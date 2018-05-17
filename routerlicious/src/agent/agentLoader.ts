@@ -7,12 +7,12 @@ export interface IAgent {
     name: string;
 
     code: any;
-};
+}
 
 // Interface for already uploaded agent names
 interface IAgentNames {
     names: string[];
-};
+}
 
 // Responsible for loading/applying runtime added agent.
 export class AgentLoader {

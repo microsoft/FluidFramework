@@ -56,7 +56,7 @@ export class StateManager {
     }
 
     public revokeWork(worker: IWorkerDetail, tenantId: string, documentId: string, workType: string) {
-        let docIndex = this.workerToDocumentMap.get(worker.socket.id).documents.findIndex(
+        const docIndex = this.workerToDocumentMap.get(worker.socket.id).documents.findIndex(
             (element) => {
                 return element.documentId === documentId &&
                     element.tenantId === tenantId &&
@@ -91,7 +91,7 @@ export class StateManager {
 
     public getActiveWorkers(): IWorkerDetail[] {
         return Array.from(this.workerToDocumentMap.values())
-            .filter((workerState) => { return (Date.now() - workerState.activeTS) <= this.workerTimeout; })
+            .filter((workerState) => (Date.now() - workerState.activeTS) <= this.workerTimeout)
             .map((workerState) => workerState.worker);
     }
 
@@ -106,8 +106,8 @@ export class StateManager {
     public revokeDocumentsFromInactiveWorkers(): IDocumentWork[] {
         const returnedWorks: IDocumentWork[] = [];
         const expiredWorkers = this.getExpiredWorkers();
-        for (let worker of expiredWorkers) {
-            for (let document of this.getDocuments(worker)) {
+        for (const worker of expiredWorkers) {
+            for (const document of this.getDocuments(worker)) {
                 returnedWorks.push(document);
             }
         }
@@ -117,7 +117,7 @@ export class StateManager {
     public getDocuments(worker: IWorkerDetail): IDocumentWork[] {
         const returnedWorks: IDocumentWork[] = [];
         const workerState = this.workerToDocumentMap.get(worker.socket.id);
-        for (let document of workerState.documents) {
+        for (const document of workerState.documents) {
             const work: IWork = { workType: document[1], workerType: this.tasks[document[1]] };
             returnedWorks.push({
                 documentId: document.documentId,
@@ -158,7 +158,7 @@ export class StateManager {
     private removeWorkerFromDocument(tenantId: string, documentId: string, workType: string) {
         const fullId = this.getFullId(tenantId, documentId);
 
-        let documentState = this.documentToWorkerMap.get(fullId);
+        const documentState = this.documentToWorkerMap.get(fullId);
         let workerIndex: number = -1;
         if (documentState) {
             for (let i = 0; i < documentState.workers.length; i++) {

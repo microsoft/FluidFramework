@@ -38,10 +38,10 @@ export class Rectangle {
     }
 
     public union(other: Rectangle): Rectangle {
-        let minX = Math.min(this.x, other.x);
-        let minY = Math.min(this.y, other.y);
-        let maxX = Math.max(this.x + this.width, other.x + other.width);
-        let maxY = Math.max(this.y + this.height, other.y + other.height);
+        const minX = Math.min(this.x, other.x);
+        const minY = Math.min(this.y, other.y);
+        const maxX = Math.max(this.x + this.width, other.x + other.width);
+        const maxY = Math.max(this.y + this.height, other.y + other.height);
         return new Rectangle(minX, minY, maxX - minX, maxY - minY);
     }
 
@@ -127,26 +127,26 @@ export class Rectangle {
     }
 
     public inner4(xfactor: number, yfactor: number, widthFactor: number, heightFactor: number) {
-        let ix = this.x + Math.round(xfactor * this.width);
-        let iy = this.y + Math.round(yfactor * this.height);
-        let iw = Math.floor(this.width * widthFactor);
-        let ih = Math.floor(this.height * heightFactor);
+        const ix = this.x + Math.round(xfactor * this.width);
+        const iy = this.y + Math.round(yfactor * this.height);
+        const iw = Math.floor(this.width * widthFactor);
+        const ih = Math.floor(this.height * heightFactor);
         return (new Rectangle(ix, iy, iw, ih));
     }
 
     public inner(factor: number) {
-        let iw = Math.round(factor * this.width);
-        let ih = Math.round(factor * this.height);
-        let ix = this.x + Math.floor((this.width - iw) / 2);
-        let iy = this.y + Math.floor((this.height - ih) / 2);
+        const iw = Math.round(factor * this.width);
+        const ih = Math.round(factor * this.height);
+        const ix = this.x + Math.floor((this.width - iw) / 2);
+        const iy = this.y + Math.floor((this.height - ih) / 2);
         return (new Rectangle(ix, iy, iw, ih));
     }
 
     public innerAbs(pixels: number) {
-        let iw = this.width - (2 * pixels);
-        let ih = this.height - (2 * pixels);
-        let ix = this.x + pixels;
-        let iy = this.y + pixels;
+        const iw = this.width - (2 * pixels);
+        const ih = this.height - (2 * pixels);
+        const ix = this.x + pixels;
+        const iy = this.y + pixels;
         return (new Rectangle(ix, iy, iw, ih));
     }
 
@@ -159,7 +159,7 @@ export class Rectangle {
         }
 
         let totalWidth = 0;
-        let widths: number[] = [];
+        const widths: number[] = [];
         for (i = 0; i < proportionalWidths.length; i++) {
             widths[i] = (proportionalWidths[i] / totalPropWidth) * this.width;
             totalWidth += widths[i];
@@ -175,7 +175,7 @@ export class Rectangle {
                 i = 0;
             }
         }
-        let rects: Rectangle[] = [];
+        const rects: Rectangle[] = [];
         let curX = this.x;
         for (i = 0; i < widths.length; i++) {
             rects[i] = new Rectangle(curX, this.y, widths[i], this.height);
@@ -193,7 +193,7 @@ export class Rectangle {
         }
 
         let totalHeight = 0;
-        let heights: number[] = [];
+        const heights: number[] = [];
         for (i = 0; i < proportionalHeights.length; i++) {
             heights[i] = (proportionalHeights[i] / totalPropHeight) * this.height;
             totalHeight += heights[i];
@@ -209,7 +209,7 @@ export class Rectangle {
                 i = 0;
             }
         }
-        let rects: Rectangle[] = [];
+        const rects: Rectangle[] = [];
         let curY = this.y;
         for (i = 0; i < heights.length; i++) {
             rects[i] = new Rectangle(this.x, curY, this.width, heights[i]);
@@ -223,14 +223,14 @@ export class Rectangle {
     }
 
     public subDivideHorizAbs(width: number) {
-        let n = Math.ceil(this.width / width);
+        const n = Math.ceil(this.width / width);
         return this.subDivideHoriz(n);
     }
 
     public subDivideHoriz(n: number) {
-        let rects: Rectangle[] = [];
+        const rects: Rectangle[] = [];
 
-        let tileWidth = this.width / n;
+        const tileWidth = this.width / n;
         let rem = this.width % n;
         let tileX = this.x;
         for (let i = 0; i < n; i++) {
@@ -245,18 +245,18 @@ export class Rectangle {
     }
 
     public subDivideVertAbs(height: number, peanutButter = true) {
-        let n = Math.ceil(this.height / height);
+        const n = Math.ceil(this.height / height);
         return this.subDivideVert(n, peanutButter);
     }
 
     public subDivideVertAbsEnclosed(height: number, peanutButter = true) {
-        let n = Math.ceil(this.height / height);
+        const n = Math.ceil(this.height / height);
         return this.subDivideVertEnclosed(n, peanutButter);
     }
 
     public subDivideVertEnclosed(n: number, peanutButter = true) {
-        let rects: Rectangle[] = [];
-        let tileHeight = Math.floor(this.height / n);
+        const rects: Rectangle[] = [];
+        const tileHeight = Math.floor(this.height / n);
         let rem = this.height % n;
         let tileY = 0;
         for (let i = 0; i < n; i++) {
@@ -271,8 +271,8 @@ export class Rectangle {
     }
 
     public subDivideVert(n: number, peanutButter = true) {
-        let rects: Rectangle[] = [];
-        let tileHeight = Math.floor(this.height / n);
+        const rects: Rectangle[] = [];
+        const tileHeight = Math.floor(this.height / n);
         let rem = this.height % n;
         let tileY = this.y;
         for (let i = 0; i < n; i++) {

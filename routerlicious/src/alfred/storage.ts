@@ -205,10 +205,10 @@ async function getOrCreateObject(
             tenantId,
         },
         {
-            documentId,
             branchMap: undefined,
             clients: undefined,
             createTime: Date.now(),
+            documentId,
             forks: [],
             logOffset: undefined,
             parent: null,
@@ -231,8 +231,8 @@ async function sendIntegrateStream(
     producer: utils.IProducer): Promise<void> {
 
     const contents: core.IForkOperation = {
-        minSequenceNumber,
         documentId: name,
+        minSequenceNumber,
         sequenceNumber,
         tenantId,
     };

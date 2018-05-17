@@ -1,3 +1,4 @@
+// tslint:disable:ban-types
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import * as core from "../../core";

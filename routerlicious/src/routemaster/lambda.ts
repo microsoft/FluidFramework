@@ -58,7 +58,7 @@ export class RouteMasterLambda extends SequencedLambda {
         const document = this.document;
         const forks = document.getActiveForks();
 
-        let maps = new Array<Promise<void>>();
+        const maps = new Array<Promise<void>>();
         for (const fork of forks) {
             const routeP = this.routeToDeli(fork, message);
             maps.push(routeP);

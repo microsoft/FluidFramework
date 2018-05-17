@@ -109,7 +109,7 @@ export class MessageFactory {
             type: api.SaveOperation,
         };
 
-        let sequencedOperation: api.ISequencedDocumentMessage = {
+        const sequencedOperation: api.ISequencedDocumentMessage = {
             clientId: this.clientId,
             clientSequenceNumber: operation.clientSequenceNumber,
             contents: operation.contents,
@@ -134,7 +134,7 @@ export class MessageFactory {
 
     public createSequencedOperation(): ISequencedOperationMessage {
         const operation = this.createDocumentMessage(0);
-        let sequencedOperation: api.ISequencedDocumentMessage = {
+        const sequencedOperation: api.ISequencedDocumentMessage = {
             clientId: this.clientId,
             clientSequenceNumber: operation.clientSequenceNumber,
             contents: operation.contents,

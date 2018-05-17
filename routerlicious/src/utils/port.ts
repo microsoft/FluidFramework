@@ -2,7 +2,7 @@
  * Normalize a port into a number, string, or false.
  */
 export function normalizePort(val) {
-    let normalizedPort = parseInt(val, 10);
+    const normalizedPort = parseInt(val, 10);
 
     if (isNaN(normalizedPort)) {
         // named pipe

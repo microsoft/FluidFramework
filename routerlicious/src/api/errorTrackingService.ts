@@ -1,3 +1,4 @@
+// tslint:disable:ban-types
 import * as raven from "raven-js";
 import { IErrorTrackingService } from "../core-utils";
 

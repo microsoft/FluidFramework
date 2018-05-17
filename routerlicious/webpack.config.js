@@ -10,7 +10,6 @@ module.exports = env => {
     let prod_target = (env && env.target)
 
     let typeCheckingCores = 1;
-
     return merge((prod_target ? prod : dev), {
         entry,
         devtool: 'source-map',    
@@ -68,10 +67,23 @@ module.exports = env => {
         },
         stats: {
             timings: true,
+            colors: true,
+            builtAt: false,
+            hash: false,
+            version: false,
+            assets: false,
+            chunks: false,
+            modules: false,
+            reasons: false,
+            children: false,
+            source: false,
+            errorDetails: false,
+            publicPath: false
         },
         plugins: [
             new ForkTsCheckerWebpackPlugin({
                 checkSyntacticErrors: true,
+                tslint: true,
                 workers: typeCheckingCores
             }),
         ]

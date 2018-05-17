@@ -28,7 +28,7 @@ export class WorkerService extends EventEmitter implements core.IWorkerService {
         super();
 
         this.socket = io(this.workerUrl, { transports: ["websocket"] });
-        for (let workType of config.permission[this.clientType]) {
+        for (const workType of config.permission[this.clientType]) {
             this.workTypeMap[workType] = true;
         }
         // Load dictionary and agents if allowed.

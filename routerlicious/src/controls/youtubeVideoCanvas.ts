@@ -37,14 +37,14 @@ export class YouTubeVideoCanvas extends ui.Component {
         playerDiv.id = "player";
         elem.appendChild(playerDiv);
 
-        let button = document.getElementById("create");
+        const button = document.getElementById("create");
         button.onclick = () => {
-            let videoInput = document.getElementById("videoId") as HTMLInputElement;
+            const videoInput = document.getElementById("videoId") as HTMLInputElement;
             this.videoId = videoInput.value;
             this.player.loadVideoById(this.videoId);
         };
 
-        let tag = document.createElement("script");
+        const tag = document.createElement("script");
         tag.src = "https://www.youtube.com/iframe_api";
         elem.appendChild(tag);
     }
@@ -69,7 +69,7 @@ export class YouTubeVideoCanvas extends ui.Component {
                     event.target.mute();
 
                     if (this.videoMapView.has("state")) {
-                        let state = this.videoMapView.get<IVideoState>("state");
+                        const state = this.videoMapView.get<IVideoState>("state");
                         playing = state.playing ? 1 : 0;
                         currentPlaybackTime = (Date.now() - state.lastChangeUTC + state.elapsedTime * 1000) / 1000;
 
@@ -91,7 +91,7 @@ export class YouTubeVideoCanvas extends ui.Component {
                     }
                 },
                 onStateChange: (event) => {
-                    let playerState = event.data;
+                    const playerState = event.data;
 
                     if (playerState === 1 || playerState === 2) {
                         this.videoMapView.set<IVideoState>("state", {
@@ -118,8 +118,8 @@ export class YouTubeVideoCanvas extends ui.Component {
 
         this.videoMap.on("valueChanged", (value) => {
             if (value.key === "state") {
-                let incomingState = this.videoMapView.get<IVideoState>(value.key);
-                let incomingPlaybackTime = (Date.now() -
+                const incomingState = this.videoMapView.get<IVideoState>(value.key);
+                const incomingPlaybackTime = (Date.now() -
                                         incomingState.lastChangeUTC +
                                         incomingState.elapsedTime * 1000) / 1000;
                 if (this.videoId !== incomingState.src) {
@@ -151,8 +151,8 @@ export class YouTubeVideoCanvas extends ui.Component {
     }
 
     public youtubeIdParser(url: string): string {
-        let regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#\&\?]*).*/;
-        let match = url.match(regExp);
+        const regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#\&\?]*).*/;
+        const match = url.match(regExp);
         return (match && match[7].length === 11) ? match[7] : null;
     }
 }

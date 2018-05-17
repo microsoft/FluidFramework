@@ -1,4 +1,5 @@
 // tslint:disable:no-bitwise whitespace align switch-default no-string-literal
+// tslint:disable:ban-types
 import performanceNow = require("performance-now");
 import {
     api, CharacterCodes, core, MergeTree,
@@ -29,12 +30,12 @@ interface IRowDiv extends ILineDiv {
 }
 
 function findRowParent(lineDiv: ILineDiv) {
-    let parent = <IRowDiv>lineDiv.parentElement;
+    let parent = lineDiv.parentElement as IRowDiv;
     while (parent) {
         if (parent.rowView) {
             return parent;
         }
-        parent = <IRowDiv>parent.parentElement;
+        parent = parent.parentElement as IRowDiv;
     }
 }
 
@@ -61,7 +62,7 @@ export interface Item {
 let viewOptions: Object;
 
 export function namesToItems(names: string[]): Item[] {
-    let items: Item[] = new Array(names.length);
+    const items: Item[] = new Array(names.length);
 
     for (let i = 0, len = names.length; i < len; i++) {
         items[i] = { key: names[i] };
@@ -87,7 +88,7 @@ export interface ICmd extends Item {
     enabled?: (flowView: FlowView) => boolean;
 }
 
-let commands: ICmd[] = [
+const commands: ICmd[] = [
     {
         exec: (f) => {
             f.copyFormat();
@@ -387,7 +388,7 @@ export function selectionListBoxCreate(
     offsetY: number,
     varHeight?: number): ISelectionListBox {
 
-    let listContainer = document.createElement("div");
+    const listContainer = document.createElement("div");
     let items: Item[];
     let itemCapacity: number;
     let selectionIndex = -1;
@@ -403,8 +404,8 @@ export function selectionListBoxCreate(
             listContainer.style.visibility = "hidden";
         },
         items: () => items,
-        prevItem,
         nextItem,
+        prevItem,
         removeHighlight,
         selectItem: selectItemByKey,
         show: () => {
@@ -462,8 +463,8 @@ export function selectionListBoxCreate(
     }
 
     function updateRectangles() {
-        let width = textRect.width;
-        let height = window.innerHeight / 3;
+        const width = textRect.width;
+        const height = window.innerHeight / 3;
         let top: number;
         let bottom: number;
         let right: number;
@@ -479,11 +480,11 @@ export function selectionListBoxCreate(
         }
         itemCapacity = Math.floor(height / itemHeight);
         if (top !== undefined) {
-            let listContainerRect = new ui.Rectangle(textRect.x, top, width, height);
+            const listContainerRect = new ui.Rectangle(textRect.x, top, width, height);
             listContainerRect.height = itemCapacity * itemHeight;
             listContainerRect.conformElementMaxHeight(listContainer);
         } else {
-            let listContainerRect = new ui.Rectangle(textRect.x, 0, width, height);
+            const listContainerRect = new ui.Rectangle(textRect.x, 0, width, height);
             listContainerRect.height = itemCapacity * itemHeight;
             listContainerRect.conformElementMaxHeightFromBottom(listContainer, bottom);
         }
@@ -518,19 +519,19 @@ export function selectionListBoxCreate(
     }
 
     function makeItemDiv(i: number, div: HTMLDivElement) {
-        let item = items[i];
-        let itemDiv = div;
+        const item = items[i];
+        const itemDiv = div;
         itemDiv.style.fontSize = "18px";
         itemDiv.style.fontFamily = "Segoe UI";
         itemDiv.style.lineHeight = itemHeight + "px";
         itemDiv.style.whiteSpace = "pre";
         items[i].div = itemDiv;
-        let itemSpan = document.createElement("span");
+        const itemSpan = document.createElement("span");
         itemSpan.innerText = "  " + item.key;
         itemDiv.appendChild(itemSpan);
 
         if (item.iconURL) {
-            let icon = document.createElement("img");
+            const icon = document.createElement("img");
             icon.style.cssFloat = "left";
             icon.style.height = itemHeight + "px";
             icon.style.width = itemHeight + "px";
@@ -560,13 +561,13 @@ export function selectionListBoxCreate(
 
     function updateSelectionList() {
         clearSubtree(listContainer);
-        let len = items.length;
+        const len = items.length;
         for (let i = 0; i < itemCapacity; i++) {
-            let indx = i + topSelection;
+            const indx = i + topSelection;
             if (indx === len) {
                 break;
             } else {
-                let item = items[indx];
+                const item = items[indx];
                 if (!item.div) {
                     item.div = document.createElement("div");
                     listContainer.appendChild(item.div);
@@ -606,25 +607,25 @@ export interface IInputBox {
 
 export function inputBoxCreate(onsubmit: (s: string) => void,
     onchanged: (s: string) => void) {
-    let elm = document.createElement("div");
-    let span = document.createElement("span");
+    const elm = document.createElement("div");
+    const span = document.createElement("span");
     elm.appendChild(span);
     let cursor: Cursor;
 
-    return <IInputBox>{
+    return {
         elm,
         getText,
         initCursor,
-        setText,
-        keypress,
         keydown,
-    };
+        keypress,
+        setText,
+    } as IInputBox;
 
     function adjustCursorX() {
-        let computedStyle = getComputedStyle(elm);
-        let fontstr = computedStyle.font;
-        let text = span.innerText.substring(0, cursor.pos);
-        let w = Math.round(getTextWidth(text, fontstr));
+        const computedStyle = getComputedStyle(elm);
+        const fontstr = computedStyle.font;
+        const text = span.innerText.substring(0, cursor.pos);
+        const w = Math.round(getTextWidth(text, fontstr));
         cursor.lateralMove(w);
     }
 
@@ -667,7 +668,7 @@ export function inputBoxCreate(onsubmit: (s: string) => void,
 
     function keypress(e: KeyboardEvent) {
         let text = span.innerText;
-        let code = e.charCode;
+        const code = e.charCode;
         if (code === CharacterCodes.cr) {
             onsubmit(text);
         } else {
@@ -681,7 +682,7 @@ export function inputBoxCreate(onsubmit: (s: string) => void,
     }
 
     function initCursor(y: number) {
-        let lineHeight = getTextHeight(elm);
+        const lineHeight = getTextHeight(elm);
         cursor = new Cursor(elm);
         cursor.assignToLine(0, lineHeight - y, elm);
         // cursor.editSpan.style.top=`${y}px`;
@@ -699,9 +700,9 @@ export function inputBoxCreate(onsubmit: (s: string) => void,
 
 export function searchBoxCreate(boundingElm: HTMLElement,
     searchStringChanged: (searchString: string) => void): ISearchBox {
-    let container = document.createElement("div");
-    let inputElmHeight = 32;
-    let itemHeight = 24;
+    const container = document.createElement("div");
+    const inputElmHeight = 32;
+    const itemHeight = 24;
     let inputElm: HTMLElement;
     let inputBox: IInputBox;
     let selectionListBox: ISelectionListBox;
@@ -709,13 +710,13 @@ export function searchBoxCreate(boundingElm: HTMLElement,
     init();
 
     return {
-        getSelectedItem,
-        getSelectedKey,
-        showSelectionList: (items) => selectionListBox.showSelectionList(items),
-        keydown,
-        keypress,
         dismiss,
         getSearchString,
+        getSelectedItem,
+        getSelectedKey,
+        keydown,
+        keypress,
+        showSelectionList: (items) => selectionListBox.showSelectionList(items),
         updateText,
     };
 
@@ -760,15 +761,15 @@ export function searchBoxCreate(boundingElm: HTMLElement,
     }
 
     function updateRectangles() {
-        let boundingRect = ui.Rectangle.fromClientRect(boundingElm.getBoundingClientRect());
-        let offsetY = boundingRect.y;
+        const boundingRect = ui.Rectangle.fromClientRect(boundingElm.getBoundingClientRect());
+        const offsetY = boundingRect.y;
         boundingRect.width = Math.floor(window.innerWidth / 4);
         boundingRect.height = Math.floor(window.innerHeight / 3);
         boundingRect.moveElementToUpperLeft(container);
         boundingRect.x = 0;
         boundingRect.y = 0;
-        let inputElmBorderSize = 2;
-        let vertSplit = boundingRect.nipVert(inputElmHeight + inputElmBorderSize);
+        const inputElmBorderSize = 2;
+        const vertSplit = boundingRect.nipVert(inputElmHeight + inputElmBorderSize);
         vertSplit[0].height -= inputElmBorderSize;
         vertSplit[0].conformElement(inputElm);
         inputElm.style.lineHeight = `${vertSplit[0].height}px`;
@@ -777,11 +778,11 @@ export function searchBoxCreate(boundingElm: HTMLElement,
     }
 
     function updateText() {
-        let text = inputBox.getText();
+        const text = inputBox.getText();
         if (text.length > 0) {
             searchStringChanged(text);
             if (selectionListBox) {
-                let items = selectionListBox.items();
+                const items = selectionListBox.items();
                 if (items) {
                     showListContainer(selectionListBox.items().length === 0);
                 }
@@ -839,7 +840,7 @@ function elmOffToSegOff(elmOff: IRangeInfo, span: HTMLSpanElement) {
     while (prevSib) {
         switch (prevSib.nodeType) {
             case Node.ELEMENT_NODE:
-                let innerSpan = <HTMLSpanElement>prevSib;
+                const innerSpan = prevSib as HTMLSpanElement;
                 offset += innerSpan.innerText.length;
                 break;
             case Node.TEXT_NODE:
@@ -855,13 +856,13 @@ function elmOffToSegOff(elmOff: IRangeInfo, span: HTMLSpanElement) {
 
 let cachedCanvas: HTMLCanvasElement;
 const baseURI = typeof document !== "undefined" ? document.location.origin : "";
-let underlineStringURL = `url("${baseURI}/public/images/underline.gif") bottom repeat-x`;
-let underlinePaulStringURL = `url("${baseURI}/public/images/underline-paul.gif") bottom repeat-x`;
-let underlinePaulGrammarStringURL = `url("${baseURI}/public/images/underline-paulgrammar.gif") bottom repeat-x`;
-let underlinePaulGoldStringURL = `url("${baseURI}/public/images/underline-gold.gif") bottom repeat-x`;
+const underlineStringURL = `url("${baseURI}/public/images/underline.gif") bottom repeat-x`;
+const underlinePaulStringURL = `url("${baseURI}/public/images/underline-paul.gif") bottom repeat-x`;
+const underlinePaulGrammarStringURL = `url("${baseURI}/public/images/underline-paulgrammar.gif") bottom repeat-x`;
+const underlinePaulGoldStringURL = `url("${baseURI}/public/images/underline-gold.gif") bottom repeat-x`;
 
 function getTextHeight(elm: HTMLDivElement) {
-    let computedStyle = getComputedStyle(elm);
+    const computedStyle = getComputedStyle(elm);
     if (computedStyle.lineHeight) {
         return parseInt(elm.style.lineHeight, 10);
     } else {
@@ -869,8 +870,8 @@ function getTextHeight(elm: HTMLDivElement) {
     }
 }
 
-let textWidthCache = new Map<string, Map<string, number>>();
-let lineHeightCache = new Map<string, number>();
+const textWidthCache = new Map<string, Map<string, number>>();
+const lineHeightCache = new Map<string, number>();
 
 function getLineHeight(fontstr: string, lineHeight?: string) {
     if (lineHeight) {
@@ -878,7 +879,7 @@ function getLineHeight(fontstr: string, lineHeight?: string) {
     }
     let height = lineHeightCache.get(fontstr);
     if (height === undefined) {
-        let elm = document.createElement("div");
+        const elm = document.createElement("div");
         elm.style.position = "absolute";
         elm.style.zIndex = "-10";
         elm.style.left = "0px";
@@ -916,7 +917,7 @@ function getMultiTextWidth(texts: string[], font: string) {
     const context = canvas.getContext("2d");
     context.font = font;
     let sum = 0;
-    for (let text of texts) {
+    for (const text of texts) {
         const metrics = context.measureText(text);
         sum += metrics.width;
     }
@@ -957,25 +958,25 @@ export interface IDocumentContext {
 }
 
 function buildDocumentContext(viewportDiv: HTMLDivElement) {
-    let fontstr = "18px Times";
+    const fontstr = "18px Times";
     viewportDiv.style.font = fontstr;
-    let headerFontstr = "22px Times";
-    let wordSpacing = getTextWidth(" ", fontstr);
-    let headerDivHeight = 32;
-    let computedStyle = window.getComputedStyle(viewportDiv);
-    let defaultLineHeight = 1.2;
-    let h = parseInt(computedStyle.fontSize, 10);
-    let defaultLineDivHeight = Math.round(h * defaultLineHeight);
-    let pgVspace = Math.round(h * 0.5);
-    let cellVspace = 3;
-    let tableVspace = pgVspace;
-    let cellTopMargin = 3;
-    let cellHMargin = 3;
-    let indentWidthThreshold = 600;
-    return <IDocumentContext>{
-        fontstr, headerFontstr, wordSpacing, headerDivHeight, defaultLineDivHeight,
-        pgVspace, cellVspace, cellHMargin, cellTopMargin, tableVspace, indentWidthThreshold,
-    };
+    const headerFontstr = "22px Times";
+    const wordSpacing = getTextWidth(" ", fontstr);
+    const headerDivHeight = 32;
+    const computedStyle = window.getComputedStyle(viewportDiv);
+    const defaultLineHeight = 1.2;
+    const h = parseInt(computedStyle.fontSize, 10);
+    const defaultLineDivHeight = Math.round(h * defaultLineHeight);
+    const pgVspace = Math.round(h * 0.5);
+    const cellVspace = 3;
+    const tableVspace = pgVspace;
+    const cellTopMargin = 3;
+    const cellHMargin = 3;
+    const indentWidthThreshold = 600;
+    return {
+        cellHMargin, cellTopMargin, cellVspace, defaultLineDivHeight, fontstr, headerDivHeight, headerFontstr,
+        indentWidthThreshold, pgVspace, tableVspace, wordSpacing,
+    } as IDocumentContext;
 }
 
 function showPresence(presenceX: number, lineContext: ILineContext, presenceInfo: ILocalPresenceInfo) {
@@ -992,9 +993,9 @@ function showPositionEndOfLine(lineContext: ILineContext, presenceInfo?: ILocalP
         addToRerenderList(lineContext);
     } else {
         if (lineContext.span) {
-            let cursorBounds = lineContext.span.getBoundingClientRect();
-            let lineDivBounds = lineContext.lineDiv.getBoundingClientRect();
-            let cursorX = cursorBounds.width + (cursorBounds.left - lineDivBounds.left);
+            const cursorBounds = lineContext.span.getBoundingClientRect();
+            const lineDivBounds = lineContext.lineDiv.getBoundingClientRect();
+            const cursorX = cursorBounds.width + (cursorBounds.left - lineDivBounds.left);
             if (!presenceInfo) {
                 lineContext.flowView.cursor.assignToLine(cursorX, lineContext.lineDivHeight, lineContext.lineDiv);
             } else {
@@ -1038,17 +1039,17 @@ function showPositionInLine(
         addToRerenderList(lineContext);
     } else {
         let posX: number;
-        let lineDivBounds = lineContext.lineDiv.getBoundingClientRect();
+        const lineDivBounds = lineContext.lineDiv.getBoundingClientRect();
         if (cursorPos > textStartPos) {
-            let preCursorText = text.substring(0, cursorPos - textStartPos);
-            let temp = lineContext.span.innerText;
+            const preCursorText = text.substring(0, cursorPos - textStartPos);
+            const temp = lineContext.span.innerText;
             lineContext.span.innerText = preCursorText;
-            let cursorBounds = lineContext.span.getBoundingClientRect();
+            const cursorBounds = lineContext.span.getBoundingClientRect();
             posX = cursorBounds.width + (cursorBounds.left - lineDivBounds.left);
             // console.log(`cbounds w ${cursorBounds.width} posX ${posX} ldb ${lineDivBounds.left}`);
             lineContext.span.innerText = temp;
         } else {
-            let cursorBounds = lineContext.span.getBoundingClientRect();
+            const cursorBounds = lineContext.span.getBoundingClientRect();
             posX = cursorBounds.left - lineDivBounds.left;
             // console.log(`cbounds whole l ${cursorBounds.left} posX ${posX} ldb ${lineDivBounds.left}`);
         }
@@ -1075,7 +1076,7 @@ function renderSegmentIntoLine(
         lineContext.lineDiv.linePos = segpos + start;
         lineContext.lineDiv.lineEnd = lineContext.lineDiv.linePos;
     }
-    let segType = segment.getType();
+    const segType = segment.getType();
     if (segType === MergeTree.SegmentType.Text) {
         if (start < 0) {
             start = 0;
@@ -1083,10 +1084,10 @@ function renderSegmentIntoLine(
         if (end > segment.cachedLength) {
             end = segment.cachedLength;
         }
-        let textSegment = <MergeTree.TextSegment>segment;
-        let text = textSegment.text.substring(start, end);
-        let textStartPos = segpos + start;
-        let textEndPos = segpos + end;
+        const textSegment = segment as MergeTree.TextSegment;
+        const text = textSegment.text.substring(start, end);
+        const textStartPos = segpos + start;
+        const textEndPos = segpos + end;
         lineContext.span = makeSegSpan(lineContext.flowView, text, textSegment, start, segpos);
         if ((lineContext.lineDiv.endPGMarker) && (lineContext.lineDiv.endPGMarker.properties.header)) {
             lineContext.span.style.color = wordHeadingColor;
@@ -1096,18 +1097,18 @@ function renderSegmentIntoLine(
         if ((lineContext.flowView.cursor.pos >= textStartPos) && (lineContext.flowView.cursor.pos <= textEndPos)) {
             showPositionInLine(lineContext, textStartPos, text, lineContext.flowView.cursor.pos);
         }
-        let presenceInfo = lineContext.flowView.presenceInfoInRange(textStartPos, textEndPos);
+        const presenceInfo = lineContext.flowView.presenceInfoInRange(textStartPos, textEndPos);
         if (presenceInfo) {
             showPositionInLine(lineContext, textStartPos, text, presenceInfo.xformPos, presenceInfo);
         }
     } else if (segType === MergeTree.SegmentType.Marker) {
-        let marker = <MergeTree.Marker>segment;
+        const marker = segment as MergeTree.Marker;
         // console.log(`marker pos: ${segpos}`);
         if (endRenderSegments(marker)) {
             if (lineContext.flowView.cursor.pos === segpos) {
                 showPositionEndOfLine(lineContext);
             } else {
-                let presenceInfo = lineContext.flowView.presenceInfoInRange(segpos, segpos);
+                const presenceInfo = lineContext.flowView.presenceInfoInRange(segpos, segpos);
                 if (presenceInfo) {
                     showPositionEndOfLine(lineContext, presenceInfo);
                 }
@@ -1129,14 +1130,14 @@ function findLineDiv(pos: number, flowView: FlowView, dive = false) {
 }
 
 function decorateLineDiv(lineDiv: ILineDiv, lineFontstr: string, lineDivHeight: number) {
-    let indentSymbol = lineDiv.indentSymbol;
+    const indentSymbol = lineDiv.indentSymbol;
     let indentFontstr = lineFontstr;
     if (indentSymbol.font) {
         indentFontstr = indentSymbol.font;
     }
-    let em = Math.round(getTextWidth("M", lineFontstr));
-    let symbolWidth = getTextWidth(indentSymbol.text, indentFontstr);
-    let symbolDiv = makeContentDiv(
+    const em = Math.round(getTextWidth("M", lineFontstr));
+    const symbolWidth = getTextWidth(indentSymbol.text, indentFontstr);
+    const symbolDiv = makeContentDiv(
         new ui.Rectangle(
             lineDiv.indentWidth - Math.floor(em + symbolWidth), 0, symbolWidth, lineDivHeight), indentFontstr);
     symbolDiv.innerText = indentSymbol.text;
@@ -1145,9 +1146,9 @@ function decorateLineDiv(lineDiv: ILineDiv, lineFontstr: string, lineDivHeight: 
 
 function reRenderLine(lineDiv: ILineDiv, flowView: FlowView, docContext: IDocumentContext) {
     if (lineDiv) {
-        let outerViewportBounds = ui.Rectangle.fromClientRect(flowView.viewportDiv.getBoundingClientRect());
-        let lineDivBounds = lineDiv.getBoundingClientRect();
-        let lineDivHeight = lineDivBounds.height;
+        const outerViewportBounds = ui.Rectangle.fromClientRect(flowView.viewportDiv.getBoundingClientRect());
+        const lineDivBounds = lineDiv.getBoundingClientRect();
+        const lineDivHeight = lineDivBounds.height;
         clearSubtree(lineDiv);
         let contentDiv = lineDiv;
         if (lineDiv.indentSymbol) {
@@ -1158,17 +1159,17 @@ function reRenderLine(lineDiv: ILineDiv, flowView: FlowView, docContext: IDocume
                 lineDivHeight), lineDiv.style.font);
             lineDiv.appendChild(contentDiv);
         }
-        let lineContext = <ILineContext>{
+        const lineContext = {
             contentDiv,
             flowView,
             lineDiv,
             lineDivHeight,
             markerPos: 0,
+            outerViewportBounds,
             pgMarker: undefined,
             span: undefined,
-            outerViewportBounds,
-        };
-        let lineEnd = lineDiv.lineEnd;
+        } as ILineContext;
+        const lineEnd = lineDiv.lineEnd;
         let end = lineEnd;
         if (end === lineDiv.linePos) {
             end++;
@@ -1185,7 +1186,7 @@ function reRenderLine(lineDiv: ILineDiv, flowView: FlowView, docContext: IDocume
 function buildIntervalBlockStyle(properties: MergeTree.PropertySet, startX: number, endX: number,
     height: number, leftInBounds: boolean, rightInBounds: boolean,
     contentDiv: HTMLDivElement, client: MergeTree.Client) {
-    let bookmarkDiv = document.createElement("div");
+    const bookmarkDiv = document.createElement("div");
     let bookmarkRect: ui.Rectangle;
     bookmarkRect = new ui.Rectangle(startX, 0, endX - startX, height);
     bookmarkRect.conformElement(bookmarkDiv);
@@ -1207,8 +1208,8 @@ function buildIntervalBlockStyle(properties: MergeTree.PropertySet, startX: numb
         if (properties["bgColor"]) {
             bookmarkDiv.style.backgroundColor = properties["bgColor"];
         } else if (properties["clid"]) {
-            let clientId = client.getOrAddShortClientId(properties["clid"]);
-            let bgColor = presenceColors[clientId % presenceColors.length];
+            const clientId = client.getOrAddShortClientId(properties["clid"]);
+            const bgColor = presenceColors[clientId % presenceColors.length];
             bookmarkDiv.style.backgroundColor = bgColor;
             bookmarkDiv.style.opacity = "0.08";
         }
@@ -1219,12 +1220,12 @@ function buildIntervalBlockStyle(properties: MergeTree.PropertySet, startX: numb
 function buildIntervalTieStyle(properties: MergeTree.PropertySet, startX: number, endX: number,
     lineDivHeight: number, leftInBounds: boolean, rightInBounds: boolean,
     contentDiv: HTMLDivElement, client: MergeTree.Client) {
-    let bookmarkDiv = document.createElement("div");
+    const bookmarkDiv = document.createElement("div");
     let bookmarkRect: ui.Rectangle;
-    let bookendDiv1 = document.createElement("div");
-    let bookendDiv2 = document.createElement("div");
-    let tenthHeight = Math.max(1, Math.floor(lineDivHeight / 10));
-    let halfHeight = Math.floor(lineDivHeight >> 1);
+    const bookendDiv1 = document.createElement("div");
+    const bookendDiv2 = document.createElement("div");
+    const tenthHeight = Math.max(1, Math.floor(lineDivHeight / 10));
+    const halfHeight = Math.floor(lineDivHeight >> 1);
     bookmarkRect = new ui.Rectangle(startX, halfHeight - tenthHeight,
         endX - startX, 2 * tenthHeight);
     bookmarkRect.conformElement(bookmarkDiv);
@@ -1243,8 +1244,8 @@ function buildIntervalTieStyle(properties: MergeTree.PropertySet, startX: number
     bookendDiv1.style.backgroundColor = "lightgray";
     bookendDiv2.style.backgroundColor = "lightgray";
     if (properties && properties["clid"]) {
-        let clientId = client.getOrAddShortClientId(properties["clid"]);
-        let bgColor = presenceColors[clientId % presenceColors.length];
+        const clientId = client.getOrAddShortClientId(properties["clid"]);
+        const bgColor = presenceColors[clientId % presenceColors.length];
         bookmarkDiv.style.backgroundColor = bgColor;
         bookendDiv1.style.backgroundColor = bgColor;
         bookendDiv2.style.backgroundColor = bgColor;
@@ -1262,13 +1263,13 @@ function getWidthInLine(endPGMarker: Paragraph.IParagraphMarker, breakIndex: num
     let itemIndex = endPGMarker.cache.breaks[breakIndex].startItemIndex;
     let w = 0;
     while (offset > 0) {
-        let item = <Paragraph.IPGBlock>endPGMarker.itemCache.items[itemIndex];
+        const item = endPGMarker.itemCache.items[itemIndex] as Paragraph.IPGBlock;
         if (!item) {
             break;
         }
         if (item.text.length > offset) {
-            let fontstr = item.fontstr || defaultFontstr;
-            let subw = getTextWidth(item.text.substring(0, offset), fontstr);
+            const fontstr = item.fontstr || defaultFontstr;
+            const subw = getTextWidth(item.text.substring(0, offset), fontstr);
             return Math.floor(w + subw);
         } else {
             w += item.width;
@@ -1311,29 +1312,29 @@ function showBookmark(properties: MergeTree.PropertySet, lineText: string,
 function showBookmarks(flowView: FlowView, lineStart: number, lineEnd: number,
     lineFontstr: string, lineDivHeight: number, lineBreakIndex: number,
     docContext: IDocumentContext, contentDiv: HTMLDivElement, endPGMarker: Paragraph.IParagraphMarker) {
-    let sel = flowView.cursor.getSelection();
+    const sel = flowView.cursor.getSelection();
     let havePresenceSel = false;
-    for (let localPresenceInfo of flowView.presenceVector) {
+    for (const localPresenceInfo of flowView.presenceVector) {
         if (localPresenceInfo && (localPresenceInfo.markXformPos !== localPresenceInfo.xformPos)) {
             havePresenceSel = true;
             break;
         }
     }
     if (flowView.bookmarks || flowView.comments || sel || havePresenceSel) {
-        let client = flowView.client;
-        let computedEnd = lineEnd;
-        let bookmarks = flowView.bookmarks.findOverlappingIntervals(lineStart, computedEnd);
-        let comments = flowView.comments.findOverlappingIntervals(lineStart, computedEnd);
-        let lineText = client.getText(lineStart, computedEnd);
+        const client = flowView.client;
+        const computedEnd = lineEnd;
+        const bookmarks = flowView.bookmarks.findOverlappingIntervals(lineStart, computedEnd);
+        const comments = flowView.comments.findOverlappingIntervals(lineStart, computedEnd);
+        const lineText = client.getText(lineStart, computedEnd);
         if (sel && ((sel.start < lineEnd) && (sel.end > lineStart))) {
             showBookmark(undefined, lineText, sel.start, sel.end, lineStart, endPGMarker,
                 computedEnd, lineFontstr, lineDivHeight, lineBreakIndex, docContext, contentDiv, client);
         }
         if (havePresenceSel) {
-            for (let localPresenceInfo of flowView.presenceVector) {
+            for (const localPresenceInfo of flowView.presenceVector) {
                 if (localPresenceInfo && (localPresenceInfo.markXformPos !== localPresenceInfo.xformPos)) {
-                    let presenceStart = Math.min(localPresenceInfo.markXformPos, localPresenceInfo.xformPos);
-                    let presenceEnd = Math.max(localPresenceInfo.markXformPos, localPresenceInfo.xformPos);
+                    const presenceStart = Math.min(localPresenceInfo.markXformPos, localPresenceInfo.xformPos);
+                    const presenceEnd = Math.max(localPresenceInfo.markXformPos, localPresenceInfo.xformPos);
                     if ((presenceStart < lineEnd) && (presenceEnd > lineStart)) {
                         showBookmark({ clid: flowView.client.getLongClientId(localPresenceInfo.clientId) },
                             lineText, presenceStart, presenceEnd, lineStart, endPGMarker,
@@ -1343,11 +1344,11 @@ function showBookmarks(flowView: FlowView, lineStart: number, lineEnd: number,
             }
         }
         if (flowView.tempBookmarks && (!flowView.modes.showBookmarks)) {
-            for (let b of flowView.tempBookmarks) {
+            for (const b of flowView.tempBookmarks) {
                 if (b.overlapsPos(client.mergeTree, lineStart, lineEnd)) {
-                    let start = b.start.toPosition(client.mergeTree, client.getCurrentSeq(),
+                    const start = b.start.toPosition(client.mergeTree, client.getCurrentSeq(),
                         client.getClientId());
-                    let end = b.end.toPosition(client.mergeTree, client.getCurrentSeq(),
+                    const end = b.end.toPosition(client.mergeTree, client.getCurrentSeq(),
                         client.getClientId());
                     showBookmark(b.properties, lineText, start, end, lineStart,
                         endPGMarker, computedEnd, lineFontstr, lineDivHeight, lineBreakIndex,
@@ -1356,10 +1357,10 @@ function showBookmarks(flowView: FlowView, lineStart: number, lineEnd: number,
             }
         }
         if (bookmarks && flowView.modes.showBookmarks) {
-            for (let b of bookmarks) {
-                let start = b.start.toPosition(client.mergeTree, client.getCurrentSeq(),
+            for (const b of bookmarks) {
+                const start = b.start.toPosition(client.mergeTree, client.getCurrentSeq(),
                     client.getClientId());
-                let end = b.end.toPosition(client.mergeTree, client.getCurrentSeq(),
+                const end = b.end.toPosition(client.mergeTree, client.getCurrentSeq(),
                     client.getClientId());
                 showBookmark(b.properties, lineText, start, end, lineStart,
                     endPGMarker, computedEnd, lineFontstr, lineDivHeight, lineBreakIndex,
@@ -1367,10 +1368,10 @@ function showBookmarks(flowView: FlowView, lineStart: number, lineEnd: number,
             }
         }
         if (comments && flowView.modes.showComments) {
-            for (let comment of comments) {
-                let start = comment.start.toPosition(client.mergeTree, client.getCurrentSeq(),
+            for (const comment of comments) {
+                const start = comment.start.toPosition(client.mergeTree, client.getCurrentSeq(),
                     client.getClientId());
-                let end = comment.end.toPosition(client.mergeTree, client.getCurrentSeq(),
+                const end = comment.end.toPosition(client.mergeTree, client.getCurrentSeq(),
                     client.getClientId());
                 comment.addProperties({ bgColor: "gold" });
                 showBookmark(comment.properties, lineText, start, end, lineStart,
@@ -1382,11 +1383,11 @@ function showBookmarks(flowView: FlowView, lineStart: number, lineEnd: number,
 }
 
 function makeContentDiv(r: ui.Rectangle, lineFontstr) {
-    let contentDiv = document.createElement("div");
+    const contentDiv = document.createElement("div");
     contentDiv.style.font = lineFontstr;
     contentDiv.style.whiteSpace = "pre";
     contentDiv.onclick = (e) => {
-        let targetDiv = <HTMLDivElement>e.target;
+        const targetDiv = e.target as HTMLDivElement;
         if (targetDiv.lastElementChild) {
             // tslint:disable-next-line:max-line-length
             console.log(`div click at ${e.clientX},${e.clientY} rightmost span with text ${targetDiv.lastElementChild.innerHTML}`);
@@ -1409,10 +1410,11 @@ interface ICellView extends Table.Cell {
     svgElm: HTMLElement;
 }
 
-let svgNS = "http://www.w3.org/2000/svg";
+const svgNS = "http://www.w3.org/2000/svg";
 
 function createSVGWrapper(w: number, h: number) {
-    let svg = <HTMLElement>document.createElementNS(svgNS, "svg");
+    // TODO (sabroner): check this logic
+    const svg = document.createElementNS(svgNS, "svg") as any as HTMLElement;
     svg.style.zIndex = "-1";
     svg.setAttribute("width", w.toString());
     svg.setAttribute("height", h.toString());
@@ -1420,7 +1422,8 @@ function createSVGWrapper(w: number, h: number) {
 }
 
 function createSVGRect(r: ui.Rectangle) {
-    let rect = <HTMLElement>document.createElementNS(svgNS, "rect");
+    // TODO (sabroner): check this logic
+    const rect = document.createElementNS(svgNS, "rect") as any as HTMLElement;
     rect.setAttribute("x", r.x.toString());
     rect.setAttribute("y", r.y.toString());
     rect.setAttribute("width", r.width.toString());
@@ -1434,14 +1437,14 @@ function createSVGRect(r: ui.Rectangle) {
 function layoutCell(
     cellView: ICellView, layoutInfo: ILayoutContext, targetTranslation: string, defer = false,
     leftmost = false, top = false) {
-    let cellRect = new ui.Rectangle(0, 0, cellView.specWidth, 0);
-    let cellViewportWidth = cellView.specWidth - (2 * layoutInfo.docContext.cellHMargin);
-    let cellViewportRect = new ui.Rectangle(layoutInfo.docContext.cellHMargin, 0,
+    const cellRect = new ui.Rectangle(0, 0, cellView.specWidth, 0);
+    const cellViewportWidth = cellView.specWidth - (2 * layoutInfo.docContext.cellHMargin);
+    const cellViewportRect = new ui.Rectangle(layoutInfo.docContext.cellHMargin, 0,
         cellViewportWidth, 0);
-    let cellDiv = document.createElement("div");
+    const cellDiv = document.createElement("div");
     cellView.div = cellDiv;
     cellRect.conformElementOpenHeight(cellDiv);
-    let transferDeferredHeight = false;
+    const transferDeferredHeight = false;
 
     cellView.viewport = new Viewport(layoutInfo.viewport.remainingHeight(),
         document.createElement("div"), cellViewportWidth);
@@ -1449,7 +1452,7 @@ function layoutCell(
     cellDiv.appendChild(cellView.viewport.div);
     cellView.viewport.vskip(layoutInfo.docContext.cellTopMargin);
 
-    let cellLayoutInfo = <ILayoutContext>{
+    const cellLayoutInfo = {
         deferredAttach: true,
         docContext: layoutInfo.docContext,
         endMarker: cellView.endMarker,
@@ -1458,24 +1461,24 @@ function layoutCell(
         stackIndex: layoutInfo.stackIndex,
         startingPosStack: layoutInfo.startingPosStack,
         viewport: cellView.viewport,
-    };
+    } as ILayoutContext;
     // TODO: deferred height calculation for starting in middle of box
     if (isInnerCell(cellView, layoutInfo)) {
-        let cellPos = getOffset(layoutInfo.flowView, cellView.marker);
+        const cellPos = getOffset(layoutInfo.flowView, cellView.marker);
         cellLayoutInfo.startPos = cellPos + cellView.marker.cachedLength;
     } else {
-        let nextTable = layoutInfo.startingPosStack.table.items[layoutInfo.stackIndex + 1];
-        cellLayoutInfo.startPos = getOffset(layoutInfo.flowView, <MergeTree.Marker>nextTable);
+        const nextTable = layoutInfo.startingPosStack.table.items[layoutInfo.stackIndex + 1];
+        cellLayoutInfo.startPos = getOffset(layoutInfo.flowView, nextTable as MergeTree.Marker);
         cellLayoutInfo.stackIndex = layoutInfo.stackIndex + 1;
     }
     if (!cellView.emptyCell) {
         cellView.renderOutput = renderFlow(cellLayoutInfo, targetTranslation, defer);
         if (cellView.additionalCellMarkers) {
-            for (let cellMarker of cellView.additionalCellMarkers) {
+            for (const cellMarker of cellView.additionalCellMarkers) {
                 cellLayoutInfo.endMarker = cellMarker.cell.endMarker;
-                let cellPos = getOffset(layoutInfo.flowView, cellMarker);
+                const cellPos = getOffset(layoutInfo.flowView, cellMarker);
                 cellLayoutInfo.startPos = cellPos + cellMarker.cachedLength;
-                let auxRenderOutput = renderFlow(cellLayoutInfo, targetTranslation, defer);
+                const auxRenderOutput = renderFlow(cellLayoutInfo, targetTranslation, defer);
                 cellView.renderOutput.deferredHeight += auxRenderOutput.deferredHeight;
                 cellView.renderOutput.overlayMarkers =
                     cellView.renderOutput.overlayMarkers.concat(auxRenderOutput.overlayMarkers);
@@ -1504,7 +1507,7 @@ function layoutCell(
         if (!layoutInfo.reRenderList) {
             layoutInfo.reRenderList = [];
         }
-        for (let lineDiv of cellLayoutInfo.reRenderList) {
+        for (const lineDiv of cellLayoutInfo.reRenderList) {
             layoutInfo.reRenderList.push(lineDiv);
         }
     }
@@ -1517,9 +1520,9 @@ function renderTable(
     targetTranslation: string,
     defer = false) {
 
-    let flowView = layoutInfo.flowView;
-    let mergeTree = flowView.client.mergeTree;
-    let tablePos = mergeTree.getOffset(table, MergeTree.UniversalSequenceNumber, flowView.client.getClientId());
+    const flowView = layoutInfo.flowView;
+    const mergeTree = flowView.client.mergeTree;
+    const tablePos = mergeTree.getOffset(table, MergeTree.UniversalSequenceNumber, flowView.client.getClientId());
     let tableView = table.table;
     if (!tableView) {
         tableView = Table.parseTable(table, tablePos, flowView.sharedString, makeFontInfo(docContext));
@@ -1528,24 +1531,24 @@ function renderTable(
         return;
     }
     // let docContext = buildDocumentContext(viewportDiv);
-    let viewportWidth = parseInt(layoutInfo.viewport.div.style.width, 10);
+    const viewportWidth = parseInt(layoutInfo.viewport.div.style.width, 10);
 
-    let tableWidth = Math.floor(tableView.contentPct * viewportWidth);
+    const tableWidth = Math.floor(tableView.contentPct * viewportWidth);
     tableView.updateWidth(tableWidth);
-    let tableIndent = Math.floor(tableView.indentPct * viewportWidth);
+    const tableIndent = Math.floor(tableView.indentPct * viewportWidth);
     let startRow: Table.Row;
     let startCell: ICellView;
 
     if (layoutInfo.startingPosStack) {
         if (layoutInfo.startingPosStack.row &&
             (layoutInfo.startingPosStack.row.items.length > layoutInfo.stackIndex)) {
-            let startRowMarker = <Table.IRowMarker>layoutInfo.startingPosStack.row.items[layoutInfo.stackIndex];
+            const startRowMarker = layoutInfo.startingPosStack.row.items[layoutInfo.stackIndex] as Table.IRowMarker;
             startRow = startRowMarker.row;
         }
         if (layoutInfo.startingPosStack.cell &&
             (layoutInfo.startingPosStack.cell.items.length > layoutInfo.stackIndex)) {
-            let startCellMarker = <Table.ICellMarker>layoutInfo.startingPosStack.cell.items[layoutInfo.stackIndex];
-            startCell = <ICellView>startCellMarker.cell;
+            const startCellMarker = layoutInfo.startingPosStack.cell.items[layoutInfo.stackIndex] as Table.ICellMarker;
+            startCell = startCellMarker.cell as ICellView;
         }
     }
 
@@ -1558,18 +1561,18 @@ function renderTable(
     let topRow = (layoutInfo.startingPosStack !== undefined) && (layoutInfo.stackIndex === 0);
     for (let rowIndex = 0, rowCount = tableView.rows.length; rowIndex < rowCount; rowIndex++) {
         let cellCount = 0;
-        let rowView = tableView.rows[rowIndex];
+        const rowView = tableView.rows[rowIndex];
         let rowHeight = 0;
         if (startRow === rowView) {
             foundStartRow = true;
         }
-        let renderRow = (!defer) && (deferredHeight >= layoutInfo.deferUntilHeight) &&
+        const renderRow = (!defer) && (deferredHeight >= layoutInfo.deferUntilHeight) &&
             foundStartRow && (!Table.rowIsMoribund(rowView.rowMarker));
         let rowDiv: IRowDiv;
         if (renderRow) {
-            let y = layoutInfo.viewport.getLineTop();
-            let rowRect = new ui.Rectangle(tableIndent, y, tableWidth, 0);
-            rowDiv = <IRowDiv>document.createElement("div");
+            const y = layoutInfo.viewport.getLineTop();
+            const rowRect = new ui.Rectangle(tableIndent, y, tableWidth, 0);
+            rowDiv = document.createElement("div") as IRowDiv;
             rowDiv.rowView = rowView;
             rowRect.conformElementOpenHeight(rowDiv);
             if (topRow && startCell) {
@@ -1587,7 +1590,7 @@ function renderTable(
         }
         let cellX = 0;
         for (let cellIndex = 0, cellsLen = rowView.cells.length; cellIndex < cellsLen; cellIndex++) {
-            let cell = <ICellView>rowView.cells[cellIndex];
+            const cell = rowView.cells[cellIndex] as ICellView;
             if ((!topRow || (cell !== startCell)) && (!Table.cellIsMoribund(cell.marker))) {
                 let noCellAbove = false;
                 if (prevRenderedRow) {
@@ -1614,10 +1617,10 @@ function renderTable(
         }
         firstRendered = false;
         if (renderRow) {
-            let heightVal = `${rowHeight}px`;
+            const heightVal = `${rowHeight}px`;
             let adjustRowWidth = 0;
             for (let cellIndex = 0, cellsLen = rowView.cells.length; cellIndex < cellsLen; cellIndex++) {
-                let cell = <ICellView>rowView.cells[cellIndex];
+                const cell = rowView.cells[cellIndex] as ICellView;
                 if (cell.div) {
                     cell.div.style.height = heightVal;
                     cell.svgElm.setAttribute("height", heightVal);
@@ -1653,7 +1656,7 @@ function renderTable(
         }
     }
     if (layoutInfo.reRenderList) {
-        for (let lineDiv of layoutInfo.reRenderList) {
+        for (const lineDiv of layoutInfo.reRenderList) {
             reRenderLine(lineDiv, flowView, docContext);
         }
         layoutInfo.reRenderList = undefined;
@@ -1663,14 +1666,14 @@ function renderTable(
 }
 
 function showCell(pos: number, flowView: FlowView) {
-    let client = flowView.client;
-    let startingPosStack =
+    const client = flowView.client;
+    const startingPosStack =
         flowView.client.mergeTree.getStackContext(pos, client.getClientId(), ["cell"]);
     if (startingPosStack.cell && (!startingPosStack.cell.empty())) {
-        let cellMarker = <Table.ICellMarker>startingPosStack.cell.top();
-        let start = getOffset(flowView, cellMarker);
-        let endMarker = cellMarker.cell.endMarker;
-        let end = getOffset(flowView, endMarker) + 1;
+        const cellMarker = startingPosStack.cell.top() as Table.ICellMarker;
+        const start = getOffset(flowView, cellMarker);
+        const endMarker = cellMarker.cell.endMarker;
+        const end = getOffset(flowView, endMarker) + 1;
         // tslint:disable:max-line-length
         console.log(`cell ${cellMarker.getId()} seq ${cellMarker.seq} clid ${cellMarker.clientId} at [${start},${end})`);
         console.log(`cell contents: ${flowView.client.getTextRangeWithMarkers(start, end)}`);
@@ -1678,14 +1681,14 @@ function showCell(pos: number, flowView: FlowView) {
 }
 
 function showTable(pos: number, flowView: FlowView) {
-    let client = flowView.client;
-    let startingPosStack =
+    const client = flowView.client;
+    const startingPosStack =
         flowView.client.mergeTree.getStackContext(pos, client.getClientId(), ["table"]);
     if (startingPosStack.table && (!startingPosStack.table.empty())) {
-        let tableMarker = <Table.ITableMarker>startingPosStack.table.top();
-        let start = getOffset(flowView, tableMarker);
-        let endMarker = tableMarker.table.endTableMarker;
-        let end = getOffset(flowView, endMarker) + 1;
+        const tableMarker = startingPosStack.table.top() as Table.ITableMarker;
+        const start = getOffset(flowView, tableMarker);
+        const endMarker = tableMarker.table.endTableMarker;
+        const end = getOffset(flowView, endMarker) + 1;
         console.log(`table ${tableMarker.getId()} at [${start},${end})`);
         console.log(`table contents: ${flowView.client.getTextRangeWithMarkers(start, end)}`);
     }
@@ -1693,29 +1696,29 @@ function showTable(pos: number, flowView: FlowView) {
 
 function renderTree(
     viewportDiv: HTMLDivElement, requestedPosition: number, flowView: FlowView, targetTranslation: string) {
-    let client = flowView.client;
-    let docContext = buildDocumentContext(viewportDiv);
+    const client = flowView.client;
+    const docContext = buildDocumentContext(viewportDiv);
     flowView.lastDocContext = docContext;
-    let outerViewportHeight = parseInt(viewportDiv.style.height, 10);
-    let outerViewportWidth = parseInt(viewportDiv.style.width, 10);
-    let outerViewport = new Viewport(outerViewportHeight, viewportDiv, outerViewportWidth);
-    let startingPosStack =
+    const outerViewportHeight = parseInt(viewportDiv.style.height, 10);
+    const outerViewportWidth = parseInt(viewportDiv.style.width, 10);
+    const outerViewport = new Viewport(outerViewportHeight, viewportDiv, outerViewportWidth);
+    const startingPosStack =
         client.mergeTree.getStackContext(requestedPosition, client.getClientId(), ["table", "cell", "row"]);
-    let layoutContext = <ILayoutContext>{
+    const layoutContext = {
         docContext,
         flowView,
         requestedPosition,
         viewport: outerViewport,
-    };
+    } as ILayoutContext;
     if (startingPosStack.table && (!startingPosStack.table.empty())) {
-        let outerTable = startingPosStack.table.items[0];
-        let outerTablePos = flowView.client.mergeTree.getOffset(<MergeTree.Marker>outerTable,
+        const outerTable = startingPosStack.table.items[0];
+        const outerTablePos = flowView.client.mergeTree.getOffset(outerTable as MergeTree.Marker,
             MergeTree.UniversalSequenceNumber, flowView.client.getClientId());
         layoutContext.startPos = outerTablePos;
         layoutContext.stackIndex = 0;
         layoutContext.startingPosStack = startingPosStack;
     } else {
-        let previousTileInfo = findTile(flowView, requestedPosition, "pg");
+        const previousTileInfo = findTile(flowView, requestedPosition, "pg");
         if (previousTileInfo) {
             layoutContext.startPos = previousTileInfo.pos + 1;
         } else {
@@ -1735,7 +1738,7 @@ function gatherOverlayLayer(
     context: IOverlayMarker[]) {
 
     if (segment.getType() === MergeTree.SegmentType.Marker) {
-        let marker = <MergeTree.Marker>segment;
+        const marker = segment as MergeTree.Marker;
         if ((marker.refType === MergeTree.ReferenceType.Simple) &&
             (marker.hasSimpleType("inkOverlay"))) {
             context.push({ id: marker.getId(), position: segpos });
@@ -1745,6 +1748,7 @@ function gatherOverlayLayer(
     return true;
 }
 
+// tslint:disable-next-line:no-empty-interface
 export interface IViewportDiv extends HTMLDivElement {
 }
 
@@ -1754,9 +1758,9 @@ function closestNorth(lineDivs: ILineDiv[], y: number) {
     let hi = lineDivs.length - 1;
     while (lo <= hi) {
         let bestBounds: ClientRect;
-        let mid = lo + Math.floor((hi - lo) / 2);
-        let lineDiv = lineDivs[mid];
-        let bounds = lineDiv.getBoundingClientRect();
+        const mid = lo + Math.floor((hi - lo) / 2);
+        const lineDiv = lineDivs[mid];
+        const bounds = lineDiv.getBoundingClientRect();
         if (bounds.bottom <= y) {
             if (!bestBounds || (best < 0) || (bestBounds.bottom < bounds.bottom)) {
                 best = mid;
@@ -1776,9 +1780,9 @@ function closestSouth(lineDivs: ILineDiv[], y: number) {
     let hi = lineDivs.length - 1;
     while (lo <= hi) {
         let bestBounds: ClientRect;
-        let mid = lo + Math.floor((hi - lo) / 2);
-        let lineDiv = lineDivs[mid];
-        let bounds = lineDiv.getBoundingClientRect();
+        const mid = lo + Math.floor((hi - lo) / 2);
+        const lineDiv = lineDivs[mid];
+        const bounds = lineDiv.getBoundingClientRect();
         if (bounds.bottom >= y) {
             if (!bestBounds || (best < 0) || (bestBounds.bottom > bounds.bottom)) {
                 best = mid;
@@ -1963,15 +1967,15 @@ function breakPGIntoLinesFFVP(itemInfo: Paragraph.IParagraphItemInfo, defaultLin
 }
 */
 function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, deferWhole = false): IRenderOutput {
-    let flowView = layoutContext.flowView;
-    let client = flowView.client;
+    const flowView = layoutContext.flowView;
+    const client = flowView.client;
     // TODO: for stable viewports cache the geometry and the divs
     // TODO: cache all this pre-amble in style blocks; override with pg properties
-    let docContext = layoutContext.docContext;
+    const docContext = layoutContext.docContext;
     let viewportStartPos = -1;
 
     function makeLineDiv(r: ui.Rectangle, lineFontstr) {
-        let lineDiv = makeContentDiv(r, lineFontstr);
+        const lineDiv = makeContentDiv(r, lineFontstr);
         layoutContext.viewport.div.appendChild(lineDiv);
         return lineDiv;
     }
@@ -1980,34 +1984,34 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
     let curPGMarker: Paragraph.IParagraphMarker;
     let curPGMarkerPos: number;
 
-    let itemsContext = <Paragraph.IItemsContext>{
+    const itemsContext = {
         fontInfo: makeFontInfo(layoutContext.docContext),
-    };
+    } as Paragraph.IItemsContext;
     if (layoutContext.deferUntilHeight === undefined) {
         layoutContext.deferUntilHeight = 0;
     }
     let deferredHeight = 0;
-    let deferredPGs = (layoutContext.containingPGMarker !== undefined);
-    let paragraphLexer = new Paragraph.ParagraphLexer(Paragraph.tokenToItems, itemsContext);
+    const deferredPGs = (layoutContext.containingPGMarker !== undefined);
+    const paragraphLexer = new Paragraph.ParagraphLexer(Paragraph.tokenToItems, itemsContext);
     itemsContext.paragraphLexer = paragraphLexer;
     textErrorRun = undefined;
 
     function makeAnnotDiv(x: number, y: number, width: number, fontstr: string) {
-        let annotDiv = document.createElement("div");
+        const annotDiv = document.createElement("div");
         annotDiv.style.font = fontstr;
         annotDiv.style.fontStyle = "italic";
-        let rect = new ui.Rectangle(x, y, width, 0);
+        const rect = new ui.Rectangle(x, y, width, 0);
         rect.conformElementOpenHeight(annotDiv);
         layoutContext.viewport.div.appendChild(annotDiv);
         return annotDiv;
     }
 
     function renderPGAnnotation(endPGMarker: Paragraph.IParagraphMarker, indentWidth: number, contentWidth: number) {
-        let annotDiv = makeAnnotDiv(indentWidth, layoutContext.viewport.getLineTop(),
+        const annotDiv = makeAnnotDiv(indentWidth, layoutContext.viewport.getLineTop(),
             contentWidth, docContext.fontstr);
-        let text = endPGMarker.properties[targetTranslation];
+        const text = endPGMarker.properties[targetTranslation];
         annotDiv.innerHTML = text;
-        let clientRect = annotDiv.getBoundingClientRect();
+        const clientRect = annotDiv.getBoundingClientRect();
         return clientRect.height;
     }
 
@@ -2018,13 +2022,13 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
         indentSymbol: Paragraph.ISymbol,
         contentWidth: number) {
 
-        let pgBreaks = endPGMarker.cache.breaks;
+        const pgBreaks = endPGMarker.cache.breaks;
         let lineDiv: ILineDiv;
         let lineDivHeight = docContext.defaultLineDivHeight;
         let span: ISegSpan;
 
         for (let breakIndex = 0, len = pgBreaks.length; breakIndex < len; breakIndex++) {
-            let lineStart = pgBreaks[breakIndex].posInPG + pgStartPos;
+            const lineStart = pgBreaks[breakIndex].posInPG + pgStartPos;
             let lineEnd: number;
             if (breakIndex < (len - 1)) {
                 lineEnd = pgBreaks[breakIndex + 1].posInPG + pgStartPos;
@@ -2038,7 +2042,7 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
                 lineDivHeight = docContext.headerDivHeight;
                 lineFontstr = docContext.headerFontstr;
             }
-            let lineOK = (!(deferredPGs || deferWhole)) && (layoutContext.deferUntilHeight <= deferredHeight);
+            const lineOK = (!(deferredPGs || deferWhole)) && (layoutContext.deferUntilHeight <= deferredHeight);
             if (lineOK && ((lineEnd === undefined) || (lineEnd > layoutContext.requestedPosition))) {
                 lineDiv = makeLineDiv(new ui.Rectangle(0, layoutContext.viewport.getLineTop(),
                     layoutContext.viewport.currentLineWidth(), lineDivHeight),
@@ -2057,10 +2061,10 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
                     }
                     lineDiv.appendChild(contentDiv);
                 }
-                let lineContext = <ILineContext>{
+                const lineContext = {
                     contentDiv, deferredAttach: layoutContext.deferredAttach, flowView: layoutContext.flowView,
                     lineDiv, lineDivHeight, pgMarker: endPGMarker, span,
-                };
+                } as ILineContext;
                 if (viewportStartPos < 0) {
                     viewportStartPos = lineStart;
                 }
@@ -2080,7 +2084,7 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
                     if (!layoutContext.reRenderList) {
                         layoutContext.reRenderList = [];
                     }
-                    for (let ldiv of lineContext.reRenderList) {
+                    for (const ldiv of lineContext.reRenderList) {
                         layoutContext.reRenderList.push(ldiv);
                     }
                 }
@@ -2098,9 +2102,9 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
         return lineDiv.lineEnd;
     }
 
-    let fetchLog = false;
+    const fetchLog = false;
     let segoff: ISegmentOffset;
-    let totalLength = client.getLength();
+    const totalLength = client.getLength();
     let viewportEndPos = currentPos;
     // TODO: use end of doc marker
     do {
@@ -2114,27 +2118,27 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
             break;
         }
         if ((segoff.segment.getType() === MergeTree.SegmentType.Marker) &&
-            ((<MergeTree.Marker>segoff.segment).hasRangeLabel("table"))) {
-            let marker = <MergeTree.Marker>segoff.segment;
+            ((segoff.segment as MergeTree.Marker).hasRangeLabel("table"))) {
+            const marker = segoff.segment as MergeTree.Marker;
             // TODO: branches
             let tableView: Table.Table;
             if (marker.removedSeq === undefined) {
                 renderTable(marker, docContext, layoutContext, targetTranslation, deferredPGs);
-                tableView = (<Table.ITableMarker>marker).table;
+                tableView = (marker as Table.ITableMarker).table;
                 deferredHeight += tableView.deferredHeight;
                 layoutContext.viewport.vskip(layoutContext.docContext.tableVspace);
             } else {
                 tableView = Table.parseTable(marker, currentPos, flowView.sharedString,
                     makeFontInfo(layoutContext.docContext));
             }
-            let endTablePos = getOffset(layoutContext.flowView, tableView.endTableMarker);
+            const endTablePos = getOffset(layoutContext.flowView, tableView.endTableMarker);
             currentPos = endTablePos + 1;
             segoff = undefined;
             // TODO: if reached end of viewport, get pos ranges
         } else {
             if (segoff.segment.getType() === MergeTree.SegmentType.Marker) {
                 // empty paragraph
-                curPGMarker = <Paragraph.IParagraphMarker>segoff.segment;
+                curPGMarker = segoff.segment as Paragraph.IParagraphMarker;
                 if (fetchLog) {
                     console.log("empty pg");
                     if (curPGMarker.itemCache) {
@@ -2143,8 +2147,8 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
                 }
                 curPGMarkerPos = currentPos;
             } else {
-                let curTilePos = findTile(flowView, currentPos, "pg", false);
-                curPGMarker = <Paragraph.IParagraphMarker>curTilePos.tile;
+                const curTilePos = findTile(flowView, currentPos, "pg", false);
+                curPGMarker = curTilePos.tile as Paragraph.IParagraphMarker;
                 curPGMarkerPos = curTilePos.pos;
             }
             itemsContext.curPGMarker = curPGMarker;
@@ -2155,7 +2159,7 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
             let contentPct = 1.0;
             let indentWidth = 0;
             let contentWidth = layoutContext.viewport.currentLineWidth();
-            let indentSymbol: Paragraph.ISymbol = undefined;
+            let indentSymbol: Paragraph.ISymbol;
 
             if (curPGMarker.listCache) {
                 indentSymbol = Paragraph.getIndentSymbol(curPGMarker);
@@ -2169,7 +2173,7 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
             if (indentPct !== 0.0) {
                 indentWidth = Math.floor(indentPct * layoutContext.viewport.currentLineWidth());
                 if (docContext.indentWidthThreshold >= layoutContext.viewport.currentLineWidth()) {
-                    let em2 = Math.round(2 * getTextWidth("M", docContext.fontstr));
+                    const em2 = Math.round(2 * getTextWidth("M", docContext.fontstr));
                     indentWidth = em2 + indentWidth;
                 }
             }
@@ -2190,28 +2194,28 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
                 } else {
                     itemsContext.itemInfo = curPGMarker.itemCache;
                 }
-                let breaks = Paragraph.breakPGIntoLinesFF(itemsContext.itemInfo.items, contentWidth);
+                const breaks = Paragraph.breakPGIntoLinesFF(itemsContext.itemInfo.items, contentWidth);
                 curPGMarker.cache = { breaks, singleLineWidth: contentWidth };
             }
             paragraphLexer.reset();
             // TODO: more accurate end of document reasoning
 
             if (currentPos < totalLength) {
-                let lineEnd = renderPG(curPGMarker, currentPos, indentWidth, indentSymbol, contentWidth);
+                const lineEnd = renderPG(curPGMarker, currentPos, indentWidth, indentSymbol, contentWidth);
                 viewportEndPos = lineEnd;
                 currentPos = curPGMarkerPos + curPGMarker.cachedLength;
 
                 if (!deferredPGs) {
                     if (curPGMarker.properties[targetTranslation]) {
                         // layoutContext.viewport.vskip(Math.floor(docContext.pgVspace/2));
-                        let height = renderPGAnnotation(curPGMarker, indentWidth, contentWidth);
+                        const height = renderPGAnnotation(curPGMarker, indentWidth, contentWidth);
                         layoutContext.viewport.vskip(height);
                     }
                 }
                 if (currentPos < totalLength) {
                     segoff = getContainingSegment(flowView, currentPos);
                     if (segoff.segment.getType() === MergeTree.SegmentType.Marker) {
-                        let marker = <MergeTree.Marker>segoff.segment;
+                        const marker = segoff.segment as MergeTree.Marker;
                         if (marker.hasRangeLabel("cell") && (marker.refType & MergeTree.ReferenceType.NestEnd)) {
                             break;
                         }
@@ -2242,15 +2246,15 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
     return {
         deferredHeight,
         overlayMarkers,
-        viewportStartPos,
         viewportEndPos,
+        viewportStartPos,
     };
 }
 
 function makeSegSpan(
     context: FlowView, segText: string, textSegment: MergeTree.TextSegment, offsetFromSegpos: number,
     segpos: number) {
-    let span = <ISegSpan>document.createElement("span");
+    const span = document.createElement("span") as ISegSpan;
     span.innerText = segText;
     span.seg = textSegment;
     span.segPos = segpos;
@@ -2269,7 +2273,7 @@ function makeSegSpan(
                 } else {
                     textErrorRun.end += segText.length;
                 }
-                let textErrorInfo = <ITextErrorInfo>textSegment.properties[key];
+                const textErrorInfo = textSegment.properties[key] as ITextErrorInfo;
                 let slb: ISelectionListBox;
                 span.textErrorRun = textErrorRun;
                 if (textErrorInfo.color === "paul") {
@@ -2291,14 +2295,14 @@ function makeSegSpan(
                         }
                         function acceptIntellisense(ev: MouseEvent) {
                             cancelIntellisense(ev);
-                            let itemElm = <HTMLElement>ev.target;
-                            let text = itemElm.innerText.trim();
+                            const itemElm = ev.target as HTMLElement;
+                            const text = itemElm.innerText.trim();
                             context.sharedString.removeText(span.textErrorRun.start, span.textErrorRun.end);
                             context.sharedString.insertText(text, span.textErrorRun.start);
                             context.localQueueRender(span.textErrorRun.start);
                         }
                         function selectItem(ev: MouseEvent) {
-                            let itemElm = <HTMLElement>ev.target;
+                            const itemElm = ev.target as HTMLElement;
                             if (slb) {
                                 slb.selectItem(itemElm.innerText);
                             }
@@ -2306,7 +2310,7 @@ function makeSegSpan(
                         }
                         console.log(`button ${e.button}`);
                         if ((e.button === 2) || ((e.button === 0) && (e.ctrlKey))) {
-                            let spanBounds = ui.Rectangle.fromClientRect(span.getBoundingClientRect());
+                            const spanBounds = ui.Rectangle.fromClientRect(span.getBoundingClientRect());
                             spanBounds.width = Math.floor(window.innerWidth / 4);
                             slb = selectionListBoxCreate(spanBounds, document.body, 24, 0, 12);
                             slb.showSelectionList(altsToItems(textErrorInfo.alternates));
@@ -2334,10 +2338,10 @@ function makeSegSpan(
 }
 
 function pointerToElementOffsetWebkit(x: number, y: number): IRangeInfo {
-    let range = document.caretRangeFromPoint(x, y);
+    const range = document.caretRangeFromPoint(x, y);
     if (range) {
-        let result = {
-            elm: <HTMLElement>range.startContainer.parentElement,
+        const result = {
+            elm: range.startContainer.parentElement as HTMLElement,
             node: range.startContainer,
             offset: range.startOffset,
         };
@@ -2354,7 +2358,7 @@ export function clearSubtree(elm: HTMLElement) {
 
 const Nope = -1;
 
-let presenceColors = ["darkgreen", "sienna", "olive", "purple"];
+const presenceColors = ["darkgreen", "sienna", "olive", "purple"];
 export class Cursor {
     public off = true;
     public parentSpan: HTMLSpanElement;
@@ -2373,7 +2377,7 @@ export class Cursor {
 
     public addPresenceInfo(presenceInfo: ILocalPresenceInfo) {
         // for now, color
-        let presenceColorIndex = presenceInfo.clientId % presenceColors.length;
+        const presenceColorIndex = presenceInfo.clientId % presenceColors.length;
         this.bgColor = presenceColors[presenceColorIndex];
         this.presenceInfo = presenceInfo;
         this.makePresenceDiv();
@@ -2396,10 +2400,10 @@ export class Cursor {
 
     public getSelection() {
         if (this.mark !== Nope) {
-            return <IRange>{
+            return {
                 end: Math.max(this.mark, this.pos),
                 start: Math.min(this.mark, this.pos),
-            };
+            } as IRange;
         }
     }
 
@@ -2442,12 +2446,12 @@ export class Cursor {
     }
 
     public onLine(pos: number) {
-        let lineDiv = this.lineDiv();
+        const lineDiv = this.lineDiv();
         return (pos >= lineDiv.linePos) && (pos < lineDiv.lineEnd);
     }
 
     public lineDiv() {
-        return <ILineDiv>this.editSpan.parentElement;
+        return this.editSpan.parentElement as ILineDiv;
     }
 
     public updateView(flowView: FlowView) {
@@ -2457,11 +2461,11 @@ export class Cursor {
         if (this.getSelection()) {
             flowView.render(flowView.topChar, true);
         } else {
-            let lineDiv = this.lineDiv();
+            const lineDiv = this.lineDiv();
             if (lineDiv && (lineDiv.linePos <= this.pos) && (lineDiv.lineEnd > this.pos)) {
                 reRenderLine(lineDiv, flowView, flowView.lastDocContext);
             } else {
-                let foundLineDiv = findLineDiv(this.pos, flowView, true);
+                const foundLineDiv = findLineDiv(this.pos, flowView, true);
                 if (foundLineDiv) {
                     reRenderLine(foundLineDiv, flowView, flowView.lastDocContext);
                 } else {
@@ -2494,8 +2498,8 @@ export class Cursor {
         }
         lineDiv.appendChild(this.editSpan);
         if (this.presenceInfo) {
-            let bannerHeight = 20;
-            let halfBannerHeight = bannerHeight / 2;
+            const bannerHeight = 20;
+            const halfBannerHeight = bannerHeight / 2;
             this.presenceDiv.style.left = `${x}px`;
             this.presenceDiv.style.height = `${bannerHeight}px`;
             this.presenceDiv.style.top = `-${halfBannerHeight}px`;
@@ -2609,7 +2613,7 @@ function getCurrentWord(pos: number, mergeTree: MergeTree.MergeTree) {
         let segWordEnd = offset;
 
         let epos = offset;
-        let nonWord = /\W/;
+        const nonWord = /\W/;
         while (epos < textSegment.text.length) {
             if (nonWord.test(textSegment.text.charAt(epos))) {
                 break;
@@ -2627,18 +2631,18 @@ function getCurrentWord(pos: number, mergeTree: MergeTree.MergeTree) {
             }
             segWordStart = spos + 1;
         }
-        return <IWordRange>{ wordStart: segWordStart, wordEnd: segWordEnd };
+        return { wordStart: segWordStart, wordEnd: segWordEnd } as IWordRange;
     }
 
-    let expandWordBackward = (segment: MergeTree.Segment) => {
+    const expandWordBackward = (segment: MergeTree.Segment) => {
         if (mergeTree.localNetLength(segment)) {
             switch (segment.getType()) {
                 case MergeTree.SegmentType.Marker:
                     return false;
                 case MergeTree.SegmentType.Text:
-                    let textSegment = <MergeTree.TextSegment>segment;
-                    let innerOffset = textSegment.text.length - 1;
-                    let maxWord = maximalWord(textSegment, innerOffset);
+                    const textSegment = segment as MergeTree.TextSegment;
+                    const innerOffset = textSegment.text.length - 1;
+                    const maxWord = maximalWord(textSegment, innerOffset);
                     if (maxWord.wordStart < maxWord.wordEnd) {
                         wordStart -= (maxWord.wordEnd - maxWord.wordStart);
                         return (maxWord.wordStart === 0);
@@ -2650,15 +2654,15 @@ function getCurrentWord(pos: number, mergeTree: MergeTree.MergeTree) {
         return true;
     };
 
-    let expandWordForward = (segment: MergeTree.Segment) => {
+    const expandWordForward = (segment: MergeTree.Segment) => {
         if (mergeTree.localNetLength(segment)) {
             switch (segment.getType()) {
                 case MergeTree.SegmentType.Marker:
                     return false;
                 case MergeTree.SegmentType.Text:
-                    let textSegment = <MergeTree.TextSegment>segment;
-                    let innerOffset = 0;
-                    let maxWord = maximalWord(textSegment, innerOffset);
+                    const textSegment = segment as MergeTree.TextSegment;
+                    const innerOffset = 0;
+                    const maxWord = maximalWord(textSegment, innerOffset);
                     if (maxWord.wordEnd > innerOffset) {
                         wordEnd += (maxWord.wordEnd - innerOffset);
                     }
@@ -2668,13 +2672,13 @@ function getCurrentWord(pos: number, mergeTree: MergeTree.MergeTree) {
         return true;
     };
 
-    let segoff = mergeTree.getContainingSegment(pos,
+    const segoff = mergeTree.getContainingSegment(pos,
         MergeTree.UniversalSequenceNumber, mergeTree.collabWindow.clientId);
     if (segoff.segment && (segoff.segment.getType() === MergeTree.SegmentType.Text)) {
-        let textSegment = <MergeTree.TextSegment>segoff.segment;
-        let maxWord = maximalWord(textSegment, segoff.offset);
+        const textSegment = segoff.segment as MergeTree.TextSegment;
+        const maxWord = maximalWord(textSegment, segoff.offset);
         if (maxWord.wordStart < maxWord.wordEnd) {
-            let segStartPos = pos - segoff.offset;
+            const segStartPos = pos - segoff.offset;
             wordStart = segStartPos + maxWord.wordStart;
             wordEnd = segStartPos + maxWord.wordEnd;
             if (maxWord.wordStart === 0) {
@@ -2685,7 +2689,7 @@ function getCurrentWord(pos: number, mergeTree: MergeTree.MergeTree) {
             }
         }
         if (wordStart >= 0) {
-            return <IWordRange>{ wordStart, wordEnd };
+            return { wordStart, wordEnd } as IWordRange;
         }
     }
 }
@@ -2750,11 +2754,11 @@ export class FlowView extends ui.Component {
     public presenceVector: ILocalPresenceInfo[] = [];
     public docRoot: types.IMapView;
     public curPG: MergeTree.Marker;
-    public modes = <IFlowViewModes>{
+    public modes = {
         showBookmarks: true,
         showComments: true,
         showCursorLocation: true,
-    };
+    } as IFlowViewModes;
     public lastDocContext: IDocumentContext;
     private lastVerticalX = -1;
     private randWordTimer: any;
@@ -2770,12 +2774,12 @@ export class FlowView extends ui.Component {
         public collabDocument: api.Document,
         public sharedString: SharedString,
         public status: Status,
-        public options: Object = undefined) {
+        public options?: Object) {
 
         super(element);
 
         this.cmdTree = new MergeTree.TST<ICmd>();
-        for (let command of commands) {
+        for (const command of commands) {
             this.cmdTree.put(command.key.toLowerCase(), command);
         }
 
@@ -2794,7 +2798,7 @@ export class FlowView extends ui.Component {
                 return;
             }
 
-            const delta = <MergeTree.IMergeTreeOp>msg.contents;
+            const delta = msg.contents as MergeTree.IMergeTreeOp;
             if (this.applyOp(delta, msg)) {
                 this.queueRender(msg);
             }
@@ -2809,17 +2813,17 @@ export class FlowView extends ui.Component {
     }
 
     public measureClone() {
-        let clock = Date.now();
+        const clock = Date.now();
         this.client.cloneFromSegments();
         console.log(`clone took ${Date.now() - clock}ms`);
     }
 
     public createBookmarks(k: number) {
-        let len = this.sharedString.client.getLength();
+        const len = this.sharedString.client.getLength();
         for (let i = 0; i < k; i++) {
-            let pos1 = Math.floor(Math.random() * (len - 1));
-            let intervalLen = Math.max(1, Math.floor(Math.random() * Math.min(len - pos1, 150)));
-            let props = { clid: this.sharedString.client.longClientId, user: this.sharedString.client.userInfo };
+            const pos1 = Math.floor(Math.random() * (len - 1));
+            const intervalLen = Math.max(1, Math.floor(Math.random() * Math.min(len - pos1, 150)));
+            const props = { clid: this.sharedString.client.longClientId, user: this.sharedString.client.userInfo };
             this.bookmarks.add(pos1, pos1 + intervalLen, MergeTree.IntervalType.Simple,
                 props);
         }
@@ -2827,15 +2831,15 @@ export class FlowView extends ui.Component {
     }
 
     public xUpdateHistoryBubble(x: number) {
-        let widgetDivBounds = this.historyWidget.getBoundingClientRect();
-        let w = widgetDivBounds.width - 14;
+        const widgetDivBounds = this.historyWidget.getBoundingClientRect();
+        const w = widgetDivBounds.width - 14;
         let diffX = x - (widgetDivBounds.left + 7);
         if (diffX <= 0) {
             diffX = 0;
         }
-        let pct = diffX / w;
-        let l = 7 + Math.floor(pct * w);
-        let seq = this.client.historyToPct(pct);
+        const pct = diffX / w;
+        const l = 7 + Math.floor(pct * w);
+        const seq = this.client.historyToPct(pct);
         this.historyVersion.innerText = `Version @${seq}`;
         this.historyBubble.style.left = `${l}px`;
         this.cursor.pos = FlowView.docStartPosition;
@@ -2843,25 +2847,25 @@ export class FlowView extends ui.Component {
     }
 
     public updateHistoryBubble(seq: number) {
-        let widgetDivBounds = this.historyWidget.getBoundingClientRect();
-        let w = widgetDivBounds.width - 14;
-        let count = this.client.undoSegments.length + this.client.redoSegments.length;
-        let pct = this.client.undoSegments.length / count;
-        let l = 7 + Math.floor(pct * w);
+        const widgetDivBounds = this.historyWidget.getBoundingClientRect();
+        const w = widgetDivBounds.width - 14;
+        const count = this.client.undoSegments.length + this.client.redoSegments.length;
+        const pct = this.client.undoSegments.length / count;
+        const l = 7 + Math.floor(pct * w);
         this.historyBubble.style.left = `${l}px`;
         this.historyVersion.innerText = `Version @${seq}`;
     }
 
     public makeHistoryWidget() {
-        let bounds = ui.Rectangle.fromClientRect(this.status.element.getBoundingClientRect());
-        let x = Math.floor(bounds.width / 2);
-        let y = 2;
-        let widgetRect = new ui.Rectangle(x, y, Math.floor(bounds.width * 0.4),
+        const bounds = ui.Rectangle.fromClientRect(this.status.element.getBoundingClientRect());
+        const x = Math.floor(bounds.width / 2);
+        const y = 2;
+        const widgetRect = new ui.Rectangle(x, y, Math.floor(bounds.width * 0.4),
             (bounds.height - 4));
-        let widgetDiv = document.createElement("div");
+        const widgetDiv = document.createElement("div");
         widgetRect.conformElement(widgetDiv);
         widgetDiv.style.zIndex = "3";
-        let bubble = document.createElement("div");
+        const bubble = document.createElement("div");
         widgetDiv.style.borderRadius = "6px";
         bubble.style.position = "absolute";
         bubble.style.width = "8px";
@@ -2872,20 +2876,20 @@ export class FlowView extends ui.Component {
         bubble.style.backgroundColor = "pink";
         widgetDiv.style.backgroundColor = "rgba(179,179,179,0.3)";
         widgetDiv.appendChild(bubble);
-        let versionSpan = document.createElement("span");
+        const versionSpan = document.createElement("span");
         widgetDiv.appendChild(versionSpan);
         versionSpan.innerText = "History";
         versionSpan.style.padding = "3px";
         this.historyVersion = versionSpan;
         this.historyWidget = widgetDiv;
         this.historyBubble = bubble;
-        let clickHistory = (ev: MouseEvent) => {
+        const clickHistory = (ev: MouseEvent) => {
             this.xUpdateHistoryBubble(ev.clientX);
         };
-        let mouseDownBubble = (ev: MouseEvent) => {
+        const mouseDownBubble = (ev: MouseEvent) => {
             widgetDiv.onmousemove = clickHistory;
         };
-        let cancelHistory = (ev: MouseEvent) => {
+        const cancelHistory = (ev: MouseEvent) => {
             widgetDiv.onmousemove = preventD;
         };
         bubble.onmousedown = mouseDownBubble;
@@ -2916,7 +2920,7 @@ export class FlowView extends ui.Component {
     public historyBack() {
         this.goHistorical();
         if (this.client.undoSegments.length > 0) {
-            let seq = this.client.undo();
+            const seq = this.client.undo();
             this.updateHistoryBubble(seq);
             this.cursor.pos = FlowView.docStartPosition;
             this.localQueueRender(FlowView.docStartPosition);
@@ -2926,7 +2930,7 @@ export class FlowView extends ui.Component {
     public historyForward() {
         this.goHistorical();
         if (this.client.redoSegments.length > 0) {
-            let seq = this.client.redo();
+            const seq = this.client.redo();
             this.updateHistoryBubble(seq);
             this.cursor.pos = FlowView.docStartPosition;
             this.localQueueRender(FlowView.docStartPosition);
@@ -2946,7 +2950,7 @@ export class FlowView extends ui.Component {
 
     public presenceInfoInRange(start: number, end: number) {
         for (let i = 0, len = this.presenceVector.length; i < len; i++) {
-            let presenceInfo = this.presenceVector[i];
+            const presenceInfo = this.presenceVector[i];
             if (presenceInfo) {
                 if ((start <= presenceInfo.xformPos) && (presenceInfo.xformPos <= end)) {
                     return presenceInfo;
@@ -2974,7 +2978,7 @@ export class FlowView extends ui.Component {
 
     public updatePresenceVector(localPresenceInfo: ILocalPresenceInfo) {
         this.updatePresencePosition(localPresenceInfo);
-        let presentPresence = this.presenceVector[localPresenceInfo.clientId];
+        const presentPresence = this.presenceVector[localPresenceInfo.clientId];
         let tempXformPos = -1;
         let tempMarkXformPos = -2;
 
@@ -2985,10 +2989,10 @@ export class FlowView extends ui.Component {
                 localPresenceInfo.cursor.presenceInfoUpdated = true;
             }
             if (presentPresence.markLocalRef) {
-                let markBaseSegment = <MergeTree.BaseSegment>presentPresence.localRef.segment;
+                const markBaseSegment = presentPresence.localRef.segment as MergeTree.BaseSegment;
                 this.client.mergeTree.removeLocalReference(markBaseSegment, presentPresence.markLocalRef);
             }
-            let baseSegment = <MergeTree.BaseSegment>presentPresence.localRef.segment;
+            const baseSegment = presentPresence.localRef.segment as MergeTree.BaseSegment;
             this.client.mergeTree.removeLocalReference(baseSegment, presentPresence.localRef);
             tempXformPos = presentPresence.xformPos;
             tempMarkXformPos = presentPresence.markXformPos;
@@ -3000,7 +3004,7 @@ export class FlowView extends ui.Component {
         this.presenceVector[localPresenceInfo.clientId] = localPresenceInfo;
         if ((localPresenceInfo.xformPos !== tempXformPos) ||
             (localPresenceInfo.markXformPos !== tempMarkXformPos)) {
-            let sameLine = localPresenceInfo.cursor &&
+            const sameLine = localPresenceInfo.cursor &&
                 localPresenceInfo.cursor.onLine(tempXformPos) &&
                 localPresenceInfo.cursor.onLine(tempMarkXformPos) &&
                 localPresenceInfo.cursor.onLine(localPresenceInfo.xformPos) &&
@@ -3084,17 +3088,17 @@ export class FlowView extends ui.Component {
     }
 
     public checkRow(lineDiv: ILineDiv, fn: (lineDiv: ILineDiv) => ILineDiv, rev?: boolean) {
-        let rowDiv = <IRowDiv>lineDiv;
+        let rowDiv = lineDiv as IRowDiv;
         let oldRowDiv: IRowDiv;
         while (rowDiv && (rowDiv !== oldRowDiv) && rowDiv.rowView) {
             oldRowDiv = rowDiv;
             lineDiv = undefined;
-            for (let cell of rowDiv.rowView.cells) {
+            for (const cell of rowDiv.rowView.cells) {
                 if (cell.div) {
-                    let innerDiv = this.lineDivSelect(fn, (cell as ICellView).viewport.div, true, rev);
+                    const innerDiv = this.lineDivSelect(fn, (cell as ICellView).viewport.div, true, rev);
                     if (innerDiv) {
                         lineDiv = innerDiv;
-                        rowDiv = <IRowDiv>innerDiv;
+                        rowDiv = innerDiv as IRowDiv;
                         break;
                     }
                 }
@@ -3105,7 +3109,7 @@ export class FlowView extends ui.Component {
 
     public lineDivSelect(fn: (lineDiv: ILineDiv) => ILineDiv, viewportDiv: IViewportDiv, dive = false, rev?: boolean) {
         if (rev) {
-            let elm = <ILineDiv>viewportDiv.lastElementChild;
+            let elm = viewportDiv.lastElementChild as ILineDiv;
             while (elm) {
                 if (elm.linePos !== undefined) {
                     let lineDiv = fn(elm);
@@ -3116,11 +3120,11 @@ export class FlowView extends ui.Component {
                         return lineDiv;
                     }
                 }
-                elm = <ILineDiv>elm.previousElementSibling;
+                elm = elm.previousElementSibling as ILineDiv;
             }
 
         } else {
-            let elm = <ILineDiv>viewportDiv.firstElementChild;
+            let elm = viewportDiv.firstElementChild as ILineDiv;
             while (elm) {
                 if (elm.linePos !== undefined) {
                     let lineDiv = fn(elm);
@@ -3131,23 +3135,23 @@ export class FlowView extends ui.Component {
                         return lineDiv;
                     }
                 }
-                elm = <ILineDiv>elm.nextElementSibling;
+                elm = elm.nextElementSibling as ILineDiv;
             }
         }
     }
 
     public clickSpan(x: number, y: number, elm: HTMLSpanElement) {
-        let span = <ISegSpan>elm;
-        let elmOff = pointerToElementOffsetWebkit(x, y);
+        const span = elm as ISegSpan;
+        const elmOff = pointerToElementOffsetWebkit(x, y);
         if (elmOff) {
             let computed = elmOffToSegOff(elmOff, span);
             if (span.offset) {
                 computed += span.offset;
             }
             this.cursor.pos = span.segPos + computed;
-            let tilePos = findTile(this, this.cursor.pos, "pg", false);
+            const tilePos = findTile(this, this.cursor.pos, "pg", false);
             if (tilePos) {
-                this.curPG = <MergeTree.Marker>tilePos.tile;
+                this.curPG = tilePos.tile as MergeTree.Marker;
             }
             this.updatePresence();
             this.cursor.updateView(this);
@@ -3156,20 +3160,20 @@ export class FlowView extends ui.Component {
     }
 
     public getPosFromPixels(targetLineDiv: ILineDiv, x: number) {
-        let position: number = undefined;
+        let position: number;
 
         if (targetLineDiv && (targetLineDiv.linePos !== undefined)) {
             let y: number;
-            let targetLineBounds = targetLineDiv.getBoundingClientRect();
+            const targetLineBounds = targetLineDiv.getBoundingClientRect();
             y = targetLineBounds.top + Math.floor(targetLineBounds.height / 2);
-            let elm = document.elementFromPoint(x, y);
+            const elm = document.elementFromPoint(x, y);
             if (elm.tagName === "DIV") {
                 if ((targetLineDiv.lineEnd - targetLineDiv.linePos) === 1) {
                     // empty line
                     position = targetLineDiv.linePos;
                 } else if (targetLineDiv === elm) {
                     if (targetLineDiv.indentWidth !== undefined) {
-                        let relX = x - targetLineBounds.left;
+                        const relX = x - targetLineBounds.left;
                         if (relX <= targetLineDiv.indentWidth) {
                             position = targetLineDiv.linePos;
                         } else {
@@ -3188,8 +3192,8 @@ export class FlowView extends ui.Component {
                 }
 
             } else if (elm.tagName === "SPAN") {
-                let span = <ISegSpan>elm;
-                let elmOff = pointerToElementOffsetWebkit(x, y);
+                const span = elm as ISegSpan;
+                const elmOff = pointerToElementOffsetWebkit(x, y);
                 if (elmOff) {
                     let computed = elmOffToSegOff(elmOff, span);
                     if (span.offset) {
@@ -3218,7 +3222,7 @@ export class FlowView extends ui.Component {
     }
 
     public getCanonicalX() {
-        let cursorRect = this.cursor.rect();
+        const cursorRect = this.cursor.rect();
         let x: number;
         if (this.lastVerticalX >= 0) {
             x = this.lastVerticalX;
@@ -3232,22 +3236,22 @@ export class FlowView extends ui.Component {
     public cursorRev() {
         if (this.cursor.pos > FlowView.docStartPosition) {
             this.cursor.pos--;
-            let segoff = getContainingSegment(this, this.cursor.pos);
+            const segoff = getContainingSegment(this, this.cursor.pos);
             if (segoff.segment.getType() !== MergeTree.SegmentType.Text) {
                 // REVIEW: assume marker for now (could be external later)
-                let marker = <MergeTree.Marker>segoff.segment;
+                const marker = segoff.segment as MergeTree.Marker;
                 if ((marker.refType & MergeTree.ReferenceType.Tile) &&
                     (marker.hasTileLabel("pg"))) {
                     if (marker.hasRangeLabel("table") && (marker.refType & MergeTree.ReferenceType.NestEnd)) {
                         this.cursorRev();
                     }
                 } else if ((marker.refType === MergeTree.ReferenceType.NestEnd) && (marker.hasRangeLabel("cell"))) {
-                    let cellMarker = <Table.ICellMarker>marker;
-                    let endId = cellMarker.getId();
+                    const cellMarker = marker as Table.ICellMarker;
+                    const endId = cellMarker.getId();
                     let beginMarker: Table.ICellMarker;
                     if (endId) {
-                        let id = Table.idFromEndId(endId);
-                        beginMarker = <Table.ICellMarker>this.sharedString.client.mergeTree.getSegmentFromId(id);
+                        const id = Table.idFromEndId(endId);
+                        beginMarker = this.sharedString.client.mergeTree.getSegmentFromId(id) as Table.ICellMarker;
                     }
                     if (beginMarker && Table.cellIsMoribund(beginMarker)) {
                         this.tryMoveCell(this.cursor.pos, true);
@@ -3265,11 +3269,11 @@ export class FlowView extends ui.Component {
         if (this.cursor.pos < (this.client.getLength() - 1)) {
             this.cursor.pos++;
 
-            let segoff = this.client.mergeTree.getContainingSegment(this.cursor.pos, MergeTree.UniversalSequenceNumber,
+            const segoff = this.client.mergeTree.getContainingSegment(this.cursor.pos, MergeTree.UniversalSequenceNumber,
                 this.client.getClientId());
             if (segoff.segment.getType() !== MergeTree.SegmentType.Text) {
                 // REVIEW: assume marker for now
-                let marker = <MergeTree.Marker>segoff.segment;
+                const marker = segoff.segment as MergeTree.Marker;
                 if ((marker.refType & MergeTree.ReferenceType.Tile) &&
                     (marker.hasTileLabel("pg"))) {
                     if (marker.hasRangeLabel("table") && (marker.refType & MergeTree.ReferenceType.NestEnd)) {
@@ -3307,29 +3311,29 @@ export class FlowView extends ui.Component {
     }
 
     public verticalMove(lineCount: number) {
-        let up = lineCount < 0;
-        let lineDiv = this.cursor.lineDiv();
+        const up = lineCount < 0;
+        const lineDiv = this.cursor.lineDiv();
         let targetLineDiv: ILineDiv;
         if (lineCount < 0) {
-            targetLineDiv = <ILineDiv>lineDiv.previousElementSibling;
+            targetLineDiv = lineDiv.previousElementSibling as ILineDiv;
         } else {
-            targetLineDiv = <ILineDiv>lineDiv.nextElementSibling;
+            targetLineDiv = lineDiv.nextElementSibling as ILineDiv;
         }
-        let x = this.getCanonicalX();
+        const x = this.getCanonicalX();
 
         // if line div is row, then find line in box closest to x
         function checkInTable() {
-            let rowDiv = <IRowDiv>targetLineDiv;
+            let rowDiv = targetLineDiv as IRowDiv;
             while (rowDiv && rowDiv.rowView) {
                 if (rowDiv.rowView) {
-                    let cell = <ICellView>rowDiv.rowView.findClosestCell(x);
+                    const cell = rowDiv.rowView.findClosestCell(x) as ICellView;
                     if (cell) {
                         if (up) {
                             targetLineDiv = cell.viewport.lastLineDiv();
                         } else {
                             targetLineDiv = cell.viewport.firstLineDiv();
                         }
-                        rowDiv = <IRowDiv>targetLineDiv;
+                        rowDiv = targetLineDiv as IRowDiv;
                     } else {
                         break;
                     }
@@ -3343,10 +3347,10 @@ export class FlowView extends ui.Component {
         } else {
             // TODO: handle nested tables
             // go out to row containing this line (line may be at top or bottom of box)
-            let rowDiv = findRowParent(lineDiv);
+            const rowDiv = findRowParent(lineDiv);
             if (rowDiv && rowDiv.rowView) {
-                let rowView = rowDiv.rowView;
-                let tableView = rowView.table;
+                const rowView = rowDiv.rowView;
+                const tableView = rowView.table;
                 let targetRow: Table.Row;
                 if (up) {
                     targetRow = tableView.findPrecedingRow(rowView);
@@ -3354,7 +3358,7 @@ export class FlowView extends ui.Component {
                     targetRow = tableView.findNextRow(rowView);
                 }
                 if (targetRow) {
-                    let cell = <ICellView>targetRow.findClosestCell(x);
+                    const cell = targetRow.findClosestCell(x) as ICellView;
                     if (cell) {
                         if (up) {
                             targetLineDiv = cell.viewport.lastLineDiv();
@@ -3366,9 +3370,9 @@ export class FlowView extends ui.Component {
                 } else {
                     // top or bottom row of table
                     if (up) {
-                        targetLineDiv = <ILineDiv>rowDiv.previousElementSibling;
+                        targetLineDiv = rowDiv.previousElementSibling as ILineDiv;
                     } else {
-                        targetLineDiv = <ILineDiv>rowDiv.nextElementSibling;
+                        targetLineDiv = rowDiv.nextElementSibling as ILineDiv;
                     }
                     if (targetLineDiv) {
                         checkInTable();
@@ -3405,16 +3409,16 @@ export class FlowView extends ui.Component {
         let prevY = Nope;
         let freshDown = false;
 
-        let moveCursor = (e: MouseEvent) => {
+        const moveCursor = (e: MouseEvent) => {
             if (e.button === 0) {
                 prevX = e.clientX;
                 prevY = e.clientY;
-                let span = <ISegSpan>e.target;
+                const span = e.target as ISegSpan;
                 let segspan: ISegSpan;
                 if (span.seg) {
                     segspan = span;
                 } else {
-                    segspan = <ISegSpan>span.parentElement;
+                    segspan = span.parentElement as ISegSpan;
                 }
                 if (segspan && segspan.seg) {
                     this.clickSpan(e.clientX, e.clientY, segspan);
@@ -3422,7 +3426,7 @@ export class FlowView extends ui.Component {
             }
         };
 
-        let mousemove = (e: MouseEvent) => {
+        const mousemove = (e: MouseEvent) => {
             if (e.button === 0) {
                 if ((prevX !== e.clientX) || (prevY !== e.clientY)) {
                     if (freshDown) {
@@ -3455,12 +3459,12 @@ export class FlowView extends ui.Component {
             this.element.onmousemove = undefined;
             if (e.button === 0) {
                 freshDown = false;
-                let span = <ISegSpan>e.target;
+                const span = e.target as ISegSpan;
                 let segspan: ISegSpan;
                 if (span.seg) {
                     segspan = span;
                 } else {
-                    segspan = <ISegSpan>span.parentElement;
+                    segspan = span.parentElement as ISegSpan;
                 }
                 if (segspan && segspan.seg) {
                     this.clickSpan(e.clientX, e.clientY, segspan);
@@ -3480,14 +3484,14 @@ export class FlowView extends ui.Component {
 
         this.element.onmousewheel = (e) => {
             if (!this.wheelTicking) {
-                let factor = 20;
+                const factor = 20;
                 let inputDelta = e.wheelDelta;
                 if (Math.abs(e.wheelDelta) === 120) {
                     inputDelta = e.wheelDelta / 6;
                 } else {
                     inputDelta = e.wheelDelta / 2;
                 }
-                let delta = factor * inputDelta;
+                const delta = factor * inputDelta;
                 // tslint:disable-next-line:max-line-length
                 // console.log(`top char: ${this.topChar - delta} factor ${factor}; delta: ${delta} wheel: ${e.wheelDeltaY} ${e.wheelDelta} ${e.detail}`);
                 setTimeout(() => {
@@ -3501,7 +3505,7 @@ export class FlowView extends ui.Component {
             e.returnValue = false;
         };
 
-        let keydownHandler = (e: KeyboardEvent) => {
+        const keydownHandler = (e: KeyboardEvent) => {
             if (this.activeSearchBox) {
                 if (e.keyCode === KeyCode.esc) {
                     this.activeSearchBox.dismiss();
@@ -3510,7 +3514,7 @@ export class FlowView extends ui.Component {
                     this.activeSearchBox.keydown(e);
                 }
             } else {
-                let saveLastVertX = this.lastVerticalX;
+                const saveLastVertX = this.lastVerticalX;
                 let specialKey = true;
                 this.lastVerticalX = -1;
                 if (e.ctrlKey && (e.keyCode !== 17)) {
@@ -3539,8 +3543,8 @@ export class FlowView extends ui.Component {
                     }
                     this.render(FlowView.docStartPosition);
                 } else if (e.keyCode === KeyCode.end) {
-                    let halfport = Math.floor(this.viewportCharCount() / 2);
-                    let topChar = this.client.getLength() - halfport;
+                    const halfport = Math.floor(this.viewportCharCount() / 2);
+                    const topChar = this.client.getLength() - halfport;
                     this.cursor.pos = topChar;
                     if (this.modes.showCursorLocation) {
                         this.cursorLocation();
@@ -3586,11 +3590,11 @@ export class FlowView extends ui.Component {
                     } else {
                         this.clearSelection();
                     }
-                    let maxPos = this.client.getLength() - 1;
+                    const maxPos = this.client.getLength() - 1;
                     if (this.viewportEndPos > maxPos) {
                         this.viewportEndPos = maxPos;
                     }
-                    let vpEnd = this.viewportEndPos;
+                    const vpEnd = this.viewportEndPos;
                     if ((this.cursor.pos < maxPos) || (lineCount < 0)) {
                         if (!this.verticalMove(lineCount)) {
                             if (((this.viewportStartPos > 0) && (lineCount < 0)) ||
@@ -3626,10 +3630,10 @@ export class FlowView extends ui.Component {
             }
         };
 
-        let keypressHandler = (e: KeyboardEvent) => {
+        const keypressHandler = (e: KeyboardEvent) => {
             if (this.activeSearchBox) {
                 if (e.charCode === CharacterCodes.cr) {
-                    let cmd = <ICmd>this.activeSearchBox.getSelectedItem();
+                    const cmd = this.activeSearchBox.getSelectedItem() as ICmd;
                     if (cmd && cmd.exec) {
                         cmd.exec(this);
                     }
@@ -3639,18 +3643,18 @@ export class FlowView extends ui.Component {
                     this.activeSearchBox.keypress(e);
                 }
             } else {
-                let pos = this.cursor.pos;
+                const pos = this.cursor.pos;
                 this.cursor.pos++;
-                let code = e.charCode;
+                const code = e.charCode;
                 if (code === CharacterCodes.cr) {
                     // TODO: other labels; for now assume only list/pg tile labels
-                    let curTilePos = findTile(this, pos, "pg", false);
-                    let pgMarker = <Paragraph.IParagraphMarker>curTilePos.tile;
-                    let pgPos = curTilePos.pos;
+                    const curTilePos = findTile(this, pos, "pg", false);
+                    const pgMarker = curTilePos.tile as Paragraph.IParagraphMarker;
+                    const pgPos = curTilePos.pos;
                     Paragraph.clearContentCaches(pgMarker);
-                    let curProps = pgMarker.properties;
-                    let newProps = MergeTree.createMap<any>();
-                    let newLabels = ["pg"];
+                    const curProps = pgMarker.properties;
+                    const newProps = MergeTree.createMap<any>();
+                    const newLabels = ["pg"];
                     if (Paragraph.isListTile(pgMarker)) {
                         newLabels.push("list");
                         newProps.indentLevel = curProps.indentLevel;
@@ -3685,40 +3689,40 @@ export class FlowView extends ui.Component {
         if (this.cursor.pos === this.cursor.lineDiv().lineEnd) {
             searchPos--;
         }
-        let tileInfo = findTile(this, searchPos, "pg", false);
+        const tileInfo = findTile(this, searchPos, "pg", false);
         if (tileInfo) {
             let buf = "";
             if (tileInfo.tile.properties) {
                 // tslint:disable:forin
-                for (let key in tileInfo.tile.properties) {
+                for (const key in tileInfo.tile.properties) {
                     buf += ` { ${key}: ${tileInfo.tile.properties[key]} }`;
                 }
             }
 
-            let lc = !!(<Paragraph.IParagraphMarker>tileInfo.tile).listCache;
+            const lc = !!(tileInfo.tile as Paragraph.IParagraphMarker).listCache;
             console.log(`tile at pos ${tileInfo.pos} with props${buf} and list cache: ${lc}`);
         }
     }
 
     public setList(listKind = 0) {
-        let searchPos = this.cursor.pos;
-        let tileInfo = findTile(this, searchPos, "pg", false);
+        const searchPos = this.cursor.pos;
+        const tileInfo = findTile(this, searchPos, "pg", false);
         if (tileInfo) {
-            let tile = <Paragraph.IParagraphMarker>tileInfo.tile;
+            const tile = tileInfo.tile as Paragraph.IParagraphMarker;
             let listStatus = false;
             if (tile.hasTileLabel("list")) {
                 listStatus = true;
             }
-            let curLabels = <string[]>tile.properties[MergeTree.reservedTileLabelsKey];
+            const curLabels = tile.properties[MergeTree.reservedTileLabelsKey] as string[];
 
             if (listStatus) {
-                let remainingLabels = curLabels.filter((l) => l !== "list");
+                const remainingLabels = curLabels.filter((l) => l !== "list");
                 this.sharedString.annotateRange({
                     [MergeTree.reservedTileLabelsKey]: remainingLabels,
                     series: null,
                 }, tileInfo.pos, tileInfo.pos + 1);
             } else {
-                let augLabels = curLabels.slice();
+                const augLabels = curLabels.slice();
                 augLabels.push("list");
                 let indentLevel = 1;
                 if (tile.properties && tile.properties.indentLevel) {
@@ -3736,13 +3740,13 @@ export class FlowView extends ui.Component {
     }
 
     public tryMoveCell(pos: number, shift = false) {
-        let cursorContext =
+        const cursorContext =
             this.client.mergeTree.getStackContext(pos, this.client.getClientId(), ["table", "cell", "row"]);
         if (cursorContext.table && (!cursorContext.table.empty())) {
-            let tableMarker = <Table.ITableMarker>cursorContext.table.top();
-            let tableView = tableMarker.table;
+            const tableMarker = cursorContext.table.top() as Table.ITableMarker;
+            const tableView = tableMarker.table;
             if (cursorContext.cell && (!cursorContext.cell.empty())) {
-                let cell = <Table.ICellMarker>cursorContext.cell.top();
+                const cell = cursorContext.cell.top() as Table.ICellMarker;
                 let toCell: Table.Cell;
                 if (shift) {
                     toCell = tableView.prevcell(cell.cell);
@@ -3750,16 +3754,16 @@ export class FlowView extends ui.Component {
                     toCell = tableView.nextcell(cell.cell);
                 }
                 if (toCell) {
-                    let offset = this.client.mergeTree.getOffset(toCell.marker,
+                    const offset = this.client.mergeTree.getOffset(toCell.marker,
                         MergeTree.UniversalSequenceNumber, this.client.getClientId());
                     this.cursor.pos = offset + 1;
                 } else {
                     if (shift) {
-                        let offset = this.client.mergeTree.getOffset(tableView.tableMarker,
+                        const offset = this.client.mergeTree.getOffset(tableView.tableMarker,
                             MergeTree.UniversalSequenceNumber, this.client.getClientId());
                         this.cursor.pos = offset - 1;
                     } else {
-                        let endOffset = this.client.mergeTree.getOffset(tableView.endTableMarker,
+                        const endOffset = this.client.mergeTree.getOffset(tableView.endTableMarker,
                             MergeTree.UniversalSequenceNumber, this.client.getClientId());
                         this.cursor.pos = endOffset + 1;
                     }
@@ -3775,21 +3779,21 @@ export class FlowView extends ui.Component {
 
     // TODO: tab stops in non-list, non-table paragraphs
     public onTAB(shift = false) {
-        let searchPos = this.cursor.pos;
-        let tileInfo = findTile(this, searchPos, "pg", false);
+        const searchPos = this.cursor.pos;
+        const tileInfo = findTile(this, searchPos, "pg", false);
         if (tileInfo) {
             if (!this.tryMoveCell(tileInfo.pos, shift)) {
-                let tile = <Paragraph.IParagraphMarker>tileInfo.tile;
+                const tile = tileInfo.tile as Paragraph.IParagraphMarker;
                 this.increaseIndent(tile, tileInfo.pos, shift);
             }
         }
     }
 
     public toggleBlockquote() {
-        let tileInfo = findTile(this, this.cursor.pos, "pg", false);
+        const tileInfo = findTile(this, this.cursor.pos, "pg", false);
         if (tileInfo) {
-            let tile = tileInfo.tile;
-            let props = tile.properties;
+            const tile = tileInfo.tile;
+            const props = tile.properties;
             if (props && props.blockquote) {
                 this.sharedString.annotateRange({ blockquote: false }, tileInfo.pos, tileInfo.pos + 1);
             } else {
@@ -3812,20 +3816,20 @@ export class FlowView extends ui.Component {
     }
 
     public copyFormat() {
-        let segoff = getContainingSegment(this, this.cursor.pos);
+        const segoff = getContainingSegment(this, this.cursor.pos);
         if (segoff.segment && (segoff.segment.getType() === MergeTree.SegmentType.Text)) {
-            let textSegment = <MergeTree.TextSegment>segoff.segment;
+            const textSegment = segoff.segment as MergeTree.TextSegment;
             this.formatRegister = MergeTree.extend(MergeTree.createMap(), textSegment.properties);
         }
     }
 
     public setProps(props: MergeTree.PropertySet, updatePG = true) {
-        let sel = this.cursor.getSelection();
+        const sel = this.cursor.getSelection();
         if (sel) {
             this.clearSelection(false);
             this.sharedString.annotateRange(props, sel.start, sel.end);
         } else {
-            let wordRange = getCurrentWord(this.cursor.pos, this.sharedString.client.mergeTree);
+            const wordRange = getCurrentWord(this.cursor.pos, this.sharedString.client.mergeTree);
             if (wordRange) {
                 this.sharedString.annotateRange(props, wordRange.wordStart, wordRange.wordEnd);
             }
@@ -3851,12 +3855,12 @@ export class FlowView extends ui.Component {
     }
 
     public toggleWordOrSelection(name: string, valueOn: string, valueOff: string) {
-        let sel = this.cursor.getSelection();
+        const sel = this.cursor.getSelection();
         if (sel) {
             this.clearSelection(false);
             this.toggleRange(name, valueOn, valueOff, sel.start, sel.end);
         } else {
-            let wordRange = getCurrentWord(this.cursor.pos, this.sharedString.client.mergeTree);
+            const wordRange = getCurrentWord(this.cursor.pos, this.sharedString.client.mergeTree);
             if (wordRange) {
                 this.toggleRange(name, valueOn, valueOff, wordRange.wordStart, wordRange.wordEnd);
             }
@@ -3865,9 +3869,9 @@ export class FlowView extends ui.Component {
 
     public toggleRange(name: string, valueOn: string, valueOff: string, start: number, end: number) {
         let someSet = false;
-        let findPropSet = (segment: MergeTree.Segment) => {
+        const findPropSet = (segment: MergeTree.Segment) => {
             if (segment.getType() === MergeTree.SegmentType.Text) {
-                let textSegment = <MergeTree.TextSegment>segment;
+                const textSegment = segment as MergeTree.TextSegment;
                 if (textSegment.properties && textSegment.properties[name] === valueOn) {
                     someSet = true;
                 }
@@ -3893,9 +3897,9 @@ export class FlowView extends ui.Component {
                 result = this.bookmarks.localCollection.nextInterval(this.cursor.pos);
             }
             if (result) {
-                let s = result.start.toPosition(this.client.mergeTree,
+                const s = result.start.toPosition(this.client.mergeTree,
                     MergeTree.UniversalSequenceNumber, this.client.getClientId());
-                let e = result.end.toPosition(this.client.mergeTree,
+                const e = result.end.toPosition(this.client.mergeTree,
                     MergeTree.UniversalSequenceNumber, this.client.getClientId());
                 let descr = "next ";
                 if (before) {
@@ -3913,11 +3917,11 @@ export class FlowView extends ui.Component {
     }
 
     public showCommentText() {
-        let overlappingComments = this.comments.findOverlappingIntervals(this.cursor.pos,
+        const overlappingComments = this.comments.findOverlappingIntervals(this.cursor.pos,
             this.cursor.pos + 1);
         if (overlappingComments && (overlappingComments.length >= 1)) {
-            let commentInterval = overlappingComments[0];
-            let commentText = commentInterval.properties["story"].client.getText();
+            const commentInterval = overlappingComments[0];
+            const commentText = commentInterval.properties["story"].client.getText();
             this.statusMessage("comment", "Comment Text: " + commentText);
             setTimeout(() => {
                 this.status.remove("comment");
@@ -3926,9 +3930,9 @@ export class FlowView extends ui.Component {
     }
 
     public createComment() {
-        let sel = this.cursor.getSelection();
+        const sel = this.cursor.getSelection();
         if (sel) {
-            let commentStory = this.collabDocument.createString();
+            const commentStory = this.collabDocument.createString();
             commentStory.insertText("a comment...", 0);
             commentStory.attach();
             this.comments.add(sel.start, sel.end, MergeTree.IntervalType.Simple,
@@ -3939,7 +3943,7 @@ export class FlowView extends ui.Component {
     }
 
     public copy() {
-        let sel = this.cursor.getSelection();
+        const sel = this.cursor.getSelection();
         if (sel) {
             this.sharedString.copy("clipboard", sel.start, sel.end);
             this.clearSelection();
@@ -3947,9 +3951,9 @@ export class FlowView extends ui.Component {
     }
 
     public cut() {
-        let sel = this.cursor.getSelection();
+        const sel = this.cursor.getSelection();
         if (sel) {
-            let len = sel.end - sel.start;
+            const len = sel.end - sel.start;
             this.sharedString.cut("clipboard", sel.start, sel.end);
             if (this.cursor.pos === sel.end) {
                 this.cursor.pos -= len;
@@ -3974,14 +3978,14 @@ export class FlowView extends ui.Component {
     }
 
     public deleteRow() {
-        let stack =
+        const stack =
             this.sharedString.client.mergeTree.getStackContext(this.cursor.pos,
                 this.sharedString.client.getClientId(), ["table", "cell", "row"]);
         if (stack.table && (!stack.table.empty())) {
-            let tableMarker = <Table.ITableMarker>stack.table.top();
-            let rowMarker = <Table.IRowMarker>stack.row.top();
+            const tableMarker = stack.table.top() as Table.ITableMarker;
+            const rowMarker = stack.row.top() as Table.IRowMarker;
             if (!tableMarker.table) {
-                let tableMarkerPos = getOffset(this, tableMarker);
+                const tableMarkerPos = getOffset(this, tableMarker);
                 Table.parseTable(tableMarker, tableMarkerPos, this.sharedString, makeFontInfo(this.lastDocContext));
             }
             Table.deleteRow(this.sharedString, rowMarker.row, tableMarker.table);
@@ -3990,14 +3994,14 @@ export class FlowView extends ui.Component {
     }
 
     public deleteCellShiftLeft() {
-        let stack =
+        const stack =
             this.sharedString.client.mergeTree.getStackContext(this.cursor.pos,
                 this.sharedString.client.getClientId(), ["table", "cell", "row"]);
         if (stack.table && (!stack.table.empty())) {
-            let tableMarker = <Table.ITableMarker>stack.table.top();
-            let cellMarker = <Table.ICellMarker>stack.cell.top();
+            const tableMarker = stack.table.top() as Table.ITableMarker;
+            const cellMarker = stack.cell.top() as Table.ICellMarker;
             if (!tableMarker.table) {
-                let tableMarkerPos = getOffset(this, tableMarker);
+                const tableMarkerPos = getOffset(this, tableMarker);
                 Table.parseTable(tableMarker, tableMarkerPos, this.sharedString, makeFontInfo(this.lastDocContext));
             }
             Table.deleteCellShiftLeft(this.sharedString, cellMarker.cell, tableMarker.table);
@@ -4006,15 +4010,15 @@ export class FlowView extends ui.Component {
     }
 
     public deleteColumn() {
-        let stack =
+        const stack =
             this.sharedString.client.mergeTree.getStackContext(this.cursor.pos,
                 this.sharedString.client.getClientId(), ["table", "cell", "row"]);
         if (stack.table && (!stack.table.empty())) {
-            let tableMarker = <Table.ITableMarker>stack.table.top();
-            let rowMarker = <Table.IRowMarker>stack.row.top();
-            let cellMarker = <Table.ICellMarker>stack.cell.top();
+            const tableMarker = stack.table.top() as Table.ITableMarker;
+            const rowMarker = stack.row.top() as Table.IRowMarker;
+            const cellMarker = stack.cell.top() as Table.ICellMarker;
             if (!tableMarker.table) {
-                let tableMarkerPos = getOffset(this, tableMarker);
+                const tableMarkerPos = getOffset(this, tableMarker);
                 Table.parseTable(tableMarker, tableMarkerPos, this.sharedString, makeFontInfo(this.lastDocContext));
             }
             Table.deleteColumn(this.sharedString, cellMarker.cell, rowMarker.row, tableMarker.table);
@@ -4023,14 +4027,14 @@ export class FlowView extends ui.Component {
     }
 
     public insertRow() {
-        let stack =
+        const stack =
             this.sharedString.client.mergeTree.getStackContext(this.cursor.pos,
                 this.sharedString.client.getClientId(), ["table", "cell", "row"]);
         if (stack.table && (!stack.table.empty())) {
-            let tableMarker = <Table.ITableMarker>stack.table.top();
-            let rowMarker = <Table.IRowMarker>stack.row.top();
+            const tableMarker = stack.table.top() as Table.ITableMarker;
+            const rowMarker = stack.row.top() as Table.IRowMarker;
             if (!tableMarker.table) {
-                let tableMarkerPos = getOffset(this, tableMarker);
+                const tableMarkerPos = getOffset(this, tableMarker);
                 Table.parseTable(tableMarker, tableMarkerPos, this.sharedString, makeFontInfo(this.lastDocContext));
             }
             Table.insertRow(this.sharedString, rowMarker.row, tableMarker.table);
@@ -4039,12 +4043,12 @@ export class FlowView extends ui.Component {
     }
 
     public tableSummary() {
-        let stack =
+        const stack =
             this.sharedString.client.mergeTree.getStackContext(this.cursor.pos,
                 this.sharedString.client.getClientId(), ["table", "cell", "row"]);
         if (stack.table && (!stack.table.empty())) {
-            let tableMarker = <Table.ITableMarker>stack.table.top();
-            let tableMarkerPos = getOffset(this, tableMarker);
+            const tableMarker = stack.table.top() as Table.ITableMarker;
+            const tableMarkerPos = getOffset(this, tableMarker);
             if (!tableMarker.table) {
                 Table.parseTable(tableMarker, tableMarkerPos, this.sharedString, makeFontInfo(this.lastDocContext));
             }
@@ -4055,9 +4059,9 @@ export class FlowView extends ui.Component {
 
     public randomCell(table: Table.Table) {
         let cellCount = 0;
-        for (let row of table.rows) {
+        for (const row of table.rows) {
             if (!Table.rowIsMoribund(row.rowMarker)) {
-                for (let cell of row.cells) {
+                for (const cell of row.cells) {
                     if (!Table.cellIsMoribund(cell.marker)) {
                         cellCount++;
                     }
@@ -4065,11 +4069,11 @@ export class FlowView extends ui.Component {
             }
         }
         if (cellCount > 0) {
-            let randIndex = Math.round(Math.random() * cellCount);
+            const randIndex = Math.round(Math.random() * cellCount);
             cellCount = 0;
-            for (let row of table.rows) {
+            for (const row of table.rows) {
                 if (!Table.rowIsMoribund(row.rowMarker)) {
-                    for (let cell of row.cells) {
+                    for (const cell of row.cells) {
                         if (!Table.cellIsMoribund(cell.marker)) {
                             if (cellCount === randIndex) {
                                 return cell;
@@ -4086,25 +4090,25 @@ export class FlowView extends ui.Component {
         let count = 0;
         let rowCount = 0;
         let columnCount = 0;
-        let stack =
+        const stack =
             this.sharedString.client.mergeTree.getStackContext(this.cursor.pos,
                 this.sharedString.client.getClientId(), ["table", "cell", "row"]);
         if (stack.table && (!stack.table.empty())) {
-            let tableMarker = <Table.ITableMarker>stack.table.top();
-            let randomTableOp = () => {
+            const tableMarker = stack.table.top() as Table.ITableMarker;
+            const randomTableOp = () => {
                 count++;
                 if (!tableMarker.table) {
-                    let tableMarkerPos = getOffset(this, tableMarker);
+                    const tableMarkerPos = getOffset(this, tableMarker);
                     Table.parseTable(tableMarker, tableMarkerPos, this.sharedString, makeFontInfo(this.lastDocContext));
                 }
-                let randCell = this.randomCell(tableMarker.table);
+                const randCell = this.randomCell(tableMarker.table);
                 if (randCell) {
-                    let pos = getOffset(this, randCell.marker);
+                    const pos = getOffset(this, randCell.marker);
                     this.cursor.pos = pos;
                     this.cursor.updateView(this);
                     let hit = false;
                     if (rowCount < 8) {
-                        let chance = Math.round(Math.random() * 10);
+                        const chance = Math.round(Math.random() * 10);
                         if (chance >= 5) {
                             this.insertRow();
                             rowCount++;
@@ -4112,7 +4116,7 @@ export class FlowView extends ui.Component {
                         }
                     }
                     if ((columnCount < 8) && (!hit)) {
-                        let chance = Math.round(Math.random() * 10);
+                        const chance = Math.round(Math.random() * 10);
                         if (chance >= 5) {
                             this.insertColumn();
                             columnCount++;
@@ -4120,7 +4124,7 @@ export class FlowView extends ui.Component {
                         }
                     }
                     if ((rowCount > 4) && (!hit)) {
-                        let chance = Math.round(Math.random() * 10);
+                        const chance = Math.round(Math.random() * 10);
                         if (chance >= 5) {
                             this.deleteRow();
                             rowCount--;
@@ -4128,7 +4132,7 @@ export class FlowView extends ui.Component {
                         }
                     }
                     if ((columnCount > 4) && (!hit)) {
-                        let chance = Math.round(Math.random() * 10);
+                        const chance = Math.round(Math.random() * 10);
                         if (chance >= 5) {
                             this.deleteColumn();
                             columnCount--;
@@ -4147,15 +4151,15 @@ export class FlowView extends ui.Component {
     }
 
     public insertColumn() {
-        let stack =
+        const stack =
             this.sharedString.client.mergeTree.getStackContext(this.cursor.pos,
                 this.sharedString.client.getClientId(), ["table", "cell", "row"]);
         if (stack.table && (!stack.table.empty())) {
-            let tableMarker = <Table.ITableMarker>stack.table.top();
-            let rowMarker = <Table.IRowMarker>stack.row.top();
-            let cellMarker = <Table.ICellMarker>stack.cell.top();
+            const tableMarker = stack.table.top() as Table.ITableMarker;
+            const rowMarker = stack.row.top() as Table.IRowMarker;
+            const cellMarker = stack.cell.top() as Table.ICellMarker;
             if (!tableMarker.table) {
-                let tableMarkerPos = getOffset(this, tableMarker);
+                const tableMarkerPos = getOffset(this, tableMarker);
                 Table.parseTable(tableMarker, tableMarkerPos, this.sharedString, makeFontInfo(this.lastDocContext));
             }
             Table.insertColumn(this.sharedString, cellMarker.cell, rowMarker.row, tableMarker.table);
@@ -4164,9 +4168,9 @@ export class FlowView extends ui.Component {
     }
 
     public setPGProps(props: MergeTree.PropertySet) {
-        let tileInfo = findTile(this, this.cursor.pos, "pg", false);
+        const tileInfo = findTile(this, this.cursor.pos, "pg", false);
         if (tileInfo) {
-            let pgMarker = <Paragraph.IParagraphMarker>tileInfo.tile;
+            const pgMarker = tileInfo.tile as Paragraph.IParagraphMarker;
             this.sharedString.annotateRange(props, tileInfo.pos,
                 pgMarker.cachedLength + tileInfo.pos);
             Paragraph.clearContentCaches(pgMarker);
@@ -4202,8 +4206,8 @@ export class FlowView extends ui.Component {
             }
             case CharacterCodes.M: {
                 this.activeSearchBox = searchBoxCreate(this.viewportDiv, (searchString) => {
-                    let prefix = this.activeSearchBox.getSearchString().toLowerCase();
-                    let items = this.cmdTree.pairsWithPrefix(prefix).map((res) => {
+                    const prefix = this.activeSearchBox.getSearchString().toLowerCase();
+                    const items = this.cmdTree.pairsWithPrefix(prefix).map((res) => {
                         return res.val;
                     }).filter((cmd) => {
                         return (!cmd.enabled) || cmd.enabled(this);
@@ -4245,11 +4249,11 @@ export class FlowView extends ui.Component {
     }
 
     public testWordInfo() {
-        let text = this.sharedString.client.getText();
-        let nonWhitespace = text.split(/\s+/g);
+        const text = this.sharedString.client.getText();
+        const nonWhitespace = text.split(/\s+/g);
         console.log(`non ws count: ${nonWhitespace.length}`);
-        let obj = new Object();
-        for (let nws of nonWhitespace) {
+        const obj = new Object();
+        for (const nws of nonWhitespace) {
             if (!obj[nws]) {
                 obj[nws] = 1;
             } else {
@@ -4257,22 +4261,22 @@ export class FlowView extends ui.Component {
             }
         }
         let count = 0;
-        let uniques = <string[]>[];
-        for (let key in obj) {
+        const uniques = [] as string[];
+        for (const key in obj) {
             if (obj.hasOwnProperty(key)) {
                 count++;
                 uniques.push(key);
             }
         }
         console.log(`${count} unique`);
-        let clock = Date.now();
+        const clock = Date.now();
         getMultiTextWidth(uniques, "18px Times");
         console.log(`unique pp cost: ${Date.now() - clock}ms`);
     }
 
     public preScroll() {
         if (this.lastVerticalX === -1) {
-            let rect = this.cursor.rect();
+            const rect = this.cursor.rect();
             this.lastVerticalX = rect.left;
         }
     }
@@ -4280,7 +4284,7 @@ export class FlowView extends ui.Component {
     public apresScroll(up: boolean) {
         if ((this.cursor.pos < this.viewportStartPos) ||
             (this.cursor.pos >= this.viewportEndPos)) {
-            let x = this.getCanonicalX();
+            const x = this.getCanonicalX();
             if (up) {
                 this.setCursorPosFromPixels(this.firstLineDiv(), x);
             } else {
@@ -4295,13 +4299,13 @@ export class FlowView extends ui.Component {
         let scrollTo = this.topChar;
         if (one) {
             if (up) {
-                let firstLineDiv = this.firstLineDiv();
+                const firstLineDiv = this.firstLineDiv();
                 scrollTo = firstLineDiv.linePos - 2;
                 if (scrollTo < 0) {
                     return;
                 }
             } else {
-                let nextFirstLineDiv = <ILineDiv>this.firstLineDiv().nextElementSibling;
+                const nextFirstLineDiv = this.firstLineDiv().nextElementSibling as ILineDiv;
                 if (nextFirstLineDiv) {
                     scrollTo = nextFirstLineDiv.linePos;
                 } else {
@@ -4309,8 +4313,8 @@ export class FlowView extends ui.Component {
                 }
             }
         } else {
-            let len = this.client.getLength();
-            let halfport = Math.floor(this.viewportCharCount() / 2);
+            const len = this.client.getLength();
+            const halfport = Math.floor(this.viewportCharCount() / 2);
             if ((up && (this.topChar === 0)) || ((!up) && (this.topChar > (len - halfport)))) {
                 return;
             }
@@ -4329,7 +4333,7 @@ export class FlowView extends ui.Component {
     }
 
     public render(topChar?: number, changed = false) {
-        let len = this.client.getLength();
+        const len = this.client.getLength();
         if (len === 0) {
             return;
         }
@@ -4347,12 +4351,12 @@ export class FlowView extends ui.Component {
             }
         }
 
-        let clk = Date.now();
+        const clk = Date.now();
         // TODO: consider using markers for presence info once splice segments during pg render
         this.updatePresencePositions();
         clearSubtree(this.viewportDiv);
         // this.viewportDiv.appendChild(this.cursor.editSpan);
-        let renderOutput = renderTree(this.viewportDiv, this.topChar, this, this.targetTranslation);
+        const renderOutput = renderTree(this.viewportDiv, this.topChar, this, this.targetTranslation);
         this.viewportStartPos = renderOutput.viewportStartPos;
         this.viewportEndPos = renderOutput.viewportEndPos;
         if (this.diagCharPort || true) {
@@ -4380,9 +4384,9 @@ export class FlowView extends ui.Component {
         }
 
         this.bookmarks = this.sharedString.getSharedIntervalCollection("bookmarks");
-        let onDeserialize = (interval) => {
+        const onDeserialize = (interval) => {
             if (interval.properties && interval.properties["story"]) {
-                let story = interval.properties["story"];
+                const story = interval.properties["story"];
                 if (!story["id"]) {
                     this.sharedString.getDocument().get(story["value"]).then((commentSharedString) => {
                         interval.properties["story"] = commentSharedString;
@@ -4399,7 +4403,7 @@ export class FlowView extends ui.Component {
         }
         const presenceMap = this.docRoot.get("presence") as types.IMap;
         this.addPresenceMap(presenceMap);
-        let intervalMap = this.sharedString.intervalCollections.getMap();
+        const intervalMap = this.sharedString.intervalCollections.getMap();
         intervalMap.on("valueChanged", (delta: types.IValueChanged) => {
             this.queueRender(undefined, true);
         });
@@ -4407,17 +4411,17 @@ export class FlowView extends ui.Component {
     }
 
     public randomWordMove() {
-        let client = this.sharedString.client;
-        let word1 = findRandomWord(client.mergeTree, client.getClientId());
+        const client = this.sharedString.client;
+        const word1 = findRandomWord(client.mergeTree, client.getClientId());
         if (word1) {
-            let removeStart = word1.pos;
-            let removeEnd = removeStart + word1.text.length;
+            const removeStart = word1.pos;
+            const removeEnd = removeStart + word1.text.length;
             this.sharedString.removeText(removeStart, removeEnd);
             let word2 = findRandomWord(client.mergeTree, client.getClientId());
             while (!word2) {
                 word2 = findRandomWord(client.mergeTree, client.getClientId());
             }
-            let pos = word2.pos + word2.text.length;
+            const pos = word2.pos + word2.text.length;
             this.sharedString.insertText(word1.text, pos);
         }
     }
@@ -4435,24 +4439,24 @@ export class FlowView extends ui.Component {
     }
 
     public updateTableInfo(changePos: number) {
-        let stack =
+        const stack =
             this.sharedString.client.mergeTree.getStackContext(changePos,
                 this.sharedString.client.getClientId(), ["table"]);
         if (stack.table && (!stack.table.empty())) {
-            let tableMarker = <Table.ITableMarker>stack.table.top();
+            const tableMarker = stack.table.top() as Table.ITableMarker;
             tableMarker.table = undefined;
         }
     }
 
     public updatePGInfo(changePos: number) {
-        let tileInfo = findTile(this, changePos, "pg", false);
+        const tileInfo = findTile(this, changePos, "pg", false);
         if (tileInfo) {
-            let tile = <Paragraph.IParagraphMarker>tileInfo.tile;
+            const tile = tileInfo.tile as Paragraph.IParagraphMarker;
             Paragraph.clearContentCaches(tile);
         } else {
             console.log("did not find pg to clear");
         }
-        let markers = this.client.getModifiedMarkersForOp();
+        const markers = this.client.getModifiedMarkersForOp();
         if (markers.length > 0) {
             this.updateTableInfo(changePos);
         }
@@ -4488,7 +4492,7 @@ export class FlowView extends ui.Component {
             return;
         }
 
-        let remotePresenceInfo = this.presenceMapView.get(delta.key) as IRemotePresenceInfo;
+        const remotePresenceInfo = this.presenceMapView.get(delta.key) as IRemotePresenceInfo;
 
         this.remotePresenceToLocal(delta.key, op.user, remotePresenceInfo);
     }
@@ -4500,7 +4504,7 @@ export class FlowView extends ui.Component {
         oldpos: number,
         posAdjust = 0) {
 
-        let remotePosInfo: IRemotePresenceInfo = {
+        const remotePosInfo: IRemotePresenceInfo = {
             origMark: -1,
             origPos: oldpos + posAdjust,
             refseq,
@@ -4525,19 +4529,19 @@ export class FlowView extends ui.Component {
             }
         }
         if (segoff.segment) {
-            let localPresenceInfo = <ILocalPresenceInfo>{
+            const localPresenceInfo = {
                 clientId,
                 fresh: true,
-                user,
-                localRef: new MergeTree.LocalReference(<MergeTree.BaseSegment>segoff.segment, segoff.offset,
+                localRef: new MergeTree.LocalReference(segoff.segment as MergeTree.BaseSegment, segoff.offset,
                     MergeTree.ReferenceType.SlideOnRemove),
-            };
+                user,
+            } as ILocalPresenceInfo;
             if (remotePresenceInfo.origMark >= 0) {
-                let markSegoff = this.client.mergeTree.getContainingSegment(remotePresenceInfo.origMark,
+                const markSegoff = this.client.mergeTree.getContainingSegment(remotePresenceInfo.origMark,
                     remotePresenceInfo.refseq, clientId);
                 if (markSegoff.segment) {
                     localPresenceInfo.markLocalRef =
-                        new MergeTree.LocalReference(<MergeTree.BaseSegment>markSegoff.segment,
+                        new MergeTree.LocalReference(markSegoff.segment as MergeTree.BaseSegment,
                             markSegoff.offset, MergeTree.ReferenceType.SlideOnRemove);
                 }
             }
@@ -4584,13 +4588,13 @@ export class FlowView extends ui.Component {
                         adjLength = delta.text.length;
                         if (delta.pos2 !== undefined) {
                             // replace range
-                            let remLen = delta.pos2 - delta.pos1;
+                            const remLen = delta.pos2 - delta.pos1;
                             adjLength -= remLen;
                         }
                         this.cursor.pos += adjLength;
                     } else if (delta.register) {
                         // paste
-                        let len = this.sharedString.client.registerCollection.getLength(msg.clientId,
+                        const len = this.sharedString.client.registerCollection.getLength(msg.clientId,
                             delta.register);
                         this.cursor.pos += len;
                         adjLength = len;
@@ -4614,7 +4618,7 @@ export class FlowView extends ui.Component {
                 return true;
             case MergeTree.MergeTreeDeltaType.GROUP: {
                 let opAffectsViewport = false;
-                for (let groupOp of delta.ops) {
+                for (const groupOp of delta.ops) {
                     opAffectsViewport = opAffectsViewport || this.applyOp(groupOp, msg);
                 }
                 return opAffectsViewport;

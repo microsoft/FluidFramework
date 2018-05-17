@@ -1,3 +1,4 @@
+// tslint:disable:ban-types
 import * as bodyParser from "body-parser";
 import * as compression from "compression";
 import * as connectRedis from "connect-redis";
@@ -125,7 +126,7 @@ export function create(
     });
 
     // Express app configuration
-    let app: Express = express();
+    const app: Express = express();
 
     // Running behind iisnode
     app.set("trust proxy", 1);
@@ -192,8 +193,8 @@ export function create(
 
     // catch 404 and forward to error handler
     app.use((req, res, next) => {
-        let err = new Error("Not Found");
-        (<any> err).status = 404;
+        const err = new Error("Not Found");
+        (err as any).status = 404;
         next(err);
     });
 
@@ -222,4 +223,4 @@ export function create(
     });
 
     return app;
-};
+}

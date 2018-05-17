@@ -1,3 +1,4 @@
+// tslint:disable:ban-types
 import * as _ from "lodash";
 import { Provider } from "nconf";
 import * as redis from "redis";
@@ -40,34 +41,34 @@ export class TmzResourcesFactory implements utils.IResourcesFactory<TmzResources
         const alfredUrl = config.get("tmz:alfred");
 
         // Setup redis for socketio
-        let io = socketIo();
+        const io = socketIo();
 
-        let host = config.get("redis:host");
-        let redisPort = config.get("redis:port");
-        let pass = config.get("redis:pass");
+        const host = config.get("redis:host");
+        const redisPort = config.get("redis:port");
+        const pass = config.get("redis:pass");
 
-        let options: any = { auth_pass: pass };
+        const options: any = { auth_pass: pass };
         if (config.get("redis:tls")) {
             options.tls = {
                 servername: host,
             };
         }
 
-        let pubOptions = _.clone(options);
-        let subOptions = _.clone(options);
+        const pubOptions = _.clone(options);
+        const subOptions = _.clone(options);
 
-        let pub = redis.createClient(redisPort, host, pubOptions);
-        let sub = redis.createClient(redisPort, host, subOptions);
+        const pub = redis.createClient(redisPort, host, pubOptions);
+        const sub = redis.createClient(redisPort, host, subOptions);
         io.adapter(socketIoRedis({ pubClient: pub, subClient: sub }));
 
         // setup state manager and work manager.
-        let port = config.get("tmz:port");
+        const port = config.get("tmz:port");
         const checkerTimeout = config.get("tmz:timeoutMSec:checker");
         const schedulerType = config.get("tmz:workerType");
         const onlyServer = config.get("tmz:onlyServer");
         const tasks = config.get("tmz:tasks");
 
-        let uploader = createUploader("minio", minioConfig);
+        const uploader = createUploader("minio", minioConfig);
 
         const authEndpoint = config.get("auth:endpoint");
         const tenantManager = new services.TenantManager(authEndpoint, config.get("worker:blobStorageUrl"));

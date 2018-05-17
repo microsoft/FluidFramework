@@ -67,7 +67,7 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
         const appTenants = (config.get("tenantConfig") as any[]).map((tenant) => ({ id: tenant._id, key: tenant.key }));
 
         // This wanst to create stuff
-        let port = utils.normalizePort(process.env.PORT || "3000");
+        const port = utils.normalizePort(process.env.PORT || "3000");
 
         return new AlfredResources(
             config,

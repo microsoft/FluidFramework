@@ -1,3 +1,4 @@
+// tslint:disable:ban-types
 import { Collection, Db, MongoClient, MongoClientOptions } from "mongodb";
 import * as core from "../core";
 

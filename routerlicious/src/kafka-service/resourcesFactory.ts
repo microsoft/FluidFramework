@@ -43,7 +43,7 @@ export class KafkaResourcesFactory implements utils.IResourcesFactory<KafkaResou
         const receiveTopic = streamConfig.topic;
 
         const clientId = moniker.choose();
-        let consumer = utils.createConsumer(kafkaLibrary, kafkaEndpoint, clientId, groupId, receiveTopic, false);
+        const consumer = utils.createConsumer(kafkaLibrary, kafkaEndpoint, clientId, groupId, receiveTopic, false);
 
         return new KafkaResources(
             lambdaFactory,

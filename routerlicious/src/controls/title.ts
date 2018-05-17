@@ -50,7 +50,7 @@ export class Title extends ui.Component {
     // Integer to RGB color converter.
     private intToHex(code: number): string {
         /* tslint:disable:no-bitwise */
-        let c = (code & 0x00FFFFFF).toString(16).toUpperCase();
+        const c = (code & 0x00FFFFFF).toString(16).toUpperCase();
         return "00000".substring(0, 6 - c.length) + c;
     }
 
@@ -58,7 +58,7 @@ export class Title extends ui.Component {
         if (hex.length === 3) {
             hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
         }
-        let num = parseInt(hex, 16);
+        const num = parseInt(hex, 16);
         return [num >> 16, num >> 8 & 255, num & 255];
     }
 }

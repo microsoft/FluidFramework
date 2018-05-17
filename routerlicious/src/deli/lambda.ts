@@ -169,7 +169,7 @@ export class DeliLambda implements IPartitionLambda {
         // Increment and grab the next sequence number
         const sequenceNumber = this.revSequenceNumber();
 
-        let origin: api.IBranchOrigin = undefined;
+        let origin: api.IBranchOrigin;
 
         if (message.operation.type === api.Integrate) {
             // Branch operation is the original message
@@ -243,14 +243,14 @@ export class DeliLambda implements IPartitionLambda {
         this.minimumSequenceNumber = msn === -1 ? sequenceNumber : msn;
 
         // Add traces
-        let traces = message.operation.traces;
+        const traces = message.operation.traces;
         if (traces !== undefined) {
             traces.push(trace);
             traces.push( {service: "deli", action: "end", timestamp: Date.now()});
         }
 
         // And now craft the output message
-        let outputMessage: api.ISequencedDocumentMessage = {
+        const outputMessage: api.ISequencedDocumentMessage = {
             clientId: message.clientId,
             clientSequenceNumber: message.operation.clientSequenceNumber,
             contents: message.operation.contents,
