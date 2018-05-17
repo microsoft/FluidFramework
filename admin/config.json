@@ -2,8 +2,7 @@
     "app": {
         "riddlerUrl": "http://riddler:5000",
         "gitUrl": "http://gitrest:3000",
-        "cobaltUrl": "http://cobalt",
-        "port": 3000
+        "cobaltUrl": "http://cobalt"
     },
     "login": {
         "microsoft": {
