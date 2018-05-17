@@ -4204,16 +4204,16 @@ export class MergeTree {
         return segmentGroup;
     }
 
-    // assumes not collaborating for now
+    // assumes collaborating!
     appendSegment(segSpec: ops.IPropertyString, seq = UniversalSequenceNumber) {
         let pos = this.root.cachedLength;
         if (segSpec.text) {
-            this.insertText(pos, UniversalSequenceNumber, LocalClientId, seq, segSpec.text,
+            this.insertText(pos, UniversalSequenceNumber, this.collabWindow.clientId, seq, segSpec.text,
                 segSpec.props as Properties.PropertySet);
         }
         else {
             // assume marker for now
-            this.insertMarker(pos, UniversalSequenceNumber, LocalClientId,
+            this.insertMarker(pos, UniversalSequenceNumber, this.collabWindow.clientId ,
                 seq, segSpec.marker.refType, segSpec.props as Properties.PropertySet);
         }
     }
