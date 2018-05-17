@@ -435,6 +435,13 @@ export class SharedString extends CollaborativeMap {
         const chunk = MergeTree.Snapshot.processChunk(header);
         let segs = textsToSegments(chunk.segmentTexts);
         this.client.mergeTree.reloadFromSegments(segs);
+        if (collaborative) {
+            // TODO currently only assumes two levels of branching
+            const branchId = originBranch === this.document.id ? 0 : 1;
+            this.collabStarted = true;
+            this.client.startCollaboration(
+                this.document.clientId, this.document.getUser(), minimumSequenceNumber, branchId);
+        }
     }
 
     private async loadBody(
@@ -452,15 +459,6 @@ export class SharedString extends CollaborativeMap {
             for (let segSpec of chunk.segmentTexts) {
                 this.client.mergeTree.appendSegment(segSpec);
             }
-        }
-
-        // This should happen if we have collab services
-        if (collaborative) {
-            // TODO currently only assumes two levels of branching
-            const branchId = originBranch === this.document.id ? 0 : 1;
-            this.collabStarted = true;
-            this.client.startCollaboration(
-                this.document.clientId, this.document.getUser(), minimumSequenceNumber, branchId);
         }
 
         // Apply all pending messages
