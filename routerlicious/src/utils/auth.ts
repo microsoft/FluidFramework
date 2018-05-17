@@ -1,17 +1,6 @@
 import * as jwt from "jsonwebtoken";
+import { ITokenClaims } from "../api-core";
 import * as utils from "../utils";
-
-export interface ITenantUser {
-    id: string;
-}
-
-// Find a home for this
-export interface ITokenClaims {
-    documentId: string;
-    permission: string;
-    tenantId: string;
-    user: ITenantUser;
-}
 
 /**
  * Generates a JWT token to authorize routerlicious

@@ -15,22 +15,18 @@ export class BaseWork extends EventEmitter {
     }
 
     public loadDocument(options: Object, service: core.IDocumentService): Promise<void> {
-        const documentP = api.load(this.id, options, null, true, api.defaultRegistry,
-            service);
-        return new Promise<void>((resolve, reject) => {
-            documentP.then(async (doc) => {
+        const documentP = api.load(this.id, options, null, true, api.defaultRegistry, service);
+        return documentP.then(
+            (doc) => {
                 console.log(`Loaded document ${this.id}`);
                 this.document = doc;
-                this.errorHandler = (error: string) => {
+                this.document.on("error", (error) => {
                     this.events.emit("error", error);
-                };
-                this.document.on("error", this.errorHandler);
-                resolve();
+                });
             }, (error) => {
-                console.log(`Document ${this.id} not found!`);
-                reject();
+                console.error("BaseWork:loadDocument failed", error);
+                return Promise.reject(error);
             });
-        });
     }
 
     public on(event: string, listener: (...args: any[]) => void): this {

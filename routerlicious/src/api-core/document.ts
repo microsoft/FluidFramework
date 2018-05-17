@@ -1,5 +1,6 @@
 import { EventEmitter } from "events";
-import { IAuthenticatedUser, IEnvelope, ILatencyMessage, IObjectMessage, ISequencedObjectMessage } from "./protocol";
+import { IEnvelope, ILatencyMessage, IObjectMessage, ISequencedObjectMessage } from "./protocol";
+import { ITenantUser } from "./tenant";
 import { ICollaborativeObject } from "./types";
 
 export interface IDeltaManager {
@@ -109,7 +110,7 @@ export interface IDocument {
 
     get(id: string): Promise<ICollaborativeObject>;
 
-    getUser(): IAuthenticatedUser;
+    getUser(): ITenantUser;
 
     snapshot(message: string): Promise<void>;
 

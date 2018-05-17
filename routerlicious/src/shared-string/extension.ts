@@ -1,4 +1,3 @@
-import * as resources from "gitresources";
 import * as api from "../api-core";
 import { SharedString } from "./sharedString";
 
@@ -11,12 +10,13 @@ export class CollaboritiveStringExtension implements api.ICollaborativeObjectExt
         document: api.IDocument,
         id: string,
         sequenceNumber: number,
+        minimumSequenceNumber: number,
+        messages: api.ISequencedObjectMessage[],
         services: api.IDistributedObjectServices,
-        version: resources.ICommit,
         headerOrigin: string): Promise<api.ICollaborativeObject> {
 
         let collaborativeString = new SharedString(document, id, sequenceNumber, services);
-        await collaborativeString.load(sequenceNumber, version, headerOrigin, services);
+        await collaborativeString.load(sequenceNumber, minimumSequenceNumber, messages, headerOrigin, services);
         return collaborativeString;
     }
 

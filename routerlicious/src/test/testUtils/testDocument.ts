@@ -52,7 +52,7 @@ export class TestDocument implements core.IDocument {
         throw new Error("Method not implemented.");
     }
 
-    public getUser(): core.IAuthenticatedUser {
+    public getUser(): core.ITenantUser {
         throw new Error("Method not implemented.");
     }
 
