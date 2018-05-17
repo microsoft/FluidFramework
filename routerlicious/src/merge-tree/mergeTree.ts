@@ -4,7 +4,7 @@ import * as Base from "./base";
 import * as Collections from "./collections";
 import * as ops from "./ops";
 import * as API from "../api-core";
-import { IAuthenticatedUser, ISequencedObjectMessage } from "../api-core";
+import { ISequencedObjectMessage, ITenantUser } from "../api-core";
 import * as Properties from "./properties";
 import * as assert from "assert";
 import { IRelativePosition } from "./index";
@@ -1873,13 +1873,13 @@ export class Client {
     clientNameToIds = new Collections.RedBlackTree<string, ClientIds>(compareStrings);
     shortClientIdMap = <string[]>[];
     shortClientBranchIdMap = <number[]>[];
-    shortClientUserInfoMap = <IAuthenticatedUser[]>[];
+    shortClientUserInfoMap = <ITenantUser[]>[];
     registerCollection = new RegisterCollection();
     localSequenceNumber = UnassignedSequenceNumber;
     opMarkersModified = <Marker[]>[];
     pendingConsensus = new Map<string, IConsensusInfo>();
     public longClientId: string;
-    public userInfo: IAuthenticatedUser;
+    public userInfo: ITenantUser;
     public undoSegments: IUndoInfo[];
     public redoSegments: IUndoInfo[];
 
@@ -2805,7 +2805,7 @@ export class Client {
         return `cli: ${this.getLongClientId(clientId)} refSeq: ${refSeq}: ` + this.mergeTree.getText(refSeq, clientId);
     }
 
-    startCollaboration(longClientId: string, userInfo: IAuthenticatedUser = null, minSeq = 0, branchId = 0) {
+    startCollaboration(longClientId: string, userInfo: ITenantUser = null, minSeq = 0, branchId = 0) {
         this.longClientId = longClientId;
         this.userInfo = userInfo;
         this.addLongClientId(longClientId, branchId);
@@ -3145,7 +3145,7 @@ export class MergeTree {
     minSeqPending = false;
     // for diagnostics
     getLongClientId: (id: number) => string;
-    getUserInfo: (id: number) => IAuthenticatedUser;
+    getUserInfo: (id: number) => ITenantUser;
 
     // TODO: make and use interface describing options
     constructor(public text: string, public options?: Properties.PropertySet) {

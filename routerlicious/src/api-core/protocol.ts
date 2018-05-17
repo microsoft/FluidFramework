@@ -1,4 +1,5 @@
 import * as storage from "./storage";
+import { ITenantUser } from "./tenant";
 
 // Delta operation application type
 export const OperationType = "op";
@@ -29,12 +30,6 @@ export const Integrate = "integrate";
 
 // Message to indicate successful round trip.
 export const RoundTrip = "tripComplete";
-
-export interface IAuthenticatedUser {
-    user: any;
-    tenantid: string;
-    permission: string;
-}
 
 /**
  * An envelope wraps the contents with the intended target
@@ -97,7 +92,7 @@ export interface IObjectMessage {
  */
 export interface ISequencedObjectMessage {
     // User who sent the message.
-    user: IAuthenticatedUser;
+    user: ITenantUser;
 
     // The sequenced identifier
     sequenceNumber: number;
@@ -185,7 +180,7 @@ export interface INack {
  */
 export interface ISequencedDocumentMessage {
     // The user that submitted the delta
-    user: IAuthenticatedUser;
+    user: ITenantUser;
 
     // The client ID that submitted the delta
     clientId: string;

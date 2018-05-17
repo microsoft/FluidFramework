@@ -31,7 +31,7 @@ export class DocumentLambda implements IPartitionLambda {
 
     private handlerCore(kafkaMessage: utils.IMessage): void {
         const message = JSON.parse(kafkaMessage.value) as core.IMessage;
-        if (!("documentId" in message)) {
+        if (!("documentId" in message) || !("tenantId" in message)) {
             return;
         }
 

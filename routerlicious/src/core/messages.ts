@@ -42,7 +42,7 @@ export interface ISystemMessage extends IMessage {
  */
 export interface IObjectMessage extends IMessage {
     // The user who submitted the message
-    user: api.IAuthenticatedUser;
+    user: api.ITenantUser;
 
     // The tenant the message is intended for
     tenantId: string;

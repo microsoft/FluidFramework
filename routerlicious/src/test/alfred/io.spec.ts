@@ -6,7 +6,7 @@ import * as api from "../../api-core";
 import * as core from "../../core";
 import { Deferred } from "../../core-utils";
 import * as socketStorage from "../../socket-storage";
-import { MongoManager } from "../../utils";
+import { generateToken, MongoManager } from "../../utils";
 import {
     MessageFactory,
     TestDbFactory,
@@ -22,6 +22,8 @@ describe("Routerlicious", () => {
     describe("Alfred", () => {
         describe("WebSockets", () => {
             describe("Messages", () => {
+                const testTenantId = "test";
+                const testSecret = "test";
                 const testId = "test";
                 let webSocketServer: TestWebSocketServer;
                 let deliKafka: TestKafka;
@@ -51,11 +53,17 @@ describe("Routerlicious", () => {
                         { id: "test", key: "test" });
                 });
 
-                function connectToServer(id: string, socket: TestWebSocket): Promise<socketStorage.IConnected> {
+                function connectToServer(
+                    id: string,
+                    tenantId: string,
+                    secret: string,
+                    socket: TestWebSocket): Promise<socketStorage.IConnected> {
+                    const token = generateToken(tenantId, id, secret);
+
                     const connectMessage: socketStorage.IConnect = {
                         id,
-                        tenantId: null,
-                        token: null,
+                        tenantId,
+                        token,
                     };
 
                     const deferred = new Deferred<socketStorage.IConnected>();
@@ -93,7 +101,7 @@ describe("Routerlicious", () => {
                 describe("#connectDocument", () => {
                     it("Should connect to and create a new interactive document on first connection", async () => {
                         const socket = webSocketServer.createConnection();
-                        const connectMessage = await connectToServer(testId, socket);
+                        const connectMessage = await connectToServer(testId, testTenantId, testSecret, socket);
                         assert.ok(connectMessage.clientId);
                         assert.equal(connectMessage.existing, false);
 
@@ -108,11 +116,13 @@ describe("Routerlicious", () => {
                     it("Should connect to and set existing flag to true when connecting to an existing document",
                         async () => {
                             const firstSocket = webSocketServer.createConnection();
-                            const firstConnectMessage = await connectToServer(testId, firstSocket);
+                            const firstConnectMessage = await connectToServer(
+                                testId, testTenantId, testSecret, firstSocket);
                             assert.equal(firstConnectMessage.existing, false);
 
                             const secondSocket = webSocketServer.createConnection();
-                            const secondConnectMessage = await connectToServer(testId, secondSocket);
+                            const secondConnectMessage = await connectToServer(
+                                testId, testTenantId, testSecret, secondSocket);
                             assert.equal(secondConnectMessage.existing, true);
                         });
                 });
@@ -120,12 +130,12 @@ describe("Routerlicious", () => {
                 describe("#disconnect", () => {
                     it("Should disconnect from an interactive document", async () => {
                         const socket = webSocketServer.createConnection();
-                        const connectMessage = await connectToServer(testId, socket);
+                        const connectMessage = await connectToServer(testId, testTenantId, testSecret, socket);
                         socket.send("disconnect");
 
                         // Connect a second client just to have something to await on.
                         // There is no ack for the disconnect, but the message will be ordered with future messages.
-                        await connectToServer(testId, webSocketServer.createConnection());
+                        await connectToServer(testId, testTenantId, testSecret, webSocketServer.createConnection());
 
                         assert.equal(deliKafka.getRawMessages().length, 3);
                         const message = deliKafka.getMessage(1);
@@ -139,7 +149,7 @@ describe("Routerlicious", () => {
                 describe("#submitOp", () => {
                     it("Can connect to the web socket server", async () => {
                         const socket = webSocketServer.createConnection();
-                        const connectMessage = await connectToServer(testId, socket);
+                        const connectMessage = await connectToServer(testId, testTenantId, testSecret, socket);
 
                         const messageFactory = new MessageFactory(testId, connectMessage.clientId);
                         const message = messageFactory.createDocumentMessage();

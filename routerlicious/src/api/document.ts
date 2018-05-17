@@ -4,84 +4,46 @@ import * as resources from "gitresources";
 import * as jwt from "jsonwebtoken";
 import * as uuid from "uuid/v4";
 import performanceNow = require("performance-now");
-import {
-    ConnectionState,
-    DeltaConnection,
-    DeltaManager,
-    IAttachMessage,
-    ICollaborativeObject,
-    ICollaborativeObjectExtension,
-    ICollaborativeObjectSave,
-    IDeltaConnection,
-    IDistributedObject,
-    IDistributedObjectServices,
-    IDocumentAttributes,
-    IDocumentDeltaStorageService,
-    IDocumentService,
-    IDocumentStorageService,
-    IEnvelope,
-    ILatencyMessage,
-    IObjectAttributes,
-    IObjectMessage,
-    IObjectStorageService,
-    ISequencedDocumentMessage,
-    ISnapshotTree,
-    ITree,
-    ITreeEntry,
-    LocalObjectStorageService,
-    NoOp,
-    ObjectStorageService,
-    Registry,
-    RoundTrip,
-    SAVE,
-    SaveOperation,
-    TreeEntry,
-} from "../api-core";
 import * as api from "../api-core";
 import * as cell from "../cell";
 import { Deferred } from "../core-utils";
 import { ICell, IMap, IStream } from "../data-types";
 import * as mapExtension from "../map";
-import {
-    CollaboritiveStringExtension, SharedIntervalCollectionValueType,
-    SharedString,
-} from "../shared-string";
-
+import * as sharedString from "../shared-string";
 import * as stream from "../stream";
 import { debug } from "./debug";
 import { BrowserErrorTrackingService } from "./errorTrackingService";
-import { NullDeltaConnection } from "./nullDeltaConnection";
 
 const rootMapId = "root";
-const MaxReconnectDelay = 32000;
 
 // Registered services to use when loading a document
-let defaultDocumentService: IDocumentService;
+let defaultDocumentService: api.IDocumentService;
 
 // The default registry for collaborative object types
-export const defaultRegistry = new Registry<ICollaborativeObjectExtension>();
+export const defaultRegistry = new api.Registry<api.ICollaborativeObjectExtension>();
 export const defaultDocumentOptions = Object.create(null);
 defaultRegistry.register(new mapExtension.MapExtension());
-defaultRegistry.register(new CollaboritiveStringExtension());
+defaultRegistry.register(new sharedString.CollaboritiveStringExtension());
 defaultRegistry.register(new stream.StreamExtension());
 defaultRegistry.register(new cell.CellExtension());
+
 // Register default map value types
 mapExtension.registerDefaultValueType(new mapExtension.DistributedSetValueType());
 mapExtension.registerDefaultValueType(new mapExtension.CounterValueType());
-mapExtension.registerDefaultValueType(new SharedIntervalCollectionValueType());
+mapExtension.registerDefaultValueType(new sharedString.SharedIntervalCollectionValueType());
 
 export interface IAttachedServices {
-    deltaConnection: IDeltaConnection;
-    objectStorage: IObjectStorageService;
+    deltaConnection: api.IDeltaConnection;
+    objectStorage: api.IObjectStorageService;
 }
 
 // Internal versions of IAttachedServices
 interface IObjectServices {
-    deltaConnection: DeltaConnection;
-    objectStorage: ObjectStorageService;
+    deltaConnection: api.ObjectDeltaConnection;
+    objectStorage: api.ObjectStorageService;
 }
 
-export function registerExtension(extension: ICollaborativeObjectExtension) {
+export function registerExtension(extension: api.ICollaborativeObjectExtension) {
     defaultRegistry.register(extension);
 }
 
@@ -90,20 +52,25 @@ export function registerExtension(extension: ICollaborativeObjectExtension) {
  * expected that the implementation provider of these will register themselves during startup prior to the user
  * requesting to load a collaborative object.
  */
-export function registerDocumentService(service: IDocumentService) {
+export function registerDocumentService(service: api.IDocumentService) {
     defaultDocumentService = service;
 }
 
-export function getDefaultDocumentService(): IDocumentService {
+export function getDefaultDocumentService(): api.IDocumentService {
     return defaultDocumentService;
 }
 
 interface IDistributedObjectState {
-    object: ICollaborativeObject;
+    object: api.ICollaborativeObject;
 
-    storage: ObjectStorageService;
+    storage: api.ObjectStorageService;
 
-    connection: DeltaConnection;
+    connection: api.ObjectDeltaConnection;
+}
+
+interface IConnectResult {
+    detailsP: Promise<api.IConnectionDetails>;
+    handlerAttachedP: Promise<void>;
 }
 
 /**
@@ -111,16 +78,16 @@ interface IDistributedObjectState {
  */
 interface IHeaderDetails {
     // Attributes for the document
-    attributes: IDocumentAttributes;
+    attributes: api.IDocumentAttributes;
 
     // Distributed objects contained within the document
-    distributedObjects: IDistributedObject[];
+    distributedObjects: api.IDistributedObject[];
 
     // The transformed messages between the minimum sequence number and sequenceNumber
-    transformedMessages: ISequencedDocumentMessage[];
+    transformedMessages: api.ISequencedDocumentMessage[];
 
     // Tree representing all blobs in the snapshot
-    tree: ISnapshotTree;
+    tree: api.ISnapshotTree;
 }
 
 function getEmptyHeader(id: string): IHeaderDetails {
@@ -138,7 +105,7 @@ function getEmptyHeader(id: string): IHeaderDetails {
     return emptyHeader;
 }
 
-function setParentBranch(messages: ISequencedDocumentMessage[], parentBranch?: string) {
+function setParentBranch(messages: api.ISequencedDocumentMessage[], parentBranch?: string) {
     for (const message of messages) {
         // Append branch information when transforming for the case of messages stashed with the snapshot
         if (parentBranch) {
@@ -151,48 +118,25 @@ function setParentBranch(messages: ISequencedDocumentMessage[], parentBranch?: s
     }
 }
 
-async function readAndParse<T>(storage: IDocumentStorageService, sha: string): Promise<T> {
+async function readAndParse<T>(storage: api.IDocumentStorageService, sha: string): Promise<T> {
     const encoded = await storage.read(sha);
     const decoded = Buffer.from(encoded, "base64").toString();
     return JSON.parse(decoded);
 }
 
-class NullServices implements api.IDocumentService {
-    constructor(private service: api.IDocumentService, private parentBranch: string) {
-    }
-
-    public connectToStorage(tenantId: string, id: string, token: string): Promise<IDocumentStorageService> {
-        return this.service.connectToStorage(tenantId, id, token);
-    }
-
-    public connectToDeltaStorage(tenantId: string, id: string, token: string): Promise<IDocumentDeltaStorageService> {
-        return this.service.connectToDeltaStorage(tenantId, id, token);
-    }
-
-    public connectToDeltaStream(tenantId: string, id: string, token: string): Promise<api.IDocumentDeltaConnection> {
-        return Promise.resolve(new NullDeltaConnection(id, this.parentBranch));
-    }
-
-    public branch(tenantId: string, id: string, token: string): Promise<string> {
-        return this.service.branch(tenantId, id, token);
-    }
-
-    public errorTrackingEnabled() {
-        return false;
-    }
-}
-
 /**
  * A document is a collection of collaborative types.
  */
-export class Document extends EventEmitter {
+export class Document extends EventEmitter implements api.IDocument {
     public static async Load(
         id: string,
-        registry: Registry<ICollaborativeObjectExtension>,
-        service: IDocumentService,
+        registry: api.Registry<api.ICollaborativeObjectExtension>,
+        service: api.IDocumentService,
         options: any,
-        version: resources.ICommit,
+        specifiedVersion: resources.ICommit,
         connect: boolean): Promise<Document> {
+
+        debug(`Document loading ${id}: ${performanceNow()} `);
 
         // Verify an extensions registry was provided
         if (!registry) {
@@ -205,177 +149,46 @@ export class Document extends EventEmitter {
         }
 
         // Connect to the document
-        if (!connect && !version) {
+        if (!connect && !specifiedVersion) {
             return Promise.reject("Must specify a version if connect is set to false");
         }
 
-        debug(`Document loading ${id} - ${performanceNow()}`);
-
-        const token = options.token;
-        // TODO can remove default tenant once we require the token
-        const tenantId = token ? (jwt.decode(token) as any).tenantId : "git";
-        const storageP = service.connectToStorage(tenantId, id, token);
-        const deltaStorageP = service.connectToDeltaStorage(tenantId, id, token);
-
-        // If a version is specified we will load it directly - otherwise will query historian for the latest
-        // version and then load it
-        if (version === undefined) {
-            const versions = await storageP.then((storage) => storage.getVersions(id, 1));
-            version = versions.length > 0 ? versions[1] : null;
+        // Verify a token was provided
+        if (!options.token) {
+            return Promise.reject("Must provide a token");
         }
 
-        // Kick off async operations to load the document state
-        // ...get the header which provides access to the 'first page' of the document
-        const headerP = storageP.then((storage) => this.getHeader(id, storage, version));
+        const document = new Document(id, registry, service, options);
+        await document.load(specifiedVersion, connect);
 
-        // ...load in all deltas later than the sequence number specified in the header
-        const pendingDeltasP = headerP.then((header) => {
-            return connect
-                ? deltaStorageP.then((deltaStorage) => deltaStorage.get(header ? header.attributes.sequenceNumber : 0))
-                : [];
-        });
-
-        const [header, pendingDeltas, deltaStorage, storage] =
-            await Promise.all([headerP, pendingDeltasP, deltaStorageP, storageP]);
-        debug(`Connected to ${id} - ${performanceNow()}`);
-
-        const documentServices = connect ? service : new NullServices(service, header.attributes.branch);
-        const document = new Document(
-            tenantId,
-            id,
-            version,
-            deltaStorage,
-            storage,
-            pendingDeltas,
-            registry,
-            documentServices,
-            options,
-            token,
-            header);
-        await document.connect(token, "Document loading");
-
-        // Make a reservation for the root object
-        document.reserveDistributedObject("root");
-
-        // Make reservations for all distributed objects in the snapshot
-        for (const object of header.distributedObjects) {
-            document.reserveDistributedObject(object.id);
-        }
-
-        // Load in distributed objects stored within the document
-        const objectsLoaded = header.distributedObjects.map(async (distributedObject) => {
-            const services = document.getObjectServices(distributedObject.id);
-            services.deltaConnection.setBaseMapping(
-                distributedObject.sequenceNumber,
-                header.attributes.minimumSequenceNumber);
-            const value = await document.loadInternal(
-                distributedObject,
-                services,
-                header.attributes.branch);
-            document.fulfillDistributedObject(value, services);
-        });
-
-        // Begin connection to the document once we have began to load all documents. This will make sure to send
-        // them the onDisconnect and onConnected messages
-        await Promise.all(objectsLoaded);
-
-        // Process all pending tardis messages
-        await Document.flushAndPause(document, header.transformedMessages);
-
-        // Notify collab objects of tardis completion
-        const loadComplete = header.distributedObjects.map(async (distributedObject) => {
-            const object = await document.get(distributedObject.id);
-            return object.loadComplete();
-        });
-        await Promise.all(loadComplete);
-
-        // Process all pending deltas
-        await Document.flushAndPause(document, pendingDeltas);
-
-        // Start the delta manager back up
-        document._deltaManager.start();
-
-        // If it's a new document we create the root map object - otherwise we wait for it to become available
-        if (!document.connectDetails.existing) {
-            document.createAttached("root", mapExtension.MapExtension.Type);
-        } else {
-            await document.get("root");
-        }
-
-        debug(`Document loaded ${id} - ${performanceNow()}`);
-
-        // And return the new object
         return document;
-    }
-
-    private static async flushAndPause(document: Document, messages: ISequencedDocumentMessage[]): Promise<void> {
-        document._deltaManager.start();
-        if (messages.length > 0) {
-            const sequenceNumber = messages[messages.length - 1].sequenceNumber;
-            await document._deltaManager.flushAndPause(sequenceNumber);
-        }
-    }
-
-    private static async getHeader(
-        id: string,
-        storage: IDocumentStorageService,
-        version: resources.ICommit): Promise<IHeaderDetails> {
-
-        if (!version) {
-            return getEmptyHeader(id);
-        }
-
-        const tree = await storage.getSnapshotTree(version);
-
-        const messagesP = readAndParse<ISequencedDocumentMessage[]>(storage, tree.blobs[".messages"]);
-        const attributesP = readAndParse<IDocumentAttributes>(storage, tree.blobs[".attributes"]);
-
-        const distributedObjectsP = Array<Promise<IDistributedObject>>();
-
-        // tslint:disable-next-line:forin
-        for (const path in tree.trees) {
-            const objectAttributesP = readAndParse<IObjectAttributes>(storage, tree.trees[path].blobs[".attributes"]);
-            const objectDetailsP = objectAttributesP.then((attributes) => {
-                return {
-                    id: path,
-                    sequenceNumber: attributes.sequenceNumber,
-                    type: attributes.type,
-                };
-            });
-            distributedObjectsP.push(objectDetailsP);
-        }
-
-        const [messages, attributes, distributedObjects] = await Promise.all(
-            [messagesP, attributesP, Promise.all(distributedObjectsP)]);
-
-        return {
-            attributes,
-            distributedObjects,
-            transformedMessages: messages,
-            tree,
-        };
     }
 
     // Map from the object ID to the collaborative object for it. If the object is not yet attached its service
     // entries will be null
     private distributedObjects = new Map<string, IDistributedObjectState>();
-
-    private reservations = new Map<string, Deferred<ICollaborativeObject>>();
+    private reservations = new Map<string, Deferred<api.ICollaborativeObject>>();
 
     // tslint:disable:variable-name
-    private _deltaManager: DeltaManager;
+    private _deltaManager: api.DeltaManager;
+    private _existing: boolean;
+    private _user: api.ITenantUser;
+    private _parentBranch: string;
     // tslint:enable:variable-name
 
-    private lastMinSequenceNumber;
-    private messagesSinceMSNChange = new Array<ISequencedDocumentMessage>();
+    private messagesSinceMSNChange = new Array<api.ISequencedDocumentMessage>();
     private clients = new Set<string>();
-    private connecting: Deferred<void>;
-    private connectDetails: api.IConnectionDetails;
-    private connectionState = ConnectionState.Disconnected;
-    private pendingAttach = new Map<string, IAttachMessage>();
+    private connectionState = api.ConnectionState.Disconnected;
+    private lastReason: string;
+    private lastContext: string;
+    private pendingAttach = new Map<string, api.IAttachMessage>();
+    private storageService: api.IDocumentStorageService;
+    private lastMinSequenceNumber;
+    private tenantId: string;
+    private loaded = false;
 
     public get clientId(): string {
-        return this.connectDetails ? this.connectDetails.clientId : "disconnected";
+        return this._deltaManager ? this._deltaManager.clientId : "disconnected";
     }
 
     public get id(): string {
@@ -390,70 +203,7 @@ export class Document extends EventEmitter {
      * Flag indicating whether the document already existed at the time of load
      */
     public get existing(): boolean {
-        return this.connectDetails ? this.connectDetails.existing : null;
-    }
-
-    /**
-     * Returns the parent branch for this document
-     */
-    public get parentBranch(): string {
-        return this.connectDetails ? this.connectDetails.parentBranch : null;
-    }
-
-    /**
-     * Constructs a new document from the provided details
-     */
-    private constructor(
-        private tenantId: string,
-        // tslint:disable-next-line:variable-name
-        private _id: string,
-        private version: resources.ICommit,
-        private deltaStorage: IDocumentDeltaStorageService,
-        private storageService: IDocumentStorageService,
-        pendingDeltas: ISequencedDocumentMessage[],
-        private registry: Registry<ICollaborativeObjectExtension>,
-        private service: IDocumentService,
-        private opts: Object,
-        private token: string,
-        private header: IHeaderDetails) {
-
-        super();
-
-        this.lastMinSequenceNumber = this.header.attributes.minimumSequenceNumber;
-        if (this.header.attributes.branch !== this.id) {
-            setParentBranch(header.transformedMessages, this.header.attributes.branch);
-        }
-        const pendingMessages = header.transformedMessages.concat(pendingDeltas);
-
-        this._deltaManager = new DeltaManager(
-            tenantId,
-            this.id,
-            header.attributes.minimumSequenceNumber,
-            pendingMessages,
-            this.deltaStorage,
-            this.service,
-            {
-                disconnect: (message: string) => {
-                    this.connect(this.token, `Disconnected ${message}`);
-                },
-
-                nack: (target: number) => {
-                    // If I have to rejoin then this doesn't matter?
-                    this.connect(this.token, `Connection NACK'ed - target sequence number is ${target}`);
-                },
-
-                prepare: async (message) => {
-                    return this.prepareRemoteMessage(message);
-                },
-
-                process: (message, context) => {
-                    this.processRemoteMessage(message, context);
-                },
-            });
-
-        this._deltaManager.on("error", (error) => {
-            this.emit("error", error);
-        });
+        return this._existing;
     }
 
     public get options(): Object {
@@ -461,10 +211,35 @@ export class Document extends EventEmitter {
     }
 
     /**
+     * Returns the parent branch for this document
+     */
+    public get parentBranch(): string {
+        return this._parentBranch;
+    }
+
+    /**
+     * Constructs a new document from the provided details
+     */
+    private constructor(
+        // tslint:disable-next-line:variable-name
+        private _id: string,
+        private registry: api.Registry<api.ICollaborativeObjectExtension>,
+        private service: api.IDocumentService,
+        private opts: any) {
+        super();
+
+        const token = this.opts.token;
+        const claims = jwt.decode(token) as api.ITokenClaims;
+        this.tenantId = claims.tenantId;
+        this._user = claims.user;
+
+    }
+
+    /**
      * Constructs a new collaborative object that can be attached to the document
      * @param type the identifier for the collaborative object type
      */
-    public create(type: string, id = uuid()): ICollaborativeObject {
+    public create(type: string, id = uuid()): api.ICollaborativeObject {
         const extension = this.registry.getExtension(type);
         const object = extension.create(this, id);
 
@@ -483,7 +258,7 @@ export class Document extends EventEmitter {
      *
      * @param id Identifier of the object to load
      */
-    public async get(id: string): Promise<ICollaborativeObject> {
+    public async get(id: string): Promise<api.ICollaborativeObject> {
         return this.reservations.has(id)
             ? this.reservations.get(id).promise
             : Promise.reject("Object does not exist");
@@ -495,7 +270,7 @@ export class Document extends EventEmitter {
      *
      * @param object
      */
-    public attach(object: ICollaborativeObject): IDistributedObjectServices {
+    public attach(object: api.ICollaborativeObject): api.IDistributedObjectServices {
         if (!this.reservations.has(object.id)) {
             throw new Error("Attached objects must be created with Document.create");
         }
@@ -503,7 +278,7 @@ export class Document extends EventEmitter {
         // Get the object snapshot and include it in the initial attach
         const snapshot = object.snapshot();
 
-        const message: IAttachMessage = {
+        const message: api.IAttachMessage = {
             id: object.id,
             snapshot,
             type: object.type,
@@ -513,7 +288,7 @@ export class Document extends EventEmitter {
 
         // Store a reference to the object in our list of objects and then get the services
         // used to attach it to the stream
-        const services = this.getObjectServices(object.id);
+        const services = this.getObjectServices(object.id, null, this.storageService);
         const entry = this.distributedObjects.get(object.id);
         assert.equal(entry.object, object);
         entry.connection = services.deltaConnection;
@@ -540,8 +315,8 @@ export class Document extends EventEmitter {
     /**
      * Creates a new collaborative string
      */
-    public createString(): SharedString {
-        return this.create(CollaboritiveStringExtension.Type) as SharedString;
+    public createString(): sharedString.SharedString {
+        return this.create(sharedString.CollaboritiveStringExtension.Type) as sharedString.SharedString;
     }
 
     /**
@@ -562,8 +337,8 @@ export class Document extends EventEmitter {
      * Saves the document by performing a snapshot.
      */
     public save(tag: string = null) {
-        const message: ICollaborativeObjectSave = { type: SAVE, message: tag };
-        this.submitMessage(SaveOperation, message);
+        const message: api.ICollaborativeObjectSave = { type: api.SAVE, message: tag };
+        this.submitMessage(api.SaveOperation, message);
     }
 
     /**
@@ -573,16 +348,16 @@ export class Document extends EventEmitter {
         throw new Error("Not yet implemented");
     }
 
-    public submitObjectMessage(envelope: IEnvelope): void {
+    public submitObjectMessage(envelope: api.IEnvelope): void {
         this.submitMessage(api.ObjectOperation, envelope);
     }
 
-    public submitLatencyMessage(message: ILatencyMessage) {
-        this._deltaManager.submitRoundtrip(RoundTrip, message);
+    public submitLatencyMessage(message: api.ILatencyMessage) {
+        this._deltaManager.submitRoundtrip(api.RoundTrip, message);
     }
 
     public branch(): Promise<string> {
-        return this.service.branch(this.tenantId, this.id, this.token);
+        return this.service.branch(this.tenantId, this.id, this.opts.token);
     }
 
     /**
@@ -604,60 +379,264 @@ export class Document extends EventEmitter {
     /**
      * Returns the user id connected to the document.
      */
-    public getUser(): api.IAuthenticatedUser {
-        return this.connectDetails ? this.connectDetails.user : null;
+    public getUser(): api.ITenantUser {
+        return this._user;
     }
 
     public getClients(): Set<string> {
         return new Set<string>(this.clients);
     }
 
-    private async connect(token: string, reason: string): Promise<void> {
-        if (this.connecting) {
-            return this.connecting.promise;
-        }
+    // make this private
+    private async load(specifiedVersion: resources.ICommit, connect: boolean): Promise<void> {
+        const storageP = this.service.connectToStorage(this.tenantId, this.id, this.opts.token);
 
-        const reconnectDelay = 1000;
-        this.connecting = new Deferred<void>();
-        this.connectCore(token, reason, reconnectDelay);
+        // If a version is specified we will load it directly - otherwise will query historian for the latest
+        // version and then load it
+        const versionP = specifiedVersion
+            ? Promise.resolve(specifiedVersion)
+            : storageP.then(async (storage) => {
+                const versions = await storage.getVersions(this.id, 1);
+                return versions.length > 0 ? versions[1] : null;
+            });
 
-        return this.connecting.promise;
-    }
+        // Kick off async operations to load the document state
+        // ... get the header which provides access to the 'first page' of the document
+        const headerP = Promise.all([storageP, versionP])
+            .then(([storage, version]) => {
+                return this.getHeader(this.id, storage, version);
+            });
 
-    private async connectCore(token: string, reason: string, delay: number) {
-        // Place back into a disconnected state while making the connection
-        this.setConnectionState(ConnectionState.Disconnected, reason);
+        // ... load the distributed data structures from the snapshot
+        const dataStructuresLoadedP = Promise.all([storageP, headerP]).then(async ([storage, header]) => {
+            await this.loadSnapshot(storage, header);
+        });
 
-        // Begin to connect to the document
-        this._deltaManager.connect(token).then(
-            (details) => {
-                this.setConnectionState(ConnectionState.Connecting, "Connected on Socket.IO channel", details.clientId);
-                this.connectDetails = details;
-                this.connecting.resolve();
-                this.connecting = null;
-            },
-            (error) => {
-                delay = Math.min(delay, MaxReconnectDelay);
-                reason = `Connection failed - trying again in ${delay}ms`;
-                debug(reason, error);
-                setTimeout(() => this.connectCore(token, reason, delay * 2), delay);
+        // ... begin the connection process to the delta stream
+        let connectResult: IConnectResult = connect
+            ? this.connect(headerP)
+            : { detailsP: Promise.resolve(null), handlerAttachedP: Promise.resolve() };
+
+        // Wait for all the loading promises to finish
+        return Promise
+            .all([storageP, versionP, headerP, dataStructuresLoadedP, connectResult.handlerAttachedP])
+            .then(async ([storageService, version, header]) => {
+                this.storageService = storageService;
+                this.lastMinSequenceNumber = header.attributes.minimumSequenceNumber;
+
+                // Start delta processing once all objects are loaded
+                if (connect) {
+                    assert(this._deltaManager, "DeltaManager should have been created during connect call");
+
+                    const readyP = Array.from(this.distributedObjects.values()).map((value) => value.object.ready());
+                    Promise.all(readyP).then(
+                        () => {
+                            debug("Everyone ready - resuming inbound messages");
+                            this._deltaManager.inbound.resume();
+                            this._deltaManager.outbound.resume();
+                        },
+                        (error) => {
+                            this.emit("error", error);
+                        });
+                }
+
+                // Initialize document details - if loading a snapshot use that - otherwise we need to wait on
+                // the initial details
+                if (version) {
+                    this._existing = true;
+                    this._parentBranch = header.attributes.branch !== this.id ? header.attributes.branch : null;
+                } else {
+                    const details = await connectResult.detailsP;
+                    this._existing = details.existing;
+                    this._parentBranch = details.parentBranch;
+                }
+
+                // Internal context is fully loaded at this point
+                this.loaded = true;
+
+                // Now that we are loaded notify all distributed data types of connection change
+                this.notifyConnectionState(this.connectionState, this.lastReason, this.lastContext);
+
+                // Waiting on the root is also good
+                // If it's a new document we create the root map object - otherwise we wait for it to become available
+                // This I don't think I can get rid of
+                if (!this.existing) {
+                    this.createAttached("root", mapExtension.MapExtension.Type);
+                } else {
+                    await this.get("root");
+                }
+
+                debug(`Document loaded ${this.id}: ${performanceNow()} `);
             });
     }
 
-    private setConnectionState(value: ConnectionState.Disconnected, reason: string);
-    private setConnectionState(value: ConnectionState.Connecting, reason: string, clientId: string);
-    private setConnectionState(value: ConnectionState.Connected, reason: string, clientId: string);
-    private setConnectionState(value: ConnectionState, reason: string, context?: string) {
+    private connect(headerP: Promise<IHeaderDetails>): IConnectResult {
+        // Create the DeltaManager and begin listening for connection events
+        this._deltaManager = new api.DeltaManager(this.id, this.tenantId, this.service);
+
+        // Open a connection - the DeltaMananger will automatically reconnect
+        const detailsP = this._deltaManager.connect("Document loading", this.opts.token);
+        this._deltaManager.on("connect", (details: api.IConnectionDetails) => {
+            this.setConnectionState(api.ConnectionState.Connecting, "Connected to Routerlicious", details.clientId);
+        });
+
+        this._deltaManager.on("disconnect", (nack: boolean) => {
+            this.setConnectionState(api.ConnectionState.Disconnected, `Disconnected - nack === ${nack}`);
+        });
+
+        this._deltaManager.on("error", (error) => {
+            this.emit("error", error);
+        });
+
+        // Begin fetching any pending deltas once we know the base sequence #. Can this fail?
+        // It seems like something, like reconnection, that we would want to retry but otherwise allow
+        // the document to load
+        const handlerAttachedP = headerP.then((header) => {
+            this._deltaManager.attachOpHandler(
+                header.attributes.sequenceNumber,
+                {
+                    prepare: async (message) => {
+                        return this.prepareRemoteMessage(message);
+                    },
+                    process: (message, context) => {
+                        this.processRemoteMessage(message, context);
+                    },
+                });
+            });
+
+        return { detailsP, handlerAttachedP };
+    }
+
+    /**
+     * Loads in all the distributed objects contained in the header
+     */
+    private async loadSnapshot(storage: api.IDocumentStorageService, header: IHeaderDetails): Promise<void> {
+        // Update message information based on branch details
+        if (header.attributes.branch !== this.id) {
+            setParentBranch(header.transformedMessages, header.attributes.branch);
+        }
+
+        // Make a reservation for the root object as well as all distributed objects in the snapshot
+        const transformedMap = new Map<string, api.ISequencedDocumentMessage[]>([["root", []]]);
+        this.reserveDistributedObject("root");
+        for (const object of header.distributedObjects) {
+            this.reserveDistributedObject(object.id);
+            transformedMap.set(object.id, []);
+        }
+
+        // Filter messages per distributed data type
+        for (const transformedMessage of header.transformedMessages) {
+            if (transformedMessage.type === api.ObjectOperation) {
+                const envelope = transformedMessage.contents as api.IEnvelope;
+                transformedMap.get(envelope.address).push(transformedMessage);
+            }
+        }
+
+        const objectsLoaded = header.distributedObjects.map(async (distributedObject) => {
+            // Filter the storage tree to only the distributed object
+            const tree = header.tree && distributedObject.id in header.tree.trees
+                ? header.tree.trees[distributedObject.id]
+                : null;
+            const services = this.getObjectServices(distributedObject.id, tree, storage);
+
+            // Start the base mapping at the MSN
+            services.deltaConnection.setBaseMapping(
+                distributedObject.sequenceNumber,
+                header.attributes.minimumSequenceNumber);
+
+            // Run the transformed messages through the delta connection in order to update their offsets
+            // Then pass these to the loadInternal call. Moving forward we will want to update the snapshot
+            // to include the range maps. And then make the objects responsible for storing any messages they
+            // need to transform.
+            const transformedMessages = transformedMap.get(distributedObject.id);
+            const transformedObjectMessages = transformedMessages.map((message) => {
+                return services.deltaConnection.translateToObjectMessage(message, true);
+            });
+
+            // Pass the transformedMessages - but the object really should be storing this
+            const value = await this.loadInternal(
+                distributedObject,
+                transformedObjectMessages,
+                services,
+                services.deltaConnection.sequenceNumber,
+                header.attributes.branch);
+
+            this.fulfillDistributedObject(value, services);
+        });
+
+        // Begin connection to the document once we have began to load all documents. This will make sure to send
+        // them the onDisconnect and onConnected messages
+        await Promise.all(objectsLoaded);
+        debug(`objectsLoaded ${this.id}: ${performanceNow()} `);
+    }
+
+    private async getHeader(
+        id: string,
+        storage: api.IDocumentStorageService,
+        version: resources.ICommit): Promise<IHeaderDetails> {
+
+        if (!version) {
+            return getEmptyHeader(id);
+        }
+
+        const tree = await storage.getSnapshotTree(version);
+
+        const messagesP = readAndParse<api.ISequencedDocumentMessage[]>(storage, tree.blobs[".messages"]);
+        const attributesP = readAndParse<api.IDocumentAttributes>(storage, tree.blobs[".attributes"]);
+
+        const distributedObjectsP = Array<Promise<api.IDistributedObject>>();
+
+        // tslint:disable-next-line:forin
+        for (const path in tree.trees) {
+            const objectAttributesP = readAndParse<api.IObjectAttributes>(
+                storage,
+                tree.trees[path].blobs[".attributes"]);
+            const objectDetailsP = objectAttributesP.then((attributes) => {
+                return {
+                    id: path,
+                    sequenceNumber: attributes.sequenceNumber,
+                    type: attributes.type,
+                };
+            });
+            distributedObjectsP.push(objectDetailsP);
+        }
+
+        const [messages, attributes, distributedObjects] = await Promise.all(
+            [messagesP, attributesP, Promise.all(distributedObjectsP)]);
+
+        return {
+            attributes,
+            distributedObjects,
+            transformedMessages: messages,
+            tree,
+        };
+    }
+
+    private setConnectionState(value: api.ConnectionState.Disconnected, reason: string);
+    private setConnectionState(value: api.ConnectionState.Connecting, reason: string, clientId: string);
+    private setConnectionState(value: api.ConnectionState.Connected, reason: string, clientId: string);
+    private setConnectionState(value: api.ConnectionState, reason: string, context?: string) {
         if (this.connectionState === value) {
             // Already in the desired state - exit early
             return;
         }
 
-        debug(`Changing from ${ConnectionState[this.connectionState]} to ${ConnectionState[value]}`, reason);
+        debug(`Changing from ${api.ConnectionState[this.connectionState]} to ${api.ConnectionState[value]}`, reason);
         this.connectionState = value;
+        this.lastReason = reason;
+        this.lastContext = context;
 
+        if (!this.loaded) {
+            // If not fully loaded return early
+            return;
+        }
+
+        this.notifyConnectionState(value, reason, context);
+    }
+
+    private notifyConnectionState(value: api.ConnectionState, reason: string, context?: string) {
         // Resend all pending attach messages prior to notifying clients
-        if (this.connectionState === ConnectionState.Connected) {
+        if (this.connectionState === api.ConnectionState.Connected) {
             for (const [, message] of this.pendingAttach) {
                 this.submitMessage(api.AttachObject, message);
             }
@@ -667,13 +646,13 @@ export class Document extends EventEmitter {
         for (const [, object] of this.distributedObjects) {
             if (object.connection) {
                 switch (value) {
-                    case ConnectionState.Disconnected:
+                    case api.ConnectionState.Disconnected:
                         object.connection.setConnectionState(value, reason);
                         break;
-                    case ConnectionState.Connecting:
+                    case api.ConnectionState.Connecting:
                         object.connection.setConnectionState(value, context);
                         break;
-                    case ConnectionState.Connected:
+                    case api.ConnectionState.Connected:
                         object.connection.setConnectionState(value, context);
                         break;
                     default:
@@ -683,22 +662,22 @@ export class Document extends EventEmitter {
         }
     }
 
-    private snapshotCore(): ITree {
-        const entries: ITreeEntry[] = [];
+    private snapshotCore(): api.ITree {
+        const entries: api.ITreeEntry[] = [];
 
         // Transform ops in the window relative to the MSN - the window is all ops between the min sequence number
         // and the current sequence number
         assert.equal(
             this._deltaManager.referenceSequenceNumber - this._deltaManager.minimumSequenceNumber,
             this.messagesSinceMSNChange.length);
-        const transformedMessages: ISequencedDocumentMessage[] = [];
+        const transformedMessages: api.ISequencedDocumentMessage[] = [];
         debug(`Transforming up to ${this._deltaManager.minimumSequenceNumber}`);
         for (const message of this.messagesSinceMSNChange) {
             transformedMessages.push(this.transform(message, this._deltaManager.minimumSequenceNumber));
         }
         entries.push({
             path: ".messages",
-            type: TreeEntry[TreeEntry.Blob],
+            type: api.TreeEntry[api.TreeEntry.Blob],
             value: {
                 contents: JSON.stringify(transformedMessages),
                 encoding: "utf-8",
@@ -712,13 +691,13 @@ export class Document extends EventEmitter {
                 const snapshot = object.object.snapshot();
 
                 // Add in the object attributes to the returned tree
-                const objectAttributes: IObjectAttributes = {
+                const objectAttributes: api.IObjectAttributes = {
                     sequenceNumber: object.connection.minimumSequenceNumber,
                     type: object.object.type,
                 };
                 snapshot.entries.push({
                     path: ".attributes",
-                    type: TreeEntry[TreeEntry.Blob],
+                    type: api.TreeEntry[api.TreeEntry.Blob],
                     value: {
                         contents: JSON.stringify(objectAttributes),
                         encoding: "utf-8",
@@ -728,21 +707,21 @@ export class Document extends EventEmitter {
                 // And then store the tree
                 entries.push({
                     path: objectId,
-                    type: TreeEntry[TreeEntry.Tree],
+                    type: api.TreeEntry[api.TreeEntry.Tree],
                     value: snapshot,
                 });
             }
         }
 
         // Save attributes for the document
-        const documentAttributes: IDocumentAttributes = {
+        const documentAttributes: api.IDocumentAttributes = {
             branch: this.id,
             minimumSequenceNumber: this._deltaManager.minimumSequenceNumber,
             sequenceNumber: this._deltaManager.referenceSequenceNumber,
         };
         entries.push({
             path: ".attributes",
-            type: TreeEntry[TreeEntry.Blob],
+            type: api.TreeEntry[api.TreeEntry.Blob],
             value: {
                 contents: JSON.stringify(documentAttributes),
                 encoding: "utf-8",
@@ -750,7 +729,7 @@ export class Document extends EventEmitter {
         });
 
         // Output the tree
-        const root: ITree = {
+        const root: api.ITree = {
             entries,
         };
 
@@ -760,17 +739,17 @@ export class Document extends EventEmitter {
     /**
      * Transforms the given message relative to the provided sequence number
      */
-    private transform(message: ISequencedDocumentMessage, sequenceNumber: number): ISequencedDocumentMessage {
+    private transform(message: api.ISequencedDocumentMessage, sequenceNumber: number): api.ISequencedDocumentMessage {
         // Allow the distributed data types to perform custom transformations
         if (message.type === api.ObjectOperation) {
-            const envelope = message.contents as IEnvelope;
+            const envelope = message.contents as api.IEnvelope;
             const objectDetails = this.distributedObjects.get(envelope.address);
             envelope.contents = objectDetails.object.transform(
-                envelope.contents as IObjectMessage,
+                envelope.contents as api.IObjectMessage,
                 objectDetails.connection.transformDocumentSequenceNumber(
                     Math.max(message.referenceSequenceNumber, sequenceNumber)));
         } else if (message.type === api.AttachObject) {
-            message.type = NoOp;
+            message.type = api.NoOp;
         }
 
         message.referenceSequenceNumber = sequenceNumber;
@@ -780,7 +759,7 @@ export class Document extends EventEmitter {
 
     private submitMessage(type: string, contents: any): void {
         // TODO better way to control access
-        if (this.connectionState === ConnectionState.Connected) {
+        if (this.connectionState === api.ConnectionState.Connected) {
             this._deltaManager.submit(type, contents);
         }
     }
@@ -796,11 +775,11 @@ export class Document extends EventEmitter {
         assert(id === "root" || !this.reservations.has(id));
 
         if (!this.reservations.has(id)) {
-            this.reservations.set(id, new Deferred<ICollaborativeObject>());
+            this.reservations.set(id, new Deferred<api.ICollaborativeObject>());
         }
     }
 
-    private fulfillDistributedObject(object: ICollaborativeObject, services: IObjectServices) {
+    private fulfillDistributedObject(object: api.ICollaborativeObject, services: IObjectServices) {
         const id = object.id;
         assert(this.reservations.has(id));
 
@@ -820,30 +799,32 @@ export class Document extends EventEmitter {
      * @param distributedObject The distributed object to load
      */
     private loadInternal(
-        distributedObject: IDistributedObject,
+        distributedObject: api.IDistributedObject,
+        transformedMessages: api.ISequencedObjectMessage[],
         services: IAttachedServices,
-        originBranch: string): Promise<ICollaborativeObject> {
+        sequenceNumber: number,
+        originBranch: string): Promise<api.ICollaborativeObject> {
 
         const extension = this.registry.getExtension(distributedObject.type);
         const value = extension.load(
             this,
             distributedObject.id,
+            sequenceNumber,
             distributedObject.sequenceNumber,
+            transformedMessages,
             services,
-            this.version,
             originBranch);
 
         return value;
     }
 
-    private getObjectServices(id: string): IObjectServices {
-        // Filter the storage tree to only the distributed object
-        const tree = this.header.tree && id in this.header.tree.trees
-            ? this.header.tree.trees[id]
-            : null;
+    private getObjectServices(
+        id: string,
+        tree: api.ISnapshotTree,
+        storage: api.IDocumentStorageService): IObjectServices {
 
-        const deltaConnection = new DeltaConnection(id, this, this.clientId, this.connectionState);
-        const objectStorage = new ObjectStorageService(tree, this.storageService);
+        const deltaConnection = new api.ObjectDeltaConnection(id, this, this.clientId, this.connectionState);
+        const objectStorage = new api.ObjectStorageService(tree, storage);
 
         return {
             deltaConnection,
@@ -851,23 +832,27 @@ export class Document extends EventEmitter {
         };
     }
 
-    private async prepareRemoteMessage(message: ISequencedDocumentMessage): Promise<any> {
+    private async prepareRemoteMessage(message: api.ISequencedDocumentMessage): Promise<any> {
         if (message.type === api.ObjectOperation) {
-            const envelope = message.contents as IEnvelope;
+            const envelope = message.contents as api.IEnvelope;
             const objectDetails = this.distributedObjects.get(envelope.address);
             return objectDetails.connection.prepare(message);
         } else if (message.type === api.AttachObject && message.clientId !== this.clientId) {
-            const attachMessage = message.contents as IAttachMessage;
+            const attachMessage = message.contents as api.IAttachMessage;
 
             // create storage service that wraps the attach data
-            const localStorage = new LocalObjectStorageService(attachMessage.snapshot);
-            const connection = new DeltaConnection(attachMessage.id, this, this.clientId, this.connectionState);
+            const localStorage = new api.LocalObjectStorageService(attachMessage.snapshot);
+            const connection = new api.ObjectDeltaConnection(
+                attachMessage.id,
+                this,
+                this.clientId,
+                this.connectionState);
 
             // Document sequence number references <= message.sequenceNumber should map to the object's 0 sequence
             // number. We cap to the MSN to keep a tighter window and because no references should be below it.
             connection.setBaseMapping(0, message.minimumSequenceNumber);
 
-            const distributedObject: IDistributedObject = {
+            const distributedObject: api.IDistributedObject = {
                 id: attachMessage.id,
                 sequenceNumber: 0,
                 type: attachMessage.type,
@@ -880,7 +865,7 @@ export class Document extends EventEmitter {
 
             const origin = message.origin ? message.origin.id : this.id;
             this.reserveDistributedObject(distributedObject.id);
-            const value = await this.loadInternal(distributedObject, services, origin);
+            const value = await this.loadInternal(distributedObject, [], services, 0, origin);
 
             return {
                 services,
@@ -889,7 +874,7 @@ export class Document extends EventEmitter {
         }
     }
 
-    private processRemoteMessage(message: ISequencedDocumentMessage, context: any) {
+    private processRemoteMessage(message: api.ISequencedDocumentMessage, context: any) {
         const minSequenceNumberChanged = this.lastMinSequenceNumber !== message.minimumSequenceNumber;
         this.lastMinSequenceNumber = message.minimumSequenceNumber;
 
@@ -899,7 +884,7 @@ export class Document extends EventEmitter {
         const eventArgs: any[] = [message];
         switch (message.type) {
             case api.ObjectOperation:
-                const envelope = message.contents as IEnvelope;
+                const envelope = message.contents as api.IEnvelope;
                 const objectDetails = this.distributedObjects.get(envelope.address);
 
                 objectDetails.connection.process(message, context);
@@ -907,12 +892,12 @@ export class Document extends EventEmitter {
                 break;
 
             case api.AttachObject:
-                const attachMessage = message.contents as IAttachMessage;
+                const attachMessage = message.contents as api.IAttachMessage;
 
                 // If a non-local operation then go and create the object - otherwise mark it as officially
                 // attached.
                 if (message.clientId !== this.clientId) {
-                    this.fulfillDistributedObject(context.value as ICollaborativeObject, context.services);
+                    this.fulfillDistributedObject(context.value as api.ICollaborativeObject, context.services);
                 } else {
                     assert(this.pendingAttach.has(attachMessage.id));
                     this.pendingAttach.delete(attachMessage.id);
@@ -931,7 +916,7 @@ export class Document extends EventEmitter {
                 this.clients.add(message.contents);
                 if (message.contents === this.clientId) {
                     this.setConnectionState(
-                        ConnectionState.Connected,
+                        api.ConnectionState.Connected,
                         `Fully joined the document@ ${message.minimumSequenceNumber}`,
                         this.clientId);
                 }
@@ -978,8 +963,8 @@ export async function load(
     options: Object = defaultDocumentOptions,
     version: resources.ICommit = null,
     connect = true,
-    registry: Registry<ICollaborativeObjectExtension> = defaultRegistry,
-    service: IDocumentService = defaultDocumentService): Promise<Document> {
+    registry: api.Registry<api.ICollaborativeObjectExtension> = defaultRegistry,
+    service: api.IDocumentService = defaultDocumentService): Promise<Document> {
 
     if (service.errorTrackingEnabled()) {
         const deferred = new Deferred<Document>();

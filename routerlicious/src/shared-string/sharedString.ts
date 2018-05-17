@@ -1,7 +1,5 @@
 // tslint:disable:whitespace align no-bitwise ordered-imports
 import * as assert from "assert";
-import performanceNow = require("performance-now");
-import * as resources from "gitresources";
 import * as api from "../api-core";
 import { Deferred } from "../core-utils";
 import { IMap, IMapView, IValueChanged } from "../data-types";
@@ -12,6 +10,7 @@ import {
     Interval, SharedIntervalCollection,
     SharedIntervalCollectionValueType,
 } from "./intervalCollection";
+import { ISequencedObjectMessage } from "../api-core";
 import { IRelativePosition } from "../merge-tree";
 
 function textsToSegments(texts: MergeTree.IPropertyString[]) {
@@ -39,6 +38,7 @@ export class SharedString extends CollaborativeMap {
     public client: MergeTree.Client;
     public intervalCollections: IMapView;
     private isLoaded = false;
+    private collabStarted = false;
     private pendingMinSequenceNumber: number = 0;
     // Deferred that triggers once the object is loaded
     private loadedDeferred = new Deferred<void>();
@@ -344,22 +344,22 @@ export class SharedString extends CollaborativeMap {
     }
 
     protected async loadContent(
-        version: resources.ICommit,
+        sequenceNumber: number,
+        minimumSequenceNumber: number,
+        messages: api.ISequencedObjectMessage[],
         headerOrigin: string,
         storage: api.IObjectStorageService): Promise<void> {
 
         const header = await storage.read("header");
-        return this.initialize(this.sequenceNumber, header, true, headerOrigin, storage);
+
+        return this.initialize(sequenceNumber, minimumSequenceNumber, messages, header, true, headerOrigin, storage);
     }
 
     protected initializeContent() {
         const intervalCollections = this.document.create(MapExtension.Type) as IMap;
         this.set("intervalCollections", intervalCollections);
         // TODO will want to update initialize to operate synchronously
-        this.initialize(0, null, false, this.id, null).then(
-            () => {
-                this.initializeIntervalCollections();
-            },
+        this.initialize(0, 0, [], null, false, this.id, null).catch(
             (error) => {
                 console.error("initializeContent", error);
             });
@@ -394,19 +394,22 @@ export class SharedString extends CollaborativeMap {
 
     protected attachContent() {
         this.client.startCollaboration(this.document.clientId, this.document.getUser(), 0);
-    }
-
-    protected loadContentComplete(): Promise<void> {
-        this.initializeIntervalCollections();
-        return Promise.resolve();
+        this.collabStarted = true;
     }
 
     protected onConnectContent(pending: api.IObjectMessage[]) {
         // Update merge tree collaboration information with new client ID and then resend pending ops
-        this.client.updateCollaboration(this.document.clientId);
+        if (this.collabStarted) {
+            this.client.updateCollaboration(this.document.clientId);
+        }
+
         this.sendNACKed();
 
         return;
+    }
+
+    protected readyContent(): Promise<void> {
+        return this.loaded;
     }
 
     private submitIfAttached(message: any) {
@@ -417,51 +420,94 @@ export class SharedString extends CollaborativeMap {
         this.submitLocalMessage(message);
     }
 
-    // TODO I need to split this into two parts - one for the header - one for the body. The loadContent will
-    // resolve on the loading of the header
-    private async initialize(
+    private loadHeader(
         sequenceNumber: number,
+        minimumSequenceNumber: number,
         header: string,
         collaborative: boolean,
         originBranch: string,
         services: api.IObjectStorageService) {
 
-        let chunk: MergeTree.MergeTreeChunk;
+        if (!header) {
+            return;
+        }
 
-        console.log(`Async load ${this.id} - ${performanceNow()}`);
+        const chunk = MergeTree.Snapshot.processChunk(header);
+        let segs = textsToSegments(chunk.segmentTexts);
+        this.client.mergeTree.reloadFromSegments(segs);
+    }
 
+    private async loadBody(
+        sequenceNumber: number,
+        minimumSequenceNumber: number,
+        header: string,
+        messages: ISequencedObjectMessage[],
+        collaborative: boolean,
+        originBranch: string,
+        services: api.IObjectStorageService) {
+
+        // If loading from a snapshot load in the body
         if (header) {
-            chunk = MergeTree.Snapshot.processChunk(header);
-            let segs = textsToSegments(chunk.segmentTexts);
-            this.client.mergeTree.reloadFromSegments(segs);
-            console.log(`Loading ${this.id} body - ${performanceNow()}`);
-            chunk = await MergeTree.Snapshot.loadChunk(services, "body");
-            console.log(`Loaded ${this.id} body - ${performanceNow()}`);
+            const chunk = await MergeTree.Snapshot.loadChunk(services, "body");
             for (let segSpec of chunk.segmentTexts) {
                 this.client.mergeTree.appendSegment(segSpec);
             }
-        } else {
-            chunk = MergeTree.Snapshot.EmptyChunk;
         }
 
+        // This should happen if we have collab services
+        if (collaborative) {
+            // TODO currently only assumes two levels of branching
+            const branchId = originBranch === this.document.id ? 0 : 1;
+            this.collabStarted = true;
+            this.client.startCollaboration(
+                this.document.clientId, this.document.getUser(), minimumSequenceNumber, branchId);
+        }
+
+        // Apply all pending messages
+        for (const message of messages) {
+            this.processContent(message);
+        }
+
+        // Do we want to break the dependence on the interval collection
         // Register the filter callback on the reference collections
         let intervalCollections = await this.get("intervalCollections") as IMap;
+
         this.intervalCollections = await intervalCollections.getView();
         intervalCollections.on("valueChanged", (ev: IValueChanged) => {
             let intervalCollection = this.intervalCollections.get<SharedIntervalCollection>(ev.key);
             intervalCollection.initialize(this, ev.key);
         });
-        // This should happen if we have collab services
-        assert.equal(sequenceNumber, chunk.chunkSequenceNumber);
-        if (collaborative) {
-            console.log(`Start ${this.id} collab - ${performanceNow()}`);
-            // TODO currently only assumes two levels of branching
-            const branchId = originBranch === this.document.id ? 0 : 1;
-            this.client.startCollaboration(this.document.clientId, this.document.getUser(), sequenceNumber, branchId);
+    }
+
+    private async initialize(
+        sequenceNumber: number,
+        minimumSequenceNumber: number,
+        messages: ISequencedObjectMessage[],
+        header: string,
+        collaborative: boolean,
+        originBranch: string,
+        services: api.IObjectStorageService) {
+
+        if (!header) {
+            assert.equal(minimumSequenceNumber, MergeTree.Snapshot.EmptyChunk.chunkSequenceNumber);
         }
 
-        console.log(`Load ${this.id} finished - ${performanceNow()}`);
-        this.loadFinished(chunk);
+        this.loadHeader(sequenceNumber, minimumSequenceNumber, header, collaborative, originBranch, services);
+        this.loadBody(
+            sequenceNumber,
+            minimumSequenceNumber,
+            header,
+            messages,
+            collaborative,
+            originBranch,
+            services).then(
+                () => {
+                    this.initializeIntervalCollections();
+                    this.loadFinished();
+                },
+                (error) => {
+                    this.loadFinished(error);
+                });
     }
 
     private initializeIntervalCollections() {
@@ -471,15 +517,17 @@ export class SharedString extends CollaborativeMap {
         }
     }
 
-    private loadFinished(chunk: MergeTree.MergeTreeChunk) {
-        this.isLoaded = true;
-        this.loadedDeferred.resolve();
-        this.emit("loadFinished", chunk, true);
+    private loadFinished(error?: any) {
+        if (error) {
+            this.loadedDeferred.reject(error);
+        } else {
+            this.isLoaded = true;
+            this.loadedDeferred.resolve();
 
-        // Update the MSN if larger than the set value
-        if (this.pendingMinSequenceNumber > this.client.mergeTree.getCollabWindow().minSeq) {
-            this.client.updateMinSeq(this.pendingMinSequenceNumber);
+            // Update the MSN if larger than the set value
+            if (this.pendingMinSequenceNumber > this.client.mergeTree.getCollabWindow().minSeq) {
+                this.client.updateMinSeq(this.pendingMinSequenceNumber);
+            }
         }
     }
-
 }

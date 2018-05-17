@@ -67,6 +67,7 @@ fs.readFile(commander.file, "utf8", async (error, data: string) => {
             Number(commander.authors),
             Number(commander.processes),
             null,
+            null,
             (metrics) => {
                 if (commander.progress) {
                     bar.update(metrics.ackProgress, {

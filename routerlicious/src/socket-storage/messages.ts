@@ -1,4 +1,4 @@
-import { IAuthenticatedUser } from "../api-core";
+import { ITenantUser } from "../api-core";
 
 /**
  * Message sent to connect to the given object
@@ -21,7 +21,7 @@ export interface IConnect {
  */
 export interface IConnected {
     // The user who is sending the message
-    user: IAuthenticatedUser;
+    user: ITenantUser;
 
     // The client who is sending the message
     clientId: string;

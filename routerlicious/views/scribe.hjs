@@ -98,7 +98,7 @@
         <script src="{{#hfurl}}/public/scripts/dist/controller.js{{/hfurl}}"></script>
         <script>
             var config = {{{ config }}};
-            prague_controller.scribe.initialize(
+            controller.scribe.initialize(
                 config,
                 "{{ id }}",
                 "{{ token }}",
