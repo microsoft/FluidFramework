@@ -1412,7 +1412,8 @@ interface ICellView extends Table.Cell {
 const svgNS = "http://www.w3.org/2000/svg";
 
 function createSVGWrapper(w: number, h: number) {
-    const svg = document.createElementNS(svgNS, "svg") as HTMLElement;
+    // TODO (sabroner): check this logic
+    const svg = document.createElementNS(svgNS, "svg") as any as HTMLElement;
     svg.style.zIndex = "-1";
     svg.setAttribute("width", w.toString());
     svg.setAttribute("height", h.toString());
@@ -1420,7 +1421,8 @@ function createSVGWrapper(w: number, h: number) {
 }
 
 function createSVGRect(r: ui.Rectangle) {
-    const rect = document.createElementNS(svgNS, "rect") as HTMLElement;
+    // TODO (sabroner): check this logic
+    const rect = document.createElementNS(svgNS, "rect") as any as HTMLElement;
     rect.setAttribute("x", r.x.toString());
     rect.setAttribute("y", r.y.toString());
     rect.setAttribute("width", r.width.toString());
