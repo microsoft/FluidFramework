@@ -54,7 +54,8 @@ module.exports = env => {
                             compilerOptions: {
                                 declaration: false,
                             },
-                            // only transpiles, but TsChecker handles the typechecking
+                            // Removes TypeChecking and forces thread safety
+                            // ForkTSCheckerWebpackPlugin handles types and syntax
                             happyPackMode: true,
                         }
                     }],
