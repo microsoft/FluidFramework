@@ -7,9 +7,9 @@
   "scripts": {
     "webpack": "webpack --config webpack.config.js",
     "webpack:api": "webpack --config webpack.config.js --env.bundle api ",
-    "webpack:ui": "webpack --config webpack.config.js --env ui",
-    "webpack:controllers": "webpack --config webpack.config.js --env controllers",
-    "webpack:agent": "webpack --config webpack.config.js --env agent",
+    "webpack:ui": "webpack --config webpack.config.js --env.bundle ui",
+    "webpack:controllers": "webpack --config webpack.config.js --env.bundle controllers",
+    "webpack:agent": "webpack --config webpack.config.js --env.bundle agent",
     "webpack:min": "webpack --config webpack.config.js --env.target production",
     "babel": "babel public/scripts/dist -d public/scripts/es5",
     "browserify:all:min": "concurrently \"npm run browserify:api:min\" \"npm run browserify:ui:min\" \"npm run browserify:controllers:min\" \"npm run browserify:agent:min\"",
