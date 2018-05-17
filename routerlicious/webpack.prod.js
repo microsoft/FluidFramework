@@ -1,12 +1,14 @@
-const common = require('./webpack.common.js');
-const merge = require('webpack-merge');
 const path = require('path');
 const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
 
-common.output.filename = '[name].min.js';
-
 // Uglify Fails on api.js unless uglify-es@3.3.9 is installed
-module.exports = merge(common, {
+module.exports = {
+    mode: "production",
+    output: {
+        path: path.resolve(__dirname, "public/scripts/dist"),
+        filename: '[name].min.js',
+        library: "[name]"
+    },
     plugins: [
         new UglifyJsPlugin({
             test: /\.ts($|\?)/i,
@@ -19,4 +21,4 @@ module.exports = merge(common, {
             }
         }),
     ],
-});
+};

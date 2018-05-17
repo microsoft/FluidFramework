@@ -1,8 +1,11 @@
-const common = require('./webpack.common.js');
-const merge = require('webpack-merge');
 const path = require('path');
 
-common.output.filename = '[name].js';
 
-module.exports = merge(common, {
-});
+module.exports = {
+    mode: "development",    
+    output: {
+        path: path.resolve(__dirname, "public/scripts/dist"),
+        filename: '[name].js', // Overwriten in prod/dev config
+        library: "[name]"
+    },
+}
