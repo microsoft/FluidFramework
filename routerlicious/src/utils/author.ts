@@ -59,7 +59,7 @@ export function normalizeText(input: string): string {
     let result = "";
     const segments = MergeTree.loadSegments(input, 0);
     for (const segment of segments) {
-        result += (<MergeTree.TextSegment> segment).text;
+        result += (segment as MergeTree.TextSegment).text;
     }
 
     return result;
@@ -210,10 +210,10 @@ function rearrange(array: any[], index: number): any[] {
     return arrayClone.concat(spliced);
 }
 
-function combine(first: number[], second: number[], combine: (a, b) => number): number[] {
+function combine(first: number[], second: number[], combineCb: (a, b) => number): number[] {
     const result = [];
     for (let i = 0; i < first.length; i++) {
-        result.push(combine(first[i], second[i]));
+        result.push(combineCb(first[i], second[i]));
     }
 
     return result;
@@ -256,7 +256,7 @@ export async function typeFile(
     metricsToken: string,
     scribeCallback: ScribeMetricsCallback): Promise<IScribeMetrics> {
 
-        let metricsArray: IScribeMetrics[] = [];
+        const metricsArray: IScribeMetrics[] = [];
         let q: any;
 
         metrics = {
@@ -278,7 +278,7 @@ export async function typeFile(
 
         await setMetrics(doc, metricsToken);
 
-        let m: IScribeMetrics = {
+        const m: IScribeMetrics = {
             ackProgress: undefined,
                 ackRate: undefined,
                 latencyAverage: undefined,
@@ -304,9 +304,9 @@ export async function typeFile(
             ss,
             typingCounter: new Counter(),
         };
-        let authors: IAuthor[] = [author];
-        let docList: api.Document[] = [doc];
-        let ssList: SharedString[] = [ss];
+        const authors: IAuthor[] = [author];
+        const docList: api.Document[] = [doc];
+        const ssList: SharedString[] = [ss];
 
         for (let i = 1; i < writers; i++ ) {
             docList.push(await api.load(doc.id, { token: documentToken }));
@@ -324,7 +324,7 @@ export async function typeFile(
         }
 
         if (writers === 1) {
-            let startTime = Date.now();
+            const startTime = Date.now();
             typingCounter.reset();
             ackCounter.reset();
             latencyCounter.reset();
@@ -342,7 +342,7 @@ export async function typeFile(
                 .then((chunkView) => {
                     let totalKeys = 0;
                     let curKey = 0;
-                    let startTime = Date.now();
+                    const startTime = Date.now();
                     typingCounter.reset();
                     ackCounter.reset();
                     latencyCounter.reset();
@@ -350,14 +350,14 @@ export async function typeFile(
 
                     return new Promise((resolve, reject) => {
                         q = queue(async (chunkKey, queueCallback) => {
-                            let chunk = chunkView.get(chunkKey);
-                            let a = authors.shift();
+                            const chunk = chunkView.get(chunkKey);
+                            const a = authors.shift();
                             curKey++;
                             metrics.typingProgress = curKey / totalKeys;
-                            typeChunk(a, chunkKey, chunk, intervalTime, scribeCallback, queueCallback).then;
+                            typeChunk(a, chunkKey, chunk, intervalTime, scribeCallback, queueCallback);
                         }, writers);
 
-                        for (let chunkKey of chunkView.keys()) {
+                        for (const chunkKey of chunkView.keys()) {
                             totalKeys++;
                             q.push(chunkKey, (
                                     metric: IScribeMetrics,
@@ -367,7 +367,7 @@ export async function typeFile(
                             });
                         }
                         q.drain = () => {
-                            let now = Date.now();
+                            const now = Date.now();
                             metrics.time = now - startTime;
                             resolve(metricsArray[0]);
                         };
@@ -491,7 +491,7 @@ export async function typeChunk(
                 return true;
             }
             let pos: number;
-            let relPosit: MergeTree.IRelativePosition = {
+            const relPosit: MergeTree.IRelativePosition = {
                 before: true,
                 id: chunkKey,
                 offset: 0,
@@ -507,7 +507,7 @@ export async function typeChunk(
             }
 
             trackOperation(() => {
-                let char = chunk.charAt(readPosition);
+                const char = chunk.charAt(readPosition);
 
                 if (code === 10) {
                     a.ss.insertMarker(pos, MergeTree.ReferenceType.Tile,

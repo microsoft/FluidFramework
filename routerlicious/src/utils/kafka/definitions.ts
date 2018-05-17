@@ -29,8 +29,7 @@ export interface IConsumer {
      * Event Handler.
      */
     on(event: "data", listener: (message: IMessage) => void): this;
-    on(event: "rebalancing", listener: (partitions: IPartition[]) => void): this;
-    on(event: "rebalanced", listener: (partitions: IPartition[]) => void): this;
+    on(event: "rebalancing" | "rebalanced", listener: (partitions: IPartition[]) => void): this;
     on(event: string, listener: Function): this;
 
     /**

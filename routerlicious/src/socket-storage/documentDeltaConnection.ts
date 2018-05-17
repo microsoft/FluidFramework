@@ -23,8 +23,8 @@ export class DocumentDeltaConnection implements api.IDocumentDeltaConnection {
             });
 
         const connectMessage: messages.IConnect = {
-            tenantId,
             id,
+            tenantId,
             token,  // token is going to indicate tenant level information, etc...
         };
 
@@ -46,7 +46,7 @@ export class DocumentDeltaConnection implements api.IDocumentDeltaConnection {
                 });
         });
 
-        let deltaConnection = new DocumentDeltaConnection(socket, id, connection);
+        const deltaConnection = new DocumentDeltaConnection(socket, id, connection);
 
         return deltaConnection;
     }

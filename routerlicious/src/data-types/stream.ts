@@ -35,7 +35,7 @@ export class Delta implements IDelta {
     }
 
     public clear(time: number = new Date().getTime()): Delta {
-        let clear: IClearAction = { };
+        const clear: IClearAction = { };
 
         this.operations.push({ clear, time });
 
@@ -48,7 +48,7 @@ export class Delta implements IDelta {
         id: string = uuid(),
         time: number = new Date().getTime()): Delta {
 
-        let stylusUp: IStylusUpAction = {
+        const stylusUp: IStylusUpAction = {
             id,
             point,
             pressure,
@@ -67,7 +67,7 @@ export class Delta implements IDelta {
         id: string = uuid(),
         time: number = new Date().getTime()): Delta {
 
-        let stylusDown: IStylusDownAction = {
+        const stylusDown: IStylusDownAction = {
             id,
             layer,
             pen,
@@ -86,7 +86,7 @@ export class Delta implements IDelta {
         id: string = uuid(),
         time: number = new Date().getTime()): Delta {
 
-        let stylusMove: IStylusMoveAction = {
+        const stylusMove: IStylusMoveAction = {
             id,
             point,
             pressure,
@@ -110,7 +110,7 @@ export function getActionType(operation: IOperation): ActionType {
     } else if (operation.stylusMove) {
         return ActionType.StylusMove;
     } else {
-        throw "Unknown action";
+        throw new Error("Unknown action");
     }
 }
 
@@ -125,7 +125,7 @@ export function getStylusAction(operation: IOperation): IStylusAction {
     } else if (operation.stylusMove) {
         return operation.stylusMove;
     } else {
-        throw "Unknown action";
+        throw new Error("Unknown action");
     }
 }
 
@@ -133,7 +133,7 @@ export function getStylusAction(operation: IOperation): IStylusAction {
  * Helper function to retrieve the ID of the stylus operation
  */
 export function getStylusId(operation: IOperation): string {
-    let type = getActionType(operation);
+    const type = getActionType(operation);
     switch (type) {
         case ActionType.StylusDown:
             return operation.stylusDown.id;
@@ -142,7 +142,7 @@ export function getStylusId(operation: IOperation): string {
         case ActionType.StylusMove:
             return operation.stylusMove.id;
         default:
-            throw "Non-stylus event";
+            throw new Error("Non-stylus event");
     }
 }
 
@@ -182,6 +182,7 @@ export enum ActionType {
     Clear,
 }
 
+// tslint:disable-next-line:no-empty-interface
 export interface IClearAction {
 }
 
@@ -206,9 +207,11 @@ export interface IStylusDownAction extends IStylusAction {
     layer: number;
 }
 
+// tslint:disable-next-line:no-empty-interface
 export interface IStylusUpAction extends IStylusAction {
 }
 
+// tslint:disable-next-line:no-empty-interface
 export interface IStylusMoveAction extends IStylusAction {
 }
 

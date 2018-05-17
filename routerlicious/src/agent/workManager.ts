@@ -136,7 +136,7 @@ export class WorkManager extends EventEmitter {
 
         if (worker) {
             if (!(fullId in this.documentMap)) {
-                let emptyMap: { [work: string]: IWork } = {};
+                const emptyMap: { [work: string]: IWork } = {};
                 this.documentMap[fullId] = emptyMap;
             }
             if (!(workType in this.documentMap[fullId])) {
@@ -198,9 +198,9 @@ export class WorkManager extends EventEmitter {
 
     private loadDict() {
         this.downloadRawText("/public/literature/dictfreq.txt").then((text: string) => {
-            let splitContent = text.split("\n");
-            for (let entry of splitContent) {
-                let splitEntry = entry.split(";");
+            const splitContent = text.split("\n");
+            for (const entry of splitContent) {
+                const splitEntry = entry.split(";");
                 this.dict.put(splitEntry[0], parseInt(splitEntry[1], 10));
             }
             console.log(`Loaded dictionary`);

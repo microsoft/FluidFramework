@@ -17,13 +17,13 @@ export class Snapshot implements ISnapshot {
     }
 
     public apply(delta: IDelta) {
-        for (let operation of delta.operations) {
+        for (const operation of delta.operations) {
             this.applyOperation(operation);
         }
     }
 
     public applyOperation(operation: IOperation) {
-        let actionType = getActionType(operation);
+        const actionType = getActionType(operation);
 
         switch (actionType) {
             case ActionType.Clear:
@@ -39,7 +39,7 @@ export class Snapshot implements ISnapshot {
                 this.processStylusMoveAction(operation);
                 break;
             default:
-                throw "Unknown action type";
+                throw new Error("Unknown action type");
         }
     }
 
@@ -54,7 +54,7 @@ export class Snapshot implements ISnapshot {
     }
 
     private processStylusDownAction(operation: IOperation) {
-        let layer = {
+        const layer = {
             id: operation.stylusDown.id,
             operations: [],
         };
@@ -72,7 +72,7 @@ export class Snapshot implements ISnapshot {
 
         // And move any after it down by one
         for (layerIndex = layerIndex + 1; layerIndex < this.layers.length; layerIndex++) {
-            let layerId = this.layers[layerIndex].id;
+            const layerId = this.layers[layerIndex].id;
             this.layerIndex[layerId] = this.layerIndex[layerId] + 1;
         }
 
@@ -85,7 +85,7 @@ export class Snapshot implements ISnapshot {
     }
 
     private addOperationToLayer(id: string, operation: IOperation) {
-        let layerIndex = this.layerIndex[id];
+        const layerIndex = this.layerIndex[id];
         this.layers[layerIndex].operations.push(operation);
     }
 }

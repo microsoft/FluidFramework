@@ -28,9 +28,9 @@ class TelegrafClient implements IMetricClient {
     }
 
     private createTelegrafRow(traces: core.ITrace[]): Object {
-        let row = new Object();
+        const row = new Object();
         const Int = telegraf.Int;
-        for (let trace of traces) {
+        for (const trace of traces) {
             row[trace.service + "-" + trace.action] = new Int(trace.timestamp);
         }
         return row;

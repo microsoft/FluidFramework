@@ -42,7 +42,7 @@ export class RiddlerResourcesFactory implements utils.IResourcesFactory<RiddlerR
         await Promise.all(upsertP);
 
         const loggerFormat = config.get("logger:morganFormat");
-        let port = utils.normalizePort(process.env.PORT || "5000");
+        const port = utils.normalizePort(process.env.PORT || "5000");
 
         return new RiddlerResources(tenantsCollectionName, mongoManager, port, loggerFormat);
     }

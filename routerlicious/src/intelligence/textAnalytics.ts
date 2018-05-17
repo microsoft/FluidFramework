@@ -51,8 +51,8 @@ class TextAnalyticsIntelligentService implements IIntelligentService {
             const keyPhrases = results[1].documents[0] ? results[1].documents[0].keyPhrases : [];
 
             return {
-                language,
                 keyPhrases,
+                language,
                 sentiment,
             };
         }

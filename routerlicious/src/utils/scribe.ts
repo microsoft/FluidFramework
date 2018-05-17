@@ -8,8 +8,9 @@ let document: api.Document;
 let sharedString: SharedString;
 
 function setParagraphs(chunks: string[]) {
+    let props;
     for (let c = 0; c < chunks.length; c++) {
-        let props = {
+        props = {
             [MergeTree.reservedMarkerIdKey]: ["p-" + c],
             [MergeTree.reservedTileLabelsKey]: ["pg"],
         };
@@ -17,7 +18,7 @@ function setParagraphs(chunks: string[]) {
     }
 
     // Insert final pg marker. All text must be before a pg marker or it won't display!
-    let props = {
+    props = {
         [MergeTree.reservedMarkerIdKey]: ["p-final"],
         [MergeTree.reservedTileLabelsKey]: ["pg"],
     };
@@ -29,7 +30,7 @@ function getParagraphs() {
         .then((root) => {
             (root.get("chunks").getView() as Promise<types.IMapView>)
                 .then((chunksMap) => {
-                    for (let key of chunksMap.keys()) {
+                    for (const key of chunksMap.keys()) {
                         console.log(key + ": " + chunksMap.get(key));
                     }
                 });
@@ -40,10 +41,10 @@ function getParagraphs() {
 async function setChunkMap(chunks: string[]) {
     let c = 0;
     const root = await document.getRoot().getView();
-    let chunkMap = root.get("chunks") as types.IMapView;
+    const chunkMap = root.get("chunks") as types.IMapView;
 
-    for (let chunk of chunks) {
-        let chunkKey = "p-" + c;
+    for (const chunk of chunks) {
+        const chunkKey = "p-" + c;
         if (chunk !== "" ) {
             chunkMap.set(chunkKey, chunk);
         }
@@ -60,9 +61,9 @@ async function conductor(
     metricsToken: string,
     callback): Promise<author.IScribeMetrics> {
 
-    let process = 0;
-    let docId = "";
-    let chunks = author.normalizeText(text).split("\n");
+    const process = 0;
+    const docId = "";
+    const chunks = author.normalizeText(text).split("\n");
 
     if (processes === 1) {
         return await author.typeFile(
@@ -76,8 +77,8 @@ async function conductor(
             callback);
     }
 
-    let interval = setInterval(() => {
-        let args = [docId, intervalTime, chunks.length, process];
+    const interval = setInterval(() => {
+        const args = [docId, intervalTime, chunks.length, process];
         childProcess.fork(__dirname + path.sep + "author.js", args);
         if (process >= processes) {
             clearInterval(interval);
@@ -106,7 +107,7 @@ export async function create(
 
     await root.set("chunks", document.createMap());
 
-    let chunks = author.normalizeText(text).split("\n");
+    const chunks = author.normalizeText(text).split("\n");
     setParagraphs(chunks);
     await setChunkMap(chunks);
     if (debug) {

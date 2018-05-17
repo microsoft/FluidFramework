@@ -25,7 +25,7 @@ export { MergeTree };
 import * as SharedString from "../shared-string";
 export { SharedString };
 
-import {CharacterCodes, Paragraph, Table}  from "../text";
+import {CharacterCodes, Paragraph, Table} from "../text";
 export { CharacterCodes, Paragraph, Table };
 
 import * as socketStorage from "../socket-storage";

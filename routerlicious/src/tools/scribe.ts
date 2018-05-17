@@ -77,7 +77,7 @@ fs.readFile(commander.file, "utf8", async (error, data: string) => {
                         typingRate: (metrics.typingRate ? metrics.typingRate : 0).toFixed(2),
                     });
                 } else {
-                    let progress = Math.round(metrics.typingProgress * 100);
+                    const progress = Math.round(metrics.typingProgress * 100);
                     if (progress > lastReported) {
                         console.log(progress + "% Completed");
                         lastReported = progress;
@@ -108,7 +108,7 @@ fs.readFile(commander.file, "utf8", async (error, data: string) => {
 });
 
 function ensurePath(filePath: string) {
-    let dir = path.dirname(filePath);
+    const dir = path.dirname(filePath);
     if (fs.existsSync(dir)) {
         return true;
     }

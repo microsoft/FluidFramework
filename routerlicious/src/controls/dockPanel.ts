@@ -39,7 +39,7 @@ export class DockPanel extends ui.Component {
             topOffset = result.height;
         }
 
-        let split = bounds.nipVertTopBottom(topOffset, bottomOffset);
+        const split = bounds.nipVertTopBottom(topOffset, bottomOffset);
 
         this.updateChildBoundsIfExists(this.top, split[0]);
         this.updateChildBoundsIfExists(this.content, split[1]);

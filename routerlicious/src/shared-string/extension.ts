@@ -1,10 +1,10 @@
 import * as api from "../api-core";
 import { SharedString } from "./sharedString";
 
-export class CollaboritiveStringExtension implements api.ICollaborativeObjectExtension {
+export class CollaborativeStringExtension implements api.ICollaborativeObjectExtension {
     public static Type = "https://graph.microsoft.com/types/mergeTree";
 
-    public type: string = CollaboritiveStringExtension.Type;
+    public type: string = CollaborativeStringExtension.Type;
 
     public async load(
         document: api.IDocument,
@@ -15,13 +15,13 @@ export class CollaboritiveStringExtension implements api.ICollaborativeObjectExt
         services: api.IDistributedObjectServices,
         headerOrigin: string): Promise<api.ICollaborativeObject> {
 
-        let collaborativeString = new SharedString(document, id, sequenceNumber, services);
+        const collaborativeString = new SharedString(document, id, sequenceNumber, services);
         await collaborativeString.load(sequenceNumber, minimumSequenceNumber, messages, headerOrigin, services);
         return collaborativeString;
     }
 
     public create(document: api.IDocument, id: string, options?: Object): api.ICollaborativeObject {
-        let collaborativeString = new SharedString(document, id, 0);
+        const collaborativeString = new SharedString(document, id, 0);
         collaborativeString.initializeLocal();
         return collaborativeString;
     }

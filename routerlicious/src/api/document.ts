@@ -2,8 +2,8 @@ import * as assert from "assert";
 import { EventEmitter } from "events";
 import * as resources from "gitresources";
 import * as jwt from "jsonwebtoken";
-import * as uuid from "uuid/v4";
 import performanceNow = require("performance-now");
+import * as uuid from "uuid/v4";
 import * as api from "../api-core";
 import * as cell from "../cell";
 import { Deferred } from "../core-utils";
@@ -23,7 +23,7 @@ let defaultDocumentService: api.IDocumentService;
 export const defaultRegistry = new api.Registry<api.ICollaborativeObjectExtension>();
 export const defaultDocumentOptions = Object.create(null);
 defaultRegistry.register(new mapExtension.MapExtension());
-defaultRegistry.register(new sharedString.CollaboritiveStringExtension());
+defaultRegistry.register(new sharedString.CollaborativeStringExtension());
 defaultRegistry.register(new stream.StreamExtension());
 defaultRegistry.register(new cell.CellExtension());
 
@@ -316,7 +316,7 @@ export class Document extends EventEmitter implements api.IDocument {
      * Creates a new collaborative string
      */
     public createString(): sharedString.SharedString {
-        return this.create(sharedString.CollaboritiveStringExtension.Type) as sharedString.SharedString;
+        return this.create(sharedString.CollaborativeStringExtension.Type) as sharedString.SharedString;
     }
 
     /**
@@ -413,7 +413,7 @@ export class Document extends EventEmitter implements api.IDocument {
         });
 
         // ... begin the connection process to the delta stream
-        let connectResult: IConnectResult = connect
+        const connectResult: IConnectResult = connect
             ? this.connect(headerP)
             : { detailsP: Promise.resolve(null), handlerAttachedP: Promise.resolve() };
 
@@ -591,11 +591,11 @@ export class Document extends EventEmitter implements api.IDocument {
             const objectAttributesP = readAndParse<api.IObjectAttributes>(
                 storage,
                 tree.trees[path].blobs[".attributes"]);
-            const objectDetailsP = objectAttributesP.then((attributes) => {
+            const objectDetailsP = objectAttributesP.then((attrs) => {
                 return {
                     id: path,
-                    sequenceNumber: attributes.sequenceNumber,
-                    type: attributes.type,
+                    sequenceNumber: attrs.sequenceNumber,
+                    type: attrs.type,
                 };
             });
             distributedObjectsP.push(objectDetailsP);
@@ -613,8 +613,8 @@ export class Document extends EventEmitter implements api.IDocument {
     }
 
     private setConnectionState(value: api.ConnectionState.Disconnected, reason: string);
-    private setConnectionState(value: api.ConnectionState.Connecting, reason: string, clientId: string);
-    private setConnectionState(value: api.ConnectionState.Connected, reason: string, clientId: string);
+    private setConnectionState(value: api.ConnectionState.Connecting | api.ConnectionState.Connected,
+                               reason: string, clientId: string);
     private setConnectionState(value: api.ConnectionState, reason: string, context?: string) {
         if (this.connectionState === value) {
             // Already in the desired state - exit early

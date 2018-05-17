@@ -136,7 +136,7 @@
     "thread-loader": "^1.1.5",
     "ts-loader": "^4.3.0",
     "tsify": "^3.0.4",
-    "tslint": "^4.5.1",
+    "tslint": "^5.9.1",
     "typescript": "^2.8.3",
     "uglify-es": "3.3.9",
     "uglifyjs-webpack-plugin": "^1.2.5",

@@ -81,8 +81,8 @@ export function create(
                     partials: defaultPartials,
                     template: undefined,
                     tenantId,
-                    token,
                     title: request.params.id,
+                    token,
                     version: JSON.stringify(values[1]),
                 });
         }, (error) => {
@@ -151,8 +151,8 @@ export function create(
                     partials: defaultPartials,
                     template,
                     tenantId,
-                    token,
                     title: request.params.id,
+                    token,
                     version: JSON.stringify(values[1]),
                 });
             }, (error) => {

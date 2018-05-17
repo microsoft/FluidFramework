@@ -27,8 +27,8 @@ export class BaseForeman {
     public revokeExpiredWork(): Array<Promise<void>> {
         const docs = this.manager.getExpiredDocuments();
         const revokedPromises = [];
-        for (let doc of docs) {
-            for (let worker of doc.workers) {
+        for (const doc of docs) {
+            for (const worker of doc.workers) {
                 revokedPromises.push(
                     this.revokeOne(
                         doc.tenantId,

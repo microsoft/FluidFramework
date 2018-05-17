@@ -24,9 +24,9 @@ export function create(config: Provider): Router {
     // Uploads the webpacked script to minio and delete the temorary script.
     function uploadScript(moduleName: string): Promise<any> {
         return new Promise<any>((resolve, reject) => {
-            let folder = path.join(__dirname, `../../../../../../tmp/build`);
-            let file = path.join(folder, `${moduleName}/webpacked_index.js`);
-            let fileStream = fs.createReadStream(file);
+            const folder = path.join(__dirname, `../../../../../../tmp/build`);
+            const file = path.join(folder, `${moduleName}/webpacked_index.js`);
+            const fileStream = fs.createReadStream(file);
             fs.stat(file, (error, stats) => {
               if (error) {
                   winston.error(`Webpacked file does not exist: ${error}`);
@@ -54,8 +54,8 @@ export function create(config: Provider): Router {
      * Retrieves a list of all module names stored in db.
      */
     router.get("/", (request, response, next) => {
-        let names: string[] = [];
-        let objectsStream = minioClient.listObjects(storageBucket, "", true);
+        const names: string[] = [];
+        const objectsStream = minioClient.listObjects(storageBucket, "", true);
         objectsStream.on("data", (obj) => {
             names.push(obj.name as string);
         });

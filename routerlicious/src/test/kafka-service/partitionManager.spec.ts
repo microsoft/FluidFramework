@@ -25,7 +25,7 @@ describe("kafka-service", () => {
             it("Should be able to stop after processing messages", async () => {
                 testConsumer.rebalance();
 
-                let messageCount = 10;
+                const messageCount = 10;
                 for (let i = 0; i < messageCount; i++) {
                     testConsumer.emit(kafkaMessageFactory.sequenceMessage({}, "test"));
                 }

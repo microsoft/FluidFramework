@@ -13,9 +13,9 @@ const extensions = commander.extensions as string[];
 
 const files = fs.readdirSync(commander.directory);
 
-let sizeLogs: any = {};
+const sizeLogs: any = {};
 
-for (let file of files) {
+for (const file of files) {
     if (extensions.indexOf(getExtension(file)) !== -1) {
         sizeLogs[file] =  fs.statSync(path.join(commander.directory, file)).size;
     }
@@ -41,7 +41,7 @@ function getExtension(fileName: string): string {
 }
 
 function ensurePath(filePath: string) {
-    let dir = path.dirname(filePath);
+    const dir = path.dirname(filePath);
     if (fs.existsSync(dir)) {
         return true;
     }

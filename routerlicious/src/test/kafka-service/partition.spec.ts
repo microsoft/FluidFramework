@@ -52,7 +52,7 @@ describe("kafka-service", () => {
 
             it("Should process all pending messages prior to stopping", async () => {
                 const testPartition = new Partition(0, testFactory, testConsumer, testConfig);
-                let messageCount = 10;
+                const messageCount = 10;
                 for (let i = 0; i < messageCount; i++) {
                     testPartition.process(kafkaMessageFactory.sequenceMessage({}, "test"));
                 }
@@ -93,7 +93,7 @@ describe("kafka-service", () => {
                 const verifyP = verifyClose(testPartition, closeError, closeRestart);
 
                 // Send off a sequence of messages
-                let messageCount = 10;
+                const messageCount = 10;
                 for (let i = 0; i < messageCount; i++) {
                     testPartition.process(kafkaMessageFactory.sequenceMessage({}, "test"));
                 }

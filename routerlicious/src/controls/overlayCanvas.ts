@@ -76,11 +76,11 @@ export class DrawingContext {
     // store instructions used to render itself? i.e. the total path? Or defer to someone else to actually
     // do the re-render with a context?
     public drawStroke(current: types.IOperation) {
-        let type = types.getActionType(current);
+        const type = types.getActionType(current);
         let shapes: IShape[];
 
-        let currentAction = types.getStylusAction(current);
-        let previousAction = types.getStylusAction(this.lastOperation || current);
+        const currentAction = types.getStylusAction(current);
+        const previousAction = types.getStylusAction(this.lastOperation || current);
 
         switch (type) {
             case types.ActionType.StylusDown:
@@ -105,7 +105,7 @@ export class DrawingContext {
         if (shapes) {
             // Update canvas bounds
             let unionedBounds: ui.Rectangle;
-            for (let shape of shapes) {
+            for (const shape of shapes) {
                 const bounds = shape.getBounds();
                 if (!unionedBounds) {
                     unionedBounds = bounds;
@@ -117,7 +117,7 @@ export class DrawingContext {
             this.ensureCanvas(unionedBounds);
 
             this.context.fillStyle = ui.toColorStringNoAlpha(this.pen.color);
-            for (let shape of shapes) {
+            for (const shape of shapes) {
                 this.context.beginPath();
                 shape.render(this.context, this.offset);
                 this.context.closePath();
@@ -193,12 +193,12 @@ export class DrawingContext {
         pen: types.IPen,
         circleInclusive: SegmentCircleInclusive): IShape[] {
 
-        let dirVector = new ui.Vector(
+        const dirVector = new ui.Vector(
             endPoint.point.x - startPoint.point.x,
             endPoint.point.y - startPoint.point.y);
-        let len = dirVector.length();
+        const len = dirVector.length();
 
-        let shapes = new Array<IShape>();
+        const shapes = new Array<IShape>();
         let trapezoidP0: ui.IPoint;
         let trapezoidP1: ui.IPoint;
         let trapezoidP2: ui.IPoint;
@@ -206,12 +206,12 @@ export class DrawingContext {
         let normalizedLateralVector: ui.IVector;
 
         // Scale by a power curve to trend towards thicker values
-        let widthAtStart = pen.thickness * Math.pow(startPoint.pressure, 0.5) / 2;
-        let widthAtEnd = pen.thickness * Math.pow(endPoint.pressure, 0.5) / 2;
+        const widthAtStart = pen.thickness * Math.pow(startPoint.pressure, 0.5) / 2;
+        const widthAtEnd = pen.thickness * Math.pow(endPoint.pressure, 0.5) / 2;
 
         // Just draws a circle on small values??
         if (len + Math.min(widthAtStart, widthAtEnd) <= Math.max(widthAtStart, widthAtEnd)) {
-            let center = widthAtStart >= widthAtEnd ? startPoint : endPoint;
+            const center = widthAtStart >= widthAtEnd ? startPoint : endPoint;
             shapes.push(new Circle({ x: center.point.x, y: center.point.y }, widthAtEnd));
             return shapes;
         }
@@ -260,7 +260,7 @@ export class DrawingContext {
                 endPoint.point.y + widthAtEnd * normalizedLateralVector.y);
         }
 
-        let polygon = new Polygon([trapezoidP0, trapezoidP3, trapezoidP2, trapezoidP1]);
+        const polygon = new Polygon([trapezoidP0, trapezoidP3, trapezoidP2, trapezoidP1]);
         shapes.push(polygon);
 
         switch (circleInclusive) {
@@ -463,7 +463,7 @@ export class OverlayCanvas extends ui.Component {
     private handlePointerDown(evt: PointerEvent) {
         // Only support pen events
         if (evt.pointerType === "pen" || (evt.pointerType === "mouse" && evt.button === 0)) {
-            let translatedPoint = this.translatePoint(this.element, evt);
+            const translatedPoint = this.translatePoint(this.element, evt);
             this.pointsToRecognize.push(translatedPoint);
 
             // Create a new layer if doesn't already exist
@@ -483,7 +483,7 @@ export class OverlayCanvas extends ui.Component {
             this.activePointerId = evt.pointerId;
             this.element.setPointerCapture(this.activePointerId);
 
-            let delta = new types.Delta().stylusDown(
+            const delta = new types.Delta().stylusDown(
                 this.translateToLayer(translatedPoint, this.activeLayer),
                 evt.pressure,
                 this.activePen);
@@ -496,9 +496,9 @@ export class OverlayCanvas extends ui.Component {
 
     private handlePointerMove(evt: PointerEvent) {
         if (evt.pointerId === this.activePointerId) {
-            let translatedPoint = this.translatePoint(this.element, evt);
+            const translatedPoint = this.translatePoint(this.element, evt);
             this.pointsToRecognize.push(translatedPoint);
-            let delta = new types.Delta().stylusMove(
+            const delta = new types.Delta().stylusMove(
                 this.translateToLayer(translatedPoint, this.activeLayer),
                 evt.pressure,
                 this.currentStylusActionId);
@@ -512,11 +512,11 @@ export class OverlayCanvas extends ui.Component {
 
     private handlePointerUp(evt: PointerEvent) {
         if (evt.pointerId === this.activePointerId) {
-            let translatedPoint = this.translatePoint(this.element, evt);
+            const translatedPoint = this.translatePoint(this.element, evt);
             this.pointsToRecognize.push(translatedPoint);
             evt.returnValue = false;
 
-            let delta = new types.Delta().stylusUp(
+            const delta = new types.Delta().stylusUp(
                 this.translateToLayer(translatedPoint, this.activeLayer),
                 evt.pressure,
                 this.currentStylusActionId);

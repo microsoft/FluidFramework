@@ -104,7 +104,7 @@ export class ResumeIntelligentSerivce implements IIntelligentService {
         client.onDeviceMethod(
             "writeLine",
             (request, response) => {
-                const payload = (<any> request.payload) as IResumeResponse;
+                const payload = (request.payload as any) as IResumeResponse;
 
                 response.send(200, "Input was written to log.", (err) => {
                     if (err) {
