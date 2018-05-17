@@ -30,6 +30,12 @@ export async function initialize(id: string, version: resources.ICommit, token: 
     const root = await doc.getRoot().getView();
 
     const canvasDiv = document.createElement("div");
+    if (!doc.existing) {
+        root.set("ink", doc.createStream());
+    } else {
+        await root.wait("ink");
+    }
+
     const canvas = new controls.FlexView(canvasDiv, doc, root);
     host.attach(canvas);
 }

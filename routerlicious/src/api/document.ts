@@ -188,7 +188,7 @@ export class Document extends EventEmitter implements api.IDocument {
     private loaded = false;
 
     public get clientId(): string {
-        return this._deltaManager.clientId;
+        return this._deltaManager ? this._deltaManager.clientId : "disconnected";
     }
 
     public get id(): string {
@@ -415,7 +415,7 @@ export class Document extends EventEmitter implements api.IDocument {
         // ... begin the connection process to the delta stream
         let connectResult: IConnectResult = connect
             ? this.connect(headerP)
-            : { detailsP: Promise.reject("No details since not connected"), handlerAttachedP: Promise.resolve() };
+            : { detailsP: Promise.resolve(null), handlerAttachedP: Promise.resolve() };
 
         // Wait for all the loading promises to finish
         return Promise
@@ -435,7 +435,7 @@ export class Document extends EventEmitter implements api.IDocument {
                 // the initial details
                 if (version) {
                     this._existing = true;
-                    this._parentBranch = header.attributes.branch;
+                    this._parentBranch = header.attributes.branch !== this.id ? header.attributes.branch : null;
                 } else {
                     const details = await connectResult.detailsP;
                     this._existing = details.existing;

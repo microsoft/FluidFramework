@@ -32,18 +32,18 @@ async function getInsights(map: types.IMap, id: string): Promise<types.IMap> {
 }
 
 async function addTranslation(document: API.Document, id: string, language: string): Promise<void> {
+    // Create the translations map
+    const insights = await document.getRoot().wait<types.IMap>("insights");
+    const view = await (await insights.wait<types.IMap>(id)).getView();
+    if (!document.existing) {
+        view.set("translations", undefined, DistributedMap.DistributedSetValueType.Name);
+    }
+
     if (!language) {
         return;
     }
 
-    const insights = await document.getRoot().wait<types.IMap>("insights");
-    const view = await (await insights.wait<types.IMap>(id)).getView();
-
-    if (!view.has("translations")) {
-        view.set("translations", undefined, DistributedMap.DistributedSetValueType.Name);
-    }
-
-    const translations = view.get<DistributedMap.DistributedSet<string>>("translations");
+    const translations = await view.wait<DistributedMap.DistributedSet<string>>("translations");
     translations.add(language);
 }
 

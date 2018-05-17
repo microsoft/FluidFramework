@@ -252,6 +252,7 @@ export async function typeFile(
     fileText: string,
     intervalTime: number,
     writers: number,
+    documentToken: string,
     metricsToken: string,
     scribeCallback: ScribeMetricsCallback): Promise<IScribeMetrics> {
 
@@ -308,11 +309,11 @@ export async function typeFile(
         let ssList: SharedString[] = [ss];
 
         for (let i = 1; i < writers; i++ ) {
-            docList.push(await api.load(doc.id));
+            docList.push(await api.load(doc.id, { token: documentToken }));
             ssList.push(await docList[i].getRoot().get("text") as SharedString);
             author = {
                 ackCounter: new Counter(),
-                doc: await api.load(doc.id),
+                doc: await api.load(doc.id, { token: documentToken }),
                 latencyCounter: new Counter(),
                 metrics: clone(m),
                 pingCounter: new Counter(),
