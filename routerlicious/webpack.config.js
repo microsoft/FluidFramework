@@ -5,16 +5,12 @@ const prod = require('./webpack.prod.js');
 const merge = require('webpack-merge');
 const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 
-const SpeedMeasurePlugin = require("speed-measure-webpack-plugin");
-const smp = new SpeedMeasurePlugin();
-
 module.exports = env => {
     let entry = getEntry(env);
     let prod_target = (env && env.target)
 
     let typeCheckingCores = 1;
-    // smp.wrap(
-    return smp.wrap(merge((prod_target ? prod : dev), {
+    return merge((prod_target ? prod : dev), {
         entry,
         devtool: 'source-map',    
         resolve: {
@@ -92,7 +88,7 @@ module.exports = env => {
             }),
         ]
     }
-))};
+)};
 
 function getEntry(env) {    
     let entry;
