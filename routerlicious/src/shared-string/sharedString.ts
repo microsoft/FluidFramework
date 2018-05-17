@@ -408,6 +408,10 @@ export class SharedString extends CollaborativeMap {
         return;
     }
 
+    protected readyContent(): Promise<void> {
+        return this.loaded;
+    }
+
     private submitIfAttached(message: any) {
         if (this.isLocal()) {
             return;
@@ -498,8 +502,8 @@ export class SharedString extends CollaborativeMap {
             originBranch,
             services).then(
                 () => {
-                    this.loadFinished();
                     this.initializeIntervalCollections();
+                    this.loadFinished();
                 },
                 (error) => {
                     this.loadFinished(error);

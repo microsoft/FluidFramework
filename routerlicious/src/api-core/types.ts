@@ -60,6 +60,12 @@ export interface ICollaborativeObject {
     snapshot(): storage.ITree;
 
     /**
+     * Returns a promise indicating whether or not the distributed data structure is ready to process
+     * incoming messages.
+     */
+    ready(): Promise<void>;
+
+    /**
      * Transforms the given message relative to the provided sequence number
      */
     transform(message: protocol.IObjectMessage, sequenceNumber: number): protocol.IObjectMessage;

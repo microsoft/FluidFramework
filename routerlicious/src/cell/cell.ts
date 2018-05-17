@@ -103,6 +103,10 @@ export class Cell extends api.CollaborativeObject implements ICell {
         this.submitIfAttached(op);
     }
 
+    public ready(): Promise<void> {
+        return Promise.resolve();
+    }
+
     /**
      * Returns whether cell is empty or not.
      */

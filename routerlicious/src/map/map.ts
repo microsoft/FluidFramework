@@ -130,6 +130,10 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
         return Promise.resolve(this.view.clear());
     }
 
+    public ready(): Promise<void> {
+        return this.readyContent();
+    }
+
     public snapshot(): api.ITree {
         const tree: api.ITree = {
             entries: [
@@ -237,6 +241,10 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
         listener: (changed: IValueChanged, local: boolean, op: api.ISequencedObjectMessage) => void): this;
     public on(event: string | symbol, listener: (...args: any[]) => void): this {
         return super.on(event, listener);
+    }
+
+    protected readyContent(): Promise<void> {
+        return Promise.resolve();
     }
 
     protected onDisconnect() {

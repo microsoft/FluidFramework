@@ -47,6 +47,8 @@ export abstract class CollaborativeObject extends EventEmitter implements IColla
         };
     }
 
+    public abstract ready(): Promise<void>;
+
     /**
      * A collaborative object, after construction, can either be loaded in the case that it is already part of
      * a collaborative document. Or later attached if it is being newly added.

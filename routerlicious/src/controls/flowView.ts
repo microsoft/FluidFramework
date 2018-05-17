@@ -4371,7 +4371,14 @@ export class FlowView extends ui.Component {
         });
     }
 
-    public loadFinished(clockStart = 0) {
+    public async loadFinished(clockStart = 0) {
+        // Work around a race condition with multiple shared strings trying to create the interval
+        // collections at the same time
+        if (this.collabDocument.existing) {
+            const intervalCollections = this.sharedString.getIntervalCollections();
+            await Promise.all([intervalCollections.wait("bookmarks"), intervalCollections.wait("comments")]);
+        }
+
         this.bookmarks = this.sharedString.getSharedIntervalCollection("bookmarks");
         let onDeserialize = (interval) => {
             if (interval.properties && interval.properties["story"]) {
