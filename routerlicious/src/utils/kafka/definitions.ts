@@ -1,3 +1,4 @@
+// tslint:disable:ban-types
 import { Deferred } from "../../core-utils";
 
 export interface IMessage {

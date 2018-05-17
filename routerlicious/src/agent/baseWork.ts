@@ -1,3 +1,4 @@
+// tslint:disable:ban-types
 import { EventEmitter } from "events";
 import { api, core } from "../client-api";
 

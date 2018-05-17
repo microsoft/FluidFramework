@@ -1,3 +1,4 @@
+// tslint:disable:ban-types
 import { EventEmitter } from "events";
 import * as kafkaNode from "kafka-node";
 import * as util from "util";

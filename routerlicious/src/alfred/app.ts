@@ -1,3 +1,4 @@
+// tslint:disable:ban-types
 import * as bodyParser from "body-parser";
 import * as compression from "compression";
 import * as connectRedis from "connect-redis";

@@ -1,3 +1,4 @@
+// tslint:disable:ban-types
 import { EventEmitter } from "events";
 import * as http from "http";
 import * as _ from "lodash";

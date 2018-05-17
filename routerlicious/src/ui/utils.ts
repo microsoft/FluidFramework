@@ -1,3 +1,5 @@
+// tslint:disable:ban-types
+
 // Utility to fetch elements by ID
 export function id(elementId: string): HTMLElement {
   return (document.getElementById(elementId)) as HTMLElement;

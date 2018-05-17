@@ -1,3 +1,4 @@
+// tslint:disable:ban-types
 import * as telegraf from "telegrafjs";
 import { core } from "../client-api";
 

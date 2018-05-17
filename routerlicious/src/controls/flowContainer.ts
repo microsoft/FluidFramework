@@ -1,3 +1,4 @@
+// tslint:disable:ban-types
 import { api, MergeTree, types } from "../client-api";
 import { SharedString } from "../shared-string";
 import * as ui from "../ui";

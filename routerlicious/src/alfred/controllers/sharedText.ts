@@ -1,3 +1,4 @@
+// tslint:disable:ban-types
 import * as resources from "gitresources";
 import performanceNow = require("performance-now");
 import * as request from "request";

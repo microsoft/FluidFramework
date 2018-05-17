@@ -1,4 +1,5 @@
 // tslint:disable:no-bitwise whitespace align switch-default no-string-literal
+// tslint:disable:ban-types
 import performanceNow = require("performance-now");
 import {
     api, CharacterCodes, core, MergeTree,

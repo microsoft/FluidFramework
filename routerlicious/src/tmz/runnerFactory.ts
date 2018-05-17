@@ -1,3 +1,4 @@
+// tslint:disable:ban-types
 import * as _ from "lodash";
 import { Provider } from "nconf";
 import * as redis from "redis";

@@ -1,3 +1,4 @@
+// tslint:disable:ban-types
 import * as kafkaNode from "kafka-node";
 import * as util from "util";
 import { debug } from "../debug";
@@ -20,7 +21,7 @@ export class KafkaNodeProducer extends Producer implements IProducer {
         const producer = this.producer as kafkaNode.Producer;
         const client = this.client as kafkaNode.Client;
 
-        await util.promisify(((callback) => producer.close(callback)) as Function)();
+        await util.promisify(((callback) => producer.close(callback)) as (Function))();
         await util.promisify(((callback) => client.close(callback)) as Function)();
     }
 

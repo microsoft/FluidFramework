@@ -1,3 +1,4 @@
+// tslint:disable:ban-types
 import { EventEmitter } from "events";
 import * as redis from "redis";
 import * as socketIoEmitter from "socket.io-emitter";

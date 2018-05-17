@@ -1,3 +1,4 @@
+// tslint:disable:ban-types
 import * as api from "../api-core";
 import { SharedString } from "./sharedString";
 

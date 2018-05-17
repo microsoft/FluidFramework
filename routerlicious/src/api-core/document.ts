@@ -1,3 +1,4 @@
+// tslint:disable:ban-types
 import { EventEmitter } from "events";
 import { IEnvelope, ILatencyMessage, IObjectMessage, ISequencedObjectMessage } from "./protocol";
 import { ITenantUser } from "./tenant";

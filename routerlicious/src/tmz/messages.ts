@@ -1,3 +1,4 @@
+// tslint:disable:ban-types
 import * as socketStorage from "../socket-storage";
 import { StateManager} from "./stateManager";
 
