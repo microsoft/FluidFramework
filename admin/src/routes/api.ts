@@ -1,13 +1,20 @@
+import * as utils from "@prague/routerlicious/dist/utils";
 import { Response, Router } from "express";
-import * as core from "../db";
+import { Provider } from "nconf";
 import { ITenantInput } from "../definitions";
 import { TenantManager } from "./tenantManager";
 
-export function create(config: any, mongoManager: core.MongoManager, userCollectionName: string,
+export function create(config: Provider, mongoManager: utils.MongoManager, userCollectionName: string,
                        orgCollectionName: string, tenantCollectionName: string): Router {
     const router: Router = Router();
-    const manager = new TenantManager(mongoManager, userCollectionName, orgCollectionName,
-                                      tenantCollectionName, config.riddlerUrl, config.gitUrl, config.cobaltUrl);
+    const manager = new TenantManager(
+        mongoManager,
+        userCollectionName,
+        orgCollectionName,
+        tenantCollectionName,
+        config.get("app:riddlerUrl"),
+        config.get("app:gitUrl"),
+        config.get("app:cobaltUrl"));
 
     function returnResponse<T>(resultP: Promise<T>, response: Response) {
         resultP.then(

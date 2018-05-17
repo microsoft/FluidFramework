@@ -1,21 +1,5 @@
 {
     "app": {
-        "logger": {
-            "colorize": true,
-            "morganFormat": "dev",
-            "json": false,
-            "level": "info",
-            "timestamp": true,
-            "label": "winston"
-        },
-        "mongo": {
-            "endpoint": "mongodb://mongodb:27017",
-            "collectionNames": {
-                "tenants": "tenantCollection",
-                "users": "userCollection",
-                "orgs": "orgCollection"
-            }
-        },
         "riddlerUrl": "http://riddler:5000",
         "gitUrl": "http://gitrest:3000",
         "cobaltUrl": "http://cobalt",
@@ -50,5 +34,36 @@
         "useMongoDBSessionStore": false,
         "databaseUri": null,
         "mongoDBSessionMaxAge": 14400
+    },
+    "logger": {
+        "colorize": true,
+        "morganFormat": "dev",
+        "json": false,
+        "level": "info",
+        "timestamp": true,
+        "label": "winston"
+    },
+    "mongo": {
+        "endpoint": "mongodb://mongodb:27017",
+        "collectionNames": {
+            "tenants": "tenantCollection",
+            "users": "userCollection",
+            "orgs": "orgCollection"
+        }
+    },
+    "kafka": {
+        "lib": {
+            "name": "kafka-node",
+            "endpoint": "zookeeper:2181"
+        }
+    },
+    "system": {
+        "topics": {
+            "send": "deltas"
+        }
+    },
+    "error": {
+        "track": false,
+        "endpoint" : "https://7235bc222189462ca65fa1a38591f96b:74acc3b4610f47a38a50d1bcbfcd6655@sentry.wu2.prague.office-int.com/2"
     }
 }

@@ -1,13 +1,14 @@
+import * as utils from "@prague/routerlicious/dist/utils";
 import { Router } from "express";
+import { Provider } from "nconf";
 import * as passport from "passport";
 import * as winston from "winston";
-import * as core from "../db";
 import { defaultPartials } from "./partials";
 import { TenantManager } from "./tenantManager";
 
 export function create(
-    config: any,
-    mongoManager: core.MongoManager,
+    config: Provider,
+    mongoManager: utils.MongoManager,
     userCollectionName: string,
     orgCollectionName: string,
     tenantCollectionName: string): Router {
@@ -18,9 +19,9 @@ export function create(
         userCollectionName,
         orgCollectionName,
         tenantCollectionName,
-        config.riddlerUrl,
-        config.gitUrl,
-        config.cobaltUrl);
+        config.get("app:riddlerUrl"),
+        config.get("app:gitUrl"),
+        config.get("app:cobaltUrl"));
 
     /**
      * Route to retrieve the home page for the app

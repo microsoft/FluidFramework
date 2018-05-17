@@ -1,3 +1,4 @@
+import * as utils from "@prague/routerlicious/dist/utils";
 import * as bodyParser from "body-parser";
 import * as compression from "compression";
 import * as cookieParser from "cookie-parser";
@@ -7,6 +8,7 @@ import * as expressSession from "express-session";
 import * as fs from "fs";
 import * as methodOverride from "method-override";
 import * as morgan from "morgan";
+import { Provider } from "nconf";
 import * as passport from "passport";
 import * as passportAzure from "passport-azure-ad";
 import * as path from "path";
@@ -90,9 +92,9 @@ const stream = split().on("data", (message) => {
     winston.info(message);
 });
 
-export function create(appConfig: any, aadConfig: any) {
+export function create(config: Provider, mongoManager: utils.MongoManager) {
     // Set up passport for AAD auth.
-    const creds = aadConfig.creds;
+    const creds = config.get("aad:creds");
     passport.use(new OIDCStrategy({
         allowHttpForRedirectUrl: creds.allowHttpForRedirectUrl,
         clientID: creds.clientID,
@@ -139,7 +141,7 @@ export function create(appConfig: any, aadConfig: any) {
 
     app.use(favicon(path.join(__dirname, "../public", "favicon.ico")));
     // TODO we probably want to switch morgan to use the common format in prod
-    app.use(morgan(appConfig.logger.morganFormat, { stream }));
+    app.use(morgan(config.get("logger:morganFormat"), { stream }));
     app.use(bodyParser.json());
     app.use(bodyParser.urlencoded({ extended: false }));
 
@@ -175,7 +177,7 @@ export function create(appConfig: any, aadConfig: any) {
     app.use(passport.initialize());
     app.use(passport.session());
 
-    const routes = appRoutes.create(appConfig);
+    const routes = appRoutes.create(config, mongoManager);
     app.use("/api", routes.api);
     app.use("/", routes.home);
 
