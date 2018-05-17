@@ -14,7 +14,7 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
-    "@prague/routerlicious": "^0.1.2457",
+    "@prague/routerlicious": "^0.1.2475",
     "antd": "^3.2.3",
     "body-parser": "^1.18.2",
     "compression": "^1.7.1",
@@ -25,7 +25,6 @@
     "express-session": "^1.15.6",
     "hjs": "0.0.6",
     "jquery": "^3.3.1",
-    "kafka-rest": "0.0.5",
     "less": "^2.7.3",
     "method-override": "^2.3.10",
     "mongodb": "^2.2.30",
