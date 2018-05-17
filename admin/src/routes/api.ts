@@ -4,14 +4,13 @@ import { Provider } from "nconf";
 import { ITenantInput } from "../definitions";
 import { TenantManager } from "./tenantManager";
 
-export function create(config: Provider, mongoManager: utils.MongoManager, userCollectionName: string,
-                       orgCollectionName: string, tenantCollectionName: string): Router {
+export function create(config: Provider, mongoManager: utils.MongoManager, ensureLoggedIn: any): Router {
     const router: Router = Router();
     const manager = new TenantManager(
         mongoManager,
-        userCollectionName,
-        orgCollectionName,
-        tenantCollectionName,
+        config.get("mongo:collectionNames:users"),
+        config.get("mongo:collectionNames:orgs"),
+        config.get("mongo:collectionNames:tenants"),
         config.get("app:riddlerUrl"),
         config.get("app:gitUrl"),
         config.get("app:cobaltUrl"));
@@ -25,16 +24,16 @@ export function create(config: Provider, mongoManager: utils.MongoManager, userC
     /**
      * Creates a new tenant
      */
-    router.post("/tenants", (request, response) => {
+    router.post("/tenants", ensureLoggedIn(), (request, response) => {
         const tenantInput = request.body as ITenantInput;
-        const tenantP = manager.addTenant(request.user.oid, tenantInput);
+        const tenantP = manager.addTenant(request.user.toString(), tenantInput);
         returnResponse(tenantP, response);
     });
 
     /**
      * Creates an existing tenant
      */
-    router.delete("/tenants/:id", (request, response) => {
+    router.delete("/tenants/:id", ensureLoggedIn(), (request, response) => {
         const tenantP = manager.deleteTenant(request.params.id);
         returnResponse(tenantP, response);
     });

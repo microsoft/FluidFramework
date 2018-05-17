@@ -1,4 +1,5 @@
 import * as utils from "@prague/routerlicious/dist/utils";
+import * as ensureAuth from "connect-ensure-login";
 import { Router } from "express";
 import { Provider } from "nconf";
 import * as api from "./api";
@@ -10,14 +11,8 @@ export interface IRoutes {
 }
 
 export function create(config: Provider, mongoManager: utils.MongoManager): IRoutes {
-
-    // Database connection
-    const tenantCollectionName = config.get("mongo:collectionNames:tenants");
-    const userCollectionName = config.get("mongo:collectionNames:users");
-    const orgCollectionName = config.get("mongo:collectionNames:orgs");
-
     return {
-        api: api.create(config, mongoManager, userCollectionName, orgCollectionName, tenantCollectionName),
-        home: home.create(config, mongoManager, userCollectionName, orgCollectionName, tenantCollectionName),
+        api: api.create(config, mongoManager, ensureAuth.ensureLoggedIn),
+        home: home.create(config, mongoManager, ensureAuth.ensureLoggedIn),
     };
 }

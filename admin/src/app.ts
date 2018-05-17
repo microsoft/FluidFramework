@@ -1,32 +1,26 @@
 import * as utils from "@prague/routerlicious/dist/utils";
 import * as bodyParser from "body-parser";
 import * as compression from "compression";
+import * as connectRedis from "connect-redis";
 import * as cookieParser from "cookie-parser";
 import * as express from "express";
 import { Express } from "express";
 import * as expressSession from "express-session";
 import * as fs from "fs";
-import * as methodOverride from "method-override";
 import * as morgan from "morgan";
 import { Provider } from "nconf";
 import * as passport from "passport";
-import * as passportAzure from "passport-azure-ad";
+import * as passportOpenIdConnect from "passport-openidconnect";
 import * as path from "path";
+import * as redis from "redis";
 import * as favicon from "serve-favicon";
 import split = require("split");
 import * as expiry from "static-expiry";
 import * as winston from "winston";
 import * as appRoutes from "./routes";
 
-interface IUser {
-    oid: any;
-}
-
 // Base endpoint to expose static files at
 const staticFilesEndpoint = "/public";
-
-// Static cache to help map from full to minified files
-const staticMinCache: { [key: string]: string } = {};
 
 // Helper function to translate from a static files URL to the path to find the file
 // relative to the static assets directory
@@ -60,31 +54,6 @@ function translateStaticUrl(
     return staticFilesEndpoint + furl(cache[local]);
 }
 
-const OIDCStrategy = passportAzure.OIDCStrategy;
-
-passport.serializeUser((user: IUser, done) => {
-    done(null, user.oid);
-});
-
-passport.deserializeUser((oid: any, done) => {
-    findByOid(oid, (err, user: IUser) => {
-        done(err, user);
-    });
-});
-
-// array to hold logged in users
-const users: IUser[] = [];
-
-const findByOid = (oid: any, fn) => {
-    for (let i = 0, len = users.length; i < len; i++) {
-        const user = users[i];
-        if (user.oid === oid) {
-            return fn(null, user);
-        }
-    }
-    return fn(null, null);
-};
-
 /**
  * Basic stream logging interface for libraries that require a stream to pipe output to (re: Morgan)
  */
@@ -93,68 +62,78 @@ const stream = split().on("data", (message) => {
 });
 
 export function create(config: Provider, mongoManager: utils.MongoManager) {
-    // Set up passport for AAD auth.
-    const creds = config.get("aad:creds");
-    passport.use(new OIDCStrategy({
-        allowHttpForRedirectUrl: creds.allowHttpForRedirectUrl,
-        clientID: creds.clientID,
-        clientSecret: creds.clientSecret,
-        clockSkew: creds.clockSkew,
-        cookieEncryptionKeys: creds.cookieEncryptionKeys,
-        identityMetadata: creds.identityMetadata,
-        isB2C: creds.isB2C,
-        issuer: creds.issuer,
-        loggingLevel: creds.loggingLevel,
-        nonceLifetime: creds.nonceLifetime,
-        nonceMaxAmount: creds.nonceMaxAmount,
-        passReqToCallback: creds.passReqToCallback,
-        redirectUrl: creds.redirectUrl,
-        responseMode: creds.responseMode,
-        responseType: creds.responseType,
-        scope: creds.scope,
-        useCookieInsteadOfSession: creds.useCookieInsteadOfSession,
-        validateIssuer: creds.validateIssuer,
-      },
-      (iss, sub, profile, accessToken, refreshToken, done) => {
-        if (!profile.oid) {
-          return done(new Error("No oid found"), null);
-        }
-        // asynchronous verification, for effect...
-        process.nextTick(() => {
-          findByOid(profile.oid, (err, user) => {
-            if (err) {
-              return done(err);
-            }
-            if (!user) {
-              // "Auto-registration"
-              users.push(profile);
-              return done(null, profile);
-            }
-            return done(null, user);
-          });
-        });
-      },
-    ));
+
+    // Create a redis session store.
+    const redisStore = connectRedis(expressSession);
+    const redisHost = config.get("redis:host");
+    const redisPort = config.get("redis:port");
+    const redisPass = config.get("redis:pass");
+    const options: any = { auth_pass: redisPass };
+    if (config.get("redis:tls")) {
+        options.tls = {
+            servername: redisHost,
+        };
+    }
+    const redisClient = redis.createClient(redisPort, redisHost, options);
+    const sessionStore = new redisStore({ client: redisClient });
+
+    const staticMinCache: { [key: string]: string } = {};
+
+    const microsoftConfiguration = config.get("login:microsoft");
+    passport.use(
+        new passportOpenIdConnect.Strategy({
+                authorizationURL: "https://login.microsoftonline.com/organizations/oauth2/v2.0/authorize",
+                callbackURL: "/auth/callback",
+                clientID: microsoftConfiguration.clientId,
+                clientSecret: microsoftConfiguration.secret,
+                issuer: "https://login.microsoftonline.com/72f988bf-86f1-41af-91ab-2d7cd011db47/v2.0",
+                passReqToCallback: true,
+                skipUserProfile: true,
+                tokenURL: "https://login.microsoftonline.com/organizations/oauth2/v2.0/token",
+            },
+            (token, tokenSecret, profile, cb) => {
+                return cb(null, profile);
+            },
+        ),
+    );
+
+    // Right now we simply pass through the entire stored user object to the session storage for that user.
+    // Ideally we should just serialize the oid and retrieve user info back from DB on deserialization.
+    passport.serializeUser((user: any, done) => {
+        done(null, user);
+    });
+
+    passport.deserializeUser((user: any, done) => {
+        done(null, user);
+    });
 
     // Express app configuration
     const app: Express = express();
 
-    app.use(favicon(path.join(__dirname, "../public", "favicon.ico")));
-    // TODO we probably want to switch morgan to use the common format in prod
-    app.use(morgan(config.get("logger:morganFormat"), { stream }));
-    app.use(bodyParser.json());
-    app.use(bodyParser.urlencoded({ extended: false }));
-
     // Running behind iisnode
     app.set("trust proxy", 1);
 
-    // View engine setup.
-    const viewPath = path.join(__dirname, "../views");
-    app.set("views", viewPath);
+    // view engine setup
+    app.set("views", path.join(__dirname, "../views"));
     app.set("view engine", "hjs");
 
     app.use(compression());
     app.use(favicon(path.join(__dirname, "../public", "favicon.ico")));
+    // TODO we probably want to switch morgan to use the common format in prod
+    app.use(morgan(config.get("logger:morganFormat"), { stream }));
+
+    app.use(cookieParser());
+    app.use(bodyParser.json({ limit: "50mb" }));
+    app.use(bodyParser.urlencoded({ limit: "50mb", extended: false }));
+    app.use(expressSession({
+        resave: true,
+        saveUninitialized: true,
+        secret: "bAq0XuQWqoAZzaAkQT5EXPCHBkeIEZqi",
+        store: sessionStore,
+    }));
+
+    app.use(passport.initialize());
+    app.use(passport.session());
 
     app.use(staticFilesEndpoint, expiry(app, { dir: path.join(__dirname, "../public") }));
     app.locals.hfurl = () => (value: string) => {
@@ -166,16 +145,15 @@ export function create(config: Provider, mongoManager: utils.MongoManager) {
     };
     app.use(staticFilesEndpoint, express.static(path.join(__dirname, "../public")));
 
-    app.use(methodOverride());
-    app.use(cookieParser());
-
-    // TODO (auth): Use MongoDB
-    app.use(expressSession({ secret: "keyboard cat", resave: true, saveUninitialized: false }));
-
-    // Initialize Passport!  Also use passport.session() middleware, to support
-    // persistent login sessions (recommended).
-    app.use(passport.initialize());
-    app.use(passport.session());
+    // The below is to check to make sure the session is available (redis could have gone down for instance) and if
+    // not return an error
+    app.use((request, response, next) => {
+        if (!request.session) {
+            return next(new Error("Session not available"));
+        } else {
+            next();     // otherwise continue
+        }
+    });
 
     const routes = appRoutes.create(config, mongoManager);
     app.use("/api", routes.api);
@@ -195,7 +173,7 @@ export function create(config: Provider, mongoManager: utils.MongoManager) {
     if (app.get("env") === "development") {
         app.use((err, req, res, next) => {
             res.status(err.status || 500);
-            res.json({
+            res.render("error", {
                 error: err,
                 message: err.message,
             });
@@ -206,7 +184,7 @@ export function create(config: Provider, mongoManager: utils.MongoManager) {
     // no stacktraces leaked to user
     app.use((err, req, res, next) => {
         res.status(err.status || 500);
-        res.json({
+        res.render("error", {
             error: {},
             message: err.message,
         });
