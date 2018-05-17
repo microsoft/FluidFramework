@@ -15,7 +15,7 @@
             var config = {{{ config }}};
             var version = {{{ version }}};
             var token = "{{ token }}";
-            prague_controller.cell.load("{{ documentId }}", version, token, config);
+            controller.cell.load("{{ documentId }}", version, token, config);
         </script>
     {{/scripts}}
 {{/layout}}
