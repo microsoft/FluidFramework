@@ -1,6 +1,5 @@
 import * as assert from "assert";
 import { EventEmitter } from "events";
-import { ICommit } from "gitresources";
 import { ValueType } from "../map/definitions";
 import { debug } from "./debug";
 import { ConnectionState, IDistributedObjectServices, IDocument, IObjectStorageService } from "./document";
@@ -54,14 +53,20 @@ export abstract class CollaborativeObject extends EventEmitter implements IColla
      */
     public async load(
         sequenceNumber: number,
-        version: ICommit,
+        minimumSequenceNumber: number,
+        messages: ISequencedObjectMessage[],
         headerOrigin: string,
         services: IDistributedObjectServices): Promise<void> {
 
         this._sequenceNumber = sequenceNumber;
         this.services = services;
 
-        await this.loadCore(version, headerOrigin, services.objectStorage);
+        await this.loadCore(
+            sequenceNumber,
+            minimumSequenceNumber,
+            messages,
+            headerOrigin,
+            services.objectStorage);
         this.attachDeltaHandler();
     }
 
@@ -117,13 +122,13 @@ export abstract class CollaborativeObject extends EventEmitter implements IColla
      */
     public abstract transform(message: IObjectMessage, sequenceNumber: number): IObjectMessage;
 
-    public abstract loadComplete(): Promise<void>;
-
     /**
      * Allows the distributed data type to perform custom loading
      */
     protected abstract loadCore(
-        version: ICommit,
+        sequenceNumber: number,
+        minimumSequenceNumber: number,
+        messages: ISequencedObjectMessage[],
         headerOrigin: string,
         services: IObjectStorageService): Promise<void>;
 

@@ -56,6 +56,7 @@ async function conductor(
     intervalTime,
     writers,
     processes,
+    documentToken: string,
     metricsToken: string,
     callback): Promise<author.IScribeMetrics> {
 
@@ -64,7 +65,15 @@ async function conductor(
     let chunks = author.normalizeText(text).split("\n");
 
     if (processes === 1) {
-        return await author.typeFile(document, sharedString, text, intervalTime, writers, metricsToken, callback);
+        return await author.typeFile(
+            document,
+            sharedString,
+            text,
+            intervalTime,
+            writers,
+            documentToken,
+            metricsToken,
+            callback);
     }
 
     let interval = setInterval(() => {
@@ -93,6 +102,7 @@ export async function create(
     // p-start might break something
     sharedString.insertMarker(0, MergeTree.ReferenceType.Tile, {[MergeTree.reservedTileLabelsKey]: ["pg"] });
     root.set("text", sharedString);
+    root.set("ink", document.createMap());
 
     await root.set("chunks", document.createMap());
 
@@ -111,10 +121,18 @@ export async function type(
     text: string,
     writers: number,
     processes: number,
+    documentToken: string,
     metricsToken: string,
     callback: author.ScribeMetricsCallback): Promise<author.IScribeMetrics> {
 
-    return conductor(text, intervalTime, writers, processes, metricsToken, callback);
+    return conductor(
+        text,
+        intervalTime,
+        writers,
+        processes,
+        documentToken,
+        metricsToken,
+        callback);
 }
 
 /**

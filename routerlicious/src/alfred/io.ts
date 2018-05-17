@@ -16,7 +16,9 @@ interface IDocumentUser {
 
     documentId: string;
 
-    user: api.IAuthenticatedUser;
+    user: api.ITenantUser;
+
+    permission: string;
 }
 
 export function register(
@@ -49,26 +51,18 @@ export function register(
         async function connectDocument(message: socketStorage.IConnect): Promise<socketStorage.IConnected> {
             const profiler = winston.startTimer();
 
-            // TODO I may need to keep the default tenant ID empty
-            // For backwards compatibility fill in tenant and token if they don't exist
-            message.tenantId = message.tenantId ? message.tenantId : defaultTenant.id;
-            const token = message.token
-                ? message.token
-                : utils.generateToken(defaultTenant.id, message.id, defaultTenant.key);
+            if (!message.token) {
+                return Promise.reject("Must provide an authorization token");
+            }
+
+            const token = message.token;
 
             // Validate token signature and claims
-            const claims = jwt.decode(token) as utils.ITokenClaims;
+            const claims = jwt.decode(token) as api.ITokenClaims;
             if (claims.documentId !== message.id || claims.tenantId !== message.tenantId) {
                 return Promise.reject("Invalid claims");
             }
             await tenantManager.verifyToken(claims.tenantId, token);
-
-            // Craft the user details
-            const authedUser: api.IAuthenticatedUser = {
-                permission: claims.permission,
-                tenantid: claims.tenantId,
-                user: claims.user,
-            };
 
             connectionProfiler.done(`Client has requested to load ${message.id}`);
             const documentDetails = await storage.getOrCreateDocument(
@@ -87,8 +81,9 @@ export function register(
                 clientId,
                 {
                     documentId: message.id,
+                    permission: claims.permission,
                     tenantId: message.tenantId,
-                    user: authedUser,
+                    user: claims.user,
                 });
 
             // Broadcast the client connection message
@@ -105,7 +100,7 @@ export function register(
                 tenantId: message.tenantId,
                 timestamp: Date.now(),
                 type: core.RawOperationType,
-                user: authedUser,
+                user: claims.user,
             };
             sendAndTrack(rawMessage);
 
@@ -118,7 +113,7 @@ export function register(
                 clientId,
                 existing: documentDetails.existing,
                 parentBranch,
-                user: authedUser,
+                user: claims.user,
             };
             profiler.done(`Loaded ${message.id}`);
 

@@ -20,7 +20,7 @@ export class DocumentPartition {
 
         // default to the git tenant if not specified
         const clonedConfig = _.cloneDeep((config as any).get());
-        clonedConfig.tenantId = tenantId || "git";
+        clonedConfig.tenantId = tenantId;
         clonedConfig.documentId = documentId;
         const documentConfig = new Provider({}).defaults(clonedConfig).use("memory");
 

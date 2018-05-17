@@ -66,7 +66,7 @@ export class DocumentDeltaConnection implements api.IDocumentDeltaConnection {
         return this.details.parentBranch;
     }
 
-    public get user(): api.IAuthenticatedUser {
+    public get user(): api.ITenantUser {
         return this.details.user;
     }
 

@@ -1,4 +1,3 @@
-import * as resources from "gitresources";
 import * as api from "../api-core";
 import { IMap, IMapView, IValueChanged, IValueOperation, IValueType, SerializeFilter } from "../data-types";
 import { debug } from "./debug";
@@ -231,10 +230,6 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
         this.serializeFilter = filter;
     }
 
-    public async loadComplete(): Promise<void> {
-        return this.loadContentComplete();
-    }
-
     public on(event: "pre-op", listener: (op: api.ISequencedObjectMessage, local: boolean) => void): this;
     public on(event: "op", listener: (op: api.ISequencedObjectMessage, local: boolean) => void): this;
     public on(
@@ -273,7 +268,9 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
     }
 
     protected async loadCore(
-        version: resources.ICommit,
+        sequenceNumber: number,
+        minimumSequenceNumber: number,
+        messages: api.ISequencedObjectMessage[],
         headerOrigin: string,
         storage: api.IObjectStorageService) {
 
@@ -282,8 +279,15 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
         const data = header ? JSON.parse(Buffer.from(header, "base64").toString("utf-8")) : {};
         await this.view.populate(data);
 
+        const contentMessages = messages.filter((message) => !this.messageHandler.has(message.contents.type));
+
         const contentStorage = new ContentObjectStorage(storage);
-        await this.loadContent(version, headerOrigin, contentStorage);
+        await this.loadContent(
+            sequenceNumber,
+            minimumSequenceNumber,
+            contentMessages,
+            headerOrigin,
+            contentStorage);
     }
 
     protected initializeLocalCore() {
@@ -295,7 +299,9 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
     }
 
     protected async loadContent(
-        version: resources.ICommit,
+        sequenceNumber: number,
+        minimumSequenceNumber: number,
+        messages: api.ISequencedObjectMessage[],
         headerOrigin: string,
         services: api.IObjectStorageService): Promise<void> {
         return;
@@ -303,10 +309,6 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
 
     protected initializeContent() {
         return;
-    }
-
-    protected loadContentComplete(): Promise<void> {
-        return Promise.resolve();
     }
 
     protected prepareCore(message: api.ISequencedObjectMessage): Promise<any> {

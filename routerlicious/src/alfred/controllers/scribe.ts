@@ -205,6 +205,7 @@ export function initialize(
                 text,
                 authorCount,
                 1,
+                token,
                 metricsToken,
                 (metrics) => updateMetrics(metrics, ackProgressBar, typingProgressBar));
 
