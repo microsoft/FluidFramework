@@ -16,6 +16,7 @@ export interface IRowMarker extends MergeTree.Marker {
 export interface IColumnMarker extends MergeTree.Marker {
     column?: Column;
     columnId?: string;
+    indexInTable?: number;
 }
 
 export interface ICellMarker extends MergeTree.Marker {
@@ -369,10 +370,14 @@ export class Table {
     public rows = <Row[]>[];
     public logicalColumns = <Column[]>[];
     public gridColumns = <IColumnMarker[]>[];
+    public idToColumn = new Map<string, IColumnMarker>();
     constructor(public tableMarker: ITableMarker, public endTableMarker: ITableMarker) {
     }
 
     public addGridColumn(columnMarker: IColumnMarker) {
+        columnMarker.columnId = columnMarker.getId();
+        this.idToColumn.set(columnMarker.columnId, columnMarker);
+        columnMarker.indexInTable = this.gridColumns.length;
         this.gridColumns.push(columnMarker);
     }
 
@@ -519,7 +524,6 @@ export class Cell {
     public specWidth = 0;
     public renderedHeight: number;
     public div: HTMLDivElement;
-    public prevLive: Cell;
     public columnId: string;
     // TODO: update on typing in cell
     public emptyCell = false;
@@ -535,18 +539,13 @@ export class Cell {
 }
 
 function getEndCellMarker(mergeTree: MergeTree.MergeTree, cellMarker: ICellMarker) {
-    let localId = cellMarker.getLocalId();
-    if (localId) {
-        return <ICellMarker>mergeTree.getSegmentFromLocalId(endPrefix + localId);
-    } else {
-        let gloId = cellMarker.getId();
-        if (gloId) {
-            return <ICellMarker>mergeTree.getSegmentFromId(endPrefix + gloId);
-        }
+    let gloId = cellMarker.getId();
+    if (gloId) {
+        return <ICellMarker>mergeTree.getSegmentFromId(endPrefix + gloId);
     }
 }
 
-function parseCell(cellStartPos: number, sharedString: SharedString, columnOffset: number, fontInfo?: Paragraph.IFontInfo) {
+function parseCell(cellStartPos: number, sharedString: SharedString, fontInfo?: Paragraph.IFontInfo) {
     let markEmptyCells = false;
     let mergeTree = sharedString.client.mergeTree;
     let cellMarkerSegOff = mergeTree.getContainingSegment(cellStartPos, MergeTree.UniversalSequenceNumber,
@@ -618,7 +617,17 @@ function parseCell(cellStartPos: number, sharedString: SharedString, columnOffse
     return cellMarker;
 }
 
-function parseRow(rowStartPos: number, sharedString: SharedString, fontInfo?: Paragraph.IFontInfo) {
+function parseRow(rowStartPos: number, sharedString: SharedString, table: Table,
+    fontInfo?: Paragraph.IFontInfo) {
+    function columnCompare(a: Cell, b: Cell) {
+        let cma = table.idToColumn.get(a.columnId);
+        let cmb = table.idToColumn.get(b.columnId);
+        if (cma && cmb) {
+            return cma.indexInTable - cmb.indexInTable;
+        } else {
+            return 1;
+        }
+    }
     let mergeTree = sharedString.client.mergeTree;
     let rowMarkerSegOff = mergeTree.getContainingSegment(rowStartPos, MergeTree.UniversalSequenceNumber,
         sharedString.client.getClientId());
@@ -633,23 +642,29 @@ function parseRow(rowStartPos: number, sharedString: SharedString, fontInfo?: Pa
     let endRowPos = getOffset(sharedString, endRowMarker);
     rowMarker.row = new Row(rowMarker, endRowMarker);
     let nextPos = rowStartPos + rowMarker.cachedLength;
-    let columnOffset = 0;
-    let prevLive: Cell;
+    let rowColumns = MergeTree.createMap<Cell>();
     while (nextPos < endRowPos) {
-        let cellMarker = parseCell(nextPos, sharedString, columnOffset, fontInfo);
+        let cellMarker = parseCell(nextPos, sharedString, fontInfo);
         if (!cellMarker) {
             return undefined;
         }
+        // TODO: check for column id not in grid
         if (!cellIsMoribund(cellMarker)) {
-            rowMarker.row.minContentWidth += cellMarker.cell.minContentWidth;
-            rowMarker.row.cells.push(cellMarker.cell);
-            cellMarker.cell.prevLive = prevLive;
-            prevLive = cellMarker.cell;
+            let cellColumnId = cellMarker.properties["columnId"];
+            if (cellColumnId && rowColumns[cellColumnId]) {
+                let headCell = rowColumns[cellColumnId];
+                headCell.addAuxMarker(cellMarker);
+            } else {
+                rowMarker.row.minContentWidth += cellMarker.cell.minContentWidth;
+                rowMarker.row.cells.push(cellMarker.cell);
+                rowColumns[cellColumnId] = cellMarker.cell;
+            }
         }
         let endcellPos = getOffset(sharedString, cellMarker.cell.endMarker);
         nextPos = endcellPos + cellMarker.cell.endMarker.cachedLength;
-        columnOffset++;
     }
+    // TODO: do this only if table is a grid
+    rowMarker.row.cells.sort(columnCompare);
     return rowMarker;
 }
 
@@ -687,7 +702,7 @@ export function succinctPrintTable(tableMarker: ITableMarker, tableMarkerPos: nu
             let endLine = false;
             if (reqPos) {
                 lineBuf += `${segpos}:`;
-                reqPos=false;
+                reqPos = false;
             }
             if (marker.hasRangeLabels()) {
                 let rangeLabel = marker.getRangeLabels()[0];
@@ -728,14 +743,14 @@ export function succinctPrintTable(tableMarker: ITableMarker, tableMarkerPos: nu
             }
             if (endLine) {
                 lineBuf += " \n";
-                reqPos=true;
+                reqPos = true;
             } else {
                 lineBuf += " ";
             }
         } else {
             let textSegment = <MergeTree.TextSegment>segment;
             lineBuf += textSegment.text;
-            reqPos=true;
+            reqPos = true;
         }
         return true;
     }
@@ -758,7 +773,7 @@ export function parseTable(
     nextPos = parseColumns(sharedString, nextPos, tableMarker.table);
     let rowIndex = 0;
     while (nextPos < endTablePos) {
-        let rowMarker = parseRow(nextPos, sharedString, fontInfo);
+        let rowMarker = parseRow(nextPos, sharedString, table, fontInfo);
         if (!rowMarker) {
             console.log("PARSE ERROR!");
             succinctPrintTable(tableMarker, tableMarkerPos, sharedString);

@@ -7,7 +7,7 @@
     {{/content}}
 
     {{$scripts}}
-        <script src="{{#hfurl}}/public/scripts/dist/index.js{{/hfurl}}"></script>
+        <script src="{{#hfurl}}/public/scripts/dist/controller.js{{/hfurl}}"></script>
         <script>
             var config = {{{ config }}};
             var version = {{{ version }}};
@@ -15,7 +15,7 @@
             var connect = {{{ connect }}};
             var token = "{{ token }}";
             console.log(`Starting load at - ${performance.now()}`);
-            controller.sharedText.load(
+            prague_controller.sharedText.load(
                 "{{ documentId }}",
                 version,
                 token,

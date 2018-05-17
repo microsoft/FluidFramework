@@ -12,6 +12,7 @@ import * as mapExtension from "../map";
 import * as sharedString from "../shared-string";
 import * as stream from "../stream";
 import { debug } from "./debug";
+import { BrowserErrorTrackingService } from "./errorTrackingService";
 
 const rootMapId = "root";
 
@@ -231,6 +232,7 @@ export class Document extends EventEmitter implements api.IDocument {
         const claims = jwt.decode(token) as api.ITokenClaims;
         this.tenantId = claims.tenantId;
         this._user = claims.user;
+
     }
 
     /**
@@ -955,5 +957,15 @@ export async function load(
     registry: api.Registry<api.ICollaborativeObjectExtension> = defaultRegistry,
     service: api.IDocumentService = defaultDocumentService): Promise<Document> {
 
-    return Document.Load(id, registry, service, options, version, connect);
+    if (service.errorTrackingEnabled()) {
+        const deferred = new Deferred<Document>();
+        const errorTracker = new BrowserErrorTrackingService();
+        errorTracker.track(() => {
+            const documentP = Document.Load(id, registry, service, options, version, connect);
+            deferred.resolve(documentP);
+        });
+        return deferred.promise;
+    } else {
+        return Document.Load(id, registry, service, options, version, connect);
+    }
 }

@@ -1,3 +1,4 @@
+import { EventEmitter } from "events";
 import { core, socketIoClient as io } from "../client-api";
 import { IWork} from "./work";
 
@@ -9,6 +10,7 @@ export class PingWork implements IWork {
     private socket: any;
     private pingTimer: any;
     private pingInterval: number = 500;
+    private events = new EventEmitter();
 
     constructor(private pingUrl: string) {
         this.socket = io(this.pingUrl, { transports: ["websocket"] });
@@ -45,5 +47,10 @@ export class PingWork implements IWork {
     public stop(): Promise<void> {
         clearInterval(this.pingTimer);
         return Promise.resolve();
+    }
+
+    public on(event: string, listener: (...args: any[]) => void): this {
+        this.events.on(event, listener);
+        return this;
     }
 }

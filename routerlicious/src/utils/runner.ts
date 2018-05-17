@@ -5,6 +5,7 @@ import * as path from "path";
 import * as winston from "winston";
 import * as core from "../core";
 import * as utils from "../utils";
+import { NodeErrorTrackingService } from "./errorTrackingService";
 import { configureLogging } from "./logger";
 
 /**
@@ -51,6 +52,11 @@ export interface IRunnerFactory<T> {
      * Creates a new runner
      */
     create(resources: T): Promise<IRunner>;
+}
+
+interface IErrorTrackingConfig {
+    track: boolean;
+    endpoint: string;
 }
 
 /**
@@ -137,8 +143,18 @@ export function runService<T extends IResources>(
         kafkaClientId,
         sendTopic);
 
+    const errorTrackingConfig = config.get("error") as IErrorTrackingConfig;
+    let runningP;
+    if (errorTrackingConfig.track) {
+        const errorTracker = new NodeErrorTrackingService(errorTrackingConfig.endpoint);
+        errorTracker.track(() => {
+            runningP = runTracked(config, producer, group, resourceFactory, runnerFactory);
+        });
+    } else {
+        runningP = runTracked(config, producer, group, resourceFactory, runnerFactory);
+    }
+
     // notify of connection
-    const runningP = runTracked(config, producer, group, resourceFactory, runnerFactory);
     runningP.then(
         () => {
             winston.info("Exiting");

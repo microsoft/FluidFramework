@@ -15,6 +15,7 @@ export interface IParagraphInfo {
 
 export interface IParagraphItemInfo {
     minWidth: number;
+    maxHeight?: number;
     items: ParagraphItem[];
 }
 
@@ -413,6 +414,7 @@ export function tokenToItems(
     let pgFontstr =fontInfo.getFont(itemsContext.curPGMarker); 
     let lfontstr = pgFontstr;
     let pgLineHeight = fontInfo.getLineHeight(lfontstr);
+    itemsContext.itemInfo.maxHeight = pgLineHeight;
     let divHeight = pgLineHeight;
     if (leadSegment.properties) {
         let fontFamily = "Times";
@@ -450,6 +452,9 @@ export function tokenToItems(
         }
         if (divHeight !== pgLineHeight) {
             block.height = divHeight;
+            if (divHeight>itemsContext.itemInfo.maxHeight) {
+                itemsContext.itemInfo.maxHeight = divHeight;
+            }
         }
         itemsContext.itemInfo.items.push(block);
     } else {

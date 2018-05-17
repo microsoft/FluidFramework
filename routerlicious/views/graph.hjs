@@ -12,13 +12,13 @@
     {{/content}}
 
     {{$scripts}}
-        <script src="{{#hfurl}}/public/scripts/dist/index.js{{/hfurl}}"></script>
+        <script src="{{#hfurl}}/public/scripts/dist/controller.js{{/hfurl}}"></script>
 
         <script>
             var config = {{{ config }}};
             var version = {{{ version }}};
             var token = "{{ token }}";
-            controller.graph.initialize("{{ documentId }}", version, token, config);
+            prague_controller.graph.initialize("{{ documentId }}", version, token, config);
         </script>
     {{/scripts}}
 {{/layout}}

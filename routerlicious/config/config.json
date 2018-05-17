@@ -119,6 +119,10 @@
         "host": "redis",
         "port": 6379
     },
+    "error": {
+        "track": false,
+        "endpoint" : "https://7235bc222189462ca65fa1a38591f96b:74acc3b4610f47a38a50d1bcbfcd6655@sentry.wu2.prague.office-int.com/2"
+    },
     "worker": {
         "intelligence": {
             "resume": {
@@ -150,10 +154,10 @@
         "onlyServer": false,
         "permission": {
             "paparazzi": ["snapshot", "spell", "intel", "translation"],
-            "canvas": ["ping"],
-            "cell": ["ping", "snapshot"],
-            "maps": ["ping", "snapshot"],
-            "sharedText": ["ping"]
+            "canvas": [],
+            "cell": ["snapshot"],
+            "maps": ["snapshot"],
+            "sharedText": []
         }
     },
     "tenantConfig": [

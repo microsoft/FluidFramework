@@ -29,7 +29,7 @@ if (!sharedStringId) {
 }
 
 // Mark socket storage as our default provider
-socketStorage.registerAsDefault(commander.server, commander.storage, commander.tenantId);
+socketStorage.registerAsDefault(commander.server, commander.storage, commander.tenantId, false);
 
 fs.readFile(commander.file, "utf8", async (error, data: string) => {
     if (error) {

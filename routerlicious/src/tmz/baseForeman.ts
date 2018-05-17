@@ -47,7 +47,7 @@ export class BaseForeman {
             worker.socket.emit("AgentObject", worker.worker.clientId, moduleName, action,
             (nack, ack: socketStorage.IWorker) => {
                 if (ack) {
-                    winston.info(`${worker.worker.clientId} is ready to load ${moduleName}`);
+                    winston.info(`Worker ${worker.worker.clientId} loaded ${moduleName}`);
                 } else {
                     winston.info(nack);
                 }

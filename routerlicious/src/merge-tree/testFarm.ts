@@ -598,14 +598,14 @@ export function TestPack(verbose = true) {
                     for (let i = 0; i < posChecksPerRound; i++) {
                         let ivals = bookmarkRangeTree.match(checkPosRanges[i]);
                         if (showResults) {
-                            console.log(`results for point [${checkPos[i]},${checkPos[i]+1})`);
-                            for (let ival of ivals) {   
+                            console.log(`results for point [${checkPos[i]},${checkPos[i] + 1})`);
+                            for (let ival of ivals) {
                                 let pos1 = server.mergeTree.referencePositionToLocalPosition(ival.key.start);
                                 let pos2 = server.mergeTree.referencePositionToLocalPosition(ival.key.end);
                                 console.log(`[${pos1},${pos2})`);
                             }
                         }
-                        posContextResults+=ivals.length;
+                        posContextResults += ivals.length;
                     }
                     posContextTime += elapsedMicroseconds(clockStart);
                     posContextChecks += posChecksPerRound;
@@ -615,7 +615,7 @@ export function TestPack(verbose = true) {
                         let ivals = bookmarkRangeTree.match(checkRangeRanges[i]);
                         if (showResults) {
                             console.log(`results for [${checkRange[i][0]},${checkRange[i][1]})`);
-                            for (let ival of ivals) {   
+                            for (let ival of ivals) {
                                 let pos1 = server.mergeTree.referencePositionToLocalPosition(ival.key.start);
                                 let pos2 = server.mergeTree.referencePositionToLocalPosition(ival.key.end);
                                 console.log(`[${pos1},${pos2})`);
@@ -860,7 +860,7 @@ export function TestPack(verbose = true) {
         serverA.startCollaboration("theServerA");
         serverA.addClients(clientsA);
         serverA.addListeners([serverB]);
-        serverB.startCollaboration("theServerB",null, 0, 1);
+        serverB.startCollaboration("theServerB", null, 0, 1);
         serverB.addClients(clientsB);
         serverB.addUpstreamClients(clientsA);
 
@@ -1139,7 +1139,7 @@ export function TestPack(verbose = true) {
             //console.log(server.mergeTree.toString());
         }
         return errorCount;
-    
+
     }
     let clientNames = ["Ed", "Ted", "Ned", "Harv", "Marv", "Glenda", "Susan"];
     function firstTest() {
@@ -1188,18 +1188,24 @@ export function TestPack(verbose = true) {
                 }
             }
         }
-        cli.updateMinSeq(6);        cli = new MergeTree.Client(" old sock!");
+        cli.updateMinSeq(6); cli = new MergeTree.Client(" old sock!");
         cli.startCollaboration("Fred2");
         for (let cname of clientNames) {
             cli.addLongClientId(cname, null);
         }
         cli.insertTextRemote("abcde", 0, undefined, 1, 0, 2);
+        let segoff = cli.mergeTree.getContainingSegment(0,
+            MergeTree.UniversalSequenceNumber, cli.getClientId());
+        let lref1 = new MergeTree.LocalReference(<MergeTree.BaseSegment>(segoff.segment),
+            segoff.offset);
         cli.insertTextRemote("yyy", 0, undefined, 2, 0, 1);
         cli.insertTextRemote("zzz", 2, undefined, 3, 1, 3);
         cli.insertTextRemote("EAGLE", 1, undefined, 4, 1, 4);
         cli.insertTextRemote("HAS", 4, undefined, 5, 1, 5);
         cli.insertTextLocal(" LANDED", 19);
         cli.insertTextRemote("yowza: ", 0, undefined, 6, 4, 2);
+        let lref1pos = cli.mergeTree.referencePositionToLocalPosition(lref1);
+        console.log(`lref pos: ${lref1pos}`);
         cli.mergeTree.ackPendingSegment(7);
         if (verbose) {
             console.log(cli.mergeTree.toString());
@@ -1287,8 +1293,8 @@ export function TestPack(verbose = true) {
                 }
             }
         }
-        cli.removeSegmentLocal(3,5);
-        fwdRanges = cli.mergeTree.tardisRangeFromClient(3,6,9,10,2,0);
+        cli.removeSegmentLocal(3, 5);
+        fwdRanges = cli.mergeTree.tardisRangeFromClient(3, 6, 9, 10, 2, 0);
         if (verbose) {
             console.log(cli.mergeTree.toString());
             console.log(`fwd range 3 6 on cli 2 refseq 9 => cli 0 local`);
@@ -1296,7 +1302,7 @@ export function TestPack(verbose = true) {
                 console.log(`fwd range (${r.start}, ${r.end})`);
             }
         }
-        cli.removeSegmentRemote(3,6,10,9,2);
+        cli.removeSegmentRemote(3, 6, 10, 9, 2);
         cli.ackPendingSegment(11);
         if (verbose) {
             console.log(cli.mergeTree.toString());
@@ -1954,22 +1960,22 @@ function testRangeTree() {
 export interface ICmd {
     description?: string;
     iconURL?: string;
-    exec?: ()=>void;
+    exec?: () => void;
 }
 export function tstSimpleCmd() {
     let tst = new Collections.TST<ICmd>();
-    tst.put("zest", { description: "zesty"});
-    tst.put("nest", { description: "nesty"});
-    tst.put("newt", { description: "nesty"});
-    tst.put("neither", { description: "nesty"});
-    tst.put("restitution", { description: "nesty"});
-    tst.put("restful", { description: "nesty"});
-    tst.put("fish", { description: "nesty"});
-    tst.put("nurf", { description: "nesty"});
-    tst.put("reify", { description: "resty"});
-    tst.put("pert", { description: "pesty"});
-    tst.put("jest", { description: "jesty"});
-    tst.put("jestcuz", { description: "jesty2"});
+    tst.put("zest", { description: "zesty" });
+    tst.put("nest", { description: "nesty" });
+    tst.put("newt", { description: "nesty" });
+    tst.put("neither", { description: "nesty" });
+    tst.put("restitution", { description: "nesty" });
+    tst.put("restful", { description: "nesty" });
+    tst.put("fish", { description: "nesty" });
+    tst.put("nurf", { description: "nesty" });
+    tst.put("reify", { description: "resty" });
+    tst.put("pert", { description: "pesty" });
+    tst.put("jest", { description: "jesty" });
+    tst.put("jestcuz", { description: "jesty2" });
     let res = tst.pairsWithPrefix("je");
     console.log("trying je");
     for (let pair of res) {
@@ -1992,9 +1998,9 @@ let testPropCopy = false;
 let overlayTree = false;
 let docTree = false;
 let chktst = false;
-let clientServerTest = true;
+let clientServerTest = false;
 let tstTest = false;
-let firstTest = false;
+let firstTest = true;
 
 if (firstTest) {
     let testPack = TestPack(true);

@@ -64,4 +64,8 @@ export class TestDocumentService implements api.IDocumentService {
     public branch(id: string, token: string): Promise<string> {
         return Promise.reject("Not implemented");
     }
+
+    public errorTrackingEnabled() {
+        return false;
+    }
 }

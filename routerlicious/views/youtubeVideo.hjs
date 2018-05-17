@@ -4,16 +4,26 @@
     {{/styles}}
 
     {{$content}}
+
+        <div id="player-div">
+            <form id="text-form">
+                <div class="form-group">
+                    <label for="video">Youtube Video Id</label>
+                    <input type="text" class="form-control" id="videoId">
+                </div>
+                <button type="button" class="btn btn-default" id="create" style="margin-bottom: 10px;">Switch</button>
+            </form>
+        </div>
     {{/content}}
 
     {{$scripts}}
-        <script src="{{#hfurl}}/public/scripts/dist/index.js{{/hfurl}}"></script>
+        <script src="{{#hfurl}}/public/scripts/dist/controller.js{{/hfurl}}"></script>
 
         <script>
             var config = {{{ config }}};
             var version = {{{ version }}};
             var token = "{{ token }}";
-            controller.youtubeVideo.initialize("{{ documentId }}", version, token, config);
+            prague_controller.youtubeVideo.initialize("{{ documentId }}", version, token, config);
         </script>
     {{/scripts}}
 {{/layout}}

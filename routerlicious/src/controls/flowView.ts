@@ -1441,8 +1441,6 @@ function layoutCell(
     let cellDiv = document.createElement("div");
     cellView.div = cellDiv;
     cellRect.conformElementOpenHeight(cellDiv);
-    let client = layoutInfo.flowView.client;
-    let mergeTree = client.mergeTree;
     let transferDeferredHeight = false;
 
     cellView.viewport = new Viewport(layoutInfo.viewport.remainingHeight(),
@@ -1463,8 +1461,8 @@ function layoutCell(
     };
     // TODO: deferred height calculation for starting in middle of box
     if (isInnerCell(cellView, layoutInfo)) {
-        let boxPos = mergeTree.getOffset(cellView.marker, MergeTree.UniversalSequenceNumber, client.getClientId());
-        cellLayoutInfo.startPos = boxPos + cellView.marker.cachedLength;
+        let cellPos = getOffset(layoutInfo.flowView, cellView.marker);
+        cellLayoutInfo.startPos = cellPos + cellView.marker.cachedLength;
     } else {
         let nextTable = layoutInfo.startingPosStack.table.items[layoutInfo.stackIndex + 1];
         cellLayoutInfo.startPos = getOffset(layoutInfo.flowView, <MergeTree.Marker>nextTable);
@@ -1475,6 +1473,8 @@ function layoutCell(
         if (cellView.additionalCellMarkers) {
             for (let cellMarker of cellView.additionalCellMarkers) {
                 cellLayoutInfo.endMarker = cellMarker.cell.endMarker;
+                let cellPos = getOffset(layoutInfo.flowView, cellMarker);
+                cellLayoutInfo.startPos = cellPos + cellMarker.cachedLength;
                 let auxRenderOutput = renderFlow(cellLayoutInfo, targetTranslation, defer);
                 cellView.renderOutput.deferredHeight += auxRenderOutput.deferredHeight;
                 cellView.renderOutput.overlayMarkers =
@@ -1793,11 +1793,12 @@ function closestSouth(lineDivs: ILineDiv[], y: number) {
 }
 
 class Viewport {
-    // keep these in order
+    // keep the line divs in order
     public lineDivs: ILineDiv[] = [];
     public visibleRanges: IRange[] = [];
     public currentLineStart = -1;
     private lineTop = 0;
+    //    private excludedRects=<ui.Rectangle[]>[];
 
     constructor(public maxHeight: number, public div: IViewportDiv, private width: number) {
     }
@@ -1818,7 +1819,7 @@ class Viewport {
         }
     }
 
-    public currentLineWidth() {
+    public currentLineWidth(h?: number) {
         return this.width;
     }
 
@@ -1905,7 +1906,62 @@ function makeFontInfo(docContext: IDocumentContext): Paragraph.IFontInfo {
         getTextWidth: gtw,
     };
 }
-
+/*
+function breakPGIntoLinesFFVP(itemInfo: Paragraph.IParagraphItemInfo, defaultLineHeight: number, viewport: Viewport) {
+    let items = itemInfo.items;
+    let breaks = <Paragraph.IBreakInfo[]>[{ posInPG: 0, startItemIndex: 0 }];
+    let posInPG = 0;
+    let committedItemsWidth = 0;
+    let blockRunWidth = 0;
+    let blockRunHeight = 0;
+    let blockRunPos = -1;
+    let prevIsGlue = true;
+    let savedTop = viewport.getLineTop();
+    let lineWidth = viewport.currentLineWidth(itemInfo.maxHeight);
+    let committedItemsHeight = 0;
+    for (let i = 0, len = items.length; i < len; i++) {
+        let item = items[i];
+        if (item.type === Paragraph.ParagraphItemType.Block) {
+            item.pos = posInPG;
+            if (prevIsGlue) {
+                blockRunPos = posInPG;
+                blockRunWidth = 0;
+            }
+            if ((committedItemsWidth + item.width) > lineWidth) {
+                breaks.push({ posInPG: blockRunPos, startItemIndex: i });
+                viewport.vskip(committedItemsHeight);
+                lineWidth = viewport.currentLineWidth(itemInfo.maxHeight);
+                committedItemsWidth = blockRunWidth;
+                committedItemsHeight = blockRunHeight;
+            }
+            posInPG += item.text.length;
+            if (committedItemsWidth > lineWidth) {
+                breaks.push({ posInPG, startItemIndex: i });
+                viewport.vskip(committedItemsHeight);
+                lineWidth = viewport.currentLineWidth(itemInfo.maxHeight);
+                committedItemsWidth = 0;
+                committedItemsHeight = 0;
+                blockRunHeight = 0;
+                blockRunWidth = 0;
+                blockRunPos = posInPG;
+            } else {
+                blockRunWidth += item.width;
+                blockRunHeight = Math.max(blockRunHeight,
+                    item.height ? item.height : defaultLineHeight);
+            }
+            prevIsGlue = false;
+        } else if (item.type === Paragraph.ParagraphItemType.Glue) {
+            posInPG++;
+            prevIsGlue = true;
+        }
+        committedItemsWidth += item.width;
+        committedItemsHeight = Math.max(committedItemsHeight,
+            item.height ? item.height : defaultLineHeight);
+    }
+    viewport.setLineTop(savedTop);
+    return breaks;
+}
+*/
 function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, deferWhole = false): IRenderOutput {
     let flowView = layoutContext.flowView;
     let client = flowView.client;
@@ -3192,10 +3248,6 @@ export class FlowView extends ui.Component {
                     if (endId) {
                         let id = Table.idFromEndId(endId);
                         beginMarker = <Table.ICellMarker>this.sharedString.client.mergeTree.getSegmentFromId(id);
-                    } else {
-                        endId = cellMarker.getLocalId();
-                        let localId = Table.idFromEndId(endId);
-                        beginMarker = <Table.ICellMarker>this.sharedString.client.mergeTree.getSegmentFromLocalId(localId);
                     }
                     if (beginMarker && Table.cellIsMoribund(beginMarker)) {
                         this.tryMoveCell(this.cursor.pos, true);
