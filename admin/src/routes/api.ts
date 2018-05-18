@@ -26,7 +26,7 @@ export function create(config: Provider, mongoManager: utils.MongoManager, ensur
      */
     router.post("/tenants", ensureLoggedIn(), (request, response) => {
         const tenantInput = request.body as ITenantInput;
-        const tenantP = manager.addTenant(request.user.toString(), tenantInput);
+        const tenantP = manager.addTenant(request.user.oid, tenantInput);
         returnResponse(tenantP, response);
     });
 
