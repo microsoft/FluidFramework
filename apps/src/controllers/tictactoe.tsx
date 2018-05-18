@@ -1,5 +1,4 @@
 import { api } from "@prague/routerlicious";
-// import * as jwt from "jsonwebtoken";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import { TicTacToe } from "./components/tictactoe/Game";
@@ -24,21 +23,6 @@ function displayError(parentElement: JQuery, error: string) {
 }
 
 export async function load(id: string, tenantId: string, endPoints: any, token?: string) {
-    /**
-     * Id: elastic-dijkstra
-     *
-     * Key: 9f29be02664c7e3fa1f470faa05104ca
-     */
-    // const token = jwt.sign({
-    //     id,
-    //     permission: "read:write",
-    //     "elastic-dijkstra",
-    //     user: {
-    //         id: test
-    //     },
-    // },
-    // secret);
-
     $("document").ready(() => {
         prague.socketStorage.registerAsDefault(endPoints.delta, endPoints.storage, tenantId);
         loadDocument(id, token).then(async (doc) => {
