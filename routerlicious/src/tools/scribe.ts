@@ -3,6 +3,7 @@ import * as fs from "fs";
 import * as path from "path";
 import * as ProgressBar from "progress";
 import * as socketStorage from "../socket-storage";
+import * as utils from "../utils";
 import { scribe } from "../utils";
 
 // Process command line input
@@ -12,7 +13,7 @@ commander
     .option("-i, --interval [interval]", "typing interval", parseFloat, 5)
     .option("-s, --server [server]", "server url", "http://localhost:3000")
     .option("-t, --storage [server]", "storage server url", "http://localhost:3001")
-    .option("-o, --tenant [id]", "tenant ID", "git")
+    .option("-o, --tenant [id]", "tenant ID", "xenodochial-lewin") // "git")
     .option("-f, --file [file]", "input file", path.join(__dirname, "../../public/literature/resume.txt"))
     .option("-b, --progress [pbar]", "show progress bar")
     .option("-w, --write [write]", "write to specific path", "./latest-scribe.json")
@@ -52,9 +53,11 @@ fs.readFile(commander.file, "utf8", async (error, data: string) => {
                 total: data.length,
             });
     }
+    const token = getToken(sharedStringId);
+    const metricsToken = getToken(sharedStringId + "-metrics", true);
 
     // TODO - replace null token parameter with generated token
-    await scribe.create(sharedStringId, null, data, debug);
+    await scribe.create(sharedStringId, token, data, debug);
     scribe.togglePlay();
 
     setTimeout(() => {
@@ -66,8 +69,8 @@ fs.readFile(commander.file, "utf8", async (error, data: string) => {
             data,
             Number(commander.authors),
             Number(commander.processes),
-            null,
-            null,
+            token,
+            metricsToken,
             (metrics) => {
                 if (commander.progress) {
                     bar.update(metrics.ackProgress, {
@@ -100,7 +103,7 @@ fs.readFile(commander.file, "utf8", async (error, data: string) => {
                 });
             },
             (typingError) => {
-                console.error(error);
+                console.error(typingError);
                 process.exit(1);
             });
     }, 1000);
@@ -114,4 +117,12 @@ function ensurePath(filePath: string) {
     }
     ensurePath(dir);
     fs.mkdirSync(dir);
+}
+
+function getToken(docId: string, metrics?: boolean) {
+    const tid = (metrics) ? "optimistic-wilson" : "xenodochial-lewin";
+    const tkey = (metrics) ? "a30de8296e5cefaa8970e39a8c0f7444" : "48fb191e6897e15777fbdaa792ce82ee";
+    const token = utils.generateToken(tid, docId, tkey);
+
+    return token;
 }

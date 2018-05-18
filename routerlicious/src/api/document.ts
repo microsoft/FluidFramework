@@ -428,8 +428,8 @@ export class Document extends EventEmitter implements api.IDocument {
                 // Start delta processing once all objects are loaded
                 if (connect) {
                     assert(this._deltaManager, "DeltaManager should have been created during connect call");
-
-                    const readyP = Array.from(this.distributedObjects.values()).map((value) => value.object.ready());
+                    const readyP = Array.from(this.distributedObjects.values()).map(
+                            (value) => value.object.ready());
                     Promise.all(readyP).then(
                         () => {
                             debug("Everyone ready - resuming inbound messages");
