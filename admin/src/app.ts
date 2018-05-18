@@ -91,8 +91,8 @@ export function create(config: Provider, mongoManager: utils.MongoManager) {
                 skipUserProfile: true,
                 tokenURL: "https://login.microsoftonline.com/organizations/oauth2/v2.0/token",
             },
-            (token, tokenSecret, profile, cb) => {
-                return cb(null, profile);
+            (req, iss, sub, profile, jwtClaims, accessToken, refreshToken, params, done) => {
+                return done(null, jwtClaims);
             },
         ),
     );

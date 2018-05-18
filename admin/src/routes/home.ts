@@ -22,7 +22,7 @@ export function create(config: Provider, mongoManager: utils.MongoManager, ensur
      * Route to retrieve the home page for the app
      */
     router.get("/", ensureLoggedIn(), (request, response, next) => {
-        const tenantsP = manager.getTenantsforUser(request.user.toString());
+        const tenantsP = manager.getTenantsforUser(request.user.oid);
         tenantsP.then(
             (tenants) => {
                 response.render(
