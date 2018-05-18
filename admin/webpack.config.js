@@ -13,7 +13,7 @@ module.exports = {
       'process.env.NODE_ENV': JSON.stringify('production')
     }),
     new UglifyJSPlugin({
-      sourceMap: true
+      // sourceMap: true
     }),
   ],
 
@@ -25,7 +25,7 @@ module.exports = {
   },
 
   // Enable sourcemaps for debugging webpack's output.
-  devtool: "source-map",
+  // devtool: "source-map",
 
   resolve: {
     // Add '.ts' and '.tsx' as resolvable extensions.
@@ -38,7 +38,8 @@ module.exports = {
         { enforce: "pre", test: /\.js$/, loader: "source-map-loader" },
         {
           test: /\.css$/,
-          use: [ 'style-loader', 'css-loader' ]
+          use: [ 'style-loader', 'css-loader' ],
+          exclude: ["/node_modules/"]
         }
     ]
   },
