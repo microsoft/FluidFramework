@@ -54,16 +54,14 @@ ingress:
   class: nginx-prod
 
 endpoints:
-  mongodb: mongodb://honorary-chimp-mongodb:27017
+  mongodb: mongodb://quieting-guppy-mongodb:27017
+  kafka: left-numbat-zookeeper:2181
+  redis: winsome-wombat-redis
   tenantsUrl: https://admin.wu2.prague.office-int.com
   historianUrl: https://historian.wu2.prague.office-int.com
   riddlerUrl: http://pesky-platypus-riddler
   gitUrl: http://smelly-wolf-gitrest
   cobaltUrl: http://smelly-wolf-cobalt
-
-auth:
-  redirectUrl: https://admin.wu2.prague.office-int.com/auth/openid/return
-  destroySessionUrl: https://login.microsoftonline.com/common/oauth2/logout?post_logout_redirect_uri=https://admin.wu2.prague.office-int.com/
 `;
 
 const writeFileAsync = util.promisify(fs.writeFile);
