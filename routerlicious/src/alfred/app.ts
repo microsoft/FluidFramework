@@ -10,6 +10,7 @@ import * as fs from "fs";
 import * as morgan from "morgan";
 import { Provider } from "nconf";
 import * as passport from "passport";
+import * as passportLocal from "passport-local";
 import * as passportOpenIdConnect from "passport-openidconnect";
 import * as path from "path";
 import * as redis from "redis";
@@ -114,6 +115,20 @@ export function create(
             },
         ),
     );
+
+    // Get local accounts - used primarily for automated testing
+    const localAccounts = config.get("login:accounts") as Array<{ username: string, password: string }>;
+    passport.use(new passportLocal.Strategy(
+        (username, password, done) => {
+            for (const localAccount of localAccounts) {
+                if (localAccount.username === username && localAccount.password === password) {
+                    return done(null, localAccount.username);
+                }
+            }
+
+            return done(null, false);
+        },
+    ));
 
     // Right now we simply pass through the entire stored user object to the session storage for that user.
     // Ideally we should just serialize the oid and retrieve user info back from DB on deserialization.

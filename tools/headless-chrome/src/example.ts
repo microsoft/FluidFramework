@@ -23,21 +23,32 @@ async function testPage(page: puppeteer.Page, matchText: string[]): Promise<numb
     };
 
     page.on("console", testFn);
-    await page.goto('http://localhost:3000/sharedText/painstaking-fang', { waitUntil: "networkidle0" });
+    await page.goto('http://alfred:3000/sharedText/painstaking-fang', { waitUntil: "networkidle0" });
     page.removeListener("console", testFn);
 
     return perfMatches;
+}
+
+async function loginAndInitialize(page: puppeteer.Page) {
+    // Go to the login page
+    await page.goto('http://alfred:3000/login/local');
+
+    // Turn on verbose debugging across all pages
+    await page.evaluate(() => {
+        localStorage.debug = "routerlicious:*";
+    });
+
+    await page.type('#username', "test");
+    await page.type('#password', "mRTvhfDTE3FYbVc");
+    await page.click('#submit');
+    await page.waitForNavigation();
 }
 
 async function run() {
     const browser = await puppeteer.launch();
     const page = await browser.newPage();
 
-    // Load the root page in order to set localStorage
-    await page.goto('http://localhost:3000');
-    await page.evaluate(() => {
-        localStorage.debug = "routerlicious:*";
-    });
+    await loginAndInitialize(page);
 
     const matchText = [
         "Document loading",
