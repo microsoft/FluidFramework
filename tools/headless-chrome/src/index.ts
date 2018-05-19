@@ -2,12 +2,6 @@ import * as commander from "commander";
 import * as puppeteer from "puppeteer";
 import { URL } from "url";
 
-interface IMetric {
-    name: string;
-    average: number;
-    raw: number[];
-}
-
 async function testPage(documentUrl: string, page: puppeteer.Page, matchText: string[]): Promise<number[]> {
     const perfMatches: number[] = [];
 
@@ -15,7 +9,7 @@ async function testPage(documentUrl: string, page: puppeteer.Page, matchText: st
     const testFn = (msg: puppeteer.ConsoleMessage) => {
         const text = msg.text();
 
-        console.log(text);
+        console.error(text);
 
         // Already found all our matches
         if (entry === matchText.length) {
@@ -59,17 +53,18 @@ async function loginAndInitialize(
 
     await page.type("#username", username);
     await page.type("#password", password);
+    const navigationP = page.waitForNavigation();
     await page.click("#submit");
-    await page.waitForNavigation();
+    await navigationP;
 }
 
 async function runTest(
     documentUrl: string,
     iterations: number,
     username: string,
-    password: string): Promise<IMetric[]> {
+    password: string): Promise<any[]> {
 
-    console.log(`Opening ${documentUrl} for ${iterations} iterations`);
+    console.error(`Opening ${documentUrl} for ${iterations} iterations`);
 
     const browser = await puppeteer.launch();
     const page = await browser.newPage();
@@ -77,40 +72,35 @@ async function runTest(
     await loginAndInitialize(documentUrl, page, username, password);
 
     const matchText = [
-        "Document loading",
-        "Document loaded",
-        "fully loaded"];
-    const rawSamples = matchText.map(() => [] as number[]);
+        { text: "Document loading", event: "loading" },
+        { text: "Document loaded", event: "loaded" },
+        { text: "fully loaded", event: "fullyLoaded" }];
+    const matchTextStrings = matchText.map((match) => match.text);
 
+    const results: any[] = [];
     for (let i = 0; i < iterations; i++) {
-        const matches = await testPage(documentUrl, page, matchText);
-        console.log(`Iteration ${i + 1}`);
+        console.error(`Iteration ${i + 1}`);
+        console.error("------------------");
+
+        const matches = await testPage(documentUrl, page, matchTextStrings);
+        if (matches.length !== matchText.length) {
+            return Promise.reject(`Missing sample ${matches.length} !== ${matchText.length}`);
+        }
+
+        console.error("");
+
+        // output values
+        const result: any =  {};
         matchText.forEach((value, index) => {
-            console.log(`${value} ${matches[index]}`);
-            rawSamples[index].push(matches[index]);
+            result[value.event] = matches[index];
         });
-        console.log("----");
+
+        results.push(result);
     }
 
-    const closeP = browser.close();
-    const metricsP = Promise.all(matchText.map(async (value, index) => {
-        if (rawSamples[index].length !== iterations) {
-            return Promise.reject(`Missing sample ${value}: ${rawSamples[index]} !== ${iterations}`);
-        }
+    await browser.close();
 
-        let sum = 0;
-        for (const rawSample of rawSamples[index]) {
-            sum += rawSample;
-        }
-
-        return {
-            average: sum / iterations,
-            name: value,
-            raw: rawSamples[index],
-        } as IMetric;
-    }));
-
-    return Promise.all([metricsP, closeP]).then(([metrics]) => metrics);
+    return results;
 }
 
 // Process command line input
@@ -120,10 +110,9 @@ commander
     .option(
         "-d, --document [document]",
         "Document to open",
-        "https://alfred.wu2-ppe.prague.office-int.com/sharedText/disastrous-page")
+        "https://alfred.eu.prague.office-int.com/sharedText/disastrous-page")
     .option("-u, --username [username]", "Username", "test")
     .option("-p, --password [password]", "Password", "mRTvhfDTE3FYbVc")
-
     .parse(process.argv);
 
 runTest(commander.document, commander.iterations, commander.username, commander.password).then(

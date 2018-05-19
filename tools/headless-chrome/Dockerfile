@@ -40,5 +40,4 @@ RUN npm install
 COPY --chown=pptruser:pptruser . .
 RUN npm run build
 
-ENTRYPOINT ["dumb-init", "--"]
-CMD ["node", "dist/example.js"]
+ENTRYPOINT ["dumb-init", "--", "node", "dist/index.js"]

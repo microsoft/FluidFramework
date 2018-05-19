@@ -1,39 +1,7 @@
 import * as aria from "aria-nodejs-sdk";
+import * as commander from "commander";
 import * as fs from "fs";
-
-const tenant = "249d93644d18425ea36b3e443d49e59a-a78d2c7d-4380-47be-8830-7a8f2f9370d5-7185";
-const logger = aria.AWTLogManager.initialize(tenant);
-
-export function ariaLogger(scribeMetrics: string, eventName: string) {
-
-    const event = new aria.AWTEventProperties();
-    event.setName(eventName);
-    event.setTimestamp(Date.now());
-
-    const metricsObject = JSON.parse(scribeMetrics);
-
-    for (const key in metricsObject) {
-        if (metricsObject.hasOwnProperty(key)) {
-            event.setProperty(nameFixer(key),
-                metricsObject[key],
-                (metricsObject[key] % 1 === 0) ? aria.AWTPropertyType.Int64 : aria.AWTPropertyType.Double);
-        }
-    }
-
-    logger.logEvent(event);
-    aria.AWTLogManager.flush(() => {
-        console.log("Flushed");
-        process.exit(0);
-    });
-}
-
-// TODO: Consider running this so logs are command line input to make it easier to add new tooling
-const path = process.argv[2];
-const name = process.argv[3];
-
-const json = fs.readFileSync(path, "utf8");
-
-ariaLogger(json, name);
+import { runInContext } from "vm";
 
 // Aria only allows alphanumeric, underscore and dot
 function nameFixer(eventName: string): string {
@@ -54,3 +22,64 @@ function nameFixer(eventName: string): string {
     }
     return fixedName;
 }
+
+function uploadMetric(logger: aria.AWTLogger, metrics: object, eventName: string) {
+    const event = new aria.AWTEventProperties();
+    event.setName(eventName);
+    event.setTimestamp(Date.now());
+
+    for (const key in metrics) {
+        if (metrics.hasOwnProperty(key)) {
+            event.setProperty(
+                nameFixer(key),
+                metrics[key],
+                (metrics[key] % 1 === 0) ? aria.AWTPropertyType.Int64 : aria.AWTPropertyType.Double);
+        }
+    }
+
+    logger.logEvent(event);
+}
+
+function uploadMetrics(path: string, eventName: string, tenant: string): Promise<void> {
+    const metricsAsString = fs.readFileSync(path, "utf8");
+
+    const logger = aria.AWTLogManager.initialize(tenant);
+
+    // Parse the metric string and convert to an array if only given a single object
+    let metrics = JSON.parse(metricsAsString);
+    metrics = metrics instanceof Array ? metrics : [metrics];
+
+    // Upload all the metrics
+    for (const metric of metrics) {
+        uploadMetric(logger, metric, eventName);
+    }
+
+    // Return a promise that will resolve when the metrics have been flushed
+    return new Promise<void>((resolve, reject) => {
+        aria.AWTLogManager.flush(() => {
+            resolve();
+        });
+    });
+}
+
+// Process command line input
+commander
+    .version("0.0.1")
+    .description("Uploads a log of metrics to Aria")
+    .option(
+        "-t, --tenant [tenant]",
+        "Aria tenant",
+        "249d93644d18425ea36b3e443d49e59a-a78d2c7d-4380-47be-8830-7a8f2f9370d5-7185")
+    .arguments("<path> <name>")
+    .action((path: string, name: string) => {
+        uploadMetrics(path, name, commander.tenant)
+            .then(() => {
+                console.log("Uploaded");
+                process.exit(0);
+            })
+            .catch((error) => {
+                console.error(error);
+                process.exit(1);
+            });
+    })
+    .parse(process.argv);
