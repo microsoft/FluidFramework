@@ -90,11 +90,12 @@ async function runTest(
         console.error("");
 
         // output values
-        const result: any = { host: parsedUrl.host };
+        const result: any = {
+            host: parsedUrl.host,
+            temperature: i === 0 ? "cold" : "warm",
+        };
         matchText.forEach((value, index) => {
-            const temperature = i === 0 ? "cold" : "warm";
             result[value.event] = matches[index];
-            result[`${temperature}_${value.event}`] = matches[index];
         });
 
         results.push(result);

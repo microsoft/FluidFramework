@@ -30,10 +30,23 @@ function uploadMetric(logger: aria.AWTLogger, metrics: object, eventName: string
 
     for (const key in metrics) {
         if (metrics.hasOwnProperty(key)) {
+            const metric = metrics[key];
+
+            let ariaMetricType = aria.AWTPropertyType.Unspecified;
+            if (typeof(metric) === "string") {
+                ariaMetricType = aria.AWTPropertyType.String;
+            } else if (Number.isInteger(metric)) {
+                ariaMetricType = aria.AWTPropertyType.Int64;
+            } else if (typeof(metric) === "number") {
+                ariaMetricType = aria.AWTPropertyType.Double;
+            } else if (typeof(metric) === "boolean") {
+                ariaMetricType = aria.AWTPropertyType.Boolean;
+            }
+
             event.setProperty(
                 nameFixer(key),
-                metrics[key],
-                (metrics[key] % 1 === 0) ? aria.AWTPropertyType.Int64 : aria.AWTPropertyType.Double);
+                metric,
+                ariaMetricType);
         }
     }
 
