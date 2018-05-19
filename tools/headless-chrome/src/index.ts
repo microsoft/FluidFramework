@@ -36,15 +36,13 @@ async function testPage(documentUrl: string, page: puppeteer.Page, matchText: st
 }
 
 async function loginAndInitialize(
-    documentUrl: string,
+    origin: string,
     page: puppeteer.Page,
     username: string,
     password: string) {
 
-    const parsedUrl = new URL(documentUrl);
-
     // Go to the login page
-    await page.goto(`${parsedUrl.origin}/login/local`);
+    await page.goto(`${origin}/login/local`);
 
     // Turn on verbose debugging across all pages
     await page.evaluate(() => {
@@ -69,12 +67,14 @@ async function runTest(
     const browser = await puppeteer.launch();
     const page = await browser.newPage();
 
-    await loginAndInitialize(documentUrl, page, username, password);
+    const parsedUrl = new URL(documentUrl);
+
+    await loginAndInitialize(parsedUrl.origin, page, username, password);
 
     const matchText = [
         { text: "Document loading", event: "loading" },
-        { text: "Document loaded", event: "loaded" },
-        { text: "fully loaded", event: "fullyLoaded" }];
+        { text: "Document loaded", event: "loaded_head" },
+        { text: "fully loaded", event: "loaded_body" }];
     const matchTextStrings = matchText.map((match) => match.text);
 
     const results: any[] = [];
@@ -90,9 +90,11 @@ async function runTest(
         console.error("");
 
         // output values
-        const result: any =  {};
+        const result: any = { host: parsedUrl.host };
         matchText.forEach((value, index) => {
+            const temperature = i === 0 ? "cold" : "warm";
             result[value.event] = matches[index];
+            result[`${temperature}_${value.event}`] = matches[index];
         });
 
         results.push(result);
