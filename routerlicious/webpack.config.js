@@ -83,7 +83,6 @@ module.exports = env => {
         plugins: [
             new ForkTsCheckerWebpackPlugin({
                 checkSyntacticErrors: true,
-                tslint: true,
                 workers: typeCheckingCores
             }),
         ]

@@ -13,7 +13,7 @@ commander
     .option("-i, --interval [interval]", "typing interval", parseFloat, 5)
     .option("-s, --server [server]", "server url", "http://localhost:3000")
     .option("-t, --storage [server]", "storage server url", "http://localhost:3001")
-    .option("-o, --tenant [id]", "tenant ID", "xenodochial-lewin") // "git")
+    .option("-o, --tenant [id]", "tenant ID", "git")
     .option("-f, --file [file]", "input file", path.join(__dirname, "../../public/literature/resume.txt"))
     .option("-b, --progress [pbar]", "show progress bar")
     .option("-w, --write [write]", "write to specific path", "./latest-scribe.json")
@@ -54,7 +54,7 @@ fs.readFile(commander.file, "utf8", async (error, data: string) => {
             });
     }
     const token = getToken(sharedStringId);
-    const metricsToken = getToken(sharedStringId + "-metrics", true);
+    const metricsToken = getToken(sharedStringId + "-metrics");
 
     // TODO - replace null token parameter with generated token
     await scribe.create(sharedStringId, token, data, debug);
@@ -120,8 +120,8 @@ function ensurePath(filePath: string) {
 }
 
 function getToken(docId: string, metrics?: boolean) {
-    const tid = (metrics) ? "optimistic-wilson" : "xenodochial-lewin";
-    const tkey = (metrics) ? "a30de8296e5cefaa8970e39a8c0f7444" : "48fb191e6897e15777fbdaa792ce82ee";
+    const tid = "xenodochial-lewin";
+    const tkey = "48fb191e6897e15777fbdaa792ce82ee";
     const token = utils.generateToken(tid, docId, tkey);
 
     return token;

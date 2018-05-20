@@ -331,7 +331,6 @@ export async function typeFile(
             pingCounter.reset();
             return typeChunk(authors[0], "p-0", fileText, intervalTime, scribeCallback, scribeCallback)
                 .then((metric) => {
-                    console.log(ss.getText());
                     metric.time = Date.now() - startTime;
                     return metric;
                 });
