@@ -56,14 +56,12 @@ fs.readFile(commander.file, "utf8", async (error, data: string) => {
     const token = getToken(sharedStringId);
     const metricsToken = getToken(sharedStringId + "-metrics");
 
-    // TODO - replace null token parameter with generated token
     await scribe.create(sharedStringId, token, data, debug);
     scribe.togglePlay();
 
     setTimeout(() => {
         let lastReported = 0;
 
-        // TODO - replace null token parameter with generated metrics document token
         const typeP = scribe.type(
             commander.interval,
             data,
