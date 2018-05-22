@@ -283,16 +283,36 @@ export class SharedString extends CollaborativeMap {
     }
 
     // TODO: fix race condition on creation by putting type on every operation
-    public getSharedIntervalCollection(label: string, onDeserialize?: (i: Interval) => void) {
+    public getSharedIntervalCollection(
+        label: string,
+        onDeserialize?: (i: Interval) => void,
+        onPrepareDeserialize?: (i) => Promise<any>) {
+
         if (!this.intervalCollections.has(label)) {
-            this.intervalCollections.set<SharedIntervalCollection>(label, undefined,
+            this.intervalCollections.set<SharedIntervalCollection>(
+                label,
+                undefined,
                 SharedIntervalCollectionValueType.Name);
         }
+
+        // Retrieve the actual shared collection from the map
         let sharedCollection = this.intervalCollections.get<SharedIntervalCollection>(label);
+
+        // Register serialization handlers for inbound and outbound messages
         if (onDeserialize) {
+            console.log("WHOOP Setting onDeserialize");
             sharedCollection.onDeserialize = onDeserialize;
         }
+
+        if (onPrepareDeserialize) {
+            console.log("WHOOP Setting onPrepareDeserialize");
+            sharedCollection.onPrepareDeserialize = onPrepareDeserialize;
+        }
+
+        // Things may not be local yet - this must be async
+        console.log("WHOOP Calling Initialize");
         sharedCollection.initialize(this, label);
+
         return sharedCollection;
     }
 
@@ -468,15 +488,8 @@ export class SharedString extends CollaborativeMap {
             this.processContent(message);
         }
 
-        // Do we want to break the dependence on the interval collection
-        // Register the filter callback on the reference collections
-        let intervalCollections = await this.get("intervalCollections") as IMap;
-
-        this.intervalCollections = await intervalCollections.getView();
-        intervalCollections.on("valueChanged", (ev: IValueChanged) => {
-            let intervalCollection = this.intervalCollections.get<SharedIntervalCollection>(ev.key);
-            intervalCollection.initialize(this, ev.key);
-        });
+        // And initialize the interval collections
+        await this.initializeIntervalCollections();
     }
 
     private async initialize(
@@ -493,6 +506,7 @@ export class SharedString extends CollaborativeMap {
         }
 
         this.loadHeader(sequenceNumber, minimumSequenceNumber, header, collaborative, originBranch, services);
+
         this.loadBody(
             sequenceNumber,
             minimumSequenceNumber,
@@ -502,7 +516,6 @@ export class SharedString extends CollaborativeMap {
             originBranch,
             services).then(
                 () => {
-                    this.initializeIntervalCollections();
                     this.loadFinished();
                 },
                 (error) => {
@@ -510,7 +523,25 @@ export class SharedString extends CollaborativeMap {
                 });
     }
 
-    private initializeIntervalCollections() {
+    private async initializeIntervalCollections() {
+        // Do we want to break the dependence on the interval collection
+        // Register the filter callback on the reference collections
+        let intervalCollections = await this.get("intervalCollections") as IMap;
+        this.intervalCollections = await intervalCollections.getView();
+
+        // Paparazzo don't know the higher level semantics on serialize/deserialize here - just raw values.
+        // So they won't ever run the flowview code to do any of that. So we *must* keep this split in
+
+        // NOTE At this point the SIC are in a position to be able to serialize their updates to the SS
+        // since the SS has attached itself to all of them - and all future ones - but we have't yet registered
+        // an ability to translate the property types on the collection. We rely on the higher level code to
+        // do that
+
+        intervalCollections.on("valueChanged", (ev: IValueChanged) => {
+            let intervalCollection = this.intervalCollections.get<SharedIntervalCollection>(ev.key);
+            intervalCollection.initialize(this, ev.key);
+        });
+
         for (let key of this.intervalCollections.keys()) {
             let intervalCollection = this.intervalCollections.get<SharedIntervalCollection>(key);
             intervalCollection.initialize(this, key);

@@ -113,8 +113,12 @@ export interface IIntervalCollection {
 }
 
 export function createInterval(
-    label: string, sharedString: SharedString, start: number,
-    end: number, intervalType: MergeTree.IntervalType) {
+    label: string,
+    sharedString: SharedString,
+    start: number,
+    end: number,
+    intervalType: MergeTree.IntervalType) {
+
     let beginRefType = MergeTree.ReferenceType.RangeBegin;
     let endRefType = MergeTree.ReferenceType.RangeEnd;
     if (intervalType === MergeTree.IntervalType.Nest) {
@@ -146,16 +150,16 @@ export function endIntervalComparer(a: Interval, b: Interval) {
 }
 
 export class LocalIntervalCollection implements IIntervalCollection {
-    private intervalTree: MergeTree.IntervalTree<Interval> = new MergeTree.IntervalTree<Interval>();
-    private endIntervalTree: MergeTree.RedBlackTree<Interval, Interval> =
-        new MergeTree.RedBlackTree<Interval, Interval>(endIntervalComparer);
+    private intervalTree = new MergeTree.IntervalTree<Interval>();
+    private endIntervalTree = new MergeTree.RedBlackTree<Interval, Interval>(endIntervalComparer);
 
-    constructor(public sharedString: SharedString, public label: string) {
+    constructor(private sharedString: SharedString, private label: string) {
     }
 
     public map(fn: (interval: Interval) => void) {
         this.intervalTree.map(fn);
     }
+
     public findOverlappingIntervals(startPosition: number, endPosition: number) {
         if (!this.intervalTree.intervals.isEmpty()) {
             let transientInterval = createInterval("transient", this.sharedString,
@@ -191,8 +195,11 @@ export class LocalIntervalCollection implements IIntervalCollection {
 
     // TODO: remove interval, handle duplicate intervals
     public addInterval(
-        start: number, end: number, intervalType: MergeTree.IntervalType,
+        start: number,
+        end: number,
+        intervalType: MergeTree.IntervalType,
         props?: MergeTree.PropertySet) {
+
         let interval = this.createInterval(start, end, intervalType);
         if (interval) {
             interval.addProperties(props);
@@ -212,6 +219,8 @@ export class LocalIntervalCollection implements IIntervalCollection {
 
 export class SharedIntervalCollectionFactory implements IValueFactory<SharedIntervalCollection> {
     public load(emitter: IValueOpEmitter, raw: ISerializedInterval[]): SharedIntervalCollection {
+        // The load here does NOT take in some way to process/load the thing.
+        // But maybe it wants to to avoid any splits?
         return new SharedIntervalCollection(emitter, raw || []);
     }
 
@@ -246,8 +255,13 @@ export class SharedIntervalCollectionValueType implements IValueType<SharedInter
             [[
                 "add",
                 {
-                    prepare: async (value, params, local, op) => {
-                        return;
+                    prepare: (value, params, local, op) => {
+                        // Local ops were applied when the message was created
+                        if (local) {
+                            return;
+                        }
+
+                        return value.prepareAdd(params, local, op);
                     },
                     process: (value, params, context, local, op) => {
                         // Local ops were applied when the message was created
@@ -255,7 +269,7 @@ export class SharedIntervalCollectionValueType implements IValueType<SharedInter
                             return;
                         }
 
-                        value.addSerialized(params, local, op);
+                        value.addSerialized(params, context, local, op);
                     },
                 },
             ],
@@ -279,29 +293,36 @@ export class SharedIntervalCollectionValueType implements IValueType<SharedInter
 }
 
 export class SharedIntervalCollection extends EventEmitter {
-    public localCollection: LocalIntervalCollection;
-    public sharedString: SharedString;
-    public label: string;
-    public savedSerializedIntervals?: ISerializedInterval[];
+    private localCollection: LocalIntervalCollection;
+    private sharedString: SharedString;
+    private savedSerializedIntervals?: ISerializedInterval[];
 
-    constructor(
-        private emitter: IValueOpEmitter,
-        serializedIntervals: ISerializedInterval[]) {
+    constructor(private emitter: IValueOpEmitter, serializedIntervals: ISerializedInterval[]) {
         super();
+
+        // NOTE: It would be ncie if I could do the initialize stuff at the time of load. Is there a way
+        // I can somehow defer access to a SIC until I'm ready to load it?
+        //
+        // This is loading the SIC from initial data. All the intervals are RAW.
         this.savedSerializedIntervals = serializedIntervals;
     }
 
     public initialize(sharedString: SharedString, label: string) {
-        if (!this.sharedString) {
-            this.label = label;
-            this.sharedString = sharedString;
-            this.localCollection = new LocalIntervalCollection(sharedString, label);
-            if (this.savedSerializedIntervals) {
-                for (let serializedInterval of this.savedSerializedIntervals) {
-                    this.deserializeInterval(serializedInterval);
-                }
-                this.savedSerializedIntervals = undefined;
+        // NOTE: This isn't called until later on. Until then the local collection is not valid
+        if (this.sharedString) {
+            return;
+        }
+
+        this.sharedString = sharedString;
+        this.localCollection = new LocalIntervalCollection(sharedString, label);
+        if (this.savedSerializedIntervals) {
+            console.log(`WHOOP ${JSON.stringify(this.savedSerializedIntervals)}`);
+            for (let serializedInterval of this.savedSerializedIntervals) {
+                console.log(`WHOOP ${JSON.stringify(serializedInterval)}`);
+                // TODO - I need to run a prepare on this
+                this.deserializeInterval(serializedInterval, null);
             }
+            this.savedSerializedIntervals = undefined;
         }
     }
 
@@ -310,7 +331,20 @@ export class SharedIntervalCollection extends EventEmitter {
     }
 
     public serialize() {
+        // Called when snapshotting to write the thing to disc
         return this.localCollection.serialize();
+    }
+
+    public map(fn: (interval: Interval) => void) {
+        this.localCollection.map(fn);
+    }
+
+    public previousInterval(pos: number): Interval {
+        return this.localCollection.previousInterval(pos);
+    }
+
+    public nextInterval(pos: number): Interval {
+        return this.localCollection.nextInterval(pos);
     }
 
     public remove(serializedInterval: ISerializedInterval, submitEvent = true) {
@@ -323,6 +357,8 @@ export class SharedIntervalCollection extends EventEmitter {
         intervalType: MergeTree.IntervalType,
         props?: MergeTree.PropertySet) {
 
+        // We are assuming initialize was called first
+
         let serializedInterval = <ISerializedInterval> {
             endPosition,
             intervalType,
@@ -330,12 +366,20 @@ export class SharedIntervalCollection extends EventEmitter {
             sequenceNumber: this.sharedString.client.getCurrentSeq(),
             startPosition,
         };
-        this.addSerialized(serializedInterval, true, null);
+        this.addSerialized(serializedInterval, null, true, null);
     }
 
     // TODO: error cases
-    public addSerialized(serializedInterval: ISerializedInterval, local: boolean, op: api.ISequencedObjectMessage) {
-        let interval = this.deserializeInterval(serializedInterval);
+    public addSerialized(
+        serializedInterval: ISerializedInterval,
+        context: any,
+        local: boolean,
+        op: api.ISequencedObjectMessage) {
+
+        // The deserialize interval here may or may not work depending on if we have actually
+        // attached a deserializer. In the initial flow we may have not.
+
+        let interval = this.deserializeInterval(serializedInterval, context);
         if (interval) {
             // Null op means this was a local add and we should submit an op to the server
             if (op === null) {
@@ -348,19 +392,32 @@ export class SharedIntervalCollection extends EventEmitter {
         return this;
     }
 
+    public prepareAdd(
+        interval: ISerializedInterval,
+        local: boolean,
+        message: api.ISequencedObjectMessage): Promise<any> {
+
+        return this.onPrepareDeserialize(interval);
+    }
+
     public on(
         event: "addInterval",
         listener: (interval: ISerializedInterval, local: boolean, op: api.ISequencedObjectMessage) => void): this {
         return super.on(event, listener);
     }
 
-    public onDeserialize = (value: Interval) => { return; };
+    public onPrepareDeserialize = (value: ISerializedInterval) => Promise.resolve();
 
-    private deserializeInterval(serializedInterval: ISerializedInterval) {
-        let interval = this.localCollection.addInterval(serializedInterval.startPosition,
-            serializedInterval.endPosition, serializedInterval.intervalType,
+    public onDeserialize = (value: Interval, context: any) => { return; };
+
+    private deserializeInterval(serializedInterval: ISerializedInterval, context: any) {
+        let interval = this.localCollection.addInterval(
+            serializedInterval.startPosition,
+            serializedInterval.endPosition,
+            serializedInterval.intervalType,
             serializedInterval.properties);
-        this.onDeserialize(interval);
+        console.log(`WHOOP this.onDeserialize`);
+        this.onDeserialize(interval, context);
         return interval;
     }
 }

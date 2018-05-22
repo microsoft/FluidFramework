@@ -3888,9 +3888,9 @@ export class FlowView extends ui.Component {
         if (this.bookmarks) {
             let result: Interval;
             if (before) {
-                result = this.bookmarks.localCollection.previousInterval(this.cursor.pos);
+                result = this.bookmarks.previousInterval(this.cursor.pos);
             } else {
-                result = this.bookmarks.localCollection.nextInterval(this.cursor.pos);
+                result = this.bookmarks.nextInterval(this.cursor.pos);
             }
             if (result) {
                 let s = result.start.toPosition(this.client.mergeTree,
@@ -3931,7 +3931,10 @@ export class FlowView extends ui.Component {
             let commentStory = this.collabDocument.createString();
             commentStory.insertText("a comment...", 0);
             commentStory.attach();
-            this.comments.add(sel.start, sel.end, MergeTree.IntervalType.Simple,
+            this.comments.add(
+                sel.start,
+                sel.end,
+                MergeTree.IntervalType.Simple,
                 { story: commentStory });
             this.cursor.clearSelection();
             this.localQueueRender(this.cursor.pos);
@@ -4380,7 +4383,9 @@ export class FlowView extends ui.Component {
         }
 
         this.bookmarks = this.sharedString.getSharedIntervalCollection("bookmarks");
+
         let onDeserialize = (interval) => {
+            console.log("WHOOP I have been asked to onDeserialize");
             if (interval.properties && interval.properties["story"]) {
                 let story = interval.properties["story"];
                 if (!story["id"]) {
@@ -4389,9 +4394,28 @@ export class FlowView extends ui.Component {
                     });
                 }
             }
+
+            console.log("WHOOP Done asked to onDeserialize");
+            return true;
         };
-        this.comments = this.sharedString.getSharedIntervalCollection("comments", onDeserialize);
-        this.comments.localCollection.map(onDeserialize);
+
+        let onPrepareDeserialize = (interval) => {
+            console.log("WHOOP I have been asked to onPrepareDeserialize");
+            return Promise.resolve();
+        };
+
+        this.comments = this.sharedString.getSharedIntervalCollection("comments", onDeserialize, onPrepareDeserialize);
+
+        // Use a custom map function here - that pushes a list of promises so we know when it's all done
+        // It would be nice if this was part of init but that might be too much. Init just inits the actual
+        // positions but then we are required to go and swap values if we care and do this early.
+
+        // The need to map is a consequence of the local collection not having the deserialize at startup time
+        this.comments.map(onDeserialize);
+        this.comments.on("addInterval", (interval, local, op) => {
+            console.log("WHOOP Hey! addInterval just got called!");
+        });
+
         this.render(0, true);
         if (clockStart > 0) {
             // tslint:disable-next-line:max-line-length
