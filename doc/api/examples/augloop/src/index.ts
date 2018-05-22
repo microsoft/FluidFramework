@@ -1,3 +1,4 @@
+import * as winston from "winston";
 import * as augLoop from "./launcher";
 
 async function run(): Promise<void> {
@@ -5,5 +6,5 @@ async function run(): Promise<void> {
 }
 
 run().catch((error) => {
-    console.error(error);
+    winston.error(error);
 });

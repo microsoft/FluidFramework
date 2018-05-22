@@ -1,4 +1,5 @@
 import {runtime} from "@augloop/runtime-client";
+import * as winston from "winston";
 import {inputSchemaName} from "./common";
 import {configureRuntimeForPowerPointWorkflows, IDocTile} from "./main";
 
@@ -10,10 +11,10 @@ const _hostMetadata = {
   };
 
 const onResultCallback = (inputSchema: string, input, outputSchema: string, output) => {
-    console.log(inputSchema);
-    console.log(JSON.stringify(input));
-    console.log(outputSchema);
-    console.log(JSON.stringify(output));
+    winston.info(inputSchema);
+    winston.info(JSON.stringify(input));
+    winston.info(outputSchema);
+    winston.info(JSON.stringify(output));
 };
 
 const _hostCallbacks = {

@@ -5,9 +5,11 @@
   "main": "index.js",
   "dependencies": {
     "@augloop/runtime-client": "1.2.79",
-    "@augloop/schemas": "^1.2.75"
+    "@augloop/schemas": "^1.2.75",
+    "winston": "^2.4.2"
   },
   "devDependencies": {
+    "@types/winston": "^2.3.9",
     "tslint": "^5.9.1",
     "typescript": "^2.8.3"
   },
