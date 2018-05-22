@@ -283,10 +283,10 @@ export class SharedString extends CollaborativeMap {
     }
 
     // TODO: fix race condition on creation by putting type on every operation
-    public getSharedIntervalCollection(
+    public async getSharedIntervalCollection(
         label: string,
-        onDeserialize?: (i: Interval) => void,
-        onPrepareDeserialize?: (i) => Promise<any>) {
+        onDeserialize?: (i: Interval, context: any) => void,
+        onPrepareDeserialize?: (i) => Promise<any>): Promise<SharedIntervalCollection> {
 
         if (!this.intervalCollections.has(label)) {
             this.intervalCollections.set<SharedIntervalCollection>(
@@ -298,20 +298,11 @@ export class SharedString extends CollaborativeMap {
         // Retrieve the actual shared collection from the map
         let sharedCollection = this.intervalCollections.get<SharedIntervalCollection>(label);
 
-        // Register serialization handlers for inbound and outbound messages
-        if (onDeserialize) {
-            console.log("WHOOP Setting onDeserialize");
-            sharedCollection.onDeserialize = onDeserialize;
-        }
-
-        if (onPrepareDeserialize) {
-            console.log("WHOOP Setting onPrepareDeserialize");
-            sharedCollection.onPrepareDeserialize = onPrepareDeserialize;
-        }
-
         // Things may not be local yet - this must be async
         console.log("WHOOP Calling Initialize");
-        sharedCollection.initialize(this, label);
+        if (onDeserialize || onPrepareDeserialize) {
+            await sharedCollection.attachSerializer(onDeserialize, onPrepareDeserialize);
+        }
 
         return sharedCollection;
     }
@@ -537,14 +528,16 @@ export class SharedString extends CollaborativeMap {
         // an ability to translate the property types on the collection. We rely on the higher level code to
         // do that
 
+        // Listen and initialize new SharedIntervalCollections
         intervalCollections.on("valueChanged", (ev: IValueChanged) => {
             let intervalCollection = this.intervalCollections.get<SharedIntervalCollection>(ev.key);
-            intervalCollection.initialize(this, ev.key);
+            intervalCollection.attachSharedString(this, ev.key);
         });
 
+        // Initialize existing SharedIntervalCollections
         for (let key of this.intervalCollections.keys()) {
             let intervalCollection = this.intervalCollections.get<SharedIntervalCollection>(key);
-            intervalCollection.initialize(this, key);
+            intervalCollection.attachSharedString(this, key);
         }
     }
 

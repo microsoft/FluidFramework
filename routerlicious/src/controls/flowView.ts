@@ -4382,7 +4382,7 @@ export class FlowView extends ui.Component {
             await Promise.all([intervalCollections.wait("bookmarks"), intervalCollections.wait("comments")]);
         }
 
-        this.bookmarks = this.sharedString.getSharedIntervalCollection("bookmarks");
+        this.bookmarks = await this.sharedString.getSharedIntervalCollection("bookmarks");
 
         let onDeserialize = (interval) => {
             console.log("WHOOP I have been asked to onDeserialize");
@@ -4400,11 +4400,13 @@ export class FlowView extends ui.Component {
         };
 
         let onPrepareDeserialize = (interval) => {
+            // TODO gotta fill me in
             console.log("WHOOP I have been asked to onPrepareDeserialize");
             return Promise.resolve();
         };
 
-        this.comments = this.sharedString.getSharedIntervalCollection("comments", onDeserialize, onPrepareDeserialize);
+        this.comments = await this.sharedString.getSharedIntervalCollection(
+            "comments", onDeserialize, onPrepareDeserialize);
 
         // Use a custom map function here - that pushes a list of promises so we know when it's all done
         // It would be nice if this was part of init but that might be too much. Init just inits the actual
