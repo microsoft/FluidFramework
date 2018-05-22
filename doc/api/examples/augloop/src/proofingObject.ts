@@ -1,9 +1,5 @@
-/**
- * Schemas and workflows for the Text Analysis/Replace Object scenario.
- */
 import {IClientRuntime, ILambda} from "@augloop/runtime-client";
-import {inputSchemaName} from "./common";
-import {IDocTile} from "./main";
+import {IDocTile, inputSchemaName} from "./common";
 
 /**
  * String constants
@@ -15,14 +11,12 @@ const proofingInputSchemaName = `${proofingPackageName}${proofingRawInputSchemaN
 const proofingOutputSchemaName = `${proofingPackageName}${proofingRawOutputSchemaName}`;
 
 /**
- * Given the presentation data in the input tile, constructs a corresponding ProofingRequest
+ * Given the text segment, constructs a corresponding ProofingRequest
  * for invoking the remote workflow.
  */
 const getProofingRequestFromDocument = (docId: string, content: string, reqOrd: number) => {
   const request = {
-    documentId: "random-id",
-    languageUxId: "en-us",
-    runOnProfileId: "{24BCFF65-03B5-40E9-90C8-59B75ABD453D}",
+    documentId: docId,
     tiles: [],
   };
   const textTile: any = {};
@@ -47,7 +41,7 @@ export const registerProofingWorkflow = (runtime: IClientRuntime): Promise<void>
   const lambdaBefore: ILambda = {
     func: (input, _config, lambdaDone: (output) => void) => {
         const docTile: IDocTile = input;
-        const output = getProofingRequestFromDocument(docTile.docId, docTile.content, docTile.reqOrd);
+        const output = getProofingRequestFromDocument(docTile.documentId, docTile.content, docTile.reqOrd);
         lambdaDone(output);
     },
     inputSchema: inputSchemaName,

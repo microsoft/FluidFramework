@@ -12,43 +12,12 @@ function registerInputSchemas(runtime: IClientRuntime): Promise<void> {
   const inputProto =
     `syntax = "proto3";
     message ${inputSchemaName} {
-      uint32 docId = 1;
-      string id = 2;
-      string content = 3;
-      uint32 reqOrd = 4;
-      uint32 requestTime = 5;
+      string documentId = 1;
+      string content = 2;
+      uint32 reqOrd = 3;
+      uint32 requestTime = 4;
     }`;
   return runtime.registerSchemas(inputProto, [inputSchemaName]);
-}
-
-/**
- * Slide tile is the input data we submit to the augmentation loop.
- */
-export interface IDocTile {
-  /**
-   * Runtime document ID.
-   */
-  docId: string;
-
-  /**
-   * ID of this page.
-   */
-  id: string;
-
-  /**
-   * Content of this slide tile in JSON format.
-   */
-  content: string;
-
-  /**
-   * Request order sequence number.
-   */
-  reqOrd: number;
-
-  /**
-   * Request timestamp in milliseconds that have elapsed since January 1, 1970 at 00:00:00 UTC.
-   */
-  requestTime: number;
 }
 
 /**
@@ -62,7 +31,7 @@ function registerWorkflows(runtime: IClientRuntime): Promise<void> {
  * Top-level function for registering the necessary schemas and workflows
  * for augmentation loop integration in PowerPoint.
  */
-export function configureRuntimeForPowerPointWorkflows(runtime: IClientRuntime): Promise<void> {
+export function configureRuntimeForWorkflows(runtime: IClientRuntime): Promise<void> {
   return registerInputSchemas(runtime).then(() => {
     return registerWorkflows(runtime);
   });

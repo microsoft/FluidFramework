@@ -1,23 +1,24 @@
-import {runtime} from "@augloop/runtime-client";
+import {IHostCallbacks, runtime} from "@augloop/runtime-client";
 import * as winston from "winston";
-import {inputSchemaName} from "./common";
-import {configureRuntimeForPowerPointWorkflows, IDocTile} from "./main";
+import {IDocTile, inputSchemaName} from "./common";
+import {configureRuntimeForWorkflows} from "./main";
 
 let _runtimeInitPromise: Promise<void> = null;
 const _serviceUrl = "https://augloop-cluster-prod-gw.westus.cloudapp.azure.com";
 const _hostMetadata = {
-    appName: "PowerPoint",
-    appPlatform: "Win32",
+    appName: "Prague",
+    appPlatform: "Node",
   };
 
-const onResultCallback = (inputSchema: string, input, outputSchema: string, output) => {
+const onResultCallback = (inputSchema: string, input: IDocTile, outputSchema: string, output) => {
+    winston.info(`Result for request ${input.reqOrd}`);
     winston.info(inputSchema);
     winston.info(JSON.stringify(input));
     winston.info(outputSchema);
     winston.info(JSON.stringify(output));
 };
 
-const _hostCallbacks = {
+const _hostCallbacks: IHostCallbacks = {
     isFeatureEnabled: null,
     onResult: onResultCallback,
     sendTelemetryEvent: null,
@@ -36,18 +37,31 @@ function startRuntime(): Promise<void> {
     return _runtimeInitPromise;
 }
 
-const sampleInput: IDocTile = {
-    content: "The cat are fat",
-    docId: "Prague-0900",
-    id: "some-random-id-00111",
-    reqOrd: 1,
-    requestTime: 123,
-};
+const inputTexts = [
+    "Terible speling",
+    "The cat are fat",
+    "Everything looks good",
+    "Congressman did something stupid",
+    `It is a truth universally acknowledged, that a single man in possession of a good fortune, must be in want of a
+    wife. However little known the feelings or views of such a man may be on his first entering a neighbourhood,
+    this truth is so well fixed in the minds of the surrounding families, that he is considered the rightful
+    property of some one or other of their daughters.`,
+];
 
 export function launch() {
     startRuntime().then(() => {
-        configureRuntimeForPowerPointWorkflows(runtime).then(() => {
-            runtime.submit(inputSchemaName, sampleInput);
+        configureRuntimeForWorkflows(runtime).then(() => {
+            let index = 0;
+            for (const text of inputTexts) {
+                const input: IDocTile = {
+                    content: text,
+                    documentId: "random-id",
+                    reqOrd: index,
+                    requestTime: index,
+                };
+                ++index;
+                runtime.submit(inputSchemaName, input);
+            }
         });
       });
 }
