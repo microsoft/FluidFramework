@@ -1,0 +1,40 @@
+{
+  "name": "augloop",
+  "version": "0.1.0",
+  "description": "Prague Augmentation Loop Example",
+  "main": "index.js",
+  "dependencies": {
+    "@augloop/runtime-client": "1.2.79",
+    "@augloop/schemas": "^1.2.75",
+    "@prague/gitresources": "^0.7.0",
+    "@prague/routerlicious": "^0.1.2504",
+    "babel-polyfill": "^6.26.0",
+    "bufferutil": "^3.0.5",
+    "jsonwebtoken": "^8.2.1"
+  },
+  "devDependencies": {
+    "@types/debug": "0.0.30",
+    "@types/jquery": "^3.3.1",
+    "@types/jsonwebtoken": "^7.2.7",
+    "@types/node": "^8.10.10",
+    "@types/socket.io-client": "^1.4.32",
+    "babel-cli": "^6.26.0",
+    "babel-core": "^6.26.3",
+    "babel-loader": "^7.1.4",
+    "babel-preset-env": "^1.6.1",
+    "cache-loader": "^1.2.2",
+    "source-map-loader": "^0.2.3",
+    "ts-loader": "^4.2.0",
+    "tslint": "^5.9.1",
+    "typescript": "^2.8.3",
+    "webpack": "^4.7.0",
+    "webpack-cli": "^2.0.15"
+  },
+  "scripts": {
+    "build": "npm run tslint && npm run webpack",
+    "tslint": "tslint 'src/**/*.ts'",
+    "webpack": "webpack --config webpack.config.js --mode development"
+  },
+  "author": "Microsoft",
+  "repository": "microsoft/prague"
+}
