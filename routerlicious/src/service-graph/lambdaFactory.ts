@@ -32,14 +32,14 @@ class SharedGraph {
     }
 
     public addVertex(id: string, label: string, x: number, y: number, width: number, height: number) {
-        this.vertices.add(<ISharedVertex> {
+        this.vertices.add({
             height,
             id,
             label,
             width,
             x,
             y,
-        });
+        } as ISharedVertex);
     }
 
     public removeVertex(id: string) {
@@ -51,11 +51,11 @@ class SharedGraph {
     }
 
     public addEdge(nodeId1: string, nodeId2: string, label: string) {
-        this.edges.add(<ISharedEdge> {
+        this.edges.add({
+            label,
             nodeId1,
             nodeId2,
-            label,
-        });
+        } as ISharedEdge);
     }
 }
 
@@ -110,7 +110,7 @@ export class ServiceGraphLambdaFactory extends EventEmitter implements IPartitio
         const alfred = config.get("paparazzi:alfred");
 
         const tenants = config.get("tenantConfig");
-        let defaultTenant = tenants.find((tenant) => tenant.isDefault);
+        const defaultTenant = tenants.find((tenant) => tenant.isDefault);
         if (!defaultTenant) {
             return Promise.reject("Could not find tenant information");
         }
@@ -119,15 +119,16 @@ export class ServiceGraphLambdaFactory extends EventEmitter implements IPartitio
         const document = await api.load("__system__graph");
         const root = await document.getRoot().getView();
 
+        let graph: IMap;
         // Initialize if it doesn't exist
         if (!root.has("graph")) {
-            const graph = document.createMap();
+            graph = document.createMap();
             graph.set<DistributedSet<number>>("vertices", undefined, DistributedSetValueType.Name);
             graph.set<DistributedSet<number>>("edges", undefined, DistributedSetValueType.Name);
             root.set("graph", graph);
         }
 
-        const graph = root.get("graph") as IMap;
+        graph = root.get("graph") as IMap;
         const view = await graph.getView();
         const vertexSet = view.get<DistributedSet<ISharedVertex>>("vertices");
         const edgeSet = view.get<DistributedSet<ISharedEdge>>("edges");

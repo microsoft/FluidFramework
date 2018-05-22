@@ -38,6 +38,6 @@ COPY --chown=pptruser:pptruser package.json .
 COPY --chown=pptruser:pptruser package-lock.json .
 RUN npm install
 COPY --chown=pptruser:pptruser . .
+RUN npm run build
 
-ENTRYPOINT ["dumb-init", "--"]
-CMD ["node", "example.js"]
+ENTRYPOINT ["dumb-init", "--", "node", "dist/index.js"]

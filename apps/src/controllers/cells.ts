@@ -141,8 +141,8 @@ export async function load(id: string, tenantId: string, endPoints: any, token?:
             }
 
             // Display the user id.
-            displayUserId($("#cellViews"), doc.getUser().user.name);
-            console.log(doc.getUser());
+            displayUserId($("#cellViews"), doc.getUser().id);
+            console.log(doc.getUser().id);
 
             // Display the initial value and then listen for updates
             displayCell($("#cellViews"), cell, doc);

@@ -31,8 +31,8 @@ export async function generateAsymmetricKeys(numBitsForKey = 4096,
     };
 
     return openpgp.generateKey(keyGenerationOptions).then((key) => {
-        let privateKey: string = key.privateKeyArmored;
-        let publicKey: string = key.publicKeyArmored;
+        const privateKey: string = key.privateKeyArmored;
+        const publicKey: string = key.publicKeyArmored;
 
         return{privateKey, publicKey};
     });

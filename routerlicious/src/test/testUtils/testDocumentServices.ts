@@ -1,3 +1,4 @@
+// tslint:disable:ban-types
 import * as git from "gitresources";
 import * as api from "../../api-core";
 

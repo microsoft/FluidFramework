@@ -19,7 +19,7 @@ export class Vector implements IVector {
      * Returns the normalized form of the given vector
      */
     public static normalize(vector: Vector): Vector {
-        let length = vector.length();
+        const length = vector.length();
         return new Vector(vector.x / length, vector.y / length);
     }
 

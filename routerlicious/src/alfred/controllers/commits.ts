@@ -2,7 +2,7 @@ import "gitgraph.js";
 import * as resources from "gitresources";
 import * as $ from "jquery";
 
-let templateConfig = {
+const templateConfig = {
     arrow: {
         offset: 2.5,
         size: 16,
@@ -37,7 +37,7 @@ let templateConfig = {
         },
     },
   };
-  let template = new GitGraph.Template(templateConfig);
+const template = new GitGraph.Template(templateConfig);
 
 function generateGraph(type: string, id: string, versions: resources.ICommitDetails[]): void {
     const config: GitGraph.GitGraphOptions = {
@@ -49,7 +49,7 @@ function generateGraph(type: string, id: string, versions: resources.ICommitDeta
     const graph = new GitGraph(config);
 
     const master = graph.branch("master");
-    for (let version of versions) {
+    for (const version of versions) {
         const commitTag = version.commit.message.split(";");
         master.commit({
             dotSize: 20,

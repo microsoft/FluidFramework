@@ -1,4 +1,5 @@
 // tslint:disable:no-bitwise
+// tslint:disable:ban-types
 export enum ReferenceType {
     Simple =        0x0,
     Tile =          0x1,

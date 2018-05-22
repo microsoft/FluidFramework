@@ -5,7 +5,7 @@ import { PartitionManager } from "./partitionManager";
 export enum CloseReason {
     LeaseLost,
     Shutdown,
-};
+}
 
 export const StartOfStream = "-1";
 

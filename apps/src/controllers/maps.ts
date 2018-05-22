@@ -143,8 +143,8 @@ export async function load(id: string, tenantId: string, endPoints: any, token?:
             const root = doc.getRoot();
 
             // Display the user id.
-            displayUserId($("#mapViews"), doc.getUser().user.name);
-            console.log(doc.getUser());
+            displayUserId($("#mapViews"), doc.getUser().id);
+            console.log(doc.getUser().id);
 
             // Display the initial values and then listen for updates
             displayMap($("#mapViews"), null, root, null, doc);

@@ -139,7 +139,7 @@ export function register(
                 return response("Invalid client ID", null);
             }
 
-            for (let message of messages) {
+            for (const message of messages) {
                 if (message.type === api.RoundTrip) {
                     // End of tracking. Write traces.
                     if (message.traces !== undefined) {

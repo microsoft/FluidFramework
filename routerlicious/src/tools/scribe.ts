@@ -3,6 +3,7 @@ import * as fs from "fs";
 import * as path from "path";
 import * as ProgressBar from "progress";
 import * as socketStorage from "../socket-storage";
+import * as utils from "../utils";
 import { scribe } from "../utils";
 
 // Process command line input
@@ -52,22 +53,22 @@ fs.readFile(commander.file, "utf8", async (error, data: string) => {
                 total: data.length,
             });
     }
+    const token = getToken(sharedStringId);
+    const metricsToken = getToken(sharedStringId + "-metrics");
 
-    // TODO - replace null token parameter with generated token
-    await scribe.create(sharedStringId, null, data, debug);
+    await scribe.create(sharedStringId, token, data, debug);
     scribe.togglePlay();
 
     setTimeout(() => {
         let lastReported = 0;
 
-        // TODO - replace null token parameter with generated metrics document token
         const typeP = scribe.type(
             commander.interval,
             data,
             Number(commander.authors),
             Number(commander.processes),
-            null,
-            null,
+            token,
+            metricsToken,
             (metrics) => {
                 if (commander.progress) {
                     bar.update(metrics.ackProgress, {
@@ -77,7 +78,7 @@ fs.readFile(commander.file, "utf8", async (error, data: string) => {
                         typingRate: (metrics.typingRate ? metrics.typingRate : 0).toFixed(2),
                     });
                 } else {
-                    let progress = Math.round(metrics.typingProgress * 100);
+                    const progress = Math.round(metrics.typingProgress * 100);
                     if (progress > lastReported) {
                         console.log(progress + "% Completed");
                         lastReported = progress;
@@ -100,7 +101,7 @@ fs.readFile(commander.file, "utf8", async (error, data: string) => {
                 });
             },
             (typingError) => {
-                console.error(error);
+                console.error(typingError);
                 process.exit(1);
             });
     }, 1000);
@@ -108,10 +109,18 @@ fs.readFile(commander.file, "utf8", async (error, data: string) => {
 });
 
 function ensurePath(filePath: string) {
-    let dir = path.dirname(filePath);
+    const dir = path.dirname(filePath);
     if (fs.existsSync(dir)) {
         return true;
     }
     ensurePath(dir);
     fs.mkdirSync(dir);
+}
+
+function getToken(docId: string, metrics?: boolean) {
+    const tid = "xenodochial-lewin";
+    const tkey = "48fb191e6897e15777fbdaa792ce82ee";
+    const token = utils.generateToken(tid, docId, tkey);
+
+    return token;
 }

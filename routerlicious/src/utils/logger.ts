@@ -29,10 +29,10 @@ export function configureLogging(config: IWinstonConfig) {
     });
 
     // Forward all debug library logs through winston
-    (<any> debug).log = (msg, ...args) => winston.info(msg, ...args);
+    (debug as any).log = (msg, ...args) => winston.info(msg, ...args);
     // override the default log format to not include the timestamp since winston will do this for us
     // tslint:disable-next-line:only-arrow-functions
-    (<any> debug).formatArgs = function(args) {
+    (debug as any).formatArgs = function(args) {
         const name = this.namespace;
         args[0] = name + " " + args[0];
     };

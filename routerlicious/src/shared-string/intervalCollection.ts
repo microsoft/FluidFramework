@@ -27,16 +27,16 @@ export class Interval implements MergeTree.IInterval {
     }
 
     public serialize(client: MergeTree.Client) {
-        let startPosition = this.start.toPosition(client.mergeTree,
+        const startPosition = this.start.toPosition(client.mergeTree,
             client.getCurrentSeq(), client.getClientId());
-        let endPosition = this.end.toPosition(client.mergeTree,
+        const endPosition = this.end.toPosition(client.mergeTree,
             client.getCurrentSeq(), client.getClientId());
-        let serializedInterval = <ISerializedInterval> {
+        const serializedInterval = {
             endPosition,
             intervalType: this.intervalType,
             sequenceNumber: client.getCurrentSeq(),
             startPosition,
-        };
+        } as ISerializedInterval;
         if (this.properties) {
             serializedInterval.properties = this.properties;
         }
@@ -48,7 +48,7 @@ export class Interval implements MergeTree.IInterval {
     }
 
     public compare(b: Interval) {
-        let startResult = this.start.compare(b.start);
+        const startResult = this.start.compare(b.start);
         if (startResult === 0) {
             return (this.end.compare(b.end));
         } else {
@@ -57,7 +57,7 @@ export class Interval implements MergeTree.IInterval {
     }
 
     public overlaps(b: Interval) {
-        let result = (this.start.compare(b.end) < 0) &&
+        const result = (this.start.compare(b.end) < 0) &&
             (this.end.compare(b.start) >= 0);
         if (this.checkMergeTree) {
             this.checkOverlaps(b, result);
@@ -75,23 +75,23 @@ export class Interval implements MergeTree.IInterval {
     }
 
     public overlapsPos(mergeTree: MergeTree.MergeTree, bstart: number, bend: number) {
-        let startPos = this.start.toPosition(mergeTree, MergeTree.UniversalSequenceNumber,
+        const startPos = this.start.toPosition(mergeTree, MergeTree.UniversalSequenceNumber,
             mergeTree.collabWindow.clientId);
-        let endPos = this.start.toPosition(mergeTree, MergeTree.UniversalSequenceNumber,
+        const endPos = this.start.toPosition(mergeTree, MergeTree.UniversalSequenceNumber,
             mergeTree.collabWindow.clientId);
         return (endPos > bstart) && (startPos < bend);
     }
 
     private checkOverlaps(b: Interval, result: boolean) {
-        let astart = this.start.toPosition(this.checkMergeTree, this.checkMergeTree.collabWindow.currentSeq,
+        const astart = this.start.toPosition(this.checkMergeTree, this.checkMergeTree.collabWindow.currentSeq,
             this.checkMergeTree.collabWindow.clientId);
-        let bstart = b.start.toPosition(this.checkMergeTree, this.checkMergeTree.collabWindow.currentSeq,
+        const bstart = b.start.toPosition(this.checkMergeTree, this.checkMergeTree.collabWindow.currentSeq,
             this.checkMergeTree.collabWindow.clientId);
-        let aend = this.end.toPosition(this.checkMergeTree, this.checkMergeTree.collabWindow.currentSeq,
+        const aend = this.end.toPosition(this.checkMergeTree, this.checkMergeTree.collabWindow.currentSeq,
             this.checkMergeTree.collabWindow.clientId);
-        let bend = b.end.toPosition(this.checkMergeTree, this.checkMergeTree.collabWindow.currentSeq,
+        const bend = b.end.toPosition(this.checkMergeTree, this.checkMergeTree.collabWindow.currentSeq,
             this.checkMergeTree.collabWindow.clientId);
-        let checkResult = ((astart < bend) && (bstart < aend));
+        const checkResult = ((astart < bend) && (bstart < aend));
         if (checkResult !== result) {
             // tslint:disable-next-line:max-line-length
             console.log(`check mismatch: res ${result} ${this.start.segment === b.end.segment} ${b.start.segment === this.end.segment}`);
@@ -109,7 +109,7 @@ export class Interval implements MergeTree.IInterval {
 export interface IIntervalCollection {
     findOverlappingIntervals(startPosition: number, endPosition: number): Interval[];
     addInterval(start: number, end: number, intervalType: MergeTree.IntervalType,
-        props?: MergeTree.PropertySet): Interval;
+                props?: MergeTree.PropertySet): Interval;
 }
 
 export function createInterval(
@@ -124,18 +124,18 @@ export function createInterval(
         beginRefType = MergeTree.ReferenceType.Transient;
         endRefType = MergeTree.ReferenceType.Transient;
     }
-    let startLref = sharedString.createPositionReference(start, beginRefType);
-    let endLref = sharedString.createPositionReference(end, endRefType);
+    const startLref = sharedString.createPositionReference(start, beginRefType);
+    const endLref = sharedString.createPositionReference(end, endRefType);
     if (startLref && endLref) {
         startLref.pairedRef = endLref;
         endLref.pairedRef = startLref;
-        let rangeProp = {
+        const rangeProp = {
             [MergeTree.reservedRangeLabelsKey]: [label],
         };
         startLref.addProperties(rangeProp);
         endLref.addProperties(rangeProp);
 
-        let ival = new Interval(startLref, endLref, intervalType, rangeProp);
+        const ival = new Interval(startLref, endLref, intervalType, rangeProp);
         // ival.checkMergeTree = sharedString.client.mergeTree;
         return ival;
     }
@@ -158,9 +158,9 @@ export class LocalIntervalCollection implements IIntervalCollection {
     }
     public findOverlappingIntervals(startPosition: number, endPosition: number) {
         if (!this.intervalTree.intervals.isEmpty()) {
-            let transientInterval = createInterval("transient", this.sharedString,
+            const transientInterval = createInterval("transient", this.sharedString,
                 startPosition, endPosition, MergeTree.IntervalType.Transient);
-            let overlappingIntervalNodes = this.intervalTree.match(transientInterval);
+            const overlappingIntervalNodes = this.intervalTree.match(transientInterval);
             return overlappingIntervalNodes.map((node) => node.key);
         } else {
             return [];
@@ -168,18 +168,18 @@ export class LocalIntervalCollection implements IIntervalCollection {
     }
 
     public previousInterval(pos: number) {
-        let transientInterval = createInterval("transient", this.sharedString,
+        const transientInterval = createInterval("transient", this.sharedString,
             pos, pos, MergeTree.IntervalType.Transient);
-        let rbNode = this.endIntervalTree.floor(transientInterval);
+        const rbNode = this.endIntervalTree.floor(transientInterval);
         if (rbNode) {
             return rbNode.data;
         }
     }
 
     public nextInterval(pos: number) {
-        let transientInterval = createInterval("transient", this.sharedString,
+        const transientInterval = createInterval("transient", this.sharedString,
             pos, pos, MergeTree.IntervalType.Transient);
-        let rbNode = this.endIntervalTree.ceil(transientInterval);
+        const rbNode = this.endIntervalTree.ceil(transientInterval);
         if (rbNode) {
             return rbNode.data;
         }
@@ -193,7 +193,7 @@ export class LocalIntervalCollection implements IIntervalCollection {
     public addInterval(
         start: number, end: number, intervalType: MergeTree.IntervalType,
         props?: MergeTree.PropertySet) {
-        let interval = this.createInterval(start, end, intervalType);
+        const interval = this.createInterval(start, end, intervalType);
         if (interval) {
             interval.addProperties(props);
             interval.properties[MergeTree.reservedRangeLabelsKey] = [this.label];
@@ -204,8 +204,8 @@ export class LocalIntervalCollection implements IIntervalCollection {
     }
 
     public serialize() {
-        let client = this.sharedString.client;
-        let intervals = this.intervalTree.intervals.keys();
+        const client = this.sharedString.client;
+        const intervals = this.intervalTree.intervals.keys();
         return intervals.map((interval) => interval.serialize(client));
     }
 }
@@ -297,7 +297,7 @@ export class SharedIntervalCollection extends EventEmitter {
             this.sharedString = sharedString;
             this.localCollection = new LocalIntervalCollection(sharedString, label);
             if (this.savedSerializedIntervals) {
-                for (let serializedInterval of this.savedSerializedIntervals) {
+                for (const serializedInterval of this.savedSerializedIntervals) {
                     this.deserializeInterval(serializedInterval);
                 }
                 this.savedSerializedIntervals = undefined;
@@ -323,19 +323,19 @@ export class SharedIntervalCollection extends EventEmitter {
         intervalType: MergeTree.IntervalType,
         props?: MergeTree.PropertySet) {
 
-        let serializedInterval = <ISerializedInterval> {
+        const serializedInterval = {
             endPosition,
             intervalType,
             properties: props,
             sequenceNumber: this.sharedString.client.getCurrentSeq(),
             startPosition,
-        };
+        } as ISerializedInterval;
         this.addSerialized(serializedInterval, true, null);
     }
 
     // TODO: error cases
     public addSerialized(serializedInterval: ISerializedInterval, local: boolean, op: api.ISequencedObjectMessage) {
-        let interval = this.deserializeInterval(serializedInterval);
+        const interval = this.deserializeInterval(serializedInterval);
         if (interval) {
             // Null op means this was a local add and we should submit an op to the server
             if (op === null) {
@@ -357,7 +357,7 @@ export class SharedIntervalCollection extends EventEmitter {
     public onDeserialize = (value: Interval) => { return; };
 
     private deserializeInterval(serializedInterval: ISerializedInterval) {
-        let interval = this.localCollection.addInterval(serializedInterval.startPosition,
+        const interval = this.localCollection.addInterval(serializedInterval.startPosition,
             serializedInterval.endPosition, serializedInterval.intervalType,
             serializedInterval.properties);
         this.onDeserialize(interval);

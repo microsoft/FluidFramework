@@ -2,5 +2,5 @@ import { Interval, SharedIntervalCollection, SharedIntervalCollectionValueType }
 import { SharedString } from "./sharedString";
 
 export { Interval, SharedIntervalCollection,
-    SharedIntervalCollectionValueType, SharedString }
+    SharedIntervalCollectionValueType, SharedString };
 export * from "./extension";

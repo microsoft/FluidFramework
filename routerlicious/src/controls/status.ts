@@ -45,14 +45,14 @@ export class Status extends ui.Component implements IStatus {
     }
 
     public remove(key: string) {
-        let i = this.findKV(key);
+        const i = this.findKV(key);
         if (i >= 0) {
             this.info.splice(i, 1);
         }
         this.renderBar();
     }
 
-    public addOption(event: string, text: string, value: boolean = undefined) {
+    public addOption(event: string, text: string, value?: boolean) {
         const element = document.createElement("li");
         this.listElement.appendChild(element);
 
@@ -123,7 +123,7 @@ export class Status extends ui.Component implements IStatus {
     public renderBar() {
         let buf = "";
         let first = true;
-        for (let kv of this.info) {
+        for (const kv of this.info) {
             buf += "<span>";
             if (!first) {
                 if (kv.showKey) {

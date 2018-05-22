@@ -34,5 +34,18 @@ export function create(config: Provider, ensureLoggedIn: any): Router {
         },
     ));
 
+    router.get(
+        "/login/local",
+        (request, response) => {
+            response.render("login", { partials: defaultPartials, title: "Routerlicious" });
+        });
+
+    router.post(
+        "/login/local",
+        passport.authenticate("local", { failureRedirect: "/login/local" }),
+        (request, response) => {
+            response.redirect("/");
+        });
+
     return router;
 }

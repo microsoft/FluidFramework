@@ -12,7 +12,7 @@ export class TestLambda implements IPartitionLambda {
 
     public handler(message: utils.IMessage): void {
         if (this.throwHandler) {
-            throw "Requested failure";
+            throw new Error("Requested failure");
         }
 
         assert.ok((this.lastOffset === undefined) || (this.lastOffset + 1 === message.offset));

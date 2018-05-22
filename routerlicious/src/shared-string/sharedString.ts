@@ -5,7 +5,7 @@ import { Deferred } from "../core-utils";
 import { IMap, IMapView, IValueChanged } from "../data-types";
 import { CollaborativeMap, MapExtension } from "../map";
 import * as MergeTree from "../merge-tree";
-import { CollaboritiveStringExtension } from "./extension";
+import { CollaborativeStringExtension } from "./extension";
 import {
     Interval, SharedIntervalCollection,
     SharedIntervalCollectionValueType,
@@ -14,8 +14,8 @@ import { ISequencedObjectMessage } from "../api-core";
 import { IRelativePosition } from "../merge-tree";
 
 function textsToSegments(texts: MergeTree.IPropertyString[]) {
-    let segments: MergeTree.Segment[] = [];
-    for (let ptext of texts) {
+    const segments: MergeTree.Segment[] = [];
+    for (const ptext of texts) {
         let segment: MergeTree.Segment;
         if (ptext.text !== undefined) {
             segment = MergeTree.TextSegment.make(ptext.text, ptext.props as MergeTree.PropertySet,
@@ -53,7 +53,7 @@ export class SharedString extends CollaborativeMap {
         sequenceNumber: number,
         services?: api.IDistributedObjectServices) {
 
-        super(id, document, CollaboritiveStringExtension.Type);
+        super(id, document, CollaborativeStringExtension.Type);
         this.client = new MergeTree.Client("", document.options);
     }
 
@@ -65,7 +65,7 @@ export class SharedString extends CollaborativeMap {
             type: MergeTree.MergeTreeDeltaType.INSERT,
         };
 
-        let pos = this.client.mergeTree.posFromRelativePos(relativePos1);
+        const pos = this.client.mergeTree.posFromRelativePos(relativePos1);
         this.client.insertMarkerLocal(pos, refType, props);
         this.submitIfAttached(insertMessage);
 
@@ -88,7 +88,7 @@ export class SharedString extends CollaborativeMap {
     }
 
     public getDocument(): api.IDocument {
-        return <api.IDocument>this.document;
+        return this.document as api.IDocument;
     }
 
     public getText(start?: number, end?: number): string {
@@ -124,8 +124,8 @@ export class SharedString extends CollaborativeMap {
         const insertMessage: MergeTree.IMergeTreeInsertMsg = {
             pos1: pos,
             props,
-            type: MergeTree.MergeTreeDeltaType.INSERT,
             text,
+            type: MergeTree.MergeTreeDeltaType.INSERT,
         };
 
         this.client.insertTextLocal(text, pos, props);
@@ -137,8 +137,8 @@ export class SharedString extends CollaborativeMap {
             pos1: start,
             pos2: end,
             props,
-            type: MergeTree.MergeTreeDeltaType.INSERT,
             text,
+            type: MergeTree.MergeTreeDeltaType.INSERT,
         };
         this.client.mergeTree.startGroupOperation();
         this.client.removeSegmentLocal(start, end);
@@ -161,9 +161,9 @@ export class SharedString extends CollaborativeMap {
     }
 
     public removeNest(nestStart: MergeTree.Marker, nestEnd: MergeTree.Marker) {
-        let start = this.client.mergeTree.getOffset(nestStart,
+        const start = this.client.mergeTree.getOffset(nestStart,
             MergeTree.UniversalSequenceNumber, this.client.getClientId());
-        let end = nestEnd.cachedLength + this.client.mergeTree.getOffset(nestEnd,
+        const end = nestEnd.cachedLength + this.client.mergeTree.getOffset(nestEnd,
             MergeTree.UniversalSequenceNumber, this.client.getClientId());
         console.log(`removing nest ${nestStart.getId()} from [${start},${end})`);
         const removeMessage: MergeTree.IMergeTreeRemoveMsg = {
@@ -193,7 +193,7 @@ export class SharedString extends CollaborativeMap {
         end: number,
         fromSeq: number) {
 
-        let ranges = this.client.mergeTree.tardisRange(start, end, fromSeq, this.client.getCurrentSeq(),
+        const ranges = this.client.mergeTree.tardisRange(start, end, fromSeq, this.client.getCurrentSeq(),
             this.client.getClientId());
         ranges.map((range: MergeTree.IIntegerRange) => {
             this.annotateRange(props, range.start, range.end);
@@ -201,19 +201,19 @@ export class SharedString extends CollaborativeMap {
     }
 
     public transaction(groupOp: MergeTree.IMergeTreeGroupMsg): MergeTree.SegmentGroup {
-        let segmentGroup = this.client.localTransaction(groupOp);
+        const segmentGroup = this.client.localTransaction(groupOp);
         this.submitIfAttached(groupOp);
         return segmentGroup;
     }
 
     public annotateMarkerNotifyConsensus(marker: MergeTree.Marker, props: MergeTree.PropertySet,
         callback: (m: MergeTree.Marker) => void) {
-        let id = marker.getId();
-        let annotateMessage: MergeTree.IMergeTreeAnnotateMsg = {
+        const id = marker.getId();
+        const annotateMessage: MergeTree.IMergeTreeAnnotateMsg = {
             combiningOp: { name: "consensus"},
+            props,
             relativePos1: { id, before: true },
             relativePos2: { id },
-            props,
             type: MergeTree.MergeTreeDeltaType.ANNOTATE,
         };
         this.client.annotateMarkerNotifyConsensus(marker, props, callback);
@@ -221,11 +221,11 @@ export class SharedString extends CollaborativeMap {
     }
 
     public annotateMarker(props: MergeTree.PropertySet, marker: MergeTree.Marker, op?: MergeTree.ICombiningOp) {
-        let id = marker.getId();
-        let annotateMessage: MergeTree.IMergeTreeAnnotateMsg = {
+        const id = marker.getId();
+        const annotateMessage: MergeTree.IMergeTreeAnnotateMsg = {
+            props,
             relativePos1: { id, before: true },
             relativePos2: { id },
-            props,
             type: MergeTree.MergeTreeDeltaType.ANNOTATE,
         };
 
@@ -237,7 +237,7 @@ export class SharedString extends CollaborativeMap {
     }
 
     public annotateRange(props: MergeTree.PropertySet, start: number, end: number, op?: MergeTree.ICombiningOp) {
-        let annotateMessage: MergeTree.IMergeTreeAnnotateMsg = {
+        const annotateMessage: MergeTree.IMergeTreeAnnotateMsg = {
             pos1: start,
             pos2: end,
             props,
@@ -257,11 +257,11 @@ export class SharedString extends CollaborativeMap {
 
     public createPositionReference(pos: number, refType: MergeTree.ReferenceType, refSeq = this.client.getCurrentSeq(),
         clientId = this.client.getClientId()): MergeTree.LocalReference {
-        let segoff = this.client.mergeTree.getContainingSegment(pos,
+        const segoff = this.client.mergeTree.getContainingSegment(pos,
             refSeq, this.client.getClientId());
         if (segoff && segoff.segment) {
-            let baseSegment = <MergeTree.BaseSegment>segoff.segment;
-            let lref = new MergeTree.LocalReference(baseSegment, segoff.offset, refType);
+            const baseSegment = segoff.segment as MergeTree.BaseSegment;
+            const lref = new MergeTree.LocalReference(baseSegment, segoff.offset, refType);
             if (refType !== MergeTree.ReferenceType.Transient) {
                 this.client.mergeTree.addLocalReference(lref);
             }
@@ -288,7 +288,7 @@ export class SharedString extends CollaborativeMap {
             this.intervalCollections.set<SharedIntervalCollection>(label, undefined,
                 SharedIntervalCollectionValueType.Name);
         }
-        let sharedCollection = this.intervalCollections.get<SharedIntervalCollection>(label);
+        const sharedCollection = this.intervalCollections.get<SharedIntervalCollection>(label);
         if (onDeserialize) {
             sharedCollection.onDeserialize = onDeserialize;
         }
@@ -297,10 +297,10 @@ export class SharedString extends CollaborativeMap {
     }
 
     public sendNACKed() {
-        let orderedSegments = <MergeTree.Segment[]>[];
+        const orderedSegments = [] as MergeTree.Segment[];
         while (!this.client.mergeTree.pendingSegments.empty()) {
-            let NACKedSegmentGroup = this.client.mergeTree.pendingSegments.dequeue();
-            for (let segment of NACKedSegmentGroup.segments) {
+            const NACKedSegmentGroup = this.client.mergeTree.pendingSegments.dequeue();
+            for (const segment of NACKedSegmentGroup.segments) {
                 orderedSegments.push(segment);
             }
         }
@@ -315,29 +315,29 @@ export class SharedString extends CollaborativeMap {
             }
         });
 
-        let segmentGroup = <MergeTree.SegmentGroup>{
+        const segmentGroup = {
             segments: orderedSegments,
-        };
-        let opList = <MergeTree.IMergeTreeOp[]>[];
+        } as MergeTree.SegmentGroup;
+        const opList = [] as MergeTree.IMergeTreeOp[];
         let prevSeg: MergeTree.Segment;
-        for (let segment of orderedSegments) {
+        for (const segment of orderedSegments) {
             if (prevSeg !== segment) {
                 segment.segmentGroup = segmentGroup;
                 this.client.segmentToOps(segment, opList);
                 prevSeg = segment;
             }
         }
-        let groupOp = <MergeTree.IMergeTreeGroupMsg>{
+        const groupOp = {
             ops: opList,
             type: MergeTree.MergeTreeDeltaType.GROUP,
-        };
+        } as MergeTree.IMergeTreeGroupMsg;
         this.client.mergeTree.pendingSegments.enqueue(segmentGroup);
         this.submitIfAttached(groupOp);
     }
 
     protected transformContent(message: api.IObjectMessage, toSequenceNumber: number): api.IObjectMessage {
         if (message.contents) {
-            this.client.transform(<api.ISequencedObjectMessage>message, toSequenceNumber);
+            this.client.transform(message as api.ISequencedObjectMessage, toSequenceNumber);
         }
         message.referenceSequenceNumber = toSequenceNumber;
         return message;
@@ -367,7 +367,7 @@ export class SharedString extends CollaborativeMap {
 
     protected snapshotContent(): api.ITree {
         this.client.mergeTree.commitGlobalMin();
-        let snap = new MergeTree.Snapshot(this.client.mergeTree);
+        const snap = new MergeTree.Snapshot(this.client.mergeTree);
         snap.extractSync();
         return snap.emit();
     }
@@ -433,7 +433,7 @@ export class SharedString extends CollaborativeMap {
         }
 
         const chunk = MergeTree.Snapshot.processChunk(header);
-        let segs = textsToSegments(chunk.segmentTexts);
+        const segs = textsToSegments(chunk.segmentTexts);
         this.client.mergeTree.reloadFromSegments(segs);
         if (collaborative) {
             // TODO currently only assumes two levels of branching
@@ -456,7 +456,7 @@ export class SharedString extends CollaborativeMap {
         // If loading from a snapshot load in the body
         if (header) {
             const chunk = await MergeTree.Snapshot.loadChunk(services, "body");
-            for (let segSpec of chunk.segmentTexts) {
+            for (const segSpec of chunk.segmentTexts) {
                 this.client.mergeTree.appendSegment(segSpec);
             }
         }
@@ -468,11 +468,11 @@ export class SharedString extends CollaborativeMap {
 
         // Do we want to break the dependence on the interval collection
         // Register the filter callback on the reference collections
-        let intervalCollections = await this.get("intervalCollections") as IMap;
+        const intervalCollections = await this.get("intervalCollections") as IMap;
 
         this.intervalCollections = await intervalCollections.getView();
         intervalCollections.on("valueChanged", (ev: IValueChanged) => {
-            let intervalCollection = this.intervalCollections.get<SharedIntervalCollection>(ev.key);
+            const intervalCollection = this.intervalCollections.get<SharedIntervalCollection>(ev.key);
             intervalCollection.initialize(this, ev.key);
         });
     }
@@ -509,8 +509,8 @@ export class SharedString extends CollaborativeMap {
     }
 
     private initializeIntervalCollections() {
-        for (let key of this.intervalCollections.keys()) {
-            let intervalCollection = this.intervalCollections.get<SharedIntervalCollection>(key);
+        for (const key of this.intervalCollections.keys()) {
+            const intervalCollection = this.intervalCollections.get<SharedIntervalCollection>(key);
             intervalCollection.initialize(this, key);
         }
     }

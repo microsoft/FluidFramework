@@ -1,3 +1,4 @@
+// tslint:disable:ban-types
 import { Provider } from "nconf";
 import { IPartitionLambdaFactory, IPlugin } from "../kafka-service/lambdas";
 import { DocumentLambdaFactory } from "./lambdaFactory";

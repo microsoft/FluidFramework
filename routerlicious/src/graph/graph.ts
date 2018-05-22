@@ -13,12 +13,12 @@ export class CollaborativeGraph implements IGraph {
     }
 
     public addVertex(id: number, label: string) {
-        let v = new Vertex(id, label);
+        const v = new Vertex(id, label);
         this.vertices.add(v);
     }
 
     public addEdge(nodeId1: number, nodeId2: number, label: string) {
-        let e = new Edge(nodeId1, nodeId2, label);
+        const e = new Edge(nodeId1, nodeId2, label);
         this.edges.add(e);
     }
 

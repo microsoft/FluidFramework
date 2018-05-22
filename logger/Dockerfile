@@ -1,13 +1,10 @@
-FROM node:8.9.3-alpine
+FROM node:8.11.1-alpine
 
 WORKDIR /usr/src/server
 COPY package-lock.json .
 COPY package.json .
 RUN npm install
-COPY . /usr/src/server
-
-RUN mkdir dist
-# RUN chown node: dist
+COPY . .
 
 RUN npm run build
 

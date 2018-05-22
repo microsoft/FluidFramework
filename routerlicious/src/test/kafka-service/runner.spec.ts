@@ -26,7 +26,7 @@ describe("kafka-service", () => {
                 const startP = testRunner.start();
                 testConsumer.rebalance();
 
-                let messageCount = 10;
+                const messageCount = 10;
                 for (let i = 0; i < messageCount; i++) {
                     testProducer.send("{}", "test");
                 }

@@ -79,8 +79,8 @@ export class DocumentService implements api.IDocumentService {
         const forkId = await new Promise<string>((resolve, reject) => {
             request.post(
                 {
-                    json: true,
                     headers,
+                    json: true,
                     url: `${this.deltaUrl}/documents/${tenantId}/${id}/forks`,
                 },
                 (error, response, body) => {

@@ -1,3 +1,4 @@
+// tslint:disable:ban-types
 import { EventEmitter } from "events";
 import * as http from "http";
 import * as _ from "lodash";
@@ -56,20 +57,20 @@ class SocketIoServer implements core.IWebSocketServer {
 }
 
 export function create(redisConfig: any, server: http.Server): core.IWebSocketServer {
-    let options: any = { auth_pass: redisConfig.pass };
+    const options: any = { auth_pass: redisConfig.pass };
     if (redisConfig.tls !== undefined) {
         options.tls = {
             servername: redisConfig.host,
         };
     }
 
-    let pubOptions = _.clone(options);
-    let subOptions = _.clone(options);
-    let pub = redis.createClient(redisConfig.port, redisConfig.host, pubOptions);
-    let sub = redis.createClient(redisConfig.port, redisConfig.host, subOptions);
+    const pubOptions = _.clone(options);
+    const subOptions = _.clone(options);
+    const pub = redis.createClient(redisConfig.port, redisConfig.host, pubOptions);
+    const sub = redis.createClient(redisConfig.port, redisConfig.host, subOptions);
 
     // Create and register a socket.io connection on the server
-    let io = socketIo();
+    const io = socketIo();
     io.adapter(socketIoRedis({ pubClient: pub, subClient: sub }));
     io.attach(server);
     return new SocketIoServer(io, pub, sub);

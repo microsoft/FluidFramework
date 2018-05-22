@@ -25,7 +25,7 @@ export class TestLambda implements IPartitionLambda {
         if (this.failHandler) {
             this.context.error("Test failure", true);
         } else if (this.throwHandler) {
-            throw "Test Error";
+            throw new Error("Test Error");
         } else {
             this.context.checkpoint(message.offset);
         }

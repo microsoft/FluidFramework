@@ -70,9 +70,9 @@ export class PartitionManager {
      */
     private checkPointCore(): Promise<void> {
         return new Promise<any>((resolve, reject) => {
-            let commitDetails = [];
-            for (let partition of Object.keys(this.partitionMap)) {
-                let currentPartition = this.partitionMap[partition];
+            const commitDetails = [];
+            for (const partition of Object.keys(this.partitionMap)) {
+                const currentPartition = this.partitionMap[partition];
                 // No update since last checkpoint. Delete the partition.
                 if (currentPartition.checkpointedOffset === currentPartition.latestOffset) {
                     delete this.partitionMap[partition];
@@ -103,7 +103,7 @@ export class PartitionManager {
      * Decides whether to kick off checkpointing or not.
      */
     private shouldCheckpoint(): boolean {
-        let partitions = Object.keys(this.partitionMap);
+        const partitions = Object.keys(this.partitionMap);
 
         // No active partitions. So don't need to checkpoint.
         if (partitions.length === 0) {
@@ -114,7 +114,7 @@ export class PartitionManager {
                 return true;
             }
             // Checks if any of the partitions has more than batchsize messages unprocessed.
-            for (let partition of partitions) {
+            for (const partition of partitions) {
                 if (this.partitionMap[partition].latestOffset - this.partitionMap[partition].checkpointedOffset >=
                     this.batchSize) {
                     return true;

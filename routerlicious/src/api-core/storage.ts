@@ -1,3 +1,4 @@
+// tslint:disable:ban-types
 import * as resources from "gitresources";
 import { IDocumentMessage, ISequencedDocumentMessage } from "./protocol";
 import { ITenantUser } from "./tenant";

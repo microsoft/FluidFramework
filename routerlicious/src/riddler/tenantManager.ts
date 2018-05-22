@@ -25,7 +25,7 @@ export interface ITenantStorageDocument {
         // Password for the storage provider
         password: string;
     };
-};
+}
 
 /**
  * Tenant details stored to the document database

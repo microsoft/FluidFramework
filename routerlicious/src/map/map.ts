@@ -161,7 +161,7 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
     }
 
     public transform(message: api.IObjectMessage, sequenceNumber: number): api.IObjectMessage {
-        let handled = message.type === api.OperationType
+        const handled = message.type === api.OperationType
             ? this.messageHandler.has((message.contents as IMapOperation).type)
             : false;
 
@@ -234,8 +234,7 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
         this.serializeFilter = filter;
     }
 
-    public on(event: "pre-op", listener: (op: api.ISequencedObjectMessage, local: boolean) => void): this;
-    public on(event: "op", listener: (op: api.ISequencedObjectMessage, local: boolean) => void): this;
+    public on(event: "pre-op" | "op", listener: (op: api.ISequencedObjectMessage, local: boolean) => void): this;
     public on(
         event: "valueChanged",
         listener: (changed: IValueChanged, local: boolean, op: api.ISequencedObjectMessage) => void): this;

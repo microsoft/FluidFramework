@@ -20,7 +20,7 @@ export interface ICellSnapshot {
     offset: number;
     sequenceNumber: number;
     snapshot: any;
-};
+}
 
 export enum CellValueType {
     // The value is another collaborative object

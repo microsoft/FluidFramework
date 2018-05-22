@@ -1,44 +1,17 @@
 {{<layout}}
-    {{$styles}}
-        <link href="{{#hfurl}}/public/stylesheets/dist/style.css{{/hfurl}}" rel="stylesheet" />
-
-    {{/styles}}
-
     {{$content}}
-
-        <div>
-
-            <div class="indicatortext" id="login-indicator">
-                <span style="float:right">Welcome back, _!</span><br/>
+        <form action="/login/local" method="post">
+            <div>
+                <label>Username:</label>
+                <input id="username" type="text" name="username"/><br/>
             </div>
-
-            <div class="titleletters">
-                <span class="titleletter" data-letter="B">B</span>
-                <span class="titleletter" data-letter="O">O</span>
-                <span class="titleletter" data-letter="L">L</span>
-                <span class="titleletter" data-letter="T">T</span>
+            <div>
+                <label>Password:</label>
+                <input id="password" type="password" name="password"/>
             </div>
-
-            <div class="form">
-                <form class="login-form">
-                    <p id="assignKeypair" class="specialmessage">Don't have your own keypair? <a href="#">Generate one now.</a></p> <br />
-                    <input id="username" type="text" placeholder="Username"/> <br />
-                    <textarea id="publicKey" rows="14" cols="10" wrap="soft" placeholder="PGP Public Key"></textarea>
-                    <textarea id="privateKey" rows="14" cols="10" wrap="soft" placeholder="PGP Private Key"></textarea>
-                    <button id="login-button">login</button>
-                    <button style="display:none" id="logout-button">logout</button>
-                </form>
+                <div>
+                <input id="submit" type="submit" value="Submit"/>
             </div>
-        
-        </div>
-
+        </form>
     {{/content}}
-
-    {{$scripts}}
-        <script src="{{#hfurl}}/public/scripts/dist/controller.js{{/hfurl}}"></script>
-        <script>
-            var config = {{{ config }}};
-            controller.login.load(config);
-        </script>
-    {{/scripts}}
 {{/layout}}

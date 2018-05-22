@@ -17,7 +17,7 @@ class EventPoint {
     public properties: IPointerPointProps;
 
     constructor(relative: HTMLElement, evt: PointerEvent) {
-        let offset = $(relative).offset();
+        const offset = $(relative).offset();
         this.rawPosition = {
             x: evt.pageX - offset.left,
             y: evt.pageY - offset.top,
@@ -58,7 +58,7 @@ export class InkCanvas extends ui.Component {
         // get context
         this.context = this.canvas.getContext("2d");
 
-        let bb = false;
+        const bb = false;
         this.canvas.addEventListener("pointerdown", (evt) => this.handlePointerDown(evt), bb);
         this.canvas.addEventListener("pointermove", (evt) => this.handlePointerMove(evt), bb);
         this.canvas.addEventListener("pointerup", (evt) => this.handlePointerUp(evt), bb);
@@ -87,8 +87,8 @@ export class InkCanvas extends ui.Component {
         const layers = this.model.getLayers();
 
         // Time of the first operation in layer 0 is our starting time
-        let startTime = layers[0].operations[0].time;
-        for (let layer of layers) {
+        const startTime = layers[0].operations[0].time;
+        for (const layer of layers) {
             this.animateLayer(layer, 0, startTime);
         }
     }
@@ -112,9 +112,9 @@ export class InkCanvas extends ui.Component {
 
         if ((evt.pointerType === "pen") || ((evt.pointerType === "mouse") && (evt.button === 0))) {
             // Anchor and clear any current selection.
-            let pt = new EventPoint(this.canvas, evt);
+            const pt = new EventPoint(this.canvas, evt);
 
-            let delta = new types.Delta().stylusDown(pt.rawPosition, evt.pressure, this.currentPen);
+            const delta = new types.Delta().stylusDown(pt.rawPosition, evt.pressure, this.currentPen);
             this.currentStylusActionId = delta.operations[0].stylusDown.id;
             this.addAndDrawStroke(delta, true);
 
@@ -124,8 +124,8 @@ export class InkCanvas extends ui.Component {
 
     private handlePointerMove(evt: PointerEvent) {
         if (evt.pointerId === this.penID) {
-            let pt = new EventPoint(this.canvas, evt);
-            let delta = new types.Delta().stylusMove(
+            const pt = new EventPoint(this.canvas, evt);
+            const delta = new types.Delta().stylusMove(
                 pt.rawPosition,
                 evt.pressure,
                 this.currentStylusActionId);
@@ -140,10 +140,10 @@ export class InkCanvas extends ui.Component {
     private handlePointerUp(evt: PointerEvent) {
         if (evt.pointerId === this.penID) {
             this.penID = -1;
-            let pt = new EventPoint(this.canvas, evt);
+            const pt = new EventPoint(this.canvas, evt);
             evt.returnValue = false;
 
-            let delta = new types.Delta().stylusUp(
+            const delta = new types.Delta().stylusUp(
                 pt.rawPosition,
                 evt.pressure,
                 this.currentStylusActionId);
@@ -161,9 +161,9 @@ export class InkCanvas extends ui.Component {
         }
 
         // Draw the requested stroke
-        let currentOperation = layer.operations[operationIndex];
-        let previousOperation = layer.operations[Math.max(0, operationIndex - 1)];
-        let time = operationIndex === 0
+        const currentOperation = layer.operations[operationIndex];
+        const previousOperation = layer.operations[Math.max(0, operationIndex - 1)];
+        const time = operationIndex === 0
             ? currentOperation.time - startTime
             : currentOperation.time - previousOperation.time;
 
@@ -184,9 +184,9 @@ export class InkCanvas extends ui.Component {
         this.clearCanvas();
 
         const layers = this.model.getLayers();
-        for (let layer of layers) {
+        for (const layer of layers) {
             let previous: types.IOperation = layer.operations[0];
-            for (let operation of layer.operations) {
+            for (const operation of layer.operations) {
                 this.drawStroke(layer, operation, previous);
                 previous = operation;
             }
@@ -197,12 +197,12 @@ export class InkCanvas extends ui.Component {
         layer: types.IInkLayer,
         current: types.IOperation,
         previous: types.IOperation) {
-        let type = types.getActionType(current);
+        const type = types.getActionType(current);
         let shapes: IShape[];
 
-        let currentAction = types.getStylusAction(current);
-        let previousAction = types.getStylusAction(previous);
-        let pen = layer.operations[0].stylusDown.pen;
+        const currentAction = types.getStylusAction(current);
+        const previousAction = types.getStylusAction(previous);
+        const pen = layer.operations[0].stylusDown.pen;
 
         switch (type) {
             case types.ActionType.StylusDown:
@@ -223,7 +223,7 @@ export class InkCanvas extends ui.Component {
 
         if (shapes) {
             this.context.fillStyle = ui.toColorStringNoAlpha(pen.color);
-            for (let shape of shapes) {
+            for (const shape of shapes) {
                 this.context.beginPath();
                 shape.render(this.context, { x: 0, y: 0 });
                 this.context.closePath();
@@ -238,22 +238,22 @@ export class InkCanvas extends ui.Component {
         }
 
         let dirtyLayers: { [key: string]: any } = {};
-        for (let operation of delta.operations) {
-            let type = types.getActionType(operation);
+        for (const operation of delta.operations) {
+            const type = types.getActionType(operation);
             if (type === types.ActionType.Clear) {
                 this.clearCanvas();
                 this.lastLayerRenderOp = {};
                 dirtyLayers = {};
             } else {
                 // Get the layer the delta applies to
-                let stylusId = types.getStylusId(operation);
+                const stylusId = types.getStylusId(operation);
                 dirtyLayers[stylusId] = true;
             }
         }
 
         // Render all the dirty layers
         // tslint:disable-next-line:forin
-        for (let id in dirtyLayers) {
+        for (const id in dirtyLayers) {
             let index = this.lastLayerRenderOp[id] || 0;
 
             const layer = this.model.getLayer(id);
@@ -278,12 +278,12 @@ export class InkCanvas extends ui.Component {
         pen: types.IPen,
         circleInclusive: SegmentCircleInclusive): IShape[] {
 
-        let dirVector = new ui.Vector(
+        const dirVector = new ui.Vector(
             endPoint.point.x - startPoint.point.x,
             endPoint.point.y - startPoint.point.y);
-        let len = dirVector.length();
+        const len = dirVector.length();
 
-        let shapes = new Array<IShape>();
+        const shapes = new Array<IShape>();
         let trapezoidP0: ui.IPoint;
         let trapezoidP1: ui.IPoint;
         let trapezoidP2: ui.IPoint;
@@ -291,12 +291,12 @@ export class InkCanvas extends ui.Component {
         let normalizedLateralVector: ui.IVector;
 
         // Scale by a power curve to trend towards thicker values
-        let widthAtStart = pen.thickness * Math.pow(startPoint.pressure, 0.5) / 2;
-        let widthAtEnd = pen.thickness * Math.pow(endPoint.pressure, 0.5) / 2;
+        const widthAtStart = pen.thickness * Math.pow(startPoint.pressure, 0.5) / 2;
+        const widthAtEnd = pen.thickness * Math.pow(endPoint.pressure, 0.5) / 2;
 
         // Just draws a circle on small values??
         if (len + Math.min(widthAtStart, widthAtEnd) <= Math.max(widthAtStart, widthAtEnd)) {
-            let center = widthAtStart >= widthAtEnd ? startPoint : endPoint;
+            const center = widthAtStart >= widthAtEnd ? startPoint : endPoint;
             shapes.push(new Circle({ x: center.point.x, y: center.point.y }, widthAtEnd));
             return shapes;
         }
@@ -345,7 +345,7 @@ export class InkCanvas extends ui.Component {
                 endPoint.point.y + widthAtEnd * normalizedLateralVector.y);
         }
 
-        let polygon = new Polygon([trapezoidP0, trapezoidP3, trapezoidP2, trapezoidP1]);
+        const polygon = new Polygon([trapezoidP0, trapezoidP3, trapezoidP2, trapezoidP1]);
         shapes.push(polygon);
 
         switch (circleInclusive) {

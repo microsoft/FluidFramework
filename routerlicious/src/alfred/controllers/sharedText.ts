@@ -1,3 +1,4 @@
+// tslint:disable:ban-types
 import * as resources from "gitresources";
 import performanceNow = require("performance-now");
 import * as request from "request";
@@ -8,7 +9,7 @@ import { controls, ui } from "../../client-ui";
 import { SharedString } from "../../shared-string";
 
 // first script loaded
-let clockStart = Date.now();
+const clockStart = Date.now();
 
 export let theFlow: controls.FlowView;
 
@@ -111,12 +112,12 @@ async function loadDocument(
         const segments = MergeTree.loadSegments(starterText, 0, true);
         for (const segment of segments) {
             if (segment.getType() === MergeTree.SegmentType.Text) {
-                let textSegment = <MergeTree.TextSegment> segment;
+                const textSegment = segment as MergeTree.TextSegment;
                 newString.insertText(textSegment.text, newString.client.getLength(),
                     textSegment.properties);
             } else {
                 // assume marker
-                let marker = <MergeTree.Marker> segment;
+                const marker = segment as MergeTree.Marker;
                 newString.insertMarker(newString.client.getLength(), marker.refType, marker.properties);
             }
         }

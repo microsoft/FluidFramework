@@ -58,7 +58,7 @@ export class ObjectDeltaConnection implements IDeltaConnection {
         assert(!this.handler);
         this.handler = handler;
     }
-
+    // tslint:disable:unified-signatures
     public setConnectionState(state: ConnectionState.Disconnected, reason: string): void;
     public setConnectionState(state: ConnectionState.Connecting, clientId: string): void;
     public setConnectionState(state: ConnectionState.Connected, clientId: string): void;

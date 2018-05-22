@@ -1,41 +1,51 @@
-import * as http from "http";
+import {Deferred } from "@prague/routerlicious/dist/core-utils";
+import * as utils from "@prague/routerlicious/dist/utils";
+import { Provider } from "nconf";
 import * as winston from "winston";
-import { Deferred } from "../core-utils";
-import * as utils from "../utils";
 import * as app from "./app";
+import { IWebServer, IWebServerFactory } from "./webServer";
 
-export class RiddlerRunner implements utils.IRunner {
-    private server: http.Server;
+export class AdminRunner implements utils.IRunner {
+    private server: IWebServer;
     private runningDeferred: Deferred<void>;
 
     constructor(
-        private collectionName: string,
+        private serverFactory: IWebServerFactory,
+        private config: Provider,
         private port: string | number,
-        private mongoManager: utils.MongoManager,
-        private loggerFormat: string) {
+        private mongoManager: utils.MongoManager) {
     }
 
     public start(): Promise<void> {
         this.runningDeferred = new Deferred<void>();
 
-        // Create the HTTP server and attach alfred to it
-        const riddler = app.create(this.collectionName, this.mongoManager, this.loggerFormat);
-        riddler.set("port", this.port);
+        const admin = app.create(
+            this.config,
+            this.mongoManager);
+        admin.set("port", this.port);
 
-        this.server = http.createServer(riddler);
+        this.server = this.serverFactory.create(admin);
 
-        this.server.listen(this.port);
-        this.server.on("error", (error) => this.onError(error));
-        this.server.on("listening", () => this.onListening());
+        const httpServer = this.server.httpServer;
+
+        // Listen on provided port, on all network interfaces.
+        httpServer.listen(this.port);
+        httpServer.on("error", (error) => this.onError(error));
+        httpServer.on("listening", () => this.onListening());
 
         return this.runningDeferred.promise;
     }
 
     public stop(): Promise<void> {
         // Close the underlying server and then resolve the runner once closed
-        this.server.close(() => {
+        this.server.close().then(
+            () => {
                 this.runningDeferred.resolve();
+            },
+            (error) => {
+                this.runningDeferred.reject(error);
             });
+
         return this.runningDeferred.promise;
     }
 
@@ -68,7 +78,7 @@ export class RiddlerRunner implements utils.IRunner {
      * Event listener for HTTP server "listening" event.
      */
     private onListening() {
-        const addr = this.server.address();
+        const addr = this.server.httpServer.address();
         const bind = typeof addr === "string"
             ? "pipe " + addr
             : "port " + addr.port;

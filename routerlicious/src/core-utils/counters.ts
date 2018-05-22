@@ -151,4 +151,4 @@ export class RateCounter {
     public getRate(): number {
         return this.value / this.elapsed();
     }
-};
+}

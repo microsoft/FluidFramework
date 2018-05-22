@@ -1,3 +1,4 @@
+// tslint:disable:ban-types
 import { EventEmitter } from "events";
 import * as kafkaNode from "kafka-node";
 import * as util from "util";
@@ -61,22 +62,22 @@ export class KafkaNodeConsumer implements IConsumer {
         return new Promise<any>((resolve, reject) => {
             this.ensureTopics(this.client, [this.topic]).then(
                 () => {
-                    this.instance = new kafkaNode.HighLevelConsumer(this.client, [{topic: this.topic}], <any> {
+                    this.instance = new kafkaNode.HighLevelConsumer(this.client, [{topic: this.topic}], {
                         autoCommit: this.autoCommit,
                         fetchMaxBytes: 1024 * 1024,
                         fetchMinBytes: 1,
                         fromOffset: true,
                         groupId,
                         maxTickMessages: 100000,
-                    });
+                    } as any);
 
                     this.instance.on("rebalancing", () => {
-                        const payloads = (<any> this.instance).getTopicPayloads();
+                        const payloads = (this.instance as any).getTopicPayloads();
                         this.events.emit("rebalancing", this.getPartitions(payloads));
                     });
 
                     this.instance.on("rebalanced", () => {
-                        const payloads = (<any> this.instance).getTopicPayloads();
+                        const payloads = (this.instance as any).getTopicPayloads();
                         this.events.emit("rebalanced", this.getPartitions(payloads));
                     });
 

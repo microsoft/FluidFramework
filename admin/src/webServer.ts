@@ -1,16 +1,31 @@
-// tslint:disable:ban-types
+import * as core from "@prague/routerlicious/dist/core";
 import * as http from "http";
 import * as util from "util";
-import * as core from "../core";
-import * as socketIo from "./socketIoServer";
 
 export type RequestListener = (request: http.IncomingMessage, response: http.ServerResponse) => void;
+
+export interface IWebServerFactory {
+    create(requestListener: RequestListener): IWebServer;
+}
+
+export interface IWebServer {
+    /**
+     * HTTP server interface
+     */
+    httpServer: core.IHttpServer;
+
+    /**
+     * Closes the web server
+     */
+    close(): Promise<void>;
+}
 
 export class HttpServer implements core.IHttpServer {
     constructor(private server: http.Server) {
     }
 
     public async close(): Promise<void> {
+        // tslint:disable-next-line
         await util.promisify(((callback) => this.server.close(callback)) as Function)();
     }
 
@@ -27,29 +42,25 @@ export class HttpServer implements core.IHttpServer {
     }
 }
 
-export class WebServer implements core.IWebServer {
-    constructor(public httpServer: HttpServer, public webSocketServer: core.IWebSocketServer) {
+export class WebServer implements IWebServer {
+    constructor(public httpServer: HttpServer) {
     }
 
     /**
      * Closes the web server
      */
     public async close(): Promise<void> {
-        await Promise.all([this.httpServer.close(), this.webSocketServer.close()]);
+        await this.httpServer.close();
     }
 }
 
-export class SocketIoWebServerFactory implements core.IWebServerFactory {
-    constructor(private redisConfig: any) {
-    }
+export class WebServerFactory implements IWebServerFactory {
 
-    public create(requestListener: RequestListener): core.IWebServer {
+    public create(requestListener: RequestListener): IWebServer {
         // Create the base HTTP server and register the provided request listener
         const server = http.createServer(requestListener);
         const httpServer = new HttpServer(server);
 
-        const socketIoServer = socketIo.create(this.redisConfig, server);
-
-        return new WebServer(httpServer, socketIoServer);
+        return new WebServer(httpServer);
     }
 }

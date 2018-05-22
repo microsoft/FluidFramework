@@ -17,7 +17,7 @@ interface ISpellQuery {
 
     // End position
     end: number;
-};
+}
 
 interface IPgMarker {
 
@@ -27,8 +27,8 @@ interface IPgMarker {
 }
 
 function compareProxStrings(a: MergeTree.ProxString<number>, b: MergeTree.ProxString<number>) {
-    let ascore = ((a.invDistance * 200) * a.val) + a.val;
-    let bscore = ((b.invDistance * 200) * b.val) + b.val;
+    const ascore = ((a.invDistance * 200) * a.val) + a.val;
+    const bscore = ((b.invDistance * 200) * b.val) + b.val;
     return bscore - ascore;
 }
 
@@ -53,18 +53,18 @@ class Speller {
     }
 
     public initialSpellCheck() {
-        let spellParagraph = (startPG: number, endPG: number, text: string) => {
-            let re = /\b\w+\b/g;
+        const spellParagraph = (startPG: number, endPG: number, text: string) => {
+            const re = /\b\w+\b/g;
             let result: RegExpExecArray;
             this.initSpellerService(this.intelligence, text, startPG);
             do {
                 result = re.exec(text);
                 if (result) {
-                    let candidate = result[0];
+                    const candidate = result[0];
                     if (this.spellingError(candidate.toLocaleLowerCase())) {
-                        let start = result.index;
-                        let end = re.lastIndex;
-                        let textErrorInfo = this.makeTextErrorInfo(candidate);
+                        const start = result.index;
+                        const end = re.lastIndex;
+                        const textErrorInfo = this.makeTextErrorInfo(candidate);
                         if (this.verbose) {
                             console.log(`spell (${startPG + start}, ${startPG + end}): ${textErrorInfo.text}`);
                         }
@@ -77,11 +77,11 @@ class Speller {
         let startPGPos = 0;
         let pgText = "";
         let endMarkerFound = false;
-        let mergeTree = this.sharedString.client.mergeTree;
+        const mergeTree = this.sharedString.client.mergeTree;
         function gatherPG(segment: MergeTree.Segment, segpos: number) {
             switch (segment.getType()) {
                 case MergeTree.SegmentType.Marker:
-                    let marker = <MergeTree.Marker>segment;
+                    const marker = segment as MergeTree.Marker;
                     if (mergeTree.localNetLength(segment)) {
                         if (marker.hasTileLabel("pg")) {
                             if (prevPG) {
@@ -103,7 +103,7 @@ class Speller {
                     }
                     break;
                 case MergeTree.SegmentType.Text:
-                    let textSegment = <MergeTree.TextSegment>segment;
+                    const textSegment = segment as MergeTree.TextSegment;
                     if (mergeTree.localNetLength(textSegment)) {
                         pgText += textSegment.text;
                     }
@@ -178,7 +178,7 @@ class Speller {
             //            setPending();
             this.currentWordSpellCheck(intelligence, delta.pos1, true);
         } else if (delta.type === MergeTree.MergeTreeDeltaType.GROUP) {
-            for (let groupOp of delta.ops) {
+            for (const groupOp of delta.ops) {
                 this.spellOp(groupOp, intelligence);
             }
         }
@@ -187,17 +187,17 @@ class Speller {
     private enqueueParagraph(delta: MergeTree.IMergeTreeOp) {
         if (delta.type === MergeTree.MergeTreeDeltaType.INSERT ||
             delta.type === MergeTree.MergeTreeDeltaType.REMOVE) {
-            let pgRef = this.sharedString.client.mergeTree.findTile(delta.pos1,
+            const pgRef = this.sharedString.client.mergeTree.findTile(delta.pos1,
                 this.sharedString.client.getClientId(), "pg");
             let pgMarker: IPgMarker;
             if (!pgRef) {
                 pgMarker = { tile: undefined, pos: 0 };
             } else {
-                pgMarker = { tile: <MergeTree.Marker>pgRef.tile, pos: pgRef.pos };
+                pgMarker = { tile: pgRef.tile as MergeTree.Marker, pos: pgRef.pos };
             }
             this.pendingParagraphs.push(pgMarker);
         } else if (delta.type === MergeTree.MergeTreeDeltaType.GROUP) {
-            for (let groupOp of delta.ops) {
+            for (const groupOp of delta.ops) {
                 this.enqueueParagraph(groupOp);
             }
         }
@@ -214,7 +214,7 @@ class Speller {
         }, idleCheckerMS);
         this.sharedString.on("op", (msg: core.ISequencedObjectMessage) => {
             if (msg && msg.contents) {
-                let delta = <MergeTree.IMergeTreeOp>msg.contents;
+                const delta = msg.contents as MergeTree.IMergeTreeOp;
                 this.pendingSpellChecks.push(delta);
                 this.enqueueParagraph(delta);
                 this.currentIdleTime = 0;
@@ -226,12 +226,12 @@ class Speller {
         if (this.pendingSpellChecks.length > 0) {
             const pendingChecks = clone(this.pendingSpellChecks);
             this.pendingSpellChecks = [];
-            for (let delta of pendingChecks) {
+            for (const delta of pendingChecks) {
                 this.spellOp(delta, intelligence);
             }
         }
         if (this.pendingParagraphs.length > 0) {
-            for (let pg of this.pendingParagraphs) {
+            for (const pg of this.pendingParagraphs) {
                 let offset = 0;
                 if (pg.tile) {
                     offset = this.sharedString.client.mergeTree.getOffset(pg.tile, MergeTree.UniversalSequenceNumber,
@@ -248,7 +248,7 @@ class Speller {
                 }
                 this.offsetMap[offset] = endPos;
             }
-            for (let start of Object.keys(this.offsetMap)) {
+            for (const start of Object.keys(this.offsetMap)) {
                 const queryString = this.sharedString.client.mergeTree.getText(MergeTree.UniversalSequenceNumber,
                     this.sharedString.client.getClientId(), "", Number(start), this.offsetMap[start]);
                 this.enqueNewQuery(intelligence, queryString, Number(start));
@@ -259,7 +259,7 @@ class Speller {
     }
 
     private makeTextErrorInfo(candidate: string) {
-        let alternates = this.dict.neighbors(candidate, 2).sort(compareProxStrings);
+        const alternates = this.dict.neighbors(candidate, 2).sort(compareProxStrings);
         if (alternates.length > Speller.altMax) {
             alternates.length = Speller.altMax;
         }
@@ -275,22 +275,22 @@ class Speller {
         let sentence = "";
         let fwdSentence = "";
         let wordsFound = false;
-        let mergeTree = this.sharedString.client.mergeTree;
+        const mergeTree = this.sharedString.client.mergeTree;
 
-        let gatherReverse = (segment: MergeTree.Segment) => {
+        const gatherReverse = (segment: MergeTree.Segment) => {
             switch (segment.getType()) {
                 case MergeTree.SegmentType.Marker:
                     if (!wordsFound) {
                         words = " " + words;
                     }
                     sentence = " " + sentence;
-                    let marker = <MergeTree.Marker>segment;
+                    const marker = segment as MergeTree.Marker;
                     if (marker.hasTileLabel("pg")) {
                         return false;
                     }
                     break;
                 case MergeTree.SegmentType.Text:
-                    let textSegment = <MergeTree.TextSegment>segment;
+                    const textSegment = segment as MergeTree.TextSegment;
                     if (mergeTree.localNetLength(textSegment)) {
                         if (!wordsFound) {
                             words = textSegment.text + words;
@@ -312,20 +312,20 @@ class Speller {
             return true;
         };
 
-        let gatherForward = (segment: MergeTree.Segment) => {
+        const gatherForward = (segment: MergeTree.Segment) => {
             switch (segment.getType()) {
                 case MergeTree.SegmentType.Marker:
                     if (!wordsFound) {
                         fwdWords = fwdWords + " ";
                     }
                     fwdSentence = fwdSentence + " ";
-                    let marker = <MergeTree.Marker>segment;
+                    const marker = segment as MergeTree.Marker;
                     if (marker.hasTileLabel("pg")) {
                         return false;
                     }
                     break;
                 case MergeTree.SegmentType.Text:
-                    let textSegment = <MergeTree.TextSegment>segment;
+                    const textSegment = segment as MergeTree.TextSegment;
                     if (mergeTree.localNetLength(textSegment)) {
                         if (!wordsFound) {
                             fwdWords = fwdWords + textSegment.text;
@@ -346,7 +346,7 @@ class Speller {
             return true;
         };
 
-        let segoff = this.sharedString.client.mergeTree.getContainingSegment(pos,
+        const segoff = this.sharedString.client.mergeTree.getContainingSegment(pos,
             MergeTree.UniversalSequenceNumber, this.sharedString.client.getClientId());
         if (segoff && segoff.segment) {
             if (segoff.offset !== 0) {
@@ -354,8 +354,8 @@ class Speller {
             }
             // assumes op has made pos a segment boundary
             this.sharedString.client.mergeTree.leftExcursion(segoff.segment, gatherReverse);
-            let startPos = pos - words.length;
-            let sentenceStartPos = pos - sentence.length;
+            const startPos = pos - words.length;
+            const sentenceStartPos = pos - sentence.length;
 
             if (segoff.segment) {
                 wordsFound = false;
@@ -369,20 +369,20 @@ class Speller {
                     console.log(`found sentence ${sentence} (start ${sentenceStartPos}, end ${sentenceStartPos + sentence.length}) around change`);
                 }
                 // TODO: send this sentence to service for analysis
-                let re = /\b\w+\b/g;
+                const re = /\b\w+\b/g;
                 let result: RegExpExecArray;
                 do {
                     result = re.exec(words);
                     if (result) {
-                        let start = result.index + startPos;
-                        let end = re.lastIndex + startPos;
-                        let candidate = result[0];
+                        const start = result.index + startPos;
+                        const end = re.lastIndex + startPos;
+                        const candidate = result[0];
                         if (this.spellingError(candidate.toLocaleLowerCase())) {
-                            let textErrorInfo = this.makeTextErrorInfo(candidate);
+                            const textErrorInfo = this.makeTextErrorInfo(candidate);
                             if (this.verbose) {
                                 console.log(`respell (${start}, ${end}): ${textErrorInfo.text}`);
                                 let buf = "alternates: ";
-                                for (let alt of textErrorInfo.alternates) {
+                                for (const alt of textErrorInfo.alternates) {
                                     buf += ` ${alt.text}:${alt.invDistance}:${alt.val}`;
                                 }
                                 console.log(buf);
@@ -428,8 +428,8 @@ class Speller {
     }
 
     private checkSpelling(rsn: number, original: string, startPos: number, result: any) {
-        let endPos = startPos + original.length;
-        let annotationRanges = [];
+        const endPos = startPos + original.length;
+        const annotationRanges = [];
 
         // No critiques from spellchecker service. Clear the whole paragraph.
         if (result.spellcheckerResult.answer === null) {
@@ -445,13 +445,13 @@ class Speller {
         // Go through each critique and create annotation ranges.
         let runningStart = startPos;
         const critiques = answer.Critiques;
-        for (let critique of critiques) {
-            let localStartOffset = critique.Start;
-            let localEndOffset = localStartOffset + critique.Length;
-            let origWord = original.substring(localStartOffset, localEndOffset);
+        for (const critique of critiques) {
+            const localStartOffset = critique.Start;
+            const localEndOffset = localStartOffset + critique.Length;
+            const origWord = original.substring(localStartOffset, localEndOffset);
             const globalStartOffset = startPos + localStartOffset;
             const globalEndOffset = startPos + localEndOffset;
-            let altSpellings = [];
+            const altSpellings = [];
 
             // Correctly spelled range. Send null and update runningStart.
             if (runningStart < globalStartOffset) {
@@ -467,21 +467,21 @@ class Speller {
             if (critique.Suggestions.length === 0 || critique.Suggestions[0].Text === "No suggestions") {
                 if (critique.CategoryTitle === "Grammar") {
                     annotationRanges.push({
-                        globalStartOffset,
                         globalEndOffset,
+                        globalStartOffset,
                         textError: { text: origWord, alternates: altSpellings, color: "paulgreen", explanation: null },
                     });
                 } else if (critique.CategoryTitle === "Spelling") {
                     annotationRanges.push({
-                        textError: { text: origWord, alternates: altSpellings, color: "paul", explanation: null },
-                        globalStartOffset,
                         globalEndOffset,
+                        globalStartOffset,
+                        textError: { text: origWord, alternates: altSpellings, color: "paul", explanation: null },
                     });
                 } else {
                     annotationRanges.push({
-                        textError: { text: origWord, alternates: altSpellings, color: "paulgolden", explanation: null },
-                        globalStartOffset,
                         globalEndOffset,
+                        globalStartOffset,
+                        textError: { text: origWord, alternates: altSpellings, color: "paulgolden", explanation: null },
                     });
                 }
                 continue;
