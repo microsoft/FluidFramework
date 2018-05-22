@@ -1868,6 +1868,7 @@ export class Client {
     accumWindow = 0;
     accumOps = 0;
     verboseOps = false;
+    noVerboseRemoteAnnote = false;
     measureOps = false;
     q: Collections.List<API.ISequencedObjectMessage>;
     checkQ: Collections.List<string>;
@@ -2573,8 +2574,8 @@ export class Client {
             this.accumOps++;
             this.accumWindow += (this.getCurrentSeq() - this.mergeTree.getCollabWindow().minSeq);
         }
-        if (this.verboseOps) {
-            console.log(`@cli ${this.getLongClientId(this.mergeTree.getCollabWindow().clientId)} seq ${seq} annotate remote start ${start} end ${end} refseq ${refSeq} cli ${clientId}`);
+        if (this.verboseOps && (!this.noVerboseRemoteAnnote)) {
+            console.log(`@cli ${this.getLongClientId(this.mergeTree.getCollabWindow().clientId)} seq ${seq} annotate remote start ${start} end ${end} refseq ${refSeq} cli ${clientId} props ${props}`);
         }
     }
 
@@ -2677,24 +2678,24 @@ export class Client {
             clockStart = clock();
         }
 
-        this.mergeTree.insertMarker(pos, refSeq, clientId, seq, behaviors, props);
+        let marker = this.mergeTree.insertMarker(pos, refSeq, clientId, seq, behaviors, props);
 
         if (this.measureOps) {
             this.localTime += elapsedMicroseconds(clockStart);
             this.localOps++;
         }
         if (this.verboseOps) {
-            console.log(`insert local marke pos ${pos} cli ${this.getLongClientId(clientId)} ref seq ${refSeq}`);
+            console.log(`insert local marker pos ${pos} cli ${this.getLongClientId(clientId)} ${marker.toString()} ref seq ${refSeq}`);
         }
     }
 
-    insertMarkerRemote(marker: ops.IMarkerDef, pos: number, props: Properties.PropertySet, seq: number, refSeq: number, clientId: number) {
+    insertMarkerRemote(markerDef: ops.IMarkerDef, pos: number, props: Properties.PropertySet, seq: number, refSeq: number, clientId: number) {
         let clockStart;
         if (this.measureOps) {
             clockStart = clock();
         }
 
-        this.mergeTree.insertMarker(pos, refSeq, clientId, seq, marker.refType, props);
+        let marker= this.mergeTree.insertMarker(pos, refSeq, clientId, seq, markerDef.refType, props);
         this.mergeTree.getCollabWindow().currentSeq = seq;
 
         if (this.measureOps) {
