@@ -1,8 +1,8 @@
 import { api, core, types } from "../client-api";
 import { nativeTextAnalytics, textAnalytics } from "../intelligence";
 import { BaseWork} from "./baseWork";
+import { IWork} from "./definitions";
 import { IntelligentServicesManager } from "./intelligence";
-import { IWork} from "./work";
 
 export class IntelWork extends BaseWork implements IWork {
 

@@ -1,6 +1,6 @@
 import { EventEmitter } from "events";
 import { core, socketIoClient as io } from "../client-api";
-import { IWork} from "./work";
+import { IWork} from "./definitions";
 
 /**
  * This uses socketio to track ping latencies.

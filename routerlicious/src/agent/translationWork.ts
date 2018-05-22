@@ -3,7 +3,7 @@ import { Builder, parseString } from "xml2js";
 import { core, map, MergeTree, types } from "../client-api";
 import { CollaborativeStringExtension, SharedString } from "../shared-string";
 import { BaseWork} from "./baseWork";
-import { IWork} from "./work";
+import { IWork} from "./definitions";
 
 const subscriptionKey = "bd099a1e38724333b253fcff7523f76a";
 

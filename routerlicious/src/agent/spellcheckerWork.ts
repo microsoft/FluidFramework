@@ -2,8 +2,8 @@ import { core, MergeTree } from "../client-api";
 import * as intelligence from "../intelligence";
 import { CollaborativeStringExtension, SharedString } from "../shared-string";
 import { BaseWork} from "./baseWork";
+import { IWork} from "./definitions";
 import { Spellcheker } from "./spellchecker";
-import { IWork} from "./work";
 
 export class SpellcheckerWork extends BaseWork implements IWork {
 
