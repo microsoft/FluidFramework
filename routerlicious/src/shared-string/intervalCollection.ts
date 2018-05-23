@@ -287,7 +287,7 @@ export class SharedIntervalCollectionView extends EventEmitter {
     private attachingP = Promise.resolve();
 
     constructor(
-        private sharedString: SharedString,
+        public sharedString: SharedString,
         savedSerializedIntervals: ISerializedInterval[],
         label: string,
         private emitter: IValueOpEmitter) {
@@ -388,7 +388,7 @@ export class SharedIntervalCollectionView extends EventEmitter {
         message: api.ISequencedObjectMessage): Promise<any> {
 
         await this.attachingP;
-        return this.onPrepareDeserialize ? this.onPrepareDeserialize(interval) : null;
+        return this.onPrepareDeserialize ? this.onPrepareDeserialize(interval.properties) : null;
     }
 
     public serializeInternal() {
@@ -427,6 +427,10 @@ export class SharedIntervalCollectionView extends EventEmitter {
 export class SharedIntervalCollection {
     private savedSerializedIntervals?: ISerializedInterval[];
     private view: SharedIntervalCollectionView;
+
+    public get attached(): boolean {
+        return !!this.view;
+    }
 
     constructor(private emitter: IValueOpEmitter, serializedIntervals: ISerializedInterval[]) {
         // NOTE: It would be nice if I could do the initialize stuff at the time of load. Is there a way

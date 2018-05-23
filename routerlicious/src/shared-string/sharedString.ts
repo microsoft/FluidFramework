@@ -531,7 +531,9 @@ export class SharedString extends CollaborativeMap {
         // Listen and initialize new SharedIntervalCollections
         intervalCollections.on("valueChanged", (ev: IValueChanged) => {
             let intervalCollection = this.intervalCollections.get<SharedIntervalCollection>(ev.key);
-            intervalCollection.attachSharedString(this, ev.key);
+            if (!intervalCollection.attached) {
+                intervalCollection.attachSharedString(this, ev.key);
+            }
         });
 
         // Initialize existing SharedIntervalCollections
