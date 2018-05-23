@@ -1,12 +1,18 @@
-// tslint:disable:no-bitwise whitespace align switch-default no-string-literal
-// tslint:disable:ban-types
+// tslint:disable:no-bitwise whitespace align switch-default no-string-literal ban-types
+import * as assert from "assert";
 import performanceNow = require("performance-now");
 import {
     api, CharacterCodes, core, MergeTree,
     Paragraph, Table, types,
 } from "../client-api";
 import { findRandomWord } from "../merge-tree-utils";
-import { Interval, SharedIntervalCollection, SharedString } from "../shared-string";
+import {
+    DeserializeCallback,
+    Interval,
+    PrepareDeserializeCallback,
+    SharedIntervalCollectionView,
+    SharedString,
+} from "../shared-string";
 import * as ui from "../ui";
 import { Status } from "./status";
 
@@ -2747,9 +2753,9 @@ export class FlowView extends ui.Component {
     public wheelTicking = false;
     public topChar = -1;
     public cursor: Cursor;
-    public bookmarks: SharedIntervalCollection;
+    public bookmarks: SharedIntervalCollectionView;
     public tempBookmarks: Interval[];
-    public comments: SharedIntervalCollection;
+    public comments: SharedIntervalCollectionView;
     public presenceMapView: types.IMapView;
     public presenceVector: ILocalPresenceInfo[] = [];
     public docRoot: types.IMapView;
@@ -3892,9 +3898,9 @@ export class FlowView extends ui.Component {
         if (this.bookmarks) {
             let result: Interval;
             if (before) {
-                result = this.bookmarks.localCollection.previousInterval(this.cursor.pos);
+                result = this.bookmarks.previousInterval(this.cursor.pos);
             } else {
-                result = this.bookmarks.localCollection.nextInterval(this.cursor.pos);
+                result = this.bookmarks.nextInterval(this.cursor.pos);
             }
             if (result) {
                 const s = result.start.toPosition(this.client.mergeTree,
@@ -3935,7 +3941,10 @@ export class FlowView extends ui.Component {
             const commentStory = this.collabDocument.createString();
             commentStory.insertText("a comment...", 0);
             commentStory.attach();
-            this.comments.add(sel.start, sel.end, MergeTree.IntervalType.Simple,
+            this.comments.add(
+                sel.start,
+                sel.end,
+                MergeTree.IntervalType.Simple,
                 { story: commentStory });
             this.cursor.clearSelection();
             this.localQueueRender(this.cursor.pos);
@@ -4383,19 +4392,29 @@ export class FlowView extends ui.Component {
             await Promise.all([intervalCollections.wait("bookmarks"), intervalCollections.wait("comments")]);
         }
 
-        this.bookmarks = this.sharedString.getSharedIntervalCollection("bookmarks");
-        const onDeserialize = (interval) => {
+        this.bookmarks = await this.sharedString.getSharedIntervalCollection("bookmarks");
+
+        const onDeserialize: DeserializeCallback = (interval, commentSharedString: core.ICollaborativeObject) => {
             if (interval.properties && interval.properties["story"]) {
-                const story = interval.properties["story"];
-                if (!story["id"]) {
-                    this.sharedString.getDocument().get(story["value"]).then((commentSharedString) => {
-                        interval.properties["story"] = commentSharedString;
-                    });
-                }
+                assert(commentSharedString);
+                interval.properties["story"] = commentSharedString;
+            }
+
+            return true;
+        };
+
+        const onPrepareDeserialize: PrepareDeserializeCallback = (properties) => {
+            if (properties && properties["story"]) {
+                const story = properties["story"];
+                return this.sharedString.getDocument().get(story["value"]);
+            } else {
+                return Promise.resolve(null);
             }
         };
-        this.comments = this.sharedString.getSharedIntervalCollection("comments", onDeserialize);
-        this.comments.localCollection.map(onDeserialize);
+
+        this.comments = await this.sharedString.getSharedIntervalCollection(
+            "comments", onDeserialize, onPrepareDeserialize);
+
         this.render(0, true);
         if (clockStart > 0) {
             // tslint:disable-next-line:max-line-length

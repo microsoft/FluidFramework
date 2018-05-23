@@ -106,60 +106,31 @@ export class Interval implements MergeTree.IInterval {
     }
 }
 
-export interface IIntervalCollection {
+interface IIntervalCollection {
     findOverlappingIntervals(startPosition: number, endPosition: number): Interval[];
     addInterval(start: number, end: number, intervalType: MergeTree.IntervalType,
                 props?: MergeTree.PropertySet): Interval;
 }
 
-export function createInterval(
-    label: string, sharedString: SharedString, start: number,
-    end: number, intervalType: MergeTree.IntervalType) {
-    let beginRefType = MergeTree.ReferenceType.RangeBegin;
-    let endRefType = MergeTree.ReferenceType.RangeEnd;
-    if (intervalType === MergeTree.IntervalType.Nest) {
-        beginRefType = MergeTree.ReferenceType.NestBegin;
-        endRefType = MergeTree.ReferenceType.NestEnd;
-    } else if (intervalType === MergeTree.IntervalType.Transient) {
-        beginRefType = MergeTree.ReferenceType.Transient;
-        endRefType = MergeTree.ReferenceType.Transient;
-    }
-    const startLref = sharedString.createPositionReference(start, beginRefType);
-    const endLref = sharedString.createPositionReference(end, endRefType);
-    if (startLref && endLref) {
-        startLref.pairedRef = endLref;
-        endLref.pairedRef = startLref;
-        const rangeProp = {
-            [MergeTree.reservedRangeLabelsKey]: [label],
-        };
-        startLref.addProperties(rangeProp);
-        endLref.addProperties(rangeProp);
-
-        const ival = new Interval(startLref, endLref, intervalType, rangeProp);
-        // ival.checkMergeTree = sharedString.client.mergeTree;
-        return ival;
-    }
-}
-
-export function endIntervalComparer(a: Interval, b: Interval) {
+function endIntervalComparer(a: Interval, b: Interval) {
     return a.end.compare(b.end);
 }
 
-export class LocalIntervalCollection implements IIntervalCollection {
-    private intervalTree: MergeTree.IntervalTree<Interval> = new MergeTree.IntervalTree<Interval>();
-    private endIntervalTree: MergeTree.RedBlackTree<Interval, Interval> =
-        new MergeTree.RedBlackTree<Interval, Interval>(endIntervalComparer);
+class LocalIntervalCollection implements IIntervalCollection {
+    private intervalTree = new MergeTree.IntervalTree<Interval>();
+    private endIntervalTree = new MergeTree.RedBlackTree<Interval, Interval>(endIntervalComparer);
 
-    constructor(public sharedString: SharedString, public label: string) {
+    constructor(private sharedString: SharedString, private label: string) {
     }
 
     public map(fn: (interval: Interval) => void) {
         this.intervalTree.map(fn);
     }
+
     public findOverlappingIntervals(startPosition: number, endPosition: number) {
         if (!this.intervalTree.intervals.isEmpty()) {
-            const transientInterval = createInterval("transient", this.sharedString,
-                startPosition, endPosition, MergeTree.IntervalType.Transient);
+            const transientInterval = this.createIntervalCore(
+                "transient", startPosition, endPosition, MergeTree.IntervalType.Transient);
             const overlappingIntervalNodes = this.intervalTree.match(transientInterval);
             return overlappingIntervalNodes.map((node) => node.key);
         } else {
@@ -168,8 +139,8 @@ export class LocalIntervalCollection implements IIntervalCollection {
     }
 
     public previousInterval(pos: number) {
-        const transientInterval = createInterval("transient", this.sharedString,
-            pos, pos, MergeTree.IntervalType.Transient);
+        const transientInterval = this.createIntervalCore(
+            "transient", pos, pos, MergeTree.IntervalType.Transient);
         const rbNode = this.endIntervalTree.floor(transientInterval);
         if (rbNode) {
             return rbNode.data;
@@ -177,8 +148,8 @@ export class LocalIntervalCollection implements IIntervalCollection {
     }
 
     public nextInterval(pos: number) {
-        const transientInterval = createInterval("transient", this.sharedString,
-            pos, pos, MergeTree.IntervalType.Transient);
+        const transientInterval = this.createIntervalCore(
+            "transient", pos, pos, MergeTree.IntervalType.Transient);
         const rbNode = this.endIntervalTree.ceil(transientInterval);
         if (rbNode) {
             return rbNode.data;
@@ -186,13 +157,16 @@ export class LocalIntervalCollection implements IIntervalCollection {
     }
 
     public createInterval(start: number, end: number, intervalType: MergeTree.IntervalType) {
-        return createInterval(this.label, this.sharedString, start, end, intervalType);
+        return this.createIntervalCore(this.label, start, end, intervalType);
     }
 
     // TODO: remove interval, handle duplicate intervals
     public addInterval(
-        start: number, end: number, intervalType: MergeTree.IntervalType,
+        start: number,
+        end: number,
+        intervalType: MergeTree.IntervalType,
         props?: MergeTree.PropertySet) {
+
         const interval = this.createInterval(start, end, intervalType);
         if (interval) {
             interval.addProperties(props);
@@ -208,15 +182,49 @@ export class LocalIntervalCollection implements IIntervalCollection {
         const intervals = this.intervalTree.intervals.keys();
         return intervals.map((interval) => interval.serialize(client));
     }
+
+    private createIntervalCore(
+        label: string,
+        start: number,
+        end: number,
+        intervalType: MergeTree.IntervalType): Interval {
+
+        let beginRefType = MergeTree.ReferenceType.RangeBegin;
+        let endRefType = MergeTree.ReferenceType.RangeEnd;
+        if (intervalType === MergeTree.IntervalType.Nest) {
+            beginRefType = MergeTree.ReferenceType.NestBegin;
+            endRefType = MergeTree.ReferenceType.NestEnd;
+        } else if (intervalType === MergeTree.IntervalType.Transient) {
+            beginRefType = MergeTree.ReferenceType.Transient;
+            endRefType = MergeTree.ReferenceType.Transient;
+        }
+        const startLref = this.sharedString.createPositionReference(start, beginRefType);
+        const endLref = this.sharedString.createPositionReference(end, endRefType);
+        if (startLref && endLref) {
+            startLref.pairedRef = endLref;
+            endLref.pairedRef = startLref;
+            const rangeProp = {
+                [MergeTree.reservedRangeLabelsKey]: [label],
+            };
+            startLref.addProperties(rangeProp);
+            endLref.addProperties(rangeProp);
+
+            const ival = new Interval(startLref, endLref, intervalType, rangeProp);
+            // ival.checkMergeTree = sharedString.client.mergeTree;
+            return ival;
+        } else {
+            return null;
+        }
+    }
 }
 
-export class SharedIntervalCollectionFactory implements IValueFactory<SharedIntervalCollection> {
+class SharedIntervalCollectionFactory implements IValueFactory<SharedIntervalCollection> {
     public load(emitter: IValueOpEmitter, raw: ISerializedInterval[]): SharedIntervalCollection {
         return new SharedIntervalCollection(emitter, raw || []);
     }
 
     public store(value: SharedIntervalCollection): ISerializedInterval[] {
-        return value.serialize();
+        return value.serializeInternal();
     }
 }
 
@@ -246,8 +254,13 @@ export class SharedIntervalCollectionValueType implements IValueType<SharedInter
             [[
                 "add",
                 {
-                    prepare: async (value, params, local, op) => {
-                        return;
+                    prepare: (value, params, local, op) => {
+                        // Local ops were applied when the message was created
+                        if (local) {
+                            return;
+                        }
+
+                        return value.prepareAddInternal(params, local, op);
                     },
                     process: (value, params, context, local, op) => {
                         // Local ops were applied when the message was created
@@ -255,97 +268,64 @@ export class SharedIntervalCollectionValueType implements IValueType<SharedInter
                             return;
                         }
 
-                        value.addSerialized(params, local, op);
-                    },
-                },
-            ],
-            [
-                "remove",
-                {
-                    prepare: async (value, params, local, op) => {
-                        return;
-                    },
-                    process: (value, params, context, local, op) => {
-                        // Local ops were applied when the message was created
-                        if (local) {
-                            return;
-                        }
-
-                        value.remove(params, false);
+                        value.addInternal(params, context, local, op);
                     },
                 },
             ]]);
     }
 }
 
-export class SharedIntervalCollection extends EventEmitter {
-    public localCollection: LocalIntervalCollection;
-    public sharedString: SharedString;
-    public label: string;
-    public savedSerializedIntervals?: ISerializedInterval[];
+export type PrepareDeserializeCallback = (properties: MergeTree.PropertySet) => Promise<any>;
+export type DeserializeCallback = (value: Interval, context: any) => void;
+
+export class SharedIntervalCollectionView extends EventEmitter {
+    private localCollection: LocalIntervalCollection;
+    private onPrepareDeserialize: PrepareDeserializeCallback;
+    private onDeserialize: DeserializeCallback;
+    private attachingP = Promise.resolve();
 
     constructor(
-        private emitter: IValueOpEmitter,
-        serializedIntervals: ISerializedInterval[]) {
+        public sharedString: SharedString,
+        savedSerializedIntervals: ISerializedInterval[],
+        label: string,
+        private emitter: IValueOpEmitter) {
         super();
-        this.savedSerializedIntervals = serializedIntervals;
-    }
 
-    public initialize(sharedString: SharedString, label: string) {
-        if (!this.sharedString) {
-            this.label = label;
-            this.sharedString = sharedString;
-            this.localCollection = new LocalIntervalCollection(sharedString, label);
-            if (this.savedSerializedIntervals) {
-                for (const serializedInterval of this.savedSerializedIntervals) {
-                    this.deserializeInterval(serializedInterval);
-                }
-                this.savedSerializedIntervals = undefined;
+        // Instantiate the local interval collection based on the saved intervals
+        this.localCollection = new LocalIntervalCollection(sharedString, label);
+        if (savedSerializedIntervals) {
+            for (const serializedInterval of savedSerializedIntervals) {
+                this.localCollection.addInterval(
+                    serializedInterval.startPosition,
+                    serializedInterval.endPosition,
+                    serializedInterval.intervalType,
+                    serializedInterval.properties);
             }
         }
     }
 
-    public findOverlappingIntervals(startPosition: number, endPosition: number) {
+    public async attachDeserializer(
+        onDeserialize: DeserializeCallback,
+        onPrepareDeserialize: PrepareDeserializeCallback): Promise<void> {
+
+        this.attachingP = this.attachDeserializerCore(onDeserialize, onPrepareDeserialize);
+        return this.attachingP;
+    }
+
+    public findOverlappingIntervals(startPosition: number, endPosition: number): Interval[] {
         return this.localCollection.findOverlappingIntervals(startPosition, endPosition);
     }
 
-    public serialize() {
-        return this.localCollection.serialize();
+    public map(fn: (interval: Interval) => void) {
+        this.localCollection.map(fn);
     }
 
-    public remove(serializedInterval: ISerializedInterval, submitEvent = true) {
-        // TODO
+    public previousInterval(pos: number): Interval {
+        return this.localCollection.previousInterval(pos);
     }
 
-    public add(
-        startPosition: number,
-        endPosition: number,
-        intervalType: MergeTree.IntervalType,
-        props?: MergeTree.PropertySet) {
-
-        const serializedInterval = {
-            endPosition,
-            intervalType,
-            properties: props,
-            sequenceNumber: this.sharedString.client.getCurrentSeq(),
-            startPosition,
-        } as ISerializedInterval;
-        this.addSerialized(serializedInterval, true, null);
-    }
-
-    // TODO: error cases
-    public addSerialized(serializedInterval: ISerializedInterval, local: boolean, op: api.ISequencedObjectMessage) {
-        const interval = this.deserializeInterval(serializedInterval);
-        if (interval) {
-            // Null op means this was a local add and we should submit an op to the server
-            if (op === null) {
-                this.emitter.emit("add", serializedInterval);
-            }
-        }
-
-        this.emit("addInterval", interval, local, op);
-
-        return this;
+    public nextInterval(pos: number): Interval {
+        return this.localCollection.nextInterval(pos);
     }
 
     public on(
@@ -354,13 +334,160 @@ export class SharedIntervalCollection extends EventEmitter {
         return super.on(event, listener);
     }
 
-    public onDeserialize = (value: Interval) => { return; };
+    public add(
+        startPosition: number,
+        endPosition: number,
+        intervalType: MergeTree.IntervalType,
+        props?: MergeTree.PropertySet) {
 
-    private deserializeInterval(serializedInterval: ISerializedInterval) {
-        const interval = this.localCollection.addInterval(serializedInterval.startPosition,
-            serializedInterval.endPosition, serializedInterval.intervalType,
+        const serializedInterval: ISerializedInterval = {
+            endPosition,
+            intervalType,
+            properties: props,
+            sequenceNumber: this.sharedString.client.getCurrentSeq(),
+            startPosition,
+        };
+
+        this.addInternal(serializedInterval, null, true, null);
+    }
+
+    // TODO: error cases
+    public addInternal(
+        serializedInterval: ISerializedInterval,
+        context: any,
+        local: boolean,
+        op: api.ISequencedObjectMessage) {
+
+        const interval = this.localCollection.addInterval(
+            serializedInterval.startPosition,
+            serializedInterval.endPosition,
+            serializedInterval.intervalType,
             serializedInterval.properties);
-        this.onDeserialize(interval);
-        return interval;
+
+        if (interval) {
+            // Local ops get submitted to the server. Remote ops have the deserializer run.
+            if (local) {
+                this.emitter.emit("add", serializedInterval);
+            } else {
+                if (this.onDeserialize) {
+                    this.onDeserialize(interval, context);
+                }
+            }
+        }
+
+        this.emit("addInterval", interval, local, op);
+
+        return this;
+    }
+
+    public async prepareAdd(
+        interval: ISerializedInterval,
+        local: boolean,
+        message: api.ISequencedObjectMessage): Promise<any> {
+
+        await this.attachingP;
+        return this.onPrepareDeserialize ? this.onPrepareDeserialize(interval.properties) : null;
+    }
+
+    public serializeInternal() {
+        return this.localCollection.serialize();
+    }
+
+    private async attachDeserializerCore(
+        onDeserialize?: DeserializeCallback,
+        onPrepareDeserialize?: PrepareDeserializeCallback): Promise<void> {
+
+        // If no deserializer is specified can skip all processing work
+        if (!onDeserialize && !onPrepareDeserialize) {
+            return;
+        }
+
+        // Start by storing the callbacks so that any subsequent modifications make use of them
+        this.onDeserialize = onDeserialize;
+        this.onPrepareDeserialize = onPrepareDeserialize;
+
+        // Trigger the async prepare work across all values in the collection
+        const preparedIntervalsP: Array<Promise<{ context: any, interval: Interval }>> = [];
+        this.localCollection.map((interval) => {
+            const preparedIntervalP = onPrepareDeserialize(interval.properties).then(
+                (context) => ({ context, interval }));
+            preparedIntervalsP.push(preparedIntervalP);
+        });
+
+        const preparedIntervals = await Promise.all(preparedIntervalsP);
+        for (const preparedInterval of preparedIntervals) {
+            this.onDeserialize(preparedInterval.interval, preparedInterval.context);
+        }
+    }
+}
+
+export class SharedIntervalCollection {
+    private savedSerializedIntervals?: ISerializedInterval[];
+    private view: SharedIntervalCollectionView;
+
+    public get attached(): boolean {
+        return !!this.view;
+    }
+
+    constructor(private emitter: IValueOpEmitter, serializedIntervals: ISerializedInterval[]) {
+        this.savedSerializedIntervals = serializedIntervals;
+    }
+
+    public attachSharedString(sharedString: SharedString, label: string) {
+        if (this.view) {
+            throw new Error("Only supports one SharedString attach");
+        }
+
+        this.view = new SharedIntervalCollectionView(sharedString, this.savedSerializedIntervals, label, this.emitter);
+        this.savedSerializedIntervals = undefined;
+    }
+
+    public async getView(
+        onDeserialize?: DeserializeCallback,
+        onPrepareDeserialize?: PrepareDeserializeCallback): Promise<SharedIntervalCollectionView> {
+
+        if (!this.view) {
+            return Promise.reject("attachSharedString must be called prior to retrieving the view");
+        }
+
+        // Attach custom deserializers if specified
+        if (onDeserialize || onPrepareDeserialize) {
+            await this.view.attachDeserializer(onDeserialize, onPrepareDeserialize);
+        }
+
+        return this.view;
+    }
+
+    public prepareAddInternal(
+        interval: ISerializedInterval,
+        local: boolean,
+        message: api.ISequencedObjectMessage): Promise<any> {
+
+        if (!this.view) {
+            return Promise.reject("attachSharedString must be called");
+        }
+
+        return this.view.prepareAdd(interval, local, message);
+    }
+
+    public addInternal(
+        serializedInterval: ISerializedInterval,
+        context: any,
+        local: boolean,
+        op: api.ISequencedObjectMessage) {
+
+        if (!this.view) {
+            throw new Error("attachSharedString must be called");
+        }
+
+        return this.view.addInternal(serializedInterval, context, local, op);
+    }
+
+    public serializeInternal() {
+        if (!this.view) {
+            throw new Error("attachSharedString must be called");
+        }
+
+        return this.view.serializeInternal();
     }
 }

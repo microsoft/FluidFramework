@@ -1,17 +1,19 @@
-// tslint:disable:whitespace align no-bitwise ordered-imports
+// tslint:disable:whitespace align no-bitwise
 import * as assert from "assert";
 import * as api from "../api-core";
 import { Deferred } from "../core-utils";
 import { IMap, IMapView, IValueChanged } from "../data-types";
 import { CollaborativeMap, MapExtension } from "../map";
+import { IRelativePosition } from "../merge-tree";
 import * as MergeTree from "../merge-tree";
 import { CollaborativeStringExtension } from "./extension";
 import {
-    Interval, SharedIntervalCollection,
+    DeserializeCallback,
+    PrepareDeserializeCallback,
+    SharedIntervalCollection,
     SharedIntervalCollectionValueType,
+    SharedIntervalCollectionView,
 } from "./intervalCollection";
-import { ISequencedObjectMessage } from "../api-core";
-import { IRelativePosition } from "../merge-tree";
 
 function textsToSegments(texts: MergeTree.IPropertyString[]) {
     const segments: MergeTree.Segment[] = [];
@@ -283,17 +285,22 @@ export class SharedString extends CollaborativeMap {
     }
 
     // TODO: fix race condition on creation by putting type on every operation
-    public getSharedIntervalCollection(label: string, onDeserialize?: (i: Interval) => void) {
+    public async getSharedIntervalCollection(
+        label: string,
+        onDeserialize?: DeserializeCallback,
+        onPrepareDeserialize?: PrepareDeserializeCallback): Promise<SharedIntervalCollectionView> {
+
         if (!this.intervalCollections.has(label)) {
-            this.intervalCollections.set<SharedIntervalCollection>(label, undefined,
+            this.intervalCollections.set<SharedIntervalCollection>(
+                label,
+                undefined,
                 SharedIntervalCollectionValueType.Name);
         }
+
         const sharedCollection = this.intervalCollections.get<SharedIntervalCollection>(label);
-        if (onDeserialize) {
-            sharedCollection.onDeserialize = onDeserialize;
-        }
-        sharedCollection.initialize(this, label);
-        return sharedCollection;
+        const view = await sharedCollection.getView(onDeserialize, onPrepareDeserialize);
+
+        return view;
     }
 
     public sendNACKed() {
@@ -448,7 +455,7 @@ export class SharedString extends CollaborativeMap {
         sequenceNumber: number,
         minimumSequenceNumber: number,
         header: string,
-        messages: ISequencedObjectMessage[],
+        messages: api.ISequencedObjectMessage[],
         collaborative: boolean,
         originBranch: string,
         services: api.IObjectStorageService) {
@@ -466,21 +473,14 @@ export class SharedString extends CollaborativeMap {
             this.processContent(message);
         }
 
-        // Do we want to break the dependence on the interval collection
-        // Register the filter callback on the reference collections
-        const intervalCollections = await this.get("intervalCollections") as IMap;
-
-        this.intervalCollections = await intervalCollections.getView();
-        intervalCollections.on("valueChanged", (ev: IValueChanged) => {
-            const intervalCollection = this.intervalCollections.get<SharedIntervalCollection>(ev.key);
-            intervalCollection.initialize(this, ev.key);
-        });
+        // And initialize the interval collections
+        await this.initializeIntervalCollections();
     }
 
     private async initialize(
         sequenceNumber: number,
         minimumSequenceNumber: number,
-        messages: ISequencedObjectMessage[],
+        messages: api.ISequencedObjectMessage[],
         header: string,
         collaborative: boolean,
         originBranch: string,
@@ -491,6 +491,7 @@ export class SharedString extends CollaborativeMap {
         }
 
         this.loadHeader(sequenceNumber, minimumSequenceNumber, header, collaborative, originBranch, services);
+
         this.loadBody(
             sequenceNumber,
             minimumSequenceNumber,
@@ -500,7 +501,6 @@ export class SharedString extends CollaborativeMap {
             originBranch,
             services).then(
                 () => {
-                    this.initializeIntervalCollections();
                     this.loadFinished();
                 },
                 (error) => {
@@ -508,10 +508,22 @@ export class SharedString extends CollaborativeMap {
                 });
     }
 
-    private initializeIntervalCollections() {
+    private async initializeIntervalCollections() {
+        const intervalCollections = await this.get("intervalCollections") as IMap;
+        this.intervalCollections = await intervalCollections.getView();
+
+        // Listen and initialize new SharedIntervalCollections
+        intervalCollections.on("valueChanged", (ev: IValueChanged) => {
+            const intervalCollection = this.intervalCollections.get<SharedIntervalCollection>(ev.key);
+            if (!intervalCollection.attached) {
+                intervalCollection.attachSharedString(this, ev.key);
+            }
+        });
+
+        // Initialize existing SharedIntervalCollections
         for (const key of this.intervalCollections.keys()) {
             const intervalCollection = this.intervalCollections.get<SharedIntervalCollection>(key);
-            intervalCollection.initialize(this, key);
+            intervalCollection.attachSharedString(this, key);
         }
     }
 

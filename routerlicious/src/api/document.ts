@@ -426,20 +426,19 @@ export class Document extends EventEmitter implements api.IDocument {
                 this.lastMinSequenceNumber = header.attributes.minimumSequenceNumber;
 
                 // Start delta processing once all objects are loaded
-                if (connect) {
-                    assert(this._deltaManager, "DeltaManager should have been created during connect call");
-
-                    const readyP = Array.from(this.distributedObjects.values()).map((value) => value.object.ready());
-                    Promise.all(readyP).then(
-                        () => {
+                const readyP = Array.from(this.distributedObjects.values()).map((value) => value.object.ready());
+                Promise.all(readyP).then(
+                    () => {
+                        if (connect) {
+                            assert(this._deltaManager, "DeltaManager should have been created during connect call");
                             debug("Everyone ready - resuming inbound messages");
                             this._deltaManager.inbound.resume();
                             this._deltaManager.outbound.resume();
-                        },
-                        (error) => {
-                            this.emit("error", error);
-                        });
-                }
+                        }
+                    },
+                    (error) => {
+                        this.emit("error", error);
+                    });
 
                 // Initialize document details - if loading a snapshot use that - otherwise we need to wait on
                 // the initial details
