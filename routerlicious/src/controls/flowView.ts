@@ -4392,18 +4392,15 @@ export class FlowView extends ui.Component {
         this.bookmarks = await this.sharedString.getSharedIntervalCollection("bookmarks");
 
         let onDeserialize: DeserializeCallback = (interval, commentSharedString: core.ICollaborativeObject) => {
-            console.log("WHOOP I have been asked to onDeserialize");
             if (interval.properties && interval.properties["story"]) {
                 assert(commentSharedString);
                 interval.properties["story"] = commentSharedString;
             }
 
-            console.log("WHOOP Done asked to onDeserialize");
             return true;
         };
 
         let onPrepareDeserialize: PrepareDeserializeCallback = (properties) => {
-            console.log("WHOOP I have been asked to onDeserialize");
             if (properties && properties["story"]) {
                 let story = properties["story"];
                 return this.sharedString.getDocument().get(story["value"]);
@@ -4414,15 +4411,6 @@ export class FlowView extends ui.Component {
 
         this.comments = await this.sharedString.getSharedIntervalCollection(
             "comments", onDeserialize, onPrepareDeserialize);
-
-        // Use a custom map function here - that pushes a list of promises so we know when it's all done
-        // It would be nice if this was part of init but that might be too much. Init just inits the actual
-        // positions but then we are required to go and swap values if we care and do this early.
-
-        // The need to map is a consequence of the local collection not having the deserialize at startup time
-        this.comments.on("addInterval", (interval, local, op) => {
-            console.log("WHOOP Hey! addInterval just got called!");
-        });
 
         this.render(0, true);
         if (clockStart > 0) {

@@ -425,13 +425,9 @@ export class Document extends EventEmitter implements api.IDocument {
                 this.lastMinSequenceNumber = header.attributes.minimumSequenceNumber;
 
                 // Start delta processing once all objects are loaded
-                // TODO I should add in a callback you can pass to document load to register this callback
                 const readyP = Array.from(this.distributedObjects.values()).map((value) => value.object.ready());
                 Promise.all(readyP).then(
                     () => {
-                        // TODO invoke document ready callback prior to starting up more messages
-                        // with a prepare and a process
-
                         if (connect) {
                             assert(this._deltaManager, "DeltaManager should have been created during connect call");
                             debug("Everyone ready - resuming inbound messages");

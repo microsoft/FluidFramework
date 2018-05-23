@@ -220,8 +220,6 @@ class LocalIntervalCollection implements IIntervalCollection {
 
 class SharedIntervalCollectionFactory implements IValueFactory<SharedIntervalCollection> {
     public load(emitter: IValueOpEmitter, raw: ISerializedInterval[]): SharedIntervalCollection {
-        // The load here does NOT take in some way to process/load the thing.
-        // But maybe it wants to to avoid any splits?
         return new SharedIntervalCollection(emitter, raw || []);
     }
 
@@ -392,7 +390,6 @@ export class SharedIntervalCollectionView extends EventEmitter {
     }
 
     public serializeInternal() {
-        // Called when snapshotting to write the thing to disc
         return this.localCollection.serialize();
     }
 
@@ -433,10 +430,6 @@ export class SharedIntervalCollection {
     }
 
     constructor(private emitter: IValueOpEmitter, serializedIntervals: ISerializedInterval[]) {
-        // NOTE: It would be nice if I could do the initialize stuff at the time of load. Is there a way
-        // I can somehow defer access to a SIC until I'm ready to load it?
-        //
-        // This is loading the SIC from initial data. All the intervals are RAW.
         this.savedSerializedIntervals = serializedIntervals;
     }
 

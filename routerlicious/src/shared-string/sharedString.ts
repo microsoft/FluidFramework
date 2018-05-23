@@ -297,11 +297,7 @@ export class SharedString extends CollaborativeMap {
                 SharedIntervalCollectionValueType.Name);
         }
 
-        // Retrieve the actual shared collection from the map
         let sharedCollection = this.intervalCollections.get<SharedIntervalCollection>(label);
-
-        // Things may not be local yet - this must be async
-        console.log("WHOOP Calling Initialize");
         const view = await sharedCollection.getView(onDeserialize, onPrepareDeserialize);
 
         return view;
@@ -515,18 +511,8 @@ export class SharedString extends CollaborativeMap {
     }
 
     private async initializeIntervalCollections() {
-        // Do we want to break the dependence on the interval collection
-        // Register the filter callback on the reference collections
         let intervalCollections = await this.get("intervalCollections") as IMap;
         this.intervalCollections = await intervalCollections.getView();
-
-        // Paparazzo don't know the higher level semantics on serialize/deserialize here - just raw values.
-        // So they won't ever run the flowview code to do any of that. So we *must* keep this split in
-
-        // NOTE At this point the SIC are in a position to be able to serialize their updates to the SS
-        // since the SS has attached itself to all of them - and all future ones - but we have't yet registered
-        // an ability to translate the property types on the collection. We rely on the higher level code to
-        // do that
 
         // Listen and initialize new SharedIntervalCollections
         intervalCollections.on("valueChanged", (ev: IValueChanged) => {
