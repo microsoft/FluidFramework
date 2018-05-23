@@ -21,13 +21,14 @@ export class MetricsLambda implements IPartitionLambda {
 
         // Update and retrieve the minimum sequence number
         const message = baseMessage as core.IRawOperationMessage;
+        const userId = message.user && message.user.id ? message.user.id : "anonymous";
 
         const event = new aria.AWTEventProperties();
         event.setName(this.eventName);
         event.setTimestamp(message.timestamp);
         event.setProperty("tenantId", message.tenantId, aria.AWTPropertyType.String);
         event.setProperty("documentId", message.documentId, aria.AWTPropertyType.String);
-        event.setProperty("userId", message.user.id, aria.AWTPropertyType.String);
+        event.setProperty("userId", userId, aria.AWTPropertyType.String);
         event.setProperty("environment", this.environment, aria.AWTPropertyType.String);
         event.setProperty("clientId", message.clientId, aria.AWTPropertyType.String);
         this.logger.logEvent(event);
