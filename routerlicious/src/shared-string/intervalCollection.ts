@@ -1,4 +1,3 @@
-import * as assert from "assert";
 import { EventEmitter } from "events";
 import * as api from "../api-core";
 import { IValueFactory, IValueOpEmitter, IValueOperation, IValueType } from "../data-types";
@@ -227,7 +226,7 @@ class SharedIntervalCollectionFactory implements IValueFactory<SharedIntervalCol
     }
 
     public store(value: SharedIntervalCollection): ISerializedInterval[] {
-        return value.serialize();
+        return value.serializeInternal();
     }
 }
 
@@ -263,7 +262,7 @@ export class SharedIntervalCollectionValueType implements IValueType<SharedInter
                             return;
                         }
 
-                        return value.prepareAdd(params, local, op);
+                        return value.prepareAddInternal(params, local, op);
                     },
                     process: (value, params, context, local, op) => {
                         // Local ops were applied when the message was created
@@ -271,81 +270,52 @@ export class SharedIntervalCollectionValueType implements IValueType<SharedInter
                             return;
                         }
 
-                        value.addSerialized(params, context, local, op);
-                    },
-                },
-            ],
-            [
-                "remove",
-                {
-                    prepare: async (value, params, local, op) => {
-                        return;
-                    },
-                    process: (value, params, context, local, op) => {
-                        // Local ops were applied when the message was created
-                        if (local) {
-                            return;
-                        }
-
-                        value.remove(params, false);
+                        value.addInternal(params, context, local, op);
                     },
                 },
             ]]);
     }
 }
 
-export class SharedIntervalCollection extends EventEmitter {
-    private localCollection: LocalIntervalCollection;
-    private sharedString: SharedString;
-    private savedSerializedIntervals?: ISerializedInterval[];
-    private onPrepareDeserialize: (value: ISerializedInterval) => Promise<void>;
-    private onDeserialize: (value: Interval, context: any) => void;
+export type PrepareDeserializeCallback = (properties: MergeTree.PropertySet) => Promise<any>;
+export type DeserializeCallback = (value: Interval, context: any) => void;
 
-    constructor(private emitter: IValueOpEmitter, serializedIntervals: ISerializedInterval[]) {
+export class SharedIntervalCollectionView extends EventEmitter {
+    private localCollection: LocalIntervalCollection;
+    private onPrepareDeserialize: PrepareDeserializeCallback;
+    private onDeserialize: DeserializeCallback;
+    private attachingP = Promise.resolve();
+
+    constructor(
+        private sharedString: SharedString,
+        savedSerializedIntervals: ISerializedInterval[],
+        label: string,
+        private emitter: IValueOpEmitter) {
         super();
 
-        // NOTE: It would be ncie if I could do the initialize stuff at the time of load. Is there a way
-        // I can somehow defer access to a SIC until I'm ready to load it?
-        //
-        // This is loading the SIC from initial data. All the intervals are RAW.
-        this.savedSerializedIntervals = serializedIntervals;
-    }
-
-    public attachSharedString(sharedString: SharedString, label: string) {
-        assert(!this.sharedString, "Only supports one SharedString attach");
-
-        // NOTE: This isn't called until later on. Until then the local collection is not valid
-        this.sharedString = sharedString;
+        // Instantiate the local interval collection based on the saved intervals
         this.localCollection = new LocalIntervalCollection(sharedString, label);
-        if (this.savedSerializedIntervals) {
-            console.log(`WHOOP ${JSON.stringify(this.savedSerializedIntervals)}`);
-            for (let serializedInterval of this.savedSerializedIntervals) {
-                console.log(`WHOOP ${JSON.stringify(serializedInterval)}`);
-                // TODO - I need to run a prepare on this
-                this.deserializeInterval(serializedInterval, null);
+        if (savedSerializedIntervals) {
+            for (let serializedInterval of savedSerializedIntervals) {
+                this.localCollection.addInterval(
+                    serializedInterval.startPosition,
+                    serializedInterval.endPosition,
+                    serializedInterval.intervalType,
+                    serializedInterval.properties);
             }
-            this.savedSerializedIntervals = undefined;
         }
     }
 
-    public async attachSerializer(
-        onDeserialize?: (value: Interval, context: any) => void,
-        onPrepareDeserialize?: (value: ISerializedInterval) => Promise<void>): Promise<void> {
+    public async attachDeserializer(
+        onDeserialize: DeserializeCallback,
+        onPrepareDeserialize: PrepareDeserializeCallback): Promise<void> {
 
-        // Process custom deserialization
-        this.onDeserialize = onDeserialize;
-        this.onPrepareDeserialize = onPrepareDeserialize;
-
-        // Run methods on LocalintervalCollection
+        this.attachingP = this.attachDeserializerCore(onDeserialize, onPrepareDeserialize);
+        return this.attachingP;
     }
 
-    public findOverlappingIntervals(startPosition: number, endPosition: number) {
+    public findOverlappingIntervals(startPosition: number, endPosition: number): Interval[] {
         return this.localCollection.findOverlappingIntervals(startPosition, endPosition);
-    }
-
-    public serialize() {
-        // Called when snapshotting to write the thing to disc
-        return this.localCollection.serialize();
     }
 
     public map(fn: (interval: Interval) => void) {
@@ -360,8 +330,10 @@ export class SharedIntervalCollection extends EventEmitter {
         return this.localCollection.nextInterval(pos);
     }
 
-    public remove(serializedInterval: ISerializedInterval, submitEvent = true) {
-        // TODO
+    public on(
+        event: "addInterval",
+        listener: (interval: ISerializedInterval, local: boolean, op: api.ISequencedObjectMessage) => void): this {
+        return super.on(event, listener);
     }
 
     public add(
@@ -370,33 +342,38 @@ export class SharedIntervalCollection extends EventEmitter {
         intervalType: MergeTree.IntervalType,
         props?: MergeTree.PropertySet) {
 
-        // We are assuming initialize was called first
-
-        let serializedInterval = <ISerializedInterval> {
+        const serializedInterval: ISerializedInterval = {
             endPosition,
             intervalType,
             properties: props,
             sequenceNumber: this.sharedString.client.getCurrentSeq(),
             startPosition,
         };
-        this.addSerialized(serializedInterval, null, true, null);
+
+        this.addInternal(serializedInterval, null, true, null);
     }
 
     // TODO: error cases
-    public addSerialized(
+    public addInternal(
         serializedInterval: ISerializedInterval,
         context: any,
         local: boolean,
         op: api.ISequencedObjectMessage) {
 
-        // The deserialize interval here may or may not work depending on if we have actually
-        // attached a deserializer. In the initial flow we may have not.
+        const interval = this.localCollection.addInterval(
+            serializedInterval.startPosition,
+            serializedInterval.endPosition,
+            serializedInterval.intervalType,
+            serializedInterval.properties);
 
-        let interval = this.deserializeInterval(serializedInterval, context);
         if (interval) {
-            // Null op means this was a local add and we should submit an op to the server
-            if (op === null) {
+            // Local ops get submitted to the server. Remote ops have the deserializer run.
+            if (local) {
                 this.emitter.emit("add", serializedInterval);
+            } else {
+                if (this.onDeserialize) {
+                    this.onDeserialize(interval, context);
+                }
             }
         }
 
@@ -405,32 +382,115 @@ export class SharedIntervalCollection extends EventEmitter {
         return this;
     }
 
-    public prepareAdd(
+    public async prepareAdd(
         interval: ISerializedInterval,
         local: boolean,
         message: api.ISequencedObjectMessage): Promise<any> {
 
-        return this.onPrepareDeserialize(interval);
+        await this.attachingP;
+        return this.onPrepareDeserialize ? this.onPrepareDeserialize(interval) : null;
     }
 
-    public on(
-        event: "addInterval",
-        listener: (interval: ISerializedInterval, local: boolean, op: api.ISequencedObjectMessage) => void): this {
-        return super.on(event, listener);
+    public serializeInternal() {
+        // Called when snapshotting to write the thing to disc
+        return this.localCollection.serialize();
     }
 
-    private deserializeInterval(serializedInterval: ISerializedInterval, context: any) {
-        let interval = this.localCollection.addInterval(
-            serializedInterval.startPosition,
-            serializedInterval.endPosition,
-            serializedInterval.intervalType,
-            serializedInterval.properties);
+    private async attachDeserializerCore(
+        onDeserialize?: DeserializeCallback,
+        onPrepareDeserialize?: PrepareDeserializeCallback): Promise<void> {
 
-        console.log(`WHOOP this.onDeserialize`);
-        if (this.onDeserialize) {
-            this.onDeserialize(interval, context);
+        // If no deserializer is specified can skip all processing work
+        if (!onDeserialize && !onPrepareDeserialize) {
+            return;
         }
 
-        return interval;
+        // Start by storing the callbacks so that any subsequent modifications make use of them
+        this.onDeserialize = onDeserialize;
+        this.onPrepareDeserialize = onPrepareDeserialize;
+
+        // Trigger the async prepare work across all values in the collection
+        const preparedIntervalsP: Array<Promise<{ context: any, interval: Interval }>> = [];
+        this.localCollection.map((interval) => {
+            const preparedIntervalP = onPrepareDeserialize(interval.properties).then(
+                (context) => ({ context, interval }));
+            preparedIntervalsP.push(preparedIntervalP);
+        });
+
+        const preparedIntervals = await Promise.all(preparedIntervalsP);
+        for (const preparedInterval of preparedIntervals) {
+            this.onDeserialize(preparedInterval.interval, preparedInterval.context);
+        }
+    }
+}
+
+export class SharedIntervalCollection {
+    private savedSerializedIntervals?: ISerializedInterval[];
+    private view: SharedIntervalCollectionView;
+
+    constructor(private emitter: IValueOpEmitter, serializedIntervals: ISerializedInterval[]) {
+        // NOTE: It would be nice if I could do the initialize stuff at the time of load. Is there a way
+        // I can somehow defer access to a SIC until I'm ready to load it?
+        //
+        // This is loading the SIC from initial data. All the intervals are RAW.
+        this.savedSerializedIntervals = serializedIntervals;
+    }
+
+    public attachSharedString(sharedString: SharedString, label: string) {
+        if (this.view) {
+            throw new Error("Only supports one SharedString attach");
+        }
+
+        this.view = new SharedIntervalCollectionView(sharedString, this.savedSerializedIntervals, label, this.emitter);
+        this.savedSerializedIntervals = undefined;
+    }
+
+    public async getView(
+        onDeserialize?: DeserializeCallback,
+        onPrepareDeserialize?: PrepareDeserializeCallback): Promise<SharedIntervalCollectionView> {
+
+        if (!this.view) {
+            return Promise.reject("attachSharedString must be called prior to retrieving the view");
+        }
+
+        // Attach custom deserializers if specified
+        if (onDeserialize || onPrepareDeserialize) {
+            await this.view.attachDeserializer(onDeserialize, onPrepareDeserialize);
+        }
+
+        return this.view;
+    }
+
+    public prepareAddInternal(
+        interval: ISerializedInterval,
+        local: boolean,
+        message: api.ISequencedObjectMessage): Promise<any> {
+
+        if (!this.view) {
+            return Promise.reject("attachSharedString must be called");
+        }
+
+        return this.view.prepareAdd(interval, local, message);
+    }
+
+    public addInternal(
+        serializedInterval: ISerializedInterval,
+        context: any,
+        local: boolean,
+        op: api.ISequencedObjectMessage) {
+
+        if (!this.view) {
+            throw new Error("attachSharedString must be called");
+        }
+
+        return this.view.addInternal(serializedInterval, context, local, op);
+    }
+
+    public serializeInternal() {
+        if (!this.view) {
+            throw new Error("attachSharedString must be called");
+        }
+
+        return this.view.serializeInternal();
     }
 }

@@ -1,11 +1,18 @@
 // tslint:disable:no-bitwise whitespace align switch-default no-string-literal
+import * as assert from "assert";
 import performanceNow = require("performance-now");
 import {
     api, CharacterCodes, core, MergeTree,
     Paragraph, Table, types,
 } from "../client-api";
 import { findRandomWord } from "../merge-tree-utils";
-import { Interval, SharedIntervalCollection, SharedString } from "../shared-string";
+import {
+    DeserializeCallback,
+    Interval,
+    PrepareDeserializeCallback,
+    SharedIntervalCollectionView,
+    SharedString,
+} from "../shared-string";
 import * as ui from "../ui";
 import { Status } from "./status";
 
@@ -2743,9 +2750,9 @@ export class FlowView extends ui.Component {
     public wheelTicking = false;
     public topChar = -1;
     public cursor: Cursor;
-    public bookmarks: SharedIntervalCollection;
+    public bookmarks: SharedIntervalCollectionView;
     public tempBookmarks: Interval[];
-    public comments: SharedIntervalCollection;
+    public comments: SharedIntervalCollectionView;
     public presenceMapView: types.IMapView;
     public presenceVector: ILocalPresenceInfo[] = [];
     public docRoot: types.IMapView;
@@ -4384,25 +4391,25 @@ export class FlowView extends ui.Component {
 
         this.bookmarks = await this.sharedString.getSharedIntervalCollection("bookmarks");
 
-        let onDeserialize = (interval) => {
+        let onDeserialize: DeserializeCallback = (interval, commentSharedString: core.ICollaborativeObject) => {
             console.log("WHOOP I have been asked to onDeserialize");
             if (interval.properties && interval.properties["story"]) {
-                let story = interval.properties["story"];
-                if (!story["id"]) {
-                    this.sharedString.getDocument().get(story["value"]).then((commentSharedString) => {
-                        interval.properties["story"] = commentSharedString;
-                    });
-                }
+                assert(commentSharedString);
+                interval.properties["story"] = commentSharedString;
             }
 
             console.log("WHOOP Done asked to onDeserialize");
             return true;
         };
 
-        let onPrepareDeserialize = (interval) => {
-            // TODO gotta fill me in
-            console.log("WHOOP I have been asked to onPrepareDeserialize");
-            return Promise.resolve();
+        let onPrepareDeserialize: PrepareDeserializeCallback = (properties) => {
+            console.log("WHOOP I have been asked to onDeserialize");
+            if (properties && properties["story"]) {
+                let story = properties["story"];
+                return this.sharedString.getDocument().get(story["value"]);
+            } else {
+                return Promise.resolve(null);
+            }
         };
 
         this.comments = await this.sharedString.getSharedIntervalCollection(
@@ -4413,7 +4420,6 @@ export class FlowView extends ui.Component {
         // positions but then we are required to go and swap values if we care and do this early.
 
         // The need to map is a consequence of the local collection not having the deserialize at startup time
-        this.comments.map(onDeserialize);
         this.comments.on("addInterval", (interval, local, op) => {
             console.log("WHOOP Hey! addInterval just got called!");
         });

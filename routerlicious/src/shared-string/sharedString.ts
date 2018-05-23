@@ -1,17 +1,19 @@
-// tslint:disable:whitespace align no-bitwise ordered-imports
+// tslint:disable:whitespace align no-bitwise
 import * as assert from "assert";
 import * as api from "../api-core";
 import { Deferred } from "../core-utils";
 import { IMap, IMapView, IValueChanged } from "../data-types";
 import { CollaborativeMap, MapExtension } from "../map";
+import { IRelativePosition } from "../merge-tree";
 import * as MergeTree from "../merge-tree";
 import { CollaboritiveStringExtension } from "./extension";
 import {
-    Interval, SharedIntervalCollection,
+    DeserializeCallback,
+    PrepareDeserializeCallback,
+    SharedIntervalCollection,
     SharedIntervalCollectionValueType,
+    SharedIntervalCollectionView,
 } from "./intervalCollection";
-import { ISequencedObjectMessage } from "../api-core";
-import { IRelativePosition } from "../merge-tree";
 
 function textsToSegments(texts: MergeTree.IPropertyString[]) {
     let segments: MergeTree.Segment[] = [];
@@ -285,8 +287,8 @@ export class SharedString extends CollaborativeMap {
     // TODO: fix race condition on creation by putting type on every operation
     public async getSharedIntervalCollection(
         label: string,
-        onDeserialize?: (i: Interval, context: any) => void,
-        onPrepareDeserialize?: (i) => Promise<any>): Promise<SharedIntervalCollection> {
+        onDeserialize?: DeserializeCallback,
+        onPrepareDeserialize?: PrepareDeserializeCallback): Promise<SharedIntervalCollectionView> {
 
         if (!this.intervalCollections.has(label)) {
             this.intervalCollections.set<SharedIntervalCollection>(
@@ -300,11 +302,9 @@ export class SharedString extends CollaborativeMap {
 
         // Things may not be local yet - this must be async
         console.log("WHOOP Calling Initialize");
-        if (onDeserialize || onPrepareDeserialize) {
-            await sharedCollection.attachSerializer(onDeserialize, onPrepareDeserialize);
-        }
+        const view = await sharedCollection.getView(onDeserialize, onPrepareDeserialize);
 
-        return sharedCollection;
+        return view;
     }
 
     public sendNACKed() {
@@ -452,7 +452,7 @@ export class SharedString extends CollaborativeMap {
         sequenceNumber: number,
         minimumSequenceNumber: number,
         header: string,
-        messages: ISequencedObjectMessage[],
+        messages: api.ISequencedObjectMessage[],
         collaborative: boolean,
         originBranch: string,
         services: api.IObjectStorageService) {
@@ -486,7 +486,7 @@ export class SharedString extends CollaborativeMap {
     private async initialize(
         sequenceNumber: number,
         minimumSequenceNumber: number,
-        messages: ISequencedObjectMessage[],
+        messages: api.ISequencedObjectMessage[],
         header: string,
         collaborative: boolean,
         originBranch: string,

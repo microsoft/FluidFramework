@@ -1,6 +1,12 @@
-import { Interval, SharedIntervalCollection, SharedIntervalCollectionValueType } from "./intervalCollection";
-import { SharedString } from "./sharedString";
-
-export { Interval, SharedIntervalCollection,
-    SharedIntervalCollectionValueType, SharedString }
+export {
+    DeserializeCallback,
+    Interval,
+    PrepareDeserializeCallback,
+    SharedIntervalCollection,
+    SharedIntervalCollectionView,
+    SharedIntervalCollectionValueType,
+} from "./intervalCollection";
+export {
+    SharedString,
+} from "./sharedString";
 export * from "./extension";
