@@ -41,7 +41,8 @@ We're currently in the middle of [Sprint 5](./doc/sprints/sprint5/readme.md) and
 |[Apps](./apps)|[![Apps Build Status](https://offnet.visualstudio.com/_apis/public/build/definitions/0a22f611-6a4a-4416-a1bb-53ed7284aa21/16/badge)](https://offnet.visualstudio.com/officenet/_build/index?definitionId=16)|
 |[Gitresources](./gitresources)|[![Gitresources Build Status](https://offnet.visualstudio.com/_apis/public/build/definitions/0a22f611-6a4a-4416-a1bb-53ed7284aa21/9/badge)](https://offnet.visualstudio.com/officenet/_build/index?definitionId=9)|
 |[Headless Chrome](./tools/headless-chrome)|[![Headless Chrome Build Status](https://offnet.visualstudio.com/_apis/public/build/definitions/0a22f611-6a4a-4416-a1bb-53ed7284aa21/19/badge)](https://offnet.visualstudio.com/officenet/_build/index?definitionId=19)|
-
+|[Prague metrics](./tools/prague-metrics)|[![Metrics Build Status](https://offnet.visualstudio.com/_apis/public/build/definitions/0a22f611-6a4a-4416-a1bb-53ed7284aa21/20/badge)](https://offnet.visualstudio.com/officenet/_build/index?definitionId=20)|
+|[Prague metrics chart](./charts/prague-metrics)|[![Prague Metrics Chart Build Status](https://offnet.visualstudio.com/_apis/public/build/definitions/0a22f611-6a4a-4416-a1bb-53ed7284aa21/21/badge)](https://offnet.visualstudio.com/officenet/_build/index?definitionId=21)|
 
 ## Demo Videos
 

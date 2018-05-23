@@ -1,0 +1,20 @@
+## Specify a imagePullPolicy
+## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
+imagePullPolicy: IfNotPresent
+image: prague.azurecr.io/prague-metrics:2551
+name: prague-metrics
+
+replicas: 1
+environment: localhost
+
+sentry: https://7235bc222189462ca65fa1a38591f96b:74acc3b4610f47a38a50d1bcbfcd6655@sentry.wu2.prague.office-int.com/2
+
+kafka:
+  zookeeper: zookeeper:2181
+  sendTopic: deltas
+  group: prague-metrics
+  receiveTopic: rawdeltas
+
+aria:
+  tenant: 249d93644d18425ea36b3e443d49e59a-a78d2c7d-4380-47be-8830-7a8f2f9370d5-7185
+  event: rawdeltas

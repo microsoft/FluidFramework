@@ -29,6 +29,7 @@ export class MetricsLambda implements IPartitionLambda {
         event.setProperty("documentId", message.documentId, aria.AWTPropertyType.String);
         event.setProperty("userId", message.user.id, aria.AWTPropertyType.String);
         event.setProperty("environment", this.environment, aria.AWTPropertyType.String);
+        event.setProperty("clientId", message.clientId, aria.AWTPropertyType.String);
         this.logger.logEvent(event);
 
         this.context.checkpoint(rawMessage.offset);
