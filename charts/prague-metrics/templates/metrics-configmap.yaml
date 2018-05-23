@@ -13,10 +13,11 @@ data:
     {
         "logger": {
             "colorize": false,
-            "morganFormat": "short",
-            "json": false,
-            "level": "verbose",
-            "timestamp": false
+            "morganFormat": "{{ .Values.logger.morganFormat }}",
+            "json": true,
+            "level": "{{ .Values.logger.level }}",
+            "timestamp": false,
+            "label": "winston"
         },
         "system": {
             "topics": {
