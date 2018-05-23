@@ -129,7 +129,7 @@ export function runService<T extends IResources>(
     group: string,
     configFile = path.join(__dirname, "../../config/config.json")) {
 
-    const config = nconf.argv().env(<any> "__").file(configFile).use("memory");
+    const config = nconf.argv().env("__" as any).file(configFile).use("memory");
     configureLogging(config.get("logger"));
 
     // Initialize system bus connection

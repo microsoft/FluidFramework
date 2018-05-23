@@ -1,42 +1,38 @@
 import { EventEmitter } from "events";
 import * as request from "request";
 import * as url from "url";
-import { core, MergeTree } from "../client-api";
+import { MergeTree } from "../client-api";
 import { AgentLoader, IAgent } from "./agentLoader";
+import { IWork, IWorkManager } from "./definitions";
 import { IntelWork } from "./intelWork";
 import { PingWork } from "./pingWork";
 import { SnapshotWork } from "./snapshotWork";
 import { SpellcheckerWork } from "./spellcheckerWork";
 import { TranslationWork } from "./translationWork";
-import { IWork } from "./work";
-
-export interface IDocumentServiceFactory {
-    getService(tenantId: string): Promise<core.IDocumentService>;
-}
 
 // Responsible for managing the lifetime of an work.
-export class WorkManager extends EventEmitter {
+export class WorkManager extends EventEmitter implements IWorkManager {
 
     private dict = new MergeTree.TST<number>();
     private agentLoader: AgentLoader;
+    private documentMap: { [docId: string]: { [work: string]: IWork} } = {};
+    private events = new EventEmitter();
 
-    constructor(private serviceFactory: IDocumentServiceFactory,
+    constructor(private serviceFactory: any,
                 private config: any,
                 private serverUrl: string,
-                private documentMap: { [docId: string]: { [work: string]: IWork} },
                 private agentModuleLoader: (id: string) => Promise<any>,
                 private clientType: string,
-                private loadDictionary: boolean,
-                private loadAgents: boolean) {
+                private workTypeMap: { [workType: string]: boolean}) {
         super();
 
         // Load dictionary if you are allowed.
-        if (this.loadDictionary) {
+        if ("spell" in this.workTypeMap) {
             this.loadDict();
         }
 
         // Load agents if you are allowed.
-        if (this.loadAgents) {
+        if ("intel" in this.workTypeMap) {
             // Agent Loader to load runtime uploaded agents.
             const agentServer = this.clientType === "paparazzi" ? this.config.alfredUrl : this.serverUrl;
             this.agentLoader = new AgentLoader(this.agentModuleLoader, agentServer);
@@ -46,7 +42,7 @@ export class WorkManager extends EventEmitter {
                 console.log(`Loaded all uploaded agents`);
             }, (err) => {
                 console.log(`Could not load agent: ${err}`);
-                this.emit("error", err);
+                this.events.emit("error", err);
             });
         }
     }
@@ -69,6 +65,11 @@ export class WorkManager extends EventEmitter {
             console.log(`Received request to unload agent ${agentName}!`);
             this.agentLoader.unloadAgent(agentName);
         }
+    }
+
+    public on(event: string, listener: (...args: any[]) => void): this {
+        this.events.on(event, listener);
+        return this;
     }
 
     private async startDocumentWork(tenantId: string, documentId: string, token: string, workType: string) {
@@ -136,7 +137,7 @@ export class WorkManager extends EventEmitter {
 
         if (worker) {
             if (!(fullId in this.documentMap)) {
-                let emptyMap: { [work: string]: IWork } = {};
+                const emptyMap: { [work: string]: IWork } = {};
                 this.documentMap[fullId] = emptyMap;
             }
             if (!(workType in this.documentMap[fullId])) {
@@ -168,7 +169,7 @@ export class WorkManager extends EventEmitter {
             this.registerAgentsToNewDocument(fullId, workType);
         }
         worker.on("error", (error) => {
-            this.emit("error", error);
+            this.events.emit("error", error);
         });
     }
 
@@ -198,9 +199,9 @@ export class WorkManager extends EventEmitter {
 
     private loadDict() {
         this.downloadRawText("/public/literature/dictfreq.txt").then((text: string) => {
-            let splitContent = text.split("\n");
-            for (let entry of splitContent) {
-                let splitEntry = entry.split(";");
+            const splitContent = text.split("\n");
+            for (const entry of splitContent) {
+                const splitEntry = entry.split(";");
                 this.dict.put(splitEntry[0], parseInt(splitEntry[1], 10));
             }
             console.log(`Loaded dictionary`);

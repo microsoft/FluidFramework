@@ -4,7 +4,6 @@ import { HashRouter, NavLink, Route } from "react-router-dom";
 import { ITenant, IUser } from "../../definitions";
 import { About } from "./About";
 import { Analytics } from "./Analytics";
-import { Logout } from "./Logout";
 import { MenuWrap } from "./MenuWrap";
 import { Tenants } from "./Tenants";
 
@@ -80,7 +79,6 @@ export class Content extends React.Component<IContentProps, IContentState> {
             <div id="outer-container" style={{height: "100%"}}>
             {this.getMenu()}
             <main id="page-wrap">
-                <Logout name={this.props.user.displayName}/>
                 <div>
                     <Route exact
                       path={"/"}

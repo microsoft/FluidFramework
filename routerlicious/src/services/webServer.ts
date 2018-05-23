@@ -1,3 +1,4 @@
+// tslint:disable:ban-types
 import * as http from "http";
 import * as util from "util";
 import * as core from "../core";

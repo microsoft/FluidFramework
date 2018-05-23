@@ -3,5 +3,5 @@ export interface IErrorTrackingService {
     /**
      * Track error/exception using a service.
      */
-    track(func: Function);
+    track(func: () => void);
 }

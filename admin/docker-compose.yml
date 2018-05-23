@@ -1,10 +1,14 @@
 version: '3'
 services:
-    apps:
+    server:
         build: .
         ports:
             - "7000:3000"
         command: node dist/www.js
+        environment:
+            - DEBUG=admin:*
+            - NODE_ENV=development
+        restart: always
         volumes:
             - .:/usr/src/server
         networks:

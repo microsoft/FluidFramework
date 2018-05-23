@@ -32,14 +32,27 @@ export class PaparazziRunner implements utils.IRunner {
         workerConfig: any,
         tenantManager: ITenantManager) {
 
+        const runnerType = "paparazzi";
+        const workTypeMap: { [workType: string]: boolean} = {};
+        for (const workType of workerConfig.permission[runnerType]) {
+            workTypeMap[workType] = true;
+        }
+
         const factory = new DocumentServiceFactory(alfredUrl, workerConfig.blobStorageUrl);
-        this.workerService = new agent.WorkerService(
-            alfredUrl,
-            tmzUrl,
+
+        const workManager = new agent.WorkManager(
             factory,
             workerConfig,
-            "paparazzi",
-            this.initLoadModule(alfredUrl));
+            alfredUrl,
+            this.initLoadModule(alfredUrl),
+            runnerType,
+            workTypeMap);
+
+        this.workerService = new agent.WorkerService(
+            tmzUrl,
+            workerConfig,
+            workTypeMap,
+            workManager);
 
         // Report any service error.
         this.workerService.on("error", (error) => {

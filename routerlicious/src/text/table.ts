@@ -28,7 +28,7 @@ let cellIdSuffix = 0;
 let rowIdSuffix = 0;
 let columnIdSuffix = 0;
 
-function getOffset(sharedString, segment: MergeTree.Segment) {
+function getOffset(sharedString: SharedString, segment: MergeTree.Segment) {
     return sharedString.client.mergeTree.getOffset(segment, MergeTree.UniversalSequenceNumber,
         sharedString.client.getClientId());
 }
@@ -101,19 +101,20 @@ function createCellBegin(opList: MergeTree.IMergeTreeOp[], cellEndId: string,
         id: cellEndId,
     };
     let startExtraProperties: Object;
+    let pgExtraProperties: Object;
     if (extraProperties) {
         startExtraProperties = MergeTree.extend(MergeTree.createMap(), extraProperties);
+        pgExtraProperties = MergeTree.extend(MergeTree.createMap(), extraProperties);
     }
     opList.push(createRelativeMarkerOp(cellEndRelPos, cellId,
         MergeTree.ReferenceType.NestBegin, ["cell"], undefined, startExtraProperties));
     let pgOp = createRelativeMarkerOp(cellEndRelPos, cellId + "C",
-        MergeTree.ReferenceType.Tile, [], ["pg"]);
+        MergeTree.ReferenceType.Tile, [], ["pg"], pgExtraProperties);
     opList.push(pgOp);
 }
 
-function createCellRelative(opList: MergeTree.IMergeTreeOp[], idBase: string,
+function createCellRelativeWithId(opList: MergeTree.IMergeTreeOp[], cellId: string,
     relpos: MergeTree.IRelativePosition, extraProperties?: MergeTree.PropertySet) {
-    let cellId = idBase + `cell${cellIdSuffix++}`;
     let cellEndId = endPrefix + cellId;
     let endExtraProperties: Object;
     if (extraProperties) {
@@ -122,6 +123,12 @@ function createCellRelative(opList: MergeTree.IMergeTreeOp[], idBase: string,
     opList.push(createRelativeMarkerOp(relpos, cellEndId,
         MergeTree.ReferenceType.NestEnd, ["cell"], undefined, endExtraProperties));
     createCellBegin(opList, cellEndId, cellId, extraProperties);
+}
+
+function createCellRelative(opList: MergeTree.IMergeTreeOp[], idBase: string,
+    relpos: MergeTree.IRelativePosition, extraProperties?: MergeTree.PropertySet) {
+    let cellId = idBase + `cell${cellIdSuffix++}`;
+    createCellRelativeWithId(opList, cellId, relpos, extraProperties);
 }
 
 function createEmptyRowAfter(opList: MergeTree.IMergeTreeOp[], sharedString: SharedString, prevRow: Row, rowId: string) {
@@ -325,7 +332,7 @@ export function createTable(pos: number, sharedString: SharedString, nrows = 3, 
         opList.push(pgOp);
     }
     opList.push(createRelativeMarkerOp(endTablePos, tableId,
-        MergeTree.ReferenceType.NestBegin, ["table"]));
+        MergeTree.ReferenceType.NestBegin, ["table"], [], { rectTable: true }));
     let columnIds = <string[]>[];
     for (let row = 0; row < nrows; row++) {
         let rowId = idBase + `row${rowIdSuffix++}`;
@@ -358,6 +365,12 @@ export function createTable(pos: number, sharedString: SharedString, nrows = 3, 
         type: MergeTree.MergeTreeDeltaType.GROUP,
     };
     sharedString.transaction(groupOp);
+}
+
+export interface IPendingCell {
+    precedingMarker: MergeTree.Marker;
+    columnId: string;
+    row: Row;
 }
 
 export class Table {
@@ -496,6 +509,8 @@ export class Row {
     public endPos: number;
     public minContentWidth = 0;
     public cells = <Cell[]>[];
+    public pendingCells = <IPendingCell[]>[];
+
     constructor(public rowMarker: IRowMarker, public endRowMarker: IRowMarker) {
 
     }
@@ -619,15 +634,6 @@ function parseCell(cellStartPos: number, sharedString: SharedString, fontInfo?: 
 
 function parseRow(rowStartPos: number, sharedString: SharedString, table: Table,
     fontInfo?: Paragraph.IFontInfo) {
-    function columnCompare(a: Cell, b: Cell) {
-        let cma = table.idToColumn.get(a.columnId);
-        let cmb = table.idToColumn.get(b.columnId);
-        if (cma && cmb) {
-            return cma.indexInTable - cmb.indexInTable;
-        } else {
-            return 1;
-        }
-    }
     let mergeTree = sharedString.client.mergeTree;
     let rowMarkerSegOff = mergeTree.getContainingSegment(rowStartPos, MergeTree.UniversalSequenceNumber,
         sharedString.client.getClientId());
@@ -640,31 +646,41 @@ function parseRow(rowStartPos: number, sharedString: SharedString, table: Table,
         return undefined;
     }
     let endRowPos = getOffset(sharedString, endRowMarker);
-    rowMarker.row = new Row(rowMarker, endRowMarker);
+    let row = new Row(rowMarker, endRowMarker);
+    rowMarker.row = row;
     let nextPos = rowStartPos + rowMarker.cachedLength;
     let rowColumns = MergeTree.createMap<Cell>();
     while (nextPos < endRowPos) {
         let cellMarker = parseCell(nextPos, sharedString, fontInfo);
         if (!cellMarker) {
+            let tableMarkerPos = getOffset(sharedString, table.tableMarker);
+            succinctPrintTable(table.tableMarker, tableMarkerPos, sharedString);
             return undefined;
         }
         // TODO: check for column id not in grid
         if (!cellIsMoribund(cellMarker)) {
             let cellColumnId = cellMarker.properties["columnId"];
-            if (cellColumnId && rowColumns[cellColumnId]) {
-                let headCell = rowColumns[cellColumnId];
-                headCell.addAuxMarker(cellMarker);
-            } else {
-                rowMarker.row.minContentWidth += cellMarker.cell.minContentWidth;
-                rowMarker.row.cells.push(cellMarker.cell);
-                rowColumns[cellColumnId] = cellMarker.cell;
-            }
+            rowMarker.row.minContentWidth += cellMarker.cell.minContentWidth;
+            rowMarker.row.cells.push(cellMarker.cell);
+            rowColumns[cellColumnId] = cellMarker.cell;
         }
         let endcellPos = getOffset(sharedString, cellMarker.cell.endMarker);
         nextPos = endcellPos + cellMarker.cell.endMarker.cachedLength;
     }
-    // TODO: do this only if table is a grid
-    rowMarker.row.cells.sort(columnCompare);
+    if (table.tableMarker.hasProperty("rectTable")) {
+        let precedingMarker = rowMarker;
+        for (let columnMarker of table.gridColumns) {
+            if (!rowColumns[columnMarker.columnId]) {
+                row.pendingCells.push(<IPendingCell>{
+                    columnId: columnMarker.columnId,
+                    precedingMarker,
+                    row,
+                });
+            } else {
+                precedingMarker = rowColumns[columnMarker.columnId].endMarker;
+            }
+        }
+    }
     return rowMarker;
 }
 
@@ -759,6 +775,21 @@ export function succinctPrintTable(tableMarker: ITableMarker, tableMarkerPos: nu
     console.log(lineBuf);
 }
 
+export function insertCellMergeOverlap(sharedString: SharedString, prevMarker: MergeTree.Marker, columnId: string, rowId: string) {
+    let extraProperties = {
+        columnId,
+        [MergeTree.reservedMarkerOverlapIdCheck]: true,
+    };
+    let cellId = `${rowId}X${columnId}`;
+    let opList = <MergeTree.IMergeTreeOp[]>[];
+    createCellRelativeWithId(opList, cellId, { id: prevMarker.getId() }, extraProperties);
+    let groupOp = <MergeTree.IMergeTreeGroupMsg>{
+        ops: opList,
+        type: MergeTree.MergeTreeDeltaType.GROUP,
+    };
+    sharedString.transaction(groupOp);
+}
+
 export function parseTable(
     tableMarker: ITableMarker, tableMarkerPos: number, sharedString: SharedString, fontInfo?: Paragraph.IFontInfo) {
 
@@ -778,6 +809,16 @@ export function parseTable(
             console.log("PARSE ERROR!");
             succinctPrintTable(tableMarker, tableMarkerPos, sharedString);
             return undefined;
+        }
+        let pendingCells = rowMarker.row.pendingCells;
+        rowMarker.row.pendingCells=[];
+        while (pendingCells.length > 0) {
+            for (let pendingCell of rowMarker.row.pendingCells) {
+                insertCellMergeOverlap(sharedString, pendingCell.precedingMarker, pendingCell.columnId, rowMarker.getId())
+            }
+            rowMarker = parseRow(nextPos, sharedString, table, fontInfo);
+            pendingCells = rowMarker.row.pendingCells;
+            endTablePos = getOffset(sharedString, endTableMarker);
         }
         let rowView = rowMarker.row;
         rowView.table = table;

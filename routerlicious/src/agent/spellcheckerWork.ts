@@ -1,9 +1,9 @@
 import { core, MergeTree } from "../client-api";
 import * as intelligence from "../intelligence";
-import { CollaboritiveStringExtension, SharedString } from "../shared-string";
+import { CollaborativeStringExtension, SharedString } from "../shared-string";
 import { BaseWork} from "./baseWork";
+import { IWork} from "./definitions";
 import { Spellcheker } from "./spellchecker";
-import { IWork} from "./work";
 
 export class SpellcheckerWork extends BaseWork implements IWork {
 
@@ -36,7 +36,7 @@ export class SpellcheckerWork extends BaseWork implements IWork {
     }
 
     private spellCheck(object: core.ICollaborativeObject) {
-        if (object.type === CollaboritiveStringExtension.Type && !this.spellcheckInvoked) {
+        if (object.type === CollaborativeStringExtension.Type && !this.spellcheckInvoked) {
             this.spellcheckInvoked = true;
             const sharedString = object as SharedString;
             // Enable spell checking for the document

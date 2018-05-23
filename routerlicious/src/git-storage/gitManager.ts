@@ -40,7 +40,7 @@ export class GitManager {
         const header = await this.historian.getHeader(sha);
 
         // Cache blobs that were sent in the header
-        for (let blob of header.blobs) {
+        for (const blob of header.blobs) {
             this.blobCache.set(blob.sha, blob);
         }
 

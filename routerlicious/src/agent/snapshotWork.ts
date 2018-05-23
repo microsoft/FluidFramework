@@ -1,7 +1,7 @@
 import { core } from "../client-api";
 import { BaseWork} from "./baseWork";
+import { IWork} from "./definitions";
 import { Serializer } from "./serializer";
-import { IWork} from "./work";
 
 // Consider idle 5s of no activity. And snapshot if a minute has gone by with no snapshot.
 const IdleDetectionTime = 5000;

@@ -41,8 +41,8 @@ export function create(config: Provider, tenantManager: ITenantManager,
                         partials: defaultPartials,
                         speed,
                         template,
-                        token,
                         title: "Scribe",
+                        token,
                     });
             },
             (error) => {

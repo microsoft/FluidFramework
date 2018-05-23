@@ -11,7 +11,7 @@ export interface IInkSnapshot {
     minimumSequenceNumber: number;
     sequenceNumber: number;
     snapshot: ISnapshot;
-};
+}
 
 const snapshotFileName = "header";
 

@@ -105,9 +105,7 @@ export abstract class CollaborativeObject extends EventEmitter implements IColla
     public isLocal(): boolean {
         return !this.services;
     }
-
-    public on(event: "pre-op", listener: (op: ISequencedObjectMessage, local: boolean) => void): this;
-    public on(event: "op", listener: (op: ISequencedObjectMessage, local: boolean) => void): this;
+    public on(event: "pre-op" | "op", listener: (op: ISequencedObjectMessage, local: boolean) => void): this;
     public on(event: string | symbol, listener: (...args: any[]) => void): this;
     public on(event: string | symbol, listener: (...args: any[]) => void): this {
         return super.on(event, listener);

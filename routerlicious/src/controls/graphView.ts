@@ -21,9 +21,9 @@ export class Graph extends ui.Component {
     constructor(element: HTMLDivElement, doc: api.Document, public graphMap: IMap) {
         super(element);
 
-        element.appendChild(document.getElementById("node-form")) as HTMLFormElement;
-        let addNodeButton = element.getElementsByClassName("add-node-button")[0] as HTMLButtonElement;
-        let inputNode = element.getElementsByClassName("node-id-input")[0] as HTMLInputElement;
+        element.appendChild(document.getElementById("node-form"));
+        const addNodeButton = element.getElementsByClassName("add-node-button")[0] as HTMLButtonElement;
+        const inputNode = element.getElementsByClassName("node-id-input")[0] as HTMLInputElement;
         addNodeButton.onclick = () => this.addVertexTo(Number(inputNode.value));
 
         this.svg = d3.select(element).append("svg");
@@ -35,15 +35,15 @@ export class Graph extends ui.Component {
     }
 
     public async addVertexTo(nodeId1: number) {
-        let cur = this.graph.getVertices().entries().length;
+        const cur = this.graph.getVertices().entries().length;
 
         this.graph.addVertex(cur, "node-" + cur);
         this.graph.addEdge(nodeId1, cur, "1-" + cur);
     }
 
     protected resizeCore(bounds: ui.Rectangle) {
-        let width = bounds.width;
-        let height = bounds.height;
+        const width = bounds.width;
+        const height = bounds.height;
 
         this.svg
             .attr("width", width)
@@ -63,10 +63,10 @@ export class Graph extends ui.Component {
             this.links = [];
         }
 
-        for (let edge of this.graph.getEdges().entries()) {
+        for (const edge of this.graph.getEdges().entries()) {
             this.links.push({source: edge.nodeId1, target: edge.nodeId2, weight: 1});
         }
-        for (let node of this.graph.getVertices().entries()) {
+        for (const node of this.graph.getVertices().entries()) {
             this.nodes.push(node);
         }
 
@@ -78,10 +78,10 @@ export class Graph extends ui.Component {
 
         this.graphMap.on("setElementAdded", async (update) => {
             if ((update.value.label as string).indexOf("node") >= 0) {
-                let vertex = update.value as Vertex;
+                const vertex = update.value as Vertex;
                 this.nodes.push(this.toNode(vertex));
             } else {
-                let edge = update.value as Edge;
+                const edge = update.value as Edge;
                 this.links.push(this.toEdge(edge));
             }
 
@@ -98,7 +98,7 @@ export class Graph extends ui.Component {
         // Lets try to bind to the elements on the SVG
         this.svg.selectAll(".link")
             .data(this.links,
-                (curLink: Link<any>) => {return curLink.source.id + "-" + curLink.target.id; } )
+                (curLink: Link<any>) => curLink.source.id + "-" + curLink.target.id )
             .enter().append("line")
             .attr("class", "link")
             .attr("x1", (curLink: Link<any>) => {
@@ -124,13 +124,13 @@ export class Graph extends ui.Component {
 
     private onTick() {
         this.svg.selectAll(".node")
-            .attr("cx", (curNode: Node) => {return curNode.x; })
-            .attr("cy", (curNode: Node) => {return curNode.y; });
+            .attr("cx", (curNode: Node) => curNode.x)
+            .attr("cy", (curNode: Node) => curNode.y);
         this.svg.selectAll(".link")
-            .attr("x1", (curLink: Link<any>) => {return curLink.source.x; })
-            .attr("y1", (curLink: Link<any>) => {return curLink.source.y; })
-            .attr("x2", (curLink: Link<any>) => {return curLink.target.x; })
-            .attr("y2", (curLink: Link<any>) => {return curLink.target.y; })
+            .attr("x1", (curLink: Link<any>) => curLink.source.x)
+            .attr("y1", (curLink: Link<any>) => curLink.source.y)
+            .attr("x2", (curLink: Link<any>) => curLink.target.x)
+            .attr("y2", (curLink: Link<any>) => curLink.target.y)
             .attr("stroke-width", 1)
             .attr("stroke", "black");
     }
@@ -154,7 +154,7 @@ export class Graph extends ui.Component {
     }
 
     private toEdge(edge: Edge): Link<any> {
-        let link = {
+        const link = {
             length: 1,
             source: edge.nodeId1,
             target: edge.nodeId2,
@@ -165,7 +165,7 @@ export class Graph extends ui.Component {
     }
 
     private toNode(vertex: Vertex): Node {
-        let inputNode = {
+        const inputNode = {
             index: vertex.id,
         };
         return inputNode as Node;

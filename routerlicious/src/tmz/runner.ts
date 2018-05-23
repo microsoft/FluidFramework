@@ -45,7 +45,7 @@ export class TmzRunner implements utils.IRunner {
                 const moduleUrl = url.resolve(this.alfredUrl, `/agent/js/${agent.name}`);
                 request.post(moduleUrl);
             } else if (agent.type === "client") {
-                winston.info(`Received a new webpacked scrtipt: ${agent.name}`);
+                winston.info(`Received a new webpacked script: ${agent.name}`);
                 this.foreman.broadcastNewAgentModule(agent.name, agent.type, "add");
             }
         });
@@ -67,14 +67,14 @@ export class TmzRunner implements utils.IRunner {
             socket.on("workerObject", async (message: socketStorage.IWorker, response) => {
                 if (!(this.onlyServer && message.type === "Client")) {
                     const newWorker: messages.IWorkerDetail = {
-                        worker: message,
                         socket,
+                        worker: message,
                     };
                     winston.info(`New worker joined. ${socket.id} : ${message.clientId}`);
                     this.foreman.getManager().addWorker(newWorker);
                     // Process all pending tasks once the first worker joins.
                     if (!this.workerJoined) {
-                        let workIds = Array.from(this.pendingWork).map((work) => JSON.parse(work) as IDocumentHandle);
+                        const workIds = Array.from(this.pendingWork).map((work) => JSON.parse(work) as IDocumentHandle);
                         await this.processDocuments(workIds);
                         this.pendingWork.clear();
                         this.workerJoined = true;
@@ -88,8 +88,8 @@ export class TmzRunner implements utils.IRunner {
             // On a heartbeat, refresh worker state.
             socket.on("heartbeatObject", async (message: socketStorage.IWorker, response) => {
                 const worker: messages.IWorkerDetail = {
-                    worker: message,
                     socket,
+                    worker: message,
                 };
                 this.foreman.getManager().refreshWorker(worker);
                 response(null, "Heartbeat");
@@ -147,16 +147,16 @@ export class TmzRunner implements utils.IRunner {
             return `${tenantId}/${documentId}`;
         }
 
-        let workToDo: messages.IDocumentWork[] = [];
-        for (let docId of ids) {
+        const workToDo: messages.IDocumentWork[] = [];
+        for (const docId of ids) {
             const fullDocId = fullId(docId.tenantId, docId.documentId);
             if (fullDocId in this.pendingAssignedMap) {
                 continue;
             }
             this.pendingAssignedMap[fullDocId] = true;
             // tslint:disable-next-line:forin
-            for (let task in this.tasks) {
-                let work: messages.IWork = {
+            for (const task in this.tasks) {
+                const work: messages.IWork = {
                     workType: task,
                     workerType: this.tasks[task],
                 };

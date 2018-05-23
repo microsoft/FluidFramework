@@ -1,6 +1,6 @@
+import * as utils from "@prague/routerlicious/dist/utils";
 import * as moniker from "moniker";
 import * as request from "request-promise-native";
-import * as core from "../db";
 import { ITenant, ITenantInput, ITenantStorage } from "../definitions";
 import { ITenantConfig, RiddlerManager} from "./riddlerManager";
 
@@ -47,7 +47,7 @@ export class TenantManager {
     private riddlerManager: RiddlerManager;
 
     constructor(
-        private mongoManager: core.MongoManager,
+        private mongoManager: utils.MongoManager,
         private userOrgCollection: string,
         private orgTenantCollection: string,
         private tenantCollection: string,

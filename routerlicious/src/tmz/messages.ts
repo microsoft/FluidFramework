@@ -1,3 +1,4 @@
+// tslint:disable:ban-types
 import * as socketStorage from "../socket-storage";
 import { StateManager} from "./stateManager";
 
@@ -95,8 +96,7 @@ export interface IAgentUploader {
     /**
      * Notifies on the event of an agent added/deleted.
      */
-    on(event: "agentAdded", listener: (message: IAgent) => void): this;
-    on(event: "agentRemoved", listener: (message: IAgent) => void): this;
+    on(event: "agentAdded" | "agentRemoved", listener: (message: IAgent) => void): this;
 
     /**
      * Notifies on error.

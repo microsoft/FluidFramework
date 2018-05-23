@@ -222,7 +222,7 @@ interface IoTarget {
 interface IMongoTarget {
     documentId: string;
     tenantId: string;
-};
+}
 
 export class ScriptoriumLambda implements IPartitionLambda {
     // We maintain three batches of work - one for MongoDB and the other two for Socket.IO.

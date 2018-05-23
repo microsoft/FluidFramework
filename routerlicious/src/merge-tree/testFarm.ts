@@ -1146,7 +1146,7 @@ export function TestPack(verbose = true) {
         let cli = new MergeTree.Client("on the mat.");
         cli.startCollaboration("Fred1");
         for (let cname of clientNames) {
-            cli.addLongClientId(cname, null);
+            cli.addLongClientId(cname);
         }
         cli.insertTextRemote("that ", 0, undefined, 1, 0, 1);
         if (verbose) {
@@ -1178,20 +1178,42 @@ export function TestPack(verbose = true) {
         }
         cli.insertMarkerRemote({ refType: ops.ReferenceType.Tile }, 0,
             { [MergeTree.reservedTileLabelsKey]: ["peach"] },
-            5, 0, 2)
+            5, 0, 2);
         cli.insertTextRemote("very ", 6, undefined, 4, 2, 2);
+        cli.insertMarkerLocal(10, ops.ReferenceType.NestBegin,
+            {
+                [MergeTree.reservedMarkerIdKey]: "overlapper",
+                [MergeTree.reservedMarkerOverlapIdCheck]: true,
+            }
+        );
+        console.log(cli.mergeTree.toString());
+        cli.insertMarkerRemote({ refType: ops.ReferenceType.NestBegin }, 10,
+            {
+                [MergeTree.reservedMarkerIdKey]: "overlapper",
+                [MergeTree.reservedMarkerOverlapIdCheck]: true,
+            },
+            7, 6, 2);
+        cli.insertMarkerRemote({ refType: ops.ReferenceType.NestBegin }, 10,
+            {
+                [MergeTree.reservedMarkerIdKey]: "overlapper",
+                [MergeTree.reservedMarkerOverlapIdCheck]: true,
+            },
+            8, 6, 3);
+        cli.ackPendingSegment(9);
         if (verbose) {
             console.log(cli.mergeTree.toString());
             for (let clientId = 0; clientId < 4; clientId++) {
-                for (let refSeq = 0; refSeq < 7; refSeq++) {
+                for (let refSeq = 0; refSeq < 10; refSeq++) {
                     console.log(cli.relText(clientId, refSeq));
                 }
             }
         }
-        cli.updateMinSeq(6); cli = new MergeTree.Client(" old sock!");
+        cli.updateMinSeq(9);
+
+        cli = new MergeTree.Client(" old sock!");
         cli.startCollaboration("Fred2");
         for (let cname of clientNames) {
-            cli.addLongClientId(cname, null);
+            cli.addLongClientId(cname);
         }
         cli.insertTextRemote("abcde", 0, undefined, 1, 0, 2);
         let segoff = cli.mergeTree.getContainingSegment(0,
@@ -1227,7 +1249,7 @@ export function TestPack(verbose = true) {
         cli = new MergeTree.Client("abcdefgh");
         cli.startCollaboration("Fred3");
         for (let cname of clientNames) {
-            cli.addLongClientId(cname, null);
+            cli.addLongClientId(cname);
         }
         cli.removeSegmentRemote(1, 3, 1, 0, 3);
         if (verbose) {

@@ -47,7 +47,7 @@ export class RiddlerRunner implements utils.IRunner {
             throw error;
         }
 
-        let bind = typeof this.port === "string"
+        const bind = typeof this.port === "string"
             ? "Pipe " + this.port
             : "Port " + this.port;
 
@@ -68,8 +68,8 @@ export class RiddlerRunner implements utils.IRunner {
      * Event listener for HTTP server "listening" event.
      */
     private onListening() {
-        let addr = this.server.address();
-        let bind = typeof addr === "string"
+        const addr = this.server.address();
+        const bind = typeof addr === "string"
             ? "pipe " + addr
             : "port " + addr.port;
         winston.info("Listening on " + bind);

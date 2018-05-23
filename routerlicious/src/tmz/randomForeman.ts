@@ -16,7 +16,7 @@ export class RandomForeman extends BaseForeman implements IForeman {
     public assignWork(workToDo: IDocumentWork[]): Array<Promise<void>> {
         const workPromises = [];
         let workers: any;
-        for (let work of workToDo) {
+        for (const work of workToDo) {
             winston.info(`Requesting worker type ${work.work.workerType} for document id ${work.documentId}`);
             switch (work.work.workerType) {
                 case "server":
@@ -45,7 +45,7 @@ export class RandomForeman extends BaseForeman implements IForeman {
     private async assignOne(work: IDocumentWork, workers: IWorkerDetail[]): Promise<void> {
         const candidates = [];
         // Check how many workers are on board and make a candiate array.
-        for (let worker of workers) {
+        for (const worker of workers) {
             worker.socket.emit(
                 "ReadyObject",
                 worker.worker.clientId,

@@ -1,3 +1,4 @@
+// tslint:disable:ban-types
 import { api, MergeTree, types } from "../client-api";
 import { SharedString } from "../shared-string";
 import * as ui from "../ui";
@@ -16,7 +17,7 @@ interface IOverlayLayerStatus {
     layer: Layer;
     active: boolean;
     cursorOffset: ui.IPoint;
-};
+}
 
 export class FlowContainer extends ui.Component {
     public status: Status;
@@ -36,7 +37,7 @@ export class FlowContainer extends ui.Component {
         private overlayMap: types.IMap,
         private image: Image,
         ink: types.IStream,
-        private options: Object = undefined) {
+        private options?: Object) {
 
         super(element);
 
@@ -183,7 +184,7 @@ export class FlowContainer extends ui.Component {
         this.dockPanel.resize(bounds);
 
         if (this.image) {
-            let overlayRect = bounds.inner4(0.7, 0.05, 0.2, 0.1);
+            const overlayRect = bounds.inner4(0.7, 0.05, 0.2, 0.1);
             overlayRect.conformElement(this.image.element);
             this.image.resize(overlayRect);
         }
@@ -212,8 +213,8 @@ export class FlowContainer extends ui.Component {
             this.overlayCanvas.addLayer(layer);
             this.activeLayers[id] = {
                 active: true,
-                layer,
                 cursorOffset: { x: 0, y: 0 },
+                layer,
             };
         }
 

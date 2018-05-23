@@ -1,6 +1,8 @@
+// tslint:disable:ban-types
+
 // Utility to fetch elements by ID
 export function id(elementId: string): HTMLElement {
-  return <HTMLElement> (document.getElementById(elementId));
+  return (document.getElementById(elementId)) as HTMLElement;
 }
 
 export function makeElementVisible(elem, visible) {
@@ -51,7 +53,7 @@ export function toColorString(color: IColor) {
 // Helper function to support HTML hexColor Strings
 export function hexStrToRGBA(hexStr: string): IColor {
   // RGBA color object
-  let colorObject: IColor = { r: 1, g: 1, b: 1, a: 1 };
+  const colorObject: IColor = { r: 1, g: 1, b: 1, a: 1 };
 
   // remove hash if it exists
   hexStr = hexStr.replace("#", "");
@@ -70,9 +72,9 @@ export function hexStrToRGBA(hexStr: string): IColor {
     colorObject.a = parseInt(hexStr.slice(6, 8), 16) / 255;
   } else if (hexStr.length === 3) {
     // Shorthand hex color
-    let rVal = hexStr.slice(0, 1);
-    let gVal = hexStr.slice(1, 2);
-    let bVal = hexStr.slice(2, 3);
+    const rVal = hexStr.slice(0, 1);
+    const gVal = hexStr.slice(1, 2);
+    const bVal = hexStr.slice(2, 3);
     colorObject.r = parseInt(rVal + rVal, 16) / 255;
     colorObject.g = parseInt(gVal + gVal, 16) / 255;
     colorObject.b = parseInt(bVal + bVal, 16) / 255;
@@ -108,7 +110,7 @@ export function toColorStruct(color: string): IColor {
 // URL/Path parsing stuff
 // ----------------------------------------------------------------------
 export function breakFilePath(path) {
-  let m = path.match(/(.*)[\/\\]([^\/\\]+)\.(\w+)/);
+  const m = path.match(/(.*)[\/\\]([^\/\\]+)\.(\w+)/);
   if (m) {
     return { source: m[0], path: m[1], filename: m[2], ext: m[3] };
   } else {
@@ -117,18 +119,18 @@ export function breakFilePath(path) {
 }
 
 export function parseURL(url) {
-  let a = document.createElement("a");
+  const a = document.createElement("a");
   a.href = url;
-  let parts = breakFilePath(a.pathname);
+  const parts = breakFilePath(a.pathname);
   return {
     ext: parts.ext,
     file: parts.filename,
     hash: a.hash.replace("#", ""),
     host: a.hostname,
     params: () => {
-      let ret = {};
-      let seg = a.search.replace(/^\?/, "").split("&");
-      let len = seg.length;
+      const ret = {};
+      const seg = a.search.replace(/^\?/, "").split("&");
+      const len = seg.length;
       let i = 0;
       let s;
       for (; i < len; i++) {
@@ -165,7 +167,7 @@ export function throttle(type: string, name: string, obj?: any) {
             running = false;
         });
       });
-};
+}
 
 /**
  * Helper class that throttles calling the provided callback based on

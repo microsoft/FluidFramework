@@ -12,55 +12,49 @@ data:
   config.json: |
     {
         "app": {
-            "logger": {
-                "colorize": true,
-                "morganFormat": "dev",
-                "json": false,
-                "level": "info",
-                "timestamp": true,
-                "label": "winston"
-            },
-            "mongo": {
-                "endpoint": "{{ .Values.endpoints.mongodb }}",
-                "collectionNames": {
-                    "tenants": "tenantCollection",
-                    "users": "userCollection",
-                    "orgs": "orgCollection"
-                }
-            },
             "riddlerUrl": "{{ .Values.endpoints.riddlerUrl }}",
             "gitUrl": "{{ .Values.endpoints.gitUrl }}",
-            "cobaltUrl": "{{ .Values.endpoints.cobaltUrl }}",
-            "port": 3000
+            "cobaltUrl": "{{ .Values.endpoints.cobaltUrl }}"
         },
-        "aad": {
-            "creds": {
-                "identityMetadata": "https://login.microsoftonline.com/microsoft.onmicrosoft.com/.well-known/openid-configuration",
-                "clientID": "3d642166-9884-4463-8248-78961b8c1300",
-                "responseType": "code id_token",
-                "responseMode": "form_post",
-                "redirectUrl": "{{ .Values.auth.redirectUrl }}",
-                "allowHttpForRedirectUrl": true,
-                "clientSecret": "IefegJIsumWtD1Of/9AIUWvm6ryR624vgMtKRmcNEsQ=",
-                "validateIssuer": true,
-                "isB2C": false,
-                "issuer": null,
-                "passReqToCallback": false,
-                "useCookieInsteadOfSession": true,
-                "cookieEncryptionKeys": [
-                  { "key": "12345678901234567890123456789012", "iv": "123456789012" },
-                  { "key": "abcdefghijklmnopqrstuvwxyzabcdef", "iv": "abcdefghijkl" }
-                ],
-                "scope": ["email", "profile"],
-                "loggingLevel": "info",
-                "nonceLifetime": null,
-                "nonceMaxAmount": 5,
-                "clockSkew": null
-            },
-            "resourceURL": "https://graph.windows.net",
-            "destroySessionUrl": "{{ .Values.auth.destroySessionUrl }}",
-            "useMongoDBSessionStore": false,
-            "databaseUri": null,
-            "mongoDBSessionMaxAge": 14400
+        "login": {
+            "microsoft": {
+                "clientId": "3d642166-9884-4463-8248-78961b8c1300",
+                "secret": "IefegJIsumWtD1Of/9AIUWvm6ryR624vgMtKRmcNEsQ="
+            }
+        },
+        "logger": {
+            "colorize": true,
+            "morganFormat": "dev",
+            "json": false,
+            "level": "info",
+            "timestamp": true,
+            "label": "winston"
+        },
+        "mongo": {
+            "endpoint": "{{ .Values.endpoints.mongodb }}",
+            "collectionNames": {
+                "tenants": "tenantCollection",
+                "users": "userCollection",
+                "orgs": "orgCollection"
+            }
+        },
+        "kafka": {
+            "lib": {
+                "name": "kafka-node",
+                "endpoint": "{{ .Values.endpoints.kafka }}"
+            }
+        },
+        "system": {
+            "topics": {
+                "send": "deltas"
+            }
+        },
+        "error": {
+            "track": true,
+            "endpoint" : "https://7235bc222189462ca65fa1a38591f96b:74acc3b4610f47a38a50d1bcbfcd6655@sentry.wu2.prague.office-int.com/2"
+        },
+        "redis": {
+            "host": "{{ .Values.endpoints.redis }}",
+            "port": 6379
         }
     }

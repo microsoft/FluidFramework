@@ -138,7 +138,7 @@ export class FlexView extends ui.Component {
 
         // Pull in all the objects on the canvas
         // tslint:disable-next-line:forin
-        for (let componentName of view.keys()) {
+        for (const componentName of view.keys()) {
             const component = view.get(componentName) as types.IMap;
             this.addComponent(component);
         }

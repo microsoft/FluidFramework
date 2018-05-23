@@ -1,5 +1,7 @@
 import { api, core } from "../client-api";
-import { IDocumentServiceFactory, WorkerService } from "./workerService";
+import { IDocumentServiceFactory } from "./definitions";
+import { WorkerService } from "./workerService";
+import { WorkManager } from "./workManager";
 
 class DefaultDocumentServiceFactory implements IDocumentServiceFactory {
     public getService(tenantId: string): Promise<core.IDocumentService> {
@@ -7,21 +9,32 @@ class DefaultDocumentServiceFactory implements IDocumentServiceFactory {
     }
 }
 
-export function registerWorker(config: any, clientType: string) {
+export function registerWorker(config: any, runnerType: string) {
     if (!config.onlyServer) {
         const workerUrl =  config.url;
         const serverUrl = config.serverUrl;
 
         // Bootstrap service and connect. On failure, try to connect again.
         console.log(`Registering as worker`);
-        const workerService = new WorkerService(
-            serverUrl,
-            workerUrl,
+
+        const workTypeMap: { [workType: string]: boolean} = {};
+        for (const workType of config.permission[runnerType]) {
+            workTypeMap[workType] = true;
+        }
+
+        const workManager = new WorkManager(
             new DefaultDocumentServiceFactory(),
             config,
-            clientType,
+            serverUrl,
             initLoadModule(config),
-        );
+            runnerType,
+            workTypeMap);
+
+        const workerService = new WorkerService(
+            workerUrl,
+            config,
+            workTypeMap,
+            workManager);
 
         // Report any service error.
         workerService.on("error", (error) => {

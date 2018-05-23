@@ -1,11 +1,6 @@
 import { EventEmitter } from "events";
 import { core, socketIoClient as io, socketStorage, utils } from "../client-api";
-import { IWork } from "./work";
-import { WorkManager } from "./workManager";
-
-export interface IDocumentServiceFactory {
-    getService(tenantId: string): Promise<core.IDocumentService>;
-}
+import { IWorkManager } from "./definitions";
 
 /**
  * The WorkerService manages the Socket.IO connection and work sent to it. On any error,
@@ -13,31 +8,16 @@ export interface IDocumentServiceFactory {
  */
 export class WorkerService extends EventEmitter implements core.IWorkerService {
     private socket;
-    private documentMap: { [docId: string]: { [work: string]: IWork} } = {};
-    private workTypeMap: { [workType: string]: boolean} = {};
-    private workManager: WorkManager;
-    private loadAgents: boolean;
 
     constructor(
-        private serverUrl: string,
         private workerUrl: string,
-        private serviceFactory: IDocumentServiceFactory,
         private config: any,
-        private clientType: string,
-        private agentModuleLoader: (id: string) => Promise<any>) {
+        private workTypeMap: { [workType: string]: boolean},
+        private workManager: IWorkManager) {
         super();
 
         this.socket = io(this.workerUrl, { transports: ["websocket"] });
-        for (let workType of config.permission[this.clientType]) {
-            this.workTypeMap[workType] = true;
-        }
-        // Load dictionary and agents if allowed.
-        const loadDictionary = ("spell" in this.workTypeMap);
-        this.loadAgents = ("intel" in this.workTypeMap);
 
-        // Set up work manager.
-        this.workManager = new WorkManager(this.serviceFactory, this.config, this.serverUrl, this.documentMap,
-                                           this.agentModuleLoader, this.clientType, loadDictionary, this.loadAgents);
         this.workManager.on("error", (error) => {
             this.emit("error", error);
         });
@@ -68,7 +48,7 @@ export class WorkerService extends EventEmitter implements core.IWorkerService {
                 } else if (ack === "Acked") {
                     // Agent loading request.
                     this.socket.on("AgentObject", (cId: string, agentName: string, action: string, response) => {
-                        if (this.loadAgents) {
+                        if ("intel" in this.workTypeMap) {
                             this.workManager.processAgentWork(agentName, action).catch((err) => {
                                 this.emit("error", err);
                             });

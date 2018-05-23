@@ -206,8 +206,10 @@ export interface BlockUpdateActions {
 }
 
 export interface InsertContext {
+    candidateSegment?: Segment;
     prepareEvents?: boolean;
-    leaf: (segment: Segment, pos: number) => SegmentChanges;
+    structureChange?: boolean;
+    leaf: (segment: Segment, pos: number, ic: InsertContext) => SegmentChanges;
     continuePredicate?: (continueFromBlock: IMergeBlock) => boolean;
 }
 
@@ -1150,7 +1152,7 @@ export class PartialSequenceLengths {
                 let aPartial = aList[i];
                 let bPartial = bList[i];
                 if ((aPartial.seq != bPartial.seq) || (aPartial.clientId != bPartial.clientId) ||
-                    (aPartial.seglen != bPartial.seglen) || (aPartial.len != bPartial.len) || 
+                    (aPartial.seglen != bPartial.seglen) || (aPartial.len != bPartial.len) ||
                     (aPartial.overlapRemoveClients && (!bPartial.overlapRemoveClients)) ||
                     (aPartial.overlapInsertClients && (!bPartial.overlapInsertClients))) {
                     return false;
@@ -1427,7 +1429,7 @@ export class PartialSequenceLengths {
             return bst;
         }
 
-        function accumulateRemoveClientOverlap(partialLength: PartialSequenceLength, 
+        function accumulateRemoveClientOverlap(partialLength: PartialSequenceLength,
             overlapRemoveClientIds: number[], seglen: number) {
             if (partialLength.overlapRemoveClients) {
                 for (let clientId of overlapRemoveClientIds) {
@@ -1445,7 +1447,7 @@ export class PartialSequenceLengths {
             }
         }
 
-        function accumulateInsertClientOverlap(partialLength: PartialSequenceLength, 
+        function accumulateInsertClientOverlap(partialLength: PartialSequenceLength,
             overlapInsertClientIds: number[], seglen: number) {
             if (partialLength.overlapInsertClients) {
                 for (let clientId of overlapInsertClientIds) {
@@ -1498,7 +1500,7 @@ export class PartialSequenceLengths {
                     accumulateRemoveClientOverlap(seqPartials[indexFirstGTE], removeClientOverlap, segmentLen);
                 } else if (insertClientOverlap) {
                     accumulateInsertClientOverlap(seqPartials[indexFirstGTE], insertClientOverlap, segmentLen);
-                } 
+                }
             }
             else {
                 let pLen: PartialSequenceLength;
@@ -1866,6 +1868,7 @@ export class Client {
     accumWindow = 0;
     accumOps = 0;
     verboseOps = false;
+    noVerboseRemoteAnnote = false;
     measureOps = false;
     q: Collections.List<API.ISequencedObjectMessage>;
     checkQ: Collections.List<string>;
@@ -2571,8 +2574,8 @@ export class Client {
             this.accumOps++;
             this.accumWindow += (this.getCurrentSeq() - this.mergeTree.getCollabWindow().minSeq);
         }
-        if (this.verboseOps) {
-            console.log(`@cli ${this.getLongClientId(this.mergeTree.getCollabWindow().clientId)} seq ${seq} annotate remote start ${start} end ${end} refseq ${refSeq} cli ${clientId}`);
+        if (this.verboseOps && (!this.noVerboseRemoteAnnote)) {
+            console.log(`@cli ${this.getLongClientId(this.mergeTree.getCollabWindow().clientId)} seq ${seq} annotate remote start ${start} end ${end} refseq ${refSeq} cli ${clientId} props ${props}`);
         }
     }
 
@@ -2664,7 +2667,7 @@ export class Client {
         }
     }
 
-    insertMarkerLocal(pos: number, behaviors: ops.ReferenceType, props?: Properties.PropertySet, pairId?: number) {
+    insertMarkerLocal(pos: number, behaviors: ops.ReferenceType, props?: Properties.PropertySet) {
         let segWindow = this.mergeTree.getCollabWindow();
         let clientId = segWindow.clientId;
         let refSeq = segWindow.currentSeq;
@@ -2675,24 +2678,24 @@ export class Client {
             clockStart = clock();
         }
 
-        this.mergeTree.insertMarker(pos, refSeq, clientId, seq, behaviors, props);
+        let marker = this.mergeTree.insertMarker(pos, refSeq, clientId, seq, behaviors, props);
 
         if (this.measureOps) {
             this.localTime += elapsedMicroseconds(clockStart);
             this.localOps++;
         }
         if (this.verboseOps) {
-            console.log(`insert local marke pos ${pos} cli ${this.getLongClientId(clientId)} ref seq ${refSeq}`);
+            console.log(`insert local marker pos ${pos} cli ${this.getLongClientId(clientId)} ${marker.toString()} ref seq ${refSeq}`);
         }
     }
 
-    insertMarkerRemote(marker: ops.IMarkerDef, pos: number, props: Properties.PropertySet, seq: number, refSeq: number, clientId: number) {
+    insertMarkerRemote(markerDef: ops.IMarkerDef, pos: number, props: Properties.PropertySet, seq: number, refSeq: number, clientId: number) {
         let clockStart;
         if (this.measureOps) {
             clockStart = clock();
         }
 
-        this.mergeTree.insertMarker(pos, refSeq, clientId, seq, marker.refType, props);
+        let marker= this.mergeTree.insertMarker(pos, refSeq, clientId, seq, markerDef.refType, props);
         this.mergeTree.getCollabWindow().currentSeq = seq;
 
         if (this.measureOps) {
@@ -4202,16 +4205,16 @@ export class MergeTree {
         return segmentGroup;
     }
 
-    // assumes not collaborating for now
+    // assumes collaborating!
     appendSegment(segSpec: ops.IPropertyString, seq = UniversalSequenceNumber) {
         let pos = this.root.cachedLength;
         if (segSpec.text) {
-            this.insertText(pos, UniversalSequenceNumber, LocalClientId, seq, segSpec.text,
+            this.insertText(pos, UniversalSequenceNumber, this.collabWindow.clientId, seq, segSpec.text,
                 segSpec.props as Properties.PropertySet);
         }
         else {
             // assume marker for now
-            this.insertMarker(pos, UniversalSequenceNumber, LocalClientId,
+            this.insertMarker(pos, UniversalSequenceNumber, this.collabWindow.clientId ,
                 seq, segSpec.marker.refType, segSpec.props as Properties.PropertySet);
         }
     }
@@ -4274,7 +4277,11 @@ export class MergeTree {
 
         let markerId = marker.getId();
         if (markerId) {
-            this.mapIdToSegment(markerId, marker);
+            let oldSegment = this.idToSegment[markerId];
+            if ((!oldSegment) || (oldSegment.getType() !== SegmentType.Marker) || (!props) ||
+                (!props[reservedMarkerOverlapIdCheck])) {
+                this.mapIdToSegment(markerId, marker);
+            }
         }
         this.insert(pos, refSeq, clientId, seq, marker, (block, pos, refSeq, clientId, seq, marker) =>
             this.blockInsert(block, pos, refSeq, clientId, seq, marker));
@@ -4350,7 +4357,7 @@ export class MergeTree {
             return segIsLocal;
         }
 
-        let onLeaf = (segment: Segment, pos: number) => {
+        let onLeaf = (segment: Segment, pos: number, context: InsertContext) => {
             let saveIfLocal = (locSegment: Segment) => {
                 // save segment so can assign sequence number when acked by server
                 if (this.collabWindow.collaborating) {
@@ -4371,7 +4378,19 @@ export class MergeTree {
                     segmentChanges.replaceCurrent = newSegment;
                     segmentChanges.next = segment;
                 } else {
-                    this.addOverlappingInsertClient(segment,clientId);
+                    context.structureChange = true;
+                    if (segment.seq !== UnassignedSequenceNumber) {
+                        this.addOverlappingInsertClient(segment, clientId);
+                    } else {
+                        segment.clientId = clientId;
+                        segment.seq = seq;
+                        if (segment.segmentGroup) {
+                            removeFromSegmentGroup(segment.segmentGroup, segment);
+                        }
+                        else {
+                            console.log(`(ovins) missing segment group for seq ${seq} ref seq ${refSeq}`);
+                        }
+                    }
                 }
             }
             else {
@@ -4381,7 +4400,7 @@ export class MergeTree {
             return segmentChanges;
         }
         return this.insertingWalk(block, pos, refSeq, clientId, seq, newSegment.getType(),
-            { leaf: onLeaf, continuePredicate: continueFrom });
+            { leaf: onLeaf, candidateSegment: newSegment, continuePredicate: continueFrom });
     }
 
     splitLeafSegment = (segment: Segment, pos: number) => {
@@ -4399,12 +4418,14 @@ export class MergeTree {
     }
 
     // assume called only when pos == len
-    breakTie(pos: number, len: number, seq: number, node: MergeNode, refSeq: number, clientId: number, segType: SegmentType) {
+    breakTie(pos: number, len: number, seq: number, node: MergeNode, refSeq: number, 
+        clientId: number, candidateSegment?: Segment) {
         if (node.isLeaf()) {
             let segment = <Segment>node;
             // TODO: marker/marker tie break & collab markers
             if (pos == 0) {
-                return segment.seq !== UnassignedSequenceNumber;
+                return (segment.seq !== UnassignedSequenceNumber) || 
+                (candidateSegment && this.isMarkerOverlap(segment, candidateSegment));
             }
             else {
                 return false;
@@ -4511,7 +4532,7 @@ export class MergeTree {
                 console.log(`@tcli: ${glc(this, this.collabWindow.clientId)} len: ${len} pos: ${pos} ` + segInfo);
             }
 
-            if ((pos < len) || ((pos == len) && this.breakTie(pos, len, seq, child, refSeq, clientId, segType))) {
+            if ((pos < len) || ((pos == len) && this.breakTie(pos, len, seq, child, refSeq, clientId, context.candidateSegment))) {
                 // found entry containing pos
                 found = true;
                 if (!child.isLeaf()) {
@@ -4520,7 +4541,11 @@ export class MergeTree {
                     let splitNode = this.insertingWalk(childBlock, pos, refSeq, clientId,
                         seq, segType, context);
                     if (splitNode === undefined) {
-                        this.blockUpdateLength(block, seq, clientId);
+                        if (context.structureChange) {
+                            this.nodeUpdateLengthNewStructure(block);
+                        } else {
+                            this.blockUpdateLength(block, seq, clientId);
+                        }
                         return undefined;
                     }
                     else if (splitNode == MergeTree.theUnfinishedNode) {
@@ -4541,7 +4566,7 @@ export class MergeTree {
                         console.log(`@tcli: ${glc(this, this.collabWindow.clientId)}: leaf action`);
                     }
 
-                    let segmentChanges = context.leaf(<Segment>child, pos);
+                    let segmentChanges = context.leaf(<Segment>child, pos, context);
                     if (segmentChanges.replaceCurrent) {
                         if (MergeTree.traceOrdinals) {
                             console.log(`assign from leaf with block ord ${ordinalToArray(block.ordinal)}`);
@@ -4555,6 +4580,9 @@ export class MergeTree {
                     }
                     else {
                         // no change
+                        if (context.structureChange) {
+                            this.nodeUpdateLengthNewStructure(block);
+                        }
                         return undefined;
                     }
                 }
@@ -4579,7 +4607,7 @@ export class MergeTree {
                     if (MergeTree.traceTraversal) {
                         console.log(`@tcli: ${glc(this, this.collabWindow.clientId)}: leaf action pos 0`);
                     }
-                    let segmentChanges = context.leaf(undefined, pos);
+                    let segmentChanges = context.leaf(undefined, pos, context);
                     newNode = segmentChanges.next;
                     // assert segmentChanges.replaceCurrent === undefined
                 }
@@ -4600,7 +4628,11 @@ export class MergeTree {
                     }
                     this.nodeUpdateOrdinals(fromSplit);
                 }
-                this.blockUpdateLength(block, seq, clientId);
+                if (context.structureChange) {
+                    this.nodeUpdateLengthNewStructure(block);
+                } else {
+                    this.blockUpdateLength(block, seq, clientId);
+                }
                 return undefined;
             }
             else {
@@ -4684,7 +4716,7 @@ export class MergeTree {
 
     addOverlappingInsertClient(segment: Segment, clientId: number) {
         if (!segment.clientOverlap) {
-            segment.clientOverlap=[clientId];
+            segment.clientOverlap = [clientId];
         } else {
             segment.clientOverlap.push(clientId);
         }
