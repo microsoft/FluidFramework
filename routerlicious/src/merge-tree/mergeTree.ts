@@ -2695,7 +2695,7 @@ export class Client {
             clockStart = clock();
         }
 
-        let marker= this.mergeTree.insertMarker(pos, refSeq, clientId, seq, markerDef.refType, props);
+        let marker = this.mergeTree.insertMarker(pos, refSeq, clientId, seq, markerDef.refType, props);
         this.mergeTree.getCollabWindow().currentSeq = seq;
 
         if (this.measureOps) {
@@ -4214,7 +4214,7 @@ export class MergeTree {
         }
         else {
             // assume marker for now
-            this.insertMarker(pos, UniversalSequenceNumber, this.collabWindow.clientId ,
+            this.insertMarker(pos, UniversalSequenceNumber, this.collabWindow.clientId,
                 seq, segSpec.marker.refType, segSpec.props as Properties.PropertySet);
         }
     }
@@ -4276,18 +4276,37 @@ export class MergeTree {
         let marker = Marker.make(behaviors, props, seq, clientId);
 
         let markerId = marker.getId();
+        let overlapping = false;
         if (markerId) {
+            let addToMap = true;
             let oldSegment = this.idToSegment[markerId];
-            if ((!oldSegment) || (oldSegment.getType() !== SegmentType.Marker) || (!props) ||
-                (!props[reservedMarkerOverlapIdCheck])) {
+            if (oldSegment && (oldSegment.getType() === SegmentType.Marker) && props && props[reservedMarkerOverlapIdCheck]) {
+                let oldPos = this.getOffset(oldSegment, refSeq, clientId);
+                if (oldPos === pos) {
+                    // overlapping insert
+                    overlapping = true;
+                    if (oldSegment.seq === UnassignedSequenceNumber) {
+                        oldSegment.seq = seq;
+                        oldSegment.clientId = clientId;
+                        if (oldSegment.segmentGroup) {
+                            removeFromSegmentGroup(oldSegment.segmentGroup, oldSegment);
+                        }
+                    } else {
+                        this.addOverlappingInsertClient(oldSegment, clientId);
+                    }
+                }
+            }
+            if (addToMap) {
                 this.mapIdToSegment(markerId, marker);
             }
         }
-        this.insert(pos, refSeq, clientId, seq, marker, (block, pos, refSeq, clientId, seq, marker) =>
-            this.blockInsert(block, pos, refSeq, clientId, seq, marker));
-        // report segment if client interested
-        if (this.markerModifiedHandler && (seq !== UnassignedSequenceNumber)) {
-            this.markerModifiedHandler(marker);
+        if (!overlapping) {
+            this.insert(pos, refSeq, clientId, seq, marker, (block, pos, refSeq, clientId, seq, marker) =>
+                this.blockInsert(block, pos, refSeq, clientId, seq, marker));
+            // report segment if client interested
+            if (this.markerModifiedHandler && (seq !== UnassignedSequenceNumber)) {
+                this.markerModifiedHandler(marker);
+            }
         }
         return marker;
     }
@@ -4321,17 +4340,6 @@ export class MergeTree {
             (seq != UnassignedSequenceNumber)) {
             this.zamboniSegments();
         }
-    }
-
-    isMarkerOverlap(existingSegment: Segment, newSegment: Segment) {
-        if ((existingSegment.getType() === SegmentType.Marker) && (newSegment.getType() === SegmentType.Marker)) {
-            let existingMarker = <Marker>existingSegment;
-            let newMarker = <Marker>newSegment;
-            if (newMarker.hasProperty(reservedMarkerOverlapIdCheck)) {
-                return newMarker.getId() === existingMarker.getId();
-            }
-        }
-        return false;
     }
 
     blockInsert<T extends Segment>(block: IMergeBlock, pos: number, refSeq: number, clientId: number, seq: number, newSegment: T) {
@@ -4374,24 +4382,8 @@ export class MergeTree {
             let segmentChanges = <SegmentChanges>{};
             if (segment) {
                 // insert before segment
-                if (!this.isMarkerOverlap(segment, newSegment)) {
-                    segmentChanges.replaceCurrent = newSegment;
-                    segmentChanges.next = segment;
-                } else {
-                    context.structureChange = true;
-                    if (segment.seq !== UnassignedSequenceNumber) {
-                        this.addOverlappingInsertClient(segment, clientId);
-                    } else {
-                        segment.clientId = clientId;
-                        segment.seq = seq;
-                        if (segment.segmentGroup) {
-                            removeFromSegmentGroup(segment.segmentGroup, segment);
-                        }
-                        else {
-                            console.log(`(ovins) missing segment group for seq ${seq} ref seq ${refSeq}`);
-                        }
-                    }
-                }
+                segmentChanges.replaceCurrent = newSegment;
+                segmentChanges.next = segment;
             }
             else {
                 segmentChanges.next = newSegment;
@@ -4418,14 +4410,13 @@ export class MergeTree {
     }
 
     // assume called only when pos == len
-    breakTie(pos: number, len: number, seq: number, node: MergeNode, refSeq: number, 
+    breakTie(pos: number, len: number, seq: number, node: MergeNode, refSeq: number,
         clientId: number, candidateSegment?: Segment) {
         if (node.isLeaf()) {
             let segment = <Segment>node;
-            // TODO: marker/marker tie break & collab markers
+            // TODO: marker/marker tie break & alternate tie break rules
             if (pos == 0) {
-                return (segment.seq !== UnassignedSequenceNumber) || 
-                (candidateSegment && this.isMarkerOverlap(segment, candidateSegment));
+                return segment.seq !== UnassignedSequenceNumber;
             }
             else {
                 return false;

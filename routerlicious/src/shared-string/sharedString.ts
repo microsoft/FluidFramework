@@ -122,6 +122,19 @@ export class SharedString extends CollaborativeMap {
         this.submitIfAttached(insertMessage);
     }
 
+    public insertTextRelative(relativePos1: IRelativePosition, text: string, props?: MergeTree.PropertySet) {
+        const insertMessage: MergeTree.IMergeTreeInsertMsg = {
+            props,
+            relativePos1,
+            type: MergeTree.MergeTreeDeltaType.INSERT,
+            text,
+        };
+
+        const pos = this.client.mergeTree.posFromRelativePos(relativePos1);
+        this.client.insertTextLocal(text, pos, props);
+        this.submitIfAttached(insertMessage);
+    }
+
     public insertText(text: string, pos: number, props?: MergeTree.PropertySet) {
         const insertMessage: MergeTree.IMergeTreeInsertMsg = {
             pos1: pos,
