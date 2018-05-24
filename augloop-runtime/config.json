@@ -1,0 +1,48 @@
+{
+    "app": {
+        "riddlerUrl": "http://riddler:5000",
+        "gitUrl": "http://gitrest:3000",
+        "cobaltUrl": "http://cobalt"
+    },
+    "login": {
+        "microsoft": {
+            "clientId": "3d642166-9884-4463-8248-78961b8c1300",
+            "secret": "IefegJIsumWtD1Of/9AIUWvm6ryR624vgMtKRmcNEsQ="
+        }
+    },
+    "logger": {
+        "colorize": true,
+        "morganFormat": "dev",
+        "json": false,
+        "level": "info",
+        "timestamp": true,
+        "label": "winston"
+    },
+    "mongo": {
+        "endpoint": "mongodb://mongodb:27017",
+        "collectionNames": {
+            "tenants": "tenantCollection",
+            "users": "userCollection",
+            "orgs": "orgCollection"
+        }
+    },
+    "kafka": {
+        "lib": {
+            "name": "kafka-node",
+            "endpoint": "zookeeper:2181"
+        }
+    },
+    "system": {
+        "topics": {
+            "send": "deltas"
+        }
+    },
+    "error": {
+        "track": false,
+        "endpoint" : "https://7235bc222189462ca65fa1a38591f96b:74acc3b4610f47a38a50d1bcbfcd6655@sentry.wu2.prague.office-int.com/2"
+    },
+    "redis": {
+        "host": "redis",
+        "port": 6379
+    }
+}

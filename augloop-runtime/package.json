@@ -1,0 +1,30 @@
+{
+  "name": "augloop",
+  "version": "0.1.0",
+  "description": "Prague Augmentation Loop Example",
+  "main": "index.js",
+  "dependencies": {
+    "@augloop/runtime-client": "1.2.79",
+    "@augloop/schemas": "^1.2.75",
+    "@prague/routerlicious": "^0.1.2560",
+    "jsonwebtoken": "^8.2.1",
+    "nconf": "^0.10.0",
+    "winston": "^2.4.2"
+  },
+  "devDependencies": {
+    "@types/jsonwebtoken": "^7.2.7",
+    "@types/nconf": "0.0.37",
+    "@types/winston": "^2.3.9",
+    "tslint": "^5.9.1",
+    "typescript": "^2.8.3"
+  },
+  "scripts": {
+    "build": "npm run tsc && npm run tslint",
+    "tsc": "tsc",
+    "tslint": "tslint 'src/**/*.ts'",
+    "start": "node dist/index.js",
+    "start:debug": "node --inspect-brk dist/index.js"
+  },
+  "author": "Microsoft",
+  "repository": "microsoft/prague"
+}
