@@ -15,6 +15,10 @@ To get started simply
 
 The [sequence, flowview, and threejs](./api/examples) examples are all setup using the above approach.
 
+### Breaking changes
+
+If you'd like to recieve email notifications when breaking changes are introduced to the API or service, please join the *pragueapi* distribution group on https://idweb
+
 #### Projects
 
 ##### @prague/routerlicious
