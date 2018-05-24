@@ -1,12 +1,21 @@
 {
   "name": "augloop",
-  "version": "0.1.0",
-  "description": "Prague Augmentation Loop Example",
-  "main": "index.js",
+  "version": "0.0.1",
+  "description": "Augmentation Loop Agent for Prague",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "concurrently \"npm run tslint\" \"npm run tsc\"",
+    "tsc": "tsc",
+    "tslint": "tslint 'src/**/*.ts*'",
+    "start": "docker-compose up",
+    "start:debug": "docker-compose -f docker-compose.yml -f docker-compose.debug.yml up",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
   "dependencies": {
     "@augloop/runtime-client": "1.2.79",
     "@augloop/schemas": "^1.2.75",
-    "@prague/routerlicious": "^0.1.2560",
+    "@prague/routerlicious": "^0.1.2569",
+    "concurrently": "^3.5.1",
     "jsonwebtoken": "^8.2.1",
     "nconf": "^0.10.0",
     "winston": "^2.4.2"
@@ -17,14 +26,5 @@
     "@types/winston": "^2.3.9",
     "tslint": "^5.9.1",
     "typescript": "^2.8.3"
-  },
-  "scripts": {
-    "build": "npm run tsc && npm run tslint",
-    "tsc": "tsc",
-    "tslint": "tslint 'src/**/*.ts'",
-    "start": "node dist/index.js",
-    "start:debug": "node --inspect-brk dist/index.js"
-  },
-  "author": "Microsoft",
-  "repository": "microsoft/prague"
+  }
 }

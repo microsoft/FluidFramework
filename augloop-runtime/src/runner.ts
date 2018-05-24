@@ -1,62 +1,76 @@
-import { api as prague } from "@prague/routerlicious";
+import * as agent from "@prague/routerlicious/dist/agent";
+import { IDocumentService, ITenantManager } from "@prague/routerlicious/dist/api-core";
 import { Deferred } from "@prague/routerlicious/dist/core-utils";
+import * as socketStorage from "@prague/routerlicious/dist/socket-storage";
 import * as utils from "@prague/routerlicious/dist/utils";
-import * as jwt from "jsonwebtoken";
 import * as winston from "winston";
+import { WorkManager } from "./workManager";
 
-const routerlicious = "https://alfred.wu2.prague.office-int.com";
-const historian = "https://historian.wu2.prague.office-int.com";
-const tenantId = "gallant-hugle";
-const secret = "03302d4ebfb6f44b662d00313aff5a46";
+class DocumentServiceFactory implements agent.IDocumentServiceFactory {
+    constructor(private serverUrl: string, private historianUrl: string) {
+    }
 
-const documentId = "test-sequence-0507-1";
-
-// Register endpoint connection
-prague.socketStorage.registerAsDefault(routerlicious, historian, tenantId);
-
-async function run(id: string): Promise<void> {
-    const token = jwt.sign(
-        {
-            documentId: id,
-            permission: "read:write", // use "read:write" for now
-            tenantId,
-            user: {
-                id: "test",
-            },
-        },
-        secret);
-
-    winston.info(`Running`);
-    // Load in the latest and connect to the document
-    const collabDoc = await prague.api.load(id, { blockUpdateMarkers: true, token });
-
-    const rootView = await collabDoc.getRoot().getView();
-    console.log("Keys");
-    console.log(rootView.keys());
-
-    // Load the text string and listen for updates
-    const text = rootView.get("text");
-
-    // Update the text after being loaded as well as when receiving ops
-    text.loaded.then(() => {
-        winston.info(`Text loaded`);
-    });
-    text.on("op", (msg) => {
-        winston.info(`op received`);
-    });
+    public async getService(tenantId: string): Promise<IDocumentService> {
+        // Disable browser error tracking for paparazzi.
+        const services = socketStorage.createDocumentService(this.serverUrl, this.historianUrl, tenantId, false);
+        return services;
+    }
 }
 
-// TODO: Need to call workerservice here.
 export class AugLoopRunner implements utils.IRunner {
+    private workerService: agent.WorkerService;
     private running = new Deferred<void>();
 
+    constructor(
+        alfredUrl: string,
+        tmzUrl: string,
+        workerConfig: any,
+        tenantManager: ITenantManager) {
+
+        const runnerType = "paparazzi";
+        const workTypeMap: { [workType: string]: boolean} = {};
+        for (const workType of workerConfig.permission[runnerType]) {
+            workTypeMap[workType] = true;
+        }
+
+        const factory = new DocumentServiceFactory(alfredUrl, workerConfig.blobStorageUrl);
+
+        const workManager = new WorkManager(
+            factory,
+            workerConfig,
+            alfredUrl,
+            this.initLoadModule(alfredUrl),
+            runnerType,
+            workTypeMap);
+
+        this.workerService = new agent.WorkerService(
+            tmzUrl,
+            workerConfig,
+            workTypeMap,
+            workManager);
+
+        // Report any service error.
+        this.workerService.on("error", (error) => {
+            winston.error(error);
+        });
+    }
+
     public start(): Promise<void> {
-        winston.info(`Will run now`);
-        run(documentId).then(() => this.running.resolve(), (error) => this.running.reject(error));
+        const workerRunningP = this.workerService.connect("Paparazzi");
+        workerRunningP.then(() => this.running.resolve(), (error) => this.running.reject(error));
 
         return this.running.promise;
     }
     public stop(): Promise<void> {
+        this.workerService.close().then(() => this.running.resolve(), (error) => this.running.reject(error));
         return this.running.promise;
+    }
+
+    private initLoadModule(alfredUrl: string): (name: string) => Promise<any> {
+        return (moduleFile: string) => {
+            return new Promise<any>((resolve, reject) => {
+                resolve();
+            });
+        };
     }
 }

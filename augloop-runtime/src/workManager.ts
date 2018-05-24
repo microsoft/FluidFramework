@@ -1,23 +1,20 @@
-/*
+import * as agent from "@prague/routerlicious/dist/agent";
+// import { MergeTree } from "@prague/routerlicious/dist/client-api";
 import { EventEmitter } from "events";
-import * as request from "request";
-import * as url from "url";
-import { MergeTree } from "../client-api";
-import { AgentLoader, IAgent } from "./agentLoader";
-import { IWork, IWorkManager } from "./definitions";
 
 // Responsible for managing the lifetime of an work.
-export class WorkManager extends EventEmitter implements IWorkManager {
+export class WorkManager extends EventEmitter implements agent.IWorkManager {
 
-    private documentMap: { [docId: string]: { [work: string]: IWork} } = {};
+    // private documentMap: { [docId: string]: { [work: string]: agent.IWork} } = {};
     private events = new EventEmitter();
 
-    constructor(private serviceFactory: any,
-                private config: any,
-                private serverUrl: string,
-                private agentModuleLoader: (id: string) => Promise<any>,
-                private clientType: string,
-                private workTypeMap: { [workType: string]: boolean}) {
+    // TODO: All params should be private
+    constructor(public serviceFactory: any,
+                public config: any,
+                public serverUrl: string,
+                public agentModuleLoader: (id: string) => Promise<any>,
+                public clientType: string,
+                public workTypeMap: { [workType: string]: boolean}) {
         super();
     }
 
@@ -43,58 +40,21 @@ export class WorkManager extends EventEmitter implements IWorkManager {
         const services = await this.serviceFactory.getService(tenantId);
 
         switch (workType) {
-            case "snapshot":
-                const snapshotWork = new SnapshotWork(documentId, token, this.config, services);
-                await this.startTask(tenantId, documentId, workType, snapshotWork);
-                break;
-            case "intel":
-                const intelWork = new IntelWork(documentId, token, this.config, services);
-                await this.startTask(tenantId, documentId, workType, intelWork);
-                break;
-            case "spell":
-                const spellcheckWork = new SpellcheckerWork(
-                    documentId,
-                    token,
-                    this.config,
-                    this.dict,
-                    services);
-                await this.startTask(tenantId, documentId, workType, spellcheckWork);
-                break;
-            case "translation":
-                const translationWork = new TranslationWork(documentId, token, this.config, services);
-                await this.startTask(tenantId, documentId, workType, translationWork);
-            case "ping":
-                const pingWork = new PingWork(this.serverUrl);
-                await this.startTask(tenantId, documentId, workType, pingWork);
-                break;
             default:
-                throw new Error("Unknown work type!");
+                console.log(`Start work for ${tenantId}/${documentId}`);
+                console.log(services);
         }
 
     }
 
     private stopDocumentWork(tenantId: string, documentId: string, workType: string) {
         switch (workType) {
-            case "snapshot":
-                this.stopTask(tenantId, documentId, workType);
-                break;
-            case "intel":
-                this.stopTask(tenantId, documentId, workType);
-                break;
-            case "spell":
-                this.stopTask(tenantId, documentId, workType);
-                break;
-            case "translation":
-                this.stopTask(tenantId, documentId, workType);
-                break;
-            case "ping":
-                this.stopTask(tenantId, documentId, workType);
-                break;
             default:
-                throw new Error("Unknown work type!");
+            console.log(`Stop work for ${tenantId}/${documentId}`);
         }
     }
 
+    /*
     private getFullId(tenantId: string, documentId: string): string {
         return `${tenantId}/${documentId}`;
     }
@@ -138,6 +98,6 @@ export class WorkManager extends EventEmitter implements IWorkManager {
         worker.on("error", (error) => {
             this.events.emit("error", error);
         });
-    }
+    }*/
 
-}*/
+}
