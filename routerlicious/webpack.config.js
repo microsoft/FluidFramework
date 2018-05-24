@@ -86,8 +86,8 @@ module.exports = env => {
                 workers: typeCheckingCores
             }),
         ]
-    }
-)};
+    });
+};
 
 function getEntry(env) {    
     let entry;
