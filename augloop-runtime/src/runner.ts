@@ -4,7 +4,7 @@ import { Deferred } from "@prague/routerlicious/dist/core-utils";
 import * as socketStorage from "@prague/routerlicious/dist/socket-storage";
 import * as utils from "@prague/routerlicious/dist/utils";
 import * as winston from "winston";
-import { WorkManager } from "./workManager";
+import { WorkManager } from "./augloop-worker";
 
 class DocumentServiceFactory implements agent.IDocumentServiceFactory {
     constructor(private serverUrl: string, private historianUrl: string) {

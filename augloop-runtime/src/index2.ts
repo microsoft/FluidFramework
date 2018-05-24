@@ -1,5 +1,5 @@
 import * as winston from "winston";
-import {AugLoopRuntime, IAugResult, IDocTile, inputSchemaName } from "./AugLoopRuntime";
+import {AugLoopRuntime, IAugResult, IDocTile, inputSchemaName } from "./augloop-runtime";
 
 async function run(): Promise<void> {
     const inputTexts = [
