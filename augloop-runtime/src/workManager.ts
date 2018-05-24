@@ -1,20 +1,19 @@
 import * as agent from "@prague/routerlicious/dist/agent";
-// import { MergeTree } from "@prague/routerlicious/dist/client-api";
 import { EventEmitter } from "events";
+import { AugmentationWork } from "./augmentationWork";
 
 // Responsible for managing the lifetime of an work.
 export class WorkManager extends EventEmitter implements agent.IWorkManager {
 
-    // private documentMap: { [docId: string]: { [work: string]: agent.IWork} } = {};
+    private documentMap: { [docId: string]: { [work: string]: agent.IWork} } = {};
     private events = new EventEmitter();
 
-    // TODO: All params should be private
-    constructor(public serviceFactory: any,
-                public config: any,
-                public serverUrl: string,
-                public agentModuleLoader: (id: string) => Promise<any>,
-                public clientType: string,
-                public workTypeMap: { [workType: string]: boolean}) {
+    constructor(private serviceFactory: any,
+                private config: any,
+                serverUrl: string,
+                agentModuleLoader: (id: string) => Promise<any>,
+                clientType: string,
+                workTypeMap: { [workType: string]: boolean}) {
         super();
     }
 
@@ -40,31 +39,36 @@ export class WorkManager extends EventEmitter implements agent.IWorkManager {
         const services = await this.serviceFactory.getService(tenantId);
 
         switch (workType) {
+            case "augmentation":
+                const augmentationWork = new AugmentationWork(documentId, token, this.config, services);
+                await this.startTask(tenantId, documentId, workType, augmentationWork);
+                break;
             default:
-                console.log(`Start work for ${tenantId}/${documentId}`);
-                console.log(services);
+                throw new Error("Unknown work type!");
         }
 
     }
 
     private stopDocumentWork(tenantId: string, documentId: string, workType: string) {
         switch (workType) {
+            case "augmentation":
+                this.stopTask(tenantId, documentId, workType);
+                break;
             default:
-            console.log(`Stop work for ${tenantId}/${documentId}`);
+                throw new Error("Unknown work type!");
         }
     }
 
-    /*
     private getFullId(tenantId: string, documentId: string): string {
         return `${tenantId}/${documentId}`;
     }
 
-    private async startTask(tenantId: string, documentId: string, workType: string, worker: IWork) {
+    private async startTask(tenantId: string, documentId: string, workType: string, worker: agent.IWork) {
         const fullId = this.getFullId(tenantId, documentId);
 
         if (worker) {
             if (!(fullId in this.documentMap)) {
-                const emptyMap: { [work: string]: IWork } = {};
+                const emptyMap: { [work: string]: agent.IWork } = {};
                 this.documentMap[fullId] = emptyMap;
             }
             if (!(workType in this.documentMap[fullId])) {
@@ -86,18 +90,13 @@ export class WorkManager extends EventEmitter implements agent.IWorkManager {
         }
     }
 
-    private async applyWork(fullId: string, workType: string, worker: IWork) {
+    private async applyWork(fullId: string, workType: string, worker: agent.IWork) {
         console.log(`Starting work ${workType} for document ${fullId}`);
         await worker.start();
         console.log(`Started work ${workType} for document ${fullId}`);
         this.documentMap[fullId][workType] = worker;
-        // Register existing intel agents to this document
-        if (workType === "intel") {
-            this.registerAgentsToNewDocument(fullId, workType);
-        }
         worker.on("error", (error) => {
             this.events.emit("error", error);
         });
-    }*/
-
+    }
 }
