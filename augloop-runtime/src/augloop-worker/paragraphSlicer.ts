@@ -1,14 +1,13 @@
 import { core, MergeTree } from "@prague/routerlicious/dist/client-api";
 import { SharedString } from "@prague/routerlicious/dist/shared-string";
 import { EventEmitter } from "events";
-import { IPgMarker } from "./definitons";
+import { IPgMarker, IRange } from "./definitons";
 
 export class ParagrapgSlicer extends EventEmitter {
     private idleTimeMS: number = 500;
     private currentIdleTime: number = 0;
     private pendingMarkers: IPgMarker[] = new Array<IPgMarker>();
-    private offsetMap: { [start: number]: number } = {};
-    private tileSet: Set<MergeTree.ReferencePosition> = new Set<MergeTree.ReferencePosition>();
+    private tileMap: Map<MergeTree.ReferencePosition, IRange> = new Map<MergeTree.ReferencePosition, IRange>();
 
     constructor(private sharedString: SharedString) {
         super();
@@ -16,9 +15,12 @@ export class ParagrapgSlicer extends EventEmitter {
 
     public run() {
         const emitSlice = (startPG: number, endPG: number, text: string) => {
-            this.emit("slice", {
+            const range: IRange = {
                 begin: startPG,
                 end: endPG,
+            };
+            this.emit("slice", {
+                range,
                 text,
             });
         };
@@ -122,30 +124,33 @@ export class ParagrapgSlicer extends EventEmitter {
                 }
                 const endMarker = this.sharedString.client.mergeTree.findTile(offset + 1,
                     this.sharedString.client.getClientId(), "pg", false);
+                this.tileMap.set(endMarker.tile, {begin: offset, end: endMarker.pos});
+                console.log(this.tileMap.size);
+            }
+            for (const entry of this.tileMap.entries()) {
+                const range = entry[1];
                 let endPos: number;
-                if (endMarker) {
-                    endPos = endMarker.pos;
+                if (entry[0]) {
+                    endPos = range.end;
                 } else {
                     endPos = this.sharedString.client.mergeTree.getLength(MergeTree.UniversalSequenceNumber,
                         this.sharedString.client.getClientId());
                 }
-                this.offsetMap[offset] = endPos;
-                this.tileSet.add(endMarker.tile);
-                console.log(this.tileSet.size);
-            }
-            for (const start of Object.keys(this.offsetMap)) {
                 const queryString = this.sharedString.client.mergeTree.getText(
                     MergeTree.UniversalSequenceNumber,
                     this.sharedString.client.getClientId(),
                     "",
-                    Number(start), this.offsetMap[start]);
+                    range.begin,
+                    endPos);
+                const newRange: IRange = {
+                    begin: range.begin,
+                    end: endPos,
+                };
                 this.emit("slice", {
-                    begin: Number(start),
-                    end: this.offsetMap[start],
+                    range: newRange,
                     text: queryString,
                 });
             }
-            this.offsetMap = {};
             this.pendingMarkers = [];
         }
     }

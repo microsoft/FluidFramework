@@ -13,7 +13,7 @@ export class ProofingManager {
         this.root.loaded.then(() => {
             const slicer = new ParagrapgSlicer(this.root);
             slicer.on("slice", (slice: ISlice) => {
-                winston.info(`Slice: ${slice.begin} -> ${slice.end}`);
+                winston.info(`Slice: ${slice.range.begin} -> ${slice.range.end}`);
                 winston.info(slice.text);
             });
             slicer.run();

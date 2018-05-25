@@ -7,11 +7,16 @@ export interface IPgMarker {
     pos: number;
 }
 
-export interface ISlice {
+export interface IRange {
 
     begin: number;
 
     end: number;
+}
+
+export interface ISlice {
+
+    range: IRange;
 
     text: string;
 }
