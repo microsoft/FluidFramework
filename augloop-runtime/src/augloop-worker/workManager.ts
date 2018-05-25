@@ -1,5 +1,7 @@
 import * as agent from "@prague/routerlicious/dist/agent";
 import { EventEmitter } from "events";
+import * as winston from "winston";
+import {AugLoopRuntime } from "../augloop-runtime";
 import { AugmentationWork } from "./augmentationWork";
 
 // Responsible for managing the lifetime of an work.
@@ -7,6 +9,7 @@ export class WorkManager extends EventEmitter implements agent.IWorkManager {
 
     private documentMap: { [docId: string]: { [work: string]: agent.IWork} } = {};
     private events = new EventEmitter();
+    private augRuntime: AugLoopRuntime;
 
     constructor(private serviceFactory: any,
                 private config: any,
@@ -15,6 +18,7 @@ export class WorkManager extends EventEmitter implements agent.IWorkManager {
                 clientType: string,
                 workTypeMap: { [workType: string]: boolean}) {
         super();
+        this.augRuntime = new AugLoopRuntime();
     }
 
     public async processDocumentWork(tenantId: string, documentId: string, workType: string,
@@ -40,7 +44,12 @@ export class WorkManager extends EventEmitter implements agent.IWorkManager {
 
         switch (workType) {
             case "augmentation":
-                const augmentationWork = new AugmentationWork(documentId, token, this.config, services);
+                const augmentationWork = new AugmentationWork(
+                    documentId,
+                    token,
+                    this.config,
+                    services,
+                    this.augRuntime);
                 await this.startTask(tenantId, documentId, workType, augmentationWork);
                 break;
             default:
@@ -91,9 +100,9 @@ export class WorkManager extends EventEmitter implements agent.IWorkManager {
     }
 
     private async applyWork(fullId: string, workType: string, worker: agent.IWork) {
-        console.log(`Starting work ${workType} for document ${fullId}`);
+        winston.info(`Starting work ${workType} for document ${fullId}`);
         await worker.start();
-        console.log(`Started work ${workType} for document ${fullId}`);
+        winston.info(`Started work ${workType} for document ${fullId}`);
         this.documentMap[fullId][workType] = worker;
         worker.on("error", (error) => {
             this.events.emit("error", error);

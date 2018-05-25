@@ -1,16 +1,19 @@
 import * as agent from "@prague/routerlicious/dist/agent";
 import { core } from "@prague/routerlicious/dist/client-api";
 import { CollaborativeStringExtension, SharedString } from "@prague/routerlicious/dist/shared-string";
+import { AugLoopRuntime } from "../augloop-runtime";
+import { ProofingManager } from "./proofingManager";
 
 export class AugmentationWork extends agent.BaseWork implements agent.IWork {
 
-    private spellcheckInvoked: boolean = false;
+    private augmentationInvoked: boolean = false;
 
     constructor(
         docId: string,
         private token: string,
         config: any,
-        private service: core.IDocumentService) {
+        private service: core.IDocumentService,
+        private augRuntime: AugLoopRuntime) {
 
         super(docId, config);
     }
@@ -30,11 +33,11 @@ export class AugmentationWork extends agent.BaseWork implements agent.IWork {
     }
 
     private runAugmentation(object: core.ICollaborativeObject) {
-        if (object.type === CollaborativeStringExtension.Type && !this.spellcheckInvoked) {
-            this.spellcheckInvoked = true;
+        if (object.type === CollaborativeStringExtension.Type && !this.augmentationInvoked) {
+            this.augmentationInvoked = true;
             const sharedString = object as SharedString;
-            console.log(sharedString.sequenceNumber);
-            console.log(`Start running augmentation`);
+            const proofingManager = new ProofingManager(sharedString, this.augRuntime);
+            proofingManager.run();
         }
     }
 }
