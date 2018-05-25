@@ -13,6 +13,7 @@ export class ParagrapgSlicer extends EventEmitter {
         super();
     }
 
+    // Slice and emit initial paragraphs of the document.
     public run() {
         const emitSlice = (startPG: number, endPG: number, text: string) => {
             const range: IRange = {
@@ -77,25 +78,27 @@ export class ParagrapgSlicer extends EventEmitter {
         this.setTypingSlicer();
     }
 
+    // Sets up slicing service for typing. Keep collecting deltas until ops are stopped.
     private setTypingSlicer() {
         const idleCheckerMS = this.idleTimeMS / 5;
         setInterval(() => {
             this.currentIdleTime += idleCheckerMS;
             if (this.currentIdleTime >= this.idleTimeMS) {
-                this.runSpellOp();
+                this.sliceParagraph();
                 this.currentIdleTime = 0;
             }
         }, idleCheckerMS);
         this.sharedString.on("op", (msg: core.ISequencedObjectMessage) => {
             if (msg && msg.contents) {
                 const delta = msg.contents as MergeTree.IMergeTreeOp;
-                this.enqueueDeltas(delta);
+                this.collectDeltas(delta);
                 this.currentIdleTime = 0;
             }
         });
     }
 
-    private enqueueDeltas(delta: MergeTree.IMergeTreeOp) {
+    // Collects deltas and convert them into markers.
+    private collectDeltas(delta: MergeTree.IMergeTreeOp) {
         if (delta.type === MergeTree.MergeTreeDeltaType.INSERT ||
             delta.type === MergeTree.MergeTreeDeltaType.REMOVE) {
             const pgRef = this.sharedString.client.mergeTree.findTile(delta.pos1,
@@ -109,12 +112,13 @@ export class ParagrapgSlicer extends EventEmitter {
             this.pendingMarkers.push(pgMarker);
         } else if (delta.type === MergeTree.MergeTreeDeltaType.GROUP) {
             for (const groupOp of delta.ops) {
-                this.enqueueDeltas(groupOp);
+                this.collectDeltas(groupOp);
             }
         }
     }
 
-    private runSpellOp() {
+    // Emits paragraphs based on previously collected markers. For dedeuplication, uses a map with tile as hash key.
+    private sliceParagraph() {
         if (this.pendingMarkers.length > 0) {
             for (const pg of this.pendingMarkers) {
                 let offset = 0;
@@ -125,7 +129,6 @@ export class ParagrapgSlicer extends EventEmitter {
                 const endMarker = this.sharedString.client.mergeTree.findTile(offset + 1,
                     this.sharedString.client.getClientId(), "pg", false);
                 this.tileMap.set(endMarker.tile, {begin: offset, end: endMarker.pos});
-                console.log(this.tileMap.size);
             }
             for (const entry of this.tileMap.entries()) {
                 const range = entry[1];
@@ -152,6 +155,7 @@ export class ParagrapgSlicer extends EventEmitter {
                 });
             }
             this.pendingMarkers = [];
+            this.tileMap.clear();
         }
     }
 }

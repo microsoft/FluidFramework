@@ -13,9 +13,11 @@ function registerInputSchemas(runtime: IClientRuntime): Promise<void> {
     `syntax = "proto3";
     message ${inputSchemaName} {
       string documentId = 1;
-      string content = 2;
-      uint32 reqOrd = 3;
-      uint32 requestTime = 4;
+      uint32 begin = 2;
+      uint32 end = 3;
+      string content = 4;
+      uint32 reqOrd = 5;
+      uint32 requestTime = 6;
     }`;
   return runtime.registerSchemas(inputProto, [inputSchemaName]);
 }

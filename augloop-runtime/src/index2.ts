@@ -16,8 +16,10 @@ async function run(): Promise<void> {
     let index = 0;
     for (const text of inputTexts) {
         const input: IDocTile = {
+            begin: 0,
             content: text,
             documentId: "random-id",
+            end: 10,
             reqOrd: index,
             requestTime: index,
         };
