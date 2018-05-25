@@ -1176,39 +1176,19 @@ export function TestPack(verbose = true) {
                 }
             }
         }
+        cli.insertTextRemote("very ", 6, undefined, 4, 2, 2);
         cli.insertMarkerRemote({ refType: ops.ReferenceType.Tile }, 0,
             { [MergeTree.reservedTileLabelsKey]: ["peach"] },
             5, 0, 2);
-        cli.insertTextRemote("very ", 6, undefined, 4, 2, 2);
-        cli.insertMarkerLocal(10, ops.ReferenceType.NestBegin,
-            {
-                [MergeTree.reservedMarkerIdKey]: "overlapper",
-                [MergeTree.reservedMarkerOverlapIdCheck]: true,
-            }
-        );
-        console.log(cli.mergeTree.toString());
-        cli.insertMarkerRemote({ refType: ops.ReferenceType.NestBegin }, 10,
-            {
-                [MergeTree.reservedMarkerIdKey]: "overlapper",
-                [MergeTree.reservedMarkerOverlapIdCheck]: true,
-            },
-            7, 6, 2);
-        cli.insertMarkerRemote({ refType: ops.ReferenceType.NestBegin }, 10,
-            {
-                [MergeTree.reservedMarkerIdKey]: "overlapper",
-                [MergeTree.reservedMarkerOverlapIdCheck]: true,
-            },
-            8, 6, 3);
-        cli.ackPendingSegment(9);
         if (verbose) {
             console.log(cli.mergeTree.toString());
             for (let clientId = 0; clientId < 4; clientId++) {
-                for (let refSeq = 0; refSeq < 10; refSeq++) {
+                for (let refSeq = 0; refSeq < 5; refSeq++) {
                     console.log(cli.relText(clientId, refSeq));
                 }
             }
         }
-        cli.updateMinSeq(9);
+        cli.updateMinSeq(5);
 
         cli = new MergeTree.Client(" old sock!");
         cli.startCollaboration("Fred2");

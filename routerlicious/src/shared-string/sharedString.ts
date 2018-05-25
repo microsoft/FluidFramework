@@ -126,8 +126,8 @@ export class SharedString extends CollaborativeMap {
         const insertMessage: MergeTree.IMergeTreeInsertMsg = {
             props,
             relativePos1,
-            type: MergeTree.MergeTreeDeltaType.INSERT,
             text,
+            type: MergeTree.MergeTreeDeltaType.INSERT,
         };
 
         const pos = this.client.mergeTree.posFromRelativePos(relativePos1);

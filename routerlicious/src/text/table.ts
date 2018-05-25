@@ -367,12 +367,6 @@ export function createTable(pos: number, sharedString: SharedString, nrows = 3, 
     sharedString.transaction(groupOp);
 }
 
-export interface IPendingCell {
-    precedingMarker: MergeTree.Marker;
-    columnId: string;
-    row: Row;
-}
-
 export class Table {
     public width: number;
     public renderedHeight: number;
@@ -509,7 +503,6 @@ export class Row {
     public endPos: number;
     public minContentWidth = 0;
     public cells = <Cell[]>[];
-    public pendingCells = <IPendingCell[]>[];
 
     constructor(public rowMarker: IRowMarker, public endRowMarker: IRowMarker) {
 
@@ -667,20 +660,6 @@ function parseRow(rowStartPos: number, sharedString: SharedString, table: Table,
         let endcellPos = getOffset(sharedString, cellMarker.cell.endMarker);
         nextPos = endcellPos + cellMarker.cell.endMarker.cachedLength;
     }
-    if (table.tableMarker.hasProperty("rectTable")) {
-        let precedingMarker = rowMarker;
-        for (let columnMarker of table.gridColumns) {
-            if (!rowColumns[columnMarker.columnId]) {
-                row.pendingCells.push(<IPendingCell>{
-                    columnId: columnMarker.columnId,
-                    precedingMarker,
-                    row,
-                });
-            } else {
-                precedingMarker = rowColumns[columnMarker.columnId].endMarker;
-            }
-        }
-    }
     return rowMarker;
 }
 
@@ -775,10 +754,9 @@ export function succinctPrintTable(tableMarker: ITableMarker, tableMarkerPos: nu
     console.log(lineBuf);
 }
 
-export function insertCellMergeOverlap(sharedString: SharedString, prevMarker: MergeTree.Marker, columnId: string, rowId: string) {
+export function insertHoleFixer(sharedString: SharedString, prevMarker: MergeTree.Marker, columnId: string, rowId: string) {
     let extraProperties = {
         columnId,
-        [MergeTree.reservedMarkerOverlapIdCheck]: true,
     };
     let cellId = `${rowId}X${columnId}`;
     let opList = <MergeTree.IMergeTreeOp[]>[];
@@ -809,16 +787,6 @@ export function parseTable(
             console.log("PARSE ERROR!");
             succinctPrintTable(tableMarker, tableMarkerPos, sharedString);
             return undefined;
-        }
-        let pendingCells = rowMarker.row.pendingCells;
-        rowMarker.row.pendingCells=[];
-        while (pendingCells.length > 0) {
-            for (let pendingCell of rowMarker.row.pendingCells) {
-                insertCellMergeOverlap(sharedString, pendingCell.precedingMarker, pendingCell.columnId, rowMarker.getId())
-            }
-            rowMarker = parseRow(nextPos, sharedString, table, fontInfo);
-            pendingCells = rowMarker.row.pendingCells;
-            endTablePos = getOffset(sharedString, endTableMarker);
         }
         let rowView = rowMarker.row;
         rowView.table = table;

@@ -159,7 +159,6 @@ export interface Segment extends IMergeNode, IRemovalInfo {
     segmentGroup?: SegmentGroup;
     seq?: number;  // if not present assumed to be previous to window min
     clientId?: number;
-    clientOverlap?: number[]; // TODO: overlap per branch
     localRefs?: LocalReference[];
     removalsByBranch?: IRemovalInfo[];
     splitAt(pos: number): Segment;
@@ -606,7 +605,6 @@ export let reservedTileLabelsKey = "referenceTileLabels";
 export let reservedRangeLabelsKey = "referenceRangeLabels";
 export let reservedMarkerIdKey = "markerId";
 export let reservedMarkerSimpleTypeKey = "markerSimpleType";
-export let reservedMarkerOverlapIdCheck = "markerCheckOverlap";
 
 function refHasTileLabels(refPos: ReferencePosition) {
     return (refPos.refType & ops.ReferenceType.Tile) &&
@@ -1045,7 +1043,6 @@ export interface PartialSequenceLength {
     seglen: number;
     clientId?: number;
     overlapRemoveClients?: Collections.RedBlackTree<number, OverlapClient>;
-    overlapInsertClients?: Collections.RedBlackTree<number, OverlapClient>;
 }
 
 export class CollaborationWindow {
@@ -1153,8 +1150,7 @@ export class PartialSequenceLengths {
                 let bPartial = bList[i];
                 if ((aPartial.seq != bPartial.seq) || (aPartial.clientId != bPartial.clientId) ||
                     (aPartial.seglen != bPartial.seglen) || (aPartial.len != bPartial.len) ||
-                    (aPartial.overlapRemoveClients && (!bPartial.overlapRemoveClients)) ||
-                    (aPartial.overlapInsertClients && (!bPartial.overlapInsertClients))) {
+                    (aPartial.overlapRemoveClients && (!bPartial.overlapRemoveClients))) {
                     return false;
                 }
             }
@@ -1302,12 +1298,6 @@ export class PartialSequenceLengths {
                 return true;
             });
         }
-        if (partialLength.overlapInsertClients) {
-            partialLength.overlapInsertClients.map((oc: Base.Property<number, OverlapClient>) => {
-                this.addClientSeqNumber(oc.data.clientId, partialLength.seq, oc.data.seglen);
-                return true;
-            });
-        }
     }
 
     update(mergeTree: MergeTree, block: IMergeBlock, seq: number, clientId: number, collabWindow: CollaborationWindow) {
@@ -1447,30 +1437,11 @@ export class PartialSequenceLengths {
             }
         }
 
-        function accumulateInsertClientOverlap(partialLength: PartialSequenceLength,
-            overlapInsertClientIds: number[], seglen: number) {
-            if (partialLength.overlapInsertClients) {
-                for (let clientId of overlapInsertClientIds) {
-                    let ovlapClientNode = partialLength.overlapInsertClients.get(clientId);
-                    if (!ovlapClientNode) {
-                        partialLength.overlapInsertClients.put(clientId, <OverlapClient>{ clientId: clientId, seglen: seglen });
-                    }
-                    else {
-                        ovlapClientNode.data.seglen += seglen;
-                    }
-                }
-            }
-            else {
-                partialLength.overlapInsertClients = getOverlapClients(overlapInsertClientIds, seglen);
-            }
-        }
-
         function insertSegment(segment: Segment, removedSeq = false, removalInfo = undefined) {
             let seq = segment.seq;
             let segmentLen = segment.cachedLength;
             let clientId = segment.clientId;
             let removeClientOverlap: number[];
-            let insertClientOverlap: number[];
 
             if (removedSeq) {
                 seq = removalInfo.removedSeq;
@@ -1479,11 +1450,7 @@ export class PartialSequenceLengths {
                 if (removalInfo.removedClientOverlap) {
                     removeClientOverlap = removalInfo.removedClientOverlap;
                 }
-            } else {
-                if (segment.clientOverlap) {
-                    insertClientOverlap = segment.clientOverlap;
-                }
-            }
+            } 
 
             let seqPartials = combinedPartialLengths.partialLengths;
             let seqPartialsLen = seqPartials.length;
@@ -1498,20 +1465,14 @@ export class PartialSequenceLengths {
                 seqPartials[indexFirstGTE].seglen += segmentLen;
                 if (removeClientOverlap) {
                     accumulateRemoveClientOverlap(seqPartials[indexFirstGTE], removeClientOverlap, segmentLen);
-                } else if (insertClientOverlap) {
-                    accumulateInsertClientOverlap(seqPartials[indexFirstGTE], insertClientOverlap, segmentLen);
-                }
+                } 
             }
             else {
                 let pLen: PartialSequenceLength;
                 if (removeClientOverlap) {
                     let overlapClients = getOverlapClients(removeClientOverlap, segmentLen);
                     pLen = { seq: seq, clientId: clientId, len: 0, seglen: segmentLen, overlapRemoveClients: overlapClients };
-                } else if (insertClientOverlap) {
-                    let overlapInsertClients = getOverlapClients(insertClientOverlap, segmentLen);
-                    pLen = { seq: seq, clientId: clientId, len: 0, seglen: segmentLen, overlapInsertClients: overlapInsertClients };
-                }
-                else {
+                } else {
                     pLen = { seq: seq, clientId: clientId, len: 0, seglen: segmentLen };
                 }
 
@@ -1623,23 +1584,6 @@ export class PartialSequenceLengths {
             else {
                 a.overlapRemoveClients = b.overlapRemoveClients;
             }
-            if (a.overlapInsertClients) {
-                if (b.overlapInsertClients) {
-                    b.overlapInsertClients.map((bProp: Base.Property<number, OverlapClient>) => {
-                        let aProp = a.overlapInsertClients.get(bProp.key);
-                        if (aProp) {
-                            aProp.data.seglen += bProp.data.seglen;
-                        }
-                        else {
-                            a.overlapInsertClients.put(bProp.data.clientId, bProp.data);
-                        }
-                        return true;
-                    });
-                }
-            }
-            else {
-                a.overlapInsertClients = b.overlapInsertClients;
-            }
         }
 
         function addNext(partialLength: PartialSequenceLength) {
@@ -1664,7 +1608,6 @@ export class PartialSequenceLengths {
                 clientId: partialLength.clientId,
                 len: pLen + partialLength.seglen,
                 seglen: partialLength.seglen,
-                overlapInsertClients: partialLength.overlapInsertClients,
                 overlapRemoveClients: partialLength.overlapRemoveClients
             };
             combinedPartialLengths.partialLengths.push(prevPartial);
@@ -4276,37 +4219,14 @@ export class MergeTree {
         let marker = Marker.make(behaviors, props, seq, clientId);
 
         let markerId = marker.getId();
-        let overlapping = false;
         if (markerId) {
-            let addToMap = true;
-            let oldSegment = this.idToSegment[markerId];
-            if (oldSegment && (oldSegment.getType() === SegmentType.Marker) && props && props[reservedMarkerOverlapIdCheck]) {
-                let oldPos = this.getOffset(oldSegment, refSeq, clientId);
-                if (oldPos === pos) {
-                    // overlapping insert
-                    overlapping = true;
-                    if (oldSegment.seq === UnassignedSequenceNumber) {
-                        oldSegment.seq = seq;
-                        oldSegment.clientId = clientId;
-                        if (oldSegment.segmentGroup) {
-                            removeFromSegmentGroup(oldSegment.segmentGroup, oldSegment);
-                        }
-                    } else {
-                        this.addOverlappingInsertClient(oldSegment, clientId);
-                    }
-                }
-            }
-            if (addToMap) {
-                this.mapIdToSegment(markerId, marker);
-            }
+            this.mapIdToSegment(markerId, marker);
         }
-        if (!overlapping) {
-            this.insert(pos, refSeq, clientId, seq, marker, (block, pos, refSeq, clientId, seq, marker) =>
-                this.blockInsert(block, pos, refSeq, clientId, seq, marker));
-            // report segment if client interested
-            if (this.markerModifiedHandler && (seq !== UnassignedSequenceNumber)) {
-                this.markerModifiedHandler(marker);
-            }
+        this.insert(pos, refSeq, clientId, seq, marker, (block, pos, refSeq, clientId, seq, marker) =>
+            this.blockInsert(block, pos, refSeq, clientId, seq, marker));
+        // report segment if client interested
+        if (this.markerModifiedHandler && (seq !== UnassignedSequenceNumber)) {
+            this.markerModifiedHandler(marker);
         }
         return marker;
     }
@@ -4702,14 +4622,6 @@ export class MergeTree {
                 this.maxOrdTime = elapsed;
             }
             this.ordTime += elapsed;
-        }
-    }
-
-    addOverlappingInsertClient(segment: Segment, clientId: number) {
-        if (!segment.clientOverlap) {
-            segment.clientOverlap = [clientId];
-        } else {
-            segment.clientOverlap.push(clientId);
         }
     }
 
