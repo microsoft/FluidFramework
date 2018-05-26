@@ -10,6 +10,7 @@ import {
     DeserializeCallback,
     Interval,
     PrepareDeserializeCallback,
+    SharedIntervalCollection,
     SharedIntervalCollectionView,
     SharedString,
 } from "../shared-string";
@@ -1330,7 +1331,7 @@ function showBookmarks(flowView: FlowView, lineStart: number, lineEnd: number,
         const client = flowView.client;
         const computedEnd = lineEnd;
         const bookmarks = flowView.bookmarks.findOverlappingIntervals(lineStart, computedEnd);
-        const comments = flowView.comments.findOverlappingIntervals(lineStart, computedEnd);
+        const comments = flowView.commentsView.findOverlappingIntervals(lineStart, computedEnd);
         const lineText = client.getText(lineStart, computedEnd);
         if (sel && ((sel.start < lineEnd) && (sel.end > lineStart))) {
             showBookmark(undefined, lineText, sel.start, sel.end, lineStart, endPGMarker,
@@ -2755,7 +2756,8 @@ export class FlowView extends ui.Component {
     public cursor: Cursor;
     public bookmarks: SharedIntervalCollectionView;
     public tempBookmarks: Interval[];
-    public comments: SharedIntervalCollectionView;
+    public comments: SharedIntervalCollection;
+    public commentsView: SharedIntervalCollectionView;
     public presenceMapView: types.IMapView;
     public presenceVector: ILocalPresenceInfo[] = [];
     public docRoot: types.IMapView;
@@ -3923,7 +3925,7 @@ export class FlowView extends ui.Component {
     }
 
     public showCommentText() {
-        const overlappingComments = this.comments.findOverlappingIntervals(this.cursor.pos,
+        const overlappingComments = this.commentsView.findOverlappingIntervals(this.cursor.pos,
             this.cursor.pos + 1);
         if (overlappingComments && (overlappingComments.length >= 1)) {
             const commentInterval = overlappingComments[0];
@@ -4392,7 +4394,8 @@ export class FlowView extends ui.Component {
             await Promise.all([intervalCollections.wait("bookmarks"), intervalCollections.wait("comments")]);
         }
 
-        this.bookmarks = await this.sharedString.getSharedIntervalCollection("bookmarks");
+        const bookmarksCollection = this.sharedString.getSharedIntervalCollection("bookmarks");
+        this.bookmarks = await bookmarksCollection.getView();
 
         const onDeserialize: DeserializeCallback = (interval, commentSharedString: core.ICollaborativeObject) => {
             if (interval.properties && interval.properties["story"]) {
@@ -4412,8 +4415,10 @@ export class FlowView extends ui.Component {
             }
         };
 
-        this.comments = await this.sharedString.getSharedIntervalCollection(
-            "comments", onDeserialize, onPrepareDeserialize);
+        // For examples of showing the API we do interval adds on the collection with comments. But use
+        // the view when doing bookmarks.
+        this.comments = this.sharedString.getSharedIntervalCollection("comments");
+        this.commentsView = await this.comments.getView(onDeserialize, onPrepareDeserialize);
 
         this.render(0, true);
         if (clockStart > 0) {

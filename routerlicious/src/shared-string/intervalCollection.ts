@@ -442,6 +442,19 @@ export class SharedIntervalCollection {
         this.savedSerializedIntervals = undefined;
     }
 
+    public add(
+        startPosition: number,
+        endPosition: number,
+        intervalType: MergeTree.IntervalType,
+        props?: MergeTree.PropertySet) {
+
+        if (!this.view) {
+            return Promise.reject("attachSharedString must be called prior to adding intervals");
+        }
+
+        this.view.add(startPosition, endPosition, intervalType, props);
+    }
+
     public async getView(
         onDeserialize?: DeserializeCallback,
         onPrepareDeserialize?: PrepareDeserializeCallback): Promise<SharedIntervalCollectionView> {

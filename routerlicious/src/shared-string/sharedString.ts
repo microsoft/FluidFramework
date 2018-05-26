@@ -8,11 +8,8 @@ import { IRelativePosition } from "../merge-tree";
 import * as MergeTree from "../merge-tree";
 import { CollaborativeStringExtension } from "./extension";
 import {
-    DeserializeCallback,
-    PrepareDeserializeCallback,
     SharedIntervalCollection,
     SharedIntervalCollectionValueType,
-    SharedIntervalCollectionView,
 } from "./intervalCollection";
 
 function textsToSegments(texts: MergeTree.IPropertyString[]) {
@@ -298,11 +295,7 @@ export class SharedString extends CollaborativeMap {
     }
 
     // TODO: fix race condition on creation by putting type on every operation
-    public async getSharedIntervalCollection(
-        label: string,
-        onDeserialize?: DeserializeCallback,
-        onPrepareDeserialize?: PrepareDeserializeCallback): Promise<SharedIntervalCollectionView> {
-
+    public getSharedIntervalCollection(label: string): SharedIntervalCollection {
         if (!this.intervalCollections.has(label)) {
             this.intervalCollections.set<SharedIntervalCollection>(
                 label,
@@ -311,9 +304,7 @@ export class SharedString extends CollaborativeMap {
         }
 
         const sharedCollection = this.intervalCollections.get<SharedIntervalCollection>(label);
-        const view = await sharedCollection.getView(onDeserialize, onPrepareDeserialize);
-
-        return view;
+        return sharedCollection;
     }
 
     public sendNACKed() {
