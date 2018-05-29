@@ -8,6 +8,8 @@ export class ParagrapgSlicer extends EventEmitter {
     private currentIdleTime: number = 0;
     private pendingMarkers: IPgMarker[] = new Array<IPgMarker>();
     private tileMap: Map<MergeTree.ReferencePosition, IRange> = new Map<MergeTree.ReferencePosition, IRange>();
+    private initialCallLimit: number = 100;
+    private initialCounter: number = 0;
 
     constructor(private sharedString: SharedString) {
         super();
@@ -16,14 +18,16 @@ export class ParagrapgSlicer extends EventEmitter {
     // Slice and emit initial paragraphs of the document.
     public run() {
         const emitSlice = (startPG: number, endPG: number, text: string) => {
-            const range: IRange = {
-                begin: startPG,
-                end: endPG,
-            };
-            this.emit("slice", {
-                range,
-                text,
-            });
+            if (++this.initialCounter < this.initialCallLimit) {
+                const range: IRange = {
+                    begin: startPG,
+                    end: endPG,
+                };
+                this.emit("slice", {
+                    range,
+                    text,
+                });
+            }
         };
         let prevPG: MergeTree.Marker;
         let startPGPos = 0;
