@@ -146,8 +146,8 @@ export class ParagrapgSlicer extends EventEmitter {
                     range.begin,
                     endPos);
                 const newRange: IRange = {
-                    begin: range.begin,
-                    end: endPos,
+                    begin: range.begin + 1,
+                    end: endPos + 1,
                 };
                 this.emit("slice", {
                     range: newRange,

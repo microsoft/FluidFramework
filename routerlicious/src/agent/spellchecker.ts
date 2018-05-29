@@ -133,16 +133,7 @@ class Speller {
             const resultP = this.intelligence.run(task);
             resultP.then((result) => {
                 const spellErrors = this.checkSpelling(task.rsn, task.text, task.start, result);
-                if (spellErrors.annotations.length > 0) {
-                    for (const annotation of spellErrors.annotations) {
-                        this.sharedString.annotateRangeFromPast(
-                            { textError: annotation.textError },
-                            annotation.globalStartOffset,
-                            annotation.globalEndOffset,
-                            spellErrors.rsn);
-                        this.sharedString.setLocalMinSeq(spellErrors.rsn);
-                    }
-                }
+                console.log(spellErrors.rsn);
                 callback();
             }, (error) => {
                 callback();

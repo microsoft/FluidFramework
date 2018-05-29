@@ -18,9 +18,11 @@ export class SliceManager extends EventEmitter {
     private docId: string;
     private refMap: Map<string, LocalRefManager> = new Map<string, LocalRefManager>();
 
-    constructor(private root: SharedString, private runtime: AugLoopRuntime) {
+    constructor(
+        private root: SharedString,
+        private runtime: AugLoopRuntime,
+        private applyInsight: (result: IAugResult) => void) {
         super();
-        // TODO: Add a random id before docId to distinguish between tenants.
         this.docId = this.root.id;
         this.handleAugLoopResponse();
     }
@@ -53,9 +55,9 @@ export class SliceManager extends EventEmitter {
             const localRefText = this.getTextFromLocalRef(localRef);
             const textBefore = result.input.content;
             const textNow = localRefText.content;
-            // Only emit if text did not change inbetween calls. Otherwise resubmit.
+            // Only apply insight if text did not change inbetween calls. Otherwise resubmit.
             if (textBefore.length === textNow.length && textBefore === textNow) {
-                this.emit("result", result);
+                this.applyInsight(result);
             } else {
                 this.submit(localRefText.beginPos, localRefText.endPos, localRefText.content);
             }
