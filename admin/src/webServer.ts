@@ -1,5 +1,6 @@
 import * as core from "@prague/routerlicious/dist/core";
 import * as http from "http";
+import { AddressInfo } from "net";
 import * as util from "util";
 
 export type RequestListener = (request: http.IncomingMessage, response: http.ServerResponse) => void;
@@ -37,8 +38,8 @@ export class HttpServer implements core.IHttpServer {
         this.server.on(event, listener);
     }
 
-    public address(): { port: number; family: string; address: string; } {
-        return this.server.address();
+    public address(): AddressInfo {
+        return this.server.address() as AddressInfo;
     }
 }
 

@@ -1,5 +1,6 @@
 // tslint:disable:ban-types
 import * as http from "http";
+import { AddressInfo } from "net";
 import * as util from "util";
 import * as core from "../core";
 import * as socketIo from "./socketIoServer";
@@ -22,8 +23,8 @@ export class HttpServer implements core.IHttpServer {
         this.server.on(event, listener);
     }
 
-    public address(): { port: number; family: string; address: string; } {
-        return this.server.address();
+    public address(): AddressInfo {
+        return this.server.address() as AddressInfo;
     }
 }
 
