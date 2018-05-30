@@ -30,25 +30,6 @@
         "endpoint": "http://riddler:5000"
     },
     "worker": {
-        "intelligence": {
-            "resume": {
-                "deviceId": "routerlicious",
-                "host": "pkarimov-paidIOT.azure-devices.net",
-                "sharedAccessKeyName": "iothubowner",
-                "sharedAccessKey": "8mvOmNnUklwnuzY+U96V51w+qCq262ZUpSkdw8nTZ18=",
-                "url": "http://localhost:3000/intelligence/resume"
-            },
-            "textAnalytics": {
-                "key": "c8b60dc5e49849ce903d7d29a2dce550"
-            },
-            "nativeTextAnalytics": {
-                "enable": false,
-                "url": "http://praguepy.westus2.cloudapp.azure.com/"
-            },
-            "spellchecker": {
-                "url": "http://augmentation.westus2.cloudapp.azure.com/spellchecker/api"
-            }
-        },
         "alfredUrl": "http://alfred:3000",
         "serverUrl": "http://localhost:3000",
         "url": "http://localhost:4000",
