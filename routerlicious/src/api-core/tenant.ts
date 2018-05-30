@@ -2,6 +2,7 @@ import { GitManager } from "../git-storage";
 
 export interface ITenantUser {
     id: string;
+    name?: string;
 }
 
 // Find a home for this
