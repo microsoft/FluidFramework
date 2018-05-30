@@ -1,5 +1,4 @@
 import { core, MergeTree } from "../client-api";
-import * as intelligence from "../intelligence";
 import { CollaborativeStringExtension, SharedString } from "../shared-string";
 import { BaseWork} from "./baseWork";
 import { IWork} from "./definitions";
@@ -41,9 +40,7 @@ export class SpellcheckerWork extends BaseWork implements IWork {
             const sharedString = object as SharedString;
             // Enable spell checking for the document
             // TODO will want to configure this as a pluggable insight
-            const spellcheckerClient = intelligence.spellcheckerService.factory.create(
-                this.config.intelligence.spellchecker);
-            const spellchecker = new Spellcheker(sharedString, this.dict, spellcheckerClient);
+            const spellchecker = new Spellcheker(sharedString, this.dict);
             spellchecker.run();
         }
     }

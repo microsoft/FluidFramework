@@ -1,5 +1,5 @@
 {
-    // Use IntelliSense to learn about possible attributes.
+    // Use IntelliSense to learn about possible Node.js debug attributes.
     // Hover to view descriptions of existing attributes.
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
@@ -7,22 +7,16 @@
         {
             "type": "node",
             "request": "attach",
-            "name": "Docker: Attach to Node",
-            "port": 9229,
+            "name": "Attach to apps",
             "address": "localhost",
-            "localRoot": "${workspaceFolder}",
-            "remoteRoot": "/usr/src/app",
-            "protocol": "inspector"
-        },
-        {
-            "type": "node",
-            "request": "launch",
-            "name": "Launch Program",
-            "program": "${workspaceFolder}/dist/index.js",
-            "preLaunchTask": "tsc: build - tsconfig.json",
-            "outFiles": [
-                "${workspaceFolder}/dist/**/*.js"
-            ]
+            "port": 5858,
+            "restart": true,
+            "sourceMaps": true,
+            "localRoot": "${workspaceRoot}",
+            "remoteRoot": "/usr/src/server",
+            "outFiles": [ "${workspaceRoot}/dist/*.js" ],
+            "protocol":"inspector",
+            "trace": "sm"
         }
     ]
 }

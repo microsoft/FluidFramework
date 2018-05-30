@@ -13,6 +13,16 @@ export interface IDocTile {
     documentId: string;
 
     /**
+     * Start index of the text.
+     */
+    begin: number;
+
+    /**
+     * End index of the text.
+     */
+    end: number;
+
+    /**
      * Content of this document segment in JSON format.
      */
     content: string;

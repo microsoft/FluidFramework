@@ -115,6 +115,7 @@
             "spell": "server",
             "intel": "server",
             "translation": "server",
+            "augmentation": "server",
             "snapshot": "both"
         },
         "workerType": "random",
