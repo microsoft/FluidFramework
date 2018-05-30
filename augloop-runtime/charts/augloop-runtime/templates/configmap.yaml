@@ -1,0 +1,57 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "fullname" . }}
+  labels:
+    app: {{ template "name" . }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    component: "{{ .Values.name }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+data:
+  config.json: |
+    {
+        "logger": {
+            "colorize": true,
+            "morganFormat": "dev",
+            "json": false,
+            "level": "info",
+            "timestamp": true,
+            "label": "winston"
+        },
+        "kafka": {
+            "lib": {
+                "name": "kafka-node",
+                "endpoint": "{{ .Values.endpoints.kafka }}"
+            }
+        },
+        "system": {
+            "topics": {
+                "send": "deltas"
+            }
+        },
+        "error": {
+            "track": true,
+            "endpoint" : "https://7235bc222189462ca65fa1a38591f96b:74acc3b4610f47a38a50d1bcbfcd6655@sentry.wu2.prague.office-int.com/2"
+        },
+        "augloop": {
+            "alfred": "{{ .Values.endpoints.alfred }}",
+            "tmz": "{{ .Values.endpoints.tmz }}"
+        },
+        "auth": {
+            "endpoint": "{{ .Values.endpoints.riddler }}"
+        },
+        "worker": {
+            "alfredUrl": "{{ .Values.endpoints.alfred }}",
+            "serverUrl": "{{ .Values.endpoints.alfredUrl }}",
+            "url": "{{ .Values.endpoints.tmzUrl }}",
+            "blobStorageUrl": "{{ .Values.endpoints.historianUrl }}",
+            "scriptUrl": "{{ .Values.endpoints.minioUrl }}/agents/",
+            "repository": "prague",
+            "storageBucket": "snapshots",
+            "intervalMSec": 5000,
+            "onlyServer": false,
+            "permission": {
+                "paparazzi": ["augmentation"]
+        }
+    }
