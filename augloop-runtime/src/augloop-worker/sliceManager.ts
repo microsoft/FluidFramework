@@ -63,6 +63,7 @@ export class SliceManager extends EventEmitter {
             }
             // Always remove references. Resubmission will create a new one.
             localRef.removeReferences();
+            this.refMap.delete(refId);
         });
     }
 
