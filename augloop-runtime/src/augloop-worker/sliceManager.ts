@@ -29,9 +29,7 @@ export class SliceManager extends EventEmitter {
 
     public submit(begin: number, end: number, content: string) {
         const ref = new LocalRefManager(this.root, begin, end);
-        ref.prepare();
-        // Make sure to create the local ref before submitting.
-        if (ref.ready()) {
+        if (ref.prepare()) {
             const refId = `${begin}-${end}`;
             this.refMap.set(refId, ref);
             const input: IDocTile = {

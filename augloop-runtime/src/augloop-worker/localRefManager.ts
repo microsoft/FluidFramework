@@ -7,15 +7,13 @@ export class LocalRefManager {
     private endRef: LocalReference;
     private beginSegment: MergeTree.BaseSegment;
     private endSegment: MergeTree.BaseSegment;
-    private segmentsCreated: boolean;
     constructor(
         private root: SharedString,
         private begin: number,
         private end: number) {
-            this.segmentsCreated = false;
     }
 
-    public prepare() {
+    public prepare(): boolean {
         const bSegment = this.root.client.mergeTree.getContainingSegment(
             this.begin,
             MergeTree.UniversalSequenceNumber,
@@ -33,7 +31,9 @@ export class LocalRefManager {
             this.endRef = new LocalReference(this.endSegment, eSegment.offset);
             this.root.client.mergeTree.addLocalReference(this.beginRef);
             this.root.client.mergeTree.addLocalReference(this.endRef);
-            this.segmentsCreated = true;
+            return true;
+        } else {
+            return false;
         }
 
     }
@@ -46,8 +46,5 @@ export class LocalRefManager {
     public removeReferences() {
         this.root.client.mergeTree.removeLocalReference(this.beginSegment, this.beginRef);
         this.root.client.mergeTree.removeLocalReference(this.endSegment, this.endRef);
-    }
-    public ready() {
-        return this.segmentsCreated;
     }
 }
