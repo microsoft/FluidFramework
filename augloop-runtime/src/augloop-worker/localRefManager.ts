@@ -29,9 +29,14 @@ export class LocalRefManager {
             this.endSegment = eSegment.segment as MergeTree.BaseSegment;
             this.beginRef = new LocalReference(this.beginSegment, bSegment.offset);
             this.endRef = new LocalReference(this.endSegment, eSegment.offset);
-            this.root.client.mergeTree.addLocalReference(this.beginRef);
-            this.root.client.mergeTree.addLocalReference(this.endRef);
-            return true;
+            if (this.beginRef.segment && this.endRef.segment) {
+                this.root.client.mergeTree.addLocalReference(this.beginRef);
+                this.root.client.mergeTree.addLocalReference(this.endRef);
+                return true;
+            } else {
+                return false;
+            }
+
         } else {
             return false;
         }

@@ -145,12 +145,7 @@ export class ParagrapgSlicer extends EventEmitter {
                     endPos = this.sharedString.client.mergeTree.getLength(MergeTree.UniversalSequenceNumber,
                         this.sharedString.client.getClientId());
                 }
-                const queryString = this.sharedString.client.mergeTree.getText(
-                    MergeTree.UniversalSequenceNumber,
-                    this.sharedString.client.getClientId(),
-                    "",
-                    range.begin,
-                    endPos);
+                const queryString = this.sharedString.getText(range.begin, endPos);
                 const newRange: IRange = {
                     begin: range.begin + 1,
                     end: endPos + 1,

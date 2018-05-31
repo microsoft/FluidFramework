@@ -81,12 +81,7 @@ export class SliceManager extends EventEmitter {
             this.root.client.mergeTree,
             MergeTree.UniversalSequenceNumber,
             this.root.client.getClientId());
-        const content =  this.root.client.mergeTree.getText(
-            MergeTree.UniversalSequenceNumber,
-            this.root.client.getClientId(),
-            "",
-            beginPos,
-            endPos);
+        const content =  this.root.getText(beginPos, endPos);
         return {
             beginPos,
             content,
