@@ -1,25 +1,40 @@
 {{<layout}}
-    {{$styles}}
-        <link href="{{#hfurl}}/public/stylesheets/dist/style.css{{/hfurl}}" rel="stylesheet" />
-    {{/styles}}
-
     {{$content}}
         <div class="container">
-            <h1>Demos</h1>
+            <h1>Prague</h1>
 
-            <h2>Starter Documents</h2>
+            <h2>Getting Started</h2>
+            <p>
+                Want to write your own Prague app?
+            </p>
+            <p>
+                The repository is located at
+                <a href="https://github.com/Microsoft/Prague/">https://github.com/Microsoft/Prague/</a>. To gain
+                access you will need to link your GitHub and Microsoft accounts. To do so follow the instructions at
+                <a href="https://repos.opensource.microsoft.com/link">https://repos.opensource.microsoft.com/link</a>.
+            </p>
+            <p>
+                After linking your accounts you should be added to the
+                <a href="https://github.com/orgs/Microsoft/teams/everyone">https://github.com/orgs/Microsoft/teams/everyone</a> group
+                which will grant you access to the Prague repo. If for some reason you are not automatically added
+                to that group request to join at
+                <a href="https://repos.opensource.microsoft.com/Microsoft/teams/pragueread">https://repos.opensource.microsoft.com/Microsoft/teams/pragueread</a>
+            </p>
+
+            <h2>Demos</h2>
+            <h3>Starter Documents</h3>
             <ul class="list-unstyled">
                 <li><a href="/templates/list">Document Templates</a></li>
                 <li><a href="/scribe">Scribe</a></li>
             </ul>
 
-            <h2>Demo Scripts</h2>
+            <h3>Demo Scripts</h3>
             <ul class="list-unstyled">
                 <li><a href="/democreator">December 2017</a></li>
                 <li><a href="/democreator/retreat">Retreat 2018</a></li>
             </ul>
 
-            <h2>Data Types</h2>
+            <h3>Data Types</h3>
             <ul class="list-unstyled">
                 <li><a href="/maps/maps">Collaborative Map</a></li>
                 <li><a href="/cell/cell">Collaborative Cell</a></li>
@@ -27,7 +42,7 @@
                 <li><a href="/sharedText/string">Shared String</a></li>
             </ul>
 
-            <h2>Example Apps</h2>
+            <h3>Example Apps</h3>
             <ul class="list-unstyled">
                 <li><a href="/youtubeVideo/youtubeVideo">Youtube Video</a></li>
                 <li><a href="/graph/graph">Graph</a></li>
