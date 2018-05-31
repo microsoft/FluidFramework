@@ -127,7 +127,7 @@ data:
             "tasks": {
                 "spell": "server",
                 "intel": "server",
-                "translation": "server"
+                "translation": "server",
                 "augmentation": "server",
                 "snapshot": "both"
             },
