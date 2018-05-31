@@ -29,17 +29,19 @@ export class SliceManager extends EventEmitter {
 
     public submit(begin: number, end: number, content: string) {
         const ref = new LocalRefManager(this.root, begin, end);
-        const refId = `${begin}-${end}`;
-        this.refMap.set(refId, ref);
-        const input: IDocTile = {
-            begin,
-            content,
-            documentId: this.docId,
-            end,
-            reqOrd: ++this.requestId,
-            requestTime: Date.now(),
-        };
-        this.runtime.submit(input, inputSchemaName);
+        if (ref.prepare()) {
+            const refId = `${begin}:${end}`;
+            this.refMap.set(refId, ref);
+            const input: IDocTile = {
+                begin,
+                content,
+                documentId: this.docId,
+                end,
+                reqOrd: ++this.requestId,
+                requestTime: Date.now(),
+            };
+            this.runtime.submit(input, inputSchemaName);
+        }
     }
 
     private handleAugLoopResponse() {
@@ -50,20 +52,23 @@ export class SliceManager extends EventEmitter {
             if (result.input.documentId !== this.docId) {
                 return;
             }
-            const refId = `${result.input.begin}-${result.input.end}`;
-            const localRef = this.refMap.get(refId);
-            const localRefText = this.getTextFromLocalRef(localRef);
-            const textBefore = result.input.content;
-            const textNow = localRefText.content;
-            // Only apply insight if text did not change inbetween calls. Otherwise resubmit.
-            if (textBefore.length === textNow.length && textBefore === textNow) {
-                this.applyInsight(result);
-            } else {
-                this.submit(localRefText.beginPos, localRefText.endPos, localRefText.content);
+            const refId = `${result.input.begin}:${result.input.end}`;
+            if (this.refMap.has(refId)) {
+                const localRef = this.refMap.get(refId);
+                const localRefText = this.getTextFromLocalRef(localRef);
+                const textBefore = result.input.content;
+                const textNow = localRefText.content;
+                // Only apply insight if text did not change inbetween calls. Otherwise resubmit.
+                if (textBefore.length === textNow.length && textBefore === textNow) {
+                    this.applyInsight(result);
+                } else {
+                    this.submit(localRefText.beginPos, localRefText.endPos, localRefText.content);
+                }
+                // Always remove references. Resubmission will create a new one.
+                localRef.removeReferences();
+                this.refMap.delete(refId);
             }
-            // Always remove references. Resubmission will create a new one.
-            localRef.removeReferences();
-            this.refMap.delete(refId);
+
         });
     }
 

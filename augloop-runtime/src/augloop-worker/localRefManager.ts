@@ -11,24 +11,32 @@ export class LocalRefManager {
         private root: SharedString,
         private begin: number,
         private end: number) {
-            const bSegment = this.root.client.mergeTree.getContainingSegment(
-                this.begin,
-                MergeTree.UniversalSequenceNumber,
-                this.root.client.getClientId(),
-            );
-            const eSegment = this.root.client.mergeTree.getContainingSegment(
-                this.end,
-                MergeTree.UniversalSequenceNumber,
-                this.root.client.getClientId(),
-            );
+    }
+
+    public prepare(): boolean {
+        const bSegment = this.root.client.mergeTree.getContainingSegment(
+            this.begin,
+            MergeTree.UniversalSequenceNumber,
+            this.root.client.getClientId(),
+        );
+        const eSegment = this.root.client.mergeTree.getContainingSegment(
+            this.end,
+            MergeTree.UniversalSequenceNumber,
+            this.root.client.getClientId(),
+        );
+        if (bSegment && eSegment) {
             this.beginSegment = bSegment.segment as MergeTree.BaseSegment;
             this.endSegment = eSegment.segment as MergeTree.BaseSegment;
             this.beginRef = new LocalReference(this.beginSegment, bSegment.offset);
             this.endRef = new LocalReference(this.endSegment, eSegment.offset);
             this.root.client.mergeTree.addLocalReference(this.beginRef);
             this.root.client.mergeTree.addLocalReference(this.endRef);
-    }
+            return true;
+        } else {
+            return false;
+        }
 
+    }
     public getBeginRef() {
         return this.beginRef;
     }
