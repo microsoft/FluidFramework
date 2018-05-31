@@ -132,7 +132,9 @@ export class ParagrapgSlicer extends EventEmitter {
                 }
                 const endMarker = this.sharedString.client.mergeTree.findTile(offset + 1,
                     this.sharedString.client.getClientId(), "pg", false);
-                this.tileMap.set(endMarker.tile, {begin: offset, end: endMarker.pos});
+                if (endMarker) {
+                    this.tileMap.set(endMarker.tile, {begin: offset, end: endMarker.pos});
+                }
             }
             for (const entry of this.tileMap.entries()) {
                 const range = entry[1];

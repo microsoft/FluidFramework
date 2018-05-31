@@ -29,17 +29,21 @@ export class SliceManager extends EventEmitter {
 
     public submit(begin: number, end: number, content: string) {
         const ref = new LocalRefManager(this.root, begin, end);
-        const refId = `${begin}-${end}`;
-        this.refMap.set(refId, ref);
-        const input: IDocTile = {
-            begin,
-            content,
-            documentId: this.docId,
-            end,
-            reqOrd: ++this.requestId,
-            requestTime: Date.now(),
-        };
-        this.runtime.submit(input, inputSchemaName);
+        ref.prepare();
+        // Make sure to create the local ref before submitting.
+        if (ref.ready()) {
+            const refId = `${begin}-${end}`;
+            this.refMap.set(refId, ref);
+            const input: IDocTile = {
+                begin,
+                content,
+                documentId: this.docId,
+                end,
+                reqOrd: ++this.requestId,
+                requestTime: Date.now(),
+            };
+            this.runtime.submit(input, inputSchemaName);
+        }
     }
 
     private handleAugLoopResponse() {
