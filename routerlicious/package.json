@@ -192,6 +192,7 @@
     "progress": "^2.0.0",
     "random-js": "^1.0.8",
     "raven": "^2.6.1",
+    "raven-js": "^3.25.2",
     "redis": "^2.7.1",
     "request": "^2.87.0",
     "request-promise-native": "^1.0.5",

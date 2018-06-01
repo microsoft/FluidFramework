@@ -13,6 +13,7 @@ import * as mapExtension from "../map";
 import * as sharedString from "../shared-string";
 import * as stream from "../stream";
 import { debug } from "./debug";
+import { BrowserErrorTrackingService } from "./errorTrackingService";
 
 const rootMapId = "root";
 
@@ -964,7 +965,6 @@ export async function load(
     connect = true,
     registry: api.Registry<api.ICollaborativeObjectExtension> = defaultRegistry,
     service: api.IDocumentService = defaultDocumentService): Promise<Document> {
-    /*
     if (service.errorTrackingEnabled()) {
         const deferred = new Deferred<Document>();
         const errorTracker = new BrowserErrorTrackingService();
@@ -973,6 +973,7 @@ export async function load(
             deferred.resolve(documentP);
         });
         return deferred.promise;
-    }*/
-    return Document.Load(id, registry, service, options, version, connect);
+    } else {
+        return Document.Load(id, registry, service, options, version, connect);
+    }
 }
