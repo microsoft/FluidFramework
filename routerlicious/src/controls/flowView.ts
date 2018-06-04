@@ -1,4 +1,4 @@
-// tslint:disable:no-bitwise whitespace align switch-default no-string-literal ban-types
+// tslint:disable:no-bitwise whitespace align switch-default no-string-literal ban-types no-angle-bracket-type-assertion
 import * as assert from "assert";
 import performanceNow = require("performance-now");
 import {
@@ -1803,7 +1803,7 @@ function closestSouth(lineDivs: ILineDiv[], y: number) {
     return best;
 }
 
-class Viewport {
+export class Viewport {
     // keep the line divs in order
     public lineDivs: ILineDiv[] = [];
     public visibleRanges: IRange[] = [];
@@ -1917,21 +1917,22 @@ function makeFontInfo(docContext: IDocumentContext): Paragraph.IFontInfo {
         getTextWidth: gtw,
     };
 }
-/*
-function breakPGIntoLinesFFVP(itemInfo: Paragraph.IParagraphItemInfo, defaultLineHeight: number, viewport: Viewport) {
-    let items = itemInfo.items;
-    let breaks = <Paragraph.IBreakInfo[]>[{ posInPG: 0, startItemIndex: 0 }];
+
+export function breakPGIntoLinesFFVP(itemInfo: Paragraph.IParagraphItemInfo, defaultLineHeight: number,
+    viewport: Viewport) {
+    const items = itemInfo.items;
+    const breaks = <Paragraph.IBreakInfo[]>[{ posInPG: 0, startItemIndex: 0 }];
     let posInPG = 0;
     let committedItemsWidth = 0;
     let blockRunWidth = 0;
     let blockRunHeight = 0;
     let blockRunPos = -1;
     let prevIsGlue = true;
-    let savedTop = viewport.getLineTop();
+    const savedTop = viewport.getLineTop();
     let lineWidth = viewport.currentLineWidth(itemInfo.maxHeight);
     let committedItemsHeight = 0;
     for (let i = 0, len = items.length; i < len; i++) {
-        let item = items[i];
+        const item = items[i];
         if (item.type === Paragraph.ParagraphItemType.Block) {
             item.pos = posInPG;
             if (prevIsGlue) {
@@ -1972,7 +1973,7 @@ function breakPGIntoLinesFFVP(itemInfo: Paragraph.IParagraphItemInfo, defaultLin
     viewport.setLineTop(savedTop);
     return breaks;
 }
-*/
+
 function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, deferWhole = false): IRenderOutput {
     const flowView = layoutContext.flowView;
     const client = flowView.client;
