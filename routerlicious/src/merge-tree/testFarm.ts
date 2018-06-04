@@ -1836,6 +1836,7 @@ function insertElm(treeLabel: string, elm: Xmldoc.XmlElement, client: MergeTree.
         elmProps, parentId);
     if (elm.children) {
         for (let child of elm.children) {
+            child = child as Xmldoc.XmlElement;
             if (child.name) {
                 insertElm(treeLabel, child, client, elmId);
             }

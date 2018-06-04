@@ -127,8 +127,9 @@ data:
             "tasks": {
                 "spell": "server",
                 "intel": "server",
-                "snapshot": "both",
-                "translation": "server"
+                "translation": "server",
+                "augmentation": "server",
+                "snapshot": "both"
             },
             "workerType": "random",
             "workerAckTimeMSec": 250,

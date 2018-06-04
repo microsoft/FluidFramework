@@ -965,7 +965,6 @@ export async function load(
     connect = true,
     registry: api.Registry<api.ICollaborativeObjectExtension> = defaultRegistry,
     service: api.IDocumentService = defaultDocumentService): Promise<Document> {
-
     if (service.errorTrackingEnabled()) {
         const deferred = new Deferred<Document>();
         const errorTracker = new BrowserErrorTrackingService();

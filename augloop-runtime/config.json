@@ -1,15 +1,4 @@
 {
-    "app": {
-        "riddlerUrl": "http://riddler:5000",
-        "gitUrl": "http://gitrest:3000",
-        "cobaltUrl": "http://cobalt"
-    },
-    "login": {
-        "microsoft": {
-            "clientId": "3d642166-9884-4463-8248-78961b8c1300",
-            "secret": "IefegJIsumWtD1Of/9AIUWvm6ryR624vgMtKRmcNEsQ="
-        }
-    },
     "logger": {
         "colorize": true,
         "morganFormat": "dev",
@@ -17,14 +6,6 @@
         "level": "info",
         "timestamp": true,
         "label": "winston"
-    },
-    "mongo": {
-        "endpoint": "mongodb://mongodb:27017",
-        "collectionNames": {
-            "tenants": "tenantCollection",
-            "users": "userCollection",
-            "orgs": "orgCollection"
-        }
     },
     "kafka": {
         "lib": {
@@ -41,8 +22,25 @@
         "track": false,
         "endpoint" : "https://7235bc222189462ca65fa1a38591f96b:74acc3b4610f47a38a50d1bcbfcd6655@sentry.wu2.prague.office-int.com/2"
     },
-    "redis": {
-        "host": "redis",
-        "port": 6379
+    "augloop": {
+        "alfred": "http://alfred:3000",
+        "tmz": "http://tmz:4000"
+    },
+    "auth": {
+        "endpoint": "http://riddler:5000"
+    },
+    "worker": {
+        "alfredUrl": "http://alfred:3000",
+        "serverUrl": "http://localhost:3000",
+        "url": "http://localhost:4000",
+        "blobStorageUrl": "http://historian:3000",
+        "scriptUrl": "http://localhost:9000/agents/",
+        "repository": "prague",
+        "storageBucket": "snapshots",
+        "intervalMSec": 5000,
+        "onlyServer": false,
+        "permission": {
+            "paparazzi": ["augmentation"]
+        }
     }
 }

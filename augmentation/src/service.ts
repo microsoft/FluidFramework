@@ -37,12 +37,13 @@ export async function readFile(path: string): Promise<any> {
 export async function writeFile(path: string, text: string): Promise<any> {
     const textToWrite = JSON.stringify(helper.constructSpellcheckerInput(text));
     return new Promise<any>((resolve, reject) => {
-        fs.writeFile(path, textToWrite, (error, data) => {
+        fs.writeFile(path, textToWrite, (error) => {
             if (error) {
                 console.log(`Error writing file: ${error}`);
                 reject(error);
+            } else {
+                resolve();
             }
-            resolve(data);
         });
     });
 }

@@ -19,17 +19,17 @@
         "@types/node": "^8.0.14",
         "@types/request": "^2.0.3",
         "concurrently": "^3.4.0",
-        "nodemon": "^1.11.0",
+        "nodemon": "^1.17.5",
         "tslint": "^4.5.1",
         "typescript": "2.3.x"
     },
     "dependencies": {
         "async": "^2.5.0",
-        "body-parser": "^1.17.2",
+        "body-parser": "^1.18.3",
         "cors": "^2.8.4",
-        "express": "^4.15.3",
+        "express": "^4.16.3",
         "hjs": "0.0.6",
-        "lodash": "^4.17.4",
-        "request": "^2.83.0"
+        "lodash": "^4.17.10",
+        "request": "^2.87.0"
     }
 }

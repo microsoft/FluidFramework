@@ -33,7 +33,7 @@ async function invokeExecutable(text: string): Promise<any> {
                     // Converts the console output to JSON.
                     resolve(helper.extractJSON(data));
             }, (error) => {
-                reject(error)
+                reject(error);
             });
         }, (error) => {
             reject(error);

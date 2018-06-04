@@ -21,9 +21,10 @@ export class BaseWork extends EventEmitter {
             (doc) => {
                 console.log(`Loaded document ${this.id}`);
                 this.document = doc;
-                this.document.on("error", (error) => {
+                this.errorHandler = (error) => {
                     this.events.emit("error", error);
-                });
+                };
+                this.document.on("error", this.errorHandler);
             }, (error) => {
                 console.error("BaseWork:loadDocument failed", error);
                 return Promise.reject(error);

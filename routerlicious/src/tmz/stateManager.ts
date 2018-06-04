@@ -118,7 +118,7 @@ export class StateManager {
         const returnedWorks: IDocumentWork[] = [];
         const workerState = this.workerToDocumentMap.get(worker.socket.id);
         for (const document of workerState.documents) {
-            const work: IWork = { workType: document[1], workerType: this.tasks[document[1]] };
+            const work: IWork = { workType: document.workType, workerType: this.tasks[document.workType] };
             returnedWorks.push({
                 documentId: document.documentId,
                 tenantId: document.tenantId,

@@ -4,6 +4,7 @@ export * from "./intelligence";
 export * from "./register";
 export * from "./spellchecker";
 export * from "./definitions";
+export * from "./baseWork";
 export * from "./snapshotWork";
 export * from "./spellcheckerWork";
 export * from "./rateLimiter";
