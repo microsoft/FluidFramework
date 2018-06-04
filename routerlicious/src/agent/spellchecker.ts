@@ -1,13 +1,19 @@
 // tslint:disable:whitespace
-import clone = require("lodash/clone");
 import { core, MergeTree } from "../client-api";
 import { SharedString } from "../shared-string";
 
-interface IPgMarker {
+export interface IPgMarker {
 
     tile: MergeTree.Marker;
 
     pos: number;
+}
+
+export interface IRange {
+
+    begin: number;
+
+    end: number;
 }
 
 function compareProxStrings(a: MergeTree.ProxString<number>, b: MergeTree.ProxString<number>) {
@@ -20,8 +26,8 @@ class Speller {
     private static altMax = 7;
     private static idleTimeMS = 500;
     private currentIdleTime: number = 0;
-    private pendingSpellChecks: MergeTree.IMergeTreeOp[] = [];
-    private pendingParagraphs: IPgMarker[] = new Array<IPgMarker>();
+    private pendingMarkers: IPgMarker[] = new Array<IPgMarker>();
+    private tileMap: Map<MergeTree.ReferencePosition, IRange> = new Map<MergeTree.ReferencePosition, IRange>();
     private verbose = false;
 
     constructor(
@@ -112,19 +118,26 @@ class Speller {
         }
     }
 
-    private spellOp(delta: MergeTree.IMergeTreeOp) {
-        if (delta.type === MergeTree.MergeTreeDeltaType.INSERT) {
-            this.currentWordSpellCheck(delta.pos1);
-        } else if (delta.type === MergeTree.MergeTreeDeltaType.REMOVE) {
-            this.currentWordSpellCheck(delta.pos1, true);
-        } else if (delta.type === MergeTree.MergeTreeDeltaType.GROUP) {
-            for (const groupOp of delta.ops) {
-                this.spellOp(groupOp);
+    private setEvents() {
+        const idleCheckerMS = Speller.idleTimeMS / 5;
+        setInterval(() => {
+            this.currentIdleTime += idleCheckerMS;
+            if (this.currentIdleTime >= Speller.idleTimeMS) {
+                this.sliceParagraph();
+                this.currentIdleTime = 0;
             }
-        }
+        }, idleCheckerMS);
+        this.sharedString.on("op", (msg: core.ISequencedObjectMessage) => {
+            if (msg && msg.contents) {
+                const delta = msg.contents as MergeTree.IMergeTreeOp;
+                this.collectDeltas(delta);
+                this.currentIdleTime = 0;
+            }
+        });
     }
 
-    private enqueueParagraph(delta: MergeTree.IMergeTreeOp) {
+    // Collects deltas and convert them into markers.
+    private collectDeltas(delta: MergeTree.IMergeTreeOp) {
         if (delta.type === MergeTree.MergeTreeDeltaType.INSERT ||
             delta.type === MergeTree.MergeTreeDeltaType.REMOVE) {
             const pgRef = this.sharedString.client.mergeTree.findTile(delta.pos1,
@@ -135,39 +148,10 @@ class Speller {
             } else {
                 pgMarker = { tile: pgRef.tile as MergeTree.Marker, pos: pgRef.pos };
             }
-            this.pendingParagraphs.push(pgMarker);
+            this.pendingMarkers.push(pgMarker);
         } else if (delta.type === MergeTree.MergeTreeDeltaType.GROUP) {
             for (const groupOp of delta.ops) {
-                this.enqueueParagraph(groupOp);
-            }
-        }
-    }
-
-    private setEvents() {
-        const idleCheckerMS = Speller.idleTimeMS / 5;
-        setInterval(() => {
-            this.currentIdleTime += idleCheckerMS;
-            if (this.currentIdleTime >= Speller.idleTimeMS) {
-                this.runSpellOp();
-                this.currentIdleTime = 0;
-            }
-        }, idleCheckerMS);
-        this.sharedString.on("op", (msg: core.ISequencedObjectMessage) => {
-            if (msg && msg.contents) {
-                const delta = msg.contents as MergeTree.IMergeTreeOp;
-                this.pendingSpellChecks.push(delta);
-                this.enqueueParagraph(delta);
-                this.currentIdleTime = 0;
-            }
-        });
-    }
-
-    private runSpellOp() {
-        if (this.pendingSpellChecks.length > 0) {
-            const pendingChecks = clone(this.pendingSpellChecks);
-            this.pendingSpellChecks = [];
-            for (const delta of pendingChecks) {
-                this.spellOp(delta);
+                this.collectDeltas(groupOp);
             }
         }
     }
@@ -183,136 +167,73 @@ class Speller {
         };
     }
 
-    private currentWordSpellCheck(pos: number, rev = false) {
-        let words = "";
-        let fwdWords = "";
-        let sentence = "";
-        let fwdSentence = "";
-        let wordsFound = false;
-        const mergeTree = this.sharedString.client.mergeTree;
-
-        const gatherReverse = (segment: MergeTree.Segment) => {
-            switch (segment.getType()) {
-                case MergeTree.SegmentType.Marker:
-                    if (!wordsFound) {
-                        words = " " + words;
-                    }
-                    sentence = " " + sentence;
-                    const marker = segment as MergeTree.Marker;
-                    if (marker.hasTileLabel("pg")) {
-                        return false;
-                    }
-                    break;
-                case MergeTree.SegmentType.Text:
-                    const textSegment = segment as MergeTree.TextSegment;
-                    if (mergeTree.localNetLength(textSegment)) {
-                        if (!wordsFound) {
-                            words = textSegment.text + words;
-                        }
-                        sentence = textSegment.text + sentence;
-                    }
-                    break;
-                // TODO: component
-                default:
-                    throw new Error("Unknown SegmentType");
-            }
-            // console.log(`rev: -${text}-`);
-            if (/\s+\w+/.test(words)) {
-                wordsFound = true;
-            }
-            if (/[\?\.\!]\s*\w+/.test(sentence)) {
-                return false;
-            }
-            return true;
-        };
-
-        const gatherForward = (segment: MergeTree.Segment) => {
-            switch (segment.getType()) {
-                case MergeTree.SegmentType.Marker:
-                    if (!wordsFound) {
-                        fwdWords = fwdWords + " ";
-                    }
-                    fwdSentence = fwdSentence + " ";
-                    const marker = segment as MergeTree.Marker;
-                    if (marker.hasTileLabel("pg")) {
-                        return false;
-                    }
-                    break;
-                case MergeTree.SegmentType.Text:
-                    const textSegment = segment as MergeTree.TextSegment;
-                    if (mergeTree.localNetLength(textSegment)) {
-                        if (!wordsFound) {
-                            fwdWords = fwdWords + textSegment.text;
-                        }
-                        fwdSentence = fwdSentence + textSegment.text;
-                    }
-                    break;
-                // TODO: component
-                default:
-                    throw new Error("Unknown SegmentType");
-            }
-            if (/\w+\s+/.test(fwdWords)) {
-                wordsFound = true;
-            }
-            if (/\w+\s*[\.\?\!]/.test(fwdSentence)) {
-                return false;
-            }
-            return true;
-        };
-
-        const segoff = this.sharedString.client.mergeTree.getContainingSegment(pos,
-            MergeTree.UniversalSequenceNumber, this.sharedString.client.getClientId());
-        if (segoff && segoff.segment) {
-            if (segoff.offset !== 0) {
-                console.log("expected pos only at segment boundary");
-            }
-            // assumes op has made pos a segment boundary
-            this.sharedString.client.mergeTree.leftExcursion(segoff.segment, gatherReverse);
-            const startPos = pos - words.length;
-            const sentenceStartPos = pos - sentence.length;
-
-            if (segoff.segment) {
-                wordsFound = false;
-                if (gatherForward(segoff.segment)) {
-                    this.sharedString.client.mergeTree.rightExcursion(segoff.segment, gatherForward);
+    // Slices paragraph based on previously collected markers. For dedeuplication, uses a map with tile as hash key.
+    private sliceParagraph() {
+        if (this.pendingMarkers.length > 0) {
+            for (const pg of this.pendingMarkers) {
+                let offset = 0;
+                if (pg.tile) {
+                    offset = this.sharedString.client.mergeTree.getOffset(pg.tile, MergeTree.UniversalSequenceNumber,
+                        this.sharedString.client.getClientId());
                 }
-                words = words + fwdWords;
-                sentence = sentence + fwdSentence;
-                if (this.verbose) {
-                    // tslint:disable-next-line:max-line-length
-                    console.log(`found sentence ${sentence} (start ${sentenceStartPos}, end ${sentenceStartPos + sentence.length}) around change`);
+                const endMarker = this.sharedString.client.mergeTree.findTile(offset + 1,
+                    this.sharedString.client.getClientId(), "pg", false);
+                if (endMarker) {
+                    this.tileMap.set(endMarker.tile, {begin: offset, end: endMarker.pos});
                 }
-                // TODO: send this sentence to service for analysis
-                const re = /\b\w+\b/g;
-                let result: RegExpExecArray;
-                do {
-                    result = re.exec(words);
-                    if (result) {
-                        const start = result.index + startPos;
-                        const end = re.lastIndex + startPos;
-                        const candidate = result[0];
-                        if (this.spellingError(candidate.toLocaleLowerCase())) {
-                            const textErrorInfo = this.makeTextErrorInfo(candidate);
-                            if (this.verbose) {
-                                console.log(`respell (${start}, ${end}): ${textErrorInfo.text}`);
-                                let buf = "alternates: ";
-                                for (const alt of textErrorInfo.alternates) {
-                                    buf += ` ${alt.text}:${alt.invDistance}:${alt.val}`;
-                                }
-                                console.log(buf);
-                            }
-                            this.sharedString.annotateRange({ textError: textErrorInfo }, start, end);
-                        } else {
-                            if (this.verbose) {
-                                // tslint:disable:max-line-length
-                                console.log(`spell ok (${start}, ${end}): ${words.substring(result.index, re.lastIndex)}`);
-                            }
-                            this.sharedString.annotateRange({ textError: null }, start, end);
-                        }
-                    }
-                }
-                while (result);
             }
+            for (const entry of this.tileMap.entries()) {
+                const range = entry[1];
+                let endPos: number;
+                if (entry[0]) {
+                    endPos = range.end;
+                } else {
+                    endPos = this.sharedString.client.mergeTree.getLength(MergeTree.UniversalSequenceNumber,
+                        this.sharedString.client.getClientId());
+                }
+                const queryString = this.sharedString.getText(range.begin, endPos);
+                const newRange: IRange = {
+                    begin: range.begin + 1,
+                    end: endPos + 1,
+                };
+                this.runtimeSpellCheck(newRange.begin, newRange.end, queryString);
+            }
+            this.pendingMarkers = [];
+            this.tileMap.clear();
+        }
+    }
+
+    private runtimeSpellCheck(beginPos: number, endPos: number, text: string) {
+        const re = /\b\w+\b/g;
+        let result: RegExpExecArray;
+        let runningStart = beginPos;
+        do {
+            result = re.exec(text);
+            if (result) {
+                const start = result.index + beginPos;
+                const end = re.lastIndex + beginPos;
+                const candidate = result[0];
+                if (this.spellingError(candidate.toLocaleLowerCase())) {
+                    if (start > runningStart) {
+                        this.sharedString.annotateRange({ textError: null }, runningStart, start);
+                    }
+                    const textErrorInfo = this.makeTextErrorInfo(candidate);
+                    if (this.verbose) {
+                        console.log(`respell (${start}, ${end}): ${textErrorInfo.text}`);
+                        let buf = "alternates: ";
+                        for (const alt of textErrorInfo.alternates) {
+                            buf += ` ${alt.text}:${alt.invDistance}:${alt.val}`;
+                        }
+                        console.log(buf);
+                    }
+                    this.sharedString.annotateRange({ textError: textErrorInfo }, start, end);
+                    runningStart = end;
+                }
+            }
+        }
+        while (result);
+        if (endPos > runningStart) {
+            this.sharedString.annotateRange({ textError: null }, runningStart, endPos);
         }
     }
 }

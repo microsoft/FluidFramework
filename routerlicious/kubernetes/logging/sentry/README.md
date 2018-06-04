@@ -1,8 +1,7 @@
 # Sentry
 
-[Sentry](https://sentry.io/) is a cross-platform crash reporting and aggregation platform. The stable/chart version does not populate environment variables correctly. Using a local modified chart. To install:
-
+[Sentry](https://sentry.io/) is a cross-platform crash reporting and aggregation platform. We use a custom yaml file to populate initial config variables. To install the chart:
 
 ```console
-$ helm install --name sentry . --wait --timeout 600
+$ helm install --name sentry --wait -f values.yaml stable/sentry --timeout=600
 ```
