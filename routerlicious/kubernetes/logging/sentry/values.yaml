@@ -103,7 +103,7 @@ persistence:
   ##
   # storageClass: "-"
   accessMode: ReadWriteOnce
-  size: 512Gi
+  size: 128Gi
 
   # Where to store sentry files
   # https://docs.sentry.io/server/filestore/
