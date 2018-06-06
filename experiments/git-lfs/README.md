@@ -18,9 +18,9 @@ To test the server, feel free to run this container, then clone this **public** 
 You should be able to load cat.bin and dog.bin from git-lfs because the data is stored in content/*/guid...
 Note: that does mean we're incepting git storages (a lfs file is stored in git, then retrieved using lfs), but this is a starting point, and it seems useful to have a hyper reproduceable test.
 
-To run:
-docker build . -t lfsgo 
-docker run -it -p 9999:9999 lfsgo
+To run:  
+docker build . -t lfsgo  
+docker run -it -p 9999:9999 lfsgo  
 
 ## Running
 
