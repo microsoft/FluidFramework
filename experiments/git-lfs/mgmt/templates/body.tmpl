@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>LFS Test Server Management</title>
+    <style type="text/css">
+      @import "/mgmt/css/primer.css";
+      .masthead{
+        padding-top:1rem;
+        padding-bottom:1rem;
+        margin-bottom:1.5rem;
+        background-color:#4183c4;
+        color: white;
+      }
+      td {
+        padding-right: 1rem;
+        padding-bottom: 1rem;
+      }
+    </style>
+  </head>
+  <body>
+    <header class="masthead">
+    <div class="container">
+      <h1>LFS Test Server</h1>
+    </div>
+    </header>
+
+    <div class="container">
+      <div class="columns">
+        <div class="one-fourth column">
+          <nav class="menu">
+            <a class="menu-item {{if eq .Name "index"}}selected{{end}}" href="/mgmt">LFS Server</a>
+            <a class="menu-item {{if eq .Name "users"}}selected{{end}}" href="/mgmt/users">Users</a>
+            <a class="menu-item {{if eq .Name "objects"}}selected{{end}}" href="/mgmt/objects">Objects</a>
+            <a class="menu-item {{if eq .Name "locks"}}selected{{end}}" href="/mgmt/locks">Locks</a>
+          </nav>
+        </div>
+        <div class="three-fourths column">
+          {{template "content" .}}
+      </div>
+    </div>
+  </body>
+</html>

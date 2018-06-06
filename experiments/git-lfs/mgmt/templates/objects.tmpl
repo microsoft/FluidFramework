@@ -1,0 +1,14 @@
+<div class="container">
+  <table>
+    <tr>
+      <th>OID</th>
+      <th>Size</th>
+    </tr>
+    {{range .Objects}}
+      <tr>
+        <td><a target="_blank" href="/mgmt/raw/{{.Oid}}">{{.Oid}}</a></td>
+        <td>{{.Size}}</td>
+      </tr>
+    {{end}}
+  </table>
+</div>

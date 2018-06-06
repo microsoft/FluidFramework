@@ -1,0 +1,23 @@
+<div class="container">
+  <p><strong>URL:</strong> {{.Config.Scheme}}://{{.Config.Host}}</p>
+  <p><strong>Listen Address:</strong> {{.Config.Listen}}</p>
+  <p><strong>Database:</strong> {{.Config.MetaDB}}</p>
+  <p><strong>Content:</strong> {{.Config.ContentPath}}</p>
+</div>
+<div class="container">
+  <p>To configure a repository to use this LFS server, add the following to the repository's <code>.gitconfig</code> file:</p>
+  <pre>
+<code>[lfs]
+    url = "{{.Config.Scheme}}://{{.Config.Host}}/"
+</code>
+</pre>
+
+{{if eq .Config.Scheme "https"}}
+<p>Your server is configured to use https. If you're using self signed certificates, or are getting SSL errors, you can add the following to your <code>.gitconfig</code> file:</p>
+<pre>
+<code>[http]
+    sslverify = false
+</code>
+</pre>
+{{end}}
+</div>

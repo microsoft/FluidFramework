@@ -1,0 +1,17 @@
+<div class="container">
+  <table>
+    {{range .Users}}
+      <tr>
+        <td>{{.Name}}</td>
+        <td><form method="POST" action="/mgmt/del"><input type="hidden" name="name" value="{{.Name}}"/><button type="submit" class="btn btn-sm btn-danger">Remove</button></form></td>
+      </tr>
+    {{end}}
+  </table>
+</div>
+<div class="container">
+  <form method="POST" action="/mgmt/add">
+    <input type="text" name="name" placeholder="Username">
+    <input type="password" name="password" placeholder="Password">
+    <button type="submit" class="btn">Add User</button>
+  </form>
+</div>
