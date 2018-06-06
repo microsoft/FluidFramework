@@ -1,0 +1,21 @@
+{
+  "name": "prague-rdkafka",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc",
+    "tsc": "tsc",
+    "start": "tsc && node dist/index.js -p",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "dependencies": {
+    "commander": "^2.15.1"
+  },
+  "devDependencies": {
+    "@types/commander": "^2.12.2",
+    "@types/node": "^8.10.10",
+    "typescript": "^2.8.3"
+  }
+}
