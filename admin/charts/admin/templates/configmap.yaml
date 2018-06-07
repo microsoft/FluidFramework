@@ -51,7 +51,7 @@ data:
         },
         "error": {
             "track": true,
-            "endpoint" : "https://7235bc222189462ca65fa1a38591f96b:74acc3b4610f47a38a50d1bcbfcd6655@sentry.wu2.prague.office-int.com/2"
+            "endpoint" : "https://344cbdea481f46baa1d3f5144c90b1f6:0385ef41b1444e8ebff49c9a6b647485@sentry.wu2.prague.office-int.com/3"
         },
         "redis": {
             "host": "{{ .Values.endpoints.redis }}",

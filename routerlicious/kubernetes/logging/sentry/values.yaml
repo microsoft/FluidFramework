@@ -23,8 +23,6 @@ web:
       value: "b8a625725c10600ca98bacd6fde134ee68528c1a"
     - name: SOCIAL_AUTH_REDIRECT_IS_HTTPS
       value: "true"
-    - name: SECURE_PROXY_SSL_HEADER
-      value: ("HTTP_X_FORWARDED_PROTO", "https")
     - name: USE_X_FORWARDED_HOST
       value: "true"
     

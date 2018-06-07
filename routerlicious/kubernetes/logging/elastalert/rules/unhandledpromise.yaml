@@ -13,7 +13,7 @@ data:
           query: "*UnhandledPromiseRejection*"
     alert:
     - "post"
-    http_post_url: "https://sentry.wu2.prague.office-int.com/api/2/store/?sentry_version=7&sentry_key=7235bc222189462ca65fa1a38591f96b&sentry_secret=74acc3b4610f47a38a50d1bcbfcd6655&sentry_client=elastalert"
+    http_post_url: "https://sentry.wu2.prague.office-int.com/api/3/store/?sentry_version=7&sentry_key=344cbdea481f46baa1d3f5144c90b1f6&sentry_secret=0385ef41b1444e8ebff49c9a6b647485&sentry_client=elastalert"
     http_post_payload:
         timestamp: timestamp
         logger: kubernetes.pod_name
