@@ -41,7 +41,7 @@ data:
             "restJsonSize": "50mb",
             "tenants": [
                 {{- range $index, $tenant := .Values.alfred.tenants }}
-                {{ toJson . }}
+                {{ toJson . }},
                 {{- end }}
                 {
                     "id": "prague",
