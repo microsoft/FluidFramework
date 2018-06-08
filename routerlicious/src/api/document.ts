@@ -364,17 +364,46 @@ export class Document extends EventEmitter implements api.IDocument {
     /**
      * Called to snapshot the given document
      */
-    public async snapshot(tagMessage: string = ""): Promise<void> {
+    public snapshot(tagMessage: string = ""): Promise<void> {
         // TODO: support for branch snapshots. For now simply no-op when a branch snapshot is requested
         if (this.parentBranch) {
             debug(`Skipping snapshot due to being branch of ${this.parentBranch}`);
             return;
         }
 
+        // Grab the snapshot of the current state
+        const snapshotSequenceNumber = this._deltaManager.referenceSequenceNumber;
         const root = this.snapshotCore();
+
         // tslint:disable-next-line:max-line-length
         const message = `Commit @${this._deltaManager.referenceSequenceNumber}:${this._deltaManager.minimumSequenceNumber} ${tagMessage}`;
-        await this.storageService.write(root, message);
+
+        return this.storageService.getVersions(this.id, 1).then(async (lastVersion) => {
+            // Pull the sequence number stored with the previous version
+            let sequenceNumber = 0;
+            if (lastVersion.length > 0) {
+                const attributesAsString = await this.storageService.getContent(lastVersion[0], ".attributes");
+                const decoded = Buffer.from(attributesAsString, "base64").toString();
+                const attributes = JSON.parse(decoded) as api.IDocumentAttributes;
+                sequenceNumber = attributes.sequenceNumber;
+            }
+
+            // Retrieve all deltas from sequenceNumber to snapshotSequenceNumber. Range is exlusive so we increment
+            // the snapshotSequenceNumber by 1 to include it.
+            const deltas = await this._deltaManager.getDeltas(sequenceNumber, snapshotSequenceNumber + 1);
+            const parents = lastVersion.length > 0 ? [lastVersion[0].sha] : [];
+            root.entries.push({
+                mode: api.FileMode.File,
+                path: "deltas",
+                type: api.TreeEntry[api.TreeEntry.Blob],
+                value: {
+                    contents: JSON.stringify(deltas),
+                    encoding: "utf-8",
+                },
+            });
+
+            await this.storageService.write(root, parents, message);
+        });
     }
 
     /**
@@ -676,6 +705,7 @@ export class Document extends EventEmitter implements api.IDocument {
             transformedMessages.push(this.transform(message, this._deltaManager.minimumSequenceNumber));
         }
         entries.push({
+            mode: api.FileMode.File,
             path: ".messages",
             type: api.TreeEntry[api.TreeEntry.Blob],
             value: {
@@ -696,6 +726,7 @@ export class Document extends EventEmitter implements api.IDocument {
                     type: object.object.type,
                 };
                 snapshot.entries.push({
+                    mode: api.FileMode.File,
                     path: ".attributes",
                     type: api.TreeEntry[api.TreeEntry.Blob],
                     value: {
@@ -706,6 +737,7 @@ export class Document extends EventEmitter implements api.IDocument {
 
                 // And then store the tree
                 entries.push({
+                    mode: api.FileMode.Directory,
                     path: objectId,
                     type: api.TreeEntry[api.TreeEntry.Tree],
                     value: snapshot,
@@ -720,6 +752,7 @@ export class Document extends EventEmitter implements api.IDocument {
             sequenceNumber: this._deltaManager.referenceSequenceNumber,
         };
         entries.push({
+            mode: api.FileMode.File,
             path: ".attributes",
             type: api.TreeEntry[api.TreeEntry.Blob],
             value: {

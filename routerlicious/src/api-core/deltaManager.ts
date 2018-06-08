@@ -11,6 +11,9 @@ import * as storage from "./storage";
 
 const MaxReconnectDelay = 8000;
 const InitialReconnectDelay = 1000;
+const MissingFetchDelay = 100;
+const MaxFetchDelay = 10000;
+const MaxBatchDeltas = 2000;
 
 /**
  * Interface used to define a strategy for handling incoming delta messages
@@ -178,12 +181,82 @@ export class DeltaManager extends EventEmitter implements IDeltaManager {
         }
 
         // Connect to the delta storage endpoint
-        this.deltaStorageP = this.service.connectToDeltaStorage(this.tenantId, this.id, token);
+        const storageDeferred = new Deferred<storage.IDocumentDeltaStorageService>();
+        this.deltaStorageP = storageDeferred.promise;
+        this.service.connectToDeltaStorage(this.tenantId, this.id, token).then(
+            (deltaStorage) => {
+                storageDeferred.resolve(deltaStorage);
+            },
+            (error) => {
+                // Could not get delta storage promise. For now we assume this is not possible and so simply
+                // emit the error.
+                this.emit("error", error);
+            });
 
         this.connecting = new Deferred<IConnectionDetails>();
         this.connectCore(token, reason, InitialReconnectDelay);
 
         return this.connecting.promise;
+    }
+
+    public getDeltas(from: number, to?: number): Promise<protocol.ISequencedDocumentMessage[]> {
+        const deferred = new Deferred<protocol.ISequencedDocumentMessage[]>();
+        this.getDeltasCore(from, to, [], deferred, 0);
+
+        return deferred.promise;
+    }
+
+    private getDeltasCore(
+        from: number,
+        to: number,
+        allDeltas: protocol.ISequencedDocumentMessage[],
+        deferred: Deferred<protocol.ISequencedDocumentMessage[]>,
+        retry: number) {
+
+        // Grab a chunk of deltas - limit the number fetched to MaxBatchDeltas
+        const deltasP = this.deltaStorageP.then((deltaStorage) => {
+            const fetchTo = to === undefined ? MaxBatchDeltas : Math.min(from + MaxBatchDeltas, to);
+            return deltaStorage.get(from, fetchTo);
+        });
+
+        // Process the received deltas
+        const replayP = deltasP.then(
+            (deltas) => {
+                allDeltas.push(...deltas);
+
+                const lastFetch = deltas.length > 0 ? deltas[deltas.length - 1].sequenceNumber : from;
+
+                // If we have no upper bound and fetched less than the max deltas - meaning we got as many as exit -
+                // then we can resolve the promise. We also resolve if we fetched up to the expected to. Otherwise
+                // we will look to try again
+                if ((to === undefined && Math.max(0, lastFetch - from - 1) < MaxBatchDeltas) || to === lastFetch + 1) {
+                    deferred.resolve(allDeltas);
+                    return null;
+                } else {
+                    // Attempt to fetch more deltas. If we didn't recieve any in the previous call we up our retry
+                    // count since something prevented us from seeing those deltas
+                    return { from: lastFetch, to, retry: deltas.length === 0 ? retry + 1 : 0 };
+                }
+            },
+            (error) => {
+                // There was an error fetching the deltas. Up the retry counter
+                return { from, to, retry: retry + 1 };
+            });
+
+        // If an error or we missed fetching ops - call back with a timer to fetch any missing values
+        replayP.then(
+            (replay) => {
+                if (!replay) {
+                    return;
+                }
+
+                const delay = Math.min(
+                    MaxFetchDelay,
+                    replay.retry !== 0 ? MissingFetchDelay * Math.pow(2, replay.retry) : 0);
+                setTimeout(
+                    () => this.getDeltasCore(replay.from, replay.to, allDeltas, deferred, replay.retry),
+                    delay);
+            });
     }
 
     private connectCore(token: string, reason: string, delay: number) {
@@ -294,24 +367,16 @@ export class DeltaManager extends EventEmitter implements IDeltaManager {
 
         this.fetching = true;
 
-        this.deltaStorageP.then(
-            (deltaStorage) => {
-                deltaStorage.get(from, to).then(
-                    (messages) => {
-                        this.fetching = false;
-                        this.catchUp(messages);
-                    },
-                    (error) => {
-                        // Retry on failure
-                        debug(error);
-                        this.fetching = false;
-                        this.fetchMissingDeltas(from, to);
-                    });
+        this.getDeltas(from, to).then(
+            (messages) => {
+                this.fetching = false;
+                this.catchUp(messages);
             },
             (error) => {
-                // Could not get delta storage promise. For now we assume this is not possible and so simply
-                // emit the error.
-                this.emit("error", error);
+                // Retry on failure
+                debug(error);
+                this.fetching = false;
+                this.fetchMissingDeltas(from, to);
             });
     }
 

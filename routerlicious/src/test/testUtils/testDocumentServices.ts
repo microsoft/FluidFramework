@@ -34,11 +34,15 @@ export class TestDocumentStorageService implements api.IDocumentStorageService {
         throw new Error("Method not implemented.");
     }
 
+    public async getContent(version: git.ICommit, path: string): Promise<string> {
+        return "";
+    }
+
     public read(path: string): Promise<string> {
         throw new Error("Method not implemented.");
     }
 
-    public write(root: api.ITree, message: string): Promise<git.ICommit> {
+    public write(root: api.ITree, parents: string[], message: string): Promise<git.ICommit> {
         throw new Error("Method not implemented.");
     }
 }

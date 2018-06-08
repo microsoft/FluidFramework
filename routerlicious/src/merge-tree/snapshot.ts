@@ -86,6 +86,7 @@ export class Snapshot {
         const tree: API.ITree = {
             entries: [
                 {
+                    mode: API.FileMode.File,
                     path: "header",
                     type: API.TreeEntry[API.TreeEntry.Blob],
                     value: {
@@ -94,6 +95,7 @@ export class Snapshot {
                     },
                 },
                 {
+                    mode: API.FileMode.File,
                     path: "body",
                     type: API.TreeEntry[API.TreeEntry.Blob],
                     value: {

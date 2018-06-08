@@ -1,3 +1,4 @@
+import hasIn = require("lodash/hasIn");
 import * as api from "../api-core";
 import { IMap, IMapView, IValueChanged, IValueOperation, IValueType, SerializeFilter } from "../data-types";
 import { debug } from "./debug";
@@ -7,6 +8,7 @@ import { MapView } from "./view";
 
 const snapshotFileName = "header";
 const contentPath = "content";
+const keyPath = "keys";
 
 /**
  * Copies all values from the provided MapView to the given Map
@@ -138,6 +140,7 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
         const tree: api.ITree = {
             entries: [
                 {
+                    mode: api.FileMode.File,
                     path: snapshotFileName,
                     type: api.TreeEntry[api.TreeEntry.Blob],
                     value: {
@@ -148,9 +151,41 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
             ],
         };
 
+        // Add in the directory structure of any links within the map
+        const keysTree: api.ITree = {
+            entries: [],
+        };
+        this.view.forEach((value, key) => {
+            if (hasIn(value, "__collaborativeObject__")) {
+                const collabObject = value as api.ICollaborativeObject;
+                const id = collabObject.id;
+                const path = encodeURIComponent(key);
+
+                keysTree.entries.push({
+                    mode: api.FileMode.Symlink,
+                    path,
+                    type: api.TreeEntry[api.TreeEntry.Blob],
+                    value: {
+                        contents: `${encodeURIComponent(id)}`,
+                        encoding: "utf-8",
+                    },
+                });
+            }
+        });
+        if (keysTree.entries.length > 0) {
+            tree.entries.push({
+                mode: api.FileMode.Directory,
+                path: keyPath,
+                type: api.TreeEntry[api.TreeEntry.Tree],
+                value: keysTree,
+            });
+        }
+
+        // Add the snapshot of the content to the tree
         const contentSnapshot = this.snapshotContent();
         if (contentSnapshot) {
             tree.entries.push({
+                mode: api.FileMode.Directory,
                 path: contentPath,
                 type: api.TreeEntry[api.TreeEntry.Tree],
                 value: contentSnapshot,

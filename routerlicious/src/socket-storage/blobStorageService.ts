@@ -23,8 +23,13 @@ export class DocumentStorageService implements api.IDocumentStorageService  {
         return value.content;
     }
 
-    public write(tree: api.ITree, message: string): Promise<resources.ICommit> {
-        return this.manager.write(this.id, tree, message);
+    public async getContent(version: resources.ICommit, path: string): Promise<string> {
+        const value = await this.manager.getContent(version.sha, path);
+        return value.content;
+    }
+
+    public write(tree: api.ITree, parents: string[], message: string): Promise<resources.ICommit> {
+        return this.manager.write(this.id, tree, parents, message);
     }
 
     private translateCommit(details: resources.ICommitDetails): resources.ICommit {

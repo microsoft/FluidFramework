@@ -64,6 +64,7 @@ export class Stream extends CollaborativeMap implements IStream {
         const tree: api.ITree = {
             entries: [
                 {
+                    mode: api.FileMode.File,
                     path: snapshotFileName,
                     type: api.TreeEntry[api.TreeEntry.Blob],
                     value: {

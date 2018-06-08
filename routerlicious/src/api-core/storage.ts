@@ -51,6 +51,14 @@ export interface ITree {
     entries: ITreeEntry[];
 }
 
+export enum FileMode {
+    File = "100644",
+    Executable = "100755",
+    Directory = "040000",
+    Commit = "160000",
+    Symlink = "120000",
+}
+
 /**
  * A tree entry wraps a path with a type of node
  */
@@ -63,6 +71,10 @@ export interface ITreeEntry {
 
     // The value of the entry - either a tree or a blob
     value: IBlob | ITree;
+
+    // The file mode; one of 100644 for file (blob), 100755 for executable (blob), 040000 for subdirectory (tree),
+    // 160000 for submodule (commit), or 120000 for a blob that specifies the path of a symlink
+    mode: FileMode;
 }
 
 /**
@@ -121,14 +133,19 @@ export interface IDocumentStorageService {
     getVersions(sha: string, count: number): Promise<resources.ICommit[]>;
 
     /**
+     * Retrieves the content for the given commit at the given path
+     */
+    getContent(version: resources.ICommit, path: string): Promise<string>;
+
+    /**
      * Reads the object with the given ID
      */
-    read(path: string): Promise<string>;
+    read(sha: string): Promise<string>;
 
     /**
      * Writes to the object with the given ID
      */
-    write(root: ITree, message: string): Promise<resources.ICommit>;
+    write(root: ITree, parents: string[], message: string): Promise<resources.ICommit>;
 }
 
 /**

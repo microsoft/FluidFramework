@@ -16,7 +16,11 @@ class TestDocumentStorageService implements api.IDocumentStorageService {
         return "";
     }
 
-    public async write(root: api.ITree, message: string): Promise<resources.ICommit> {
+    public async getContent(version: resources.ICommit, path: string): Promise<string> {
+        return "";
+    }
+
+    public async write(root: api.ITree, parents: string[], message: string): Promise<resources.ICommit> {
         const commit: resources.ICommit = {
             author: { date: "", email: "", name: ""},
             committer: { date: "", email: "", name: ""},

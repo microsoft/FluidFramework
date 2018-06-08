@@ -86,49 +86,8 @@ export class GitManager {
         return this.historian.createBlob(blob);
     }
 
-    public async createTree(files: api.ITree): Promise<resources.ITree> {
-        // Kick off the work to create all the tree values
-        const entriesP: Array<Promise<resources.ICreateBlobResponse | resources.ITree>> = [];
-        for (const entry of files.entries) {
-            switch (api.TreeEntry[entry.type]) {
-                case api.TreeEntry.Blob:
-                    const entryAsBlob = entry.value as api.IBlob;
-                    const blobP = this.createBlob(entryAsBlob.contents, entryAsBlob.encoding);
-                    entriesP.push(blobP);
-                    break;
-
-                case api.TreeEntry.Tree:
-                    const entryAsTree = entry.value as api.ITree;
-                    const treeBlobP = this.createTree(entryAsTree);
-                    entriesP.push(treeBlobP);
-                    break;
-
-                default:
-                    return Promise.reject("Unknown entry type");
-            }
-        }
-
-        // Wait for them all to resolve
-        const entries = await Promise.all(entriesP);
-        const tree: resources.ICreateTreeEntry[] = [];
-        assert(entries.length === files.entries.length);
-
-        // Construct a new tree from the collection of hashes
-        for (let i = 0; i < files.entries.length; i++) {
-            const isTree = files.entries[i].type === api.TreeEntry[api.TreeEntry.Tree];
-            tree.push({
-                mode: isTree ? "040000" : "100644",
-                path: files.entries[i].path,
-                sha: entries[i].sha,
-                type: isTree ? "tree" : "blob",
-            });
-        }
-
-        const requestBody: resources.ICreateTreeParams = {
-            tree,
-        };
-        const treeP = this.historian.createTree(requestBody);
-        return treeP;
+    public createTree(files: api.ITree): Promise<resources.ITree> {
+        return this.createTreeCore(files, 0);
     }
 
     public async createCommit(commit: resources.ICreateCommitParams): Promise<resources.ICommit> {
@@ -169,14 +128,13 @@ export class GitManager {
     /**
      * Writes to the object with the given ID
      */
-    public async write(branch: string, inputTree: api.ITree, message: string): Promise<resources.ICommit> {
-        const treeShaP = this.createTree(inputTree);
-        const lastCommitP = this.getCommits(branch, 1);
+    public async write(
+        branch: string,
+        inputTree: api.ITree,
+        parents: string[],
+        message: string): Promise<resources.ICommit> {
 
-        // TODO maybe I should make people provide the parent commit rather than get the last one?
-        const joined = await Promise.all([treeShaP, lastCommitP]);
-        const tree = joined[0];
-        const lastCommit = joined[1];
+        const tree = await this.createTree(inputTree);
 
         // Construct a commit for the tree
         const commitParams: resources.ICreateCommitParams = {
@@ -186,7 +144,7 @@ export class GitManager {
                 name: "Kurt Berglund",
             },
             message,
-            parents: lastCommit.length > 0 ? [lastCommit[0].sha] : [],
+            parents,
             tree: tree.sha,
         };
 
@@ -202,6 +160,67 @@ export class GitManager {
         }
 
         return commit;
+    }
+
+    private async createTreeCore(files: api.ITree, depth: number): Promise<resources.ITree> {
+        // Kick off the work to create all the tree values
+        const entriesP: Array<Promise<resources.ICreateBlobResponse | resources.ITree>> = [];
+        for (const entry of files.entries) {
+            switch (api.TreeEntry[entry.type]) {
+                case api.TreeEntry.Blob:
+                    const entryAsBlob = entry.value as api.IBlob;
+
+                    // Symlinks currently directy reference a folder off the root of the tree. We adjust
+                    // the path based on the depth of the tree
+                    if (entry.mode === api.FileMode.Symlink) {
+                        entryAsBlob.contents = this.translateSymlink(entryAsBlob.contents, depth);
+                    }
+
+                    const blobP = this.createBlob(entryAsBlob.contents, entryAsBlob.encoding);
+                    entriesP.push(blobP);
+                    break;
+
+                case api.TreeEntry.Tree:
+                    const entryAsTree = entry.value as api.ITree;
+                    const treeBlobP = this.createTreeCore(entryAsTree, depth + 1);
+                    entriesP.push(treeBlobP);
+                    break;
+
+                default:
+                    return Promise.reject("Unknown entry type");
+            }
+        }
+
+        // Wait for them all to resolve
+        const entries = await Promise.all(entriesP);
+        const tree: resources.ICreateTreeEntry[] = [];
+        assert(entries.length === files.entries.length);
+
+        // Construct a new tree from the collection of hashes
+        for (let i = 0; i < files.entries.length; i++) {
+            const isTree = files.entries[i].type === api.TreeEntry[api.TreeEntry.Tree];
+            tree.push({
+                mode: files.entries[i].mode,
+                path: files.entries[i].path,
+                sha: entries[i].sha,
+                type: isTree ? "tree" : "blob",
+            });
+        }
+
+        const requestBody: resources.ICreateTreeParams = {
+            tree,
+        };
+        const treeP = this.historian.createTree(requestBody);
+        return treeP;
+    }
+
+    private translateSymlink(link: string, depth: number): string {
+        let prefix = "";
+        for (let i = 0; i < depth; i++) {
+            prefix += "../";
+        }
+
+        return `${prefix}${link}`;
     }
 }
 

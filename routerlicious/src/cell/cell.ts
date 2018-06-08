@@ -133,6 +133,7 @@ export class Cell extends api.CollaborativeObject implements ICell {
         const tree: api.ITree = {
             entries: [
                 {
+                    mode: api.FileMode.File,
                     path: snapshotFileName,
                     type: api.TreeEntry[api.TreeEntry.Blob],
                     value: {
