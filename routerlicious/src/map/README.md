@@ -1,7 +1,7 @@
 # Map Data Types
 
 ## Counter
-You can create a counter on a map key. We support incrementing/decremnting counter to an upper/lower limit.
+You can create a counter on a map key. We support incrementing/decrementing counter to an upper/lower limit.
 ### Create counter on a map kay
 **Required parameter:**<br/>
 *key*: map key name for the counter.<br/>
@@ -28,7 +28,7 @@ map.on("initCounter", (changed: api.IKeyValueChanged) => {
     get(): Promise<number>;
  }
 ```
-Incrementing/decremnting a counter emits "incrementCounter" events on the map.
+Incrementing/decrementing a counter emits "incrementCounter" events on the map.
 ```
 map.on("incrementCounter", async (changed: IKeyValueChanged ) => {
     // changed.key is the key for the counter.

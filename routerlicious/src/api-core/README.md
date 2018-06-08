@@ -13,7 +13,7 @@ General questions
 * Can I somehow reuse the old sharedb types here? Maybe they all listen for server updates but we pipe changes
   through my own place.
 * Do I really need to abstract the collaborative data types inside of a container object like a document? Or can I expose    them as individual objects? The document may provide better visibility in to where the person is inside the document.
-  But do we really want the MUI semantics of these objects being separably addressible?
+  But do we really want the MUI semantics of these objects being separably addressable?
 
 * Do we need some form of discovery on the underlying data type? Probably not since this is placed within the JS from
   the MUI itself
