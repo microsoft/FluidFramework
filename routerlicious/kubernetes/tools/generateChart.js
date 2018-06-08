@@ -38,6 +38,7 @@ alfred:
   externalUrl: https://alfred.wu2.prague.office-int.com
   host: alfred.wu2.prague.office-int.com
   cert: wu2-tls-certificate
+  tenants: []
 
 deli:
   name: deli

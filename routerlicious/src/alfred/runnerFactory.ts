@@ -64,7 +64,7 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
         const tenantManager = new services.TenantManager(authEndpoint, config.get("worker:blobStorageUrl"));
 
         // Tenants attached to the apps this service exposes
-        const appTenants = (config.get("tenantConfig") as any[]).map((tenant) => ({ id: tenant._id, key: tenant.key }));
+        const appTenants = config.get("alfred:tenants") as Array<{ id: string, key: string }>;
 
         // This wanst to create stuff
         const port = utils.normalizePort(process.env.PORT || "3000");

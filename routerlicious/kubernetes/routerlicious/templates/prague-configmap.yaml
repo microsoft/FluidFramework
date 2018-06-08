@@ -38,7 +38,24 @@ data:
             "kafkaClientId": "{{ template "alfred.fullname" . }}",
             "topic": "{{ .Values.kafka.topics.rawdeltas }}",
             "bucket": "snapshots",
-            "restJsonSize": "50mb"
+            "restJsonSize": "50mb",
+            "tenants": [
+                {{- range $index, $tenant := .Values.alfred.tenants }}
+                {{ toJson . }}
+                {{- end }}
+                {
+                    "id": "prague",
+                    "key": "43cfc3fbf04a97c0921fd23ff10f9e4b"
+                },
+                {
+                    "id": "github",
+                    "key": "0bea3f87c186991a69245a29dc3f61d2"
+                },
+                {
+                    "id": "cobalt",
+                    "key": "0e3c439e9ba63d85936c7e7e9c79478c"
+                }
+            ]
         },
         "login": {
             "enabled": true,
