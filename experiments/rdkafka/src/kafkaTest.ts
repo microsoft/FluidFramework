@@ -15,7 +15,7 @@ let partition = 0;
 commander
     .version("0.0.1")
     .option("-i, --implementation [implementation]", "Choose your Implementation", "kafka-node")
-    .option("-m, --messages [messages]", "number of messages to test with", parseFloat, 10 ** 5)
+    .option("-m, --messages [messages]", "number of messages to test with", parseFloat, 10 ** 4)
     .option("-b, --batchSize [batchSize]", "how many messages to put in a batch", parseFloat, 1)
     .option("-o, --offset [offset]", "Offset Only")
     .option("-p, --progress [progress]", "show progress")
