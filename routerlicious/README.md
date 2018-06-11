@@ -85,6 +85,8 @@ Docker Compose is used to run the service locally. To start up an instance of th
 * `docker-compose build`
 * `docker-compose up`
 
+The standalone app is meant to be run in a Linux container. If when running either of the above commands you get an error mentioning `no matching manifest for windows/amd64 in the manifest list entries`, check that your Docker installation is configured to run Linux containers. If you are on Docker for Windows, you can check this by right-clicking on the Docker icon in your taskbar. If you see the option `Switch to Linux containers...`, click this. If you see the option `Switch to Windows containers...`, you are already configured to run Linux containers.
+
 ### Testing
 
 To test simply run `npm test` - either inside of the container or after building locally.
