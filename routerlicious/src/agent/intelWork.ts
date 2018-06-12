@@ -13,7 +13,9 @@ export class IntelWork extends BaseWork implements IWork {
     }
 
     public async start(): Promise<void> {
-        await this.loadDocument({ localMinSeq: 0, encrypted: undefined, token: this.token }, this.service);
+        await this.loadDocument(
+            { localMinSeq: 0, encrypted: undefined, token: this.token, client: { type: "robot"} },
+            this.service);
         const root = await this.document.getRoot().getView();
         if (!root.has("insights")) {
             root.set("insights", this.document.createMap());

@@ -95,6 +95,7 @@ function getEmptyHeader(id: string): IHeaderDetails {
     const emptyHeader: IHeaderDetails = {
         attributes: {
             branch: id,
+            clients: [],
             minimumSequenceNumber: 0,
             sequenceNumber: 0,
         },
@@ -178,7 +179,7 @@ export class Document extends EventEmitter implements api.IDocument {
     // tslint:enable:variable-name
 
     private messagesSinceMSNChange = new Array<api.ISequencedDocumentMessage>();
-    private clients = new Set<string>();
+    private clients = new Map<string, api.IWorkerClient>();
     private connectionState = api.ConnectionState.Disconnected;
     private lastReason: string;
     private lastContext: string;
@@ -413,8 +414,8 @@ export class Document extends EventEmitter implements api.IDocument {
         return this._user;
     }
 
-    public getClients(): Set<string> {
-        return new Set<string>(this.clients);
+    public getClients(): Map<string, api.IWorkerClient> {
+        return new Map<string, api.IWorkerClient>(this.clients);
     }
 
     // make this private
@@ -453,6 +454,7 @@ export class Document extends EventEmitter implements api.IDocument {
             .then(async ([storageService, version, header]) => {
                 this.storageService = storageService;
                 this.lastMinSequenceNumber = header.attributes.minimumSequenceNumber;
+                this.clients = new Map(header.attributes.clients);
 
                 // Start delta processing once all objects are loaded
                 const readyP = Array.from(this.distributedObjects.values()).map((value) => value.object.ready());
@@ -491,6 +493,7 @@ export class Document extends EventEmitter implements api.IDocument {
                 // This I don't think I can get rid of
                 if (!this.existing) {
                     this.createAttached("root", mapExtension.MapExtension.Type);
+                    console.log(`I am the owner`);
                 } else {
                     await this.get("root");
                 }
@@ -504,7 +507,7 @@ export class Document extends EventEmitter implements api.IDocument {
         this._deltaManager = new api.DeltaManager(this.id, this.tenantId, this.service);
 
         // Open a connection - the DeltaMananger will automatically reconnect
-        const detailsP = this._deltaManager.connect("Document loading", this.opts.token);
+        const detailsP = this._deltaManager.connect("Document loading", this.opts.token, this.opts.client);
         this._deltaManager.on("connect", (details: api.IConnectionDetails) => {
             this.setConnectionState(api.ConnectionState.Connecting, "Connected to Routerlicious", details.clientId);
         });
@@ -748,6 +751,7 @@ export class Document extends EventEmitter implements api.IDocument {
         // Save attributes for the document
         const documentAttributes: api.IDocumentAttributes = {
             branch: this.id,
+            clients: [...this.clients],
             minimumSequenceNumber: this._deltaManager.minimumSequenceNumber,
             sequenceNumber: this._deltaManager.referenceSequenceNumber,
         };
@@ -946,7 +950,7 @@ export class Document extends EventEmitter implements api.IDocument {
                 break;
 
             case api.ClientJoin:
-                this.clients.add(message.contents);
+                this.clients.set(message.contents.clientId, message.contents.detail);
                 if (message.contents === this.clientId) {
                     this.setConnectionState(
                         api.ConnectionState.Connected,
@@ -959,8 +963,21 @@ export class Document extends EventEmitter implements api.IDocument {
                 break;
 
             case api.ClientLeave:
-                this.clients.delete(message.contents);
+                this.clients.delete(message.contents.clientId);
                 this.emit("clientLeave", message.contents);
+                let firstClient: api.IWorkerClientDetail;
+                for (const client of this.clients) {
+                    if (!client[1] || client[1].type !== api.Robot) {
+                        firstClient = {
+                            clientId: client[0],
+                            detail: client[1],
+                        };
+                        break;
+                    }
+                }
+                if (this.clientId === firstClient.clientId) {
+                    console.log(`I am the owner now!`);
+                }
                 break;
 
             default:

@@ -42,6 +42,10 @@
             }
         ]
     },
+    "client": {
+        "type": "browser",
+        "permission": ["snapshot"]
+    },
     "login": {
         "enabled": false,
         "microsoft": {

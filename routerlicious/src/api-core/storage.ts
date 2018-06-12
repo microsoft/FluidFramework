@@ -1,5 +1,6 @@
 // tslint:disable:ban-types
 import * as resources from "gitresources";
+import { IWorkerClient } from "./client";
 import { IDocumentMessage, ISequencedDocumentMessage } from "./protocol";
 import { ITenantUser } from "./tenant";
 
@@ -18,6 +19,11 @@ export interface IDocumentAttributes {
      * Minimum sequence number when the snapshot was taken
      */
     minimumSequenceNumber: number;
+
+    /**
+     * List of clients when the snapshot was taken
+     */
+    clients: Array<[string, IWorkerClient]>;
 }
 
 export interface IObjectAttributes {
@@ -215,7 +221,11 @@ export interface IDocumentService {
     /**
      * Subscribes to the document delta stream
      */
-    connectToDeltaStream(tenantId: string, id: string, token: string): Promise<IDocumentDeltaConnection>;
+    connectToDeltaStream(
+        tenantId: string,
+        id: string,
+        token: string,
+        client: IWorkerClient): Promise<IDocumentDeltaConnection>;
 
     /**
      * Creates a branch of the document with the given ID. Returns the new ID.

@@ -64,8 +64,9 @@ export class DocumentService implements api.IDocumentService {
     public async connectToDeltaStream(
         tenantId: string,
         id: string,
-        token: string): Promise<api.IDocumentDeltaConnection> {
-        return DocumentDeltaConnection.Create(tenantId, id, token, io, this.deltaUrl);
+        token: string,
+        client: api.IWorkerClient): Promise<api.IDocumentDeltaConnection> {
+        return DocumentDeltaConnection.Create(tenantId, id, token, io, client, this.deltaUrl);
     }
 
     public async branch(tenantId: string, id: string, token: string): Promise<string> {

@@ -3,7 +3,6 @@ import * as resources from "gitresources";
 import performanceNow = require("performance-now");
 import * as request from "request";
 import * as url from "url";
-import * as agent from "../../agent";
 import { api as API, map as DistributedMap,  MergeTree, socketStorage, types } from "../../client-api";
 import { controls, ui } from "../../client-ui";
 import { SharedString } from "../../shared-string";
@@ -78,6 +77,7 @@ async function loadDocument(
 
     const host = new ui.BrowserContainerHost();
 
+    console.log(JSON.stringify(config));
     socketStorage.registerAsDefault(
         document.location.origin,
         config.blobStorageUrl,
@@ -87,18 +87,18 @@ async function loadDocument(
         config.historianApi,
         config.credentials);
     console.log(`collabDoc loading ${id} - ${performanceNow()}`);
-    const collabDoc = await API.load(id, { blockUpdateMarkers: true, token }, version, connect);
+    const collabDoc = await API.load(id, { blockUpdateMarkers: true, client: config.client, token }, version, connect);
     console.log(`collabDoc loaded ${id} - ${performanceNow()}`);
     const root = await collabDoc.getRoot().getView();
     console.log(`Getting root ${id} - ${performanceNow()}`);
 
-    collabDoc.on("clientJoin", (name) => {
-        console.log(`${name} joined`);
-        console.log(`${Array.from(collabDoc.getClients())}`);
+    collabDoc.on("clientJoin", (message) => {
+        console.log(`${JSON.stringify(message)} joined`);
+        console.log(`${Array.from(collabDoc.getClients().keys())}`);
     });
-    collabDoc.on("clientLeave", (name) => {
-        console.log(`${name} left`);
-        console.log(`${Array.from(collabDoc.getClients())}`);
+    collabDoc.on("clientLeave", (message) => {
+        console.log(`${JSON.stringify(message)} left`);
+        console.log(`${Array.from(collabDoc.getClients().keys())}`);
     });
 
     // If a text element already exists load it directly - otherwise load in pride + prejudice
@@ -173,9 +173,6 @@ async function loadDocument(
     theFlow.timeToEdit = theFlow.timeToImpression = Date.now() - clockStart;
 
     theFlow.setEdit(root);
-
-    // Bootstrap worker service.
-    agent.registerWorker(config, "sharedText");
 
     sharedString.loaded.then(() => {
         theFlow.loadFinished(clockStart);
