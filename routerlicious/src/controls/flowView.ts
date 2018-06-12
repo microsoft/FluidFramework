@@ -1838,6 +1838,10 @@ export class Viewport {
         this.lineTop += h;
     }
 
+    public getLineX() {
+        return 0;
+    }
+
     public getLineTop() {
         return this.lineTop;
     }
@@ -1918,10 +1922,18 @@ function makeFontInfo(docContext: IDocumentContext): Paragraph.IFontInfo {
     };
 }
 
+export interface IFlowBreakInfo extends Paragraph.IBreakInfo {
+    lineX?: number;
+    lineWidth?: number;
+    lineHeight?: number;
+}
+
 export function breakPGIntoLinesFFVP(itemInfo: Paragraph.IParagraphItemInfo, defaultLineHeight: number,
     viewport: Viewport) {
     const items = itemInfo.items;
-    const breaks = <Paragraph.IBreakInfo[]>[{ posInPG: 0, startItemIndex: 0 }];
+    let lineWidth = viewport.currentLineWidth(itemInfo.maxHeight);
+    let prevBreak: IFlowBreakInfo = { lineWidth, posInPG: 0, startItemIndex: 0 };
+    const breaks = <IFlowBreakInfo[]>[prevBreak];
     let posInPG = 0;
     let committedItemsWidth = 0;
     let blockRunWidth = 0;
@@ -1929,7 +1941,6 @@ export function breakPGIntoLinesFFVP(itemInfo: Paragraph.IParagraphItemInfo, def
     let blockRunPos = -1;
     let prevIsGlue = true;
     const savedTop = viewport.getLineTop();
-    let lineWidth = viewport.currentLineWidth(itemInfo.maxHeight);
     let committedItemsHeight = 0;
     for (let i = 0, len = items.length; i < len; i++) {
         const item = items[i];
@@ -1940,7 +1951,10 @@ export function breakPGIntoLinesFFVP(itemInfo: Paragraph.IParagraphItemInfo, def
                 blockRunWidth = 0;
             }
             if ((committedItemsWidth + item.width) > lineWidth) {
-                breaks.push({ posInPG: blockRunPos, startItemIndex: i });
+                prevBreak.lineX = viewport.getLineX();
+                prevBreak.lineHeight = committedItemsHeight;
+                prevBreak = { lineWidth, posInPG: blockRunPos, startItemIndex: i };
+                breaks.push(prevBreak);
                 viewport.vskip(committedItemsHeight);
                 lineWidth = viewport.currentLineWidth(itemInfo.maxHeight);
                 committedItemsWidth = blockRunWidth;
@@ -1948,7 +1962,10 @@ export function breakPGIntoLinesFFVP(itemInfo: Paragraph.IParagraphItemInfo, def
             }
             posInPG += item.text.length;
             if (committedItemsWidth > lineWidth) {
-                breaks.push({ posInPG, startItemIndex: i });
+                prevBreak.lineX = viewport.getLineX();
+                prevBreak.lineHeight = committedItemsHeight;
+                prevBreak = { lineWidth, posInPG, startItemIndex: i };
+                breaks.push(prevBreak);
                 viewport.vskip(committedItemsHeight);
                 lineWidth = viewport.currentLineWidth(itemInfo.maxHeight);
                 committedItemsWidth = 0;
@@ -1970,6 +1987,8 @@ export function breakPGIntoLinesFFVP(itemInfo: Paragraph.IParagraphItemInfo, def
         committedItemsHeight = Math.max(committedItemsHeight,
             item.height ? item.height : defaultLineHeight);
     }
+    prevBreak.lineX = viewport.getLineX();
+    prevBreak.lineHeight = committedItemsHeight;
     viewport.setLineTop(savedTop);
     return breaks;
 }
@@ -2026,35 +2045,60 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
     function renderPG(
         endPGMarker: Paragraph.IParagraphMarker,
         pgStartPos: number,
-        indentWidth: number,
+        indentPct: number,
         indentSymbol: Paragraph.ISymbol,
-        contentWidth: number) {
+        contentPct: number) {
 
-        const pgBreaks = endPGMarker.cache.breaks;
+        const pgBreaks = <IFlowBreakInfo[]>endPGMarker.cache.breaks;
         let lineDiv: ILineDiv;
         let lineDivHeight = docContext.defaultLineDivHeight;
         let span: ISegSpan;
+        let lineWidth: number;
+        let lineX = 0;
+        let lineY: number;
+        let lineFontstr = docContext.fontstr;
+        lineDivHeight = docContext.defaultLineDivHeight;
+        if (endPGMarker.properties && (endPGMarker.properties.header !== undefined)) {
+            // TODO: header levels etc.
+            lineDivHeight = docContext.headerDivHeight;
+            lineFontstr = docContext.headerFontstr;
+        }
+        let lineHeight = lineDivHeight;
+       for (let breakIndex = 0, len = pgBreaks.length; breakIndex < len; breakIndex++) {
+            const breakInfo = pgBreaks[breakIndex];
+            lineY = layoutContext.viewport.getLineTop();
+            if (endPGMarker.cache.isUniformWidth) {
+                lineWidth = layoutContext.viewport.currentLineWidth();
+            } else {
+                lineWidth = breakInfo.lineWidth;
+                lineHeight = breakInfo.lineHeight;
+                lineX = breakInfo.lineX;
+            }
+            let indentWidth = 0;
+            let contentWidth = lineWidth;
+            if (indentPct !== 0.0) {
+                indentWidth = Math.floor(indentPct * lineWidth);
+                if (docContext.indentWidthThreshold >= lineWidth) {
+                    const em2 = Math.round(2 * getTextWidth("M", docContext.fontstr));
+                    indentWidth = em2 + indentWidth;
+                }
+            }
+            contentWidth = Math.floor(contentPct * lineWidth) - indentWidth;
+            if (contentWidth > lineWidth) {
+                // tslint:disable:max-line-length
+                console.log(`egregious content width ${contentWidth} bound ${lineWidth}`);
+            }
 
-        for (let breakIndex = 0, len = pgBreaks.length; breakIndex < len; breakIndex++) {
-            const lineStart = pgBreaks[breakIndex].posInPG + pgStartPos;
+            const lineStart = breakInfo.posInPG + pgStartPos;
             let lineEnd: number;
             if (breakIndex < (len - 1)) {
                 lineEnd = pgBreaks[breakIndex + 1].posInPG + pgStartPos;
             } else {
                 lineEnd = undefined;
             }
-            let lineFontstr = docContext.fontstr;
-            lineDivHeight = docContext.defaultLineDivHeight;
-            if (endPGMarker.properties && (endPGMarker.properties.header !== undefined)) {
-                // TODO: header levels etc.
-                lineDivHeight = docContext.headerDivHeight;
-                lineFontstr = docContext.headerFontstr;
-            }
             const lineOK = (!(deferredPGs || deferWhole)) && (layoutContext.deferUntilHeight <= deferredHeight);
             if (lineOK && ((lineEnd === undefined) || (lineEnd > layoutContext.requestedPosition))) {
-                lineDiv = makeLineDiv(new ui.Rectangle(0, layoutContext.viewport.getLineTop(),
-                    layoutContext.viewport.currentLineWidth(), lineDivHeight),
-                    lineFontstr);
+                lineDiv = makeLineDiv(new ui.Rectangle(lineX, lineY, lineWidth, lineHeight), lineFontstr);
                 lineDiv.endPGMarker = endPGMarker;
                 lineDiv.breakIndex = breakIndex;
                 let contentDiv = lineDiv;
@@ -2163,60 +2207,45 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
             // TODO: only set this to undefined if text changed
             curPGMarker.listCache = undefined;
             Paragraph.getListCacheInfo(layoutContext.flowView.sharedString, curPGMarker, curPGMarkerPos);
-            let indentPct = 0.0;
-            let contentPct = 1.0;
-            let indentWidth = 0;
-            let contentWidth = layoutContext.viewport.currentLineWidth();
             let indentSymbol: Paragraph.ISymbol;
+            const indentPct = Paragraph.getIndentPct(curPGMarker);
+            const contentPct = Paragraph.getContentPct(curPGMarker);
 
             if (curPGMarker.listCache) {
                 indentSymbol = Paragraph.getIndentSymbol(curPGMarker);
             }
-            if (indentPct === 0.0) {
-                indentPct = Paragraph.getIndentPct(curPGMarker);
-            }
-            if (contentPct === 1.0) {
-                contentPct = Paragraph.getContentPct(curPGMarker);
-            }
-            if (indentPct !== 0.0) {
-                indentWidth = Math.floor(indentPct * layoutContext.viewport.currentLineWidth());
-                if (docContext.indentWidthThreshold >= layoutContext.viewport.currentLineWidth()) {
-                    const em2 = Math.round(2 * getTextWidth("M", docContext.fontstr));
-                    indentWidth = em2 + indentWidth;
-                }
-            }
-            contentWidth = Math.floor(contentPct * layoutContext.viewport.currentLineWidth()) - indentWidth;
-            if (contentWidth > layoutContext.viewport.currentLineWidth()) {
-                // tslint:disable:max-line-length
-                console.log(`egregious content width ${contentWidth} bound ${layoutContext.viewport.currentLineWidth()}`);
-            }
             if (flowView.historyClient) {
                 Paragraph.clearContentCaches(curPGMarker);
             }
-            if ((!curPGMarker.cache) || (curPGMarker.cache.singleLineWidth !== contentWidth)) {
-                if (!curPGMarker.itemCache) {
-                    itemsContext.itemInfo = { items: [], minWidth: 0 };
-                    client.mergeTree.mapRange({ leaf: Paragraph.segmentToItems }, MergeTree.UniversalSequenceNumber,
-                        client.getClientId(), itemsContext, currentPos, curPGMarkerPos + 1);
-                    curPGMarker.itemCache = itemsContext.itemInfo;
-                } else {
-                    itemsContext.itemInfo = curPGMarker.itemCache;
-                }
-                const breaks = Paragraph.breakPGIntoLinesFF(itemsContext.itemInfo.items, contentWidth);
-                curPGMarker.cache = { breaks, singleLineWidth: contentWidth };
+            if (!curPGMarker.itemCache) {
+                itemsContext.itemInfo = { items: [], minWidth: 0 };
+                client.mergeTree.mapRange({ leaf: Paragraph.segmentToItems }, MergeTree.UniversalSequenceNumber,
+                    client.getClientId(), itemsContext, currentPos, curPGMarkerPos + 1);
+                curPGMarker.itemCache = itemsContext.itemInfo;
+            } else {
+                itemsContext.itemInfo = curPGMarker.itemCache;
             }
+            // TODO: always use break VP for excluded regions; go ahead and break each time
+            const contentWidth = layoutContext.viewport.currentLineWidth();
+            // const breaks = Paragraph.breakPGIntoLinesFF(itemsContext.itemInfo.items, contentWidth);
+            // curPGMarker.cache = { breaks, isUniformWidth: true, uniformLineWidth: contentWidth };
+
+            const breaks = breakPGIntoLinesFFVP(itemsContext.itemInfo, docContext.defaultLineDivHeight, layoutContext.viewport);
+            curPGMarker.cache = { breaks, isUniformWidth: false };
             paragraphLexer.reset();
             // TODO: more accurate end of document reasoning
 
             if (currentPos < totalLength) {
-                const lineEnd = renderPG(curPGMarker, currentPos, indentWidth, indentSymbol, contentWidth);
+                const lineEnd = renderPG(curPGMarker, currentPos, indentPct, indentSymbol, contentPct);
                 viewportEndPos = lineEnd;
                 currentPos = curPGMarkerPos + curPGMarker.cachedLength;
 
                 if (!deferredPGs) {
                     if (curPGMarker.properties[targetTranslation]) {
                         // layoutContext.viewport.vskip(Math.floor(docContext.pgVspace/2));
-                        const height = renderPGAnnotation(curPGMarker, indentWidth, contentWidth);
+                        // TODO: make sure content width is same as pg width (may be different with regions present)
+                        const height = renderPGAnnotation(curPGMarker, Math.floor(indentPct * contentWidth),
+                            Math.floor(contentPct * contentWidth));
                         layoutContext.viewport.vskip(height);
                     }
                 }
