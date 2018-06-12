@@ -10,7 +10,8 @@ export interface IBreakInfo {
 
 export interface IParagraphInfo {
     breaks: IBreakInfo[];
-    singleLineWidth: number;
+    isUniformWidth?: boolean;
+    uniformLineWidth?: number;
 }
 
 export interface IParagraphItemInfo {
@@ -75,7 +76,7 @@ export interface IPGGlue extends IParagraphItem {
 export interface IPGPenalty extends IParagraphItem {
     type: ParagraphItemType.Penalty;
     cost: number;
-}
+}``
 
 export type ParagraphItem = IPGBlock | IPGGlue | IPGPenalty;
 

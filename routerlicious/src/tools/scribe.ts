@@ -13,7 +13,8 @@ commander
     .option("-i, --interval [interval]", "typing interval", parseFloat, 5)
     .option("-s, --server [server]", "server url", "http://localhost:3000")
     .option("-t, --storage [server]", "storage server url", "http://localhost:3001")
-    .option("-o, --tenant [id]", "tenant ID", "git")
+    .option("-o, --tenant [tenant]", "tenant ID", "xenodochial-lewin")
+    .option("-k, --key [key]", "key", "48fb191e6897e15777fbdaa792ce82ee")
     .option("-f, --file [file]", "input file", path.join(__dirname, "../../public/literature/resume.txt"))
     .option("-b, --progress [pbar]", "show progress bar")
     .option("-w, --write [write]", "write to specific path", "./latest-scribe.json")
@@ -30,7 +31,7 @@ if (!sharedStringId) {
 }
 
 // Mark socket storage as our default provider
-socketStorage.registerAsDefault(commander.server, commander.storage, commander.tenantId, false);
+socketStorage.registerAsDefault(commander.server, commander.storage, commander.tenant, false);
 
 fs.readFile(commander.file, "utf8", async (error, data: string) => {
     if (error) {
@@ -53,8 +54,9 @@ fs.readFile(commander.file, "utf8", async (error, data: string) => {
                 total: data.length,
             });
     }
-    const token = getToken(sharedStringId);
-    const metricsToken = getToken(sharedStringId + "-metrics");
+
+    const token = utils.generateToken(commander.tenant, sharedStringId, commander.key);
+    const metricsToken = utils.generateToken(commander.tenant, `${sharedStringId}-metrics`, commander.key);
 
     await scribe.create(sharedStringId, token, data, debug);
     scribe.togglePlay();
@@ -115,12 +117,4 @@ function ensurePath(filePath: string) {
     }
     ensurePath(dir);
     fs.mkdirSync(dir);
-}
-
-function getToken(docId: string, metrics?: boolean) {
-    const tid = "xenodochial-lewin";
-    const tkey = "48fb191e6897e15777fbdaa792ce82ee";
-    const token = utils.generateToken(tid, docId, tkey);
-
-    return token;
 }
