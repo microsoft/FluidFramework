@@ -77,7 +77,6 @@ async function loadDocument(
 
     const host = new ui.BrowserContainerHost();
 
-    console.log(JSON.stringify(config));
     socketStorage.registerAsDefault(
         document.location.origin,
         config.blobStorageUrl,

@@ -180,6 +180,7 @@ export class Document extends EventEmitter implements api.IDocument {
 
     private messagesSinceMSNChange = new Array<api.ISequencedDocumentMessage>();
     private clients = new Map<string, api.IWorkerClient>();
+    private isLeader: boolean = false;
     private connectionState = api.ConnectionState.Disconnected;
     private lastReason: string;
     private lastContext: string;
@@ -493,7 +494,6 @@ export class Document extends EventEmitter implements api.IDocument {
                 // This I don't think I can get rid of
                 if (!this.existing) {
                     this.createAttached("root", mapExtension.MapExtension.Type);
-                    console.log(`I am the owner`);
                 } else {
                     await this.get("root");
                 }
@@ -957,27 +957,14 @@ export class Document extends EventEmitter implements api.IDocument {
                         `Fully joined the document@ ${message.minimumSequenceNumber}`,
                         this.clientId);
                 }
-
+                this.electLeader();
                 this.emit("clientJoin", message.contents);
-
                 break;
 
             case api.ClientLeave:
                 this.clients.delete(message.contents);
                 this.emit("clientLeave", message.contents);
-                let firstClient: api.IWorkerClientDetail;
-                for (const client of this.clients) {
-                    if (!client[1] || client[1].type !== api.Robot) {
-                        firstClient = {
-                            clientId: client[0],
-                            detail: client[1],
-                        };
-                        break;
-                    }
-                }
-                if (firstClient && this.clientId === firstClient.clientId) {
-                    console.log(`I am the owner now!`);
-                }
+                this.electLeader();
                 break;
 
             default:
@@ -1002,6 +989,26 @@ export class Document extends EventEmitter implements api.IDocument {
         }
 
         this.emit("op", ...eventArgs);
+    }
+
+    private electLeader() {
+        // On a client joining/departure, decides whether this client is the new leader.
+        if (!this.isLeader) {
+            let firstClient: api.IWorkerClientDetail;
+            for (const client of this.clients) {
+                if (!client[1] || client[1].type !== api.Robot) {
+                    firstClient = {
+                        clientId: client[0],
+                        detail: client[1],
+                    };
+                    break;
+                }
+            }
+            if (firstClient && this.clientId === firstClient.clientId) {
+                this.isLeader = true;
+                console.log(`I am the new leader!`);
+            }
+        }
     }
 }
 
