@@ -153,7 +153,7 @@ export class DeliLambda implements IPartitionLambda {
             } else {
                 if (message.operation.type === api.ClientJoin) {
                     this.upsertClient(
-                        message.operation.contents,
+                        message.operation.contents.clientId,
                         0,
                         this.minimumSequenceNumber,
                         message.timestamp,

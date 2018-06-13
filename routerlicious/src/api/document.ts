@@ -951,7 +951,7 @@ export class Document extends EventEmitter implements api.IDocument {
 
             case api.ClientJoin:
                 this.clients.set(message.contents.clientId, message.contents.detail);
-                if (message.contents === this.clientId) {
+                if (message.contents.clientId === this.clientId) {
                     this.setConnectionState(
                         api.ConnectionState.Connected,
                         `Fully joined the document@ ${message.minimumSequenceNumber}`,
@@ -963,7 +963,7 @@ export class Document extends EventEmitter implements api.IDocument {
                 break;
 
             case api.ClientLeave:
-                this.clients.delete(message.contents.clientId);
+                this.clients.delete(message.contents);
                 this.emit("clientLeave", message.contents);
                 let firstClient: api.IWorkerClientDetail;
                 for (const client of this.clients) {
@@ -975,7 +975,7 @@ export class Document extends EventEmitter implements api.IDocument {
                         break;
                     }
                 }
-                if (this.clientId === firstClient.clientId) {
+                if (firstClient && this.clientId === firstClient.clientId) {
                     console.log(`I am the owner now!`);
                 }
                 break;
