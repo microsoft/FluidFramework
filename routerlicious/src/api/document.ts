@@ -61,6 +61,12 @@ export function getDefaultDocumentService(): api.IDocumentService {
     return defaultDocumentService;
 }
 
+let blobStorage: api.IDocumentStorageService;
+
+export function getDefaultBlobStorage(): api.IDocumentStorageService {
+    return blobStorage;
+}
+
 interface IDistributedObjectState {
     object: api.ICollaborativeObject;
 
@@ -495,6 +501,7 @@ export class Document extends EventEmitter implements api.IDocument {
                     await this.get("root");
                 }
 
+                blobStorage = await storageP;
                 debug(`Document loaded ${this.id}: ${performanceNow()} `);
             });
     }

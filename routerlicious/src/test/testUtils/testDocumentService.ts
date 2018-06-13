@@ -4,6 +4,8 @@ import { DocumentDeltaStorageService } from "../../socket-storage";
 import { TestDocumentDeltaConnection } from "./";
 
 class TestDocumentStorageService implements api.IDocumentStorageService {
+    public manager = null;
+
     public async getSnapshotTree(version: resources.ICommit): Promise<api.ISnapshotTree> {
         return null;
     }
