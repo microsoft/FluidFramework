@@ -162,7 +162,7 @@ data:
         },
         "error": {
             "track": true,
-            "endpoint" : "https://344cbdea481f46baa1d3f5144c90b1f6:0385ef41b1444e8ebff49c9a6b647485@sentry.wu2.prague.office-int.com/3"
+            "endpoint" : "https://25f5c231660f474fb85fb4daeb070029:3301d25c7ed9434688e4f5bd998b9739@sentry.wu2.prague.office-int.com/2"
         },
         "worker": {
             "intelligence": {
