@@ -12,7 +12,7 @@ data:
         level: "error"
     alert:
     - "post"
-    http_post_url: "https://sentry.wu2.prague.office-int.com/api/3/store/?sentry_version=7&sentry_key=344cbdea481f46baa1d3f5144c90b1f6&sentry_secret=0385ef41b1444e8ebff49c9a6b647485&sentry_client=elastalert"
+    http_post_url: "https://sentry.wu2.prague.office-int.com/api/2/store/?sentry_version=7&sentry_key=25f5c231660f474fb85fb4daeb070029&sentry_secret=3301d25c7ed9434688e4f5bd998b9739&sentry_client=elastalert"
     http_post_payload:
         timestamp: timestamp
         logger: kubernetes.pod_name

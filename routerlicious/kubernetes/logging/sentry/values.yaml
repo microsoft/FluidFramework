@@ -18,9 +18,9 @@ web:
       memory: 300Mi
   env:
     - name: GITHUB_APP_ID
-      value: "9255d1b3f50809bbce28"
+      value: ""
     - name: GITHUB_API_SECRET
-      value: "b8a625725c10600ca98bacd6fde134ee68528c1a"
+      value: ""
     - name: SOCIAL_AUTH_REDIRECT_IS_HTTPS
       value: "true"
     - name: USE_X_FORWARDED_HOST
