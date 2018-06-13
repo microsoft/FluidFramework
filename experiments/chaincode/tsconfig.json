@@ -1,0 +1,23 @@
+{    
+    "exclude": [
+        "dist",
+        "node_modules"
+    ],
+    "compilerOptions": {
+        "target": "es6",
+        "noImplicitAny": false,
+        "noUnusedLocals": true,
+        "module": "commonjs",
+        "moduleResolution": "node",
+        "outDir": "dist",
+        "sourceMap": true,
+        "inlineSources": true,
+        "types": [
+            "@theledger/fabric-shim-types",
+            "@types/bytebuffer"
+        ]
+    },
+    "include": [
+        "src/**/*"
+    ]
+}
