@@ -1,98 +1,50 @@
-import { api, core } from "../client-api";
-import { IDocumentServiceFactory, ITaskRunnerConfig } from "./definitions";
-import { WorkerService } from "./workerService";
-import { WorkManager } from "./workManager";
+import { api, core, types } from "../client-api";
+import { ITaskRunnerConfig } from "./definitions";
+import { SnapshotWork } from "./snapshotWork";
 
-class DefaultDocumentServiceFactory implements IDocumentServiceFactory {
-    public getService(tenantId: string): Promise<core.IDocumentService> {
-        return Promise.resolve(api.getDefaultDocumentService());
-    }
-}
-
-export function registerToWork(doc: api.Document, config: ITaskRunnerConfig) {
+export function registerToWork(doc: api.Document, config: ITaskRunnerConfig, token: string) {
     if (config.permission && config.permission.length > 0) {
         const permittedTasks = config.permission;
-        doc.on("help", (message: core.IHelpMessage) => {
+        doc.on("help", async (message: core.IHelpMessage) => {
             // For now only leader will accept the work.
             // TODO: Find a reliable way to ack this help message exactly once by any client.
             if (message.clientId === doc.clientId) {
+                const tasksToDo = [];
                 for (const task of message.tasks) {
                     if (permittedTasks.indexOf(task) !== -1) {
-                        console.log(`I will perform ${task}!`);
+                        tasksToDo.push(task);
                     }
+                }
+                if (tasksToDo.length > 0) {
+                    const rootMap = await doc.getRoot();
+                    const workMap = await rootMap.get("tasks") as types.IMap;
+                    performTasks(doc.id, doc.clientId, token, tasksToDo, workMap).catch((err) => {
+                        console.error(err);
+                    });
                 }
             }
         });
     }
 }
 
-export function registerWorker(config: any, runnerType: string) {
-    if (!config.onlyServer) {
-        const workerUrl =  config.url;
-        const serverUrl = config.serverUrl;
-
-        // Bootstrap service and connect. On failure, try to connect again.
-        console.log(`Registering as worker`);
-
-        const workTypeMap: { [workType: string]: boolean} = {};
-        for (const workType of config.permission[runnerType]) {
-            workTypeMap[workType] = true;
-        }
-
-        const workManager = new WorkManager(
-            new DefaultDocumentServiceFactory(),
-            config,
-            serverUrl,
-            initLoadModule(config),
-            runnerType,
-            workTypeMap);
-
-        const workerService = new WorkerService(
-            workerUrl,
-            config,
-            workTypeMap,
-            workManager);
-
-        // Report any service error.
-        workerService.on("error", (error) => {
-            console.log(error);
-        });
-
-        let workerP = workerService.connect("Client");
-        workerP.catch((error) => {
-            console.log(`Error connecting to worker`);
-            workerP = workerService.connect("Client");
-        });
+// TODO: Make this for every work types. Move this over to webworker.
+async function performTasks(docId: string, clientId: string, token: string, tasks: string[], workMap: types.IMap) {
+    const taskPromises = [];
+    for (const task of tasks) {
+        taskPromises.push(performTask(docId, clientId, token, task, workMap));
     }
+    await Promise.all(taskPromises);
 }
 
-function initLoadModule(config: any): (name: string) => Promise<any> {
-    return (scriptName: string) => {
-        return new Promise<any>((resolve, reject) => {
-            /*
-            const scriptUrl = `${config.scriptUrl}${scriptName}`;
-            $.getScript(scriptUrl, (data, textStatus, jqxhr) => {
-                console.log(data);
-                console.log(textStatus);
-                console.log(jqxhr.status);
-                console.log("Load was performed.");
-
-                const m1 = "ResumeAnalyticsFactory";
-                const m2 = "factory";
-                import(m1).then((loadedModule) => {
-                    console.log(`${loadedModule}`);
-                }, (err) => {
-                    console.log(`Error importing ${scriptName}: ${err}`);
-                });
-
-                import(m2).then((loadedModule) => {
-                    console.log(`${loadedModule}`);
-                }, (err) => {
-                    console.log(`Error importing ${scriptName}: ${err}`);
-                });
-              });
-            */
-            reject("Client module loader not implemented yet");
-        });
-    };
+async function performTask(docId: string, clientId: string, token: string, task: string, workMap: types.IMap) {
+    switch (task) {
+        case "snapshot":
+            const snapshotWork  = new SnapshotWork(docId, token, {}, api.getDefaultDocumentService());
+            await snapshotWork.start();
+            workMap.set(task, clientId);
+            console.log(`ClientId ${clientId} started ${task}`);
+            break;
+        default:
+            throw new Error("Unknown task type");
+    }
 }
