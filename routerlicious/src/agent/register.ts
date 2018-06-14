@@ -1,11 +1,28 @@
 import { api, core } from "../client-api";
-import { IDocumentServiceFactory } from "./definitions";
+import { IDocumentServiceFactory, ITaskRunnerConfig } from "./definitions";
 import { WorkerService } from "./workerService";
 import { WorkManager } from "./workManager";
 
 class DefaultDocumentServiceFactory implements IDocumentServiceFactory {
     public getService(tenantId: string): Promise<core.IDocumentService> {
         return Promise.resolve(api.getDefaultDocumentService());
+    }
+}
+
+export function registerToWork(doc: api.Document, config: ITaskRunnerConfig) {
+    if (config.permission && config.permission.length > 0) {
+        const permittedTasks = config.permission;
+        doc.on("help", (message: core.IHelpMessage) => {
+            // For now only leader will accept the work.
+            // TODO: Find a reliable way to ack this help message exactly once by any client.
+            if (message.clientId === doc.clientId) {
+                for (const task of message.tasks) {
+                    if (permittedTasks.indexOf(task) !== -1) {
+                        console.log(`I will perform ${task}!`);
+                    }
+                }
+            }
+        });
     }
 }
 

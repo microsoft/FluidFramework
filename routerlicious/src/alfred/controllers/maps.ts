@@ -1,6 +1,7 @@
 import * as resources from "gitresources";
 import * as $ from "jquery";
 import hasIn = require("lodash/hasIn");
+import * as agent from "../../agent";
 import { api, map as Map, socketStorage, types } from "../../client-api";
 import { IValueChanged } from "../../data-types";
 import { Counter, DistributedSet } from "../../map";
@@ -155,6 +156,12 @@ function loadFull(id: string, version: resources.ICommit, config: any, token?: s
 
             // Display the initial values and then listen for updates
             displayMap($("#mapViews"), null, root, null, doc);
+
+            // Register to run task only if the client type is browser.
+            const taskConfig = config.client as agent.ITaskRunnerConfig;
+            if (taskConfig && taskConfig.type === "browser") {
+                agent.registerToWork(doc, taskConfig);
+            }
         }, (err) => {
             // TODO (auth): Display an error page here.
             console.log(err);

@@ -974,6 +974,10 @@ export class Document extends EventEmitter implements api.IDocument {
                 this.electLeader();
                 break;
 
+            case api.Help:
+                this.emit("help", message.contents);
+                break;
+
             default:
                 break;
         }
