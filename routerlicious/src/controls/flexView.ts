@@ -211,8 +211,12 @@ export class FlexView extends ui.Component {
 
         const now = Date.now();
 
+        // Create Hash (Github hashes the string in this modified way)
         const fileString = "blob " + file.length + "\0" +  file;
         const hash = crypto.createHash("sha1").update(fileString).digest("hex");
+
+        // Set the hash in blob storage
+        // TODO: Empty should be the inclusion's information
         this.blobMap.set<string>(hash, "empty");
 
         const blobResponseP = gitManager.createBlob(file, "utf-8") as Promise<resources.ICreateBlobResponse>;
@@ -220,6 +224,7 @@ export class FlexView extends ui.Component {
 
             console.log("blob Promise Completed: " + (Date.now() - now));
             console.log("sha: " + blobResponse.sha);
+            // TODO: Indicate the inclusion is done uploading
         });
     }
 
@@ -240,12 +245,16 @@ export class FlexView extends ui.Component {
         for (const sha of shas) {
             filesP.push(gitManager.getBlob(sha));
         }
-        Promise.all(filesP).then((files) => {
-            const contents = files.map((blob) => {
-                return new Buffer(blob.content, "base64").toString("utf-8");
+        Promise.all(filesP)
+            .then((files) => {
+                const contents = files.map((blob) => {
+                    return new Buffer(blob.content, "base64").toString("utf-8");
+                });
+                console.log(contents[0]);
+            })
+            .catch((error) => {
+                console.log("Error: " + JSON.stringify(error));
             });
-            console.log(contents[0]);
-        });
     }
 
     private async fileToText(file: File): Promise<string> {
