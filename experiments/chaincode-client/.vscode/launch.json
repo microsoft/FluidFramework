@@ -8,7 +8,8 @@
             "type": "node",
             "request": "launch",
             "name": "Launch Program",
-            "program": "${workspaceFolder}/dist/registerUser.js",
+            "program": "${workspaceFolder}/dist/invoke.js",
+            "args": ["b", "30"],
             "outFiles": [
                 "${workspaceFolder}/dist/**/*.js"
             ]

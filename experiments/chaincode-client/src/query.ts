@@ -25,7 +25,8 @@ async function run(userId: string, channelId: string): Promise<string> {
     cryptoSuite.setCryptoKeyStore(cryptoStore);
     client.setCryptoSuite(cryptoSuite);
 
-    // get the enrolled user from persistence, this user will sign all requests
+    // get the enrolled user from persistence, this user will sign all requests.
+    // The get call also seems to apply this user to the context
     const memberUser = await client.getUserContext(userId, true);
     if (!memberUser || !memberUser.isEnrolled()) {
         return Promise.reject(`Failed to get ${userId}.... run registerUser.js`);
