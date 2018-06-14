@@ -18,7 +18,7 @@ export function registerToWork(doc: api.Document, config: ITaskRunnerConfig, tok
                 if (tasksToDo.length > 0) {
                     const rootMap = await doc.getRoot();
                     const workMap = await rootMap.get("tasks") as types.IMap;
-                    performTasks(doc.id, doc.clientId, token, tasksToDo, workMap).catch((err) => {
+                    await performTasks(doc.id, doc.clientId, token, tasksToDo, workMap).catch((err) => {
                         console.error(err);
                     });
                 }
