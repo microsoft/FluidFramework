@@ -31,6 +31,9 @@ export const Integrate = "integrate";
 // Message to indicate successful round trip.
 export const RoundTrip = "tripComplete";
 
+// Message to indicate the need of an agent for a document.
+export const Help = "Help";
+
 /**
  * An envelope wraps the contents with the intended target
  */
@@ -132,6 +135,13 @@ export interface IAttachMessage {
 
     // Initial snapshot of the document
     snapshot: storage.ITree;
+}
+
+export interface IHelpMessage {
+
+    clientId: string;
+
+    tasks: string[];
 }
 
 export interface ILatencyMessage {

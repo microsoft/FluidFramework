@@ -8,14 +8,18 @@ import * as uuid from "uuid/v4";
 import * as api from "../api-core";
 import * as cell from "../cell";
 import { Deferred } from "../core-utils";
-import { ICell, IMap, IStream } from "../data-types";
+import { ICell, IMap, IMapView, IStream } from "../data-types";
 import * as mapExtension from "../map";
 import * as sharedString from "../shared-string";
 import * as stream from "../stream";
 import { debug } from "./debug";
 import { BrowserErrorTrackingService } from "./errorTrackingService";
 
+// TODO: All these should come from the server as a part of document creation.
 const rootMapId = "root";
+const taskMapId = "tasks";
+const documentTasks = ["snapshot", "spell", "intel", "translation", "augmentation"];
+const taskCheckerMS = 15000;
 
 // Registered services to use when loading a document
 let defaultDocumentService: api.IDocumentService;
@@ -494,6 +498,9 @@ export class Document extends EventEmitter implements api.IDocument {
                 // This I don't think I can get rid of
                 if (!this.existing) {
                     this.createAttached("root", mapExtension.MapExtension.Type);
+                    this.createTaskMap(taskMapId).catch((err) => {
+                        this.emit(err);
+                    });
                 } else {
                     await this.get("root");
                 }
@@ -991,8 +998,18 @@ export class Document extends EventEmitter implements api.IDocument {
         this.emit("op", ...eventArgs);
     }
 
+    private async createTaskMap(id: string) {
+        const rootMap = this.getRoot();
+        rootMap.set(id, this.createMap());
+        const taskMap = await rootMap.get(id) as IMap;
+        for (const task of documentTasks) {
+            taskMap.set(task, undefined);
+        }
+    }
+
+    // On a client joining/departure, decides whether this client is the new leader.
+    // Skip if this client is already a leader.
     private electLeader() {
-        // On a client joining/departure, decides whether this client is the new leader.
         if (!this.isLeader) {
             let firstClient: api.IWorkerClientDetail;
             for (const client of this.clients) {
@@ -1006,8 +1023,42 @@ export class Document extends EventEmitter implements api.IDocument {
             }
             if (firstClient && this.clientId === firstClient.clientId) {
                 this.isLeader = true;
-                console.log(`I am the new leader!`);
+                this.checkTasks();
             }
+        }
+    }
+
+    private checkTasks() {
+        this.submitHelpMessage().catch((err) => {
+            this.emit(err);
+        });
+        setInterval(() => {
+            this.submitHelpMessage().catch((err) => {
+                this.emit(err);
+            });
+        }, taskCheckerMS);
+    }
+
+    // Submits a help message for unassigned tasks.
+    private async submitHelpMessage() {
+        const rootMap = this.getRoot();
+        const taskMap = await rootMap.get(taskMapId) as IMap;
+        const taskMapView = await taskMap.getView() as IMapView;
+        const unassignedTasks = [];
+        for (const task of taskMapView.keys()) {
+            const clientId = taskMapView.get(task);
+            // A task is unassigned if there is no client or old client associated with it.
+            if (clientId && this.getClients().has(clientId)) {
+                continue;
+            }
+            unassignedTasks.push(task);
+        }
+        if (unassignedTasks.length > 0) {
+            const helpMessage: api.IHelpMessage = {
+                clientId: this.clientId,
+                tasks: unassignedTasks,
+            };
+            this.submitMessage(api.Help, helpMessage);
         }
     }
 }
