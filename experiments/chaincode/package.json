@@ -1,0 +1,22 @@
+{
+  "name": "chaincode",
+  "version": "0.1.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc && tslint 'src/**/*'",
+    "start": "node dist/index.js"
+  },
+  "devDependencies": {
+    "@theledger/fabric-shim-types": "^1.0.6",
+    "@types/bytebuffer": "^5.0.37",
+    "@types/node": "^8.10.19",
+    "tslint": "^5.10.0",
+    "typescript": "^2.8.3"
+  },
+  "dependencies": {
+    "fabric-ca-client": "^1.1.2",
+    "fabric-client": "^1.1.2",
+    "fabric-shim": "^1.1.2"
+  }
+}

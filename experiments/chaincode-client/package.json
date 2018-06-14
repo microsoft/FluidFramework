@@ -1,0 +1,20 @@
+{
+  "name": "chaincode-client",
+  "version": "0.1.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc && tslint 'src/**/*'"
+  },
+  "devDependencies": {
+    "@types/bytebuffer": "^5.0.37",
+    "@types/node": "^8.10.19",
+    "tslint": "^5.10.0",
+    "typescript": "^2.8.3"
+  },
+  "dependencies": {
+    "commander": "^2.15.1",
+    "fabric-ca-client": "^1.1.2",
+    "fabric-client": "^1.1.2"
+  }
+}
