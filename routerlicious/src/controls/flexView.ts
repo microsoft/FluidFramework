@@ -1,4 +1,5 @@
 // The main app code
+import * as crypto from "crypto";
 import * as resources from "gitresources";
 import { api, types } from "../client-api";
 import * as gitStorage from "../git-storage";
@@ -209,12 +210,16 @@ export class FlexView extends ui.Component {
         const gitManager: gitStorage.GitManager = docService.manager;
 
         const now = Date.now();
+
+        const fileString = "blob " + file.length + "\0" +  file;
+        const hash = crypto.createHash("sha1").update(fileString).digest("hex");
+        this.blobMap.set<string>(hash, "empty");
+
         const blobResponseP = gitManager.createBlob(file, "utf-8") as Promise<resources.ICreateBlobResponse>;
         blobResponseP.then(async (blobResponse) => {
 
             console.log("blob Promise Completed: " + (Date.now() - now));
             console.log("sha: " + blobResponse.sha);
-            await this.blobMap.set<string>(blobResponse.sha, blobResponse.sha);
         });
     }
 
