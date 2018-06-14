@@ -27,7 +27,7 @@ export function registerToWork(doc: api.Document, config: ITaskRunnerConfig, tok
     }
 }
 
-// TODO: Make this for every work types. Move this over to webworker.
+// TODO: Make this for every work types. Move this over to webworker. And allow it not to reconnect in api.load.
 async function performTasks(docId: string, clientId: string, token: string, tasks: string[], workMap: types.IMap) {
     const taskPromises = [];
     for (const task of tasks) {

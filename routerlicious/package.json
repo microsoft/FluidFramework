@@ -148,7 +148,7 @@
   "dependencies": {
     "@types/async": "^2.0.49",
     "amqp10": "^3.6.0",
-    "amqplib": "^0.5.1",
+    "amqplib": "^0.5.2",
     "async": "^2.6.0",
     "azure-event-hubs": "0.0.7",
     "azure-iot-device": "^1.4.3",

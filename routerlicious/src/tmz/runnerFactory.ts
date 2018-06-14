@@ -9,7 +9,8 @@ import { ITenantManager } from "../api-core";
 import * as services from "../services";
 import * as utils from "../utils";
 import { createUploader } from "./agentUploader";
-import { IAgentUploader } from "./messages";
+import { IAgentUploader, IMessageSender } from "./messages";
+import { createMessageSender } from "./messageSender";
 import { TmzRunner } from "./runner";
 
 export class TmzResources implements utils.IResources {
@@ -20,6 +21,7 @@ export class TmzResources implements utils.IResources {
         public sub: redis.RedisClient,
         public port: any,
         public uploader: IAgentUploader,
+        public messageSender: IMessageSender,
         public schedulerType: string,
         public onlyServer: boolean,
         public checkerTimeout: number,
@@ -69,6 +71,7 @@ export class TmzResourcesFactory implements utils.IResourcesFactory<TmzResources
         const tasks = config.get("tmz:tasks");
 
         const uploader = createUploader("minio", minioConfig);
+        const messageSender = createMessageSender(config.get("rabbitmq"), config.get("tmz"));
 
         const authEndpoint = config.get("auth:endpoint");
         const tenantManager = new services.TenantManager(authEndpoint, config.get("worker:blobStorageUrl"));
@@ -80,6 +83,7 @@ export class TmzResourcesFactory implements utils.IResourcesFactory<TmzResources
             sub,
             port,
             uploader,
+            messageSender,
             schedulerType,
             onlyServer,
             checkerTimeout,
@@ -95,6 +99,7 @@ export class TmzRunnerFactory implements utils.IRunnerFactory<TmzResources> {
             resources.alfredUrl,
             resources.port,
             resources.uploader,
+            resources.messageSender,
             resources.schedulerType,
             resources.onlyServer,
             resources.checkerTimeout,

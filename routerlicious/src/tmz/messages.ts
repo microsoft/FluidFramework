@@ -84,6 +84,16 @@ export interface IAgent {
 }
 
 /**
+ * Message sent by the sender.
+ */
+export interface IMessage {
+
+    type: string;
+
+    content: any;
+}
+
+/**
  * Interface to implement the agent loader.
  */
 export interface IAgentUploader {
@@ -103,4 +113,25 @@ export interface IAgentUploader {
      */
     on(event: string, listener: Function): this;
 
+}
+
+/**
+ * Interface to implement the task/agent broadcaster.
+ */
+export interface IMessageSender {
+
+    /**
+     * Preps the underlying message queue.
+     */
+    initialize(): Promise<void>;
+
+    /**
+     * Sends the message.
+     */
+    send(message: IMessage): void;
+
+    /**
+     * Notifies on error.
+     */
+    on(event: string, listener: Function): this;
 }

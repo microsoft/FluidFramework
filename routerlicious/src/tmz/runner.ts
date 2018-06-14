@@ -26,6 +26,7 @@ export class TmzRunner implements utils.IRunner {
         private alfredUrl: string,
         private port: any,
         private agentUploader: messages.IAgentUploader,
+        private messageSender: messages.IMessageSender,
         schedulerType: string,
         private onlyServer: boolean,
         private checkerTimeout: number,
@@ -35,7 +36,7 @@ export class TmzRunner implements utils.IRunner {
         this.foreman = workerFactory.create(schedulerType, tenantManager);
     }
 
-    public start(): Promise<void> {
+    public async start(): Promise<void> {
         // Preps and start listening to agent uploader.
         this.agentUploader.initialize();
         this.agentUploader.on("agentAdded", (agent: messages.IAgent) => {
@@ -112,6 +113,13 @@ export class TmzRunner implements utils.IRunner {
         this.checkerInterval = setInterval(async () => {
             await this.adjustWorkAssignment();
         }, this.checkerTimeout);
+
+        await this.messageSender.initialize().catch((err) => {
+            this.deferred.reject(err);
+        });
+        this.messageSender.on("error", (err) => {
+            this.deferred.reject(err);
+        });
 
         return this.deferred.promise;
     }

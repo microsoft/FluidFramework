@@ -103,6 +103,8 @@ services:
         image: "redis:alpine"
     mongodb:
         image: "mongo:3.4.3"
+    rabbitmq:
+        image: "rabbitmq:alpine"
     minio:
         image: minio/minio
         ports:

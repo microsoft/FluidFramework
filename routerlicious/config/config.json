@@ -122,7 +122,7 @@
     },
     "tmz": {
         "alfred": "http://alfred:3000",
-        "queue": "snapshot",
+        "messageQueueName": "taskQueue",
         "port": 4000,
         "timeoutMSec": {
             "checker": 10000,
@@ -139,6 +139,9 @@
         "workerType": "random",
         "workerAckTimeMSec": 250,
         "onlyServer": false
+    },
+    "rabbitmq": {
+        "connectionString": "amqp://rabbitmq"
     },
     "redis": {
         "host": "redis",
