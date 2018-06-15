@@ -4,10 +4,11 @@ import * as unzip from "unzip-stream";
 import * as url from "url";
 import * as winston from "winston";
 import * as agent from "../agent";
-import { IDocumentService, ITenantManager } from "../api-core";
+import { IDocumentService} from "../api-core";
 import { Deferred } from "../core-utils";
 import * as socketStorage from "../socket-storage";
 import * as utils from "../utils";
+import { IMessage, IMessageReceiver } from "./messages";
 
 // TODO can likely consolidate the runner and the worker service
 
@@ -30,7 +31,7 @@ export class PaparazziRunner implements utils.IRunner {
         alfredUrl: string,
         tmzUrl: string,
         workerConfig: any,
-        tenantManager: ITenantManager) {
+        private messageReceiver: IMessageReceiver) {
 
         const runnerType = "paparazzi";
         const workTypeMap: { [workType: string]: boolean} = {};
@@ -60,9 +61,23 @@ export class PaparazziRunner implements utils.IRunner {
         });
     }
 
-    public start(): Promise<void> {
+    public async start(): Promise<void> {
         // const workerRunningP = this.workerService.connect("Paparazzi");
         // workerRunningP.then(() => this.running.resolve(), (error) => this.running.reject(error));
+
+        // Preps message receiver.
+        await this.messageReceiver.initialize().catch((err) => {
+            this.running.reject(err);
+        });
+        this.messageReceiver.on("error", (err) => {
+            this.running.reject(err);
+        });
+        this.messageReceiver.on("message", (message: IMessage) => {
+            winston.info(`Paparazzi received a help message`);
+            winston.info(JSON.stringify(message));
+            /* {"content":{"clientId":"halting-bedroom",
+            "tasks":["spell","intel","translation","augmentation"]},"type":"task"} */
+        });
 
         return this.running.promise;
     }

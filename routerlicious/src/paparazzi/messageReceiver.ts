@@ -1,9 +1,9 @@
 import * as amqp from "amqplib";
 import { EventEmitter } from "events";
 import * as winston from "winston";
-import { IMessage, IMessageSender } from "./messages";
+import { IMessage, IMessageReceiver } from "./messages";
 
-class RabbitmqSender implements IMessageSender {
+class RabbitmqReceiver implements IMessageReceiver {
 
     private events = new EventEmitter();
     private rabbitmqConnectionString: string;
@@ -20,15 +20,18 @@ class RabbitmqSender implements IMessageSender {
         this.connection = await amqp.connect(this.rabbitmqConnectionString);
         this.channel = await this.connection.createChannel();
         await this.channel.assertQueue(this.messageQueueName, { durable: true });
-        winston.info(`Rabbitmq channel ready to produce!`);
+        winston.info(`Rabbitmq channel ready to receive!`);
+
+        // We don't need to ack the messages since they will be part of next help message if unacked.
+        this.channel.consume(this.messageQueueName, (msgBuffer) => {
+            const msgString = msgBuffer.content.toString();
+            const msg = JSON.parse(msgString) as IMessage;
+            this.events.emit("message", msg);
+        }, {noAck: true});
 
         this.connection.on("error", (error) => {
             this.events.emit("error", error);
         });
-    }
-
-    public send(message: IMessage) {
-        this.channel.sendToQueue(this.messageQueueName, new Buffer(JSON.stringify(message)), { persistent: true });
     }
 
     public on(event: string, listener: (...args: any[]) => void): this {
@@ -43,7 +46,7 @@ class RabbitmqSender implements IMessageSender {
     }
 }
 
-// Factory to switch between different message sender.
-export function createMessageSender(rabbitmqConfig: any, tmzConfig: any): IMessageSender {
-    return new RabbitmqSender(rabbitmqConfig, tmzConfig);
+// Factory to switch between different message receiver.
+export function createMessageReceiver(rabbitmqConfig: any, tmzConfig: any): IMessageReceiver {
+    return new RabbitmqReceiver(rabbitmqConfig, tmzConfig);
 }

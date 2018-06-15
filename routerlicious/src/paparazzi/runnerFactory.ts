@@ -1,7 +1,7 @@
 import { Provider } from "nconf";
-import { ITenantManager } from "../api-core";
-import { TenantManager  } from "../services";
 import * as utils from "../utils";
+import { createMessageReceiver } from "./messageReceiver";
+import { IMessageReceiver } from "./messages";
 import { PaparazziRunner } from "./runner";
 
 export class PaparazziResources implements utils.IResources {
@@ -9,11 +9,11 @@ export class PaparazziResources implements utils.IResources {
         public alfredUrl: string,
         public tmzUrl: string,
         public workerConfig: any,
-        public tenantManager: ITenantManager) {
+        public messageReceiver: IMessageReceiver) {
     }
 
-    public dispose(): Promise<void> {
-        return Promise.resolve();
+    public async dispose(): Promise<void> {
+        await this.messageReceiver.close();
     }
 }
 
@@ -23,15 +23,13 @@ export class PaparazziResourcesFactory implements utils.IResourcesFactory<Papara
         const tmzUrl = config.get("paparazzi:tmz");
         const workerConfig = config.get("worker");
 
-        // Database connection
-        const authEndpoint = config.get("auth:endpoint");
-        const tenantManager = new TenantManager(authEndpoint, config.get("worker:blobStorageUrl"));
+        const messageReceiver = createMessageReceiver(config.get("rabbitmq"), config.get("tmz"));
 
         return new PaparazziResources(
             alfredUrl,
             tmzUrl,
             workerConfig,
-            tenantManager);
+            messageReceiver);
     }
 }
 
@@ -41,6 +39,6 @@ export class PaparazziRunnerFactory implements utils.IRunnerFactory<PaparazziRes
             resources.alfredUrl,
             resources.tmzUrl,
             resources.workerConfig,
-            resources.tenantManager);
+            resources.messageReceiver);
     }
 }

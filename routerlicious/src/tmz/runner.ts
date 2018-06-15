@@ -69,6 +69,9 @@ export class TmzRunner implements utils.IRunner {
         };
         winston.info(`Help needed for ${tenantId}/${documentId}`);
         winston.info(JSON.stringify(queueMessage));
-        // TODO: send message to queue
+        this.messageSender.send({
+            content: message,
+            type: "task",
+        });
     }
 }
