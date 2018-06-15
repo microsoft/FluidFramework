@@ -1,7 +1,7 @@
 import * as request from "request";
 import * as url from "url";
 import * as winston from "winston";
-import { IHelpMessage, ITenantManager } from "../api-core";
+import { IHelpMessage, IQueueMessage, ITenantManager } from "../api-core";
 import { Deferred } from "../core-utils";
 import * as utils from "../utils";
 import * as messages from "./messages";
@@ -13,7 +13,7 @@ export class TmzRunner implements utils.IRunner {
         private alfredUrl: string,
         private agentUploader: messages.IAgentUploader,
         private messageSender: messages.IMessageSender,
-        tenantManager: ITenantManager) {
+        private tenantManager: ITenantManager) {
     }
 
     public async start(): Promise<void> {
@@ -59,9 +59,16 @@ export class TmzRunner implements utils.IRunner {
         return this.deferred.promise;
     }
 
-    public async trackDocument(tenantId: string, documentId: string, content: IHelpMessage): Promise<void> {
+    public async trackDocument(tenantId: string, documentId: string, message: IHelpMessage): Promise<void> {
+        const token = await this.tenantManager.getKey(tenantId);
+        const queueMessage: IQueueMessage = {
+            documentId,
+            message,
+            tenantId,
+            token,
+        };
         winston.info(`Help needed for ${tenantId}/${documentId}`);
-        winston.info(JSON.stringify(content));
+        winston.info(JSON.stringify(queueMessage));
         // TODO: send message to queue
     }
 }

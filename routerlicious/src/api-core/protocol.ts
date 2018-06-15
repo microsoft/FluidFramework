@@ -144,6 +144,17 @@ export interface IHelpMessage {
     tasks: string[];
 }
 
+export interface IQueueMessage {
+
+    message: IHelpMessage;
+
+    tenantId: string;
+
+    documentId: string;
+
+    token: string;
+}
+
 export interface ILatencyMessage {
     // Latency traces.
     traces: ITrace[];
