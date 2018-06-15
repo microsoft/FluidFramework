@@ -61,13 +61,13 @@ export class PaparazziRunner implements utils.IRunner {
     }
 
     public start(): Promise<void> {
-        const workerRunningP = this.workerService.connect("Paparazzi");
-        workerRunningP.then(() => this.running.resolve(), (error) => this.running.reject(error));
+        // const workerRunningP = this.workerService.connect("Paparazzi");
+        // workerRunningP.then(() => this.running.resolve(), (error) => this.running.reject(error));
 
         return this.running.promise;
     }
     public stop(): Promise<void> {
-        this.workerService.close().then(() => this.running.resolve(), (error) => this.running.reject(error));
+        // this.workerService.close().then(() => this.running.resolve(), (error) => this.running.reject(error));
         return this.running.promise;
     }
 

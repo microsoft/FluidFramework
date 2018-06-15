@@ -1,3 +1,4 @@
+import { Help } from "../api-core";
 import * as core from "../core";
 import { IContext } from "../kafka-service/lambdas";
 import { SequencedLambda } from "../kafka-service/sequencedLambda";
@@ -18,9 +19,14 @@ export class TmzLambda extends SequencedLambda {
         const baseMessage = JSON.parse(message.value.toString()) as core.IMessage;
         if (baseMessage.type === core.SequencedOperationType) {
             const sequencedMessage = baseMessage as core.ISequencedOperationMessage;
-            await this.runner.trackDocument(sequencedMessage.tenantId, sequencedMessage.documentId);
+            // Only process "Help" messages.
+            if (sequencedMessage.operation.type === Help) {
+                await this.runner.trackDocument(
+                    sequencedMessage.tenantId,
+                    sequencedMessage.documentId,
+                    sequencedMessage.operation.contents);
+            }
         }
-
         this.context.checkpoint(message.offset);
     }
 }

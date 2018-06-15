@@ -1,76 +1,12 @@
 // tslint:disable:ban-types
-import * as socketStorage from "../socket-storage";
-import { StateManager} from "./stateManager";
-
 /**
- * State of a document.
+ * Message sent by the sender.
  */
-export interface IDocumentState {
-    tenantId: string;
+export interface IMessage {
 
-    documentId: string;
+    type: string;
 
-    workers: Array<{ detail: IWorkerDetail, workType: string }>; // Array<<IWorkerDetail, workType>>
-
-    activeTS: number;
-}
-
-/**
- * Detail Description of worker used by tmz
- */
-export interface IWorkerDetail {
-    // Worker object
-    worker: socketStorage.IWorker;
-
-    // Socket object
-    socket: any;
-}
-
-/**
- * Type of work and desired worker type.
- */
-export interface IWork {
-    workType: string;
-
-    workerType: string;
-}
-
-/**
- * Type of Document and Work.
- */
-export interface IDocumentWork {
-    tenantId: string;
-
-    documentId: string;
-
-    work: IWork;
-}
-
-/**
- * Interface to implement the Work manager.
- */
-export interface IForeman {
-
-    /**
-     * Broadcasts a new agent arrival to workers.
-     */
-    broadcastNewAgentModule(moduleName: string, workerType: string, action: string): void;
-
-    /**
-     * Assigns tasks to workers based on some heuristics.
-     */
-    assignWork(workToDo: IDocumentWork[]): Array<Promise<void>>;
-
-    /**
-     * Revokes expired work. Already implemented in base class.
-     */
-    revokeExpiredWork(): Array<Promise<void>>;
-
-    /**
-     * Returns underlying State Manager. Already implemented in base class.
-     */
-    getManager(): StateManager;
-
+    content: any;
 }
 
 /**
@@ -81,16 +17,6 @@ export interface IAgent {
     type: string;
 
     name: string;
-}
-
-/**
- * Message sent by the sender.
- */
-export interface IMessage {
-
-    type: string;
-
-    content: any;
 }
 
 /**
@@ -134,4 +60,9 @@ export interface IMessageSender {
      * Notifies on error.
      */
     on(event: string, listener: Function): this;
+
+    /**
+     * Notifies on error.
+     */
+    close(): Promise<void>;
 }

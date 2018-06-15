@@ -8,6 +8,7 @@ class RabbitmqSender implements IMessageSender {
     private events = new EventEmitter();
     private rabbitmqConnectionString: string;
     private messageQueueName: string;
+    private connection: amqp.Connection;
     private channel: amqp.Channel;
 
     constructor(rabbitmqConfig: any, tmzConfig: any) {
@@ -16,12 +17,12 @@ class RabbitmqSender implements IMessageSender {
     }
 
     public async initialize() {
-        const connection = await amqp.connect(this.rabbitmqConnectionString);
-        this.channel = await connection.createChannel();
+        this.connection = await amqp.connect(this.rabbitmqConnectionString);
+        this.channel = await this.connection.createChannel();
         await this.channel.assertQueue(this.messageQueueName, { durable: true });
         winston.info(`Rabbitmq channel ready!`);
 
-        connection.on("error", (error) => {
+        this.connection.on("error", (error) => {
             this.events.emit("error", error);
         });
     }
@@ -33,6 +34,12 @@ class RabbitmqSender implements IMessageSender {
     public on(event: string, listener: (...args: any[]) => void): this {
         this.events.on(event, listener);
         return this;
+    }
+
+    public async close() {
+        const closeChannelP = this.channel.close();
+        const closeConnectionP = this.connection.close();
+        await Promise.all([closeChannelP, closeConnectionP]);
     }
 }
 

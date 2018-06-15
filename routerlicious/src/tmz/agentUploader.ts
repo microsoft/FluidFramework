@@ -48,7 +48,6 @@ class MinioUploader implements IAgentUploader {
         }, (error) => {
             this.events.emit("error", `Error creating minio bucket ${this. minioBucket}: ${error}`);
         });
-
     }
 
     public on(event: string, listener: (...args: any[]) => void): this {
