@@ -14,8 +14,15 @@
   },
   "dependencies": {
     "@prague/routerlicious": "^0.1.2569",
+    "body-parser": "^1.18.3",
     "commander": "^2.15.1",
+    "compression": "^1.7.2",
+    "cors": "^2.8.4",
     "fabric-ca-client": "^1.1.2",
-    "fabric-client": "^1.1.2"
+    "fabric-client": "^1.1.2",
+    "jsonwebtoken": "^8.3.0",
+    "lodash": "^4.17.10",
+    "nconf": "^0.10.0",
+    "winston": "^3.0.0"
   }
 }
