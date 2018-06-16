@@ -118,6 +118,7 @@
         "checkpointTimeIntervalMsec": 1000
     },
     "tmz": {
+        "alfred": "http://alfred:3000",
         "messageQueueName": "taskQueue"
     },
     "rabbitmq": {

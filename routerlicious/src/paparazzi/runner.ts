@@ -60,32 +60,55 @@ export class PaparazziRunner implements utils.IRunner {
         });
         this.messageReceiver.on("message", (message: IMessage) => {
             const type = message.type;
-            // The api supports start and stopping of tasks. But for now we just handle starting.
-            if (type === "task") {
+            if (type === "tasks:start") {
                 const requestMessage = message.content as IQueueMessage;
-                this.processDocumentWork(requestMessage);
+                this.startDocumentWork(requestMessage);
+            } else if (type === "agent:add") {
+                const agentName = message.content as string;
+                this.loadAgent(agentName);
+            } else if (type === "agent:remove") {
+                const agentName = message.content as string;
+                this.unloadAgent(agentName);
             }
+            // TODO: May be we also want to revoke tasks from a worker? Or the worker should self manage?
         });
 
         return this.running.promise;
     }
 
-    public processDocumentWork(requestMsg: IQueueMessage) {
+    public stop(): Promise<void> {
+        return this.running.promise;
+    }
+
+    private startDocumentWork(requestMsg: IQueueMessage) {
         // Only start tasks that are allowed to run.
         const filteredTask = requestMsg.message.tasks.filter((task) => this.permission.has(task));
 
-        winston.info(`Starting ${filteredTask} for ${requestMsg.tenantId}/${requestMsg.documentId}`);
-        this.workerService.startTasks(
-            requestMsg.tenantId,
-            requestMsg.documentId,
-            filteredTask,
-            requestMsg.token).catch((err) => {
-                // tslint:disable-next-line
-                winston.error(`Error starting ${filteredTask} for ${requestMsg.tenantId}/${requestMsg.documentId}: ${err}`);
-            });
+        if (filteredTask.length > 0) {
+            winston.info(`Starting ${JSON.stringify(filteredTask)}: ${requestMsg.tenantId}/${requestMsg.documentId}`);
+            this.workerService.startTasks(
+                requestMsg.tenantId,
+                requestMsg.documentId,
+                filteredTask,
+                requestMsg.token).catch((err) => {
+                    winston.error(
+                        // tslint:disable-next-line
+                        `Error starting ${JSON.stringify(filteredTask)}: ${requestMsg.tenantId}/${requestMsg.documentId}: ${err}`
+                    );
+                });
+        }
     }
-    public stop(): Promise<void> {
-        return this.running.promise;
+
+    private loadAgent(agentName: string) {
+        this.workerService.loadAgent(agentName).catch((err) => {
+            winston.error(`Error loading new agent: ${agentName}`);
+        });
+    }
+
+    private unloadAgent(agentName: string) {
+        this.workerService.unloadAgent(agentName).catch((err) => {
+            winston.error(`Error unloading new agent: ${agentName}`);
+        });
     }
 
     private initLoadModule(alfredUrl: string): (name: string) => Promise<any> {

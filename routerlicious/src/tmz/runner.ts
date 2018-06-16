@@ -29,21 +29,29 @@ export class TmzRunner implements utils.IRunner {
         this.agentUploader.initialize();
         this.agentUploader.on("agentAdded", (agent: messages.IAgent) => {
             if (agent.type === "server") {
-                winston.info(`New module uploaded: ${agent.name}`);
-                // Send help message.
+                winston.info(`New agent package uploaded: ${agent.name}`);
+                // Convert to webpacked script.
                 const moduleUrl = url.resolve(this.alfredUrl, `/agent/js/${agent.name}`);
                 request.post(moduleUrl);
+                this.messageSender.send({
+                    content: agent.name,
+                    type: "agent:add",
+                });
             } else if (agent.type === "client") {
-                // winston.info(`Received a new webpacked script: ${agent.name}`);
-                // TODO: Send help message.
+                winston.info(`New agent script uploaded: ${agent.name}`);
+                // TODO: Figure out an way to send this message to browser clients.
             }
         });
         this.agentUploader.on("agentRemoved", (agent: messages.IAgent) => {
             if (agent.type === "server") {
-                winston.info(`Module deleted: ${agent.name}`);
-                // Send help message.
+                winston.info(`Agent package removed: ${agent.name}`);
+                this.messageSender.send({
+                    content: agent.name,
+                    type: "agent:remove",
+                });
             } else if (agent.type === "client") {
-                // TODO: Implement removal from client.
+                winston.info(`Agent script removed`);
+                // TODO: Figure out an way to send this message to browser clients.
             }
         });
         this.agentUploader.on("error", (err) => {
@@ -67,11 +75,10 @@ export class TmzRunner implements utils.IRunner {
             tenantId,
             token: utils.generateToken(tenantId, documentId, key),
         };
-        winston.info(`Help needed for ${tenantId}/${documentId}`);
-        winston.info(JSON.stringify(queueMessage));
+        winston.info(`Tasks requested for ${tenantId}/${documentId}: ${JSON.stringify(message.tasks)}`);
         this.messageSender.send({
             content: queueMessage,
-            type: "task",
+            type: "tasks:start",
         });
     }
 }
