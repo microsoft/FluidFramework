@@ -25,6 +25,10 @@ export function create(config: Provider): Router {
         const from = stringToSequenceNumber(request.query.from);
         const to = stringToSequenceNumber(request.query.to);
 
+        // TODO need to filter the items on the chain by documentID and be able to return them here
+        // Although I guess I need to run simple deli off of the results of the chain and then store
+        // this stuff in memory...
+
         // Query for the deltas and return a filtered version of just the operations field
         const deltasP = getDeltas(request.params.id, from, to);
         deltasP.then(

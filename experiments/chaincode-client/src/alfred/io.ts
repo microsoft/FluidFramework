@@ -2,6 +2,7 @@ import * as api from "@prague/routerlicious/dist/api-core";
 import * as core from "@prague/routerlicious/dist/core";
 import { ThroughputCounter } from "@prague/routerlicious/dist/core-utils";
 import * as socketStorage from "@prague/routerlicious/dist/socket-storage";
+import * as fabric from "fabric-client";
 import * as jwt from "jsonwebtoken";
 import * as moniker from "moniker";
 import { Provider } from "nconf";
@@ -17,7 +18,13 @@ interface IDocumentUser {
     permission: string;
 }
 
-export function register(webSocketServer: core.IWebSocketServer, config: Provider) {
+export function register(
+    webSocketServer: core.IWebSocketServer,
+    config: Provider,
+    client: fabric,
+    channel: fabric.Channel,
+    channelId: string) {
+
     const throughput = new ThroughputCounter(winston.info);
 
     webSocketServer.on("connection", (socket: core.IWebSocket) => {
@@ -29,10 +36,27 @@ export function register(webSocketServer: core.IWebSocketServer, config: Provide
 
         async function sendAndTrack(message: core.IRawOperationMessage) {
             throughput.produce();
-            // Send to the BC here
-            // const sendP = producer.send(JSON.stringify(message), message.documentId);
-            // sendP.catch((error) => { return; }).then(() => throughput.acknowlwedge());
-            // return sendP;
+
+            // get a transaction id object based on the current user assigned to fabric client
+            const txId = client.newTransactionID();
+            console.log("Assigning transaction_id: ", txId.getTransactionID());
+
+            // must send the proposal to endorsing peers
+            const request = {
+                args: [message.documentId, JSON.stringify(message)],
+                // targets: let default to the peer assigned to the client
+                chainId: channelId,
+                chaincodeId: "fabcar",
+                fcn: "op",
+                txId,
+            };
+
+            // send the transaction proposal to the peers
+            const [proposalResponses] = await channel.sendTransactionProposal(request);
+            if (!proposalResponses || !proposalResponses[0].response || proposalResponses[0].response.status !== 200) {
+                return Promise.reject("Transaction proposal was bad");
+            }
+
             return;
         }
 

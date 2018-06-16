@@ -2,7 +2,9 @@
 import * as core from "@prague/routerlicious/dist/core";
 import * as services from "@prague/routerlicious/dist/services";
 import * as utils from "@prague/routerlicious/dist/utils";
+import * as fabric from "fabric-client";
 import { Provider } from "nconf";
+import * as path from "path";
 import { AlfredRunner } from "./runner";
 
 export class AlfredResources implements utils.IResources {
@@ -12,7 +14,10 @@ export class AlfredResources implements utils.IResources {
         public config: Provider,
         public redisConfig: any,
         public webSocketLibrary: string,
-        public port: any) {
+        public port: any,
+        public client: fabric,
+        public channel: fabric.Channel,
+        public channelId: string) {
 
         this.webServerFactory = new services.SocketIoWebServerFactory(this.redisConfig);
     }
@@ -24,6 +29,26 @@ export class AlfredResources implements utils.IResources {
 
 export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredResources> {
     public async create(config: Provider): Promise<AlfredResources> {
+        const client = new fabric();
+        const peer = client.newPeer("grpc://localhost:7051");
+        const order = client.newOrderer("grpc://localhost:7050");
+
+        // setup the fabric network
+        const channelId = config.get("channelId");
+        const channel = client.newChannel(channelId);
+        channel.addPeer(peer);
+        channel.addOrderer(order);
+
+        const storePath = path.join(__dirname, "../../hfc-key-store");
+        const stateStore = await fabric.newDefaultKeyValueStore({ path: storePath });
+
+        // assign the store to the fabric client
+        client.setStateStore(stateStore);
+        const cryptoSuite = fabric.newCryptoSuite();
+        const cryptoStore = fabric.newCryptoKeyStore({ path: storePath });
+        cryptoSuite.setCryptoKeyStore(cryptoStore);
+        client.setCryptoSuite(cryptoSuite);
+
         const webSocketLibrary = config.get("alfred:webSocketLib");
         const redisConfig = config.get("redis");
 
@@ -34,7 +59,10 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
             config,
             redisConfig,
             webSocketLibrary,
-            port);
+            port,
+            client,
+            channel,
+            channelId);
     }
 }
 
@@ -43,6 +71,9 @@ export class AlfredRunnerFactory implements utils.IRunnerFactory<AlfredResources
         return new AlfredRunner(
             resources.webServerFactory,
             resources.config,
-            resources.port);
+            resources.port,
+            resources.client,
+            resources.channel,
+            resources.channelId);
     }
 }
