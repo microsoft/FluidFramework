@@ -20,7 +20,7 @@ export class SpellcheckerWork extends BaseWork implements IWork {
         this.dict = dictionary;
     }
 
-    public async start(): Promise<void> {
+    public async start(task: string): Promise<void> {
         await this.loadDocument(
             {
                 blockUpdateMarkers: true,
@@ -29,7 +29,8 @@ export class SpellcheckerWork extends BaseWork implements IWork {
                 localMinSeq: 0,
                 token: this.token,
             },
-            this.service);
+            this.service,
+            task);
         const eventHandler = (op: core.ISequencedDocumentMessage, object: core.ICollaborativeObject) => {
             if (op.type === core.ObjectOperation || op.type === core.AttachObject) {
                 this.spellCheck(object);

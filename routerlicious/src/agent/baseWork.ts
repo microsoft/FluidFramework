@@ -1,6 +1,6 @@
 // tslint:disable:ban-types
 import { EventEmitter } from "events";
-import { api, core } from "../client-api";
+import { api, core, types } from "../client-api";
 
 export class BaseWork extends EventEmitter {
 
@@ -15,20 +15,13 @@ export class BaseWork extends EventEmitter {
         this.config = this.conf;
     }
 
-    public loadDocument(options: Object, service: core.IDocumentService): Promise<void> {
-        const documentP = api.load(this.id, options, null, true, api.defaultRegistry, service);
-        return documentP.then(
-            (doc) => {
-                console.log(`Loaded document ${this.id}`);
-                this.document = doc;
-                this.errorHandler = (error) => {
-                    this.events.emit("error", error);
-                };
-                this.document.on("error", this.errorHandler);
-            }, (error) => {
-                console.error("BaseWork:loadDocument failed", error);
-                return Promise.reject(error);
-            });
+    public async loadDocument(options: Object, service: core.IDocumentService, task: string): Promise<void> {
+        this.document = await api.load(this.id, options, null, true, api.defaultRegistry, service);
+        await this.updateTaskMap(task);
+        this.errorHandler = (error) => {
+            this.events.emit("error", error);
+        };
+        this.document.on("error", this.errorHandler);
     }
 
     public on(event: string, listener: (...args: any[]) => void): this {
@@ -36,12 +29,32 @@ export class BaseWork extends EventEmitter {
         return this;
     }
 
-    public stop(): Promise<void> {
+    public async stop(): Promise<void> {
         // Make sure the document is loaded first.
         if (this.document !== undefined) {
             this.document.removeListener("op", this.operation);
             this.document.removeListener("error", this.errorHandler);
         }
-        return Promise.resolve();
+    }
+
+    private async updateTaskMap(task: string) {
+        const rootMapView = await this.document.getRoot().getView();
+        await this.waitForTaskMap(rootMapView);
+        const taskMap = rootMapView.get("tasks") as types.IMap;
+        taskMap.set(task, this.document.clientId);
+    }
+
+    private pollTaskMap(root: types.IMapView, resolve, reject) {
+        if (root.has("tasks")) {
+            resolve();
+        } else {
+            const pauseAmount = 50;
+            console.log(`Did not find taskmap - waiting ${pauseAmount}ms`);
+            setTimeout(() => this.pollTaskMap(root, resolve, reject), pauseAmount);
+        }
+    }
+
+    private waitForTaskMap(root: types.IMapView): Promise<void> {
+        return new Promise<void>((resolve, reject) => this.pollTaskMap(root, resolve, reject));
     }
 }

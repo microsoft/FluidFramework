@@ -4,20 +4,18 @@ import * as unzip from "unzip-stream";
 import * as url from "url";
 import * as winston from "winston";
 import * as agent from "../agent";
-import { IDocumentService} from "../api-core";
+import { IDocumentService, IQueueMessage} from "../api-core";
 import { Deferred } from "../core-utils";
 import * as socketStorage from "../socket-storage";
 import * as utils from "../utils";
 import { IMessage, IMessageReceiver } from "./messages";
-
-// TODO can likely consolidate the runner and the worker service
 
 class DocumentServiceFactory implements agent.IDocumentServiceFactory {
     constructor(private serverUrl: string, private historianUrl: string) {
     }
 
     public async getService(tenantId: string): Promise<IDocumentService> {
-        // Disable browser error tracking for paparazzi.
+        // Disabling browser error tracking for paparazzi.
         const services = socketStorage.createDocumentService(this.serverUrl, this.historianUrl, tenantId, false);
         return services;
     }
@@ -26,34 +24,25 @@ class DocumentServiceFactory implements agent.IDocumentServiceFactory {
 export class PaparazziRunner implements utils.IRunner {
     private workerService: agent.WorkerService;
     private running = new Deferred<void>();
+    private permission: Set<string>;
 
     constructor(
-        alfredUrl: string,
-        tmzUrl: string,
-        workerConfig: any,
+        private alfredUrl: string,
+        private workerConfig: any,
         private messageReceiver: IMessageReceiver) {
 
         const runnerType = "paparazzi";
-        const workTypeMap: { [workType: string]: boolean} = {};
-        for (const workType of workerConfig.permission[runnerType]) {
-            workTypeMap[workType] = true;
-        }
+        this.permission = new Set(workerConfig.permission as string[]);
 
-        const factory = new DocumentServiceFactory(alfredUrl, workerConfig.blobStorageUrl);
-
-        const workManager = new agent.WorkManager(
-            factory,
-            workerConfig,
-            alfredUrl,
-            this.initLoadModule(alfredUrl),
-            runnerType,
-            workTypeMap);
+        const factory = new DocumentServiceFactory(this.alfredUrl, workerConfig.blobStorageUrl);
 
         this.workerService = new agent.WorkerService(
-            tmzUrl,
-            workerConfig,
-            workTypeMap,
-            workManager);
+            factory,
+            this.workerConfig,
+            this.alfredUrl,
+            this.initLoadModule(this.alfredUrl),
+            runnerType,
+            this.permission);
 
         // Report any service error.
         this.workerService.on("error", (error) => {
@@ -62,9 +51,6 @@ export class PaparazziRunner implements utils.IRunner {
     }
 
     public async start(): Promise<void> {
-        // const workerRunningP = this.workerService.connect("Paparazzi");
-        // workerRunningP.then(() => this.running.resolve(), (error) => this.running.reject(error));
-
         // Preps message receiver.
         await this.messageReceiver.initialize().catch((err) => {
             this.running.reject(err);
@@ -73,16 +59,32 @@ export class PaparazziRunner implements utils.IRunner {
             this.running.reject(err);
         });
         this.messageReceiver.on("message", (message: IMessage) => {
-            winston.info(`Paparazzi received a help message`);
-            winston.info(JSON.stringify(message));
-            /* {"content":{"clientId":"halting-bedroom",
-            "tasks":["spell","intel","translation","augmentation"]},"type":"task"} */
+            const type = message.type;
+            // The api supports start and stopping of tasks. But for now we just handle starting.
+            if (type === "task") {
+                const requestMessage = message.content as IQueueMessage;
+                this.processDocumentWork(requestMessage);
+            }
         });
 
         return this.running.promise;
     }
+
+    public processDocumentWork(requestMsg: IQueueMessage) {
+        // Only start tasks that are allowed to run.
+        const filteredTask = requestMsg.message.tasks.filter((task) => this.permission.has(task));
+
+        winston.info(`Starting ${filteredTask} for ${requestMsg.tenantId}/${requestMsg.documentId}`);
+        this.workerService.startTasks(
+            requestMsg.tenantId,
+            requestMsg.documentId,
+            filteredTask,
+            requestMsg.token).catch((err) => {
+                // tslint:disable-next-line
+                winston.error(`Error starting ${filteredTask} for ${requestMsg.tenantId}/${requestMsg.documentId}: ${err}`);
+            });
+    }
     public stop(): Promise<void> {
-        // this.workerService.close().then(() => this.running.resolve(), (error) => this.running.reject(error));
         return this.running.promise;
     }
 

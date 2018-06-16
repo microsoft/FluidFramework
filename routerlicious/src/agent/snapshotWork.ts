@@ -13,10 +13,11 @@ export class SnapshotWork extends BaseWork implements IWork {
         super(docId, config);
     }
 
-    public async start(): Promise<void> {
+    public async start(task: string): Promise<void> {
         await this.loadDocument(
             { encrypted: undefined, localMinSeq: 0, token: this.token, client: { type: "robot"} },
-            this.service);
+            this.service,
+            task);
         const serializer = new Serializer(this.document, IdleDetectionTime, MaxTimeWithoutSnapshot, SnapshotRetryTime);
         const eventHandler = (op: core.ISequencedDocumentMessage) => {
             serializer.run(op);

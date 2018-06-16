@@ -60,17 +60,17 @@ export class TmzRunner implements utils.IRunner {
     }
 
     public async trackDocument(tenantId: string, documentId: string, message: IHelpMessage): Promise<void> {
-        const token = await this.tenantManager.getKey(tenantId);
+        const key = await this.tenantManager.getKey(tenantId);
         const queueMessage: IQueueMessage = {
             documentId,
             message,
             tenantId,
-            token,
+            token: utils.generateToken(tenantId, documentId, key),
         };
         winston.info(`Help needed for ${tenantId}/${documentId}`);
         winston.info(JSON.stringify(queueMessage));
         this.messageSender.send({
-            content: message,
+            content: queueMessage,
             type: "task",
         });
     }

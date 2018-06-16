@@ -7,7 +7,6 @@ import { PaparazziRunner } from "./runner";
 export class PaparazziResources implements utils.IResources {
     constructor(
         public alfredUrl: string,
-        public tmzUrl: string,
         public workerConfig: any,
         public messageReceiver: IMessageReceiver) {
     }
@@ -20,14 +19,12 @@ export class PaparazziResources implements utils.IResources {
 export class PaparazziResourcesFactory implements utils.IResourcesFactory<PaparazziResources> {
     public async create(config: Provider): Promise<PaparazziResources> {
         const alfredUrl = config.get("paparazzi:alfred");
-        const tmzUrl = config.get("paparazzi:tmz");
         const workerConfig = config.get("worker");
 
         const messageReceiver = createMessageReceiver(config.get("rabbitmq"), config.get("tmz"));
 
         return new PaparazziResources(
             alfredUrl,
-            tmzUrl,
             workerConfig,
             messageReceiver);
     }
@@ -37,7 +34,6 @@ export class PaparazziRunnerFactory implements utils.IRunnerFactory<PaparazziRes
     public async create(resources: PaparazziResources): Promise<utils.IRunner> {
         return new PaparazziRunner(
             resources.alfredUrl,
-            resources.tmzUrl,
             resources.workerConfig,
             resources.messageReceiver);
     }

@@ -3,7 +3,7 @@ import * as request from "request";
 import * as url from "url";
 import { MergeTree } from "../client-api";
 import { AgentLoader, IAgent } from "./agentLoader";
-import { IWork, IWorkManager } from "./definitions";
+import { IDocumentServiceFactory, IWork, IWorkManager } from "./definitions";
 import { IntelWork } from "./intelWork";
 import { PingWork } from "./pingWork";
 import { SnapshotWork } from "./snapshotWork";
@@ -11,6 +11,8 @@ import { SpellcheckerWork } from "./spellcheckerWork";
 import { TranslationWork } from "./translationWork";
 
 // Responsible for managing the lifetime of an work.
+// TODO: This class is meant to run inside both node and browser,
+// Need to change it when browser webworker story is figured out.
 export class WorkManager extends EventEmitter implements IWorkManager {
 
     private dict = new MergeTree.TST<number>();
@@ -18,21 +20,21 @@ export class WorkManager extends EventEmitter implements IWorkManager {
     private documentMap: { [docId: string]: { [work: string]: IWork} } = {};
     private events = new EventEmitter();
 
-    constructor(private serviceFactory: any,
+    constructor(private serviceFactory: IDocumentServiceFactory,
                 private config: any,
                 private serverUrl: string,
                 private agentModuleLoader: (id: string) => Promise<any>,
                 private clientType: string,
-                private workTypeMap: { [workType: string]: boolean}) {
+                private permission: Set<string>) {
         super();
 
         // Load dictionary if you are allowed.
-        if ("spell" in this.workTypeMap) {
+        if (this.permission.has("spell")) {
             this.loadDict();
         }
 
         // Load agents if you are allowed.
-        if ("intel" in this.workTypeMap) {
+        if (this.permission.has("intel")) {
             // Agent Loader to load runtime uploaded agents.
             const agentServer = this.clientType === "paparazzi" ? this.config.alfredUrl : this.serverUrl;
             this.agentLoader = new AgentLoader(this.agentModuleLoader, agentServer);
@@ -48,7 +50,7 @@ export class WorkManager extends EventEmitter implements IWorkManager {
     }
 
     public async processDocumentWork(tenantId: string, documentId: string, workType: string,
-                                     action: string, token?: string) {
+                                     action: string, token: string) {
         if (action === "start") {
             await this.startDocumentWork(tenantId, documentId, token, workType);
         } else {
@@ -161,7 +163,7 @@ export class WorkManager extends EventEmitter implements IWorkManager {
 
     private async applyWork(fullId: string, workType: string, worker: IWork) {
         console.log(`Starting work ${workType} for document ${fullId}`);
-        await worker.start();
+        await worker.start(workType);
         console.log(`Started work ${workType} for document ${fullId}`);
         this.documentMap[fullId][workType] = worker;
         // Register existing intel agents to this document

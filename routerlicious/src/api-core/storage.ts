@@ -33,16 +33,6 @@ export interface IObjectAttributes {
 }
 
 /**
- * The worker service connects to work manager (TMZ) and registers itself to receive work.
- */
-export interface IWorkerService {
-    /**
-     * Connects to tmz and subscribes to start working.
-     */
-    connect(type: string): Promise<any>;
-}
-
-/**
  * Type of entries that can be stored in a tree
  */
 export enum TreeEntry {

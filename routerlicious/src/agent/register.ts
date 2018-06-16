@@ -1,4 +1,4 @@
-import { api, core, types } from "../client-api";
+import { api, core } from "../client-api";
 import { ITaskRunnerConfig } from "./definitions";
 import { SnapshotWork } from "./snapshotWork";
 
@@ -16,9 +16,7 @@ export function registerToWork(doc: api.Document, config: ITaskRunnerConfig, tok
                     }
                 }
                 if (tasksToDo.length > 0) {
-                    const rootMap = await doc.getRoot();
-                    const workMap = await rootMap.get("tasks") as types.IMap;
-                    await performTasks(doc.id, doc.clientId, token, tasksToDo, workMap).catch((err) => {
+                    await performTasks(doc.id, token, tasksToDo).catch((err) => {
                         console.error(err);
                     });
                 }
@@ -28,21 +26,19 @@ export function registerToWork(doc: api.Document, config: ITaskRunnerConfig, tok
 }
 
 // TODO: Make this for every work types. Move this over to webworker. And allow it not to reconnect in api.load.
-async function performTasks(docId: string, clientId: string, token: string, tasks: string[], workMap: types.IMap) {
+async function performTasks(docId: string, token: string, tasks: string[]) {
     const taskPromises = [];
     for (const task of tasks) {
-        taskPromises.push(performTask(docId, clientId, token, task, workMap));
+        taskPromises.push(performTask(docId, token, task));
     }
     await Promise.all(taskPromises);
 }
 
-async function performTask(docId: string, clientId: string, token: string, task: string, workMap: types.IMap) {
+async function performTask(docId: string, token: string, task: string) {
     switch (task) {
         case "snapshot":
             const snapshotWork  = new SnapshotWork(docId, token, {}, api.getDefaultDocumentService());
-            await snapshotWork.start();
-            workMap.set(task, clientId);
-            console.log(`ClientId ${clientId} started ${task}`);
+            await snapshotWork.start(task);
             break;
         default:
             throw new Error("Unknown task type");
