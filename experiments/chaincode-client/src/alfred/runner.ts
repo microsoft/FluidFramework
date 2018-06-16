@@ -1,10 +1,10 @@
 import * as core from "@prague/routerlicious/dist/core";
 import { Deferred } from "@prague/routerlicious/dist/core-utils";
 import * as utils from "@prague/routerlicious/dist/utils";
-import * as fabric from "fabric-client";
 import { Provider } from "nconf";
 import * as winston from "winston";
 import * as app from "./app";
+import * as db from "./chainDb";
 import * as io from "./io";
 
 export class AlfredRunner implements utils.IRunner {
@@ -15,9 +15,7 @@ export class AlfredRunner implements utils.IRunner {
         private serverFactory: core.IWebServerFactory,
         private config: Provider,
         private port: string | number,
-        private client: fabric,
-        private channel: fabric.Channel,
-        private channelId: string) {
+        private chainDb: db.ChainDb) {
     }
 
     public start(): Promise<void> {
@@ -32,7 +30,7 @@ export class AlfredRunner implements utils.IRunner {
         const httpServer = this.server.httpServer;
 
         // Register all the socket.io stuff
-        io.register(this.server.webSocketServer, this.config, this.client, this.channel, this.channelId);
+        io.register(this.server.webSocketServer, this.config, this.chainDb);
 
         // Listen on provided port, on all network interfaces.
         httpServer.listen(this.port);

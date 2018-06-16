@@ -1,0 +1,19 @@
+{
+    "channelId": "mychannel",
+    "userId": "user1",
+    "logger": {
+        "colorize": true,
+        "morganFormat": "dev",
+        "json": false,
+        "level": "info",
+        "timestamp": true,
+        "label": "winston"
+    },
+    "redis": {
+        "host": "localhost",
+        "port": 6379
+    },
+    "alfred": {
+        "restJsonSize": "50mb"
+    }
+}

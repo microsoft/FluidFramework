@@ -5,6 +5,7 @@ import * as utils from "@prague/routerlicious/dist/utils";
 import * as fabric from "fabric-client";
 import { Provider } from "nconf";
 import * as path from "path";
+import * as db from "./chainDb";
 import { AlfredRunner } from "./runner";
 
 export class AlfredResources implements utils.IResources {
@@ -15,9 +16,7 @@ export class AlfredResources implements utils.IResources {
         public redisConfig: any,
         public webSocketLibrary: string,
         public port: any,
-        public client: fabric,
-        public channel: fabric.Channel,
-        public channelId: string) {
+        public chainDb: db.ChainDb) {
 
         this.webServerFactory = new services.SocketIoWebServerFactory(this.redisConfig);
     }
@@ -49,20 +48,26 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
         cryptoSuite.setCryptoKeyStore(cryptoStore);
         client.setCryptoSuite(cryptoSuite);
 
+        const userId = config.get("userId");
+        const memberUser = await client.getUserContext(userId, true);
+        if (!memberUser || !memberUser.isEnrolled()) {
+            return Promise.reject(`Failed to get ${userId}.... run registerUser.js`);
+        }
+
         const webSocketLibrary = config.get("alfred:webSocketLib");
         const redisConfig = config.get("redis");
 
         // This wanst to create stuff
         const port = utils.normalizePort(process.env.PORT || "3000");
 
+        const chainDb = await db.init(client, channel, channelId);
+
         return new AlfredResources(
             config,
             redisConfig,
             webSocketLibrary,
             port,
-            client,
-            channel,
-            channelId);
+            chainDb);
     }
 }
 
@@ -72,8 +77,6 @@ export class AlfredRunnerFactory implements utils.IRunnerFactory<AlfredResources
             resources.webServerFactory,
             resources.config,
             resources.port,
-            resources.client,
-            resources.channel,
-            resources.channelId);
+            resources.chainDb);
     }
 }
