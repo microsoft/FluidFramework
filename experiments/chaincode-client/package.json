@@ -13,6 +13,7 @@
     "typescript": "^2.8.3"
   },
   "dependencies": {
+    "@prague/routerlicious": "^0.1.2569",
     "commander": "^2.15.1",
     "fabric-ca-client": "^1.1.2",
     "fabric-client": "^1.1.2"

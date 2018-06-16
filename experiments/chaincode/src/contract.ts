@@ -34,12 +34,29 @@ export class Contract implements IChaincode {
             case "set":
                 result = await this.setKey(stub, params);
                 break;
+            case "op":
+                result = await this.op(stub, params);
+                break;
             default:
                 console.log("I hit a default block");
                 return shimError("Unknown function call");
         }
 
         return success(result);
+    }
+
+    private async op(stub: Stub, params: string[]): Promise<Buffer> {
+        if (params.length !== 2) {
+            return Promise.reject("Invalid argument length to get");
+        }
+
+        const [documentId, op] = params;
+        const txId = stub.getTxID();
+        const compositeIndexName = "documentId~txID";
+        const key = stub.createCompositeKey(compositeIndexName, [documentId, txId]);
+        stub.putState(key, Buffer.from(op));
+
+        return Buffer.from("");
     }
 
     private async getKey(stub: Stub, params: string[]): Promise<Buffer> {

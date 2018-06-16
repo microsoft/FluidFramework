@@ -5,6 +5,16 @@ Reminders
 
 ## Running
 
+### Production
+
+... start up the Hyperledger
+```
+cd fabcar
+./startFabric node
+```
+
+### Development mode
+
 ... in chaincode container
 ```
 docker exec -it chaincode bash
