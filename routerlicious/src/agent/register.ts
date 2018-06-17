@@ -9,7 +9,7 @@ import { TranslationWork } from "./translationWork";
 export function registerToWork(doc: api.Document, config: ITaskRunnerConfig, token: string, workerConfig: any) {
     if (config.permission && config.permission.length > 0) {
         const permittedTasks = config.permission;
-        doc.on("help", async (message: core.IHelpMessage) => {
+        doc.on("clientHelp", async (message: core.IHelpMessage) => {
             // For now only leader will accept the work.
             // TODO: Find a reliable way to ack this help message exactly once by any client.
             if (message.clientId === doc.clientId) {

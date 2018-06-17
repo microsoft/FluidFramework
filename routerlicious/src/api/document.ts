@@ -19,7 +19,8 @@ import { BrowserErrorTrackingService } from "./errorTrackingService";
 const rootMapId = "root";
 const taskMapId = "tasks";
 const documentTasks = ["snapshot", "spell", "intel", "translation", "augmentation"];
-const taskCheckerMS = 15000;
+const taskCheckerMS = 20000;
+const helpSubmissionMS = 5000;
 
 // Registered services to use when loading a document
 let defaultDocumentService: api.IDocumentService;
@@ -185,6 +186,7 @@ export class Document extends EventEmitter implements api.IDocument {
     private messagesSinceMSNChange = new Array<api.ISequencedDocumentMessage>();
     private clients = new Map<string, api.IWorkerClient>();
     private isLeader: boolean = false;
+    private taskMapView: IMapView;
     private connectionState = api.ConnectionState.Disconnected;
     private lastReason: string;
     private lastContext: string;
@@ -974,8 +976,8 @@ export class Document extends EventEmitter implements api.IDocument {
                 this.electLeader();
                 break;
 
-            case api.Help:
-                this.emit("help", message.contents);
+            case api.ClientHelp:
+                this.emit("clientHelp", message.contents);
                 break;
 
             default:
@@ -1006,8 +1008,9 @@ export class Document extends EventEmitter implements api.IDocument {
         const rootMap = this.getRoot();
         rootMap.set(id, this.createMap());
         const taskMap = await rootMap.get(id) as IMap;
+        this.taskMapView = await taskMap.getView();
         for (const task of documentTasks) {
-            taskMap.set(task, undefined);
+            this.taskMapView.set(task, undefined);
         }
     }
 
@@ -1045,25 +1048,38 @@ export class Document extends EventEmitter implements api.IDocument {
 
     // Submits a help message for unassigned tasks.
     private async submitHelpMessage() {
-        const rootMap = this.getRoot();
-        const taskMap = await rootMap.get(taskMapId) as IMap;
-        const taskMapView = await taskMap.getView() as IMapView;
-        const unassignedTasks = [];
-        for (const task of taskMapView.keys()) {
-            const clientId = taskMapView.get(task);
+        const unassignedTasks = this.getUnassignedTasks();
+        if (unassignedTasks.length > 0) {
+            const clientHelpMessage: api.IHelpMessage = {
+                clientId: this.clientId,
+                tasks: unassignedTasks,
+            };
+            this.submitMessage(api.ClientHelp, clientHelpMessage);
+            // Wait for the browser clients to ack first. Only ask for remote help if there are stil unacked tasks.
+            setTimeout(() => {
+                const unackedTasks = this.getUnassignedTasks();
+                if (unackedTasks.length > 0) {
+                    const remoteHelpMessage: api.IHelpMessage = {
+                        clientId: this.clientId,
+                        tasks: unackedTasks,
+                    };
+                    this.submitMessage(api.RemoteHelp, remoteHelpMessage);
+                }
+            }, helpSubmissionMS);
+        }
+    }
+
+    private getUnassignedTasks(): string[] {
+        const unassignedTasks: string[] = [];
+        for (const task of this.taskMapView.keys()) {
+            const clientId = this.taskMapView.get(task);
             // A task is unassigned if there is no client or old client associated with it.
             if (clientId && this.getClients().has(clientId)) {
                 continue;
             }
             unassignedTasks.push(task);
         }
-        if (unassignedTasks.length > 0) {
-            const helpMessage: api.IHelpMessage = {
-                clientId: this.clientId,
-                tasks: unassignedTasks,
-            };
-            this.submitMessage(api.Help, helpMessage);
-        }
+        return unassignedTasks;
     }
 }
 

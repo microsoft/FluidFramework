@@ -1,4 +1,4 @@
-import { Help } from "../api-core";
+import { RemoteHelp } from "../api-core";
 import * as core from "../core";
 import { IContext } from "../kafka-service/lambdas";
 import { SequencedLambda } from "../kafka-service/sequencedLambda";
@@ -20,7 +20,7 @@ export class TmzLambda extends SequencedLambda {
         if (baseMessage.type === core.SequencedOperationType) {
             const sequencedMessage = baseMessage as core.ISequencedOperationMessage;
             // Only process "Help" messages.
-            if (sequencedMessage.operation.type === Help) {
+            if (sequencedMessage.operation.type === RemoteHelp) {
                 await this.runner.trackDocument(
                     sequencedMessage.tenantId,
                     sequencedMessage.documentId,
