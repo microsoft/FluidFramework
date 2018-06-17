@@ -26,21 +26,19 @@ export class PaparazziRunner implements utils.IRunner {
     private running = new Deferred<void>();
     private permission: Set<string>;
 
-    constructor(
-        private alfredUrl: string,
-        private workerConfig: any,
-        private messageReceiver: IMessageReceiver) {
+    constructor(private workerConfig: any, private messageReceiver: IMessageReceiver) {
 
         const runnerType = "paparazzi";
         this.permission = new Set(workerConfig.permission as string[]);
+        const alfredUrl = workerConfig.alfredUrl;
 
-        const factory = new DocumentServiceFactory(this.alfredUrl, workerConfig.blobStorageUrl);
+        const factory = new DocumentServiceFactory(alfredUrl, workerConfig.blobStorageUrl);
 
         this.workerService = new agent.WorkerService(
             factory,
             this.workerConfig,
-            this.alfredUrl,
-            this.initLoadModule(this.alfredUrl),
+            alfredUrl,
+            this.initLoadModule(alfredUrl),
             runnerType,
             this.permission);
 

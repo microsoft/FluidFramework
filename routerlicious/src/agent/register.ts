@@ -1,8 +1,12 @@
 import { api, core } from "../client-api";
 import { ITaskRunnerConfig } from "./definitions";
+import { loadDictionary } from "./dictionaryLoader";
+import { IntelWork } from "./intelWork";
 import { SnapshotWork } from "./snapshotWork";
+import { SpellcheckerWork } from "./spellcheckerWork";
+import { TranslationWork } from "./translationWork";
 
-export function registerToWork(doc: api.Document, config: ITaskRunnerConfig, token: string) {
+export function registerToWork(doc: api.Document, config: ITaskRunnerConfig, token: string, workerConfig: any) {
     if (config.permission && config.permission.length > 0) {
         const permittedTasks = config.permission;
         doc.on("help", async (message: core.IHelpMessage) => {
@@ -16,7 +20,7 @@ export function registerToWork(doc: api.Document, config: ITaskRunnerConfig, tok
                     }
                 }
                 if (tasksToDo.length > 0) {
-                    await performTasks(doc.id, token, tasksToDo).catch((err) => {
+                    await performTasks(doc.id, token, tasksToDo, workerConfig).catch((err) => {
                         console.error(err);
                     });
                 }
@@ -26,19 +30,38 @@ export function registerToWork(doc: api.Document, config: ITaskRunnerConfig, tok
 }
 
 // TODO: Make this for every work types. Move this over to webworker. And allow it not to reconnect in api.load.
-async function performTasks(docId: string, token: string, tasks: string[]) {
+async function performTasks(docId: string, token: string, tasks: string[], config) {
     const taskPromises = [];
     for (const task of tasks) {
-        taskPromises.push(performTask(docId, token, task));
+        taskPromises.push(performTask(docId, token, task, config));
     }
     await Promise.all(taskPromises);
 }
 
-async function performTask(docId: string, token: string, task: string) {
+async function performTask(docId: string, token: string, task: string, config: any) {
     switch (task) {
         case "snapshot":
-            const snapshotWork  = new SnapshotWork(docId, token, {}, api.getDefaultDocumentService());
+            const snapshotWork  = new SnapshotWork(docId, token, config, api.getDefaultDocumentService());
             await snapshotWork.start(task);
+            break;
+        case "intel":
+            const intelWork  = new IntelWork(docId, token, config, api.getDefaultDocumentService());
+            await intelWork.start(task);
+            break;
+        case "spell":
+            const dictionary = await loadDictionary(config.serverUrl);
+            const spellWork = new SpellcheckerWork(
+                docId,
+                token,
+                config,
+                dictionary,
+                api.getDefaultDocumentService(),
+            );
+            await spellWork.start(task);
+            break;
+        case "translation":
+            const translationWork = new TranslationWork(docId, token, config, api.getDefaultDocumentService());
+            await translationWork.start(task);
             break;
         default:
             throw new Error("Unknown task type");

@@ -92,7 +92,7 @@ async function loadDocument(
     // Register to run task only if the client type is browser.
     const taskConfig = config.client as agent.ITaskRunnerConfig;
     if (taskConfig && taskConfig.type === "browser") {
-        agent.registerToWork(collabDoc, taskConfig, token);
+        agent.registerToWork(collabDoc, taskConfig, token, config);
     }
 
     console.log(`collabDoc loaded ${id} - ${performanceNow()}`);

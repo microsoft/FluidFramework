@@ -1,9 +1,8 @@
 import { EventEmitter } from "events";
-import * as request from "request";
-import * as url from "url";
 import { MergeTree } from "../client-api";
 import { AgentLoader, IAgent } from "./agentLoader";
 import { IDocumentServiceFactory, IWork, IWorkManager } from "./definitions";
+import { loadDictionary } from "./dictionaryLoader";
 import { IntelWork } from "./intelWork";
 import { PingWork } from "./pingWork";
 import { SnapshotWork } from "./snapshotWork";
@@ -28,9 +27,13 @@ export class WorkManager extends EventEmitter implements IWorkManager {
                 private permission: Set<string>) {
         super();
 
-        // Load dictionary if you are allowed.
+        // Load dictionary if you are allowed to run spellcheck.
         if (this.permission.has("spell")) {
-            this.loadDict();
+            loadDictionary(this.serverUrl).then((dict) => {
+                this.dict = dict;
+            }, (err) => {
+                this.events.emit(err);
+            });
         }
 
         // Load agents if you are allowed.
@@ -198,35 +201,4 @@ export class WorkManager extends EventEmitter implements IWorkManager {
             intelWork.registerNewService(agents[name].code);
         }
     }
-
-    private loadDict() {
-        this.downloadRawText("/public/literature/dictfreq.txt").then((text: string) => {
-            const splitContent = text.split("\n");
-            for (const entry of splitContent) {
-                const splitEntry = entry.split(";");
-                this.dict.put(splitEntry[0], parseInt(splitEntry[1], 10));
-            }
-            console.log(`Loaded dictionary`);
-        }, (err) => {
-            // On error, try to request alfred again after a timeout.
-            setTimeout(() => {
-                this.loadDict();
-            }, 100);
-        });
-    }
-
-    private downloadRawText(textUrl: string): Promise<string> {
-        return new Promise<string>((resolve, reject) => {
-            request.get(url.resolve(this.serverUrl, textUrl), (error, response, body: string) => {
-                if (error) {
-                    reject(error);
-                } else if (response.statusCode !== 200) {
-                    reject(response.statusCode);
-                } else {
-                    resolve(body);
-                }
-            });
-        });
-    }
-
 }

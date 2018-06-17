@@ -160,7 +160,7 @@ function loadFull(id: string, version: resources.ICommit, config: any, token?: s
             // Register to run task only if the client type is browser.
             const taskConfig = config.client as agent.ITaskRunnerConfig;
             if (taskConfig && taskConfig.type === "browser") {
-                agent.registerToWork(doc, taskConfig, token);
+                agent.registerToWork(doc, taskConfig, token, config);
             }
         }, (err) => {
             // TODO (auth): Display an error page here.

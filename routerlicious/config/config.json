@@ -107,9 +107,6 @@
             "topic": "deltas"
         }
     },
-    "paparazzi": {
-        "alfred": "http://alfred:3000"
-    },
     "scriptorium": {
         "topic": "deltas",
         "kafkaClientId": "scriptorium",
