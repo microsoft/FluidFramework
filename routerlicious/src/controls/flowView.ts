@@ -16,7 +16,6 @@ import {
 } from "../shared-string";
 import * as ui from "../ui";
 import { Status } from "./status";
-import { start } from "repl";
 
 export interface IOverlayMarker {
     id: string;
