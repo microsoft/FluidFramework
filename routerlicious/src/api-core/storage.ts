@@ -1,5 +1,6 @@
 // tslint:disable:ban-types
 import * as resources from "gitresources";
+import * as gitStorage from "../git-storage";
 import { IWorkerClient } from "./client";
 import { IDocumentMessage, ISequencedDocumentMessage } from "./protocol";
 import { ITenantUser } from "./tenant";
@@ -118,6 +119,8 @@ export interface IDistributedObject {
  * Interface to provide access to snapshots saved for a collaborative object
  */
 export interface IDocumentStorageService {
+    manager: gitStorage.GitManager;
+
     /**
      * Returns the snapshot tree.
      */

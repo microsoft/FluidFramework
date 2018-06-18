@@ -1,5 +1,8 @@
 // The main app code
+import * as crypto from "crypto";
+import * as resources from "gitresources";
 import { api, types } from "../client-api";
+import * as gitStorage from "../git-storage";
 import * as ui from "../ui";
 import { Button } from "./button";
 import { Chart } from "./chart";
@@ -39,6 +42,7 @@ export class FlexView extends ui.Component {
     private popup: Popup;
     private colorStack: StackPanel;
     private components: IFlexViewComponent[] = [];
+    private blobMap: types.IMap; // TODO: make blobMap a sibling of root?
 
     constructor(element: HTMLDivElement, doc: api.Document, root: types.IMapView) {
         super(element);
@@ -47,6 +51,12 @@ export class FlexView extends ui.Component {
         element.appendChild(dockElement);
         this.dock = new DockPanel(dockElement);
         this.addChild(this.dock);
+
+        if (root.has("blobs")) {
+            this.blobMap = root.get<types.IMap>("blobs");
+        } else {
+            this.blobMap = root.set<types.IMap>("blobs", doc.createMap());
+        }
 
         // Add the ink canvas to the dock
         const inkCanvasElement = document.createElement("div");
@@ -64,8 +74,26 @@ export class FlexView extends ui.Component {
             document.createElement("div"),
             buttonSize,
             ["btn", "btn-palette", "prague-icon-replay"]);
+
+        const buttonDiv = document.createElement("div");
+        const input = document.createElement("input");
+        input.setAttribute("type", "file");
+        input.style.visibility = "hidden";
+
+        const inclusionButton = new Button(
+            buttonDiv,
+            buttonSize,
+            ["btn", "btn-palette", "prague-icon-tube"]);
+
+        const downloadButton = new Button(
+            document.createElement("div"),
+            buttonSize,
+            ["btn", "btn-palette", "prague-icon-pyramid"]);
+
         stackPanel.addChild(this.colorButton);
         stackPanel.addChild(replayButton);
+        stackPanel.addChild(inclusionButton);
+        stackPanel.addChild(downloadButton);
         this.dock.addBottom(stackPanel);
 
         replayButton.on("click", (event) => {
@@ -76,6 +104,17 @@ export class FlexView extends ui.Component {
         this.colorButton.on("click", (event) => {
             debug("Color button click");
             this.popup.toggle();
+        });
+
+        inclusionButton.on("click", (event) => {
+            input.click();
+            input.onchange = async () => {
+                this.uploadInclusion(await this.fileToText(input.files.item(0)));
+            };
+        });
+
+        downloadButton.on("click", (event) => {
+            this.downloadInclusions();
         });
 
         // These should turn into components
@@ -164,5 +203,74 @@ export class FlexView extends ui.Component {
         this.element.insertBefore(chart.element, this.element.lastChild);
         this.addChild(chart);
         this.resizeCore(this.size);
+    }
+
+    private async uploadInclusion(file: string) {
+        const docService = api.getDefaultBlobStorage();
+        const gitManager: gitStorage.GitManager = docService.manager;
+
+        const now = Date.now();
+
+        // Create Hash (Github hashes the string in this modified way)
+        const fileString = "blob " + file.length + "\0" +  file;
+        const hash = crypto.createHash("sha1").update(fileString).digest("hex");
+
+        // Set the hash in blob storage
+        // TODO: Empty should be the inclusion's information
+        this.blobMap.set<string>(hash, "empty");
+
+        const blobResponseP = gitManager.createBlob(file, "utf-8") as Promise<resources.ICreateBlobResponse>;
+        blobResponseP.then(async (blobResponse) => {
+
+            console.log("blob Promise Completed: " + (Date.now() - now));
+            console.log("sha: " + blobResponse.sha);
+            // TODO: Indicate the inclusion is done uploading
+        });
+    }
+
+    private async downloadInclusions() {
+        const docService = api.getDefaultBlobStorage();
+        const gitManager: gitStorage.GitManager = docService.manager;
+
+        const shas: string[] = [];
+
+        const blobView = await this.blobMap.getView();
+
+        for (const key of blobView.keys()) {
+            shas.push(key);
+        }
+
+        const filesP: Array<Promise<resources.IBlob>> = [];
+
+        for (const sha of shas) {
+            filesP.push(gitManager.getBlob(sha));
+        }
+        Promise.all(filesP)
+            .then((files) => {
+                const contents = files.map((blob) => {
+                    return new Buffer(blob.content, "base64").toString("utf-8");
+                });
+                console.log(contents[0]);
+            })
+            .catch((error) => {
+                console.log("Error: " + JSON.stringify(error));
+            });
+    }
+
+    private async fileToText(file: File): Promise<string> {
+        const fr = new FileReader();
+
+        return new Promise<string>((resolve, reject) => {
+            fr.onerror = (error) => {
+                fr.abort();
+                reject("error: " + JSON.stringify(error));
+            };
+
+            fr.onloadend = () => {
+                resolve(fr.result as string);
+            };
+
+            fr.readAsText(file);
+        });
     }
 }

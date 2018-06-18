@@ -1846,6 +1846,11 @@ export class Viewport {
         return this.lineTop;
     }
 
+    public resetTop() {
+        // TODO: update rect y to 0 and h to h-(deltaY-y)
+        this.lineTop=0;
+    }
+
     public setLineTop(v: number) {
         this.lineTop = v;
     }
@@ -1929,7 +1934,7 @@ export interface IFlowBreakInfo extends Paragraph.IBreakInfo {
 }
 
 export function breakPGIntoLinesFFVP(itemInfo: Paragraph.IParagraphItemInfo, defaultLineHeight: number,
-    viewport: Viewport) {
+    viewport: Viewport, startOffset = 0) {
     const items = itemInfo.items;
     let lineWidth = viewport.currentLineWidth(itemInfo.maxHeight);
     let prevBreak: IFlowBreakInfo = { lineWidth, posInPG: 0, startItemIndex: 0 };
@@ -1942,6 +1947,14 @@ export function breakPGIntoLinesFFVP(itemInfo: Paragraph.IParagraphItemInfo, def
     let prevIsGlue = true;
     const savedTop = viewport.getLineTop();
     let committedItemsHeight = 0;
+    let firstLine= true;
+
+    function checkViewportFirstLine(pos: number) {
+        if ((startOffset>0)&&firstLine&&(pos>=startOffset)) {
+            firstLine = false;
+            viewport.resetTop();
+        }
+    }
     for (let i = 0, len = items.length; i < len; i++) {
         const item = items[i];
         if (item.type === Paragraph.ParagraphItemType.Block) {
@@ -1951,6 +1964,7 @@ export function breakPGIntoLinesFFVP(itemInfo: Paragraph.IParagraphItemInfo, def
                 blockRunWidth = 0;
             }
             if ((committedItemsWidth + item.width) > lineWidth) {
+                checkViewportFirstLine(blockRunPos);
                 prevBreak.lineX = viewport.getLineX();
                 prevBreak.lineHeight = committedItemsHeight;
                 prevBreak = { lineWidth, posInPG: blockRunPos, startItemIndex: i };
@@ -1962,6 +1976,7 @@ export function breakPGIntoLinesFFVP(itemInfo: Paragraph.IParagraphItemInfo, def
             }
             posInPG += item.text.length;
             if (committedItemsWidth > lineWidth) {
+                checkViewportFirstLine(posInPG);
                 prevBreak.lineX = viewport.getLineX();
                 prevBreak.lineHeight = committedItemsHeight;
                 prevBreak = { lineWidth, posInPG, startItemIndex: i };
@@ -2064,7 +2079,7 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
             lineFontstr = docContext.headerFontstr;
         }
         let lineHeight = lineDivHeight;
-       for (let breakIndex = 0, len = pgBreaks.length; breakIndex < len; breakIndex++) {
+        for (let breakIndex = 0, len = pgBreaks.length; breakIndex < len; breakIndex++) {
             const breakInfo = pgBreaks[breakIndex];
             lineY = layoutContext.viewport.getLineTop();
             if (endPGMarker.cache.isUniformWidth) {
@@ -2230,7 +2245,12 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
             // const breaks = Paragraph.breakPGIntoLinesFF(itemsContext.itemInfo.items, contentWidth);
             // curPGMarker.cache = { breaks, isUniformWidth: true, uniformLineWidth: contentWidth };
 
-            const breaks = breakPGIntoLinesFFVP(itemsContext.itemInfo, docContext.defaultLineDivHeight, layoutContext.viewport);
+            let startOffset = 0;
+            if (layoutContext.requestedPosition > currentPos) {
+                startOffset = layoutContext.requestedPosition - currentPos;
+            }
+            const breaks = breakPGIntoLinesFFVP(itemsContext.itemInfo, docContext.defaultLineDivHeight,
+                layoutContext.viewport, startOffset);
             curPGMarker.cache = { breaks, isUniformWidth: false };
             paragraphLexer.reset();
             // TODO: more accurate end of document reasoning

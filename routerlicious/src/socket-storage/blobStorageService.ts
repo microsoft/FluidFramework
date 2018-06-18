@@ -6,7 +6,7 @@ import * as gitStorage from "../git-storage";
  * Document access to underlying storage
  */
 export class DocumentStorageService implements api.IDocumentStorageService  {
-    constructor(tenantId: string, private id: string, private manager: gitStorage.GitManager) {
+    constructor(tenantId: string, private id: string, public manager: gitStorage.GitManager) {
     }
 
     public getSnapshotTree(version: resources.ICommit): Promise<api.ISnapshotTree> {

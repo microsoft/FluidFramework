@@ -26,6 +26,8 @@ export class TestDocumentDeltaConnection implements api.IDocumentDeltaConnection
 }
 
 export class TestDocumentStorageService implements api.IDocumentStorageService {
+    public manager = null;
+
     public getSnapshotTree(version: git.ICommit): Promise<api.ISnapshotTree> {
         throw new Error("Method not implemented.");
     }
