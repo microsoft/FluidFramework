@@ -9,46 +9,19 @@ import { SpellcheckerWork } from "./spellcheckerWork";
 import { TranslationWork } from "./translationWork";
 
 // Responsible for managing the lifetime of an work.
-// TODO: This class is meant to run inside both node and browser,
-// Need to change it when browser webworker story is figured out.
 export class WorkManager extends EventEmitter implements IWorkManager {
 
-    private dict = new MergeTree.TST<number>();
+    private dict: MergeTree.TST<number>;
     private agentLoader: AgentLoader;
     private documentMap: { [docId: string]: { [work: string]: IWork} } = {};
     private events = new EventEmitter();
+    private agentsLoaded: boolean = false;
 
     constructor(private serviceFactory: IDocumentServiceFactory,
                 private config: any,
                 private serverUrl: string,
-                private agentModuleLoader: (id: string) => Promise<any>,
-                private clientType: string,
-                private permission: Set<string>) {
+                private agentModuleLoader: (id: string) => Promise<any>) {
         super();
-
-        // Load dictionary if you are allowed to run spellcheck.
-        if (this.permission.has("spell")) {
-            loadDictionary(this.serverUrl).then((dict) => {
-                this.dict = dict;
-            }, (err) => {
-                this.events.emit(err);
-            });
-        }
-
-        // Load agents if you are allowed.
-        if (this.permission.has("intel")) {
-            // Agent Loader to load runtime uploaded agents.
-            const agentServer = this.clientType === "paparazzi" ? this.config.alfredUrl : this.serverUrl;
-            this.agentLoader = new AgentLoader(this.agentModuleLoader, agentServer);
-
-            // Start loading all uploaded agents.
-            this.agentLoader.loadUploadedAgents(this.clientType).then(() => {
-                console.log(`Loaded all uploaded agents`);
-            }, (err) => {
-                console.log(`Could not load agent: ${err}`);
-                this.events.emit("error", err);
-            });
-        }
     }
 
     public async startDocumentWork(tenantId: string, documentId: string, workType: string, token?: string) {
@@ -60,10 +33,14 @@ export class WorkManager extends EventEmitter implements IWorkManager {
                 await this.startTask(tenantId, documentId, workType, snapshotWork);
                 break;
             case "intel":
+                await this.loadUploadedAgents();
                 const intelWork = new IntelWork(documentId, token, this.config, services);
                 await this.startTask(tenantId, documentId, workType, intelWork);
                 break;
             case "spell":
+                await this.loadSpellings().catch((err) => {
+                    this.events.emit(err);
+                });
                 const spellcheckWork = new SpellcheckerWork(
                     documentId,
                     token,
@@ -165,5 +142,21 @@ export class WorkManager extends EventEmitter implements IWorkManager {
             console.log(`Registering ${name} to document ${fullId}`);
             intelWork.registerNewService(agents[name].code);
         }
+    }
+
+    private async loadSpellings() {
+        if (!this.dict) {
+            this.dict = new MergeTree.TST<number>();
+            this.dict = await loadDictionary(this.serverUrl);
+        }
+    }
+
+    private async loadUploadedAgents() {
+        if (!this.agentsLoaded) {
+            this.agentLoader = new AgentLoader(this.agentModuleLoader, this.config.alfredUrl);
+            await this.agentLoader.loadUploadedAgents();
+            this.agentsLoaded = true;
+        }
+
     }
 }

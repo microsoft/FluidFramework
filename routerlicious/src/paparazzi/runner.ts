@@ -27,8 +27,6 @@ export class PaparazziRunner implements utils.IRunner {
     private permission: Set<string>;
 
     constructor(private workerConfig: any, private messageReceiver: IMessageReceiver) {
-
-        const runnerType = "paparazzi";
         this.permission = new Set(workerConfig.permission as string[]);
         const alfredUrl = workerConfig.alfredUrl;
 
@@ -38,9 +36,7 @@ export class PaparazziRunner implements utils.IRunner {
             factory,
             this.workerConfig,
             alfredUrl,
-            this.initLoadModule(alfredUrl),
-            runnerType,
-            this.permission);
+            this.initLoadModule(alfredUrl));
 
         // Report any service error.
         this.workerService.on("error", (error) => {
@@ -104,9 +100,7 @@ export class PaparazziRunner implements utils.IRunner {
     }
 
     private unloadAgent(agentName: string) {
-        this.workerService.unloadAgent(agentName).catch((err) => {
-            winston.error(`Error unloading new agent: ${agentName}`);
-        });
+        this.workerService.unloadAgent(agentName);
     }
 
     private initLoadModule(alfredUrl: string): (name: string) => Promise<any> {
@@ -116,7 +110,6 @@ export class PaparazziRunner implements utils.IRunner {
             winston.info(`Worker will load ${moduleName}`);
 
             // TODO - switch these to absolute paths
-
             return new Promise<any>((resolve, reject) => {
                 fs.access(`../../../tmp/intel_modules/${moduleName}`, (error) => {
                     // Module already exists locally. Just import it!

@@ -14,17 +14,13 @@ export class WorkerService extends EventEmitter {
         private serviceFactory: IDocumentServiceFactory,
         private config: any,
         private serverUrl: string,
-        private agentModuleLoader: (id: string) => Promise<any>,
-        private clientType: string,
-        private permission: Set<string>) {
+        private agentModuleLoader: (id: string) => Promise<any>) {
         super();
         this.workManager = new WorkManager(
             this.serviceFactory,
             this.config,
             this.serverUrl,
-            this.agentModuleLoader,
-            this.clientType,
-            this.permission);
+            this.agentModuleLoader);
         this.workManager.on("error", (error) => {
             this.emit("error", error);
         });
@@ -48,7 +44,7 @@ export class WorkerService extends EventEmitter {
         await this.workManager.loadAgent(agentName);
     }
 
-    public async unloadAgent(agentName: string) {
-        await this.workManager.unloadAgent(agentName);
+    public unloadAgent(agentName: string) {
+        this.workManager.unloadAgent(agentName);
     }
 }
