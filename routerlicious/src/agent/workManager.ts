@@ -1,11 +1,9 @@
 import { EventEmitter } from "events";
-import * as request from "request";
-import * as url from "url";
 import { MergeTree } from "../client-api";
 import { AgentLoader, IAgent } from "./agentLoader";
-import { IWork, IWorkManager } from "./definitions";
+import { IDocumentServiceFactory, IDocumentTaskInfo, IWork, IWorkManager } from "./definitions";
+import { loadDictionary } from "./dictionaryLoader";
 import { IntelWork } from "./intelWork";
-import { PingWork } from "./pingWork";
 import { SnapshotWork } from "./snapshotWork";
 import { SpellcheckerWork } from "./spellcheckerWork";
 import { TranslationWork } from "./translationWork";
@@ -13,66 +11,23 @@ import { TranslationWork } from "./translationWork";
 // Responsible for managing the lifetime of an work.
 export class WorkManager extends EventEmitter implements IWorkManager {
 
-    private dict = new MergeTree.TST<number>();
+    private dict: MergeTree.TST<number>;
     private agentLoader: AgentLoader;
     private documentMap: { [docId: string]: { [work: string]: IWork} } = {};
     private events = new EventEmitter();
+    private agentsLoaded: boolean = false;
 
-    constructor(private serviceFactory: any,
+    constructor(private serviceFactory: IDocumentServiceFactory,
                 private config: any,
                 private serverUrl: string,
-                private agentModuleLoader: (id: string) => Promise<any>,
-                private clientType: string,
-                private workTypeMap: { [workType: string]: boolean}) {
+                private agentModuleLoader: (id: string) => Promise<any>) {
         super();
-
-        // Load dictionary if you are allowed.
-        if ("spell" in this.workTypeMap) {
-            this.loadDict();
-        }
-
-        // Load agents if you are allowed.
-        if ("intel" in this.workTypeMap) {
-            // Agent Loader to load runtime uploaded agents.
-            const agentServer = this.clientType === "paparazzi" ? this.config.alfredUrl : this.serverUrl;
-            this.agentLoader = new AgentLoader(this.agentModuleLoader, agentServer);
-
-            // Start loading all uploaded agents.
-            this.agentLoader.loadUploadedAgents(this.clientType).then(() => {
-                console.log(`Loaded all uploaded agents`);
-            }, (err) => {
-                console.log(`Could not load agent: ${err}`);
-                this.events.emit("error", err);
-            });
-        }
+        this.loadUploadedAgents().catch((err) => {
+            this.emit("error", err);
+        });
     }
 
-    public async processDocumentWork(tenantId: string, documentId: string, workType: string,
-                                     action: string, token?: string) {
-        if (action === "start") {
-            await this.startDocumentWork(tenantId, documentId, token, workType);
-        } else {
-            this.stopDocumentWork(tenantId, documentId, workType);
-        }
-    }
-
-    public async processAgentWork(agentName: string, action: string) {
-        if (action === "add") {
-            console.log(`Received request to load agent ${agentName}!`);
-            const agent = await this.agentLoader.loadNewAgent(agentName);
-            this.registerAgentToExistingDocuments(agent);
-        } else if (action === "remove") {
-            console.log(`Received request to unload agent ${agentName}!`);
-            this.agentLoader.unloadAgent(agentName);
-        }
-    }
-
-    public on(event: string, listener: (...args: any[]) => void): this {
-        this.events.on(event, listener);
-        return this;
-    }
-
-    private async startDocumentWork(tenantId: string, documentId: string, token: string, workType: string) {
+    public async startDocumentWork(tenantId: string, documentId: string, workType: string, token?: string) {
         const services = await this.serviceFactory.getService(tenantId);
 
         switch (workType) {
@@ -85,6 +40,9 @@ export class WorkManager extends EventEmitter implements IWorkManager {
                 await this.startTask(tenantId, documentId, workType, intelWork);
                 break;
             case "spell":
+                await this.loadSpellings().catch((err) => {
+                    this.events.emit(err);
+                });
                 const spellcheckWork = new SpellcheckerWork(
                     documentId,
                     token,
@@ -96,36 +54,37 @@ export class WorkManager extends EventEmitter implements IWorkManager {
             case "translation":
                 const translationWork = new TranslationWork(documentId, token, this.config, services);
                 await this.startTask(tenantId, documentId, workType, translationWork);
-            case "ping":
-                const pingWork = new PingWork(this.serverUrl);
-                await this.startTask(tenantId, documentId, workType, pingWork);
                 break;
             default:
-                throw new Error("Unknown work type!");
+                throw new Error(`Unknown work type: ${workType}`);
         }
 
     }
 
-    private stopDocumentWork(tenantId: string, documentId: string, workType: string) {
-        switch (workType) {
-            case "snapshot":
-                this.stopTask(tenantId, documentId, workType);
-                break;
-            case "intel":
-                this.stopTask(tenantId, documentId, workType);
-                break;
-            case "spell":
-                this.stopTask(tenantId, documentId, workType);
-                break;
-            case "translation":
-                this.stopTask(tenantId, documentId, workType);
-                break;
-            case "ping":
-                this.stopTask(tenantId, documentId, workType);
-                break;
-            default:
-                throw new Error("Unknown work type!");
+    public stopDocumentWork(tenantId: string, documentId: string, workType: string) {
+        const fullId = this.getFullId(tenantId, documentId);
+        if (fullId in this.documentMap) {
+            const taskMap = this.documentMap[fullId];
+            const task = taskMap[workType];
+            if (task !== undefined) {
+                task.stop(workType);
+                delete taskMap[workType];
+            }
         }
+    }
+
+    public async loadAgent(agentName: string): Promise<void> {
+        const agent = await this.agentLoader.loadNewAgent(agentName);
+        this.registerAgentToExistingDocuments(agent);
+    }
+
+    public unloadAgent(agentName: string) {
+        this.agentLoader.unloadAgent(agentName);
+    }
+
+    public on(event: string, listener: (...args: any[]) => void): this {
+        this.events.on(event, listener);
+        return this;
     }
 
     private getFullId(tenantId: string, documentId: string): string {
@@ -146,22 +105,9 @@ export class WorkManager extends EventEmitter implements IWorkManager {
         }
     }
 
-    private stopTask(tenantId: string, documentId: string, workType: string) {
-        const fullId = this.getFullId(tenantId, documentId);
-
-        if (fullId in this.documentMap) {
-            const taskMap = this.documentMap[fullId];
-            const task = taskMap[workType];
-            if (task !== undefined) {
-                task.stop();
-                delete taskMap[workType];
-            }
-        }
-    }
-
     private async applyWork(fullId: string, workType: string, worker: IWork) {
         console.log(`Starting work ${workType} for document ${fullId}`);
-        await worker.start();
+        await worker.start(workType);
         console.log(`Started work ${workType} for document ${fullId}`);
         this.documentMap[fullId][workType] = worker;
         // Register existing intel agents to this document
@@ -170,6 +116,9 @@ export class WorkManager extends EventEmitter implements IWorkManager {
         }
         worker.on("error", (error) => {
             this.events.emit("error", error);
+        });
+        worker.on("stop", (ev: IDocumentTaskInfo) => {
+            this.stopDocumentWork(ev.tenantId, ev.docId, ev.task);
         });
     }
 
@@ -197,34 +146,19 @@ export class WorkManager extends EventEmitter implements IWorkManager {
         }
     }
 
-    private loadDict() {
-        this.downloadRawText("/public/literature/dictfreq.txt").then((text: string) => {
-            const splitContent = text.split("\n");
-            for (const entry of splitContent) {
-                const splitEntry = entry.split(";");
-                this.dict.put(splitEntry[0], parseInt(splitEntry[1], 10));
-            }
-            console.log(`Loaded dictionary`);
-        }, (err) => {
-            // On error, try to request alfred again after a timeout.
-            setTimeout(() => {
-                this.loadDict();
-            }, 100);
-        });
+    private async loadSpellings() {
+        if (!this.dict) {
+            this.dict = new MergeTree.TST<number>();
+            this.dict = await loadDictionary(this.serverUrl);
+        }
     }
 
-    private downloadRawText(textUrl: string): Promise<string> {
-        return new Promise<string>((resolve, reject) => {
-            request.get(url.resolve(this.serverUrl, textUrl), (error, response, body: string) => {
-                if (error) {
-                    reject(error);
-                } else if (response.statusCode !== 200) {
-                    reject(response.statusCode);
-                } else {
-                    resolve(body);
-                }
-            });
-        });
-    }
+    private async loadUploadedAgents() {
+        if (!this.agentsLoaded) {
+            this.agentLoader = new AgentLoader(this.agentModuleLoader, this.config.alfredUrl);
+            await this.agentLoader.loadUploadedAgents();
+            this.agentsLoaded = true;
+        }
 
+    }
 }

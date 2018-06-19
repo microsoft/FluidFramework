@@ -29,6 +29,10 @@
         "bucket": "snapshots",
         "restJsonSize": "50mb"
     },
+    "client": {
+        "type": "browser",
+        "permission": ["snapshot"]
+    },
     "login": {
         "enabled": false,
         "microsoft": {

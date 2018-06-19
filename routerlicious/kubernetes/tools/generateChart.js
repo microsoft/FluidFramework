@@ -59,6 +59,9 @@ tmz:
   host: tmz.wu2.prague.office-int.com
   cert: wu2-tls-certificate
 
+rabbitmq:
+  connectionString: amqp://prague:JFqxYjRrIE@lumpy-worm-rabbitmq
+
 paparazzi:
   name: paparazzi
   replicas: 1

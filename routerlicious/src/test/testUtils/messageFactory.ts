@@ -63,7 +63,7 @@ export class MessageFactory {
     public createJoin(timestamp = Date.now()) {
         const operation: api.IDocumentMessage = {
             clientSequenceNumber: -1,
-            contents: this.clientId,
+            contents: { clientId: this.clientId },
             referenceSequenceNumber: -1,
             traces: [],
             type: api.ClientJoin,

@@ -11,12 +11,14 @@ export async function getConfig(
     tenantManager: ITenantManager,
     tenantId: string,
     trackError: boolean,
+    client: any,
     direct = false): Promise<string> {
 
     // Make a copy of the config to avoid destructive modifications to the original
     const updatedConfig = _.cloneDeep(config);
     updatedConfig.tenantId = tenantId;
     updatedConfig.trackError = trackError;
+    updatedConfig.client = client;
 
     if (direct) {
         const tenant = await tenantManager.getTenant(tenantId);

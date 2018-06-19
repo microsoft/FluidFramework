@@ -6,12 +6,16 @@ import { api, map as Map, socketStorage, types } from "../../client-api";
 import { IValueChanged } from "../../data-types";
 import { Counter, DistributedSet } from "../../map";
 
-async function loadDocument(id: string, version: resources.ICommit, token?: string): Promise<api.Document> {
-    console.log("Loading in root document...");
-    const document = await api.load(id, { encrypted: false, token }, version);
+async function loadDocument(
+    id: string,
+    version: resources.ICommit,
+    client: any,
+    token?: string): Promise<api.Document> {
+        console.log("Loading in root document...");
+        const document = await api.load(id, { client, encrypted: false, token }, version);
 
-    console.log("Document loaded");
-    return document;
+        console.log("Document loaded");
+        return document;
 }
 
 async function updateOrCreateKey(key: string, map: types.IMap, container: JQuery, doc: api.Document) {
@@ -144,8 +148,7 @@ function loadFull(id: string, version: resources.ICommit, config: any, token?: s
 
     $(document).ready(() => {
         // Bootstrap worker service.
-        agent.registerWorker(config, "maps");
-        loadDocument(id, version, token).then(async (doc) => {
+        loadDocument(id, version, config.client, token).then(async (doc) => {
             // tslint:disable-next-line
             window["doc"] = doc;
 
@@ -153,6 +156,12 @@ function loadFull(id: string, version: resources.ICommit, config: any, token?: s
 
             // Display the initial values and then listen for updates
             displayMap($("#mapViews"), null, root, null, doc);
+
+            // Register to run task only if the client type is browser.
+            const taskConfig = config.client as agent.ITaskRunnerConfig;
+            if (taskConfig && taskConfig.type === "browser") {
+                agent.registerToWork(doc, taskConfig, token, config);
+            }
         }, (err) => {
             // TODO (auth): Display an error page here.
             console.log(err);
@@ -168,7 +177,7 @@ function loadCommit(id: string, version: resources.ICommit, config: any) {
         config.trackError);
 
     $(document).ready(() => {
-        api.load(id, { encrypted: false /* api.isUserLoggedIn() */ }, version, false).then(async (doc) => {
+        api.load(id, { client: config.client, encrypted: false }, version, false).then(async (doc) => {
             // tslint:disable-next-line
             window["doc"] = doc;
 

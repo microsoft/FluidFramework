@@ -30,11 +30,10 @@ export class AgentLoader {
         return this.runtimeAgents;
     }
 
-    public async loadUploadedAgents(clientType: string): Promise<IAgent[]> {
+    public async loadUploadedAgents(): Promise<IAgent[]> {
         const agents = await this.loadUploadedAgentNames();
         const allAgentNames = (JSON.parse(agents) as IAgentNames).names;
-        const agentNames = (clientType === "paparazzi") ? allAgentNames.filter((name) => (name.indexOf("/") === -1)) :
-                            allAgentNames.filter((name) => (name.indexOf("/") !== -1));
+        const agentNames = allAgentNames.filter((name) => (name.indexOf("/") === -1));
         const loadPromises = agentNames.map((agentName) => this.loadNewAgent(agentName));
         const loadedAgents = await Promise.all(loadPromises);
         return loadedAgents;

@@ -1,46 +1,32 @@
 import { Provider } from "nconf";
-import { ITenantManager } from "../api-core";
-import { TenantManager  } from "../services";
 import * as utils from "../utils";
+import { createMessageReceiver } from "./messageReceiver";
+import { IMessageReceiver } from "./messages";
 import { PaparazziRunner } from "./runner";
 
 export class PaparazziResources implements utils.IResources {
-    constructor(
-        public alfredUrl: string,
-        public tmzUrl: string,
-        public workerConfig: any,
-        public tenantManager: ITenantManager) {
+    constructor(public workerConfig: any, public messageReceiver: IMessageReceiver) {
     }
 
-    public dispose(): Promise<void> {
-        return Promise.resolve();
+    public async dispose(): Promise<void> {
+        await this.messageReceiver.close();
     }
 }
 
 export class PaparazziResourcesFactory implements utils.IResourcesFactory<PaparazziResources> {
     public async create(config: Provider): Promise<PaparazziResources> {
-        const alfredUrl = config.get("paparazzi:alfred");
-        const tmzUrl = config.get("paparazzi:tmz");
+        const tmzConfig = config.get("tmz");
+        const rabbitmqConfig = config.get("rabbitmq");
         const workerConfig = config.get("worker");
 
-        // Database connection
-        const authEndpoint = config.get("auth:endpoint");
-        const tenantManager = new TenantManager(authEndpoint, config.get("worker:blobStorageUrl"));
+        const messageReceiver = createMessageReceiver(rabbitmqConfig, tmzConfig);
 
-        return new PaparazziResources(
-            alfredUrl,
-            tmzUrl,
-            workerConfig,
-            tenantManager);
+        return new PaparazziResources(workerConfig, messageReceiver);
     }
 }
 
 export class PaparazziRunnerFactory implements utils.IRunnerFactory<PaparazziResources> {
     public async create(resources: PaparazziResources): Promise<utils.IRunner> {
-        return new PaparazziRunner(
-            resources.alfredUrl,
-            resources.tmzUrl,
-            resources.workerConfig,
-            resources.tenantManager);
+        return new PaparazziRunner(resources.workerConfig, resources.messageReceiver);
     }
 }

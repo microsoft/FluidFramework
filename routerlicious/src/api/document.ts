@@ -8,14 +8,19 @@ import * as uuid from "uuid/v4";
 import * as api from "../api-core";
 import * as cell from "../cell";
 import { Deferred } from "../core-utils";
-import { ICell, IMap, IStream } from "../data-types";
+import { ICell, IMap, IMapView, IStream } from "../data-types";
 import * as mapExtension from "../map";
 import * as sharedString from "../shared-string";
 import * as stream from "../stream";
 import { debug } from "./debug";
 import { BrowserErrorTrackingService } from "./errorTrackingService";
 
+// TODO: All these should come from the server as a part of document creation.
 const rootMapId = "root";
+const taskMapId = "tasks";
+const documentTasks = ["snapshot", "spell", "intel", "translation", "augmentation"];
+const taskCheckerMS = 20000;
+const helpSubmissionMS = 5000;
 
 // Registered services to use when loading a document
 let defaultDocumentService: api.IDocumentService;
@@ -101,6 +106,7 @@ function getEmptyHeader(id: string): IHeaderDetails {
     const emptyHeader: IHeaderDetails = {
         attributes: {
             branch: id,
+            clients: [],
             minimumSequenceNumber: 0,
             sequenceNumber: 0,
         },
@@ -181,21 +187,27 @@ export class Document extends EventEmitter implements api.IDocument {
     private _existing: boolean;
     private _user: api.ITenantUser;
     private _parentBranch: string;
+    private _tenantId: string;
     // tslint:enable:variable-name
 
     private messagesSinceMSNChange = new Array<api.ISequencedDocumentMessage>();
-    private clients = new Set<string>();
+    private clients = new Map<string, api.IWorkerClient>();
+    private isLeader: boolean = false;
+    private taskMapView: IMapView;
     private connectionState = api.ConnectionState.Disconnected;
     private lastReason: string;
     private lastContext: string;
     private pendingAttach = new Map<string, api.IAttachMessage>();
     private storageService: api.IDocumentStorageService;
     private lastMinSequenceNumber;
-    private tenantId: string;
     private loaded = false;
 
     public get clientId(): string {
         return this._deltaManager ? this._deltaManager.clientId : "disconnected";
+    }
+
+    public get tenantId(): string {
+        return this._tenantId;
     }
 
     public get id(): string {
@@ -237,7 +249,7 @@ export class Document extends EventEmitter implements api.IDocument {
 
         const token = this.opts.token;
         const claims = jwt.decode(token) as api.ITokenClaims;
-        this.tenantId = claims.tenantId;
+        this._tenantId = claims.tenantId;
         this._user = claims.user;
 
     }
@@ -419,8 +431,8 @@ export class Document extends EventEmitter implements api.IDocument {
         return this._user;
     }
 
-    public getClients(): Set<string> {
-        return new Set<string>(this.clients);
+    public getClients(): Map<string, api.IWorkerClient> {
+        return new Map<string, api.IWorkerClient>(this.clients);
     }
 
     private async load(specifiedVersion: resources.ICommit, connect: boolean): Promise<void> {
@@ -458,6 +470,7 @@ export class Document extends EventEmitter implements api.IDocument {
             .then(async ([storageService, version, header]) => {
                 this.storageService = storageService;
                 this.lastMinSequenceNumber = header.attributes.minimumSequenceNumber;
+                this.clients = new Map(header.attributes.clients);
 
                 // Start delta processing once all objects are loaded
                 const readyP = Array.from(this.distributedObjects.values()).map((value) => value.object.ready());
@@ -496,6 +509,11 @@ export class Document extends EventEmitter implements api.IDocument {
                 // This I don't think I can get rid of
                 if (!this.existing) {
                     this.createAttached("root", mapExtension.MapExtension.Type);
+                    this.getOrCreateTaskMap(taskMapId).then(() => {
+                        this.initTaskMap();
+                    }, (err) => {
+                        this.emit(err);
+                    });
                 } else {
                     await this.get("root");
                 }
@@ -510,7 +528,7 @@ export class Document extends EventEmitter implements api.IDocument {
         this._deltaManager = new api.DeltaManager(this.id, this.tenantId, this.service);
 
         // Open a connection - the DeltaMananger will automatically reconnect
-        const detailsP = this._deltaManager.connect("Document loading", this.opts.token);
+        const detailsP = this._deltaManager.connect("Document loading", this.opts.token, this.opts.client);
         this._deltaManager.on("connect", (details: api.IConnectionDetails) => {
             this.setConnectionState(api.ConnectionState.Connecting, "Connected to Routerlicious", details.clientId);
         });
@@ -754,6 +772,7 @@ export class Document extends EventEmitter implements api.IDocument {
         // Save attributes for the document
         const documentAttributes: api.IDocumentAttributes = {
             branch: this.id,
+            clients: [...this.clients],
             minimumSequenceNumber: this._deltaManager.minimumSequenceNumber,
             sequenceNumber: this._deltaManager.referenceSequenceNumber,
         };
@@ -952,21 +971,25 @@ export class Document extends EventEmitter implements api.IDocument {
                 break;
 
             case api.ClientJoin:
-                this.clients.add(message.contents);
-                if (message.contents === this.clientId) {
+                this.clients.set(message.contents.clientId, message.contents.detail);
+                if (message.contents.clientId === this.clientId) {
                     this.setConnectionState(
                         api.ConnectionState.Connected,
                         `Fully joined the document@ ${message.minimumSequenceNumber}`,
                         this.clientId);
                 }
-
+                this.electLeader();
                 this.emit("clientJoin", message.contents);
-
                 break;
 
             case api.ClientLeave:
                 this.clients.delete(message.contents);
                 this.emit("clientLeave", message.contents);
+                this.electLeader();
+                break;
+
+            case api.ClientHelp:
+                this.emit("clientHelp", message.contents);
                 break;
 
             default:
@@ -991,6 +1014,94 @@ export class Document extends EventEmitter implements api.IDocument {
         }
 
         this.emit("op", ...eventArgs);
+    }
+
+    private async getOrCreateTaskMap(id: string) {
+        if (!this.taskMapView) {
+            const rootMap = this.getRoot();
+            const hasTaskMap = await rootMap.has(id);
+            if (!hasTaskMap) {
+                rootMap.set(id, this.createMap());
+            }
+            const taskMap = await rootMap.get(id) as IMap;
+            this.taskMapView = await taskMap.getView();
+        }
+    }
+
+    private initTaskMap() {
+        for (const task of documentTasks) {
+            this.taskMapView.set(task, undefined);
+        }
+    }
+
+    // On a client joining/departure, decides whether this client is the new leader.
+    // Skip if this client is already a leader.
+    private electLeader() {
+        if (!this.isLeader) {
+            let firstClient: api.IWorkerClientDetail;
+            for (const client of this.getClients()) {
+                if (!client[1] || client[1].type !== api.Robot) {
+                    firstClient = {
+                        clientId: client[0],
+                        detail: client[1],
+                    };
+                    break;
+                }
+            }
+            if (firstClient && this.clientId === firstClient.clientId) {
+                console.log(`Client id ${this.clientId} is the new leader`);
+                this.isLeader = true;
+                this.checkTasks();
+            }
+        }
+    }
+
+    private checkTasks() {
+        this.submitHelpMessage().catch((err) => {
+            this.emit(err);
+        });
+        setInterval(() => {
+            this.submitHelpMessage().catch((err) => {
+                this.emit(err);
+            });
+        }, taskCheckerMS);
+    }
+
+    // Submits a help message for unassigned tasks.
+    private async submitHelpMessage() {
+        const unassignedTasks = await this.getUnassignedTasks();
+        if (unassignedTasks.length > 0) {
+            const clientHelpMessage: api.IHelpMessage = {
+                clientId: this.clientId,
+                tasks: unassignedTasks,
+            };
+            this.submitMessage(api.ClientHelp, clientHelpMessage);
+            // Wait for the browser clients to ack first. Only ask for remote help if there are stil unacked tasks.
+            setTimeout(async () => {
+                const unackedTasks = await this.getUnassignedTasks();
+                if (unackedTasks.length > 0) {
+                    const remoteHelpMessage: api.IHelpMessage = {
+                        clientId: this.clientId,
+                        tasks: unackedTasks,
+                    };
+                    this.submitMessage(api.RemoteHelp, remoteHelpMessage);
+                }
+            }, helpSubmissionMS);
+        }
+    }
+
+    private async getUnassignedTasks(): Promise<string[]> {
+        await this.getOrCreateTaskMap(taskMapId);
+        const unassignedTasks: string[] = [];
+        for (const task of this.taskMapView.keys()) {
+            const clientId = this.taskMapView.get(task);
+            // A task is unassigned if there is no client or old client associated with it.
+            if (clientId && this.getClients().has(clientId)) {
+                continue;
+            }
+            unassignedTasks.push(task);
+        }
+        return unassignedTasks;
     }
 }
 

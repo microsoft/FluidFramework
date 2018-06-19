@@ -2,6 +2,7 @@ import * as assert from "assert";
 import { EventEmitter } from "events";
 import cloneDeep = require("lodash/cloneDeep");
 import { Deferred } from "../core-utils";
+import { Browser, IWorkerClient } from "./client";
 import { debug } from "./debug";
 import { DeltaConnection, IConnectionDetails } from "./deltaConnection";
 import { DeltaQueue } from "./deltaQueue";
@@ -175,7 +176,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager {
         this._outbound.push(message);
     }
 
-    public async connect(reason: string, token: string): Promise<IConnectionDetails> {
+    public async connect(reason: string, token: string, client: IWorkerClient): Promise<IConnectionDetails> {
         if (this.connecting) {
             return this.connecting.promise;
         }
@@ -194,7 +195,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager {
             });
 
         this.connecting = new Deferred<IConnectionDetails>();
-        this.connectCore(token, reason, InitialReconnectDelay);
+        this.connectCore(token, reason, InitialReconnectDelay, client);
 
         return this.connecting.promise;
     }
@@ -259,8 +260,10 @@ export class DeltaManager extends EventEmitter implements IDeltaManager {
             });
     }
 
-    private connectCore(token: string, reason: string, delay: number) {
-        DeltaConnection.Connect(this.tenantId, this.id, token, this.service).then(
+    private connectCore(token: string, reason: string, delay: number, client: IWorkerClient) {
+        // Reconnection is only enabled for non robot clients.
+        const reconnect = (client === undefined || client.type === Browser);
+        DeltaConnection.Connect(this.tenantId, this.id, token, this.service, client).then(
             (connection) => {
                 this.connection = connection;
 
@@ -286,7 +289,12 @@ export class DeltaManager extends EventEmitter implements IDeltaManager {
                     this._outbound.clear();
 
                     this.emit("disconnect", true);
-                    this.connectCore(token, "Reconnecting", InitialReconnectDelay);
+                    if (!reconnect) {
+                        this._inbound.systemPause();
+                        this._inbound.clear();
+                    } else {
+                        this.connectCore(token, "Reconnecting", InitialReconnectDelay, client);
+                    }
                 });
 
                 connection.on("disconnect", (disconnectReason) => {
@@ -294,7 +302,12 @@ export class DeltaManager extends EventEmitter implements IDeltaManager {
                     this._outbound.clear();
 
                     this.emit("disconnect", false);
-                    this.connectCore(token, "Reconnecting", InitialReconnectDelay);
+                    if (!reconnect) {
+                        this._inbound.systemPause();
+                        this._inbound.clear();
+                    } else {
+                        this.connectCore(token, "Reconnecting", InitialReconnectDelay, client);
+                    }
                 });
 
                 // Notify of the connection
@@ -304,7 +317,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager {
                 delay = Math.min(delay, MaxReconnectDelay);
                 reason = `Connection failed - trying again in ${delay}ms`;
                 debug(reason, error);
-                setTimeout(() => this.connectCore(token, reason, delay * 2), delay);
+                setTimeout(() => this.connectCore(token, reason, delay * 2, client), delay);
             });
     }
 

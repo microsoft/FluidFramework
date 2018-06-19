@@ -16,7 +16,12 @@ export function create(config: Provider, tenantManager: ITenantManager,
     router.get("/:tenantId?/:id", ensureLoggedIn(), async (request, response, next) => {
         const tenantId = request.params.tenantId || appTenants[0].id;
 
-        const workerConfigP = utils.getConfig(config.get("worker"), tenantManager, tenantId, config.get("error:track"));
+        const workerConfigP = utils.getConfig(
+            config.get("worker"),
+            tenantManager,
+            tenantId,
+            config.get("error:track"),
+            config.get("client"));
         const versionP = storage.getLatestVersion(tenantManager, tenantId, request.params.id);
         const token = utils.getToken(tenantId, request.params.id, appTenants);
 

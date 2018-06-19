@@ -87,12 +87,16 @@ export function register(
                 });
 
             // Broadcast the client connection message
+            const clientDetail: api.IWorkerClientDetail = {
+                clientId,
+                detail: message.client,
+            };
             const rawMessage: core.IRawOperationMessage = {
                 clientId: null,
                 documentId: message.id,
                 operation: {
                     clientSequenceNumber: -1,
-                    contents: clientId,
+                    contents: clientDetail,
                     referenceSequenceNumber: -1,
                     traces: [],
                     type: api.ClientJoin,

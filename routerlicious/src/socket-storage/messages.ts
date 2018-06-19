@@ -1,4 +1,4 @@
-import { ITenantUser } from "../api-core";
+import { ITenantUser, IWorkerClient } from "../api-core";
 
 /**
  * Message sent to connect to the given object
@@ -10,8 +10,11 @@ export interface IConnect {
     // The document that is being connected to
     id: string;
 
-    // authorization token
+    // Authorization token
     token: string;
+
+    // Type of the client trying to connect
+    client: IWorkerClient;
 }
 
 /**
