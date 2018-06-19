@@ -64,6 +64,6 @@ async function performTask(docId: string, token: string, task: string, config: a
             await translationWork.start(task);
             break;
         default:
-            throw new Error("Unknown task type");
+            throw new Error(`Unknown task type: ${task}`);
     }
 }

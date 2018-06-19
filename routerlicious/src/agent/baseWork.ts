@@ -1,6 +1,7 @@
 // tslint:disable:ban-types
 import { EventEmitter } from "events";
 import { api, core, types } from "../client-api";
+import { IDocumentTaskInfo } from "./definitions";
 
 const leaderCheckerMS = 20000;
 
@@ -36,12 +37,13 @@ export class BaseWork extends EventEmitter {
     public async stop(task: string): Promise<void> {
         // Make sure the document is loaded first.
         if (this.document !== undefined) {
-            // Reset the task map, remove the listeners, and clear the checker.
-            console.log(`Removing ${task} task for document ${this.document.id}`);
+            // Reset the task map, remove doc listener and self listeners.
+            console.log(`Removing ${task} task for document ${this.document.tenantId}/${this.document.id}`);
             this.updateTaskMap(task, undefined);
             this.document.removeListener("op", this.operation);
             this.document.removeListener("error", this.errorHandler);
-            clearInterval(this.leaderCheckerTimer);
+            this.events.removeAllListeners();
+            this.removeAllListeners();
         }
     }
 
@@ -66,11 +68,17 @@ export class BaseWork extends EventEmitter {
         return new Promise<void>((resolve, reject) => this.pollTaskMap(root, resolve, reject));
     }
 
-    // Periodically checks for leaders in the document.
+    // Periodically checks for leaders in the document. Emits a stop request if leader is not present.
     private checkForLeader(task) {
         this.leaderCheckerTimer = setInterval(() => {
             if (this.noLeader()) {
-                this.stop(task);
+                const stopEvent: IDocumentTaskInfo = {
+                    docId: this.document.id,
+                    task,
+                    tenantId: this.document.tenantId,
+                };
+                this.events.emit("stop", stopEvent);
+                clearInterval(this.leaderCheckerTimer);
             }
         }, leaderCheckerMS);
     }

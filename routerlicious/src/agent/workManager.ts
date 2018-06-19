@@ -1,10 +1,9 @@
 import { EventEmitter } from "events";
 import { MergeTree } from "../client-api";
 import { AgentLoader, IAgent } from "./agentLoader";
-import { IDocumentServiceFactory, IWork, IWorkManager } from "./definitions";
+import { IDocumentServiceFactory, IDocumentTaskInfo, IWork, IWorkManager } from "./definitions";
 import { loadDictionary } from "./dictionaryLoader";
 import { IntelWork } from "./intelWork";
-import { PingWork } from "./pingWork";
 import { SnapshotWork } from "./snapshotWork";
 import { SpellcheckerWork } from "./spellcheckerWork";
 import { TranslationWork } from "./translationWork";
@@ -52,32 +51,7 @@ export class WorkManager extends EventEmitter implements IWorkManager {
         }
     }
 
-    public async processDocumentWork(tenantId: string, documentId: string, workType: string,
-                                     action: string, token: string) {
-        if (action === "start") {
-            await this.startDocumentWork(tenantId, documentId, token, workType);
-        } else {
-            this.stopDocumentWork(tenantId, documentId, workType);
-        }
-    }
-
-    public async processAgentWork(agentName: string, action: string) {
-        if (action === "add") {
-            console.log(`Received request to load agent ${agentName}!`);
-            const agent = await this.agentLoader.loadNewAgent(agentName);
-            this.registerAgentToExistingDocuments(agent);
-        } else if (action === "remove") {
-            console.log(`Received request to unload agent ${agentName}!`);
-            this.agentLoader.unloadAgent(agentName);
-        }
-    }
-
-    public on(event: string, listener: (...args: any[]) => void): this {
-        this.events.on(event, listener);
-        return this;
-    }
-
-    private async startDocumentWork(tenantId: string, documentId: string, token: string, workType: string) {
+    public async startDocumentWork(tenantId: string, documentId: string, workType: string, token?: string) {
         const services = await this.serviceFactory.getService(tenantId);
 
         switch (workType) {
@@ -101,36 +75,37 @@ export class WorkManager extends EventEmitter implements IWorkManager {
             case "translation":
                 const translationWork = new TranslationWork(documentId, token, this.config, services);
                 await this.startTask(tenantId, documentId, workType, translationWork);
-            case "ping":
-                const pingWork = new PingWork(this.serverUrl);
-                await this.startTask(tenantId, documentId, workType, pingWork);
                 break;
             default:
-                throw new Error("Unknown work type!");
+                throw new Error(`Unknown work type: ${workType}`);
         }
 
     }
 
-    private stopDocumentWork(tenantId: string, documentId: string, workType: string) {
-        switch (workType) {
-            case "snapshot":
-                this.stopTask(tenantId, documentId, workType);
-                break;
-            case "intel":
-                this.stopTask(tenantId, documentId, workType);
-                break;
-            case "spell":
-                this.stopTask(tenantId, documentId, workType);
-                break;
-            case "translation":
-                this.stopTask(tenantId, documentId, workType);
-                break;
-            case "ping":
-                this.stopTask(tenantId, documentId, workType);
-                break;
-            default:
-                throw new Error("Unknown work type!");
+    public stopDocumentWork(tenantId: string, documentId: string, workType: string) {
+        const fullId = this.getFullId(tenantId, documentId);
+        if (fullId in this.documentMap) {
+            const taskMap = this.documentMap[fullId];
+            const task = taskMap[workType];
+            if (task !== undefined) {
+                task.stop(workType);
+                delete taskMap[workType];
+            }
         }
+    }
+
+    public async loadAgent(agentName: string): Promise<void> {
+        const agent = await this.agentLoader.loadNewAgent(agentName);
+        this.registerAgentToExistingDocuments(agent);
+    }
+
+    public unloadAgent(agentName: string) {
+        this.agentLoader.unloadAgent(agentName);
+    }
+
+    public on(event: string, listener: (...args: any[]) => void): this {
+        this.events.on(event, listener);
+        return this;
     }
 
     private getFullId(tenantId: string, documentId: string): string {
@@ -151,19 +126,6 @@ export class WorkManager extends EventEmitter implements IWorkManager {
         }
     }
 
-    private stopTask(tenantId: string, documentId: string, workType: string) {
-        const fullId = this.getFullId(tenantId, documentId);
-
-        if (fullId in this.documentMap) {
-            const taskMap = this.documentMap[fullId];
-            const task = taskMap[workType];
-            if (task !== undefined) {
-                task.stop(workType);
-                delete taskMap[workType];
-            }
-        }
-    }
-
     private async applyWork(fullId: string, workType: string, worker: IWork) {
         console.log(`Starting work ${workType} for document ${fullId}`);
         await worker.start(workType);
@@ -175,6 +137,9 @@ export class WorkManager extends EventEmitter implements IWorkManager {
         }
         worker.on("error", (error) => {
             this.events.emit("error", error);
+        });
+        worker.on("stop", (ev: IDocumentTaskInfo) => {
+            this.stopDocumentWork(ev.tenantId, ev.docId, ev.task);
         });
     }
 

@@ -187,6 +187,7 @@ export class Document extends EventEmitter implements api.IDocument {
     private _existing: boolean;
     private _user: api.ITenantUser;
     private _parentBranch: string;
+    private _tenantId: string;
     // tslint:enable:variable-name
 
     private messagesSinceMSNChange = new Array<api.ISequencedDocumentMessage>();
@@ -199,11 +200,14 @@ export class Document extends EventEmitter implements api.IDocument {
     private pendingAttach = new Map<string, api.IAttachMessage>();
     private storageService: api.IDocumentStorageService;
     private lastMinSequenceNumber;
-    private tenantId: string;
     private loaded = false;
 
     public get clientId(): string {
         return this._deltaManager ? this._deltaManager.clientId : "disconnected";
+    }
+
+    public get tenantId(): string {
+        return this._tenantId;
     }
 
     public get id(): string {
@@ -245,7 +249,7 @@ export class Document extends EventEmitter implements api.IDocument {
 
         const token = this.opts.token;
         const claims = jwt.decode(token) as api.ITokenClaims;
-        this.tenantId = claims.tenantId;
+        this._tenantId = claims.tenantId;
         this._user = claims.user;
 
     }

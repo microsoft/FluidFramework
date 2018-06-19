@@ -33,24 +33,22 @@ export class WorkerService extends EventEmitter {
     public async startTasks(tenantId: string, documentId: string, tasks: string[], token: string) {
         const tasksP = [];
         for (const task of tasks) {
-            tasksP.push(this.workManager.processDocumentWork(tenantId, documentId, task, "start", token));
+            tasksP.push(this.workManager.startDocumentWork(tenantId, documentId, task, token));
         }
         await Promise.all(tasksP);
     }
 
-    public async stopTasks(tenantId: string, documentId: string, tasks: string[], token: string) {
-        const tasksP = [];
+    public stopTasks(tenantId: string, documentId: string, tasks: string[]) {
         for (const task of tasks) {
-            tasksP.push(this.workManager.processDocumentWork(tenantId, documentId, task, "stop", token));
+            this.workManager.stopDocumentWork(tenantId, documentId, task);
         }
-        await Promise.all(tasksP);
     }
 
     public async loadAgent(agentName: string) {
-        await this.workManager.processAgentWork(agentName, "add");
+        await this.workManager.loadAgent(agentName);
     }
 
     public async unloadAgent(agentName: string) {
-        await this.workManager.processAgentWork(agentName, "remove");
+        await this.workManager.unloadAgent(agentName);
     }
 }
