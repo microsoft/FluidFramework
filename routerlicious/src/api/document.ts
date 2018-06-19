@@ -423,7 +423,6 @@ export class Document extends EventEmitter implements api.IDocument {
         return new Set<string>(this.clients);
     }
 
-    // make this private
     private async load(specifiedVersion: resources.ICommit, connect: boolean): Promise<void> {
         const storageP = this.service.connectToStorage(this.tenantId, this.id, this.opts.token);
 

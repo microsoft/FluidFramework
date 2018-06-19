@@ -32,6 +32,11 @@ interface IFlexViewComponent {
     size: ui.ISize;
 }
 
+interface IInclusion {
+    content: string;
+    size: number;
+}
+
 /**
  * Canvas app
  */
@@ -57,6 +62,14 @@ export class FlexView extends ui.Component {
         } else {
             this.blobMap = root.set<types.IMap>("blobs", doc.createMap());
         }
+        const r = doc.getRoot();
+        const blobsP  = r.get("blobs");
+        blobsP.then((blobs) => {
+            console.log(blobs);
+            blobs.getView().then((blobView) => {
+                console.log(blobView);
+            });
+        });
 
         // Add the ink canvas to the dock
         const inkCanvasElement = document.createElement("div");
@@ -109,7 +122,7 @@ export class FlexView extends ui.Component {
         inclusionButton.on("click", (event) => {
             input.click();
             input.onchange = async () => {
-                this.uploadInclusion(await this.fileToText(input.files.item(0)));
+                this.uploadInclusion(await this.fileToBinaryString(input.files.item(0)));
             };
         });
 
@@ -205,26 +218,26 @@ export class FlexView extends ui.Component {
         this.resizeCore(this.size);
     }
 
-    private async uploadInclusion(file: string) {
+    private async uploadInclusion(file: IInclusion) {
         const docService = api.getDefaultBlobStorage();
         const gitManager: gitStorage.GitManager = docService.manager;
 
-        const now = Date.now();
-
         // Create Hash (Github hashes the string in this modified way)
-        const fileString = "blob " + file.length + "\0" +  file;
+        // Depending on how line endings are stored (https://help.github.com/articles/dealing-with-line-endings/)
+        // File size needs to be based on ArrayBuffer...
+        const fileString = "blob " + file.size + "\0" +  file.content;
+
         const hash = crypto.createHash("sha1").update(fileString).digest("hex");
 
         // Set the hash in blob storage
         // TODO: Empty should be the inclusion's information
         this.blobMap.set<string>(hash, "empty");
 
-        const blobResponseP = gitManager.createBlob(file, "utf-8") as Promise<resources.ICreateBlobResponse>;
+        // Encoding must match with the fileToBinary encoding
+        const blobResponseP = gitManager.createBlob(file.content, "utf-8") as Promise<resources.ICreateBlobResponse>;
         blobResponseP.then(async (blobResponse) => {
-
-            console.log("blob Promise Completed: " + (Date.now() - now));
-            console.log("sha: " + blobResponse.sha);
             // TODO: Indicate the inclusion is done uploading
+            console.log("Completed uploading blob");
         });
     }
 
@@ -243,11 +256,13 @@ export class FlexView extends ui.Component {
         const filesP: Array<Promise<resources.IBlob>> = [];
 
         for (const sha of shas) {
+            console.log("Download Sha: " + sha);
             filesP.push(gitManager.getBlob(sha));
         }
         Promise.all(filesP)
             .then((files) => {
                 const contents = files.map((blob) => {
+                    // Blob returns in base64 based on https://github.com/Microsoft/Prague/issues/732
                     return new Buffer(blob.content, "base64").toString("utf-8");
                 });
                 console.log(contents[0]);
@@ -257,20 +272,25 @@ export class FlexView extends ui.Component {
             });
     }
 
-    private async fileToText(file: File): Promise<string> {
+    private async fileToBinaryString(file: File): Promise<IInclusion> {
         const fr = new FileReader();
 
-        return new Promise<string>((resolve, reject) => {
+        return new Promise<IInclusion>((resolve, reject) => {
             fr.onerror = (error) => {
                 fr.abort();
                 reject("error: " + JSON.stringify(error));
             };
 
             fr.onloadend = () => {
-                resolve(fr.result as string);
+                // This encoding must match the createblob encoding
+                const t = Buffer.from(fr.result, "utf-8");
+                const incl = {
+                    content: t.toString("utf-8"),
+                    size: t.length,
+                };
+                resolve(incl);
             };
-
-            fr.readAsText(file);
+            fr.readAsArrayBuffer(file);
         });
     }
 }
