@@ -506,7 +506,9 @@ export class Document extends EventEmitter implements api.IDocument {
                 // This I don't think I can get rid of
                 if (!this.existing) {
                     this.createAttached("root", mapExtension.MapExtension.Type);
-                    this.createTaskMap(taskMapId).catch((err) => {
+                    this.getOrCreateTaskMap(taskMapId).then(() => {
+                        this.initTaskMap();
+                    }, (err) => {
                         this.emit(err);
                     });
                 } else {
@@ -1011,11 +1013,19 @@ export class Document extends EventEmitter implements api.IDocument {
         this.emit("op", ...eventArgs);
     }
 
-    private async createTaskMap(id: string) {
-        const rootMap = this.getRoot();
-        rootMap.set(id, this.createMap());
-        const taskMap = await rootMap.get(id) as IMap;
-        this.taskMapView = await taskMap.getView();
+    private async getOrCreateTaskMap(id: string) {
+        if (!this.taskMapView) {
+            const rootMap = this.getRoot();
+            const hasTaskMap = await rootMap.has(id);
+            if (!hasTaskMap) {
+                rootMap.set(id, this.createMap());
+            }
+            const taskMap = await rootMap.get(id) as IMap;
+            this.taskMapView = await taskMap.getView();
+        }
+    }
+
+    private initTaskMap() {
         for (const task of documentTasks) {
             this.taskMapView.set(task, undefined);
         }
@@ -1026,7 +1036,7 @@ export class Document extends EventEmitter implements api.IDocument {
     private electLeader() {
         if (!this.isLeader) {
             let firstClient: api.IWorkerClientDetail;
-            for (const client of this.clients) {
+            for (const client of this.getClients()) {
                 if (!client[1] || client[1].type !== api.Robot) {
                     firstClient = {
                         clientId: client[0],
@@ -1036,6 +1046,7 @@ export class Document extends EventEmitter implements api.IDocument {
                 }
             }
             if (firstClient && this.clientId === firstClient.clientId) {
+                console.log(`Client id ${this.clientId} is the new leader`);
                 this.isLeader = true;
                 this.checkTasks();
             }
@@ -1055,7 +1066,7 @@ export class Document extends EventEmitter implements api.IDocument {
 
     // Submits a help message for unassigned tasks.
     private async submitHelpMessage() {
-        const unassignedTasks = this.getUnassignedTasks();
+        const unassignedTasks = await this.getUnassignedTasks();
         if (unassignedTasks.length > 0) {
             const clientHelpMessage: api.IHelpMessage = {
                 clientId: this.clientId,
@@ -1063,8 +1074,8 @@ export class Document extends EventEmitter implements api.IDocument {
             };
             this.submitMessage(api.ClientHelp, clientHelpMessage);
             // Wait for the browser clients to ack first. Only ask for remote help if there are stil unacked tasks.
-            setTimeout(() => {
-                const unackedTasks = this.getUnassignedTasks();
+            setTimeout(async () => {
+                const unackedTasks = await this.getUnassignedTasks();
                 if (unackedTasks.length > 0) {
                     const remoteHelpMessage: api.IHelpMessage = {
                         clientId: this.clientId,
@@ -1076,7 +1087,8 @@ export class Document extends EventEmitter implements api.IDocument {
         }
     }
 
-    private getUnassignedTasks(): string[] {
+    private async getUnassignedTasks(): Promise<string[]> {
+        await this.getOrCreateTaskMap(taskMapId);
         const unassignedTasks: string[] = [];
         for (const task of this.taskMapView.keys()) {
             const clientId = this.taskMapView.get(task);

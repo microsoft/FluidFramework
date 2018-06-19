@@ -158,7 +158,7 @@ export class WorkManager extends EventEmitter implements IWorkManager {
             const taskMap = this.documentMap[fullId];
             const task = taskMap[workType];
             if (task !== undefined) {
-                task.stop();
+                task.stop(workType);
                 delete taskMap[workType];
             }
         }

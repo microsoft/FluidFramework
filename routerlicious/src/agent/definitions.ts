@@ -9,7 +9,7 @@ export interface IWork {
     /**
      * Stops the work
      */
-    stop(): Promise<void>;
+    stop(task: string): Promise<void>;
 
     /**
      * Error event
