@@ -1928,6 +1928,7 @@ function makeFontInfo(docContext: IDocumentContext): Paragraph.IFontInfo {
 }
 
 export interface IFlowBreakInfo extends Paragraph.IBreakInfo {
+    lineY?: number;
     lineX?: number;
     lineWidth?: number;
     lineHeight?: number;
@@ -1965,6 +1966,7 @@ export function breakPGIntoLinesFFVP(itemInfo: Paragraph.IParagraphItemInfo, def
             }
             if ((committedItemsWidth + item.width) > lineWidth) {
                 checkViewportFirstLine(blockRunPos);
+                prevBreak.lineY = viewport.getLineTop();
                 prevBreak.lineX = viewport.getLineX();
                 prevBreak.lineHeight = committedItemsHeight;
                 prevBreak = { lineWidth, posInPG: blockRunPos, startItemIndex: i };
@@ -1977,6 +1979,7 @@ export function breakPGIntoLinesFFVP(itemInfo: Paragraph.IParagraphItemInfo, def
             posInPG += item.text.length;
             if (committedItemsWidth > lineWidth) {
                 checkViewportFirstLine(posInPG);
+                prevBreak.lineY = viewport.getLineTop();
                 prevBreak.lineX = viewport.getLineX();
                 prevBreak.lineHeight = committedItemsHeight;
                 prevBreak = { lineWidth, posInPG, startItemIndex: i };
@@ -2002,6 +2005,8 @@ export function breakPGIntoLinesFFVP(itemInfo: Paragraph.IParagraphItemInfo, def
         committedItemsHeight = Math.max(committedItemsHeight,
             item.height ? item.height : defaultLineHeight);
     }
+    checkViewportFirstLine(posInPG);
+    prevBreak.lineY=viewport.getLineTop();
     prevBreak.lineX = viewport.getLineX();
     prevBreak.lineHeight = committedItemsHeight;
     viewport.setLineTop(savedTop);
@@ -2088,6 +2093,7 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
                 lineWidth = breakInfo.lineWidth;
                 lineHeight = breakInfo.lineHeight;
                 lineX = breakInfo.lineX;
+                lineY = breakInfo.lineY;
             }
             let indentWidth = 0;
             let contentWidth = lineWidth;
