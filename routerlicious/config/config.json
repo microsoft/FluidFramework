@@ -116,7 +116,8 @@
     },
     "tmz": {
         "alfred": "http://alfred:3000",
-        "messageQueueName": "taskQueue"
+        "taskQueueName": "taskQueue",
+        "agentExchangeName": "agentQueue"
     },
     "rabbitmq": {
         "connectionString": "amqp://rabbitmq"

@@ -22,6 +22,9 @@ export class WorkManager extends EventEmitter implements IWorkManager {
                 private serverUrl: string,
                 private agentModuleLoader: (id: string) => Promise<any>) {
         super();
+        this.loadUploadedAgents().catch((err) => {
+            this.emit("error", err);
+        });
     }
 
     public async startDocumentWork(tenantId: string, documentId: string, workType: string, token?: string) {
@@ -33,7 +36,6 @@ export class WorkManager extends EventEmitter implements IWorkManager {
                 await this.startTask(tenantId, documentId, workType, snapshotWork);
                 break;
             case "intel":
-                await this.loadUploadedAgents();
                 const intelWork = new IntelWork(documentId, token, this.config, services);
                 await this.startTask(tenantId, documentId, workType, intelWork);
                 break;

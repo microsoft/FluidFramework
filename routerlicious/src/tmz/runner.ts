@@ -1,5 +1,3 @@
-import * as request from "request";
-import * as url from "url";
 import * as winston from "winston";
 import { IHelpMessage, IQueueMessage, ITenantManager } from "../api-core";
 import { Deferred } from "../core-utils";
@@ -10,7 +8,7 @@ export class TmzRunner implements utils.IRunner {
     private deferred = new Deferred<void>();
 
     constructor(
-        private alfredUrl: string,
+        alfredUrl: string,
         private agentUploader: messages.IAgentUploader,
         private messageSender: messages.IMessageSender,
         private tenantManager: ITenantManager) {
@@ -30,10 +28,13 @@ export class TmzRunner implements utils.IRunner {
         this.agentUploader.on("agentAdded", (agent: messages.IAgent) => {
             if (agent.type === "server") {
                 winston.info(`New agent package uploaded: ${agent.name}`);
-                // Convert to webpacked script.
-                const moduleUrl = url.resolve(this.alfredUrl, `/agent/js/${agent.name}`);
-                request.post(moduleUrl);
-                this.messageSender.send({
+
+                // Converting to webpacked scripts is disabled for now. Need to figure out an way to do it only once.
+                // const moduleUrl = url.resolve(this.alfredUrl, `/agent/js/${agent.name}`);
+                // request.post(moduleUrl);
+
+                // Publishes to exchange.
+                this.messageSender.sendAgent({
                     content: agent.name,
                     type: "agent:add",
                 });
@@ -45,7 +46,7 @@ export class TmzRunner implements utils.IRunner {
         this.agentUploader.on("agentRemoved", (agent: messages.IAgent) => {
             if (agent.type === "server") {
                 winston.info(`Agent package removed: ${agent.name}`);
-                this.messageSender.send({
+                this.messageSender.sendAgent({
                     content: agent.name,
                     type: "agent:remove",
                 });
@@ -76,7 +77,7 @@ export class TmzRunner implements utils.IRunner {
             token: utils.generateToken(tenantId, documentId, key),
         };
         winston.info(`Tasks requested for ${tenantId}/${documentId}: ${JSON.stringify(message.tasks)}`);
-        this.messageSender.send({
+        this.messageSender.sendTask({
             content: queueMessage,
             type: "tasks:start",
         });

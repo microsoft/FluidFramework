@@ -27,8 +27,6 @@ services:
         restart: always
     tmz:
         build: .
-        ports:
-            - "4000:4000"
         command: node dist/kafka-service/index.js tmz ../tmz/index.js
         environment:
             - DEBUG=routerlicious:*

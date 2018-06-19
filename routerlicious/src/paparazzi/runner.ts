@@ -94,12 +94,14 @@ export class PaparazziRunner implements utils.IRunner {
     }
 
     private loadAgent(agentName: string) {
+        winston.info(`Request received to load ${agentName}`);
         this.workerService.loadAgent(agentName).catch((err) => {
-            winston.error(`Error loading new agent: ${agentName}`);
+            winston.error(`Error loading agent ${agentName}: ${err}`);
         });
     }
 
     private unloadAgent(agentName: string) {
+        winston.info(`Request received to unload ${agentName}`);
         this.workerService.unloadAgent(agentName);
     }
 
@@ -107,7 +109,7 @@ export class PaparazziRunner implements utils.IRunner {
         return (moduleFile: string) => {
             const moduleUrl = url.resolve(alfredUrl, `agent/${moduleFile}`);
             const moduleName = moduleFile.split(".")[0];
-            winston.info(`Worker will load ${moduleName}`);
+            winston.info(`Task runner will load ${moduleName}`);
 
             // TODO - switch these to absolute paths
             return new Promise<any>((resolve, reject) => {

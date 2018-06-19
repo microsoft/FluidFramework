@@ -52,9 +52,14 @@ export interface IMessageSender {
     initialize(): Promise<void>;
 
     /**
-     * Sends the message.
+     * Sends a task message for a document.
      */
-    send(message: IMessage): void;
+    sendTask(message: IMessage): void;
+
+    /**
+     * Sends an agent loading message.
+     */
+    sendAgent(message: IMessage): void;
 
     /**
      * Notifies on error.
