@@ -1,12 +1,13 @@
-import * as agent from "@prague/routerlicious/dist/agent";
-import { IDocumentService, ITenantManager } from "@prague/routerlicious/dist/api-core";
+import { IDocumentServiceFactory } from "@prague/routerlicious/dist/agent";
+import { IDocumentService, IQueueMessage } from "@prague/routerlicious/dist/api-core";
 import { Deferred } from "@prague/routerlicious/dist/core-utils";
+import { IMessage, IMessageReceiver } from "@prague/routerlicious/dist/paparazzi/messages";
 import * as socketStorage from "@prague/routerlicious/dist/socket-storage";
 import * as utils from "@prague/routerlicious/dist/utils";
 import * as winston from "winston";
-import { WorkManager } from "./augloop-worker";
+import { WorkerService } from "./workerService";
 
-class DocumentServiceFactory implements agent.IDocumentServiceFactory {
+class DocumentServiceFactory implements IDocumentServiceFactory {
     constructor(private serverUrl: string, private historianUrl: string) {
     }
 
@@ -18,36 +19,17 @@ class DocumentServiceFactory implements agent.IDocumentServiceFactory {
 }
 
 export class AugLoopRunner implements utils.IRunner {
-    private workerService: agent.WorkerService;
+    private workerService: WorkerService;
     private running = new Deferred<void>();
+    private permission: Set<string>;
 
-    constructor(
-        alfredUrl: string,
-        tmzUrl: string,
-        workerConfig: any,
-        tenantManager: ITenantManager) {
-
-        const runnerType = "paparazzi";
-        const workTypeMap: { [workType: string]: boolean} = {};
-        for (const workType of workerConfig.permission[runnerType]) {
-            workTypeMap[workType] = true;
-        }
+    constructor(private workerConfig: any, private messageReceiver: IMessageReceiver) {
+        this.permission = new Set(workerConfig.permission as string[]);
+        const alfredUrl = workerConfig.alfredUrl;
 
         const factory = new DocumentServiceFactory(alfredUrl, workerConfig.blobStorageUrl);
 
-        const workManager = new WorkManager(
-            factory,
-            workerConfig,
-            alfredUrl,
-            this.initLoadModule(alfredUrl),
-            runnerType,
-            workTypeMap);
-
-        this.workerService = new agent.WorkerService(
-            tmzUrl,
-            workerConfig,
-            workTypeMap,
-            workManager);
+        this.workerService = new WorkerService(factory, this.workerConfig);
 
         // Report any service error.
         this.workerService.on("error", (error) => {
@@ -55,22 +37,45 @@ export class AugLoopRunner implements utils.IRunner {
         });
     }
 
-    public start(): Promise<void> {
-        const workerRunningP = this.workerService.connect("Paparazzi");
-        workerRunningP.then(() => this.running.resolve(), (error) => this.running.reject(error));
+    public async start(): Promise<void> {
+        // Preps message receiver.
+        await this.messageReceiver.initialize().catch((err) => {
+            this.running.reject(err);
+        });
+        this.messageReceiver.on("error", (err) => {
+            this.running.reject(err);
+        });
+        this.messageReceiver.on("message", (message: IMessage) => {
+            const type = message.type;
+            if (type === "tasks:start") {
+                const requestMessage = message.content as IQueueMessage;
+                this.startDocumentWork(requestMessage);
+            }
+        });
 
         return this.running.promise;
     }
+
     public stop(): Promise<void> {
-        this.workerService.close().then(() => this.running.resolve(), (error) => this.running.reject(error));
         return this.running.promise;
     }
 
-    private initLoadModule(alfredUrl: string): (name: string) => Promise<any> {
-        return (moduleFile: string) => {
-            return new Promise<any>((resolve, reject) => {
-                resolve();
-            });
-        };
+    private startDocumentWork(requestMsg: IQueueMessage) {
+        // Only start tasks that are allowed to run.
+        const filteredTask = requestMsg.message.tasks.filter((task) => this.permission.has(task));
+
+        if (filteredTask.length > 0) {
+            winston.info(`Starting ${JSON.stringify(filteredTask)}: ${requestMsg.tenantId}/${requestMsg.documentId}`);
+            this.workerService.startTasks(
+                requestMsg.tenantId,
+                requestMsg.documentId,
+                filteredTask,
+                requestMsg.token).catch((err) => {
+                    winston.error(
+                        // tslint:disable-next-line
+                        `Error starting ${JSON.stringify(filteredTask)}: ${requestMsg.tenantId}/${requestMsg.documentId}: ${err}`
+                    );
+                });
+        }
     }
 }

@@ -22,25 +22,22 @@
         "track": false,
         "endpoint" : "https://25f5c231660f474fb85fb4daeb070029:3301d25c7ed9434688e4f5bd998b9739@sentry.wu2.prague.office-int.com/2"
     },
-    "augloop": {
-        "alfred": "http://alfred:3000",
-        "tmz": "http://tmz:4000"
-    },
     "auth": {
         "endpoint": "http://riddler:5000"
     },
     "worker": {
         "alfredUrl": "http://alfred:3000",
         "serverUrl": "http://localhost:3000",
-        "url": "http://localhost:4000",
         "blobStorageUrl": "http://historian:3000",
-        "scriptUrl": "http://localhost:9000/agents/",
         "repository": "prague",
-        "storageBucket": "snapshots",
-        "intervalMSec": 5000,
-        "onlyServer": false,
-        "permission": {
-            "paparazzi": ["augmentation"]
-        }
+        "permission": ["augmentation"]
+    },
+    "tmz": {
+        "alfred": "http://alfred:3000",
+        "taskQueueName": "taskQueue",
+        "agentExchangeName": "agentQueue"
+    },
+    "rabbitmq": {
+        "connectionString": "amqp://rabbitmq"
     }
 }

@@ -1,8 +1,8 @@
 import * as agent from "@prague/routerlicious/dist/agent";
 import { core } from "@prague/routerlicious/dist/client-api";
 import { CollaborativeStringExtension, SharedString } from "@prague/routerlicious/dist/shared-string";
-import { AugLoopRuntime } from "../augloop-runtime";
-import { ProofingManager } from "./proofingManager";
+import { AugLoopRuntime } from "./augloop-runtime";
+import { ProofingManager } from "./augloop-worker/proofingManager";
 
 export class AugmentationWork extends agent.BaseWork implements agent.IWork {
 
@@ -18,10 +18,11 @@ export class AugmentationWork extends agent.BaseWork implements agent.IWork {
         super(docId, config);
     }
 
-    public async start(): Promise<void> {
+    public async start(task: string): Promise<void> {
         await this.loadDocument(
             { blockUpdateMarkers: true, localMinSeq: 0, encrypted: undefined, token: this.token },
-            this.service);
+            this.service,
+            task);
         const eventHandler = (op: core.ISequencedDocumentMessage, object: core.ICollaborativeObject) => {
             if (op.type === core.ObjectOperation || op.type === core.AttachObject) {
                 this.runAugmentation(object);
