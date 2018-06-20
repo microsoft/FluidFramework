@@ -54,17 +54,14 @@ routemaster:
 
 tmz:
   name: tmz
-  replicas: 1
+  replicas: 4
   externalUrl: https://tmz.wu2.prague.office-int.com
   host: tmz.wu2.prague.office-int.com
   cert: wu2-tls-certificate
 
-rabbitmq:
-  connectionString: amqp://prague:JFqxYjRrIE@lumpy-worm-rabbitmq
-
 paparazzi:
   name: paparazzi
-  replicas: 1
+  replicas: 8
 
 serviceGraph:
   name: servicegraph
@@ -86,6 +83,9 @@ cobalt:
 zookeeper:
   local: false
   url: left-numbat-zookeeper:2181
+
+rabbitmq:
+  connectionString: amqp://prague:JFqxYjRrIE@lumpy-worm-rabbitmq
 
 mongodb:
   url: mongodb://quieting-guppy-mongodb:27017

@@ -3,7 +3,7 @@ import { EventEmitter } from "events";
 import {configureRuntimeForWorkflows} from "./registration";
 import {IAugResult, IDocTile} from "./schema";
 
-const serviceUrl = "https://augloop-cluster-prod-gw.westus.cloudapp.azure.com";
+const serviceUrl = "https://augloop-prod.trafficmanager.net";
 const hostMetadata: HostMetadata = {
     appName: "Prague",
     appPlatform: "Node",
