@@ -19,7 +19,7 @@ import { BrowserErrorTrackingService } from "./errorTrackingService";
 const rootMapId = "root";
 const taskMapId = "tasks";
 const documentTasks = ["snapshot", "spell", "intel", "translation", "augmentation"];
-const taskCheckerMS = 20000;
+const taskCheckerMS = 10000;
 const helpSubmissionMS = 5000;
 
 // Registered services to use when loading a document
