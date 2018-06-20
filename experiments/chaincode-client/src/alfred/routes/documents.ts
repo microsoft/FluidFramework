@@ -1,7 +1,8 @@
 import { Router } from "express";
 import { Provider } from "nconf";
+import { ChainDb } from "../chainDb";
 
-export function create(config: Provider): Router {
+export function create(config: Provider, db: ChainDb): Router {
     const router: Router = Router();
 
     router.get("/:tenantId?/:id", (request, response, next) => {

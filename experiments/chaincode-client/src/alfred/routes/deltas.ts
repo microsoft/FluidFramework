@@ -1,6 +1,7 @@
 import * as api from "@prague/routerlicious/dist/api-core";
 import { Router } from "express";
 import { Provider } from "nconf";
+import { ChainDb } from "../chainDb";
 
 export async function getDeltas(
     documentId: string,
@@ -10,7 +11,7 @@ export async function getDeltas(
     return [];
 }
 
-export function create(config: Provider): Router {
+export function create(config: Provider, db: ChainDb): Router {
     const router: Router = Router();
 
     function stringToSequenceNumber(value: string): number {

@@ -6,6 +6,7 @@ import * as morgan from "morgan";
 import { Provider } from "nconf";
 import split = require("split");
 import * as winston from "winston";
+import { ChainDb } from "./chainDb";
 import * as alfredRoutes from "./routes";
 
 /**
@@ -15,7 +16,7 @@ const stream = split().on("data", (message) => {
     winston.info(message);
 });
 
-export function create(config: Provider) {
+export function create(config: Provider, db: ChainDb) {
     // Maximum REST request size
     const requestSize = config.get("alfred:restJsonSize");
 
@@ -37,7 +38,7 @@ export function create(config: Provider) {
     });
 
     // bind routes
-    const routes = alfredRoutes.create(config);
+    const routes = alfredRoutes.create(config, db);
     app.use("/api", routes);
 
     // catch 404 and forward to error handler

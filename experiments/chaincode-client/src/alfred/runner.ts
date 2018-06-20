@@ -22,7 +22,7 @@ export class AlfredRunner implements utils.IRunner {
         this.runningDeferred = new Deferred<void>();
 
         // Create the HTTP server and attach alfred to it
-        const alfred = app.create(this.config);
+        const alfred = app.create(this.config, this.chainDb);
         alfred.set("port", this.port);
 
         this.server = this.serverFactory.create(alfred);
