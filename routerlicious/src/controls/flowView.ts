@@ -1709,6 +1709,7 @@ function renderTree(
     const outerViewportHeight = parseInt(viewportDiv.style.height, 10);
     const outerViewportWidth = parseInt(viewportDiv.style.width, 10);
     const outerViewport = new Viewport(outerViewportHeight, viewportDiv, outerViewportWidth);
+    outerViewport.randExclu();
     const startingPosStack =
         client.mergeTree.getStackContext(requestedPosition, client.getClientId(), ["table", "cell", "row"]);
     const layoutContext = {
@@ -1803,19 +1804,46 @@ function closestSouth(lineDivs: ILineDiv[], y: number) {
     return best;
 }
 
+export interface IExcludedRectangle extends ui.Rectangle {
+    left: boolean;
+    curY: number;
+}
+
+function makeExcludedRectangle(x: number, y: number, w: number, h: number) {
+    const r = <IExcludedRectangle>new ui.Rectangle(x, y, w, h);
+    r.left = true;
+    r.curY = 0;
+    return r;
+}
+
+// function lineIntersectsRect(y: number, rect: IExcludedRectangle) {
+//     return (y>=rect.y)&&(y<=(rect.y+rect.height));
+// }
+
 export class Viewport {
     // keep the line divs in order
     public lineDivs: ILineDiv[] = [];
     public visibleRanges: IRange[] = [];
     public currentLineStart = -1;
     private lineTop = 0;
-    //    private excludedRects=<ui.Rectangle[]>[];
+    private pendingRect: IExcludedRectangle;
+    private excludedRects = <IExcludedRectangle[]>[];
+    private lineX = 0;
 
     constructor(public maxHeight: number, public div: IViewportDiv, private width: number) {
     }
 
-    public startLine(heightEstimate?: number) {
-        // TODO: update width relative to started line
+    public randExclu() {
+        const fh = Math.floor(this.maxHeight / 10);
+        const fw = Math.floor(this.width / 10);
+        let x = 100;
+        let y = 50;
+        for (let i = 0; i < 5; i++) {
+            const r = makeExcludedRectangle(x, y, fw, fh);
+            x += 50;
+            y += Math.floor(fh * 1.2);
+            this.excludedRects.push(r);
+        }
     }
 
     public firstLineDiv() {
@@ -1831,7 +1859,28 @@ export class Viewport {
     }
 
     public currentLineWidth(h?: number) {
+/*        const y1 = this.lineTop;
+        const y2 = this.lineTop + h;
+        let w = this.width;
+        for (let i=0,len=this.excludedRects.length;i<len;i++) {
+            const exclu = this.excludedRects[i];
+            let nextclu: IExcludedRectangle;
+            if (i<(len-1)) {
+                nextclu = this.excludedRects[i+1];
+            }
+
+            if (lineIntersectsRect(y1,exclu)||lineIntersectsRect(y2,exclu)) {
+
+            }
+
+        }*/
         return this.width;
+    }
+
+    public commitVirtualLine(h: number) {
+        if (!this.pendingRect) {
+            this.lineTop += h;
+        }
     }
 
     public vskip(h: number) {
@@ -1839,7 +1888,7 @@ export class Viewport {
     }
 
     public getLineX() {
-        return 0;
+        return this.lineX;
     }
 
     public getLineTop() {
@@ -1848,7 +1897,7 @@ export class Viewport {
 
     public resetTop() {
         // TODO: update rect y to 0 and h to h-(deltaY-y)
-        this.lineTop=0;
+        this.lineTop = 0;
     }
 
     public setLineTop(v: number) {
@@ -1948,10 +1997,10 @@ export function breakPGIntoLinesFFVP(itemInfo: Paragraph.IParagraphItemInfo, def
     let prevIsGlue = true;
     const savedTop = viewport.getLineTop();
     let committedItemsHeight = 0;
-    let firstLine= true;
+    let firstLine = true;
 
     function checkViewportFirstLine(pos: number) {
-        if ((startOffset>0)&&firstLine&&(pos>=startOffset)) {
+        if ((startOffset > 0) && firstLine && (pos >= startOffset)) {
             firstLine = false;
             viewport.resetTop();
         }
@@ -1971,7 +2020,7 @@ export function breakPGIntoLinesFFVP(itemInfo: Paragraph.IParagraphItemInfo, def
                 prevBreak.lineHeight = committedItemsHeight;
                 prevBreak = { lineWidth, posInPG: blockRunPos, startItemIndex: i };
                 breaks.push(prevBreak);
-                viewport.vskip(committedItemsHeight);
+                viewport.commitVirtualLine(committedItemsHeight);
                 lineWidth = viewport.currentLineWidth(itemInfo.maxHeight);
                 committedItemsWidth = blockRunWidth;
                 committedItemsHeight = blockRunHeight;
@@ -1984,7 +2033,7 @@ export function breakPGIntoLinesFFVP(itemInfo: Paragraph.IParagraphItemInfo, def
                 prevBreak.lineHeight = committedItemsHeight;
                 prevBreak = { lineWidth, posInPG, startItemIndex: i };
                 breaks.push(prevBreak);
-                viewport.vskip(committedItemsHeight);
+                viewport.commitVirtualLine(committedItemsHeight);
                 lineWidth = viewport.currentLineWidth(itemInfo.maxHeight);
                 committedItemsWidth = 0;
                 committedItemsHeight = 0;
@@ -2006,7 +2055,7 @@ export function breakPGIntoLinesFFVP(itemInfo: Paragraph.IParagraphItemInfo, def
             item.height ? item.height : defaultLineHeight);
     }
     checkViewportFirstLine(posInPG);
-    prevBreak.lineY=viewport.getLineTop();
+    prevBreak.lineY = viewport.getLineTop();
     prevBreak.lineX = viewport.getLineX();
     prevBreak.lineHeight = committedItemsHeight;
     viewport.setLineTop(savedTop);
@@ -2247,6 +2296,8 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
                 itemsContext.itemInfo = curPGMarker.itemCache;
             }
             // TODO: always use break VP for excluded regions; go ahead and break each time
+            // TODO: this is particular to pg annotation; need to call different vp idea for
+            //   annotation
             const contentWidth = layoutContext.viewport.currentLineWidth();
             // const breaks = Paragraph.breakPGIntoLinesFF(itemsContext.itemInfo.items, contentWidth);
             // curPGMarker.cache = { breaks, isUniformWidth: true, uniformLineWidth: contentWidth };
