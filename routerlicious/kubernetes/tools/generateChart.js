@@ -54,7 +54,7 @@ routemaster:
 
 tmz:
   name: tmz
-  replicas: 4
+  replicas: 8
   externalUrl: https://tmz.wu2.prague.office-int.com
   host: tmz.wu2.prague.office-int.com
   cert: wu2-tls-certificate
