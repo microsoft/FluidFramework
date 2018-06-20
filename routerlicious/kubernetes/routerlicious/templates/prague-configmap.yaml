@@ -57,6 +57,10 @@ data:
                 }
             ]
         },
+        "client": {
+            "type": "browser",
+            "permission": []
+        },
         "login": {
             "enabled": true,
             "microsoft": {
@@ -116,12 +120,6 @@ data:
                 "topic": "{{ .Values.kafka.topics.deltas }}"
             }
         },
-        "paparazzi": {
-            "queue": "snapshot",
-            "bucket": "snapshots",
-            "alfred": "http://{{ template "alfred.fullname" . }}",
-            "tmz": "http://{{ template "tmz.fullname" . }}"
-        },
         "scriptorium": {
             "topic": "{{ .Values.kafka.topics.deltas }}",
             "kafkaClientId": "{{ template "scriptorium.fullname" . }}",
@@ -131,26 +129,14 @@ data:
         },
         "tmz": {
             "alfred": "http://{{ template "alfred.fullname" . }}",
-            "queue": "snapshot",
             "topic": "{{ .Values.kafka.topics.deltas }}",
             "kafkaClientId": "{{ template "tmz.fullname" . }}",
             "groupId": "{{ template "tmz.fullname" . }}",
-            "port": 4000,
-            "timeoutMSec": {
-                "checker": 10000,
-                "worker": 10000,
-                "document": 600000
-            },
-            "tasks": {
-                "spell": "server",
-                "intel": "server",
-                "translation": "server",
-                "augmentation": "server",
-                "snapshot": "both"
-            },
-            "workerType": "random",
-            "workerAckTimeMSec": 250,
-            "onlyServer": false
+            "taskQueueName": "taskQueue",
+            "agentExchangeName": "agentQueue"
+        },
+        "rabbitmq": {
+            "connectionString": "{{ .Values.rabbitmq.connectionString }}"
         },
         "riddler": {
             "port": 5000,
@@ -179,27 +165,13 @@ data:
                 "nativeTextAnalytics": {
                     "enable": false,
                     "url": "http://praguepy.westus2.cloudapp.azure.com/"
-                },
-                "spellchecker": {
-                    "url": "https://augmentation.wu2.prague.office-int.com/spellchecker/api"
                 }
             },
             "alfredUrl": "http://{{ template "alfred.fullname" . }}",
             "serverUrl": "{{ .Values.alfred.externalUrl }}",
-            "url": "{{ .Values.tmz.externalUrl }}",
             "blobStorageUrl": "{{ .Values.historian.externalUrl }}",
-            "scriptUrl": "{{ .Values.minio.externalUrl }}/agents/",
             "repository": "prague",
-            "storageBucket": "snapshots",
-            "intervalMSec": 5000,
-            "onlyServer": false,
-            "permission": {
-                "paparazzi": ["snapshot", "spell", "intel", "translation"],
-                "canvas": [],
-                "cell": ["snapshot"],
-                "maps": ["snapshot"],
-                "sharedText": []
-            }
+            "permission": ["snapshot", "spell", "intel", "translation"]
         },
         "tenantConfig": [
             {

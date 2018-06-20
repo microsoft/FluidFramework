@@ -57,7 +57,12 @@ export function create(
         const disableCache = "disableCache" in request.query;
         const token = getToken(tenantId, request.params.id, appTenants);
 
-        const workerConfigP = getConfig(config.get("worker"), tenantManager, tenantId, config.get("error:track"));
+        const workerConfigP = getConfig(
+            config.get("worker"),
+            tenantManager,
+            tenantId,
+            config.get("error:track"),
+            config.get("client"));
         const targetVersionSha = request.query.version;
         const versionP = storage.getVersion(
             tenantManager,
@@ -124,6 +129,7 @@ export function create(
             tenantManager,
             tenantId,
             config.get("error:track"),
+            config.get("client"),
             direct);
         const versionP = storage.getLatestVersion(tenantManager, tenantId, request.params.id);
         Promise.all([workerConfigP, versionP]).then((values) => {

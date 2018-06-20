@@ -4,19 +4,18 @@ import * as unzip from "unzip-stream";
 import * as url from "url";
 import * as winston from "winston";
 import * as agent from "../agent";
-import { IDocumentService, ITenantManager } from "../api-core";
+import { IDocumentService, IQueueMessage} from "../api-core";
 import { Deferred } from "../core-utils";
 import * as socketStorage from "../socket-storage";
 import * as utils from "../utils";
-
-// TODO can likely consolidate the runner and the worker service
+import { IMessage, IMessageReceiver } from "./messages";
 
 class DocumentServiceFactory implements agent.IDocumentServiceFactory {
     constructor(private serverUrl: string, private historianUrl: string) {
     }
 
     public async getService(tenantId: string): Promise<IDocumentService> {
-        // Disable browser error tracking for paparazzi.
+        // Disabling browser error tracking for paparazzi.
         const services = socketStorage.createDocumentService(this.serverUrl, this.historianUrl, tenantId, false);
         return services;
     }
@@ -25,34 +24,19 @@ class DocumentServiceFactory implements agent.IDocumentServiceFactory {
 export class PaparazziRunner implements utils.IRunner {
     private workerService: agent.WorkerService;
     private running = new Deferred<void>();
+    private permission: Set<string>;
 
-    constructor(
-        alfredUrl: string,
-        tmzUrl: string,
-        workerConfig: any,
-        tenantManager: ITenantManager) {
-
-        const runnerType = "paparazzi";
-        const workTypeMap: { [workType: string]: boolean} = {};
-        for (const workType of workerConfig.permission[runnerType]) {
-            workTypeMap[workType] = true;
-        }
+    constructor(private workerConfig: any, private messageReceiver: IMessageReceiver) {
+        this.permission = new Set(workerConfig.permission as string[]);
+        const alfredUrl = workerConfig.alfredUrl;
 
         const factory = new DocumentServiceFactory(alfredUrl, workerConfig.blobStorageUrl);
 
-        const workManager = new agent.WorkManager(
-            factory,
-            workerConfig,
-            alfredUrl,
-            this.initLoadModule(alfredUrl),
-            runnerType,
-            workTypeMap);
-
         this.workerService = new agent.WorkerService(
-            tmzUrl,
-            workerConfig,
-            workTypeMap,
-            workManager);
+            factory,
+            this.workerConfig,
+            alfredUrl,
+            this.initLoadModule(alfredUrl));
 
         // Report any service error.
         this.workerService.on("error", (error) => {
@@ -60,25 +44,74 @@ export class PaparazziRunner implements utils.IRunner {
         });
     }
 
-    public start(): Promise<void> {
-        const workerRunningP = this.workerService.connect("Paparazzi");
-        workerRunningP.then(() => this.running.resolve(), (error) => this.running.reject(error));
+    public async start(): Promise<void> {
+        // Preps message receiver.
+        await this.messageReceiver.initialize().catch((err) => {
+            this.running.reject(err);
+        });
+        this.messageReceiver.on("error", (err) => {
+            this.running.reject(err);
+        });
+        this.messageReceiver.on("message", (message: IMessage) => {
+            const type = message.type;
+            if (type === "tasks:start") {
+                const requestMessage = message.content as IQueueMessage;
+                this.startDocumentWork(requestMessage);
+            } else if (type === "agent:add") {
+                const agentName = message.content as string;
+                this.loadAgent(agentName);
+            } else if (type === "agent:remove") {
+                const agentName = message.content as string;
+                this.unloadAgent(agentName);
+            }
+            // TODO: May be we also want to revoke tasks from a worker? Or the worker should self manage?
+        });
 
         return this.running.promise;
     }
+
     public stop(): Promise<void> {
-        this.workerService.close().then(() => this.running.resolve(), (error) => this.running.reject(error));
         return this.running.promise;
+    }
+
+    private startDocumentWork(requestMsg: IQueueMessage) {
+        // Only start tasks that are allowed to run.
+        const filteredTask = requestMsg.message.tasks.filter((task) => this.permission.has(task));
+
+        if (filteredTask.length > 0) {
+            winston.info(`Starting ${JSON.stringify(filteredTask)}: ${requestMsg.tenantId}/${requestMsg.documentId}`);
+            this.workerService.startTasks(
+                requestMsg.tenantId,
+                requestMsg.documentId,
+                filteredTask,
+                requestMsg.token).catch((err) => {
+                    winston.error(
+                        // tslint:disable-next-line
+                        `Error starting ${JSON.stringify(filteredTask)}: ${requestMsg.tenantId}/${requestMsg.documentId}: ${err}`
+                    );
+                });
+        }
+    }
+
+    private loadAgent(agentName: string) {
+        winston.info(`Request received to load ${agentName}`);
+        this.workerService.loadAgent(agentName).catch((err) => {
+            winston.error(`Error loading agent ${agentName}: ${err}`);
+        });
+    }
+
+    private unloadAgent(agentName: string) {
+        winston.info(`Request received to unload ${agentName}`);
+        this.workerService.unloadAgent(agentName);
     }
 
     private initLoadModule(alfredUrl: string): (name: string) => Promise<any> {
         return (moduleFile: string) => {
             const moduleUrl = url.resolve(alfredUrl, `agent/${moduleFile}`);
             const moduleName = moduleFile.split(".")[0];
-            winston.info(`Worker will load ${moduleName}`);
+            winston.info(`Task runner will load ${moduleName}`);
 
             // TODO - switch these to absolute paths
-
             return new Promise<any>((resolve, reject) => {
                 fs.access(`../../../tmp/intel_modules/${moduleName}`, (error) => {
                     // Module already exists locally. Just import it!

@@ -31,10 +31,11 @@ kubectl create secret docker-registry regsecret --docker-server=prague.azurecr.i
 kubectl apply -f system/azure-unmanaged-premium.yaml
 ```
 
-You'll also need to have a Redis, MongoDB, and Historian instances running.
+You'll also need to have a Redis, MongoDB, Rabbitmq, and Historian instances running.
 
-We install MongoDB from the helm stable repository
+We install MongoDB and Rabbitmq from the helm stable repository
 `helm install -f system/mongodb.yaml stable/mongodb`
+`helm install --set rbacEnabled=false,rabbitmq.username=prague,persistence.enabled=true,persistence.size=16Gi stable/rabbitmq`
 
 Redis, Kafka and Historian come from the /charts directory. You'll want to install each of them.
 
@@ -81,8 +82,10 @@ PPE
 Mongo - quoting-armadillo
 Redis - lumpy-condor
 Historian - terrific-otter
+Rabbitmq - modest-poodle
 
 Prod
 Mongo - quieting-guppy
 Redis - winsome-wombat
 Historian - smelly-wolf
+Rabbitmq - lumpy-worm

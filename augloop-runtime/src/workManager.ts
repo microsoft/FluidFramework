@@ -1,7 +1,7 @@
 import * as agent from "@prague/routerlicious/dist/agent";
 import { EventEmitter } from "events";
 import * as winston from "winston";
-import {AugLoopRuntime } from "../augloop-runtime";
+import { AugLoopRuntime } from "./augloop-runtime";
 import { AugmentationWork } from "./augmentationWork";
 
 // Responsible for managing the lifetime of an work.
@@ -11,35 +11,12 @@ export class WorkManager extends EventEmitter implements agent.IWorkManager {
     private events = new EventEmitter();
     private augRuntime: AugLoopRuntime;
 
-    constructor(private serviceFactory: any,
-                private config: any,
-                serverUrl: string,
-                agentModuleLoader: (id: string) => Promise<any>,
-                clientType: string,
-                workTypeMap: { [workType: string]: boolean}) {
+    constructor(private serviceFactory: agent.IDocumentServiceFactory, private config: any) {
         super();
         this.augRuntime = new AugLoopRuntime();
     }
 
-    public async processDocumentWork(tenantId: string, documentId: string, workType: string,
-                                     action: string, token?: string) {
-        if (action === "start") {
-            await this.startDocumentWork(tenantId, documentId, token, workType);
-        } else {
-            this.stopDocumentWork(tenantId, documentId, workType);
-        }
-    }
-
-    public async processAgentWork(agentName: string, action: string) {
-        return;
-    }
-
-    public on(event: string, listener: (...args: any[]) => void): this {
-        this.events.on(event, listener);
-        return this;
-    }
-
-    private async startDocumentWork(tenantId: string, documentId: string, token: string, workType: string) {
+    public async startDocumentWork(tenantId: string, documentId: string, workType: string, token?: string) {
         const services = await this.serviceFactory.getService(tenantId);
 
         switch (workType) {
@@ -58,14 +35,29 @@ export class WorkManager extends EventEmitter implements agent.IWorkManager {
 
     }
 
-    private stopDocumentWork(tenantId: string, documentId: string, workType: string) {
-        switch (workType) {
-            case "augmentation":
-                this.stopTask(tenantId, documentId, workType);
-                break;
-            default:
-                throw new Error("Unknown work type!");
+    public stopDocumentWork(tenantId: string, documentId: string, workType: string) {
+        const fullId = this.getFullId(tenantId, documentId);
+        if (fullId in this.documentMap) {
+            const taskMap = this.documentMap[fullId];
+            const task = taskMap[workType];
+            if (task !== undefined) {
+                task.stop(workType);
+                delete taskMap[workType];
+            }
         }
+    }
+
+    public async loadAgent(agentName: string): Promise<void> {
+        // No implementation needed
+    }
+
+    public unloadAgent(agentName: string) {
+        // No implementation needed
+    }
+
+    public on(event: string, listener: (...args: any[]) => void): this {
+        this.events.on(event, listener);
+        return this;
     }
 
     private getFullId(tenantId: string, documentId: string): string {
@@ -86,26 +78,16 @@ export class WorkManager extends EventEmitter implements agent.IWorkManager {
         }
     }
 
-    private stopTask(tenantId: string, documentId: string, workType: string) {
-        const fullId = this.getFullId(tenantId, documentId);
-
-        if (fullId in this.documentMap) {
-            const taskMap = this.documentMap[fullId];
-            const task = taskMap[workType];
-            if (task !== undefined) {
-                task.stop();
-                delete taskMap[workType];
-            }
-        }
-    }
-
     private async applyWork(fullId: string, workType: string, worker: agent.IWork) {
         winston.info(`Starting work ${workType} for document ${fullId}`);
-        await worker.start();
+        await worker.start(workType);
         winston.info(`Started work ${workType} for document ${fullId}`);
         this.documentMap[fullId][workType] = worker;
         worker.on("error", (error) => {
             this.events.emit("error", error);
+        });
+        worker.on("stop", (ev: agent.IDocumentTaskInfo) => {
+            this.stopDocumentWork(ev.tenantId, ev.docId, ev.task);
         });
     }
 }

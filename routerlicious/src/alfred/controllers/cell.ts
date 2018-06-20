@@ -1,11 +1,10 @@
 import * as resources from "gitresources";
 import * as $ from "jquery";
-import * as agent from "../../agent";
 import { api, socketStorage, types } from "../../client-api";
 
-async function loadDocument(id: string, version: resources.ICommit, token: string): Promise<api.Document> {
+async function loadDocument(id: string, version: resources.ICommit, token: string, client: any): Promise<api.Document> {
     console.log("Loading in root document...");
-    const document = await api.load(id, { encrypted: false, token }, version);
+    const document = await api.load(id, { client, encrypted: false, token }, version);
 
     console.log("Document loaded");
     return document;
@@ -114,10 +113,7 @@ export async function load(id: string, version: resources.ICommit, token: string
         config.tenantId,
         config.trackError);
 
-    // Bootstrap worker service.
-    agent.registerWorker(config, "cell");
-
-    const doc = await loadDocument(id, version, token);
+    const doc = await loadDocument(id, version, token, config.client);
     const root = doc.getRoot();
 
     let cell: types.ICell;

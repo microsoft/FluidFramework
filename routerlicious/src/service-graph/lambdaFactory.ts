@@ -107,7 +107,7 @@ export class ServiceGraphLambdaFactory extends EventEmitter implements IPartitio
     }
 
     public async create(config: Provider, context: IContext): Promise<IPartitionLambda> {
-        const alfred = config.get("paparazzi:alfred");
+        const alfred = config.get("worker:alfredUrl");
 
         const tenants = config.get("tenantConfig");
         const defaultTenant = tenants.find((tenant) => tenant.isDefault);

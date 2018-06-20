@@ -31,6 +31,12 @@ export const Integrate = "integrate";
 // Message to indicate successful round trip.
 export const RoundTrip = "tripComplete";
 
+// Message to indicate the need of a browser agent for a document.
+export const ClientHelp = "clientHelp";
+
+// Message to indicate the need of a remote agent for a document.
+export const RemoteHelp = "remoteHelp";
+
 /**
  * An envelope wraps the contents with the intended target
  */
@@ -132,6 +138,24 @@ export interface IAttachMessage {
 
     // Initial snapshot of the document
     snapshot: storage.ITree;
+}
+
+export interface IHelpMessage {
+
+    clientId: string;
+
+    tasks: string[];
+}
+
+export interface IQueueMessage {
+
+    message: IHelpMessage;
+
+    tenantId: string;
+
+    documentId: string;
+
+    token: string;
 }
 
 export interface ILatencyMessage {

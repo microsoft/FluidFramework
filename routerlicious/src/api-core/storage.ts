@@ -1,6 +1,7 @@
 // tslint:disable:ban-types
 import * as resources from "gitresources";
 import * as gitStorage from "../git-storage";
+import { IWorkerClient } from "./client";
 import { IDocumentMessage, ISequencedDocumentMessage } from "./protocol";
 import { ITenantUser } from "./tenant";
 
@@ -19,22 +20,17 @@ export interface IDocumentAttributes {
      * Minimum sequence number when the snapshot was taken
      */
     minimumSequenceNumber: number;
+
+    /**
+     * List of clients when the snapshot was taken
+     */
+    clients: Array<[string, IWorkerClient]>;
 }
 
 export interface IObjectAttributes {
     sequenceNumber: number;
 
     type: string;
-}
-
-/**
- * The worker service connects to work manager (TMZ) and registers itself to receive work.
- */
-export interface IWorkerService {
-    /**
-     * Connects to tmz and subscribes to start working.
-     */
-    connect(type: string): Promise<any>;
 }
 
 /**
@@ -218,7 +214,11 @@ export interface IDocumentService {
     /**
      * Subscribes to the document delta stream
      */
-    connectToDeltaStream(tenantId: string, id: string, token: string): Promise<IDocumentDeltaConnection>;
+    connectToDeltaStream(
+        tenantId: string,
+        id: string,
+        token: string,
+        client: IWorkerClient): Promise<IDocumentDeltaConnection>;
 
     /**
      * Creates a branch of the document with the given ID. Returns the new ID.

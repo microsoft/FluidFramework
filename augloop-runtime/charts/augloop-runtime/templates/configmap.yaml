@@ -12,11 +12,11 @@ data:
   config.json: |
     {
         "logger": {
-            "colorize": true,
-            "morganFormat": "dev",
-            "json": false,
-            "level": "info",
-            "timestamp": true,
+            "colorize": false,
+            "morganFormat": "short",
+            "json": true,
+            "level": "verbose",
+            "timestamp": false,
             "label": "winston"
         },
         "kafka": {
@@ -34,25 +34,22 @@ data:
             "track": true,
             "endpoint" : "https://25f5c231660f474fb85fb4daeb070029:3301d25c7ed9434688e4f5bd998b9739@sentry.wu2.prague.office-int.com/2"
         },
-        "augloop": {
-            "alfred": "{{ .Values.endpoints.alfred }}",
-            "tmz": "{{ .Values.endpoints.tmz }}"
-        },
         "auth": {
             "endpoint": "{{ .Values.endpoints.riddler }}"
         },
         "worker": {
             "alfredUrl": "{{ .Values.endpoints.alfred }}",
             "serverUrl": "{{ .Values.endpoints.alfredUrl }}",
-            "url": "{{ .Values.endpoints.tmzUrl }}",
             "blobStorageUrl": "{{ .Values.endpoints.historianUrl }}",
-            "scriptUrl": "{{ .Values.endpoints.minioUrl }}/agents/",
             "repository": "prague",
-            "storageBucket": "snapshots",
-            "intervalMSec": 5000,
-            "onlyServer": false,
-            "permission": {
-                "paparazzi": ["augmentation"]
-            }
+            "permission": ["augmentation"]
+        },
+        "tmz": {
+            "alfred": "{{ .Values.endpoints.alfred }}",
+            "taskQueueName": "taskQueue",
+            "agentExchangeName": "agentQueue"
+        },
+        "rabbitmq": {
+            "connectionString": "{{ .Values.endpoints.rabbitmq }}"
         }
     }

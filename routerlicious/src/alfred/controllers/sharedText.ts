@@ -87,18 +87,25 @@ async function loadDocument(
         config.historianApi,
         config.credentials);
     console.log(`collabDoc loading ${id} - ${performanceNow()}`);
-    const collabDoc = await API.load(id, { blockUpdateMarkers: true, token }, version, connect);
+    const collabDoc = await API.load(id, { blockUpdateMarkers: true, client: config.client, token }, version, connect);
+
+    // Register to run task only if the client type is browser.
+    const taskConfig = config.client as agent.ITaskRunnerConfig;
+    if (taskConfig && taskConfig.type === "browser") {
+        agent.registerToWork(collabDoc, taskConfig, token, config);
+    }
+
     console.log(`collabDoc loaded ${id} - ${performanceNow()}`);
     const root = await collabDoc.getRoot().getView();
     console.log(`Getting root ${id} - ${performanceNow()}`);
 
-    collabDoc.on("clientJoin", (name) => {
-        console.log(`${name} joined`);
-        console.log(`${Array.from(collabDoc.getClients())}`);
+    collabDoc.on("clientJoin", (message) => {
+        console.log(`${JSON.stringify(message)} joined`);
+        console.log(`${Array.from(collabDoc.getClients().keys())}`);
     });
-    collabDoc.on("clientLeave", (name) => {
-        console.log(`${name} left`);
-        console.log(`${Array.from(collabDoc.getClients())}`);
+    collabDoc.on("clientLeave", (message) => {
+        console.log(`${JSON.stringify(message)} left`);
+        console.log(`${Array.from(collabDoc.getClients().keys())}`);
     });
 
     // If a text element already exists load it directly - otherwise load in pride + prejudice
@@ -173,9 +180,6 @@ async function loadDocument(
     theFlow.timeToEdit = theFlow.timeToImpression = Date.now() - clockStart;
 
     theFlow.setEdit(root);
-
-    // Bootstrap worker service.
-    agent.registerWorker(config, "sharedText");
 
     sharedString.loaded.then(() => {
         theFlow.loadFinished(clockStart);

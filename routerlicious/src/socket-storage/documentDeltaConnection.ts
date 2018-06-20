@@ -13,6 +13,7 @@ export class DocumentDeltaConnection implements api.IDocumentDeltaConnection {
         id: string,
         token: string,
         io: SocketIOClientStatic,
+        client: api.IWorkerClient,
         url: string): Promise<api.IDocumentDeltaConnection> {
 
         const socket = io(
@@ -23,6 +24,7 @@ export class DocumentDeltaConnection implements api.IDocumentDeltaConnection {
             });
 
         const connectMessage: messages.IConnect = {
+            client,
             id,
             tenantId,
             token,  // token is going to indicate tenant level information, etc...

@@ -25,7 +25,7 @@ home: https://github.com/microsoft/prague
 const values =
 `## Generated from a tool - do not edit directly
 ## Prague image version
-replicaCount: 1
+replicaCount: 4
 image: prague.azurecr.io/augloop-runtime:${imageVersion}
 
 ## Specify a imagePullPolicy
@@ -45,12 +45,10 @@ resources:
 endpoints:
   kafka: left-numbat-zookeeper:2181
   alfred: http://pesky-platypus-alfred
-  tmz: http://pesky-platypus-tmz
   riddler: http://pesky-platypus-riddler
   alfredUrl: https://alfred.wu2.prague.office-int.com
-  tmzUrl: https://tmz.wu2.prague.office-int.com
   historianUrl: https://historian.wu2.prague.office-int.com
-  minioUrl: https://minio.wu2.prague.office-int.com
+  rabbitmq: amqp://prague:JFqxYjRrIE@lumpy-worm-rabbitmq
 `;
 
 const writeFileAsync = util.promisify(fs.writeFile);

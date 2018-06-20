@@ -1,5 +1,5 @@
+import * as agent from "@prague/routerlicious/dist/agent";
 import { EventEmitter } from "events";
-import { IDocumentServiceFactory, IWorkManager } from "./definitions";
 import { WorkManager } from "./workManager";
 
 /**
@@ -8,19 +8,12 @@ import { WorkManager } from "./workManager";
  */
 export class WorkerService extends EventEmitter {
 
-    private workManager: IWorkManager;
+    private workManager: agent.IWorkManager;
 
     constructor(
-        private serviceFactory: IDocumentServiceFactory,
-        private config: any,
-        private serverUrl: string,
-        private agentModuleLoader: (id: string) => Promise<any>) {
+        private serviceFactory: agent.IDocumentServiceFactory, private config: any) {
         super();
-        this.workManager = new WorkManager(
-            this.serviceFactory,
-            this.config,
-            this.serverUrl,
-            this.agentModuleLoader);
+        this.workManager = new WorkManager(this.serviceFactory, this.config);
         this.workManager.on("error", (error) => {
             this.emit("error", error);
         });

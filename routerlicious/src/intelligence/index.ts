@@ -8,6 +8,3 @@ export { textAnalytics };
 
 import * as nativeTextAnalytics from "./nativeTextAnalytics";
 export { nativeTextAnalytics };
-
-import * as spellcheckerService from "./spellchecker";
-export { spellcheckerService };

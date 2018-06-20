@@ -42,6 +42,10 @@
             }
         ]
     },
+    "client": {
+        "type": "browser",
+        "permission": ["snapshot"]
+    },
     "login": {
         "enabled": false,
         "microsoft": {
@@ -103,12 +107,6 @@
             "topic": "deltas"
         }
     },
-    "paparazzi": {
-        "queue": "snapshot",
-        "bucket": "snapshots",
-        "alfred": "http://alfred:3000",
-        "tmz": "http://tmz:4000"
-    },
     "scriptorium": {
         "topic": "deltas",
         "kafkaClientId": "scriptorium",
@@ -118,23 +116,11 @@
     },
     "tmz": {
         "alfred": "http://alfred:3000",
-        "queue": "snapshot",
-        "port": 4000,
-        "timeoutMSec": {
-            "checker": 10000,
-            "worker": 10000,
-            "document": 600000
-        },
-        "tasks": {
-            "spell": "server",
-            "intel": "server",
-            "translation": "server",
-            "augmentation": "server",
-            "snapshot": "both"
-        },
-        "workerType": "random",
-        "workerAckTimeMSec": 250,
-        "onlyServer": false
+        "taskQueueName": "taskQueue",
+        "agentExchangeName": "agentQueue"
+    },
+    "rabbitmq": {
+        "connectionString": "amqp://rabbitmq"
     },
     "redis": {
         "host": "redis",
@@ -159,27 +145,13 @@
             "nativeTextAnalytics": {
                 "enable": false,
                 "url": "http://praguepy.westus2.cloudapp.azure.com/"
-            },
-            "spellchecker": {
-                "url": "http://augmentation.westus2.cloudapp.azure.com/spellchecker/api"
             }
         },
         "alfredUrl": "http://alfred:3000",
         "serverUrl": "http://localhost:3000",
-        "url": "http://localhost:4000",
         "blobStorageUrl": "http://historian:3000",
-        "scriptUrl": "http://localhost:9000/agents/",
         "repository": "prague",
-        "storageBucket": "snapshots",
-        "intervalMSec": 5000,
-        "onlyServer": false,
-        "permission": {
-            "paparazzi": ["snapshot", "spell", "intel", "translation"],
-            "canvas": [],
-            "cell": ["snapshot"],
-            "maps": ["snapshot"],
-            "sharedText": []
-        }
+        "permission": ["snapshot", "spell", "intel", "translation"]
     },
     "tenantConfig": [
         {

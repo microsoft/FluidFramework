@@ -27,8 +27,6 @@ services:
         restart: always
     tmz:
         build: .
-        ports:
-            - "4000:4000"
         command: node dist/kafka-service/index.js tmz ../tmz/index.js
         environment:
             - DEBUG=routerlicious:*
@@ -103,6 +101,8 @@ services:
         image: "redis:alpine"
     mongodb:
         image: "mongo:3.4.3"
+    rabbitmq:
+        image: "rabbitmq:alpine"
     minio:
         image: minio/minio
         ports:

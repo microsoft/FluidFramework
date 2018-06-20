@@ -4,30 +4,40 @@ export interface IWork {
     /**
      * Starts the work
      */
-    start(): Promise<void>;
+    start(task: string): Promise<void>;
 
     /**
      * Stops the work
      */
-    stop(): Promise<void>;
+    stop(task: string): Promise<void>;
 
     /**
-     * Error event
+     * "error" and "stop" listener
      */
-    on(event: "error", listener: (error: string) => void): this;
+    on(event: "stop" | "error", listener: (error: any) => void): this;
 }
 
 export interface IWorkManager {
     /**
-     * Process a document work
+     * Starts working on a document
      */
-    processDocumentWork(tenantId: string, documentId: string, workType: string, action: string, token?: string):
+    startDocumentWork(tenantId: string, documentId: string, workType: string, token?: string):
         Promise<void>;
 
     /**
-     * Process a new agent
+     * Stops working on a document
      */
-    processAgentWork(agentName: string, action: string);
+    stopDocumentWork(tenantId: string, documentId: string, workType: string): void;
+
+    /**
+     * Loads a new agent
+     */
+    loadAgent(agentName: string): Promise<void>;
+
+    /**
+     * Unloads an existing agent
+     */
+    unloadAgent(agentName: string): void;
 
     /**
      * Error event
@@ -38,4 +48,20 @@ export interface IWorkManager {
 export interface IDocumentServiceFactory {
 
     getService(tenantId: string): Promise<core.IDocumentService>;
+}
+
+export interface ITaskRunnerConfig {
+
+    type: string;
+
+    permission: string[];
+}
+
+export interface IDocumentTaskInfo {
+
+    tenantId: string;
+
+    docId: string;
+
+    task: string;
 }

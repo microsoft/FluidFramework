@@ -1,81 +1,69 @@
 import { api, core } from "../client-api";
-import { IDocumentServiceFactory } from "./definitions";
-import { WorkerService } from "./workerService";
-import { WorkManager } from "./workManager";
+import { ITaskRunnerConfig } from "./definitions";
+import { loadDictionary } from "./dictionaryLoader";
+import { IntelWork } from "./intelWork";
+import { SnapshotWork } from "./snapshotWork";
+import { SpellcheckerWork } from "./spellcheckerWork";
+import { TranslationWork } from "./translationWork";
 
-class DefaultDocumentServiceFactory implements IDocumentServiceFactory {
-    public getService(tenantId: string): Promise<core.IDocumentService> {
-        return Promise.resolve(api.getDefaultDocumentService());
-    }
-}
-
-export function registerWorker(config: any, runnerType: string) {
-    if (!config.onlyServer) {
-        const workerUrl =  config.url;
-        const serverUrl = config.serverUrl;
-
-        // Bootstrap service and connect. On failure, try to connect again.
-        console.log(`Registering as worker`);
-
-        const workTypeMap: { [workType: string]: boolean} = {};
-        for (const workType of config.permission[runnerType]) {
-            workTypeMap[workType] = true;
-        }
-
-        const workManager = new WorkManager(
-            new DefaultDocumentServiceFactory(),
-            config,
-            serverUrl,
-            initLoadModule(config),
-            runnerType,
-            workTypeMap);
-
-        const workerService = new WorkerService(
-            workerUrl,
-            config,
-            workTypeMap,
-            workManager);
-
-        // Report any service error.
-        workerService.on("error", (error) => {
-            console.log(error);
-        });
-
-        let workerP = workerService.connect("Client");
-        workerP.catch((error) => {
-            console.log(`Error connecting to worker`);
-            workerP = workerService.connect("Client");
+export function registerToWork(doc: api.Document, config: ITaskRunnerConfig, token: string, workerConfig: any) {
+    if (config.permission && config.permission.length > 0) {
+        const permittedTasks = config.permission;
+        doc.on("clientHelp", async (message: core.IHelpMessage) => {
+            // For now only leader will accept the work.
+            // TODO: Find a reliable way to ack this help message exactly once by any client.
+            if (message.clientId === doc.clientId) {
+                const tasksToDo = [];
+                for (const task of message.tasks) {
+                    if (permittedTasks.indexOf(task) !== -1) {
+                        tasksToDo.push(task);
+                    }
+                }
+                if (tasksToDo.length > 0) {
+                    await performTasks(doc.id, token, tasksToDo, workerConfig).catch((err) => {
+                        console.error(err);
+                    });
+                }
+            }
         });
     }
 }
 
-function initLoadModule(config: any): (name: string) => Promise<any> {
-    return (scriptName: string) => {
-        return new Promise<any>((resolve, reject) => {
-            /*
-            const scriptUrl = `${config.scriptUrl}${scriptName}`;
-            $.getScript(scriptUrl, (data, textStatus, jqxhr) => {
-                console.log(data);
-                console.log(textStatus);
-                console.log(jqxhr.status);
-                console.log("Load was performed.");
+// TODO: Make this for every work types. Move this over to webworker. And allow it not to reconnect in api.load.
+async function performTasks(docId: string, token: string, tasks: string[], config) {
+    const taskPromises = [];
+    for (const task of tasks) {
+        taskPromises.push(performTask(docId, token, task, config));
+    }
+    await Promise.all(taskPromises);
+}
 
-                const m1 = "ResumeAnalyticsFactory";
-                const m2 = "factory";
-                import(m1).then((loadedModule) => {
-                    console.log(`${loadedModule}`);
-                }, (err) => {
-                    console.log(`Error importing ${scriptName}: ${err}`);
-                });
-
-                import(m2).then((loadedModule) => {
-                    console.log(`${loadedModule}`);
-                }, (err) => {
-                    console.log(`Error importing ${scriptName}: ${err}`);
-                });
-              });
-            */
-            reject("Client module loader not implemented yet");
-        });
-    };
+async function performTask(docId: string, token: string, task: string, config: any) {
+    switch (task) {
+        case "snapshot":
+            const snapshotWork  = new SnapshotWork(docId, token, config, api.getDefaultDocumentService());
+            await snapshotWork.start(task);
+            break;
+        case "intel":
+            const intelWork  = new IntelWork(docId, token, config, api.getDefaultDocumentService());
+            await intelWork.start(task);
+            break;
+        case "spell":
+            const dictionary = await loadDictionary(config.serverUrl);
+            const spellWork = new SpellcheckerWork(
+                docId,
+                token,
+                config,
+                dictionary,
+                api.getDefaultDocumentService(),
+            );
+            await spellWork.start(task);
+            break;
+        case "translation":
+            const translationWork = new TranslationWork(docId, token, config, api.getDefaultDocumentService());
+            await translationWork.start(task);
+            break;
+        default:
+            throw new Error(`Unknown task type: ${task}`);
+    }
 }
