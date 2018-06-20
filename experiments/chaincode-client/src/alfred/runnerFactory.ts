@@ -57,10 +57,12 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
         const webSocketLibrary = config.get("alfred:webSocketLib");
         const redisConfig = config.get("redis");
 
+        const publisher = new services.SocketIoRedisPublisher(redisConfig.port, redisConfig.host);
+
         // This wanst to create stuff
         const port = utils.normalizePort(process.env.PORT || "3000");
 
-        const chainDb = await db.init(client, channel, channelId);
+        const chainDb = await db.init(client, channel, channelId, publisher);
 
         return new AlfredResources(
             config,

@@ -1,15 +1,6 @@
-import * as api from "@prague/routerlicious/dist/api-core";
 import { Router } from "express";
 import { Provider } from "nconf";
 import { ChainDb } from "../chainDb";
-
-export async function getDeltas(
-    documentId: string,
-    from?: number,
-    to?: number): Promise<api.ISequencedDocumentMessage[]> {
-
-    return [];
-}
 
 export function create(config: Provider, db: ChainDb): Router {
     const router: Router = Router();
@@ -26,12 +17,8 @@ export function create(config: Provider, db: ChainDb): Router {
         const from = stringToSequenceNumber(request.query.from);
         const to = stringToSequenceNumber(request.query.to);
 
-        // TODO need to filter the items on the chain by documentID and be able to return them here
-        // Although I guess I need to run simple deli off of the results of the chain and then store
-        // this stuff in memory...
-
         // Query for the deltas and return a filtered version of just the operations field
-        const deltasP = getDeltas(request.params.id, from, to);
+        const deltasP = db.getDeltas(request.params.id, from, to);
         deltasP.then(
             (deltas) => {
                 response.status(200).json(null);

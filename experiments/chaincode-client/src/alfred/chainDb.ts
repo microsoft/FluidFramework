@@ -1,7 +1,7 @@
 import * as api from "@prague/routerlicious/dist/api-core";
 import * as core from "@prague/routerlicious/dist/core";
+import * as services from "@prague/routerlicious/dist/services";
 import * as assert from "assert";
-import { EventEmitter } from "events";
 import * as fabric from "fabric-client";
 
 function dumpBlock(block: fabric.Block) {
@@ -43,17 +43,53 @@ class MiniDeli {
         return sequenced;
     }
 
-    public getDeltas(documentId: string, from: number, to: number): api.ISequencedDocumentMessage[] {
-        return null;
+    public async getDeltas(documentId: string, from: number, to: number): Promise<api.ISequencedDocumentMessage[]> {
+        const deltas = this.sequenceNumbers.get(documentId);
+        if (!deltas) {
+            return Promise.reject("Unknown document ID");
+        }
+
+        from = from || 0;
+        to = to || deltas.length;
+
+        return deltas.slice(from, to);
+    }
+
+    public getOrCreateDocument(id: string) {
+        if (!this.sequenceNumbers.has(id)) {
+            this.sequenceNumbers.set(id, []);
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+    public hasDocument(id: string) {
+        return this.sequenceNumbers.has(id);
     }
 }
 
-export class ChainDb extends EventEmitter {
+export class ChainDb {
     private deli = new MiniDeli();
     private blocks = new Map<number, fabric.Block>();
 
-    constructor(private client: fabric, private channel: fabric.Channel, private chainId: string) {
-        super();
+    constructor(
+        private client: fabric,
+        private channel: fabric.Channel,
+        private chainId: string,
+        private publisher: services.SocketIoRedisPublisher) {
+    }
+
+    public async getDeltas(documentId: string, from: number, to: number): Promise<api.ISequencedDocumentMessage[]> {
+        return this.deli.getDeltas(documentId, from, to);
+    }
+
+    public hasDocument(documentId): boolean {
+        return this.deli.hasDocument(documentId);
+    }
+
+    public getOrCreateDocument(id: string) {
+        return this.deli.getOrCreateDocument(id);
     }
 
     public async load() {
@@ -163,8 +199,11 @@ export class ChainDb extends EventEmitter {
                     console.log(value);
                     const parsed = JSON.parse(value);
                     if (parsed.type === "prague") {
+                        const raw = parsed.data as core.IRawOperationMessage;
                         const sequenced = this.deli.sequence(parsed.data);
-                        super.emit("op", sequenced);
+                        this.publisher
+                            .to(`${raw.tenantId}/${raw.documentId}`)
+                            .emit("op", raw.documentId, [sequenced]);
                     }
                 } catch (exception) {
                     console.error(exception);
@@ -174,8 +213,13 @@ export class ChainDb extends EventEmitter {
     }
 }
 
-export async function init(client: fabric, channel: fabric.Channel, chainId: string): Promise<ChainDb> {
-    const db = new ChainDb(client, channel, chainId);
+export async function init(
+    client: fabric,
+    channel: fabric.Channel,
+    chainId: string,
+    publisher: services.SocketIoRedisPublisher): Promise<ChainDb> {
+
+    const db = new ChainDb(client, channel, chainId, publisher);
     await db.load();
 
     return db;

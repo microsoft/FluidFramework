@@ -46,17 +46,12 @@ export function register(
 
             // Validate token signature and claims
             const claims = jwt.decode(token) as api.ITokenClaims;
-            // if (claims.documentId !== message.id || claims.tenantId !== message.tenantId) {
-            //     return Promise.reject("Invalid claims");
-            // }
+            if (claims.documentId !== message.id || claims.tenantId !== message.tenantId) {
+                return Promise.reject("Invalid claims");
+            }
 
-            // const documentDetails = await storage.getOrCreateDocument(
-            //     mongoManager,
-            //     documentsCollectionName,
-            //     producer,
-            //     message.tenantId,
-            //     message.id);
-            const documentDetails = { existing: false };
+            const existing = chainDb.getOrCreateDocument(message.id);
+            const documentDetails = { existing };
 
             const clientId = moniker.choose();
             await Promise.all(
