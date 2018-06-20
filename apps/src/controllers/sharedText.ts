@@ -1,4 +1,4 @@
-import { agent, api, ui } from "@prague/routerlicious";
+import { api, ui } from "@prague/routerlicious";
 import * as $ from "jquery";
 import performanceNow = require("performance-now");
 import * as request from "request";
@@ -122,11 +122,6 @@ export async function onLoad(
             theFlow.timeToEdit = theFlow.timeToImpression = Date.now() - clockStart;
 
             theFlow.setEdit(root);
-
-            // Bootstrap worker service.
-            if (workerConfig) {
-                agent.registerWorker(workerConfig, "sharedText");
-            }
 
             sharedString.loaded.then(() => {
                 theFlow.loadFinished(clockStart);

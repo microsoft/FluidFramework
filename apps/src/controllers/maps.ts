@@ -1,4 +1,4 @@
-import { agent, api } from "@prague/routerlicious";
+import { api } from "@prague/routerlicious";
 import * as $ from "jquery";
 import hasIn = require("lodash/hasIn");
 
@@ -132,10 +132,6 @@ export async function load(id: string, tenantId: string, endPoints: any, token?:
                            workerConfig?: any) {
     prague.socketStorage.registerAsDefault(endPoints.delta, endPoints.storage, tenantId);
     $(document).ready(() => {
-        // Only register to work if the config is present.
-        if (workerConfig) {
-            agent.registerWorker(workerConfig, "maps");
-        }
         loadDocument(id, token).then((doc) => {
             // tslint:disable-next-line
             window["doc"] = doc;
