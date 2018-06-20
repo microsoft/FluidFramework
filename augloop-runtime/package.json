@@ -14,7 +14,7 @@
   "dependencies": {
     "@augloop/runtime-client": "1.2.79",
     "@augloop/schemas": "^1.2.75",
-    "@prague/routerlicious": "^0.1.2587",
+    "@prague/routerlicious": "^0.1.2686",
     "concurrently": "^3.5.1",
     "jsonwebtoken": "^8.2.1",
     "nconf": "^0.10.0",
