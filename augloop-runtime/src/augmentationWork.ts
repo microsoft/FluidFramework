@@ -20,7 +20,13 @@ export class AugmentationWork extends agent.BaseWork implements agent.IWork {
 
     public async start(task: string): Promise<void> {
         await this.loadDocument(
-            { blockUpdateMarkers: true, localMinSeq: 0, encrypted: undefined, token: this.token },
+            {
+                blockUpdateMarkers: true,
+                client: { type: "robot"},
+                encrypted: undefined,
+                localMinSeq: 0,
+                token: this.token,
+            },
             this.service,
             task);
         const eventHandler = (op: core.ISequencedDocumentMessage, object: core.ICollaborativeObject) => {
