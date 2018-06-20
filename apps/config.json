@@ -32,25 +32,13 @@
                 "nativeTextAnalytics": {
                     "enable": false,
                     "url": "http://praguepy.westus2.cloudapp.azure.com/"
-                },
-                "spellchecker": {
-                    "url": "https://augmentation.wu2.prague.office-int.com/spellchecker/api"
                 }
             },
+            "alfredUrl": "https://alfred.wu2.prague.office-int.com",
             "serverUrl": "https://alfred.wu2.prague.office-int.com",
-            "url": "https://tmz.wu2.prague.office-int.com",
             "blobStorageUrl": "https://historian.wu2.prague.office-int.com",
-            "scriptUrl": "https://minio.wu2.prague.office-int.com/agents/",
-            "storageBucket": "snapshots",
-            "intervalMSec": 5000,
-            "onlyServer": false,
-            "permission": {
-                "paparazzi": ["snapshot", "spell", "intel"],
-                "canvas": ["ping"],
-                "cells": ["ping", "snapshot"],
-                "maps": ["ping", "snapshot"],
-                "sharedText": ["ping"]
-            }
+            "repository": "prague",
+            "permission": ["snapshot", "spell", "intel", "translation"]
         }
     },
     "aad": {

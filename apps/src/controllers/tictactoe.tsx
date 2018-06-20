@@ -28,58 +28,71 @@ export async function load(id: string, tenantId: string, endPoints: any, token?:
         loadDocument(id, token).then(async (doc) => {
             // tslint:disable-next-line
             window["doc"] = doc;
-            const playerName = doc.getUser().id;
+            const plName = doc.getUser().id;
+            const playerName = plName.indexOf("@") === -1 ? plName : plName.substring(0, plName.indexOf("@"));
             let playerId: number;
-
-            const rootView = await doc.getRoot().getView();
+            let rootView: types.IMapView;
             let gameMap: types.IMap;
             let gameView: types.IMapView;
-            if (rootView.has("game")) {
-                playerId = 2;
-                gameMap = rootView.get("game") as types.IMap;
-                gameView = await gameMap.getView();
-                gameView.set("pl2", playerName);
-            } else {
+            let canJoin: boolean = true;
+
+            // First player is responsible for creating the map objects.
+            if (!doc.existing) {
                 playerId = 1;
+                rootView = await doc.getRoot().getView();
                 rootView.set("game", doc.createMap());
                 gameMap = rootView.get("game") as types.IMap;
                 gameView = await gameMap.getView();
                 gameView.set("pl1", playerName);
-            }
-
-            let canJoin: boolean = true;
-
-            if (gameView.has("counter")) {
+                const counter = gameView.set<Map.Counter>("counter", undefined, Map.CounterValueType.Name);
+                counter.increment(1);
+                gameView.set("next", playerId);
+            } else {    // Second player waits for all map objects to be created first.
+                playerId = 2;
+                rootView = await doc.getRoot().getView();
+                await waitForMapObject(rootView, "game");
+                gameMap = rootView.get("game") as types.IMap;
+                gameView = await gameMap.getView();
+                await waitForMapObject(gameView, "counter");
                 const counter = gameView.get("counter") as api.map.Counter;
                 if (counter.value === 2) {
                     canJoin = false;
                 } else {
                     counter.increment(1);
+                    gameView.set("pl2", playerName);
                 }
-            } else {
-                const counter = gameView.set<Map.Counter>("counter", undefined, Map.CounterValueType.Name);
-                counter.increment(1);
-                gameView.set("next", playerId);
             }
-
             if (!canJoin) {
-                console.log(`${playerId} can't join the game!`);
+                console.log(`this player can't join the game!`);
                 displayError($("#tictactoeViews"), "No more players allowed");
             } else {
                 console.log(`${playerId} can join the game!`);
                 const player = {
                     id: playerId,
-                    name: doc.getUser().id,
+                    name: playerName,
                 };
                 ReactDOM.render(
                     <TicTacToe player={player} gameMap={gameMap} gameView={gameView}/>,
                     document.getElementById("tictactoeViews"),
                 );
             }
-
         }, (err) => {
             displayError($("#tictactoeViews"), JSON.stringify(err));
             console.log(err);
         });
     });
+}
+
+function waitForMapObject(root: types.IMapView, id: string): Promise<void> {
+    return new Promise<void>((resolve, reject) => pollMap(root, id, resolve, reject));
+}
+
+function pollMap(root: types.IMapView, id: string, resolve, reject) {
+    if (root.has(id)) {
+        resolve();
+    } else {
+        const pauseAmount = 50;
+        console.log(`Did not find taskmap - waiting ${pauseAmount}ms`);
+        setTimeout(() => pollMap(root, id, resolve, reject), pauseAmount);
+    }
 }

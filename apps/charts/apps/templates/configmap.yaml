@@ -44,25 +44,13 @@ data:
                     "nativeTextAnalytics": {
                         "enable": false,
                         "url": "{{ .Values.endpoints.nativeTextAnalytics }}"
-                    },
-                    "spellchecker": {
-                        "url": "{{ .Values.endpoints.spellchecker }}"
                     }
                 },
+                "alfredUrl": "{{ .Values.endpoints.serverUrl }}",
                 "serverUrl": "{{ .Values.endpoints.serverUrl }}",
-                "url": "{{ .Values.endpoints.tmzUrl }}",
                 "blobStorageUrl": "{{ .Values.endpoints.blobStorageUrl }}",
-                "scriptUrl": "{{ .Values.endpoints.scriptUrl }}",
-                "storageBucket": "snapshots",
-                "intervalMSec": 5000,
-                "onlyServer": false,
-                "permission": {
-                    "paparazzi": ["snapshot", "spell", "intel"],
-                    "canvas": ["ping"],
-                    "cells": ["ping", "snapshot"],
-                    "maps": ["ping", "snapshot"],
-                    "sharedText": ["ping"]
-                }
+                "repository": "prague",
+                "permission": ["snapshot", "spell", "intel", "translation"]
             }
         },
         "aad": {

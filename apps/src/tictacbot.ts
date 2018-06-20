@@ -62,33 +62,32 @@ function startPlaying(gameMap: types.IMap, gameView: types.IMapView, playerId: n
 }
 
 // A stateless function that joins a document and starts listening to messages.
-export function start(id: string, tenantId: string, endPoints: any) {
+export function start(id: string, tenantId: string, endPoints: any, token: string) {
     prague.socketStorage.registerAsDefault(endPoints.delta, endPoints.storage, tenantId);
     setTimeout(() => {
         console.log(`Robot started after 3 seconds!`);
-        loadDocument(id).then(async (doc) => {
+        loadDocument(id, token).then(async (doc) => {
             const playerName = "Robot";
             const playerId = 2;
-
             const rootView = await doc.getRoot().getView();
             let gameMap: types.IMap;
             let gameView: types.IMapView;
-            if (rootView.has("game")) {
-                gameMap = rootView.get("game") as types.IMap;
-                gameView = await gameMap.getView();
-                gameView.set("pl2", playerName);
-                console.log(`Updated playername into map!`);
-            }
 
+            // Robot always joins as a second player. Wait for for all map objects.
+            await waitForMapObject(rootView, "game");
+            gameMap = rootView.get("game") as types.IMap;
+            gameView = await gameMap.getView();
+            gameView.set("pl2", playerName);
+            console.log(`Updated playername into map!`);
+
+            await waitForMapObject(gameView, "counter");
+            const counter = gameView.get("counter") as api.map.Counter;
             let canJoin: boolean = true;
-            if (gameView.has("counter")) {
-                const counter = gameView.get("counter") as api.map.Counter;
-                if (counter.value === 2) {
-                    canJoin = false;
-                } else {
-                    counter.increment(1);
-                    console.log(`Incremented map counter!`);
-                }
+            if (counter.value === 2) {
+                canJoin = false;
+            } else {
+                counter.increment(1);
+                console.log(`Incremented map counter!`);
             }
 
             if (!canJoin) {
@@ -101,4 +100,18 @@ export function start(id: string, tenantId: string, endPoints: any) {
             console.log(err);
         });
     }, 3000);
+}
+
+function waitForMapObject(root: types.IMapView, id: string): Promise<void> {
+    return new Promise<void>((resolve, reject) => pollMap(root, id, resolve, reject));
+}
+
+function pollMap(root: types.IMapView, id: string, resolve, reject) {
+    if (root.has(id)) {
+        resolve();
+    } else {
+        const pauseAmount = 50;
+        console.log(`Did not find taskmap - waiting ${pauseAmount}ms`);
+        setTimeout(() => pollMap(root, id, resolve, reject), pauseAmount);
+    }
 }
