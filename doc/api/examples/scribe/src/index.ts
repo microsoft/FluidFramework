@@ -90,15 +90,6 @@ function handleFiles(createButton: HTMLButtonElement,
     reader.readAsText(file);
 }
 
-function addLink(element: HTMLDivElement, link: string) {
-    const anchor = document.createElement("a");
-    anchor.href = link;
-    anchor.innerText = anchor.href;
-    anchor.target = "_blank";
-    element.appendChild(anchor);
-    element.appendChild(document.createElement("br"));
-}
-
 export function initialize(
     historian: string,
     routerlicious: string,
@@ -108,8 +99,7 @@ export function initialize(
     metricsToken: string,
     template: string,
     speed: number,
-    authors: number,
-    languages: string) {
+    authors: number) {
     const loadFile = !id;
 
     // Easy access to a couple of page elements
@@ -120,7 +110,6 @@ export function initialize(
     const createDetails = document.getElementById("create-details") as HTMLElement;
     const typingDetails = document.getElementById("typing-details") as HTMLElement;
     const intervalElement = document.getElementById("interval") as HTMLInputElement;
-    const translationElement = document.getElementById("translation") as HTMLInputElement;
     const authorElement = document.getElementById("authors") as HTMLInputElement;
     const typingProgress = document.getElementById("typing-progress") as HTMLElement;
     const typingProgressBar = typingProgress.getElementsByClassName("progress-bar")[0] as HTMLElement;
@@ -130,9 +119,6 @@ export function initialize(
     // Set the speed and translation elements
     intervalElement.value = speed.toString();
     authorElement.value = authors.toString();
-    if (translationElement) {
-        translationElement.value = languages;
-    }
 
     if (loadFile) {
         const inputElement = document.getElementById("file") as HTMLInputElement; // BINGO
@@ -163,20 +149,9 @@ export function initialize(
 
         scribeP.then(() => {
             const linkList = document.getElementById("link-list") as HTMLDivElement;
-
-            addLink(linkList, `/sharedText/${id}`);
-            addLink(linkList, `/canvas/${id}-metrics`);
-            addLink(linkList, `/maps/${id}`);
-
-            if (languages) {
-                linkList.appendChild(document.createElement("br"));
-                const translationDiv = document.createElement("div");
-                translationDiv.innerText = "Translations";
-                linkList.appendChild(translationDiv);
-                for (const language of languages.split(",")) {
-                    addLink(linkList, `/sharedText/${id}?language=${language}`);
-                }
-            }
+            const docIdDiv = document.createElement("div");
+            docIdDiv.innerText = id;
+            linkList.appendChild(docIdDiv);
 
             startButton.classList.remove("hidden");
             createDetails.classList.remove("hidden");
@@ -283,8 +258,7 @@ function start() {
         metricsToken,
         "/resume.txt",
         50,
-        1,
-        "");
+        1);
 }
 
 start();
