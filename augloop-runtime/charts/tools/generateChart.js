@@ -25,7 +25,7 @@ home: https://github.com/microsoft/prague
 const values =
 `## Generated from a tool - do not edit directly
 ## Prague image version
-replicaCount: 4
+replicaCount: 1
 image: prague.azurecr.io/augloop-runtime:${imageVersion}
 
 ## Specify a imagePullPolicy
