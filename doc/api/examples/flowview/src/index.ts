@@ -38,7 +38,7 @@ async function run(id: string): Promise<void> {
     console.log(rootView.keys());
 
     // Add in the text string if it doesn't yet exist
-    if (!rootView.has("text")) {
+    if (!collabDoc.existing) {
         const newString = collabDoc.createString() as prague.SharedString.SharedString;
         const starterText = " ";
         const segments = prague.MergeTree.loadSegments(starterText, 0, true);
@@ -58,6 +58,8 @@ async function run(id: string): Promise<void> {
         rootView.set("text", newString);
         rootView.set("ink", collabDoc.createMap());
         rootView.set("pageInk", collabDoc.createStream());
+    } else {
+        await Promise.all([rootView.wait("text"), rootView.wait("ink")]);
     }
 
     // Load the text string and listen for updates

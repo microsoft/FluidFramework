@@ -4,6 +4,7 @@ import * as express from "express";
 import { Express } from "express";
 import * as morgan from "morgan";
 import { Provider } from "nconf";
+import * as path from "path";
 import split = require("split");
 import * as winston from "winston";
 import { ChainDb } from "./chainDb";
@@ -23,23 +24,16 @@ export function create(config: Provider, db: ChainDb) {
     // Express app configuration
     const app: Express = express();
 
+    app.set("views", path.join(__dirname, "../../views"));
+    app.set("view engine", "hjs");
+
     app.use(morgan(config.get("logger:morganFormat"), { stream }));
     app.use(bodyParser.json({ limit: requestSize }));
     app.use(bodyParser.urlencoded({ limit: requestSize, extended: false }));
 
-    // The below is to check to make sure the session is available (redis could have gone down for instance) and if
-    // not return an error
-    app.use((request, response, next) => {
-        if (!request.session) {
-            return next(new Error("Session not available"));
-        } else {
-            next();     // otherwise continue
-        }
-    });
-
     // bind routes
     const routes = alfredRoutes.create(config, db);
-    app.use("/api", routes);
+    app.use(routes);
 
     // catch 404 and forward to error handler
     app.use((req, res, next) => {

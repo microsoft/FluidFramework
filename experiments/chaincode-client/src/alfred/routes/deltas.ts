@@ -21,7 +21,7 @@ export function create(config: Provider, db: ChainDb): Router {
         const deltasP = db.getDeltas(request.params.id, from, to);
         deltasP.then(
             (deltas) => {
-                response.status(200).json(null);
+                response.status(200).json(deltas);
             },
             (error) => {
                 response.status(500).json(error);

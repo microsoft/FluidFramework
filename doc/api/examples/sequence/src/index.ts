@@ -36,8 +36,10 @@ async function run(id: string): Promise<void> {
     console.log(rootView.keys());
 
     // Add in the text string if it doesn't yet exist
-    if (!rootView.has("text")) {
+    if (!collabDoc.existing) {
         rootView.set("text", collabDoc.createString());
+    } else {
+        await rootView.wait("text");
     }
 
     // Load the text string and listen for updates

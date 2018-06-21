@@ -34,7 +34,7 @@ async function run(userId: string, channelId: string, documentId: string, op: st
     }
 
     const sendPs = [];
-    for (let i = 0; i < 15; i++) {
+    for (let i = 0; i < 1; i++) {
         const sendP = submitTx(client, channel, channelId, documentId, op);
         sendPs.push(sendP);
     }

@@ -2,6 +2,7 @@ import * as api from "@prague/routerlicious/dist/api-core";
 import * as core from "@prague/routerlicious/dist/core";
 import * as services from "@prague/routerlicious/dist/services";
 import * as assert from "assert";
+import * as async from "async";
 import * as fabric from "fabric-client";
 
 function dumpBlock(block: fabric.Block) {
@@ -26,6 +27,8 @@ class MiniDeli {
         const sequenceNumbers = this.sequenceNumbers.get(documentId);
         const sequenceNumber = sequenceNumbers.length + 1;
 
+        console.log(`~~~~~~~~~~~ Sequencing message for ${message.documentId}`);
+
         const sequenced: api.ISequencedDocumentMessage = {
             clientId: message.clientId,
             clientSequenceNumber: message.operation.clientSequenceNumber,
@@ -46,7 +49,7 @@ class MiniDeli {
     public async getDeltas(documentId: string, from: number, to: number): Promise<api.ISequencedDocumentMessage[]> {
         const deltas = this.sequenceNumbers.get(documentId);
         if (!deltas) {
-            return Promise.reject("Unknown document ID");
+            return [];
         }
 
         from = from || 0;
@@ -72,12 +75,19 @@ class MiniDeli {
 export class ChainDb {
     private deli = new MiniDeli();
     private blocks = new Map<number, fabric.Block>();
+    private sendQueue: async.AsyncQueue<core.IRawOperationMessage>;
 
     constructor(
         private client: fabric,
         private channel: fabric.Channel,
         private chainId: string,
         private publisher: services.SocketIoRedisPublisher) {
+
+        this.sendQueue = async.queue<core.IRawOperationMessage, any>(
+            (message, callback) => {
+                this.sendMessage(message).then(() => callback(), (error) => callback(error));
+            },
+            1);
     }
 
     public async getDeltas(documentId: string, from: number, to: number): Promise<api.ISequencedDocumentMessage[]> {
@@ -129,6 +139,12 @@ export class ChainDb {
     }
 
     public async send(message: core.IRawOperationMessage) {
+        this.sendQueue.push(message);
+    }
+
+    private async sendMessage(message: core.IRawOperationMessage) {
+        console.log(`Message from ${message.clientId}: ${message.operation.clientSequenceNumber}`);
+
         // get a transaction id object based on the current user assigned to fabric client
         const txId = this.client.newTransactionID();
         console.log("Assigning transaction_id: ", txId.getTransactionID());
@@ -144,30 +160,49 @@ export class ChainDb {
         };
 
         // send the transaction proposal to the peers
-        const [proposalResponses] = await this.channel.sendTransactionProposal(request);
+        const [proposalResponses, proposal] = await this.channel.sendTransactionProposal(request);
         if (!proposalResponses || !proposalResponses[0].response || proposalResponses[0].response.status !== 200) {
             return Promise.reject("Transaction proposal was bad");
         }
+
+        // build up the request for the orderer to have the transaction committed
+        const commitRequest: fabric.TransactionRequest = {
+            proposal,
+            proposalResponses,
+        };
+
+        // set the transaction listener and set a timeout of 30 sec
+        // if the transaction did not get committed within the timeout period,
+        // report a TIMEOUT status
+        const transactionIdAsString = txId.getTransactionID();
+        console.log(`txid: ${transactionIdAsString}`);
+
+        await this.channel.sendTransaction(commitRequest);
     }
 
     private async processNewBlock(block: fabric.Block): Promise<void> {
+        console.log(`%%%% processNewBlock(${block.header.number})`);
         const blockNumber = parseInt(block.header.number as any, 10);
 
-        // Ignore previously processed blocks
-        if (this.blocks.has(blockNumber)) {
-            return;
-        }
-
+        // Process all previous blocks
         if (blockNumber > 0 && !this.blocks.has(blockNumber - 1)) {
             const previousBlock = await this.channel.queryBlock(blockNumber - 1);
             await this.processNewBlock(previousBlock);
         }
 
-        // recurse on ourself to handle possible case of block we started adding being added after the fact
-        await this.processNewBlock(block);
+        block = await this.channel.queryBlock(blockNumber);
+        // And then process the current one if we haven't already seen it. This check is more natural at the
+        // beginning of the method call. But given loading any previous blocks in the chain is async there's a chance
+        // of double processing. To avoid doing an existance check at both the beginning of the function and after
+        // processing previous blocks we instead just do it in a single place after processing previous blocks.
+        if (!this.blocks.has(blockNumber)) {
+            this.sequenceBlock(block);
+        }
     }
 
     private sequenceBlock(block: fabric.Block) {
+        console.log(`%%%% sequenceBlock(${block.header.number})`);
+
         const blockNumber = parseInt(block.header.number as any, 10);
         const hash = block.header.data_hash.toString();
         const previousHash = block.header.previous_hash.toString();
@@ -179,6 +214,7 @@ export class ChainDb {
             `${blockNumber} === 0 || this.blocks.has(${blockNumber - 1})`);
 
         this.blocks.set(blockNumber, block);
+        console.log(`   ... ${block.data.data.length} blocks`);
         for (const thing of block.data.data) {
             // enum HeaderType {
             //     MESSAGE = 0;                   // Used for messages which are signed but opaque
@@ -191,6 +227,7 @@ export class ChainDb {
             //     CHAINCODE_PACKAGE = 6;         // Used for packaging chaincode artifacts for install
             //     PEER_RESOURCE_UPDATE = 7;      // Used for encoding updates to the peer resource configuration
             // }
+            console.log(`   ... type ${thing.payload.header.channel_header.type}`);
             if (thing.payload.header.channel_header.type === 3) {
                 try {
                     const inner = thing.payload.data;
@@ -206,7 +243,7 @@ export class ChainDb {
                             .emit("op", raw.documentId, [sequenced]);
                     }
                 } catch (exception) {
-                    console.error(exception);
+                    // Ignore exceptions
                 }
             }
         }
