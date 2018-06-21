@@ -1,24 +1,23 @@
 {
-  "name": "sequence",
+  "name": "scribe",
   "version": "0.1.0",
-  "description": "Prague API sequence sample",
+  "description": "Prague API scribe sample",
   "main": "index.js",
   "dependencies": {
     "@prague/gitresources": "^0.7.0",
     "@prague/routerlicious": "^0.1.2569",
-    "babel-polyfill": "^6.26.0",
-    "jsonwebtoken": "^8.2.1"
+    "jsonwebtoken": "^8.3.0",
+    "request": "^2.87.0",
+    "xhr": "^2.5.0"
   },
   "devDependencies": {
     "@types/debug": "0.0.30",
     "@types/jquery": "^3.3.1",
     "@types/jsonwebtoken": "^7.2.7",
     "@types/node": "^8.10.10",
+    "@types/request": "^2.47.1",
     "@types/socket.io-client": "^1.4.32",
-    "babel-cli": "^6.26.0",
-    "babel-core": "^6.26.3",
-    "babel-loader": "^7.1.4",
-    "babel-preset-env": "^1.6.1",
+    "http-server": "^0.11.1",
     "source-map-loader": "^0.2.3",
     "ts-loader": "^4.2.0",
     "tslint": "^5.9.1",
@@ -26,11 +25,14 @@
     "webpack": "^4.7.0",
     "webpack-cli": "^2.0.15"
   },
+  "browser": {
+    "request": "xhr"
+  },
   "scripts": {
     "build": "npm run tslint && npm run webpack",
+    "start": "http-server -o",
     "tslint": "tslint 'src/**/*.ts'",
     "webpack": "webpack --config webpack.config.js"
   },
-  "author": "Microsoft",
-  "repository": "microsoft/prague"
+  "author": "Microsoft"
 }

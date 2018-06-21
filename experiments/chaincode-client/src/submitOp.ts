@@ -8,7 +8,7 @@ import * as fabric from "fabric-client";
 import * as path from "path";
 import * as util from "util";
 
-async function run(userId: string, channelId: string, key: string, value: string): Promise<string> {
+async function run(userId: string, channelId: string, documentId: string, op: string): Promise<string> {
     const client = new fabric();
 
     // setup the fabric network
@@ -34,25 +34,25 @@ async function run(userId: string, channelId: string, key: string, value: string
     }
 
     const sendPs = [];
-    for (let i = 0; i < 15; i++) {
-        const sendP = submitTx(client, channel, channelId, key, value);
+    for (let i = 0; i < 1; i++) {
+        const sendP = submitTx(client, channel, channelId, documentId, op);
         sendPs.push(sendP);
     }
     await Promise.all(sendPs);
 }
 
-async function submitTx(client: fabric, channel: fabric.Channel, channelId: string, key: string, value: string) {
+async function submitTx(client: fabric, channel: fabric.Channel, channelId: string, documentId: string, op: string) {
     // get a transaction id object based on the current user assigned to fabric client
     const txId = client.newTransactionID();
     console.log("Assigning transaction_id: ", txId.getTransactionID());
 
     // must send the proposal to endorsing peers
     const request = {
-        args: [key, value],
+        args: [documentId, op],
         // targets: let default to the peer assigned to the client
         chainId: channelId,
         chaincodeId: "fabcar",
-        fcn: "set",
+        fcn: "op",
         txId,
     };
 
@@ -139,9 +139,9 @@ commander
     .version("0.0.1")
     .option("-u, --userId [userId]", "User ID", "user1")
     .option("-c, --channelId [channelId]", "Channel ID", "mychannel")
-    .arguments("<key> <value>")
-    .action((key, value) => {
-        run(commander.userId, commander.channelId, key, value).then(
+    .arguments("<documentId> <op>")
+    .action((documentId, op) => {
+        run(commander.userId, commander.channelId, documentId, op).then(
             () => {
                 console.log("Done");
             },

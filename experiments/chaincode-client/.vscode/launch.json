@@ -8,7 +8,7 @@
             "type": "node",
             "request": "launch",
             "name": "Launch Program",
-            "program": "${workspaceFolder}/dist/invoke.js",
+            "program": "${workspaceFolder}/dist/alfred/www.js",
             "args": ["b", "30"],
             "outFiles": [
                 "${workspaceFolder}/dist/**/*.js"
