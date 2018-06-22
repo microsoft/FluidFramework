@@ -21,7 +21,11 @@ export class WorkManager extends EventEmitter implements agent.IWorkManager {
 
         switch (workType) {
             case "augmentation":
+                await this.augRuntime.initialize().catch((err) => {
+                    winston.error(err);
+                });
                 const augmentationWork = new AugmentationWork(
+                    tenantId,
                     documentId,
                     token,
                     this.config,

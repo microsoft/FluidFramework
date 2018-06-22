@@ -7,15 +7,17 @@ import { ProofingManager } from "./augloop-worker/proofingManager";
 export class AugmentationWork extends agent.BaseWork implements agent.IWork {
 
     private augmentationInvoked: boolean = false;
+    private fullId: string;
 
     constructor(
-        docId: string,
+        private tenantId: string,
+        private docId: string,
         private token: string,
         config: any,
         private service: core.IDocumentService,
         private augRuntime: AugLoopRuntime) {
-
         super(docId, config);
+        this.fullId = `${this.tenantId}/${this.docId}`;
     }
 
     public async start(task: string): Promise<void> {
@@ -31,7 +33,7 @@ export class AugmentationWork extends agent.BaseWork implements agent.IWork {
             task);
         const eventHandler = (op: core.ISequencedDocumentMessage, object: core.ICollaborativeObject) => {
             if (op.type === core.ObjectOperation || op.type === core.AttachObject) {
-                this.runAugmentation(object);
+                this.runAugmentation(this.fullId, object);
             }
         };
         this.operation = eventHandler;
@@ -39,11 +41,16 @@ export class AugmentationWork extends agent.BaseWork implements agent.IWork {
         return Promise.resolve();
     }
 
-    private runAugmentation(object: core.ICollaborativeObject) {
+    public async stop(task: string): Promise<void> {
+        this.augRuntime.removeDocument(this.fullId);
+        await super.stop(task);
+    }
+
+    private runAugmentation(fullId: string, object: core.ICollaborativeObject) {
         if (object.type === CollaborativeStringExtension.Type && !this.augmentationInvoked) {
             this.augmentationInvoked = true;
             const sharedString = object as SharedString;
-            const proofingManager = new ProofingManager(sharedString, this.augRuntime);
+            const proofingManager = new ProofingManager(fullId, sharedString, this.augRuntime);
             proofingManager.run();
         }
     }
