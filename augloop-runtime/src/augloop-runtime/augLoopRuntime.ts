@@ -3,7 +3,7 @@ import { EventEmitter } from "events";
 import {configureRuntimeForWorkflows} from "./registration";
 import {IAugResult, IDocTile} from "./schema";
 
-const serviceUrl = "https://augloop-prod.trafficmanager.net";
+const serviceUrl = "https://augloop-cluster-int-gw.southcentralus.cloudapp.azure.com";
 const hostMetadata: HostMetadata = {
     appName: "Prague",
     appPlatform: "Node",
@@ -38,6 +38,7 @@ export class AugLoopRuntime extends EventEmitter {
             {
                 isFeatureEnabled: null,
                 onResult: this.onResultCallback.bind(this),
+                requestAuthToken: null,
                 sendTelemetryEvent: null,
             });
         return this.runtimeInitPromise;

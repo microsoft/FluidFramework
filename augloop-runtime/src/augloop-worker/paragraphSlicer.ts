@@ -8,7 +8,7 @@ export class ParagrapgSlicer extends EventEmitter {
     private currentIdleTime: number = 0;
     private pendingMarkers: IPgMarker[] = new Array<IPgMarker>();
     private tileMap: Map<MergeTree.ReferencePosition, IRange> = new Map<MergeTree.ReferencePosition, IRange>();
-    private initialCallLimit: number = 5;
+    private initialCallLimit: number = 10;
     private initialCounter: number = 0;
 
     constructor(private sharedString: SharedString) {
