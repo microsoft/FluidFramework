@@ -1,6 +1,5 @@
 import { MergeTree } from "@prague/routerlicious/dist/client-api";
 import { SharedString } from "@prague/routerlicious/dist/shared-string";
-import { EventEmitter } from "events";
 import {AugLoopRuntime, IAugResult, IDocTile, inputSchemaName } from "../augloop-runtime";
 import { LocalRefManager } from "./localRefManager";
 
@@ -13,18 +12,15 @@ export interface ILocalRefText {
     content: string;
 }
 
-export class SliceManager extends EventEmitter {
+export class SliceManager {
     private requestId: number = 0;
-    private docId: string;
     private refMap: Map<string, LocalRefManager> = new Map<string, LocalRefManager>();
 
     constructor(
+        private fullId: string,
         private root: SharedString,
         private runtime: AugLoopRuntime,
         private applyInsight: (result: IAugResult) => void) {
-        super();
-        this.docId = this.root.id;
-        this.handleAugLoopResponse();
     }
 
     public submit(begin: number, end: number, content: string) {
@@ -35,41 +31,32 @@ export class SliceManager extends EventEmitter {
             const input: IDocTile = {
                 begin,
                 content,
-                documentId: this.docId,
+                documentId: this.fullId,
                 end,
                 reqOrd: ++this.requestId,
                 requestTime: Date.now(),
             };
-            this.runtime.submit(input, inputSchemaName);
+            this.runtime.submit(this.fullId, input, inputSchemaName, this);
         }
     }
 
-    private handleAugLoopResponse() {
-        this.runtime.on("error", (error) => {
-            this.emit("error", error);
-        });
-        this.runtime.on("result", (result: IAugResult) => {
-            if (result.input.documentId !== this.docId) {
-                return;
+    public onResult(result: IAugResult) {
+        const refId = `${result.input.begin}:${result.input.end}`;
+        if (this.refMap.has(refId)) {
+            const localRef = this.refMap.get(refId);
+            const localRefText = this.getTextFromLocalRef(localRef);
+            const textBefore = result.input.content;
+            const textNow = localRefText.content;
+            // Only apply insight if text did not change inbetween calls. Otherwise resubmit.
+            if (textBefore.length === textNow.length && textBefore === textNow) {
+                this.applyInsight(result);
+            } else {
+                this.submit(localRefText.beginPos, localRefText.endPos, localRefText.content);
             }
-            const refId = `${result.input.begin}:${result.input.end}`;
-            if (this.refMap.has(refId)) {
-                const localRef = this.refMap.get(refId);
-                const localRefText = this.getTextFromLocalRef(localRef);
-                const textBefore = result.input.content;
-                const textNow = localRefText.content;
-                // Only apply insight if text did not change inbetween calls. Otherwise resubmit.
-                if (textBefore.length === textNow.length && textBefore === textNow) {
-                    this.applyInsight(result);
-                } else {
-                    this.submit(localRefText.beginPos, localRefText.endPos, localRefText.content);
-                }
-                // Always remove references. Resubmission will create a new one.
-                localRef.removeReferences();
-                this.refMap.delete(refId);
-            }
-
-        });
+            // Always remove references. Resubmission will create a new one.
+            localRef.removeReferences();
+            this.refMap.delete(refId);
+        }
     }
 
     private getTextFromLocalRef(localRef: LocalRefManager): ILocalRefText {

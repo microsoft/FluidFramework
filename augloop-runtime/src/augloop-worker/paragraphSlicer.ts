@@ -1,7 +1,7 @@
 import { core, MergeTree } from "@prague/routerlicious/dist/client-api";
 import { SharedString } from "@prague/routerlicious/dist/shared-string";
 import { EventEmitter } from "events";
-import { IPgMarker, IRange } from "./definitons";
+import { IPgMarker, IRange } from "./definitions";
 
 export class ParagrapgSlicer extends EventEmitter {
     private idleTimeMS: number = 500;
