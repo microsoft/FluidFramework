@@ -12,7 +12,7 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
-    "@augloop/runtime-client": "1.3.46",
+    "@augloop/runtime-client": "1.4.11",
     "@augloop/schemas": "^1.3.38",
     "@prague/routerlicious": "^0.1.2686",
     "concurrently": "^3.5.1",
