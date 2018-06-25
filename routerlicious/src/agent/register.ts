@@ -1,35 +1,48 @@
-import { api, core } from "../client-api";
+import { api } from "../client-api";
 import { ITaskRunnerConfig } from "./definitions";
 import { loadDictionary } from "./dictionaryLoader";
 import { IntelWork } from "./intelWork";
 import { SnapshotWork } from "./snapshotWork";
 import { SpellcheckerWork } from "./spellcheckerWork";
 import { TranslationWork } from "./translationWork";
+import { getTaskMapView } from "./utils";
 
+// Try to grab any allowed task on first load and then when a client leaves.
 export function registerToWork(doc: api.Document, config: ITaskRunnerConfig, token: string, workerConfig: any) {
     if (config.permission && config.permission.length > 0) {
         const permittedTasks = config.permission;
-        doc.on("clientHelp", async (message: core.IHelpMessage) => {
-            // For now only leader will accept the work.
-            // TODO: Find a reliable way to ack this help message exactly once by any client.
-            if (message.clientId === doc.clientId) {
-                const tasksToDo = [];
-                for (const task of message.tasks) {
-                    if (permittedTasks.indexOf(task) !== -1) {
-                        tasksToDo.push(task);
-                    }
-                }
-                if (tasksToDo.length > 0) {
-                    await performTasks(doc.id, token, tasksToDo, workerConfig).catch((err) => {
-                        console.error(err);
-                    });
-                }
+        startUnassignedTasks(doc, permittedTasks, token, workerConfig).catch((err) => {
+            console.error(err);
+        });
+        doc.on("clientLeave", async () => {
+            // To prevent multiple clients picking up the same work, only first browser client is allowed.
+            const firstClient = doc.getFirstBrowserClient();
+            if (firstClient && firstClient.clientId === doc.clientId) {
+                await startUnassignedTasks(doc, permittedTasks, token, workerConfig).catch((err) => {
+                    console.error(err);
+                });
             }
         });
     }
 }
 
-// TODO: Make this for every work types. Move this over to webworker. And allow it not to reconnect in api.load.
+async function startUnassignedTasks(doc: api.Document, permittedTasks: string[], token: string, workerConfig: any) {
+    const taskMapView = await getTaskMapView(doc);
+    const tasksToDo = [];
+    for (const task of taskMapView.keys()) {
+        const clientId = taskMapView.get(task);
+        if (clientId && doc.getClients().has(clientId)) {
+            continue;
+        }
+        if (permittedTasks.indexOf(task) !== -1) {
+            tasksToDo.push(task);
+        }
+    }
+    if (tasksToDo.length > 0) {
+        await performTasks(doc.id, token, tasksToDo, workerConfig);
+    }
+}
+
 async function performTasks(docId: string, token: string, tasks: string[], config) {
     const taskPromises = [];
     for (const task of tasks) {
