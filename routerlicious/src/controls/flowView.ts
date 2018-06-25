@@ -870,8 +870,9 @@ const underlinePaulGoldStringURL = `url("${baseURI}/public/images/underline-gold
 
 function getTextHeight(elm: HTMLDivElement) {
     const computedStyle = getComputedStyle(elm);
-    if (computedStyle.lineHeight) {
-        return parseInt(elm.style.lineHeight, 10);
+    if (computedStyle.lineHeight && (computedStyle.lineHeight.length > 0) &&
+        (computedStyle.lineHeight !== "normal")) {
+        return parseInt(computedStyle.lineHeight, 10);
     } else {
         return parseInt(computedStyle.fontSize, 10);
     }
@@ -882,7 +883,7 @@ const lineHeightCache = new Map<string, number>();
 
 function getLineHeight(fontstr: string, lineHeight?: string) {
     if (lineHeight) {
-        fontstr += ("@" + lineHeight);
+        fontstr += ("/" + lineHeight);
     }
     let height = lineHeightCache.get(fontstr);
     if (height === undefined) {
@@ -891,10 +892,14 @@ function getLineHeight(fontstr: string, lineHeight?: string) {
         elm.style.zIndex = "-10";
         elm.style.left = "0px";
         elm.style.top = "0px";
+        elm.style.font = fontstr;
         document.body.appendChild(elm);
         height = getTextHeight(elm);
         document.body.removeChild(elm);
         lineHeightCache.set(fontstr, height);
+    }
+    if (isNaN(height)) {
+        console.log(`nan height with fontstr ${fontstr}`);
     }
     return height;
 }
@@ -1709,7 +1714,7 @@ function renderTree(
     const outerViewportHeight = parseInt(viewportDiv.style.height, 10);
     const outerViewportWidth = parseInt(viewportDiv.style.width, 10);
     const outerViewport = new Viewport(outerViewportHeight, viewportDiv, outerViewportWidth);
-    outerViewport.randExclu();
+    // outerViewport.randExclu();
     const startingPosStack =
         client.mergeTree.getStackContext(requestedPosition, client.getClientId(), ["table", "cell", "row"]);
     const layoutContext = {
@@ -1816,9 +1821,16 @@ function makeExcludedRectangle(x: number, y: number, w: number, h: number) {
     return r;
 }
 
-// function lineIntersectsRect(y: number, rect: IExcludedRectangle) {
-//     return (y>=rect.y)&&(y<=(rect.y+rect.height));
-// }
+export interface ILineRect {
+    h: number;
+    w: number;
+    x: number;
+    y: number;
+}
+
+function lineIntersectsRect(y: number, rect: IExcludedRectangle) {
+    return (y >= rect.y) && (y <= (rect.y + rect.height));
+}
 
 export class Viewport {
     // keep the line divs in order
@@ -1826,7 +1838,6 @@ export class Viewport {
     public visibleRanges: IRange[] = [];
     public currentLineStart = -1;
     private lineTop = 0;
-    private pendingRect: IExcludedRectangle;
     private excludedRects = <IExcludedRectangle[]>[];
     private lineX = 0;
 
@@ -1846,6 +1857,10 @@ export class Viewport {
         }
     }
 
+    public horizIntersect(h: number, rect: IExcludedRectangle) {
+        return lineIntersectsRect(this.lineTop, rect) || (lineIntersectsRect(this.lineTop + h, rect));
+    }
+
     public firstLineDiv() {
         if (this.lineDivs.length > 0) {
             return this.lineDivs[0];
@@ -1858,29 +1873,36 @@ export class Viewport {
         }
     }
 
-    public currentLineWidth(h?: number) {
-/*        const y1 = this.lineTop;
-        const y2 = this.lineTop + h;
-        let w = this.width;
-        for (let i=0,len=this.excludedRects.length;i<len;i++) {
-            const exclu = this.excludedRects[i];
-            let nextclu: IExcludedRectangle;
-            if (i<(len-1)) {
-                nextclu = this.excludedRects[i+1];
-            }
-
-            if (lineIntersectsRect(y1,exclu)||lineIntersectsRect(y2,exclu)) {
-
-            }
-
-        }*/
-        return this.width;
-    }
-
-    public commitVirtualLine(h: number) {
-        if (!this.pendingRect) {
+    public endOfParagraph(h: number) {
+        if (this.lineX !== 0) {
+            this.lineX = 0;
             this.lineTop += h;
         }
+    }
+
+    public getLineRect(h: number) {
+        const x = this.lineX;
+        let w = this.width;
+        let rectHit = false;
+        const y = this.lineTop;
+        for (const exclu of this.excludedRects) {
+            if ((exclu.x > x) && this.horizIntersect(h, exclu)) {
+                this.lineX = exclu.x + exclu.width;
+                w = exclu.x - x;
+                rectHit = true;
+            }
+        }
+        if (!rectHit) {
+            // hit right edge
+            w = this.width - x;
+            this.lineX = 0;
+            this.lineTop += h;
+        }
+        return <ILineRect>{ h, w, x, y };
+    }
+
+    public currentLineWidth(h?: number) {
+        return this.width;
     }
 
     public vskip(h: number) {
@@ -1898,6 +1920,7 @@ export class Viewport {
     public resetTop() {
         // TODO: update rect y to 0 and h to h-(deltaY-y)
         this.lineTop = 0;
+        this.lineX = 0;
     }
 
     public setLineTop(v: number) {
@@ -1986,8 +2009,13 @@ export interface IFlowBreakInfo extends Paragraph.IBreakInfo {
 export function breakPGIntoLinesFFVP(itemInfo: Paragraph.IParagraphItemInfo, defaultLineHeight: number,
     viewport: Viewport, startOffset = 0) {
     const items = itemInfo.items;
-    let lineWidth = viewport.currentLineWidth(itemInfo.maxHeight);
-    let prevBreak: IFlowBreakInfo = { lineWidth, posInPG: 0, startItemIndex: 0 };
+    let lineRect = viewport.getLineRect(itemInfo.maxHeight);
+    let prevBreak: IFlowBreakInfo = {
+        lineHeight: lineRect.h,
+        lineWidth: lineRect.w,
+        lineX: lineRect.x, lineY: lineRect.y,
+        posInPG: 0, startItemIndex: 0,
+    };
     const breaks = <IFlowBreakInfo[]>[prevBreak];
     let posInPG = 0;
     let committedItemsWidth = 0;
@@ -2000,7 +2028,7 @@ export function breakPGIntoLinesFFVP(itemInfo: Paragraph.IParagraphItemInfo, def
     let firstLine = true;
 
     function checkViewportFirstLine(pos: number) {
-        if ((startOffset > 0) && firstLine && (pos >= startOffset)) {
+        if ((startOffset > 0) && firstLine && (pos > startOffset)) {
             firstLine = false;
             viewport.resetTop();
         }
@@ -2013,28 +2041,30 @@ export function breakPGIntoLinesFFVP(itemInfo: Paragraph.IParagraphItemInfo, def
                 blockRunPos = posInPG;
                 blockRunWidth = 0;
             }
-            if ((committedItemsWidth + item.width) > lineWidth) {
+            if ((committedItemsWidth + item.width) > lineRect.w) {
                 checkViewportFirstLine(blockRunPos);
-                prevBreak.lineY = viewport.getLineTop();
-                prevBreak.lineX = viewport.getLineX();
-                prevBreak.lineHeight = committedItemsHeight;
-                prevBreak = { lineWidth, posInPG: blockRunPos, startItemIndex: i };
+                lineRect = viewport.getLineRect(itemInfo.maxHeight);
+                prevBreak = {
+                    lineHeight: lineRect.h,
+                    lineWidth: lineRect.w,
+                    lineX: lineRect.x, lineY: lineRect.y,
+                    posInPG: blockRunPos, startItemIndex: i,
+                };
                 breaks.push(prevBreak);
-                viewport.commitVirtualLine(committedItemsHeight);
-                lineWidth = viewport.currentLineWidth(itemInfo.maxHeight);
                 committedItemsWidth = blockRunWidth;
                 committedItemsHeight = blockRunHeight;
             }
             posInPG += item.text.length;
-            if (committedItemsWidth > lineWidth) {
+            if (committedItemsWidth > lineRect.w) {
                 checkViewportFirstLine(posInPG);
-                prevBreak.lineY = viewport.getLineTop();
-                prevBreak.lineX = viewport.getLineX();
-                prevBreak.lineHeight = committedItemsHeight;
-                prevBreak = { lineWidth, posInPG, startItemIndex: i };
+                lineRect = viewport.getLineRect(itemInfo.maxHeight);
+                prevBreak = {
+                    lineHeight: lineRect.h,
+                    lineWidth: lineRect.w,
+                    lineX: lineRect.x, lineY: lineRect.y,
+                    posInPG, startItemIndex: i,
+                };
                 breaks.push(prevBreak);
-                viewport.commitVirtualLine(committedItemsHeight);
-                lineWidth = viewport.currentLineWidth(itemInfo.maxHeight);
                 committedItemsWidth = 0;
                 committedItemsHeight = 0;
                 blockRunHeight = 0;
@@ -2055,9 +2085,7 @@ export function breakPGIntoLinesFFVP(itemInfo: Paragraph.IParagraphItemInfo, def
             item.height ? item.height : defaultLineHeight);
     }
     checkViewportFirstLine(posInPG);
-    prevBreak.lineY = viewport.getLineTop();
-    prevBreak.lineX = viewport.getLineX();
-    prevBreak.lineHeight = committedItemsHeight;
+    viewport.endOfParagraph(itemInfo.maxHeight);
     viewport.setLineTop(savedTop);
     return breaks;
 }
@@ -2168,6 +2196,7 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
             }
             const lineOK = (!(deferredPGs || deferWhole)) && (layoutContext.deferUntilHeight <= deferredHeight);
             if (lineOK && ((lineEnd === undefined) || (lineEnd > layoutContext.requestedPosition))) {
+                console.log(`line Y is ${lineY} breakIndex ${breakIndex}`);
                 lineDiv = makeLineDiv(new ui.Rectangle(lineX, lineY, lineWidth, lineHeight), lineFontstr);
                 lineDiv.endPGMarker = endPGMarker;
                 lineDiv.breakIndex = breakIndex;
