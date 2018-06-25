@@ -10,7 +10,7 @@ class RabbitmqReceiver implements IMessageReceiver {
     private events = new EventEmitter();
     private rabbitmqConnectionString: string;
     private taskQueueName: string;
-    private agentExchangeName: string;
+    private agentExchange: string;
     private connection: amqp.Connection;
     private channel: amqp.Channel;
     private agentDedupTimer: NodeJS.Timer;
@@ -18,8 +18,9 @@ class RabbitmqReceiver implements IMessageReceiver {
 
     constructor(rabbitmqConfig: any, tmzConfig: any) {
         this.rabbitmqConnectionString = rabbitmqConfig.connectionString;
-        this.taskQueueName = tmzConfig.taskQueueName;
-        this.agentExchangeName = tmzConfig.agentExchangeName;
+        // This queueName should match the one listed on tmzConfig.
+        this.taskQueueName = "paparazziQueue";
+        this.agentExchange = tmzConfig.agentExchange;
     }
 
     public async initialize() {
@@ -36,10 +37,10 @@ class RabbitmqReceiver implements IMessageReceiver {
         }, {noAck: true});
 
         // Exchange for agent messages.
-        await this.channel.assertExchange(this.agentExchangeName, "fanout", {durable: true});
+        await this.channel.assertExchange(this.agentExchange, "fanout", {durable: true});
         const agentQueue = await this.channel.assertQueue("", {durable: true});
         winston.info(`Rabbitmq agent queue ready to receive!`);
-        this.channel.bindQueue(agentQueue.queue, this.agentExchangeName, "");
+        this.channel.bindQueue(agentQueue.queue, this.agentExchange, "");
 
         // Agents messages needs to be acked since they are sent only once.
         this.channel.consume(agentQueue.queue, (msgBuffer) => {

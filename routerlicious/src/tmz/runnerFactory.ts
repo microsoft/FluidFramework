@@ -12,7 +12,8 @@ export class TmzResources implements utils.IResources {
         public alfredUrl: string,
         public uploader: IAgentUploader,
         public messageSender: IMessageSender,
-        public tenantManager: ITenantManager) {
+        public tenantManager: ITenantManager,
+        public permissions: any) {
     }
 
     public async dispose(): Promise<void> {
@@ -23,19 +24,19 @@ export class TmzResources implements utils.IResources {
 export class TmzResourcesFactory implements utils.IResourcesFactory<TmzResources> {
     public async create(config: Provider): Promise<TmzResources> {
         const minioConfig = config.get("minio");
-        const alfredUrl = config.get("tmz:alfred");
-
         const uploader = createUploader("minio", minioConfig);
-        const messageSender = createMessageSender(config.get("rabbitmq"), config.get("tmz"));
+        const tmzConfig = config.get("tmz");
+        const messageSender = createMessageSender(config.get("rabbitmq"), tmzConfig);
 
         const authEndpoint = config.get("auth:endpoint");
         const tenantManager = new services.TenantManager(authEndpoint, config.get("worker:blobStorageUrl"));
 
         return new TmzResources(
-            alfredUrl,
+            tmzConfig.alfred,
             uploader,
             messageSender,
-            tenantManager);
+            tenantManager,
+            tmzConfig.permissions);
     }
 }
 
@@ -45,6 +46,7 @@ export class TmzRunnerFactory implements utils.IRunnerFactory<TmzResources> {
             resources.alfredUrl,
             resources.uploader,
             resources.messageSender,
-            resources.tenantManager);
+            resources.tenantManager,
+            resources.permissions);
     }
 }

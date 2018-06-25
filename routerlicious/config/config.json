@@ -116,8 +116,12 @@
     },
     "tmz": {
         "alfred": "http://alfred:3000",
-        "taskQueueName": "taskQueue",
-        "agentExchangeName": "agentQueue"
+        "agentExchange": "agentExchange",
+        "queues": ["paparazziQueue", "augloopQueue"],
+        "permissions": {
+            "paparazziQueue": ["snapshot", "spell", "intel", "translation"],
+            "augloopQueue": ["augmentation"]
+        }
     },
     "rabbitmq": {
         "connectionString": "amqp://rabbitmq"

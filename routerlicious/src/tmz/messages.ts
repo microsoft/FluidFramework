@@ -52,9 +52,9 @@ export interface IMessageSender {
     initialize(): Promise<void>;
 
     /**
-     * Sends a task message for a document.
+     * Sends a task message for a document to a queue.
      */
-    sendTask(message: IMessage): void;
+    sendTask(queueName: string, message: IMessage): void;
 
     /**
      * Sends an agent loading message.

@@ -7,23 +7,31 @@ class RabbitmqSender implements IMessageSender {
 
     private events = new EventEmitter();
     private rabbitmqConnectionString: string;
-    private taskQueueName: string;
-    private agentExchangeName: string;
+    private agentExchange: string;
+    private taskQueues: string[];
     private connection: amqp.Connection;
     private channel: amqp.Channel;
 
     constructor(rabbitmqConfig: any, tmzConfig: any) {
         this.rabbitmqConnectionString = rabbitmqConfig.connectionString;
-        this.taskQueueName = tmzConfig.taskQueueName;
-        this.agentExchangeName = tmzConfig.agentExchangeName;
+        this.agentExchange = tmzConfig.agentExchange;
+        this.taskQueues = tmzConfig.queues;
     }
 
     public async initialize() {
         this.connection = await amqp.connect(this.rabbitmqConnectionString);
         this.channel = await this.connection.createChannel();
-        await this.channel.assertQueue(this.taskQueueName, { durable: true });
-        winston.info(`Rabbitmq task queue ready to produce!`);
-        await this.channel.assertExchange(this.agentExchangeName, "fanout", { durable: true });
+
+        // Assert task queues.
+        const queuePromises = [];
+        for (const queue of this.taskQueues) {
+            queuePromises.push(this.channel.assertQueue(queue, { durable: true }));
+        }
+        await Promise.all(queuePromises);
+        winston.info(`Rabbitmq task queues ready to produce!`);
+
+        // Assert agent exchange.
+        await this.channel.assertExchange(this.agentExchange, "fanout", { durable: true });
         winston.info(`Rabbitmq ready to produce in agent exchage!`);
 
         this.connection.on("error", (error) => {
@@ -31,12 +39,12 @@ class RabbitmqSender implements IMessageSender {
         });
     }
 
-    public sendTask(message: IMessage) {
-        this.channel.sendToQueue(this.taskQueueName, new Buffer(JSON.stringify(message)), { persistent: true });
+    public sendTask(queueName: string, message: IMessage) {
+        this.channel.sendToQueue(queueName, new Buffer(JSON.stringify(message)), { persistent: true });
     }
 
     public sendAgent(message: IMessage) {
-        this.channel.publish(this.agentExchangeName, "", new Buffer(JSON.stringify(message)), { persistent: true });
+        this.channel.publish(this.agentExchange, "", new Buffer(JSON.stringify(message)), { persistent: true });
     }
 
     public on(event: string, listener: (...args: any[]) => void): this {
