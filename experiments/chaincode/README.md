@@ -5,6 +5,22 @@ Reminders
 
 ## Running
 
+### Production
+
+Starting with the HyperLedger examples
+
+In the fabcar directory update `CC_SRC_PATH` to be `/opt/gopath/src/github.com/ts`
+
+In the basic-network directory update the cli entry of the docker-compose file to add a new volume entry `./../../../Prague/experiments/chaincode:/opt/gopath/src/github.com/ts`
+
+... start up the Hyperledger
+```
+cd fabcar
+./startFabric node
+```
+
+### Development mode
+
 ... in chaincode container
 ```
 docker exec -it chaincode bash

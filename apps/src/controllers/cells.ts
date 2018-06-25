@@ -1,4 +1,4 @@
-import { agent, api } from "@prague/routerlicious";
+import { api } from "@prague/routerlicious";
 import * as $ from "jquery";
 
 import prague = api;
@@ -125,10 +125,6 @@ export async function load(id: string, tenantId: string, endPoints: any, token?:
                            workerConfig?: any) {
     prague.socketStorage.registerAsDefault(endPoints.delta, endPoints.storage, tenantId);
     $("document").ready(() => {
-        // Only register to work if the config is present.
-        if (workerConfig) {
-            agent.registerWorker(workerConfig, "cells");
-        }
         loadDocument(id, token).then(async (doc) => {
             const root = doc.getRoot();
 

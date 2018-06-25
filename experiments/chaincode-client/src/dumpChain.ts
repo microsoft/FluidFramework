@@ -42,40 +42,54 @@ async function run(userId: string, channelId: string): Promise<any> {
 
     // Iterate over the blocks
     let hash = info.currentBlockHash.toString("hex");
-    const transactions = [];
     while (hash) {
         const block = await channel.queryBlockByHash(Buffer.from(hash, "hex"));
-        console.log("BLOCK");
-        console.log("----");
-        console.log(JSON.stringify(block.header, null, 2));
-        console.log("\n");
-        console.log(`next hash ${block.header.previous_hash.toString()}`);
+        dumpBlock(block);
         hash = block.header.previous_hash.toString();
-
-        for (const thing of block.data.data) {
-            // enum HeaderType {
-            //     MESSAGE = 0;                   // Used for messages which are signed but opaque
-            //     CONFIG = 1;                    // Used for messages which express the channel config
-            //     CONFIG_UPDATE = 2;             // Used for transactions which update the channel config
-            //     ENDORSER_TRANSACTION = 3;      // Used by the SDK to submit endorser based transactions
-            //     ORDERER_TRANSACTION = 4;       // Used internally by the orderer for management
-            //     DELIVER_SEEK_INFO = 5;         // Used as the type for Envelope messages submitted to instruct
-            //                                    // the Deliver API to seek
-            //     CHAINCODE_PACKAGE = 6;         // Used for packaging chaincode artifacts for install
-            //     PEER_RESOURCE_UPDATE = 7;      // Used for encoding updates to the peer resource configuration
-            // }
-            transactions.push({
-                txId: thing.payload.header.channel_header.tx_id,
-                type: thing.payload.header.channel_header.type,
-            });
-        }
     }
 
-    // list of transactions extracted from the chain
-    transactions.reverse();
-    console.log(JSON.stringify(transactions, null, 2));
+    await foo(client);
+}
 
-    return;
+function dumpBlock(block: fabric.Block) {
+    console.log("BLOCK");
+    console.log("----");
+    console.log(JSON.stringify(block.header, null, 2));
+    console.log("\n");
+    console.log(`next hash ${block.header.previous_hash.toString()}`);
+    console.log(`TRANSACTIONS ${block.data.data.length}`);
+    console.log("--------------------------------------");
+    for (const thing of block.data.data) {
+        // enum HeaderType {
+        //     MESSAGE = 0;                   // Used for messages which are signed but opaque
+        //     CONFIG = 1;                    // Used for messages which express the channel config
+        //     CONFIG_UPDATE = 2;             // Used for transactions which update the channel config
+        //     ENDORSER_TRANSACTION = 3;      // Used by the SDK to submit endorser based transactions
+        //     ORDERER_TRANSACTION = 4;       // Used internally by the orderer for management
+        //     DELIVER_SEEK_INFO = 5;         // Used as the type for Envelope messages submitted to instruct
+        //                                    // the Deliver API to seek
+        //     CHAINCODE_PACKAGE = 6;         // Used for packaging chaincode artifacts for install
+        //     PEER_RESOURCE_UPDATE = 7;      // Used for encoding updates to the peer resource configuration
+        // }
+        const txDetails = {
+            txId: thing.payload.header.channel_header.tx_id,
+            type: thing.payload.header.channel_header.type,
+        };
+        console.log(txDetails);
+    }
+}
+
+async function foo(client: fabric): Promise<void> {
+    // get an eventhub once the fabric client has a user assigned. The user
+    // is required bacause the event registration must be signed
+    const eventHub = client.newEventHub();
+    eventHub.setPeerAddr("grpc://localhost:7053", null);
+    eventHub.connect();
+    eventHub.registerBlockEvent((block) => {
+        dumpBlock(block);
+    });
+
+    return new Promise<void>((reject, response) => { return; });
 }
 
 commander

@@ -1,7 +1,6 @@
 import { SharedString } from "@prague/routerlicious/dist/shared-string";
-import * as winston from "winston";
 import { AugLoopRuntime, IAugResult } from "../augloop-runtime";
-import { ISlice } from "./definitons";
+import { ISlice } from "./definitions";
 import { ParagrapgSlicer } from "./paragraphSlicer";
 import { SliceManager } from "./sliceManager";
 
@@ -34,16 +33,13 @@ export interface ISuggestion {
 
 export class ProofingManager {
     private sliceManager: SliceManager;
-    constructor(private root: SharedString, private runtime: AugLoopRuntime) {
+    constructor(private fullId: string, private root: SharedString, private runtime: AugLoopRuntime) {
     }
 
     public run() {
         this.root.loaded.then(() => {
             const slicer = new ParagrapgSlicer(this.root);
-            this.sliceManager = new SliceManager(this.root, this.runtime, this.applyInsight);
-            this.sliceManager.on("error", (error) => {
-                winston.error(error);
-            });
+            this.sliceManager = new SliceManager(this.fullId, this.root, this.runtime, this.applyInsight);
             slicer.on("slice", (slice: ISlice) => {
                 if (slice.text.length > 0) {
                     this.sliceManager.submit(slice.range.begin, slice.range.end, slice.text);

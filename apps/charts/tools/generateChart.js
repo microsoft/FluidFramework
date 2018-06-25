@@ -61,11 +61,8 @@ endpoints:
   storage: https://historian.wu2.prague.office-int.com
   resume: https://alfred.wu2.prague.office-int.com/intelligence/resume
   nativeTextAnalytics: http://praguepy.westus2.cloudapp.azure.com/
-  spellchecker: https://augmentation.wu2.prague.office-int.com/spellchecker/api
   serverUrl: https://alfred.wu2.prague.office-int.com
-  tmzUrl: https://tmz.wu2.prague.office-int.com
   blobStorageUrl: https://historian.wu2.prague.office-int.com
-  scriptUrl: https://minio.wu2.prague.office-int.com/agents/
 
 auth:
   redirectUrl: https://www.wu2.prague.office-int.com/auth/openid/return

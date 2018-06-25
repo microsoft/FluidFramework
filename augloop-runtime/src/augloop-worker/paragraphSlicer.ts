@@ -1,14 +1,14 @@
 import { core, MergeTree } from "@prague/routerlicious/dist/client-api";
 import { SharedString } from "@prague/routerlicious/dist/shared-string";
 import { EventEmitter } from "events";
-import { IPgMarker, IRange } from "./definitons";
+import { IPgMarker, IRange } from "./definitions";
 
 export class ParagrapgSlicer extends EventEmitter {
     private idleTimeMS: number = 500;
     private currentIdleTime: number = 0;
     private pendingMarkers: IPgMarker[] = new Array<IPgMarker>();
     private tileMap: Map<MergeTree.ReferencePosition, IRange> = new Map<MergeTree.ReferencePosition, IRange>();
-    private initialCallLimit: number = 5;
+    private initialCallLimit: number = 10;
     private initialCounter: number = 0;
 
     constructor(private sharedString: SharedString) {

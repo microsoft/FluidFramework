@@ -7,7 +7,7 @@ import * as commander from "commander";
 import * as fabric from "fabric-client";
 import * as path from "path";
 
-async function run(userId: string, channelId: string): Promise<string> {
+async function run(userId: string, channelId: string, key: string): Promise<string> {
     const client = new fabric();
 
     // setup the fabric network
@@ -33,10 +33,10 @@ async function run(userId: string, channelId: string): Promise<string> {
     }
 
     const request = {
-        args: ["a"],
+        args: [key],
         // targets : --- letting this default to the peers assigned to the channel
         chaincodeId: "fabcar",
-        fcn: "get",
+        fcn: "get2",
     };
 
     // send the query proposal to the peer
@@ -57,14 +57,16 @@ commander
     .version("0.0.1")
     .option("-u, --userId [userId]", "User ID", "user1")
     .option("-c, --channelId [channelId]", "Channel ID", "mychannel")
+    .arguments("<key>")
+    .action((key) => {
+        console.log(`${commander.userId} ${commander.channelId}`);
+        run(commander.userId, commander.channelId, key).then(
+            (response) => {
+                console.log("Response is ", response);
+            },
+            (error) => {
+                console.error("Failed to run query", error);
+                process.exit(1);
+            });
+    })
     .parse(process.argv);
-
-console.log(`${commander.userId} ${commander.channelId}`);
-run(commander.userId, commander.channelId).then(
-    (response) => {
-        console.log("Response is ", response);
-    },
-    (error) => {
-        console.error("Failed to run query", error);
-        process.exit(1);
-    });

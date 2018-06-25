@@ -33,6 +33,15 @@ async function run(userId: string, channelId: string, key: string, value: string
         return Promise.reject(`Failed to get ${userId}.... run registerUser.js`);
     }
 
+    const sendPs = [];
+    for (let i = 0; i < 15; i++) {
+        const sendP = submitTx(client, channel, channelId, key, value);
+        sendPs.push(sendP);
+    }
+    await Promise.all(sendPs);
+}
+
+async function submitTx(client: fabric, channel: fabric.Channel, channelId: string, key: string, value: string) {
     // get a transaction id object based on the current user assigned to fabric client
     const txId = client.newTransactionID();
     console.log("Assigning transaction_id: ", txId.getTransactionID());

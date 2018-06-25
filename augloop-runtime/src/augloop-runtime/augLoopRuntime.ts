@@ -1,33 +1,40 @@
 import {HostMetadata, runtime} from "@augloop/runtime-client";
-import { EventEmitter } from "events";
+import { SliceManager } from "../augloop-worker";
 import {configureRuntimeForWorkflows} from "./registration";
 import {IAugResult, IDocTile} from "./schema";
 
-const serviceUrl = "https://augloop-prod.trafficmanager.net";
+const serviceUrl = "https://augloop-cluster-int-gw.southcentralus.cloudapp.azure.com";
 const hostMetadata: HostMetadata = {
     appName: "Prague",
     appPlatform: "Node",
 };
-export class AugLoopRuntime extends EventEmitter {
+export class AugLoopRuntime {
     private runtimeInitPromise: Promise<void> = null;
     private workflowPromise: Promise<void> = null;
+    private callerMap: Map<string, SliceManager> = new Map<string, SliceManager>();
 
-    constructor() {
-        super();
+    public async initialize() {
+        await this.startRuntime();
+        await this.configureRuntimeForWorkflows();
     }
 
-    public submit(input: IDocTile, schemaName: string) {
-        this.startRuntime().then(() => {
-            this.configureRuntimeForWorkflows().then(() => {
-                runtime.submit(schemaName, input);
-            }, (err) => {
-                this.emit("error", err);
-            });
-        }, (error) => {
-            this.emit("error", error);
-        });
+    public submit(fullId: string, input: IDocTile, schemaName: string, caller: SliceManager) {
+        this.setCaller(fullId, caller);
+        runtime.submit(schemaName, input);
     }
 
+    public removeDocument(fullId) {
+        if (this.callerMap.has(fullId)) {
+            console.log(`Removing ${fullId} from runtime tracked documents`);
+            this.callerMap.delete(fullId);
+        }
+    }
+
+    private setCaller(fullId: string, caller: SliceManager) {
+        if (!this.callerMap.has(fullId)) {
+            this.callerMap.set(fullId, caller);
+        }
+    }
     private async startRuntime() {
         if (this.runtimeInitPromise !== null) {
           return this.runtimeInitPromise;
@@ -38,6 +45,7 @@ export class AugLoopRuntime extends EventEmitter {
             {
                 isFeatureEnabled: null,
                 onResult: this.onResultCallback.bind(this),
+                requestAuthToken: null,
                 sendTelemetryEvent: null,
             });
         return this.runtimeInitPromise;
@@ -56,6 +64,9 @@ export class AugLoopRuntime extends EventEmitter {
             input,
             output,
         };
-        this.emit("result", result);
+        const fullId = input.documentId;
+        if (this.callerMap.has(fullId)) {
+            this.callerMap.get(fullId).onResult(result);
+        }
     }
 }

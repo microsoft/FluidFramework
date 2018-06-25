@@ -144,28 +144,28 @@ export class Board extends React.Component<IBoardProps, IBoardState> {
 
         if (initial) {
             this.state = {
-                squares,
-                iAmNext,
-                winner,
-                nPlayers,
                 historyMode: false,
+                iAmNext,
+                nPlayers,
+                squares,
+                winner,
             };
             this.addToHistory();
         } else {
             this.setState({
-                squares,
                 iAmNext,
-                winner,
                 nPlayers,
+                squares,
+                winner,
             }, () => {
               this.addToHistory();
             });
         }
         if (!winner) {
-            const winner = this.calculateWinner(squares);
-            if (winner) {
-                stateView.set("winner", winner);
-                this.updateStat(winner);
+            const newWinner = this.calculateWinner(squares);
+            if (newWinner) {
+                stateView.set("winner", newWinner);
+                this.updateStat(newWinner);
             }
         }
     }

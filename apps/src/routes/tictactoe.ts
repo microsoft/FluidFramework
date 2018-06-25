@@ -33,7 +33,7 @@ export function create(config: any): Router {
         renderView(request, response, docId, config);
         // Start a bot for single players.
         if (request.query.player === "single") {
-            bot.start(docId, config.tenantInfo.tenantId, config.tenantInfo.endpoints);
+            bot.start(docId, config.tenantInfo.tenantId, config.tenantInfo.endpoints, request.query.token);
         }
     });
 
