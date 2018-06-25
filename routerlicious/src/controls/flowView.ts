@@ -1896,7 +1896,6 @@ export class Viewport {
             // hit right edge
             w = this.width - x;
             this.lineX = 0;
-            this.lineTop += h;
         }
         return <ILineRect>{ h, w, x, y };
     }
@@ -2009,30 +2008,31 @@ export interface IFlowBreakInfo extends Paragraph.IBreakInfo {
 export function breakPGIntoLinesFFVP(itemInfo: Paragraph.IParagraphItemInfo, defaultLineHeight: number,
     viewport: Viewport, startOffset = 0) {
     const items = itemInfo.items;
+    const savedTop = viewport.getLineTop();
     let lineRect = viewport.getLineRect(itemInfo.maxHeight);
-    let prevBreak: IFlowBreakInfo = {
-        lineHeight: lineRect.h,
+    let breakInfo: IFlowBreakInfo = {
+        lineHeight: defaultLineHeight,
         lineWidth: lineRect.w,
         lineX: lineRect.x, lineY: lineRect.y,
         posInPG: 0, startItemIndex: 0,
     };
-    const breaks = <IFlowBreakInfo[]>[prevBreak];
+    const breaks = <IFlowBreakInfo[]>[breakInfo];
     let posInPG = 0;
     let committedItemsWidth = 0;
     let blockRunWidth = 0;
     let blockRunHeight = 0;
     let blockRunPos = -1;
     let prevIsGlue = true;
-    const savedTop = viewport.getLineTop();
     let committedItemsHeight = 0;
-    let firstLine = true;
 
     function checkViewportFirstLine(pos: number) {
-        if ((startOffset > 0) && firstLine && (pos > startOffset)) {
-            firstLine = false;
+        if (pos <= startOffset) {
             viewport.resetTop();
+            return true;
         }
+        return false;
     }
+
     for (let i = 0, len = items.length; i < len; i++) {
         const item = items[i];
         if (item.type === Paragraph.ParagraphItemType.Block) {
@@ -2042,29 +2042,36 @@ export function breakPGIntoLinesFFVP(itemInfo: Paragraph.IParagraphItemInfo, def
                 blockRunWidth = 0;
             }
             if ((committedItemsWidth + item.width) > lineRect.w) {
+                if (viewport.getLineX() === 0) {
+                    viewport.vskip(committedItemsHeight);
+                }
                 checkViewportFirstLine(blockRunPos);
                 lineRect = viewport.getLineRect(itemInfo.maxHeight);
-                prevBreak = {
-                    lineHeight: lineRect.h,
+                breakInfo = {
+                    lineHeight: committedItemsHeight,
                     lineWidth: lineRect.w,
                     lineX: lineRect.x, lineY: lineRect.y,
                     posInPG: blockRunPos, startItemIndex: i,
                 };
-                breaks.push(prevBreak);
+                breaks.push(breakInfo);
                 committedItemsWidth = blockRunWidth;
                 committedItemsHeight = blockRunHeight;
             }
             posInPG += item.text.length;
             if (committedItemsWidth > lineRect.w) {
+                if (viewport.getLineX() === 0) {
+                    viewport.vskip(committedItemsHeight);
+
+                }
                 checkViewportFirstLine(posInPG);
                 lineRect = viewport.getLineRect(itemInfo.maxHeight);
-                prevBreak = {
-                    lineHeight: lineRect.h,
+                breakInfo = {
+                    lineHeight: committedItemsHeight,
                     lineWidth: lineRect.w,
                     lineX: lineRect.x, lineY: lineRect.y,
                     posInPG, startItemIndex: i,
                 };
-                breaks.push(prevBreak);
+                breaks.push(breakInfo);
                 committedItemsWidth = 0;
                 committedItemsHeight = 0;
                 blockRunHeight = 0;
@@ -2084,7 +2091,6 @@ export function breakPGIntoLinesFFVP(itemInfo: Paragraph.IParagraphItemInfo, def
         committedItemsHeight = Math.max(committedItemsHeight,
             item.height ? item.height : defaultLineHeight);
     }
-    checkViewportFirstLine(posInPG);
     viewport.endOfParagraph(itemInfo.maxHeight);
     viewport.setLineTop(savedTop);
     return breaks;
