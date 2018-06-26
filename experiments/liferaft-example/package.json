@@ -1,0 +1,22 @@
+{
+  "name": "raft",
+  "version": "0.1.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc && tslint 'src/**/*.ts'"
+  },
+  "dependencies": {
+    "argh": "^0.1.4",
+    "axon": "^2.0.3",
+    "diagnostics": "^1.1.0",
+    "liferaft": "^1.0.0",
+    "moniker": "^0.1.2"
+  },
+  "devDependencies": {
+    "@types/axon": "^2.0.0",
+    "@types/node": "^10.3.6",
+    "tslint": "^5.10.0",
+    "typescript": "^2.9.2"
+  }
+}
