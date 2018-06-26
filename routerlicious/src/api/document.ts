@@ -363,7 +363,9 @@ export class Document extends EventEmitter implements api.IDocument {
      * Closes the document and detaches all listeners
      */
     public close() {
-        throw new Error("Not yet implemented");
+        if (this._deltaManager) {
+            this._deltaManager.close();
+        }
     }
 
     public submitObjectMessage(envelope: api.IEnvelope): void {
