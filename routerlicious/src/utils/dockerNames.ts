@@ -634,6 +634,7 @@ const prague = [
     "white",
     "greenly",
     "simkowitz",
+    "pinjala",
 ];
 
 // Docker names + Prague names
