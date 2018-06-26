@@ -18,8 +18,9 @@ export class AugLoopResourcesFactory implements utils.IResourcesFactory<AugLoopR
         const tmzConfig = config.get("tmz");
         const rabbitmqConfig = config.get("rabbitmq");
         const workerConfig = config.get("worker");
+        const queueName = config.get("augloop-runtime:queue");
 
-        const messageReceiver = createMessageReceiver(rabbitmqConfig, tmzConfig);
+        const messageReceiver = createMessageReceiver(rabbitmqConfig, tmzConfig, queueName);
 
         return new AugLoopResources(workerConfig, messageReceiver);
     }

@@ -1,10 +1,11 @@
-import {HostMetadata, runtime} from "@augloop/runtime-client";
+import {runtime} from "@augloop/runtime-client";
+import { IClientMetadata } from "@augloop/schemas";
 import { SliceManager } from "../augloop-worker";
 import {configureRuntimeForWorkflows} from "./registration";
 import {IAugResult, IDocTile} from "./schema";
 
 const serviceUrl = "https://augloop-cluster-int-gw.southcentralus.cloudapp.azure.com";
-const hostMetadata: HostMetadata = {
+const hostMetadata: IClientMetadata = {
     appName: "Prague",
     appPlatform: "Node",
 };

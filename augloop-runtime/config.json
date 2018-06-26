@@ -34,8 +34,10 @@
     },
     "tmz": {
         "alfred": "http://alfred:3000",
-        "taskQueueName": "taskQueue",
-        "agentExchangeName": "agentQueue"
+        "agentExchange": "agentExchange"
+    },
+    "augloop-runtime": {
+            "queue": "augloopQueue"
     },
     "rabbitmq": {
         "connectionString": "amqp://rabbitmq"

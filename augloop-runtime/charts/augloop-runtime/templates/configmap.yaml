@@ -46,8 +46,10 @@ data:
         },
         "tmz": {
             "alfred": "{{ .Values.endpoints.alfred }}",
-            "taskQueueName": "taskQueue",
-            "agentExchangeName": "agentQueue"
+            "agentExchange": "agentExchange"
+        },
+        "augloop-runtime": {
+            "queue": "augloopQueue"
         },
         "rabbitmq": {
             "connectionString": "{{ .Values.endpoints.rabbitmq }}"
