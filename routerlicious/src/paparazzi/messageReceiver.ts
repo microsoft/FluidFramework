@@ -9,18 +9,15 @@ class RabbitmqReceiver implements IMessageReceiver {
 
     private events = new EventEmitter();
     private rabbitmqConnectionString: string;
-    private taskQueueName: string;
     private agentExchange: string;
     private connection: amqp.Connection;
     private channel: amqp.Channel;
     private agentDedupTimer: NodeJS.Timer;
     private agentMap = new Map<string, IMessage>();
 
-    constructor(rabbitmqConfig: any, tmzConfig: any) {
-        this.rabbitmqConnectionString = rabbitmqConfig.connectionString;
-        // This queueName should match the one listed on tmzConfig.
-        this.taskQueueName = "paparazziQueue";
-        this.agentExchange = tmzConfig.agentExchange;
+    constructor(private rabbitmqConfig: any, private tmzConfig: any, private taskQueueName: string) {
+        this.rabbitmqConnectionString = this.rabbitmqConfig.connectionString;
+        this.agentExchange = this.tmzConfig.agentExchange;
     }
 
     public async initialize() {
@@ -80,6 +77,6 @@ class RabbitmqReceiver implements IMessageReceiver {
 }
 
 // Factory to switch between different message receiver.
-export function createMessageReceiver(rabbitmqConfig: any, tmzConfig: any): IMessageReceiver {
-    return new RabbitmqReceiver(rabbitmqConfig, tmzConfig);
+export function createMessageReceiver(rabbitmqConfig: any, tmzConfig: any, queueName: string): IMessageReceiver {
+    return new RabbitmqReceiver(rabbitmqConfig, tmzConfig, queueName);
 }
