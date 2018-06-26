@@ -43,13 +43,11 @@ export class AlfredRunner implements utils.IRunner {
         // Register all the socket.io stuff
         io.register(
             this.server.webSocketServer,
-            this.config,
             this.mongoManager,
             this.producer,
             this.documentsCollectionName,
             this.metricClientConfig,
-            this.tenantManager,
-            this.appTenants[0]);
+            this.tenantManager);
 
         // Listen on provided port, on all network interfaces.
         httpServer.listen(this.port);

@@ -1,6 +1,5 @@
 import * as jwt from "jsonwebtoken";
 import * as moniker from "moniker";
-import { Provider } from "nconf";
 import * as winston from "winston";
 import * as agent from "../agent";
 import * as api from "../api-core";
@@ -9,7 +8,6 @@ import { ThroughputCounter } from "../core-utils";
 import * as socketStorage from "../socket-storage";
 import * as utils from "../utils";
 import * as storage from "./storage";
-import { IAlfredTenant } from "./tenant";
 
 interface IDocumentUser {
     tenantId: string;
@@ -23,13 +21,11 @@ interface IDocumentUser {
 
 export function register(
     webSocketServer: core.IWebSocketServer,
-    config: Provider,
     mongoManager: utils.MongoManager,
     producer: utils.IProducer,
     documentsCollectionName: string,
     metricClientConfig: any,
-    tenantManager: api.ITenantManager,
-    defaultTenant: IAlfredTenant) {
+    tenantManager: api.ITenantManager) {
 
     const throughput = new ThroughputCounter(winston.info);
     const metricLogger = agent.createMetricClient(metricClientConfig);

@@ -1,6 +1,4 @@
 import * as assert from "assert";
-import * as nconf from "nconf";
-import * as path from "path";
 import * as io from "../../alfred/io";
 import * as api from "../../api-core";
 import * as core from "../../core";
@@ -15,8 +13,6 @@ import {
     TestWebSocket,
     TestWebSocketServer,
 } from "../testUtils";
-
-const defaultConfig = nconf.file(path.join(__dirname, "../../../config.test.json")).use("memory");
 
 describe("Routerlicious", () => {
     describe("Alfred", () => {
@@ -44,13 +40,11 @@ describe("Routerlicious", () => {
 
                     io.register(
                         webSocketServer,
-                        defaultConfig,
                         mongoManager,
                         producer,
                         documentsCollectionName,
                         metricClientConfig,
-                        testTenantManager,
-                        { id: "test", key: "test" });
+                        testTenantManager);
                 });
 
                 function connectToServer(
