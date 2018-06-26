@@ -132,8 +132,15 @@ data:
             "topic": "{{ .Values.kafka.topics.deltas }}",
             "kafkaClientId": "{{ template "tmz.fullname" . }}",
             "groupId": "{{ template "tmz.fullname" . }}",
-            "taskQueueName": "taskQueue",
-            "agentExchangeName": "agentQueue"
+            "agentExchange": "agentExchange",
+            "queues": ["paparazziQueue", "augloopQueue"],
+            "permissions": {
+                "paparazziQueue": ["snapshot", "spell", "intel", "translation"],
+                "augloopQueue": ["augmentation"]
+            }
+        },
+        "paparazzi": {
+            "queue": "paparazziQueue"
         },
         "rabbitmq": {
             "connectionString": "{{ .Values.rabbitmq.connectionString }}"

@@ -1,7 +1,8 @@
 // tslint:disable:ban-types
 import { EventEmitter } from "events";
-import { api, core, types } from "../client-api";
+import { api, core } from "../client-api";
 import { IDocumentTaskInfo } from "./definitions";
+import { getTaskMapView } from "./utils";
 
 const leaderCheckerMS = 20000;
 
@@ -21,7 +22,7 @@ export class BaseWork extends EventEmitter {
 
     public async loadDocument(options: Object, service: core.IDocumentService, task: string): Promise<void> {
         this.document = await api.load(this.id, options, null, true, api.defaultRegistry, service);
-        await this.updateTaskMap(task, this.document.clientId);
+        await this.updateTaskMap(this.document, task, this.document.clientId);
         this.errorHandler = (error) => {
             this.events.emit("error", error);
         };
@@ -39,7 +40,7 @@ export class BaseWork extends EventEmitter {
         if (this.document !== undefined) {
             // Reset the task map, remove doc listener and self listeners.
             console.log(`Removing ${task} task for document ${this.document.tenantId}/${this.document.id}`);
-            this.updateTaskMap(task, undefined);
+            this.updateTaskMap(this.document, task, undefined);
             this.document.removeListener("op", this.operation);
             this.document.removeListener("error", this.errorHandler);
             this.events.removeAllListeners();
@@ -47,25 +48,9 @@ export class BaseWork extends EventEmitter {
         }
     }
 
-    private async updateTaskMap(task: string, clientId: string) {
-        const rootMapView = await this.document.getRoot().getView();
-        await this.waitForTaskMap(rootMapView);
-        const taskMap = rootMapView.get("tasks") as types.IMap;
-        taskMap.set(task, clientId);
-    }
-
-    private pollTaskMap(root: types.IMapView, resolve, reject) {
-        if (root.has("tasks")) {
-            resolve();
-        } else {
-            const pauseAmount = 50;
-            console.log(`Did not find taskmap - waiting ${pauseAmount}ms`);
-            setTimeout(() => this.pollTaskMap(root, resolve, reject), pauseAmount);
-        }
-    }
-
-    private waitForTaskMap(root: types.IMapView): Promise<void> {
-        return new Promise<void>((resolve, reject) => this.pollTaskMap(root, resolve, reject));
+    private async updateTaskMap(doc: api.Document, task: string, clientId: string) {
+        const taskMapView = await getTaskMapView(doc);
+        taskMapView.set(task, clientId);
     }
 
     // Periodically checks for leaders in the document. Emits a stop request if leader is not present.

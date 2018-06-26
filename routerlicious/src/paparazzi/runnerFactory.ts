@@ -18,8 +18,9 @@ export class PaparazziResourcesFactory implements utils.IResourcesFactory<Papara
         const tmzConfig = config.get("tmz");
         const rabbitmqConfig = config.get("rabbitmq");
         const workerConfig = config.get("worker");
+        const queueName = config.get("paparazzi:queue");
 
-        const messageReceiver = createMessageReceiver(rabbitmqConfig, tmzConfig);
+        const messageReceiver = createMessageReceiver(rabbitmqConfig, tmzConfig, queueName);
 
         return new PaparazziResources(workerConfig, messageReceiver);
     }

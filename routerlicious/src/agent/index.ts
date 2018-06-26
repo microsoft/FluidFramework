@@ -13,6 +13,7 @@ export * from "./metricClient";
 export * from "./pingWork";
 export * from "./agentLoader";
 export * from "./workManager";
+export * from "./utils";
 
 import * as constants from "./constants";
 export { constants };

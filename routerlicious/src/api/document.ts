@@ -15,12 +15,11 @@ import * as stream from "../stream";
 import { debug } from "./debug";
 import { BrowserErrorTrackingService } from "./errorTrackingService";
 
-// TODO: All these should come from the server as a part of document creation.
+// TODO: All these should be enforced by server as a part of document creation.
 const rootMapId = "root";
 const taskMapId = "tasks";
 const documentTasks = ["snapshot", "spell", "intel", "translation", "augmentation"];
-const taskCheckerMS = 10000;
-const helpSubmissionMS = 5000;
+const taskCheckerMS = 5000;
 
 // Registered services to use when loading a document
 let defaultDocumentService: api.IDocumentService;
@@ -435,6 +434,18 @@ export class Document extends EventEmitter implements api.IDocument {
         return new Map<string, api.IWorkerClient>(this.clients);
     }
 
+    public getFirstBrowserClient(): api.IWorkerClientDetail {
+        for (const client of this.getClients()) {
+            if (!client[1] || client[1].type !== api.Robot) {
+                return {
+                    clientId: client[0],
+                    detail: client[1],
+                };
+            }
+        }
+        return undefined;
+    }
+
     private async load(specifiedVersion: resources.ICommit, connect: boolean): Promise<void> {
         const storageP = this.service.connectToStorage(this.tenantId, this.id, this.opts.token);
 
@@ -509,9 +520,7 @@ export class Document extends EventEmitter implements api.IDocument {
                 // This I don't think I can get rid of
                 if (!this.existing) {
                     this.createAttached("root", mapExtension.MapExtension.Type);
-                    this.getOrCreateTaskMap(taskMapId).then(() => {
-                        this.initTaskMap();
-                    }, (err) => {
+                    this.createTaskMap(taskMapId).catch((err) => {
                         this.emit(err);
                     });
                 } else {
@@ -988,10 +997,6 @@ export class Document extends EventEmitter implements api.IDocument {
                 this.electLeader();
                 break;
 
-            case api.ClientHelp:
-                this.emit("clientHelp", message.contents);
-                break;
-
             default:
                 break;
         }
@@ -1016,21 +1021,21 @@ export class Document extends EventEmitter implements api.IDocument {
         this.emit("op", ...eventArgs);
     }
 
-    private async getOrCreateTaskMap(id: string) {
-        if (!this.taskMapView) {
-            const rootMap = this.getRoot();
-            const hasTaskMap = await rootMap.has(id);
-            if (!hasTaskMap) {
-                rootMap.set(id, this.createMap());
-            }
-            const taskMap = await rootMap.get(id) as IMap;
-            this.taskMapView = await taskMap.getView();
+    private async createTaskMap(id: string) {
+        const rootMap = this.getRoot();
+        rootMap.set(id, this.createMap());
+        const taskMap = await rootMap.get(id) as IMap;
+        this.taskMapView = await taskMap.getView();
+        for (const task of documentTasks) {
+            this.taskMapView.set(task, undefined);
         }
     }
 
-    private initTaskMap() {
-        for (const task of documentTasks) {
-            this.taskMapView.set(task, undefined);
+    private async getTaskMap(id: string) {
+        if (!this.taskMapView) {
+            const rootMap = this.getRoot();
+            const taskMap = await rootMap.get(id) as IMap;
+            this.taskMapView = await taskMap.getView();
         }
     }
 
@@ -1038,28 +1043,17 @@ export class Document extends EventEmitter implements api.IDocument {
     // Skip if this client is already a leader.
     private electLeader() {
         if (!this.isLeader) {
-            let firstClient: api.IWorkerClientDetail;
-            for (const client of this.getClients()) {
-                if (!client[1] || client[1].type !== api.Robot) {
-                    firstClient = {
-                        clientId: client[0],
-                        detail: client[1],
-                    };
-                    break;
-                }
-            }
+            const firstClient = this.getFirstBrowserClient();
             if (firstClient && this.clientId === firstClient.clientId) {
                 console.log(`Client id ${this.clientId} is the new leader`);
                 this.isLeader = true;
-                this.checkTasks();
+                this.askForHelp();
             }
         }
     }
 
-    private checkTasks() {
-        this.submitHelpMessage().catch((err) => {
-            this.emit(err);
-        });
+    // Checks the task map and submits a help message to pick up unassigned tasks.
+    private askForHelp() {
         setInterval(() => {
             this.submitHelpMessage().catch((err) => {
                 this.emit(err);
@@ -1071,27 +1065,16 @@ export class Document extends EventEmitter implements api.IDocument {
     private async submitHelpMessage() {
         const unassignedTasks = await this.getUnassignedTasks();
         if (unassignedTasks.length > 0) {
-            const clientHelpMessage: api.IHelpMessage = {
+            const helpMessage: api.IHelpMessage = {
                 clientId: this.clientId,
                 tasks: unassignedTasks,
             };
-            this.submitMessage(api.ClientHelp, clientHelpMessage);
-            // Wait for the browser clients to ack first. Only ask for remote help if there are stil unacked tasks.
-            setTimeout(async () => {
-                const unackedTasks = await this.getUnassignedTasks();
-                if (unackedTasks.length > 0) {
-                    const remoteHelpMessage: api.IHelpMessage = {
-                        clientId: this.clientId,
-                        tasks: unackedTasks,
-                    };
-                    this.submitMessage(api.RemoteHelp, remoteHelpMessage);
-                }
-            }, helpSubmissionMS);
+            this.submitMessage(api.RemoteHelp, helpMessage);
         }
     }
 
     private async getUnassignedTasks(): Promise<string[]> {
-        await this.getOrCreateTaskMap(taskMapId);
+        await this.getTaskMap(taskMapId);
         const unassignedTasks: string[] = [];
         for (const task of this.taskMapView.keys()) {
             const clientId = this.taskMapView.get(task);

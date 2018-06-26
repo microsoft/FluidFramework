@@ -6,15 +6,24 @@ import * as messages from "./messages";
 
 export class TmzRunner implements utils.IRunner {
     private deferred = new Deferred<void>();
+    private taskQueueMap = new Map<string, string>();
 
     constructor(
         alfredUrl: string,
         private agentUploader: messages.IAgentUploader,
         private messageSender: messages.IMessageSender,
-        private tenantManager: ITenantManager) {
+        private tenantManager: ITenantManager,
+        private permissions: any) {
     }
 
     public async start(): Promise<void> {
+        // tslint:disable-next-line:forin
+        for (const queueName in this.permissions) {
+            for (const task of this.permissions[queueName]) {
+                this.taskQueueMap.set(task, queueName);
+            }
+        }
+
         // Preps message sender.
         await this.messageSender.initialize().catch((err) => {
             this.deferred.reject(err);
@@ -68,18 +77,43 @@ export class TmzRunner implements utils.IRunner {
         return this.deferred.promise;
     }
 
-    public async trackDocument(tenantId: string, documentId: string, message: IHelpMessage): Promise<void> {
+    public async trackDocument(tenantId: string, docId: string, message: IHelpMessage): Promise<void> {
         const key = await this.tenantManager.getKey(tenantId);
-        const queueMessage: IQueueMessage = {
-            documentId,
-            message,
-            tenantId,
-            token: utils.generateToken(tenantId, documentId, key),
-        };
-        winston.info(`Tasks requested for ${tenantId}/${documentId}: ${JSON.stringify(message.tasks)}`);
-        this.messageSender.sendTask({
-            content: queueMessage,
-            type: "tasks:start",
-        });
+        const queueTaskMap = this.generateQueueTaskMap(message.tasks);
+        for (const queueTask of queueTaskMap) {
+            if (queueTask[1].length > 0) {
+                const queueMessage: IQueueMessage = {
+                    documentId: docId,
+                    message: {
+                        clientId: message.clientId,
+                        tasks: queueTask[1],
+                    },
+                    tenantId,
+                    token: utils.generateToken(tenantId, docId, key),
+                };
+                this.messageSender.sendTask(
+                    queueTask[0],
+                    {
+                        content: queueMessage,
+                        type: "tasks:start",
+                    },
+                );
+                winston.info(`${queueTask[0]}. ${tenantId}/${docId}: ${JSON.stringify(queueMessage.message.tasks)}`);
+            }
+        }
+    }
+
+    private generateQueueTaskMap(tasks: string[]): Map<string, string[]> {
+        const queueTaskMap = new Map<string, string[]>();
+        for (const task of tasks) {
+            if (this.taskQueueMap.has(task)) {
+                const queue = this.taskQueueMap.get(task);
+                if (!queueTaskMap.has(queue)) {
+                    queueTaskMap.set(queue, []);
+                }
+                queueTaskMap.get(queue).push(task);
+            }
+        }
+        return queueTaskMap;
     }
 }

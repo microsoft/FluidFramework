@@ -31,9 +31,6 @@ export const Integrate = "integrate";
 // Message to indicate successful round trip.
 export const RoundTrip = "tripComplete";
 
-// Message to indicate the need of a browser agent for a document.
-export const ClientHelp = "clientHelp";
-
 // Message to indicate the need of a remote agent for a document.
 export const RemoteHelp = "remoteHelp";
 

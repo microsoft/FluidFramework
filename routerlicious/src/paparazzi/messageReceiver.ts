@@ -9,17 +9,15 @@ class RabbitmqReceiver implements IMessageReceiver {
 
     private events = new EventEmitter();
     private rabbitmqConnectionString: string;
-    private taskQueueName: string;
-    private agentExchangeName: string;
+    private agentExchange: string;
     private connection: amqp.Connection;
     private channel: amqp.Channel;
     private agentDedupTimer: NodeJS.Timer;
     private agentMap = new Map<string, IMessage>();
 
-    constructor(rabbitmqConfig: any, tmzConfig: any) {
-        this.rabbitmqConnectionString = rabbitmqConfig.connectionString;
-        this.taskQueueName = tmzConfig.taskQueueName;
-        this.agentExchangeName = tmzConfig.agentExchangeName;
+    constructor(private rabbitmqConfig: any, private tmzConfig: any, private taskQueueName: string) {
+        this.rabbitmqConnectionString = this.rabbitmqConfig.connectionString;
+        this.agentExchange = this.tmzConfig.agentExchange;
     }
 
     public async initialize() {
@@ -36,10 +34,10 @@ class RabbitmqReceiver implements IMessageReceiver {
         }, {noAck: true});
 
         // Exchange for agent messages.
-        await this.channel.assertExchange(this.agentExchangeName, "fanout", {durable: true});
+        await this.channel.assertExchange(this.agentExchange, "fanout", {durable: true});
         const agentQueue = await this.channel.assertQueue("", {durable: true});
         winston.info(`Rabbitmq agent queue ready to receive!`);
-        this.channel.bindQueue(agentQueue.queue, this.agentExchangeName, "");
+        this.channel.bindQueue(agentQueue.queue, this.agentExchange, "");
 
         // Agents messages needs to be acked since they are sent only once.
         this.channel.consume(agentQueue.queue, (msgBuffer) => {
@@ -79,6 +77,6 @@ class RabbitmqReceiver implements IMessageReceiver {
 }
 
 // Factory to switch between different message receiver.
-export function createMessageReceiver(rabbitmqConfig: any, tmzConfig: any): IMessageReceiver {
-    return new RabbitmqReceiver(rabbitmqConfig, tmzConfig);
+export function createMessageReceiver(rabbitmqConfig: any, tmzConfig: any, queueName: string): IMessageReceiver {
+    return new RabbitmqReceiver(rabbitmqConfig, tmzConfig, queueName);
 }
