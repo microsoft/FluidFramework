@@ -1705,6 +1705,47 @@ export class DocumentTree {
     }
 }
 
+function findReplacePerf(filename: string) {
+    let client = new MergeTree.Client("", { blockUpdateMarkers: true });
+    Text.loadTextFromFile(filename, client.mergeTree);
+
+    let clockStart = clock();
+
+    let cFetches = 0;
+    let cReplaces = 0;
+    for (let pos = 0; pos < client.getLength();) {
+        let curSegOff = client.mergeTree.getContainingSegment(pos, MergeTree.UniversalSequenceNumber, client.getClientId());
+        cFetches++;
+
+        let curSeg = <MergeTree.BaseSegment>curSegOff.segment;
+        let textSeg = <MergeTree.TextSegment>curSeg;
+        if (textSeg != null) {
+            let text = textSeg.text;
+            let i = text.indexOf("the");
+            if (i >= 0) {
+                client.mergeTree.removeRange(
+                    pos + i, 
+                    pos + i + 3, 
+                    MergeTree.UniversalSequenceNumber, 
+                    client.getClientId());
+                client.mergeTree.insertText(
+                    pos + i, 
+                    MergeTree.UniversalSequenceNumber, 
+                    client.getClientId(), 
+                    1, 
+                    "teh");
+                pos = pos + i + 3;
+                cReplaces++;
+            } else {
+                pos += (curSeg.cachedLength - curSegOff.offset);
+            }
+        }
+    }
+
+    let elapsed = elapsedMicroseconds(clockStart);
+    console.log(`${cFetches} fetches and ${cReplaces} replaces took ${elapsed} microseconds`);
+}
+
 let testTST = false;
 if (testTST) {
     tst();
@@ -1734,6 +1775,11 @@ describe("Routerlicious", () => {
             const testPack = TestPack(false);
             const filename = path.join(__dirname, "../../../public/literature", "pp.txt");
             assert(testPack.clientServer(filename, 1000) === 0);
+        }).timeout(Number.MAX_VALUE);
+
+        it("findReplPerf", () => {
+            const filename = path.join(__dirname, "../../../public/literature", "pp10.txt");
+            findReplacePerf(filename);
         }).timeout(Number.MAX_VALUE)
     });
 });
