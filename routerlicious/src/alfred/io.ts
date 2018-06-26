@@ -16,16 +16,18 @@ interface IDocumentUser {
 
     user: api.ITenantUser;
 
+    orderer: core.IOrderer;
+
     permission: string;
 }
 
 export function register(
     webSocketServer: core.IWebSocketServer,
     mongoManager: utils.MongoManager,
-    producer: utils.IProducer,
     documentsCollectionName: string,
     metricClientConfig: any,
-    tenantManager: api.ITenantManager) {
+    orderManager: core.IOrdererManager,
+    tenantManager: core.ITenantManager) {
 
     const throughput = new ThroughputCounter(winston.info);
     const metricLogger = agent.createMetricClient(metricClientConfig);
@@ -37,9 +39,10 @@ export function register(
         // Map from client IDs on this connection to the object ID and user info.
         const connectionsMap = new Map<string, IDocumentUser>();
 
-        function sendAndTrack(message: core.IRawOperationMessage) {
+        function sendAndTrack(orderer: core.IOrderer, message: core.IRawOperationMessage) {
+            // I need to change the producer to become an orderer
             throughput.produce();
-            const sendP = producer.send(JSON.stringify(message), message.documentId);
+            const sendP = orderer.order(message, message.documentId);
             sendP.catch((error) => { return; }).then(() => throughput.acknowlwedge());
             return sendP;
         }
@@ -60,11 +63,12 @@ export function register(
             }
             await tenantManager.verifyToken(claims.tenantId, token);
 
+            const orderer = await orderManager.getOrderer(claims.tenantId, claims.documentId);
+
             connectionProfiler.done(`Client has requested to load ${message.id}`);
             const documentDetails = await storage.getOrCreateDocument(
                 mongoManager,
                 documentsCollectionName,
-                producer,
                 message.tenantId,
                 message.id);
 
@@ -77,6 +81,7 @@ export function register(
                 clientId,
                 {
                     documentId: message.id,
+                    orderer,
                     permission: claims.permission,
                     tenantId: message.tenantId,
                     user: claims.user,
@@ -102,7 +107,7 @@ export function register(
                 type: core.RawOperationType,
                 user: claims.user,
             };
-            sendAndTrack(rawMessage);
+            sendAndTrack(orderer, rawMessage);
 
             const parentBranch = documentDetails.value.parent
                 ? documentDetails.value.parent.documentId
@@ -168,7 +173,7 @@ export function register(
                 // Add trace
                 rawMessage.operation.traces.push( {service: "alfred", action: "start", timestamp: Date.now()} );
 
-                sendAndTrack(rawMessage).then(
+                sendAndTrack(docUser.orderer, rawMessage).then(
                     (responseMessage) => {
                         response(null, responseMessage);
                     },
@@ -218,7 +223,7 @@ export function register(
                     user: docUser.user,
                 };
 
-                sendAndTrack(rawMessage);
+                sendAndTrack(docUser.orderer, rawMessage);
             }
         });
     });

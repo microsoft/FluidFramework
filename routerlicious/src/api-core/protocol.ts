@@ -1,5 +1,4 @@
 import * as storage from "./storage";
-import { ITenantUser } from "./tenant";
 
 // Delta operation application type
 export const OperationType = "op";
@@ -230,4 +229,17 @@ export interface ISequencedDocumentMessage {
 
     // Traces related to the packet.
     traces: ITrace[];
+}
+
+export interface ITenantUser {
+    id: string;
+    name?: string;
+}
+
+// Find a home for this
+export interface ITokenClaims {
+    documentId: string;
+    permission: string;
+    tenantId: string;
+    user: ITenantUser;
 }

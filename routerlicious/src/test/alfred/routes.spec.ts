@@ -22,12 +22,13 @@ describe("Routerlicious", () => {
                 const mongoManager = new MongoManager(testDbFactory);
                 const testTenantManager = new TestTenantManager();
                 testKafka = new TestKafka();
+                const producer = testKafka.createProducer();
                 const alfred = app.create(
                     defaultConfig,
                     testTenantManager,
                     [{ id: "git", key: "git" }],
                     mongoManager,
-                    testKafka.createProducer());
+                    producer);
                 testServer = supertest(alfred);
             });
 

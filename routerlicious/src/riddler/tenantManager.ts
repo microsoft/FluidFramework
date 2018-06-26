@@ -1,7 +1,7 @@
 import * as crypto from "crypto";
 import * as jwt from "jsonwebtoken";
 import * as _ from "lodash";
-import { ITenantConfig, ITenantStorage } from "../api-core";
+import { ITenantConfig, ITenantStorage } from "../core";
 import * as utils from "../utils";
 
 export interface ITenantStorageDocument {

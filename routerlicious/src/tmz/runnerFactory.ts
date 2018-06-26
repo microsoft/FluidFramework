@@ -1,5 +1,5 @@
 import { Provider } from "nconf";
-import { ITenantManager } from "../api-core";
+import { ITenantManager } from "../core";
 import * as services from "../services";
 import * as utils from "../utils";
 import { createUploader } from "./agentUploader";
@@ -29,7 +29,9 @@ export class TmzResourcesFactory implements utils.IResourcesFactory<TmzResources
         const messageSender = createMessageSender(config.get("rabbitmq"), tmzConfig);
 
         const authEndpoint = config.get("auth:endpoint");
-        const tenantManager = new services.TenantManager(authEndpoint, config.get("worker:blobStorageUrl"));
+        const tenantManager = new services.TenantManager(
+            authEndpoint,
+            config.get("worker:blobStorageUrl"));
 
         return new TmzResources(
             tmzConfig.alfred,

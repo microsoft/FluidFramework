@@ -24,14 +24,12 @@ export async function getDocument(
 export async function getOrCreateDocument(
     mongoManager: utils.MongoManager,
     documentsCollectionName: string,
-    producer: utils.IProducer,
     tenantId: string,
     documentId: string): Promise<{existing: boolean, value: core.IDocument }> {
 
     const getOrCreateP = getOrCreateObject(
         mongoManager,
         documentsCollectionName,
-        producer,
         tenantId,
         documentId);
 
@@ -39,7 +37,7 @@ export async function getOrCreateDocument(
 }
 
 export async function getLatestVersion(
-    tenantManager: api.ITenantManager,
+    tenantManager: core.ITenantManager,
     tenantId: string,
     documentId: string): Promise<ICommitDetails> {
 
@@ -57,7 +55,7 @@ export async function getLatestVersion(
 }
 
 export async function getVersions(
-    tenantManager: api.ITenantManager,
+    tenantManager: core.ITenantManager,
     tenantId: string,
     documentId: string,
     count: number): Promise<ICommitDetails[]> {
@@ -77,7 +75,7 @@ export async function getVersions(
 }
 
 export async function getVersion(
-    tenantManager: api.ITenantManager,
+    tenantManager: core.ITenantManager,
     tenantId: string,
     documentId: string,
     sha: string): Promise<ICommit> {
@@ -113,7 +111,7 @@ export async function getForks(
 
 export async function createFork(
     producer: utils.IProducer,
-    tenantManager: api.ITenantManager,
+    tenantManager: core.ITenantManager,
     mongoManager: utils.MongoManager,
     documentsCollectionName: string,
     tenantId: string,
@@ -193,7 +191,6 @@ export async function createFork(
 async function getOrCreateObject(
     mongoManager: utils.MongoManager,
     documentsCollectionName: string,
-    producer: utils.IProducer,
     tenantId: string,
     documentId: string): Promise<{ existing: boolean, value: core.IDocument }> {
 

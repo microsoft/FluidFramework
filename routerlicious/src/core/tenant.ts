@@ -1,16 +1,9 @@
 import { GitManager } from "../git-storage";
 
-export interface ITenantUser {
+export interface ITenantConfig {
     id: string;
-    name?: string;
-}
 
-// Find a home for this
-export interface ITokenClaims {
-    documentId: string;
-    permission: string;
-    tenantId: string;
-    user: ITenantUser;
+    storage: ITenantStorage;
 }
 
 export interface ITenantStorage {
@@ -34,12 +27,6 @@ export interface ITenantStorage {
         // Password for the storage provider
         password: string;
     };
-}
-
-export interface ITenantConfig {
-    id: string;
-
-    storage: ITenantStorage;
 }
 
 export interface ITenant {

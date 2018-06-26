@@ -1,6 +1,6 @@
 import { Provider } from "nconf";
 import * as winston from "winston";
-import { ITenantManager } from "../api-core";
+import { IOrdererManager, ITenantManager } from "../core";
 import * as core from "../core";
 import { Deferred } from "../core-utils";
 import * as utils from "../utils";
@@ -16,6 +16,7 @@ export class AlfredRunner implements utils.IRunner {
         private serverFactory: core.IWebServerFactory,
         private config: Provider,
         private port: string | number,
+        private orderManager: IOrdererManager,
         private tenantManager: ITenantManager,
         private appTenants: IAlfredTenant[],
         private mongoManager: utils.MongoManager,
@@ -44,9 +45,9 @@ export class AlfredRunner implements utils.IRunner {
         io.register(
             this.server.webSocketServer,
             this.mongoManager,
-            this.producer,
             this.documentsCollectionName,
             this.metricClientConfig,
+            this.orderManager,
             this.tenantManager);
 
         // Listen on provided port, on all network interfaces.

@@ -1,7 +1,6 @@
 // tslint:disable:ban-types
 import { EventEmitter } from "events";
-import { IEnvelope, ILatencyMessage, IObjectMessage, ISequencedObjectMessage } from "./protocol";
-import { ITenantUser } from "./tenant";
+import { IEnvelope, ILatencyMessage, IObjectMessage, ISequencedObjectMessage, ITenantUser } from "./protocol";
 import { ICollaborativeObject } from "./types";
 
 export interface IDeltaManager {

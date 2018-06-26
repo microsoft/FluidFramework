@@ -9,6 +9,7 @@ import {
     MessageFactory,
     TestDbFactory,
     TestKafka,
+    TestOrdererManager,
     TestTenantManager,
     TestWebSocket,
     TestWebSocketServer,
@@ -23,6 +24,7 @@ describe("Routerlicious", () => {
                 const testId = "test";
                 let webSocketServer: TestWebSocketServer;
                 let deliKafka: TestKafka;
+                let testOrderer: TestOrdererManager;
                 let testTenantManager: TestTenantManager;
 
                 beforeEach(() => {
@@ -35,15 +37,16 @@ describe("Routerlicious", () => {
                     deliKafka = new TestKafka();
                     const producer = deliKafka.createProducer();
                     testTenantManager = new TestTenantManager();
+                    testOrderer = new TestOrdererManager(producer);
 
                     webSocketServer = new TestWebSocketServer();
 
                     io.register(
                         webSocketServer,
                         mongoManager,
-                        producer,
                         documentsCollectionName,
                         metricClientConfig,
+                        testOrderer,
                         testTenantManager);
                 });
 
