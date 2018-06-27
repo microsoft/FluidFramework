@@ -33,7 +33,7 @@ interface IFlexViewComponent {
 }
 
 interface IInclusion {
-    content: string;
+    content: Buffer;
     size: number;
 }
 
@@ -220,14 +220,14 @@ export class FlexView extends ui.Component {
         const docService = api.getDefaultBlobStorage();
         const gitManager: gitStorage.GitManager = docService.manager;
 
-        const hash = gitHashFile(Buffer.from(file.content, "utf-8"));
+        const hash = gitHashFile(file.content);
 
         // Set the hash in blob storage
         // TODO: Empty should be the inclusion's information
         await this.blobMap.set<string>(hash, "empty");
 
-        // Encoding must match with the fileToBinary encoding
-        const blobResponseP = gitManager.createBlob(file.content, "utf-8") as Promise<resources.ICreateBlobResponse>;
+        const encodedBuffer = file.content.toString("base64");
+        const blobResponseP = gitManager.createBlob(encodedBuffer, "base64") as Promise<resources.ICreateBlobResponse>;
         blobResponseP.then(async (blobResponse) => {
             // TODO: Indicate the inclusion is done uploading
             console.log("Completed uploading blob");
@@ -282,10 +282,9 @@ export class FlexView extends ui.Component {
             };
 
             fr.onloadend = () => {
-                // This encoding must match the createblob encoding
-                const t = Buffer.from(fr.result, "utf-8");
+                const t = Buffer.from(fr.result);
                 const incl = {
-                    content: t.toString("utf-8"),
+                    content: t,
                     size: t.length,
                 };
                 resolve(incl);
