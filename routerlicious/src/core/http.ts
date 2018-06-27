@@ -14,6 +14,9 @@ export interface IWebSocket {
     join(id: string): Promise<void>;
 
     send(data: any, topic?: string, cb?: (err: Error) => void): void;
+
+    // resolve this with send
+    emit(event: string, ...args);
 }
 
 export interface IWebServer {

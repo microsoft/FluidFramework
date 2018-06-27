@@ -63,8 +63,6 @@ export function register(
             }
             await tenantManager.verifyToken(claims.tenantId, token);
 
-            const orderer = await orderManager.getOrderer(socket, claims.tenantId, claims.documentId);
-
             connectionProfiler.done(`Client has requested to load ${message.id}`);
             const documentDetails = await storage.getOrCreateDocument(
                 mongoManager,
@@ -75,6 +73,8 @@ export function register(
             const clientId = moniker.choose();
             await Promise.all(
                 [socket.join(`${claims.tenantId}/${claims.documentId}`), socket.join(`client#${clientId}`)]);
+
+            const orderer = await orderManager.getOrderer(socket, claims.tenantId, claims.documentId);
 
             // Create and set a new client ID
             connectionsMap.set(
@@ -107,7 +107,11 @@ export function register(
                 type: core.RawOperationType,
                 user: claims.user,
             };
-            sendAndTrack(orderer, rawMessage);
+
+            // work around a race condition on fast first send
+            setTimeout(() => {
+                sendAndTrack(orderer, rawMessage);
+            }, 50);
 
             const parentBranch = documentDetails.value.parent
                 ? documentDetails.value.parent.documentId

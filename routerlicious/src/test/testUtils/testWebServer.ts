@@ -20,6 +20,10 @@ export class TestWebSocket implements core.IWebSocket {
     public send(event: string, ...args: any[]) {
         this.events.emit(event, ...args);
     }
+
+    public emit(event: string, ...args: any[]) {
+        this.events.emit(event, ...args);
+    }
 }
 
 export class TestWebSocketServer implements core.IWebSocketServer {

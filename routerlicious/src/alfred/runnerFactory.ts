@@ -52,17 +52,20 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
 
         // create the index on the documents collection
         const db = await mongoManager.getDatabase();
-        const collection = db.collection<any>(documentsCollectionName);
-        await collection.createIndex(
+        const documentsCollection = db.collection<core.IDocument>(documentsCollectionName);
+        await documentsCollection.createIndex(
             {
                 documentId: 1,
                 tenantId: 1,
             },
             true);
 
+        const deltasCollectionName = config.get("mongo:collectionNames:deltas");
+        const deltasCollection = db.collection(deltasCollectionName);
+
         // Manager to query riddler for tenant information
         const tenantManager = new services.TenantManager(authEndpoint, config.get("worker:blobStorageUrl"));
-        const orderManager = new services.OrdererManager(producer);
+        const orderManager = new services.OrdererManager(producer, documentsCollection, deltasCollection);
 
         // Tenants attached to the apps this service exposes
         const appTenants = config.get("alfred:tenants") as Array<{ id: string, key: string }>;
