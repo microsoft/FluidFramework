@@ -8,6 +8,7 @@ import { Button } from "./button";
 import { Chart } from "./chart";
 import { debug } from "./debug";
 import { DockPanel } from "./dockPanel";
+import { Image } from "./image";
 import { InkCanvas } from "./inkCanvas";
 import { Popup } from "./popup";
 import { Orientation, StackPanel } from "./stackPanel";
@@ -33,8 +34,11 @@ interface IFlexViewComponent {
 }
 
 interface IInclusion {
-    content: Buffer;
-    size: number;
+    content?: Buffer;
+    fileName?: string;
+    size?: number;
+    type?: string;
+    sha?: string;
 }
 
 /**
@@ -49,7 +53,7 @@ export class FlexView extends ui.Component {
     private components: IFlexViewComponent[] = [];
     private blobMap: types.IMap; // TODO: make blobMap a sibling of root?
 
-    constructor(element: HTMLDivElement, doc: api.Document, root: types.IMapView) {
+    constructor(element: HTMLDivElement, private doc: api.Document, root: types.IMapView) {
         super(element);
 
         const dockElement = document.createElement("div");
@@ -63,6 +67,10 @@ export class FlexView extends ui.Component {
             root.wait<types.IMap>("blobs")
                 .then((blobMap) => {
                     this.blobMap = blobMap;
+                    this.downloadInclusions()
+                        .then((incls) => {
+                            this.renderInclusions(incls);
+                        });
                 })
                 .catch((error) => {
                     console.log("Blob map failed to load");
@@ -124,8 +132,9 @@ export class FlexView extends ui.Component {
             };
         });
 
-        downloadButton.on("click", (event) => {
-            this.downloadInclusions();
+        downloadButton.on("click", async (event) => {
+            const incls = await this.downloadInclusions() as IInclusion[];
+            this.renderInclusions(incls);
         });
 
         // These should turn into components
@@ -216,15 +225,38 @@ export class FlexView extends ui.Component {
         this.resizeCore(this.size);
     }
 
+    private async renderInclusions(incls: IInclusion[]) {
+        for (const incl of incls) {
+            console.log(incl.content.toString("utf-8", 0, 100));
+
+            // TODO: reject these blobs at the download level
+            if (incl.type.includes("image") && document.getElementById(incl.sha) === null) {
+                // TODO: FileReader.readAsDataURL(blob)
+                const urlObj = window.URL;
+                const url = urlObj.createObjectURL(new Blob([incl.content], {
+                    type: incl.type,
+                }));
+                const imgDiv = document.createElement("div");
+                imgDiv.id = incl.sha;
+                imgDiv.style.height = "100px";
+                imgDiv.style.width = "100px";
+                this.ink.addPhoto(new Image(imgDiv, url ));
+            }
+        }
+
+    }
+
     private async uploadInclusion(file: IInclusion) {
         const docService = api.getDefaultBlobStorage();
         const gitManager: gitStorage.GitManager = docService.manager;
-
         const hash = gitHashFile(file.content);
 
         // Set the hash in blob storage
         // TODO: Empty should be the inclusion's information
-        await this.blobMap.set<string>(hash, "empty");
+        const fileMap = await this.blobMap.set<types.IMap>(hash, this.doc.createMap());
+        fileMap.set<string>("type", file.type);
+        fileMap.set<string>("size", file.size);
+        fileMap.set<string>("fileName", file.fileName);
 
         const encodedBuffer = file.content.toString("base64");
         const blobResponseP = gitManager.createBlob(encodedBuffer, "base64") as Promise<resources.ICreateBlobResponse>;
@@ -234,42 +266,41 @@ export class FlexView extends ui.Component {
         });
     }
 
-    private async downloadInclusions() {
+    // Returns blobs end
+    private async downloadInclusions(): Promise<IInclusion[]> {
         const docService = api.getDefaultBlobStorage();
         const gitManager: gitStorage.GitManager = docService.manager;
 
-        const shas: string[] = [];
+        const incls: IInclusion[] = [];
+        const filesP: Array<Promise<resources.IBlob>> = [];
 
         const blobView = await this.blobMap.getView();
 
         for (const key of blobView.keys()) {
-            shas.push(key);
+            const fileMap = await blobView.get<types.IMap>(key).getView();
+            filesP.push(gitManager.getBlob(key));
+
+            incls.push({
+                fileName: fileMap.get("fileName"),
+                sha: key,
+                size: fileMap.get("size"),
+                type: fileMap.get("type"),
+            });
         }
 
-        const filesP: Array<Promise<resources.IBlob>> = [];
-
-        for (const sha of shas) {
-            console.log("Download Sha: " + sha);
-            filesP.push(gitManager.getBlob(sha));
-        }
-        Promise.all(filesP)
+        return Promise.all(filesP)
             .then((files) => {
-                files.map((blob) => {
+                files.map((blob, index) => {
                     // Blob returns in base64 based on https://github.com/Microsoft/Prague/issues/732
-                    const str = new Buffer(blob.content, "base64").toString("utf-8");
-                    this.renderInclusions(str);
-                    return str;
+                    incls[index].content = new Buffer(blob.content, "base64");
                 });
+                return incls;
             })
             .catch((error) => {
                 console.log("Error: " + JSON.stringify(error));
+                // TODO: reject
+                return null;
             });
-    }
-
-    private renderInclusions(incl: string): void {
-        console.log(incl.slice(0, 100));
-
-        // TODO: sabroner finish rendering
     }
 
     private async fileToInclusion(file: File): Promise<IInclusion> {
@@ -285,7 +316,9 @@ export class FlexView extends ui.Component {
                 const t = Buffer.from(fr.result);
                 const incl = {
                     content: t,
+                    fileName: file.name,
                     size: t.length,
+                    type: file.type,
                 };
                 resolve(incl);
             };

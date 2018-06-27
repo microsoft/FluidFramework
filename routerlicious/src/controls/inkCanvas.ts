@@ -1,4 +1,5 @@
 import { types } from "../client-api";
+import { controls } from "../client-ui";
 import * as ui from "../ui";
 import { SegmentCircleInclusive } from "./overlayCanvas";
 import { Circle, IShape, Polygon } from "./shapes/index";
@@ -91,6 +92,11 @@ export class InkCanvas extends ui.Component {
         for (const layer of layers) {
             this.animateLayer(layer, 0, startTime);
         }
+    }
+
+    public addPhoto(image: controls.Image) {
+        this.addChild(image);
+        this.element.appendChild(image.element);
     }
 
     /**
