@@ -201,6 +201,8 @@ export class Document extends EventEmitter implements api.IDocument {
     private lastMinSequenceNumber;
     private loaded = false;
 
+    private localOps: number = 0;
+
     public get clientId(): string {
         return this._deltaManager ? this._deltaManager.clientId : "disconnected";
     }
@@ -233,6 +235,13 @@ export class Document extends EventEmitter implements api.IDocument {
      */
     public get parentBranch(): string {
         return this._parentBranch;
+    }
+
+    /**
+     * Flag indicating whether all submitted ops for this document is acked.
+     */
+    public get noPendingOps(): boolean {
+        return this._deltaManager && this._deltaManager.allOpsAcked;
     }
 
     /**
@@ -859,8 +868,24 @@ export class Document extends EventEmitter implements api.IDocument {
                 object,
                 storage: services ? services.objectStorage : null,
             });
-
+        this.listenToObjectOps(object);
         this.reservations.get(id).resolve(object);
+    }
+
+    private listenToObjectOps(object: api.ICollaborativeObject) {
+        object.on("op-submitted", () => {
+            ++this.localOps;
+        });
+        object.on("op-acked", () => {
+            --this.localOps;
+            this.checkAckCount();
+        });
+    }
+
+    private checkAckCount() {
+        if (this.localOps === 0) {
+            this.emit("ops-acked");
+        }
     }
 
     /**

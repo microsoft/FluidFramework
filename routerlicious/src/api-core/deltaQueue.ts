@@ -18,6 +18,10 @@ export class DeltaQueue<T> extends EventEmitter implements IDeltaQueue {
         return this.q.length();
     }
 
+    public get empty(): boolean {
+        return this.q.empty();
+    }
+
     constructor(private worker: async.AsyncWorker<T, void>) {
         super();
 
