@@ -91,10 +91,6 @@ export class DeltaManager extends EventEmitter implements IDeltaManager {
         return this.connection ? this.connection.details.clientId : "disconnected";
     }
 
-    public get allOpsAcked(): boolean {
-        return this._inbound.empty;
-    }
-
     constructor(private id: string, private tenantId: string, private service: storage.IDocumentService) {
         super();
 

@@ -19,7 +19,7 @@ export class DeltaQueue<T> extends EventEmitter implements IDeltaQueue {
     }
 
     public get empty(): boolean {
-        return this.q.empty();
+        return this.length === 0;
     }
 
     constructor(private worker: async.AsyncWorker<T, void>) {

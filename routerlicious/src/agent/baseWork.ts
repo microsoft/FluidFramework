@@ -41,12 +41,12 @@ export class BaseWork extends EventEmitter {
             // Reset the task map, remove listeners, and close the document.
             console.log(`Removing ${task} task for document ${this.document.tenantId}/${this.document.id}`);
             await this.updateTaskMap(this.document, task, undefined);
-            if (this.document.noPendingOps) {
-                this.closeDocument(task);
-            } else {
-                this.document.on("ops-acked", () => {
+            if (this.document.hasUnackedOps) {
+                this.document.on("processed", () => {
                     this.closeDocument(task);
                 });
+            } else {
+                this.closeDocument(task);
             }
         }
     }

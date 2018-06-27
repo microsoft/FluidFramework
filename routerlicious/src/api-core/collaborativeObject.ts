@@ -36,6 +36,10 @@ export abstract class CollaborativeObject extends EventEmitter implements IColla
         return this._state;
     }
 
+    public get dirty(): boolean {
+        return this.pendingOps.length > 0;
+    }
+
     constructor(public id: string, protected document: IDocument, public type: string) {
         super();
     }
@@ -183,7 +187,6 @@ export abstract class CollaborativeObject extends EventEmitter implements IColla
 
         // Store the message for when it is ACKed and then submit to the server if connected
         this.pendingOps.push(message);
-        this.emit("op-submitted");
         this.pingMap[message.clientSequenceNumber] = Date.now();
 
         // Send if we are connected - otherwise just add to the sent list
@@ -278,7 +281,9 @@ export abstract class CollaborativeObject extends EventEmitter implements IColla
             if (this.pendingOps.length > 0 &&
                 this.pendingOps[0].clientSequenceNumber === message.clientSequenceNumber) {
                 this.pendingOps.shift();
-                this.emit("op-acked");
+                if (this.pendingOps.length === 0) {
+                    this.emit("processed");
+                }
             } else {
                 debug(`Duplicate ack received ${message.clientSequenceNumber}`);
             }
