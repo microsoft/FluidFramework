@@ -109,9 +109,7 @@ export function register(
             };
 
             // work around a race condition on fast first send
-            setTimeout(() => {
-                sendAndTrack(orderer, rawMessage);
-            }, 50);
+            sendAndTrack(orderer, rawMessage);
 
             const parentBranch = documentDetails.value.parent
                 ? documentDetails.value.parent.documentId
