@@ -65,13 +65,13 @@ export function create(config: Provider, tenantManager: ITenantManager,
     /**
      * Script entry point root
      */
-    router.get("/demo", ensureLoggedIn(), (request, response, next) => {
+    router.get("/demo/:tenantId?", ensureLoggedIn(), (request, response, next) => {
         const speed = Number.parseFloat(request.query.speed) || defaultSpeed;
         const authors = Number.parseFloat(request.query.authors) || defaultAuthors;
         const text = request.query.text || defaultTemplate;
         const languages = request.query.language || "";
 
-        handleResponse(response, speed, authors, languages, moniker.choose(), text);
+        handleResponse(response, speed, authors, languages, moniker.choose(), text, request.params.tenantId);
     });
 
     return router;
