@@ -63,7 +63,7 @@ export function register(
             }
             await tenantManager.verifyToken(claims.tenantId, token);
 
-            const orderer = await orderManager.getOrderer(claims.tenantId, claims.documentId);
+            const orderer = await orderManager.getOrderer(socket, claims.tenantId, claims.documentId);
 
             connectionProfiler.done(`Client has requested to load ${message.id}`);
             const documentDetails = await storage.getOrCreateDocument(

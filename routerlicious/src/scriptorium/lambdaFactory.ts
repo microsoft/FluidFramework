@@ -20,6 +20,8 @@ export class ScriptoriumLambdaFactory extends EventEmitter implements IPartition
     }
 
     public async create(config: Provider, context: IContext): Promise<IPartitionLambda> {
+        // Takes in the io as well as the collection. I can probably keep the same lambda but only ever give it stuff
+        // from a single document
         return new ScriptoriumLambda(this.io, this.collection, context);
     }
 
