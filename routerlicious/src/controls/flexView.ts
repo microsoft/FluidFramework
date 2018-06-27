@@ -1,7 +1,7 @@
 // The main app code
-import * as crypto from "crypto";
 import * as resources from "gitresources";
 import { api, types } from "../client-api";
+import { gitHashFile } from "../core-utils";
 import * as gitStorage from "../git-storage";
 import * as ui from "../ui";
 import { Button } from "./button";
@@ -57,19 +57,17 @@ export class FlexView extends ui.Component {
         this.dock = new DockPanel(dockElement);
         this.addChild(this.dock);
 
-        if (root.has("blobs")) {
-            this.blobMap = root.get<types.IMap>("blobs");
-        } else {
+        if (!doc.existing) {
             this.blobMap = root.set<types.IMap>("blobs", doc.createMap());
+        } else {
+            root.wait<types.IMap>("blobs")
+                .then((blobMap) => {
+                    this.blobMap = blobMap;
+                })
+                .catch((error) => {
+                    console.log("Blob map failed to load");
+                });
         }
-        const r = doc.getRoot();
-        const blobsP  = r.get("blobs");
-        blobsP.then((blobs) => {
-            console.log(blobs);
-            blobs.getView().then((blobView) => {
-                console.log(blobView);
-            });
-        });
 
         // Add the ink canvas to the dock
         const inkCanvasElement = document.createElement("div");
@@ -122,7 +120,7 @@ export class FlexView extends ui.Component {
         inclusionButton.on("click", (event) => {
             input.click();
             input.onchange = async () => {
-                this.uploadInclusion(await this.fileToBinaryString(input.files.item(0)));
+                this.uploadInclusion(await this.fileToInclusion(input.files.item(0)));
             };
         });
 
@@ -222,16 +220,11 @@ export class FlexView extends ui.Component {
         const docService = api.getDefaultBlobStorage();
         const gitManager: gitStorage.GitManager = docService.manager;
 
-        // Create Hash (Github hashes the string in this modified way)
-        // Depending on how line endings are stored (https://help.github.com/articles/dealing-with-line-endings/)
-        // File size needs to be based on ArrayBuffer...
-        const fileString = "blob " + file.size + "\0" +  file.content;
-
-        const hash = crypto.createHash("sha1").update(fileString).digest("hex");
+        const hash = gitHashFile(Buffer.from(file.content, "utf-8"));
 
         // Set the hash in blob storage
         // TODO: Empty should be the inclusion's information
-        this.blobMap.set<string>(hash, "empty");
+        await this.blobMap.set<string>(hash, "empty");
 
         // Encoding must match with the fileToBinary encoding
         const blobResponseP = gitManager.createBlob(file.content, "utf-8") as Promise<resources.ICreateBlobResponse>;
@@ -261,18 +254,25 @@ export class FlexView extends ui.Component {
         }
         Promise.all(filesP)
             .then((files) => {
-                const contents = files.map((blob) => {
+                files.map((blob) => {
                     // Blob returns in base64 based on https://github.com/Microsoft/Prague/issues/732
-                    return new Buffer(blob.content, "base64").toString("utf-8");
+                    const str = new Buffer(blob.content, "base64").toString("utf-8");
+                    this.renderInclusions(str);
+                    return str;
                 });
-                console.log(contents[0]);
             })
             .catch((error) => {
                 console.log("Error: " + JSON.stringify(error));
             });
     }
 
-    private async fileToBinaryString(file: File): Promise<IInclusion> {
+    private renderInclusions(incl: string): void {
+        console.log(incl.slice(0, 100));
+
+        // TODO: sabroner finish rendering
+    }
+
+    private async fileToInclusion(file: File): Promise<IInclusion> {
         const fr = new FileReader();
 
         return new Promise<IInclusion>((resolve, reject) => {

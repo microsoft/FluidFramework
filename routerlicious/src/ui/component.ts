@@ -1,7 +1,7 @@
 import { EventEmitter } from "events";
 import { ISize, Rectangle } from "./geometry";
 
-// Composition or inheritence for the below?
+// Composition or inheritance for the below?
 
 export abstract class Component {
     protected size = new Rectangle(0, 0, 0, 0);
