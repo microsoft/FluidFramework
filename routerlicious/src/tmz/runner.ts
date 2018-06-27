@@ -1,5 +1,6 @@
 import * as winston from "winston";
-import { IHelpMessage, IQueueMessage, ITenantManager } from "../api-core";
+import { IHelpMessage, IQueueMessage } from "../api-core";
+import { ITenantManager } from "../core";
 import { Deferred } from "../core-utils";
 import * as utils from "../utils";
 import * as messages from "./messages";

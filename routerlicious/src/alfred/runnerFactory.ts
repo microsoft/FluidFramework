@@ -1,5 +1,4 @@
 import { Provider } from "nconf";
-import { ITenantManager } from "../api-core";
 import * as core from "../core";
 import * as services from "../services";
 import * as utils from "../utils";
@@ -14,7 +13,8 @@ export class AlfredResources implements utils.IResources {
         public producer: utils.IProducer,
         public redisConfig: any,
         public webSocketLibrary: string,
-        public tenantManager: ITenantManager,
+        public orderManager: core.IOrdererManager,
+        public tenantManager: core.ITenantManager,
         public appTenants: IAlfredTenant[],
         public mongoManager: utils.MongoManager,
         public port: any,
@@ -52,16 +52,20 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
 
         // create the index on the documents collection
         const db = await mongoManager.getDatabase();
-        const collection = db.collection<any>(documentsCollectionName);
-        await collection.createIndex(
+        const documentsCollection = db.collection<core.IDocument>(documentsCollectionName);
+        await documentsCollection.createIndex(
             {
                 documentId: 1,
                 tenantId: 1,
             },
             true);
 
+        const deltasCollectionName = config.get("mongo:collectionNames:deltas");
+        const deltasCollection = db.collection(deltasCollectionName);
+
         // Manager to query riddler for tenant information
         const tenantManager = new services.TenantManager(authEndpoint, config.get("worker:blobStorageUrl"));
+        const orderManager = new services.OrdererManager(producer, documentsCollection, deltasCollection);
 
         // Tenants attached to the apps this service exposes
         const appTenants = config.get("alfred:tenants") as Array<{ id: string, key: string }>;
@@ -74,6 +78,7 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
             producer,
             redisConfig,
             webSocketLibrary,
+            orderManager,
             tenantManager,
             appTenants,
             mongoManager,
@@ -89,6 +94,7 @@ export class AlfredRunnerFactory implements utils.IRunnerFactory<AlfredResources
             resources.webServerFactory,
             resources.config,
             resources.port,
+            resources.orderManager,
             resources.tenantManager,
             resources.appTenants,
             resources.mongoManager,

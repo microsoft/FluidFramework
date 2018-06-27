@@ -18,7 +18,7 @@ import * as favicon from "serve-favicon";
 import split = require("split");
 import * as expiry from "static-expiry";
 import * as winston from "winston";
-import { ITenantManager } from "../api-core";
+import { ITenantManager } from "../core";
 import * as utils from "../utils";
 import * as alfredRoutes from "./routes";
 import { IAlfredTenant } from "./tenant";

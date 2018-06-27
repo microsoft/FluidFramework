@@ -1,5 +1,5 @@
 import * as _ from "lodash";
-import { ITenantManager } from "../api-core";
+import { ITenantManager } from "../core";
 import * as utils from "../utils";
 import { IAlfredTenant } from "./tenant";
 

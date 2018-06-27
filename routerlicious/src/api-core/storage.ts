@@ -2,8 +2,7 @@
 import * as resources from "gitresources";
 import * as gitStorage from "../git-storage";
 import { IWorkerClient } from "./client";
-import { IDocumentMessage, ISequencedDocumentMessage } from "./protocol";
-import { ITenantUser } from "./tenant";
+import { IDocumentMessage, ISequencedDocumentMessage, ITenantUser } from "./protocol";
 
 export interface IDocumentAttributes {
     /**

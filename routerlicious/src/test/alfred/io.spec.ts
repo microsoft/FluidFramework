@@ -1,6 +1,4 @@
 import * as assert from "assert";
-import * as nconf from "nconf";
-import * as path from "path";
 import * as io from "../../alfred/io";
 import * as api from "../../api-core";
 import * as core from "../../core";
@@ -11,12 +9,11 @@ import {
     MessageFactory,
     TestDbFactory,
     TestKafka,
+    TestOrdererManager,
     TestTenantManager,
     TestWebSocket,
     TestWebSocketServer,
 } from "../testUtils";
-
-const defaultConfig = nconf.file(path.join(__dirname, "../../../config.test.json")).use("memory");
 
 describe("Routerlicious", () => {
     describe("Alfred", () => {
@@ -27,6 +24,7 @@ describe("Routerlicious", () => {
                 const testId = "test";
                 let webSocketServer: TestWebSocketServer;
                 let deliKafka: TestKafka;
+                let testOrderer: TestOrdererManager;
                 let testTenantManager: TestTenantManager;
 
                 beforeEach(() => {
@@ -39,18 +37,17 @@ describe("Routerlicious", () => {
                     deliKafka = new TestKafka();
                     const producer = deliKafka.createProducer();
                     testTenantManager = new TestTenantManager();
+                    testOrderer = new TestOrdererManager(producer);
 
                     webSocketServer = new TestWebSocketServer();
 
                     io.register(
                         webSocketServer,
-                        defaultConfig,
                         mongoManager,
-                        producer,
                         documentsCollectionName,
                         metricClientConfig,
-                        testTenantManager,
-                        { id: "test", key: "test" });
+                        testOrderer,
+                        testTenantManager);
                 });
 
                 function connectToServer(

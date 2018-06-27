@@ -1,7 +1,7 @@
 import * as cors from "cors";
 import { Router } from "express";
 import { Provider } from "nconf";
-import { ITenantManager } from "../../../api-core";
+import { ITenantManager } from "../../../core";
 import * as utils from "../../../utils";
 import { IAlfredTenant } from "../../tenant";
 import * as deltas from "./deltas";

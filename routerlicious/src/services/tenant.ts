@@ -1,9 +1,9 @@
 import * as request from "request-promise-native";
-import * as api from "../api-core";
+import * as core from "../core";
 import { GitManager } from "../git-storage";
 import * as clientServices from "../services-client";
 
-export class Tenant implements api.ITenant {
+export class Tenant implements core.ITenant {
     public get id(): string {
         return this.config.id;
     }
@@ -12,22 +12,22 @@ export class Tenant implements api.ITenant {
         return this.manager;
     }
 
-    public get storage(): api.ITenantStorage {
+    public get storage(): core.ITenantStorage {
         return this.config.storage;
     }
 
-    constructor(private config: api.ITenantConfig, private manager: GitManager) {
+    constructor(private config: core.ITenantConfig, private manager: GitManager) {
     }
 }
 
 /**
  * Manages a collection of tenants
  */
-export class TenantManager implements api.ITenantManager {
+export class TenantManager implements core.ITenantManager {
     constructor(private endpoint: string, private historianEndpoint: string) {
     }
 
-    public async getTenant(tenantId: string): Promise<api.ITenant> {
+    public async getTenant(tenantId: string): Promise<core.ITenant> {
         const details = await request.get(
             `${this.endpoint}/api/tenants/${tenantId}`,
             {
@@ -36,7 +36,7 @@ export class TenantManager implements api.ITenantManager {
                     "Content-Type": "application/json",
                 },
                 json: true,
-            }) as api.ITenantConfig;
+            }) as core.ITenantConfig;
 
         const historian = new clientServices.Historian(
             `${this.historianEndpoint}/repos/${tenantId}`,

@@ -1,6 +1,5 @@
 import * as jwt from "jsonwebtoken";
 import * as moniker from "moniker";
-import { Provider } from "nconf";
 import * as winston from "winston";
 import * as agent from "../agent";
 import * as api from "../api-core";
@@ -9,7 +8,6 @@ import { ThroughputCounter } from "../core-utils";
 import * as socketStorage from "../socket-storage";
 import * as utils from "../utils";
 import * as storage from "./storage";
-import { IAlfredTenant } from "./tenant";
 
 interface IDocumentUser {
     tenantId: string;
@@ -18,18 +16,18 @@ interface IDocumentUser {
 
     user: api.ITenantUser;
 
+    orderer: core.IOrderer;
+
     permission: string;
 }
 
 export function register(
     webSocketServer: core.IWebSocketServer,
-    config: Provider,
     mongoManager: utils.MongoManager,
-    producer: utils.IProducer,
     documentsCollectionName: string,
     metricClientConfig: any,
-    tenantManager: api.ITenantManager,
-    defaultTenant: IAlfredTenant) {
+    orderManager: core.IOrdererManager,
+    tenantManager: core.ITenantManager) {
 
     const throughput = new ThroughputCounter(winston.info);
     const metricLogger = agent.createMetricClient(metricClientConfig);
@@ -41,9 +39,10 @@ export function register(
         // Map from client IDs on this connection to the object ID and user info.
         const connectionsMap = new Map<string, IDocumentUser>();
 
-        function sendAndTrack(message: core.IRawOperationMessage) {
+        function sendAndTrack(orderer: core.IOrderer, message: core.IRawOperationMessage) {
+            // I need to change the producer to become an orderer
             throughput.produce();
-            const sendP = producer.send(JSON.stringify(message), message.documentId);
+            const sendP = orderer.order(message, message.documentId);
             sendP.catch((error) => { return; }).then(() => throughput.acknowlwedge());
             return sendP;
         }
@@ -68,7 +67,6 @@ export function register(
             const documentDetails = await storage.getOrCreateDocument(
                 mongoManager,
                 documentsCollectionName,
-                producer,
                 message.tenantId,
                 message.id);
 
@@ -76,11 +74,14 @@ export function register(
             await Promise.all(
                 [socket.join(`${claims.tenantId}/${claims.documentId}`), socket.join(`client#${clientId}`)]);
 
+            const orderer = await orderManager.getOrderer(socket, claims.tenantId, claims.documentId);
+
             // Create and set a new client ID
             connectionsMap.set(
                 clientId,
                 {
                     documentId: message.id,
+                    orderer,
                     permission: claims.permission,
                     tenantId: message.tenantId,
                     user: claims.user,
@@ -106,7 +107,11 @@ export function register(
                 type: core.RawOperationType,
                 user: claims.user,
             };
-            sendAndTrack(rawMessage);
+
+            // work around a race condition on fast first send
+            setTimeout(() => {
+                sendAndTrack(orderer, rawMessage);
+            }, 50);
 
             const parentBranch = documentDetails.value.parent
                 ? documentDetails.value.parent.documentId
@@ -172,7 +177,7 @@ export function register(
                 // Add trace
                 rawMessage.operation.traces.push( {service: "alfred", action: "start", timestamp: Date.now()} );
 
-                sendAndTrack(rawMessage).then(
+                sendAndTrack(docUser.orderer, rawMessage).then(
                     (responseMessage) => {
                         response(null, responseMessage);
                     },
@@ -222,7 +227,7 @@ export function register(
                     user: docUser.user,
                 };
 
-                sendAndTrack(rawMessage);
+                sendAndTrack(docUser.orderer, rawMessage);
             }
         });
     });

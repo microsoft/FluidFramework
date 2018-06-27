@@ -2,13 +2,12 @@ import { EventEmitter } from "events";
 import { IWorkerClient } from "./client";
 import * as protocol from "./protocol";
 import * as storage from "./storage";
-import { ITenantUser } from "./tenant";
 
 export interface IConnectionDetails {
     clientId: string;
     existing: boolean;
     parentBranch: string;
-    user: ITenantUser;
+    user: protocol.ITenantUser;
 }
 
 export class DeltaConnection extends EventEmitter {

@@ -1,4 +1,4 @@
-import { ITenant, ITenantManager, ITenantStorage } from "../../api-core";
+import { ITenant, ITenantManager, ITenantStorage } from "../../core";
 import { GitManager } from "../../git-storage";
 import { TestHistorian } from "./";
 

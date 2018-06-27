@@ -8,6 +8,7 @@ export * from "./testDocumentLambda";
 export * from "./testDocumentService";
 export * from "./testHistorian";
 export * from "./testKafka";
+export * from "./testOrderer";
 export * from "./testPublisher";
 export * from "./testRegistration";
 export * from "./testTenantManager";

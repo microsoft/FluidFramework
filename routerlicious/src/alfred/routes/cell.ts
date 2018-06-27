@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { Provider } from "nconf";
-import { ITenantManager } from "../../api-core";
+import { ITenantManager } from "../../core";
 import * as storage from "../storage";
 import { IAlfredTenant } from "../tenant";
 import * as utils from "../utils";
