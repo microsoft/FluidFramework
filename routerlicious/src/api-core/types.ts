@@ -30,6 +30,11 @@ export interface ICollaborativeObject {
     type: string;
 
     /**
+     * Returns whether the object has any pending unacked ops.
+     */
+    dirty: boolean;
+
+    /**
      * Marker to clearly identify the object as a collaborative object
      */
     __collaborativeObject__: boolean;

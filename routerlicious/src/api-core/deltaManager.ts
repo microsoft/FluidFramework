@@ -207,6 +207,12 @@ export class DeltaManager extends EventEmitter implements IDeltaManager {
         return deferred.promise;
     }
 
+    public close() {
+        if (this.connection) {
+            this.connection.close();
+        }
+    }
+
     private getDeltasCore(
         from: number,
         to: number,

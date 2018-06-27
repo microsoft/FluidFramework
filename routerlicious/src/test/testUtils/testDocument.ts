@@ -7,6 +7,7 @@ import { Deferred } from "../../core-utils";
 export class TestDeltaQueue extends EventEmitter implements core.IDeltaQueue {
     public paused: boolean;
     public length: number;
+    public empty: boolean;
     private resumeDeferred: Deferred<void>;
 
     public pause() {

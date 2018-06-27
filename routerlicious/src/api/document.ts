@@ -236,6 +236,18 @@ export class Document extends EventEmitter implements api.IDocument {
     }
 
     /**
+     * Flag indicating whether all submitted ops for this document is acked.
+     */
+    public get hasUnackedOps(): boolean {
+        for (const state of this.distributedObjects.values()) {
+            if (state.object.dirty) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * Constructs a new document from the provided details
      */
     private constructor(
@@ -363,7 +375,9 @@ export class Document extends EventEmitter implements api.IDocument {
      * Closes the document and detaches all listeners
      */
     public close() {
-        throw new Error("Not yet implemented");
+        if (this._deltaManager) {
+            this._deltaManager.close();
+        }
     }
 
     public submitObjectMessage(envelope: api.IEnvelope): void {
@@ -857,8 +871,16 @@ export class Document extends EventEmitter implements api.IDocument {
                 object,
                 storage: services ? services.objectStorage : null,
             });
-
+        this.attachOpAckListener(object);
         this.reservations.get(id).resolve(object);
+    }
+
+    private attachOpAckListener(object: api.ICollaborativeObject) {
+        object.on("processed", () => {
+            if (!this.hasUnackedOps) {
+                this.emit("processed");
+            }
+        });
     }
 
     /**

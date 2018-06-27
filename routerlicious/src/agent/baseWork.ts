@@ -38,14 +38,26 @@ export class BaseWork extends EventEmitter {
     public async stop(task: string): Promise<void> {
         // Make sure the document is loaded first.
         if (this.document !== undefined) {
-            // Reset the task map, remove doc listener and self listeners.
+            // Reset the task map, remove listeners, and close the document.
             console.log(`Removing ${task} task for document ${this.document.tenantId}/${this.document.id}`);
-            this.updateTaskMap(this.document, task, undefined);
-            this.document.removeListener("op", this.operation);
-            this.document.removeListener("error", this.errorHandler);
-            this.events.removeAllListeners();
-            this.removeAllListeners();
+            await this.updateTaskMap(this.document, task, undefined);
+            if (this.document.hasUnackedOps) {
+                this.document.on("processed", () => {
+                    this.closeDocument(task);
+                });
+            } else {
+                this.closeDocument(task);
+            }
         }
+    }
+
+    private closeDocument(task: string) {
+        console.log(`Closing document ${this.document.tenantId}/${this.document.id} for task ${task}`);
+        this.document.removeListener("op", this.operation);
+        this.document.removeListener("error", this.errorHandler);
+        this.document.close();
+        this.events.removeAllListeners();
+        this.removeAllListeners();
     }
 
     private async updateTaskMap(doc: api.Document, task: string, clientId: string) {
