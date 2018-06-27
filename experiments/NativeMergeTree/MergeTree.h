@@ -104,6 +104,8 @@ struct MergeBlock final : public MergeNode
 	using LengthMap = TLengthMap<MaxNodesInBlock>;
 	ChildNodeArray children;
 	LengthMap lengthMap;
+	int depthMin = 0;
+	int depthMax = 0;
 
 	MergeBlock() : MergeNode(false /*isLeaf*/) {}
 
@@ -114,6 +116,8 @@ struct MergeBlock final : public MergeNode
 		: MergeNode(false /*isLeaf*/)
 		, children(std::move(other.children))
 		, lengthMap(std::move(other.lengthMap))
+		, depthMin(other.depthMin)
+		, depthMax(other.depthMax)
 	{
 		for (auto&& child : *this)
 			child->parent = this;
@@ -169,6 +173,18 @@ struct MergeBlock final : public MergeNode
 		}
 		assert(children[index] == nullptr);
 
+		if (!newNode->isLeaf)
+		{
+			MergeBlock *newBlock = static_cast<MergeBlock *>(newNode.get());
+			if (ChildCount() == 0 || (newBlock->depthMin + 1) > depthMin)
+				depthMin = newBlock->depthMin + 1;
+			depthMax = std::max(depthMax, newBlock->depthMax + 1);
+		}
+		else
+		{
+			depthMin = 1;
+			depthMax = std::max(depthMax, 1);
+		}
 		newNode->parent = this;
 		newNode->index = static_cast<int8_t>(index);
 		children[index] = std::move(newNode);
@@ -232,6 +248,11 @@ struct MergeBlock final : public MergeNode
 
 		newBlock->lengthMap = lengthMap.Split();
 
+		depthMin = recomputeDepthMinSlow();
+		newBlock->depthMin = newBlock->recomputeDepthMinSlow();
+		depthMax = recomputeDepthMaxSlow();
+		newBlock->depthMax = newBlock->recomputeDepthMaxSlow();
+
 		checkBlockInvariants();
 		newBlock->checkBlockInvariants();
 
@@ -259,8 +280,12 @@ struct MergeBlock final : public MergeNode
 				}
 				std::move(children.begin(), children.end(), newBlock->children.begin());
 				newBlock->lengthMap = std::move(lengthMap);
+				newBlock->depthMin = depthMin;
+				newBlock->depthMax = depthMax;
 
 				lengthMap = LengthMap();
+				depthMin = 0;
+				depthMax = 0;
 
 				MergeBlock *newBlockRaw = newBlock.get();
 				adopt(std::move(newBlock), 0, false /*fSplit*/);
@@ -353,6 +378,44 @@ struct MergeBlock final : public MergeNode
 		return LengthMap(std::move(entries), childCount);
 	}
 
+	[[nodiscard]]
+	int recomputeDepthMinSlow()
+	{
+		if (ChildCount() == 0)
+			return 0;
+
+		if (children[0]->isLeaf)
+			return 1;
+
+		int d = std::numeric_limits<int>::max();
+		for (const auto &child : *this)
+		{
+			MergeBlock *childBlock = static_cast<MergeBlock *>(child.get());
+			d = std::min(d, childBlock->depthMin + 1);
+		}
+
+		return d;
+	}
+
+	[[nodiscard]]
+	int recomputeDepthMaxSlow()
+	{
+		if (ChildCount() == 0)
+			return 0;
+
+		if (children[0]->isLeaf)
+			return 1;
+
+		int d = 0;
+		for (const auto &child : *this)
+		{
+			MergeBlock *childBlock = static_cast<MergeBlock *>(child.get());
+			d = std::max(d, childBlock->depthMax + 1);
+		}
+
+		return d;
+	}
+
 	void checkBlockInvariants()
 	{
 #ifdef _DEBUG
@@ -366,8 +429,17 @@ struct MergeBlock final : public MergeNode
 		for (int i = ChildCount(); i < MaxNodesInBlock; i++)
 			assert(children[i] == nullptr);
 
+		for (int i = 1; i < ChildCount(); i++)
+			assert(children[i - 1]->isLeaf == children[i]->isLeaf);
+
 		LengthMap newLengths = recomputeLengthsSlow();
 		assert(newLengths == lengthMap);
+
+		int dMin = recomputeDepthMinSlow();
+		int dMax = recomputeDepthMaxSlow();
+		assert(depthMin == dMin);
+		assert(depthMax == dMax);
+		assert(depthMax >= depthMin);
 #endif
 	}
 };
@@ -677,19 +749,35 @@ struct MergeTree
 		// 'nodes' at iBegin
 		auto fillBlock = [&nodes](MergeBlock *block, size_t iBegin, size_t iEnd) -> void
 		{
-			std::move(nodes.begin() + iBegin, nodes.begin() + iEnd, block->children.begin());
+			for (size_t i = iBegin + 1; i < iEnd; i++)
+				assert(nodes[i - 1]->isLeaf == nodes[i]->isLeaf);
 			uint32_t childCount = static_cast<uint32_t>(iEnd - iBegin);
+			assert(childCount > 0);
+			assert(childCount <= MergeBlock::MaxNodesInBlock);
+
+			std::move(nodes.begin() + iBegin, nodes.begin() + iEnd, block->children.begin());
 			for (size_t i = 0; i < childCount; i++)
 			{
 				block->children[i]->parent = block;
 				block->children[i]->index = static_cast<uint8_t>(i);
 			}
 			block->lengthMap = block->recomputeLengthsSlow();
+			if (block->children[0]->isLeaf)
+			{
+				block->depthMin = 1;
+				block->depthMax = 1;
+			}
+			else
+			{
+				MergeBlock *childBlock = static_cast<MergeBlock*>(block->children[0].get());
+				block->depthMin = childBlock->depthMin + 1;
+				block->depthMax = childBlock->depthMax + 1;
+			}
 		};
 
 		while (nodes.size() > MergeBlock::MaxNodesInBlock)
 		{
-			for (size_t iBegin = 0, iEnd = MergeBlock::MaxNodesInBlock; iEnd < nodes.size(); iBegin = iEnd, iEnd = std::min(iEnd + MergeBlock::MaxNodesInBlock, nodes.size()))
+			for (size_t iBegin = 0, iEnd = MergeBlock::MaxNodesInBlock; iBegin < nodes.size(); iBegin = iEnd, iEnd = std::min(iEnd + MergeBlock::MaxNodesInBlock, nodes.size()))
 			{
 				std::unique_ptr<MergeBlock> block = std::make_unique<MergeBlock>();
 				fillBlock(block.get(), iBegin, iEnd);
@@ -699,6 +787,7 @@ struct MergeTree
 			nodes.erase(std::remove(nodes.begin(), nodes.end(), nullptr), nodes.end());
 		}
 		fillBlock(&root, 0, nodes.size());
+		checkInvariants();
 	}
 
 	void checkInvariants()
