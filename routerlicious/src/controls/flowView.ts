@@ -2202,7 +2202,6 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
             }
             const lineOK = (!(deferredPGs || deferWhole)) && (layoutContext.deferUntilHeight <= deferredHeight);
             if (lineOK && ((lineEnd === undefined) || (lineEnd > layoutContext.requestedPosition))) {
-                console.log(`line Y is ${lineY} breakIndex ${breakIndex}`);
                 lineDiv = makeLineDiv(new ui.Rectangle(lineX, lineY, lineWidth, lineHeight), lineFontstr);
                 lineDiv.endPGMarker = endPGMarker;
                 lineDiv.breakIndex = breakIndex;
