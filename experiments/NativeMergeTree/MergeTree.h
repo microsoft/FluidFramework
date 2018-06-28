@@ -99,6 +99,7 @@ struct TextSegment final : public Segment
 struct MergeBlock final : public MergeNode
 {
 	static constexpr size_t MaxNodesInBlock = Config::BlockSize();
+	static constexpr int MaxDepthImbalance = 2;
 
 	using ChildNodeArray = std::array<std::unique_ptr<MergeNode>, MaxNodesInBlock>;
 	using LengthMap = TLengthMap<MaxNodesInBlock>;
@@ -125,6 +126,7 @@ struct MergeBlock final : public MergeNode
 
 	int ChildCount() const { return lengthMap.ChildCount(); }
 	bool isFull() const { return ChildCount() == MaxNodesInBlock; }
+	bool IsUnbalanced() const { return (depthMax - depthMin) > MaxDepthImbalance; }
 	MergeNode *get(int i) const
 	{
 		assert(i >= 0 && i < ChildCount());
@@ -720,7 +722,15 @@ struct MergeTree
 			MergeBlock *parent = &root;
 			while (parent->ChildCount() > 0 && !parent->children[0]->isLeaf)
 				parent = static_cast<MergeBlock *>(parent->children[parent->ChildCount() - 1].get());
-			parent->ensureExtraCapacity(1);
+
+			if (parent->ChildCount() == MergeBlock::MaxNodesInBlock)
+			{
+				// do a slightly complicated dance to ensure that we keep track of the right parent even if it has to split
+				MergeNode *lastChild = parent->children[parent->ChildCount() - 1].get();
+				lastChild->parent->ensureExtraCapacity(1);
+				parent = lastChild->parent;
+			}
+
 			txn->segments.push_back(newSegment.get());
 			parent->adopt(std::move(newSegment), parent->ChildCount(), false /*fSplit*/);
 		}
@@ -744,6 +754,11 @@ struct MergeTree
 		for (auto&& segment : segments)
 			nodes.push_back(std::move(segment));
 
+		ReloadBlockFromNodes(&root, std::move(nodes));
+	}
+
+	void ReloadBlockFromNodes(MergeBlock *rootBlock, std::vector<std::unique_ptr<MergeNode>> nodes)
+	{
 		// Given a range of indexes in 'nodes', move the elements from
 		// those indexes into a new block, and put that block back into
 		// 'nodes' at iBegin
@@ -786,8 +801,77 @@ struct MergeTree
 
 			nodes.erase(std::remove(nodes.begin(), nodes.end(), nullptr), nodes.end());
 		}
-		fillBlock(&root, 0, nodes.size());
-		checkInvariants();
+		fillBlock(rootBlock, 0, nodes.size());
+		rootBlock->checkBlockInvariants();
+	}
+
+	// Given an unbalanced block, find the smallest block under it
+	// that's still unbalanced. The goal is to rewrite as little
+	// of the tree as possible, but still make progress.
+	MergeBlock *FindRebalancePoint(MergeBlock *block)
+	{
+		assert(block->IsUnbalanced());
+
+		MergeBlock *candidate = nullptr;
+		for (const auto &childNode : *block)
+		{
+			if (childNode->isLeaf)
+			{
+				assert(false);
+				return block;
+			}
+
+			MergeBlock *childBlock = static_cast<MergeBlock *>(childNode.get());
+			if (childBlock->IsUnbalanced())
+				return FindRebalancePoint(childBlock);
+		}
+
+		return block;
+	}
+
+	template <typename TCallback>
+	void EnumerateSegments(MergeBlock *block, TCallback callback)
+	{
+		for (auto &&child : *block)
+		{
+			if (child->isLeaf)
+				callback(child);
+			else
+				EnumerateSegments(static_cast<MergeBlock *>(child.get()), callback);
+		}
+	}
+
+	std::vector<std::unique_ptr<MergeNode>> ExtractSegments(MergeBlock *block)
+	{
+		std::vector<std::unique_ptr<MergeNode>> nodes;
+		EnumerateSegments(block, [&](std::unique_ptr<MergeNode> &node)
+		{
+			nodes.push_back(std::move(node));
+		});
+
+		for (auto &&child : *block)
+			child = nullptr;
+
+		block->lengthMap = MergeBlock::LengthMap();
+
+		return nodes;
+	}
+
+	// There are three things that we want to tidy up during idle time:
+	// * rebalancing the tree
+	// * cleaning up dead segments
+	// * merging together adjacent compatible segments
+	//
+	// So far, we only do the first one
+	void Zamboni(bool &fKeepGoing)
+	{
+		while (root.IsUnbalanced() && fKeepGoing)
+		{
+			MergeBlock *block = FindRebalancePoint(&root);
+			std::vector<std::unique_ptr<MergeNode>> nodes = ExtractSegments(block);
+			// TODO: now would be a good time to trim out dead segments
+			ReloadBlockFromNodes(block, std::move(nodes));
+		}
 	}
 
 	void checkInvariants()

@@ -324,4 +324,20 @@ TEST_METHOD(MergeTree_BasicReplace)
 	AssertDoc(doc, Seq::Create(1), "The fox");
 	AssertDoc(doc, Seq::Create(2), "The slow fox");
 }
+
+TEST_METHOD(MergeTree_AppendMany)
+{
+	MergeTree doc;
+
+	Seq seqPrev = Seq::Universal();
+	for (int i = 1; i < 500; i++)
+	{
+		MergeTree::Txn txn = doc.StartTransaction(seqPrev);
+		doc.Replace(txn, doc.CpMac(txn->seqBase), 0, "a");
+		doc.CommitTransaction(txn, Seq::Create(i));
+		seqPrev = Seq::Create(i);
+	}
+
+	AssertDoc(doc, seqPrev, std::string(499, 'a'));
+}
 };
