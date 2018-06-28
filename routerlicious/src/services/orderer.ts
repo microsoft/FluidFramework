@@ -125,7 +125,7 @@ export class LocalOrderer implements IOrderer {
         const tmzLambda = new TmzLambda(
             tmzContext,
             tmzRunner,
-            new Promise<void>((resolve, reject) => { }));
+            new Promise<void>((resolve, reject) => { return; }));
 
         // Routemaster lambda
         // import { RouteMasterLambda } from "../routemaster/lambda";
@@ -133,9 +133,9 @@ export class LocalOrderer implements IOrderer {
         // const routemasterLambda = new RouteMasterLambda(
         //     null /* document */,
         // The producer below gets the trickiest. We need to be able to connect to an existing document - or open a new
-        // one - and then be able to send messages to it. But this document may not yet be open. So we need to be able to start
-        // processing of it. Also how do we manage pending work and fallback in these situations across all lambdas. Or do they combine
-        // up together?
+        // one - and then be able to send messages to it. But this document may not yet be open. So we need to be able
+        // to start processing of it. Also how do we manage pending work and fallback in these situations across all
+        // lambdas. Or do they combine up together?
         //     producer /* producer */,
         //     routeMasterContext);
 
