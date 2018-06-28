@@ -225,13 +225,13 @@ MergeTree MakeTestMergeTree()
 	// 1: The slow fox
 	// 2: The slow brown fox
 	// 3: The quick brown fox
-	std::vector<std::unique_ptr<Segment>> segments;
-	segments.push_back(std::make_unique<TextSegment>(Seq::Universal(), "The "));
-	segments.push_back(std::make_unique<TextSegment>(Seq::Create(1), "slow "));
+	std::vector<std::shared_ptr<Segment>> segments;
+	segments.push_back(std::make_shared<TextSegment>(Seq::Universal(), "The "));
+	segments.push_back(std::make_shared<TextSegment>(Seq::Create(1), "slow "));
 	segments[1]->seqRemoved = Seq::Create(3);
-	segments.push_back(std::make_unique<TextSegment>(Seq::Create(3), "quick "));
-	segments.push_back(std::make_unique<TextSegment>(Seq::Create(2), "brown "));
-	segments.push_back(std::make_unique<TextSegment>(Seq::Universal(), "fox"));
+	segments.push_back(std::make_shared<TextSegment>(Seq::Create(3), "quick "));
+	segments.push_back(std::make_shared<TextSegment>(Seq::Create(2), "brown "));
+	segments.push_back(std::make_shared<TextSegment>(Seq::Universal(), "fox"));
 
 	doc.ReloadFromSegments(std::move(segments));
 	return doc;

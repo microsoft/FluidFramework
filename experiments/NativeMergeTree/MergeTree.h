@@ -60,7 +60,7 @@ struct Segment : public MergeNode
 	{}
 
 	virtual ~Segment() = default;
-	virtual std::unique_ptr<Segment> splitAt(int pos) = 0;
+	virtual std::shared_ptr<Segment> splitAt(int pos) = 0;
 	void Commit(Seq seqLocal, Seq seqServer) override
 	{
 		if (seqAdded == seqLocal)
@@ -79,7 +79,7 @@ struct TextSegment final : public Segment
 		, m_text(text)
 	{}
 
-	std::unique_ptr<Segment> splitAt(int pos) override
+	std::shared_ptr<Segment> splitAt(int pos) override
 	{
 		if (pos > 0)
 		{
@@ -87,7 +87,7 @@ struct TextSegment final : public Segment
 			m_text.resize(pos);
 			length = m_text.size();
 
-			std::unique_ptr<TextSegment> leafSegment = std::make_unique<TextSegment>(*this);
+			std::shared_ptr<TextSegment> leafSegment = std::make_shared<TextSegment>(*this);
 			leafSegment->m_text = std::move(remainingText);
 			leafSegment->length = leafSegment->m_text.size();
 			return leafSegment;
@@ -101,7 +101,7 @@ struct MergeBlock final : public MergeNode
 	static constexpr size_t MaxNodesInBlock = Config::BlockSize();
 	static constexpr int MaxDepthImbalance = 2;
 
-	using ChildNodeArray = std::array<std::unique_ptr<MergeNode>, MaxNodesInBlock>;
+	using ChildNodeArray = std::array<std::shared_ptr<MergeNode>, MaxNodesInBlock>;
 	using LengthMap = TLengthMap<MaxNodesInBlock>;
 	ChildNodeArray children;
 	LengthMap lengthMap;
@@ -162,7 +162,7 @@ struct MergeBlock final : public MergeNode
 		parent->updateParentLengths(seqAdded, seqRemoved, length);
 	}
 
-	void adopt(std::unique_ptr<MergeNode> newNode, uint8_t index, bool fWasSplit)
+	void adopt(const std::shared_ptr<MergeNode> &newNode, uint8_t index, bool fWasSplit)
 	{
 		int iNewLast = ChildCount();
 		assert(index <= iNewLast);
@@ -231,7 +231,7 @@ struct MergeBlock final : public MergeNode
 	{
 		assert(parent->ChildCount() < MaxNodesInBlock);
 		checkBlockInvariants();
-		std::unique_ptr<MergeBlock> newBlock = std::make_unique<MergeBlock>();
+		std::shared_ptr<MergeBlock> newBlock = std::make_shared<MergeBlock>();
 		static_assert(MaxNodesInBlock % 2 == 0);
 		constexpr int split = MaxNodesInBlock / 2;
 
@@ -271,7 +271,7 @@ struct MergeBlock final : public MergeNode
 			{
 				// Looks like we're the root!
 				// move contents of root into a child node, and then Split that
-				std::unique_ptr<MergeBlock> newBlock = std::make_unique<MergeBlock>();
+				std::shared_ptr<MergeBlock> newBlock = std::make_shared<MergeBlock>();
 				for (int i = 0; i < MaxNodesInBlock; i++)
 				{
 					if (children[i] != nullptr)
@@ -695,7 +695,7 @@ struct MergeTree
 		assert(dcp >= 0);
 
 		SegmentIterator it = findAndSplit(txn->seqBase, cp + dcp);
-		std::unique_ptr<Segment> newSegment = std::make_unique<TextSegment>(txn->seqNew, text);
+		std::shared_ptr<Segment> newSegment = std::make_shared<TextSegment>(txn->seqNew, text);
 
 		// Remove existing text if needed
 		if (dcp > 0)
@@ -747,9 +747,9 @@ struct MergeTree
 		return root.lengthMap.Entries().back().GetSeq();
 	}
 
-	void ReloadFromSegments(std::vector<std::unique_ptr<Segment>> segments)
+	void ReloadFromSegments(std::vector<std::shared_ptr<Segment>> segments)
 	{
-		std::vector<std::unique_ptr<MergeNode>> nodes;
+		std::vector<std::shared_ptr<MergeNode>> nodes;
 		nodes.reserve(segments.size());
 		for (auto&& segment : segments)
 			nodes.push_back(std::move(segment));
@@ -757,7 +757,7 @@ struct MergeTree
 		ReloadBlockFromNodes(&root, std::move(nodes));
 	}
 
-	void ReloadBlockFromNodes(MergeBlock *rootBlock, std::vector<std::unique_ptr<MergeNode>> nodes)
+	void ReloadBlockFromNodes(MergeBlock *rootBlock, std::vector<std::shared_ptr<MergeNode>> nodes)
 	{
 		// Given a range of indexes in 'nodes', move the elements from
 		// those indexes into a new block, and put that block back into
@@ -794,7 +794,7 @@ struct MergeTree
 		{
 			for (size_t iBegin = 0, iEnd = MergeBlock::MaxNodesInBlock; iBegin < nodes.size(); iBegin = iEnd, iEnd = std::min(iEnd + MergeBlock::MaxNodesInBlock, nodes.size()))
 			{
-				std::unique_ptr<MergeBlock> block = std::make_unique<MergeBlock>();
+				std::shared_ptr<MergeBlock> block = std::make_shared<MergeBlock>();
 				fillBlock(block.get(), iBegin, iEnd);
 				nodes[iBegin] = std::move(block);
 			}
@@ -841,10 +841,10 @@ struct MergeTree
 		}
 	}
 
-	std::vector<std::unique_ptr<MergeNode>> ExtractSegments(MergeBlock *block)
+	std::vector<std::shared_ptr<MergeNode>> ExtractSegments(MergeBlock *block)
 	{
-		std::vector<std::unique_ptr<MergeNode>> nodes;
-		EnumerateSegments(block, [&](std::unique_ptr<MergeNode> &node)
+		std::vector<std::shared_ptr<MergeNode>> nodes;
+		EnumerateSegments(block, [&](std::shared_ptr<MergeNode> &node)
 		{
 			nodes.push_back(std::move(node));
 		});
@@ -868,7 +868,7 @@ struct MergeTree
 		while (root.IsUnbalanced() && fKeepGoing)
 		{
 			MergeBlock *block = FindRebalancePoint(&root);
-			std::vector<std::unique_ptr<MergeNode>> nodes = ExtractSegments(block);
+			std::vector<std::shared_ptr<MergeNode>> nodes = ExtractSegments(block);
 			// TODO: now would be a good time to trim out dead segments
 			ReloadBlockFromNodes(block, std::move(nodes));
 		}

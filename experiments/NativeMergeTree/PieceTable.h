@@ -13,7 +13,7 @@ public:
 
 private:
 	using RGCP = std::vector<CP>;
-	using RGSEG = std::vector<std::unique_ptr<Segment>>;
+	using RGSEG = std::vector<std::shared_ptr<Segment>>;
 
 	// m_rgcp holds the CP of each segment, plus cpMac
 	// so if you have three segments of length 3, it would look like:
@@ -48,7 +48,7 @@ private:
 			return i; // cp is already on a segment boundary
 
 		assert(cpBase < cp);
-		std::unique_ptr<Segment> segNew = m_rgseg[i]->splitAt(cp - cpBase);
+		std::shared_ptr<Segment> segNew = m_rgseg[i]->splitAt(cp - cpBase);
 		m_rgseg.insert(m_rgseg.begin() + i + 1, std::move(segNew));
 		m_rgcp.insert(m_rgcp.begin() + i + 1, cp);
 		CheckInvariants();
@@ -147,7 +147,7 @@ public:
 		CheckInvariants();
 	}
 
-	void ReloadFromSegments(std::vector<std::unique_ptr<Segment>> segments)
+	void ReloadFromSegments(std::vector<std::shared_ptr<Segment>> segments)
 	{
 		m_rgcp.clear();
 		m_rgseg = std::move(segments);
