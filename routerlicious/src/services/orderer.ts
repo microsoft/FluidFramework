@@ -4,6 +4,8 @@ import { DeliLambda } from "../deli/lambda";
 import { ClientSequenceTimeout } from "../deli/lambdaFactory";
 import { IContext } from "../kafka-service/lambdas";
 import { ScriptoriumLambda } from "../scriptorium/lambda";
+import { TmzLambda } from "../tmz/lambda";
+import { TmzRunner } from "../tmz/runner";
 import { IMessage, IProducer, KafkaOrderer } from "../utils";
 
 // Want a pure local orderer that can do all kinds of stuff
@@ -20,7 +22,9 @@ class LocalContext implements IContext {
 class LocalProducer implements IProducer {
     private offset = 1;
 
-    constructor(private lambda: ScriptoriumLambda) {
+    constructor(
+        private lambda: ScriptoriumLambda,
+        private tmzLambda: TmzLambda) {
     }
 
     public async send(message: string, topic: string): Promise<any> {
@@ -35,6 +39,7 @@ class LocalProducer implements IProducer {
         this.offset++;
 
         this.lambda.handler(scriptoriumMessage);
+        this.tmzLambda.handler(scriptoriumMessage);
     }
 
     public close(): Promise<void> {
@@ -75,7 +80,8 @@ export class LocalOrderer implements IOrderer {
         tenantId: string,
         documentId: string,
         collection: ICollection<IDocument>,
-        deltasCollection: ICollection<any>): Promise<LocalOrderer> {
+        deltasCollection: ICollection<any>,
+        tmzRunner: TmzRunner): Promise<LocalOrderer> {
 
         // Lookup the last sequence number stored
         // TODO - is this storage specific to the orderer in place? Or can I generalize the output context?
@@ -84,7 +90,13 @@ export class LocalOrderer implements IOrderer {
             return Promise.reject(`${tenantId}/${documentId} does not exist - cannot sequence`);
         }
 
-        return new LocalOrderer(tenantId, documentId, collection, deltasCollection, dbObject);
+        return new LocalOrderer(
+            tenantId,
+            documentId,
+            collection,
+            deltasCollection,
+            dbObject,
+            tmzRunner);
     }
 
     private offset = 0;
@@ -97,8 +109,10 @@ export class LocalOrderer implements IOrderer {
         documentId: string,
         collection: ICollection<IDocument>,
         deltasCollection: ICollection<any>,
-        dbObject: IDocument) {
+        dbObject: IDocument,
+        tmzRunner: TmzRunner) {
 
+        // Scriptorium Lambda
         const scriptoriumContext = new LocalContext();
         this.socketPublisher = new LocalSocketPublisher();
         const scriptoriumLambda = new ScriptoriumLambda(
@@ -106,7 +120,27 @@ export class LocalOrderer implements IOrderer {
             deltasCollection,
             scriptoriumContext);
 
-        this.producer = new LocalProducer(scriptoriumLambda);
+        // TMZ lambda
+        const tmzContext = new LocalContext();
+        const tmzLambda = new TmzLambda(
+            tmzContext,
+            tmzRunner,
+            new Promise<void>((resolve, reject) => { return; }));
+
+        // Routemaster lambda
+        // import { RouteMasterLambda } from "../routemaster/lambda";
+        // const routeMasterContext = new LocalContext();
+        // const routemasterLambda = new RouteMasterLambda(
+        //     null /* document */,
+        // The producer below gets the trickiest. We need to be able to connect to an existing document - or open a new
+        // one - and then be able to send messages to it. But this document may not yet be open. So we need to be able
+        // to start processing of it. Also how do we manage pending work and fallback in these situations across all
+        // lambdas. Or do they combine up together?
+        //     producer /* producer */,
+        //     routeMasterContext);
+
+        // Deli Lambda
+        this.producer = new LocalProducer(scriptoriumLambda, tmzLambda);
         const deliContext = new LocalContext();
         this.deliLambda = new DeliLambda(
             deliContext,
@@ -145,7 +179,9 @@ export class OrdererManager implements IOrdererManager {
     constructor(
         producer: IProducer,
         private documentsCollection: ICollection<IDocument>,
-        private deltasCollection: ICollection<any>) {
+        private deltasCollection: ICollection<any>,
+        private tmzRunner: TmzRunner) {
+
         this.orderer = new KafkaOrderer(producer);
     }
 
@@ -160,7 +196,8 @@ export class OrdererManager implements IOrdererManager {
                     tenantId,
                     documentId,
                     this.documentsCollection,
-                    this.deltasCollection);
+                    this.deltasCollection,
+                    this.tmzRunner);
                 this.localOrderers.set(documentId, ordererP);
             }
 
