@@ -4,7 +4,7 @@ import { api, core } from "../client-api";
 import { IDocumentTaskInfo } from "./definitions";
 import { getTaskMapView } from "./utils";
 
-const leaderCheckerMS = 20000;
+const leaderCheckerMS = 5000;
 
 export class BaseWork extends EventEmitter {
 

@@ -59,12 +59,13 @@ const dragDrop = d3
 let linkElements;
 let nodeElements;
 let textElements;
+let clientElements;
 
 // we use svg groups to logically group the elements together
 const linkGroup = svg.append("g").attr("class", "links");
 const nodeGroup = svg.append("g").attr("class", "nodes");
 const textGroup = svg.append("g").attr("class", "texts");
-const labelGroup = svg.append("g").attr("class", "labels");
+const clientGroup = svg.append("g").attr("class", "clients");
 
 function updateGraph(graph: any) {
     // links
@@ -106,6 +107,20 @@ function updateGraph(graph: any) {
                 .style("font-weight", "bold");
 
     textElements = textEnter.merge(textElements);
+
+    // texts
+    clientElements = clientGroup.selectAll("text").data(graph.nodes, (node: any) => node.id);
+    clientElements.exit().remove();
+
+    const clientEnter = clientElements
+        .enter()
+            .append("text")
+                .text((node: any) => node.clientId)
+                .attr("font-size", 14)
+                .attr("dx", (node: any) => node.radius)
+                .attr("dy", (node: any) => -(node.radius / 4));
+
+    clientElements = clientEnter.merge(clientElements);
 }
 
 function updateSimulation(graph: any) {
@@ -114,6 +129,7 @@ function updateSimulation(graph: any) {
     simulation.nodes(graph.nodes).on("tick", () => {
         nodeElements.attr("cx", (node: any) => node.x).attr("cy", (node: any) => node.y);
         textElements.attr("x", (node: any) => node.x).attr("y", (node: any) => node.y);
+        clientElements.attr("x", (node: any) => node.x).attr("y", (node: any) => node.y);
         linkElements
             .attr("x1", (link: any) => link.source.x)
             .attr("y1", (link: any) => link.source.y)
@@ -122,7 +138,7 @@ function updateSimulation(graph: any) {
     });
 
     simulation.force("link").links(graph.links);
-    simulation.restart();
+    simulation.alpha(0.5).restart();
 }
 
 export async function load(id: string, version: resources.ICommit, config: any, token?: string) {
@@ -134,26 +150,33 @@ export async function load(id: string, version: resources.ICommit, config: any, 
     const doc = await api.load(id, { client: { type: "robot" }, encrypted: false, token }, version);
     const taskMap = await getTaskMap(doc);
     const taskMapView = await taskMap.getView();
-    let graph = generateGraphData(id, taskMapView);
+    let graph = generateGraphData(doc, id, taskMapView);
     updateSimulation(graph);
 
     taskMap.on("valueChanged", () => {
-        graph = generateGraphData(id, taskMapView);
-        console.log(graph);
+        graph = generateGraphData(doc, id, taskMapView);
+        updateSimulation(graph);
+    });
+
+    doc.on("clientLeave", () => {
+        graph = generateGraphData(doc, id, taskMapView);
         updateSimulation(graph);
     });
 }
 
-function generateGraphData(docId: string, taskMapView: types.IMapView): IGraph {
+function generateGraphData(document: api.Document, docId: string, taskMapView: types.IMapView): IGraph {
     const nodes: INode[] = [];
     const links: ILink[] = [];
     nodes.push({ clientId: undefined, id: docId, group: 1, radius: 100});
     let groupId = 1;
     for (const task of taskMapView.keys()) {
-        const clientId = taskMapView.get(task);
+        const clientId = taskMapView.get(task) as string;
         if (clientId) {
-            nodes.push({ clientId, id: task, group: ++groupId, radius: 50 });
-            links.push({ label: clientId, source: docId, target: task, strength: 0.1});
+            const activeClient = document.getClients().has(clientId);
+            if (activeClient) {
+                nodes.push({ clientId, id: task, group: ++groupId, radius: 50 });
+                links.push({ label: clientId, source: docId, target: task, strength: 0.1});
+            }
         }
     }
     const graph: IGraph = {
