@@ -49,6 +49,38 @@ export function create(
     });
 
     /**
+     * Loads task graph for the document.
+     */
+    router.get("/:tenantId?/:id/taskGraph", ensureLoggedIn(), (request, response, next) => {
+        const tenantId = request.params.tenantId || appTenants[0].id;
+
+        const workerConfigP = getConfig(
+            config.get("worker"),
+            tenantManager,
+            tenantId,
+            config.get("error:track"),
+            config.get("client"));
+        const versionP = storage.getLatestVersion(tenantManager, tenantId, request.params.id);
+        const token = getToken(tenantId, request.params.id, appTenants);
+
+        Promise.all([workerConfigP, versionP]).then((values) => {
+            response.render(
+                "taskGraph",
+                {
+                    config: values[0],
+                    documentId: request.params.id,
+                    partials: defaultPartials,
+                    tenantId,
+                    title: request.params.id,
+                    token,
+                    version: JSON.stringify(values[1]),
+                });
+        }, (error) => {
+            response.status(400).json(error);
+        });
+    });
+
+    /**
      * Loading of a specific version of shared text.
      */
     router.get("/:tenantId?/:id/commit", ensureLoggedIn(), async (request, response, next) => {

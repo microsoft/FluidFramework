@@ -25,4 +25,7 @@ export { ping };
 import * as commits from "./commits";
 export { commits };
 
+import * as taskGraph from "./taskGraph";
+export { taskGraph };
+
 export * from "./utils";
