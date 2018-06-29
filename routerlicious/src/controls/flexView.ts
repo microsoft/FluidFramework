@@ -1,5 +1,6 @@
 // The main app code
 import { api, core, types} from "../client-api";
+import { inclusionAnalytics } from "../intelligence";
 import * as ui from "../ui";
 import { Button } from "./button";
 import { Chart } from "./chart";
@@ -49,7 +50,7 @@ export class FlexView extends ui.Component {
         this.dock = new DockPanel(dockElement);
         this.addChild(this.dock);
 
-        doc.getInclusionsMap().on("valueChanged", async (changed, local, op) => {
+        doc.getInclusionsMap().on("valueChanged", async (changed) => {
             this.renderInclusion(await doc.getInclusion(changed.key));
         });
 
@@ -57,6 +58,7 @@ export class FlexView extends ui.Component {
             console.log(JSON.stringify(args));
         });
 
+        // Load inclusions on start
         doc.getInclusions()
             .then(async (keys) => {
                 for (const key of keys) {
@@ -112,10 +114,17 @@ export class FlexView extends ui.Component {
             this.popup.toggle();
         });
 
+        // Upload Inclusion
         inclusionButton.on("click", (event) => {
             input.click();
             input.onchange = async () => {
                 const incl = await this.fileToInclusion(input.files.item(0));
+                // tslint:disable-next-line:max-line-length
+                const analytics = new inclusionAnalytics.InclusionAnalyticsIntelligentService("3554516ca53c4fffb4bf619cf5d8b043");
+                const analysis = JSON.parse(await analytics.run(incl)) as any;
+                const caption = analysis.description.captions[0].text;
+
+                incl.caption = caption;
 
                 // Because the inclusion going in has the content, the inclusion coming out should as well
                 // Other users will have a placeholder render followed by the full thing.
@@ -124,6 +133,7 @@ export class FlexView extends ui.Component {
             };
         });
 
+        // Download Inclusion
         downloadButton.on("click", async (event) => {
             const incls = await this.downloadInclusions() as core.IInclusion[];
             this.renderInclusions(incls);
@@ -228,6 +238,8 @@ export class FlexView extends ui.Component {
 
         // We have an image, and it isn't in the DOM
         if (incl.type.includes("image")) {
+
+            // Style the metadata of the image
             if (document.getElementById(incl.sha) === null) {
                 const newImageDiv = document.createElement("div");
                 newImageDiv.id = incl.sha;
@@ -235,15 +247,18 @@ export class FlexView extends ui.Component {
                 newImageDiv.style.width = incl.width + 15 + "px";
                 newImageDiv.style.border = "3px solid black";
                 newImageDiv.classList.add("no-image");
-                this.ink.addPhoto(new Image(newImageDiv, null ));
-            }
-            const imgDiv = document.getElementById(incl.sha);
 
+                const image = new Image(newImageDiv, null );
+                image.setMessage(incl.caption);
+                this.ink.addPhoto(image);
+            }
+
+            // Render the Image itself
+            const imgDiv = document.getElementById(incl.sha);
             const img = imgDiv.getElementsByTagName("img")[0];
 
             if (imgDiv.classList.contains("no-image") && incl.content !== null) {
-
-                // TODO: use FileReader.readAsDataURL(blob)
+                // TODO (sabroner): use FileReader.readAsDataURL(blob)
                 const urlObj = window.URL;
                 const url = urlObj.createObjectURL(new Blob([incl.content], {
                     type: incl.type,

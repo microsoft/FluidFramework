@@ -26,6 +26,7 @@ export interface IInclusion {
     type?: string;
     sha?: string;
     width?: number;
+    caption?: string;
 }
 
 export interface ICollaborativeObject {

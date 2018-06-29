@@ -372,6 +372,7 @@ export class Document extends EventEmitter implements api.IDocument {
         fileMap.set<number>("width", file.width);
         fileMap.set<number>("height", file.height);
         fileMap.set<string>("fileName", file.fileName);
+        fileMap.set<string>("caption", file.caption);
         return file;
     }
 
@@ -381,7 +382,7 @@ export class Document extends EventEmitter implements api.IDocument {
         const blobResponseP = this.storageService.manager.createBlob(encodedBuffer, "base64");
 
         blobResponseP.then(async (blobResponse) => {
-            // TODO: Indicate the inclusion is done uploading
+            // TODO (sabroner): Indicate the inclusion is done uploading
             console.log("Completed uploading blob");
             this.emit("inclusionUploaded", blobResponse.sha);
         });
@@ -405,6 +406,7 @@ export class Document extends EventEmitter implements api.IDocument {
                 const blobResponse = values[1];
 
                 return {
+                    caption: fileMap.get("caption"),
                     content: new Buffer(blobResponse.content, "base64"),
                     fileName: fileMap.get("fileName"),
                     height: fileMap.get("height"),
