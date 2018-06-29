@@ -100,6 +100,7 @@ struct TextSegment final : public Segment
 struct MergeBlock final : public MergeNode
 {
 	static constexpr size_t MaxNodesInBlock = Config::BlockSize();
+	static constexpr size_t IdealNodesInBlock = MaxNodesInBlock * 3 / 4;
 	static constexpr int MaxDepthImbalance = 2;
 
 	using ChildNodeArray = std::array<std::shared_ptr<MergeNode>, MaxNodesInBlock>;
@@ -123,6 +124,18 @@ struct MergeBlock final : public MergeNode
 	{
 		for (auto&& child : *this)
 			child->parent = this;
+	}
+
+	MergeBlock &operator=(MergeBlock &&other)
+	{
+		children = std::move(other.children);
+		lengthMap = std::move(other.lengthMap);
+		depthMin = other.depthMin;
+		depthMax = other.depthMax;
+
+		for (auto&& child : *this)
+			child->parent = this;
+		return *this;
 	}
 
 	template <typename TIter>
@@ -216,6 +229,9 @@ struct MergeBlock final : public MergeNode
 			depthMin = 1;
 			depthMax = std::max(depthMax, 1);
 		}
+		if (ChildCount() + 1 < IdealNodesInBlock)
+			depthMin = 0;
+
 		newNode->parent = this;
 		newNode->index = static_cast<int8_t>(index);
 		children[index] = std::move(newNode);
@@ -391,7 +407,7 @@ struct MergeBlock final : public MergeNode
 	[[nodiscard]]
 	int recomputeDepthMinSlow()
 	{
-		if (ChildCount() == 0)
+		if (ChildCount() < IdealNodesInBlock)
 			return 0;
 
 		if (children[0]->isLeaf)
@@ -767,37 +783,6 @@ struct MergeTree
 
 	void ReloadBlockFromNodes(MergeBlock *rootBlock, std::vector<std::shared_ptr<MergeNode>> nodes)
 	{
-		// Given a range of indexes in 'nodes', move the elements from
-		// those indexes into a new block, and put that block back into
-		// 'nodes' at iBegin
-		auto fillBlock = [&nodes](MergeBlock *block, size_t iBegin, size_t iEnd) -> void
-		{
-			for (size_t i = iBegin + 1; i < iEnd; i++)
-				assert(nodes[i - 1]->isLeaf == nodes[i]->isLeaf);
-			uint32_t childCount = static_cast<uint32_t>(iEnd - iBegin);
-			assert(childCount > 0);
-			assert(childCount <= MergeBlock::MaxNodesInBlock);
-
-			std::move(nodes.begin() + iBegin, nodes.begin() + iEnd, block->children.begin());
-			for (size_t i = 0; i < childCount; i++)
-			{
-				block->children[i]->parent = block;
-				block->children[i]->index = static_cast<uint8_t>(i);
-			}
-			block->lengthMap = block->recomputeLengthsSlow();
-			if (block->children[0]->isLeaf)
-			{
-				block->depthMin = 1;
-				block->depthMax = 1;
-			}
-			else
-			{
-				MergeBlock *childBlock = static_cast<MergeBlock*>(block->children[0].get());
-				block->depthMin = childBlock->depthMin + 1;
-				block->depthMax = childBlock->depthMax + 1;
-			}
-		};
-
 		while (nodes.size() > MergeBlock::MaxNodesInBlock)
 		{
 			for (size_t iBegin = 0, iEnd = MergeBlock::MaxNodesInBlock; iBegin < nodes.size(); iBegin = iEnd, iEnd = std::min(iEnd + MergeBlock::MaxNodesInBlock, nodes.size()))
@@ -811,7 +796,8 @@ struct MergeTree
 
 			nodes.erase(std::remove(nodes.begin(), nodes.end(), nullptr), nodes.end());
 		}
-		fillBlock(rootBlock, 0, nodes.size());
+		MergeBlock blockT(nodes.begin(), nodes.end());
+		*rootBlock = std::move(blockT);
 		rootBlock->checkBlockInvariants();
 	}
 
@@ -873,7 +859,13 @@ struct MergeTree
 	// * merging together adjacent compatible segments
 	//
 	// So far, we only do the first one
-	void Zamboni(bool &fKeepGoing)
+	void RunMaintenance(bool &fKeepGoing)
+	{
+		RunArborist(fKeepGoing);
+	}
+	
+	// The Arborist maintains the tree by pruning branches that are too long
+	void RunArborist(bool &fKeepGoing)
 	{
 		while (root.IsUnbalanced() && fKeepGoing)
 		{
@@ -881,6 +873,7 @@ struct MergeTree
 			std::vector<std::shared_ptr<MergeNode>> nodes = ExtractSegments(block);
 			// TODO: now would be a good time to trim out dead segments
 			ReloadBlockFromNodes(block, std::move(nodes));
+			// FIXME need to update parent depths up to the root
 		}
 	}
 

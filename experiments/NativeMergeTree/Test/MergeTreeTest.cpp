@@ -215,6 +215,11 @@ TEST_METHOD(Equality)
 
 };
 
+std::shared_ptr<MergeBlock> MakeMergeBlock(std::initializer_list<std::shared_ptr<MergeNode>> nodes)
+{
+	return std::make_shared<MergeBlock>(nodes.begin(), nodes.end());
+}
+
 TEST_CLASS(MergeTreeTest)
 {
 MergeTree MakeTestMergeTree()
@@ -339,5 +344,28 @@ TEST_METHOD(MergeTree_AppendMany)
 	}
 
 	AssertDoc(doc, seqPrev, std::string(499, 'a'));
+}
+
+TEST_METHOD(MergeTree_Arborist)
+{
+	std::shared_ptr<MergeBlock> b1 = MakeMergeBlock({
+		std::make_shared<TextSegment>(Seq::Universal(), "a"),
+		std::make_shared<TextSegment>(Seq::Universal(), "b"),
+		std::make_shared<TextSegment>(Seq::Universal(), "c"),
+		});
+
+	std::shared_ptr<MergeBlock> b2 = MakeMergeBlock({ b1 });
+	std::shared_ptr<MergeBlock> b3 = MakeMergeBlock({ b2 });
+
+	MergeTree doc;
+	doc.root = std::move(*b3);
+
+	assert(doc.root.IsUnbalanced());
+
+	bool fKeepGoing = true;
+	doc.RunMaintenance(fKeepGoing);
+
+	assert(!doc.root.IsUnbalanced());
+	AssertDoc(doc, Seq::Universal(), "abc");
 }
 };
