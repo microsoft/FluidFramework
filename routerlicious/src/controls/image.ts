@@ -21,6 +21,7 @@ export class Image extends ui.Component {
         element.appendChild(this.image);
     }
 
+    // TODO: Use setMessage to display ACS data
     public setMessage(message: string) {
         this.message.innerText = message;
     }

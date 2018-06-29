@@ -1,8 +1,5 @@
 // The main app code
-import * as resources from "gitresources";
-import { api, types } from "../client-api";
-import { gitHashFile } from "../core-utils";
-import * as gitStorage from "../git-storage";
+import { api, core, types} from "../client-api";
 import * as ui from "../ui";
 import { Button } from "./button";
 import { Chart } from "./chart";
@@ -33,14 +30,6 @@ interface IFlexViewComponent {
     size: ui.ISize;
 }
 
-interface IInclusion {
-    content?: Buffer;
-    fileName?: string;
-    size?: number;
-    type?: string;
-    sha?: string;
-}
-
 /**
  * Canvas app
  */
@@ -51,7 +40,6 @@ export class FlexView extends ui.Component {
     private popup: Popup;
     private colorStack: StackPanel;
     private components: IFlexViewComponent[] = [];
-    private blobMap: types.IMap; // TODO: make blobMap a sibling of root?
 
     constructor(element: HTMLDivElement, private doc: api.Document, root: types.IMapView) {
         super(element);
@@ -61,21 +49,20 @@ export class FlexView extends ui.Component {
         this.dock = new DockPanel(dockElement);
         this.addChild(this.dock);
 
-        if (!doc.existing) {
-            this.blobMap = root.set<types.IMap>("blobs", doc.createMap());
-        } else {
-            root.wait<types.IMap>("blobs")
-                .then((blobMap) => {
-                    this.blobMap = blobMap;
-                    this.downloadInclusions()
-                        .then((incls) => {
-                            this.renderInclusions(incls);
-                        });
-                })
-                .catch((error) => {
-                    console.log("Blob map failed to load");
-                });
-        }
+        doc.getInclusionsMap().on("valueChanged", async (changed, local, op) => {
+            this.renderInclusion(await doc.getInclusion(changed.key));
+        });
+
+        doc.on("inclusionUploaded", (args) => {
+            console.log(JSON.stringify(args));
+        });
+
+        doc.getInclusions()
+            .then(async (keys) => {
+                for (const key of keys) {
+                    this.renderInclusion(await doc.getInclusion(key));
+                }
+            });
 
         // Add the ink canvas to the dock
         const inkCanvasElement = document.createElement("div");
@@ -128,12 +115,17 @@ export class FlexView extends ui.Component {
         inclusionButton.on("click", (event) => {
             input.click();
             input.onchange = async () => {
-                this.uploadInclusion(await this.fileToInclusion(input.files.item(0)));
+                const incl = await this.fileToInclusion(input.files.item(0));
+
+                // Because the inclusion going in has the content, the inclusion coming out should as well
+                // Other users will have a placeholder render followed by the full thing.
+                this.renderInclusion(this.doc.createInclusion(incl));
+                this.doc.addInclusion(incl);
             };
         });
 
         downloadButton.on("click", async (event) => {
-            const incls = await this.downloadInclusions() as IInclusion[];
+            const incls = await this.downloadInclusions() as core.IInclusion[];
             this.renderInclusions(incls);
         });
 
@@ -225,104 +217,102 @@ export class FlexView extends ui.Component {
         this.resizeCore(this.size);
     }
 
-    private async renderInclusions(incls: IInclusion[]) {
+    private async renderInclusions(incls: core.IInclusion[]) {
         for (const incl of incls) {
-            console.log(incl.content.toString("utf-8", 0, 100));
+            this.renderInclusion(incl);
+        }
 
-            // TODO: reject these blobs at the download level
-            if (incl.type.includes("image") && document.getElementById(incl.sha) === null) {
-                // TODO: FileReader.readAsDataURL(blob)
+    }
+
+    private async renderInclusion(incl: core.IInclusion) {
+
+        // We have an image, and it isn't in the DOM
+        if (incl.type.includes("image")) {
+            if (document.getElementById(incl.sha) === null) {
+                const newImageDiv = document.createElement("div");
+                newImageDiv.id = incl.sha;
+                newImageDiv.style.height = incl.height + 40 + "px";
+                newImageDiv.style.width = incl.width + 15 + "px";
+                newImageDiv.style.border = "3px solid black";
+                newImageDiv.classList.add("no-image");
+                this.ink.addPhoto(new Image(newImageDiv, null ));
+            }
+            const imgDiv = document.getElementById(incl.sha);
+
+            const img = imgDiv.getElementsByTagName("img")[0];
+
+            if (imgDiv.classList.contains("no-image") && incl.content !== null) {
+
+                // TODO: use FileReader.readAsDataURL(blob)
                 const urlObj = window.URL;
                 const url = urlObj.createObjectURL(new Blob([incl.content], {
                     type: incl.type,
                 }));
-                const imgDiv = document.createElement("div");
-                imgDiv.id = incl.sha;
-                imgDiv.style.height = "100px";
-                imgDiv.style.width = "100px";
-                this.ink.addPhoto(new Image(imgDiv, url ));
+                img.src = url;
+
+                imgDiv.classList.replace("no-image", "image");
             }
         }
-
     }
 
-    private async uploadInclusion(file: IInclusion) {
-        const docService = api.getDefaultBlobStorage();
-        const gitManager: gitStorage.GitManager = docService.manager;
-        const hash = gitHashFile(file.content);
+    private async downloadInclusions(): Promise<core.IInclusion[]> {
+        const keys = await this.doc.getInclusionsMap().keys();
 
-        // Set the hash in blob storage
-        // TODO: Empty should be the inclusion's information
-        const fileMap = await this.blobMap.set<types.IMap>(hash, this.doc.createMap());
-        fileMap.set<string>("type", file.type);
-        fileMap.set<string>("size", file.size);
-        fileMap.set<string>("fileName", file.fileName);
-
-        const encodedBuffer = file.content.toString("base64");
-        const blobResponseP = gitManager.createBlob(encodedBuffer, "base64") as Promise<resources.ICreateBlobResponse>;
-        blobResponseP.then(async (blobResponse) => {
-            // TODO: Indicate the inclusion is done uploading
-            console.log("Completed uploading blob");
+        const inclusionsP = keys.map((key) => {
+            return this.doc.getInclusion(key);
         });
+
+        return Promise.all((inclusionsP));
     }
 
-    // Returns blobs end
-    private async downloadInclusions(): Promise<IInclusion[]> {
-        const docService = api.getDefaultBlobStorage();
-        const gitManager: gitStorage.GitManager = docService.manager;
+    private async fileToInclusion(file: File): Promise<core.IInclusion> {
+        const arrayBufferReader = new FileReader();
+        const urlObjReader = new FileReader();
 
-        const incls: IInclusion[] = [];
-        const filesP: Array<Promise<resources.IBlob>> = [];
+        const incl = {
+            fileName: file.name,
+            type: file.type,
+        } as core.IInclusion;
 
-        const blobView = await this.blobMap.getView();
-
-        for (const key of blobView.keys()) {
-            const fileMap = await blobView.get<types.IMap>(key).getView();
-            filesP.push(gitManager.getBlob(key));
-
-            incls.push({
-                fileName: fileMap.get("fileName"),
-                sha: key,
-                size: fileMap.get("size"),
-                type: fileMap.get("type"),
-            });
-        }
-
-        return Promise.all(filesP)
-            .then((files) => {
-                files.map((blob, index) => {
-                    // Blob returns in base64 based on https://github.com/Microsoft/Prague/issues/732
-                    incls[index].content = new Buffer(blob.content, "base64");
-                });
-                return incls;
-            })
-            .catch((error) => {
-                console.log("Error: " + JSON.stringify(error));
-                // TODO: reject
-                return null;
-            });
-    }
-
-    private async fileToInclusion(file: File): Promise<IInclusion> {
-        const fr = new FileReader();
-
-        return new Promise<IInclusion>((resolve, reject) => {
-            fr.onerror = (error) => {
-                fr.abort();
+        const arrayBufferP = new Promise<void>((resolve, reject) => {
+            arrayBufferReader.onerror = (error) => {
+                arrayBufferReader.abort();
                 reject("error: " + JSON.stringify(error));
             };
 
-            fr.onloadend = () => {
-                const t = Buffer.from(fr.result);
-                const incl = {
-                    content: t,
-                    fileName: file.name,
-                    size: t.length,
-                    type: file.type,
-                };
-                resolve(incl);
+            arrayBufferReader.onloadend = () => {
+                const imageData = Buffer.from(arrayBufferReader.result);
+                incl.size = imageData.byteLength;
+                incl.content = imageData;
+
+                resolve();
             };
-            fr.readAsArrayBuffer(file);
+            arrayBufferReader.readAsArrayBuffer(file);
+        });
+
+        const urlObjP = new Promise<void>((resolve, reject) => {
+            urlObjReader.onerror = (error) => {
+                urlObjReader.abort();
+                reject("error: " + JSON.stringify(error));
+            };
+
+            urlObjReader.onloadend = () => {
+                const imageUrl = urlObjReader.result;
+                const img = document.createElement("img");
+                img.src = imageUrl;
+                img.onload = () => {
+                    incl.height = img.height;
+                    incl.width = img.width;
+                    resolve();
+                };
+            };
+
+            urlObjReader.readAsDataURL(file);
+        });
+
+        return Promise.all([arrayBufferP, urlObjP])
+            .then(() => {
+                return incl;
         });
     }
 }
