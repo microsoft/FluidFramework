@@ -1,5 +1,6 @@
 import { Provider } from "nconf";
 import * as winston from "winston";
+import * as ws from "ws";
 import { IOrdererManager, ITenantManager } from "../core";
 import * as core from "../core";
 import { Deferred } from "../core-utils";
@@ -54,6 +55,17 @@ export class AlfredRunner implements utils.IRunner {
         httpServer.listen(this.port);
         httpServer.on("error", (error) => this.onError(error));
         httpServer.on("listening", () => this.onListening());
+
+        // Start up the peer-to-peer socket server - will eventually want to consolidate this inside
+        // existing services
+        const webSocketServer = new ws.Server({
+            port: 4000,
+        });
+        webSocketServer.on("connection", (socket) => {
+            socket.on("message", (message) => {
+                winston.info(`Hey! ${message}`);
+            });
+        });
 
         return this.runningDeferred.promise;
     }
