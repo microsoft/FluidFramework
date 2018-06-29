@@ -15,10 +15,10 @@ struct MergeTreePerfTester
 
 // Reads a file at 'path', and creates a segment for each line of the file
 // Pass cCopies > 1 to load multiple copies of the file, if you need bigger data
-std::vector<std::unique_ptr<Segment>> LoadFileIntoSegments(const char *path, int cCopies)
+std::vector<std::shared_ptr<Segment>> LoadFileIntoSegments(const char *path, int cCopies)
 {
 	FileView fileView(path);
-	std::vector<std::unique_ptr<Segment>> segments;
+	std::vector<std::shared_ptr<Segment>> segments;
 
 	for (int n = 0; n < cCopies; n++)
 	{
@@ -26,7 +26,7 @@ std::vector<std::unique_ptr<Segment>> LoadFileIntoSegments(const char *path, int
 		size_t i = text.find('\n');
 		while (i != std::string_view::npos)
 		{
-			segments.push_back(std::make_unique<TextSegment>(Seq::Universal(), std::string(text.substr(0, i + 1))));
+			segments.push_back(std::make_shared<TextSegment>(Seq::Universal(), std::string(text.substr(0, i + 1))));
 			text.remove_prefix(i + 1);
 			i = text.find('\n');
 		}

@@ -215,6 +215,11 @@ TEST_METHOD(Equality)
 
 };
 
+std::shared_ptr<MergeBlock> MakeMergeBlock(std::initializer_list<std::shared_ptr<MergeNode>> nodes)
+{
+	return std::make_shared<MergeBlock>(nodes.begin(), nodes.end());
+}
+
 TEST_CLASS(MergeTreeTest)
 {
 MergeTree MakeTestMergeTree()
@@ -225,13 +230,13 @@ MergeTree MakeTestMergeTree()
 	// 1: The slow fox
 	// 2: The slow brown fox
 	// 3: The quick brown fox
-	std::vector<std::unique_ptr<Segment>> segments;
-	segments.push_back(std::make_unique<TextSegment>(Seq::Universal(), "The "));
-	segments.push_back(std::make_unique<TextSegment>(Seq::Create(1), "slow "));
+	std::vector<std::shared_ptr<Segment>> segments;
+	segments.push_back(std::make_shared<TextSegment>(Seq::Universal(), "The "));
+	segments.push_back(std::make_shared<TextSegment>(Seq::Create(1), "slow "));
 	segments[1]->seqRemoved = Seq::Create(3);
-	segments.push_back(std::make_unique<TextSegment>(Seq::Create(3), "quick "));
-	segments.push_back(std::make_unique<TextSegment>(Seq::Create(2), "brown "));
-	segments.push_back(std::make_unique<TextSegment>(Seq::Universal(), "fox"));
+	segments.push_back(std::make_shared<TextSegment>(Seq::Create(3), "quick "));
+	segments.push_back(std::make_shared<TextSegment>(Seq::Create(2), "brown "));
+	segments.push_back(std::make_shared<TextSegment>(Seq::Universal(), "fox"));
 
 	doc.ReloadFromSegments(std::move(segments));
 	return doc;
@@ -323,5 +328,44 @@ TEST_METHOD(MergeTree_BasicReplace)
 	AssertDoc(doc, Seq::Universal(), "");
 	AssertDoc(doc, Seq::Create(1), "The fox");
 	AssertDoc(doc, Seq::Create(2), "The slow fox");
+}
+
+TEST_METHOD(MergeTree_AppendMany)
+{
+	MergeTree doc;
+
+	Seq seqPrev = Seq::Universal();
+	for (int i = 1; i < 500; i++)
+	{
+		MergeTree::Txn txn = doc.StartTransaction(seqPrev);
+		doc.Replace(txn, doc.CpMac(txn->seqBase), 0, "a");
+		doc.CommitTransaction(txn, Seq::Create(i));
+		seqPrev = Seq::Create(i);
+	}
+
+	AssertDoc(doc, seqPrev, std::string(499, 'a'));
+}
+
+TEST_METHOD(MergeTree_Arborist)
+{
+	std::shared_ptr<MergeBlock> b1 = MakeMergeBlock({
+		std::make_shared<TextSegment>(Seq::Universal(), "a"),
+		std::make_shared<TextSegment>(Seq::Universal(), "b"),
+		std::make_shared<TextSegment>(Seq::Universal(), "c"),
+		});
+
+	std::shared_ptr<MergeBlock> b2 = MakeMergeBlock({ b1 });
+	std::shared_ptr<MergeBlock> b3 = MakeMergeBlock({ b2 });
+
+	MergeTree doc;
+	doc.root = std::move(*b3);
+
+	assert(doc.root.IsUnbalanced());
+
+	bool fKeepGoing = true;
+	doc.RunMaintenance(fKeepGoing);
+
+	assert(!doc.root.IsUnbalanced());
+	AssertDoc(doc, Seq::Universal(), "abc");
 }
 };
