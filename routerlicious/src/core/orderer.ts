@@ -6,4 +6,6 @@ export interface IOrderer {
 
 export interface IOrdererManager {
     getOrderer(socket: any, tenantId: string, documentId: string): Promise<IOrderer>;
+
+    route(message: IRawOperationMessage);
 }

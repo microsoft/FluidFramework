@@ -1,3 +1,9 @@
+import * as assert from "assert";
+import * as async from "async";
+import * as dns from "dns";
+import * as os from "os";
+import * as util from "util";
+import * as ws from "ws";
 import { ICollection, IDocument, IOrderer, IOrdererManager, IRawOperationMessage, IWebSocket } from "../core";
 import * as core from "../core";
 import { DeliLambda } from "../deli/lambda";
@@ -7,6 +13,14 @@ import { ScriptoriumLambda } from "../scriptorium/lambda";
 import { TmzLambda } from "../tmz/lambda";
 import { TmzRunner } from "../tmz/runner";
 import { IMessage, IProducer, KafkaOrderer } from "../utils";
+import { debug } from "./debug";
+
+async function getHostIp(): Promise<string> {
+    const hostname = os.hostname();
+    const lookup = util.promisify(dns.lookup);
+    const info = await lookup(hostname);
+    return info.address;
+}
 
 // Want a pure local orderer that can do all kinds of stuff
 class LocalContext implements IContext {
@@ -48,6 +62,8 @@ class LocalProducer implements IProducer {
 }
 
 class LocalTopic implements core.ITopic {
+    // TODO - this needs to know about outbound web sockets too
+
     constructor(private publisher: LocalSocketPublisher) {
     }
 
@@ -75,13 +91,25 @@ class LocalSocketPublisher implements core.IPublisher {
     }
 }
 
-export class LocalOrderer implements IOrderer {
-    public static async Load(
-        tenantId: string,
-        documentId: string,
-        collection: ICollection<IDocument>,
-        deltasCollection: ICollection<any>,
-        tmzRunner: TmzRunner): Promise<LocalOrderer> {
+async function getOrderer(
+    tenantId: string,
+    documentId: string,
+    collection: ICollection<IDocument>,
+    deltasCollection: ICollection<any>,
+    reservationsCollection: ICollection<{ documentId: string, tenantId: string, server: string }>,
+    tmzRunner: TmzRunner): Promise<ISocketOrderer> {
+
+    const hostIp = await getHostIp();
+    debug(`Ordering ${hostIp}`);
+
+    // Check to see if someone has locked the document - if not we can go and do it.
+    // If we have the lock we go and start ordering.
+    // If we don't have the lock then we figure out who does and start sending messages.
+    // Could probably just stash the reservation into the stuff stored with the document below
+    const val = await reservationsCollection.findOne({ documentId, tenantId });
+    if (!val) {
+        debug("We got to the document first");
+        await reservationsCollection.insertOne({ documentId, server: hostIp, tenantId });
 
         // Lookup the last sequence number stored
         // TODO - is this storage specific to the orderer in place? Or can I generalize the output context?
@@ -97,14 +125,72 @@ export class LocalOrderer implements IOrderer {
             deltasCollection,
             dbObject,
             tmzRunner);
+    } else {
+        // TOOD - will need to check the time on the lease and then take it
+        debug(`Val is ${JSON.stringify(val)}`);
+        // Reservation exists - have the orderer simply establish a WS connection to it and proxy commands
+        return new ProxyOrderer(val.server, tenantId, documentId);
+    }
+}
+
+interface ISocketOrderer extends IOrderer {
+    attachSocket(socket: any);
+}
+
+/**
+ * Proxies ordering to an external service which does the actual ordering
+ */
+class ProxyOrderer implements ISocketOrderer {
+    private sockets: any[] = [];
+    private queue: async.AsyncQueue<IRawOperationMessage>;
+
+    constructor(server: string, tenantId: string, documentId: string) {
+        // connect to service
+        const socket = new ws(`ws://${server}:4000`);
+        socket.on(
+            "open",
+            () => {
+                this.queue.resume();
+            });
+
+        socket.on(
+            "message",
+            (data) => {
+                for (const clientSocket of this.sockets) {
+                    clientSocket.emit("op", documentId, [data]);
+                }
+            });
+
+        this.queue = async.queue<IRawOperationMessage, any>(
+            (value, callback) => {
+                // TODO error handling
+                socket.send(JSON.stringify(value));
+                callback();
+            },
+            1);
+        this.queue.pause();
     }
 
+    public async order(message: IRawOperationMessage, topic: string): Promise<void> {
+        debug(`ProxyOrderer ${message.clientId}:${message.operation.clientSequenceNumber}`);
+        this.queue.push(message);
+    }
+
+    public attachSocket(socket: any) {
+        this.sockets.push(socket);
+    }
+}
+
+/**
+ * Performs local ordering of messages based on an in-memory stream of operations.
+ */
+class LocalOrderer implements ISocketOrderer {
     private offset = 0;
     private deliLambda: DeliLambda;
     private producer: LocalProducer;
     private socketPublisher: LocalSocketPublisher;
 
-    private constructor(
+    constructor(
         tenantId: string,
         documentId: string,
         collection: ICollection<IDocument>,
@@ -174,12 +260,13 @@ export class LocalOrderer implements IOrderer {
 export class OrdererManager implements IOrdererManager {
     // TODO instantiate the orderer from a passed in config/tenant manager rather than assuming just one
     private orderer: IOrderer;
-    private localOrderers = new Map<string, Promise<LocalOrderer>>();
+    private localOrderers = new Map<string, Promise<ISocketOrderer>>();
 
     constructor(
         producer: IProducer,
         private documentsCollection: ICollection<IDocument>,
         private deltasCollection: ICollection<any>,
+        private reservationsCollection: ICollection<{ documentId: string, tenantId: string, server: string }>,
         private tmzRunner: TmzRunner) {
 
         this.orderer = new KafkaOrderer(producer);
@@ -192,11 +279,12 @@ export class OrdererManager implements IOrdererManager {
 
         if (tenantId === "local") {
             if (!this.localOrderers.has(documentId)) {
-                const ordererP = LocalOrderer.Load(
+                const ordererP = getOrderer(
                     tenantId,
                     documentId,
                     this.documentsCollection,
                     this.deltasCollection,
+                    this.reservationsCollection,
                     this.tmzRunner);
                 this.localOrderers.set(documentId, ordererP);
             }
@@ -209,5 +297,12 @@ export class OrdererManager implements IOrdererManager {
         } else {
             return Promise.resolve(this.orderer);
         }
+    }
+
+    public route(message: IRawOperationMessage) {
+        assert(message.tenantId === "local");
+        const localP = this.localOrderers.get(message.documentId);
+        assert (localP);
+        localP.then((orderer) => orderer.order(message, message.documentId));
     }
 }

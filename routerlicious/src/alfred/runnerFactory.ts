@@ -63,6 +63,8 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
 
         const deltasCollectionName = config.get("mongo:collectionNames:deltas");
         const deltasCollection = db.collection(deltasCollectionName);
+        const reservationsCollection = db
+            .collection<{ documentId: string, tenantId: string, server: string }>("reservations");
 
         // TODO should fold this into the lambda itself
         // TMZ resources
@@ -72,12 +74,12 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
         const runner = await runnerFactory.create(resources);
         runner.start();
 
-        // Manager to query riddler for tenant information
         const tenantManager = new services.TenantManager(authEndpoint, config.get("worker:blobStorageUrl"));
         const orderManager = new services.OrdererManager(
             producer,
             documentsCollection,
             deltasCollection,
+            reservationsCollection,
             runner);
 
         // Tenants attached to the apps this service exposes

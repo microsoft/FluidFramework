@@ -11,4 +11,8 @@ export class TestOrdererManager implements IOrdererManager {
     public getOrderer(tenantId: string, documentId: string): Promise<IOrderer> {
         return Promise.resolve(this.orderer);
     }
+
+    public route(message) {
+        return;
+    }
 }
