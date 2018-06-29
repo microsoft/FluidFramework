@@ -29,7 +29,7 @@ const svg = d3.select("body")
 .append("svg")
 .attr("width", w)
 .attr("height", h);
-const color = d3.scaleOrdinal(d3.schemeCategory10);
+const color = d3.scaleOrdinal(d3.schemePastel1);
 const simulation: any = d3.forceSimulation()
     .force("charge", d3.forceManyBody().strength(-3000))
     .force("center", d3.forceCenter(w / 2, h / 2))
