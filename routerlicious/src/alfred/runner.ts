@@ -63,7 +63,7 @@ export class AlfredRunner implements utils.IRunner {
         });
         webSocketServer.on("connection", (socket) => {
             socket.on("message", (message) => {
-                winston.info(`Hey! ${message}`);
+                this.orderManager.route(JSON.parse(message as string) as core.IRawOperationMessage);
             });
         });
 

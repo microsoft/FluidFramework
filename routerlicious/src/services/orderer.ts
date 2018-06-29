@@ -1,3 +1,4 @@
+import * as assert from "assert";
 import * as async from "async";
 import * as dns from "dns";
 import * as os from "os";
@@ -128,7 +129,7 @@ async function getOrderer(
         // TOOD - will need to check the time on the lease and then take it
         debug(`Val is ${JSON.stringify(val)}`);
         // Reservation exists - have the orderer simply establish a WS connection to it and proxy commands
-        return new ProxyOrderer(val.server);
+        return new ProxyOrderer(val.server, tenantId, documentId);
     }
 }
 
@@ -143,34 +144,27 @@ class ProxyOrderer implements ISocketOrderer {
     private sockets: any[] = [];
     private queue: async.AsyncQueue<IRawOperationMessage>;
 
-    // async queue with messages that trigger after socket opens
-
-    constructor(server: string) {
+    constructor(server: string, tenantId: string, documentId: string) {
         // connect to service
         const socket = new ws(`ws://${server}:4000`);
         socket.on(
             "open",
             () => {
                 this.queue.resume();
-                setInterval(
-                    () => {
-                        socket.send("Hello");
-                    },
-                    1000);
             });
 
         socket.on(
             "message",
             (data) => {
-                for (const socket of this.sockets) {
-                    socket.emit("op", ...args);
+                for (const clientSocket of this.sockets) {
+                    clientSocket.emit("op", documentId, [data]);
                 }
             });
 
         this.queue = async.queue<IRawOperationMessage, any>(
             (value, callback) => {
                 // TODO error handling
-                socket.send(value);
+                socket.send(JSON.stringify(value));
                 callback();
             },
             1);
@@ -303,5 +297,12 @@ export class OrdererManager implements IOrdererManager {
         } else {
             return Promise.resolve(this.orderer);
         }
+    }
+
+    public route(message: IRawOperationMessage) {
+        assert(message.tenantId === "local");
+        const localP = this.localOrderers.get(message.documentId);
+        assert (localP);
+        localP.then((orderer) => orderer.order(message, message.documentId));
     }
 }
