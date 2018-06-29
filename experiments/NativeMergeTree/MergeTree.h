@@ -2,6 +2,7 @@
 #include <memory>
 #include <string>
 #include <list>
+#include <optional>
 #include "array_view.h"
 #include "Seq.h"
 #include "LengthMap.h"
@@ -124,6 +125,34 @@ struct MergeBlock final : public MergeNode
 			child->parent = this;
 	}
 
+	template <typename TIter>
+	MergeBlock(TIter b, TIter e, 
+		std::optional<LengthMap> &&optLengthMap = std::nullopt)
+		: MergeNode(false /*isLeaf*/)
+	{
+		static_assert(std::is_same_v<
+			std::decay_t<decltype(*b)>,
+			std::shared_ptr<MergeNode>
+		>);
+		assert((e - b) <= MaxNodesInBlock);
+		for (int i = 0; b != e && i < MaxNodesInBlock; i++, b++)
+		{
+			children[i] = *b;
+			children[i]->parent = this;
+			children[i]->index = i;
+
+			if (i > 0)
+				assert(children[i - 1]->isLeaf == children[i]->isLeaf);
+		}
+
+		if (optLengthMap.has_value())
+			lengthMap = std::move(optLengthMap.value());
+		else
+			lengthMap = recomputeLengthsSlow();
+		depthMin = recomputeDepthMinSlow();
+		depthMax = recomputeDepthMaxSlow();
+	}
+
 	int ChildCount() const { return lengthMap.ChildCount(); }
 	bool isFull() const { return ChildCount() == MaxNodesInBlock; }
 	bool IsUnbalanced() const { return (depthMax - depthMin) > MaxDepthImbalance; }
@@ -231,29 +260,18 @@ struct MergeBlock final : public MergeNode
 	{
 		assert(parent->ChildCount() < MaxNodesInBlock);
 		checkBlockInvariants();
-		std::shared_ptr<MergeBlock> newBlock = std::make_shared<MergeBlock>();
 		static_assert(MaxNodesInBlock % 2 == 0);
 		constexpr int split = MaxNodesInBlock / 2;
 
-		// Move latter half of children to new node
-		std::move(children.begin() + split, children.end(), newBlock->children.begin());
+		std::shared_ptr<MergeBlock> newBlock = std::make_shared<MergeBlock>(
+			children.begin() + split, children.end(), lengthMap.Split());
 
-		// Update parent and index fields
-		for (int i = 0; i < split; i++)
-		{
-			assert(children[i]->index == i);
-			assert(children[i]->parent == this);
-
-			newBlock->children[i]->index = i;
-			newBlock->children[i]->parent = newBlock.get();
-		}
-
-		newBlock->lengthMap = lengthMap.Split();
+		assert(split == ChildCount());
+		for (size_t i = split; i < children.size(); i++)
+			children[i] = nullptr;
 
 		depthMin = recomputeDepthMinSlow();
-		newBlock->depthMin = newBlock->recomputeDepthMinSlow();
 		depthMax = recomputeDepthMaxSlow();
-		newBlock->depthMax = newBlock->recomputeDepthMaxSlow();
 
 		checkBlockInvariants();
 		newBlock->checkBlockInvariants();
@@ -271,28 +289,18 @@ struct MergeBlock final : public MergeNode
 			{
 				// Looks like we're the root!
 				// move contents of root into a child node, and then Split that
-				std::shared_ptr<MergeBlock> newBlock = std::make_shared<MergeBlock>();
-				for (int i = 0; i < MaxNodesInBlock; i++)
-				{
-					if (children[i] != nullptr)
-					{
-						children[i]->parent = newBlock.get();
-						assert(children[i]->index == i);
-					}
-				}
-				std::move(children.begin(), children.end(), newBlock->children.begin());
-				newBlock->lengthMap = std::move(lengthMap);
-				newBlock->depthMin = depthMin;
-				newBlock->depthMax = depthMax;
+				std::shared_ptr<MergeBlock> newBlock = std::make_shared<MergeBlock>(
+					begin(), end(), std::move(lengthMap));
 
+				for (auto &&child : children)
+					child = nullptr;
 				lengthMap = LengthMap();
 				depthMin = 0;
 				depthMax = 0;
 
-				MergeBlock *newBlockRaw = newBlock.get();
 				adopt(std::move(newBlock), 0, false /*fSplit*/);
 
-				newBlockRaw->split();
+				static_cast<MergeBlock *>(children[0].get())->split();
 			}
 			else
 			{
@@ -794,9 +802,11 @@ struct MergeTree
 		{
 			for (size_t iBegin = 0, iEnd = MergeBlock::MaxNodesInBlock; iBegin < nodes.size(); iBegin = iEnd, iEnd = std::min(iEnd + MergeBlock::MaxNodesInBlock, nodes.size()))
 			{
-				std::shared_ptr<MergeBlock> block = std::make_shared<MergeBlock>();
-				fillBlock(block.get(), iBegin, iEnd);
+				std::shared_ptr<MergeBlock> block = std::make_shared<MergeBlock>(
+					nodes.begin() + iBegin, nodes.begin() + iEnd);
 				nodes[iBegin] = std::move(block);
+				for (size_t i = iBegin + 1; i < iEnd; i++)
+					nodes[i] = nullptr;
 			}
 
 			nodes.erase(std::remove(nodes.begin(), nodes.end(), nullptr), nodes.end());
