@@ -123,6 +123,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="array_view.h" />
+    <ClInclude Include="FileView_Posix.h" />
+    <ClInclude Include="FileView_Win32.h" />
     <ClInclude Include="LengthMap.h" />
     <ClInclude Include="MergeTree.h" />
     <ClInclude Include="PieceTable.h" />

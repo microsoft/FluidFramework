@@ -30,6 +30,12 @@
     <ClInclude Include="PieceTable.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="FileView_Posix.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FileView_Win32.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="NativeMergeTree.natvis" />

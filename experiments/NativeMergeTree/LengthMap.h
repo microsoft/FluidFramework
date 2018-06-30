@@ -8,7 +8,7 @@
 template <size_t BlockSize>
 struct TLengthMap
 {
-	static constexpr size_t BlockSize = BlockSize;
+	static constexpr size_t cBlockSize = BlockSize;
 
 	struct FindResult
 	{
