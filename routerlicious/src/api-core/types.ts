@@ -18,6 +18,17 @@ export interface ICollaborativeObjectSave {
     message: string;
 }
 
+export interface IInclusion {
+    content?: Buffer;
+    fileName?: string;
+    height?: number;
+    size?: number;
+    type?: string;
+    sha?: string;
+    width?: number;
+    caption?: string;
+}
+
 export interface ICollaborativeObject {
     /**
      * A readonly identifier for the collaborative object

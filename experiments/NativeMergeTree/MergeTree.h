@@ -2,6 +2,7 @@
 #include <memory>
 #include <string>
 #include <list>
+#include <optional>
 #include "array_view.h"
 #include "Seq.h"
 #include "LengthMap.h"
@@ -60,7 +61,7 @@ struct Segment : public MergeNode
 	{}
 
 	virtual ~Segment() = default;
-	virtual std::unique_ptr<Segment> splitAt(int pos) = 0;
+	virtual std::shared_ptr<Segment> splitAt(int pos) = 0;
 	void Commit(Seq seqLocal, Seq seqServer) override
 	{
 		if (seqAdded == seqLocal)
@@ -79,7 +80,7 @@ struct TextSegment final : public Segment
 		, m_text(text)
 	{}
 
-	std::unique_ptr<Segment> splitAt(int pos) override
+	std::shared_ptr<Segment> splitAt(int pos) override
 	{
 		if (pos > 0)
 		{
@@ -87,7 +88,7 @@ struct TextSegment final : public Segment
 			m_text.resize(pos);
 			length = m_text.size();
 
-			std::unique_ptr<TextSegment> leafSegment = std::make_unique<TextSegment>(*this);
+			std::shared_ptr<TextSegment> leafSegment = std::make_shared<TextSegment>(*this);
 			leafSegment->m_text = std::move(remainingText);
 			leafSegment->length = leafSegment->m_text.size();
 			return leafSegment;
@@ -99,11 +100,15 @@ struct TextSegment final : public Segment
 struct MergeBlock final : public MergeNode
 {
 	static constexpr size_t MaxNodesInBlock = Config::BlockSize();
+	static constexpr size_t IdealNodesInBlock = MaxNodesInBlock * 3 / 4;
+	static constexpr int MaxDepthImbalance = 2;
 
-	using ChildNodeArray = std::array<std::unique_ptr<MergeNode>, MaxNodesInBlock>;
+	using ChildNodeArray = std::array<std::shared_ptr<MergeNode>, MaxNodesInBlock>;
 	using LengthMap = TLengthMap<MaxNodesInBlock>;
 	ChildNodeArray children;
 	LengthMap lengthMap;
+	int depthMin = 0;
+	int depthMax = 0;
 
 	MergeBlock() : MergeNode(false /*isLeaf*/) {}
 
@@ -114,13 +119,56 @@ struct MergeBlock final : public MergeNode
 		: MergeNode(false /*isLeaf*/)
 		, children(std::move(other.children))
 		, lengthMap(std::move(other.lengthMap))
+		, depthMin(other.depthMin)
+		, depthMax(other.depthMax)
 	{
 		for (auto&& child : *this)
 			child->parent = this;
 	}
 
+	MergeBlock &operator=(MergeBlock &&other)
+	{
+		children = std::move(other.children);
+		lengthMap = std::move(other.lengthMap);
+		depthMin = other.depthMin;
+		depthMax = other.depthMax;
+
+		for (auto&& child : *this)
+			child->parent = this;
+		return *this;
+	}
+
+	template <typename TIter>
+	MergeBlock(TIter b, TIter e, 
+		std::optional<LengthMap> &&optLengthMap = std::nullopt)
+		: MergeNode(false /*isLeaf*/)
+	{
+		static_assert(std::is_same_v<
+			std::decay_t<decltype(*b)>,
+			std::shared_ptr<MergeNode>
+		>);
+		assert((e - b) <= MaxNodesInBlock);
+		for (int i = 0; b != e && i < MaxNodesInBlock; i++, b++)
+		{
+			children[i] = *b;
+			children[i]->parent = this;
+			children[i]->index = i;
+
+			if (i > 0)
+				assert(children[i - 1]->isLeaf == children[i]->isLeaf);
+		}
+
+		if (optLengthMap.has_value())
+			lengthMap = std::move(optLengthMap.value());
+		else
+			lengthMap = recomputeLengthsSlow();
+		depthMin = recomputeDepthMinSlow();
+		depthMax = recomputeDepthMaxSlow();
+	}
+
 	int ChildCount() const { return lengthMap.ChildCount(); }
 	bool isFull() const { return ChildCount() == MaxNodesInBlock; }
+	bool IsUnbalanced() const { return (depthMax - depthMin) > MaxDepthImbalance; }
 	MergeNode *get(int i) const
 	{
 		assert(i >= 0 && i < ChildCount());
@@ -156,7 +204,7 @@ struct MergeBlock final : public MergeNode
 		parent->updateParentLengths(seqAdded, seqRemoved, length);
 	}
 
-	void adopt(std::unique_ptr<MergeNode> newNode, uint8_t index, bool fWasSplit)
+	void adopt(const std::shared_ptr<MergeNode> &newNode, uint8_t index, bool fWasSplit)
 	{
 		int iNewLast = ChildCount();
 		assert(index <= iNewLast);
@@ -168,6 +216,21 @@ struct MergeBlock final : public MergeNode
 			children[i]->index = i;
 		}
 		assert(children[index] == nullptr);
+
+		if (!newNode->isLeaf)
+		{
+			MergeBlock *newBlock = static_cast<MergeBlock *>(newNode.get());
+			if (ChildCount() == 0 || (newBlock->depthMin + 1) > depthMin)
+				depthMin = newBlock->depthMin + 1;
+			depthMax = std::max(depthMax, newBlock->depthMax + 1);
+		}
+		else
+		{
+			depthMin = 1;
+			depthMax = std::max(depthMax, 1);
+		}
+		if (ChildCount() + 1 < IdealNodesInBlock)
+			depthMin = 0;
 
 		newNode->parent = this;
 		newNode->index = static_cast<int8_t>(index);
@@ -213,24 +276,18 @@ struct MergeBlock final : public MergeNode
 	{
 		assert(parent->ChildCount() < MaxNodesInBlock);
 		checkBlockInvariants();
-		std::unique_ptr<MergeBlock> newBlock = std::make_unique<MergeBlock>();
 		static_assert(MaxNodesInBlock % 2 == 0);
 		constexpr int split = MaxNodesInBlock / 2;
 
-		// Move latter half of children to new node
-		std::move(children.begin() + split, children.end(), newBlock->children.begin());
+		std::shared_ptr<MergeBlock> newBlock = std::make_shared<MergeBlock>(
+			children.begin() + split, children.end(), lengthMap.Split());
 
-		// Update parent and index fields
-		for (int i = 0; i < split; i++)
-		{
-			assert(children[i]->index == i);
-			assert(children[i]->parent == this);
+		assert(split == ChildCount());
+		for (size_t i = split; i < children.size(); i++)
+			children[i] = nullptr;
 
-			newBlock->children[i]->index = i;
-			newBlock->children[i]->parent = newBlock.get();
-		}
-
-		newBlock->lengthMap = lengthMap.Split();
+		depthMin = recomputeDepthMinSlow();
+		depthMax = recomputeDepthMaxSlow();
 
 		checkBlockInvariants();
 		newBlock->checkBlockInvariants();
@@ -248,24 +305,18 @@ struct MergeBlock final : public MergeNode
 			{
 				// Looks like we're the root!
 				// move contents of root into a child node, and then Split that
-				std::unique_ptr<MergeBlock> newBlock = std::make_unique<MergeBlock>();
-				for (int i = 0; i < MaxNodesInBlock; i++)
-				{
-					if (children[i] != nullptr)
-					{
-						children[i]->parent = newBlock.get();
-						assert(children[i]->index == i);
-					}
-				}
-				std::move(children.begin(), children.end(), newBlock->children.begin());
-				newBlock->lengthMap = std::move(lengthMap);
+				std::shared_ptr<MergeBlock> newBlock = std::make_shared<MergeBlock>(
+					begin(), end(), std::move(lengthMap));
 
+				for (auto &&child : children)
+					child = nullptr;
 				lengthMap = LengthMap();
+				depthMin = 0;
+				depthMax = 0;
 
-				MergeBlock *newBlockRaw = newBlock.get();
 				adopt(std::move(newBlock), 0, false /*fSplit*/);
 
-				newBlockRaw->split();
+				static_cast<MergeBlock *>(children[0].get())->split();
 			}
 			else
 			{
@@ -353,6 +404,44 @@ struct MergeBlock final : public MergeNode
 		return LengthMap(std::move(entries), childCount);
 	}
 
+	[[nodiscard]]
+	int recomputeDepthMinSlow()
+	{
+		if (ChildCount() < IdealNodesInBlock)
+			return 0;
+
+		if (children[0]->isLeaf)
+			return 1;
+
+		int d = std::numeric_limits<int>::max();
+		for (const auto &child : *this)
+		{
+			MergeBlock *childBlock = static_cast<MergeBlock *>(child.get());
+			d = std::min(d, childBlock->depthMin + 1);
+		}
+
+		return d;
+	}
+
+	[[nodiscard]]
+	int recomputeDepthMaxSlow()
+	{
+		if (ChildCount() == 0)
+			return 0;
+
+		if (children[0]->isLeaf)
+			return 1;
+
+		int d = 0;
+		for (const auto &child : *this)
+		{
+			MergeBlock *childBlock = static_cast<MergeBlock *>(child.get());
+			d = std::max(d, childBlock->depthMax + 1);
+		}
+
+		return d;
+	}
+
 	void checkBlockInvariants()
 	{
 #ifdef _DEBUG
@@ -366,8 +455,17 @@ struct MergeBlock final : public MergeNode
 		for (int i = ChildCount(); i < MaxNodesInBlock; i++)
 			assert(children[i] == nullptr);
 
+		for (int i = 1; i < ChildCount(); i++)
+			assert(children[i - 1]->isLeaf == children[i]->isLeaf);
+
 		LengthMap newLengths = recomputeLengthsSlow();
 		assert(newLengths == lengthMap);
+
+		int dMin = recomputeDepthMinSlow();
+		int dMax = recomputeDepthMaxSlow();
+		assert(depthMin == dMin);
+		assert(depthMax == dMax);
+		assert(depthMax >= depthMin);
 #endif
 	}
 };
@@ -621,7 +719,7 @@ struct MergeTree
 		assert(dcp >= 0);
 
 		SegmentIterator it = findAndSplit(txn->seqBase, cp + dcp);
-		std::unique_ptr<Segment> newSegment = std::make_unique<TextSegment>(txn->seqNew, text);
+		std::shared_ptr<Segment> newSegment = std::make_shared<TextSegment>(txn->seqNew, text);
 
 		// Remove existing text if needed
 		if (dcp > 0)
@@ -648,7 +746,15 @@ struct MergeTree
 			MergeBlock *parent = &root;
 			while (parent->ChildCount() > 0 && !parent->children[0]->isLeaf)
 				parent = static_cast<MergeBlock *>(parent->children[parent->ChildCount() - 1].get());
-			parent->ensureExtraCapacity(1);
+
+			if (parent->ChildCount() == MergeBlock::MaxNodesInBlock)
+			{
+				// do a slightly complicated dance to ensure that we keep track of the right parent even if it has to split
+				MergeNode *lastChild = parent->children[parent->ChildCount() - 1].get();
+				lastChild->parent->ensureExtraCapacity(1);
+				parent = lastChild->parent;
+			}
+
 			txn->segments.push_back(newSegment.get());
 			parent->adopt(std::move(newSegment), parent->ChildCount(), false /*fSplit*/);
 		}
@@ -665,40 +771,110 @@ struct MergeTree
 		return root.lengthMap.Entries().back().GetSeq();
 	}
 
-	void ReloadFromSegments(std::vector<std::unique_ptr<Segment>> segments)
+	void ReloadFromSegments(std::vector<std::shared_ptr<Segment>> segments)
 	{
-		std::vector<std::unique_ptr<MergeNode>> nodes;
+		std::vector<std::shared_ptr<MergeNode>> nodes;
 		nodes.reserve(segments.size());
 		for (auto&& segment : segments)
 			nodes.push_back(std::move(segment));
 
-		// Given a range of indexes in 'nodes', move the elements from
-		// those indexes into a new block, and put that block back into
-		// 'nodes' at iBegin
-		auto fillBlock = [&nodes](MergeBlock *block, size_t iBegin, size_t iEnd) -> void
-		{
-			std::move(nodes.begin() + iBegin, nodes.begin() + iEnd, block->children.begin());
-			uint32_t childCount = static_cast<uint32_t>(iEnd - iBegin);
-			for (size_t i = 0; i < childCount; i++)
-			{
-				block->children[i]->parent = block;
-				block->children[i]->index = static_cast<uint8_t>(i);
-			}
-			block->lengthMap = block->recomputeLengthsSlow();
-		};
+		ReloadBlockFromNodes(&root, std::move(nodes));
+	}
 
+	void ReloadBlockFromNodes(MergeBlock *rootBlock, std::vector<std::shared_ptr<MergeNode>> nodes)
+	{
 		while (nodes.size() > MergeBlock::MaxNodesInBlock)
 		{
-			for (size_t iBegin = 0, iEnd = MergeBlock::MaxNodesInBlock; iEnd < nodes.size(); iBegin = iEnd, iEnd = std::min(iEnd + MergeBlock::MaxNodesInBlock, nodes.size()))
+			for (size_t iBegin = 0, iEnd = MergeBlock::MaxNodesInBlock; iBegin < nodes.size(); iBegin = iEnd, iEnd = std::min(iEnd + MergeBlock::MaxNodesInBlock, nodes.size()))
 			{
-				std::unique_ptr<MergeBlock> block = std::make_unique<MergeBlock>();
-				fillBlock(block.get(), iBegin, iEnd);
+				std::shared_ptr<MergeBlock> block = std::make_shared<MergeBlock>(
+					nodes.begin() + iBegin, nodes.begin() + iEnd);
 				nodes[iBegin] = std::move(block);
+				for (size_t i = iBegin + 1; i < iEnd; i++)
+					nodes[i] = nullptr;
 			}
 
 			nodes.erase(std::remove(nodes.begin(), nodes.end(), nullptr), nodes.end());
 		}
-		fillBlock(&root, 0, nodes.size());
+		MergeBlock blockT(nodes.begin(), nodes.end());
+		*rootBlock = std::move(blockT);
+		rootBlock->checkBlockInvariants();
+	}
+
+	// Given an unbalanced block, find the smallest block under it
+	// that's still unbalanced. The goal is to rewrite as little
+	// of the tree as possible, but still make progress.
+	MergeBlock *FindRebalancePoint(MergeBlock *block)
+	{
+		assert(block->IsUnbalanced());
+
+		MergeBlock *candidate = nullptr;
+		for (const auto &childNode : *block)
+		{
+			if (childNode->isLeaf)
+			{
+				assert(false);
+				return block;
+			}
+
+			MergeBlock *childBlock = static_cast<MergeBlock *>(childNode.get());
+			if (childBlock->IsUnbalanced())
+				return FindRebalancePoint(childBlock);
+		}
+
+		return block;
+	}
+
+	template <typename TCallback>
+	void EnumerateSegments(MergeBlock *block, TCallback callback)
+	{
+		for (auto &&child : *block)
+		{
+			if (child->isLeaf)
+				callback(child);
+			else
+				EnumerateSegments(static_cast<MergeBlock *>(child.get()), callback);
+		}
+	}
+
+	std::vector<std::shared_ptr<MergeNode>> ExtractSegments(MergeBlock *block)
+	{
+		std::vector<std::shared_ptr<MergeNode>> nodes;
+		EnumerateSegments(block, [&](std::shared_ptr<MergeNode> &node)
+		{
+			nodes.push_back(std::move(node));
+		});
+
+		for (auto &&child : *block)
+			child = nullptr;
+
+		block->lengthMap = MergeBlock::LengthMap();
+
+		return nodes;
+	}
+
+	// There are three things that we want to tidy up during idle time:
+	// * rebalancing the tree
+	// * cleaning up dead segments
+	// * merging together adjacent compatible segments
+	//
+	// So far, we only do the first one
+	void RunMaintenance(bool &fKeepGoing)
+	{
+		RunArborist(fKeepGoing);
+	}
+	
+	// The Arborist maintains the tree by pruning branches that are too long
+	void RunArborist(bool &fKeepGoing)
+	{
+		while (root.IsUnbalanced() && fKeepGoing)
+		{
+			MergeBlock *block = FindRebalancePoint(&root);
+			std::vector<std::shared_ptr<MergeNode>> nodes = ExtractSegments(block);
+			// TODO: now would be a good time to trim out dead segments
+			ReloadBlockFromNodes(block, std::move(nodes));
+			// FIXME need to update parent depths up to the root
+		}
 	}
 
 	void checkInvariants()

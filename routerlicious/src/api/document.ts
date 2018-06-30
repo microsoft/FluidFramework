@@ -7,7 +7,7 @@ import performanceNow = require("performance-now");
 import * as uuid from "uuid/v4";
 import * as api from "../api-core";
 import * as cell from "../cell";
-import { Deferred } from "../core-utils";
+import { Deferred, gitHashFile } from "../core-utils";
 import { ICell, IMap, IMapView, IStream } from "../data-types";
 import * as mapExtension from "../map";
 import * as sharedString from "../shared-string";
@@ -17,6 +17,7 @@ import { BrowserErrorTrackingService } from "./errorTrackingService";
 
 // TODO: All these should be enforced by server as a part of document creation.
 const rootMapId = "root";
+const inclusionMapId = "inclusions";
 const taskMapId = "tasks";
 const documentTasks = ["snapshot", "spell", "intel", "translation", "augmentation"];
 const taskCheckerMS = 5000;
@@ -63,12 +64,6 @@ export function registerDocumentService(service: api.IDocumentService) {
 
 export function getDefaultDocumentService(): api.IDocumentService {
     return defaultDocumentService;
-}
-
-let blobStorage: api.IDocumentStorageService;
-
-export function getDefaultBlobStorage(): api.IDocumentStorageService {
-    return blobStorage;
 }
 
 interface IDistributedObjectState {
@@ -363,6 +358,70 @@ export class Document extends EventEmitter implements api.IDocument {
         return this.distributedObjects.get(rootMapId).object as IMap;
     }
 
+    public getInclusionsMap(): IMap {
+        return this.distributedObjects.get(inclusionMapId).object as IMap;
+    }
+
+    // TODO (sabroner) turn filemap into a full type
+    public createInclusion(file: api.IInclusion): api.IInclusion {
+        const hash = gitHashFile(file.content);
+        file.sha = hash;
+        const fileMap = this.getInclusionsMap().set<IMap>(hash, this.createMap());
+        fileMap.set<string>("type", file.type);
+        fileMap.set<string>("size", file.size);
+        fileMap.set<number>("width", file.width);
+        fileMap.set<number>("height", file.height);
+        fileMap.set<string>("fileName", file.fileName);
+        fileMap.set<string>("caption", file.caption);
+        return file;
+    }
+
+    public addInclusion(file: api.IInclusion): void {
+
+        const encodedBuffer = file.content.toString("base64");
+        const blobResponseP = this.storageService.manager.createBlob(encodedBuffer, "base64");
+
+        blobResponseP.then(async (blobResponse) => {
+            // TODO (sabroner): Indicate the inclusion is done uploading
+            console.log("Completed uploading blob");
+            this.emit("inclusionUploaded", blobResponse.sha);
+        });
+    }
+
+    public getInclusions(): Promise<string[]> {
+        const inclusionMap = this.getInclusionsMap();
+
+        return inclusionMap.keys();
+    }
+
+    public getInclusion(key: string): Promise<api.IInclusion> {
+        const fileMapP = this.getInclusionsMap().wait(key) as Promise<IMap>;
+
+        const blobResponseP = this.storageService.manager.getBlob(key);
+
+        return Promise.all([fileMapP, blobResponseP])
+            .then(async (values) => {
+
+                const fileMap = await values[0].getView();
+                const blobResponse = values[1];
+
+                return {
+                    caption: fileMap.get("caption"),
+                    content: new Buffer(blobResponse.content, "base64"),
+                    fileName: fileMap.get("fileName"),
+                    height: fileMap.get("height"),
+                    sha: key,
+                    size: fileMap.get("size"),
+                    type: fileMap.get("type"),
+                    width: fileMap.get("width"),
+                } as api.IInclusion;
+            })
+            .catch((error) => {
+                console.log("Error");
+                return null;
+            });
+    }
+
     /**
      * Saves the document by performing a snapshot.
      */
@@ -533,15 +592,14 @@ export class Document extends EventEmitter implements api.IDocument {
                 // If it's a new document we create the root map object - otherwise we wait for it to become available
                 // This I don't think I can get rid of
                 if (!this.existing) {
-                    this.createAttached("root", mapExtension.MapExtension.Type);
+                    this.createAttached(rootMapId, mapExtension.MapExtension.Type);
+                    this.createAttached(inclusionMapId, mapExtension.MapExtension.Type);
                     this.createTaskMap(taskMapId).catch((err) => {
                         this.emit(err);
                     });
                 } else {
-                    await this.get("root");
+                    await this.get(rootMapId);
                 }
-
-                blobStorage = await storageP;
                 debug(`Document loaded ${this.id}: ${performanceNow()} `);
             });
     }

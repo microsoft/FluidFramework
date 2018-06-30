@@ -150,17 +150,29 @@ export async function load(id: string, version: resources.ICommit, config: any, 
     const doc = await api.load(id, { client: { type: "robot" }, encrypted: false, token }, version);
     const taskMap = await getTaskMap(doc);
     const taskMapView = await taskMap.getView();
-    let graph = generateGraphData(doc, id, taskMapView);
-    updateSimulation(graph);
+    let prev: IGraph;
+    let curr = generateGraphData(doc, id, taskMapView);
+    updateSimulation(curr);
+    prev = curr;
 
     taskMap.on("valueChanged", () => {
-        graph = generateGraphData(doc, id, taskMapView);
-        updateSimulation(graph);
+        curr = generateGraphData(doc, id, taskMapView);
+        if (!sameGraph(prev, curr)) {
+            updateSimulation(curr);
+            prev = curr;
+        } else {
+            console.log(`Same graph!`);
+        }
     });
 
     doc.on("clientLeave", () => {
-        graph = generateGraphData(doc, id, taskMapView);
-        updateSimulation(graph);
+        curr = generateGraphData(doc, id, taskMapView);
+        if (!sameGraph(prev, curr)) {
+            updateSimulation(curr);
+            prev = curr;
+        } else {
+            console.log(`Same graph!`);
+        }
     });
 }
 
@@ -204,4 +216,40 @@ function pollTaskMap(root: types.IMapView, resolve, reject) {
         console.log(`Did not find taskmap - waiting ${pauseAmount}ms`);
         setTimeout(() => pollTaskMap(root, resolve, reject), pauseAmount);
     }
+}
+
+function sameNode(node1: INode, node2: INode): boolean {
+    return (node1.clientId === node2.clientId &&
+            node1.group === node2.group &&
+            node1.id === node2.id &&
+            node1.radius === node2.radius);
+}
+
+function sameLink(link1: ILink, link2: ILink): boolean {
+    return (link1.label === link2.label &&
+            link1.source === link2.source &&
+            link1.strength === link2.strength &&
+            link1.target === link2.target);
+}
+
+function sameGraph(prev: IGraph, curr: IGraph) {
+    if (!prev) {
+        return false;
+    }
+    if (prev.nodes.length !== curr.nodes.length ||
+        prev.links.length !== curr.links.length) {
+            return false;
+    }
+    for (let i = 0; i < prev.nodes.length; ++i) {
+        if (!sameNode(prev.nodes[i], curr.nodes[i])) {
+            return false;
+        }
+    }
+    for (let i = 0; i < prev.links.length; ++i) {
+        if (!sameLink(prev.links[i], curr.links[i])) {
+            return false;
+        }
+    }
+
+    return true;
 }
