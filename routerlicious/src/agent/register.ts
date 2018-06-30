@@ -1,5 +1,4 @@
-import { api } from "../client-api";
-import { ITaskRunnerConfig } from "./definitions";
+import { api, core } from "../client-api";
 import { loadDictionary } from "./dictionaryLoader";
 import { IntelWork } from "./intelWork";
 import { SnapshotWork } from "./snapshotWork";
@@ -8,9 +7,9 @@ import { TranslationWork } from "./translationWork";
 import { getTaskMapView } from "./utils";
 
 // Try to grab any allowed task on first load and then when a client leaves.
-export function registerToWork(doc: api.Document, config: ITaskRunnerConfig, token: string, workerConfig: any) {
-    if (config.permission && config.permission.length > 0) {
-        const permittedTasks = config.permission;
+export function registerToWork(doc: api.Document, client: core.IClient, token: string, workerConfig: any) {
+    if (client.permission && client.permission.length > 0) {
+        const permittedTasks = client.permission;
         startUnassignedTasks(doc, permittedTasks, token, workerConfig).catch((err) => {
             console.error(err);
         });
