@@ -88,7 +88,7 @@ export function register(
                 });
 
             // Broadcast the client connection message
-            const clientDetail: api.IWorkerClientDetail = {
+            const clientDetail: api.IClientDetail = {
                 clientId,
                 detail: message.client,
             };

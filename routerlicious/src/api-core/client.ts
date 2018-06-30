@@ -2,16 +2,16 @@ export const Browser = "browser";
 
 export const Robot = "robot";
 
-export interface IWorkerClient {
+export interface IClient {
 
     type: string;
 
     permission: string[];
 }
 
-export interface IWorkerClientDetail {
+export interface IClientDetail {
 
     clientId: string;
 
-    detail: IWorkerClient;
+    detail: IClient;
 }

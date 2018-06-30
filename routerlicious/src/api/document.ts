@@ -185,7 +185,7 @@ export class Document extends EventEmitter implements api.IDocument {
     // tslint:enable:variable-name
 
     private messagesSinceMSNChange = new Array<api.ISequencedDocumentMessage>();
-    private clients = new Map<string, api.IWorkerClient>();
+    private clients = new Map<string, api.IClient>();
     private isLeader: boolean = false;
     private taskMapView: IMapView;
     private connectionState = api.ConnectionState.Disconnected;
@@ -503,11 +503,11 @@ export class Document extends EventEmitter implements api.IDocument {
         return this._user;
     }
 
-    public getClients(): Map<string, api.IWorkerClient> {
-        return new Map<string, api.IWorkerClient>(this.clients);
+    public getClients(): Map<string, api.IClient> {
+        return new Map<string, api.IClient>(this.clients);
     }
 
-    public getFirstBrowserClient(): api.IWorkerClientDetail {
+    public getFirstBrowserClient(): api.IClientDetail {
         for (const client of this.getClients()) {
             if (!client[1] || client[1].type !== api.Robot) {
                 return {
