@@ -509,7 +509,7 @@ export class Document extends EventEmitter implements api.IDocument {
 
     public getFirstBrowserClient(): api.IClientDetail {
         for (const client of this.getClients()) {
-            if (!client[1] || client[1].type !== api.Robot) {
+            if (!client[1] || client[1].type === api.Browser) {
                 return {
                     clientId: client[0],
                     detail: client[1],

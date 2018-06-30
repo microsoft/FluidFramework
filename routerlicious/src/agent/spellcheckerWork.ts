@@ -24,7 +24,7 @@ export class SpellcheckerWork extends BaseWork implements IWork {
         await this.loadDocument(
             {
                 blockUpdateMarkers: true,
-                client: { type: "robot"},
+                client: { type: "spell"},
                 encrypted: undefined,
                 localMinSeq: 0,
                 token: this.token,

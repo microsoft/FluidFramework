@@ -147,7 +147,7 @@ export async function load(id: string, version: resources.ICommit, config: any, 
         config.blobStorageUrl,
         config.tenantId,
         config.trackError);
-    const doc = await api.load(id, { client: { type: "robot" }, encrypted: false, token }, version);
+    const doc = await api.load(id, { client: { type: "visualize" }, encrypted: false, token }, version);
     const taskMap = await getTaskMap(doc);
     const taskMapView = await taskMap.getView();
     let prev: IGraph;

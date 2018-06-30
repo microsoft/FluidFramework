@@ -80,10 +80,10 @@ export class BaseWork extends EventEmitter {
         }, leaderCheckerMS);
     }
 
-    // A leader is any non-robot client connected to the document.
+    // A leader is any browser client connected to the document.
     private noLeader(): boolean {
         for (const client of this.document.getClients()) {
-            if (!client[1] || client[1].type !== core.Robot) {
+            if (!client[1] || client[1].type === core.Browser) {
                 return false;
             }
         }

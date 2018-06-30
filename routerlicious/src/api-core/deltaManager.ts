@@ -267,7 +267,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager {
     }
 
     private connectCore(token: string, reason: string, delay: number, client: IClient) {
-        // Reconnection is only enabled for non robot clients.
+        // Reconnection is only enabled for browser clients.
         const reconnect = (client === undefined || client.type === Browser);
         DeltaConnection.Connect(this.tenantId, this.id, token, this.service, client).then(
             (connection) => {
