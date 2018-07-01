@@ -4,7 +4,9 @@ import * as dns from "dns";
 import * as os from "os";
 import * as util from "util";
 import * as ws from "ws";
-import { ICollection, IDocument, IOrderer, IOrdererManager, IRawOperationMessage, IWebSocket } from "../core";
+import {
+    ICollection, IDocument, IOrderer, IOrdererManager, IOrdererSocket, IRawOperationMessage,
+} from "../core";
 import * as core from "../core";
 import { DeliLambda } from "../deli/lambda";
 import { ClientSequenceTimeout } from "../deli/lambdaFactory";
@@ -69,13 +71,13 @@ class LocalTopic implements core.ITopic {
 
     public emit(event: string, ...args: any[]) {
         for (const socket of this.publisher.sockets) {
-            socket.emit(event, ...args);
+            socket.send(event, args[0], args[1]);
         }
     }
 }
 
 class LocalSocketPublisher implements core.IPublisher {
-    public sockets = new Array<IWebSocket>();
+    public sockets = new Array<IOrdererSocket>();
 
     public on(event: string, listener: (...args: any[]) => void) {
         return;
@@ -86,7 +88,7 @@ class LocalSocketPublisher implements core.IPublisher {
         return new LocalTopic(this);
     }
 
-    public attachSocket(socket: IWebSocket) {
+    public attachSocket(socket: IOrdererSocket) {
         this.sockets.push(socket);
     }
 }
@@ -127,44 +129,64 @@ async function getOrderer(
             tmzRunner);
     } else {
         // TOOD - will need to check the time on the lease and then take it
-        debug(`Val is ${JSON.stringify(val)}`);
+        debug(`*****************************************************`);
+        debug(`Not the orderer: Connecting to ${JSON.stringify(val)}`);
         // Reservation exists - have the orderer simply establish a WS connection to it and proxy commands
         return new ProxyOrderer(val.server, tenantId, documentId);
     }
 }
 
 interface ISocketOrderer extends IOrderer {
-    attachSocket(socket: any);
+    attachSocket(socket: IOrdererSocket);
 }
 
 /**
  * Proxies ordering to an external service which does the actual ordering
  */
 class ProxyOrderer implements ISocketOrderer {
-    private sockets: any[] = [];
+    private sockets: IOrdererSocket[] = [];
     private queue: async.AsyncQueue<IRawOperationMessage>;
 
     constructor(server: string, tenantId: string, documentId: string) {
         // connect to service
+        debug(`Connecting to ${server}`);
         const socket = new ws(`ws://${server}:4000`);
         socket.on(
             "open",
             () => {
-                this.queue.resume();
+                debug(`Socket opened`);
+                socket.send(
+                    JSON.stringify({ op: "connect", tenantId, documentId }),
+                    (error) => {
+                        debug(`Connected`);
+                        this.queue.resume();
+                    });
+            });
+
+        socket.on(
+            "error",
+            (error) => {
+                debug(`!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!`);
+                debug(error);
             });
 
         socket.on(
             "message",
             (data) => {
+                debug(`*****************************************************`);
+                debug(`Inbound`);
+                const parsedData = JSON.parse(data as string);
                 for (const clientSocket of this.sockets) {
-                    clientSocket.emit("op", documentId, [data]);
+                    debug(`${parsedData.op}, ${parsedData.id}, ${parsedData.data}`);
+                    clientSocket.send(parsedData.op, parsedData.id, parsedData.data);
                 }
             });
 
         this.queue = async.queue<IRawOperationMessage, any>(
             (value, callback) => {
-                // TODO error handling
-                socket.send(JSON.stringify(value));
+                debug(`*****************************************************`);
+                debug(`Sending ${value.clientId}@${value.operation.clientSequenceNumber}`);
+                socket.send(JSON.stringify({ op: "message", data: value }));
                 callback();
             },
             1);
@@ -176,7 +198,7 @@ class ProxyOrderer implements ISocketOrderer {
         this.queue.push(message);
     }
 
-    public attachSocket(socket: any) {
+    public attachSocket(socket: IOrdererSocket) {
         this.sockets.push(socket);
     }
 }
@@ -239,6 +261,7 @@ class LocalOrderer implements ISocketOrderer {
     }
 
     public async order(message: IRawOperationMessage, topic: string): Promise<void> {
+        debug(`Ordering ${message.documentId}@${this.offset}`);
         const deliMessage: IMessage = {
             highWaterOffset: this.offset,
             key: message.documentId,
@@ -252,7 +275,7 @@ class LocalOrderer implements ISocketOrderer {
         this.deliLambda.handler(deliMessage);
     }
 
-    public attachSocket(socket: any) {
+    public attachSocket(socket: IOrdererSocket) {
         this.socketPublisher.attachSocket(socket);
     }
 }
@@ -273,7 +296,7 @@ export class OrdererManager implements IOrdererManager {
     }
 
     public getOrderer(
-        socket: any,
+        socket: IOrdererSocket,
         tenantId: string,
         documentId: string): Promise<IOrderer> {
 
@@ -300,9 +323,15 @@ export class OrdererManager implements IOrdererManager {
     }
 
     public route(message: IRawOperationMessage) {
+        debug("((((((((((((((((((((((((((((((((((((((");
+        debug(`*** Routing ${message.tenantId}`);
         assert(message.tenantId === "local");
+        debug(`*** Getting orderer for ${message.documentId}`);
         const localP = this.localOrderers.get(message.documentId);
         assert (localP);
-        localP.then((orderer) => orderer.order(message, message.documentId));
+        localP.then((orderer) => {
+            debug(`*** Found orderer - ordering ${message.documentId}`);
+            orderer.order(message, message.documentId);
+        });
     }
 }
