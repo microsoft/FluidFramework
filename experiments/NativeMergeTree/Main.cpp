@@ -76,7 +76,7 @@ void RunFindReplaceTest_PieceTable(const char *path)
 	}
 
 	std::chrono::high_resolution_clock::time_point ts2 = std::chrono::high_resolution_clock::now();
-	printf("Runtime: %I64d us\n", std::chrono::duration_cast<std::chrono::microseconds>(ts2 - ts1).count());
+	printf("Runtime: %lld us\n", std::chrono::duration_cast<std::chrono::microseconds>(ts2 - ts1).count());
 	printf("Fetch count: %d\n", cFetches);
 	printf("Replace count: %d\n", cReplaces);
 }
@@ -123,7 +123,7 @@ void RunFindReplaceTest_MergeTree(const char *path)
 	//doc.CommitTransaction(txn, Seq::Create(1));
 
 	std::chrono::high_resolution_clock::time_point ts2 = std::chrono::high_resolution_clock::now();
-	printf("Runtime: %I64d us\n", std::chrono::duration_cast<std::chrono::microseconds>(ts2 - ts1).count());
+	printf("Runtime: %lld us\n", std::chrono::duration_cast<std::chrono::microseconds>(ts2 - ts1).count());
 	printf("Fetch count: %d\n", cFetches);
 	printf("Replace count: %d\n", cReplaces);
 }
@@ -174,8 +174,12 @@ void RunMergeTreeMisc()
 
 int main(int argc, char **argv)
 {
+#ifdef __EMSCRIPTEN__
+		RunFindReplaceTest_MergeTree("assets/pp10.txt");
+#else
 	if (argc > 1 && strcmp(argv[1], "piecetable") == 0)
-		RunFindReplaceTest_PieceTable("C:\\Users\\ravipi\\source\\repos\\Prague\\routerlicious\\public\\literature\\pp10.txt");
+		RunFindReplaceTest_PieceTable("../../routerlicious/public/literature/pp10.txt");
 	else //if (strcmp(argv[1], "mergetree"))
-		RunFindReplaceTest_MergeTree("C:\\Users\\ravipi\\source\\repos\\Prague\\routerlicious\\public\\literature\\pp10.txt");
+		RunFindReplaceTest_MergeTree("../../routerlicious/public/literature/pp10.txt");
+#endif
 }
