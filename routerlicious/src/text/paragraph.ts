@@ -76,7 +76,7 @@ export interface IPGGlue extends IParagraphItem {
 export interface IPGPenalty extends IParagraphItem {
     type: ParagraphItemType.Penalty;
     cost: number;
-}``
+}
 
 export type ParagraphItem = IPGBlock | IPGGlue | IPGPenalty;
 
