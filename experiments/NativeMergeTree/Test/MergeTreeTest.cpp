@@ -148,12 +148,12 @@ TEST_METHOD(Split)
 	LengthMap::Entry entryBefore(Seq::Universal());
 	LengthMap::Entry entryAfter(Seq::Universal());
 
-	for (int i = 0; i < LengthMap::BlockSize; i++)
+	for (int i = 0; i < LengthMap::cBlockSize; i++)
 		entryBefore.lengths[i] = i + 1;
-	for (int i = LengthMap::BlockSize / 2; i < LengthMap::BlockSize; i++)
-		entryAfter.lengths[i] = i - LengthMap::BlockSize / 2;
+	for (int i = LengthMap::cBlockSize / 2; i < LengthMap::cBlockSize; i++)
+		entryAfter.lengths[i] = i - LengthMap::cBlockSize / 2;
 
-	LengthMap map1{ {entryBefore}, static_cast<int>(LengthMap::BlockSize) };
+	LengthMap map1{ {entryBefore}, static_cast<int>(LengthMap::cBlockSize) };
 	LengthMap map2 = map1.Split();
 	Assert::IsTrue(map1 == map2);
 }
