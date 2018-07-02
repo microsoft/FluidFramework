@@ -248,6 +248,26 @@ const commands: ICmd[] = [
     },
     {
         enabled: (f) => {
+            return !f.modes.randExclusion;
+        },
+        exec: (f) => {
+            f.modes.randExclusion = true;
+            f.localQueueRender(f.cursor.pos);
+        },
+        key: "inclusion test on",
+    },
+    {
+        enabled: (f) => {
+            return f.modes.randExclusion;
+        },
+        exec: (f) => {
+            f.modes.randExclusion = false;
+            f.localQueueRender(f.cursor.pos);
+        },
+        key: "inclusion test off",
+    },
+    {
+        enabled: (f) => {
             return !f.modes.showBookmarks;
         },
         exec: (f) => {
@@ -867,6 +887,7 @@ const underlineStringURL = `url("${baseURI}/public/images/underline.gif") bottom
 const underlinePaulStringURL = `url("${baseURI}/public/images/underline-paul.gif") bottom repeat-x`;
 const underlinePaulGrammarStringURL = `url("${baseURI}/public/images/underline-paulgrammar.gif") bottom repeat-x`;
 const underlinePaulGoldStringURL = `url("${baseURI}/public/images/underline-gold.gif") bottom repeat-x`;
+// const mrBennetEyeRoll = `url("${baseURI}/public/images/bennet-eye-roll.gif")`;
 
 function getTextHeight(elm: HTMLDivElement) {
     const computedStyle = getComputedStyle(elm);
@@ -1714,7 +1735,9 @@ function renderTree(
     const outerViewportHeight = parseInt(viewportDiv.style.height, 10);
     const outerViewportWidth = parseInt(viewportDiv.style.width, 10);
     const outerViewport = new Viewport(outerViewportHeight, viewportDiv, outerViewportWidth);
-    // outerViewport.randExclu();
+    if (flowView.modes.randExclusion) {
+        outerViewport.randExclu();
+    }
     const startingPosStack =
         client.mergeTree.getStackContext(requestedPosition, client.getClientId(), ["table", "cell", "row"]);
     const layoutContext = {
@@ -1832,6 +1855,9 @@ function lineIntersectsRect(y: number, rect: IExcludedRectangle) {
     return (y >= rect.y) && (y <= (rect.y + rect.height));
 }
 
+const bennet1w = 299;
+const bennet1h = 168;
+
 export class Viewport {
     // keep the line divs in order
     public lineDivs: ILineDiv[] = [];
@@ -1845,18 +1871,23 @@ export class Viewport {
     }
 
     public randExclu() {
-        const fh = Math.floor(this.maxHeight / 10);
-        const fw = Math.floor(this.width / 10);
-        let x = 100;
-        let y = 50;
-        for (let i = 0; i < 5; i++) {
-            const r = makeExcludedRectangle(x, y, fw, fh);
-            x += 50;
-            y += Math.floor(fh * 1.2);
-            this.excludedRects.push(r);
-        }
+        const ar = bennet1h / bennet1w;
+        const w = Math.floor(this.width / 3);
+        const h = Math.floor(ar * w);
+        this.excludedRects.push(makeExcludedRectangle(Math.floor(this.width / 2),
+            Math.floor(this.maxHeight / 4), w,
+            h));
+        this.showExclu();
     }
 
+    public showExclu() {
+        for (const exclu of this.excludedRects) {
+            const showImage = document.createElement("img");
+            showImage.src = `${baseURI}/public/images/bennet1.jpeg`;
+            exclu.conformElement(showImage);
+            this.div.appendChild(showImage);
+        }
+    }
     public horizIntersect(h: number, rect: IExcludedRectangle) {
         return lineIntersectsRect(this.lineTop, rect) || (lineIntersectsRect(this.lineTop + h, rect));
     }
@@ -1890,6 +1921,7 @@ export class Viewport {
                 this.lineX = exclu.x + exclu.width;
                 w = exclu.x - x;
                 rectHit = true;
+                break;
             }
         }
         if (!rectHit) {
@@ -1926,8 +1958,10 @@ export class Viewport {
         this.lineTop = v;
     }
 
-    public commitLineDiv(lineDiv: ILineDiv, h: number) {
-        this.lineTop += h;
+    public commitLineDiv(lineDiv: ILineDiv, h: number, eol = true) {
+        if (eol) {
+            this.lineTop += h;
+        }
         this.lineDivs.push(lineDiv);
     }
 
@@ -2244,8 +2278,9 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
                         layoutContext.reRenderList.push(ldiv);
                     }
                 }
-
-                layoutContext.viewport.commitLineDiv(lineDiv, lineDivHeight);
+                let eol = (lineX + lineWidth) >= layoutContext.viewport.currentLineWidth();
+                eol = eol || (lineEnd === undefined);
+                layoutContext.viewport.commitLineDiv(lineDiv, lineDivHeight, eol);
             } else {
                 deferredHeight += lineDivHeight;
             }
@@ -2868,6 +2903,7 @@ function preventD(e: Event) {
 }
 
 export interface IFlowViewModes {
+    randExclusion?: boolean;
     showBookmarks?: boolean;
     showComments?: boolean;
     showCursorLocation?: boolean;
@@ -2904,6 +2940,7 @@ export class FlowView extends ui.Component {
     public docRoot: types.IMapView;
     public curPG: MergeTree.Marker;
     public modes = {
+        randExclusion: false,
         showBookmarks: true,
         showComments: true,
         showCursorLocation: true,
