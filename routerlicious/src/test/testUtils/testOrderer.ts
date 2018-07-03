@@ -8,7 +8,7 @@ export class TestOrdererManager implements IOrdererManager {
         this.orderer = new KafkaOrderer(producer);
     }
 
-    public getOrderer(tenantId: string, documentId: string): Promise<IOrderer> {
+    public getOrderer(socket, tenantId: string, documentId: string): Promise<IOrderer> {
         return Promise.resolve(this.orderer);
     }
 
