@@ -102,7 +102,6 @@ async function getOrderer(
     tmzRunner: TmzRunner): Promise<ISocketOrderer> {
 
     const hostIp = await getHostIp();
-    debug(`Ordering ${hostIp}`);
 
     // Check to see if someone has locked the document - if not we can go and do it.
     // If we have the lock we go and start ordering.
@@ -110,7 +109,7 @@ async function getOrderer(
     // Could probably just stash the reservation into the stuff stored with the document below
     const val = await reservationsCollection.findOne({ documentId, tenantId });
     if (!val) {
-        debug("We got to the document first");
+        debug(`Becoming leader for ${tenantId}/${documentId}:${hostIp}`);
         await reservationsCollection.insertOne({ documentId, server: hostIp, tenantId });
 
         // Lookup the last sequence number stored
@@ -129,8 +128,7 @@ async function getOrderer(
             tmzRunner);
     } else {
         // TOOD - will need to check the time on the lease and then take it
-        debug(`*****************************************************`);
-        debug(`Not the orderer: Connecting to ${JSON.stringify(val)}`);
+        debug(`${hostIp} Connecting to ${tenantId}/${documentId}:${val.server}`);
         // Reservation exists - have the orderer simply establish a WS connection to it and proxy commands
         return new ProxyOrderer(val.server, tenantId, documentId);
     }
@@ -149,16 +147,13 @@ class ProxyOrderer implements ISocketOrderer {
 
     constructor(server: string, tenantId: string, documentId: string) {
         // connect to service
-        debug(`Connecting to ${server}`);
         const socket = new ws(`ws://${server}:4000`);
         socket.on(
             "open",
             () => {
-                debug(`Socket opened`);
                 socket.send(
                     JSON.stringify({ op: "connect", tenantId, documentId }),
                     (error) => {
-                        debug(`Connected`);
                         this.queue.resume();
                     });
             });
@@ -166,26 +161,20 @@ class ProxyOrderer implements ISocketOrderer {
         socket.on(
             "error",
             (error) => {
-                debug(`!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!`);
                 debug(error);
             });
 
         socket.on(
             "message",
             (data) => {
-                debug(`*****************************************************`);
-                debug(`Inbound`);
                 const parsedData = JSON.parse(data as string);
                 for (const clientSocket of this.sockets) {
-                    debug(`${parsedData.op}, ${parsedData.id}, ${parsedData.data}`);
                     clientSocket.send(parsedData.op, parsedData.id, parsedData.data);
                 }
             });
 
         this.queue = async.queue<IRawOperationMessage, any>(
             (value, callback) => {
-                debug(`*****************************************************`);
-                debug(`Sending ${value.clientId}@${value.operation.clientSequenceNumber}`);
                 socket.send(JSON.stringify({ op: "message", data: value }));
                 callback();
             },
@@ -194,7 +183,6 @@ class ProxyOrderer implements ISocketOrderer {
     }
 
     public async order(message: IRawOperationMessage, topic: string): Promise<void> {
-        debug(`ProxyOrderer ${message.clientId}:${message.operation.clientSequenceNumber}`);
         this.queue.push(message);
     }
 
@@ -261,7 +249,6 @@ class LocalOrderer implements ISocketOrderer {
     }
 
     public async order(message: IRawOperationMessage, topic: string): Promise<void> {
-        debug(`Ordering ${message.documentId}@${this.offset}`);
         const deliMessage: IMessage = {
             highWaterOffset: this.offset,
             key: message.documentId,
@@ -323,14 +310,10 @@ export class OrdererManager implements IOrdererManager {
     }
 
     public route(message: IRawOperationMessage) {
-        debug("((((((((((((((((((((((((((((((((((((((");
-        debug(`*** Routing ${message.tenantId}`);
         assert(message.tenantId === "local");
-        debug(`*** Getting orderer for ${message.documentId}`);
         const localP = this.localOrderers.get(message.documentId);
         assert (localP);
         localP.then((orderer) => {
-            debug(`*** Found orderer - ordering ${message.documentId}`);
             orderer.order(message, message.documentId);
         });
     }

@@ -24,7 +24,6 @@ class RemoteConnection implements IOrdererSocket {
         const ordererP = orderManager.getOrderer(this, tenantId, documentId);
         ordererP.then(
             (orderer) => {
-                winston.info(`Orderer set`);
                 this.orderer = orderer;
                 this.q.resume();
             },
@@ -33,8 +32,6 @@ class RemoteConnection implements IOrdererSocket {
             });
 
         this.q = async.queue<core.IRawOperationMessage, any>((message, callback) => {
-            // tslint:disable-next-line
-            winston.info(`Remote order request ${message.tenantId}/${message.documentId}@${message.operation.clientSequenceNumber}`);
             this.orderer.order(message, message.documentId);
             callback();
         });
@@ -106,21 +103,17 @@ export class AlfredRunner implements utils.IRunner {
             const remoteConnectionMap = new Map<string, RemoteConnection>();
 
             socket.on("message", (message) => {
-                winston.info(`Inbound message ${message}`);
                 const parsed = JSON.parse(message as string);
 
                 // Listen for connection requests and then messages sent to them
                 if (parsed.op === "connect") {
-                    winston.info(`Connected to ${parsed.tenantId} ${parsed.documentId}`);
                     const remote = new RemoteConnection(this.orderManager, socket, parsed.tenantId, parsed.documentId);
                     remoteConnectionMap.set(`${parsed.tenantId}/${parsed.documentId}`, remote);
                 } else if (parsed.op === "message") {
-                    winston.info(`  ---  Got a message to process`);
                     const rawOperation = parsed.data as core.IRawOperationMessage;
                     const id = `${rawOperation.tenantId}/${rawOperation.documentId}`;
                     assert(remoteConnectionMap.has(id));
                     remoteConnectionMap.get(id).order(rawOperation);
-                    winston.info(`  ---  DONE processing`);
                 }
             });
         });
