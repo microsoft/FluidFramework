@@ -21,6 +21,18 @@ interface IDocumentUser {
     permission: string;
 }
 
+/**
+ * Bridge from a socket.io socket to our internal IOrdererSocket
+ */
+class SocketIOOrdererSocket implements core.IOrdererSocket {
+    constructor(private socket: any) {
+    }
+
+    public send(op: string, id: string, data: any[]) {
+        this.socket.emit(op, id, data);
+    }
+}
+
 export function register(
     webSocketServer: core.IWebSocketServer,
     mongoManager: utils.MongoManager,
@@ -74,7 +86,10 @@ export function register(
             await Promise.all(
                 [socket.join(`${claims.tenantId}/${claims.documentId}`), socket.join(`client#${clientId}`)]);
 
-            const orderer = await orderManager.getOrderer(socket, claims.tenantId, claims.documentId);
+            const orderer = await orderManager.getOrderer(
+                new SocketIOOrdererSocket(socket),
+                claims.tenantId,
+                claims.documentId);
 
             // Create and set a new client ID
             connectionsMap.set(

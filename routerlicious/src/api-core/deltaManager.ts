@@ -322,7 +322,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager {
             (error) => {
                 delay = Math.min(delay, MaxReconnectDelay);
                 reason = `Connection failed - trying again in ${delay}ms`;
-                debug(reason, error);
+                debug(reason, error.toString());
                 setTimeout(() => this.connectCore(token, reason, delay * 2, client), delay);
             });
     }
@@ -356,7 +356,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager {
         // allows the server to know our true reference sequence number and be able to correctly update the minimum
         // sequence number (MSN). We don't ackowledge other message types similarly (like a min sequence number update)
         // to avoid ackowledgement cycles (i.e. ack the MSN update, which updates the MSN, then ack the update, etc...).
-        if (message.type !== protocol.NoOp) {
+        if (message.type === protocol.OperationType) {
             this.updateSequenceNumber();
         }
     }
@@ -366,11 +366,12 @@ export class DeltaManager extends EventEmitter implements IDeltaManager {
      */
     private handleOutOfOrderMessage(message: protocol.ISequencedDocumentMessage) {
         if (message.sequenceNumber <= this.lastQueuedSequenceNumber) {
-            debug(`Received duplicate message ${message.sequenceNumber}`);
+            debug(`${this.tenantId}/${this.id} Received duplicate message ${message.sequenceNumber}`);
             return;
         }
 
-        debug(`${this.id} out of order message ${message.sequenceNumber} ${this.lastQueuedSequenceNumber}`);
+        // tslint:disable-next-line:max-line-length
+        debug(`${this.tenantId}/${this.id} out of order message ${message.sequenceNumber} ${this.lastQueuedSequenceNumber}`);
         this.pending.push(message);
         this.fetchMissingDeltas(this.lastQueuedSequenceNumber, message.sequenceNumber);
     }
@@ -393,7 +394,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager {
             },
             (error) => {
                 // Retry on failure
-                debug(error);
+                debug(error.toString());
                 this.fetching = false;
                 this.fetchMissingDeltas(from, to);
             });
