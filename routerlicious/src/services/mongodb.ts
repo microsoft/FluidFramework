@@ -2,14 +2,17 @@
 import { Collection, Db, MongoClient, MongoClientOptions } from "mongodb";
 import * as core from "../core";
 
+const MaxFetchSize = 2000;
+
 export class MongoCollection<T> implements core.ICollection<T> {
     constructor(private collection: Collection<T>) {
     }
 
-    public find(query: Object, sort: any): Promise<T[]> {
+    public find(query: Object, sort: any, limit = MaxFetchSize): Promise<T[]> {
         return this.collection
             .find(query)
             .sort(sort)
+            .limit(limit)
             .toArray();
     }
 
