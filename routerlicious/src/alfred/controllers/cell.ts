@@ -4,7 +4,7 @@ import { api, socketStorage, types } from "../../client-api";
 
 async function loadDocument(id: string, version: resources.ICommit, token: string, client: any): Promise<api.Document> {
     console.log("Loading in root document...");
-    const document = await api.load(id, { client, encrypted: false, token }, version);
+    const document = await api.load(id, { encrypted: false, token }, version);
 
     console.log("Document loaded");
     return document;

@@ -1,6 +1,6 @@
 import * as d3 from "d3";
 import * as resources from "gitresources";
-import { api, socketStorage, types } from "../../client-api";
+import { api, core, socketStorage } from "../../client-api";
 
 interface INode {
     clientId: string;
@@ -148,15 +148,13 @@ export async function load(id: string, version: resources.ICommit, config: any, 
         config.tenantId,
         config.trackError);
     const doc = await api.load(id, { client: { type: "visualize" }, encrypted: false, token }, version);
-    const taskMap = await getTaskMap(doc);
-    const taskMapView = await taskMap.getView();
     let prev: IGraph;
-    let curr = generateGraphData(doc, id, taskMapView);
+    let curr = generateGraphData(doc);
     updateSimulation(curr);
     prev = curr;
 
-    taskMap.on("valueChanged", () => {
-        curr = generateGraphData(doc, id, taskMapView);
+    doc.on("clientLeave", () => {
+        curr = generateGraphData(doc);
         if (!sameGraph(prev, curr)) {
             updateSimulation(curr);
             prev = curr;
@@ -165,8 +163,8 @@ export async function load(id: string, version: resources.ICommit, config: any, 
         }
     });
 
-    doc.on("clientLeave", () => {
-        curr = generateGraphData(doc, id, taskMapView);
+    doc.on("clientJoin", () => {
+        curr = generateGraphData(doc);
         if (!sameGraph(prev, curr)) {
             updateSimulation(curr);
             prev = curr;
@@ -176,19 +174,15 @@ export async function load(id: string, version: resources.ICommit, config: any, 
     });
 }
 
-function generateGraphData(document: api.Document, docId: string, taskMapView: types.IMapView): IGraph {
+function generateGraphData(document: api.Document): IGraph {
     const nodes: INode[] = [];
     const links: ILink[] = [];
-    nodes.push({ clientId: undefined, id: docId, group: 1, radius: 100});
+    nodes.push({ clientId: undefined, id: document.id, group: 1, radius: 100});
     let groupId = 1;
-    for (const task of taskMapView.keys()) {
-        const clientId = taskMapView.get(task) as string;
-        if (clientId) {
-            const activeClient = document.getClients().has(clientId);
-            if (activeClient) {
-                nodes.push({ clientId, id: task, group: ++groupId, radius: 50 });
-                links.push({ label: clientId, source: docId, target: task, strength: 0.1});
-            }
+    for (const client of document.getClients()) {
+        if (client[1] && client[1].type !== core.Browser) {
+            nodes.push({ clientId: client[0], id: client[1].type, group: ++groupId, radius: 50 });
+            links.push({ label: client[0], source: document.id, target: client[1].type, strength: 0.1});
         }
     }
     const graph: IGraph = {
@@ -196,26 +190,6 @@ function generateGraphData(document: api.Document, docId: string, taskMapView: t
         nodes,
     };
     return graph;
-}
-
-export async function getTaskMap(doc: api.Document): Promise<types.IMap> {
-    const rootMapView = await doc.getRoot().getView();
-    await waitForTaskMap(rootMapView);
-    return await rootMapView.get("tasks") as types.IMap;
-}
-
-function waitForTaskMap(root: types.IMapView): Promise<void> {
-    return new Promise<void>((resolve, reject) => pollTaskMap(root, resolve, reject));
-}
-
-function pollTaskMap(root: types.IMapView, resolve, reject) {
-    if (root.has("tasks")) {
-        resolve();
-    } else {
-        const pauseAmount = 50;
-        console.log(`Did not find taskmap - waiting ${pauseAmount}ms`);
-        setTimeout(() => pollTaskMap(root, resolve, reject), pauseAmount);
-    }
 }
 
 function sameNode(node1: INode, node2: INode): boolean {

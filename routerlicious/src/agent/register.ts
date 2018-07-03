@@ -4,45 +4,19 @@ import { IntelWork } from "./intelWork";
 import { SnapshotWork } from "./snapshotWork";
 import { SpellcheckerWork } from "./spellcheckerWork";
 import { TranslationWork } from "./translationWork";
-import { getTaskMapView } from "./utils";
 
-// Try to grab any allowed task on first load and then when a client leaves.
+// If a client declares taks runnning capability in permission array, it must register to perform the task.
 export function registerToWork(doc: api.Document, client: core.IClient, token: string, workerConfig: any) {
     if (client.permission && client.permission.length > 0) {
-        const permittedTasks = client.permission;
-        startUnassignedTasks(doc, permittedTasks, token, workerConfig).catch((err) => {
-            console.error(err);
-        });
-        doc.on("clientLeave", async () => {
-            // To prevent multiple clients picking up the same work, only first browser client is allowed.
-            const firstClient = doc.getFirstBrowserClient();
-            if (firstClient && firstClient.clientId === doc.clientId) {
-                await startUnassignedTasks(doc, permittedTasks, token, workerConfig).catch((err) => {
-                    console.error(err);
-                });
-            }
+        doc.on("localHelp", async (helpMessage: core.IHelpMessage) => {
+            await performTasks(doc.id, token, helpMessage.tasks, workerConfig).catch((err) => {
+                console.error(err);
+            });
         });
     }
 }
 
-async function startUnassignedTasks(doc: api.Document, permittedTasks: string[], token: string, workerConfig: any) {
-    const taskMapView = await getTaskMapView(doc);
-    const tasksToDo = [];
-    for (const task of taskMapView.keys()) {
-        const clientId = taskMapView.get(task);
-        if (clientId && doc.getClients().has(clientId)) {
-            continue;
-        }
-        if (permittedTasks.indexOf(task) !== -1) {
-            tasksToDo.push(task);
-        }
-    }
-    if (tasksToDo.length > 0) {
-        await performTasks(doc.id, token, tasksToDo, workerConfig);
-    }
-}
-
-async function performTasks(docId: string, token: string, tasks: string[], config) {
+async function performTasks(docId: string, token: string, tasks: string[], config: any) {
     const taskPromises = [];
     for (const task of tasks) {
         taskPromises.push(performTask(docId, token, task, config));
