@@ -242,6 +242,13 @@ export class Document extends EventEmitter implements api.IDocument {
     }
 
     /**
+     * Flag indicating whether this document is fully connected.
+     */
+    public get isConnected(): boolean {
+        return this.connectionState === api.ConnectionState.Connected;
+    }
+
+    /**
      * Constructs a new document from the provided details
      */
     private constructor(
@@ -750,6 +757,10 @@ export class Document extends EventEmitter implements api.IDocument {
         }
 
         this.notifyConnectionState(value, reason, context);
+
+        if (this.connectionState === api.ConnectionState.Connected) {
+            this.emit("connected");
+        }
     }
 
     private notifyConnectionState(value: api.ConnectionState, reason: string, context?: string) {
