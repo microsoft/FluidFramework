@@ -65,7 +65,7 @@ export class DocumentService implements api.IDocumentService {
         tenantId: string,
         id: string,
         token: string,
-        client: api.IWorkerClient): Promise<api.IDocumentDeltaConnection> {
+        client: api.IClient): Promise<api.IDocumentDeltaConnection> {
         return DocumentDeltaConnection.Create(tenantId, id, token, io, client, this.deltaUrl);
     }
 

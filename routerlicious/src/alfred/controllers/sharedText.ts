@@ -4,7 +4,7 @@ import performanceNow = require("performance-now");
 import * as request from "request";
 import * as url from "url";
 import * as agent from "../../agent";
-import { api as API, map as DistributedMap,  MergeTree, socketStorage, types } from "../../client-api";
+import { api as API, core, map as DistributedMap,  MergeTree, socketStorage, types } from "../../client-api";
 import { controls, ui } from "../../client-ui";
 import { SharedString } from "../../shared-string";
 
@@ -90,9 +90,9 @@ async function loadDocument(
     const collabDoc = await API.load(id, { blockUpdateMarkers: true, client: config.client, token }, version, connect);
 
     // Register to run task only if the client type is browser.
-    const taskConfig = config.client as agent.ITaskRunnerConfig;
-    if (taskConfig && taskConfig.type === "browser") {
-        agent.registerToWork(collabDoc, taskConfig, token, config);
+    const client = config.client as core.IClient;
+    if (client && client.type === "browser") {
+        agent.registerToWork(collabDoc, client, token, config);
     }
 
     console.log(`collabDoc loaded ${id} - ${performanceNow()}`);

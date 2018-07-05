@@ -13,7 +13,7 @@ export class DocumentDeltaConnection implements api.IDocumentDeltaConnection {
         id: string,
         token: string,
         io: SocketIOClientStatic,
-        client: api.IWorkerClient,
+        client: api.IClient,
         url: string): Promise<api.IDocumentDeltaConnection> {
 
         const socket = io(

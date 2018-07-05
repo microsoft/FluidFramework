@@ -50,13 +50,6 @@ export interface IDocumentServiceFactory {
     getService(tenantId: string): Promise<core.IDocumentService>;
 }
 
-export interface ITaskRunnerConfig {
-
-    type: string;
-
-    permission: string[];
-}
-
 export interface IDocumentTaskInfo {
 
     tenantId: string;

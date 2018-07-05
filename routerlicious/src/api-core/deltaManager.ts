@@ -2,7 +2,7 @@ import * as assert from "assert";
 import { EventEmitter } from "events";
 import cloneDeep = require("lodash/cloneDeep");
 import { Deferred } from "../core-utils";
-import { Browser, IWorkerClient } from "./client";
+import { Browser, IClient } from "./client";
 import { debug } from "./debug";
 import { DeltaConnection, IConnectionDetails } from "./deltaConnection";
 import { DeltaQueue } from "./deltaQueue";
@@ -176,7 +176,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager {
         this._outbound.push(message);
     }
 
-    public async connect(reason: string, token: string, client: IWorkerClient): Promise<IConnectionDetails> {
+    public async connect(reason: string, token: string, client: IClient): Promise<IConnectionDetails> {
         if (this.connecting) {
             return this.connecting.promise;
         }
@@ -266,8 +266,8 @@ export class DeltaManager extends EventEmitter implements IDeltaManager {
             });
     }
 
-    private connectCore(token: string, reason: string, delay: number, client: IWorkerClient) {
-        // Reconnection is only enabled for non robot clients.
+    private connectCore(token: string, reason: string, delay: number, client: IClient) {
+        // Reconnection is only enabled for browser clients.
         const reconnect = (client === undefined || client.type === Browser);
         DeltaConnection.Connect(this.tenantId, this.id, token, this.service, client).then(
             (connection) => {

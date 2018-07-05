@@ -2,7 +2,6 @@
 import { EventEmitter } from "events";
 import { api, core } from "../client-api";
 import { IDocumentTaskInfo } from "./definitions";
-import { getTaskMapView } from "./utils";
 
 const leaderCheckerMS = 7500;
 
@@ -22,7 +21,6 @@ export class BaseWork extends EventEmitter {
 
     public async loadDocument(options: Object, service: core.IDocumentService, task: string): Promise<void> {
         this.document = await api.load(this.id, options, null, true, api.defaultRegistry, service);
-        await this.updateTaskMap(this.document, task, this.document.clientId);
         this.errorHandler = (error) => {
             this.events.emit("error", error);
         };
@@ -40,7 +38,6 @@ export class BaseWork extends EventEmitter {
         if (this.document !== undefined) {
             // Reset the task map, remove listeners, and close the document.
             console.log(`Removing ${task} task for document ${this.document.tenantId}/${this.document.id}`);
-            await this.updateTaskMap(this.document, task, undefined);
             if (this.document.hasUnackedOps) {
                 this.document.on("processed", () => {
                     this.closeDocument(task);
@@ -60,11 +57,6 @@ export class BaseWork extends EventEmitter {
         this.removeAllListeners();
     }
 
-    private async updateTaskMap(doc: api.Document, task: string, clientId: string) {
-        const taskMapView = await getTaskMapView(doc);
-        taskMapView.set(task, clientId);
-    }
-
     // Periodically checks for leaders in the document. Emits a stop request if leader is not present.
     private checkForLeader(task) {
         this.leaderCheckerTimer = setInterval(() => {
@@ -80,10 +72,10 @@ export class BaseWork extends EventEmitter {
         }, leaderCheckerMS);
     }
 
-    // A leader is any non-robot client connected to the document.
+    // A leader is any browser client connected to the document.
     private noLeader(): boolean {
         for (const client of this.document.getClients()) {
-            if (!client[1] || client[1].type !== core.Robot) {
+            if (!client[1] || client[1].type === core.Browser) {
                 return false;
             }
         }
