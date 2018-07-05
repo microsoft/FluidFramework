@@ -3,17 +3,17 @@ import * as resources from "gitresources";
 import { api, core, socketStorage } from "../../client-api";
 
 interface INode {
-    clientId: string;
-    id: string;
+    label: string;  // Text inside the node.
+    id: string; // Unique id for the node.
     group: number;
     radius: number;
+    leader: boolean;
 }
 
 interface ILink {
     source: string;
     target: string;
     strength: number;
-    label: string;
 }
 
 interface IGraph {
@@ -99,12 +99,13 @@ function updateGraph(graph: any) {
     const textEnter = textElements
         .enter()
             .append("text")
-                .text((node: any) => node.id)
+                .text((node: any) => node.label)
                 .attr("font-size", (node: any) => node.group === 1 ? 18 : 14)
                 .attr("dx", 0)
                 .attr("dy", 0)
                 .style("text-anchor", "middle")
-                .style("font-weight", "bold");
+                .style("font-weight", "bold")
+                .style("font-style", (node: any) => node.leader ? "italic" : undefined);
 
     textElements = textEnter.merge(textElements);
 
@@ -115,10 +116,11 @@ function updateGraph(graph: any) {
     const clientEnter = clientElements
         .enter()
             .append("text")
-                .text((node: any) => node.clientId)
-                .attr("font-size", 14)
+                .text((node: any) => node.group === 1 ? undefined : node.id)
+                .attr("font-size", (node: any) => node.leader ? 16 : 14)
                 .attr("dx", (node: any) => node.radius)
-                .attr("dy", (node: any) => -(node.radius / 4));
+                .attr("dy", (node: any) => -(node.radius / 4))
+                .style("font-weight", (node: any) => node.leader ? "bold" : "");
 
     clientElements = clientEnter.merge(clientElements);
 }
@@ -177,13 +179,16 @@ export async function load(id: string, version: resources.ICommit, config: any, 
 function generateGraphData(document: api.Document): IGraph {
     const nodes: INode[] = [];
     const links: ILink[] = [];
-    nodes.push({ clientId: undefined, id: document.id, group: 1, radius: 100});
+    nodes.push({ label: document.id, id: document.id, group: 1, radius: 100, leader: false});
     let groupId = 1;
-    for (const client of document.getClients()) {
-        if (client[1] && client[1].type !== core.Browser) {
-            nodes.push({ clientId: client[0], id: client[1].type, group: ++groupId, radius: 50 });
-            links.push({ label: client[0], source: document.id, target: client[1].type, strength: 0.1});
-        }
+    const clients = document.getClients();
+    const leaderId = getLeaderId(clients);
+    for (const client of clients) {
+        const leader = leaderId === client[0];
+        const nodeType = (client[1] && client[1].type !== core.Browser) ?
+            client[1].type : (leader ? "leader" : undefined);
+        nodes.push({ label: nodeType, id: client[0], group: ++groupId, radius: leader ? 75 : 50, leader });
+        links.push({ source: document.id, target: client[0], strength: 0.1});
     }
     const graph: IGraph = {
         links,
@@ -192,16 +197,21 @@ function generateGraphData(document: api.Document): IGraph {
     return graph;
 }
 
+function getLeaderId(clients: Map<string, core.IClient>) {
+    const leader = api.getLeader(clients);
+    return leader ? leader.clientId : undefined;
+}
+
 function sameNode(node1: INode, node2: INode): boolean {
-    return (node1.clientId === node2.clientId &&
+    return (node1.label === node2.label &&
             node1.group === node2.group &&
             node1.id === node2.id &&
-            node1.radius === node2.radius);
+            node1.radius === node2.radius &&
+            node1.leader === node2.leader);
 }
 
 function sameLink(link1: ILink, link2: ILink): boolean {
-    return (link1.label === link2.label &&
-            link1.source === link2.source &&
+    return (link1.source === link2.source &&
             link1.strength === link2.strength &&
             link1.target === link2.target);
 }

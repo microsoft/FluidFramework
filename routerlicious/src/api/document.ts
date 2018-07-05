@@ -14,7 +14,7 @@ import * as sharedString from "../shared-string";
 import * as stream from "../stream";
 import { debug } from "./debug";
 import { BrowserErrorTrackingService } from "./errorTrackingService";
-import { analyzeTasks, isNewLeader } from "./taskAnalyzer";
+import { analyzeTasks, getLeader } from "./taskAnalyzer";
 
 // TODO: All these should be enforced by server as a part of document creation.
 const rootMapId = "root";
@@ -185,7 +185,7 @@ export class Document extends EventEmitter implements api.IDocument {
 
     private messagesSinceMSNChange = new Array<api.ISequencedDocumentMessage>();
     private clients = new Map<string, api.IClient>();
-    private isLeader: boolean = false;
+    private helpRequested: Set<string> = new Set<string>();
     private connectionState = api.ConnectionState.Disconnected;
     private lastReason: string;
     private lastContext: string;
@@ -193,7 +193,6 @@ export class Document extends EventEmitter implements api.IDocument {
     private storageService: api.IDocumentStorageService;
     private lastMinSequenceNumber;
     private loaded = false;
-    private askHelpTimer;
 
     public get clientId(): string {
         return this._deltaManager ? this._deltaManager.clientId : "disconnected";
@@ -1100,42 +1099,37 @@ export class Document extends EventEmitter implements api.IDocument {
     // If so, calculate if there are any unhandled tasks for browsers and remote agents.
     // Emit local help message for this browser and submits a remote help message for agents.
 
-    // To prevent recurrent op sending, this will execute once per leader. Since client tends to leave
-    // in a batch (e.g., shutdown of paparazzi will make a few clients leave), we wait for clients to leave
-    // before we ask for help.
+    // To prevent recurrent op sending, we keep track of already requested tasks and only send
+    // help for each task once.
 
     // With this restriction of sending only one help message, some taks may never get picked (e.g., paparazzi leaves
     // and we are still having the same leader)
 
     // TODO: Need to fix this logic once services are hardened better.
     private runTaskAnalyzer() {
-        clearTimeout(this.askHelpTimer);
-        this.askHelpTimer = setTimeout(() => {
-            if (this.isLeader) {
-                return;
-            }
-            this.isLeader = isNewLeader(this.getClients(), this.clientId);
-            if (this.isLeader) {
-                console.log(`Client ${this.clientId} is the new leader!`);
-                const helpTasks = analyzeTasks(this.clientId, this.getClients(), documentTasks);
-                if (helpTasks.browser.length > 0) {
+            const currentLeader = getLeader(this.getClients());
+            const isLeader = currentLeader && currentLeader.clientId === this.clientId;
+            if (isLeader) {
+                console.log(`Client ${this.clientId} is the current leader!`);
+                const helpTasks = analyzeTasks(this.clientId, this.getClients(), documentTasks, this.helpRequested);
+                if (helpTasks && helpTasks.browser.length > 0) {
                     const localHelpMessage: api.IHelpMessage = {
                         clientId: this.clientId,
                         tasks: helpTasks.browser,
                     };
-                    console.log(`Local help needed: ${helpTasks.browser}`);
+                    console.log(`Local help needed for ${helpTasks.browser}`);
                     this.emit("localHelp", localHelpMessage);
                 }
-                if (helpTasks.robot.length > 0) {
+                if (helpTasks && helpTasks.robot.length > 0) {
                     const remoteHelpMessage: api.IHelpMessage = {
                         clientId: this.clientId,
                         tasks: helpTasks.robot,
                     };
-                    console.log(`Remote help needed: ${helpTasks.robot}`);
+                    console.log(`Remote help needed for ${helpTasks.robot}`);
                     this.submitMessage(api.RemoteHelp, remoteHelpMessage);
                 }
             }
-        }, 3000);
+
     }
 }
 

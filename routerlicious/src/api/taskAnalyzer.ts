@@ -7,6 +7,7 @@ export interface IHelpTasks {
 }
 
 // For a given list of connected clients and tasks to run, this function calculates need for local & remote help.
+// To make sure that a task is only requested once, this also takes already requested tasks into account.
 
 // Right now only one client (aka leader) is allowed to run tasks and ask for local and remote.
 // To become completely distributed, each client should take into account other client permissions
@@ -17,15 +18,20 @@ export interface IHelpTasks {
 export function analyzeTasks(
     runnerClientId: string,
     clients: Map<string, api.IClient>,
-    tasks: string[]): IHelpTasks {
+    tasks: string[],
+    requestedTasks: Set<string>): IHelpTasks {
     const robotClients = [...clients].filter((client) => isRobot(client[1]));
     const handledTasks = robotClients.map((robot) => robot[1].type);
     const unhandledTasks = tasks.filter((task) => handledTasks.indexOf(task) === -1);
     if (unhandledTasks.length > 0) {
         const runnerClient = clients.get(runnerClientId);
         const permission = runnerClient ? runnerClient.permission : [];
-        const allowedTasks = unhandledTasks.filter((task) => permission && permission.indexOf(task) !== -1);
-        const robotNeeded = unhandledTasks.filter((task) => permission && permission.indexOf(task) === -1);
+        const allowedTasks = unhandledTasks.filter(
+            (task) => permission && permission.indexOf(task) !== -1 && !requestedTasks.has(task));
+        const robotNeeded = unhandledTasks.filter(
+            (task) => permission && permission.indexOf(task) === -1 && !requestedTasks.has(task));
+        addToRequestedTasks(requestedTasks, allowedTasks);
+        addToRequestedTasks(requestedTasks, robotNeeded);
         return {
             browser: allowedTasks,
             robot: robotNeeded,
@@ -33,16 +39,7 @@ export function analyzeTasks(
     }
 }
 
-export function isNewLeader(clients: Map<string, api.IClient>, clientId: string): boolean {
-    const firstBrowserClient = getFirstBrowserClient(clients);
-    return firstBrowserClient && firstBrowserClient.clientId === clientId;
-}
-
-function isRobot(client: api.IClient): boolean {
-    return client && client.type !== api.Browser;
-}
-
-function getFirstBrowserClient(clients: Map<string, api.IClient>): api.IClientDetail {
+export function getLeader(clients: Map<string, api.IClient>): api.IClientDetail {
     for (const client of clients) {
         if (!isRobot(client[1])) {
             return {
@@ -51,4 +48,14 @@ function getFirstBrowserClient(clients: Map<string, api.IClient>): api.IClientDe
             };
         }
     }
+}
+
+function addToRequestedTasks(requestedTasks: Set<string>, tasks: string[]) {
+    for (const task of tasks) {
+        requestedTasks.add(task);
+    }
+}
+
+function isRobot(client: api.IClient): boolean {
+    return client && client.type !== api.Browser;
 }
