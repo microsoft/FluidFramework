@@ -11,6 +11,7 @@ import { debug } from "../debug";
 import { ISocketOrderer } from "./interfaces";
 import { LocalOrderer } from "./localOrderer";
 import { ProxyOrderer } from "./proxyOrderer";
+import { IReservationManager } from "./reservationManager";
 
 async function getHostIp(): Promise<string> {
     const hostname = os.hostname();
@@ -19,25 +20,28 @@ async function getHostIp(): Promise<string> {
     return info.address;
 }
 
+// Factory method to either create a local or proxy orderer.
+// I should have the order manager just have registered factories for types of ordering
 async function getOrderer(
     tenantId: string,
     documentId: string,
     collection: ICollection<IDocument>,
     deltasCollection: ICollection<any>,
-    reservationsCollection: ICollection<{ documentId: string, tenantId: string, server: string }>,
+    reservationManager: IReservationManager,
     tmzRunner: TmzRunner): Promise<ISocketOrderer> {
 
+    // Get the identifier for the current node
     const hostIp = await getHostIp();
 
-    // Check to see if someone has locked the document - if not we can go and do it.
-    // If we have the lock we go and start ordering.
-    // If we don't have the lock then we figure out who does and start sending messages.
-    // Could probably just stash the reservation into the stuff stored with the document below
-    const val = await reservationsCollection.findOne({ documentId, tenantId });
-    if (!val) {
-        debug(`Becoming leader for ${tenantId}/${documentId}:${hostIp}`);
-        await reservationsCollection.insertOne({ documentId, server: hostIp, tenantId });
+    const reservationKey = `${tenantId}/${documentId}`;
+    const expiration = Date.now() + 1000;
+    const reservation = await reservationManager.reserve(reservationKey, hostIp, expiration);
 
+    if (reservation.value === hostIp) {
+        debug(`Becoming leader for ${tenantId}/${documentId}:${hostIp}`);
+
+        // I could put the reservation on the dbObject. And not be able to update the stored numbers unless
+        // I fully have the thing
         // Lookup the last sequence number stored
         // TODO - is this storage specific to the orderer in place? Or can I generalize the output context?
         const dbObject = await collection.findOne({ documentId, tenantId });
@@ -51,12 +55,14 @@ async function getOrderer(
             collection,
             deltasCollection,
             dbObject,
-            tmzRunner);
+            tmzRunner,
+            reservation,
+            reservationManager);
     } else {
         // TOOD - will need to check the time on the lease and then take it
-        debug(`${hostIp} Connecting to ${tenantId}/${documentId}:${val.server}`);
+        debug(`${hostIp} Connecting to ${tenantId}/${documentId}:${reservation.value}`);
         // Reservation exists - have the orderer simply establish a WS connection to it and proxy commands
-        return new ProxyOrderer(val.server, tenantId, documentId);
+        return new ProxyOrderer(reservation.value, tenantId, documentId);
     }
 }
 
@@ -69,7 +75,7 @@ export class OrdererManager implements IOrdererManager {
         producer: IProducer,
         private documentsCollection: ICollection<IDocument>,
         private deltasCollection: ICollection<any>,
-        private reservationsCollection: ICollection<{ documentId: string, tenantId: string, server: string }>,
+        private reservationManager: IReservationManager,
         private tmzRunner: TmzRunner) {
 
         this.orderer = new KafkaOrderer(producer);
@@ -87,7 +93,7 @@ export class OrdererManager implements IOrdererManager {
                     documentId,
                     this.documentsCollection,
                     this.deltasCollection,
-                    this.reservationsCollection,
+                    this.reservationManager,
                     this.tmzRunner);
                 this.localOrderers.set(documentId, ordererP);
             }

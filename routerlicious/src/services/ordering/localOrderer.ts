@@ -7,7 +7,9 @@ import { ScriptoriumLambda } from "../../scriptorium/lambda";
 import { TmzLambda } from "../../tmz/lambda";
 import { TmzRunner } from "../../tmz/runner";
 import { IMessage, IProducer } from "../../utils";
+import { debug } from "../debug";
 import { ISocketOrderer } from "./interfaces";
+import { IReservation, IReservationManager } from "./reservationManager";
 
 class LocalTopic implements core.ITopic {
     // TODO - this needs to know about outbound web sockets too
@@ -78,6 +80,9 @@ class LocalProducer implements IProducer {
     }
 }
 
+// Can I treat each Alfred as a mini-Kafka. And consolidate all the deli logic together?
+// Rather than creating one per?
+
 /**
  * Performs local ordering of messages based on an in-memory stream of operations.
  */
@@ -88,12 +93,14 @@ export class LocalOrderer implements ISocketOrderer {
     private socketPublisher: LocalSocketPublisher;
 
     constructor(
-        tenantId: string,
-        documentId: string,
+        private tenantId: string,
+        private documentId: string,
         collection: ICollection<IDocument>,
         deltasCollection: ICollection<any>,
         dbObject: IDocument,
-        tmzRunner: TmzRunner) {
+        tmzRunner: TmzRunner,
+        private reservation: IReservation,
+        private reservationManager: IReservationManager) {
 
         // Scriptorium Lambda
         const scriptoriumContext = new LocalContext();
@@ -133,6 +140,8 @@ export class LocalOrderer implements ISocketOrderer {
             collection,
             this.producer,
             ClientSequenceTimeout);
+
+        this.trackReservation();
     }
 
     public async order(message: IRawOperationMessage, topic: string): Promise<void> {
@@ -151,5 +160,25 @@ export class LocalOrderer implements ISocketOrderer {
 
     public attachSocket(socket: IOrdererSocket) {
         this.socketPublisher.attachSocket(socket);
+    }
+
+    private trackReservation() {
+        const interval = (this.reservation.expiration - Date.now()) / 2;
+
+        setTimeout(
+            () => {
+                debug(`Updating reservation for ${this.tenantId}/${this.documentId}`);
+                const updated = Date.now() + 1000;
+                this.reservationManager.update(this.reservation, updated).then(
+                    (newReservation) => {
+                        this.reservation = newReservation;
+                        this.trackReservation();
+                    },
+                    (error) => {
+                        debug(`Failure updating reservation for ${this.tenantId}/${this.documentId}`, error);
+                        // TODO unable to update reservation. Stop ordering and shut down.
+                    });
+            },
+            interval);
     }
 }
