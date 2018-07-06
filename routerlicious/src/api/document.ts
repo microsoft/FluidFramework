@@ -190,8 +190,6 @@ export class Document extends EventEmitter implements api.IDocument {
     private isLeader: boolean = false;
     private taskMapView: IMapView;
     private connectionState = api.ConnectionState.Disconnected;
-    private lastReason: string;
-    private lastContext: string;
     private pendingAttach = new Map<string, api.IAttachMessage>();
     private storageService: api.IDocumentStorageService;
     private lastMinSequenceNumber;
@@ -588,7 +586,7 @@ export class Document extends EventEmitter implements api.IDocument {
                 this.loaded = true;
 
                 // Now that we are loaded notify all distributed data types of connection change
-                this.notifyConnectionState(this.connectionState, this.lastReason, this.lastContext);
+                this.notifyConnectionState(this.connectionState);
 
                 // Waiting on the root is also good
                 // If it's a new document we create the root map object - otherwise we wait for it to become available
@@ -763,8 +761,6 @@ export class Document extends EventEmitter implements api.IDocument {
 
         debug(`Changing from ${api.ConnectionState[this.connectionState]} to ${api.ConnectionState[value]}`, reason);
         this.connectionState = value;
-        this.lastReason = reason;
-        this.lastContext = context;
 
         // Stash the clientID to detect when transioning from connecting (socket.io channel open) to connected
         // (have received the join message for the client ID)
