@@ -88,10 +88,6 @@ export class DeltaManager extends EventEmitter implements IDeltaManager {
         return this.minSequenceNumber;
     }
 
-    public get clientId(): string {
-        return this.connection ? this.connection.details.clientId : "disconnected";
-    }
-
     constructor(private id: string, private tenantId: string, private service: storage.IDocumentService) {
         super();
 

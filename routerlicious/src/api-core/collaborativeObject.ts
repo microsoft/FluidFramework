@@ -205,20 +205,20 @@ export abstract class CollaborativeObject extends EventEmitter implements IColla
             process: (message, context) => {
                 this.process(message, context);
             },
-            setConnectionState: (state: ConnectionState, context?: any) => {
-                this.setConnectionState(state, context);
+            setConnectionState: (state: ConnectionState) => {
+                this.setConnectionState(state);
             },
         });
 
         // Trigger initial state
-        this.setConnectionState(this.services.deltaConnection.state, this.services.deltaConnection.clientId);
+        this.setConnectionState(this.services.deltaConnection.state);
     }
 
     private async prepare(message: ISequencedObjectMessage): Promise<any> {
         return this.prepareCore(message);
     }
 
-    private setConnectionState(state: ConnectionState, context?: any) {
+    private setConnectionState(state: ConnectionState) {
         // Should I change the state at the end? So that we *can't* send new stuff before we send old?
         this._state = state;
 
