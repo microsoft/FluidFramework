@@ -18,7 +18,7 @@ import { analyzeTasks, getLeader } from "./taskAnalyzer";
 
 // TODO: All these should be enforced by server as a part of document creation.
 const rootMapId = "root";
-const inclusionMapId = "inclusions";
+const blobMapId = "blobs";
 const documentTasks = ["snapshot", "spell", "intel", "translation", "augmentation"];
 
 // Registered services to use when loading a document
@@ -363,15 +363,16 @@ export class Document extends EventEmitter implements api.IDocument {
         return this.distributedObjects.get(rootMapId).object as IMap;
     }
 
-    public getInclusionsMap(): IMap {
-        return this.distributedObjects.get(inclusionMapId).object as IMap;
+    public getBlobMap(): IMap {
+        return this.distributedObjects.get(blobMapId).object as IMap;
     }
 
-    // TODO (sabroner) turn filemap into a full type
-    public createInclusion(file: api.IInclusion): api.IInclusion {
+    // TODO (sabroner) turn filemap into a more fully featured class
+    // TODO (sabroner) Move this out of document
+    public createBlobMetadata(file: api.IInclusion): api.IInclusion {
         const hash = gitHashFile(file.content);
         file.sha = hash;
-        const fileMap = this.getInclusionsMap().set<IMap>(hash, this.createMap());
+        const fileMap = this.getBlobMap().set<IMap>(hash, this.createMap());
         fileMap.set<string>("type", file.type);
         fileMap.set<string>("size", file.size);
         fileMap.set<number>("width", file.width);
@@ -381,26 +382,23 @@ export class Document extends EventEmitter implements api.IDocument {
         return file;
     }
 
-    public addInclusion(file: api.IInclusion): void {
+    public uploadBlob(file: api.IInclusion): api.IInclusion {
+
+        this.createBlobMetadata(file);
 
         const encodedBuffer = file.content.toString("base64");
-        const blobResponseP = this.storageService.manager.createBlob(encodedBuffer, "base64");
+        this.storageService.manager.createBlob(encodedBuffer, "base64");
 
-        blobResponseP.then(async (blobResponse) => {
-            // TODO (sabroner): Indicate the inclusion is done uploading
-            console.log("Completed uploading blob");
-            this.emit("inclusionUploaded", blobResponse.sha);
-        });
+        return this.createBlobMetadata(file);
     }
 
-    public getInclusions(): Promise<string[]> {
-        const inclusionMap = this.getInclusionsMap();
-
-        return inclusionMap.keys();
+    public getBlobHashes(): Promise<string[]> {
+        const blobMap = this.getBlobMap();
+        return blobMap.keys();
     }
 
-    public getInclusion(key: string): Promise<api.IInclusion> {
-        const fileMapP = this.getInclusionsMap().wait(key) as Promise<IMap>;
+    public getBlob(key: string): Promise<api.IInclusion> {
+        const fileMapP = this.getBlobMap().wait(key) as Promise<IMap>;
 
         const blobResponseP = this.storageService.manager.getBlob(key);
 
@@ -586,7 +584,7 @@ export class Document extends EventEmitter implements api.IDocument {
                 // This I don't think I can get rid of
                 if (!this.existing) {
                     this.createAttached(rootMapId, mapExtension.MapExtension.Type);
-                    this.createAttached(inclusionMapId, mapExtension.MapExtension.Type);
+                    this.createAttached(blobMapId, mapExtension.MapExtension.Type);
                 } else {
                     await this.get(rootMapId);
                 }

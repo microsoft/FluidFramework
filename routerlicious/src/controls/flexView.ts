@@ -1,6 +1,6 @@
 // The main app code
 import { api, core, types} from "../client-api";
-import { inclusionAnalytics } from "../intelligence";
+import { ImageAnalytics } from "../intelligence";
 import * as ui from "../ui";
 import { Button } from "./button";
 import { Chart } from "./chart";
@@ -50,19 +50,19 @@ export class FlexView extends ui.Component {
         this.dock = new DockPanel(dockElement);
         this.addChild(this.dock);
 
-        doc.getInclusionsMap().on("valueChanged", async (changed) => {
-            this.renderInclusion(await doc.getInclusion(changed.key));
+        doc.getBlobMap().on("valueChanged", async (changed) => {
+            this.renderImage(await doc.getBlob(changed.key));
         });
 
         doc.on("inclusionUploaded", (args) => {
             console.log(JSON.stringify(args));
         });
 
-        // Load inclusions on start
-        doc.getInclusions()
+        // Load blobs on start
+        doc.getBlobHashes()
             .then(async (keys) => {
                 for (const key of keys) {
-                    this.renderInclusion(await doc.getInclusion(key));
+                    this.renderImage(await doc.getBlob(key));
                 }
             });
 
@@ -88,20 +88,14 @@ export class FlexView extends ui.Component {
         input.setAttribute("type", "file");
         input.style.visibility = "hidden";
 
-        const inclusionButton = new Button(
+        const uploadBlobButton = new Button(
             buttonDiv,
             buttonSize,
             ["btn", "btn-palette", "prague-icon-tube"]);
 
-        const downloadButton = new Button(
-            document.createElement("div"),
-            buttonSize,
-            ["btn", "btn-palette", "prague-icon-pyramid"]);
-
         stackPanel.addChild(this.colorButton);
         stackPanel.addChild(replayButton);
-        stackPanel.addChild(inclusionButton);
-        stackPanel.addChild(downloadButton);
+        stackPanel.addChild(uploadBlobButton);
         this.dock.addBottom(stackPanel);
 
         replayButton.on("click", (event) => {
@@ -114,29 +108,22 @@ export class FlexView extends ui.Component {
             this.popup.toggle();
         });
 
-        // Upload Inclusion
-        inclusionButton.on("click", (event) => {
+        // Upload Blob
+        uploadBlobButton.on("click", (event) => {
             input.click();
             input.onchange = async () => {
                 const incl = await this.fileToInclusion(input.files.item(0));
                 // tslint:disable-next-line:max-line-length
-                const analytics = new inclusionAnalytics.InclusionAnalyticsIntelligentService("3554516ca53c4fffb4bf619cf5d8b043");
+                const analytics = new ImageAnalytics.ImageAnalyticsIntelligentService("3554516ca53c4fffb4bf619cf5d8b043");
                 const analysis = JSON.parse(await analytics.run(incl)) as any;
                 const caption = analysis.description.captions[0].text;
 
                 incl.caption = caption;
 
-                // Because the inclusion going in has the content, the inclusion coming out should as well
+                // Because the blob going in has the content, the blob coming out should as well
                 // Other users will have a placeholder render followed by the full thing.
-                this.renderInclusion(this.doc.createInclusion(incl));
-                this.doc.addInclusion(incl);
+                this.renderImage(this.doc.uploadBlob(incl));
             };
-        });
-
-        // Download Inclusion
-        downloadButton.on("click", async (event) => {
-            const incls = await this.downloadInclusions() as core.IInclusion[];
-            this.renderInclusions(incls);
         });
 
         // These should turn into components
@@ -227,14 +214,7 @@ export class FlexView extends ui.Component {
         this.resizeCore(this.size);
     }
 
-    private async renderInclusions(incls: core.IInclusion[]) {
-        for (const incl of incls) {
-            this.renderInclusion(incl);
-        }
-
-    }
-
-    private async renderInclusion(incl: core.IInclusion) {
+    private async renderImage(incl: core.IInclusion) {
 
         // We have an image, and it isn't in the DOM
         if (incl.type.includes("image")) {
@@ -268,16 +248,6 @@ export class FlexView extends ui.Component {
                 imgDiv.classList.replace("no-image", "image");
             }
         }
-    }
-
-    private async downloadInclusions(): Promise<core.IInclusion[]> {
-        const keys = await this.doc.getInclusionsMap().keys();
-
-        const inclusionsP = keys.map((key) => {
-            return this.doc.getInclusion(key);
-        });
-
-        return Promise.all((inclusionsP));
     }
 
     private async fileToInclusion(file: File): Promise<core.IInclusion> {
