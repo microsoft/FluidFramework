@@ -7,7 +7,6 @@ async function getFileContents(p: string): Promise<Buffer> {
 
     return new Promise<Buffer>((resolve, reject) => {
         fs.readFile(p, (error, data) => {
-            // Maybe add blob property bag?
             if (error) {
                 reject(error);
             }
@@ -20,33 +19,6 @@ describe("Core-Utils", () => {
     // Expected hashes are from git hash-object file...
     // Make sure the hash is of the file and not of an LFS stub
     describe("#gitHashFile", () => {
-        it("Simple txt should Hash", async () => {
-            const p = path.join(__dirname, "../../../public/literature/simple.txt");
-            const file = await getFileContents(p);
-            const expectedHash = "6769dd60bdf536a83c9353272157893043e9f7d0";
-            const hash = gitHashFile(file);
-
-            assert.equal(hash, expectedHash);
-        });
-
-        it("Pride and Prejudice txt (larger charset) should Hash", async () => {
-            const p = path.join(__dirname, "../../../public/literature/pp.txt");
-            const file = await getFileContents(p);
-            const expectedHash = "76508dbbe920a86c32dfc55db9267ba48b7fcc13";
-            const hash = gitHashFile(file);
-
-            assert.equal(hash, expectedHash);
-        });
-
-        it("Bindy SVG should Hash", async () => {
-            const p = path.join(__dirname, "../../../public/images/bindy.svg");
-            const file = await getFileContents(p);
-            const expectedHash = "c741e46ae4a5f1ca19debf0ac609aabc5fe94add";
-            const hash = gitHashFile(file);
-
-            assert.equal(hash, expectedHash);
-        });
-
         it("Windows ICON should Hash", async () => {
             const p = path.join(__dirname, "../../../public/favicon.ico");
             const file = await getFileContents(p);

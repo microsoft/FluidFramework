@@ -24,7 +24,7 @@ export class SpellcheckerWork extends BaseWork implements IWork {
         await this.loadDocument(
             {
                 blockUpdateMarkers: true,
-                client: { type: "robot"},
+                client: { type: "spell"},
                 encrypted: undefined,
                 localMinSeq: 0,
                 token: this.token,
@@ -36,9 +36,18 @@ export class SpellcheckerWork extends BaseWork implements IWork {
                 this.spellCheck(object);
             }
         };
-        this.operation = eventHandler;
-        this.document.on("op", eventHandler);
-        return Promise.resolve();
+
+        // Temporary workaround: Currently annotations are not being added to the pending op list when the document
+        // is not connected. Making sure that the document is fully connected before starting the spellchecker.
+        if (this.document.isConnected) {
+            this.operation = eventHandler;
+            this.document.on("op", eventHandler);
+        } else {
+            this.document.on("connected", () => {
+                this.operation = eventHandler;
+                this.document.on("op", eventHandler);
+            });
+        }
     }
 
     private spellCheck(object: core.ICollaborativeObject) {

@@ -1,4 +1,4 @@
-import { ITenantUser, IWorkerClient } from "../api-core";
+import { IClient, ITenantUser } from "../api-core";
 
 /**
  * Message sent to connect to the given object
@@ -14,7 +14,7 @@ export interface IConnect {
     token: string;
 
     // Type of the client trying to connect
-    client: IWorkerClient;
+    client: IClient;
 }
 
 /**

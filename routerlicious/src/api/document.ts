@@ -8,19 +8,18 @@ import * as uuid from "uuid/v4";
 import * as api from "../api-core";
 import * as cell from "../cell";
 import { Deferred, gitHashFile } from "../core-utils";
-import { ICell, IMap, IMapView, IStream } from "../data-types";
+import { ICell, IMap, IStream } from "../data-types";
 import * as mapExtension from "../map";
 import * as sharedString from "../shared-string";
 import * as stream from "../stream";
 import { debug } from "./debug";
 import { BrowserErrorTrackingService } from "./errorTrackingService";
+import { analyzeTasks, getLeader } from "./taskAnalyzer";
 
 // TODO: All these should be enforced by server as a part of document creation.
 const rootMapId = "root";
-const inclusionMapId = "inclusions";
-const taskMapId = "tasks";
+const blobMapId = "blobs";
 const documentTasks = ["snapshot", "spell", "intel", "translation", "augmentation"];
-const taskCheckerMS = 5000;
 
 // Registered services to use when loading a document
 let defaultDocumentService: api.IDocumentService;
@@ -186,9 +185,8 @@ export class Document extends EventEmitter implements api.IDocument {
     // tslint:enable:variable-name
 
     private messagesSinceMSNChange = new Array<api.ISequencedDocumentMessage>();
-    private clients = new Map<string, api.IWorkerClient>();
-    private isLeader: boolean = false;
-    private taskMapView: IMapView;
+    private clients = new Map<string, api.IClient>();
+    private helpRequested: Set<string> = new Set<string>();
     private connectionState = api.ConnectionState.Disconnected;
     private pendingAttach = new Map<string, api.IAttachMessage>();
     private storageService: api.IDocumentStorageService;
@@ -240,6 +238,13 @@ export class Document extends EventEmitter implements api.IDocument {
             }
         }
         return false;
+    }
+
+    /**
+     * Flag indicating whether this document is fully connected.
+     */
+    public get isConnected(): boolean {
+        return this.connectionState === api.ConnectionState.Connected;
     }
 
     /**
@@ -358,15 +363,16 @@ export class Document extends EventEmitter implements api.IDocument {
         return this.distributedObjects.get(rootMapId).object as IMap;
     }
 
-    public getInclusionsMap(): IMap {
-        return this.distributedObjects.get(inclusionMapId).object as IMap;
+    public getBlobMap(): IMap {
+        return this.distributedObjects.get(blobMapId).object as IMap;
     }
 
-    // TODO (sabroner) turn filemap into a full type
-    public createInclusion(file: api.IInclusion): api.IInclusion {
+    // TODO (sabroner) turn filemap into a more fully featured class
+    // TODO (sabroner) Move this out of document
+    public createBlobMetadata(file: api.IInclusion): api.IInclusion {
         const hash = gitHashFile(file.content);
         file.sha = hash;
-        const fileMap = this.getInclusionsMap().set<IMap>(hash, this.createMap());
+        const fileMap = this.getBlobMap().set<IMap>(hash, this.createMap());
         fileMap.set<string>("type", file.type);
         fileMap.set<string>("size", file.size);
         fileMap.set<number>("width", file.width);
@@ -376,26 +382,23 @@ export class Document extends EventEmitter implements api.IDocument {
         return file;
     }
 
-    public addInclusion(file: api.IInclusion): void {
+    public uploadBlob(file: api.IInclusion): api.IInclusion {
+
+        this.createBlobMetadata(file);
 
         const encodedBuffer = file.content.toString("base64");
-        const blobResponseP = this.storageService.manager.createBlob(encodedBuffer, "base64");
+        this.storageService.manager.createBlob(encodedBuffer, "base64");
 
-        blobResponseP.then(async (blobResponse) => {
-            // TODO (sabroner): Indicate the inclusion is done uploading
-            console.log("Completed uploading blob");
-            this.emit("inclusionUploaded", blobResponse.sha);
-        });
+        return this.createBlobMetadata(file);
     }
 
-    public getInclusions(): Promise<string[]> {
-        const inclusionMap = this.getInclusionsMap();
-
-        return inclusionMap.keys();
+    public getBlobHashes(): Promise<string[]> {
+        const blobMap = this.getBlobMap();
+        return blobMap.keys();
     }
 
-    public getInclusion(key: string): Promise<api.IInclusion> {
-        const fileMapP = this.getInclusionsMap().wait(key) as Promise<IMap>;
+    public getBlob(key: string): Promise<api.IInclusion> {
+        const fileMapP = this.getBlobMap().wait(key) as Promise<IMap>;
 
         const blobResponseP = this.storageService.manager.getBlob(key);
 
@@ -503,20 +506,8 @@ export class Document extends EventEmitter implements api.IDocument {
         return this._user;
     }
 
-    public getClients(): Map<string, api.IWorkerClient> {
-        return new Map<string, api.IWorkerClient>(this.clients);
-    }
-
-    public getFirstBrowserClient(): api.IWorkerClientDetail {
-        for (const client of this.getClients()) {
-            if (!client[1] || client[1].type !== api.Robot) {
-                return {
-                    clientId: client[0],
-                    detail: client[1],
-                };
-            }
-        }
-        return undefined;
+    public getClients(): Map<string, api.IClient> {
+        return new Map<string, api.IClient>(this.clients);
     }
 
     private async load(specifiedVersion: resources.ICommit, connect: boolean): Promise<void> {
@@ -593,10 +584,7 @@ export class Document extends EventEmitter implements api.IDocument {
                 // This I don't think I can get rid of
                 if (!this.existing) {
                     this.createAttached(rootMapId, mapExtension.MapExtension.Type);
-                    this.createAttached(inclusionMapId, mapExtension.MapExtension.Type);
-                    this.createTaskMap(taskMapId).catch((err) => {
-                        this.emit(err);
-                    });
+                    this.createAttached(blobMapId, mapExtension.MapExtension.Type);
                 } else {
                     await this.get(rootMapId);
                 }
@@ -776,6 +764,10 @@ export class Document extends EventEmitter implements api.IDocument {
         }
 
         this.notifyConnectionState(value);
+
+        if (this.connectionState === api.ConnectionState.Connected) {
+            this.emit("connected");
+        }
     }
 
     private notifyConnectionState(value: api.ConnectionState) {
@@ -1062,14 +1054,14 @@ export class Document extends EventEmitter implements api.IDocument {
                         `Fully joined the document@ ${message.minimumSequenceNumber}`,
                         this.pendingClientId);
                 }
-                this.electLeader();
+                this.runTaskAnalyzer();
                 this.emit("clientJoin", message.contents);
                 break;
 
             case api.ClientLeave:
                 this.clients.delete(message.contents);
                 this.emit("clientLeave", message.contents);
-                this.electLeader();
+                this.runTaskAnalyzer();
                 break;
 
             default:
@@ -1096,70 +1088,40 @@ export class Document extends EventEmitter implements api.IDocument {
         this.emit("op", ...eventArgs);
     }
 
-    private async createTaskMap(id: string) {
-        const rootMap = this.getRoot();
-        rootMap.set(id, this.createMap());
-        const taskMap = await rootMap.get(id) as IMap;
-        this.taskMapView = await taskMap.getView();
-        for (const task of documentTasks) {
-            this.taskMapView.set(task, undefined);
-        }
-    }
+    // On a client joining/departure, decide whether this client is the new leader.
+    // If so, calculate if there are any unhandled tasks for browsers and remote agents.
+    // Emit local help message for this browser and submits a remote help message for agents.
 
-    private async getTaskMap(id: string) {
-        if (!this.taskMapView) {
-            const rootMap = this.getRoot();
-            const taskMap = await rootMap.get(id) as IMap;
-            this.taskMapView = await taskMap.getView();
-        }
-    }
+    // To prevent recurrent op sending, we keep track of already requested tasks and only send
+    // help for each task once.
 
-    // On a client joining/departure, decides whether this client is the new leader.
-    // Skip if this client is already a leader.
-    private electLeader() {
-        if (!this.isLeader) {
-            const firstClient = this.getFirstBrowserClient();
-            if (firstClient && this._clientId === firstClient.clientId) {
-                console.log(`Client id ${this._clientId} is the new leader`);
-                this.isLeader = true;
-                this.askForHelp();
+    // With this restriction of sending only one help message, some taks may never get picked (e.g., paparazzi leaves
+    // and we are still having the same leader)
+
+    // TODO: Need to fix this logic once services are hardened better.
+    private runTaskAnalyzer() {
+            const currentLeader = getLeader(this.getClients());
+            const isLeader = currentLeader && currentLeader.clientId === this.clientId;
+            if (isLeader) {
+                console.log(`Client ${this.clientId} is the current leader!`);
+                const helpTasks = analyzeTasks(this.clientId, this.getClients(), documentTasks, this.helpRequested);
+                if (helpTasks && helpTasks.browser.length > 0) {
+                    const localHelpMessage: api.IHelpMessage = {
+                        clientId: this.clientId,
+                        tasks: helpTasks.browser,
+                    };
+                    console.log(`Local help needed for ${helpTasks.browser}`);
+                    this.emit("localHelp", localHelpMessage);
+                }
+                if (helpTasks && helpTasks.robot.length > 0) {
+                    const remoteHelpMessage: api.IHelpMessage = {
+                        clientId: this.clientId,
+                        tasks: helpTasks.robot,
+                    };
+                    console.log(`Remote help needed for ${helpTasks.robot}`);
+                    this.submitMessage(api.RemoteHelp, remoteHelpMessage);
+                }
             }
-        }
-    }
-
-    // Checks the task map and submits a help message to pick up unassigned tasks.
-    private askForHelp() {
-        setInterval(() => {
-            this.submitHelpMessage().catch((err) => {
-                this.emit(err);
-            });
-        }, taskCheckerMS);
-    }
-
-    // Submits a help message for unassigned tasks.
-    private async submitHelpMessage() {
-        const unassignedTasks = await this.getUnassignedTasks();
-        if (unassignedTasks.length > 0) {
-            const helpMessage: api.IHelpMessage = {
-                clientId: this._clientId,
-                tasks: unassignedTasks,
-            };
-            this.submitMessage(api.RemoteHelp, helpMessage);
-        }
-    }
-
-    private async getUnassignedTasks(): Promise<string[]> {
-        await this.getTaskMap(taskMapId);
-        const unassignedTasks: string[] = [];
-        for (const task of this.taskMapView.keys()) {
-            const clientId = this.taskMapView.get(task);
-            // A task is unassigned if there is no client or old client associated with it.
-            if (clientId && this.getClients().has(clientId)) {
-                continue;
-            }
-            unassignedTasks.push(task);
-        }
-        return unassignedTasks;
     }
 }
 

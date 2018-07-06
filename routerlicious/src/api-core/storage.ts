@@ -1,7 +1,7 @@
 // tslint:disable:ban-types
 import * as resources from "gitresources";
 import * as gitStorage from "../git-storage";
-import { IWorkerClient } from "./client";
+import { IClient } from "./client";
 import { IDocumentMessage, ISequencedDocumentMessage, ITenantUser } from "./protocol";
 
 export interface IDocumentAttributes {
@@ -23,7 +23,7 @@ export interface IDocumentAttributes {
     /**
      * List of clients when the snapshot was taken
      */
-    clients: Array<[string, IWorkerClient]>;
+    clients: Array<[string, IClient]>;
 }
 
 export interface IObjectAttributes {
@@ -126,7 +126,7 @@ export interface IDocumentStorageService {
     getSnapshotTree(version: resources.ICommit): Promise<ISnapshotTree>;
 
     /**
-     * Retrives all versions of the document starting at the specified sha - or null if from the head
+     * Retrieves all versions of the document starting at the specified sha - or null if from the head
      */
     getVersions(sha: string, count: number): Promise<resources.ICommit[]>;
 
@@ -217,7 +217,7 @@ export interface IDocumentService {
         tenantId: string,
         id: string,
         token: string,
-        client: IWorkerClient): Promise<IDocumentDeltaConnection>;
+        client: IClient): Promise<IDocumentDeltaConnection>;
 
     /**
      * Creates a branch of the document with the given ID. Returns the new ID.

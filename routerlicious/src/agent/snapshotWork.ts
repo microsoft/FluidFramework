@@ -15,7 +15,7 @@ export class SnapshotWork extends BaseWork implements IWork {
 
     public async start(task: string): Promise<void> {
         await this.loadDocument(
-            { encrypted: undefined, localMinSeq: 0, token: this.token, client: { type: "robot"} },
+            { encrypted: undefined, localMinSeq: 0, token: this.token, client: { type: "snapshot"} },
             this.service,
             task);
         const serializer = new Serializer(this.document, IdleDetectionTime, MaxTimeWithoutSnapshot, SnapshotRetryTime);
