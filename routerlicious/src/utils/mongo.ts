@@ -8,7 +8,7 @@ export class MongoManager {
     private databaseP: Promise<core.IDb>;
 
     constructor(private factory: core.IDbFactory, private shouldReconnect = true, private reconnectDelayMs = 1000) {
-        this.connect(0);
+        this.databaseP = this.connect();
     }
 
     /**
@@ -28,37 +28,19 @@ export class MongoManager {
     }
 
     /**
-     * Reconnects to MongoDb
-     */
-    private connect(delay) {
-        if (!this.shouldReconnect) {
-            return;
-        }
-
-        this.databaseP = new Promise<core.IDb>((resolve) => {
-            setTimeout(
-                () => {
-                    const connectP = this.connectCore();
-                    resolve(connectP);
-                },
-                delay);
-        });
-    }
-
-    /**
      * Creates a connection to the MongoDB database
      */
-    private connectCore(): Promise<core.IDb> {
+    private connect(): Promise<core.IDb> {
         const databaseP = this.factory.connect()
             .then((db) => {
                 db.on("error", (error) => {
                     debug("DB Error", error);
-                    this.connect(this.reconnectDelayMs);
+                    this.reconnect(this.reconnectDelayMs);
                 });
 
                 db.on("close", (value) => {
                     debug("DB Close", value);
-                    this.connect(this.reconnectDelayMs);
+                    this.reconnect(this.reconnectDelayMs);
                 });
 
                 return db;
@@ -66,9 +48,27 @@ export class MongoManager {
 
         databaseP.catch((error) => {
             debug("DB Connection Error", error);
-            this.connect(this.reconnectDelayMs);
+            this.reconnect(this.reconnectDelayMs);
         });
 
         return databaseP;
+    }
+
+    /**
+     * Reconnects to MongoDb
+     */
+    private reconnect(delay) {
+        if (!this.shouldReconnect) {
+            return;
+        }
+
+        this.databaseP = new Promise<core.IDb>((resolve) => {
+            setTimeout(
+                () => {
+                    const connectP = this.connect();
+                    resolve(connectP);
+                },
+                delay);
+        });
     }
 }

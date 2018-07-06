@@ -66,7 +66,7 @@ function updateMetrics(metrics: IScribeMetrics, ackProgressBar: HTMLElement, typ
 
     if (metrics.serverAverage) {
         document.getElementById("server-latency").innerText =
-            `Server latency: ${(metrics.serverAverage).toFixed(2)} ms`;
+            `Server latency (local orderer only): ${(metrics.serverAverage).toFixed(2)} ms`;
     }
 
     if (metrics.pingAverage) {
