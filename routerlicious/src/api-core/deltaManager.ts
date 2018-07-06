@@ -1,6 +1,7 @@
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import cloneDeep = require("lodash/cloneDeep");
+import now = require("performance-now");
 import { Deferred } from "../core-utils";
 import { Browser, IWorkerClient } from "./client";
 import { debug } from "./debug";
@@ -146,7 +147,12 @@ export class DeltaManager extends EventEmitter implements IDeltaManager {
      */
     public submit(type: string, contents: any): void {
         // Start adding trace for the op.
-        const traces: protocol.ITrace[] = [ { service: "client", action: "start", timestamp: Date.now()}];
+        const traces: protocol.ITrace[] = [
+            {
+                action: "start",
+                service: "client",
+                timestamp: now(),
+            }];
         const message: protocol.IDocumentMessage = {
             clientSequenceNumber: ++this.clientSequenceNumber,
             contents,
@@ -314,6 +320,10 @@ export class DeltaManager extends EventEmitter implements IDeltaManager {
                     } else {
                         this.connectCore(token, "Reconnecting", InitialReconnectDelay, client);
                     }
+                });
+
+                connection.on("pong", (latency) => {
+                    this.emit("pong", latency);
                 });
 
                 // Notify of the connection

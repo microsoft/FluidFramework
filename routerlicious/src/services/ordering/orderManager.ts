@@ -34,7 +34,7 @@ async function getOrderer(
     const hostIp = await getHostIp();
 
     const reservationKey = `${tenantId}/${documentId}`;
-    const expiration = Date.now() + 1000;
+    const expiration = Date.now() + 60000;
     const reservation = await reservationManager.reserve(reservationKey, hostIp, expiration);
 
     if (reservation.value === hostIp) {

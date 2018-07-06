@@ -1,10 +1,10 @@
 import * as jwt from "jsonwebtoken";
 import * as moniker from "moniker";
+import now = require("performance-now");
 import * as winston from "winston";
 import * as agent from "../agent";
 import * as api from "../api-core";
 import * as core from "../core";
-import { ThroughputCounter } from "../core-utils";
 import * as socketStorage from "../socket-storage";
 import * as utils from "../utils";
 import * as storage from "./storage";
@@ -41,7 +41,6 @@ export function register(
     orderManager: core.IOrdererManager,
     tenantManager: core.ITenantManager) {
 
-    const throughput = new ThroughputCounter(winston.info);
     const metricLogger = agent.createMetricClient(metricClientConfig);
 
     webSocketServer.on("connection", (socket: core.IWebSocket) => {
@@ -53,9 +52,7 @@ export function register(
 
         function sendAndTrack(orderer: core.IOrderer, message: core.IRawOperationMessage) {
             // I need to change the producer to become an orderer
-            throughput.produce();
             const sendP = orderer.order(message, message.documentId);
-            sendP.catch((error) => { return; }).then(() => throughput.acknowlwedge());
             return sendP;
         }
 
@@ -185,10 +182,13 @@ export function register(
                     user: docUser.user,
                 };
 
-                throughput.produce();
-
                 // Add trace
-                rawMessage.operation.traces.push( {service: "alfred", action: "start", timestamp: Date.now()} );
+                rawMessage.operation.traces.push(
+                    {
+                        action: "start",
+                        service: "alfred",
+                        timestamp: now(),
+                    });
 
                 sendAndTrack(docUser.orderer, rawMessage).then(
                     (responseMessage) => {

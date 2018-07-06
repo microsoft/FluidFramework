@@ -1,5 +1,6 @@
 import * as assert from "assert";
 import { EventEmitter } from "events";
+import now = require("performance-now");
 import { ValueType } from "../map/definitions";
 import { debug } from "./debug";
 import { ConnectionState, IDistributedObjectServices, IDocument, IObjectStorageService } from "./document";
@@ -21,9 +22,6 @@ export abstract class CollaborativeObject extends EventEmitter implements IColla
     private pendingOps: IObjectMessage[] = [];
 
     private services: IDistributedObjectServices;
-
-    // Socketio acked messages timestamp.
-    private pingMap: { [clientSequenceNumber: number]: number} = {};
 
     // Sequence number for operations local to this client
     private clientSequenceNumber = 0;
@@ -187,7 +185,6 @@ export abstract class CollaborativeObject extends EventEmitter implements IColla
 
         // Store the message for when it is ACKed and then submit to the server if connected
         this.pendingOps.push(message);
-        this.pingMap[message.clientSequenceNumber] = Date.now();
 
         // Send if we are connected - otherwise just add to the sent list
         if (this.state === ConnectionState.Connected) {
@@ -289,13 +286,11 @@ export abstract class CollaborativeObject extends EventEmitter implements IColla
             }
 
             // Add final trace.
-            message.traces.push( { service: "client", action: "end", timestamp: Date.now()});
-            // Add ping trace and remove from local map.
-            if (message.clientSequenceNumber in this.pingMap) {
-                // tslint:disable-next-line:max-line-length
-                message.traces.push( { service: "ping", action: "end", timestamp: this.pingMap[message.clientSequenceNumber]});
-                delete this.pingMap[message.clientSequenceNumber];
-            }
+            message.traces.push({
+                action: "end",
+                service: "client",
+                timestamp: now(),
+            });
 
             // Submit the latency message back to server.
             this.submitLatencyMessage(message);

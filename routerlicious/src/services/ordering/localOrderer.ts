@@ -168,7 +168,7 @@ export class LocalOrderer implements ISocketOrderer {
         setTimeout(
             () => {
                 debug(`Updating reservation for ${this.tenantId}/${this.documentId}`);
-                const updated = Date.now() + 1000;
+                const updated = Date.now() + 60000;
                 this.reservationManager.update(this.reservation, updated).then(
                     (newReservation) => {
                         this.reservation = newReservation;

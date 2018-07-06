@@ -1,5 +1,6 @@
 import * as assert from "assert";
 import { EventEmitter } from "events";
+import now = require("performance-now");
 import * as winston from "winston";
 import * as api from "../api-core";
 import * as core from "../core";
@@ -259,7 +260,11 @@ export class ScriptoriumLambda implements IPartitionLambda {
 
             // Add trace.
             if (value.operation.traces !== undefined) {
-                value.operation.traces.push( {service: "scriptorium", action: "start", timestamp: Date.now()});
+                value.operation.traces.push({
+                    action: "start",
+                    service: "scriptorium",
+                    timestamp: now(),
+                });
             }
 
             // Batch send to MongoDB
@@ -330,7 +335,11 @@ export class ScriptoriumLambda implements IPartitionLambda {
             work.map((value) => {
                 const valueAsSequenced = value as api.ISequencedDocumentMessage;
                 if (valueAsSequenced && valueAsSequenced.traces !== undefined) {
-                    valueAsSequenced.traces.push( {service: "scriptorium", action: "end", timestamp: Date.now()});
+                    valueAsSequenced.traces.push({
+                        action: "end",
+                        service: "scriptorium",
+                        timestamp: now(),
+                    });
                 }
             });
 
