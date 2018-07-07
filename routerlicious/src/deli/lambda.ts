@@ -1,9 +1,10 @@
 import * as assert from "assert";
 import * as _ from "lodash";
+import now = require("performance-now");
 import * as winston from "winston";
 import * as api from "../api-core";
 import * as core from "../core";
-import { RangeTracker, ThroughputCounter } from "../core-utils";
+import { RangeTracker } from "../core-utils";
 import { IContext, IPartitionLambda } from "../kafka-service/lambdas";
 import * as utils from "../utils";
 import { CheckpointContext, ICheckpoint, IClientSequenceNumber } from "./checkpointContext";
@@ -28,7 +29,6 @@ function getBranchClientId(branch: string) {
 }
 
 export class DeliLambda implements IPartitionLambda {
-    private throughput = new ThroughputCounter(winston.info, "Delta Topic ");
     private sequenceNumber: number = undefined;
     private logOffset: number;
 
@@ -93,7 +93,11 @@ export class DeliLambda implements IPartitionLambda {
 
     public handler(message: utils.IMessage): void {
         // Trace for the message.
-        const trace: api.ITrace = { service: "deli", action: "start", timestamp: Date.now()};
+        const trace: api.ITrace = {
+            action: "start",
+            service: "deli",
+            timestamp: now(),
+        };
         this.ticket(message, trace);
     }
 
@@ -246,7 +250,11 @@ export class DeliLambda implements IPartitionLambda {
         const traces = message.operation.traces;
         if (traces !== undefined) {
             traces.push(trace);
-            traces.push( {service: "deli", action: "end", timestamp: Date.now()});
+            traces.push({
+                action: "end",
+                service: "deli",
+                timestamp: now(),
+            });
         }
 
         // And now craft the output message
@@ -314,10 +322,8 @@ export class DeliLambda implements IPartitionLambda {
         const checkpoint = this.generateCheckpoint();
 
         // Otherwise send the message to the event hub
-        this.throughput.produce();
         this.producer.send(JSON.stringify(message), message.documentId).then(
             (result) => {
-                this.throughput.acknowlwedge();
                 this.checkpointContext.checkpoint(checkpoint);
             },
             (error) => {

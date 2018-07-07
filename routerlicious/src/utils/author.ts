@@ -19,6 +19,7 @@ const ackCounter = new Counter();
 const latencyCounter = new Counter();
 const pingCounter = new Counter();
 const typingCounter = new Counter();
+const serverOrderCounter = new Counter();
 
 function padTime(value: number) {
     return `0${value}`.slice(-2);
@@ -66,7 +67,6 @@ export function normalizeText(input: string): string {
 }
 
 export interface IScribeMetrics {
-
     // Average latency between when a message is sent and when it is ack'd by the server
     latencyAverage: number;
     latencyStdDev: number;
@@ -76,6 +76,12 @@ export interface IScribeMetrics {
     // The rate of both typing messages and receiving replies
     ackRate: number;
     typingRate: number;
+
+    // Server ordering performance
+    serverAverage: number;
+
+    // Total number of ops
+    totalOps: number;
 
     // The progress of typing and receiving ack for messages in the range [0,1]
     typingProgress: number;
@@ -268,8 +274,10 @@ export async function typeFile(
             latencyStdDev: undefined,
             pingAverage: undefined,
             pingMaximum: undefined,
+            serverAverage: undefined,
             textLength: fileText.length,
             time: 0,
+            totalOps: 0,
             typingInterval: intervalTime,
             typingProgress: undefined,
             typingRate: undefined,
@@ -287,8 +295,10 @@ export async function typeFile(
                 latencyStdDev: undefined,
                 pingAverage: undefined,
                 pingMaximum: undefined,
+                serverAverage: undefined,
                 textLength: fileText.length,
                 time: 0,
+                totalOps: 0,
                 typingInterval: intervalTime,
                 typingProgress: undefined,
                 typingRate: undefined,
@@ -394,14 +404,13 @@ export async function typeChunk(
     return new Promise<IScribeMetrics>((resolve, reject) => {
         let readPosition = 0;
         let lineNumber = 0;
+        let totalOps = 0;
 
         const histogramRange = 5;
         const histogram = new utils.Histogram(histogramRange);
 
         // Trigger a new sample after a second has elapsed
         const samplingRate = 1000;
-
-        const messageStart: number[] = [];
 
         let mean = 0;
         let stdDev = 0;
@@ -426,9 +435,17 @@ export async function typeChunk(
             }
         }, 1000);
 
+        a.doc.on("pong", (latency) => {
+            pingCounter.increment(latency);
+        });
+
+        a.doc.on("op", () => {
+            totalOps++;
+        });
+
         a.ss.on("op", (message: core.ISequencedObjectMessage) => {
             if (message.clientSequenceNumber &&
-                message.clientSequenceNumber > 10 &&
+                message.clientSequenceNumber > 25 &&
                 message.clientId === a.doc.clientId) {
 
                 ackCounter.increment(1);
@@ -438,32 +455,47 @@ export async function typeChunk(
                     metrics.ackRate = rate;
                 }
 
-                // Wait for a bit prior to starting the running calculation
-                if (messageStart.length > 25) {
-                    const roundTrip = Date.now() - messageStart.pop();
-                    latencyCounter.increment(roundTrip);
+                let clientStart: number;
+                let clientEnd: number;
+                let orderBegin: number;
+                let orderEnd: number;
 
-                    if (message.traces.length === 8 && message.traces[7].service === "ping") {
-                        pingCounter.increment(message.traces[7].timestamp - message.traces[0].timestamp);
+                for (const trace of message.traces) {
+                    if (trace.service === "alfred" && trace.action === "start") {
+                        orderBegin = trace.timestamp;
+                    } else if (trace.service === "scriptorium" && trace.action === "end") {
+                        orderEnd = trace.timestamp;
+                    } else if (trace.service === "client" && trace.action === "start") {
+                        clientStart = trace.timestamp;
+                    } else if (trace.service === "client" && trace.action === "end") {
+                        clientEnd = trace.timestamp;
                     }
-
-                    metrics.pingAverage = pingCounter.getValue() / pingCounter.getSamples();
-                    metrics.pingMaximum = pingCounter.getMaximum();
-
-                    histogram.add(roundTrip);
-                    const samples = latencyCounter.getSamples();
-                    metrics.latencyMinimum = latencyCounter.getMinimum();
-                    metrics.latencyMaximum = latencyCounter.getMaximum();
-                    metrics.latencyAverage = latencyCounter.getValue() / samples;
-
-                    // Update std deviation using Welford's method
-                    stdDev = stdDev + (roundTrip - metrics.latencyAverage) * (roundTrip - mean);
-                    metrics.latencyStdDev =
-                        samples > 1 ? Math.sqrt(stdDev / (samples - 1)) : 0;
-
-                    // Store the mean for use in the next round
-                    mean = metrics.latencyAverage;
                 }
+
+                // const roundTrip = Date.now() - messageStart.pop();
+                const roundTrip = clientEnd - clientStart;
+                latencyCounter.increment(roundTrip);
+                serverOrderCounter.increment(orderEnd - orderBegin);
+
+                metrics.pingAverage = pingCounter.getValue() / pingCounter.getSamples();
+                metrics.pingMaximum = pingCounter.getMaximum();
+
+                histogram.add(roundTrip);
+                const samples = latencyCounter.getSamples();
+                metrics.latencyMinimum = latencyCounter.getMinimum();
+                metrics.latencyMaximum = latencyCounter.getMaximum();
+                metrics.latencyAverage = latencyCounter.getValue() / samples;
+                metrics.totalOps = totalOps;
+
+                metrics.serverAverage = serverOrderCounter.getValue() / serverOrderCounter.getSamples();
+
+                // Update std deviation using Welford's method
+                stdDev = stdDev + (roundTrip - metrics.latencyAverage) * (roundTrip - mean);
+                metrics.latencyStdDev =
+                    samples > 1 ? Math.sqrt(stdDev / (samples - 1)) : 0;
+
+                // Store the mean for use in the next round
+                mean = metrics.latencyAverage;
 
                 scribeCallback(clone(metrics));
             }
@@ -473,7 +505,6 @@ export async function typeChunk(
         function trackOperation(fn: () => void) {
             typingCounter.increment(1);
             fn();
-            messageStart.push(Date.now());
         }
 
         function type(): boolean {
