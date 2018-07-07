@@ -5,7 +5,7 @@
   "main": "index.js",
   "dependencies": {
     "@prague/gitresources": "^0.7.0",
-    "@prague/routerlicious": "^0.1.2569",
+    "@prague/routerlicious": "^0.1.2823",
     "jsonwebtoken": "^8.2.1"
   },
   "devDependencies": {
