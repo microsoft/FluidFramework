@@ -14,21 +14,14 @@ export class TmzLambdaFactory extends EventEmitter implements IPartitionLambdaFa
         private permissions: any) {
         super();
 
-        // After a message queue error we need to recreate the lambda.
         this.messageSender.on("error", (error) => {
+            // After a message queue error we need to recreate the lambda.
             this.emit("error", error);
         });
     }
 
     public async create(config: Provider, context: IContext): Promise<IPartitionLambda> {
-        // Preps message sender.
-        await this.messageSender.initialize().catch((error) => {
-            winston.error(error);
-        });
-        // Preps agent uploader
-        await this.initializeAgentUploader().catch((error) => {
-            winston.error(error);
-        });
+        this.listenToUploadedAgents();
         return new TmzLambda(
             this.messageSender,
             this.tenantManager,
@@ -40,8 +33,7 @@ export class TmzLambdaFactory extends EventEmitter implements IPartitionLambdaFa
         await this.messageSender.close();
     }
 
-    private async initializeAgentUploader() {
-        await this.agentUploader.initialize();
+    private listenToUploadedAgents() {
         this.agentUploader.on("agentAdded", (agent: IAgent) => {
             if (agent.type === "server") {
                 winston.info(`New agent package uploaded: ${agent.name}`);
