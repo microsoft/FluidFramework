@@ -1,17 +1,25 @@
 import { Provider } from "nconf";
+import * as winston from "winston";
 import { IPartitionLambdaFactory } from "../kafka-service/lambdas";
+import * as services from "../services";
 import { TmzLambdaFactory } from "./lambdaFactory";
-import { TmzResourcesFactory, TmzRunnerFactory } from "./runnerFactory";
 
 export async function create(config: Provider): Promise<IPartitionLambdaFactory> {
-    const resourceFactory = new TmzResourcesFactory();
-    const runnerFactory = new TmzRunnerFactory();
+    const authEndpoint = config.get("auth:endpoint");
+    const tenantManager = new services.TenantManager(
+        authEndpoint,
+        config.get("worker:blobStorageUrl"));
 
-    // Create and start a runner
-    const resources = await resourceFactory.create(config);
-    const runner = await runnerFactory.create(resources);
-    const running = runner.start();
+    const minioConfig = config.get("minio");
+    const agentUploader = services.createUploader("minio", minioConfig);
+    const tmzConfig = config.get("tmz");
+    const messageSender = services.createMessageSender(config.get("rabbitmq"), tmzConfig);
 
-    // Start the lambda factory - linking back to the foreman runner to notify of document updates
-    return new TmzLambdaFactory(resources, runner, running);
+    // Preps message sender and agent uploader.
+    const messageSenderP = messageSender.initialize();
+    const agentUploaderP = agentUploader.initialize();
+    await Promise.all([messageSenderP, agentUploaderP]).catch((err) => {
+        winston.error(err);
+    });
+    return new TmzLambdaFactory(messageSender, agentUploader, tenantManager, tmzConfig.permissions);
 }

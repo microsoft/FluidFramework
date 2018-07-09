@@ -3,3 +3,5 @@ export * from "./ordering";
 export * from "./socketIoRedisPublisher";
 export * from "./tenant";
 export * from "./webServer";
+export * from "./messageSender";
+export * from "./agentUploader";

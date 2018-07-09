@@ -3,11 +3,11 @@ import * as dns from "dns";
 import * as os from "os";
 import * as util from "util";
 import {
-    ICollection, IDocument, IOrderer, IOrdererManager, IOrdererSocket, IRawOperationMessage,
+    ICollection, IDocument, IMessageSender, IOrderer, IOrdererManager, IOrdererSocket, IRawOperationMessage,
 } from "../../core";
-import { TmzRunner } from "../../tmz/runner";
 import { IProducer, KafkaOrderer } from "../../utils";
 import { debug } from "../debug";
+import { TenantManager } from "../tenant";
 import { ISocketOrderer } from "./interfaces";
 import { LocalOrderer } from "./localOrderer";
 import { ProxyOrderer } from "./proxyOrderer";
@@ -28,7 +28,9 @@ async function getOrderer(
     collection: ICollection<IDocument>,
     deltasCollection: ICollection<any>,
     reservationManager: IReservationManager,
-    tmzRunner: TmzRunner): Promise<ISocketOrderer> {
+    taskMessageSender: IMessageSender,
+    tenantManager: TenantManager,
+    taskPermission: any): Promise<ISocketOrderer> {
 
     // Get the identifier for the current node
     const hostIp = await getHostIp();
@@ -55,9 +57,11 @@ async function getOrderer(
             collection,
             deltasCollection,
             dbObject,
-            tmzRunner,
             reservation,
-            reservationManager);
+            reservationManager,
+            taskMessageSender,
+            tenantManager,
+            taskPermission);
     } else {
         // TOOD - will need to check the time on the lease and then take it
         debug(`${hostIp} Connecting to ${tenantId}/${documentId}:${reservation.value}`);
@@ -76,7 +80,9 @@ export class OrdererManager implements IOrdererManager {
         private documentsCollection: ICollection<IDocument>,
         private deltasCollection: ICollection<any>,
         private reservationManager: IReservationManager,
-        private tmzRunner: TmzRunner) {
+        private taskMessageSender: IMessageSender,
+        private tenantManager: TenantManager,
+        private permission: any) {
 
         this.orderer = new KafkaOrderer(producer);
     }
@@ -94,7 +100,9 @@ export class OrdererManager implements IOrdererManager {
                     this.documentsCollection,
                     this.deltasCollection,
                     this.reservationManager,
-                    this.tmzRunner);
+                    this.taskMessageSender,
+                    this.tenantManager,
+                    this.permission);
                 this.localOrderers.set(documentId, ordererP);
             }
 

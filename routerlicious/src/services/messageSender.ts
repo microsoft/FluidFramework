@@ -1,7 +1,7 @@
 import * as amqp from "amqplib";
 import { EventEmitter } from "events";
 import * as winston from "winston";
-import { IMessage, IMessageSender } from "./messages";
+import { IMessage, IMessageSender } from "../core";
 
 class RabbitmqSender implements IMessageSender {
 

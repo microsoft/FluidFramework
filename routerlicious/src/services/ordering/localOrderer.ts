@@ -5,9 +5,9 @@ import { ClientSequenceTimeout } from "../../deli/lambdaFactory";
 import { IContext } from "../../kafka-service/lambdas";
 import { ScriptoriumLambda } from "../../scriptorium/lambda";
 import { TmzLambda } from "../../tmz/lambda";
-import { TmzRunner } from "../../tmz/runner";
 import { IMessage, IProducer } from "../../utils";
 import { debug } from "../debug";
+import { TenantManager } from "../tenant";
 import { ISocketOrderer } from "./interfaces";
 import { IReservation, IReservationManager } from "./reservationManager";
 
@@ -98,9 +98,11 @@ export class LocalOrderer implements ISocketOrderer {
         collection: ICollection<IDocument>,
         deltasCollection: ICollection<any>,
         dbObject: IDocument,
-        tmzRunner: TmzRunner,
         private reservation: IReservation,
-        private reservationManager: IReservationManager) {
+        private reservationManager: IReservationManager,
+        private taskMessageSender: core.IMessageSender,
+        private tenantManager: TenantManager,
+        private permission: any) {
 
         // Scriptorium Lambda
         const scriptoriumContext = new LocalContext();
@@ -113,9 +115,10 @@ export class LocalOrderer implements ISocketOrderer {
         // TMZ lambda
         const tmzContext = new LocalContext();
         const tmzLambda = new TmzLambda(
-            tmzContext,
-            tmzRunner,
-            new Promise<void>((resolve, reject) => { return; }));
+            this.taskMessageSender,
+            this.tenantManager,
+            this.permission,
+            tmzContext);
 
         // Routemaster lambda
         // import { RouteMasterLambda } from "../routemaster/lambda";
