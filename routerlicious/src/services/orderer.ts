@@ -13,9 +13,9 @@ import { ClientSequenceTimeout } from "../deli/lambdaFactory";
 import { IContext } from "../kafka-service/lambdas";
 import { ScriptoriumLambda } from "../scriptorium/lambda";
 import { TmzLambda } from "../tmz/lambda";
-import { TmzRunner } from "../tmz/runner";
 import { IMessage, IProducer, KafkaOrderer } from "../utils";
 import { debug } from "./debug";
+import { TenantManager } from "./tenant";
 
 async function getHostIp(): Promise<string> {
     const hostname = os.hostname();
@@ -99,7 +99,9 @@ async function getOrderer(
     collection: ICollection<IDocument>,
     deltasCollection: ICollection<any>,
     reservationsCollection: ICollection<{ documentId: string, tenantId: string, server: string }>,
-    tmzRunner: TmzRunner): Promise<ISocketOrderer> {
+    taskMessageSender: core.IMessageSender,
+    tenantManager: TenantManager,
+    taskPermission: any): Promise<ISocketOrderer> {
 
     const hostIp = await getHostIp();
 
@@ -125,7 +127,9 @@ async function getOrderer(
             collection,
             deltasCollection,
             dbObject,
-            tmzRunner);
+            taskMessageSender,
+            tenantManager,
+            taskPermission);
     } else {
         // TOOD - will need to check the time on the lease and then take it
         debug(`${hostIp} Connecting to ${tenantId}/${documentId}:${val.server}`);
@@ -206,7 +210,9 @@ class LocalOrderer implements ISocketOrderer {
         collection: ICollection<IDocument>,
         deltasCollection: ICollection<any>,
         dbObject: IDocument,
-        tmzRunner: TmzRunner) {
+        messageSender: core.IMessageSender,
+        tenantManager: TenantManager,
+        taskPermission: any) {
 
         // Scriptorium Lambda
         const scriptoriumContext = new LocalContext();
@@ -219,9 +225,10 @@ class LocalOrderer implements ISocketOrderer {
         // TMZ lambda
         const tmzContext = new LocalContext();
         const tmzLambda = new TmzLambda(
-            tmzContext,
-            tmzRunner,
-            new Promise<void>((resolve, reject) => { return; }));
+            messageSender,
+            tenantManager,
+            taskPermission,
+            tmzContext);
 
         // Routemaster lambda
         // import { RouteMasterLambda } from "../routemaster/lambda";
@@ -277,7 +284,9 @@ export class OrdererManager implements IOrdererManager {
         private documentsCollection: ICollection<IDocument>,
         private deltasCollection: ICollection<any>,
         private reservationsCollection: ICollection<{ documentId: string, tenantId: string, server: string }>,
-        private tmzRunner: TmzRunner) {
+        private taskMessageSender: core.IMessageSender,
+        private tenantManager: TenantManager,
+        private taskPermission: any) {
 
         this.orderer = new KafkaOrderer(producer);
     }
@@ -295,7 +304,9 @@ export class OrdererManager implements IOrdererManager {
                     this.documentsCollection,
                     this.deltasCollection,
                     this.reservationsCollection,
-                    this.tmzRunner);
+                    this.taskMessageSender,
+                    this.tenantManager,
+                    this.taskPermission);
                 this.localOrderers.set(documentId, ordererP);
             }
 

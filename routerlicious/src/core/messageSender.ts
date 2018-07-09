@@ -2,7 +2,7 @@
 /**
  * Message sent by the sender.
  */
-export interface IMessage {
+export interface ITaskMessage {
 
     type: string;
 
@@ -27,7 +27,7 @@ export interface IAgentUploader {
     /**
      * Preps the underlying storage.
      */
-    initialize(): void;
+    initialize(): Promise<void>;
 
     /**
      * Notifies on the event of an agent added/deleted.
@@ -54,12 +54,12 @@ export interface IMessageSender {
     /**
      * Sends a task message for a document to a queue.
      */
-    sendTask(queueName: string, message: IMessage): void;
+    sendTask(queueName: string, message: ITaskMessage): void;
 
     /**
      * Sends an agent loading message.
      */
-    sendAgent(message: IMessage): void;
+    sendAgent(message: ITaskMessage): void;
 
     /**
      * Notifies on error.
