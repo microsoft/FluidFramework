@@ -78,14 +78,14 @@ export interface IDeltaHandler {
     /**
      * State change events to indicate changes to the delta connection
      */
-    setConnectionState(state: ConnectionState, context?: any): void;
+    setConnectionState(state: ConnectionState): void;
 }
 
 /**
  * Interface to represent a connection to a delta notification stream.
  */
 export interface IDeltaConnection {
-    clientId: string;
+    // clientId: string;
 
     state: ConnectionState;
 

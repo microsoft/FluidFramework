@@ -63,6 +63,21 @@ function updateMetrics(metrics: IScribeMetrics, ackProgressBar: HTMLElement, typ
         document.getElementById("typing-rate").innerText =
             `Typing rate: ${(metrics.typingRate).toFixed(2)} characters/second`;
     }
+
+    if (metrics.serverAverage) {
+        document.getElementById("server-latency").innerText =
+            `Server latency (local orderer only): ${(metrics.serverAverage).toFixed(2)} ms`;
+    }
+
+    if (metrics.pingAverage) {
+        document.getElementById("avg-ping").innerText =
+            `Ping: ${(metrics.pingAverage).toFixed(2)} ms`;
+    }
+
+    if (metrics.totalOps) {
+        document.getElementById("total-ops").innerText =
+            `Total Ops: ${(metrics.totalOps).toFixed(2)}`;
+    }
 }
 
 function handleFiles(createButton: HTMLButtonElement,

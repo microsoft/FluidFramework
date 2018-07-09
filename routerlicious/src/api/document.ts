@@ -18,7 +18,7 @@ import { analyzeTasks, getLeader } from "./taskAnalyzer";
 
 // TODO: All these should be enforced by server as a part of document creation.
 const rootMapId = "root";
-const inclusionMapId = "inclusions";
+const blobMapId = "blobs";
 const documentTasks = ["snapshot", "spell", "intel", "translation", "augmentation"];
 
 // Registered services to use when loading a document
@@ -181,21 +181,21 @@ export class Document extends EventEmitter implements api.IDocument {
     private _user: api.ITenantUser;
     private _parentBranch: string;
     private _tenantId: string;
+    private _clientId = "disconnected";
     // tslint:enable:variable-name
 
     private messagesSinceMSNChange = new Array<api.ISequencedDocumentMessage>();
     private clients = new Map<string, api.IClient>();
     private helpRequested: Set<string> = new Set<string>();
     private connectionState = api.ConnectionState.Disconnected;
-    private lastReason: string;
-    private lastContext: string;
     private pendingAttach = new Map<string, api.IAttachMessage>();
     private storageService: api.IDocumentStorageService;
     private lastMinSequenceNumber;
     private loaded = false;
+    private pendingClientId: string;
 
     public get clientId(): string {
-        return this._deltaManager ? this._deltaManager.clientId : "disconnected";
+        return this._clientId;
     }
 
     public get tenantId(): string {
@@ -363,15 +363,16 @@ export class Document extends EventEmitter implements api.IDocument {
         return this.distributedObjects.get(rootMapId).object as IMap;
     }
 
-    public getInclusionsMap(): IMap {
-        return this.distributedObjects.get(inclusionMapId).object as IMap;
+    public getBlobMap(): IMap {
+        return this.distributedObjects.get(blobMapId).object as IMap;
     }
 
-    // TODO (sabroner) turn filemap into a full type
-    public createInclusion(file: api.IInclusion): api.IInclusion {
+    // TODO (sabroner) turn filemap into a more fully featured class
+    // TODO (sabroner) Move this out of document
+    public createBlobMetadata(file: api.IInclusion): api.IInclusion {
         const hash = gitHashFile(file.content);
         file.sha = hash;
-        const fileMap = this.getInclusionsMap().set<IMap>(hash, this.createMap());
+        const fileMap = this.getBlobMap().set<IMap>(hash, this.createMap());
         fileMap.set<string>("type", file.type);
         fileMap.set<string>("size", file.size);
         fileMap.set<number>("width", file.width);
@@ -381,26 +382,23 @@ export class Document extends EventEmitter implements api.IDocument {
         return file;
     }
 
-    public addInclusion(file: api.IInclusion): void {
+    public uploadBlob(file: api.IInclusion): api.IInclusion {
+
+        this.createBlobMetadata(file);
 
         const encodedBuffer = file.content.toString("base64");
-        const blobResponseP = this.storageService.manager.createBlob(encodedBuffer, "base64");
+        this.storageService.manager.createBlob(encodedBuffer, "base64");
 
-        blobResponseP.then(async (blobResponse) => {
-            // TODO (sabroner): Indicate the inclusion is done uploading
-            console.log("Completed uploading blob");
-            this.emit("inclusionUploaded", blobResponse.sha);
-        });
+        return this.createBlobMetadata(file);
     }
 
-    public getInclusions(): Promise<string[]> {
-        const inclusionMap = this.getInclusionsMap();
-
-        return inclusionMap.keys();
+    public getBlobHashes(): Promise<string[]> {
+        const blobMap = this.getBlobMap();
+        return blobMap.keys();
     }
 
-    public getInclusion(key: string): Promise<api.IInclusion> {
-        const fileMapP = this.getInclusionsMap().wait(key) as Promise<IMap>;
+    public getBlob(key: string): Promise<api.IInclusion> {
+        const fileMapP = this.getBlobMap().wait(key) as Promise<IMap>;
 
         const blobResponseP = this.storageService.manager.getBlob(key);
 
@@ -579,14 +577,14 @@ export class Document extends EventEmitter implements api.IDocument {
                 this.loaded = true;
 
                 // Now that we are loaded notify all distributed data types of connection change
-                this.notifyConnectionState(this.connectionState, this.lastReason, this.lastContext);
+                this.notifyConnectionState(this.connectionState);
 
                 // Waiting on the root is also good
                 // If it's a new document we create the root map object - otherwise we wait for it to become available
                 // This I don't think I can get rid of
                 if (!this.existing) {
                     this.createAttached(rootMapId, mapExtension.MapExtension.Type);
-                    this.createAttached(inclusionMapId, mapExtension.MapExtension.Type);
+                    this.createAttached(blobMapId, mapExtension.MapExtension.Type);
                 } else {
                     await this.get(rootMapId);
                 }
@@ -610,6 +608,10 @@ export class Document extends EventEmitter implements api.IDocument {
 
         this._deltaManager.on("error", (error) => {
             this.emit("error", error);
+        });
+
+        this._deltaManager.on("pong", (latency) => {
+            this.emit("pong", latency);
         });
 
         // Begin fetching any pending deltas once we know the base sequence #. Can this fail?
@@ -747,22 +749,28 @@ export class Document extends EventEmitter implements api.IDocument {
 
         debug(`Changing from ${api.ConnectionState[this.connectionState]} to ${api.ConnectionState[value]}`, reason);
         this.connectionState = value;
-        this.lastReason = reason;
-        this.lastContext = context;
+
+        // Stash the clientID to detect when transioning from connecting (socket.io channel open) to connected
+        // (have received the join message for the client ID)
+        if (value === api.ConnectionState.Connecting) {
+            this.pendingClientId = context;
+        } else if (value === api.ConnectionState.Connected) {
+            this._clientId = context;
+        }
 
         if (!this.loaded) {
             // If not fully loaded return early
             return;
         }
 
-        this.notifyConnectionState(value, reason, context);
+        this.notifyConnectionState(value);
 
         if (this.connectionState === api.ConnectionState.Connected) {
             this.emit("connected");
         }
     }
 
-    private notifyConnectionState(value: api.ConnectionState, reason: string, context?: string) {
+    private notifyConnectionState(value: api.ConnectionState) {
         // Resend all pending attach messages prior to notifying clients
         if (this.connectionState === api.ConnectionState.Connected) {
             for (const [, message] of this.pendingAttach) {
@@ -773,19 +781,7 @@ export class Document extends EventEmitter implements api.IDocument {
         // Notify connected client objects of the change
         for (const [, object] of this.distributedObjects) {
             if (object.connection) {
-                switch (value) {
-                    case api.ConnectionState.Disconnected:
-                        object.connection.setConnectionState(value, reason);
-                        break;
-                    case api.ConnectionState.Connecting:
-                        object.connection.setConnectionState(value, context);
-                        break;
-                    case api.ConnectionState.Connected:
-                        object.connection.setConnectionState(value, context);
-                        break;
-                    default:
-                        break;
-                }
+                object.connection.setConnectionState(value);
             }
         }
     }
@@ -964,7 +960,7 @@ export class Document extends EventEmitter implements api.IDocument {
         tree: api.ISnapshotTree,
         storage: api.IDocumentStorageService): IObjectServices {
 
-        const deltaConnection = new api.ObjectDeltaConnection(id, this, this.clientId, this.connectionState);
+        const deltaConnection = new api.ObjectDeltaConnection(id, this, this.connectionState);
         const objectStorage = new api.ObjectStorageService(tree, storage);
 
         return {
@@ -978,16 +974,12 @@ export class Document extends EventEmitter implements api.IDocument {
             const envelope = message.contents as api.IEnvelope;
             const objectDetails = this.distributedObjects.get(envelope.address);
             return objectDetails.connection.prepare(message);
-        } else if (message.type === api.AttachObject && message.clientId !== this.clientId) {
+        } else if (message.type === api.AttachObject && message.clientId !== this._clientId) {
             const attachMessage = message.contents as api.IAttachMessage;
 
             // create storage service that wraps the attach data
             const localStorage = new api.LocalObjectStorageService(attachMessage.snapshot);
-            const connection = new api.ObjectDeltaConnection(
-                attachMessage.id,
-                this,
-                this.clientId,
-                this.connectionState);
+            const connection = new api.ObjectDeltaConnection(attachMessage.id, this, this.connectionState);
 
             // Document sequence number references <= message.sequenceNumber should map to the object's 0 sequence
             // number. We cap to the MSN to keep a tighter window and because no references should be below it.
@@ -1037,7 +1029,7 @@ export class Document extends EventEmitter implements api.IDocument {
 
                 // If a non-local operation then go and create the object - otherwise mark it as officially
                 // attached.
-                if (message.clientId !== this.clientId) {
+                if (message.clientId !== this._clientId) {
                     this.fulfillDistributedObject(context.value as api.ICollaborativeObject, context.services);
                 } else {
                     assert(this.pendingAttach.has(attachMessage.id));
@@ -1055,11 +1047,12 @@ export class Document extends EventEmitter implements api.IDocument {
 
             case api.ClientJoin:
                 this.clients.set(message.contents.clientId, message.contents.detail);
-                if (message.contents.clientId === this.clientId) {
+                // This is the only one that requires the pending client ID
+                if (message.contents.clientId === this.pendingClientId) {
                     this.setConnectionState(
                         api.ConnectionState.Connected,
                         `Fully joined the document@ ${message.minimumSequenceNumber}`,
-                        this.clientId);
+                        this.pendingClientId);
                 }
                 this.runTaskAnalyzer();
                 this.emit("clientJoin", message.contents);
@@ -1129,7 +1122,6 @@ export class Document extends EventEmitter implements api.IDocument {
                     this.submitMessage(api.RemoteHelp, remoteHelpMessage);
                 }
             }
-
     }
 }
 

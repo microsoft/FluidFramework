@@ -68,7 +68,7 @@ export interface ITrace {
     // Denotes receiving/sending.
     action: string;
 
-    // Timestamp.
+    // Floating point time in milliseconds with up to nanosecond precision
     timestamp: number;
 }
 
