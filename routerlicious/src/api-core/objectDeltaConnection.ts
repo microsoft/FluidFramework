@@ -17,10 +17,6 @@ export class ObjectDeltaConnection implements IDeltaConnection {
     private minSequenceNumber: number;
     private handler: IDeltaHandler;
 
-    public get clientId(): string {
-        return this._clientId;
-    }
-
     public get state(): ConnectionState {
         return this._state;
     }
@@ -37,7 +33,6 @@ export class ObjectDeltaConnection implements IDeltaConnection {
     constructor(
         public objectId: string,
         private document: IDocument,
-        private _clientId: string,
         private _state: ConnectionState) {
     }
     // tslint:enable:variable-name
@@ -58,14 +53,10 @@ export class ObjectDeltaConnection implements IDeltaConnection {
         assert(!this.handler);
         this.handler = handler;
     }
-    // tslint:disable:unified-signatures
-    public setConnectionState(state: ConnectionState.Disconnected, reason: string): void;
-    public setConnectionState(state: ConnectionState.Connecting, clientId: string): void;
-    public setConnectionState(state: ConnectionState.Connected, clientId: string): void;
-    public setConnectionState(state: ConnectionState, context: string) {
+
+    public setConnectionState(state: ConnectionState) {
         this._state = state;
-        this._clientId = state !== ConnectionState.Disconnected ? context : null;
-        this.handler.setConnectionState(state as any, context);
+        this.handler.setConnectionState(state as any);
     }
 
     /**

@@ -64,19 +64,26 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
         const deltasCollection = db.collection(deltasCollectionName);
         const reservationsCollection = db
             .collection<{ documentId: string, tenantId: string, server: string }>("reservations");
+        await reservationsCollection.createIndex(
+            {
+                key: 1,
+            },
+            true);
 
         // tmz agent uploader does not run locally.
         // TODO: Make agent uploader run locally.
         const tmzConfig = config.get("tmz");
         const taskMessageSender = services.createMessageSender(config.get("rabbitmq"), tmzConfig);
         await taskMessageSender.initialize();
+
+        const reservationManager = new services.ReservationManager(mongoManager, "reservations");
         const tenantManager = new services.TenantManager(authEndpoint, config.get("worker:blobStorageUrl"));
 
         const orderManager = new services.OrdererManager(
             producer,
             documentsCollection,
             deltasCollection,
-            reservationsCollection,
+            reservationManager,
             taskMessageSender,
             tenantManager,
             tmzConfig.permissions);

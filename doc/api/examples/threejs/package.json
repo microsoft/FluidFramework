@@ -9,7 +9,7 @@
     "webpack": "webpack --config webpack.config.js"
   },
   "dependencies": {
-    "@prague/routerlicious": "^0.1.2338",
+    "@prague/routerlicious": "^0.1.2823",
     "@types/express": "^4.11.1",
     "@types/node": "^9.6.7",
     "jsonwebtoken": "^8.2.1",

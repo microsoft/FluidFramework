@@ -126,7 +126,7 @@ export interface IDocumentStorageService {
     getSnapshotTree(version: resources.ICommit): Promise<ISnapshotTree>;
 
     /**
-     * Retrives all versions of the document starting at the specified sha - or null if from the head
+     * Retrieves all versions of the document starting at the specified sha - or null if from the head
      */
     getVersions(sha: string, count: number): Promise<resources.ICommit[]>;
 

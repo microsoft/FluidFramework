@@ -8,7 +8,7 @@ export class MongoManager {
     private databaseP: Promise<core.IDb>;
 
     constructor(private factory: core.IDbFactory, private shouldReconnect = true, private reconnectDelayMs = 1000) {
-        this.connect();
+        this.databaseP = this.connect();
     }
 
     /**
@@ -30,38 +30,45 @@ export class MongoManager {
     /**
      * Creates a connection to the MongoDB database
      */
-    private connect() {
-        this.databaseP = this.factory.connect()
+    private connect(): Promise<core.IDb> {
+        const databaseP = this.factory.connect()
             .then((db) => {
                 db.on("error", (error) => {
                     debug("DB Error", error);
-                    this.reconnect();
+                    this.reconnect(this.reconnectDelayMs);
                 });
 
                 db.on("close", (value) => {
                     debug("DB Close", value);
-                    this.reconnect();
+                    this.reconnect(this.reconnectDelayMs);
                 });
 
                 return db;
             });
 
-        this.databaseP.catch((error) => {
+        databaseP.catch((error) => {
             debug("DB Connection Error", error);
-            this.reconnect();
+            this.reconnect(this.reconnectDelayMs);
         });
+
+        return databaseP;
     }
 
     /**
      * Reconnects to MongoDb
      */
-    private reconnect() {
+    private reconnect(delay) {
         if (!this.shouldReconnect) {
             return;
         }
 
-        setTimeout(() => {
-            this.connect();
-        }, this.reconnectDelayMs);
+        this.databaseP = new Promise<core.IDb>((resolve) => {
+            setTimeout(
+                () => {
+                    const connectP = this.connect();
+                    resolve(connectP);
+                },
+                delay);
+        });
     }
 }
