@@ -69,6 +69,7 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
         // TODO: Make agent uploader run locally.
         const tmzConfig = config.get("tmz");
         const taskMessageSender = services.createMessageSender(config.get("rabbitmq"), tmzConfig);
+        await taskMessageSender.initialize();
         const tenantManager = new services.TenantManager(authEndpoint, config.get("worker:blobStorageUrl"));
 
         const orderManager = new services.OrdererManager(
