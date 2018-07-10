@@ -4,8 +4,6 @@ import { DocumentDeltaStorageService } from "../../socket-storage";
 import { TestDocumentDeltaConnection } from "./";
 
 class TestDocumentStorageService implements api.IDocumentStorageService {
-    public manager = null;
-
     public async getSnapshotTree(version: resources.ICommit): Promise<api.ISnapshotTree> {
         return null;
     }
@@ -36,6 +34,14 @@ class TestDocumentStorageService implements api.IDocumentStorageService {
             url: "test",
         };
         return commit;
+    }
+
+    public async createBlob(file: Buffer): Promise<resources.ICreateBlobResponse> {
+        return null;
+    }
+
+    public async getBlob(sha: string): Promise<resources.IBlob> {
+        return null;
     }
 }
 

@@ -384,10 +384,7 @@ export class Document extends EventEmitter implements api.IDocument {
 
     public uploadBlob(file: api.IInclusion): api.IInclusion {
 
-        this.createBlobMetadata(file);
-
-        const encodedBuffer = file.content.toString("base64");
-        this.storageService.manager.createBlob(encodedBuffer, "base64");
+        this.storageService.createBlob(file.content);
 
         return this.createBlobMetadata(file);
     }
@@ -400,7 +397,7 @@ export class Document extends EventEmitter implements api.IDocument {
     public getBlob(key: string): Promise<api.IInclusion> {
         const fileMapP = this.getBlobMap().wait(key) as Promise<IMap>;
 
-        const blobResponseP = this.storageService.manager.getBlob(key);
+        const blobResponseP = this.storageService.getBlob(key);
 
         return Promise.all([fileMapP, blobResponseP])
             .then(async (values) => {
@@ -420,7 +417,7 @@ export class Document extends EventEmitter implements api.IDocument {
                 } as api.IInclusion;
             })
             .catch((error) => {
-                console.log("Error");
+                console.log("Error: " + JSON.stringify(error));
                 return null;
             });
     }
