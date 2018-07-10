@@ -15,12 +15,20 @@ Note all of the below need to be run from an admin command prompt
 https://chocolatey.org/install
 `choco install kubernetes-cli`
 `choco install minikube`
-
 `minikube.exe start --vm-driver=hyperv`
 
 Running locally
 
+To match Azure we create a few base resources
+
 `kubectl apply -f system/minikube-ssd.yaml`
+
+Installing base services
+
+```
+cd ../charts/kafka
+helm install .
+```
 
 Reuse docker daemon
 

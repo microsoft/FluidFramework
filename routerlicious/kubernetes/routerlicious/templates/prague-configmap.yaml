@@ -15,7 +15,7 @@ data:
             "colorize": false,
             "morganFormat": "short",
             "json": true,
-            "level": "verbose",
+            "level": "info",
             "timestamp": false,
             "label": "winston"
         },

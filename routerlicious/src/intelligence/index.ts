@@ -9,5 +9,5 @@ export { textAnalytics };
 import * as nativeTextAnalytics from "./nativeTextAnalytics";
 export { nativeTextAnalytics };
 
-import * as inclusionAnalytics from "./inclusionAnalytics";
-export { inclusionAnalytics };
+import * as ImageAnalytics from "./imageAnalytics";
+export { ImageAnalytics };

@@ -24,7 +24,7 @@ export class AugmentationWork extends agent.BaseWork implements agent.IWork {
         await this.loadDocument(
             {
                 blockUpdateMarkers: true,
-                client: { type: "robot"},
+                client: { type: "augmentation"},
                 encrypted: undefined,
                 localMinSeq: 0,
                 token: this.token,

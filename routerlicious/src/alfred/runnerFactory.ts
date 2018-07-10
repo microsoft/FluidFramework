@@ -1,7 +1,6 @@
 import { Provider } from "nconf";
 import * as core from "../core";
 import * as services from "../services";
-import { TmzResourcesFactory, TmzRunnerFactory } from "../tmz/runnerFactory";
 import * as utils from "../utils";
 import { AlfredRunner } from "./runner";
 import { IAlfredTenant } from "./tenant";
@@ -65,22 +64,29 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
         const deltasCollection = db.collection(deltasCollectionName);
         const reservationsCollection = db
             .collection<{ documentId: string, tenantId: string, server: string }>("reservations");
+        await reservationsCollection.createIndex(
+            {
+                key: 1,
+            },
+            true);
 
-        // TODO should fold this into the lambda itself
-        // TMZ resources
-        const resourceFactory = new TmzResourcesFactory();
-        const runnerFactory = new TmzRunnerFactory();
-        const resources = await resourceFactory.create(config);
-        const runner = await runnerFactory.create(resources);
-        runner.start();
+        // tmz agent uploader does not run locally.
+        // TODO: Make agent uploader run locally.
+        const tmzConfig = config.get("tmz");
+        const taskMessageSender = services.createMessageSender(config.get("rabbitmq"), tmzConfig);
+        await taskMessageSender.initialize();
 
+        const reservationManager = new services.ReservationManager(mongoManager, "reservations");
         const tenantManager = new services.TenantManager(authEndpoint, config.get("worker:blobStorageUrl"));
+
         const orderManager = new services.OrdererManager(
             producer,
             documentsCollection,
             deltasCollection,
-            reservationsCollection,
-            runner);
+            reservationManager,
+            taskMessageSender,
+            tenantManager,
+            tmzConfig.permissions);
 
         // Tenants attached to the apps this service exposes
         const appTenants = config.get("alfred:tenants") as Array<{ id: string, key: string }>;

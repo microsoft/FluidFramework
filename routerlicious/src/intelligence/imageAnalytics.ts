@@ -9,15 +9,15 @@ export interface IConfig {
 }
 
 // TODO (sabroner): stop using this directly
-export class InclusionAnalyticsIntelligentService implements IIntelligentService {
-    public name: string = "InclusionAnalytics";
+export class ImageAnalyticsIntelligentService implements IIntelligentService {
+    public name: string = "ImageAnalytics";
 
     constructor(private key: string) {
     }
 
-    public async run(inclusion: IInclusion): Promise<any> {
+    public async run(imageBlob: IInclusion): Promise<any> {
 
-        const result = this.invokeRequest(imageURL, inclusion);
+        const result = this.invokeRequest(imageURL, imageBlob);
         return result;
     }
 
@@ -50,10 +50,10 @@ export class InclusionAnalyticsIntelligentService implements IIntelligentService
 }
 
 // TODO (sabroner): Work this into intelWork
-export class InclusionAnalyticsFactory implements IIntelligentServiceFactory {
+export class ImageAnalyticsFactory implements IIntelligentServiceFactory {
     public create(config: IConfig): IIntelligentService {
-        return new InclusionAnalyticsIntelligentService(config.key);
+        return new ImageAnalyticsIntelligentService(config.key);
     }
 }
 
-export const factory = new InclusionAnalyticsFactory();
+export const factory = new ImageAnalyticsFactory();

@@ -1,5 +1,5 @@
 import { EventEmitter } from "events";
-import { IWorkerClient } from "./client";
+import { IClient } from "./client";
 import * as protocol from "./protocol";
 import * as storage from "./storage";
 
@@ -16,7 +16,7 @@ export class DeltaConnection extends EventEmitter {
         id: string,
         token: string,
         service: storage.IDocumentService,
-        client: IWorkerClient) {
+        client: IClient) {
         const connection = await service.connectToDeltaStream(tenantId, id, token, client);
         return new DeltaConnection(connection);
     }

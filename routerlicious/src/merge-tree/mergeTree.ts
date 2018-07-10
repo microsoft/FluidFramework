@@ -1341,12 +1341,16 @@ export class PartialSequenceLengths {
             }
             else {
                 let segment = <Segment>child;
+
+                let segBranchId = mergeTree.getBranchId(segment.clientId);
+                let removalInfo = mergeTree.getRemovalInfo(branchId, segBranchId, segment);
+
                 if (segment.seq == seq) {
-                    seqSeglen += segment.cachedLength;
+                    if (removalInfo.removedSeq !== seq) {
+                        seqSeglen += segment.cachedLength;
+                    }
                 }
                 else {
-                    let segBranchId = mergeTree.getBranchId(segment.clientId);
-                    let removalInfo = mergeTree.getRemovalInfo(branchId, segBranchId, segment);
                     if (removalInfo.removedSeq === seq) {
                         seqSeglen -= segment.cachedLength;
                     }

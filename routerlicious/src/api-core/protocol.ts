@@ -68,7 +68,7 @@ export interface ITrace {
     // Denotes receiving/sending.
     action: string;
 
-    // Timestamp.
+    // Floating point time in milliseconds with up to nanosecond precision
     timestamp: number;
 }
 
@@ -137,8 +137,6 @@ export interface IAttachMessage {
 }
 
 export interface IHelpMessage {
-
-    clientId: string;
 
     tasks: string[];
 }

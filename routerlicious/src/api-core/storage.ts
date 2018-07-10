@@ -1,7 +1,6 @@
 // tslint:disable:ban-types
 import * as resources from "gitresources";
-import * as gitStorage from "../git-storage";
-import { IWorkerClient } from "./client";
+import { IClient } from "./client";
 import { IDocumentMessage, ISequencedDocumentMessage, ITenantUser } from "./protocol";
 
 export interface IDocumentAttributes {
@@ -23,7 +22,7 @@ export interface IDocumentAttributes {
     /**
      * List of clients when the snapshot was taken
      */
-    clients: Array<[string, IWorkerClient]>;
+    clients: Array<[string, IClient]>;
 }
 
 export interface IObjectAttributes {
@@ -118,7 +117,6 @@ export interface IDistributedObject {
  * Interface to provide access to snapshots saved for a collaborative object
  */
 export interface IDocumentStorageService {
-    manager: gitStorage.GitManager;
 
     /**
      * Returns the snapshot tree.
@@ -126,7 +124,7 @@ export interface IDocumentStorageService {
     getSnapshotTree(version: resources.ICommit): Promise<ISnapshotTree>;
 
     /**
-     * Retrives all versions of the document starting at the specified sha - or null if from the head
+     * Retrieves all versions of the document starting at the specified sha - or null if from the head
      */
     getVersions(sha: string, count: number): Promise<resources.ICommit[]>;
 
@@ -144,6 +142,16 @@ export interface IDocumentStorageService {
      * Writes to the object with the given ID
      */
     write(root: ITree, parents: string[], message: string): Promise<resources.ICommit>;
+
+    /**
+     * Creates a blob out of the given buffer
+     */
+    createBlob(file: Buffer): Promise<resources.ICreateBlobResponse>;
+
+    /**
+     * Retrieves a blob with the given sha
+     */
+    getBlob(sha: string): Promise<resources.IBlob>;
 }
 
 /**
@@ -217,7 +225,7 @@ export interface IDocumentService {
         tenantId: string,
         id: string,
         token: string,
-        client: IWorkerClient): Promise<IDocumentDeltaConnection>;
+        client: IClient): Promise<IDocumentDeltaConnection>;
 
     /**
      * Creates a branch of the document with the given ID. Returns the new ID.

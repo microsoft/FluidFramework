@@ -11,7 +11,7 @@ const historian = "https://historian.wu2.prague.office-int.com";
 const tenantId = "gallant-hugle";
 const secret = "03302d4ebfb6f44b662d00313aff5a46";
 
-const documentId = "test-sequence-0507-1";
+const documentId = "test-sequence-0706-1";
 
 // Register endpoint connection
 prague.socketStorage.registerAsDefault(routerlicious, historian, tenantId);
