@@ -18,10 +18,10 @@ export class TmzLambdaFactory extends EventEmitter implements IPartitionLambdaFa
             // After a message queue error we need to recreate the lambda.
             this.emit("error", error);
         });
+        this.listenToUploadedAgents();
     }
 
     public async create(config: Provider, context: IContext): Promise<IPartitionLambda> {
-        this.listenToUploadedAgents();
         return new TmzLambda(
             this.messageSender,
             this.tenantManager,
