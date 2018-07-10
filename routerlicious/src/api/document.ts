@@ -1104,7 +1104,6 @@ export class Document extends EventEmitter implements api.IDocument {
                 const helpTasks = analyzeTasks(this.clientId, this.getClients(), documentTasks, this.helpRequested);
                 if (helpTasks && helpTasks.browser.length > 0) {
                     const localHelpMessage: api.IHelpMessage = {
-                        clientId: this.clientId,
                         tasks: helpTasks.browser,
                     };
                     console.log(`Local help needed for ${helpTasks.browser}`);
@@ -1112,7 +1111,6 @@ export class Document extends EventEmitter implements api.IDocument {
                 }
                 if (helpTasks && helpTasks.robot.length > 0) {
                     const remoteHelpMessage: api.IHelpMessage = {
-                        clientId: this.clientId,
                         tasks: helpTasks.robot,
                     };
                     console.log(`Remote help needed for ${helpTasks.robot}`);
