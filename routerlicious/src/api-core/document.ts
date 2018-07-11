@@ -1,6 +1,6 @@
 // tslint:disable:ban-types
 import { EventEmitter } from "events";
-import { IEnvelope, ILatencyMessage, IObjectMessage, ISequencedObjectMessage, ITenantUser } from "./protocol";
+import { IEnvelope, IObjectMessage, ISequencedObjectMessage, ITenantUser } from "./protocol";
 import { ICollaborativeObject } from "./types";
 
 export interface IDeltaManager {
@@ -120,7 +120,4 @@ export interface IDocument {
     snapshot(message: string): Promise<void>;
 
     submitObjectMessage(envelope: IEnvelope);
-
-    // TODO Should I hide this internally on the message - doesn't seem to be a primary object
-    submitLatencyMessage(message: ILatencyMessage);
 }
