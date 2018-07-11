@@ -1,11 +1,12 @@
-import * as assert from "assert";
 import { EventEmitter } from "events";
 import * as _ from "lodash";
+import * as ws from "ws";
+import { TmzRunner } from "../../tmz/runner";
 import { MongoManager } from "../../utils";
 import { debug } from "../debug";
-import { IConcreteNode, IConcreteNodeFactory } from "./interfaces";
+import { IConcreteNode, INode, ISocketOrderer } from "./interfaces";
+import { LocalOrderer } from "./localOrderer";
 
-// import * as ws from "ws";
 // connect to service
 // const socket = new ws(`ws://${server}:4000`);
 // socket.on(
@@ -33,89 +34,41 @@ import { IConcreteNode, IConcreteNodeFactory } from "./interfaces";
 //         }
 //     });
 
-/**
- * Identifier for an ordering node in the system
- */
-interface INode {
-    // Unique identifier for the node
-    _id: string;
+// class RemoteConnection implements IOrdererSocket {
+//     private q: async.AsyncQueue<core.IRawOperationMessage>;
+//     private orderer: IOrderer;
 
-    // Address that the node can be reached at
-    address: string;
+//     constructor(
+//         orderManager: IOrdererManager,
+//         private socket: ws,
+//         tenantId: string,
+//         documentId: string) {
 
-    // Time when the node is set to expire
-    expiration: number;
-}
+//         const ordererP = orderManager.getOrderer(this, tenantId, documentId);
+//         ordererP.then(
+//             (orderer) => {
+//                 this.orderer = orderer;
+//                 this.q.resume();
+//             },
+//             (error) => {
+//                 this.q.kill();
+//             });
 
-/**
- * Connection to a remote node
- */
-class RemoteNode extends EventEmitter implements IConcreteNode {
-    // private lastUpdate = Date.now();
+//         this.q = async.queue<core.IRawOperationMessage, any>((message, callback) => {
+//             this.orderer.order(message, message.documentId);
+//             callback();
+//         });
+//         this.q.pause();
+//     }
 
-    public static async Connect(
-        id: string,
-        mongoManager: MongoManager,
-        nodeCollectionName: string): Promise<RemoteNode> {
+//     public order(message: core.IRawOperationMessage) {
+//         this.q.push(message);
+//     }
 
-        const node = new RemoteNode(id, mongoManager, nodeCollectionName);
-        await node.connect();
-
-        return node;
-    }
-
-    public get id(): string {
-        return this._id;
-    }
-
-    public get valid(): boolean {
-        return this._valid;
-    }
-
-    // tslint:disable:variable-name
-    private _id: string;
-    private _valid: boolean;
-    // tslint:enable:variable-name
-
-    // TODO establish some kind of connection to the node from here?
-    // should I rely on the remote node to update me of its details? And only fall back to mongo if necessary?
-    // I can probably assume it's all good so long as it tells me things are good. And then I avoid the update loop.
-    // Expired nodes I can track separately.
-
-    private constructor(id: string, private mongoManager: MongoManager, private nodeCollectionName: string) {
-        super();
-
-        this._id = id;
-        this._valid = true;
-    }
-
-    public send(message: any) {
-        return;
-    }
-
-    public async connect(): Promise<void> {
-        const db = await this.mongoManager.getDatabase();
-        const nodeCollection = db.collection<INode>(this.nodeCollectionName);
-        const details = await nodeCollection.findOne({ _id: this._id });
-
-        if (details.expiration < Date.now()) {
-            this._valid = false;
-        } else {
-            this._valid = true;
-        }
-
-        // TODO establish websocket connection to remote server. Node stays valid so long as the connection is open
-        // and the remote channel keeps it open. If the connection is lost we will attempt to reconnect and
-        // continue to buffer messages. Reconnection will indicate node loss and we will use that to set the invalid
-        // flag
-    }
-}
-
-export class LocalNodeFactory implements IConcreteNodeFactory {
-    public create(): Promise<LocalNode> {
-        return null;
-    }
-}
+//     public send(op: string, id: string, data: any[]) {
+//         this.socket.send(JSON.stringify({ op, id, data }));
+//     }
+// }
 
 // Local node manages maintaining the reservation. As well as handling managing the local orderers.
 // Messages sent to it are directly routed.
@@ -125,6 +78,9 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
         address: string,
         mongoManager: MongoManager,
         nodeCollectionName: string,
+        documentsCollectionName: string,
+        deltasCollectionName: string,
+        tmzRunner: TmzRunner,
         timeoutLength: number) {
 
         // Look up any existing information for the node or create a new one
@@ -135,7 +91,14 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
             mongoManager,
             timeoutLength);
 
-        return new LocalNode(node, mongoManager, nodeCollectionName, timeoutLength);
+        return new LocalNode(
+            node,
+            mongoManager,
+            nodeCollectionName,
+            documentsCollectionName,
+            deltasCollectionName,
+            tmzRunner,
+            timeoutLength);
     }
 
     private static async Create(
@@ -191,15 +154,70 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
         return true;
     }
 
+    private webSocketServer: ws.Server;
+
     private constructor(
         private node: INode,
         private mongoManager: MongoManager,
         private nodeCollectionName: string,
+        private documentsCollectionName: string,
+        private deltasCollectionName: string,
+        private tmzRunner: TmzRunner,
         private timeoutLength: number) {
         super();
 
         // Schedule the first heartbeat to update the reservation
         this.scheduleHeartbeat();
+
+        // Start up the peer-to-peer socket server to listen to inbound messages
+        this.webSocketServer = new ws.Server({ port: 4000 });
+
+        // Connections will arrive from remote nodes
+        this.webSocketServer.on("connection", (socket) => {
+            // const remoteConnectionMap = new Map<string, RemoteConnection>();
+
+            // Messages will be inbound from the remote server
+            socket.on("message", (message) => {
+            //     const parsed = JSON.parse(message as string);
+            //     // Listen for connection requests and then messages sent to them
+            //     if (parsed.op === "connect") {
+            //         const remote = new RemoteConnection(
+            //             this.orderManager, socket, parsed.tenantId, parsed.documentId);
+            //         remoteConnectionMap.set(`${parsed.tenantId}/${parsed.documentId}`, remote);
+            //     } else if (parsed.op === "message") {
+            //         const rawOperation = parsed.data as core.IRawOperationMessage;
+            //         const id = `${rawOperation.tenantId}/${rawOperation.documentId}`;
+            //         assert(remoteConnectionMap.has(id));
+            //         remoteConnectionMap.get(id).order(rawOperation);
+            //     }
+            });
+
+            socket.on("close", (code, reason) => {
+                debug("ws connection closed", code, reason);
+            });
+
+            socket.on("error", (error) => {
+                debug("ws connection error", error);
+            });
+        });
+
+        this.webSocketServer.on("error", (error) => {
+            debug("wss error", error);
+        });
+    }
+
+    public async connectOrderer(tenantId: string, documentId: string): Promise<ISocketOrderer> {
+        // Our node is responsible for sequencing messages
+        debug(`${this.id} Becoming leader for ${tenantId}/${documentId}`);
+        const orderer = LocalOrderer.Load(
+            this.mongoManager,
+            tenantId,
+            documentId,
+            this.documentsCollectionName,
+            this.deltasCollectionName,
+            this.tmzRunner);
+
+        return orderer;
     }
 
     public send(message: any) {
@@ -214,6 +232,8 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
             // Have lost the node. Need to shutdown everything and close down
             debug(`${this.node._id} did not renew before expiration`);
             this.emit("expired");
+
+            // TODO close the web socket server
         } else {
             // Schedule a heartbeat at the midpoint of the timeout length
             const targetTime = this.node.expiration - (this.timeoutLength / 2);
@@ -239,65 +259,5 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
                 },
                 delta);
         }
-    }
-}
-
-/**
- * Tracks the validity of a set of nodes.
- */
-export class NodeManager extends EventEmitter {
-    // Every node we have ever loaded
-    private nodes = new Map<string, IConcreteNode>();
-    // Nodes we are attempting to load
-    private pendingNodes = new Map<string, Promise<IConcreteNode>>();
-
-    constructor(
-        private mongoManager: MongoManager,
-        private nodeCollectionName: string) {
-        super();
-    }
-
-    /**
-     * Registers a new local node with the NodeManager
-     */
-    public registerLocal(node: IConcreteNode): void {
-        // Verify the node hasn't been previously registered
-        assert(!this.nodes.has(node.id));
-        assert(!this.pendingNodes.has(node.id));
-
-        // Add the local node to the list. We do not add it to the valid list because we do not track the validity
-        // of a local node.
-        this.nodes.set(node.id, node);
-    }
-
-    /**
-     * Loads the given remote node with the provided ID
-     */
-    public loadRemote(id: string): Promise<IConcreteNode> {
-        // Return immediately if have the resolved value
-        if (this.nodes.has(id)) {
-            return Promise.resolve(this.nodes.get(id));
-        }
-
-        // Otherwise return a promise for the node
-        if (this.pendingNodes.has(id)) {
-            return this.pendingNodes.get(id);
-        }
-
-        // Otherwise load in the information
-        const pendingNodeP = this.getNode(id);
-        this.pendingNodes.set(id, pendingNodeP);
-
-        return pendingNodeP;
-    }
-
-    private async getNode(id: string): Promise<IConcreteNode> {
-        const node = await RemoteNode.Connect(id, this.mongoManager, this.nodeCollectionName);
-        this.nodes.set(id, node);
-
-        // TODO Register for node events here
-        // node.on("error", (error) => { });
-
-        return node;
     }
 }

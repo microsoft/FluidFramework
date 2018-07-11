@@ -188,4 +188,9 @@ export class LocalOrderer implements ISocketOrderer {
     public attachSocket(socket: IOrdererSocket) {
         this.socketPublisher.attachSocket(socket);
     }
+
+    public send(message: any): void {
+        // TODO implement me
+        return;
+    }
 }

@@ -1,25 +1,14 @@
 import * as assert from "assert";
-import { IOrderer, IOrdererManager, IOrdererSocket, IRawOperationMessage } from "../../core";
-import { TmzRunner } from "../../tmz/runner";
-import { KafkaOrderer, MongoManager } from "../../utils";
-import { debug } from "../debug";
+import { IOrderer, IOrdererManager, IOrdererSocket } from "../../core";
+import { KafkaOrderer } from "../../utils";
 import { IConcreteNode, IConcreteNodeFactory, IReservationManager, ISocketOrderer } from "./interfaces";
-import { LocalOrderer } from "./localOrderer";
-import { ProxyOrderer } from "./proxyOrderer";
 
 export class LocalOrderManager {
     private localOrderers = new Map<string, Promise<ISocketOrderer>>();
     private localNodeP: Promise<IConcreteNode>;
 
-    constructor(
-        nodeFactory: IConcreteNodeFactory,
-        private mongoManager: MongoManager,
-        private documentsCollectionName: string,
-        private deltasCollectionName: string,
-        private reservationManager: IReservationManager,
-        private tmzRunner: TmzRunner) {
-
-        this.localNodeP = nodeFactory.create();
+    constructor(private nodeFactory: IConcreteNodeFactory, private reservationManager: IReservationManager) {
+        this.createLocalNode();
     }
 
     public async get(tenantId: string, documentId: string): Promise<ISocketOrderer> {
@@ -31,15 +20,6 @@ export class LocalOrderManager {
         return this.localOrderers.get(documentId);
     }
 
-    public route(message: IRawOperationMessage) {
-        assert(message.tenantId === "local");
-        const localP = this.localOrderers.get(message.documentId);
-        assert(localP);
-        localP.then((orderer) => {
-            orderer.order(message, message.documentId);
-        });
-    }
-
     // Factory method to either create a local or proxy orderer.
     // I should have the order manager just have registered factories for types of ordering
     private async getCore(tenantId: string, documentId: string): Promise<ISocketOrderer> {
@@ -49,23 +29,23 @@ export class LocalOrderManager {
         const reservedNode = await this.reservationManager.getOrReserve(reservationKey, localNode);
         assert(reservedNode.valid);
 
-        if (reservedNode === localNode) {
-            // Our node is responsible for sequencing messages
-            debug(`Becoming leader for ${tenantId}/${documentId}:${reservedNode.id}`);
+        const orderer = await reservedNode.connectOrderer(tenantId, documentId);
+        // orderer can never go bad - only the node
 
-            return LocalOrderer.Load(
-                this.mongoManager,
-                tenantId,
-                documentId,
-                this.documentsCollectionName,
-                this.deltasCollectionName,
-                this.tmzRunner);
-        } else {
-            // TOOD - will need to check the time on the lease and then take it
-            debug(`Connecting to ${tenantId}/${documentId}:${reservedNode.id}`);
-            // Reservation exists - have the orderer simply establish a WS connection to it and proxy commands
-            return new ProxyOrderer(reservedNode, tenantId, documentId);
-        }
+        return orderer;
+    }
+
+    private createLocalNode() {
+        this.localNodeP = this.nodeFactory.create();
+        this.localNodeP.then(
+            (localNode) => {
+                localNode.on("error", (error) => {
+                    // handle disconnects, error, etc... and create a new node
+                });
+            },
+            (error) => {
+                // Reconnect the node
+            });
     }
 }
 
@@ -87,9 +67,5 @@ export class OrdererManager implements IOrdererManager {
         } else {
             return Promise.resolve(this.kafkaOrderer);
         }
-    }
-
-    public route(message: IRawOperationMessage) {
-        this.localOrderManager.route(message);
     }
 }

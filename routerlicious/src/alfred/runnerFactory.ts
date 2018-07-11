@@ -1,20 +1,11 @@
-import * as dns from "dns";
 import { Provider } from "nconf";
 import * as os from "os";
-import * as util from "util";
 import * as core from "../core";
 import * as services from "../services";
 import { TmzResourcesFactory, TmzRunnerFactory } from "../tmz/runnerFactory";
 import * as utils from "../utils";
 import { AlfredRunner } from "./runner";
 import { IAlfredTenant } from "./tenant";
-
-export async function getHostIp(): Promise<string> {
-    const hostname = os.hostname();
-    const lookup = util.promisify(dns.lookup);
-    const info = await lookup(hostname);
-    return info.address;
-}
 
 export class AlfredResources implements utils.IResources {
     public webServerFactory: core.IWebServerFactory;
@@ -86,22 +77,20 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
         const reservationManager = new services.ReservationManager(
             nodeManager,
             mongoManager,
-            nodeCollectionName,
-            config.get("mongo:collectionNames:reservations"),
-            1000);
+            config.get("mongo:collectionNames:reservations"));
 
         const tenantManager = new services.TenantManager(authEndpoint, config.get("worker:blobStorageUrl"));
-        // const address = await getHostIp();
-        // os.hostname(),
-        // address,
-        const nodeFactory = new services.LocalNodeFactory();
-        const localOrderManager = new services.LocalOrderManager(
-            nodeFactory,
+        const address = await utils.getHostIp();
+        const nodeFactory = new services.LocalNodeFactory(
+            os.hostname(),
+            address,
             mongoManager,
+            nodeCollectionName,
             documentsCollectionName,
             deltasCollectionName,
-            reservationManager,
-            runner);
+            runner,
+            1000);
+        const localOrderManager = new services.LocalOrderManager(nodeFactory, reservationManager);
         const kafkaOrderer = new utils.KafkaOrderer(producer);
         const orderManager = new services.OrdererManager(localOrderManager, kafkaOrderer);
 

@@ -1,5 +1,6 @@
 export * from "./auth";
 export * from "./conversion";
+export * from "./dns";
 export * from "./dockerNames";
 export * from "./errorTrackingService";
 export * from "./file";

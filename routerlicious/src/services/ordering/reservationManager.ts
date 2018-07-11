@@ -2,7 +2,7 @@ import { EventEmitter } from "events";
 import { ICollection } from "../../core";
 import { MongoManager } from "../../utils";
 import { IConcreteNode, IReservationManager } from "./interfaces";
-import { NodeManager } from "./nodeTracker";
+import { NodeManager } from "./nodeManager";
 
 /**
  * Reservation for the given id within the system. The reservation is considered held for as long as the node
@@ -14,22 +14,11 @@ interface IReservation {
     node: string;
 }
 
-// A node has a list of documents under its control
-// The node maintains an inbound and outbound stream of ops. And you can connect 'sockets' to it.
-export class Node extends EventEmitter {
-}
-
-// A remote node exists on another server. We poll it for updates
-export class RemoteNode extends Node {
-}
-
 export class ReservationManager extends EventEmitter implements IReservationManager {
     constructor(
         private nodeTracker: NodeManager,
         private mongoManager: MongoManager,
-        nodeCollectionName: string,
-        private reservationColletionName: string,
-        timeoutLength: number) {
+        private reservationColletionName: string) {
         super();
     }
 
