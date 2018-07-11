@@ -14,18 +14,23 @@ $ kubectl apply -f ./grafana/grafana-service.yaml
 $ kubectl apply -f ./grafana/grafana-ingress.yaml
 ```
 
-Dashboard configurations are kept up to date in the "dashboards" folder. In the event of redeployment, use grafana's "import dashboard" option to restore the graphs.
+To access grafana dashboard, navigate to https://grafana.wu2.prague.office-int.com. Use username 'admin' and password 'XEUqUw!8YDgBH*4c'.
 
-For security purpose, we don't expose grafana dashboard publicly. Use kubernetes port forwarding feature to load the dashboard in the browser. Run:
+Dashboard configurations are kept up to date in the "dashboards" folder. In the event of grafana redeployment, use grafana's "import dashboard" option to restore the graphs.
+
+For security purpose, we don't expose influxdb publicly. Use kubernetes port forwarding feature to run query directly against influxdb. Run:
 
 ```bash
 $ kubectl get pods --namespace metric
 ```
 
-This will list all the pods running telegraf, grafana, and influxdb. Copy the pod name starts with 'grafana' prefix. Then run:
+This will list all the pods running telegraf, grafana, and influxdb. Copy the influxdb pod name. Then run:
 
 ```bash
-$ kubectl port-forward --namespace metric <grafana-pod-name> 5000:3000
+$ kubectl port-forward --namespace metric <pod-name> 8086:8086
 ```
 
-This will map grafana exposed port (3000) to localhost 5000 port. Navigate to http://localhost:5000 to see the dashboard.
+Below is an example of a sample query against influxdb.
+```bash
+curl -G 'http://localhost:8086/query?pretty=true' --data-urlencode "db=telegraf" --data-urlencode "q=SELECT * FROM \"latency\""
+```
