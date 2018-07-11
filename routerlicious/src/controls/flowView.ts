@@ -2156,7 +2156,10 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
     }
     let deferredHeight = 0;
     const deferredPGs = (layoutContext.containingPGMarker !== undefined);
-    const paragraphLexer = new Paragraph.ParagraphLexer(Paragraph.tokenToItems, itemsContext);
+    const paragraphLexer = new Paragraph.ParagraphLexer({
+        markerToken: Paragraph.markerToItems,
+        textToken: Paragraph.textTokenToItems,
+    }, itemsContext);
     itemsContext.paragraphLexer = paragraphLexer;
     textErrorRun = undefined;
 

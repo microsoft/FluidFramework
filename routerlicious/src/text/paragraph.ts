@@ -35,12 +35,13 @@ export enum ParagraphItemType {
     Block,
     Glue,
     Penalty,
+    Marker,
 }
 
 export interface IParagraphItem {
     type: ParagraphItemType;
     width: number;
-    textSegment: MergeTree.TextSegment;
+    segment: MergeTree.Segment;
     pos?: number;
     // present if not default
     height?: number;
@@ -52,8 +53,17 @@ export interface IPGBlock extends IParagraphItem {
     text: string;
 }
 
+export interface IPGMarker extends IParagraphItem {
+    type: ParagraphItemType.Marker;
+    segment: MergeTree.Marker;
+}
+
 function makeIPGBlock(width: number, text: string, textSegment: MergeTree.TextSegment) {
-    return <IPGBlock>{ type: ParagraphItemType.Block, width, text, textSegment };
+    return <IPGBlock>{ type: ParagraphItemType.Block, width, text, segment: textSegment };
+}
+
+function makeIPGMarker(marker: MergeTree.Marker) {
+    return <IPGMarker>{ type: ParagraphItemType.Marker, width: 0, segment: marker };
 }
 
 function makeGlue(
@@ -63,7 +73,7 @@ function makeGlue(
     stretch: number,
     shrink: number) {
 
-    return <IPGGlue>{ type: ParagraphItemType.Glue, width, text, textSegment, stretch, shrink };
+    return <IPGGlue>{ type: ParagraphItemType.Glue, width, text, segment: textSegment, stretch, shrink };
 }
 
 export interface IPGGlue extends IParagraphItem {
@@ -78,7 +88,7 @@ export interface IPGPenalty extends IParagraphItem {
     cost: number;
 }
 
-export type ParagraphItem = IPGBlock | IPGGlue | IPGPenalty;
+export type ParagraphItem = IPGBlock | IPGGlue | IPGPenalty | IPGMarker;
 
 // for now assume uniform line widths
 export function breakPGIntoLinesFF(items: ParagraphItem[], lineWidth: number) {
@@ -124,8 +134,10 @@ export const enum ParagraphLexerState {
     AccumSpaces,
 }
 
-export type ParagraphTokenAction<TContext> =
-    (text: string, type: ParagraphItemType, leadSegment: MergeTree.TextSegment, context?: TContext) => void;
+export interface ParagraphTokenActions<TContext> {
+    textToken(text: string, type: ParagraphItemType, leadSegment: MergeTree.TextSegment, context?: TContext);
+    markerToken(marker: MergeTree.Marker, context?: TContext);
+}
 
 export class ParagraphLexer<TContext> {
     public state = ParagraphLexerState.AccumBlockChars;
@@ -133,7 +145,7 @@ export class ParagraphLexer<TContext> {
     private textBuf = "";
     private leadSegment: MergeTree.TextSegment;
 
-    constructor(public tokenAction: ParagraphTokenAction<TContext>, public actionContext?: TContext) {
+    constructor(public tokenActions: ParagraphTokenActions<TContext>, public actionContext?: TContext) {
     }
 
     public reset() {
@@ -141,6 +153,11 @@ export class ParagraphLexer<TContext> {
         this.spaceCount = 0;
         this.textBuf = "";
         this.leadSegment = undefined;
+    }
+
+    public mark(marker: MergeTree.Marker) {
+        this.emit();
+        this.emitMarker(marker);
     }
 
     public lex(textSegment: MergeTree.TextSegment) {
@@ -180,7 +197,7 @@ export class ParagraphLexer<TContext> {
 
     private emitGlue() {
         if (this.spaceCount > 0) {
-            this.tokenAction(MergeTree.internedSpaces(this.spaceCount), ParagraphItemType.Glue,
+            this.tokenActions.textToken(MergeTree.internedSpaces(this.spaceCount), ParagraphItemType.Glue,
                 this.leadSegment, this.actionContext);
             this.spaceCount = 0;
         }
@@ -188,11 +205,14 @@ export class ParagraphLexer<TContext> {
 
     private emitBlock() {
         if (this.textBuf.length > 0) {
-            this.tokenAction(this.textBuf, ParagraphItemType.Block, this.leadSegment, this.actionContext);
+            this.tokenActions.textToken(this.textBuf, ParagraphItemType.Block, this.leadSegment, this.actionContext);
             this.textBuf = "";
         }
     }
 
+    private emitMarker(marker: MergeTree.Marker) {
+        this.tokenActions.markerToken(marker, this.actionContext);
+    }
 }
 
 
@@ -408,11 +428,15 @@ export interface IItemsContext {
     paragraphLexer: ParagraphLexer<IItemsContext>;
 }
 
-export function tokenToItems(
+export function markerToItems(marker: MergeTree.Marker, itemsContext: IItemsContext) {
+    itemsContext.itemInfo.items.push(makeIPGMarker(marker));
+}
+
+export function textTokenToItems(
     text: string, type: ParagraphItemType, leadSegment: MergeTree.TextSegment,
     itemsContext: IItemsContext) {
     let fontInfo = itemsContext.fontInfo;
-    let pgFontstr =fontInfo.getFont(itemsContext.curPGMarker); 
+    let pgFontstr = fontInfo.getFont(itemsContext.curPGMarker);
     let lfontstr = pgFontstr;
     let pgLineHeight = fontInfo.getLineHeight(lfontstr);
     itemsContext.itemInfo.maxHeight = pgLineHeight;
@@ -453,13 +477,13 @@ export function tokenToItems(
         }
         if (divHeight !== pgLineHeight) {
             block.height = divHeight;
-            if (divHeight>itemsContext.itemInfo.maxHeight) {
+            if (divHeight > itemsContext.itemInfo.maxHeight) {
                 itemsContext.itemInfo.maxHeight = divHeight;
             }
         }
         itemsContext.itemInfo.items.push(block);
     } else {
-        let wordSpacing = fontInfo.getTextWidth(" ",lfontstr);
+        let wordSpacing = fontInfo.getTextWidth(" ", lfontstr);
         itemsContext.itemInfo.items.push(makeGlue(textWidth, text, leadSegment,
             wordSpacing / 2, wordSpacing / 3));
     }
@@ -470,6 +494,12 @@ export function isEndBox(marker: MergeTree.Marker) {
         marker.hasRangeLabel("box");
 }
 
+export const contentReferenceProperty = "cref";
+
+export function isContentReference(marker: MergeTree.Marker) {
+    return marker.hasProperty(contentReferenceProperty);
+}
+
 export function segmentToItems(
     segment: MergeTree.Segment, segpos: number, refSeq: number, clientId: number,
     start: number, end: number, context: IItemsContext) {
@@ -478,7 +508,9 @@ export function segmentToItems(
         context.paragraphLexer.lex(textSegment);
     } else if (segment.getType() === MergeTree.SegmentType.Marker) {
         let marker = <MergeTree.Marker>segment;
-        if (marker.hasTileLabel("pg") || isEndBox(marker)) {
+        if (isContentReference(marker)) {
+            context.paragraphLexer.mark(marker);
+        } else if (marker.hasTileLabel("pg") || isEndBox(marker)) {
             context.nextPGPos = segpos;
             return false;
         }
