@@ -494,10 +494,10 @@ export function isEndBox(marker: MergeTree.Marker) {
         marker.hasRangeLabel("box");
 }
 
-export const contentReferenceProperty = "cref";
+export const referenceProperty = "cref";
 
-export function isContentReference(marker: MergeTree.Marker) {
-    return marker.hasProperty(contentReferenceProperty);
+export function isReference(marker: MergeTree.Marker) {
+    return marker.hasProperty(referenceProperty);
 }
 
 export function segmentToItems(
@@ -508,7 +508,7 @@ export function segmentToItems(
         context.paragraphLexer.lex(textSegment);
     } else if (segment.getType() === MergeTree.SegmentType.Marker) {
         let marker = <MergeTree.Marker>segment;
-        if (isContentReference(marker)) {
+        if (isReference(marker)) {
             context.paragraphLexer.mark(marker);
         } else if (marker.hasTileLabel("pg") || isEndBox(marker)) {
             context.nextPGPos = segpos;
