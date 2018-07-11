@@ -1,10 +1,20 @@
+import * as dns from "dns";
 import { Provider } from "nconf";
+import * as os from "os";
+import * as util from "util";
 import * as core from "../core";
 import * as services from "../services";
 import { TmzResourcesFactory, TmzRunnerFactory } from "../tmz/runnerFactory";
 import * as utils from "../utils";
 import { AlfredRunner } from "./runner";
 import { IAlfredTenant } from "./tenant";
+
+export async function getHostIp(): Promise<string> {
+    const hostname = os.hostname();
+    const lookup = util.promisify(dns.lookup);
+    const info = await lookup(hostname);
+    return info.address;
+}
 
 export class AlfredResources implements utils.IResources {
     public webServerFactory: core.IWebServerFactory;
@@ -60,16 +70,7 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
                 tenantId: 1,
             },
             true);
-
         const deltasCollectionName = config.get("mongo:collectionNames:deltas");
-        const deltasCollection = db.collection(deltasCollectionName);
-        const reservationsCollection = db
-            .collection<{ documentId: string, tenantId: string, server: string }>("reservations");
-        await reservationsCollection.createIndex(
-            {
-                key: 1,
-            },
-            true);
 
         // TODO should fold this into the lambda itself
         // TMZ resources
@@ -79,14 +80,30 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
         const runner = await runnerFactory.create(resources);
         runner.start();
 
-        const reservationManager = new services.ReservationManager(mongoManager, "reservations");
+        const nodeCollectionName = config.get("mongo:collectionNames:nodes");
+        const nodeManager = new services.NodeManager(mongoManager, nodeCollectionName);
+        // this.nodeTracker.on("invalidate", (id) => this.emit("invalidate", id));
+        const reservationManager = new services.ReservationManager(
+            nodeManager,
+            mongoManager,
+            nodeCollectionName,
+            config.get("mongo:collectionNames:reservations"),
+            1000);
+
         const tenantManager = new services.TenantManager(authEndpoint, config.get("worker:blobStorageUrl"));
-        const orderManager = new services.OrdererManager(
-            producer,
-            documentsCollection,
-            deltasCollection,
+        // const address = await getHostIp();
+        // os.hostname(),
+        // address,
+        const nodeFactory = new services.LocalNodeFactory();
+        const localOrderManager = new services.LocalOrderManager(
+            nodeFactory,
+            mongoManager,
+            documentsCollectionName,
+            deltasCollectionName,
             reservationManager,
             runner);
+        const kafkaOrderer = new utils.KafkaOrderer(producer);
+        const orderManager = new services.OrdererManager(localOrderManager, kafkaOrderer);
 
         // Tenants attached to the apps this service exposes
         const appTenants = config.get("alfred:tenants") as Array<{ id: string, key: string }>;

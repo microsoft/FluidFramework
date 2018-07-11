@@ -78,6 +78,11 @@ function updateMetrics(metrics: IScribeMetrics, ackProgressBar: HTMLElement, typ
         document.getElementById("total-ops").innerText =
             `Total Ops: ${(metrics.totalOps).toFixed(2)}`;
     }
+
+    if (metrics.processAverage) {
+        document.getElementById("avg-process").innerText =
+            `Process time: ${(metrics.processAverage).toFixed(2)}`;
+    }
 }
 
 function handleFiles(createButton: HTMLButtonElement,

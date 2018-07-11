@@ -614,6 +614,10 @@ export class Document extends EventEmitter implements api.IDocument {
             this.emit("pong", latency);
         });
 
+        this._deltaManager.on("processTime", (time) => {
+            this.emit("processTime", time);
+        });
+
         // Begin fetching any pending deltas once we know the base sequence #. Can this fail?
         // It seems like something, like reconnection, that we would want to retry but otherwise allow
         // the document to load

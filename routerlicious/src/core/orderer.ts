@@ -5,6 +5,7 @@ export interface IOrdererSocket {
 }
 
 export interface IOrderer {
+    // TODO I might not want to make this sync - just make it enforce actual order
     order(message: IRawOperationMessage, topic: string): Promise<void>;
 }
 

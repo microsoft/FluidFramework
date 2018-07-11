@@ -18,6 +18,7 @@ let metrics: IScribeMetrics;
 const ackCounter = new Counter();
 const latencyCounter = new Counter();
 const pingCounter = new Counter();
+const processCounter = new Counter();
 const typingCounter = new Counter();
 const serverOrderCounter = new Counter();
 
@@ -92,6 +93,7 @@ export interface IScribeMetrics {
 
     pingAverage: number;
     pingMaximum: number;
+    processAverage: number;
 
     typingInterval: number;
     writers: number;
@@ -274,6 +276,7 @@ export async function typeFile(
             latencyStdDev: undefined,
             pingAverage: undefined,
             pingMaximum: undefined,
+            processAverage: undefined,
             serverAverage: undefined,
             textLength: fileText.length,
             time: 0,
@@ -295,6 +298,7 @@ export async function typeFile(
                 latencyStdDev: undefined,
                 pingAverage: undefined,
                 pingMaximum: undefined,
+                processAverage: undefined,
                 serverAverage: undefined,
                 textLength: fileText.length,
                 time: 0,
@@ -443,6 +447,10 @@ export async function typeChunk(
             totalOps++;
         });
 
+        a.doc.on("processTime", (time) => {
+            processCounter.increment(time);
+        });
+
         a.ss.on("op", (message: core.ISequencedObjectMessage) => {
             if (message.clientSequenceNumber &&
                 message.clientSequenceNumber > 25 &&
@@ -479,6 +487,7 @@ export async function typeChunk(
 
                 metrics.pingAverage = pingCounter.getValue() / pingCounter.getSamples();
                 metrics.pingMaximum = pingCounter.getMaximum();
+                metrics.processAverage = processCounter.getValue() / processCounter.getSamples();
 
                 histogram.add(roundTrip);
                 const samples = latencyCounter.getSamples();

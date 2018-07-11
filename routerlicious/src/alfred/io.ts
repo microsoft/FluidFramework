@@ -87,6 +87,8 @@ export function register(
                 new SocketIOOrdererSocket(socket),
                 claims.tenantId,
                 claims.documentId);
+            // TODO orderer needs to be able to broadcast when it loses the connection - and then we disconnect
+            // and close the socket
 
             // Create and set a new client ID
             connectionsMap.set(

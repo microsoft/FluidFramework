@@ -6,10 +6,8 @@ import { IContext } from "../../kafka-service/lambdas";
 import { ScriptoriumLambda } from "../../scriptorium/lambda";
 import { TmzLambda } from "../../tmz/lambda";
 import { TmzRunner } from "../../tmz/runner";
-import { IMessage, IProducer } from "../../utils";
-import { debug } from "../debug";
+import { IMessage, IProducer, MongoManager } from "../../utils";
 import { ISocketOrderer } from "./interfaces";
-import { IReservation, IReservationManager } from "./reservationManager";
 
 class LocalTopic implements core.ITopic {
     // TODO - this needs to know about outbound web sockets too
@@ -87,20 +85,51 @@ class LocalProducer implements IProducer {
  * Performs local ordering of messages based on an in-memory stream of operations.
  */
 export class LocalOrderer implements ISocketOrderer {
+    public static async Load(
+        mongoManager: MongoManager,
+        tenantId: string,
+        documentId: string,
+        documentsCollectionName: string,
+        deltasCollectionName: string,
+        tmzRunner: TmzRunner) {
+
+        const db = await mongoManager.getDatabase();
+        const collection = db.collection<IDocument>(documentsCollectionName);
+        const deltasCollection = db.collection<any>(deltasCollectionName);
+
+        // I could put the reservation on the dbObject. And not be able to update the stored numbers unless
+        // I fully have the thing
+        // Lookup the last sequence number stored
+        // TODO - is this storage specific to the orderer in place? Or can I generalize the output context?
+        const dbObject = await collection.findOne({ documentId, tenantId });
+        if (!dbObject) {
+            return Promise.reject(`${tenantId}/${documentId} does not exist - cannot sequence`);
+        }
+
+        return new LocalOrderer(
+            tenantId,
+            documentId,
+            collection,
+            deltasCollection,
+            dbObject,
+            tmzRunner);
+    }
+
     private offset = 0;
     private deliLambda: DeliLambda;
     private producer: LocalProducer;
     private socketPublisher: LocalSocketPublisher;
 
     constructor(
-        private tenantId: string,
-        private documentId: string,
+        tenantId: string,
+        documentId: string,
         collection: ICollection<IDocument>,
         deltasCollection: ICollection<any>,
         dbObject: IDocument,
-        tmzRunner: TmzRunner,
-        private reservation: IReservation,
-        private reservationManager: IReservationManager) {
+        tmzRunner: TmzRunner) {
+
+        // TODO I want to maintain an inbound queue. On lambda failures I need to recreate all of them. Just
+        // like what happens when the service goes down.
 
         // Scriptorium Lambda
         const scriptoriumContext = new LocalContext();
@@ -140,8 +169,6 @@ export class LocalOrderer implements ISocketOrderer {
             collection,
             this.producer,
             ClientSequenceTimeout);
-
-        this.trackReservation();
     }
 
     public async order(message: IRawOperationMessage, topic: string): Promise<void> {
@@ -160,25 +187,5 @@ export class LocalOrderer implements ISocketOrderer {
 
     public attachSocket(socket: IOrdererSocket) {
         this.socketPublisher.attachSocket(socket);
-    }
-
-    private trackReservation() {
-        const interval = (this.reservation.expiration - Date.now()) / 2;
-
-        setTimeout(
-            () => {
-                debug(`Updating reservation for ${this.tenantId}/${this.documentId}`);
-                const updated = Date.now() + 60000;
-                this.reservationManager.update(this.reservation, updated).then(
-                    (newReservation) => {
-                        this.reservation = newReservation;
-                        this.trackReservation();
-                    },
-                    (error) => {
-                        debug(`Failure updating reservation for ${this.tenantId}/${this.documentId}`, error);
-                        // TODO unable to update reservation. Stop ordering and shut down.
-                    });
-            },
-            interval);
     }
 }

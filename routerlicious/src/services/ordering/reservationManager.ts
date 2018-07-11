@@ -1,89 +1,77 @@
+import { EventEmitter } from "events";
 import { ICollection } from "../../core";
 import { MongoManager } from "../../utils";
-import { debug } from "../debug";
+import { IConcreteNode, IReservationManager } from "./interfaces";
+import { NodeManager } from "./nodeTracker";
 
-export interface IReservation {
-    key: string;
-    value: string;
-    expiration: number;
+/**
+ * Reservation for the given id within the system. The reservation is considered held for as long as the node
+ * maintains the given epoch
+ */
+interface IReservation {
+    _id: string;
+
+    node: string;
 }
 
-export interface IReservationManager {
-    /**
-     * Attempts to make a reservation at the given key with the provided value. The return result will either
-     * be the requested reservation. Or the value that currently holds the reservation.
-     */
-    reserve(key: string, value: string, expiration: number): Promise<IReservation>;
-
-    /**
-     * Attempts to update the given reservation to the new expiration time.
-     */
-    update(reservation: IReservation, expiration: number): Promise<IReservation>;
+// A node has a list of documents under its control
+// The node maintains an inbound and outbound stream of ops. And you can connect 'sockets' to it.
+export class Node extends EventEmitter {
 }
 
-export class ReservationManager implements IReservationManager {
-    constructor(private mongoManager: MongoManager, private collectionName: string) {
+// A remote node exists on another server. We poll it for updates
+export class RemoteNode extends Node {
+}
+
+export class ReservationManager extends EventEmitter implements IReservationManager {
+    constructor(
+        private nodeTracker: NodeManager,
+        private mongoManager: MongoManager,
+        nodeCollectionName: string,
+        private reservationColletionName: string,
+        timeoutLength: number) {
+        super();
     }
 
-    public async reserve(key: string, value: string, expiration: number): Promise<IReservation> {
+    public async getOrReserve(key: string, node: IConcreteNode): Promise<IConcreteNode> {
         const reservations = await this.getReservationsCollection();
-
-        // First get any existing value
         const reservation = await reservations.findOne({ key });
 
         // Reservation can be null (first time), expired, or existing and within the time window
-        const now = Date.now();
-        if (reservation === null || now > reservation.expiration) {
-            const newReservation = {
-                expiration,
-                key,
-                value,
-            };
-            debug("Attempting to reserve", reservation, newReservation);
-            return this.makeReservation(reservation, newReservation, reservations);
+        if (reservation === null) {
+            await this.makeReservation(node, key, null, reservations);
+            return node;
         } else {
-            debug("Using existing reservation", reservation);
-            return reservation;
+            const remoteNode = await this.nodeTracker.loadRemote(key);
+            if (remoteNode.valid) {
+                return remoteNode;
+            } else {
+                await this.makeReservation(node, key, reservation, reservations);
+                return node;
+            }
         }
-    }
-
-    public async update(reservation: IReservation, expiration: number): Promise<IReservation> {
-        const newReservation = {
-            expiration,
-            key: reservation.key,
-            value: reservation.value,
-        };
-
-        const reservations = await this.getReservationsCollection();
-        await reservations.update(reservation, newReservation, null);
-
-        return newReservation;
     }
 
     private async makeReservation(
+        node: IConcreteNode,
+        key: string,
         existing: IReservation,
-        requested: IReservation,
-        collection: ICollection<IReservation>): Promise<IReservation> {
+        collection: ICollection<IReservation>): Promise<any> {
+
+        const newReservation: IReservation = { _id: key, node: node.id };
 
         if (existing) {
             await collection.update(
-                {
-                    expiration: existing.expiration,
-                    key: existing.key,
-                    value: existing.value,
-                },
-                requested
-                ,
+                { _id: key, node: existing.node },
+                newReservation,
                 null);
         } else {
-            await collection.insertOne(requested);
+            await collection.insertOne(newReservation);
         }
-
-        return requested;
     }
 
     private async getReservationsCollection(): Promise<ICollection<IReservation>> {
         const db = await this.mongoManager.getDatabase();
-        return db.collection<IReservation>(this.collectionName);
+        return db.collection<IReservation>(this.reservationColletionName);
     }
 }
