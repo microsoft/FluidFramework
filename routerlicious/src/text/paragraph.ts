@@ -494,7 +494,7 @@ export function isEndBox(marker: MergeTree.Marker) {
         marker.hasRangeLabel("box");
 }
 
-export const referenceProperty = "cref";
+export const referenceProperty = "ref";
 
 export function isReference(marker: MergeTree.Marker) {
     return marker.hasProperty(referenceProperty);

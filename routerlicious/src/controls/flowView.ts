@@ -248,26 +248,6 @@ const commands: ICmd[] = [
     },
     {
         enabled: (f) => {
-            return !f.modes.randExclusion;
-        },
-        exec: (f) => {
-            f.modes.randExclusion = true;
-            f.localQueueRender(f.cursor.pos);
-        },
-        key: "inclusion test on",
-    },
-    {
-        enabled: (f) => {
-            return f.modes.randExclusion;
-        },
-        exec: (f) => {
-            f.modes.randExclusion = false;
-            f.localQueueRender(f.cursor.pos);
-        },
-        key: "inclusion test off",
-    },
-    {
-        enabled: (f) => {
             return !f.modes.showBookmarks;
         },
         exec: (f) => {
@@ -338,6 +318,12 @@ const commands: ICmd[] = [
     },
     {
         exec: (f) => {
+            f.insertPhoto();
+        },
+        key: "insert photo",
+    },
+    {
+        exec: (f) => {
             f.insertColumn();
         },
         key: "insert column",
@@ -393,6 +379,13 @@ const commands: ICmd[] = [
         key: "underline",
     },
 ];
+
+export function moveMarker(flowView: FlowView, toPos: number, marker: MergeTree.Marker) {
+    const curPos = getOffset(flowView, marker);
+    flowView.sharedString.cut("inclusion", curPos, curPos + marker.cachedLength);
+    flowView.sharedString.paste("inclusion", toPos);
+    flowView.localQueueRender(toPos);
+}
 
 export interface ISelectionListBox {
     elm: HTMLDivElement;
@@ -1735,9 +1728,6 @@ function renderTree(
     const outerViewportHeight = parseInt(viewportDiv.style.height, 10);
     const outerViewportWidth = parseInt(viewportDiv.style.width, 10);
     const outerViewport = new Viewport(outerViewportHeight, viewportDiv, outerViewportWidth);
-    if (flowView.modes.randExclusion) {
-        outerViewport.randExclu();
-    }
     const startingPosStack =
         client.mergeTree.getStackContext(requestedPosition, client.getClientId(), ["table", "cell", "row"]);
     const layoutContext = {
@@ -1855,9 +1845,6 @@ function lineIntersectsRect(y: number, rect: IExcludedRectangle) {
     return (y >= rect.y) && (y <= (rect.y + rect.height));
 }
 
-const bennet1w = 299;
-const bennet1h = 168;
-
 export class Viewport {
     // keep the line divs in order
     public lineDivs: ILineDiv[] = [];
@@ -1870,16 +1857,6 @@ export class Viewport {
     constructor(public maxHeight: number, public div: IViewportDiv, private width: number) {
     }
 
-    public randExclu() {
-        const ar = bennet1h / bennet1w;
-        const w = Math.floor(this.width / 3);
-        const h = Math.floor(ar * w);
-        this.excludedRects.push(makeExcludedRectangle(Math.floor(this.width / 2),
-            Math.floor(this.maxHeight / 4), w,
-            h));
-        this.showExclu();
-    }
-
     public showExclu() {
         for (const exclu of this.excludedRects) {
             const showImage = document.createElement("img");
@@ -1888,6 +1865,79 @@ export class Viewport {
             this.div.appendChild(showImage);
         }
     }
+
+    public addInclusion(flowView: FlowView, marker: MergeTree.Marker, x: number, y: number,
+        lineHeight: number) {
+        const irdoc = <IReferenceDoc>marker.properties.ref;
+        const mousemove = (emove) => {
+            const deltaX = emove.clientX - flowView.downX;
+            const deltaY = emove.clientY - flowView.downY;
+            if (deltaX || deltaY) {
+                irdoc.layout.deltaX = deltaX;
+                irdoc.layout.deltaY = deltaY;
+                flowView.sharedString.annotateMarker({ ref: irdoc }, marker);
+                flowView.localQueueRender(Nope);
+            }
+            emove.returnValue = false;
+            emove.preventDefault();
+            emove.stopPropagation();
+            return false;
+        };
+        const mouseup = (eup) => {
+            const elm = <HTMLElement>eup.target;
+            elm.onmousemove = undefined;
+            eup.returnValue = false;
+            eup.preventDefault();
+            eup.stopPropagation();
+            flowView.movingInclusion = false;
+            return false;
+        };
+        const mousedown = (e: MouseEvent) => {
+            const elm = <HTMLElement>e.target;
+            flowView.movingInclusion=true;
+            flowView.downX = e.clientX;
+            flowView.downY = e.clientY;
+            elm.onmousemove = mousemove;
+            elm.onmouseup = mouseup;
+            e.returnValue = false;
+            e.preventDefault();
+            e.stopPropagation();
+            return false;
+        };
+        if (irdoc) {
+            // for now always an image
+            if (irdoc.type.name === "image") {
+                const showImage = document.createElement("img");
+                showImage.src = irdoc.url;
+                showImage.onmousedown = mousedown;
+                if (flowView.movingInclusion) {
+                    showImage.onmousemove = mousemove;
+                    showImage.onmouseup = mouseup;
+                }
+                const w = Math.floor(this.width / 3);
+                let h = w;
+                if (irdoc.layout) {
+                    h = Math.floor(w * irdoc.layout.ar);
+                }
+                if ((x + w) > this.width) {
+                    x -= w;
+                }
+                x = Math.floor(x);
+                y += lineHeight;
+                if (irdoc.layout.deltaX) {
+                    x = Math.floor(irdoc.layout.deltaX + x);
+                }
+                if (irdoc.layout.deltaY) {
+                    y = Math.floor(irdoc.layout.deltaY + y);
+                }
+                const exclu = makeExcludedRectangle(x, y, w, h);
+                exclu.conformElement(showImage);
+                this.div.appendChild(showImage);
+                this.excludedRects.push(exclu);
+            }
+        }
+    }
+
     public horizIntersect(h: number, rect: IExcludedRectangle) {
         return lineIntersectsRect(this.lineTop, rect) || (lineIntersectsRect(this.lineTop + h, rect));
     }
@@ -2039,7 +2089,7 @@ export interface IFlowBreakInfo extends Paragraph.IBreakInfo {
     lineHeight?: number;
 }
 
-export function breakPGIntoLinesFFVP(itemInfo: Paragraph.IParagraphItemInfo, defaultLineHeight: number,
+export function breakPGIntoLinesFFVP(flowView: FlowView, itemInfo: Paragraph.IParagraphItemInfo, defaultLineHeight: number,
     viewport: Viewport, startOffset = 0) {
     const items = itemInfo.items;
     const savedTop = viewport.getLineTop();
@@ -2095,7 +2145,6 @@ export function breakPGIntoLinesFFVP(itemInfo: Paragraph.IParagraphItemInfo, def
             if (committedItemsWidth > lineRect.w) {
                 if (viewport.getLineX() === 0) {
                     viewport.vskip(committedItemsHeight);
-
                 }
                 checkViewportFirstLine(posInPG);
                 lineRect = viewport.getLineRect(itemInfo.maxHeight);
@@ -2120,10 +2169,15 @@ export function breakPGIntoLinesFFVP(itemInfo: Paragraph.IParagraphItemInfo, def
         } else if (item.type === Paragraph.ParagraphItemType.Glue) {
             posInPG++;
             prevIsGlue = true;
+        } else if (item.type === Paragraph.ParagraphItemType.Marker) {
+            viewport.addInclusion(flowView, <MergeTree.Marker>item.segment, lineRect.x + committedItemsWidth,
+                viewport.getLineTop(), committedItemsHeight);
         }
         committedItemsWidth += item.width;
-        committedItemsHeight = Math.max(committedItemsHeight,
-            item.height ? item.height : defaultLineHeight);
+        if (item.type !== Paragraph.ParagraphItemType.Marker) {
+            committedItemsHeight = Math.max(committedItemsHeight,
+                item.height ? item.height : defaultLineHeight);
+        }
     }
     viewport.endOfParagraph(itemInfo.maxHeight);
     viewport.setLineTop(savedTop);
@@ -2378,7 +2432,7 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
             if (layoutContext.requestedPosition > currentPos) {
                 startOffset = layoutContext.requestedPosition - currentPos;
             }
-            const breaks = breakPGIntoLinesFFVP(itemsContext.itemInfo, docContext.defaultLineDivHeight,
+            const breaks = breakPGIntoLinesFFVP(layoutContext.flowView, itemsContext.itemInfo, docContext.defaultLineDivHeight,
                 layoutContext.viewport, startOffset);
             curPGMarker.cache = { breaks, isUniformWidth: false };
             paragraphLexer.reset();
@@ -2905,8 +2959,43 @@ function preventD(e: Event) {
     return false;
 }
 
+export interface IReferenceDocType {
+    name: string;
+}
+
+export interface IRefLayoutSpec {
+    minWidth?: number;
+    minHeight?: number;
+    reqWidth?: number;
+    reqHeight?: number;
+    ar?: number;
+    deltaX?: number;
+    deltaY?: number;
+}
+
+export interface IReferenceDoc {
+    type: IReferenceDocType;
+    url: string;
+    layout?: IRefLayoutSpec;
+}
+
+export function makeImageRef(imageSrc: string, cb: (irdoc: IReferenceDoc) => void) {
+    const image = document.createElement("img");
+    const rdocType = <IReferenceDocType>{
+        name: "image",
+    };
+    const irdoc = <IReferenceDoc>{
+        type: rdocType,
+        url: imageSrc,
+    };
+    image.src = imageSrc;
+    image.onload = () => {
+        irdoc.layout = { ar: image.naturalHeight / image.naturalWidth };
+        cb(irdoc);
+    };
+}
+
 export interface IFlowViewModes {
-    randExclusion?: boolean;
     showBookmarks?: boolean;
     showComments?: boolean;
     showCursorLocation?: boolean;
@@ -2948,6 +3037,9 @@ export class FlowView extends ui.Component {
         showComments: true,
         showCursorLocation: true,
     } as IFlowViewModes;
+    public movingInclusion = false;
+    public downX: number;
+    public downY: number;
     public lastDocContext: IDocumentContext;
     private lastVerticalX = -1;
     private randWordTimer: any;
@@ -4132,6 +4224,16 @@ export class FlowView extends ui.Component {
             this.cursor.clearSelection();
             this.localQueueRender(this.cursor.pos);
         }
+    }
+
+    public insertPhoto() {
+        makeImageRef(`${baseURI}/public/images/bennet1.jpeg`, (irdoc) => {
+            const refProps = {
+                [Paragraph.referenceProperty]: irdoc,
+            };
+            this.sharedString.insertMarker(this.cursor.pos, MergeTree.ReferenceType.Simple, refProps);
+            this.localQueueRender(this.cursor.pos);
+        });
     }
 
     public copy() {
