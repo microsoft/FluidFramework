@@ -1,5 +1,6 @@
 import { Provider } from "nconf";
 import * as winston from "winston";
+import * as ws from "ws";
 import { IOrdererManager, ITenantManager } from "../core";
 import * as core from "../core";
 import { Deferred } from "../core-utils";
@@ -54,6 +55,24 @@ export class AlfredRunner implements utils.IRunner {
         httpServer.listen(this.port);
         httpServer.on("error", (error) => this.onError(error));
         httpServer.on("listening", () => this.onListening());
+
+        const webSocketServer = new ws.Server({ port: 5000 });
+        webSocketServer.on("connection", (socket, request) => {
+            winston.info(`New inbound web socket connection ${request.url}`);
+
+            socket.on("close", (code, reason) => {
+                winston.info("ws connection closed", code, reason);
+            });
+
+            socket.on("error", (error) => {
+                winston.info("ws connection error", error);
+            });
+
+            // Messages will be inbound from the remote server
+            socket.on("message", (message) => {
+                socket.send(message);
+            });
+        });
 
         return this.runningDeferred.promise;
     }
