@@ -12,12 +12,12 @@ import { ISocketOrderer } from "./interfaces";
 class LocalTopic implements core.ITopic {
     // TODO - this needs to know about outbound web sockets too
 
-    constructor(private publisher: LocalSocketPublisher) {
+    constructor(private topic: string, private publisher: LocalSocketPublisher) {
     }
 
     public emit(event: string, ...args: any[]) {
         for (const socket of this.publisher.sockets) {
-            socket.send(event, args[0], args[1]);
+            socket.send(this.topic, event, args[0], args[1]);
         }
     }
 }
@@ -30,8 +30,7 @@ class LocalSocketPublisher implements core.IPublisher {
     }
 
     public to(topic: string): core.ITopic {
-        // TODO need to be able to distinguish sockets and channels. Or just take in raw socket.io here.
-        return new LocalTopic(this);
+        return new LocalTopic(topic, this);
     }
 
     public attachSocket(socket: IOrdererSocket) {
@@ -171,13 +170,13 @@ export class LocalOrderer implements ISocketOrderer {
             ClientSequenceTimeout);
     }
 
-    public async order(message: IRawOperationMessage, topic: string): Promise<void> {
+    public order(message: IRawOperationMessage): void {
         const deliMessage: IMessage = {
             highWaterOffset: this.offset,
             key: message.documentId,
             offset: this.offset,
             partition: 0,
-            topic,
+            topic: message.documentId,
             value: JSON.stringify(message),
         };
         this.offset++;
@@ -187,10 +186,5 @@ export class LocalOrderer implements ISocketOrderer {
 
     public attachSocket(socket: IOrdererSocket) {
         this.socketPublisher.attachSocket(socket);
-    }
-
-    public send(message: any): void {
-        // TODO implement me
-        return;
     }
 }

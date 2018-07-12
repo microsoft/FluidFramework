@@ -28,7 +28,7 @@ class SocketIOOrdererSocket implements core.IOrdererSocket {
     constructor(private socket: any) {
     }
 
-    public send(op: string, id: string, data: any[]) {
+    public send(topic: string, op: string, id: string, data: any[]) {
         this.socket.emit(op, id, data);
     }
 }
@@ -49,12 +49,6 @@ export function register(
 
         // Map from client IDs on this connection to the object ID and user info.
         const connectionsMap = new Map<string, IDocumentUser>();
-
-        function sendAndTrack(orderer: core.IOrderer, message: core.IRawOperationMessage) {
-            // I need to change the producer to become an orderer
-            const sendP = orderer.order(message, message.documentId);
-            return sendP;
-        }
 
         async function connectDocument(message: socketStorage.IConnect): Promise<socketStorage.IConnected> {
             const profiler = winston.startTimer();
@@ -123,7 +117,7 @@ export function register(
             };
 
             // work around a race condition on fast first send
-            sendAndTrack(orderer, rawMessage);
+            orderer.order(rawMessage);
 
             const parentBranch = documentDetails.value.parent
                 ? documentDetails.value.parent.documentId
@@ -192,14 +186,8 @@ export function register(
                         timestamp: now(),
                     });
 
-                sendAndTrack(docUser.orderer, rawMessage).then(
-                    (responseMessage) => {
-                        response(null, responseMessage);
-                    },
-                    (error) => {
-                        winston.error(error);
-                        response(error, null);
-                    });
+                docUser.orderer.order(rawMessage);
+                response(null);
             }
         });
 
@@ -242,7 +230,7 @@ export function register(
                     user: docUser.user,
                 };
 
-                sendAndTrack(docUser.orderer, rawMessage);
+                docUser.orderer.order(rawMessage);
             }
         });
     });

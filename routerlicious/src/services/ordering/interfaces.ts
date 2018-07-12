@@ -1,9 +1,7 @@
 import { EventEmitter } from "events";
-import { IOrderer, IOrdererSocket } from "../../core";
+import { IOrderer, IOrdererSocket, IRawOperationMessage } from "../../core";
 
 export interface ISocketOrderer extends IOrderer {
-    send(message: any): void;
-
     attachSocket(socket: IOrdererSocket);
 }
 
@@ -38,4 +36,18 @@ export interface INode {
 
     // Time when the node is set to expire
     expiration: number;
+}
+
+export interface IOpMessage {
+    topic: string;
+    op: string;
+    id: string;
+    data: any[];
+}
+
+export interface INodeMessage {
+    // better way to do the before in TS?
+    type: "order" | "join" | "op";
+
+    payload: IRawOperationMessage | string | IOpMessage;
 }

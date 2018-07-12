@@ -5,7 +5,7 @@ export class KafkaOrderer implements IOrderer {
     constructor(private producer: IProducer) {
     }
 
-    public order(message: IRawOperationMessage, topic: string): Promise<void> {
-        return this.producer.send(JSON.stringify(message), topic);
+    public order(message: IRawOperationMessage): Promise<void> {
+        return this.producer.send(JSON.stringify(message), message.documentId);
     }
 }

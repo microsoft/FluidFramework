@@ -24,14 +24,14 @@ export class ReservationManager extends EventEmitter implements IReservationMana
 
     public async getOrReserve(key: string, node: IConcreteNode): Promise<IConcreteNode> {
         const reservations = await this.getReservationsCollection();
-        const reservation = await reservations.findOne({ key });
+        const reservation = await reservations.findOne({ _id: key });
 
         // Reservation can be null (first time), expired, or existing and within the time window
         if (reservation === null) {
             await this.makeReservation(node, key, null, reservations);
             return node;
         } else {
-            const remoteNode = await this.nodeTracker.loadRemote(key);
+            const remoteNode = await this.nodeTracker.loadRemote(reservation.node);
             if (remoteNode.valid) {
                 return remoteNode;
             } else {

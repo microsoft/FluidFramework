@@ -80,7 +80,7 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
             config.get("mongo:collectionNames:reservations"));
 
         const tenantManager = new services.TenantManager(authEndpoint, config.get("worker:blobStorageUrl"));
-        const address = await utils.getHostIp();
+        const address = `${await utils.getHostIp()}:4000`;
         const nodeFactory = new services.LocalNodeFactory(
             os.hostname(),
             address,
@@ -89,7 +89,7 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
             documentsCollectionName,
             deltasCollectionName,
             runner,
-            1000);
+            60000);
         const localOrderManager = new services.LocalOrderManager(nodeFactory, reservationManager);
         const kafkaOrderer = new utils.KafkaOrderer(producer);
         const orderManager = new services.OrdererManager(localOrderManager, kafkaOrderer);

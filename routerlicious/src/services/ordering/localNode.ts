@@ -1,74 +1,34 @@
+import * as assert from "assert";
 import { EventEmitter } from "events";
 import * as _ from "lodash";
 import * as ws from "ws";
+import { IOrdererSocket, IRawOperationMessage } from "../../core";
 import { TmzRunner } from "../../tmz/runner";
 import { MongoManager } from "../../utils";
 import { debug } from "../debug";
-import { IConcreteNode, INode, ISocketOrderer } from "./interfaces";
+import { IConcreteNode, INode, INodeMessage, IOpMessage, ISocketOrderer } from "./interfaces";
 import { LocalOrderer } from "./localOrderer";
 
-// connect to service
-// const socket = new ws(`ws://${server}:4000`);
-// socket.on(
-//     "open",
-//     () => {
-//         socket.send(
-//             JSON.stringify({ op: "connect", tenantId, documentId }),
-//             (error) => {
-//                 this.queue.resume();
-//             });
-//     });
+class ProxySocket implements IOrdererSocket {
+    constructor(private socket: ws) {
+    }
 
-// socket.on(
-//     "error",
-//     (error) => {
-//         debug(error);
-//     });
+    public send(topic: string, op: string, id: string, data: any[]) {
+        const payload: IOpMessage = {
+            data,
+            id,
+            op,
+            topic,
+        };
+        const nodeMessage: INodeMessage = {
+            payload,
+            type: "op",
+        };
 
-// socket.on(
-//     "message",
-//     (data) => {
-//         const parsedData = JSON.parse(data as string);
-//         for (const clientSocket of this.sockets) {
-//             clientSocket.send(parsedData.op, parsedData.id, parsedData.data);
-//         }
-//     });
-
-// class RemoteConnection implements IOrdererSocket {
-//     private q: async.AsyncQueue<core.IRawOperationMessage>;
-//     private orderer: IOrderer;
-
-//     constructor(
-//         orderManager: IOrdererManager,
-//         private socket: ws,
-//         tenantId: string,
-//         documentId: string) {
-
-//         const ordererP = orderManager.getOrderer(this, tenantId, documentId);
-//         ordererP.then(
-//             (orderer) => {
-//                 this.orderer = orderer;
-//                 this.q.resume();
-//             },
-//             (error) => {
-//                 this.q.kill();
-//             });
-
-//         this.q = async.queue<core.IRawOperationMessage, any>((message, callback) => {
-//             this.orderer.order(message, message.documentId);
-//             callback();
-//         });
-//         this.q.pause();
-//     }
-
-//     public order(message: core.IRawOperationMessage) {
-//         this.q.push(message);
-//     }
-
-//     public send(op: string, id: string, data: any[]) {
-//         this.socket.send(JSON.stringify({ op, id, data }));
-//     }
-// }
+        // debug(`Proxy ${op}@${id}`);
+        this.socket.send(JSON.stringify(nodeMessage));
+    }
+}
 
 // Local node manages maintaining the reservation. As well as handling managing the local orderers.
 // Messages sent to it are directly routed.
@@ -107,6 +67,8 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
         nodeCollectionName: string,
         mongoManager: MongoManager,
         timeoutLength: number): Promise<INode> {
+
+        debug("Creating node", id);
 
         const db = await mongoManager.getDatabase();
         const nodeCollection = db.collection<INode>(nodeCollectionName);
@@ -155,6 +117,7 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
     }
 
     private webSocketServer: ws.Server;
+    private orderMap = new Map<string, LocalOrderer>();
 
     private constructor(
         private node: INode,
@@ -173,24 +136,8 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
         this.webSocketServer = new ws.Server({ port: 4000 });
 
         // Connections will arrive from remote nodes
-        this.webSocketServer.on("connection", (socket) => {
-            // const remoteConnectionMap = new Map<string, RemoteConnection>();
-
-            // Messages will be inbound from the remote server
-            socket.on("message", (message) => {
-            //     const parsed = JSON.parse(message as string);
-            //     // Listen for connection requests and then messages sent to them
-            //     if (parsed.op === "connect") {
-            //         const remote = new RemoteConnection(
-            //             this.orderManager, socket, parsed.tenantId, parsed.documentId);
-            //         remoteConnectionMap.set(`${parsed.tenantId}/${parsed.documentId}`, remote);
-            //     } else if (parsed.op === "message") {
-            //         const rawOperation = parsed.data as core.IRawOperationMessage;
-            //         const id = `${rawOperation.tenantId}/${rawOperation.documentId}`;
-            //         assert(remoteConnectionMap.has(id));
-            //         remoteConnectionMap.get(id).order(rawOperation);
-            //     }
-            });
+        this.webSocketServer.on("connection", (socket, request) => {
+            debug(`New inbound web socket connection ${request.url}`);
 
             socket.on("close", (code, reason) => {
                 debug("ws connection closed", code, reason);
@@ -198,6 +145,32 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
 
             socket.on("error", (error) => {
                 debug("ws connection error", error);
+            });
+
+            // Messages will be inbound from the remote server
+            socket.on("message", (message) => {
+                const parsed = JSON.parse(message as string) as INodeMessage;
+
+                if (parsed.type === "join") {
+                    const fullId = parsed.payload as string;
+                    if (!this.orderMap.has(fullId)) {
+                        debug("Received message for un-owned document", fullId);
+                        return;
+                    }
+
+                    debug(`Join of ${fullId}`);
+                    this.orderMap.get(fullId).attachSocket(new ProxySocket(socket));
+                } else if (parsed.type === "order") {
+                    const orderMessage = parsed.payload as IRawOperationMessage;
+                    const fullId = `${orderMessage.tenantId}/${orderMessage.documentId}`;
+                    if (!this.orderMap.has(fullId)) {
+                        debug("Received message for un-owned document", fullId);
+                        return;
+                    }
+
+                    // debug(`Order ${orderMessage.clientId}@${orderMessage.operation.clientSequenceNumber}`);
+                    this.orderMap.get(fullId).order(orderMessage);
+                }
             });
         });
 
@@ -207,15 +180,18 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
     }
 
     public async connectOrderer(tenantId: string, documentId: string): Promise<ISocketOrderer> {
+        const fullId = `${tenantId}/${documentId}`;
         // Our node is responsible for sequencing messages
-        debug(`${this.id} Becoming leader for ${tenantId}/${documentId}`);
-        const orderer = LocalOrderer.Load(
+        debug(`${this.id} Becoming leader for ${fullId}`);
+        const orderer = await LocalOrderer.Load(
             this.mongoManager,
             tenantId,
             documentId,
             this.documentsCollectionName,
             this.deltasCollectionName,
             this.tmzRunner);
+        assert(!this.orderMap.has(fullId));
+        this.orderMap.set(fullId, orderer);
 
         return orderer;
     }
@@ -248,6 +224,7 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
                         this.timeoutLength);
                     updateP.then(
                         (newNode) => {
+                            debug(`Successfully renewed expiration for ${this.node._id}`);
                             this.node = newNode;
                             this.scheduleHeartbeat();
                         },
