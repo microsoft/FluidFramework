@@ -1099,11 +1099,11 @@ export class Document extends EventEmitter implements api.IDocument {
                 service: this.clientType,
                 timestamp: performanceNow(),
             });
-            // Add a pong trace if available.
+            // Add a ping trace if available.
             if (this.lastPong) {
                 message.traces.push({
                     action: undefined,
-                    service: "pong",
+                    service: `${this.clientType}-ping`,
                     timestamp: this.lastPong,
                 });
                 this.lastPong = undefined;
