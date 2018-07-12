@@ -216,10 +216,16 @@ export class DeltaManager extends EventEmitter implements IDeltaManager {
         return deferred.promise;
     }
 
+    /**
+     * Closes the connection and clears inbound & outbound queues.
+     */
     public close() {
         if (this.connection) {
             this.connection.close();
         }
+        this._inbound.clear();
+        this._outbound.clear();
+        this.removeAllListeners();
     }
 
     private getDeltasCore(

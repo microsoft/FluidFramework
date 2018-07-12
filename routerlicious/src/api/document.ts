@@ -441,6 +441,7 @@ export class Document extends EventEmitter implements api.IDocument {
         if (this._deltaManager) {
             this._deltaManager.close();
         }
+        this.removeAllListeners();
     }
 
     public submitObjectMessage(envelope: api.IEnvelope): void {
