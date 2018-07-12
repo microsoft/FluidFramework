@@ -32,7 +32,8 @@ class TelegrafClient implements IMetricClient {
         const row = new Object();
         const Float = telegraf.Float;
         for (const trace of traces) {
-            row[trace.service + "-" + trace.action] = new Float(trace.timestamp);
+            const column = `${trace.service}${trace.action ? "-" + trace.action : ""}`;
+            row[column] = new Float(trace.timestamp);
         }
         return row;
     }
