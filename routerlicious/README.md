@@ -258,7 +258,7 @@ By default, the service does not run locally. To run locally, first add the foll
         }
     }
 ```
-This will enable the metric writer to write to telegraf client. Then run `docker-compose -f docker-compose.yml -f docker-compose.dev.yml -f docker-compose.metric.yml up` to bring up telegraf, influxdb, and grafana containers. Navigate "http://localhost:5000" to see grafana up and running.
+This will enable the metric writer to write to telegraf client. Then run `docker-compose -f docker-compose.yml -f docker-compose.dev.yml -f docker-compose.metric.yml up` to bring up telegraf, influxdb, and grafana containers. Navigate "http://localhost:7000" to see grafana up and running.
 
 ## Authentication model
 Routerlicious uses a token based authentication model. Tenants are registered to routerlicious first and a secret key is generated for each tenant. Apps are expected to pass <secret-key>, <tenant-id>, and <user-info> as a signed token to routerlicious. Tenants are given a symmetric-key beforehand to sign the token.

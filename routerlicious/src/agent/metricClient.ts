@@ -30,9 +30,10 @@ class TelegrafClient implements IMetricClient {
 
     private createTelegrafRow(traces: core.ITrace[]): Object {
         const row = new Object();
-        const Int = telegraf.Int;
+        const Float = telegraf.Float;
         for (const trace of traces) {
-            row[trace.service + "-" + trace.action] = new Int(trace.timestamp);
+            const column = `${trace.service}${trace.action ? "-" + trace.action : ""}`;
+            row[column] = new Float(trace.timestamp);
         }
         return row;
     }

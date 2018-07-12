@@ -36,13 +36,13 @@ export class BaseWork extends EventEmitter {
     public async stop(task: string): Promise<void> {
         // Make sure the document is loaded first.
         if (this.document !== undefined) {
-            // Reset the task map, remove listeners, and close the document.
-            console.log(`Removing ${task} task for document ${this.document.tenantId}/${this.document.id}`);
             if (this.document.hasUnackedOps) {
+                console.log(`${this.document.tenantId}/${this.document.id} has subscribed to processed events`);
                 this.document.on("processed", () => {
                     this.closeDocument(task);
                 });
             } else {
+                console.log(`${this.document.tenantId}/${this.document.id} has no pending ops`);
                 this.closeDocument(task);
             }
         }

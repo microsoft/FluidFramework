@@ -3,7 +3,7 @@
 ## ref: https://hub.docker.com/r/library/telegraf/tags/
 image:
   repo: "telegraf"
-  tag: "latest"
+  tag: "1.2.1"
   pullPolicy: IfNotPresent
 
 ## Configure resource requests and limits
