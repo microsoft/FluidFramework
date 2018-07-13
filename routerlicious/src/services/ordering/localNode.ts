@@ -8,9 +8,10 @@ import { MongoManager } from "../../utils";
 import { debug } from "../debug";
 import { IConcreteNode, INode, INodeMessage, IOpMessage, ISocketOrderer } from "./interfaces";
 import { LocalOrderer } from "./localOrderer";
+import { Socket } from "./socket";
 
 class ProxySocket implements IOrdererSocket {
-    constructor(private socket: ws) {
+    constructor(private socket: Socket<INodeMessage>) {
     }
 
     public send(topic: string, op: string, id: string, data: any[]) {
@@ -25,8 +26,7 @@ class ProxySocket implements IOrdererSocket {
             type: "op",
         };
 
-        // debug(`Proxy ${op}@${id}`);
-        this.socket.send(JSON.stringify(nodeMessage));
+        this.socket.send(nodeMessage);
     }
 }
 
@@ -136,23 +136,14 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
         this.webSocketServer = new ws.Server({ port: 4000 });
 
         // Connections will arrive from remote nodes
-        this.webSocketServer.on("connection", (socket, request) => {
+        this.webSocketServer.on("connection", (wsSocket, request) => {
             debug(`New inbound web socket connection ${request.url}`);
-
-            socket.on("close", (code, reason) => {
-                debug("ws connection closed", code, reason);
-            });
-
-            socket.on("error", (error) => {
-                debug("ws connection error", error);
-            });
+            const socket = new Socket<INodeMessage>(wsSocket);
 
             // Messages will be inbound from the remote server
             socket.on("message", (message) => {
-                const parsed = JSON.parse(message as string) as INodeMessage;
-
-                if (parsed.type === "join") {
-                    const fullId = parsed.payload as string;
+                if (message.type === "join") {
+                    const fullId = message.payload as string;
                     if (!this.orderMap.has(fullId)) {
                         debug("Received message for un-owned document", fullId);
                         return;
@@ -160,8 +151,8 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
 
                     debug(`Join of ${fullId}`);
                     this.orderMap.get(fullId).attachSocket(new ProxySocket(socket));
-                } else if (parsed.type === "order") {
-                    const orderMessage = parsed.payload as IRawOperationMessage;
+                } else if (message.type === "order") {
+                    const orderMessage = message.payload as IRawOperationMessage;
                     const fullId = `${orderMessage.tenantId}/${orderMessage.documentId}`;
                     if (!this.orderMap.has(fullId)) {
                         debug("Received message for un-owned document", fullId);
