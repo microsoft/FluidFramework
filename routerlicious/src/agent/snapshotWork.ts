@@ -2,6 +2,7 @@ import { core } from "../client-api";
 import { BaseWork} from "./baseWork";
 import { IWork} from "./definitions";
 import { Serializer } from "./serializer";
+import { runAfterWait } from "./utils";
 
 // Consider idle 5s of no activity. And snapshot if a minute has gone by with no snapshot.
 const IdleDetectionTime = 5000;
@@ -29,17 +30,13 @@ export class SnapshotWork extends BaseWork implements IWork {
     }
 
     public async stop(task: string): Promise<void> {
-        if (!this.serializer.isSnapshotting) {
-            this.serializer.stop();
-        } else {
-            return new Promise<void>((resolve, reject) => {
-                const callback = async () => {
-                    this.serializer.stop();
-                    await super.stop(task);
-                    resolve();
-                };
-                this.serializer.on("snapshotted", callback);
+        await runAfterWait(
+            this.serializer.isSnapshotting,
+            this.serializer,
+            "snapshotted",
+            async () => {
+                this.serializer.stop();
+                await super.stop(task);
             });
-        }
     }
 }

@@ -2,6 +2,7 @@
 import { EventEmitter } from "events";
 import { api, core } from "../client-api";
 import { IDocumentTaskInfo } from "./definitions";
+import { runAfterWait } from "./utils";
 
 const leaderCheckerMS = 7500;
 
@@ -36,18 +37,13 @@ export class BaseWork extends EventEmitter {
     public async stop(task: string): Promise<void> {
         // Make sure the document is loaded first.
         if (this.document !== undefined) {
-            if (this.document.hasUnackedOps) {
-                console.log(`${this.document.tenantId}/${this.document.id} is waiting for processed event to fire!`);
-                return new Promise<void>((resolve, reject) => {
-                    const callback = () => {
-                        this.closeDocument(task);
-                        resolve();
-                    };
-                    this.document.on("processed", callback);
+            await runAfterWait(
+                this.document.hasUnackedOps,
+                this.document,
+                "processed",
+                async () => {
+                    this.closeDocument(task);
                 });
-            } else {
-                this.closeDocument(task);
-            }
         }
     }
 
