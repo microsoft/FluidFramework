@@ -1,4 +1,5 @@
 import * as assert from "assert";
+import { EventEmitter } from "events";
 import { SaveOperation } from "../api-core";
 import { core } from "../client-api";
 
@@ -19,10 +20,11 @@ interface IOpSnapshotDetails {
 /**
  * Mananges snapshot creation for a distributed document
  */
-export class Serializer {
+export class Serializer extends EventEmitter {
     // Use the current time on initialization since we will be loading off a snapshot
     private lastSnapshotTime: number = Date.now();
     private idleTimer = null;
+    private retryTimer = null;
     private lastOp: core.ISequencedDocumentMessage = null;
     private lastOpSnapshotDetails: IOpSnapshotDetails = null;
     private snapshotting = false;
@@ -32,6 +34,7 @@ export class Serializer {
         private idleTime: number,
         private maxTimeWithoutSnapshot: number,
         private retryTime: number) {
+            super();
     }
 
     public run(op: core.ISequencedDocumentMessage) {
@@ -51,6 +54,15 @@ export class Serializer {
             // Otherwise detect when we idle to trigger the snapshot
             this.startIdleTimer();
         }
+    }
+
+    public get isSnapshotting() {
+        return this.snapshotting;
+    }
+
+    public stop() {
+        this.clearIdleTimer();
+        this.clearRetryTimer();
     }
 
     private snapshot(message: string, required: boolean) {
@@ -75,10 +87,11 @@ export class Serializer {
         // message flow. Otherwise attempt the snapshot again
         snapshotP.then((success) => {
             if (!success && required) {
-                setTimeout(() => this.snapshot(message, required), this.retryTime);
+                this.retryTimer = setTimeout(() => this.snapshot(message, required), this.retryTime);
             } else {
                 this.document.deltaManager.inbound.resume();
                 this.snapshotting = false;
+                this.emit("snapshotted");
             }
         });
     }
@@ -106,9 +119,16 @@ export class Serializer {
         if (!this.idleTimer) {
             return;
         }
-
         clearTimeout(this.idleTimer);
         this.idleTimer = null;
+    }
+
+    private clearRetryTimer() {
+        if (!this.retryTimer) {
+            return;
+        }
+        clearTimeout(this.retryTimer);
+        this.retryTimer = null;
     }
 
     private startIdleTimer() {

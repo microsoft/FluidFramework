@@ -37,12 +37,15 @@ export class BaseWork extends EventEmitter {
         // Make sure the document is loaded first.
         if (this.document !== undefined) {
             if (this.document.hasUnackedOps) {
-                console.log(`${this.document.tenantId}/${this.document.id} has subscribed to processed events`);
-                this.document.on("processed", () => {
-                    this.closeDocument(task);
+                console.log(`${this.document.tenantId}/${this.document.id} is waiting for processed event to fire!`);
+                return new Promise<void>((resolve, reject) => {
+                    const callback = () => {
+                        this.closeDocument(task);
+                        resolve();
+                    };
+                    this.document.on("processed", callback);
                 });
             } else {
-                console.log(`${this.document.tenantId}/${this.document.id} has no pending ops`);
                 this.closeDocument(task);
             }
         }
@@ -52,6 +55,7 @@ export class BaseWork extends EventEmitter {
         console.log(`Closing document ${this.document.tenantId}/${this.document.id} for task ${task}`);
         this.document.removeListener("op", this.operation);
         this.document.removeListener("error", this.errorHandler);
+        this.document.removeAllListeners();
         this.document.close();
         this.events.removeAllListeners();
         this.removeAllListeners();
