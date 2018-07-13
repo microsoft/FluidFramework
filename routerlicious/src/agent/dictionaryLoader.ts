@@ -15,10 +15,7 @@ export async function loadDictionary(serverUrl: string): Promise<MergeTree.TST<n
             resolve(dict);
         }, (err) => {
             console.log(err);
-            // On error, try to request alfred again after a timeout.
-            setTimeout(async () => {
-                await loadDictionary(serverUrl);
-            }, 100);
+            reject(err);
         });
     });
 }

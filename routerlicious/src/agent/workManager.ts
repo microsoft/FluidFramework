@@ -43,13 +43,15 @@ export class WorkManager extends EventEmitter implements IWorkManager {
                 await this.loadSpellings().catch((err) => {
                     this.events.emit(err);
                 });
-                const spellcheckWork = new SpellcheckerWork(
-                    documentId,
-                    token,
-                    this.config,
-                    this.dict,
-                    services);
-                await this.startTask(tenantId, documentId, workType, spellcheckWork);
+                if (this.dict) {
+                    const spellcheckWork = new SpellcheckerWork(
+                        documentId,
+                        token,
+                        this.config,
+                        this.dict,
+                        services);
+                    await this.startTask(tenantId, documentId, workType, spellcheckWork);
+                }
                 break;
             case "translation":
                 const translationWork = new TranslationWork(documentId, token, this.config, services);
