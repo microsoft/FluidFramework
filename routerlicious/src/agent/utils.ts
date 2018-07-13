@@ -10,7 +10,7 @@ export async function runAfterWait(
     } else {
         return new Promise<void>((resolve, reject) => {
             eventSource.on(eventName, async () => {
-                console.log(`${eventName} fired!`);
+                console.log(`${eventName} event fired!`);
                 await callback();
                 resolve();
             });

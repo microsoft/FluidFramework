@@ -27,7 +27,9 @@ export class IntelWork extends BaseWork implements IWork {
     }
 
     public async stop(task: string): Promise<void> {
-        await this.intelligenceManager.stop();
+        if (this.intelligenceManager) {
+            await this.intelligenceManager.stop();
+        }
         await super.stop(task);
     }
 

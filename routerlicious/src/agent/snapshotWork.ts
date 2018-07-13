@@ -30,13 +30,15 @@ export class SnapshotWork extends BaseWork implements IWork {
     }
 
     public async stop(task: string): Promise<void> {
-        await runAfterWait(
-            this.serializer.isSnapshotting,
-            this.serializer,
-            "snapshotted",
-            async () => {
-                this.serializer.stop();
-                await super.stop(task);
-            });
+        if (this.serializer) {
+            await runAfterWait(
+                this.serializer.isSnapshotting,
+                this.serializer,
+                "snapshotted",
+                async () => {
+                    this.serializer.stop();
+                });
+        }
+        await super.stop(task);
     }
 }
