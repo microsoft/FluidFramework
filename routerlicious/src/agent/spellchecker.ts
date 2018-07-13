@@ -25,6 +25,7 @@ function compareProxStrings(a: MergeTree.ProxString<number>, b: MergeTree.ProxSt
 class Speller {
     private static altMax = 7;
     private static idleTimeMS = 500;
+    private idleTimer = null;
     private currentIdleTime: number = 0;
     private pendingMarkers: IPgMarker[] = new Array<IPgMarker>();
     private tileMap: Map<MergeTree.ReferencePosition, IRange> = new Map<MergeTree.ReferencePosition, IRange>();
@@ -110,6 +111,15 @@ class Speller {
         this.setEvents();
     }
 
+    public stop() {
+        this.sharedString.removeAllListeners();
+        if (!this.idleTimer) {
+            return;
+        }
+        clearInterval(this.idleTimer);
+        this.idleTimer = null;
+    }
+
     private spellingError(word: string) {
         if (/\b\d+\b/.test(word)) {
             return false;
@@ -120,7 +130,7 @@ class Speller {
 
     private setEvents() {
         const idleCheckerMS = Speller.idleTimeMS / 5;
-        setInterval(() => {
+        this.idleTimer = setInterval(() => {
             this.currentIdleTime += idleCheckerMS;
             if (this.currentIdleTime >= Speller.idleTimeMS) {
                 this.sliceParagraph();
@@ -239,6 +249,8 @@ class Speller {
 }
 
 export class Spellcheker {
+    private speller: Speller;
+
     constructor(
         private root: SharedString,
         private dict: MergeTree.TST<number>) {
@@ -246,8 +258,12 @@ export class Spellcheker {
 
     public run() {
         this.root.loaded.then(() => {
-            const theSpeller = new Speller(this.root, this.dict);
-            theSpeller.initialSpellCheck();
+            this.speller = new Speller(this.root, this.dict);
+            this.speller.initialSpellCheck();
         });
+    }
+
+    public stop() {
+        this.speller.stop();
     }
 }

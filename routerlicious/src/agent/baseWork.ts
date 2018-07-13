@@ -66,8 +66,8 @@ export class BaseWork extends EventEmitter {
                     task,
                     tenantId: this.document.tenantId,
                 };
-                this.events.emit("stop", stopEvent);
                 clearInterval(this.leaderCheckerTimer);
+                this.events.emit("stop", stopEvent);
             }
         }, leaderCheckerMS);
     }

@@ -7,7 +7,7 @@ import { Spellcheker } from "./spellchecker";
 export class SpellcheckerWork extends BaseWork implements IWork {
 
     private dict = new MergeTree.TST<number>();
-    private spellcheckInvoked: boolean = false;
+    private spellchecker: Spellcheker;
 
     constructor(
         docId: string,
@@ -43,6 +43,7 @@ export class SpellcheckerWork extends BaseWork implements IWork {
             this.operation = eventHandler;
             this.document.on("op", eventHandler);
         } else {
+            console.log(`Waiting for the document to fully connected before running spellcheck!`);
             this.document.on("connected", () => {
                 this.operation = eventHandler;
                 this.document.on("op", eventHandler);
@@ -50,14 +51,20 @@ export class SpellcheckerWork extends BaseWork implements IWork {
         }
     }
 
+    public async stop(task: string): Promise<void> {
+        if (this.spellchecker) {
+            this.spellchecker.stop();
+        }
+        await super.stop(task);
+    }
+
+    // Enable spell checking for the document
+    // TODO will want to configure this as a pluggable insight
     private spellCheck(object: core.ICollaborativeObject) {
-        if (object.type === CollaborativeStringExtension.Type && !this.spellcheckInvoked) {
-            this.spellcheckInvoked = true;
+        if (object.type === CollaborativeStringExtension.Type && !this.spellchecker) {
             const sharedString = object as SharedString;
-            // Enable spell checking for the document
-            // TODO will want to configure this as a pluggable insight
-            const spellchecker = new Spellcheker(sharedString, this.dict);
-            spellchecker.run();
+            this.spellchecker = new Spellcheker(sharedString, this.dict);
+            this.spellchecker.run();
         }
     }
 }
