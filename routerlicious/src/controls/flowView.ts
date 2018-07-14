@@ -14,6 +14,7 @@ import {
     SharedIntervalCollectionView,
     SharedString,
 } from "../shared-string";
+import { IPGBlock, ParagraphItemType } from "../text/paragraph";
 import * as ui from "../ui";
 import { Status } from "./status";
 
@@ -44,6 +45,11 @@ function findRowParent(lineDiv: ILineDiv) {
         }
         parent = parent.parentElement as IRowDiv;
     }
+}
+
+interface IRefImg extends HTMLImageElement {
+    marker: MergeTree.Marker;
+    exclu: IExcludedRectangle;
 }
 
 interface ISegSpan extends HTMLSpanElement {
@@ -382,9 +388,9 @@ const commands: ICmd[] = [
 
 export function moveMarker(flowView: FlowView, toPos: number, marker: MergeTree.Marker) {
     const curPos = getOffset(flowView, marker);
+    console.log(`move marker from ${curPos} to ${toPos}`);
     flowView.sharedString.cut("inclusion", curPos, curPos + marker.cachedLength);
     flowView.sharedString.paste("inclusion", toPos);
-    flowView.localQueueRender(toPos);
 }
 
 export interface ISelectionListBox {
@@ -1289,18 +1295,20 @@ function getWidthInLine(endPGMarker: Paragraph.IParagraphMarker, breakIndex: num
     let itemIndex = endPGMarker.cache.breaks[breakIndex].startItemIndex;
     let w = 0;
     while (offset > 0) {
-        const item = endPGMarker.itemCache.items[itemIndex] as Paragraph.IPGBlock;
-        if (!item) {
+        const item = endPGMarker.itemCache.items[itemIndex];
+        if (!item || (item.type===ParagraphItemType.Marker)) {
+            itemIndex++;
             break;
         }
-        if (item.text.length > offset) {
+        const blockItem = <IPGBlock>item;
+        if (blockItem.text.length > offset) {
             const fontstr = item.fontstr || defaultFontstr;
-            const subw = getTextWidth(item.text.substring(0, offset), fontstr);
+            const subw = getTextWidth(blockItem.text.substring(0, offset), fontstr);
             return Math.floor(w + subw);
         } else {
             w += item.width;
         }
-        offset -= item.text.length;
+        offset -= blockItem.text.length;
         itemIndex++;
     }
     return Math.round(w);
@@ -1869,51 +1877,12 @@ export class Viewport {
     public addInclusion(flowView: FlowView, marker: MergeTree.Marker, x: number, y: number,
         lineHeight: number) {
         const irdoc = <IReferenceDoc>marker.properties.ref;
-        const mousemove = (emove) => {
-            const deltaX = emove.clientX - flowView.downX;
-            const deltaY = emove.clientY - flowView.downY;
-            if (deltaX || deltaY) {
-                irdoc.layout.deltaX = deltaX;
-                irdoc.layout.deltaY = deltaY;
-                flowView.sharedString.annotateMarker({ ref: irdoc }, marker);
-                flowView.localQueueRender(Nope);
-            }
-            emove.returnValue = false;
-            emove.preventDefault();
-            emove.stopPropagation();
-            return false;
-        };
-        const mouseup = (eup) => {
-            const elm = <HTMLElement>eup.target;
-            elm.onmousemove = undefined;
-            eup.returnValue = false;
-            eup.preventDefault();
-            eup.stopPropagation();
-            flowView.movingInclusion = false;
-            return false;
-        };
-        const mousedown = (e: MouseEvent) => {
-            const elm = <HTMLElement>e.target;
-            flowView.movingInclusion=true;
-            flowView.downX = e.clientX;
-            flowView.downY = e.clientY;
-            elm.onmousemove = mousemove;
-            elm.onmouseup = mouseup;
-            e.returnValue = false;
-            e.preventDefault();
-            e.stopPropagation();
-            return false;
-        };
         if (irdoc) {
             // for now always an image
             if (irdoc.type.name === "image") {
-                const showImage = document.createElement("img");
+                const showImage = <IRefImg>document.createElement("img");
+                showImage.marker = marker;
                 showImage.src = irdoc.url;
-                showImage.onmousedown = mousedown;
-                if (flowView.movingInclusion) {
-                    showImage.onmousemove = mousemove;
-                    showImage.onmouseup = mouseup;
-                }
                 const w = Math.floor(this.width / 3);
                 let h = w;
                 if (irdoc.layout) {
@@ -1924,14 +1893,9 @@ export class Viewport {
                 }
                 x = Math.floor(x);
                 y += lineHeight;
-                if (irdoc.layout.deltaX) {
-                    x = Math.floor(irdoc.layout.deltaX + x);
-                }
-                if (irdoc.layout.deltaY) {
-                    y = Math.floor(irdoc.layout.deltaY + y);
-                }
                 const exclu = makeExcludedRectangle(x, y, w, h);
                 exclu.conformElement(showImage);
+                showImage.exclu = exclu;
                 this.div.appendChild(showImage);
                 this.excludedRects.push(exclu);
             }
@@ -2590,6 +2554,22 @@ function pointerToElementOffsetWebkit(x: number, y: number): IRangeInfo {
     }
 }
 
+export function pixelToPosition(flowView: FlowView, x: number, y: number) {
+    const elm = document.elementFromPoint(x, y);
+    if (elm && (elm.tagName === "SPAN")) {
+        const span = elm as ISegSpan;
+        const elmOff = pointerToElementOffsetWebkit(x, y);
+        if (elmOff && (span.segPos!==undefined)) {
+            let computed = elmOffToSegOff(elmOff, span);
+            if (span.offset) {
+                computed += span.offset;
+            }
+            return span.segPos + computed;
+        }
+    }
+    return Nope;
+}
+
 export function clearSubtree(elm: HTMLElement) {
     while (elm.lastChild) {
         elm.removeChild(elm.lastChild);
@@ -2969,8 +2949,6 @@ export interface IRefLayoutSpec {
     reqWidth?: number;
     reqHeight?: number;
     ar?: number;
-    deltaX?: number;
-    deltaY?: number;
 }
 
 export interface IReferenceDoc {
@@ -3688,21 +3666,45 @@ export class FlowView extends ui.Component {
         this.element.onselectstart = preventD;
         let prevX = Nope;
         let prevY = Nope;
+        let downX = Nope;
+        let downY = Nope;
         let freshDown = false;
 
-        const moveCursor = (e: MouseEvent) => {
+        const moveObjects = (e: MouseEvent) => {
             if (e.button === 0) {
                 prevX = e.clientX;
                 prevY = e.clientY;
-                const span = e.target as ISegSpan;
-                let segspan: ISegSpan;
-                if (span.seg) {
-                    segspan = span;
+                const elm = <HTMLElement>e.target;
+                if (elm.tagName === "IMG") {
+                    const refimg = elm as IRefImg;
+                    // console.log(`moving inclusion to nowhere with ${prevX-downX},${prevY-downY}`);
+                    let deltaX = prevX-downX;
+                    const deltaY = prevY-downY;
+                    const exclu = refimg.exclu;
+                    if (deltaX||deltaY) {
+                        if (deltaX>0) {
+                            deltaX+=exclu.width;
+                        }
+                        const x=exclu.x+deltaX;
+                        const y = exclu.y+deltaY;
+                        const toPos = pixelToPosition(this, x, y);
+                        console.log(`to pos: ${toPos}`);
+                        if (toPos!==Nope) {
+                            moveMarker(this, toPos, refimg.marker);
+                            this.render(this.topChar, true);
+                        }
+                    }
                 } else {
-                    segspan = span.parentElement as ISegSpan;
-                }
-                if (segspan && segspan.seg) {
-                    this.clickSpan(e.clientX, e.clientY, segspan);
+                    const span = elm as ISegSpan;
+                    let segspan: ISegSpan;
+                    if (span.seg) {
+                        segspan = span;
+                    } else {
+                        segspan = span.parentElement as ISegSpan;
+                    }
+                    if (segspan && segspan.seg) {
+                        this.clickSpan(e.clientX, e.clientY, segspan);
+                    }
                 }
             }
         };
@@ -3714,7 +3716,7 @@ export class FlowView extends ui.Component {
                         this.cursor.tryMark();
                         freshDown = false;
                     }
-                    moveCursor(e);
+                    moveObjects(e);
                 }
                 e.preventDefault();
                 e.returnValue = false;
@@ -3725,7 +3727,9 @@ export class FlowView extends ui.Component {
         this.element.onmousedown = (e) => {
             if (e.button === 0) {
                 freshDown = true;
-                moveCursor(e);
+                downX=e.clientX;
+                downY=e.clientY;
+                moveObjects(e);
                 if (!e.shiftKey) {
                     this.clearSelection();
                 }
