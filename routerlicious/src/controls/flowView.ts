@@ -388,7 +388,7 @@ const commands: ICmd[] = [
 
 export function moveMarker(flowView: FlowView, toPos: number, marker: MergeTree.Marker) {
     const curPos = getOffset(flowView, marker);
-    console.log(`move marker from ${curPos} to ${toPos}`);
+    console.log(`move marker from ${curPos} to ${toPos} ${marker.removedSeq}`);
     flowView.sharedString.cut("inclusion", curPos, curPos + marker.cachedLength);
     flowView.sharedString.paste("inclusion", toPos);
 }
@@ -3741,7 +3741,7 @@ export class FlowView extends ui.Component {
         };
 
         this.element.onmouseup = (e) => {
-            this.element.onmousemove = undefined;
+            this.element.onmousemove = preventD;
             if (e.button === 0) {
                 freshDown = false;
                 const span = e.target as ISegSpan;
