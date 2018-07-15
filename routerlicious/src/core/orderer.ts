@@ -1,4 +1,4 @@
-import { IDocumentMessage, ITenantUser } from "../api-core";
+import { IClient, IDocumentMessage, ITenantUser } from "../api-core";
 import { IWebSocket } from "../core";
 
 export interface IOrdererSocket {
@@ -20,7 +20,7 @@ export interface IOrdererConnection {
 }
 
 export interface IOrderer {
-    connect(socket: IWebSocket, user: ITenantUser): Promise<IOrdererConnection>;
+    connect(socket: IWebSocket, user: ITenantUser, client: IClient): Promise<IOrdererConnection>;
 }
 
 export interface IOrdererManager {

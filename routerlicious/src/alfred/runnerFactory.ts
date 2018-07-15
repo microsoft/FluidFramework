@@ -81,6 +81,8 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
             config.get("mongo:collectionNames:reservations"));
 
         const tenantManager = new services.TenantManager(authEndpoint, config.get("worker:blobStorageUrl"));
+        const storage = new services.DocumentStorage(mongoManager, documentsCollectionName, tenantManager, producer);
+
         const address = `${await utils.getHostIp()}:4000`;
         const nodeFactory = new services.LocalNodeFactory(
             os.hostname(),
@@ -92,13 +94,11 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
             runner,
             60000);
         const localOrderManager = new services.LocalOrderManager(nodeFactory, reservationManager);
-        const kafkaOrdererFactory = new utils.KafkaOrdererFactory(producer);
+        const kafkaOrdererFactory = new services.KafkaOrdererFactory(producer, storage);
         const orderManager = new services.OrdererManager(localOrderManager, kafkaOrdererFactory);
 
         // Tenants attached to the apps this service exposes
         const appTenants = config.get("alfred:tenants") as Array<{ id: string, key: string }>;
-
-        const storage = new services.DocumentStorage(mongoManager, documentsCollectionName, tenantManager, producer);
 
         // This wanst to create stuff
         const port = utils.normalizePort(process.env.PORT || "3000");
@@ -131,7 +131,6 @@ export class AlfredRunnerFactory implements utils.IRunnerFactory<AlfredResources
             resources.appTenants,
             resources.mongoManager,
             resources.producer,
-            resources.documentsCollectionName,
             resources.metricClientConfig);
     }
 }

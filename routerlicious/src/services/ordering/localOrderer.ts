@@ -1,4 +1,5 @@
-import { ICollection, IDocument, IOrdererSocket, IRawOperationMessage } from "../../core";
+import * as api from "../../api-core";
+import { ICollection, IDocument, IOrdererConnection, IOrdererSocket, IRawOperationMessage } from "../../core";
 import * as core from "../../core";
 import { DeliLambda } from "../../deli/lambda";
 import { ClientSequenceTimeout } from "../../deli/lambdaFactory";
@@ -186,5 +187,12 @@ export class LocalOrderer implements ISocketOrderer {
 
     public attachSocket(socket: IOrdererSocket) {
         this.socketPublisher.attachSocket(socket);
+    }
+
+    public async connect(
+        socket: core.IWebSocket,
+        user: api.ITenantUser,
+        client: api.IClient): Promise<IOrdererConnection> {
+        return null;
     }
 }

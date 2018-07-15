@@ -52,7 +52,7 @@ export function create(
 
     return {
         agent: agent.create(config),
-        api: api.create(config, tenantManager, mongoManager, producer, appTenants),
+        api: api.create(config, tenantManager, storage, mongoManager, producer, appTenants),
         canvas: canvas.create(config, tenantManager, storage, appTenants, ensureLoggedIn),
         cell: cell.create(config, tenantManager, storage, appTenants, ensureLoggedIn),
         demoCreator: demoCreator.create(config, ensureLoggedIn),

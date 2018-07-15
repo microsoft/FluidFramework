@@ -6,16 +6,27 @@ import { IProducer } from "../../utils";
 
 export class KafkaOrdererConnection implements core.IOrdererConnection {
     public static async Create(
+        existing: boolean,
+        document: core.IDocument,
         producer: IProducer,
         tenantId: string,
         documentId: string,
         socket: core.IWebSocket,
-        user: api.ITenantUser): Promise<KafkaOrdererConnection> {
+        user: api.ITenantUser,
+        client: api.IClient): Promise<KafkaOrdererConnection> {
 
         const clientId = moniker.choose();
 
         // Create the connection
-        const connection = new KafkaOrdererConnection(producer, tenantId, documentId, clientId, user);
+        const connection = new KafkaOrdererConnection(
+            existing,
+            document,
+            producer,
+            tenantId,
+            documentId,
+            clientId,
+            user,
+            client);
 
         // Bind the socket to the channels the connection will send to
         await Promise.all([
@@ -43,39 +54,40 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
     // tslint:enable:variable-name
 
     constructor(
+        existing: boolean,
+        document: core.IDocument,
         private producer: IProducer,
         private tenantId: string,
         private documentId: string,
         clientId: string,
-        private user: api.ITenantUser) {
+        private user: api.ITenantUser,
+        private client: api.IClient) {
 
         this._clientId = clientId;
+        this._parentBranch = document.parent ? document.parent.documentId : null;
 
-        // const parentBranch = documentDetails.value.parent
-        //     ? documentDetails.value.parent.documentId
-        //     : null;
+        const clientDetail: api.IClientDetail = {
+            clientId: this.clientId,
+            detail: this.client,
+        };
 
-        // Broadcast the client connection message
-        // const clientDetail: api.IClientDetail = {
-        //     clientId,
-        //     detail: message.client,
-        // };
+        const message: core.IRawOperationMessage = {
+            clientId: null,
+            documentId: this.documentId,
+            operation: {
+                clientSequenceNumber: -1,
+                contents: clientDetail,
+                referenceSequenceNumber: -1,
+                traces: [],
+                type: api.ClientJoin,
+            },
+            tenantId: this.tenantId,
+            timestamp: Date.now(),
+            type: core.RawOperationType,
+            user: this.user,
+        };
 
-        // const rawMessage: core.IRawOperationMessage = {
-        //     clientId: null,
-        //     documentId: message.id,
-        //     operation: {
-        //         clientSequenceNumber: -1,
-        //         contents: clientDetail,
-        //         referenceSequenceNumber: -1,
-        //         traces: [],
-        //         type: api.ClientJoin,
-        //     },
-        //     tenantId: message.tenantId,
-        //     timestamp: Date.now(),
-        //     type: core.RawOperationType,
-        //     user: claims.user,
-        // };
+        this.submitRawOperation(message);
     }
 
     public order(message: api.IDocumentMessage): void {
@@ -128,38 +140,58 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
 }
 
 export class KafkaOrderer implements core.IOrderer {
-    public static Create(): Promise<KafkaOrderer> {
-        // import * as storage from "./storage";
-        // const documentDetails = await storage.getOrCreateDocument(
-        //     mongoManager,
-        //     documentsCollectionName,
-        //     message.tenantId,
-        //     message.id);
+    public static async Create(
+        storage: core.IDocumentStorage,
+        producer: IProducer,
+        tenantId: string,
+        documentId: string): Promise<KafkaOrderer> {
+
+        const details = await storage.getOrCreateDocument(tenantId, documentId);
+        return new KafkaOrderer(details, producer, tenantId, documentId);
     }
 
-    constructor(private producer: IProducer, private tenantId: string, private documentId: string) {
+    private existing: boolean;
+
+    constructor(
+        private details: core.IDocumentDetails,
+        private producer: IProducer,
+        private tenantId: string,
+        private documentId: string) {
+        this.existing = details.existing;
     }
 
-    public async connect(socket: core.IWebSocket, user: api.ITenantUser): Promise<core.IOrdererConnection> {
-        return KafkaOrdererConnection.Create(
+    public async connect(
+        socket: core.IWebSocket,
+        user: api.ITenantUser,
+        client: api.IClient): Promise<core.IOrdererConnection> {
+
+        const connection = KafkaOrdererConnection.Create(
+            this.existing,
+            this.details.value,
             this.producer,
             this.tenantId,
             this.documentId,
             socket,
-            user);
+            user,
+            client);
+
+        // document is now existing regardless of the original value
+        this.existing = true;
+
+        return connection;
     }
 }
 
 export class KafkaOrdererFactory {
     private ordererMap = new Map<string, Promise<core.IOrderer>>();
 
-    constructor(private producer: IProducer) {
+    constructor(private producer: IProducer, private storage: core.IDocumentStorage) {
     }
 
     public async create(tenantId: string, documentId: string): Promise<core.IOrderer> {
         const fullId = `${tenantId}/${documentId}`;
         if (!this.ordererMap.has(fullId)) {
-            const orderer = KafkaOrderer.Create(this.producer, tenantId, documentId);
+            const orderer = KafkaOrderer.Create(this.storage, this.producer, tenantId, documentId);
             this.ordererMap.set(fullId, orderer);
         }
 

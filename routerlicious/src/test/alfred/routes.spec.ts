@@ -2,6 +2,7 @@ import * as nconf from "nconf";
 import * as path from "path";
 import * as supertest from "supertest";
 import * as app from "../../alfred/app";
+import * as services from "../../services";
 import { MongoManager } from "../../utils";
 import { TestDbFactory, TestKafka, TestTenantManager } from "../testUtils";
 
@@ -23,9 +24,11 @@ describe("Routerlicious", () => {
                 const testTenantManager = new TestTenantManager();
                 testKafka = new TestKafka();
                 const producer = testKafka.createProducer();
+                const storage = new services.DocumentStorage(mongoManager, "documents", testTenantManager, producer);
                 const alfred = app.create(
                     defaultConfig,
                     testTenantManager,
+                    storage,
                     [{ id: "git", key: "git" }],
                     mongoManager,
                     producer);

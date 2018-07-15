@@ -4,10 +4,9 @@ import * as api from "../../api-core";
 import * as core from "../../core";
 import { Deferred } from "../../core-utils";
 import * as socketStorage from "../../socket-storage";
-import { generateToken, MongoManager } from "../../utils";
+import { generateToken } from "../../utils";
 import {
     MessageFactory,
-    TestDbFactory,
     TestKafka,
     TestOrdererManager,
     TestTenantManager,
@@ -28,23 +27,17 @@ describe("Routerlicious", () => {
                 let testTenantManager: TestTenantManager;
 
                 beforeEach(() => {
-                    const documentsCollectionName = "test";
                     const metricClientConfig = {};
-                    const testData: { [key: string]: any[] } = {};
 
-                    const testDbFactory = new TestDbFactory(testData);
-                    const mongoManager = new MongoManager(testDbFactory);
                     deliKafka = new TestKafka();
-                    const producer = deliKafka.createProducer();
+                    // const producer = deliKafka.createProducer();
                     testTenantManager = new TestTenantManager();
-                    testOrderer = new TestOrdererManager(producer);
+                    testOrderer = new TestOrdererManager();
 
                     webSocketServer = new TestWebSocketServer();
 
                     io.register(
                         webSocketServer,
-                        mongoManager,
-                        documentsCollectionName,
                         metricClientConfig,
                         testOrderer,
                         testTenantManager);

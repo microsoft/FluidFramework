@@ -4,12 +4,9 @@ import * as agent from "../agent";
 import * as api from "../api-core";
 import * as core from "../core";
 import * as socketStorage from "../socket-storage";
-import * as utils from "../utils";
 
 export function register(
     webSocketServer: core.IWebSocketServer,
-    mongoManager: utils.MongoManager,
-    documentsCollectionName: string,
     metricClientConfig: any,
     orderManager: core.IOrdererManager,
     tenantManager: core.ITenantManager) {
@@ -36,7 +33,7 @@ export function register(
 
             // And then connect to the orderer
             const orderer = await orderManager.getOrderer(claims.tenantId, claims.documentId);
-            const connection = await orderer.connect(socket, claims.user);
+            const connection = await orderer.connect(socket, claims.user, message.client);
 
             // store a lookup from the clientID of the connection to the connection itself
             connectionsMap.set(connection.clientId, connection);

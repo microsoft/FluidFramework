@@ -22,7 +22,6 @@ export class AlfredRunner implements utils.IRunner {
         private appTenants: IAlfredTenant[],
         private mongoManager: utils.MongoManager,
         private producer: utils.IProducer,
-        private documentsCollectionName: string,
         private metricClientConfig: any) {
     }
 
@@ -46,8 +45,6 @@ export class AlfredRunner implements utils.IRunner {
         // Register all the socket.io stuff
         io.register(
             this.server.webSocketServer,
-            this.mongoManager,
-            this.documentsCollectionName,
             this.metricClientConfig,
             this.orderManager,
             this.tenantManager);

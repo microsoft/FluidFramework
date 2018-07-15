@@ -1,4 +1,5 @@
-import { IOrdererSocket, IRawOperationMessage } from "../../core";
+import * as api from "../../api-core";
+import { IOrdererConnection, IOrdererSocket, IRawOperationMessage, IWebSocket } from "../../core";
 // import { debug } from "../debug";
 import { IOpMessage, ISocketOrderer } from "./interfaces";
 
@@ -28,5 +29,12 @@ export class ProxyOrderer implements ISocketOrderer {
         for (const socket of this.sockets) {
             socket.send(message.topic, message.op, message.id, message.data);
         }
+    }
+
+    public async connect(
+        socket: IWebSocket,
+        user: api.ITenantUser,
+        client: api.IClient): Promise<IOrdererConnection> {
+        return null;
     }
 }
