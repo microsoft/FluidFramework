@@ -1,37 +1,10 @@
 import * as jwt from "jsonwebtoken";
-import * as moniker from "moniker";
-import now = require("performance-now");
 import * as winston from "winston";
 import * as agent from "../agent";
 import * as api from "../api-core";
 import * as core from "../core";
 import * as socketStorage from "../socket-storage";
 import * as utils from "../utils";
-import * as storage from "./storage";
-
-interface IDocumentUser {
-    tenantId: string;
-
-    documentId: string;
-
-    user: api.ITenantUser;
-
-    orderer: core.IOrderer;
-
-    permission: string;
-}
-
-/**
- * Bridge from a socket.io socket to our internal IOrdererSocket
- */
-class SocketIOOrdererSocket implements core.IOrdererSocket {
-    constructor(private socket: any) {
-    }
-
-    public send(topic: string, op: string, id: string, data: any[]) {
-        this.socket.emit(op, id, data);
-    }
-}
 
 export function register(
     webSocketServer: core.IWebSocketServer,
@@ -44,15 +17,10 @@ export function register(
     const metricLogger = agent.createMetricClient(metricClientConfig);
 
     webSocketServer.on("connection", (socket: core.IWebSocket) => {
-        const connectionProfiler = winston.startTimer();
-        connectionProfiler.logger.info(`New socket.io connection`);
-
         // Map from client IDs on this connection to the object ID and user info.
-        const connectionsMap = new Map<string, IDocumentUser>();
+        const connectionsMap = new Map<string, core.IOrdererConnection>();
 
         async function connectDocument(message: socketStorage.IConnect): Promise<socketStorage.IConnected> {
-            const profiler = winston.startTimer();
-
             if (!message.token) {
                 return Promise.reject("Must provide an authorization token");
             }
@@ -66,71 +34,20 @@ export function register(
             }
             await tenantManager.verifyToken(claims.tenantId, token);
 
-            connectionProfiler.done(`Client has requested to load ${message.id}`);
-            const documentDetails = await storage.getOrCreateDocument(
-                mongoManager,
-                documentsCollectionName,
-                message.tenantId,
-                message.id);
+            // And then connect to the orderer
+            const orderer = await orderManager.getOrderer(claims.tenantId, claims.documentId);
+            const connection = await orderer.connect(socket, claims.user);
 
-            const clientId = moniker.choose();
-            await Promise.all(
-                [socket.join(`${claims.tenantId}/${claims.documentId}`), socket.join(`client#${clientId}`)]);
-
-            const orderer = await orderManager.getOrderer(
-                new SocketIOOrdererSocket(socket),
-                claims.tenantId,
-                claims.documentId);
-            // TODO orderer needs to be able to broadcast when it loses the connection - and then we disconnect
-            // and close the socket
-
-            // Create and set a new client ID
-            connectionsMap.set(
-                clientId,
-                {
-                    documentId: message.id,
-                    orderer,
-                    permission: claims.permission,
-                    tenantId: message.tenantId,
-                    user: claims.user,
-                });
-
-            // Broadcast the client connection message
-            const clientDetail: api.IClientDetail = {
-                clientId,
-                detail: message.client,
-            };
-            const rawMessage: core.IRawOperationMessage = {
-                clientId: null,
-                documentId: message.id,
-                operation: {
-                    clientSequenceNumber: -1,
-                    contents: clientDetail,
-                    referenceSequenceNumber: -1,
-                    traces: [],
-                    type: api.ClientJoin,
-                },
-                tenantId: message.tenantId,
-                timestamp: Date.now(),
-                type: core.RawOperationType,
-                user: claims.user,
-            };
-
-            // work around a race condition on fast first send
-            orderer.order(rawMessage);
-
-            const parentBranch = documentDetails.value.parent
-                ? documentDetails.value.parent.documentId
-                : null;
+            // store a lookup from the clientID of the connection to the connection itself
+            connectionsMap.set(connection.clientId, connection);
 
             // And return the connection information to the client
             const connectedMessage: socketStorage.IConnected = {
-                clientId,
-                existing: documentDetails.existing,
-                parentBranch,
+                clientId: connection.clientId,
+                existing: connection.existing,
+                parentBranch: connection.parentBranch,
                 user: claims.user,
             };
-            profiler.done(`Loaded ${message.id}`);
 
             return connectedMessage;
         }
@@ -158,79 +75,25 @@ export function register(
                 if (message.type === api.RoundTrip) {
                     // End of tracking. Write traces.
                     if (message.traces !== undefined) {
-                        metricLogger.writeLatencyMetric("latency", message.traces)
-                        .catch((error) => {
-                            winston.error(error.stack);
-                        });
+                        metricLogger.writeLatencyMetric("latency", message.traces).catch(
+                            (error) => {
+                                winston.error(error.stack);
+                            });
                     }
-                    response(null, "Roundtrip message received");
-                    continue;
-                }
-
-                const docUser = connectionsMap.get(clientId);
-                const rawMessage: core.IRawOperationMessage = {
-                    clientId,
-                    documentId: docUser.documentId,
-                    operation: message,
-                    tenantId: docUser.tenantId,
-                    timestamp: Date.now(),
-                    type: core.RawOperationType,
-                    user: docUser.user,
-                };
-
-                // Add trace
-                rawMessage.operation.traces.push(
-                    {
-                        action: "start",
-                        service: "alfred",
-                        timestamp: now(),
-                    });
-
-                docUser.orderer.order(rawMessage);
-                response(null);
-            }
-        });
-
-        // Message sent when a ping operation is submitted to the router
-        socket.on("pingObject", (message: api.IPingMessage, response) => {
-            // Ack the unacked message.
-            if (!message.acked) {
-                message.acked = true;
-                // return response(null, message);
-                socket.send(message, "pingObject");
-            } else {
-                // Only write if the traces are correctly timestamped twice.
-                if (message.traces !== undefined && message.traces.length === 2) {
-                    metricLogger.writeLatencyMetric("pinglatency", message.traces)
-                    .catch((error) => {
-                        winston.error(error.stack);
-                    });
+                } else {
+                    const connection = connectionsMap.get(clientId);
+                    connection.order(message);
                 }
             }
+
+            response(null);
         });
 
         socket.on("disconnect", () => {
             // Send notification messages for all client IDs in the connection map
-            for (const [clientId, docUser] of connectionsMap) {
+            for (const [clientId, connection] of connectionsMap) {
                 winston.info(`Disconnect of ${clientId}`);
-
-                const rawMessage: core.IRawOperationMessage = {
-                    clientId: null,
-                    documentId: docUser.documentId,
-                    operation: {
-                        clientSequenceNumber: -1,
-                        contents: clientId,
-                        referenceSequenceNumber: -1,
-                        traces: [],
-                        type: api.ClientLeave,
-                    },
-                    tenantId: docUser.tenantId,
-                    timestamp: Date.now(),
-                    type: core.RawOperationType,
-                    user: docUser.user,
-                };
-
-                docUser.orderer.order(rawMessage);
+                connection.disconnect();
             }
         });
     });

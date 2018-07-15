@@ -91,8 +91,8 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
             runner,
             60000);
         const localOrderManager = new services.LocalOrderManager(nodeFactory, reservationManager);
-        const kafkaOrderer = new utils.KafkaOrderer(producer);
-        const orderManager = new services.OrdererManager(localOrderManager, kafkaOrderer);
+        const kafkaOrdererFactory = new utils.KafkaOrdererFactory(producer);
+        const orderManager = new services.OrdererManager(localOrderManager, kafkaOrdererFactory);
 
         // Tenants attached to the apps this service exposes
         const appTenants = config.get("alfred:tenants") as Array<{ id: string, key: string }>;
