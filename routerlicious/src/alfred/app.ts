@@ -18,7 +18,7 @@ import * as favicon from "serve-favicon";
 import split = require("split");
 import * as expiry from "static-expiry";
 import * as winston from "winston";
-import { ITenantManager } from "../core";
+import { IDocumentStorage, ITenantManager } from "../core";
 import * as utils from "../utils";
 import * as alfredRoutes from "./routes";
 import { IAlfredTenant } from "./tenant";
@@ -68,6 +68,7 @@ const stream = split().on("data", (message) => {
 export function create(
     config: Provider,
     tenantManager: ITenantManager,
+    storage: IDocumentStorage,
     appTenants: IAlfredTenant[],
     mongoManager: utils.MongoManager,
     producer: utils.IProducer) {
@@ -189,7 +190,7 @@ export function create(
     });
 
     // bind routes
-    const routes = alfredRoutes.create(config, tenantManager, mongoManager, producer, appTenants);
+    const routes = alfredRoutes.create(config, tenantManager, mongoManager, storage, producer, appTenants);
     app.use(routes.api);
     app.use("/templates", routes.templates);
     app.use("/maps", routes.maps);

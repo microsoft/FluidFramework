@@ -17,6 +17,7 @@ export class AlfredResources implements utils.IResources {
         public webSocketLibrary: string,
         public orderManager: core.IOrdererManager,
         public tenantManager: core.ITenantManager,
+        public storage: core.IDocumentStorage,
         public appTenants: IAlfredTenant[],
         public mongoManager: utils.MongoManager,
         public port: any,
@@ -97,6 +98,8 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
         // Tenants attached to the apps this service exposes
         const appTenants = config.get("alfred:tenants") as Array<{ id: string, key: string }>;
 
+        const storage = new services.DocumentStorage(mongoManager, documentsCollectionName, tenantManager, producer);
+
         // This wanst to create stuff
         const port = utils.normalizePort(process.env.PORT || "3000");
 
@@ -107,6 +110,7 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
             webSocketLibrary,
             orderManager,
             tenantManager,
+            storage,
             appTenants,
             mongoManager,
             port,
@@ -123,6 +127,7 @@ export class AlfredRunnerFactory implements utils.IRunnerFactory<AlfredResources
             resources.port,
             resources.orderManager,
             resources.tenantManager,
+            resources.storage,
             resources.appTenants,
             resources.mongoManager,
             resources.producer,

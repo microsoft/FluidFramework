@@ -1,24 +1,13 @@
 import { Router } from "express";
-import { Provider } from "nconf";
-import { ITenantManager } from "../../../core";
-import * as utils from "../../../utils";
-import * as storage from "../../storage";
+import { IDocumentStorage } from "../../../core";
 import { IAlfredTenant } from "../../tenant";
 
-export function create(
-    config: Provider,
-    tenantManager: ITenantManager,
-    mongoManager: utils.MongoManager,
-    producer: utils.IProducer,
-    appTenants: IAlfredTenant[]): Router {
+export function create(storage: IDocumentStorage, appTenants: IAlfredTenant[]): Router {
 
-    const documentsCollectionName = config.get("mongo:collectionNames:documents");
     const router: Router = Router();
 
     router.get("/:tenantId?/:id", (request, response, next) => {
         const documentP = storage.getDocument(
-            mongoManager,
-            documentsCollectionName,
             request.params.tenantId || appTenants[0].id,
             request.params.id);
         documentP.then(
@@ -35,8 +24,6 @@ export function create(
      */
     router.get("/:tenantId?/:id/forks", (request, response, next) => {
         const forksP = storage.getForks(
-            mongoManager,
-            documentsCollectionName,
             request.params.tenantId || appTenants[0].id,
             request.params.id);
         forksP.then(
@@ -53,10 +40,6 @@ export function create(
      */
     router.post("/:tenantId?/:id/forks", (request, response, next) => {
         const forkIdP = storage.createFork(
-            producer,
-            tenantManager,
-            mongoManager,
-            documentsCollectionName,
             request.params.tenantId || appTenants[0].id,
             request.params.id);
         forkIdP.then(

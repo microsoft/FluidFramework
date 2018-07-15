@@ -1,6 +1,6 @@
 import { Provider } from "nconf";
 import * as winston from "winston";
-import { IOrdererManager, ITenantManager } from "../core";
+import { IDocumentStorage, IOrdererManager, ITenantManager } from "../core";
 import * as core from "../core";
 import { Deferred } from "../core-utils";
 import * as utils from "../utils";
@@ -18,6 +18,7 @@ export class AlfredRunner implements utils.IRunner {
         private port: string | number,
         private orderManager: IOrdererManager,
         private tenantManager: ITenantManager,
+        private storage: IDocumentStorage,
         private appTenants: IAlfredTenant[],
         private mongoManager: utils.MongoManager,
         private producer: utils.IProducer,
@@ -32,6 +33,7 @@ export class AlfredRunner implements utils.IRunner {
         const alfred = app.create(
             this.config,
             this.tenantManager,
+            this.storage,
             this.appTenants,
             this.mongoManager,
             this.producer);
