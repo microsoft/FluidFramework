@@ -386,10 +386,8 @@ const commands: ICmd[] = [
     },
 ];
 
-export function moveMarker(flowView: FlowView, toPos: number, marker: MergeTree.Marker) {
-    const curPos = getOffset(flowView, marker);
-    console.log(`move marker from ${curPos} to ${toPos} ${marker.removedSeq}`);
-    flowView.sharedString.cut("inclusion", curPos, curPos + marker.cachedLength);
+export function moveMarker(flowView: FlowView, fromPos: number, toPos: number) {
+    flowView.sharedString.cut("inclusion", fromPos, fromPos + 1);
     flowView.sharedString.paste("inclusion", toPos);
 }
 
@@ -1296,7 +1294,7 @@ function getWidthInLine(endPGMarker: Paragraph.IParagraphMarker, breakIndex: num
     let w = 0;
     while (offset > 0) {
         const item = endPGMarker.itemCache.items[itemIndex];
-        if (!item || (item.type===ParagraphItemType.Marker)) {
+        if (!item || (item.type === ParagraphItemType.Marker)) {
             itemIndex++;
             break;
         }
@@ -1885,14 +1883,20 @@ export class Viewport {
                 showImage.src = irdoc.url;
                 const w = Math.floor(this.width / 3);
                 let h = w;
+                let dx = 0;
+                let dy = 0;
                 if (irdoc.layout) {
                     h = Math.floor(w * irdoc.layout.ar);
+                    // TODO: adjust dx, dy by viewport dimensions
+                    dx = irdoc.layout.dx;
+                    dy = irdoc.layout.dy;
                 }
                 if ((x + w) > this.width) {
                     x -= w;
                 }
-                x = Math.floor(x);
+                x = Math.floor(x + dx);
                 y += lineHeight;
+                y = Math.floor(y + dy);
                 const exclu = makeExcludedRectangle(x, y, w, h);
                 exclu.conformElement(showImage);
                 showImage.exclu = exclu;
@@ -2559,7 +2563,7 @@ export function pixelToPosition(flowView: FlowView, x: number, y: number) {
     if (elm && (elm.tagName === "SPAN")) {
         const span = elm as ISegSpan;
         const elmOff = pointerToElementOffsetWebkit(x, y);
-        if (elmOff && (span.segPos!==undefined)) {
+        if (elmOff && (span.segPos !== undefined)) {
             let computed = elmOffToSegOff(elmOff, span);
             if (span.offset) {
                 computed += span.offset;
@@ -2928,6 +2932,12 @@ function findTile(flowView: FlowView, startPos: number, tileType: string, preced
     return flowView.client.mergeTree.findTile(startPos, flowView.client.getClientId(), tileType, preceding);
 }
 
+function annotateMarker(flowView: FlowView, props: MergeTree.PropertySet, marker: MergeTree.Marker) {
+    const start = getOffset(flowView, marker);
+    const end = start + marker.cachedLength;
+    flowView.sharedString.annotateRange(props, start, end);
+}
+
 function getOffset(flowView: FlowView, segment: MergeTree.Segment) {
     return flowView.client.mergeTree.getOffset(segment, MergeTree.UniversalSequenceNumber,
         flowView.client.getClientId());
@@ -2949,6 +2959,8 @@ export interface IRefLayoutSpec {
     reqWidth?: number;
     reqHeight?: number;
     ar?: number;
+    dx?: number;
+    dy?: number;
 }
 
 export interface IReferenceDoc {
@@ -2968,7 +2980,7 @@ export function makeImageRef(imageSrc: string, cb: (irdoc: IReferenceDoc) => voi
     };
     image.src = imageSrc;
     image.onload = () => {
-        irdoc.layout = { ar: image.naturalHeight / image.naturalWidth };
+        irdoc.layout = { ar: image.naturalHeight / image.naturalWidth, dx: 0, dy: 0 };
         cb(irdoc);
     };
 }
@@ -3016,8 +3028,6 @@ export class FlowView extends ui.Component {
         showCursorLocation: true,
     } as IFlowViewModes;
     public movingInclusion = false;
-    public downX: number;
-    public downY: number;
     public lastDocContext: IDocumentContext;
     private lastVerticalX = -1;
     private randWordTimer: any;
@@ -3668,42 +3678,49 @@ export class FlowView extends ui.Component {
         let prevY = Nope;
         let downX = Nope;
         let downY = Nope;
+        let imgMarker: MergeTree.Marker;
         let freshDown = false;
 
-        const moveObjects = (e: MouseEvent) => {
+        const moveObjects = (e: MouseEvent, fresh = false) => {
             if (e.button === 0) {
                 prevX = e.clientX;
                 prevY = e.clientY;
-                const elm = <HTMLElement>e.target;
-                if (elm.tagName === "IMG") {
-                    const refimg = elm as IRefImg;
-                    // console.log(`moving inclusion to nowhere with ${prevX-downX},${prevY-downY}`);
-                    let deltaX = prevX-downX;
-                    const deltaY = prevY-downY;
-                    const exclu = refimg.exclu;
-                    if (deltaX||deltaY) {
-                        if (deltaX>0) {
-                            deltaX+=exclu.width;
+                const elm = <HTMLElement>document.elementFromPoint(prevX, prevY);
+                if (elm) {
+                    if (fresh) {
+                        if (elm.tagName === "IMG") {
+                            this.movingInclusion = true;
+                            const refimg = elm as IRefImg;
+                            imgMarker = refimg.marker;
                         }
-                        const x=exclu.x+deltaX;
-                        const y = exclu.y+deltaY;
-                        const toPos = pixelToPosition(this, x, y);
-                        console.log(`to pos: ${toPos}`);
-                        if (toPos!==Nope) {
-                            moveMarker(this, toPos, refimg.marker);
+                    }
+                    if (this.movingInclusion) {
+                        // console.log(`moving inclusion to nowhere with ${prevX-downX},${prevY-downY}`);
+                        const deltaX = prevX - downX;
+                        const deltaY = prevY - downY;
+                        const thresh = 2;
+                        const dist = Math.abs(deltaX) + Math.abs(deltaY);
+                        if (dist >= thresh) {
+                            const irdoc = <IReferenceDoc>imgMarker.properties.ref;
+                            irdoc.layout.dx = deltaX;
+                            irdoc.layout.dy = deltaY;
+                            const refProps = {
+                                [Paragraph.referenceProperty]: irdoc,
+                            };
+                            annotateMarker(this, refProps, imgMarker);
                             this.render(this.topChar, true);
                         }
-                    }
-                } else {
-                    const span = elm as ISegSpan;
-                    let segspan: ISegSpan;
-                    if (span.seg) {
-                        segspan = span;
                     } else {
-                        segspan = span.parentElement as ISegSpan;
-                    }
-                    if (segspan && segspan.seg) {
-                        this.clickSpan(e.clientX, e.clientY, segspan);
+                        const span = elm as ISegSpan;
+                        let segspan: ISegSpan;
+                        if (span.seg) {
+                            segspan = span;
+                        } else {
+                            segspan = span.parentElement as ISegSpan;
+                        }
+                        if (segspan && segspan.seg) {
+                            this.clickSpan(e.clientX, e.clientY, segspan);
+                        }
                     }
                 }
             }
@@ -3727,9 +3744,9 @@ export class FlowView extends ui.Component {
         this.element.onmousedown = (e) => {
             if (e.button === 0) {
                 freshDown = true;
-                downX=e.clientX;
-                downY=e.clientY;
-                moveObjects(e);
+                downX = e.clientX;
+                downY = e.clientY;
+                moveObjects(e, true);
                 if (!e.shiftKey) {
                     this.clearSelection();
                 }
@@ -3744,19 +3761,23 @@ export class FlowView extends ui.Component {
             this.element.onmousemove = preventD;
             if (e.button === 0) {
                 freshDown = false;
-                const span = e.target as ISegSpan;
-                let segspan: ISegSpan;
-                if (span.seg) {
-                    segspan = span;
-                } else {
-                    segspan = span.parentElement as ISegSpan;
-                }
-                if (segspan && segspan.seg) {
-                    this.clickSpan(e.clientX, e.clientY, segspan);
-                    if (this.cursor.emptySelection()) {
-                        this.clearSelection();
+                const elm = <HTMLElement>document.elementFromPoint(prevX, prevY);
+                if (!this.movingInclusion) {
+                    const span = elm as ISegSpan;
+                    let segspan: ISegSpan;
+                    if (span.seg) {
+                        segspan = span;
+                    } else {
+                        segspan = span.parentElement as ISegSpan;
+                    }
+                    if (segspan && segspan.seg) {
+                        this.clickSpan(e.clientX, e.clientY, segspan);
+                        if (this.cursor.emptySelection()) {
+                            this.clearSelection();
+                        }
                     }
                 }
+                this.movingInclusion = false;
                 e.preventDefault();
                 e.returnValue = false;
                 return false;
