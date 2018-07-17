@@ -132,7 +132,7 @@ export async function createFork(
         minimumSequenceNumber = StartingSequenceNumber;
         sequenceNumber = StartingSequenceNumber;
     } else {
-        // Create a new commit, referecing the ref head, but swap out the metadata to indicate the branch details
+        // Create a new commit, referencing the ref head, but swap out the metadata to indicate the branch details
         const attributesContentP = gitManager.getContent(head.object.sha, ".attributes");
         const branchP = gitManager.upsertRef(name, head.object.sha);
         const [attributesContent] = await Promise.all([attributesContentP, branchP]);

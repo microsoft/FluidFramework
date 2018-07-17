@@ -170,7 +170,7 @@ export class GitManager {
                 case api.TreeEntry.Blob:
                     const entryAsBlob = entry.value as api.IBlob;
 
-                    // Symlinks currently directy reference a folder off the root of the tree. We adjust
+                    // Symlinks currently directly references a folder off the root of the tree. We adjust
                     // the path based on the depth of the tree
                     if (entry.mode === api.FileMode.Symlink) {
                         entryAsBlob.contents = this.translateSymlink(entryAsBlob.contents, depth);
