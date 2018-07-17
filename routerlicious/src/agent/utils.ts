@@ -1,5 +1,8 @@
 import { EventEmitter } from "events";
 
+/**
+ * Invokes a callback based on boolean or waits for event to fire.
+ */
 export async function runAfterWait(
     dirty: boolean,
     eventSource: EventEmitter,
@@ -15,5 +18,27 @@ export async function runAfterWait(
                 resolve();
             });
         });
+    }
+}
+
+/**
+ * Utility to run a forced garbage collector.
+ * To expose gc, run node --expose-gc dist/paparazzi/index.js.
+ */
+export function runGC() {
+    global.gc();
+    setTimeout(() => {
+        printMemoryUsage();
+    }, 5000);
+}
+
+/**
+ * Utility to print node memory usage.
+ */
+function printMemoryUsage() {
+    const used = process.memoryUsage();
+    // tslint:disable-next-line
+    for (const key in used) {
+        console.log(`${key} ${Math.round(used[key] / 1024 / 1024 * 100) / 100} MB`);
     }
 }

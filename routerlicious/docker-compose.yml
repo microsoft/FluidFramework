@@ -51,7 +51,7 @@ services:
         restart: always
     paparazzi:
         build: .
-        command: node dist/paparazzi/index.js
+        command: node --expose-gc dist/paparazzi/index.js
         environment:
             - DEBUG=routerlicious:*
             - worker__intelligence__resume__url=http://alfred:3000/intelligence/resume

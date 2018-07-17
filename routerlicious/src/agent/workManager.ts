@@ -13,7 +13,7 @@ export class WorkManager extends EventEmitter implements IWorkManager {
 
     private dict: MergeTree.TST<number>;
     private agentLoader: AgentLoader;
-    private documentMap: { [docId: string]: { [work: string]: IWork} } = {};
+    private documentMap = new Map<string, IWork>();
     private events = new EventEmitter();
     private agentsLoaded: boolean = false;
 
@@ -63,15 +63,22 @@ export class WorkManager extends EventEmitter implements IWorkManager {
 
     }
 
-    public stopDocumentWork(tenantId: string, documentId: string, workType: string) {
-        const fullId = this.getFullId(tenantId, documentId);
-        if (fullId in this.documentMap) {
-            const taskMap = this.documentMap[fullId];
-            const task = taskMap[workType];
-            if (task !== undefined) {
-                task.stop(workType);
-                delete taskMap[workType];
+    public async stopDocumentWork(tenantId: string, documentId: string, workType: string) {
+        const fullId = this.getFullId(tenantId, documentId, workType);
+        if (this.documentMap.has(fullId)) {
+            const task = this.documentMap.get(fullId);
+            if (task) {
+                task.removeListeners();
+                await task.stop(workType);
+                this.documentMap.delete(fullId);
             }
+        }
+        if (this.documentMap.size > 0) {
+            for (const doc of this.documentMap) {
+                console.log(`CURRENTLY ACTIVE: ${doc[0]}`);
+            }
+        } else {
+            console.log(`NO ACTIVE DOCUMENTS`);
         }
     }
 
@@ -89,57 +96,50 @@ export class WorkManager extends EventEmitter implements IWorkManager {
         return this;
     }
 
-    private getFullId(tenantId: string, documentId: string): string {
-        return `${tenantId}/${documentId}`;
+    private getFullId(tenantId: string, documentId: string, workType: string): string {
+        return `${tenantId}/${documentId}/${workType}`;
     }
 
     private async startTask(tenantId: string, documentId: string, workType: string, worker: IWork) {
-        const fullId = this.getFullId(tenantId, documentId);
+        const fullId = this.getFullId(tenantId, documentId, workType);
 
-        if (worker) {
-            if (!(fullId in this.documentMap)) {
-                const emptyMap: { [work: string]: IWork } = {};
-                this.documentMap[fullId] = emptyMap;
-            }
-            if (!(workType in this.documentMap[fullId])) {
-                await this.applyWork(fullId, workType, worker);
-            }
+        if (!this.documentMap.has(fullId) && worker) {
+            this.documentMap.set(fullId, worker);
+            await this.applyWork(fullId, workType, worker);
         }
     }
 
     private async applyWork(fullId: string, workType: string, worker: IWork) {
-        console.log(`Starting work ${workType} for document ${fullId}`);
         await worker.start(workType);
         console.log(`Started work ${workType} for document ${fullId}`);
-        this.documentMap[fullId][workType] = worker;
         // Register existing intel agents to this document
         if (workType === "intel") {
-            this.registerAgentsToNewDocument(fullId, workType);
+            this.registerAgentsToNewDocument(fullId);
         }
+        // Listen for errors and future stop events.
         worker.on("error", (error) => {
             this.events.emit("error", error);
         });
         worker.on("stop", (ev: IDocumentTaskInfo) => {
-            this.stopDocumentWork(ev.tenantId, ev.docId, ev.task);
+            this.events.emit("stop", ev);
         });
     }
 
     // Register a new agent to all active documents.
     private registerAgentToExistingDocuments(agent: IAgent) {
-        for (const docId of Object.keys(this.documentMap)) {
-            for (const workType of Object.keys(this.documentMap[docId])) {
-                if (workType === "intel") {
-                    const intelWork = this.documentMap[docId][workType] as IntelWork;
-                    intelWork.registerNewService(agent.code);
-                    console.log(`Registered newly loaded ${agent.name} to document ${docId}`);
-                }
+        for (const doc of this.documentMap) {
+            const taskName = doc[0].split("/")[2];
+            if (taskName === "intel") {
+                const intelWork = doc[1] as IntelWork;
+                intelWork.registerNewService(agent.code);
+                console.log(`Registered newly loaded ${agent.name} to document ${doc[0]}`);
             }
         }
     }
 
     // Register all agents to a new document.
-    private registerAgentsToNewDocument(fullId: string, workType: string) {
-        const intelWork = this.documentMap[fullId][workType] as IntelWork;
+    private registerAgentsToNewDocument(fullId: string) {
+        const intelWork = this.documentMap.get(fullId) as IntelWork;
         const agents = this.agentLoader.getAgents();
         // tslint:disable-next-line
         for (const name in agents) {

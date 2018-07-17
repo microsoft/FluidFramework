@@ -1,5 +1,6 @@
 import { EventEmitter } from "events";
-import { IDocumentServiceFactory, IWorkManager } from "./definitions";
+import { IDocumentServiceFactory, IDocumentTaskInfo, IWorkManager } from "./definitions";
+import { runGC } from "./utils";
 import { WorkManager } from "./workManager";
 
 /**
@@ -21,9 +22,10 @@ export class WorkerService extends EventEmitter {
             this.config,
             this.serverUrl,
             this.agentModuleLoader);
-        this.workManager.on("error", (error) => {
-            this.emit("error", error);
-        });
+        this.listenToEvents();
+        setInterval(() => {
+            runGC();
+        }, 10000);
     }
 
     public async startTasks(tenantId: string, documentId: string, tasks: string[], token: string) {
@@ -32,12 +34,12 @@ export class WorkerService extends EventEmitter {
             tasksP.push(this.workManager.startDocumentWork(tenantId, documentId, task, token));
         }
         await Promise.all(tasksP);
+        runGC();
     }
 
-    public stopTasks(tenantId: string, documentId: string, tasks: string[]) {
-        for (const task of tasks) {
-            this.workManager.stopDocumentWork(tenantId, documentId, task);
-        }
+    public async stopTask(tenantId: string, documentId: string, task: string) {
+        await this.workManager.stopDocumentWork(tenantId, documentId, task);
+        runGC();
     }
 
     public async loadAgent(agentName: string) {
@@ -46,5 +48,14 @@ export class WorkerService extends EventEmitter {
 
     public unloadAgent(agentName: string) {
         this.workManager.unloadAgent(agentName);
+    }
+
+    private listenToEvents() {
+        this.workManager.on("error", (error) => {
+            this.emit("error", error);
+        });
+        this.workManager.on("stop", (ev: IDocumentTaskInfo) => {
+            this.emit("stop", ev);
+        });
     }
 }

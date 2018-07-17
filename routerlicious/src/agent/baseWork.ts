@@ -47,6 +47,10 @@ export class BaseWork extends EventEmitter {
         }
     }
 
+    public removeListeners() {
+        this.removeAllListeners();
+    }
+
     private closeDocument(task: string) {
         console.log(`Closing document ${this.document.tenantId}/${this.document.id} for task ${task}`);
         this.document.removeListener("op", this.operation);
@@ -55,19 +59,23 @@ export class BaseWork extends EventEmitter {
         this.document.close();
         this.events.removeAllListeners();
         this.removeAllListeners();
+        if (this.leaderCheckerTimer) {
+            clearInterval(this.leaderCheckerTimer);
+        }
     }
 
     // Periodically checks for leaders in the document. Emits a stop request if leader is not present.
     private checkForLeader(task) {
         this.leaderCheckerTimer = setInterval(() => {
+            console.log(`Running leader checker for ${this.document.id}/${task}!`);
             if (this.noLeader()) {
                 const stopEvent: IDocumentTaskInfo = {
                     docId: this.document.id,
                     task,
                     tenantId: this.document.tenantId,
                 };
-                clearInterval(this.leaderCheckerTimer);
                 this.events.emit("stop", stopEvent);
+                console.log(`No leader for ${this.document.id}: ${task}`);
             }
         }, leaderCheckerMS);
     }
