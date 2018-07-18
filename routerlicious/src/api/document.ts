@@ -6,6 +6,7 @@ import * as jwt from "jsonwebtoken";
 import performanceNow = require("performance-now");
 import * as uuid from "uuid/v4";
 import * as api from "../api-core";
+import { BlobManager, IImageBlob } from "../api-core";
 import * as cell from "../cell";
 import { Deferred, gitHashFile } from "../core-utils";
 import { ICell, IMap, IStream } from "../data-types";
@@ -85,6 +86,8 @@ interface IHeaderDetails {
     // Attributes for the document
     attributes: api.IDocumentAttributes;
 
+    blobs: api.IImageBlob[];
+
     // Distributed objects contained within the document
     distributedObjects: api.IDistributedObject[];
 
@@ -103,6 +106,7 @@ function getEmptyHeader(id: string): IHeaderDetails {
             minimumSequenceNumber: 0,
             sequenceNumber: 0,
         },
+        blobs: [],
         distributedObjects: [],
         transformedMessages: [],
         tree: null,
@@ -190,6 +194,7 @@ export class Document extends EventEmitter implements api.IDocument {
     private connectionState = api.ConnectionState.Disconnected;
     private pendingAttach = new Map<string, api.IAttachMessage>();
     private storageService: api.IDocumentStorageService;
+    private blobManager: api.IBlobManager;
     private lastMinSequenceNumber;
     private loaded = false;
     private pendingClientId: string;
@@ -371,59 +376,31 @@ export class Document extends EventEmitter implements api.IDocument {
         return this.distributedObjects.get(blobMapId).object as IMap;
     }
 
-    // TODO (sabroner) turn filemap into a more fully featured class
-    // TODO (sabroner) Move this out of document
-    public createBlobMetadata(file: api.IInclusion): api.IInclusion {
-        const hash = gitHashFile(file.content);
-        file.sha = hash;
-        const fileMap = this.getBlobMap().set<IMap>(hash, this.createMap());
-        fileMap.set<string>("type", file.type);
-        fileMap.set<string>("size", file.size);
-        fileMap.set<number>("width", file.width);
-        fileMap.set<number>("height", file.height);
-        fileMap.set<string>("fileName", file.fileName);
-        fileMap.set<string>("caption", file.caption);
+    public createBlobMetadata(file: api.IImageBlob, sha: string): api.IImageBlob {
+        file.sha = sha;
+
+        this.blobManager.addBlob(file).then(() => this.submitMessage(api.BlobPrepared, file));
         return file;
     }
 
-    public uploadBlob(file: api.IInclusion): api.IInclusion {
-
-        this.storageService.createBlob(file.content);
-
-        return this.createBlobMetadata(file);
+    public async uploadBlob(file: api.IImageBlob): Promise<api.IImageBlob> {
+        const sha = gitHashFile(file.content);
+        this.blobManager.createBlob(file.content).then(() => {
+            this.submitMessage(api.BlobUploaded, sha);
+        });
+        return this.createBlobMetadata(file, sha);
     }
 
-    public getBlobHashes(): Promise<string[]> {
-        const blobMap = this.getBlobMap();
-        return blobMap.keys();
+    public getBlobMetadata(): Promise<IImageBlob[]> {
+        return new Promise<IImageBlob[]>((resolve) => {
+            resolve(this.blobManager.getBlobMetadata());
+        });
     }
 
-    public getBlob(key: string): Promise<api.IInclusion> {
-        const fileMapP = this.getBlobMap().wait(key) as Promise<IMap>;
+    public async getBlob(sha: string): Promise<api.IImageBlob> {
 
-        const blobResponseP = this.storageService.getBlob(key);
+        return this.blobManager.getBlob(sha);
 
-        return Promise.all([fileMapP, blobResponseP])
-            .then(async (values) => {
-
-                const fileMap = await values[0].getView();
-                const blobResponse = values[1];
-
-                return {
-                    caption: fileMap.get("caption"),
-                    content: new Buffer(blobResponse.content, "base64"),
-                    fileName: fileMap.get("fileName"),
-                    height: fileMap.get("height"),
-                    sha: key,
-                    size: fileMap.get("size"),
-                    type: fileMap.get("type"),
-                    width: fileMap.get("width"),
-                } as api.IInclusion;
-            })
-            .catch((error) => {
-                console.log("Error: " + JSON.stringify(error));
-                return null;
-            });
     }
 
     /**
@@ -479,7 +456,7 @@ export class Document extends EventEmitter implements api.IDocument {
                 sequenceNumber = attributes.sequenceNumber;
             }
 
-            // Retrieve all deltas from sequenceNumber to snapshotSequenceNumber. Range is exlusive so we increment
+            // Retrieve all deltas from sequenceNumber to snapshotSequenceNumber. Range is exclusive so we increment
             // the snapshotSequenceNumber by 1 to include it.
             const deltas = await this._deltaManager.getDeltas(sequenceNumber, snapshotSequenceNumber + 1);
             const parents = lastVersion.length > 0 ? [lastVersion[0].sha] : [];
@@ -544,7 +521,11 @@ export class Document extends EventEmitter implements api.IDocument {
                 this.storageService = storageService;
                 this.lastMinSequenceNumber = header.attributes.minimumSequenceNumber;
                 this.clients = new Map(header.attributes.clients);
+                this.blobManager = new BlobManager(this.storageService);
 
+                if (header.blobs.length > 0) {
+                    this.blobManager.loadBlobMetadata(header.blobs);
+                }
                 // Start delta processing once all objects are loaded
                 const readyP = Array.from(this.distributedObjects.values()).map((value) => value.object.ready());
                 Promise.all(readyP).then(
@@ -582,7 +563,6 @@ export class Document extends EventEmitter implements api.IDocument {
                 // This I don't think I can get rid of
                 if (!this.existing) {
                     this.createAttached(rootMapId, mapExtension.MapExtension.Type);
-                    this.createAttached(blobMapId, mapExtension.MapExtension.Type);
                 } else {
                     await this.get(rootMapId);
                 }
@@ -707,6 +687,7 @@ export class Document extends EventEmitter implements api.IDocument {
         const tree = await storage.getSnapshotTree(version);
 
         const messagesP = readAndParse<api.ISequencedDocumentMessage[]>(storage, tree.blobs[".messages"]);
+        const blobsP = readAndParse<api.IImageBlob[]>(storage, tree.blobs[".blobs"]);
         const attributesP = readAndParse<api.IDocumentAttributes>(storage, tree.blobs[".attributes"]);
 
         const distributedObjectsP = Array<Promise<api.IDistributedObject>>();
@@ -726,11 +707,12 @@ export class Document extends EventEmitter implements api.IDocument {
             distributedObjectsP.push(objectDetailsP);
         }
 
-        const [messages, attributes, distributedObjects] = await Promise.all(
-            [messagesP, attributesP, Promise.all(distributedObjectsP)]);
+        const [messages, blobs, attributes, distributedObjects] = await Promise.all(
+            [messagesP, blobsP, attributesP, Promise.all(distributedObjectsP)]);
 
         return {
             attributes,
+            blobs,
             distributedObjects,
             transformedMessages: messages,
             tree,
@@ -749,7 +731,7 @@ export class Document extends EventEmitter implements api.IDocument {
         debug(`Changing from ${api.ConnectionState[this.connectionState]} to ${api.ConnectionState[value]}`, reason);
         this.connectionState = value;
 
-        // Stash the clientID to detect when transioning from connecting (socket.io channel open) to connected
+        // Stash the clientID to detect when transitioning from connecting (socket.io channel open) to connected
         // (have received the join message for the client ID)
         if (value === api.ConnectionState.Connecting) {
             this.pendingClientId = context;
@@ -788,6 +770,7 @@ export class Document extends EventEmitter implements api.IDocument {
     private snapshotCore(): api.ITree {
         const entries: api.ITreeEntry[] = [];
 
+        // Craft the .messages file for the document
         // Transform ops in the window relative to the MSN - the window is all ops between the min sequence number
         // and the current sequence number
         assert.equal(
@@ -808,6 +791,18 @@ export class Document extends EventEmitter implements api.IDocument {
             },
         });
 
+        const blobMetaData = this.blobManager.getBlobMetadata();
+        entries.push({
+            mode: api.FileMode.File,
+            path: ".blobs",
+            type: api.TreeEntry[api.TreeEntry.Blob],
+            value: {
+                contents: JSON.stringify(blobMetaData),
+                encoding: "utf-8",
+            },
+        });
+
+        // Craft the .attributes file for each distributed object
         for (const [objectId, object] of this.distributedObjects) {
             // If the object isn't local - and we have received the sequenced op creating the object (i.e. it has a
             // base mapping) - then we go ahead and snapshot
@@ -1064,6 +1059,17 @@ export class Document extends EventEmitter implements api.IDocument {
                 this.runTaskAnalyzer();
                 break;
 
+            // Message contains full metadata (no content)
+            case api.BlobPrepared:
+                this.blobManager.addBlob(message.contents);
+                this.emit(api.BlobPrepared, message.contents);
+                break;
+
+            case api.BlobUploaded:
+                // indicates that blob has been uploaded, just a flag... no blob buffer
+                // message.contents is just the hash
+                this.blobManager.createBlob(message.contents);
+                this.emit(api.BlobUploaded, message.contents);
             default:
                 break;
         }

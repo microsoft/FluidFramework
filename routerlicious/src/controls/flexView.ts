@@ -50,19 +50,32 @@ export class FlexView extends ui.Component {
         this.dock = new DockPanel(dockElement);
         this.addChild(this.dock);
 
-        doc.getBlobMap().on("valueChanged", async (changed) => {
-            this.renderImage(await doc.getBlob(changed.key));
+        doc.on(core.BlobPrepared, (message) => {
+            this.renderImage(message);
         });
 
-        doc.on("inclusionUploaded", (args) => {
-            console.log(JSON.stringify(args));
+        doc.on(core.BlobUploaded, async (message) => {
+            this.renderImage(await doc.getBlob(message));
         });
 
         // Load blobs on start
-        doc.getBlobHashes()
-            .then(async (keys) => {
-                for (const key of keys) {
-                    this.renderImage(await doc.getBlob(key));
+        doc.getBlobMetadata()
+            // Render metadata
+            .then((blobs) => {
+                for (const blob of blobs) {
+                    if (blob.type.includes("image")) {
+                        this.renderImage(blob);
+                    }
+                }
+                return blobs;
+            })
+            // fetch and render content
+            .then(async (blobs) => {
+                for (const blob of blobs) {
+                    doc.getBlob(blob.sha)
+                        .then((blobWithContent) => {
+                            this.renderImage(blobWithContent);
+                        });
                 }
             });
 
@@ -122,7 +135,7 @@ export class FlexView extends ui.Component {
 
                 // Because the blob going in has the content, the blob coming out should as well
                 // Other users will have a placeholder render followed by the full thing.
-                this.renderImage(this.doc.uploadBlob(incl));
+                this.doc.uploadBlob(incl);
             };
         });
 
@@ -214,7 +227,7 @@ export class FlexView extends ui.Component {
         this.resizeCore(this.size);
     }
 
-    private async renderImage(incl: core.IInclusion) {
+    private async renderImage(incl: core.IImageBlob) {
 
         // We have an image, and it isn't in the DOM
         if (incl.type.includes("image")) {
@@ -250,14 +263,14 @@ export class FlexView extends ui.Component {
         }
     }
 
-    private async fileToInclusion(file: File): Promise<core.IInclusion> {
+    private async fileToInclusion(file: File): Promise<core.IImageBlob> {
         const arrayBufferReader = new FileReader();
         const urlObjReader = new FileReader();
 
         const incl = {
             fileName: file.name,
             type: file.type,
-        } as core.IInclusion;
+        } as core.IImageBlob;
 
         const arrayBufferP = new Promise<void>((resolve, reject) => {
             arrayBufferReader.onerror = (error) => {

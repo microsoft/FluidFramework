@@ -61,7 +61,7 @@ export class Serializer {
         this.document.deltaManager.inbound.pause();
         const snapshotP = this.document.snapshot(message).then(
             () => {
-                // On succes note the last op and time of the snapshot. Skip on error to cause us to
+                // On success note the last op and time of the snapshot. Skip on error to cause us to
                 // attempt the snapshot again.
                 this.lastSnapshotTime = Date.now();
                 return true;
