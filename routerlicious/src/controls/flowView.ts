@@ -1734,6 +1734,10 @@ function renderTree(
     const outerViewportHeight = parseInt(viewportDiv.style.height, 10);
     const outerViewportWidth = parseInt(viewportDiv.style.width, 10);
     const outerViewport = new Viewport(outerViewportHeight, viewportDiv, outerViewportWidth);
+    if (flowView.movingInclusion) {
+        outerViewport.addInclusion(flowView, flowView.movingMarker,
+            flowView.movingExclu.x, flowView.movingExclu.y, docContext.defaultLineDivHeight, true);
+    }
     const startingPosStack =
         client.mergeTree.getStackContext(requestedPosition, client.getClientId(), ["table", "cell", "row"]);
     const layoutContext = {
@@ -1873,35 +1877,37 @@ export class Viewport {
     }
 
     public addInclusion(flowView: FlowView, marker: MergeTree.Marker, x: number, y: number,
-        lineHeight: number) {
-        const irdoc = <IReferenceDoc>marker.properties.ref;
-        if (irdoc) {
-            // for now always an image
-            if (irdoc.type.name === "image") {
-                const showImage = <IRefImg>document.createElement("img");
-                showImage.marker = marker;
-                showImage.src = irdoc.url;
-                const w = Math.floor(this.width / 3);
-                let h = w;
-                let dx = 0;
-                let dy = 0;
-                if (irdoc.layout) {
-                    h = Math.floor(w * irdoc.layout.ar);
-                    // TODO: adjust dx, dy by viewport dimensions
-                    dx = irdoc.layout.dx;
-                    dy = irdoc.layout.dy;
+        lineHeight: number, movingMarker = false) {
+        if ((flowView.movingMarker !== marker) || (movingMarker)) {
+            const irdoc = <IReferenceDoc>marker.properties.ref;
+            if (irdoc) {
+                // for now always an image
+                if (irdoc.type.name === "image") {
+                    const showImage = <IRefImg>document.createElement("img");
+                    showImage.marker = marker;
+                    showImage.src = irdoc.url;
+                    const w = Math.floor(this.width / 3);
+                    let h = w;
+                    let dx = 0;
+                    let dy = 0;
+                    if (irdoc.layout) {
+                        h = Math.floor(w * irdoc.layout.ar);
+                        // TODO: adjust dx, dy by viewport dimensions
+                        dx = irdoc.layout.dx;
+                        dy = irdoc.layout.dy;
+                    }
+                    if ((x + w) > this.width) {
+                        x -= w;
+                    }
+                    x = Math.floor(x + dx);
+                    y += lineHeight;
+                    y = Math.floor(y + dy);
+                    const exclu = makeExcludedRectangle(x, y, w, h);
+                    exclu.conformElement(showImage);
+                    showImage.exclu = exclu;
+                    this.div.appendChild(showImage);
+                    this.excludedRects.push(exclu);
                 }
-                if ((x + w) > this.width) {
-                    x -= w;
-                }
-                x = Math.floor(x + dx);
-                y += lineHeight;
-                y = Math.floor(y + dy);
-                const exclu = makeExcludedRectangle(x, y, w, h);
-                exclu.conformElement(showImage);
-                showImage.exclu = exclu;
-                this.div.appendChild(showImage);
-                this.excludedRects.push(exclu);
             }
         }
     }
@@ -3028,6 +3034,8 @@ export class FlowView extends ui.Component {
         showCursorLocation: true,
     } as IFlowViewModes;
     public movingInclusion = false;
+    public movingExclu: IExcludedRectangle;
+    public movingMarker: MergeTree.Marker;
     public lastDocContext: IDocumentContext;
     private lastVerticalX = -1;
     private randWordTimer: any;
@@ -3403,6 +3411,8 @@ export class FlowView extends ui.Component {
                         }
                         return lineDiv;
                     }
+                } else {
+                    console.log(`elm in fwd line search is ${elm.tagName}`);
                 }
                 elm = elm.nextElementSibling as ILineDiv;
             }
@@ -3692,6 +3702,8 @@ export class FlowView extends ui.Component {
                             this.movingInclusion = true;
                             const refimg = elm as IRefImg;
                             imgMarker = refimg.marker;
+                            this.movingExclu = refimg.exclu;
+                            this.movingMarker = imgMarker;
                         }
                     }
                     if (this.movingInclusion) {
@@ -3761,8 +3773,27 @@ export class FlowView extends ui.Component {
             this.element.onmousemove = preventD;
             if (e.button === 0) {
                 freshDown = false;
-                const elm = <HTMLElement>document.elementFromPoint(prevX, prevY);
-                if (!this.movingInclusion) {
+                if (this.movingInclusion) {
+                    const deltaX = prevX - downX;
+                    const deltaY = prevY - downY;
+                    const pos = this.getNearestPosition({
+                        x: e.clientX + deltaX,
+                        y: e.clientY + deltaY,
+                    });
+                    const irdoc = <IReferenceDoc>imgMarker.properties.ref;
+                    irdoc.layout.dx = 0;
+                    irdoc.layout.dy = 0;
+                    const refProps = {
+                        [Paragraph.referenceProperty]: irdoc,
+                    };
+                    annotateMarker(this, refProps, imgMarker);
+                    if (pos !== undefined) {
+                        console.log(`moving to ${pos}`);
+                        moveMarker(this, getOffset(this, this.movingMarker), pos);
+                    }
+                    this.render(this.topChar, true);
+                } else {
+                    const elm = <HTMLElement>document.elementFromPoint(prevX, prevY);
                     const span = elm as ISegSpan;
                     let segspan: ISegSpan;
                     if (span.seg) {
