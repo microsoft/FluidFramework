@@ -583,6 +583,7 @@ export class Document extends EventEmitter implements api.IDocument {
 
         this._deltaManager.on("disconnect", (nack: boolean) => {
             this.setConnectionState(api.ConnectionState.Disconnected, `Disconnected - nack === ${nack}`);
+            this.emit("disconnect");
         });
 
         this._deltaManager.on("error", (error) => {
