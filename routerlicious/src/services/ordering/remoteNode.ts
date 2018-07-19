@@ -37,8 +37,8 @@ class ProxySocketConnection implements IOrdererConnection {
         this.node.send(this.cid, "disconnect", null);
     }
 
-    public emit(op: string, id: string, data: any[]) {
-        this.socket.emit(op, id, data);
+    public emit(op: string, id: string, ...data: any[]) {
+        this.socket.emit(op, id, ...data);
     }
 }
 
@@ -127,9 +127,9 @@ export class RemoteNode extends EventEmitter implements IConcreteNode {
                             message.payload as IConnectedMessage);
 
                         // Add new connection to routing tables
-                        this.topicMap.set(socketConnection.clientId, [socketConnection]);
+                        this.topicMap.set(`client#${socketConnection.clientId}`, [socketConnection]);
                         const fullId = `${pendingConnect.tenantId}/${pendingConnect.documentId}`;
-                        if (this.topicMap.has(fullId)) {
+                        if (!this.topicMap.has(fullId)) {
                             this.topicMap.set(fullId, []);
                         }
                         this.topicMap.get(fullId).push(socketConnection);
@@ -184,7 +184,7 @@ export class RemoteNode extends EventEmitter implements IConcreteNode {
     private route(message: IOpMessage) {
         const sockets = this.topicMap.get(message.topic);
         for (const socket of sockets) {
-            socket.emit(message.op, message.data[0], message.data.slice(1));
+            socket.emit(message.op, message.data[0], ...message.data.slice(1));
         }
     }
 

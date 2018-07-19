@@ -28,7 +28,6 @@ class WebSocketSubscriber implements ISubscriber {
 
     public send(topic: string, ...args: any[]): void {
         this.socket.emit(args[0], ...args.slice(1));
-        throw new Error("Method not implemented.");
     }
 }
 
@@ -162,7 +161,7 @@ class DeliProducer implements IProducer {
             offset: this.offset,
             partition: 0,
             topic,
-            value: JSON.stringify(message),
+            value: message,
         };
         this.offset++;
         this.lambda.handler(deliMessage);
@@ -208,6 +207,11 @@ class LocalOrdererConnection implements IOrdererConnection {
         this._existing = existing;
         this._parentBranch = document.parent ? document.parent.documentId : null;
 
+        // Subscribe to the message channels
+        this.pubsub.subscribe(`${this.tenantId}/${this.documentId}`, this.socket);
+        this.pubsub.subscribe(`client#${this.clientId}`, this.socket);
+
+        // Send the connect message
         const clientDetail: api.IClientDetail = {
             clientId: this.clientId,
             detail: this.client,
@@ -229,10 +233,8 @@ class LocalOrdererConnection implements IOrdererConnection {
             user: this.user,
         };
 
-        this.submitRawOperation(message);
-
-        this.pubsub.subscribe(`${this.tenantId}/${this.documentId}`, this.socket);
-        this.pubsub.subscribe(`client#${this.clientId}`, this.socket);
+        // Submit on next tick to sequence behind connect response
+        process.nextTick(() => this.submitRawOperation(message));
     }
 
     public order(message: api.IDocumentMessage): void {
