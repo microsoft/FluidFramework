@@ -227,7 +227,7 @@ export class TranslationWork extends BaseWork implements IWork {
                 }
             }
         };
-        this.operation = eventHandler;
+        this.opHandler = eventHandler;
         this.document.on("op", eventHandler);
         return Promise.resolve();
     }

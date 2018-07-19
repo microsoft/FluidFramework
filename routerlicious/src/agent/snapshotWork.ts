@@ -24,7 +24,7 @@ export class SnapshotWork extends BaseWork implements IWork {
         const eventHandler = (op: core.ISequencedDocumentMessage) => {
             this.serializer.run(op);
         };
-        this.operation = eventHandler;
+        this.opHandler = eventHandler;
         this.document.on("op", eventHandler);
 
         return Promise.resolve();

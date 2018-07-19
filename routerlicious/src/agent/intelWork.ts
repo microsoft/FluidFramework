@@ -51,7 +51,7 @@ export class IntelWork extends BaseWork implements IWork {
                 this.intelligenceManager.process(object);
             }
         };
-        this.operation = eventHandler;
+        this.opHandler = eventHandler;
         this.document.on("op", eventHandler);
         return Promise.resolve();
     }

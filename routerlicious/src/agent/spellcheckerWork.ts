@@ -40,12 +40,12 @@ export class SpellcheckerWork extends BaseWork implements IWork {
         // Temporary workaround: Currently annotations are not being added to the pending op list when the document
         // is not connected. Making sure that the document is fully connected before starting the spellchecker.
         if (this.document.isConnected) {
-            this.operation = eventHandler;
+            this.opHandler = eventHandler;
             this.document.on("op", eventHandler);
         } else {
             console.log(`Waiting for the document to fully connected before running spellcheck!`);
             this.document.on("connected", () => {
-                this.operation = eventHandler;
+                this.opHandler = eventHandler;
                 this.document.on("op", eventHandler);
             });
         }
