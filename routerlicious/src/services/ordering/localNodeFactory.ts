@@ -1,4 +1,5 @@
 import * as uuid from "uuid/v4";
+import * as core from "../../core";
 import { TmzRunner } from "../../tmz/runner";
 import { MongoManager } from "../../utils";
 import { IConcreteNodeFactory } from "./interfaces";
@@ -8,6 +9,7 @@ export class LocalNodeFactory implements IConcreteNodeFactory {
     constructor(
         private hostname: string,
         private address: string,
+        private storage: core.IDocumentStorage,
         private mongoManager: MongoManager,
         private nodeCollectionName: string,
         private documentsCollectionName: string,
@@ -20,6 +22,7 @@ export class LocalNodeFactory implements IConcreteNodeFactory {
         const node = LocalNode.Connect(
             `${this.hostname}-${uuid()}`,
             this.address,
+            this.storage,
             this.mongoManager,
             this.nodeCollectionName,
             this.documentsCollectionName,

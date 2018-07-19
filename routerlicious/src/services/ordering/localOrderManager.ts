@@ -1,15 +1,18 @@
 import * as assert from "assert";
-import { IConcreteNode, IConcreteNodeFactory, IReservationManager, ISocketOrderer } from "./interfaces";
+import { IOrderer } from "../../core";
+import { IConcreteNode, IConcreteNodeFactory, IReservationManager } from "./interfaces";
 
+// The LocalOrderManager maintains a set of nodes and their set of ownerships of documents
+// It then provides caches of orderers
 export class LocalOrderManager {
-    private localOrderers = new Map<string, Promise<ISocketOrderer>>();
+    private localOrderers = new Map<string, Promise<IOrderer>>();
     private localNodeP: Promise<IConcreteNode>;
 
     constructor(private nodeFactory: IConcreteNodeFactory, private reservationManager: IReservationManager) {
         this.createLocalNode();
     }
 
-    public async get(tenantId: string, documentId: string): Promise<ISocketOrderer> {
+    public async get(tenantId: string, documentId: string): Promise<IOrderer> {
         if (!this.localOrderers.has(documentId)) {
             const ordererP = this.getCore(tenantId, documentId);
             this.localOrderers.set(documentId, ordererP);
@@ -20,7 +23,7 @@ export class LocalOrderManager {
 
     // Factory method to either create a local or proxy orderer.
     // I should have the order manager just have registered factories for types of ordering
-    private async getCore(tenantId: string, documentId: string): Promise<ISocketOrderer> {
+    private async getCore(tenantId: string, documentId: string): Promise<IOrderer> {
         const localNode = await this.localNodeP;
 
         const reservationKey = `${tenantId}/${documentId}`;
@@ -28,7 +31,6 @@ export class LocalOrderManager {
         assert(reservedNode.valid);
 
         const orderer = await reservedNode.connectOrderer(tenantId, documentId);
-        // orderer can never go bad - only the node
 
         return orderer;
     }

@@ -87,6 +87,7 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
         const nodeFactory = new services.LocalNodeFactory(
             os.hostname(),
             address,
+            storage,
             mongoManager,
             nodeCollectionName,
             documentsCollectionName,

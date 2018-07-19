@@ -1,32 +1,42 @@
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import * as _ from "lodash";
+import * as uuid from "uuid/v4";
 import * as ws from "ws";
-import { IOrdererSocket, IRawOperationMessage } from "../../core";
+import * as api from "../../api-core";
+import { IDocumentStorage, IOrderer, IOrdererConnection } from "../../core";
 import { TmzRunner } from "../../tmz/runner";
 import { MongoManager } from "../../utils";
 import { debug } from "../debug";
-import { IConcreteNode, INode, INodeMessage, IOpMessage, ISocketOrderer } from "./interfaces";
-import { LocalOrderer } from "./localOrderer";
+import {
+    IConcreteNode, IConnectedMessage, IConnectMessage, INode, INodeMessage, IOpMessage,
+} from "./interfaces";
+import { ISubscriber, LocalOrderer } from "./localOrderer";
 import { Socket } from "./socket";
 
-class ProxySocket implements IOrdererSocket {
+// Can I treat each Alfred as a mini-Kafka. And consolidate all the deli logic together?
+// Rather than creating one per? I'm in some ways on this path.
+
+class RemoteSubscriber implements ISubscriber {
+    public id = uuid();
+
     constructor(private socket: Socket<INodeMessage>) {
     }
 
-    public send(topic: string, op: string, id: string, data: any[]) {
-        const payload: IOpMessage = {
-            data,
-            id,
-            op,
+    public send(topic: string, event: string, ...args: any[]): void {
+        const opMessage: IOpMessage = {
+            data: args,
+            op: event,
             topic,
         };
-        const nodeMessage: INodeMessage = {
-            payload,
+
+        const message: INodeMessage = {
+            cid: -1,
+            payload: opMessage,
             type: "op",
         };
 
-        this.socket.send(nodeMessage);
+        this.socket.send(message);
     }
 }
 
@@ -36,6 +46,7 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
     public static async Connect(
         id: string,
         address: string,
+        storage: IDocumentStorage,
         mongoManager: MongoManager,
         nodeCollectionName: string,
         documentsCollectionName: string,
@@ -53,6 +64,7 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
 
         return new LocalNode(
             node,
+            storage,
             mongoManager,
             nodeCollectionName,
             documentsCollectionName,
@@ -118,9 +130,11 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
 
     private webSocketServer: ws.Server;
     private orderMap = new Map<string, LocalOrderer>();
+    private connectionMap = new Map<number, IOrdererConnection>();
 
     private constructor(
         private node: INode,
+        private storage: IDocumentStorage,
         private mongoManager: MongoManager,
         private nodeCollectionName: string,
         private documentsCollectionName: string,
@@ -139,28 +153,54 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
         this.webSocketServer.on("connection", (wsSocket, request) => {
             debug(`New inbound web socket connection ${request.url}`);
             const socket = new Socket<INodeMessage>(wsSocket);
+            const subscriber = new RemoteSubscriber(socket);
 
             // Messages will be inbound from the remote server
             socket.on("message", (message) => {
-                if (message.type === "join") {
-                    const fullId = message.payload as string;
-                    if (!this.orderMap.has(fullId)) {
-                        debug("Received message for un-owned document", fullId);
-                        return;
+                switch (message.type) {
+                    case "connect": {
+                        const connectMessage = message.payload as IConnectMessage;
+                        const fullId = `${connectMessage.tenantId}/${connectMessage.documentId}`;
+                        const orderer = this.orderMap.get(fullId);
+                        assert(orderer);
+
+                        // Create a new socket and bind it to a relay on the node
+                        const connection = orderer.connectInternal(
+                            subscriber,
+                            connectMessage.user,
+                            connectMessage.client);
+
+                        // Need to subscribe to both channels. Then broadcast subscription across pipe
+                        // on receiving a message
+                        this.connectionMap.set(message.cid, connection);
+
+                        // emit connected message
+                        const connected: IConnectedMessage = {
+                            clientId: connection.clientId,
+                            existing: connection.existing,
+                            parentBranch: connection.parentBranch,
+                        };
+                        socket.send({ cid: message.cid, type: "connected", payload: connected });
+
+                        break;
                     }
 
-                    debug(`Join of ${fullId}`);
-                    this.orderMap.get(fullId).attachSocket(new ProxySocket(socket));
-                } else if (message.type === "order") {
-                    const orderMessage = message.payload as IRawOperationMessage;
-                    const fullId = `${orderMessage.tenantId}/${orderMessage.documentId}`;
-                    if (!this.orderMap.has(fullId)) {
-                        debug("Received message for un-owned document", fullId);
-                        return;
+                    case "disconnect": {
+                        const connection = this.connectionMap.get(message.cid);
+                        assert(connection);
+                        connection.disconnect();
+                        this.connectionMap.delete(message.cid);
+
+                        break;
                     }
 
-                    // debug(`Order ${orderMessage.clientId}@${orderMessage.operation.clientSequenceNumber}`);
-                    this.orderMap.get(fullId).order(orderMessage);
+                    case "order": {
+                        const orderMessage = message.payload as api.IDocumentMessage;
+                        const connection = this.connectionMap.get(message.cid);
+                        assert(connection);
+                        connection.order(orderMessage);
+                        break;
+                    }
                 }
             });
         });
@@ -170,11 +210,12 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
         });
     }
 
-    public async connectOrderer(tenantId: string, documentId: string): Promise<ISocketOrderer> {
+    public async connectOrderer(tenantId: string, documentId: string): Promise<IOrderer> {
         const fullId = `${tenantId}/${documentId}`;
         // Our node is responsible for sequencing messages
         debug(`${this.id} Becoming leader for ${fullId}`);
         const orderer = await LocalOrderer.Load(
+            this.storage,
             this.mongoManager,
             tenantId,
             documentId,
@@ -185,10 +226,6 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
         this.orderMap.set(fullId, orderer);
 
         return orderer;
-    }
-
-    public send(message: any) {
-        return;
     }
 
     private scheduleHeartbeat() {

@@ -1,16 +1,13 @@
 import { EventEmitter } from "events";
-import { IOrderer, IOrdererSocket, IRawOperationMessage } from "../../core";
-
-export interface ISocketOrderer extends IOrderer {
-    attachSocket(socket: IOrdererSocket);
-}
+import * as api from "../../api-core";
+import { IOrderer } from "../../core";
 
 export interface IConcreteNode extends EventEmitter {
     id: string;
 
     valid: boolean;
 
-    connectOrderer(tenantId: string, documentId: string): Promise<ISocketOrderer>;
+    connectOrderer(tenantId: string, documentId: string): Promise<IOrderer>;
 }
 
 export interface IReservationManager {
@@ -41,13 +38,28 @@ export interface INode {
 export interface IOpMessage {
     topic: string;
     op: string;
-    id: string;
     data: any[];
 }
 
-export interface INodeMessage {
-    // better way to do the before in TS?
-    type: "order" | "join" | "op";
+export interface IConnectMessage {
+    tenantId: string;
+    documentId: string;
+    user: api.ITenantUser;
+    client: api.IClient;
+}
 
-    payload: IRawOperationMessage | string | IOpMessage;
+export interface IConnectedMessage {
+    clientId: string;
+    existing: boolean;
+    parentBranch: string;
+}
+
+export interface INodeMessage {
+    // Connection identifier
+    cid: number;
+
+    // better way to do the before in TS?
+    type: "order" | "op" | "connect" | "disconnect" | "connected";
+
+    payload: api.IDocumentMessage | string | IOpMessage | IConnectMessage | IConnectedMessage;
 }

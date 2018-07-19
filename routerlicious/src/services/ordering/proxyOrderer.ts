@@ -1,40 +1,23 @@
 import * as api from "../../api-core";
-import { IOrdererConnection, IOrdererSocket, IRawOperationMessage, IWebSocket } from "../../core";
-// import { debug } from "../debug";
-import { IOpMessage, ISocketOrderer } from "./interfaces";
+import { IOrderer, IOrdererConnection, IWebSocket } from "../../core";
+
+export interface IOrdererConnectionFactory {
+    connect(socket: IWebSocket, user: api.ITenantUser, client: api.IClient): Promise<IOrdererConnection>;
+}
 
 /**
  * Proxies ordering to an external service which does the actual ordering
  */
-export class ProxyOrderer implements ISocketOrderer {
-    private sockets: IOrdererSocket[] = [];
-
-    constructor(
-        tenantId: string,
-        documentId: string,
-        private sendFn: (message: IRawOperationMessage) => void) {
-    }
-
-    public order(message: IRawOperationMessage): void {
-        // debug(`Received order message ${message.clientId}@${message.operation.clientSequenceNumber}`);
-        this.sendFn(message);
-    }
-
-    public attachSocket(socket: IOrdererSocket) {
-        this.sockets.push(socket);
-    }
-
-    public broadcast(message: IOpMessage) {
-        // debug(`Broadcast to ${this.sockets.length} sockets`);
-        for (const socket of this.sockets) {
-            socket.send(message.topic, message.op, message.id, message.data);
-        }
+export class ProxyOrderer implements IOrderer {
+    constructor(private factory: IOrdererConnectionFactory) {
     }
 
     public async connect(
         socket: IWebSocket,
         user: api.ITenantUser,
         client: api.IClient): Promise<IOrdererConnection> {
-        return null;
+
+        const proxiedSocket = await this.factory.connect(socket, user, client);
+        return proxiedSocket;
     }
 }

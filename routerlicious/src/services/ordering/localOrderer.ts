@@ -1,5 +1,8 @@
+import * as assert from "assert";
+import * as moniker from "moniker";
+import now = require("performance-now");
 import * as api from "../../api-core";
-import { ICollection, IDocument, IOrdererConnection, IOrdererSocket, IRawOperationMessage } from "../../core";
+import { ICollection, IDocument, IOrdererConnection } from "../../core";
 import * as core from "../../core";
 import { DeliLambda } from "../../deli/lambda";
 import { ClientSequenceTimeout } from "../../deli/lambdaFactory";
@@ -8,34 +11,102 @@ import { ScriptoriumLambda } from "../../scriptorium/lambda";
 import { TmzLambda } from "../../tmz/lambda";
 import { TmzRunner } from "../../tmz/runner";
 import { IMessage, IProducer, MongoManager } from "../../utils";
-import { ISocketOrderer } from "./interfaces";
 
-class LocalTopic implements core.ITopic {
-    // TODO - this needs to know about outbound web sockets too
+export interface ISubscriber {
+    id: string;
 
-    constructor(private topic: string, private publisher: LocalSocketPublisher) {
+    send(topic: string, ...args: any[]): void;
+}
+
+class WebSocketSubscriber implements ISubscriber {
+    public get id(): string {
+        return this.socket.id;
     }
 
-    public emit(event: string, ...args: any[]) {
-        for (const socket of this.publisher.sockets) {
-            socket.send(this.topic, event, args[0], args[1]);
+    constructor(private socket: core.IWebSocket) {
+    }
+
+    public send(topic: string, ...args: any[]): void {
+        this.socket.emit(args[0], ...args.slice(1));
+        throw new Error("Method not implemented.");
+    }
+}
+
+export interface IPubSub {
+    // Registers a subscriber for the given message
+    subscribe(topic: string, subscriber: ISubscriber);
+
+    // Removes the subscriber
+    unsubscribe(topic: string, subscriber: ISubscriber);
+
+    // Publishes a message to the given topic
+    publish(topic: string, ...args: any[]): void;
+}
+
+class PubSub implements IPubSub {
+    private topics = new Map<string, Map<string, { subscriber: ISubscriber, count: number }>>();
+
+    public publish(topic: string, ...args: any[]): void {
+        const subscriptions = this.topics.get(topic);
+        if (subscriptions) {
+            for (const [, value] of subscriptions) {
+                value.subscriber.send(topic, ...args);
+            }
+        }
+    }
+
+    // Subscribes to a topic. The same subscriber can be added multiple times. In this case we maintain a ref count
+    // on the total number of times it has been subscribed. But we will only publish to it once.
+    public subscribe(topic: string, subscriber: ISubscriber) {
+        if (!this.topics.has(topic)) {
+            this.topics.set(topic, new Map<string, { subscriber: ISubscriber, count: number }>());
+        }
+
+        const subscriptions = this.topics.get(topic);
+        if (!subscriptions.has(subscriber.id)) {
+            subscriptions.set(subscriber.id, { subscriber, count: 0});
+        }
+
+        subscriptions.get(subscriber.id).count++;
+    }
+
+    public unsubscribe(topic: string, subscriber: ISubscriber) {
+        assert(this.topics.has(topic));
+        const subscriptions = this.topics.get(topic);
+
+        assert(subscriptions.has(subscriber.id));
+        const details = subscriptions.get(subscriber.id);
+        details.count--;
+        if (details.count === 0) {
+            subscriptions.delete(subscriber.id);
+        }
+
+        if (subscriptions.size === 0) {
+            this.topics.delete(topic);
         }
     }
 }
 
+// I should just merge the interfaces below and combine into one to avoid creating intermediate classes
+class LocalTopic implements core.ITopic {
+    constructor(private topic: string, private publisher: IPubSub) {
+    }
+
+    public emit(event: string, ...args: any[]) {
+        this.publisher.publish(this.topic, event, ...args);
+    }
+}
+
 class LocalSocketPublisher implements core.IPublisher {
-    public sockets = new Array<IOrdererSocket>();
+    constructor(private publisher: IPubSub) {
+    }
 
     public on(event: string, listener: (...args: any[]) => void) {
         return;
     }
 
     public to(topic: string): core.ITopic {
-        return new LocalTopic(topic, this);
-    }
-
-    public attachSocket(socket: IOrdererSocket) {
-        this.sockets.push(socket);
+        return new LocalTopic(topic, this.publisher);
     }
 }
 
@@ -50,7 +121,7 @@ class LocalContext implements IContext {
     }
 }
 
-class LocalProducer implements IProducer {
+class ScriptoriumProducer implements IProducer {
     private offset = 1;
 
     constructor(
@@ -78,14 +149,149 @@ class LocalProducer implements IProducer {
     }
 }
 
-// Can I treat each Alfred as a mini-Kafka. And consolidate all the deli logic together?
-// Rather than creating one per?
+class DeliProducer implements IProducer {
+    private offset = 0;
+
+    constructor(private lambda: DeliLambda) {
+    }
+
+    public async send(message: string, topic: string): Promise<any> {
+        const deliMessage: IMessage = {
+            highWaterOffset: this.offset,
+            key: topic,
+            offset: this.offset,
+            partition: 0,
+            topic,
+            value: JSON.stringify(message),
+        };
+        this.offset++;
+        this.lambda.handler(deliMessage);
+    }
+
+    public close(): Promise<void> {
+        return Promise.resolve();
+    }
+}
+
+class LocalOrdererConnection implements IOrdererConnection {
+    public get clientId(): string {
+        return this._clientId;
+    }
+
+    public get existing(): boolean {
+        return this._existing;
+    }
+
+    public get parentBranch(): string {
+        return this._parentBranch;
+    }
+
+    // tslint:disable:variable-name
+    private _clientId: string;
+    private _existing: boolean;
+    private _parentBranch: string;
+    // tslint:enable:variable-name
+
+    constructor(
+        private pubsub: IPubSub,
+        public socket: ISubscriber,
+        existing: boolean,
+        document: core.IDocument,
+        private producer: IProducer,
+        private tenantId: string,
+        private documentId: string,
+        clientId: string,
+        private user: api.ITenantUser,
+        private client: api.IClient) {
+
+        this._clientId = clientId;
+        this._existing = existing;
+        this._parentBranch = document.parent ? document.parent.documentId : null;
+
+        const clientDetail: api.IClientDetail = {
+            clientId: this.clientId,
+            detail: this.client,
+        };
+
+        const message: core.IRawOperationMessage = {
+            clientId: null,
+            documentId: this.documentId,
+            operation: {
+                clientSequenceNumber: -1,
+                contents: clientDetail,
+                referenceSequenceNumber: -1,
+                traces: [],
+                type: api.ClientJoin,
+            },
+            tenantId: this.tenantId,
+            timestamp: Date.now(),
+            type: core.RawOperationType,
+            user: this.user,
+        };
+
+        this.submitRawOperation(message);
+
+        this.pubsub.subscribe(`${this.tenantId}/${this.documentId}`, this.socket);
+        this.pubsub.subscribe(`client#${this.clientId}`, this.socket);
+    }
+
+    public order(message: api.IDocumentMessage): void {
+        const rawMessage: core.IRawOperationMessage = {
+            clientId: this.clientId,
+            documentId: this.documentId,
+            operation: message,
+            tenantId: this.tenantId,
+            timestamp: Date.now(),
+            type: core.RawOperationType,
+            user: this.user,
+        };
+
+        this.submitRawOperation(rawMessage);
+    }
+
+    public disconnect() {
+        const message: core.IRawOperationMessage = {
+            clientId: null,
+            documentId: this.documentId,
+            operation: {
+                clientSequenceNumber: -1,
+                contents: this.clientId,
+                referenceSequenceNumber: -1,
+                traces: [],
+                type: api.ClientLeave,
+            },
+            tenantId: this.tenantId,
+            timestamp: Date.now(),
+            type: core.RawOperationType,
+            user: this.user,
+        };
+        this.submitRawOperation(message);
+
+        this.pubsub.unsubscribe(`${this.tenantId}/${this.documentId}`, this.socket);
+        this.pubsub.unsubscribe(`client#${this.clientId}`, this.socket);
+    }
+
+    private submitRawOperation(message: core.IRawOperationMessage) {
+        // Add trace
+        if (message.operation && message.operation.traces) {
+            message.operation.traces.push(
+                {
+                    action: "start",
+                    service: "alfred",
+                    timestamp: now(),
+                });
+        }
+
+        this.producer.send(JSON.stringify(message), this.documentId);
+    }
+}
 
 /**
  * Performs local ordering of messages based on an in-memory stream of operations.
  */
-export class LocalOrderer implements ISocketOrderer {
+export class LocalOrderer implements core.IOrderer {
     public static async Load(
+        storage: core.IDocumentStorage,
         mongoManager: MongoManager,
         tenantId: string,
         documentId: string,
@@ -93,47 +299,44 @@ export class LocalOrderer implements ISocketOrderer {
         deltasCollectionName: string,
         tmzRunner: TmzRunner) {
 
-        const db = await mongoManager.getDatabase();
-        const collection = db.collection<IDocument>(documentsCollectionName);
+        const [details, db] = await Promise.all([
+            storage.getOrCreateDocument(tenantId, documentId),
+            mongoManager.getDatabase(),
+        ]);
         const deltasCollection = db.collection<any>(deltasCollectionName);
-
-        // I could put the reservation on the dbObject. And not be able to update the stored numbers unless
-        // I fully have the thing
-        // Lookup the last sequence number stored
-        // TODO - is this storage specific to the orderer in place? Or can I generalize the output context?
-        const dbObject = await collection.findOne({ documentId, tenantId });
-        if (!dbObject) {
-            return Promise.reject(`${tenantId}/${documentId} does not exist - cannot sequence`);
-        }
+        const collection = db.collection<IDocument>(documentsCollectionName);
 
         return new LocalOrderer(
+            details,
             tenantId,
             documentId,
             collection,
             deltasCollection,
-            dbObject,
             tmzRunner);
     }
 
-    private offset = 0;
-    private deliLambda: DeliLambda;
-    private producer: LocalProducer;
+    private producer: ScriptoriumProducer;
+    private deliProducer: DeliProducer;
+    private existing: boolean;
     private socketPublisher: LocalSocketPublisher;
+    private pubsub = new PubSub();
 
     constructor(
-        tenantId: string,
-        documentId: string,
-        collection: ICollection<IDocument>,
+        private details: core.IDocumentDetails,
+        private tenantId: string,
+        private documentId: string,
+        collection: ICollection<core.IDocument>,
         deltasCollection: ICollection<any>,
-        dbObject: IDocument,
         tmzRunner: TmzRunner) {
+
+        this.existing = details.existing;
+        this.socketPublisher = new LocalSocketPublisher(this.pubsub);
 
         // TODO I want to maintain an inbound queue. On lambda failures I need to recreate all of them. Just
         // like what happens when the service goes down.
 
         // Scriptorium Lambda
         const scriptoriumContext = new LocalContext();
-        this.socketPublisher = new LocalSocketPublisher();
         const scriptoriumLambda = new ScriptoriumLambda(
             this.socketPublisher,
             deltasCollection,
@@ -146,53 +349,52 @@ export class LocalOrderer implements ISocketOrderer {
             tmzRunner,
             new Promise<void>((resolve, reject) => { return; }));
 
-        // Routemaster lambda
-        // import { RouteMasterLambda } from "../routemaster/lambda";
-        // const routeMasterContext = new LocalContext();
-        // const routemasterLambda = new RouteMasterLambda(
-        //     null /* document */,
-        // The producer below gets the trickiest. We need to be able to connect to an existing document - or open a new
-        // one - and then be able to send messages to it. But this document may not yet be open. So we need to be able
-        // to start processing of it. Also how do we manage pending work and fallback in these situations across all
-        // lambdas. Or do they combine up together?
-        //     producer /* producer */,
-        //     routeMasterContext);
-
         // Deli Lambda
-        this.producer = new LocalProducer(scriptoriumLambda, tmzLambda);
+        this.producer = new ScriptoriumProducer(scriptoriumLambda, tmzLambda);
         const deliContext = new LocalContext();
-        this.deliLambda = new DeliLambda(
+        const deliLambda = new DeliLambda(
             deliContext,
             tenantId,
             documentId,
-            dbObject,
+            details.value,
             collection,
             this.producer,
             ClientSequenceTimeout);
-    }
-
-    public order(message: IRawOperationMessage): void {
-        const deliMessage: IMessage = {
-            highWaterOffset: this.offset,
-            key: message.documentId,
-            offset: this.offset,
-            partition: 0,
-            topic: message.documentId,
-            value: JSON.stringify(message),
-        };
-        this.offset++;
-
-        this.deliLambda.handler(deliMessage);
-    }
-
-    public attachSocket(socket: IOrdererSocket) {
-        this.socketPublisher.attachSocket(socket);
+        this.deliProducer = new DeliProducer(deliLambda);
     }
 
     public async connect(
         socket: core.IWebSocket,
         user: api.ITenantUser,
         client: api.IClient): Promise<IOrdererConnection> {
-        return null;
+
+        const socketSubscriber = new WebSocketSubscriber(socket);
+        const orderer = this.connectInternal(socketSubscriber, user, client);
+        return orderer;
+    }
+
+    public connectInternal(
+        subscriber: ISubscriber,
+        user: api.ITenantUser,
+        client: api.IClient): IOrdererConnection {
+        const clientId = moniker.choose();
+
+        // Create the connection
+        const connection = new LocalOrdererConnection(
+            this.pubsub,
+            subscriber,
+            this.existing,
+            this.details.value,
+            this.deliProducer,
+            this.tenantId,
+            this.documentId,
+            clientId,
+            user,
+            client);
+
+        // document is now existing regardless of the original value
+        this.existing = true;
+
+        return connection;
     }
 }

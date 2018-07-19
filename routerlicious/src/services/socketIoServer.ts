@@ -29,10 +29,6 @@ class SocketIoSocket implements core.IWebSocket {
         await socketJoin(this.socket, id);
     }
 
-    public async send(data: any, topic: string) {
-        this.socket.emit(topic, data);
-    }
-
     public async emit(event: string, ...args) {
         this.socket.emit(event, ...args);
     }

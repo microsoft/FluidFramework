@@ -64,6 +64,7 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
         private client: api.IClient) {
 
         this._clientId = clientId;
+        this._existing = existing;
         this._parentBranch = document.parent ? document.parent.documentId : null;
 
         const clientDetail: api.IClientDetail = {

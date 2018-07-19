@@ -22,9 +22,8 @@ export function register(
                 return Promise.reject("Must provide an authorization token");
             }
 
-            const token = message.token;
-
             // Validate token signature and claims
+            const token = message.token;
             const claims = jwt.decode(token) as api.ITokenClaims;
             if (claims.documentId !== message.id || claims.tenantId !== message.tenantId) {
                 return Promise.reject("Invalid claims");
@@ -34,8 +33,6 @@ export function register(
             // And then connect to the orderer
             const orderer = await orderManager.getOrderer(claims.tenantId, claims.documentId);
             const connection = await orderer.connect(socket, claims.user, message.client);
-
-            // store a lookup from the clientID of the connection to the connection itself
             connectionsMap.set(connection.clientId, connection);
 
             // And return the connection information to the client
