@@ -147,11 +147,6 @@ export interface IDocumentStorageService {
      * Creates a blob out of the given buffer
      */
     createBlob(file: Buffer): Promise<resources.ICreateBlobResponse>;
-
-    /**
-     * Retrieves a blob with the given sha
-     */
-    getBlob(sha: string): Promise<resources.IBlob>;
 }
 
 /**

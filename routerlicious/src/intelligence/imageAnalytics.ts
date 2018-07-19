@@ -1,5 +1,5 @@
 import * as request from "request";
-import { IInclusion } from "../api-core";
+import { IImageBlob } from "../api-core";
 import { IIntelligentService, IIntelligentServiceFactory } from "./api";
 
 const imageURL = "https://westus2.api.cognitive.microsoft.com/vision/v2.0/describe";
@@ -15,13 +15,13 @@ export class ImageAnalyticsIntelligentService implements IIntelligentService {
     constructor(private key: string) {
     }
 
-    public async run(imageBlob: IInclusion): Promise<any> {
+    public async run(imageBlob: IImageBlob): Promise<any> {
 
         const result = this.invokeRequest(imageURL, imageBlob);
         return result;
     }
 
-    private invokeRequest(service: string, data: IInclusion): Promise<any> {
+    private invokeRequest(service: string, data: IImageBlob): Promise<any> {
         return new Promise<any>((resolve, reject) => {
             request.post(
                 service,

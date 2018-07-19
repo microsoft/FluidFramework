@@ -9,6 +9,15 @@ import { IContext, IPartitionLambda } from "../kafka-service/lambdas";
 import * as utils from "../utils";
 import { CheckpointContext, ICheckpoint, IClientSequenceNumber } from "./checkpointContext";
 
+export interface ITicketedMessageOutput {
+
+    message: core.ITicketedMessage;
+
+    timestamp: number;
+
+    user: api.ITenantUser;
+}
+
 const SequenceNumberComparer: utils.IComparer<IClientSequenceNumber> = {
     compare: (a, b) => a.referenceSequenceNumber - b.referenceSequenceNumber,
     min: {
@@ -92,20 +101,37 @@ export class DeliLambda implements IPartitionLambda {
     }
 
     public handler(message: utils.IMessage): void {
-        // Trace for the message.
-        const trace: api.ITrace = {
-            action: "start",
-            service: "deli",
-            timestamp: now(),
-        };
-        this.ticket(message, trace);
+        // Ticket current message.
+        const ticketedMessage = this.ticket(message, this.createTrace());
+
+        // Return early if message is not valid.
+        if (!ticketedMessage) {
+            return;
+        }
+        const outputMessages = [ticketedMessage.message];
+
+        // Check if there are any old/idle clients.
+        const idleClient = this.getIdleClient(ticketedMessage.timestamp);
+
+        // Craft a leave message for the idle client and ticket the message.
+        if (idleClient) {
+            const leaveMessage = this.createLeaveMessage(
+                ticketedMessage.message,
+                idleClient.clientId,
+                ticketedMessage.user);
+            const kafkaMessage = this.createKafkaMessage(leaveMessage, message);
+            outputMessages.push(this.ticket(kafkaMessage, this.createTrace()).message);
+        }
+
+        // Send all ticketed messages.
+        this.sendMessages(outputMessages);
     }
 
     public close() {
         this.checkpointContext.close();
     }
 
-    private ticket(rawMessage: utils.IMessage, trace: api.ITrace): void {
+    private ticket(rawMessage: utils.IMessage, trace: api.ITrace): ITicketedMessageOutput {
         // In cases where we are reprocessing messages we have already checkpointed exit early
         if (rawMessage.offset < this.logOffset) {
             return;
@@ -134,8 +160,7 @@ export class DeliLambda implements IPartitionLambda {
                 // Get the node for the clientID - NACK if non-existent
                 const node = this.clientNodeMap.get(message.clientId);
                 if (!node || node.value.nack) {
-                    this.sendNack(message);
-                    return;
+                    return this.createNackMessage(message, objectMessage.user);
                 }
 
                 // Verify that the message is within the current window
@@ -149,10 +174,7 @@ export class DeliLambda implements IPartitionLambda {
                         true,
                         true);
 
-                    // Send the nack message
-                    this.sendNack(message);
-
-                    return;
+                    return this.createNackMessage(message, objectMessage.user);
                 }
             } else {
                 if (message.operation.type === api.ClientJoin) {
@@ -243,18 +265,14 @@ export class DeliLambda implements IPartitionLambda {
 
         // Store the previous minimum sequene number we returned and then update it. If there are no clients
         // then set the MSN to the next SN.
-        const msn = this.getMinimumSequenceNumber(objectMessage.timestamp);
+        const msn = this.getMinimumSequenceNumber();
         this.minimumSequenceNumber = msn === -1 ? sequenceNumber : msn;
 
         // Add traces
         const traces = message.operation.traces;
         if (traces !== undefined) {
             traces.push(trace);
-            traces.push({
-                action: "end",
-                service: "deli",
-                timestamp: now(),
-            });
+            traces.push(this.createTrace());
         }
 
         // And now craft the output message
@@ -281,7 +299,11 @@ export class DeliLambda implements IPartitionLambda {
             type: core.SequencedOperationType,
         };
 
-        this.sendMessage(sequencedMessage);
+        return {
+            message: sequencedMessage,
+            timestamp: objectMessage.timestamp,
+            user: message.user,
+        };
     }
 
     private isDuplicate(message: core.IRawOperationMessage): boolean {
@@ -316,13 +338,18 @@ export class DeliLambda implements IPartitionLambda {
         return false;
     }
 
-    private sendMessage(message: core.ITicketedMessage) {
+    /**
+     * Sends messages to kafka and checkpoints current context on success.
+     */
+    private sendMessages(messages: core.ITicketedMessage[]) {
         // TODO optimize this to aviod doing per message
         // Checkpoint the current state
         const checkpoint = this.generateCheckpoint();
 
-        // Otherwise send the message to the event hub
-        this.producer.send(JSON.stringify(message), message.documentId).then(
+        const sendPromises = [];
+        messages.map((message) => sendPromises.push(this.producer.send(JSON.stringify(message), message.documentId)));
+
+        Promise.all(sendPromises).then(
             (result) => {
                 this.checkpointContext.checkpoint(checkpoint);
             },
@@ -332,7 +359,35 @@ export class DeliLambda implements IPartitionLambda {
             });
     }
 
-    private sendNack(message: core.IRawOperationMessage) {
+    /**
+     * Creates a leave message for inactive clients.
+     */
+    private createLeaveMessage(
+        ticketedMessage: core.ITicketedMessage,
+        clientId: string,
+        user: api.ITenantUser): core.IRawOperationMessage {
+        const leaveMessage: core.IRawOperationMessage = {
+            clientId: null,
+            documentId: ticketedMessage.documentId,
+            operation: {
+                clientSequenceNumber: -1,
+                contents: clientId,
+                referenceSequenceNumber: -1,
+                traces: [],
+                type: api.ClientLeave,
+            },
+            tenantId: ticketedMessage.tenantId,
+            timestamp: Date.now(),
+            type: core.RawOperationType,
+            user,
+        };
+        return leaveMessage;
+    }
+
+    /**
+     * Creates a nack message for out of window/disconnected clients.
+     */
+    private createNackMessage(message: core.IRawOperationMessage, user: api.ITenantUser): ITicketedMessageOutput {
         const nackMessage: core.INackMessage = {
             clientId: message.clientId,
             documentId: message.documentId,
@@ -343,8 +398,40 @@ export class DeliLambda implements IPartitionLambda {
             tenantId: message.tenantId,
             type: core.NackOperationType,
         };
+        return {
+            message: nackMessage,
+            timestamp: message.timestamp,
+            user,
+        };
+    }
 
-        this.sendMessage(nackMessage);
+    /**
+     * Creates a raw kafka message simulating the next message after last message.
+     */
+    private createKafkaMessage(
+        rawMessage: core.IRawOperationMessage,
+        lastKafkaMessage: utils.IMessage): utils.IMessage {
+        const kafkaMessage: utils.IMessage = {
+            highWaterOffset: lastKafkaMessage.highWaterOffset,
+            key: lastKafkaMessage.key,
+            offset: lastKafkaMessage.offset + 1,
+            partition: lastKafkaMessage.partition,
+            topic: lastKafkaMessage.topic,
+            value: JSON.stringify(rawMessage),
+        };
+        return kafkaMessage;
+    }
+
+    /**
+     * Creates a new trace
+     */
+    private createTrace() {
+        const trace: api.ITrace = {
+            action: "start",
+            service: "deli",
+            timestamp: now(),
+        };
+        return trace;
     }
 
     /**
@@ -444,20 +531,26 @@ export class DeliLambda implements IPartitionLambda {
     }
 
     /**
-     * Retrieves the minimum sequence number. A timestamp is provided to expire old clients.
+     * Retrieves the minimum sequence number.
      */
-    private getMinimumSequenceNumber(timestamp: number): number {
-        while (this.clientSeqNumbers.count() > 0) {
+    private getMinimumSequenceNumber(): number {
+        if (this.clientSeqNumbers.count() > 0) {
             const client = this.clientSeqNumbers.peek();
-            if (!client.value.canEvict || timestamp - client.value.lastUpdate < this.clientTimeout) {
-                return client.value.referenceSequenceNumber;
-            }
-
-            this.clientSeqNumbers.get();
-            this.clientNodeMap.delete(client.value.clientId);
+            return client.value.referenceSequenceNumber;
+        } else {
+            return -1;
         }
+    }
 
-        // No clients are in the window
-        return -1;
+    /**
+     * Get idle client.
+     */
+    private getIdleClient(timestamp: number): IClientSequenceNumber {
+        if (this.clientSeqNumbers.count() > 0) {
+            const client = this.clientSeqNumbers.peek();
+            if (client.value.canEvict && (timestamp - client.value.lastUpdate > this.clientTimeout)) {
+                return client.value;
+            }
+        }
     }
 }

@@ -36,10 +36,6 @@ export class DocumentStorageService implements api.IDocumentStorageService  {
         return this.manager.createBlob(file.toString("base64"), "base64");
     }
 
-    public async getBlob(sha: string): Promise<resources.IBlob> {
-        return this.manager.getBlob(sha);
-    }
-
     private translateCommit(details: resources.ICommitDetails): resources.ICommit {
         return {
             author: details.commit.author,

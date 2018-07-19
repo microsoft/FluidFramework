@@ -1,3 +1,4 @@
+export * from "./blobManager";
 export * from "./client";
 export * from "./collaborativeObject";
 export * from "./deltaConnection";

@@ -26,6 +26,7 @@ export class SnapshotWork extends BaseWork implements IWork {
         };
         this.operation = eventHandler;
         this.document.on("op", eventHandler);
+
         return Promise.resolve();
     }
 
