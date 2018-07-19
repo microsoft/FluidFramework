@@ -200,6 +200,7 @@ export class Document extends EventEmitter implements api.IDocument {
     private pendingClientId: string;
     private lastPong: number;
     private clientType: string;
+    private lastLeaderClientId: string;
 
     public get clientId(): string {
         return this._clientId;
@@ -1128,7 +1129,8 @@ export class Document extends EventEmitter implements api.IDocument {
      * Emit local help message for this browser and submits a remote help message for agents.
      *
      * To prevent recurrent op sending, we keep track of already requested tasks and only send
-     * help for each task once.
+     * help for each task once. We also keep track of last leader client as the reconnection
+     * should start from a clean slate.
      *
      * With this restriction of sending only one help message, some taks may never get picked (e.g., paparazzi leaves
      * and we are still having the same leader)
@@ -1140,6 +1142,14 @@ export class Document extends EventEmitter implements api.IDocument {
             const isLeader = currentLeader && currentLeader.clientId === this.clientId;
             if (isLeader) {
                 console.log(`Client ${this.clientId} is the current leader!`);
+
+                // On a reconnection, start with a clean slate.
+                if (this.lastLeaderClientId !== this.clientId) {
+                    this.helpRequested.clear();
+                }
+                this.lastLeaderClientId = this.clientId;
+
+                // Analyze the current state and ask for local and remote help seperately.
                 const helpTasks = analyzeTasks(this.clientId, this.getClients(), documentTasks, this.helpRequested);
                 if (helpTasks && helpTasks.browser.length > 0) {
                     const localHelpMessage: api.IHelpMessage = {
