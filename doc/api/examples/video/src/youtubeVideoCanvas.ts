@@ -32,7 +32,7 @@ export class YouTubeVideoCanvas extends ui.Component {
         elem.appendChild(playerDiv);
 
         // Build switch button
-        const button = document.getElementById("switch");
+        const button = document.getElementById("create");
         // TODO: fix this
         button.onclick = () => {
             const videoInput = document.getElementById("videoId") as HTMLInputElement;
