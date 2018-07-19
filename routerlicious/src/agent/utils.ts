@@ -27,15 +27,12 @@ export async function runAfterWait(
  */
 export function runGC() {
     global.gc();
-    setTimeout(() => {
-        printMemoryUsage();
-    }, 5000);
 }
 
 /**
  * Utility to print node memory usage.
  */
-function printMemoryUsage() {
+export function printMemoryUsage() {
     const used = process.memoryUsage();
     // tslint:disable-next-line
     for (const key in used) {

@@ -6,7 +6,7 @@ import { runAfterWait } from "./utils";
 
 const leaderCheckerMS = 7500;
 
-// This timer should be more than deli kick off timer.
+// This timer should be more than deli kick out timer.
 const idleTimeoutMS = (5 * 60 * 1000) + (30 * 1000);
 
 export class BaseWork extends EventEmitter {

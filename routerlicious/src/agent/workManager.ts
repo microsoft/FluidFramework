@@ -73,13 +73,6 @@ export class WorkManager extends EventEmitter implements IWorkManager {
                 this.documentMap.delete(fullId);
             }
         }
-        if (this.documentMap.size > 0) {
-            for (const doc of this.documentMap) {
-                console.log(`CURRENTLY ACTIVE: ${doc[0]}`);
-            }
-        } else {
-            console.log(`NO ACTIVE DOCUMENTS`);
-        }
     }
 
     public async loadAgent(agentName: string): Promise<void> {
