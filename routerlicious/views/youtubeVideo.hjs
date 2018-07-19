@@ -11,7 +11,7 @@
                     <label for="video">Youtube Video Id</label>
                     <input type="text" class="form-control" id="videoId">
                 </div>
-                <button type="button" class="btn btn-default" id="create" style="margin-bottom: 10px;">Switch</button>
+                <button type="button" class="btn btn-default" id="switch" style="margin-bottom: 10px;">Switch</button>
             </form>
         </div>
     {{/content}}
