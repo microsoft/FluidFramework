@@ -2,10 +2,6 @@ import { EventEmitter } from "events";
 import { IDocumentServiceFactory, IDocumentTaskInfo, IWorkManager } from "./definitions";
 import { WorkManager } from "./workManager";
 
-/**
- * The WorkerService manages the Socket.IO connection and work sent to it. On any error,
- * it notifies the caller and keep working.
- */
 export class WorkerService extends EventEmitter {
 
     private workManager: IWorkManager;

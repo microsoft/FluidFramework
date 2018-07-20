@@ -4,6 +4,7 @@ import { EventEmitter } from "events";
 import { IPgMarker, IRange } from "./definitions";
 
 export class ParagrapgSlicer extends EventEmitter {
+    private idleTimer = null;
     private idleTimeMS: number = 500;
     private currentIdleTime: number = 0;
     private pendingMarkers: IPgMarker[] = new Array<IPgMarker>();
@@ -82,10 +83,19 @@ export class ParagrapgSlicer extends EventEmitter {
         this.setTypingSlicer();
     }
 
+    public stop() {
+        this.sharedString.removeAllListeners();
+        if (!this.idleTimer) {
+            return;
+        }
+        clearInterval(this.idleTimer);
+        this.idleTimer = null;
+    }
+
     // Sets up slicing service for typing. Keep collecting deltas until ops are stopped.
     private setTypingSlicer() {
         const idleCheckerMS = this.idleTimeMS / 5;
-        setInterval(() => {
+        this.idleTimer = setInterval(() => {
             this.currentIdleTime += idleCheckerMS;
             if (this.currentIdleTime >= this.idleTimeMS) {
                 this.sliceParagraph();

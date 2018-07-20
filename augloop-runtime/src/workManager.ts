@@ -7,7 +7,7 @@ import { AugmentationWork } from "./augmentationWork";
 // Responsible for managing the lifetime of an work.
 export class WorkManager extends EventEmitter implements agent.IWorkManager {
 
-    private documentMap: { [docId: string]: { [work: string]: agent.IWork} } = {};
+    private documentMap = new Map<string, agent.IWork>();
     private events = new EventEmitter();
     private augRuntime: AugLoopRuntime;
 
@@ -39,14 +39,14 @@ export class WorkManager extends EventEmitter implements agent.IWorkManager {
 
     }
 
-    public stopDocumentWork(tenantId: string, documentId: string, workType: string) {
-        const fullId = this.getFullId(tenantId, documentId);
-        if (fullId in this.documentMap) {
-            const taskMap = this.documentMap[fullId];
-            const task = taskMap[workType];
-            if (task !== undefined) {
-                task.stop(workType);
-                delete taskMap[workType];
+    public async stopDocumentWork(tenantId: string, documentId: string, workType: string) {
+        const fullId = this.getFullId(tenantId, documentId, workType);
+        if (this.documentMap.has(fullId)) {
+            const task = this.documentMap.get(fullId);
+            if (task) {
+                task.removeListeners();
+                await task.stop(workType);
+                this.documentMap.delete(fullId);
             }
         }
     }
@@ -64,34 +64,28 @@ export class WorkManager extends EventEmitter implements agent.IWorkManager {
         return this;
     }
 
-    private getFullId(tenantId: string, documentId: string): string {
-        return `${tenantId}/${documentId}`;
+    private getFullId(tenantId: string, documentId: string, workType: string): string {
+        return `${tenantId}/${documentId}/${workType}`;
     }
 
     private async startTask(tenantId: string, documentId: string, workType: string, worker: agent.IWork) {
-        const fullId = this.getFullId(tenantId, documentId);
+        const fullId = this.getFullId(tenantId, documentId, workType);
 
-        if (worker) {
-            if (!(fullId in this.documentMap)) {
-                const emptyMap: { [work: string]: agent.IWork } = {};
-                this.documentMap[fullId] = emptyMap;
-            }
-            if (!(workType in this.documentMap[fullId])) {
-                await this.applyWork(fullId, workType, worker);
-            }
+        if (!this.documentMap.has(fullId) && worker) {
+            this.documentMap.set(fullId, worker);
+            await this.applyWork(fullId, workType, worker);
         }
     }
 
     private async applyWork(fullId: string, workType: string, worker: agent.IWork) {
-        winston.info(`Starting work ${workType} for document ${fullId}`);
         await worker.start(workType);
-        winston.info(`Started work ${workType} for document ${fullId}`);
-        this.documentMap[fullId][workType] = worker;
+        console.log(`Started work ${workType} for document ${fullId}`);
+        // Listen for errors and future stop events.
         worker.on("error", (error) => {
             this.events.emit("error", error);
         });
         worker.on("stop", (ev: agent.IDocumentTaskInfo) => {
-            this.stopDocumentWork(ev.tenantId, ev.docId, ev.task);
+            this.events.emit("stop", ev);
         });
     }
 }
