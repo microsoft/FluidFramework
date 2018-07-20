@@ -2,6 +2,7 @@ import { api, core, types } from "../client-api";
 import * as intelligence from "../intelligence";
 import { CollaborativeStringExtension, SharedString } from "../shared-string";
 import { RateLimiter } from "./rateLimiter";
+import { runAfterWait } from "./utils";
 
 // 5s wait time between intelligent service calls
 const defaultWaitTime = 10 * 1000;
@@ -51,5 +52,15 @@ export class IntelligentServicesManager {
             }
             this.rateLimiter.trigger();
         }
+    }
+
+    public async stop() {
+        await runAfterWait(
+            this.rateLimiter.isRunning,
+            this.rateLimiter,
+            "done",
+            async () => {
+                this.rateLimiter.stop();
+            });
     }
 }

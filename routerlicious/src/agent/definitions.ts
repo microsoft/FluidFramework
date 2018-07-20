@@ -14,7 +14,12 @@ export interface IWork {
     /**
      * "error" and "stop" listener
      */
-    on(event: "stop" | "error", listener: (error: any) => void): this;
+    on(event: "stop" | "error", listener: (event: any) => void): this;
+
+    /**
+     * Remove event listeners
+     */
+    removeListeners(): void;
 }
 
 export interface IWorkManager {
@@ -27,7 +32,7 @@ export interface IWorkManager {
     /**
      * Stops working on a document
      */
-    stopDocumentWork(tenantId: string, documentId: string, workType: string): void;
+    stopDocumentWork(tenantId: string, documentId: string, workType: string): Promise<void>;
 
     /**
      * Loads a new agent
@@ -40,9 +45,9 @@ export interface IWorkManager {
     unloadAgent(agentName: string): void;
 
     /**
-     * Error event
+     * Error event or stop event.
      */
-    on(event: "error", listener: (error: string) => void): this;
+    on(event: "error" | "stop", listener: (event: any) => void): this;
 }
 
 export interface IDocumentServiceFactory {

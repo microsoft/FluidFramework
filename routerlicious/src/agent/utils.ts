@@ -1,21 +1,41 @@
-import { api, types } from "../client-api";
+import { EventEmitter } from "events";
 
-export async function getTaskMapView(doc: api.Document): Promise<types.IMapView> {
-    const rootMapView = await doc.getRoot().getView();
-    await waitForTaskMap(rootMapView);
-    return await (rootMapView.get("tasks") as types.IMap).getView();
-}
-
-function waitForTaskMap(root: types.IMapView): Promise<void> {
-    return new Promise<void>((resolve, reject) => pollTaskMap(root, resolve, reject));
-}
-
-function pollTaskMap(root: types.IMapView, resolve, reject) {
-    if (root.has("tasks")) {
-        resolve();
+/**
+ * Invokes a callback based on boolean or waits for event to fire.
+ */
+export async function runAfterWait(
+    dirty: boolean,
+    eventSource: EventEmitter,
+    eventName: string,
+    callback: () => Promise<void>) {
+    if (!dirty) {
+        await callback();
     } else {
-        const pauseAmount = 50;
-        console.log(`Did not find taskmap - waiting ${pauseAmount}ms`);
-        setTimeout(() => pollTaskMap(root, resolve, reject), pauseAmount);
+        return new Promise<void>((resolve, reject) => {
+            eventSource.on(eventName, async () => {
+                console.log(`${eventName} event fired!`);
+                await callback();
+                resolve();
+            });
+        });
+    }
+}
+
+/**
+ * Utility to run a forced garbage collector.
+ * To expose gc, run node --expose-gc dist/paparazzi/index.js.
+ */
+export function runGC() {
+    global.gc();
+}
+
+/**
+ * Utility to print node memory usage.
+ */
+export function printMemoryUsage() {
+    const used = process.memoryUsage();
+    // tslint:disable-next-line
+    for (const key in used) {
+        console.log(`${key} ${Math.round(used[key] / 1024 / 1024 * 100) / 100} MB`);
     }
 }

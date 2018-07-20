@@ -26,6 +26,13 @@ export class IntelWork extends BaseWork implements IWork {
         return this.processIntelligenceWork(this.document, insightsMapView);
     }
 
+    public async stop(task: string): Promise<void> {
+        if (this.intelligenceManager) {
+            await this.intelligenceManager.stop();
+        }
+        await super.stop(task);
+    }
+
     public registerNewService(service: any) {
         this.intelligenceManager.registerService(service.factory.create(this.config.intelligence.resume));
     }
@@ -44,7 +51,7 @@ export class IntelWork extends BaseWork implements IWork {
                 this.intelligenceManager.process(object);
             }
         };
-        this.operation = eventHandler;
+        this.opHandler = eventHandler;
         this.document.on("op", eventHandler);
         return Promise.resolve();
     }
