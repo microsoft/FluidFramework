@@ -1,4 +1,4 @@
-import { IDocumentServiceFactory } from "@prague/routerlicious/dist/agent";
+import { IDocumentServiceFactory, IDocumentTaskInfo } from "@prague/routerlicious/dist/agent";
 import { IDocumentService, IQueueMessage } from "@prague/routerlicious/dist/api-core";
 import { Deferred } from "@prague/routerlicious/dist/core-utils";
 import { IMessage, IMessageReceiver } from "@prague/routerlicious/dist/paparazzi/messages";
@@ -31,10 +31,7 @@ export class AugLoopRunner implements utils.IRunner {
 
         this.workerService = new WorkerService(factory, this.workerConfig);
 
-        // Report any service error.
-        this.workerService.on("error", (error) => {
-            winston.error(error);
-        });
+        this.listenToEvents();
     }
 
     public async start(): Promise<void> {
@@ -58,6 +55,17 @@ export class AugLoopRunner implements utils.IRunner {
 
     public stop(): Promise<void> {
         return this.running.promise;
+    }
+
+    private listenToEvents() {
+        // Report any service error.
+        this.workerService.on("error", (error) => {
+            winston.error(error);
+        });
+        // Listen to stop events.
+        this.workerService.on("stop", (ev: IDocumentTaskInfo) => {
+            this.workerService.stopTask(ev.tenantId, ev.docId, ev.task);
+        });
     }
 
     private startDocumentWork(requestMsg: IQueueMessage) {

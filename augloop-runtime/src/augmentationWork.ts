@@ -8,6 +8,7 @@ export class AugmentationWork extends agent.BaseWork implements agent.IWork {
 
     private augmentationInvoked: boolean = false;
     private fullId: string;
+    private proofingManager: ProofingManager;
 
     constructor(
         private tenantId: string,
@@ -36,12 +37,25 @@ export class AugmentationWork extends agent.BaseWork implements agent.IWork {
                 this.runAugmentation(this.fullId, object);
             }
         };
-        this.operation = eventHandler;
-        this.document.on("op", eventHandler);
-        return Promise.resolve();
+
+        // Temporary workaround: Currently annotations are not being added to the pending op list when the document
+        // is not connected. Making sure that the document is fully connected before starting the spellchecker.
+        if (this.document.isConnected) {
+            this.opHandler = eventHandler;
+            this.document.on("op", eventHandler);
+        } else {
+            console.log(`Waiting for the document to fully connected before running spellcheck!`);
+            this.document.on("connected", () => {
+                this.opHandler = eventHandler;
+                this.document.on("op", eventHandler);
+            });
+        }
     }
 
     public async stop(task: string): Promise<void> {
+        if (this.proofingManager) {
+            this.proofingManager.stop();
+        }
         this.augRuntime.removeDocument(this.fullId);
         await super.stop(task);
     }
@@ -50,8 +64,8 @@ export class AugmentationWork extends agent.BaseWork implements agent.IWork {
         if (object.type === CollaborativeStringExtension.Type && !this.augmentationInvoked) {
             this.augmentationInvoked = true;
             const sharedString = object as SharedString;
-            const proofingManager = new ProofingManager(fullId, sharedString, this.augRuntime);
-            proofingManager.run();
+            this.proofingManager = new ProofingManager(fullId, sharedString, this.augRuntime);
+            this.proofingManager.run();
         }
     }
 }

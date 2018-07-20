@@ -33,20 +33,28 @@ export interface ISuggestion {
 
 export class ProofingManager {
     private sliceManager: SliceManager;
+    private slicer: ParagrapgSlicer;
     constructor(private fullId: string, private root: SharedString, private runtime: AugLoopRuntime) {
     }
 
     public run() {
         this.root.loaded.then(() => {
-            const slicer = new ParagrapgSlicer(this.root);
+            this.slicer = new ParagrapgSlicer(this.root);
             this.sliceManager = new SliceManager(this.fullId, this.root, this.runtime, this.applyInsight);
-            slicer.on("slice", (slice: ISlice) => {
+            this.slicer.on("slice", (slice: ISlice) => {
                 if (slice.text.length > 0) {
                     this.sliceManager.submit(slice.range.begin, slice.range.end, slice.text);
                 }
             });
-            slicer.run();
+            this.slicer.run();
         });
+    }
+
+    public stop() {
+        if (this.slicer) {
+            this.slicer.stop();
+            this.slicer.removeAllListeners();
+        }
     }
 
     private applyInsight(result: IAugResult) {
