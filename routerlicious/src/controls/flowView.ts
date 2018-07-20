@@ -1734,9 +1734,9 @@ function renderTree(
     const outerViewportHeight = parseInt(viewportDiv.style.height, 10);
     const outerViewportWidth = parseInt(viewportDiv.style.width, 10);
     const outerViewport = new Viewport(outerViewportHeight, viewportDiv, outerViewportWidth);
-    if (flowView.movingInclusion) {
-        outerViewport.addInclusion(flowView, flowView.movingMarker,
-            flowView.movingExclu.x, flowView.movingExclu.y, docContext.defaultLineDivHeight, true);
+    if (flowView.movingInclusion.onTheMove) {
+        outerViewport.addInclusion(flowView, flowView.movingInclusion.marker,
+            flowView.movingInclusion.exclu.x, flowView.movingInclusion.exclu.y, docContext.defaultLineDivHeight, true);
     }
     const startingPosStack =
         client.mergeTree.getStackContext(requestedPosition, client.getClientId(), ["table", "cell", "row"]);
@@ -1878,7 +1878,7 @@ export class Viewport {
 
     public addInclusion(flowView: FlowView, marker: MergeTree.Marker, x: number, y: number,
         lineHeight: number, movingMarker = false) {
-        if ((flowView.movingMarker !== marker) || (movingMarker)) {
+        if ((!flowView.movingInclusion.onTheMove) || ((flowView.movingInclusion.onTheMove && (flowView.movingInclusion.marker !== marker)) || movingMarker)) {
             const irdoc = <IReferenceDoc>marker.properties.ref;
             if (irdoc) {
                 // for now always an image
@@ -1888,13 +1888,15 @@ export class Viewport {
                     showImage.src = irdoc.url;
                     const w = Math.floor(this.width / 3);
                     let h = w;
+                    // TODO: adjust dx, dy by viewport dimensions
                     let dx = 0;
                     let dy = 0;
+                    if (movingMarker) {
+                        dx = flowView.movingInclusion.dx;
+                        dy = flowView.movingInclusion.dy;
+                    }
                     if (irdoc.layout) {
                         h = Math.floor(w * irdoc.layout.ar);
-                        // TODO: adjust dx, dy by viewport dimensions
-                        dx = irdoc.layout.dx;
-                        dy = irdoc.layout.dy;
                     }
                     if ((x + w) > this.width) {
                         x -= w;
@@ -2813,6 +2815,19 @@ export interface IRemotePresenceInfo {
     refseq: number;
 }
 
+export interface IMovingInclusionInfo {
+    onTheMove: boolean;
+    exclu?: ui.Rectangle;
+    marker?: MergeTree.Marker;
+    dx?: number;
+    dy?: number;
+}
+
+export interface IRemoteDragPresenceInfo {
+    exclu: ui.Rectangle;
+    markerPos: number;
+}
+
 export interface ILocalPresenceInfo {
     localRef?: MergeTree.LocalReference;
     markLocalRef?: MergeTree.LocalReference;
@@ -2938,7 +2953,7 @@ function findTile(flowView: FlowView, startPos: number, tileType: string, preced
     return flowView.client.mergeTree.findTile(startPos, flowView.client.getClientId(), tileType, preceding);
 }
 
-function annotateMarker(flowView: FlowView, props: MergeTree.PropertySet, marker: MergeTree.Marker) {
+export function annotateMarker(flowView: FlowView, props: MergeTree.PropertySet, marker: MergeTree.Marker) {
     const start = getOffset(flowView, marker);
     const end = start + marker.cachedLength;
     flowView.sharedString.annotateRange(props, start, end);
@@ -3033,9 +3048,7 @@ export class FlowView extends ui.Component {
         showComments: true,
         showCursorLocation: true,
     } as IFlowViewModes;
-    public movingInclusion = false;
-    public movingExclu: IExcludedRectangle;
-    public movingMarker: MergeTree.Marker;
+    public movingInclusion = <IMovingInclusionInfo>{ onTheMove: false };
     public lastDocContext: IDocumentContext;
     private lastVerticalX = -1;
     private randWordTimer: any;
@@ -3699,27 +3712,22 @@ export class FlowView extends ui.Component {
                 if (elm) {
                     if (fresh) {
                         if (elm.tagName === "IMG") {
-                            this.movingInclusion = true;
+                            this.movingInclusion.onTheMove = true;
                             const refimg = elm as IRefImg;
                             imgMarker = refimg.marker;
-                            this.movingExclu = refimg.exclu;
-                            this.movingMarker = imgMarker;
+                            this.movingInclusion.exclu = refimg.exclu;
+                            this.movingInclusion.marker = imgMarker;
                         }
                     }
-                    if (this.movingInclusion) {
+                    if (this.movingInclusion.onTheMove) {
                         // console.log(`moving inclusion to nowhere with ${prevX-downX},${prevY-downY}`);
                         const deltaX = prevX - downX;
                         const deltaY = prevY - downY;
                         const thresh = 2;
                         const dist = Math.abs(deltaX) + Math.abs(deltaY);
                         if (dist >= thresh) {
-                            const irdoc = <IReferenceDoc>imgMarker.properties.ref;
-                            irdoc.layout.dx = deltaX;
-                            irdoc.layout.dy = deltaY;
-                            const refProps = {
-                                [Paragraph.referenceProperty]: irdoc,
-                            };
-                            annotateMarker(this, refProps, imgMarker);
+                            this.movingInclusion.dx = deltaX;
+                            this.movingInclusion.dy = deltaY;
                             this.render(this.topChar, true);
                         }
                     } else {
@@ -3773,24 +3781,20 @@ export class FlowView extends ui.Component {
             this.element.onmousemove = preventD;
             if (e.button === 0) {
                 freshDown = false;
-                if (this.movingInclusion) {
+                if (this.movingInclusion.onTheMove) {
                     const deltaX = prevX - downX;
                     const deltaY = prevY - downY;
                     const pos = this.getNearestPosition({
-                        x: e.clientX + deltaX,
-                        y: e.clientY + deltaY,
+                        x: this.movingInclusion.exclu.x + deltaX,
+                        y: this.movingInclusion.exclu.y + deltaY,
                     });
-                    const irdoc = <IReferenceDoc>imgMarker.properties.ref;
-                    irdoc.layout.dx = 0;
-                    irdoc.layout.dy = 0;
-                    const refProps = {
-                        [Paragraph.referenceProperty]: irdoc,
-                    };
-                    annotateMarker(this, refProps, imgMarker);
                     if (pos !== undefined) {
                         console.log(`moving to ${pos}`);
-                        moveMarker(this, getOffset(this, this.movingMarker), pos);
+                        moveMarker(this, getOffset(this, this.movingInclusion.marker), pos);
                     }
+                    this.movingInclusion.dx = 0;
+                    this.movingInclusion.dy = 0;
+                    this.movingInclusion.onTheMove = false;
                     this.render(this.topChar, true);
                 } else {
                     const elm = <HTMLElement>document.elementFromPoint(prevX, prevY);
@@ -3808,7 +3812,6 @@ export class FlowView extends ui.Component {
                         }
                     }
                 }
-                this.movingInclusion = false;
                 e.preventDefault();
                 e.returnValue = false;
                 return false;
@@ -4923,6 +4926,16 @@ export class FlowView extends ui.Component {
             this.presenceMapView.set(this.collabDocument.clientId, presenceInfo);
         }
     }
+
+    // private updateDragPresence() {
+    //     if (this.presenceMapView) {
+    //         const dragPresenceInfo: IRemoteDragPresenceInfo = {
+    //             exclu: this.movingExclu,
+    //             markerPos: getOffset(this, this.movingMarker),
+    //         };
+    //         this.presenceMapView.set(this.collabDocument.clientId+"drag", dragPresenceInfo);
+    //     }
+    // }
 
     private increaseIndent(tile: Paragraph.IParagraphMarker, pos: number, decrease = false) {
         tile.listCache = undefined;
