@@ -1,14 +1,6 @@
 import { api, types } from "../client-api";
 import * as ui from "../ui";
-
-// tslint:disable-next-line:no-namespace
-declare global {
-    // tslint:disable-next-line:interface-name
-    interface Window {
-        onYouTubeIframeAPIReady?: () => void;
-        YT: any;
-    }
-}
+import { getProposedPlaybackTime, PlayerState, YouTubeWrapper } from "../utils/youtubeHelper";
 
 interface IVideoState {
     playing: boolean;
@@ -21,29 +13,34 @@ interface IVideoState {
  * youtube video app
  */
 export class YouTubeVideoCanvas extends ui.Component {
-    public player: any;
+    public player: YouTubeWrapper;
     private videoId: string;
     private videoMap: types.IMap;
     private videoMapView: types.IMapView;
+    private playerId = "player";
 
     constructor(elem: HTMLDivElement, private doc: api.Document, private root: types.IMap) {
         super(elem);
-        this.player = null;
-        this.videoId = "-Of_yz-4iXs"; // Default Minecraft video
 
+        // Youtube Setup
+        this.videoId = "-Of_yz-4iXs"; // Default Minecraft video
         window.onYouTubeIframeAPIReady = () => { this.loadYoutubePlayer(); };
 
+        // Add youtube player to the DOM
         const playerDiv = document.createElement("div");
-        playerDiv.id = "player";
+        playerDiv.id = this.playerId;
         elem.appendChild(playerDiv);
 
-        const button = document.getElementById("create");
+        // Build switch button
+        const button = document.getElementById("switch");
+        // TODO: fix this
         button.onclick = () => {
             const videoInput = document.getElementById("videoId") as HTMLInputElement;
             this.videoId = videoInput.value;
-            this.player.loadVideoById(this.videoId);
+            this.player.loadNewVideo(this.videoId);
         };
 
+        // Load in Youtube Script
         const tag = document.createElement("script");
         tag.src = "https://www.youtube.com/iframe_api";
         elem.appendChild(tag);
@@ -51,86 +48,71 @@ export class YouTubeVideoCanvas extends ui.Component {
 
     public async loadYoutubePlayer() {
 
+        // Create our distributed Map, called "youTubeVideo", on the root map
         if (await this.root.has("youTubeVideo")) {
             this.videoMap = await this.root.get<types.IMap>("youTubeVideo");
         } else {
             this.videoMap = await this.root.set<types.IMap>("youTubeVideo", this.doc.createMap());
         }
 
+        // Fetch a synchronous version of the youTubeVideo Map for easier use
         this.videoMapView = await this.videoMap.getView();
 
-        let playing: number = 0;
-        let currentPlaybackTime: number = 0;
+        this.player = new YouTubeWrapper(this.videoId, this.playerId,
+        // On YouTube Player Ready
+        (event) => {
+            if (this.videoMapView.has("state")) {
+                const state = this.videoMapView.get<IVideoState>("state");
 
-        // tslint:disable-next-line:no-unused-new
-        this.player = new window.YT.Player("player", {
-            events: {
-                onReady: (event) => {
-                    event.target.mute();
+                const proposedPlaybackTime = getProposedPlaybackTime(state.lastChangeUTC,
+                    state.playing, state.elapsedTime);
 
-                    if (this.videoMapView.has("state")) {
-                        const state = this.videoMapView.get<IVideoState>("state");
-                        playing = state.playing ? 1 : 0;
-                        currentPlaybackTime = (Date.now() - state.lastChangeUTC + state.elapsedTime * 1000) / 1000;
-
-                        if (currentPlaybackTime < event.target.getDuration()) {
-                            event.target.seekTo(currentPlaybackTime);
-                            if (playing) {
-                                event.target.playVideo();
-                            } else {
-                                event.target.pauseVideo();
-                            }
-                        } else {
-                            this.videoMapView.set<IVideoState>("state", {
-                                elapsedTime: 0,
-                                lastChangeUTC: Date.now(),
-                                playing,
-                                src: this.videoId,
-                            });
-                        }
-                    }
-                },
-                onStateChange: (event) => {
-                    const playerState = event.data;
-
-                    if (playerState === 1 || playerState === 2) {
-                        this.videoMapView.set<IVideoState>("state", {
-                            elapsedTime: event.target.getCurrentTime(),
-                            lastChangeUTC: Date.now(),
-                            playing: playerState === 1,
-                            src: this.videoId,
-                        });
-                    } else if (playerState === -1 ) {
-                        event.target.playVideo(); // Takes the player out of frozen state
+                // Valid playback time
+                if (proposedPlaybackTime < this.player.getDuration()) {
+                    this.player.seekTo(proposedPlaybackTime);
+                    if (state.playing) {
+                        this.player.playVideo();
                     } else {
-                        console.log("Buffering: " + playerState);
+                        this.player.pauseVideo();
                     }
-                },
-            },
-            height: 390,
-            playerVars: {
-                autoplay: playing,
-                start: currentPlaybackTime,
-            },
-            videoId: this.videoId,
-            width: 640,
+                } else {
+                    // We've finished the video! Reset the state.
+                    this.videoMapView.set<IVideoState>("state", {
+                        elapsedTime: 0,
+                        lastChangeUTC: Date.now(),
+                        playing: false,
+                        src: this.videoId,
+                    });
+                }
+            }
+        },
+        // On YouTube Player play/pause/buffer State Change
+        (playerState) => {
+            // Update current time, play/pause, src, last changed time
+            if (playerState === PlayerState.playing || playerState === PlayerState.paused) {
+                this.videoMapView.set<IVideoState>("state", {
+                    elapsedTime: this.player.getCurrentTime(),
+                    lastChangeUTC: Date.now(),
+                    playing: (playerState === PlayerState.playing),
+                    src: this.videoId,
+                });
+            }
         });
 
+        // Actions to take when the client receives an update to the video map
         this.videoMap.on("valueChanged", (value) => {
             if (value.key === "state") {
                 const incomingState = this.videoMapView.get<IVideoState>(value.key);
                 const incomingPlaybackTime = (Date.now() -
                                         incomingState.lastChangeUTC +
                                         incomingState.elapsedTime * 1000) / 1000;
-                if (this.videoId !== incomingState.src) {
-                    this.videoId = incomingState.src;
-                    this.player.loadVideoById(incomingState.src);
-                }
+
+                this.player.loadNewVideo(incomingState.src);
 
                 // Is incomingState very similar to local state
                 if (Math.abs(incomingState.lastChangeUTC - Date.now()) / 1000 < 2 &&
                     Math.abs(this.player.getCurrentTime() - incomingPlaybackTime) < 2 &&
-                    incomingState.playing === (this.player.getPlayerState() === 1)
+                    incomingState.playing === this.player.isPlaying()
                 ) {
                     console.log("Ignore local changes");
                 } else {
@@ -148,11 +130,5 @@ export class YouTubeVideoCanvas extends ui.Component {
                 console.log("Default: " + value.key);
             }
         });
-    }
-
-    public youtubeIdParser(url: string): string {
-        const regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#\&\?]*).*/;
-        const match = url.match(regExp);
-        return (match && match[7].length === 11) ? match[7] : null;
     }
 }

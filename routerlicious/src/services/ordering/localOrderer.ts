@@ -9,8 +9,8 @@ import { ClientSequenceTimeout } from "../../deli/lambdaFactory";
 import { IContext } from "../../kafka-service/lambdas";
 import { ScriptoriumLambda } from "../../scriptorium/lambda";
 import { TmzLambda } from "../../tmz/lambda";
-import { TmzRunner } from "../../tmz/runner";
 import { IMessage, IProducer, MongoManager } from "../../utils";
+import { TenantManager } from "../tenant";
 
 export interface ISubscriber {
     id: string;
@@ -299,7 +299,9 @@ export class LocalOrderer implements core.IOrderer {
         documentId: string,
         documentsCollectionName: string,
         deltasCollectionName: string,
-        tmzRunner: TmzRunner) {
+        taskMessageSender: core.IMessageSender,
+        tenantManager: TenantManager,
+        permission: any) {
 
         const [details, db] = await Promise.all([
             storage.getOrCreateDocument(tenantId, documentId),
@@ -314,7 +316,9 @@ export class LocalOrderer implements core.IOrderer {
             documentId,
             collection,
             deltasCollection,
-            tmzRunner);
+            taskMessageSender,
+            tenantManager,
+            permission);
     }
 
     private producer: ScriptoriumProducer;
@@ -329,7 +333,9 @@ export class LocalOrderer implements core.IOrderer {
         private documentId: string,
         collection: ICollection<core.IDocument>,
         deltasCollection: ICollection<any>,
-        tmzRunner: TmzRunner) {
+        private taskMessageSender: core.IMessageSender,
+        private tenantManager: TenantManager,
+        private permission: any) {
 
         this.existing = details.existing;
         this.socketPublisher = new LocalSocketPublisher(this.pubsub);
@@ -347,9 +353,10 @@ export class LocalOrderer implements core.IOrderer {
         // TMZ lambda
         const tmzContext = new LocalContext();
         const tmzLambda = new TmzLambda(
-            tmzContext,
-            tmzRunner,
-            new Promise<void>((resolve, reject) => { return; }));
+            this.taskMessageSender,
+            this.tenantManager,
+            this.permission,
+            tmzContext);
 
         // Deli Lambda
         this.producer = new ScriptoriumProducer(scriptoriumLambda, tmzLambda);

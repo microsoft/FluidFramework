@@ -53,4 +53,8 @@ export class PingWork implements IWork {
         this.events.on(event, listener);
         return this;
     }
+
+    public removeListeners() {
+        // Not implemented.
+    }
 }

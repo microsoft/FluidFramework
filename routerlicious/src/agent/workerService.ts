@@ -1,11 +1,7 @@
 import { EventEmitter } from "events";
-import { IDocumentServiceFactory, IWorkManager } from "./definitions";
+import { IDocumentServiceFactory, IDocumentTaskInfo, IWorkManager } from "./definitions";
 import { WorkManager } from "./workManager";
 
-/**
- * The WorkerService manages the Socket.IO connection and work sent to it. On any error,
- * it notifies the caller and keep working.
- */
 export class WorkerService extends EventEmitter {
 
     private workManager: IWorkManager;
@@ -21,9 +17,7 @@ export class WorkerService extends EventEmitter {
             this.config,
             this.serverUrl,
             this.agentModuleLoader);
-        this.workManager.on("error", (error) => {
-            this.emit("error", error);
-        });
+        this.listenToEvents();
     }
 
     public async startTasks(tenantId: string, documentId: string, tasks: string[], token: string) {
@@ -34,10 +28,8 @@ export class WorkerService extends EventEmitter {
         await Promise.all(tasksP);
     }
 
-    public stopTasks(tenantId: string, documentId: string, tasks: string[]) {
-        for (const task of tasks) {
-            this.workManager.stopDocumentWork(tenantId, documentId, task);
-        }
+    public async stopTask(tenantId: string, documentId: string, task: string) {
+        await this.workManager.stopDocumentWork(tenantId, documentId, task);
     }
 
     public async loadAgent(agentName: string) {
@@ -46,5 +38,14 @@ export class WorkerService extends EventEmitter {
 
     public unloadAgent(agentName: string) {
         this.workManager.unloadAgent(agentName);
+    }
+
+    private listenToEvents() {
+        this.workManager.on("error", (error) => {
+            this.emit("error", error);
+        });
+        this.workManager.on("stop", (ev: IDocumentTaskInfo) => {
+            this.emit("stop", ev);
+        });
     }
 }

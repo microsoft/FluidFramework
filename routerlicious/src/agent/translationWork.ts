@@ -1,9 +1,11 @@
+import { EventEmitter } from "events";
 import * as request from "request";
 import { Builder, parseString } from "xml2js";
 import { core, map, MergeTree, types } from "../client-api";
 import { CollaborativeStringExtension, SharedString } from "../shared-string";
 import { BaseWork} from "./baseWork";
 import { IWork} from "./definitions";
+import { runAfterWait } from "./utils";
 
 const subscriptionKey = "bd099a1e38724333b253fcff7523f76a";
 
@@ -61,13 +63,20 @@ async function translate(from: string, to: string, text: string[]): Promise<stri
     });
 }
 
-class Translator {
+class Translator extends EventEmitter {
     private view: types.IMapView;
-    private pendingTranslation: any;
+    private pendingTranslation = false;
+    private translating = false;
+    private translationTimer = null;
 
     constructor(
         private insights: types.IMap,
         private sharedString: SharedString) {
+            super();
+    }
+
+    public get isTranslating() {
+        return this.translating;
     }
 
     public async start(): Promise<void> {
@@ -80,6 +89,13 @@ class Translator {
                 this.requestTranslation(op);
             }
         });
+    }
+
+    public stop() {
+        // Remove listener to stop inbound ops first.
+        this.sharedString.removeAllListeners();
+        // Cancel timer to stop invoking further translation.
+        clearTimeout(this.translationTimer);
     }
 
     private needsTranslation(op: any): boolean {
@@ -122,20 +138,25 @@ class Translator {
         this.pendingTranslation = true;
 
         // Set a timeout before we perform the translation to collect any extra inbound ops
-        setTimeout(() => {
+        this.translationTimer = setTimeout(() => {
             // Let new reqeusts start
             this.pendingTranslation = false;
 
             const languages = this.view.get("translations") as map.DistributedSet<string>;
 
             // Run translation on all other operations
+            this.translating = true;
             const translationsP = Promise.all(languages.entries().map((language) => this.translate(language)));
             const doneP = translationsP.catch((error) => {
+                this.translating = false;
                 console.error(error);
+                this.emit("translated");
             });
 
             doneP.then(() => {
+                this.translating = false;
                 console.log(`${start} - ${Date.now()} - Done with translation ${this.sharedString.id}`);
+                this.emit("translated");
             });
         }, 30);
     }
@@ -164,6 +185,7 @@ class Translator {
 export class TranslationWork extends BaseWork implements IWork {
     private translationSet = new Set();
     private translators = new Map<string, core.ICollaborativeObject>();
+    private translator: Translator;
 
     constructor(docId: string, private token: string, config: any, private service: core.IDocumentService) {
         super(docId, config);
@@ -181,18 +203,31 @@ export class TranslationWork extends BaseWork implements IWork {
         return this.trackEvents(insights);
     }
 
+    public async stop(task: string): Promise<void> {
+        if (this.translator) {
+            await runAfterWait(
+                this.translator.isTranslating,
+                this.translator,
+                "translated",
+                async () => {
+                    this.translator.stop();
+                });
+        }
+        await super.stop(task);
+    }
+
     private trackEvents(insights: types.IMap): Promise<void> {
         const eventHandler = (op: core.ISequencedDocumentMessage, object: core.ICollaborativeObject) => {
             if (object && object.type === CollaborativeStringExtension.Type) {
                 if (!this.translationSet.has(object)) {
                     this.translationSet.add(object);
-                    const translator = new Translator(insights, object as SharedString);
+                    this.translator = new Translator(insights, object as SharedString);
                     this.translators.set(object.id, object);
-                    translator.start();
+                    this.translator.start();
                 }
             }
         };
-        this.operation = eventHandler;
+        this.opHandler = eventHandler;
         this.document.on("op", eventHandler);
         return Promise.resolve();
     }

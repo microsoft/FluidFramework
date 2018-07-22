@@ -1,10 +1,9 @@
 import * as assert from "assert";
 import { EventEmitter } from "events";
-import now = require("performance-now");
 import { ValueType } from "../map/definitions";
 import { debug } from "./debug";
 import { ConnectionState, IDistributedObjectServices, IDocument, IObjectStorageService } from "./document";
-import { ILatencyMessage, IObjectMessage, ISequencedObjectMessage, OperationType } from "./protocol";
+import { IObjectMessage, ISequencedObjectMessage, OperationType } from "./protocol";
 import { ITree } from "./storage";
 import { ICollaborativeObject } from "./types";
 
@@ -284,30 +283,10 @@ export abstract class CollaborativeObject extends EventEmitter implements IColla
             } else {
                 debug(`Duplicate ack received ${message.clientSequenceNumber}`);
             }
-
-            // Add final trace.
-            message.traces.push({
-                action: "end",
-                service: "client",
-                timestamp: now(),
-            });
-
-            // Submit the latency message back to server.
-            this.submitLatencyMessage(message);
         }
 
         this.emit("pre-op", message, local);
         this.processCore(message, context);
         this.emit("op", message, local);
-    }
-
-    /**
-     * Submits a heartbeat message to the remote server
-     */
-    private submitLatencyMessage(message: ISequencedObjectMessage) {
-        const latencyMessage: ILatencyMessage = {
-            traces: message.traces,
-        };
-        this.document.submitLatencyMessage(latencyMessage);
     }
 }

@@ -38,10 +38,7 @@ export class PaparazziRunner implements utils.IRunner {
             alfredUrl,
             this.initLoadModule(alfredUrl));
 
-        // Report any service error.
-        this.workerService.on("error", (error) => {
-            winston.error(error);
-        });
+        this.listenToEvents();
     }
 
     public async start(): Promise<void> {
@@ -72,6 +69,17 @@ export class PaparazziRunner implements utils.IRunner {
 
     public stop(): Promise<void> {
         return this.running.promise;
+    }
+
+    private listenToEvents() {
+        // Report any service error.
+        this.workerService.on("error", (error) => {
+            winston.error(error);
+        });
+        // Listen to stop events.
+        this.workerService.on("stop", (ev: agent.IDocumentTaskInfo) => {
+            this.workerService.stopTask(ev.tenantId, ev.docId, ev.task);
+        });
     }
 
     private startDocumentWork(requestMsg: IQueueMessage) {

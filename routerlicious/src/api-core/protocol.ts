@@ -9,7 +9,7 @@ export const NoOp = "noop";
 // Operation performed on a distributed data type
 export const ObjectOperation = "objOp";
 
-// Save Operation performed on a distributed data type
+// Save Operation performed on a distributed data type, forces immediate snapshot
 export const SaveOperation = "saveOp";
 
 // Attaches a new object to the document
@@ -32,6 +32,10 @@ export const RoundTrip = "tripComplete";
 
 // Message to indicate the need of a remote agent for a document.
 export const RemoteHelp = "remoteHelp";
+
+export const BlobPrepared = "blobPrepared";
+
+export const BlobUploaded = "blobUploaded";
 
 /**
  * An envelope wraps the contents with the intended target
@@ -138,8 +142,6 @@ export interface IAttachMessage {
 
 export interface IHelpMessage {
 
-    clientId: string;
-
     tasks: string[];
 }
 
@@ -196,7 +198,7 @@ export interface INack {
 }
 
 /**
- * Sequenced message for a distribute document
+ * Sequenced message for a distributed document
  */
 export interface ISequencedDocumentMessage {
     // The user that submitted the delta

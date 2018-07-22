@@ -4,8 +4,8 @@ import * as _ from "lodash";
 import * as uuid from "uuid/v4";
 import * as ws from "ws";
 import * as api from "../../api-core";
-import { IDocumentStorage, IOrderer, IOrdererConnection } from "../../core";
-import { TmzRunner } from "../../tmz/runner";
+import { IDocumentStorage, IMessageSender, IOrderer, IOrdererConnection } from "../../core";
+import * as services from "../../services";
 import { MongoManager } from "../../utils";
 import { debug } from "../debug";
 import {
@@ -51,8 +51,10 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
         nodeCollectionName: string,
         documentsCollectionName: string,
         deltasCollectionName: string,
-        tmzRunner: TmzRunner,
-        timeoutLength: number) {
+        timeoutLength: number,
+        taskMessageSender: IMessageSender,
+        tenantManager: services.TenantManager,
+        permission: any) {
 
         // Look up any existing information for the node or create a new one
         const node = await LocalNode.Create(
@@ -69,8 +71,10 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
             nodeCollectionName,
             documentsCollectionName,
             deltasCollectionName,
-            tmzRunner,
-            timeoutLength);
+            timeoutLength,
+            taskMessageSender,
+            tenantManager,
+            permission);
     }
 
     private static async Create(
@@ -139,8 +143,10 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
         private nodeCollectionName: string,
         private documentsCollectionName: string,
         private deltasCollectionName: string,
-        private tmzRunner: TmzRunner,
-        private timeoutLength: number) {
+        private timeoutLength: number,
+        private taskMessageSender: IMessageSender,
+        private tenantManager: services.TenantManager,
+        private permission: any) {
         super();
 
         // Schedule the first heartbeat to update the reservation
@@ -221,7 +227,9 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
             documentId,
             this.documentsCollectionName,
             this.deltasCollectionName,
-            this.tmzRunner);
+            this.taskMessageSender,
+            this.tenantManager,
+            this.permission);
         assert(!this.orderMap.has(fullId));
         this.orderMap.set(fullId, orderer);
 

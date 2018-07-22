@@ -73,8 +73,4 @@ export class TestDocument implements core.IDocument {
     public submitObjectMessage(envelope: core.IEnvelope) {
         throw new Error("Method not implemented.");
     }
-
-    public submitLatencyMessage(message: core.ILatencyMessage) {
-        throw new Error("Method not implemented.");
-    }
 }

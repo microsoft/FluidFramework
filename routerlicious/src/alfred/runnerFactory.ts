@@ -2,7 +2,6 @@ import { Provider } from "nconf";
 import * as os from "os";
 import * as core from "../core";
 import * as services from "../services";
-import { TmzResourcesFactory, TmzRunnerFactory } from "../tmz/runnerFactory";
 import * as utils from "../utils";
 import { AlfredRunner } from "./runner";
 import { IAlfredTenant } from "./tenant";
@@ -64,13 +63,11 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
             true);
         const deltasCollectionName = config.get("mongo:collectionNames:deltas");
 
-        // TODO should fold this into the lambda itself
-        // TMZ resources
-        const resourceFactory = new TmzResourcesFactory();
-        const runnerFactory = new TmzRunnerFactory();
-        const resources = await resourceFactory.create(config);
-        const runner = await runnerFactory.create(resources);
-        runner.start();
+        // tmz agent uploader does not run locally.
+        // TODO: Make agent uploader run locally.
+        const tmzConfig = config.get("tmz");
+        const taskMessageSender = services.createMessageSender(config.get("rabbitmq"), tmzConfig);
+        await taskMessageSender.initialize();
 
         const nodeCollectionName = config.get("mongo:collectionNames:nodes");
         const nodeManager = new services.NodeManager(mongoManager, nodeCollectionName);
@@ -92,8 +89,10 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
             nodeCollectionName,
             documentsCollectionName,
             deltasCollectionName,
-            runner,
-            60000);
+            60000,
+            taskMessageSender,
+            tenantManager,
+            tmzConfig.permissions);
         const localOrderManager = new services.LocalOrderManager(nodeFactory, reservationManager);
         const kafkaOrdererFactory = new services.KafkaOrdererFactory(producer, storage);
         const orderManager = new services.OrdererManager(localOrderManager, kafkaOrdererFactory);

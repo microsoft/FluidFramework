@@ -35,15 +35,18 @@ async function performTask(docId: string, token: string, task: string, config: a
             await intelWork.start(task);
             break;
         case "spell":
-            const dictionary = await loadDictionary(config.serverUrl);
-            const spellWork = new SpellcheckerWork(
-                docId,
-                token,
-                config,
-                dictionary,
-                api.getDefaultDocumentService(),
-            );
-            await spellWork.start(task);
+            loadDictionary(config.serverUrl).then(async (dictionary) => {
+                const spellWork = new SpellcheckerWork(
+                    docId,
+                    token,
+                    config,
+                    dictionary,
+                    api.getDefaultDocumentService(),
+                );
+                await spellWork.start(task);
+            }, (err) => {
+                console.log(err);
+            });
             break;
         case "translation":
             const translationWork = new TranslationWork(docId, token, config, api.getDefaultDocumentService());

@@ -451,10 +451,10 @@ export async function typeChunk(
             processCounter.increment(time);
         });
 
-        a.ss.on("op", (message: core.ISequencedObjectMessage) => {
+        a.ss.on("op", (message: core.ISequencedObjectMessage, local) => {
             if (message.clientSequenceNumber &&
                 message.clientSequenceNumber > 25 &&
-                message.clientId === a.doc.clientId) {
+                local) {
 
                 ackCounter.increment(1);
                 // Wait for at least one cycle
@@ -473,9 +473,9 @@ export async function typeChunk(
                         orderBegin = trace.timestamp;
                     } else if (trace.service === "scriptorium" && trace.action === "end") {
                         orderEnd = trace.timestamp;
-                    } else if (trace.service === "client" && trace.action === "start") {
+                    } else if (trace.service === "browser" && trace.action === "start") {
                         clientStart = trace.timestamp;
-                    } else if (trace.service === "client" && trace.action === "end") {
+                    } else if (trace.service === "browser" && trace.action === "end") {
                         clientEnd = trace.timestamp;
                     }
                 }

@@ -6,6 +6,7 @@ import * as jwt from "jsonwebtoken";
 import performanceNow = require("performance-now");
 import * as uuid from "uuid/v4";
 import * as api from "../api-core";
+import { BlobManager, IImageBlob } from "../api-core";
 import * as cell from "../cell";
 import { Deferred, gitHashFile } from "../core-utils";
 import { ICell, IMap, IStream } from "../data-types";
@@ -85,6 +86,8 @@ interface IHeaderDetails {
     // Attributes for the document
     attributes: api.IDocumentAttributes;
 
+    blobs: api.IImageBlob[];
+
     // Distributed objects contained within the document
     distributedObjects: api.IDistributedObject[];
 
@@ -103,6 +106,7 @@ function getEmptyHeader(id: string): IHeaderDetails {
             minimumSequenceNumber: 0,
             sequenceNumber: 0,
         },
+        blobs: [],
         distributedObjects: [],
         transformedMessages: [],
         tree: null,
@@ -190,9 +194,13 @@ export class Document extends EventEmitter implements api.IDocument {
     private connectionState = api.ConnectionState.Disconnected;
     private pendingAttach = new Map<string, api.IAttachMessage>();
     private storageService: api.IDocumentStorageService;
+    private blobManager: api.IBlobManager;
     private lastMinSequenceNumber;
     private loaded = false;
     private pendingClientId: string;
+    private lastPong: number;
+    private clientType: string;
+    private lastLeaderClientId: string;
 
     public get clientId(): string {
         return this._clientId;
@@ -263,6 +271,8 @@ export class Document extends EventEmitter implements api.IDocument {
         this._tenantId = claims.tenantId;
         this._user = claims.user;
 
+        this.clientType = (this.opts.client === undefined || this.opts.client.type === api.Browser) ?
+            api.Browser : api.Robot;
     }
 
     /**
@@ -367,62 +377,31 @@ export class Document extends EventEmitter implements api.IDocument {
         return this.distributedObjects.get(blobMapId).object as IMap;
     }
 
-    // TODO (sabroner) turn filemap into a more fully featured class
-    // TODO (sabroner) Move this out of document
-    public createBlobMetadata(file: api.IInclusion): api.IInclusion {
-        const hash = gitHashFile(file.content);
-        file.sha = hash;
-        const fileMap = this.getBlobMap().set<IMap>(hash, this.createMap());
-        fileMap.set<string>("type", file.type);
-        fileMap.set<string>("size", file.size);
-        fileMap.set<number>("width", file.width);
-        fileMap.set<number>("height", file.height);
-        fileMap.set<string>("fileName", file.fileName);
-        fileMap.set<string>("caption", file.caption);
+    public createBlobMetadata(file: api.IImageBlob, sha: string): api.IImageBlob {
+        file.sha = sha;
+
+        this.blobManager.addBlob(file).then(() => this.submitMessage(api.BlobPrepared, file));
         return file;
     }
 
-    public uploadBlob(file: api.IInclusion): api.IInclusion {
-
-        this.createBlobMetadata(file);
-
-        const encodedBuffer = file.content.toString("base64");
-        this.storageService.manager.createBlob(encodedBuffer, "base64");
-
-        return this.createBlobMetadata(file);
+    public async uploadBlob(file: api.IImageBlob): Promise<api.IImageBlob> {
+        const sha = gitHashFile(file.content);
+        this.blobManager.createBlob(file.content).then(() => {
+            this.submitMessage(api.BlobUploaded, sha);
+        });
+        return this.createBlobMetadata(file, sha);
     }
 
-    public getBlobHashes(): Promise<string[]> {
-        const blobMap = this.getBlobMap();
-        return blobMap.keys();
+    public getBlobMetadata(): Promise<IImageBlob[]> {
+        return new Promise<IImageBlob[]>((resolve) => {
+            resolve(this.blobManager.getBlobMetadata());
+        });
     }
 
-    public getBlob(key: string): Promise<api.IInclusion> {
-        const fileMapP = this.getBlobMap().wait(key) as Promise<IMap>;
+    public async getBlob(sha: string): Promise<api.IImageBlob> {
 
-        const blobResponseP = this.storageService.manager.getBlob(key);
+        return this.blobManager.getBlob(sha);
 
-        return Promise.all([fileMapP, blobResponseP])
-            .then(async (values) => {
-
-                const fileMap = await values[0].getView();
-                const blobResponse = values[1];
-
-                return {
-                    caption: fileMap.get("caption"),
-                    content: new Buffer(blobResponse.content, "base64"),
-                    fileName: fileMap.get("fileName"),
-                    height: fileMap.get("height"),
-                    sha: key,
-                    size: fileMap.get("size"),
-                    type: fileMap.get("type"),
-                    width: fileMap.get("width"),
-                } as api.IInclusion;
-            })
-            .catch((error) => {
-                console.log("Error");
-                return null;
-            });
     }
 
     /**
@@ -440,14 +419,11 @@ export class Document extends EventEmitter implements api.IDocument {
         if (this._deltaManager) {
             this._deltaManager.close();
         }
+        this.removeAllListeners();
     }
 
     public submitObjectMessage(envelope: api.IEnvelope): void {
         this.submitMessage(api.ObjectOperation, envelope);
-    }
-
-    public submitLatencyMessage(message: api.ILatencyMessage) {
-        this._deltaManager.submitRoundtrip(api.RoundTrip, message);
     }
 
     public branch(): Promise<string> {
@@ -481,7 +457,7 @@ export class Document extends EventEmitter implements api.IDocument {
                 sequenceNumber = attributes.sequenceNumber;
             }
 
-            // Retrieve all deltas from sequenceNumber to snapshotSequenceNumber. Range is exlusive so we increment
+            // Retrieve all deltas from sequenceNumber to snapshotSequenceNumber. Range is exclusive so we increment
             // the snapshotSequenceNumber by 1 to include it.
             const deltas = await this._deltaManager.getDeltas(sequenceNumber, snapshotSequenceNumber + 1);
             const parents = lastVersion.length > 0 ? [lastVersion[0].sha] : [];
@@ -546,7 +522,11 @@ export class Document extends EventEmitter implements api.IDocument {
                 this.storageService = storageService;
                 this.lastMinSequenceNumber = header.attributes.minimumSequenceNumber;
                 this.clients = new Map(header.attributes.clients);
+                this.blobManager = new BlobManager(this.storageService);
 
+                if (header.blobs.length > 0) {
+                    this.blobManager.loadBlobMetadata(header.blobs);
+                }
                 // Start delta processing once all objects are loaded
                 const readyP = Array.from(this.distributedObjects.values()).map((value) => value.object.ready());
                 Promise.all(readyP).then(
@@ -584,7 +564,6 @@ export class Document extends EventEmitter implements api.IDocument {
                 // This I don't think I can get rid of
                 if (!this.existing) {
                     this.createAttached(rootMapId, mapExtension.MapExtension.Type);
-                    this.createAttached(blobMapId, mapExtension.MapExtension.Type);
                 } else {
                     await this.get(rootMapId);
                 }
@@ -594,16 +573,17 @@ export class Document extends EventEmitter implements api.IDocument {
 
     private connect(headerP: Promise<IHeaderDetails>): IConnectResult {
         // Create the DeltaManager and begin listening for connection events
-        this._deltaManager = new api.DeltaManager(this.id, this.tenantId, this.service);
+        this._deltaManager = new api.DeltaManager(this.id, this.tenantId, this.service, this.opts.client);
 
         // Open a connection - the DeltaMananger will automatically reconnect
-        const detailsP = this._deltaManager.connect("Document loading", this.opts.token, this.opts.client);
+        const detailsP = this._deltaManager.connect("Document loading", this.opts.token);
         this._deltaManager.on("connect", (details: api.IConnectionDetails) => {
             this.setConnectionState(api.ConnectionState.Connecting, "Connected to Routerlicious", details.clientId);
         });
 
         this._deltaManager.on("disconnect", (nack: boolean) => {
             this.setConnectionState(api.ConnectionState.Disconnected, `Disconnected - nack === ${nack}`);
+            this.emit("disconnect");
         });
 
         this._deltaManager.on("error", (error) => {
@@ -612,6 +592,7 @@ export class Document extends EventEmitter implements api.IDocument {
 
         this._deltaManager.on("pong", (latency) => {
             this.emit("pong", latency);
+            this.lastPong = latency;
         });
 
         this._deltaManager.on("processTime", (time) => {
@@ -712,6 +693,7 @@ export class Document extends EventEmitter implements api.IDocument {
         const tree = await storage.getSnapshotTree(version);
 
         const messagesP = readAndParse<api.ISequencedDocumentMessage[]>(storage, tree.blobs[".messages"]);
+        const blobsP = readAndParse<api.IImageBlob[]>(storage, tree.blobs[".blobs"]);
         const attributesP = readAndParse<api.IDocumentAttributes>(storage, tree.blobs[".attributes"]);
 
         const distributedObjectsP = Array<Promise<api.IDistributedObject>>();
@@ -731,11 +713,12 @@ export class Document extends EventEmitter implements api.IDocument {
             distributedObjectsP.push(objectDetailsP);
         }
 
-        const [messages, attributes, distributedObjects] = await Promise.all(
-            [messagesP, attributesP, Promise.all(distributedObjectsP)]);
+        const [messages, blobs, attributes, distributedObjects] = await Promise.all(
+            [messagesP, blobsP, attributesP, Promise.all(distributedObjectsP)]);
 
         return {
             attributes,
+            blobs,
             distributedObjects,
             transformedMessages: messages,
             tree,
@@ -754,7 +737,7 @@ export class Document extends EventEmitter implements api.IDocument {
         debug(`Changing from ${api.ConnectionState[this.connectionState]} to ${api.ConnectionState[value]}`, reason);
         this.connectionState = value;
 
-        // Stash the clientID to detect when transioning from connecting (socket.io channel open) to connected
+        // Stash the clientID to detect when transitioning from connecting (socket.io channel open) to connected
         // (have received the join message for the client ID)
         if (value === api.ConnectionState.Connecting) {
             this.pendingClientId = context;
@@ -793,6 +776,7 @@ export class Document extends EventEmitter implements api.IDocument {
     private snapshotCore(): api.ITree {
         const entries: api.ITreeEntry[] = [];
 
+        // Craft the .messages file for the document
         // Transform ops in the window relative to the MSN - the window is all ops between the min sequence number
         // and the current sequence number
         assert.equal(
@@ -813,6 +797,18 @@ export class Document extends EventEmitter implements api.IDocument {
             },
         });
 
+        const blobMetaData = this.blobManager.getBlobMetadata();
+        entries.push({
+            mode: api.FileMode.File,
+            path: ".blobs",
+            type: api.TreeEntry[api.TreeEntry.Blob],
+            value: {
+                contents: JSON.stringify(blobMetaData),
+                encoding: "utf-8",
+            },
+        });
+
+        // Craft the .attributes file for each distributed object
         for (const [objectId, object] of this.distributedObjects) {
             // If the object isn't local - and we have received the sequenced op creating the object (i.e. it has a
             // base mapping) - then we go ahead and snapshot
@@ -1024,6 +1020,7 @@ export class Document extends EventEmitter implements api.IDocument {
                 const envelope = message.contents as api.IEnvelope;
                 const objectDetails = this.distributedObjects.get(envelope.address);
 
+                this.submitLatencyMessage(message);
                 objectDetails.connection.process(message, context);
                 eventArgs.push(objectDetails.object);
                 break;
@@ -1068,6 +1065,17 @@ export class Document extends EventEmitter implements api.IDocument {
                 this.runTaskAnalyzer();
                 break;
 
+            // Message contains full metadata (no content)
+            case api.BlobPrepared:
+                this.blobManager.addBlob(message.contents);
+                this.emit(api.BlobPrepared, message.contents);
+                break;
+
+            case api.BlobUploaded:
+                // indicates that blob has been uploaded, just a flag... no blob buffer
+                // message.contents is just the hash
+                this.blobManager.createBlob(message.contents);
+                this.emit(api.BlobUploaded, message.contents);
             default:
                 break;
         }
@@ -1092,26 +1100,64 @@ export class Document extends EventEmitter implements api.IDocument {
         this.emit("op", ...eventArgs);
     }
 
-    // On a client joining/departure, decide whether this client is the new leader.
-    // If so, calculate if there are any unhandled tasks for browsers and remote agents.
-    // Emit local help message for this browser and submits a remote help message for agents.
+    /**
+     * Submits a trace message to remote server.
+     */
+    private submitLatencyMessage(message: api.ISequencedDocumentMessage) {
+        // Submits a roundtrip message only if the message was originally generated by this client.
+        if (this.clientId === message.clientId) {
+            // Add final ack trace.
+            message.traces.push({
+                action: "end",
+                service: this.clientType,
+                timestamp: performanceNow(),
+            });
+            // Add a ping trace if available.
+            if (this.lastPong) {
+                message.traces.push({
+                    action: undefined,
+                    service: `${this.clientType}-ping`,
+                    timestamp: this.lastPong,
+                });
+                this.lastPong = undefined;
+            }
+            const latencyMessage: api.ILatencyMessage = {
+                traces: message.traces,
+            };
+            this._deltaManager.submitRoundtrip(api.RoundTrip, latencyMessage);
+        }
+    }
 
-    // To prevent recurrent op sending, we keep track of already requested tasks and only send
-    // help for each task once.
-
-    // With this restriction of sending only one help message, some taks may never get picked (e.g., paparazzi leaves
-    // and we are still having the same leader)
-
-    // TODO: Need to fix this logic once services are hardened better.
+    /**
+     * On a client joining/departure, decide whether this client is the new leader.
+     * If so, calculate if there are any unhandled tasks for browsers and remote agents.
+     * Emit local help message for this browser and submits a remote help message for agents.
+     *
+     * To prevent recurrent op sending, we keep track of already requested tasks and only send
+     * help for each task once. We also keep track of last leader client as the reconnection
+     * should start from a clean slate.
+     *
+     * With this restriction of sending only one help message, some taks may never get picked (e.g., paparazzi leaves
+     * and we are still having the same leader)
+     *
+     * TODO: Need to fix this logic once services are hardened better.
+     */
     private runTaskAnalyzer() {
             const currentLeader = getLeader(this.getClients());
             const isLeader = currentLeader && currentLeader.clientId === this.clientId;
             if (isLeader) {
                 console.log(`Client ${this.clientId} is the current leader!`);
+
+                // On a reconnection, start with a clean slate.
+                if (this.lastLeaderClientId !== this.clientId) {
+                    this.helpRequested.clear();
+                }
+                this.lastLeaderClientId = this.clientId;
+
+                // Analyze the current state and ask for local and remote help seperately.
                 const helpTasks = analyzeTasks(this.clientId, this.getClients(), documentTasks, this.helpRequested);
                 if (helpTasks && helpTasks.browser.length > 0) {
                     const localHelpMessage: api.IHelpMessage = {
-                        clientId: this.clientId,
                         tasks: helpTasks.browser,
                     };
                     console.log(`Local help needed for ${helpTasks.browser}`);
@@ -1119,7 +1165,6 @@ export class Document extends EventEmitter implements api.IDocument {
                 }
                 if (helpTasks && helpTasks.robot.length > 0) {
                     const remoteHelpMessage: api.IHelpMessage = {
-                        clientId: this.clientId,
                         tasks: helpTasks.robot,
                     };
                     console.log(`Remote help needed for ${helpTasks.robot}`);

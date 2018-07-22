@@ -14,6 +14,7 @@ import {
     SharedIntervalCollectionView,
     SharedString,
 } from "../shared-string";
+import { IPGBlock, ParagraphItemType } from "../text/paragraph";
 import * as ui from "../ui";
 import { Status } from "./status";
 
@@ -44,6 +45,11 @@ function findRowParent(lineDiv: ILineDiv) {
         }
         parent = parent.parentElement as IRowDiv;
     }
+}
+
+interface IRefImg extends HTMLImageElement {
+    marker: MergeTree.Marker;
+    exclu: IExcludedRectangle;
 }
 
 interface ISegSpan extends HTMLSpanElement {
@@ -248,26 +254,6 @@ const commands: ICmd[] = [
     },
     {
         enabled: (f) => {
-            return !f.modes.randExclusion;
-        },
-        exec: (f) => {
-            f.modes.randExclusion = true;
-            f.localQueueRender(f.cursor.pos);
-        },
-        key: "inclusion test on",
-    },
-    {
-        enabled: (f) => {
-            return f.modes.randExclusion;
-        },
-        exec: (f) => {
-            f.modes.randExclusion = false;
-            f.localQueueRender(f.cursor.pos);
-        },
-        key: "inclusion test off",
-    },
-    {
-        enabled: (f) => {
             return !f.modes.showBookmarks;
         },
         exec: (f) => {
@@ -338,6 +324,12 @@ const commands: ICmd[] = [
     },
     {
         exec: (f) => {
+            f.insertPhoto();
+        },
+        key: "insert photo",
+    },
+    {
+        exec: (f) => {
             f.insertColumn();
         },
         key: "insert column",
@@ -393,6 +385,11 @@ const commands: ICmd[] = [
         key: "underline",
     },
 ];
+
+export function moveMarker(flowView: FlowView, fromPos: number, toPos: number) {
+    flowView.sharedString.cut("inclusion", fromPos, fromPos + 1);
+    flowView.sharedString.paste("inclusion", toPos);
+}
 
 export interface ISelectionListBox {
     elm: HTMLDivElement;
@@ -1296,18 +1293,20 @@ function getWidthInLine(endPGMarker: Paragraph.IParagraphMarker, breakIndex: num
     let itemIndex = endPGMarker.cache.breaks[breakIndex].startItemIndex;
     let w = 0;
     while (offset > 0) {
-        const item = endPGMarker.itemCache.items[itemIndex] as Paragraph.IPGBlock;
-        if (!item) {
+        const item = endPGMarker.itemCache.items[itemIndex];
+        if (!item || (item.type === ParagraphItemType.Marker)) {
+            itemIndex++;
             break;
         }
-        if (item.text.length > offset) {
+        const blockItem = <IPGBlock>item;
+        if (blockItem.text.length > offset) {
             const fontstr = item.fontstr || defaultFontstr;
-            const subw = getTextWidth(item.text.substring(0, offset), fontstr);
+            const subw = getTextWidth(blockItem.text.substring(0, offset), fontstr);
             return Math.floor(w + subw);
         } else {
             w += item.width;
         }
-        offset -= item.text.length;
+        offset -= blockItem.text.length;
         itemIndex++;
     }
     return Math.round(w);
@@ -1735,8 +1734,9 @@ function renderTree(
     const outerViewportHeight = parseInt(viewportDiv.style.height, 10);
     const outerViewportWidth = parseInt(viewportDiv.style.width, 10);
     const outerViewport = new Viewport(outerViewportHeight, viewportDiv, outerViewportWidth);
-    if (flowView.modes.randExclusion) {
-        outerViewport.randExclu();
+    if (flowView.movingInclusion.onTheMove) {
+        outerViewport.addInclusion(flowView, flowView.movingInclusion.marker,
+            flowView.movingInclusion.exclu.x, flowView.movingInclusion.exclu.y, docContext.defaultLineDivHeight, true);
     }
     const startingPosStack =
         client.mergeTree.getStackContext(requestedPosition, client.getClientId(), ["table", "cell", "row"]);
@@ -1855,9 +1855,6 @@ function lineIntersectsRect(y: number, rect: IExcludedRectangle) {
     return (y >= rect.y) && (y <= (rect.y + rect.height));
 }
 
-const bennet1w = 299;
-const bennet1h = 168;
-
 export class Viewport {
     // keep the line divs in order
     public lineDivs: ILineDiv[] = [];
@@ -1870,16 +1867,6 @@ export class Viewport {
     constructor(public maxHeight: number, public div: IViewportDiv, private width: number) {
     }
 
-    public randExclu() {
-        const ar = bennet1h / bennet1w;
-        const w = Math.floor(this.width / 3);
-        const h = Math.floor(ar * w);
-        this.excludedRects.push(makeExcludedRectangle(Math.floor(this.width / 2),
-            Math.floor(this.maxHeight / 4), w,
-            h));
-        this.showExclu();
-    }
-
     public showExclu() {
         for (const exclu of this.excludedRects) {
             const showImage = document.createElement("img");
@@ -1888,6 +1875,45 @@ export class Viewport {
             this.div.appendChild(showImage);
         }
     }
+
+    public addInclusion(flowView: FlowView, marker: MergeTree.Marker, x: number, y: number,
+        lineHeight: number, movingMarker = false) {
+        if ((!flowView.movingInclusion.onTheMove) || ((flowView.movingInclusion.onTheMove && (flowView.movingInclusion.marker !== marker)) || movingMarker)) {
+            const irdoc = <IReferenceDoc>marker.properties.ref;
+            if (irdoc) {
+                // for now always an image
+                if (irdoc.type.name === "image") {
+                    const showImage = <IRefImg>document.createElement("img");
+                    showImage.marker = marker;
+                    showImage.src = irdoc.url;
+                    const w = Math.floor(this.width / 3);
+                    let h = w;
+                    // TODO: adjust dx, dy by viewport dimensions
+                    let dx = 0;
+                    let dy = 0;
+                    if (movingMarker) {
+                        dx = flowView.movingInclusion.dx;
+                        dy = flowView.movingInclusion.dy;
+                    }
+                    if (irdoc.layout) {
+                        h = Math.floor(w * irdoc.layout.ar);
+                    }
+                    if ((x + w) > this.width) {
+                        x -= w;
+                    }
+                    x = Math.floor(x + dx);
+                    y += lineHeight;
+                    y = Math.floor(y + dy);
+                    const exclu = makeExcludedRectangle(x, y, w, h);
+                    exclu.conformElement(showImage);
+                    showImage.exclu = exclu;
+                    this.div.appendChild(showImage);
+                    this.excludedRects.push(exclu);
+                }
+            }
+        }
+    }
+
     public horizIntersect(h: number, rect: IExcludedRectangle) {
         return lineIntersectsRect(this.lineTop, rect) || (lineIntersectsRect(this.lineTop + h, rect));
     }
@@ -2039,7 +2065,7 @@ export interface IFlowBreakInfo extends Paragraph.IBreakInfo {
     lineHeight?: number;
 }
 
-export function breakPGIntoLinesFFVP(itemInfo: Paragraph.IParagraphItemInfo, defaultLineHeight: number,
+export function breakPGIntoLinesFFVP(flowView: FlowView, itemInfo: Paragraph.IParagraphItemInfo, defaultLineHeight: number,
     viewport: Viewport, startOffset = 0) {
     const items = itemInfo.items;
     const savedTop = viewport.getLineTop();
@@ -2095,7 +2121,6 @@ export function breakPGIntoLinesFFVP(itemInfo: Paragraph.IParagraphItemInfo, def
             if (committedItemsWidth > lineRect.w) {
                 if (viewport.getLineX() === 0) {
                     viewport.vskip(committedItemsHeight);
-
                 }
                 checkViewportFirstLine(posInPG);
                 lineRect = viewport.getLineRect(itemInfo.maxHeight);
@@ -2120,10 +2145,15 @@ export function breakPGIntoLinesFFVP(itemInfo: Paragraph.IParagraphItemInfo, def
         } else if (item.type === Paragraph.ParagraphItemType.Glue) {
             posInPG++;
             prevIsGlue = true;
+        } else if (item.type === Paragraph.ParagraphItemType.Marker) {
+            viewport.addInclusion(flowView, <MergeTree.Marker>item.segment, lineRect.x + committedItemsWidth,
+                viewport.getLineTop(), committedItemsHeight);
         }
         committedItemsWidth += item.width;
-        committedItemsHeight = Math.max(committedItemsHeight,
-            item.height ? item.height : defaultLineHeight);
+        if (item.type !== Paragraph.ParagraphItemType.Marker) {
+            committedItemsHeight = Math.max(committedItemsHeight,
+                item.height ? item.height : defaultLineHeight);
+        }
     }
     viewport.endOfParagraph(itemInfo.maxHeight);
     viewport.setLineTop(savedTop);
@@ -2156,7 +2186,10 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
     }
     let deferredHeight = 0;
     const deferredPGs = (layoutContext.containingPGMarker !== undefined);
-    const paragraphLexer = new Paragraph.ParagraphLexer(Paragraph.tokenToItems, itemsContext);
+    const paragraphLexer = new Paragraph.ParagraphLexer({
+        markerToken: Paragraph.markerToItems,
+        textToken: Paragraph.textTokenToItems,
+    }, itemsContext);
     itemsContext.paragraphLexer = paragraphLexer;
     textErrorRun = undefined;
 
@@ -2375,7 +2408,7 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
             if (layoutContext.requestedPosition > currentPos) {
                 startOffset = layoutContext.requestedPosition - currentPos;
             }
-            const breaks = breakPGIntoLinesFFVP(itemsContext.itemInfo, docContext.defaultLineDivHeight,
+            const breaks = breakPGIntoLinesFFVP(layoutContext.flowView, itemsContext.itemInfo, docContext.defaultLineDivHeight,
                 layoutContext.viewport, startOffset);
             curPGMarker.cache = { breaks, isUniformWidth: false };
             paragraphLexer.reset();
@@ -2531,6 +2564,22 @@ function pointerToElementOffsetWebkit(x: number, y: number): IRangeInfo {
         range.detach();
         return result;
     }
+}
+
+export function pixelToPosition(flowView: FlowView, x: number, y: number) {
+    const elm = document.elementFromPoint(x, y);
+    if (elm && (elm.tagName === "SPAN")) {
+        const span = elm as ISegSpan;
+        const elmOff = pointerToElementOffsetWebkit(x, y);
+        if (elmOff && (span.segPos !== undefined)) {
+            let computed = elmOffToSegOff(elmOff, span);
+            if (span.offset) {
+                computed += span.offset;
+            }
+            return span.segPos + computed;
+        }
+    }
+    return Nope;
 }
 
 export function clearSubtree(elm: HTMLElement) {
@@ -2766,6 +2815,19 @@ export interface IRemotePresenceInfo {
     refseq: number;
 }
 
+export interface IMovingInclusionInfo {
+    onTheMove: boolean;
+    exclu?: ui.Rectangle;
+    marker?: MergeTree.Marker;
+    dx?: number;
+    dy?: number;
+}
+
+export interface IRemoteDragPresenceInfo {
+    exclu: ui.Rectangle;
+    markerPos: number;
+}
+
 export interface ILocalPresenceInfo {
     localRef?: MergeTree.LocalReference;
     markLocalRef?: MergeTree.LocalReference;
@@ -2891,6 +2953,12 @@ function findTile(flowView: FlowView, startPos: number, tileType: string, preced
     return flowView.client.mergeTree.findTile(startPos, flowView.client.getClientId(), tileType, preceding);
 }
 
+export function annotateMarker(flowView: FlowView, props: MergeTree.PropertySet, marker: MergeTree.Marker) {
+    const start = getOffset(flowView, marker);
+    const end = start + marker.cachedLength;
+    flowView.sharedString.annotateRange(props, start, end);
+}
+
 function getOffset(flowView: FlowView, segment: MergeTree.Segment) {
     return flowView.client.mergeTree.getOffset(segment, MergeTree.UniversalSequenceNumber,
         flowView.client.getClientId());
@@ -2902,8 +2970,43 @@ function preventD(e: Event) {
     return false;
 }
 
+export interface IReferenceDocType {
+    name: string;
+}
+
+export interface IRefLayoutSpec {
+    minWidth?: number;
+    minHeight?: number;
+    reqWidth?: number;
+    reqHeight?: number;
+    ar?: number;
+    dx?: number;
+    dy?: number;
+}
+
+export interface IReferenceDoc {
+    type: IReferenceDocType;
+    url: string;
+    layout?: IRefLayoutSpec;
+}
+
+export function makeImageRef(imageSrc: string, cb: (irdoc: IReferenceDoc) => void) {
+    const image = document.createElement("img");
+    const rdocType = <IReferenceDocType>{
+        name: "image",
+    };
+    const irdoc = <IReferenceDoc>{
+        type: rdocType,
+        url: imageSrc,
+    };
+    image.src = imageSrc;
+    image.onload = () => {
+        irdoc.layout = { ar: image.naturalHeight / image.naturalWidth, dx: 0, dy: 0 };
+        cb(irdoc);
+    };
+}
+
 export interface IFlowViewModes {
-    randExclusion?: boolean;
     showBookmarks?: boolean;
     showComments?: boolean;
     showCursorLocation?: boolean;
@@ -2945,6 +3048,7 @@ export class FlowView extends ui.Component {
         showComments: true,
         showCursorLocation: true,
     } as IFlowViewModes;
+    public movingInclusion = <IMovingInclusionInfo>{ onTheMove: false };
     public lastDocContext: IDocumentContext;
     private lastVerticalX = -1;
     private randWordTimer: any;
@@ -3320,6 +3424,8 @@ export class FlowView extends ui.Component {
                         }
                         return lineDiv;
                     }
+                } else {
+                    console.log(`elm in fwd line search is ${elm.tagName}`);
                 }
                 elm = elm.nextElementSibling as ILineDiv;
             }
@@ -3593,21 +3699,49 @@ export class FlowView extends ui.Component {
         this.element.onselectstart = preventD;
         let prevX = Nope;
         let prevY = Nope;
+        let downX = Nope;
+        let downY = Nope;
+        let imgMarker: MergeTree.Marker;
         let freshDown = false;
 
-        const moveCursor = (e: MouseEvent) => {
+        const moveObjects = (e: MouseEvent, fresh = false) => {
             if (e.button === 0) {
                 prevX = e.clientX;
                 prevY = e.clientY;
-                const span = e.target as ISegSpan;
-                let segspan: ISegSpan;
-                if (span.seg) {
-                    segspan = span;
-                } else {
-                    segspan = span.parentElement as ISegSpan;
-                }
-                if (segspan && segspan.seg) {
-                    this.clickSpan(e.clientX, e.clientY, segspan);
+                const elm = <HTMLElement>document.elementFromPoint(prevX, prevY);
+                if (elm) {
+                    if (fresh) {
+                        if (elm.tagName === "IMG") {
+                            this.movingInclusion.onTheMove = true;
+                            const refimg = elm as IRefImg;
+                            imgMarker = refimg.marker;
+                            this.movingInclusion.exclu = refimg.exclu;
+                            this.movingInclusion.marker = imgMarker;
+                        }
+                    }
+                    if (this.movingInclusion.onTheMove) {
+                        // console.log(`moving inclusion to nowhere with ${prevX-downX},${prevY-downY}`);
+                        const deltaX = prevX - downX;
+                        const deltaY = prevY - downY;
+                        const thresh = 2;
+                        const dist = Math.abs(deltaX) + Math.abs(deltaY);
+                        if (dist >= thresh) {
+                            this.movingInclusion.dx = deltaX;
+                            this.movingInclusion.dy = deltaY;
+                            this.render(this.topChar, true);
+                        }
+                    } else {
+                        const span = elm as ISegSpan;
+                        let segspan: ISegSpan;
+                        if (span.seg) {
+                            segspan = span;
+                        } else {
+                            segspan = span.parentElement as ISegSpan;
+                        }
+                        if (segspan && segspan.seg) {
+                            this.clickSpan(e.clientX, e.clientY, segspan);
+                        }
+                    }
                 }
             }
         };
@@ -3619,7 +3753,7 @@ export class FlowView extends ui.Component {
                         this.cursor.tryMark();
                         freshDown = false;
                     }
-                    moveCursor(e);
+                    moveObjects(e);
                 }
                 e.preventDefault();
                 e.returnValue = false;
@@ -3630,7 +3764,9 @@ export class FlowView extends ui.Component {
         this.element.onmousedown = (e) => {
             if (e.button === 0) {
                 freshDown = true;
-                moveCursor(e);
+                downX = e.clientX;
+                downY = e.clientY;
+                moveObjects(e, true);
                 if (!e.shiftKey) {
                     this.clearSelection();
                 }
@@ -3642,20 +3778,38 @@ export class FlowView extends ui.Component {
         };
 
         this.element.onmouseup = (e) => {
-            this.element.onmousemove = undefined;
+            this.element.onmousemove = preventD;
             if (e.button === 0) {
                 freshDown = false;
-                const span = e.target as ISegSpan;
-                let segspan: ISegSpan;
-                if (span.seg) {
-                    segspan = span;
+                if (this.movingInclusion.onTheMove) {
+                    const deltaX = prevX - downX;
+                    const deltaY = prevY - downY;
+                    const pos = this.getNearestPosition({
+                        x: this.movingInclusion.exclu.x + deltaX,
+                        y: this.movingInclusion.exclu.y + deltaY,
+                    });
+                    if (pos !== undefined) {
+                        console.log(`moving to ${pos}`);
+                        moveMarker(this, getOffset(this, this.movingInclusion.marker), pos);
+                    }
+                    this.movingInclusion.dx = 0;
+                    this.movingInclusion.dy = 0;
+                    this.movingInclusion.onTheMove = false;
+                    this.render(this.topChar, true);
                 } else {
-                    segspan = span.parentElement as ISegSpan;
-                }
-                if (segspan && segspan.seg) {
-                    this.clickSpan(e.clientX, e.clientY, segspan);
-                    if (this.cursor.emptySelection()) {
-                        this.clearSelection();
+                    const elm = <HTMLElement>document.elementFromPoint(prevX, prevY);
+                    const span = elm as ISegSpan;
+                    let segspan: ISegSpan;
+                    if (span.seg) {
+                        segspan = span;
+                    } else {
+                        segspan = span.parentElement as ISegSpan;
+                    }
+                    if (segspan && segspan.seg) {
+                        this.clickSpan(e.clientX, e.clientY, segspan);
+                        if (this.cursor.emptySelection()) {
+                            this.clearSelection();
+                        }
                     }
                 }
                 e.preventDefault();
@@ -4129,6 +4283,16 @@ export class FlowView extends ui.Component {
             this.cursor.clearSelection();
             this.localQueueRender(this.cursor.pos);
         }
+    }
+
+    public insertPhoto() {
+        makeImageRef(`${baseURI}/public/images/bennet1.jpeg`, (irdoc) => {
+            const refProps = {
+                [Paragraph.referenceProperty]: irdoc,
+            };
+            this.sharedString.insertMarker(this.cursor.pos, MergeTree.ReferenceType.Simple, refProps);
+            this.localQueueRender(this.cursor.pos);
+        });
     }
 
     public copy() {
@@ -4762,6 +4926,16 @@ export class FlowView extends ui.Component {
             this.presenceMapView.set(this.collabDocument.clientId, presenceInfo);
         }
     }
+
+    // private updateDragPresence() {
+    //     if (this.presenceMapView) {
+    //         const dragPresenceInfo: IRemoteDragPresenceInfo = {
+    //             exclu: this.movingExclu,
+    //             markerPos: getOffset(this, this.movingMarker),
+    //         };
+    //         this.presenceMapView.set(this.collabDocument.clientId+"drag", dragPresenceInfo);
+    //     }
+    // }
 
     private increaseIndent(tile: Paragraph.IParagraphMarker, pos: number, decrease = false) {
         tile.listCache = undefined;

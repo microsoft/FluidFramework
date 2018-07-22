@@ -1,11 +1,16 @@
+import { EventEmitter } from "events";
+
 /**
  * The rate limiter is a simple class that will defer running an async action
  */
-export class RateLimiter {
+export class RateLimiter extends EventEmitter {
     private pending = false;
     private dirty = false;
+    private running = false;
+    private triggerTimer = null;
 
     constructor(private action: () => Promise<any>, private rate: number) {
+        super();
     }
 
     public trigger() {
@@ -23,6 +28,7 @@ export class RateLimiter {
         // Mark ourselves pending and clear the dirty flag
         this.dirty = false;
         this.pending = true;
+        this.running = true;
 
         // No pending and it's been at least the given amount of time between action
         const completeP = this.action().catch((error) => {
@@ -32,15 +38,29 @@ export class RateLimiter {
             }
         });
 
-        // Finally clause to start snapshotting again once we finish
+        // Finally clause to start running tasks again once we finish
         completeP.then(() => {
+            this.running = false;
+            this.emit("done");
             // Wait rate amount of time before resolving to limit the udpate flow
-            setTimeout(() => {
+            this.triggerTimer = setTimeout(() => {
                 this.pending = false;
                 if (this.dirty) {
                     this.trigger();
                 }
             }, this.rate);
         });
+    }
+
+    public get isRunning() {
+        return this.running;
+    }
+
+    public stop() {
+        if (!this.triggerTimer) {
+            return;
+        }
+        clearTimeout(this.triggerTimer);
+        this.triggerTimer = null;
     }
 }

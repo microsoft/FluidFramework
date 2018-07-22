@@ -1,6 +1,6 @@
 import * as uuid from "uuid/v4";
 import * as core from "../../core";
-import { TmzRunner } from "../../tmz/runner";
+import * as services from "../../services";
 import { MongoManager } from "../../utils";
 import { IConcreteNodeFactory } from "./interfaces";
 import { LocalNode } from "./localNode";
@@ -14,8 +14,10 @@ export class LocalNodeFactory implements IConcreteNodeFactory {
         private nodeCollectionName: string,
         private documentsCollectionName: string,
         private deltasCollectionName: string,
-        private tmzRunner: TmzRunner,
-        private timeoutLength: number) {
+        private timeoutLength: number,
+        private taskMessageSender: core.IMessageSender,
+        private tenantManager: services.TenantManager,
+        private permission: any) {
     }
 
     public async create(): Promise<LocalNode> {
@@ -27,8 +29,10 @@ export class LocalNodeFactory implements IConcreteNodeFactory {
             this.nodeCollectionName,
             this.documentsCollectionName,
             this.deltasCollectionName,
-            this.tmzRunner,
-            this.timeoutLength);
+            this.timeoutLength,
+            this.taskMessageSender,
+            this.tenantManager,
+            this.permission);
 
         return node;
     }

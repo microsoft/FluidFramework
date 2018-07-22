@@ -604,7 +604,10 @@ function parseCell(cellStartPos: number, sharedString: SharedString, fontInfo?: 
                             fontInfo,
                             itemInfo: { items: [], minWidth: 0 },
                         };
-                        let paragraphLexer = new Paragraph.ParagraphLexer(Paragraph.tokenToItems, itemsContext);
+                        let paragraphLexer = new Paragraph.ParagraphLexer({
+                            markerToken: Paragraph.markerToItems,
+                            textToken: Paragraph.textTokenToItems,
+                        }, itemsContext);
                         itemsContext.paragraphLexer = paragraphLexer;
 
                         mergeTree.mapRange({ leaf: Paragraph.segmentToItems }, MergeTree.UniversalSequenceNumber,

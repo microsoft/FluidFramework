@@ -1,6 +1,5 @@
 // tslint:disable:ban-types
 import * as resources from "gitresources";
-import * as gitStorage from "../git-storage";
 import { IClient } from "./client";
 import { IDocumentMessage, ISequencedDocumentMessage, ITenantUser } from "./protocol";
 
@@ -118,7 +117,6 @@ export interface IDistributedObject {
  * Interface to provide access to snapshots saved for a collaborative object
  */
 export interface IDocumentStorageService {
-    manager: gitStorage.GitManager;
 
     /**
      * Returns the snapshot tree.
@@ -144,6 +142,11 @@ export interface IDocumentStorageService {
      * Writes to the object with the given ID
      */
     write(root: ITree, parents: string[], message: string): Promise<resources.ICommit>;
+
+    /**
+     * Creates a blob out of the given buffer
+     */
+    createBlob(file: Buffer): Promise<resources.ICreateBlobResponse>;
 }
 
 /**
