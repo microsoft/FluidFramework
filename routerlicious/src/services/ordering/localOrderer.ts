@@ -234,7 +234,7 @@ class LocalOrdererConnection implements IOrdererConnection {
         };
 
         // Submit on next tick to sequence behind connect response
-        process.nextTick(() => this.submitRawOperation(message));
+        this.submitRawOperation(message);
     }
 
     public order(message: api.IDocumentMessage): void {

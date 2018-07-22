@@ -3,12 +3,13 @@ import * as io from "../../alfred/io";
 import * as api from "../../api-core";
 import * as core from "../../core";
 import { Deferred } from "../../core-utils";
+import * as services from "../../services";
 import * as socketStorage from "../../socket-storage";
-import { generateToken } from "../../utils";
+import { generateToken, MongoManager } from "../../utils";
 import {
     MessageFactory,
+    TestDbFactory,
     TestKafka,
-    TestOrdererManager,
     TestTenantManager,
     TestWebSocket,
     TestWebSocketServer,
@@ -21,18 +22,29 @@ describe("Routerlicious", () => {
                 const testTenantId = "test";
                 const testSecret = "test";
                 const testId = "test";
+
                 let webSocketServer: TestWebSocketServer;
                 let deliKafka: TestKafka;
-                let testOrderer: TestOrdererManager;
+                let testOrderer: core.IOrdererManager;
                 let testTenantManager: TestTenantManager;
 
                 beforeEach(() => {
+                    const documentsCollectionName = "test";
                     const metricClientConfig = {};
+                    const testData: { [key: string]: any[] } = {};
 
                     deliKafka = new TestKafka();
-                    // const producer = deliKafka.createProducer();
+                    const producer = deliKafka.createProducer();
                     testTenantManager = new TestTenantManager();
-                    testOrderer = new TestOrdererManager();
+                    const testDbFactory = new TestDbFactory(testData);
+                    const mongoManager = new MongoManager(testDbFactory);
+                    const testStorage = new services.DocumentStorage(
+                        mongoManager,
+                        documentsCollectionName,
+                        testTenantManager,
+                        producer);
+                    const kafkaOrderer = new services.KafkaOrdererFactory(producer, testStorage);
+                    testOrderer = new services.OrdererManager(null, kafkaOrderer);
 
                     webSocketServer = new TestWebSocketServer();
 

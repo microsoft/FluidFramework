@@ -11,12 +11,6 @@
     "webpack:controllers": "webpack --config webpack.config.js --env.bundle controllers",
     "webpack:agent": "webpack --config webpack.config.js --env.bundle agent",
     "webpack:min": "webpack --config webpack.config.js --env.target production",
-    "babel": "babel public/scripts/dist -d public/scripts/es5",
-    "browserify:all:min": "concurrently \"npm run browserify:api:min\" \"npm run browserify:ui:min\" \"npm run browserify:controllers:min\" \"npm run browserify:agent:min\"",
-    "browserify:controllers:min": "browserify src/alfred/controllers/index.ts --debug -s controller -p [ tsify ] | uglifyjs --source-map content=inline,url=controller.min.js.map -o public/scripts/dist/controllers.min.js",
-    "browserify:api:min": "browserify src/client-api/index.ts --debug -s prague_api -p [ tsify ] | uglifyjs --source-map content=inline,url=api.min.js.map -o public/scripts/dist/api.min.js",
-    "browserify:ui:min": "browserify src/client-ui/index.ts --debug -s prague_ui -p [ tsify ] | uglifyjs --source-map content=inline,url=ui.min.js.map -o public/scripts/dist/ui.min.js",
-    "browserify:agent:min": "browserify src/agent/index.ts --debug -s prague_agent -p [ tsify ] | uglifyjs --source-map content=inline,url=agent.min.js.map -o public/scripts/dist/agent.min.js",
     "build": "concurrently \"npm run tslint\" \"npm run tsc\" \"npm run less\" \"npm run webpack\"",
     "build:dts": "dts-bundle --main dist/client-api/index.d.ts --name prague --baseDir ./dist --out ../public/scripts/dist/prague.d.ts",
     "build:full": "concurrently \"npm run build\" \"npm run webpack:min\"",
@@ -49,24 +43,7 @@
     "stop": "docker-compose down",
     "stop:full": "docker-compose down && docker volume prune --force",
     "beast": "npm test -- --beast --grep beastTest",
-    "perf:deli:debug": "nodemon --exitcrash --inspect=0.0.0.0:5858 dist/perf/deli.js -w dist",
-    "pretest:perf:deli": "docker-compose -f docker-compose.test.deli.yml down --remove-orphans",
-    "test:perf:deli": "npm run pretest:perf:deli; docker-compose -f docker-compose.test.deli.yml up",
-    "perf:scriptorium:debug": "nodemon --exitcrash --inspect=0.0.0.0:5858 dist/perf/scriptorium.js -w dist",
-    "pretest:perf:scriptorium": "docker-compose -f docker-compose.test.scriptorium.yml down --remove-orphans",
     "postinstall": "npm run registryAuth",
-    "test:perf:scriptorium": "npm run pretest:perf:scriptorium; docker-compose -f docker-compose.test.scriptorium.yml up",
-    "perf:alfred:debug": "nodemon --exitcrash --inspect=0.0.0.0:5858 dist/perf/alfred.js -w dist",
-    "pretest:perf:alfred": "docker-compose -f docker-compose.test.alfred.yml down --remove-orphans",
-    "test:perf:alfred": "npm run pretest:perf:alfred; docker-compose -f docker-compose.test.alfred.yml up",
-    "perf:client:debug": "nodemon --exitcrash --inspect=0.0.0.0:5858 dist/perf/client.js -w dist",
-    "pretest:perf:client": "docker-compose -f docker-compose.test.client.yml down --remove-orphans",
-    "test:perf:client": "npm run pretest:perf:client; docker-compose -f docker-compose.test.client.yml up",
-    "perf:kafka:producer:debug": "nodemon --exitcrash --inspect=0.0.0.0:5858 dist/perf/kafkaproducer.js -w dist",
-    "perf:kafka:consumer:debug": "nodemon --exitcrash --inspect=0.0.0.0:5859 dist/perf/kafkaconsumer.js -w dist",
-    "perf:kafka:debug": "concurrently \"npm run perf:kafka:producer:debug\" \"npm run perf:kafka:consumer:debug\"",
-    "pretest:perf:kafka": "docker-compose -f docker-compose.test.kafka.yml down --remove-orphans",
-    "test:perf:kafka": "npm run pretest:perf:kafka; docker-compose -f docker-compose.test.kafka.yml up",
     "test:ml:debug": "nodemon --exitcrash --inspect=0.0.0.0:5858 dist/perf/mltest.js -w dist"
   },
   "author": "Microsoft",
@@ -116,10 +93,6 @@
     "@types/ws": "^3.2.1",
     "@types/xml2js": "^0.4.2",
     "@types/xmldoc": "^1.1.2",
-    "babel-cli": "^6.26.0",
-    "babel-preset-env": "^1.6.1",
-    "browserify": "^14.1.0",
-    "browserify-shim": "^3.8.13",
     "cache-loader": "^1.2.2",
     "concurrently": "^3.4.0",
     "dts-bundle": "^0.7.3",
@@ -217,20 +190,6 @@
   },
   "browser": {
     "request": "xhr"
-  },
-  "browserify": {
-    "transform": [
-      "browserify-shim"
-    ]
-  },
-  "browserify-shim": {
-    "../client-api": "global:prague",
-    "../../client-api": "global:prague",
-    "../client-ui": "global:pragueUi",
-    "../../client-ui": "global:pragueUi",
-    "../agent": "global:pragueAgent",
-    "../../agent": "global:pragueAgent",
-    "jquery": "global:$"
   },
   "nyc": {
     "all": true,
