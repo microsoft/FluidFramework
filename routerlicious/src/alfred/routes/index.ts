@@ -1,7 +1,7 @@
 import * as ensureAuth from "connect-ensure-login";
 import { Router } from "express";
 import { Provider } from "nconf";
-import { ITenantManager } from "../../core";
+import { IDocumentStorage, ITenantManager } from "../../core";
 import * as utils from "../../utils";
 import { IAlfredTenant } from "../tenant";
 import * as agent from "./agent";
@@ -41,6 +41,7 @@ export function create(
     config: Provider,
     tenantManager: ITenantManager,
     mongoManager: utils.MongoManager,
+    storage: IDocumentStorage,
     producer: utils.IProducer,
     appTenants: IAlfredTenant[]) {
 
@@ -51,19 +52,19 @@ export function create(
 
     return {
         agent: agent.create(config),
-        api: api.create(config, tenantManager, mongoManager, producer, appTenants),
-        canvas: canvas.create(config, tenantManager, appTenants, ensureLoggedIn),
-        cell: cell.create(config, tenantManager, appTenants, ensureLoggedIn),
+        api: api.create(config, tenantManager, storage, mongoManager, producer, appTenants),
+        canvas: canvas.create(config, tenantManager, storage, appTenants, ensureLoggedIn),
+        cell: cell.create(config, tenantManager, storage, appTenants, ensureLoggedIn),
         demoCreator: demoCreator.create(config, ensureLoggedIn),
-        graph: graph.create(config, tenantManager, appTenants, ensureLoggedIn),
+        graph: graph.create(config, tenantManager, storage, appTenants, ensureLoggedIn),
         home: home.create(config, ensureLoggedIn),
         intelligence: intelligence.create(config),
-        maps: maps.create(config, tenantManager, appTenants, ensureLoggedIn),
+        maps: maps.create(config, tenantManager, storage, appTenants, ensureLoggedIn),
         ping: ping.create(),
         scribe: scribe.create(config, tenantManager, appTenants, ensureLoggedIn),
-        sharedText: sharedText.create(config, tenantManager, mongoManager, producer, appTenants, ensureLoggedIn),
+        sharedText: sharedText.create(config, tenantManager, storage, appTenants, ensureLoggedIn),
         singUp: signUp.create(config),
         templates: templates.create(config),
-        youtubeVideo: youtubeVideo.create(config, tenantManager, appTenants, ensureLoggedIn),
+        youtubeVideo: youtubeVideo.create(config, tenantManager, storage, appTenants, ensureLoggedIn),
     };
 }

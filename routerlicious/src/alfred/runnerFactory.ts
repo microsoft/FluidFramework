@@ -1,4 +1,5 @@
 import { Provider } from "nconf";
+import * as os from "os";
 import * as core from "../core";
 import * as services from "../services";
 import * as utils from "../utils";
@@ -15,6 +16,7 @@ export class AlfredResources implements utils.IResources {
         public webSocketLibrary: string,
         public orderManager: core.IOrdererManager,
         public tenantManager: core.ITenantManager,
+        public storage: core.IDocumentStorage,
         public appTenants: IAlfredTenant[],
         public mongoManager: utils.MongoManager,
         public port: any,
@@ -59,16 +61,7 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
                 tenantId: 1,
             },
             true);
-
         const deltasCollectionName = config.get("mongo:collectionNames:deltas");
-        const deltasCollection = db.collection(deltasCollectionName);
-        const reservationsCollection = db
-            .collection<{ documentId: string, tenantId: string, server: string }>("reservations");
-        await reservationsCollection.createIndex(
-            {
-                key: 1,
-            },
-            true);
 
         // tmz agent uploader does not run locally.
         // TODO: Make agent uploader run locally.
@@ -76,17 +69,33 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
         const taskMessageSender = services.createMessageSender(config.get("rabbitmq"), tmzConfig);
         await taskMessageSender.initialize();
 
-        const reservationManager = new services.ReservationManager(mongoManager, "reservations");
-        const tenantManager = new services.TenantManager(authEndpoint, config.get("worker:blobStorageUrl"));
+        const nodeCollectionName = config.get("mongo:collectionNames:nodes");
+        const nodeManager = new services.NodeManager(mongoManager, nodeCollectionName);
+        // this.nodeTracker.on("invalidate", (id) => this.emit("invalidate", id));
+        const reservationManager = new services.ReservationManager(
+            nodeManager,
+            mongoManager,
+            config.get("mongo:collectionNames:reservations"));
 
-        const orderManager = new services.OrdererManager(
-            producer,
-            documentsCollection,
-            deltasCollection,
-            reservationManager,
+        const tenantManager = new services.TenantManager(authEndpoint, config.get("worker:blobStorageUrl"));
+        const storage = new services.DocumentStorage(mongoManager, documentsCollectionName, tenantManager, producer);
+
+        const address = `${await utils.getHostIp()}:4000`;
+        const nodeFactory = new services.LocalNodeFactory(
+            os.hostname(),
+            address,
+            storage,
+            mongoManager,
+            nodeCollectionName,
+            documentsCollectionName,
+            deltasCollectionName,
+            60000,
             taskMessageSender,
             tenantManager,
             tmzConfig.permissions);
+        const localOrderManager = new services.LocalOrderManager(nodeFactory, reservationManager);
+        const kafkaOrdererFactory = new services.KafkaOrdererFactory(producer, storage);
+        const orderManager = new services.OrdererManager(localOrderManager, kafkaOrdererFactory);
 
         // Tenants attached to the apps this service exposes
         const appTenants = config.get("alfred:tenants") as Array<{ id: string, key: string }>;
@@ -101,6 +110,7 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
             webSocketLibrary,
             orderManager,
             tenantManager,
+            storage,
             appTenants,
             mongoManager,
             port,
@@ -117,10 +127,10 @@ export class AlfredRunnerFactory implements utils.IRunnerFactory<AlfredResources
             resources.port,
             resources.orderManager,
             resources.tenantManager,
+            resources.storage,
             resources.appTenants,
             resources.mongoManager,
             resources.producer,
-            resources.documentsCollectionName,
             resources.metricClientConfig);
     }
 }

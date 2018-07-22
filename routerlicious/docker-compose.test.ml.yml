@@ -1,9 +1,0 @@
-version: '3'
-services:
-  test:
-    build: . 
-    ports:
-      - "5858:5858"
-    command: npm run test:ml:debug
-    volumes:
-      - .:/usr/src/server

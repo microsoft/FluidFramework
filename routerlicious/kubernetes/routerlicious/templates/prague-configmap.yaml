@@ -25,7 +25,9 @@ data:
                 "deltas": "deltas",
                 "documents": "documents",
                 "partitions": "partitions",
-                "tenants": "tenants"
+                "tenants": "tenants",
+                "nodes": "nodes",
+                "reservations": "reservations"
             }
         },
         "kafka": {

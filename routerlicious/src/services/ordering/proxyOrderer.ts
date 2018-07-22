@@ -1,58 +1,23 @@
-import * as async from "async";
-import * as ws from "ws";
-import { IOrdererSocket, IRawOperationMessage } from "../../core";
-import { debug } from "../debug";
-import { ISocketOrderer } from "./interfaces";
+import * as api from "../../api-core";
+import { IOrderer, IOrdererConnection, IWebSocket } from "../../core";
+
+export interface IOrdererConnectionFactory {
+    connect(socket: IWebSocket, user: api.ITenantUser, client: api.IClient): Promise<IOrdererConnection>;
+}
 
 /**
  * Proxies ordering to an external service which does the actual ordering
  */
-export class ProxyOrderer implements ISocketOrderer {
-    private sockets: IOrdererSocket[] = [];
-    private queue: async.AsyncQueue<IRawOperationMessage>;
-
-    constructor(server: string, tenantId: string, documentId: string) {
-        // connect to service
-        const socket = new ws(`ws://${server}:4000`);
-        socket.on(
-            "open",
-            () => {
-                socket.send(
-                    JSON.stringify({ op: "connect", tenantId, documentId }),
-                    (error) => {
-                        this.queue.resume();
-                    });
-            });
-
-        socket.on(
-            "error",
-            (error) => {
-                debug(error);
-            });
-
-        socket.on(
-            "message",
-            (data) => {
-                const parsedData = JSON.parse(data as string);
-                for (const clientSocket of this.sockets) {
-                    clientSocket.send(parsedData.op, parsedData.id, parsedData.data);
-                }
-            });
-
-        this.queue = async.queue<IRawOperationMessage, any>(
-            (value, callback) => {
-                socket.send(JSON.stringify({ op: "message", data: value }));
-                callback();
-            },
-            1);
-        this.queue.pause();
+export class ProxyOrderer implements IOrderer {
+    constructor(private factory: IOrdererConnectionFactory) {
     }
 
-    public async order(message: IRawOperationMessage, topic: string): Promise<void> {
-        this.queue.push(message);
-    }
+    public async connect(
+        socket: IWebSocket,
+        user: api.ITenantUser,
+        client: api.IClient): Promise<IOrdererConnection> {
 
-    public attachSocket(socket: IOrdererSocket) {
-        this.sockets.push(socket);
+        const proxiedSocket = await this.factory.connect(socket, user, client);
+        return proxiedSocket;
     }
 }

@@ -1,51 +1,12 @@
-import * as assert from "assert";
-import * as async from "async";
 import { Provider } from "nconf";
 import * as winston from "winston";
-import * as ws from "ws";
-import { IOrderer, IOrdererManager, IOrdererSocket, ITenantManager } from "../core";
+import { IDocumentStorage, IOrdererManager, ITenantManager } from "../core";
 import * as core from "../core";
 import { Deferred } from "../core-utils";
 import * as utils from "../utils";
 import * as app from "./app";
 import * as io from "./io";
 import { IAlfredTenant } from "./tenant";
-
-class RemoteConnection implements IOrdererSocket {
-    private q: async.AsyncQueue<core.IRawOperationMessage>;
-    private orderer: IOrderer;
-
-    constructor(
-        orderManager: IOrdererManager,
-        private socket: ws,
-        tenantId: string,
-        documentId: string) {
-
-        const ordererP = orderManager.getOrderer(this, tenantId, documentId);
-        ordererP.then(
-            (orderer) => {
-                this.orderer = orderer;
-                this.q.resume();
-            },
-            (error) => {
-                this.q.kill();
-            });
-
-        this.q = async.queue<core.IRawOperationMessage, any>((message, callback) => {
-            this.orderer.order(message, message.documentId);
-            callback();
-        });
-        this.q.pause();
-    }
-
-    public order(message: core.IRawOperationMessage) {
-        this.q.push(message);
-    }
-
-    public send(op: string, id: string, data: any[]) {
-        this.socket.send(JSON.stringify({ op, id, data }));
-    }
-}
 
 export class AlfredRunner implements utils.IRunner {
     private server: core.IWebServer;
@@ -57,10 +18,10 @@ export class AlfredRunner implements utils.IRunner {
         private port: string | number,
         private orderManager: IOrdererManager,
         private tenantManager: ITenantManager,
+        private storage: IDocumentStorage,
         private appTenants: IAlfredTenant[],
         private mongoManager: utils.MongoManager,
         private producer: utils.IProducer,
-        private documentsCollectionName: string,
         private metricClientConfig: any) {
     }
 
@@ -71,6 +32,7 @@ export class AlfredRunner implements utils.IRunner {
         const alfred = app.create(
             this.config,
             this.tenantManager,
+            this.storage,
             this.appTenants,
             this.mongoManager,
             this.producer);
@@ -83,8 +45,6 @@ export class AlfredRunner implements utils.IRunner {
         // Register all the socket.io stuff
         io.register(
             this.server.webSocketServer,
-            this.mongoManager,
-            this.documentsCollectionName,
             this.metricClientConfig,
             this.orderManager,
             this.tenantManager);
@@ -93,30 +53,6 @@ export class AlfredRunner implements utils.IRunner {
         httpServer.listen(this.port);
         httpServer.on("error", (error) => this.onError(error));
         httpServer.on("listening", () => this.onListening());
-
-        // Start up the peer-to-peer socket server - will eventually want to consolidate this inside
-        // existing services
-        const webSocketServer = new ws.Server({
-            port: 4000,
-        });
-        webSocketServer.on("connection", (socket) => {
-            const remoteConnectionMap = new Map<string, RemoteConnection>();
-
-            socket.on("message", (message) => {
-                const parsed = JSON.parse(message as string);
-
-                // Listen for connection requests and then messages sent to them
-                if (parsed.op === "connect") {
-                    const remote = new RemoteConnection(this.orderManager, socket, parsed.tenantId, parsed.documentId);
-                    remoteConnectionMap.set(`${parsed.tenantId}/${parsed.documentId}`, remote);
-                } else if (parsed.op === "message") {
-                    const rawOperation = parsed.data as core.IRawOperationMessage;
-                    const id = `${rawOperation.tenantId}/${rawOperation.documentId}`;
-                    assert(remoteConnectionMap.has(id));
-                    remoteConnectionMap.get(id).order(rawOperation);
-                }
-            });
-        });
 
         return this.runningDeferred.promise;
     }

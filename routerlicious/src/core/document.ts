@@ -1,4 +1,26 @@
+import { ICommit, ICommitDetails } from "gitresources";
 import { IRangeTrackerSnapshot } from "../core-utils";
+
+export interface IDocumentDetails {
+    existing: boolean;
+    value: IDocument;
+}
+
+export interface IDocumentStorage {
+    getDocument(tenantId: string, documentId: string): Promise<any>;
+
+    getOrCreateDocument(tenantId: string, documentId: string): Promise<IDocumentDetails>;
+
+    getLatestVersion(tenantId: string, documentId: string): Promise<ICommitDetails>;
+
+    getVersions(tenantId: string, documentId: string, count: number): Promise<ICommitDetails[]>;
+
+    getVersion(tenantId: string, documentId: string, sha: string): Promise<ICommit>;
+
+    getForks(tenantId: string, documentId: string): Promise<string[]>;
+
+    createFork(tenantId: string, id: string): Promise<string>;
+}
 
 export interface IFork {
     // The id of the fork

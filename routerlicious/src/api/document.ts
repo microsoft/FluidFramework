@@ -595,6 +595,10 @@ export class Document extends EventEmitter implements api.IDocument {
             this.lastPong = latency;
         });
 
+        this._deltaManager.on("processTime", (time) => {
+            this.emit("processTime", time);
+        });
+
         // Begin fetching any pending deltas once we know the base sequence #. Can this fail?
         // It seems like something, like reconnection, that we would want to retry but otherwise allow
         // the document to load
@@ -1016,9 +1020,9 @@ export class Document extends EventEmitter implements api.IDocument {
                 const envelope = message.contents as api.IEnvelope;
                 const objectDetails = this.distributedObjects.get(envelope.address);
 
+                this.submitLatencyMessage(message);
                 objectDetails.connection.process(message, context);
                 eventArgs.push(objectDetails.object);
-                this.submitLatencyMessage(message);
                 break;
 
             case api.AttachObject:

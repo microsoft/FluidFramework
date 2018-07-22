@@ -88,6 +88,7 @@
                     <span id="avg-latency"></span><br/>
                     <span id="stddev-latency"></span><br/>
                     <span id="server-latency"></span><br/>
+                    <span id="avg-process"></span><br/>
                     <span id="avg-ping"></span><br/>
                     <span id="total-ops"></span>
                 </p>

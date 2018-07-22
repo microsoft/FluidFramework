@@ -361,6 +361,8 @@ export class DeltaManager extends EventEmitter implements IDeltaManager {
 
     private async processMessage(message: protocol.ISequencedDocumentMessage): Promise<void> {
         assert.equal(message.sequenceNumber, this.baseSequenceNumber + 1);
+        const startTime = now();
+
         // TODO handle error cases, NACK, etc...
         const context = await this.handler.prepare(message);
 
@@ -377,6 +379,9 @@ export class DeltaManager extends EventEmitter implements IDeltaManager {
         if (message.type === protocol.OperationType) {
             this.updateSequenceNumber();
         }
+
+        const endTime = now();
+        this.emit("processTime", endTime - startTime);
     }
 
     /**

@@ -1,13 +1,16 @@
 import { Router } from "express";
 import { Provider } from "nconf";
-import { ITenantManager } from "../../core";
-import * as storage from "../storage";
+import { IDocumentStorage, ITenantManager } from "../../core";
 import { IAlfredTenant } from "../tenant";
 import * as utils from "../utils";
 import { defaultPartials } from "./partials";
 
-export function create(config: Provider, tenantManager: ITenantManager,
-                       appTenants: IAlfredTenant[], ensureLoggedIn: any): Router {
+export function create(
+    config: Provider,
+    tenantManager: ITenantManager,
+    storage: IDocumentStorage,
+    appTenants: IAlfredTenant[],
+    ensureLoggedIn: any): Router {
     const router: Router = Router();
 
     /**
@@ -22,7 +25,7 @@ export function create(config: Provider, tenantManager: ITenantManager,
             tenantId,
             config.get("error:track"),
             config.get("client"));
-        const versionP = storage.getLatestVersion(tenantManager, tenantId, request.params.id);
+        const versionP = storage.getLatestVersion(tenantId, request.params.id);
         const token = utils.getToken(tenantId, request.params.id, appTenants);
 
         Promise.all([workerConfigP, versionP]).then((values) => {

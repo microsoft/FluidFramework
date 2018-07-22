@@ -1,9 +1,7 @@
 import { Router } from "express";
 import { Provider } from "nconf";
 import * as path from "path";
-import { ITenantManager } from "../../core";
-import * as utils from "../../utils";
-import * as storage from "../storage";
+import { IDocumentStorage, ITenantManager } from "../../core";
 import { IAlfredTenant } from "../tenant";
 import { getConfig, getToken } from "../utils";
 import { defaultPartials } from "./partials";
@@ -16,13 +14,11 @@ const defaultSpellChecking = "enabled";
 export function create(
     config: Provider,
     tenantManager: ITenantManager,
-    mongoManager: utils.MongoManager,
-    producer: utils.IProducer,
+    storage: IDocumentStorage,
     appTenants: IAlfredTenant[],
     ensureLoggedIn: any): Router {
 
     const router: Router = Router();
-    const documentsCollectionName = config.get("mongo:collectionNames:documents");
 
     /**
      * Loads count number of latest commits.
@@ -30,7 +26,7 @@ export function create(
     router.get("/:tenantId?/:id/commits", ensureLoggedIn(), (request, response, next) => {
         const tenantId = request.params.tenantId || appTenants[0].id;
 
-        const versionsP = storage.getVersions(tenantManager, tenantId, request.params.id, 30);
+        const versionsP = storage.getVersions(tenantId, request.params.id, 30);
         versionsP.then(
             (versions) => {
                 response.render(
@@ -60,7 +56,7 @@ export function create(
             tenantId,
             config.get("error:track"),
             config.get("client"));
-        const versionP = storage.getLatestVersion(tenantManager, tenantId, request.params.id);
+        const versionP = storage.getLatestVersion(tenantId, request.params.id);
         const token = getToken(tenantId, request.params.id, appTenants);
 
         Promise.all([workerConfigP, versionP]).then((values) => {
@@ -97,7 +93,6 @@ export function create(
             config.get("client"));
         const targetVersionSha = request.query.version;
         const versionP = storage.getVersion(
-            tenantManager,
             tenantId,
             request.params.id,
             targetVersionSha);
@@ -130,13 +125,7 @@ export function create(
     router.post("/:tenantId?/:id/fork", ensureLoggedIn(), (request, response, next) => {
         const tenantId = request.params.tenantId || appTenants[0].id;
 
-        const forkP = storage.createFork(
-            producer,
-            tenantManager,
-            mongoManager,
-            documentsCollectionName,
-            tenantId,
-            request.params.id);
+        const forkP = storage.createFork(tenantId, request.params.id);
         forkP.then(
             (fork) => {
                 response.redirect(`/sharedText/${fork}`);
@@ -163,7 +152,7 @@ export function create(
             config.get("error:track"),
             config.get("client"),
             direct);
-        const versionP = storage.getLatestVersion(tenantManager, tenantId, request.params.id);
+        const versionP = storage.getLatestVersion(tenantId, request.params.id);
         Promise.all([workerConfigP, versionP]).then((values) => {
             const parsedTemplate = path.parse(request.query.template ? request.query.template : defaultTemplate);
             const template =

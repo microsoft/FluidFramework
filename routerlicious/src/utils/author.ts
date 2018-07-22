@@ -18,6 +18,7 @@ let metrics: IScribeMetrics;
 const ackCounter = new Counter();
 const latencyCounter = new Counter();
 const pingCounter = new Counter();
+const processCounter = new Counter();
 const typingCounter = new Counter();
 const serverOrderCounter = new Counter();
 
@@ -92,6 +93,7 @@ export interface IScribeMetrics {
 
     pingAverage: number;
     pingMaximum: number;
+    processAverage: number;
 
     typingInterval: number;
     writers: number;
@@ -274,6 +276,7 @@ export async function typeFile(
             latencyStdDev: undefined,
             pingAverage: undefined,
             pingMaximum: undefined,
+            processAverage: undefined,
             serverAverage: undefined,
             textLength: fileText.length,
             time: 0,
@@ -295,6 +298,7 @@ export async function typeFile(
                 latencyStdDev: undefined,
                 pingAverage: undefined,
                 pingMaximum: undefined,
+                processAverage: undefined,
                 serverAverage: undefined,
                 textLength: fileText.length,
                 time: 0,
@@ -443,10 +447,14 @@ export async function typeChunk(
             totalOps++;
         });
 
-        a.ss.on("op", (message: core.ISequencedObjectMessage) => {
+        a.doc.on("processTime", (time) => {
+            processCounter.increment(time);
+        });
+
+        a.ss.on("op", (message: core.ISequencedObjectMessage, local) => {
             if (message.clientSequenceNumber &&
                 message.clientSequenceNumber > 25 &&
-                message.clientId === a.doc.clientId) {
+                local) {
 
                 ackCounter.increment(1);
                 // Wait for at least one cycle
@@ -465,9 +473,9 @@ export async function typeChunk(
                         orderBegin = trace.timestamp;
                     } else if (trace.service === "scriptorium" && trace.action === "end") {
                         orderEnd = trace.timestamp;
-                    } else if (trace.service === "client" && trace.action === "start") {
+                    } else if (trace.service === "browser" && trace.action === "start") {
                         clientStart = trace.timestamp;
-                    } else if (trace.service === "client" && trace.action === "end") {
+                    } else if (trace.service === "browser" && trace.action === "end") {
                         clientEnd = trace.timestamp;
                     }
                 }
@@ -479,6 +487,7 @@ export async function typeChunk(
 
                 metrics.pingAverage = pingCounter.getValue() / pingCounter.getSamples();
                 metrics.pingMaximum = pingCounter.getMaximum();
+                metrics.processAverage = processCounter.getValue() / processCounter.getSamples();
 
                 histogram.add(roundTrip);
                 const samples = latencyCounter.getSamples();
