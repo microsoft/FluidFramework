@@ -260,7 +260,7 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
                         this.timeoutLength);
                     updateP.then(
                         (newNode) => {
-                            debug(`Successfully renewed expiration for ${this.node._id}`);
+                            // debug(`Successfully renewed expiration for ${this.node._id}`);
                             this.node = newNode;
                             this.scheduleHeartbeat();
                         },
