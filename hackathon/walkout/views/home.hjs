@@ -1,0 +1,13 @@
+{{<layout}}
+    {{$styles}}
+    {{/styles}}
+
+    {{$content}}
+        <div class="container">
+            Hello!
+        </div>
+    {{/content}}
+
+    {{$scripts}}
+    {{/scripts}}
+{{/layout}}
