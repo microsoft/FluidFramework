@@ -1,7 +1,8 @@
 import { Component } from '@angular/core';
 import { ModalController, NavController } from 'ionic-angular';
-import { AddItemPage } from '../add-item/add-item';
+import { AddItemPage } from '../add-item/add-item'
 import { ItemDetailPage } from '../item-detail/item-detail';
+import { Data } from '../../providers/data/data';
  
 @Component({
   selector: 'page-home',
@@ -11,7 +12,15 @@ export class HomePage {
  
   public items = [];
  
-  constructor(public navCtrl: NavController, public modalCtrl: ModalController) {
+  constructor(public navCtrl: NavController, public modalCtrl: ModalController, public dataService: Data) {
+ 
+    this.dataService.getData().then((todos) => {
+ 
+      if(todos){
+        this.items = todos;
+      }
+ 
+    });
  
   }
  
@@ -37,6 +46,7 @@ export class HomePage {
  
   saveItem(item){
     this.items.push(item);
+    this.dataService.save(this.items);
   }
  
   viewItem(item){
