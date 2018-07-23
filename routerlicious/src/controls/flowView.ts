@@ -2568,18 +2568,30 @@ function pointerToElementOffsetWebkit(x: number, y: number): IRangeInfo {
 
 export function pixelToPosition(flowView: FlowView, x: number, y: number) {
     const elm = document.elementFromPoint(x, y);
-    if (elm && (elm.tagName === "SPAN")) {
+    if (elm.tagName === "SPAN") {
+        let position: number;
         const span = elm as ISegSpan;
         const elmOff = pointerToElementOffsetWebkit(x, y);
-        if (elmOff && (span.segPos !== undefined)) {
+        if (elmOff) {
             let computed = elmOffToSegOff(elmOff, span);
             if (span.offset) {
                 computed += span.offset;
             }
-            return span.segPos + computed;
+            position = span.segPos + computed;
+        }
+        return position;
+    } else {
+        let targetLineDiv = elm as ILineDiv;
+        if (targetLineDiv.linePos !== undefined) {
+            return flowView.getPosFromPixels(targetLineDiv, x);
+        }
+        do {
+            targetLineDiv = targetLineDiv.previousElementSibling as ILineDiv;
+        } while (targetLineDiv && (targetLineDiv.linePos === undefined));
+        if (targetLineDiv) {
+            return flowView.getPosFromPixels(targetLineDiv, x);
         }
     }
-    return Nope;
 }
 
 export function clearSubtree(elm: HTMLElement) {
@@ -3605,11 +3617,15 @@ export class FlowView extends ui.Component {
     public verticalMove(lineCount: number) {
         const up = lineCount < 0;
         const lineDiv = this.cursor.lineDiv();
-        let targetLineDiv: ILineDiv;
+        let targetLineDiv = lineDiv;
         if (lineCount < 0) {
-            targetLineDiv = lineDiv.previousElementSibling as ILineDiv;
+            do {
+                targetLineDiv = targetLineDiv.previousElementSibling as ILineDiv;
+            } while (targetLineDiv && (targetLineDiv.linePos === undefined));
         } else {
-            targetLineDiv = lineDiv.nextElementSibling as ILineDiv;
+            do {
+                targetLineDiv = targetLineDiv.nextElementSibling as ILineDiv;
+            } while (targetLineDiv && (targetLineDiv.linePos === undefined));
         }
         const x = this.getCanonicalX();
 
@@ -3782,12 +3798,11 @@ export class FlowView extends ui.Component {
             if (e.button === 0) {
                 freshDown = false;
                 if (this.movingInclusion.onTheMove) {
-                    const deltaX = prevX - downX;
-                    const deltaY = prevY - downY;
-                    const pos = this.getNearestPosition({
-                        x: this.movingInclusion.exclu.x + deltaX,
-                        y: this.movingInclusion.exclu.y + deltaY,
-                    });
+                    const deltaX = e.clientX - downX;
+                    const deltaY = e.clientY - downY;
+                    console.log(`dx ${deltaX} dy ${deltaY} ex ${this.movingInclusion.exclu.x} ey ${this.movingInclusion.exclu.y}`);
+                    const pos = pixelToPosition(this, this.movingInclusion.exclu.x + deltaX,
+                        this.movingInclusion.exclu.y + deltaY);
                     if (pos !== undefined) {
                         console.log(`moving to ${pos}`);
                         moveMarker(this, getOffset(this, this.movingInclusion.marker), pos);
