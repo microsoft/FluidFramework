@@ -83,4 +83,5 @@
     <plugin name="cordova-plugin-ionic-keyboard" spec="^2.0.5" />
     <allow-navigation href="http://10.89.144.55:8100" />
     <engine name="android" spec="7.0.0" />
+    <allow-navigation href="http://10.81.234.1:8100" />
 </widget>

@@ -1,15 +1,9 @@
 import { Component } from '@angular/core';
-import { api as prague } from "@prague/routerlicious";
 import { ModalController, NavController } from 'ionic-angular';
-import * as jwt from "jsonwebtoken";
 import { AddItemPage } from '../add-item/add-item'
 import { ItemDetailPage } from '../item-detail/item-detail';
 import { Data } from '../../providers/data/data';
-
-const routerlicious = "https://alfred.wu2-ppe.prague.office-int.com";
-const historian = "https://historian.wu2-ppe.prague.office-int.com";
-const tenantId = "confident-turing";
-const secret = "24c1ebcf087132e31a7e3c25f56f6626";
+import { Factory } from '../../providers/factory/factory';
  
 @Component({
   selector: 'page-home',
@@ -19,82 +13,41 @@ export class HomePage {
  
   public items = [];
  
-  constructor(public navCtrl: NavController, public modalCtrl: ModalController, public dataService: Data) {
- 
-    this.dataService.getData().then((todos) => {
- 
-      if(todos){
-        this.items = todos;
-      }
- 
-    });
-
-    prague.socketStorage.registerAsDefault(routerlicious, historian, tenantId);
-    const documentId = "hack-todo-0001";
-
-    const token = this.makeToken(documentId);
-
-    this.loadDocument(documentId, token).then((doc) => {
-      console.log(`Doc client id: ${doc.clientId}`);
-    }, (err) => {
-      console.log(err);
-    })
- 
+  constructor(
+    public navCtrl: NavController,
+    public modalCtrl: ModalController,
+    public dataService: Data,
+    public factoryService: Factory) {
   }
  
   ionViewDidLoad(){
- 
+    
+    this.factoryService.getOrCreateList().then((documentId) => {
+      console.log(`Name ${documentId} generated!`);
+      this.dataService.init(documentId).then(() => {
+        console.log(`Created a document and started listening!`);
+      }, (err) => {
+        console.log(`Error creating document: ${err}`);
+      });
+    }, (error) => {
+      console.log(`Error generating document name: ${error}`);
+    });
   }
  
   addItem(){
- 
     let addModal = this.modalCtrl.create(AddItemPage);
- 
     addModal.onDidDismiss((item) => {
- 
-          if(item){
-            this.saveItem(item);
-          }
- 
+      if(item){
+        this.dataService.save(item);
+      }
     });
- 
     addModal.present();
- 
-  }
- 
-  saveItem(item){
-    this.items.push(item);
-    this.dataService.save(this.items);
   }
  
   viewItem(item){
     this.navCtrl.push(ItemDetailPage, {
       item: item
     });
-  }
-
-  private async loadDocument(id: string, token?: string): Promise<prague.api.Document> {
-    console.log("Loading in root document...");
-    const document = await prague.api.load(id, { encrypted: false, token }).catch((err) => {
-        return Promise.reject(err);
-    });
-
-    console.log("Document loaded");
-    return document;
-  }
-
-  private makeToken(documentId: string) {
-    const token = jwt.sign(
-      {
-          documentId,
-          permission: "read:write", // use "read:write" for now
-          tenantId,
-          user: {
-              id: "test",
-          },
-      },
-      secret);
-      return token;
   }
  
 }
