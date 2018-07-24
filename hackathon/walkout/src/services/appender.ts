@@ -6,11 +6,11 @@ import { IHook } from "../github";
 export class Appender extends EventEmitter {
     private childProcess: ChildProcess;
 
-    constructor() {
+    constructor(id: string) {
         super();
 
         const workerPath = path.join(__dirname, "../worker");
-        this.childProcess = fork(workerPath);
+        this.childProcess = fork(workerPath, [id]);
 
         this.childProcess.on(
             "exit",
@@ -36,7 +36,9 @@ export class Appender extends EventEmitter {
         this.childProcess.send(
             { event, hook },
             (error) => {
-                console.log(error);
+                if (error) {
+                    console.log(error);
+                }
             });
     }
 }
