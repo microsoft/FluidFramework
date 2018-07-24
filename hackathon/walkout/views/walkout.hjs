@@ -1,0 +1,17 @@
+{{<layout}}
+    {{$styles}}
+    {{/styles}}
+
+    {{$content}}
+        <div class="container">
+            <div class="movie"></div>
+        </div>
+    {{/content}}
+
+    {{$scripts}}
+        <script src="/public/dist/bundle.js"></script>
+        <script>
+            controllers.load("{{ id }}");
+        </script>
+    {{/scripts}}
+{{/layout}}

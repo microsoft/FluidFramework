@@ -34,5 +34,17 @@ export function create(config: Provider, ensureLoggedIn: any): Router {
             });
     });
 
+    router.get("/walkout/:id", ensureLoggedIn(), (request, resposne) => {
+        resposne.render(
+            "walkout",
+            {
+                id: request.params.id,
+                partials: {
+                    layout: "layout",
+                },
+                title: "Walkout",
+            });
+    });
+
     return router;
 }

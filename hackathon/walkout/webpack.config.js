@@ -1,32 +1,13 @@
 const path = require('path');
 
 module.exports = {
-    entry: './src/index.ts',
-    devtool: 'source-map',
+    entry: './src/controllers/index.ts',
     module: {
         rules: [
             {
                 test: /\.tsx?$/,
                 use: 'ts-loader',
                 exclude: /node_modules/
-            },
-            {
-                test: /\.js$/,
-                include: [
-                    path.resolve(__dirname, "node_modules/@prague/routerlicious"),
-                    path.resolve(__dirname, "node_modules/telegrafjs"),
-                ],
-                use: {
-                    loader: 'babel-loader',
-                    options: {
-                        presets: ['env']
-                    }
-                }
-            },
-            {
-                test: /\.js$/,
-                use: ["source-map-loader"],
-                enforce: "pre"
             }
         ]
     },
@@ -35,7 +16,9 @@ module.exports = {
     },
     output: {
         filename: 'bundle.js',
-        path: path.resolve(__dirname, 'dist')
+        library: "controllers",
+		libraryTarget: "umd",
+        path: path.resolve(__dirname, 'public/dist')
     },
     node: {
         fs: 'empty',

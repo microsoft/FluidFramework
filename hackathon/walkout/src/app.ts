@@ -44,6 +44,7 @@ export function create(config: Provider, appendManager: AppendManager) {
     app.use(bodyParser.urlencoded({ extended: false }));
     app.use(passport.initialize());
     app.use(passport.session());
+    app.use("/public", express.static(path.join(__dirname, "../public")));
 
     const appRoutes = routes.create(config, appendManager);
     app.use("/", appRoutes.auth);
