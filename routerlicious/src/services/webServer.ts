@@ -36,7 +36,9 @@ export class WebServer implements core.IWebServer {
      * Closes the web server
      */
     public async close(): Promise<void> {
-        await Promise.all([this.httpServer.close(), this.webSocketServer.close()]);
+        await Promise.all([
+            this.httpServer.close(),
+            this.webSocketServer ? this.webSocketServer.close() : Promise.resolve()]);
     }
 }
 
@@ -52,5 +54,15 @@ export class SocketIoWebServerFactory implements core.IWebServerFactory {
         const socketIoServer = socketIo.create(this.redisConfig, server);
 
         return new WebServer(httpServer, socketIoServer);
+    }
+}
+
+export class BasicWebServerFactory implements core.IWebServerFactory {
+    public create(requestListener: RequestListener): core.IWebServer {
+        // Create the base HTTP server and register the provided request listener
+        const server = http.createServer(requestListener);
+        const httpServer = new HttpServer(server);
+
+        return new WebServer(httpServer, null);
     }
 }

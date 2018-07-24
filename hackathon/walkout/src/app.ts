@@ -16,7 +16,12 @@ export function create(config: Provider) {
             clientSecret: config.get("clientSecret"),
         },
         (accessToken, refreshToken, profile, cb) => {
-            return cb(null, { id: profile.id });
+            return cb(
+                null,
+                {
+                    accessToken,
+                    profile,
+                });
         });
     passport.use(gitHubStrategy);
     passport.serializeUser((user: any, done) => {

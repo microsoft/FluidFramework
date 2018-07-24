@@ -6,7 +6,7 @@ export function create(): Router {
 
     router.get(
         "/login",
-        passport.authenticate("github"));
+        passport.authenticate("github", { scope: ["repo"] }));
 
     router.get(
         "/auth/github/callback",

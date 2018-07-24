@@ -1,0 +1,17 @@
+{{<layout}}
+    {{$styles}}
+    {{/styles}}
+
+    {{$content}}
+        <div class="container">
+            <ul>
+            {{#repos}}
+                <li>{{.}}</li>
+            {{/repos}}
+            </ul>
+        </div>
+    {{/content}}
+
+    {{$scripts}}
+    {{/scripts}}
+{{/layout}}
