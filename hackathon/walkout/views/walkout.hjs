@@ -4,14 +4,23 @@
 
     {{$content}}
         <div class="container">
-            <div class="movie"></div>
+            <div id="player"></div>
         </div>
     {{/content}}
 
     {{$scripts}}
         <script src="/public/dist/bundle.js"></script>
         <script>
-            controllers.load("{{ id }}");
+            // 2. This code loads the IFrame Player API code asynchronously.
+            var tag = document.createElement('script');
+
+            tag.src = "https://www.youtube.com/iframe_api";
+            var firstScriptTag = document.getElementsByTagName('script')[0];
+            firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+            function onYouTubeIframeAPIReady() {
+                controllers.load("{{ id }}", YT);
+            }
         </script>
     {{/scripts}}
 {{/layout}}
