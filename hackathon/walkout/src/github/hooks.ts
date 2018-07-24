@@ -121,14 +121,6 @@ export interface IHook {
     name: string;
 }
 
-export interface IPingHook {
-    zen: string;
-    hook_id: number;
-    hook: any;
-    repository: IRepository;
-    sender: ISender;
-}
-
 export interface ICommit {
     id: string;
     tree_id: string;
@@ -151,7 +143,13 @@ export interface ICommit {
     modified: string[];
 }
 
-export interface IPushHook {
+export interface IPingHook extends IHook {
+    zen: string;
+    hook_id: number;
+    hook: any;
+}
+
+export interface IPushHook extends IHook {
     ref: string;
     before: string;
     after: string;
@@ -162,10 +160,13 @@ export interface IPushHook {
     compare: string;
     head_commit: ICommit;
     commits: ICommit[];
-    repository: IRepository;
-    sender: ISender;
     pusher: {
         name: string;
         email: string;
     };
+}
+
+export interface IHook {
+    repository: IRepository;
+    sender: ISender;
 }

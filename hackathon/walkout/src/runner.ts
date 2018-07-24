@@ -4,6 +4,7 @@ import * as utils from "@prague/routerlicious/dist/utils";
 import { Provider } from "nconf";
 import * as winston from "winston";
 import * as app from "./app";
+import { AppendManager } from "./services";
 
 export class WalkoutRunner implements utils.IRunner {
     private server: IWebServer;
@@ -12,13 +13,14 @@ export class WalkoutRunner implements utils.IRunner {
     constructor(
         private serverFactory: IWebServerFactory,
         private config: Provider,
-        private port: string | number) {
+        private port: string | number,
+        private appendManager: AppendManager) {
     }
 
     public start(): Promise<void> {
         this.runningDeferred = new Deferred<void>();
 
-        const admin = app.create(this.config);
+        const admin = app.create(this.config, this.appendManager);
         admin.set("port", this.port);
 
         this.server = this.serverFactory.create(admin);

@@ -7,8 +7,9 @@ import * as passport from "passport";
 import { Strategy as GitHubStrategy } from "passport-github";
 import * as path from "path";
 import * as routes from "./routes";
+import { AppendManager } from "./services";
 
-export function create(config: Provider) {
+export function create(config: Provider, appendManager: AppendManager) {
     const gitHubStrategy = new GitHubStrategy(
         {
             callbackURL: "http://localhost:3000/auth/github/callback",
@@ -44,7 +45,7 @@ export function create(config: Provider) {
     app.use(passport.initialize());
     app.use(passport.session());
 
-    const appRoutes = routes.create(config);
+    const appRoutes = routes.create(config, appendManager);
     app.use("/", appRoutes.auth);
     app.use("/", appRoutes.home);
     app.use("/", appRoutes.webhook);
