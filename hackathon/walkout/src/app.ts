@@ -39,6 +39,7 @@ export function create(config: Provider) {
     app.set("view engine", "hjs");
 
     app.use(expressSession({ secret: "bAq0XuQWqoAZzaAkQT5EXPCHBkeIEZqi" }));
+    app.use(bodyParser.json());
     app.use(bodyParser.urlencoded({ extended: false }));
     app.use(passport.initialize());
     app.use(passport.session());
@@ -46,6 +47,7 @@ export function create(config: Provider) {
     const appRoutes = routes.create(config);
     app.use("/", appRoutes.auth);
     app.use("/", appRoutes.home);
+    app.use("/", appRoutes.webhook);
 
     // catch 404 and forward to error handler
     app.use((req, res, next) => {
