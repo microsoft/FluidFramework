@@ -9,6 +9,7 @@
     {{/content}}
 
     {{$scripts}}
+        <script src="/public/dist/1.bundle.js"></script>
         <script src="/public/dist/bundle.js"></script>
         <script>
             // 2. This code loads the IFrame Player API code asynchronously.
