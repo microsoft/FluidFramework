@@ -1736,7 +1736,8 @@ function renderTree(
     const outerViewport = new Viewport(outerViewportHeight, viewportDiv, outerViewportWidth);
     if (flowView.movingInclusion.onTheMove) {
         outerViewport.addInclusion(flowView, flowView.movingInclusion.marker,
-            flowView.movingInclusion.exclu.x, flowView.movingInclusion.exclu.y, docContext.defaultLineDivHeight, true);
+            flowView.movingInclusion.exclu.x, flowView.movingInclusion.exclu.y,
+            docContext.defaultLineDivHeight, true);
     }
     const startingPosStack =
         client.mergeTree.getStackContext(requestedPosition, client.getClientId(), ["table", "cell", "row"]);
@@ -1835,6 +1836,8 @@ function closestSouth(lineDivs: ILineDiv[], y: number) {
 export interface IExcludedRectangle extends ui.Rectangle {
     left: boolean;
     curY: number;
+    requiresUL?: boolean;
+    floatL?: boolean;
 }
 
 function makeExcludedRectangle(x: number, y: number, w: number, h: number) {
@@ -1845,6 +1848,7 @@ function makeExcludedRectangle(x: number, y: number, w: number, h: number) {
 }
 
 export interface ILineRect {
+    e?: IExcludedRectangle;
     h: number;
     w: number;
     x: number;
@@ -1886,6 +1890,7 @@ export class Viewport {
                     const showImage = <IRefImg>document.createElement("img");
                     showImage.marker = marker;
                     showImage.src = irdoc.url;
+                    const minX = Math.floor(this.width / 5);
                     const w = Math.floor(this.width / 3);
                     let h = w;
                     // TODO: adjust dx, dy by viewport dimensions
@@ -1902,9 +1907,18 @@ export class Viewport {
                         x -= w;
                     }
                     x = Math.floor(x + dx);
+                    if (x < minX) {
+                        x = 0;
+                    }
                     y += lineHeight;
                     y = Math.floor(y + dy);
                     const exclu = makeExcludedRectangle(x, y, w, h);
+                    if (movingMarker) {
+                        exclu.requiresUL = true;
+                        if (exclu.x === 0) {
+                            exclu.floatL = true;
+                        }
+                    }
                     exclu.conformElement(showImage);
                     showImage.exclu = exclu;
                     this.div.appendChild(showImage);
@@ -1938,14 +1952,26 @@ export class Viewport {
     }
 
     public getLineRect(h: number) {
-        const x = this.lineX;
+        let x = this.lineX;
         let w = this.width;
         let rectHit = false;
         const y = this.lineTop;
+        let e: IExcludedRectangle;
         for (const exclu of this.excludedRects) {
-            if ((exclu.x > x) && this.horizIntersect(h, exclu)) {
-                this.lineX = exclu.x + exclu.width;
-                w = exclu.x - x;
+            if ((exclu.x >= x) && this.horizIntersect(h, exclu)) {
+                if ((this.lineX === 0) && (exclu.x === 0)) {
+                    x = exclu.x + exclu.width;
+                    // assume for now only one rect across
+                    this.lineX = 0;
+                    w = this.width - x;
+                } else {
+                    this.lineX = exclu.x + exclu.width;
+                    w = exclu.x - x;
+                }
+                if (exclu.requiresUL) {
+                    e = exclu;
+                    exclu.requiresUL = false;
+                }
                 rectHit = true;
                 break;
             }
@@ -1955,7 +1981,7 @@ export class Viewport {
             w = this.width - x;
             this.lineX = 0;
         }
-        return <ILineRect>{ h, w, x, y };
+        return <ILineRect>{ e, h, w, x, y };
     }
 
     public currentLineWidth(h?: number) {
@@ -2063,6 +2089,7 @@ export interface IFlowBreakInfo extends Paragraph.IBreakInfo {
     lineX?: number;
     lineWidth?: number;
     lineHeight?: number;
+    movingExclu?: IExcludedRectangle;
 }
 
 export function breakPGIntoLinesFFVP(flowView: FlowView, itemInfo: Paragraph.IParagraphItemInfo, defaultLineHeight: number,
@@ -2074,6 +2101,7 @@ export function breakPGIntoLinesFFVP(flowView: FlowView, itemInfo: Paragraph.IPa
         lineHeight: defaultLineHeight,
         lineWidth: lineRect.w,
         lineX: lineRect.x, lineY: lineRect.y,
+        movingExclu: lineRect.e,
         posInPG: 0, startItemIndex: 0,
     };
     const breaks = <IFlowBreakInfo[]>[breakInfo];
@@ -2111,6 +2139,7 @@ export function breakPGIntoLinesFFVP(flowView: FlowView, itemInfo: Paragraph.IPa
                     lineHeight: committedItemsHeight,
                     lineWidth: lineRect.w,
                     lineX: lineRect.x, lineY: lineRect.y,
+                    movingExclu: lineRect.e,
                     posInPG: blockRunPos, startItemIndex: i,
                 };
                 breaks.push(breakInfo);
@@ -2128,6 +2157,7 @@ export function breakPGIntoLinesFFVP(flowView: FlowView, itemInfo: Paragraph.IPa
                     lineHeight: committedItemsHeight,
                     lineWidth: lineRect.w,
                     lineX: lineRect.x, lineY: lineRect.y,
+                    movingExclu: lineRect.e,
                     posInPG, startItemIndex: i,
                 };
                 breaks.push(breakInfo);
@@ -2146,7 +2176,8 @@ export function breakPGIntoLinesFFVP(flowView: FlowView, itemInfo: Paragraph.IPa
             posInPG++;
             prevIsGlue = true;
         } else if (item.type === Paragraph.ParagraphItemType.Marker) {
-            viewport.addInclusion(flowView, <MergeTree.Marker>item.segment, lineRect.x + committedItemsWidth,
+            viewport.addInclusion(flowView, <MergeTree.Marker>item.segment,
+                lineRect.x + committedItemsWidth,
                 viewport.getLineTop(), committedItemsHeight);
         }
         committedItemsWidth += item.width;
@@ -2314,6 +2345,17 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
                 let eol = (lineX + lineWidth) >= layoutContext.viewport.currentLineWidth();
                 eol = eol || (lineEnd === undefined);
                 layoutContext.viewport.commitLineDiv(lineDiv, lineDivHeight, eol);
+                if (breakInfo.movingExclu) {
+                    // console.log(`exclu line ${lineDiv.innerHTML} pos ${lineDiv.linePos} end ${lineDiv.lineEnd}`);
+                    if (breakInfo.movingExclu.floatL) {
+                        flowView.movingInclusion.ulPos = lineDiv.linePos;
+                    } else {
+                        flowView.movingInclusion.ulPos = lineDiv.lineEnd;
+                        if (lineDiv.lineEnd === curPGMarkerPos) {
+                            flowView.movingInclusion.ulPos--;
+                        }
+                    }
+                }
             } else {
                 deferredHeight += lineDivHeight;
             }
@@ -2821,7 +2863,11 @@ enum KeyCode {
     letter_z = 90,
 }
 
-export interface IRemotePresenceInfo {
+export interface IRemotePresenceBase {
+    type: string;
+}
+export interface IRemotePresenceInfo extends IRemotePresenceBase {
+    type: "selection";
     origPos: number;
     origMark: number;
     refseq: number;
@@ -2829,15 +2875,20 @@ export interface IRemotePresenceInfo {
 
 export interface IMovingInclusionInfo {
     onTheMove: boolean;
-    exclu?: ui.Rectangle;
+    exclu?: IExcludedRectangle;
     marker?: MergeTree.Marker;
     dx?: number;
     dy?: number;
+    ulPos?: number;
 }
 
-export interface IRemoteDragPresenceInfo {
-    exclu: ui.Rectangle;
+export interface IRemoteDragInfo extends IRemotePresenceBase {
+    type: "drag";
+    exclu: IExcludedRectangle;
     markerPos: number;
+    onTheMove: boolean;
+    dx: number;
+    dy: number;
 }
 
 export interface ILocalPresenceInfo {
@@ -3744,6 +3795,7 @@ export class FlowView extends ui.Component {
                         if (dist >= thresh) {
                             this.movingInclusion.dx = deltaX;
                             this.movingInclusion.dy = deltaY;
+                            this.updateDragPresence();
                             this.render(this.topChar, true);
                         }
                     } else {
@@ -3798,18 +3850,19 @@ export class FlowView extends ui.Component {
             if (e.button === 0) {
                 freshDown = false;
                 if (this.movingInclusion.onTheMove) {
-                    const deltaX = e.clientX - downX;
-                    const deltaY = e.clientY - downY;
-                    console.log(`dx ${deltaX} dy ${deltaY} ex ${this.movingInclusion.exclu.x} ey ${this.movingInclusion.exclu.y}`);
-                    const pos = pixelToPosition(this, this.movingInclusion.exclu.x + deltaX,
-                        this.movingInclusion.exclu.y + deltaY);
-                    if (pos !== undefined) {
-                        console.log(`moving to ${pos}`);
-                        moveMarker(this, getOffset(this, this.movingInclusion.marker), pos);
-                    }
+                    const toPos = this.movingInclusion.ulPos;
                     this.movingInclusion.dx = 0;
                     this.movingInclusion.dy = 0;
                     this.movingInclusion.onTheMove = false;
+                    this.movingInclusion.ulPos = undefined;
+                    this.updateDragPresence();
+                    if (toPos !== undefined) {
+                        // console.log(`moving to ${toPos}`);
+                        const fromPos = getOffset(this, this.movingInclusion.marker);
+                        moveMarker(this, fromPos, toPos);
+                        this.updatePGInfo(fromPos);
+                        this.updatePGInfo(toPos);
+                    }
                     this.render(this.topChar, true);
                 } else {
                     const elm = <HTMLElement>document.elementFromPoint(prevX, prevY);
@@ -4873,9 +4926,12 @@ export class FlowView extends ui.Component {
             return;
         }
 
-        const remotePresenceInfo = this.presenceMapView.get(delta.key) as IRemotePresenceInfo;
-
-        this.remotePresenceToLocal(delta.key, op.user, remotePresenceInfo);
+        const remotePresenceBase = this.presenceMapView.get(delta.key) as IRemotePresenceBase;
+        if (remotePresenceBase.type === "selection") {
+            this.remotePresenceToLocal(delta.key, op.user, remotePresenceBase as IRemotePresenceInfo);
+        } else if (remotePresenceBase.type === "drag") {
+            this.remoteDragToLocal(delta.key, op.user, remotePresenceBase as IRemoteDragInfo);
+        }
     }
 
     private remotePresenceFromEdit(
@@ -4889,9 +4945,19 @@ export class FlowView extends ui.Component {
             origMark: -1,
             origPos: oldpos + posAdjust,
             refseq,
+            type: "selection",
         };
 
         this.remotePresenceToLocal(longClientId, userInfo, remotePosInfo);
+    }
+    // TODO: throttle this if local starts moving
+    private remoteDragToLocal(longClientId: string, user: core.ITenantUser, remoteDragInfo: IRemoteDragInfo) {
+        this.movingInclusion.exclu = remoteDragInfo.exclu;
+        this.movingInclusion.marker = <MergeTree.Marker>getContainingSegment(this, remoteDragInfo.markerPos).segment;
+        this.movingInclusion.dx = remoteDragInfo.dx;
+        this.movingInclusion.dy = remoteDragInfo.dy;
+        this.movingInclusion.onTheMove = remoteDragInfo.onTheMove;
+        this.localQueueRender(Nope);
     }
 
     private remotePresenceToLocal(longClientId: string, user: core.ITenantUser, remotePresenceInfo: IRemotePresenceInfo, posAdjust = 0) {
@@ -4936,21 +5002,27 @@ export class FlowView extends ui.Component {
                 origMark: this.cursor.mark,
                 origPos: this.cursor.pos,
                 refseq: this.client.getCurrentSeq(),
+                type: "selection",
             };
 
             this.presenceMapView.set(this.collabDocument.clientId, presenceInfo);
         }
     }
 
-    // private updateDragPresence() {
-    //     if (this.presenceMapView) {
-    //         const dragPresenceInfo: IRemoteDragPresenceInfo = {
-    //             exclu: this.movingExclu,
-    //             markerPos: getOffset(this, this.movingMarker),
-    //         };
-    //         this.presenceMapView.set(this.collabDocument.clientId+"drag", dragPresenceInfo);
-    //     }
-    // }
+    private updateDragPresence() {
+        if (this.presenceMapView) {
+            let dragPresenceInfo: IRemoteDragInfo;
+            dragPresenceInfo = {
+                dx: this.movingInclusion.dx,
+                dy: this.movingInclusion.dy,
+                exclu: this.movingInclusion.exclu,
+                markerPos: getOffset(this, this.movingInclusion.marker),
+                onTheMove: this.movingInclusion.onTheMove,
+                type: "drag",
+            };
+            this.presenceMapView.set(this.collabDocument.clientId, dragPresenceInfo);
+        }
+    }
 
     private increaseIndent(tile: Paragraph.IParagraphMarker, pos: number, decrease = false) {
         tile.listCache = undefined;
