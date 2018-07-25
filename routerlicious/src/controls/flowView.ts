@@ -46,11 +46,18 @@ function findRowParent(lineDiv: ILineDiv) {
         parent = parent.parentElement as IRowDiv;
     }
 }
-
-interface IRefImg extends HTMLImageElement {
+interface IRefInclusion {
     marker: MergeTree.Marker;
     exclu: IExcludedRectangle;
 }
+
+interface IRefFlow extends HTMLDivElement, IRefInclusion {
+}
+
+interface IRefImage extends HTMLImageElement, IRefInclusion {
+}
+
+type IRefElement = IRefFlow | IRefImage;
 
 interface ISegSpan extends HTMLSpanElement {
     seg: MergeTree.TextSegment;
@@ -327,6 +334,12 @@ const commands: ICmd[] = [
             f.insertPhoto();
         },
         key: "insert photo",
+    },
+    {
+        exec: (f) => {
+            f.addChildFlow();
+        },
+        key: "cflow test",
     },
     {
         exec: (f) => {
@@ -1859,6 +1872,10 @@ function lineIntersectsRect(y: number, rect: IExcludedRectangle) {
     return (y >= rect.y) && (y <= (rect.y + rect.height));
 }
 
+export interface IFlowRefMarker extends MergeTree.Marker {
+    flowView: FlowView;
+}
+
 export class Viewport {
     // keep the line divs in order
     public lineDivs: ILineDiv[] = [];
@@ -1887,7 +1904,7 @@ export class Viewport {
             if (irdoc) {
                 // for now always an image
                 if (irdoc.type.name === "image") {
-                    const showImage = <IRefImg>document.createElement("img");
+                    const showImage = <IRefImage>document.createElement("img");
                     showImage.marker = marker;
                     showImage.src = irdoc.url;
                     const minX = Math.floor(this.width / 5);
@@ -1923,6 +1940,54 @@ export class Viewport {
                     showImage.exclu = exclu;
                     this.div.appendChild(showImage);
                     this.excludedRects.push(exclu);
+                } else if ((irdoc.type.name === "childFlow") && (!flowView.parentFlow)) {
+                    // TODO: rationalize duplicate code across irdoc types
+                    const flowDiv = <IRefFlow>document.createElement("div");
+                    flowDiv.marker = marker;
+                    const minX = Math.floor(this.width / 5);
+                    const w = Math.floor(this.width / 3);
+                    let h = w;
+                    // TODO: adjust dx, dy by viewport dimensions
+                    let dx = 0;
+                    let dy = 0;
+                    if (movingMarker) {
+                        dx = flowView.movingInclusion.dx;
+                        dy = flowView.movingInclusion.dy;
+                    }
+                    if (irdoc.layout) {
+                        h = Math.floor(w * irdoc.layout.ar);
+                    }
+                    if ((x + w) > this.width) {
+                        x -= w;
+                    }
+                    x = Math.floor(x + dx);
+                    if (x < minX) {
+                        x = 0;
+                    }
+                    y += lineHeight;
+                    y = Math.floor(y + dy);
+                    const exclu = makeExcludedRectangle(x, y, w, h);
+                    if (movingMarker) {
+                        exclu.requiresUL = true;
+                        if (exclu.x === 0) {
+                            exclu.floatL = true;
+                        }
+                    }
+                    exclu.conformElement(flowDiv);
+                    flowDiv.style.backgroundColor = "#DDDDDD";
+                    flowDiv.exclu = exclu;
+                    this.div.appendChild(flowDiv);
+                    this.excludedRects.push(exclu);
+                    const flowRefMarker = marker as IFlowRefMarker;
+                    let startChar = 0;
+                    let cursorPos = 0;
+                    const prevFlowView = flowRefMarker.flowView;
+                    if (prevFlowView) {
+                        startChar = prevFlowView.viewportStartPos;
+                        cursorPos = prevFlowView.cursor.pos;
+                    }
+                    flowRefMarker.flowView = flowView.renderChildFlow(startChar, cursorPos,
+                        flowDiv, exclu, marker);
                 }
             }
         }
@@ -3113,6 +3178,12 @@ export class FlowView extends ui.Component {
     } as IFlowViewModes;
     public movingInclusion = <IMovingInclusionInfo>{ onTheMove: false };
     public lastDocContext: IDocumentContext;
+    public focusChild: FlowView;
+    public focusMarker: MergeTree.Marker;
+    public childMarker: MergeTree.Marker;
+    public parentFlow: FlowView;
+    public keypressHandler: (e: KeyboardEvent) => void;
+    public keydownHandler: (e: KeyboardEvent) => void;
     private lastVerticalX = -1;
     private randWordTimer: any;
     private pendingRender = false;
@@ -3163,6 +3234,42 @@ export class FlowView extends ui.Component {
 
     public treeForViewport() {
         console.log(this.sharedString.client.mergeTree.rangeToString(this.viewportStartPos, this.viewportEndPos));
+    }
+
+    public renderChildFlow(startChar: number, cursorPos: number, flowElement: HTMLDivElement,
+        flowRect: IExcludedRectangle, marker: MergeTree.Marker) {
+        const childFlow = new FlowView(flowElement, this.collabDocument, this.sharedString,
+            this.status, this.options);
+        childFlow.parentFlow = this;
+        childFlow.setEdit(this.docRoot);
+        childFlow.comments = this.comments;
+        childFlow.commentsView = this.commentsView;
+        childFlow.presenceMapView = this.presenceMapView;
+        childFlow.presenceVector = this.presenceVector;
+        childFlow.bookmarks = this.bookmarks;
+        childFlow.cursor.pos = cursorPos;
+        const clientRect = new ui.Rectangle(0, 0, flowRect.width, flowRect.height);
+        childFlow.resizeCore(clientRect);
+        childFlow.render(startChar, true);
+        if (this.focusMarker === marker) {
+            this.focusChild = childFlow;
+        }
+        childFlow.childMarker = marker;
+        return childFlow;
+    }
+
+    public addChildFlow() {
+        const rdocType = <IReferenceDocType>{
+            name: "childFlow",
+        };
+        const irdoc = <IReferenceDoc>{
+            type: rdocType,
+        };
+        const refProps = {
+            [Paragraph.referenceProperty]: irdoc,
+        };
+        this.sharedString.insertMarker(this.cursor.pos, MergeTree.ReferenceType.Simple, refProps);
+        this.localQueueRender(this.cursor.pos);
     }
 
     public measureClone() {
@@ -3510,6 +3617,12 @@ export class FlowView extends ui.Component {
             }
             this.updatePresence();
             this.cursor.updateView(this);
+            if (this.parentFlow) {
+                this.parentFlow.focusChild = this;
+                this.parentFlow.focusMarker = this.childMarker;
+            }
+            this.focusChild = undefined;
+            this.focusMarker = undefined;
             return true;
         }
     }
@@ -3768,22 +3881,22 @@ export class FlowView extends ui.Component {
         let prevY = Nope;
         let downX = Nope;
         let downY = Nope;
-        let imgMarker: MergeTree.Marker;
+        let incluMarker: MergeTree.Marker;
         let freshDown = false;
 
         const moveObjects = (e: MouseEvent, fresh = false) => {
             if (e.button === 0) {
                 prevX = e.clientX;
                 prevY = e.clientY;
-                const elm = <HTMLElement>document.elementFromPoint(prevX, prevY);
+                const elm = document.elementFromPoint(prevX, prevY);
                 if (elm) {
                     if (fresh) {
-                        if (elm.tagName === "IMG") {
+                        const refInclu = elm as IRefElement;
+                        if (refInclu.marker) {
                             this.movingInclusion.onTheMove = true;
-                            const refimg = elm as IRefImg;
-                            imgMarker = refimg.marker;
-                            this.movingInclusion.exclu = refimg.exclu;
-                            this.movingInclusion.marker = imgMarker;
+                            incluMarker = refInclu.marker;
+                            this.movingInclusion.exclu = refInclu.exclu;
+                            this.movingInclusion.marker = incluMarker;
                         }
                     }
                     if (this.movingInclusion.onTheMove) {
@@ -3840,6 +3953,7 @@ export class FlowView extends ui.Component {
                 }
                 this.element.onmousemove = mousemove;
             }
+            e.stopPropagation();
             e.preventDefault();
             e.returnValue = false;
             return false;
@@ -3880,6 +3994,7 @@ export class FlowView extends ui.Component {
                         }
                     }
                 }
+                e.stopPropagation();
                 e.preventDefault();
                 e.returnValue = false;
                 return false;
@@ -3909,12 +4024,15 @@ export class FlowView extends ui.Component {
                 }, 20);
                 this.wheelTicking = true;
             }
+            e.stopPropagation();
             e.preventDefault();
             e.returnValue = false;
         };
 
         const keydownHandler = (e: KeyboardEvent) => {
-            if (this.activeSearchBox) {
+            if (this.focusChild) {
+                this.focusChild.keydownHandler(e);
+            } else if (this.activeSearchBox) {
                 if (e.keyCode === KeyCode.esc) {
                     this.activeSearchBox.dismiss();
                     this.activeSearchBox = undefined;
@@ -4039,7 +4157,9 @@ export class FlowView extends ui.Component {
         };
 
         const keypressHandler = (e: KeyboardEvent) => {
-            if (this.activeSearchBox) {
+            if (this.focusChild) {
+                this.focusChild.keypressHandler(e);
+            } else if (this.activeSearchBox) {
                 if (e.charCode === CharacterCodes.cr) {
                     const cmd = this.activeSearchBox.getSelectedItem() as ICmd;
                     if (cmd && cmd.exec) {
@@ -4090,6 +4210,8 @@ export class FlowView extends ui.Component {
         // Register for keyboard messages
         this.on("keydown", keydownHandler);
         this.on("keypress", keypressHandler);
+        this.keypressHandler = keypressHandler;
+        this.keydownHandler = keydownHandler;
     }
 
     public viewTileProps() {
@@ -4897,14 +5019,18 @@ export class FlowView extends ui.Component {
     }
 
     public localQueueRender(updatePos: number) {
-        if (updatePos >= 0) {
-            this.updatePGInfo(updatePos);
+        if (this.parentFlow) {
+            this.parentFlow.localQueueRender(updatePos);
+        } else {
+            if (updatePos >= 0) {
+                this.updatePGInfo(updatePos);
+            }
+            this.pendingRender = true;
+            window.requestAnimationFrame(() => {
+                this.pendingRender = false;
+                this.render(this.topChar, true);
+            });
         }
-        this.pendingRender = true;
-        window.requestAnimationFrame(() => {
-            this.pendingRender = false;
-            this.render(this.topChar, true);
-        });
     }
 
     public setViewOption(options: Object) {
