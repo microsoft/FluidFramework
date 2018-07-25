@@ -45,5 +45,25 @@ export function create(store: nconf.Provider, tenantService: ITenantService, cac
             useCache);
     });
 
+    /**
+     * Retrieves the given blob as an image
+     */
+    router.get("/repos/:ignored?/:tenantId/git/blobs/:sha/image", (request, response, next) => {
+        const useCache = !("disableCache" in request.query);
+
+        const blobP = getBlob(request.params.tenantId, request.get("Authorization"), request.params.sha, useCache);
+
+        blobP.then((blob) => {
+            if (useCache) {
+                response.setHeader("Cache-Control", "public, max-age=31536000");
+            }
+            response.setHeader("content-type", "image/jpeg");
+            response.status(200).write(new Buffer(blob.content, "base64"), () => response.end());
+        },
+        (error) => {
+            response.status(400).json(error);
+        });
+    });
+
     return router;
 }
