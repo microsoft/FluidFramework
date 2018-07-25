@@ -104,7 +104,7 @@ export class TodoList extends React.Component<IToDoListProps, IToDoListState> {
     }
 
     private listenForUpdate() {
-        this.props.map.on("valueChanged", () => {
+        this.props.map.on("valueChanged", (op: any) => {
             this.setState({
                 list: this.getData(),
             });

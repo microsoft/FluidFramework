@@ -60,26 +60,17 @@ export async function load(id: string, tenantId: string, endPoints: any, token?:
 
 async function prepare(document: prague.api.Document): Promise<IMapPair> {
     return new Promise<IMapPair>((resolve, reject) => {
-      // We check both cases but at least for now, document should always exist.
       if (document.existing) {
         console.log(`Existing document!`);
-        if (document.isConnected) {
-          console.log(`Already connected!`);
-          prepareCore(document).then((mapView) => {
-            resolve(mapView);
-          }, (error) => {
-            reject(error);
-          });
-        } else {
-          document.on("connected", () => {
-            console.log(`On connected event!`);
+        const rootMap = document.getRoot();
+        // Wait for the root map to show up.
+        rootMap.wait("todo").then(() => {
             prepareCore(document).then((mapView) => {
-              resolve(mapView);
-            }, (error) => {
-              reject(error);
-            });
-          });
-        }
+                resolve(mapView);
+              }, (error) => {
+                reject(error);
+              });
+        });
       } else {
         prepareCore(document, true).then((mapView) => {
           resolve(mapView);
