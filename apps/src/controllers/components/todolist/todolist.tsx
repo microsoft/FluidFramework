@@ -114,13 +114,13 @@ export class TodoList extends React.Component<IToDoListProps, IToDoListState> {
     private getData() {
         const keyArray = Array.from(this.props.view.keys());
         const list = keyArray.map((key) => {
-            const rawItem = this.props.view.get(key);
+            const rawItem = this.props.view.get(key) as string;
             const parts = rawItem.split("@");
             return {
               description: parts[1],
               title: parts[0],
             };
         });
-        return list;
+        return list.filter((item) => item.title && item.title !== "");
     }
 }

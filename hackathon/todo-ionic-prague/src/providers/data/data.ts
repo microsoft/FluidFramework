@@ -58,37 +58,30 @@ export class Data {
 
   private initData() {
     const keyArray = Array.from(this.todoView.keys());
-    this.list = keyArray.map((key) => {
-      const rawItem = this.todoView.get(key);
+    const items = keyArray.map((key) => {
+      const rawItem = this.todoView.get(key) as string;
       const parts = rawItem.split("@");
       return {
         title: parts[0],
         description: parts[1],
       }
     });
+    this.list = items.filter((item) => item.title && item.title !== "");
   }
 
   private async prepare() {
     return new Promise<void>((resolve, reject) => {
       if (this.document.existing) {
         console.log(`Existing document!`);
-        if (this.document.isConnected) {
-          console.log(`Already connected!`);
+        const rootMap = this.document.getRoot();
+        // Wait for the root map to show up.
+        rootMap.wait("todo").then(() => {
           this.prepareCore().then(() => {
             resolve();
           }, (error) => {
             reject(error);
           });
-        } else {
-          this.document.on("connected", () => {
-            console.log(`On connected event!`);
-            this.prepareCore().then(() => {
-              resolve();
-            }, (error) => {
-              reject(error);
-            });
-          });
-        }
+        });
       } else {
         this.prepareCore(true).then(() => {
           resolve();
