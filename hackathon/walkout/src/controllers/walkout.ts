@@ -30,6 +30,7 @@ async function playVideo(player, id: string) {
 
     const video = await videoDocMap.get(id);
     player.loadVideoById({ videoId: video.id, startSeconds: video.start, endSeconds: video.end });
+    // return and register a promise to fire when state goes to ended?
 }
 
 async function run(id: string, YT: any): Promise<void> {
@@ -43,10 +44,14 @@ async function run(id: string, YT: any): Promise<void> {
                         resolve(p);
                     },
                     onStateChange: (event) => {
+                        // YT.PlayerState.ENDED
                         console.log(JSON.stringify(event, null, 2));
                     },
                 },
                 height: "100%",
+                playerVars: {
+                    controls: 0,
+                },
                 width: "100%",
             });
     });
