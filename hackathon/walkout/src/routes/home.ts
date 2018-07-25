@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { Provider } from "nconf";
-import { GitHub } from "../github";
+import { GitHub, IPassportUser } from "../github";
 
 export function create(config: Provider, ensureLoggedIn: any): Router {
     const router: Router = Router();
@@ -31,6 +31,20 @@ export function create(config: Provider, ensureLoggedIn: any): Router {
                         repos: names,
                         title: "Walkout",
                     });
+            });
+    });
+
+    router.get("/me", ensureLoggedIn(), (request, response) => {
+        const user = request.user.profile as IPassportUser;
+
+        response.render(
+            "me",
+            {
+                partials: {
+                    layout: "layout",
+                },
+                profile: JSON.stringify(user._json),
+                title: "Walkout",
             });
     });
 

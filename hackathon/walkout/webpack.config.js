@@ -2,6 +2,7 @@ const path = require('path');
 
 module.exports = {
     entry: './src/controllers/index.ts',
+    devtool: 'source-map',
     module: {
         rules: [
             {
