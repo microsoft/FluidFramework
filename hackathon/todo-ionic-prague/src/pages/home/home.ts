@@ -12,6 +12,7 @@ import { Factory } from '../../providers/factory/factory';
 export class HomePage {
  
   public items = [];
+  public documentId: string;
  
   constructor(
     public navCtrl: NavController,
@@ -23,6 +24,7 @@ export class HomePage {
   ionViewDidLoad(){
     
     this.factoryService.getOrCreateList().then((documentId) => {
+      this.documentId = documentId;
       console.log(`Name ${documentId} generated!`);
       this.dataService.init(documentId).then(() => {
         console.log(`Created a document and started listening!`);
