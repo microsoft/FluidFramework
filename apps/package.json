@@ -42,6 +42,7 @@
     "rc-slider": "^8.6.1",
     "react": "^16.3.0",
     "react-dom": "^16.3.0",
+    "react-responsive-modal": "^3.2.0",
     "react-table": "^6.8.6",
     "request": "^2.86.0",
     "serve-favicon": "^2.4.5",
