@@ -51,13 +51,8 @@ interface IRefInclusion {
     exclu: IExcludedRectangle;
 }
 
-interface IRefFlow extends HTMLDivElement, IRefInclusion {
+interface IRefDiv extends HTMLDivElement, IRefInclusion {
 }
-
-interface IRefImage extends HTMLImageElement, IRefInclusion {
-}
-
-type IRefElement = IRefFlow | IRefImage;
 
 interface ISegSpan extends HTMLSpanElement {
     seg: MergeTree.TextSegment;
@@ -1899,85 +1894,73 @@ export class Viewport {
 
     public addInclusion(flowView: FlowView, marker: MergeTree.Marker, x: number, y: number,
         lineHeight: number, movingMarker = false) {
-        if ((!flowView.movingInclusion.onTheMove) || ((flowView.movingInclusion.onTheMove && (flowView.movingInclusion.marker !== marker)) || movingMarker)) {
+        if ((!flowView.movingInclusion.onTheMove) ||
+            ((flowView.movingInclusion.onTheMove && (flowView.movingInclusion.marker !== marker)) ||
+                movingMarker)) {
             const irdoc = <IReferenceDoc>marker.properties.ref;
             if (irdoc) {
+                const borderSize = 4;
                 // for now always an image
+                const minX = Math.floor(this.width / 5);
+                const w = Math.floor(this.width / 3);
+                let h = w;
+                // TODO: adjust dx, dy by viewport dimensions
+                let dx = 0;
+                let dy = 0;
+                if (movingMarker) {
+                    dx = flowView.movingInclusion.dx;
+                    dy = flowView.movingInclusion.dy;
+                }
+                if (irdoc.layout) {
+                    h = Math.floor(w * irdoc.layout.ar);
+                }
+                if ((x + w) > this.width) {
+                    x -= w;
+                }
+                x = Math.floor(x + dx);
+                if (x < minX) {
+                    x = 0;
+                }
+                y += lineHeight;
+                y = Math.floor(y + dy);
+                const exclu = makeExcludedRectangle(x, y, w, h);
+                const excluDiv = <IRefDiv>document.createElement("div");
+                const innerDiv = document.createElement("div");
+                exclu.conformElement(excluDiv);
+                excluDiv.style.backgroundColor = "#DDDDDD";
+                const toHlt = (e: MouseEvent) => {
+                    excluDiv.style.backgroundColor = "green";
+                };
+                const toOrig = (e: MouseEvent) => {
+                    excluDiv.style.backgroundColor = "#DDDDDD";
+                };
+                excluDiv.onmouseleave = toOrig;
+                innerDiv.onmouseenter = toOrig;
+                excluDiv.onmouseenter = toHlt;
+                innerDiv.onmouseleave = toHlt;
+                if (movingMarker) {
+                    exclu.requiresUL = true;
+                    if (exclu.x === 0) {
+                        exclu.floatL = true;
+                    }
+                }
+                const excluView = exclu.innerAbs(borderSize);
+                excluView.x = borderSize;
+                excluView.y = borderSize;
+                excluView.conformElement(innerDiv);
+                excluDiv.exclu = exclu;
+                excluDiv.marker = marker;
+                this.div.appendChild(excluDiv);
+                excluDiv.appendChild(innerDiv);
+                this.excludedRects.push(exclu);
                 if (irdoc.type.name === "image") {
-                    const showImage = <IRefImage>document.createElement("img");
-                    showImage.marker = marker;
+                    const showImage = document.createElement("img");
+                    innerDiv.appendChild(showImage);
+                    excluView.conformElement(showImage);
+                    showImage.style.left = "0px";
+                    showImage.style.top = "0px";
                     showImage.src = irdoc.url;
-                    const minX = Math.floor(this.width / 5);
-                    const w = Math.floor(this.width / 3);
-                    let h = w;
-                    // TODO: adjust dx, dy by viewport dimensions
-                    let dx = 0;
-                    let dy = 0;
-                    if (movingMarker) {
-                        dx = flowView.movingInclusion.dx;
-                        dy = flowView.movingInclusion.dy;
-                    }
-                    if (irdoc.layout) {
-                        h = Math.floor(w * irdoc.layout.ar);
-                    }
-                    if ((x + w) > this.width) {
-                        x -= w;
-                    }
-                    x = Math.floor(x + dx);
-                    if (x < minX) {
-                        x = 0;
-                    }
-                    y += lineHeight;
-                    y = Math.floor(y + dy);
-                    const exclu = makeExcludedRectangle(x, y, w, h);
-                    if (movingMarker) {
-                        exclu.requiresUL = true;
-                        if (exclu.x === 0) {
-                            exclu.floatL = true;
-                        }
-                    }
-                    exclu.conformElement(showImage);
-                    showImage.exclu = exclu;
-                    this.div.appendChild(showImage);
-                    this.excludedRects.push(exclu);
                 } else if ((irdoc.type.name === "childFlow") && (!flowView.parentFlow)) {
-                    // TODO: rationalize duplicate code across irdoc types
-                    const flowDiv = <IRefFlow>document.createElement("div");
-                    flowDiv.marker = marker;
-                    const minX = Math.floor(this.width / 5);
-                    const w = Math.floor(this.width / 3);
-                    let h = w;
-                    // TODO: adjust dx, dy by viewport dimensions
-                    let dx = 0;
-                    let dy = 0;
-                    if (movingMarker) {
-                        dx = flowView.movingInclusion.dx;
-                        dy = flowView.movingInclusion.dy;
-                    }
-                    if (irdoc.layout) {
-                        h = Math.floor(w * irdoc.layout.ar);
-                    }
-                    if ((x + w) > this.width) {
-                        x -= w;
-                    }
-                    x = Math.floor(x + dx);
-                    if (x < minX) {
-                        x = 0;
-                    }
-                    y += lineHeight;
-                    y = Math.floor(y + dy);
-                    const exclu = makeExcludedRectangle(x, y, w, h);
-                    if (movingMarker) {
-                        exclu.requiresUL = true;
-                        if (exclu.x === 0) {
-                            exclu.floatL = true;
-                        }
-                    }
-                    exclu.conformElement(flowDiv);
-                    flowDiv.style.backgroundColor = "#DDDDDD";
-                    flowDiv.exclu = exclu;
-                    this.div.appendChild(flowDiv);
-                    this.excludedRects.push(exclu);
                     const flowRefMarker = marker as IFlowRefMarker;
                     let startChar = 0;
                     let cursorPos = 0;
@@ -1987,7 +1970,7 @@ export class Viewport {
                         cursorPos = prevFlowView.cursor.pos;
                     }
                     flowRefMarker.flowView = flowView.renderChildFlow(startChar, cursorPos,
-                        flowDiv, exclu, marker);
+                        innerDiv, exclu, marker);
                 }
             }
         }
@@ -3891,7 +3874,7 @@ export class FlowView extends ui.Component {
                 const elm = document.elementFromPoint(prevX, prevY);
                 if (elm) {
                     if (fresh) {
-                        const refInclu = elm as IRefElement;
+                        const refInclu = elm as IRefDiv;
                         if (refInclu.marker) {
                             this.movingInclusion.onTheMove = true;
                             incluMarker = refInclu.marker;
