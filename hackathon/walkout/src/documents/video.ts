@@ -1,10 +1,24 @@
 import { api as prague } from "@prague/routerlicious";
 import { EventEmitter } from "events";
+import * as jwt from "jsonwebtoken";
+import { rev } from "../constants";
 
 export class VideoDocument extends EventEmitter {
-    public static async Load(id: string, token: string): Promise<VideoDocument> {
+    public static async Load(id: string, tenantId: string, secret: string): Promise<VideoDocument> {
+        const revedId = `${id}${rev}`;
+        const token = jwt.sign(
+            {
+                documentId: revedId,
+                permission: "read:write",
+                tenantId,
+                user: {
+                    id: "test",
+                },
+            },
+            secret);
+
         // Load in the latest and connect to the document
-        const collabDoc = await prague.api.load(id, { blockUpdateMarkers: true, token });
+        const collabDoc = await prague.api.load(revedId, { blockUpdateMarkers: true, token });
 
         await new Promise((resolve) => {
             collabDoc.once("connected", () => resolve());

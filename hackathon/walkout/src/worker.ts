@@ -1,6 +1,7 @@
 import { api as prague } from "@prague/routerlicious";
 import * as jwt from "jsonwebtoken";
 import * as process from "process";
+import { rev } from "./constants";
 import { IHook } from "./github";
 
 const routerlicious = "https://alfred.wu2.prague.office-int.com";
@@ -49,6 +50,7 @@ class StreamManager {
 }
 
 async function run(id: string): Promise<void> {
+    const revedId = `${id}${rev}`;
     const streamManager = new StreamManager();
 
     // listen for inbound messages
@@ -58,7 +60,7 @@ async function run(id: string): Promise<void> {
 
     const token = jwt.sign(
         {
-            documentId: id,
+            documentId: revedId,
             permission: "read:write", // use "read:write" for now
             tenantId,
             user: {
@@ -68,7 +70,7 @@ async function run(id: string): Promise<void> {
         secret);
 
     // Load in the latest and connect to the document
-    const collabDoc = await prague.api.load(id, { blockUpdateMarkers: true, token });
+    const collabDoc = await prague.api.load(revedId, { blockUpdateMarkers: true, token });
     const rootView = await collabDoc.getRoot().getView();
 
     // Add in the text string if it doesn't yet exist

@@ -1,5 +1,5 @@
 import { api as prague } from "@prague/routerlicious";
-import * as jwt from "jsonwebtoken";
+
 import { VideoDocument } from "../documents";
 import { IUser } from "../github";
 
@@ -26,18 +26,7 @@ function track(video, divId: string, eventId: string, getFn: () => string, setFn
 }
 
 async function run(user: IUser): Promise<void> {
-    const token = jwt.sign(
-        {
-            documentId: user.login,
-            permission: "read:write",
-            tenantId,
-            user: {
-                id: "test",
-            },
-        },
-        secret);
-
-    const video = await VideoDocument.Load(user.login, token);
+    const video = await VideoDocument.Load(user.login, tenantId, secret);
 
     track(video, "videoId", "videoChanged", () => video.id, (value) => video.id = value);
     track(

@@ -3,6 +3,7 @@ import * as async from "async";
 import * as escape from "escape-html";
 import * as jwt from "jsonwebtoken";
 import SvgText from "svg-text";
+import { rev } from "../constants";
 import { VideoDocument } from "../documents";
 import * as gh from "../github";
 
@@ -62,17 +63,7 @@ class VideoPlayer {
 
         const id = author.username;
         if (!this.videoDocMap.has(id)) {
-            const token = jwt.sign(
-                {
-                    documentId: id,
-                    permission: "read:write",
-                    tenantId,
-                    user: {
-                        id: "test",
-                    },
-                },
-                secret);
-            const videoP = VideoDocument.Load(id, token);
+            const videoP = VideoDocument.Load(id, tenantId, secret);
             this.videoDocMap.set(id, videoP);
         }
         const video = await this.videoDocMap.get(id);
@@ -170,10 +161,11 @@ class VideoPlayer {
 }
 
 async function run(id: string, YT: any): Promise<void> {
+    const revedId = `${id}${rev}`;
     const player = new VideoPlayer(YT, "player");
     const token = jwt.sign(
         {
-            documentId: id,
+            documentId: revedId,
             permission: "read:write",
             tenantId,
             user: {
@@ -183,7 +175,7 @@ async function run(id: string, YT: any): Promise<void> {
         secret);
 
     // Load in the latest and connect to the document
-    const collabDoc = await prague.api.load(id, { blockUpdateMarkers: true, token });
+    const collabDoc = await prague.api.load(revedId, { blockUpdateMarkers: true, token });
     await new Promise((resolve) => {
         collabDoc.once("connected", () => resolve());
     });
