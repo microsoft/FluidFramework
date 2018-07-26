@@ -9,6 +9,7 @@ const tenantId = "confident-turing";
 const secret = "24c1ebcf087132e31a7e3c25f56f6626";
 
 export interface IItem {
+  id: string;
   title: string;
   description: string;
 }
@@ -48,6 +49,11 @@ export class Data {
     const keyArray = Array.from(this.todoView.keys());
     const mapIndex = keyArray.length;
     this.todoView.set(String(mapIndex), `${data.title}@${data.description}`);
+  }
+
+  public delete(id: string) {
+    this.todoView.set(id, undefined);
+    console.log(`Deleted: $(id)`);
   }
 
   private setListener() {

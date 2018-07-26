@@ -47,8 +47,8 @@ export class TodoList extends React.Component<IToDoListProps, IToDoListState> {
     }
 
     public onSave = () => {
-        const title = this.state.title;
-        const description = this.state.description;
+        const title = this.state.title ? this.state.title : "";
+        const description = this.state.description ? this.state.description : "";
         this.save(title, description);
     }
 

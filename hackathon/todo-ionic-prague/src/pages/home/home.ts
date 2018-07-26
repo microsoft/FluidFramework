@@ -45,6 +45,10 @@ export class HomePage {
     });
     addModal.present();
   }
+
+  removeItem(id: string) {
+    this.dataService.delete(id);
+  }
  
   viewItem(item){
     this.navCtrl.push(ItemDetailPage, {
