@@ -62,7 +62,7 @@ export class Data {
     })
   }
 
-  private getData() {
+  public getData() {
     const keyArray = Array.from(this.todoView.keys());
     const items = keyArray.map((key) => {
         const rawItem = this.todoView.get(key) as string;
@@ -78,7 +78,7 @@ export class Data {
         }
     });
     this.list = items.filter((item) => item && item.title && item.title !== "");
-}
+  }
 
   private async prepare() {
     return new Promise<void>((resolve, reject) => {

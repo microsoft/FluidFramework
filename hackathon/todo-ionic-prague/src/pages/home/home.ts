@@ -55,5 +55,11 @@ export class HomePage {
       item: item
     });
   }
+
+  doRefresh(refresher) {
+    console.log('Begin async operation', refresher);
+    this.dataService.getData();
+    refresher.complete();
+  }
  
 }

@@ -10,6 +10,13 @@
 </ion-header>
 
 <ion-content>
+  <ion-refresher (ionRefresh)="doRefresh($event)">
+    <ion-refresher-content pullingIcon="arrow-dropdown"
+                            pullingText="Pull to refresh"
+                            refreshingSpinner="circles"
+                            refreshingText="Refreshing list...">
+    </ion-refresher-content>
+  </ion-refresher>
   <ion-list>
     <ion-item-sliding *ngFor="let item of dataService.list">
       <ion-item (click)="viewItem(item)">
