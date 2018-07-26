@@ -13,10 +13,12 @@
   "dependencies": {
     "@prague/gitresources": "^0.7.1",
     "@prague/routerlicious": "^0.1.2823",
+    "@types/escape-html": "0.0.20",
     "@types/winston": "^2.3.9",
     "async": "^2.6.1",
     "body-parser": "^1.18.3",
     "connect-ensure-login": "^0.1.1",
+    "escape-html": "^1.0.3",
     "express": "^4.16.3",
     "express-session": "^1.15.6",
     "hjs": "0.0.6",
@@ -25,6 +27,7 @@
     "passport-github": "^1.1.0",
     "request": "^2.87.0",
     "request-promise-native": "^1.0.5",
+    "svg-text": "^0.5.1",
     "winston": "^3.0.0"
   },
   "devDependencies": {
