@@ -65,22 +65,30 @@ export class TodoList extends React.Component<IToDoListProps, IToDoListState> {
         const { modalOpen, title, description } = this.state;
         return (
             <div>
+                <div className="list-add" onClick={this.onOpenModal}>
+                    <span className="list-add-content">+</span>
+                </div>
                 <ReactTable
                     data={data}
                     columns={columns}
-                    defaultPageSize={10}
+                    defaultPageSize={25}
                     className="-striped -highlight"
                 />
-                <button onClick={this.onOpenModal}>Add Item</button>
                 <Modal open={modalOpen} onClose={this.onCloseModal} center>
                     <h2>Add Item</h2>
-                    Title: <input type="text" name="title" value={title} onChange={this.handleTitleChange} />
+                    Title: <input
+                        className="item-input"
+                        type="text"
+                        name="title"
+                        value={title}
+                        onChange={this.handleTitleChange} />
                     Description: <input
+                        className="item-input"
                         type="text"
                         name="description"
                         value={description}
                         onChange={this.handleDescriptionChange} />
-                    <button onClick={this.onSave}>Save</button>
+                    <button className="list-save" onClick={this.onSave}>Save</button>
                 </Modal>
             </div>
         );
