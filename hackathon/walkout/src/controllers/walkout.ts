@@ -10,42 +10,27 @@ const tenantId = "heuristic-kepler";
 const secret = "f9349c025fc7e98d9b8cdec6bbe4320e";
 prague.socketStorage.registerAsDefault(routerlicious, historian, tenantId);
 
-const videoDocMap = new Map<string, Promise<VideoDocument>>();
+class VideoPlayer {
+    private player: any;
+    private playbackQueue: async.AsyncQueue<string>;
+    private videoDocMap = new Map<string, Promise<VideoDocument>>();
+    private playDeferred: prague.utils.Deferred<void>;
 
-async function playVideo(player, id: string) {
-    if (!videoDocMap.has(id)) {
-        const token = jwt.sign(
-            {
-                documentId: id,
-                permission: "read:write",
-                tenantId,
-                user: {
-                    id: "test",
-                },
-            },
-            secret);
-        const videoP = VideoDocument.Load(id, token);
-        videoDocMap.set(id, videoP);
-    }
-
-    const video = await videoDocMap.get(id);
-    player.loadVideoById({ videoId: video.id, startSeconds: video.start, endSeconds: video.end });
-    // return and register a promise to fire when state goes to ended?
-}
-
-async function run(id: string, YT: any): Promise<void> {
-    const playerP = new Promise<any>((resolve, reject) => {
-        const p = new YT.Player(
-            "player",
+    constructor(YT, divId: string) {
+        this.player = new YT.Player(
+            divId,
             {
                 events: {
                     onReady: () => {
-                        console.log("Hey, I'm ready!");
-                        resolve(p);
+                        this.playbackQueue.resume();
                     },
                     onStateChange: (event) => {
-                        // YT.PlayerState.ENDED
-                        console.log(JSON.stringify(event, null, 2));
+                        if (event.data === YT.PlayerState.ENDED) {
+                            if (this.playDeferred) {
+                                this.playDeferred.resolve();
+                                this.playDeferred = null;
+                            }
+                        }
                     },
                 },
                 height: "100%",
@@ -54,7 +39,47 @@ async function run(id: string, YT: any): Promise<void> {
                 },
                 width: "100%",
             });
-    });
+
+        this.playbackQueue = async.queue<string, any>(
+            (work, callback) => {
+                this.playVideo(work)
+                    .catch(() => { return; })
+                    .then(() => callback());
+            },
+            1);
+        this.playbackQueue.pause();
+    }
+
+    public addToPlaylist(id: string) {
+        this.playbackQueue.push(id);
+    }
+
+    private async playVideo(id: string) {
+        if (!this.videoDocMap.has(id)) {
+            const token = jwt.sign(
+                {
+                    documentId: id,
+                    permission: "read:write",
+                    tenantId,
+                    user: {
+                        id: "test",
+                    },
+                },
+                secret);
+            const videoP = VideoDocument.Load(id, token);
+            this.videoDocMap.set(id, videoP);
+        }
+
+        const video = await this.videoDocMap.get(id);
+        this.playDeferred = new prague.utils.Deferred<void>();
+        this.player.loadVideoById({ videoId: video.id, startSeconds: video.start, endSeconds: video.end });
+
+        await this.playDeferred.promise;
+    }
+}
+
+async function run(id: string, YT: any): Promise<void> {
+    const player = new VideoPlayer(YT, "player");
 
     const token = jwt.sign(
         {
@@ -80,9 +105,7 @@ async function run(id: string, YT: any): Promise<void> {
 
     // Load the text string and listen for updates
     const stream = rootView.get("messages") as prague.types.IStream;
-    const player = await playerP;
 
-    console.log("Listening inbound");
     stream.on("op", (op) => {
         const delta = op.contents as prague.types.IDelta;
         for (const operation of delta.operations) {
@@ -90,19 +113,11 @@ async function run(id: string, YT: any): Promise<void> {
                 const rawPen = operation.stylusDown.pen as any;
                 if (rawPen.event === "push") {
                     const pushEvent = rawPen.hook as gh.IPushHook;
-                    playbackQueue.push(pushEvent.commits[0].author.username);
+                    player.addToPlaylist(pushEvent.commits[0].author.username);
                 }
             }
         }
     });
-
-    const playbackQueue = async.queue<string, any>(
-        (work, callback) => {
-            playVideo(player, work)
-                .catch(() => { return; })
-                .then(() => callback());
-        },
-        1);
 }
 
 export function load(id: string, playerFn: any) {
