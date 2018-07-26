@@ -5,6 +5,7 @@ import ReactTable from "react-table";
 import "react-table/react-table.css";
 
 export interface IItem {
+    id: string;
     title: string;
     description: string;
 }
@@ -51,6 +52,11 @@ export class TodoList extends React.Component<IToDoListProps, IToDoListState> {
         this.save(title, description);
     }
 
+    public onDelete = (id: string) => {
+        this.props.view.set(id, undefined);
+        console.log(`Deleted: ${id}`);
+    }
+
     public render() {
         const data = this.state.list;
         const columns = [
@@ -61,6 +67,13 @@ export class TodoList extends React.Component<IToDoListProps, IToDoListState> {
         {
             Header: "Description",
             accessor: "description",
+        },
+        {
+            Cell: (row) => (
+                <button className="list-delete" onClick={() => this.onDelete(row.value)}>Done</button>
+            ),
+            Header: "Action",
+            accessor: "id",
         }];
         const { modalOpen, title, description } = this.state;
         return (
@@ -119,16 +132,21 @@ export class TodoList extends React.Component<IToDoListProps, IToDoListState> {
         });
     }
 
-    private getData() {
+    private getData(): IItem[] {
         const keyArray = Array.from(this.props.view.keys());
         const list = keyArray.map((key) => {
             const rawItem = this.props.view.get(key) as string;
-            const parts = rawItem.split("@");
-            return {
-              description: parts[1],
-              title: parts[0],
-            };
+            if (!rawItem || rawItem === "") {
+                return undefined;
+            } else {
+                const parts = rawItem.split("@");
+                return {
+                  description: parts[1],
+                  id: key,
+                  title: parts[0],
+                };
+            }
         });
-        return list.filter((item) => item.title && item.title !== "");
+        return list.filter((item) => item && item.title && item.title !== "");
     }
 }

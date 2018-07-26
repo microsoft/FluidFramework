@@ -32,7 +32,7 @@ export class Data {
       this.loadDocument(documentId, token).then((doc) => {
         this.document = doc;
         this.prepare().then(() => {
-          this.initData();
+          this.getData();
           this.setListener();
           resolve();
         }, (err) => {
@@ -52,22 +52,27 @@ export class Data {
 
   private setListener() {
     this.todoMap.on("valueChanged", () => {
-      this.initData();
+      this.getData();
     })
   }
 
-  private initData() {
+  private getData() {
     const keyArray = Array.from(this.todoView.keys());
     const items = keyArray.map((key) => {
-      const rawItem = this.todoView.get(key) as string;
-      const parts = rawItem.split("@");
-      return {
-        title: parts[0],
-        description: parts[1],
-      }
+        const rawItem = this.todoView.get(key) as string;
+        if (!rawItem || rawItem === "") {
+            return undefined;
+        } else {
+            const parts = rawItem.split("@");
+            return {
+              description: parts[1],
+              id: key,
+              title: parts[0],
+            };
+        }
     });
-    this.list = items.filter((item) => item.title && item.title !== "");
-  }
+    this.list = items.filter((item) => item && item.title && item.title !== "");
+}
 
   private async prepare() {
     return new Promise<void>((resolve, reject) => {
