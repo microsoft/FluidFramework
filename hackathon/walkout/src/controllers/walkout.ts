@@ -2,7 +2,6 @@ import { api as prague } from "@prague/routerlicious";
 import * as async from "async";
 import * as escape from "escape-html";
 import * as jwt from "jsonwebtoken";
-import SvgText from "svg-text";
 import { rev } from "../constants";
 import { VideoDocument } from "../documents";
 import * as gh from "../github";
@@ -12,6 +11,64 @@ const historian = "https://historian.wu2.prague.office-int.com";
 const tenantId = "heuristic-kepler";
 const secret = "f9349c025fc7e98d9b8cdec6bbe4320e";
 prague.socketStorage.registerAsDefault(routerlicious, historian, tenantId);
+
+function getBreakPoint(text: string, charNum: number) {
+    // look for the first whitespace character
+    for (; charNum >= 0; charNum--) {
+        if (/\s/.test(text.charAt(charNum))) {
+            // Then look for the first non-whitespace character
+            for (; charNum >= 0; charNum--) {
+                if (!/\s/.test(text.charAt(charNum))) {
+                    return charNum;
+                }
+            }
+        }
+    }
+
+    return -1;
+}
+
+function measure(measureElement: SVGSVGElement, text: string, lineHeight: number) {
+    measureElement.innerHTML =
+        `<text style="font-family: Arial, sans-serif; font-size: ${lineHeight}px;">${text}</text>`;
+    const textElem = measureElement.getElementsByTagName("text")[0];
+    const bbox = textElem.getBBox();
+
+    return { textElem, bbox };
+}
+
+function layout(text: string, lineHeight: number, width: number): Array<{ text: string, bbox: SVGRect }> {
+    const measureElement = (document.getElementById("measureSvg") as any) as SVGSVGElement;
+
+    const breaks = new Array<{ text: string, bbox: SVGRect }>();
+    while (true) {
+        const { textElem, bbox } = measure(measureElement, text, lineHeight);
+        if (bbox.width < width) {
+            breaks.push({ text, bbox });
+            break;
+        }
+
+        const point = measureElement.createSVGPoint();
+        point.x = width;
+        point.y = 0;
+
+        // getCharNumAtPosition will find us the character at the width. We then find the first non-whitespace
+        // character after the first set of whitespace characters and break there. If nothing can be found
+        // we just break at getCharNumAtPosition. We add 1 to the result to help with the substr calls.
+        const charNum = textElem.getCharNumAtPosition(point);
+        const rawBreakPoint = getBreakPoint(text, charNum);
+        const breakPoint = rawBreakPoint === -1 ? charNum : rawBreakPoint + 1;
+
+        const breakText = text.substr(0, breakPoint);
+        text = text.substr(breakPoint);
+
+        // Measure the actual place we did the line break and add it to the stack
+        const breakMeasure = measure(measureElement, breakText, lineHeight);
+        breaks.push({ text: breakText, bbox: breakMeasure.bbox });
+    }
+
+    return breaks;
+}
 
 class VideoPlayer {
     private player: any;
@@ -79,46 +136,26 @@ class VideoPlayer {
         let index = 1;
         const delayDelta = 0.5;
 
-        // const measureOuter = document.getElementById("measure");
-        // measureOuter.innerHTML = `<svg id="measureSvg" width="60%" height="1000px"></svg>`;
-        const measureElement = document.getElementById("measureSvg");
-
         const splitLines = commit.message.split("\n").map((text) => ({ text, class: "" }));
         splitLines.push({ text: author.email, class: "small" });
 
-        const lines = new Array<{ text: string, class: string, lineHeight: number }>();
+        const lines = new Array<{ text: string, class: string, lineHeight: number, bbox: SVGRect }>();
         for (const line of splitLines) {
             const lineHeight = line.class === "small" ? smallHeight : height;
-            const text = new SvgText({
-                element: measureElement,
-                maxWidth: window.innerWidth / 2,
-                style: { "font-family": "Arial, sans-serif", "font-size": `${lineHeight}px` },
-                text: line.text,
-            }).text as SVGTextElement;
+            const breaks = layout(escape(line.text), lineHeight, window.innerWidth * 0.6);
 
-            for (const childNode of text.childNodes) {
-                lines.push({
-                    class: line.class,
-                    lineHeight,
-                    text: escape(childNode.textContent),
-                });
+            for (const b of breaks) {
+                lines.push({ bbox: b.bbox, class: line.class, text: b.text, lineHeight });
             }
         }
 
         let firstDelay = 0;
         let secondDelay = lines.length * delayDelta;
         for (const line of lines) {
-            // We compute again to get accurate sizing fo the tspan
-            const bbox = new SvgText({
-                element: measureElement,
-                maxWidth: window.innerWidth / 2,
-                style: { "font-family": "Arial, sans-serif", "font-size": `${line.lineHeight}px` },
-                text: line.text,
-            }).text.getBBox();
-
             // tslint:disable:max-line-length
             // Super cool SVG animation from https://codepen.io/supah/pen/vXyBza?editors=1111 and part of
             // https://speckyboy.com/css-javascript-text-animation-snippets/
+            const bbox = line.bbox;
             const rect = `<rect x="${bbox.x + x}" y="${bbox.y + y}" width="${bbox.width}" height="${bbox.height}" style="fill:rgb(0,0,0);stroke-width:10;stroke:rgb(0,0,0);" />`;
             const firstText = `<text text-anchor="start" x="${x}" y="${y}" class="text text-stroke ${line.class}" clip-path="url(#text${index})" style="-webkit-animation-delay: ${firstDelay}s; animation-delay: ${firstDelay}s;">${line.text}</text>`;
             const secondText = `<text text-anchor="start" x="${x}" y="${y}" class="text text-stroke text-stroke-2 ${line.class}" clip-path="url(#text${index})" style="-webkit-animation-delay: ${secondDelay}s; animation-delay: ${secondDelay}s;">${line.text}</text>`;
