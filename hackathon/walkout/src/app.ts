@@ -12,7 +12,7 @@ import { AppendManager } from "./services";
 export function create(config: Provider, appendManager: AppendManager) {
     const gitHubStrategy = new GitHubStrategy(
         {
-            callbackURL: "http://localhost:3000/auth/github/callback",
+            callbackURL: config.get("callback") || "http://localhost:3000/auth/github/callback",
             clientID: config.get("clientId"),
             clientSecret: config.get("clientSecret"),
         },
