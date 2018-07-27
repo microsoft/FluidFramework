@@ -12,3 +12,6 @@ export { tictactoe };
 
 import * as snake from "./snake";
 export { snake };
+
+import * as todolist from "./todolist";
+export { todolist };

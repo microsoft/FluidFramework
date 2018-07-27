@@ -18,7 +18,7 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
-    "@prague/routerlicious": "^0.1.2694",
+    "@prague/routerlicious": "^0.1.2913",
     "body-parser": "^1.18.2",
     "compression": "^1.7.1",
     "concurrently": "^3.5.1",
@@ -42,6 +42,8 @@
     "rc-slider": "^8.6.1",
     "react": "^16.3.0",
     "react-dom": "^16.3.0",
+    "react-responsive-modal": "^3.2.0",
+    "react-table": "^6.8.6",
     "request": "^2.86.0",
     "serve-favicon": "^2.4.5",
     "split": "^1.0.1",
@@ -62,6 +64,7 @@
     "@types/passport": "^0.4.2",
     "@types/react": "^16.1.0",
     "@types/react-dom": "^16.0.4",
+    "@types/react-table": "^6.7.11",
     "@types/request": "^2.47.0",
     "@types/serve-favicon": "^2.2.30",
     "@types/split": "^0.3.28",
