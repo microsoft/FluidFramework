@@ -35,7 +35,7 @@ You'll also need to have a Redis, MongoDB, Rabbitmq, and Historian instances run
 
 We install MongoDB and Rabbitmq from the helm stable repository
 `helm install -f system/mongodb.yaml stable/mongodb`
-`helm install --set rbacEnabled=false,rabbitmq.username=prague,persistence.enabled=true,persistence.size=16Gi stable/rabbitmq`
+`helm install --set rbacEnabled=false,rabbitmq.username=prague,rabbitmq.password=xxxxxxxxx,persistence.enabled=true,persistence.size=16Gi stable/rabbitmq`
 
 Redis, Kafka and Historian come from the /charts directory. You'll want to install each of them.
 
