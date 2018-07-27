@@ -1,6 +1,7 @@
 // tslint:disable:no-bitwise whitespace align switch-default no-string-literal ban-types no-angle-bracket-type-assertion
 import * as assert from "assert";
 import performanceNow = require("performance-now");
+import { blobUploadHandler, IDataBlob, urlToInclusion } from "../blob";
 import {
     api, CharacterCodes, core, MergeTree,
     Paragraph, Table, types,
@@ -1453,7 +1454,6 @@ interface ICellView extends Table.Cell {
 const svgNS = "http://www.w3.org/2000/svg";
 
 function createSVGWrapper(w: number, h: number) {
-    // TODO (sabroner): check this logic
     const svg = document.createElementNS(svgNS, "svg") as any as HTMLElement;
     svg.style.zIndex = "-1";
     svg.setAttribute("width", w.toString());
@@ -1462,7 +1462,6 @@ function createSVGWrapper(w: number, h: number) {
 }
 
 function createSVGRect(r: ui.Rectangle) {
-    // TODO (sabroner): check this logic
     const rect = document.createElementNS(svgNS, "rect") as any as HTMLElement;
     rect.setAttribute("x", r.x.toString());
     rect.setAttribute("y", r.y.toString());
@@ -1884,12 +1883,15 @@ export class Viewport {
     }
 
     public showExclu() {
-        for (const exclu of this.excludedRects) {
-            const showImage = document.createElement("img");
-            showImage.src = `${baseURI}/public/images/bennet1.jpeg`;
-            exclu.conformElement(showImage);
-            this.div.appendChild(showImage);
-        }
+        urlToInclusion(`${baseURI}/public/images/bennet1.jpeg`)
+            .then((incl) => {
+                for (const exclu of this.excludedRects) {
+                    const showImage = document.createElement("img");
+                    showImage.src = incl.url;
+                    exclu.conformElement(showImage);
+                    this.div.appendChild(showImage);
+                }
+            });
     }
 
     public addInclusion(flowView: FlowView, marker: MergeTree.Marker, x: number, y: number,
@@ -1959,7 +1961,7 @@ export class Viewport {
                     excluView.conformElement(showImage);
                     showImage.style.left = "0px";
                     showImage.style.top = "0px";
-                    showImage.src = irdoc.url;
+                    showImage.src = irdoc.url; // getBlobUrl(irdoc.sha, flowView.collabDocument.tenantId);
                 } else if ((irdoc.type.name === "childFlow") && (!flowView.parentFlow)) {
                     const flowRefMarker = marker as IFlowRefMarker;
                     let startChar = 0;
@@ -3097,20 +3099,23 @@ export interface IRefLayoutSpec {
 
 export interface IReferenceDoc {
     type: IReferenceDocType;
+    sha: string;
     url: string;
     layout?: IRefLayoutSpec;
 }
 
-export function makeImageRef(imageSrc: string, cb: (irdoc: IReferenceDoc) => void) {
+export function makeImageRef(blob: IDataBlob, tenant: string, cb: (irdoc: IReferenceDoc) => void) {
     const image = document.createElement("img");
     const rdocType = <IReferenceDocType>{
         name: "image",
     };
     const irdoc = <IReferenceDoc>{
+        sha: blob.sha,
         type: rdocType,
-        url: imageSrc,
+        url: blob.url,
     };
-    image.src = imageSrc;
+    image.src =  blob.url; // getBlobUrl(sha, tenant);
+
     image.onload = () => {
         irdoc.layout = { ar: image.naturalHeight / image.naturalWidth, dx: 0, dy: 0 };
         cb(irdoc);
@@ -3213,6 +3218,12 @@ export class FlowView extends ui.Component {
 
         this.cursor = new Cursor(this.viewportDiv);
         this.setViewOption(this.options);
+        blobUploadHandler(element,
+            (incl: IDataBlob) => {
+                return this.sharedString.getDocument().uploadBlob(incl);
+            },
+            (incl: IDataBlob) => this.insertPhotoInternal(incl),
+        );
     }
 
     public treeForViewport() {
@@ -4459,7 +4470,17 @@ export class FlowView extends ui.Component {
     }
 
     public insertPhoto() {
-        makeImageRef(`${baseURI}/public/images/bennet1.jpeg`, (irdoc) => {
+        urlToInclusion(`${baseURI}/public/images/bennet1.jpeg`)
+            .then(async (incl) => {
+                this.insertPhotoInternal(await this.collabDocument.uploadBlob(incl));
+            })
+            .catch((error) => {
+                console.log(error);
+            });
+    }
+
+    private insertPhotoInternal(blob: IDataBlob) {
+        makeImageRef(blob, this.collabDocument.tenantId, (irdoc) => {
             const refProps = {
                 [Paragraph.referenceProperty]: irdoc,
             };
@@ -4468,6 +4489,7 @@ export class FlowView extends ui.Component {
         });
     }
 
+    // tslint:disable:member-ordering
     public copy() {
         const sel = this.cursor.getSelection();
         if (sel) {

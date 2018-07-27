@@ -2,6 +2,7 @@
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import * as core from "../../api-core";
+import { IDataBlob } from "../../blob";
 import { Deferred } from "../../core-utils";
 
 export class TestDeltaQueue extends EventEmitter implements core.IDeltaQueue {
@@ -65,6 +66,14 @@ export class TestDocument implements core.IDocument {
     public snapshot(message: string): Promise<void> {
         this.snapshotRequests++;
         return this.snapshotCore(message);
+    }
+
+    public uploadBlob(blob: IDataBlob): Promise<IDataBlob> {
+        return null;
+    }
+
+    public getBlob(sha: string): Promise<IDataBlob> {
+        return null;
     }
 
     // Allow derived classes to override the snapshot processing

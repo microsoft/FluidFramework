@@ -1,5 +1,6 @@
 // tslint:disable:ban-types
 import { EventEmitter } from "events";
+import { IDataBlob } from "../blob";
 import { IEnvelope, IObjectMessage, ISequencedObjectMessage, ITenantUser } from "./protocol";
 import { ICollaborativeObject } from "./types";
 
@@ -116,6 +117,10 @@ export interface IDocument {
     get(id: string): Promise<ICollaborativeObject>;
 
     getUser(): ITenantUser;
+
+    uploadBlob(blob: IDataBlob): Promise<IDataBlob>;
+
+    getBlob(sha: string): Promise<IDataBlob>;
 
     snapshot(message: string): Promise<void>;
 

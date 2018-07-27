@@ -6,7 +6,8 @@ import * as jwt from "jsonwebtoken";
 import performanceNow = require("performance-now");
 import * as uuid from "uuid/v4";
 import * as api from "../api-core";
-import { BlobManager, IImageBlob } from "../api-core";
+import { BlobManager } from "../api-core";
+import { IDataBlob } from "../blob";
 import * as cell from "../cell";
 import { Deferred, gitHashFile } from "../core-utils";
 import { ICell, IMap, IStream } from "../data-types";
@@ -86,7 +87,7 @@ interface IHeaderDetails {
     // Attributes for the document
     attributes: api.IDocumentAttributes;
 
-    blobs: api.IImageBlob[];
+    blobs: IDataBlob[];
 
     // Distributed objects contained within the document
     distributedObjects: api.IDistributedObject[];
@@ -377,14 +378,14 @@ export class Document extends EventEmitter implements api.IDocument {
         return this.distributedObjects.get(blobMapId).object as IMap;
     }
 
-    public createBlobMetadata(file: api.IImageBlob, sha: string): api.IImageBlob {
+    public createBlobMetadata(file: IDataBlob, sha: string): IDataBlob {
         file.sha = sha;
-
+        file.url = this.storageService.getRawUrl(sha);
         this.blobManager.addBlob(file).then(() => this.submitMessage(api.BlobPrepared, file));
         return file;
     }
 
-    public async uploadBlob(file: api.IImageBlob): Promise<api.IImageBlob> {
+    public async uploadBlob(file: IDataBlob): Promise<IDataBlob> {
         const sha = gitHashFile(file.content);
         this.blobManager.createBlob(file.content).then(() => {
             this.submitMessage(api.BlobUploaded, sha);
@@ -392,16 +393,14 @@ export class Document extends EventEmitter implements api.IDocument {
         return this.createBlobMetadata(file, sha);
     }
 
-    public getBlobMetadata(): Promise<IImageBlob[]> {
-        return new Promise<IImageBlob[]>((resolve) => {
+    public getBlobMetadata(): Promise<IDataBlob[]> {
+        return new Promise<IDataBlob[]>((resolve) => {
             resolve(this.blobManager.getBlobMetadata());
         });
     }
 
-    public async getBlob(sha: string): Promise<api.IImageBlob> {
-
+    public async getBlob(sha: string): Promise<IDataBlob> {
         return this.blobManager.getBlob(sha);
-
     }
 
     /**
@@ -693,7 +692,7 @@ export class Document extends EventEmitter implements api.IDocument {
         const tree = await storage.getSnapshotTree(version);
 
         const messagesP = readAndParse<api.ISequencedDocumentMessage[]>(storage, tree.blobs[".messages"]);
-        const blobsP = readAndParse<api.IImageBlob[]>(storage, tree.blobs[".blobs"]);
+        const blobsP = readAndParse<IDataBlob[]>(storage, tree.blobs[".blobs"]);
         const attributesP = readAndParse<api.IDocumentAttributes>(storage, tree.blobs[".attributes"]);
 
         const distributedObjectsP = Array<Promise<api.IDistributedObject>>();

@@ -53,6 +53,10 @@ export class TestDocumentStorageService implements api.IDocumentStorageService {
     public async getBlob(sha: string): Promise<git.IBlob> {
         return null;
     }
+
+    public getRawUrl(sha: string): string {
+        return null;
+    }
 }
 
 export class TestDocumentDeltaStorageService implements api.IDocumentDeltaStorageService {

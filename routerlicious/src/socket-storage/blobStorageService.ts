@@ -36,6 +36,10 @@ export class DocumentStorageService implements api.IDocumentStorageService  {
         return this.manager.createBlob(file.toString("base64"), "base64");
     }
 
+    public getRawUrl(sha: string): string {
+        return this.manager.getRawUrl(sha);
+    }
+
     private translateCommit(details: resources.ICommitDetails): resources.ICommit {
         return {
             author: details.commit.author,

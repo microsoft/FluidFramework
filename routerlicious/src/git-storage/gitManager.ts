@@ -71,6 +71,11 @@ export class GitManager {
             : this.historian.getBlob(sha);
     }
 
+    public getRawUrl(sha: string): string {
+        // TODO (Sabroner): change the historian url to mimic github
+        return this.historian.endpoint + "/git/blobs/" + sha + "/image";
+    }
+
     /**
      * Retrieves the object at the given revision number
      */

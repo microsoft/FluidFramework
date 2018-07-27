@@ -147,6 +147,11 @@ export interface IDocumentStorageService {
      * Creates a blob out of the given buffer
      */
     createBlob(file: Buffer): Promise<resources.ICreateBlobResponse>;
+
+    /**
+     * Fetch image Data url
+     */
+    getRawUrl(sha: string): string;
 }
 
 /**
@@ -204,7 +209,7 @@ export interface IDocumentDeltaConnection {
 
 export interface IDocumentService {
     /**
-     * Access to storage associated with the document
+     * Access to storage associated with the document...
      */
     connectToStorage(tenantId: string, id: string, token: string): Promise<IDocumentStorageService>;
 

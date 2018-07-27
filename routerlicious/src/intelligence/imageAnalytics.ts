@@ -1,5 +1,5 @@
 import * as request from "request";
-import { IImageBlob } from "../api-core";
+import { IImageBlob } from "../blob";
 import { IIntelligentService, IIntelligentServiceFactory } from "./api";
 
 const imageURL = "https://westus2.api.cognitive.microsoft.com/vision/v2.0/describe";

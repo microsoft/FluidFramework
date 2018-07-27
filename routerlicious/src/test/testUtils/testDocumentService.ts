@@ -43,6 +43,10 @@ class TestDocumentStorageService implements api.IDocumentStorageService {
     public async getBlob(sha: string): Promise<resources.IBlob> {
         return null;
     }
+
+    public getRawUrl(sha: string): string {
+        return null;
+    }
 }
 
 export class TestDocumentService implements api.IDocumentService {

@@ -1,6 +1,6 @@
 // The main app code
+import { fileToInclusion, IImageBlob, isIImageBlob } from "../blob";
 import { api, core, types} from "../client-api";
-import { ImageAnalytics } from "../intelligence";
 import * as ui from "../ui";
 import { Button } from "./button";
 import { Chart } from "./chart";
@@ -55,7 +55,10 @@ export class FlexView extends ui.Component {
         });
 
         doc.on(core.BlobUploaded, async (message) => {
-            this.renderImage(await doc.getBlob(message));
+            const blob = await doc.getBlob(message);
+            if (isIImageBlob(blob)) {
+                this.renderImage(blob);
+            }
         });
 
         // Load blobs on start
@@ -63,8 +66,8 @@ export class FlexView extends ui.Component {
             // Render metadata
             .then((blobs) => {
                 for (const blob of blobs) {
-                    if (blob.type.includes("image")) {
-                        this.renderImage(blob);
+                    if (isIImageBlob(blob)) {
+                        this.renderImage(blob as IImageBlob);
                     }
                 }
                 return blobs;
@@ -74,7 +77,9 @@ export class FlexView extends ui.Component {
                 for (const blob of blobs) {
                     doc.getBlob(blob.sha)
                         .then((blobWithContent) => {
-                            this.renderImage(blobWithContent);
+                            if (isIImageBlob(blob)) {
+                                this.renderImage(blobWithContent as IImageBlob);
+                            }
                         });
                 }
             });
@@ -125,13 +130,12 @@ export class FlexView extends ui.Component {
         uploadBlobButton.on("click", (event) => {
             input.click();
             input.onchange = async () => {
-                const incl = await this.fileToInclusion(input.files.item(0));
+                const incl = await fileToInclusion(input.files.item(0));
+                // TODO sabroner: reinstate intelligent services in insights map
                 // tslint:disable-next-line:max-line-length
-                const analytics = new ImageAnalytics.ImageAnalyticsIntelligentService("3554516ca53c4fffb4bf619cf5d8b043");
-                const analysis = JSON.parse(await analytics.run(incl)) as any;
-                const caption = analysis.description.captions[0].text;
-
-                incl.caption = caption;
+                // const analytics = new ImageAnalytics.ImageAnalyticsIntelligentService("3554516ca53c4fffb4bf619cf5d8b043");
+                // const analysis = JSON.parse(await analytics.run(incl as IImageBlob)) as any;
+                // const caption = analysis.description.captions[0].text;
 
                 // Because the blob going in has the content, the blob coming out should as well
                 // Other users will have a placeholder render followed by the full thing.
@@ -227,7 +231,7 @@ export class FlexView extends ui.Component {
         this.resizeCore(this.size);
     }
 
-    private async renderImage(incl: core.IImageBlob) {
+    private async renderImage(incl: IImageBlob) {
 
         // We have an image, and it isn't in the DOM
         if (incl.type.includes("image")) {
@@ -242,7 +246,6 @@ export class FlexView extends ui.Component {
                 newImageDiv.classList.add("no-image");
 
                 const image = new Image(newImageDiv, null );
-                image.setMessage(incl.caption);
                 this.ink.addPhoto(image);
             }
 
@@ -251,7 +254,7 @@ export class FlexView extends ui.Component {
             const img = imgDiv.getElementsByTagName("img")[0];
 
             if (imgDiv.classList.contains("no-image") && incl.content !== null) {
-                // TODO (sabroner): use FileReader.readAsDataURL(blob)
+                // TODO (sabroner): use blobUtils
                 const urlObj = window.URL;
                 const url = urlObj.createObjectURL(new Blob([incl.content], {
                     type: incl.type,
@@ -261,56 +264,5 @@ export class FlexView extends ui.Component {
                 imgDiv.classList.replace("no-image", "image");
             }
         }
-    }
-
-    private async fileToInclusion(file: File): Promise<core.IImageBlob> {
-        const arrayBufferReader = new FileReader();
-        const urlObjReader = new FileReader();
-
-        const incl = {
-            fileName: file.name,
-            type: file.type,
-        } as core.IImageBlob;
-
-        const arrayBufferP = new Promise<void>((resolve, reject) => {
-            arrayBufferReader.onerror = (error) => {
-                arrayBufferReader.abort();
-                reject("error: " + JSON.stringify(error));
-            };
-
-            arrayBufferReader.onloadend = () => {
-                const imageData = Buffer.from(arrayBufferReader.result);
-                incl.size = imageData.byteLength;
-                incl.content = imageData;
-
-                resolve();
-            };
-            arrayBufferReader.readAsArrayBuffer(file);
-        });
-
-        const urlObjP = new Promise<void>((resolve, reject) => {
-            urlObjReader.onerror = (error) => {
-                urlObjReader.abort();
-                reject("error: " + JSON.stringify(error));
-            };
-
-            urlObjReader.onloadend = () => {
-                const imageUrl = urlObjReader.result;
-                const img = document.createElement("img");
-                img.src = imageUrl;
-                img.onload = () => {
-                    incl.height = img.height;
-                    incl.width = img.width;
-                    resolve();
-                };
-            };
-
-            urlObjReader.readAsDataURL(file);
-        });
-
-        return Promise.all([arrayBufferP, urlObjP])
-            .then(() => {
-                return incl;
-        });
     }
 }

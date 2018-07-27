@@ -1,32 +1,21 @@
 import { ICreateBlobResponse } from "gitresources";
 import * as api from "../api-core";
-
-// TODO sabroner: Reimplement imageblob so it extends some baseblob type
-export interface IImageBlob {
-    content?: Buffer;
-    fileName?: string;
-    size?: number;
-    sha: string;
-    height: number;
-    type: string;
-    width: number;
-    caption: string;
-}
+import { IDataBlob } from "../blob/blobTypes";
 
 export interface IBlobManager {
 
     // Rehydrate a blob manager from a snapshot
-    loadBlobMetadata(hashes: IImageBlob[]);
+    loadBlobMetadata(hashes: IDataBlob[]);
 
     // Get the metadata for all blobs on a document
     // Strip content if it exists
-    getBlobMetadata(): IImageBlob[];
+    getBlobMetadata(): IDataBlob[];
 
     // Retrieve the blob data
-    getBlob(sha: string): Promise<IImageBlob>;
+    getBlob(sha: string): Promise<IDataBlob>;
 
-    // Add one blob's metadata
-    addBlob(blob: IImageBlob): Promise<void>;
+    // Add one blob's metadata to the local storage of blob metadata
+    addBlob(blob: IDataBlob): Promise<void>;
 
     // Upload a blob to storage
     createBlob(file: Buffer): Promise<ICreateBlobResponse>;
@@ -34,19 +23,19 @@ export interface IBlobManager {
 
 export class BlobManager implements IBlobManager {
 
-    private blobs: Map<string, IImageBlob>;
+    private blobs: Map<string, IDataBlob>;
 
     constructor(private storage: api.IDocumentStorageService) {
-        this.blobs = new Map<string, IImageBlob>();
+        this.blobs = new Map<string, IDataBlob>();
     }
 
-    public async loadBlobMetadata(hashes: IImageBlob[]) {
+    public async loadBlobMetadata(hashes: IDataBlob[]) {
         for (const hash of hashes) {
             this.blobs.set(hash.sha, hash);
         }
     }
 
-    public getBlobMetadata(): IImageBlob[] {
+    public getBlobMetadata(): IDataBlob[] {
         const blobs = [... this.blobs.values()];
         const arr =  blobs.map((value) => {
             value.content = null;
@@ -55,8 +44,14 @@ export class BlobManager implements IBlobManager {
         return arr;
     }
 
-    public async getBlob(sha: string): Promise<IImageBlob> {
-        return new Promise<IImageBlob>((resolve, reject) => {
+    public async getBlob(sha: string): Promise<IDataBlob> {
+        return new Promise<IDataBlob>((resolve, reject) => {
+            if (this.blobs.has(sha) && this.blobs.get(sha).content !== null) {
+                const blob = this.blobs.get(sha);
+                if (blob.content.byteLength > 0) {
+                    resolve(blob);
+                }
+            }
 
             this.storage.read(sha)
                 .then((blobString) => {
@@ -65,6 +60,7 @@ export class BlobManager implements IBlobManager {
                     const blobContent = new Buffer(blobString, "base64");
                     const blob = this.blobs.get(sha);
                     blob.content = blobContent;
+                    blob.url = this.storage.getRawUrl(sha);
                     this.blobs.set(sha, blob);
                     resolve(blob);
                 })
@@ -75,7 +71,7 @@ export class BlobManager implements IBlobManager {
     }
 
     // TODO: sabroner add blob<t> where t is the inclusion types we add...
-    public async addBlob(blob: IImageBlob): Promise<void> {
+    public async addBlob(blob: IDataBlob): Promise<void> {
         if (blob.content !== null || blob.content !== undefined) {
             blob.content = null;
         }
