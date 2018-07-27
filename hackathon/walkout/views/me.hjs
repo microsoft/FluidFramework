@@ -1,19 +1,22 @@
 {{<layout}}
     {{$styles}}
+        <link rel="stylesheet" href="https://static2.sharepointonline.com/files/fabric/office-ui-fabric-core/9.6.0/css/fabric.min.css">
+        <style>
+            .playback-buttons {
+                margin-top: 25px;
+            }
+        </style>
     {{/styles}}
 
     {{$content}}
-        <div>YouTube Video ID</layout>
-        <input type="text" id="videoId"></layout>
-
-        <div>Start</div>
-        <input type="text" id="start"></layout>
-
-        <div>End</div>
-        <input type="text" id="end"></layout>
+        <div id="example"></div>
     {{/content}}
 
     {{$scripts}}
+        <!-- Dependencies -->
+        <script crossorigin src="https://unpkg.com/react@16/umd/react.development.js"></script>
+        <script crossorigin src="https://unpkg.com/react-dom@16/umd/react-dom.development.js"></script>
+
         <script src="/public/dist/1.bundle.js"></script>
         <script src="/public/dist/bundle.js"></script>
         <script>

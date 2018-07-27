@@ -13,7 +13,8 @@
         "outDir": "dist",
         "rootDir": "./src",
         "sourceMap": true,
-        "inlineSources": true
+        "inlineSources": true,
+        "jsx": "react"
     },
     "include": [
         "src/**/*"
