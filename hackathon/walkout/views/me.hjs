@@ -1,0 +1,24 @@
+{{<layout}}
+    {{$styles}}
+    {{/styles}}
+
+    {{$content}}
+        <div>YouTube Video ID</layout>
+        <input type="text" id="videoId"></layout>
+
+        <div>Start</div>
+        <input type="text" id="start"></layout>
+
+        <div>End</div>
+        <input type="text" id="end"></layout>
+    {{/content}}
+
+    {{$scripts}}
+        <script src="/public/dist/1.bundle.js"></script>
+        <script src="/public/dist/bundle.js"></script>
+        <script>
+            const details = {{{ profile }}};
+            controllers.loadVideo(details);
+        </script>
+    {{/scripts}}
+{{/layout}}

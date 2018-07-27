@@ -1,0 +1,109 @@
+{{<layout}}
+    {{$styles}}
+        <style>
+            html,body{
+                height: 100%;
+                margin: 0;
+                padding: 0;
+                overflow: hidden;
+            }
+
+            .container {
+                height: 100%;
+            }
+
+            .details {
+                position: absolute;
+                width: 100%;
+                height: 100%;
+            }
+
+            .measure {
+                position: absolute;
+                width: 100%;
+                height: 100%;
+                opacity: 0;
+            }
+        </style>
+        <style>
+            svg.intro .text {
+                display: none;
+            }
+            svg.intro.go .text {
+                font-family: Arial, sans-serif;
+                font-size: 60px;
+                display: block;
+            }
+            svg.intro.go .text-stroke {
+                fill: none;
+                stroke: #51256f;
+                stroke-width: 8.4px;
+                stroke-dashoffset: -900;
+                stroke-dasharray: 900;
+                stroke-linecap: butt;
+                stroke-linejoin: round;
+                -webkit-animation: dash 2.5s ease-in-out forwards;
+                        animation: dash 2.5s ease-in-out forwards;
+            }
+
+            svg.intro.go .text.small {
+                font-family: Arial, sans-serif;
+                font-size: 30px;
+                display: block;
+            }
+            svg.intro.go .text-stroke.small {
+                stroke-width: 4.2px;
+                stroke-dashoffset: -900;
+                stroke-dasharray: 900;
+                stroke-linecap: butt;
+                stroke-linejoin: round;
+                -webkit-animation: dash 2.5s ease-in-out forwards;
+                        animation: dash 2.5s ease-in-out forwards;
+            }
+
+            svg.intro.go .text-stroke-2 {
+                stroke: #f6bdfa;
+            }
+
+            @-webkit-keyframes dash {
+                100% {
+                    stroke-dashoffset: 0;
+                }
+            }
+
+            @keyframes dash {
+                100% {
+                    stroke-dashoffset: 0;
+                }
+            }
+        </style>
+    {{/styles}}
+
+    {{$content}}
+        <div class="container">
+            <div id="measure" class="measure">
+                <svg id="measureSvg" width="60%" height="1000px"></svg>
+            </div>
+            <div id="details" class="details">
+            </div>
+            <div id="player"></div>
+        </div>
+    {{/content}}
+
+    {{$scripts}}
+        <script src="/public/dist/1.bundle.js"></script>
+        <script src="/public/dist/bundle.js"></script>
+        <script>
+            // 2. This code loads the IFrame Player API code asynchronously.
+            var tag = document.createElement('script');
+
+            tag.src = "https://www.youtube.com/iframe_api";
+            var firstScriptTag = document.getElementsByTagName('script')[0];
+            firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+            function onYouTubeIframeAPIReady() {
+                controllers.load("{{ id }}", YT);
+            }
+        </script>
+    {{/scripts}}
+{{/layout}}
