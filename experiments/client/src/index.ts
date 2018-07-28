@@ -1,3 +1,4 @@
+import * as prague from "@prague/routerlicious";
 import { app, BrowserWindow } from "electron";
 import * as path from "path";
 import * as url from "url";
@@ -5,6 +6,12 @@ import * as url from "url";
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
 let win: BrowserWindow;
+
+// register default prague endpoint
+const routerlicious = "https://alfred.wu2.prague.office-int.com";
+const historian = "https://historian.wu2.prague.office-int.com";
+const tenantId = "suspicious-northcutt";
+prague.api.socketStorage.registerAsDefault(routerlicious, historian, tenantId);
 
 function createWindow() {
     // Create the browser window.
