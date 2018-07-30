@@ -1,7 +1,7 @@
 import * as amqp from "amqplib";
 import { EventEmitter } from "events";
 import * as winston from "winston";
-import { IMessage, IMessageSender } from "../core";
+import { IMessageSender, ITaskMessage } from "../core";
 
 class RabbitmqSender implements IMessageSender {
 
@@ -39,11 +39,11 @@ class RabbitmqSender implements IMessageSender {
         });
     }
 
-    public sendTask(queueName: string, message: IMessage) {
+    public sendTask(queueName: string, message: ITaskMessage) {
         this.channel.sendToQueue(queueName, new Buffer(JSON.stringify(message)), { persistent: true });
     }
 
-    public sendAgent(message: IMessage) {
+    public sendAgent(message: ITaskMessage) {
         this.channel.publish(this.agentExchange, "", new Buffer(JSON.stringify(message)), { persistent: true });
     }
 
