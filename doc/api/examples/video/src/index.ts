@@ -1,6 +1,6 @@
 import { api as prague, ui as pragueUi } from "@prague/routerlicious";
 import * as jwt from "jsonwebtoken";
-import { YouTubeVideoCanvas } from "../node_modules/@prague/routerlicious/dist/controls";
+import { YouTubeVideoCanvas } from "./YouTubeVideoCanvas";
 
 // For local development
 // const routerlicious = "http://localhost:3000";
@@ -12,7 +12,7 @@ const historian = "https://historian.wu2.prague.office-int.com";
 const tenantId = "gallant-hugle";
 const secret = "03302d4ebfb6f44b662d00313aff5a46";
 
-const documentId = window.location.search.slice(1) || "test-flowview-0706-1";
+const documentId = window.location.search.slice(1) || "test-videoplayer-1";
 
 // Register endpoint connection
 prague.socketStorage.registerAsDefault(routerlicious, historian, tenantId);

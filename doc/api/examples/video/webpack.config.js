@@ -1,37 +1,59 @@
 const path = require('path');
+const SpeedMeasurePlugin = require("speed-measure-webpack-plugin");
 
-module.exports = {
+const smp = new SpeedMeasurePlugin();
+
+module.exports = smp.wrap({
     entry: './src/index.ts',
     devtool: 'source-map',
+    resolve: {
+        extensions: [ '.tsx', '.ts', '.js', '.json' ]
+    },
+    mode: "development",
     module: {
         rules: [
             {
-                test: /\.tsx?$/,
-                use: 'ts-loader',
-                exclude: /node_modules/
+                test: /\.(ts|tsx)$/,
+                use: [
+                    {
+                        loader: "cache-loader"
+                    },
+                    {
+                        loader: 'thread-loader',
+                        options: {
+                            workers: require('os').cpus().length,
+                        },
+                    },
+                    {
+                    loader: "ts-loader",
+                    options: {
+                        compilerOptions: {
+                            declaration: false,
+                        },
+                        // Removes TypeChecking and forces thread safety
+                        // ForkTSCheckerWebpackPlugin handles types and syntax
+                        happyPackMode: true,
+                    }
+                }],
+                exclude: [
+                    "/node_modules/",
+                    "/dist/",
+                ]
             },
-            {
+            { // TODO: Investigate why babel-loader reduces build speeds by so much
                 test: /\.js$/,
                 include: [
                     path.resolve(__dirname, "node_modules/@prague/routerlicious"),
                     path.resolve(__dirname, "node_modules/telegrafjs"),
                 ],
                 use: {
-                    loader: 'babel-loader',
+                    loader: 'babel-loader?cacheDirectory',
                     options: {
                         presets: ['env']
                     }
                 }
-            },
-            {
-                test: /\.js$/,
-                use: ["source-map-loader"],
-                enforce: "pre"
             }
         ]
-    },
-    resolve: {
-        extensions: [ '.tsx', '.ts', '.js' ]
     },
     output: {
         filename: 'bundle.js',
@@ -43,4 +65,4 @@ module.exports = {
         net: 'empty',
         tls: 'empty'
     }
-};
+});
