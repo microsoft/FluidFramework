@@ -1,4 +1,5 @@
 import { Provider } from "nconf";
+import { createUploader } from "../services";
 import * as utils from "../utils";
 import { createMessageReceiver } from "./messageReceiver";
 import { IMessageReceiver } from "./messages";

@@ -6,4 +6,4 @@ export * from "./orderer";
 export * from "./partitionManager";
 export * from "./publisher";
 export * from "./tenant";
-export * from "./messageSender";
+export * from "./taskMessages";

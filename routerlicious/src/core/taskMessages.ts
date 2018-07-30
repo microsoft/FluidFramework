@@ -1,6 +1,6 @@
 // tslint:disable:ban-types
 /**
- * Message sent by the sender.
+ * Message for the task.
  */
 export interface ITaskMessage {
 
@@ -42,7 +42,7 @@ export interface IAgentUploader {
 }
 
 /**
- * Interface to implement the task/agent broadcaster.
+ * Interface to implement the task sender.
  */
 export interface IMessageSender {
 
@@ -60,6 +60,27 @@ export interface IMessageSender {
      * Sends an agent loading message.
      */
     sendAgent(message: ITaskMessage): void;
+
+    /**
+     * Notifies on error.
+     */
+    on(event: string, listener: Function): this;
+
+    /**
+     * Notifies on error.
+     */
+    close(): Promise<void>;
+}
+
+/**
+ * Interface to implement the task receiver.
+ */
+export interface IMessageReceiver {
+
+    /**
+     * Preps the underlying message queue.
+     */
+    initialize(): Promise<void>;
 
     /**
      * Notifies on error.
