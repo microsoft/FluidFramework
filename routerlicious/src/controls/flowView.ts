@@ -4042,12 +4042,27 @@ export class FlowView extends ui.Component {
                 } else if (e.keyCode === KeyCode.esc) {
                     this.clearSelection();
                 } else if (e.keyCode === KeyCode.backspace) {
-                    this.cursor.pos--;
+                    let toRemove = this.cursor.getSelection();
+                    if (toRemove) {
+                        // If there was a selected range, use it as range to remove below.  In preparation, clear
+                        // the FlowView's selection and set the cursor to the start of the range to be deleted.
+                        this.clearSelection();
+                        this.cursor.pos = toRemove.start;
+                    } else {
+                        // Otherwise, construct the range to remove by moving the cursor once in the reverse direction.
+                        // Below we will remove the positions spanned by the current and previous cursor positions.
+                        const removeEnd = this.cursor.pos;
+                        this.cursorRev();
+                        toRemove = {
+                            end: removeEnd,
+                            start: this.cursor.pos,
+                        };
+                    }
                     if (this.modes.showCursorLocation) {
                         this.cursorLocation();
                     }
-                    this.sharedString.removeText(this.cursor.pos, this.cursor.pos + 1);
-                    this.localQueueRender(this.cursor.pos);
+                    this.sharedString.removeText(toRemove.start, toRemove.end);
+                    this.localQueueRender(toRemove.start);
                 } else if (((e.keyCode === KeyCode.pageUp) || (e.keyCode === KeyCode.pageDown)) && (!this.ticking)) {
                     setTimeout(() => {
                         this.scroll(e.keyCode === KeyCode.pageUp);
