@@ -1,8 +1,9 @@
+import { IDocument } from "../api-core";
 import { gitHashFile } from "../core-utils";
 import { getFileBlobType, IDataBlob, IImageBlob } from "./blobTypes";
 
 export async function blobUploadHandler(dragZone: HTMLDivElement,
-                                        blobStorageCB: (file: IDataBlob) => Promise<IDataBlob>,
+                                        document: IDocument,
                                         blobDisplayCB: (file: IDataBlob) => void) {
 
     dragZone.ondrop = (event) => {
@@ -13,7 +14,7 @@ export async function blobUploadHandler(dragZone: HTMLDivElement,
         const files = dt.files;
         fileToInclusion(files[0])
             .then(async (blob) => {
-                blob = await blobStorageCB(blob);
+                blob = await document.uploadBlob(blob);
                 blobDisplayCB(blob);
             });
     };

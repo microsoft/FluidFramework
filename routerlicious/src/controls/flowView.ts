@@ -3219,9 +3219,7 @@ export class FlowView extends ui.Component {
         this.cursor = new Cursor(this.viewportDiv);
         this.setViewOption(this.options);
         blobUploadHandler(element,
-            (incl: IDataBlob) => {
-                return this.sharedString.getDocument().uploadBlob(incl);
-            },
+            this.sharedString.getDocument(),
             (incl: IDataBlob) => this.insertPhotoInternal(incl),
         );
     }

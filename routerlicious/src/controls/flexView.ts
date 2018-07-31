@@ -1,5 +1,5 @@
 // The main app code
-import { fileToInclusion, IImageBlob, isIImageBlob } from "../blob";
+import { blobUploadHandler, fileToInclusion, IImageBlob, isIImageBlob } from "../blob";
 import { api, core, types} from "../client-api";
 import * as ui from "../ui";
 import { Button } from "./button";
@@ -85,7 +85,9 @@ export class FlexView extends ui.Component {
             });
 
         // Add the ink canvas to the dock
+        // Add blob Upload Handler
         const inkCanvasElement = document.createElement("div");
+        blobUploadHandler(inkCanvasElement, doc, this.renderImage);
         this.ink = new InkCanvas(inkCanvasElement, root.get("ink"));
         this.dock.addContent(this.ink);
 
