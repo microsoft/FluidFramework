@@ -11,12 +11,16 @@
   },
   "author": "",
   "dependencies": {
-    "electron": "^1.7.9",
+    "@prague/routerlicious": "^0.1.2823",
+    "electron": "^2.0.5",
+    "electron-default-menu": "^1.0.1",
     "moniker": "^0.1.2",
-    "routerlicious": "file:../../routerlicious"
+    "uuid": "^3.3.2"
   },
   "devDependencies": {
+    "@types/node": "^10.5.4",
+    "@types/uuid": "^3.4.3",
     "tslint": "^5.8.0",
-    "typescript": "^2.6.2"
+    "typescript": "^2.9.2"
   }
 }
