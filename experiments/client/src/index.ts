@@ -1,5 +1,5 @@
 import * as prague from "@prague/routerlicious";
-import { app, BrowserWindow, Menu, shell } from "electron";
+import { app, BrowserWindow, ipcMain, Menu, shell } from "electron";
 import defaultMenu = require("electron-default-menu");
 import * as os from "os";
 import * as path from "path";
@@ -27,8 +27,20 @@ const windowMap = new Map<string, BrowserWindow>();
 let preserveWindows = false;
 
 function createWindow(id: string, noteId: string, windowList: WindowList) {
+    const windowOptions: any = {width: 800, height: 600};
+    const focused = BrowserWindow.getFocusedWindow();
+    if (focused) {
+        const [x, y] = focused.getPosition();
+        windowOptions.x = x + 25;
+        windowOptions.y = y + 25;
+    } else if (windowMap.size > 0) {
+        const [x, y] = Array.from(windowMap.values()).pop().getPosition();
+        windowOptions.x = x + 25;
+        windowOptions.y = y + 25;
+    }
+
     // Create the browser window.
-    const win = new BrowserWindow({width: 800, height: 600});
+    const win = new BrowserWindow(windowOptions);
 
     // and load the index.html of the app.
     win.loadURL(url.format({
@@ -37,16 +49,14 @@ function createWindow(id: string, noteId: string, windowList: WindowList) {
         slashes: true,
     }));
     win.webContents.on("did-finish-load", () => win.webContents.send("load-note", noteId));
+    win.setTitle(noteId);
 
     windowMap.set(id, win);
     win.on(
         "closed",
         () => {
-            console.log(`Window closed ${id}`);
-
             // If a remote close the window will no longer be in the list. Otherwise we explicitly remove it.
             if (windowList.has(id) && !preserveWindows) {
-                console.log(`windowList has ${id}`);
                 windowList.closeWindow(id);
             }
 
@@ -57,15 +67,38 @@ function createWindow(id: string, noteId: string, windowList: WindowList) {
     // win.webContents.openDevTools();
 }
 
-function createNote(noteList: NoteList, windowList: WindowList) {
-    const note = noteList.addNote();
-    const window = windowList.openWindow(note.id);
-    console.log(`No windows - creating new window ${window.id} ${window.noteId}`);
+function createNote(noteList: NoteList, windowList: WindowList, noteId?: string) {
+    noteId = noteId ? noteId : noteList.addNote().id;
+    const window = windowList.openWindow(noteId);
     createWindow(window.id, window.noteId, windowList);
 }
 
+let notesWindow: BrowserWindow;
+function showAllNotes() {
+    if (notesWindow) {
+        return;
+    }
+
+    // Create the browser window.
+    notesWindow = new BrowserWindow({width: 800, height: 600});
+    notesWindow.setTitle("Notes");
+    notesWindow.webContents.on("did-finish-load", () => notesWindow.webContents.send("load-notes-list", username));
+
+    // and load the index.html of the app.
+    notesWindow.loadURL(url.format({
+        pathname: path.join(__dirname, "../views/notes.html"),
+        protocol: "file:",
+        slashes: true,
+    }));
+
+    notesWindow.on(
+        "closed",
+        () => {
+            notesWindow = null;
+        });
+}
+
 async function start(): Promise<void> {
-    console.log("Starting");
     const [windowList, noteList] = await Promise.all([windowListP, noteListP]);
 
     const menu = defaultMenu(app, shell);
@@ -83,6 +116,20 @@ async function start(): Promise<void> {
             },
         ],
     });
+
+    ipcMain.on("open-note", (event, id) => {
+        createNote(noteList, windowList, id);
+    });
+
+    const viewSubmenu = menu[3].submenu;
+    viewSubmenu.push({ type: "separator" });
+    viewSubmenu.push({
+        accelerator: "CmdOrCtrl+L",
+        click: () => {
+            showAllNotes();
+        },
+        label: "All Notes",
+    });
     Menu.setApplicationMenu(Menu.buildFromTemplate(menu));
 
     // Listen for updates to the notes window list
@@ -93,7 +140,6 @@ async function start(): Promise<void> {
                 return;
             }
 
-            console.log(`Creating remote window ${id}`);
             createWindow(id, windowList.getWindows().get(id).noteId, windowList);
         });
 
@@ -104,7 +150,6 @@ async function start(): Promise<void> {
                 return;
             }
 
-            console.log(`Closing remote window ${id}`);
             if (windowMap.has(id)) {
                 const window = windowMap.get(id);
                 window.close();
@@ -114,7 +159,6 @@ async function start(): Promise<void> {
     // Open already opened notes
     const existingWindows = windowList.getWindows();
     for (const [id, window] of existingWindows) {
-        console.log(`Creatign window at start ${id}`);
         createWindow(id, window.noteId, windowList);
     }
 

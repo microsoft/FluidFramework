@@ -65,7 +65,7 @@ export class NoteList extends EventEmitter {
                     return;
                 }
 
-                if (!noteView.has(changed.key)) {
+                if (noteView.has(changed.key)) {
                     // new note or value changed
                     if (this.notes.has(changed.key)) {
                         this.notes.get(changed.key).name = noteView.get(changed.key);

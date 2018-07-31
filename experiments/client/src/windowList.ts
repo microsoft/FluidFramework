@@ -51,8 +51,6 @@ export class WindowList extends EventEmitter {
                     return;
                 }
 
-                console.log(`valueChanged ${changed.key}`);
-
                 if (windowsView.has(changed.key)) {
                     this.addWindowCore(changed.key, windowsView.get(changed.key), false);
                 } else {

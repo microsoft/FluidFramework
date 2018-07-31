@@ -1,18 +1,25 @@
 {
-  "name": "prague-client",
+  "name": "nota",
   "version": "0.0.1",
   "description": "Prague electron client",
   "main": "dist/index.js",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && tslint 'src/**/*'",
     "start": "electron dist/index.js",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "tslint": "tslint 'src/**/*.ts'"
+    "tslint": "tslint 'src/**/*.ts'",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder"
   },
   "author": "",
+  "build": {
+    "appId": "com.microsoft.nota",
+    "directories": {
+      "output": "package"
+    }
+  },
   "dependencies": {
     "@prague/routerlicious": "^0.1.2823",
-    "electron": "^2.0.5",
     "electron-default-menu": "^1.0.1",
     "moniker": "^0.1.2",
     "uuid": "^3.3.2"
@@ -20,6 +27,8 @@
   "devDependencies": {
     "@types/node": "^10.5.4",
     "@types/uuid": "^3.4.3",
+    "electron": "^2.0.5",
+    "electron-builder": "^20.26.0",
     "tslint": "^5.8.0",
     "typescript": "^2.9.2"
   }

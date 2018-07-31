@@ -23,8 +23,6 @@ async function run(id: string): Promise<void> {
     const collabDoc = await prague.api.load(id, { blockUpdateMarkers: true, token });
 
     const rootView = await collabDoc.getRoot().getView();
-    console.log("Keys");
-    console.log(rootView.keys());
 
     // Add in the text string if it doesn't yet exist
     if (!collabDoc.existing) {
