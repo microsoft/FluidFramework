@@ -1,5 +1,8 @@
 import { api, types } from "@prague/routerlicious/dist/client-api";
 import { EventEmitter } from "events";
+import * as uuid from "uuid/v4";
+import { revision } from "./constants";
+import { TokenGenerator } from "./tokenGenerator";
 
 export interface INote {
     // Document ID for the note data
@@ -13,9 +16,20 @@ export interface INote {
 }
 
 export class NoteList extends EventEmitter {
-    public static async Load(userName: string, token: string): Promise<NoteList> {
-        const document = await api.load(`notes-${userName}`, { token });
-        const notes = await document.getRoot();
+    public static async Load(userName: string, tokenGenerator: TokenGenerator): Promise<NoteList> {
+        const id = `notes-${userName}-${revision}`;
+        const token = tokenGenerator.generate(id);
+
+        const document = await api.load(id, { token });
+        const root = await document.getRoot();
+        const rootView = await root.getView();
+        if (!document.existing) {
+            rootView.set("notes", document.createMap());
+        } else {
+            await rootView.wait("notes");
+        }
+
+        const notes = rootView.get("notes") as types.IMap;
         const notesView = await notes.getView();
 
         return new NoteList(notes, notesView);
@@ -71,10 +85,12 @@ export class NoteList extends EventEmitter {
         return this.notes;
     }
 
-    public addNote(id: string, name: string) {
-        const key = NoteList.CreateId(id);
-        this.addNoteCore(key, name, true);
+    public addNote() {
+        const key = NoteList.CreateId(uuid());
+        const note = this.addNoteCore(key, "", true);
         this.emit("notesChanged");
+
+        return note;
     }
 
     public on(event: "notesChanged", listener: (...args: any[]) => void): this {
@@ -82,9 +98,9 @@ export class NoteList extends EventEmitter {
         return this;
     }
 
-    private addNoteCore(id: string, name: string, local: boolean) {
+    private addNoteCore(id: string, name: string, local: boolean): INote {
         // Add to map view if this is a local insert
-        if (!local) {
+        if (local) {
             this.noteView.set(id, name);
         }
 
@@ -96,5 +112,7 @@ export class NoteList extends EventEmitter {
             name,
         };
         this.notes.set(id, note);
+
+        return note;
     }
 }
