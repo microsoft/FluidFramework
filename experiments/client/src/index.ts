@@ -34,6 +34,7 @@ function createWindow(id: string, noteId: string, windowList: WindowList) {
         protocol: "file:",
         slashes: true,
     }));
+    win.webContents.on("did-finish-load", () => win.webContents.send("load-note", noteId));
 
     windowMap.set(id, win);
     win.on(

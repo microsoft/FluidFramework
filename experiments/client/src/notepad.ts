@@ -1,186 +1,89 @@
-import {
-    api as API,
-    map as DistributedMap,
-    MergeTree,
-    SharedString,
-    socketStorage,
-    types,
-} from "@prague/routerlicious/dist/client-api";
-import { controls, ui } from "@prague/routerlicious/dist/client-ui";
-import * as resources from "gitresources";
-import performanceNow = require("performance-now");
-import * as request from "request";
-import * as url from "url";
+import { api as prague, ui as pragueUi } from "@prague/routerlicious";
+import * as electron from "electron";
+import { TokenGenerator } from "./tokenGenerator";
 
-// first script loaded
-const clockStart = Date.now();
+// For local development
+const routerlicious = "https://alfred.wu2.prague.office-int.com";
+const historian = "https://historian.wu2.prague.office-int.com";
+const tenantId = "suspicious-northcutt";
 
-export let theFlow: controls.FlowView;
+// Get a token generator
+const secret = "86efe90f7d9f5864b3887781c8539b3a";
+const generator = new TokenGenerator(tenantId, secret);
 
-function downloadRawText(textUrl: string): Promise<string> {
-    return new Promise<string>((resolve, reject) => {
-        request.get(url.resolve(document.baseURI, textUrl), (error, response, body: string) => {
-            if (error) {
-                reject(error);
-            } else if (response.statusCode !== 200) {
-                reject(response.statusCode);
-            } else {
-                resolve(body);
-            }
-        });
-    });
-}
+// Register endpoint connection
+prague.socketStorage.registerAsDefault(routerlicious, historian, tenantId);
 
-async function getInsights(map: types.IMap, id: string): Promise<types.IMap> {
-    const insights = await map.wait<types.IMap>("insights");
-    return insights.wait<types.IMap>(id);
-}
+async function run(id: string): Promise<void> {
+    const token = generator.generate(id);
 
-async function addTranslation(document: API.Document, id: string, language: string): Promise<void> {
-    // Create the translations map
-    const insights = await document.getRoot().wait<types.IMap>("insights");
-    const view = await (await insights.wait<types.IMap>(id)).getView();
-    if (!document.existing) {
-        view.set("translations", undefined, DistributedMap.DistributedSetValueType.Name);
-    }
+    const host = new pragueUi.ui.BrowserContainerHost();
 
-    if (!language) {
-        return;
-    }
+    // Load in the latest and connect to the document
+    const collabDoc = await prague.api.load(id, { blockUpdateMarkers: true, token });
 
-    const translations = await view.wait<DistributedMap.DistributedSet<string>>("translations");
-    translations.add(language);
-}
+    const rootView = await collabDoc.getRoot().getView();
+    console.log("Keys");
+    console.log(rootView.keys());
 
-export async function load(
-    id: string,
-    version: resources.ICommit,
-    token: string,
-    pageInk: boolean,
-    disableCache: boolean,
-    config: any,
-    template: string,
-    connect: boolean,
-    options: object) {
-
-    console.log(`Load Option: ${JSON.stringify(options)}`);
-    loadDocument(id, version, token, pageInk, disableCache, config, template, connect, options).catch((error) => {
-        console.error(error);
-    });
-}
-
-async function loadDocument(
-    id: string,
-    version: resources.ICommit,
-    token: string,
-    pageInk: boolean,
-    disableCache: boolean,
-    config: any,
-    template: string,
-    connect: boolean,
-    options: object) {
-
-    const host = new ui.BrowserContainerHost();
-
-    socketStorage.registerAsDefault(
-        document.location.origin,
-        config.blobStorageUrl,
-        config.tenantId,
-        config.trackError,
-        disableCache,
-        config.historianApi,
-        config.credentials);
-    console.log(`collabDoc loading ${id} - ${performanceNow()}`);
-    const collabDoc = await API.load(id, { blockUpdateMarkers: true, client: config.client, token }, version, connect);
-
-    console.log(`collabDoc loaded ${id} - ${performanceNow()}`);
-    const root = await collabDoc.getRoot().getView();
-    console.log(`Getting root ${id} - ${performanceNow()}`);
-
-    collabDoc.on("clientJoin", (message) => {
-        console.log(`${JSON.stringify(message)} joined`);
-        console.log(`${Array.from(collabDoc.getClients().keys())}`);
-    });
-    collabDoc.on("clientLeave", (message) => {
-        console.log(`${JSON.stringify(message)} left`);
-        console.log(`${Array.from(collabDoc.getClients().keys())}`);
-    });
-
-    // If a text element already exists load it directly - otherwise load in pride + prejudice
+    // Add in the text string if it doesn't yet exist
     if (!collabDoc.existing) {
-        console.log(`Not existing ${id} - ${performanceNow()}`);
-        root.set("presence", collabDoc.createMap());
-        root.set("users", collabDoc.createMap());
-        const newString = collabDoc.createString() as SharedString.SharedString;
-
-        const starterText = template ? await downloadRawText(template) : " ";
-        const segments = MergeTree.loadSegments(starterText, 0, true);
+        const newString = collabDoc.createString() as prague.SharedString.SharedString;
+        const starterText = " ";
+        const segments = prague.MergeTree.loadSegments(starterText, 0, true);
         for (const segment of segments) {
-            if (segment.getType() === MergeTree.SegmentType.Text) {
-                const textSegment = segment as MergeTree.TextSegment;
+            if (segment.getType() === prague.MergeTree.SegmentType.Text) {
+                const textSegment = segment as prague.MergeTree.TextSegment;
                 newString.insertText(textSegment.text, newString.client.getLength(),
                     textSegment.properties);
             } else {
                 // assume marker
-                const marker = segment as MergeTree.Marker;
+                const marker = segment as prague.MergeTree.Marker;
                 newString.insertMarker(newString.client.getLength(), marker.refType, marker.properties);
             }
         }
-        root.set("text", newString);
-        root.set("ink", collabDoc.createMap());
 
-        if (pageInk) {
-            root.set("pageInk", collabDoc.createStream());
-        }
+        rootView.set("presence", collabDoc.createMap());
+        rootView.set("text", newString);
+        rootView.set("ink", collabDoc.createMap());
+        rootView.set("pageInk", collabDoc.createStream());
     } else {
-        await Promise.all([root.wait("text"), root.wait("ink")]);
+        await Promise.all([rootView.wait("text"), rootView.wait("ink")]);
     }
 
-    const sharedString = root.get("text") as SharedString.SharedString;
-    console.log(`Shared string ready - ${performanceNow()}`);
-    console.log(window.navigator.userAgent);
-    console.log(`id is ${id}`);
-    console.log(`Partial load fired - ${performanceNow()}`);
+    // Load the text string and listen for updates
+    const text = rootView.get("text");
+    const ink = rootView.get("ink");
 
-    // Higher plane ink
-    const inkPlane = root.get("ink");
-
-    // Bindy for insights
-    const image = new controls.Image(
+    const image = new pragueUi.controls.Image(
         document.createElement("div"),
-        url.resolve(document.baseURI, "/public/images/bindy.svg"));
+        "https://alfred.wu2.prague.office-int.com/public/images/bindy.svg");
 
-    const containerDiv = document.createElement("div");
-    const container = new controls.FlowContainer(
-        containerDiv,
+    const textElement = document.getElementById("text") as HTMLDivElement;
+    const container = new pragueUi.controls.FlowContainer(
+        textElement,
         collabDoc,
-        sharedString,
-        inkPlane,
+        text,
+        ink,
         image,
-        root.get("pageInk") as types.IStream,
-        options);
-    theFlow = container.flowView;
+        rootView.get("pageInk"),
+        {});
+    const theFlow = container.flowView;
     host.attach(container);
 
-    const translationLanguage = "translationLanguage";
-    addTranslation(collabDoc, sharedString.id, options[translationLanguage]).catch((error) => {
-        console.error("Problem adding translation", error);
-    });
-
-    getInsights(collabDoc.getRoot(), sharedString.id).then(
-        (insightsMap) => {
-            container.trackInsights(insightsMap);
-        });
-
-    if (sharedString.client.getLength() > 0) {
+    if (text.client.getLength() > 0) {
         theFlow.render(0, true);
     }
+
+    const clockStart = Date.now();
     theFlow.timeToEdit = theFlow.timeToImpression = Date.now() - clockStart;
+    theFlow.setEdit(rootView);
 
-    theFlow.setEdit(root);
-
-    sharedString.loaded.then(() => {
+    text.loaded.then(() => {
         theFlow.loadFinished(clockStart);
-        console.log(`fully loaded ${id}: ${performanceNow()} `);
     });
 }
+
+electron.ipcRenderer.on("load-note", (event, id) => {
+    run(id);
+});
