@@ -3,7 +3,6 @@ import { IHelpMessage, IQueueMessage, RemoteHelp } from "../api-core";
 import * as core from "../core";
 import { IContext } from "../kafka-service/lambdas";
 import { SequencedLambda } from "../kafka-service/sequencedLambda";
-import * as services from "../services";
 import * as utils from "../utils";
 
 export class TmzLambda extends SequencedLambda {
@@ -11,7 +10,7 @@ export class TmzLambda extends SequencedLambda {
     private requestMap = new Map<string, Set<string>>();
     constructor(
         private messageSender: core.ITaskMessageSender,
-        private tenantManager: services.TenantManager,
+        private tenantManager: core.ITenantManager,
         private permissions: any,
         protected context: IContext) {
         super(context);

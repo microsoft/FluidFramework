@@ -1,6 +1,5 @@
 import * as uuid from "uuid/v4";
 import * as core from "../../core";
-import * as services from "../../services";
 import { MongoManager } from "../../utils";
 import { IConcreteNodeFactory } from "./interfaces";
 import { LocalNode } from "./localNode";
@@ -16,7 +15,7 @@ export class LocalNodeFactory implements IConcreteNodeFactory {
         private deltasCollectionName: string,
         private timeoutLength: number,
         private taskMessageSender: core.ITaskMessageSender,
-        private tenantManager: services.TenantManager,
+        private tenantManager: core.ITenantManager,
         private permission: any) {
     }
 

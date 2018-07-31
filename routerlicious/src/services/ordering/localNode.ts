@@ -4,8 +4,7 @@ import * as _ from "lodash";
 import * as uuid from "uuid/v4";
 import * as ws from "ws";
 import * as api from "../../api-core";
-import { IDocumentStorage, IOrderer, IOrdererConnection, ITaskMessageSender } from "../../core";
-import * as services from "../../services";
+import { IDocumentStorage, IOrderer, IOrdererConnection, ITaskMessageSender, ITenantManager } from "../../core";
 import { MongoManager } from "../../utils";
 import { debug } from "../debug";
 import {
@@ -53,7 +52,7 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
         deltasCollectionName: string,
         timeoutLength: number,
         taskMessageSender: ITaskMessageSender,
-        tenantManager: services.TenantManager,
+        tenantManager: ITenantManager,
         permission: any) {
 
         // Look up any existing information for the node or create a new one
@@ -145,7 +144,7 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
         private deltasCollectionName: string,
         private timeoutLength: number,
         private taskMessageSender: ITaskMessageSender,
-        private tenantManager: services.TenantManager,
+        private tenantManager: ITenantManager,
         private permission: any) {
         super();
 

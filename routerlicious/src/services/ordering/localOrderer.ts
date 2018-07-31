@@ -2,7 +2,7 @@ import * as assert from "assert";
 import * as moniker from "moniker";
 import now = require("performance-now");
 import * as api from "../../api-core";
-import { ICollection, IDocument, IOrdererConnection } from "../../core";
+import { ICollection, IDocument, IOrdererConnection, ITenantManager } from "../../core";
 import * as core from "../../core";
 import { DeliLambda } from "../../deli/lambda";
 import { ClientSequenceTimeout } from "../../deli/lambdaFactory";
@@ -10,7 +10,6 @@ import { IContext } from "../../kafka-service/lambdas";
 import { ScriptoriumLambda } from "../../scriptorium/lambda";
 import { TmzLambda } from "../../tmz/lambda";
 import { IMessage, IProducer, MongoManager } from "../../utils";
-import { TenantManager } from "../tenant";
 
 export interface ISubscriber {
     id: string;
@@ -300,7 +299,7 @@ export class LocalOrderer implements core.IOrderer {
         documentsCollectionName: string,
         deltasCollectionName: string,
         taskMessageSender: core.ITaskMessageSender,
-        tenantManager: TenantManager,
+        tenantManager: ITenantManager,
         permission: any) {
 
         const [details, db] = await Promise.all([
@@ -334,7 +333,7 @@ export class LocalOrderer implements core.IOrderer {
         collection: ICollection<core.IDocument>,
         deltasCollection: ICollection<any>,
         private taskMessageSender: core.ITaskMessageSender,
-        private tenantManager: TenantManager,
+        private tenantManager: ITenantManager,
         private permission: any) {
 
         this.existing = details.existing;
