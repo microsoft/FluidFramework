@@ -1,6 +1,6 @@
 import { api, types } from "@prague/routerlicious/dist/client-api";
 import { EventEmitter } from "events";
-import * as uuid from "uuid/v4";
+import * as moniker from "moniker";
 import { revision } from "./constants";
 import { TokenGenerator } from "./tokenGenerator";
 
@@ -86,7 +86,7 @@ export class NoteList extends EventEmitter {
     }
 
     public addNote() {
-        const key = NoteList.CreateId(uuid());
+        const key = NoteList.CreateId(moniker.choose());
         const note = this.addNoteCore(key, "", true);
         this.emit("notesChanged");
 

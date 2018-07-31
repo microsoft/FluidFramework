@@ -1,5 +1,6 @@
 import * as prague from "@prague/routerlicious";
-import { app, BrowserWindow } from "electron";
+import { app, BrowserWindow, Menu, shell } from "electron";
+import defaultMenu = require("electron-default-menu");
 import * as os from "os";
 import * as path from "path";
 import * as url from "url";
@@ -23,6 +24,7 @@ const windowListP = WindowList.Load(username, generator);
 const noteListP = NoteList.Load(username, generator);
 
 const windowMap = new Map<string, BrowserWindow>();
+let preserveWindows = false;
 
 function createWindow(id: string, noteId: string, windowList: WindowList) {
     // Create the browser window.
@@ -43,7 +45,7 @@ function createWindow(id: string, noteId: string, windowList: WindowList) {
             console.log(`Window closed ${id}`);
 
             // If a remote close the window will no longer be in the list. Otherwise we explicitly remove it.
-            if (windowList.has(id)) {
+            if (windowList.has(id) && !preserveWindows) {
                 console.log(`windowList has ${id}`);
                 windowList.closeWindow(id);
             }
@@ -55,9 +57,33 @@ function createWindow(id: string, noteId: string, windowList: WindowList) {
     // win.webContents.openDevTools();
 }
 
+function createNote(noteList: NoteList, windowList: WindowList) {
+    const note = noteList.addNote();
+    const window = windowList.openWindow(note.id);
+    console.log(`No windows - creating new window ${window.id} ${window.noteId}`);
+    createWindow(window.id, window.noteId, windowList);
+}
+
 async function start(): Promise<void> {
     console.log("Starting");
     const [windowList, noteList] = await Promise.all([windowListP, noteListP]);
+
+    const menu = defaultMenu(app, shell);
+    menu.splice(1, 0, {
+        label: "File",
+        submenu: [
+            {
+                accelerator: "CmdOrCtrl+N",
+                click: () => {
+                    createNote(noteList, windowList);
+                },
+                enabled: true,
+                label: "New",
+                visible: true,
+            },
+        ],
+    });
+    Menu.setApplicationMenu(Menu.buildFromTemplate(menu));
 
     // Listen for updates to the notes window list
     windowList.on(
@@ -96,11 +122,7 @@ async function start(): Promise<void> {
     windowList.connected.then(() => {
         // Create a new note if one isn't already open
         if (existingWindows.size === 0) {
-            noteList.addNote();
-            const note = noteList.addNote();
-            const window = windowList.openWindow(note.id);
-            console.log(`No windows - creating new window ${window.id}`);
-            createWindow(window.id, window.noteId, windowList);
+            createNote(noteList, windowList);
         }
     });
 }
@@ -124,6 +146,10 @@ app.on("window-all-closed", () => {
     if (process.platform !== "darwin") {
         app.quit();
     }
+});
+
+app.on("before-quit", () => {
+    preserveWindows = true;
 });
 
 app.on("activate", () => {
