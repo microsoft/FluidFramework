@@ -1,20 +1,18 @@
 import * as amqp from "amqplib";
 import { EventEmitter } from "events";
 import * as winston from "winston";
-import { IMessage, IMessageSender } from "../core";
+import {ITaskMessage, ITaskMessageSender } from "../core";
 
-class RabbitmqSender implements IMessageSender {
+class RabbitmqTaskSender implements ITaskMessageSender {
 
     private events = new EventEmitter();
     private rabbitmqConnectionString: string;
-    private agentExchange: string;
     private taskQueues: string[];
     private connection: amqp.Connection;
     private channel: amqp.Channel;
 
     constructor(rabbitmqConfig: any, tmzConfig: any) {
         this.rabbitmqConnectionString = rabbitmqConfig.connectionString;
-        this.agentExchange = tmzConfig.agentExchange;
         this.taskQueues = tmzConfig.queues;
     }
 
@@ -30,21 +28,13 @@ class RabbitmqSender implements IMessageSender {
         await Promise.all(queuePromises);
         winston.info(`Rabbitmq task queues ready to produce!`);
 
-        // Assert agent exchange.
-        await this.channel.assertExchange(this.agentExchange, "fanout", { durable: true });
-        winston.info(`Rabbitmq ready to produce in agent exchage!`);
-
         this.connection.on("error", (error) => {
             this.events.emit("error", error);
         });
     }
 
-    public sendTask(queueName: string, message: IMessage) {
-        this.channel.sendToQueue(queueName, new Buffer(JSON.stringify(message)), { persistent: true });
-    }
-
-    public sendAgent(message: IMessage) {
-        this.channel.publish(this.agentExchange, "", new Buffer(JSON.stringify(message)), { persistent: true });
+    public sendTask(queueName: string, message: ITaskMessage) {
+        this.channel.sendToQueue(queueName, new Buffer(JSON.stringify(message)), { persistent: false });
     }
 
     public on(event: string, listener: (...args: any[]) => void): this {
@@ -60,6 +50,6 @@ class RabbitmqSender implements IMessageSender {
 }
 
 // Factory to switch between different message sender.
-export function createMessageSender(rabbitmqConfig: any, tmzConfig: any): IMessageSender {
-    return new RabbitmqSender(rabbitmqConfig, tmzConfig);
+export function createMessageSender(rabbitmqConfig: any, tmzConfig: any): ITaskMessageSender {
+    return new RabbitmqTaskSender(rabbitmqConfig, tmzConfig);
 }

@@ -5,10 +5,10 @@ import * as url from "url";
 import * as winston from "winston";
 import * as agent from "../agent";
 import { IDocumentService, IQueueMessage} from "../api-core";
+import * as core from "../core";
 import { Deferred } from "../core-utils";
 import * as socketStorage from "../socket-storage";
 import * as utils from "../utils";
-import { IMessage, IMessageReceiver } from "./messages";
 
 class DocumentServiceFactory implements agent.IDocumentServiceFactory {
     constructor(private serverUrl: string, private historianUrl: string) {
@@ -26,7 +26,10 @@ export class PaparazziRunner implements utils.IRunner {
     private running = new Deferred<void>();
     private permission: Set<string>;
 
-    constructor(private workerConfig: any, private messageReceiver: IMessageReceiver) {
+    constructor(
+        private workerConfig: any,
+        private messageReceiver: core.ITaskMessageReceiver,
+        private agentUploader: core.IAgentUploader) {
         this.permission = new Set(workerConfig.permission as string[]);
         const alfredUrl = workerConfig.alfredUrl;
 
@@ -37,31 +40,67 @@ export class PaparazziRunner implements utils.IRunner {
             this.workerConfig,
             alfredUrl,
             this.initLoadModule(alfredUrl));
-
-        this.listenToEvents();
     }
 
     public async start(): Promise<void> {
-        // Preps message receiver.
-        await this.messageReceiver.initialize().catch((err) => {
+
+        // Preps message receiver and agent uploader.
+        const messageReceiverP = this.messageReceiver.initialize();
+        const agentUploaderP = this.agentUploader.initialize();
+        await Promise.all([messageReceiverP, agentUploaderP]).catch((err) => {
             this.running.reject(err);
         });
+
+        // Should reject on message receiver error.
         this.messageReceiver.on("error", (err) => {
             this.running.reject(err);
         });
-        this.messageReceiver.on("message", (message: IMessage) => {
+
+        // Accept a task.
+        this.messageReceiver.on("message", (message: core.ITaskMessage) => {
             const type = message.type;
             if (type === "tasks:start") {
                 const requestMessage = message.content as IQueueMessage;
                 this.startDocumentWork(requestMessage);
-            } else if (type === "agent:add") {
-                const agentName = message.content as string;
-                this.loadAgent(agentName);
-            } else if (type === "agent:remove") {
-                const agentName = message.content as string;
-                this.unloadAgent(agentName);
             }
-            // TODO: May be we also want to revoke tasks from a worker? Or the worker should self manage?
+        });
+
+        // Listen and respond to stop events.
+        this.workerService.on("stop", (ev: agent.IDocumentTaskInfo) => {
+            this.workerService.stopTask(ev.tenantId, ev.docId, ev.task);
+        });
+
+        // Respond to uploaded/removed agents.
+        this.agentUploader.on("agentAdded", (agentModule: core.IAgent) => {
+            if (agentModule.type === "server") {
+                winston.info(`New agent package uploaded: ${agentModule.name}`);
+                this.loadAgent(agentModule.name as string);
+
+                // Converting to webpacked scripts is disabled for now. Need to figure out an way to do it only once.
+                // const moduleUrl = url.resolve(this.alfredUrl, `/agent/js/${agent.name}`);
+                // request.post(moduleUrl);
+            } else if (agentModule.type === "client") {
+                winston.info(`New agent script uploaded: ${agentModule.name}`);
+                // TODO: Figure out an way to send this message to browser clients.
+            }
+        });
+        this.agentUploader.on("agentRemoved", (agentModule: core.IAgent) => {
+            if (agentModule.type === "server") {
+                winston.info(`Agent package removed: ${agentModule.name}`);
+                this.unloadAgent(agentModule.name as string);
+            } else if (agentModule.type === "client") {
+                winston.info(`Agent script removed`);
+                // TODO: Figure out an way to send this message to browser clients.
+            }
+        });
+        this.agentUploader.on("error", (err) => {
+            // Report on agent uploader error.
+            winston.error(err);
+        });
+
+        // Report any service error.
+        this.workerService.on("error", (error) => {
+            winston.error(error);
         });
 
         return this.running.promise;
@@ -69,17 +108,6 @@ export class PaparazziRunner implements utils.IRunner {
 
     public stop(): Promise<void> {
         return this.running.promise;
-    }
-
-    private listenToEvents() {
-        // Report any service error.
-        this.workerService.on("error", (error) => {
-            winston.error(error);
-        });
-        // Listen to stop events.
-        this.workerService.on("stop", (ev: agent.IDocumentTaskInfo) => {
-            this.workerService.stopTask(ev.tenantId, ev.docId, ev.task);
-        });
     }
 
     private startDocumentWork(requestMsg: IQueueMessage) {

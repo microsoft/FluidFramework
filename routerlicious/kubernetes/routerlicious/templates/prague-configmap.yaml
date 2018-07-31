@@ -138,7 +138,6 @@ data:
             "topic": "{{ .Values.kafka.topics.deltas }}",
             "kafkaClientId": "{{ template "tmz.fullname" . }}",
             "groupId": "{{ template "tmz.fullname" . }}",
-            "agentExchange": "agentExchange",
             "queues": ["paparazziQueue", "augloopQueue"],
             "permissions": {
                 "paparazziQueue": ["snapshot", "spell", "intel", "translation"],

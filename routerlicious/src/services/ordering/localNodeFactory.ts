@@ -15,7 +15,7 @@ export class LocalNodeFactory implements IConcreteNodeFactory {
         private documentsCollectionName: string,
         private deltasCollectionName: string,
         private timeoutLength: number,
-        private taskMessageSender: core.IMessageSender,
+        private taskMessageSender: core.ITaskMessageSender,
         private tenantManager: services.TenantManager,
         private permission: any) {
     }

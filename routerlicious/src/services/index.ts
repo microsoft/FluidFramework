@@ -5,4 +5,5 @@ export * from "./storage";
 export * from "./tenant";
 export * from "./webServer";
 export * from "./messageSender";
+export * from "./messageReceiver";
 export * from "./agentUploader";

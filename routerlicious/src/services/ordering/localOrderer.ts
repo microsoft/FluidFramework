@@ -299,7 +299,7 @@ export class LocalOrderer implements core.IOrderer {
         documentId: string,
         documentsCollectionName: string,
         deltasCollectionName: string,
-        taskMessageSender: core.IMessageSender,
+        taskMessageSender: core.ITaskMessageSender,
         tenantManager: TenantManager,
         permission: any) {
 
@@ -333,7 +333,7 @@ export class LocalOrderer implements core.IOrderer {
         private documentId: string,
         collection: ICollection<core.IDocument>,
         deltasCollection: ICollection<any>,
-        private taskMessageSender: core.IMessageSender,
+        private taskMessageSender: core.ITaskMessageSender,
         private tenantManager: TenantManager,
         private permission: any) {
 
