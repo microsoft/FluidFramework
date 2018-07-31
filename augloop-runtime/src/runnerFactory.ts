@@ -1,11 +1,11 @@
-import { createMessageReceiver } from "@prague/routerlicious/dist/paparazzi/messageReceiver";
-import { IMessageReceiver } from "@prague/routerlicious/dist/paparazzi/messages";
+import { ITaskMessageReceiver } from "@prague/routerlicious/dist/core";
+import { createMessageReceiver } from "@prague/routerlicious/dist/services";
 import * as utils from "@prague/routerlicious/dist/utils";
 import { Provider } from "nconf";
 import { AugLoopRunner } from "./runner";
 
 export class AugLoopResources implements utils.IResources {
-    constructor(public workerConfig: any, public messageReceiver: IMessageReceiver) {
+    constructor(public workerConfig: any, public messageReceiver: ITaskMessageReceiver) {
     }
 
     public async dispose(): Promise<void> {
@@ -15,12 +15,11 @@ export class AugLoopResources implements utils.IResources {
 
 export class AugLoopResourcesFactory implements utils.IResourcesFactory<AugLoopResources> {
     public async create(config: Provider): Promise<AugLoopResources> {
-        const tmzConfig = config.get("tmz");
         const rabbitmqConfig = config.get("rabbitmq");
         const workerConfig = config.get("worker");
         const queueName = config.get("augloop-runtime:queue");
 
-        const messageReceiver = createMessageReceiver(rabbitmqConfig, tmzConfig, queueName);
+        const messageReceiver = createMessageReceiver(rabbitmqConfig, queueName);
 
         return new AugLoopResources(workerConfig, messageReceiver);
     }

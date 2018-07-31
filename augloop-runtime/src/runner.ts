@@ -1,7 +1,7 @@
 import { IDocumentServiceFactory, IDocumentTaskInfo } from "@prague/routerlicious/dist/agent";
 import { IDocumentService, IQueueMessage } from "@prague/routerlicious/dist/api-core";
+import * as core from "@prague/routerlicious/dist/core";
 import { Deferred } from "@prague/routerlicious/dist/core-utils";
-import { IMessage, IMessageReceiver } from "@prague/routerlicious/dist/paparazzi/messages";
 import * as socketStorage from "@prague/routerlicious/dist/socket-storage";
 import * as utils from "@prague/routerlicious/dist/utils";
 import * as winston from "winston";
@@ -23,15 +23,13 @@ export class AugLoopRunner implements utils.IRunner {
     private running = new Deferred<void>();
     private permission: Set<string>;
 
-    constructor(private workerConfig: any, private messageReceiver: IMessageReceiver) {
+    constructor(private workerConfig: any, private messageReceiver: core.ITaskMessageReceiver) {
         this.permission = new Set(workerConfig.permission as string[]);
         const alfredUrl = workerConfig.alfredUrl;
 
         const factory = new DocumentServiceFactory(alfredUrl, workerConfig.blobStorageUrl);
 
         this.workerService = new WorkerService(factory, this.workerConfig);
-
-        this.listenToEvents();
     }
 
     public async start(): Promise<void> {
@@ -39,10 +37,14 @@ export class AugLoopRunner implements utils.IRunner {
         await this.messageReceiver.initialize().catch((err) => {
             this.running.reject(err);
         });
+
+        // Should reject on message receiver error.
         this.messageReceiver.on("error", (err) => {
             this.running.reject(err);
         });
-        this.messageReceiver.on("message", (message: IMessage) => {
+
+        // Accept a task.
+        this.messageReceiver.on("message", (message: core.ITaskMessage) => {
             const type = message.type;
             if (type === "tasks:start") {
                 const requestMessage = message.content as IQueueMessage;
@@ -50,22 +52,21 @@ export class AugLoopRunner implements utils.IRunner {
             }
         });
 
+        // Listen and respond to stop events.
+        this.workerService.on("stop", (ev: IDocumentTaskInfo) => {
+            this.workerService.stopTask(ev.tenantId, ev.docId, ev.task);
+        });
+
+        // Report any error while working on the document.
+        this.workerService.on("error", (error) => {
+            winston.error(error);
+        });
+
         return this.running.promise;
     }
 
     public stop(): Promise<void> {
         return this.running.promise;
-    }
-
-    private listenToEvents() {
-        // Report any service error.
-        this.workerService.on("error", (error) => {
-            winston.error(error);
-        });
-        // Listen to stop events.
-        this.workerService.on("stop", (ev: IDocumentTaskInfo) => {
-            this.workerService.stopTask(ev.tenantId, ev.docId, ev.task);
-        });
     }
 
     private startDocumentWork(requestMsg: IQueueMessage) {
