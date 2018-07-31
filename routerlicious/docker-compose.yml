@@ -97,7 +97,7 @@ services:
         ports:
             - "2181:2181"
     kafka:
-        image: wurstmeister/kafka:latest
+        image: wurstmeister/kafka:1.1.0
         ports:
             - "9092:9092"
         environment:
