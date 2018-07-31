@@ -122,7 +122,6 @@
     },
     "tmz": {
         "alfred": "http://alfred:3000",
-        "agentExchange": "agentExchange",
         "queues": ["paparazziQueue", "augloopQueue"],
         "permissions": {
             "paparazziQueue": ["snapshot", "spell", "intel", "translation"],

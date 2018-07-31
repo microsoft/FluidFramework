@@ -44,7 +44,7 @@ export interface IAgentUploader {
 /**
  * Interface to implement the task sender.
  */
-export interface IMessageSender {
+export interface ITaskMessageSender {
 
     /**
      * Preps the underlying message queue.
@@ -55,11 +55,6 @@ export interface IMessageSender {
      * Sends a task message for a document to a queue.
      */
     sendTask(queueName: string, message: ITaskMessage): void;
-
-    /**
-     * Sends an agent loading message.
-     */
-    sendAgent(message: ITaskMessage): void;
 
     /**
      * Notifies on error.
@@ -75,7 +70,7 @@ export interface IMessageSender {
 /**
  * Interface to implement the task receiver.
  */
-export interface IMessageReceiver {
+export interface ITaskMessageReceiver {
 
     /**
      * Preps the underlying message queue.

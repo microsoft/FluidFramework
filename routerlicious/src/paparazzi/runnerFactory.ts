@@ -7,7 +7,7 @@ import { PaparazziRunner } from "./runner";
 export class PaparazziResources implements utils.IResources {
     constructor(
         public workerConfig: any,
-        public messageReceiver: core.IMessageReceiver,
+        public messageReceiver: core.ITaskMessageReceiver,
         public agentUploader: core.IAgentUploader) {
     }
 
@@ -18,14 +18,13 @@ export class PaparazziResources implements utils.IResources {
 
 export class PaparazziResourcesFactory implements utils.IResourcesFactory<PaparazziResources> {
     public async create(config: Provider): Promise<PaparazziResources> {
-        const tmzConfig = config.get("tmz");
         const workerConfig = config.get("worker");
         const queueName = config.get("paparazzi:queue");
 
         const rabbitmqConfig = config.get("rabbitmq");
         const minioConfig = config.get("minio");
 
-        const messageReceiver = services.createMessageReceiver(rabbitmqConfig, tmzConfig, queueName);
+        const messageReceiver = services.createMessageReceiver(rabbitmqConfig, queueName);
         const agentUploader = services.createUploader("minio", minioConfig);
 
         return new PaparazziResources(workerConfig, messageReceiver, agentUploader);

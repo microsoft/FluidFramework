@@ -28,7 +28,7 @@ export class PaparazziRunner implements utils.IRunner {
 
     constructor(
         private workerConfig: any,
-        private messageReceiver: core.IMessageReceiver,
+        private messageReceiver: core.ITaskMessageReceiver,
         private agentUploader: core.IAgentUploader) {
         this.permission = new Set(workerConfig.permission as string[]);
         const alfredUrl = workerConfig.alfredUrl;

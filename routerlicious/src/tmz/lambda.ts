@@ -10,7 +10,7 @@ export class TmzLambda extends SequencedLambda {
     private taskQueueMap = new Map<string, string>();
     private requestMap = new Map<string, Set<string>>();
     constructor(
-        private messageSender: core.IMessageSender,
+        private messageSender: core.ITaskMessageSender,
         private tenantManager: services.TenantManager,
         private permissions: any,
         protected context: IContext) {

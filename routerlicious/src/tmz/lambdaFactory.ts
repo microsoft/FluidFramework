@@ -1,13 +1,13 @@
 import { EventEmitter } from "events";
 import { Provider } from "nconf";
-import { IMessageSender } from "../core";
+import { ITaskMessageSender } from "../core";
 import { IContext, IPartitionLambda, IPartitionLambdaFactory } from "../kafka-service/lambdas";
 import * as services from "../services";
 import { TmzLambda } from "./lambda";
 
 export class TmzLambdaFactory extends EventEmitter implements IPartitionLambdaFactory {
     constructor(
-        private messageSender: IMessageSender,
+        private messageSender: ITaskMessageSender,
         private tenantManager: services.TenantManager,
         private permissions: any) {
         super();
