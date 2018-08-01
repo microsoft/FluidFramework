@@ -1,0 +1,49 @@
+{
+  "name": "pragstroids",
+  "version": "0.8.10",
+  "keywords": [
+    "html5",
+    "game",
+    "rendering",
+    "engine",
+    "2d",
+    "canvas",
+    "mobile"
+  ],
+  "files": [
+    "doc/",
+    "ext/",
+    "lib/",
+    "platform/",
+    "test/"
+  ],
+  "devDependencies": {
+    "browserify": "^2.3.0",
+    "browserify-middleware": "^7.0.0",
+    "expect.js": "*",
+    "express": "^4.13.4",
+    "gulp": "*",
+    "gulp-browserify": "*",
+    "gulp-bump": "*",
+    "gulp-concat": "*",
+    "gulp-header": "^1.7.1",
+    "gulp-mocha": "*",
+    "gulp-rename": "^1.2.0",
+    "gulp-uglify": "*",
+    "gulp-util": "^3.0.5",
+    "gulp-wrap": "*",
+    "minimist": "*",
+    "sandboxed-module": "^2.0.0",
+    "serve-index": "^1.7.3",
+    "sinon": "*",
+    "uglifyify": "^3.0.1",
+    "vinyl-buffer": "^1.0.0",
+    "vinyl-source-stream": "^1.0.0",
+    "vinyl-transform": "^1.0.0"
+  },
+  "dependencies": {
+    "@prague/routerlicious": "^0.1.2694",
+    "browser-resolve": "^1.11.3",
+    "stage-js": "^0.8.10"
+  }
+}

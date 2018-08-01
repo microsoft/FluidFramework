@@ -1,0 +1,40 @@
+<!DOCTYPE html> 
+<html>
+
+<head>
+  <title>Prage Asteroids</title>
+  <meta name="viewport" content="user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, width=device-width, height=device-height"
+  />
+
+  <link href="../example.css" rel="stylesheet" />
+
+  <style>
+    body {
+      font-family: 'Courier New', Courier, monospace;
+      background: #000;
+    }
+  </style>
+
+</head>
+
+<body class="dark">
+  <div class="hint" id="hintId">
+    <span>Use arrow keys &amp; space  ('a' for boost)</span>
+  </div>
+
+  <div class="name" onsubmit="return updateFriendlyName();">
+    <form id="friendlyNameForm">
+    <label>Name:</label>
+    <input autocomplete="off" name="friendlyName" id="friendlyName" type="text" placeholder="Type and Press Enter"  />
+  </form>
+  </div>
+
+  <script src="/example.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/planck-js@0.1/dist/planck.js"></script>
+  <script src="stage-planck.js"></script>
+  <script src="/lib/pragueGlobal.js"></script>
+  <script src="app.js"></script>
+
+</body>
+
+</html>

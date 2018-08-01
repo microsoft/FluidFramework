@@ -1,0 +1,69 @@
+body {
+  font-family: sans-serif;
+	overflow: hidden;
+}
+
+.about,.hint,.name {
+	position: absolute;
+	padding: 0.7em 1em;
+	background: rgba(240, 240, 240, 0.7);
+}
+
+.dark .about,.dark .hint, .dark .name {
+	background: rgba(32, 32, 32, 0.7);
+}
+
+.about {
+	right: 0.5em;
+	bottom: 0.5em;
+}
+
+.hint {
+	left: 0.5em;
+	bottom: 0.5em;
+}
+
+.loading {
+	margin: 10% 10%;
+	font-size: xx-large;
+	position: absolute;
+}
+
+a {
+	text-decoration: none;
+	color: blue;
+}
+
+a:hover {
+	text-decoration: underline;
+}
+
+.dark {
+	color: #ccc;
+	background: #222;
+}
+
+.dark a {
+	color: #fff;
+}
+
+.name {
+	right: 0.5em;
+	bottom: 0.5em;
+	color: #ccc;
+	font-family: 'Courier New', Courier, monospace;
+	font-size: 16px;
+}
+
+#friendlyName{
+	background-color: transparent;
+    border-color: transparent;
+    color: #ccc;
+	font-family: 'Courier New', Courier, monospace;
+	font-size: 16px;
+	outline: none;
+}
+
+#friendlyNameForm{
+	margin: 0;
+}

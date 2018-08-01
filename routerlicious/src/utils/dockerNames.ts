@@ -638,6 +638,16 @@ const prague = [
     "lehenbauer",
     "zhang",
     "wilber",
+    "murphy",
+    "jokiel",
+    "modi",
+    "zhang",
+    "vairamain",
+    "juraszek",
+    "zhu",
+    "velhankar",
+    "ye",
+    "sen",
 ];
 
 // Docker names + Prague names

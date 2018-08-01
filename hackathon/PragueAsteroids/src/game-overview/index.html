@@ -1,0 +1,35 @@
+<!DOCTYPE html> 
+<html>
+
+<head>
+    <title>Prague Game Overview</title>
+    <meta name="viewport" content="user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, width=device-width, height=device-height"
+    />
+
+    <style>
+        body {
+            font-family: 'Courier New', Courier, monospace;
+            padding: 30px;
+        }
+    </style>
+
+</head>
+
+<body>
+    <h1>Prague Asteroids Game!</h1>
+    <h2>New Game</h2>
+    <form id="newGameForm" target="" onsubmit="return onNewGameSubmit();">
+        <label class='name'>Id: </label>
+        <input name="docId" id="docId" type="text" />
+        <input type="submit" value="play" id="connectSubmit" />
+    </form>
+    <h2>Existing Games</h2>
+    <div id='gameList'>
+        Loading...
+    </div>
+
+    <script src="/lib/pragueGlobal.js"></script>
+    <script src="app.js"></script>
+</body>
+
+</html>
