@@ -1,8 +1,7 @@
 // tslint:disable:ban-types
 import { EventEmitter } from "events";
-import { IDataBlob } from "../blob";
 import { IEnvelope, IObjectMessage, ISequencedObjectMessage, ITenantUser } from "./protocol";
-import { ICollaborativeObject } from "./types";
+import { ICollaborativeObject, IDataBlob } from "./types";
 
 export interface IDeltaManager {
     // The queue of inbound delta messages

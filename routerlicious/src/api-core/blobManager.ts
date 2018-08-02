@@ -1,21 +1,20 @@
 import { ICreateBlobResponse } from "gitresources";
 import * as api from "../api-core";
-import { IDataBlob } from "../blob/blobTypes";
 
 export interface IBlobManager {
 
     // Rehydrate a blob manager from a snapshot
-    loadBlobMetadata(hashes: IDataBlob[]);
+    loadBlobMetadata(hashes: api.IDataBlob[]);
 
     // Get the metadata for all blobs on a document
     // Strip content if it exists
-    getBlobMetadata(): IDataBlob[];
+    getBlobMetadata(): api.IDataBlob[];
 
     // Retrieve the blob data
-    getBlob(sha: string): Promise<IDataBlob>;
+    getBlob(sha: string): Promise<api.IDataBlob>;
 
     // Add one blob's metadata to the local storage of blob metadata
-    addBlob(blob: IDataBlob): Promise<void>;
+    addBlob(blob: api.IDataBlob): Promise<void>;
 
     // Upload a blob to storage
     createBlob(file: Buffer): Promise<ICreateBlobResponse>;
@@ -23,19 +22,19 @@ export interface IBlobManager {
 
 export class BlobManager implements IBlobManager {
 
-    private blobs: Map<string, IDataBlob>;
+    private blobs: Map<string, api.IDataBlob>;
 
     constructor(private storage: api.IDocumentStorageService) {
-        this.blobs = new Map<string, IDataBlob>();
+        this.blobs = new Map<string, api.IDataBlob>();
     }
 
-    public async loadBlobMetadata(hashes: IDataBlob[]) {
+    public async loadBlobMetadata(hashes: api.IDataBlob[]) {
         for (const hash of hashes) {
             this.blobs.set(hash.sha, hash);
         }
     }
 
-    public getBlobMetadata(): IDataBlob[] {
+    public getBlobMetadata(): api.IDataBlob[] {
         const blobs = [... this.blobs.values()];
         const arr =  blobs.map((value) => {
             value.content = null;
@@ -44,8 +43,8 @@ export class BlobManager implements IBlobManager {
         return arr;
     }
 
-    public async getBlob(sha: string): Promise<IDataBlob> {
-        return new Promise<IDataBlob>((resolve, reject) => {
+    public async getBlob(sha: string): Promise<api.IDataBlob> {
+        return new Promise<api.IDataBlob>((resolve, reject) => {
             if (this.blobs.has(sha) && this.blobs.get(sha).content !== null) {
                 const blob = this.blobs.get(sha);
                 if (blob.content.byteLength > 0) {
@@ -71,7 +70,7 @@ export class BlobManager implements IBlobManager {
     }
 
     // TODO: sabroner add blob<t> where t is the inclusion types we add...
-    public async addBlob(blob: IDataBlob): Promise<void> {
+    public async addBlob(blob: api.IDataBlob): Promise<void> {
         if (blob.content !== null || blob.content !== undefined) {
             blob.content = null;
         }

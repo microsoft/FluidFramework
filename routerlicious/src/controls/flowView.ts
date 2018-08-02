@@ -1,7 +1,7 @@
 // tslint:disable:no-bitwise whitespace align switch-default no-string-literal ban-types no-angle-bracket-type-assertion
 import * as assert from "assert";
 import performanceNow = require("performance-now");
-import { blobUploadHandler, IDataBlob, urlToInclusion } from "../blob";
+import { blobUploadHandler, urlToInclusion } from "../blob";
 import {
     api, CharacterCodes, core, MergeTree,
     Paragraph, Table, types,
@@ -1961,7 +1961,7 @@ export class Viewport {
                     excluView.conformElement(showImage);
                     showImage.style.left = "0px";
                     showImage.style.top = "0px";
-                    showImage.src = irdoc.url; // getBlobUrl(irdoc.sha, flowView.collabDocument.tenantId);
+                    showImage.src = irdoc.url;
                 } else if ((irdoc.type.name === "childFlow") && (!flowView.parentFlow)) {
                     const flowRefMarker = marker as IFlowRefMarker;
                     let startChar = 0;
@@ -3104,7 +3104,7 @@ export interface IReferenceDoc {
     layout?: IRefLayoutSpec;
 }
 
-export function makeImageRef(blob: IDataBlob, tenant: string, cb: (irdoc: IReferenceDoc) => void) {
+export function makeImageRef(blob: core.IDataBlob, tenant: string, cb: (irdoc: IReferenceDoc) => void) {
     const image = document.createElement("img");
     const rdocType = <IReferenceDocType>{
         name: "image",
@@ -3114,7 +3114,7 @@ export function makeImageRef(blob: IDataBlob, tenant: string, cb: (irdoc: IRefer
         type: rdocType,
         url: blob.url,
     };
-    image.src =  blob.url; // getBlobUrl(sha, tenant);
+    image.src =  blob.url;
 
     image.onload = () => {
         irdoc.layout = { ar: image.naturalHeight / image.naturalWidth, dx: 0, dy: 0 };
@@ -3220,7 +3220,7 @@ export class FlowView extends ui.Component {
         this.setViewOption(this.options);
         blobUploadHandler(element,
             this.sharedString.getDocument(),
-            (incl: IDataBlob) => this.insertPhotoInternal(incl),
+            (incl: core.IDataBlob) => this.insertPhotoInternal(incl),
         );
     }
 
@@ -4492,7 +4492,7 @@ export class FlowView extends ui.Component {
             });
     }
 
-    private insertPhotoInternal(blob: IDataBlob) {
+    private insertPhotoInternal(blob: core.IDataBlob) {
         makeImageRef(blob, this.collabDocument.tenantId, (irdoc) => {
             const refProps = {
                 [Paragraph.referenceProperty]: irdoc,

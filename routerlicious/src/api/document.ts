@@ -6,8 +6,6 @@ import * as jwt from "jsonwebtoken";
 import performanceNow = require("performance-now");
 import * as uuid from "uuid/v4";
 import * as api from "../api-core";
-import { BlobManager } from "../api-core";
-import { IDataBlob } from "../blob";
 import * as cell from "../cell";
 import { Deferred, gitHashFile } from "../core-utils";
 import { ICell, IMap, IStream } from "../data-types";
@@ -20,7 +18,6 @@ import { analyzeTasks, getLeader } from "./taskAnalyzer";
 
 // TODO: All these should be enforced by server as a part of document creation.
 const rootMapId = "root";
-const blobMapId = "blobs";
 const documentTasks = ["snapshot", "spell", "intel", "translation", "augmentation"];
 
 // Registered services to use when loading a document
@@ -87,7 +84,7 @@ interface IHeaderDetails {
     // Attributes for the document
     attributes: api.IDocumentAttributes;
 
-    blobs: IDataBlob[];
+    blobs: api.IDataBlob[];
 
     // Distributed objects contained within the document
     distributedObjects: api.IDistributedObject[];
@@ -374,18 +371,14 @@ export class Document extends EventEmitter implements api.IDocument {
         return this.distributedObjects.get(rootMapId).object as IMap;
     }
 
-    public getBlobMap(): IMap {
-        return this.distributedObjects.get(blobMapId).object as IMap;
-    }
-
-    public createBlobMetadata(file: IDataBlob, sha: string): IDataBlob {
+    public createBlobMetadata(file: api.IDataBlob, sha: string): api.IDataBlob {
         file.sha = sha;
         file.url = this.storageService.getRawUrl(sha);
         this.blobManager.addBlob(file).then(() => this.submitMessage(api.BlobPrepared, file));
         return file;
     }
 
-    public async uploadBlob(file: IDataBlob): Promise<IDataBlob> {
+    public async uploadBlob(file: api.IDataBlob): Promise<api.IDataBlob> {
         const sha = gitHashFile(file.content);
         this.blobManager.createBlob(file.content).then(() => {
             this.submitMessage(api.BlobUploaded, sha);
@@ -393,13 +386,13 @@ export class Document extends EventEmitter implements api.IDocument {
         return this.createBlobMetadata(file, sha);
     }
 
-    public getBlobMetadata(): Promise<IDataBlob[]> {
-        return new Promise<IDataBlob[]>((resolve) => {
+    public getBlobMetadata(): Promise<api.IDataBlob[]> {
+        return new Promise<api.IDataBlob[]>((resolve) => {
             resolve(this.blobManager.getBlobMetadata());
         });
     }
 
-    public async getBlob(sha: string): Promise<IDataBlob> {
+    public async getBlob(sha: string): Promise<api.IDataBlob> {
         return this.blobManager.getBlob(sha);
     }
 
@@ -521,7 +514,7 @@ export class Document extends EventEmitter implements api.IDocument {
                 this.storageService = storageService;
                 this.lastMinSequenceNumber = header.attributes.minimumSequenceNumber;
                 this.clients = new Map(header.attributes.clients);
-                this.blobManager = new BlobManager(this.storageService);
+                this.blobManager = new api.BlobManager(this.storageService);
 
                 if (header.blobs.length > 0) {
                     this.blobManager.loadBlobMetadata(header.blobs);
@@ -692,7 +685,7 @@ export class Document extends EventEmitter implements api.IDocument {
         const tree = await storage.getSnapshotTree(version);
 
         const messagesP = readAndParse<api.ISequencedDocumentMessage[]>(storage, tree.blobs[".messages"]);
-        const blobsP = readAndParse<IDataBlob[]>(storage, tree.blobs[".blobs"]);
+        const blobsP = readAndParse<api.IDataBlob[]>(storage, tree.blobs[".blobs"]);
         const attributesP = readAndParse<api.IDocumentAttributes>(storage, tree.blobs[".attributes"]);
 
         const distributedObjectsP = Array<Promise<api.IDistributedObject>>();

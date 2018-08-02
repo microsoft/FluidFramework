@@ -1,5 +1,6 @@
 // The main app code
-import { blobUploadHandler, fileToInclusion, IImageBlob, isIImageBlob } from "../blob";
+import { getFileBlobType, IImageBlob } from "../api-core";
+import { blobUploadHandler } from "../blob";
 import { api, core, types} from "../client-api";
 import * as ui from "../ui";
 import { Button } from "./button";
@@ -42,7 +43,7 @@ export class FlexView extends ui.Component {
     private colorStack: StackPanel;
     private components: IFlexViewComponent[] = [];
 
-    constructor(element: HTMLDivElement, private doc: api.Document, root: types.IMapView) {
+    constructor(element: HTMLDivElement, doc: api.Document, root: types.IMapView) {
         super(element);
 
         const dockElement = document.createElement("div");
@@ -56,8 +57,8 @@ export class FlexView extends ui.Component {
 
         doc.on(core.BlobUploaded, async (message) => {
             const blob = await doc.getBlob(message);
-            if (isIImageBlob(blob)) {
-                this.renderImage(blob);
+            if (getFileBlobType(blob.type) === "image") {
+                this.renderImage(blob as IImageBlob);
             }
         });
 
@@ -66,7 +67,7 @@ export class FlexView extends ui.Component {
             // Render metadata
             .then((blobs) => {
                 for (const blob of blobs) {
-                    if (isIImageBlob(blob)) {
+                    if (getFileBlobType(blob.type) === "image") {
                         this.renderImage(blob as IImageBlob);
                     }
                 }
@@ -77,7 +78,7 @@ export class FlexView extends ui.Component {
                 for (const blob of blobs) {
                     doc.getBlob(blob.sha)
                         .then((blobWithContent) => {
-                            if (isIImageBlob(blob)) {
+                            if (getFileBlobType(blob.type) === "image") {
                                 this.renderImage(blobWithContent as IImageBlob);
                             }
                         });
@@ -103,19 +104,8 @@ export class FlexView extends ui.Component {
             buttonSize,
             ["btn", "btn-palette", "prague-icon-replay"]);
 
-        const buttonDiv = document.createElement("div");
-        const input = document.createElement("input");
-        input.setAttribute("type", "file");
-        input.style.visibility = "hidden";
-
-        const uploadBlobButton = new Button(
-            buttonDiv,
-            buttonSize,
-            ["btn", "btn-palette", "prague-icon-tube"]);
-
         stackPanel.addChild(this.colorButton);
         stackPanel.addChild(replayButton);
-        stackPanel.addChild(uploadBlobButton);
         this.dock.addBottom(stackPanel);
 
         replayButton.on("click", (event) => {
@@ -126,23 +116,6 @@ export class FlexView extends ui.Component {
         this.colorButton.on("click", (event) => {
             debug("Color button click");
             this.popup.toggle();
-        });
-
-        // Upload Blob
-        uploadBlobButton.on("click", (event) => {
-            input.click();
-            input.onchange = async () => {
-                const incl = await fileToInclusion(input.files.item(0));
-                // TODO sabroner: reinstate intelligent services in insights map
-                // tslint:disable-next-line:max-line-length
-                // const analytics = new ImageAnalytics.ImageAnalyticsIntelligentService("3554516ca53c4fffb4bf619cf5d8b043");
-                // const analysis = JSON.parse(await analytics.run(incl as IImageBlob)) as any;
-                // const caption = analysis.description.captions[0].text;
-
-                // Because the blob going in has the content, the blob coming out should as well
-                // Other users will have a placeholder render followed by the full thing.
-                this.doc.uploadBlob(incl);
-            };
         });
 
         // These should turn into components

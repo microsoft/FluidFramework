@@ -2,7 +2,6 @@
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import * as core from "../../api-core";
-import { IDataBlob } from "../../blob";
 import { Deferred } from "../../core-utils";
 
 export class TestDeltaQueue extends EventEmitter implements core.IDeltaQueue {
@@ -68,11 +67,11 @@ export class TestDocument implements core.IDocument {
         return this.snapshotCore(message);
     }
 
-    public uploadBlob(blob: IDataBlob): Promise<IDataBlob> {
+    public uploadBlob(blob: core.IDataBlob): Promise<core.IDataBlob> {
         return null;
     }
 
-    public getBlob(sha: string): Promise<IDataBlob> {
+    public getBlob(sha: string): Promise<core.IDataBlob> {
         return null;
     }
 

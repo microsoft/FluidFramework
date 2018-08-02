@@ -1,10 +1,9 @@
-import { IDocument } from "../api-core";
+import * as api from "../api-core";
 import { gitHashFile } from "../core-utils";
-import { getFileBlobType, IDataBlob, IImageBlob } from "./blobTypes";
 
 export async function blobUploadHandler(dragZone: HTMLDivElement,
-                                        document: IDocument,
-                                        blobDisplayCB: (file: IDataBlob) => void) {
+                                        document: api.IDocument,
+                                        blobDisplayCB: (file: api.IDataBlob) => void) {
 
     dragZone.ondrop = (event) => {
         event.dataTransfer.dropEffect = "copy";
@@ -25,38 +24,35 @@ export async function blobUploadHandler(dragZone: HTMLDivElement,
     };
 }
 
-function blobToFile(blob: Blob, fileName: string): File {
-    const b: any = blob;
-    b.lastModifiedDate = new Date();
-    b.name = fileName;
-
-    return b as File;
-}
-
-export async function urlToInclusion(path: string): Promise<IDataBlob> {
+export async function urlToInclusion(path: string): Promise<api.IDataBlob> {
     // TODO sabroner: wow this is brittle.
     const pathComponents = path.split("/");
     const fileName = pathComponents[pathComponents.length - 1];
 
-    return new Promise<IDataBlob>((resolve, reject) => {
+    return new Promise<api.IDataBlob>((resolve, reject) => {
         const xhr = new XMLHttpRequest();
         xhr.open("GET", path);
         xhr.responseType = "blob"; // force the HTTP response, response-type header to be blob
         xhr.onload = () => {
-            resolve(fileToInclusion(blobToFile(xhr.response, fileName)));
+
+            const b: any = xhr.response;
+            b.lastModifiedDate = new Date();
+            b.name = fileName;
+            const f: File = b;
+            resolve(fileToInclusion(f));
         };
         xhr.send();
     });
 }
 
-export async function fileToInclusion(file: File): Promise<IDataBlob> {
+async function fileToInclusion(file: File): Promise<api.IDataBlob> {
     const arrayBufferReader = new FileReader();
 
     const baseInclusion = {
         fileName: file.name,
         type: file.type,
         url: "", // TODO sabroner: can I create the URL locally?
-    } as IDataBlob;
+    } as api.IDataBlob;
 
     const arrayBufferP = new Promise<Buffer>((resolve, reject) => {
         arrayBufferReader.onerror = (error) => {
@@ -71,32 +67,32 @@ export async function fileToInclusion(file: File): Promise<IDataBlob> {
         arrayBufferReader.readAsArrayBuffer(file);
     });
 
-    let blobP: Promise<IDataBlob>;
+    let blobP: Promise<api.IDataBlob>;
 
-    switch (getFileBlobType(baseInclusion.type)) {
+    switch (api.getFileBlobType(baseInclusion.type)) {
         case "image": {
-            blobP = imageHandler(file, baseInclusion as IImageBlob);
+            blobP = imageHandler(file, baseInclusion as api.IImageBlob);
 
             return Promise.all([arrayBufferP, blobP])
                 .then(([arrayBuffer, blob]) => {
-                    const incls: IImageBlob = {
+                    const incl: api.IImageBlob = {
                         content: arrayBuffer,
                         fileName: file.name,
-                        height: (blob as IImageBlob).height,
+                        height: (blob as api.IImageBlob).height,
                         sha: gitHashFile(arrayBuffer),
                         size: arrayBuffer.byteLength,
                         type: file.type,
                         url: baseInclusion.url,
-                        width: (blob as IImageBlob).width,
+                        width: (blob as api.IImageBlob).width,
                     };
-                    return incls as IImageBlob;
+                    return incl as api.IImageBlob;
                 });
         }
         case "text": {
-            blobP = textHandler(file, baseInclusion as IDataBlob);
+            blobP = textHandler(file, baseInclusion as api.IDataBlob);
             return Promise.all([arrayBufferP, blobP])
-                .then(([arrayBuffer, text]) => {
-                    const incls: IDataBlob = {
+                .then(([arrayBuffer, blob]) => {
+                    const incl: api.IDataBlob = {
                         content: arrayBuffer,
                         fileName: file.name,
                         sha: gitHashFile(arrayBuffer),
@@ -104,20 +100,31 @@ export async function fileToInclusion(file: File): Promise<IDataBlob> {
                         type: file.type,
                         url: baseInclusion.url,
                     };
-                    return incls as IDataBlob;
+                    return incl as api.IDataBlob;
                 });
         }
         default: {
             console.log("default");
-            break;
+            return Promise.all([arrayBufferP])
+                .then(([arrayBuffer]) => {
+                    const incl: api.IDataBlob = {
+                        content: arrayBuffer,
+                        fileName: file.name,
+                        sha: gitHashFile(arrayBuffer),
+                        size: arrayBuffer.byteLength,
+                        type: file.type,
+                        url: baseInclusion.url,
+                    };
+                    return incl as api.IDataBlob;
+                });
         }
     }
 }
 
-async function imageHandler(imageFile: File, incl: IImageBlob): Promise<IImageBlob> {
+async function imageHandler(imageFile: File, incl: api.IImageBlob): Promise<api.IImageBlob> {
     const urlObjReader = new FileReader();
 
-    const urlObjP = new Promise<IImageBlob>((resolve, reject) => {
+    const urlObjP = new Promise<api.IImageBlob>((resolve, reject) => {
         urlObjReader.onerror = (error) => {
             urlObjReader.abort();
             reject("error: " + JSON.stringify(error));
@@ -139,7 +146,7 @@ async function imageHandler(imageFile: File, incl: IImageBlob): Promise<IImageBl
     return urlObjP;
 }
 
-async function textHandler(textFile: File, incl: IDataBlob): Promise<IDataBlob> {
+async function textHandler(textFile: File, incl: api.IDataBlob): Promise<api.IDataBlob> {
     /// STUB
     return null;
 }
