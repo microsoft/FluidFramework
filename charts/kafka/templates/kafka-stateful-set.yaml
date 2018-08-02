@@ -21,7 +21,7 @@ spec:
       terminationGracePeriodSeconds: 10
       containers:
       - name: kafka
-        image: wurstmeister/kafka:latest
+        image: wurstmeister/kafka:2.11-1.1.1
         ports:
         - name: kafka
           containerPort: 9092
