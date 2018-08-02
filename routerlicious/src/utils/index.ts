@@ -9,6 +9,7 @@ export * from "./logger";
 export * from "./mongo";
 export * from "./port";
 export * from "./runner";
+export * from "./safeParser";
 
 import * as scribe from "./scribe";
 export { scribe };

@@ -1,4 +1,5 @@
 import { Provider } from "nconf";
+import * as winston from "winston";
 import * as core from "../core";
 import { IContext, IPartitionLambda, IPartitionLambdaFactory } from "../kafka-service/lambdas";
 import * as utils from "../utils";
@@ -30,7 +31,13 @@ export class DocumentLambda implements IPartitionLambda {
     }
 
     private handlerCore(kafkaMessage: utils.IMessage): void {
-        const message = JSON.parse(kafkaMessage.value) as core.IMessage;
+
+        const parsedKafkaMessage = utils.safelyParseJSON(kafkaMessage.value);
+        if (parsedKafkaMessage === undefined) {
+            winston.error(`Invalid JSON input: ${kafkaMessage.value}`);
+            return;
+        }
+        const message = parsedKafkaMessage as core.IMessage;
         if (!("documentId" in message) || !("tenantId" in message)) {
             return;
         }

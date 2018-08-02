@@ -80,7 +80,13 @@ class ServiceGraphLambda implements IPartitionLambda {
     }
 
     private handleCore(message: utils.IMessage) {
-        const baseMessage = JSON.parse(message.value) as core.IMessage;
+
+        const parsedMessage = utils.safelyParseJSON(message.value);
+        if (parsedMessage === undefined) {
+            winston.error(`Invalid JSON input: ${message.value}`);
+            return;
+        }
+        const baseMessage = parsedMessage as core.IMessage;
         if (baseMessage.type !== core.SystemType) {
             return;
         }

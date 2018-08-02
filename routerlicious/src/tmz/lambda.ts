@@ -24,7 +24,14 @@ export class TmzLambda extends SequencedLambda {
     }
 
     protected async handlerCore(message: utils.IMessage): Promise<void> {
-        const baseMessage = JSON.parse(message.value.toString()) as core.IMessage;
+        const messageContent = message.value.toString();
+        const parsedMessage = utils.safelyParseJSON(messageContent);
+        if (parsedMessage === undefined) {
+            winston.error(`Invalid JSON input: ${messageContent}`);
+            return;
+        }
+
+        const baseMessage = parsedMessage as core.IMessage;
         if (baseMessage.type === core.SequencedOperationType) {
             const sequencedMessage = baseMessage as core.ISequencedOperationMessage;
             // Only process "Help" messages.

@@ -139,8 +139,15 @@ export class DeliLambda implements IPartitionLambda {
 
         this.logOffset = rawMessage.offset;
 
+        const rawMessageContent = rawMessage.value.toString();
+        const parsedRawMessage = utils.safelyParseJSON(rawMessageContent);
+        if (parsedRawMessage === undefined) {
+            winston.error(`Invalid JSON input: ${rawMessageContent}`);
+            return;
+        }
+
         // Update the client's reference sequence number based on the message type
-        const objectMessage = JSON.parse(rawMessage.value.toString()) as core.IObjectMessage;
+        const objectMessage = parsedRawMessage as core.IObjectMessage;
 
         // Exit out early for unknown messages
         if (objectMessage.type !== core.RawOperationType) {
