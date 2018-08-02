@@ -1,0 +1,10 @@
+{
+  "dependencies": {
+    "@ms/excel-online-calc": "^8.8.1",
+    "esm": "^3.0.72"
+  },
+  "scripts": {
+    "preinstall": "npm install -g vsts-npm-auth --registry https://registry.npmjs.com --always-auth false && vsts-npm-auth -config .npmrc",
+    "test": "node index.js"
+  }
+}
