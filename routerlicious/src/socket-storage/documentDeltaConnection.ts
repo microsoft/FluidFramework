@@ -19,6 +19,10 @@ export class DocumentDeltaConnection implements api.IDocumentDeltaConnection {
         const socket = io(
             url,
             {
+                query: {
+                    documentId: id,
+                    tenantId,
+                },
                 reconnection: false,
                 transports: ["websocket"],
             });
