@@ -1,0 +1,27 @@
+{{<layout}}
+    {{$styles}}
+        <link href="/public/stylesheets/style.css" rel="stylesheet" />
+    {{/styles}}
+    {{$content}}
+        <div class="container">
+            <h1>Nota</h1>
+
+            <p>
+                <a href="/notes">My Notes</a>
+            </p>
+
+            <div>
+                Downloads
+            </div>
+            <ul class="list-unstyled">
+                <li><a>PC</a></li>
+                <li><a>Mac</a></li>
+            </ul>
+        </div>
+    {{/content}}
+    {{$scripts}}
+        <script>
+            controllers.loadNote("{{ token }}", "{{ noteId }}", "{{ notesToken }}");
+        </script>
+    {{/scripts}}
+{{/layout}}

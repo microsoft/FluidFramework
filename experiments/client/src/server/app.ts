@@ -92,6 +92,18 @@ export function create(config: Provider) {
     app.use("/public/stylesheets", express.static(path.join(__dirname, "../../stylesheets")));
 
     app.get("/", ensureLoggedIn(), (request, response) => {
+        response.render(
+            "home",
+            {
+                partials: {
+                    layout: "layout",
+                },
+                title: "Nota",
+            },
+        );
+    });
+
+    app.get("/notes", ensureLoggedIn(), (request, response) => {
         const user = request.user.sub;
         const token = getNotesToken(user, tenantId, tenantSecret);
 
