@@ -1,0 +1,13 @@
+{{<layout}}
+    {{$styles}}
+        <link href="/public/stylesheets/style.css" rel="stylesheet" />
+    {{/styles}}
+    {{$content}}
+        <div id="text"></div>
+    {{/content}}
+    {{$scripts}}
+        <script>
+            controllers.loadNote("{{ token }}", "{{ noteId }}", "{{ notesToken }}");
+        </script>
+    {{/scripts}}
+{{/layout}}

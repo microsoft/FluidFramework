@@ -82,8 +82,8 @@ export class NoteList extends EventEmitter {
         return this.notes;
     }
 
-    public addNote() {
-        const key = NoteList.CreateId(moniker.choose());
+    public addNote(id = moniker.choose()) {
+        const key = NoteList.CreateId(id);
         const note = this.addNoteCore(key, "", true);
         this.emit("notesChanged");
 

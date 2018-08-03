@@ -36,7 +36,7 @@ function createWindow(id: string, noteId: string, windowList: WindowList, tokenM
 
     // and load the index.html of the app.
     win.loadURL(url.format({
-        pathname: path.join(__dirname, "../views/index.html"),
+        pathname: path.join(__dirname, "../views/note.html"),
         protocol: "file:",
         slashes: true,
     }));

@@ -1,6 +1,6 @@
 import { api as prague, ui as pragueUi } from "@prague/routerlicious";
-import * as electron from "electron";
 import * as jwt from "jsonwebtoken";
+import { NoteList } from "../noteList";
 
 // For local development
 const routerlicious = "https://alfred.wu2.prague.office-int.com";
@@ -10,7 +10,13 @@ const tenantId = "suspicious-northcutt";
 // Register endpoint connection
 prague.socketStorage.registerAsDefault(routerlicious, historian, tenantId);
 
-async function run(token: string): Promise<void> {
+export async function loadNote(token: string, noteId: string, notesToken: string): Promise<void> {
+    // if notes token is specified add to the list
+    if (noteId) {
+        const notes = await NoteList.Load(notesToken);
+        notes.addNote(noteId);
+    }
+
     const host = new pragueUi.ui.BrowserContainerHost();
 
     // Load in the latest and connect to the document
@@ -76,7 +82,3 @@ async function run(token: string): Promise<void> {
         theFlow.loadFinished(clockStart);
     });
 }
-
-electron.ipcRenderer.on("load-note", (event, token) => {
-    run(token);
-});

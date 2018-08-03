@@ -5,6 +5,7 @@ import { Express } from "express";
 import OAuthServer = require("express-oauth-server");
 import * as expressSession from "express-session";
 import * as jwt from "jsonwebtoken";
+import * as moniker from "moniker";
 import * as morgan from "morgan";
 import { Provider } from "nconf";
 import * as passport from "passport";
@@ -24,6 +25,16 @@ function generateToken(documentId: string, tenantId: string, secret: string): st
             },
         },
         secret);
+    return token;
+}
+
+function getNotesToken(user: string, tenantId: string, secret: string) {
+    const token = generateToken(`${user}-notes`, tenantId, secret);
+    return token;
+}
+
+function getNoteToken(user: string, noteId: string, tenantId: string, secret: string) {
+    const token = generateToken(`${user}-notes-${noteId}`, tenantId, secret);
     return token;
 }
 
@@ -78,12 +89,56 @@ export function create(config: Provider) {
     app.use(passport.initialize());
     app.use(passport.session());
     app.use("/public", express.static(path.join(__dirname, "../../public")));
+    app.use("/public/stylesheets", express.static(path.join(__dirname, "../../stylesheets")));
 
-    // app.use("/", appRoutes.auth);
     app.get("/", ensureLoggedIn(), (request, response) => {
+        const user = request.user.sub;
+        const token = getNotesToken(user, tenantId, tenantSecret);
+
         response.render(
             "webnotes",
             {
+                partials: {
+                    layout: "layout",
+                },
+                title: "Nota",
+                token,
+            },
+        );
+    });
+
+    app.get("/notes/:id", ensureLoggedIn(), (request, response) => {
+        const user = request.user.sub;
+        const token = getNoteToken(user, request.params.id, tenantId, tenantSecret);
+
+        response.render(
+            "webnote",
+            {
+                partials: {
+                    layout: "layout",
+                },
+                title: request.params.id,
+                token,
+            },
+        );
+    });
+
+    app.post("/notes", ensureLoggedIn(), (request, response) => {
+        const user = request.user.sub;
+        const noteId = moniker.choose();
+        const notesToken = getNotesToken(user, tenantId, tenantSecret);
+        const noteToken = getNoteToken(user, noteId, tenantId, tenantSecret);
+
+        response.render(
+            "webnote",
+            {
+                noteId,
+                notesToken,
+                partials: {
+                    layout: "layout",
+                },
+                title: request.params.id,
+                token: noteToken,
             },
         );
     });
@@ -133,15 +188,13 @@ export function create(config: Provider) {
 
     app.post("/api/me/tokens/notes", oauth.authenticate(), (request, response) => {
         const user = response.locals.oauth.token.user.id;
-        console.log(`User is ${user}`);
-        const token = generateToken(`${user}-notes`, tenantId, tenantSecret);
+        const token = getNotesToken(user, tenantId, tenantSecret);
         response.status(200).json(token);
     });
 
     app.post("/api/me/tokens/notes/:id", oauth.authenticate(), (request, response) => {
         const user = response.locals.oauth.token.user.id;
-        console.log(`User is ${user}`);
-        const token = generateToken(`${user}-notes-${request.params.id}`, tenantId, tenantSecret);
+        const token = getNoteToken(user, request.params.id, tenantId, tenantSecret);
         response.status(200).json(token);
     });
 

@@ -5,22 +5,17 @@
   <meta charset="UTF-8">
   <link href="https://ajax.aspnetcdn.com/ajax/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet" />
   <link href="https://ajax.aspnetcdn.com/ajax/bootstrap/3.3.7/css/bootstrap-theme.min.css" rel="stylesheet" />
+  <link href="../stylesheets/style.css" rel="stylesheet" />
 </head>
 
 <body>
-  <h1>Notes</h1>
-  <dl id="note-list">
-  </dl>
+  <div id="text"></div>
   <script>
     const electron = require("electron");
     const controllers = require("../dist/controllers")
 
-    function openNote(id) {
-      electron.ipcRenderer.send("open-note", id);
-    }
-
-    electron.ipcRenderer.on("load-notes-list", (event, token) => {
-      controllers.loadNotes(token, openNote);
+    electron.ipcRenderer.on("load-note", (event, token) => {
+      controllers.loadNote(token);
     });
   </script>
 </body>
