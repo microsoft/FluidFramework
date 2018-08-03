@@ -1,11 +1,11 @@
+import * as appauth from "@openid/appauth";
 import * as prague from "@prague/routerlicious";
 import { app, BrowserWindow, ipcMain, Menu, shell } from "electron";
 import defaultMenu = require("electron-default-menu");
-import * as os from "os";
 import * as path from "path";
 import * as url from "url";
 import { NoteList } from "./noteList";
-import { TokenGenerator } from "./tokenGenerator";
+import { TokenManager } from "./tokenManager";
 import { WindowList } from "./windowList";
 
 // register default prague endpoint
@@ -14,19 +14,11 @@ const historian = "https://historian.wu2.prague.office-int.com";
 const tenantId = "suspicious-northcutt";
 prague.api.socketStorage.registerAsDefault(routerlicious, historian, tenantId);
 
-// Get a token generator
-const secret = "86efe90f7d9f5864b3887781c8539b3a";
-const generator = new TokenGenerator(tenantId, secret);
-
-// Begin loading the list of windows for the given user
-const username = os.userInfo().username;
-const windowListP = WindowList.Load(username, generator);
-const noteListP = NoteList.Load(username, generator);
-
 const windowMap = new Map<string, BrowserWindow>();
 let preserveWindows = false;
 
-function createWindow(id: string, noteId: string, windowList: WindowList) {
+function createWindow(id: string, noteId: string, windowList: WindowList, tokenManager: TokenManager) {
+    const tokenP = tokenManager.getTokenForNote(noteId);
     const windowOptions: any = {width: 800, height: 600};
     const focused = BrowserWindow.getFocusedWindow();
     if (focused) {
@@ -48,7 +40,9 @@ function createWindow(id: string, noteId: string, windowList: WindowList) {
         protocol: "file:",
         slashes: true,
     }));
-    win.webContents.on("did-finish-load", () => win.webContents.send("load-note", noteId));
+    win.webContents.on("did-finish-load", () => {
+        tokenP.then((token) => win.webContents.send("load-note", token));
+    });
     win.setTitle(noteId);
 
     windowMap.set(id, win);
@@ -67,14 +61,14 @@ function createWindow(id: string, noteId: string, windowList: WindowList) {
     // win.webContents.openDevTools();
 }
 
-function createNote(noteList: NoteList, windowList: WindowList, noteId?: string) {
+function createNote(noteList: NoteList, windowList: WindowList, tokenManager: TokenManager, noteId?: string) {
     noteId = noteId ? noteId : noteList.addNote().id;
     const window = windowList.openWindow(noteId);
-    createWindow(window.id, window.noteId, windowList);
+    createWindow(window.id, window.noteId, windowList, tokenManager);
 }
 
 let notesWindow: BrowserWindow;
-function showAllNotes() {
+function showAllNotes(token: string) {
     if (notesWindow) {
         return;
     }
@@ -82,7 +76,9 @@ function showAllNotes() {
     // Create the browser window.
     notesWindow = new BrowserWindow({width: 800, height: 600});
     notesWindow.setTitle("Notes");
-    notesWindow.webContents.on("did-finish-load", () => notesWindow.webContents.send("load-notes-list", username));
+    notesWindow.webContents.on(
+        "did-finish-load",
+        () => notesWindow.webContents.send("load-notes-list", token));
 
     // and load the index.html of the app.
     notesWindow.loadURL(url.format({
@@ -98,7 +94,25 @@ function showAllNotes() {
         });
 }
 
-async function start(): Promise<void> {
+export async function start(): Promise<void> {
+    const configuration = new appauth.AuthorizationServiceConfiguration(
+        "http://localhost:3000/auth/oauth/auth",
+        "http://localhost:3000/auth/oauth/token",
+        "http://localhost:3000/auth/oauth/auth");
+    const tokenManager = new TokenManager(
+        configuration,
+        "dog",
+        "http://127.0.0.1:8000",
+        "openid");
+
+    const [notesToken, windowsToken] = await Promise.all([
+        tokenManager.getNotesToken(),
+        tokenManager.getWindowsTokens(),
+    ]);
+
+    const windowListP = WindowList.Load(windowsToken);
+    const noteListP = NoteList.Load(notesToken);
+
     const [windowList, noteList] = await Promise.all([windowListP, noteListP]);
 
     const menu = defaultMenu(app, shell);
@@ -108,7 +122,7 @@ async function start(): Promise<void> {
             {
                 accelerator: "CmdOrCtrl+N",
                 click: () => {
-                    createNote(noteList, windowList);
+                    createNote(noteList, windowList, tokenManager);
                 },
                 enabled: true,
                 label: "New",
@@ -118,7 +132,7 @@ async function start(): Promise<void> {
     });
 
     ipcMain.on("open-note", (event, id) => {
-        createNote(noteList, windowList, id);
+        createNote(noteList, windowList, tokenManager, id);
     });
 
     const viewSubmenu = menu[3].submenu;
@@ -126,11 +140,14 @@ async function start(): Promise<void> {
     viewSubmenu.push({
         accelerator: "CmdOrCtrl+L",
         click: () => {
-            showAllNotes();
+            showAllNotes(notesToken);
         },
         label: "All Notes",
     });
     Menu.setApplicationMenu(Menu.buildFromTemplate(menu));
+
+    // Open already opened notes
+    await windowList.connected;
 
     // Listen for updates to the notes window list
     windowList.on(
@@ -140,7 +157,7 @@ async function start(): Promise<void> {
                 return;
             }
 
-            createWindow(id, windowList.getWindows().get(id).noteId, windowList);
+            createWindow(id, windowList.getWindows().get(id).noteId, windowList, tokenManager);
         });
 
     windowList.on(
@@ -156,19 +173,15 @@ async function start(): Promise<void> {
             }
         });
 
-    // Open already opened notes
     const existingWindows = windowList.getWindows();
     for (const [id, window] of existingWindows) {
-        createWindow(id, window.noteId, windowList);
+        createWindow(id, window.noteId, windowList, tokenManager);
     }
 
-    // After connection see if we need to bring up a new window
-    windowList.connected.then(() => {
-        // Create a new note if one isn't already open
-        if (existingWindows.size === 0) {
-            createNote(noteList, windowList);
-        }
-    });
+    // Create a new note if one isn't already open
+    if (existingWindows.size === 0) {
+        createNote(noteList, windowList, tokenManager);
+    }
 }
 
 // This method will be called when Electron has finished

@@ -1,16 +1,11 @@
 import { api as prague } from "@prague/routerlicious";
 import * as electron from "electron";
 import { NoteList } from "./noteList";
-import { TokenGenerator } from "./tokenGenerator";
 
 // For local development
 const routerlicious = "https://alfred.wu2.prague.office-int.com";
 const historian = "https://historian.wu2.prague.office-int.com";
 const tenantId = "suspicious-northcutt";
-
-// Get a token generator
-const secret = "86efe90f7d9f5864b3887781c8539b3a";
-const generator = new TokenGenerator(tenantId, secret);
 
 // Register endpoint connection
 prague.socketStorage.registerAsDefault(routerlicious, historian, tenantId);
@@ -42,8 +37,8 @@ function renderNotes(notes: NoteList) {
     }
 }
 
-async function run(username: string): Promise<void> {
-    const notes = await NoteList.Load(username, generator);
+async function run(token: string): Promise<void> {
+    const notes = await NoteList.Load(token);
 
     renderNotes(notes);
     notes.on("notesChanged", () => {
@@ -51,6 +46,6 @@ async function run(username: string): Promise<void> {
     });
 }
 
-electron.ipcRenderer.on("load-notes-list", (event, id) => {
-    run(id);
+electron.ipcRenderer.on("load-notes-list", (event, token) => {
+    run(token);
 });

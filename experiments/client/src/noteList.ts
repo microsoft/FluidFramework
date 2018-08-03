@@ -1,8 +1,7 @@
-import { api, types } from "@prague/routerlicious/dist/client-api";
+import { api, core, types } from "@prague/routerlicious/dist/client-api";
 import { EventEmitter } from "events";
+import * as jwt from "jsonwebtoken";
 import * as moniker from "moniker";
-import { revision } from "./constants";
-import { TokenGenerator } from "./tokenGenerator";
 
 export interface INote {
     // Document ID for the note data
@@ -16,11 +15,9 @@ export interface INote {
 }
 
 export class NoteList extends EventEmitter {
-    public static async Load(userName: string, tokenGenerator: TokenGenerator): Promise<NoteList> {
-        const id = `notes-${userName}-${revision}`;
-        const token = tokenGenerator.generate(id);
-
-        const document = await api.load(id, { token });
+    public static async Load(token: string): Promise<NoteList> {
+        const claims = jwt.decode(token) as core.ITokenClaims;
+        const document = await api.load(claims.documentId, { token });
         const root = await document.getRoot();
         const rootView = await root.getView();
         if (!document.existing) {

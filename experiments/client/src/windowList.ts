@@ -1,8 +1,7 @@
-import { api, types } from "@prague/routerlicious/dist/client-api";
+import { api, core, types } from "@prague/routerlicious/dist/client-api";
 import { EventEmitter } from "events";
+import * as jwt from "jsonwebtoken";
 import * as uuid from "uuid/v4";
-import { revision } from "./constants";
-import { TokenGenerator } from "./tokenGenerator";
 
 export interface IWindow {
     id: string;
@@ -11,11 +10,9 @@ export interface IWindow {
 }
 
 export class WindowList extends EventEmitter {
-    public static async Load(userName: string, generator: TokenGenerator): Promise<WindowList> {
-        const windowListId = `windows-${userName}-${revision}`;
-        const token = generator.generate(windowListId);
-
-        const document = await api.load(windowListId, { token });
+    public static async Load(token: string): Promise<WindowList> {
+        const claims = jwt.decode(token) as core.ITokenClaims;
+        const document = await api.load(claims.documentId, { token });
         const connectedP = new Promise<void>((resolve) => {
             document.once("connected", () => resolve());
         });

@@ -1,26 +1,21 @@
 import { api as prague, ui as pragueUi } from "@prague/routerlicious";
 import * as electron from "electron";
-import { TokenGenerator } from "./tokenGenerator";
+import * as jwt from "jsonwebtoken";
 
 // For local development
 const routerlicious = "https://alfred.wu2.prague.office-int.com";
 const historian = "https://historian.wu2.prague.office-int.com";
 const tenantId = "suspicious-northcutt";
 
-// Get a token generator
-const secret = "86efe90f7d9f5864b3887781c8539b3a";
-const generator = new TokenGenerator(tenantId, secret);
-
 // Register endpoint connection
 prague.socketStorage.registerAsDefault(routerlicious, historian, tenantId);
 
-async function run(id: string): Promise<void> {
-    const token = generator.generate(id);
-
+async function run(token: string): Promise<void> {
     const host = new pragueUi.ui.BrowserContainerHost();
 
     // Load in the latest and connect to the document
-    const collabDoc = await prague.api.load(id, { blockUpdateMarkers: true, token });
+    const claims = jwt.decode(token) as prague.core.ITokenClaims;
+    const collabDoc = await prague.api.load(claims.documentId, { blockUpdateMarkers: true, token });
 
     const rootView = await collabDoc.getRoot().getView();
 
@@ -82,6 +77,6 @@ async function run(id: string): Promise<void> {
     });
 }
 
-electron.ipcRenderer.on("load-note", (event, id) => {
-    run(id);
+electron.ipcRenderer.on("load-note", (event, token) => {
+    run(token);
 });
