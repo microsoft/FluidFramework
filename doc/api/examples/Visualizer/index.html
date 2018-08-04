@@ -1,0 +1,41 @@
+<html>
+    <head>
+        <title>Prague Visualizer</title>
+        <style>
+            body { margin: 10; }
+            canvas { width: 100%; height: 100% }
+            #visualization{
+                width: 90%;
+                height: 80%;
+                border: 1px solid lightgray
+            }
+            .btn {
+                background-color: DodgerBlue;
+                border: none;
+                color: white;
+                padding: 12px 16px;
+                font-size: 16px;
+                cursor: pointer;
+            }
+            .hidden{
+                visibility:hidden;
+            }
+            /* Darker background on mouse-over */
+            .btn:hover {
+                background-color: RoyalBlue;
+            }
+        </style>
+    </head>
+    <body>
+        <script src="./dist/bundle.js"></script>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+        <link href="vis-network.min.css" rel="stylesheet" type="text/css" />
+        <h1> Prague Document Visualizer</h1>
+        <h4>Document Name: <label id="lblDocumentName"></label></h4>
+        <div id="visualization"></div>
+        <label id="lblSharedStringSelected"></label><br/>
+        <label id= "lblCPRange"></label><br/>
+        <button id="prevButton"><i class="fa fa-arrow-left"></i></button>
+        <button id="nextButton"><i class="fa fa-arrow-right"></i></button>
+    </body>
+</html>
