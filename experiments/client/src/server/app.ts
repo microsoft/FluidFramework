@@ -46,7 +46,7 @@ export function create(config: Provider) {
 
     const microsoftStrategy = new passportOpenIdConnect.Strategy({
             authorizationURL: "https://login.microsoftonline.com/organizations/oauth2/v2.0/authorize",
-            callbackURL: "/auth/callback",
+            callbackURL: config.get("callbackURL"),
             clientID: config.get("clientId"),
             clientSecret: config.get("secret"),
             issuer: "https://login.microsoftonline.com/72f988bf-86f1-41af-91ab-2d7cd011db47/v2.0",
@@ -55,9 +55,6 @@ export function create(config: Provider) {
             tokenURL: "https://login.microsoftonline.com/organizations/oauth2/v2.0/token",
         },
         (req, iss, sub, profile, jwtClaims, accessToken, refreshToken, params, done) => {
-            // https://github.com/oauthjs/express-oauth-server/blob/master/examples/postgresql/index.js
-            // https://apps.dev.microsoft.com
-            // sub is my friend on the claims
             return done(null, jwtClaims);
         },
     );
