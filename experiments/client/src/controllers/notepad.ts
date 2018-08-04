@@ -1,20 +1,19 @@
 import { api as prague, ui as pragueUi } from "@prague/routerlicious";
 import * as jwt from "jsonwebtoken";
-import { NoteList } from "../noteList";
+import { NoteList } from "../models";
 
-// For local development
-const routerlicious = "https://alfred.wu2.prague.office-int.com";
-const historian = "https://historian.wu2.prague.office-int.com";
-const tenantId = "suspicious-northcutt";
-
-// Register endpoint connection
-prague.socketStorage.registerAsDefault(routerlicious, historian, tenantId);
+async function addNote(noteId: string, token: string) {
+    const notes = await NoteList.Load(token);
+    if (!notes.has(noteId)) {
+        console.log(`Adding note ${noteId}`);
+        notes.addNote(noteId);
+    }
+}
 
 export async function loadNote(token: string, noteId: string, notesToken: string): Promise<void> {
     // if notes token is specified add to the list
-    if (noteId) {
-        const notes = await NoteList.Load(notesToken);
-        notes.addNote(noteId);
+    if (notesToken) {
+        addNote(noteId, notesToken);
     }
 
     const host = new pragueUi.ui.BrowserContainerHost();

@@ -1,18 +1,25 @@
-import * as appauth from "@openid/appauth";
 import * as prague from "@prague/routerlicious";
 import { app, BrowserWindow, ipcMain, Menu, shell } from "electron";
 import defaultMenu = require("electron-default-menu");
+import * as nconf from "nconf";
 import * as path from "path";
 import * as url from "url";
-import { NoteList } from "./noteList";
+import { NoteList, WindowList } from "../models";
 import { TokenManager } from "./tokenManager";
-import { WindowList } from "./windowList";
 
-// register default prague endpoint
-const routerlicious = "https://alfred.wu2.prague.office-int.com";
-const historian = "https://historian.wu2.prague.office-int.com";
-const tenantId = "suspicious-northcutt";
-prague.api.socketStorage.registerAsDefault(routerlicious, historian, tenantId);
+interface IElectronConfig {
+    routerlicious: string;
+    historian: string;
+    tenantId: string;
+    clientId: string;
+    clientSecret: string;
+    notaServer: string;
+}
+
+const file = path.join(__dirname, "../../config.electron.json");
+const config = nconf.argv().env("__" as any).file(file).use("memory").get() as IElectronConfig;
+
+prague.api.socketStorage.registerAsDefault(config.routerlicious, config.historian, config.tenantId);
 
 const windowMap = new Map<string, BrowserWindow>();
 let preserveWindows = false;
@@ -36,12 +43,15 @@ function createWindow(id: string, noteId: string, windowList: WindowList, tokenM
 
     // and load the index.html of the app.
     win.loadURL(url.format({
-        pathname: path.join(__dirname, "../views/note.html"),
+        pathname: path.join(__dirname, "../../views/note.html"),
         protocol: "file:",
         slashes: true,
     }));
     win.webContents.on("did-finish-load", () => {
-        tokenP.then((token) => win.webContents.send("load-note", token));
+        tokenP.then(
+            (token) => {
+                win.webContents.send("load-note", token, config.routerlicious, config.historian, config.tenantId);
+            });
     });
     win.setTitle(noteId);
 
@@ -78,11 +88,18 @@ function showAllNotes(token: string) {
     notesWindow.setTitle("Notes");
     notesWindow.webContents.on(
         "did-finish-load",
-        () => notesWindow.webContents.send("load-notes-list", token));
+        () => {
+            notesWindow.webContents.send(
+                "load-notes-list",
+                token,
+                config.routerlicious,
+                config.historian,
+                config.tenantId);
+        });
 
     // and load the index.html of the app.
     notesWindow.loadURL(url.format({
-        pathname: path.join(__dirname, "../views/notes.html"),
+        pathname: path.join(__dirname, "../../views/notes.html"),
         protocol: "file:",
         slashes: true,
     }));
@@ -95,13 +112,10 @@ function showAllNotes(token: string) {
 }
 
 export async function start(): Promise<void> {
-    const configuration = new appauth.AuthorizationServiceConfiguration(
-        "http://localhost:3000/auth/oauth/auth",
-        "http://localhost:3000/auth/oauth/token",
-        "http://localhost:3000/auth/oauth/auth");
     const tokenManager = new TokenManager(
-        configuration,
-        "dog",
+        config.notaServer,
+        config.clientId,
+        config.clientSecret,
         "http://127.0.0.1:8000",
         "openid");
 

@@ -21,4 +21,4 @@ USER node
 ENTRYPOINT ["/sbin/tini", "--"]
 
 # And set the default command to start the server
-CMD ["npm", "start"]
+CMD ["npm", "run", "server"]

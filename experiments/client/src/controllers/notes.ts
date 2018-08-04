@@ -1,13 +1,4 @@
-import { api as prague } from "@prague/routerlicious";
-import { NoteList } from "../noteList";
-
-// For local development
-const routerlicious = "https://alfred.wu2.prague.office-int.com";
-const historian = "https://historian.wu2.prague.office-int.com";
-const tenantId = "suspicious-northcutt";
-
-// Register endpoint connection
-prague.socketStorage.registerAsDefault(routerlicious, historian, tenantId);
+import { NoteList } from "../models";
 
 function renderNotes(notes: NoteList, openNote: (id: string) => void) {
     const noteList = document.getElementById("note-list");

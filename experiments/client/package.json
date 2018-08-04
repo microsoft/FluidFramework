@@ -5,7 +5,7 @@
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc && tslint 'src/**/*'",
-    "start": "electron dist/index.js",
+    "start": "electron dist/app/index.js",
     "server": "node dist/server/www.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "tslint": "tslint 'src/**/*.ts'",

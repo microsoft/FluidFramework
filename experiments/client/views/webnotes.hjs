@@ -13,6 +13,7 @@
                 window.open(`/notes/${encodeURIComponent(id)}`, "_blank");
             }
 
+            controllers.register("{{ routerlicious }}", "{{ historian }}", "{{ tenantId }}");
             controllers.loadNotes("{{ token }}", openNote);
         </script>
     {{/scripts}}

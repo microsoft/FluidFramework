@@ -14,7 +14,8 @@
     const electron = require("electron");
     const controllers = require("../dist/controllers")
 
-    electron.ipcRenderer.on("load-note", (event, token) => {
+    electron.ipcRenderer.on("load-note", (event, token, routerlicious, historian, tenantId) => {
+      controllers.register(routerlicious, historian, tenantId);
       controllers.loadNote(token);
     });
   </script>

@@ -18,6 +18,11 @@ export class NoteList extends EventEmitter {
     public static async Load(token: string): Promise<NoteList> {
         const claims = jwt.decode(token) as core.ITokenClaims;
         const document = await api.load(claims.documentId, { token });
+        const connectedP = new Promise<void>((resolve) => {
+            document.once("connected", () => resolve());
+        });
+        await connectedP;
+
         const root = await document.getRoot();
         const rootView = await root.getView();
         if (!document.existing) {
@@ -76,6 +81,16 @@ export class NoteList extends EventEmitter {
 
                 this.emit("notesChanged");
             });
+    }
+
+    public has(id: string): boolean {
+        for (const [, value] of this.notes) {
+            if (value.id === id) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public getNotes(): Map<string, INote> {

@@ -19,7 +19,8 @@
       electron.ipcRenderer.send("open-note", id);
     }
 
-    electron.ipcRenderer.on("load-notes-list", (event, token) => {
+    electron.ipcRenderer.on("load-notes-list", (event, token, routerlicious, historian, tenantId) => {
+      controllers.register(routerlicious, historian, tenantId);
       controllers.loadNotes(token, openNote);
     });
   </script>

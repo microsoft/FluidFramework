@@ -14,31 +14,36 @@ import * as path from "path";
 import * as uuid from "uuid/v4";
 import { Model } from "./model";
 
-function generateToken(documentId: string, tenantId: string, secret: string): string {
+function generateToken(documentId: string, tenantId: string, secret: string, name: string): string {
     const token = jwt.sign(
         {
             documentId,
             permission: "read:write", // use "read:write" for now
             tenantId,
             user: {
-                id: "test",
+                id: name,
             },
         },
         secret);
     return token;
 }
 
-function getNotesToken(user: string, tenantId: string, secret: string) {
-    const token = generateToken(`${user}-notes`, tenantId, secret);
+function getNotesToken(user: string, tenantId: string, secret: string, name: string) {
+    const token = generateToken(`${user}-notes`, tenantId, secret, name);
     return token;
 }
 
-function getNoteToken(user: string, noteId: string, tenantId: string, secret: string) {
-    const token = generateToken(`${user}-notes-${noteId}`, tenantId, secret);
+function getNoteToken(user: string, noteId: string, tenantId: string, secret: string, name: string) {
+    const token = generateToken(`${user}-notes-${noteId}`, tenantId, secret, name);
     return token;
 }
 
 export function create(config: Provider) {
+    const routerlicious = config.get("routerlicious");
+    const historian = config.get("historian");
+    const tenantId = config.get("tenantId");
+    const tenantSecret = config.get("tenantSecret");
+
     const microsoftStrategy = new passportOpenIdConnect.Strategy({
             authorizationURL: "https://login.microsoftonline.com/organizations/oauth2/v2.0/authorize",
             callbackURL: "/auth/callback",
@@ -69,13 +74,9 @@ export function create(config: Provider) {
     // Express app configuration
     const app: Express = express();
 
-    const model = new Model([
-        {
-            grants: ["authorization_code"],
-            id: "dog",
-            redirectUris: ["http://localhost:3000/dog", "http://127.0.0.1:8000"],
-            secret: "cats",
-        }]) as any;
+    // TODO put client configs in the JSON config
+
+    const model = new Model(config.get("clients")) as any;
     const oauth = new OAuthServer({ model });
 
     // view engine setup
@@ -105,14 +106,18 @@ export function create(config: Provider) {
 
     app.get("/notes", ensureLoggedIn(), (request, response) => {
         const user = request.user.sub;
-        const token = getNotesToken(user, tenantId, tenantSecret);
+        const name = request.user.name;
+        const token = getNotesToken(user, tenantId, tenantSecret, name);
 
         response.render(
             "webnotes",
             {
+                historian,
                 partials: {
                     layout: "layout",
                 },
+                routerlicious,
+                tenantId,
                 title: "Nota",
                 token,
             },
@@ -121,14 +126,21 @@ export function create(config: Provider) {
 
     app.get("/notes/:id", ensureLoggedIn(), (request, response) => {
         const user = request.user.sub;
-        const token = getNoteToken(user, request.params.id, tenantId, tenantSecret);
+        const name = request.user.name;
+        const token = getNoteToken(user, request.params.id, tenantId, tenantSecret, name);
+        const notesToken = getNotesToken(user, tenantId, tenantSecret, name);
 
         response.render(
             "webnote",
             {
+                historian,
+                noteId: request.params.id,
+                notesToken,
                 partials: {
                     layout: "layout",
                 },
+                routerlicious,
+                tenantId,
                 title: request.params.id,
                 token,
             },
@@ -136,23 +148,8 @@ export function create(config: Provider) {
     });
 
     app.post("/notes", ensureLoggedIn(), (request, response) => {
-        const user = request.user.sub;
         const noteId = moniker.choose();
-        const notesToken = getNotesToken(user, tenantId, tenantSecret);
-        const noteToken = getNoteToken(user, noteId, tenantId, tenantSecret);
-
-        response.render(
-            "webnote",
-            {
-                noteId,
-                notesToken,
-                partials: {
-                    layout: "layout",
-                },
-                title: request.params.id,
-                token: noteToken,
-            },
-        );
+        response.redirect(`/notes/${encodeURIComponent(noteId)}`);
     });
 
     app.get(
@@ -177,10 +174,7 @@ export function create(config: Provider) {
     const options = {
         authenticateHandler: {
             handle: (request, response) => {
-                // Whatever you need to do to authorize / retrieve your user from post data here
-                return {
-                    id: request.user.sub,
-                };
+                return request.user;
             },
         },
     };
@@ -189,24 +183,25 @@ export function create(config: Provider) {
     app.get("/auth/oauth/auth", ensureLoggedIn(), oauth.authorize(options));
     app.post("/auth/oauth/auth", ensureLoggedIn(), oauth.authorize(options));
 
-    const tenantId = config.get("tenantId");
-    const tenantSecret = config.get("tenantSecret");
     app.post("/api/me/tokens/windows", oauth.authenticate(), (request, response) => {
-        const user = response.locals.oauth.token.user.id;
+        const user = response.locals.oauth.token.user.sub;
+        const name = response.locals.oauth.token.user.name;
         console.log(`User is ${user}`);
-        const token = generateToken(`${user}-windows`, tenantId, tenantSecret);
+        const token = generateToken(`${user}-windows`, tenantId, tenantSecret, name);
         response.status(200).json(token);
     });
 
     app.post("/api/me/tokens/notes", oauth.authenticate(), (request, response) => {
-        const user = response.locals.oauth.token.user.id;
-        const token = getNotesToken(user, tenantId, tenantSecret);
+        const user = response.locals.oauth.token.user.sub;
+        const name = response.locals.oauth.token.user.name;
+        const token = getNotesToken(user, tenantId, tenantSecret, name);
         response.status(200).json(token);
     });
 
     app.post("/api/me/tokens/notes/:id", oauth.authenticate(), (request, response) => {
-        const user = response.locals.oauth.token.user.id;
-        const token = getNoteToken(user, request.params.id, tenantId, tenantSecret);
+        const user = response.locals.oauth.token.user.sub;
+        const name = response.locals.oauth.token.user.name;
+        const token = getNoteToken(user, request.params.id, tenantId, tenantSecret, name);
         response.status(200).json(token);
     });
 

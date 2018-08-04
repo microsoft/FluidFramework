@@ -6,6 +6,7 @@ import * as webRequest from "request-promise-native";
 // Following example at https://github.com/googlesamples/appauth-js-electron-sample
 
 export class TokenManager {
+    private configuration: appauth.AuthorizationServiceConfiguration;
     private notifier: appauth.AuthorizationNotifier;
     private requestor: NodeRequestor;
     private authorizationHandler: NodeBasedHandler;
@@ -17,10 +18,16 @@ export class TokenManager {
     private authorizationRequestDeferred: api.utils.Deferred<void>;
 
     constructor(
-        private configuration: appauth.AuthorizationServiceConfiguration,
+        private serverUri: string,
         private clientId: string,
+        private clientSecret: string,
         private redirectUri: string,
         private scope: string) {
+
+        this.configuration = new appauth.AuthorizationServiceConfiguration(
+            `${this.serverUri}/auth/oauth/auth`,
+            `${this.serverUri}/auth/oauth/token`,
+            `${this.serverUri}/auth/oauth/auth`);
 
         this.notifier = new appauth.AuthorizationNotifier();
         this.requestor = new NodeRequestor();
@@ -42,7 +49,7 @@ export class TokenManager {
     public async getNotesToken(): Promise<string> {
         const token = await this.getAccessToken();
         return webRequest.post(
-            "http://localhost:3000/api/me/tokens/notes",
+            `${this.serverUri}/api/me/tokens/notes`,
             {
                 headers: {
                     Authorization: `Bearer ${token}`,
@@ -54,7 +61,7 @@ export class TokenManager {
     public async getWindowsTokens(): Promise<string> {
         const token = await this.getAccessToken();
         return webRequest.post(
-            "http://localhost:3000/api/me/tokens/windows",
+            `${this.serverUri}/api/me/tokens/windows`,
             {
                 headers: {
                     Authorization: `Bearer ${token}`,
@@ -66,7 +73,7 @@ export class TokenManager {
     public async getTokenForNote(id: string): Promise<string> {
         const token = await this.getAccessToken();
         return webRequest.post(
-            `http://localhost:3000/api/me/tokens/notes/${encodeURIComponent(id)}`,
+            `${this.serverUri}/api/me/tokens/notes/${encodeURIComponent(id)}`,
             {
                 headers: {
                     Authorization: `Bearer ${token}`,
@@ -89,7 +96,7 @@ export class TokenManager {
                 this.scope,
                 appauth.AuthorizationRequest.RESPONSE_TYPE_CODE,
                 undefined,
-                { prompt: "consent", access_type: "offline", client_secret: "cats" });
+                { prompt: "consent", access_type: "offline", client_secret: this.clientSecret });
 
             this.authorizationHandler.performAuthorizationRequest(this.configuration, request);
         }
@@ -104,7 +111,7 @@ export class TokenManager {
             appauth.GRANT_TYPE_AUTHORIZATION_CODE,
             code,
             undefined,
-            { client_secret: "cats" });
+            { client_secret: this.clientSecret });
 
         const response = await this.tokenHandler.performTokenRequest(this.configuration, request);
         this.refreshToken = response.refreshToken;
@@ -126,7 +133,7 @@ export class TokenManager {
             appauth.GRANT_TYPE_REFRESH_TOKEN,
             undefined,
             this.refreshToken,
-            { client_secret: "cats" });
+            { client_secret: this.clientSecret });
         const response = await this.tokenHandler.performTokenRequest(this.configuration, request);
         this.accessTokenResponse = response;
 
