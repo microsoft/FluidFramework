@@ -3150,16 +3150,17 @@ export class MergeTree {
         for (let i = 0; i < block.childCount; i++) {
             let child = block.children[i];
             if (child.isLeaf()) {
-                let segment = this.segmentClone(<Segment>block.children[i]);
-                bBlock.children[i] = segment;
+                let segment = this.segmentClone(<Segment>child);
+                bBlock.assignChild(segment, i);
                 if (segments) {
                     segments.push(segment);
                 }
             } else {
-                bBlock.children[i] = this.blockClone(<IMergeBlock>block.children[i], segments);
+                bBlock.assignChild(this.blockClone(<IMergeBlock>child, segments),i);
             }
         }
         this.nodeUpdateLengthNewStructure(bBlock);
+        this.nodeUpdateOrdinals(bBlock);
         return bBlock;
     }
 
