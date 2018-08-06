@@ -55,12 +55,14 @@ export class IntelligentServicesManager {
     }
 
     public async stop() {
-        await runAfterWait(
-            this.rateLimiter.isRunning,
-            this.rateLimiter,
-            "done",
-            async () => {
-                this.rateLimiter.stop();
-            });
+        if (this.rateLimiter) {
+            await runAfterWait(
+                this.rateLimiter.isRunning,
+                this.rateLimiter,
+                "done",
+                async () => {
+                    this.rateLimiter.stop();
+                });
+        }
     }
 }

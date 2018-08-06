@@ -17,11 +17,7 @@ export class IntelWork extends BaseWork implements IWork {
             { localMinSeq: 0, encrypted: undefined, token: this.token, client: { type: "intel"} },
             this.service,
             task);
-        const root = await this.document.getRoot().getView();
-        if (!root.has("insights")) {
-            root.set("insights", this.document.createMap());
-        }
-        const insightsMap = root.get("insights") as types.IMap;
+        const insightsMap = await this.document.getRoot().wait<types.IMap>("insights");
         const insightsMapView = await insightsMap.getView();
         return this.processIntelligenceWork(this.document, insightsMapView);
     }

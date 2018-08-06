@@ -97,6 +97,10 @@ export class LocalReference implements ReferencePosition {
         }
     }
 
+    toPositionFromClient(client: Client) {
+        return this.toPosition(client.mergeTree, client.getCurrentSeq(), client.getClientId());
+    }
+
     hasTileLabels() {
         return refHasTileLabels(this);
     }

@@ -14,6 +14,8 @@
 #define MAX_LOADSTRING 100
 
 #define IDM_INSERT 200
+#define IDM_REMOVE 201
+#define IDM_ADDMARKER 202
 
 using namespace v8;
 using namespace node;
@@ -36,9 +38,13 @@ INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
 HWND textEdit;
 HWND positionEdit;
 HWND hWnd;
+HWND positionEndEdit;
 
 // To store any attached objects
 Persistent<Object> attachedJSObject;
+Persistent<Object>  attachedJSObjectRoot;
+Persistent<Object> attachedJSObjectComment;
+Persistent<Object> attachedDocFactoryObj;
 Persistent<Context> runningContext;
 Isolate* runningIsolate;
 
@@ -50,9 +56,150 @@ namespace node {
     void DumpBacktrace(FILE* fp) {
     }
 }  // namespace node
+Local<Object> EnsurePragueMap(v8::Local<Object> mapParentView, const wchar_t *xszKey);
+static void ViewAvailable(const v8::FunctionCallbackInfo<v8::Value>& args)
+{
+	if (args.Length() < 1)
+	{
+		args.GetReturnValue().Set(Boolean::New(args.GetIsolate(), false));
+	}
+
+	Isolate* isolate = args.GetIsolate();
+	HandleScope scope(isolate);
+
+	Local<Object> attached = args[0]->ToObject();
+	Local<Object> commentMap = EnsurePragueMap(attached, L"1234");
+
+	args.GetReturnValue().Set(Boolean::New(args.GetIsolate(), true));
+}
+
+Local<Object> EnsurePragueMap(v8::Local<Object> mapParentView, const wchar_t *xszKey) 
+{
+	Local<Context> context = runningContext.Get(runningIsolate);
+
+	std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
+	std::string utf8String = converter.to_bytes(xszKey);
+
+	Local<FunctionTemplate> functionTemplate = FunctionTemplate::New(runningIsolate, ViewAvailable);
+	Local<Function> function = functionTemplate->GetFunction();
+
+	context->Global()->Set(String::NewFromUtf8(runningIsolate, "testprague"), function);
+
+	Local<Function> ensuremap = Local<Function>::Cast(mapParentView->Get(String::NewFromUtf8(runningIsolate, "EnsureSharedMapView")));
+	const int argc = 1;
+	v8::Local<v8::Value> argv[argc] =
+	{
+		v8::String::NewFromUtf8(runningIsolate, &utf8String[0])
+	};
+
+	Local<Object> ret = ensuremap->Call(mapParentView, argc, argv)->ToObject();
+
+	return ret;
+
+}
+void TraverseProperties(Local<Value> val, Isolate *isolate, Local<Context> context, int iLevel)
+{
+    if (val->IsObject()) {
+        //Local<Context> context = Context::New(isolate);
+        Local<Object> object = val->ToObject();
+        MaybeLocal<Array> maybe_props = object->GetOwnPropertyNames(context);
+        if (!maybe_props.IsEmpty()) {
+            Local<Array> props = maybe_props.ToLocalChecked();
+            for (uint32_t i = 0; i < props->Length(); i++) {
+                Local<Value> key = props->Get(i);
+                Local<Value> value = object->Get(key);
+                // do stuff with key / value
+                String::Utf8Value utf8_key(key);
+                String::Utf8Value utf8_value(value);
+                iLevel;
+                if (strcmp(*utf8_key, "children") && strcmp(*utf8_key, "rightmostTiles") && strcmp(*utf8_key, "leftmostTiles"))
+                    TraverseProperties(value, isolate, context, iLevel + 1);
+            }
+        }
+    }
+}
+
+static Local<Object> GetCommentSharedString(Local<Object> root)
+{
+	Local<Context> context = runningContext.Get(runningIsolate);
+
+	Local<Function> ensureSharedString = Local<Function>::Cast(root->Get(String::NewFromUtf8(runningIsolate, "EnsureSharedString")));
+
+	std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
+	std::string utf8String = converter.to_bytes(L"comments");
+	const int argc = 1;
+	v8::Local<v8::Value> argv[argc] =
+	{
+		v8::String::NewFromUtf8(runningIsolate, &utf8String[0]),
+	};
+
+	Local<Object> commentsharedstring = ensureSharedString->Call(root, argc, argv)->ToObject();
+	return commentsharedstring;
+}
 
 
-static void ChangeCallback(const v8::FunctionCallbackInfo<v8::Value>& args) {
+static void AttachCallback(const v8::FunctionCallbackInfo<v8::Value>& args) {
+    if (args.Length() < 1) {
+        args.GetReturnValue().Set(Boolean::New(args.GetIsolate(), false));
+    }
+
+    Isolate* isolate = args.GetIsolate();
+    HandleScope scope(isolate);
+
+    Local<Object> attached = args[1]->ToObject();
+    // Store the object in a persistent handle to keep it around after the call
+    attachedJSObject.Reset(isolate, attached);
+
+    // Add a C++ listener for updates to the object
+    ListenForUpdates(isolate, attached);
+
+	Local<Object> rootObject = args[0]->ToObject();
+	attachedJSObjectRoot.Reset(isolate, rootObject);
+	//Local<Object> attachedComment = GetCommentSharedString(rootObject);
+	//// Store the object in a persistent handle to keep it around after the call
+	//attachedJSObjectComment.Reset(isolate, attachedComment);
+	//ListenForUpdates(isolate, attachedComment);
+
+    args.GetReturnValue().Set(Boolean::New(args.GetIsolate(), true));
+}
+
+
+bool FFindValue(v8::Local<v8::Object> &obj, v8::Local<v8::Value> &value, std::list<std::string> &lstProperty, std::list<std::string>::iterator it) 
+{
+    if (it == lstProperty.end())
+        return true;
+
+    const char *sz = it->c_str();
+    Local<Context> context = runningContext.Get(runningIsolate);
+    MaybeLocal<Value> mayBeValue = obj->Get(context, String::NewFromUtf8(runningIsolate, sz));
+    
+    // If no value match for this key, return
+    Local<Value> valRet;
+    if (!mayBeValue.ToLocal(&valRet))
+        return false;
+
+    it++; // Advance the iterator to find whether we have more to search for
+
+    // we have reached the end, so return value
+    if (it == lstProperty.end())
+    {
+        value = valRet;
+        return true;
+    }
+
+    // If matching value is not an object, return false
+    if (!valRet->IsObject())
+        return false;
+    return FFindValue(valRet->ToObject(), value, lstProperty, it);
+}
+
+
+
+
+
+
+static  std::list<std::string> test({ "contents", "type" });
+static void OnEachStreamOp(const v8::FunctionCallbackInfo<v8::Value>& args) {
     Isolate* isolate = args.GetIsolate();
     HandleScope scope(isolate);
 
@@ -60,18 +207,78 @@ static void ChangeCallback(const v8::FunctionCallbackInfo<v8::Value>& args) {
 
     Local<Function> getText = Local<Function>::Cast(attached->Get(String::NewFromUtf8(runningIsolate, "getText")));
 
-    const int argc = 0;
-    v8::Local<v8::Value>* argv = nullptr;
+    Local<Context> context = runningContext.Get(runningIsolate);
+    Local<Object> msgObj = args[2]->ToObject();
+    Local<Value> val;
 
-    Local<String> result = getText->Call(attached, argc, argv)->ToString();
-
+    std::list<std::string> lst;
+    lst.push_back("contents");
+    lst.push_back("text");
     std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
+    if (FFindValue(msgObj, val, lst, lst.begin()))
+    {
+        Local<String> valStr = val->ToString();
+        std::wstring text = converter.from_bytes(std::string(*v8::String::Utf8Value(valStr)));
+    }	
+
+    TraverseProperties(msgObj, isolate, context, 0);
+	Local<v8::Integer> intVal = msgObj->ToInteger();
+	int length = intVal->Value();
+	(length);
+	Local<Function> toString = Local<Function>::Cast(msgObj->ToObject()->Get(String::NewFromUtf8(runningIsolate, "getType")));
+	const int argc = 0;
+	v8::Local<v8::Value> *argv = nullptr;
+
+	Local<String> result = toString->Call(attached, argc, argv)->ToString();
+
+    //Isolate* isolate = args.GetIsolate();
+    //HandleScope scope(isolate);
+    Local<Object> opMsg = args[1]->ToObject();
+
+
+    Local<String> text;
+    //NewFunction(opMsg, text);
+
+    
+
+    /*const int argc = 0;
+    v8::Local<v8::Value>* argv = nullptr;
+*/
+	result = getText->Call(attached, argc, argv)->ToString();
+
+    //std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
     currentText = converter.from_bytes(std::string(*v8::String::Utf8Value(result)));
+
+	Local<Function> getClientId = Local<Function>::Cast(attached->Get(String::NewFromUtf8(runningIsolate, "getClientId")));
+	result = getClientId->Call(attached, argc, argv)->ToString();
+	std::wstring clientId = converter.from_bytes(std::string(*v8::String::Utf8Value(result)));
 
     InvalidateRect(hWnd, 0, TRUE);
 }
 
-static void AttachCallback(const v8::FunctionCallbackInfo<v8::Value>& args) {
+static void OpenDocument(std::wstring docId) {
+    Local<Context> context = runningContext.Get(runningIsolate);
+    Local<Object> attached = attachedDocFactoryObj.Get(runningIsolate);
+
+    std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
+    std::string utf8String = converter.to_bytes(docId);
+    
+    Local<FunctionTemplate> functionTemplate = FunctionTemplate::New(runningIsolate, AttachCallback);
+    Local<Function> function = functionTemplate->GetFunction();
+
+    context->Global()->Set(String::NewFromUtf8(runningIsolate, "pragueAttach"), function);
+
+    Local<Function> openDoc = Local<Function>::Cast(attached->Get(String::NewFromUtf8(runningIsolate, "OpenDoc")));
+    const int argc = 1;
+    v8::Local<v8::Value> argv[argc] =
+    {
+        v8::String::NewFromUtf8(runningIsolate, &utf8String[0])
+    };
+
+	openDoc->Call(attached, argc, argv);
+}
+
+static void AttachDocFactory(const v8::FunctionCallbackInfo<v8::Value>& args) {
     if (args.Length() < 1) {
         args.GetReturnValue().Set(Boolean::New(args.GetIsolate(), false));
     }
@@ -81,54 +288,160 @@ static void AttachCallback(const v8::FunctionCallbackInfo<v8::Value>& args) {
     Local<Object> attached = args[0]->ToObject();
 
     // Store the object in a persistent handle to keep it around after the call
-    attachedJSObject.Reset(isolate, attached);
+    attachedDocFactoryObj.Reset(isolate, attached);
 
-    // Add a C++ listener for updates to the object
-    ListenForUpdates(isolate, attached);
+    OpenDocument(L"jisach_2_21_04");
 
     args.GetReturnValue().Set(Boolean::New(args.GetIsolate(), true));
 }
 
+
+static void RemoveText(int pos1, int pos2)
+{
+	Local<Context> context = runningContext.Get(runningIsolate);
+	Local<Object> attached = attachedJSObject.Get(runningIsolate);
+
+
+	Local<Function> removeText = Local<Function>::Cast(attached->Get(String::NewFromUtf8(runningIsolate, "removeText")));
+	const int argc = 2;
+	v8::Local<v8::Value> argv[argc] =
+	{
+		v8::Number::New(runningIsolate, pos1),
+		v8::Number::New(runningIsolate, pos2)
+	};
+
+	removeText->Call(attached, argc, argv);
+}
+
+static void InsertTileMarker(int pos1, std::wstring label, std::wstring id)
+{
+	Local<Context> context = runningContext.Get(runningIsolate);
+	Local<Object> attached = attachedJSObject.Get(runningIsolate);
+
+	std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
+	std::string labelstr = converter.to_bytes(label);
+	std::string idstr = converter.to_bytes(id);
+
+	Local<Function> insertMarker = Local<Function>::Cast(attached->Get(String::NewFromUtf8(runningIsolate, "insertTileMarker")));
+	const int argc = 3;
+	v8::Local<v8::Value> argv[argc] =
+	{
+		v8::Number::New(runningIsolate, pos1),
+		v8::String::NewFromUtf8(runningIsolate, &labelstr[0]),
+		v8::String::NewFromUtf8(runningIsolate, &idstr[0]),
+	};
+
+	insertMarker->Call(attached, argc, argv);
+}
+
+static void InsertRangeMarker(int pos1, int pos2, std::wstring label, std::wstring id)
+{
+	Local<Context> context = runningContext.Get(runningIsolate);
+	Local<Object> attached = attachedJSObject.Get(runningIsolate);
+
+	std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
+	std::string labelstr = converter.to_bytes(label);
+	std::string idstr = converter.to_bytes(id);
+
+	Local<Function> insertMarker = Local<Function>::Cast(attached->Get(String::NewFromUtf8(runningIsolate, "insertRangeMarker")));
+	const int argc = 4;
+	v8::Local<v8::Value> argv[argc] =
+	{
+		v8::Number::New(runningIsolate, pos1),
+		v8::Number::New(runningIsolate, pos2),
+		v8::String::NewFromUtf8(runningIsolate, &labelstr[0]),
+		v8::String::NewFromUtf8(runningIsolate, &idstr[0]),
+	};
+
+	insertMarker->Call(attached, argc, argv);
+}
+
 static void InsertText(std::wstring text, int position) {
+
     HandleScope handle_scope(runningIsolate);
     Local<Context> context = runningContext.Get(runningIsolate);
-    Local<Object> attached = attachedJSObject.Get(runningIsolate);
+    Local<Object> root = attachedJSObjectRoot.Get(runningIsolate);
+	Local<Object> attached = attachedJSObject.Get(runningIsolate);// GetCommentSharedString(root);
 
     std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
     std::string utf8String = converter.to_bytes(text);
+	Local<Object> rootMapView = attachedJSObjectRoot.Get(runningIsolate);
+	Local<Object> commentsMap = EnsurePragueMap(rootMapView, L"comments");
+
 
     Local<Function> insertText = Local<Function>::Cast(attached->Get(String::NewFromUtf8(runningIsolate, "insertText")));
-    const int argc = 2;
+	Local<Object> props = Object::New(runningIsolate);
+	props->Set(v8::String::NewFromUtf8(runningIsolate, "MyKey"), v8::String::NewFromUtf8(runningIsolate, "MyValue"));
+	const int argc = 3;
     v8::Local<v8::Value> argv[argc] =
     {
         v8::String::NewFromUtf8(runningIsolate, &utf8String[0]),
-        v8::Number::New(runningIsolate, position)
+        v8::Number::New(runningIsolate, position),
+		props,
     };
 
     insertText->Call(attached, argc, argv);
 }
+static void OnInitialLoadLength(const v8::FunctionCallbackInfo<v8::Value>& args);
+static void OnInitialLoadOfSegments(const v8::FunctionCallbackInfo<v8::Value>& args);
+static void OnInitialLoadBegin(const v8::FunctionCallbackInfo<v8::Value>& args)
+{
+
+}
+static void OnInitialLoadEnd(const v8::FunctionCallbackInfo<v8::Value>& args)
+{
+/*
+	Local<Object> rootMapView = attachedJSObjectRoot.Get(runningIsolate);
+	Local<Object> commentsMap = EnsurePragueMap(rootMapView, L"Comments");
+	Local<Object> commentMap = EnsurePragueMap(commentsMap, L"1234");*/
+
+}
 
 static void ListenForUpdates(Isolate* isolate, Local<Object> attached) {
-    Local<FunctionTemplate> functionTemplate = FunctionTemplate::New(isolate, ChangeCallback);
-    Local<Function> function = functionTemplate->GetFunction();
+	Local<FunctionTemplate> functionTemplate = FunctionTemplate::New(runningIsolate,
+		OnEachStreamOp);
+	Local<Function> function1 = functionTemplate->GetFunction();
 
-    Local<Function> on = Local<Function>::Cast(attached->Get(String::NewFromUtf8(runningIsolate, "on")));
-    const int argc = 1;
-    v8::Local<v8::Value> argv[argc] =
-    {
-        function
-    };
+	functionTemplate = FunctionTemplate::New(runningIsolate,
+		OnInitialLoadOfSegments);
+	Local<Function> function2 = functionTemplate->GetFunction();
 
-    on->Call(attached, argc, argv);
+	functionTemplate = FunctionTemplate::New(runningIsolate,
+		OnInitialLoadLength);
+	Local<Function> function3 = functionTemplate->GetFunction();
+
+	functionTemplate = FunctionTemplate::New(runningIsolate,
+		OnInitialLoadBegin);
+	Local<Function> function4 = functionTemplate->GetFunction();
+	functionTemplate = FunctionTemplate::New(runningIsolate,
+		OnInitialLoadEnd);
+	Local<Function> function5 = functionTemplate->GetFunction();
+
+
+	Local<Function> on = Local<Function>::Cast(attached->Get(String::NewFromUtf8(runningIsolate, "on")));
+	const int argc = 5;
+	v8::Local<v8::Value> argv[argc] =
+	{
+		function1,
+		function2,
+		function3,
+		function4,
+		function5
+	};
+
+	on->Call(attached, argc, argv);
+
 }
 
 int Start(HACCEL hAccelTable, node::NodePlatform* platform, uv_loop_t* event_loop, Isolate* isolate, IsolateData* isolate_data, int argc, const char* const* argv, int exec_argc, const char* const* exec_argv) {
+
+
     runningIsolate = isolate;
 
     HandleScope handle_scope(isolate);
 
     Local<ObjectTemplate> global = ObjectTemplate::New(isolate);
-    global->Set(String::NewFromUtf8(isolate, "pragueAttach"), FunctionTemplate::New(isolate, AttachCallback));
+    global->Set(String::NewFromUtf8(isolate, "AttachDocFactory"), FunctionTemplate::New(isolate, AttachDocFactory));
 
     Local<Context> context = Context::New(isolate, NULL, global);
     runningContext.Reset(isolate, context);
@@ -382,7 +695,32 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             (HMENU) IDM_INSERT,
             hInst,
             NULL);
-        
+
+        HWND buttonDelete = CreateWindow(
+            L"BUTTON",
+            L"Remove",
+            WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
+            120,
+            10,
+            100,
+            20,
+            hWnd,
+            (HMENU)IDM_REMOVE,
+            hInst,
+            NULL);
+
+		HWND buttonMarker = CreateWindow(
+			L"BUTTON",
+			L"Add Marker",
+			WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
+			230,
+			10,
+			100,
+			20,
+			hWnd,
+			(HMENU)IDM_ADDMARKER,
+			hInst,
+			NULL);
         textEdit = CreateWindow(
             L"EDIT",
             L"",
@@ -401,6 +739,19 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             L"",
             WS_CHILD | WS_VISIBLE | WS_BORDER,
             10,
+            100,
+            100,
+            40,
+            hWnd,
+            NULL,
+            hInst,
+            NULL);
+
+        positionEndEdit = CreateWindow(
+            L"EDIT",
+            L"",
+            WS_CHILD | WS_VISIBLE | WS_BORDER,
+            120,
             100,
             100,
             40,
@@ -433,8 +784,36 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
             int positionAsInt = std::stoi(position);
             InsertText(text, positionAsInt);
-        }
             break;
+        }
+        case IDM_REMOVE:
+        {
+            wchar_t buffer[2000];
+
+            GetWindowText(positionEdit, (LPWSTR)buffer, sizeof(buffer));
+            std::wstring wstrPos1(buffer);
+
+            int pos1 = std::stoi(wstrPos1);
+
+            GetWindowText(positionEndEdit, (LPWSTR)buffer, sizeof(buffer));
+            std::wstring wstrPos2(buffer);
+
+            int pos2 = std::stoi(wstrPos2);
+            RemoveText(pos1, pos2);
+			break;
+        }
+		case IDM_ADDMARKER:
+		{
+			wchar_t buffer[2000];
+
+			GetWindowText(positionEdit, (LPWSTR)buffer, sizeof(buffer));
+			std::wstring wstrPos1(buffer);
+
+			int pos1 = std::stoi(wstrPos1);
+			InsertTileMarker(pos1, L"tile",L"id");
+			break;
+		}
+
         default:
             return DefWindowProc(hWnd, message, wParam, lParam);
         }
@@ -477,4 +856,23 @@ INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
         break;
     }
     return (INT_PTR)FALSE;
+}
+
+static void OnInitialLoadLength(const v8::FunctionCallbackInfo<v8::Value>& args)
+{/*
+	InsertTileMarker(0, L"para", L"1");
+	InsertTileMarker(1, L"para", L"2");
+	InsertRangeMarker(0, 3, L"sdtcard", L"0");
+	InsertTileMarker(4, L"para", L"3");
+	InsertTileMarker(5, L"para", L"4");
+	InsertTileMarker(6, L"para", L"5");
+	InsertRangeMarker(5, 8, L"sdtcard", L"0");
+	InsertTileMarker(9, L"para", L"6");*/
+
+}
+
+static void OnInitialLoadOfSegments(const v8::FunctionCallbackInfo<v8::Value>& args)
+{
+	int a = 5;
+	(a);
 }

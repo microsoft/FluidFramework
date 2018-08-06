@@ -18,6 +18,7 @@ import { analyzeTasks, getLeader } from "./taskAnalyzer";
 
 // TODO: All these should be enforced by server as a part of document creation.
 const rootMapId = "root";
+const insightsMapId = "insights";
 const documentTasks = ["snapshot", "spell", "intel", "translation", "augmentation"];
 
 // Registered services to use when loading a document
@@ -556,6 +557,7 @@ export class Document extends EventEmitter implements api.IDocument {
                 // This I don't think I can get rid of
                 if (!this.existing) {
                     this.createAttached(rootMapId, mapExtension.MapExtension.Type);
+                    this.createInsightsMap();
                 } else {
                     await this.get(rootMapId);
                 }
@@ -1118,6 +1120,11 @@ export class Document extends EventEmitter implements api.IDocument {
             };
             this._deltaManager.submitRoundtrip(api.RoundTrip, latencyMessage);
         }
+    }
+
+    private createInsightsMap() {
+        const rootMap = this.getRoot();
+        rootMap.set(insightsMapId, this.createMap());
     }
 
     /**
