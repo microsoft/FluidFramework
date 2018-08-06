@@ -1454,7 +1454,7 @@ export class PartialSequenceLengths {
                 if (removalInfo.removedClientOverlap) {
                     removeClientOverlap = removalInfo.removedClientOverlap;
                 }
-            } 
+            }
 
             let seqPartials = combinedPartialLengths.partialLengths;
             let seqPartialsLen = seqPartials.length;
@@ -1469,7 +1469,7 @@ export class PartialSequenceLengths {
                 seqPartials[indexFirstGTE].seglen += segmentLen;
                 if (removeClientOverlap) {
                     accumulateRemoveClientOverlap(seqPartials[indexFirstGTE], removeClientOverlap, segmentLen);
-                } 
+                }
             }
             else {
                 let pLen: PartialSequenceLength;
@@ -1909,8 +1909,8 @@ export class Client {
     cloneFromSegments() {
         let clone = new Client("", this.mergeTree.options);
         let segments = <Segment[]>[];
-        this.mergeTree.blockCloneFromSegments(this.mergeTree.root, segments);
-        clone.mergeTree.reloadFromSegments(segments);
+        let newRoot = this.mergeTree.blockClone(this.mergeTree.root, segments);
+        clone.mergeTree.root = newRoot;
         let undoSeg = <IUndoInfo[]>[];
         for (let segment of segments) {
             if (segment.seq !== 0) {
@@ -3131,17 +3131,6 @@ export class MergeTree {
         return block;
     }
 
-    blockCloneFromSegments(block: IMergeBlock, segments: Segment[]) {
-        for (let i = 0; i < block.childCount; i++) {
-            let child = block.children[i];
-            if (child.isLeaf()) {
-                segments.push(this.segmentClone(<Segment>block.children[i]));
-            } else {
-                this.blockCloneFromSegments(<IMergeBlock>child, segments);
-            }
-        }
-    }
-
     clone() {
         let options = {
             blockUpdateMarkers: this.blockUpdateMarkers,
@@ -3152,14 +3141,18 @@ export class MergeTree {
         b.root = b.blockClone(this.root);
     }
 
-    blockClone(block: IMergeBlock) {
+    blockClone(block: IMergeBlock, segments?: Segment[]) {
         let bBlock = this.makeBlock(block.childCount);
         for (let i = 0; i < block.childCount; i++) {
             let child = block.children[i];
             if (child.isLeaf()) {
-                bBlock.children[i] = this.segmentClone(<Segment>block.children[i]);
+                let segment = this.segmentClone(<Segment>block.children[i]);
+                bBlock.children[i] = segment;
+                if (segments) {
+                    segments.push(segment);
+                }
             } else {
-                bBlock.children[i] = this.blockClone(<IMergeBlock>block.children[i]);
+                bBlock.children[i] = this.blockClone(<IMergeBlock>block.children[i], segments);
             }
         }
         this.nodeUpdateLengthNewStructure(bBlock);
