@@ -2,17 +2,6 @@
 #include "PieceTable.h"
 #include <chrono>
 
-struct MergeTreePerfTester
-{
-	MergeTree tree;
-
-	MergeTreePerfTester(std::string_view text)
-	{
-
-
-	}
-};
-
 // Reads a file at 'path', and creates a segment for each line of the file
 // Pass cCopies > 1 to load multiple copies of the file, if you need bigger data
 std::vector<std::shared_ptr<Segment>> LoadFileIntoSegments(const char *path, int cCopies)
@@ -26,7 +15,7 @@ std::vector<std::shared_ptr<Segment>> LoadFileIntoSegments(const char *path, int
 		size_t i = text.find('\n');
 		while (i != std::string_view::npos)
 		{
-			segments.push_back(std::make_shared<TextSegment>(Seq::Universal(), std::string(text.substr(0, i + 1))));
+			segments.push_back(std::make_shared<TextSegment>(text.substr(0, i + 1)));
 			text.remove_prefix(i + 1);
 			i = text.find('\n');
 		}
@@ -86,7 +75,8 @@ void RunFindReplaceTest_MergeTree(const char *path)
 	printf("== Merge tree find/replace test ==\n");
 
 	using namespace std::string_view_literals;
-	MergeTree doc;
+	SimpleLoopbackRouter router;
+	MergeTree doc(&router);
 	auto segments = LoadFileIntoSegments(path, 1);
 	doc.ReloadFromSegments(std::move(segments));
 
@@ -97,20 +87,19 @@ void RunFindReplaceTest_MergeTree(const char *path)
 	std::chrono::high_resolution_clock::time_point ts1 = std::chrono::high_resolution_clock::now();
 
 	CharacterPosition cp(0);
-	const CharacterPosition cpMac = doc.CpMac(Seq::Universal());
-	MergeTree::Txn txn = doc.StartTransaction(Seq::Universal());
+	const CharacterPosition cpMac = doc.CpMac();
 	int cFetches = 0;
 	int cReplaces = 0;
 	while (cp < cpMac)
 	{
-		std::string_view run = doc.Fetch(Seq::Universal(), cp);
+		std::string_view run = doc.Fetch(cp);
 		cFetches++;
 
 #if TEST_REPLACE
 		std::string_view::size_type pos = run.find(svReplace, 0);
 		if (pos != std::string_view::npos)
 		{
-			doc.Replace(txn, cp + pos, svReplace.size(), svReplacement);
+			doc.Replace(cp + pos, svReplace.size(), svReplacement);
 			cReplaces++;
 			cp = cp + pos + svReplace.size();
 		}
@@ -126,18 +115,19 @@ void RunFindReplaceTest_MergeTree(const char *path)
 	printf("Runtime: %lld us\n", std::chrono::duration_cast<std::chrono::microseconds>(ts2 - ts1).count());
 	printf("Fetch count: %d\n", cFetches);
 	printf("Replace count: %d\n", cReplaces);
+
+	doc.checkInvariants();
 }
 
 void RunMergeTreeMisc()
 {
+#ifdef REMOVED
 	MergeTree tree;
 	{
-		auto txn = tree.StartTransaction(Seq::Universal());
-		tree.Replace(txn, CharacterPosition(0), 0, "asdf");
+		tree.Replace(CharacterPosition(0), 0, "asdf");
 		tree.checkInvariants();
 	}
 
-#ifdef REMOVED
 	{
 		auto res = tree.find(Seq::Universal(), CharacterPosition(2));
 	}
@@ -177,6 +167,8 @@ int main(int argc, char **argv)
 #ifdef __EMSCRIPTEN__
 		RunFindReplaceTest_MergeTree("assets/pp10.txt");
 #else
+	Sleep(3000);
+
 	if (argc > 1 && strcmp(argv[1], "piecetable") == 0)
 		RunFindReplaceTest_PieceTable("../../routerlicious/public/literature/pp10.txt");
 	else //if (strcmp(argv[1], "mergetree"))

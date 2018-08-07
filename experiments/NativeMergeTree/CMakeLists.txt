@@ -12,9 +12,11 @@ file(COPY "${PROJECT_SOURCE_DIR}/../../routerlicious/public/literature/"
 
 set (NATIVEMERGETREE_HEADERS
 	"array_view.h"
-	"LengthMap.h"
+	"PartialLengths.h"
+	"Messages.h"
 	"MergeTree.h"
 	"PieceTable.h"
+	"Router.h"
 	"Seq.h"
 )
 

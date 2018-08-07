@@ -62,6 +62,28 @@ public:
 	constexpr bool operator==(const CharacterPosition &other) const { return cp == other.cp; }
 	constexpr bool operator!=(const CharacterPosition &other) const { return cp != other.cp; }
 
-	CharacterPosition operator+(int dcp) { return CharacterPosition(cp + dcp); }
+	CharacterPosition operator+(int dcp) const { return CharacterPosition(cp + dcp); }
+	CharacterPosition operator-(int dcp) const { return CharacterPosition(cp - dcp); }
+};
+
+struct ClientId
+{
+private:
+	uint32_t client;
+
+	ClientId() = delete;
+	explicit constexpr ClientId(uint32_t client) : client(client) {}
+
+public:
+	static constexpr ClientId Nil() { return ClientId{ std::numeric_limits<uint32_t>::max() }; }
+	static constexpr ClientId Local() { return ClientId{ 0 }; }
+	static constexpr ClientId Create(uint32_t client) { return ClientId{ client }; }
+
+	constexpr bool operator<(const ClientId &other) const { return client < other.client; }
+	constexpr bool operator>(const ClientId &other) const { return client > other.client; }
+	constexpr bool operator<=(const ClientId &other) const { return client <= other.client; }
+	constexpr bool operator>=(const ClientId &other) const { return client >= other.client; }
+	constexpr bool operator==(const ClientId &other) const { return client == other.client; }
+	constexpr bool operator!=(const ClientId &other) const { return client != other.client; }
 };
 

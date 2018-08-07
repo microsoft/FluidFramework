@@ -125,9 +125,11 @@
     <ClInclude Include="array_view.h" />
     <ClInclude Include="FileView_Posix.h" />
     <ClInclude Include="FileView_Win32.h" />
-    <ClInclude Include="LengthMap.h" />
     <ClInclude Include="MergeTree.h" />
+    <ClInclude Include="Messages.h" />
+    <ClInclude Include="PartialLengths.h" />
     <ClInclude Include="PieceTable.h" />
+    <ClInclude Include="Router.h" />
     <ClInclude Include="Seq.h" />
   </ItemGroup>
   <ItemGroup>

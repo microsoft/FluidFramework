@@ -112,7 +112,7 @@ public:
 	{
 		std::unique_ptr<TextSegment> seg;
 		if (text.size() > 0)
-			seg = std::make_unique<TextSegment>(Seq::Universal(), text);
+			seg = std::make_unique<TextSegment>(text);
 		Index i1 = ISplitCp(cp);
 		Index i2 = (dcp == 0) ? i1 : ISplitCp(cp + dcp);
 
