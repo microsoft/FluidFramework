@@ -14,8 +14,9 @@
                 Downloads
             </div>
             <ul class="list-unstyled">
-                <li><a>PC</a></li>
-                <li><a>Mac</a></li>
+                <li><a href="https://praguedev.blob.core.windows.net/nota/RLpRAvZfAPkHXrqUUTEW/nota Setup 0.0.1.exe">PC</a></li>
+                <li><a href="https://praguedev.blob.core.windows.net/nota/RLpRAvZfAPkHXrqUUTEW/nota-0.0.1.dmg">Mac</a></li>
+                <li><a href="https://praguedev.blob.core.windows.net/nota/RLpRAvZfAPkHXrqUUTEW/nota_0.0.1_amd64.deb">Linux</a></li>
             </ul>
         </div>
     {{/content}}

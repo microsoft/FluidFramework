@@ -55,7 +55,11 @@ export function create(config: Provider) {
             tokenURL: "https://login.microsoftonline.com/organizations/oauth2/v2.0/token",
         },
         (req, iss, sub, profile, jwtClaims, accessToken, refreshToken, params, done) => {
-            return done(null, jwtClaims);
+            if (jwtClaims.tid !== "72f988bf-86f1-41af-91ab-2d7cd011db47") {
+                return done(new Error("Tenant not supported"));
+            } else {
+                return done(null, jwtClaims);
+            }
         },
     );
 

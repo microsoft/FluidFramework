@@ -2,7 +2,7 @@
   "name": "nota",
   "version": "0.0.1",
   "description": "Prague electron client",
-  "main": "dist/index.js",
+  "main": "dist/app/index.js",
   "scripts": {
     "build": "tsc && tslint 'src/**/*'",
     "start": "electron dist/app/index.js",
@@ -11,9 +11,16 @@
     "tslint": "tslint 'src/**/*.ts'",
     "pack": "electron-builder --dir",
     "dist": "electron-builder",
+    "dist-linux": "electron-builder --linux deb",
+    "dist-mac": "electron-builder --mac",
+    "dist-win": "electron-builder --windows",
     "webpack": "webpack --config webpack.config.js"
   },
-  "author": "",
+  "author": {
+    "email": "kurtb@microsoft.com",
+    "name": "Prague Team"
+  },
+  "homepage": "https://nota.eu.prague.office-int.com/",
   "build": {
     "appId": "com.microsoft.nota",
     "directories": {

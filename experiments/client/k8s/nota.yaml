@@ -13,7 +13,7 @@ spec:
     spec:
       containers:
       - name: nota
-        image: prague.azurecr.io/nota:0.1.1
+        image: prague.azurecr.io/nota:0.1.2
         imagePullPolicy: IfNotPresent
         ports:
         - name: ui
