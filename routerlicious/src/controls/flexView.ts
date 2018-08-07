@@ -51,6 +51,54 @@ export class FlexView extends ui.Component {
         this.dock = new DockPanel(dockElement);
         this.addChild(this.dock);
 
+        this.addBlobListeners(doc);
+
+        // Add the ink canvas to the dock
+        // Add blob Upload Handler
+        const inkCanvasElement = document.createElement("div");
+        blobUploadHandler(inkCanvasElement, doc, this.renderImage);
+        this.ink = new InkCanvas(inkCanvasElement, root.get("ink"));
+        this.dock.addContent(this.ink);
+
+        this.addButtons();
+
+        // UI components on the flex view
+        if (!root.has("components")) {
+            root.set("components", doc.createMap());
+        }
+        this.processComponents(root.get("components"));
+    }
+
+    protected resizeCore(bounds: ui.Rectangle) {
+        // Update the base ink dock
+        bounds.conformElement(this.dock.element);
+        this.dock.resize(bounds);
+
+        // Layout component windows
+        for (const component of this.components) {
+            const componentRect = new ui.Rectangle(
+                component.position.x,
+                component.position.y,
+                component.size.width,
+                component.size.height);
+            componentRect.conformElement(component.component.element);
+            component.component.resize(componentRect);
+        }
+
+        // Size the color swatch popup
+        const colorButtonRect = ui.Rectangle.fromClientRect(this.colorButton.element.getBoundingClientRect());
+        const popupSize = this.popup.measure(bounds);
+        const rect = new ui.Rectangle(
+            colorButtonRect.x,
+            colorButtonRect.y - popupSize.height,
+            popupSize.width,
+            popupSize.height);
+        rect.conformElement(this.popup.element);
+        this.popup.resize(rect);
+    }
+
+    private addBlobListeners(doc: api.Document) {
+
         doc.on(core.BlobPrepared, (message) => {
             this.renderImage(message);
         });
@@ -84,14 +132,9 @@ export class FlexView extends ui.Component {
                         });
                 }
             });
+    }
 
-        // Add the ink canvas to the dock
-        // Add blob Upload Handler
-        const inkCanvasElement = document.createElement("div");
-        blobUploadHandler(inkCanvasElement, doc, this.renderImage);
-        this.ink = new InkCanvas(inkCanvasElement, root.get("ink"));
-        this.dock.addContent(this.ink);
-
+    private addButtons() {
         const stackPanelElement = document.createElement("div");
         const buttonSize = { width: 50, height: 50 };
         const stackPanel = new StackPanel(stackPanelElement, Orientation.Horizontal, ["navbar-prague"]);
@@ -137,40 +180,6 @@ export class FlexView extends ui.Component {
         this.popup.addContent(this.colorStack);
         this.addChild(this.popup);
         this.element.appendChild(this.popup.element);
-
-        // UI components on the flex view
-        if (!root.has("components")) {
-            root.set("components", doc.createMap());
-        }
-        this.processComponents(root.get("components"));
-    }
-
-    protected resizeCore(bounds: ui.Rectangle) {
-        // Update the base ink dock
-        bounds.conformElement(this.dock.element);
-        this.dock.resize(bounds);
-
-        // Layout component windows
-        for (const component of this.components) {
-            const componentRect = new ui.Rectangle(
-                component.position.x,
-                component.position.y,
-                component.size.width,
-                component.size.height);
-            componentRect.conformElement(component.component.element);
-            component.component.resize(componentRect);
-        }
-
-        // Size the color swatch popup
-        const colorButtonRect = ui.Rectangle.fromClientRect(this.colorButton.element.getBoundingClientRect());
-        const popupSize = this.popup.measure(bounds);
-        const rect = new ui.Rectangle(
-            colorButtonRect.x,
-            colorButtonRect.y - popupSize.height,
-            popupSize.width,
-            popupSize.height);
-        rect.conformElement(this.popup.element);
-        this.popup.resize(rect);
     }
 
     private async processComponents(components: types.IMap) {
