@@ -1,1 +1,20 @@
-<h1>Hello!</h1>
+{{<layout}}
+    {{$content}}
+        <h1>Notes</h1>
+        <form method="post" action="/notes" target="_blank">
+            <input type="submit" value="Create"> 
+        </form>
+        <dl id="note-list">
+        </dl>
+    {{/content}}
+    {{$scripts}}
+        <script>
+            function openNote(id) {
+                window.open(`/notes/${encodeURIComponent(id)}`, "_blank");
+            }
+
+            controllers.register("{{ routerlicious }}", "{{ historian }}", "{{ tenantId }}");
+            controllers.loadNotes("{{ token }}", openNote);
+        </script>
+    {{/scripts}}
+{{/layout}}

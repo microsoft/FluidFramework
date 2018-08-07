@@ -1,0 +1,28 @@
+{{<layout}}
+    {{$styles}}
+        <link href="/public/stylesheets/style.css" rel="stylesheet" />
+    {{/styles}}
+    {{$content}}
+        <div class="container">
+            <h1>Nota</h1>
+
+            <p>
+                <a href="/notes">My Notes</a>
+            </p>
+
+            <div>
+                Downloads
+            </div>
+            <ul class="list-unstyled">
+                <li><a href="https://praguedev.blob.core.windows.net/nota/RLpRAvZfAPkHXrqUUTEW/nota Setup 0.0.1.exe">PC</a></li>
+                <li><a href="https://praguedev.blob.core.windows.net/nota/RLpRAvZfAPkHXrqUUTEW/nota-0.0.1.dmg">Mac</a></li>
+                <li><a href="https://praguedev.blob.core.windows.net/nota/RLpRAvZfAPkHXrqUUTEW/nota_0.0.1_amd64.deb">Linux</a></li>
+            </ul>
+        </div>
+    {{/content}}
+    {{$scripts}}
+        <script>
+            controllers.loadNote("{{ token }}", "{{ noteId }}", "{{ notesToken }}");
+        </script>
+    {{/scripts}}
+{{/layout}}
