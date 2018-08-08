@@ -5,7 +5,7 @@ import * as api from "../../api-core";
 import { ICollection, IDocument, IOrdererConnection, ITenantManager } from "../../core";
 import * as core from "../../core";
 import { DeliLambda } from "../../deli/lambda";
-import { ClientSequenceTimeout } from "../../deli/lambdaFactory";
+import { ActivityCheckingTimeout, ClientSequenceTimeout } from "../../deli/lambdaFactory";
 import { IContext } from "../../kafka-service/lambdas";
 import { ScriptoriumLambda } from "../../scriptorium/lambda";
 import { TmzLambda } from "../../tmz/lambda";
@@ -367,7 +367,8 @@ export class LocalOrderer implements core.IOrderer {
             details.value,
             collection,
             this.producer,
-            ClientSequenceTimeout);
+            ClientSequenceTimeout,
+            ActivityCheckingTimeout);
         this.deliProducer = new DeliProducer(deliLambda);
     }
 

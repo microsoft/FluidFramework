@@ -5,8 +5,11 @@ import { IContext, IPartitionLambda, IPartitionLambdaFactory } from "../kafka-se
 import * as utils from "../utils";
 import { DeliLambda } from "./lambda";
 
-// We expire clients after 5 minutes of no activity
-export const ClientSequenceTimeout = 5 * 60 * 1000;
+// We expire clients after 3 minutes of no activity
+export const ClientSequenceTimeout = 3 * 60 * 1000;
+
+// Timeout for checking inactivity.
+export const ActivityCheckingTimeout = 1 * 60 * 1000;
 
 export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaFactory {
     constructor(
@@ -36,7 +39,8 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
             this.collection,
             // The producer as well it shouldn't take. Maybe it just gives an output stream?
             this.producer,
-            ClientSequenceTimeout);
+            ClientSequenceTimeout,
+            ActivityCheckingTimeout);
     }
 
     public async dispose(): Promise<void> {

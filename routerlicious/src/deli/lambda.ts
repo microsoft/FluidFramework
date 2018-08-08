@@ -47,15 +47,17 @@ export class DeliLambda implements IPartitionLambda {
     private minimumSequenceNumber = 0;
     private branchMap: RangeTracker;
     private checkpointContext: CheckpointContext;
+    private idleTimer: any;
 
     constructor(
         context: IContext,
-        tenantId: string,
+        private tenantId: string,
         private documentId: string,
         dbObject: core.IDocument,
         collection: core.ICollection<core.IDocument>,
         private producer: utils.IProducer,
-        private clientTimeout: number) {
+        private clientTimeout: number,
+        private activityTimeout: number) {
 
         // Instantiate existing clients
         if (dbObject.clients) {
@@ -97,7 +99,7 @@ export class DeliLambda implements IPartitionLambda {
         // Initialize counting context
         this.sequenceNumber = dbObject.sequenceNumber;
         this.logOffset = dbObject.logOffset;
-        this.checkpointContext = new CheckpointContext(tenantId, documentId, collection, context);
+        this.checkpointContext = new CheckpointContext(this.tenantId, this.documentId, collection, context);
     }
 
     public handler(message: utils.IMessage): void {
@@ -108,23 +110,30 @@ export class DeliLambda implements IPartitionLambda {
         if (!ticketedMessage) {
             return;
         }
+
         const outputMessages = [ticketedMessage.message];
 
-        // Check if there are any old/idle clients.
+        // Check if there are any old/idle clients. Craft a leave message and ticket the message.
         const idleClient = this.getIdleClient(ticketedMessage.timestamp);
-
-        // Craft a leave message for the idle client and ticket the message.
         if (idleClient) {
-            const leaveMessage = this.createLeaveMessage(
-                ticketedMessage.message,
-                idleClient.clientId,
-                ticketedMessage.user);
-            const kafkaMessage = this.createKafkaMessage(leaveMessage, message);
-            outputMessages.push(this.ticket(kafkaMessage, this.createTrace()).message);
+            const leaveMessage = this.createLeaveMessage(idleClient.clientId, ticketedMessage.user);
+            const kafkaLeaveMessage = this.createKafkaMessage(leaveMessage, message);
+            outputMessages.push(this.ticket(kafkaLeaveMessage, this.createTrace()).message);
         }
 
         // Send all ticketed messages.
         this.sendMessages(outputMessages);
+
+        // Start a timer to check inactivity on the document. To trigger idle client leave message,
+        // we send a noop. The noop should trigger a client leave message if there are idle clients.
+        if (this.idleTimer) {
+            clearTimeout(this.idleTimer);
+        }
+        this.idleTimer = setTimeout(() => {
+            const noOpMessage = this.createNoOpMessage();
+            const kafkaNoOpMessage = this.createKafkaMessage(noOpMessage, message);
+            this.handler(kafkaNoOpMessage);
+        }, this.activityTimeout);
     }
 
     public close() {
@@ -370,12 +379,11 @@ export class DeliLambda implements IPartitionLambda {
      * Creates a leave message for inactive clients.
      */
     private createLeaveMessage(
-        ticketedMessage: core.ITicketedMessage,
         clientId: string,
         user: api.ITenantUser): core.IRawOperationMessage {
         const leaveMessage: core.IRawOperationMessage = {
             clientId: null,
-            documentId: ticketedMessage.documentId,
+            documentId: this.documentId,
             operation: {
                 clientSequenceNumber: -1,
                 contents: clientId,
@@ -383,7 +391,7 @@ export class DeliLambda implements IPartitionLambda {
                 traces: [],
                 type: api.ClientLeave,
             },
-            tenantId: ticketedMessage.tenantId,
+            tenantId: this.tenantId,
             timestamp: Date.now(),
             type: core.RawOperationType,
             user,
@@ -397,12 +405,12 @@ export class DeliLambda implements IPartitionLambda {
     private createNackMessage(message: core.IRawOperationMessage, user: api.ITenantUser): ITicketedMessageOutput {
         const nackMessage: core.INackMessage = {
             clientId: message.clientId,
-            documentId: message.documentId,
+            documentId: this.documentId,
             operation: {
                 operation: message.operation,
                 sequenceNumber: this.minimumSequenceNumber,
             },
-            tenantId: message.tenantId,
+            tenantId: this.tenantId,
             type: core.NackOperationType,
         };
         return {
@@ -412,8 +420,27 @@ export class DeliLambda implements IPartitionLambda {
         };
     }
 
+    private createNoOpMessage(): core.IRawOperationMessage {
+        const noOpMessage: core.IRawOperationMessage = {
+            clientId: null,
+            documentId: this.documentId,
+            operation: {
+                clientSequenceNumber: -1,
+                contents: null,
+                referenceSequenceNumber: -1,
+                traces: [],
+                type: api.NoOp,
+            },
+            tenantId: this.tenantId,
+            timestamp: Date.now(),
+            type: core.RawOperationType,
+            user: null,
+        };
+        return noOpMessage;
+    }
+
     /**
-     * Creates a raw kafka message simulating the next message after last message.
+     * Creates a raw kafka message with the same properties of last kafka message.
      */
     private createKafkaMessage(
         rawMessage: core.IRawOperationMessage,
@@ -421,7 +448,7 @@ export class DeliLambda implements IPartitionLambda {
         const kafkaMessage: utils.IMessage = {
             highWaterOffset: lastKafkaMessage.highWaterOffset,
             key: lastKafkaMessage.key,
-            offset: lastKafkaMessage.offset + 1,
+            offset: lastKafkaMessage.offset,
             partition: lastKafkaMessage.partition,
             topic: lastKafkaMessage.topic,
             value: JSON.stringify(rawMessage),
