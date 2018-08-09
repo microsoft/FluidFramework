@@ -1,0 +1,26 @@
+{
+  "name": "@prague/utils",
+  "version": "0.1.0",
+  "description": "Server to assign sequence numbers and route deltas between connected clients",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "npm run tsc && npm run tslint",
+    "test": "mocha --recursive dist/test",
+    "tsc": "tsc",
+    "tslint": "tslint 'src/**/*.ts'"
+  },
+  "author": "Microsoft",
+  "repository": "microsoft/prague",
+  "devDependencies": {
+    "tslint": "^5.11.0",
+    "typescript": "^3.0.1"
+  },
+  "dependencies": {
+    "@prague/gitresources": "^0.7.1",
+    "@types/async": "^2.0.49",
+    "@types/debug": "0.0.30",
+    "@types/node": "^10.5.4",
+    "lodash": "^4.17.10"
+  }
+}
