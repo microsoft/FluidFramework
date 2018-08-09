@@ -1,12 +1,11 @@
 {
-  "name": "@prague/utils",
+  "name": "@prague/socket-storage",
   "version": "0.1.0",
-  "description": "Collection of utility functions for Prague",
+  "description": "Socket.IO + Git implementation of Prague service API",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "npm run tsc && npm run tslint",
-    "test": "mocha --recursive dist/test",
     "tsc": "tsc",
     "tslint": "tslint 'src/**/*.ts'"
   },
@@ -18,8 +17,10 @@
   },
   "dependencies": {
     "@prague/gitresources": "^0.7.1",
-    "@types/debug": "0.0.30",
-    "@types/node": "^10.5.4",
-    "lodash": "^4.17.10"
+    "@prague/loader": "0.1.0",
+    "@prague/services-client": "0.1.0",
+    "@prague/utils": "0.1.0",
+    "@types/socket.io-client": "^1.4.32",
+    "socket.io-client": "^2.1.1"
   }
 }
