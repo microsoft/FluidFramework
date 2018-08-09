@@ -1,4 +1,4 @@
-import * as api from "@prague/loader";
+import * as api from "@prague/runtime-definitions";
 import { BatchManager } from "@prague/utils";
 import { EventEmitter } from "events";
 import { debug } from "./debug";

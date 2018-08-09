@@ -1,12 +1,11 @@
+import * as runtime from "@prague/runtime-definitions";
 import { EventEmitter } from "events";
-import * as protocol from "./protocol";
-import * as storage from "./storage";
 
 export interface IConnectionDetails {
     clientId: string;
     existing: boolean;
     parentBranch: string;
-    user: protocol.IUser;
+    user: runtime.IUser;
 }
 
 export class DeltaConnection extends EventEmitter {
@@ -14,8 +13,8 @@ export class DeltaConnection extends EventEmitter {
         tenantId: string,
         id: string,
         token: string,
-        service: storage.IDocumentService,
-        client: storage.IClient) {
+        service: runtime.IDocumentService,
+        client: runtime.IClient) {
         const connection = await service.connectToDeltaStream(tenantId, id, token, client);
         return new DeltaConnection(connection);
     }
@@ -38,7 +37,7 @@ export class DeltaConnection extends EventEmitter {
     private _connected = true;
     // tslint:enable:variable-name
 
-    private constructor(private connection: storage.IDocumentDeltaConnection) {
+    private constructor(private connection: runtime.IDocumentDeltaConnection) {
         super();
 
         this._details = {
@@ -49,11 +48,11 @@ export class DeltaConnection extends EventEmitter {
         };
 
         // listen for new messages
-        connection.on("op", (documentId: string, messages: protocol.ISequencedDocumentMessage[]) => {
+        connection.on("op", (documentId: string, messages: runtime.ISequencedDocumentMessage[]) => {
             this.emit("op", documentId, messages);
         });
 
-        connection.on("nack", (documentId: string, message: protocol.INack[]) => {
+        connection.on("nack", (documentId: string, message: runtime.INack[]) => {
             // Mark nacked and also pause any outbound communication
             this._nacked = true;
             const target = message[0].sequenceNumber;
@@ -80,7 +79,7 @@ export class DeltaConnection extends EventEmitter {
         this.removeAllListeners();
     }
 
-    public submit(message: protocol.IDocumentMessage): void {
+    public submit(message: runtime.IDocumentMessage): void {
         this.connection.submit(message);
     }
 }

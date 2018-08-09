@@ -1,4 +1,4 @@
-import * as api from "@prague/loader";
+import * as api from "@prague/runtime-definitions";
 import { GitManager, Historian, ICredentials } from "@prague/services-client";
 import * as request from "request";
 import * as io from "socket.io-client";

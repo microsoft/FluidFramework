@@ -1,4 +1,4 @@
-import { IClient, IUser } from "@prague/loader";
+import { IClient, IUser } from "@prague/runtime-definitions";
 
 /**
  * Message sent to connect to the given object

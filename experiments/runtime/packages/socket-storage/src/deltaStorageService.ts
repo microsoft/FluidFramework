@@ -1,4 +1,4 @@
-import * as api from "@prague/loader";
+import * as api from "@prague/runtime-definitions";
 import * as querystring from "querystring";
 import * as request from "request";
 

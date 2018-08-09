@@ -1,6 +1,9 @@
 {
   "name": "root",
   "private": true,
+  "scripts": {
+    "build": "lerna run build --stream"
+  },
   "devDependencies": {
     "lerna": "^3.0.0-rc.0"
   }

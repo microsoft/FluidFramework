@@ -1,5 +1,5 @@
 import * as resources from "@prague/gitresources";
-import * as api from "@prague/loader";
+import * as api from "@prague/runtime-definitions";
 import * as assert from "assert";
 import * as request from "request-promise-native";
 import { IHistorian } from "./historian";

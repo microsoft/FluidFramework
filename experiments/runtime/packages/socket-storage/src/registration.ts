@@ -1,4 +1,4 @@
-import { IDocumentService } from "@prague/loader";
+import { IDocumentService } from "@prague/runtime-definitions";
 import { DocumentService } from "./documentService";
 
 export function createDocumentService(
