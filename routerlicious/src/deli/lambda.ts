@@ -102,7 +102,7 @@ export class DeliLambda implements IPartitionLambda {
         this.checkpointContext = new CheckpointContext(this.tenantId, this.documentId, collection, context);
     }
 
-    public handler(message: utils.IMessage): void {
+    public handler(message: utils.IMessage, crafted = false): void {
         // Ticket current message.
         const ticketedMessage = this.ticket(message, this.createTrace());
 
@@ -113,7 +113,8 @@ export class DeliLambda implements IPartitionLambda {
 
         const outputMessages = [ticketedMessage.message];
 
-        // Check if there are any old/idle clients. Craft a leave message and ticket the message.
+        // Check if there are any old/idle clients. Craft and ticket a leave message.
+        // Piggyback with the actual kafka message.
         const idleClient = this.getIdleClient(ticketedMessage.timestamp);
         if (idleClient) {
             const leaveMessage = this.createLeaveMessage(idleClient.clientId, ticketedMessage.user);
@@ -121,8 +122,9 @@ export class DeliLambda implements IPartitionLambda {
             outputMessages.push(this.ticket(kafkaLeaveMessage, this.createTrace()).message);
         }
 
-        // Send all ticketed messages.
-        this.sendMessages(outputMessages);
+        // We only checkpoint real kafka message. Crafted kafka messages are not checkpointed since
+        // they share the same offset with the last kafka message.
+        crafted ? this.sendMessages(outputMessages) : this.sendAndCheckpoint(outputMessages);
 
         // Start a timer to check inactivity on the document. To trigger idle client leave message,
         // we send a noop. The noop should trigger a client leave message if there are idle clients.
@@ -132,7 +134,7 @@ export class DeliLambda implements IPartitionLambda {
         this.idleTimer = setTimeout(() => {
             const noOpMessage = this.createNoOpMessage();
             const kafkaNoOpMessage = this.createKafkaMessage(noOpMessage, message);
-            this.handler(kafkaNoOpMessage);
+            this.handler(kafkaNoOpMessage, true);
         }, this.activityTimeout);
     }
 
@@ -357,15 +359,12 @@ export class DeliLambda implements IPartitionLambda {
     /**
      * Sends messages to kafka and checkpoints current context on success.
      */
-    private sendMessages(messages: core.ITicketedMessage[]) {
+    private sendAndCheckpoint(messages: core.ITicketedMessage[]) {
         // TODO optimize this to aviod doing per message
         // Checkpoint the current state
         const checkpoint = this.generateCheckpoint();
 
-        const sendPromises = [];
-        messages.map((message) => sendPromises.push(this.producer.send(JSON.stringify(message), message.documentId)));
-
-        Promise.all(sendPromises).then(
+        this.sendMessages(messages).then(
             (result) => {
                 this.checkpointContext.checkpoint(checkpoint);
             },
@@ -373,6 +372,15 @@ export class DeliLambda implements IPartitionLambda {
                 // TODO issue with Kafka - need to propagate the issue somehow
                 winston.error("Could not send message", error);
             });
+    }
+
+    /**
+     * Sends messages to kafka.
+     */
+    private async sendMessages(messages: core.ITicketedMessage[]) {
+        const sendPromises = [];
+        messages.map((message) => sendPromises.push(this.producer.send(JSON.stringify(message), message.documentId)));
+        await Promise.all(sendPromises);
     }
 
     /**

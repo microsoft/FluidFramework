@@ -567,10 +567,15 @@ export class Document extends EventEmitter implements api.IDocument {
 
     private connect(headerP: Promise<IHeaderDetails>): IConnectResult {
         // Create the DeltaManager and begin listening for connection events
-        this._deltaManager = new api.DeltaManager(this.id, this.tenantId, this.service, this.opts.client);
+        this._deltaManager = new api.DeltaManager(
+            this.id,
+            this.tenantId,
+            this.opts.token,
+            this.service,
+            this.opts.client);
 
         // Open a connection - the DeltaMananger will automatically reconnect
-        const detailsP = this._deltaManager.connect("Document loading", this.opts.token);
+        const detailsP = this._deltaManager.connect("Document loading");
         this._deltaManager.on("connect", (details: api.IConnectionDetails) => {
             this.setConnectionState(api.ConnectionState.Connecting, "Connected to Routerlicious", details.clientId);
         });
@@ -1049,14 +1054,20 @@ export class Document extends EventEmitter implements api.IDocument {
                         `Fully joined the document@ ${message.minimumSequenceNumber}`,
                         this.pendingClientId);
                 }
-                this.runTaskAnalyzer();
                 this.emit("clientJoin", message.contents);
+                this.runTaskAnalyzer();
                 break;
 
             case api.ClientLeave:
-                this.clients.delete(message.contents);
-                this.emit("clientLeave", message.contents);
-                this.runTaskAnalyzer();
+                const leftClientId = message.contents;
+                this.clients.delete(leftClientId);
+                this.emit("clientLeave", leftClientId);
+                // Switch to read only mode if a client receives it's own leave message.
+                if (this.clientId === leftClientId) {
+                    this._deltaManager.enableReadonlyMode();
+                } else {
+                    this.runTaskAnalyzer();
+                }
                 break;
 
             // Message contains full metadata (no content)

@@ -45,6 +45,9 @@ export class DeltaManager extends EventEmitter implements IDeltaManager {
     private updateHasBeenRequested = false;
     private updateSequenceNumberTimer: any;
 
+    // Flag indicating whether the client is only a receiving client.
+    private readonly = false;
+
     // The minimum sequence number and last sequence number received from the server
     private minSequenceNumber = 0;
 
@@ -90,6 +93,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager {
     constructor(
         private id: string,
         private tenantId: string,
+        private token: string,
         private service: storage.IDocumentService,
         private client: IClient) {
         super();
@@ -160,6 +164,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager {
             traces,
             type,
         };
+        this.readonly = false;
 
         this.stopSequenceNumberUpdate();
         this._outbound.push(message);
@@ -176,11 +181,12 @@ export class DeltaManager extends EventEmitter implements IDeltaManager {
             traces: contents.traces,
             type,
         };
+        this.readonly = false;
 
         this._outbound.push(message);
     }
 
-    public async connect(reason: string, token: string): Promise<IConnectionDetails> {
+    public async connect(reason: string): Promise<IConnectionDetails> {
         if (this.connecting) {
             return this.connecting.promise;
         }
@@ -188,7 +194,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager {
         // Connect to the delta storage endpoint
         const storageDeferred = new Deferred<storage.IDocumentDeltaStorageService>();
         this.deltaStorageP = storageDeferred.promise;
-        this.service.connectToDeltaStorage(this.tenantId, this.id, token).then(
+        this.service.connectToDeltaStorage(this.tenantId, this.id, this.token).then(
             (deltaStorage) => {
                 storageDeferred.resolve(deltaStorage);
             },
@@ -199,7 +205,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager {
             });
 
         this.connecting = new Deferred<IConnectionDetails>();
-        this.connectCore(token, reason, InitialReconnectDelay);
+        this.connectCore(reason, InitialReconnectDelay);
 
         return this.connecting.promise;
     }
@@ -211,10 +217,18 @@ export class DeltaManager extends EventEmitter implements IDeltaManager {
         return deferred.promise;
     }
 
+    public enableReadonlyMode() {
+        this.stopHeartbeatSending();
+        this.stopSequenceNumberUpdate();
+        this.readonly = true;
+    }
+
     /**
      * Closes the connection and clears inbound & outbound queues.
      */
     public close() {
+        this.stopHeartbeatSending();
+        this.stopSequenceNumberUpdate();
         if (this.connection) {
             this.connection.close();
         }
@@ -276,10 +290,11 @@ export class DeltaManager extends EventEmitter implements IDeltaManager {
             });
     }
 
-    private connectCore(token: string, reason: string, delay: number) {
+    private connectCore(reason: string, delay: number) {
         // Reconnection is only enabled for browser clients.
         const reconnect = this.clientType === Browser;
-        DeltaConnection.Connect(this.tenantId, this.id, token, this.service, this.client).then(
+
+        DeltaConnection.Connect(this.tenantId, this.id, this.token, this.service, this.client).then(
             (connection) => {
                 this.connection = connection;
 
@@ -309,7 +324,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager {
                         this._inbound.systemPause();
                         this._inbound.clear();
                     } else {
-                        this.connectCore(token, "Reconnecting", InitialReconnectDelay);
+                        this.connectCore("Reconnecting on nack", InitialReconnectDelay);
                     }
                 });
 
@@ -322,7 +337,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager {
                         this._inbound.systemPause();
                         this._inbound.clear();
                     } else {
-                        this.connectCore(token, "Reconnecting", InitialReconnectDelay);
+                        this.connectCore("Reconnecting on disconnect", InitialReconnectDelay);
                     }
                 });
 
@@ -337,7 +352,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager {
                 delay = Math.min(delay, MaxReconnectDelay);
                 reason = `Connection failed - trying again in ${delay}ms`;
                 debug(reason, error.toString());
-                setTimeout(() => this.connectCore(token, reason, delay * 2), delay);
+                setTimeout(() => this.connectCore(reason, delay * 2), delay);
             });
     }
 
@@ -434,6 +449,11 @@ export class DeltaManager extends EventEmitter implements IDeltaManager {
      * Acks the server to update the reference sequence number
      */
     private updateSequenceNumber() {
+        // Exit early for readonly clients. They don't take part in the minimum sequence number calculation.
+        if (this.readonly) {
+            return;
+        }
+
         // The server maintains a time based window for the min sequence number. As such we want to periodically
         // send a heartbeat to get the latest sequence number once the window has moved past where we currently are.
         if (this.heartbeatTimer) {
@@ -472,5 +492,12 @@ export class DeltaManager extends EventEmitter implements IDeltaManager {
 
         this.updateHasBeenRequested = false;
         this.updateSequenceNumberTimer = undefined;
+    }
+
+    private stopHeartbeatSending() {
+        if (this.heartbeatTimer) {
+            clearTimeout(this.heartbeatTimer);
+        }
+        this.heartbeatTimer = undefined;
     }
 }
