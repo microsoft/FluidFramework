@@ -11,3 +11,4 @@ export * from "./status";
 export * from "./overlayCanvas";
 export * from "./shapeRecognizer";
 export * from "./title";
+export * from "./video";

@@ -99,6 +99,11 @@ export class InkCanvas extends ui.Component {
         this.element.appendChild(image.element);
     }
 
+    public addVideo(video: controls.Video) {
+        this.addChild(video);
+        this.element.appendChild(video.element);
+    }
+
     /**
      * Resizes the canvas
      */

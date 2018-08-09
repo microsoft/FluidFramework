@@ -90,6 +90,12 @@ export interface IImageBlob extends IDataBlob {
     width: number;
 }
 
+export interface IVideoBlob extends IDataBlob {
+    height: number;
+    width: number;
+    length: number; // ms?
+}
+
 export function getFileBlobType(mimeType: string) {
     switch (mimeType) {
         case "image/jpeg":
@@ -98,7 +104,15 @@ export function getFileBlobType(mimeType: string) {
         case "image/bmp": {
             return "image";
         }
+        case "video/mp4": {
+            console.log("in video/mp4");
+            return "video";
+        }
+        case "text/plain": {
+            return "text";
+        }
         default: {
+            console.log("default");
             return null;
         }
     }

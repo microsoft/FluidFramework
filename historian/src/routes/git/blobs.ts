@@ -57,7 +57,6 @@ export function create(store: nconf.Provider, tenantService: ITenantService, cac
             if (useCache) {
                 response.setHeader("Cache-Control", "public, max-age=31536000");
             }
-            response.setHeader("content-type", "image/jpeg");
             response.status(200).write(new Buffer(blob.content, "base64"), () => response.end());
         },
         (error) => {

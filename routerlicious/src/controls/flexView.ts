@@ -11,6 +11,7 @@ import { Image } from "./image";
 import { InkCanvas } from "./inkCanvas";
 import { Popup } from "./popup";
 import { Orientation, StackPanel } from "./stackPanel";
+import { Video } from "./video";
 
 const colors: types.IColor[] = [
     { r: 253 / 255, g:   0 / 255, b:  12 / 255, a: 1 },
@@ -105,19 +106,16 @@ export class FlexView extends ui.Component {
 
         doc.on(core.BlobUploaded, async (message) => {
             const blob = await doc.getBlob(message);
-            if (getFileBlobType(blob.type) === "image") {
-                this.renderImage(blob as IImageBlob);
-            }
+            this.renderImage(blob as IImageBlob);
         });
 
         // Load blobs on start
         doc.getBlobMetadata()
             // Render metadata
+            // Todo: sabroner remove double load (url)
             .then((blobs) => {
                 for (const blob of blobs) {
-                    if (getFileBlobType(blob.type) === "image") {
-                        this.renderImage(blob as IImageBlob);
-                    }
+                    this.renderImage(blob as IImageBlob);
                 }
                 return blobs;
             })
@@ -126,9 +124,7 @@ export class FlexView extends ui.Component {
                 for (const blob of blobs) {
                     doc.getBlob(blob.sha)
                         .then((blobWithContent) => {
-                            if (getFileBlobType(blob.type) === "image") {
-                                this.renderImage(blobWithContent as IImageBlob);
-                            }
+                            this.renderImage(blobWithContent as IImageBlob);
                         });
                 }
             });
@@ -147,8 +143,14 @@ export class FlexView extends ui.Component {
             buttonSize,
             ["btn", "btn-palette", "prague-icon-replay"]);
 
+        const videoPlay = new Button(
+            document.createElement("div"),
+            buttonSize,
+            ["btn", "btn-palette", "prague-icon-tube"]);
+
         stackPanel.addChild(this.colorButton);
         stackPanel.addChild(replayButton);
+        stackPanel.addChild(videoPlay);
         this.dock.addBottom(stackPanel);
 
         replayButton.on("click", (event) => {
@@ -161,7 +163,19 @@ export class FlexView extends ui.Component {
             this.popup.toggle();
         });
 
-        // These should turn into components
+        videoPlay.on("click", () => {
+            const videos = document.getElementsByTagName("video");
+            if (videos.length === 1) {
+                const video = videos.item(0);
+                if (video.paused) {
+                    video.play();
+                } else {
+                    video.pause();
+                }
+            }
+        });
+
+       // These should turn into components
         this.colorStack = new StackPanel(document.createElement("div"), Orientation.Vertical, []);
         for (const color of colors) {
             const buttonElement = document.createElement("div");
@@ -216,9 +230,8 @@ export class FlexView extends ui.Component {
     }
 
     private async renderImage(incl: IImageBlob) {
-
         // We have an image, and it isn't in the DOM
-        if (incl.type.includes("image")) {
+        if (getFileBlobType(incl.type) === "image") {
 
             // Style the metadata of the image
             if (document.getElementById(incl.sha) === null) {
@@ -247,6 +260,12 @@ export class FlexView extends ui.Component {
 
                 imgDiv.classList.replace("no-image", "image");
             }
-        }
+        } else if (getFileBlobType(incl.type) === "video" && document.getElementById(incl.sha) === null) {
+            const videoDiv = document.createElement("div");
+            videoDiv.id = incl.sha;
+            videoDiv.style.height = incl.height + 40 + "px";
+            videoDiv.style.width = incl.width + 15 + "px";
+            videoDiv.style.border = "3px solid black";
+            this.ink.addVideo(new Video(videoDiv, incl.url));
     }
 }
