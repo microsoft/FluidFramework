@@ -9,14 +9,20 @@ Capabilities
 * Client consensus protocol
 * Versioning of loader
 
-## Lerna
+## Building
 
 In order to be very clear about package differences this project makes use of [Lerna](https://lernajs.io)
 to manage a monorepo.
 
-To install globally and be able to call lerna directly run `npm install -g lerna` or alternately you can run `npx lerna` to have npm install the package and then execute the script.
+To get started with lerna simply `npm install`. This will install lerna itself. From there you have access to
+the tool by running `npx lerna`.
 
-Lerna wraps npm commands and manages symlinks between projects. Most npm commands map directly - i.e.
+Lerna manages a set of npm modules that reside within the packages folder. It will automatically create
+symlinks between dependent projects within the node_modules folder duration bootstrapping (its equivalent of npm
+install). This allows for changes to be made to a dependent package without the need for reinstalling it in the
+parent package.
+
+Lerna then wraps npm commands and invokes them across all tracked projects. Most npm commands map directly - i.e.
 
 |npm|lerna|
 |---|-----|

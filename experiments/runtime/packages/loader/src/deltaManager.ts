@@ -3,11 +3,10 @@ import * as assert from "assert";
 import { EventEmitter } from "events";
 import cloneDeep = require("lodash/cloneDeep");
 import now = require("performance-now");
-import { Browser, IClient, Robot } from "./client";
 import { debug } from "./debug";
 import { DeltaConnection, IConnectionDetails } from "./deltaConnection";
 import { DeltaQueue } from "./deltaQueue";
-import { IDeltaManager, IDeltaQueue } from "./document";
+import { IDeltaManager, IDeltaQueue } from "./deltas";
 import * as protocol from "./protocol";
 import * as storage from "./storage";
 
@@ -72,8 +71,6 @@ export class DeltaManager extends EventEmitter implements IDeltaManager {
     private handler: IDeltaHandlerStrategy;
     private deltaStorageP: Promise<storage.IDocumentDeltaStorageService>;
 
-    private clientType: string;
-
     public get inbound(): IDeltaQueue {
         return this._inbound;
     }
@@ -94,10 +91,10 @@ export class DeltaManager extends EventEmitter implements IDeltaManager {
         private id: string,
         private tenantId: string,
         private service: storage.IDocumentService,
-        private client: IClient) {
+        private client: storage.IClient,
+        private reconnect: boolean) {
         super();
 
-        this.clientType = (this.client === undefined || this.client.type === Browser) ? Browser : Robot;
         // Inbound message queue
         this._inbound = new DeltaQueue<protocol.ISequencedDocumentMessage>((op, callback) => {
             this.processMessage(op).then(
@@ -150,38 +147,15 @@ export class DeltaManager extends EventEmitter implements IDeltaManager {
      */
     public submit(type: string, contents: any): void {
         // Start adding trace for the op.
-        const traces: protocol.ITrace[] = [
-            {
-                action: "start",
-                service: this.clientType,
-                timestamp: now(),
-            }];
         const message: protocol.IDocumentMessage = {
             clientSequenceNumber: ++this.clientSequenceNumber,
             contents,
             referenceSequenceNumber: this.baseSequenceNumber,
-            traces,
             type,
         };
 
         this.readonly = false;
         this.stopSequenceNumberUpdate();
-        this._outbound.push(message);
-    }
-
-    /**
-     * Submits an acked roundtrip operation.
-     */
-    public async submitRoundtrip(type: string, contents: protocol.ILatencyMessage) {
-        const message: protocol.IDocumentMessage = {
-            clientSequenceNumber: -1,
-            contents: null,
-            referenceSequenceNumber: -1,
-            traces: contents.traces,
-            type,
-        };
-
-        this.readonly = false;
         this._outbound.push(message);
     }
 
@@ -282,8 +256,6 @@ export class DeltaManager extends EventEmitter implements IDeltaManager {
     }
 
     private connectCore(token: string, reason: string, delay: number) {
-        // Reconnection is only enabled for browser clients.
-        const reconnect = this.clientType === Browser;
         DeltaConnection.Connect(this.tenantId, this.id, token, this.service, this.client).then(
             (connection) => {
                 this.connection = connection;
@@ -310,7 +282,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager {
                     this._outbound.clear();
 
                     this.emit("disconnect", true);
-                    if (!reconnect) {
+                    if (!this.reconnect) {
                         this._inbound.systemPause();
                         this._inbound.clear();
                     } else {
@@ -323,7 +295,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager {
                     this._outbound.clear();
 
                     this.emit("disconnect", false);
-                    if (!reconnect) {
+                    if (!this.reconnect) {
                         this._inbound.systemPause();
                         this._inbound.clear();
                     } else {
@@ -376,7 +348,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager {
         // allows the server to know our true reference sequence number and be able to correctly update the minimum
         // sequence number (MSN). We don't ackowledge other message types similarly (like a min sequence number update)
         // to avoid ackowledgement cycles (i.e. ack the MSN update, which updates the MSN, then ack the update, etc...).
-        if (message.type === protocol.OperationType) {
+        if (message.type === protocol.MessageType.Operation) {
             this.updateSequenceNumber();
         }
 
@@ -450,7 +422,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager {
             clearTimeout(this.heartbeatTimer);
         }
         this.heartbeatTimer = setTimeout(() => {
-            this.submit(protocol.NoOp, null);
+            this.submit(protocol.MessageType.NoOp, null);
         }, 2000 + 1000);
 
         // If an update has already been requeested then mark this fact. We will wait until no updates have
@@ -467,7 +439,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager {
             // If a second update wasn't requested then send an update message. Otherwise defer this until we
             // stop processing new messages.
             if (!this.updateHasBeenRequested) {
-                this.submit(protocol.NoOp, null);
+                this.submit(protocol.MessageType.NoOp, null);
             } else {
                 this.updateHasBeenRequested = false;
                 this.updateSequenceNumber();

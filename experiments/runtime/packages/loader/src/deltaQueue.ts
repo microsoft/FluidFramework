@@ -1,6 +1,6 @@
 import * as queue from "async/queue";
 import { EventEmitter } from "events";
-import { IDeltaQueue } from "./document";
+import { IDeltaQueue } from "./deltas";
 
 export class DeltaQueue<T> extends EventEmitter implements IDeltaQueue {
     private q: async.AsyncQueue<T>;
