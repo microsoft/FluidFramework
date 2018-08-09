@@ -1,5 +1,5 @@
-// tslint:disable:ban-types
 import * as resources from "@prague/gitresources";
+import { EventEmitter } from "events";
 import { IClient } from "./client";
 import { IDocumentMessage, ISequencedDocumentMessage, ITenantUser } from "./protocol";
 
@@ -164,8 +164,7 @@ export interface IDocumentDeltaStorageService {
     get(from?: number, to?: number): Promise<ISequencedDocumentMessage[]>;
 }
 
-// TODO inherit from EventEmitter
-export interface IDocumentDeltaConnection {
+export interface IDocumentDeltaConnection extends EventEmitter {
     /**
      * ClientID for the connection
      */
@@ -190,11 +189,6 @@ export interface IDocumentDeltaConnection {
      * The identity of the logged-in user
      */
     user: ITenantUser;
-
-    /**
-     * Subscribe to events emitted by the document
-     */
-    on(event: string, listener: Function): this;
 
     /**
      * Submit a new message to the server

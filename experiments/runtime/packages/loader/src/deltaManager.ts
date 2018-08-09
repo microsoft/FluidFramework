@@ -1,8 +1,8 @@
+import { Deferred } from "@prague/utils";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import cloneDeep = require("lodash/cloneDeep");
 import now = require("performance-now");
-import { Deferred } from "../utils";
 import { Browser, IClient, Robot } from "./client";
 import { debug } from "./debug";
 import { DeltaConnection, IConnectionDetails } from "./deltaConnection";
