@@ -267,5 +267,6 @@ export class FlexView extends ui.Component {
             videoDiv.style.width = incl.width + 15 + "px";
             videoDiv.style.border = "3px solid black";
             this.ink.addVideo(new Video(videoDiv, incl.url));
+        }
     }
 }
