@@ -11,6 +11,7 @@ import { Image } from "./image";
 import { InkCanvas } from "./inkCanvas";
 import { Popup } from "./popup";
 import { Orientation, StackPanel } from "./stackPanel";
+import { Video } from "./video";
 
 const colors: types.IColor[] = [
     { r: 253 / 255, g:   0 / 255, b:  12 / 255, a: 1 },
@@ -51,39 +52,7 @@ export class FlexView extends ui.Component {
         this.dock = new DockPanel(dockElement);
         this.addChild(this.dock);
 
-        doc.on(core.BlobPrepared, (message) => {
-            this.renderImage(message);
-        });
-
-        doc.on(core.BlobUploaded, async (message) => {
-            const blob = await doc.getBlob(message);
-            if (getFileBlobType(blob.type) === "image") {
-                this.renderImage(blob as IImageBlob);
-            }
-        });
-
-        // Load blobs on start
-        doc.getBlobMetadata()
-            // Render metadata
-            .then((blobs) => {
-                for (const blob of blobs) {
-                    if (getFileBlobType(blob.type) === "image") {
-                        this.renderImage(blob as IImageBlob);
-                    }
-                }
-                return blobs;
-            })
-            // fetch and render content
-            .then(async (blobs) => {
-                for (const blob of blobs) {
-                    doc.getBlob(blob.sha)
-                        .then((blobWithContent) => {
-                            if (getFileBlobType(blob.type) === "image") {
-                                this.renderImage(blobWithContent as IImageBlob);
-                            }
-                        });
-                }
-            });
+        this.addBlobListeners(doc);
 
         // Add the ink canvas to the dock
         // Add blob Upload Handler
@@ -92,51 +61,7 @@ export class FlexView extends ui.Component {
         this.ink = new InkCanvas(inkCanvasElement, root.get("ink"));
         this.dock.addContent(this.ink);
 
-        const stackPanelElement = document.createElement("div");
-        const buttonSize = { width: 50, height: 50 };
-        const stackPanel = new StackPanel(stackPanelElement, Orientation.Horizontal, ["navbar-prague"]);
-        this.colorButton = new Button(
-            document.createElement("div"),
-            buttonSize,
-            ["btn", "btn-palette", "prague-icon-pencil"]);
-        const replayButton = new Button(
-            document.createElement("div"),
-            buttonSize,
-            ["btn", "btn-palette", "prague-icon-replay"]);
-
-        stackPanel.addChild(this.colorButton);
-        stackPanel.addChild(replayButton);
-        this.dock.addBottom(stackPanel);
-
-        replayButton.on("click", (event) => {
-            debug("Replay button click");
-            this.ink.replay();
-        });
-
-        this.colorButton.on("click", (event) => {
-            debug("Color button click");
-            this.popup.toggle();
-        });
-
-        // These should turn into components
-        this.colorStack = new StackPanel(document.createElement("div"), Orientation.Vertical, []);
-        for (const color of colors) {
-            const buttonElement = document.createElement("div");
-            buttonElement.style.backgroundColor = ui.toColorString(color);
-            const button = new Button(buttonElement, { width: 200, height: 50 }, ["btn-flat"]);
-            this.colorStack.addChild(button);
-
-            button.on("click", (event) => {
-                this.ink.setPenColor(color);
-                this.popup.toggle();
-            });
-        }
-
-        // Popup to display the colors
-        this.popup = new Popup(document.createElement("div"));
-        this.popup.addContent(this.colorStack);
-        this.addChild(this.popup);
-        this.element.appendChild(this.popup.element);
+        this.addButtons();
 
         // UI components on the flex view
         if (!root.has("components")) {
@@ -173,6 +98,104 @@ export class FlexView extends ui.Component {
         this.popup.resize(rect);
     }
 
+    private addBlobListeners(doc: api.Document) {
+
+        doc.on(core.BlobPrepared, (message) => {
+            this.renderImage(message);
+        });
+
+        doc.on(core.BlobUploaded, async (message) => {
+            const blob = await doc.getBlob(message);
+            this.renderImage(blob as IImageBlob);
+        });
+
+        // Load blobs on start
+        doc.getBlobMetadata()
+            // Render metadata
+            // Todo: sabroner remove double load (url)
+            .then((blobs) => {
+                for (const blob of blobs) {
+                    this.renderImage(blob as IImageBlob);
+                }
+                return blobs;
+            })
+            // fetch and render content
+            .then(async (blobs) => {
+                for (const blob of blobs) {
+                    doc.getBlob(blob.sha)
+                        .then((blobWithContent) => {
+                            this.renderImage(blobWithContent as IImageBlob);
+                        });
+                }
+            });
+    }
+
+    private addButtons() {
+        const stackPanelElement = document.createElement("div");
+        const buttonSize = { width: 50, height: 50 };
+        const stackPanel = new StackPanel(stackPanelElement, Orientation.Horizontal, ["navbar-prague"]);
+        this.colorButton = new Button(
+            document.createElement("div"),
+            buttonSize,
+            ["btn", "btn-palette", "prague-icon-pencil"]);
+        const replayButton = new Button(
+            document.createElement("div"),
+            buttonSize,
+            ["btn", "btn-palette", "prague-icon-replay"]);
+
+        const videoPlay = new Button(
+            document.createElement("div"),
+            buttonSize,
+            ["btn", "btn-palette", "prague-icon-tube"]);
+
+        stackPanel.addChild(this.colorButton);
+        stackPanel.addChild(replayButton);
+        stackPanel.addChild(videoPlay);
+        this.dock.addBottom(stackPanel);
+
+        replayButton.on("click", (event) => {
+            debug("Replay button click");
+            this.ink.replay();
+        });
+
+        this.colorButton.on("click", (event) => {
+            debug("Color button click");
+            this.popup.toggle();
+        });
+
+        videoPlay.on("click", () => {
+            const videos = document.getElementsByTagName("video");
+            if (videos.length === 1) {
+                const video = videos.item(0);
+                if (video.paused) {
+                    video.play();
+                } else {
+                    video.pause();
+                }
+            }
+        });
+
+       // These should turn into components
+        this.colorStack = new StackPanel(document.createElement("div"), Orientation.Vertical, []);
+        for (const color of colors) {
+            const buttonElement = document.createElement("div");
+            buttonElement.style.backgroundColor = ui.toColorString(color);
+            const button = new Button(buttonElement, { width: 200, height: 50 }, ["btn-flat"]);
+            this.colorStack.addChild(button);
+
+            button.on("click", (event) => {
+                this.ink.setPenColor(color);
+                this.popup.toggle();
+            });
+        }
+
+        // Popup to display the colors
+        this.popup = new Popup(document.createElement("div"));
+        this.popup.addContent(this.colorStack);
+        this.addChild(this.popup);
+        this.element.appendChild(this.popup.element);
+    }
+
     private async processComponents(components: types.IMap) {
         const view = await components.getView();
 
@@ -207,9 +230,8 @@ export class FlexView extends ui.Component {
     }
 
     private async renderImage(incl: IImageBlob) {
-
         // We have an image, and it isn't in the DOM
-        if (incl.type.includes("image")) {
+        if (getFileBlobType(incl.type) === "image") {
 
             // Style the metadata of the image
             if (document.getElementById(incl.sha) === null) {
@@ -238,6 +260,13 @@ export class FlexView extends ui.Component {
 
                 imgDiv.classList.replace("no-image", "image");
             }
+        } else if (getFileBlobType(incl.type) === "video" && document.getElementById(incl.sha) === null) {
+            const videoDiv = document.createElement("div");
+            videoDiv.id = incl.sha;
+            videoDiv.style.height = incl.height + 40 + "px";
+            videoDiv.style.width = incl.width + 15 + "px";
+            videoDiv.style.border = "3px solid black";
+            this.ink.addVideo(new Video(videoDiv, incl.url));
         }
     }
 }

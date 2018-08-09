@@ -1,0 +1,59 @@
+{
+  "name": "@prague/loader",
+  "version": "0.1.0",
+  "description": "Server to assign sequence numbers and route deltas between connected clients",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "webpack": "webpack --config webpack.config.js",
+    "build": "concurrently \"npm run tslint\" \"npm run tsc\" \"npm run webpack\"",
+    "test": "mocha --recursive dist/test",
+    "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml",
+    "tsc": "tsc",
+    "tslint": "tslint 'src/**/*.ts'"
+  },
+  "author": "Microsoft",
+  "repository": "microsoft/prague",
+  "devDependencies": {
+    "cache-loader": "^1.2.2",
+    "concurrently": "^3.6.1",
+    "fork-ts-checker-webpack-plugin": "^0.4.3",
+    "thread-loader": "^1.2.0",
+    "ts-loader": "^4.4.2",
+    "tslint": "^5.11.0",
+    "typescript": "^3.0.1",
+    "uglifyjs-webpack-plugin": "^1.2.7",
+    "webpack": "^4.16.3",
+    "webpack-cli": "^3.1.0"
+  },
+  "dependencies": {
+    "@prague/gitresources": "^0.7.1",
+    "@prague/utils": "^0.1.0",
+    "@types/async": "^2.0.49",
+    "@types/debug": "0.0.30",
+    "@types/node": "^10.5.4",
+    "async": "^2.6.1",
+    "debug": "^3.1.0",
+    "lodash": "^4.17.10",
+    "performance-now": "^2.1.0"
+  },
+  "nyc": {
+    "all": true,
+    "exclude": [
+      "src/test/**/*.ts",
+      "dist/test/**/*.js"
+    ],
+    "include": [
+      "src/**/*.ts",
+      "dist/**/*.js"
+    ],
+    "reporter": [
+      "cobertura",
+      "html",
+      "text"
+    ],
+    "temp-directory": "nyc/.nyc_output",
+    "cache-dir": "nyc/.cache",
+    "report-dir": "nyc/report"
+  }
+}

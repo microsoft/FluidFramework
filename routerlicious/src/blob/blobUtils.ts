@@ -88,6 +88,25 @@ async function fileToInclusion(file: File): Promise<api.IDataBlob> {
                     return incl as api.IImageBlob;
                 });
         }
+        case "video": {
+            blobP = videoHandler(file, baseInclusion as api.IVideoBlob);
+            return Promise.all([arrayBufferP, blobP])
+                .then(([arrayBuffer, blob]) => {
+                    const incl: api.IVideoBlob = {
+                        content: arrayBuffer,
+                        fileName: file.name,
+                        height: (blob as api.IVideoBlob).height,
+                        length: (blob as api.IVideoBlob).length,
+                        sha: gitHashFile(arrayBuffer),
+                        size: arrayBuffer.byteLength,
+                        type: file.type,
+                        url: baseInclusion.url,
+                        width: (blob as api.IVideoBlob).width,
+                    };
+                    console.log(incl.sha);
+                    return incl as api.IVideoBlob;
+                });
+        }
         case "text": {
             blobP = textHandler(file, baseInclusion as api.IDataBlob);
             return Promise.all([arrayBufferP, blobP])
@@ -149,4 +168,32 @@ async function imageHandler(imageFile: File, incl: api.IImageBlob): Promise<api.
 async function textHandler(textFile: File, incl: api.IDataBlob): Promise<api.IDataBlob> {
     /// STUB
     return null;
+}
+
+async function videoHandler(videoFile: File, incl: api.IVideoBlob): Promise<api.IVideoBlob> {
+    const urlObjReader = new FileReader();
+
+    const urlObjP = new Promise<api.IVideoBlob>((resolve, reject) => {
+        urlObjReader.onerror = (error) => {
+            urlObjReader.abort();
+            reject("error: " + JSON.stringify(error));
+        };
+
+        urlObjReader.onloadend = () => {
+            const imageUrl = urlObjReader.result;
+            const video = document.createElement("video");
+            video.src = imageUrl;
+            video.load();
+
+            video.onloadedmetadata = (event) => {
+                incl.height = video.videoHeight;
+                incl.width = video.videoWidth;
+                incl.length = video.duration;
+                resolve(incl);
+            };
+        };
+
+        urlObjReader.readAsDataURL(videoFile);
+    });
+    return urlObjP;
 }
