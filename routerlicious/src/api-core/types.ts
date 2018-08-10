@@ -76,24 +76,31 @@ export interface ICollaborativeObject {
     transform(message: protocol.IObjectMessage, sequenceNumber: number): protocol.IObjectMessage;
 }
 
-export interface IDataBlob {
+export type IGenericBlob = IDataBlob | IImageBlob | IVideoBlob;
+
+export interface IBaseBlob {
     content?: Buffer;
     size: number;
-    type: string;
     sha: string;
     fileName: string;
     url: string; // Link to durable URL
 }
 
-export interface IImageBlob extends IDataBlob {
+export interface IDataBlob extends IBaseBlob {
+    type: "generic";
+}
+
+export interface IImageBlob extends IBaseBlob {
+    type: "image";
     height: number;
     width: number;
 }
 
-export interface IVideoBlob extends IDataBlob {
+export interface IVideoBlob extends IBaseBlob {
+    type: "video";
     height: number;
     width: number;
-    length: number; // ms?
+    length: number;
 }
 
 export function getFileBlobType(mimeType: string) {
@@ -105,15 +112,13 @@ export function getFileBlobType(mimeType: string) {
             return "image";
         }
         case "video/mp4": {
-            console.log("in video/mp4");
             return "video";
         }
         case "text/plain": {
             return "text";
         }
         default: {
-            console.log("default");
-            return null;
+            return "generic";
         }
     }
 }

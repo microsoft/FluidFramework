@@ -2,7 +2,7 @@ import * as ui from "../ui";
 
 export class Video extends ui.Component {
     private message: HTMLSpanElement;
-    private image: HTMLVideoElement;
+    private video: HTMLVideoElement;
 
     constructor(element: HTMLDivElement, src: string) {
         super(element);
@@ -15,9 +15,9 @@ export class Video extends ui.Component {
         this.message.style.backgroundColor = "rgba(0, 240, 20, 0.5)";
         element.appendChild(this.message);
 
-        this.image = document.createElement("video");
-        this.image.src = src;
-        element.appendChild(this.image);
+        this.video = document.createElement("video");
+        this.video.src = src;
+        element.appendChild(this.video);
     }
 
     public resizeCore(bounds: ui.Rectangle) {
@@ -25,6 +25,6 @@ export class Video extends ui.Component {
         bounds.y = 0;
         const overlayInnerRects = bounds.nipHoriz(Math.floor(bounds.width * 0.6));
         overlayInnerRects[0].conformElement(this.message);
-        overlayInnerRects[1].conformElement(this.image);
+        overlayInnerRects[1].conformElement(this.video);
     }
 }
