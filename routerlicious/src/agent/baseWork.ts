@@ -28,8 +28,19 @@ export class BaseWork extends EventEmitter {
     public async loadDocument(options: Object, service: core.IDocumentService, task: string): Promise<void> {
         this.task = task;
         this.document = await api.load(this.id, options, null, true, api.defaultRegistry, service);
-        this.attachListeners();
+
+        // Make sure the document is fully connected.
+        if (this.document.isConnected) {
+            this.attachListeners();
+        } else {
+            console.log(`Waiting for the document to fully connected before running spellcheck!`);
+            this.document.on("connected", () => {
+                this.attachListeners();
+            });
+        }
+
         this.checkForLeader();
+
     }
 
     public on(event: string, listener: (...args: any[]) => void): this {

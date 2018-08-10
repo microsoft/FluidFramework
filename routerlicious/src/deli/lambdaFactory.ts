@@ -6,10 +6,10 @@ import * as utils from "../utils";
 import { DeliLambda } from "./lambda";
 
 // We expire clients after 3 minutes of no activity
-export const ClientSequenceTimeout = 3 * 60 * 1000;
+export const ClientSequenceTimeout = 30 * 1000;
 
 // Timeout for checking inactivity.
-export const ActivityCheckingTimeout = 1 * 60 * 1000;
+export const ActivityCheckingTimeout = 10 * 1000;
 
 export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaFactory {
     constructor(
