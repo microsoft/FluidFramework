@@ -189,7 +189,6 @@ export class Document extends EventEmitter implements api.IDocument {
 
     private messagesSinceMSNChange = new Array<api.ISequencedDocumentMessage>();
     private clients = new Map<string, api.IClient>();
-    private helpRequested: Set<string> = new Set<string>();
     private connectionState = api.ConnectionState.Disconnected;
     private pendingAttach = new Map<string, api.IAttachMessage>();
     private storageService: api.IDocumentStorageService;
@@ -198,8 +197,13 @@ export class Document extends EventEmitter implements api.IDocument {
     private loaded = false;
     private pendingClientId: string;
     private lastPong: number;
+
+    // Task analyzer related variables.
+    // TODO: Move this to a seperate class.
     private clientType: string;
     private lastLeaderClientId: string;
+    private helpSendDelay: number;
+    private helpTimer = null;
 
     public get clientId(): string {
         return this._clientId;
@@ -409,6 +413,7 @@ export class Document extends EventEmitter implements api.IDocument {
      * Closes the document and detaches all listeners
      */
     public close() {
+        this.stopSendingHelp();
         if (this._deltaManager) {
             this._deltaManager.close();
         }
@@ -1143,14 +1148,7 @@ export class Document extends EventEmitter implements api.IDocument {
      * If so, calculate if there are any unhandled tasks for browsers and remote agents.
      * Emit local help message for this browser and submits a remote help message for agents.
      *
-     * To prevent recurrent op sending, we keep track of already requested tasks and only send
-     * help for each task once. We also keep track of last leader client as the reconnection
-     * should start from a clean slate.
-     *
-     * With this restriction of sending only one help message, some taks may never get picked (e.g., paparazzi leaves
-     * and we are still having the same leader)
-     *
-     * TODO: Need to fix this logic once services are hardened better.
+     * To prevent recurrent op sending, we use an exponential backoff timer.
      */
     private runTaskAnalyzer() {
             const currentLeader = getLeader(this.getClients());
@@ -1158,29 +1156,45 @@ export class Document extends EventEmitter implements api.IDocument {
             if (isLeader) {
                 console.log(`Client ${this.clientId} is the current leader!`);
 
-                // On a reconnection, start with a clean slate.
-                if (this.lastLeaderClientId !== this.clientId) {
-                    this.helpRequested.clear();
-                }
-                this.lastLeaderClientId = this.clientId;
+                // Clear previous timer.
+                this.stopSendingHelp();
 
-                // Analyze the current state and ask for local and remote help seperately.
-                const helpTasks = analyzeTasks(this.clientId, this.getClients(), documentTasks, this.helpRequested);
-                if (helpTasks && helpTasks.browser.length > 0) {
-                    const localHelpMessage: api.IHelpMessage = {
-                        tasks: helpTasks.browser,
-                    };
-                    console.log(`Local help needed for ${helpTasks.browser}`);
-                    this.emit("localHelp", localHelpMessage);
+                // On a reconnection, start with an initial timer value.
+                if (this.lastLeaderClientId !== this.clientId) {
+                    this.helpSendDelay = 1000;
+                    this.lastLeaderClientId = this.clientId;
                 }
-                if (helpTasks && helpTasks.robot.length > 0) {
-                    const remoteHelpMessage: api.IHelpMessage = {
-                        tasks: helpTasks.robot,
-                    };
-                    console.log(`Remote help needed for ${helpTasks.robot}`);
-                    this.submitMessage(api.RemoteHelp, remoteHelpMessage);
-                }
+
+                // Analyze the current state and ask for local and remote help seperately after the timeout.
+                // Exponentially increase the timer to prevent recurrent op sending.
+                this.helpTimer = setTimeout(() => {
+                    const helpTasks = analyzeTasks(this.clientId, this.getClients(), documentTasks);
+                    if (helpTasks && (helpTasks.browser.length > 0 || helpTasks.robot.length > 0)) {
+                        if (helpTasks.browser.length > 0) {
+                            const localHelpMessage: api.IHelpMessage = {
+                                tasks: helpTasks.browser,
+                            };
+                            console.log(`Requesting local help for ${helpTasks.browser}`);
+                            this.emit("localHelp", localHelpMessage);
+                        }
+                        if (helpTasks.robot.length > 0) {
+                            const remoteHelpMessage: api.IHelpMessage = {
+                                tasks: helpTasks.robot,
+                            };
+                            console.log(`Requesting remote help for ${helpTasks.robot}`);
+                            this.submitMessage(api.RemoteHelp, remoteHelpMessage);
+                        }
+                        this.helpSendDelay *= 2;
+                    }
+                }, this.helpSendDelay);
             }
+    }
+
+    private stopSendingHelp() {
+        if (this.helpTimer) {
+            clearTimeout(this.helpTimer);
+        }
+        this.helpTimer = undefined;
     }
 }
 
