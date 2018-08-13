@@ -51,11 +51,11 @@ export class SpellcheckerWork extends BaseWork implements IWork {
         }
     }
 
-    public async stop(task: string): Promise<void> {
+    public async stop(): Promise<void> {
         if (this.spellchecker) {
             this.spellchecker.stop();
         }
-        await super.stop(task);
+        await super.stop();
     }
 
     // Enable spell checking for the document

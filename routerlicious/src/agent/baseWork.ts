@@ -4,8 +4,6 @@ import { api, core } from "../client-api";
 import { IDocumentTaskInfo } from "./definitions";
 import { runAfterWait } from "./utils";
 
-const leaderCheckerTimeout = 60 * 60 * 1000;
-
 export class BaseWork extends EventEmitter {
 
     protected document: api.Document;
@@ -17,7 +15,6 @@ export class BaseWork extends EventEmitter {
     private leaveHandler: (...args: any[]) => void;
 
     private events = new EventEmitter();
-    private leaderCheckerTimer = null;
     private readonlyMode = false;
 
     constructor(private id: string, private conf: any) {
@@ -29,18 +26,14 @@ export class BaseWork extends EventEmitter {
         this.task = task;
         this.document = await api.load(this.id, options, null, true, api.defaultRegistry, service);
 
-        // Make sure the document is fully connected.
+        // Make sure the document is fully connected before attaching listeners.
         if (this.document.isConnected) {
             this.attachListeners();
         } else {
-            console.log(`Waiting for the document to fully connected before running spellcheck!`);
             this.document.on("connected", () => {
                 this.attachListeners();
             });
         }
-
-        this.checkForLeader();
-
     }
 
     public on(event: string, listener: (...args: any[]) => void): this {
@@ -48,7 +41,7 @@ export class BaseWork extends EventEmitter {
         return this;
     }
 
-    public async stop(task: string): Promise<void> {
+    public async stop(): Promise<void> {
         // Make sure the document is loaded.
         if (this.document !== undefined) {
             // For read only mode, just close the document. Otherwise wait for ops to acked first.
@@ -101,28 +94,11 @@ export class BaseWork extends EventEmitter {
         console.log(`Closing document ${this.document.tenantId}/${this.document.id} for task ${this.task}`);
 
         // Remove all listeners from the document.
-        this.document.removeListener("op", this.opHandler);
-        this.document.removeListener("error", this.errorHandler);
-        this.document.removeListener("clientLeave", this.leaveHandler);
         this.document.removeAllListeners();
 
         // Close the document.
         this.document.close();
 
-        // Clear timers.
-        if (this.leaderCheckerTimer) {
-            clearInterval(this.leaderCheckerTimer);
-        }
-        this.leaderCheckerTimer = undefined;
-    }
-
-    // In case a client leave message is missed, a fallback timer is used to check for leader.
-    private checkForLeader() {
-        this.leaderCheckerTimer = setInterval(() => {
-            if (this.noLeader()) {
-                this.requestStop();
-            }
-        }, leaderCheckerTimeout);
     }
 
     // Emits a stop request message to the caller.

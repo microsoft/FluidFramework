@@ -22,11 +22,11 @@ export class IntelWork extends BaseWork implements IWork {
         return this.processIntelligenceWork(this.document, insightsMapView);
     }
 
-    public async stop(task: string): Promise<void> {
+    public async stop(): Promise<void> {
         if (this.intelligenceManager) {
             await this.intelligenceManager.stop();
         }
-        await super.stop(task);
+        await super.stop();
     }
 
     public registerNewService(service: any) {

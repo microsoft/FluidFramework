@@ -27,7 +27,7 @@ export class WorkManager extends EventEmitter implements IWorkManager {
         });
     }
 
-    public async startDocumentWork(tenantId: string, documentId: string, workType: string, token?: string) {
+    public async startDocumentWork(tenantId: string, documentId: string, workType: string, token: string) {
         const services = await this.serviceFactory.getService(tenantId);
 
         switch (workType) {
@@ -67,11 +67,8 @@ export class WorkManager extends EventEmitter implements IWorkManager {
         const fullId = this.getFullId(tenantId, documentId, workType);
         if (this.documentMap.has(fullId)) {
             const task = this.documentMap.get(fullId);
-            if (task) {
-                task.removeListeners();
-                await task.stop(workType);
-                this.documentMap.delete(fullId);
-            }
+            await this.stopTask(task);
+            this.documentMap.delete(fullId);
         }
     }
 
@@ -116,6 +113,13 @@ export class WorkManager extends EventEmitter implements IWorkManager {
         worker.on("stop", (ev: IDocumentTaskInfo) => {
             this.events.emit("stop", ev);
         });
+    }
+
+    private async stopTask(task: IWork) {
+        if (task) {
+            task.removeListeners();
+            await task.stop();
+        }
     }
 
     // Register a new agent to all active documents.
