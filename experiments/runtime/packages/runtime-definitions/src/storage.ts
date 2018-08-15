@@ -1,6 +1,7 @@
 import * as resources from "@prague/gitresources";
 import { EventEmitter } from "events";
-import { IDocumentMessage, ISequencedDocumentMessage, IUser } from "./protocol";
+import { IDocumentMessage, ISequencedDocumentMessage } from "./protocol";
+import { IUser } from "./users";
 
 export interface IClient {
     type: string;

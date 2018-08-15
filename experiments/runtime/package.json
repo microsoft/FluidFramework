@@ -2,9 +2,15 @@
   "name": "root",
   "private": true,
   "scripts": {
-    "build": "lerna run build --stream"
+    "build": "lerna run build --stream",
+    "build:client": "lerna run build --stream --scope @prague/loader-client --include-filtered-dependencies",
+    "start": "DEBUG=prague:* lerna run start --stream --scope @prague/loader-client"
   },
   "devDependencies": {
     "lerna": "^3.0.0-rc.0"
+  },
+  "dependencies": {
+    "@types/jsonwebtoken": "^7.2.8",
+    "jsonwebtoken": "^8.3.0"
   }
 }

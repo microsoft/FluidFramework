@@ -1,3 +1,5 @@
+import { IUser } from "./users";
+
 export enum MessageType {
     // Delta operation application type
     Operation = "op",
@@ -30,12 +32,6 @@ export interface IBranchOrigin {
 
     // Min sequence number for the message in branch id
     minimumSequenceNumber: number;
-}
-
-export interface IUser {
-    id: string;
-
-    name?: string;
 }
 
 export interface INack {
