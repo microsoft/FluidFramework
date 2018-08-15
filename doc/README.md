@@ -12,6 +12,11 @@ To get started simply
 * Choose "npm"
 * Select the @Release view (this will give versions of the library that work with the production servies)
 * And then follow the steps provided. This involves adding a new line to your project's .npmrc as well as storing credentials to access the private repo on your machine.
+* IMPORTANT NOTE: VSTS will give you a line like this to put into your .npmrc file:
+  `registry=https://offnet.pkgs.visualstudio.com/_packaging/prague@Release/npm/registry/`
+  
+  You need to prefix that line with @prague in order to not force all package lookups to go to the Prague registry. The line you add to your .npmrc file should actually look like this:
+  `@prague:registry=https://offnet.pkgs.visualstudio.com/_packaging/prague@Release/npm/registry/`
 
 The [sequence, flowview, and threejs](./api/examples) examples are all setup using the above approach.
 
