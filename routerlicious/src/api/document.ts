@@ -607,7 +607,7 @@ export class Document extends EventEmitter implements api.IDocument {
                         this.processRemoteMessage(message, context);
                     },
                 });
-            });
+        });
 
         return { detailsP, handlerAttachedP };
     }

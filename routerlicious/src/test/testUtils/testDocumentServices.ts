@@ -7,6 +7,7 @@ export class TestDocumentDeltaConnection implements api.IDocumentDeltaConnection
     public parentBranch: string;
     public user: api.ITenantUser;
     public clientId: string;
+    public initialMessages: api.ISequencedDocumentMessage[] | undefined;
     public documentId: string;
     public encrypted: boolean;
     public privateKey: string;
