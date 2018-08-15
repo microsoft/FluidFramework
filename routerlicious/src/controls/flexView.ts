@@ -43,8 +43,9 @@ export class FlexView extends ui.Component {
     private popup: Popup;
     private colorStack: StackPanel;
     private components: IFlexViewComponent[] = [];
+    private insightsMap: types.IMapView;
 
-    constructor(element: HTMLDivElement, doc: api.Document, root: types.IMapView) {
+    constructor(element: HTMLDivElement, private doc: api.Document, root: types.IMapView) {
         super(element);
 
         const dockElement = document.createElement("div");
@@ -67,6 +68,14 @@ export class FlexView extends ui.Component {
         if (!root.has("components")) {
             root.set("components", doc.createMap());
         }
+
+        if (!root.has("insights")) {
+            root.set("insights", doc.createMap());
+        }
+        root.get<types.IMap>("insights").getView()
+            .then((insightsView) => {
+                this.insightsMap = insightsView;
+            });
         this.processComponents(root.get("components"));
     }
 
@@ -132,14 +141,8 @@ export class FlexView extends ui.Component {
             buttonSize,
             ["btn", "btn-palette", "prague-icon-replay"]);
 
-        const videoPlay = new Button(
-            document.createElement("div"),
-            buttonSize,
-            ["btn", "btn-palette", "prague-icon-tube"]);
-
         stackPanel.addChild(this.colorButton);
         stackPanel.addChild(replayButton);
-        stackPanel.addChild(videoPlay);
         this.dock.addBottom(stackPanel);
 
         replayButton.on("click", (event) => {
@@ -150,18 +153,6 @@ export class FlexView extends ui.Component {
         this.colorButton.on("click", (event) => {
             debug("Color button click");
             this.popup.toggle();
-        });
-
-        videoPlay.on("click", () => {
-            const videos = document.getElementsByTagName("video");
-            if (videos.length === 1) {
-                const video = videos.item(0);
-                if (video.paused) {
-                    video.play();
-                } else {
-                    video.pause();
-                }
-            }
         });
 
        // These should turn into components
@@ -249,7 +240,14 @@ export class FlexView extends ui.Component {
                 videoDiv.style.height = incl.height + 40 + "px";
                 videoDiv.style.width = incl.width + 15 + "px";
                 videoDiv.style.border = "3px solid black";
-                ink.addVideo(new Video(videoDiv, incl.url));
+
+                if (!this.insightsMap.has(incl.sha)) {
+                    this.insightsMap.set(incl.sha, this.doc.createMap());
+                }
+                const videoMap = this.insightsMap.get<types.IMap>(incl.sha);
+
+                const video = new Video(videoDiv, videoMap, incl.url);
+                ink.addVideo(video);
             } else {
                 const videoDiv = document.getElementById(incl.sha);
                 const video = videoDiv.getElementsByTagName("video").item(0);
