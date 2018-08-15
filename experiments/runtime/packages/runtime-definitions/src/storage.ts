@@ -1,7 +1,13 @@
 import * as resources from "@prague/gitresources";
 import { EventEmitter } from "events";
-import { IClient } from "./client";
-import { IDocumentMessage, ISequencedDocumentMessage, ITenantUser } from "./protocol";
+import { IDocumentMessage, ISequencedDocumentMessage } from "./protocol";
+import { IUser } from "./users";
+
+export interface IClient {
+    type: string;
+
+    permission: string[];
+}
 
 export interface IDocumentAttributes {
     /**
@@ -188,7 +194,7 @@ export interface IDocumentDeltaConnection extends EventEmitter {
     /**
      * The identity of the logged-in user
      */
-    user: ITenantUser;
+    user: IUser;
 
     /**
      * Submit a new message to the server

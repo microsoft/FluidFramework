@@ -1,11 +1,13 @@
 {
-  "name": "@prague/loader",
+  "name": "@prague/services-client",
   "version": "0.1.0",
-  "description": "Prague document loader",
+  "description": "Isomorphic services for communicating with Prague",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "tsc && tslint 'src/**/*.ts'"
+    "build": "npm run tsc && npm run tslint",
+    "tsc": "tsc",
+    "tslint": "tslint 'src/**/*.ts'"
   },
   "author": "Microsoft",
   "repository": "microsoft/prague",
@@ -16,14 +18,9 @@
   "dependencies": {
     "@prague/gitresources": "^0.7.1",
     "@prague/runtime-definitions": "0.1.0",
-    "@prague/utils": "^0.1.0",
-    "@types/async": "^2.0.49",
-    "@types/debug": "0.0.30",
-    "@types/lodash": "^4.14.116",
-    "@types/node": "^10.5.4",
-    "async": "^2.6.1",
+    "@types/node": "^10.5.7",
+    "@types/request-promise-native": "^1.0.15",
     "debug": "^3.1.0",
-    "lodash": "^4.17.10",
-    "performance-now": "^2.1.0"
+    "request-promise-native": "^1.0.5"
   }
 }
