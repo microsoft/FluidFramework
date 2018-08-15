@@ -103,6 +103,10 @@ export class Document extends EventEmitter {
         return this._user;
     }
 
+    public get connected(): boolean {
+        return this.connectionState === ConnectionState.Connected;
+    }
+
     /**
      * Flag indicating whether the document already existed at the time of load
      */
