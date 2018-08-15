@@ -14,8 +14,8 @@ Then open index.html in your browser of choice to view the example
 # How it works
 
 The API code itself is loaded by including
-`<script src="https://praguenpm.blob.core.windows.net/api/Release-17/api.js"></script>`
-in [index.html](index.html).
+`import { api as prague } from "@prague/routerlicious";`
+in [src/index.ts](src/index.ts).
 
 The code for the example is in [src/index.ts](src/index.ts). The example loads a collaborative document which contains
 a single text string. A basic HTML form is then used to insert text into the string.
