@@ -1,9 +1,6 @@
 import { IUser } from "./users";
 
 export enum MessageType {
-    // Delta operation application type
-    Operation = "op",
-
     // Empty operation message. Used to send an updated reference sequence number.
     NoOp = "noop",
 
@@ -12,12 +9,6 @@ export enum MessageType {
 
     // System message sent to indicate a client has left the collaboration
     ClientLeave = "leave",
-
-    // System message to indicate the creation of a new fork
-    Fork = "fork",
-
-    // Message sent when forwarding a sequenced message to an upstream branch
-    Integrate = "integrate",
 }
 
 /**

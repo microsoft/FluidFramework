@@ -17,6 +17,7 @@ async function run(
 }
 
 // Process command line input
+let action = false;
 commander
     .version(packageDetails.version)
     .option("-u, --deltas [deltas]", "Deltas URL", "http://localhost:3000")
@@ -25,6 +26,7 @@ commander
     .option("-u, --secret [secret]", "Secret", "43cfc3fbf04a97c0921fd23ff10f9e4b")
     .arguments("<documentId>")
     .action((documentId) => {
+        action = true;
         const tokenServices = new driver.TokenService();
         const documentServices = driver.createDocumentService(commander.deltas, commander.snapshots);
         const token = jwt.sign(
@@ -42,3 +44,7 @@ commander
         });
     })
     .parse(process.argv);
+
+if (!action) {
+    commander.help();
+}
