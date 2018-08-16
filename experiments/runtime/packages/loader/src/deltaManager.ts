@@ -142,9 +142,9 @@ export class DeltaManager extends EventEmitter implements IDeltaManager {
     }
 
     /**
-     * Submits a new delta operation
+     * Submits a new delta operation. Returns the client sequence number of the submitted message
      */
-    public submit(type: string, contents: any): void {
+    public submit(type: string, contents: any): number {
         // Start adding trace for the op.
         const message: runtime.IDocumentMessage = {
             clientSequenceNumber: ++this.clientSequenceNumber,
@@ -156,6 +156,8 @@ export class DeltaManager extends EventEmitter implements IDeltaManager {
         this.readonly = false;
         this.stopSequenceNumberUpdate();
         this._outbound.push(message);
+
+        return message.clientSequenceNumber;
     }
 
     public async connect(reason: string, token: string): Promise<IConnectionDetails> {

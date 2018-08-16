@@ -1,10 +1,10 @@
 import { ICommit } from "@prague/gitresources";
 import {
-    IClient,
     IClientJoin,
     IDocumentAttributes,
     IDocumentService,
     IDocumentStorageService,
+    IProposal,
     ISequencedDocumentMessage,
     ISnapshotTree,
     ITokenService,
@@ -17,6 +17,7 @@ import { debug } from "./debug";
 import { IConnectionDetails } from "./deltaConnection";
 import { DeltaManager } from "./deltaManager";
 import { IDeltaManager } from "./deltas";
+import { Quorum } from "./quorum";
 
 interface IConnectResult {
     detailsP: Promise<IConnectionDetails>;
@@ -41,7 +42,9 @@ function getEmptyHeader(id: string): IHeaderDetails {
             branch: id,
             clients: [],
             minimumSequenceNumber: 0,
+            proposals: [],
             sequenceNumber: 0,
+            values: [],
         },
         tree: null,
     };
@@ -73,11 +76,13 @@ export enum ConnectionState {
     Connected,
 }
 
+// TODO consider a name change for this. The document is likely built on top of this infrastructure
 export class Document extends EventEmitter {
     private pendingClientId: string;
     private loaded = false;
-    private clients = new Map<string, IClient>();
     private connectionState = ConnectionState.Disconnected;
+    private quorum: Quorum;
+    private clientId: string;
 
     // tslint:disable:variable-name
     private _deltaManager: DeltaManager;
@@ -169,7 +174,11 @@ export class Document extends EventEmitter {
         return Promise
             .all([storageP, versionP, headerP, connectResult.handlerAttachedP])
             .then(async ([storageService, version, header]) => {
-                this.clients = new Map(header.attributes.clients);
+                this.quorum = new Quorum(
+                    (key, value) => this.submitMessage(MessageType.Propose, { key, value }),
+                    header.attributes.clients,
+                    header.attributes.proposals,
+                    header.attributes.values);
 
                 // Start delta processing once all objects are loaded
                 // const readyP = Array.from(this.distributedObjects.values()).map((value) => value.object.ready());
@@ -221,12 +230,14 @@ export class Document extends EventEmitter {
             });
     }
 
-    public getClients(): Map<string, IClient> {
-        return new Map<string, IClient>(this.clients);
+    /**
+     * Retrieves the quorum associated with the document
+     */
+    public getQuorum(): Quorum {
+        return this.quorum;
     }
 
-    public on(event: "clientJoin", listener: (message: IClientJoin) => void): this;
-    public on(event: "clientLeave" | "connected", listener: (clientId: string) => void): this;
+    public on(event: "connected", listener: (clientId: string) => void): this;
     public on(event: "disconnect", listener: () => void): this;
     public on(event: "error", listener: (error: any) => void): this;
     public on(event: "op", listener: (message: ISequencedDocumentMessage) => void): this;
@@ -322,8 +333,18 @@ export class Document extends EventEmitter {
         }
 
         if (this.connectionState === ConnectionState.Connected) {
+            this.clientId = this.pendingClientId;
             this.emit("connected", this.pendingClientId);
         }
+    }
+
+    private submitMessage(type: MessageType, contents: any): number {
+        if (this.connectionState !== ConnectionState.Connected) {
+            return -1;
+        }
+
+        const clientSequenceNumber = this._deltaManager.submit(MessageType[type], contents);
+        return clientSequenceNumber;
     }
 
     private async prepareRemoteMessage(message: ISequencedDocumentMessage): Promise<any> {
@@ -331,10 +352,12 @@ export class Document extends EventEmitter {
     }
 
     private processRemoteMessage(message: ISequencedDocumentMessage, context: any) {
+        const local = this.clientId === message.clientId;
+
         switch (message.type) {
             case MessageType.ClientJoin:
                 const join = message.contents as IClientJoin;
-                this.clients.set(join.clientId, join.detail);
+                this.quorum.addMember(join.clientId, join.detail);
 
                 // This is the only one that requires the pending client ID
                 if (join.clientId === this.pendingClientId) {
@@ -348,14 +371,27 @@ export class Document extends EventEmitter {
                 break;
 
             case MessageType.ClientLeave:
-                this.clients.delete(message.contents);
+                this.quorum.removeMember(message.contents);
                 this.emit("clientLeave", message.contents);
+                break;
+
+            case MessageType.Propose:
+                const proposal = message.contents as IProposal;
+                this.quorum.addProposal(
+                    proposal.key,
+                    proposal.value,
+                    message.sequenceNumber,
+                    local,
+                    message.clientSequenceNumber);
+                break;
+
+            case MessageType.Reject:
+                const sequenceNumber = message.contents as number;
+                this.quorum.rejectProposal(sequenceNumber);
                 break;
 
             default:
                 break;
         }
-
-        this.emit("op", message);
     }
 }

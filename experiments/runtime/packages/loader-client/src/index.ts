@@ -28,9 +28,10 @@ async function run(
     ora.promise(documentP, `Loading ${claims.tenantId}/${claims.documentId}`);
     const document = await documentP;
 
-    console.log(chalk.bgYellow("Initial clients"), chalk.bgBlue(JSON.stringify(Array.from(document.getClients()))));
-    document.on("clientJoin", (message) => console.log(chalk.bgBlue(`${message.clientId} joined`)));
-    document.on("clientLeave", (clientId) => console.log(chalk.bgBlue(`${clientId} left`)));
+    const quorum = document.getQuorum();
+    console.log(chalk.bgYellow("Initial clients"), chalk.bgBlue(JSON.stringify(Array.from(quorum.getMembers()))));
+    quorum.on("addMember", (clientId, details) => console.log(chalk.bgBlue(`${clientId} joined`)));
+    quorum.on("removeMember", (clientId) => console.log(chalk.bgBlue(`${clientId} left`)));
 
     console.log("");
     console.log("Begin entering proposals (ctrl+c to quit)");
