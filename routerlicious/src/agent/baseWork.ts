@@ -26,14 +26,13 @@ export class BaseWork extends EventEmitter {
         this.task = task;
         this.document = await api.load(this.id, options, null, true, api.defaultRegistry, service);
 
-        // Make sure the document is fully connected before attaching listeners.
-        if (this.document.isConnected) {
-            this.attachListeners();
-        } else {
-            this.document.on("connected", () => {
-                this.attachListeners();
+        await runAfterWait(
+            !this.document.isConnected,
+            this.document,
+            "connected",
+            async () => {
+                this.attachPostListeners();
             });
-        }
     }
 
     public on(event: string, listener: (...args: any[]) => void): this {
@@ -68,7 +67,7 @@ export class BaseWork extends EventEmitter {
         // Allows derived class to implement their own start.
     }
 
-    private attachListeners() {
+    private attachPostListeners() {
         // Emits document relared errors to caller.
         this.errorHandler = (error) => {
             this.events.emit("error", error);
@@ -79,10 +78,12 @@ export class BaseWork extends EventEmitter {
         // If other client leaves, run the leader checker first.
         this.leaveHandler = async (clientId: string) => {
             if (this.document.clientId === clientId) {
+                console.log(`STOPPING BECAUSE OF SELF LEAVE: ${this.task}`);
                 this.readonlyMode = true;
                 this.requestStop();
             } else {
                 if (this.noLeader()) {
+                    console.log(`STOPPING BECAUSE OF LEADER LEAVE: ${this.task}`);
                     this.requestStop();
                 }
             }
