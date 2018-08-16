@@ -29,9 +29,24 @@ async function run(
     const document = await documentP;
 
     const quorum = document.getQuorum();
-    console.log(chalk.bgYellow("Initial clients"), chalk.bgBlue(JSON.stringify(Array.from(quorum.getMembers()))));
+    console.log(chalk.yellow("Initial clients"), chalk.bgBlue(JSON.stringify(Array.from(quorum.getMembers()))));
     quorum.on("addMember", (clientId, details) => console.log(chalk.bgBlue(`${clientId} joined`)));
     quorum.on("removeMember", (clientId) => console.log(chalk.bgBlue(`${clientId} left`)));
+    quorum.on(
+        "addProposal",
+        (sequenceNumber, key, value) => {
+            console.log(chalk.yellowBright(`Propose ${key}=${value}@${sequenceNumber}`));
+        });
+    quorum.on(
+        "approveProposal",
+        (sequenceNumber, key, value) => {
+            console.log(chalk.green(`Approve ${key}=${value}@${sequenceNumber}`));
+        });
+    quorum.on(
+        "rejectProposal",
+        (sequenceNumber, key, value, rejections) => {
+            console.log(chalk.red(`Reject ${key}=${value}@${sequenceNumber} by ${rejections}`));
+        });
 
     console.log("");
     console.log("Begin entering proposals (ctrl+c to quit)");
@@ -42,8 +57,8 @@ async function run(
         const key = await readlineAsync(input, chalk.green("Key: "));
         const value = await readlineAsync(input, chalk.green("Value: "));
 
-        const neverDoneP = new Promise<void>((resolve, reject) => { return; });
-        ora.promise(neverDoneP, `Proposing that ${key} = ${value}`);
+        const proposeP = quorum.propose(key, value);
+        ora.promise(proposeP, `Proposing that ${key} = ${value}`);
     }
 }
 

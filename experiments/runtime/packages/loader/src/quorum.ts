@@ -60,7 +60,7 @@ export class Quorum extends EventEmitter {
      * Removes a client from the quorum
      */
     public removeMember(clientId: string) {
-        assert(this.members.has(clientId));
+        assert(this.members.has(clientId), `this.members.has(${clientId})`);
         this.members.delete(clientId);
         this.emit("removeMember", clientId);
     }
@@ -104,6 +104,8 @@ export class Quorum extends EventEmitter {
 
         const deferred = local ? this.localProposals.get(clientSequenceNumber) : undefined;
         this.proposals.set(sequenceNumber, { key, value, sequenceNumber, deferred });
+
+        this.emit("addProposal", sequenceNumber, key, value);
     }
 
     /**
@@ -131,6 +133,12 @@ export class Quorum extends EventEmitter {
 
     public on(event: "addMember", listener: (clientId: string, details: IClient) => void): this;
     public on(event: "removeMember", listener: (clientId: string) => void): this;
+    public on(
+        event: "approveProposal" | "addProposal",
+        listener: (sequenceNumber: number, key: string, value: any) => void): this;
+    public on(
+        event: "rejectProposal",
+        listener: (sequenceNumber: number, key: string, value: any, rejections: string[]) => void): this;
     public on(event: string | symbol, listener: (...args: any[]) => void): this {
         return super.on(event, listener);
     }
@@ -140,7 +148,7 @@ export class Quorum extends EventEmitter {
      * a rejection then it becomes an accepted consensus value.
      */
     public updateMinimumSequenceNumber(value: number) {
-        assert(this.minimumSequenceNumber >= value);
+        assert(value >= this.minimumSequenceNumber);
         if (this.minimumSequenceNumber === value) {
             return;
         }
@@ -149,6 +157,42 @@ export class Quorum extends EventEmitter {
 
         // Accept proposals and reject proposals whose sequenceNumber is <= the minimumSequenceNumber
 
-        return;
+        // Return a sorted list of approved proposals. We sort so that we apply them in their sequence number order
+        // TODO this can be optimized if necessary to avoid the linear search+sort
+        const completed = new Array<TrackedProposal>();
+        for (const [sequenceNumber, proposal] of this.proposals) {
+            if (sequenceNumber <= this.minimumSequenceNumber) {
+                console.log(`${sequenceNumber} Completed`);
+                completed.push(proposal);
+            }
+        }
+        completed.sort((a, b) => a.sequenceNumber - b.sequenceNumber);
+
+        for (const proposal of completed) {
+            const approved = !proposal.rejections;
+
+            // If it was a local proposal - resolve the promise
+            if (proposal.deferred) {
+                proposal.deferred.resolve(approved);
+            }
+
+            if (approved) {
+                this.values.set(proposal.key, proposal.value);
+                this.emit(
+                    "approveProposal",
+                    proposal.sequenceNumber,
+                    proposal.key,
+                    proposal.value);
+            } else {
+                this.emit(
+                    "rejectProposal",
+                    proposal.sequenceNumber,
+                    proposal.key,
+                    proposal.value,
+                    Array.from(proposal.rejections));
+            }
+
+            this.proposals.delete(proposal.sequenceNumber);
+        }
     }
 }

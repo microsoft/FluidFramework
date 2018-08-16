@@ -344,7 +344,7 @@ export class Document extends EventEmitter {
             return -1;
         }
 
-        const clientSequenceNumber = this._deltaManager.submit(MessageType[type], contents);
+        const clientSequenceNumber = this._deltaManager.submit(type, contents);
         return clientSequenceNumber;
     }
 
