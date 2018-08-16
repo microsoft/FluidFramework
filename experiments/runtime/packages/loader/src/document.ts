@@ -175,10 +175,11 @@ export class Document extends EventEmitter {
             .all([storageP, versionP, headerP, connectResult.handlerAttachedP])
             .then(async ([storageService, version, header]) => {
                 this.quorum = new Quorum(
-                    (key, value) => this.submitMessage(MessageType.Propose, { key, value }),
+                    header.attributes.minimumSequenceNumber,
                     header.attributes.clients,
                     header.attributes.proposals,
-                    header.attributes.values);
+                    header.attributes.values,
+                    (key, value) => this.submitMessage(MessageType.Propose, { key, value }));
 
                 // Start delta processing once all objects are loaded
                 // const readyP = Array.from(this.distributedObjects.values()).map((value) => value.object.ready());
@@ -387,11 +388,15 @@ export class Document extends EventEmitter {
 
             case MessageType.Reject:
                 const sequenceNumber = message.contents as number;
-                this.quorum.rejectProposal(sequenceNumber);
+                this.quorum.rejectProposal(message.clientId, sequenceNumber);
                 break;
 
             default:
                 break;
         }
+
+        // Notify the quorum of the MSN from the message. We rely on it to handle duplicate values but may
+        // want to move that logic to this class.
+        this.quorum.updateMinimumSequenceNumber(message.minimumSequenceNumber);
     }
 }

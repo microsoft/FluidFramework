@@ -3,9 +3,9 @@ import { Deferred } from "@prague/utils";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 
-// Appends a deferred to a sequenced proposal. For locally generated promises this allows us to attach a Deferred
-// which we will resolve once the proposal is either accepted or rejected.
-type TrackedProposal = ISequencedProposal & { deferred?: Deferred<boolean> };
+// Appends a deferred and rejection count to a sequenced proposal. For locally generated promises this allows us to
+// attach a Deferred which we will resolve once the proposal is either accepted or rejected.
+type TrackedProposal = ISequencedProposal & { deferred?: Deferred<boolean>, rejections?: Set<string> };
 
 /**
  * A quorum represents all clients currently within the collaboration window. As well as the values
@@ -20,15 +20,16 @@ export class Quorum extends EventEmitter {
     private localProposals = new Map<number, Deferred<boolean>>();
 
     constructor(
-        private submitProposal: (key: string, value: any) => number,
+        private minimumSequenceNumber: number,
         members: Array<[string, IClient]>,
         proposals: ISequencedProposal[],
-        values: Array<[string, any]>) {
+        values: Array<[string, any]>,
+        private submitProposal: (key: string, value: any) => number) {
         super();
 
         this.members = new Map(members);
         this.proposals = new Map(
-            proposals.map((proposal) => [proposal.sequenceNumber, proposal] as [number, ISequencedProposal]));
+            proposals.map((proposal) => [proposal.sequenceNumber, proposal] as [number, TrackedProposal]));
         this.values = new Map(values);
     }
 
@@ -108,10 +109,23 @@ export class Quorum extends EventEmitter {
     /**
      * Rejects the given proposal
      */
-    public rejectProposal(sequenceNumber: number) {
+    public rejectProposal(clientId: string, sequenceNumber: number) {
         // Proposals require unanimous approval so any rejection results in a rejection of the proposal. For error
         // detection we will keep a rejected proposal in the pending list until the MSN advances so that we can
         // track the total number of rejections.
+        assert(this.proposals.has(sequenceNumber));
+
+        const proposal = this.proposals.get(sequenceNumber);
+        if (!proposal.rejections) {
+            proposal.rejections = new Set();
+        }
+
+        assert(!proposal.rejections.has(clientId));
+        proposal.rejections.add(clientId);
+
+        // We will emit approval and rejection messages once the MSN advances past the sequence number of the
+        // proposal. This will allow us to convey all clients who rejected the proposal.
+
         return;
     }
 
@@ -119,5 +133,22 @@ export class Quorum extends EventEmitter {
     public on(event: "removeMember", listener: (clientId: string) => void): this;
     public on(event: string | symbol, listener: (...args: any[]) => void): this {
         return super.on(event, listener);
+    }
+
+    /**
+     * Updates the minimum sequence number. If the MSN advances past the sequence number for any proposal without
+     * a rejection then it becomes an accepted consensus value.
+     */
+    public updateMinimumSequenceNumber(value: number) {
+        assert(this.minimumSequenceNumber >= value);
+        if (this.minimumSequenceNumber === value) {
+            return;
+        }
+
+        this.minimumSequenceNumber = value;
+
+        // Accept proposals and reject proposals whose sequenceNumber is <= the minimumSequenceNumber
+
+        return;
     }
 }
