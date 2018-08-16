@@ -9,6 +9,8 @@ export enum MessageType {
 
     // System message sent to indicate a client has left the collaboration
     ClientLeave = "leave",
+
+    // Consensus messages
 }
 
 /**

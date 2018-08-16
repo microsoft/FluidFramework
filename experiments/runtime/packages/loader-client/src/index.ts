@@ -24,9 +24,13 @@ async function run(
     tokenServices: ITokenService): Promise<void> {
     const claims = tokenServices.extractClaims(token);
 
-    const loadP = loader.load(token, null, documentServices, tokenServices);
-    ora.promise(loadP, `Loading ${claims.tenantId}/${claims.documentId}`);
-    await loadP;
+    const documentP = loader.load(token, null, documentServices, tokenServices);
+    ora.promise(documentP, `Loading ${claims.tenantId}/${claims.documentId}`);
+    const document = await documentP;
+
+    console.log(chalk.bgYellow("Initial clients"), chalk.bgBlue(JSON.stringify(Array.from(document.getClients()))));
+    document.on("clientJoin", (message) => console.log(chalk.bgBlue(`${message.clientId} joined`)));
+    document.on("clientLeave", (clientId) => console.log(chalk.bgBlue(`${clientId} left`)));
 
     console.log("");
     console.log("Begin entering proposals (ctrl+c to quit)");
@@ -36,8 +40,9 @@ async function run(
     while (true) {
         const key = await readlineAsync(input, chalk.green("Key: "));
         const value = await readlineAsync(input, chalk.green("Value: "));
-        console.log(`${key}: ${value}`);
-        console.log("");
+
+        const neverDoneP = new Promise<void>((resolve, reject) => { return; });
+        ora.promise(neverDoneP, `Proposing that ${key} = ${value}`);
     }
 }
 

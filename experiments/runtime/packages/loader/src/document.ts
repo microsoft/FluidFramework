@@ -1,6 +1,7 @@
 import { ICommit } from "@prague/gitresources";
 import {
     IClient,
+    IClientJoin,
     IDocumentAttributes,
     IDocumentService,
     IDocumentStorageService,
@@ -220,6 +221,20 @@ export class Document extends EventEmitter {
             });
     }
 
+    public getClients(): Map<string, IClient> {
+        return new Map<string, IClient>(this.clients);
+    }
+
+    public on(event: "clientJoin", listener: (message: IClientJoin) => void): this;
+    public on(event: "clientLeave" | "connected", listener: (clientId: string) => void): this;
+    public on(event: "disconnect", listener: () => void): this;
+    public on(event: "error", listener: (error: any) => void): this;
+    public on(event: "op", listener: (message: ISequencedDocumentMessage) => void): this;
+    public on(event: "pong" | "processTime", listener: (latency: number) => void): this;
+    public on(event: string | symbol, listener: (...args: any[]) => void): this {
+        return super.on(event, listener);
+    }
+
     private async getHeader(
         id: string,
         storage: IDocumentStorageService,
@@ -307,7 +322,7 @@ export class Document extends EventEmitter {
         }
 
         if (this.connectionState === ConnectionState.Connected) {
-            this.emit("connected");
+            this.emit("connected", this.pendingClientId);
         }
     }
 
@@ -318,17 +333,18 @@ export class Document extends EventEmitter {
     private processRemoteMessage(message: ISequencedDocumentMessage, context: any) {
         switch (message.type) {
             case MessageType.ClientJoin:
-                this.clients.set(message.contents.clientId, message.contents.detail);
+                const join = message.contents as IClientJoin;
+                this.clients.set(join.clientId, join.detail);
 
                 // This is the only one that requires the pending client ID
-                if (message.contents.clientId === this.pendingClientId) {
+                if (join.clientId === this.pendingClientId) {
                     this.setConnectionState(
                         ConnectionState.Connected,
                         `joined @ ${message.minimumSequenceNumber}`,
                         this.pendingClientId);
                 }
 
-                this.emit("clientJoin", message.contents);
+                this.emit("clientJoin", join);
                 break;
 
             case MessageType.ClientLeave:

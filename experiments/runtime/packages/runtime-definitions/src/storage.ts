@@ -1,13 +1,8 @@
 import * as resources from "@prague/gitresources";
 import { EventEmitter } from "events";
+import { IClient } from "./clients";
 import { IDocumentMessage, ISequencedDocumentMessage } from "./protocol";
 import { IUser } from "./users";
-
-export interface IClient {
-    type: string;
-
-    permission: string[];
-}
 
 export interface IDocumentAttributes {
     /**
