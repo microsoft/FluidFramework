@@ -179,7 +179,8 @@ export class Document extends EventEmitter {
                     header.attributes.clients,
                     header.attributes.proposals,
                     header.attributes.values,
-                    (key, value) => this.submitMessage(MessageType.Propose, { key, value }));
+                    (key, value) => this.submitMessage(MessageType.Propose, { key, value }),
+                    (sequenceNumber) => this.submitMessage(MessageType.Reject, sequenceNumber));
 
                 // Start delta processing once all objects are loaded
                 // const readyP = Array.from(this.distributedObjects.values()).map((value) => value.object.ready());

@@ -34,8 +34,8 @@ async function run(
     quorum.on("removeMember", (clientId) => console.log(chalk.bgBlue(`${clientId} left`)));
     quorum.on(
         "addProposal",
-        (sequenceNumber, key, value) => {
-            console.log(chalk.yellowBright(`Propose ${key}=${value}@${sequenceNumber}`));
+        (proposal) => {
+            console.log(chalk.yellowBright(`Propose ${proposal.key}=${proposal.value}@${proposal.sequenceNumber}`));
         });
     quorum.on(
         "approveProposal",

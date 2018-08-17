@@ -3,9 +3,45 @@ import { Deferred } from "@prague/utils";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 
+export interface IPendingProposal extends ISequencedProposal {
+    reject();
+}
+
 // Appends a deferred and rejection count to a sequenced proposal. For locally generated promises this allows us to
 // attach a Deferred which we will resolve once the proposal is either accepted or rejected.
-type TrackedProposal = ISequencedProposal & { deferred?: Deferred<boolean>, rejections?: Set<string> };
+class PendingProposal implements IPendingProposal, ISequencedProposal {
+    public rejections: Set<string>;
+    private canReject = true;
+
+    constructor(
+        private sendReject: (sequenceNumber: number) => void,
+        public sequenceNumber: number,
+        public key: string,
+        public value: any,
+        public deferred?: Deferred<boolean>) {
+    }
+
+    public reject() {
+        if (!this.canReject) {
+            throw new Error("Can no longer reject this proposal");
+        }
+
+        this.sendReject(this.sequenceNumber);
+    }
+
+    public disableRejection() {
+        this.canReject = false;
+    }
+
+    public addRejection(clientId: string) {
+        if (!this.rejections) {
+            this.rejections = new Set();
+        }
+
+        assert(!this.rejections.has(clientId));
+        this.rejections.add(clientId);
+    }
+}
 
 /**
  * A quorum represents all clients currently within the collaboration window. As well as the values
@@ -13,7 +49,7 @@ type TrackedProposal = ISequencedProposal & { deferred?: Deferred<boolean>, reje
  */
 export class Quorum extends EventEmitter {
     private members: Map<string, IClient>;
-    private proposals: Map<number, TrackedProposal>;
+    private proposals: Map<number, PendingProposal>;
     private values: Map<string, any>;
 
     // Locally generated proposals
@@ -24,12 +60,18 @@ export class Quorum extends EventEmitter {
         members: Array<[string, IClient]>,
         proposals: ISequencedProposal[],
         values: Array<[string, any]>,
-        private submitProposal: (key: string, value: any) => number) {
+        private sendProposal: (key: string, value: any) => number,
+        private sendReject: (sequenceNumber: number) => void) {
         super();
 
         this.members = new Map(members);
         this.proposals = new Map(
-            proposals.map((proposal) => [proposal.sequenceNumber, proposal] as [number, TrackedProposal]));
+            proposals.map((proposal) => {
+                return [
+                    proposal.sequenceNumber,
+                    new PendingProposal(this.sendReject, proposal.sequenceNumber, proposal.key, proposal.value),
+                ] as [number, PendingProposal];
+            }));
         this.values = new Map(values);
     }
 
@@ -79,7 +121,7 @@ export class Quorum extends EventEmitter {
      * nack/disconnect. The correct answer for this should become more clear as we build scenarios on top of the loader.
      */
     public propose(key: string, value: any): Promise<boolean> {
-        const clientSequenceNumber = this.submitProposal(key, value);
+        const clientSequenceNumber = this.sendProposal(key, value);
         if (clientSequenceNumber < 0) {
             return Promise.reject(false);
         }
@@ -102,10 +144,19 @@ export class Quorum extends EventEmitter {
         assert(!this.proposals.has(sequenceNumber));
         assert(!local || this.localProposals.has(clientSequenceNumber));
 
-        const deferred = local ? this.localProposals.get(clientSequenceNumber) : undefined;
-        this.proposals.set(sequenceNumber, { key, value, sequenceNumber, deferred });
+        const proposal = new PendingProposal(
+            this.sendReject,
+            sequenceNumber,
+            key,
+            value,
+            local ? this.localProposals.get(clientSequenceNumber) : undefined);
+        this.proposals.set(sequenceNumber, proposal);
 
-        this.emit("addProposal", sequenceNumber, key, value);
+        // Emit the event - which will also provide clients an opportunity to reject the proposal. We require
+        // clients to make a rejection decision at the time of receiving the proposal and so disable rejecting it
+        // after we have emitted the event.
+        this.emit("addProposal", proposal);
+        proposal.disableRejection();
     }
 
     /**
@@ -118,12 +169,7 @@ export class Quorum extends EventEmitter {
         assert(this.proposals.has(sequenceNumber));
 
         const proposal = this.proposals.get(sequenceNumber);
-        if (!proposal.rejections) {
-            proposal.rejections = new Set();
-        }
-
-        assert(!proposal.rejections.has(clientId));
-        proposal.rejections.add(clientId);
+        proposal.addRejection(clientId);
 
         // We will emit approval and rejection messages once the MSN advances past the sequence number of the
         // proposal. This will allow us to convey all clients who rejected the proposal.
@@ -133,9 +179,8 @@ export class Quorum extends EventEmitter {
 
     public on(event: "addMember", listener: (clientId: string, details: IClient) => void): this;
     public on(event: "removeMember", listener: (clientId: string) => void): this;
-    public on(
-        event: "approveProposal" | "addProposal",
-        listener: (sequenceNumber: number, key: string, value: any) => void): this;
+    public on(event: "addProposal", listener: (proposal: IPendingProposal) => void): this;
+    public on(event: "approveProposal", listener: (sequenceNumber: number, key: string, value: any) => void): this;
     public on(
         event: "rejectProposal",
         listener: (sequenceNumber: number, key: string, value: any, rejections: string[]) => void): this;
@@ -159,7 +204,7 @@ export class Quorum extends EventEmitter {
 
         // Return a sorted list of approved proposals. We sort so that we apply them in their sequence number order
         // TODO this can be optimized if necessary to avoid the linear search+sort
-        const completed = new Array<TrackedProposal>();
+        const completed = new Array<PendingProposal>();
         for (const [sequenceNumber, proposal] of this.proposals) {
             if (sequenceNumber <= this.minimumSequenceNumber) {
                 console.log(`${sequenceNumber} Completed`);

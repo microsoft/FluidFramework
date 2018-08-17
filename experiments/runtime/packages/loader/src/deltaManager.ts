@@ -43,9 +43,6 @@ export class DeltaManager extends EventEmitter implements IDeltaManager {
     private updateHasBeenRequested = false;
     private updateSequenceNumberTimer: any;
 
-    // Flag indicating whether the client has only received messages
-    private readonly = true;
-
     // The minimum sequence number and last sequence number received from the server
     private minSequenceNumber = 0;
 
@@ -153,7 +150,6 @@ export class DeltaManager extends EventEmitter implements IDeltaManager {
             type,
         };
 
-        this.readonly = false;
         this.stopSequenceNumberUpdate();
         this._outbound.push(message);
 
@@ -415,11 +411,6 @@ export class DeltaManager extends EventEmitter implements IDeltaManager {
      * Acks the server to update the reference sequence number
      */
     private updateSequenceNumber() {
-        // Exit early for readonly clients. They don't take part in the minimum sequence number calculation.
-        if (this.readonly) {
-            return;
-        }
-
         // The server maintains a time based window for the min sequence number. As such we want to periodically
         // send a heartbeat to get the latest sequence number once the window has moved past where we currently are.
         if (this.heartbeatTimer) {
