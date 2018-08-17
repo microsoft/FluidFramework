@@ -18,7 +18,7 @@ class PendingProposal implements IPendingProposal, ISequencedProposal {
         public sequenceNumber: number,
         public key: string,
         public value: any,
-        public deferred?: Deferred<boolean>) {
+        public deferred?: Deferred<void>) {
     }
 
     public reject() {
@@ -53,7 +53,7 @@ export class Quorum extends EventEmitter {
     private values: Map<string, any>;
 
     // Locally generated proposals
-    private localProposals = new Map<number, Deferred<boolean>>();
+    private localProposals = new Map<number, Deferred<void>>();
 
     constructor(
         private minimumSequenceNumber: number,
@@ -120,13 +120,13 @@ export class Quorum extends EventEmitter {
      * TODO: Right now we will only submit proposals for connected clients and not attempt to resubmit on any
      * nack/disconnect. The correct answer for this should become more clear as we build scenarios on top of the loader.
      */
-    public propose(key: string, value: any): Promise<boolean> {
+    public propose(key: string, value: any): Promise<void> {
         const clientSequenceNumber = this.sendProposal(key, value);
         if (clientSequenceNumber < 0) {
             return Promise.reject(false);
         }
 
-        const deferred = new Deferred<boolean>();
+        const deferred = new Deferred<void>();
         this.localProposals.set(clientSequenceNumber, deferred);
         return deferred.promise;
     }
@@ -218,7 +218,9 @@ export class Quorum extends EventEmitter {
 
             // If it was a local proposal - resolve the promise
             if (proposal.deferred) {
-                proposal.deferred.resolve(approved);
+                approved
+                    ? proposal.deferred.resolve()
+                    : proposal.deferred.reject(`Rejected by ${Array.from(proposal.rejections)}`);
             }
 
             if (approved) {

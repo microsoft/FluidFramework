@@ -20,6 +20,7 @@ async function readlineAsync(input: readline.ReadLine, prompt: string): Promise<
 async function run(
     token: string,
     options: any,
+    reject: boolean,
     documentServices: IDocumentService,
     tokenServices: ITokenService): Promise<void> {
     const claims = tokenServices.extractClaims(token);
@@ -35,7 +36,12 @@ async function run(
     quorum.on(
         "addProposal",
         (proposal) => {
-            console.log(chalk.yellowBright(`Propose ${proposal.key}=${proposal.value}@${proposal.sequenceNumber}`));
+            if (reject) {
+                console.log(chalk.redBright(`Reject ${proposal.key}=${proposal.value}@${proposal.sequenceNumber}`));
+                proposal.reject();
+            } else {
+                console.log(chalk.yellowBright(`Propose ${proposal.key}=${proposal.value}@${proposal.sequenceNumber}`));
+            }
         });
     quorum.on(
         "approveProposal",
@@ -66,10 +72,11 @@ async function run(
 let action = false;
 commander
     .version(packageDetails.version)
-    .option("-u, --deltas [deltas]", "Deltas URL", "http://localhost:3000")
-    .option("-u, --snapshots [snapshots]", "Snapshots URL", "http://localhost:3001")
-    .option("-u, --tenant [tenant]", "Tenant", "prague")
-    .option("-u, --secret [secret]", "Secret", "43cfc3fbf04a97c0921fd23ff10f9e4b")
+    .option("-d, --deltas [deltas]", "Deltas URL", "http://localhost:3000")
+    .option("-h, --snapshots [snapshots]", "Snapshots URL", "http://localhost:3001")
+    .option("-t, --tenant [tenant]", "Tenant", "prague")
+    .option("-s, --secret [secret]", "Secret", "43cfc3fbf04a97c0921fd23ff10f9e4b")
+    .option("-r, --reject", "Reject")
     .arguments("<documentId>")
     .action((documentId) => {
         action = true;
@@ -84,7 +91,7 @@ commander
             },
             commander.secret);
 
-        run(token, null, documentServices, tokenServices).catch((error) => {
+        run(token, null, commander.reject, documentServices, tokenServices).catch((error) => {
             console.error(error);
             process.exit(1);
         });
