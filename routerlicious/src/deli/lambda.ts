@@ -14,8 +14,6 @@ export interface ITicketedMessageOutput {
     message: core.ITicketedMessage;
 
     timestamp: number;
-
-    user: api.ITenantUser;
 }
 
 const SequenceNumberComparer: utils.IComparer<IClientSequenceNumber> = {
@@ -55,7 +53,8 @@ export class DeliLambda implements IPartitionLambda {
         private documentId: string,
         dbObject: core.IDocument,
         collection: core.ICollection<core.IDocument>,
-        private producer: utils.IProducer,
+        private forwardProducer: utils.IProducer,
+        private reverseProducer: utils.IProducer,
         private clientTimeout: number,
         private activityTimeout: number) {
 
@@ -102,7 +101,7 @@ export class DeliLambda implements IPartitionLambda {
         this.checkpointContext = new CheckpointContext(this.tenantId, this.documentId, collection, context);
     }
 
-    public handler(message: utils.IMessage, crafted = false): void {
+    public handler(message: utils.IMessage): void {
         // Ticket current message.
         const ticketedMessage = this.ticket(message, this.createTrace());
 
@@ -111,30 +110,24 @@ export class DeliLambda implements IPartitionLambda {
             return;
         }
 
-        const outputMessages = [ticketedMessage.message];
+        // Send ticketed message to scriptorium.
+        this.sendToScriptorium(ticketedMessage.message);
 
-        // Check if there are any old/idle clients. Craft and ticket a leave message.
-        // Piggyback with the actual kafka message.
+        // Check if there are any old/idle clients. Craft and send a leave message to alfred.
         const idleClient = this.getIdleClient(ticketedMessage.timestamp);
         if (idleClient) {
-            const leaveMessage = this.createLeaveMessage(idleClient.clientId, ticketedMessage.user);
-            const kafkaLeaveMessage = this.createKafkaMessage(leaveMessage, message);
-            outputMessages.push(this.ticket(kafkaLeaveMessage, this.createTrace()).message);
+            const leaveMessage = this.createLeaveMessage(idleClient.clientId);
+            this.sendToAlfred(leaveMessage);
         }
 
-        // We only checkpoint real kafka message. Crafted kafka messages are not checkpointed since
-        // they share the same offset with the last kafka message.
-        crafted ? this.sendMessages(outputMessages) : this.sendAndCheckpoint(outputMessages);
-
         // Start a timer to check inactivity on the document. To trigger idle client leave message,
-        // we send a noop. The noop should trigger a client leave message if there are idle clients.
+        // we send a noop back to alfred. The noop should trigger a client leave message if there are any.
         if (this.idleTimer) {
             clearTimeout(this.idleTimer);
         }
         this.idleTimer = setTimeout(() => {
             const noOpMessage = this.createNoOpMessage();
-            const kafkaNoOpMessage = this.createKafkaMessage(noOpMessage, message);
-            this.handler(kafkaNoOpMessage, true);
+            this.sendToAlfred(noOpMessage);
         }, this.activityTimeout);
     }
 
@@ -178,7 +171,7 @@ export class DeliLambda implements IPartitionLambda {
                 // Get the node for the clientID - NACK if non-existent
                 const node = this.clientNodeMap.get(message.clientId);
                 if (!node || node.value.nack) {
-                    return this.createNackMessage(message, objectMessage.user);
+                    return this.createNackMessage(message);
                 }
 
                 // Verify that the message is within the current window
@@ -192,7 +185,7 @@ export class DeliLambda implements IPartitionLambda {
                         true,
                         true);
 
-                    return this.createNackMessage(message, objectMessage.user);
+                    return this.createNackMessage(message);
                 }
             } else {
                 if (message.operation.type === api.ClientJoin) {
@@ -320,7 +313,6 @@ export class DeliLambda implements IPartitionLambda {
         return {
             message: sequencedMessage,
             timestamp: objectMessage.timestamp,
-            user: message.user,
         };
     }
 
@@ -356,39 +348,34 @@ export class DeliLambda implements IPartitionLambda {
         return false;
     }
 
-    /**
-     * Sends messages to kafka and checkpoints current context on success.
-     */
-    private sendAndCheckpoint(messages: core.ITicketedMessage[]) {
+    private sendToScriptorium(message: core.ITicketedMessage) {
         // TODO optimize this to aviod doing per message
         // Checkpoint the current state
         const checkpoint = this.generateCheckpoint();
 
-        this.sendMessages(messages).then(
+        // Otherwise send the message to the event hub
+        this.forwardProducer.send(JSON.stringify(message), message.documentId).then(
             (result) => {
                 this.checkpointContext.checkpoint(checkpoint);
             },
             (error) => {
                 // TODO issue with Kafka - need to propagate the issue somehow
-                winston.error("Could not send message", error);
+                winston.error("Could not send message to scriptorium", error);
             });
     }
 
-    /**
-     * Sends messages to kafka.
-     */
-    private async sendMessages(messages: core.ITicketedMessage[]) {
-        const sendPromises = [];
-        messages.map((message) => sendPromises.push(this.producer.send(JSON.stringify(message), message.documentId)));
-        await Promise.all(sendPromises);
+    private sendToAlfred(message: core.IRawOperationMessage) {
+        // Otherwise send the message to the event hub
+        this.reverseProducer.send(JSON.stringify(message), message.documentId).catch((error) => {
+                // TODO issue with Kafka - need to propagate the issue somehow
+                winston.error("Could not send message to alfred", error);
+            });
     }
 
     /**
      * Creates a leave message for inactive clients.
      */
-    private createLeaveMessage(
-        clientId: string,
-        user: api.ITenantUser): core.IRawOperationMessage {
+    private createLeaveMessage(clientId: string): core.IRawOperationMessage {
         const leaveMessage: core.IRawOperationMessage = {
             clientId: null,
             documentId: this.documentId,
@@ -402,7 +389,7 @@ export class DeliLambda implements IPartitionLambda {
             tenantId: this.tenantId,
             timestamp: Date.now(),
             type: core.RawOperationType,
-            user,
+            user: null,
         };
         return leaveMessage;
     }
@@ -410,7 +397,7 @@ export class DeliLambda implements IPartitionLambda {
     /**
      * Creates a nack message for out of window/disconnected clients.
      */
-    private createNackMessage(message: core.IRawOperationMessage, user: api.ITenantUser): ITicketedMessageOutput {
+    private createNackMessage(message: core.IRawOperationMessage): ITicketedMessageOutput {
         const nackMessage: core.INackMessage = {
             clientId: message.clientId,
             documentId: this.documentId,
@@ -424,7 +411,6 @@ export class DeliLambda implements IPartitionLambda {
         return {
             message: nackMessage,
             timestamp: message.timestamp,
-            user,
         };
     }
 
@@ -445,23 +431,6 @@ export class DeliLambda implements IPartitionLambda {
             user: null,
         };
         return noOpMessage;
-    }
-
-    /**
-     * Creates a raw kafka message with the same properties of last kafka message.
-     */
-    private createKafkaMessage(
-        rawMessage: core.IRawOperationMessage,
-        lastKafkaMessage: utils.IMessage): utils.IMessage {
-        const kafkaMessage: utils.IMessage = {
-            highWaterOffset: lastKafkaMessage.highWaterOffset,
-            key: lastKafkaMessage.key,
-            offset: lastKafkaMessage.offset,
-            partition: lastKafkaMessage.partition,
-            topic: lastKafkaMessage.topic,
-            value: JSON.stringify(rawMessage),
-        };
-        return kafkaMessage;
     }
 
     /**

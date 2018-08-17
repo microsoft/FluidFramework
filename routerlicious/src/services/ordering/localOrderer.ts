@@ -367,6 +367,7 @@ export class LocalOrderer implements core.IOrderer {
             details.value,
             collection,
             this.producer,
+            this.deliProducer,
             ClientSequenceTimeout,
             ActivityCheckingTimeout);
         this.deliProducer = new DeliProducer(deliLambda);
