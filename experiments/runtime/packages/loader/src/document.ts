@@ -1,9 +1,10 @@
 import { ICommit } from "@prague/gitresources";
 import {
-    IClient,
+    IClientJoin,
     IDocumentAttributes,
     IDocumentService,
     IDocumentStorageService,
+    IProposal,
     ISequencedDocumentMessage,
     ISnapshotTree,
     ITokenService,
@@ -16,6 +17,7 @@ import { debug } from "./debug";
 import { IConnectionDetails } from "./deltaConnection";
 import { DeltaManager } from "./deltaManager";
 import { IDeltaManager } from "./deltas";
+import { Quorum } from "./quorum";
 
 interface IConnectResult {
     detailsP: Promise<IConnectionDetails>;
@@ -40,7 +42,9 @@ function getEmptyHeader(id: string): IHeaderDetails {
             branch: id,
             clients: [],
             minimumSequenceNumber: 0,
+            proposals: [],
             sequenceNumber: 0,
+            values: [],
         },
         tree: null,
     };
@@ -72,11 +76,13 @@ export enum ConnectionState {
     Connected,
 }
 
+// TODO consider a name change for this. The document is likely built on top of this infrastructure
 export class Document extends EventEmitter {
     private pendingClientId: string;
     private loaded = false;
-    private clients = new Map<string, IClient>();
     private connectionState = ConnectionState.Disconnected;
+    private quorum: Quorum;
+    private clientId: string;
 
     // tslint:disable:variable-name
     private _deltaManager: DeltaManager;
@@ -168,7 +174,13 @@ export class Document extends EventEmitter {
         return Promise
             .all([storageP, versionP, headerP, connectResult.handlerAttachedP])
             .then(async ([storageService, version, header]) => {
-                this.clients = new Map(header.attributes.clients);
+                this.quorum = new Quorum(
+                    header.attributes.minimumSequenceNumber,
+                    header.attributes.clients,
+                    header.attributes.proposals,
+                    header.attributes.values,
+                    (key, value) => this.submitMessage(MessageType.Propose, { key, value }),
+                    (sequenceNumber) => this.submitMessage(MessageType.Reject, sequenceNumber));
 
                 // Start delta processing once all objects are loaded
                 // const readyP = Array.from(this.distributedObjects.values()).map((value) => value.object.ready());
@@ -218,6 +230,22 @@ export class Document extends EventEmitter {
 
                 debug(`Document loaded ${this.id}: ${now()} `);
             });
+    }
+
+    /**
+     * Retrieves the quorum associated with the document
+     */
+    public getQuorum(): Quorum {
+        return this.quorum;
+    }
+
+    public on(event: "connected", listener: (clientId: string) => void): this;
+    public on(event: "disconnect", listener: () => void): this;
+    public on(event: "error", listener: (error: any) => void): this;
+    public on(event: "op", listener: (message: ISequencedDocumentMessage) => void): this;
+    public on(event: "pong" | "processTime", listener: (latency: number) => void): this;
+    public on(event: string | symbol, listener: (...args: any[]) => void): this {
+        return super.on(event, listener);
     }
 
     private async getHeader(
@@ -307,8 +335,18 @@ export class Document extends EventEmitter {
         }
 
         if (this.connectionState === ConnectionState.Connected) {
-            this.emit("connected");
+            this.clientId = this.pendingClientId;
+            this.emit("connected", this.pendingClientId);
         }
+    }
+
+    private submitMessage(type: MessageType, contents: any): number {
+        if (this.connectionState !== ConnectionState.Connected) {
+            return -1;
+        }
+
+        const clientSequenceNumber = this._deltaManager.submit(type, contents);
+        return clientSequenceNumber;
     }
 
     private async prepareRemoteMessage(message: ISequencedDocumentMessage): Promise<any> {
@@ -316,30 +354,50 @@ export class Document extends EventEmitter {
     }
 
     private processRemoteMessage(message: ISequencedDocumentMessage, context: any) {
+        const local = this.clientId === message.clientId;
+
         switch (message.type) {
             case MessageType.ClientJoin:
-                this.clients.set(message.contents.clientId, message.contents.detail);
+                const join = message.contents as IClientJoin;
+                this.quorum.addMember(join.clientId, join.detail);
 
                 // This is the only one that requires the pending client ID
-                if (message.contents.clientId === this.pendingClientId) {
+                if (join.clientId === this.pendingClientId) {
                     this.setConnectionState(
                         ConnectionState.Connected,
                         `joined @ ${message.minimumSequenceNumber}`,
                         this.pendingClientId);
                 }
 
-                this.emit("clientJoin", message.contents);
+                this.emit("clientJoin", join);
                 break;
 
             case MessageType.ClientLeave:
-                this.clients.delete(message.contents);
+                this.quorum.removeMember(message.contents);
                 this.emit("clientLeave", message.contents);
+                break;
+
+            case MessageType.Propose:
+                const proposal = message.contents as IProposal;
+                this.quorum.addProposal(
+                    proposal.key,
+                    proposal.value,
+                    message.sequenceNumber,
+                    local,
+                    message.clientSequenceNumber);
+                break;
+
+            case MessageType.Reject:
+                const sequenceNumber = message.contents as number;
+                this.quorum.rejectProposal(message.clientId, sequenceNumber);
                 break;
 
             default:
                 break;
         }
 
-        this.emit("op", message);
+        // Notify the quorum of the MSN from the message. We rely on it to handle duplicate values but may
+        // want to move that logic to this class.
+        this.quorum.updateMinimumSequenceNumber(message.minimumSequenceNumber);
     }
 }
