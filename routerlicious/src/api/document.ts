@@ -757,6 +757,7 @@ export class Document extends EventEmitter implements api.IDocument {
         this.notifyConnectionState(value);
 
         if (this.connectionState === api.ConnectionState.Connected) {
+            this._deltaManager.disableReadonlyMode();
             this.emit("connected");
         }
     }

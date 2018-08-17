@@ -45,8 +45,9 @@ export class DeltaManager extends EventEmitter implements IDeltaManager {
     private updateHasBeenRequested = false;
     private updateSequenceNumberTimer: any;
 
-    // Flag indicating whether the client is only a receiving client.
-    private readonly = false;
+    // Flag indicating whether the client is only a receiving client. Client starts in readonly mode.
+    // Switches only on self client join message or on message submission.
+    private readonly = true;
 
     // The minimum sequence number and last sequence number received from the server
     private minSequenceNumber = 0;
@@ -221,6 +222,10 @@ export class DeltaManager extends EventEmitter implements IDeltaManager {
         this.stopHeartbeatSending();
         this.stopSequenceNumberUpdate();
         this.readonly = true;
+    }
+
+    public disableReadonlyMode() {
+        this.readonly = false;
     }
 
     /**
