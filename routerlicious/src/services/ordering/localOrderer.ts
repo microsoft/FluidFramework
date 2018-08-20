@@ -148,9 +148,7 @@ class ScriptoriumProducer implements IProducer {
 }
 
 class DeliProducer implements IProducer {
-    private offset = 0;
-
-    constructor(private lambda: DeliLambda) {
+    constructor(private lambda: DeliLambda, private offset: number = 0) {
     }
 
     public async send(message: string, topic: string): Promise<any> {
@@ -368,7 +366,7 @@ export class LocalOrderer implements core.IOrderer {
             collection,
             this.producer,
             ClientSequenceTimeout);
-        this.deliProducer = new DeliProducer(deliLambda);
+        this.deliProducer = new DeliProducer(deliLambda, this.existing ? details.value.sequenceNumber : 0);
     }
 
     public async connect(
