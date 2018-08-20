@@ -74,16 +74,14 @@ export class BaseWork extends EventEmitter {
         };
         this.document.on("error", this.errorHandler);
 
-        // On a self client leave, mark yourself as readonly and emits a stop message.
-        // If other client leaves, run the leader checker first.
+        // On a self client leave, mark yourself as readonly and request stop.
+        // Otherwise check leader.
         this.leaveHandler = async (clientId: string) => {
             if (this.document.clientId === clientId) {
-                console.log(`STOPPING BECAUSE OF SELF LEAVE: ${this.task}`);
                 this.readonlyMode = true;
                 this.requestStop();
             } else {
                 if (this.noLeader()) {
-                    console.log(`STOPPING BECAUSE OF LEADER LEAVE: ${this.task}`);
                     this.requestStop();
                 }
             }
