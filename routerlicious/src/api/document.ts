@@ -1161,7 +1161,7 @@ export class Document extends EventEmitter implements api.IDocument {
                 // On a reconnection, start with an initial timer value.
                 if (this.lastLeaderClientId !== this.clientId) {
                     console.log(`Client ${this.clientId} is the current leader!`);
-                    this.helpSendDelay = 1000;
+                    this.helpSendDelay = 5000;
                     this.lastLeaderClientId = this.clientId;
                 }
 
@@ -1184,7 +1184,7 @@ export class Document extends EventEmitter implements api.IDocument {
                             console.log(`Requesting remote help for ${helpTasks.robot}`);
                             this.submitMessage(api.RemoteHelp, remoteHelpMessage);
                         }
-                        this.helpSendDelay *= 10;
+                        this.helpSendDelay *= 2;
                     }
                 }, this.helpSendDelay);
             }
