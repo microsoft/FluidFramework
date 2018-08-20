@@ -9,8 +9,13 @@ export async function create(config: Provider): Promise<IPartitionLambdaFactory>
     const mongoUrl = config.get("mongo:endpoint") as string;
     const kafkaEndpoint = config.get("kafka:lib:endpoint");
     const kafkaLibrary = config.get("kafka:lib:name");
-    const kafkaClientId = config.get("deli:kafkaClientId");
-    const sendTopic = config.get("deli:topics:send");
+
+    const kafkaForwardClientId = config.get("deli:kafkaClientId");
+    const kafkaReverseClientId = config.get("alfred:kafkaClientId");
+
+    const forwardSendTopic = config.get("deli:topics:send");
+    const reverseSendTopic = config.get("alfred:topic");
+
     const documentsCollectionName = config.get("mongo:collectionNames:documents");
 
     // Connection to stored document details
@@ -19,7 +24,8 @@ export async function create(config: Provider): Promise<IPartitionLambdaFactory>
     const client = await mongoManager.getDatabase();
     const collection = await client.collection<core.IDocument>(documentsCollectionName);
 
-    const producer = utils.createProducer(kafkaLibrary, kafkaEndpoint, kafkaClientId, sendTopic);
+    const forwardProducer = utils.createProducer(kafkaLibrary, kafkaEndpoint, kafkaForwardClientId, forwardSendTopic);
+    const reverseProducer = utils.createProducer(kafkaLibrary, kafkaEndpoint, kafkaReverseClientId, reverseSendTopic);
 
-    return new DeliLambdaFactory(mongoManager, collection, producer);
+    return new DeliLambdaFactory(mongoManager, collection, forwardProducer, reverseProducer);
 }

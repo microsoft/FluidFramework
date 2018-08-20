@@ -4,11 +4,6 @@ import { api, core } from "../client-api";
 import { IDocumentTaskInfo } from "./definitions";
 import { runAfterWait } from "./utils";
 
-const leaderCheckerMS = 7500;
-
-// This timer should be more than deli kick out timer.
-const idleTimeoutMS = (5 * 60 * 1000) + (30 * 1000);
-
 export class BaseWork extends EventEmitter {
 
     protected document: api.Document;
@@ -16,14 +11,11 @@ export class BaseWork extends EventEmitter {
     protected task: string;
 
     protected opHandler: (...args: any[]) => void;
-    private idleHandler: (...args: any[]) => void;
     private errorHandler: (...args: any[]) => void;
-    private disconnectHandler: (...args: any[]) => void;
     private leaveHandler: (...args: any[]) => void;
 
     private events = new EventEmitter();
-    private leaderCheckerTimer = null;
-    private idleTimer = null;
+    private readonlyMode = false;
 
     constructor(private id: string, private conf: any) {
         super();
@@ -33,8 +25,14 @@ export class BaseWork extends EventEmitter {
     public async loadDocument(options: Object, service: core.IDocumentService, task: string): Promise<void> {
         this.task = task;
         this.document = await api.load(this.id, options, null, true, api.defaultRegistry, service);
-        this.attachListeners();
-        this.checkForLeader(task);
+
+        await runAfterWait(
+            !this.document.isConnected,
+            this.document,
+            "connected",
+            async () => {
+                this.attachPostListeners();
+            });
     }
 
     public on(event: string, listener: (...args: any[]) => void): this {
@@ -42,21 +40,25 @@ export class BaseWork extends EventEmitter {
         return this;
     }
 
-    public async stop(task: string): Promise<void> {
-        // Make sure the document is loaded first.
+    public async stop(): Promise<void> {
+        // Make sure the document is loaded.
         if (this.document !== undefined) {
-            await runAfterWait(
-                this.document.hasUnackedOps,
-                this.document,
-                "processed",
-                async () => {
-                    this.closeDocument(task);
-                });
+            // For read only mode, just close the document. Otherwise wait for ops to acked first.
+            if (this.readonlyMode) {
+                this.closeDocument();
+            } else {
+                await runAfterWait(
+                    this.document.hasUnackedOps,
+                    this.document,
+                    "processed",
+                    async () => {
+                        this.closeDocument();
+                    });
+            }
         }
     }
 
     public removeListeners() {
-        // Deattach all listeners.
         this.events.removeAllListeners();
         this.removeAllListeners();
     }
@@ -65,76 +67,47 @@ export class BaseWork extends EventEmitter {
         // Allows derived class to implement their own start.
     }
 
-    private attachListeners() {
+    private attachPostListeners() {
+        // Emits document relared errors to caller.
         this.errorHandler = (error) => {
             this.events.emit("error", error);
         };
         this.document.on("error", this.errorHandler);
 
-        // On a disconnect or self client leave, close and restart the document.
-        this.disconnectHandler = async () => {
-            await this.closeAndRestart();
-        };
-        this.document.on("disconnect", this.disconnectHandler);
-
+        // On a self client leave, mark yourself as readonly and request stop.
+        // Otherwise check leader.
         this.leaveHandler = async (clientId: string) => {
             if (this.document.clientId === clientId) {
-                await this.closeAndRestart();
+                this.readonlyMode = true;
+                this.requestStop();
+            } else {
+                if (this.noLeader()) {
+                    this.requestStop();
+                }
             }
         };
         this.document.on("clientLeave", this.leaveHandler);
-
-        // Close and restart if the document is idle for a while.
-        this.idleHandler = () => {
-            if (this.idleTimer) {
-                clearTimeout(this.idleTimer);
-            }
-            this.idleTimer = setTimeout(async () => {
-                await this.closeAndRestart();
-            }, idleTimeoutMS);
-        };
-        this.document.on("op", this.idleHandler);
     }
 
-    private async closeAndRestart(): Promise<void> {
-        this.closeDocument(this.task);
-        await this.start(this.task);
-    }
-
-    private closeDocument(task: string) {
-        console.log(`Closing document ${this.document.tenantId}/${this.document.id} for task ${task}`);
+    private closeDocument() {
+        console.log(`Closing document ${this.document.tenantId}/${this.document.id} for task ${this.task}`);
 
         // Remove all listeners from the document.
-        this.document.removeListener("op", this.opHandler);
-        this.document.removeListener("error", this.errorHandler);
-        this.document.removeListener("disconnect", this.disconnectHandler);
-        this.document.removeListener("clientLeave", this.leaveHandler);
         this.document.removeAllListeners();
 
         // Close the document.
         this.document.close();
 
-        // Clear all timers.
-        if (this.leaderCheckerTimer) {
-            clearInterval(this.leaderCheckerTimer);
-        }
-        if (this.idleTimer) {
-            clearTimeout(this.idleTimer);
-        }
     }
 
-    // Periodically checks for leaders in the document. Emits a stop request if leader is not present.
-    private checkForLeader(task) {
-        this.leaderCheckerTimer = setInterval(() => {
-            if (this.noLeader()) {
-                const stopEvent: IDocumentTaskInfo = {
-                    docId: this.document.id,
-                    task,
-                    tenantId: this.document.tenantId,
-                };
-                this.events.emit("stop", stopEvent);
-            }
-        }, leaderCheckerMS);
+    // Emits a stop request message to the caller.
+    private requestStop() {
+        const stopEvent: IDocumentTaskInfo = {
+            docId: this.document.id,
+            task: this.task,
+            tenantId: this.document.tenantId,
+        };
+        this.events.emit("stop", stopEvent);
     }
 
     // A leader is any browser client connected to the document.

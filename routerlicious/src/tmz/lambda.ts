@@ -7,7 +7,6 @@ import * as utils from "../utils";
 
 export class TmzLambda extends SequencedLambda {
     private taskQueueMap = new Map<string, string>();
-    private requestMap = new Map<string, Set<string>>();
     constructor(
         private messageSender: core.ITaskMessageSender,
         private tenantManager: core.ITenantManager,
@@ -54,9 +53,7 @@ export class TmzLambda extends SequencedLambda {
         docId: string,
         message: IHelpMessage): Promise<void> {
         const key = await this.tenantManager.getKey(tenantId);
-
-        const fullId = `${tenantId}/${docId}/${clientId}`;
-        const filteredTasks = this.filterTasks(fullId, message.tasks);
+        const filteredTasks = this.filterTasks(message.tasks);
         for (const queueTask of filteredTasks) {
             const queueName = queueTask[0];
             const tasks = queueTask[1];
@@ -76,38 +73,24 @@ export class TmzLambda extends SequencedLambda {
                         type: "tasks:start",
                     },
                 );
-                winston.info(`Request to ${queueName}: ${fullId}:${JSON.stringify(tasks)}`);
+                winston.info(`Request to ${queueName}: ${tenantId}/${docId}/${clientId}:${JSON.stringify(tasks)}`);
             }
         }
     }
 
-    // From a list of task requests, find the unrequested tasks for this document-clientid.
-    // Figure out the queue for the tasks and return a map of <queue, takss[]>.
-    // Also update the request map.
-    private filterTasks(fullId: string, tasks: string[]): Map<string, string[]> {
-        // FIlter out the unrequested tasks.
-        const requestedTasks = this.requestMap.has(fullId) ? this.requestMap.get(fullId) : new Set<string>();
-        const newTasks = tasks.filter((task) => !requestedTasks.has(task));
-
+    // From a list of task requests, figure out the queue for the tasks and return a map of <queue, takss[]>
+    private filterTasks(tasks: string[]): Map<string, string[]> {
         // Figure out the queue for each task and populate the map.
         const queueTaskMap = new Map<string, string[]>();
-        for (const task of newTasks) {
+        for (const task of tasks) {
             if (this.taskQueueMap.has(task)) {
                 const queue = this.taskQueueMap.get(task);
                 if (!queueTaskMap.has(queue)) {
                     queueTaskMap.set(queue, []);
                 }
                 queueTaskMap.get(queue).push(task);
-                this.updateRequestMap(fullId, task);
             }
         }
         return queueTaskMap;
-    }
-
-    private updateRequestMap(fullId: string, task: string) {
-        if (!this.requestMap.has(fullId)) {
-            this.requestMap.set(fullId, new Set<string>());
-        }
-        this.requestMap.get(fullId).add(task);
     }
 }

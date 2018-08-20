@@ -203,7 +203,7 @@ export class TranslationWork extends BaseWork implements IWork {
         return this.trackEvents(insights);
     }
 
-    public async stop(task: string): Promise<void> {
+    public async stop(): Promise<void> {
         if (this.translator) {
             await runAfterWait(
                 this.translator.isTranslating,
@@ -213,7 +213,7 @@ export class TranslationWork extends BaseWork implements IWork {
                     this.translator.stop();
                 });
         }
-        await super.stop(task);
+        await super.stop();
     }
 
     private trackEvents(insights: types.IMap): Promise<void> {

@@ -1,11 +1,12 @@
 import * as assert from "assert";
+import { EventEmitter } from "events";
 import * as moniker from "moniker";
 import now = require("performance-now");
 import * as api from "../../api-core";
 import { ICollection, IDocument, IOrdererConnection, ITenantManager } from "../../core";
 import * as core from "../../core";
 import { DeliLambda } from "../../deli/lambda";
-import { ClientSequenceTimeout } from "../../deli/lambdaFactory";
+import { ActivityCheckingTimeout, ClientSequenceTimeout } from "../../deli/lambdaFactory";
 import { IContext } from "../../kafka-service/lambdas";
 import { ScriptoriumLambda } from "../../scriptorium/lambda";
 import { TmzLambda } from "../../tmz/lambda";
@@ -116,56 +117,6 @@ class LocalContext implements IContext {
 
     public error(error: any, restart: boolean) {
         return;
-    }
-}
-
-class ScriptoriumProducer implements IProducer {
-    private offset = 1;
-
-    constructor(
-        private lambda: ScriptoriumLambda,
-        private tmzLambda: TmzLambda) {
-    }
-
-    public async send(message: string, topic: string): Promise<any> {
-        const scriptoriumMessage: IMessage = {
-            highWaterOffset: this.offset,
-            key: topic,
-            offset: this.offset,
-            partition: 0,
-            topic,
-            value: message,
-        };
-        this.offset++;
-
-        this.lambda.handler(scriptoriumMessage);
-        this.tmzLambda.handler(scriptoriumMessage);
-    }
-
-    public close(): Promise<void> {
-        return Promise.resolve();
-    }
-}
-
-class DeliProducer implements IProducer {
-    constructor(private lambda: DeliLambda, private offset: number = 0) {
-    }
-
-    public async send(message: string, topic: string): Promise<any> {
-        const deliMessage: IMessage = {
-            highWaterOffset: this.offset,
-            key: topic,
-            offset: this.offset,
-            partition: 0,
-            topic,
-            value: message,
-        };
-        this.offset++;
-        this.lambda.handler(deliMessage);
-    }
-
-    public close(): Promise<void> {
-        return Promise.resolve();
     }
 }
 
@@ -281,6 +232,7 @@ class LocalOrdererConnection implements IOrdererConnection {
                 });
         }
 
+        // Submits the message.
         this.producer.send(JSON.stringify(message), this.documentId);
     }
 }
@@ -318,8 +270,13 @@ export class LocalOrderer implements core.IOrderer {
             permission);
     }
 
-    private producer: ScriptoriumProducer;
-    private deliProducer: DeliProducer;
+    private alfredToDeliKafka: InMemoryKafka;
+    private deliToScriptoriumKafka: InMemoryKafka;
+
+    private deliLambda: DeliLambda;
+    private tmzLambda: TmzLambda;
+    private scriptoriumLambda: ScriptoriumLambda;
+
     private existing: boolean;
     private socketPublisher: LocalSocketPublisher;
     private pubsub = new PubSub();
@@ -340,33 +297,39 @@ export class LocalOrderer implements core.IOrderer {
         // TODO I want to maintain an inbound queue. On lambda failures I need to recreate all of them. Just
         // like what happens when the service goes down.
 
+        // In memory kafka.
+        this.alfredToDeliKafka = new InMemoryKafka();
+        this.deliToScriptoriumKafka = new InMemoryKafka();
+
         // Scriptorium Lambda
         const scriptoriumContext = new LocalContext();
-        const scriptoriumLambda = new ScriptoriumLambda(
+        this.scriptoriumLambda = new ScriptoriumLambda(
             this.socketPublisher,
             deltasCollection,
             scriptoriumContext);
 
         // TMZ lambda
         const tmzContext = new LocalContext();
-        const tmzLambda = new TmzLambda(
+        this.tmzLambda = new TmzLambda(
             this.taskMessageSender,
             this.tenantManager,
             this.permission,
             tmzContext);
 
-        // Deli Lambda
-        this.producer = new ScriptoriumProducer(scriptoriumLambda, tmzLambda);
+        // Deli lambda
         const deliContext = new LocalContext();
-        const deliLambda = new DeliLambda(
+        this.deliLambda = new DeliLambda(
             deliContext,
             tenantId,
             documentId,
             details.value,
             collection,
-            this.producer,
-            ClientSequenceTimeout);
-        this.deliProducer = new DeliProducer(deliLambda, this.existing ? details.value.sequenceNumber : 0);
+            this.deliToScriptoriumKafka,
+            this.alfredToDeliKafka,
+            ClientSequenceTimeout,
+            ActivityCheckingTimeout);
+
+        this.startLambdas();
     }
 
     public async connect(
@@ -391,7 +354,7 @@ export class LocalOrderer implements core.IOrderer {
             subscriber,
             this.existing,
             this.details.value,
-            this.deliProducer,
+            this.alfredToDeliKafka,
             this.tenantId,
             this.documentId,
             clientId,
@@ -402,5 +365,45 @@ export class LocalOrderer implements core.IOrderer {
         this.existing = true;
 
         return connection;
+    }
+
+    private startLambdas() {
+        this.alfredToDeliKafka.on("message", (message: IMessage) => {
+            this.deliLambda.handler(message);
+        });
+
+        this.deliToScriptoriumKafka.on("message", (message: IMessage) => {
+            this.scriptoriumLambda.handler(message);
+            this.tmzLambda.handler(message);
+        });
+    }
+}
+
+// Dumb local in memory kafka.
+// TODO: Make this real.
+class InMemoryKafka extends EventEmitter implements IProducer {
+
+    private offset = 0;
+
+    constructor() {
+        super();
+    }
+
+    public async send(message: string, topic: string): Promise<any> {
+        const kafkaMessage: IMessage = {
+            highWaterOffset: this.offset,
+            key: topic,
+            offset: this.offset,
+            partition: 0,
+            topic,
+            value: message,
+        };
+        this.emit("message", kafkaMessage);
+        this.offset++;
+
+    }
+
+    public close(): Promise<void> {
+        return Promise.resolve();
     }
 }

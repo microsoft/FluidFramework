@@ -8,11 +8,15 @@ import { DeliLambda } from "./lambda";
 // We expire clients after 5 minutes of no activity
 export const ClientSequenceTimeout = 5 * 60 * 1000;
 
+// Timeout for sending no-ops to trigger inactivity checker.
+export const ActivityCheckingTimeout = 30 * 1000;
+
 export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaFactory {
     constructor(
         private mongoManager: utils.MongoManager,
         private collection: core.ICollection<core.IDocument>,
-        private producer: utils.IProducer) {
+        private forwardProducer: utils.IProducer,
+        private reverseProducer: utils.IProducer) {
         super();
     }
 
@@ -35,13 +39,16 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
             // It probably shouldn't take the collection - I can manage that
             this.collection,
             // The producer as well it shouldn't take. Maybe it just gives an output stream?
-            this.producer,
-            ClientSequenceTimeout);
+            this.forwardProducer,
+            this.reverseProducer,
+            ClientSequenceTimeout,
+            ActivityCheckingTimeout);
     }
 
     public async dispose(): Promise<void> {
         const mongoClosedP = this.mongoManager.close();
-        const producerClosedP = this.producer.close();
-        await Promise.all([mongoClosedP,  producerClosedP]);
+        const forwardProducerClosedP = this.forwardProducer.close();
+        const reverseProducerClosedP = this.reverseProducer.close();
+        await Promise.all([mongoClosedP,  forwardProducerClosedP, reverseProducerClosedP]);
     }
 }
