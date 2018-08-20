@@ -8,6 +8,7 @@ export interface IConnectionDetails {
     existing: boolean;
     parentBranch: string;
     user: protocol.ITenantUser;
+    initialMessages?: protocol.ISequencedDocumentMessage[];
 }
 
 export class DeltaConnection extends EventEmitter {
@@ -45,6 +46,7 @@ export class DeltaConnection extends EventEmitter {
         this._details = {
             clientId: connection.clientId,
             existing: connection.existing,
+            initialMessages: connection.initialMessages,
             parentBranch: connection.parentBranch,
             user: connection.user,
         };

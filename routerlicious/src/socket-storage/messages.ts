@@ -1,4 +1,4 @@
-import { IClient, ITenantUser } from "../api-core";
+import { IClient, ISequencedDocumentMessage, ITenantUser } from "../api-core";
 
 /**
  * Message sent to connect to the given object
@@ -34,6 +34,9 @@ export interface IConnected {
 
     // The parent branch for the document
     parentBranch: string;
+
+    // Messages sent during the connection
+    initialMessages?: ISequencedDocumentMessage[];
 }
 
 /**

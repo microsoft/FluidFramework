@@ -1,5 +1,5 @@
 // The main app code
-import { getFileBlobType, IImageBlob } from "../api-core";
+import { IGenericBlob } from "../api-core";
 import { blobUploadHandler } from "../blob";
 import { api, core, types} from "../client-api";
 import * as ui from "../ui";
@@ -43,8 +43,9 @@ export class FlexView extends ui.Component {
     private popup: Popup;
     private colorStack: StackPanel;
     private components: IFlexViewComponent[] = [];
+    private insightsMap: types.IMapView;
 
-    constructor(element: HTMLDivElement, doc: api.Document, root: types.IMapView) {
+    constructor(element: HTMLDivElement, private doc: api.Document, root: types.IMapView) {
         super(element);
 
         const dockElement = document.createElement("div");
@@ -57,9 +58,9 @@ export class FlexView extends ui.Component {
         // Add the ink canvas to the dock
         // Add blob Upload Handler
         const inkCanvasElement = document.createElement("div");
-        blobUploadHandler(inkCanvasElement, doc, this.renderImage);
         this.ink = new InkCanvas(inkCanvasElement, root.get("ink"));
         this.dock.addContent(this.ink);
+        blobUploadHandler(inkCanvasElement, doc, (incl) => this.renderFunc(incl, this.ink));
 
         this.addButtons();
 
@@ -67,6 +68,14 @@ export class FlexView extends ui.Component {
         if (!root.has("components")) {
             root.set("components", doc.createMap());
         }
+
+        if (!root.has("insights")) {
+            root.set("insights", doc.createMap());
+        }
+        root.get<types.IMap>("insights").getView()
+            .then((insightsView) => {
+                this.insightsMap = insightsView;
+            });
         this.processComponents(root.get("components"));
     }
 
@@ -101,32 +110,21 @@ export class FlexView extends ui.Component {
     private addBlobListeners(doc: api.Document) {
 
         doc.on(core.BlobPrepared, (message) => {
-            this.renderImage(message);
+            this.render(message);
         });
 
         doc.on(core.BlobUploaded, async (message) => {
             const blob = await doc.getBlob(message);
-            this.renderImage(blob as IImageBlob);
+            this.render(blob);
         });
 
         // Load blobs on start
         doc.getBlobMetadata()
-            // Render metadata
-            // Todo: sabroner remove double load (url)
             .then((blobs) => {
                 for (const blob of blobs) {
-                    this.renderImage(blob as IImageBlob);
+                    this.render(blob);
                 }
                 return blobs;
-            })
-            // fetch and render content
-            .then(async (blobs) => {
-                for (const blob of blobs) {
-                    doc.getBlob(blob.sha)
-                        .then((blobWithContent) => {
-                            this.renderImage(blobWithContent as IImageBlob);
-                        });
-                }
             });
     }
 
@@ -143,14 +141,8 @@ export class FlexView extends ui.Component {
             buttonSize,
             ["btn", "btn-palette", "prague-icon-replay"]);
 
-        const videoPlay = new Button(
-            document.createElement("div"),
-            buttonSize,
-            ["btn", "btn-palette", "prague-icon-tube"]);
-
         stackPanel.addChild(this.colorButton);
         stackPanel.addChild(replayButton);
-        stackPanel.addChild(videoPlay);
         this.dock.addBottom(stackPanel);
 
         replayButton.on("click", (event) => {
@@ -161,18 +153,6 @@ export class FlexView extends ui.Component {
         this.colorButton.on("click", (event) => {
             debug("Color button click");
             this.popup.toggle();
-        });
-
-        videoPlay.on("click", () => {
-            const videos = document.getElementsByTagName("video");
-            if (videos.length === 1) {
-                const video = videos.item(0);
-                if (video.paused) {
-                    video.play();
-                } else {
-                    video.pause();
-                }
-            }
         });
 
        // These should turn into components
@@ -229,44 +209,53 @@ export class FlexView extends ui.Component {
         this.resizeCore(this.size);
     }
 
-    private async renderImage(incl: IImageBlob) {
-        // We have an image, and it isn't in the DOM
-        if (getFileBlobType(incl.type) === "image") {
+    private async render(incl: IGenericBlob) {
+        this.renderFunc(incl, this.ink);
+    }
 
-            // Style the metadata of the image
+    private renderFunc = async (incl: IGenericBlob, ink: InkCanvas) => {
+
+        if (incl.type === "image") {
+            if (document.getElementById(incl.sha) === null) { // Handle blob Processed
+                const imageDiv = document.createElement("div");
+                imageDiv.id = incl.sha;
+                imageDiv.style.height = incl.height + 40 + "px";
+                imageDiv.style.width = incl.width + 15 + "px";
+                imageDiv.style.border = "3px solid black";
+
+                const image = new Image(imageDiv, incl.url);
+                ink.addPhoto(image);
+            } else { // handle blob uploaded
+                const imageDiv = document.getElementById(incl.sha);
+                const image = imageDiv.getElementsByTagName("img").item(0);
+                if (image.naturalWidth === 0) {
+                    image.src = image.src;
+                }
+            }
+
+        } else if (incl.type === "video") {
             if (document.getElementById(incl.sha) === null) {
-                const newImageDiv = document.createElement("div");
-                newImageDiv.id = incl.sha;
-                newImageDiv.style.height = incl.height + 40 + "px";
-                newImageDiv.style.width = incl.width + 15 + "px";
-                newImageDiv.style.border = "3px solid black";
-                newImageDiv.classList.add("no-image");
+                const videoDiv = document.createElement("div");
+                videoDiv.id = incl.sha;
+                videoDiv.style.height = incl.height + 40 + "px";
+                videoDiv.style.width = incl.width + 15 + "px";
+                videoDiv.style.border = "3px solid black";
 
-                const image = new Image(newImageDiv, null );
-                this.ink.addPhoto(image);
+                if (!this.insightsMap.has(incl.sha)) {
+                    this.insightsMap.set(incl.sha, this.doc.createMap());
+                }
+                const videoMap = this.insightsMap.get<types.IMap>(incl.sha);
+
+                const video = new Video(videoDiv, videoMap, incl.url);
+                ink.addVideo(video);
+            } else {
+                const videoDiv = document.getElementById(incl.sha);
+                const video = videoDiv.getElementsByTagName("video").item(0);
+                if (video.height === 0) {
+                    video.src = video.src;
+                    video.load();
+                }
             }
-
-            // Render the Image itself
-            const imgDiv = document.getElementById(incl.sha);
-            const img = imgDiv.getElementsByTagName("img")[0];
-
-            if (imgDiv.classList.contains("no-image") && incl.content !== null) {
-                // TODO (sabroner): use blobUtils
-                const urlObj = window.URL;
-                const url = urlObj.createObjectURL(new Blob([incl.content], {
-                    type: incl.type,
-                }));
-                img.src = url;
-
-                imgDiv.classList.replace("no-image", "image");
-            }
-        } else if (getFileBlobType(incl.type) === "video" && document.getElementById(incl.sha) === null) {
-            const videoDiv = document.createElement("div");
-            videoDiv.id = incl.sha;
-            videoDiv.style.height = incl.height + 40 + "px";
-            videoDiv.style.width = incl.width + 15 + "px";
-            videoDiv.style.border = "3px solid black";
-            this.ink.addVideo(new Video(videoDiv, incl.url));
         }
     }
 }

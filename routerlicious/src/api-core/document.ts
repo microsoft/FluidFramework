@@ -1,7 +1,7 @@
 // tslint:disable:ban-types
 import { EventEmitter } from "events";
 import { IEnvelope, IObjectMessage, ISequencedObjectMessage, ITenantUser } from "./protocol";
-import { ICollaborativeObject, IDataBlob } from "./types";
+import { ICollaborativeObject, IGenericBlob } from "./types";
 
 export interface IDeltaManager {
     // The queue of inbound delta messages
@@ -117,9 +117,9 @@ export interface IDocument {
 
     getUser(): ITenantUser;
 
-    uploadBlob(blob: IDataBlob): Promise<IDataBlob>;
+    uploadBlob(blob: IGenericBlob): Promise<IGenericBlob>;
 
-    getBlob(sha: string): Promise<IDataBlob>;
+    getBlob(sha: string): Promise<IGenericBlob>;
 
     snapshot(message: string): Promise<void>;
 

@@ -85,7 +85,13 @@ export class Snapshot implements ISnapshot {
     }
 
     private addOperationToLayer(id: string, operation: IOperation) {
-        const layerIndex = this.layerIndex[id];
-        this.layers[layerIndex].operations.push(operation);
+        // TODO: Why is this operation sometimes undefined?
+        if (this.layerIndex[id] !== undefined) {
+            const layerIndex = this.layerIndex[id];
+            if (this.layers[layerIndex].operations === undefined) {
+                this.layers[layerIndex].operations = [];
+            }
+            this.layers[layerIndex].operations.push(operation);
+        }
     }
 }

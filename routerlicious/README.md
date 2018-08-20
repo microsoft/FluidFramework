@@ -57,6 +57,8 @@ To start the service for development run the following commands:
 * `npm run build`
 * `npm start`
 
+To stop the service run `npm stop`. If you also want to clean up any mounted volumes (to get to a fully clean state) run `npm run stop:full`.
+
 If you also need debugging you can run:
 
 * `npm run start:debug` - which will allow you to attach a debugger

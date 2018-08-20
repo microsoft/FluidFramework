@@ -192,6 +192,11 @@ export interface IDocumentDeltaConnection {
     user: ITenantUser;
 
     /**
+     * Messages sent during the connection
+     */
+    initialMessages?: ISequencedDocumentMessage[];
+
+    /**
      * Subscribe to events emitted by the document
      */
     on(event: string, listener: Function): this;

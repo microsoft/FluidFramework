@@ -85,7 +85,7 @@ interface IHeaderDetails {
     // Attributes for the document
     attributes: api.IDocumentAttributes;
 
-    blobs: api.IDataBlob[];
+    blobs: api.IGenericBlob[];
 
     // Distributed objects contained within the document
     distributedObjects: api.IDistributedObject[];
@@ -376,14 +376,14 @@ export class Document extends EventEmitter implements api.IDocument {
         return this.distributedObjects.get(rootMapId).object as IMap;
     }
 
-    public createBlobMetadata(file: api.IDataBlob, sha: string): api.IDataBlob {
+    public createBlobMetadata(file: api.IGenericBlob, sha: string): api.IGenericBlob {
         file.sha = sha;
         file.url = this.storageService.getRawUrl(sha);
         this.blobManager.addBlob(file).then(() => this.submitMessage(api.BlobPrepared, file));
         return file;
     }
 
-    public async uploadBlob(file: api.IDataBlob): Promise<api.IDataBlob> {
+    public async uploadBlob(file: api.IGenericBlob): Promise<api.IGenericBlob> {
         const sha = gitHashFile(file.content);
         this.blobManager.createBlob(file.content).then(() => {
             this.submitMessage(api.BlobUploaded, sha);
@@ -391,13 +391,13 @@ export class Document extends EventEmitter implements api.IDocument {
         return this.createBlobMetadata(file, sha);
     }
 
-    public getBlobMetadata(): Promise<api.IDataBlob[]> {
-        return new Promise<api.IDataBlob[]>((resolve) => {
+    public getBlobMetadata(): Promise<api.IGenericBlob[]> {
+        return new Promise<api.IGenericBlob[]>((resolve) => {
             resolve(this.blobManager.getBlobMetadata());
         });
     }
 
-    public async getBlob(sha: string): Promise<api.IDataBlob> {
+    public async getBlob(sha: string): Promise<api.IGenericBlob> {
         return this.blobManager.getBlob(sha);
     }
 
@@ -617,7 +617,7 @@ export class Document extends EventEmitter implements api.IDocument {
                         this.processRemoteMessage(message, context);
                     },
                 });
-            });
+        });
 
         return { detailsP, handlerAttachedP };
     }
@@ -697,7 +697,7 @@ export class Document extends EventEmitter implements api.IDocument {
         const tree = await storage.getSnapshotTree(version);
 
         const messagesP = readAndParse<api.ISequencedDocumentMessage[]>(storage, tree.blobs[".messages"]);
-        const blobsP = readAndParse<api.IDataBlob[]>(storage, tree.blobs[".blobs"]);
+        const blobsP = readAndParse<api.IGenericBlob[]>(storage, tree.blobs[".blobs"]);
         const attributesP = readAndParse<api.IDocumentAttributes>(storage, tree.blobs[".attributes"]);
 
         const distributedObjectsP = Array<Promise<api.IDistributedObject>>();

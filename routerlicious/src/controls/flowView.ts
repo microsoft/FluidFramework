@@ -3104,7 +3104,7 @@ export interface IReferenceDoc {
     layout?: IRefLayoutSpec;
 }
 
-export function makeImageRef(blob: core.IDataBlob, tenant: string, cb: (irdoc: IReferenceDoc) => void) {
+export function makeImageRef(blob: core.IGenericBlob, tenant: string, cb: (irdoc: IReferenceDoc) => void) {
     const image = document.createElement("img");
     const rdocType = <IReferenceDocType>{
         name: "image",
@@ -3220,7 +3220,7 @@ export class FlowView extends ui.Component {
         this.setViewOption(this.options);
         blobUploadHandler(element,
             this.sharedString.getDocument(),
-            (incl: core.IDataBlob) => this.insertPhotoInternal(incl),
+            (incl: core.IGenericBlob) => this.insertPhotoInternal(incl),
         );
     }
 
@@ -4492,7 +4492,7 @@ export class FlowView extends ui.Component {
             });
     }
 
-    private insertPhotoInternal(blob: core.IDataBlob) {
+    private insertPhotoInternal(blob: core.IGenericBlob) {
         makeImageRef(blob, this.collabDocument.tenantId, (irdoc) => {
             const refProps = {
                 [Paragraph.referenceProperty]: irdoc,

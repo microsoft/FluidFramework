@@ -1,0 +1,26 @@
+{
+  "name": "@prague/services-client",
+  "version": "0.1.0",
+  "description": "Isomorphic services for communicating with Prague",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "npm run tsc && npm run tslint",
+    "tsc": "tsc",
+    "tslint": "tslint 'src/**/*.ts'"
+  },
+  "author": "Microsoft",
+  "repository": "microsoft/prague",
+  "devDependencies": {
+    "tslint": "^5.11.0",
+    "typescript": "^3.0.1"
+  },
+  "dependencies": {
+    "@prague/gitresources": "^0.7.1",
+    "@prague/runtime-definitions": "0.1.0",
+    "@types/node": "^10.5.7",
+    "@types/request-promise-native": "^1.0.15",
+    "debug": "^3.1.0",
+    "request-promise-native": "^1.0.5"
+  }
+}

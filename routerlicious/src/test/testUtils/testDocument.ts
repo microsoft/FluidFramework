@@ -67,11 +67,11 @@ export class TestDocument implements core.IDocument {
         return this.snapshotCore(message);
     }
 
-    public uploadBlob(blob: core.IDataBlob): Promise<core.IDataBlob> {
+    public uploadBlob(blob: core.IGenericBlob): Promise<core.IGenericBlob> {
         return null;
     }
 
-    public getBlob(sha: string): Promise<core.IDataBlob> {
+    public getBlob(sha: string): Promise<core.IGenericBlob> {
         return null;
     }
 

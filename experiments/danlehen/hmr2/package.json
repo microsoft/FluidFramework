@@ -1,0 +1,24 @@
+{
+  "name": "@prague/hmr",
+  "description": "Demo of hot module reloading.  Use 'npm run dev' and view at http://localhost:8080.",
+  "scripts": {
+    "webpack": "webpack --config webpack.prod.js",
+    "dev": "webpack-serve --config webpack.dev.js"
+  },
+  "author": "Microsoft",
+  "repository": "microsoft/prague",
+  "devDependencies": {
+    "@types/jsonwebtoken": "^7.2.8",
+    "clean-webpack-plugin": "^0.1.19",
+    "html-webpack-plugin": "^3.2.0",
+    "ts-loader": "^4.4.2",
+    "typescript": "^3.0.1",
+    "webpack": "^4.16.5",
+    "webpack-cli": "^3.1.0",
+    "webpack-merge": "^4.1.4",
+    "webpack-serve": "^2.0.2"
+  },
+  "dependencies": {
+    "jsonwebtoken": "^8.3.0"
+  }
+}

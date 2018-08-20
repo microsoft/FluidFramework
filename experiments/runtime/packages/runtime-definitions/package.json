@@ -1,0 +1,20 @@
+{
+  "name": "@prague/runtime-definitions",
+  "version": "0.1.0",
+  "description": "Prague document loader",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc && tslint 'src/**/*.ts'"
+  },
+  "author": "Microsoft",
+  "repository": "microsoft/prague",
+  "devDependencies": {
+    "tslint": "^5.11.0",
+    "typescript": "^3.0.1"
+  },
+  "dependencies": {
+    "@prague/gitresources": "^0.7.1",
+    "@types/node": "^10.5.7"
+  }
+}

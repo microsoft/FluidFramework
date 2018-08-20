@@ -350,6 +350,12 @@ export class DeltaManager extends EventEmitter implements IDeltaManager {
                     this.emit("pong", latency);
                 });
 
+                const initialMessages =  connection.details.initialMessages;
+                if (initialMessages && initialMessages.length > 0) {
+                    // the "connectDocument" message sent us some deltas. let's process them
+                    this.catchUp(initialMessages);
+                }
+
                 // Notify of the connection
                 this.emit("connect", connection.details);
             },

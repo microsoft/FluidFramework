@@ -70,7 +70,7 @@ export class TestDocumentService implements api.IDocumentService {
         id: string,
         token: string): Promise<api.IDocumentDeltaConnection> {
 
-        return new TestDocumentDeltaConnection(id, "test-client", false, "", null);
+        return new TestDocumentDeltaConnection(id, "test-client", false, "", null, undefined);
     }
 
     public branch(tenantId: string, id: string, token: string): Promise<string> {

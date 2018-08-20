@@ -1,7 +1,9 @@
 import * as resources from "@prague/gitresources";
 import { EventEmitter } from "events";
-import { IClient } from "./client";
-import { IDocumentMessage, ISequencedDocumentMessage, ITenantUser } from "./protocol";
+import { IClient } from "./clients";
+import { ISequencedProposal } from "./consensus";
+import { IDocumentMessage, ISequencedDocumentMessage } from "./protocol";
+import { IUser } from "./users";
 
 export interface IDocumentAttributes {
     /**
@@ -23,6 +25,16 @@ export interface IDocumentAttributes {
      * List of clients when the snapshot was taken
      */
     clients: Array<[string, IClient]>;
+
+    /**
+     * Pending proposals at the time of the snapshot
+     */
+    proposals: ISequencedProposal[];
+
+    /**
+     * Quorum values at the time of the snapshot
+     */
+    values: Array<[string, any]>;
 }
 
 export interface IObjectAttributes {
@@ -188,7 +200,7 @@ export interface IDocumentDeltaConnection extends EventEmitter {
     /**
      * The identity of the logged-in user
      */
-    user: ITenantUser;
+    user: IUser;
 
     /**
      * Submit a new message to the server

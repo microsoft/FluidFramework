@@ -1,9 +1,9 @@
-import * as queue from "async/queue";
+import { AsyncQueue, AsyncWorker, queue } from "async";
 import { EventEmitter } from "events";
-import { IDeltaQueue } from "./document";
+import { IDeltaQueue } from "./deltas";
 
 export class DeltaQueue<T> extends EventEmitter implements IDeltaQueue {
-    private q: async.AsyncQueue<T>;
+    private q: AsyncQueue<T>;
 
     // We expose access to the DeltaQueue in order to allow users (from the console or code) to be able to pause/resume.
     // But the internal system itself also sometimes needs to override these changes. The system field takes precedence.
@@ -22,7 +22,7 @@ export class DeltaQueue<T> extends EventEmitter implements IDeltaQueue {
         return this.length === 0;
     }
 
-    constructor(private worker: async.AsyncWorker<T, void>) {
+    constructor(private worker: AsyncWorker<T, void>) {
         super();
 
         // Clear creates a new queue

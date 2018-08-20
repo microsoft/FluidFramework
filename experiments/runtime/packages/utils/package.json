@@ -1,7 +1,7 @@
 {
   "name": "@prague/utils",
   "version": "0.1.0",
-  "description": "Server to assign sequence numbers and route deltas between connected clients",
+  "description": "Collection of utility functions for Prague",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
@@ -18,7 +18,6 @@
   },
   "dependencies": {
     "@prague/gitresources": "^0.7.1",
-    "@types/async": "^2.0.49",
     "@types/debug": "0.0.30",
     "@types/node": "^10.5.4",
     "lodash": "^4.17.10"
