@@ -5,11 +5,11 @@ import { IContext, IPartitionLambda, IPartitionLambdaFactory } from "../kafka-se
 import * as utils from "../utils";
 import { DeliLambda } from "./lambda";
 
-// We expire clients after 3 minutes of no activity
-export const ClientSequenceTimeout = 60 * 1000;
+// We expire clients after 5 minutes of no activity
+export const ClientSequenceTimeout = 5 * 60 * 1000;
 
-// Timeout for checking inactivity.
-export const ActivityCheckingTimeout = 20 * 1000;
+// Timeout for sending no-ops to trigger inactivity checker.
+export const ActivityCheckingTimeout = 30 * 1000;
 
 export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaFactory {
     constructor(
