@@ -21,6 +21,7 @@
     "@types/debug": "0.0.30",
     "@types/lodash": "^4.14.116",
     "@types/node": "^10.5.4",
+    "@types/scriptjs": "^0.0.2",
     "async": "^2.6.1",
     "debug": "^3.1.0",
     "lodash": "^4.17.10",
