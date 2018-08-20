@@ -42,6 +42,9 @@
     <ClInclude Include="PartialLengths.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="FileTable.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="NativeMergeTree.natvis" />

@@ -1,5 +1,6 @@
 #pragma once
 #include <cassert>
+#include <deque>
 #include "Messages.h"
 
 struct IMessageListener
@@ -19,6 +20,9 @@ struct SimpleLoopbackRouter : public IRouterEndpoint
 	IMessageListener *m_listener = nullptr;
 	Seq seq = Seq::Create(0);
 
+	uint32_t maxQueueLength = 0;
+	std::deque<SequencedMessage> queue;
+
 	ClientId GetLocalClientId() override
 	{
 		return ClientId::Create(7);
@@ -26,7 +30,8 @@ struct SimpleLoopbackRouter : public IRouterEndpoint
 
 	void Send(const Message &msg)
 	{
-		SequencedMessage smsg;
+		queue.emplace_back();
+		SequencedMessage &smsg = queue.back();
 		smsg.sequenceNumber = seq;
 		smsg.clientSequenceNumber = msg.clientSequenceNumber;
 		smsg.referenceSequenceNumber = msg.referenceSequenceNumber;
@@ -36,7 +41,11 @@ struct SimpleLoopbackRouter : public IRouterEndpoint
 
 		seq = seq.next();
 
-		m_listener->OnMessageReceived(smsg);
+		while (queue.size() > maxQueueLength)
+		{
+			m_listener->OnMessageReceived(queue.front());
+			queue.pop_front();
+		}
 	}
 
 	void AddListener(IMessageListener * listener)
@@ -49,7 +58,7 @@ struct SimpleLoopbackRouter : public IRouterEndpoint
 template <size_t N>
 struct MultiClientRouter
 {
-	Seq seq = Seq::Create(0);
+	Seq seq = Seq::Create(1);
 	std::vector<SequencedMessage> msgs;
 
 	struct Endpoint : public IRouterEndpoint
@@ -59,7 +68,7 @@ struct MultiClientRouter
 
 		ClientId GetLocalClientId() override
 		{
-			return ClientId::Create(7);
+			return client;
 		}
 
 		void AddListener(IMessageListener *listener) override
@@ -69,16 +78,7 @@ struct MultiClientRouter
 
 		void Send(const Message &msg)
 		{
-			SequencedMessage smsg;
-			smsg.sequenceNumber = router->seq;
-			smsg.clientSequenceNumber = msg.clientSequenceNumber;
-			smsg.referenceSequenceNumber = msg.referenceSequenceNumber;
-			smsg.minimumSequenceNumber = Seq::Universal(); // TODO
-			smsg.clientId = GetLocalClientId();
-			smsg.contents = msg.contents;
-
-			router->seq = router->seq.next();
-			router->msgs.push_back(std::move(smsg));
+			router->Receive(msg, client);
 		}
 	};
 
@@ -94,10 +94,25 @@ struct MultiClientRouter
 		}
 	}
 
+	void Receive(const Message &msg, ClientId client)
+	{
+		SequencedMessage smsg;
+		smsg.sequenceNumber = this->seq;
+		smsg.clientSequenceNumber = msg.clientSequenceNumber;
+		smsg.referenceSequenceNumber = msg.referenceSequenceNumber;
+		smsg.minimumSequenceNumber = Seq::Universal(); // TODO
+		smsg.clientId = client;
+		smsg.contents = msg.contents;
+
+		this->seq = this->seq.next();
+		msgs.push_back(std::move(smsg));
+	}
+
 	void PumpMessages()
 	{
 		for (auto &&msg : msgs)
 			for (IMessageListener *listener : listeners)
 				listener->OnMessageReceived(msg);
+		msgs.clear();
 	}
 };

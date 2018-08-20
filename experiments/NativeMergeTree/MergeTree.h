@@ -9,6 +9,7 @@
 #include "PartialLengths.h"
 #include "Messages.h"
 #include "Router.h"
+#include "FileTable.h"
 
 namespace Config
 {
@@ -83,7 +84,13 @@ struct Adjustment
 	Adjustment(CharacterPosition cp, int32_t dcp) : cp(cp), dcp(dcp) {}
 };
 
-inline CharacterPosition CpAdjustCp(CharacterPosition cp, const Adjustment &adj)
+enum class Stick
+{
+	Left,
+	Right,
+};
+
+inline CharacterPosition CpAdjustCp(CharacterPosition cp, const Adjustment &adj, Stick stick)
 {
 	if (cp < adj.cp || adj.dcp == 0)
 		return cp;
@@ -101,13 +108,13 @@ inline CharacterPosition CpAdjustCp(CharacterPosition cp, const Adjustment &adj)
 		if (cp > adj.cp)
 			return cp + adj.dcp;
 
-		// FUTURE apply stickiness here?
-		// for now assume right sticky
-		return cp + adj.dcp;
+		if (stick == Stick::Right)
+			return cp + adj.dcp; 
+		return cp;
 	}
 }
 
-struct Transaction
+struct Edit
 {
 	Seq seq;
 	ClientId client;
@@ -115,21 +122,28 @@ struct Transaction
 	std::vector<std::weak_ptr<Segment>> segmentsRemoved;
 	Adjustment adjustment;
 
-	static constexpr order_by<Transaction, &Transaction::seq> OrderBySeq{};
+	static constexpr order_by<Edit, &Edit::seq> OrderBySeq{};
 
-	Transaction(Seq seq, ClientId client)
+	Edit(Seq seq, ClientId client)
 		: seq(seq)
 		, client(client)
 	{}
 };
+
+inline Seq SeqFromEditPtr(const std::shared_ptr<Edit> &ped)
+{
+	return ped->seq;
+}
+
+constexpr const order_by<std::shared_ptr<Edit>, &SeqFromEditPtr> OrderEditPtrBySeq{};
 
 struct Segment : public MergeNode
 {
 	SegmentType m_type;
 	int length;
 	bool isDead = false;
-	std::weak_ptr<Transaction> txnAdded;
-	std::weak_ptr<Transaction> txnRemoved;
+	std::weak_ptr<Edit> edAdded;
+	std::weak_ptr<Edit> edRemoved;
 
 	Segment(SegmentType type, int length)
 		: MergeNode(true /*isLeaf*/)
@@ -138,12 +152,13 @@ struct Segment : public MergeNode
 	{}
 
 	virtual ~Segment() = default;
+	virtual std::string_view Text() = 0;
 	virtual std::shared_ptr<Segment> splitAt(int pos) = 0;
 
 	bool IsRemoved() const
 	{
-		std::shared_ptr<Transaction> txn = txnRemoved.lock();
-		return txn != nullptr;
+		std::shared_ptr<Edit> ed = edRemoved.lock();
+		return ed != nullptr;
 	}
 };
 
@@ -152,9 +167,14 @@ struct TextSegment final : public Segment
 	std::string m_text;
 
 	TextSegment(std::string_view text)
-		: Segment(SegmentType::Text, text.length())
+		: Segment(SegmentType::Text, static_cast<int>(text.length()))
 		, m_text(text)
 	{}
+
+	std::string_view Text() override
+	{
+		return m_text;
+	}
 
 	std::shared_ptr<Segment> splitAt(int pos) override
 	{
@@ -162,18 +182,56 @@ struct TextSegment final : public Segment
 		{
 			std::string remainingText = m_text.substr(pos);
 			m_text.resize(pos);
-			length = m_text.size();
+			length = static_cast<int>(m_text.size());
 
 			std::shared_ptr<TextSegment> leafSegment = std::make_shared<TextSegment>(*this);
 			leafSegment->m_text = std::move(remainingText);
-			leafSegment->length = leafSegment->m_text.size();
+			leafSegment->length = static_cast<int>(leafSegment->m_text.size());
 
-			std::shared_ptr<Transaction> txn = leafSegment->txnAdded.lock();
-			if (txn)
-				txn->segmentsAdded.push_back(leafSegment);
-			txn = leafSegment->txnRemoved.lock();
-			if (txn)
-				txn->segmentsRemoved.push_back(leafSegment);
+			std::shared_ptr<Edit> ed = leafSegment->edAdded.lock();
+			if (ed)
+				ed->segmentsAdded.push_back(leafSegment);
+			ed = leafSegment->edRemoved.lock();
+			if (ed)
+				ed->segmentsRemoved.push_back(leafSegment);
+
+			return leafSegment;
+		}
+		return nullptr;
+	}
+};
+
+struct ExternalSegment final : public Segment
+{
+	FN fn;
+	const char *m_text;
+
+	ExternalSegment(FN fn, const char *text, int length)
+		: Segment(SegmentType::Text, length)
+		, fn(fn)
+		, m_text(text)
+	{}
+
+	std::string_view Text() override
+	{
+		return std::string_view(m_text, length);
+	}
+
+	std::shared_ptr<Segment> splitAt(int pos) override
+	{
+		if (pos > 0)
+		{
+			std::shared_ptr<ExternalSegment> leafSegment = std::make_shared<ExternalSegment>(*this);
+			leafSegment->m_text = m_text + pos;
+			leafSegment->length -= pos;
+			length = pos;
+
+			std::shared_ptr<Edit> ed = leafSegment->edAdded.lock();
+			if (ed)
+				ed->segmentsAdded.push_back(leafSegment);
+			ed = leafSegment->edRemoved.lock();
+			if (ed)
+				ed->segmentsRemoved.push_back(leafSegment);
 
 			return leafSegment;
 		}
@@ -463,7 +521,7 @@ struct MergeBlock final : public MergeNode
 			stats.depthMax = 1;
 
 			auto isDead = [](const std::shared_ptr<MergeNode> &node) -> bool { return static_cast<Segment *>(node.get())->isDead; };
-			stats.cDeadSegments = std::count_if(this->begin(), this->end(), isDead);
+			stats.cDeadSegments = static_cast<int8_t>(std::count_if(this->begin(), this->end(), isDead));
 		}
 
 		if (ChildCount() == 0)
@@ -649,8 +707,8 @@ struct MergeTree : public IMessageListener
 {
 	std::shared_ptr<MergeBlock> root;
 
-	std::vector<std::shared_ptr<Transaction>> m_txns;
-	std::vector<std::shared_ptr<Transaction>> m_txnsLocal;
+	std::deque<std::shared_ptr<Edit>> m_edits;
+	std::deque<std::shared_ptr<Edit>> m_editsLocal;
 	Seq clientSeqNext = Seq::Create(1000);
 	ClientId clientLocal = ClientId::Nil();
 
@@ -714,15 +772,20 @@ struct MergeTree : public IMessageListener
 	std::string_view Fetch(CharacterPosition cp)
 	{
 		CharacterIterator it = find(cp);
-		std::string_view svRet = static_cast<TextSegment *>(it.Segment())->m_text;
+		std::string_view svRet = it.Segment()->Text();
 		svRet.remove_prefix(it.OffsetInSegment());
 		return svRet;
 	}
 
-	void Replace(CharacterPosition cp, int dcp, std::string_view text)
+	void Replace(const CharacterPosition cp, const int dcp, std::string_view text, std::shared_ptr<Edit> ed = nullptr)
 	{
-		StartLocalTxn();
-		const std::shared_ptr<Transaction> &txn = m_txnsLocal.back();
+		bool fLocalEdit = false;
+		if (ed == nullptr)
+		{
+			fLocalEdit = true;
+			StartLocalEdit();
+			ed = m_editsLocal.back();
+		}
 		assert(dcp >= 0);
 
 		SegmentIterator it = findAndSplit(cp + dcp);
@@ -732,17 +795,17 @@ struct MergeTree : public IMessageListener
 		{
 			SegmentIterator it0 = findAndSplit(cp);
 
-			// Mark segments in it0..it as removed in txn.seqNew
+			// Mark segments in it0..it as removed in ed
 			while (it0 != it)
 			{
 				Segment *segmentRaw = it0.Segment();
 				assert(!segmentRaw->IsRemoved());
-				segmentRaw->txnRemoved = txn;
+				segmentRaw->edRemoved = ed;
 
 				segmentRaw->updateParentLengths(-(segmentRaw->length));
 
 				std::shared_ptr<Segment> segment = std::static_pointer_cast<Segment>(segmentRaw->parent->children[segmentRaw->index]);
-				txn->segmentsRemoved.push_back(segment);
+				ed->segmentsRemoved.push_back(segment);
 				it0.Next();
 			}
 		}
@@ -750,8 +813,8 @@ struct MergeTree : public IMessageListener
 		if (text.length() > 0)
 		{
 			std::shared_ptr<Segment> newSegment = std::make_shared<TextSegment>(text);
-			newSegment->txnAdded = txn;
-			txn->segmentsAdded.push_back(newSegment);
+			newSegment->edAdded = ed;
+			ed->segmentsAdded.push_back(newSegment);
 
 			// Insert new segment containing text at the end of the range
 			if (it.IsEnd())
@@ -778,7 +841,12 @@ struct MergeTree : public IMessageListener
 			}
 		}
 
-		Send(txn.get());
+		assert(ed->adjustment.cp == CharacterPosition::Invalid());
+		ed->adjustment.cp = cp;
+		ed->adjustment.dcp = static_cast<int>(text.length()) - dcp;
+
+		if (fLocalEdit)
+			SendReplaceOp(cp, dcp, text, ed.get());
 	}
 
 	CharacterPosition CpFromSegment(Segment *segment)
@@ -797,60 +865,73 @@ struct MergeTree : public IMessageListener
 		return cp;
 	}
 
-	void StartLocalTxn()
+	void StartLocalEdit()
 	{
-		auto txn = std::make_shared<Transaction>(clientSeqNext, ClientId::Local());
-		m_txnsLocal.push_back(txn);
+		auto ed = std::make_shared<Edit>(clientSeqNext, clientLocal);
+		m_editsLocal.push_back(ed);
 		clientSeqNext = clientSeqNext.next();
 	}
 
-	template <size_t N>
-	void TardisCpsToServerTip(std::array<CharacterPosition, N> &cps, Seq refSeq, ClientId client)
+	void TardisRangeToServerTip(std::array<CharacterPosition, 2> &cps, Seq refSeq, ClientId client)
 	{
-		assert(std::is_sorted(m_txns.begin(), m_txns.end(), Transaction::OrderBySeq));
-		auto it = std::lower_bound(m_txns.begin(), m_txns.end(), refSeq, Transaction::OrderBySeq);
-		assert(it->seq == refSeq);
+		if (m_edits.size() == 0)
+			return;
 
-		for (; it != m_txns.end(); it++)
+		assert(std::is_sorted(m_edits.begin(), m_edits.end(), OrderEditPtrBySeq));
+		auto it = std::upper_bound(m_edits.begin(), m_edits.end(), refSeq, OrderEditPtrBySeq);
+		assert(it == m_edits.end() || (*it)->seq == refSeq.next());
+
+		for (; it != m_edits.end(); it++)
 		{
-			if (it->client == client)
+			if ((*it)->client == client)
 				continue;
 
-			for (size_t icp = 0; icp < N; icp++)
-				cps[icp] = CpAdjustCp(cps[icp], it->adjustment);
-		}
-	}
-	template <size_t N>
-	void TardisCpsToLocal(std::array<CharacterPosition, N> &cps)
-	{
-		for (const std::shared_ptr<Transaction> &txn : m_txnsLocal)
-		{
-			for (size_t icp = 0; icp < N; icp++)
-				cps[icp] = CpAdjustCp(cps[icp], it->adjustment);
+			cps[0] = CpAdjustCp(cps[0], (*it)->adjustment, Stick::Right);
+			cps[1] = CpAdjustCp(cps[1], (*it)->adjustment, Stick::Right);
 		}
 	}
 
-	void Send(Transaction *txn)
+	void TardisServerRangeToLocal(std::array<CharacterPosition, 2> &cps)
+	{
+		for (const std::shared_ptr<Edit> &ed : m_editsLocal)
+		{
+			cps[0] = CpAdjustCp(cps[0], ed->adjustment, Stick::Left);
+			cps[1] = CpAdjustCp(cps[1], ed->adjustment, Stick::Left);
+		}
+	}
+
+	void RebaseLocalEdits(CharacterPosition cp, int dcp)
+	{
+		Adjustment adj { cp, dcp };
+		for (const std::shared_ptr<Edit> &ed : m_editsLocal)
+		{
+			auto cpNew = CpAdjustCp(ed->adjustment.cp, adj, Stick::Right);
+			ed->adjustment.cp = cpNew;
+		}
+	}
+
+	void SendReplaceOp(CharacterPosition cp, int dcp, std::string_view text, Edit *ed)
 	{
 		if (router == nullptr)
 			return;
 
-		if (txn->segmentsAdded.size() > 0)
+		if (ed->segmentsAdded.size() > 0)
 		{
 			Message msg;
-			msg.clientSequenceNumber = txn->seq;
-			msg.referenceSequenceNumber = m_txns.empty() ? Seq::Universal() : m_txns.back()->seq;
+			msg.clientSequenceNumber = ed->seq;
+			msg.referenceSequenceNumber = m_edits.empty() ? Seq::Universal() : m_edits.back()->seq;
 
 			MergeTreeInsertMsg insertMsg;
-			insertMsg.pos1 = txn->adjustment.cp;
-			int dcpRemoved = 0;
-			for (const std::weak_ptr<Segment> &weakSegment : txn->segmentsRemoved)
-				dcpRemoved += weakSegment.lock()->length;
-			insertMsg.pos2 = txn->adjustment.cp + dcpRemoved;
-			insertMsg.text = "TODO";
+			insertMsg.pos1 = cp;
+			insertMsg.pos2 = cp + dcp;
+			insertMsg.text = text;
 			msg.contents = std::move(insertMsg);
 			
 			router->Send(msg);
+		}
+		else
+		{
+			assert(false);
 		}
 	}
 
@@ -858,16 +939,35 @@ struct MergeTree : public IMessageListener
 	{
 		if (msg.clientId == clientLocal)
 		{
-			assert(msg.clientSequenceNumber == m_txnsLocal.front()->seq);
-			std::shared_ptr<Transaction> txn = m_txnsLocal[0];
-			m_txnsLocal.erase(m_txnsLocal.begin());
-			txn->seq = msg.sequenceNumber;
-			m_txns.push_back(txn);
+			assert(msg.clientSequenceNumber == m_editsLocal.front()->seq);
+			m_edits.push_back(std::move(m_editsLocal.front()));
+			m_editsLocal.pop_front();
+			m_edits.back()->seq = msg.sequenceNumber;
 		}
 		else
 		{
-			// This is some complicated code that I should write someday
-			assert(false);
+			std::array<CharacterPosition, 2> cps;
+			if (std::holds_alternative<MergeTreeInsertMsg>(msg.contents))
+			{
+				const MergeTreeInsertMsg &insertMsg = std::get<MergeTreeInsertMsg>(msg.contents);
+				cps[0] = insertMsg.pos1;
+				if (insertMsg.pos2 != CharacterPosition::Invalid())
+					cps[1] = insertMsg.pos2;
+				else
+					cps[1] = cps[0];
+
+				TardisRangeToServerTip(cps, msg.referenceSequenceNumber, msg.clientId);
+				TardisServerRangeToLocal(cps);
+				std::shared_ptr<Edit> ed = std::make_shared<Edit>(msg.sequenceNumber, msg.clientId);
+				m_edits.push_back(ed);
+				int dcpRem = cps[1].AsInt() - cps[0].AsInt();
+				Replace(cps[0], dcpRem, insertMsg.text, ed);
+				RebaseLocalEdits(cps[1], dcpRem + insertMsg.text.length());
+			}
+			else
+			{
+				assert(false);
+			}
 		}
 
 		ClearOldSequenceNumbers(msg.minimumSequenceNumber);
@@ -875,22 +975,22 @@ struct MergeTree : public IMessageListener
 
 	void ClearOldSequenceNumbers(Seq minSeq)
 	{
-		auto it = m_txns.begin();
-		while (it != m_txns.end() && minSeq > (*it)->seq)
+		auto it = m_edits.begin();
+		while (it != m_edits.end() && minSeq > (*it)->seq)
 		{
-			Transaction *txn = it->get();
+			Edit *ed = it->get();
 			std::shared_ptr<Segment> segment;
-			for (auto &&weakSegment : txn->segmentsAdded)
+			for (auto &&weakSegment : ed->segmentsAdded)
 			{
 				segment = weakSegment.lock();
-				assert(segment->txnAdded.lock().get() == txn);
-				segment->txnAdded.reset();
+				assert(segment->edAdded.lock().get() == ed);
+				segment->edAdded.reset();
 			}
 
-			for (auto &&weakSegment : txn->segmentsRemoved)
+			for (auto &&weakSegment : ed->segmentsRemoved)
 			{
 				segment = weakSegment.lock();
-				assert(segment->txnRemoved.lock().get() == txn);
+				assert(segment->edRemoved.lock().get() == ed);
 				segment->isDead = true;
 
 				for (MergeBlock *parent = segment->parent; parent != nullptr; parent = parent->parent)
@@ -900,7 +1000,7 @@ struct MergeTree : public IMessageListener
 			it++;
 		}
 
-		m_txns.erase(m_txns.begin(), it);
+		m_edits.erase(m_edits.begin(), it);
 	}
 
 	void ReloadFromSegments(std::vector<std::shared_ptr<Segment>> segments)

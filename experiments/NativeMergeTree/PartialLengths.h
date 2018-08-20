@@ -27,7 +27,7 @@ public:
 	
 	template <typename TIter>
 	TPartialLengths(TIter itB, TIter itE)
-		: count(itE - itB)
+		: count(static_cast<Index>(itE - itB))
 	{
 		std::copy(itB, itE, lengths.begin());
 		std::fill(lengths.begin() + count, lengths.end(), lengthNil);
