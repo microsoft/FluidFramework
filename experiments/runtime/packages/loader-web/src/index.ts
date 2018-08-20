@@ -1,11 +1,18 @@
 import * as loader from "@prague/loader";
-import { IDocumentService, ITokenService } from "@prague/runtime-definitions";
+import { ICodeLoader, IDocumentService, ITokenService } from "@prague/runtime-definitions";
 import * as driver from "@prague/socket-storage";
 import chalk from "chalk";
 import * as jwt from "jsonwebtoken";
 import * as queryString from "query-string";
+import * as scriptjs from "scriptjs";
 
-console.log("HI");
+class WebLoader implements ICodeLoader {
+    public load(url: string): Promise<void> {
+        return new Promise<void>((resolve) => {
+            scriptjs.get(url, () => resolve());
+        });
+    }
+}
 
 async function run(
     token: string,
@@ -14,7 +21,12 @@ async function run(
     documentServices: IDocumentService,
     tokenServices: ITokenService): Promise<void> {
 
-    const documentP = loader.load(token, null, documentServices, tokenServices);
+    const documentP = loader.load(
+        token,
+        null,
+        documentServices,
+        new WebLoader(),
+        tokenServices);
     const document = await documentP;
 
     const quorum = document.getQuorum();

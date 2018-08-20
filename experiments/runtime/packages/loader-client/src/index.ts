@@ -1,5 +1,5 @@
 import * as loader from "@prague/loader";
-import { IDocumentService, ITokenService } from "@prague/runtime-definitions";
+import { ICodeLoader, IDocumentService, ITokenService } from "@prague/runtime-definitions";
 import * as driver from "@prague/socket-storage";
 import chalk from "chalk";
 import * as commander from "commander";
@@ -7,6 +7,13 @@ import * as jwt from "jsonwebtoken";
 import * as ora from "ora";
 import * as process from "process";
 import * as readline from "readline";
+
+class NodeCodeLoader implements ICodeLoader {
+    public load(url: string): Promise<void> {
+        console.log(`Loading ${url}`);
+        return Promise.resolve();
+    }
+}
 
 // tslint:disable-next-line:no-var-requires
 const packageDetails = require("../package.json");
@@ -25,7 +32,12 @@ async function run(
     tokenServices: ITokenService): Promise<void> {
     const claims = tokenServices.extractClaims(token);
 
-    const documentP = loader.load(token, null, documentServices, tokenServices);
+    const documentP = loader.load(
+        token,
+        null,
+        documentServices,
+        new NodeCodeLoader(),
+        tokenServices);
     ora.promise(documentP, `Loading ${claims.tenantId}/${claims.documentId}`);
     const document = await documentP;
 

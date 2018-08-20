@@ -1,6 +1,7 @@
 import { ICommit } from "@prague/gitresources";
 import {
     IClientJoin,
+    ICodeLoader,
     IDocumentAttributes,
     IDocumentService,
     IDocumentStorageService,
@@ -130,6 +131,7 @@ export class Document extends EventEmitter {
     constructor(
         private token: string,
         private service: IDocumentService,
+        private codeLoader: ICodeLoader,
         tokenService: ITokenService,
         private options: any) {
         super();
@@ -170,6 +172,8 @@ export class Document extends EventEmitter {
             ? this.connect(headerP)
             : { detailsP: Promise.resolve(null), handlerAttachedP: Promise.resolve() };
 
+        // TODO once we are dynamically loading code we will need to use it here
+
         // Wait for all the loading promises to finish
         return Promise
             .all([storageP, versionP, headerP, connectResult.handlerAttachedP])
@@ -181,6 +185,14 @@ export class Document extends EventEmitter {
                     header.attributes.values,
                     (key, value) => this.submitMessage(MessageType.Propose, { key, value }),
                     (sequenceNumber) => this.submitMessage(MessageType.Reject, sequenceNumber));
+
+                this.quorum.on(
+                    "approveProposal",
+                    (sequenceNumber, key, value) => {
+                        if (key === "code") {
+                            this.loadCode(value);
+                        }
+                    });
 
                 // Start delta processing once all objects are loaded
                 // const readyP = Array.from(this.distributedObjects.values()).map((value) => value.object.ready());
@@ -246,6 +258,24 @@ export class Document extends EventEmitter {
     public on(event: "pong" | "processTime", listener: (latency: number) => void): this;
     public on(event: string | symbol, listener: (...args: any[]) => void): this {
         return super.on(event, listener);
+    }
+
+    /**
+     * Code to apply to the document has changed. Load it in now.
+     */
+    private loadCode(url: string) {
+        // Stop processing inbound messages as we transition to the new code
+        this.deltaManager.inbound.pause();
+        const loadedP = this.codeLoader.load(url);
+        loadedP.then(
+            () => {
+                // TODO transitions, etc...
+                this.deltaManager.inbound.resume();
+            },
+            (error) => {
+                // I believe this is a fatal problem - or we need to keep trying
+                console.error(error);
+            });
     }
 
     private async getHeader(

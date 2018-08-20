@@ -1,5 +1,5 @@
 import { ICommit } from "@prague/gitresources";
-import { IDocumentService, ITokenService } from "@prague/runtime-definitions";
+import { ICodeLoader, IDocumentService, ITokenService } from "@prague/runtime-definitions";
 import now = require("performance-now");
 import { debug } from "./debug";
 import { Document } from "./document";
@@ -11,6 +11,7 @@ export async function load(
     token: string,
     options: any,
     documentService: IDocumentService,
+    codeLoader: ICodeLoader,
     tokenService: ITokenService,
     specifiedVersion: ICommit = null,
     connect = true): Promise<Document> {
@@ -37,7 +38,7 @@ export async function load(
         return Promise.reject("Must provide a token");
     }
 
-    const document = new Document(token, documentService, tokenService, options);
+    const document = new Document(token, documentService, codeLoader, tokenService, options);
     await document.load(specifiedVersion, connect);
 
     return document;
