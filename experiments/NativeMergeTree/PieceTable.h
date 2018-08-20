@@ -36,7 +36,7 @@ private:
 		it = std::lower_bound(m_rgcp.begin(), m_rgcp.end(), cp);
 		if (it == m_rgcp.end() || *it != cp)
 			it--; // lower_bound returns the next element if there's no match, but we want the previous
-		return (it - m_rgcp.begin());
+		return static_cast<Index>(it - m_rgcp.begin());
 	}
 
 	// Ensures that cp is at a segment boundary, splitting the segment if necessary.
@@ -82,7 +82,7 @@ public:
 	// Returns the number of segments
 	Index IMac() const
 	{
-		return m_rgseg.size();
+		return static_cast<Index>(m_rgseg.size());
 	}
 
 	// Returns the number of CPs in the document
@@ -100,7 +100,7 @@ public:
 			return std::string_view();
 		}
 		Index i = IFindCp(cp);
-		std::string_view text(static_cast<TextSegment *>(m_rgseg[i].get())->m_text);
+		std::string_view text = m_rgseg[i]->Text();
 		text.remove_prefix(cp - CpFromI(i));
 
 		assert(text.size() > 0);

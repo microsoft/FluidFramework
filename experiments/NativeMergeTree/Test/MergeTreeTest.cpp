@@ -15,7 +15,7 @@ static Adjustment Adjust(int cp, int dcp)
 
 static void Check(int cp, const Adjustment &adj, int cpExpected)
 {
-	CharacterPosition actual = CpAdjustCp(CharacterPosition(cp), adj);
+	CharacterPosition actual = CpAdjustCp(CharacterPosition(cp), adj, Stick::Right);
 	CharacterPosition expected(cpExpected);
 	Assert::AreEqual(expected.AsInt(), actual.AsInt());
 }
@@ -80,7 +80,7 @@ void AssertDoc(MergeTree &doc, std::string_view text)
 	{
 		std::string_view run = doc.Fetch(cp);
 		strDoc += run;
-		cp = cp + run.length();
+		cp = cp + static_cast<int>(run.length());
 	}
 
 	Assert::AreEqual(std::string(text), strDoc);
@@ -134,6 +134,67 @@ TEST_METHOD(MergeTree_AppendMany)
 		doc.Replace(doc.CpMac(), 0, "a");
 
 	AssertDoc(doc, std::string(500, 'a'));
+}
+
+// Helper to set up N instances of MergeTree connected to the same router
+template <size_t N>
+struct MultiClientTestSetup
+{
+	MultiClientRouter<N> router;
+	std::array<MergeTree, N> docs;
+
+	template <size_t... I>
+	MultiClientTestSetup(std::index_sequence<I...>)
+		: router()
+		, docs{ &router.endpoints[I]... }
+	{}
+
+	MultiClientTestSetup()
+		: MultiClientTestSetup(std::make_index_sequence<N>{})
+	{}
+};
+
+TEST_METHOD(MultiClient_SingleEdit)
+{
+	MultiClientTestSetup<3> setup;
+	setup.docs[0].Replace(CharacterPosition(0), 0, "test");
+	setup.router.PumpMessages();
+
+	for (MergeTree &doc : setup.docs)
+		AssertDoc(doc, "test");
+}
+
+TEST_METHOD(MultiClient_ConcurrentEdits_NoOverlap)
+{
+	MultiClientTestSetup<4> setup;
+	setup.docs[0].Replace(CharacterPosition(0), 0, "The quick brown fox");
+	setup.router.PumpMessages();
+
+	setup.docs[1].Replace(CharacterPosition(4), 5, "slow");
+	setup.docs[2].Replace(CharacterPosition(10), 5, "grey");
+	AssertDoc(setup.docs[0], "The quick brown fox");
+	AssertDoc(setup.docs[1], "The slow brown fox");
+	AssertDoc(setup.docs[2], "The quick grey fox");
+
+	setup.router.PumpMessages();
+
+	for (auto &doc : setup.docs)
+		AssertDoc(doc, "The slow grey fox");
+}
+
+TEST_METHOD(MultiClient_ConcurrentEdits_SamePosition)
+{
+	MultiClientTestSetup<5> setup;
+	setup.docs[0].Replace(CharacterPosition(0), 0, "a");
+	setup.docs[1].Replace(CharacterPosition(0), 0, "b");
+	setup.docs[2].Replace(CharacterPosition(0), 0, "c");
+	setup.docs[3].Replace(CharacterPosition(0), 0, "d");
+	setup.docs[4].Replace(CharacterPosition(0), 0, "e");
+
+	setup.router.PumpMessages();
+
+	for (auto &doc : setup.docs)
+		AssertDoc(doc, "abcde");
 }
 
 #ifdef TODO

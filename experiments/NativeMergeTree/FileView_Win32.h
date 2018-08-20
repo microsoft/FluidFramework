@@ -40,6 +40,9 @@ public:
 		CloseHandle(m_hfile);
 	}
 
+	FileView(const FileView &) = delete;
+	FileView &operator=(const FileView &) = delete;
+
 	auto Data() const { return m_view; }
 };
 

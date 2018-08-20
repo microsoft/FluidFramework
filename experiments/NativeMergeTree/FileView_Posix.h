@@ -42,6 +42,9 @@ public:
 		close(m_fd);
 	}
 
+	FileView(const FileView &) = delete;
+	FileView &operator=(const FileView &) = delete;
+
 	auto Data() const
 	{
 		return m_view;

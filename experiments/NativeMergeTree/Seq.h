@@ -44,11 +44,11 @@ public:
 struct CharacterPosition
 {
 private:
-	int cp;
-
-	CharacterPosition() = delete;
+	int cp = -1;
 
 public:
+	CharacterPosition() noexcept = default;
+
 	explicit constexpr CharacterPosition(int cp) : cp(cp) {}
 	int AsInt() const { return cp; }
 
