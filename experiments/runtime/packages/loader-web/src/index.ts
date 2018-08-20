@@ -1,18 +1,22 @@
 import * as loader from "@prague/loader";
-import { ICodeLoader, IDocumentService, ITokenService } from "@prague/runtime-definitions";
+import { ICodeLoader, IDocumentService, IModule, IPraguePackage, ITokenService } from "@prague/runtime-definitions";
 import * as driver from "@prague/socket-storage";
+import * as assert from "assert";
 import chalk from "chalk";
 import * as jwt from "jsonwebtoken";
 import * as queryString from "query-string";
 import * as scriptjs from "scriptjs";
 
 class WebLoader implements ICodeLoader {
-    public load(url: string): Promise<void> {
-        return new Promise<void>((resolve) => {
-            scriptjs.get(url, () => resolve());
+    public load(pkg: IPraguePackage): Promise<IModule> {
+        return new Promise<any>((resolve) => {
+            assert(pkg.prague && pkg.prague.browser);
+            scriptjs(pkg.prague.browser.bundle, () => resolve(window[pkg.prague.browser.entrypoint]));
         });
     }
 }
+
+// {"prague":{"browser":{"entrypoint":"test","bundle":["http://localhost:8080/dist/test.bundle.js"]}}}
 
 async function run(
     token: string,

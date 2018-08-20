@@ -5,6 +5,7 @@ import {
     IDocumentAttributes,
     IDocumentService,
     IDocumentStorageService,
+    IPraguePackage,
     IProposal,
     ISequencedDocumentMessage,
     ISnapshotTree,
@@ -263,12 +264,13 @@ export class Document extends EventEmitter {
     /**
      * Code to apply to the document has changed. Load it in now.
      */
-    private loadCode(url: string) {
+    private loadCode(pkg: IPraguePackage) {
         // Stop processing inbound messages as we transition to the new code
         this.deltaManager.inbound.pause();
-        const loadedP = this.codeLoader.load(url);
+        const loadedP = this.codeLoader.load(pkg);
         loadedP.then(
-            () => {
+            (module) => {
+                module.hello();
                 // TODO transitions, etc...
                 this.deltaManager.inbound.resume();
             },

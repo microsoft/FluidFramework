@@ -1,5 +1,5 @@
 import * as loader from "@prague/loader";
-import { ICodeLoader, IDocumentService, ITokenService } from "@prague/runtime-definitions";
+import { ICodeLoader, IDocumentService, IModule, IPraguePackage, ITokenService } from "@prague/runtime-definitions";
 import * as driver from "@prague/socket-storage";
 import chalk from "chalk";
 import * as commander from "commander";
@@ -9,9 +9,9 @@ import * as process from "process";
 import * as readline from "readline";
 
 class NodeCodeLoader implements ICodeLoader {
-    public load(url: string): Promise<void> {
-        console.log(`Loading ${url}`);
-        return Promise.resolve();
+    public load(pkg: IPraguePackage): Promise<IModule> {
+        console.log(`Loading ${pkg.prague.browser.entrypoint}`);
+        return Promise.resolve(null);
     }
 }
 
@@ -75,8 +75,16 @@ async function run(
         const key = await readlineAsync(input, chalk.green("Key: "));
         const value = await readlineAsync(input, chalk.green("Value: "));
 
-        const proposeP = quorum.propose(key, value);
-        ora.promise(proposeP, `Proposing that ${key} = ${value}`);
+        // Accept both raw strings and JSON input
+        let parsedValue: any;
+        try {
+            parsedValue = JSON.parse(value);
+        } catch {
+            parsedValue = value;
+        }
+
+        const proposeP = quorum.propose(key, parsedValue);
+        ora.promise(proposeP, `Proposing that ${key} = ${JSON.stringify(parsedValue)}`);
     }
 }
 
