@@ -16,7 +16,7 @@ export class WorkManager extends EventEmitter implements agent.IWorkManager {
         this.augRuntime = new AugLoopRuntime();
     }
 
-    public async startDocumentWork(tenantId: string, documentId: string, workType: string, token?: string) {
+    public async startDocumentWork(tenantId: string, documentId: string, workType: string, token: string) {
         const services = await this.serviceFactory.getService(tenantId);
 
         switch (workType) {
@@ -43,11 +43,8 @@ export class WorkManager extends EventEmitter implements agent.IWorkManager {
         const fullId = this.getFullId(tenantId, documentId, workType);
         if (this.documentMap.has(fullId)) {
             const task = this.documentMap.get(fullId);
-            if (task) {
-                task.removeListeners();
-                await task.stop(workType);
-                this.documentMap.delete(fullId);
-            }
+            await this.stopTask(task);
+            this.documentMap.delete(fullId);
         }
     }
 
@@ -74,6 +71,13 @@ export class WorkManager extends EventEmitter implements agent.IWorkManager {
         if (!this.documentMap.has(fullId) && worker) {
             this.documentMap.set(fullId, worker);
             await this.applyWork(fullId, workType, worker);
+        }
+    }
+
+    private async stopTask(task: agent.IWork) {
+        if (task) {
+            task.removeListeners();
+            await task.stop();
         }
     }
 

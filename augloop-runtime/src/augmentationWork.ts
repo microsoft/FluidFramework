@@ -52,12 +52,12 @@ export class AugmentationWork extends agent.BaseWork implements agent.IWork {
         }
     }
 
-    public async stop(task: string): Promise<void> {
+    public async stop(): Promise<void> {
         if (this.proofingManager) {
             this.proofingManager.stop();
         }
         this.augRuntime.removeDocument(this.fullId);
-        await super.stop(task);
+        await super.stop();
     }
 
     private runAugmentation(fullId: string, object: core.ICollaborativeObject) {
