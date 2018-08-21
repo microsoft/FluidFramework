@@ -14,6 +14,8 @@ export interface ITicketedMessageOutput {
     message: core.ITicketedMessage;
 
     timestamp: number;
+
+    type: string;
 }
 
 const SequenceNumberComparer: utils.IComparer<IClientSequenceNumber> = {
@@ -114,10 +116,14 @@ export class DeliLambda implements IPartitionLambda {
         this.sendToScriptorium(ticketedMessage.message);
 
         // Check if there are any old/idle clients. Craft and send a leave message to alfred.
-        const idleClient = this.getIdleClient(ticketedMessage.timestamp);
-        if (idleClient) {
-            const leaveMessage = this.createLeaveMessage(idleClient.clientId);
-            this.sendToAlfred(leaveMessage);
+        // To prevent recurrent leave message sending, leave messages are only piggybacked with
+        // other message type.
+        if (ticketedMessage.type !== api.ClientLeave) {
+            const idleClient = this.getIdleClient(ticketedMessage.timestamp);
+            if (idleClient) {
+                const leaveMessage = this.createLeaveMessage(idleClient.clientId);
+                this.sendToAlfred(leaveMessage);
+            }
         }
 
         // Start a timer to check inactivity on the document. To trigger idle client leave message,
@@ -165,10 +171,27 @@ export class DeliLambda implements IPartitionLambda {
             return;
         }
 
-        // Nack handling - only applies to non-integration messages
+        // Cases only applies to non-integration messages
         if (message.operation.type !== api.Integrate) {
-            if (message.clientId) {
-                // Get the node for the clientID - NACK if non-existent
+            // Handle client join/leave and fork messages.
+            if (!message.clientId) {
+                if (message.operation.type === api.ClientLeave) {
+                    // Return if the client has already been removed due to a prior leave message.
+                    if (!this.removeClient(message.operation.contents)) {
+                        return;
+                    }
+                } else if (message.operation.type === api.ClientJoin) {
+                    this.upsertClient(
+                        message.operation.contents.clientId,
+                        0,
+                        this.minimumSequenceNumber,
+                        message.timestamp,
+                        true);
+                } else if (message.operation.type === api.Fork) {
+                    winston.info(`Fork ${message.documentId} -> ${message.operation.contents.name}`);
+                }
+            } else {
+                // Nack handling
                 const node = this.clientNodeMap.get(message.clientId);
                 if (!node || node.value.nack) {
                     return this.createNackMessage(message);
@@ -186,19 +209,6 @@ export class DeliLambda implements IPartitionLambda {
                         true);
 
                     return this.createNackMessage(message);
-                }
-            } else {
-                if (message.operation.type === api.ClientJoin) {
-                    this.upsertClient(
-                        message.operation.contents.clientId,
-                        0,
-                        this.minimumSequenceNumber,
-                        message.timestamp,
-                        true);
-                } else if (message.operation.type === api.ClientLeave) {
-                    this.removeClient(message.operation.contents);
-                } else if (message.operation.type === api.Fork) {
-                    winston.info(`Fork ${message.documentId} -> ${message.operation.contents.name}`);
                 }
             }
         }
@@ -313,6 +323,7 @@ export class DeliLambda implements IPartitionLambda {
         return {
             message: sequencedMessage,
             timestamp: objectMessage.timestamp,
+            type: message.operation.type,
         };
     }
 
@@ -411,6 +422,7 @@ export class DeliLambda implements IPartitionLambda {
         return {
             message: nackMessage,
             timestamp: message.timestamp,
+            type: message.operation.type,
         };
     }
 
@@ -508,18 +520,19 @@ export class DeliLambda implements IPartitionLambda {
     }
 
     /**
-     * Remoes the provided client from the list of tracked clients
+     * Removes the provided client from the list of tracked clients.
+     * Returns false if the client has been removed earlier.
      */
-    private removeClient(clientId: string) {
+    private removeClient(clientId: string): boolean {
         if (!this.clientNodeMap.has(clientId)) {
-            // We remove idle clients which may cause us to have already removed this client
-            return;
+            return false;
         }
 
         // Remove the client from the list of nodes
         const details = this.clientNodeMap.get(clientId);
         this.clientSeqNumbers.remove(details);
         this.clientNodeMap.delete(clientId);
+        return true;
     }
 
     /**
