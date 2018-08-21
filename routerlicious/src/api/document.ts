@@ -1069,7 +1069,9 @@ export class Document extends EventEmitter implements api.IDocument {
                 this.clients.delete(leftClientId);
                 this.emit("clientLeave", leftClientId);
                 // Switch to read only mode if a client receives it's own leave message.
+                // Stop any pending help request.
                 if (this.clientId === leftClientId) {
+                    this.stopSendingHelp();
                     this._deltaManager.enableReadonlyMode();
                 } else {
                     this.runTaskAnalyzer();
