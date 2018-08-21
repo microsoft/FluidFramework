@@ -2,7 +2,8 @@ import * as bodyParser from "body-parser";
 import * as express from "express";
 import { Express } from "express";
 import * as morgan from "morgan";
-import split = require("split");
+// tslint:disable-next-line:no-var-requires
+const split = require("split");
 import * as winston from "winston";
 import * as utils from "../utils";
 import * as api from "./api";

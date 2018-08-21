@@ -1,4 +1,5 @@
-import hasIn = require("lodash/hasIn");
+// tslint:disable-next-line:no-var-requires
+const hasIn = require("lodash/hasIn");
 import * as api from "../api-core";
 import { IMap, IMapView, IValueChanged, IValueOperation, IValueType, SerializeFilter } from "../data-types";
 import { debug } from "./debug";

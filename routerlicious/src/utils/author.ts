@@ -1,5 +1,6 @@
 import * as queue from "async/queue";
-import clone = require("lodash/clone");
+// tslint:disable-next-line:no-var-requires
+const clone = require("lodash/clone");
 import { api, core, MergeTree, utils } from "../client-api";
 import { ICell, IMap } from "../data-types";
 import { SharedString } from "../shared-string";

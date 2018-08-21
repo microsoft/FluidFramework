@@ -1,4 +1,5 @@
-import hasIn = require("lodash/hasIn");
+// tslint:disable-next-line:no-var-requires
+const hasIn = require("lodash/hasIn");
 import * as api from "../api-core";
 import { ICell } from "../data-types";
 import { debug } from "./debug";

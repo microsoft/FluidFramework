@@ -1,5 +1,6 @@
 import * as assert from "assert";
-import cloneDeep = require("lodash/cloneDeep");
+// tslint:disable-next-line:no-var-requires
+const cloneDeep = require("lodash/cloneDeep");
 
 export interface IRange {
     primary: number;

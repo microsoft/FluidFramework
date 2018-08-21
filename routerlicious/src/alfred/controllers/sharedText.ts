@@ -1,6 +1,7 @@
 // tslint:disable:ban-types
 import * as resources from "gitresources";
-import performanceNow = require("performance-now");
+// tslint:disable-next-line:no-var-requires
+const performanceNow = require("performance-now");
 import * as request from "request";
 import * as url from "url";
 import * as agent from "../../agent";

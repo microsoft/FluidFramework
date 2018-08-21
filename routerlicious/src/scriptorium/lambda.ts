@@ -1,6 +1,7 @@
 import * as assert from "assert";
 import { EventEmitter } from "events";
-import now = require("performance-now");
+// tslint:disable-next-line:no-var-requires
+const now = require("performance-now");
 import * as winston from "winston";
 import * as api from "../api-core";
 import * as core from "../core";

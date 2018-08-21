@@ -1,6 +1,7 @@
 import * as resources from "gitresources";
 import * as $ from "jquery";
-import hasIn = require("lodash/hasIn");
+// tslint:disable-next-line:no-var-requires
+const hasIn = require("lodash/hasIn");
 import * as agent from "../../agent";
 import { api, core, map as Map, socketStorage, types } from "../../client-api";
 import { IValueChanged } from "../../data-types";

@@ -15,7 +15,8 @@ import * as passportOpenIdConnect from "passport-openidconnect";
 import * as path from "path";
 import * as redis from "redis";
 import * as favicon from "serve-favicon";
-import split = require("split");
+// tslint:disable-next-line:no-var-requires
+const split = require("split");
 import * as expiry from "static-expiry";
 import * as winston from "winston";
 import { IDocumentStorage, ITenantManager } from "../core";

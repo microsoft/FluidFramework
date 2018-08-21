@@ -1,7 +1,9 @@
 import * as assert from "assert";
 import { EventEmitter } from "events";
-import cloneDeep = require("lodash/cloneDeep");
-import now = require("performance-now");
+// tslint:disable-next-line:no-var-requires
+const cloneDeep = require("lodash/cloneDeep");
+// tslint:disable-next-line:no-var-requires
+const now = require("performance-now");
 import { Deferred } from "../core-utils";
 import { Browser, IClient, Robot } from "./client";
 import { debug } from "./debug";

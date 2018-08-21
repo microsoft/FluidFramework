@@ -3,7 +3,8 @@ import * as assert from "assert";
 import { EventEmitter } from "events";
 import * as resources from "gitresources";
 import * as jwt from "jsonwebtoken";
-import performanceNow = require("performance-now");
+// tslint:disable-next-line:no-var-requires
+const performanceNow = require("performance-now");
 import * as uuid from "uuid/v4";
 import * as api from "../api-core";
 import * as cell from "../cell";

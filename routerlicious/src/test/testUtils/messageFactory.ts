@@ -1,4 +1,5 @@
-import hash = require("string-hash");
+// tslint:disable-next-line:no-var-requires
+const hash = require("string-hash");
 import * as api from "../../api-core";
 import { IRawOperationMessage, ISequencedOperationMessage, RawOperationType, SequencedOperationType } from "../../core";
 import * as utils from "../../utils";
