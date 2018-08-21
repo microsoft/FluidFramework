@@ -1,0 +1,27 @@
+{
+  "name": "@prague/chaincode",
+  "version": "0.1.0",
+  "description": "Classic Prague runtime as chaincode",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "webpack --config webpack.config.js && tslint 'src/**/*.ts'",
+    "start": "webpack-serve webpack.config.js --port 8081"
+  },
+  "author": "Microsoft",
+  "repository": "microsoft/prague",
+  "devDependencies": {
+    "source-map-loader": "^0.2.3",
+    "ts-loader": "^4.2.0",
+    "tslint": "^5.11.0",
+    "typescript": "^3.0.1",
+    "webpack": "^4.7.0",
+    "webpack-cli": "^2.0.15",
+    "webpack-serve": "^2.0.2"
+  },
+  "dependencies": {
+    "@prague/api": "^0.1.0",
+    "@prague/runtime-definitions": "^0.1.0",
+    "@types/node": "^10.5.8"
+  }
+}

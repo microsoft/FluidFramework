@@ -7,6 +7,7 @@ import {
     IDocumentStorageService,
     IPraguePackage,
     IProposal,
+    IRuntime,
     ISequencedDocumentMessage,
     ISnapshotTree,
     ITokenService,
@@ -78,6 +79,12 @@ export enum ConnectionState {
     Connected,
 }
 
+class TestRuntime implements IRuntime {
+    public hello() {
+        console.log("Hello!");
+    }
+}
+
 // TODO consider a name change for this. The document is likely built on top of this infrastructure
 export class Document extends EventEmitter {
     private pendingClientId: string;
@@ -94,6 +101,8 @@ export class Document extends EventEmitter {
     private _tenantId: string;
     private _user: IUser;
     // tslint:enable:variable-name
+
+    private runtime = new TestRuntime();
 
     public get tenantId(): string {
         return this._tenantId;
@@ -190,7 +199,9 @@ export class Document extends EventEmitter {
                 this.quorum.on(
                     "approveProposal",
                     (sequenceNumber, key, value) => {
+                        console.log(`approve ${key}`);
                         if (key === "code") {
+                            console.log(`loadCode ${JSON.stringify(value)}`);
                             this.loadCode(value);
                         }
                     });
@@ -268,9 +279,11 @@ export class Document extends EventEmitter {
         // Stop processing inbound messages as we transition to the new code
         this.deltaManager.inbound.pause();
         const loadedP = this.codeLoader.load(pkg);
-        loadedP.then(
-            (module) => {
-                module.hello();
+        const initializedP = loadedP.then((module) => {
+            return module.initialize(this.runtime);
+        });
+        initializedP.then(
+            () => {
                 // TODO transitions, etc...
                 this.deltaManager.inbound.resume();
             },

@@ -53,12 +53,16 @@ export interface IPraguePackage extends IPackage {
     };
 }
 
+export interface IRuntime {
+    hello(): void;
+}
+
 /**
  * Exported module definition
  */
 export interface IModule {
-    // Function definition to simply print to the console. Used in debugging
-    hello: () => void;
+    // module entry point. Called to initialize the chain code.
+    initialize(runtime: IRuntime): Promise<any>;
 }
 
 /**

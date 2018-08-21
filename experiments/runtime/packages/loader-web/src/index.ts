@@ -16,7 +16,7 @@ class WebLoader implements ICodeLoader {
     }
 }
 
-// {"prague":{"browser":{"entrypoint":"test","bundle":["http://localhost:8080/dist/test.bundle.js"]}}}
+// {"prague":{"browser":{"entrypoint":"test","bundle":["http://localhost:8081/dist/main.bundle.js"]}}}
 
 async function run(
     token: string,
