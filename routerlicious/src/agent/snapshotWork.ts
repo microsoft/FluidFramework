@@ -9,6 +9,9 @@ const IdleDetectionTime = 5000;
 const MaxTimeWithoutSnapshot = IdleDetectionTime * 12;
 const SnapshotRetryTime = 1000;
 
+// Snapshot if 1000 ops received since last snapshot.
+const MaxOpCountWithoutSnapshot = 1000;
+
 export class SnapshotWork extends BaseWork implements IWork {
     private serializer: Serializer;
     constructor(docId: string, private token: string, config: any, private service: core.IDocumentService) {
@@ -20,7 +23,12 @@ export class SnapshotWork extends BaseWork implements IWork {
             { encrypted: undefined, localMinSeq: 0, token: this.token, client: { type: "snapshot"} },
             this.service,
             task);
-        this.serializer = new Serializer(this.document, IdleDetectionTime, MaxTimeWithoutSnapshot, SnapshotRetryTime);
+        this.serializer = new Serializer(
+            this.document,
+            IdleDetectionTime,
+            MaxTimeWithoutSnapshot,
+            SnapshotRetryTime,
+            MaxOpCountWithoutSnapshot);
         const eventHandler = (op: core.ISequencedDocumentMessage) => {
             this.serializer.run(op);
         };

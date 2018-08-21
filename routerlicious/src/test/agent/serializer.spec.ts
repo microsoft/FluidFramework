@@ -8,6 +8,7 @@ describe("Routerlicious", () => {
             const idleTime = 10;
             const maxTimeWithoutSnapshot = 20;
             const retryTime = 1;
+            const MaxOpCountWithoutSnapshot = 100;
             const documentId = "test-document";
             const clientId = "test-client";
 
@@ -18,7 +19,12 @@ describe("Routerlicious", () => {
             beforeEach(() => {
                 factory = new MessageFactory(documentId, clientId);
                 document = new TestDocument(documentId, clientId);
-                serializer = new agent.Serializer(document, idleTime, maxTimeWithoutSnapshot, retryTime);
+                serializer = new agent.Serializer(
+                    document,
+                    idleTime,
+                    maxTimeWithoutSnapshot,
+                    retryTime,
+                    MaxOpCountWithoutSnapshot);
             });
 
             describe("run", () => {

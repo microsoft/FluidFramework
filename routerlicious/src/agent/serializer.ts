@@ -23,6 +23,7 @@ interface IOpSnapshotDetails {
 export class Serializer extends EventEmitter {
     // Use the current time on initialization since we will be loading off a snapshot
     private lastSnapshotTime: number = Date.now();
+    private lastSnapshotSeqNumber: number = 0;
     private idleTimer = null;
     private retryTimer = null;
     private lastOp: core.ISequencedDocumentMessage = null;
@@ -33,7 +34,8 @@ export class Serializer extends EventEmitter {
         private document: core.IDocument,
         private idleTime: number,
         private maxTimeWithoutSnapshot: number,
-        private retryTime: number) {
+        private retryTime: number,
+        private maxOpCountWithoutSnapshot: number) {
             super();
     }
 
@@ -73,9 +75,10 @@ export class Serializer extends EventEmitter {
         this.document.deltaManager.inbound.pause();
         const snapshotP = this.document.snapshot(message).then(
             () => {
-                // On success note the last op and time of the snapshot. Skip on error to cause us to
+                // On success note the time of the snapshot and op sequence number. Skip on error to cause us to
                 // attempt the snapshot again.
                 this.lastSnapshotTime = Date.now();
+                this.lastSnapshotSeqNumber = this.lastOp.sequenceNumber;
                 return true;
             },
             (error) => {
@@ -107,10 +110,12 @@ export class Serializer extends EventEmitter {
         } else {
             // Snapshot if it has been above the max time between snapshots.
             const timeSinceLastSnapshot = Date.now() - this.lastSnapshotTime;
+            const opCountSinceLastSnapshot = op.sequenceNumber - this.lastSnapshotSeqNumber;
             return {
                 message: "",
                 required: false,
-                shouldSnapshot: timeSinceLastSnapshot > this.maxTimeWithoutSnapshot,
+                shouldSnapshot: (timeSinceLastSnapshot > this.maxTimeWithoutSnapshot) ||
+                                (opCountSinceLastSnapshot > this.maxOpCountWithoutSnapshot),
             };
         }
     }
