@@ -21,6 +21,7 @@ export interface IOrdererConnection {
 
 export interface IOrderer {
     connect(socket: IWebSocket, user: ITenantUser, client: IClient): Promise<IOrdererConnection>;
+    close(): Promise<void>;
 }
 
 export interface IOrdererManager {

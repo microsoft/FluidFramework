@@ -20,4 +20,8 @@ export class ProxyOrderer implements IOrderer {
         const proxiedSocket = await this.factory.connect(socket, user, client);
         return proxiedSocket;
     }
+
+    public close() {
+        return Promise.resolve();
+    }
 }

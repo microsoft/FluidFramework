@@ -342,6 +342,17 @@ export class LocalOrderer implements core.IOrderer {
         return connection;
     }
 
+    public async close() {
+        // close in-memory kafkas
+        this.alfredToDeliKafka.close();
+        this.deliToScriptoriumKafka.close();
+
+        // close lambas
+        this.scriptoriumLambda.close();
+        this.tmzLambda.close();
+        this.deliLambda.close();
+    }
+
     private startLambdas() {
         this.alfredToDeliKafka.on("message", (message: IMessage) => {
             this.deliLambda.handler(message);

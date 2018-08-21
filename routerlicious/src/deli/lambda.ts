@@ -129,9 +129,10 @@ export class DeliLambda implements IPartitionLambda {
 
         // Start a timer to check inactivity on the document. To trigger idle client leave message,
         // we send a noop back to alfred. The noop should trigger a client leave message if there are any.
-        if (this.idleTimer) {
+        if (this.idleTimer !== undefined) {
             clearTimeout(this.idleTimer);
         }
+
         this.idleTimer = setTimeout(() => {
             const noOpMessage = this.createNoOpMessage();
             this.sendToAlfred(noOpMessage);
@@ -140,6 +141,11 @@ export class DeliLambda implements IPartitionLambda {
 
     public close() {
         this.checkpointContext.close();
+
+        if (this.idleTimer !== undefined) {
+            clearTimeout(this.idleTimer);
+            this.idleTimer = undefined;
+        }
     }
 
     private ticket(rawMessage: utils.IMessage, trace: api.ITrace): ITicketedMessageOutput {
@@ -379,9 +385,9 @@ export class DeliLambda implements IPartitionLambda {
     private sendToAlfred(message: core.IRawOperationMessage) {
         // Otherwise send the message to the event hub
         this.reverseProducer.send(JSON.stringify(message), message.documentId).catch((error) => {
-                // TODO issue with Kafka - need to propagate the issue somehow
-                winston.error("Could not send message to alfred", error);
-            });
+            // TODO issue with Kafka - need to propagate the issue somehow
+            winston.error("Could not send message to alfred", error);
+        });
     }
 
     /**
@@ -471,7 +477,7 @@ export class DeliLambda implements IPartitionLambda {
             branchMap: this.branchMap ? this.branchMap.serialize() : undefined,
             clients,
             logOffset: this.logOffset,
-            sequenceNumber : this.sequenceNumber,
+            sequenceNumber: this.sequenceNumber,
         };
     }
 

@@ -182,6 +182,10 @@ export class KafkaOrderer implements core.IOrderer {
 
         return connection;
     }
+
+    public close() {
+        return Promise.resolve();
+    }
 }
 
 export class KafkaOrdererFactory {

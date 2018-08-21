@@ -13,12 +13,27 @@ export class LocalOrderManager {
     }
 
     public async get(tenantId: string, documentId: string): Promise<IOrderer> {
-        if (!this.localOrderers.has(documentId)) {
-            const ordererP = this.getCore(tenantId, documentId);
-            this.localOrderers.set(documentId, ordererP);
+        const key = this.getKey(tenantId, documentId);
+
+        let ordererP = this.localOrderers.get(key);
+        if (!ordererP) {
+            ordererP = this.getCore(tenantId, documentId);
+            this.localOrderers.set(key, ordererP);
         }
 
-        return this.localOrderers.get(documentId);
+        return ordererP;
+    }
+
+    public async remove(tenantId: string, documentId: string) {
+        const key = this.getKey(tenantId, documentId);
+
+        const ordererP = this.localOrderers.get(key);
+        if (ordererP) {
+            this.localOrderers.delete(key);
+
+            const orderer = await ordererP;
+            await orderer.close();
+        }
     }
 
     // Factory method to either create a local or proxy orderer.
@@ -26,8 +41,8 @@ export class LocalOrderManager {
     private async getCore(tenantId: string, documentId: string): Promise<IOrderer> {
         const localNode = await this.localNodeP;
 
-        const reservationKey = `${tenantId}/${documentId}`;
-        const reservedNode = await this.reservationManager.getOrReserve(reservationKey, localNode);
+        const key = this.getKey(tenantId, documentId);
+        const reservedNode = await this.reservationManager.getOrReserve(key, localNode);
         assert(reservedNode.valid);
 
         const orderer = await reservedNode.connectOrderer(tenantId, documentId);
@@ -46,5 +61,9 @@ export class LocalOrderManager {
             (error) => {
                 // Reconnect the node
             });
+    }
+
+    private getKey(tenantId: string, documentId: string) {
+        return `${tenantId}/${documentId}`;
     }
 }
