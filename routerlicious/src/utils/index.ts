@@ -7,6 +7,7 @@ export * from "./file";
 export * from "./heap";
 export * from "./logger";
 export * from "./mongo";
+export * from "./mongoDatabaseManager";
 export * from "./port";
 export * from "./runner";
 export * from "./safeParser";

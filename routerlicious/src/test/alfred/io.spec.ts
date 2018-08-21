@@ -5,7 +5,7 @@ import * as core from "../../core";
 import { Deferred } from "../../core-utils";
 import * as services from "../../services";
 import * as socketStorage from "../../socket-storage";
-import { generateToken, MongoManager } from "../../utils";
+import * as utils from "../../utils";
 import {
     MessageFactory,
     TestDbFactory,
@@ -29,7 +29,7 @@ describe("Routerlicious", () => {
                 let testTenantManager: TestTenantManager;
 
                 beforeEach(() => {
-                    const documentsCollectionName = "test";
+                    const collectionNames = "test";
                     const metricClientConfig = {};
                     const testData: { [key: string]: any[] } = {};
 
@@ -37,10 +37,14 @@ describe("Routerlicious", () => {
                     const producer = deliKafka.createProducer();
                     testTenantManager = new TestTenantManager();
                     const testDbFactory = new TestDbFactory(testData);
-                    const mongoManager = new MongoManager(testDbFactory);
-                    const testStorage = new services.DocumentStorage(
+                    const mongoManager = new utils.MongoManager(testDbFactory);
+                    const databaseManager = new utils.MongoDatabaseManager(
                         mongoManager,
-                        documentsCollectionName,
+                        collectionNames,
+                        collectionNames,
+                        collectionNames);
+                    const testStorage = new services.DocumentStorage(
+                        databaseManager,
                         testTenantManager,
                         producer);
                     const kafkaOrderer = new services.KafkaOrdererFactory(producer, testStorage);
@@ -60,7 +64,7 @@ describe("Routerlicious", () => {
                     tenantId: string,
                     secret: string,
                     socket: TestWebSocket): Promise<socketStorage.IConnected> {
-                    const token = generateToken(tenantId, id, secret);
+                    const token = utils.generateToken(tenantId, id, secret);
 
                     const connectMessage: socketStorage.IConnect = {
                         client: undefined,

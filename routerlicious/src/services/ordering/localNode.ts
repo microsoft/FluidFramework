@@ -4,8 +4,9 @@ import * as _ from "lodash";
 import * as uuid from "uuid/v4";
 import * as ws from "ws";
 import * as api from "../../api-core";
-import { IDocumentStorage, IOrderer, IOrdererConnection, ITaskMessageSender, ITenantManager } from "../../core";
-import { MongoManager } from "../../utils";
+import {
+    IDatabaseManager, IDocumentStorage, IOrderer, IOrdererConnection, ITaskMessageSender, ITenantManager,
+} from "../../core";
 import { debug } from "../debug";
 import {
     IConcreteNode, IConnectedMessage, IConnectMessage, INode, INodeMessage, IOpMessage,
@@ -46,10 +47,7 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
         id: string,
         address: string,
         storage: IDocumentStorage,
-        mongoManager: MongoManager,
-        nodeCollectionName: string,
-        documentsCollectionName: string,
-        deltasCollectionName: string,
+        databaseManager: IDatabaseManager,
         timeoutLength: number,
         taskMessageSender: ITaskMessageSender,
         tenantManager: ITenantManager,
@@ -59,17 +57,13 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
         const node = await LocalNode.Create(
             id,
             address,
-            nodeCollectionName,
-            mongoManager,
+            databaseManager,
             timeoutLength);
 
         return new LocalNode(
             node,
             storage,
-            mongoManager,
-            nodeCollectionName,
-            documentsCollectionName,
-            deltasCollectionName,
+            databaseManager,
             timeoutLength,
             taskMessageSender,
             tenantManager,
@@ -79,14 +73,12 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
     private static async Create(
         id: string,
         address: string,
-        nodeCollectionName: string,
-        mongoManager: MongoManager,
+        databaseManager: IDatabaseManager,
         timeoutLength: number): Promise<INode> {
 
         debug("Creating node", id);
 
-        const db = await mongoManager.getDatabase();
-        const nodeCollection = db.collection<INode>(nodeCollectionName);
+        const nodeCollection = await databaseManager.getNodeCollection();
         const node = {
             _id: id,
             address,
@@ -99,12 +91,10 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
 
     private static async UpdateExpiration(
         existing: INode,
-        nodeCollectionName: string,
-        mongoManager: MongoManager,
+        databaseManager: IDatabaseManager,
         timeoutLength: number): Promise<INode> {
 
-        const db = await mongoManager.getDatabase();
-        const nodeCollection = db.collection<INode>(nodeCollectionName);
+        const nodeCollection = await databaseManager.getNodeCollection();
         const newExpiration = Date.now() + timeoutLength;
 
         await nodeCollection.update(
@@ -138,10 +128,7 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
     private constructor(
         private node: INode,
         private storage: IDocumentStorage,
-        private mongoManager: MongoManager,
-        private nodeCollectionName: string,
-        private documentsCollectionName: string,
-        private deltasCollectionName: string,
+        private databaseManager: IDatabaseManager,
         private timeoutLength: number,
         private taskMessageSender: ITaskMessageSender,
         private tenantManager: ITenantManager,
@@ -221,11 +208,9 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
         debug(`${this.id} Becoming leader for ${fullId}`);
         const orderer = await LocalOrderer.Load(
             this.storage,
-            this.mongoManager,
+            this.databaseManager,
             tenantId,
             documentId,
-            this.documentsCollectionName,
-            this.deltasCollectionName,
             this.taskMessageSender,
             this.tenantManager,
             this.permission);
@@ -254,8 +239,7 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
                 () => {
                     const updateP = LocalNode.UpdateExpiration(
                         this.node,
-                        this.nodeCollectionName,
-                        this.mongoManager,
+                        this.databaseManager,
                         this.timeoutLength);
                     updateP.then(
                         (newNode) => {

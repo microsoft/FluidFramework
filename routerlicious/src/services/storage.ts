@@ -9,8 +9,7 @@ const StartingSequenceNumber = 0;
 
 export class DocumentStorage implements core.IDocumentStorage {
     constructor(
-        private mongoManager: utils.MongoManager,
-        private documentsCollectionName: string,
+        private databaseManager: core.IDatabaseManager,
         private tenantManager: core.ITenantManager,
         private producer: utils.IProducer) {
     }
@@ -19,9 +18,7 @@ export class DocumentStorage implements core.IDocumentStorage {
      * Retrieves database details for the given document
      */
     public async getDocument(tenantId: string, documentId: string): Promise<any> {
-        const db = await this.mongoManager.getDatabase();
-        const collection = db.collection<any>(this.documentsCollectionName);
-
+        const collection = await this.databaseManager.getDocumentCollection();
         return collection.findOne({ documentId, tenantId });
     }
 
@@ -55,8 +52,7 @@ export class DocumentStorage implements core.IDocumentStorage {
      * Retrieves the forks for the given document
      */
     public async getForks(tenantId: string, documentId: string): Promise<string[]> {
-        const db = await this.mongoManager.getDatabase();
-        const collection = db.collection<any>(this.documentsCollectionName);
+        const collection: core.ICollection<any> = await this.databaseManager.getDocumentCollection();
         const document = await collection.findOne({ documentId, tenantId });
 
         return document.forks || [];
@@ -89,9 +85,8 @@ export class DocumentStorage implements core.IDocumentStorage {
             sequenceNumber = attributes.sequenceNumber;
         }
 
-        // Get access to Mongo to update the route tables
-        const db = await this.mongoManager.getDatabase();
-        const collection = db.collection<core.IDocument>(this.documentsCollectionName);
+        // Access to the documents collection to update the route tables
+        const collection = await this.databaseManager.getDocumentCollection();
 
         // Insert the fork entry and update the parent to prep storage for both objects
         const insertFork = collection.insertOne(
@@ -135,8 +130,7 @@ export class DocumentStorage implements core.IDocumentStorage {
     }
 
     private async getOrCreateObject(tenantId: string, documentId: string): Promise<core.IDocumentDetails> {
-        const db = await this.mongoManager.getDatabase();
-        const collection = db.collection<core.IDocument>(this.documentsCollectionName);
+        const collection = await this.databaseManager.getDocumentCollection();
         const result = await collection.findOrCreate(
             {
                 documentId,

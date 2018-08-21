@@ -78,17 +78,21 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
             config.get("mongo:collectionNames:reservations"));
 
         const tenantManager = new services.TenantManager(authEndpoint, config.get("worker:blobStorageUrl"));
-        const storage = new services.DocumentStorage(mongoManager, documentsCollectionName, tenantManager, producer);
+
+        const databaseManager = new utils.MongoDatabaseManager(
+            mongoManager,
+            nodeCollectionName,
+            documentsCollectionName,
+            deltasCollectionName);
+
+        const storage = new services.DocumentStorage(databaseManager, tenantManager, producer);
 
         const address = `${await utils.getHostIp()}:4000`;
         const nodeFactory = new services.LocalNodeFactory(
             os.hostname(),
             address,
             storage,
-            mongoManager,
-            nodeCollectionName,
-            documentsCollectionName,
-            deltasCollectionName,
+            databaseManager,
             60000,
             taskMessageSender,
             tenantManager,

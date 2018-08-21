@@ -3,14 +3,14 @@ import { EventEmitter } from "events";
 import * as moniker from "moniker";
 import now = require("performance-now");
 import * as api from "../../api-core";
-import { ICollection, IDocument, IOrdererConnection, ITenantManager } from "../../core";
+import { ICollection, IOrdererConnection, ITenantManager } from "../../core";
 import * as core from "../../core";
 import { DeliLambda } from "../../deli/lambda";
 import { ActivityCheckingTimeout, ClientSequenceTimeout } from "../../deli/lambdaFactory";
 import { IContext } from "../../kafka-service/lambdas";
 import { ScriptoriumLambda } from "../../scriptorium/lambda";
 import { TmzLambda } from "../../tmz/lambda";
-import { IMessage, IProducer, MongoManager } from "../../utils";
+import { IMessage, IProducer } from "../../utils";
 
 export interface ISubscriber {
     id: string;
@@ -63,7 +63,7 @@ class PubSub implements IPubSub {
 
         const subscriptions = this.topics.get(topic);
         if (!subscriptions.has(subscriber.id)) {
-            subscriptions.set(subscriber.id, { subscriber, count: 0});
+            subscriptions.set(subscriber.id, { subscriber, count: 0 });
         }
 
         subscriptions.get(subscriber.id).count++;
@@ -86,16 +86,6 @@ class PubSub implements IPubSub {
     }
 }
 
-// I should just merge the interfaces below and combine into one to avoid creating intermediate classes
-class LocalTopic implements core.ITopic {
-    constructor(private topic: string, private publisher: IPubSub) {
-    }
-
-    public emit(event: string, ...args: any[]) {
-        this.publisher.publish(this.topic, event, ...args);
-    }
-}
-
 class LocalSocketPublisher implements core.IPublisher {
     constructor(private publisher: IPubSub) {
     }
@@ -105,7 +95,9 @@ class LocalSocketPublisher implements core.IPublisher {
     }
 
     public to(topic: string): core.ITopic {
-        return new LocalTopic(topic, this.publisher);
+        return {
+            emit: (event: string, ...args: any[]) => this.publisher.publish(topic, event, ...args),
+        };
     }
 }
 
@@ -121,39 +113,22 @@ class LocalContext implements IContext {
 }
 
 class LocalOrdererConnection implements IOrdererConnection {
-    public get clientId(): string {
-        return this._clientId;
-    }
 
-    public get existing(): boolean {
-        return this._existing;
-    }
-
-    public get parentBranch(): string {
-        return this._parentBranch;
-    }
-
-    // tslint:disable:variable-name
-    private _clientId: string;
-    private _existing: boolean;
-    private _parentBranch: string;
-    // tslint:enable:variable-name
+    public readonly parentBranch: string;
 
     constructor(
         private pubsub: IPubSub,
         public socket: ISubscriber,
-        existing: boolean,
+        public readonly existing: boolean,
         document: core.IDocument,
         private producer: IProducer,
         private tenantId: string,
         private documentId: string,
-        clientId: string,
+        public readonly clientId: string,
         private user: api.ITenantUser,
         private client: api.IClient) {
 
-        this._clientId = clientId;
-        this._existing = existing;
-        this._parentBranch = document.parent ? document.parent.documentId : null;
+        this.parentBranch = document.parent ? document.parent.documentId : null;
 
         // Subscribe to the message channels
         this.pubsub.subscribe(`${this.tenantId}/${this.documentId}`, this.socket);
@@ -241,89 +216,88 @@ class LocalOrdererConnection implements IOrdererConnection {
  * Performs local ordering of messages based on an in-memory stream of operations.
  */
 export class LocalOrderer implements core.IOrderer {
+
     public static async Load(
         storage: core.IDocumentStorage,
-        mongoManager: MongoManager,
+        databaseManager: core.IDatabaseManager,
         tenantId: string,
         documentId: string,
-        documentsCollectionName: string,
-        deltasCollectionName: string,
         taskMessageSender: core.ITaskMessageSender,
         tenantManager: ITenantManager,
         permission: any) {
 
-        const [details, db] = await Promise.all([
+        const [details, documentCollection, deltasCollection] = await Promise.all([
             storage.getOrCreateDocument(tenantId, documentId),
-            mongoManager.getDatabase(),
+            databaseManager.getDocumentCollection(),
+            databaseManager.getDeltaCollection(tenantId, documentId),
         ]);
-        const deltasCollection = db.collection<any>(deltasCollectionName);
-        const collection = db.collection<IDocument>(documentsCollectionName);
 
         return new LocalOrderer(
             details,
             tenantId,
             documentId,
-            collection,
+            documentCollection,
             deltasCollection,
             taskMessageSender,
             tenantManager,
             permission);
     }
 
+    private static pubSub = new PubSub();
+    private static socketPublisher = new LocalSocketPublisher(LocalOrderer.pubSub);
+
+    private static scriptoriumContext = new LocalContext();
+    private static tmzContext = new LocalContext();
+    private static deliContext = new LocalContext();
+
+    private scriptoriumLambda: ScriptoriumLambda;
+    private tmzLambda: TmzLambda;
+    private deliLambda: DeliLambda;
+
     private alfredToDeliKafka: InMemoryKafka;
     private deliToScriptoriumKafka: InMemoryKafka;
 
-    private deliLambda: DeliLambda;
-    private tmzLambda: TmzLambda;
-    private scriptoriumLambda: ScriptoriumLambda;
-
     private existing: boolean;
-    private socketPublisher: LocalSocketPublisher;
-    private pubsub = new PubSub();
 
     constructor(
         private details: core.IDocumentDetails,
         private tenantId: string,
         private documentId: string,
-        collection: ICollection<core.IDocument>,
+        documentCollection: ICollection<core.IDocument>,
         deltasCollection: ICollection<any>,
         private taskMessageSender: core.ITaskMessageSender,
         private tenantManager: ITenantManager,
         private permission: any) {
 
         this.existing = details.existing;
-        this.socketPublisher = new LocalSocketPublisher(this.pubsub);
 
         // TODO I want to maintain an inbound queue. On lambda failures I need to recreate all of them. Just
         // like what happens when the service goes down.
 
         // In memory kafka.
-        this.alfredToDeliKafka = new InMemoryKafka();
+        this.alfredToDeliKafka = new InMemoryKafka(this.existing ? details.value.sequenceNumber : 0);
         this.deliToScriptoriumKafka = new InMemoryKafka();
 
         // Scriptorium Lambda
-        const scriptoriumContext = new LocalContext();
         this.scriptoriumLambda = new ScriptoriumLambda(
-            this.socketPublisher,
+            LocalOrderer.socketPublisher,
             deltasCollection,
-            scriptoriumContext);
+            LocalOrderer.scriptoriumContext);
 
         // TMZ lambda
-        const tmzContext = new LocalContext();
         this.tmzLambda = new TmzLambda(
             this.taskMessageSender,
             this.tenantManager,
             this.permission,
-            tmzContext);
+            LocalOrderer.tmzContext);
 
         // Deli lambda
-        const deliContext = new LocalContext();
         this.deliLambda = new DeliLambda(
-            deliContext,
+            LocalOrderer.deliContext,
             tenantId,
             documentId,
             details.value,
-            collection,
+            documentCollection,
             this.deliToScriptoriumKafka,
             this.alfredToDeliKafka,
             ClientSequenceTimeout,
@@ -350,7 +324,7 @@ export class LocalOrderer implements core.IOrderer {
 
         // Create the connection
         const connection = new LocalOrdererConnection(
-            this.pubsub,
+            LocalOrderer.pubSub,
             subscriber,
             this.existing,
             this.details.value,
@@ -383,9 +357,7 @@ export class LocalOrderer implements core.IOrderer {
 // TODO: Make this real.
 class InMemoryKafka extends EventEmitter implements IProducer {
 
-    private offset = 0;
-
-    constructor() {
+    constructor(private offset = 0) {
         super();
     }
 
@@ -400,7 +372,6 @@ class InMemoryKafka extends EventEmitter implements IProducer {
         };
         this.emit("message", kafkaMessage);
         this.offset++;
-
     }
 
     public close(): Promise<void> {

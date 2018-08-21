@@ -3,7 +3,7 @@ import * as path from "path";
 import * as supertest from "supertest";
 import * as app from "../../alfred/app";
 import * as services from "../../services";
-import { MongoManager } from "../../utils";
+import * as utils from "../../utils";
 import { TestDbFactory, TestKafka, TestTenantManager } from "../testUtils";
 
 const defaultConfig = nconf.file(path.join(__dirname, "../../../config.test.json")).use("memory");
@@ -20,11 +20,16 @@ describe("Routerlicious", () => {
                 };
 
                 const testDbFactory = new TestDbFactory(testData);
-                const mongoManager = new MongoManager(testDbFactory);
+                const mongoManager = new utils.MongoManager(testDbFactory);
                 const testTenantManager = new TestTenantManager();
                 testKafka = new TestKafka();
                 const producer = testKafka.createProducer();
-                const storage = new services.DocumentStorage(mongoManager, "documents", testTenantManager, producer);
+                const databaseManager = new utils.MongoDatabaseManager(
+                    mongoManager,
+                    "nodes",
+                    "documents",
+                    "deltas");
+                const storage = new services.DocumentStorage(databaseManager, testTenantManager, producer);
                 const alfred = app.create(
                     defaultConfig,
                     testTenantManager,
