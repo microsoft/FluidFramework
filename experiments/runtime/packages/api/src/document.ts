@@ -1,4 +1,4 @@
-// import { IEnvelope } from "@prague/api-definitions";
+import { DocumentMessage } from "@prague/api-definitions";
 // import * as resources from "@prague/gitresources";
 import { IRuntime, MessageType } from "@prague/runtime-definitions";
 // import { Deferred } from "@prague/utils";
@@ -7,12 +7,6 @@ import { EventEmitter } from "events";
 // import performanceNow = require("performance-now");
 // import * as uuid from "uuid/v4";
 // import { debug } from "./debug";
-
-export enum DocumentMessage {
-    AttachObject = "attach",
-
-    ObjectOperation = "objOp",
-}
 
 /**
  * A document is a collection of collaborative types.

@@ -1,5 +1,11 @@
 import { IBranchOrigin, IUser } from "@prague/runtime-definitions";
 
+export enum DocumentMessage {
+    AttachObject = "attach",
+
+    ObjectOperation = "objOp",
+}
+
 /**
  * Message related to a distributed data type
  */

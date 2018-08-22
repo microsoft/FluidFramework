@@ -1,5 +1,5 @@
 {
-  "name": "@prague/api-definitions",
+  "name": "@prague/map",
   "version": "0.1.0",
   "description": "Prague document loader",
   "main": "dist/index.js",
@@ -14,8 +14,11 @@
     "typescript": "^3.0.1"
   },
   "dependencies": {
+    "@prague/api-definitions": "^0.1.0",
     "@prague/runtime-definitions": "^0.1.0",
-    "@types/debug": "^0.0.30",
-    "debug": "^3.1.0"
+    "@types/debug": "0.0.30",
+    "@types/lodash": "^4.14.116",
+    "debug": "^3.1.0",
+    "lodash": "^4.17.10"
   }
 }
