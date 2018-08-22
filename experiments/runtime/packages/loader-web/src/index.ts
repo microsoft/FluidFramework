@@ -1,5 +1,11 @@
 import * as loader from "@prague/loader";
-import { ICodeLoader, IDocumentService, IModule, IPraguePackage, ITokenService } from "@prague/runtime-definitions";
+import {
+    IChaincodeFactory,
+    ICodeLoader,
+    IDocumentService,
+    IPraguePackage,
+    ITokenService,
+} from "@prague/runtime-definitions";
 import * as driver from "@prague/socket-storage";
 import * as assert from "assert";
 import chalk from "chalk";
@@ -8,7 +14,7 @@ import * as queryString from "query-string";
 import * as scriptjs from "scriptjs";
 
 class WebLoader implements ICodeLoader {
-    public load(pkg: IPraguePackage): Promise<IModule> {
+    public load(pkg: IPraguePackage): Promise<IChaincodeFactory> {
         return new Promise<any>((resolve) => {
             assert(pkg.prague && pkg.prague.browser);
             scriptjs(pkg.prague.browser.bundle, () => resolve(window[pkg.prague.browser.entrypoint]));
@@ -16,7 +22,7 @@ class WebLoader implements ICodeLoader {
     }
 }
 
-// {"prague":{"browser":{"entrypoint":"test","bundle":["http://localhost:8081/dist/main.bundle.js"]}}}
+// {"prague":{"browser":{"entrypoint":"main","bundle":["http://localhost:8081/dist/main.bundle.js"]}}}
 
 async function run(
     token: string,

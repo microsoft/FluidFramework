@@ -1,10 +1,12 @@
 import { ICommit } from "@prague/gitresources";
 import {
+    IChaincode,
     IClientJoin,
     ICodeLoader,
     IDocumentAttributes,
     IDocumentService,
     IDocumentStorageService,
+    IMessageHandler,
     IPraguePackage,
     IProposal,
     IRuntime,
@@ -14,6 +16,7 @@ import {
     IUser,
     MessageType,
 } from "@prague/runtime-definitions";
+import * as assert from "assert";
 import { EventEmitter } from "events";
 import now = require("performance-now");
 import { debug } from "./debug";
@@ -79,9 +82,16 @@ export enum ConnectionState {
     Connected,
 }
 
-class TestRuntime implements IRuntime {
-    public hello() {
-        console.log("Hello!");
+class Runtime implements IRuntime {
+    private handlers = new Map<string, IMessageHandler>();
+
+    public registerHandler(type: string, handler: IMessageHandler) {
+        assert(!this.handlers.has(type));
+        this.handlers.set(type, handler);
+    }
+
+    public getHandler(type: string) {
+        return this.handlers.get(type);
     }
 }
 
@@ -93,6 +103,10 @@ export class Document extends EventEmitter {
     private quorum: Quorum;
     private clientId: string;
 
+    // Active chaincode and associated runtime
+    private runtime = new Runtime();
+    private chaincode: IChaincode;
+
     // tslint:disable:variable-name
     private _deltaManager: DeltaManager;
     private _existing: boolean;
@@ -101,8 +115,6 @@ export class Document extends EventEmitter {
     private _tenantId: string;
     private _user: IUser;
     // tslint:enable:variable-name
-
-    private runtime = new TestRuntime();
 
     public get tenantId(): string {
         return this._tenantId;
@@ -278,13 +290,23 @@ export class Document extends EventEmitter {
     private loadCode(pkg: IPraguePackage) {
         // Stop processing inbound messages as we transition to the new code
         this.deltaManager.inbound.pause();
+
         const loadedP = this.codeLoader.load(pkg);
-        const initializedP = loadedP.then((module) => {
-            return module.initialize(this.runtime);
+        const initializedP = loadedP.then(async (module) => {
+            // TODO transitions, etc... for now unload existing chaincode if it exists
+            if (this.chaincode) {
+                await this.chaincode.close();
+            }
+
+            const runtime = new Runtime();
+            const chaincode = await module.instantiate(runtime);
+            return { chaincode, runtime };
         });
+
         initializedP.then(
-            () => {
-                // TODO transitions, etc...
+            (value) => {
+                this.chaincode = value.chaincode;
+                this.runtime = value.runtime;
                 this.deltaManager.inbound.resume();
             },
             (error) => {
@@ -395,7 +417,14 @@ export class Document extends EventEmitter {
     }
 
     private async prepareRemoteMessage(message: ISequencedDocumentMessage): Promise<any> {
-        return;
+        const local = this.clientId === message.clientId;
+
+        const handler = this.runtime.getHandler(message.type);
+        if (handler) {
+            return handler.prepare(message, local);
+        } else {
+            return;
+        }
     }
 
     private processRemoteMessage(message: ISequencedDocumentMessage, context: any) {
@@ -439,6 +468,12 @@ export class Document extends EventEmitter {
 
             default:
                 break;
+        }
+
+        // Allow registered event handlers to process the code
+        const handler = this.runtime.getHandler(message.type);
+        if (handler) {
+            handler.process(message, context, local);
         }
 
         // Notify the quorum of the MSN from the message. We rely on it to handle duplicate values but may
