@@ -107,6 +107,8 @@ export interface IDocument {
 
     deltaManager: IDeltaManager;
 
+    options: any;
+
     create(type: string, id?: string): ICollaborativeObject;
 
     attach(object: ICollaborativeObject): IDistributedObjectServices;
