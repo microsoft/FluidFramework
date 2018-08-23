@@ -1,5 +1,6 @@
 import * as assert from "assert";
 import { EventEmitter } from "events";
+import * as _ from "lodash";
 // tslint:disable-next-line:no-var-requires
 const now = require("performance-now");
 import * as winston from "winston";
@@ -275,16 +276,7 @@ export class ScriptoriumLambda implements IPartitionLambda {
                 });
             }
 
-            // Batch send to MongoDB
-            this.mongoManager.add(
-                {
-                    documentId: value.documentId,
-                    tenantId: value.tenantId,
-                },
-                value,
-                message.offset);
-
-            // And to Socket.IO
+            // Send to Socket.IO
             const target: IoTarget = {
                 documentId: value.documentId,
                 event: "op",
@@ -292,6 +284,18 @@ export class ScriptoriumLambda implements IPartitionLambda {
                 topic: `${value.tenantId}/${value.documentId}`,
             };
             this.ioManager.add(target, value.operation, message.offset);
+
+            const clonedValue = _.cloneDeep(value);
+            clonedValue.operation.traces = [];
+
+            // Batch send to MongoDB
+            this.mongoManager.add(
+                {
+                    documentId: clonedValue.documentId,
+                    tenantId: clonedValue.tenantId,
+                },
+                clonedValue,
+                message.offset);
         } else if (baseMessage.type === core.NackOperationType) {
             const value = baseMessage as core.INackMessage;
 
