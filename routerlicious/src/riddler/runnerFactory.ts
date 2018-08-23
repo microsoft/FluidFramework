@@ -1,5 +1,5 @@
 import { Provider } from "nconf";
-import { getOrCreateRepository } from "../git-storage";
+import { getOrCreateRepository } from "../git-storage/getOrCreateRepository";
 import * as services from "../services";
 import * as utils from "../utils";
 import { RiddlerRunner } from "./runner";
