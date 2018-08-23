@@ -15,6 +15,26 @@ export enum MessageType {
 
     // Message used to reject a pending proposal
     Reject = "reject",
+
+    // TODO the attach and operation names are partially historican. We may want to rename to align with changes
+    // coming from code loading.
+
+    // Creates a new channel and attaches chaincode to it
+    Attach = "attach",
+
+    // Channel operation.
+    Operation = "objOp",
+}
+
+/**
+ * An envelope wraps the contents with the intended target
+ */
+export interface IEnvelope {
+    // The target for the envelope
+    address: string;
+
+    // The contents of the envelope
+    contents: any;
 }
 
 /**

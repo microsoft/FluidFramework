@@ -1,11 +1,13 @@
 import { ICommit } from "@prague/gitresources";
 import {
+    IAttachMessage,
     IChaincode,
     IClientJoin,
     ICodeLoader,
     IDocumentAttributes,
     IDocumentService,
     IDocumentStorageService,
+    IEnvelope,
     IMessageHandler,
     IPraguePackage,
     IProposal,
@@ -85,6 +87,9 @@ export enum ConnectionState {
 class Runtime implements IRuntime {
     private handlers = new Map<string, IMessageHandler>();
 
+    constructor(public readonly existing: boolean) {
+    }
+
     public registerHandler(type: string, handler: IMessageHandler) {
         assert(!this.handlers.has(type));
         this.handlers.set(type, handler);
@@ -104,7 +109,7 @@ export class Document extends EventEmitter {
     private clientId: string;
 
     // Active chaincode and associated runtime
-    private runtime = new Runtime();
+    private runtime: Runtime;
     private chaincode: IChaincode;
 
     // tslint:disable:variable-name
@@ -183,40 +188,32 @@ export class Document extends EventEmitter {
                 return this.getHeader(this.id, storage, version);
             });
 
-        // TODO the below I can't do until I actually have the code loaded
-        // ... load the distributed data structures from the snapshot
-        // const dataStructuresLoadedP = Promise.all([storageP, headerP]).then(async ([storage, header]) => {
-        //     await this.loadSnapshot(storage, header);
-        // });
-
         // ... begin the connection process to the delta stream
         const connectResult: IConnectResult = connect
             ? this.connect(headerP)
             : { detailsP: Promise.resolve(null), handlerAttachedP: Promise.resolve() };
 
-        // TODO once we are dynamically loading code we will need to use it here
+        // ... load the distributed data structures from the snapshot
+        // const channelsLoadedP = Promise.all([storageP, headerP]).then(async ([storage, header]) => {
+        //     await this.loadSnapshot(storage, header);
+        // });
+
+        // ... load in the existing quorum
+        const quorumP = headerP.then((header) => this.loadQuorum(header));
+        const chaincodeP = quorumP.then((quorum) => this.loadCodeFromQuorum(quorum));
+
+        // Am I doing too much here? Should the loader just go and fetch everything that is needed to to pass details
+        // to the chaincode to begin running...?
+        // * So begin delta connection (this doesn't need to necessarily complete before the code load)
+        // * Grab the snapshot (may want to require something to exist always for simplicity)
+        // * Load the quorum - from the quorum see if code is attached
+        // * Initialize the quorum with the set of channels, the data, etc...
 
         // Wait for all the loading promises to finish
         return Promise
-            .all([storageP, versionP, headerP, connectResult.handlerAttachedP])
-            .then(async ([storageService, version, header]) => {
-                this.quorum = new Quorum(
-                    header.attributes.minimumSequenceNumber,
-                    header.attributes.clients,
-                    header.attributes.proposals,
-                    header.attributes.values,
-                    (key, value) => this.submitMessage(MessageType.Propose, { key, value }),
-                    (sequenceNumber) => this.submitMessage(MessageType.Reject, sequenceNumber));
-
-                this.quorum.on(
-                    "approveProposal",
-                    (sequenceNumber, key, value) => {
-                        console.log(`approve ${key}`);
-                        if (key === "code") {
-                            console.log(`loadCode ${JSON.stringify(value)}`);
-                            this.loadCode(value);
-                        }
-                    });
+            .all([storageP, versionP, headerP, quorumP, chaincodeP, connectResult.handlerAttachedP])
+            .then(async ([storageService, version, header, quorum, chaincode]) => {
+                this.quorum = quorum;
 
                 // Start delta processing once all objects are loaded
                 // const readyP = Array.from(this.distributedObjects.values()).map((value) => value.object.ready());
@@ -247,6 +244,8 @@ export class Document extends EventEmitter {
                     this._existing = details.existing;
                     this._parentBranch = details.parentBranch;
                 }
+
+                this.runtime = new Runtime(this.existing);
 
                 // Internal context is fully loaded at this point
                 this.loaded = true;
@@ -284,10 +283,40 @@ export class Document extends EventEmitter {
         return super.on(event, listener);
     }
 
+    private loadQuorum(header): Quorum {
+        const quorum = new Quorum(
+            header.attributes.minimumSequenceNumber,
+            header.attributes.clients,
+            header.attributes.proposals,
+            header.attributes.values,
+            (key, value) => this.submitMessage(MessageType.Propose, { key, value }),
+            (sequenceNumber) => this.submitMessage(MessageType.Reject, sequenceNumber));
+
+        this.quorum.on(
+            "approveProposal",
+            (sequenceNumber, key, value) => {
+                console.log(`approve ${key}`);
+                if (key === "code") {
+                    console.log(`loadCode ${JSON.stringify(value)}`);
+                    this.loadCode(value);
+                }
+            });
+
+        return quorum;
+    }
+
+    private loadCodeFromQuorum(quorum: Quorum): Promise<IChaincode> {
+        if (quorum.has("code")) {
+            return this.loadCode(quorum.get("code"));
+        } else {
+            return null;
+        }
+    }
+
     /**
      * Code to apply to the document has changed. Load it in now.
      */
-    private loadCode(pkg: IPraguePackage) {
+    private loadCode(pkg: IPraguePackage): Promise<IChaincode> {
         // Stop processing inbound messages as we transition to the new code
         this.deltaManager.inbound.pause();
 
@@ -298,21 +327,86 @@ export class Document extends EventEmitter {
                 await this.chaincode.close();
             }
 
-            const runtime = new Runtime();
+            const runtime = new Runtime(this.existing);
             const chaincode = await module.instantiate(runtime);
             return { chaincode, runtime };
         });
 
-        initializedP.then(
+        return initializedP.then(
             (value) => {
                 this.chaincode = value.chaincode;
                 this.runtime = value.runtime;
                 this.deltaManager.inbound.resume();
+                return this.chaincode;
             },
             (error) => {
                 // I believe this is a fatal problem - or we need to keep trying
                 console.error(error);
+                return Promise.reject(error);
             });
+    }
+
+    /**
+     * Loads in all the distributed objects contained in the header
+     */
+    private async loadSnapshot(storage: IDocumentStorageService, header: IHeaderDetails): Promise<void> {
+        // Update message information based on branch details
+        if (header.attributes.branch !== this.id) {
+            setParentBranch(header.transformedMessages, header.attributes.branch);
+        }
+
+        // Make a reservation for the root object as well as all distributed objects in the snapshot
+        const transformedMap = new Map<string, api.ISequencedDocumentMessage[]>([["root", []]]);
+        this.reserveDistributedObject("root");
+        for (const object of header.distributedObjects) {
+            this.reserveDistributedObject(object.id);
+            transformedMap.set(object.id, []);
+        }
+
+        // Filter messages per distributed data type
+        for (const transformedMessage of header.transformedMessages) {
+            if (transformedMessage.type === api.ObjectOperation) {
+                const envelope = transformedMessage.contents as api.IEnvelope;
+                transformedMap.get(envelope.address).push(transformedMessage);
+            }
+        }
+
+        const objectsLoaded = header.distributedObjects.map(async (distributedObject) => {
+            // Filter the storage tree to only the distributed object
+            const tree = header.tree && distributedObject.id in header.tree.trees
+                ? header.tree.trees[distributedObject.id]
+                : null;
+            const services = this.getObjectServices(distributedObject.id, tree, storage);
+
+            // Start the base mapping at the MSN
+            services.deltaConnection.setBaseMapping(
+                distributedObject.sequenceNumber,
+                header.attributes.minimumSequenceNumber);
+
+            // Run the transformed messages through the delta connection in order to update their offsets
+            // Then pass these to the loadInternal call. Moving forward we will want to update the snapshot
+            // to include the range maps. And then make the objects responsible for storing any messages they
+            // need to transform.
+            const transformedMessages = transformedMap.get(distributedObject.id);
+            const transformedObjectMessages = transformedMessages.map((message) => {
+                return services.deltaConnection.translateToObjectMessage(message, true);
+            });
+
+            // Pass the transformedMessages - but the object really should be storing this
+            const value = await this.loadInternal(
+                distributedObject,
+                transformedObjectMessages,
+                services,
+                services.deltaConnection.sequenceNumber,
+                header.attributes.branch);
+
+            this.fulfillDistributedObject(value, services);
+        });
+
+        // Begin connection to the document once we have began to load all documents. This will make sure to send
+        // them the onDisconnect and onConnected messages
+        await Promise.all(objectsLoaded);
+        debug(`objectsLoaded ${this.id}: ${performanceNow()} `);
     }
 
     private async getHeader(
@@ -416,14 +510,78 @@ export class Document extends EventEmitter {
         return clientSequenceNumber;
     }
 
+    /**
+     * Loads in a distributed object and stores it in the internal Document object map
+     * @param distributedObject The distributed object to load
+     */
+    private loadInternal(
+        distributedObject: api.IDistributedObject,
+        transformedMessages: api.ISequencedObjectMessage[],
+        services: IAttachedServices,
+        sequenceNumber: number,
+        originBranch: string): Promise<api.ICollaborativeObject> {
+
+        const extension = this.registry.getExtension(distributedObject.type);
+        const value = extension.load(
+            this,
+            distributedObject.id,
+            sequenceNumber,
+            distributedObject.sequenceNumber,
+            transformedMessages,
+            services,
+            originBranch);
+
+        return value;
+    }
+
     private async prepareRemoteMessage(message: ISequencedDocumentMessage): Promise<any> {
         const local = this.clientId === message.clientId;
 
-        const handler = this.runtime.getHandler(message.type);
-        if (handler) {
-            return handler.prepare(message, local);
-        } else {
-            return;
+        switch (message.type) {
+            case MessageType.Operation:
+                const envelope = message.contents as IEnvelope;
+                const objectDetails = this.distributedObjects.get(envelope.address);
+                return objectDetails.connection.prepare(message);
+
+            case MessageType.Attach:
+                if (local) {
+                    break;
+                }
+
+                // An attach means that we have a new channel. Runtime should notify everyone this exists?
+                // Or does the loader invoke something on the code?
+                // Somehow the chaincode needs to create the object to handle a channel.
+
+                const attachMessage = message.contents as IAttachMessage;
+
+                // create storage service that wraps the attach data
+                const localStorage = new LocalObjectStorageService(attachMessage.snapshot);
+                const connection = new ObjectDeltaConnection(attachMessage.id, this, this.connectionState);
+
+                // Document sequence number references <= message.sequenceNumber should map to the object's 0
+                // sequence number. We cap to the MSN to keep a tighter window and because no references should
+                // be below it.
+                connection.setBaseMapping(0, message.minimumSequenceNumber);
+
+                const distributedObject: api.IDistributedObject = {
+                    id: attachMessage.id,
+                    sequenceNumber: 0,
+                    type: attachMessage.type,
+                };
+
+                const services = {
+                    deltaConnection: connection,
+                    objectStorage: localStorage,
+                };
+
+                const origin = message.origin ? message.origin.id : this.id;
+                this.reserveDistributedObject(distributedObject.id);
+                const value = await this.loadInternal(distributedObject, [], services, 0, origin);
+
+                return {
+                    services,
+                    value,
+                };
         }
     }
 
@@ -466,14 +624,37 @@ export class Document extends EventEmitter {
                 this.quorum.rejectProposal(message.clientId, sequenceNumber);
                 break;
 
+            case MessageType.Attach:
+                const attachMessage = message.contents as IAttachMessage;
+                // If a non-local operation then go and create the object - otherwise mark it as officially attached.
+                if (local) {
+                    assert(this.pendingAttach.has(attachMessage.id));
+                    this.pendingAttach.delete(attachMessage.id);
+
+                    // Document sequence number references <= message.sequenceNumber should map to the
+                    // object's 0 sequence number. We cap to the MSN to keep a tighter window and because
+                    // no references should be below it.
+                    this.distributedObjects.get(attachMessage.id).connection.setBaseMapping(
+                        0,
+                        message.minimumSequenceNumber);
+                } else {
+                    this.fulfillDistributedObject(context.value as api.ICollaborativeObject, context.services);
+                }
+
+                break;
+
+            case MessageType.Operation:
+                const envelope = message.contents as IEnvelope;
+                const objectDetails = this.distributedObjects.get(envelope.address);
+
+                // This will need some kind of target?
+
+                objectDetails.connection.process(message, context);
+
+                break;
+
             default:
                 break;
-        }
-
-        // Allow registered event handlers to process the code
-        const handler = this.runtime.getHandler(message.type);
-        if (handler) {
-            handler.process(message, context, local);
         }
 
         // Notify the quorum of the MSN from the message. We rely on it to handle duplicate values but may

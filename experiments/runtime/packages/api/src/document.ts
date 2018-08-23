@@ -1,17 +1,22 @@
-import { DocumentMessage } from "@prague/api-definitions";
+import { DocumentMessage, ICollaborativeObject, IDocument } from "@prague/api-definitions";
+import { IMap, MapExtension } from "@prague/map";
 // import * as resources from "@prague/gitresources";
 import { IRuntime, MessageType } from "@prague/runtime-definitions";
+import { CollaborativeStringExtension, SharedString } from "@prague/shared-string";
+import { IStream, StreamExtension } from "@prague/stream";
 // import { Deferred } from "@prague/utils";
 // import * as assert from "assert";
 import { EventEmitter } from "events";
 // import performanceNow = require("performance-now");
-// import * as uuid from "uuid/v4";
+import * as uuid from "uuid/v4";
 // import { debug } from "./debug";
+
+const rootMapId = "root";
 
 /**
  * A document is a collection of collaborative types.
  */
-export class Document extends EventEmitter /* implements IDocument */ {
+export class Document extends EventEmitter implements IDocument {
     public static async Load(runtime: IRuntime): Promise<Document> {
         const document = new Document(runtime);
         return document;
@@ -30,113 +35,57 @@ export class Document extends EventEmitter /* implements IDocument */ {
     // private lastLeaderClientId: string;
 
     /**
+     * Flag indicating whether the document already existed at the time of load
+     */
+    public get existing(): boolean {
+        return this.runtime.existing;
+    }
+
+    /**
      * Constructs a new document from the provided details
      */
-    private constructor(runtime: IRuntime) {
+    private constructor(private runtime: IRuntime) {
         super();
-
-        this.registerRuntimeHandlers(runtime);
     }
 
-    private registerRuntimeHandlers(runtime: IRuntime) {
-        // Client join messages
-        runtime.registerHandler(
-            MessageType.ClientJoin,
-            {
-                prepare: (message, local) => Promise.resolve(),
-                process: (message, context, local) => {
-                    this.runTaskAnalyzer();
-                    this.emit("clientJoin", message.contents);
-                },
-            });
-
-        // Client leave messages
-        runtime.registerHandler(
-            MessageType.ClientLeave,
-            {
-                prepare: (message, local) => Promise.resolve(),
-                process: (message, context, local) => {
-                    this.emit("clientLeave", message.contents);
-                    this.runTaskAnalyzer();
-                },
-            });
-
-        // Object operations
-        runtime.registerHandler(
-            DocumentMessage.ObjectOperation,
-            {
-                prepare: async (message, local) => {
-                    // const envelope = message.contents as IEnvelope;
-                    // const objectDetails = this.distributedObjects.get(envelope.address);
-                    // return objectDetails.connection.prepare(message);
-                },
-                process: (message, context, local) => {
-                    // const envelope = message.contents as IEnvelope;
-                    // const objectDetails = this.distributedObjects.get(envelope.address);
-                    // objectDetails.connection.process(message, context);
-                },
-            });
-
-        runtime.registerHandler(
-            DocumentMessage.AttachObject,
-            {
-                prepare: async (message, local) => {
-                    // const attachMessage = message.contents as api.IAttachMessage;
-
-                    // // create storage service that wraps the attach data
-                    // const localStorage = new api.LocalObjectStorageService(attachMessage.snapshot);
-                    // const connection = new api.ObjectDeltaConnection(attachMessage.id, this, this.connectionState);
-
-                    // // Document sequence number references <= message.sequenceNumber should map to the
-                    // // object's 0 sequence number. We cap to the MSN to keep a tighter window and because no
-                    // // references should be below it.
-                    // connection.setBaseMapping(0, message.minimumSequenceNumber);
-
-                    // const distributedObject: api.IDistributedObject = {
-                    //     id: attachMessage.id,
-                    //     sequenceNumber: 0,
-                    //     type: attachMessage.type,
-                    // };
-
-                    // const services = {
-                    //     deltaConnection: connection,
-                    //     objectStorage: localStorage,
-                    // };
-
-                    // const origin = message.origin ? message.origin.id : this.id;
-                    // this.reserveDistributedObject(distributedObject.id);
-                    // const value = await this.loadInternal(distributedObject, [], services, 0, origin);
-
-                    // return {
-                    //     services,
-                    //     value,
-                    // };
-                },
-                process: (message, context, local) => {
-                    // const attachMessage = message.contents as api.IAttachMessage;
-
-                    // // If a non-local operation then go and create the object - otherwise mark it as officially
-                    // // attached.
-                    // if (message.clientId !== this._clientId) {
-                    //     this.fulfillDistributedObject(context.value as api.ICollaborativeObject, context.services);
-                    // } else {
-                    //     assert(this.pendingAttach.has(attachMessage.id));
-                    //     this.pendingAttach.delete(attachMessage.id);
-
-                    //     // Document sequence number references <= message.sequenceNumber should map to the
-                    //     // object's 0 sequence number. We cap to the MSN to keep a tighter window and because
-                    //     // no references should be below it.
-                    //     this.distributedObjects.get(attachMessage.id).connection.setBaseMapping(
-                    //         0,
-                    //         message.minimumSequenceNumber);
-                    // }
-                    // eventArgs.push(this.distributedObjects.get(attachMessage.id).object);
-                },
-            });
+    public getRoot(): IMap {
+        return this.distributedObjects.get(rootMapId).object as IMap;
     }
 
-    private runTaskAnalyzer() {
-        console.log("Task analyzer active!");
+    /**
+     * Creates a new collaborative map
+     */
+    public createMap(): IMap {
+        return this.create(MapExtension.Type) as IMap;
+    }
+
+    /**
+     * Creates a new collaborative string
+     */
+    public createString(): SharedString {
+        return this.create(CollaborativeStringExtension.Type) as SharedString;
+    }
+
+    /**
+     * Creates a new ink collaborative object
+     */
+    public createStream(): IStream {
+        return this.create(StreamExtension.Type) as IStream;
+    }
+
+    /**
+     * Constructs a new collaborative object that can be attached to the document
+     * @param type the identifier for the collaborative object type
+     */
+    public create(type: string, id = uuid()): ICollaborativeObject {
+        const extension = this.registry.getExtension(type);
+        const object = extension.create(this, id);
+
+        // Store the unattached service in the object map
+        this.reserveDistributedObject(id);
+        this.fulfillDistributedObject(object, null);
+
+        return object;
     }
 
     // private processRemoteMessage(message: api.ISequencedDocumentMessage, context: any) {
