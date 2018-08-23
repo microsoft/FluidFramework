@@ -1,3 +1,5 @@
+import { IChaincodeFactory } from "./chaincode";
+
 /**
  * Person definition in a npm script
  */
@@ -54,14 +56,6 @@ export interface IPraguePackage extends IPackage {
 }
 
 /**
- * Exported module definition
- */
-export interface IModule {
-    // Function definition to simply print to the console. Used in debugging
-    hello: () => void;
-}
-
-/**
  * Code loading interface
  */
 export interface ICodeLoader {
@@ -72,5 +66,5 @@ export interface ICodeLoader {
      * package then goes and refers to other stuff. The base package will have the ability to pull in, install
      * data contained in the document.
      */
-    load(pkg: IPackage): Promise<IModule>;
+    load(pkg: IPackage): Promise<IChaincodeFactory>;
 }

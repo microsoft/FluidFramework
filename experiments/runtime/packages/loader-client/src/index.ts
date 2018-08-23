@@ -1,5 +1,11 @@
 import * as loader from "@prague/loader";
-import { ICodeLoader, IDocumentService, IModule, IPraguePackage, ITokenService } from "@prague/runtime-definitions";
+import {
+    IChaincodeFactory,
+    ICodeLoader,
+    IDocumentService,
+    IPraguePackage,
+    ITokenService,
+} from "@prague/runtime-definitions";
 import * as driver from "@prague/socket-storage";
 import chalk from "chalk";
 import * as commander from "commander";
@@ -9,9 +15,13 @@ import * as process from "process";
 import * as readline from "readline";
 
 class NodeCodeLoader implements ICodeLoader {
-    public load(pkg: IPraguePackage): Promise<IModule> {
+    public async load(pkg: IPraguePackage): Promise<IChaincodeFactory> {
         console.log(`Loading ${pkg.prague.browser.entrypoint}`);
-        return Promise.resolve(null);
+        return {
+            instantiate: async (runtime) => {
+                return { close: () => Promise.resolve() };
+            },
+        };
     }
 }
 
