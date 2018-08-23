@@ -1,5 +1,5 @@
-import * as request from "request-promise-native";
 import * as resources from "gitresources";
+import * as request from "request-promise-native";
 
 export async function getOrCreateRepository(endpoint: string, owner: string, repository: string): Promise<void> {
     console.log(`Get Repo: ${endpoint}/${owner}/${repository}`);

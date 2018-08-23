@@ -227,5 +227,3 @@ export class GitManager {
         return `${prefix}${link}`;
     }
 }
-
-
