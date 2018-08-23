@@ -1879,6 +1879,7 @@ export class Viewport {
     private lineTop = 0;
     private excludedRects = <IExcludedRectangle[]>[];
     private lineX = 0;
+    private inclusions: Map<string, HTMLVideoElement> = new Map<string, HTMLVideoElement>();
 
     constructor(public maxHeight: number, public div: IViewportDiv, private width: number) {
     }
@@ -1963,6 +1964,22 @@ export class Viewport {
                     showImage.style.left = "0px";
                     showImage.style.top = "0px";
                     showImage.src = irdoc.url;
+                } else if (irdoc.type.name === "video") {
+                    let showVideo: HTMLVideoElement;
+                    if (irdoc.sha && this.inclusions.has(irdoc.sha)) {
+                        showVideo = this.inclusions.get(irdoc.sha) as HTMLVideoElement;
+                    } else {
+                        showVideo = document.createElement("video");
+                    }
+                    innerDiv.appendChild(showVideo);
+                    excluView.conformElement(showVideo);
+                    showVideo.style.left = "0px";
+                    showVideo.style.top = "0px";
+                    showVideo.src = irdoc.url;
+                    showVideo.controls = true;
+                    showVideo.muted = true;
+                    showVideo.load();
+                    this.inclusions.set(irdoc.sha, showVideo);
                 } else if ((irdoc.type.name === "childFlow") && (!flowView.parentFlow)) {
                     const flowRefMarker = marker as IFlowRefMarker;
                     let startChar = 0;
@@ -3105,22 +3122,41 @@ export interface IReferenceDoc {
     layout?: IRefLayoutSpec;
 }
 
-export function makeImageRef(blob: core.IGenericBlob, tenant: string, cb: (irdoc: IReferenceDoc) => void) {
-    const image = document.createElement("img");
-    const rdocType = <IReferenceDocType>{
-        name: "image",
-    };
-    const irdoc = <IReferenceDoc>{
-        sha: blob.sha,
-        type: rdocType,
-        url: blob.url,
-    };
-    image.src =  blob.url;
+export function makeBlobRef(blob: core.IGenericBlob, tenant: string, cb: (irdoc: IReferenceDoc) => void) {
+    switch (blob.type) {
+        case "image": {
+            const image = document.createElement("img");
+            const irdocType = <IReferenceDocType>{
+                name: "image",
+            };
+            const irdoc = <IReferenceDoc>{
+                sha: blob.sha,
+                type: irdocType,
+                url: blob.url,
+            };
+            image.src =  blob.url;
 
-    image.onload = () => {
-        irdoc.layout = { ar: image.naturalHeight / image.naturalWidth, dx: 0, dy: 0 };
-        cb(irdoc);
-    };
+            image.onload = () => {
+                irdoc.layout = { ar: image.naturalHeight / image.naturalWidth, dx: 0, dy: 0 };
+                cb(irdoc);
+            };
+            break;
+        }
+        case "video": {
+            const video = document.createElement("video");
+            const irdocType = <IReferenceDocType>{
+                name: "video",
+            };
+            const irdoc = <IReferenceDoc>{
+                sha: blob.sha,
+                type: irdocType,
+                url: blob.url,
+            };
+            video.src =  blob.url;
+            cb(irdoc);
+            video.load();
+        }
+    }
 }
 
 export interface IFlowViewModes {
@@ -3221,7 +3257,7 @@ export class FlowView extends ui.Component {
         this.setViewOption(this.options);
         blobUploadHandler(element,
             this.sharedString.getDocument(),
-            (incl: core.IGenericBlob) => this.insertPhotoInternal(incl),
+            (incl: core.IGenericBlob) => this.insertBlobInternal(incl),
         );
     }
 
@@ -4486,21 +4522,34 @@ export class FlowView extends ui.Component {
     public insertPhoto() {
         urlToInclusion(`${baseURI}/public/images/bennet1.jpeg`)
             .then(async (incl) => {
-                this.insertPhotoInternal(await this.collabDocument.uploadBlob(incl));
+                this.insertBlobInternal(await this.collabDocument.uploadBlob(incl));
             })
             .catch((error) => {
                 console.log(error);
             });
     }
 
-    private insertPhotoInternal(blob: core.IGenericBlob) {
-        makeImageRef(blob, this.collabDocument.tenantId, (irdoc) => {
-            const refProps = {
-                [Paragraph.referenceProperty]: irdoc,
-            };
-            this.sharedString.insertMarker(this.cursor.pos, MergeTree.ReferenceType.Simple, refProps);
-            this.localQueueRender(this.cursor.pos);
-        });
+    public insertVideo() {
+        urlToInclusion(`${baseURI}/public/images/SampleVideo_1280x720_1mb.mp4`)
+            .then(async (incl) => {
+                this.insertBlobInternal(await this.collabDocument.uploadBlob(incl));
+            })
+            .catch((error) => {
+                console.log(error);
+            });
+    }
+
+    private insertBlobInternal(blob: core.IGenericBlob) {
+        this.collabDocument.getBlob(blob.sha)
+            .then((finalBlob) => {
+                makeBlobRef(finalBlob, this.collabDocument.tenantId, (irdoc) => {
+                    const refProps = {
+                        [Paragraph.referenceProperty]: irdoc,
+                    };
+                    this.sharedString.insertMarker(this.cursor.pos, MergeTree.ReferenceType.Simple, refProps);
+                    this.localQueueRender(this.cursor.pos);
+                });
+            });
     }
 
     // tslint:disable:member-ordering
