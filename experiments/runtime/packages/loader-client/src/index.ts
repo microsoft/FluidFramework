@@ -22,6 +22,7 @@ class NodeCodeLoader implements ICodeLoader {
                 return {
                     close: () => Promise.resolve(),
                     getModule: () => Promise.resolve(),
+                    run: () => Promise.resolve(),
                 };
             },
         };

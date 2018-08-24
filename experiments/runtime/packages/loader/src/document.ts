@@ -304,6 +304,12 @@ export class Document extends EventEmitter {
                 this.chaincode = value.chaincode;
                 // this.runtime = value.runtime;
                 this.deltaManager.inbound.resume();
+
+                // TODO BIG TODO
+                // Calling run should be more explicit. We need to have initialized the code on all the chains
+                // prior to calling the run method.
+                this.chaincode.run(null);
+
                 return this.chaincode;
             },
             (error) => {

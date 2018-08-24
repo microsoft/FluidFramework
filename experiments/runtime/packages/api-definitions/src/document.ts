@@ -1,8 +1,4 @@
-import {
-    IDistributedObjectServices,
-    IEnvelope,
-    IUser,
-} from "@prague/runtime-definitions";
+import { IDistributedObjectServices, IUser } from "@prague/runtime-definitions";
 import { EventEmitter } from "events";
 import { ICollaborativeObject } from "./types";
 
@@ -46,8 +42,6 @@ export interface IDocument {
 
     clientId: string;
 
-    deltaManager: IDeltaManager;
-
     options: any;
 
     create(type: string, id?: string): ICollaborativeObject;
@@ -57,8 +51,4 @@ export interface IDocument {
     get(id: string): Promise<ICollaborativeObject>;
 
     getUser(): IUser;
-
-    snapshot(message: string): Promise<void>;
-
-    submitObjectMessage(envelope: IEnvelope);
 }

@@ -12,8 +12,10 @@ export interface IChaincode {
      */
     close(): Promise<void>;
 
-    // Does the chaincode query the runtime with events/callbacks...?
-    // Or does the loader be more active in use and there is some kind of "load" here?
+    /**
+     * Invoked once the chaincode has been fully instantiated on the document
+     */
+    run(runtime: IRuntime): Promise<void>;
 }
 
 /**

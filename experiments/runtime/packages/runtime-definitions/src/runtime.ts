@@ -10,16 +10,15 @@ export interface IMessageHandler {
 }
 
 export interface IRuntime {
-    existing: boolean;
+    readonly id: string;
 
-    // retrieves a list of all channels + metadata that chaincode can use to load details.
-    getChannels(): any[];
+    readonly existing: boolean;
 
-    // attaches an op handler to the given channel.
-    attachChannel(handler: IMessageHandler);
+    readonly options: any;
 
-    // creates a new channel. Initial channel data is provided as well as a handler.
-    createChannel(snapshot: any, handler: IMessageHandler);
+    readonly clientId: string;
+
+    getChannel(id: string): any;
 
     // The above 3 things don't let the code loader do any fine grained loading - but that is probably ok?
     // There may be opportunities where I can re-use an object across runs assuming the version of the data type/code
