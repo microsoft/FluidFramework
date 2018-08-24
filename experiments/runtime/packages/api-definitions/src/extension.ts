@@ -1,4 +1,9 @@
-import { IDistributedObjectServices, ISequencedObjectMessage } from "@prague/runtime-definitions";
+import {
+    IChaincodeModule,
+    IDistributedObjectServices,
+    IRuntime,
+    ISequencedObjectMessage,
+} from "@prague/runtime-definitions";
 import { IDocument } from "./document";
 import * as types from "./types";
 
@@ -11,7 +16,7 @@ export interface IExtension {
 /**
  * Definitions of a collaborative extensions. Extensions follow a common model but enable custom behavior.
  */
-export interface ICollaborativeObjectExtension extends IExtension {
+export interface ICollaborativeObjectExtension extends IChaincodeModule, IExtension {
     /**
      * Loads the given distributed object. This call is only ever invoked internally as the only thing
      * that is ever directly loaded is the document itself. Load will then only be called on documents that
@@ -28,11 +33,10 @@ export interface ICollaborativeObjectExtension extends IExtension {
      * need a way to allow the document to provide later storage for the object.
      */
     load(
-        document: IDocument,
+        runtime: IRuntime,
         id: string,
         sequenceNumber: number,
         minimumSequenceNumber: number,
-        messages: ISequencedObjectMessage[],
         services: IDistributedObjectServices,
         headerOrigin: string): Promise<types.ICollaborativeObject>;
 

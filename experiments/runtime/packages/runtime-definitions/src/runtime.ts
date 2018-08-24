@@ -1,4 +1,6 @@
+import { IDistributedObjectServices } from "./channel";
 import { ISequencedDocumentMessage } from "./protocol";
+import { IUser } from "./users";
 
 /**
  * Message handler definition
@@ -18,11 +20,11 @@ export interface IRuntime {
 
     readonly clientId: string;
 
+    readonly user: IUser;
+
     getChannel(id: string): any;
 
-    // The above 3 things don't let the code loader do any fine grained loading - but that is probably ok?
-    // There may be opportunities where I can re-use an object across runs assuming the version of the data type/code
-    // have not changed?
+    createChannel(id: string, type: string): IDistributedObjectServices;
 
     // A channel defines a dist data type and its associated op stream of changes to it. In whole the document
     // is a JSON DB.

@@ -1,9 +1,5 @@
-import {
-    ICollaborativeObject,
-    IDocument,
-    ValueType,
-} from "@prague/api-definitions";
-import { ISequencedObjectMessage } from "@prague/runtime-definitions";
+import { ICollaborativeObject, ValueType } from "@prague/api-definitions";
+import { IRuntime, ISequencedObjectMessage } from "@prague/runtime-definitions";
 import hasIn = require("lodash/hasIn");
 import { IMapOperation, IMapValue } from "./definitions";
 import { IMapView, IValueOpEmitter, SerializeFilter } from "./interfaces";
@@ -39,7 +35,7 @@ export interface ILocalViewElement {
 export class MapView implements IMapView {
     private data = new Map<string, ILocalViewElement>();
 
-    constructor(private map: CollaborativeMap, private document: IDocument, id: string) {
+    constructor(private map: CollaborativeMap, private runtime: IRuntime, id: string) {
     }
 
     public async populate(data: {[key: string]: IMapValue }): Promise<void> {
@@ -209,7 +205,7 @@ export class MapView implements IMapView {
     private async fill(key: string, remote: IMapValue): Promise<ILocalViewElement> {
         let translatedValue: any;
         if (remote.type === ValueType[ValueType.Collaborative]) {
-            const distributedObject = await this.document.get(remote.value);
+            const distributedObject = await this.runtime.getChannel(remote.value);
             translatedValue = distributedObject;
         } else if (remote.type === ValueType[ValueType.Plain]) {
             translatedValue = remote.value;

@@ -73,12 +73,12 @@ export class ChannelDeltaConnection implements IDeltaConnection {
         return !!this.rangeTracker;
     }
 
-    public async prepare(message: ISequencedDocumentMessage): Promise<IMessageContext> {
+    public async prepare(message: ISequencedDocumentMessage, local: boolean): Promise<IMessageContext> {
         assert(this.baseMappingIsSet());
         assert(this.handler);
 
         const objectMessage = this.translateToObjectMessage(message);
-        const handlerContext = await this.handler.prepare(objectMessage);
+        const handlerContext = await this.handler.prepare(objectMessage, local);
 
         return {
             handlerContext,
@@ -86,7 +86,7 @@ export class ChannelDeltaConnection implements IDeltaConnection {
         };
     }
 
-    public process(message: ISequencedDocumentMessage, context: IMessageContext) {
+    public process(message: ISequencedDocumentMessage, local: boolean, context: IMessageContext) {
         assert(this.baseMappingIsSet());
         assert(this.handler);
 
@@ -95,7 +95,7 @@ export class ChannelDeltaConnection implements IDeltaConnection {
         this.rangeTracker.add(message.sequenceNumber, context.objectMessage.sequenceNumber);
         this.minSequenceNumber = context.objectMessage.minimumSequenceNumber;
 
-        this.handler.process(context.objectMessage, context.handlerContext);
+        this.handler.process(context.objectMessage, local, context.handlerContext);
     }
 
     public transformDocumentSequenceNumber(value: number) {

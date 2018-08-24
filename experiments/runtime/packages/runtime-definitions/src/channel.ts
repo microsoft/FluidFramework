@@ -31,9 +31,9 @@ export interface IAttachMessage {
 }
 
 export interface IDeltaHandler {
-    prepare: (message: ISequencedObjectMessage) => Promise<any>;
+    prepare: (message: ISequencedObjectMessage, local: boolean) => Promise<any>;
 
-    process: (message: ISequencedObjectMessage, context: any) => void;
+    process: (message: ISequencedObjectMessage, local: boolean, context: any) => void;
 
     minSequenceNumberChanged: (value: number) => void;
 

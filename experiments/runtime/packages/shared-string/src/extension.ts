@@ -1,5 +1,5 @@
 import * as api from "@prague/api-definitions";
-import { IDistributedObjectServices, ISequencedObjectMessage } from "@prague/runtime-definitions";
+import { IDistributedObjectServices, IRuntime } from "@prague/runtime-definitions";
 import { SharedString } from "./sharedString";
 
 export class CollaborativeStringExtension implements api.ICollaborativeObjectExtension {
@@ -8,21 +8,20 @@ export class CollaborativeStringExtension implements api.ICollaborativeObjectExt
     public type: string = CollaborativeStringExtension.Type;
 
     public async load(
-        document: api.IDocument,
+        runtime: IRuntime,
         id: string,
         sequenceNumber: number,
         minimumSequenceNumber: number,
-        messages: ISequencedObjectMessage[],
         services: IDistributedObjectServices,
         headerOrigin: string): Promise<api.ICollaborativeObject> {
 
-        const collaborativeString = new SharedString(document, id, sequenceNumber, services);
-        await collaborativeString.load(sequenceNumber, minimumSequenceNumber, messages, headerOrigin, services);
+        const collaborativeString = new SharedString(id, runtime, sequenceNumber, services);
+        await collaborativeString.load(sequenceNumber, minimumSequenceNumber, headerOrigin, services);
         return collaborativeString;
     }
 
     public create(document: api.IDocument, id: string): api.ICollaborativeObject {
-        const collaborativeString = new SharedString(document, id, 0);
+        const collaborativeString = new SharedString(id, document.runtime, 0);
         collaborativeString.initializeLocal();
         return collaborativeString;
     }

@@ -46,7 +46,7 @@ export class Document extends EventEmitter implements IDocument {
     /**
      * Constructs a new document from the provided details
      */
-    private constructor(private runtime: IRuntime) {
+    private constructor(public runtime: IRuntime) {
         super();
 
         this.modules.set(MapExtension.Type, new MapExtension());

@@ -1,4 +1,4 @@
-import { IObjectMessage, ITree } from "@prague/runtime-definitions";
+import { IChannel, IObjectMessage, ITree } from "@prague/runtime-definitions";
 
 /**
  * Helper interface to wrap a snapshot with the sequence number it was taken at
@@ -9,12 +9,7 @@ export interface ICollaborativeObjectSnapshot {
     snapshot: any;
 }
 
-export interface ICollaborativeObject {
-    /**
-     * A readonly identifier for the collaborative object
-     */
-    id: string;
-
+export interface ICollaborativeObject extends IChannel {
     /**
      * The type of the collaborative object
      */
@@ -54,12 +49,6 @@ export interface ICollaborativeObject {
      * Snapshots the object
      */
     snapshot(): ITree;
-
-    /**
-     * Returns a promise indicating whether or not the distributed data structure is ready to process
-     * incoming messages.
-     */
-    ready(): Promise<void>;
 
     /**
      * Transforms the given message relative to the provided sequence number

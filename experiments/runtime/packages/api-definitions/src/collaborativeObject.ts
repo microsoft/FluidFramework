@@ -3,13 +3,13 @@ import {
     IDistributedObjectServices,
     IObjectMessage,
     IObjectStorageService,
+    IRuntime,
     ISequencedObjectMessage,
     ITree,
 } from "@prague/runtime-definitions";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import { debug } from "./debug";
-import { IDocument } from "./document";
 import { ICollaborativeObject } from "./types";
 import { ValueType } from "./valueType";
 
@@ -46,7 +46,7 @@ export abstract class CollaborativeObject extends EventEmitter implements IColla
         return this.pendingOps.length > 0;
     }
 
-    constructor(public id: string, protected document: IDocument, public type: string) {
+    constructor(public id: string, protected runtime: IRuntime, public type: string) {
         super();
     }
 
@@ -66,7 +66,6 @@ export abstract class CollaborativeObject extends EventEmitter implements IColla
     public async load(
         sequenceNumber: number,
         minimumSequenceNumber: number,
-        messages: ISequencedObjectMessage[],
         headerOrigin: string,
         services: IDistributedObjectServices): Promise<void> {
 
@@ -76,7 +75,6 @@ export abstract class CollaborativeObject extends EventEmitter implements IColla
         await this.loadCore(
             sequenceNumber,
             minimumSequenceNumber,
-            messages,
             headerOrigin,
             services.objectStorage);
         this.attachDeltaHandler();
@@ -103,7 +101,7 @@ export abstract class CollaborativeObject extends EventEmitter implements IColla
         this.attachCore();
 
         // Notify the document of the attachment
-        this.services = this.document.attach(this);
+        this.services = this.runtime.createChannel(this.id, this.type);
         this.attachDeltaHandler();
 
         return this;
@@ -138,7 +136,6 @@ export abstract class CollaborativeObject extends EventEmitter implements IColla
     protected abstract loadCore(
         sequenceNumber: number,
         minimumSequenceNumber: number,
-        messages: ISequencedObjectMessage[],
         headerOrigin: string,
         services: IObjectStorageService): Promise<void>;
 
@@ -155,12 +152,12 @@ export abstract class CollaborativeObject extends EventEmitter implements IColla
     /**
      * Prepares the given message for processing
      */
-    protected abstract prepareCore(message: ISequencedObjectMessage): Promise<any>;
+    protected abstract prepareCore(message: ISequencedObjectMessage, local: boolean): Promise<any>;
 
     /**
      * Derived classes must override this to do custom processing on a remote message
      */
-    protected abstract processCore(message: ISequencedObjectMessage, context: any);
+    protected abstract processCore(message: ISequencedObjectMessage, local: boolean, context: any);
 
     /**
      * Method called when the minimum sequence number for the object has changed
@@ -207,11 +204,11 @@ export abstract class CollaborativeObject extends EventEmitter implements IColla
             minSequenceNumberChanged: (value) => {
                 this.processMinSequenceNumberChanged(value);
             },
-            prepare: async (message) => {
-                return this.prepare(message);
+            prepare: async (message, local) => {
+                return this.prepare(message, local);
             },
-            process: (message, context) => {
-                this.process(message, context);
+            process: (message, local, context) => {
+                this.process(message, local, context);
             },
             setConnectionState: (state: ConnectionState) => {
                 this.setConnectionState(state);
@@ -222,8 +219,8 @@ export abstract class CollaborativeObject extends EventEmitter implements IColla
         this.setConnectionState(this.services.deltaConnection.state);
     }
 
-    private async prepare(message: ISequencedObjectMessage): Promise<any> {
-        return this.prepareCore(message);
+    private async prepare(message: ISequencedObjectMessage, local: boolean): Promise<any> {
+        return this.prepareCore(message, local);
     }
 
     private setConnectionState(state: ConnectionState) {
@@ -274,12 +271,11 @@ export abstract class CollaborativeObject extends EventEmitter implements IColla
     /**
      * Handles a message being received from the remote delta server
      */
-    private process(message: ISequencedObjectMessage, context: any) {
+    private process(message: ISequencedObjectMessage, local: boolean, context: any) {
         // server messages should only be delivered to this method in sequence number order
         assert.equal(this.sequenceNumber + 1, message.sequenceNumber);
         this._sequenceNumber = message.sequenceNumber;
 
-        const local = message.clientId === this.document.clientId;
         if (message.type === OperationType && local) {
             // One of our messages was sequenced. We can remove it from the local message list. Given these arrive
             // in order we only need to check the beginning of the local list.
@@ -295,7 +291,7 @@ export abstract class CollaborativeObject extends EventEmitter implements IColla
         }
 
         this.emit("pre-op", message, local);
-        this.processCore(message, context);
+        this.processCore(message, local, context);
         this.emit("op", message, local);
     }
 }

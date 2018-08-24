@@ -15,6 +15,7 @@ import {
     IObjectStorageService,
     IPraguePackage,
     IProposal,
+    IRuntime,
     ISequencedDocumentMessage,
     ISnapshotTree,
     ITokenService,
@@ -68,6 +69,7 @@ export class Document extends EventEmitter {
     private chaincode: IChaincode;
     private pendingAttach = new Map<string, IAttachMessage>();
     private channels = new Map<string, IChannelState>();
+    private runtime: IRuntime;
 
     // tslint:disable:variable-name
     private _deltaManager: DeltaManager;
@@ -173,9 +175,10 @@ export class Document extends EventEmitter {
             .then(async ([storageService, tree, version, attributes, quorum, chaincode]) => {
                 this.quorum = quorum;
                 this.chaincode = chaincode;
+                this.runtime = null;
 
                 // Instantiate channels from chaincode and stored data
-                const channelStates = await this.loadChannels(storageService, tree, attributes);
+                const channelStates = await this.loadChannels(this.runtime, storageService, tree, attributes);
                 for (const channelState of channelStates) {
                     this.channels.set(channelState.object.id, channelState);
                 }
@@ -323,6 +326,7 @@ export class Document extends EventEmitter {
      * Loads in all the distributed objects contained in the header
      */
     private async loadChannels(
+        runtime: IRuntime,
         storage: IDocumentStorageService,
         tree: ISnapshotTree,
         attributes: IDocumentAttributes): Promise<IChannelState[]> {
@@ -330,7 +334,7 @@ export class Document extends EventEmitter {
         const channelsP = new Array<Promise<IChannelState>>();
         // tslint:disable-next-line:forin
         for (const path in tree.trees) {
-            const channelP = this.loadSnapshotChannel(path, tree.trees[path], attributes, storage);
+            const channelP = this.loadSnapshotChannel(runtime, path, tree.trees[path], attributes, storage);
             channelsP.push(channelP);
         }
 
@@ -341,6 +345,7 @@ export class Document extends EventEmitter {
     }
 
     private async loadSnapshotChannel(
+        runtime: IRuntime,
         id: string,
         tree: ISnapshotTree,
         attributes: IDocumentAttributes,
@@ -351,6 +356,7 @@ export class Document extends EventEmitter {
         services.deltaConnection.setBaseMapping(channelAttributes.sequenceNumber, attributes.minimumSequenceNumber);
 
         return this.loadChannel(
+            runtime,
             id,
             channelAttributes.type,
             channelAttributes.sequenceNumber,
@@ -360,6 +366,7 @@ export class Document extends EventEmitter {
     }
 
     private async loadChannel(
+        runtime: IRuntime,
         id: string,
         type: string,
         sequenceNumber: number,
@@ -373,6 +380,7 @@ export class Document extends EventEmitter {
         // TODO need to fix up the SN vs. MSN stuff here. If want to push messages to object also need
         // to store the mappings from channel ID to doc ID.
         const value = await extension.load(
+            runtime,
             id,
             sequenceNumber,
             minSequenceNumber,
@@ -497,7 +505,7 @@ export class Document extends EventEmitter {
             case MessageType.Operation:
                 const envelope = message.contents as IEnvelope;
                 const objectDetails = this.channels.get(envelope.address);
-                return objectDetails.connection.prepare(message);
+                return objectDetails.connection.prepare(message, local);
 
             case MessageType.Attach:
                 if (local) {
@@ -528,6 +536,7 @@ export class Document extends EventEmitter {
 
                 const origin = message.origin ? message.origin.id : this.id;
                 const value = await this.loadChannel(
+                    this.runtime,
                     attachMessage.id,
                     attachMessage.type,
                     0,
@@ -601,7 +610,7 @@ export class Document extends EventEmitter {
             case MessageType.Operation:
                 const envelope = message.contents as IEnvelope;
                 const objectDetails = this.channels.get(envelope.address);
-                objectDetails.connection.process(message, context);
+                objectDetails.connection.process(message, local, context);
 
                 break;
 

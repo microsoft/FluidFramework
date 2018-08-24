@@ -1,12 +1,12 @@
 // tslint:disable:whitespace align no-bitwise
-import { IDocument } from "@prague/api-definitions";
-import { CollaborativeMap, IMap, IMapView, IValueChanged, MapExtension } from "@prague/map";
+import { CollaborativeMap, IMap, IMapView, IValueChanged } from "@prague/map";
 import { IRelativePosition } from "@prague/merge-tree";
 import * as MergeTree from "@prague/merge-tree";
 import {
     IDistributedObjectServices,
     IObjectMessage,
     IObjectStorageService,
+    IRuntime,
     ISequencedObjectMessage,
     ITree,
 } from "@prague/runtime-definitions";
@@ -53,12 +53,12 @@ export class SharedString extends CollaborativeMap {
     }
 
     constructor(
-        document: IDocument,
         public id: string,
+        runtime: IRuntime,
         sequenceNumber: number,
         services?: IDistributedObjectServices) {
-        super(id, document, CollaborativeStringExtension.Type);
-        this.client = new MergeTree.Client("", document.options);
+        super(id, runtime, CollaborativeStringExtension.Type);
+        this.client = new MergeTree.Client("", runtime.options);
     }
 
     public insertMarkerRelative(relativePos1: IRelativePosition, refType, props?: MergeTree.PropertySet) {
@@ -89,10 +89,6 @@ export class SharedString extends CollaborativeMap {
 
         this.client.insertMarkerLocal(pos, refType, props);
         this.submitIfAttached(insertMessage);
-    }
-
-    public getDocument(): IDocument {
-        return this.document as IDocument;
     }
 
     public getText(start?: number, end?: number): string {
@@ -362,20 +358,22 @@ export class SharedString extends CollaborativeMap {
     protected async loadContent(
         sequenceNumber: number,
         minimumSequenceNumber: number,
-        messages: ISequencedObjectMessage[],
         headerOrigin: string,
         storage: IObjectStorageService): Promise<void> {
 
         const header = await storage.read("header");
 
-        return this.initialize(sequenceNumber, minimumSequenceNumber, messages, header, true, headerOrigin, storage);
+        // TODO needs to start saving pending ops
+        return this.initialize(sequenceNumber, minimumSequenceNumber, header, true, headerOrigin, storage);
     }
 
     protected initializeContent() {
-        const intervalCollections = this.document.create(MapExtension.Type) as IMap;
-        this.set("intervalCollections", intervalCollections);
+        // TODO TODOO TODO need a plan for this
+        // const intervalCollections = this.document.create(MapExtension.Type) as IMap;
+        // this.set("intervalCollections", intervalCollections);
+
         // TODO will want to update initialize to operate synchronously
-        this.initialize(0, 0, [], null, false, this.id, null).catch(
+        this.initialize(0, 0, null, false, this.id, null).catch(
             (error) => {
                 console.error("initializeContent", error);
             });
@@ -409,14 +407,14 @@ export class SharedString extends CollaborativeMap {
     }
 
     protected attachContent() {
-        this.client.startCollaboration(this.document.clientId, this.document.getUser(), 0);
+        this.client.startCollaboration(this.runtime.clientId, this.runtime.user, 0);
         this.collabStarted = true;
     }
 
     protected onConnectContent(pending: IObjectMessage[]) {
         // Update merge tree collaboration information with new client ID and then resend pending ops
         if (this.collabStarted) {
-            this.client.updateCollaboration(this.document.clientId);
+            this.client.updateCollaboration(this.runtime.clientId);
         }
 
         this.sendNACKed();
@@ -453,10 +451,10 @@ export class SharedString extends CollaborativeMap {
         this.client.mergeTree.reloadFromSegments(segs);
         if (collaborative) {
             // TODO currently only assumes two levels of branching
-            const branchId = originBranch === this.document.id ? 0 : 1;
+            const branchId = originBranch === this.runtime.id ? 0 : 1;
             this.collabStarted = true;
             this.client.startCollaboration(
-                this.document.clientId, this.document.getUser(), minimumSequenceNumber, branchId);
+                this.runtime.clientId, this.runtime.user, minimumSequenceNumber, branchId);
         }
     }
 
@@ -464,7 +462,6 @@ export class SharedString extends CollaborativeMap {
         sequenceNumber: number,
         minimumSequenceNumber: number,
         header: string,
-        messages: ISequencedObjectMessage[],
         collaborative: boolean,
         originBranch: string,
         services: IObjectStorageService) {
@@ -477,10 +474,11 @@ export class SharedString extends CollaborativeMap {
             }
         }
 
-        // Apply all pending messages
-        for (const message of messages) {
-            this.processContent(message);
-        }
+        // TODO the messages need to be stored inside the attributes/snapshot/etc...
+        // Load + apply all pending messages
+        // for (const message of messages) {
+        //     this.processContent(message);
+        // }
 
         // And initialize the interval collections
         await this.initializeIntervalCollections();
@@ -489,7 +487,6 @@ export class SharedString extends CollaborativeMap {
     private async initialize(
         sequenceNumber: number,
         minimumSequenceNumber: number,
-        messages: ISequencedObjectMessage[],
         header: string,
         collaborative: boolean,
         originBranch: string,
@@ -505,7 +502,6 @@ export class SharedString extends CollaborativeMap {
             sequenceNumber,
             minimumSequenceNumber,
             header,
-            messages,
             collaborative,
             originBranch,
             services).then(

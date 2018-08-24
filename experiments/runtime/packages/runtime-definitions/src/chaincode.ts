@@ -54,6 +54,7 @@ export interface IChaincodeModule  {
      * need a way to allow the document to provide later storage for the object.
      */
     load(
+        runtime: IRuntime,
         id: string,
         sequenceNumber: number,
         minimumSequenceNumber: number,

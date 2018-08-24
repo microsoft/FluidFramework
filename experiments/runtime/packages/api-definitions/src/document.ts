@@ -1,4 +1,4 @@
-import { IDistributedObjectServices, IUser } from "@prague/runtime-definitions";
+import { IDistributedObjectServices, IRuntime, IUser } from "@prague/runtime-definitions";
 import { EventEmitter } from "events";
 import { ICollaborativeObject } from "./types";
 
@@ -43,6 +43,8 @@ export interface IDocument {
     clientId: string;
 
     options: any;
+
+    runtime: IRuntime;
 
     create(type: string, id?: string): ICollaborativeObject;
 
