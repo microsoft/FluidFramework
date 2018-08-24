@@ -1,4 +1,5 @@
 import * as api from "@prague/api-definitions";
+import { IDistributedObjectServices, ISequencedObjectMessage } from "@prague/runtime-definitions";
 import { IMap, IValueType } from "./interfaces";
 import { CollaborativeMap } from "./map";
 
@@ -21,8 +22,8 @@ export class MapExtension implements api.ICollaborativeObjectExtension {
         id: string,
         sequenceNumber: number,
         minimumSequenceNumber: number,
-        messages: api.ISequencedObjectMessage[],
-        services: api.IDistributedObjectServices,
+        messages: ISequencedObjectMessage[],
+        services: IDistributedObjectServices,
         headerOrigin: string): Promise<IMap> {
 
         const map = new CollaborativeMap(id, document, MapExtension.Type);

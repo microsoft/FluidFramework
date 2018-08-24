@@ -1,5 +1,5 @@
-import { IDistributedObjectServices, IDocument } from "./document";
-import { ISequencedObjectMessage } from "./protocol";
+import { IDistributedObjectServices, ISequencedObjectMessage } from "@prague/runtime-definitions";
+import { IDocument } from "./document";
 import * as types from "./types";
 
 export interface IExtension {

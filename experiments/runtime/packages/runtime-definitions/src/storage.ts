@@ -37,6 +37,7 @@ export interface IDocumentAttributes {
     values: Array<[string, any]>;
 }
 
+// TODO consider a rename to channel
 export interface IObjectAttributes {
     sequenceNumber: number;
 

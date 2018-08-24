@@ -2,12 +2,16 @@ import {
     CollaborativeObject,
     ICollaborativeObject,
     IDocument,
+    OperationType,
+} from "@prague/api-definitions";
+import {
+    FileMode,
     IObjectMessage,
     IObjectStorageService,
     ISequencedObjectMessage,
-    OperationType,
-} from "@prague/api-definitions";
-import { FileMode, ITree, TreeEntry } from "@prague/runtime-definitions";
+    ITree,
+    TreeEntry,
+} from "@prague/runtime-definitions";
 import hasIn = require("lodash/hasIn");
 import { debug } from "./debug";
 import { IMapOperation } from "./definitions";

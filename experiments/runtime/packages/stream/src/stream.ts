@@ -1,13 +1,13 @@
 import {
     IDocument,
-    IObjectMessage,
-    IObjectStorageService,
-    ISequencedObjectMessage,
     OperationType,
 } from "@prague/api-definitions";
 import { CollaborativeMap } from "@prague/map";
 import {
     FileMode,
+    IObjectMessage,
+    IObjectStorageService,
+    ISequencedObjectMessage,
     ITree,
     TreeEntry,
 } from "@prague/runtime-definitions";

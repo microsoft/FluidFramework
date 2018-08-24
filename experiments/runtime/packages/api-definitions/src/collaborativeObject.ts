@@ -1,9 +1,15 @@
-import { ITree } from "@prague/runtime-definitions";
+import {
+    ConnectionState,
+    IDistributedObjectServices,
+    IObjectMessage,
+    IObjectStorageService,
+    ISequencedObjectMessage,
+    ITree,
+} from "@prague/runtime-definitions";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import { debug } from "./debug";
-import { ConnectionState, IDistributedObjectServices, IDocument, IObjectStorageService } from "./document";
-import { IObjectMessage, ISequencedObjectMessage } from "./protocol";
+import { IDocument } from "./document";
 import { ICollaborativeObject } from "./types";
 import { ValueType } from "./valueType";
 

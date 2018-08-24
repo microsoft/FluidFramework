@@ -1,15 +1,13 @@
 // tslint:disable:whitespace align no-bitwise
-import {
-    IDistributedObjectServices,
-    IDocument,
-    IObjectMessage,
-    IObjectStorageService,
-    ISequencedObjectMessage,
-} from "@prague/api-definitions";
+import { IDocument } from "@prague/api-definitions";
 import { CollaborativeMap, IMap, IMapView, IValueChanged, MapExtension } from "@prague/map";
 import { IRelativePosition } from "@prague/merge-tree";
 import * as MergeTree from "@prague/merge-tree";
 import {
+    IDistributedObjectServices,
+    IObjectMessage,
+    IObjectStorageService,
+    ISequencedObjectMessage,
     ITree,
 } from "@prague/runtime-definitions";
 import { Deferred } from "@prague/utils";

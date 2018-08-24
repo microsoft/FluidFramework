@@ -1,4 +1,5 @@
 import * as api from "@prague/api-definitions";
+import { IDistributedObjectServices, ISequencedObjectMessage } from "@prague/runtime-definitions";
 import { Stream } from "./stream";
 
 export class StreamExtension implements api.ICollaborativeObjectExtension {
@@ -11,8 +12,8 @@ export class StreamExtension implements api.ICollaborativeObjectExtension {
         id: string,
         sequenceNumber: number,
         minimumSequenceNumber: number,
-        messages: api.ISequencedObjectMessage[],
-        services: api.IDistributedObjectServices,
+        messages: ISequencedObjectMessage[],
+        services: IDistributedObjectServices,
         headerOrigin: string): Promise<api.ICollaborativeObject> {
 
         const stream = new Stream(document, id, sequenceNumber);

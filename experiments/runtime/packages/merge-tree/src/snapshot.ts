@@ -1,8 +1,6 @@
 import {
-    IObjectStorageService,
-} from "@prague/api-definitions";
-import {
     FileMode,
+    IObjectStorageService,
     ITree,
     TreeEntry,
 } from "@prague/runtime-definitions";

@@ -1,4 +1,5 @@
 import * as api from "@prague/api-definitions";
+import { IDistributedObjectServices, ISequencedObjectMessage } from "@prague/runtime-definitions";
 import { SharedString } from "./sharedString";
 
 export class CollaborativeStringExtension implements api.ICollaborativeObjectExtension {
@@ -11,8 +12,8 @@ export class CollaborativeStringExtension implements api.ICollaborativeObjectExt
         id: string,
         sequenceNumber: number,
         minimumSequenceNumber: number,
-        messages: api.ISequencedObjectMessage[],
-        services: api.IDistributedObjectServices,
+        messages: ISequencedObjectMessage[],
+        services: IDistributedObjectServices,
         headerOrigin: string): Promise<api.ICollaborativeObject> {
 
         const collaborativeString = new SharedString(document, id, sequenceNumber, services);

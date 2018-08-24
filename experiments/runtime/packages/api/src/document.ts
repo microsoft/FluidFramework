@@ -1,7 +1,7 @@
-import { DocumentMessage, ICollaborativeObject, IDocument } from "@prague/api-definitions";
+import { ICollaborativeObject } from "@prague/api-definitions";
 import { IMap, MapExtension } from "@prague/map";
 // import * as resources from "@prague/gitresources";
-import { IRuntime, MessageType } from "@prague/runtime-definitions";
+import { IRuntime } from "@prague/runtime-definitions";
 import { CollaborativeStringExtension, SharedString } from "@prague/shared-string";
 import { IStream, StreamExtension } from "@prague/stream";
 // import { Deferred } from "@prague/utils";
@@ -11,12 +11,12 @@ import { EventEmitter } from "events";
 import * as uuid from "uuid/v4";
 // import { debug } from "./debug";
 
-const rootMapId = "root";
+// const rootMapId = "root";
 
 /**
  * A document is a collection of collaborative types.
  */
-export class Document extends EventEmitter implements IDocument {
+export class Document extends EventEmitter /* implements IDocument */ {
     public static async Load(runtime: IRuntime): Promise<Document> {
         const document = new Document(runtime);
         return document;
@@ -24,9 +24,6 @@ export class Document extends EventEmitter implements IDocument {
 
     // Map from the object ID to the collaborative object for it. If the object is not yet attached its service
     // entries will be null
-    // private distributedObjects = new Map<string, IDistributedObjectState>();
-    // private reservations = new Map<string, Deferred<api.ICollaborativeObject>>();
-
     // private messagesSinceMSNChange = new Array<api.ISequencedDocumentMessage>();
     // private helpRequested: Set<string> = new Set<string>();
     // private pendingAttach = new Map<string, api.IAttachMessage>();
@@ -48,9 +45,9 @@ export class Document extends EventEmitter implements IDocument {
         super();
     }
 
-    public getRoot(): IMap {
-        return this.distributedObjects.get(rootMapId).object as IMap;
-    }
+    // public getRoot(): IMap {
+    //     return this.distributedObjects.get(rootMapId).object as IMap;
+    // }
 
     /**
      * Creates a new collaborative map
@@ -78,40 +75,10 @@ export class Document extends EventEmitter implements IDocument {
      * @param type the identifier for the collaborative object type
      */
     public create(type: string, id = uuid()): ICollaborativeObject {
-        const extension = this.registry.getExtension(type);
-        const object = extension.create(this, id);
+        // const extension = this.registry.getExtension(type);
+        // const object = extension.create(this, id);
 
-        // Store the unattached service in the object map
-        this.reserveDistributedObject(id);
-        this.fulfillDistributedObject(object, null);
-
-        return object;
+        // return object;
+        return null;
     }
-
-    // private processRemoteMessage(message: api.ISequencedDocumentMessage, context: any) {
-    //     const minSequenceNumberChanged = this.lastMinSequenceNumber !== message.minimumSequenceNumber;
-    //     this.lastMinSequenceNumber = message.minimumSequenceNumber;
-
-    //     // Add the message to the list of pending messages so we can transform them during a snapshot
-    //     this.messagesSinceMSNChange.push(message);
-
-    // if (minSequenceNumberChanged) {
-    //     // Reset the list of messages we have received since the min sequence number changed
-    //     let index = 0;
-    //     for (; index < this.messagesSinceMSNChange.length; index++) {
-    //         if (this.messagesSinceMSNChange[index].sequenceNumber > message.minimumSequenceNumber) {
-    //             break;
-    //         }
-    //     }
-    //     this.messagesSinceMSNChange = this.messagesSinceMSNChange.slice(index);
-
-    //     for (const [, object] of this.distributedObjects) {
-    //         if (!object.object.isLocal() && object.connection.baseMappingIsSet()) {
-    //             object.connection.updateMinSequenceNumber(message.minimumSequenceNumber);
-    //         }
-    //     }
-    // }
-
-    // this.emit("op", ...eventArgs);
-    // }
 }

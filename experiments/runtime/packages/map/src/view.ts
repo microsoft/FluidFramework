@@ -1,9 +1,9 @@
 import {
     ICollaborativeObject,
     IDocument,
-    ISequencedObjectMessage,
     ValueType,
 } from "@prague/api-definitions";
+import { ISequencedObjectMessage } from "@prague/runtime-definitions";
 import hasIn = require("lodash/hasIn");
 import { IMapOperation, IMapValue } from "./definitions";
 import { IMapView, IValueOpEmitter, SerializeFilter } from "./interfaces";
