@@ -62,10 +62,7 @@ else
         if (hs == null)
           view.set(highScoreConst, JSON.stringify({ user: '', friendlyName: '', score: 0 }));
 
-        doSnapshot(_view, docId)
-
         _view.document.on("clientLeave", (name) => {
-          doSnapshot(_view, docId);
         });
 
         doStage();
@@ -706,11 +703,6 @@ function doStage() {
     }
 
     function endGame() {
-      /*_view.document.snapshot().then(() => {
-          console.log(`Snapshot ${docId}`);
-      }, (err) => {
-          console.log(`Snapshot ${docId} Error: ${err}`);
-      });*/
       gameover.show();
     }
 

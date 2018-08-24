@@ -3,34 +3,16 @@ var prague=require("@prague/routerlicious");
 
 // This page will read from the common Prague Doc that manages all the connected games
 
-const globalrouterlicious = "https://alfred.wu2.prague.office-int.com";
-const globalhistorian = "https://historian.wu2.prague.office-int.com";
-const globaltenantId = "trusting-wescoff";
+const globalrouterlicious = "https://alfred.wu2-ppe.prague.office-int.com";
+const globalhistorian = "https://historian.wu2-ppe.prague.office-int.com";
+const globaltenantId = "confident-turing";
 
-const globaldocId = "prague-astroid-global-map" + Math.floor(Date.now().valueOf() / 1000 / 60 / 60 / 24);
+const globaldocId = "prague-astroid-readout-0824";
 
 var _globalView;
 
 // Register endpoint connection
 prague.api.socketStorage.registerAsDefault(globalrouterlicious, globalhistorian, globaltenantId);
-
-window.doSnapshot= function(view, docId)
-{
-    var lastSnapshot = view.get("lastSnapshot")
-    if(lastSnapshot==null || lastSnapshot< Date.now().valueOf()-30000 )
-    {
-        view.set("lastSnapshot", Date.now().valueOf());
-
-        console.log(`Snapshot  ${docId} Starting`);
-
-        return view.document.snapshot().then(() => {
-            console.log(`Snapshot  ${docId} Complete`);
-        }, (err) => {
-            console.log(`Snapshot ${docId} Error: ${err}`);
-        });
-    }
-    return Promise.resolve();
-};
 
 window.connectToPragueGlobalMap=function(waitForLoad)
 {
@@ -40,7 +22,6 @@ window.connectToPragueGlobalMap=function(waitForLoad)
             .then(view=>{
                 _globalView = view;
                 if(waitForLoad){
-                    doSnapshot(_globalView, globaldocId);
                 }
                 return view;
             });
@@ -64,7 +45,7 @@ window.connectToDocumentRootView=function(docId, waitForLoad) {
                         id: "anyone", 
                     }
                 },
-                secretKey:"865611902d834bc16ed2d7a7f2895ee3"
+                secretKey:"24c1ebcf087132e31a7e3c25f56f6626"
             })
     };
 

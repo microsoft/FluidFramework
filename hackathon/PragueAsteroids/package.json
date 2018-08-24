@@ -42,7 +42,7 @@
     "vinyl-transform": "^1.0.0"
   },
   "dependencies": {
-    "@prague/routerlicious": "^0.1.2694",
+    "@prague/routerlicious": "^0.1.3084",
     "browser-resolve": "^1.11.3",
     "stage-js": "^0.8.10"
   }
