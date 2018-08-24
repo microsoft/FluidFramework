@@ -1,4 +1,5 @@
 import * as request from "request";
+import * as io from "socket.io-client";
 import * as api from "../api-core";
 import { GitManager } from "../git-storage";
 import { Historian, ICredentials } from "../services-client";
