@@ -4,6 +4,7 @@
   "description": "Loader client app",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "sideEffects": "false",
   "scripts": {
     "build": "tsc && tslint 'src/**/*.ts'",
     "start": "node dist/index.js"

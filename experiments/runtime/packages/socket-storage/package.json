@@ -4,9 +4,11 @@
   "description": "Socket.IO + Git implementation of Prague service API",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "sideEffects": "false",
   "scripts": {
-    "build": "npm run tsc && npm run tslint",
-    "tsc": "tsc",
+    "build": "npm run build:commonjs && npm run build:esnext && npm run tslint",
+    "build:commonjs": "tsc",
+    "build:esnext": "tsc --outDir lib --m esnext",
     "tslint": "tslint 'src/**/*.ts'"
   },
   "author": "Microsoft",
@@ -20,8 +22,12 @@
     "@prague/runtime-definitions": "0.1.0",
     "@prague/services-client": "0.1.0",
     "@prague/utils": "0.1.0",
+    "@types/debug": "^0.0.30",
+    "@types/jwt-decode": "^2.2.1",
     "@types/socket.io-client": "^1.4.32",
-    "request": "^2.87.0",
+    "axios": "^0.18.0",
+    "debug": "^3.1.0",
+    "jwt-decode": "^2.2.0",
     "socket.io-client": "^2.1.1"
   }
 }

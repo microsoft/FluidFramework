@@ -1,6 +1,6 @@
 import * as api from "@prague/runtime-definitions";
 import { GitManager, Historian, ICredentials } from "@prague/services-client";
-import * as request from "request";
+import axios from "axios";
 import * as io from "socket.io-client";
 import { DocumentStorageService } from "./blobStorageService";
 import { DeltaStorageService, DocumentDeltaStorageService } from "./deltaStorageService";
@@ -76,25 +76,8 @@ export class DocumentService implements api.IDocumentService {
             };
         }
 
-        const forkId = await new Promise<string>((resolve, reject) => {
-            request.post(
-                {
-                    headers,
-                    json: true,
-                    url: `${this.deltaUrl}/documents/${tenantId}/${id}/forks`,
-                },
-                (error, response, body) => {
-                    if (error) {
-                        reject(error);
-                    } else if (response.statusCode !== 201) {
-                        reject(response.statusCode);
-                    } else {
-                        resolve(body);
-                    }
-                });
-        });
-
-        return forkId;
+        const result = await axios.post<string>(`${this.deltaUrl}/documents/${tenantId}/${id}/forks`, { headers });
+        return result.data;
     }
 
     public errorTrackingEnabled() {

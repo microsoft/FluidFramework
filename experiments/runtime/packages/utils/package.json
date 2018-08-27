@@ -4,10 +4,11 @@
   "description": "Collection of utility functions for Prague",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "sideEffects": "false",
   "scripts": {
-    "build": "npm run tsc && npm run tslint",
-    "test": "mocha --recursive dist/test",
-    "tsc": "tsc",
+    "build": "npm run build:commonjs && npm run build:esnext && npm run tslint",
+    "build:commonjs": "tsc",
+    "build:esnext": "tsc --outDir lib --m esnext",
     "tslint": "tslint 'src/**/*.ts'"
   },
   "author": "Microsoft",

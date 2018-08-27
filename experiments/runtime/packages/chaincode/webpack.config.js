@@ -1,4 +1,5 @@
 const path = require('path');
+var Visualizer = require('webpack-visualizer-plugin');
 
 module.exports = {
     entry: {
@@ -34,9 +35,7 @@ module.exports = {
             publicPath: '/dist/'
         }
     },
-    node: {
-        fs: 'empty',
-        net: 'empty',
-        tls: 'empty'
-    },
+    plugins: [new Visualizer({
+        filename: './statistics.html'
+      })],
 };

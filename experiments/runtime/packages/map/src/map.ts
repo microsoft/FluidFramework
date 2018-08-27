@@ -12,12 +12,15 @@ import {
     ITree,
     TreeEntry,
 } from "@prague/runtime-definitions";
-import hasIn = require("lodash/hasIn");
 import { debug } from "./debug";
 import { IMapOperation } from "./definitions";
 import { MapExtension } from "./extension";
 import { IMap, IMapView, IValueChanged, IValueOperation, IValueType, SerializeFilter } from "./interfaces";
 import { MapView } from "./view";
+
+// tslint:disable:no-var-requires
+const hasIn = require("lodash/hasIn");
+// tslint:enable:no-var-requires
 
 const snapshotFileName = "header";
 const contentPath = "content";

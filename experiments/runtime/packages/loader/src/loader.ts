@@ -1,8 +1,11 @@
 import { ICommit } from "@prague/gitresources";
 import { ICodeLoader, IDocumentService, ITokenService } from "@prague/runtime-definitions";
-import now = require("performance-now");
 import { debug } from "./debug";
 import { Document } from "./document";
+
+// tslint:disable:no-var-requires
+const now = require("performance-now");
+// tslint:enable:no-var-requires
 
 /**
  * Loads a new interactive document

@@ -1,8 +1,37 @@
 import { Chaincode, Document } from "@prague/api";
 import { IChaincode, IRuntime } from "@prague/runtime-definitions";
 
+const html = `
+<div class="container">
+        <h1>Sequence Example</h1>
+        <p>
+            Type in some text in the form below, choose an insertion location, and then click the insert button
+            to insert that text into a collaborative string.
+        </p>
+        <p>
+            <form id="insertForm" class="form-inline">
+                <div class="form-group">
+                    <label for="insertText">Text</label>
+                    <input id="insertText" type="text" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label for="insertLocation">Location</label>
+                    <input id="insertLocation" type="text" class="form-control" value="0">
+                </div>
+                <button type="submit" class="btn btn-default">Insert</button>
+            </form>
+        </p>
+
+        <p>
+            <div id="text"></div>
+        </p>
+    </div>
+`;
+
 class Runner {
     public async run(collabDoc: Document) {
+        document.getElementById("content").innerHTML = html;
+
         const rootView = await collabDoc.getRoot().getView();
         console.log("Keys");
         console.log(rootView.keys());

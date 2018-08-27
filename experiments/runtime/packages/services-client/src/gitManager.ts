@@ -1,7 +1,6 @@
 import * as resources from "@prague/gitresources";
 import * as api from "@prague/runtime-definitions";
 import * as assert from "assert";
-import * as request from "request-promise-native";
 import { IHistorian } from "./historian";
 
 export function buildHierarchy(flatTree: resources.ITree): api.ISnapshotTree {
@@ -226,29 +225,5 @@ export class GitManager {
         }
 
         return `${prefix}${link}`;
-    }
-}
-
-export async function getOrCreateRepository(endpoint: string, owner: string, repository: string): Promise<void> {
-    console.log(`Get Repo: ${endpoint}/${owner}/${repository}`);
-    const details = await request.get(`${endpoint}/repos/${owner}/${repository}`)
-        .catch((error) => error.statusCode === 400 ? null : Promise.reject(error));
-
-    if (!details) {
-        console.log(`Create Repo: ${endpoint}/${owner}/${repository}`);
-        const createParams: resources.ICreateRepoParams = {
-            name: repository,
-        };
-
-        await request.post(
-            `${endpoint}/${owner}/repos`,
-            {
-                body: createParams,
-                headers: {
-                    "Accept": "application/json",
-                    "Content-Type": "application/json",
-                },
-                json: true,
-            });
     }
 }
