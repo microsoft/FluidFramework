@@ -215,11 +215,10 @@ export class Historian implements IHistorian {
             options.url = `${options.url}?cacheBust=${Date.now()}`;
         }
 
-        const response = await axios.request<T>(options);
-        if (response.status !== statusCode) {
-            return Promise.reject(response.status);
-        } else {
-            return response.data;
-        }
+        const response = await axios.request<T>(options)
+            .catch((error) => error.response && error.response.status !== statusCode
+                ? Promise.reject(error.response.status)
+                : Promise.reject(error));
+        return response.data;
     }
 }
