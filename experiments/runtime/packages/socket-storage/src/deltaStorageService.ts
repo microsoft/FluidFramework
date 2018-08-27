@@ -1,6 +1,6 @@
 import * as api from "@prague/runtime-definitions";
+import axios from "axios";
 import * as querystring from "querystring";
-import * as request from "request";
 
 /**
  * Storage service limited to only being able to fetch documents for a specific document
@@ -25,7 +25,7 @@ export class DeltaStorageService implements api.IDeltaStorageService {
     constructor(private url: string) {
     }
 
-    public get(
+    public async get(
         tenantId: string,
         id: string,
         token: string,
@@ -40,22 +40,8 @@ export class DeltaStorageService implements api.IDeltaStorageService {
             };
         }
 
-        return new Promise<api.ISequencedDocumentMessage[]>((resolve, reject) => {
-            request.get(
-                {
-                    headers,
-                    json: true,
-                    url: `${this.url}/deltas/${tenantId}/${id}?${query}`,
-                },
-                (error, response, body) => {
-                    if (error) {
-                        reject(error);
-                    } else if (response.statusCode !== 200) {
-                        reject(response.statusCode);
-                    } else {
-                        resolve(body);
-                    }
-                });
-        });
+        const result = await axios.get<api.ISequencedDocumentMessage[]>(
+            `${this.url}/deltas/${tenantId}/${id}?${query}`, { headers });
+        return result.data;
     }
 }

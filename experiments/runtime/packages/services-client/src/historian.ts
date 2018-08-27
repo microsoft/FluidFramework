@@ -1,6 +1,6 @@
 import * as git from "@prague/gitresources";
+import { AxiosRequestConfig, default as axios } from "axios";
 import * as querystring from "querystring";
-import * as request from "request";
 
 function endsWith(value: string, endings: string[]): boolean {
     for (const ending of endings) {
@@ -166,10 +166,9 @@ export class Historian implements IHistorian {
     }
 
     private get<T>(url: string): Promise<T> {
-        const options: request.OptionsWithUrl = {
+        const options: AxiosRequestConfig = {
             headers: {
             },
-            json: true,
             method: "GET",
             url: `${this.endpoint}${url}`,
         };
@@ -177,12 +176,8 @@ export class Historian implements IHistorian {
     }
 
     private post<T>(url: string, requestBody: any): Promise<T> {
-        const options: request.OptionsWithUrl = {
-            body: requestBody,
-            headers: {
-                "Content-Type": "application/json",
-            },
-            json: true,
+        const options: AxiosRequestConfig = {
+            data: requestBody,
             method: "POST",
             url: `${this.endpoint}${url}`,
         };
@@ -190,7 +185,7 @@ export class Historian implements IHistorian {
     }
 
     private delete<T>(url: string): Promise<T> {
-        const options: request.OptionsWithUrl = {
+        const options: AxiosRequestConfig = {
             headers: {
             },
             method: "DELETE",
@@ -200,19 +195,15 @@ export class Historian implements IHistorian {
     }
 
     private patch<T>(url: string, requestBody: any): Promise<T> {
-        const options: request.OptionsWithUrl = {
-            body: requestBody,
-            headers: {
-                "Content-Type": "application/json",
-            },
-            json: true,
+        const options: AxiosRequestConfig = {
+            data: requestBody,
             method: "PATCH",
             url: `${this.endpoint}${url}`,
         };
         return this.request(options, 200);
     }
 
-    private request<T>(options: request.OptionsWithUrl, statusCode: number): Promise<T> {
+    private async request<T>(options: AxiosRequestConfig, statusCode: number): Promise<T> {
         if (this.authorization) {
             options.headers.Authorization = this.authorization;
         }
@@ -224,18 +215,11 @@ export class Historian implements IHistorian {
             options.url = `${options.url}?cacheBust=${Date.now()}`;
         }
 
-        return new Promise<T>((resolve, reject) => {
-            request(
-                options,
-                (error, response, body) => {
-                    if (error) {
-                        return reject(error);
-                    } else if (response.statusCode !== statusCode) {
-                        return reject(response.statusCode);
-                    } else {
-                        return resolve(response.body);
-                    }
-                });
-        });
+        const response = await axios.request<T>(options);
+        if (response.status !== statusCode) {
+            return Promise.reject(response.status);
+        } else {
+            return response.data;
+        }
     }
 }
