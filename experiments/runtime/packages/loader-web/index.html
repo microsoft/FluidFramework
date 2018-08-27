@@ -2,9 +2,34 @@
 <html lang="en">
 <head>
     <title>Prague Loader</title>
+    <link href="https://ajax.aspnetcdn.com/ajax/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://ajax.aspnetcdn.com/ajax/bootstrap/3.3.7/css/bootstrap-theme.min.css" rel="stylesheet" />
 </head>
 <body>
-    <h1>Hello!</h1>
+    <div class="container">
+        <h1>Sequence Example</h1>
+        <p>
+            Type in some text in the form below, choose an insertion location, and then click the insert button
+            to insert that text into a collaborative string.
+        </p>
+        <p>
+            <form id="insertForm" class="form-inline">
+                <div class="form-group">
+                    <label for="insertText">Text</label>
+                    <input id="insertText" type="text" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label for="insertLocation">Location</label>
+                    <input id="insertLocation" type="text" class="form-control" value="0">
+                </div>
+                <button type="submit" class="btn btn-default">Insert</button>
+            </form>
+        </p>
+
+        <p>
+            <div id="text"></div>
+        </p>
+    </div>
     <script src="/dist/main.bundle.js"></script>
 </body>
 </html>

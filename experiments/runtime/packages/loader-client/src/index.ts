@@ -19,7 +19,11 @@ class NodeCodeLoader implements ICodeLoader {
         console.log(`Loading ${pkg.prague.browser.entrypoint}`);
         return {
             instantiate: async (runtime) => {
-                return { close: () => Promise.resolve() };
+                return {
+                    close: () => Promise.resolve(),
+                    getModule: () => Promise.resolve(),
+                    run: () => Promise.resolve(),
+                };
             },
         };
     }

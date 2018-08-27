@@ -1,4 +1,5 @@
 export * from "./chaincode";
+export * from "./channel";
 export * from "./clients";
 export * from "./consensus";
 export * from "./loader";

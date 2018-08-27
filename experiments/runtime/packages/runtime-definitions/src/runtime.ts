@@ -1,4 +1,7 @@
+import { IChannel } from "./chaincode";
+import { IDistributedObjectServices } from "./channel";
 import { ISequencedDocumentMessage } from "./protocol";
+import { IUser } from "./users";
 
 /**
  * Message handler definition
@@ -10,9 +13,33 @@ export interface IMessageHandler {
 }
 
 export interface IRuntime {
+    readonly id: string;
+
+    readonly existing: boolean;
+
+    readonly options: any;
+
+    readonly clientId: string;
+
+    readonly user: IUser;
+
     /**
-     * Registers a new handler for the given operation type. After registration ops of the given
-     * type will be routed to the provided handler.
+     * Returns the channel with the given id
      */
-    registerHandler(type: string, handler: IMessageHandler);
+    getChannel(id: string): IChannel;
+
+    /**
+     * Creates a new channel of the given type
+     */
+    createChannel(id: string, type: string): IChannel;
+
+    /**
+     * Attaches the channel to the runtime - exposing it ot remote clients
+     */
+    attachChannel(channel: IChannel): IDistributedObjectServices;
+
+    /**
+     * Waits for the given channel to show up
+     */
+    waitForChannel(id: string): Promise<void>;
 }

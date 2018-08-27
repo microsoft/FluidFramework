@@ -1,6 +1,6 @@
 // tslint:disable
-import { ISequencedObjectMessage, OperationType } from "@prague/api-definitions";
-import { IUser } from "@prague/runtime-definitions";
+import { OperationType } from "@prague/api-definitions";
+import { ISequencedObjectMessage, IUser } from "@prague/runtime-definitions";
 import * as Base from "./base";
 import * as Collections from "./collections";
 import * as ops from "./ops";

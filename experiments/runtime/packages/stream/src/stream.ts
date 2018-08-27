@@ -1,13 +1,11 @@
-import {
-    IDocument,
-    IObjectMessage,
-    IObjectStorageService,
-    ISequencedObjectMessage,
-    OperationType,
-} from "@prague/api-definitions";
+import { OperationType } from "@prague/api-definitions";
 import { CollaborativeMap } from "@prague/map";
 import {
     FileMode,
+    IObjectMessage,
+    IObjectStorageService,
+    IRuntime,
+    ISequencedObjectMessage,
     ITree,
     TreeEntry,
 } from "@prague/runtime-definitions";
@@ -33,11 +31,11 @@ export class Stream extends CollaborativeMap implements IStream {
     private inkSnapshot: Snapshot;
 
     constructor(
-        document: IDocument,
         id: string,
+        runtime: IRuntime,
         sequenceNumber: number) {
 
-        super(id, document, StreamExtension.Type);
+        super(id, runtime, StreamExtension.Type);
     }
 
     public getLayers(): IInkLayer[] {
@@ -56,7 +54,6 @@ export class Stream extends CollaborativeMap implements IStream {
     protected async loadContent(
         sequenceNumber: number,
         minimumSequenceNumber: number,
-        messages: IObjectMessage[],
         headerOrigin: string,
         storage: IObjectStorageService): Promise<void> {
 
@@ -89,8 +86,8 @@ export class Stream extends CollaborativeMap implements IStream {
         return tree;
     }
 
-    protected processContent(message: ISequencedObjectMessage) {
-        if (message.type === OperationType && message.clientId !== this.document.clientId) {
+    protected processContent(message: ISequencedObjectMessage, local: boolean) {
+        if (message.type === OperationType && local) {
             this.inkSnapshot.apply(message.contents as IDelta);
         }
     }

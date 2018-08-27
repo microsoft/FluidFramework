@@ -1,4 +1,5 @@
 import * as api from "@prague/api-definitions";
+import { IDistributedObjectServices, IRuntime } from "@prague/runtime-definitions";
 import { IMap, IValueType } from "./interfaces";
 import { CollaborativeMap } from "./map";
 
@@ -17,23 +18,22 @@ export class MapExtension implements api.ICollaborativeObjectExtension {
     public type: string = MapExtension.Type;
 
     public async load(
-        document: api.IDocument,
+        runtime: IRuntime,
         id: string,
         sequenceNumber: number,
         minimumSequenceNumber: number,
-        messages: api.ISequencedObjectMessage[],
-        services: api.IDistributedObjectServices,
+        services: IDistributedObjectServices,
         headerOrigin: string): Promise<IMap> {
 
-        const map = new CollaborativeMap(id, document, MapExtension.Type);
+        const map = new CollaborativeMap(id, runtime, MapExtension.Type);
         this.registerValueTypes(map, defaultValueTypes);
-        await map.load(sequenceNumber, minimumSequenceNumber, messages, headerOrigin, services);
+        await map.load(sequenceNumber, minimumSequenceNumber, headerOrigin, services);
 
         return map;
     }
 
-    public create(document: api.IDocument, id: string): IMap {
-        const map = new CollaborativeMap(id, document, MapExtension.Type);
+    public create(runtime: IRuntime, id: string): IMap {
+        const map = new CollaborativeMap(id, runtime, MapExtension.Type);
         this.registerValueTypes(map, defaultValueTypes);
         map.initializeLocal();
 

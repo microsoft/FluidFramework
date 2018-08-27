@@ -1,8 +1,6 @@
-import {
-    ISequencedObjectMessage,
-} from "@prague/api-definitions";
 import { IValueFactory, IValueOpEmitter, IValueOperation, IValueType } from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
+import { ISequencedObjectMessage } from "@prague/runtime-definitions";
 import { EventEmitter } from "events";
 import { SharedString } from "./sharedString";
 

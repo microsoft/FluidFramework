@@ -21,7 +21,9 @@
     "@prague/utils": "^0.1.0",
     "@types/debug": "0.0.30",
     "@types/lodash": "^4.14.116",
+    "@types/uuid": "^3.4.3",
     "debug": "^3.1.0",
-    "lodash": "^4.17.10"
+    "lodash": "^4.17.10",
+    "uuid": "^3.3.2"
   }
 }

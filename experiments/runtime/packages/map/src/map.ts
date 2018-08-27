@@ -1,13 +1,17 @@
 import {
     CollaborativeObject,
     ICollaborativeObject,
-    IDocument,
-    IObjectMessage,
-    IObjectStorageService,
-    ISequencedObjectMessage,
     OperationType,
 } from "@prague/api-definitions";
-import { FileMode, ITree, TreeEntry } from "@prague/runtime-definitions";
+import {
+    FileMode,
+    IObjectMessage,
+    IObjectStorageService,
+    IRuntime,
+    ISequencedObjectMessage,
+    ITree,
+    TreeEntry,
+} from "@prague/runtime-definitions";
 import hasIn = require("lodash/hasIn");
 import { debug } from "./debug";
 import { IMapOperation } from "./definitions";
@@ -55,12 +59,9 @@ export class CollaborativeMap extends CollaborativeObject implements IMap {
      * Constructs a new collaborative map. If the object is non-local an id and service interfaces will
      * be provided
      */
-    constructor(
-        id: string,
-        document: IDocument,
-        type = MapExtension.Type) {
+    constructor(id: string, runtime: IRuntime, type = MapExtension.Type) {
 
-        super(id, document, type);
+        super(id, runtime, type);
         const defaultPrepare = (op: IMapOperation, local: boolean) => Promise.resolve();
         this.serializeFilter = (key, value, valueType) => value;
 
@@ -104,10 +105,7 @@ export class CollaborativeMap extends CollaborativeObject implements IMap {
                 },
             });
 
-        this.view = new MapView(
-            this,
-            this.document,
-            this.id);
+        this.view = new MapView(this, this.runtime, this.id);
     }
 
     public async keys(): Promise<string[]> {
@@ -321,7 +319,6 @@ export class CollaborativeMap extends CollaborativeObject implements IMap {
     protected async loadCore(
         sequenceNumber: number,
         minimumSequenceNumber: number,
-        messages: ISequencedObjectMessage[],
         headerOrigin: string,
         storage: IObjectStorageService) {
 
@@ -330,13 +327,10 @@ export class CollaborativeMap extends CollaborativeObject implements IMap {
         const data = header ? JSON.parse(Buffer.from(header, "base64").toString("utf-8")) : {};
         await this.view.populate(data);
 
-        const contentMessages = messages.filter((message) => !this.messageHandler.has(message.contents.type));
-
         const contentStorage = new ContentObjectStorage(storage);
         await this.loadContent(
             sequenceNumber,
             minimumSequenceNumber,
-            contentMessages,
             headerOrigin,
             contentStorage);
     }
@@ -352,7 +346,6 @@ export class CollaborativeMap extends CollaborativeObject implements IMap {
     protected async loadContent(
         sequenceNumber: number,
         minimumSequenceNumber: number,
-        messages: ISequencedObjectMessage[],
         headerOrigin: string,
         services: IObjectStorageService): Promise<void> {
         return;
@@ -362,9 +355,8 @@ export class CollaborativeMap extends CollaborativeObject implements IMap {
         return;
     }
 
-    protected prepareCore(message: ISequencedObjectMessage): Promise<any> {
+    protected prepareCore(message: ISequencedObjectMessage, local: boolean): Promise<any> {
         if (message.type === OperationType) {
-            const local = message.clientId === this.document.clientId;
             const op: IMapOperation = message.contents;
             if (this.messageHandler.has(op.type)) {
                 return this.messageHandler.get(op.type).prepare(op, local, message);
@@ -374,10 +366,9 @@ export class CollaborativeMap extends CollaborativeObject implements IMap {
         return this.prepareContent(message);
     }
 
-    protected processCore(message: ISequencedObjectMessage, context: any) {
+    protected processCore(message: ISequencedObjectMessage, local: boolean, context: any) {
         let handled = false;
         if (message.type === OperationType) {
-            const local = message.clientId === this.document.clientId;
             const op: IMapOperation = message.contents;
             if (this.messageHandler.has(op.type)) {
                 this.messageHandler.get(op.type).process(op, context, local, message);
