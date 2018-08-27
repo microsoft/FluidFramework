@@ -3,11 +3,12 @@
   "version": "0.1.0",
   "description": "Loader client app",
   "main": "dist/index.js",
+  "module": "lib/index.js",
   "types": "dist/index.d.ts",
   "sideEffects": "false",
   "scripts": {
     "build": "webpack --config webpack.config.js && tslint 'src/**/*.ts'",
-    "start": "webpack-serve webpack.config.js --open"
+    "start": "webpack-serve webpack.config.js"
   },
   "author": "Microsoft",
   "repository": "microsoft/prague",

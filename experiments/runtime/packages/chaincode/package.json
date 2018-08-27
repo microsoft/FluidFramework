@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "description": "Classic Prague runtime as chaincode",
   "main": "dist/index.js",
+  "module": "lib/index.js",
   "types": "dist/index.d.ts",
   "sideEffects": "false",
   "scripts": {
