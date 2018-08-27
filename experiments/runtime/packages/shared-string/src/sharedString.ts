@@ -1,5 +1,5 @@
 // tslint:disable:whitespace align no-bitwise
-import { CollaborativeMap, IMap, IMapView, IValueChanged } from "@prague/map";
+import { CollaborativeMap, IMap, IMapView, IValueChanged, MapExtension } from "@prague/map";
 import { IRelativePosition } from "@prague/merge-tree";
 import * as MergeTree from "@prague/merge-tree";
 import {
@@ -12,6 +12,7 @@ import {
 } from "@prague/runtime-definitions";
 import { Deferred } from "@prague/utils";
 import * as assert from "assert";
+import * as uuid from "uuid/v4";
 import { CollaborativeStringExtension } from "./extension";
 import {
     SharedIntervalCollection,
@@ -368,9 +369,8 @@ export class SharedString extends CollaborativeMap {
     }
 
     protected initializeContent() {
-        // TODO TODOO TODO need a plan for this
-        // const intervalCollections = this.document.create(MapExtension.Type) as IMap;
-        // this.set("intervalCollections", intervalCollections);
+        const intervalCollections = this.runtime.createChannel(uuid(), MapExtension.Type) as IMap;
+        this.set("intervalCollections", intervalCollections);
 
         // TODO will want to update initialize to operate synchronously
         this.initialize(0, 0, null, false, this.id, null).catch(

@@ -21,8 +21,8 @@ export class StreamExtension implements api.ICollaborativeObjectExtension {
         return stream;
     }
 
-    public create(document: api.IDocument, id: string): api.ICollaborativeObject {
-        const stream = new Stream(id, document.runtime, 0);
+    public create(runtime: IRuntime, id: string): api.ICollaborativeObject {
+        const stream = new Stream(id, runtime, 0);
         stream.initializeLocal();
 
         return stream;

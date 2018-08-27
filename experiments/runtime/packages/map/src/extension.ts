@@ -32,8 +32,8 @@ export class MapExtension implements api.ICollaborativeObjectExtension {
         return map;
     }
 
-    public create(document: api.IDocument, id: string): IMap {
-        const map = new CollaborativeMap(id, document.runtime, MapExtension.Type);
+    public create(runtime: IRuntime, id: string): IMap {
+        const map = new CollaborativeMap(id, runtime, MapExtension.Type);
         this.registerValueTypes(map, defaultValueTypes);
         map.initializeLocal();
 

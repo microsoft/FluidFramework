@@ -1,17 +1,13 @@
-import { ICollaborativeObject, ICollaborativeObjectExtension, IDocument } from "@prague/api-definitions";
+import { ICollaborativeObject, IDocument } from "@prague/api-definitions";
 import { IMap, MapExtension } from "@prague/map";
-// import * as resources from "@prague/gitresources";
 import { IDistributedObjectServices, IRuntime, IUser } from "@prague/runtime-definitions";
 import { CollaborativeStringExtension, SharedString } from "@prague/shared-string";
 import { IStream, StreamExtension } from "@prague/stream";
-// import { Deferred } from "@prague/utils";
-// import * as assert from "assert";
 import { EventEmitter } from "events";
-// import performanceNow = require("performance-now");
 import * as uuid from "uuid/v4";
-// import { debug } from "./debug";
 
 const rootMapId = "root";
+const insightsMapId = "insights";
 
 /**
  * A document is a collection of collaborative types.
@@ -19,6 +15,17 @@ const rootMapId = "root";
 export class Document extends EventEmitter implements IDocument {
     public static async Load(runtime: IRuntime): Promise<Document> {
         const document = new Document(runtime);
+
+        if (!runtime.existing) {
+            const root = runtime.createChannel(rootMapId, MapExtension.Type) as IMap;
+            root.attach();
+
+            const insights = runtime.createChannel(insightsMapId, MapExtension.Type);
+            root.set(insightsMapId, insights);
+        } else {
+            await runtime.waitForChannel("root");
+        }
+
         return document;
     }
 
@@ -34,8 +41,6 @@ export class Document extends EventEmitter implements IDocument {
         return this.runtime.options;
     }
 
-    private modules = new Map<string, ICollaborativeObjectExtension>();
-
     /**
      * Flag indicating whether the document already existed at the time of load
      */
@@ -48,10 +53,6 @@ export class Document extends EventEmitter implements IDocument {
      */
     private constructor(public runtime: IRuntime) {
         super();
-
-        this.modules.set(MapExtension.Type, new MapExtension());
-        this.modules.set(CollaborativeStringExtension.Type, new CollaborativeStringExtension());
-        this.modules.set(StreamExtension.Type, new StreamExtension());
     }
 
     public getRoot(): IMap {
@@ -62,25 +63,25 @@ export class Document extends EventEmitter implements IDocument {
      * Creates a new collaborative map
      */
     public createMap(): IMap {
-        return this.create(MapExtension.Type) as IMap;
+        return this.runtime.createChannel(uuid(), MapExtension.Type) as IMap;
     }
 
     /**
      * Creates a new collaborative string
      */
     public createString(): SharedString {
-        return this.create(CollaborativeStringExtension.Type) as SharedString;
+        return this.runtime.createChannel(uuid(), CollaborativeStringExtension.Type) as SharedString;
     }
 
     /**
      * Creates a new ink collaborative object
      */
     public createStream(): IStream {
-        return this.create(StreamExtension.Type) as IStream;
+        return this.runtime.createChannel(uuid(), StreamExtension.Type) as IStream;
     }
 
-    public get(id: string): Promise<ICollaborativeObject> {
-        throw new Error("Method not implemented.");
+    public async get(id: string): Promise<ICollaborativeObject> {
+        return this.runtime.getChannel(id) as ICollaborativeObject;
     }
 
     public snapshot(message: string): Promise<void> {
@@ -88,21 +89,10 @@ export class Document extends EventEmitter implements IDocument {
     }
 
     public attach(object: ICollaborativeObject): IDistributedObjectServices {
-        throw new Error("Method not implemented.");
+        return this.runtime.attachChannel(object);
     }
 
     public getUser(): IUser {
-        throw new Error("Method not implemented.");
-    }
-
-    /**
-     * Constructs a new collaborative object that can be attached to the document
-     * @param type the identifier for the collaborative object type
-     */
-    public create(type: string, id = uuid()): ICollaborativeObject {
-        const extension = this.modules.get(type);
-        const object = extension.create(this, id);
-
-        return object;
+        return this.runtime.user;
     }
 }

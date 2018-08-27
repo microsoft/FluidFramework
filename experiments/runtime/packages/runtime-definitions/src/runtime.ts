@@ -1,3 +1,4 @@
+import { IChannel } from "./chaincode";
 import { IDistributedObjectServices } from "./channel";
 import { ISequencedDocumentMessage } from "./protocol";
 import { IUser } from "./users";
@@ -22,10 +23,23 @@ export interface IRuntime {
 
     readonly user: IUser;
 
-    getChannel(id: string): any;
+    /**
+     * Returns the channel with the given id
+     */
+    getChannel(id: string): IChannel;
 
-    createChannel(id: string, type: string): IDistributedObjectServices;
+    /**
+     * Creates a new channel of the given type
+     */
+    createChannel(id: string, type: string): IChannel;
 
-    // A channel defines a dist data type and its associated op stream of changes to it. In whole the document
-    // is a JSON DB.
+    /**
+     * Attaches the channel to the runtime - exposing it ot remote clients
+     */
+    attachChannel(channel: IChannel): IDistributedObjectServices;
+
+    /**
+     * Waits for the given channel to show up
+     */
+    waitForChannel(id: string): Promise<void>;
 }

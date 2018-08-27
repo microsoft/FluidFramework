@@ -20,8 +20,8 @@ export class CollaborativeStringExtension implements api.ICollaborativeObjectExt
         return collaborativeString;
     }
 
-    public create(document: api.IDocument, id: string): api.ICollaborativeObject {
-        const collaborativeString = new SharedString(id, document.runtime, 0);
+    public create(runtime: IRuntime, id: string): api.ICollaborativeObject {
+        const collaborativeString = new SharedString(id, runtime, 0);
         collaborativeString.initializeLocal();
         return collaborativeString;
     }

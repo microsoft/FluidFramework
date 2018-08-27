@@ -7,6 +7,7 @@ import {
     IChannel,
     IClientJoin,
     ICodeLoader,
+    IDistributedObjectServices,
     IDocumentAttributes,
     IDocumentService,
     IDocumentStorageService,
@@ -22,6 +23,7 @@ import {
     IUser,
     MessageType,
 } from "@prague/runtime-definitions";
+import { Deferred } from "@prague/utils";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import now = require("performance-now");
@@ -58,20 +60,20 @@ interface IChannelState {
 }
 
 // TODO consider a name change for this. The document is likely built on top of this infrastructure
-export class Document extends EventEmitter {
+export class Document extends EventEmitter implements IRuntime {
     private pendingClientId: string;
     private loaded = false;
     private connectionState = ConnectionState.Disconnected;
     private quorum: Quorum;
-    private clientId: string;
 
     // Active chaincode and associated runtime
     private chaincode: IChaincode;
     private pendingAttach = new Map<string, IAttachMessage>();
     private channels = new Map<string, IChannelState>();
-    private runtime: IRuntime;
+    private storageService: IDocumentStorageService;
 
     // tslint:disable:variable-name
+    private _clientId: string = "disconnected";
     private _deltaManager: DeltaManager;
     private _existing: boolean;
     private _id: string;
@@ -79,6 +81,8 @@ export class Document extends EventEmitter {
     private _tenantId: string;
     private _user: IUser;
     // tslint:enable:variable-name
+
+    private watches = new Map<string, Deferred<void>>();
 
     public get tenantId(): string {
         return this._tenantId;
@@ -100,6 +104,10 @@ export class Document extends EventEmitter {
         return this.connectionState === ConnectionState.Connected;
     }
 
+    public get clientId(): string {
+        return this._clientId;
+    }
+
     /**
      * Flag indicating whether the document already existed at the time of load
      */
@@ -119,7 +127,7 @@ export class Document extends EventEmitter {
         private service: IDocumentService,
         private codeLoader: ICodeLoader,
         tokenService: ITokenService,
-        private options: any) {
+        public readonly options: any) {
         super();
 
         const claims = tokenService.extractClaims(token);
@@ -175,10 +183,10 @@ export class Document extends EventEmitter {
             .then(async ([storageService, tree, version, attributes, quorum, chaincode]) => {
                 this.quorum = quorum;
                 this.chaincode = chaincode;
-                this.runtime = null;
+                this.storageService = storageService;
 
                 // Instantiate channels from chaincode and stored data
-                const channelStates = await this.loadChannels(this.runtime, storageService, tree, attributes);
+                const channelStates = await this.loadChannels(this, storageService, tree, attributes);
                 for (const channelState of channelStates) {
                     this.channels.set(channelState.object.id, channelState);
                 }
@@ -235,6 +243,51 @@ export class Document extends EventEmitter {
         return super.on(event, listener);
     }
 
+    public getChannel(id: string): IChannel {
+        return this.channels.get(id).object;
+    }
+
+    public createChannel(id: string, type: string): IChannel {
+        const extension = this.chaincode.getModule(type) as IChaincodeModule;
+        return extension.create(this, id);
+    }
+
+    public attachChannel(channel: IChannel): IDistributedObjectServices {
+        // Get the object snapshot and include it in the initial attach
+        const snapshot = channel.snapshot();
+
+        const message: IAttachMessage = {
+            id: channel.id,
+            snapshot,
+            type: channel.type,
+        };
+        this.pendingAttach.set(channel.id, message);
+        this.submitMessage(MessageType.Attach, message);
+
+        // Store a reference to the object in our list of objects and then get the services
+        // used to attach it to the stream
+        const services = this.getObjectServices(channel.id, null, this.storageService);
+        // const entry = this.channels.get(channel.id);
+        // assert.equal(entry.object, channel);
+        this.channels.set(
+            channel.id,
+            { object: channel, connection: services.deltaConnection, storage: services.objectStorage });
+        // entry.connection = services.deltaConnection;
+        // entry.storage = services.objectStorage;
+
+        return services;
+    }
+
+    public waitForChannel(id: string): Promise<void> {
+        if (this.channels.has(id)) {
+            return Promise.resolve();
+        }
+
+        const deferred = new Deferred<void>();
+        this.watches.set(id, deferred);
+        return deferred.promise;
+    }
+
     private loadQuorum(storage: IDocumentStorageService, tree: ISnapshotTree): Quorum {
         // TODO load the stored quorum from the snapshot tree
 
@@ -246,7 +299,7 @@ export class Document extends EventEmitter {
             (key, value) => this.submitMessage(MessageType.Propose, { key, value }),
             (sequenceNumber) => this.submitMessage(MessageType.Reject, sequenceNumber));
 
-        this.quorum.on(
+        quorum.on(
             "approveProposal",
             (sequenceNumber, key, value) => {
                 console.log(`approve ${key}`);
@@ -305,14 +358,8 @@ export class Document extends EventEmitter {
         return initializedP.then(
             (value) => {
                 this.chaincode = value.chaincode;
-                // this.runtime = value.runtime;
                 this.deltaManager.inbound.resume();
-
-                // TODO BIG TODO
-                // Calling run should be more explicit. We need to have initialized the code on all the chains
-                // prior to calling the run method.
-                this.chaincode.run(null);
-
+                this.chaincode.run(this);
                 return this.chaincode;
             },
             (error) => {
@@ -332,10 +379,12 @@ export class Document extends EventEmitter {
         attributes: IDocumentAttributes): Promise<IChannelState[]> {
 
         const channelsP = new Array<Promise<IChannelState>>();
-        // tslint:disable-next-line:forin
-        for (const path in tree.trees) {
-            const channelP = this.loadSnapshotChannel(runtime, path, tree.trees[path], attributes, storage);
-            channelsP.push(channelP);
+        if (tree) {
+            // tslint:disable-next-line:forin
+            for (const path in tree.trees) {
+                const channelP = this.loadSnapshotChannel(runtime, path, tree.trees[path], attributes, storage);
+                channelsP.push(channelP);
+            }
         }
 
         const channels = await Promise.all(channelsP);
@@ -474,6 +523,8 @@ export class Document extends EventEmitter {
         // (have received the join message for the client ID)
         if (value === ConnectionState.Connecting) {
             this.pendingClientId = context;
+        } else if (value === ConnectionState.Connected) {
+            this._clientId = this.pendingClientId;
         }
 
         if (!this.loaded) {
@@ -484,7 +535,6 @@ export class Document extends EventEmitter {
         this.notifyConnectionState(value);
 
         if (this.connectionState === ConnectionState.Connected) {
-            this.clientId = this.pendingClientId;
             this.emit("connected", this.pendingClientId);
         }
     }
@@ -499,7 +549,7 @@ export class Document extends EventEmitter {
     }
 
     private async prepareRemoteMessage(message: ISequencedDocumentMessage): Promise<any> {
-        const local = this.clientId === message.clientId;
+        const local = this._clientId === message.clientId;
 
         switch (message.type) {
             case MessageType.Operation:
@@ -536,7 +586,7 @@ export class Document extends EventEmitter {
 
                 const origin = message.origin ? message.origin.id : this.id;
                 const value = await this.loadChannel(
-                    this.runtime,
+                    this,
                     attachMessage.id,
                     attachMessage.type,
                     0,
@@ -549,7 +599,7 @@ export class Document extends EventEmitter {
     }
 
     private processRemoteMessage(message: ISequencedDocumentMessage, context: any) {
-        const local = this.clientId === message.clientId;
+        const local = this._clientId === message.clientId;
 
         switch (message.type) {
             case MessageType.ClientJoin:
@@ -603,6 +653,10 @@ export class Document extends EventEmitter {
                 } else {
                     const channelState = context as IChannelState;
                     this.channels.set(channelState.object.id, channelState);
+                    if (this.watches.has(channelState.object.id)) {
+                        this.watches.get(channelState.object.id).resolve();
+                        this.watches.delete(channelState.object.id);
+                    }
                 }
 
                 break;

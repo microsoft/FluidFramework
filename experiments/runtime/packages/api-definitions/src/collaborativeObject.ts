@@ -101,7 +101,7 @@ export abstract class CollaborativeObject extends EventEmitter implements IColla
         this.attachCore();
 
         // Notify the document of the attachment
-        this.services = this.runtime.createChannel(this.id, this.type);
+        this.services = this.runtime.attachChannel(this);
         this.attachDeltaHandler();
 
         return this;
@@ -113,6 +113,7 @@ export abstract class CollaborativeObject extends EventEmitter implements IColla
     public isLocal(): boolean {
         return !this.services;
     }
+
     public on(event: "pre-op" | "op", listener: (op: ISequencedObjectMessage, local: boolean) => void): this;
     public on(event: string | symbol, listener: (...args: any[]) => void): this;
     public on(event: string | symbol, listener: (...args: any[]) => void): this {

@@ -1,5 +1,6 @@
 import { IDistributedObjectServices } from "./channel";
 import { IRuntime } from "./runtime";
+import { ITree } from "./storage";
 
 export interface IChaincode {
     /**
@@ -34,7 +35,11 @@ export interface IChannel {
      */
     readonly id: string;
 
+    readonly type: string;
+
     ready(): Promise<void>;
+
+    snapshot(): ITree;
 }
 
 export interface IChaincodeModule  {
@@ -60,4 +65,13 @@ export interface IChaincodeModule  {
         minimumSequenceNumber: number,
         services: IDistributedObjectServices,
         headerOrigin: string): Promise<IChannel>;
+
+    /**
+     * Creates a local version of the distributive object.
+     *
+     * Calling attach on the object later will insert it into object stream.
+     * NOTE here - When we attach we need to submit all the pending ops prior to actually doing the attach
+     * for consistency.
+     */
+    create(runtime: IRuntime, id: string): IChannel;
 }
