@@ -26,7 +26,6 @@ import {
 import { Deferred } from "@prague/utils";
 import * as assert from "assert";
 import { EventEmitter } from "events";
-import now = require("performance-now");
 import { ChannelDeltaConnection } from "./channelDeltaConnection";
 import { ChannelStorageService } from "./channelStorageService";
 import { debug } from "./debug";
@@ -35,6 +34,10 @@ import { DeltaManager } from "./deltaManager";
 import { IDeltaManager } from "./deltas";
 import { LocalChannelStorageService } from "./localChannelStorageService";
 import { Quorum } from "./quorum";
+
+// tslint:disable:no-var-requires
+const now = require("performance-now");
+// tslint:enable:no-var-requires
 
 interface IConnectResult {
     detailsP: Promise<IConnectionDetails>;

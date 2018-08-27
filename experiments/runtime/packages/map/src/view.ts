@@ -1,9 +1,12 @@
 import { ICollaborativeObject, ValueType } from "@prague/api-definitions";
 import { IRuntime, ISequencedObjectMessage } from "@prague/runtime-definitions";
-import hasIn = require("lodash/hasIn");
 import { IMapOperation, IMapValue } from "./definitions";
 import { IMapView, IValueOpEmitter, SerializeFilter } from "./interfaces";
 import { CollaborativeMap } from "./map";
+
+// tslint:disable:no-var-requires
+const hasIn = require("lodash/hasIn");
+// tslint:enable:no-var-requires
 
 class ValueOpEmitter implements IValueOpEmitter {
     constructor(private type: string, private key: string, private map: CollaborativeMap) {

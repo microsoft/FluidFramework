@@ -2,12 +2,15 @@ import * as runtime from "@prague/runtime-definitions";
 import { Deferred } from "@prague/utils";
 import * as assert from "assert";
 import { EventEmitter } from "events";
-import cloneDeep = require("lodash/cloneDeep");
-import now = require("performance-now");
 import { debug } from "./debug";
 import { DeltaConnection, IConnectionDetails } from "./deltaConnection";
 import { DeltaQueue } from "./deltaQueue";
 import { IDeltaManager, IDeltaQueue } from "./deltas";
+
+// tslint:disable:no-var-requires
+const cloneDeep = require("lodash/cloneDeep");
+const now = require("performance-now");
+// tslint:enable:no-var-requires
 
 const MaxReconnectDelay = 8000;
 const InitialReconnectDelay = 1000;
