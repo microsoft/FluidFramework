@@ -3,11 +3,12 @@
   "version": "0.1.0",
   "description": "Loader client app",
   "main": "dist/index.js",
+  "module": "lib/index.js",
   "types": "dist/index.d.ts",
   "sideEffects": "false",
   "scripts": {
     "build": "webpack --config webpack.config.js && tslint 'src/**/*.ts'",
-    "start": "webpack-serve webpack.config.js --open"
+    "start": "webpack-serve webpack.config.js"
   },
   "author": "Microsoft",
   "repository": "microsoft/prague",
@@ -26,10 +27,14 @@
     "@types/chalk": "^2.2.0",
     "@types/jsonwebtoken": "^7.2.8",
     "@types/node": "^10.5.8",
+    "@types/pako": "^1.0.0",
     "@types/query-string": "^6.1.0",
     "@types/scriptjs": "0.0.2",
+    "axios": "^0.18.0",
     "chalk": "^2.4.1",
+    "js-untar": "^2.0.0",
     "jsonwebtoken": "^8.3.0",
+    "pako": "^1.0.6",
     "query-string": "^6.1.0",
     "scriptjs": "^2.5.8",
     "webpack": "^4.7.0",

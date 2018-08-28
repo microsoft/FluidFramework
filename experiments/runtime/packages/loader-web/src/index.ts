@@ -8,8 +8,11 @@ import {
 } from "@prague/runtime-definitions";
 import * as driver from "@prague/socket-storage";
 import * as assert from "assert";
+import axios from "axios";
 import chalk from "chalk";
+import untar from "js-untar";
 import * as jwt from "jsonwebtoken";
+import * as pako from "pako";
 import * as queryString from "query-string";
 import * as scriptjs from "scriptjs";
 
@@ -19,6 +22,20 @@ class WebLoader implements ICodeLoader {
             assert(pkg.prague && pkg.prague.browser);
             scriptjs(pkg.prague.browser.bundle, () => resolve(window[pkg.prague.browser.entrypoint]));
         });
+    }
+
+    public async loadNpm(packageUrl: string): Promise<any> {
+        const data = await axios.get<ArrayBuffer>(packageUrl, { responseType: "arraybuffer"});
+        const inflateResult = pako.inflate(new Uint8Array(data.data));
+        untar(inflateResult.buffer)
+            .progress((extractedFile) => {
+                console.log("Extract file!", JSON.stringify(extractedFile));
+            })
+            .then((extractedFiles) => {
+                console.log(JSON.stringify(extractedFiles, null, 2));
+            });
+
+        return inflateResult;
     }
 }
 
@@ -31,13 +48,17 @@ async function run(
     documentServices: IDocumentService,
     tokenServices: ITokenService): Promise<void> {
 
+    const webLoader = new WebLoader();
     const documentP = loader.load(
         token,
         null,
         documentServices,
-        new WebLoader(),
+        webLoader,
         tokenServices);
     const document = await documentP;
+
+    // Test of doing direct NPM loading
+    // webLoader.loadNpm("http://localhost:8080/dist/js-untar-0.1.0.tgz");
 
     const quorum = document.getQuorum();
     console.log(chalk.yellow("Initial clients"), chalk.bgBlue(JSON.stringify(Array.from(quorum.getMembers()))));
