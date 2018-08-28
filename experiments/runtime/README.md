@@ -30,3 +30,9 @@ Lerna then wraps npm commands and invokes them across all tracked projects. Most
 |npm run build|lerna run build|
 
 Optional parameters can be passed to restrict these operations to a single project.
+
+## Running private npm repository
+
+`docker run -it --rm --name verdaccio -v $(pwd)/verdaccio/conf:/verdaccio/conf -p 4873:4873 verdaccio/verdaccio:3`
+
+The default username/password to access the registry is prague/bohemia

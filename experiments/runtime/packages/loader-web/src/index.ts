@@ -14,32 +14,76 @@ import untar from "js-untar";
 import * as jwt from "jsonwebtoken";
 import * as pako from "pako";
 import * as queryString from "query-string";
-import * as scriptjs from "scriptjs";
 
-class WebLoader implements ICodeLoader {
-    public load(pkg: IPraguePackage): Promise<IChaincodeFactory> {
-        return new Promise<any>((resolve) => {
-            assert(pkg.prague && pkg.prague.browser);
-            scriptjs(pkg.prague.browser.bundle, () => resolve(window[pkg.prague.browser.entrypoint]));
-        });
-    }
-
-    public async loadNpm(packageUrl: string): Promise<any> {
-        const data = await axios.get<ArrayBuffer>(packageUrl, { responseType: "arraybuffer"});
-        const inflateResult = pako.inflate(new Uint8Array(data.data));
-        untar(inflateResult.buffer)
-            .progress((extractedFile) => {
-                console.log("Extract file!", JSON.stringify(extractedFile));
-            })
-            .then((extractedFiles) => {
-                console.log(JSON.stringify(extractedFiles, null, 2));
-            });
-
-        return inflateResult;
-    }
+interface ITarEntry {
+    buffer: ArrayBuffer;
+    blob: Blob;
+    name: string;
+    mode: string;
+    uid: string;
+    gid: string;
+    size: number;
+    mtime: number;
+    checksum: number;
+    type: string;
+    linkname: string;
+    ustarFormat: string;
+    version: string;
+    uname: string;
+    gname: string;
+    devmajor: number;
+    devminor: number;
+    namePrefix: string;
+    getBlobUrl(): string;
+    readAsJSON(): any;
+    readAsString(): string;
 }
 
-// {"prague":{"browser":{"entrypoint":"main","bundle":["http://localhost:8081/dist/main.bundle.js"]}}}
+class WebLoader implements ICodeLoader {
+    public async load(source: string): Promise<IChaincodeFactory> {
+        const components = source.match(/(.*)\/(.*)@(.*)/);
+        if (!components) {
+            return Promise.reject("Invalid package");
+        }
+
+        const [, scope, name, version] = components;
+        const url = `http://localhost:4873/${encodeURI(scope)}/${encodeURI(name)}/${encodeURI(version)}`;
+        const details = await axios.get(url);
+
+        const data = await axios.get<ArrayBuffer>(details.data.dist.tarball, { responseType: "arraybuffer"});
+        const inflateResult = pako.inflate(new Uint8Array(data.data));
+        const extractedFiles = await untar(inflateResult.buffer) as ITarEntry[];
+
+        const pkg = new Map<string, ITarEntry>();
+        for (const extractedFile of extractedFiles) {
+            pkg.set(extractedFile.name, extractedFile);
+        }
+
+        if (!pkg.has("package/package.json")) {
+            return Promise.reject("Not a valid npm module");
+        }
+
+        const textDecoder = new TextDecoder("utf-8");
+        const packageJson = JSON.parse(textDecoder.decode(pkg.get("package/package.json").buffer)) as IPraguePackage;
+        assert(packageJson.prague && packageJson.prague.browser);
+
+        for (const bundle of packageJson.prague.browser.bundle) {
+            const appended = `package/${bundle}`;
+            if (!pkg.has(appended)) {
+                return Promise.reject("browser entry point missing");
+            }
+
+            const file = textDecoder.decode(pkg.get(appended).buffer);
+
+            // TODO using eval for now but likely will want to switch to a script import with a wrapped context
+            // to isolate the code
+            // tslint:disable-next-line:no-eval
+            eval(file);
+        }
+
+        return window[packageJson.prague.browser.entrypoint];
+    }
+}
 
 async function run(
     token: string,
@@ -56,9 +100,6 @@ async function run(
         webLoader,
         tokenServices);
     const document = await documentP;
-
-    // Test of doing direct NPM loading
-    // webLoader.loadNpm("http://localhost:8080/dist/js-untar-0.1.0.tgz");
 
     const quorum = document.getQuorum();
     console.log(chalk.yellow("Initial clients"), chalk.bgBlue(JSON.stringify(Array.from(quorum.getMembers()))));

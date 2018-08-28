@@ -1,13 +1,15 @@
 {
-  "name": "@prague/chaincode",
+  "name": "@chaincode/sequence",
   "version": "0.1.2",
   "description": "Classic Prague runtime as chaincode",
   "main": "dist/index.js",
-  "module": "lib/index.js",
   "types": "dist/index.d.ts",
   "sideEffects": "false",
   "scripts": {
-    "build": "webpack --config webpack.config.js && tslint 'src/**/*.ts'",
+    "build": "npm run tsc && npm run webpack && npm run tslint",
+    "tsc": "tsc",
+    "webpack": "webpack --config webpack.config.js",
+    "tslint": "tslint 'src/**/*.ts'",
     "start": "webpack-serve webpack.config.js --port 8081"
   },
   "author": "Microsoft",
@@ -26,5 +28,13 @@
     "@prague/api": "^0.1.2",
     "@prague/runtime-definitions": "^0.1.2",
     "@types/node": "^10.5.8"
+  },
+  "prague": {
+    "browser": {
+      "entrypoint": "main",
+      "bundle": [
+        "dist/main.bundle.js"
+      ]
+    }
   }
 }

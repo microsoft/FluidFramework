@@ -14,7 +14,6 @@ import {
     IEnvelope,
     IObjectAttributes,
     IObjectStorageService,
-    IPraguePackage,
     IProposal,
     IRuntime,
     ISequencedDocumentMessage,
@@ -342,7 +341,7 @@ export class Document extends EventEmitter implements IRuntime {
     /**
      * Code to apply to the document has changed. Load it in now.
      */
-    private loadCode(pkg: IPraguePackage): Promise<IChaincode> {
+    private loadCode(pkg: string): Promise<IChaincode> {
         // Stop processing inbound messages as we transition to the new code
         this.deltaManager.inbound.pause();
 
