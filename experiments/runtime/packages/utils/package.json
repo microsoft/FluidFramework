@@ -1,6 +1,6 @@
 {
   "name": "@prague/utils",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "description": "Collection of utility functions for Prague",
   "main": "dist/index.js",
   "module": "lib/index.js",

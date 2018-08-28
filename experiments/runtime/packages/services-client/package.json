@@ -1,6 +1,6 @@
 {
   "name": "@prague/services-client",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "description": "Isomorphic services for communicating with Prague",
   "main": "dist/index.js",
   "module": "lib/index.js",
@@ -20,7 +20,7 @@
   },
   "dependencies": {
     "@prague/gitresources": "^0.7.1",
-    "@prague/runtime-definitions": "0.1.0",
+    "@prague/runtime-definitions": "^0.1.2",
     "@types/node": "^10.5.7",
     "axios": "^0.18.0",
     "debug": "^3.1.0"

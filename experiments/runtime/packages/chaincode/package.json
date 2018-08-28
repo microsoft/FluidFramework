@@ -1,6 +1,6 @@
 {
   "name": "@prague/chaincode",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "description": "Classic Prague runtime as chaincode",
   "main": "dist/index.js",
   "module": "lib/index.js",
@@ -23,8 +23,8 @@
     "webpack-visualizer-plugin": "^0.1.11"
   },
   "dependencies": {
-    "@prague/api": "^0.1.0",
-    "@prague/runtime-definitions": "^0.1.0",
+    "@prague/api": "^0.1.2",
+    "@prague/runtime-definitions": "^0.1.2",
     "@types/node": "^10.5.8"
   }
 }
