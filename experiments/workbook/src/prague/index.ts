@@ -1,5 +1,7 @@
-import * as prague from "../../../../../routerlicious/dist";
+import * as prague from "../../../../routerlicious/dist";
 import api = prague.api.api;
+import types = prague.api.types;
+import IMapView = prague.api.types.IMapView;
 import SharedString = prague.api.SharedString.SharedString;
 import mergeTree = prague.api.MergeTree;
 import MergeTree = mergeTree.MergeTree;
@@ -10,6 +12,7 @@ import socketStorage = prague.api.socketStorage;
 import * as jwt from "jsonwebtoken";
 
 export {
+    IMapView,
     MergeTree,
     Segment,
     SharedString,
@@ -17,15 +20,15 @@ export {
     UniversalSequenceNumber
 };
 
-export async function open(id: string): Promise<SharedString> {
+export async function open(id: string): Promise<api.Document> {
     const routerliciousUrl = "http://localhost:3000";
     const historianUrl = "http://localhost:3001";
     const tenantId = "prague";
     const secret = "43cfc3fbf04a97c0921fd23ff10f9e4b";
     
     socketStorage.registerAsDefault(routerliciousUrl, historianUrl, tenantId);
-    
-    const document = await api.load(id, { 
+
+    const doc = await api.load(id, {
         blockUpdateMarkers: true,
         token: jwt.sign({
             documentId: id,
@@ -35,10 +38,28 @@ export async function open(id: string): Promise<SharedString> {
         }, secret)
     });
 
-    const rootView = await document.getRoot().getView();
-    if (!document.existing) {
-        rootView.set("text", document.createString());
+    await new Promise(resolve => {
+        doc.once("connected", () => resolve())
+    });
+
+    const rootView = await doc.getRoot().getView();
+    if (!doc.existing) {
+        rootView.set("created", new Date().toUTCString());
     }
 
-    return await rootView.wait("text") as SharedString;
+    return doc;
+}
+
+export async function upsertMap(document: api.Document, name: string) {
+    const root = await document.getRoot();
+    const rootView = await root.getView();
+
+    const existing = rootView.get(name);
+    if (existing) {
+        return { map: existing, view: await (existing as types.IMap).getView()} ;
+    }
+
+    const newMap = document.createMap();
+    rootView.set(name, newMap);
+    return { map: newMap, view: await newMap.getView() };
 }

@@ -2,6 +2,11 @@
 import * as MergeTree from "../merge-tree";
 import { CharacterCodes } from "./characterCodes";
 import { SharedString } from "../shared-string";
+import { ReferenceType } from "../merge-tree";
+
+// TODO: Should not pull in 'ui' module, as thing bring '@ms/excel-online-calc', etc.
+//       into our node services.
+import * as ui from "../ui";
 
 export interface IBreakInfo {
     posInPG: number;
@@ -50,6 +55,9 @@ export interface IParagraphItem {
 
 export interface IPGBlock extends IParagraphItem {
     type: ParagraphItemType.Block;
+
+    // TODO: Only the string's length property appears to be used to determine how many
+    //       positions the block occupies.  Consider making this 'positionLength' or similar.
     text: string;
 }
 
@@ -426,10 +434,39 @@ export interface IItemsContext {
     nextPGPos: number;
     itemInfo: IParagraphItemInfo;
     paragraphLexer: ParagraphLexer<IItemsContext>;
+
+    // TODO: Should lift into a component-standard layout/render context instead
+    //       of using a map to smuggle context to components.
+    services: Map<string, any>;
 }
 
 export function markerToItems(marker: MergeTree.Marker, itemsContext: IItemsContext) {
-    itemsContext.itemInfo.items.push(makeIPGMarker(marker));
+    const items = itemsContext.itemInfo.items;
+    const font = itemsContext.fontInfo.getFont(itemsContext.curPGMarker);
+
+    // If the marker is a simple reference, see if it's types is registered as an external
+    // component.
+    if (marker.refType === ReferenceType.Simple) {
+        const typeName = marker.properties.ref && marker.properties.ref.type.name;
+        const component = ui.refTypeNameToComponent.get(typeName);
+
+        // If it is a registered external component, measure it and push a block item.
+        if (component) {
+            const state = marker.properties.state;
+
+            items.push({ 
+                type: ParagraphItemType.Block,
+                text: "1",  // Only text.length is used to measure positions occupied.
+                width: component.measure(state, itemsContext.services, font),
+                segment: marker
+            } as IPGBlock);
+
+            return;
+        }
+    }
+
+    // Otherwise, assume this is a paragraph marker.  (Note early 'return' above.)
+    items.push(makeIPGMarker(marker));
 }
 
 export function textTokenToItems(

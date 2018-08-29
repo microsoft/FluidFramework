@@ -3,10 +3,12 @@ import * as assert from "assert";
 // tslint:disable-next-line:no-var-requires
 const performanceNow = require("performance-now");
 import { blobUploadHandler, urlToInclusion } from "../blob";
+import { CollaborativeWorkbook } from "../calc";
 import {
     api, CharacterCodes, core, MergeTree,
     Paragraph, Table, types,
 } from "../client-api";
+import { ReferenceType } from "../merge-tree";
 import { findRandomWord } from "../merge-tree-utils";
 import {
     DeserializeCallback,
@@ -1144,6 +1146,24 @@ function renderSegmentIntoLine(
     } else if (segType === MergeTree.SegmentType.Marker) {
         const marker = segment as MergeTree.Marker;
         // console.log(`marker pos: ${segpos}`);
+
+        // If the marker is a simple reference, see if it's types is registered as an external
+        // component.
+        if (marker.refType === ReferenceType.Simple) {
+            const typeName = marker.properties.ref && marker.properties.ref.type.name;
+            const component = ui.refTypeNameToComponent.get(typeName);
+
+            // If it is a registered external component, ask it to render itself to HTML and
+            // insert the divs here.
+            if (component) {
+                lineContext.contentDiv.appendChild(
+                    component.render(
+                        marker.properties.state,
+                        lineContext.flowView.services,
+                    ));
+            }
+        }
+
         if (endRenderSegments(marker)) {
             if (lineContext.flowView.cursor.pos === segpos) {
                 showPositionEndOfLine(lineContext);
@@ -2277,8 +2297,11 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
     let curPGMarker: Paragraph.IParagraphMarker;
     let curPGMarkerPos: number;
 
+    // TODO: Should lift into a component-standard layout/render context instead
+    //       of using 'services' to smuggle context to components.
     const itemsContext = {
         fontInfo: makeFontInfo(layoutContext.docContext),
+        services: layoutContext.flowView.services,
     } as Paragraph.IItemsContext;
     if (layoutContext.deferUntilHeight === undefined) {
         layoutContext.deferUntilHeight = 0;
@@ -3209,6 +3232,11 @@ export class FlowView extends ui.Component {
     public parentFlow: FlowView;
     public keypressHandler: (e: KeyboardEvent) => void;
     public keydownHandler: (e: KeyboardEvent) => void;
+
+    // TODO: 'services' is being used temporarily to smuggle context down to components.
+    //       Should be replaced w/component-standardized render context, layout context, etc.
+    public services = new Map<string, any>();
+
     private lastVerticalX = -1;
     private randWordTimer: any;
     private pendingRender = false;
@@ -3259,6 +3287,31 @@ export class FlowView extends ui.Component {
             this.sharedString.getDocument(),
             (incl: core.IGenericBlob) => this.insertBlobInternal(incl),
         );
+
+        // TODO: Should insert a workbook into the document on demand, implement the ability
+        //       to add references to pre-existing notebooks, support multiple notebooks, ...
+        //
+        //       Instead, we currently check to see if a workbook already exists.  If not, we
+        //       insert one up front.
+        this.collabDocument.getRoot().getView().then((rootView) => {
+            let workbookMap = rootView.get("workbook");
+            if (!workbookMap) {
+                workbookMap = this.collabDocument.createMap();
+                rootView.set("workbook", workbookMap);
+            }
+            workbookMap.on("valueChanged", () => {
+                // TODO: Track which cells are visible and damp invalidation for off-screen cells.
+                this.queueRender(undefined, true);
+            });
+            workbookMap.getView().then((workbookView) => {
+                this.services.set("workbook",
+                new CollaborativeWorkbook(workbookView, 2, 4, [
+                    // If empty, seed the workbook w/some initial data for demos.
+                    ["Dan", "500", "43", "0"],
+                    ["Kurt", "490", "0", "0"],
+                ]));
+            });
+        });
     }
 
     public treeForViewport() {
@@ -4206,8 +4259,18 @@ export class FlowView extends ui.Component {
             } else if (this.activeSearchBox) {
                 if (e.charCode === CharacterCodes.cr) {
                     const cmd = this.activeSearchBox.getSelectedItem() as ICmd;
+
+                    // If the searchbox successfully resolved to a simple command, execute it.
                     if (cmd && cmd.exec) {
                         cmd.exec(this);
+                    } else {
+                        // TODO: A micro-language for inserting components would be helpful here.
+                        const searchString = this.activeSearchBox.getSearchString();
+
+                        // If it starts with "=", assume it's a formula definition.
+                        if (searchString.startsWith("=")) {
+                            this.insertFormula(searchString);
+                        }
                     }
                     this.activeSearchBox.dismiss();
                     this.activeSearchBox = undefined;
@@ -4517,6 +4580,23 @@ export class FlowView extends ui.Component {
             this.cursor.clearSelection();
             this.localQueueRender(this.cursor.pos);
         }
+    }
+
+    /** Inserts a Formula box to display the given 'formula'. */
+    public insertFormula(formula: string) {
+        // TODO: Unclear if piggy-backing on ReferencType.Simple is the best way to insert custom boxes.
+        this.sharedString.insertMarker(this.cursor.pos, MergeTree.ReferenceType.Simple, {
+            [Paragraph.referenceProperty]: {
+                sha: "",                        // 'sha' not used
+                type: {
+                    name: "formula",
+                } as IReferenceDocType,
+                url: "",                        // 'url' not used
+            } as IReferenceDoc,
+            state: { formula },
+        });
+        this.cursorFwd();
+        this.localQueueRender(this.cursor.pos);
     }
 
     public insertPhoto() {

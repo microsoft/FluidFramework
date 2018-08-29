@@ -1,4 +1,4 @@
-import { analyze, config, formula, location, parse, runtime, value, util } from '@ms/excel-online-calc';
+import { analyze, config, formula, location, parse, runtime, util, value } from "@ms/excel-online-calc";
 
 import AnalyzeGlobals = analyze.AnalyzeGlobals;
 import createAnalyzer = analyze.createAnalyzer;
@@ -13,6 +13,7 @@ import documentLoc = location.documentLoc;
 import DocumentLoc = location.DocumentLoc;
 import FormulaSource = location.FormulaSource;
 import gridCell = location.gridCell;
+import GridCell = location.GridCell;
 import gridRange = location.gridRange;
 import NameLoc = location.NameLoc;
 import sheetGridCell = location.sheetGridCell;
@@ -52,20 +53,22 @@ import ResultKind = util.ResultKind;
 import blankOper = value.blankOper;
 import BlankOper = value.BlankOper;
 import ErrorOper = value.ErrorOper;
+import Oper = value.Oper;
 import OperKind = value.OperKind;
 import Precedents = value.Precedents;
 import ReadOper = value.ReadOper;
 import UnboxedOper = value.UnboxedOper;
 import WriteOper = value.WriteOper;
 
-//TODO: Avoid importing test/internal modules from calc.ts?
-import { Config } from '@ms/excel-online-calc/lib/lang/config';
+// TODO: Avoid importing test/internal modules from calc.ts?
+import { jaggedArray } from "@ms/excel-online-calc/lib/common/arrayUtils";
+import { Config } from "@ms/excel-online-calc/lib/lang/config";
+import { NotFormulaString } from "@ms/excel-online-calc/lib/parse/serviceTypes";
+import { EvalFormulaPaused, illFormedFormula, IllFormedFormula, NotImplemented } from "@ms/excel-online-calc/lib/runtime/serviceTypes";
+import { isErrorOper } from "@ms/excel-online-calc/lib/runtime/util";
 import { createLocaleInfo } from "@ms/excel-online-calc/lib/test/config";
-import { illFormedFormula } from '@ms/excel-online-calc/lib/runtime/serviceTypes';
-import { jaggedArray } from '@ms/excel-online-calc/lib/common/arrayUtils';
-import { makeGetFirstOrderFunc } from '@ms/excel-online-calc/lib/test/evalContext';
-import { isErrorOper } from '@ms/excel-online-calc/lib/runtime/util';
-import { errorNames } from '@ms/excel-online-calc/lib/test/config';
+import { errorNames } from "@ms/excel-online-calc/lib/test/config";
+import { makeGetFirstOrderFunc } from "@ms/excel-online-calc/lib/test/evalContext";
 
 export {
     AnalyzeGlobals,
@@ -88,6 +91,7 @@ export {
     DocumentLoc,
     errorNames,                 // TODO: Avoid exporting test/internal modules?
     ErrorOper,
+    EvalFormulaPaused,          // TODO: Avoid exporting test/internal modules?
     EvalGlobals,
     failure,
     FailureReason,
@@ -95,15 +99,20 @@ export {
     finalValue,
     FormulaSource,
     gridCell,
+    GridCell,
     gridRange,
     Interrupt,
     illFormedFormula,           // TODO: Avoid exporting test/internal modules?
+    IllFormedFormula,           // TODO: Avoid exporting test/internal modules?
     isErrorOper,                // TODO: Avoid exporting test/internal modules?
     jaggedArray,                // TODO: Avoid exporting test/internal modules?
     location,
     makeGetFirstOrderFunc,      // TODO: Avoid exporting test/internal modules?
     NameLoc,
     notFormulaString,
+    NotImplemented,             // TODO: Avoid exporting test/internal modules?
+    NotFormulaString,           // TODO: Avoid exporting test/internal modules?
+    Oper,
     OperKind,
     ParseGlobals,
     pendingValue,
@@ -137,7 +146,7 @@ export function isBlankOper(oper: any): oper is BlankOper {
 
 /** True if the given string begins with '='. */
 export function isFormulaString(input: any): input is string {
-    return (typeof input === 'string' && input[0] === '=');
+    return (typeof input === "string" && input[0] === "=");
 }
 
 /** True if the given CheckedFormula is a WellFormedFormula. */
