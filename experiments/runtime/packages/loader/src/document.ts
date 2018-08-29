@@ -14,6 +14,7 @@ import {
     IEnvelope,
     IObjectAttributes,
     IObjectStorageService,
+    IPlatform,
     IProposal,
     IRuntime,
     ISequencedDocumentMessage,
@@ -126,6 +127,7 @@ export class Document extends EventEmitter implements IRuntime {
 
     constructor(
         private token: string,
+        private platform: IPlatform,
         private service: IDocumentService,
         private codeLoader: ICodeLoader,
         tokenService: ITokenService,
@@ -361,7 +363,7 @@ export class Document extends EventEmitter implements IRuntime {
             (value) => {
                 this.chaincode = value.chaincode;
                 this.deltaManager.inbound.resume();
-                this.chaincode.run(this);
+                this.chaincode.run(this, this.platform);
                 return this.chaincode;
             },
             (error) => {

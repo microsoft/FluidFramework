@@ -1,5 +1,5 @@
 import { Chaincode, Document } from "@prague/api";
-import { IChaincode, IRuntime } from "@prague/runtime-definitions";
+import { IChaincode, IPlatform, IRuntime } from "@prague/runtime-definitions";
 
 const html = `
 <div class="container">
@@ -29,9 +29,7 @@ const html = `
 `;
 
 class Runner {
-    public async run(collabDoc: Document) {
-        document.getElementById("content").innerHTML = html;
-
+    public async run(collabDoc: Document, platform: IPlatform) {
         const rootView = await collabDoc.getRoot().getView();
         console.log("Keys");
         console.log(rootView.keys());
@@ -46,28 +44,39 @@ class Runner {
         // Load the text string and listen for updates
         const text = rootView.get("text");
 
-        const textElement = document.getElementById("text");
-        textElement.innerText = text.client.getText();
+        const dom = platform ? platform.queryInterface<Document>("dom") : null;
 
-        // Update the text after being loaded as well as when receiving ops
-        text.loaded.then(() => {
+        if (dom) {
+            dom.getElementById("content").innerHTML = html;
+
+            const textElement = dom.getElementById("text");
             textElement.innerText = text.client.getText();
-        });
-        text.on("op", (msg) => {
-            textElement.innerText = text.client.getText();
-        });
 
-        const insertElement = document.getElementById("insertForm") as HTMLFormElement;
-        insertElement.onsubmit = (event) => {
-            const insertText = (insertElement.elements.namedItem("insertText") as HTMLInputElement).value;
-            const insertPosition = parseInt(
-                (insertElement.elements.namedItem("insertLocation") as HTMLInputElement).value,
-                10);
+            // Update the text after being loaded as well as when receiving ops
+            text.loaded.then(() => {
+                textElement.innerText = text.client.getText();
+            });
 
-            text.insertText(insertText, insertPosition);
+            text.on("op", (msg) => {
+                textElement.innerText = text.client.getText();
+            });
 
-            event.preventDefault();
-        };
+            const insertElement = dom.getElementById("insertForm") as HTMLFormElement;
+            insertElement.onsubmit = (event) => {
+                const insertText = (insertElement.elements.namedItem("insertText") as HTMLInputElement).value;
+                const insertPosition = parseInt(
+                    (insertElement.elements.namedItem("insertLocation") as HTMLInputElement).value,
+                    10);
+
+                text.insertText(insertText, insertPosition);
+
+                event.preventDefault();
+            };
+        } else {
+            text.on("op", () => {
+                console.log(`WOOOTEXT----Text: ${text.client.getText()}`);
+            });
+        }
     }
 }
 

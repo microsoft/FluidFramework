@@ -3,6 +3,7 @@ import {
     IChaincodeFactory,
     ICodeLoader,
     IDocumentService,
+    IPlatform,
     IPraguePackage,
     ITokenService,
 } from "@prague/runtime-definitions";
@@ -85,6 +86,17 @@ class WebLoader implements ICodeLoader {
     }
 }
 
+class WebPlatform implements IPlatform {
+    public queryInterface<T>(id: string) {
+        switch (id) {
+            case "dom":
+                return document;
+            default:
+                return null;
+        }
+    }
+}
+
 async function run(
     token: string,
     options: any,
@@ -93,9 +105,12 @@ async function run(
     tokenServices: ITokenService): Promise<void> {
 
     const webLoader = new WebLoader();
+    const webPlatform = new WebPlatform();
+
     const documentP = loader.load(
         token,
         null,
+        webPlatform,
         documentServices,
         webLoader,
         tokenServices);
