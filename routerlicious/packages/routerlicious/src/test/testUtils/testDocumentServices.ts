@@ -1,5 +1,5 @@
 // tslint:disable:ban-types
-import * as git from "gitresources";
+import * as git from "@prague/gitresources";
 import * as api from "../../api-core";
 
 export class TestDocumentDeltaConnection implements api.IDocumentDeltaConnection {

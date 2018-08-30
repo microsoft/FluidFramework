@@ -1,5 +1,5 @@
+import * as resources from "@prague/gitresources";
 import * as assert from "assert";
-import * as resources from "gitresources";
 import * as api from "../api-core";
 import { IHistorian } from "../services-client";
 

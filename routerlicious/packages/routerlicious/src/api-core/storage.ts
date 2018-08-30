@@ -1,5 +1,5 @@
 // tslint:disable:ban-types
-import * as resources from "gitresources";
+import * as resources from "@prague/gitresources";
 import { IClient } from "./client";
 import { IDocumentMessage, ISequencedDocumentMessage, ITenantUser } from "./protocol";
 

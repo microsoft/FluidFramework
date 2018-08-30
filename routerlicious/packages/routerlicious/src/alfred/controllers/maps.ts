@@ -1,4 +1,4 @@
-import * as resources from "gitresources";
+import * as resources from "@prague/gitresources";
 import * as $ from "jquery";
 // tslint:disable-next-line:no-var-requires
 const hasIn = require("lodash/hasIn");

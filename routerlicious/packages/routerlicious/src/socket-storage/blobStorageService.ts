@@ -1,4 +1,4 @@
-import * as resources from "gitresources";
+import * as resources from "@prague/gitresources";
 import * as api from "../api-core";
 import * as gitStorage from "../git-storage";
 

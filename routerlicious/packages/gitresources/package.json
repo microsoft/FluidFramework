@@ -1,11 +1,12 @@
 {
   "name": "@prague/gitresources",
-  "version": "0.7.1",
+  "version": "0.1.0",
   "description": "Git resource definitions",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "npm run tslint && npm run tsc",
+    "build:full": "npm run build",
     "tsc": "tsc",
     "tslint": "tslint 'src/**/*.ts'"
   },

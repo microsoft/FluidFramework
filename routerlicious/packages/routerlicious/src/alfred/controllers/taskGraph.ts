@@ -1,5 +1,5 @@
+import * as resources from "@prague/gitresources";
 import * as d3 from "d3";
-import * as resources from "gitresources";
 import { api, core, socketStorage } from "../../client-api";
 
 interface INode {

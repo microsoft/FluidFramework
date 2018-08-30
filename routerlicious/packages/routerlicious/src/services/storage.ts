@@ -1,4 +1,4 @@
-import { ICommit, ICommitDetails } from "gitresources";
+import { ICommit, ICommitDetails } from "@prague/gitresources";
 import * as moniker from "moniker";
 import * as winston from "winston";
 import * as api from "../api-core";

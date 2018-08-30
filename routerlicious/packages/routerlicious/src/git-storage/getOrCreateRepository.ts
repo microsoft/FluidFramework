@@ -1,4 +1,4 @@
-import * as resources from "gitresources";
+import * as resources from "@prague/gitresources";
 import * as request from "request-promise-native";
 
 export async function getOrCreateRepository(endpoint: string, owner: string, repository: string): Promise<void> {

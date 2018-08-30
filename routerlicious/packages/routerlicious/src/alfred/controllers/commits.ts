@@ -1,5 +1,5 @@
+import * as resources from "@prague/gitresources";
 import "gitgraph.js";
-import * as resources from "gitresources";
 import * as $ from "jquery";
 
 const templateConfig = {

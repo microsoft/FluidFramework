@@ -1,4 +1,4 @@
-import { ICommit, ICommitDetails } from "gitresources";
+import { ICommit, ICommitDetails } from "@prague/gitresources";
 import { IRangeTrackerSnapshot } from "../core-utils";
 
 export interface IDocumentDetails {

@@ -1,4 +1,4 @@
-import * as resources from "gitresources";
+import * as resources from "@prague/gitresources";
 import * as $ from "jquery";
 import { api, socketStorage, types } from "../../client-api";
 

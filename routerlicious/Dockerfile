@@ -13,8 +13,11 @@ WORKDIR /usr/src/server
 COPY package-lock.json .
 COPY package.json .
 COPY lerna.json .
+COPY packages/gitresources/package-lock.json packages/gitresources/package-lock.json
+COPY packages/gitresources/package.json packages/gitresources/package.json
 COPY packages/routerlicious/package-lock.json packages/routerlicious/package-lock.json
 COPY packages/routerlicious/package.json packages/routerlicious/package.json
+
 # Need to set the --unsafe-perf flag since we are doing the install as root. Consider adding an 'app' accout so we
 # can do the install as node but then switch to 'app' to run. As app we won't be able to write to installed files
 # and be able to change them.
@@ -32,7 +35,6 @@ RUN apk del .gyp
 
 # And now copy over our actual code and build
 COPY . .
-RUN npm install
 RUN npm run build
 
 # Don't run as root user

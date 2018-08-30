@@ -1,5 +1,5 @@
 // tslint:disable:ban-types
-import * as resources from "gitresources";
+import * as resources from "@prague/gitresources";
 // tslint:disable-next-line:no-var-requires
 const performanceNow = require("performance-now");
 import * as request from "request";

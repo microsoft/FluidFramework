@@ -1,4 +1,4 @@
-import * as git from "gitresources";
+import * as git from "@prague/gitresources";
 import { IHistorian } from "../../services-client";
 
 export class TestHistorian implements IHistorian {

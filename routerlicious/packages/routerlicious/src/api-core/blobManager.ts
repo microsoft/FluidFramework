@@ -1,4 +1,4 @@
-import { ICreateBlobResponse } from "gitresources";
+import { ICreateBlobResponse } from "@prague/gitresources";
 import * as api from "../api-core";
 
 export interface IBlobManager {

@@ -1,7 +1,7 @@
 // tslint:disable:ban-types
+import * as resources from "@prague/gitresources";
 import * as assert from "assert";
 import { EventEmitter } from "events";
-import * as resources from "gitresources";
 import * as jwt from "jsonwebtoken";
 // tslint:disable-next-line:no-var-requires
 const performanceNow = require("performance-now");
