@@ -27,7 +27,7 @@ export interface IChaincodeFactory {
     /**
      * Instantiates a new instance of the chaincode against the given runtime
      */
-    instantiate(runtime: IRuntime): Promise<IChaincode>;
+    instantiate(): Promise<IChaincode>;
 }
 
 export interface IChannel {
