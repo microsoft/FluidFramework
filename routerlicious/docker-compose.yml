@@ -9,15 +9,6 @@ services:
             - DEBUG=routerlicious:*
             - NODE_ENV=development
         restart: always
-    alfred2:
-        build: .
-        ports:
-            - "3003:3000"
-        command: node dist/alfred/www.js
-        environment:
-            - DEBUG=routerlicious:*
-            - NODE_ENV=development
-        restart: always
     deli:
         build: .
         command: node dist/kafka-service/index.js deli ../document-router/index.js

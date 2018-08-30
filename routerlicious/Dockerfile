@@ -1,4 +1,4 @@
-FROM node:8.11.1-alpine
+FROM node:8.11.4-alpine
 
 # node-gyp dependencies
 RUN apk add --no-cache --virtual .gyp python make g++
@@ -12,14 +12,13 @@ WORKDIR /usr/src/server
 # Copy over the package and package-lock and install prior to the other code to optimize Docker's file system cache on rebuilds
 COPY package-lock.json .
 COPY package.json .
-RUN npm install
-
-# And now copy over our actual code and build
-COPY . .
-RUN npm run build:full
-
-# Remove build tools
-RUN apk del .gyp
+COPY lerna.json .
+COPY packages/routerlicious/package-lock.json packages/routerlicious/package-lock.json
+COPY packages/routerlicious/package.json packages/routerlicious/package.json
+# Need to set the --unsafe-perf flag since we are doing the install as root. Consider adding an 'app' accout so we
+# can do the install as node but then switch to 'app' to run. As app we won't be able to write to installed files
+# and be able to change them.
+RUN npm install --unsafe-perm
 
 # Expose the port the app runs under
 EXPOSE 3000
@@ -28,8 +27,19 @@ EXPOSE 3000
 RUN mkdir nyc
 RUN chown node: nyc
 
+# Remove build tools
+RUN apk del .gyp
+
+# And now copy over our actual code and build
+COPY . .
+RUN npm install
+RUN npm run build
+
 # Don't run as root user
 USER node
+
+# Switch to the routerlicious folder
+WORKDIR /usr/src/server/packages/routerlicious
 
 # Node wasn't designed to be run as PID 1. Tini is a tiny init wrapper. You can also set --init on docker later than
 # 1.13 but Kubernetes is at 1.12 so we prefer tini for now.

@@ -39,6 +39,8 @@ export interface IDeltaHandlerStrategy {
  * messages in order regardless of possible network conditions or timings causing out of order delivery.
  */
 export class DeltaManager extends EventEmitter implements IDeltaManager {
+    public shouldUpdateSequenceNumber = false;
+
     private pending: runtime.ISequencedDocumentMessage[] = [];
     private fetching = false;
 
@@ -420,7 +422,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager {
             clearTimeout(this.heartbeatTimer);
         }
         this.heartbeatTimer = setTimeout(() => {
-            this.submit(runtime.MessageType.NoOp, null);
+            this.submitNoOp();
         }, 2000 + 1000);
 
         // If an update has already been requeested then mark this fact. We will wait until no updates have
@@ -437,12 +439,18 @@ export class DeltaManager extends EventEmitter implements IDeltaManager {
             // If a second update wasn't requested then send an update message. Otherwise defer this until we
             // stop processing new messages.
             if (!this.updateHasBeenRequested) {
-                this.submit(runtime.MessageType.NoOp, null);
+                this.submitNoOp();
             } else {
                 this.updateHasBeenRequested = false;
                 this.updateSequenceNumber();
             }
         }, 100);
+    }
+
+    private submitNoOp() {
+        if (this.shouldUpdateSequenceNumber) {
+            this.submit(runtime.MessageType.NoOp, null);
+        }
     }
 
     private stopSequenceNumberUpdate() {

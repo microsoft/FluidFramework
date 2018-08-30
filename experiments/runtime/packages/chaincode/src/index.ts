@@ -1,5 +1,5 @@
 import { Chaincode, Document } from "@prague/api";
-import { IChaincode, IPlatform, IRuntime } from "@prague/runtime-definitions";
+import { IChaincode, IPlatform } from "@prague/runtime-definitions";
 
 const html = `
 <div class="container">
@@ -80,7 +80,7 @@ class Runner {
     }
 }
 
-export async function instantiate(runtime: IRuntime): Promise<IChaincode> {
+export async function instantiate(): Promise<IChaincode> {
     // Instantiate a new runtime per code load. That'll separate handlers, etc...
     const chaincode = new Chaincode(new Runner());
     return chaincode;

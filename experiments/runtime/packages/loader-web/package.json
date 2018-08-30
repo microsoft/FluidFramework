@@ -7,8 +7,10 @@
   "types": "dist/index.d.ts",
   "sideEffects": "false",
   "scripts": {
-    "build": "webpack --config webpack.config.js && tslint 'src/**/*.ts'",
-    "start": "webpack-serve webpack.config.js"
+    "build": "webpack --config webpack.config.js",
+    "build:full": "npm run build && npm run tslint",
+    "start": "webpack-serve webpack.config.js",
+    "tslint": "tslint 'src/**/*.ts'"
   },
   "author": "Microsoft",
   "repository": "microsoft/prague",

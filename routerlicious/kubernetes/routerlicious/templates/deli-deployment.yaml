@@ -37,7 +37,7 @@ spec:
           value: "../deli/index.js"
         volumeMounts:
         - name: config
-          mountPath: /usr/src/server/config/config.json
+          mountPath: /usr/src/server/packages/routerlicious/config/config.json
           subPath: config.json
       imagePullSecrets:
       - name: regsecret

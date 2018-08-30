@@ -174,8 +174,8 @@ export function initialize(
             id = sharedTextId.value;
         }
 
-        intervalTime = Number.parseInt(intervalElement.value);
-        authorCount = Number.parseInt(authorElement.value);
+        intervalTime = Number.parseInt(intervalElement.value, 10);
+        authorCount = Number.parseInt(authorElement.value, 10);
         const scribeP = scribe.create(id, token, text);
 
         scribeP.then(() => {

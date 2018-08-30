@@ -6,8 +6,10 @@
   "types": "dist/index.d.ts",
   "sideEffects": "false",
   "scripts": {
-    "build": "tsc && tslint 'src/**/*.ts'",
-    "start": "node dist/index.js"
+    "build": "tsc",
+    "build:full": "npm run build && npm run tslint",
+    "start": "node dist/index.js",
+    "tslint": "tslint 'src/**/*.ts'"
   },
   "author": "Microsoft",
   "repository": "microsoft/prague",

@@ -7,7 +7,8 @@
   "types": "dist/index.d.ts",
   "sideEffects": "false",
   "scripts": {
-    "build": "npm run build:commonjs && npm run build:esnext && npm run tslint",
+    "build": "npm run build:commonjs",
+    "build:full": "npm run build && npm run build:esnext && npm run tslint",
     "build:commonjs": "tsc",
     "build:esnext": "tsc --outDir lib --m esnext",
     "tslint": "tslint 'src/**/*.ts'"

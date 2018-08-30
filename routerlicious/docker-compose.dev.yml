@@ -3,9 +3,6 @@ services:
     alfred:
         volumes:
             - .:/usr/src/server
-    alfred2:
-        volumes:
-            - .:/usr/src/server
     deli:
         volumes:
             - .:/usr/src/server
