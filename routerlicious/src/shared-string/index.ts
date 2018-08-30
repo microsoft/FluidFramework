@@ -5,6 +5,7 @@ export {
     SharedIntervalCollection,
     SharedIntervalCollectionView,
     SharedIntervalCollectionValueType,
+    SharedStringIntervalCollectionValueType,
 } from "./intervalCollection";
 export {
     SharedString,

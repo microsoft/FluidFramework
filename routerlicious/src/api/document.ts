@@ -36,6 +36,7 @@ defaultRegistry.register(new cell.CellExtension());
 // Register default map value types
 mapExtension.registerDefaultValueType(new mapExtension.DistributedSetValueType());
 mapExtension.registerDefaultValueType(new mapExtension.CounterValueType());
+mapExtension.registerDefaultValueType(new sharedString.SharedStringIntervalCollectionValueType());
 mapExtension.registerDefaultValueType(new sharedString.SharedIntervalCollectionValueType());
 
 export interface IAttachedServices {

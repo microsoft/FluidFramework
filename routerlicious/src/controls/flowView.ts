@@ -3210,10 +3210,10 @@ export class FlowView extends ui.Component {
     public wheelTicking = false;
     public topChar = -1;
     public cursor: Cursor;
-    public bookmarks: SharedIntervalCollectionView;
+    public bookmarks: SharedIntervalCollectionView<SharedStringInterval>;
     public tempBookmarks: SharedStringInterval[];
-    public comments: SharedIntervalCollection;
-    public commentsView: SharedIntervalCollectionView;
+    public comments: SharedIntervalCollection<SharedStringInterval>;
+    public commentsView: SharedIntervalCollectionView<SharedStringInterval>;
     public presenceMapView: types.IMapView;
     public presenceVector: ILocalPresenceInfo[] = [];
     public docRoot: types.IMapView;

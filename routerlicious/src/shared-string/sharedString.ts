@@ -9,7 +9,8 @@ import * as MergeTree from "../merge-tree";
 import { CollaborativeStringExtension } from "./extension";
 import {
     SharedIntervalCollection,
-    SharedIntervalCollectionValueType,
+    SharedStringInterval,
+    SharedStringIntervalCollectionValueType,
 } from "./intervalCollection";
 
 function textsToSegments(texts: MergeTree.IPropertyString[]) {
@@ -179,7 +180,7 @@ export class SharedString extends CollaborativeMap {
             MergeTree.UniversalSequenceNumber, this.client.getClientId());
         console.log(`removing nest ${nestStart.getId()} from [${start},${end})`);
         const removeMessage: MergeTree.IMergeTreeRemoveMsg = {
-            checkNest: {id1: nestStart.getId(), id2: nestEnd.getId()},
+            checkNest: { id1: nestStart.getId(), id2: nestEnd.getId() },
             pos1: start,
             pos2: end,
             type: MergeTree.MergeTreeDeltaType.REMOVE,
@@ -222,7 +223,7 @@ export class SharedString extends CollaborativeMap {
         callback: (m: MergeTree.Marker) => void) {
         const id = marker.getId();
         const annotateMessage: MergeTree.IMergeTreeAnnotateMsg = {
-            combiningOp: { name: "consensus"},
+            combiningOp: { name: "consensus" },
             props,
             relativePos1: { id, before: true },
             relativePos2: { id },
@@ -295,15 +296,16 @@ export class SharedString extends CollaborativeMap {
     }
 
     // TODO: fix race condition on creation by putting type on every operation
-    public getSharedIntervalCollection(label: string): SharedIntervalCollection {
+    public getSharedIntervalCollection(label: string): SharedIntervalCollection<SharedStringInterval> {
         if (!this.intervalCollections.has(label)) {
-            this.intervalCollections.set<SharedIntervalCollection>(
+            this.intervalCollections.set<SharedIntervalCollection<SharedStringInterval>>(
                 label,
                 undefined,
-                SharedIntervalCollectionValueType.Name);
+                SharedStringIntervalCollectionValueType.Name);
         }
 
-        const sharedCollection = this.intervalCollections.get<SharedIntervalCollection>(label);
+        const sharedCollection =
+            this.intervalCollections.get<SharedIntervalCollection<SharedStringInterval>>(label);
         return sharedCollection;
     }
 
@@ -518,16 +520,18 @@ export class SharedString extends CollaborativeMap {
 
         // Listen and initialize new SharedIntervalCollections
         intervalCollections.on("valueChanged", (ev: IValueChanged) => {
-            const intervalCollection = this.intervalCollections.get<SharedIntervalCollection>(ev.key);
+            const intervalCollection =
+                this.intervalCollections.get<SharedIntervalCollection<SharedStringInterval>>(ev.key);
             if (!intervalCollection.attached) {
-                intervalCollection.attachSharedString(this, ev.key);
+                intervalCollection.attach(this.client, ev.key);
             }
         });
 
         // Initialize existing SharedIntervalCollections
         for (const key of this.intervalCollections.keys()) {
-            const intervalCollection = this.intervalCollections.get<SharedIntervalCollection>(key);
-            intervalCollection.attachSharedString(this, key);
+            const intervalCollection =
+                this.intervalCollections.get<SharedIntervalCollection<SharedStringInterval>>(key);
+            intervalCollection.attach(this.client, key);
         }
     }
 
