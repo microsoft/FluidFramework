@@ -1,39 +1,29 @@
 import { ICommit } from "@prague/gitresources";
 import {
     ConnectionState,
-    IAttachMessage,
     IChaincode,
-    IChaincodeModule,
-    IChannel,
     IClientJoin,
     ICodeLoader,
-    IDistributedObjectServices,
     IDocumentAttributes,
     IDocumentService,
     IDocumentStorageService,
-    IEnvelope,
-    IObjectAttributes,
-    IObjectStorageService,
     IPlatform,
     IProposal,
-    IRuntime,
     ISequencedDocumentMessage,
     ISnapshotTree,
     ITokenService,
     IUser,
     MessageType,
 } from "@prague/runtime-definitions";
-import { Deferred } from "@prague/utils";
 import * as assert from "assert";
 import { EventEmitter } from "events";
-import { ChannelDeltaConnection } from "./channelDeltaConnection";
-import { ChannelStorageService } from "./channelStorageService";
 import { debug } from "./debug";
 import { IConnectionDetails } from "./deltaConnection";
 import { DeltaManager } from "./deltaManager";
 import { IDeltaManager } from "./deltas";
-import { LocalChannelStorageService } from "./localChannelStorageService";
 import { Quorum } from "./quorum";
+import { Runtime } from "./runtime";
+import { readAndParse } from "./utils";
 
 // tslint:disable:no-var-requires
 const now = require("performance-now");
@@ -45,35 +35,16 @@ interface IConnectResult {
     handlerAttachedP: Promise<void>;
 }
 
-async function readAndParse<T>(storage: IDocumentStorageService, sha: string): Promise<T> {
-    const encoded = await storage.read(sha);
-    const decoded = Buffer.from(encoded, "base64").toString();
-    return JSON.parse(decoded);
-}
-
-interface IObjectServices {
-    deltaConnection: ChannelDeltaConnection;
-    objectStorage: IObjectStorageService;
-}
-
-interface IChannelState {
-    object: IChannel;
-    storage: IObjectStorageService;
-    connection: ChannelDeltaConnection;
-}
-
 // TODO consider a name change for this. The document is likely built on top of this infrastructure
-export class Document extends EventEmitter implements IRuntime {
+export class Document extends EventEmitter {
     private pendingClientId: string;
     private loaded = false;
     private connectionState = ConnectionState.Disconnected;
     private quorum: Quorum;
 
     // Active chaincode and associated runtime
-    private chaincode: IChaincode;
-    private pendingAttach = new Map<string, IAttachMessage>();
-    private channels = new Map<string, IChannelState>();
     private storageService: IDocumentStorageService;
+    private runtime: Runtime;
 
     // tslint:disable:variable-name
     private _clientId: string = "disconnected";
@@ -84,8 +55,6 @@ export class Document extends EventEmitter implements IRuntime {
     private _tenantId: string;
     private _user: IUser;
     // tslint:enable:variable-name
-
-    private watches = new Map<string, Deferred<void>>();
 
     public get tenantId(): string {
         return this._tenantId;
@@ -186,18 +155,24 @@ export class Document extends EventEmitter implements IRuntime {
             .all([storageP, treeP, versionP, attributesP, quorumP, chaincodeP, connectResult.handlerAttachedP])
             .then(async ([storageService, tree, version, attributes, quorum, chaincode]) => {
                 this.quorum = quorum;
-                this.chaincode = chaincode;
                 this.storageService = storageService;
 
                 // Instantiate channels from chaincode and stored data
-                const channelStates = await this.loadChannels(this, storageService, tree, attributes);
-                for (const channelState of channelStates) {
-                    this.channels.set(channelState.object.id, channelState);
-                }
+                this.runtime = await Runtime.LoadFromSnapshot(
+                    chaincode,
+                    storageService,
+                    this.connectionState,
+                    tree,
+                    attributes.branch,
+                    attributes.minimumSequenceNumber,
+                    (type, contents) => this.submitMessage(type, contents));
+
+                // given the load is async and we haven't set the runtime variable it's possible we missed the change
+                // of value. Make a call to the runtime to change the state to pick up the latest.
+                this.runtime.changeConnectionState(this.connectionState);
 
                 // Start delta processing once all channels are loaded
-                const readyP = Array.from(this.channels.values()).map((value) => value.object.ready());
-                Promise.all(readyP).then(
+                this.runtime.ready().then(
                     () => {
                         if (connect) {
                             assert(this._deltaManager, "DeltaManager should have been created during connect call");
@@ -224,10 +199,10 @@ export class Document extends EventEmitter implements IRuntime {
                 // Internal context is fully loaded at this point
                 this.loaded = true;
 
-                // Now that we are loaded notify all distributed data types of connection change
-                this.notifyConnectionState(this.connectionState);
-
                 debug(`Document loaded ${this.id}: ${now()} `);
+
+                // Starts the runtime
+                this.runtime.start(this.platform);
             });
     }
 
@@ -247,51 +222,6 @@ export class Document extends EventEmitter implements IRuntime {
         return super.on(event, listener);
     }
 
-    public getChannel(id: string): IChannel {
-        return this.channels.get(id).object;
-    }
-
-    public createChannel(id: string, type: string): IChannel {
-        const extension = this.chaincode.getModule(type) as IChaincodeModule;
-        return extension.create(this, id);
-    }
-
-    public attachChannel(channel: IChannel): IDistributedObjectServices {
-        // Get the object snapshot and include it in the initial attach
-        const snapshot = channel.snapshot();
-
-        const message: IAttachMessage = {
-            id: channel.id,
-            snapshot,
-            type: channel.type,
-        };
-        this.pendingAttach.set(channel.id, message);
-        this.submitMessage(MessageType.Attach, message);
-
-        // Store a reference to the object in our list of objects and then get the services
-        // used to attach it to the stream
-        const services = this.getObjectServices(channel.id, null, this.storageService);
-        // const entry = this.channels.get(channel.id);
-        // assert.equal(entry.object, channel);
-        this.channels.set(
-            channel.id,
-            { object: channel, connection: services.deltaConnection, storage: services.objectStorage });
-        // entry.connection = services.deltaConnection;
-        // entry.storage = services.objectStorage;
-
-        return services;
-    }
-
-    public waitForChannel(id: string): Promise<void> {
-        if (this.channels.has(id)) {
-            return Promise.resolve();
-        }
-
-        const deferred = new Deferred<void>();
-        this.watches.set(id, deferred);
-        return deferred.promise;
-    }
-
     private loadQuorum(storage: IDocumentStorageService, tree: ISnapshotTree): Quorum {
         // TODO load the stored quorum from the snapshot tree
 
@@ -309,11 +239,42 @@ export class Document extends EventEmitter implements IRuntime {
                 console.log(`approve ${key}`);
                 if (key === "code") {
                     console.log(`loadCode ${JSON.stringify(value)}`);
-                    this.loadCode(value);
+
+                    // TODO quorum needs prepare/process events
+                    // Stop processing inbound messages as we transition to the new code
+                    this.deltaManager.inbound.pause();
+                    this.transitionRuntime(value).then(
+                        () => {
+                            this.deltaManager.inbound.resume();
+                        },
+                        (error) => {
+                            this.emit("error", error);
+                        });
                 }
             });
 
         return quorum;
+    }
+
+    private async transitionRuntime(pkg: string) {
+        // Close the previous runtime and return a snapshot of the data
+        /* const snapshot = */
+        await this.runtime.close();
+
+        // Load the new code and create a new runtime from the previous snapshot
+        const chaincode = await this.loadCode(pkg);
+        const newRuntime = await Runtime.LoadFromSnapshot(
+            chaincode,
+            this.storageService,
+            this.connectionState,
+            null,
+            this.id,
+            this._deltaManager.minimumSequenceNumber,
+            (type, message) => this.submitMessage(type, message));
+        this.runtime = newRuntime;
+
+        // Start up the new runtime
+        newRuntime.start(this.platform);
     }
 
     private loadCodeFromQuorum(quorum: Quorum): Promise<IChaincode> {
@@ -324,143 +285,14 @@ export class Document extends EventEmitter implements IRuntime {
         }
     }
 
-    private notifyConnectionState(value: ConnectionState) {
-        // Resend all pending attach messages prior to notifying clients
-        if (this.connectionState === ConnectionState.Connected) {
-            for (const [, message] of this.pendingAttach) {
-                this.submitMessage(MessageType.Attach, message);
-            }
-        }
-
-        // Notify connected client objects of the change
-        for (const [, object] of this.channels) {
-            if (object.connection) {
-                object.connection.setConnectionState(value);
-            }
-        }
-    }
-
     /**
      * Code to apply to the document has changed. Load it in now.
      */
-    private loadCode(pkg: string): Promise<IChaincode> {
-        // Stop processing inbound messages as we transition to the new code
-        this.deltaManager.inbound.pause();
+    private async loadCode(pkg: string): Promise<IChaincode> {
+        const module = await this.codeLoader.load(pkg);
+        const chaincode = await module.instantiate();
 
-        const loadedP = this.codeLoader.load(pkg);
-        const initializedP = loadedP.then(async (module) => {
-            // TODO transitions, etc... for now unload existing chaincode if it exists
-            if (this.chaincode) {
-                await this.chaincode.close();
-            }
-
-            const runtime = null;
-            const chaincode = await module.instantiate(runtime);
-            return { chaincode, runtime };
-        });
-
-        return initializedP.then(
-            (value) => {
-                this.chaincode = value.chaincode;
-                this.deltaManager.inbound.resume();
-                this.chaincode.run(this, this.platform);
-                return this.chaincode;
-            },
-            (error) => {
-                // I believe this is a fatal problem - or we need to keep trying
-                console.error(error);
-                return Promise.reject(error);
-            });
-    }
-
-    /**
-     * Loads in all the distributed objects contained in the header
-     */
-    private async loadChannels(
-        runtime: IRuntime,
-        storage: IDocumentStorageService,
-        tree: ISnapshotTree,
-        attributes: IDocumentAttributes): Promise<IChannelState[]> {
-
-        const channelsP = new Array<Promise<IChannelState>>();
-        if (tree) {
-            // tslint:disable-next-line:forin
-            for (const path in tree.trees) {
-                const channelP = this.loadSnapshotChannel(runtime, path, tree.trees[path], attributes, storage);
-                channelsP.push(channelP);
-            }
-        }
-
-        const channels = await Promise.all(channelsP);
-        debug(`objectsLoaded ${this.id}: ${now()} `);
-
-        return channels;
-    }
-
-    private async loadSnapshotChannel(
-        runtime: IRuntime,
-        id: string,
-        tree: ISnapshotTree,
-        attributes: IDocumentAttributes,
-        storage: IDocumentStorageService): Promise<IChannelState> {
-
-        const channelAttributes = await readAndParse<IObjectAttributes>(storage, tree.blobs[".attributes"]);
-        const services = this.getObjectServices(id, tree, storage);
-        services.deltaConnection.setBaseMapping(channelAttributes.sequenceNumber, attributes.minimumSequenceNumber);
-
-        return this.loadChannel(
-            runtime,
-            id,
-            channelAttributes.type,
-            channelAttributes.sequenceNumber,
-            channelAttributes.sequenceNumber,
-            services,
-            attributes.branch);
-    }
-
-    private async loadChannel(
-        runtime: IRuntime,
-        id: string,
-        type: string,
-        sequenceNumber: number,
-        minSequenceNumber: number,
-        services: IObjectServices,
-        originBranch: string): Promise<IChannelState> {
-
-        // Pass the transformedMessages - but the object really should be storing this
-        const extension = this.chaincode.getModule(type) as IChaincodeModule;
-
-        // TODO need to fix up the SN vs. MSN stuff here. If want to push messages to object also need
-        // to store the mappings from channel ID to doc ID.
-        const value = await extension.load(
-            runtime,
-            id,
-            sequenceNumber,
-            minSequenceNumber,
-            services,
-            originBranch);
-
-        return { object: value, storage: services.objectStorage, connection: services.deltaConnection };
-    }
-
-    private getObjectServices(
-        id: string,
-        tree: ISnapshotTree,
-        storage: IDocumentStorageService): IObjectServices {
-
-        const deltaConnection = new ChannelDeltaConnection(
-            id,
-            this.connectionState,
-            (message) => {
-                const envelope: IEnvelope = { address: id, contents: message };
-                this.submitMessage(MessageType.Operation, envelope);
-            });
-        const objectStorage = new ChannelStorageService(tree, storage);
-
-        return {
-            deltaConnection,
-            objectStorage,
-        };
+        return chaincode;
     }
 
     private connect(attributesP: Promise<IDocumentAttributes>): IConnectResult {
@@ -536,7 +368,7 @@ export class Document extends EventEmitter implements IRuntime {
             return;
         }
 
-        this.notifyConnectionState(value);
+        this.runtime.changeConnectionState(value);
 
         if (this.connectionState === ConnectionState.Connected) {
             this.emit("connected", this.pendingClientId);
@@ -557,48 +389,10 @@ export class Document extends EventEmitter implements IRuntime {
 
         switch (message.type) {
             case MessageType.Operation:
-                const envelope = message.contents as IEnvelope;
-                const objectDetails = this.channels.get(envelope.address);
-                return objectDetails.connection.prepare(message, local);
+                return this.runtime.prepare(message, local);
 
             case MessageType.Attach:
-                if (local) {
-                    break;
-                }
-
-                const attachMessage = message.contents as IAttachMessage;
-
-                // create storage service that wraps the attach data
-                const localStorage = new LocalChannelStorageService(attachMessage.snapshot);
-                const connection = new ChannelDeltaConnection(
-                    attachMessage.id,
-                    this.connectionState,
-                    (submitMessage) => {
-                        const submitEnvelope: IEnvelope = { address: attachMessage.id, contents: submitMessage };
-                        this.submitMessage(MessageType.Operation, submitEnvelope);
-                    });
-
-                // Document sequence number references <= message.sequenceNumber should map to the object's 0
-                // sequence number. We cap to the MSN to keep a tighter window and because no references should
-                // be below it.
-                connection.setBaseMapping(0, message.minimumSequenceNumber);
-
-                const services: IObjectServices = {
-                    deltaConnection: connection,
-                    objectStorage: localStorage,
-                };
-
-                const origin = message.origin ? message.origin.id : this.id;
-                const value = await this.loadChannel(
-                    this,
-                    attachMessage.id,
-                    attachMessage.type,
-                    0,
-                    0,
-                    services,
-                    origin);
-
-                return value;
+                return this.runtime.prepareAttach(message, local);
         }
     }
 
@@ -642,33 +436,11 @@ export class Document extends EventEmitter implements IRuntime {
                 break;
 
             case MessageType.Attach:
-                const attachMessage = message.contents as IAttachMessage;
-                // If a non-local operation then go and create the object - otherwise mark it as officially attached.
-                if (local) {
-                    assert(this.pendingAttach.has(attachMessage.id));
-                    this.pendingAttach.delete(attachMessage.id);
-
-                    // Document sequence number references <= message.sequenceNumber should map to the
-                    // object's 0 sequence number. We cap to the MSN to keep a tighter window and because
-                    // no references should be below it.
-                    this.channels.get(attachMessage.id).connection.setBaseMapping(
-                        0,
-                        message.minimumSequenceNumber);
-                } else {
-                    const channelState = context as IChannelState;
-                    this.channels.set(channelState.object.id, channelState);
-                    if (this.watches.has(channelState.object.id)) {
-                        this.watches.get(channelState.object.id).resolve();
-                        this.watches.delete(channelState.object.id);
-                    }
-                }
-
+                this.runtime.processAttach(message, local, context);
                 break;
 
             case MessageType.Operation:
-                const envelope = message.contents as IEnvelope;
-                const objectDetails = this.channels.get(envelope.address);
-                objectDetails.connection.process(message, local, context);
+                this.runtime.process(message, local, context);
 
                 break;
 
