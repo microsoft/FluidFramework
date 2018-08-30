@@ -91,12 +91,16 @@ export class Slider extends Box<ISliderState> {
     public render(self: ISliderState, services: Map<string, any>) {
         // TODO: Styles should be passed in as part of a component-standard render context.
         const slider = document.createElement("input");
+        slider.className = "slider";
         slider.type = "range";
         slider.min = "1";
         slider.max = "100";
         slider.value = this.getEvaluatedFormula(self, services);
-        // slider.style =
-        return slider;
+
+        const span = document.createElement("span");
+        span.appendChild(slider);
+
+        return span;
     }
 
     /** Returns the post-evaluated  */
