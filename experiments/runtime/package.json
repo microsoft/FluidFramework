@@ -3,6 +3,7 @@
   "private": true,
   "scripts": {
     "build": "lerna run build --stream",
+    "build:full": "lerna run build:full --stream",
     "build:client": "lerna run build --stream --scope @prague/loader-client --include-filtered-dependencies",
     "postinstall": "lerna bootstrap",
     "start": "DEBUG=prague:* lerna run start --stream --scope @prague/loader-client",

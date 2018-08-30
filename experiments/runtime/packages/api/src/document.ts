@@ -14,17 +14,19 @@ const insightsMapId = "insights";
  */
 export class Document extends EventEmitter implements IDocument {
     public static async Load(runtime: IRuntime): Promise<Document> {
-        const document = new Document(runtime);
+        let root: IMap;
 
         if (!runtime.existing) {
-            const root = runtime.createChannel(rootMapId, MapExtension.Type) as IMap;
+            root = runtime.createChannel(rootMapId, MapExtension.Type) as IMap;
             root.attach();
 
             const insights = runtime.createChannel(insightsMapId, MapExtension.Type);
             root.set(insightsMapId, insights);
         } else {
-            await runtime.waitForChannel("root");
+            root = await runtime.getChannel("root") as IMap;
         }
+
+        const document = new Document(runtime, root);
 
         return document;
     }
@@ -51,12 +53,12 @@ export class Document extends EventEmitter implements IDocument {
     /**
      * Constructs a new document from the provided details
      */
-    private constructor(public runtime: IRuntime) {
+    private constructor(public runtime: IRuntime, private root: IMap) {
         super();
     }
 
     public getRoot(): IMap {
-        return this.runtime.getChannel(rootMapId) as IMap;
+        return this.root;
     }
 
     /**
@@ -81,7 +83,8 @@ export class Document extends EventEmitter implements IDocument {
     }
 
     public async get(id: string): Promise<ICollaborativeObject> {
-        return this.runtime.getChannel(id) as ICollaborativeObject;
+        const channel = await this.runtime.getChannel(id);
+        return channel as ICollaborativeObject;
     }
 
     public snapshot(message: string): Promise<void> {

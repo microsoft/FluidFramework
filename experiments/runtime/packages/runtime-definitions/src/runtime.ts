@@ -26,7 +26,7 @@ export interface IRuntime {
     /**
      * Returns the channel with the given id
      */
-    getChannel(id: string): IChannel;
+    getChannel(id: string): Promise<IChannel>;
 
     /**
      * Creates a new channel of the given type
@@ -37,9 +37,4 @@ export interface IRuntime {
      * Attaches the channel to the runtime - exposing it ot remote clients
      */
     attachChannel(channel: IChannel): IDistributedObjectServices;
-
-    /**
-     * Waits for the given channel to show up
-     */
-    waitForChannel(id: string): Promise<void>;
 }

@@ -4271,6 +4271,11 @@ export class FlowView extends ui.Component {
                         if (searchString.startsWith("=")) {
                             this.insertFormula(searchString);
                         }
+
+                        // If it starts with "*", assume it's a slider definition.
+                        if (searchString.startsWith("*")) {
+                            this.insertSlider("=" + searchString.substring(1));
+                        }
                     }
                     this.activeSearchBox.dismiss();
                     this.activeSearchBox = undefined;
@@ -4594,6 +4599,23 @@ export class FlowView extends ui.Component {
                 url: "",                        // 'url' not used
             } as IReferenceDoc,
             state: { formula },
+        });
+        this.cursorFwd();
+        this.localQueueRender(this.cursor.pos);
+    }
+
+    /** Inserts a Slider box to display the given 'formula'. */
+    public insertSlider(value: string) {
+        // TODO: Unclear if piggy-backing on ReferencType.Simple is the best way to insert custom boxes.
+        this.sharedString.insertMarker(this.cursor.pos, MergeTree.ReferenceType.Simple, {
+            [Paragraph.referenceProperty]: {
+                sha: "",                        // 'sha' not used
+                type: {
+                    name: "slider",
+                } as IReferenceDocType,
+                url: "",                        // 'url' not used
+            } as IReferenceDoc,
+            state: { value },
         });
         this.cursorFwd();
         this.localQueueRender(this.cursor.pos);
