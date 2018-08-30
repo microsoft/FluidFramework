@@ -9,6 +9,7 @@ import {
     IDocumentStorageService,
     IPlatform,
     IProposal,
+    IRuntime,
     ISequencedDocumentMessage,
     ISnapshotTree,
     ITokenService,
@@ -33,6 +34,20 @@ interface IConnectResult {
     detailsP: Promise<IConnectionDetails>;
 
     handlerAttachedP: Promise<void>;
+}
+
+class NullChaincode implements IChaincode {
+    public getModule(type: string): any {
+        return null;
+    }
+
+    public close(): Promise<void> {
+        return Promise.resolve();
+    }
+
+    public run(runtime: IRuntime, platform: IPlatform): Promise<void> {
+        return Promise.resolve();
+    }
 }
 
 // TODO consider a name change for this. The document is likely built on top of this infrastructure
@@ -159,6 +174,11 @@ export class Document extends EventEmitter {
 
                 // Instantiate channels from chaincode and stored data
                 this.runtime = await Runtime.LoadFromSnapshot(
+                    this.id,
+                    this.existing,
+                    this.options,
+                    this.clientId,
+                    this.user,
                     chaincode,
                     storageService,
                     this.connectionState,
@@ -169,7 +189,7 @@ export class Document extends EventEmitter {
 
                 // given the load is async and we haven't set the runtime variable it's possible we missed the change
                 // of value. Make a call to the runtime to change the state to pick up the latest.
-                this.runtime.changeConnectionState(this.connectionState);
+                this.runtime.changeConnectionState(this.connectionState, this.clientId);
 
                 // Start delta processing once all channels are loaded
                 this.runtime.ready().then(
@@ -257,6 +277,8 @@ export class Document extends EventEmitter {
     }
 
     private async transitionRuntime(pkg: string) {
+        // TODO it's possible in between the close and the resume we may be disconnected. Want to either sequence
+        // those events with ops or find a better way
         // Close the previous runtime and return a snapshot of the data
         /* const snapshot = */
         await this.runtime.close();
@@ -264,6 +286,11 @@ export class Document extends EventEmitter {
         // Load the new code and create a new runtime from the previous snapshot
         const chaincode = await this.loadCode(pkg);
         const newRuntime = await Runtime.LoadFromSnapshot(
+            this.id,
+            this.existing,
+            this.options,
+            this.clientId,
+            this.user,
             chaincode,
             this.storageService,
             this.connectionState,
@@ -281,7 +308,7 @@ export class Document extends EventEmitter {
         if (quorum.has("code")) {
             return this.loadCode(quorum.get("code"));
         } else {
-            return null;
+            return Promise.resolve(new NullChaincode());
         }
     }
 
@@ -361,6 +388,7 @@ export class Document extends EventEmitter {
             this.pendingClientId = context;
         } else if (value === ConnectionState.Connected) {
             this._clientId = this.pendingClientId;
+            this._deltaManager.shouldUpdateSequenceNumber = true;
         }
 
         if (!this.loaded) {
@@ -368,7 +396,7 @@ export class Document extends EventEmitter {
             return;
         }
 
-        this.runtime.changeConnectionState(value);
+        this.runtime.changeConnectionState(value, this.clientId);
 
         if (this.connectionState === ConnectionState.Connected) {
             this.emit("connected", this.pendingClientId);

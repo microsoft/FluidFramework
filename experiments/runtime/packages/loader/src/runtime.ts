@@ -36,6 +36,11 @@ interface IObjectServices {
 
 export class Runtime implements IRuntime {
     public static async LoadFromSnapshot(
+        id: string,
+        existing: boolean,
+        options: any,
+        clientId: string,
+        user: IUser,
         chaincode: IChaincode,
         storage: IDocumentStorageService,
         connectionState: ConnectionState,
@@ -44,7 +49,16 @@ export class Runtime implements IRuntime {
         minimumSequenceNumber: number,
         submitFn: (type: MessageType, contents: any) => void): Promise<Runtime> {
 
-        const runtime = new Runtime(chaincode, storage, connectionState, submitFn);
+        const runtime = new Runtime(
+            id,
+            existing,
+            options,
+            clientId,
+            user,
+            chaincode,
+            storage,
+            connectionState,
+            submitFn);
 
         if (tree) {
             Object.keys(tree.trees).forEach((path) => {
@@ -68,18 +82,17 @@ export class Runtime implements IRuntime {
         return runtime;
     }
 
-    public id: string;
-    public existing: boolean;
-    public options: any;
-    public clientId: string;
-    public user: IUser;
-
     private channels = new Map<string, IChannelState>();
     private channelsDeferred = new Map<string, Deferred<IChannel>>();
     private closed = false;
     private pendingAttach = new Map<string, IAttachMessage>();
 
     private constructor(
+        public id: string,
+        public existing: boolean,
+        public options: any,
+        public clientId: string,
+        public user: IUser,
         private chaincode: IChaincode,
         private storageService: IDocumentStorageService,
         private connectionState: ConnectionState,
@@ -89,9 +102,14 @@ export class Runtime implements IRuntime {
     public getChannel(id: string): Promise<IChannel> {
         this.verifyNotClosed();
 
-        return this.channelsDeferred.has(id)
-            ? this.channelsDeferred.get(id).promise
-            : Promise.reject("Channel does not exist");
+        // TODO we don't assume any channels (even root) in the runtime. If you request a channel that doesn't exist
+        // we will never resolve the promise. May want a flag to getChannel that doesn't wait for the promise if
+        // it doesn't exist
+        if (!this.channelsDeferred.has(id)) {
+            this.channelsDeferred.set(id, new Deferred<IChannel>());
+        }
+
+        return this.channelsDeferred.get(id).promise;
     }
 
     public createChannel(id: string, type: string): IChannel {
@@ -99,11 +117,15 @@ export class Runtime implements IRuntime {
 
         const extension = this.chaincode.getModule(type) as IChaincodeModule;
         const channel = extension.create(this, id);
-
-        const deferred = new Deferred<IChannel>();
-        deferred.resolve(channel);
-        this.channelsDeferred.set(id, deferred);
         this.channels.set(id, { object: channel, connection: null, storage: null });
+
+        if (this.channelsDeferred.has(id)) {
+            this.channelsDeferred.get(id).resolve(channel);
+        } else {
+            const deferred = new Deferred<IChannel>();
+            deferred.resolve(channel);
+            this.channelsDeferred.set(id, deferred);
+        }
 
         return channel;
     }
@@ -146,7 +168,7 @@ export class Runtime implements IRuntime {
         this.chaincode.run(this, platform);
     }
 
-    public changeConnectionState(value: ConnectionState) {
+    public changeConnectionState(value: ConnectionState, clientId: string) {
         this.verifyNotClosed();
 
         if (value === this.connectionState) {
@@ -154,6 +176,7 @@ export class Runtime implements IRuntime {
         }
 
         this.connectionState = value;
+        this.clientId = clientId;
 
         // Resend all pending attach messages prior to notifying clients
         if (value === ConnectionState.Connected) {
@@ -208,6 +231,13 @@ export class Runtime implements IRuntime {
         } else {
             const channelState = context as IChannelState;
             this.channels.set(channelState.object.id, channelState);
+            if (this.channelsDeferred.has(channelState.object.id)) {
+                this.channelsDeferred.get(channelState.object.id).resolve(channelState.object);
+            } else {
+                const deferred = new Deferred<IChannel>();
+                deferred.resolve(channelState.object);
+                this.channelsDeferred.set(channelState.object.id, deferred);
+            }
         }
     }
 
@@ -267,8 +297,9 @@ export class Runtime implements IRuntime {
     }
 
     private reserve(id: string) {
-        assert(!this.channelsDeferred.has(id));
-        this.channelsDeferred.set(id, new Deferred<IChannel>());
+        if (!this.channelsDeferred.has(id)) {
+            this.channelsDeferred.set(id, new Deferred<IChannel>());
+        }
     }
 
     private async loadSnapshotChannel(
