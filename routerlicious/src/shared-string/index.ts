@@ -1,6 +1,6 @@
 export {
     DeserializeCallback,
-    Interval,
+    SharedStringInterval,
     PrepareDeserializeCallback,
     SharedIntervalCollection,
     SharedIntervalCollectionView,

@@ -6,13 +6,67 @@ import { SharedString } from "./sharedString";
 
 export interface ISerializedInterval {
     sequenceNumber: number;
-    startPosition: number;
-    endPosition: number;
+    start: number;
+    end: number;
     intervalType: MergeTree.IntervalType;
     properties?: MergeTree.PropertySet;
 }
 
 export class Interval implements MergeTree.IInterval {
+    public properties: MergeTree.PropertySet;
+
+    constructor(
+        public start: number,
+        public end: number,
+        props?: MergeTree.PropertySet) {
+        if (props) {
+            this.addProperties(props);
+        }
+    }
+
+    public serialize(client: MergeTree.Client) {
+        const serializedInterval = {
+            end: this.end,
+            intervalType: 0,
+            sequenceNumber: client.getCurrentSeq(),
+            start: this.start,
+        } as ISerializedInterval;
+        if (this.properties) {
+            serializedInterval.properties = this.properties;
+        }
+        return serializedInterval;
+    }
+
+    public clone() {
+        return new Interval(this.start, this.end, this.properties);
+    }
+
+    public compare(b: Interval) {
+        const startResult = this.start - b.start;
+        if (startResult === 0) {
+            return (this.end - b.end);
+        } else {
+            return startResult;
+        }
+    }
+
+    public overlaps(b: Interval) {
+        const result = (this.start < b.end) &&
+            (this.end >= b.start);
+        return result;
+    }
+
+    public union(b: Interval) {
+        return new Interval(Math.min(this.start, b.start),
+            Math.max(this.end, b.end), this.properties);
+    }
+
+    public addProperties(newProps: MergeTree.PropertySet, op?: MergeTree.ICombiningOp) {
+        this.properties = MergeTree.addProperties(this.properties, newProps, op);
+    }
+}
+
+export class SharedStringInterval implements MergeTree.IInterval {
     public properties: MergeTree.PropertySet;
     private checkMergeTree: MergeTree.MergeTree;
 
@@ -32,10 +86,10 @@ export class Interval implements MergeTree.IInterval {
         const endPosition = this.end.toPosition(client.mergeTree,
             client.getCurrentSeq(), client.getClientId());
         const serializedInterval = {
-            endPosition,
+            end : endPosition,
             intervalType: this.intervalType,
             sequenceNumber: client.getCurrentSeq(),
-            startPosition,
+            start: startPosition,
         } as ISerializedInterval;
         if (this.properties) {
             serializedInterval.properties = this.properties;
@@ -44,10 +98,10 @@ export class Interval implements MergeTree.IInterval {
     }
 
     public clone() {
-        return new Interval(this.start, this.end, this.intervalType);
+        return new SharedStringInterval(this.start, this.end, this.intervalType);
     }
 
-    public compare(b: Interval) {
+    public compare(b: SharedStringInterval) {
         const startResult = this.start.compare(b.start);
         if (startResult === 0) {
             return (this.end.compare(b.end));
@@ -56,7 +110,7 @@ export class Interval implements MergeTree.IInterval {
         }
     }
 
-    public overlaps(b: Interval) {
+    public overlaps(b: SharedStringInterval) {
         const result = (this.start.compare(b.end) < 0) &&
             (this.end.compare(b.start) >= 0);
         if (this.checkMergeTree) {
@@ -65,8 +119,8 @@ export class Interval implements MergeTree.IInterval {
         return result;
     }
 
-    public union(b: Interval) {
-        return new Interval(this.start.min(b.start),
+    public union(b: SharedStringInterval) {
+        return new SharedStringInterval(this.start.min(b.start),
             this.end.max(b.end), this.intervalType);
     }
 
@@ -82,7 +136,7 @@ export class Interval implements MergeTree.IInterval {
         return (endPos > bstart) && (startPos < bend);
     }
 
-    private checkOverlaps(b: Interval, result: boolean) {
+    private checkOverlaps(b: SharedStringInterval, result: boolean) {
         const astart = this.start.toPosition(this.checkMergeTree, this.checkMergeTree.collabWindow.currentSeq,
             this.checkMergeTree.collabWindow.clientId);
         const bstart = b.start.toPosition(this.checkMergeTree, this.checkMergeTree.collabWindow.currentSeq,
@@ -107,23 +161,24 @@ export class Interval implements MergeTree.IInterval {
 }
 
 interface IIntervalCollection {
-    findOverlappingIntervals(startPosition: number, endPosition: number): Interval[];
+    findOverlappingIntervals(startPosition: number, endPosition: number): SharedStringInterval[];
     addInterval(start: number, end: number, intervalType: MergeTree.IntervalType,
-                props?: MergeTree.PropertySet): Interval;
+                props?: MergeTree.PropertySet): SharedStringInterval;
 }
 
-function endIntervalComparer(a: Interval, b: Interval) {
+function endIntervalComparer(a: SharedStringInterval, b: SharedStringInterval) {
     return a.end.compare(b.end);
 }
 
 class LocalIntervalCollection implements IIntervalCollection {
-    private intervalTree = new MergeTree.IntervalTree<Interval>();
-    private endIntervalTree = new MergeTree.RedBlackTree<Interval, Interval>(endIntervalComparer);
+    private intervalTree = new MergeTree.IntervalTree<SharedStringInterval>();
+    private endIntervalTree =
+        new MergeTree.RedBlackTree<SharedStringInterval, SharedStringInterval>(endIntervalComparer);
 
     constructor(private sharedString: SharedString, private label: string) {
     }
 
-    public map(fn: (interval: Interval) => void) {
+    public map(fn: (interval: SharedStringInterval) => void) {
         this.intervalTree.map(fn);
     }
 
@@ -187,7 +242,7 @@ class LocalIntervalCollection implements IIntervalCollection {
         label: string,
         start: number,
         end: number,
-        intervalType: MergeTree.IntervalType): Interval {
+        intervalType: MergeTree.IntervalType): SharedStringInterval {
 
         let beginRefType = MergeTree.ReferenceType.RangeBegin;
         let endRefType = MergeTree.ReferenceType.RangeEnd;
@@ -209,7 +264,7 @@ class LocalIntervalCollection implements IIntervalCollection {
             startLref.addProperties(rangeProp);
             endLref.addProperties(rangeProp);
 
-            const ival = new Interval(startLref, endLref, intervalType, rangeProp);
+            const ival = new SharedStringInterval(startLref, endLref, intervalType, rangeProp);
             // ival.checkMergeTree = sharedString.client.mergeTree;
             return ival;
         } else {
@@ -276,7 +331,7 @@ export class SharedIntervalCollectionValueType implements IValueType<SharedInter
 }
 
 export type PrepareDeserializeCallback = (properties: MergeTree.PropertySet) => Promise<any>;
-export type DeserializeCallback = (value: Interval, context: any) => void;
+export type DeserializeCallback = (value: SharedStringInterval, context: any) => void;
 
 export class SharedIntervalCollectionView extends EventEmitter {
     private localCollection: LocalIntervalCollection;
@@ -296,8 +351,8 @@ export class SharedIntervalCollectionView extends EventEmitter {
         if (savedSerializedIntervals) {
             for (const serializedInterval of savedSerializedIntervals) {
                 this.localCollection.addInterval(
-                    serializedInterval.startPosition,
-                    serializedInterval.endPosition,
+                    serializedInterval.start,
+                    serializedInterval.end,
                     serializedInterval.intervalType,
                     serializedInterval.properties);
             }
@@ -312,19 +367,19 @@ export class SharedIntervalCollectionView extends EventEmitter {
         return this.attachingP;
     }
 
-    public findOverlappingIntervals(startPosition: number, endPosition: number): Interval[] {
+    public findOverlappingIntervals(startPosition: number, endPosition: number): SharedStringInterval[] {
         return this.localCollection.findOverlappingIntervals(startPosition, endPosition);
     }
 
-    public map(fn: (interval: Interval) => void) {
+    public map(fn: (interval: SharedStringInterval) => void) {
         this.localCollection.map(fn);
     }
 
-    public previousInterval(pos: number): Interval {
+    public previousInterval(pos: number): SharedStringInterval {
         return this.localCollection.previousInterval(pos);
     }
 
-    public nextInterval(pos: number): Interval {
+    public nextInterval(pos: number): SharedStringInterval {
         return this.localCollection.nextInterval(pos);
     }
 
@@ -341,11 +396,11 @@ export class SharedIntervalCollectionView extends EventEmitter {
         props?: MergeTree.PropertySet) {
 
         const serializedInterval: ISerializedInterval = {
-            endPosition,
+            end: endPosition,
             intervalType,
             properties: props,
             sequenceNumber: this.sharedString.client.getCurrentSeq(),
-            startPosition,
+            start: startPosition,
         };
 
         this.addInternal(serializedInterval, null, true, null);
@@ -359,8 +414,8 @@ export class SharedIntervalCollectionView extends EventEmitter {
         op: api.ISequencedObjectMessage) {
 
         const interval = this.localCollection.addInterval(
-            serializedInterval.startPosition,
-            serializedInterval.endPosition,
+            serializedInterval.start,
+            serializedInterval.end,
             serializedInterval.intervalType,
             serializedInterval.properties);
 
@@ -407,7 +462,7 @@ export class SharedIntervalCollectionView extends EventEmitter {
         this.onPrepareDeserialize = onPrepareDeserialize;
 
         // Trigger the async prepare work across all values in the collection
-        const preparedIntervalsP: Array<Promise<{ context: any, interval: Interval }>> = [];
+        const preparedIntervalsP: Array<Promise<{ context: any, interval: SharedStringInterval }>> = [];
         this.localCollection.map((interval) => {
             const preparedIntervalP = onPrepareDeserialize(interval.properties).then(
                 (context) => ({ context, interval }));

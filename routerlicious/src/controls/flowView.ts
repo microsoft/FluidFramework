@@ -10,11 +10,11 @@ import {
 import { findRandomWord } from "../merge-tree-utils";
 import {
     DeserializeCallback,
-    Interval,
     PrepareDeserializeCallback,
     SharedIntervalCollection,
     SharedIntervalCollectionView,
     SharedString,
+    SharedStringInterval,
 } from "../shared-string";
 import { IPGBlock, ParagraphItemType } from "../text/paragraph";
 import * as ui from "../ui";
@@ -3188,7 +3188,7 @@ export class FlowView extends ui.Component {
     public topChar = -1;
     public cursor: Cursor;
     public bookmarks: SharedIntervalCollectionView;
-    public tempBookmarks: Interval[];
+    public tempBookmarks: SharedStringInterval[];
     public comments: SharedIntervalCollection;
     public commentsView: SharedIntervalCollectionView;
     public presenceMapView: types.IMapView;
@@ -4464,7 +4464,7 @@ export class FlowView extends ui.Component {
 
     public showAdjacentBookmark(before = true) {
         if (this.bookmarks) {
-            let result: Interval;
+            let result: SharedStringInterval;
             if (before) {
                 result = this.bookmarks.previousInterval(this.cursor.pos);
             } else {
