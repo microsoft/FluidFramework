@@ -111,6 +111,7 @@
     "uglify-es": "3.3.9",
     "uglifyjs-webpack-plugin": "^1.2.5",
     "webpack": "^4.8.2",
+    "webpack-bundle-analyzer": "^2.13.1",
     "webpack-cli": "^2.1.4",
     "webpack-merge": "^4.1.2"
   },
