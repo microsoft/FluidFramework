@@ -3,29 +3,41 @@ import {
     IChaincodeFactory,
     ICodeLoader,
     IDocumentService,
-    IPraguePackage,
+    IPlatform,
     ITokenService,
 } from "@prague/runtime-definitions";
 import * as driver from "@prague/socket-storage";
 import chalk from "chalk";
+import { exec } from "child_process";
 import * as commander from "commander";
 import * as jwt from "jsonwebtoken";
 import * as ora from "ora";
+import * as path from "path";
 import * as process from "process";
 import * as readline from "readline";
+import { promisify } from "util";
+
+const asyncExec = promisify(exec);
 
 class NodeCodeLoader implements ICodeLoader {
-    public async load(pkg: IPraguePackage): Promise<IChaincodeFactory> {
-        console.log(`Loading ${pkg.prague.browser.entrypoint}`);
-        return {
-            instantiate: async (runtime) => {
-                return {
-                    close: () => Promise.resolve(),
-                    getModule: () => Promise.resolve(),
-                    run: () => Promise.resolve(),
-                };
-            },
-        };
+    public async load(pkg: string): Promise<IChaincodeFactory> {
+        const components = pkg.match(/(.*)\/(.*)@(.*)/);
+        if (!components) {
+            return Promise.reject("Invalid package");
+        }
+        const [, scope, name] = components;
+
+        const packagesBase = path.join(__dirname, "../packages");
+        await asyncExec(`npm install ${pkg}`, { cwd: packagesBase });
+
+        const entry = require(`${packagesBase}/node_modules/${scope}/${name}`);
+        return entry;
+    }
+}
+
+class NodePlatform implements IPlatform {
+    public queryInterface<T>(id: string) {
+        return null;
     }
 }
 
@@ -46,9 +58,11 @@ async function run(
     tokenServices: ITokenService): Promise<void> {
     const claims = tokenServices.extractClaims(token);
 
+    const platform = new NodePlatform();
     const documentP = loader.load(
         token,
         null,
+        platform,
         documentServices,
         new NodeCodeLoader(),
         tokenServices);

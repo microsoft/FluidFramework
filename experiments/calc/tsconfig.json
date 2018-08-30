@@ -5,15 +5,14 @@
   ],
   "compilerOptions": {
     "target": "es6",
-    "declaration": true,
     "module": "commonjs",
     "moduleResolution": "node",
-    "rootDir": "../../..",
+    "rootDir": "./src",
     "outDir": "./dist",
     "sourceMap": true,
     "inlineSources": true,
     "noImplicitAny": false,
-    "noUnusedLocals": false,
+    "noUnusedLocals": true,
     "forceConsistentCasingInFileNames": true
   },
   "include": [

@@ -66,5 +66,5 @@ export interface ICodeLoader {
      * package then goes and refers to other stuff. The base package will have the ability to pull in, install
      * data contained in the document.
      */
-    load(pkg: IPackage): Promise<IChaincodeFactory>;
+    load(source: string): Promise<IChaincodeFactory>;
 }

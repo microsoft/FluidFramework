@@ -1,8 +1,9 @@
 {
   "name": "@prague/socket-storage",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "description": "Socket.IO + Git implementation of Prague service API",
   "main": "dist/index.js",
+  "module": "lib/index.js",
   "types": "dist/index.d.ts",
   "sideEffects": "false",
   "scripts": {
@@ -19,9 +20,9 @@
   },
   "dependencies": {
     "@prague/gitresources": "^0.7.1",
-    "@prague/runtime-definitions": "0.1.0",
-    "@prague/services-client": "0.1.0",
-    "@prague/utils": "0.1.0",
+    "@prague/runtime-definitions": "^0.1.2",
+    "@prague/services-client": "^0.1.2",
+    "@prague/utils": "^0.1.2",
     "@types/debug": "^0.0.30",
     "@types/jwt-decode": "^2.2.1",
     "@types/socket.io-client": "^1.4.32",

@@ -1,5 +1,5 @@
 import { MapExtension } from "@prague/map";
-import { IChaincode, IRuntime } from "@prague/runtime-definitions";
+import { IChaincode, IPlatform, IRuntime } from "@prague/runtime-definitions";
 import { CollaborativeStringExtension } from "@prague/shared-string";
 import { StreamExtension } from "@prague/stream";
 import * as assert from "assert";
@@ -9,7 +9,7 @@ import { Document } from "./document";
 /**
  * A document is a collection of collaborative types.
  */
-export class Chaincode extends EventEmitter implements IChaincode /* implements IDocument */ {
+export class Chaincode extends EventEmitter implements IChaincode {
     private modules = new Map<string, any>();
 
     /**
@@ -35,8 +35,8 @@ export class Chaincode extends EventEmitter implements IChaincode /* implements 
         return Promise.resolve();
     }
 
-    public async run(runtime: IRuntime): Promise<void> {
+    public async run(runtime: IRuntime, platform: IPlatform): Promise<void> {
         const document = await Document.Load(runtime);
-        this.runner.run(document);
+        this.runner.run(document, platform);
     }
 }

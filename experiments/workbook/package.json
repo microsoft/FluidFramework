@@ -19,7 +19,6 @@
     "webpack-serve": "^2.0.2"
   },
   "dependencies": {
-    "@ms/excel-online-calc": "^8.10.1",
     "jsonwebtoken": "^8.3.0"
   }
 }

@@ -14,7 +14,7 @@ import {
     IEnvelope,
     IObjectAttributes,
     IObjectStorageService,
-    IPraguePackage,
+    IPlatform,
     IProposal,
     IRuntime,
     ISequencedDocumentMessage,
@@ -127,6 +127,7 @@ export class Document extends EventEmitter implements IRuntime {
 
     constructor(
         private token: string,
+        private platform: IPlatform,
         private service: IDocumentService,
         private codeLoader: ICodeLoader,
         tokenService: ITokenService,
@@ -342,7 +343,7 @@ export class Document extends EventEmitter implements IRuntime {
     /**
      * Code to apply to the document has changed. Load it in now.
      */
-    private loadCode(pkg: IPraguePackage): Promise<IChaincode> {
+    private loadCode(pkg: string): Promise<IChaincode> {
         // Stop processing inbound messages as we transition to the new code
         this.deltaManager.inbound.pause();
 
@@ -362,7 +363,7 @@ export class Document extends EventEmitter implements IRuntime {
             (value) => {
                 this.chaincode = value.chaincode;
                 this.deltaManager.inbound.resume();
-                this.chaincode.run(this);
+                this.chaincode.run(this, this.platform);
                 return this.chaincode;
             },
             (error) => {

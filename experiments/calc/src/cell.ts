@@ -2,9 +2,9 @@ import {
     CompiledFormula,
     Precedents,
     ReadOper,
-    ReasonKind,
     SheetGridRange,
-} from './types'
+    FailureReason,
+} from "./types";
 
 /** Structure representing the state of a Workbook cell. */
 export interface Cell {
@@ -12,14 +12,14 @@ export interface Cell {
     state: CellState;
     formulaText?: string;
     compiledFormula?: CompiledFormula;
-    reason?: ReasonKind;
+    reason?: FailureReason;
     precedents?: Precedents;
     dependents?: SheetGridRange[];
 }
 
 /** True if the given 'value' is a 'Cell' structure. */
 export function isCell(value: any): value is Cell {
-    return (typeof value === 'object' && value.oper && value.state && isCellState(value.state));
+    return (typeof value === "object" && value.oper && value.state && isCellState(value.state));
 }
 
 /**
@@ -27,9 +27,9 @@ export function isCell(value: any): value is Cell {
  * error state if evaluation failed.
  */
 export enum CellState {
-    Dirty = 'Dirty',
-    Final = 'Final',
-    Failed = 'Failed'
+    Dirty = "Dirty",
+    Final = "Final",
+    Failed = "Failed",
 }
 
 /** True if the given 'state' is any of the defined CellStates. */
@@ -37,7 +37,7 @@ function isCellState(state: any): state is CellState {
     return (state === CellState.Dirty || state === CellState.Final || state === CellState.Failed);
 }
 
-/** 
+/**
  * Returns the first index of the given 'dependency' in the array of dependencies, or -1 if
  * the given dependency does not exist in the array.
  */
@@ -70,13 +70,13 @@ function add(existing: SheetGridRange[], toAdd: SheetGridRange) {
     }
 }
 
-/** 
+/**
  * Remove the given SheetGridRange from the 'existing' set.  If the range is not in the set,
  * does nothing.
  */
 function remove(existing: SheetGridRange[], toRemove: SheetGridRange) {
     if (existing) {
-        //Try to find the precedent in the list of dependents, and remove it if you do.
+        // Try to find the precedent in the list of dependents, and remove it if you do.
         const existingDependencyIndex = findDependencyIndex(toRemove, existing);
         if (existingDependencyIndex >= 0) {
             existing.splice(existingDependencyIndex, 1);

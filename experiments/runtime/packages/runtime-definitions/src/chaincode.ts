@@ -1,4 +1,5 @@
 import { IDistributedObjectServices } from "./channel";
+import { IPlatform } from "./platform";
 import { IRuntime } from "./runtime";
 import { ITree } from "./storage";
 
@@ -16,7 +17,7 @@ export interface IChaincode {
     /**
      * Invoked once the chaincode has been fully instantiated on the document
      */
-    run(runtime: IRuntime): Promise<void>;
+    run(runtime: IRuntime, platform: IPlatform): Promise<void>;
 }
 
 /**

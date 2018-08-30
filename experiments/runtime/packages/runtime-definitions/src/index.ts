@@ -3,6 +3,7 @@ export * from "./channel";
 export * from "./clients";
 export * from "./consensus";
 export * from "./loader";
+export * from "./platform";
 export * from "./protocol";
 export * from "./runtime";
 export * from "./storage";
