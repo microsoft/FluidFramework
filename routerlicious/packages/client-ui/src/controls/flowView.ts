@@ -1,13 +1,13 @@
 // tslint:disable:no-bitwise whitespace align switch-default no-string-literal ban-types no-angle-bracket-type-assertion
+import {
+    api, CharacterCodes, core, MergeTree,
+    Paragraph, Table, types,
+} from "@prague/client-api";
 import * as assert from "assert";
 // tslint:disable-next-line:no-var-requires
 const performanceNow = require("performance-now");
 import { blobUploadHandler, urlToInclusion } from "../blob";
 import { CollaborativeWorkbook } from "../calc";
-import {
-    api, CharacterCodes, core, MergeTree,
-    Paragraph, Table, types,
-} from "../client-api";
 import { ReferenceType } from "../merge-tree";
 import { findRandomWord } from "../merge-tree-utils";
 import {

@@ -1,4 +1,4 @@
-import { api, assert, types } from "../client-api";
+import { api, assert, types } from "@prague/client-api";
 import * as ui from "../ui";
 import { debug } from "./debug";
 import * as recognizer from "./shapeRecognizer";

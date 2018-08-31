@@ -4,10 +4,6 @@ import { CharacterCodes } from "./characterCodes";
 import { SharedString } from "../shared-string";
 import { ReferenceType } from "../merge-tree";
 
-// TODO: Should not pull in 'ui' module, as thing bring '@ms/excel-online-calc', etc.
-//       into our node services.
-import * as ui from "../ui";
-
 export interface IBreakInfo {
     posInPG: number;
     startItemIndex: number;
@@ -447,8 +443,9 @@ export function markerToItems(marker: MergeTree.Marker, itemsContext: IItemsCont
     // If the marker is a simple reference, see if it's types is registered as an external
     // component.
     if (marker.refType === ReferenceType.Simple) {
-        const typeName = marker.properties.ref && marker.properties.ref.type.name;
-        const component = ui.refTypeNameToComponent.get(typeName);
+        console.log("FIX ME FIX ME - UNCOMMENT BELOW");
+        // const typeName = marker.properties.ref && marker.properties.ref.type.name;
+        const component = null; // ui.refTypeNameToComponent.get(typeName);
 
         // If it is a registered external component, measure it and push a block item.
         if (component) {

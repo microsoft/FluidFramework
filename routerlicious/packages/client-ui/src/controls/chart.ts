@@ -1,4 +1,4 @@
-import { types } from "../client-api";
+import { types } from "@prague/client-api";
 import * as ui from "../ui";
 
 export class Chart extends ui.Component {

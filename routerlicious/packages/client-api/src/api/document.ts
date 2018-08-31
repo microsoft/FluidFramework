@@ -2,7 +2,7 @@
 import * as resources from "@prague/gitresources";
 import * as assert from "assert";
 import { EventEmitter } from "events";
-import * as jwt from "jsonwebtoken";
+import * as jwtDecode from "jwt-decode";
 // tslint:disable-next-line:no-var-requires
 const performanceNow = require("performance-now");
 import * as uuid from "uuid/v4";
@@ -272,7 +272,7 @@ export class Document extends EventEmitter implements api.IDocument {
         super();
 
         const token = this.opts.token;
-        const claims = jwt.decode(token) as api.ITokenClaims;
+        const claims = jwtDecode(token) as api.ITokenClaims;
         this._tenantId = claims.tenantId;
         this._user = claims.user;
 

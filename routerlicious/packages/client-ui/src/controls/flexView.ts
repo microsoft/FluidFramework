@@ -1,7 +1,7 @@
 // The main app code
+import { api, core, types} from "@prague/client-api";
 import { IGenericBlob } from "../api-core";
 import { blobUploadHandler } from "../blob";
-import { api, core, types} from "../client-api";
 import * as ui from "../ui";
 import { Button } from "./button";
 import { Chart } from "./chart";

@@ -1,5 +1,5 @@
 import * as random from "random-js";
-import { MergeTree as MergeTree } from "../client-api";
+import * as MergeTree from "../merge-tree";
 
 const mt = random.engines.mt19937();
 mt.seedWithArray([0xdeadbeef, 0xfeedbed]);

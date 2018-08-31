@@ -1,8 +1,9 @@
-import { types } from "../client-api";
-import { controls } from "../client-ui";
+import { types } from "@prague/client-api";
 import * as ui from "../ui";
+import { Image } from "./image";
 import { SegmentCircleInclusive } from "./overlayCanvas";
 import { Circle, IShape, Polygon } from "./shapes/index";
+import { Video } from "./video";
 
 interface IPtrEvtPoint {
     x: number;
@@ -94,12 +95,12 @@ export class InkCanvas extends ui.Component {
         }
     }
 
-    public addPhoto(image: controls.Image) {
+    public addPhoto(image: Image) {
         this.addChild(image);
         this.element.appendChild(image.element);
     }
 
-    public addVideo(video: controls.Video) {
+    public addVideo(video: Video) {
         this.addChild(video);
         this.element.appendChild(video.element);
     }
