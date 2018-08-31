@@ -1,7 +1,5 @@
+import { api, map, types } from "@prague/client-api";
 import * as assert from "assert";
-import * as api from "../../api";
-import { IMap } from "../../data-types";
-import { DistributedSet, DistributedSetValueType } from "../../map";
 import { generateToken } from "../../utils";
 import * as testUtils from "../testUtils";
 
@@ -9,9 +7,9 @@ describe("Routerlicious", () => {
     describe("Map", () => {
         describe("Set", () => {
             let testDocument: api.Document;
-            let testMap: IMap;
-            let emptySet: DistributedSet<number>;
-            let populatedSet: DistributedSet<number>;
+            let testMap: types.IMap;
+            let emptySet: map.DistributedSet<number>;
+            let populatedSet: map.DistributedSet<number>;
 
             beforeEach(async () => {
                 const tenantId = "test";
@@ -23,11 +21,14 @@ describe("Routerlicious", () => {
                 testDocument = await api.load(documentId, { token });
                 testMap = testDocument.createMap();
 
-                emptySet = testMap.set<DistributedSet<number>>("emptySet", undefined, DistributedSetValueType.Name);
-                populatedSet = testMap.set<DistributedSet<number>>(
+                emptySet = testMap.set<map.DistributedSet<number>>(
+                    "emptySet",
+                    undefined,
+                    map.DistributedSetValueType.Name);
+                populatedSet = testMap.set<map.DistributedSet<number>>(
                     "populatedSet",
                     [1, 2, 4, 6],
-                    DistributedSetValueType.Name);
+                    map.DistributedSetValueType.Name);
             });
 
             describe(".add()", () => {

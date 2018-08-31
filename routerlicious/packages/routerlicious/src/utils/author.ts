@@ -1,9 +1,7 @@
+import { api, core, MergeTree, SharedString, types, utils } from "@prague/client-api";
 import * as queue from "async/queue";
 // tslint:disable-next-line:no-var-requires
 const clone = require("lodash/clone");
-import { api, core, MergeTree, utils } from "../client-api";
-import { ICell, IMap } from "../data-types";
-import { SharedString } from "../shared-string";
 import Counter = utils.RateCounter;
 
 let play: boolean = false;
@@ -12,8 +10,8 @@ const saveLineFrequency = 5;
 
 const ChartSamples = 10;
 
-let histogramData: ICell;
-let performanceData: ICell;
+let histogramData: types.ICell;
+let performanceData: types.ICell;
 let metrics: IScribeMetrics;
 
 const ackCounter = new Counter();
@@ -45,7 +43,7 @@ export interface IAuthor {
     metrics: IScribeMetrics;
 
     doc: api.Document;
-    ss: SharedString;
+    ss: SharedString.SharedString;
 }
 
 /**
@@ -257,7 +255,7 @@ async function setMetrics(doc: api.Document, token: string) {
 
 export async function typeFile(
     doc: api.Document,
-    ss: SharedString,
+    ss: SharedString.SharedString,
     fileText: string,
     intervalTime: number,
     writers: number,
@@ -321,18 +319,18 @@ export async function typeFile(
         };
         const authors: IAuthor[] = [author];
         const docList: api.Document[] = [doc];
-        const ssList: SharedString[] = [ss];
+        const ssList: SharedString.SharedString[] = [ss];
 
         for (let i = 1; i < writers; i++ ) {
             docList.push(await api.load(doc.id, { token: documentToken }));
-            ssList.push(await docList[i].getRoot().get("text") as SharedString);
+            ssList.push(await docList[i].getRoot().get("text") as SharedString.SharedString);
             author = {
                 ackCounter: new Counter(),
                 doc: await api.load(doc.id, { token: documentToken }),
                 latencyCounter: new Counter(),
                 metrics: clone(m),
                 pingCounter: new Counter(),
-                ss: await docList[i].getRoot().get("text") as SharedString,
+                ss: await docList[i].getRoot().get("text") as SharedString.SharedString,
                 typingCounter: new Counter(),
             };
             authors.push(author);
@@ -350,7 +348,7 @@ export async function typeFile(
                     return metric;
                 });
         } else {
-            return (doc.getRoot().get("chunks") as Promise<IMap>)
+            return (doc.getRoot().get("chunks") as Promise<types.IMap>)
                 .then((chunkMap) => {
                     return chunkMap.getView();
                 })

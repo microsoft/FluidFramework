@@ -1,5 +1,5 @@
+import { GitManager } from "@prague/client-api";
 import { ITenant, ITenantManager, ITenantStorage } from "../../core";
-import { GitManager } from "../../git-storage";
 import { TestHistorian } from "./";
 
 export class TestTenant implements ITenant {

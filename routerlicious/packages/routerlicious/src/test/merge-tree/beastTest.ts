@@ -1,15 +1,11 @@
+import { MergeTree, mergeTreeUtils } from "@prague/client-api";
+import * as Base from "@prague/client-api/dist/merge-tree/base";
+import * as Text from "@prague/client-api/dist/merge-tree/text";
 import * as assert from "assert";
 import * as JsDiff from "diff";
 import * as fs from "fs";
 import * as path from "path";
 import * as random from "random-js";
-import * as MergeTree from "../../merge-tree";
-import { findRandomWord } from "../../merge-tree-utils";
-import * as Base from "../../merge-tree/base";
-import * as Collections from "../../merge-tree/collections";
-import * as ops from "../../merge-tree/ops";
-import * as Paparazzo from "../../merge-tree/snapshot";
-import * as Text from "../../merge-tree/text";
 
 // tslint:disable
 
@@ -39,7 +35,7 @@ export function simpleTest() {
         "Dingo", "wild"
     ];
 
-    let beast = new Collections.RedBlackTree<string, string>(compareStrings);
+    let beast = new MergeTree.RedBlackTree<string, string>(compareStrings);
     for (let i = 0; i < a.length; i += 2) {
         beast.put(a[i], a[i + 1]);
     }
@@ -80,7 +76,7 @@ export function integerTest1() {
     const imax = 10000000;
     const intCount = 1100000;
     let distribution = random.integer(imin, imax);
-    let beast = new Collections.RedBlackTree<number, number>(compareNumbers);
+    let beast = new MergeTree.RedBlackTree<number, number>(compareNumbers);
 
     function randInt() {
         return distribution(mt);
@@ -127,8 +123,8 @@ export function fileTest1() {
     console.log("len: " + a.length);
 
     for (let k = 0; k < iterCount; k++) {
-        let beast = new Collections.RedBlackTree<string, number>(compareStrings);
-        let linearBeast = Collections.LinearDictionary<string, number>(compareStrings);
+        let beast = new MergeTree.RedBlackTree<string, number>(compareStrings);
+        let linearBeast = MergeTree.LinearDictionary<string, number>(compareStrings);
         for (let i = 0, len = a.length; i < len; i++) {
             a[i] = a[i].trim();
             if (a[i].length > 0) {
@@ -601,7 +597,7 @@ export function TestPack(verbose = true) {
         server.addClients(clients);
         if (testSyncload) {
             let clockStart = clock();
-            let segs = Paparazzo.Snapshot.loadSync("snap-initial");
+            let segs = MergeTree.Snapshot.loadSync("snap-initial");
             console.log(`sync load time ${elapsedMicroseconds(clockStart)}`);
             let fromLoad = new MergeTree.MergeTree("");
             fromLoad.reloadFromSegments(segs);
@@ -699,9 +695,9 @@ export function TestPack(verbose = true) {
             let preLen = client.getLength();
             let pos = random.integer(0, preLen)(mt);
             if (includeMarkers) {
-                server.enqueueMsg(client.makeInsertMarkerMsg("test", ops.ReferenceType.Tile,
+                server.enqueueMsg(client.makeInsertMarkerMsg("test", MergeTree.ReferenceType.Tile,
                     pos, MergeTree.UnassignedSequenceNumber, client.getCurrentSeq(), ""));
-                client.insertMarkerLocal(pos, ops.ReferenceType.Tile,
+                client.insertMarkerLocal(pos, MergeTree.ReferenceType.Tile,
                     { [MergeTree.reservedTileLabelsKey]: "test" });
             }
             server.enqueueMsg(client.makeInsertMsg(text, pos, MergeTree.UnassignedSequenceNumber,
@@ -725,7 +721,7 @@ export function TestPack(verbose = true) {
         }
 
         function randomWordMove(client: MergeTree.Client) {
-            let word1 = findRandomWord(client.mergeTree, client.getClientId());
+            let word1 = mergeTreeUtils.findRandomWord(client.mergeTree, client.getClientId());
             if (word1) {
                 let removeStart = word1.pos;
                 let removeEnd = removeStart + word1.text.length;
@@ -735,9 +731,9 @@ export function TestPack(verbose = true) {
                 if (MergeTree.useCheckQ) {
                     client.enqueueTestString();
                 }
-                let word2 = findRandomWord(client.mergeTree, client.getClientId());
+                let word2 = mergeTreeUtils.findRandomWord(client.mergeTree, client.getClientId());
                 while (!word2) {
-                    word2 = findRandomWord(client.mergeTree, client.getClientId());
+                    word2 = mergeTreeUtils.findRandomWord(client.mergeTree, client.getClientId());
                 }
                 let pos = word2.pos + word2.text.length;
                 server.enqueueMsg(client.makeInsertMsg(word1.text, pos, MergeTree.UnassignedSequenceNumber,
@@ -832,7 +828,7 @@ export function TestPack(verbose = true) {
 
             if (extractSnap) {
                 let clockStart = clock();
-                let snapshot = new Paparazzo.Snapshot(snapClient.mergeTree);
+                let snapshot = new MergeTree.Snapshot(snapClient.mergeTree);
                 snapshot.extractSync();
                 extractSnapTime += elapsedMicroseconds(clockStart);
                 extractSnapOps++;
@@ -954,7 +950,7 @@ export function TestPack(verbose = true) {
             let curmin = snapClient.mergeTree.getCollabWindow().minSeq;
             lastSnap = curmin;
             console.log(`snap started seq ${snapClient.getCurrentSeq()} minseq ${curmin}`);
-            let snapshot = new Paparazzo.Snapshot(snapClient.mergeTree, filename, snapFinished);
+            let snapshot = new MergeTree.Snapshot(snapClient.mergeTree, filename, snapFinished);
             snapshot.start();
         }
 
@@ -1175,7 +1171,7 @@ export function TestPack(verbose = true) {
                 }
             }
         }
-        cli.insertMarkerRemote({ refType: ops.ReferenceType.Tile }, 0,
+        cli.insertMarkerRemote({ refType: MergeTree.ReferenceType.Tile }, 0,
             { [MergeTree.reservedTileLabelsKey]: ["peach"] },
             5, 0, 2)
         cli.insertTextRemote("very ", 6, undefined, 4, 2, 2);
@@ -1188,7 +1184,7 @@ export function TestPack(verbose = true) {
             }
         }
         cli.updateMinSeq(6);
-        let segs = new Paparazzo.Snapshot(cli.mergeTree).extractSync();
+        let segs = new MergeTree.Snapshot(cli.mergeTree).extractSync();
         if (verbose) {
             for (let seg of segs) {
                 if (seg.text !== undefined) {
@@ -1326,7 +1322,7 @@ export function TestPack(verbose = true) {
     }
 }
 
-function compareProxStrings(a: Collections.ProxString<number>, b: Collections.ProxString<number>) {
+function compareProxStrings(a: MergeTree.ProxString<number>, b: MergeTree.ProxString<number>) {
     let ascore = (a.invDistance * 200) + a.val;
     let bscore = (b.invDistance * 200) + b.val;
     return bscore - ascore;
@@ -1354,7 +1350,7 @@ function shuffle<T>(a: Array<T>) {
 }
 
 function tst() {
-    let tree = new Collections.TST<boolean>();
+    let tree = new MergeTree.TST<boolean>();
     let entries = ["giraffe", "hut", "aardvark", "gold", "hover", "yurt", "hot", "antelope", "gift", "banana"];
     for (let entry of entries) {
         tree.put(entry, true);
@@ -1368,14 +1364,14 @@ function tst() {
     console.log(p2);
     let p3 = tree.neighbors("hat");
     console.log(p3);
-    let ntree = new Collections.TST<number>();
+    let ntree = new MergeTree.TST<number>();
     let filename = path.join(__dirname, "../../public/literature/dict.txt")
     let content = fs.readFileSync(filename, "utf8");
     let splitContent = content.split(/\r\n|\n/g);
     let corpusFilename = path.join(__dirname, "../../../public/literature/pp.txt")
     let corpusContent = fs.readFileSync(corpusFilename, "utf8");
-    let corpusTree = new Collections.TST<number>();
-    function addCorpus(corpusContent: string, corpusTree: Collections.TST<number>) {
+    let corpusTree = new MergeTree.TST<number>();
+    function addCorpus(corpusContent: string, corpusTree: MergeTree.TST<number>) {
         let count = 0;
         let re = /\b\w+\b/g;
         let result: RegExpExecArray;
@@ -1486,7 +1482,7 @@ export class DocumentTree {
         } else {
             let id: number;
             if (docNode.name === "pg") {
-                client.insertMarkerLocal(this.pos, ops.ReferenceType.Tile,
+                client.insertMarkerLocal(this.pos, MergeTree.ReferenceType.Tile,
                     {
                         [MergeTree.reservedTileLabelsKey]: [docNode.name],
                     },
@@ -1500,10 +1496,10 @@ export class DocumentTree {
                     [MergeTree.reservedMarkerIdKey]: trid,
                     [MergeTree.reservedRangeLabelsKey]: [docNode.name],
                 };
-                let behaviors = ops.ReferenceType.NestBegin;
+                let behaviors = MergeTree.ReferenceType.NestBegin;
                 if (docNode.name === "row") {
                     props[MergeTree.reservedTileLabelsKey] = ["pg"];
-                    behaviors |= ops.ReferenceType.Tile;
+                    behaviors |= MergeTree.ReferenceType.Tile;
                 }
 
                 client.insertMarkerLocal(this.pos, behaviors, props);
@@ -1514,7 +1510,7 @@ export class DocumentTree {
             }
             if (docNode.name !== "pg") {
                 let etrid = "end-" + docNode.name + id.toString();
-                client.insertMarkerLocal(this.pos, ops.ReferenceType.NestEnd,
+                client.insertMarkerLocal(this.pos, MergeTree.ReferenceType.NestEnd,
                     {
                         [MergeTree.reservedMarkerIdKey]: etrid,
                         [MergeTree.reservedRangeLabelsKey]: [docNode.name],
@@ -1530,11 +1526,11 @@ export class DocumentTree {
         let pos = 0;
         let verbose = false;
         let stacks = {
-            box: new Collections.Stack<string>(),
-            row: new Collections.Stack<string>()
+            box: new MergeTree.Stack<string>(),
+            row: new MergeTree.Stack<string>()
         };
 
-        function printStack(stack: Collections.Stack<string>) {
+        function printStack(stack: MergeTree.Stack<string>) {
             for (let item in stack.items) {
                 console.log(item);
             }
@@ -1547,7 +1543,7 @@ export class DocumentTree {
             }
         }
 
-        function checkTreeStackEmpty(treeStack: Collections.Stack<string>) {
+        function checkTreeStackEmpty(treeStack: MergeTree.Stack<string>) {
             if (!treeStack.empty()) {
                 errorCount++;
                 console.log("mismatch: client stack empty; tree stack not");
@@ -1566,7 +1562,7 @@ export class DocumentTree {
                     client.getClientId(), ["box", "row"]);
                 for (let name of ["box", "row"]) {
                     let cliStack = cliStacks[name];
-                    let treeStack = <Collections.Stack<string>>stacks[name];
+                    let treeStack = <MergeTree.Stack<string>>stacks[name];
                     if (cliStack) {
                         let len = cliStack.items.length;
                         if (len > 0) {

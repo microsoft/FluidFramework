@@ -1,5 +1,5 @@
+import { ui } from "@prague/client-ui";
 import * as assert from "assert";
-import { Rectangle } from "../../../ui";
 
 describe("Routerlicious", () => {
     describe("UI", () => {
@@ -10,7 +10,7 @@ describe("Routerlicious", () => {
                         const width = 400;
                         const height = 400;
 
-                        const rectangle = new Rectangle(0, 0, width, height);
+                        const rectangle = new ui.Rectangle(0, 0, width, height);
                         assert.equal(rectangle.x, 0);
                         assert.equal(rectangle.y, 0);
                         assert.equal(rectangle.width, width);

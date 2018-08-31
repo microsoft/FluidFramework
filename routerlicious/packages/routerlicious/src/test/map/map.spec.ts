@@ -1,15 +1,13 @@
+import { api, map, types } from "@prague/client-api";
 import * as assert from "assert";
-import * as api from "../../api";
-import { IMapView } from "../../data-types";
-import { CollaborativeMap, copyMap, MapView } from "../../map";
 import { generateToken } from "../../utils";
 import * as testUtils from "../testUtils";
 
 describe("Routerlicious", () => {
     describe("Map", () => {
         let testDocument: api.Document;
-        let rootMap: CollaborativeMap;
-        let testMap: CollaborativeMap;
+        let rootMap: map.CollaborativeMap;
+        let testMap: map.CollaborativeMap;
 
         beforeEach(async () => {
             const tenantId = "test";
@@ -19,8 +17,8 @@ describe("Routerlicious", () => {
             testUtils.registerAsTest("", "", "");
             const token = generateToken(tenantId, documentId, secret);
             testDocument = await api.load(documentId, { token });
-            rootMap = testDocument.getRoot() as CollaborativeMap;
-            testMap = testDocument.createMap() as CollaborativeMap;
+            rootMap = testDocument.getRoot() as map.CollaborativeMap;
+            testMap = testDocument.createMap() as map.CollaborativeMap;
         });
 
         describe("CollaborativeMap", () => {
@@ -53,7 +51,7 @@ describe("Routerlicious", () => {
                 from.set("kevin", "love");
 
                 const to = new Map();
-                copyMap(from, to);
+                map.copyMap(from, to);
 
                 for (const key of from.keys()) {
                     assert.ok(to.has(key));
@@ -63,7 +61,7 @@ describe("Routerlicious", () => {
         });
 
         describe("MapView", () => {
-            let view: IMapView;
+            let view: types.IMapView;
 
             beforeEach(async () => {
                 view = await testMap.getView();
@@ -139,7 +137,7 @@ describe("Routerlicious", () => {
                     const subMap = testDocument.createMap();
                     view.set("object", subMap);
 
-                    const concrete = view as MapView;
+                    const concrete = view as map.MapView;
                     const serialized = concrete.serialize((key, value, type) => value);
                     const parsed = JSON.parse(serialized);
 

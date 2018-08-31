@@ -1,6 +1,5 @@
+import { core as api, socketStorage } from "@prague/client-api";
 import * as resources from "@prague/gitresources";
-import * as api from "../../api-core";
-import { DocumentDeltaStorageService } from "../../socket-storage";
 import { TestDocumentDeltaConnection } from "./";
 
 class TestDocumentStorageService implements api.IDocumentStorageService {
@@ -62,7 +61,7 @@ export class TestDocumentService implements api.IDocumentService {
         tenantId: string,
         id: string,
         token: string): Promise<api.IDocumentDeltaStorageService> {
-        return new DocumentDeltaStorageService(tenantId, id, token, this.deltaStorage);
+        return new socketStorage.DocumentDeltaStorageService(tenantId, id, token, this.deltaStorage);
     }
 
     public async connectToDeltaStream(

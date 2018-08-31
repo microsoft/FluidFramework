@@ -1,11 +1,10 @@
+import { core as api, utils as coreUtils } from "@prague/client-api";
 import * as assert from "assert";
 import * as _ from "lodash";
 // tslint:disable-next-line:no-var-requires
 const now = require("performance-now");
 import * as winston from "winston";
-import * as api from "../api-core";
 import * as core from "../core";
-import { RangeTracker } from "../core-utils";
 import { IContext, IPartitionLambda } from "../kafka-service/lambdas";
 import * as utils from "../utils";
 import { CheckpointContext, ICheckpoint, IClientSequenceNumber } from "./checkpointContext";
@@ -46,7 +45,7 @@ export class DeliLambda implements IPartitionLambda {
     private clientNodeMap = new Map<string, utils.IHeapNode<IClientSequenceNumber>>();
     private clientSeqNumbers = new utils.Heap<IClientSequenceNumber>(SequenceNumberComparer);
     private minimumSequenceNumber = 0;
-    private branchMap: RangeTracker;
+    private branchMap: coreUtils.RangeTracker;
     private checkpointContext: CheckpointContext;
     private idleTimer: any;
 
@@ -77,10 +76,10 @@ export class DeliLambda implements IPartitionLambda {
         // Setup branch information
         if (dbObject.parent) {
             if (dbObject.branchMap) {
-                this.branchMap = new RangeTracker(dbObject.branchMap);
+                this.branchMap = new coreUtils.RangeTracker(dbObject.branchMap);
             } else {
                 // Initialize the range tracking window
-                this.branchMap = new RangeTracker(
+                this.branchMap = new coreUtils.RangeTracker(
                     dbObject.parent.minimumSequenceNumber,
                     dbObject.parent.minimumSequenceNumber);
                 // tslint:disable-next-line:max-line-length

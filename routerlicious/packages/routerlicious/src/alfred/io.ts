@@ -1,9 +1,8 @@
+import * as agent from "@prague/agent";
+import { core as api, socketStorage } from "@prague/client-api";
 import * as jwt from "jsonwebtoken";
 import * as winston from "winston";
-import * as agent from "../agent";
-import * as api from "../api-core";
 import * as core from "../core";
-import * as socketStorage from "../socket-storage";
 
 export function register(
     webSocketServer: core.IWebSocketServer,

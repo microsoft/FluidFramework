@@ -1,4 +1,4 @@
-import * as api from "../../api-core";
+import { core as api } from "@prague/client-api";
 import { IOrderer, IOrdererConnection, IWebSocket } from "../../core";
 
 export interface IOrdererConnectionFactory {

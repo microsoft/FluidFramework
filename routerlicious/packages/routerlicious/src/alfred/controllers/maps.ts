@@ -1,11 +1,9 @@
+import * as agent from "@prague/agent";
+import { api, core, map as Map, socketStorage, types } from "@prague/client-api";
 import * as resources from "@prague/gitresources";
 import * as $ from "jquery";
 // tslint:disable-next-line:no-var-requires
 const hasIn = require("lodash/hasIn");
-import * as agent from "../../agent";
-import { api, core, map as Map, socketStorage, types } from "../../client-api";
-import { IValueChanged } from "../../data-types";
-import { Counter, DistributedSet } from "../../map";
 
 async function loadDocument(
     id: string,
@@ -37,10 +35,10 @@ async function updateOrCreateKey(key: string, map: types.IMap, container: JQuery
         }
     } else {
         if (key === "set") {
-            const set = value as DistributedSet<number>;
+            const set = value as Map.DistributedSet<number>;
             keyElement.text(`${key}: ${JSON.stringify(set.entries())}`);
         } else if (key === "counter") {
-            const counter = value as Counter;
+            const counter = value as Map.Counter;
             keyElement.text(`${key}: ${counter.value}`);
         } else {
             keyElement.text(`${key}: ${JSON.stringify(value)}`);
@@ -58,7 +56,7 @@ async function displayValues(map: types.IMap, container: JQuery, doc: api.Docume
     }
 
     // Listen and process updates
-    map.on("valueChanged", async (changed: IValueChanged ) => {
+    map.on("valueChanged", async (changed: types.IValueChanged ) => {
         updateOrCreateKey(changed.key, map, values, doc);
     });
 

@@ -1,8 +1,7 @@
+import { core as api, utils } from "@prague/client-api";
 import * as assert from "assert";
 import { EventEmitter } from "events";
-import * as api from "../../api-core";
 import { IOrderer, IOrdererConnection, IWebSocket } from "../../core";
-import { Deferred } from "../../core-utils";
 import { MongoManager } from "../../utils";
 import { debug } from "../debug";
 import { IConcreteNode, IConnectedMessage, IConnectMessage, INode, INodeMessage, IOpMessage } from "./interfaces";
@@ -57,7 +56,7 @@ class ProxySocketThing implements IOrdererConnectionFactory {
 }
 
 interface IPendingConnection {
-    deferred: Deferred<IOrdererConnection>;
+    deferred: utils.Deferred<IOrdererConnection>;
     socket: IWebSocket;
     tenantId: string;
     documentId: string;
@@ -174,7 +173,7 @@ export class RemoteNode extends EventEmitter implements IConcreteNode {
             user,
         };
 
-        const deferred = new Deferred<IOrdererConnection>();
+        const deferred = new utils.Deferred<IOrdererConnection>();
         this.connectMap.set(cid, { socket, deferred, tenantId, documentId });
         this.send(cid, "connect", connectMessage);
 

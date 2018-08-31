@@ -1,6 +1,5 @@
+import { core as api, map } from "@prague/client-api";
 import * as assert from "assert";
-import * as api from "../../api-core";
-import * as map from "../../map";
 
 describe("Routerlicious", () => {
     describe("Api", () => {

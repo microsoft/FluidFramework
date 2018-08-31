@@ -1,4 +1,5 @@
-import { core, socketIoClient as io } from "../../client-api";
+import { core } from "@prague/client-api";
+import * as io from "socket.io-client";
 
 // new average = old average + (next data - old average) / next count
 let messageCount = 0;

@@ -1,9 +1,9 @@
+import { core as api } from "@prague/client-api";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import * as moniker from "moniker";
 // tslint:disable-next-line:no-var-requires
 const now = require("performance-now");
-import * as api from "../../api-core";
 import { ICollection, IOrdererConnection, ITenantManager } from "../../core";
 import * as core from "../../core";
 import { DeliLambda } from "../../deli/lambda";

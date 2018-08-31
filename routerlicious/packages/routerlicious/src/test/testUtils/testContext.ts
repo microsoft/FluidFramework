@@ -1,6 +1,6 @@
+import { utils } from "@prague/client-api";
 import * as assert from "assert";
 import { EventEmitter } from "events";
-import * as utils from "../../core-utils";
 import { IContext } from "../../kafka-service/lambdas";
 
 interface IWaitOffset {

@@ -1,4 +1,4 @@
-import * as api from "../api-core";
+import { core as api } from "@prague/client-api";
 
 // String identifying the raw operation message
 export const RawOperationType: string = "RawOperation";

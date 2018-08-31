@@ -1,5 +1,4 @@
-import * as api from "../../api";
-import * as apiCore from "../../api-core";
+import { api, core as apiCore } from "@prague/client-api";
 import * as testUtils from "./";
 
 export function registerAsTest(deltaUrl: string, blobUrl: string, repository: string) {

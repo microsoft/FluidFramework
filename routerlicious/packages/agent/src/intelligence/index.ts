@@ -11,3 +11,6 @@ export { nativeTextAnalytics };
 
 import * as ImageAnalytics from "./imageAnalytics";
 export { ImageAnalytics };
+
+import * as resume from "./resume";
+export { resume };

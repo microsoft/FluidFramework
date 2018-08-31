@@ -1,5 +1,5 @@
+import { core } from "@prague/client-api";
 import * as assert from "assert";
-import { core } from "../../client-api";
 
 export class DeltaQueueManager {
     public static Unlimited = -1;

@@ -1,19 +1,18 @@
 // tslint:disable:ban-types
+import { core, utils } from "@prague/client-api";
 import * as assert from "assert";
 import { EventEmitter } from "events";
-import * as core from "../../api-core";
-import { Deferred } from "../../core-utils";
 
 export class TestDeltaQueue extends EventEmitter implements core.IDeltaQueue {
     public paused: boolean;
     public length: number;
     public empty: boolean;
-    private resumeDeferred: Deferred<void>;
+    private resumeDeferred: utils.Deferred<void>;
 
     public pause() {
         if (!this.paused) {
             this.paused = true;
-            this.resumeDeferred = new Deferred<void>();
+            this.resumeDeferred = new utils.Deferred<void>();
         }
     }
 

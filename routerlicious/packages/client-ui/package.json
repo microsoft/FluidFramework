@@ -1,7 +1,7 @@
 {
   "name": "@prague/client-ui",
   "version": "0.1.0",
-  "description": "Server to assign sequence numbers and route deltas between connected clients",
+  "description": "Prague client UI",
   "main": "dist/index.js",
   "module": "lib/index.js",
   "types": "dist/index.d.ts",
@@ -10,11 +10,8 @@
     "build": "npm run tsc && npm run tslint",
     "build:full": "npm run build && npm run build:esnext",
     "build:esnext": "tsc --outDir lib --m esnext",
-    "test": "mocha --recursive dist/test",
-    "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml",
     "tsc": "tsc",
-    "tslint": "tslint 'src/**/*.ts'",
-    "beast": "npm test -- --beast --grep beastTest"
+    "tslint": "tslint 'src/**/*.ts'"
   },
   "author": "Microsoft",
   "repository": "microsoft/prague",

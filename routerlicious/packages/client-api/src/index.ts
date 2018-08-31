@@ -39,3 +39,5 @@ export { socketStorage };
 
 import * as api from "./api";
 export { api };
+
+export * from "./services-client";

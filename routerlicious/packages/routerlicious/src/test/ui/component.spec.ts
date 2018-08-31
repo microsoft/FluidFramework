@@ -1,6 +1,6 @@
+import { ui } from "@prague/client-ui";
 import * as assert from "assert";
 import { JSDOM } from "jsdom";
-import * as ui from "../../ui";
 
 class TestComponent extends ui.Component {
     protected resizeCore(rectangle: ui.Rectangle) {

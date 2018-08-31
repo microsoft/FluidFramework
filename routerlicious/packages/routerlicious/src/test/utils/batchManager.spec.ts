@@ -1,15 +1,15 @@
+import { utils } from "@prague/client-api";
 import * as assert from "assert";
-import { BatchManager } from "../../core-utils";
 
 describe("Routerlicious", () => {
     describe("Utils", () => {
         describe("BatchManager", () => {
-            let batchManager: BatchManager<any>;
+            let batchManager: utils.BatchManager<any>;
             let pending: { [key: string]: any[][] };
 
             beforeEach(() => {
                 pending = {};
-                batchManager = new BatchManager<any>((id, work) => {
+                batchManager = new utils.BatchManager<any>((id, work) => {
                     if (!(id in pending)) {
                         pending[id] = [];
                     }
