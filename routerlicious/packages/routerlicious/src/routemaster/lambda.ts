@@ -1,5 +1,5 @@
+import { core as api } from "@prague/client-api";
 import * as winston from "winston";
-import * as api from "../api-core";
 import * as core from "../core";
 import { IContext } from "../kafka-service/lambdas";
 import { SequencedLambda } from "../kafka-service/sequencedLambda";

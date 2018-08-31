@@ -1,7 +1,7 @@
+import { core as api } from "@prague/client-api";
 import { ICommit, ICommitDetails } from "@prague/gitresources";
 import * as moniker from "moniker";
 import * as winston from "winston";
-import * as api from "../api-core";
 import * as core from "../core";
 import * as utils from "../utils";
 

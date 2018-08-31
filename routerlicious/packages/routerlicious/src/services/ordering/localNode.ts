@@ -1,9 +1,9 @@
+import { core as api } from "@prague/client-api";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import * as _ from "lodash";
 import * as uuid from "uuid/v4";
 import * as ws from "ws";
-import * as api from "../../api-core";
 import {
     IDatabaseManager, IDocumentStorage, IOrderer, IOrdererConnection, ITaskMessageSender, ITenantManager,
 } from "../../core";

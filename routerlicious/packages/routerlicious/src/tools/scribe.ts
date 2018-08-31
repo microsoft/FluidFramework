@@ -1,8 +1,8 @@
+import { socketStorage } from "@prague/client-api";
 import * as commander from "commander";
 import * as fs from "fs";
 import * as path from "path";
 import * as ProgressBar from "progress";
-import * as socketStorage from "../socket-storage";
 import * as utils from "../utils";
 import { scribe } from "../utils";
 

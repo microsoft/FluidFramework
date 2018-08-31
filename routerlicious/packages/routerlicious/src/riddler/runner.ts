@@ -1,12 +1,12 @@
+import { utils as coreUtils } from "@prague/client-api";
 import * as http from "http";
 import * as winston from "winston";
-import { Deferred } from "../core-utils";
 import * as utils from "../utils";
 import * as app from "./app";
 
 export class RiddlerRunner implements utils.IRunner {
     private server: http.Server;
-    private runningDeferred: Deferred<void>;
+    private runningDeferred: coreUtils.Deferred<void>;
 
     constructor(
         private collectionName: string,
@@ -16,7 +16,7 @@ export class RiddlerRunner implements utils.IRunner {
     }
 
     public start(): Promise<void> {
-        this.runningDeferred = new Deferred<void>();
+        this.runningDeferred = new coreUtils.Deferred<void>();
 
         // Create the HTTP server and attach alfred to it
         const riddler = app.create(this.collectionName, this.mongoManager, this.loggerFormat);

@@ -1,10 +1,8 @@
+import { core as api, socketStorage, utils as coreUtils } from "@prague/client-api";
 import * as assert from "assert";
 import * as io from "../../alfred/io";
-import * as api from "../../api-core";
 import * as core from "../../core";
-import { Deferred } from "../../core-utils";
 import * as services from "../../services";
-import * as socketStorage from "../../socket-storage";
 import * as utils from "../../utils";
 import {
     MessageFactory,
@@ -73,7 +71,7 @@ describe("Routerlicious", () => {
                         token,
                     };
 
-                    const deferred = new Deferred<socketStorage.IConnected>();
+                    const deferred = new coreUtils.Deferred<socketStorage.IConnected>();
                     socket.send(
                         "connectDocument",
                         connectMessage,
@@ -93,7 +91,7 @@ describe("Routerlicious", () => {
                     clientId: string,
                     message: api.IDocumentMessage): Promise<void> {
 
-                    const deferred = new Deferred<void>();
+                    const deferred = new coreUtils.Deferred<void>();
                     socket.send("submitOp", clientId, [message], (error: any, response: any) => {
                         if (error) {
                             deferred.reject(error);

@@ -1,6 +1,6 @@
+import { api, core, socketStorage } from "@prague/client-api";
 import * as resources from "@prague/gitresources";
 import * as d3 from "d3";
-import { api, core, socketStorage } from "../../client-api";
 
 interface INode {
     label: string;  // Text inside the node.

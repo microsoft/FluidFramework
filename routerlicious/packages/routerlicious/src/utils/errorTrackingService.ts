@@ -1,7 +1,7 @@
+import { utils } from "@prague/client-api";
 import * as raven from "raven";
-import { IErrorTrackingService } from "../core-utils";
 
-export class NodeErrorTrackingService implements IErrorTrackingService {
+export class NodeErrorTrackingService implements utils.IErrorTrackingService {
 
     constructor(private endpoint: string) {
     }

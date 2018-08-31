@@ -1,6 +1,6 @@
 // tslint:disable:ban-types
+import { core as api } from "@prague/client-api";
 import * as git from "@prague/gitresources";
-import * as api from "../../api-core";
 
 export class TestDocumentDeltaConnection implements api.IDocumentDeltaConnection {
     public existing: boolean;

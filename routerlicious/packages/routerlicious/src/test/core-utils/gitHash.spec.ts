@@ -1,7 +1,7 @@
+import { utils } from "@prague/client-api";
 import * as assert from "assert";
 import * as fs from "fs";
 import * as path from "path";
-import { gitHashFile } from "../../core-utils";
 
 async function getFileContents(p: string): Promise<Buffer> {
 
@@ -23,7 +23,7 @@ describe("Core-Utils", () => {
             const p = path.join(__dirname, "../../../public/favicon.ico");
             const file = await getFileContents(p);
             const expectedHash = "bfe873eb228f98720fe0ed18c638daa13906958f";
-            const hash = gitHashFile(file);
+            const hash = utils.gitHashFile(file);
 
             assert.equal(hash, expectedHash);
         });
@@ -32,7 +32,7 @@ describe("Core-Utils", () => {
             const p = path.join(__dirname, "../../../public/images/aka.pdf");
             const file = await getFileContents(p);
             const expectedHash = "f3423703f542852aa7f3d1a13e73f0de0d8c9c0f";
-            const hash = gitHashFile(file);
+            const hash = utils.gitHashFile(file);
 
             assert.equal(hash, expectedHash);
         });
@@ -41,7 +41,7 @@ describe("Core-Utils", () => {
             const p = path.join(__dirname, "../../../public/images/clippy.gif");
             const file = await getFileContents(p);
             const expectedHash = "3ce319dee60ec493f93c7e1ac4c97470b10707fd";
-            const hash = gitHashFile(file);
+            const hash = utils.gitHashFile(file);
 
             assert.equal(hash, expectedHash);
         });

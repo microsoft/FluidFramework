@@ -1,7 +1,7 @@
+import { core as api } from "@prague/client-api";
 import * as moniker from "moniker";
 // tslint:disable-next-line:no-var-requires
 const now = require("performance-now");
-import * as api from "../../api-core";
 import * as core from "../../core";
 import { IProducer } from "../../utils";
 

@@ -1,6 +1,6 @@
+import { utils as coreUtils } from "@prague/client-api";
 import * as assert from "assert";
 import { Provider } from "nconf";
-import { Deferred } from "../../core-utils";
 import * as utils from "../../utils";
 import { TestKafka, TestProducer } from "../testUtils/index";
 
@@ -11,7 +11,7 @@ class TestResources implements utils.IResources {
 }
 
 class TestRunner implements utils.IRunner {
-    private deferred = new Deferred<void>();
+    private deferred = new coreUtils.Deferred<void>();
 
     constructor(private fail: boolean) {
     }

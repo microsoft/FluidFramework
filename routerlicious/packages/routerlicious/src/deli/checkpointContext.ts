@@ -1,6 +1,6 @@
+import { utils } from "@prague/client-api";
 import * as winston from "winston";
 import * as core from "../core";
-import { IRangeTrackerSnapshot } from "../core-utils";
 import { IContext } from "../kafka-service/lambdas";
 
 export interface IClientSequenceNumber {
@@ -14,7 +14,7 @@ export interface IClientSequenceNumber {
 }
 
 export interface ICheckpoint {
-    branchMap: IRangeTrackerSnapshot;
+    branchMap: utils.IRangeTrackerSnapshot;
     clients: IClientSequenceNumber[];
     logOffset: number;
     sequenceNumber: number;

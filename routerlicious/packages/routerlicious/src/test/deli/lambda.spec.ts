@@ -1,7 +1,7 @@
+import * as agent from "@prague/agent";
 import * as assert from "assert";
 import * as _ from "lodash";
 import * as nconf from "nconf";
-import * as agent from "../../agent";
 import * as core from "../../core";
 import { ClientSequenceTimeout, DeliLambdaFactory } from "../../deli/lambdaFactory";
 import { IPartitionLambda } from "../../kafka-service/lambdas";

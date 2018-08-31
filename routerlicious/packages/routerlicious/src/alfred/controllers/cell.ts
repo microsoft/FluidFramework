@@ -1,6 +1,6 @@
+import { api, socketStorage, types } from "@prague/client-api";
 import * as resources from "@prague/gitresources";
 import * as $ from "jquery";
-import { api, socketStorage, types } from "../../client-api";
 
 async function loadDocument(id: string, version: resources.ICommit, token: string, client: any): Promise<api.Document> {
     console.log("Loading in root document...");

@@ -1,6 +1,6 @@
+import { socketStorage } from "@prague/client-api";
 import * as request from "request";
 import * as url from "url";
-import { socketStorage } from "../../client-api";
 import { IScribeMetrics } from "../../utils/author";
 import * as scribe from "../../utils/scribe";
 
@@ -100,7 +100,7 @@ function handleFiles(createButton: HTMLButtonElement,
     const reader = new FileReader();
     reader.onload = (event) => {
         // After loading the file show the create button
-        text = reader.result;
+        text = reader.result as string;
         createButton.classList.remove("hidden");
     };
 

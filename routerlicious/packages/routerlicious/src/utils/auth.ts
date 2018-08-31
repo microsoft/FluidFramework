@@ -1,5 +1,5 @@
+import { core } from "@prague/client-api";
 import * as jwt from "jsonwebtoken";
-import { ITokenClaims } from "../api-core";
 import * as utils from "../utils";
 
 /**
@@ -7,7 +7,7 @@ import * as utils from "../utils";
  */
 export function generateToken(tenantId: string, documentId: string, key: string): string {
     const userId = utils.getRandomName(" ", true);
-    const claims: ITokenClaims = {
+    const claims: core.ITokenClaims = {
         documentId,
         permission: "read:write",
         tenantId,

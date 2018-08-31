@@ -1,13 +1,20 @@
 // tslint:disable:ban-types
+import * as agent from "@prague/agent";
+import {
+    api as API,
+    core,
+    map as DistributedMap,
+    MergeTree,
+    SharedString,
+    socketStorage,
+    types,
+} from "@prague/client-api";
+import { controls, ui } from "@prague/client-ui";
 import * as resources from "@prague/gitresources";
 // tslint:disable-next-line:no-var-requires
 const performanceNow = require("performance-now");
 import * as request from "request";
 import * as url from "url";
-import * as agent from "../../agent";
-import { api as API, core, map as DistributedMap,  MergeTree, socketStorage, types } from "../../client-api";
-import { controls, ui } from "../../client-ui";
-import { SharedString } from "../../shared-string";
 
 // first script loaded
 const clockStart = Date.now();
@@ -114,7 +121,7 @@ async function loadDocument(
         console.log(`Not existing ${id} - ${performanceNow()}`);
         root.set("presence", collabDoc.createMap());
         root.set("users", collabDoc.createMap());
-        const newString = collabDoc.createString() as SharedString;
+        const newString = collabDoc.createString() as SharedString.SharedString;
 
         const starterText = template ? await downloadRawText(template) : " ";
         const segments = MergeTree.loadSegments(starterText, 0, true);
@@ -139,7 +146,7 @@ async function loadDocument(
         await Promise.all([root.wait("text"), root.wait("ink")]);
     }
 
-    const sharedString = root.get("text") as SharedString;
+    const sharedString = root.get("text") as SharedString.SharedString;
     console.log(`Shared string ready - ${performanceNow()}`);
     console.log(window.navigator.userAgent);
     console.log(`id is ${id}`);

@@ -1,12 +1,12 @@
+import { utils as coreUtils } from "@prague/client-api";
 import { Provider } from "nconf";
 import * as winston from "winston";
-import { Deferred } from "../core-utils";
 import * as utils from "../utils";
 import { IPartitionLambdaFactory } from "./lambdas";
 import { PartitionManager } from "./partitionManager";
 
 export class KafkaRunner implements utils.IRunner {
-    private deferred: Deferred<void>;
+    private deferred: coreUtils.Deferred<void>;
     private partitionManager: PartitionManager;
 
     constructor(
@@ -16,7 +16,7 @@ export class KafkaRunner implements utils.IRunner {
     }
 
     public start(): Promise<void> {
-        this.deferred = new Deferred<void>();
+        this.deferred = new coreUtils.Deferred<void>();
 
         process.on("warning", (msg) => {
             console.trace("Warning", msg);
