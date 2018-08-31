@@ -1,6 +1,6 @@
 import * as resources from "@prague/gitresources";
 import * as api from "../api-core";
-import * as gitStorage from "../git-storage";
+import * as gitStorage from "../services-client";
 
 /**
  * Document access to underlying storage
