@@ -136,6 +136,8 @@ export class DeltaManager extends EventEmitter implements IDeltaManager {
      * Sets the sequence number from which inbound messages should be returned
      */
     public attachOpHandler(sequenceNumber: number, handler: IDeltaHandlerStrategy) {
+        debug("Attached op handler", sequenceNumber);
+
         // The MSN starts at the base the manager is initialized to
         this.baseSequenceNumber = sequenceNumber;
         this.minSequenceNumber = this.baseSequenceNumber;
@@ -352,14 +354,25 @@ export class DeltaManager extends EventEmitter implements IDeltaManager {
                     this.emit("pong", latency);
                 });
 
-                const initialMessages =  connection.details.initialMessages;
-                if (initialMessages && initialMessages.length > 0) {
-                    // the "connectDocument" message sent us some deltas. let's process them
-                    this.catchUp(initialMessages);
-                }
-
                 // Notify of the connection
                 this.emit("connect", connection.details);
+
+                const initialMessages = connection.details.initialMessages;
+                if (initialMessages && initialMessages.length > 0) {
+                    // the "connect_document_success" message sent us some deltas
+                    debug("Catching up on initial messages", initialMessages);
+
+                    // confirm the status of the handler and inbound queue
+                    if (!this.handler || this._inbound.paused) {
+                        // process them once the queue is ready
+                        this._inbound.once("resume", () => {
+                            this.catchUp(initialMessages);
+                        });
+
+                    } else {
+                        this.catchUp(initialMessages);
+                    }
+                }
             },
             (error) => {
                 delay = Math.min(delay, MaxReconnectDelay);

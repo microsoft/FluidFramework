@@ -72,8 +72,17 @@ describe("Routerlicious", () => {
                     };
 
                     const deferred = new coreUtils.Deferred<socketStorage.IConnected>();
+
+                    socket.on("connect_document_success", (connectedMessage: socketStorage.IConnected) => {
+                        deferred.resolve(connectedMessage);
+                    });
+
+                    socket.on("connect_document_error", (error: any) => {
+                        deferred.reject(error);
+                    });
+
                     socket.send(
-                        "connectDocument",
+                        "connect_document",
                         connectMessage,
                         (error: any, connectedMessage: socketStorage.IConnected) => {
                             if (error) {
@@ -103,7 +112,7 @@ describe("Routerlicious", () => {
                     return deferred.promise;
                 }
 
-                describe("#connectDocument", () => {
+                describe("#connect_document", () => {
                     it("Should connect to and create a new interactive document on first connection", async () => {
                         const socket = webSocketServer.createConnection();
                         const connectMessage = await connectToServer(testId, testTenantId, testSecret, socket);

@@ -35,21 +35,41 @@ export class DocumentDeltaConnection implements api.IDocumentDeltaConnection {
         };
 
         const connection = await new Promise<messages.IConnected>((resolve, reject) => {
+            // Listen for ops sent before we receive a response to connect_document
+            const queuedMessages: api.ISequencedDocumentMessage[] = [];
+
+            const earlyOpHandler = (documentId: string, msgs: api.ISequencedDocumentMessage[]) => {
+                debug("Queued early ops", msgs.length);
+                queuedMessages.push(...msgs);
+            };
+            socket.on("op", earlyOpHandler);
+
             // Listen for connection issues
             socket.on("connect_error", (error) => {
                 reject(error);
             });
 
-            socket.emit(
-                "connectDocument",
-                connectMessage,
-                (error, response: messages.IConnected) => {
-                    if (error) {
-                        return reject(error);
-                    } else {
-                        return resolve(response);
+            socket.on("connect_document_success", (response: messages.IConnected) => {
+                socket.removeListener("op", earlyOpHandler);
+
+                if (queuedMessages.length > 0) {
+                    // some messages were queued.
+                    // add them to the list of initialMessages to be processed
+                    if (!response.initialMessages) {
+                        response.initialMessages = [];
                     }
-                });
+
+                    response.initialMessages.push(...queuedMessages);
+
+                    response.initialMessages.sort((a, b) => a.sequenceNumber - b.sequenceNumber);
+                }
+
+                resolve(response);
+            });
+
+            socket.on("connect_document_error", reject);
+
+            socket.emit("connect_document", connectMessage);
         });
 
         const deltaConnection = new DocumentDeltaConnection(socket, id, connection);
@@ -74,6 +94,10 @@ export class DocumentDeltaConnection implements api.IDocumentDeltaConnection {
 
     public get user(): api.ITenantUser {
         return this.details.user;
+    }
+
+    public get initialMessages(): api.ISequencedDocumentMessage[] {
+        return this.details.initialMessages;
     }
 
     constructor(
