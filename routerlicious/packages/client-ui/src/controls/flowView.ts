@@ -1,24 +1,21 @@
 // tslint:disable:no-bitwise whitespace align switch-default no-string-literal ban-types no-angle-bracket-type-assertion
 import {
-    api, CharacterCodes, core, MergeTree,
-    Paragraph, Table, types,
+    api,
+    CharacterCodes,
+    core,
+    MergeTree,
+    mergeTreeUtils,
+    Paragraph,
+    SharedString,
+    Table,
+    Text,
+    types,
 } from "@prague/client-api";
 import * as assert from "assert";
 // tslint:disable-next-line:no-var-requires
 const performanceNow = require("performance-now");
 import { blobUploadHandler, urlToInclusion } from "../blob";
 import { CollaborativeWorkbook } from "../calc";
-import { ReferenceType } from "../merge-tree";
-import { findRandomWord } from "../merge-tree-utils";
-import {
-    DeserializeCallback,
-    PrepareDeserializeCallback,
-    SharedIntervalCollection,
-    SharedIntervalCollectionView,
-    SharedString,
-    SharedStringInterval,
-} from "../shared-string";
-import { IPGBlock, ParagraphItemType } from "../text/paragraph";
 import * as ui from "../ui";
 import { Status } from "./status";
 
@@ -1149,7 +1146,7 @@ function renderSegmentIntoLine(
 
         // If the marker is a simple reference, see if it's types is registered as an external
         // component.
-        if (marker.refType === ReferenceType.Simple) {
+        if (marker.refType === MergeTree.ReferenceType.Simple) {
             const typeName = marker.properties.ref && marker.properties.ref.type.name;
             const component = ui.refTypeNameToComponent.get(typeName);
 
@@ -1324,11 +1321,11 @@ function getWidthInLine(endPGMarker: Paragraph.IParagraphMarker, breakIndex: num
     let w = 0;
     while (offset > 0) {
         const item = endPGMarker.itemCache.items[itemIndex];
-        if (!item || (item.type === ParagraphItemType.Marker)) {
+        if (!item || (item.type === Text.Paragraph.ParagraphItemType.Marker)) {
             itemIndex++;
             break;
         }
-        const blockItem = <IPGBlock>item;
+        const blockItem = <Text.Paragraph.IPGBlock>item;
         if (blockItem.text.length > offset) {
             const fontstr = item.fontstr || defaultFontstr;
             const subw = getTextWidth(blockItem.text.substring(0, offset), fontstr);
@@ -3210,10 +3207,10 @@ export class FlowView extends ui.Component {
     public wheelTicking = false;
     public topChar = -1;
     public cursor: Cursor;
-    public bookmarks: SharedIntervalCollectionView<SharedStringInterval>;
-    public tempBookmarks: SharedStringInterval[];
-    public comments: SharedIntervalCollection<SharedStringInterval>;
-    public commentsView: SharedIntervalCollectionView<SharedStringInterval>;
+    public bookmarks: SharedString.SharedIntervalCollectionView<SharedString.SharedStringInterval>;
+    public tempBookmarks: SharedString.SharedStringInterval[];
+    public comments: SharedString.SharedIntervalCollection<SharedString.SharedStringInterval>;
+    public commentsView: SharedString.SharedIntervalCollectionView<SharedString.SharedStringInterval>;
     public presenceMapView: types.IMapView;
     public presenceVector: ILocalPresenceInfo[] = [];
     public docRoot: types.IMapView;
@@ -3249,7 +3246,7 @@ export class FlowView extends ui.Component {
     constructor(
         element: HTMLDivElement,
         public collabDocument: api.Document,
-        public sharedString: SharedString,
+        public sharedString: SharedString.SharedString,
         public status: Status,
         public options?: Object) {
 
@@ -4532,7 +4529,7 @@ export class FlowView extends ui.Component {
 
     public showAdjacentBookmark(before = true) {
         if (this.bookmarks) {
-            let result: SharedStringInterval;
+            let result: SharedString.SharedStringInterval;
             if (before) {
                 result = this.bookmarks.previousInterval(this.cursor.pos);
             } else {
@@ -5099,7 +5096,7 @@ export class FlowView extends ui.Component {
         const bookmarksCollection = this.sharedString.getSharedIntervalCollection("bookmarks");
         this.bookmarks = await bookmarksCollection.getView();
 
-        const onDeserialize: DeserializeCallback = (interval, commentSharedString: core.ICollaborativeObject) => {
+        const onDeserialize: SharedString.DeserializeCallback = (interval, commentSharedString: core.ICollaborativeObject) => {
             if (interval.properties && interval.properties["story"]) {
                 assert(commentSharedString);
                 interval.properties["story"] = commentSharedString;
@@ -5108,7 +5105,7 @@ export class FlowView extends ui.Component {
             return true;
         };
 
-        const onPrepareDeserialize: PrepareDeserializeCallback = (properties) => {
+        const onPrepareDeserialize: SharedString.PrepareDeserializeCallback = (properties) => {
             if (properties && properties["story"]) {
                 const story = properties["story"];
                 return this.sharedString.getDocument().get(story["value"]);
@@ -5138,14 +5135,14 @@ export class FlowView extends ui.Component {
 
     public randomWordMove() {
         const client = this.sharedString.client;
-        const word1 = findRandomWord(client.mergeTree, client.getClientId());
+        const word1 = mergeTreeUtils.findRandomWord(client.mergeTree, client.getClientId());
         if (word1) {
             const removeStart = word1.pos;
             const removeEnd = removeStart + word1.text.length;
             this.sharedString.removeText(removeStart, removeEnd);
-            let word2 = findRandomWord(client.mergeTree, client.getClientId());
+            let word2 = mergeTreeUtils.findRandomWord(client.mergeTree, client.getClientId());
             while (!word2) {
-                word2 = findRandomWord(client.mergeTree, client.getClientId());
+                word2 = mergeTreeUtils.findRandomWord(client.mergeTree, client.getClientId());
             }
             const pos = word2.pos + word2.text.length;
             this.sharedString.insertText(word1.text, pos);

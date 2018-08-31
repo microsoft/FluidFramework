@@ -24,6 +24,15 @@
   },
   "dependencies": {
     "@prague/client-api": "^0.1.0",
-    "@types/node": "^10.9.4"
+    "@types/d3": "^5.0.0",
+    "@types/debug": "^0.0.30",
+    "@types/jquery": "^3.3.6",
+    "@types/node": "^10.9.4",
+    "d3": "^5.7.0",
+    "debug": "^3.1.0",
+    "jquery": "^3.3.1",
+    "performance-now": "^2.1.0",
+    "shape-detector": "^0.2.1",
+    "webcola": "^3.3.8"
   }
 }

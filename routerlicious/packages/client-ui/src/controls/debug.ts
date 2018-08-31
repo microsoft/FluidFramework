@@ -1,3 +1,3 @@
-import { debug as registerDebug } from "@prague/client-api";
+import * as registerDebug from "debug";
 
 export const debug = registerDebug("routerlicious:controls");

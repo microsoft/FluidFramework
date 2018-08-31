@@ -1,3 +1,6 @@
+// TODO: Should move Formula to a separate file.
+import { IllFormedFormula, NotImplemented, ResultKind, Workbook } from "../../ext/calc";
+
 // TODO: Should plumb through access to the caching implementation from FlowView.
 const measureTextWidth = (font: string, text: string) => {
     const measure2d = document.createElement("canvas").getContext("2d");
@@ -19,9 +22,6 @@ export abstract class Box<TState> {
     /** Returns the emitted HTML of an inline box. */
     public abstract render(self: TState, services: Map<string, any>): HTMLElement;
 }
-
-// TODO: Should move Formula to a separate file.
-import { IllFormedFormula, NotImplemented, ResultKind, Workbook } from "../../ext/calc";
 
 export interface IFormulaState {
     formula: string;

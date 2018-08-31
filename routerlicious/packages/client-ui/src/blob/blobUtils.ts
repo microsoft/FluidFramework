@@ -1,6 +1,4 @@
-import * as api from "../api-core";
-import { getFileBlobType } from "../api-core";
-import { gitHashFile } from "../core-utils";
+import { core as api, utils } from "@prague/client-api";
 
 export async function blobUploadHandler(dragZone: HTMLDivElement,
                                         document: api.IDocument,
@@ -51,7 +49,7 @@ async function fileToInclusion(file: File): Promise<api.IGenericBlob> {
 
     const baseInclusion = {
         fileName: file.name,
-        type: getFileBlobType(file.type),
+        type: api.getFileBlobType(file.type),
         url: "", // TODO sabroner: can I create the URL locally?
     } as api.IGenericBlob;
 
@@ -62,7 +60,7 @@ async function fileToInclusion(file: File): Promise<api.IGenericBlob> {
         };
 
         arrayBufferReader.onloadend = () => {
-            const blobData = Buffer.from(arrayBufferReader.result);
+            const blobData = Buffer.from(arrayBufferReader.result as ArrayBuffer);
             resolve(blobData);
         };
         arrayBufferReader.readAsArrayBuffer(file);
@@ -78,7 +76,7 @@ async function fileToInclusion(file: File): Promise<api.IGenericBlob> {
                         content: arrayBuffer,
                         fileName: file.name,
                         height: (blob as api.IImageBlob).height,
-                        sha: gitHashFile(arrayBuffer),
+                        sha: utils.gitHashFile(arrayBuffer),
                         size: arrayBuffer.byteLength,
                         type: "image",
                         url: blob.url,
@@ -96,7 +94,7 @@ async function fileToInclusion(file: File): Promise<api.IGenericBlob> {
                         fileName: file.name,
                         height: blob.height,
                         length: blob.length,
-                        sha: gitHashFile(arrayBuffer),
+                        sha: utils.gitHashFile(arrayBuffer),
                         size: arrayBuffer.byteLength,
                         type: "video",
                         url: blob.url,
@@ -111,7 +109,7 @@ async function fileToInclusion(file: File): Promise<api.IGenericBlob> {
                     const incl: api.IGenericBlob = {
                         content: arrayBuffer,
                         fileName: file.name,
-                        sha: gitHashFile(arrayBuffer),
+                        sha: utils.gitHashFile(arrayBuffer),
                         size: arrayBuffer.byteLength,
                         type: "generic",
                         url: baseInclusion.url,
@@ -132,7 +130,7 @@ async function imageHandler(imageFile: File, incl: api.IImageBlob): Promise<api.
         };
 
         urlObjReader.onloadend = () => {
-            const imageUrl = urlObjReader.result;
+            const imageUrl = urlObjReader.result as string;
             const img = document.createElement("img");
             img.src = imageUrl;
             img.onload = () => {
@@ -158,7 +156,7 @@ async function videoHandler(videoFile: File, incl: api.IVideoBlob): Promise<api.
         };
 
         urlObjReader.onloadend = () => {
-            const videoUrl = urlObjReader.result;
+            const videoUrl = urlObjReader.result as string;
             const video = document.createElement("video");
             video.src = videoUrl;
             video.load();

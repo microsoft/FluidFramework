@@ -1,6 +1,7 @@
-import * as ui from "../ui";
 import { Component } from "./component";
 import { debug } from "./debug";
+import { Rectangle } from "./geometry";
+import { removeAllChildren } from "./utils";
 
 // The majority of this can likely be abstracted behind interfaces - drawing inspiration from other
 // UI frameworks. For now we keep it simple and have this class manage the lifetime of the UI framework.
@@ -37,7 +38,7 @@ export class BrowserContainerHost {
             this.root.emit("keypress", e);
         };
 
-        ui.removeAllChildren(document.body);
+        removeAllChildren(document.body);
         document.body.appendChild(root.element);
 
         // Trigger initial resize due to attach
@@ -46,7 +47,7 @@ export class BrowserContainerHost {
 
     private resize() {
         const clientRect = document.body.getBoundingClientRect();
-        const newSize = ui.Rectangle.fromClientRect(clientRect);
+        const newSize = Rectangle.fromClientRect(clientRect);
         newSize.conformElement(this.root.element);
         this.root.resize(newSize);
     }

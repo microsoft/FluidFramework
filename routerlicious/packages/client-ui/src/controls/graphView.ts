@@ -1,9 +1,7 @@
-import { api, map, types } from "@prague/client-api";
+import { api, graph, map, types } from "@prague/client-api";
 import * as d3 from "d3";
 import * as cola from "webcola";
 import { Link, Node } from "webcola";
-import { IMap} from "../data-types";
-import { CollaborativeGraph, Edge, Vertex } from "../graph";
 import * as ui from "../ui";
 
 /**
@@ -18,7 +16,7 @@ export class Graph extends ui.Component {
     private nodes: Node[];
     private links: Array<Link<number | Node>>;
 
-    constructor(element: HTMLDivElement, doc: api.Document, public graphMap: IMap) {
+    constructor(element: HTMLDivElement, doc: api.Document, public graphMap: types.IMap) {
         super(element);
 
         element.appendChild(document.getElementById("node-form"));
@@ -78,10 +76,10 @@ export class Graph extends ui.Component {
 
         this.graphMap.on("setElementAdded", async (update) => {
             if ((update.value.label as string).indexOf("node") >= 0) {
-                const vertex = update.value as Vertex;
+                const vertex = update.value as graph.Vertex;
                 this.nodes.push(this.toNode(vertex));
             } else {
-                const edge = update.value as Edge;
+                const edge = update.value as graph.Edge;
                 this.links.push(this.toEdge(edge));
             }
 
@@ -140,20 +138,20 @@ export class Graph extends ui.Component {
         const hasEdge = this.graphMapView.has("edge");
 
         if (!hasEdge) {
-            this.graph = new CollaborativeGraph(
-                root.set<map.DistributedSet<Edge>>("edge", undefined, map.DistributedSetValueType.Name),
-                root.set<map.DistributedSet<Vertex>>("vertex", undefined, map.DistributedSetValueType.Name));
+            this.graph = new graph.CollaborativeGraph(
+                root.set<map.DistributedSet<graph.Edge>>("edge", undefined, map.DistributedSetValueType.Name),
+                root.set<map.DistributedSet<graph.Vertex>>("vertex", undefined, map.DistributedSetValueType.Name));
 
             // Seed the graph with edges
             this.graph.addVertex(0, "node-0");
             this.graph.addVertex(1, "node-1");
             this.graph.addEdge(0, 1, "0-1");
         } else {
-            this.graph = new CollaborativeGraph(this.graphMapView.get("edge"), this.graphMapView.get("vertex"));
+            this.graph = new graph.CollaborativeGraph(this.graphMapView.get("edge"), this.graphMapView.get("vertex"));
         }
     }
 
-    private toEdge(edge: Edge): Link<any> {
+    private toEdge(edge: graph.Edge): Link<any> {
         const link = {
             length: 1,
             source: edge.nodeId1,
@@ -164,7 +162,7 @@ export class Graph extends ui.Component {
         return link;
     }
 
-    private toNode(vertex: Vertex): Node {
+    private toNode(vertex: graph.Vertex): Node {
         const inputNode = {
             index: vertex.id,
         };

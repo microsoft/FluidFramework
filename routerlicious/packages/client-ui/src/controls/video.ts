@@ -1,11 +1,11 @@
-import { IMap } from "../data-types";
+import { types } from "@prague/client-api";
 import * as ui from "../ui";
 
 export class Video extends ui.Component {
     private message: HTMLSpanElement;
     private video: HTMLVideoElement;
 
-    constructor(element: HTMLDivElement, private videoMap: IMap, src: string) {
+    constructor(element: HTMLDivElement, private videoMap: types.IMap, src: string) {
         super(element);
 
         this.message = document.createElement("span");

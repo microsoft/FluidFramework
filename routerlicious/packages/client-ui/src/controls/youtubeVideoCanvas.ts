@@ -1,4 +1,4 @@
-import { api, types } from "../client-api";
+import { api, types } from "@prague/client-api";
 import * as ui from "../ui";
 import { getProposedPlaybackTime, PlayerState, YouTubeWrapper } from "../utils/youtubeHelper";
 

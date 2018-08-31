@@ -1,6 +1,5 @@
 // The main app code
 import { api, core, types} from "@prague/client-api";
-import { IGenericBlob } from "../api-core";
 import { blobUploadHandler } from "../blob";
 import * as ui from "../ui";
 import { Button } from "./button";
@@ -209,11 +208,11 @@ export class FlexView extends ui.Component {
         this.resizeCore(this.size);
     }
 
-    private async render(incl: IGenericBlob) {
+    private async render(incl: core.IGenericBlob) {
         this.renderFunc(incl, this.ink);
     }
 
-    private renderFunc = async (incl: IGenericBlob, ink: InkCanvas) => {
+    private renderFunc = async (incl: core.IGenericBlob, ink: InkCanvas) => {
 
         if (incl.type === "image") {
             if (document.getElementById(incl.sha) === null) { // Handle blob Processed

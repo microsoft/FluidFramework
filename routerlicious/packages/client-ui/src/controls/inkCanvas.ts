@@ -1,4 +1,5 @@
 import { types } from "@prague/client-api";
+import * as $ from "jquery";
 import * as ui from "../ui";
 import { Image } from "./image";
 import { SegmentCircleInclusive } from "./overlayCanvas";

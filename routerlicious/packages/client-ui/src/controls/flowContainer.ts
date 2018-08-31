@@ -1,6 +1,5 @@
 // tslint:disable:ban-types
-import { api, MergeTree, types } from "@prague/client-api";
-import { SharedString } from "../shared-string";
+import { api, MergeTree, SharedString, types } from "@prague/client-api";
 import * as ui from "../ui";
 import { debug } from "./debug";
 import { DockPanel } from "./dockPanel";
@@ -33,7 +32,7 @@ export class FlowContainer extends ui.Component {
     constructor(
         element: HTMLDivElement,
         private collabDocument: api.Document,
-        sharedString: SharedString,
+        sharedString: SharedString.SharedString,
         private overlayMap: types.IMap,
         private image: Image,
         ink: types.IStream,
