@@ -31,6 +31,12 @@ module.exports = env => {
         module: {
             rules: [
                 {
+                    test: /\.js$/,
+                    use: ["source-map-loader"],
+                    exclude: /node_modules/,
+                    enforce: "pre"
+                },
+                {
                     test: /\.(ts|tsx)$/,
                     use: [
                         {
