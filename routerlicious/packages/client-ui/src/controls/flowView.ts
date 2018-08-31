@@ -1,14 +1,10 @@
 // tslint:disable:no-bitwise whitespace align switch-default no-string-literal ban-types no-angle-bracket-type-assertion
 import {
     api,
-    CharacterCodes,
     core,
     MergeTree,
     mergeTreeUtils,
-    Paragraph,
     SharedString,
-    Table,
-    Text,
     types,
 } from "@prague/client-api";
 import * as assert from "assert";
@@ -16,6 +12,11 @@ import * as assert from "assert";
 const performanceNow = require("performance-now");
 import { blobUploadHandler, urlToInclusion } from "../blob";
 import { CollaborativeWorkbook } from "../calc";
+import {
+    CharacterCodes,
+    Paragraph,
+    Table,
+} from "../text";
 import * as ui from "../ui";
 import { Status } from "./status";
 
@@ -1321,11 +1322,11 @@ function getWidthInLine(endPGMarker: Paragraph.IParagraphMarker, breakIndex: num
     let w = 0;
     while (offset > 0) {
         const item = endPGMarker.itemCache.items[itemIndex];
-        if (!item || (item.type === Text.Paragraph.ParagraphItemType.Marker)) {
+        if (!item || (item.type === Paragraph.ParagraphItemType.Marker)) {
             itemIndex++;
             break;
         }
-        const blockItem = <Text.Paragraph.IPGBlock>item;
+        const blockItem = <Paragraph.IPGBlock>item;
         if (blockItem.text.length > offset) {
             const fontstr = item.fontstr || defaultFontstr;
             const subw = getTextWidth(blockItem.text.substring(0, offset), fontstr);

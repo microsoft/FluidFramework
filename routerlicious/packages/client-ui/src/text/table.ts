@@ -1,13 +1,12 @@
 // tslint:disable
-import * as MergeTree from "../merge-tree";
-import { SharedString } from "../shared-string";
+import { MergeTree, SharedString as SharedStringModule } from "@prague/client-api";
 import * as Paragraph from "./paragraph";
-import { MergeTreeDeltaType } from "../merge-tree";
+
+type SharedString = SharedStringModule.SharedString;
 
 export interface ITableMarker extends MergeTree.Marker {
     table?: Table;
 }
-
 
 export interface IRowMarker extends MergeTree.Marker {
     row?: Row;
@@ -185,7 +184,7 @@ export function insertColumn(sharedString: SharedString, prevCell: Cell, row: Ro
         },
         props: { columnId, [MergeTree.reservedMarkerIdKey]: columnId },
         relativePos1: { id: prevColumnId },
-        type: MergeTreeDeltaType.INSERT,
+        type: MergeTree.MergeTreeDeltaType.INSERT,
     };
     opList.push(insertColMarkerOp);
     for (let row of table.rows) {
@@ -228,7 +227,7 @@ export function deleteColumn(sharedString: SharedString, cell: Cell, row: Row,
     const removeColMarkerOp = <MergeTree.IMergeTreeRemoveMsg>{
         relativePos1: { id: columnId, before: true },
         relativePos2: { id: columnId },
-        type: MergeTreeDeltaType.REMOVE,
+        type: MergeTree.MergeTreeDeltaType.REMOVE,
     };
     opList.push(removeColMarkerOp);
     let groupOp = <MergeTree.IMergeTreeGroupMsg>{
@@ -247,7 +246,7 @@ export function deleteCellShiftLeft(sharedString: SharedString, cell: Cell,
         pos1: cellPos,
         pos2: cellPos + cell.marker.cachedLength,
         props: { moribund: true },
-        type: MergeTreeDeltaType.ANNOTATE,
+        type: MergeTree.MergeTreeDeltaType.ANNOTATE,
     };
     let opList = [annotOp];
     let groupOp = <MergeTree.IMergeTreeGroupMsg>{
@@ -268,7 +267,7 @@ export function deleteRow(sharedString: SharedString, row: Row, table: Table) {
         pos1: rowPos,
         pos2: rowPos + row.rowMarker.cachedLength,
         props: { moribund: true },
-        type: MergeTreeDeltaType.ANNOTATE,
+        type: MergeTree.MergeTreeDeltaType.ANNOTATE,
     };
     let opList = [annotOp];
     let groupOp = <MergeTree.IMergeTreeGroupMsg>{
@@ -356,7 +355,7 @@ export function createTable(pos: number, sharedString: SharedString, nrows = 3, 
             },
             props: { columnId, [MergeTree.reservedMarkerIdKey]: columnId },
             relativePos1: { id: tableId },
-            type: MergeTreeDeltaType.INSERT,
+            type: MergeTree.MergeTreeDeltaType.INSERT,
         };
         opList.push(insertColMarkerOp);
     }

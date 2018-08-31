@@ -1,8 +1,9 @@
 // tslint:disable
-import * as MergeTree from "../merge-tree";
+import { MergeTree, SharedString as SharedStringModule } from "@prague/client-api";
 import { CharacterCodes } from "./characterCodes";
-import { SharedString } from "../shared-string";
-import { ReferenceType } from "../merge-tree";
+import * as ui from "../ui";
+
+type SharedString = SharedStringModule.SharedString;
 
 export interface IBreakInfo {
     posInPG: number;
@@ -442,10 +443,9 @@ export function markerToItems(marker: MergeTree.Marker, itemsContext: IItemsCont
 
     // If the marker is a simple reference, see if it's types is registered as an external
     // component.
-    if (marker.refType === ReferenceType.Simple) {
-        console.log("FIX ME FIX ME - UNCOMMENT BELOW");
-        // const typeName = marker.properties.ref && marker.properties.ref.type.name;
-        const component = null; // ui.refTypeNameToComponent.get(typeName);
+    if (marker.refType === MergeTree.ReferenceType.Simple) {
+        const typeName = marker.properties.ref && marker.properties.ref.type.name;
+        const component = ui.refTypeNameToComponent.get(typeName);
 
         // If it is a registered external component, measure it and push a block item.
         if (component) {
