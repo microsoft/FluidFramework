@@ -178,6 +178,8 @@ export class Historian implements IHistorian {
     private post<T>(url: string, requestBody: any): Promise<T> {
         const options: AxiosRequestConfig = {
             data: requestBody,
+            headers: {
+            },
             method: "POST",
             url: `${this.endpoint}${url}`,
         };
@@ -197,6 +199,8 @@ export class Historian implements IHistorian {
     private patch<T>(url: string, requestBody: any): Promise<T> {
         const options: AxiosRequestConfig = {
             data: requestBody,
+            headers: {
+            },
             method: "PATCH",
             url: `${this.endpoint}${url}`,
         };
