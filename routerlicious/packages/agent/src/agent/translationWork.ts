@@ -1,8 +1,7 @@
+import { core, map, MergeTree, SharedString, types } from "@prague/client-api";
 import { EventEmitter } from "events";
 import * as request from "request";
 import { Builder, parseString } from "xml2js";
-import { core, map, MergeTree, types } from "../client-api";
-import { CollaborativeStringExtension, SharedString } from "../shared-string";
 import { BaseWork} from "./baseWork";
 import { IWork} from "./definitions";
 import { runAfterWait } from "./utils";
@@ -71,7 +70,7 @@ class Translator extends EventEmitter {
 
     constructor(
         private insights: types.IMap,
-        private sharedString: SharedString) {
+        private sharedString: SharedString.SharedString) {
             super();
     }
 
@@ -218,10 +217,10 @@ export class TranslationWork extends BaseWork implements IWork {
 
     private trackEvents(insights: types.IMap): Promise<void> {
         const eventHandler = (op: core.ISequencedDocumentMessage, object: core.ICollaborativeObject) => {
-            if (object && object.type === CollaborativeStringExtension.Type) {
+            if (object && object.type === SharedString.CollaborativeStringExtension.Type) {
                 if (!this.translationSet.has(object)) {
                     this.translationSet.add(object);
-                    this.translator = new Translator(insights, object as SharedString);
+                    this.translator = new Translator(insights, object as SharedString.SharedString);
                     this.translators.set(object.id, object);
                     this.translator.start();
                 }

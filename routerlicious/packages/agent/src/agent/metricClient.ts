@@ -1,6 +1,6 @@
 // tslint:disable:ban-types
+import { core } from "@prague/client-api";
 import * as telegraf from "telegrafjs";
-import { core } from "../client-api";
 
 export interface IMetricClient {
     writeLatencyMetric(series: string, traces: core.ITrace[]): Promise<void>;

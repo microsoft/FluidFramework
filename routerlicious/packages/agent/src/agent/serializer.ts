@@ -1,7 +1,6 @@
+import { core } from "@prague/client-api";
 import * as assert from "assert";
 import { EventEmitter } from "events";
-import { SaveOperation } from "../api-core";
-import { core } from "../client-api";
 
 /**
  * Wrapper interface holding snapshot details for a given op
@@ -100,7 +99,7 @@ export class Serializer extends EventEmitter {
     }
 
     private getOpSnapshotDetails(op: core.ISequencedDocumentMessage): IOpSnapshotDetails {
-        if (op.type === SaveOperation) {
+        if (op.type === core.SaveOperation) {
             // Forced snapshot.
             return {
                 message: `;${op.clientId}: ${op.contents.message}`,

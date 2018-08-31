@@ -1,4 +1,4 @@
-import { api, core, types } from "../client-api";
+import { api, core, types } from "@prague/client-api";
 import { nativeTextAnalytics, textAnalytics } from "../intelligence";
 import { BaseWork} from "./baseWork";
 import { IWork} from "./definitions";

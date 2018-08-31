@@ -1,4 +1,4 @@
-import { core } from "../client-api";
+import { core } from "@prague/client-api";
 import { BaseWork} from "./baseWork";
 import { IWork} from "./definitions";
 import { Serializer } from "./serializer";

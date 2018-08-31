@@ -1,5 +1,6 @@
+import { core } from "@prague/client-api";
 import { EventEmitter } from "events";
-import { core, socketIoClient as io } from "../client-api";
+import * as io from "socket.io-client";
 import { IWork} from "./definitions";
 
 /**

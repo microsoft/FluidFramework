@@ -1,7 +1,7 @@
+import { utils } from "@prague/client-api";
 import { Client, Message } from "azure-iot-device";
 import { Mqtt } from "azure-iot-device-mqtt";
 import * as iothub from "azure-iothub";
-import { utils } from "../client-api";
 import { IIntelligentService, IIntelligentServiceFactory } from "./api";
 
 interface IResumeResponse {

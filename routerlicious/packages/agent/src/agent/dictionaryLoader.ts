@@ -1,6 +1,6 @@
+import { MergeTree } from "@prague/client-api";
 import * as request from "request";
 import * as url from "url";
-import { MergeTree } from "../client-api";
 
 export async function loadDictionary(serverUrl: string): Promise<MergeTree.TST<number>> {
     const dict = new MergeTree.TST<number>();

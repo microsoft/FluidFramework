@@ -1,6 +1,5 @@
 // tslint:disable:whitespace
-import { core, MergeTree } from "../client-api";
-import { SharedString } from "../shared-string";
+import { core, MergeTree, SharedString } from "@prague/client-api";
 
 export interface IPgMarker {
 
@@ -32,7 +31,7 @@ class Speller {
     private verbose = false;
 
     constructor(
-        public sharedString: SharedString,
+        public sharedString: SharedString.SharedString,
         private dict: MergeTree.TST<number>) {
     }
 
@@ -252,7 +251,7 @@ export class Spellcheker {
     private speller: Speller;
 
     constructor(
-        private root: SharedString,
+        private root: SharedString.SharedString,
         private dict: MergeTree.TST<number>) {
     }
 

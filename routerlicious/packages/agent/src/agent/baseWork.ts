@@ -1,6 +1,6 @@
 // tslint:disable:ban-types
+import { api, core } from "@prague/client-api";
 import { EventEmitter } from "events";
-import { api, core } from "../client-api";
 import { IDocumentTaskInfo } from "./definitions";
 import { runAfterWait } from "./utils";
 

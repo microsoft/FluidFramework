@@ -1,4 +1,4 @@
-import { api, core } from "../client-api";
+import { api, core } from "@prague/client-api";
 import { loadDictionary } from "./dictionaryLoader";
 import { IntelWork } from "./intelWork";
 import { SnapshotWork } from "./snapshotWork";

@@ -1,4 +1,3 @@
-// import * as request from "request";
 import { IIntelligentService, IIntelligentServiceFactory } from "./api";
 
 export interface IConfig {

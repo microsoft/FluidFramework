@@ -1,4 +1,4 @@
-import { core } from "../client-api";
+import { core } from "@prague/client-api";
 
 export interface IWork {
     /**

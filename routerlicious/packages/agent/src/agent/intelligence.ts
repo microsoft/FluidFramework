@@ -1,6 +1,5 @@
-import { api, core, types } from "../client-api";
+import { api, core, SharedString, types } from "@prague/client-api";
 import * as intelligence from "../intelligence";
-import { CollaborativeStringExtension, SharedString } from "../shared-string";
 import { RateLimiter } from "./rateLimiter";
 import { runAfterWait } from "./utils";
 
@@ -25,9 +24,9 @@ export class IntelligentServicesManager {
 
     public process(object: core.ICollaborativeObject) {
         // TODO expose way for intelligent services to express their supported document types
-        if (object.type === CollaborativeStringExtension.Type) {
+        if (object.type === SharedString.CollaborativeStringExtension.Type) {
             if (!this.intelInvoked) {
-                const sharedString = object as SharedString;
+                const sharedString = object as SharedString.SharedString;
 
                 // And then run plugin insights rate limited
                 this.rateLimiter = new RateLimiter(
