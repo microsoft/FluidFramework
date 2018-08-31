@@ -1862,12 +1862,15 @@ function closestSouth(lineDivs: ILineDiv[], y: number) {
 export interface IExcludedRectangle extends ui.Rectangle {
     left: boolean;
     curY: number;
+    id?: string;
+    // What do the below parameters mean?
     requiresUL?: boolean;
     floatL?: boolean;
 }
 
-function makeExcludedRectangle(x: number, y: number, w: number, h: number) {
+function makeExcludedRectangle(x: number, y: number, w: number, h: number, id?: string) {
     const r = <IExcludedRectangle>new ui.Rectangle(x, y, w, h);
+    r.id = id;
     r.left = true;
     r.curY = 0;
     return r;
@@ -1914,6 +1917,29 @@ export class Viewport {
             });
     }
 
+    // Remove inclusions that are not in the excluded rect list
+    public removeInclusions() {
+        if (this.div) {
+            // TODO: sabroner fix skip issue
+            for (const child of this.div.children) {
+                if ((child.classList as DOMTokenList).contains("preserve")) {
+                    if (this.excludedRects.every((e) => e.id !== child.classList[1])) {
+                        this.div.removeChild(child);
+                    }
+                }
+            }
+        }
+    }
+
+    public viewHasInclusion(sha: string): HTMLDivElement {
+        for (const child of this.div.children) {
+            if ((child.classList as DOMTokenList).contains(sha)) {
+                return child as HTMLDivElement;
+            }
+        }
+        return null;
+    }
+
     public addInclusion(flowView: FlowView, marker: MergeTree.Marker, x: number, y: number,
         lineHeight: number, movingMarker = false) {
         if ((!flowView.movingInclusion.onTheMove) ||
@@ -1945,70 +1971,90 @@ export class Viewport {
                 }
                 y += lineHeight;
                 y = Math.floor(y + dy);
-                const exclu = makeExcludedRectangle(x, y, w, h);
-                const excluDiv = <IRefDiv>document.createElement("div");
-                const innerDiv = document.createElement("div");
-                exclu.conformElement(excluDiv);
-                excluDiv.style.backgroundColor = "#DDDDDD";
-                const toHlt = (e: MouseEvent) => {
-                    excluDiv.style.backgroundColor = "green";
-                };
-                const toOrig = (e: MouseEvent) => {
-                    excluDiv.style.backgroundColor = "#DDDDDD";
-                };
-                excluDiv.onmouseleave = toOrig;
-                innerDiv.onmouseenter = toOrig;
-                excluDiv.onmouseenter = toHlt;
-                innerDiv.onmouseleave = toHlt;
+                const exclu = makeExcludedRectangle(x, y, w, h, irdoc.sha);
+                // This logic eventually triggers the marker to get moved based on the requiresUL property
                 if (movingMarker) {
                     exclu.requiresUL = true;
                     if (exclu.x === 0) {
                         exclu.floatL = true;
                     }
                 }
-                const excluView = exclu.innerAbs(borderSize);
-                excluView.x = borderSize;
-                excluView.y = borderSize;
-                excluView.conformElement(innerDiv);
-                excluDiv.exclu = exclu;
-                excluDiv.marker = marker;
-                this.div.appendChild(excluDiv);
-                excluDiv.appendChild(innerDiv);
-                this.excludedRects.push(exclu);
-                if (irdoc.type.name === "image") {
-                    const showImage = document.createElement("img");
-                    innerDiv.appendChild(showImage);
-                    excluView.conformElement(showImage);
-                    showImage.style.left = "0px";
-                    showImage.style.top = "0px";
-                    showImage.src = irdoc.url;
-                } else if (irdoc.type.name === "video") {
-                    let showVideo: HTMLVideoElement;
-                    if (irdoc.sha && this.inclusions.has(irdoc.sha)) {
-                        showVideo = this.inclusions.get(irdoc.sha) as HTMLVideoElement;
-                    } else {
-                        showVideo = document.createElement("video");
+                let excluDiv = <IRefDiv>this.viewHasInclusion(irdoc.sha);
+
+                // Move the inclusion
+                if (excluDiv) {
+                    exclu.conformElement(excluDiv);
+                    excluDiv.exclu = exclu;
+                    excluDiv.marker = marker;
+
+                    this.excludedRects = this.excludedRects.filter((e) => e.id !== exclu.id);
+                    this.excludedRects.push(exclu);
+                } else {
+                    // Create inclusion for first time
+
+                    excluDiv = <IRefDiv>document.createElement("div");
+                    excluDiv.classList.add("preserve");
+                    excluDiv.classList.add(irdoc.sha);
+                    const innerDiv = document.createElement("div");
+                    exclu.conformElement(excluDiv);
+                    excluDiv.style.backgroundColor = "#DDDDDD";
+                    const toHlt = (e: MouseEvent) => {
+                        excluDiv.style.backgroundColor = "green";
+                    };
+                    const toOrig = (e: MouseEvent) => {
+                        excluDiv.style.backgroundColor = "#DDDDDD";
+                    };
+                    excluDiv.onmouseleave = toOrig;
+                    innerDiv.onmouseenter = toOrig;
+                    excluDiv.onmouseenter = toHlt;
+                    innerDiv.onmouseleave = toHlt;
+
+                    const excluView = exclu.innerAbs(borderSize);
+                    excluView.x = borderSize;
+                    excluView.y = borderSize;
+                    excluView.conformElement(innerDiv);
+                    excluDiv.exclu = exclu;
+                    excluDiv.marker = marker;
+                    this.div.appendChild(excluDiv);
+                    excluDiv.appendChild(innerDiv);
+
+                    // Excluded Rects is checked when remaking paragraphs in getLineRect
+                    this.excludedRects.push(exclu);
+                    if (irdoc.type.name === "image") {
+                        const showImage = document.createElement("img");
+                        innerDiv.appendChild(showImage);
+                        excluView.conformElement(showImage);
+                        showImage.style.left = "0px";
+                        showImage.style.top = "0px";
+                        showImage.src = irdoc.url;
+                    } else if (irdoc.type.name === "video") {
+                        let showVideo: HTMLVideoElement;
+                        if (irdoc.sha && this.inclusions.has(irdoc.sha)) {
+                            showVideo = this.inclusions.get(irdoc.sha) as HTMLVideoElement;
+                        } else {
+                            showVideo = document.createElement("video");
+                        }
+                        innerDiv.appendChild(showVideo);
+                        excluView.conformElement(showVideo);
+                        showVideo.style.left = "0px";
+                        showVideo.style.top = "0px";
+                        showVideo.src = irdoc.url;
+                        showVideo.controls = true;
+                        showVideo.muted = true;
+                        showVideo.load();
+                        this.inclusions.set(irdoc.sha, showVideo);
+                    } else if ((irdoc.type.name === "childFlow") && (!flowView.parentFlow)) {
+                        const flowRefMarker = marker as IFlowRefMarker;
+                        let startChar = 0;
+                        let cursorPos = 0;
+                        const prevFlowView = flowRefMarker.flowView;
+                        if (prevFlowView) {
+                            startChar = prevFlowView.viewportStartPos;
+                            cursorPos = prevFlowView.cursor.pos;
+                        }
+                        flowRefMarker.flowView = flowView.renderChildFlow(startChar, cursorPos,
+                            innerDiv, exclu, marker);
                     }
-                    innerDiv.appendChild(showVideo);
-                    excluView.conformElement(showVideo);
-                    showVideo.style.left = "0px";
-                    showVideo.style.top = "0px";
-                    showVideo.src = irdoc.url;
-                    showVideo.controls = true;
-                    showVideo.muted = true;
-                    showVideo.load();
-                    this.inclusions.set(irdoc.sha, showVideo);
-                } else if ((irdoc.type.name === "childFlow") && (!flowView.parentFlow)) {
-                    const flowRefMarker = marker as IFlowRefMarker;
-                    let startChar = 0;
-                    let cursorPos = 0;
-                    const prevFlowView = flowRefMarker.flowView;
-                    if (prevFlowView) {
-                        startChar = prevFlowView.viewportStartPos;
-                        cursorPos = prevFlowView.cursor.pos;
-                    }
-                    flowRefMarker.flowView = flowView.renderChildFlow(startChar, cursorPos,
-                        innerDiv, exclu, marker);
                 }
             }
         }
@@ -2047,7 +2093,7 @@ export class Viewport {
             if ((exclu.x >= x) && this.horizIntersect(h, exclu)) {
                 if ((this.lineX === 0) && (exclu.x === 0)) {
                     x = exclu.x + exclu.width;
-                    // assume for now only one rect across
+                    // TODO: assume for now only one rect across
                     this.lineX = 0;
                     w = this.width - x;
                 } else {
@@ -2067,7 +2113,8 @@ export class Viewport {
             w = this.width - x;
             this.lineX = 0;
         }
-        return <ILineRect>{ e, h, w, x, y };
+
+       return <ILineRect>{ e, h, w, x, y };
     }
 
     public currentLineWidth(h?: number) {
@@ -2590,6 +2637,8 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
         viewportStartPos,
         viewportEndPos);
 
+    layoutContext.viewport.removeInclusions();
+
     return {
         deferredHeight,
         overlayMarkers,
@@ -2725,9 +2774,24 @@ export function pixelToPosition(flowView: FlowView, x: number, y: number) {
     }
 }
 
+// Called from a few contexts, inclusions are called render
 export function clearSubtree(elm: HTMLElement) {
-    while (elm.lastChild) {
-        elm.removeChild(elm.lastChild);
+    const removeList: Node[] = [];
+    for (const child of elm.childNodes) {
+        if (!(child as HTMLElement).classList.contains("preserve")) {
+            removeList.push(child);
+        }
+    }
+    for (const node of removeList) {
+        elm.removeChild(node);
+    }
+}
+
+export function clearInclusion(elm: HTMLElement, sha: string) {
+    for (const child of elm.childNodes) {
+        if ((child as HTMLElement).classList.contains(sha)) {
+            return elm.removeChild(child);
+        }
     }
 }
 
@@ -5070,6 +5134,7 @@ export class FlowView extends ui.Component {
         const renderOutput = renderTree(this.viewportDiv, this.topChar, this, this.targetTranslation);
         this.viewportStartPos = renderOutput.viewportStartPos;
         this.viewportEndPos = renderOutput.viewportEndPos;
+
         if (this.diagCharPort || true) {
             this.statusMessage("render", `&nbsp ${Date.now() - clk}ms`);
         }
