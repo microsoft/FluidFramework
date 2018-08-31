@@ -29,6 +29,7 @@
     "@types/uuid": "^3.4.4",
     "async": "^2.6.1",
     "axios": "^0.18.0",
+    "debug": "^3.1.0",
     "jwt-decode": "^2.2.0",
     "performance-now": "^2.1.0",
     "random-js": "^1.0.8",
