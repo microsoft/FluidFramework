@@ -533,29 +533,17 @@ export function isReference(marker: MergeTree.Marker) {
 export function segmentToItems(
     segment: MergeTree.Segment, segpos: number, refSeq: number, clientId: number,
     start: number, end: number, context: IItemsContext) {
-
-    switch (segment.getType()) {
-        case MergeTree.SegmentType.Text: {
-            context.paragraphLexer.lex(segment as MergeTree.TextSegment);
-            return true;
-        }
-
-        case MergeTree.SegmentType.Marker: {
-            const asMarker = segment as MergeTree.Marker;
-            const maybeComponent = ui.maybeGetComponent(asMarker);
-            
-            const isParagraph = asMarker.hasTileLabel("pg")
-                || isEndBox(asMarker)
-                || maybeComponent
-                && maybeComponent.isParagraph;
-
-            if (isParagraph) {
-                context.nextPGPos = segpos;
-                return false;
-            } else if (isReference(asMarker)) {
-                context.paragraphLexer.mark(asMarker);
-                return true;
-            }
+    if (segment.getType() === MergeTree.SegmentType.Text) {
+        let textSegment = <MergeTree.TextSegment>segment;
+        context.paragraphLexer.lex(textSegment);
+    } else if (segment.getType() === MergeTree.SegmentType.Marker) {
+        let marker = <MergeTree.Marker>segment;
+        if (isReference(marker)) {
+            context.paragraphLexer.mark(marker);
+        } else if (marker.hasTileLabel("pg") || isEndBox(marker)) {
+            context.nextPGPos = segpos;
+            return false;
         }
     }
+    return true;
 }
