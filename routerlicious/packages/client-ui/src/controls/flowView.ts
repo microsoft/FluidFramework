@@ -394,6 +394,12 @@ const commands: ICmd[] = [
         },
         key: "underline",
     },
+    {
+        exec: (f) => {
+            f.insertSheetlet();
+        },
+        key: "insert sheet",
+    },
 ];
 
 export function moveMarker(flowView: FlowView, fromPos: number, toPos: number) {
@@ -1109,6 +1115,21 @@ function endRenderSegments(marker: MergeTree.Marker) {
 
 const wordHeadingColor = "rgb(47, 84, 150)";
 
+/**
+ * Stops propagation of UI events to the FlowView host.  This works around the FlowView
+ * invoking 'preventDefault()', which breaks the behavior of HTML intrinsic controls like
+ * <input />.
+ */
+function handleEvents(element: HTMLElement) {
+    element.addEventListener("mousedown", (e) => { e.stopPropagation(); });
+    element.addEventListener("mousemove", (e) => { e.stopPropagation(); });
+    element.addEventListener("mouseup", (e) => { e.stopPropagation(); });
+    element.addEventListener("keydown", (e) => { e.stopPropagation(); });
+    element.addEventListener("keypress", (e) => { e.stopPropagation(); });
+    element.addEventListener("keyup", (e) => { e.stopPropagation(); });
+    return element;
+}
+
 function renderSegmentIntoLine(
     segment: MergeTree.Segment, segpos: number, refSeq: number,
     clientId: number, start: number, end: number, lineContext: ILineContext) {
@@ -1155,10 +1176,10 @@ function renderSegmentIntoLine(
             // insert the divs here.
             if (component) {
                 lineContext.contentDiv.appendChild(
-                    component.render(
+                    handleEvents(component.render(
                         marker.properties.state,
                         lineContext.flowView.services,
-                    ));
+                    )));
             }
         }
 
@@ -2519,8 +2540,42 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
         if (!segoff.segment) {
             break;
         }
-        if ((segoff.segment.getType() === MergeTree.SegmentType.Marker) &&
-            ((segoff.segment as MergeTree.Marker).hasRangeLabel("table"))) {
+
+        const asMarker = segoff.segment.getType() === MergeTree.SegmentType.Marker
+            ? segoff.segment as MergeTree.Marker
+            : undefined;
+
+        const maybeComponent = asMarker && ui.maybeGetComponent(asMarker);
+
+        if (maybeComponent) {
+            const componentDiv = handleEvents(maybeComponent.render(asMarker.properties.state, layoutContext.flowView.services));
+
+            // Force subtree positioning to be relative to the lineDiv we create below.
+            componentDiv.style.display = "flex";
+
+            // Temporarily parent 'componentDiv' in the position where we will insert the lineDiv
+            // in order to calculate it's height.
+            layoutContext.viewport.div.appendChild(componentDiv);
+            const componentHeight = componentDiv.scrollHeight;
+            componentDiv.remove();
+
+            const lineDiv = makeLineDiv(
+                new ui.Rectangle(
+                    0,
+                    layoutContext.viewport.getLineTop(),
+                    parseInt(layoutContext.viewport.div.style.width, 10),
+                    componentHeight),
+                layoutContext.docContext.fontstr);
+
+            lineDiv.appendChild(componentDiv);
+
+            // TODO: Suspect that missing ILineDiv metadata on element is why scroll(..) can hang on components.
+            // componentDiv.linePos = currentPos;
+            // componentDiv.lineEnd = currentPos + 1;
+            layoutContext.viewport.vskip(componentHeight);
+            currentPos++;
+            segoff = undefined;
+        } else if (asMarker && asMarker.hasRangeLabel("table")) {
             const marker = segoff.segment as MergeTree.Marker;
             // TODO: branches
             let tableView: Table.Table;
@@ -3317,6 +3372,12 @@ export class FlowView extends ui.Component {
 
         super(element);
 
+        // Enable element to receive focus (see Example 1):
+        // https://www.w3.org/WAI/GL/WCAG20/WD-WCAG20-TECHS/SCR29.html
+        this.element.tabIndex = 0;
+
+        this.element.style.outline = "0px solid transparent";
+
         this.cmdTree = new MergeTree.TST<ICmd>();
         for (const command of commands) {
             this.cmdTree.put(command.key.toLowerCase(), command);
@@ -4087,6 +4148,7 @@ export class FlowView extends ui.Component {
         };
 
         this.element.onmousedown = (e) => {
+            this.element.focus();
             if (e.button === 0) {
                 freshDown = true;
                 downX = e.clientX;
@@ -4147,6 +4209,16 @@ export class FlowView extends ui.Component {
                 e.returnValue = false;
                 return false;
             }
+        };
+
+        this.element.onblur = (e) => {
+            // TODO: doesn't actually stop timer.
+            this.cursor.hide();
+        };
+
+        this.element.onfocus = (e) => {
+            // TODO: doesn't actually start timer.
+            this.cursor.show();
         };
 
         this.element.onmousewheel = (e) => {
@@ -4350,25 +4422,7 @@ export class FlowView extends ui.Component {
                 const code = e.charCode;
                 if (code === CharacterCodes.cr) {
                     // TODO: other labels; for now assume only list/pg tile labels
-                    const curTilePos = findTile(this, pos, "pg", false);
-                    const pgMarker = curTilePos.tile as Paragraph.IParagraphMarker;
-                    const pgPos = curTilePos.pos;
-                    Paragraph.clearContentCaches(pgMarker);
-                    const curProps = pgMarker.properties;
-                    const newProps = MergeTree.createMap<any>();
-                    const newLabels = ["pg"];
-                    if (Paragraph.isListTile(pgMarker)) {
-                        newLabels.push("list");
-                        newProps.indentLevel = curProps.indentLevel;
-                        newProps.listKind = curProps.listKind;
-                    }
-                    newProps[MergeTree.reservedTileLabelsKey] = newLabels;
-                    // TODO: place in group op
-                    // old marker gets new props
-                    this.sharedString.annotateRange(newProps, pgPos, pgPos + 1,
-                        { name: "rewrite" });
-                    // new marker gets existing props
-                    this.sharedString.insertMarker(pos, MergeTree.ReferenceType.Tile, curProps);
+                    this.insertParagraph(pos);
                 } else {
                     this.sharedString.insertText(String.fromCharCode(code), pos);
                     this.updatePGInfo(pos);
@@ -4649,38 +4703,19 @@ export class FlowView extends ui.Component {
         }
     }
 
-    /** Inserts a Formula box to display the given 'formula'. */
-    public insertFormula(formula: string) {
-        // TODO: Unclear if piggy-backing on ReferencType.Simple is the best way to insert custom boxes.
-        this.sharedString.insertMarker(this.cursor.pos, MergeTree.ReferenceType.Simple, {
-            [Paragraph.referenceProperty]: {
-                sha: "",                        // 'sha' not used
-                type: {
-                    name: "formula",
-                } as IReferenceDocType,
-                url: "",                        // 'url' not used
-            } as IReferenceDoc,
-            state: { formula },
-        });
-        this.cursorFwd();
-        this.localQueueRender(this.cursor.pos);
+    /** Insert a Sheetlet. */
+    public insertSheetlet() {
+        this.insertComponent("sheetlet", { });
     }
 
-    /** Inserts a Slider box to display the given 'formula'. */
+    /** Insert a Formula box to display the given 'formula'. */
+    public insertFormula(formula: string) {
+        this.insertComponent("formula", { formula });
+    }
+
+    /** Insert a Slider box to display the given 'formula'. */
     public insertSlider(value: string) {
-        // TODO: Unclear if piggy-backing on ReferencType.Simple is the best way to insert custom boxes.
-        this.sharedString.insertMarker(this.cursor.pos, MergeTree.ReferenceType.Simple, {
-            [Paragraph.referenceProperty]: {
-                sha: "",                        // 'sha' not used
-                type: {
-                    name: "slider",
-                } as IReferenceDocType,
-                url: "",                        // 'url' not used
-            } as IReferenceDoc,
-            state: { value },
-        });
-        this.cursorFwd();
-        this.localQueueRender(this.cursor.pos);
+        this.insertComponent("slider", { value });
     }
 
     public insertPhoto() {
@@ -5278,6 +5313,55 @@ export class FlowView extends ui.Component {
                 this.render(this.topChar, true);
             }
         }
+    }
+
+    private insertParagraph(pos: number) {
+        const curTilePos = findTile(this, pos, "pg", false);
+        const pgMarker = curTilePos.tile as Paragraph.IParagraphMarker;
+        const pgPos = curTilePos.pos;
+        Paragraph.clearContentCaches(pgMarker);
+        const curProps = pgMarker.properties;
+        const newProps = MergeTree.createMap<any>();
+        const newLabels = ["pg"];
+
+        // TODO: Should merge w/all exisitng tile labels?
+        if (Paragraph.isListTile(pgMarker)) {
+            newLabels.push("list");
+            newProps.indentLevel = curProps.indentLevel;
+            newProps.listKind = curProps.listKind;
+        }
+
+        newProps[MergeTree.reservedTileLabelsKey] = newLabels;
+
+        // TODO: place in group op
+        // old marker gets new props
+        this.sharedString.annotateRange(newProps, pgPos, pgPos + 1, { name: "rewrite" });
+        // new marker gets existing props
+        this.sharedString.insertMarker(pos, MergeTree.ReferenceType.Tile, curProps);
+    }
+
+    private insertComponent(type: string, state: {}) {
+        const startPos = this.cursor.pos;
+
+        // TODO: All markers should be inserted as an atomic group.
+        const component = ui.refTypeNameToComponent.get(type);
+        if (component.isParagraph) {
+            this.insertParagraph(this.cursor.pos++);
+        }
+
+        const props = {
+            [Paragraph.referenceProperty]: {
+                sha: "",                        // 'sha' not used
+                type: {
+                    name: type,
+                } as IReferenceDocType,
+                url: "",                        // 'url' not used
+            } as IReferenceDoc,
+            state,
+        };
+
+        this.sharedString.insertMarker(this.cursor.pos++, MergeTree.ReferenceType.Simple, props);
+        this.localQueueRender(startPos);
     }
 
     private remotePresenceUpdate(delta: types.IValueChanged, local: boolean, op: core.ISequencedObjectMessage) {

@@ -441,25 +441,21 @@ export function markerToItems(marker: MergeTree.Marker, itemsContext: IItemsCont
     const items = itemsContext.itemInfo.items;
     const font = itemsContext.fontInfo.getFont(itemsContext.curPGMarker);
 
-    // If the marker is a simple reference, see if it's types is registered as an external
-    // component.
-    if (marker.refType === MergeTree.ReferenceType.Simple) {
-        const typeName = marker.properties.ref && marker.properties.ref.type.name;
-        const component = ui.refTypeNameToComponent.get(typeName);
+    const typeName = marker.properties.ref && marker.properties.ref.type.name;
+    const component = ui.refTypeNameToComponent.get(typeName);
 
-        // If it is a registered external component, measure it and push a block item.
-        if (component) {
-            const state = marker.properties.state;
+    // If it is a registered external component, measure it and push a block item.
+    if (component) {
+        const state = marker.properties.state;
 
-            items.push({ 
-                type: ParagraphItemType.Block,
-                text: "1",  // Only text.length is used to measure positions occupied.
-                width: component.measure(state, itemsContext.services, font),
-                segment: marker
-            } as IPGBlock);
+        items.push({ 
+            type: ParagraphItemType.Block,
+            text: "1",  // Only text.length is used to measure positions occupied.
+            width: component.measure(state, itemsContext.services, font),
+            segment: marker
+        } as IPGBlock);
 
-            return;
-        }
+        return;
     }
 
     // Otherwise, assume this is a paragraph marker.  (Note early 'return' above.)
@@ -537,17 +533,29 @@ export function isReference(marker: MergeTree.Marker) {
 export function segmentToItems(
     segment: MergeTree.Segment, segpos: number, refSeq: number, clientId: number,
     start: number, end: number, context: IItemsContext) {
-    if (segment.getType() === MergeTree.SegmentType.Text) {
-        let textSegment = <MergeTree.TextSegment>segment;
-        context.paragraphLexer.lex(textSegment);
-    } else if (segment.getType() === MergeTree.SegmentType.Marker) {
-        let marker = <MergeTree.Marker>segment;
-        if (isReference(marker)) {
-            context.paragraphLexer.mark(marker);
-        } else if (marker.hasTileLabel("pg") || isEndBox(marker)) {
-            context.nextPGPos = segpos;
-            return false;
+
+    switch (segment.getType()) {
+        case MergeTree.SegmentType.Text: {
+            context.paragraphLexer.lex(segment as MergeTree.TextSegment);
+            return true;
+        }
+
+        case MergeTree.SegmentType.Marker: {
+            const asMarker = segment as MergeTree.Marker;
+            const maybeComponent = ui.maybeGetComponent(asMarker);
+            
+            const isParagraph = asMarker.hasTileLabel("pg")
+                || isEndBox(asMarker)
+                || maybeComponent
+                && maybeComponent.isParagraph;
+
+            if (isParagraph) {
+                context.nextPGPos = segpos;
+                return false;
+            } else if (isReference(asMarker)) {
+                context.paragraphLexer.mark(asMarker);
+                return true;
+            }
         }
     }
-    return true;
 }
