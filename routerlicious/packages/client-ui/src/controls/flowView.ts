@@ -334,6 +334,12 @@ const commands: ICmd[] = [
     },
     {
         exec: (f) => {
+            f.insertList();
+        },
+        key: "insert list",
+    },
+    {
+        exec: (f) => {
             f.addChildFlow();
         },
         key: "cflow test",
@@ -419,11 +425,14 @@ export interface ISelectionListBox {
     items(): Item[];
     getSelectedKey(): string;
     getSelectedItem(): Item;
+    getSelectionIndex(): number;
+    setSelectionIndex(indx: number);
     keydown(e: KeyboardEvent);
 }
 
 export function selectionListBoxCreate(
-    textRect: ui.Rectangle,
+    shapeRect: ui.Rectangle,
+    popup: boolean,
     container: HTMLElement,
     itemHeight: number,
     offsetY: number,
@@ -441,6 +450,7 @@ export function selectionListBoxCreate(
         elm: listContainer,
         getSelectedItem,
         getSelectedKey,
+        getSelectionIndex,
         hide: () => {
             listContainer.style.visibility = "hidden";
         },
@@ -450,11 +460,20 @@ export function selectionListBoxCreate(
         prevItem,
         removeHighlight,
         selectItem: selectItemByKey,
+        setSelectionIndex,
         show: () => {
             listContainer.style.visibility = "visible";
         },
         showSelectionList,
     };
+
+    function getSelectionIndex() {
+        return selectionIndex;
+    }
+
+    function setSelectionIndex(indx: number) {
+        selectItem(indx);
+    }
 
     function selectItemByKey(key: string) {
         key = key.trim();
@@ -512,38 +531,51 @@ export function selectionListBoxCreate(
         container.appendChild(listContainer);
     }
 
-    function updateRectangles() {
-        const width = textRect.width;
-        const height = window.innerHeight / 3;
-        let top: number;
-        let bottom: number;
-        let right: number;
-        if ((textRect.x + textRect.width) > window.innerWidth) {
-            right = textRect.x;
-        }
-        // TODO: use container div instead of window/doc body
-        // TODO: right/left (for now assume go right)
-        if ((height + textRect.y + offsetY + textRect.height) >= window.innerHeight) {
-            bottom = window.innerHeight - textRect.y;
-        } else {
-            top = textRect.y + textRect.height;
-        }
-        itemCapacity = Math.floor(height / itemHeight);
-        if (top !== undefined) {
-            const listContainerRect = new ui.Rectangle(textRect.x, top, width, height);
-            listContainerRect.height = itemCapacity * itemHeight;
-            listContainerRect.conformElementMaxHeight(listContainer);
-        } else {
-            const listContainerRect = new ui.Rectangle(textRect.x, 0, width, height);
-            listContainerRect.height = itemCapacity * itemHeight;
-            listContainerRect.conformElementMaxHeightFromBottom(listContainer, bottom);
-        }
-        if (right !== undefined) {
-            listContainer.style.right = (window.innerWidth - right) + "px";
-            listContainer.style.left = "";
-        }
+    function nonPopUpdateRectangles() {
+        shapeRect.conformElement(listContainer);
+        itemCapacity = Math.floor(shapeRect.height / itemHeight);
+
         if (varHeight) {
             listContainer.style.paddingBottom = varHeight + "px";
+        }
+    }
+
+    function updateRectangles() {
+        if (!popup) {
+            nonPopUpdateRectangles();
+        } else {
+            const width = shapeRect.width;
+            const height = window.innerHeight / 3;
+            let top: number;
+            let bottom: number;
+            let right: number;
+            if ((shapeRect.x + shapeRect.width) > window.innerWidth) {
+                right = shapeRect.x;
+            }
+            // TODO: use container div instead of window/doc body
+            // TODO: right/left (for now assume go right)
+            if ((height + shapeRect.y + offsetY + shapeRect.height) >= window.innerHeight) {
+                bottom = window.innerHeight - shapeRect.y;
+            } else {
+                top = shapeRect.y + shapeRect.height;
+            }
+            itemCapacity = Math.floor(height / itemHeight);
+            if (top !== undefined) {
+                const listContainerRect = new ui.Rectangle(shapeRect.x, top, width, height);
+                listContainerRect.height = itemCapacity * itemHeight;
+                listContainerRect.conformElementMaxHeight(listContainer);
+            } else {
+                const listContainerRect = new ui.Rectangle(shapeRect.x, 0, width, height);
+                listContainerRect.height = itemCapacity * itemHeight;
+                listContainerRect.conformElementMaxHeightFromBottom(listContainer, bottom);
+            }
+            if (right !== undefined) {
+                listContainer.style.right = (window.innerWidth - right) + "px";
+                listContainer.style.left = "";
+            }
+            if (varHeight) {
+                listContainer.style.paddingBottom = varHeight + "px";
+            }
         }
     }
 
@@ -824,7 +856,7 @@ export function searchBoxCreate(boundingElm: HTMLElement,
         vertSplit[0].conformElement(inputElm);
         inputElm.style.lineHeight = `${vertSplit[0].height}px`;
         vertSplit[0].height += inputElmBorderSize;
-        selectionListBox = selectionListBoxCreate(vertSplit[0], container, itemHeight, offsetY);
+        selectionListBox = selectionListBoxCreate(vertSplit[0], true, container, itemHeight, offsetY);
     }
 
     function updateText() {
@@ -1923,6 +1955,10 @@ export interface IFlowRefMarker extends MergeTree.Marker {
     flowView: FlowView;
 }
 
+export interface IListRefMarker extends MergeTree.Marker {
+    selectionListBox: ISelectionListBox;
+}
+
 export class Viewport {
     // keep the line divs in order
     public lineDivs: ILineDiv[] = [];
@@ -2074,6 +2110,17 @@ export class Viewport {
                         showVideo.muted = true;
                         showVideo.load();
                         this.inclusions.set(irdoc.sha, showVideo);
+                    } else if (irdoc.type.name === "list") {
+                        const listRefMarker = marker as IListRefMarker;
+                        let selectionIndex = 0;
+                        const prevSelectionBox = listRefMarker.selectionListBox;
+                        if (prevSelectionBox) {
+                            selectionIndex = prevSelectionBox.getSelectionIndex();
+                        }
+                        const shapeRect = new ui.Rectangle(0,0,exclu.width,exclu.height);
+                        listRefMarker.selectionListBox =
+                            selectionListBoxCreate(shapeRect, false, innerDiv, 24, 2);
+                        listRefMarker.selectionListBox.setSelectionIndex(selectionIndex);
                     } else if ((irdoc.type.name === "childFlow") && (!flowView.parentFlow)) {
                         const flowRefMarker = marker as IFlowRefMarker;
                         let startChar = 0;
@@ -2145,7 +2192,7 @@ export class Viewport {
             this.lineX = 0;
         }
 
-       return <ILineRect>{ e, h, w, x, y };
+        return <ILineRect>{ e, h, w, x, y };
     }
 
     public currentLineWidth(h?: number) {
@@ -2773,7 +2820,7 @@ function makeSegSpan(
                         if ((e.button === 2) || ((e.button === 0) && (e.ctrlKey))) {
                             const spanBounds = ui.Rectangle.fromClientRect(span.getBoundingClientRect());
                             spanBounds.width = Math.floor(window.innerWidth / 4);
-                            slb = selectionListBoxCreate(spanBounds, document.body, 24, 0, 12);
+                            slb = selectionListBoxCreate(spanBounds, true, document.body, 24, 0, 12);
                             slb.showSelectionList(altsToItems(textErrorInfo.alternates));
                             span.onmouseup = cancelIntellisense;
                             document.body.onmouseup = cancelIntellisense;
@@ -3272,6 +3319,11 @@ export interface IReferenceDoc {
     layout?: IRefLayoutSpec;
 }
 
+export interface IListReferenceDoc extends IReferenceDoc {
+    items: Item[];
+    selectionIndex: number;
+}
+
 export function makeBlobRef(blob: core.IGenericBlob, tenant: string, cb: (irdoc: IReferenceDoc) => void) {
     switch (blob.type) {
         case "image": {
@@ -3478,6 +3530,7 @@ export class FlowView extends ui.Component {
             name: "childFlow",
         };
         const irdoc = <IReferenceDoc>{
+            sha: "C",
             type: rdocType,
         };
         const refProps = {
@@ -4715,7 +4768,7 @@ export class FlowView extends ui.Component {
 
     /** Insert a Sheetlet. */
     public insertSheetlet() {
-        this.insertComponent("sheetlet", { });
+        this.insertComponent("sheetlet", {});
     }
 
     /** Insert a Formula box to display the given 'formula'. */
@@ -4726,6 +4779,20 @@ export class FlowView extends ui.Component {
     /** Insert a Slider box to display the given 'formula'. */
     public insertSlider(value: string) {
         this.insertComponent("slider", { value });
+    }
+
+    public insertList() {
+        const startPos = this.cursor.pos;
+        const testList: Item[] = [{ key: "providence" }, { key: "boston" }, { key: "issaquah" }];
+        const props = <IListReferenceDoc>{
+            items: testList,
+            selectionIndex: 0,
+            sha: "L",
+            type: { name: "list" },
+            url: "",
+        };
+        this.sharedString.insertMarker(this.cursor.pos++, MergeTree.ReferenceType.Simple, props);
+        this.localQueueRender(startPos);
     }
 
     public insertPhoto() {

@@ -1,3 +1,4 @@
+// tslint:disable:no-empty-interface
 import { Box } from ".";
 import { ResultKind } from "../../ext/calc";
 import { CollaborativeWorkbook } from "../calc";
@@ -87,7 +88,7 @@ export class Sheetlet extends Box<ISheetletState> {
         }
     }
 
-    /** 
+    /**
      * Replace the focused <input>'s value with the corresponding cell's formula for
      * editing.
      */

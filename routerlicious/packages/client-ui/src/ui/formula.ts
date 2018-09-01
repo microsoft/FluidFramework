@@ -4,7 +4,7 @@ import { IllFormedFormula, NotImplemented, ResultKind, Workbook } from "../../ex
 
 // TODO: "typeof" test is currently necessary due to static 'refTypeToComponent' map
 //       in registry.ts instantiating the 'Formula' singleton when the module loads
-//       in node during tests. 
+//       in node during tests.
 const measure2d = (typeof document !== "undefined") && document.createElement("canvas").getContext("2d");
 
 // TODO: Should plumb through access to the caching implementation from FlowView.
