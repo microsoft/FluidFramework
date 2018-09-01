@@ -10,7 +10,7 @@ a final quiz component will be inserted with a multiple-choice test. By having a
 to update the demo by changing how we intermix components inside the interactive document. This will allow us to
 explore the component model in the context of building a textbook of the future and modern newspaper.
 
-The sprint will run from April to June.
+The sprint will run from April to September.
 
 ## Component model Tasks
 

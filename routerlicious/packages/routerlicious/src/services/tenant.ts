@@ -1,7 +1,6 @@
+import { GitManager, Historian } from "@prague/client-api";
 import * as request from "request-promise-native";
 import * as core from "../core";
-import { GitManager } from "../git-storage";
-import * as clientServices from "../services-client";
 
 export class Tenant implements core.ITenant {
     public get id(): string {
@@ -38,7 +37,7 @@ export class TenantManager implements core.ITenantManager {
                 json: true,
             }) as core.ITenantConfig;
 
-        const historian = new clientServices.Historian(
+        const historian = new Historian(
             `${this.historianEndpoint}/repos/${tenantId}`,
             true,
             false);

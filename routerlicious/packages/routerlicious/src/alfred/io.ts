@@ -1,9 +1,8 @@
+import * as agent from "@prague/agent";
+import { core as api, socketStorage } from "@prague/client-api";
 import * as jwt from "jsonwebtoken";
 import * as winston from "winston";
-import * as agent from "../agent";
-import * as api from "../api-core";
 import * as core from "../core";
-import * as socketStorage from "../socket-storage";
 
 export function register(
     webSocketServer: core.IWebSocketServer,
@@ -46,6 +45,7 @@ export function register(
             return connectedMessage;
         }
 
+        // todo: remove this handler once clients onboard "connect_document"
         // Note connect is a reserved socket.io word so we use connectDocument to represent the connect request
         socket.on("connectDocument", async (message: socketStorage.IConnect, response) => {
             connectDocument(message).then(
@@ -55,6 +55,18 @@ export function register(
                 (error) => {
                     winston.info(`connectDocument error`, error);
                     response(error, null);
+                });
+        });
+
+        // Note connect is a reserved socket.io word so we use connect_document to represent the connect request
+        socket.on("connect_document", async (message: socketStorage.IConnect) => {
+            connectDocument(message).then(
+                (connectedMessage) => {
+                    socket.emit("connect_document_success", connectedMessage);
+                },
+                (error) => {
+                    winston.info(`connectDocument error`, error);
+                    socket.emit("connect_document_error", error);
                 });
         });
 

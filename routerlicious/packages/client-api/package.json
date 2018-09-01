@@ -1,0 +1,60 @@
+{
+  "name": "@prague/client-api",
+  "version": "0.1.0",
+  "description": "Prague client API",
+  "main": "dist/index.js",
+  "module": "lib/index.js",
+  "types": "dist/index.d.ts",
+  "sideEffects": false,
+  "scripts": {
+    "build": "npm run tsc && npm run tslint",
+    "build:full": "npm run build && npm run build:esnext",
+    "build:esnext": "tsc --outDir lib --m esnext",
+    "tsc": "tsc",
+    "tslint": "tslint 'src/**/*.ts'"
+  },
+  "author": "Microsoft",
+  "repository": "microsoft/prague",
+  "devDependencies": {
+    "tslint": "^5.11.0",
+    "typescript": "^3.0.3",
+    "xmldoc": "^1.1.2"
+  },
+  "dependencies": {
+    "@prague/gitresources": "^0.1.0",
+    "@types/async": "^2.0.49",
+    "@types/node": "^10.9.4",
+    "@types/random-js": "^1.0.30",
+    "@types/socket.io-client": "^1.4.32",
+    "@types/uuid": "^3.4.4",
+    "async": "^2.6.1",
+    "axios": "^0.18.0",
+    "debug": "^3.1.0",
+    "jwt-decode": "^2.2.0",
+    "lodash": "^4.17.10",
+    "performance-now": "^2.1.0",
+    "random-js": "^1.0.8",
+    "raven-js": "^3.26.4",
+    "socket.io-client": "^2.1.1",
+    "uuid": "^3.3.2"
+  },
+  "nyc": {
+    "all": true,
+    "exclude": [
+      "src/test/**/*.ts",
+      "dist/test/**/*.js"
+    ],
+    "include": [
+      "src/**/*.ts",
+      "dist/**/*.js"
+    ],
+    "reporter": [
+      "cobertura",
+      "html",
+      "text"
+    ],
+    "temp-directory": "nyc/.nyc_output",
+    "cache-dir": "nyc/.cache",
+    "report-dir": "nyc/report"
+  }
+}

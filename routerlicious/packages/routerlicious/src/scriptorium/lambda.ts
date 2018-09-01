@@ -1,12 +1,11 @@
+import { core as api, utils as coreUtils } from "@prague/client-api";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import * as _ from "lodash";
 // tslint:disable-next-line:no-var-requires
 const now = require("performance-now");
 import * as winston from "winston";
-import * as api from "../api-core";
 import * as core from "../core";
-import { Range } from "../core-utils";
 import { IContext, IPartitionLambda } from "../kafka-service/lambdas";
 import * as utils from "../utils";
 
@@ -74,7 +73,7 @@ class OffsetBatch<K, T> {
 export class BatchManager<K, T> extends EventEmitter {
     public static MinRangeValue = Number.NEGATIVE_INFINITY;
 
-    public range = new Range(BatchManager.MinRangeValue, BatchManager.MinRangeValue);
+    public range = new coreUtils.Range(BatchManager.MinRangeValue, BatchManager.MinRangeValue);
 
     // The manager maintains a pending batch of operations as well as a current batch. The current batch is the
     // one that is in the process of being sent. The pending batch is the next batch that will be sent.
@@ -194,11 +193,11 @@ export class WorkManager extends EventEmitter {
 
     private updateOffset() {
         let maxHead = this.lastOffset;
-        let range = new Range();
+        let range = new coreUtils.Range();
 
         for (const work of this.work) {
             maxHead = Math.max(maxHead, work.range.head);
-            range = Range.union(range, work.range);
+            range = coreUtils.Range.union(range, work.range);
         }
 
         // If all the offsets are empty we take the max of the heads (which will be the largest offset seen). Otherwise

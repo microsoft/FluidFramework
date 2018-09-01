@@ -1,6 +1,6 @@
+import { MergeTree } from "@prague/client-api";
 import * as fs from "fs";
 import * as path from "path";
-import * as Collections from "../merge-tree/collections";
 
 const corpusFilenames = ["pp.txt", "huckfinn.txt", "shakespeare.txt", "tomsawyer.txt", "ulysses.txt"];
 
@@ -26,8 +26,8 @@ function shuffle<T>(a: T[]) {
 }
 
 function train() {
-    const corpusTree = new Collections.TST<number>();
-    function addCorpus(content: string, tree: Collections.TST<number>) {
+    const corpusTree = new MergeTree.TST<number>();
+    function addCorpus(content: string, tree: MergeTree.TST<number>) {
         let count = 0;
         const re = /\b\w+\b/g;
         let result: RegExpExecArray;

@@ -1,34 +1,34 @@
+import { utils } from "@prague/client-api";
 import * as assert from "assert";
-import { Range } from "../../core-utils";
 import { assertThrows } from "../testUtils";
 
 describe("Core-Utils", () => {
     describe("Range", () => {
-        let range: Range;
+        let range: utils.Range;
 
         beforeEach(() => {
-            range = new Range();
+            range = new utils.Range();
         });
 
         describe("#intersect", () => {
             it("Should be able to intersect two ranges", () => {
-                const first = new Range(10, 30);
-                const second = new Range(20, 25);
-                const third = new Range(45, 55);
+                const first = new utils.Range(10, 30);
+                const second = new utils.Range(20, 25);
+                const third = new utils.Range(45, 55);
 
-                assert.deepEqual(Range.intersect(first, second), new Range(20, 25));
-                assert.ok(Range.intersect(first, third).empty);
+                assert.deepEqual(utils.Range.intersect(first, second), new utils.Range(20, 25));
+                assert.ok(utils.Range.intersect(first, third).empty);
             });
         });
 
         describe("#union", () => {
-            it("Should be able to union two ranges", () => {
-                const first = new Range(10, 30);
-                const second = new Range(50, 60);
+            it("Should be able to union two Ranges", () => {
+                const first = new utils.Range(10, 30);
+                const second = new utils.Range(50, 60);
 
-                assert.deepEqual(first, Range.union(first, range));
-                assert.deepEqual(Range.union(first, range), first);
-                assert.deepEqual(Range.union(first, second), new Range(10, 60));
+                assert.deepEqual(first, utils.Range.union(first, range));
+                assert.deepEqual(utils.Range.union(first, range), first);
+                assert.deepEqual(utils.Range.union(first, second), new utils.Range(10, 60));
             });
         });
 

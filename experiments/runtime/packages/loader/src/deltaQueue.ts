@@ -1,4 +1,5 @@
-import { AsyncQueue, AsyncWorker, queue } from "async";
+import { AsyncQueue, AsyncWorker } from "async";
+import * as queue from "async/queue";
 import { EventEmitter } from "events";
 import { IDeltaQueue } from "./deltas";
 

@@ -4,8 +4,7 @@
   "description": "Prague API sequence sample",
   "main": "index.js",
   "dependencies": {
-    "@prague/gitresources": "^0.7.0",
-    "@prague/routerlicious": "^0.1.2823",
+    "@prague/client-api": "^0.1.3187",
     "jsonwebtoken": "^8.2.1"
   },
   "devDependencies": {
@@ -19,7 +18,9 @@
     "tslint": "^5.9.1",
     "typescript": "^2.8.3",
     "webpack": "^4.7.0",
-    "webpack-cli": "^2.0.15"
+    "webpack-bundle-analyzer": "^2.13.1",
+    "webpack-cli": "^2.0.15",
+    "webpack-visualizer-plugin": "^0.1.11"
   },
   "scripts": {
     "build": "npm run tslint && npm run webpack",

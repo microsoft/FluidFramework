@@ -1,4 +1,4 @@
-import * as resume from "../intelligence/resume";
+import { resume } from "@prague/agent";
 
 const intelligent = resume.factory.create({
     deviceId: "routerlicious",

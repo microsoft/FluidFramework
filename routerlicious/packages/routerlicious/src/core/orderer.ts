@@ -1,4 +1,4 @@
-import { IClient, IDocumentMessage, ITenantUser } from "../api-core";
+import { core } from "@prague/client-api";
 import { IWebSocket } from "../core";
 
 export interface IOrdererSocket {
@@ -14,13 +14,13 @@ export interface IOrdererConnection {
 
     parentBranch: string;
 
-    order(message: IDocumentMessage): void;
+    order(message: core.IDocumentMessage): void;
 
     disconnect();
 }
 
 export interface IOrderer {
-    connect(socket: IWebSocket, user: ITenantUser, client: IClient): Promise<IOrdererConnection>;
+    connect(socket: IWebSocket, user: core.ITenantUser, client: core.IClient): Promise<IOrdererConnection>;
     close(): Promise<void>;
 }
 

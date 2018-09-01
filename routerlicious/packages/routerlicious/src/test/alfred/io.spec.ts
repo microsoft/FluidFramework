@@ -1,10 +1,8 @@
+import { core as api, socketStorage, utils as coreUtils } from "@prague/client-api";
 import * as assert from "assert";
 import * as io from "../../alfred/io";
-import * as api from "../../api-core";
 import * as core from "../../core";
-import { Deferred } from "../../core-utils";
 import * as services from "../../services";
-import * as socketStorage from "../../socket-storage";
 import * as utils from "../../utils";
 import {
     MessageFactory,
@@ -73,9 +71,18 @@ describe("Routerlicious", () => {
                         token,
                     };
 
-                    const deferred = new Deferred<socketStorage.IConnected>();
+                    const deferred = new coreUtils.Deferred<socketStorage.IConnected>();
+
+                    socket.on("connect_document_success", (connectedMessage: socketStorage.IConnected) => {
+                        deferred.resolve(connectedMessage);
+                    });
+
+                    socket.on("connect_document_error", (error: any) => {
+                        deferred.reject(error);
+                    });
+
                     socket.send(
-                        "connectDocument",
+                        "connect_document",
                         connectMessage,
                         (error: any, connectedMessage: socketStorage.IConnected) => {
                             if (error) {
@@ -93,7 +100,7 @@ describe("Routerlicious", () => {
                     clientId: string,
                     message: api.IDocumentMessage): Promise<void> {
 
-                    const deferred = new Deferred<void>();
+                    const deferred = new coreUtils.Deferred<void>();
                     socket.send("submitOp", clientId, [message], (error: any, response: any) => {
                         if (error) {
                             deferred.reject(error);
@@ -105,7 +112,7 @@ describe("Routerlicious", () => {
                     return deferred.promise;
                 }
 
-                describe("#connectDocument", () => {
+                describe("#connect_document", () => {
                     it("Should connect to and create a new interactive document on first connection", async () => {
                         const socket = webSocketServer.createConnection();
                         const connectMessage = await connectToServer(testId, testTenantId, testSecret, socket);

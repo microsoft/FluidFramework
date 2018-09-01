@@ -1,5 +1,5 @@
+import { core as api } from "@prague/client-api";
 import * as winston from "winston";
-import { IHelpMessage, IQueueMessage, RemoteHelp } from "../api-core";
 import * as core from "../core";
 import { IContext } from "../kafka-service/lambdas";
 import { SequencedLambda } from "../kafka-service/sequencedLambda";
@@ -34,7 +34,7 @@ export class TmzLambda extends SequencedLambda {
         if (baseMessage.type === core.SequencedOperationType) {
             const sequencedMessage = baseMessage as core.ISequencedOperationMessage;
             // Only process "Help" messages.
-            if (sequencedMessage.operation.type === RemoteHelp) {
+            if (sequencedMessage.operation.type === api.RemoteHelp) {
                 await this.trackDocument(
                     sequencedMessage.operation.clientId,
                     sequencedMessage.tenantId,
@@ -51,14 +51,14 @@ export class TmzLambda extends SequencedLambda {
         clientId: string,
         tenantId: string,
         docId: string,
-        message: IHelpMessage): Promise<void> {
+        message: api.IHelpMessage): Promise<void> {
         const key = await this.tenantManager.getKey(tenantId);
         const filteredTasks = this.filterTasks(message.tasks);
         for (const queueTask of filteredTasks) {
             const queueName = queueTask[0];
             const tasks = queueTask[1];
             if (tasks.length > 0) {
-                const queueMessage: IQueueMessage = {
+                const queueMessage: api.IQueueMessage = {
                     documentId: docId,
                     message: {
                         tasks,

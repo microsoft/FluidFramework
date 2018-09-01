@@ -1,4 +1,6 @@
 const path = require('path');
+// var Visualizer = require('webpack-visualizer-plugin');
+// const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 
 module.exports = {
     entry: './src/index.ts',
@@ -25,9 +27,12 @@ module.exports = {
         path: path.resolve(__dirname, 'dist')
     },
     node: {
-        fs: 'empty',
-        dgram: 'empty',
-        net: 'empty',
-        tls: 'empty'
-    }
+        fs: 'empty'
+    },
+    plugins: [
+        // new BundleAnalyzerPlugin(),
+        // new Visualizer({
+        //     filename: './statistics.html'
+        // })
+    ],
 };

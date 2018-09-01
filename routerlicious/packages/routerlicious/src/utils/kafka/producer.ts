@@ -1,4 +1,4 @@
-import { Deferred } from "../../core-utils";
+import { utils } from "@prague/client-api";
 import { IPendingMessage, IProducer } from "./definitions";
 
 /**
@@ -24,7 +24,7 @@ export abstract class Producer implements IProducer {
         const pending = this.messages[key];
 
         // Insert a new pending message
-        const deferred = new Deferred<any>();
+        const deferred = new utils.Deferred<any>();
         pending.push({ deferred, message });
 
         // Mark the need to send a message

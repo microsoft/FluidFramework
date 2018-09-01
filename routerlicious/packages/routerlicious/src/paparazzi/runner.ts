@@ -1,20 +1,18 @@
+import * as agent from "@prague/agent";
+import { core as api, socketStorage, utils as coreUtils } from "@prague/client-api";
 import * as fs from "fs";
 import * as request from "request";
 import * as unzip from "unzip-stream";
 import * as url from "url";
 import * as winston from "winston";
-import * as agent from "../agent";
-import { IDocumentService, IQueueMessage} from "../api-core";
 import * as core from "../core";
-import { Deferred } from "../core-utils";
-import * as socketStorage from "../socket-storage";
 import * as utils from "../utils";
 
 class DocumentServiceFactory implements agent.IDocumentServiceFactory {
     constructor(private serverUrl: string, private historianUrl: string) {
     }
 
-    public async getService(tenantId: string): Promise<IDocumentService> {
+    public async getService(tenantId: string): Promise<api.IDocumentService> {
         // Disabling browser error tracking for paparazzi.
         const services = socketStorage.createDocumentService(this.serverUrl, this.historianUrl, tenantId, false);
         return services;
@@ -23,7 +21,7 @@ class DocumentServiceFactory implements agent.IDocumentServiceFactory {
 
 export class PaparazziRunner implements utils.IRunner {
     private workerService: agent.WorkerService;
-    private running = new Deferred<void>();
+    private running = new coreUtils.Deferred<void>();
     private permission: Set<string>;
 
     constructor(
@@ -60,7 +58,7 @@ export class PaparazziRunner implements utils.IRunner {
         this.messageReceiver.on("message", (message: core.ITaskMessage) => {
             const type = message.type;
             if (type === "tasks:start") {
-                const requestMessage = message.content as IQueueMessage;
+                const requestMessage = message.content as api.IQueueMessage;
                 this.startDocumentWork(requestMessage);
             }
         });
@@ -110,7 +108,7 @@ export class PaparazziRunner implements utils.IRunner {
         return this.running.promise;
     }
 
-    private startDocumentWork(requestMsg: IQueueMessage) {
+    private startDocumentWork(requestMsg: api.IQueueMessage) {
         // Only start tasks that are allowed to run.
         const filteredTask = requestMsg.message.tasks.filter((task) => this.permission.has(task));
 

@@ -6,13 +6,15 @@ const merge = require('webpack-merge');
 const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 
 module.exports = env => {
-    let entry = getEntry(env);
+    let entry = {
+        controller: "./src/alfred/controllers/index.ts",
+    };
     let prod_target = (env && env.target)
 
     let typeCheckingCores = 1;
     return merge((prod_target ? prod : dev), {
         entry,
-        devtool: 'source-map',    
+        devtool: 'source-map',
         resolve: {
             extensions: [".ts", ".tsx", ".js", ".json"]
         },
@@ -25,15 +27,15 @@ module.exports = env => {
         },
         externals: {
             jquery: '$',
-            "../client-api": "api",
-            "../../client-api": "api",
-            "../client-ui": "ui",
-            "../../client-ui": "ui",
-            "../agent": "agent",
-            "../../agent": "agent",
         },
         module: {
             rules: [
+                {
+                    test: /\.js$/,
+                    use: ["source-map-loader"],
+                    exclude: /node_modules/,
+                    enforce: "pre"
+                },
                 {
                     test: /\.(ts|tsx)$/,
                     use: [
@@ -52,6 +54,7 @@ module.exports = env => {
                         options: {
                             compilerOptions: {
                                 declaration: false,
+                                module: "esnext",
                             },
                             // Removes TypeChecking and forces thread safety
                             // ForkTSCheckerWebpackPlugin handles types and syntax
@@ -88,37 +91,3 @@ module.exports = env => {
         ]
     });
 };
-
-function getEntry(env) {    
-    let entry;
-
-    let apiPath = "./src/client-api/index.ts";
-    let uiPath = "./src/client-ui/index.ts";
-    let agentPath = "./src/agent/index.ts";
-    let controllerPath = "./src/alfred/controllers/index.ts";
-
-    if (env && env.bundle) {
-        switch (env.bundle) {
-            case ("api"):
-                entry = {api: apiPath};
-                break;
-            case ("ui"):
-                entry = {ui: uiPath};
-                break;
-            case ("agent"):
-                entry = {agent: agentPath};
-                break;
-            case ("controller"):
-                entry = {controller: controllerPath};
-                break;
-        }
-    } else {
-        entry = {    
-            api: apiPath,
-            ui: uiPath,
-            agent: agentPath,
-            controller: controllerPath,
-        };
-    }
-    return entry;
-}

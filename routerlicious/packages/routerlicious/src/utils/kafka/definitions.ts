@@ -1,5 +1,5 @@
 // tslint:disable:ban-types
-import { Deferred } from "../../core-utils";
+import { utils } from "@prague/client-api";
 
 export interface IMessage {
     topic: string;
@@ -54,7 +54,7 @@ export interface IConsumer {
  */
 export interface IPendingMessage {
     // The deferred is used to resolve a promise once the message is sent
-    deferred: Deferred<any>;
+    deferred: utils.Deferred<any>;
 
     // The message to send
     message: string;

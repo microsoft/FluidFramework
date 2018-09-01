@@ -1,11 +1,10 @@
+import { api, MergeTree, SharedString, types } from "@prague/client-api";
 import * as childProcess from "child_process";
 import * as path from "path";
-import { api, MergeTree, types } from "../client-api";
-import { SharedString } from "../shared-string";
 import * as author from "./author";
 
 let document: api.Document;
-let sharedString: SharedString;
+let sharedString: SharedString.SharedString;
 
 function setParagraphs(chunks: string[]) {
     let props;
@@ -98,7 +97,7 @@ export async function create(
 
     root.set("presence", document.createMap());
     root.set("users", document.createMap());
-    sharedString = document.createString() as SharedString;
+    sharedString = document.createString() as SharedString.SharedString;
 
     // p-start might break something
     sharedString.insertMarker(0, MergeTree.ReferenceType.Tile, {[MergeTree.reservedTileLabelsKey]: ["pg"] });

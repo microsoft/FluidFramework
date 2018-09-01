@@ -1,4 +1,4 @@
-import { api as prague } from "@prague/routerlicious";
+import { api, socketStorage } from "@prague/client-api";
 import * as jwt from "jsonwebtoken";
 
 // For local development
@@ -11,10 +11,10 @@ const historian = "https://historian.wu2.prague.office-int.com";
 const tenantId = "gallant-hugle";
 const secret = "03302d4ebfb6f44b662d00313aff5a46";
 
-const documentId = "test-sequence-0706-1";
+const documentId = "test-sequence-0831-1";
 
 // Register endpoint connection
-prague.socketStorage.registerAsDefault(routerlicious, historian, tenantId);
+socketStorage.registerAsDefault(routerlicious, historian, tenantId);
 
 async function run(id: string): Promise<void> {
     const token = jwt.sign(
@@ -29,7 +29,7 @@ async function run(id: string): Promise<void> {
         secret);
 
     // Load in the latest and connect to the document
-    const collabDoc = await prague.api.load(id, { blockUpdateMarkers: true, token });
+    const collabDoc = await api.load(id, { blockUpdateMarkers: true, token });
 
     const rootView = await collabDoc.getRoot().getView();
     console.log("Keys");

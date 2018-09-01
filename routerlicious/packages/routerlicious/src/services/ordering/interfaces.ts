@@ -1,5 +1,5 @@
+import { core as api } from "@prague/client-api";
 import { EventEmitter } from "events";
-import * as api from "../../api-core";
 import { IOrderer } from "../../core";
 
 export interface IConcreteNode extends EventEmitter {

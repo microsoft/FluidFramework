@@ -10,13 +10,12 @@ RUN apk add --no-cache tini python make g++
 WORKDIR /usr/src/server
 
 # Copy over the package and package-lock and install prior to the other code to optimize Docker's file system cache on rebuilds
-COPY package-lock.json .
-COPY package.json .
-COPY lerna.json .
-COPY packages/gitresources/package-lock.json packages/gitresources/package-lock.json
-COPY packages/gitresources/package.json packages/gitresources/package.json
-COPY packages/routerlicious/package-lock.json packages/routerlicious/package-lock.json
-COPY packages/routerlicious/package.json packages/routerlicious/package.json
+COPY *.json ./
+COPY packages/agent/package*.json packages/agent/
+COPY packages/client-api/package*.json packages/client-api/
+COPY packages/client-ui/package*.json packages/client-ui/
+COPY packages/gitresources/package*.json packages/gitresources/
+COPY packages/routerlicious/package*.json packages/routerlicious/
 
 # Need to set the --unsafe-perf flag since we are doing the install as root. Consider adding an 'app' accout so we
 # can do the install as node but then switch to 'app' to run. As app we won't be able to write to installed files

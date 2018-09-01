@@ -1,13 +1,8 @@
 // tslint:disable
+import { api as API, core as apiCore, MergeTree, SharedString, socketStorage } from "@prague/client-api";
 import * as fs from "fs";
 import * as path from "path";
-import * as Collections from "../merge-tree/collections";
 import * as commander from "commander";
-import * as API from "../api";
-import * as apiCore from "../api-core";
-import * as MergeTree from "../merge-tree";
-import { SharedString } from "../shared-string";
-import * as socketStorage from "../socket-storage";
 
 function clock() {
     return process.hrtime();
@@ -19,7 +14,7 @@ function elapsedMilliseconds(start: [number, number]) {
     return duration;
 }
 
-function compareProxStrings(a: Collections.ProxString<number>, b: Collections.ProxString<number>) {
+function compareProxStrings(a: MergeTree.ProxString<number>, b: MergeTree.ProxString<number>) {
     let ascore = ((a.invDistance * 200) * a.val) + a.val;
     let bscore = ((b.invDistance * 200) * b.val) + b.val;
     return bscore - ascore;
@@ -27,10 +22,10 @@ function compareProxStrings(a: Collections.ProxString<number>, b: Collections.Pr
 
 class Speller {
     static altMax = 7;
-    dict = new Collections.TST<number>();
+    dict = new MergeTree.TST<number>();
     verbose = true;
 
-    constructor(public sharedString: SharedString) {
+    constructor(public sharedString: SharedString.SharedString) {
     }
 
     spellingError(word: string) {
@@ -310,7 +305,7 @@ async function initSpell(id: string) {
     if (!root.has("text")) {
         root.set("text", document.createString());
     }
-    const sharedString = root.get("text") as SharedString;
+    const sharedString = root.get("text") as SharedString.SharedString;
     console.log("partial load fired");
     sharedString.loaded.then(() => {
         theSpeller = new Speller(sharedString);

@@ -1,6 +1,6 @@
+import { core as api } from "@prague/client-api";
 import { Router } from "express";
 import { Provider } from "nconf";
-import * as api from "../../../api-core";
 import * as utils from "../../../utils";
 import { IAlfredTenant } from "../../tenant";
 
