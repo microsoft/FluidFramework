@@ -24,7 +24,7 @@ export function create(config: Provider): Router {
     // Uploads the webpacked script to minio and delete the temorary script.
     function uploadScript(moduleName: string): Promise<any> {
         return new Promise<any>((resolve, reject) => {
-            const folder = path.join(__dirname, `../../../../../../tmp/build`);
+            const folder = "/tmp/build";
             const file = path.join(folder, `${moduleName}/webpacked_index.js`);
             const fileStream = fs.createReadStream(file);
             fs.stat(file, (error, stats) => {
@@ -93,28 +93,28 @@ export function create(config: Provider): Router {
                 return error.code === "NoSuchKey" ? response.status(200).send(null) : response.status(400).json({ error });
             }
             stream
-            .pipe(unzip.Extract({ path: `../../../tmp/temp_modules/${moduleName}` })
+            .pipe(unzip.Extract({ path: `/tmp/temp_modules/${moduleName}` })
             .on("error", (err) => {
                 winston.error(`Error writing unzipped module ${moduleName}: ${err}`);
                 response.status(500).json( {status: "error"} );
             })
             .on("close", () => {
                 const compiler = webpack({
-                    entry: `../../../tmp/temp_modules/${moduleName}/${moduleName}/dist/index.js`,
+                    entry: `/tmp/temp_modules/${moduleName}/${moduleName}/dist/index.js`,
                     output: {
                         filename: "webpacked_index.js",
-                        path: path.join(__dirname, `../../../../../../tmp/build/${moduleName}`),
+                        path: `/tmp/build/${moduleName}`,
                     },
                     resolve: {
                         modules: [
                           "temp_modules",
-                          path.resolve(__dirname, "../../../../../../tmp"),
+                          "/tmp",
                         ],
                     },
                     target: "node",
                 });
 
-                const tempFolder = path.join(__dirname, `../../../../../../tmp/temp_modules`);
+                const tempFolder = `/tmp/temp_modules`;
                 compiler.run((err, stats) => {
                     if (err || stats.hasErrors()) {
                         winston.error(`Error packing: ${err}`);

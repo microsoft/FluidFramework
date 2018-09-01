@@ -145,13 +145,13 @@ export class PaparazziRunner implements utils.IRunner {
             const moduleName = moduleFile.split(".")[0];
             winston.info(`Task runner will load ${moduleName}`);
 
-            // TODO - switch these to absolute paths
             return new Promise<any>((resolve, reject) => {
-                fs.access(`../../../tmp/intel_modules/${moduleName}`, (error) => {
+                fs.access(`/tmp/intel_modules/${moduleName}`, (error) => {
                     // Module already exists locally. Just import it!
                     if (!error) {
                       winston.info(`Module ${moduleName} already exists locally`);
-                      import(`../../../../../tmp/intel_modules/${moduleName}/${moduleName}`).then((loadedModule) => {
+                      import(`/tmp/intel_modules/${moduleName}/${moduleName}`).then(
+                        (loadedModule) => {
                             winston.info(`${moduleName} loaded!`);
                             resolve(loadedModule);
                         }, (err) => {
@@ -169,12 +169,12 @@ export class PaparazziRunner implements utils.IRunner {
                             reject(`Error requesting intel module from server: ${err}`);
                         })
                         // Unzipping one level nested to avoid collision with any OS generated folder/file.
-                        .pipe(unzip.Extract({ path: `../../../tmp/intel_modules/${moduleName}` })
+                        .pipe(unzip.Extract({ path: `/tmp/intel_modules/${moduleName}` })
                         .on("error", (err) => {
                             reject(`Error writing unzipped module ${moduleName}: ${err}`);
                         })
                         .on("close", () => {
-                            import(`../../../../../tmp/intel_modules/${moduleName}/${moduleName}`)
+                            import(`/tmp/intel_modules/${moduleName}/${moduleName}`)
                             .then((loadedModule) => {
                                 winston.info(`${moduleName} loaded!`);
                                 resolve(loadedModule);
