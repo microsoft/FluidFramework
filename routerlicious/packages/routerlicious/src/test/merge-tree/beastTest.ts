@@ -1,5 +1,6 @@
 import { MergeTree, mergeTreeUtils } from "@prague/client-api";
 import * as Base from "@prague/client-api/dist/merge-tree/base";
+import { SnapshotFS } from "@prague/client-api/dist/merge-tree/snapshot-fs";
 import * as Text from "@prague/client-api/dist/merge-tree/text";
 import * as assert from "assert";
 import * as JsDiff from "diff";
@@ -597,7 +598,7 @@ export function TestPack(verbose = true) {
         server.addClients(clients);
         if (testSyncload) {
             let clockStart = clock();
-            let segs = MergeTree.Snapshot.loadSync("snap-initial");
+            let segs = SnapshotFS.loadSync("snap-initial");
             console.log(`sync load time ${elapsedMicroseconds(clockStart)}`);
             let fromLoad = new MergeTree.MergeTree("");
             fromLoad.reloadFromSegments(segs);
@@ -950,7 +951,7 @@ export function TestPack(verbose = true) {
             let curmin = snapClient.mergeTree.getCollabWindow().minSeq;
             lastSnap = curmin;
             console.log(`snap started seq ${snapClient.getCurrentSeq()} minseq ${curmin}`);
-            let snapshot = new MergeTree.Snapshot(snapClient.mergeTree, filename, snapFinished);
+            let snapshot = new SnapshotFS(snapClient.mergeTree, filename, snapFinished);
             snapshot.start();
         }
 

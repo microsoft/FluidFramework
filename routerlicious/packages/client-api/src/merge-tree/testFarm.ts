@@ -2038,7 +2038,7 @@ if (clientServerTest) {
     let ppTest = true;
     let branch = false;
     let testPack = TestPack();
-    const filename = path.join(__dirname, "../../public/literature", "pp.txt");
+    const filename = path.join(__dirname, "../../../routerlicious/public/literature", "pp.txt");
     if (ppTest) {
         if (branch) {
             testPack.clientServerBranch(filename, 100000);

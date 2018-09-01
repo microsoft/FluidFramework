@@ -165,7 +165,7 @@ function measureFetch(startFile: string, withBookmarks = false) {
     et = elapsedMicroseconds(clockStart);
     console.log(`naive clone took ${(et / (1000*reps)).toFixed(1)} milliseconds`);
 }
-const filename = path.join(__dirname, "../../public/literature", "pp.txt");
+const filename = path.join(__dirname, "../../../routerlicious/public/literature", "pp.txt");
 
 propertyCopy();
 measureFetch(filename);
