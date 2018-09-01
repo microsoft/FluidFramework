@@ -415,6 +415,7 @@ export interface ISelectionListBox {
     items(): Item[];
     getSelectedKey(): string;
     getSelectedItem(): Item;
+    keydown(e: KeyboardEvent);
 }
 
 export function selectionListBoxCreate(
@@ -440,6 +441,7 @@ export function selectionListBoxCreate(
             listContainer.style.visibility = "hidden";
         },
         items: () => items,
+        keydown,
         nextItem,
         prevItem,
         removeHighlight,
@@ -486,6 +488,14 @@ export function selectionListBoxCreate(
     function nextItem() {
         if (selectionIndex < (items.length - 1)) {
             selectItem(selectionIndex + 1);
+        }
+    }
+
+    function keydown(e: KeyboardEvent) {
+        if (e.keyCode === KeyCode.upArrow) {
+            prevItem();
+        } else if (e.keyCode === KeyCode.downArrow) {
+            nextItem();
         }
     }
 
@@ -3157,7 +3167,7 @@ export function makeBlobRef(blob: core.IGenericBlob, tenant: string, cb: (irdoc:
                 type: irdocType,
                 url: blob.url,
             };
-            image.src =  blob.url;
+            image.src = blob.url;
 
             image.onload = () => {
                 irdoc.layout = { ar: image.naturalHeight / image.naturalWidth, dx: 0, dy: 0 };
@@ -3175,7 +3185,7 @@ export function makeBlobRef(blob: core.IGenericBlob, tenant: string, cb: (irdoc:
                 type: irdocType,
                 url: blob.url,
             };
-            video.src =  blob.url;
+            video.src = blob.url;
             cb(irdoc);
             video.load();
         }
@@ -3305,11 +3315,11 @@ export class FlowView extends ui.Component {
             });
             workbookMap.getView().then((workbookView) => {
                 this.services.set("workbook",
-                new CollaborativeWorkbook(workbookView, 2, 4, [
-                    // If empty, seed the workbook w/some initial data for demos.
-                    ["Dan", "500", "43", "0"],
-                    ["Kurt", "490", "0", "0"],
-                ]));
+                    new CollaborativeWorkbook(workbookView, 2, 4, [
+                        // If empty, seed the workbook w/some initial data for demos.
+                        ["Dan", "500", "43", "0"],
+                        ["Kurt", "490", "0", "0"],
+                    ]));
             });
         });
     }
