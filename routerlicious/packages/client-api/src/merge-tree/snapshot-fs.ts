@@ -2,6 +2,17 @@ import * as fs from "fs";
 import * as Collections from "./collections";
 import * as MergeTree from "./mergeTree";
 import { SnapChunk, Snapshot, SnapshotHeader } from "./snapshot";
+import { loadText } from "./text";
+
+export function loadTextFromFile(filename: string, mergeTree: MergeTree.MergeTree, segLimit = 0) {
+    const content = fs.readFileSync(filename, "utf8");
+    return loadText(content, mergeTree, segLimit);
+}
+
+export function loadTextFromFileWithMarkers(filename: string, mergeTree: MergeTree.MergeTree, segLimit = 0) {
+    const content = fs.readFileSync(filename, "utf8");
+    return loadText(content, mergeTree, segLimit, true);
+}
 
 // tslint:disable
 

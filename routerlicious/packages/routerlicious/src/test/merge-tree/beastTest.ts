@@ -1,7 +1,6 @@
 import { MergeTree, mergeTreeUtils } from "@prague/client-api";
 import * as Base from "@prague/client-api/dist/merge-tree/base";
-import { SnapshotFS } from "@prague/client-api/dist/merge-tree/snapshot-fs";
-import * as Text from "@prague/client-api/dist/merge-tree/text";
+import { loadTextFromFile, SnapshotFS } from "@prague/client-api/dist/merge-tree/snapshot-fs";
 import * as assert from "assert";
 import * as JsDiff from "diff";
 import * as fs from "fs";
@@ -582,7 +581,7 @@ export function TestPack(verbose = true) {
         let server = new MergeTree.TestServer(initString);
         server.measureOps = true;
         if (startFile) {
-            Text.loadTextFromFile(startFile, server.mergeTree, fileSegCount);
+            loadTextFromFile(startFile, server.mergeTree, fileSegCount);
         }
 
         let clients = <MergeTree.Client[]>Array(clientCount);
@@ -590,7 +589,7 @@ export function TestPack(verbose = true) {
             clients[i] = new MergeTree.Client(initString);
             clients[i].measureOps = true;
             if (startFile) {
-                Text.loadTextFromFile(startFile, clients[i].mergeTree, fileSegCount);
+                loadTextFromFile(startFile, clients[i].mergeTree, fileSegCount);
             }
             clients[i].startCollaboration(`Fred${i}`);
         }
@@ -611,7 +610,7 @@ export function TestPack(verbose = true) {
         if (addSnapClient) {
             snapClient = new MergeTree.Client(initString);
             if (startFile) {
-                Text.loadTextFromFile(startFile, snapClient.mergeTree, fileSegCount);
+                loadTextFromFile(startFile, snapClient.mergeTree, fileSegCount);
             }
             snapClient.startCollaboration("snapshot");
             server.addListeners([snapClient]);
@@ -1704,7 +1703,7 @@ export class DocumentTree {
 
 function findReplacePerf(filename: string) {
     let client = new MergeTree.Client("", { blockUpdateMarkers: true });
-    Text.loadTextFromFile(filename, client.mergeTree);
+    loadTextFromFile(filename, client.mergeTree);
 
     let clockStart = clock();
 

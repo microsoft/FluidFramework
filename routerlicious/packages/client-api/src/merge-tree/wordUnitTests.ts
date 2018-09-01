@@ -5,7 +5,7 @@ import * as Properties from "./properties";
 import * as ops from "./ops";
 import * as path from "path";
 import * as random from "random-js";
-import * as Text from "./text";
+import { loadTextFromFileWithMarkers } from "./snapshot-fs";
 
 function clock() {
     return process.hrtime();
@@ -127,7 +127,7 @@ function makeBookmarks(client: MergeTree.Client, bookmarkCount: number) {
 function measureFetch(startFile: string, withBookmarks = false) {
     let bookmarkCount = 20000;
     let client = new MergeTree.Client("", { blockUpdateMarkers: true });
-    Text.loadTextFromFileWithMarkers(startFile, client.mergeTree);
+    loadTextFromFileWithMarkers(startFile, client.mergeTree);
     if (withBookmarks) {
         makeBookmarks(client, bookmarkCount);
         console.log(`inserting ${bookmarkCount} refs into text`);

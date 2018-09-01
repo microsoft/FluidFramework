@@ -11,7 +11,7 @@ import { SharedStringInterval } from "../shared-string";
 import * as MergeTree from "./mergeTree";
 import * as ops from "./ops";
 import * as Properties from "./properties";
-import * as Text from "./text";
+import { loadTextFromFile } from "./snapshot-fs";
 import * as Xmldoc from "xmldoc";
 import { insertOverlayNode, OverlayNodePosition, onodeTypeKey } from "./overlayTree";
 
@@ -246,7 +246,7 @@ export function TestPack(verbose = true) {
         let server = new MergeTree.TestServer(initString, options);
         server.measureOps = true;
         if (startFile) {
-            Text.loadTextFromFile(startFile, server.mergeTree, fileSegCount);
+            loadTextFromFile(startFile, server.mergeTree, fileSegCount);
         }
 
         let clients = <MergeTree.Client[]>Array(clientCount);
@@ -254,7 +254,7 @@ export function TestPack(verbose = true) {
             clients[i] = new MergeTree.Client(initString);
             clients[i].measureOps = true;
             if (startFile) {
-                Text.loadTextFromFile(startFile, clients[i].mergeTree, fileSegCount);
+                loadTextFromFile(startFile, clients[i].mergeTree, fileSegCount);
             }
             clients[i].startCollaboration(`Fred${i}`);
         }
@@ -284,7 +284,7 @@ export function TestPack(verbose = true) {
         if (addSnapClient) {
             snapClient = new MergeTree.Client(initString);
             if (startFile) {
-                Text.loadTextFromFile(startFile, snapClient.mergeTree, fileSegCount);
+                loadTextFromFile(startFile, snapClient.mergeTree, fileSegCount);
             }
             snapClient.startCollaboration("snapshot");
             server.addListeners([snapClient]);
@@ -823,8 +823,8 @@ export function TestPack(verbose = true) {
         let serverB = new MergeTree.TestServer(initString);
         serverB.measureOps = true;
         if (startFile) {
-            Text.loadTextFromFile(startFile, serverA.mergeTree, fileSegCount);
-            Text.loadTextFromFile(startFile, serverB.mergeTree, fileSegCount);
+            loadTextFromFile(startFile, serverA.mergeTree, fileSegCount);
+            loadTextFromFile(startFile, serverB.mergeTree, fileSegCount);
         }
 
         let clientsA = <MergeTree.Client[]>Array(clientCountA);
@@ -834,7 +834,7 @@ export function TestPack(verbose = true) {
             clientsA[i] = new MergeTree.Client(initString);
             clientsA[i].measureOps = true;
             if (startFile) {
-                Text.loadTextFromFile(startFile, clientsA[i].mergeTree, fileSegCount);
+                loadTextFromFile(startFile, clientsA[i].mergeTree, fileSegCount);
             }
             clientsA[i].startCollaboration(`FredA${i}`);
         }
@@ -843,7 +843,7 @@ export function TestPack(verbose = true) {
             clientsB[i] = new MergeTree.Client(initString);
             clientsB[i].measureOps = true;
             if (startFile) {
-                Text.loadTextFromFile(startFile, clientsB[i].mergeTree, fileSegCount);
+                loadTextFromFile(startFile, clientsB[i].mergeTree, fileSegCount);
             }
             clientsB[i].startCollaboration(`FredB${i}`, null, 0, 1);
         }
