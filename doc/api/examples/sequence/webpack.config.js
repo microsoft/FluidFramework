@@ -26,9 +26,6 @@ module.exports = {
         filename: 'bundle.js',
         path: path.resolve(__dirname, 'dist')
     },
-    node: {
-        fs: 'empty'
-    },
     plugins: [
         // new BundleAnalyzerPlugin(),
         // new Visualizer({
