@@ -1,5 +1,5 @@
 // tslint:disable:ban-types
-import { core as api } from "@prague/client-api";
+import { core as api, socketStorage } from "@prague/client-api";
 import * as git from "@prague/gitresources";
 
 export class TestDocumentDeltaConnection implements api.IDocumentDeltaConnection {
@@ -67,6 +67,8 @@ export class TestDocumentDeltaStorageService implements api.IDocumentDeltaStorag
 }
 
 export class TestDocumentService implements api.IDocumentService {
+    private errorTracking = new socketStorage.DefaultErrorTracking();
+
     public async connectToStorage(id: string, token: string): Promise<api.IDocumentStorageService> {
         return new TestDocumentStorageService();
     }
@@ -83,7 +85,7 @@ export class TestDocumentService implements api.IDocumentService {
         return Promise.reject("Not implemented");
     }
 
-    public errorTrackingEnabled() {
-        return false;
+    public getErrorTrackingService() {
+        return this.errorTracking;
     }
 }

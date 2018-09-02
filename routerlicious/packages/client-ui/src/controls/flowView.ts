@@ -3,10 +3,10 @@ import {
     api,
     core,
     MergeTree,
-    mergeTreeUtils,
     SharedString,
     types,
 } from "@prague/client-api";
+import { findRandomWord } from "@prague/client-api/dist/merge-tree-utils";
 import * as assert from "assert";
 // tslint:disable-next-line:no-var-requires
 const performanceNow = require("performance-now");
@@ -5313,14 +5313,14 @@ export class FlowView extends ui.Component {
 
     public randomWordMove() {
         const client = this.sharedString.client;
-        const word1 = mergeTreeUtils.findRandomWord(client.mergeTree, client.getClientId());
+        const word1 = findRandomWord(client.mergeTree, client.getClientId());
         if (word1) {
             const removeStart = word1.pos;
             const removeEnd = removeStart + word1.text.length;
             this.sharedString.removeText(removeStart, removeEnd);
-            let word2 = mergeTreeUtils.findRandomWord(client.mergeTree, client.getClientId());
+            let word2 = findRandomWord(client.mergeTree, client.getClientId());
             while (!word2) {
-                word2 = mergeTreeUtils.findRandomWord(client.mergeTree, client.getClientId());
+                word2 = findRandomWord(client.mergeTree, client.getClientId());
             }
             const pos = word2.pos + word2.text.length;
             this.sharedString.insertText(word1.text, pos);

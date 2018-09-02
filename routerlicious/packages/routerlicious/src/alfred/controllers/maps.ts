@@ -1,9 +1,10 @@
 import * as agent from "@prague/agent";
-import { api, core, map as Map, socketStorage, types } from "@prague/client-api";
+import { api, core, map as Map, types } from "@prague/client-api";
 import * as resources from "@prague/gitresources";
 import * as $ from "jquery";
 // tslint:disable-next-line:no-var-requires
 const hasIn = require("lodash/hasIn");
+import { registerDocumentServices } from "./utils";
 
 async function loadDocument(
     id: string,
@@ -139,11 +140,7 @@ export async function load(
 }
 
 function loadFull(id: string, version: resources.ICommit, config: any, token?: string) {
-    socketStorage.registerAsDefault(
-        document.location.origin,
-        config.blobStorageUrl,
-        config.tenantId,
-        config.trackError);
+    registerDocumentServices(config);
 
     $(document).ready(() => {
         // Bootstrap worker service.
@@ -169,11 +166,7 @@ function loadFull(id: string, version: resources.ICommit, config: any, token?: s
 }
 
 function loadCommit(id: string, version: resources.ICommit, config: any) {
-    socketStorage.registerAsDefault(
-        document.location.origin,
-        config.blobStorageUrl,
-        config.tenantId,
-        config.trackError);
+    registerDocumentServices(config);
 
     $(document).ready(() => {
         api.load(id, { client: config.client, encrypted: false }, version, false).then(async (doc) => {

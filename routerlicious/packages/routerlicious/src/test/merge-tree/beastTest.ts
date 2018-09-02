@@ -1,4 +1,5 @@
-import { MergeTree, mergeTreeUtils } from "@prague/client-api";
+import { MergeTree } from "@prague/client-api";
+import { findRandomWord } from "@prague/client-api/dist/merge-tree-utils";
 import * as Base from "@prague/client-api/dist/merge-tree/base";
 import { loadTextFromFile, SnapshotFS } from "@prague/client-api/dist/merge-tree/snapshot-fs";
 import * as assert from "assert";
@@ -721,7 +722,7 @@ export function TestPack(verbose = true) {
         }
 
         function randomWordMove(client: MergeTree.Client) {
-            let word1 = mergeTreeUtils.findRandomWord(client.mergeTree, client.getClientId());
+            let word1 = findRandomWord(client.mergeTree, client.getClientId());
             if (word1) {
                 let removeStart = word1.pos;
                 let removeEnd = removeStart + word1.text.length;
@@ -731,9 +732,9 @@ export function TestPack(verbose = true) {
                 if (MergeTree.useCheckQ) {
                     client.enqueueTestString();
                 }
-                let word2 = mergeTreeUtils.findRandomWord(client.mergeTree, client.getClientId());
+                let word2 = findRandomWord(client.mergeTree, client.getClientId());
                 while (!word2) {
-                    word2 = mergeTreeUtils.findRandomWord(client.mergeTree, client.getClientId());
+                    word2 = findRandomWord(client.mergeTree, client.getClientId());
                 }
                 let pos = word2.pos + word2.text.length;
                 server.enqueueMsg(client.makeInsertMsg(word1.text, pos, MergeTree.UnassignedSequenceNumber,

@@ -1,6 +1,7 @@
-import { api, socketStorage, types } from "@prague/client-api";
+import { api, types } from "@prague/client-api";
 import * as resources from "@prague/gitresources";
 import * as $ from "jquery";
+import { registerDocumentServices } from "./utils";
 
 async function loadDocument(id: string, version: resources.ICommit, token: string, client: any): Promise<api.Document> {
     console.log("Loading in root document...");
@@ -107,11 +108,7 @@ function randomizeCell(cell: types.ICell, element1: JQuery, element2: JQuery) {
 }
 
 export async function load(id: string, version: resources.ICommit, token: string, config: any) {
-    socketStorage.registerAsDefault(
-        document.location.origin,
-        config.blobStorageUrl,
-        config.tenantId,
-        config.trackError);
+    registerDocumentServices(config);
 
     const doc = await loadDocument(id, version, token, config.client);
     const root = doc.getRoot();

@@ -16,7 +16,7 @@ export class DocumentService implements api.IDocumentService {
     constructor(
         private deltaUrl: string,
         private gitUrl: string,
-        private errorTracking: boolean,
+        private errorTracking: api.IErrorTrackingService,
         private disableCache: boolean,
         private historianApi: boolean,
         private directCredentials: ICredentials) {
@@ -80,7 +80,7 @@ export class DocumentService implements api.IDocumentService {
         return result.data;
     }
 
-    public errorTrackingEnabled() {
+    public getErrorTrackingService() {
         return this.errorTracking;
     }
 }

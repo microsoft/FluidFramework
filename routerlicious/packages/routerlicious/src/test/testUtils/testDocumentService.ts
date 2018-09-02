@@ -49,6 +49,7 @@ class TestDocumentStorageService implements api.IDocumentStorageService {
 }
 
 export class TestDocumentService implements api.IDocumentService {
+    private errorTracking = new socketStorage.DefaultErrorTracking();
 
     constructor(private deltaStorage: api.IDeltaStorageService) {
     }
@@ -76,7 +77,7 @@ export class TestDocumentService implements api.IDocumentService {
         return Promise.reject("Not implemented");
     }
 
-    public errorTrackingEnabled() {
-        return false;
+    public getErrorTrackingService() {
+        return this.errorTracking;
     }
 }

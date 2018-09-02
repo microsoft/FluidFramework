@@ -1,12 +1,13 @@
 import * as socketStorage from ".";
 import * as api from "../api";
-import { IDocumentService } from "../api-core";
+import { IDocumentService, IErrorTrackingService } from "../api-core";
+import { DefaultErrorTracking } from "./errorTracking";
 
 export function createDocumentService(
     deltaUrl: string,
     gitUrl: string,
     tenantId: string,
-    errorTracking = true,
+    errorTracking: IErrorTrackingService = new DefaultErrorTracking(),
     disableCache = false,
     historianApi = true,
     credentials?): IDocumentService {
@@ -26,7 +27,7 @@ export function registerAsDefault(
     deltaUrl: string,
     gitUrl: string,
     tenantId: string,
-    errorTracking = true,
+    errorTracking: IErrorTrackingService = new DefaultErrorTracking(),
     disableCache = false,
     historianApi = true,
     credentials?) {

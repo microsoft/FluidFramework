@@ -22,9 +22,6 @@ export { graph };
 import * as MergeTree from "./merge-tree";
 export { MergeTree };
 
-import * as mergeTreeUtils from "./merge-tree-utils";
-export { mergeTreeUtils };
-
 import * as SharedString from "./shared-string";
 export { SharedString };
 

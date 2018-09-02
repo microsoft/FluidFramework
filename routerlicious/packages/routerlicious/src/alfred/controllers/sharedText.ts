@@ -15,6 +15,7 @@ import * as resources from "@prague/gitresources";
 const performanceNow = require("performance-now");
 import * as request from "request";
 import * as url from "url";
+import { BrowserErrorTrackingService } from "./errorTracking";
 
 // first script loaded
 const clockStart = Date.now();
@@ -86,11 +87,14 @@ async function loadDocument(
 
     const host = new ui.BrowserContainerHost();
 
+    const errorService = config.trackError
+        ? new BrowserErrorTrackingService()
+        : new socketStorage.DefaultErrorTracking();
     socketStorage.registerAsDefault(
         document.location.origin,
         config.blobStorageUrl,
         config.tenantId,
-        config.trackError,
+        errorService,
         disableCache,
         config.historianApi,
         config.credentials);

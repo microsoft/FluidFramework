@@ -1,4 +1,4 @@
-import * as crypto from "crypto";
+import * as sha1 from "sha.js/sha1";
 
 /**
  * Returns the value of an object or sets to default if undefined.
@@ -13,10 +13,7 @@ export function getOrDefault<T>(value: T, def: T): T {
  */
 export function gitHashFile(file: Buffer): string {
     const size = file.byteLength;
-
     const filePrefix = "blob " + size + "\0";
-    const hashEngine = crypto.createHash("sha1");
-    hashEngine.update(filePrefix);
-    hashEngine.update(file);
-    return hashEngine.digest("hex");
+    const engine = new sha1();
+    return engine.update(filePrefix).update(file).digest("hex");
 }

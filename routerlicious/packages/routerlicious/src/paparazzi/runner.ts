@@ -14,7 +14,7 @@ class DocumentServiceFactory implements agent.IDocumentServiceFactory {
 
     public async getService(tenantId: string): Promise<api.IDocumentService> {
         // Disabling browser error tracking for paparazzi.
-        const services = socketStorage.createDocumentService(this.serverUrl, this.historianUrl, tenantId, false);
+        const services = socketStorage.createDocumentService(this.serverUrl, this.historianUrl, tenantId);
         return services;
     }
 }

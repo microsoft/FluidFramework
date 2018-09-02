@@ -212,6 +212,14 @@ export interface IDocumentDeltaConnection {
     disconnect();
 }
 
+// Error tracking service.
+export interface IErrorTrackingService {
+    /**
+     * Track error/exception using a service.
+     */
+    track(func: () => void);
+}
+
 export interface IDocumentService {
     /**
      * Access to storage associated with the document...
@@ -238,7 +246,7 @@ export interface IDocumentService {
     branch(tenantId: string, id: string, token: string): Promise<string>;
 
     /**
-     * Error tracking enabled or not.
+     * Returns the error tracking service
      */
-    errorTrackingEnabled(): boolean;
+    getErrorTrackingService(): IErrorTrackingService;
 }

@@ -1,5 +1,6 @@
-import { core } from "@prague/client-api";
+import { core, socketStorage } from "@prague/client-api";
 import * as assert from "assert";
+import { BrowserErrorTrackingService } from "./errorTracking";
 
 export class DeltaQueueManager {
     public static Unlimited = -1;
@@ -33,4 +34,16 @@ export class DeltaQueueManager {
 
         this.q.resume();
     }
+}
+
+export function registerDocumentServices(config: any) {
+    const errorService = config.trackError
+        ? new BrowserErrorTrackingService()
+        : new socketStorage.DefaultErrorTracking();
+
+    socketStorage.registerAsDefault(
+        document.location.origin,
+        config.blobStorageUrl,
+        config.tenantId,
+        errorService);
 }

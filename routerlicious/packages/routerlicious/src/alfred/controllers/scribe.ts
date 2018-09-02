@@ -1,8 +1,8 @@
-import { socketStorage } from "@prague/client-api";
 import * as request from "request";
 import * as url from "url";
 import { IScribeMetrics } from "../../utils/author";
 import * as scribe from "../../utils/scribe";
+import { registerDocumentServices } from "./utils";
 
 // Text represents the loaded file text
 let text: string;
@@ -250,9 +250,5 @@ export function initialize(
     });
 
     // Mark socket storage as our default provider
-    socketStorage.registerAsDefault(
-        document.location.origin,
-        config.blobStorageUrl,
-        config.tenantId,
-        config.trackError);
+    registerDocumentServices(config);
 }

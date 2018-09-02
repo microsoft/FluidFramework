@@ -106,6 +106,7 @@
     "passport-openidconnect": "0.0.2",
     "progress": "^2.0.0",
     "raven": "^2.6.3",
+    "raven-js": "^3.26.4",
     "redis": "^2.7.1",
     "request-promise-native": "^1.0.5",
     "serve-favicon": "^2.5.0",

@@ -332,6 +332,6 @@ if (!sharedStringId) {
 }
 else {
     // Mark socket storage as our default provider
-    socketStorage.registerAsDefault(commander.server, commander.storage, commander.tenantId, false);
+    socketStorage.registerAsDefault(commander.server, commander.storage, commander.tenantId);
     initSpell(sharedStringId);
 }

@@ -1,6 +1,7 @@
-import { api, socketStorage, types } from "@prague/client-api";
+import { api, types } from "@prague/client-api";
 import { controls, ui } from "@prague/client-ui";
 import * as resources from "@prague/gitresources";
+import { registerDocumentServices } from "./utils";
 
 async function loadDocument(id: string, version: resources.ICommit, token: string, client: any): Promise<api.Document> {
     console.log("Loading in root document...");
@@ -16,11 +17,7 @@ ui.throttle("resize", "throttled-resize");
 export async function initialize(id: string, version: resources.ICommit, token: string, config: any) {
     const host = new ui.BrowserContainerHost();
 
-    socketStorage.registerAsDefault(
-        document.location.origin,
-        config.blobStorageUrl,
-        config.tenantId,
-        config.trackError);
+    registerDocumentServices(config);
 
     const doc = await loadDocument(id, version, token, config.client);
     const root = doc.getRoot();
