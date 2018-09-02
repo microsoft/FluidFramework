@@ -22,6 +22,7 @@
   },
   "dependencies": {
     "@prague/gitresources": "^0.1.0",
+    "@prague/utils": "^0.1.0",
     "@types/async": "^2.0.49",
     "@types/node": "^10.9.4",
     "@types/random-js": "^1.0.31",

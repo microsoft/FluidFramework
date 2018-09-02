@@ -54,7 +54,8 @@ module.exports = env => {
                         options: {
                             compilerOptions: {
                                 declaration: false,
-                                module: "esnext",
+                                // Switch to es6 modules in production to enable tree shaking
+                                module: prod_target ? "esnext" : "commonjs",
                             },
                             // Removes TypeChecking and forces thread safety
                             // ForkTSCheckerWebpackPlugin handles types and syntax

@@ -1,5 +1,6 @@
 import * as agent from "@prague/agent";
-import { core as api, socketStorage, utils as coreUtils } from "@prague/client-api";
+import { core as api, socketStorage } from "@prague/client-api";
+import { Deferred } from "@prague/utils";
 import * as fs from "fs";
 import * as request from "request";
 import * as unzip from "unzip-stream";
@@ -21,7 +22,7 @@ class DocumentServiceFactory implements agent.IDocumentServiceFactory {
 
 export class PaparazziRunner implements utils.IRunner {
     private workerService: agent.WorkerService;
-    private running = new coreUtils.Deferred<void>();
+    private running = new Deferred<void>();
     private permission: Set<string>;
 
     constructor(

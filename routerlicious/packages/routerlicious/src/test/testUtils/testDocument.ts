@@ -1,5 +1,5 @@
-// tslint:disable:ban-types
-import { core, utils } from "@prague/client-api";
+import { core } from "@prague/client-api";
+import * as utils from "@prague/utils";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 
@@ -35,7 +35,7 @@ export class TestDeltaManager implements core.IDeltaManager {
 
 export class TestDocument implements core.IDocument {
     public deltaManager = new TestDeltaManager();
-    public options: Object;
+    public options: any;
     public snapshotRequests = 0;
 
     constructor(public id: string, public clientId: string) {

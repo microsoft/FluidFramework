@@ -1,4 +1,5 @@
-import { core as api, socketStorage, utils as coreUtils } from "@prague/client-api";
+import { core as api, socketStorage } from "@prague/client-api";
+import { Deferred } from "@prague/utils";
 import * as assert from "assert";
 import * as io from "../../alfred/io";
 import * as core from "../../core";
@@ -71,7 +72,7 @@ describe("Routerlicious", () => {
                         token,
                     };
 
-                    const deferred = new coreUtils.Deferred<socketStorage.IConnected>();
+                    const deferred = new Deferred<socketStorage.IConnected>();
 
                     socket.on("connect_document_success", (connectedMessage: socketStorage.IConnected) => {
                         deferred.resolve(connectedMessage);
@@ -100,7 +101,7 @@ describe("Routerlicious", () => {
                     clientId: string,
                     message: api.IDocumentMessage): Promise<void> {
 
-                    const deferred = new coreUtils.Deferred<void>();
+                    const deferred = new Deferred<void>();
                     socket.send("submitOp", clientId, [message], (error: any, response: any) => {
                         if (error) {
                             deferred.reject(error);

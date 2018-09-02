@@ -1,7 +1,7 @@
 // tslint:disable:whitespace align no-bitwise
+import { Deferred } from "@prague/utils";
 import * as assert from "assert";
 import * as api from "../api-core";
-import { Deferred } from "../core-utils";
 import { IMap, IMapView, IValueChanged } from "../data-types";
 import { CollaborativeMap, MapExtension } from "../map";
 import { IRelativePosition } from "../merge-tree";

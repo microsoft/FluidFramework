@@ -1,4 +1,4 @@
-import { utils } from "@prague/client-api";
+import * as utils from "@prague/utils";
 import * as assert from "assert";
 
 describe("Routerlicious", () => {

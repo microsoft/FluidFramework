@@ -1,4 +1,4 @@
-import { utils } from "@prague/client-api";
+import { Deferred } from "@prague/utils";
 import * as core from "../core";
 
 export class DocumentManager {
@@ -55,7 +55,7 @@ export class DocumentManager {
     public async getDeltas(from: number, to: number): Promise<core.ISequencedOperationMessage[]> {
         const finalLength = Math.max(0, to - from - 1);
         let result: core.ISequencedOperationMessage[] = [];
-        const deferred = new utils.Deferred<core.ISequencedOperationMessage[]>();
+        const deferred = new Deferred<core.ISequencedOperationMessage[]>();
 
         const pollDeltas = () => {
             const query = {

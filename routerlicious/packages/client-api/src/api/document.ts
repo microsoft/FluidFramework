@@ -1,5 +1,5 @@
-// tslint:disable:ban-types
 import * as resources from "@prague/gitresources";
+import { Deferred } from "@prague/utils";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import * as jwtDecode from "jwt-decode";
@@ -8,7 +8,7 @@ const performanceNow = require("performance-now");
 import * as uuid from "uuid/v4";
 import * as api from "../api-core";
 import * as cell from "../cell";
-import { Deferred, gitHashFile } from "../core-utils";
+import { gitHashFile } from "../core-utils";
 import { ICell, IMap, IStream } from "../data-types";
 import * as mapExtension from "../map";
 import * as sharedString from "../shared-string";
@@ -229,7 +229,7 @@ export class Document extends EventEmitter implements api.IDocument {
         return this._existing;
     }
 
-    public get options(): Object {
+    public get options(): any {
         return this.opts;
     }
 
@@ -1206,7 +1206,7 @@ export class Document extends EventEmitter implements api.IDocument {
  */
 export async function load(
     id: string,
-    options: Object = defaultDocumentOptions,
+    options: any = defaultDocumentOptions,
     version: resources.ICommit = null,
     connect = true,
     registry: api.Registry<api.ICollaborativeObjectExtension> = defaultRegistry,

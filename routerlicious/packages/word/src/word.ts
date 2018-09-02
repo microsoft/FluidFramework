@@ -1,11 +1,13 @@
+import {
+    api,
+    core as apicore,
+    MergeTree as mergeTree,
+    SharedString as sharedString,
+    socketStorage,
+    types as dataTypes,
+} from "@prague/client-api";
 import { EventEmitter } from "events";
 import * as jwt from "jsonwebtoken";
-import * as api from "../api";
-import * as apicore from "../api-core";
-import * as dataTypes from "../data-types";
-import * as mergeTree from "../merge-tree";
-import * as sharedString from "../shared-string";
-import * as socketStorage from "../socket-storage";
 
 export interface IRemotePresenceInfo {
     origPos: number;

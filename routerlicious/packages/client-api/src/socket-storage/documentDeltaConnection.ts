@@ -1,6 +1,6 @@
+import { BatchManager } from "@prague/utils";
 import { EventEmitter } from "events";
 import * as api from "../api-core";
-import { BatchManager } from "../core-utils";
 import { debug } from "./debug";
 import * as messages from "./messages";
 

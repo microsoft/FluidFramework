@@ -1,4 +1,4 @@
-import * as api from "@prague/client-api";
+import { Deferred } from "@prague/utils";
 import { Provider } from "nconf";
 import * as winston from "winston";
 import { IDocumentStorage, IOrdererManager, ITenantManager } from "../core";
@@ -10,7 +10,7 @@ import { IAlfredTenant } from "./tenant";
 
 export class AlfredRunner implements utils.IRunner {
     private server: core.IWebServer;
-    private runningDeferred: api.utils.Deferred<void>;
+    private runningDeferred: Deferred<void>;
 
     constructor(
         private serverFactory: core.IWebServerFactory,
@@ -26,7 +26,7 @@ export class AlfredRunner implements utils.IRunner {
     }
 
     public start(): Promise<void> {
-        this.runningDeferred = new api.utils.Deferred<void>();
+        this.runningDeferred = new Deferred<void>();
 
         // Create the HTTP server and attach alfred to it
         const alfred = app.create(

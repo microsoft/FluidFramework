@@ -1,5 +1,5 @@
 // tslint:disable:ban-types
-import { utils } from "@prague/client-api";
+import * as utils from "@prague/utils";
 
 export interface IMessage {
     topic: string;

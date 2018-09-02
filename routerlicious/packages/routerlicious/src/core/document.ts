@@ -1,5 +1,5 @@
-import { utils } from "@prague/client-api";
 import { ICommit, ICommitDetails } from "@prague/gitresources";
+import { IRangeTrackerSnapshot } from "@prague/utils";
 
 export interface IDocumentDetails {
     existing: boolean;
@@ -75,7 +75,7 @@ export interface IDocument {
         nack: boolean,
     }];
 
-    branchMap: utils.IRangeTrackerSnapshot;
+    branchMap: IRangeTrackerSnapshot;
 
     sequenceNumber: number;
 

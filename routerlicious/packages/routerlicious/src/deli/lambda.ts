@@ -1,4 +1,5 @@
-import { core as api, utils as coreUtils } from "@prague/client-api";
+import { core as api } from "@prague/client-api";
+import { RangeTracker } from "@prague/utils";
 import * as assert from "assert";
 import * as _ from "lodash";
 // tslint:disable-next-line:no-var-requires
@@ -45,7 +46,7 @@ export class DeliLambda implements IPartitionLambda {
     private clientNodeMap = new Map<string, utils.IHeapNode<IClientSequenceNumber>>();
     private clientSeqNumbers = new utils.Heap<IClientSequenceNumber>(SequenceNumberComparer);
     private minimumSequenceNumber = 0;
-    private branchMap: coreUtils.RangeTracker;
+    private branchMap: RangeTracker;
     private checkpointContext: CheckpointContext;
     private idleTimer: any;
 
@@ -76,10 +77,10 @@ export class DeliLambda implements IPartitionLambda {
         // Setup branch information
         if (dbObject.parent) {
             if (dbObject.branchMap) {
-                this.branchMap = new coreUtils.RangeTracker(dbObject.branchMap);
+                this.branchMap = new RangeTracker(dbObject.branchMap);
             } else {
                 // Initialize the range tracking window
-                this.branchMap = new coreUtils.RangeTracker(
+                this.branchMap = new RangeTracker(
                     dbObject.parent.minimumSequenceNumber,
                     dbObject.parent.minimumSequenceNumber);
                 // tslint:disable-next-line:max-line-length

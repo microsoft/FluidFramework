@@ -1,4 +1,5 @@
-import { core as api, utils } from "@prague/client-api";
+import { core as api } from "@prague/client-api";
+import { Deferred } from "@prague/utils";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import { IOrderer, IOrdererConnection, IWebSocket } from "../../core";
@@ -56,7 +57,7 @@ class ProxySocketThing implements IOrdererConnectionFactory {
 }
 
 interface IPendingConnection {
-    deferred: utils.Deferred<IOrdererConnection>;
+    deferred: Deferred<IOrdererConnection>;
     socket: IWebSocket;
     tenantId: string;
     documentId: string;
@@ -173,7 +174,7 @@ export class RemoteNode extends EventEmitter implements IConcreteNode {
             user,
         };
 
-        const deferred = new utils.Deferred<IOrdererConnection>();
+        const deferred = new Deferred<IOrdererConnection>();
         this.connectMap.set(cid, { socket, deferred, tenantId, documentId });
         this.send(cid, "connect", connectMessage);
 

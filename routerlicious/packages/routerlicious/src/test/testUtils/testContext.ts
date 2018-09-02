@@ -1,4 +1,4 @@
-import { utils } from "@prague/client-api";
+import * as utils from "@prague/utils";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import { IContext } from "../../kafka-service/lambdas";

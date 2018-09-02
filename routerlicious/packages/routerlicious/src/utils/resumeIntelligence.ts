@@ -1,5 +1,5 @@
 import { IIntelligentService } from "@prague/agent";
-import { utils } from "@prague/client-api";
+import * as utils from "@prague/utils";
 import { Client, Message } from "azure-iot-device";
 import { Mqtt } from "azure-iot-device-mqtt";
 import * as iothub from "azure-iothub";

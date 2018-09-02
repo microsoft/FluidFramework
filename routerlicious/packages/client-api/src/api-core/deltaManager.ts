@@ -1,10 +1,10 @@
+import { Deferred } from "@prague/utils";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 // tslint:disable-next-line:no-var-requires
 const cloneDeep = require("lodash/cloneDeep");
 // tslint:disable-next-line:no-var-requires
 const now = require("performance-now");
-import { Deferred } from "../core-utils";
 import { Browser, IClient, Robot } from "./client";
 import { debug } from "./debug";
 import { DeltaConnection, IConnectionDetails } from "./deltaConnection";

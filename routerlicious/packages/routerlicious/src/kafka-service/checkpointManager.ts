@@ -1,4 +1,4 @@
-import { utils as coreUtils } from "@prague/client-api";
+import { Deferred } from "@prague/utils";
 import * as assert from "assert";
 import * as utils from "../utils";
 
@@ -7,7 +7,7 @@ export class CheckpointManager {
     private closed = false;
     private commitedOffset: number;
     private lastOffset: number;
-    private pendingCheckpoint: coreUtils.Deferred<void>;
+    private pendingCheckpoint: Deferred<void>;
     private error: any;
 
     constructor(private id: number, private consumer: utils.IConsumer) {
@@ -43,7 +43,7 @@ export class CheckpointManager {
             // Create a promise that will resolve to the next checkpoint that will include the requested offset
             // and then return this as the result of checkpoint
             if (!this.pendingCheckpoint) {
-                this.pendingCheckpoint = new coreUtils.Deferred<void>();
+                this.pendingCheckpoint = new Deferred<void>();
             }
             return this.pendingCheckpoint.promise;
         }

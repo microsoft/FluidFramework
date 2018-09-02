@@ -1,5 +1,5 @@
+import { RangeTracker } from "@prague/utils";
 import * as assert from "assert";
-import { RangeTracker } from "../core-utils";
 import { ConnectionState, IDeltaConnection, IDeltaHandler, IDocument } from "./document";
 import { IEnvelope, IObjectMessage, ISequencedDocumentMessage, ISequencedObjectMessage } from "./protocol";
 

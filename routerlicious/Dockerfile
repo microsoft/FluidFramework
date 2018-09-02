@@ -15,7 +15,11 @@ COPY packages/agent/package*.json packages/agent/
 COPY packages/client-api/package*.json packages/client-api/
 COPY packages/client-ui/package*.json packages/client-ui/
 COPY packages/gitresources/package*.json packages/gitresources/
+COPY packages/loader/package*.json packages/loader/
 COPY packages/routerlicious/package*.json packages/routerlicious/
+COPY packages/runtime-definitions/package*.json packages/runtime-definitions/
+COPY packages/utils/package*.json packages/utils/
+COPY packages/word/package*.json packages/word/
 
 # Need to set the --unsafe-perf flag since we are doing the install as root. Consider adding an 'app' accout so we
 # can do the install as node but then switch to 'app' to run. As app we won't be able to write to installed files
