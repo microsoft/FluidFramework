@@ -1,3 +1,10 @@
+import {
+    FileMode,
+    IObjectMessage,
+    ISequencedObjectMessage,
+    ITree,
+    TreeEntry,
+} from "@prague/runtime-definitions";
 // tslint:disable-next-line:no-var-requires
 const hasIn = require("lodash/hasIn");
 import * as api from "../api-core";
@@ -115,7 +122,7 @@ export class Cell extends api.CollaborativeObject implements ICell {
         return this.data === undefined ? true : false;
     }
 
-    public snapshot(): api.ITree {
+    public snapshot(): ITree {
         // Get a serializable form of data
         let content: ICellValue;
         if (this.data && hasIn(this.data, "__collaborativeObject__")) {
@@ -131,12 +138,12 @@ export class Cell extends api.CollaborativeObject implements ICell {
         }
 
         // And then construct the tree for it
-        const tree: api.ITree = {
+        const tree: ITree = {
             entries: [
                 {
-                    mode: api.FileMode.File,
+                    mode: FileMode.File,
                     path: snapshotFileName,
-                    type: api.TreeEntry[api.TreeEntry.Blob],
+                    type: TreeEntry[TreeEntry.Blob],
                     value: {
                         contents: JSON.stringify(content),
                         encoding: "utf-8",
@@ -148,14 +155,14 @@ export class Cell extends api.CollaborativeObject implements ICell {
         return tree;
     }
 
-    public transform(message: api.IObjectMessage, sequenceNumber: number): api.IObjectMessage {
+    public transform(message: IObjectMessage, sequenceNumber: number): IObjectMessage {
         return message;
     }
 
     protected async loadCore(
         sequenceNumber: number,
         minimumSequenceNumber: number,
-        messages: api.IObjectMessage[],
+        messages: IObjectMessage[],
         headerOrigin: string,
         storage: api.IObjectStorageService): Promise<void> {
 
@@ -181,7 +188,7 @@ export class Cell extends api.CollaborativeObject implements ICell {
         debug(`Cell ${this.id} is now disconnected`);
     }
 
-    protected onConnect(pending: api.IObjectMessage[]) {
+    protected onConnect(pending: IObjectMessage[]) {
         for (const message of pending) {
             this.submitLocalMessage(message.contents);
         }
@@ -189,7 +196,7 @@ export class Cell extends api.CollaborativeObject implements ICell {
         return;
     }
 
-    protected async prepareCore(message: api.ISequencedObjectMessage): Promise<any> {
+    protected async prepareCore(message: ISequencedObjectMessage): Promise<any> {
         if (message.type === api.OperationType && message.clientId !== this.document.clientId) {
             const op: ICellOperation = message.contents;
             if (op.type === "setCell") {
@@ -200,7 +207,7 @@ export class Cell extends api.CollaborativeObject implements ICell {
         }
     }
 
-    protected processCore(message: api.ISequencedObjectMessage, context: any) {
+    protected processCore(message: ISequencedObjectMessage, context: any) {
         if (message.type === api.OperationType && message.clientId !== this.document.clientId) {
             const op: ICellOperation = message.contents;
 

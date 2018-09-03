@@ -1,4 +1,5 @@
 import { core as api } from "@prague/client-api";
+import { IDocumentMessage, INack, ISequencedDocumentMessage } from "@prague/runtime-definitions";
 
 // String identifying the raw operation message
 export const RawOperationType: string = "RawOperation";
@@ -71,7 +72,7 @@ export interface IUpdateReferenceSequenceNumberMessage extends IObjectMessage {
  */
 export interface IRawOperationMessage extends IObjectMessage {
     // The message that was submitted
-    operation: api.IDocumentMessage;
+    operation: IDocumentMessage;
 }
 
 // Need to change this name - it isn't necessarily ticketed
@@ -91,7 +92,7 @@ export interface INackMessage extends ITicketedMessage {
     clientId: string;
 
     // The details of the nack
-    operation: api.INack;
+    operation: INack;
 }
 
 /**
@@ -99,7 +100,7 @@ export interface INackMessage extends ITicketedMessage {
  */
 export interface ISequencedOperationMessage extends ITicketedMessage {
     // The sequenced operation
-    operation: api.ISequencedDocumentMessage;
+    operation: ISequencedDocumentMessage;
 }
 
 export interface IForkOperation {

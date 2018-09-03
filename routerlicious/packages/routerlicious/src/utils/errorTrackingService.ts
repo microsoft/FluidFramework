@@ -1,7 +1,7 @@
-import { core } from "@prague/client-api";
+import { IErrorTrackingService } from "@prague/runtime-definitions";
 import * as raven from "raven";
 
-export class NodeErrorTrackingService implements core.IErrorTrackingService {
+export class NodeErrorTrackingService implements IErrorTrackingService {
 
     constructor(private endpoint: string) {
     }

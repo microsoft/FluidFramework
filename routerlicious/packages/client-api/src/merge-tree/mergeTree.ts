@@ -1,10 +1,9 @@
 // tslint:disable
-
+import { ISequencedObjectMessage, IUser } from "@prague/runtime-definitions";
 import * as Base from "./base";
 import * as Collections from "./collections";
 import * as ops from "./ops";
 import * as API from "../api-core";
-import { ISequencedObjectMessage, ITenantUser } from "../api-core";
 import * as Properties from "./properties";
 import * as assert from "assert";
 import { IRelativePosition } from "./index";
@@ -1731,7 +1730,7 @@ export function elapsedMicroseconds(start: [number, number] | number) {
 export const useCheckQ = false;
 
 function checkTextMatchRelative(refSeq: number, clientId: number, server: TestServer,
-    msg: API.ISequencedObjectMessage) {
+    msg: ISequencedObjectMessage) {
     let client = server.clients[clientId];
     let serverText = server.mergeTree.getText(refSeq, clientId);
     let cliText = client.checkQ.dequeue();
@@ -1821,19 +1820,19 @@ export class Client {
     verboseOps = false;
     noVerboseRemoteAnnote = false;
     measureOps = false;
-    q: Collections.List<API.ISequencedObjectMessage>;
+    q: Collections.List<ISequencedObjectMessage>;
     checkQ: Collections.List<string>;
     clientSequenceNumber = 1;
     clientNameToIds = new Collections.RedBlackTree<string, ClientIds>(compareStrings);
     shortClientIdMap = <string[]>[];
     shortClientBranchIdMap = <number[]>[];
-    shortClientUserInfoMap = <ITenantUser[]>[];
+    shortClientUserInfoMap = <IUser[]>[];
     registerCollection = new RegisterCollection();
     localSequenceNumber = UnassignedSequenceNumber;
     opMarkersModified = <Marker[]>[];
     pendingConsensus = new Map<string, IConsensusInfo>();
     public longClientId: string;
-    public userInfo: ITenantUser;
+    public userInfo: IUser;
     public undoSegments: IUndoInfo[];
     public redoSegments: IUndoInfo[];
 
@@ -1843,7 +1842,7 @@ export class Client {
         this.mergeTree.getUserInfo = id => this.getUserInfo(id);
         this.mergeTree.markerModifiedHandler = marker => this.markerModified(marker);
         this.mergeTree.clientIdToBranchId = this.shortClientBranchIdMap;
-        this.q = Collections.ListMakeHead<API.ISequencedObjectMessage>();
+        this.q = Collections.ListMakeHead<ISequencedObjectMessage>();
         this.checkQ = Collections.ListMakeHead<string>();
     }
 
@@ -2077,11 +2076,11 @@ export class Client {
         return this.q.count() > 0;
     }
 
-    enqueueMsg(msg: API.ISequencedObjectMessage) {
+    enqueueMsg(msg: ISequencedObjectMessage) {
         this.q.enqueue(msg);
     }
 
-    dequeueMsg(): API.ISequencedObjectMessage {
+    dequeueMsg(): ISequencedObjectMessage {
         return this.q.dequeue();
     }
 
@@ -2125,7 +2124,7 @@ export class Client {
         }
     }
 
-    transformOp(op: ops.IMergeTreeOp, msg: API.ISequencedObjectMessage, toSequenceNumber: number) {
+    transformOp(op: ops.IMergeTreeOp, msg: ISequencedObjectMessage, toSequenceNumber: number) {
         if ((op.type == ops.MergeTreeDeltaType.ANNOTATE) ||
             (op.type == ops.MergeTreeDeltaType.REMOVE)) {
             let ranges = this.mergeTree.tardisRange(op.pos1, op.pos2, msg.referenceSequenceNumber, toSequenceNumber);
@@ -2155,7 +2154,7 @@ export class Client {
         return op;
     }
 
-    transform(msg: API.ISequencedObjectMessage, toSequenceNumber: number) {
+    transform(msg: ISequencedObjectMessage, toSequenceNumber: number) {
         if (msg.referenceSequenceNumber >= toSequenceNumber) {
             return msg;
         }
@@ -2212,7 +2211,7 @@ export class Client {
         // TODO: error reporting
     }
 
-    checkNest(op: ops.IMergeTreeRemoveMsg, msg: API.ISequencedObjectMessage, clid: number) {
+    checkNest(op: ops.IMergeTreeRemoveMsg, msg: ISequencedObjectMessage, clid: number) {
         let beginMarker = this.mergeTree.getSegmentFromId(op.checkNest.id1);
         let endMarker = this.mergeTree.getSegmentFromId(op.checkNest.id2);
         let beginPos = this.mergeTree.getOffset(beginMarker, msg.referenceSequenceNumber, clid);
@@ -2222,7 +2221,7 @@ export class Client {
         }
     }
 
-    applyOp(op: ops.IMergeTreeOp, msg: API.ISequencedObjectMessage) {
+    applyOp(op: ops.IMergeTreeOp, msg: ISequencedObjectMessage) {
         let clid = this.getOrAddShortClientId(msg.clientId);
         switch (op.type) {
             case ops.MergeTreeDeltaType.INSERT:
@@ -2318,12 +2317,12 @@ export class Client {
         return this.opMarkersModified;
     }
 
-    coreApplyMsg(msg: API.ISequencedObjectMessage) {
+    coreApplyMsg(msg: ISequencedObjectMessage) {
         this.resetModifiedMarkers();
         this.applyOp(<ops.IMergeTreeOp>msg.contents, msg);
     }
 
-    applyMsg(msg: API.ISequencedObjectMessage) {
+    applyMsg(msg: ISequencedObjectMessage) {
         if ((msg !== undefined) && (msg.minimumSequenceNumber > this.mergeTree.getCollabWindow().minSeq)) {
             this.updateMinSeq(msg.minimumSequenceNumber);
         }
@@ -2337,7 +2336,7 @@ export class Client {
 
         // Apply if an operation message
         if (msg.type === API.OperationType) {
-            const operationMessage = msg as API.ISequencedObjectMessage;
+            const operationMessage = msg as ISequencedObjectMessage;
             if (msg.clientId === this.longClientId) {
                 let op = <ops.IMergeTreeOp>msg.contents;
                 if (op.type !== ops.MergeTreeDeltaType.ANNOTATE) {
@@ -2759,7 +2758,7 @@ export class Client {
         return `cli: ${this.getLongClientId(clientId)} refSeq: ${refSeq}: ` + this.mergeTree.getText(refSeq, clientId);
     }
 
-    startCollaboration(longClientId: string, userInfo: ITenantUser = null, minSeq = 0, branchId = 0) {
+    startCollaboration(longClientId: string, userInfo: IUser = null, minSeq = 0, branchId = 0) {
         this.longClientId = longClientId;
         this.userInfo = userInfo;
         this.addLongClientId(longClientId, branchId);
@@ -2823,7 +2822,7 @@ export class TestServer extends Client {
         this.listeners = listeners;
     }
 
-    applyMsg(msg: API.ISequencedObjectMessage) {
+    applyMsg(msg: ISequencedObjectMessage) {
         this.coreApplyMsg(msg);
         if (useCheckQ) {
             let clid = this.getShortClientId(msg.clientId);
@@ -2858,7 +2857,6 @@ export class TestServer extends Client {
             minimumSequenceNumber: msg.minimumSequenceNumber,
             referenceSequenceNumber: msg.referenceSequenceNumber,
             sequenceNumber: msg.sequenceNumber,
-            traces: msg.traces,
             type: msg.type
         }
     }
@@ -3099,7 +3097,7 @@ export class MergeTree {
     minSeqPending = false;
     // for diagnostics
     getLongClientId: (id: number) => string;
-    getUserInfo: (id: number) => ITenantUser;
+    getUserInfo: (id: number) => IUser;
 
     // TODO: make and use interface describing options
     constructor(public text: string, public options?: Properties.PropertySet) {

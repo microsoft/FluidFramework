@@ -1,10 +1,10 @@
+import { IObjectMessage, ISequencedObjectMessage, ITree } from "@prague/runtime-definitions";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import { ValueType } from "../map/definitions";
 import { debug } from "./debug";
 import { ConnectionState, IDistributedObjectServices, IDocument, IObjectStorageService } from "./document";
-import { IObjectMessage, ISequencedObjectMessage, OperationType } from "./protocol";
-import { ITree } from "./storage";
+import { OperationType } from "./protocol";
 import { ICollaborativeObject } from "./types";
 
 export abstract class CollaborativeObject extends EventEmitter implements ICollaborativeObject {

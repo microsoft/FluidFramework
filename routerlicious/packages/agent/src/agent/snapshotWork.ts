@@ -1,4 +1,4 @@
-import { core } from "@prague/client-api";
+import { IDocumentService, ISequencedDocumentMessage } from "@prague/runtime-definitions";
 import { BaseWork} from "./baseWork";
 import { IWork} from "./definitions";
 import { Serializer } from "./serializer";
@@ -14,7 +14,7 @@ const MaxOpCountWithoutSnapshot = 1000;
 
 export class SnapshotWork extends BaseWork implements IWork {
     private serializer: Serializer;
-    constructor(docId: string, private token: string, config: any, private service: core.IDocumentService) {
+    constructor(docId: string, private token: string, config: any, private service: IDocumentService) {
         super(docId, config);
     }
 
@@ -29,7 +29,7 @@ export class SnapshotWork extends BaseWork implements IWork {
             MaxTimeWithoutSnapshot,
             SnapshotRetryTime,
             MaxOpCountWithoutSnapshot);
-        const eventHandler = (op: core.ISequencedDocumentMessage) => {
+        const eventHandler = (op: ISequencedDocumentMessage) => {
             this.serializer.run(op);
         };
         this.opHandler = eventHandler;

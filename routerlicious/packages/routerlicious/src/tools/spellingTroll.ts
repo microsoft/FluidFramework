@@ -1,5 +1,6 @@
 // tslint:disable
-import { api as API, core as apiCore, MergeTree, SharedString, socketStorage } from "@prague/client-api";
+import { api as API, MergeTree, SharedString, socketStorage } from "@prague/client-api";
+import { ISequencedObjectMessage } from "@prague/runtime-definitions";
 import * as fs from "fs";
 import * as path from "path";
 import * as commander from "commander";
@@ -64,7 +65,7 @@ class Speller {
     }
 
     setEvents() {
-        this.sharedString.on("op", (msg: apiCore.ISequencedObjectMessage) => {
+        this.sharedString.on("op", (msg: ISequencedObjectMessage) => {
             if (msg && msg.contents) {
                 this.spellOp(<MergeTree.IMergeTreeOp>msg.contents);
             }

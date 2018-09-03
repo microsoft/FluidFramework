@@ -1,4 +1,20 @@
 import * as resources from "@prague/gitresources";
+import {
+    FileMode,
+    IDistributedObject,
+    IDocumentAttributes,
+    IDocumentService,
+    IDocumentStorageService,
+    IEnvelope,
+    IObjectAttributes,
+    IObjectMessage,
+    ISequencedDocumentMessage,
+    ISequencedObjectMessage,
+    ISnapshotTree,
+    ITree,
+    ITreeEntry,
+    TreeEntry,
+} from "@prague/runtime-definitions";
 import { Deferred } from "@prague/utils";
 import * as assert from "assert";
 import { EventEmitter } from "events";
@@ -22,7 +38,7 @@ const insightsMapId = "insights";
 const documentTasks = ["snapshot", "spell", "intel", "translation", "augmentation"];
 
 // Registered services to use when loading a document
-let defaultDocumentService: api.IDocumentService;
+let defaultDocumentService: IDocumentService;
 
 // The default registry for collaborative object types
 export const defaultRegistry = new api.Registry<api.ICollaborativeObjectExtension>();
@@ -58,11 +74,11 @@ export function registerExtension(extension: api.ICollaborativeObjectExtension) 
  * expected that the implementation provider of these will register themselves during startup prior to the user
  * requesting to load a collaborative object.
  */
-export function registerDocumentService(service: api.IDocumentService) {
+export function registerDocumentService(service: IDocumentService) {
     defaultDocumentService = service;
 }
 
-export function getDefaultDocumentService(): api.IDocumentService {
+export function getDefaultDocumentService(): IDocumentService {
     return defaultDocumentService;
 }
 
@@ -84,18 +100,18 @@ interface IConnectResult {
  */
 interface IHeaderDetails {
     // Attributes for the document
-    attributes: api.IDocumentAttributes;
+    attributes: IDocumentAttributes;
 
     blobs: api.IGenericBlob[];
 
     // Distributed objects contained within the document
-    distributedObjects: api.IDistributedObject[];
+    distributedObjects: IDistributedObject[];
 
     // The transformed messages between the minimum sequence number and sequenceNumber
-    transformedMessages: api.ISequencedDocumentMessage[];
+    transformedMessages: ISequencedDocumentMessage[];
 
     // Tree representing all blobs in the snapshot
-    tree: api.ISnapshotTree;
+    tree: ISnapshotTree;
 }
 
 function getEmptyHeader(id: string): IHeaderDetails {
@@ -104,7 +120,9 @@ function getEmptyHeader(id: string): IHeaderDetails {
             branch: id,
             clients: [],
             minimumSequenceNumber: 0,
+            proposals: [],
             sequenceNumber: 0,
+            values: [],
         },
         blobs: [],
         distributedObjects: [],
@@ -115,7 +133,7 @@ function getEmptyHeader(id: string): IHeaderDetails {
     return emptyHeader;
 }
 
-function setParentBranch(messages: api.ISequencedDocumentMessage[], parentBranch?: string) {
+function setParentBranch(messages: ISequencedDocumentMessage[], parentBranch?: string) {
     for (const message of messages) {
         // Append branch information when transforming for the case of messages stashed with the snapshot
         if (parentBranch) {
@@ -128,7 +146,7 @@ function setParentBranch(messages: api.ISequencedDocumentMessage[], parentBranch
     }
 }
 
-async function readAndParse<T>(storage: api.IDocumentStorageService, sha: string): Promise<T> {
+async function readAndParse<T>(storage: IDocumentStorageService, sha: string): Promise<T> {
     const encoded = await storage.read(sha);
     const decoded = Buffer.from(encoded, "base64").toString();
     return JSON.parse(decoded);
@@ -141,7 +159,7 @@ export class Document extends EventEmitter implements api.IDocument {
     public static async Load(
         id: string,
         registry: api.Registry<api.ICollaborativeObjectExtension>,
-        service: api.IDocumentService,
+        service: IDocumentService,
         options: any,
         specifiedVersion: resources.ICommit,
         connect: boolean): Promise<Document> {
@@ -188,11 +206,11 @@ export class Document extends EventEmitter implements api.IDocument {
     private _clientId = "disconnected";
     // tslint:enable:variable-name
 
-    private messagesSinceMSNChange = new Array<api.ISequencedDocumentMessage>();
+    private messagesSinceMSNChange = new Array<ISequencedDocumentMessage>();
     private clients = new Map<string, api.IClient>();
     private connectionState = api.ConnectionState.Disconnected;
     private pendingAttach = new Map<string, api.IAttachMessage>();
-    private storageService: api.IDocumentStorageService;
+    private storageService: IDocumentStorageService;
     private blobManager: api.IBlobManager;
     private lastMinSequenceNumber;
     private loaded = false;
@@ -266,7 +284,7 @@ export class Document extends EventEmitter implements api.IDocument {
         // tslint:disable-next-line:variable-name
         private _id: string,
         private registry: api.Registry<api.ICollaborativeObjectExtension>,
-        private service: api.IDocumentService,
+        private service: IDocumentService,
         private opts: any) {
         super();
 
@@ -421,7 +439,7 @@ export class Document extends EventEmitter implements api.IDocument {
         this.removeAllListeners();
     }
 
-    public submitObjectMessage(envelope: api.IEnvelope): void {
+    public submitObjectMessage(envelope: IEnvelope): void {
         this.submitMessage(api.ObjectOperation, envelope);
     }
 
@@ -452,7 +470,7 @@ export class Document extends EventEmitter implements api.IDocument {
             if (lastVersion.length > 0) {
                 const attributesAsString = await this.storageService.getContent(lastVersion[0], ".attributes");
                 const decoded = Buffer.from(attributesAsString, "base64").toString();
-                const attributes = JSON.parse(decoded) as api.IDocumentAttributes;
+                const attributes = JSON.parse(decoded) as IDocumentAttributes;
                 sequenceNumber = attributes.sequenceNumber;
             }
 
@@ -461,9 +479,9 @@ export class Document extends EventEmitter implements api.IDocument {
             const deltas = await this._deltaManager.getDeltas(sequenceNumber, snapshotSequenceNumber + 1);
             const parents = lastVersion.length > 0 ? [lastVersion[0].sha] : [];
             root.entries.push({
-                mode: api.FileMode.File,
+                mode: FileMode.File,
                 path: "deltas",
-                type: api.TreeEntry[api.TreeEntry.Blob],
+                type: TreeEntry[TreeEntry.Blob],
                 value: {
                     contents: JSON.stringify(deltas),
                     encoding: "utf-8",
@@ -626,14 +644,14 @@ export class Document extends EventEmitter implements api.IDocument {
     /**
      * Loads in all the distributed objects contained in the header
      */
-    private async loadSnapshot(storage: api.IDocumentStorageService, header: IHeaderDetails): Promise<void> {
+    private async loadSnapshot(storage: IDocumentStorageService, header: IHeaderDetails): Promise<void> {
         // Update message information based on branch details
         if (header.attributes.branch !== this.id) {
             setParentBranch(header.transformedMessages, header.attributes.branch);
         }
 
         // Make a reservation for the root object as well as all distributed objects in the snapshot
-        const transformedMap = new Map<string, api.ISequencedDocumentMessage[]>([["root", []]]);
+        const transformedMap = new Map<string, ISequencedDocumentMessage[]>([["root", []]]);
         this.reserveDistributedObject("root");
         for (const object of header.distributedObjects) {
             this.reserveDistributedObject(object.id);
@@ -643,7 +661,7 @@ export class Document extends EventEmitter implements api.IDocument {
         // Filter messages per distributed data type
         for (const transformedMessage of header.transformedMessages) {
             if (transformedMessage.type === api.ObjectOperation) {
-                const envelope = transformedMessage.contents as api.IEnvelope;
+                const envelope = transformedMessage.contents as IEnvelope;
                 transformedMap.get(envelope.address).push(transformedMessage);
             }
         }
@@ -688,7 +706,7 @@ export class Document extends EventEmitter implements api.IDocument {
 
     private async getHeader(
         id: string,
-        storage: api.IDocumentStorageService,
+        storage: IDocumentStorageService,
         version: resources.ICommit): Promise<IHeaderDetails> {
 
         if (!version) {
@@ -697,15 +715,15 @@ export class Document extends EventEmitter implements api.IDocument {
 
         const tree = await storage.getSnapshotTree(version);
 
-        const messagesP = readAndParse<api.ISequencedDocumentMessage[]>(storage, tree.blobs[".messages"]);
+        const messagesP = readAndParse<ISequencedDocumentMessage[]>(storage, tree.blobs[".messages"]);
         const blobsP = readAndParse<api.IGenericBlob[]>(storage, tree.blobs[".blobs"]);
-        const attributesP = readAndParse<api.IDocumentAttributes>(storage, tree.blobs[".attributes"]);
+        const attributesP = readAndParse<IDocumentAttributes>(storage, tree.blobs[".attributes"]);
 
-        const distributedObjectsP = Array<Promise<api.IDistributedObject>>();
+        const distributedObjectsP = Array<Promise<IDistributedObject>>();
 
         // tslint:disable-next-line:forin
         for (const path in tree.trees) {
-            const objectAttributesP = readAndParse<api.IObjectAttributes>(
+            const objectAttributesP = readAndParse<IObjectAttributes>(
                 storage,
                 tree.trees[path].blobs[".attributes"]);
             const objectDetailsP = objectAttributesP.then((attrs) => {
@@ -779,8 +797,8 @@ export class Document extends EventEmitter implements api.IDocument {
         }
     }
 
-    private snapshotCore(): api.ITree {
-        const entries: api.ITreeEntry[] = [];
+    private snapshotCore(): ITree {
+        const entries: ITreeEntry[] = [];
 
         // Craft the .messages file for the document
         // Transform ops in the window relative to the MSN - the window is all ops between the min sequence number
@@ -788,15 +806,15 @@ export class Document extends EventEmitter implements api.IDocument {
         assert.equal(
             this._deltaManager.referenceSequenceNumber - this._deltaManager.minimumSequenceNumber,
             this.messagesSinceMSNChange.length);
-        const transformedMessages: api.ISequencedDocumentMessage[] = [];
+        const transformedMessages: ISequencedDocumentMessage[] = [];
         debug(`Transforming up to ${this._deltaManager.minimumSequenceNumber}`);
         for (const message of this.messagesSinceMSNChange) {
             transformedMessages.push(this.transform(message, this._deltaManager.minimumSequenceNumber));
         }
         entries.push({
-            mode: api.FileMode.File,
+            mode: FileMode.File,
             path: ".messages",
-            type: api.TreeEntry[api.TreeEntry.Blob],
+            type: TreeEntry[TreeEntry.Blob],
             value: {
                 contents: JSON.stringify(transformedMessages),
                 encoding: "utf-8",
@@ -805,9 +823,9 @@ export class Document extends EventEmitter implements api.IDocument {
 
         const blobMetaData = this.blobManager.getBlobMetadata();
         entries.push({
-            mode: api.FileMode.File,
+            mode: FileMode.File,
             path: ".blobs",
-            type: api.TreeEntry[api.TreeEntry.Blob],
+            type: TreeEntry[TreeEntry.Blob],
             value: {
                 contents: JSON.stringify(blobMetaData),
                 encoding: "utf-8",
@@ -822,14 +840,14 @@ export class Document extends EventEmitter implements api.IDocument {
                 const snapshot = object.object.snapshot();
 
                 // Add in the object attributes to the returned tree
-                const objectAttributes: api.IObjectAttributes = {
+                const objectAttributes: IObjectAttributes = {
                     sequenceNumber: object.connection.minimumSequenceNumber,
                     type: object.object.type,
                 };
                 snapshot.entries.push({
-                    mode: api.FileMode.File,
+                    mode: FileMode.File,
                     path: ".attributes",
-                    type: api.TreeEntry[api.TreeEntry.Blob],
+                    type: TreeEntry[TreeEntry.Blob],
                     value: {
                         contents: JSON.stringify(objectAttributes),
                         encoding: "utf-8",
@@ -838,25 +856,27 @@ export class Document extends EventEmitter implements api.IDocument {
 
                 // And then store the tree
                 entries.push({
-                    mode: api.FileMode.Directory,
+                    mode: FileMode.Directory,
                     path: objectId,
-                    type: api.TreeEntry[api.TreeEntry.Tree],
+                    type: TreeEntry[TreeEntry.Tree],
                     value: snapshot,
                 });
             }
         }
 
         // Save attributes for the document
-        const documentAttributes: api.IDocumentAttributes = {
+        const documentAttributes: IDocumentAttributes = {
             branch: this.id,
             clients: [...this.clients],
             minimumSequenceNumber: this._deltaManager.minimumSequenceNumber,
+            proposals: [],
             sequenceNumber: this._deltaManager.referenceSequenceNumber,
+            values: [],
         };
         entries.push({
-            mode: api.FileMode.File,
+            mode: FileMode.File,
             path: ".attributes",
-            type: api.TreeEntry[api.TreeEntry.Blob],
+            type: TreeEntry[TreeEntry.Blob],
             value: {
                 contents: JSON.stringify(documentAttributes),
                 encoding: "utf-8",
@@ -864,7 +884,7 @@ export class Document extends EventEmitter implements api.IDocument {
         });
 
         // Output the tree
-        const root: api.ITree = {
+        const root: ITree = {
             entries,
         };
 
@@ -874,13 +894,13 @@ export class Document extends EventEmitter implements api.IDocument {
     /**
      * Transforms the given message relative to the provided sequence number
      */
-    private transform(message: api.ISequencedDocumentMessage, sequenceNumber: number): api.ISequencedDocumentMessage {
+    private transform(message: ISequencedDocumentMessage, sequenceNumber: number): ISequencedDocumentMessage {
         // Allow the distributed data types to perform custom transformations
         if (message.type === api.ObjectOperation) {
-            const envelope = message.contents as api.IEnvelope;
+            const envelope = message.contents as IEnvelope;
             const objectDetails = this.distributedObjects.get(envelope.address);
             envelope.contents = objectDetails.object.transform(
-                envelope.contents as api.IObjectMessage,
+                envelope.contents as IObjectMessage,
                 objectDetails.connection.transformDocumentSequenceNumber(
                     Math.max(message.referenceSequenceNumber, sequenceNumber)));
         } else if (message.type === api.AttachObject) {
@@ -942,8 +962,8 @@ export class Document extends EventEmitter implements api.IDocument {
      * @param distributedObject The distributed object to load
      */
     private loadInternal(
-        distributedObject: api.IDistributedObject,
-        transformedMessages: api.ISequencedObjectMessage[],
+        distributedObject: IDistributedObject,
+        transformedMessages: ISequencedObjectMessage[],
         services: IAttachedServices,
         sequenceNumber: number,
         originBranch: string): Promise<api.ICollaborativeObject> {
@@ -963,8 +983,8 @@ export class Document extends EventEmitter implements api.IDocument {
 
     private getObjectServices(
         id: string,
-        tree: api.ISnapshotTree,
-        storage: api.IDocumentStorageService): IObjectServices {
+        tree: ISnapshotTree,
+        storage: IDocumentStorageService): IObjectServices {
 
         const deltaConnection = new api.ObjectDeltaConnection(id, this, this.connectionState);
         const objectStorage = new api.ObjectStorageService(tree, storage);
@@ -975,9 +995,9 @@ export class Document extends EventEmitter implements api.IDocument {
         };
     }
 
-    private async prepareRemoteMessage(message: api.ISequencedDocumentMessage): Promise<any> {
+    private async prepareRemoteMessage(message: ISequencedDocumentMessage): Promise<any> {
         if (message.type === api.ObjectOperation) {
-            const envelope = message.contents as api.IEnvelope;
+            const envelope = message.contents as IEnvelope;
             const objectDetails = this.distributedObjects.get(envelope.address);
             return objectDetails.connection.prepare(message);
         } else if (message.type === api.AttachObject && message.clientId !== this._clientId) {
@@ -991,7 +1011,7 @@ export class Document extends EventEmitter implements api.IDocument {
             // number. We cap to the MSN to keep a tighter window and because no references should be below it.
             connection.setBaseMapping(0, message.minimumSequenceNumber);
 
-            const distributedObject: api.IDistributedObject = {
+            const distributedObject: IDistributedObject = {
                 id: attachMessage.id,
                 sequenceNumber: 0,
                 type: attachMessage.type,
@@ -1013,7 +1033,7 @@ export class Document extends EventEmitter implements api.IDocument {
         }
     }
 
-    private processRemoteMessage(message: api.ISequencedDocumentMessage, context: any) {
+    private processRemoteMessage(message: ISequencedDocumentMessage, context: any) {
         const minSequenceNumberChanged = this.lastMinSequenceNumber !== message.minimumSequenceNumber;
         this.lastMinSequenceNumber = message.minimumSequenceNumber;
 
@@ -1023,7 +1043,7 @@ export class Document extends EventEmitter implements api.IDocument {
         const eventArgs: any[] = [message];
         switch (message.type) {
             case api.ObjectOperation:
-                const envelope = message.contents as api.IEnvelope;
+                const envelope = message.contents as IEnvelope;
                 const objectDetails = this.distributedObjects.get(envelope.address);
 
                 this.submitLatencyMessage(message);
@@ -1117,7 +1137,7 @@ export class Document extends EventEmitter implements api.IDocument {
     /**
      * Submits a trace message to remote server.
      */
-    private submitLatencyMessage(message: api.ISequencedDocumentMessage) {
+    private submitLatencyMessage(message: ISequencedDocumentMessage & { traces?: api.ITrace[] }) {
         // Submits a roundtrip message only if the message was originally generated by this client.
         if (this.clientId === message.clientId) {
             // Add final ack trace.
@@ -1126,6 +1146,7 @@ export class Document extends EventEmitter implements api.IDocument {
                 service: this.clientType,
                 timestamp: performanceNow(),
             });
+
             // Add a ping trace if available.
             if (this.lastPong) {
                 message.traces.push({
@@ -1135,9 +1156,11 @@ export class Document extends EventEmitter implements api.IDocument {
                 });
                 this.lastPong = undefined;
             }
+
             const latencyMessage: api.ILatencyMessage = {
                 traces: message.traces,
             };
+
             this._deltaManager.submitRoundtrip(api.RoundTrip, latencyMessage);
         }
     }
@@ -1210,7 +1233,7 @@ export async function load(
     version: resources.ICommit = null,
     connect = true,
     registry: api.Registry<api.ICollaborativeObjectExtension> = defaultRegistry,
-    service: api.IDocumentService = defaultDocumentService): Promise<Document> {
+    service: IDocumentService = defaultDocumentService): Promise<Document> {
 
     const deferred = new Deferred<Document>();
     service.getErrorTrackingService().track(() => {

@@ -1,7 +1,6 @@
 // tslint:disable:whitespace align
-
+import { ISequencedObjectMessage } from "@prague/runtime-definitions";
 import { EventEmitter } from "events";
-import * as api from "../api-core";
 import { IValueFactory, IValueOpEmitter, IValueOperation, IValueType } from "../data-types";
 import * as MergeTree from "../merge-tree";
 
@@ -495,7 +494,7 @@ export class SharedIntervalCollectionView<TInterval extends ISerializableInterva
 
     public on(
         event: "addInterval",
-        listener: (interval: ISerializedInterval, local: boolean, op: api.ISequencedObjectMessage) => void): this {
+        listener: (interval: ISerializedInterval, local: boolean, op: ISequencedObjectMessage) => void): this {
         return super.on(event, listener);
     }
 
@@ -526,7 +525,7 @@ export class SharedIntervalCollectionView<TInterval extends ISerializableInterva
         serializedInterval: ISerializedInterval,
         context: any,
         local: boolean,
-        op: api.ISequencedObjectMessage) {
+        op: ISequencedObjectMessage) {
 
         const interval = this.localCollection.addInterval(
             serializedInterval.start,
@@ -553,7 +552,7 @@ export class SharedIntervalCollectionView<TInterval extends ISerializableInterva
     public async prepareAdd(
         interval: ISerializedInterval,
         local: boolean,
-        message: api.ISequencedObjectMessage): Promise<any> {
+        message: ISequencedObjectMessage): Promise<any> {
 
         await this.attachingP;
         return this.onPrepareDeserialize ? this.onPrepareDeserialize(interval.properties) : null;
@@ -651,7 +650,7 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval> {
     public prepareAddInternal(
         interval: ISerializedInterval,
         local: boolean,
-        message: api.ISequencedObjectMessage): Promise<any> {
+        message: ISequencedObjectMessage): Promise<any> {
 
         if (!this.view) {
             return Promise.reject("attachSharedString must be called");
@@ -664,7 +663,7 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval> {
         serializedInterval: ISerializedInterval,
         context: any,
         local: boolean,
-        op: api.ISequencedObjectMessage) {
+        op: ISequencedObjectMessage) {
 
         if (!this.view) {
             throw new Error("attachSharedString must be called");

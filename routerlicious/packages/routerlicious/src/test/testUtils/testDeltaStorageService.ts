@@ -1,14 +1,17 @@
-import { core as api } from "@prague/client-api";
+import {
+    IDeltaStorageService,
+    ISequencedDocumentMessage,
+} from "@prague/runtime-definitions";
 
-export class TestDeltaStorageService implements api.IDeltaStorageService {
+export class TestDeltaStorageService implements IDeltaStorageService {
     public get(
         tenantId: string,
         id: string,
         token: string,
         from?: number,
-        to?: number): Promise<api.ISequencedDocumentMessage[]> {
+        to?: number): Promise<ISequencedDocumentMessage[]> {
 
-        return new Promise<api.ISequencedDocumentMessage[]>((resolve, reject) => {
+        return new Promise<ISequencedDocumentMessage[]>((resolve, reject) => {
             resolve([]);
         });
     }

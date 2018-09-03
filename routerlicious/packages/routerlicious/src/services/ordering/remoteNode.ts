@@ -1,4 +1,5 @@
 import { core as api } from "@prague/client-api";
+import { IDocumentMessage } from "@prague/runtime-definitions";
 import { Deferred } from "@prague/utils";
 import * as assert from "assert";
 import { EventEmitter } from "events";
@@ -29,7 +30,7 @@ class ProxySocketConnection implements IOrdererConnection {
         private details: IConnectedMessage) {
     }
 
-    public order(message: api.IDocumentMessage): void {
+    public order(message: IDocumentMessage): void {
         this.node.send(this.cid, "order", message);
     }
 

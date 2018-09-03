@@ -1,4 +1,5 @@
 import { core as api } from "@prague/client-api";
+import { IDocumentMessage } from "@prague/runtime-definitions";
 import { EventEmitter } from "events";
 import { IOrderer } from "../../core";
 
@@ -61,5 +62,5 @@ export interface INodeMessage {
     // better way to do the before in TS?
     type: "order" | "op" | "connect" | "disconnect" | "connected";
 
-    payload: api.IDocumentMessage | string | IOpMessage | IConnectMessage | IConnectedMessage;
+    payload: IDocumentMessage | string | IOpMessage | IConnectMessage | IConnectedMessage;
 }

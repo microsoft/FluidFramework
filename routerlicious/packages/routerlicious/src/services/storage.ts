@@ -1,5 +1,6 @@
 import { core as api } from "@prague/client-api";
 import { ICommit, ICommitDetails } from "@prague/gitresources";
+import { IDocumentAttributes } from "@prague/runtime-definitions";
 import * as moniker from "moniker";
 import * as winston from "winston";
 import * as core from "../core";
@@ -80,7 +81,7 @@ export class DocumentStorage implements core.IDocumentStorage {
             const [attributesContent] = await Promise.all([attributesContentP, branchP]);
 
             const attributesJson = Buffer.from(attributesContent.content, "base64").toString("utf-8");
-            const attributes = JSON.parse(attributesJson) as api.IDocumentAttributes;
+            const attributes = JSON.parse(attributesJson) as IDocumentAttributes;
             minimumSequenceNumber = attributes.minimumSequenceNumber;
             sequenceNumber = attributes.sequenceNumber;
         }
@@ -176,7 +177,6 @@ export class DocumentStorage implements core.IDocumentStorage {
                 clientSequenceNumber: -1,
                 contents,
                 referenceSequenceNumber: -1,
-                traces: [],
                 type: api.Fork,
             },
             tenantId,

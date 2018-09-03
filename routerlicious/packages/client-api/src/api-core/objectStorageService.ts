@@ -1,5 +1,5 @@
+import { IDocumentStorageService, ISnapshotTree } from "@prague/runtime-definitions";
 import { IObjectStorageService } from "./document";
-import { IDocumentStorageService, ISnapshotTree } from "./storage";
 
 export class ObjectStorageService implements IObjectStorageService {
     private static flattenTree(base: string, tree: ISnapshotTree, results: { [path: string]: string }) {

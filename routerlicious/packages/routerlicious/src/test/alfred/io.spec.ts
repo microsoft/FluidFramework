@@ -1,4 +1,5 @@
 import { core as api, socketStorage } from "@prague/client-api";
+import { IDocumentMessage } from "@prague/runtime-definitions";
 import { Deferred } from "@prague/utils";
 import * as assert from "assert";
 import * as io from "../../alfred/io";
@@ -99,7 +100,7 @@ describe("Routerlicious", () => {
                 function sendMessage(
                     socket: TestWebSocket,
                     clientId: string,
-                    message: api.IDocumentMessage): Promise<void> {
+                    message: IDocumentMessage): Promise<void> {
 
                     const deferred = new Deferred<void>();
                     socket.send("submitOp", clientId, [message], (error: any, response: any) => {

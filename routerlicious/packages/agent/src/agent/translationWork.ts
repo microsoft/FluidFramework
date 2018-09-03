@@ -1,4 +1,5 @@
 import { core, map, MergeTree, SharedString, types } from "@prague/client-api";
+import { IDocumentService, ISequencedDocumentMessage, ISequencedObjectMessage } from "@prague/runtime-definitions";
 import { EventEmitter } from "events";
 import * as request from "request";
 import { Builder, parseString } from "xml2js";
@@ -83,7 +84,7 @@ class Translator extends EventEmitter {
         const typeInsights = await this.insights.get(this.sharedString.id) as types.IMap;
         this.view = await typeInsights.getView();
 
-        this.sharedString.on("op", (op: core.ISequencedObjectMessage) => {
+        this.sharedString.on("op", (op: ISequencedObjectMessage) => {
             if (this.needsTranslation(op)) {
                 this.requestTranslation(op);
             }
@@ -124,7 +125,7 @@ class Translator extends EventEmitter {
         return true;
     }
 
-    private requestTranslation(op: core.ISequencedObjectMessage): void {
+    private requestTranslation(op: ISequencedObjectMessage): void {
         // Exit early if there is a translation in progress but make not of the desired request
         if (this.pendingTranslation) {
             return;
@@ -186,7 +187,7 @@ export class TranslationWork extends BaseWork implements IWork {
     private translators = new Map<string, core.ICollaborativeObject>();
     private translator: Translator;
 
-    constructor(docId: string, private token: string, config: any, private service: core.IDocumentService) {
+    constructor(docId: string, private token: string, config: any, private service: IDocumentService) {
         super(docId, config);
     }
 
@@ -216,7 +217,7 @@ export class TranslationWork extends BaseWork implements IWork {
     }
 
     private trackEvents(insights: types.IMap): Promise<void> {
-        const eventHandler = (op: core.ISequencedDocumentMessage, object: core.ICollaborativeObject) => {
+        const eventHandler = (op: ISequencedDocumentMessage, object: core.ICollaborativeObject) => {
             if (object && object.type === SharedString.CollaborativeStringExtension.Type) {
                 if (!this.translationSet.has(object)) {
                     this.translationSet.add(object);

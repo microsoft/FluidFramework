@@ -1,4 +1,5 @@
 import { core } from "@prague/client-api";
+import { IEnvelope } from "@prague/runtime-definitions";
 import * as utils from "@prague/utils";
 import * as assert from "assert";
 import { EventEmitter } from "events";
@@ -77,7 +78,7 @@ export class TestDocument implements core.IDocument {
     // Allow derived classes to override the snapshot processing
     public snapshotCore = (message: string) => Promise.resolve();
 
-    public submitObjectMessage(envelope: core.IEnvelope) {
+    public submitObjectMessage(envelope: IEnvelope) {
         throw new Error("Method not implemented.");
     }
 }

@@ -1,4 +1,5 @@
 import { ICreateBlobResponse } from "@prague/gitresources";
+import { IDocumentStorageService } from "@prague/runtime-definitions";
 import * as api from "../api-core";
 
 export interface IBlobManager {
@@ -24,7 +25,7 @@ export class BlobManager implements IBlobManager {
 
     private blobs: Map<string, api.IGenericBlob>;
 
-    constructor(private storage: api.IDocumentStorageService) {
+    constructor(private storage: IDocumentStorageService) {
         this.blobs = new Map<string, api.IGenericBlob>();
     }
 

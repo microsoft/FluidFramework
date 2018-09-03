@@ -204,6 +204,11 @@ export interface IDocumentDeltaConnection extends EventEmitter {
     user: IUser;
 
     /**
+     * Messages sent during the connection
+     */
+    initialMessages?: ISequencedDocumentMessage[];
+
+    /**
      * Submit a new message to the server
      */
     submit(message: IDocumentMessage): void;
@@ -212,6 +217,14 @@ export interface IDocumentDeltaConnection extends EventEmitter {
      * Disconnects the given delta connection
      */
     disconnect();
+}
+
+// Error tracking service.
+export interface IErrorTrackingService {
+    /**
+     * Track error/exception using a service.
+     */
+    track(func: () => void);
 }
 
 export interface IDocumentService {
@@ -240,7 +253,7 @@ export interface IDocumentService {
     branch(tenantId: string, id: string, token: string): Promise<string>;
 
     /**
-     * Error tracking enabled or not.
+     * Returns the error tracking service
      */
-    errorTrackingEnabled(): boolean;
+    getErrorTrackingService(): IErrorTrackingService;
 }

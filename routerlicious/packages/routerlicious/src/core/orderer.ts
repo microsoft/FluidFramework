@@ -1,4 +1,5 @@
 import { core } from "@prague/client-api";
+import { IDocumentMessage } from "@prague/runtime-definitions";
 import { IWebSocket } from "../core";
 
 export interface IOrdererSocket {
@@ -14,7 +15,7 @@ export interface IOrdererConnection {
 
     parentBranch: string;
 
-    order(message: core.IDocumentMessage): void;
+    order(message: IDocumentMessage): void;
 
     disconnect();
 }

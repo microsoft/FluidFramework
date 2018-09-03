@@ -1,11 +1,17 @@
 import * as resources from "@prague/gitresources";
+import {
+    FileMode,
+    ISnapshotTree,
+    ITree,
+    TreeEntry,
+} from "@prague/runtime-definitions";
 import * as assert from "assert";
 import * as api from "../api-core";
 import { IHistorian } from "../services-client";
 
-export function buildHierarchy(flatTree: resources.ITree): api.ISnapshotTree {
-    const lookup: { [path: string]: api.ISnapshotTree } = {};
-    const root: api.ISnapshotTree = { blobs: {}, trees: {} };
+export function buildHierarchy(flatTree: resources.ITree): ISnapshotTree {
+    const lookup: { [path: string]: ISnapshotTree } = {};
+    const root: ISnapshotTree = { blobs: {}, trees: {} };
     lookup[""] = root;
 
     for (const entry of flatTree.tree) {
@@ -35,7 +41,7 @@ export class GitManager {
     constructor(private historian: IHistorian) {
     }
 
-    public async getHeader(id: string, sha: string): Promise<api.ISnapshotTree> {
+    public async getHeader(id: string, sha: string): Promise<ISnapshotTree> {
         const header = await this.historian.getHeader(sha);
 
         // Cache blobs that were sent in the header
@@ -90,7 +96,7 @@ export class GitManager {
         return this.historian.createBlob(blob);
     }
 
-    public createTree(files: api.ITree): Promise<resources.ITree> {
+    public createTree(files: ITree): Promise<resources.ITree> {
         return this.createTreeCore(files, 0);
     }
 
@@ -134,7 +140,7 @@ export class GitManager {
      */
     public async write(
         branch: string,
-        inputTree: api.ITree,
+        inputTree: ITree,
         parents: string[],
         message: string): Promise<resources.ICommit> {
 
@@ -166,17 +172,17 @@ export class GitManager {
         return commit;
     }
 
-    private async createTreeCore(files: api.ITree, depth: number): Promise<resources.ITree> {
+    private async createTreeCore(files: ITree, depth: number): Promise<resources.ITree> {
         // Kick off the work to create all the tree values
         const entriesP: Array<Promise<resources.ICreateBlobResponse | resources.ITree>> = [];
         for (const entry of files.entries) {
-            switch (api.TreeEntry[entry.type]) {
-                case api.TreeEntry.Blob:
+            switch (TreeEntry[entry.type]) {
+                case TreeEntry.Blob:
                     const entryAsBlob = entry.value as api.IBlob;
 
                     // Symlinks currently directly references a folder off the root of the tree. We adjust
                     // the path based on the depth of the tree
-                    if (entry.mode === api.FileMode.Symlink) {
+                    if (entry.mode === FileMode.Symlink) {
                         entryAsBlob.contents = this.translateSymlink(entryAsBlob.contents, depth);
                     }
 
@@ -184,8 +190,8 @@ export class GitManager {
                     entriesP.push(blobP);
                     break;
 
-                case api.TreeEntry.Tree:
-                    const entryAsTree = entry.value as api.ITree;
+                case TreeEntry.Tree:
+                    const entryAsTree = entry.value as ITree;
                     const treeBlobP = this.createTreeCore(entryAsTree, depth + 1);
                     entriesP.push(treeBlobP);
                     break;
@@ -202,7 +208,7 @@ export class GitManager {
 
         // Construct a new tree from the collection of hashes
         for (let i = 0; i < files.entries.length; i++) {
-            const isTree = files.entries[i].type === api.TreeEntry[api.TreeEntry.Tree];
+            const isTree = files.entries[i].type === TreeEntry[TreeEntry.Tree];
             tree.push({
                 mode: files.entries[i].mode,
                 path: files.entries[i].path,

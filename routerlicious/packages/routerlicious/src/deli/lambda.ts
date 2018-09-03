@@ -1,4 +1,5 @@
 import { core as api } from "@prague/client-api";
+import { IBranchOrigin, IDocumentMessage, ISequencedDocumentMessage } from "@prague/runtime-definitions";
 import { RangeTracker } from "@prague/utils";
 import * as assert from "assert";
 import * as _ from "lodash";
@@ -223,12 +224,12 @@ export class DeliLambda implements IPartitionLambda {
         // Increment and grab the next sequence number
         const sequenceNumber = this.revSequenceNumber();
 
-        let origin: api.IBranchOrigin;
+        let origin: IBranchOrigin;
 
         if (message.operation.type === api.Integrate) {
             // Branch operation is the original message
             const branchOperation = message.operation.contents as core.ISequencedOperationMessage;
-            const branchDocumentMessage = branchOperation.operation as api.ISequencedDocumentMessage;
+            const branchDocumentMessage = branchOperation.operation as ISequencedDocumentMessage;
             const branchClientId = getBranchClientId(branchOperation.documentId);
 
             // Do I transform the ref or the MSN - I guess the ref here because it's that key space
@@ -250,9 +251,9 @@ export class DeliLambda implements IPartitionLambda {
                     clientSequenceNumber: branchDocumentMessage.sequenceNumber,
                     contents: branchDocumentMessage.contents,
                     referenceSequenceNumber: transformedRefSeqNumber,
-                    traces: message.operation.traces,
+                    traces: (message.operation as IDocumentMessage & { traces: api.ITrace[] }).traces,
                     type: branchDocumentMessage.type,
-                },
+                } as IDocumentMessage,
                 tenantId: message.tenantId,
                 timestamp: message.timestamp,
                 type: core.RawOperationType,
@@ -297,14 +298,15 @@ export class DeliLambda implements IPartitionLambda {
         this.minimumSequenceNumber = msn === -1 ? sequenceNumber : msn;
 
         // Add traces
-        const traces = message.operation.traces;
+        const messageWithTraces = message.operation as IDocumentMessage & { traces?: api.ITrace[] };
+        const traces = messageWithTraces.traces;
         if (traces !== undefined) {
             traces.push(trace);
             traces.push(this.createTrace());
         }
 
         // And now craft the output message
-        const outputMessage: api.ISequencedDocumentMessage = {
+        const outputMessage: ISequencedDocumentMessage & ({ traces: api.ITrace[] }) = {
             clientId: message.clientId,
             clientSequenceNumber: message.operation.clientSequenceNumber,
             contents: message.operation.contents,
@@ -401,7 +403,6 @@ export class DeliLambda implements IPartitionLambda {
                 clientSequenceNumber: -1,
                 contents: clientId,
                 referenceSequenceNumber: -1,
-                traces: [],
                 type: api.ClientLeave,
             },
             tenantId: this.tenantId,
@@ -441,7 +442,6 @@ export class DeliLambda implements IPartitionLambda {
                 clientSequenceNumber: -1,
                 contents: null,
                 referenceSequenceNumber: -1,
-                traces: [],
                 type: api.NoOp,
             },
             tenantId: this.tenantId,

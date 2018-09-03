@@ -1,4 +1,4 @@
-import { core as api } from "@prague/client-api";
+import { IDocumentMessage } from "@prague/runtime-definitions";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import * as _ from "lodash";
@@ -187,7 +187,7 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
                     }
 
                     case "order": {
-                        const orderMessage = message.payload as api.IDocumentMessage;
+                        const orderMessage = message.payload as IDocumentMessage;
                         const connection = this.connectionMap.get(message.cid);
                         assert(connection);
                         connection.order(orderMessage);

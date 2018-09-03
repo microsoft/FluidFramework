@@ -1,4 +1,9 @@
 // tslint:disable:whitespace align no-bitwise
+import {
+    IObjectMessage,
+    ISequencedObjectMessage,
+    ITree,
+} from "@prague/runtime-definitions";
 import { Deferred } from "@prague/utils";
 import * as assert from "assert";
 import * as api from "../api-core";
@@ -348,9 +353,9 @@ export class SharedString extends CollaborativeMap {
         this.submitIfAttached(groupOp);
     }
 
-    protected transformContent(message: api.IObjectMessage, toSequenceNumber: number): api.IObjectMessage {
+    protected transformContent(message: IObjectMessage, toSequenceNumber: number): IObjectMessage {
         if (message.contents) {
-            this.client.transform(message as api.ISequencedObjectMessage, toSequenceNumber);
+            this.client.transform(message as ISequencedObjectMessage, toSequenceNumber);
         }
         message.referenceSequenceNumber = toSequenceNumber;
         return message;
@@ -359,7 +364,7 @@ export class SharedString extends CollaborativeMap {
     protected async loadContent(
         sequenceNumber: number,
         minimumSequenceNumber: number,
-        messages: api.ISequencedObjectMessage[],
+        messages: ISequencedObjectMessage[],
         headerOrigin: string,
         storage: api.IObjectStorageService): Promise<void> {
 
@@ -378,7 +383,7 @@ export class SharedString extends CollaborativeMap {
             });
     }
 
-    protected snapshotContent(): api.ITree {
+    protected snapshotContent(): ITree {
         this.client.mergeTree.commitGlobalMin();
         const snap = new MergeTree.Snapshot(this.client.mergeTree);
         snap.extractSync();
@@ -389,7 +394,7 @@ export class SharedString extends CollaborativeMap {
         return this.loadedDeferred.promise;
     }
 
-    protected processContent(message: api.ISequencedObjectMessage) {
+    protected processContent(message: ISequencedObjectMessage) {
         this.client.applyMsg(message);
         if (this.client.mergeTree.minSeqPending) {
             this.client.mergeTree.notifyMinSeqListeners();
@@ -410,7 +415,7 @@ export class SharedString extends CollaborativeMap {
         this.collabStarted = true;
     }
 
-    protected onConnectContent(pending: api.IObjectMessage[]) {
+    protected onConnectContent(pending: IObjectMessage[]) {
         // Update merge tree collaboration information with new client ID and then resend pending ops
         if (this.collabStarted) {
             this.client.updateCollaboration(this.document.clientId);
@@ -461,7 +466,7 @@ export class SharedString extends CollaborativeMap {
         sequenceNumber: number,
         minimumSequenceNumber: number,
         header: string,
-        messages: api.ISequencedObjectMessage[],
+        messages: ISequencedObjectMessage[],
         collaborative: boolean,
         originBranch: string,
         services: api.IObjectStorageService) {
@@ -486,7 +491,7 @@ export class SharedString extends CollaborativeMap {
     private async initialize(
         sequenceNumber: number,
         minimumSequenceNumber: number,
-        messages: api.ISequencedObjectMessage[],
+        messages: ISequencedObjectMessage[],
         header: string,
         collaborative: boolean,
         originBranch: string,

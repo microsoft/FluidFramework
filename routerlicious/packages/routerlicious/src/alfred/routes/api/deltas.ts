@@ -1,4 +1,4 @@
-import { core as api } from "@prague/client-api";
+import { ISequencedDocumentMessage } from "@prague/runtime-definitions";
 import { Router } from "express";
 import { Provider } from "nconf";
 import * as utils from "../../../utils";
@@ -10,7 +10,7 @@ export function getDeltas(
     tenantId: string,
     documentId: string,
     from?: number,
-    to?: number): Promise<api.ISequencedDocumentMessage[]> {
+    to?: number): Promise<ISequencedDocumentMessage[]> {
 
     // Create an optional filter to restrict the delta range
     const query: any = { documentId, tenantId };

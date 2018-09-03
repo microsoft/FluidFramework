@@ -1,23 +1,33 @@
-// tslint:disable:ban-types
 import { core as api, socketStorage } from "@prague/client-api";
 import * as git from "@prague/gitresources";
+import {
+    IDocumentDeltaConnection,
+    IDocumentDeltaStorageService,
+    IDocumentMessage,
+    IDocumentService,
+    IDocumentStorageService,
+    ISequencedDocumentMessage,
+    ISnapshotTree,
+    ITree,
+} from "@prague/runtime-definitions";
+import { EventEmitter } from "events";
 
-export class TestDocumentDeltaConnection implements api.IDocumentDeltaConnection {
+export class TestDocumentDeltaConnection extends EventEmitter implements IDocumentDeltaConnection {
     public existing: boolean;
     public parentBranch: string;
     public user: api.ITenantUser;
     public clientId: string;
-    public initialMessages: api.ISequencedDocumentMessage[] | undefined;
+    public initialMessages: ISequencedDocumentMessage[] | undefined;
     public documentId: string;
     public encrypted: boolean;
     public privateKey: string;
     public publicKey: string;
 
-    public on(event: string, listener: Function): this {
-        throw new Error("Method not implemented.");
+    constructor() {
+        super();
     }
 
-    public submit(message: api.IDocumentMessage): void {
+    public submit(message: IDocumentMessage): void {
         throw new Error("Method not implemented.");
     }
 
@@ -26,8 +36,8 @@ export class TestDocumentDeltaConnection implements api.IDocumentDeltaConnection
     }
 }
 
-export class TestDocumentStorageService implements api.IDocumentStorageService {
-    public getSnapshotTree(version: git.ICommit): Promise<api.ISnapshotTree> {
+export class TestDocumentStorageService implements IDocumentStorageService {
+    public getSnapshotTree(version: git.ICommit): Promise<ISnapshotTree> {
         throw new Error("Method not implemented.");
     }
 
@@ -43,7 +53,7 @@ export class TestDocumentStorageService implements api.IDocumentStorageService {
         throw new Error("Method not implemented.");
     }
 
-    public write(root: api.ITree, parents: string[], message: string): Promise<git.ICommit> {
+    public write(root: ITree, parents: string[], message: string): Promise<git.ICommit> {
         throw new Error("Method not implemented.");
     }
 
@@ -60,24 +70,24 @@ export class TestDocumentStorageService implements api.IDocumentStorageService {
     }
 }
 
-export class TestDocumentDeltaStorageService implements api.IDocumentDeltaStorageService {
-    public get(from?: number, to?: number): Promise<api.ISequencedDocumentMessage[]> {
+export class TestDocumentDeltaStorageService implements IDocumentDeltaStorageService {
+    public get(from?: number, to?: number): Promise<ISequencedDocumentMessage[]> {
         throw new Error("Method not implemented.");
     }
 }
 
-export class TestDocumentService implements api.IDocumentService {
+export class TestDocumentService implements IDocumentService {
     private errorTracking = new socketStorage.DefaultErrorTracking();
 
-    public async connectToStorage(id: string, token: string): Promise<api.IDocumentStorageService> {
+    public async connectToStorage(id: string, token: string): Promise<IDocumentStorageService> {
         return new TestDocumentStorageService();
     }
 
-    public async connectToDeltaStorage(id: string, token: string): Promise<api.IDocumentDeltaStorageService> {
+    public async connectToDeltaStorage(id: string, token: string): Promise<IDocumentDeltaStorageService> {
         return new TestDocumentDeltaStorageService();
     }
 
-    public async connectToDeltaStream(id: string, token: string): Promise<api.IDocumentDeltaConnection> {
+    public async connectToDeltaStream(id: string, token: string): Promise<IDocumentDeltaConnection> {
         return new TestDocumentDeltaConnection();
     }
 

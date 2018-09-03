@@ -1,4 +1,5 @@
 import { core } from "@prague/client-api";
+import { ISequencedDocumentMessage } from "@prague/runtime-definitions";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 
@@ -25,7 +26,7 @@ export class Serializer extends EventEmitter {
     private lastSnapshotSeqNumber: number = 0;
     private idleTimer = null;
     private retryTimer = null;
-    private lastOp: core.ISequencedDocumentMessage = null;
+    private lastOp: ISequencedDocumentMessage = null;
     private lastOpSnapshotDetails: IOpSnapshotDetails = null;
     private snapshotting = false;
 
@@ -38,7 +39,7 @@ export class Serializer extends EventEmitter {
             super();
     }
 
-    public run(op: core.ISequencedDocumentMessage) {
+    public run(op: ISequencedDocumentMessage) {
         assert(!this.snapshotting, "Op processing should be paused when a snapshot is happening");
 
         // Stop any idle processing
@@ -98,7 +99,7 @@ export class Serializer extends EventEmitter {
         });
     }
 
-    private getOpSnapshotDetails(op: core.ISequencedDocumentMessage): IOpSnapshotDetails {
+    private getOpSnapshotDetails(op: ISequencedDocumentMessage): IOpSnapshotDetails {
         if (op.type === core.SaveOperation) {
             // Forced snapshot.
             return {

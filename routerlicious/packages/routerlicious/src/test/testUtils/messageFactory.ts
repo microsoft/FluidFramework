@@ -1,4 +1,5 @@
 import { core as api } from "@prague/client-api";
+import { IDocumentMessage, ISequencedDocumentMessage } from "@prague/runtime-definitions";
 // tslint:disable-next-line:no-var-requires
 const hash = require("string-hash");
 import { IRawOperationMessage, ISequencedOperationMessage, RawOperationType, SequencedOperationType } from "../../core";
@@ -45,12 +46,11 @@ export class MessageFactory {
     constructor(private documentId, private clientId, private tenantId = "test") {
     }
 
-    public createDocumentMessage(referenceSequenceNumber = 0): api.IDocumentMessage {
-        const operation: api.IDocumentMessage = {
+    public createDocumentMessage(referenceSequenceNumber = 0): IDocumentMessage {
+        const operation: IDocumentMessage = {
             clientSequenceNumber: this.clientSequenceNumber++,
             contents: null,
             referenceSequenceNumber,
-            traces: [],
             type: api.NoOp,
         };
         return operation;
@@ -62,11 +62,10 @@ export class MessageFactory {
     }
 
     public createJoin(timestamp = Date.now()) {
-        const operation: api.IDocumentMessage = {
+        const operation: IDocumentMessage = {
             clientSequenceNumber: -1,
             contents: { clientId: this.clientId },
             referenceSequenceNumber: -1,
-            traces: [],
             type: api.ClientJoin,
         };
 
@@ -74,18 +73,17 @@ export class MessageFactory {
     }
 
     public createLeave(timestamp = Date.now()) {
-        const operation: api.IDocumentMessage = {
+        const operation: IDocumentMessage = {
             clientSequenceNumber: -1,
             contents: this.clientId,
             referenceSequenceNumber: -1,
-            traces: [],
             type: api.ClientLeave,
         };
 
         return this.createRawOperation(operation, timestamp, null);
     }
 
-    public createRawOperation(operation: api.IDocumentMessage, timestamp, clientId) {
+    public createRawOperation(operation: IDocumentMessage, timestamp, clientId) {
         const objectMessage: IRawOperationMessage = {
             clientId,
             documentId: this.documentId,
@@ -100,17 +98,16 @@ export class MessageFactory {
     }
 
     public createSave(): ISequencedOperationMessage {
-        const operation: api.IDocumentMessage = {
+        const operation: IDocumentMessage = {
             clientSequenceNumber: this.clientSequenceNumber++,
             contents: {
                 message: "Test Save",
             },
             referenceSequenceNumber: 0,
-            traces: [],
             type: api.SaveOperation,
         };
 
-        const sequencedOperation: api.ISequencedDocumentMessage = {
+        const sequencedOperation: ISequencedDocumentMessage = {
             clientId: this.clientId,
             clientSequenceNumber: operation.clientSequenceNumber,
             contents: operation.contents,
@@ -118,7 +115,6 @@ export class MessageFactory {
             origin: undefined,
             referenceSequenceNumber: operation.referenceSequenceNumber,
             sequenceNumber: this.sequenceNumber++,
-            traces: [],
             type: operation.type,
             user: null,
         };
@@ -135,7 +131,7 @@ export class MessageFactory {
 
     public createSequencedOperation(): ISequencedOperationMessage {
         const operation = this.createDocumentMessage(0);
-        const sequencedOperation: api.ISequencedDocumentMessage = {
+        const sequencedOperation: ISequencedDocumentMessage = {
             clientId: this.clientId,
             clientSequenceNumber: operation.clientSequenceNumber,
             contents: operation.contents,
@@ -143,7 +139,6 @@ export class MessageFactory {
             origin: undefined,
             referenceSequenceNumber: operation.referenceSequenceNumber,
             sequenceNumber: this.sequenceNumber++,
-            traces: [],
             type: operation.type,
             user: null,
         };

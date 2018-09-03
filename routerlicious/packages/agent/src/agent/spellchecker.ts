@@ -1,5 +1,5 @@
-// tslint:disable:whitespace
-import { core, MergeTree, SharedString } from "@prague/client-api";
+import { MergeTree, SharedString } from "@prague/client-api";
+import { ISequencedObjectMessage } from "@prague/runtime-definitions";
 
 export interface IPgMarker {
 
@@ -136,7 +136,7 @@ class Speller {
                 this.currentIdleTime = 0;
             }
         }, idleCheckerMS);
-        this.sharedString.on("op", (msg: core.ISequencedObjectMessage) => {
+        this.sharedString.on("op", (msg: ISequencedObjectMessage) => {
             if (msg && msg.contents) {
                 const delta = msg.contents as MergeTree.IMergeTreeOp;
                 this.collectDeltas(delta);

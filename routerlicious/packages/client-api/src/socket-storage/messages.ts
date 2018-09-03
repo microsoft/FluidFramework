@@ -1,4 +1,4 @@
-import { IClient, ISequencedDocumentMessage, ITenantUser } from "../api-core";
+import { IClient, ISequencedDocumentMessage, IUser } from "@prague/runtime-definitions";
 
 /**
  * Message sent to connect to the given object
@@ -24,7 +24,7 @@ export interface IConnect {
  */
 export interface IConnected {
     // The user who is sending the message
-    user: ITenantUser;
+    user: IUser;
 
     // The client who is sending the message
     clientId: string;

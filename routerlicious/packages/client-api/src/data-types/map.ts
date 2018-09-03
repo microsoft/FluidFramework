@@ -1,4 +1,5 @@
-import { ICollaborativeObject, ISequencedObjectMessage } from "../api-core";
+import { ISequencedObjectMessage } from "@prague/runtime-definitions";
+import { ICollaborativeObject } from "../api-core";
 
 export type SerializeFilter = (key: string, serializedValue: any, type: string) => any;
 

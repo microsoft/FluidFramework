@@ -1,7 +1,12 @@
+import {
+    IEnvelope,
+    IObjectMessage,
+    ISequencedDocumentMessage,
+    ISequencedObjectMessage,
+} from "@prague/runtime-definitions";
 import { RangeTracker } from "@prague/utils";
 import * as assert from "assert";
 import { ConnectionState, IDeltaConnection, IDeltaHandler, IDocument } from "./document";
-import { IEnvelope, IObjectMessage, ISequencedDocumentMessage, ISequencedObjectMessage } from "./protocol";
 
 export interface IMessageContext {
     objectMessage: ISequencedObjectMessage;
@@ -148,7 +153,6 @@ export class ObjectDeltaConnection implements IDeltaConnection {
             origin: documentMessage.origin,
             referenceSequenceNumber: message.referenceSequenceNumber,
             sequenceNumber: this._sequenceNumber + 1,
-            traces: documentMessage.traces,
             type: message.type,
             user: documentMessage.user,
         };

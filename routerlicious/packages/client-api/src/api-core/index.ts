@@ -7,7 +7,6 @@ export * from "./deltaQueue";
 export * from "./document";
 export * from "./extension";
 export * from "./protocol";
-export * from "./storage";
 export * from "./types";
 export * from "./deltaManager";
 export * from "./localObjectStorageService";

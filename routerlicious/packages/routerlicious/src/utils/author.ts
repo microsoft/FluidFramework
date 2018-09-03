@@ -1,4 +1,5 @@
 import { api, core, MergeTree, SharedString, types, utils } from "@prague/client-api";
+import { ISequencedObjectMessage } from "@prague/runtime-definitions";
 import * as queue from "async/queue";
 // tslint:disable-next-line:no-var-requires
 const clone = require("lodash/clone");
@@ -450,7 +451,7 @@ export async function typeChunk(
             processCounter.increment(time);
         });
 
-        a.ss.on("op", (message: core.ISequencedObjectMessage, local) => {
+        a.ss.on("op", (message: ISequencedObjectMessage & { traces: core.ITrace[] }, local) => {
             if (message.clientSequenceNumber &&
                 message.clientSequenceNumber > 25 &&
                 local) {

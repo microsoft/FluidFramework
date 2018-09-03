@@ -1,3 +1,10 @@
+import {
+    IDocumentDeltaConnection,
+    IDocumentDeltaStorageService,
+    IDocumentService,
+    IDocumentStorageService,
+    IErrorTrackingService,
+} from "@prague/runtime-definitions";
 import axios from "axios";
 import * as io from "socket.io-client";
 import * as api from "../api-core";
@@ -10,13 +17,13 @@ import { DocumentDeltaConnection } from "./documentDeltaConnection";
  * The DocumentService manages the Socket.IO connection and manages routing requests to connected
  * clients
  */
-export class DocumentService implements api.IDocumentService {
+export class DocumentService implements IDocumentService {
     private deltaStorage: DeltaStorageService;
 
     constructor(
         private deltaUrl: string,
         private gitUrl: string,
-        private errorTracking: api.IErrorTrackingService,
+        private errorTracking: IErrorTrackingService,
         private disableCache: boolean,
         private historianApi: boolean,
         private directCredentials: ICredentials) {
@@ -27,7 +34,7 @@ export class DocumentService implements api.IDocumentService {
     public async connectToStorage(
         tenantId: string,
         id: string,
-        token: string): Promise<api.IDocumentStorageService> {
+        token: string): Promise<IDocumentStorageService> {
 
         const endpoint = `${this.gitUrl}/repos/${tenantId}`;
 
@@ -55,7 +62,7 @@ export class DocumentService implements api.IDocumentService {
     public async connectToDeltaStorage(
         tenantId: string,
         id: string,
-        token: string): Promise<api.IDocumentDeltaStorageService> {
+        token: string): Promise<IDocumentDeltaStorageService> {
 
         return new DocumentDeltaStorageService(tenantId, id, token, this.deltaStorage);
     }
@@ -64,7 +71,7 @@ export class DocumentService implements api.IDocumentService {
         tenantId: string,
         id: string,
         token: string,
-        client: api.IClient): Promise<api.IDocumentDeltaConnection> {
+        client: api.IClient): Promise<IDocumentDeltaConnection> {
         return DocumentDeltaConnection.Create(tenantId, id, token, io, client, this.deltaUrl);
     }
 

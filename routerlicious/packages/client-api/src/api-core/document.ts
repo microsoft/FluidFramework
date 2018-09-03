@@ -1,6 +1,6 @@
 // tslint:disable:ban-types
+import {IEnvelope, IObjectMessage, ISequencedObjectMessage, IUser } from "@prague/runtime-definitions";
 import { EventEmitter } from "events";
-import { IEnvelope, IObjectMessage, ISequencedObjectMessage, ITenantUser } from "./protocol";
 import { ICollaborativeObject, IGenericBlob } from "./types";
 
 export interface IDeltaManager {
@@ -115,7 +115,7 @@ export interface IDocument {
 
     get(id: string): Promise<ICollaborativeObject>;
 
-    getUser(): ITenantUser;
+    getUser(): IUser;
 
     uploadBlob(blob: IGenericBlob): Promise<IGenericBlob>;
 

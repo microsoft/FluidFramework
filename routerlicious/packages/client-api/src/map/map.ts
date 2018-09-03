@@ -1,3 +1,11 @@
+import {
+    FileMode,
+    IObjectMessage,
+    IObjectStorageService,
+    ISequencedObjectMessage,
+    ITree,
+    TreeEntry,
+} from "@prague/runtime-definitions";
 // tslint:disable-next-line:no-var-requires
 const hasIn = require("lodash/hasIn");
 import * as api from "../api-core";
@@ -20,8 +28,8 @@ export function copyMap(from: IMapView, to: Map<string, any>) {
     });
 }
 
-class ContentObjectStorage implements api.IObjectStorageService {
-    constructor(private storage: api.IObjectStorageService) {
+class ContentObjectStorage implements IObjectStorageService {
+    constructor(private storage: IObjectStorageService) {
     }
 
     public read(path: string): Promise<string> {
@@ -30,8 +38,8 @@ class ContentObjectStorage implements api.IObjectStorageService {
 }
 
 interface IMapMessageHandler {
-    prepare(op: IMapOperation, local: boolean, message: api.ISequencedObjectMessage): Promise<any>;
-    process(op: IMapOperation, context: any, local: boolean, message: api.ISequencedObjectMessage): void;
+    prepare(op: IMapOperation, local: boolean, message: ISequencedObjectMessage): Promise<any>;
+    process(op: IMapOperation, context: any, local: boolean, message: ISequencedObjectMessage): void;
 }
 
 /**
@@ -137,13 +145,13 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
         return this.readyContent();
     }
 
-    public snapshot(): api.ITree {
-        const tree: api.ITree = {
+    public snapshot(): ITree {
+        const tree: ITree = {
             entries: [
                 {
-                    mode: api.FileMode.File,
+                    mode: FileMode.File,
                     path: snapshotFileName,
-                    type: api.TreeEntry[api.TreeEntry.Blob],
+                    type: TreeEntry[TreeEntry.Blob],
                     value: {
                         contents: this.view.serialize(this.serializeFilter),
                         encoding: "utf-8",
@@ -153,7 +161,7 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
         };
 
         // Add in the directory structure of any links within the map
-        const keysTree: api.ITree = {
+        const keysTree: ITree = {
             entries: [],
         };
         this.view.forEach((value, key) => {
@@ -163,9 +171,9 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
                 const path = encodeURIComponent(key);
 
                 keysTree.entries.push({
-                    mode: api.FileMode.Symlink,
+                    mode: FileMode.Symlink,
                     path,
-                    type: api.TreeEntry[api.TreeEntry.Blob],
+                    type: TreeEntry[TreeEntry.Blob],
                     value: {
                         contents: `${encodeURIComponent(id)}`,
                         encoding: "utf-8",
@@ -175,9 +183,9 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
         });
         if (keysTree.entries.length > 0) {
             tree.entries.push({
-                mode: api.FileMode.Directory,
+                mode: FileMode.Directory,
                 path: keyPath,
-                type: api.TreeEntry[api.TreeEntry.Tree],
+                type: TreeEntry[TreeEntry.Tree],
                 value: keysTree,
             });
         }
@@ -186,9 +194,9 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
         const contentSnapshot = this.snapshotContent();
         if (contentSnapshot) {
             tree.entries.push({
-                mode: api.FileMode.Directory,
+                mode: FileMode.Directory,
                 path: contentPath,
-                type: api.TreeEntry[api.TreeEntry.Tree],
+                type: TreeEntry[TreeEntry.Tree],
                 value: contentSnapshot,
             });
         }
@@ -196,7 +204,7 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
         return tree;
     }
 
-    public transform(message: api.IObjectMessage, sequenceNumber: number): api.IObjectMessage {
+    public transform(message: IObjectMessage, sequenceNumber: number): IObjectMessage {
         const handled = message.type === api.OperationType
             ? this.messageHandler.has((message.contents as IMapOperation).type)
             : false;
@@ -270,10 +278,10 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
         this.serializeFilter = filter;
     }
 
-    public on(event: "pre-op" | "op", listener: (op: api.ISequencedObjectMessage, local: boolean) => void): this;
+    public on(event: "pre-op" | "op", listener: (op: ISequencedObjectMessage, local: boolean) => void): this;
     public on(
         event: "valueChanged",
-        listener: (changed: IValueChanged, local: boolean, op: api.ISequencedObjectMessage) => void): this;
+        listener: (changed: IValueChanged, local: boolean, op: ISequencedObjectMessage) => void): this;
     public on(event: string | symbol, listener: (...args: any[]) => void): this {
         return super.on(event, listener);
     }
@@ -287,12 +295,12 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
         this.onDisconnectContent();
     }
 
-    protected onConnect(pending: api.IObjectMessage[]) {
+    protected onConnect(pending: IObjectMessage[]) {
         debug(`Map ${this.id} is now connected`);
 
         // Filter the nonAck and pending mesages into a map set and a content set.
-        const mapMessages: api.IObjectMessage[] = [];
-        const contentMessages: api.IObjectMessage[] = [];
+        const mapMessages: IObjectMessage[] = [];
+        const contentMessages: IObjectMessage[] = [];
         for (const message of pending) {
             if (this.isMapMessage(message)) {
                 mapMessages.push(message);
@@ -313,9 +321,9 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
     protected async loadCore(
         sequenceNumber: number,
         minimumSequenceNumber: number,
-        messages: api.ISequencedObjectMessage[],
+        messages: ISequencedObjectMessage[],
         headerOrigin: string,
-        storage: api.IObjectStorageService) {
+        storage: IObjectStorageService) {
 
         const header = await storage.read(snapshotFileName);
 
@@ -344,9 +352,9 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
     protected async loadContent(
         sequenceNumber: number,
         minimumSequenceNumber: number,
-        messages: api.ISequencedObjectMessage[],
+        messages: ISequencedObjectMessage[],
         headerOrigin: string,
-        services: api.IObjectStorageService): Promise<void> {
+        services: IObjectStorageService): Promise<void> {
         return;
     }
 
@@ -354,7 +362,7 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
         return;
     }
 
-    protected prepareCore(message: api.ISequencedObjectMessage): Promise<any> {
+    protected prepareCore(message: ISequencedObjectMessage): Promise<any> {
         if (message.type === api.OperationType) {
             const local = message.clientId === this.document.clientId;
             const op: IMapOperation = message.contents;
@@ -366,7 +374,7 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
         return this.prepareContent(message);
     }
 
-    protected processCore(message: api.ISequencedObjectMessage, context: any) {
+    protected processCore(message: ISequencedObjectMessage, context: any) {
         let handled = false;
         if (message.type === api.OperationType) {
             const local = message.clientId === this.document.clientId;
@@ -395,14 +403,14 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
         return;
     }
 
-    protected async prepareContent(message: api.ISequencedObjectMessage): Promise<any> {
+    protected async prepareContent(message: ISequencedObjectMessage): Promise<any> {
         return;
     }
 
     /**
      * Processes a content message
      */
-    protected processContent(message: api.ISequencedObjectMessage, context: any) {
+    protected processContent(message: ISequencedObjectMessage, context: any) {
         return;
     }
 
@@ -416,7 +424,7 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
     /**
      * Message sent upon reconnecting to the delta stream
      */
-    protected onConnectContent(pending: api.IObjectMessage[]) {
+    protected onConnectContent(pending: IObjectMessage[]) {
         for (const message of pending) {
             this.submitLocalMessage(message.contents);
         }
@@ -427,7 +435,7 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
     /**
      * Snapshots the content
      */
-    protected snapshotContent(): api.ITree {
+    protected snapshotContent(): ITree {
         return null;
     }
 
@@ -441,11 +449,11 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
     /**
      * Allows derived classes to transform the given message
      */
-    protected transformContent(message: api.IObjectMessage, sequenceNumber: number): api.IObjectMessage {
+    protected transformContent(message: IObjectMessage, sequenceNumber: number): IObjectMessage {
         return message;
     }
 
-    private isMapMessage(message: api.IObjectMessage): boolean {
+    private isMapMessage(message: IObjectMessage): boolean {
         const type = message.contents.type;
         return this.messageHandler.has(type);
     }

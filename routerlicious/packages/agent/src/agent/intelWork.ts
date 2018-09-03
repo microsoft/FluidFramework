@@ -1,4 +1,5 @@
 import { api, core, types } from "@prague/client-api";
+import { IDocumentService, ISequencedDocumentMessage } from "@prague/runtime-definitions";
 import { nativeTextAnalytics, textAnalytics } from "../intelligence";
 import { BaseWork} from "./baseWork";
 import { IWork} from "./definitions";
@@ -8,7 +9,7 @@ export class IntelWork extends BaseWork implements IWork {
 
     private intelligenceManager: IntelligentServicesManager;
 
-    constructor(docId: string, private token: string, config: any, private service: core.IDocumentService) {
+    constructor(docId: string, private token: string, config: any, private service: IDocumentService) {
         super(docId, config);
     }
 
@@ -40,7 +41,7 @@ export class IntelWork extends BaseWork implements IWork {
             this.intelligenceManager.registerService(
                 nativeTextAnalytics.factory.create(this.config.intelligence.nativeTextAnalytics));
         }
-        const eventHandler = (op: core.ISequencedDocumentMessage, object: core.ICollaborativeObject) => {
+        const eventHandler = (op: ISequencedDocumentMessage, object: core.ICollaborativeObject) => {
             if (op.type === core.ObjectOperation) {
                 this.intelligenceManager.process(object);
             } else if (op.type === core.AttachObject) {

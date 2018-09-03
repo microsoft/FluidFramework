@@ -1,4 +1,4 @@
-import { core } from "@prague/client-api";
+import { IDocumentService } from "@prague/runtime-definitions";
 
 export interface IWork {
     /**
@@ -52,7 +52,7 @@ export interface IWorkManager {
 
 export interface IDocumentServiceFactory {
 
-    getService(tenantId: string): Promise<core.IDocumentService>;
+    getService(tenantId: string): Promise<IDocumentService>;
 }
 
 export interface IDocumentTaskInfo {

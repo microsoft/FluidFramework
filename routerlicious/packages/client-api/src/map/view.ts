@@ -1,3 +1,4 @@
+import { ISequencedObjectMessage } from "@prague/runtime-definitions";
 // tslint:disable-next-line:no-var-requires
 const hasIn = require("lodash/hasIn");
 import * as api from "../api-core";
@@ -182,7 +183,7 @@ export class MapView implements IMapView {
         return JSON.stringify(serialized);
     }
 
-    public setCore(key: string, value: ILocalViewElement, local: boolean, op: api.ISequencedObjectMessage) {
+    public setCore(key: string, value: ILocalViewElement, local: boolean, op: ISequencedObjectMessage) {
         this.data.set(key, value);
         this.map.emit("valueChanged", { key }, local, op);
     }
@@ -192,12 +193,12 @@ export class MapView implements IMapView {
         return translation;
     }
 
-    public clearCore(local: boolean, op: api.ISequencedObjectMessage) {
+    public clearCore(local: boolean, op: ISequencedObjectMessage) {
         this.data.clear();
         this.map.emit("clear", local, op);
     }
 
-    public deleteCore(key: string, local: boolean, op: api.ISequencedObjectMessage) {
+    public deleteCore(key: string, local: boolean, op: ISequencedObjectMessage) {
         this.data.delete(key);
         this.map.emit("valueChanged", { key }, local, op);
     }

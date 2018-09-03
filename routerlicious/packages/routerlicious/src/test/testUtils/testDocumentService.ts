@@ -1,9 +1,18 @@
-import { core as api, socketStorage } from "@prague/client-api";
+import { socketStorage } from "@prague/client-api";
 import * as resources from "@prague/gitresources";
+import {
+    IDeltaStorageService,
+    IDocumentDeltaConnection,
+    IDocumentDeltaStorageService,
+    IDocumentService,
+    IDocumentStorageService,
+    ISnapshotTree,
+    ITree,
+} from "@prague/runtime-definitions";
 import { TestDocumentDeltaConnection } from "./";
 
-class TestDocumentStorageService implements api.IDocumentStorageService {
-    public async getSnapshotTree(version: resources.ICommit): Promise<api.ISnapshotTree> {
+class TestDocumentStorageService implements IDocumentStorageService {
+    public async getSnapshotTree(version: resources.ICommit): Promise<ISnapshotTree> {
         return null;
     }
 
@@ -19,7 +28,7 @@ class TestDocumentStorageService implements api.IDocumentStorageService {
         return "";
     }
 
-    public async write(root: api.ITree, parents: string[], message: string): Promise<resources.ICommit> {
+    public async write(root: ITree, parents: string[], message: string): Promise<resources.ICommit> {
         const commit: resources.ICommit = {
             author: { date: "", email: "", name: ""},
             committer: { date: "", email: "", name: ""},
@@ -48,27 +57,27 @@ class TestDocumentStorageService implements api.IDocumentStorageService {
     }
 }
 
-export class TestDocumentService implements api.IDocumentService {
+export class TestDocumentService implements IDocumentService {
     private errorTracking = new socketStorage.DefaultErrorTracking();
 
-    constructor(private deltaStorage: api.IDeltaStorageService) {
+    constructor(private deltaStorage: IDeltaStorageService) {
     }
 
-    public async connectToStorage(tenantId: string, id: string, token: string): Promise<api.IDocumentStorageService> {
+    public async connectToStorage(tenantId: string, id: string, token: string): Promise<IDocumentStorageService> {
         return new TestDocumentStorageService();
     }
 
     public async connectToDeltaStorage(
         tenantId: string,
         id: string,
-        token: string): Promise<api.IDocumentDeltaStorageService> {
+        token: string): Promise<IDocumentDeltaStorageService> {
         return new socketStorage.DocumentDeltaStorageService(tenantId, id, token, this.deltaStorage);
     }
 
     public async connectToDeltaStream(
         tenantId: string,
         id: string,
-        token: string): Promise<api.IDocumentDeltaConnection> {
+        token: string): Promise<IDocumentDeltaConnection> {
 
         return new TestDocumentDeltaConnection(id, "test-client", false, "", null, undefined);
     }

@@ -1,4 +1,5 @@
 // tslint:disable:ban-types
+import { ISequencedObjectMessage } from "@prague/runtime-definitions";
 import * as api from "../api-core";
 import { SharedString } from "./sharedString";
 
@@ -12,7 +13,7 @@ export class CollaborativeStringExtension implements api.ICollaborativeObjectExt
         id: string,
         sequenceNumber: number,
         minimumSequenceNumber: number,
-        messages: api.ISequencedObjectMessage[],
+        messages: ISequencedObjectMessage[],
         services: api.IDistributedObjectServices,
         headerOrigin: string): Promise<api.ICollaborativeObject> {
 

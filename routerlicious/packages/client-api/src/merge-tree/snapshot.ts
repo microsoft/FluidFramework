@@ -1,3 +1,4 @@
+import { FileMode, ITree, TreeEntry } from "@prague/runtime-definitions";
 import * as API from "../api-core";
 import * as MergeTree from "./mergeTree";
 import * as ops from "./ops";
@@ -67,25 +68,25 @@ export class Snapshot {
         }
     }
 
-    emit(): API.ITree {
+    emit(): ITree {
         let chunk1 = this.getCharLengthSegs(this.texts, 10000);
         let chunk2 = this.getCharLengthSegs(this.texts, chunk1.totalLengthChars, chunk1.chunkSegmentCount);
 
-        const tree: API.ITree = {
+        const tree: ITree = {
             entries: [
                 {
-                    mode: API.FileMode.File,
+                    mode: FileMode.File,
                     path: "header",
-                    type: API.TreeEntry[API.TreeEntry.Blob],
+                    type: TreeEntry[TreeEntry.Blob],
                     value: {
                         contents: JSON.stringify(chunk1),
                         encoding: "utf-8",
                     },
                 },
                 {
-                    mode: API.FileMode.File,
+                    mode: FileMode.File,
                     path: "body",
-                    type: API.TreeEntry[API.TreeEntry.Blob],
+                    type: TreeEntry[TreeEntry.Blob],
                     value: {
                         contents: JSON.stringify(chunk2),
                         encoding: "utf-8",

@@ -1,4 +1,5 @@
 import { core as api } from "@prague/client-api";
+import { IDocumentMessage } from "@prague/runtime-definitions";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import * as moniker from "moniker";
@@ -148,7 +149,6 @@ class LocalOrdererConnection implements IOrdererConnection {
                 clientSequenceNumber: -1,
                 contents: clientDetail,
                 referenceSequenceNumber: -1,
-                traces: [],
                 type: api.ClientJoin,
             },
             tenantId: this.tenantId,
@@ -161,7 +161,7 @@ class LocalOrdererConnection implements IOrdererConnection {
         this.submitRawOperation(message);
     }
 
-    public order(message: api.IDocumentMessage): void {
+    public order(message: IDocumentMessage): void {
         const rawMessage: core.IRawOperationMessage = {
             clientId: this.clientId,
             documentId: this.documentId,
@@ -183,7 +183,6 @@ class LocalOrdererConnection implements IOrdererConnection {
                 clientSequenceNumber: -1,
                 contents: this.clientId,
                 referenceSequenceNumber: -1,
-                traces: [],
                 type: api.ClientLeave,
             },
             tenantId: this.tenantId,
@@ -199,8 +198,9 @@ class LocalOrdererConnection implements IOrdererConnection {
 
     private submitRawOperation(message: core.IRawOperationMessage) {
         // Add trace
-        if (message.operation && message.operation.traces) {
-            message.operation.traces.push(
+        const operation = message.operation as IDocumentMessage & { traces?: api.ITrace[] };
+        if (operation && operation.traces) {
+            operation.traces.push(
                 {
                     action: "start",
                     service: "alfred",

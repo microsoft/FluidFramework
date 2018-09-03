@@ -1,5 +1,4 @@
-import * as protocol from "./protocol";
-import * as storage from "./storage";
+import { IObjectMessage, ITree } from "@prague/runtime-definitions";
 
 export const SAVE = "save";
 
@@ -62,7 +61,7 @@ export interface ICollaborativeObject {
     /**
      * Snapshots the object
      */
-    snapshot(): storage.ITree;
+    snapshot(): ITree;
 
     /**
      * Returns a promise indicating whether or not the distributed data structure is ready to process
@@ -73,7 +72,7 @@ export interface ICollaborativeObject {
     /**
      * Transforms the given message relative to the provided sequence number
      */
-    transform(message: protocol.IObjectMessage, sequenceNumber: number): protocol.IObjectMessage;
+    transform(message: IObjectMessage, sequenceNumber: number): IObjectMessage;
 }
 
 export type IGenericBlob = IDataBlob | IImageBlob | IVideoBlob;

@@ -1,5 +1,5 @@
-// tslint:disable:ban-types
 import { api, core } from "@prague/client-api";
+import { IDocumentService } from "@prague/runtime-definitions";
 import { EventEmitter } from "events";
 import { IDocumentTaskInfo } from "./definitions";
 import { runAfterWait } from "./utils";
@@ -22,7 +22,7 @@ export class BaseWork extends EventEmitter {
         this.config = this.conf;
     }
 
-    public async loadDocument(options: Object, service: core.IDocumentService, task: string): Promise<void> {
+    public async loadDocument(options: any, service: IDocumentService, task: string): Promise<void> {
         this.task = task;
         this.document = await api.load(this.id, options, null, true, api.defaultRegistry, service);
 

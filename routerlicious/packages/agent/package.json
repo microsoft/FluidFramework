@@ -20,6 +20,7 @@
   },
   "dependencies": {
     "@prague/client-api": "^0.1.0",
+    "@prague/runtime-definitions": "^0.1.0",
     "@prague/utils": "^0.1.0",
     "@types/request": "^2.47.1",
     "@types/socket.io-client": "^1.4.32",

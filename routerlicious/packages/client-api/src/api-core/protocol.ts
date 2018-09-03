@@ -1,4 +1,4 @@
-import * as storage from "./storage";
+import { ITree } from "@prague/runtime-definitions";
 
 // Delta operation application type
 export const OperationType = "op";
@@ -38,31 +38,6 @@ export const BlobPrepared = "blobPrepared";
 export const BlobUploaded = "blobUploaded";
 
 /**
- * An envelope wraps the contents with the intended target
- */
-export interface IEnvelope {
-    // The target for the envelope
-    address: string;
-
-    // The contents of the envelope
-    contents: any;
-}
-
-/**
- * Branch origin information
- */
-export interface IBranchOrigin {
-    // Origin branch of the message
-    id: string;
-
-    // Sequence number for the message in branch id
-    sequenceNumber: number;
-
-    // Min sequence number for the message in branch id
-    minimumSequenceNumber: number;
-}
-
-/**
  * Messages to track latency trace
  */
 export interface ITrace {
@@ -76,59 +51,6 @@ export interface ITrace {
     timestamp: number;
 }
 
-/**
- * Message related to a distributed data type
- */
-export interface IObjectMessage {
-    // The object's client sequence number
-    clientSequenceNumber: number;
-
-    // The reference object sequence number the message was sent relative to
-    referenceSequenceNumber: number;
-
-    // The type of message for the object
-    type: string;
-
-    // The operation to perform on the object
-    contents: any;
-}
-
-/**
- * Sequenced message for a distributed data type
- */
-export interface ISequencedObjectMessage {
-    // User who sent the message.
-    user: ITenantUser;
-
-    // The sequenced identifier
-    sequenceNumber: number;
-
-    // The minimum sequence number for all connected clients
-    minimumSequenceNumber: number;
-
-    // The document's client sequence number
-    clientSequenceNumber: number;
-
-    // The reference sequence number the message was sent relative to
-    referenceSequenceNumber: number;
-
-    // The client ID that submitted the delta
-    clientId: string;
-
-    // The type of operation
-    type: string;
-
-    // The contents of the message
-    contents: any;
-
-    // Origin branch information for the message. Can be marked undefined if the current
-    // message is also the origin.
-    origin: IBranchOrigin;
-
-    // Traces related to the packet.
-    traces: ITrace[];
-}
-
 export interface IAttachMessage {
     // The identifier for the object
     id: string;
@@ -137,7 +59,7 @@ export interface IAttachMessage {
     type: string;
 
     // Initial snapshot of the document
-    snapshot: storage.ITree;
+    snapshot: ITree;
 }
 
 export interface IHelpMessage {
@@ -169,70 +91,6 @@ export interface IPingMessage {
     traces: ITrace[];
 }
 
-/**
- * Document specific message
- */
-export interface IDocumentMessage {
-    // The document's client sequence number
-    clientSequenceNumber: number;
-
-    // The reference sequence number the message was sent relative to
-    referenceSequenceNumber: number;
-
-    // The type of document message being sent
-    type: string;
-
-    // The contents of the message
-    contents: any;
-
-    // Traces related to the packet.
-    traces: ITrace[];
-}
-
-export interface INack {
-    // The operation that was just nacked
-    operation: IDocumentMessage;
-
-    // The sequence number the client needs to catch up to
-    sequenceNumber: number;
-}
-
-/**
- * Sequenced message for a distributed document
- */
-export interface ISequencedDocumentMessage {
-    // The user that submitted the delta
-    user: ITenantUser;
-
-    // The client ID that submitted the delta
-    clientId: string;
-
-    // The sequenced identifier
-    sequenceNumber: number;
-
-    // The minimum sequence number for all connected clients
-    minimumSequenceNumber: number;
-
-    // The document's client sequence number
-    clientSequenceNumber: number;
-
-    // The reference sequence number the message was sent relative to
-    referenceSequenceNumber: number;
-
-    // The type of operation
-    type: string;
-
-    // The contents of the message
-    contents: any;
-
-    // Origin branch information for the message. Can be marked undefined if the current
-    // message is also the origin.
-    origin: IBranchOrigin;
-
-    // Traces related to the packet.
-    traces: ITrace[];
-}
-
 export interface ITenantUser {
     id: string;
     name?: string;
@@ -244,4 +102,15 @@ export interface ITokenClaims {
     permission: string;
     tenantId: string;
     user: ITenantUser;
+}
+
+/**
+ * Raw blob stored within the tree
+ */
+export interface IBlob {
+    // Contents of the blob
+    contents: string;
+
+    // The encoding of the contents string (utf-8 or base64)
+    encoding: string;
 }

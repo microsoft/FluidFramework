@@ -1,3 +1,8 @@
+import {
+    IDocumentDeltaConnection,
+    IDocumentMessage,
+    ISequencedDocumentMessage,
+} from "@prague/runtime-definitions";
 import { BatchManager } from "@prague/utils";
 import { EventEmitter } from "events";
 import * as api from "../api-core";
@@ -7,14 +12,14 @@ import * as messages from "./messages";
 /**
  * Represents a connection to a stream of delta updates
  */
-export class DocumentDeltaConnection implements api.IDocumentDeltaConnection {
+export class DocumentDeltaConnection extends EventEmitter implements IDocumentDeltaConnection {
     public static async Create(
         tenantId: string,
         id: string,
         token: string,
         io: SocketIOClientStatic,
         client: api.IClient,
-        url: string): Promise<api.IDocumentDeltaConnection> {
+        url: string): Promise<IDocumentDeltaConnection> {
 
         const socket = io(
             url,
@@ -36,9 +41,9 @@ export class DocumentDeltaConnection implements api.IDocumentDeltaConnection {
 
         const connection = await new Promise<messages.IConnected>((resolve, reject) => {
             // Listen for ops sent before we receive a response to connect_document
-            const queuedMessages: api.ISequencedDocumentMessage[] = [];
+            const queuedMessages: ISequencedDocumentMessage[] = [];
 
-            const earlyOpHandler = (documentId: string, msgs: api.ISequencedDocumentMessage[]) => {
+            const earlyOpHandler = (documentId: string, msgs: ISequencedDocumentMessage[]) => {
                 debug("Queued early ops", msgs.length);
                 queuedMessages.push(...msgs);
             };
@@ -78,7 +83,7 @@ export class DocumentDeltaConnection implements api.IDocumentDeltaConnection {
     }
 
     private emitter = new EventEmitter();
-    private submitManager: BatchManager<api.IDocumentMessage>;
+    private submitManager: BatchManager<IDocumentMessage>;
 
     public get clientId(): string {
         return this.details.clientId;
@@ -96,7 +101,7 @@ export class DocumentDeltaConnection implements api.IDocumentDeltaConnection {
         return this.details.user;
     }
 
-    public get initialMessages(): api.ISequencedDocumentMessage[] {
+    public get initialMessages(): ISequencedDocumentMessage[] {
         return this.details.initialMessages;
     }
 
@@ -104,8 +109,9 @@ export class DocumentDeltaConnection implements api.IDocumentDeltaConnection {
         private socket: SocketIOClient.Socket,
         public documentId: string,
         public details: messages.IConnected) {
+        super();
 
-        this.submitManager = new BatchManager<api.IDocumentMessage>((submitType, work) => {
+        this.submitManager = new BatchManager<IDocumentMessage>((submitType, work) => {
             this.socket.emit(
                 submitType,
                 this.details.clientId,
@@ -138,7 +144,7 @@ export class DocumentDeltaConnection implements api.IDocumentDeltaConnection {
     /**
      * Submits a new delta operation to the server
      */
-    public submit(message: api.IDocumentMessage): void {
+    public submit(message: IDocumentMessage): void {
         this.submitManager.add("submitOp", message);
     }
 

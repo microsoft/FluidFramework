@@ -1,6 +1,6 @@
+import { IDocumentService, IErrorTrackingService } from "@prague/runtime-definitions";
 import * as socketStorage from ".";
 import * as api from "../api";
-import { IDocumentService, IErrorTrackingService } from "../api-core";
 import { DefaultErrorTracking } from "./errorTracking";
 
 export function createDocumentService(

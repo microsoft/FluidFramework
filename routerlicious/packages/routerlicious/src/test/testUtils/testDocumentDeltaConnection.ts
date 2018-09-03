@@ -1,6 +1,12 @@
 import { core as api } from "@prague/client-api";
+import {
+    IDocumentDeltaConnection,
+    IDocumentMessage,
+    ISequencedDocumentMessage,
+} from "@prague/runtime-definitions";
+import { EventEmitter } from "events";
 
-export class TestDocumentDeltaConnection implements api.IDocumentDeltaConnection {
+export class TestDocumentDeltaConnection extends EventEmitter implements IDocumentDeltaConnection {
 
     constructor(
         public documentId: string,
@@ -8,7 +14,8 @@ export class TestDocumentDeltaConnection implements api.IDocumentDeltaConnection
         public existing: boolean,
         public parentBranch: string,
         public user: api.ITenantUser,
-        public initialMessages: api.ISequencedDocumentMessage[] | undefined) {
+        public initialMessages: ISequencedDocumentMessage[] | undefined) {
+        super();
     }
 
     /**
@@ -21,7 +28,7 @@ export class TestDocumentDeltaConnection implements api.IDocumentDeltaConnection
     /**
      * Submits a new delta operation to the server
      */
-    public submit(message: api.IDocumentMessage): void {
+    public submit(message: IDocumentMessage): void {
         return;
     }
 

@@ -21,6 +21,7 @@
   },
   "dependencies": {
     "@prague/client-api": "^0.1.0",
+    "@prague/runtime-definitions": "^0.1.0",
     "@types/jsonwebtoken": "^7.2.8",
     "@types/node": "^10.9.4",
     "jsonwebtoken": "^8.3.0"

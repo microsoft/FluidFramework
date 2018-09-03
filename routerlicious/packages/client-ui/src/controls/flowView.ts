@@ -7,6 +7,7 @@ import {
     types,
 } from "@prague/client-api";
 import { findRandomWord } from "@prague/client-api/dist/merge-tree-utils";
+import { ISequencedObjectMessage } from "@prague/runtime-definitions";
 import * as assert from "assert";
 // tslint:disable-next-line:no-var-requires
 const performanceNow = require("performance-now");
@@ -3666,7 +3667,7 @@ export class FlowView extends ui.Component {
     }
 
     public addPresenceMap(presenceMap: types.IMap) {
-        presenceMap.on("valueChanged", (delta: types.IValueChanged, local: boolean, op: core.ISequencedObjectMessage) => {
+        presenceMap.on("valueChanged", (delta: types.IValueChanged, local: boolean, op: ISequencedObjectMessage) => {
             this.remotePresenceUpdate(delta, local, op);
         });
 
@@ -5441,7 +5442,7 @@ export class FlowView extends ui.Component {
         this.localQueueRender(startPos);
     }
 
-    private remotePresenceUpdate(delta: types.IValueChanged, local: boolean, op: core.ISequencedObjectMessage) {
+    private remotePresenceUpdate(delta: types.IValueChanged, local: boolean, op: ISequencedObjectMessage) {
         if (local) {
             return;
         }
@@ -5558,7 +5559,7 @@ export class FlowView extends ui.Component {
 
     // TODO: paragraph spanning changes and annotations
     // TODO: generalize this by using transform fwd
-    private applyOp(delta: MergeTree.IMergeTreeOp, msg: core.ISequencedObjectMessage) {
+    private applyOp(delta: MergeTree.IMergeTreeOp, msg: ISequencedObjectMessage) {
         // tslint:disable:switch-default
         switch (delta.type) {
             case MergeTree.MergeTreeDeltaType.INSERT:
@@ -5633,7 +5634,7 @@ export class FlowView extends ui.Component {
         }
     }
 
-    private queueRender(msg: core.ISequencedObjectMessage, go = false) {
+    private queueRender(msg: ISequencedObjectMessage, go = false) {
         if ((!this.pendingRender) && (go || (msg && msg.contents))) {
             this.pendingRender = true;
             window.requestAnimationFrame(() => {

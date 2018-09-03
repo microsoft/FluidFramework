@@ -1,5 +1,6 @@
 import * as agent from "@prague/agent";
 import { core as api, socketStorage } from "@prague/client-api";
+import { IDocumentService } from "@prague/runtime-definitions";
 import { Deferred } from "@prague/utils";
 import * as fs from "fs";
 import * as request from "request";
@@ -13,7 +14,7 @@ class DocumentServiceFactory implements agent.IDocumentServiceFactory {
     constructor(private serverUrl: string, private historianUrl: string) {
     }
 
-    public async getService(tenantId: string): Promise<api.IDocumentService> {
+    public async getService(tenantId: string): Promise<IDocumentService> {
         // Disabling browser error tracking for paparazzi.
         const services = socketStorage.createDocumentService(this.serverUrl, this.historianUrl, tenantId);
         return services;

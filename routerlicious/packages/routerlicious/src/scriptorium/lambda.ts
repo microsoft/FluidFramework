@@ -1,4 +1,5 @@
-import { core as api, utils as coreUtils } from "@prague/client-api";
+import { core as coreApi, utils as coreUtils } from "@prague/client-api";
+import { INack, ISequencedDocumentMessage } from "@prague/runtime-definitions";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import * as _ from "lodash";
@@ -231,7 +232,7 @@ export class ScriptoriumLambda implements IPartitionLambda {
     // One socket.IO group is for sequenced ops and the other for nack'ed messages.
     // By splitting the two we can update each independently and on their own cadence
     private mongoManager: BatchManager<IMongoTarget, core.ISequencedOperationMessage>;
-    private ioManager: BatchManager<IoTarget, api.ISequencedDocumentMessage | api.INack>;
+    private ioManager: BatchManager<IoTarget, ISequencedDocumentMessage | INack>;
     private idleManager: BatchManager<string, void>;
 
     private workManager = new WorkManager();
@@ -267,8 +268,9 @@ export class ScriptoriumLambda implements IPartitionLambda {
             const value = baseMessage as core.ISequencedOperationMessage;
 
             // Add trace.
-            if (value.operation.traces !== undefined) {
-                value.operation.traces.push({
+            const operationWithTraces = value.operation as ISequencedDocumentMessage & { traces: coreApi.ITrace[]};
+            if (operationWithTraces.traces !== undefined) {
+                operationWithTraces.traces.push({
                     action: "start",
                     service: "scriptorium",
                     timestamp: now(),
@@ -285,7 +287,8 @@ export class ScriptoriumLambda implements IPartitionLambda {
             this.ioManager.add(target, value.operation, message.offset);
 
             const clonedValue = _.cloneDeep(value);
-            clonedValue.operation.traces = [];
+            const clonedWithTraces = clonedValue.operation as ISequencedDocumentMessage & { traces: coreApi.ITrace[] };
+            clonedWithTraces.traces = [];
 
             // Batch send to MongoDB
             this.mongoManager.add(
@@ -338,13 +341,13 @@ export class ScriptoriumLambda implements IPartitionLambda {
     /**
      * BatchManager callback invoked once a new batch is ready to be processed
      */
-    private async processIoBatch(batch: Batch<IoTarget, api.INack | api.ISequencedDocumentMessage>): Promise<void> {
+    private async processIoBatch(batch: Batch<IoTarget, INack | ISequencedDocumentMessage>): Promise<void> {
         // Serialize the current batch to Mongo
         await batch.map(async (id, work) => {
             winston.verbose(`Broadcasting to socket.io ${id.documentId}@${id.topic}@${id.event}:${work.length}`);
             // Add trace to each message before routing.
             work.map((value) => {
-                const valueAsSequenced = value as api.ISequencedDocumentMessage;
+                const valueAsSequenced = value as ISequencedDocumentMessage & { traces: coreApi.ITrace[]};
                 if (valueAsSequenced && valueAsSequenced.traces !== undefined) {
                     valueAsSequenced.traces.push({
                         action: "end",

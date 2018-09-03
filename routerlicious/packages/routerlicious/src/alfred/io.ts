@@ -1,5 +1,6 @@
 import * as agent from "@prague/agent";
 import { core as api, socketStorage } from "@prague/client-api";
+import { IDocumentMessage } from "@prague/runtime-definitions";
 import * as jwt from "jsonwebtoken";
 import * as winston from "winston";
 import * as core from "../core";
@@ -71,7 +72,7 @@ export function register(
         });
 
         // Message sent when a new operation is submitted to the router
-        socket.on("submitOp", (clientId: string, messages: api.IDocumentMessage[], response) => {
+        socket.on("submitOp", (clientId: string, messages: IDocumentMessage[], response) => {
             // Verify the user has connected on this object id
             if (!connectionsMap.has(clientId)) {
                 return response("Invalid client ID", null);
@@ -80,8 +81,9 @@ export function register(
             for (const message of messages) {
                 if (message.type === api.RoundTrip) {
                     // End of tracking. Write traces.
-                    if (message.traces !== undefined) {
-                        metricLogger.writeLatencyMetric("latency", message.traces).catch(
+                    const messageWithTraces = message as IDocumentMessage & { traces?: api.ITrace[] };
+                    if (messageWithTraces.traces !== undefined) {
+                        metricLogger.writeLatencyMetric("latency", messageWithTraces.traces).catch(
                             (error) => {
                                 winston.error(error.stack);
                             });

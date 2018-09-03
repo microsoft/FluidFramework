@@ -1,3 +1,6 @@
+import {
+    ISequencedObjectMessage,
+} from "@prague/runtime-definitions";
 import * as api from "../api-core";
 import { ICell } from "../data-types";
 import { Cell } from "./cell";
@@ -15,7 +18,7 @@ export class CellExtension implements api.ICollaborativeObjectExtension {
         id: string,
         sequenceNumber: number,
         minimumSequenceNumber: number,
-        messages: api.ISequencedObjectMessage[],
+        messages: ISequencedObjectMessage[],
         services: api.IDistributedObjectServices,
         headerOrigin: string): Promise<ICell> {
 

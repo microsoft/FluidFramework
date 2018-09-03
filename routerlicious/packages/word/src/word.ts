@@ -1,11 +1,11 @@
 import {
     api,
-    core as apicore,
     MergeTree as mergeTree,
     SharedString as sharedString,
     socketStorage,
     types as dataTypes,
 } from "@prague/client-api";
+import { ISequencedObjectMessage } from "@prague/runtime-definitions";
 import { EventEmitter } from "events";
 import * as jwt from "jsonwebtoken";
 
@@ -205,7 +205,7 @@ export class SharedStringForWord extends EventEmitter {
         }
      }
 
-     public on(event: "op", listener: (op: apicore.ISequencedObjectMessage, local: boolean) => void): this;
+     public on(event: "op", listener: (op: ISequencedObjectMessage, local: boolean) => void): this;
      public on(event: string | symbol, listener: (...args: any[]) => void): this {
          return super.on(event, listener);
      }

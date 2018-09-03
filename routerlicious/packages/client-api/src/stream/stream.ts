@@ -1,3 +1,10 @@
+import {
+    FileMode,
+    IObjectMessage,
+    ISequencedObjectMessage,
+    ITree,
+    TreeEntry,
+} from "@prague/runtime-definitions";
 import * as api from "../api-core";
 import { IDelta, IInkLayer, IStream } from "../data-types";
 import { CollaborativeMap } from "../map";
@@ -45,7 +52,7 @@ export class Stream extends CollaborativeMap implements IStream {
     protected async loadContent(
         sequenceNumber: number,
         minimumSequenceNumber: number,
-        messages: api.IObjectMessage[],
+        messages: IObjectMessage[],
         headerOrigin: string,
         storage: api.IObjectStorageService): Promise<void> {
 
@@ -60,13 +67,13 @@ export class Stream extends CollaborativeMap implements IStream {
         this.initialize(emptySnapshot);
     }
 
-    protected snapshotContent(): api.ITree {
-        const tree: api.ITree = {
+    protected snapshotContent(): ITree {
+        const tree: ITree = {
             entries: [
                 {
-                    mode: api.FileMode.File,
+                    mode: FileMode.File,
                     path: snapshotFileName,
-                    type: api.TreeEntry[api.TreeEntry.Blob],
+                    type: TreeEntry[TreeEntry.Blob],
                     value: {
                         contents: JSON.stringify(this.inkSnapshot),
                         encoding: "utf-8",
@@ -78,13 +85,13 @@ export class Stream extends CollaborativeMap implements IStream {
         return tree;
     }
 
-    protected processContent(message: api.ISequencedObjectMessage) {
+    protected processContent(message: ISequencedObjectMessage) {
         if (message.type === api.OperationType && message.clientId !== this.document.clientId) {
             this.inkSnapshot.apply(message.contents as IDelta);
         }
     }
 
-    protected onConnectContent(pending: api.IObjectMessage[]) {
+    protected onConnectContent(pending: IObjectMessage[]) {
         // Stream can resend messages under new client id
         for (const message of pending) {
             this.submitLocalMessage(message.contents);

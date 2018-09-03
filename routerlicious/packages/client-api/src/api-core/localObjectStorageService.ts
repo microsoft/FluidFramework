@@ -1,5 +1,5 @@
+import * as storage from "@prague/runtime-definitions";
 import { IObjectStorageService } from "./document";
-import * as storage from "./storage";
 
 export class LocalObjectStorageService implements IObjectStorageService {
     constructor(private tree: storage.ITree) {
