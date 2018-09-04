@@ -1,9 +1,9 @@
 // tslint:disable
+import { OperationType } from "@prague/api-definitions";
 import { ISequencedObjectMessage, IUser } from "@prague/runtime-definitions";
 import * as Base from "./base";
 import * as Collections from "./collections";
 import * as ops from "./ops";
-import * as API from "../api-core";
 import * as Properties from "./properties";
 import * as assert from "assert";
 import { IRelativePosition } from "./index";
@@ -2008,7 +2008,7 @@ export class Client {
                 type: ops.MergeTreeDeltaType.INSERT, marker: { type: markerType, behaviors }, pos1: pos
             },
             traces: [],
-            type: API.OperationType,
+            type: OperationType,
         };
     }
 
@@ -2028,7 +2028,7 @@ export class Client {
                 type: ops.MergeTreeDeltaType.INSERT, text: text, pos1: pos
             },
             traces: [],
-            type: API.OperationType,
+            type: OperationType,
         };
     }
 
@@ -2048,7 +2048,7 @@ export class Client {
                 type: ops.MergeTreeDeltaType.REMOVE, pos1: start, pos2: end,
             },
             traces: [],
-            type: API.OperationType,
+            type: OperationType,
         };
     }
 
@@ -2068,7 +2068,7 @@ export class Client {
                 type: ops.MergeTreeDeltaType.ANNOTATE, pos1: start, pos2: end, props
             },
             traces: [],
-            type: API.OperationType,
+            type: OperationType,
         };
     }
 
@@ -2335,7 +2335,7 @@ export class Client {
         this.getOrAddShortClientId(msg.clientId, branchId);
 
         // Apply if an operation message
-        if (msg.type === API.OperationType) {
+        if (msg.type === OperationType) {
             const operationMessage = msg as ISequencedObjectMessage;
             if (msg.clientId === this.longClientId) {
                 let op = <ops.IMergeTreeOp>msg.contents;

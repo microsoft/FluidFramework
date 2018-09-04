@@ -1,5 +1,4 @@
-import { FileMode, ITree, TreeEntry } from "@prague/runtime-definitions";
-import * as API from "../api-core";
+import { FileMode, IObjectStorageService, ITree, TreeEntry } from "@prague/runtime-definitions";
 import * as MergeTree from "./mergeTree";
 import * as ops from "./ops";
 
@@ -134,7 +133,7 @@ export class Snapshot {
         return texts;
     }
 
-    public static async loadChunk(storage: API.IObjectStorageService, path: string): Promise<ops.MergeTreeChunk> {
+    public static async loadChunk(storage: IObjectStorageService, path: string): Promise<ops.MergeTreeChunk> {
         let chunkAsString: string = await storage.read(path);
         return Snapshot.processChunk(chunkAsString);
     }
