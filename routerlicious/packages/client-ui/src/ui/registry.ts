@@ -1,11 +1,10 @@
 import { MergeTree } from "@prague/client-api";
 import ReferenceType = MergeTree.ReferenceType;
 
-import { Box, Chart, Formula, Sheetlet, Slider } from ".";
+import { Box, Formula, Sheetlet, Slider } from ".";
 
 // TODO: Component registry should not be static/global.
 export const refTypeNameToComponent = new Map<string, Box<any>>([
-    ["chart", new Chart()],
     ["formula", new Formula()],
     ["sheetlet", new Sheetlet()],
     ["slider", new Slider()],

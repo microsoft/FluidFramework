@@ -1,5 +1,4 @@
 export * from "./box";
-export * from "./chart";
 export * from "./formula";
 export * from "./sheetlet";
 export * from "./slider";
