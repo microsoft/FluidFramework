@@ -1,4 +1,5 @@
-import { api, socketStorage } from "@prague/client-api";
+import { api } from "@prague/client-api";
+import * as socketStorage from "@prague/socket-storage";
 import * as jwt from "jsonwebtoken";
 
 // For local development
@@ -14,7 +15,8 @@ const secret = "03302d4ebfb6f44b662d00313aff5a46";
 const documentId = "test-sequence-0831-1";
 
 // Register endpoint connection
-socketStorage.registerAsDefault(routerlicious, historian, tenantId);
+const documentServices = socketStorage.createDocumentService(routerlicious, historian);
+api.registerDocumentService(documentServices);
 
 async function run(id: string): Promise<void> {
     const token = jwt.sign(
