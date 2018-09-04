@@ -359,35 +359,9 @@ const commands: ICmd[] = [
     },
     {
         exec: (f) => {
-            f.insertRow();
-            f.insertColumn();
-        },
-        key: "insert row then col",
-    },
-    {
-        exec: (f) => {
-            f.crazyTable(40);
-        },
-        key: "crazy table",
-    },
-    {
-        exec: (f) => {
-            f.insertColumn();
-            f.insertRow();
-        },
-        key: "insert col then row",
-    },
-    {
-        exec: (f) => {
             f.deleteRow();
         },
         key: "delete row",
-    },
-    {
-        exec: (f) => {
-            f.deleteCellShiftLeft();
-        },
-        key: "delete cell shift left",
     },
     {
         exec: (f) => {
@@ -533,8 +507,10 @@ export function selectionListBoxCreate(
     }
 
     function nonPopUpdateRectangles() {
-        shapeRect.conformElement(listContainer);
-        itemCapacity = Math.floor(shapeRect.height / itemHeight);
+        const trimRect=new ui.Rectangle(shapeRect.x,shapeRect.y,
+            shapeRect.width-10,shapeRect.height-10);
+        trimRect.conformElement(listContainer);
+        itemCapacity = Math.floor(trimRect.height / itemHeight);
 
         if (varHeight) {
             listContainer.style.paddingBottom = varHeight + "px";
@@ -2118,9 +2094,15 @@ export class Viewport {
                         if (prevSelectionBox) {
                             selectionIndex = prevSelectionBox.getSelectionIndex();
                         }
-                        const shapeRect = new ui.Rectangle(0,0,exclu.width,exclu.height);
+                        const shapeRect = new ui.Rectangle(0, 0, exclu.width, exclu.height);
                         listRefMarker.selectionListBox =
                             selectionListBoxCreate(shapeRect, false, innerDiv, 24, 2);
+                        const listIrdoc =
+                            <IListReferenceDoc>listRefMarker.properties[Paragraph.referenceProperty];
+                        for (const item of listIrdoc.items) {
+                            item.div = undefined;
+                        }
+                        listRefMarker.selectionListBox.showSelectionList(listIrdoc.items);
                         listRefMarker.selectionListBox.setSelectionIndex(selectionIndex);
                     } else if ((irdoc.type.name === "childFlow") && (!flowView.parentFlow)) {
                         const flowRefMarker = marker as IFlowRefMarker;
@@ -4785,14 +4767,17 @@ export class FlowView extends ui.Component {
     public insertList() {
         const startPos = this.cursor.pos;
         const testList: Item[] = [{ key: "providence" }, { key: "boston" }, { key: "issaquah" }];
-        const props = <IListReferenceDoc>{
+        const irdoc = <IListReferenceDoc>{
             items: testList,
             selectionIndex: 0,
             sha: "L",
             type: { name: "list" },
             url: "",
         };
-        this.sharedString.insertMarker(this.cursor.pos++, MergeTree.ReferenceType.Simple, props);
+        const refProps = {
+            [Paragraph.referenceProperty]: irdoc,
+        };
+        this.sharedString.insertMarker(this.cursor.pos++, MergeTree.ReferenceType.Simple, refProps);
         this.localQueueRender(startPos);
     }
 
