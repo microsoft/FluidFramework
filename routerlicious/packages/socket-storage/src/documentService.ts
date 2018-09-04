@@ -1,14 +1,7 @@
-import {
-    IDocumentDeltaConnection,
-    IDocumentDeltaStorageService,
-    IDocumentService,
-    IDocumentStorageService,
-    IErrorTrackingService,
-} from "@prague/runtime-definitions";
+import * as api from "@prague/runtime-definitions";
+import { GitManager, Historian, ICredentials } from "@prague/services-client";
 import axios from "axios";
 import * as io from "socket.io-client";
-import * as api from "../api-core";
-import { GitManager, Historian, ICredentials } from "../services-client";
 import { DocumentStorageService } from "./blobStorageService";
 import { DeltaStorageService, DocumentDeltaStorageService } from "./deltaStorageService";
 import { DocumentDeltaConnection } from "./documentDeltaConnection";
@@ -17,13 +10,13 @@ import { DocumentDeltaConnection } from "./documentDeltaConnection";
  * The DocumentService manages the Socket.IO connection and manages routing requests to connected
  * clients
  */
-export class DocumentService implements IDocumentService {
+export class DocumentService implements api.IDocumentService {
     private deltaStorage: DeltaStorageService;
 
     constructor(
         private deltaUrl: string,
         private gitUrl: string,
-        private errorTracking: IErrorTrackingService,
+        private errorTracking: api.IErrorTrackingService,
         private disableCache: boolean,
         private historianApi: boolean,
         private directCredentials: ICredentials) {
@@ -34,7 +27,7 @@ export class DocumentService implements IDocumentService {
     public async connectToStorage(
         tenantId: string,
         id: string,
-        token: string): Promise<IDocumentStorageService> {
+        token: string): Promise<api.IDocumentStorageService> {
 
         const endpoint = `${this.gitUrl}/repos/${tenantId}`;
 
@@ -62,7 +55,7 @@ export class DocumentService implements IDocumentService {
     public async connectToDeltaStorage(
         tenantId: string,
         id: string,
-        token: string): Promise<IDocumentDeltaStorageService> {
+        token: string): Promise<api.IDocumentDeltaStorageService> {
 
         return new DocumentDeltaStorageService(tenantId, id, token, this.deltaStorage);
     }
@@ -71,7 +64,7 @@ export class DocumentService implements IDocumentService {
         tenantId: string,
         id: string,
         token: string,
-        client: api.IClient): Promise<IDocumentDeltaConnection> {
+        client: api.IClient): Promise<api.IDocumentDeltaConnection> {
         return DocumentDeltaConnection.Create(tenantId, id, token, io, client, this.deltaUrl);
     }
 

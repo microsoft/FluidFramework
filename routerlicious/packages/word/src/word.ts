@@ -2,10 +2,10 @@ import {
     api,
     MergeTree as mergeTree,
     SharedString as sharedString,
-    socketStorage,
     types as dataTypes,
 } from "@prague/client-api";
 import { ISequencedObjectMessage } from "@prague/runtime-definitions";
+import * as socketStorage from "@prague/socket-storage";
 import { EventEmitter } from "events";
 import * as jwt from "jsonwebtoken";
 
@@ -321,7 +321,8 @@ const tenantId = "awesome-knuth";
 const secret = "5ad2ccdb911c9c3a5beb34965334edca";
 
 // Register endpoint connection
-socketStorage.registerAsDefault(routerlicious, historian, tenantId);
+const documentService = socketStorage.createDocumentService(routerlicious, historian);
+api.registerDocumentService(documentService);
 
 async function OpenDocument(id: string): Promise<void> {
     // Load in the latest and connect to the document

@@ -6,11 +6,11 @@ import {
     map as DistributedMap,
     MergeTree,
     SharedString,
-    socketStorage,
     types,
 } from "@prague/client-api";
 import { controls, ui } from "@prague/client-ui";
 import * as resources from "@prague/gitresources";
+import * as socketStorage from "@prague/socket-storage";
 // tslint:disable-next-line:no-var-requires
 const performanceNow = require("performance-now");
 import * as request from "request";
@@ -90,14 +90,14 @@ async function loadDocument(
     const errorService = config.trackError
         ? new BrowserErrorTrackingService()
         : new socketStorage.DefaultErrorTracking();
-    socketStorage.registerAsDefault(
+    const documentService = socketStorage.createDocumentService(
         document.location.origin,
         config.blobStorageUrl,
-        config.tenantId,
         errorService,
         disableCache,
         config.historianApi,
         config.credentials);
+    API.registerDocumentService(documentService);
     console.log(`collabDoc loading ${id} - ${performanceNow()}`);
     const collabDoc = await API.load(id, { blockUpdateMarkers: true, client: config.client, token }, version, connect);
 

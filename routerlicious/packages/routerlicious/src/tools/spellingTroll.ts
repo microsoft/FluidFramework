@@ -1,5 +1,6 @@
 // tslint:disable
-import { api as API, MergeTree, SharedString, socketStorage } from "@prague/client-api";
+import { api as API, MergeTree, SharedString } from "@prague/client-api";
+import * as socketStorage from "@prague/socket-storage";
 import { ISequencedObjectMessage } from "@prague/runtime-definitions";
 import * as fs from "fs";
 import * as path from "path";
@@ -333,6 +334,7 @@ if (!sharedStringId) {
 }
 else {
     // Mark socket storage as our default provider
-    socketStorage.registerAsDefault(commander.server, commander.storage, commander.tenantId);
+    const documentServices = socketStorage.createDocumentService(commander.server, commander.storage);
+    API.registerDocumentService(documentServices);
     initSpell(sharedStringId);
 }

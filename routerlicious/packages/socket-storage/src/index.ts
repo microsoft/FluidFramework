@@ -1,3 +1,4 @@
+export * from "./errorTracking";
 export * from "./messages";
 export * from "./deltaStorageService";
 export * from "./documentService";

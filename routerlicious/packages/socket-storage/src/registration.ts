@@ -1,10 +1,11 @@
-import { IDocumentService } from "@prague/runtime-definitions";
+import { IDocumentService, IErrorTrackingService } from "@prague/runtime-definitions";
 import { DocumentService } from "./documentService";
+import { DefaultErrorTracking } from "./errorTracking";
 
 export function createDocumentService(
     deltaUrl: string,
     gitUrl: string,
-    errorTracking = true,
+    errorTracking: IErrorTrackingService = new DefaultErrorTracking(),
     disableCache = false,
     historianApi = true,
     credentials?): IDocumentService {

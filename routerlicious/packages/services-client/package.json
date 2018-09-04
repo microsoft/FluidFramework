@@ -1,7 +1,7 @@
 {
-  "name": "@prague/api-definitions",
-  "version": "0.1.2",
-  "description": "Prague document loader",
+  "name": "@prague/services-client",
+  "version": "0.1.0",
+  "description": "Isomorphic services for communicating with Prague",
   "main": "dist/index.js",
   "module": "lib/index.js",
   "types": "dist/index.d.ts",
@@ -20,8 +20,10 @@
     "typescript": "^3.0.1"
   },
   "dependencies": {
-    "@prague/runtime-definitions": "^0.1.2",
-    "@types/debug": "^0.0.30",
+    "@prague/gitresources": "^0.1.0",
+    "@prague/runtime-definitions": "^0.1.0",
+    "@types/node": "^10.5.7",
+    "axios": "^0.18.0",
     "debug": "^3.1.0"
   }
 }

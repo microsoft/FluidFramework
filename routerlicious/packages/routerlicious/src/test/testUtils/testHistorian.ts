@@ -1,5 +1,5 @@
-import { IHistorian } from "@prague/client-api";
 import * as git from "@prague/gitresources";
+import { IHistorian } from "@prague/services-client";
 
 export class TestHistorian implements IHistorian {
     public endpoint = "http://test";

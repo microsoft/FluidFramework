@@ -1,4 +1,5 @@
-import { socketStorage } from "@prague/client-api";
+import { api } from "@prague/client-api";
+import * as socketStorage from "@prague/socket-storage";
 import * as commander from "commander";
 import * as fs from "fs";
 import * as path from "path";
@@ -31,7 +32,8 @@ if (!sharedStringId) {
 }
 
 // Mark socket storage as our default provider
-socketStorage.registerAsDefault(commander.server, commander.storage, commander.tenant);
+const documentService = socketStorage.createDocumentService(commander.server, commander.storage);
+api.registerDocumentService(documentService);
 
 fs.readFile(commander.file, "utf8", async (error, data: string) => {
     if (error) {

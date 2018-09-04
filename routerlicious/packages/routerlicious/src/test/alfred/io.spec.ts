@@ -1,5 +1,6 @@
-import { core as api, socketStorage } from "@prague/client-api";
+import { core as api } from "@prague/client-api";
 import { IDocumentMessage } from "@prague/runtime-definitions";
+import * as socketStorage from "@prague/socket-storage";
 import { Deferred } from "@prague/utils";
 import * as assert from "assert";
 import * as io from "../../alfred/io";

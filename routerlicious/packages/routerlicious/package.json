@@ -41,6 +41,8 @@
     "@prague/client-ui": "^0.1.0",
     "@prague/gitresources": "^0.1.0",
     "@prague/runtime-definitions": "^0.1.0",
+    "@prague/services-client": "^0.1.0",
+    "@prague/socket-storage": "^0.1.0",
     "@prague/utils": "^0.1.0",
     "@types/amqplib": "^0.5.7",
     "@types/async": "^2.0.49",

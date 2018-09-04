@@ -1,6 +1,7 @@
-import { api, core, socketStorage } from "@prague/client-api";
+import { api, core } from "@prague/client-api";
 import * as resources from "@prague/gitresources";
 import * as d3 from "d3";
+import { registerDocumentServices } from "./utils";
 
 interface INode {
     label: string;  // Text inside the node.
@@ -144,11 +145,8 @@ function updateSimulation(graph: any) {
 }
 
 export async function load(id: string, version: resources.ICommit, config: any, token?: string) {
-    socketStorage.registerAsDefault(
-        document.location.origin,
-        config.blobStorageUrl,
-        config.tenantId,
-        config.trackError);
+    registerDocumentServices(config);
+
     const doc = await api.load(id, { client: { type: "visualize" }, encrypted: false, token }, version);
     let prev: IGraph;
     let curr = generateGraphData(doc);

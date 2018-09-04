@@ -1,4 +1,4 @@
-import { GitManager } from "@prague/client-api";
+import { GitManager } from "@prague/services-client";
 
 export interface ITenantConfig {
     id: string;

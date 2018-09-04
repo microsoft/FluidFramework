@@ -1,4 +1,4 @@
-import { getOrCreateRepository } from "@prague/client-api";
+import { getOrCreateRepository } from "@prague/services-client";
 import { Provider } from "nconf";
 import * as services from "../services";
 import * as utils from "../utils";

@@ -1,4 +1,3 @@
-import { socketStorage } from "@prague/client-api";
 import * as resources from "@prague/gitresources";
 import {
     IDeltaStorageService,
@@ -9,6 +8,7 @@ import {
     ISnapshotTree,
     ITree,
 } from "@prague/runtime-definitions";
+import * as socketStorage from "@prague/socket-storage";
 import { TestDocumentDeltaConnection } from "./";
 
 class TestDocumentStorageService implements IDocumentStorageService {

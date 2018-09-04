@@ -1,4 +1,5 @@
-import { core, socketStorage } from "@prague/client-api";
+import { api, core } from "@prague/client-api";
+import * as socketStorage from "@prague/socket-storage";
 import * as assert from "assert";
 import { BrowserErrorTrackingService } from "./errorTracking";
 
@@ -41,9 +42,9 @@ export function registerDocumentServices(config: any) {
         ? new BrowserErrorTrackingService()
         : new socketStorage.DefaultErrorTracking();
 
-    socketStorage.registerAsDefault(
+    const documentServices = socketStorage.createDocumentService(
         document.location.origin,
         config.blobStorageUrl,
-        config.tenantId,
         errorService);
+    api.registerDocumentService(documentServices);
 }

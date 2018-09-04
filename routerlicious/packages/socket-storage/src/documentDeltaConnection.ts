@@ -1,4 +1,10 @@
-import * as api from "@prague/runtime-definitions";
+import {
+    IClient,
+    IDocumentDeltaConnection,
+    IDocumentMessage,
+    ISequencedDocumentMessage,
+    IUser,
+} from "@prague/runtime-definitions";
 import { BatchManager } from "@prague/utils";
 import { EventEmitter } from "events";
 import { debug } from "./debug";
@@ -7,14 +13,14 @@ import * as messages from "./messages";
 /**
  * Represents a connection to a stream of delta updates
  */
-export class DocumentDeltaConnection extends EventEmitter implements api.IDocumentDeltaConnection {
+export class DocumentDeltaConnection extends EventEmitter implements IDocumentDeltaConnection {
     public static async Create(
         tenantId: string,
         id: string,
         token: string,
         io: SocketIOClientStatic,
-        client: api.IClient,
-        url: string): Promise<api.IDocumentDeltaConnection> {
+        client: IClient,
+        url: string): Promise<IDocumentDeltaConnection> {
 
         const socket = io(
             url,
@@ -35,21 +41,41 @@ export class DocumentDeltaConnection extends EventEmitter implements api.IDocume
         };
 
         const connection = await new Promise<messages.IConnected>((resolve, reject) => {
+            // Listen for ops sent before we receive a response to connect_document
+            const queuedMessages: ISequencedDocumentMessage[] = [];
+
+            const earlyOpHandler = (documentId: string, msgs: ISequencedDocumentMessage[]) => {
+                debug("Queued early ops", msgs.length);
+                queuedMessages.push(...msgs);
+            };
+            socket.on("op", earlyOpHandler);
+
             // Listen for connection issues
             socket.on("connect_error", (error) => {
                 reject(error);
             });
 
-            socket.emit(
-                "connectDocument",
-                connectMessage,
-                (error, response: messages.IConnected) => {
-                    if (error) {
-                        return reject(error);
-                    } else {
-                        return resolve(response);
+            socket.on("connect_document_success", (response: messages.IConnected) => {
+                socket.removeListener("op", earlyOpHandler);
+
+                if (queuedMessages.length > 0) {
+                    // some messages were queued.
+                    // add them to the list of initialMessages to be processed
+                    if (!response.initialMessages) {
+                        response.initialMessages = [];
                     }
-                });
+
+                    response.initialMessages.push(...queuedMessages);
+
+                    response.initialMessages.sort((a, b) => a.sequenceNumber - b.sequenceNumber);
+                }
+
+                resolve(response);
+            });
+
+            socket.on("connect_document_error", reject);
+
+            socket.emit("connect_document", connectMessage);
         });
 
         const deltaConnection = new DocumentDeltaConnection(socket, id, connection);
@@ -58,7 +84,7 @@ export class DocumentDeltaConnection extends EventEmitter implements api.IDocume
     }
 
     private emitter = new EventEmitter();
-    private submitManager: BatchManager<api.IDocumentMessage>;
+    private submitManager: BatchManager<IDocumentMessage>;
 
     public get clientId(): string {
         return this.details.clientId;
@@ -72,8 +98,12 @@ export class DocumentDeltaConnection extends EventEmitter implements api.IDocume
         return this.details.parentBranch;
     }
 
-    public get user(): api.IUser {
+    public get user(): IUser {
         return this.details.user;
+    }
+
+    public get initialMessages(): ISequencedDocumentMessage[] {
+        return this.details.initialMessages;
     }
 
     constructor(
@@ -82,7 +112,7 @@ export class DocumentDeltaConnection extends EventEmitter implements api.IDocume
         public details: messages.IConnected) {
         super();
 
-        this.submitManager = new BatchManager<api.IDocumentMessage>((submitType, work) => {
+        this.submitManager = new BatchManager<IDocumentMessage>((submitType, work) => {
             this.socket.emit(
                 submitType,
                 this.details.clientId,
@@ -115,7 +145,7 @@ export class DocumentDeltaConnection extends EventEmitter implements api.IDocume
     /**
      * Submits a new delta operation to the server
      */
-    public submit(message: api.IDocumentMessage): void {
+    public submit(message: IDocumentMessage): void {
         this.submitManager.add("submitOp", message);
     }
 

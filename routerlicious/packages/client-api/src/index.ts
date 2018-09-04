@@ -25,10 +25,5 @@ export { MergeTree };
 import * as SharedString from "./shared-string";
 export { SharedString };
 
-import * as socketStorage from "./socket-storage";
-export { socketStorage };
-
 import * as api from "./api";
 export { api };
-
-export * from "./services-client";

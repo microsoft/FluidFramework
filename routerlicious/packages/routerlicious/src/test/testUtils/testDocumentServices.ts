@@ -1,4 +1,4 @@
-import { core as api, socketStorage } from "@prague/client-api";
+import { core as api } from "@prague/client-api";
 import * as git from "@prague/gitresources";
 import {
     IDocumentDeltaConnection,
@@ -10,6 +10,7 @@ import {
     ISnapshotTree,
     ITree,
 } from "@prague/runtime-definitions";
+import * as socketStorage from "@prague/socket-storage";
 import { EventEmitter } from "events";
 
 export class TestDocumentDeltaConnection extends EventEmitter implements IDocumentDeltaConnection {

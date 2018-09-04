@@ -1,4 +1,4 @@
-import { GitManager, Historian } from "@prague/client-api";
+import { GitManager, Historian } from "@prague/services-client";
 import * as request from "request-promise-native";
 import * as core from "../core";
 
