@@ -3451,7 +3451,11 @@ export class FlowView extends ui.Component {
         // https://www.w3.org/WAI/GL/WCAG20/WD-WCAG20-TECHS/SCR29.html
         this.element.tabIndex = 0;
 
+        // Disable visible focus outline when FlowView is focused.
         this.element.style.outline = "0px solid transparent";
+
+        // Clip children of FlowView to the bounds of the FlowView's root div.
+        this.element.style.overflow = "hidden";
 
         this.cmdTree = new MergeTree.TST<ICmd>();
         for (const command of commands) {
