@@ -1141,17 +1141,35 @@ function endRenderSegments(marker: MergeTree.Marker) {
 const wordHeadingColor = "rgb(47, 84, 150)";
 
 /**
- * Stops propagation of UI events to the FlowView host.  This works around the FlowView
- * invoking 'preventDefault()', which breaks the behavior of HTML intrinsic controls like
- * <input />.
+ * Ensure the given 'element' is focusable and restore the default behavior of HTML intrinsic
+ * controls (e.g., <input>) within the element.
  */
-function handleEvents(element: HTMLElement) {
+function allowDOMEvents(element: HTMLElement) {
+    // Ensure element can receive DOM focus (see Example 1):
+    // https://www.w3.org/WAI/GL/WCAG20/WD-WCAG20-TECHS/SCR29.html
+
+    // Note: 'tabIndex' should never be NaN, undefined, etc., but use of negation below ensures
+    //       these degenerate values will also be replaced with 0.
+    if (!(element.tabIndex >= 0)) {
+        element.tabIndex = 0;
+    }
+
+    // TODO: Unsure if the empty/overlapping line divs overlapping inclusions are intentional?
+    //
+    // Elevate elements expecting DOM focus within their stacking container to ensure they
+    // appear above empty line divs generated after their marker.
+    element.style.zIndex = "1";
+
+    // Stops these events from bubbling back up to the FlowView when the <div> is focused.
+    // The FlowView invokes 'preventDefault()' on these events, which blocks the behavior of
+    // HTML intrinsic controls like <input />.
     element.addEventListener("mousedown", (e) => { e.stopPropagation(); });
     element.addEventListener("mousemove", (e) => { e.stopPropagation(); });
     element.addEventListener("mouseup", (e) => { e.stopPropagation(); });
     element.addEventListener("keydown", (e) => { e.stopPropagation(); });
     element.addEventListener("keypress", (e) => { e.stopPropagation(); });
     element.addEventListener("keyup", (e) => { e.stopPropagation(); });
+
     return element;
 }
 
@@ -1195,13 +1213,13 @@ function renderSegmentIntoLine(
         // component.
         if (marker.refType === MergeTree.ReferenceType.Simple) {
             const typeName = marker.properties.ref && marker.properties.ref.type.name;
-            const component = ui.refTypeNameToComponent.get(typeName);
+            const maybeComponent = ui.refTypeNameToComponent.get(typeName);
 
             // If it is a registered external component, ask it to render itself to HTML and
             // insert the divs here.
-            if (component) {
+            if (maybeComponent) {
                 lineContext.contentDiv.appendChild(
-                    handleEvents(component.render(
+                    allowDOMEvents(maybeComponent.render(
                         marker.properties.state,
                         lineContext.flowView.services,
                     )));
@@ -2103,6 +2121,12 @@ export class Viewport {
                         const shapeRect = new ui.Rectangle(0, 0, exclu.width, exclu.height);
                         listRefMarker.selectionListBox =
                             selectionListBoxCreate(shapeRect, false, innerDiv, 24, 2);
+
+                        // Allow the list box to receive DOM focus and subscribe its 'keydown' handler.
+                        allowDOMEvents(listRefMarker.selectionListBox.elm);
+                        listRefMarker.selectionListBox.elm.addEventListener("keydown",
+                            (e) => listRefMarker.selectionListBox.keydown(e));
+
                         const listIrdoc =
                             <IListReferenceDoc>listRefMarker.properties[Paragraph.referenceProperty];
                         for (const item of listIrdoc.items) {
@@ -2594,7 +2618,7 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
         const maybeComponent = asMarker && ui.maybeGetComponent(asMarker);
 
         if (maybeComponent) {
-            const componentDiv = handleEvents(maybeComponent.render(asMarker.properties.state, layoutContext.flowView.services));
+            const componentDiv = allowDOMEvents(maybeComponent.render(asMarker.properties.state, layoutContext.flowView.services));
 
             // Force subtree positioning to be relative to the lineDiv we create below.
             componentDiv.style.display = "flex";
