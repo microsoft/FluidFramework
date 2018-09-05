@@ -513,8 +513,8 @@ export function selectionListBoxCreate(
     }
 
     function nonPopUpdateRectangles() {
-        const trimRect=new ui.Rectangle(shapeRect.x,shapeRect.y,
-            shapeRect.width-10,shapeRect.height-10);
+        const trimRect = new ui.Rectangle(shapeRect.x, shapeRect.y,
+            shapeRect.width - 10, shapeRect.height - 10);
         trimRect.conformElement(listContainer);
         itemCapacity = Math.floor(trimRect.height / itemHeight);
 
@@ -2934,6 +2934,7 @@ export class Cursor {
     private blinkCount = 0;
     private blinkTimer: any;
     private bgColor = "blue";
+    private enabled = true;
 
     constructor(public viewportDiv: HTMLDivElement, public pos = 0) {
         this.makeSpan();
@@ -2945,7 +2946,60 @@ export class Cursor {
         this.bgColor = presenceColors[presenceColorIndex];
         this.presenceInfo = presenceInfo;
         this.makePresenceDiv();
+
+        this.refresh();
+
+        if (this.enabled) {
+            this.show();
+        } else {
+            this.hide(true);
+        }
+    }
+
+    /**
+     * Refreshes the cursor
+     * It will enable / disable the cursor depending on if the client is connected
+     */
+    public refresh() {
+        if (this.presenceInfo) {
+            if (this.presenceInfo.shouldShowCursor()) {
+                this.enable();
+            } else {
+                this.disable();
+            }
+        }
+    }
+
+    /**
+     * Enable the cursor - makes the cursor visible
+     */
+    public enable() {
+        if (this.enabled) {
+            return;
+        }
+
+        this.enabled = true;
         this.show();
+
+        this.blinkCursor();
+    }
+
+    /**
+     * Disable the cursor - hides the cursor and prevents it from showing up
+     */
+    public disable() {
+        if (!this.enabled) {
+            return;
+        }
+
+        this.enabled = false;
+        this.hide(true);
+        this.clearSelection();
+
+        if (this.blinkTimer) {
+            clearTimeout(this.blinkTimer);
+            this.blinkTimer = undefined;
+        }
     }
 
     public tryMark() {
@@ -2971,13 +3025,22 @@ export class Cursor {
         }
     }
 
-    public hide() {
+    public hide(hidePresenceDiv: boolean = false) {
         this.editSpan.style.visibility = "hidden";
+
+        if (hidePresenceDiv && this.presenceInfo) {
+            this.presenceDiv.style.visibility = "hidden";
+        }
     }
 
     public show() {
+        if (!this.enabled) {
+            return;
+        }
+
         this.editSpan.style.backgroundColor = this.bgColor;
         this.editSpan.style.visibility = "visible";
+
         if (this.presenceInfo) {
             this.presenceDiv.style.visibility = "visible";
         }
@@ -3084,6 +3147,10 @@ export class Cursor {
     }
 
     private blinker = () => {
+        if (!this.enabled) {
+            return;
+        }
+
         if (this.off) {
             this.show();
         } else {
@@ -3178,6 +3245,7 @@ export interface ILocalPresenceInfo {
     user: core.ITenantUser;
     cursor?: Cursor;
     fresh: boolean;
+    shouldShowCursor: () => boolean;
 }
 
 interface ISegmentOffset {
@@ -3483,6 +3551,15 @@ export class FlowView extends ui.Component {
             }
         });
 
+        // refresh cursors when clients join or leave
+        collabDocument.on("clientJoin", () => {
+            this.updatePresenceCursors();
+        });
+
+        collabDocument.on("clientLeave", () => {
+            this.updatePresenceCursors();
+        });
+
         this.cursor = new Cursor(this.viewportDiv);
         this.setViewOption(this.options);
         blobUploadHandler(element,
@@ -3573,6 +3650,14 @@ export class FlowView extends ui.Component {
                 props);
         }
         this.localQueueRender(-1);
+    }
+
+    public updatePresenceCursors() {
+        for (const presenceInfo of this.presenceVector) {
+            if (presenceInfo && presenceInfo.cursor) {
+                presenceInfo.cursor.refresh();
+            }
+        }
     }
 
     public xUpdateHistoryBubble(x: number) {
@@ -5526,6 +5611,12 @@ export class FlowView extends ui.Component {
                 fresh: true,
                 localRef: new MergeTree.LocalReference(segoff.segment as MergeTree.BaseSegment, segoff.offset,
                     MergeTree.ReferenceType.SlideOnRemove),
+                shouldShowCursor: () => {
+                    return this.client.getClientId() !== clientId &&
+                        Array.from(this.collabDocument.getClients().keys())
+                            .map((k) => this.client.getOrAddShortClientId(k))
+                            .indexOf(clientId) !== -1;
+                },
                 user,
             } as ILocalPresenceInfo;
             if (remotePresenceInfo.origMark >= 0) {
