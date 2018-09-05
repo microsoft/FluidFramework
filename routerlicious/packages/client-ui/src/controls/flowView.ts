@@ -381,6 +381,12 @@ const commands: ICmd[] = [
         },
         key: "insert sheet",
     },
+    {
+        exec: (f) => {
+            f.insertChart();
+        },
+        key: "insert chart",
+    },
 ];
 
 export function moveMarker(flowView: FlowView, fromPos: number, toPos: number) {
@@ -4752,6 +4758,11 @@ export class FlowView extends ui.Component {
     /** Insert a Sheetlet. */
     public insertSheetlet() {
         this.insertComponent("sheetlet", {});
+    }
+
+    /** Insert a Chart. */
+    public insertChart() {
+        this.insertComponent("chart", {});
     }
 
     /** Insert a Formula box to display the given 'formula'. */
