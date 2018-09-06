@@ -57,11 +57,11 @@ export class Document extends EventEmitter {
     }
 
     public get tenantId(): string {
-        return this.loader.tenantId;
+        return this.runtime.tenantId;
     }
 
     public get deltaManager(): pragueLoader.IDeltaManager {
-        return this.loader.deltaManager;
+        return this.runtime.deltaManager;
     }
 
     /**
@@ -79,20 +79,20 @@ export class Document extends EventEmitter {
      * Returns the parent branch for this document
      */
     public get parentBranch(): string {
-        return this.loader.parentBranch;
+        return this.runtime.parentBranch;
     }
 
     /**
      * Flag indicating whether this document is fully connected.
      */
     public get isConnected(): boolean {
-        return this.loader.connected;
+        return this.runtime.connected;
     }
 
     /**
      * Constructs a new document from the provided details
      */
-    constructor(private loader: pragueLoader.Document, private runtime: IRuntime, private root: IMap) {
+    constructor(private runtime: IRuntime, private root: IMap) {
         super();
     }
 
@@ -162,45 +162,45 @@ export class Document extends EventEmitter {
     }
 
     public getClients(): Map<string, IClient> {
-        // TODO return clients off of runtime/loader
-        throw new Error("Not implemented");
-    }
-
-    /**
-     * Called to snapshot the given document
-     */
-    public snapshot(tagMessage: string = ""): Promise<void> {
-        throw new Error("Not implemented");
-    }
-
-    /**
-     * Closes the document and detaches all listeners
-     */
-    public close() {
-        throw new Error("Not implemented");
+        const quorum = this.runtime.getQuorum();
+        return quorum.getMembers();
     }
 
     /**
      * Flag indicating whether all submitted ops for this document is acked.
      */
     public get hasUnackedOps(): boolean {
-        throw new Error("Not implemented");
+        return this.runtime.hasUnackedOps();
     }
 
-    public async uploadBlob(file: IGenericBlob): Promise<IGenericBlob> {
-        throw new Error("Not implemented");
-    }
-
-    public async getBlob(sha: string): Promise<IGenericBlob> {
-        throw new Error("Not implemented");
-    }
-
-    public getBlobMetadata(): Promise<IGenericBlob[]> {
-        throw new Error("Not implemented");
+    /**
+     * Called to snapshot the given document
+     */
+    public snapshot(tagMessage: string = ""): Promise<void> {
+        return this.runtime.snapshot(tagMessage);
     }
 
     public save(tag: string = null) {
-        throw new Error("Not implemented");
+        this.runtime.save(tag);
+    }
+
+    /**
+     * Closes the document and detaches all listeners
+     */
+    public close() {
+        this.runtime.close();
+    }
+
+    public async uploadBlob(file: IGenericBlob): Promise<IGenericBlob> {
+        return this.runtime.uploadBlob(file);
+    }
+
+    public async getBlob(sha: string): Promise<IGenericBlob> {
+        return this.runtime.getBlob(sha);
+    }
+
+    public getBlobMetadata(): Promise<IGenericBlob[]> {
+        return this.runtime.getBlobMetadata();
     }
 }
 
@@ -269,7 +269,7 @@ export async function load(
     }
 
     // Return the document
-    const document = new Document(loaderDoc, runtime, root);
+    const document = new Document(runtime, root);
 
     return document;
 }

@@ -1,5 +1,6 @@
 import { IChannel } from "./chaincode";
 import { IDistributedObjectServices } from "./channel";
+import { IDeltaManager } from "./document";
 import { ISequencedDocumentMessage } from "./protocol";
 import { IUser } from "./users";
 
@@ -13,6 +14,8 @@ export interface IMessageHandler {
 }
 
 export interface IRuntime {
+    readonly tenantId: string;
+
     readonly id: string;
 
     readonly existing: boolean;
@@ -22,6 +25,12 @@ export interface IRuntime {
     readonly clientId: string;
 
     readonly user: IUser;
+
+    readonly parentBranch: string;
+
+    readonly connected: boolean;
+
+    readonly deltaManager: IDeltaManager;
 
     /**
      * Returns the channel with the given id
@@ -37,4 +46,32 @@ export interface IRuntime {
      * Attaches the channel to the runtime - exposing it ot remote clients
      */
     attachChannel(channel: IChannel): IDistributedObjectServices;
+
+    /**
+     * Retrieves the current quorum
+     */
+    getQuorum(): IQuorum;
+
+    /**
+     * Snapshots the current runtime
+     */
+    snapshot(): Promise<void>;
+
+    /**
+     * Triggers a message to force a snapshot
+     */
+    save(tag: string);
+
+    /**
+     * Terminates the runtime and closes the document
+     */
+    close();
+
+    // Blob related calls
+
+    uploadBlob(file: IGenericBlob): Promise<IGenericBlob>;
+
+    getBlob(sha: string): Promise<IGenericBlob>;
+
+    getBlobMetadata(): Promise<IGenericBlob[]>;
 }
