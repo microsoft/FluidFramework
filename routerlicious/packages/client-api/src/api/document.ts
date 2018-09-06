@@ -2,7 +2,7 @@ import { ICollaborativeObject } from "@prague/api-definitions";
 import * as cell from "@prague/cell";
 import * as resources from "@prague/gitresources";
 import * as pragueLoader from "@prague/loader";
-import * as mapExtension from "@prague/map";
+import { IMap, MapExtension } from "@prague/map";
 import {
     IClient,
     IDocumentService,
@@ -17,11 +17,16 @@ import { EventEmitter } from "events";
 import * as uuid from "uuid/v4";
 import { IGenericBlob } from "../api-core";
 import { CodeLoader } from "./codeLoader";
+import { debug } from "./debug";
 import { Platform } from "./platform";
 import { TokenService } from "./tokenService";
 
+// tslint:disable-next-line
+const apiVersion = require("../../package.json").version;
+
 // TODO: All these should be enforced by server as a part of document creation.
 const rootMapId = "root";
+const insightsMapId = "insights";
 
 // Registered services to use when loading a document
 let defaultDocumentService: IDocumentService;
@@ -87,7 +92,7 @@ export class Document extends EventEmitter {
     /**
      * Constructs a new document from the provided details
      */
-    constructor(private loader: pragueLoader.Document, private runtime: IRuntime, private root: mapExtension.IMap) {
+    constructor(private loader: pragueLoader.Document, private runtime: IRuntime, private root: IMap) {
         super();
     }
 
@@ -116,8 +121,8 @@ export class Document extends EventEmitter {
     /**
      * Creates a new collaborative map
      */
-    public createMap(): mapExtension.IMap {
-        return this.create(mapExtension.MapExtension.Type) as mapExtension.IMap;
+    public createMap(): IMap {
+        return this.create(MapExtension.Type) as IMap;
     }
 
     /**
@@ -145,7 +150,7 @@ export class Document extends EventEmitter {
     /**
      * Retrieves the root collaborative object that the document is based on
      */
-    public getRoot(): mapExtension.IMap {
+    public getRoot(): IMap {
         return this.root;
     }
 
@@ -199,6 +204,22 @@ export class Document extends EventEmitter {
     }
 }
 
+async function initializeChaincode(document: pragueLoader.Document, pkg: string): Promise<void> {
+    const quorum = document.getQuorum();
+
+    // Wait for connection so that proposals can be sent
+    if (!document.connected) {
+        await new Promise<void>((resolve) => document.on("connected", () => resolve()));
+    }
+
+    // And then make the proposal if a code proposal has not yet been made
+    if (!quorum.has("code")) {
+        await quorum.propose("code", pkg);
+    }
+
+    debug(`Code is ${quorum.get("code")}`);
+}
+
 /**
  * Loads a specific version (commit) of the collaborative object
  */
@@ -213,8 +234,9 @@ export async function load(
     const tokenService = new TokenService();
     const runDeferred = new Deferred<{ runtime: IRuntime, platform: IPlatform }>();
     const loader = new CodeLoader(
-        async (runtime, platform) => {
-            this.runDeferred.resolve({ runtime, platform });
+        async (r, p) => {
+            debug("Code loaded and resolved");
+            runDeferred.resolve({ runtime: r, platform: p });
         });
 
     // Load the Prague document
@@ -228,24 +250,26 @@ export async function load(
         version,
         connect);
 
-    // Install ourselves as chaincode if there has been no consensus on it
+    initializeChaincode(loaderDoc, `@prague/client-api@${apiVersion}`)
+        .catch((error) => debug("chaincode error", error));
 
     // Wait for loader to start us
-    const run = await runDeferred.promise;
+    const { runtime } = await runDeferred.promise;
 
-    // if (!runtime.existing) {
-    //     root = runtime.createChannel(rootMapId, MapExtension.Type) as IMap;
-    //     root.attach();
+    // Initialize core data structures
+    let root: IMap;
+    if (!runtime.existing) {
+        root = runtime.createChannel(rootMapId, MapExtension.Type) as IMap;
+        root.attach();
 
-    //     const insights = runtime.createChannel(insightsMapId, MapExtension.Type);
-    //     root.set(insightsMapId, insights);
-    // } else {
-    //     root = await runtime.getChannel("root") as IMap;
-    // }
+        const insights = runtime.createChannel(insightsMapId, MapExtension.Type);
+        root.set(insightsMapId, insights);
+    } else {
+        root = await runtime.getChannel("root") as IMap;
+    }
 
     // Return the document
-    const root = await this.runtime.getChannel(rootMapId) as mapExtension.IMap;
-    const document = new Document(loaderDoc, run.runtime, root);
+    const document = new Document(loaderDoc, runtime, root);
 
     return document;
 }
