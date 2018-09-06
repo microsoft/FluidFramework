@@ -1,5 +1,9 @@
-import { api, core, MergeTree, SharedString, types, utils } from "@prague/client-api";
+import { ICell } from "@prague/cell";
+import { api, core, utils } from "@prague/client-api";
+import { IMap } from "@prague/map";
+import * as MergeTree from "@prague/merge-tree";
 import { ISequencedObjectMessage } from "@prague/runtime-definitions";
+import * as SharedString from "@prague/shared-string";
 import * as queue from "async/queue";
 // tslint:disable-next-line:no-var-requires
 const clone = require("lodash/clone");
@@ -11,8 +15,8 @@ const saveLineFrequency = 5;
 
 const ChartSamples = 10;
 
-let histogramData: types.ICell;
-let performanceData: types.ICell;
+let histogramData: ICell;
+let performanceData: ICell;
 let metrics: IScribeMetrics;
 
 const ackCounter = new Counter();
@@ -349,7 +353,7 @@ export async function typeFile(
                     return metric;
                 });
         } else {
-            return (doc.getRoot().get("chunks") as Promise<types.IMap>)
+            return (doc.getRoot().get("chunks") as Promise<IMap>)
                 .then((chunkMap) => {
                     return chunkMap.getView();
                 })

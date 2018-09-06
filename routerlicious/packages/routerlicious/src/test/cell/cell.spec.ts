@@ -1,4 +1,5 @@
-import { api, types } from "@prague/client-api";
+import { ICell } from "@prague/cell";
+import { api } from "@prague/client-api";
 import * as assert from "assert";
 import { generateToken } from "../../utils";
 import * as testUtils from "../testUtils";
@@ -7,7 +8,7 @@ describe("Routerlicious", () => {
     describe("Api", () => {
         describe("cell", () => {
             let testDocument: api.Document;
-            let testCell: types.ICell;
+            let testCell: ICell;
 
             beforeEach(async () => {
                 const tenantId = "test";

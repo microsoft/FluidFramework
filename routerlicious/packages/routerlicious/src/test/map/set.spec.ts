@@ -1,4 +1,5 @@
-import { api, map, types } from "@prague/client-api";
+import { api } from "@prague/client-api";
+import * as map from "@prague/map";
 import * as assert from "assert";
 import { generateToken } from "../../utils";
 import * as testUtils from "../testUtils";
@@ -7,7 +8,7 @@ describe("Routerlicious", () => {
     describe("Map", () => {
         describe("Set", () => {
             let testDocument: api.Document;
-            let testMap: types.IMap;
+            let testMap: map.IMap;
             let emptySet: map.DistributedSet<number>;
             let populatedSet: map.DistributedSet<number>;
 

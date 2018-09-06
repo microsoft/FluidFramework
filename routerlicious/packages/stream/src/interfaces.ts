@@ -1,5 +1,5 @@
+import { ICollaborativeObject } from "@prague/api-definitions";
 import * as uuid from "uuid/v4";
-import * as api from "../api-core";
 
 export interface IPoint {
     x: number;
@@ -146,7 +146,7 @@ export function getStylusId(operation: IOperation): string {
     }
 }
 
-export interface IStream extends api.ICollaborativeObject {
+export interface IStream extends ICollaborativeObject {
     getLayers(): IInkLayer[];
 
     getLayer(key: string): IInkLayer;
@@ -242,7 +242,7 @@ export interface IDelta {
     operations: IOperation[];
 }
 
-export interface IStream extends api.ICollaborativeObject {
+export interface IStream extends ICollaborativeObject {
     getLayers(): IInkLayer[];
 
     getLayer(key: string): IInkLayer;

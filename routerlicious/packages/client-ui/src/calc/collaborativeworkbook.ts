@@ -1,4 +1,4 @@
-import { types } from "@prague/client-api";
+import * as map from "@prague/map";
 import { UnboxedOper, Workbook } from "../../ext/calc";
 
 /**
@@ -6,13 +6,13 @@ import { UnboxedOper, Workbook } from "../../ext/calc";
  * This subclass adds basic storage to an IMapView using "row,col" as the key.
  */
 export class CollaborativeWorkbook extends Workbook {
-    private readonly cellText: types.IMapView;
+    private readonly cellText: map.IMapView;
 
     /**
      * Constructs a new Workbook with the prescribed dimensions, optionally initializing it
      * with a jagged 2D array of cell values as pre-parsed strings.
      */
-    constructor(cellText: types.IMapView, numRows: number, numCols: number, init?: string[][]) {
+    constructor(cellText: map.IMapView, numRows: number, numCols: number, init?: string[][]) {
         const existingRows = cellText.get("numRows");
         const existingCols = cellText.get("numCols");
 

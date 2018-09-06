@@ -1,5 +1,7 @@
-import { api, core, types } from "@prague/client-api";
-import { IDocumentService, ISequencedDocumentMessage } from "@prague/runtime-definitions";
+import { ICollaborativeObject } from "@prague/api-definitions";
+import { api } from "@prague/client-api";
+import { IMap, IMapView } from "@prague/map";
+import { IDocumentService, ISequencedDocumentMessage, MessageType } from "@prague/runtime-definitions";
 import { nativeTextAnalytics, textAnalytics } from "../intelligence";
 import { BaseWork} from "./baseWork";
 import { IWork} from "./definitions";
@@ -18,7 +20,7 @@ export class IntelWork extends BaseWork implements IWork {
             { localMinSeq: 0, encrypted: undefined, token: this.token, client: { type: "intel"} },
             this.service,
             task);
-        const insightsMap = await this.document.getRoot().wait<types.IMap>("insights");
+        const insightsMap = await this.document.getRoot().wait<IMap>("insights");
         const insightsMapView = await insightsMap.getView();
         return this.processIntelligenceWork(this.document, insightsMapView);
     }
@@ -34,17 +36,17 @@ export class IntelWork extends BaseWork implements IWork {
         this.intelligenceManager.registerService(service.factory.create(this.config.intelligence.resume));
     }
 
-    private processIntelligenceWork(doc: api.Document, insightsMap: types.IMapView): Promise<void> {
+    private processIntelligenceWork(doc: api.Document, insightsMap: IMapView): Promise<void> {
         this.intelligenceManager = new IntelligentServicesManager(doc, insightsMap);
         this.intelligenceManager.registerService(textAnalytics.factory.create(this.config.intelligence.textAnalytics));
         if (this.config.intelligence.nativeTextAnalytics.enable) {
             this.intelligenceManager.registerService(
                 nativeTextAnalytics.factory.create(this.config.intelligence.nativeTextAnalytics));
         }
-        const eventHandler = (op: ISequencedDocumentMessage, object: core.ICollaborativeObject) => {
-            if (op.type === core.ObjectOperation) {
+        const eventHandler = (op: ISequencedDocumentMessage, object: ICollaborativeObject) => {
+            if (op.type === MessageType.Operation) {
                 this.intelligenceManager.process(object);
-            } else if (op.type === core.AttachObject) {
+            } else if (op.type === MessageType.Attach) {
                 this.intelligenceManager.process(object);
             }
         };

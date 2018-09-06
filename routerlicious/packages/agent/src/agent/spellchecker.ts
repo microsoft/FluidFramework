@@ -1,8 +1,8 @@
-import { MergeTree, SharedString } from "@prague/client-api";
+import * as MergeTree from "@prague/merge-tree";
 import { ISequencedObjectMessage } from "@prague/runtime-definitions";
+import * as SharedString from "@prague/shared-string";
 
 export interface IPgMarker {
-
     tile: MergeTree.Marker;
 
     pos: number;

@@ -1,6 +1,7 @@
-import { api, types } from "@prague/client-api";
+import { api } from "@prague/client-api";
 import { controls, ui } from "@prague/client-ui";
 import * as resources from "@prague/gitresources";
+import { IMap } from "@prague/map";
 import { registerDocumentServices } from "./utils";
 
 async function loadDocument(id: string, version: resources.ICommit, token: string, client: any): Promise<api.Document> {
@@ -27,7 +28,7 @@ export async function initialize(id: string, version: resources.ICommit, token: 
     host.attach(canvas);
 }
 
-export async function fetchGraphRoot(root: types.IMap, doc: api.Document): Promise<types.IMap> {
+export async function fetchGraphRoot(root: IMap, doc: api.Document): Promise<IMap> {
     const hasGraph = await root.has("graph");
     if (!hasGraph) {
         root.set("graph", doc.createMap());

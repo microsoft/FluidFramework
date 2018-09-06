@@ -1,5 +1,4 @@
-import { core as api } from "@prague/client-api";
-import { IDocumentMessage } from "@prague/runtime-definitions";
+import { IClient, IDocumentMessage, IUser } from "@prague/runtime-definitions";
 import { Deferred } from "@prague/utils";
 import * as assert from "assert";
 import { EventEmitter } from "events";
@@ -50,8 +49,8 @@ class ProxySocketThing implements IOrdererConnectionFactory {
 
     public async connect(
         socket: IWebSocket,
-        user: api.ITenantUser,
-        client: api.IClient): Promise<IOrdererConnection> {
+        user: IUser,
+        client: IClient): Promise<IOrdererConnection> {
 
         return this.node.connect(socket, this.tenantId, this.documentId, user, client);
     }
@@ -164,8 +163,8 @@ export class RemoteNode extends EventEmitter implements IConcreteNode {
         socket: IWebSocket,
         tenantId: string,
         documentId: string,
-        user: api.ITenantUser,
-        client: api.IClient): Promise<IOrdererConnection> {
+        user: IUser,
+        client: IClient): Promise<IOrdererConnection> {
 
         const cid = this.getNextCid();
         const connectMessage: IConnectMessage = {

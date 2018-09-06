@@ -1,28 +1,27 @@
-// tslint:disable:ban-types
-import { ISequencedObjectMessage } from "@prague/runtime-definitions";
-import * as api from "../api-core";
+import { ICollaborativeObject, ICollaborativeObjectExtension } from "@prague/api-definitions";
+import { IDistributedObjectServices, IRuntime, ISequencedObjectMessage } from "@prague/runtime-definitions";
 import { SharedString } from "./sharedString";
 
-export class CollaborativeStringExtension implements api.ICollaborativeObjectExtension {
+export class CollaborativeStringExtension implements ICollaborativeObjectExtension {
     public static Type = "https://graph.microsoft.com/types/mergeTree";
 
     public type: string = CollaborativeStringExtension.Type;
 
     public async load(
-        document: api.IDocument,
+        document: IRuntime,
         id: string,
         sequenceNumber: number,
         minimumSequenceNumber: number,
         messages: ISequencedObjectMessage[],
-        services: api.IDistributedObjectServices,
-        headerOrigin: string): Promise<api.ICollaborativeObject> {
+        services: IDistributedObjectServices,
+        headerOrigin: string): Promise<ICollaborativeObject> {
 
         const collaborativeString = new SharedString(document, id, sequenceNumber, services);
         await collaborativeString.load(sequenceNumber, minimumSequenceNumber, messages, headerOrigin, services);
         return collaborativeString;
     }
 
-    public create(document: api.IDocument, id: string, options?: Object): api.ICollaborativeObject {
+    public create(document: IRuntime, id: string, options?: any): ICollaborativeObject {
         const collaborativeString = new SharedString(document, id, 0);
         collaborativeString.initializeLocal();
         return collaborativeString;

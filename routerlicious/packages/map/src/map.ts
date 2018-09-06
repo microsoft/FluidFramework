@@ -7,6 +7,7 @@ import {
     FileMode,
     IObjectMessage,
     IObjectStorageService,
+    IRuntime,
     ISequencedObjectMessage,
     ITree,
     TreeEntry,
@@ -61,10 +62,10 @@ export class CollaborativeMap extends CollaborativeObject implements IMap {
      */
     constructor(
         id: string,
-        document: api.IDocument,
+        runtime: IRuntime,
         type = MapExtension.Type) {
 
-        super(id, document, type);
+        super(id, runtime, type);
         const defaultPrepare = (op: IMapOperation, local: boolean) => Promise.resolve();
         this.serializeFilter = (key, value, valueType) => value;
 
@@ -110,7 +111,7 @@ export class CollaborativeMap extends CollaborativeObject implements IMap {
 
         this.view = new MapView(
             this,
-            this.document,
+            this.runtime,
             this.id);
     }
 
@@ -366,22 +367,20 @@ export class CollaborativeMap extends CollaborativeObject implements IMap {
         return;
     }
 
-    protected prepareCore(message: ISequencedObjectMessage): Promise<any> {
+    protected prepareCore(message: ISequencedObjectMessage, local: boolean): Promise<any> {
         if (message.type === OperationType) {
-            const local = message.clientId === this.document.clientId;
             const op: IMapOperation = message.contents;
             if (this.messageHandler.has(op.type)) {
                 return this.messageHandler.get(op.type).prepare(op, local, message);
             }
         }
 
-        return this.prepareContent(message);
+        return this.prepareContent(message, local);
     }
 
-    protected processCore(message: ISequencedObjectMessage, context: any) {
+    protected processCore(message: ISequencedObjectMessage, local: boolean, context: any) {
         let handled = false;
         if (message.type === OperationType) {
-            const local = message.clientId === this.document.clientId;
             const op: IMapOperation = message.contents;
             if (this.messageHandler.has(op.type)) {
                 this.messageHandler.get(op.type).process(op, context, local, message);
@@ -390,7 +389,7 @@ export class CollaborativeMap extends CollaborativeObject implements IMap {
         }
 
         if (!handled) {
-            this.processContent(message, context);
+            this.processContent(message, local, context);
         }
     }
 
@@ -407,14 +406,14 @@ export class CollaborativeMap extends CollaborativeObject implements IMap {
         return;
     }
 
-    protected async prepareContent(message: ISequencedObjectMessage): Promise<any> {
+    protected async prepareContent(message: ISequencedObjectMessage, local: boolean): Promise<any> {
         return;
     }
 
     /**
      * Processes a content message
      */
-    protected processContent(message: ISequencedObjectMessage, context: any) {
+    protected processContent(message: ISequencedObjectMessage, local: boolean, context: any) {
         return;
     }
 

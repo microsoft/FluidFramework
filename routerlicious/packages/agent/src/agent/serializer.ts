@@ -1,4 +1,5 @@
 import { core } from "@prague/client-api";
+import { IDeltaManager } from "@prague/loader";
 import { ISequencedDocumentMessage } from "@prague/runtime-definitions";
 import * as assert from "assert";
 import { EventEmitter } from "events";
@@ -17,6 +18,15 @@ interface IOpSnapshotDetails {
     required: boolean;
 }
 
+// Temporary measure until we swap to use the loader/runtime
+export interface ISnapshotDocument {
+    id: string;
+
+    deltaManager: IDeltaManager;
+
+    snapshot(message: string): Promise<void>;
+}
+
 /**
  * Mananges snapshot creation for a distributed document
  */
@@ -31,7 +41,7 @@ export class Serializer extends EventEmitter {
     private snapshotting = false;
 
     constructor(
-        private document: core.IDocument,
+        private document: ISnapshotDocument,
         private idleTime: number,
         private maxTimeWithoutSnapshot: number,
         private retryTime: number,

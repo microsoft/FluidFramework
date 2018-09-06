@@ -1,16 +1,14 @@
 // tslint:disable:ban-types
 import * as agent from "@prague/agent";
-import {
-    api as API,
-    core,
-    map as DistributedMap,
-    MergeTree,
-    SharedString,
-    types,
-} from "@prague/client-api";
+import { api as API } from "@prague/client-api";
 import { controls, ui } from "@prague/client-ui";
 import * as resources from "@prague/gitresources";
+import * as DistributedMap from "@prague/map";
+import * as MergeTree from "@prague/merge-tree";
+import { IClient } from "@prague/runtime-definitions";
+import * as SharedString from "@prague/shared-string";
 import * as socketStorage from "@prague/socket-storage";
+import { IStream } from "@prague/stream";
 // tslint:disable-next-line:no-var-requires
 const performanceNow = require("performance-now");
 import * as request from "request";
@@ -36,15 +34,15 @@ function downloadRawText(textUrl: string): Promise<string> {
     });
 }
 
-async function getInsights(map: types.IMap, id: string): Promise<types.IMap> {
-    const insights = await map.wait<types.IMap>("insights");
-    return insights.wait<types.IMap>(id);
+async function getInsights(map: DistributedMap.IMap, id: string): Promise<DistributedMap.IMap> {
+    const insights = await map.wait<DistributedMap.IMap>("insights");
+    return insights.wait<DistributedMap.IMap>(id);
 }
 
 async function addTranslation(document: API.Document, id: string, language: string): Promise<void> {
     // Create the translations map
-    const insights = await document.getRoot().wait<types.IMap>("insights");
-    const view = await (await insights.wait<types.IMap>(id)).getView();
+    const insights = await document.getRoot().wait<DistributedMap.IMap>("insights");
+    const view = await (await insights.wait<DistributedMap.IMap>(id)).getView();
     if (!document.existing) {
         view.set("translations", undefined, DistributedMap.DistributedSetValueType.Name);
     }
@@ -102,7 +100,7 @@ async function loadDocument(
     const collabDoc = await API.load(id, { blockUpdateMarkers: true, client: config.client, token }, version, connect);
 
     // Register to run task only if the client type is browser.
-    const client = config.client as core.IClient;
+    const client = config.client as IClient;
     if (client && client.type === "browser") {
         agent.registerToWork(collabDoc, client, token, config);
     }
@@ -171,7 +169,7 @@ async function loadDocument(
         sharedString,
         inkPlane,
         image,
-        root.get("pageInk") as types.IStream,
+        root.get("pageInk") as IStream,
         options);
     theFlow = container.flowView;
     host.attach(container);

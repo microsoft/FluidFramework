@@ -1,9 +1,9 @@
-import * as api from "../api-core";
+import { ICollaborativeObject } from "@prague/api-definitions";
 
 /**
  * Collaborative cell interface
  */
-export interface ICell extends api.ICollaborativeObject {
+export interface ICell extends ICollaborativeObject {
     /**
      * Retrieves the cell value.
      */

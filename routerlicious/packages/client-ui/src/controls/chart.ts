@@ -1,11 +1,11 @@
-import { types } from "@prague/client-api";
+import { ICell } from "@prague/cell";
 import * as ui from "../ui";
 
 export class Chart extends ui.Component {
     private chart: any;
     private lastSize: ui.ISize = { width: -1, height: -1 };
 
-    constructor(element: HTMLDivElement, private cell: types.ICell) {
+    constructor(element: HTMLDivElement, private cell: ICell) {
         super(element);
         // tslint:disable-next-line:no-string-literal
         const Microsoft = typeof window !== "undefined" ? window["Microsoft"] : undefined;

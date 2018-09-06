@@ -1,5 +1,5 @@
 import { core as api } from "@prague/client-api";
-import { IDocumentMessage } from "@prague/runtime-definitions";
+import { IClient, IClientJoin, IDocumentMessage, IUser, MessageType } from "@prague/runtime-definitions";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import * as moniker from "moniker";
@@ -127,8 +127,8 @@ class LocalOrdererConnection implements IOrdererConnection {
         private tenantId: string,
         private documentId: string,
         public readonly clientId: string,
-        private user: api.ITenantUser,
-        private client: api.IClient) {
+        private user: IUser,
+        private client: IClient) {
 
         this.parentBranch = document.parent ? document.parent.documentId : null;
 
@@ -137,7 +137,7 @@ class LocalOrdererConnection implements IOrdererConnection {
         this.pubsub.subscribe(`client#${this.clientId}`, this.socket);
 
         // Send the connect message
-        const clientDetail: api.IClientDetail = {
+        const clientDetail: IClientJoin = {
             clientId: this.clientId,
             detail: this.client,
         };
@@ -149,7 +149,7 @@ class LocalOrdererConnection implements IOrdererConnection {
                 clientSequenceNumber: -1,
                 contents: clientDetail,
                 referenceSequenceNumber: -1,
-                type: api.ClientJoin,
+                type: MessageType.ClientJoin,
             },
             tenantId: this.tenantId,
             timestamp: Date.now(),
@@ -183,7 +183,7 @@ class LocalOrdererConnection implements IOrdererConnection {
                 clientSequenceNumber: -1,
                 contents: this.clientId,
                 referenceSequenceNumber: -1,
-                type: api.ClientLeave,
+                type: MessageType.ClientLeave,
             },
             tenantId: this.tenantId,
             timestamp: Date.now(),
@@ -309,8 +309,8 @@ export class LocalOrderer implements core.IOrderer {
 
     public async connect(
         socket: core.IWebSocket,
-        user: api.ITenantUser,
-        client: api.IClient): Promise<IOrdererConnection> {
+        user: IUser,
+        client: IClient): Promise<IOrdererConnection> {
 
         const socketSubscriber = new WebSocketSubscriber(socket);
         const orderer = this.connectInternal(socketSubscriber, user, client);
@@ -319,8 +319,8 @@ export class LocalOrderer implements core.IOrderer {
 
     public connectInternal(
         subscriber: ISubscriber,
-        user: api.ITenantUser,
-        client: api.IClient): IOrdererConnection {
+        user: IUser,
+        client: IClient): IOrdererConnection {
         const clientId = moniker.choose();
 
         // Create the connection

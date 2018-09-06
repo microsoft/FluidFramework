@@ -1,5 +1,5 @@
 import { core as api } from "@prague/client-api";
-import { IDocumentMessage, ISequencedDocumentMessage } from "@prague/runtime-definitions";
+import { IDocumentMessage, ISequencedDocumentMessage, MessageType } from "@prague/runtime-definitions";
 // tslint:disable-next-line:no-var-requires
 const hash = require("string-hash");
 import { IRawOperationMessage, ISequencedOperationMessage, RawOperationType, SequencedOperationType } from "../../core";
@@ -51,7 +51,7 @@ export class MessageFactory {
             clientSequenceNumber: this.clientSequenceNumber++,
             contents: null,
             referenceSequenceNumber,
-            type: api.NoOp,
+            type: MessageType.NoOp,
         };
         return operation;
     }
@@ -66,7 +66,7 @@ export class MessageFactory {
             clientSequenceNumber: -1,
             contents: { clientId: this.clientId },
             referenceSequenceNumber: -1,
-            type: api.ClientJoin,
+            type: MessageType.ClientJoin,
         };
 
         return this.createRawOperation(operation, timestamp, null);
@@ -77,7 +77,7 @@ export class MessageFactory {
             clientSequenceNumber: -1,
             contents: this.clientId,
             referenceSequenceNumber: -1,
-            type: api.ClientLeave,
+            type: MessageType.ClientLeave,
         };
 
         return this.createRawOperation(operation, timestamp, null);

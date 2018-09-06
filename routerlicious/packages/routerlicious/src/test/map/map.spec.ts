@@ -1,4 +1,5 @@
-import { api, map, types } from "@prague/client-api";
+import { api } from "@prague/client-api";
+import * as map from "@prague/map";
 import * as assert from "assert";
 import { generateToken } from "../../utils";
 import * as testUtils from "../testUtils";
@@ -61,7 +62,7 @@ describe("Routerlicious", () => {
         });
 
         describe("MapView", () => {
-            let view: types.IMapView;
+            let view: map.IMapView;
 
             beforeEach(async () => {
                 view = await testMap.getView();

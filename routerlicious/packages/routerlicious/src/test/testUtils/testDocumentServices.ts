@@ -1,4 +1,3 @@
-import { core as api } from "@prague/client-api";
 import * as git from "@prague/gitresources";
 import {
     IDocumentDeltaConnection,
@@ -9,6 +8,7 @@ import {
     ISequencedDocumentMessage,
     ISnapshotTree,
     ITree,
+    IUser,
 } from "@prague/runtime-definitions";
 import * as socketStorage from "@prague/socket-storage";
 import { EventEmitter } from "events";
@@ -16,7 +16,7 @@ import { EventEmitter } from "events";
 export class TestDocumentDeltaConnection extends EventEmitter implements IDocumentDeltaConnection {
     public existing: boolean;
     public parentBranch: string;
-    public user: api.ITenantUser;
+    public user: IUser;
     public clientId: string;
     public initialMessages: ISequencedDocumentMessage[] | undefined;
     public documentId: string;

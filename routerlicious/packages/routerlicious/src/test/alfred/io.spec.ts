@@ -1,5 +1,4 @@
-import { core as api } from "@prague/client-api";
-import { IDocumentMessage } from "@prague/runtime-definitions";
+import { IDocumentMessage, MessageType } from "@prague/runtime-definitions";
 import * as socketStorage from "@prague/socket-storage";
 import { Deferred } from "@prague/utils";
 import * as assert from "assert";
@@ -126,7 +125,7 @@ describe("Routerlicious", () => {
                         const message = deliKafka.getLastMessage();
                         assert.equal(message.documentId, testId);
                         assert.equal(message.operation.clientId, null);
-                        assert.equal(message.operation.type, api.ClientJoin);
+                        assert.equal(message.operation.type, MessageType.ClientJoin);
                         assert.equal(message.operation.contents.clientId, connectMessage.clientId);
                     });
 
@@ -158,7 +157,7 @@ describe("Routerlicious", () => {
                         const message = deliKafka.getMessage(1);
                         assert.equal(message.documentId, testId);
                         assert.equal(message.operation.clientId, null);
-                        assert.equal(message.operation.type, api.ClientLeave);
+                        assert.equal(message.operation.type, MessageType.ClientLeave);
                         assert.equal(message.operation.contents, connectMessage.clientId);
                     });
                 });

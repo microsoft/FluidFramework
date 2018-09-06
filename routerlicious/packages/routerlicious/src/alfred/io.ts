@@ -1,6 +1,6 @@
 import * as agent from "@prague/agent";
 import { core as api } from "@prague/client-api";
-import { IDocumentMessage } from "@prague/runtime-definitions";
+import { IDocumentMessage, ITokenClaims } from "@prague/runtime-definitions";
 import * as socketStorage from "@prague/socket-storage";
 import * as jwt from "jsonwebtoken";
 import * as winston from "winston";
@@ -25,7 +25,7 @@ export function register(
 
             // Validate token signature and claims
             const token = message.token;
-            const claims = jwt.decode(token) as api.ITokenClaims;
+            const claims = jwt.decode(token) as ITokenClaims;
             if (claims.documentId !== message.id || claims.tenantId !== message.tenantId) {
                 return Promise.reject("Invalid claims");
             }

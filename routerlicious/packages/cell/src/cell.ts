@@ -1,13 +1,19 @@
 import {
+    CollaborativeObject,
+    ICollaborativeObject,
+    OperationType,
+} from "@prague/api-definitions";
+import {
     FileMode,
     IObjectMessage,
+    IObjectStorageService,
+    IRuntime,
     ISequencedObjectMessage,
     ITree,
     TreeEntry,
 } from "@prague/runtime-definitions";
 // tslint:disable-next-line:no-var-requires
 const hasIn = require("lodash/hasIn");
-import * as api from "../api-core";
 import { debug } from "./debug";
 import { CellExtension } from "./extension";
 import { ICell } from "./interfaces";
@@ -51,15 +57,15 @@ const snapshotFileName = "header";
 /**
  * Implementation of a cell collaborative object
  */
-export class Cell extends api.CollaborativeObject implements ICell {
+export class Cell extends CollaborativeObject implements ICell {
     private data: any;
 
     /**
      * Constructs a new collaborative cell. If the object is non-local an id and service interfaces will
      * be provided
      */
-    constructor(id: string, document: api.IDocument) {
-        super(id, document, CellExtension.Type);
+    constructor(id: string, runtime: IRuntime) {
+        super(id, runtime, CellExtension.Type);
     }
 
     /**
@@ -76,7 +82,7 @@ export class Cell extends api.CollaborativeObject implements ICell {
         let operationValue: ICellValue;
         if (hasIn(value, "__collaborativeObject__")) {
             // Convert any local collaborative objects to our internal storage format
-            const collaborativeObject = value as api.ICollaborativeObject;
+            const collaborativeObject = value as ICollaborativeObject;
             if (!this.isLocal()) {
                 collaborativeObject.attach();
             }
@@ -128,7 +134,7 @@ export class Cell extends api.CollaborativeObject implements ICell {
         if (this.data && hasIn(this.data, "__collaborativeObject__")) {
             content = {
                 type: CellValueType[CellValueType.Collaborative],
-                value: (this.data as api.ICollaborativeObject).id,
+                value: (this.data as ICollaborativeObject).id,
             };
         } else {
             content = {
@@ -164,7 +170,7 @@ export class Cell extends api.CollaborativeObject implements ICell {
         minimumSequenceNumber: number,
         messages: IObjectMessage[],
         headerOrigin: string,
-        storage: api.IObjectStorageService): Promise<void> {
+        storage: IObjectStorageService): Promise<void> {
 
         const rawContent = await storage.read(snapshotFileName);
         const content = rawContent
@@ -172,7 +178,7 @@ export class Cell extends api.CollaborativeObject implements ICell {
             : { type: CellValueType[CellValueType.Plain], value: undefined };
 
         this.data = content.type === CellValueType[CellValueType.Collaborative]
-            ? await this.document.get(content.value)
+            ? await this.runtime.getChannel(content.value)
             : content.value;
     }
 
@@ -196,19 +202,19 @@ export class Cell extends api.CollaborativeObject implements ICell {
         return;
     }
 
-    protected async prepareCore(message: ISequencedObjectMessage): Promise<any> {
-        if (message.type === api.OperationType && message.clientId !== this.document.clientId) {
+    protected async prepareCore(message: ISequencedObjectMessage, local: boolean): Promise<any> {
+        if (message.type === OperationType && !local) {
             const op: ICellOperation = message.contents;
             if (op.type === "setCell") {
                 return op.value.type === CellValueType[CellValueType.Collaborative]
-                    ? await this.document.get(op.value.value)
+                    ? await this.runtime.getChannel(op.value.value)
                     : op.value.value;
             }
         }
     }
 
-    protected processCore(message: ISequencedObjectMessage, context: any) {
-        if (message.type === api.OperationType && message.clientId !== this.document.clientId) {
+    protected processCore(message: ISequencedObjectMessage, local: boolean, context: any) {
+        if (message.type === OperationType && !local) {
             const op: ICellOperation = message.contents;
 
             switch (op.type) {

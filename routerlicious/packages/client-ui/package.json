@@ -20,8 +20,16 @@
     "typescript": "^3.0.3"
   },
   "dependencies": {
+    "@prague/api-definitions": "^0.1.0",
+    "@prague/cell": "^0.1.0",
     "@prague/client-api": "^0.1.0",
+    "@prague/graph": "^0.1.0",
+    "@prague/map": "^0.1.0",
+    "@prague/merge-tree": "^0.1.0",
+    "@prague/merge-tree-utils": "^0.1.0",
     "@prague/runtime-definitions": "^0.1.0",
+    "@prague/shared-string": "^0.1.0",
+    "@prague/stream": "^0.1.0",
     "@types/d3": "^5.0.0",
     "@types/debug": "^0.0.30",
     "@types/jquery": "^3.3.6",

@@ -1,4 +1,4 @@
-import { MergeTree } from "@prague/client-api";
+import * as MergeTree from "@prague/merge-tree";
 import * as fs from "fs";
 import * as path from "path";
 

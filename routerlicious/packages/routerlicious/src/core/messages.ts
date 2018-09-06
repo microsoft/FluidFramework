@@ -1,5 +1,4 @@
-import { core as api } from "@prague/client-api";
-import { IDocumentMessage, INack, ISequencedDocumentMessage } from "@prague/runtime-definitions";
+import { IDocumentMessage, INack, ISequencedDocumentMessage, IUser } from "@prague/runtime-definitions";
 
 // String identifying the raw operation message
 export const RawOperationType: string = "RawOperation";
@@ -43,7 +42,7 @@ export interface ISystemMessage extends IMessage {
  */
 export interface IObjectMessage extends IMessage {
     // The user who submitted the message
-    user: api.ITenantUser;
+    user: IUser;
 
     // The tenant the message is intended for
     tenantId: string;

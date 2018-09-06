@@ -199,7 +199,6 @@ export function create(
     app.use("/sharedText", routes.sharedText);
     app.use("/cell", routes.cell);
     app.use("/scribe", routes.scribe);
-    app.use("signup", routes.singUp);
     app.use("/intelligence", routes.intelligence);
     app.use("/democreator", routes.demoCreator);
     app.use("/youtubeVideo", routes.youtubeVideo);

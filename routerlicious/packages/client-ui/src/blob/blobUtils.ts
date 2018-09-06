@@ -1,8 +1,9 @@
-import { core as api, utils } from "@prague/client-api";
+import { api, core, utils } from "@prague/client-api";
 
-export async function blobUploadHandler(dragZone: HTMLDivElement,
-                                        document: api.IDocument,
-                                        blobDisplayCB: (file: api.IGenericBlob) => void) {
+export async function blobUploadHandler(
+    dragZone: HTMLDivElement,
+    document: api.Document,
+    blobDisplayCB: (file: core.IGenericBlob) => void) {
 
     dragZone.ondrop = (event) => {
         event.dataTransfer.dropEffect = "copy";
@@ -23,12 +24,12 @@ export async function blobUploadHandler(dragZone: HTMLDivElement,
     };
 }
 
-export async function urlToInclusion(path: string): Promise<api.IGenericBlob> {
+export async function urlToInclusion(path: string): Promise<core.IGenericBlob> {
     // TODO sabroner: wow this is brittle.
     const pathComponents = path.split("/");
     const fileName = pathComponents[pathComponents.length - 1];
 
-    return new Promise<api.IGenericBlob>((resolve, reject) => {
+    return new Promise<core.IGenericBlob>((resolve, reject) => {
         const xhr = new XMLHttpRequest();
         xhr.open("GET", path);
         xhr.responseType = "blob"; // force the HTTP response, response-type header to be blob
@@ -44,14 +45,14 @@ export async function urlToInclusion(path: string): Promise<api.IGenericBlob> {
     });
 }
 
-async function fileToInclusion(file: File): Promise<api.IGenericBlob> {
+async function fileToInclusion(file: File): Promise<core.IGenericBlob> {
     const arrayBufferReader = new FileReader();
 
     const baseInclusion = {
         fileName: file.name,
-        type: api.getFileBlobType(file.type),
+        type: core.getFileBlobType(file.type),
         url: "", // TODO sabroner: can I create the URL locally?
-    } as api.IGenericBlob;
+    } as core.IGenericBlob;
 
     const arrayBufferP = new Promise<Buffer>((resolve, reject) => {
         arrayBufferReader.onerror = (error) => {
@@ -68,28 +69,28 @@ async function fileToInclusion(file: File): Promise<api.IGenericBlob> {
 
     switch (baseInclusion.type) {
         case "image": {
-            const blobP = imageHandler(file, baseInclusion as api.IImageBlob);
+            const blobP = imageHandler(file, baseInclusion as core.IImageBlob);
 
             return Promise.all([arrayBufferP, blobP])
                 .then(([arrayBuffer, blob]) => {
-                    const incl: api.IImageBlob = {
+                    const incl: core.IImageBlob = {
                         content: arrayBuffer,
                         fileName: file.name,
-                        height: (blob as api.IImageBlob).height,
+                        height: (blob as core.IImageBlob).height,
                         sha: utils.gitHashFile(arrayBuffer),
                         size: arrayBuffer.byteLength,
                         type: "image",
                         url: blob.url,
-                        width: (blob as api.IImageBlob).width,
+                        width: (blob as core.IImageBlob).width,
                     };
-                    return incl as api.IImageBlob;
+                    return incl as core.IImageBlob;
                 });
         }
         case "video": {
             const blobP = videoHandler(file, baseInclusion);
             return Promise.all([arrayBufferP, blobP])
                 .then(([arrayBuffer, blob]) => {
-                    const incl: api.IVideoBlob = {
+                    const incl: core.IVideoBlob = {
                         content: arrayBuffer,
                         fileName: file.name,
                         height: blob.height,
@@ -100,13 +101,13 @@ async function fileToInclusion(file: File): Promise<api.IGenericBlob> {
                         url: blob.url,
                         width: blob.width,
                     };
-                    return incl as api.IVideoBlob;
+                    return incl as core.IVideoBlob;
                 });
         }
         default: {
             return Promise.all([arrayBufferP])
                 .then(([arrayBuffer]) => {
-                    const incl: api.IGenericBlob = {
+                    const incl: core.IGenericBlob = {
                         content: arrayBuffer,
                         fileName: file.name,
                         sha: utils.gitHashFile(arrayBuffer),
@@ -114,16 +115,16 @@ async function fileToInclusion(file: File): Promise<api.IGenericBlob> {
                         type: "generic",
                         url: baseInclusion.url,
                     };
-                    return incl as api.IGenericBlob;
+                    return incl as core.IGenericBlob;
                 });
         }
     }
 }
 
-async function imageHandler(imageFile: File, incl: api.IImageBlob): Promise<api.IImageBlob> {
+async function imageHandler(imageFile: File, incl: core.IImageBlob): Promise<core.IImageBlob> {
     const urlObjReader = new FileReader();
 
-    const urlObjP = new Promise<api.IImageBlob>((resolve, reject) => {
+    const urlObjP = new Promise<core.IImageBlob>((resolve, reject) => {
         urlObjReader.onerror = (error) => {
             urlObjReader.abort();
             reject("error: " + JSON.stringify(error));
@@ -146,10 +147,10 @@ async function imageHandler(imageFile: File, incl: api.IImageBlob): Promise<api.
     return urlObjP;
 }
 
-async function videoHandler(videoFile: File, incl: api.IVideoBlob): Promise<api.IVideoBlob> {
+async function videoHandler(videoFile: File, incl: core.IVideoBlob): Promise<core.IVideoBlob> {
     const urlObjReader = new FileReader();
 
-    const urlObjP = new Promise<api.IVideoBlob>((resolve, reject) => {
+    const urlObjP = new Promise<core.IVideoBlob>((resolve, reject) => {
         urlObjReader.onerror = (error) => {
             urlObjReader.abort();
             reject("error: " + JSON.stringify(error));

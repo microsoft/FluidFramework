@@ -3,7 +3,6 @@ import { IDocumentStorageService } from "@prague/runtime-definitions";
 import * as api from "../api-core";
 
 export interface IBlobManager {
-
     // Rehydrate a blob manager from a snapshot
     loadBlobMetadata(hashes: api.IGenericBlob[]);
 

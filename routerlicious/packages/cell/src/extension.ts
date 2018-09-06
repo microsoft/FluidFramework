@@ -1,25 +1,23 @@
-import {
-    ISequencedObjectMessage,
-} from "@prague/runtime-definitions";
-import * as api from "../api-core";
+import { ICollaborativeObjectExtension } from "@prague/api-definitions";
+import { IDistributedObjectServices, IRuntime, ISequencedObjectMessage } from "@prague/runtime-definitions";
 import { Cell } from "./cell";
 import { ICell } from "./interfaces";
 
 /**
  * The extension that defines the map
  */
-export class CellExtension implements api.ICollaborativeObjectExtension {
+export class CellExtension implements ICollaborativeObjectExtension {
     public static Type = "https://graph.microsoft.com/types/cell";
 
     public type: string = CellExtension.Type;
 
     public async load(
-        document: api.IDocument,
+        document: IRuntime,
         id: string,
         sequenceNumber: number,
         minimumSequenceNumber: number,
         messages: ISequencedObjectMessage[],
-        services: api.IDistributedObjectServices,
+        services: IDistributedObjectServices,
         headerOrigin: string): Promise<ICell> {
 
         const cell = new Cell(id, document);
@@ -27,7 +25,7 @@ export class CellExtension implements api.ICollaborativeObjectExtension {
         return cell;
     }
 
-    public create(document: api.IDocument, id: string): ICell {
+    public create(document: IRuntime, id: string): ICell {
         const cell = new Cell(id, document);
         cell.initializeLocal();
         return cell;

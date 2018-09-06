@@ -1,8 +1,8 @@
-import { core as api } from "@prague/client-api";
 import {
     IDocumentDeltaConnection,
     IDocumentMessage,
     ISequencedDocumentMessage,
+    IUser,
 } from "@prague/runtime-definitions";
 import { EventEmitter } from "events";
 
@@ -13,7 +13,7 @@ export class TestDocumentDeltaConnection extends EventEmitter implements IDocume
         public clientId: string,
         public existing: boolean,
         public parentBranch: string,
-        public user: api.ITenantUser,
+        public user: IUser,
         public initialMessages: ISequencedDocumentMessage[] | undefined) {
         super();
     }

@@ -1,10 +1,10 @@
-import { core } from "@prague/client-api";
-import { IEnvelope } from "@prague/runtime-definitions";
+import { ISnapshotDocument } from "@prague/agent";
+import { IDeltaManager, IDeltaQueue } from "@prague/loader";
 import * as utils from "@prague/utils";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 
-export class TestDeltaQueue extends EventEmitter implements core.IDeltaQueue {
+export class TestDeltaQueue extends EventEmitter implements IDeltaQueue {
     public paused: boolean;
     public length: number;
     public empty: boolean;
@@ -28,38 +28,17 @@ export class TestDeltaQueue extends EventEmitter implements core.IDeltaQueue {
     }
 }
 
-export class TestDeltaManager implements core.IDeltaManager {
+export class TestDeltaManager implements IDeltaManager {
     public inbound = new TestDeltaQueue();
 
     public outbound = new TestDeltaQueue();
 }
 
-export class TestDocument implements core.IDocument {
+export class TestDocument implements ISnapshotDocument {
     public deltaManager = new TestDeltaManager();
-    public options: any;
     public snapshotRequests = 0;
 
     constructor(public id: string, public clientId: string) {
-    }
-
-    public create(type: string, id?: string): core.ICollaborativeObject {
-        throw new Error("Method not implemented.");
-    }
-
-    public attach(object: core.ICollaborativeObject): core.IDistributedObjectServices {
-        throw new Error("Method not implemented.");
-    }
-
-    public get(id: string): Promise<core.ICollaborativeObject> {
-        throw new Error("Method not implemented.");
-    }
-
-    public getUser(): core.ITenantUser {
-        throw new Error("Method not implemented.");
-    }
-
-    public getContentModel(): core.IContentModelExtension {
-        throw new Error("Method not implemented.");
     }
 
     public snapshot(message: string): Promise<void> {
@@ -67,18 +46,6 @@ export class TestDocument implements core.IDocument {
         return this.snapshotCore(message);
     }
 
-    public uploadBlob(blob: core.IGenericBlob): Promise<core.IGenericBlob> {
-        return null;
-    }
-
-    public getBlob(sha: string): Promise<core.IGenericBlob> {
-        return null;
-    }
-
     // Allow derived classes to override the snapshot processing
     public snapshotCore = (message: string) => Promise.resolve();
-
-    public submitObjectMessage(envelope: IEnvelope) {
-        throw new Error("Method not implemented.");
-    }
 }

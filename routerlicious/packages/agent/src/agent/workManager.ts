@@ -1,4 +1,4 @@
-import { MergeTree } from "@prague/client-api";
+import * as MergeTree from "@prague/merge-tree";
 import { EventEmitter } from "events";
 import { AgentLoader, IAgent } from "./agentLoader";
 import { IDocumentServiceFactory, IDocumentTaskInfo, IWork, IWorkManager } from "./definitions";

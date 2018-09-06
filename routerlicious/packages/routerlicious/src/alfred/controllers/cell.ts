@@ -1,4 +1,5 @@
-import { api, types } from "@prague/client-api";
+import { ICell } from "@prague/cell";
+import { api } from "@prague/client-api";
 import * as resources from "@prague/gitresources";
 import * as $ from "jquery";
 import { registerDocumentServices } from "./utils";
@@ -11,7 +12,7 @@ async function loadDocument(id: string, version: resources.ICommit, token: strin
     return document;
 }
 
-async function updateOrCreateValue(cell: types.ICell, container: JQuery, doc: api.Document) {
+async function updateOrCreateValue(cell: ICell, container: JQuery, doc: api.Document) {
 
     // Initially cell is empty.
     const emptyCell = await cell.empty();
@@ -41,7 +42,7 @@ async function updateOrCreateValue(cell: types.ICell, container: JQuery, doc: ap
 /**
  * Displays the actual value and listen for updates.
  */
-async function displayCellValue(cell: types.ICell, container: JQuery, doc: api.Document) {
+async function displayCellValue(cell: ICell, container: JQuery, doc: api.Document) {
 
     const value = $("<div></div>");
 
@@ -58,7 +59,7 @@ async function displayCellValue(cell: types.ICell, container: JQuery, doc: api.D
 /**
  * Displays the cell
  */
-async function displayCell(parentElement: JQuery, cell: types.ICell, doc: api.Document) {
+async function displayCell(parentElement: JQuery, cell: ICell, doc: api.Document) {
     const header = $(`<h2>${cell.id}</h2>`);
     parentElement.append(header);
 
@@ -82,12 +83,12 @@ async function displayCell(parentElement: JQuery, cell: types.ICell, doc: api.Do
 /**
  * Add another cell to the cell.
  */
-function addAnotherCell(parent: JQuery, cell: types.ICell, element1: JQuery, element2: JQuery, doc: api.Document) {
+function addAnotherCell(parent: JQuery, cell: ICell, element1: JQuery, element2: JQuery, doc: api.Document) {
     element1.remove();
     element2.remove();
 
     const childCell = $(`<div></div>`);
-    const newCell = doc.createCell() as types.ICell;
+    const newCell = doc.createCell() as ICell;
     parent.append(childCell);
     cell.set(newCell);
 
@@ -97,7 +98,7 @@ function addAnotherCell(parent: JQuery, cell: types.ICell, element1: JQuery, ele
 /**
  * Randomly changes the values in the cell
  */
-function randomizeCell(cell: types.ICell, element1: JQuery, element2: JQuery) {
+function randomizeCell(cell: ICell, element1: JQuery, element2: JQuery) {
     element1.remove();
     element2.remove();
     const keys = ["foo", "bar", "baz", "binky", "winky", "twinkie"];
@@ -113,9 +114,9 @@ export async function load(id: string, version: resources.ICommit, token: string
     const doc = await loadDocument(id, version, token, config.client);
     const root = doc.getRoot();
 
-    let cell: types.ICell;
+    let cell: ICell;
     if (await root.has("cell")) {
-        cell = await root.get<types.ICell>("cell");
+        cell = await root.get<ICell>("cell");
     } else {
         cell = doc.createCell();
         root.set("cell", cell);

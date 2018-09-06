@@ -1,4 +1,4 @@
-import { MergeTree } from "@prague/client-api";
+import * as MergeTree from "@prague/merge-tree";
 import ReferenceType = MergeTree.ReferenceType;
 
 import { Box, Formula, Sheetlet, Slider } from ".";

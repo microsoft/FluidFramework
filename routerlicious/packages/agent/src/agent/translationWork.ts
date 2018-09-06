@@ -1,5 +1,8 @@
-import { core, map, MergeTree, SharedString, types } from "@prague/client-api";
+import * as core from "@prague/api-definitions";
+import * as map from "@prague/map";
+import * as MergeTree from "@prague/merge-tree";
 import { IDocumentService, ISequencedDocumentMessage, ISequencedObjectMessage } from "@prague/runtime-definitions";
+import * as SharedString from "@prague/shared-string";
 import { EventEmitter } from "events";
 import * as request from "request";
 import { Builder, parseString } from "xml2js";
@@ -64,13 +67,13 @@ async function translate(from: string, to: string, text: string[]): Promise<stri
 }
 
 class Translator extends EventEmitter {
-    private view: types.IMapView;
+    private view: map.IMapView;
     private pendingTranslation = false;
     private translating = false;
     private translationTimer = null;
 
     constructor(
-        private insights: types.IMap,
+        private insights: map.IMap,
         private sharedString: SharedString.SharedString) {
             super();
     }
@@ -81,7 +84,7 @@ class Translator extends EventEmitter {
 
     public async start(): Promise<void> {
         await this.insights.wait(this.sharedString.id);
-        const typeInsights = await this.insights.get(this.sharedString.id) as types.IMap;
+        const typeInsights = await this.insights.get(this.sharedString.id) as map.IMap;
         this.view = await typeInsights.getView();
 
         this.sharedString.on("op", (op: ISequencedObjectMessage) => {
@@ -199,7 +202,7 @@ export class TranslationWork extends BaseWork implements IWork {
 
         // Wait for the insights
         await this.document.getRoot().wait("insights");
-        const insights = await this.document.getRoot().get("insights") as types.IMap;
+        const insights = await this.document.getRoot().get("insights") as map.IMap;
         return this.trackEvents(insights);
     }
 
@@ -216,7 +219,7 @@ export class TranslationWork extends BaseWork implements IWork {
         await super.stop();
     }
 
-    private trackEvents(insights: types.IMap): Promise<void> {
+    private trackEvents(insights: map.IMap): Promise<void> {
         const eventHandler = (op: ISequencedDocumentMessage, object: core.ICollaborativeObject) => {
             if (object && object.type === SharedString.CollaborativeStringExtension.Type) {
                 if (!this.translationSet.has(object)) {

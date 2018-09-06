@@ -1,5 +1,5 @@
-import { api, core } from "@prague/client-api";
-import { IDocumentService } from "@prague/runtime-definitions";
+import { api } from "@prague/client-api";
+import { Browser, IDocumentService } from "@prague/runtime-definitions";
 import { EventEmitter } from "events";
 import { IDocumentTaskInfo } from "./definitions";
 import { runAfterWait } from "./utils";
@@ -24,7 +24,7 @@ export class BaseWork extends EventEmitter {
 
     public async loadDocument(options: any, service: IDocumentService, task: string): Promise<void> {
         this.task = task;
-        this.document = await api.load(this.id, options, null, true, api.defaultRegistry, service);
+        this.document = await api.load(this.id, options, null, true, service);
 
         await runAfterWait(
             !this.document.isConnected,
@@ -113,7 +113,7 @@ export class BaseWork extends EventEmitter {
     // A leader is any browser client connected to the document.
     private noLeader(): boolean {
         for (const client of this.document.getClients()) {
-            if (!client[1] || client[1].type === core.Browser) {
+            if (!client[1] || client[1].type === Browser) {
                 return false;
             }
         }
