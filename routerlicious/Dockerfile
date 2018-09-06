@@ -11,16 +11,23 @@ WORKDIR /usr/src/server
 
 # Copy over the package and package-lock and install prior to the other code to optimize Docker's file system cache on rebuilds
 COPY *.json ./
-COPY packages/api-definitions/package*.json packages/api-definitions/
 COPY packages/agent/package*.json packages/agent/
+COPY packages/api-definitions/package*.json packages/api-definitions/
+COPY packages/cell/package*.json packages/cell/
 COPY packages/client-api/package*.json packages/client-api/
 COPY packages/client-ui/package*.json packages/client-ui/
 COPY packages/gitresources/package*.json packages/gitresources/
+COPY packages/graph/package*.json packages/graph/
 COPY packages/loader/package*.json packages/loader/
+COPY packages/map/package*.json packages/map/
+COPY packages/merge-tree/package*.json packages/merge-tree/
+COPY packages/merge-tree-utils/package*.json packages/merge-tree-utils/
 COPY packages/routerlicious/package*.json packages/routerlicious/
 COPY packages/runtime-definitions/package*.json packages/runtime-definitions/
 COPY packages/services-client/package*.json packages/services-client/
+COPY packages/shared-string/package*.json packages/shared-string/
 COPY packages/socket-storage/package*.json packages/socket-storage/
+COPY packages/stream/package*.json packages/stream/
 COPY packages/utils/package*.json packages/utils/
 COPY packages/word/package*.json packages/word/
 
@@ -41,7 +48,7 @@ RUN apk del .gyp
 
 # And now copy over our actual code and build
 COPY . .
-RUN npm run build
+RUN npm run build:full
 
 # Don't run as root user
 USER node
