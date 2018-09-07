@@ -1,6 +1,7 @@
 // The main app code
 import { api, core } from "@prague/client-api";
 import { IMap, IMapView } from "@prague/map";
+import { IGenericBlob } from "@prague/runtime-definitions";
 import { IColor } from "@prague/stream";
 import { blobUploadHandler } from "../blob";
 import * as ui from "../ui";
@@ -210,11 +211,11 @@ export class FlexView extends ui.Component {
         this.resizeCore(this.size);
     }
 
-    private async render(incl: core.IGenericBlob) {
+    private async render(incl: IGenericBlob) {
         this.renderFunc(incl, this.ink);
     }
 
-    private renderFunc = async (incl: core.IGenericBlob, ink: InkCanvas) => {
+    private renderFunc = async (incl: IGenericBlob, ink: InkCanvas) => {
 
         if (incl.type === "image") {
             if (document.getElementById(incl.sha) === null) { // Handle blob Processed

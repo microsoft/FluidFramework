@@ -24,6 +24,9 @@ export enum MessageType {
 
     // Channel operation.
     Operation = "objOp",
+
+    // Forced snapshot
+    Save = "save",
 }
 
 /**
@@ -168,4 +171,10 @@ export interface IEnvelope {
 
     // The contents of the envelope
     contents: any;
+}
+
+export interface ISave {
+    type: string;
+
+    message: string;
 }

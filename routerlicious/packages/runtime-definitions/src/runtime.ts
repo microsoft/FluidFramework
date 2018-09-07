@@ -1,6 +1,8 @@
+import { IGenericBlob } from "./blobs";
 import { IChannel } from "./chaincode";
 import { IDistributedObjectServices } from "./channel";
-import { IDeltaManager } from "./document";
+import { IQuorum } from "./consensus";
+import { IDeltaManager } from "./deltas";
 import { ISequencedDocumentMessage } from "./protocol";
 import { IUser } from "./users";
 
@@ -55,17 +57,19 @@ export interface IRuntime {
     /**
      * Snapshots the current runtime
      */
-    snapshot(): Promise<void>;
+    snapshot(message: string): Promise<void>;
 
     /**
      * Triggers a message to force a snapshot
      */
-    save(tag: string);
+    save(message: string);
 
     /**
      * Terminates the runtime and closes the document
      */
     close();
+
+    hasUnackedOps(): boolean;
 
     // Blob related calls
 

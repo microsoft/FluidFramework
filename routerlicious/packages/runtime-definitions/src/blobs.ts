@@ -1,11 +1,3 @@
-export const SAVE = "save";
-
-export interface ICollaborativeObjectSave {
-    type: string;
-
-    message: string;
-}
-
 export type IGenericBlob = IDataBlob | IImageBlob | IVideoBlob;
 
 export interface IBaseBlob {

@@ -1,10 +1,10 @@
 // tslint:disable:no-bitwise whitespace align switch-default no-string-literal ban-types no-angle-bracket-type-assertion
 import { ICollaborativeObject } from "@prague/api-definitions";
-import { api, core } from "@prague/client-api";
+import { api } from "@prague/client-api";
 import * as types from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
 import { findRandomWord } from "@prague/merge-tree-utils";
-import { ISequencedObjectMessage, IUser } from "@prague/runtime-definitions";
+import { IGenericBlob, ISequencedObjectMessage, IUser } from "@prague/runtime-definitions";
 import * as SharedString from "@prague/shared-string";
 import * as assert from "assert";
 // tslint:disable-next-line:no-var-requires
@@ -3323,7 +3323,7 @@ export interface IListReferenceDoc extends IReferenceDoc {
     selectionIndex: number;
 }
 
-export function makeBlobRef(blob: core.IGenericBlob, tenant: string, cb: (irdoc: IReferenceDoc) => void) {
+export function makeBlobRef(blob: IGenericBlob, tenant: string, cb: (irdoc: IReferenceDoc) => void) {
     switch (blob.type) {
         case "image": {
             const image = document.createElement("img");
@@ -3470,7 +3470,7 @@ export class FlowView extends ui.Component {
         blobUploadHandler(
             element,
             this.collabDocument,
-            (incl: core.IGenericBlob) => this.insertBlobInternal(incl),
+            (incl: IGenericBlob) => this.insertBlobInternal(incl),
         );
 
         // TODO: Should insert a workbook into the document on demand, implement the ability
@@ -4815,7 +4815,7 @@ export class FlowView extends ui.Component {
             });
     }
 
-    private insertBlobInternal(blob: core.IGenericBlob) {
+    private insertBlobInternal(blob: IGenericBlob) {
         this.collabDocument.getBlob(blob.sha)
             .then((finalBlob) => {
                 makeBlobRef(finalBlob, this.collabDocument.tenantId, (irdoc) => {

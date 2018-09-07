@@ -5,7 +5,6 @@ import { EventEmitter } from "events";
 import { debug } from "./debug";
 import { DeltaConnection, IConnectionDetails } from "./deltaConnection";
 import { DeltaQueue } from "./deltaQueue";
-import { IDeltaManager, IDeltaQueue } from "./deltas";
 
 // tslint:disable:no-var-requires
 const cloneDeep = require("lodash/cloneDeep");
@@ -38,7 +37,7 @@ export interface IDeltaHandlerStrategy {
  * Manages the flow of both inbound and outbound messages. This class ensures that collaborative objects receive delta
  * messages in order regardless of possible network conditions or timings causing out of order delivery.
  */
-export class DeltaManager extends EventEmitter implements IDeltaManager {
+export class DeltaManager extends EventEmitter implements runtime.IDeltaManager {
     public shouldUpdateSequenceNumber = false;
 
     private pending: runtime.ISequencedDocumentMessage[] = [];
@@ -72,11 +71,11 @@ export class DeltaManager extends EventEmitter implements IDeltaManager {
     private handler: IDeltaHandlerStrategy;
     private deltaStorageP: Promise<runtime.IDocumentDeltaStorageService>;
 
-    public get inbound(): IDeltaQueue {
+    public get inbound(): runtime.IDeltaQueue {
         return this._inbound;
     }
 
-    public get outbound(): IDeltaQueue {
+    public get outbound(): runtime.IDeltaQueue {
         return this._outbound;
     }
 

@@ -1,6 +1,5 @@
 import { core } from "@prague/client-api";
-import { IDeltaManager } from "@prague/loader";
-import { ISequencedDocumentMessage } from "@prague/runtime-definitions";
+import { IDeltaManager, ISequencedDocumentMessage } from "@prague/runtime-definitions";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 

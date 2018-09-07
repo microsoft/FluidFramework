@@ -4,12 +4,15 @@ import {
     IChaincode,
     IChaincodeModule,
     IChannel,
+    IDeltaManager,
     IDistributedObjectServices,
     IDocumentStorageService,
     IEnvelope,
+    IGenericBlob,
     IObjectAttributes,
     IObjectStorageService,
     IPlatform,
+    IQuorum,
     IRuntime,
     ISequencedDocumentMessage,
     ISnapshotTree,
@@ -81,6 +84,11 @@ export class Runtime implements IRuntime {
 
         return runtime;
     }
+
+    public tenantId: string;
+    public parentBranch: string;
+    public connected: boolean;
+    public deltaManager: IDeltaManager;
 
     private channels = new Map<string, IChannelState>();
     private channelsDeferred = new Map<string, Deferred<IChannel>>();
@@ -280,6 +288,34 @@ export class Runtime implements IRuntime {
             origin);
 
         return value;
+    }
+
+    public getQuorum(): IQuorum {
+        throw new Error("Method not implemented.");
+    }
+
+    public hasUnackedOps(): boolean {
+        throw new Error("Method not implemented.");
+    }
+
+    public snapshot(message: string): Promise<void> {
+        throw new Error("Method not implemented.");
+    }
+
+    public save(tag: string) {
+        throw new Error("Method not implemented.");
+    }
+
+    public uploadBlob(file: IGenericBlob): Promise<IGenericBlob> {
+        throw new Error("Method not implemented.");
+    }
+
+    public getBlob(sha: string): Promise<IGenericBlob> {
+        throw new Error("Method not implemented.");
+    }
+
+    public getBlobMetadata(): Promise<IGenericBlob[]> {
+        throw new Error("Method not implemented.");
     }
 
     public async close(): Promise<any> {

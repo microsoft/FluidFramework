@@ -5,7 +5,9 @@ import * as pragueLoader from "@prague/loader";
 import { IMap, MapExtension } from "@prague/map";
 import {
     IClient,
+    IDeltaManager,
     IDocumentService,
+    IGenericBlob,
     IPlatform,
     IRuntime,
     IUser,
@@ -15,7 +17,6 @@ import * as stream from "@prague/stream";
 import { Deferred } from "@prague/utils";
 import { EventEmitter } from "events";
 import * as uuid from "uuid/v4";
-import { IGenericBlob } from "../api-core";
 import { CodeLoader } from "./codeLoader";
 import { debug } from "./debug";
 import { Platform } from "./platform";
@@ -60,7 +61,7 @@ export class Document extends EventEmitter {
         return this.runtime.tenantId;
     }
 
-    public get deltaManager(): pragueLoader.IDeltaManager {
+    public get deltaManager(): IDeltaManager {
         return this.runtime.deltaManager;
     }
 

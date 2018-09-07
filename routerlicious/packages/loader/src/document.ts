@@ -4,6 +4,7 @@ import {
     IChaincode,
     IClientJoin,
     ICodeLoader,
+    IDeltaManager,
     IDocumentAttributes,
     IDocumentService,
     IDocumentStorageService,
@@ -21,7 +22,6 @@ import { EventEmitter } from "events";
 import { debug } from "./debug";
 import { IConnectionDetails } from "./deltaConnection";
 import { DeltaManager } from "./deltaManager";
-import { IDeltaManager } from "./deltas";
 import { Quorum } from "./quorum";
 import { Runtime } from "./runtime";
 import { readAndParse } from "./utils";

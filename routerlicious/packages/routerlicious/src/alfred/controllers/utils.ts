@@ -1,5 +1,5 @@
 import { api } from "@prague/client-api";
-import { IDeltaQueue } from "@prague/loader";
+import { IDeltaQueue } from "@prague/runtime-definitions";
 import * as socketStorage from "@prague/socket-storage";
 import * as assert from "assert";
 import { BrowserErrorTrackingService } from "./errorTracking";
