@@ -180,7 +180,7 @@ export class DeliLambda implements IPartitionLambda {
         }
 
         // Cases only applies to non-integration messages
-        if (message.operation.type !== api.Integrate) {
+        if (message.operation.type !== MessageType.Integrate) {
             // Handle client join/leave and fork messages.
             if (!message.clientId) {
                 if (message.operation.type === MessageType.ClientLeave) {
@@ -195,7 +195,7 @@ export class DeliLambda implements IPartitionLambda {
                         this.minimumSequenceNumber,
                         message.timestamp,
                         true);
-                } else if (message.operation.type === api.Fork) {
+                } else if (message.operation.type === MessageType.Fork) {
                     winston.info(`Fork ${message.documentId} -> ${message.operation.contents.name}`);
                 }
             } else {
@@ -226,7 +226,7 @@ export class DeliLambda implements IPartitionLambda {
 
         let origin: IBranchOrigin;
 
-        if (message.operation.type === api.Integrate) {
+        if (message.operation.type === MessageType.Integrate) {
             // Branch operation is the original message
             const branchOperation = message.operation.contents as core.ISequencedOperationMessage;
             const branchDocumentMessage = branchOperation.operation as ISequencedDocumentMessage;
@@ -337,13 +337,13 @@ export class DeliLambda implements IPartitionLambda {
     }
 
     private isDuplicate(message: core.IRawOperationMessage): boolean {
-        if (message.operation.type !== api.Integrate && !message.clientId) {
+        if (message.operation.type !== MessageType.Integrate && !message.clientId) {
             return false;
         }
 
         let clientId: string;
         let clientSequenceNumber: number;
-        if (message.operation.type === api.Integrate) {
+        if (message.operation.type === MessageType.Integrate) {
             clientId = getBranchClientId(message.operation.contents.documentId);
             clientSequenceNumber = message.operation.contents.operation.sequenceNumber;
         } else {

@@ -1,4 +1,3 @@
-import { core as api } from "@prague/client-api";
 import { IDocumentMessage, ISequencedDocumentMessage, MessageType } from "@prague/runtime-definitions";
 // tslint:disable-next-line:no-var-requires
 const hash = require("string-hash");
@@ -104,7 +103,7 @@ export class MessageFactory {
                 message: "Test Save",
             },
             referenceSequenceNumber: 0,
-            type: api.SaveOperation,
+            type: MessageType.Save,
         };
 
         const sequencedOperation: ISequencedDocumentMessage = {

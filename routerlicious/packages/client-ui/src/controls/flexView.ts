@@ -1,7 +1,7 @@
 // The main app code
-import { api, core } from "@prague/client-api";
+import { api } from "@prague/client-api";
 import { IMap, IMapView } from "@prague/map";
-import { IGenericBlob } from "@prague/runtime-definitions";
+import { IGenericBlob, MessageType } from "@prague/runtime-definitions";
 import { IColor } from "@prague/stream";
 import { blobUploadHandler } from "../blob";
 import * as ui from "../ui";
@@ -111,11 +111,11 @@ export class FlexView extends ui.Component {
 
     private addBlobListeners(doc: api.Document) {
 
-        doc.on(core.BlobPrepared, (message) => {
+        doc.on(MessageType.BlobPrepared, (message) => {
             this.render(message);
         });
 
-        doc.on(core.BlobUploaded, async (message) => {
+        doc.on(MessageType.BlobUploaded, async (message) => {
             const blob = await doc.getBlob(message);
             this.render(blob);
         });

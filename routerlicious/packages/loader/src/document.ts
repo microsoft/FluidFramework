@@ -207,8 +207,7 @@ export class Document extends EventEmitter {
                     attributes.minimumSequenceNumber,
                     (type, contents) => this.submitMessage(type, contents),
                     (message) => this.snapshot(message),
-                    () => this.close(),
-                    () => this.hasUnackedOps());
+                    () => this.close());
 
                 // given the load is async and we haven't set the runtime variable it's possible we missed the change
                 // of value. Make a call to the runtime to change the state to pick up the latest.
@@ -263,6 +262,18 @@ export class Document extends EventEmitter {
     public on(event: "pong" | "processTime", listener: (latency: number) => void): this;
     public on(event: string | symbol, listener: (...args: any[]) => void): this {
         return super.on(event, listener);
+    }
+
+    public snapshot(message: string): Promise<void> {
+        throw new Error("Not implementd");
+    }
+
+    public close() {
+        if (this._deltaManager) {
+            this._deltaManager.close();
+        }
+
+        this.removeAllListeners();
     }
 
     private loadQuorum(storage: IDocumentStorageService, tree: ISnapshotTree): Quorum {
@@ -336,7 +347,9 @@ export class Document extends EventEmitter {
             null,
             this.id,
             this._deltaManager.minimumSequenceNumber,
-            (type, message) => this.submitMessage(type, message));
+            (type, contents) => this.submitMessage(type, contents),
+            (message) => this.snapshot(message),
+            () => this.close());
         this.runtime = newRuntime;
 
         // Start up the new runtime

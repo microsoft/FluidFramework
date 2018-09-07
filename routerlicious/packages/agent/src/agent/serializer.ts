@@ -1,5 +1,4 @@
-import { core } from "@prague/client-api";
-import { IDeltaManager, ISequencedDocumentMessage } from "@prague/runtime-definitions";
+import { IDeltaManager, ISequencedDocumentMessage, MessageType } from "@prague/runtime-definitions";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 
@@ -109,7 +108,7 @@ export class Serializer extends EventEmitter {
     }
 
     private getOpSnapshotDetails(op: ISequencedDocumentMessage): IOpSnapshotDetails {
-        if (op.type === core.SaveOperation) {
+        if (op.type === MessageType.Save) {
             // Forced snapshot.
             return {
                 message: `;${op.clientId}: ${op.contents.message}`,

@@ -20,9 +20,9 @@ import {
     IUser,
     MessageType,
 } from "@prague/runtime-definitions";
-import { Deferred } from "@prague/utils";
+import { Deferred, gitHashFile } from "@prague/utils";
 import * as assert from "assert";
-import { BlobManager, gitHashFile } from "./blobManager";
+import { BlobManager } from "./blobManager";
 import { ChannelDeltaConnection } from "./channelDeltaConnection";
 import { ChannelStorageService } from "./channelStorageService";
 import { LocalChannelStorageService } from "./localChannelStorageService";
@@ -59,8 +59,7 @@ export class Runtime implements IRuntime {
         minimumSequenceNumber: number,
         submitFn: (type: MessageType, contents: any) => void,
         snapshotFn: (message: string) => Promise<void>,
-        closeFn: () => void,
-        hasUnackedOpsFn: () => boolean) {
+        closeFn: () => void) {
 
         const runtime = new Runtime(
             tenantId,
@@ -78,8 +77,7 @@ export class Runtime implements IRuntime {
             connectionState,
             submitFn,
             snapshotFn,
-            closeFn,
-            hasUnackedOpsFn);
+            closeFn);
 
         if (tree) {
             Object.keys(tree.trees).forEach((path) => {
@@ -126,8 +124,7 @@ export class Runtime implements IRuntime {
         private connectionState: ConnectionState,
         private submitFn: (type: MessageType, contents: any) => void,
         private snapshotFn: (message: string) => Promise<void>,
-        private closeFn: () => void,
-        private hasUnackedOpsFn: () => boolean) {
+        private closeFn: () => void) {
     }
 
     public getChannel(id: string): Promise<IChannel> {
@@ -325,7 +322,13 @@ export class Runtime implements IRuntime {
     public hasUnackedOps(): boolean {
         this.verifyNotClosed();
 
-        return this.hasUnackedOpsFn();
+        for (const state of this.channels.values()) {
+            if (state.object.dirty) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public snapshot(message: string): Promise<void> {

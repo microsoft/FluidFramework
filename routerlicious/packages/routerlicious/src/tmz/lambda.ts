@@ -1,4 +1,5 @@
 import { core as api } from "@prague/client-api";
+import { MessageType } from "@prague/runtime-definitions";
 import * as winston from "winston";
 import * as core from "../core";
 import { IContext } from "../kafka-service/lambdas";
@@ -34,7 +35,7 @@ export class TmzLambda extends SequencedLambda {
         if (baseMessage.type === core.SequencedOperationType) {
             const sequencedMessage = baseMessage as core.ISequencedOperationMessage;
             // Only process "Help" messages.
-            if (sequencedMessage.operation.type === api.RemoteHelp) {
+            if (sequencedMessage.operation.type === MessageType.RemoteHelp) {
                 await this.trackDocument(
                     sequencedMessage.operation.clientId,
                     sequencedMessage.tenantId,

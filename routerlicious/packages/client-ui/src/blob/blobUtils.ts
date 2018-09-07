@@ -1,5 +1,6 @@
-import { api, utils } from "@prague/client-api";
+import { api } from "@prague/client-api";
 import { getFileBlobType, IGenericBlob, IImageBlob, IVideoBlob } from "@prague/runtime-definitions";
+import { gitHashFile } from "@prague/utils";
 
 export async function blobUploadHandler(
     dragZone: HTMLDivElement,
@@ -78,7 +79,7 @@ async function fileToInclusion(file: File): Promise<IGenericBlob> {
                         content: arrayBuffer,
                         fileName: file.name,
                         height: (blob as IImageBlob).height,
-                        sha: utils.gitHashFile(arrayBuffer),
+                        sha: gitHashFile(arrayBuffer),
                         size: arrayBuffer.byteLength,
                         type: "image",
                         url: blob.url,
@@ -96,7 +97,7 @@ async function fileToInclusion(file: File): Promise<IGenericBlob> {
                         fileName: file.name,
                         height: blob.height,
                         length: blob.length,
-                        sha: utils.gitHashFile(arrayBuffer),
+                        sha: gitHashFile(arrayBuffer),
                         size: arrayBuffer.byteLength,
                         type: "video",
                         url: blob.url,
@@ -111,7 +112,7 @@ async function fileToInclusion(file: File): Promise<IGenericBlob> {
                     const incl: IGenericBlob = {
                         content: arrayBuffer,
                         fileName: file.name,
-                        sha: utils.gitHashFile(arrayBuffer),
+                        sha: gitHashFile(arrayBuffer),
                         size: arrayBuffer.byteLength,
                         type: "generic",
                         url: baseInclusion.url,

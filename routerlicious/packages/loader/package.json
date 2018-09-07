@@ -31,7 +31,6 @@
     "async": "^2.6.1",
     "debug": "^3.1.0",
     "lodash": "^4.17.10",
-    "performance-now": "^2.1.0",
-    "sha.js": "^2.4.11"
+    "performance-now": "^2.1.0"
   }
 }

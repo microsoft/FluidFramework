@@ -39,6 +39,8 @@ export interface IChannel {
 
     readonly type: string;
 
+    dirty: boolean;
+
     ready(): Promise<void>;
 
     snapshot(): ITree;

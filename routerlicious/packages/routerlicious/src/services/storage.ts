@@ -1,6 +1,5 @@
-import { core as api } from "@prague/client-api";
 import { ICommit, ICommitDetails } from "@prague/gitresources";
-import { IDocumentAttributes } from "@prague/runtime-definitions";
+import { IDocumentAttributes, MessageType } from "@prague/runtime-definitions";
 import * as moniker from "moniker";
 import * as winston from "winston";
 import * as core from "../core";
@@ -177,7 +176,7 @@ export class DocumentStorage implements core.IDocumentStorage {
                 clientSequenceNumber: -1,
                 contents,
                 referenceSequenceNumber: -1,
-                type: api.Fork,
+                type: MessageType.Fork,
             },
             tenantId,
             timestamp: Date.now(),

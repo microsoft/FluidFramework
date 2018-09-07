@@ -30,6 +30,7 @@
     "@prague/runtime-definitions": "^0.1.0",
     "@prague/shared-string": "^0.1.0",
     "@prague/stream": "^0.1.0",
+    "@prague/utils": "^0.1.0",
     "@types/d3": "^5.0.0",
     "@types/debug": "^0.0.30",
     "@types/jquery": "^3.3.6",
