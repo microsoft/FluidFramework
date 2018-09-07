@@ -448,6 +448,10 @@ export class Runtime extends EventEmitter implements IRuntime {
         return entries;
     }
 
+    public submitMessage(type: MessageType, content: any) {
+        this.submit(type, content);
+    }
+
     private submit(type: MessageType, content: any) {
         this.verifyNotClosed();
         this.submitFn(type, content);

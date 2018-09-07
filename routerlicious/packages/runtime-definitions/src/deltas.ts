@@ -6,6 +6,11 @@ export interface IDeltaManager {
 
     // the queue of outbound delta messages
     outbound: IDeltaQueue;
+
+    /**
+     * Puts the delta manager in read only mode
+     */
+    enableReadonlyMode(): void;
 }
 
 export interface IDeltaQueue extends EventEmitter {

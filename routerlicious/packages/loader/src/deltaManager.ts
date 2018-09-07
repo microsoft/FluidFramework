@@ -398,7 +398,8 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
         // allows the server to know our true reference sequence number and be able to correctly update the minimum
         // sequence number (MSN). We don't ackowledge other message types similarly (like a min sequence number update)
         // to avoid ackowledgement cycles (i.e. ack the MSN update, which updates the MSN, then ack the update, etc...).
-        if (message.type === runtime.MessageType.Operation) {
+        if (message.type === runtime.MessageType.Operation ||
+            message.type === runtime.MessageType.Propose) {
             this.updateSequenceNumber();
         }
 

@@ -1,6 +1,5 @@
 import { api } from "@prague/client-api";
 import * as resources from "@prague/gitresources";
-import { getLeader } from "@prague/loader";
 import { Browser, IClient } from "@prague/runtime-definitions";
 import * as d3 from "d3";
 import { registerDocumentServices } from "./utils";
@@ -198,7 +197,7 @@ function generateGraphData(document: api.Document): IGraph {
 }
 
 function getLeaderId(clients: Map<string, IClient>) {
-    const leader = getLeader(clients);
+    const leader = api.getLeader(clients);
     return leader ? leader.clientId : undefined;
 }
 

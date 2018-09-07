@@ -12,7 +12,6 @@ import {
     IDocumentStorageService,
     IEnvelope,
     IGenericBlob,
-    IHelpMessage,
     IPlatform,
     IProposal,
     IRuntime,
@@ -34,14 +33,11 @@ import { IConnectionDetails } from "./deltaConnection";
 import { DeltaManager } from "./deltaManager";
 import { IQuorumSnapshot, Quorum } from "./quorum";
 import { Runtime } from "./runtime";
-import { analyzeTasks, getLeader } from "./taskAnalyzer";
 import { readAndParse } from "./utils";
 
 // tslint:disable:no-var-requires
 const now = require("performance-now");
 // tslint:enable:no-var-requires
-
-const documentTasks = ["snapshot", "spell", "intel", "translation", "augmentation"];
 
 interface IConnectResult {
     detailsP: Promise<IConnectionDetails>;
@@ -85,12 +81,6 @@ export class Document extends EventEmitter {
     private _tenantId: string;
     private _user: IUser;
     // tslint:enable:variable-name
-
-    // Task analyzer related variables.
-    // TODO: Move this to a seperate class.
-    private lastLeaderClientId: string;
-    private helpSendDelay: number;
-    private helpTimer = null;
 
     public get tenantId(): string {
         return this._tenantId;
@@ -739,21 +729,11 @@ export class Document extends EventEmitter {
                 }
 
                 this.emit("clientJoin", join);
-                this.runTaskAnalyzer();
                 break;
 
             case MessageType.ClientLeave:
-                const leftClientId = message.contents;
                 this.quorum.removeMember(message.contents);
                 this.emit("clientLeave", message.contents);
-                // Switch to read only mode if a client receives it's own leave message.
-                // Stop any pending help request.
-                if (this.clientId === leftClientId) {
-                    this.stopSendingHelp();
-                    this._deltaManager.enableReadonlyMode();
-                } else {
-                    this.runTaskAnalyzer();
-                }
                 break;
 
             case MessageType.Propose:
@@ -803,58 +783,5 @@ export class Document extends EventEmitter {
         this.runtime.updateMinSequenceNumber(message.minimumSequenceNumber);
 
         this.emit("op", ...eventArgs);
-    }
-
-    /**
-     * On a client joining/departure, decide whether this client is the new leader.
-     * If so, calculate if there are any unhandled tasks for browsers and remote agents.
-     * Emit local help message for this browser and submits a remote help message for agents.
-     *
-     * To prevent recurrent op sending, we use an exponential backoff timer.
-     */
-    private runTaskAnalyzer() {
-        const currentLeader = getLeader(this.quorum.getMembers());
-        const isLeader = currentLeader && currentLeader.clientId === this.clientId;
-        if (isLeader) {
-            // Clear previous timer.
-            this.stopSendingHelp();
-
-            // On a reconnection, start with an initial timer value.
-            if (this.lastLeaderClientId !== this.clientId) {
-                console.log(`Client ${this.clientId} is the current leader!`);
-                this.helpSendDelay = 5000;
-                this.lastLeaderClientId = this.clientId;
-            }
-
-            // Analyze the current state and ask for local and remote help seperately after the timeout.
-            // Exponentially increase the timer to prevent recurrent op sending.
-            this.helpTimer = setTimeout(() => {
-                const helpTasks = analyzeTasks(this.clientId, this.quorum.getMembers(), documentTasks);
-                if (helpTasks && (helpTasks.browser.length > 0 || helpTasks.robot.length > 0)) {
-                    if (helpTasks.browser.length > 0) {
-                        const localHelpMessage: IHelpMessage = {
-                            tasks: helpTasks.browser,
-                        };
-                        console.log(`Requesting local help for ${helpTasks.browser}`);
-                        this.emit("localHelp", localHelpMessage);
-                    }
-                    if (helpTasks.robot.length > 0) {
-                        const remoteHelpMessage: IHelpMessage = {
-                            tasks: helpTasks.robot,
-                        };
-                        console.log(`Requesting remote help for ${helpTasks.robot}`);
-                        this.submitMessage(MessageType.RemoteHelp, remoteHelpMessage);
-                    }
-                    this.helpSendDelay *= 2;
-                }
-            }, this.helpSendDelay);
-        }
-    }
-
-    private stopSendingHelp() {
-        if (this.helpTimer) {
-            clearTimeout(this.helpTimer);
-        }
-        this.helpTimer = undefined;
     }
 }

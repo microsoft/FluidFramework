@@ -4,7 +4,7 @@ import { IChannel } from "./chaincode";
 import { IDistributedObjectServices } from "./channel";
 import { IQuorum } from "./consensus";
 import { IDeltaManager } from "./deltas";
-import { ISequencedDocumentMessage } from "./protocol";
+import { ISequencedDocumentMessage, MessageType } from "./protocol";
 import { IUser } from "./users";
 
 /**
@@ -79,4 +79,9 @@ export interface IRuntime extends EventEmitter {
     getBlob(sha: string): Promise<IGenericBlob>;
 
     getBlobMetadata(): Promise<IGenericBlob[]>;
+
+    /**
+     * Submits a message on the document channel
+     */
+    submitMessage(type: MessageType, content: any);
 }

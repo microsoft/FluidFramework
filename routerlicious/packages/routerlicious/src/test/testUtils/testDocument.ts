@@ -32,6 +32,10 @@ export class TestDeltaManager implements IDeltaManager {
     public inbound = new TestDeltaQueue();
 
     public outbound = new TestDeltaQueue();
+
+    public enableReadonlyMode() {
+        return;
+    }
 }
 
 export class TestDocument implements ISnapshotDocument {
