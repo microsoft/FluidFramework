@@ -9,7 +9,7 @@ export interface IBlobManager {
 
     // Get the metadata for all blobs on a document
     // Strip content if it exists
-    getBlobMetadata(): api.IGenericBlob[];
+    getBlobMetadata(): Promise<api.IGenericBlob[]>;
 
     // Retrieve the blob data
     getBlob(sha: string): Promise<api.IGenericBlob>;
@@ -35,13 +35,12 @@ export class BlobManager implements IBlobManager {
         }
     }
 
-    public getBlobMetadata(): api.IGenericBlob[] {
+    public getBlobMetadata(): Promise<api.IGenericBlob[]> {
         const blobs = [... this.blobs.values()];
-        const arr =  blobs.map((value) => {
+        return Promise.resolve(blobs.map((value) => {
             value.content = null;
             return value;
-        });
-        return arr;
+        }));
     }
 
     public async getBlob(sha: string): Promise<api.IGenericBlob> {

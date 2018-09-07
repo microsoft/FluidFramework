@@ -411,9 +411,7 @@ export class Document extends EventEmitter implements api.IDocument {
     }
 
     public getBlobMetadata(): Promise<api.IGenericBlob[]> {
-        return new Promise<api.IGenericBlob[]>((resolve) => {
-            resolve(this.blobManager.getBlobMetadata());
-        });
+        return this.blobManager.getBlobMetadata();
     }
 
     public async getBlob(sha: string): Promise<api.IGenericBlob> {
