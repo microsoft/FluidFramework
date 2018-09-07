@@ -219,6 +219,17 @@ export class Document extends EventEmitter {
                 this.storageService = storageService;
                 this.blobManager = blobManager;
 
+                // Initialize document details - if loading a snapshot use that - otherwise we need to wait on
+                // the initial details
+                if (version) {
+                    this._existing = true;
+                    this._parentBranch = attributes.branch !== this.id ? attributes.branch : null;
+                } else {
+                    const details = await connectResult.detailsP;
+                    this._existing = details.existing;
+                    this._parentBranch = details.parentBranch;
+                }
+
                 // Instantiate channels from chaincode and stored data
                 this.runtime = await Runtime.LoadFromSnapshot(
                     this.tenantId,
@@ -259,17 +270,6 @@ export class Document extends EventEmitter {
                     (error) => {
                         this.emit("error", error);
                     });
-
-                // Initialize document details - if loading a snapshot use that - otherwise we need to wait on
-                // the initial details
-                if (version) {
-                    this._existing = true;
-                    this._parentBranch = attributes.branch !== this.id ? attributes.branch : null;
-                } else {
-                    const details = await connectResult.detailsP;
-                    this._existing = details.existing;
-                    this._parentBranch = details.parentBranch;
-                }
 
                 // Internal context is fully loaded at this point
                 this.loaded = true;
@@ -724,6 +724,7 @@ export class Document extends EventEmitter {
             this.messagesSinceMSNChange = this.messagesSinceMSNChange.slice(index);
         }
 
+        const eventArgs: any[] = [message];
         switch (message.type) {
             case MessageType.ClientJoin:
                 const join = message.contents as IClientJoin;
@@ -771,7 +772,8 @@ export class Document extends EventEmitter {
                 break;
 
             case MessageType.Attach:
-                this.runtime.processAttach(message, local, context);
+                const attachChannel = this.runtime.processAttach(message, local, context);
+                eventArgs.push(attachChannel);
                 break;
 
             // Message contains full metadata (no content)
@@ -787,7 +789,8 @@ export class Document extends EventEmitter {
                 this.emit(MessageType.BlobUploaded, message.contents);
 
             case MessageType.Operation:
-                this.runtime.process(message, local, context);
+                const operationChannel = this.runtime.process(message, local, context);
+                eventArgs.push(operationChannel);
                 break;
 
             default:
@@ -798,6 +801,8 @@ export class Document extends EventEmitter {
         // want to move that logic to this class.
         this.quorum.updateMinimumSequenceNumber(message.minimumSequenceNumber);
         this.runtime.updateMinSequenceNumber(message.minimumSequenceNumber);
+
+        this.emit("op", ...eventArgs);
     }
 
     /**

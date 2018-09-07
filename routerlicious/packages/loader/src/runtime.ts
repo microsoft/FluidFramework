@@ -119,7 +119,7 @@ export class Runtime extends EventEmitter implements IRuntime {
         public readonly tenantId: string,
         public readonly id: string,
         public readonly parentBranch: string,
-        public readonly existing: boolean,
+        public existing: boolean,
         public readonly options: any,
         public clientId: string,
         public readonly user: IUser,
@@ -241,7 +241,7 @@ export class Runtime extends EventEmitter implements IRuntime {
         return objectDetails.connection.prepare(message, local);
     }
 
-    public process(message: ISequencedDocumentMessage, local: boolean, context: any) {
+    public process(message: ISequencedDocumentMessage, local: boolean, context: any): IChannel {
         this.verifyNotClosed();
 
         const envelope = message.contents as IEnvelope;
@@ -249,9 +249,11 @@ export class Runtime extends EventEmitter implements IRuntime {
         assert(objectDetails);
 
         objectDetails.connection.process(message, local, context);
+
+        return objectDetails.object;
     }
 
-    public processAttach(message: ISequencedDocumentMessage, local: boolean, context: IChannelState) {
+    public processAttach(message: ISequencedDocumentMessage, local: boolean, context: IChannelState): IChannel {
         this.verifyNotClosed();
 
         const attachMessage = message.contents as IAttachMessage;
@@ -278,6 +280,8 @@ export class Runtime extends EventEmitter implements IRuntime {
                 this.channelsDeferred.set(channelState.object.id, deferred);
             }
         }
+
+        return this.channels.get(attachMessage.id).object;
     }
 
     public async prepareAttach(message: ISequencedDocumentMessage, local: boolean): Promise<IChannelState> {
