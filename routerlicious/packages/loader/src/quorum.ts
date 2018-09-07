@@ -1,4 +1,4 @@
-import { IClient, ISequencedProposal } from "@prague/runtime-definitions";
+import { IClient, IQuorum, ISequencedProposal } from "@prague/runtime-definitions";
 import { Deferred } from "@prague/utils";
 import * as assert from "assert";
 import { EventEmitter } from "events";
@@ -47,7 +47,7 @@ class PendingProposal implements IPendingProposal, ISequencedProposal {
  * A quorum represents all clients currently within the collaboration window. As well as the values
  * they have agreed upon and any pending proposals.
  */
-export class Quorum extends EventEmitter {
+export class Quorum extends EventEmitter implements IQuorum {
     private members: Map<string, IClient>;
     private proposals: Map<number, PendingProposal>;
     private values: Map<string, any>;

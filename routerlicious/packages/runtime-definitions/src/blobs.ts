@@ -1,3 +1,23 @@
+import { ICreateBlobResponse } from "@prague/gitresources";
+
+export interface IBlobManager {
+    // Rehydrate a blob manager from a snapshot
+    loadBlobMetadata(hashes: IGenericBlob[]);
+
+    // Get the metadata for all blobs on a document
+    // Strip content if it exists
+    getBlobMetadata(): IGenericBlob[];
+
+    // Retrieve the blob data
+    getBlob(sha: string): Promise<IGenericBlob>;
+
+    // Add one blob's metadata to the local storage of blob metadata
+    addBlob(blob: IGenericBlob): Promise<void>;
+
+    // Upload a blob to storage
+    createBlob(file: Buffer): Promise<ICreateBlobResponse>;
+}
+
 export type IGenericBlob = IDataBlob | IImageBlob | IVideoBlob;
 
 export interface IBaseBlob {

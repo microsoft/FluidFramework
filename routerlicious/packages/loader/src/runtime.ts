@@ -14,6 +14,7 @@ import {
     IPlatform,
     IQuorum,
     IRuntime,
+    ISave,
     ISequencedDocumentMessage,
     ISnapshotTree,
     IUser,
@@ -21,6 +22,7 @@ import {
 } from "@prague/runtime-definitions";
 import { Deferred } from "@prague/utils";
 import * as assert from "assert";
+import { BlobManager, gitHashFile } from "./blobManager";
 import { ChannelDeltaConnection } from "./channelDeltaConnection";
 import { ChannelStorageService } from "./channelStorageService";
 import { LocalChannelStorageService } from "./localChannelStorageService";
@@ -39,29 +41,45 @@ interface IObjectServices {
 
 export class Runtime implements IRuntime {
     public static async LoadFromSnapshot(
+        tenantId: string,
         id: string,
+        parentBranch: string,
         existing: boolean,
         options: any,
         clientId: string,
         user: IUser,
+        blobManager: BlobManager,
         chaincode: IChaincode,
+        deltaManager: IDeltaManager,
+        quorum: IQuorum,
         storage: IDocumentStorageService,
         connectionState: ConnectionState,
         tree: ISnapshotTree,
         branch: string,
         minimumSequenceNumber: number,
-        submitFn: (type: MessageType, contents: any) => void): Promise<Runtime> {
+        submitFn: (type: MessageType, contents: any) => void,
+        snapshotFn: (message: string) => Promise<void>,
+        closeFn: () => void,
+        hasUnackedOpsFn: () => boolean) {
 
         const runtime = new Runtime(
+            tenantId,
             id,
+            parentBranch,
             existing,
             options,
             clientId,
             user,
+            blobManager,
+            deltaManager,
+            quorum,
             chaincode,
             storage,
             connectionState,
-            submitFn);
+            submitFn,
+            snapshotFn,
+            closeFn,
+            hasUnackedOpsFn);
 
         if (tree) {
             Object.keys(tree.trees).forEach((path) => {
@@ -85,10 +103,7 @@ export class Runtime implements IRuntime {
         return runtime;
     }
 
-    public tenantId: string;
-    public parentBranch: string;
     public connected: boolean;
-    public deltaManager: IDeltaManager;
 
     private channels = new Map<string, IChannelState>();
     private channelsDeferred = new Map<string, Deferred<IChannel>>();
@@ -96,15 +111,23 @@ export class Runtime implements IRuntime {
     private pendingAttach = new Map<string, IAttachMessage>();
 
     private constructor(
-        public id: string,
-        public existing: boolean,
-        public options: any,
+        public readonly tenantId: string,
+        public readonly id: string,
+        public readonly parentBranch: string,
+        public readonly existing: boolean,
+        public readonly options: any,
         public clientId: string,
-        public user: IUser,
+        public readonly user: IUser,
+        private blobManager: BlobManager,
+        public readonly deltaManager: IDeltaManager,
+        private quorum: IQuorum,
         private chaincode: IChaincode,
         private storageService: IDocumentStorageService,
         private connectionState: ConnectionState,
-        private submitFn: (type: MessageType, contents: any) => void) {
+        private submitFn: (type: MessageType, contents: any) => void,
+        private snapshotFn: (message: string) => Promise<void>,
+        private closeFn: () => void,
+        private hasUnackedOpsFn: () => boolean) {
     }
 
     public getChannel(id: string): Promise<IChannel> {
@@ -188,9 +211,12 @@ export class Runtime implements IRuntime {
 
         // Resend all pending attach messages prior to notifying clients
         if (value === ConnectionState.Connected) {
+            this.connected = true;
             for (const [, message] of this.pendingAttach) {
                 this.submit(MessageType.Attach, message);
             }
+        } else {
+            this.connected = false;
         }
 
         for (const [, object] of this.channels) {
@@ -291,40 +317,64 @@ export class Runtime implements IRuntime {
     }
 
     public getQuorum(): IQuorum {
-        throw new Error("Method not implemented.");
+        this.verifyNotClosed();
+
+        return this.quorum;
     }
 
     public hasUnackedOps(): boolean {
-        throw new Error("Method not implemented.");
+        this.verifyNotClosed();
+
+        return this.hasUnackedOpsFn();
     }
 
     public snapshot(message: string): Promise<void> {
-        throw new Error("Method not implemented.");
+        this.verifyNotClosed();
+
+        return this.snapshotFn(message);
     }
 
     public save(tag: string) {
-        throw new Error("Method not implemented.");
+        this.verifyNotClosed();
+
+        const message: ISave = { message: tag };
+        this.submit(MessageType.Save, message);
     }
 
-    public uploadBlob(file: IGenericBlob): Promise<IGenericBlob> {
-        throw new Error("Method not implemented.");
+    public async uploadBlob(file: IGenericBlob): Promise<IGenericBlob> {
+        this.verifyNotClosed();
+
+        const sha = gitHashFile(file.content);
+        file.sha = sha;
+        file.url = this.storageService.getRawUrl(sha);
+
+        this.blobManager.addBlob(file).then(() => this.submit(MessageType.BlobPrepared, file));
+        this.blobManager.createBlob(file.content).then(() => this.submit(MessageType.BlobUploaded, sha));
+
+        return file;
     }
 
     public getBlob(sha: string): Promise<IGenericBlob> {
-        throw new Error("Method not implemented.");
+        this.verifyNotClosed();
+
+        return this.blobManager.getBlob(sha);
     }
 
-    public getBlobMetadata(): Promise<IGenericBlob[]> {
-        throw new Error("Method not implemented.");
+    public async getBlobMetadata(): Promise<IGenericBlob[]> {
+        return this.blobManager.getBlobMetadata();
     }
 
-    public async close(): Promise<any> {
+    public async stop(): Promise<any> {
         this.verifyNotClosed();
 
         this.closed = true;
 
         // TODO return a snapshot to pass to next chunk of code
         return null;
+    }
+
+    public close(): void {
+        this.closeFn();
     }
 
     private submit(type: MessageType, content: any) {

@@ -8,6 +8,7 @@ import {
     IDocumentAttributes,
     IDocumentService,
     IDocumentStorageService,
+    IGenericBlob,
     IPlatform,
     IProposal,
     IRuntime,
@@ -19,6 +20,7 @@ import {
 } from "@prague/runtime-definitions";
 import * as assert from "assert";
 import { EventEmitter } from "events";
+import { BlobManager } from "./blobManager";
 import { debug } from "./debug";
 import { IConnectionDetails } from "./deltaConnection";
 import { DeltaManager } from "./deltaManager";
@@ -56,6 +58,7 @@ export class Document extends EventEmitter {
     private loaded = false;
     private connectionState = ConnectionState.Disconnected;
     private quorum: Quorum;
+    private blobManager: BlobManager;
 
     // Active chaincode and associated runtime
     private storageService: IDocumentStorageService;
@@ -165,27 +168,47 @@ export class Document extends EventEmitter {
         // ...instantiate the chaincode defined on the document
         const chaincodeP = quorumP.then((quorum) => this.loadCodeFromQuorum(quorum));
 
+        const blobManagerP = Promise.all([storageP, treeP]).then(
+            ([storage, tree]) => this.loadBlobManager(storage, tree));
+
         // Wait for all the loading promises to finish
         return Promise
-            .all([storageP, treeP, versionP, attributesP, quorumP, chaincodeP, connectResult.handlerAttachedP])
-            .then(async ([storageService, tree, version, attributes, quorum, chaincode]) => {
+            .all([
+                storageP,
+                treeP,
+                versionP,
+                attributesP,
+                quorumP,
+                blobManagerP,
+                chaincodeP,
+                connectResult.handlerAttachedP])
+            .then(async ([storageService, tree, version, attributes, quorum, blobManager, chaincode]) => {
                 this.quorum = quorum;
                 this.storageService = storageService;
+                this.blobManager = blobManager;
 
                 // Instantiate channels from chaincode and stored data
                 this.runtime = await Runtime.LoadFromSnapshot(
+                    this.tenantId,
                     this.id,
+                    this.parentBranch,
                     this.existing,
                     this.options,
                     this.clientId,
                     this.user,
+                    this.blobManager,
                     chaincode,
+                    this.deltaManager,
+                    this.quorum,
                     storageService,
                     this.connectionState,
                     tree,
                     attributes.branch,
                     attributes.minimumSequenceNumber,
-                    (type, contents) => this.submitMessage(type, contents));
+                    (type, contents) => this.submitMessage(type, contents),
+                    (message) => this.snapshot(message),
+                    () => this.close(),
+                    () => this.hasUnackedOps());
 
                 // given the load is async and we haven't set the runtime variable it's possible we missed the change
                 // of value. Make a call to the runtime to change the state to pick up the latest.
@@ -276,22 +299,38 @@ export class Document extends EventEmitter {
         return quorum;
     }
 
+    private async loadBlobManager(storage: IDocumentStorageService, tree: ISnapshotTree): Promise<BlobManager> {
+        const blobs: IGenericBlob[] = tree
+            ? await readAndParse<IGenericBlob[]>(storage, tree.blobs[".blobs"])
+            : [];
+
+        const blobManager = new BlobManager(storage);
+        blobManager.loadBlobMetadata(blobs);
+
+        return blobManager;
+    }
+
     private async transitionRuntime(pkg: string) {
         // TODO it's possible in between the close and the resume we may be disconnected. Want to either sequence
         // those events with ops or find a better way
         // Close the previous runtime and return a snapshot of the data
         /* const snapshot = */
-        await this.runtime.close();
+        await this.runtime.stop();
 
         // Load the new code and create a new runtime from the previous snapshot
         const chaincode = await this.loadCode(pkg);
         const newRuntime = await Runtime.LoadFromSnapshot(
+            this.tenantId,
             this.id,
+            this.parentBranch,
             this.existing,
             this.options,
             this.clientId,
             this.user,
+            this.blobManager,
             chaincode,
+            this.deltaManager,
+            this.quorum,
             this.storageService,
             this.connectionState,
             null,
@@ -467,9 +506,20 @@ export class Document extends EventEmitter {
                 this.runtime.processAttach(message, local, context);
                 break;
 
+            // Message contains full metadata (no content)
+            case MessageType.BlobPrepared:
+                this.blobManager.addBlob(message.contents);
+                this.emit(MessageType.BlobPrepared, message.contents);
+                break;
+
+            case MessageType.BlobUploaded:
+                // indicates that blob has been uploaded, just a flag... no blob buffer
+                // message.contents is just the hash
+                this.blobManager.createBlob(message.contents);
+                this.emit(MessageType.BlobUploaded, message.contents);
+
             case MessageType.Operation:
                 this.runtime.process(message, local, context);
-
                 break;
 
             default:

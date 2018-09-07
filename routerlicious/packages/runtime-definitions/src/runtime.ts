@@ -67,7 +67,7 @@ export interface IRuntime {
     /**
      * Terminates the runtime and closes the document
      */
-    close();
+    close(): void;
 
     hasUnackedOps(): boolean;
 

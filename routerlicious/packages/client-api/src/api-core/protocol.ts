@@ -1,21 +1,5 @@
-// Save Operation performed on a distributed data type, forces immediate snapshot
-export const SaveOperation = "saveOp";
-
-// System message to indicate the creation of a new fork
-export const Fork = "fork";
-
-// Message sent when forwarding a sequenced message to an upstream branch
-export const Integrate = "integrate";
-
 // Message to indicate successful round trip.
 export const RoundTrip = "tripComplete";
-
-// Message to indicate the need of a remote agent for a document.
-export const RemoteHelp = "remoteHelp";
-
-export const BlobPrepared = "blobPrepared";
-
-export const BlobUploaded = "blobUploaded";
 
 /**
  * Messages to track latency trace

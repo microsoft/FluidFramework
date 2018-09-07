@@ -16,6 +16,12 @@ export enum MessageType {
     // Message used to reject a pending proposal
     Reject = "reject",
 
+    // Blob preparation message
+    BlobPrepared = "blobPrepared",
+
+    // Blob uploaded
+    BlobUploaded = "blobUploaded",
+
     // TODO the attach and operation names are partially historican. We may want to rename to align with changes
     // coming from code loading.
 
@@ -26,7 +32,16 @@ export enum MessageType {
     Operation = "objOp",
 
     // Forced snapshot
-    Save = "save",
+    Save = "saveOp",
+
+    // System message to indicate the creation of a new fork
+    Fork = "fork",
+
+    // Message sent when forwarding a sequenced message to an upstream branch
+    Integrate = "integrate",
+
+    // Message to indicate the need of a remote agent for a document.
+    RemoteHelp = "remoteHelp",
 }
 
 /**
@@ -174,7 +189,5 @@ export interface IEnvelope {
 }
 
 export interface ISave {
-    type: string;
-
     message: string;
 }
