@@ -1,5 +1,4 @@
-import { core as api } from "@prague/client-api";
-import { IClient, IClientJoin, IDocumentMessage, IUser, MessageType } from "@prague/runtime-definitions";
+import { IClient, IClientJoin, IDocumentMessage, ITrace, IUser, MessageType } from "@prague/runtime-definitions";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import * as moniker from "moniker";
@@ -198,7 +197,7 @@ class LocalOrdererConnection implements IOrdererConnection {
 
     private submitRawOperation(message: core.IRawOperationMessage) {
         // Add trace
-        const operation = message.operation as IDocumentMessage & { traces?: api.ITrace[] };
+        const operation = message.operation as IDocumentMessage & { traces?: ITrace[] };
         if (operation && operation.traces) {
             operation.traces.push(
                 {

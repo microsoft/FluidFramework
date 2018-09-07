@@ -1,5 +1,5 @@
-import { api, core } from "@prague/client-api";
-import { IClient } from "@prague/runtime-definitions";
+import { api } from "@prague/client-api";
+import { IClient, IHelpMessage } from "@prague/runtime-definitions";
 import { loadDictionary } from "./dictionaryLoader";
 import { IntelWork } from "./intelWork";
 import { SnapshotWork } from "./snapshotWork";
@@ -9,7 +9,7 @@ import { TranslationWork } from "./translationWork";
 // If a client declares taks runnning capability in permission array, it must register to perform the task.
 export function registerToWork(doc: api.Document, client: IClient, token: string, workerConfig: any) {
     if (client.permission && client.permission.length > 0) {
-        doc.on("localHelp", async (helpMessage: core.IHelpMessage) => {
+        doc.on("localHelp", async (helpMessage: IHelpMessage) => {
             await performTasks(doc.id, token, helpMessage.tasks, workerConfig).catch((err) => {
                 console.error(err);
             });

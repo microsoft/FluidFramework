@@ -1,24 +1,7 @@
+import { IHelpMessage, ITrace } from "@prague/runtime-definitions";
+
 // Message to indicate successful round trip.
 export const RoundTrip = "tripComplete";
-
-/**
- * Messages to track latency trace
- */
-export interface ITrace {
-    // Service generating the trace.
-    service: string;
-
-    // Denotes receiving/sending.
-    action: string;
-
-    // Floating point time in milliseconds with up to nanosecond precision
-    timestamp: number;
-}
-
-export interface IHelpMessage {
-
-    tasks: string[];
-}
 
 export interface IQueueMessage {
 

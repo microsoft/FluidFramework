@@ -106,6 +106,11 @@ export class Document extends EventEmitter {
         return channel as ICollaborativeObject;
     }
 
+    public on(event: string | symbol, listener: (...args: any[]) => void): this {
+        this.runtime.on(event, listener);
+        return this;
+    }
+
     /**
      * Loads the specified distributed object. Returns null if it does not exist
      *

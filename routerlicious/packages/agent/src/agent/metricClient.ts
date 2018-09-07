@@ -1,9 +1,8 @@
-// tslint:disable:ban-types
-import { core } from "@prague/client-api";
+import { ITrace } from "@prague/runtime-definitions";
 import * as telegraf from "telegrafjs";
 
 export interface IMetricClient {
-    writeLatencyMetric(series: string, traces: core.ITrace[]): Promise<void>;
+    writeLatencyMetric(series: string, traces: ITrace[]): Promise<void>;
 }
 
 class TelegrafClient implements IMetricClient {
@@ -20,7 +19,7 @@ class TelegrafClient implements IMetricClient {
         });
     }
 
-    public writeLatencyMetric(series: string, traces: core.ITrace[]): Promise<void> {
+    public writeLatencyMetric(series: string, traces: ITrace[]): Promise<void> {
         if (!this.connected || !traces || traces.length === 0) {
             return Promise.resolve();
         } else {
@@ -28,7 +27,7 @@ class TelegrafClient implements IMetricClient {
         }
     }
 
-    private createTelegrafRow(traces: core.ITrace[]): Object {
+    private createTelegrafRow(traces: ITrace[]): any {
         const row = new Object();
         const Float = telegraf.Float;
         for (const trace of traces) {
@@ -38,7 +37,7 @@ class TelegrafClient implements IMetricClient {
         return row;
     }
 
-    private writeToTelegraf(series: string, row: Object): Promise<void> {
+    private writeToTelegraf(series: string, row: any): Promise<void> {
         const Measurement = telegraf.Measurement;
 
         return this.telegrafClient.sendMeasurement(new Measurement(
@@ -52,7 +51,7 @@ class TelegrafClient implements IMetricClient {
 // Default client for loca run.
 class DefaultClient implements IMetricClient {
 
-    public writeLatencyMetric(series: string, traces: core.ITrace[]): Promise<void> {
+    public writeLatencyMetric(series: string, traces: ITrace[]): Promise<void> {
         return Promise.resolve();
     }
 }

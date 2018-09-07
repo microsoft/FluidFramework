@@ -1,5 +1,5 @@
 import { core as api } from "@prague/client-api";
-import { MessageType } from "@prague/runtime-definitions";
+import { IHelpMessage, MessageType } from "@prague/runtime-definitions";
 import * as winston from "winston";
 import * as core from "../core";
 import { IContext } from "../kafka-service/lambdas";
@@ -52,7 +52,7 @@ export class TmzLambda extends SequencedLambda {
         clientId: string,
         tenantId: string,
         docId: string,
-        message: api.IHelpMessage): Promise<void> {
+        message: IHelpMessage): Promise<void> {
         const key = await this.tenantManager.getKey(tenantId);
         const filteredTasks = this.filterTasks(message.tasks);
         for (const queueTask of filteredTasks) {

@@ -6,6 +6,7 @@ export interface IConnectionDetails {
     existing: boolean;
     parentBranch: string;
     user: runtime.IUser;
+    initialMessages?: runtime.ISequencedDocumentMessage[];
 }
 
 export class DeltaConnection extends EventEmitter {

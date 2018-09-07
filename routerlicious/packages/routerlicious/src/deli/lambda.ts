@@ -1,5 +1,10 @@
-import { core as api } from "@prague/client-api";
-import { IBranchOrigin, IDocumentMessage, ISequencedDocumentMessage, MessageType } from "@prague/runtime-definitions";
+import {
+    IBranchOrigin,
+    IDocumentMessage,
+    ISequencedDocumentMessage,
+    ITrace,
+    MessageType,
+} from "@prague/runtime-definitions";
 import { RangeTracker } from "@prague/utils";
 import * as assert from "assert";
 import * as _ from "lodash";
@@ -149,7 +154,7 @@ export class DeliLambda implements IPartitionLambda {
         }
     }
 
-    private ticket(rawMessage: utils.IMessage, trace: api.ITrace): ITicketedMessageOutput {
+    private ticket(rawMessage: utils.IMessage, trace: ITrace): ITicketedMessageOutput {
         // In cases where we are reprocessing messages we have already checkpointed exit early
         if (rawMessage.offset < this.logOffset) {
             return;
@@ -251,7 +256,7 @@ export class DeliLambda implements IPartitionLambda {
                     clientSequenceNumber: branchDocumentMessage.sequenceNumber,
                     contents: branchDocumentMessage.contents,
                     referenceSequenceNumber: transformedRefSeqNumber,
-                    traces: (message.operation as IDocumentMessage & { traces: api.ITrace[] }).traces,
+                    traces: (message.operation as IDocumentMessage & { traces: ITrace[] }).traces,
                     type: branchDocumentMessage.type,
                 } as IDocumentMessage,
                 tenantId: message.tenantId,
@@ -298,7 +303,7 @@ export class DeliLambda implements IPartitionLambda {
         this.minimumSequenceNumber = msn === -1 ? sequenceNumber : msn;
 
         // Add traces
-        const messageWithTraces = message.operation as IDocumentMessage & { traces?: api.ITrace[] };
+        const messageWithTraces = message.operation as IDocumentMessage & { traces?: ITrace[] };
         const traces = messageWithTraces.traces;
         if (traces !== undefined) {
             traces.push(trace);
@@ -306,7 +311,7 @@ export class DeliLambda implements IPartitionLambda {
         }
 
         // And now craft the output message
-        const outputMessage: ISequencedDocumentMessage & ({ traces: api.ITrace[] }) = {
+        const outputMessage: ISequencedDocumentMessage & ({ traces: ITrace[] }) = {
             clientId: message.clientId,
             clientSequenceNumber: message.operation.clientSequenceNumber,
             contents: message.operation.contents,
@@ -456,7 +461,7 @@ export class DeliLambda implements IPartitionLambda {
      * Creates a new trace
      */
     private createTrace() {
-        const trace: api.ITrace = {
+        const trace: ITrace = {
             action: "start",
             service: "deli",
             timestamp: now(),
