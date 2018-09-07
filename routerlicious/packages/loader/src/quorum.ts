@@ -18,7 +18,9 @@ class PendingProposal implements IPendingProposal, ISequencedProposal {
         public sequenceNumber: number,
         public key: string,
         public value: any,
+        rejections: string[],
         public deferred?: Deferred<void>) {
+        this.rejections = new Set(rejections);
     }
 
     public reject() {
@@ -43,6 +45,12 @@ class PendingProposal implements IPendingProposal, ISequencedProposal {
     }
 }
 
+export interface IQuorumSnapshot {
+    members: Array<[string, IClient]>;
+    proposals: Array<[number, ISequencedProposal, string[]]>;
+    values: Array<[string, any]>;
+}
+
 /**
  * A quorum represents all clients currently within the collaboration window. As well as the values
  * they have agreed upon and any pending proposals.
@@ -58,7 +66,7 @@ export class Quorum extends EventEmitter implements IQuorum {
     constructor(
         private minimumSequenceNumber: number,
         members: Array<[string, IClient]>,
-        proposals: ISequencedProposal[],
+        proposals: Array<[number, ISequencedProposal, string[]]>,
         values: Array<[string, any]>,
         private sendProposal: (key: string, value: any) => number,
         private sendReject: (sequenceNumber: number) => void) {
@@ -66,13 +74,34 @@ export class Quorum extends EventEmitter implements IQuorum {
 
         this.members = new Map(members);
         this.proposals = new Map(
-            proposals.map((proposal) => {
+            proposals.map(([, proposal, rejections]) => {
                 return [
                     proposal.sequenceNumber,
-                    new PendingProposal(this.sendReject, proposal.sequenceNumber, proposal.key, proposal.value),
+                    new PendingProposal(
+                        this.sendReject,
+                        proposal.sequenceNumber,
+                        proposal.key,
+                        proposal.value,
+                        rejections),
                 ] as [number, PendingProposal];
             }));
         this.values = new Map(values);
+    }
+
+    public snapshot(): IQuorumSnapshot {
+        const serializedProposals = Array.from(this.proposals).map(
+            ([sequenceNumber, proposal]) => {
+                return [
+                    sequenceNumber,
+                    { sequenceNumber, key: proposal.key, value: proposal.value },
+                    Array.from(proposal.rejections)] as [number, ISequencedProposal, string[]];
+            });
+
+        return {
+            members: [...this.members],
+            proposals: serializedProposals,
+            values: [...this.values],
+        };
     }
 
     /**
@@ -149,6 +178,7 @@ export class Quorum extends EventEmitter implements IQuorum {
             sequenceNumber,
             key,
             value,
+            [],
             local ? this.localProposals.get(clientSequenceNumber) : undefined);
         this.proposals.set(sequenceNumber, proposal);
 

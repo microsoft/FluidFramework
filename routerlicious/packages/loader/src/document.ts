@@ -3,6 +3,7 @@ import {
     ConnectionState,
     FileMode,
     IChaincode,
+    IClient,
     IClientJoin,
     ICodeLoader,
     IDeltaManager,
@@ -15,6 +16,7 @@ import {
     IProposal,
     IRuntime,
     ISequencedDocumentMessage,
+    ISequencedProposal,
     ISnapshotTree,
     ITokenService,
     ITree,
@@ -29,7 +31,7 @@ import { BlobManager } from "./blobManager";
 import { debug } from "./debug";
 import { IConnectionDetails } from "./deltaConnection";
 import { DeltaManager } from "./deltaManager";
-import { Quorum } from "./quorum";
+import { IQuorumSnapshot, Quorum } from "./quorum";
 import { Runtime } from "./runtime";
 import { readAndParse } from "./utils";
 
@@ -169,7 +171,8 @@ export class Document extends EventEmitter {
             : { detailsP: Promise.resolve(null), handlerAttachedP: Promise.resolve() };
 
         // ...load in the existing quorum
-        const quorumP = Promise.all([storageP, treeP]).then(([storage, tree]) => this.loadQuorum(storage, tree));
+        const quorumP = Promise.all([attributesP, storageP, treeP]).then(
+            ([attributes, storage, tree]) => this.loadQuorum(attributes, storage, tree));
 
         // ...instantiate the chaincode defined on the document
         const chaincodeP = quorumP.then((quorum) => this.loadCodeFromQuorum(quorum));
@@ -380,6 +383,17 @@ export class Document extends EventEmitter {
             },
         });
 
+        const quorumSnapshot = this.quorum.snapshot();
+        entries.push({
+            mode: FileMode.File,
+            path: "quorum",
+            type: TreeEntry[TreeEntry.Blob],
+            value: {
+                contents: JSON.stringify(quorumSnapshot),
+                encoding: "utf-8",
+            },
+        });
+
         const channelEntries = this.runtime.snapshotInternal();
         entries.push(...channelEntries);
 
@@ -467,14 +481,31 @@ export class Document extends EventEmitter {
         return transformedMap;
     }
 
-    private loadQuorum(storage: IDocumentStorageService, tree: ISnapshotTree): Quorum {
-        // TODO load the stored quorum from the snapshot tree
+    private async loadQuorum(
+        attributes: IDocumentAttributes,
+        storage: IDocumentStorageService,
+        tree: ISnapshotTree): Promise<Quorum> {
+
+        let members: Array<[string, IClient]>;
+        let proposals: Array<[number, ISequencedProposal, string[]]>;
+        let values: Array<[string, any]>;
+
+        if (tree && tree.blobs.quorum) {
+            const quorumSnapshot = await readAndParse<IQuorumSnapshot>(storage, tree.blobs.quorum);
+            members = quorumSnapshot.members;
+            proposals = quorumSnapshot.proposals;
+            values = quorumSnapshot.values;
+        } else {
+            members = [];
+            proposals = [];
+            values = [];
+        }
 
         const quorum = new Quorum(
-            0,
-            [],
-            [],
-            [],
+            attributes.minimumSequenceNumber,
+            members,
+            proposals,
+            values,
             (key, value) => this.submitMessage(MessageType.Propose, { key, value }),
             (sequenceNumber) => this.submitMessage(MessageType.Reject, sequenceNumber));
 
