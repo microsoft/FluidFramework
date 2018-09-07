@@ -1,5 +1,5 @@
 import { ICell } from "@prague/cell";
-import { api } from "@prague/client-api";
+import * as api from "@prague/client-api";
 import * as assert from "assert";
 import { generateToken } from "../../utils";
 import * as testUtils from "../testUtils";

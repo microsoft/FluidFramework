@@ -1,4 +1,4 @@
-import { api } from "@prague/client-api";
+import * as api from "@prague/client-api";
 import * as resources from "@prague/gitresources";
 import { Browser, IClient } from "@prague/runtime-definitions";
 import * as d3 from "d3";

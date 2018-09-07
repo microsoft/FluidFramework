@@ -1,6 +1,6 @@
 // tslint:disable:ban-types
 import * as agent from "@prague/agent";
-import { api as API } from "@prague/client-api";
+import * as API from "@prague/client-api";
 import { controls, ui } from "@prague/client-ui";
 import * as resources from "@prague/gitresources";
 import * as DistributedMap from "@prague/map";

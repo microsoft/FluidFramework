@@ -1,4 +1,4 @@
-import { api } from "@prague/client-api";
+import * as api from "@prague/client-api";
 import { Browser, IDocumentService } from "@prague/runtime-definitions";
 import { EventEmitter } from "events";
 import { IDocumentTaskInfo } from "./definitions";

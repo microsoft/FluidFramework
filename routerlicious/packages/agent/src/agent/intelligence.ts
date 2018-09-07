@@ -1,5 +1,5 @@
 import { ICollaborativeObject } from "@prague/api-definitions";
-import { api } from "@prague/client-api";
+import * as api from "@prague/client-api";
 import { IMap, IMapView } from "@prague/map";
 import * as SharedString from "@prague/shared-string";
 import * as intelligence from "../intelligence";

@@ -1,4 +1,4 @@
-import { api } from "@prague/client-api";
+import * as api from "@prague/client-api";
 import { IDeltaQueue } from "@prague/runtime-definitions";
 import * as socketStorage from "@prague/socket-storage";
 import * as assert from "assert";

@@ -1,5 +1,5 @@
 import { ICell } from "@prague/cell";
-import { api } from "@prague/client-api";
+import * as api from "@prague/client-api";
 import * as resources from "@prague/gitresources";
 import * as $ from "jquery";
 import { registerDocumentServices } from "./utils";

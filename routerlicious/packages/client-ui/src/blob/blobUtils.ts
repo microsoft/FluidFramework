@@ -1,4 +1,4 @@
-import { api } from "@prague/client-api";
+import * as api from "@prague/client-api";
 import { getFileBlobType, IGenericBlob, IImageBlob, IVideoBlob } from "@prague/runtime-definitions";
 import { gitHashFile } from "@prague/utils";
 

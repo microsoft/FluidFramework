@@ -1,4 +1,4 @@
-import { utils } from "@prague/client-api";
+import * as utils from "@prague/client-api";
 import * as assert from "assert";
 import { assertThrows } from "../testUtils";
 

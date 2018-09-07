@@ -1,4 +1,4 @@
-import { api } from "@prague/client-api";
+import * as api from "@prague/client-api";
 import * as map from "@prague/map";
 import * as assert from "assert";
 import { generateToken } from "../../utils";

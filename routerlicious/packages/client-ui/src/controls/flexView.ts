@@ -1,5 +1,5 @@
 // The main app code
-import { api } from "@prague/client-api";
+import * as api from "@prague/client-api";
 import { IMap, IMapView } from "@prague/map";
 import { IGenericBlob, MessageType } from "@prague/runtime-definitions";
 import { IColor } from "@prague/stream";

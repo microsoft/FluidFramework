@@ -1,4 +1,4 @@
-import { api } from "@prague/client-api";
+import * as api from "@prague/client-api";
 import { IDocumentService } from "@prague/runtime-definitions";
 import * as testUtils from "./";
 

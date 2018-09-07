@@ -1,4 +1,4 @@
-import { api } from "@prague/client-api";
+import * as api from "@prague/client-api";
 import { controls, ui } from "@prague/client-ui";
 import * as resources from "@prague/gitresources";
 import { IMap } from "@prague/map";

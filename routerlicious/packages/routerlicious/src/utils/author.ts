@@ -1,5 +1,5 @@
 import { ICell } from "@prague/cell";
-import { api, utils } from "@prague/client-api";
+import * as api from "@prague/client-api";
 import { IMap } from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
 import { ISequencedObjectMessage, ITrace } from "@prague/runtime-definitions";
@@ -7,7 +7,7 @@ import * as SharedString from "@prague/shared-string";
 import * as queue from "async/queue";
 // tslint:disable-next-line:no-var-requires
 const clone = require("lodash/clone");
-import Counter = utils.RateCounter;
+import Counter = api.RateCounter;
 
 let play: boolean = false;
 
@@ -193,7 +193,7 @@ function getChartConfiguration(data: IChartData) {
     };
 }
 
-function getHistogramConfiguration(histogram: utils.Histogram) {
+function getHistogramConfiguration(histogram: api.Histogram) {
     return {
         series: [
             {
@@ -415,7 +415,7 @@ export async function typeChunk(
         let totalOps = 0;
 
         const histogramRange = 5;
-        const histogram = new utils.Histogram(histogramRange);
+        const histogram = new api.Histogram(histogramRange);
 
         // Trigger a new sample after a second has elapsed
         const samplingRate = 1000;

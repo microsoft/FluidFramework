@@ -1,4 +1,4 @@
-import { core as api } from "@prague/client-api";
+import * as api from "@prague/client-api";
 import { IHelpMessage, MessageType } from "@prague/runtime-definitions";
 import * as winston from "winston";
 import * as core from "../core";

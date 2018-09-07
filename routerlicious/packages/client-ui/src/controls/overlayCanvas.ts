@@ -1,4 +1,4 @@
-import { api } from "@prague/client-api";
+import * as api from "@prague/client-api";
 import * as stream from "@prague/stream";
 import * as assert from "assert";
 import * as ui from "../ui";

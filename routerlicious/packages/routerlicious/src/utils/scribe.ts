@@ -1,4 +1,4 @@
-import { api } from "@prague/client-api";
+import * as api from "@prague/client-api";
 import { IMapView } from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
 import * as SharedString from "@prague/shared-string";

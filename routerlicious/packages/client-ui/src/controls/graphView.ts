@@ -1,4 +1,4 @@
-import { api } from "@prague/client-api";
+import * as api from "@prague/client-api";
 import * as graph from "@prague/graph";
 import * as map from "@prague/map";
 import * as d3 from "d3";

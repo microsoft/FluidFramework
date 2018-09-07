@@ -1,4 +1,4 @@
-import { utils as coreUtils } from "@prague/client-api";
+import * as coreUtils from "@prague/client-api";
 import { INack, ISequencedDocumentMessage, ITrace } from "@prague/runtime-definitions";
 import * as assert from "assert";
 import { EventEmitter } from "events";
