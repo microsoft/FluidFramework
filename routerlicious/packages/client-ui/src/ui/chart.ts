@@ -48,8 +48,9 @@ export class Chart extends Box<IChartState> {
         // Explicitly set div height to match the chart that will asynchronously arrive from
         // the web service.  This reserves the appropriate amount of vertical space in the
         // FlowView, avoiding the need for a later invalidation/resize when the chart arrives.
-        const height = 480;
+        const height = 260;
         div.style.height = `${height}px`;
+        div.style.justifyContent = "center";
 
         // Configure the chart, initiating the request from the charting service.
         const chart = new Charts.Chart(this.host, div);
@@ -65,7 +66,7 @@ export class Chart extends Box<IChartState> {
             }],
             size: {
                 height,
-                width: 768,
+                width: Math.round(height * 1.618),        // ~= Golden ratio wrt. height
             },
         });
 
