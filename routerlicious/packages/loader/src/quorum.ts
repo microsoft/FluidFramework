@@ -36,10 +36,6 @@ class PendingProposal implements IPendingProposal, ISequencedProposal {
     }
 
     public addRejection(clientId: string) {
-        if (!this.rejections) {
-            this.rejections = new Set();
-        }
-
         assert(!this.rejections.has(clientId));
         this.rejections.add(clientId);
     }
@@ -244,7 +240,7 @@ export class Quorum extends EventEmitter implements IQuorum {
         completed.sort((a, b) => a.sequenceNumber - b.sequenceNumber);
 
         for (const proposal of completed) {
-            const approved = !proposal.rejections;
+            const approved = proposal.rejections.size === 0;
 
             // If it was a local proposal - resolve the promise
             if (proposal.deferred) {
