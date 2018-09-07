@@ -1,6 +1,7 @@
 import { ICommit } from "@prague/gitresources";
 import {
     ConnectionState,
+    FileMode,
     IChaincode,
     IClientJoin,
     ICodeLoader,
@@ -8,6 +9,7 @@ import {
     IDocumentAttributes,
     IDocumentService,
     IDocumentStorageService,
+    IEnvelope,
     IGenericBlob,
     IPlatform,
     IProposal,
@@ -15,8 +17,11 @@ import {
     ISequencedDocumentMessage,
     ISnapshotTree,
     ITokenService,
+    ITree,
+    ITreeEntry,
     IUser,
     MessageType,
+    TreeEntry,
 } from "@prague/runtime-definitions";
 import * as assert from "assert";
 import { EventEmitter } from "events";
@@ -59,6 +64,7 @@ export class Document extends EventEmitter {
     private connectionState = ConnectionState.Disconnected;
     private quorum: Quorum;
     private blobManager: BlobManager;
+    private messagesSinceMSNChange = new Array<ISequencedDocumentMessage>();
 
     // Active chaincode and associated runtime
     private storageService: IDocumentStorageService;
@@ -171,6 +177,9 @@ export class Document extends EventEmitter {
         const blobManagerP = Promise.all([storageP, treeP]).then(
             ([storage, tree]) => this.loadBlobManager(storage, tree));
 
+        const tardisMessagesP = Promise.all([attributesP, storageP, treeP]).then(
+            ([attributes, storage, tree]) => this.loadTardisMessages(attributes, storage, tree));
+
         // Wait for all the loading promises to finish
         return Promise
             .all([
@@ -181,8 +190,18 @@ export class Document extends EventEmitter {
                 quorumP,
                 blobManagerP,
                 chaincodeP,
+                tardisMessagesP,
                 connectResult.handlerAttachedP])
-            .then(async ([storageService, tree, version, attributes, quorum, blobManager, chaincode]) => {
+            .then(async ([
+                storageService,
+                tree,
+                version,
+                attributes,
+                quorum,
+                blobManager,
+                chaincode,
+                tardisMessages]) => {
+
                 this.quorum = quorum;
                 this.storageService = storageService;
                 this.blobManager = blobManager;
@@ -198,7 +217,8 @@ export class Document extends EventEmitter {
                     this.user,
                     this.blobManager,
                     chaincode,
-                    this.deltaManager,
+                    tardisMessages,
+                    this._deltaManager,
                     this.quorum,
                     storageService,
                     this.connectionState,
@@ -264,8 +284,14 @@ export class Document extends EventEmitter {
         return super.on(event, listener);
     }
 
-    public snapshot(message: string): Promise<void> {
-        throw new Error("Not implementd");
+    /**
+     * Modifies emit to also forward to the active runtime.
+     */
+    public emit(message: string | symbol, ...args: any[]): boolean {
+        const superResult = super.emit(message, ...args);
+        const runtimeResult = this.runtime ? this.runtime.emit(message, ...args) : true;
+
+        return superResult && runtimeResult;
     }
 
     public close() {
@@ -274,6 +300,171 @@ export class Document extends EventEmitter {
         }
 
         this.removeAllListeners();
+    }
+
+    public async snapshot(tagMessage: string): Promise<void> {
+        // TODO: support for branch snapshots. For now simply no-op when a branch snapshot is requested
+        if (this.parentBranch) {
+            debug(`Skipping snapshot due to being branch of ${this.parentBranch}`);
+            return;
+        }
+
+        // Grab the snapshot of the current state
+        const snapshotSequenceNumber = this._deltaManager.referenceSequenceNumber;
+        const root = this.snapshotCore();
+
+        const deltaDetails =
+            `${this._deltaManager.referenceSequenceNumber}:${this._deltaManager.minimumSequenceNumber}`;
+        const message = `Commit @${deltaDetails} ${tagMessage}`;
+
+        return this.storageService.getVersions(this.id, 1).then(async (lastVersion) => {
+            // Pull the sequence number stored with the previous version
+            let sequenceNumber = 0;
+            if (lastVersion.length > 0) {
+                const attributesAsString = await this.storageService.getContent(lastVersion[0], ".attributes");
+                const decoded = Buffer.from(attributesAsString, "base64").toString();
+                const attributes = JSON.parse(decoded) as IDocumentAttributes;
+                sequenceNumber = attributes.sequenceNumber;
+            }
+
+            // Retrieve all deltas from sequenceNumber to snapshotSequenceNumber. Range is exclusive so we increment
+            // the snapshotSequenceNumber by 1 to include it.
+            const deltas = await this._deltaManager.getDeltas(sequenceNumber, snapshotSequenceNumber + 1);
+            const parents = lastVersion.length > 0 ? [lastVersion[0].sha] : [];
+            root.entries.push({
+                mode: FileMode.File,
+                path: "deltas",
+                type: TreeEntry[TreeEntry.Blob],
+                value: {
+                    contents: JSON.stringify(deltas),
+                    encoding: "utf-8",
+                },
+            });
+
+            await this.storageService.write(root, parents, message);
+        });
+    }
+
+    private snapshotCore(): ITree {
+        const entries: ITreeEntry[] = [];
+
+        // Craft the .messages file for the document
+        // Transform ops in the window relative to the MSN - the window is all ops between the min sequence number
+        // and the current sequence number
+        assert.equal(
+            this._deltaManager.referenceSequenceNumber - this._deltaManager.minimumSequenceNumber,
+            this.messagesSinceMSNChange.length);
+        const transformedMessages: ISequencedDocumentMessage[] = [];
+        debug(`Transforming up to ${this._deltaManager.minimumSequenceNumber}`);
+        for (const message of this.messagesSinceMSNChange) {
+            transformedMessages.push(this.transform(message, this._deltaManager.minimumSequenceNumber));
+        }
+        entries.push({
+            mode: FileMode.File,
+            path: ".messages",
+            type: TreeEntry[TreeEntry.Blob],
+            value: {
+                contents: JSON.stringify(transformedMessages),
+                encoding: "utf-8",
+            },
+        });
+
+        const blobMetaData = this.blobManager.getBlobMetadata();
+        entries.push({
+            mode: FileMode.File,
+            path: ".blobs",
+            type: TreeEntry[TreeEntry.Blob],
+            value: {
+                contents: JSON.stringify(blobMetaData),
+                encoding: "utf-8",
+            },
+        });
+
+        const channelEntries = this.runtime.snapshotInternal();
+        entries.push(...channelEntries);
+
+        // Save attributes for the document
+        const documentAttributes: IDocumentAttributes = {
+            branch: this.id,
+            clients: [...this.quorum.getMembers()],
+            minimumSequenceNumber: this._deltaManager.minimumSequenceNumber,
+            proposals: [],
+            sequenceNumber: this._deltaManager.referenceSequenceNumber,
+            values: [],
+        };
+        entries.push({
+            mode: FileMode.File,
+            path: ".attributes",
+            type: TreeEntry[TreeEntry.Blob],
+            value: {
+                contents: JSON.stringify(documentAttributes),
+                encoding: "utf-8",
+            },
+        });
+
+        // Output the tree
+        const root: ITree = {
+            entries,
+        };
+
+        return root;
+    }
+
+    /**
+     * Transforms the given message relative to the provided sequence number
+     */
+    private transform(message: ISequencedDocumentMessage, sequenceNumber: number): ISequencedDocumentMessage {
+        // Allow the distributed data types to perform custom transformations
+        if (message.type === MessageType.Operation) {
+            this.runtime.transform(message);
+        } else {
+            message.type = MessageType.NoOp;
+        }
+
+        message.referenceSequenceNumber = sequenceNumber;
+
+        return message;
+    }
+
+    private async loadTardisMessages(
+        attributes: IDocumentAttributes,
+        storage: IDocumentStorageService,
+        tree: ISnapshotTree): Promise<Map<string, ISequencedDocumentMessage[]>> {
+
+        const messages: ISequencedDocumentMessage[] = tree
+            ? await readAndParse<ISequencedDocumentMessage[]>(storage, tree.blobs[".messages"])
+            : [];
+
+        // Update message information based on branch details
+        if (attributes.branch !== this.id) {
+            for (const message of messages) {
+                // Append branch information when transforming for the case of messages stashed with the snapshot
+                if (attributes.branch) {
+                    message.origin = {
+                        id: attributes.branch,
+                        minimumSequenceNumber: message.minimumSequenceNumber,
+                        sequenceNumber: message.sequenceNumber,
+                    };
+                }
+            }
+        }
+
+        // Make a reservation for the root object as well as all distributed objects in the snapshot
+        const transformedMap = new Map<string, ISequencedDocumentMessage[]>();
+
+        // Filter messages per distributed data type
+        for (const message of messages) {
+            if (message.type === MessageType.Operation) {
+                const envelope = message.contents as IEnvelope;
+                if (transformedMap.has(envelope.address)) {
+                    transformedMap.set(envelope.address, []);
+                }
+
+                transformedMap.get(envelope.address).push(message);
+            }
+        }
+
+        return transformedMap;
     }
 
     private loadQuorum(storage: IDocumentStorageService, tree: ISnapshotTree): Quorum {
@@ -340,7 +531,8 @@ export class Document extends EventEmitter {
             this.user,
             this.blobManager,
             chaincode,
-            this.deltaManager,
+            new Map(),
+            this._deltaManager,
             this.quorum,
             this.storageService,
             this.connectionState,
@@ -479,6 +671,19 @@ export class Document extends EventEmitter {
     private processRemoteMessage(message: ISequencedDocumentMessage, context: any) {
         const local = this._clientId === message.clientId;
 
+        // Add the message to the list of pending messages so we can transform them during a snapshot
+        // Reset the list of messages we have received since the min sequence number changed
+        this.messagesSinceMSNChange.push(message);
+        let index = 0;
+        for (; index < this.messagesSinceMSNChange.length; index++) {
+            if (this.messagesSinceMSNChange[index].sequenceNumber > message.minimumSequenceNumber) {
+                break;
+            }
+        }
+        if (index !== 0) {
+            this.messagesSinceMSNChange = this.messagesSinceMSNChange.slice(index);
+        }
+
         switch (message.type) {
             case MessageType.ClientJoin:
                 const join = message.contents as IClientJoin;
@@ -542,5 +747,6 @@ export class Document extends EventEmitter {
         // Notify the quorum of the MSN from the message. We rely on it to handle duplicate values but may
         // want to move that logic to this class.
         this.quorum.updateMinimumSequenceNumber(message.minimumSequenceNumber);
+        this.runtime.updateMinSequenceNumber(message.minimumSequenceNumber);
     }
 }

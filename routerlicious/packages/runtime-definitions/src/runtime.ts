@@ -1,3 +1,4 @@
+import { EventEmitter } from "events";
 import { IGenericBlob } from "./blobs";
 import { IChannel } from "./chaincode";
 import { IDistributedObjectServices } from "./channel";
@@ -15,7 +16,7 @@ export interface IMessageHandler {
     process(message: ISequencedDocumentMessage, context: any, local: boolean): void;
 }
 
-export interface IRuntime {
+export interface IRuntime extends EventEmitter {
     readonly tenantId: string;
 
     readonly id: string;

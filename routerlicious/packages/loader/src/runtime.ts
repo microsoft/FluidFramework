@@ -1,15 +1,16 @@
 import {
     ConnectionState,
+    FileMode,
     IAttachMessage,
     IChaincode,
     IChaincodeModule,
     IChannel,
-    IDeltaManager,
     IDistributedObjectServices,
     IDocumentStorageService,
     IEnvelope,
     IGenericBlob,
     IObjectAttributes,
+    IObjectMessage,
     IObjectStorageService,
     IPlatform,
     IQuorum,
@@ -17,14 +18,18 @@ import {
     ISave,
     ISequencedDocumentMessage,
     ISnapshotTree,
+    ITreeEntry,
     IUser,
     MessageType,
+    TreeEntry,
 } from "@prague/runtime-definitions";
 import { Deferred, gitHashFile } from "@prague/utils";
 import * as assert from "assert";
+import { EventEmitter } from "events";
 import { BlobManager } from "./blobManager";
 import { ChannelDeltaConnection } from "./channelDeltaConnection";
 import { ChannelStorageService } from "./channelStorageService";
+import { DeltaManager } from "./deltaManager";
 import { LocalChannelStorageService } from "./localChannelStorageService";
 import { readAndParse } from "./utils";
 
@@ -39,7 +44,7 @@ interface IObjectServices {
     objectStorage: IObjectStorageService;
 }
 
-export class Runtime implements IRuntime {
+export class Runtime extends EventEmitter implements IRuntime {
     public static async LoadFromSnapshot(
         tenantId: string,
         id: string,
@@ -50,7 +55,8 @@ export class Runtime implements IRuntime {
         user: IUser,
         blobManager: BlobManager,
         chaincode: IChaincode,
-        deltaManager: IDeltaManager,
+        tardisMessages: Map<string, ISequencedDocumentMessage[]>,
+        deltaManager: DeltaManager,
         quorum: IQuorum,
         storage: IDocumentStorageService,
         connectionState: ConnectionState,
@@ -91,6 +97,7 @@ export class Runtime implements IRuntime {
                     path,
                     tree.trees[path],
                     storage,
+                    tardisMessages.has(path) ? tardisMessages.get(path) : [],
                     branch,
                     minimumSequenceNumber);
             });
@@ -117,7 +124,7 @@ export class Runtime implements IRuntime {
         public clientId: string,
         public readonly user: IUser,
         private blobManager: BlobManager,
-        public readonly deltaManager: IDeltaManager,
+        public readonly deltaManager: DeltaManager,
         private quorum: IQuorum,
         private chaincode: IChaincode,
         private storageService: IDocumentStorageService,
@@ -125,6 +132,7 @@ export class Runtime implements IRuntime {
         private submitFn: (type: MessageType, contents: any) => void,
         private snapshotFn: (message: string) => Promise<void>,
         private closeFn: () => void) {
+        super();
     }
 
     public getChannel(id: string): Promise<IChannel> {
@@ -307,6 +315,7 @@ export class Runtime implements IRuntime {
             attachMessage.type,
             0,
             0,
+            [],
             services,
             origin);
 
@@ -363,6 +372,15 @@ export class Runtime implements IRuntime {
         return this.blobManager.getBlob(sha);
     }
 
+    public transform(message: ISequencedDocumentMessage) {
+        const envelope = message.contents as IEnvelope;
+        const objectDetails = this.channels.get(envelope.address);
+        envelope.contents = objectDetails.object.transform(
+            envelope.contents as IObjectMessage,
+            objectDetails.connection.transformDocumentSequenceNumber(
+                Math.max(message.referenceSequenceNumber, this.deltaManager.referenceSequenceNumber)));
+    }
+
     public async getBlobMetadata(): Promise<IGenericBlob[]> {
         return this.blobManager.getBlobMetadata();
     }
@@ -378,6 +396,52 @@ export class Runtime implements IRuntime {
 
     public close(): void {
         this.closeFn();
+    }
+
+    public updateMinSequenceNumber(msn: number) {
+        for (const [, object] of this.channels) {
+            if (!object.object.isLocal() && object.connection.baseMappingIsSet()) {
+                object.connection.updateMinSequenceNumber(msn);
+            }
+        }
+    }
+
+    public snapshotInternal(): ITreeEntry[] {
+        const entries = new Array<ITreeEntry>();
+
+        // Craft the .attributes file for each distributed object
+        for (const [objectId, object] of this.channels) {
+            // If the object isn't local - and we have received the sequenced op creating the object (i.e. it has a
+            // base mapping) - then we go ahead and snapshot
+            if (!object.object.isLocal() && object.connection.baseMappingIsSet()) {
+                const snapshot = object.object.snapshot();
+
+                // Add in the object attributes to the returned tree
+                const objectAttributes: IObjectAttributes = {
+                    sequenceNumber: object.connection.minimumSequenceNumber,
+                    type: object.object.type,
+                };
+                snapshot.entries.push({
+                    mode: FileMode.File,
+                    path: ".attributes",
+                    type: TreeEntry[TreeEntry.Blob],
+                    value: {
+                        contents: JSON.stringify(objectAttributes),
+                        encoding: "utf-8",
+                    },
+                });
+
+                // And then store the tree
+                entries.push({
+                    mode: FileMode.Directory,
+                    path: objectId,
+                    type: TreeEntry[TreeEntry.Tree],
+                    value: snapshot,
+                });
+            }
+        }
+
+        return entries;
     }
 
     private submit(type: MessageType, content: any) {
@@ -396,6 +460,7 @@ export class Runtime implements IRuntime {
         id: string,
         tree: ISnapshotTree,
         storage: IDocumentStorageService,
+        messages: ISequencedDocumentMessage[],
         branch: string,
         minimumSequenceNumber: number): Promise<void> {
 
@@ -408,6 +473,7 @@ export class Runtime implements IRuntime {
             channelAttributes.type,
             channelAttributes.sequenceNumber,
             channelAttributes.sequenceNumber,
+            messages,
             services,
             branch);
 
@@ -421,6 +487,7 @@ export class Runtime implements IRuntime {
         type: string,
         sequenceNumber: number,
         minSequenceNumber: number,
+        messages: ISequencedDocumentMessage[],
         services: IObjectServices,
         originBranch: string): Promise<IChannelState> {
 
@@ -434,7 +501,7 @@ export class Runtime implements IRuntime {
             id,
             sequenceNumber,
             minSequenceNumber,
-            [], // FIX ME!
+            messages,
             services,
             originBranch);
 

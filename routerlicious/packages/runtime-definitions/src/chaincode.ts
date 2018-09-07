@@ -1,6 +1,6 @@
 import { IDistributedObjectServices } from "./channel";
 import { IPlatform } from "./platform";
-import { ISequencedObjectMessage } from "./protocol";
+import { IObjectMessage, ISequencedObjectMessage } from "./protocol";
 import { IRuntime } from "./runtime";
 import { ITree } from "./storage";
 
@@ -44,6 +44,10 @@ export interface IChannel {
     ready(): Promise<void>;
 
     snapshot(): ITree;
+
+    transform(message: IObjectMessage, sequenceNumber: number): IObjectMessage;
+
+    isLocal(): boolean;
 }
 
 export interface IChaincodeModule  {
