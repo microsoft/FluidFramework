@@ -4,9 +4,9 @@
   "description": "Prague API sequence sample",
   "main": "index.js",
   "dependencies": {
-    "@prague/gitresources": "^0.7.0",
-    "@prague/routerlicious": "^0.1.2823",
-    "babel-polyfill": "^6.26.0",
+    "@prague/client-api": "^0.1.3270",
+    "@prague/client-ui": "^0.1.3270",
+    "@prague/socket-storage": "^0.1.3270",
     "jsonwebtoken": "^8.2.1"
   },
   "devDependencies": {
@@ -14,11 +14,6 @@
     "@types/jquery": "^3.3.1",
     "@types/jsonwebtoken": "^7.2.7",
     "@types/node": "^8.10.10",
-    "@types/socket.io-client": "^1.4.32",
-    "babel-cli": "^6.26.0",
-    "babel-core": "^6.26.3",
-    "babel-loader": "^7.1.4",
-    "babel-preset-env": "^1.6.1",
     "source-map-loader": "^0.2.3",
     "ts-loader": "^4.2.0",
     "tslint": "^5.9.1",
@@ -28,6 +23,7 @@
   },
   "scripts": {
     "build": "npm run tslint && npm run webpack",
+    "tsc": "tsc",
     "tslint": "tslint 'src/**/*.ts'",
     "webpack": "webpack --config webpack.config.js"
   },

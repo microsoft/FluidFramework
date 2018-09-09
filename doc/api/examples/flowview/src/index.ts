@@ -1,4 +1,6 @@
-import { api as prague, ui as pragueUi } from "@prague/routerlicious";
+import * as prague from "@prague/client-api";
+import * as pragueUi from "@prague/client-ui";
+import * as socketStorage from "@prague/socket-storage";
 import * as jwt from "jsonwebtoken";
 
 // For local development
@@ -14,7 +16,8 @@ const secret = "03302d4ebfb6f44b662d00313aff5a46";
 const documentId = window.location.search.slice(1) || "test-flowview-0706-1";
 
 // Register endpoint connection
-prague.socketStorage.registerAsDefault(routerlicious, historian, tenantId);
+const documentServices = socketStorage.createDocumentService(routerlicious, historian);
+prague.api.registerDocumentService(documentServices);
 
 async function run(id: string): Promise<void> {
     const token = jwt.sign(

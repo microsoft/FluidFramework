@@ -12,19 +12,6 @@ module.exports = {
             },
             {
                 test: /\.js$/,
-                include: [
-                    path.resolve(__dirname, "node_modules/@prague/routerlicious"),
-                    path.resolve(__dirname, "node_modules/telegrafjs"),
-                ],
-                use: {
-                    loader: 'babel-loader',
-                    options: {
-                        presets: ['env']
-                    }
-                }
-            },
-            {
-                test: /\.js$/,
                 use: ["source-map-loader"],
                 enforce: "pre"
             }
@@ -36,11 +23,5 @@ module.exports = {
     output: {
         filename: 'bundle.js',
         path: path.resolve(__dirname, 'dist')
-    },
-    node: {
-        fs: 'empty',
-        dgram: 'empty',
-        net: 'empty',
-        tls: 'empty'
     }
 };
