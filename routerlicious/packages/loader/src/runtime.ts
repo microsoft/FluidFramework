@@ -126,7 +126,7 @@ export class Runtime extends EventEmitter implements IRuntime {
         private blobManager: BlobManager,
         public readonly deltaManager: DeltaManager,
         private quorum: IQuorum,
-        private chaincode: IChaincode,
+        public readonly chaincode: IChaincode,
         private storageService: IDocumentStorageService,
         private connectionState: ConnectionState,
         private submitFn: (type: MessageType, contents: any) => void,

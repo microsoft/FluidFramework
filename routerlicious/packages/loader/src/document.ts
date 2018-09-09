@@ -14,7 +14,6 @@ import {
     IGenericBlob,
     IPlatform,
     IProposal,
-    IRuntime,
     ISequencedDocumentMessage,
     ISequencedProposal,
     ISnapshotTree,
@@ -31,6 +30,7 @@ import { BlobManager } from "./blobManager";
 import { debug } from "./debug";
 import { IConnectionDetails } from "./deltaConnection";
 import { DeltaManager } from "./deltaManager";
+import { NullChaincode } from "./nullChaincode";
 import { IQuorumSnapshot, Quorum } from "./quorum";
 import { Runtime } from "./runtime";
 import { readAndParse } from "./utils";
@@ -43,20 +43,6 @@ interface IConnectResult {
     detailsP: Promise<IConnectionDetails>;
 
     handlerAttachedP: Promise<void>;
-}
-
-class NullChaincode implements IChaincode {
-    public getModule(type: string): any {
-        return null;
-    }
-
-    public close(): Promise<void> {
-        return Promise.resolve();
-    }
-
-    public run(runtime: IRuntime, platform: IPlatform): Promise<void> {
-        return Promise.resolve();
-    }
 }
 
 // TODO consider a name change for this. The document is likely built on top of this infrastructure
@@ -175,7 +161,8 @@ export class Document extends EventEmitter {
             ([attributes, storage, tree]) => this.loadQuorum(attributes, storage, tree));
 
         // ...instantiate the chaincode defined on the document
-        const chaincodeP = quorumP.then((quorum) => this.loadCodeFromQuorum(quorum));
+        const chaincodeP = Promise.all([quorumP, treeP, versionP]).then(
+            ([quorum, tree, version]) => this.loadCodeFromQuorum(quorum, tree, version));
 
         const blobManagerP = Promise.all([storageP, treeP]).then(
             ([storage, tree]) => this.loadBlobManager(storage, tree));
@@ -470,7 +457,7 @@ export class Document extends EventEmitter {
         for (const message of messages) {
             if (message.type === MessageType.Operation) {
                 const envelope = message.contents as IEnvelope;
-                if (transformedMap.has(envelope.address)) {
+                if (!transformedMap.has(envelope.address)) {
                     transformedMap.set(envelope.address, []);
                 }
 
@@ -579,11 +566,17 @@ export class Document extends EventEmitter {
         newRuntime.start(this.platform);
     }
 
-    private loadCodeFromQuorum(quorum: Quorum): Promise<IChaincode> {
+    private loadCodeFromQuorum(quorum: Quorum, tree: ISnapshotTree, version: ICommit): Promise<IChaincode> {
         if (quorum.has("code")) {
             return this.loadCode(quorum.get("code"));
         } else {
-            return Promise.resolve(new NullChaincode());
+            // For back compat if no version is specified and there are channels specified then we auto-load
+            // the legacy set of code
+            if (version && tree && Object.keys(tree.trees).length > 0) {
+                return this.loadCode("@prague/client-api");
+            } else {
+                return Promise.resolve(new NullChaincode());
+            }
         }
     }
 
@@ -688,6 +681,14 @@ export class Document extends EventEmitter {
 
     private async prepareRemoteMessage(message: ISequencedDocumentMessage): Promise<any> {
         const local = this._clientId === message.clientId;
+
+        // If on the null chaincode - and we just got a channel op - transition to the legacy API
+        // This exists for backwards compatibility and will be removed going forward. We will require code to be
+        // instantiated on the document in order to process channel ops.
+        if ((message.type === MessageType.Operation || message.type === MessageType.Attach) &&
+            this.runtime.chaincode instanceof NullChaincode) {
+            await this.transitionRuntime("@prague/client-api");
+        }
 
         switch (message.type) {
             case MessageType.Operation:

@@ -334,8 +334,12 @@ export async function load(
         version,
         connect);
 
-    initializeChaincode(loaderDoc, `@prague/client-api@${apiVersion}`)
-        .catch((error) => debug("chaincode error", error));
+    // If this is a new document we will go and instantiate the chaincode. For old documents we assume a legacy
+    // package.
+    if (!loaderDoc.existing) {
+        initializeChaincode(loaderDoc, `@prague/client-api@${apiVersion}`)
+            .catch((error) => debug("chaincode error", error));
+    }
 
     // Wait for loader to start us
     const { runtime } = await runDeferred.promise;
