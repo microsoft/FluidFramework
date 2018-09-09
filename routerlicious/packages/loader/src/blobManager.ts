@@ -14,13 +14,12 @@ export class BlobManager implements IBlobManager {
         }
     }
 
-    public getBlobMetadata(): IGenericBlob[] {
+    public getBlobMetadata(): Promise<IGenericBlob[]> {
         const blobs = [... this.blobs.values()];
-        const arr =  blobs.map((value) => {
+        return Promise.resolve(blobs.map((value) => {
             value.content = null;
             return value;
-        });
-        return arr;
+        }));
     }
 
     public async getBlob(sha: string): Promise<IGenericBlob> {

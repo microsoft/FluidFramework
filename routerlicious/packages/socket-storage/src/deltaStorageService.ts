@@ -41,7 +41,7 @@ export class DeltaStorageService implements api.IDeltaStorageService {
         }
 
         const result = await axios.get<api.ISequencedDocumentMessage[]>(
-            `${this.url}/deltas/${tenantId}/${id}?${query}`, { headers });
+            `${this.url}/deltas/${encodeURIComponent(tenantId)}/${encodeURIComponent(id)}?${query}`, { headers });
         return result.data;
     }
 }

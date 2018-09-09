@@ -182,6 +182,7 @@ export function create(appConfig: any, aadConfig: any) {
     app.use("/tictactoe", routes.tictactoe);
     app.use("/snake", routes.snake);
     app.use("/todolist", routes.todolist);
+    app.use("/quizzes", routes.quizzes);
     app.use("/", routes.home);
 
     // catch 404 and forward to error handler

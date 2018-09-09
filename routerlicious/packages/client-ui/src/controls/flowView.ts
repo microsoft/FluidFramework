@@ -357,35 +357,9 @@ const commands: ICmd[] = [
     },
     {
         exec: (f) => {
-            f.insertRow();
-            f.insertColumn();
-        },
-        key: "insert row then col",
-    },
-    {
-        exec: (f) => {
-            f.crazyTable(40);
-        },
-        key: "crazy table",
-    },
-    {
-        exec: (f) => {
-            f.insertColumn();
-            f.insertRow();
-        },
-        key: "insert col then row",
-    },
-    {
-        exec: (f) => {
             f.deleteRow();
         },
         key: "delete row",
-    },
-    {
-        exec: (f) => {
-            f.deleteCellShiftLeft();
-        },
-        key: "delete cell shift left",
     },
     {
         exec: (f) => {
@@ -404,6 +378,12 @@ const commands: ICmd[] = [
             f.insertSheetlet();
         },
         key: "insert sheet",
+    },
+    {
+        exec: (f) => {
+            f.insertChart();
+        },
+        key: "insert chart",
     },
 ];
 
@@ -531,8 +511,10 @@ export function selectionListBoxCreate(
     }
 
     function nonPopUpdateRectangles() {
-        shapeRect.conformElement(listContainer);
-        itemCapacity = Math.floor(shapeRect.height / itemHeight);
+        const trimRect = new ui.Rectangle(shapeRect.x, shapeRect.y,
+            shapeRect.width - 10, shapeRect.height - 10);
+        trimRect.conformElement(listContainer);
+        itemCapacity = Math.floor(trimRect.height / itemHeight);
 
         if (varHeight) {
             listContainer.style.paddingBottom = varHeight + "px";
@@ -1157,17 +1139,35 @@ function endRenderSegments(marker: MergeTree.Marker) {
 const wordHeadingColor = "rgb(47, 84, 150)";
 
 /**
- * Stops propagation of UI events to the FlowView host.  This works around the FlowView
- * invoking 'preventDefault()', which breaks the behavior of HTML intrinsic controls like
- * <input />.
+ * Ensure the given 'element' is focusable and restore the default behavior of HTML intrinsic
+ * controls (e.g., <input>) within the element.
  */
-function handleEvents(element: HTMLElement) {
+function allowDOMEvents(element: HTMLElement) {
+    // Ensure element can receive DOM focus (see Example 1):
+    // https://www.w3.org/WAI/GL/WCAG20/WD-WCAG20-TECHS/SCR29.html
+
+    // Note: 'tabIndex' should never be NaN, undefined, etc., but use of negation below ensures
+    //       these degenerate values will also be replaced with 0.
+    if (!(element.tabIndex >= 0)) {
+        element.tabIndex = 0;
+    }
+
+    // TODO: Unsure if the empty/overlapping line divs overlapping inclusions are intentional?
+    //
+    // Elevate elements expecting DOM focus within their stacking container to ensure they
+    // appear above empty line divs generated after their marker.
+    element.style.zIndex = "1";
+
+    // Stops these events from bubbling back up to the FlowView when the <div> is focused.
+    // The FlowView invokes 'preventDefault()' on these events, which blocks the behavior of
+    // HTML intrinsic controls like <input />.
     element.addEventListener("mousedown", (e) => { e.stopPropagation(); });
     element.addEventListener("mousemove", (e) => { e.stopPropagation(); });
     element.addEventListener("mouseup", (e) => { e.stopPropagation(); });
     element.addEventListener("keydown", (e) => { e.stopPropagation(); });
     element.addEventListener("keypress", (e) => { e.stopPropagation(); });
     element.addEventListener("keyup", (e) => { e.stopPropagation(); });
+
     return element;
 }
 
@@ -1211,13 +1211,13 @@ function renderSegmentIntoLine(
         // component.
         if (marker.refType === MergeTree.ReferenceType.Simple) {
             const typeName = marker.properties.ref && marker.properties.ref.type.name;
-            const component = ui.refTypeNameToComponent.get(typeName);
+            const maybeComponent = ui.refTypeNameToComponent.get(typeName);
 
             // If it is a registered external component, ask it to render itself to HTML and
             // insert the divs here.
-            if (component) {
+            if (maybeComponent) {
                 lineContext.contentDiv.appendChild(
-                    handleEvents(component.render(
+                    allowDOMEvents(maybeComponent.render(
                         marker.properties.state,
                         lineContext.flowView.services,
                     )));
@@ -2116,9 +2116,21 @@ export class Viewport {
                         if (prevSelectionBox) {
                             selectionIndex = prevSelectionBox.getSelectionIndex();
                         }
-                        const shapeRect = new ui.Rectangle(0,0,exclu.width,exclu.height);
+                        const shapeRect = new ui.Rectangle(0, 0, exclu.width, exclu.height);
                         listRefMarker.selectionListBox =
                             selectionListBoxCreate(shapeRect, false, innerDiv, 24, 2);
+
+                        // Allow the list box to receive DOM focus and subscribe its 'keydown' handler.
+                        allowDOMEvents(listRefMarker.selectionListBox.elm);
+                        listRefMarker.selectionListBox.elm.addEventListener("keydown",
+                            (e) => listRefMarker.selectionListBox.keydown(e));
+
+                        const listIrdoc =
+                            <IListReferenceDoc>listRefMarker.properties[Paragraph.referenceProperty];
+                        for (const item of listIrdoc.items) {
+                            item.div = undefined;
+                        }
+                        listRefMarker.selectionListBox.showSelectionList(listIrdoc.items);
                         listRefMarker.selectionListBox.setSelectionIndex(selectionIndex);
                     } else if ((irdoc.type.name === "childFlow") && (!flowView.parentFlow)) {
                         const flowRefMarker = marker as IFlowRefMarker;
@@ -2604,7 +2616,7 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
         const maybeComponent = asMarker && ui.maybeGetComponent(asMarker);
 
         if (maybeComponent) {
-            const componentDiv = handleEvents(maybeComponent.render(asMarker.properties.state, layoutContext.flowView.services));
+            const componentDiv = allowDOMEvents(maybeComponent.render(asMarker.properties.state, layoutContext.flowView.services));
 
             // Force subtree positioning to be relative to the lineDiv we create below.
             componentDiv.style.display = "flex";
@@ -2920,6 +2932,7 @@ export class Cursor {
     private blinkCount = 0;
     private blinkTimer: any;
     private bgColor = "blue";
+    private enabled = true;
 
     constructor(public viewportDiv: HTMLDivElement, public pos = 0) {
         this.makeSpan();
@@ -2931,7 +2944,60 @@ export class Cursor {
         this.bgColor = presenceColors[presenceColorIndex];
         this.presenceInfo = presenceInfo;
         this.makePresenceDiv();
+
+        this.refresh();
+
+        if (this.enabled) {
+            this.show();
+        } else {
+            this.hide(true);
+        }
+    }
+
+    /**
+     * Refreshes the cursor
+     * It will enable / disable the cursor depending on if the client is connected
+     */
+    public refresh() {
+        if (this.presenceInfo) {
+            if (this.presenceInfo.shouldShowCursor()) {
+                this.enable();
+            } else {
+                this.disable();
+            }
+        }
+    }
+
+    /**
+     * Enable the cursor - makes the cursor visible
+     */
+    public enable() {
+        if (this.enabled) {
+            return;
+        }
+
+        this.enabled = true;
         this.show();
+
+        this.blinkCursor();
+    }
+
+    /**
+     * Disable the cursor - hides the cursor and prevents it from showing up
+     */
+    public disable() {
+        if (!this.enabled) {
+            return;
+        }
+
+        this.enabled = false;
+        this.hide(true);
+        this.clearSelection();
+
+        if (this.blinkTimer) {
+            clearTimeout(this.blinkTimer);
+            this.blinkTimer = undefined;
+        }
     }
 
     public tryMark() {
@@ -2957,13 +3023,22 @@ export class Cursor {
         }
     }
 
-    public hide() {
+    public hide(hidePresenceDiv: boolean = false) {
         this.editSpan.style.visibility = "hidden";
+
+        if (hidePresenceDiv && this.presenceInfo) {
+            this.presenceDiv.style.visibility = "hidden";
+        }
     }
 
     public show() {
+        if (!this.enabled) {
+            return;
+        }
+
         this.editSpan.style.backgroundColor = this.bgColor;
         this.editSpan.style.visibility = "visible";
+
         if (this.presenceInfo) {
             this.presenceDiv.style.visibility = "visible";
         }
@@ -3070,6 +3145,10 @@ export class Cursor {
     }
 
     private blinker = () => {
+        if (!this.enabled) {
+            return;
+        }
+
         if (this.off) {
             this.show();
         } else {
@@ -3164,6 +3243,7 @@ export interface ILocalPresenceInfo {
     user: IUser;
     cursor?: Cursor;
     fresh: boolean;
+    shouldShowCursor: () => boolean;
 }
 
 interface ISegmentOffset {
@@ -3437,7 +3517,11 @@ export class FlowView extends ui.Component {
         // https://www.w3.org/WAI/GL/WCAG20/WD-WCAG20-TECHS/SCR29.html
         this.element.tabIndex = 0;
 
+        // Disable visible focus outline when FlowView is focused.
         this.element.style.outline = "0px solid transparent";
+
+        // Clip children of FlowView to the bounds of the FlowView's root div.
+        this.element.style.overflow = "hidden";
 
         this.cmdTree = new MergeTree.TST<ICmd>();
         for (const command of commands) {
@@ -3463,6 +3547,15 @@ export class FlowView extends ui.Component {
             if (this.applyOp(delta, msg)) {
                 this.queueRender(msg);
             }
+        });
+
+        // refresh cursors when clients join or leave
+        collabDocument.on("clientJoin", () => {
+            this.updatePresenceCursors();
+        });
+
+        collabDocument.on("clientLeave", () => {
+            this.updatePresenceCursors();
         });
 
         this.cursor = new Cursor(this.viewportDiv);
@@ -3556,6 +3649,14 @@ export class FlowView extends ui.Component {
                 props);
         }
         this.localQueueRender(-1);
+    }
+
+    public updatePresenceCursors() {
+        for (const presenceInfo of this.presenceVector) {
+            if (presenceInfo && presenceInfo.cursor) {
+                presenceInfo.cursor.refresh();
+            }
+        }
     }
 
     public xUpdateHistoryBubble(x: number) {
@@ -4771,6 +4872,11 @@ export class FlowView extends ui.Component {
         this.insertComponent("sheetlet", {});
     }
 
+    /** Insert a Chart. */
+    public insertChart() {
+        this.insertComponent("chart", {});
+    }
+
     /** Insert a Formula box to display the given 'formula'. */
     public insertFormula(formula: string) {
         this.insertComponent("formula", { formula });
@@ -4784,14 +4890,17 @@ export class FlowView extends ui.Component {
     public insertList() {
         const startPos = this.cursor.pos;
         const testList: Item[] = [{ key: "providence" }, { key: "boston" }, { key: "issaquah" }];
-        const props = <IListReferenceDoc>{
+        const irdoc = <IListReferenceDoc>{
             items: testList,
             selectionIndex: 0,
             sha: "L",
             type: { name: "list" },
             url: "",
         };
-        this.sharedString.insertMarker(this.cursor.pos++, MergeTree.ReferenceType.Simple, props);
+        const refProps = {
+            [Paragraph.referenceProperty]: irdoc,
+        };
+        this.sharedString.insertMarker(this.cursor.pos++, MergeTree.ReferenceType.Simple, refProps);
         this.localQueueRender(startPos);
     }
 
@@ -5501,6 +5610,12 @@ export class FlowView extends ui.Component {
                 fresh: true,
                 localRef: new MergeTree.LocalReference(segoff.segment as MergeTree.BaseSegment, segoff.offset,
                     MergeTree.ReferenceType.SlideOnRemove),
+                shouldShowCursor: () => {
+                    return this.client.getClientId() !== clientId &&
+                        Array.from(this.collabDocument.getClients().keys())
+                            .map((k) => this.client.getOrAddShortClientId(k))
+                            .indexOf(clientId) !== -1;
+                },
                 user,
             } as ILocalPresenceInfo;
             if (remotePresenceInfo.origMark >= 0) {
