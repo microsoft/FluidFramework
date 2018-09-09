@@ -1,25 +1,17 @@
-import * as api from "@prague/client-api";
 import * as map from "@prague/map";
 import * as assert from "assert";
-import { generateToken } from "../../utils";
-import * as testUtils from "../testUtils";
 
 describe("Routerlicious", () => {
     describe("Map", () => {
         describe("Counter", () => {
-            let testDocument: api.Document;
             let testMap: map.IMap;
             let testCounter: map.Counter;
 
             beforeEach(async () => {
-                const tenantId = "test";
-                const documentId = "testDocument";
-                const secret = "test";
+                const extension = new map.MapExtension();
+                testMap = extension.create(null, "test");
+                testMap.registerValueType(new map.CounterValueType());
 
-                testUtils.registerAsTest("", "", "");
-                const token = generateToken(tenantId, documentId, secret);
-                testDocument = await api.load(documentId, { token });
-                testMap = testDocument.createMap();
                 testCounter = testMap.set("defaultCounter", undefined, map.CounterValueType.Name);
             });
 

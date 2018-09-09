@@ -1,24 +1,14 @@
-import { ICell } from "@prague/cell";
-import * as api from "@prague/client-api";
+import { CellExtension, ICell } from "@prague/cell";
 import * as assert from "assert";
-import { generateToken } from "../../utils";
-import * as testUtils from "../testUtils";
 
 describe("Routerlicious", () => {
     describe("Api", () => {
         describe("cell", () => {
-            let testDocument: api.Document;
             let testCell: ICell;
 
             beforeEach(async () => {
-                const tenantId = "test";
-                const documentId = "testDocument";
-                const secret = "test";
-
-                testUtils.registerAsTest("", "", "");
-                const token = generateToken(tenantId, documentId, secret);
-                testDocument = await api.load(documentId, { token });
-                testCell = testDocument.createCell();
+                const extension = new CellExtension();
+                testCell = extension.create(null, "cell");
             });
 
             it("Can create a cell", () => {
