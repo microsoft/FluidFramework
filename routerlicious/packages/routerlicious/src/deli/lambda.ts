@@ -256,7 +256,7 @@ export class DeliLambda implements IPartitionLambda {
                     clientSequenceNumber: branchDocumentMessage.sequenceNumber,
                     contents: branchDocumentMessage.contents,
                     referenceSequenceNumber: transformedRefSeqNumber,
-                    traces: (message.operation as IDocumentMessage & { traces: ITrace[] }).traces,
+                    traces: message.operation.traces,
                     type: branchDocumentMessage.type,
                 } as IDocumentMessage,
                 tenantId: message.tenantId,
@@ -303,7 +303,7 @@ export class DeliLambda implements IPartitionLambda {
         this.minimumSequenceNumber = msn === -1 ? sequenceNumber : msn;
 
         // Add traces
-        const messageWithTraces = message.operation as IDocumentMessage & { traces?: ITrace[] };
+        const messageWithTraces = message.operation as IDocumentMessage;
         const traces = messageWithTraces.traces;
         if (traces !== undefined) {
             traces.push(trace);
@@ -311,7 +311,7 @@ export class DeliLambda implements IPartitionLambda {
         }
 
         // And now craft the output message
-        const outputMessage: ISequencedDocumentMessage & ({ traces: ITrace[] }) = {
+        const outputMessage: ISequencedDocumentMessage = {
             clientId: message.clientId,
             clientSequenceNumber: message.operation.clientSequenceNumber,
             contents: message.operation.contents,
@@ -408,6 +408,7 @@ export class DeliLambda implements IPartitionLambda {
                 clientSequenceNumber: -1,
                 contents: clientId,
                 referenceSequenceNumber: -1,
+                traces: [],
                 type: MessageType.ClientLeave,
             },
             tenantId: this.tenantId,
@@ -447,6 +448,7 @@ export class DeliLambda implements IPartitionLambda {
                 clientSequenceNumber: -1,
                 contents: null,
                 referenceSequenceNumber: -1,
+                traces: [],
                 type: MessageType.NoOp,
             },
             tenantId: this.tenantId,

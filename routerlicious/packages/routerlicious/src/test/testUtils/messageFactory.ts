@@ -50,6 +50,7 @@ export class MessageFactory {
             clientSequenceNumber: this.clientSequenceNumber++,
             contents: null,
             referenceSequenceNumber,
+            traces: [],
             type: MessageType.NoOp,
         };
         return operation;
@@ -65,6 +66,7 @@ export class MessageFactory {
             clientSequenceNumber: -1,
             contents: { clientId: this.clientId },
             referenceSequenceNumber: -1,
+            traces: [],
             type: MessageType.ClientJoin,
         };
 
@@ -76,6 +78,7 @@ export class MessageFactory {
             clientSequenceNumber: -1,
             contents: this.clientId,
             referenceSequenceNumber: -1,
+            traces: [],
             type: MessageType.ClientLeave,
         };
 
@@ -103,6 +106,7 @@ export class MessageFactory {
                 message: "Test Save",
             },
             referenceSequenceNumber: 0,
+            traces: [],
             type: MessageType.Save,
         };
 
@@ -114,6 +118,7 @@ export class MessageFactory {
             origin: undefined,
             referenceSequenceNumber: operation.referenceSequenceNumber,
             sequenceNumber: this.sequenceNumber++,
+            traces: [],
             type: operation.type,
             user: null,
         };
@@ -138,6 +143,7 @@ export class MessageFactory {
             origin: undefined,
             referenceSequenceNumber: operation.referenceSequenceNumber,
             sequenceNumber: this.sequenceNumber++,
+            traces: [],
             type: operation.type,
             user: null,
         };

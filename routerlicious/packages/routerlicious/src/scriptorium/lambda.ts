@@ -1,5 +1,5 @@
 import * as coreUtils from "@prague/client-api";
-import { INack, ISequencedDocumentMessage, ITrace } from "@prague/runtime-definitions";
+import { INack, ISequencedDocumentMessage } from "@prague/runtime-definitions";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import * as _ from "lodash";
@@ -268,7 +268,7 @@ export class ScriptoriumLambda implements IPartitionLambda {
             const value = baseMessage as core.ISequencedOperationMessage;
 
             // Add trace.
-            const operationWithTraces = value.operation as ISequencedDocumentMessage & { traces: ITrace[]};
+            const operationWithTraces = value.operation as ISequencedDocumentMessage;
             if (operationWithTraces.traces !== undefined) {
                 operationWithTraces.traces.push({
                     action: "start",
@@ -287,7 +287,7 @@ export class ScriptoriumLambda implements IPartitionLambda {
             this.ioManager.add(target, value.operation, message.offset);
 
             const clonedValue = _.cloneDeep(value);
-            const clonedWithTraces = clonedValue.operation as ISequencedDocumentMessage & { traces: ITrace[] };
+            const clonedWithTraces = clonedValue.operation as ISequencedDocumentMessage;
             clonedWithTraces.traces = [];
 
             // Batch send to MongoDB
@@ -347,7 +347,7 @@ export class ScriptoriumLambda implements IPartitionLambda {
             winston.verbose(`Broadcasting to socket.io ${id.documentId}@${id.topic}@${id.event}:${work.length}`);
             // Add trace to each message before routing.
             work.map((value) => {
-                const valueAsSequenced = value as ISequencedDocumentMessage & { traces: ITrace[]};
+                const valueAsSequenced = value as ISequencedDocumentMessage;
                 if (valueAsSequenced && valueAsSequenced.traces !== undefined) {
                     valueAsSequenced.traces.push({
                         action: "end",

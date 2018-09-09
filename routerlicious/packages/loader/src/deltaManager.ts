@@ -162,7 +162,7 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
                 service: this.clientType,
                 timestamp: now(),
             }];
-        const message: runtime.IDocumentMessage & { traces: runtime.ITrace[] } = {
+        const message: runtime.IDocumentMessage = {
             clientSequenceNumber: ++this.clientSequenceNumber,
             contents,
             referenceSequenceNumber: this.baseSequenceNumber,
@@ -387,6 +387,13 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
 
         // TODO handle error cases, NACK, etc...
         const context = await this.handler.prepare(message);
+
+        // Add final ack trace.
+        message.traces.push({
+            action: "end",
+            service: this.clientType,
+            timestamp: now(),
+        });
 
         // Watch the minimum sequence number and be ready to update as needed
         this.minSequenceNumber = message.minimumSequenceNumber;

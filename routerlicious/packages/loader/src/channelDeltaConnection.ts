@@ -155,6 +155,7 @@ export class ChannelDeltaConnection implements IDeltaConnection {
             origin: documentMessage.origin,
             referenceSequenceNumber: message.referenceSequenceNumber,
             sequenceNumber: this._sequenceNumber + 1,
+            traces: documentMessage.traces,
             type: message.type,
             user: documentMessage.user,
         };

@@ -2,7 +2,7 @@ import { ICell } from "@prague/cell";
 import * as api from "@prague/client-api";
 import { IMap } from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
-import { ISequencedObjectMessage, ITrace } from "@prague/runtime-definitions";
+import { ISequencedObjectMessage } from "@prague/runtime-definitions";
 import * as SharedString from "@prague/shared-string";
 import * as queue from "async/queue";
 // tslint:disable-next-line:no-var-requires
@@ -455,7 +455,7 @@ export async function typeChunk(
             processCounter.increment(time);
         });
 
-        a.ss.on("op", (message: ISequencedObjectMessage & { traces: ITrace[] }, local) => {
+        a.ss.on("op", (message: ISequencedObjectMessage, local) => {
             if (message.clientSequenceNumber &&
                 message.clientSequenceNumber > 25 &&
                 local) {

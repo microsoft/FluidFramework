@@ -94,6 +94,7 @@ export class RouteMasterLambda extends SequencedLambda {
                 clientSequenceNumber: -1,
                 contents: message,
                 referenceSequenceNumber: -1,
+                traces: [],
                 type: MessageType.Integrate,
             },
             tenantId: message.tenantId,

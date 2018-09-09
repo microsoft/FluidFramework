@@ -176,6 +176,7 @@ export class DocumentStorage implements core.IDocumentStorage {
                 clientSequenceNumber: -1,
                 contents,
                 referenceSequenceNumber: -1,
+                traces: [],
                 type: MessageType.Fork,
             },
             tenantId,
