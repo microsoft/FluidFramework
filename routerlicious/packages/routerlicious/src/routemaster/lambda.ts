@@ -1,4 +1,4 @@
-import { core as api } from "@prague/client-api";
+import { MessageType } from "@prague/runtime-definitions";
 import * as winston from "winston";
 import * as core from "../core";
 import { IContext } from "../kafka-service/lambdas";
@@ -22,7 +22,7 @@ export class RouteMasterLambda extends SequencedLambda {
         if (message.type === core.SequencedOperationType) {
             // Create the fork first then route any messages. This will make the fork creation the first message
             // routed to the fork. We only process the fork on the route branch it is defined.
-            if (!message.operation.origin && message.operation.type === api.Fork) {
+            if (!message.operation.origin && message.operation.type === MessageType.Fork) {
                 await this.createFork(message);
             }
 
@@ -94,7 +94,8 @@ export class RouteMasterLambda extends SequencedLambda {
                 clientSequenceNumber: -1,
                 contents: message,
                 referenceSequenceNumber: -1,
-                type: api.Integrate,
+                traces: [],
+                type: MessageType.Integrate,
             },
             tenantId: message.tenantId,
             timestamp: Date.now(),

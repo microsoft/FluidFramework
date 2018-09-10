@@ -1,4 +1,5 @@
-import { api, core } from "@prague/client-api";
+import * as api from "@prague/client-api";
+import { IDeltaQueue } from "@prague/runtime-definitions";
 import * as socketStorage from "@prague/socket-storage";
 import * as assert from "assert";
 import { BrowserErrorTrackingService } from "./errorTracking";
@@ -8,7 +9,7 @@ export class DeltaQueueManager {
 
     private takeCount = DeltaQueueManager.Unlimited;
 
-    constructor(private q: core.IDeltaQueue) {
+    constructor(private q: IDeltaQueue) {
         this.q.on("op", () => {
             console.log(`Take count: ${this.takeCount}`);
 

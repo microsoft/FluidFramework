@@ -1,4 +1,4 @@
-import { types } from "@prague/client-api";
+import * as types from "@prague/stream";
 import * as $ from "jquery";
 import * as ui from "../ui";
 import { Image } from "./image";

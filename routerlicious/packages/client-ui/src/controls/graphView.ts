@@ -1,4 +1,6 @@
-import { api, graph, map, types } from "@prague/client-api";
+import * as api from "@prague/client-api";
+import * as graph from "@prague/graph";
+import * as map from "@prague/map";
 import * as d3 from "d3";
 import * as cola from "webcola";
 import { Link, Node } from "webcola";
@@ -8,15 +10,15 @@ import * as ui from "../ui";
  * Basic collaborative Graph Editor
  */
 export class Graph extends ui.Component {
-    public graph: types.IGraph;
-    public graphMapView: types.IMapView;
+    public graph: graph.IGraph;
+    public graphMapView: map.IMapView;
     private svg: any;
     private d3Graph: any;
 
     private nodes: Node[];
     private links: Array<Link<number | Node>>;
 
-    constructor(element: HTMLDivElement, doc: api.Document, public graphMap: types.IMap) {
+    constructor(element: HTMLDivElement, doc: api.Document, public graphMap: map.IMap) {
         super(element);
 
         element.appendChild(document.getElementById("node-form"));
@@ -51,7 +53,7 @@ export class Graph extends ui.Component {
             .size([width, height]);
     }
 
-    private async graphHandler(root: types.IMap, doc: api.Document, element: HTMLDivElement) {
+    private async graphHandler(root: map.IMap, doc: api.Document, element: HTMLDivElement) {
         this.graphMapView = await root.getView();
 
         this.fetchGraph(root, doc);
@@ -133,7 +135,7 @@ export class Graph extends ui.Component {
             .attr("stroke", "black");
     }
 
-    private fetchGraph(root: types.IMap, doc: api.Document) {
+    private fetchGraph(root: map.IMap, doc: api.Document) {
 
         const hasEdge = this.graphMapView.has("edge");
 

@@ -21,7 +21,10 @@
   },
   "dependencies": {
     "@prague/client-api": "^0.1.0",
+    "@prague/map": "^0.1.0",
+    "@prague/merge-tree": "^0.1.0",
     "@prague/runtime-definitions": "^0.1.0",
+    "@prague/shared-string": "^0.1.0",
     "@prague/socket-storage": "^0.1.0",
     "@types/jsonwebtoken": "^7.2.8",
     "@types/node": "^10.9.4",

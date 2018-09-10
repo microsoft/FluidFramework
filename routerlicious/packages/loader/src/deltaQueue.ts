@@ -1,7 +1,7 @@
+import { IDeltaQueue } from "@prague/runtime-definitions";
 import { AsyncQueue, AsyncWorker } from "async";
 import * as queue from "async/queue";
 import { EventEmitter } from "events";
-import { IDeltaQueue } from "./deltas";
 
 export class DeltaQueue<T> extends EventEmitter implements IDeltaQueue {
     private q: AsyncQueue<T>;

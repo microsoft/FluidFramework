@@ -1,5 +1,7 @@
-import { core, MergeTree, SharedString } from "@prague/client-api";
-import { IDocumentService, ISequencedDocumentMessage } from "@prague/runtime-definitions";
+import * as core from "@prague/api-definitions";
+import * as MergeTree from "@prague/merge-tree";
+import { IDocumentService, ISequencedDocumentMessage, MessageType } from "@prague/runtime-definitions";
+import * as SharedString from "@prague/shared-string";
 import { BaseWork} from "./baseWork";
 import { IWork} from "./definitions";
 import { Spellcheker } from "./spellchecker";
@@ -32,7 +34,7 @@ export class SpellcheckerWork extends BaseWork implements IWork {
             this.service,
             task);
         const eventHandler = (op: ISequencedDocumentMessage, object: core.ICollaborativeObject) => {
-            if (op.type === core.ObjectOperation || op.type === core.AttachObject) {
+            if (op.type === MessageType.Operation || op.type === MessageType.Attach) {
                 this.spellCheck(object);
             }
         };

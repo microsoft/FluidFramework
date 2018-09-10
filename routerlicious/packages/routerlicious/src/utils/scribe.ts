@@ -1,4 +1,7 @@
-import { api, MergeTree, SharedString, types } from "@prague/client-api";
+import * as api from "@prague/client-api";
+import { IMapView } from "@prague/map";
+import * as MergeTree from "@prague/merge-tree";
+import * as SharedString from "@prague/shared-string";
 import * as childProcess from "child_process";
 import * as path from "path";
 import * as author from "./author";
@@ -27,7 +30,7 @@ function setParagraphs(chunks: string[]) {
 function getParagraphs() {
     document.getRoot().getView()
         .then((root) => {
-            (root.get("chunks").getView() as Promise<types.IMapView>)
+            (root.get("chunks").getView() as Promise<IMapView>)
                 .then((chunksMap) => {
                     for (const key of chunksMap.keys()) {
                         console.log(key + ": " + chunksMap.get(key));
@@ -40,7 +43,7 @@ function getParagraphs() {
 async function setChunkMap(chunks: string[]) {
     let c = 0;
     const root = await document.getRoot().getView();
-    const chunkMap = root.get("chunks") as types.IMapView;
+    const chunkMap = root.get("chunks") as IMapView;
 
     for (const chunk of chunks) {
         const chunkKey = "p-" + c;

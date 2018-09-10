@@ -1,10 +1,8 @@
-import {
-    api,
-    MergeTree as mergeTree,
-    SharedString as sharedString,
-    types as dataTypes,
-} from "@prague/client-api";
+import * as api from "@prague/client-api";
+import { IMap, IMapView } from "@prague/map";
+import * as mergeTree from "@prague/merge-tree";
 import { ISequencedObjectMessage } from "@prague/runtime-definitions";
+import * as sharedString from "@prague/shared-string";
 import * as socketStorage from "@prague/socket-storage";
 import { EventEmitter } from "events";
 import * as jwt from "jsonwebtoken";
@@ -20,7 +18,10 @@ export interface IRemotePresenceInfo {
 // or provides some default arguments which either should be removed or should be moved to Prague API.
 export class SharedStringForWord extends EventEmitter {
     private sharedString: sharedString.SharedString;
-    public constructor(sharedStringIn: sharedString.SharedString) {
+
+    public constructor(
+        sharedStringIn: sharedString.SharedString,
+        private document: api.Document) {
         super();
         this.sharedString = sharedStringIn;
     }
@@ -93,7 +94,7 @@ export class SharedStringForWord extends EventEmitter {
         setImmediate(() => { return; });
     }
 
-    public getIntervalCollections(): dataTypes.IMapView {
+    public getIntervalCollections(): IMapView {
         return this.sharedString.getIntervalCollections();
     }
 
@@ -102,7 +103,7 @@ export class SharedStringForWord extends EventEmitter {
                                                                            sharedStringFromGuid: any) => void) {
         try {
             console.log("get Shared String %s", guid);
-            const sharedStringFromGuid = await this.sharedString.getDocument().get(guid);
+            const sharedStringFromGuid = await this.document.get(guid);
             console.log("got Shared String %s", guid);
             OnSharedStringFromGuidAvailable(guid, sharedStringFromGuid);
         } catch (e) {
@@ -126,11 +127,11 @@ export class SharedStringForWord extends EventEmitter {
                 if (properties && properties[rowGuid] && properties[colGuid]) {
                     const rowProp = properties[rowGuid];
                     const colProp = properties[colGuid];
-                    const p1 = this.sharedString.getDocument().get(rowProp[key]);
-                    const p2 = this.sharedString.getDocument().get(colProp[key]);
+                    const p1 = this.document.get(rowProp[key]);
+                    const p2 = this.document.get(colProp[key]);
                     if (properties[cellGuid]) {
                         const cellProp = properties[cellGuid];
-                        const p3 = this.sharedString.getDocument().get(cellProp[key]);
+                        const p3 = this.document.get(cellProp[key]);
                         return Promise.all([p1, p2, p3]);
                     } else {
                     return Promise.all([p1, p2]);
@@ -298,7 +299,7 @@ interface ISharedStringForWordFactory {
     GetSharedStringForWord: (sharedString: any) => SharedStringForWord;
 }
 
-declare function pragueAttach(rootMap: dataTypes.IMap,
+declare function pragueAttach(rootMap: IMap,
                               sharedStringForWord: SharedStringForWord,
                               document: api.Document,
                               sharedStringForWordFactory: ISharedStringForWordFactory,
@@ -352,11 +353,11 @@ async function OpenDocument(id: string): Promise<void> {
 
     // Load the text string and listen for updates
     const text = await rootView.wait("text") as sharedString.SharedString;
-    const sharedStringForWord = new SharedStringForWord(text);
+    const sharedStringForWord = new SharedStringForWord(text, collabDoc);
 
     const sharedStringForWordFactory = {
         GetSharedStringForWord: (sharedStringIn: any) => {
-            return new SharedStringForWord(sharedStringIn);
+            return new SharedStringForWord(sharedStringIn, collabDoc);
         },
     };
 

@@ -1,4 +1,4 @@
-import { IClient, ISequencedProposal } from "@prague/runtime-definitions";
+import { IClient, IQuorum, ISequencedProposal } from "@prague/runtime-definitions";
 import { Deferred } from "@prague/utils";
 import * as assert from "assert";
 import { EventEmitter } from "events";
@@ -18,7 +18,9 @@ class PendingProposal implements IPendingProposal, ISequencedProposal {
         public sequenceNumber: number,
         public key: string,
         public value: any,
+        rejections: string[],
         public deferred?: Deferred<void>) {
+        this.rejections = new Set(rejections);
     }
 
     public reject() {
@@ -34,20 +36,22 @@ class PendingProposal implements IPendingProposal, ISequencedProposal {
     }
 
     public addRejection(clientId: string) {
-        if (!this.rejections) {
-            this.rejections = new Set();
-        }
-
         assert(!this.rejections.has(clientId));
         this.rejections.add(clientId);
     }
+}
+
+export interface IQuorumSnapshot {
+    members: Array<[string, IClient]>;
+    proposals: Array<[number, ISequencedProposal, string[]]>;
+    values: Array<[string, any]>;
 }
 
 /**
  * A quorum represents all clients currently within the collaboration window. As well as the values
  * they have agreed upon and any pending proposals.
  */
-export class Quorum extends EventEmitter {
+export class Quorum extends EventEmitter implements IQuorum {
     private members: Map<string, IClient>;
     private proposals: Map<number, PendingProposal>;
     private values: Map<string, any>;
@@ -58,7 +62,7 @@ export class Quorum extends EventEmitter {
     constructor(
         private minimumSequenceNumber: number,
         members: Array<[string, IClient]>,
-        proposals: ISequencedProposal[],
+        proposals: Array<[number, ISequencedProposal, string[]]>,
         values: Array<[string, any]>,
         private sendProposal: (key: string, value: any) => number,
         private sendReject: (sequenceNumber: number) => void) {
@@ -66,13 +70,34 @@ export class Quorum extends EventEmitter {
 
         this.members = new Map(members);
         this.proposals = new Map(
-            proposals.map((proposal) => {
+            proposals.map(([, proposal, rejections]) => {
                 return [
                     proposal.sequenceNumber,
-                    new PendingProposal(this.sendReject, proposal.sequenceNumber, proposal.key, proposal.value),
+                    new PendingProposal(
+                        this.sendReject,
+                        proposal.sequenceNumber,
+                        proposal.key,
+                        proposal.value,
+                        rejections),
                 ] as [number, PendingProposal];
             }));
         this.values = new Map(values);
+    }
+
+    public snapshot(): IQuorumSnapshot {
+        const serializedProposals = Array.from(this.proposals).map(
+            ([sequenceNumber, proposal]) => {
+                return [
+                    sequenceNumber,
+                    { sequenceNumber, key: proposal.key, value: proposal.value },
+                    Array.from(proposal.rejections)] as [number, ISequencedProposal, string[]];
+            });
+
+        return {
+            members: [...this.members],
+            proposals: serializedProposals,
+            values: [...this.values],
+        };
     }
 
     /**
@@ -149,6 +174,7 @@ export class Quorum extends EventEmitter {
             sequenceNumber,
             key,
             value,
+            [],
             local ? this.localProposals.get(clientSequenceNumber) : undefined);
         this.proposals.set(sequenceNumber, proposal);
 
@@ -214,7 +240,7 @@ export class Quorum extends EventEmitter {
         completed.sort((a, b) => a.sequenceNumber - b.sequenceNumber);
 
         for (const proposal of completed) {
-            const approved = !proposal.rejections;
+            const approved = proposal.rejections.size === 0;
 
             // If it was a local proposal - resolve the promise
             if (proposal.deferred) {

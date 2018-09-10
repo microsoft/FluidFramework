@@ -1,4 +1,4 @@
-import { core } from "@prague/client-api";
+import * as core from "@prague/client-api";
 import * as io from "socket.io-client";
 
 // new average = old average + (next data - old average) / next count

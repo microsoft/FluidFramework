@@ -1,0 +1,27 @@
+{
+  "name": "@prague/merge-tree-utils",
+  "version": "0.1.0",
+  "description": "Prague document loader",
+  "main": "dist/index.js",
+  "module": "lib/index.js",
+  "types": "dist/index.d.ts",
+  "sideEffects": "false",
+  "scripts": {
+    "build": "npm run build:commonjs",
+    "build:full": "npm run build && npm run build:esnext && npm run tslint",
+    "build:commonjs": "tsc",
+    "build:esnext": "tsc --outDir lib --m esnext",
+    "tslint": "tslint 'src/**/*.ts'"
+  },
+  "author": "Microsoft",
+  "repository": "microsoft/prague",
+  "devDependencies": {
+    "tslint": "^5.11.0",
+    "typescript": "^3.0.1"
+  },
+  "dependencies": {
+    "@prague/merge-tree": "^0.1.0",
+    "@types/random-js": "^1.0.31",
+    "random-js": "^1.0.8"
+  }
+}

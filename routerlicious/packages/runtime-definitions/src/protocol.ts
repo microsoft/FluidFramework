@@ -16,6 +16,12 @@ export enum MessageType {
     // Message used to reject a pending proposal
     Reject = "reject",
 
+    // Blob preparation message
+    BlobPrepared = "blobPrepared",
+
+    // Blob uploaded
+    BlobUploaded = "blobUploaded",
+
     // TODO the attach and operation names are partially historican. We may want to rename to align with changes
     // coming from code loading.
 
@@ -24,6 +30,18 @@ export enum MessageType {
 
     // Channel operation.
     Operation = "objOp",
+
+    // Forced snapshot
+    Save = "saveOp",
+
+    // System message to indicate the creation of a new fork
+    Fork = "fork",
+
+    // Message sent when forwarding a sequenced message to an upstream branch
+    Integrate = "integrate",
+
+    // Message to indicate the need of a remote agent for a document.
+    RemoteHelp = "remoteHelp",
 }
 
 /**
@@ -74,6 +92,9 @@ export interface IDocumentMessage {
 
     // The contents of the message
     contents: any;
+
+    // Traces related to the packet.
+    traces: ITrace[];
 }
 
 /**
@@ -107,6 +128,9 @@ export interface ISequencedDocumentMessage {
     // Origin branch information for the message. Can be marked undefined if the current
     // message is also the origin.
     origin: IBranchOrigin;
+
+    // Traces related to the packet.
+    traces: ITrace[];
 }
 
 /**
@@ -157,6 +181,9 @@ export interface ISequencedObjectMessage {
     // Origin branch information for the message. Can be marked undefined if the current
     // message is also the origin.
     origin: IBranchOrigin;
+
+    // Traces related to the packet.
+    traces: ITrace[];
 }
 
 /**
@@ -168,4 +195,27 @@ export interface IEnvelope {
 
     // The contents of the envelope
     contents: any;
+}
+
+export interface ISave {
+    message: string;
+}
+
+/**
+ * Messages to track latency trace
+ */
+export interface ITrace {
+    // Service generating the trace.
+    service: string;
+
+    // Denotes receiving/sending.
+    action: string;
+
+    // Floating point time in milliseconds with up to nanosecond precision
+    timestamp: number;
+}
+
+export interface IHelpMessage {
+
+    tasks: string[];
 }

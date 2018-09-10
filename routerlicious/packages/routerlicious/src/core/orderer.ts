@@ -1,5 +1,4 @@
-import { core } from "@prague/client-api";
-import { IDocumentMessage } from "@prague/runtime-definitions";
+import { IClient, IDocumentMessage, IUser } from "@prague/runtime-definitions";
 import { IWebSocket } from "../core";
 
 export interface IOrdererSocket {
@@ -21,7 +20,7 @@ export interface IOrdererConnection {
 }
 
 export interface IOrderer {
-    connect(socket: IWebSocket, user: core.ITenantUser, client: core.IClient): Promise<IOrdererConnection>;
+    connect(socket: IWebSocket, user: IUser, client: IClient): Promise<IOrdererConnection>;
     close(): Promise<void>;
 }
 

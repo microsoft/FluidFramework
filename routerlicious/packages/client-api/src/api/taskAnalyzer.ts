@@ -1,4 +1,4 @@
-import * as api from "../api-core";
+import { Browser, IClient, IClientJoin } from "@prague/runtime-definitions";
 
 export interface IHelpTasks {
     robot: string[];
@@ -16,7 +16,7 @@ export interface IHelpTasks {
 // TODO: Make this run on all clients once services are hardened better.
 export function analyzeTasks(
     runnerClientId: string,
-    clients: Map<string, api.IClient>,
+    clients: Map<string, IClient>,
     tasks: string[]): IHelpTasks {
     const robotClients = [...clients].filter((client) => isRobot(client[1]));
     const handledTasks = robotClients.map((robot) => robot[1].type);
@@ -33,7 +33,7 @@ export function analyzeTasks(
     }
 }
 
-export function getLeader(clients: Map<string, api.IClient>): api.IClientDetail {
+export function getLeader(clients: Map<string, IClient>): IClientJoin {
     for (const client of clients) {
         if (!isRobot(client[1])) {
             return {
@@ -44,6 +44,6 @@ export function getLeader(clients: Map<string, api.IClient>): api.IClientDetail 
     }
 }
 
-function isRobot(client: api.IClient): boolean {
-    return client && client.type !== api.Browser;
+function isRobot(client: IClient): boolean {
+    return client && client.type !== Browser;
 }

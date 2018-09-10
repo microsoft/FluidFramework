@@ -1,5 +1,10 @@
-import { core as api } from "@prague/client-api";
-import { IBranchOrigin, IDocumentMessage, ISequencedDocumentMessage } from "@prague/runtime-definitions";
+import {
+    IBranchOrigin,
+    IDocumentMessage,
+    ISequencedDocumentMessage,
+    ITrace,
+    MessageType,
+} from "@prague/runtime-definitions";
 import { RangeTracker } from "@prague/utils";
 import * as assert from "assert";
 import * as _ from "lodash";
@@ -120,7 +125,7 @@ export class DeliLambda implements IPartitionLambda {
         // Check if there are any old/idle clients. Craft and send a leave message to alfred.
         // To prevent recurrent leave message sending, leave messages are only piggybacked with
         // other message type.
-        if (ticketedMessage.type !== api.ClientLeave) {
+        if (ticketedMessage.type !== MessageType.ClientLeave) {
             const idleClient = this.getIdleClient(ticketedMessage.timestamp);
             if (idleClient) {
                 const leaveMessage = this.createLeaveMessage(idleClient.clientId);
@@ -149,7 +154,7 @@ export class DeliLambda implements IPartitionLambda {
         }
     }
 
-    private ticket(rawMessage: utils.IMessage, trace: api.ITrace): ITicketedMessageOutput {
+    private ticket(rawMessage: utils.IMessage, trace: ITrace): ITicketedMessageOutput {
         // In cases where we are reprocessing messages we have already checkpointed exit early
         if (rawMessage.offset < this.logOffset) {
             return;
@@ -180,22 +185,22 @@ export class DeliLambda implements IPartitionLambda {
         }
 
         // Cases only applies to non-integration messages
-        if (message.operation.type !== api.Integrate) {
+        if (message.operation.type !== MessageType.Integrate) {
             // Handle client join/leave and fork messages.
             if (!message.clientId) {
-                if (message.operation.type === api.ClientLeave) {
+                if (message.operation.type === MessageType.ClientLeave) {
                     // Return if the client has already been removed due to a prior leave message.
                     if (!this.removeClient(message.operation.contents)) {
                         return;
                     }
-                } else if (message.operation.type === api.ClientJoin) {
+                } else if (message.operation.type === MessageType.ClientJoin) {
                     this.upsertClient(
                         message.operation.contents.clientId,
                         0,
                         this.minimumSequenceNumber,
                         message.timestamp,
                         true);
-                } else if (message.operation.type === api.Fork) {
+                } else if (message.operation.type === MessageType.Fork) {
                     winston.info(`Fork ${message.documentId} -> ${message.operation.contents.name}`);
                 }
             } else {
@@ -226,7 +231,7 @@ export class DeliLambda implements IPartitionLambda {
 
         let origin: IBranchOrigin;
 
-        if (message.operation.type === api.Integrate) {
+        if (message.operation.type === MessageType.Integrate) {
             // Branch operation is the original message
             const branchOperation = message.operation.contents as core.ISequencedOperationMessage;
             const branchDocumentMessage = branchOperation.operation as ISequencedDocumentMessage;
@@ -251,7 +256,7 @@ export class DeliLambda implements IPartitionLambda {
                     clientSequenceNumber: branchDocumentMessage.sequenceNumber,
                     contents: branchDocumentMessage.contents,
                     referenceSequenceNumber: transformedRefSeqNumber,
-                    traces: (message.operation as IDocumentMessage & { traces: api.ITrace[] }).traces,
+                    traces: message.operation.traces,
                     type: branchDocumentMessage.type,
                 } as IDocumentMessage,
                 tenantId: message.tenantId,
@@ -298,7 +303,7 @@ export class DeliLambda implements IPartitionLambda {
         this.minimumSequenceNumber = msn === -1 ? sequenceNumber : msn;
 
         // Add traces
-        const messageWithTraces = message.operation as IDocumentMessage & { traces?: api.ITrace[] };
+        const messageWithTraces = message.operation as IDocumentMessage;
         const traces = messageWithTraces.traces;
         if (traces !== undefined) {
             traces.push(trace);
@@ -306,7 +311,7 @@ export class DeliLambda implements IPartitionLambda {
         }
 
         // And now craft the output message
-        const outputMessage: ISequencedDocumentMessage & ({ traces: api.ITrace[] }) = {
+        const outputMessage: ISequencedDocumentMessage = {
             clientId: message.clientId,
             clientSequenceNumber: message.operation.clientSequenceNumber,
             contents: message.operation.contents,
@@ -337,13 +342,13 @@ export class DeliLambda implements IPartitionLambda {
     }
 
     private isDuplicate(message: core.IRawOperationMessage): boolean {
-        if (message.operation.type !== api.Integrate && !message.clientId) {
+        if (message.operation.type !== MessageType.Integrate && !message.clientId) {
             return false;
         }
 
         let clientId: string;
         let clientSequenceNumber: number;
-        if (message.operation.type === api.Integrate) {
+        if (message.operation.type === MessageType.Integrate) {
             clientId = getBranchClientId(message.operation.contents.documentId);
             clientSequenceNumber = message.operation.contents.operation.sequenceNumber;
         } else {
@@ -403,7 +408,8 @@ export class DeliLambda implements IPartitionLambda {
                 clientSequenceNumber: -1,
                 contents: clientId,
                 referenceSequenceNumber: -1,
-                type: api.ClientLeave,
+                traces: [],
+                type: MessageType.ClientLeave,
             },
             tenantId: this.tenantId,
             timestamp: Date.now(),
@@ -442,7 +448,8 @@ export class DeliLambda implements IPartitionLambda {
                 clientSequenceNumber: -1,
                 contents: null,
                 referenceSequenceNumber: -1,
-                type: api.NoOp,
+                traces: [],
+                type: MessageType.NoOp,
             },
             tenantId: this.tenantId,
             timestamp: Date.now(),
@@ -456,7 +463,7 @@ export class DeliLambda implements IPartitionLambda {
      * Creates a new trace
      */
     private createTrace() {
-        const trace: api.ITrace = {
+        const trace: ITrace = {
             action: "start",
             service: "deli",
             timestamp: now(),

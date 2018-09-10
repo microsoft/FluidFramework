@@ -1,6 +1,8 @@
 import * as agent from "@prague/agent";
-import { api, core, map as Map, types } from "@prague/client-api";
+import * as api from "@prague/client-api";
 import * as resources from "@prague/gitresources";
+import * as Map from "@prague/map";
+import { IClient } from "@prague/runtime-definitions";
 import * as $ from "jquery";
 // tslint:disable-next-line:no-var-requires
 const hasIn = require("lodash/hasIn");
@@ -18,7 +20,7 @@ async function loadDocument(
         return document;
 }
 
-async function updateOrCreateKey(key: string, map: types.IMap, container: JQuery, doc: api.Document) {
+async function updateOrCreateKey(key: string, map: Map.IMap, container: JQuery, doc: api.Document) {
     const value = await map.get(key);
 
     let keyElement = container.find(`>.${key}`);
@@ -47,7 +49,7 @@ async function updateOrCreateKey(key: string, map: types.IMap, container: JQuery
     }
 }
 
-async function displayValues(map: types.IMap, container: JQuery, doc: api.Document) {
+async function displayValues(map: Map.IMap, container: JQuery, doc: api.Document) {
     const keys = await map.keys();
     keys.sort();
 
@@ -57,7 +59,7 @@ async function displayValues(map: types.IMap, container: JQuery, doc: api.Docume
     }
 
     // Listen and process updates
-    map.on("valueChanged", async (changed: types.IValueChanged ) => {
+    map.on("valueChanged", async (changed: Map.IValueChanged ) => {
         updateOrCreateKey(changed.key, map, values, doc);
     });
 
@@ -67,7 +69,7 @@ async function displayValues(map: types.IMap, container: JQuery, doc: api.Docume
 /**
  * Displays the keys in the map
  */
-async function displayMap(parentElement: JQuery, key: string, map: types.IMap, parent: types.IMap, doc: api.Document) {
+async function displayMap(parentElement: JQuery, key: string, map: Map.IMap, parent: Map.IMap, doc: api.Document) {
     const header = key !== null ? $(`<h2>${key}: ${map.id}</h2>`) : $(`<h2>${map.id}</h2>`);
 
     if (key !== null) {
@@ -112,7 +114,7 @@ async function displayMap(parentElement: JQuery, key: string, map: types.IMap, p
 /**
  * Randomly changes the values in the map
  */
-async function randomizeMap(map: types.IMap) {
+async function randomizeMap(map: Map.IMap) {
     // link up the randomize button
     const keys = ["foo", "bar", "baz", "binky", "winky", "twinkie"];
 
@@ -154,7 +156,7 @@ function loadFull(id: string, version: resources.ICommit, config: any, token?: s
             displayMap($("#mapViews"), null, root, null, doc);
 
             // Register to run task only if the client type is browser.
-            const client = config.client as core.IClient;
+            const client = config.client as IClient;
             if (client && client.type === "browser") {
                 agent.registerToWork(doc, client, token, config);
             }

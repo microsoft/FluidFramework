@@ -1,28 +1,37 @@
 import { ICommit } from "@prague/gitresources";
 import {
     ConnectionState,
+    FileMode,
     IChaincode,
+    IClient,
     IClientJoin,
     ICodeLoader,
+    IDeltaManager,
     IDocumentAttributes,
     IDocumentService,
     IDocumentStorageService,
+    IEnvelope,
+    IGenericBlob,
     IPlatform,
     IProposal,
-    IRuntime,
     ISequencedDocumentMessage,
+    ISequencedProposal,
     ISnapshotTree,
     ITokenService,
+    ITree,
+    ITreeEntry,
     IUser,
     MessageType,
+    TreeEntry,
 } from "@prague/runtime-definitions";
 import * as assert from "assert";
 import { EventEmitter } from "events";
+import { BlobManager } from "./blobManager";
 import { debug } from "./debug";
 import { IConnectionDetails } from "./deltaConnection";
 import { DeltaManager } from "./deltaManager";
-import { IDeltaManager } from "./deltas";
-import { Quorum } from "./quorum";
+import { NullChaincode } from "./nullChaincode";
+import { IQuorumSnapshot, Quorum } from "./quorum";
 import { Runtime } from "./runtime";
 import { readAndParse } from "./utils";
 
@@ -36,26 +45,14 @@ interface IConnectResult {
     handlerAttachedP: Promise<void>;
 }
 
-class NullChaincode implements IChaincode {
-    public getModule(type: string): any {
-        return null;
-    }
-
-    public close(): Promise<void> {
-        return Promise.resolve();
-    }
-
-    public run(runtime: IRuntime, platform: IPlatform): Promise<void> {
-        return Promise.resolve();
-    }
-}
-
 // TODO consider a name change for this. The document is likely built on top of this infrastructure
 export class Document extends EventEmitter {
     private pendingClientId: string;
     private loaded = false;
     private connectionState = ConnectionState.Disconnected;
     private quorum: Quorum;
+    private blobManager: BlobManager;
+    private messagesSinceMSNChange = new Array<ISequencedDocumentMessage>();
 
     // Active chaincode and associated runtime
     private storageService: IDocumentStorageService;
@@ -160,32 +157,78 @@ export class Document extends EventEmitter {
             : { detailsP: Promise.resolve(null), handlerAttachedP: Promise.resolve() };
 
         // ...load in the existing quorum
-        const quorumP = Promise.all([storageP, treeP]).then(([storage, tree]) => this.loadQuorum(storage, tree));
+        const quorumP = Promise.all([attributesP, storageP, treeP]).then(
+            ([attributes, storage, tree]) => this.loadQuorum(attributes, storage, tree));
 
         // ...instantiate the chaincode defined on the document
-        const chaincodeP = quorumP.then((quorum) => this.loadCodeFromQuorum(quorum));
+        const chaincodeP = Promise.all([quorumP, treeP, versionP]).then(
+            ([quorum, tree, version]) => this.loadCodeFromQuorum(quorum, tree, version));
+
+        const blobManagerP = Promise.all([storageP, treeP]).then(
+            ([storage, tree]) => this.loadBlobManager(storage, tree));
+
+        const tardisMessagesP = Promise.all([attributesP, storageP, treeP]).then(
+            ([attributes, storage, tree]) => this.loadTardisMessages(attributes, storage, tree));
 
         // Wait for all the loading promises to finish
         return Promise
-            .all([storageP, treeP, versionP, attributesP, quorumP, chaincodeP, connectResult.handlerAttachedP])
-            .then(async ([storageService, tree, version, attributes, quorum, chaincode]) => {
+            .all([
+                storageP,
+                treeP,
+                versionP,
+                attributesP,
+                quorumP,
+                blobManagerP,
+                chaincodeP,
+                tardisMessagesP,
+                connectResult.handlerAttachedP])
+            .then(async ([
+                storageService,
+                tree,
+                version,
+                attributes,
+                quorum,
+                blobManager,
+                chaincode,
+                tardisMessages]) => {
+
                 this.quorum = quorum;
                 this.storageService = storageService;
+                this.blobManager = blobManager;
+
+                // Initialize document details - if loading a snapshot use that - otherwise we need to wait on
+                // the initial details
+                if (version) {
+                    this._existing = true;
+                    this._parentBranch = attributes.branch !== this.id ? attributes.branch : null;
+                } else {
+                    const details = await connectResult.detailsP;
+                    this._existing = details.existing;
+                    this._parentBranch = details.parentBranch;
+                }
 
                 // Instantiate channels from chaincode and stored data
                 this.runtime = await Runtime.LoadFromSnapshot(
+                    this.tenantId,
                     this.id,
+                    this.parentBranch,
                     this.existing,
                     this.options,
                     this.clientId,
                     this.user,
+                    this.blobManager,
                     chaincode,
+                    tardisMessages,
+                    this._deltaManager,
+                    this.quorum,
                     storageService,
                     this.connectionState,
                     tree,
                     attributes.branch,
                     attributes.minimumSequenceNumber,
-                    (type, contents) => this.submitMessage(type, contents));
+                    (type, contents) => this.submitMessage(type, contents),
+                    (message) => this.snapshot(message),
+                    () => this.close());
 
                 // given the load is async and we haven't set the runtime variable it's possible we missed the change
                 // of value. Make a call to the runtime to change the state to pick up the latest.
@@ -204,17 +247,6 @@ export class Document extends EventEmitter {
                     (error) => {
                         this.emit("error", error);
                     });
-
-                // Initialize document details - if loading a snapshot use that - otherwise we need to wait on
-                // the initial details
-                if (version) {
-                    this._existing = true;
-                    this._parentBranch = attributes.branch !== this.id ? attributes.branch : null;
-                } else {
-                    const details = await connectResult.detailsP;
-                    this._existing = details.existing;
-                    this._parentBranch = details.parentBranch;
-                }
 
                 // Internal context is fully loaded at this point
                 this.loaded = true;
@@ -242,14 +274,225 @@ export class Document extends EventEmitter {
         return super.on(event, listener);
     }
 
-    private loadQuorum(storage: IDocumentStorageService, tree: ISnapshotTree): Quorum {
-        // TODO load the stored quorum from the snapshot tree
+    /**
+     * Modifies emit to also forward to the active runtime.
+     */
+    public emit(message: string | symbol, ...args: any[]): boolean {
+        const superResult = super.emit(message, ...args);
+        const runtimeResult = this.runtime ? this.runtime.emit(message, ...args) : true;
+
+        return superResult && runtimeResult;
+    }
+
+    public close() {
+        if (this._deltaManager) {
+            this._deltaManager.close();
+        }
+
+        this.removeAllListeners();
+    }
+
+    public async snapshot(tagMessage: string): Promise<void> {
+        // TODO: support for branch snapshots. For now simply no-op when a branch snapshot is requested
+        if (this.parentBranch) {
+            debug(`Skipping snapshot due to being branch of ${this.parentBranch}`);
+            return;
+        }
+
+        // Grab the snapshot of the current state
+        const snapshotSequenceNumber = this._deltaManager.referenceSequenceNumber;
+        const root = this.snapshotCore();
+
+        const deltaDetails =
+            `${this._deltaManager.referenceSequenceNumber}:${this._deltaManager.minimumSequenceNumber}`;
+        const message = `Commit @${deltaDetails} ${tagMessage}`;
+
+        return this.storageService.getVersions(this.id, 1).then(async (lastVersion) => {
+            // Pull the sequence number stored with the previous version
+            let sequenceNumber = 0;
+            if (lastVersion.length > 0) {
+                const attributesAsString = await this.storageService.getContent(lastVersion[0], ".attributes");
+                const decoded = Buffer.from(attributesAsString, "base64").toString();
+                const attributes = JSON.parse(decoded) as IDocumentAttributes;
+                sequenceNumber = attributes.sequenceNumber;
+            }
+
+            // Retrieve all deltas from sequenceNumber to snapshotSequenceNumber. Range is exclusive so we increment
+            // the snapshotSequenceNumber by 1 to include it.
+            const deltas = await this._deltaManager.getDeltas(sequenceNumber, snapshotSequenceNumber + 1);
+            const parents = lastVersion.length > 0 ? [lastVersion[0].sha] : [];
+            root.entries.push({
+                mode: FileMode.File,
+                path: "deltas",
+                type: TreeEntry[TreeEntry.Blob],
+                value: {
+                    contents: JSON.stringify(deltas),
+                    encoding: "utf-8",
+                },
+            });
+
+            await this.storageService.write(root, parents, message);
+        });
+    }
+
+    private snapshotCore(): ITree {
+        const entries: ITreeEntry[] = [];
+
+        // Craft the .messages file for the document
+        // Transform ops in the window relative to the MSN - the window is all ops between the min sequence number
+        // and the current sequence number
+        assert.equal(
+            this._deltaManager.referenceSequenceNumber - this._deltaManager.minimumSequenceNumber,
+            this.messagesSinceMSNChange.length);
+        const transformedMessages: ISequencedDocumentMessage[] = [];
+        debug(`Transforming up to ${this._deltaManager.minimumSequenceNumber}`);
+        for (const message of this.messagesSinceMSNChange) {
+            transformedMessages.push(this.transform(message, this._deltaManager.minimumSequenceNumber));
+        }
+        entries.push({
+            mode: FileMode.File,
+            path: ".messages",
+            type: TreeEntry[TreeEntry.Blob],
+            value: {
+                contents: JSON.stringify(transformedMessages),
+                encoding: "utf-8",
+            },
+        });
+
+        const blobMetaData = this.blobManager.getBlobMetadata();
+        entries.push({
+            mode: FileMode.File,
+            path: ".blobs",
+            type: TreeEntry[TreeEntry.Blob],
+            value: {
+                contents: JSON.stringify(blobMetaData),
+                encoding: "utf-8",
+            },
+        });
+
+        const quorumSnapshot = this.quorum.snapshot();
+        entries.push({
+            mode: FileMode.File,
+            path: "quorum",
+            type: TreeEntry[TreeEntry.Blob],
+            value: {
+                contents: JSON.stringify(quorumSnapshot),
+                encoding: "utf-8",
+            },
+        });
+
+        const channelEntries = this.runtime.snapshotInternal();
+        entries.push(...channelEntries);
+
+        // Save attributes for the document
+        const documentAttributes: IDocumentAttributes = {
+            branch: this.id,
+            clients: [...this.quorum.getMembers()],
+            minimumSequenceNumber: this._deltaManager.minimumSequenceNumber,
+            proposals: [],
+            sequenceNumber: this._deltaManager.referenceSequenceNumber,
+            values: [],
+        };
+        entries.push({
+            mode: FileMode.File,
+            path: ".attributes",
+            type: TreeEntry[TreeEntry.Blob],
+            value: {
+                contents: JSON.stringify(documentAttributes),
+                encoding: "utf-8",
+            },
+        });
+
+        // Output the tree
+        const root: ITree = {
+            entries,
+        };
+
+        return root;
+    }
+
+    /**
+     * Transforms the given message relative to the provided sequence number
+     */
+    private transform(message: ISequencedDocumentMessage, sequenceNumber: number): ISequencedDocumentMessage {
+        // Allow the distributed data types to perform custom transformations
+        if (message.type === MessageType.Operation) {
+            this.runtime.transform(message);
+        } else {
+            message.type = MessageType.NoOp;
+        }
+
+        message.referenceSequenceNumber = sequenceNumber;
+
+        return message;
+    }
+
+    private async loadTardisMessages(
+        attributes: IDocumentAttributes,
+        storage: IDocumentStorageService,
+        tree: ISnapshotTree): Promise<Map<string, ISequencedDocumentMessage[]>> {
+
+        const messages: ISequencedDocumentMessage[] = tree
+            ? await readAndParse<ISequencedDocumentMessage[]>(storage, tree.blobs[".messages"])
+            : [];
+
+        // Update message information based on branch details
+        if (attributes.branch !== this.id) {
+            for (const message of messages) {
+                // Append branch information when transforming for the case of messages stashed with the snapshot
+                if (attributes.branch) {
+                    message.origin = {
+                        id: attributes.branch,
+                        minimumSequenceNumber: message.minimumSequenceNumber,
+                        sequenceNumber: message.sequenceNumber,
+                    };
+                }
+            }
+        }
+
+        // Make a reservation for the root object as well as all distributed objects in the snapshot
+        const transformedMap = new Map<string, ISequencedDocumentMessage[]>();
+
+        // Filter messages per distributed data type
+        for (const message of messages) {
+            if (message.type === MessageType.Operation) {
+                const envelope = message.contents as IEnvelope;
+                if (!transformedMap.has(envelope.address)) {
+                    transformedMap.set(envelope.address, []);
+                }
+
+                transformedMap.get(envelope.address).push(message);
+            }
+        }
+
+        return transformedMap;
+    }
+
+    private async loadQuorum(
+        attributes: IDocumentAttributes,
+        storage: IDocumentStorageService,
+        tree: ISnapshotTree): Promise<Quorum> {
+
+        let members: Array<[string, IClient]>;
+        let proposals: Array<[number, ISequencedProposal, string[]]>;
+        let values: Array<[string, any]>;
+
+        if (tree && tree.blobs.quorum) {
+            const quorumSnapshot = await readAndParse<IQuorumSnapshot>(storage, tree.blobs.quorum);
+            members = quorumSnapshot.members;
+            proposals = quorumSnapshot.proposals;
+            values = quorumSnapshot.values;
+        } else {
+            members = [];
+            proposals = [];
+            values = [];
+        }
 
         const quorum = new Quorum(
-            0,
-            [],
-            [],
-            [],
+            attributes.minimumSequenceNumber,
+            members,
+            proposals,
+            values,
             (key, value) => this.submitMessage(MessageType.Propose, { key, value }),
             (sequenceNumber) => this.submitMessage(MessageType.Reject, sequenceNumber));
 
@@ -276,39 +519,64 @@ export class Document extends EventEmitter {
         return quorum;
     }
 
+    private async loadBlobManager(storage: IDocumentStorageService, tree: ISnapshotTree): Promise<BlobManager> {
+        const blobs: IGenericBlob[] = tree
+            ? await readAndParse<IGenericBlob[]>(storage, tree.blobs[".blobs"])
+            : [];
+
+        const blobManager = new BlobManager(storage);
+        blobManager.loadBlobMetadata(blobs);
+
+        return blobManager;
+    }
+
     private async transitionRuntime(pkg: string) {
         // TODO it's possible in between the close and the resume we may be disconnected. Want to either sequence
         // those events with ops or find a better way
         // Close the previous runtime and return a snapshot of the data
         /* const snapshot = */
-        await this.runtime.close();
+        await this.runtime.stop();
 
         // Load the new code and create a new runtime from the previous snapshot
         const chaincode = await this.loadCode(pkg);
         const newRuntime = await Runtime.LoadFromSnapshot(
+            this.tenantId,
             this.id,
+            this.parentBranch,
             this.existing,
             this.options,
             this.clientId,
             this.user,
+            this.blobManager,
             chaincode,
+            new Map(),
+            this._deltaManager,
+            this.quorum,
             this.storageService,
             this.connectionState,
             null,
             this.id,
             this._deltaManager.minimumSequenceNumber,
-            (type, message) => this.submitMessage(type, message));
+            (type, contents) => this.submitMessage(type, contents),
+            (message) => this.snapshot(message),
+            () => this.close());
         this.runtime = newRuntime;
 
         // Start up the new runtime
         newRuntime.start(this.platform);
     }
 
-    private loadCodeFromQuorum(quorum: Quorum): Promise<IChaincode> {
+    private loadCodeFromQuorum(quorum: Quorum, tree: ISnapshotTree, version: ICommit): Promise<IChaincode> {
         if (quorum.has("code")) {
             return this.loadCode(quorum.get("code"));
         } else {
-            return Promise.resolve(new NullChaincode());
+            // For back compat if no version is specified and there are channels specified then we auto-load
+            // the legacy set of code
+            if (version && tree && Object.keys(tree.trees).length > 0) {
+                return this.loadCode("@prague/client-api");
+            } else {
+                return Promise.resolve(new NullChaincode());
+            }
         }
     }
 
@@ -325,10 +593,10 @@ export class Document extends EventEmitter {
     private connect(attributesP: Promise<IDocumentAttributes>): IConnectResult {
         // Create the DeltaManager and begin listening for connection events
         const clientDetails = this.options ? this.options.client : null;
-        this._deltaManager = new DeltaManager(this.id, this.tenantId, this.service, clientDetails, true);
+        this._deltaManager = new DeltaManager(this.id, this.tenantId, this.token, this.service, clientDetails);
 
         // Open a connection - the DeltaMananger will automatically reconnect
-        const detailsP = this._deltaManager.connect("Document loading", this.token);
+        const detailsP = this._deltaManager.connect("Document loading");
         this._deltaManager.on("connect", (details: IConnectionDetails) => {
             this.setConnectionState(ConnectionState.Connecting, "websocket established", details.clientId);
         });
@@ -388,7 +656,6 @@ export class Document extends EventEmitter {
             this.pendingClientId = context;
         } else if (value === ConnectionState.Connected) {
             this._clientId = this.pendingClientId;
-            this._deltaManager.shouldUpdateSequenceNumber = true;
         }
 
         if (!this.loaded) {
@@ -415,6 +682,14 @@ export class Document extends EventEmitter {
     private async prepareRemoteMessage(message: ISequencedDocumentMessage): Promise<any> {
         const local = this._clientId === message.clientId;
 
+        // If on the null chaincode - and we just got a channel op - transition to the legacy API
+        // This exists for backwards compatibility and will be removed going forward. We will require code to be
+        // instantiated on the document in order to process channel ops.
+        if ((message.type === MessageType.Operation || message.type === MessageType.Attach) &&
+            this.runtime.chaincode instanceof NullChaincode) {
+            await this.transitionRuntime("@prague/client-api");
+        }
+
         switch (message.type) {
             case MessageType.Operation:
                 return this.runtime.prepare(message, local);
@@ -427,6 +702,20 @@ export class Document extends EventEmitter {
     private processRemoteMessage(message: ISequencedDocumentMessage, context: any) {
         const local = this._clientId === message.clientId;
 
+        // Add the message to the list of pending messages so we can transform them during a snapshot
+        // Reset the list of messages we have received since the min sequence number changed
+        this.messagesSinceMSNChange.push(message);
+        let index = 0;
+        for (; index < this.messagesSinceMSNChange.length; index++) {
+            if (this.messagesSinceMSNChange[index].sequenceNumber > message.minimumSequenceNumber) {
+                break;
+            }
+        }
+        if (index !== 0) {
+            this.messagesSinceMSNChange = this.messagesSinceMSNChange.slice(index);
+        }
+
+        const eventArgs: any[] = [message];
         switch (message.type) {
             case MessageType.ClientJoin:
                 const join = message.contents as IClientJoin;
@@ -464,12 +753,25 @@ export class Document extends EventEmitter {
                 break;
 
             case MessageType.Attach:
-                this.runtime.processAttach(message, local, context);
+                const attachChannel = this.runtime.processAttach(message, local, context);
+                eventArgs.push(attachChannel);
                 break;
 
-            case MessageType.Operation:
-                this.runtime.process(message, local, context);
+            // Message contains full metadata (no content)
+            case MessageType.BlobPrepared:
+                this.blobManager.addBlob(message.contents);
+                this.emit(MessageType.BlobPrepared, message.contents);
+                break;
 
+            case MessageType.BlobUploaded:
+                // indicates that blob has been uploaded, just a flag... no blob buffer
+                // message.contents is just the hash
+                this.blobManager.createBlob(message.contents);
+                this.emit(MessageType.BlobUploaded, message.contents);
+
+            case MessageType.Operation:
+                const operationChannel = this.runtime.process(message, local, context);
+                eventArgs.push(operationChannel);
                 break;
 
             default:
@@ -479,5 +781,8 @@ export class Document extends EventEmitter {
         // Notify the quorum of the MSN from the message. We rely on it to handle duplicate values but may
         // want to move that logic to this class.
         this.quorum.updateMinimumSequenceNumber(message.minimumSequenceNumber);
+        this.runtime.updateMinSequenceNumber(message.minimumSequenceNumber);
+
+        this.emit("op", ...eventArgs);
     }
 }

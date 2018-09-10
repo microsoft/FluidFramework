@@ -1,5 +1,4 @@
-import { core as api } from "@prague/client-api";
-import { IDocumentMessage } from "@prague/runtime-definitions";
+import { IClient, IDocumentMessage, IUser } from "@prague/runtime-definitions";
 import { EventEmitter } from "events";
 import { IOrderer } from "../../core";
 
@@ -45,8 +44,8 @@ export interface IOpMessage {
 export interface IConnectMessage {
     tenantId: string;
     documentId: string;
-    user: api.ITenantUser;
-    client: api.IClient;
+    user: IUser;
+    client: IClient;
 }
 
 export interface IConnectedMessage {

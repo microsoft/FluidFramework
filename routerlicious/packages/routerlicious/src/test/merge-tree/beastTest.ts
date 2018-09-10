@@ -1,7 +1,7 @@
-import { MergeTree } from "@prague/client-api";
-import { findRandomWord } from "@prague/client-api/dist/merge-tree-utils";
-import * as Base from "@prague/client-api/dist/merge-tree/base";
-import { loadTextFromFile, SnapshotFS } from "@prague/client-api/dist/merge-tree/snapshot-fs";
+import * as MergeTree from "@prague/merge-tree";
+import { findRandomWord } from "@prague/merge-tree-utils";
+import * as Base from "@prague/merge-tree/dist/base";
+import { loadTextFromFile, SnapshotFS } from "@prague/merge-tree/dist/snapshot-fs";
 import * as assert from "assert";
 import * as JsDiff from "diff";
 import * as fs from "fs";

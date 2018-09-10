@@ -1,5 +1,4 @@
-import { core as api } from "@prague/client-api";
-import { IDocumentMessage, ISequencedDocumentMessage } from "@prague/runtime-definitions";
+import { IDocumentMessage, ISequencedDocumentMessage, MessageType } from "@prague/runtime-definitions";
 // tslint:disable-next-line:no-var-requires
 const hash = require("string-hash");
 import { IRawOperationMessage, ISequencedOperationMessage, RawOperationType, SequencedOperationType } from "../../core";
@@ -51,7 +50,8 @@ export class MessageFactory {
             clientSequenceNumber: this.clientSequenceNumber++,
             contents: null,
             referenceSequenceNumber,
-            type: api.NoOp,
+            traces: [],
+            type: MessageType.NoOp,
         };
         return operation;
     }
@@ -66,7 +66,8 @@ export class MessageFactory {
             clientSequenceNumber: -1,
             contents: { clientId: this.clientId },
             referenceSequenceNumber: -1,
-            type: api.ClientJoin,
+            traces: [],
+            type: MessageType.ClientJoin,
         };
 
         return this.createRawOperation(operation, timestamp, null);
@@ -77,7 +78,8 @@ export class MessageFactory {
             clientSequenceNumber: -1,
             contents: this.clientId,
             referenceSequenceNumber: -1,
-            type: api.ClientLeave,
+            traces: [],
+            type: MessageType.ClientLeave,
         };
 
         return this.createRawOperation(operation, timestamp, null);
@@ -104,7 +106,8 @@ export class MessageFactory {
                 message: "Test Save",
             },
             referenceSequenceNumber: 0,
-            type: api.SaveOperation,
+            traces: [],
+            type: MessageType.Save,
         };
 
         const sequencedOperation: ISequencedDocumentMessage = {
@@ -115,6 +118,7 @@ export class MessageFactory {
             origin: undefined,
             referenceSequenceNumber: operation.referenceSequenceNumber,
             sequenceNumber: this.sequenceNumber++,
+            traces: [],
             type: operation.type,
             user: null,
         };
@@ -139,6 +143,7 @@ export class MessageFactory {
             origin: undefined,
             referenceSequenceNumber: operation.referenceSequenceNumber,
             sequenceNumber: this.sequenceNumber++,
+            traces: [],
             type: operation.type,
             user: null,
         };

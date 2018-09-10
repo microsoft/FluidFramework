@@ -1,5 +1,5 @@
 import * as agent from "@prague/agent";
-import { core as api } from "@prague/client-api";
+import * as api from "@prague/client-api";
 import { IDocumentService } from "@prague/runtime-definitions";
 import * as socketStorage from "@prague/socket-storage";
 import { Deferred } from "@prague/utils";

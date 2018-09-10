@@ -1,9 +1,13 @@
-import { api, core, MergeTree, SharedString, types, utils } from "@prague/client-api";
+import { ICell } from "@prague/cell";
+import * as api from "@prague/client-api";
+import { IMap } from "@prague/map";
+import * as MergeTree from "@prague/merge-tree";
 import { ISequencedObjectMessage } from "@prague/runtime-definitions";
+import * as SharedString from "@prague/shared-string";
 import * as queue from "async/queue";
 // tslint:disable-next-line:no-var-requires
 const clone = require("lodash/clone");
-import Counter = utils.RateCounter;
+import Counter = api.RateCounter;
 
 let play: boolean = false;
 
@@ -11,8 +15,8 @@ const saveLineFrequency = 5;
 
 const ChartSamples = 10;
 
-let histogramData: types.ICell;
-let performanceData: types.ICell;
+let histogramData: ICell;
+let performanceData: ICell;
 let metrics: IScribeMetrics;
 
 const ackCounter = new Counter();
@@ -189,7 +193,7 @@ function getChartConfiguration(data: IChartData) {
     };
 }
 
-function getHistogramConfiguration(histogram: utils.Histogram) {
+function getHistogramConfiguration(histogram: api.Histogram) {
     return {
         series: [
             {
@@ -349,7 +353,7 @@ export async function typeFile(
                     return metric;
                 });
         } else {
-            return (doc.getRoot().get("chunks") as Promise<types.IMap>)
+            return (doc.getRoot().get("chunks") as Promise<IMap>)
                 .then((chunkMap) => {
                     return chunkMap.getView();
                 })
@@ -411,7 +415,7 @@ export async function typeChunk(
         let totalOps = 0;
 
         const histogramRange = 5;
-        const histogram = new utils.Histogram(histogramRange);
+        const histogram = new api.Histogram(histogramRange);
 
         // Trigger a new sample after a second has elapsed
         const samplingRate = 1000;
@@ -451,7 +455,7 @@ export async function typeChunk(
             processCounter.increment(time);
         });
 
-        a.ss.on("op", (message: ISequencedObjectMessage & { traces: core.ITrace[] }, local) => {
+        a.ss.on("op", (message: ISequencedObjectMessage, local) => {
             if (message.clientSequenceNumber &&
                 message.clientSequenceNumber > 25 &&
                 local) {

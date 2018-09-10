@@ -1,4 +1,4 @@
-import { core } from "@prague/client-api";
+import { IPingMessage } from "@prague/client-api";
 import { EventEmitter } from "events";
 import * as io from "socket.io-client";
 import { IWork} from "./definitions";
@@ -19,7 +19,7 @@ export class PingWork implements IWork {
 
     public start(): Promise<void> {
         this.pingTimer = setInterval(() => {
-            const pingMessage: core.IPingMessage = {
+            const pingMessage: IPingMessage = {
                 acked: false,
                 traces: [{
                     action: "start",
@@ -30,7 +30,7 @@ export class PingWork implements IWork {
             this.socket.emit(
                 "pingObject",
                 pingMessage,
-                (error, response: core.IPingMessage) => {
+                (error, response: IPingMessage) => {
                     if (!error && response.traces.length > 0) {
                         response.acked = true;
                         response.traces.push({

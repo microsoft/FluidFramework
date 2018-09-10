@@ -66,6 +66,7 @@ export abstract class CollaborativeObject extends EventEmitter implements IColla
     public async load(
         sequenceNumber: number,
         minimumSequenceNumber: number,
+        messages: ISequencedObjectMessage[],
         headerOrigin: string,
         services: IDistributedObjectServices): Promise<void> {
 
@@ -75,6 +76,7 @@ export abstract class CollaborativeObject extends EventEmitter implements IColla
         await this.loadCore(
             sequenceNumber,
             minimumSequenceNumber,
+            messages,
             headerOrigin,
             services.objectStorage);
         this.attachDeltaHandler();
@@ -137,6 +139,7 @@ export abstract class CollaborativeObject extends EventEmitter implements IColla
     protected abstract loadCore(
         sequenceNumber: number,
         minimumSequenceNumber: number,
+        messages: ISequencedObjectMessage[],
         headerOrigin: string,
         services: IObjectStorageService): Promise<void>;
 

@@ -1,4 +1,4 @@
-import { api } from "@prague/client-api";
+import * as api from "@prague/client-api";
 import * as socketStorage from "@prague/socket-storage";
 import * as commander from "commander";
 import * as fs from "fs";

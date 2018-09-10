@@ -1,5 +1,7 @@
 // tslint:disable
-import { api as API, MergeTree, SharedString } from "@prague/client-api";
+import * as API from "@prague/client-api";
+import * as MergeTree from "@prague/merge-tree";
+import * as SharedString from "@prague/shared-string";
 import * as socketStorage from "@prague/socket-storage";
 import { ISequencedObjectMessage } from "@prague/runtime-definitions";
 import * as fs from "fs";

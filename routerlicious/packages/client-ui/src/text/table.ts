@@ -1,5 +1,6 @@
 // tslint:disable
-import { MergeTree, SharedString as SharedStringModule } from "@prague/client-api";
+import * as MergeTree from "@prague/merge-tree";
+import * as SharedStringModule from "@prague/shared-string";
 import * as Paragraph from "./paragraph";
 
 type SharedString = SharedStringModule.SharedString;

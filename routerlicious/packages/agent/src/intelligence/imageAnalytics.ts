@@ -1,4 +1,4 @@
-import { core } from "@prague/client-api";
+import { IImageBlob } from "@prague/runtime-definitions";
 import * as request from "request";
 import { IIntelligentService, IIntelligentServiceFactory } from "./api";
 
@@ -15,13 +15,13 @@ export class ImageAnalyticsIntelligentService implements IIntelligentService {
     constructor(private key: string) {
     }
 
-    public async run(imageBlob: core.IImageBlob): Promise<any> {
+    public async run(imageBlob: IImageBlob): Promise<any> {
 
         const result = this.invokeRequest(imageURL, imageBlob);
         return result;
     }
 
-    private invokeRequest(service: string, data: core.IImageBlob): Promise<any> {
+    private invokeRequest(service: string, data: IImageBlob): Promise<any> {
         return new Promise<any>((resolve, reject) => {
             request.post(
                 service,

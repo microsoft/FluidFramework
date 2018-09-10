@@ -1,5 +1,6 @@
 import {
     ConnectionState,
+    FileMode,
     IAttachMessage,
     IChaincode,
     IChaincodeModule,
@@ -7,19 +8,28 @@ import {
     IDistributedObjectServices,
     IDocumentStorageService,
     IEnvelope,
+    IGenericBlob,
     IObjectAttributes,
+    IObjectMessage,
     IObjectStorageService,
     IPlatform,
+    IQuorum,
     IRuntime,
+    ISave,
     ISequencedDocumentMessage,
     ISnapshotTree,
+    ITreeEntry,
     IUser,
     MessageType,
+    TreeEntry,
 } from "@prague/runtime-definitions";
-import { Deferred } from "@prague/utils";
+import { Deferred, gitHashFile } from "@prague/utils";
 import * as assert from "assert";
+import { EventEmitter } from "events";
+import { BlobManager } from "./blobManager";
 import { ChannelDeltaConnection } from "./channelDeltaConnection";
 import { ChannelStorageService } from "./channelStorageService";
+import { DeltaManager } from "./deltaManager";
 import { LocalChannelStorageService } from "./localChannelStorageService";
 import { readAndParse } from "./utils";
 
@@ -34,31 +44,46 @@ interface IObjectServices {
     objectStorage: IObjectStorageService;
 }
 
-export class Runtime implements IRuntime {
+export class Runtime extends EventEmitter implements IRuntime {
     public static async LoadFromSnapshot(
+        tenantId: string,
         id: string,
+        parentBranch: string,
         existing: boolean,
         options: any,
         clientId: string,
         user: IUser,
+        blobManager: BlobManager,
         chaincode: IChaincode,
+        tardisMessages: Map<string, ISequencedDocumentMessage[]>,
+        deltaManager: DeltaManager,
+        quorum: IQuorum,
         storage: IDocumentStorageService,
         connectionState: ConnectionState,
         tree: ISnapshotTree,
         branch: string,
         minimumSequenceNumber: number,
-        submitFn: (type: MessageType, contents: any) => void): Promise<Runtime> {
+        submitFn: (type: MessageType, contents: any) => void,
+        snapshotFn: (message: string) => Promise<void>,
+        closeFn: () => void) {
 
         const runtime = new Runtime(
+            tenantId,
             id,
+            parentBranch,
             existing,
             options,
             clientId,
             user,
+            blobManager,
+            deltaManager,
+            quorum,
             chaincode,
             storage,
             connectionState,
-            submitFn);
+            submitFn,
+            snapshotFn,
+            closeFn);
 
         if (tree) {
             Object.keys(tree.trees).forEach((path) => {
@@ -72,6 +97,7 @@ export class Runtime implements IRuntime {
                     path,
                     tree.trees[path],
                     storage,
+                    tardisMessages.has(path) ? tardisMessages.get(path) : [],
                     branch,
                     minimumSequenceNumber);
             });
@@ -82,21 +108,31 @@ export class Runtime implements IRuntime {
         return runtime;
     }
 
+    public connected: boolean;
+
     private channels = new Map<string, IChannelState>();
     private channelsDeferred = new Map<string, Deferred<IChannel>>();
     private closed = false;
     private pendingAttach = new Map<string, IAttachMessage>();
 
     private constructor(
-        public id: string,
+        public readonly tenantId: string,
+        public readonly id: string,
+        public readonly parentBranch: string,
         public existing: boolean,
-        public options: any,
+        public readonly options: any,
         public clientId: string,
-        public user: IUser,
-        private chaincode: IChaincode,
+        public readonly user: IUser,
+        private blobManager: BlobManager,
+        public readonly deltaManager: DeltaManager,
+        private quorum: IQuorum,
+        public readonly chaincode: IChaincode,
         private storageService: IDocumentStorageService,
         private connectionState: ConnectionState,
-        private submitFn: (type: MessageType, contents: any) => void) {
+        private submitFn: (type: MessageType, contents: any) => void,
+        private snapshotFn: (message: string) => Promise<void>,
+        private closeFn: () => void) {
+        super();
     }
 
     public getChannel(id: string): Promise<IChannel> {
@@ -180,9 +216,12 @@ export class Runtime implements IRuntime {
 
         // Resend all pending attach messages prior to notifying clients
         if (value === ConnectionState.Connected) {
+            this.connected = true;
             for (const [, message] of this.pendingAttach) {
                 this.submit(MessageType.Attach, message);
             }
+        } else {
+            this.connected = false;
         }
 
         for (const [, object] of this.channels) {
@@ -202,7 +241,7 @@ export class Runtime implements IRuntime {
         return objectDetails.connection.prepare(message, local);
     }
 
-    public process(message: ISequencedDocumentMessage, local: boolean, context: any) {
+    public process(message: ISequencedDocumentMessage, local: boolean, context: any): IChannel {
         this.verifyNotClosed();
 
         const envelope = message.contents as IEnvelope;
@@ -210,9 +249,11 @@ export class Runtime implements IRuntime {
         assert(objectDetails);
 
         objectDetails.connection.process(message, local, context);
+
+        return objectDetails.object;
     }
 
-    public processAttach(message: ISequencedDocumentMessage, local: boolean, context: IChannelState) {
+    public processAttach(message: ISequencedDocumentMessage, local: boolean, context: IChannelState): IChannel {
         this.verifyNotClosed();
 
         const attachMessage = message.contents as IAttachMessage;
@@ -239,6 +280,8 @@ export class Runtime implements IRuntime {
                 this.channelsDeferred.set(channelState.object.id, deferred);
             }
         }
+
+        return this.channels.get(attachMessage.id).object;
     }
 
     public async prepareAttach(message: ISequencedDocumentMessage, local: boolean): Promise<IChannelState> {
@@ -276,19 +319,137 @@ export class Runtime implements IRuntime {
             attachMessage.type,
             0,
             0,
+            [],
             services,
             origin);
 
         return value;
     }
 
-    public async close(): Promise<any> {
+    public getQuorum(): IQuorum {
+        this.verifyNotClosed();
+
+        return this.quorum;
+    }
+
+    public hasUnackedOps(): boolean {
+        this.verifyNotClosed();
+
+        for (const state of this.channels.values()) {
+            if (state.object.dirty) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public snapshot(message: string): Promise<void> {
+        this.verifyNotClosed();
+
+        return this.snapshotFn(message);
+    }
+
+    public save(tag: string) {
+        this.verifyNotClosed();
+
+        const message: ISave = { message: tag };
+        this.submit(MessageType.Save, message);
+    }
+
+    public async uploadBlob(file: IGenericBlob): Promise<IGenericBlob> {
+        this.verifyNotClosed();
+
+        const sha = gitHashFile(file.content);
+        file.sha = sha;
+        file.url = this.storageService.getRawUrl(sha);
+
+        this.blobManager.addBlob(file).then(() => this.submit(MessageType.BlobPrepared, file));
+        this.blobManager.createBlob(file.content).then(() => this.submit(MessageType.BlobUploaded, sha));
+
+        return file;
+    }
+
+    public getBlob(sha: string): Promise<IGenericBlob> {
+        this.verifyNotClosed();
+
+        return this.blobManager.getBlob(sha);
+    }
+
+    public transform(message: ISequencedDocumentMessage) {
+        const envelope = message.contents as IEnvelope;
+        const objectDetails = this.channels.get(envelope.address);
+        envelope.contents = objectDetails.object.transform(
+            envelope.contents as IObjectMessage,
+            objectDetails.connection.transformDocumentSequenceNumber(
+                Math.max(message.referenceSequenceNumber, this.deltaManager.referenceSequenceNumber)));
+    }
+
+    public async getBlobMetadata(): Promise<IGenericBlob[]> {
+        return this.blobManager.getBlobMetadata();
+    }
+
+    public async stop(): Promise<any> {
         this.verifyNotClosed();
 
         this.closed = true;
 
         // TODO return a snapshot to pass to next chunk of code
         return null;
+    }
+
+    public close(): void {
+        this.closeFn();
+    }
+
+    public updateMinSequenceNumber(msn: number) {
+        for (const [, object] of this.channels) {
+            if (!object.object.isLocal() && object.connection.baseMappingIsSet()) {
+                object.connection.updateMinSequenceNumber(msn);
+            }
+        }
+    }
+
+    public snapshotInternal(): ITreeEntry[] {
+        const entries = new Array<ITreeEntry>();
+
+        // Craft the .attributes file for each distributed object
+        for (const [objectId, object] of this.channels) {
+            // If the object isn't local - and we have received the sequenced op creating the object (i.e. it has a
+            // base mapping) - then we go ahead and snapshot
+            if (!object.object.isLocal() && object.connection.baseMappingIsSet()) {
+                const snapshot = object.object.snapshot();
+
+                // Add in the object attributes to the returned tree
+                const objectAttributes: IObjectAttributes = {
+                    sequenceNumber: object.connection.minimumSequenceNumber,
+                    type: object.object.type,
+                };
+                snapshot.entries.push({
+                    mode: FileMode.File,
+                    path: ".attributes",
+                    type: TreeEntry[TreeEntry.Blob],
+                    value: {
+                        contents: JSON.stringify(objectAttributes),
+                        encoding: "utf-8",
+                    },
+                });
+
+                // And then store the tree
+                entries.push({
+                    mode: FileMode.Directory,
+                    path: objectId,
+                    type: TreeEntry[TreeEntry.Tree],
+                    value: snapshot,
+                });
+            }
+        }
+
+        return entries;
+    }
+
+    public submitMessage(type: MessageType, content: any) {
+        this.submit(type, content);
     }
 
     private submit(type: MessageType, content: any) {
@@ -307,6 +468,7 @@ export class Runtime implements IRuntime {
         id: string,
         tree: ISnapshotTree,
         storage: IDocumentStorageService,
+        messages: ISequencedDocumentMessage[],
         branch: string,
         minimumSequenceNumber: number): Promise<void> {
 
@@ -319,6 +481,7 @@ export class Runtime implements IRuntime {
             channelAttributes.type,
             channelAttributes.sequenceNumber,
             channelAttributes.sequenceNumber,
+            messages,
             services,
             branch);
 
@@ -332,6 +495,7 @@ export class Runtime implements IRuntime {
         type: string,
         sequenceNumber: number,
         minSequenceNumber: number,
+        messages: ISequencedDocumentMessage[],
         services: IObjectServices,
         originBranch: string): Promise<IChannelState> {
 
@@ -345,6 +509,7 @@ export class Runtime implements IRuntime {
             id,
             sequenceNumber,
             minSequenceNumber,
+            messages,
             services,
             originBranch);
 

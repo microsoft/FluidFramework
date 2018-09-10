@@ -16,7 +16,6 @@ import * as maps from "./maps";
 import * as ping from "./ping";
 import * as scribe from "./scribe";
 import * as sharedText from "./sharedText";
-import * as signUp from "./signUp";
 import * as templates from "./templates";
 import * as youtubeVideo from "./youtubeVideo";
 
@@ -63,7 +62,6 @@ export function create(
         ping: ping.create(),
         scribe: scribe.create(config, tenantManager, appTenants, ensureLoggedIn),
         sharedText: sharedText.create(config, tenantManager, storage, appTenants, ensureLoggedIn),
-        singUp: signUp.create(config),
         templates: templates.create(config),
         youtubeVideo: youtubeVideo.create(config, tenantManager, storage, appTenants, ensureLoggedIn),
     };

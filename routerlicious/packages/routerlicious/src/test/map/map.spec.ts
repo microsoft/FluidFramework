@@ -1,31 +1,19 @@
-import { api, map, types } from "@prague/client-api";
+import * as map from "@prague/map";
 import * as assert from "assert";
-import { generateToken } from "../../utils";
-import * as testUtils from "../testUtils";
 
 describe("Routerlicious", () => {
     describe("Map", () => {
-        let testDocument: api.Document;
-        let rootMap: map.CollaborativeMap;
-        let testMap: map.CollaborativeMap;
+        let rootMap: map.IMap;
+        let testMap: map.IMap;
+        let extension: map.MapExtension;
 
         beforeEach(async () => {
-            const tenantId = "test";
-            const documentId = "testDocument";
-            const secret = "test";
-
-            testUtils.registerAsTest("", "", "");
-            const token = generateToken(tenantId, documentId, secret);
-            testDocument = await api.load(documentId, { token });
-            rootMap = testDocument.getRoot() as map.CollaborativeMap;
-            testMap = testDocument.createMap() as map.CollaborativeMap;
+            extension = new map.MapExtension();
+            rootMap = extension.create(null, "root");
+            testMap = extension.create(null, "test");
         });
 
         describe("CollaborativeMap", () => {
-            it("Can create a document", () => {
-                assert.ok(testDocument);
-            });
-
             it("Can get the root map", () => {
                 assert.ok(rootMap);
             });
@@ -61,7 +49,7 @@ describe("Routerlicious", () => {
         });
 
         describe("MapView", () => {
-            let view: types.IMapView;
+            let view: map.IMapView;
 
             beforeEach(async () => {
                 view = await testMap.getView();
@@ -99,7 +87,7 @@ describe("Routerlicious", () => {
                 });
 
                 it("Should be able to set a collaborative object as a key", () => {
-                    const subMap = testDocument.createMap();
+                    const subMap = extension.create(null, "subMap");
                     view.set("test", subMap);
                     assert.equal(view.get("test"), subMap);
                 });
@@ -134,7 +122,7 @@ describe("Routerlicious", () => {
                     view.set("first", "second");
                     view.set("third", "fourth");
                     view.set("fifth", "sixth");
-                    const subMap = testDocument.createMap();
+                    const subMap = extension.create(null, "subMap");
                     view.set("object", subMap);
 
                     const concrete = view as map.MapView;

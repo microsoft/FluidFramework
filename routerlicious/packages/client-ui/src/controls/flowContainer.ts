@@ -1,5 +1,9 @@
 // tslint:disable:ban-types
-import { api, MergeTree, SharedString, types } from "@prague/client-api";
+import * as api from "@prague/client-api";
+import { IMap } from "@prague/map";
+import * as MergeTree from "@prague/merge-tree";
+import * as SharedString from "@prague/shared-string";
+import { IStream } from "@prague/stream";
 import * as ui from "../ui";
 import { debug } from "./debug";
 import { DockPanel } from "./dockPanel";
@@ -33,9 +37,9 @@ export class FlowContainer extends ui.Component {
         element: HTMLDivElement,
         private collabDocument: api.Document,
         sharedString: SharedString.SharedString,
-        private overlayMap: types.IMap,
+        private overlayMap: IMap,
         private image: Image,
-        ink: types.IStream,
+        ink: IStream,
         private options?: Object) {
 
         super(element);
@@ -74,7 +78,7 @@ export class FlowContainer extends ui.Component {
         overlayCanvasDiv.classList.add("overlay-canvas");
         this.overlayCanvas = new OverlayCanvas(collabDocument, overlayCanvasDiv, layerPanelDiv);
 
-        this.overlayCanvas.on("ink", (layer: InkLayer, model: types.IStream, start: ui.IPoint) => {
+        this.overlayCanvas.on("ink", (layer: InkLayer, model: IStream, start: ui.IPoint) => {
             this.overlayCanvas.enableInkHitTest(false);
             const position = this.flowView.getNearestPosition(start);
             this.overlayCanvas.enableInkHitTest(true);
@@ -171,7 +175,7 @@ export class FlowContainer extends ui.Component {
         this.title.setVisibility(visible);
     }
 
-    public trackInsights(insights: types.IMap) {
+    public trackInsights(insights: IMap) {
         this.updateInsights(insights);
         insights.on("valueChanged", () => {
             this.updateInsights(insights);
@@ -200,7 +204,7 @@ export class FlowContainer extends ui.Component {
         if (this.activeLayers[id]) {
             this.activeLayers[id].active = true;
         }
-        const ink = await this.overlayMap.get(id) as types.IStream;
+        const ink = await this.overlayMap.get(id) as IStream;
 
         if (!(id in this.layerCache)) {
             const layer = new InkLayer(this.size, ink);
@@ -231,7 +235,7 @@ export class FlowContainer extends ui.Component {
         this.activeLayers[id].layer.setPosition(translated);
     }
 
-    private async updateInsights(insights: types.IMap) {
+    private async updateInsights(insights: IMap) {
         const view = await insights.getView();
 
         if (view.has("ResumeAnalytics") && this.image) {

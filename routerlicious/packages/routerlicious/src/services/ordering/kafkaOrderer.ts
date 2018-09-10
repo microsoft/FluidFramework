@@ -1,5 +1,4 @@
-import { core as api } from "@prague/client-api";
-import { IDocumentMessage } from "@prague/runtime-definitions";
+import { IClient, IClientJoin, IDocumentMessage, IUser, MessageType } from "@prague/runtime-definitions";
 import * as moniker from "moniker";
 // tslint:disable-next-line:no-var-requires
 const now = require("performance-now");
@@ -14,8 +13,8 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
         tenantId: string,
         documentId: string,
         socket: core.IWebSocket,
-        user: api.ITenantUser,
-        client: api.IClient): Promise<KafkaOrdererConnection> {
+        user: IUser,
+        client: IClient): Promise<KafkaOrdererConnection> {
 
         const clientId = moniker.choose();
 
@@ -62,14 +61,14 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
         private tenantId: string,
         private documentId: string,
         clientId: string,
-        private user: api.ITenantUser,
-        private client: api.IClient) {
+        private user: IUser,
+        private client: IClient) {
 
         this._clientId = clientId;
         this._existing = existing;
         this._parentBranch = document.parent ? document.parent.documentId : null;
 
-        const clientDetail: api.IClientDetail = {
+        const clientDetail: IClientJoin = {
             clientId: this.clientId,
             detail: this.client,
         };
@@ -81,7 +80,8 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
                 clientSequenceNumber: -1,
                 contents: clientDetail,
                 referenceSequenceNumber: -1,
-                type: api.ClientJoin,
+                traces: [],
+                type: MessageType.ClientJoin,
             },
             tenantId: this.tenantId,
             timestamp: Date.now(),
@@ -114,7 +114,8 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
                 clientSequenceNumber: -1,
                 contents: this.clientId,
                 referenceSequenceNumber: -1,
-                type: api.ClientLeave,
+                traces: [],
+                type: MessageType.ClientLeave,
             },
             tenantId: this.tenantId,
             timestamp: Date.now(),
@@ -164,8 +165,8 @@ export class KafkaOrderer implements core.IOrderer {
 
     public async connect(
         socket: core.IWebSocket,
-        user: api.ITenantUser,
-        client: api.IClient): Promise<core.IOrdererConnection> {
+        user: IUser,
+        client: IClient): Promise<core.IOrdererConnection> {
 
         const connection = KafkaOrdererConnection.Create(
             this.existing,

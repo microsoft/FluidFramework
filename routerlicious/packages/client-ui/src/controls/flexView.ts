@@ -1,5 +1,8 @@
 // The main app code
-import { api, core, types} from "@prague/client-api";
+import * as api from "@prague/client-api";
+import { IMap, IMapView } from "@prague/map";
+import { IGenericBlob, MessageType } from "@prague/runtime-definitions";
+import { IColor } from "@prague/stream";
 import { blobUploadHandler } from "../blob";
 import * as ui from "../ui";
 import { Button } from "./button";
@@ -12,7 +15,7 @@ import { Popup } from "./popup";
 import { Orientation, StackPanel } from "./stackPanel";
 import { Video } from "./video";
 
-const colors: types.IColor[] = [
+const colors: IColor[] = [
     { r: 253 / 255, g:   0 / 255, b:  12 / 255, a: 1 },
     { r: 134 / 255, g:   0 / 255, b:  56 / 255, a: 1 },
     { r: 253 / 255, g: 187 / 255, b:  48 / 255, a: 1 },
@@ -42,9 +45,9 @@ export class FlexView extends ui.Component {
     private popup: Popup;
     private colorStack: StackPanel;
     private components: IFlexViewComponent[] = [];
-    private insightsMap: types.IMapView;
+    private insightsMap: IMapView;
 
-    constructor(element: HTMLDivElement, private doc: api.Document, root: types.IMapView) {
+    constructor(element: HTMLDivElement, private doc: api.Document, root: IMapView) {
         super(element);
 
         const dockElement = document.createElement("div");
@@ -71,7 +74,7 @@ export class FlexView extends ui.Component {
         if (!root.has("insights")) {
             root.set("insights", doc.createMap());
         }
-        root.get<types.IMap>("insights").getView()
+        root.get<IMap>("insights").getView()
             .then((insightsView) => {
                 this.insightsMap = insightsView;
             });
@@ -108,11 +111,11 @@ export class FlexView extends ui.Component {
 
     private addBlobListeners(doc: api.Document) {
 
-        doc.on(core.BlobPrepared, (message) => {
+        doc.on(MessageType.BlobPrepared, (message) => {
             this.render(message);
         });
 
-        doc.on(core.BlobUploaded, async (message) => {
+        doc.on(MessageType.BlobUploaded, async (message) => {
             const blob = await doc.getBlob(message);
             this.render(blob);
         });
@@ -175,13 +178,13 @@ export class FlexView extends ui.Component {
         this.element.appendChild(this.popup.element);
     }
 
-    private async processComponents(components: types.IMap) {
+    private async processComponents(components: IMap) {
         const view = await components.getView();
 
         // Pull in all the objects on the canvas
         // tslint:disable-next-line:forin
         for (const componentName of view.keys()) {
-            const component = view.get(componentName) as types.IMap;
+            const component = view.get(componentName) as IMap;
             this.addComponent(component);
         }
 
@@ -192,7 +195,7 @@ export class FlexView extends ui.Component {
         });
     }
 
-    private async addComponent(component: types.IMap) {
+    private async addComponent(component: IMap) {
         const details = await component.getView();
         if (details.get("type") !== "chart") {
             return;
@@ -208,11 +211,11 @@ export class FlexView extends ui.Component {
         this.resizeCore(this.size);
     }
 
-    private async render(incl: core.IGenericBlob) {
+    private async render(incl: IGenericBlob) {
         this.renderFunc(incl, this.ink);
     }
 
-    private renderFunc = async (incl: core.IGenericBlob, ink: InkCanvas) => {
+    private renderFunc = async (incl: IGenericBlob, ink: InkCanvas) => {
 
         if (incl.type === "image") {
             if (document.getElementById(incl.sha) === null) { // Handle blob Processed
@@ -243,7 +246,7 @@ export class FlexView extends ui.Component {
                 if (!this.insightsMap.has(incl.sha)) {
                     this.insightsMap.set(incl.sha, this.doc.createMap());
                 }
-                const videoMap = this.insightsMap.get<types.IMap>(incl.sha);
+                const videoMap = this.insightsMap.get<IMap>(incl.sha);
 
                 const video = new Video(videoDiv, videoMap, incl.url);
                 ink.addVideo(video);

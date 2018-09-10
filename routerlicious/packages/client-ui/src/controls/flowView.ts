@@ -1,13 +1,11 @@
 // tslint:disable:no-bitwise whitespace align switch-default no-string-literal ban-types no-angle-bracket-type-assertion
-import {
-    api,
-    core,
-    MergeTree,
-    SharedString,
-    types,
-} from "@prague/client-api";
-import { findRandomWord } from "@prague/client-api/dist/merge-tree-utils";
-import { ISequencedObjectMessage } from "@prague/runtime-definitions";
+import { ICollaborativeObject } from "@prague/api-definitions";
+import * as api from "@prague/client-api";
+import * as types from "@prague/map";
+import * as MergeTree from "@prague/merge-tree";
+import { findRandomWord } from "@prague/merge-tree-utils";
+import { IGenericBlob, ISequencedObjectMessage, IUser } from "@prague/runtime-definitions";
+import * as SharedString from "@prague/shared-string";
 import * as assert from "assert";
 // tslint:disable-next-line:no-var-requires
 const performanceNow = require("performance-now");
@@ -3183,7 +3181,7 @@ export class Cursor {
         this.blinkTimer = setTimeout(this.blinker, 20);
     }
 
-    private getUserDisplayString(user: core.ITenantUser): string {
+    private getUserDisplayString(user: IUser): string {
         // TODO - callback to client code to provide mapping from user -> display
         // this would allow a user ID to be put on the wire which can then be mapped
         // back to an email, name, etc...
@@ -3242,7 +3240,7 @@ export interface ILocalPresenceInfo {
     xformPos?: number;
     markXformPos?: number;
     clientId: number;
-    user: core.ITenantUser;
+    user: IUser;
     cursor?: Cursor;
     fresh: boolean;
     shouldShowCursor: () => boolean;
@@ -3405,7 +3403,7 @@ export interface IListReferenceDoc extends IReferenceDoc {
     selectionIndex: number;
 }
 
-export function makeBlobRef(blob: core.IGenericBlob, tenant: string, cb: (irdoc: IReferenceDoc) => void) {
+export function makeBlobRef(blob: IGenericBlob, tenant: string, cb: (irdoc: IReferenceDoc) => void) {
     switch (blob.type) {
         case "image": {
             const image = document.createElement("img");
@@ -3562,9 +3560,10 @@ export class FlowView extends ui.Component {
 
         this.cursor = new Cursor(this.viewportDiv);
         this.setViewOption(this.options);
-        blobUploadHandler(element,
-            this.sharedString.getDocument(),
-            (incl: core.IGenericBlob) => this.insertBlobInternal(incl),
+        blobUploadHandler(
+            element,
+            this.collabDocument,
+            (incl: IGenericBlob) => this.insertBlobInternal(incl),
         );
 
         // TODO: Should insert a workbook into the document on demand, implement the ability
@@ -4925,7 +4924,7 @@ export class FlowView extends ui.Component {
             });
     }
 
-    private insertBlobInternal(blob: core.IGenericBlob) {
+    private insertBlobInternal(blob: IGenericBlob) {
         this.collabDocument.getBlob(blob.sha)
             .then((finalBlob) => {
                 makeBlobRef(finalBlob, this.collabDocument.tenantId, (irdoc) => {
@@ -5384,7 +5383,7 @@ export class FlowView extends ui.Component {
         const bookmarksCollection = this.sharedString.getSharedIntervalCollection("bookmarks");
         this.bookmarks = await bookmarksCollection.getView();
 
-        const onDeserialize: SharedString.DeserializeCallback = (interval, commentSharedString: core.ICollaborativeObject) => {
+        const onDeserialize: SharedString.DeserializeCallback = (interval, commentSharedString: ICollaborativeObject) => {
             if (interval.properties && interval.properties["story"]) {
                 assert(commentSharedString);
                 interval.properties["story"] = commentSharedString;
@@ -5396,7 +5395,7 @@ export class FlowView extends ui.Component {
         const onPrepareDeserialize: SharedString.PrepareDeserializeCallback = (properties) => {
             if (properties && properties["story"]) {
                 const story = properties["story"];
-                return this.sharedString.getDocument().get(story["value"]);
+                return this.collabDocument.get(story["value"]);
             } else {
                 return Promise.resolve(null);
             }
@@ -5566,7 +5565,7 @@ export class FlowView extends ui.Component {
 
     private remotePresenceFromEdit(
         longClientId: string,
-        userInfo: core.ITenantUser,
+        userInfo: IUser,
         refseq: number,
         oldpos: number,
         posAdjust = 0) {
@@ -5581,7 +5580,7 @@ export class FlowView extends ui.Component {
         this.remotePresenceToLocal(longClientId, userInfo, remotePosInfo);
     }
     // TODO: throttle this if local starts moving
-    private remoteDragToLocal(longClientId: string, user: core.ITenantUser, remoteDragInfo: IRemoteDragInfo) {
+    private remoteDragToLocal(longClientId: string, user: IUser, remoteDragInfo: IRemoteDragInfo) {
         this.movingInclusion.exclu = remoteDragInfo.exclu;
         this.movingInclusion.marker = <MergeTree.Marker>getContainingSegment(this, remoteDragInfo.markerPos).segment;
         this.movingInclusion.dx = remoteDragInfo.dx;
@@ -5590,7 +5589,7 @@ export class FlowView extends ui.Component {
         this.localQueueRender(Nope);
     }
 
-    private remotePresenceToLocal(longClientId: string, user: core.ITenantUser, remotePresenceInfo: IRemotePresenceInfo, posAdjust = 0) {
+    private remotePresenceToLocal(longClientId: string, user: IUser, remotePresenceInfo: IRemotePresenceInfo, posAdjust = 0) {
         const clientId = this.client.getOrAddShortClientId(longClientId);
 
         let segoff = this.client.mergeTree.getContainingSegment(remotePresenceInfo.origPos,
