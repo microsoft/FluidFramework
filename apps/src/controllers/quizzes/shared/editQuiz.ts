@@ -4,6 +4,7 @@ import * as ko from "knockout";
 import { Choice, Hint, IQuiz } from "./choice";
 import { Quiz } from "./choiceQuiz";
 import { ControlBarViewModel, ControlButton } from "./controlBar";
+import { addCustomBindings } from "./customBindings";
 import * as utils from "./utils";
 
 interface IChoiceQuizState {
@@ -12,21 +13,22 @@ interface IChoiceQuizState {
     feedbackChoices: number[];
 }
 
-/*
-TODO: REMOVE?
 //
 // Add a popover binding to automatically apply the bootstrap bindings to the required elements
 //
-ko.bindingHandlers['popover'] = {
-    init: function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
+/*
+TODO: bring binding back!
+ko.bindingHandlers["popover"] = {
+    init: (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) => {
         $(element).popover();
-        $(element).on('click', (e) => {
+        $(element).on("click", (e) => {
             e.preventDefault();
             return true;
         });
-    }
+    },
 };
 */
+
 function createCallback<T>(deferred: JQueryDeferred<T>): Labs.Core.ILabCallback<T> {
     return (err, data) => {
         if (err) {
@@ -849,7 +851,7 @@ export function initialize(defaultQuizConfiguration: IQuiz) {
                 const appViewModel = new AppViewModel(connectionResponse, defaultQuizConfiguration);
 
                 // add custom bindings
-                // Utils.addCustomBindings();
+                addCustomBindings();
 
                 // And start up knockout!
                 ko.applyBindings(appViewModel);

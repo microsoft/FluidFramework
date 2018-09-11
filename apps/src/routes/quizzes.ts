@@ -19,14 +19,14 @@ function renderView(viewName: string, request, response, docId: string, config: 
 export function create(config: any): Router {
     const router: Router = Router();
 
-    router.get("/edit/:id", ensureAuthenticated(config.tenantInfo.id, config.tenantInfo.secretKey),
+    router.get("/mcq/edit/:id", ensureAuthenticated(config.tenantInfo.id, config.tenantInfo.secretKey),
               (request, response, next) => {
         request.query.token = response.locals.token;
         const docId = request.params.id;
         renderView("editquiz", request, response, docId, config);
     });
 
-    router.get("/view/:id", ensureAuthenticated(config.tenantInfo.id, config.tenantInfo.secretKey),
+    router.get("/mcq/view/:id", ensureAuthenticated(config.tenantInfo.id, config.tenantInfo.secretKey),
               (request, response, next) => {
         request.query.token = response.locals.token;
         const docId = request.params.id;
