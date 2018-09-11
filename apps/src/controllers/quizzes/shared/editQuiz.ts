@@ -618,7 +618,7 @@ class AppViewModel {
 
     private modeSwitchP: JQueryPromise<void> = $.when<void>();
 
-    constructor(connectionInformation: Labs.Core.IConnectionResponse, defaultQuiz: IQuiz) {
+    constructor(defaultQuiz: IQuiz) {
         this.defaultQuiz = defaultQuiz;
 
         // The view specifies what is the current view model to make use of
@@ -626,13 +626,13 @@ class AppViewModel {
 
         // Initialize the current mode
         this.isModeSetByAuthor = ko.observable(false);
-        this.switchMode(connectionInformation.mode, false);
+        this.switchMode(Labs.Core.LabMode.Edit, false);
 
-        // Also set up change event handlers
-        Labs.on(Labs.Core.EventTypes.ModeChanged, (data) => {
+        // TODO: Pass an event handler to switch button?
+        /*Labs.on(Labs.Core.EventTypes.ModeChanged, (data) => {
             const modeChangedEvent = data as Labs.Core.ModeChangedEventData;
             this.switchMode(Labs.Core.LabMode[modeChangedEvent.mode], false);
-        });
+        });*/
     }
 
     /* trigerredInternally is true if an author clicks "Preview"/"Edit" button in PPT, otherwise it is set to false */
@@ -840,26 +840,15 @@ function getConfiguration(quiz: IQuiz): Labs.Core.IConfiguration {
 export function initialize(defaultQuizConfiguration: IQuiz) {
     console.log(`Init called!`);
     $(document).ready(() => {
-        Labs.connect((err, connectionResponse) => {
-            if (err) {
-                ko.applyBindings({
-                    errorMessage: ko.observable(JSON.stringify(err)),
-                    view: ko.observable(new AppView("emptyTemplate", null)),
-                });
-                console.log(`Error happened!`);
-                // $("#errorModal").modal();
-            } else {
+        console.log(`Document ready!`);
+        // And initialize our view model
+        const appViewModel = new AppViewModel(defaultQuizConfiguration);
 
-                console.log(`No Error! We should load now`);
-                // And initialize our view model
-                const appViewModel = new AppViewModel(connectionResponse, defaultQuizConfiguration);
+        // add custom bindings
+        addCustomBindings();
 
-                // add custom bindings
-                addCustomBindings();
+        // And start up knockout!
+        ko.applyBindings(appViewModel);
 
-                // And start up knockout!
-                ko.applyBindings(appViewModel);
-            }
-        });
     });
 }

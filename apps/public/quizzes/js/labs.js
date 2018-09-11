@@ -466,9 +466,9 @@ var Labs;
     }
     Labs.getLanguage = getLanguage;
     function checkIsConnected() {
-        if (_connectionState != 2 /* Connected */) {
-            throw "API not initialized";
-        }
+        // if (_connectionState != 2 /* Connected */) {
+            // throw "API not initialized";
+        // }
     }
 })(Labs || (Labs = {}));
 var Labs;

@@ -1,4 +1,5 @@
 /* tslint:disable */
+import * as ko from "knockout";
 
 // For Localization
 declare var Localization;
@@ -139,7 +140,7 @@ export function addContentEditableBindings() {
     ko.bindingHandlers["ckEditInliner"] = {
         // Only attach it once during initialization.
         init: (element, valueAccessor) => {
-            CKEDITOR.config.language = filterLanguage(Labs.getLanguage());
+            CKEDITOR.config.language = "en-us";
             CKEDITOR.disableAutoInline = true;
             CKEDITOR.inline(element.id, {
                 extraPlugins: "mathequation",
@@ -155,7 +156,7 @@ export function addContentEditableBindings() {
 }
 
 export function addLocalizationBindings() {
-    const texts = Localization.getLocaleStrings(Labs.getLanguage());
+    const texts = Localization.getLocaleStrings("en-US");
     ko.bindingHandlers["localText"] = {
         update: (element, valueAccessor, allBindingsAccessor, viewModel, context) => {
             const key = ko.utils.unwrapObservable(valueAccessor());

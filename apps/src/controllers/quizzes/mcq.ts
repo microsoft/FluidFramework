@@ -3,11 +3,7 @@ import { initialize } from "./shared/editQuiz";
 export async function load(id: string, tenantId: string, endPoints: any, token?: string, workerConfig?: any) {
     console.log(`Loaded`);
     Labs.DefaultHostBuilder = () => {
-        if (window.location.href.indexOf("PostMessageLabHost") !== -1) {
-            return new Labs.PostMessageLabHost("test", parent, "*");
-        } else {
-            return new Labs.OfficeJSLabHost();
-        }
+        return new Labs.PostMessageLabHost("test", parent, "*");
     };
     initialize({
         allowChoiceEditing: true,
