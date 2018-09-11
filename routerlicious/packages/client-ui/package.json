@@ -20,6 +20,7 @@
     "typescript": "^3.0.3"
   },
   "dependencies": {
+    "@prague/app-ui": "^0.1.0",
     "@prague/api-definitions": "^0.1.0",
     "@prague/cell": "^0.1.0",
     "@prague/client-api": "^0.1.0",

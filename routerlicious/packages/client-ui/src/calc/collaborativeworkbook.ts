@@ -48,6 +48,16 @@ export class CollaborativeWorkbook extends Workbook {
         });
     }
 
+    public on(event: string | symbol, listener: (...args: any[]) => void): this {
+        this.cellText.getMap().on(event, listener);
+        return this;
+    }
+
+    public removeListener(event: string | symbol, listener: (...args: any[]) => void): this {
+        this.cellText.getMap().removeListener(event, listener);
+        return this;
+    }
+
     protected loadCellText(row: number, col: number): string {
         return this.cellText.get(`${row},${col}`);
     }

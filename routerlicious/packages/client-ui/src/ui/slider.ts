@@ -1,34 +1,60 @@
-import { Box } from ".";
+import { BoxState, Inline } from "@prague/app-ui";
+import { FlowViewContext } from ".";
 import { IllFormedFormula, NotImplemented, ResultKind, Workbook } from "../../ext/calc";
 
-export interface ISliderState {
-    value: string;
+export class SliderState extends BoxState {
+    public value: string;
 }
 
+const parseRowColExp = /=\s*([A-Z]+)([0-9]+)/;
+const asciiA = "A".charCodeAt(0);
+
 /** Renders a Formula as an inline box. */
-export class Slider extends Box<ISliderState> {
-    public measure(self: ISliderState, services: Map<string, any>, font: string) {
-        // TODO: Somehow make this changeable based on range?
-        return 10;
+export class Slider extends Inline<SliderState> {
+    private readonly width = 100;
+
+    protected measuring(self: SliderState, context: FlowViewContext): { min: number; max: number; } {
+        return { min: this.width, max: this.width };
     }
 
-    public render(self: ISliderState, services: Map<string, any>) {
-        // TODO: Styles should be passed in as part of a component-standard render context.
-        const slider = document.createElement("input");
-        slider.className = "slider";
-        slider.type = "range";
-        slider.min = "1";
-        slider.max = "100";
-        slider.value = this.getEvaluatedFormula(self, services);
-
+    protected mounting(self: SliderState, context: FlowViewContext): HTMLElement {
         const span = document.createElement("span");
-        span.appendChild(slider);
+        return this.updating(self, context, span);
+    }
 
-        return span;
+    protected unmounting(self: BoxState, context: FlowViewContext, element: HTMLElement): void {
+        // NYI: FlowView currently does not unmount components as they are removed.
+    }
+
+    protected updating(self: SliderState, context: FlowViewContext, element: HTMLElement): HTMLElement {
+        let slider = element.getElementsByTagName("input")[0];
+
+        if (!slider) {
+            slider = document.createElement("input");
+            slider.className = "slider";
+            slider.type = "range";
+            slider.min = "0";
+            slider.max = "10";
+            slider.style.width = `${this.width}px`;
+            slider.addEventListener("mouseup", (e) => {
+                const workbook = context.services.get("workbook") as Workbook;
+                const [row, col] = this.parseRowCol(self.value);
+                workbook.setCellText(row, col, slider.value);
+            });
+            element.appendChild(slider);
+        }
+
+        slider.value = this.getEvaluatedFormula(self, context.services);
+        return element;
+    }
+
+    private parseRowCol(text: string) {
+        const matches = parseRowColExp.exec(text.toUpperCase());
+        return [ parseInt(matches[2], 10) - 1, matches[1].charCodeAt(0) - asciiA ];
     }
 
     /** Returns the post-evaluated  */
-    private getEvaluatedFormula(self: ISliderState, services: Map<string, any>) {
+    private getEvaluatedFormula(self: SliderState, services: Map<string, any>) {
         // If the service is not yet available, return a 'loading' message.
         const workbook = services && services.get("workbook") as Workbook;
         if (typeof workbook === "undefined") {

@@ -12,6 +12,7 @@ WORKDIR /usr/src/server
 # Copy over the package and package-lock and install prior to the other code to optimize Docker's file system cache on rebuilds
 COPY *.json ./
 COPY packages/agent/package*.json packages/agent/
+COPY packages/app-ui/package*.json packages/app-ui/
 COPY packages/api-definitions/package*.json packages/api-definitions/
 COPY packages/cell/package*.json packages/cell/
 COPY packages/chaincode/package*.json packages/chaincode/

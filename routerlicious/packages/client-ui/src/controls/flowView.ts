@@ -9,6 +9,7 @@ import * as SharedString from "@prague/shared-string";
 import * as assert from "assert";
 // tslint:disable-next-line:no-var-requires
 const performanceNow = require("performance-now");
+import { isBlock } from "@prague/app-ui";
 import { blobUploadHandler, urlToInclusion } from "../blob";
 import { CollaborativeWorkbook } from "../calc";
 import {
@@ -1216,11 +1217,24 @@ function renderSegmentIntoLine(
             // If it is a registered external component, ask it to render itself to HTML and
             // insert the divs here.
             if (maybeComponent) {
-                lineContext.contentDiv.appendChild(
-                    allowDOMEvents(maybeComponent.render(
-                        marker.properties.state,
-                        lineContext.flowView.services,
-                    )));
+                const context = new ui.FlowViewContext(
+                    document.createElement("canvas").getContext("2d"),
+                    lineContext.lineDiv.style,
+                    lineContext.flowView.services,
+                );
+
+                const newElement = maybeComponent.upsert(
+                    marker.properties.state,
+                    context,
+                    marker.properties.cachedElement,
+                );
+
+                if (newElement !== marker.properties.cachedElement) {
+                    marker.properties.cachedElement = newElement;
+                    allowDOMEvents(newElement);
+                }
+
+                lineContext.contentDiv.appendChild(newElement);
             }
         }
 
@@ -2615,8 +2629,23 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
 
         const maybeComponent = asMarker && ui.maybeGetComponent(asMarker);
 
-        if (maybeComponent) {
-            const componentDiv = allowDOMEvents(maybeComponent.render(asMarker.properties.state, layoutContext.flowView.services));
+        if (isBlock(maybeComponent)) {
+            const context = new ui.FlowViewContext(
+                document.createElement("canvas").getContext("2d"),
+                layoutContext.viewport.div.style,
+                layoutContext.flowView.services,
+            );
+
+            const componentDiv = maybeComponent.upsert(
+                asMarker.properties.state,
+                context,
+                asMarker.properties.cachedElement,
+            );
+
+            if (componentDiv !== asMarker.properties.cachedElement) {
+                asMarker.properties.cachedElement = componentDiv;
+                allowDOMEvents(componentDiv);
+            }
 
             // Force subtree positioning to be relative to the lineDiv we create below.
             componentDiv.style.display = "flex";
@@ -3583,10 +3612,14 @@ export class FlowView extends ui.Component {
             });
             workbookMap.getView().then((workbookView) => {
                 this.services.set("workbook",
-                    new CollaborativeWorkbook(workbookView, 2, 4, [
-                        // If empty, seed the workbook w/some initial data for demos.
-                        ["Dan", "500", "43", "0"],
-                        ["Kurt", "490", "0", "0"],
+                    // If empty, seed the workbook w/some initial data for demos.
+                    new CollaborativeWorkbook(workbookView, 6, 6, [
+                        ["Player", "Euchre", "Bridge", "Poker", "Go Fish", "Total Wins"],
+                        ["Daniel", "0", "0", "0", "5", "=SUM(B2:E2)"],
+                        ["Kurt",   "2", "3", "0", "0", "=SUM(B3:E3)"],
+                        ["Sam",    "3", "4", "0", "0", "=SUM(B4:E4)"],
+                        ["Tanvir", "3", "3", "0", "0", "=SUM(B5:E5)"],
+                        ["Total Played", "=SUM(B2:B5)", "=SUM(C2:C5)", "=SUM(D2:D5)", "=SUM(E2:E5)", "=SUM(F2:F5)"],
                     ]));
             });
         });
@@ -5479,11 +5512,13 @@ export class FlowView extends ui.Component {
             if (updatePos >= 0) {
                 this.updatePGInfo(updatePos);
             }
-            this.pendingRender = true;
-            window.requestAnimationFrame(() => {
-                this.pendingRender = false;
-                this.render(this.topChar, true);
-            });
+            if (!this.pendingRender) {
+                this.pendingRender = true;
+                window.requestAnimationFrame(() => {
+                    this.pendingRender = false;
+                    this.render(this.topChar, true);
+                });
+            }
         }
     }
 
@@ -5531,7 +5566,7 @@ export class FlowView extends ui.Component {
 
         // TODO: All markers should be inserted as an atomic group.
         const component = ui.refTypeNameToComponent.get(type);
-        if (component.isParagraph) {
+        if (isBlock(component)) {
             this.insertParagraph(this.cursor.pos++);
         }
 

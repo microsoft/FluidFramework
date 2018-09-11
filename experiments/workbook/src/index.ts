@@ -11,7 +11,7 @@ function openWorkbook(docName: string) {
         return prague.upsertMap(document, "workbook");
     }).then(mapAndView => {
         const { view } = mapAndView;
-        const workbook = new CollaborativeWorkbook(view, 8, 8, [
+        const workbook = new CollaborativeWorkbook(view, 7, 7, [
             ['Player', 'Euchre', 'Bridge', 'Poker', 'Cribbage', 'Go Fish', 'Total Wins'],
             ['Daniel', "0", "0", "0", "0", "5", '=SUM(B2:F2)'],
             ['Kurt',   "2", "3", "0", "3", "0", '=SUM(B3:F3)'],

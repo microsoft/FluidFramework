@@ -1,40 +1,49 @@
 // TODO: Should move Formula to a separate file.
-import { Box } from ".";
+import { BoxState, Inline } from "@prague/app-ui";
 import { IllFormedFormula, NotImplemented, ResultKind, Workbook } from "../../ext/calc";
+import { FlowViewContext } from "./flowViewContext";
 
-// TODO: "typeof" test is currently necessary due to static 'refTypeToComponent' map
-//       in registry.ts instantiating the 'Formula' singleton when the module loads
-//       in node during tests.
-const measure2d = (typeof document !== "undefined") && document.createElement("canvas").getContext("2d");
-
-// TODO: Should plumb through access to the caching implementation from FlowView.
-const measureTextWidth = (font: string, text: string) => {
-    measure2d.font = font;
-    return measure2d.measureText(text).width;
-};
-
-export interface IFormulaState {
-    formula: string;
+export class FormulaState extends BoxState {
+    public formula: string;
 }
 
 /** Renders a Formula as an inline box. */
-export class Formula extends Box<IFormulaState> {
-    public measure(self: IFormulaState, services: Map<string, any>, font: string) {
-        // TODO: Styles should be passed in as part of a component-standard layout context.
-        font += " italic";
-        return measureTextWidth(font, this.getEvaluatedFormula(self, services));
+export class Formula extends Inline<FormulaState> {
+
+    protected measuring(self: FormulaState, context: FlowViewContext) {
+        let width;
+
+        this.withStyle(context, () => {
+            width = context.measureText(this.getEvaluatedFormula(self, context.services)).width;
+        });
+
+        return { min: width, max: width };
     }
 
-    public render(self: IFormulaState, services: Map<string, any>) {
-        // TODO: Styles should be passed in as part of a component-standard render context.
+    protected mounting(self: FormulaState, context: FlowViewContext) {
         const span = document.createElement("span");
-        span.style.fontStyle = "italic";
-        span.innerText = this.getEvaluatedFormula(self, services);
+        this.updating(self, context, span);
         return span;
     }
 
+    protected unmounting(self: FormulaState, context: FlowViewContext, element: HTMLElement) {
+        // NYI: FlowView currently does not unmount components as they are removed.
+    }
+
+    protected updating(self: FormulaState, context: FlowViewContext, element: HTMLElement) {
+        this.withStyle(context, () => {
+            element.style.font = context.style.font;
+            element.innerText = this.getEvaluatedFormula(self, context.services);
+        });
+
+        return element;
+    }
+    private withStyle(context: FlowViewContext, scope: () => void) {
+        context.withStyle({ font: "italic " + context.style.font }, scope);
+    }
+
     /** Returns the post-evaluated  */
-    private getEvaluatedFormula(self: IFormulaState, services: Map<string, any>) {
+    private getEvaluatedFormula(self: FormulaState, services: Map<string, any>) {
         // If the service is not yet available, return a 'loading' message.
         const workbook = services && services.get("workbook") as Workbook;
         if (typeof workbook === "undefined") {

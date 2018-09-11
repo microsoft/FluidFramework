@@ -1,66 +1,96 @@
-import { Box } from ".";
+import { Block, BoxState } from "@prague/app-ui";
 import { ResultKind } from "../../ext/calc";
 import * as Charts from "../../ext/microsoft-charts/";
 import { CollaborativeWorkbook } from "../calc";
+import { FlowViewContext } from "./flowViewContext";
 
-// tslint:disable:no-empty-interface
-export interface IChartState {}
+const chartSym = Symbol("Chart.chart");
+
+export class ChartState extends BoxState {
+    public [chartSym]?: Charts.Chart;
+}
 
 /** Renders a worksheet as a chart using IvyCharts service. */
-export class Chart extends Box<IChartState> {
-    public get isParagraph() { return true; }       // Participate as a paragraph in FlowView.
-
+export class Chart extends Block<ChartState> {
     private readonly host = new Charts.Host({
-        base: "https://charts.microsoft.com" });
+        base: "https://charts.microsoft.com",
+    });
 
-    public measure(self: IChartState, services: Map<string, any>, font: string) {
-        throw new Error("measure() currently unused in paragraph.");
-        return NaN;
-    }
-
-    public render(self: IChartState, services: Map<string, any>) {
-        // If the workbook is still loading, early exit with a placeholder message.
-        const workbook = services.get("workbook");
-        if (typeof workbook === "undefined") {
-            const placeholder = document.createElement("div");
-            placeholder.innerText = "[ Loading... ]";
-            return placeholder;
-        }
-
-        // TODO: Component state should specify which region of the workbook contains
-        //       category names.
-        const categoryNames = [];
-        for (let r = 0; r < workbook.numRows; r++) {
-            categoryNames.push(this.getAt(workbook, r, 0));
-        }
-
-        // TODO: Component state should specify which region of the workbook contains
-        //       the values for the chart.
-        const values = [];
-        for (let r = 0; r < workbook.numRows; r++) {
-            values.push(this.getAt(workbook, r, 1));
-        }
-
+    protected mounting(self: ChartState, context: FlowViewContext): HTMLElement {
         // Create the div to which the Chart will attach the SVG rendered chart when the
         // web service responds.
         const div = document.createElement("div");
 
-        // Explicitly set div height to match the chart that will asynchronously arrive from
-        // the web service.  This reserves the appropriate amount of vertical space in the
-        // FlowView, avoiding the need for a later invalidation/resize when the chart arrives.
+        // Call 'updating' to update the contents of the div with the updated chart.
+        return this.updating(self, context, div);
+    }
+
+    protected unmounting(self: BoxState, context: FlowViewContext, element: HTMLElement): void {
+        // NYI: FlowView currently does not unmount components as they are removed.
+    }
+
+    protected updating(self: ChartState, context: FlowViewContext, element: HTMLElement): HTMLElement {
+        const workbook = context.services.get("workbook");
+
+        // If the workbook is still loading then early exit.
+        if (workbook === undefined) {
+            // Display a placeholder message until the workbook loads.
+            element.innerText = "[ Loading... ]";
+            return element;
+        }
+
         const height = 260;
-        div.style.height = `${height}px`;
-        div.style.justifyContent = "center";
+        if (!self[chartSym]) {
+            // We're creating the chart component for the first time.  Remove the placeholder content
+            // (if any).
+            while (element.lastChild) {
+                element.removeChild(element.lastChild);
+            }
+
+            // Explicitly set div height to match the chart that will asynchronously arrive from
+            // the web service.  This reserves the appropriate amount of vertical space in the
+            // FlowView, avoiding the need for a later invalidation/resize when the chart arrives.
+            element.style.height = `${height}px`;
+            element.style.justifyContent = "center";
+
+            self[chartSym] = new Charts.Chart(this.host, element);
+            self[chartSym].setRenderer(Charts.IvyRenderer.Svg);
+        }
+
+        // TODO: Component state should specify which region of the workbook contains
+        //       category names.  Currently hard-coded to 'A2:A(maxRows - 1)'
+        const categoryNames = [];
+        for (let r = 1; r < workbook.numRows - 1; r++) {
+            categoryNames.push(this.getAt(workbook, r, 0));
+        }
+
+        // TODO: Component state should specify which region of the workbook contains
+        //       the values for the chart.  Currently hard-coded to 'E2:E(maxRows - 1)'
+        const values = [];
+        for (let r = 1; r < workbook.numRows - 1; r++) {
+            values.push(this.getAt(workbook, r, 5));
+        }
 
         // Configure the chart, initiating the request from the charting service.
-        const chart = new Charts.Chart(this.host, div);
-        chart.setRenderer(Charts.IvyRenderer.Svg);
-        chart.setConfiguration({
-            layout: "Bar Clustered",
+        self[chartSym].setConfiguration({
+            layout: "Pie",
+            legend: {
+                position: {
+                    edge: "Left",
+                    edgePosition: "Middle",
+                },
+                title: {
+                    position: {
+                        edge: "Top",
+                        edgePosition: "Middle",
+                    },
+                    text: "Player",
+                },
+            },
             series: [{
                 data: {
-                    categoryNames,
-                    values,
+                    categoryNames: categoryNames.reverse(),
+                    values: values.reverse(),
                 },
                 id: "Series1",
             }],
@@ -70,7 +100,7 @@ export class Chart extends Box<IChartState> {
             },
         });
 
-        return div;
+        return element;
     }
 
     /** Evaluates the cell at the given (row, col), coercing the result to a number | boolean | string. */

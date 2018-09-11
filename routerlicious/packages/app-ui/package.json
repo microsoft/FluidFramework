@@ -1,0 +1,23 @@
+{
+  "name": "@prague/app-ui",
+  "version": "0.1.0",
+  "description": "Prague App UI",
+  "main": "dist/index.js",
+  "module": "lib/index.js",
+  "types": "dist/index.d.ts",
+  "sideEffects": false,
+  "scripts": {
+    "build": "npm run tsc && npm run tslint",
+    "build:full": "npm run build && npm run build:esnext",
+    "build:esnext": "tsc --outDir lib --m esnext",
+    "tsc": "tsc",
+    "tslint": "tslint 'src/**/*.ts'"
+  },
+  "author": "Microsoft",
+  "repository": "microsoft/prague",
+  "devDependencies": {
+    "tslint": "^5.11.0",
+    "typescript": "^3.0.3"
+  },
+  "dependencies": {}
+}
