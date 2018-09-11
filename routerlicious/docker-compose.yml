@@ -111,6 +111,12 @@ services:
             MINIO_ACCESS_KEY: prague
             MINIO_SECRET_KEY: mhioAkNXTwdX4dXWgKgXVtHo
         command: server /export
+    verdaccio:
+        image: verdaccio/verdaccio:3.8.1
+        ports:
+            - "4873:4873"
+        volumes:
+            - ./verdaccio/conf:/verdaccio/conf
 volumes:
   git:
     driver: local

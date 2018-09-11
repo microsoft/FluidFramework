@@ -12,6 +12,7 @@ import * as demoCreator from "./democreator";
 import * as graph from "./graph";
 import * as home from "./home";
 import * as intelligence from "./intelligence";
+import * as loader from "./loader";
 import * as maps from "./maps";
 import * as ping from "./ping";
 import * as scribe from "./scribe";
@@ -25,6 +26,7 @@ export interface IRoutes {
     canvas: Router;
     cell: Router;
     demoCreator: Router;
+    loader: Router;
     home: Router;
     intelligence: Router;
     signUp: Router;
@@ -58,6 +60,7 @@ export function create(
         graph: graph.create(config, tenantManager, storage, appTenants, ensureLoggedIn),
         home: home.create(config, ensureLoggedIn),
         intelligence: intelligence.create(config),
+        loader: loader.create(config, tenantManager, storage, appTenants, ensureLoggedIn),
         maps: maps.create(config, tenantManager, storage, appTenants, ensureLoggedIn),
         ping: ping.create(),
         scribe: scribe.create(config, tenantManager, appTenants, ensureLoggedIn),

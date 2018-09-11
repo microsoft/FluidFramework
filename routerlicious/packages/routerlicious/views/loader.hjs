@@ -1,0 +1,20 @@
+{{<layout}}
+    {{$styles}}
+        <link href="{{#hfurl}}/public/stylesheets/dist/map.css{{/hfurl}}" rel="stylesheet" />
+    {{/styles}}
+
+    {{$content}}
+        <div>I am the loader</div>
+    {{/content}}
+
+    {{$scripts}}
+        <script src="{{#hfurl}}/public/scripts/dist/loader.js{{/hfurl}}"></script>
+        <script>
+            var config = {{{ config }}};
+            var version = {{{ version }}};
+            var token = "{{ token }}";
+
+            loader.initialize("{{ documentId }}", version, token, config);
+        </script>
+    {{/scripts}}
+{{/layout}}

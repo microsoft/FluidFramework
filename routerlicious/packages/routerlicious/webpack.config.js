@@ -4,29 +4,17 @@ const dev = require('./webpack.dev.js');
 const prod = require('./webpack.prod.js');
 const merge = require('webpack-merge');
 const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
+const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 
 module.exports = env => {
-    let entry = {
-        controller: "./src/alfred/controllers/index.ts",
-    };
-    let prod_target = (env && env.target)
-
+    let prod_target = env && env.target;
+    const envOptions = prod_target ? prod : dev
     let typeCheckingCores = 1;
-    return merge((prod_target ? prod : dev), {
-        entry,
+
+    const defaultOptions = {
         devtool: 'source-map',
         resolve: {
             extensions: [".ts", ".tsx", ".js", ".json"]
-        },
-        node: {
-            dgram: 'empty',
-            fs: 'empty',
-            net: 'empty',
-            tls: 'empty',
-            child_process: 'empty',
-        },
-        externals: {
-            jquery: '$',
         },
         module: {
             rules: [
@@ -90,5 +78,47 @@ module.exports = env => {
                 workers: typeCheckingCores
             }),
         ]
-    });
+    };
+
+    const bundles = [
+        {
+            entry: {
+                controller: "./src/alfred/controllers/index.ts",
+            },
+            node: {
+                dgram: 'empty',
+                fs: 'empty',
+                net: 'empty',
+                tls: 'empty',
+                child_process: 'empty',
+            },
+            externals: {
+                jquery: '$',
+            },
+            plugins: [
+                new BundleAnalyzerPlugin({
+                    analyzerMode: 'static',
+                    reportFilename: 'routerlicious.stats.html',
+                    openAnalyzer: false,
+                    generateStatsFile: true,
+                    statsFilename: 'routerlicious.stats.json'
+                  })
+            ],
+        },
+        {
+            entry: {
+                loader: "./src/alfred/controllers/loader.ts"
+            },
+            plugins: [
+                new BundleAnalyzerPlugin({
+                    analyzerMode: 'static',
+                    reportFilename: 'loader.stats.html',
+                    openAnalyzer: false,
+                    generateStatsFile: true,
+                    statsFilename: 'loader.stats.json'
+                  })
+            ],
+        }];
+
+    return bundles.map((bundle) => merge(envOptions, defaultOptions, bundle));
 };

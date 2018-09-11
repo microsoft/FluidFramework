@@ -43,6 +43,7 @@
     "@prague/client-ui": "^0.1.0",
     "@prague/gitresources": "^0.1.0",
     "@prague/loader": "^0.1.0",
+    "@prague/loader-web": "^0.1.0",
     "@prague/map": "^0.1.0",
     "@prague/merge-tree": "^0.1.0",
     "@prague/merge-tree-utils": "^0.1.0",

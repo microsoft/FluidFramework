@@ -14,11 +14,14 @@ COPY *.json ./
 COPY packages/agent/package*.json packages/agent/
 COPY packages/api-definitions/package*.json packages/api-definitions/
 COPY packages/cell/package*.json packages/cell/
+COPY packages/chaincode/package*.json packages/chaincode/
 COPY packages/client-api/package*.json packages/client-api/
 COPY packages/client-ui/package*.json packages/client-ui/
 COPY packages/gitresources/package*.json packages/gitresources/
 COPY packages/graph/package*.json packages/graph/
 COPY packages/loader/package*.json packages/loader/
+COPY packages/loader-client/package*.json packages/loader-client/
+COPY packages/loader-web/package*.json packages/loader-web/
 COPY packages/map/package*.json packages/map/
 COPY packages/merge-tree/package*.json packages/merge-tree/
 COPY packages/merge-tree-utils/package*.json packages/merge-tree-utils/

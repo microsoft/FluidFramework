@@ -1,6 +1,5 @@
 const path = require('path');
 const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
-const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 
 // Uglify Fails on api.js unless uglify-es@3.3.9 is installed
 module.exports = {
@@ -20,13 +19,6 @@ module.exports = {
                 compress: true,
                 warnings: false,
             }
-        }),
-        new BundleAnalyzerPlugin({
-            analyzerMode: 'static',
-            reportFilename: 'routerlicious.stats.html',
-            openAnalyzer: false,
-            generateStatsFile: true,
-            statsFilename: 'routerlicious.stats.json'
-          })       
+        })
     ],
 };

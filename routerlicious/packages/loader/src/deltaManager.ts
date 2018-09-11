@@ -99,7 +99,7 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
         private client: runtime.IClient) {
         super();
 
-        this.clientType = (this.client === undefined || this.client.type === runtime.Browser)
+        this.clientType = (!this.client || this.client.type === runtime.Browser)
             ? runtime.Browser
             : runtime.Robot;
         // Inbound message queue
