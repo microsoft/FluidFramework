@@ -354,8 +354,8 @@
     {{$scripts}}
         <script src="{{#hfurl}}/public/scripts/dist/index.js{{/hfurl}}"></script>
         <script>
-            // var endpoints = {{{ endpoints }}};
-            // controller.todolist.load("{{ id }}", "{{ tenantId }}", endpoints, "{{ token }}");
+            var endpoints = {{{ endpoints }}};
+            controller.mcq.load("{{ id }}", "{{ tenantId }}", endpoints, "{{ token }}");
         </script>
     {{/scripts}}
 {{/layout}}
