@@ -1,3 +1,5 @@
+import * as ko from "knockout";
+
 export type IControlButtonHandler = ()  => void;
 
 export class ControlButton {

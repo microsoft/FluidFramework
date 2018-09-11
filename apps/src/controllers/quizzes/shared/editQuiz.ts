@@ -626,7 +626,10 @@ class AppViewModel {
 
         // Initialize the current mode
         this.isModeSetByAuthor = ko.observable(false);
-        this.switchMode(Labs.Core.LabMode.Edit, false);
+
+        const quiz = new Quiz(this.defaultQuiz);
+        this.view(new AppView("editTemplate", new EditViewModel(this, null, quiz)));
+        // this.switchMode(Labs.Core.LabMode.Edit, false);
 
         // TODO: Pass an event handler to switch button?
         /*Labs.on(Labs.Core.EventTypes.ModeChanged, (data) => {

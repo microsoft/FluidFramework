@@ -1,6 +1,7 @@
 {{<layout}}
     {{$styles}}
         <link href="{{#hfurl}}/public/stylesheets/dist/style.css{{/hfurl}}" rel="stylesheet" />
+        <link href="{{#hfurl}}/public/quizzes/css/quiz.css{{/hfurl}}" rel="stylesheet" />
     {{/styles}}
 
     {{$content}}
@@ -234,7 +235,39 @@
                         <!-- /ko -->
                     </form>
                 </div>
-                @Html.Partial("~/Views/Shared/_ControlBar.cshtml")
+                <div class="container-fluid">
+                    <div id="quiz-controls-container" data-bind="with: controlBar">
+                        <div class="row" id="quiz-controls">
+                                <div class="btn-control-container">
+                                    <!-- ko foreach: leftButtons -->
+                                    <button class="btn btn-control" data-bind="visible: visible, css: {disabled: !enabled()}, click: click">
+                                        <span data-bind="localText: title"></span>
+                                    </button>
+                                    <!-- /ko -->
+                                </div>
+                                <div class="copyright-container">
+                                    <div class="copyright-container-inner">
+                                        <ul class="footer-links">
+                                            <li>
+                                                <a data-bind="localLink: 'QuizFooterTermsLink'" target="_blank"><span data-bind="localText: 'QuizFooterTerms'"></span></a>
+                                            </li>
+                                            <li>
+                                                <a data-bind="localLink: 'QuizFooterPrivacyLink'" target="_blank"><span data-bind="localText: 'QuizFooterPrivacy'"></span></a>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+
+                                <div class="btn-control-container pull-right">
+                                    <!-- ko foreach: rightButtons -->
+                                    <button class="btn btn-control" data-bind="visible: visible, css: {disabled: !enabled()}, click: click">
+                                        <span data-bind="localText: title"></span>
+                                    </button>
+                                    <!-- /ko -->
+                                </div>
+                        </div>
+                    </div>
+                </div>
             </script>
 
             <script type="text/html" id="showTemplate">

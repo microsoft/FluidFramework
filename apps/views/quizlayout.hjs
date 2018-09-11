@@ -8,7 +8,6 @@
     <title>{{ title }}</title>
 
     <link href="//ajax.aspnetcdn.com/ajax/bootstrap/3.0.0/css/bootstrap.min.css" rel="stylesheet" />
-    <link href="{{#hfurl}}/public/quizzes/css/quiz.css" rel="stylesheet" />
     <link href="//e0d1.wpc.azureedge.net/80E0D1/OfficeMixProdBlobStorage/mathquill/mathquill.css" rel="stylesheet" />
 
     {{$styles}}{{/styles}}

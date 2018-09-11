@@ -1,3 +1,5 @@
+import * as ko from "knockout";
+
 // Saved state for a choice quiz
 export interface IChoiceQuizState {
     seed: string;
