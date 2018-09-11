@@ -352,6 +352,21 @@
     {{/content}}
 
     {{$scripts}}
+        <script src="//ajax.aspnetcdn.com/ajax/jQuery/jquery-3.2.1.min.js"></script>
+        <script src="//ajax.aspnetcdn.com/ajax/bootstrap/3.3.7/bootstrap.min.js"></script>
+        <script src="https://appsforoffice.microsoft.com/lib/1.1/hosted/office.js"></script>
+        <script src="{{#hfurl}}/public/quizzes/js/labs.js{{/hfurl}}"></script>
+        <script src="{{#hfurl}}/public/scripts/dist/index.js{{/hfurl}}"></script>
+        <script src="{{#hfurl}}/public/quizzes/js/localeStrings.js{{/hfurl}}"></script>
+        <script src="//e0d1.wpc.azureedge.net/80E0D1/OfficeMixProdBlobStorage/ckeditor/ckeditor.js"></script>
+        <script src="//e0d1.wpc.azureedge.net/80E0D1/OfficeMixProdBlobStorage/mathquill/mathquill.js"></script>
+
+        <script src="https://e0d1.wpc.azureedge.net/80E0D1/OfficeMixProdBlobStorage/mathjax/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+        <script type="text/x-mathjax-config">
+            MathJax.Hub.Config({
+            tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+        });
+        </script>
         <script src="{{#hfurl}}/public/scripts/dist/index.js{{/hfurl}}"></script>
         <script>
             var endpoints = {{{ endpoints }}};

@@ -838,6 +838,7 @@ function getConfiguration(quiz: IQuiz): Labs.Core.IConfiguration {
 // Quiz entry point. Once the document is ready attempts to establish a connection with Labs.js
 //
 export function initialize(defaultQuizConfiguration: IQuiz) {
+    console.log(`Init called!`);
     $(document).ready(() => {
         Labs.connect((err, connectionResponse) => {
             if (err) {
@@ -845,8 +846,11 @@ export function initialize(defaultQuizConfiguration: IQuiz) {
                     errorMessage: ko.observable(JSON.stringify(err)),
                     view: ko.observable(new AppView("emptyTemplate", null)),
                 });
+                console.log(`Error happened!`);
                 // $("#errorModal").modal();
             } else {
+
+                console.log(`No Error! We should load now`);
                 // And initialize our view model
                 const appViewModel = new AppViewModel(connectionResponse, defaultQuizConfiguration);
 
