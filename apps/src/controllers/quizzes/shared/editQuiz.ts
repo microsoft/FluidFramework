@@ -1,10 +1,10 @@
 import * as $ from "jquery";
 import * as ko from "knockout";
-// import { Labs } from "./ext/labs";
 import { Choice, Hint, IQuiz } from "./choice";
 import { Quiz } from "./choiceQuiz";
 import { ControlBarViewModel, ControlButton } from "./controlBar";
 import { addCustomBindings } from "./customBindings";
+import * as types from "./definitions";
 import * as utils from "./utils";
 
 interface IChoiceQuizState {
@@ -71,17 +71,15 @@ class EditViewModel {
     public controlBar: ControlBarViewModel;
 
     private appViewModel: AppViewModel;
-    private labEditor: Labs.LabEditor;
 
     // Variables used to implement quiz configuration throttling.
     private dirty = false;
     private timer = null;
-    private pendingQuizData = null;
+    private pendingQuizData: IQuiz = null;
 
     constructor(appViewModel: AppViewModel, labEditor: Labs.LabEditor, quiz: Quiz) {
         this.appViewModel = appViewModel;
         this.quiz = quiz;
-        this.labEditor = labEditor;
 
         this.initControlBar();
 
@@ -110,11 +108,16 @@ class EditViewModel {
             this.timer = null;
             this.dirty = false;
 
+            console.log(this.pendingQuizData.question);
+
+            // We should serialize here and store it somewhere.
+            /*
             this.labEditor.setConfiguration(getConfiguration(this.pendingQuizData), (err, unused) => {
                 if (err) {
                     this.appViewModel.showError(err);
                 }
             });
+            */
         }
     }
 
@@ -794,8 +797,8 @@ class AppViewModel {
 //
 // Method that given a quiz, returns the configuration sent to the server
 //
-function getConfiguration(quiz: IQuiz): Labs.Core.IConfiguration {
-    const choices: Labs.Components.IChoice[] = [];
+function getConfiguration(quiz: IQuiz): types.IConfiguration {
+    const choices: types.IChoice[] = [];
 
     // Old quizzes have 'name' and 'value' field. New quiz just sets them as null.
     quiz.choices.forEach((choice) => {
@@ -808,12 +811,12 @@ function getConfiguration(quiz: IQuiz): Labs.Core.IConfiguration {
             });
     });
 
-    const hints: Labs.Core.IValue[] = [];
+    const hints: types.IValue[] = [];
     quiz.hints.forEach((hint) => {
         hints.push({ isHint: true, value: {"text/plain": hint.text } });
     });
 
-    const choiceComponent: Labs.Components.IChoiceComponent = {
+    const choiceComponent: types.IChoiceComponent = {
         answer: quiz.allowMultipleAnswers ? quiz.answer : (quiz.answer != null ? [quiz.answer] : []),
         choices,
         data: quiz,
@@ -824,7 +827,7 @@ function getConfiguration(quiz: IQuiz): Labs.Core.IConfiguration {
         question: { "text/html": quiz.question, "text/plain": $(quiz.question).text() },
         secure: false,
         timeLimit: quiz.isTimed ? quiz.timeLimit : 0,
-        type: Labs.Components.ChoiceComponentType,
+        type: "mcq",
         values: { hints },
     };
 
@@ -837,9 +840,7 @@ function getConfiguration(quiz: IQuiz): Labs.Core.IConfiguration {
     };
 }
 
-//
-// Quiz entry point. Once the document is ready attempts to establish a connection with Labs.js
-//
+// Quiz entry point.
 export function initialize(defaultQuizConfiguration: IQuiz) {
     console.log(`Init called!`);
     $(document).ready(() => {
