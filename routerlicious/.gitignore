@@ -3,4 +3,3 @@ node_modules
 dist
 nyc
 *.log
-verdaccio/conf/htpasswd

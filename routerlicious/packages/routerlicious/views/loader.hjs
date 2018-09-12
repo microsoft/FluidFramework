@@ -4,7 +4,7 @@
     {{/styles}}
 
     {{$content}}
-        <div>I am the loader</div>
+        <div id="content"></div>
     {{/content}}
 
     {{$scripts}}

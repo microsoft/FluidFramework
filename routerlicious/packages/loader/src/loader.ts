@@ -42,8 +42,15 @@ export async function load(
         return Promise.reject("Must provide a token");
     }
 
-    const document = new Document(token, platform, documentService, codeLoader, tokenService, options);
-    await document.load(specifiedVersion, connect);
+    const document = await Document.Load(
+        token,
+        platform,
+        documentService,
+        codeLoader,
+        tokenService,
+        options,
+        specifiedVersion,
+        connect);
 
     return document;
 }

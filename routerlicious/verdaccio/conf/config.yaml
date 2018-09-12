@@ -25,7 +25,7 @@ auth:
     file: /verdaccio/conf/htpasswd
     # Maximum amount of users allowed to register, defaults to "+infinity".
     # You can set this to -1 to disable registration.
-    #max_users: 1000
+    max_users: -1
 
 # a list of other known repositories we can talk to
 uplinks:
@@ -35,7 +35,7 @@ uplinks:
 packages:
   '@*/*':
     # scoped packages
-    access: $all
+    access: $authenticated
     publish: $authenticated
     proxy: npmjs
 
@@ -45,7 +45,7 @@ packages:
     #
     # you can specify usernames/groupnames (depending on your auth plugin)
     # and three keywords: "$all", "$anonymous", "$authenticated"
-    access: $all
+    access: $authenticated
 
     # allow all known users to publish packages
     # (anyone can register by default, remember?)

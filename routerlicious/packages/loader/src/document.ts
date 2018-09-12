@@ -47,6 +47,21 @@ interface IConnectResult {
 
 // TODO consider a name change for this. The document is likely built on top of this infrastructure
 export class Document extends EventEmitter {
+    public static async Load(
+        token: string,
+        platform: IPlatform,
+        service: IDocumentService,
+        codeLoader: ICodeLoader,
+        tokenService: ITokenService,
+        options: any,
+        specifiedVersion: ICommit,
+        connect: boolean): Promise<Document> {
+        const doc = new Document(token, platform, service, codeLoader, tokenService, options);
+        await doc.load(specifiedVersion, connect);
+
+        return doc;
+    }
+
     private pendingClientId: string;
     private loaded = false;
     private connectionState = ConnectionState.Disconnected;
@@ -121,7 +136,84 @@ export class Document extends EventEmitter {
         this._user = claims.user;
     }
 
-    public async load(specifiedVersion: ICommit, connect: boolean): Promise<void> {
+    /**
+     * Retrieves the quorum associated with the document
+     */
+    public getQuorum(): Quorum {
+        return this.quorum;
+    }
+
+    public on(event: "connected", listener: (clientId: string) => void): this;
+    public on(event: "disconnect", listener: () => void): this;
+    public on(event: "error", listener: (error: any) => void): this;
+    public on(event: "op", listener: (message: ISequencedDocumentMessage) => void): this;
+    public on(event: "pong" | "processTime", listener: (latency: number) => void): this;
+    public on(event: string | symbol, listener: (...args: any[]) => void): this {
+        return super.on(event, listener);
+    }
+
+    /**
+     * Modifies emit to also forward to the active runtime.
+     */
+    public emit(message: string | symbol, ...args: any[]): boolean {
+        const superResult = super.emit(message, ...args);
+        const runtimeResult = this.runtime ? this.runtime.emit(message, ...args) : true;
+
+        return superResult && runtimeResult;
+    }
+
+    public close() {
+        if (this._deltaManager) {
+            this._deltaManager.close();
+        }
+
+        this.removeAllListeners();
+    }
+
+    public async snapshot(tagMessage: string): Promise<void> {
+        // TODO: support for branch snapshots. For now simply no-op when a branch snapshot is requested
+        if (this.parentBranch) {
+            debug(`Skipping snapshot due to being branch of ${this.parentBranch}`);
+            return;
+        }
+
+        // Grab the snapshot of the current state
+        const snapshotSequenceNumber = this._deltaManager.referenceSequenceNumber;
+        const root = this.snapshotCore();
+
+        const deltaDetails =
+            `${this._deltaManager.referenceSequenceNumber}:${this._deltaManager.minimumSequenceNumber}`;
+        const message = `Commit @${deltaDetails} ${tagMessage}`;
+
+        return this.storageService.getVersions(this.id, 1).then(async (lastVersion) => {
+            // Pull the sequence number stored with the previous version
+            let sequenceNumber = 0;
+            if (lastVersion.length > 0) {
+                const attributesAsString = await this.storageService.getContent(lastVersion[0], ".attributes");
+                const decoded = Buffer.from(attributesAsString, "base64").toString();
+                const attributes = JSON.parse(decoded) as IDocumentAttributes;
+                sequenceNumber = attributes.sequenceNumber;
+            }
+
+            // Retrieve all deltas from sequenceNumber to snapshotSequenceNumber. Range is exclusive so we increment
+            // the snapshotSequenceNumber by 1 to include it.
+            const deltas = await this._deltaManager.getDeltas(sequenceNumber, snapshotSequenceNumber + 1);
+            const parents = lastVersion.length > 0 ? [lastVersion[0].sha] : [];
+            root.entries.push({
+                mode: FileMode.File,
+                path: "deltas",
+                type: TreeEntry[TreeEntry.Blob],
+                value: {
+                    contents: JSON.stringify(deltas),
+                    encoding: "utf-8",
+                },
+            });
+
+            await this.storageService.write(root, parents, message);
+        });
+    }
+
+    private async load(specifiedVersion: ICommit, connect: boolean): Promise<void> {
         const storageP = this.service.connectToStorage(this.tenantId, this.id, this.token);
 
         // If a version is specified we will load it directly - otherwise will query historian for the latest
@@ -256,83 +348,6 @@ export class Document extends EventEmitter {
                 // Starts the runtime
                 this.runtime.start(this.platform);
             });
-    }
-
-    /**
-     * Retrieves the quorum associated with the document
-     */
-    public getQuorum(): Quorum {
-        return this.quorum;
-    }
-
-    public on(event: "connected", listener: (clientId: string) => void): this;
-    public on(event: "disconnect", listener: () => void): this;
-    public on(event: "error", listener: (error: any) => void): this;
-    public on(event: "op", listener: (message: ISequencedDocumentMessage) => void): this;
-    public on(event: "pong" | "processTime", listener: (latency: number) => void): this;
-    public on(event: string | symbol, listener: (...args: any[]) => void): this {
-        return super.on(event, listener);
-    }
-
-    /**
-     * Modifies emit to also forward to the active runtime.
-     */
-    public emit(message: string | symbol, ...args: any[]): boolean {
-        const superResult = super.emit(message, ...args);
-        const runtimeResult = this.runtime ? this.runtime.emit(message, ...args) : true;
-
-        return superResult && runtimeResult;
-    }
-
-    public close() {
-        if (this._deltaManager) {
-            this._deltaManager.close();
-        }
-
-        this.removeAllListeners();
-    }
-
-    public async snapshot(tagMessage: string): Promise<void> {
-        // TODO: support for branch snapshots. For now simply no-op when a branch snapshot is requested
-        if (this.parentBranch) {
-            debug(`Skipping snapshot due to being branch of ${this.parentBranch}`);
-            return;
-        }
-
-        // Grab the snapshot of the current state
-        const snapshotSequenceNumber = this._deltaManager.referenceSequenceNumber;
-        const root = this.snapshotCore();
-
-        const deltaDetails =
-            `${this._deltaManager.referenceSequenceNumber}:${this._deltaManager.minimumSequenceNumber}`;
-        const message = `Commit @${deltaDetails} ${tagMessage}`;
-
-        return this.storageService.getVersions(this.id, 1).then(async (lastVersion) => {
-            // Pull the sequence number stored with the previous version
-            let sequenceNumber = 0;
-            if (lastVersion.length > 0) {
-                const attributesAsString = await this.storageService.getContent(lastVersion[0], ".attributes");
-                const decoded = Buffer.from(attributesAsString, "base64").toString();
-                const attributes = JSON.parse(decoded) as IDocumentAttributes;
-                sequenceNumber = attributes.sequenceNumber;
-            }
-
-            // Retrieve all deltas from sequenceNumber to snapshotSequenceNumber. Range is exclusive so we increment
-            // the snapshotSequenceNumber by 1 to include it.
-            const deltas = await this._deltaManager.getDeltas(sequenceNumber, snapshotSequenceNumber + 1);
-            const parents = lastVersion.length > 0 ? [lastVersion[0].sha] : [];
-            root.entries.push({
-                mode: FileMode.File,
-                path: "deltas",
-                type: TreeEntry[TreeEntry.Blob],
-                value: {
-                    contents: JSON.stringify(deltas),
-                    encoding: "utf-8",
-                },
-            });
-
-            await this.storageService.write(root, parents, message);
-        });
     }
 
     private snapshotCore(): ITree {
@@ -655,6 +670,7 @@ export class Document extends EventEmitter {
         if (value === ConnectionState.Connecting) {
             this.pendingClientId = context;
         } else if (value === ConnectionState.Connected) {
+            this._deltaManager.disableReadonlyMode();
             this._clientId = this.pendingClientId;
         }
 
