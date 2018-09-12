@@ -1,6 +1,11 @@
 // TODO: Split into separate files.
 // Wrapper stuff
 
+export enum LabMode {
+    Edit = 0,
+    View = 1,
+}
+
 export interface IUserData {
     data?: any;
 }
@@ -41,7 +46,7 @@ export interface IConfiguration extends IUserData {
     analytics: any;
 }
 
-// Quiz specific stuff
+// Quiz specific stuff (Edit)
 export interface IChoice {
     id: string;
     content: {
@@ -52,6 +57,36 @@ export interface IChoice {
 }
 
 export interface IChoiceComponent extends IComponent {
+    question: {
+        [type: string]: any;
+    };
+    choices: IChoice[];
+    timeLimit: number;
+    maxAttempts: number;
+    maxScore: number;
+    hasAnswer: boolean;
+    answer: any;
+    secure: boolean;
+}
+
+// Quiz specific stuff (View)
+export interface IValueInstance {
+    valueId: string;
+    isHint: boolean;
+    hasValue: boolean;
+    value?: {
+        [type: string]: any;
+    };
+}
+export interface IComponentInstance extends ILabObject, IUserData {
+    componentId: string;
+    name: string;
+    values: {
+        [type: string]: IValueInstance[];
+    };
+}
+
+export interface IChoiceComponentInstance extends IComponentInstance {
     question: {
         [type: string]: any;
     };

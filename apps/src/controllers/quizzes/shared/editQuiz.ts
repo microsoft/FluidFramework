@@ -29,16 +29,6 @@ ko.bindingHandlers["popover"] = {
 };
 */
 
-function createCallback<T>(deferred: JQueryDeferred<T>): Labs.Core.ILabCallback<T> {
-    return (err, data) => {
-        if (err) {
-            deferred.reject(err);
-        } else {
-            deferred.resolve(data);
-        }
-    };
-}
-
 //
 // Class used to represent a view template and the view model bound to it. Used to switch between the edit
 // and the view bindings.
@@ -108,16 +98,7 @@ class EditViewModel {
             this.timer = null;
             this.dirty = false;
 
-            console.log(this.pendingQuizData.question);
-
-            // We should serialize here and store it somewhere.
-            /*
-            this.labEditor.setConfiguration(getConfiguration(this.pendingQuizData), (err, unused) => {
-                if (err) {
-                    this.appViewModel.showError(err);
-                }
-            });
-            */
+            this.appViewModel.configuration = getConfiguration(this.pendingQuizData);
         }
     }
 
@@ -224,23 +205,18 @@ class ShowViewModel {
     public fontSize: KnockoutComputed<string>;
     public submitEnabled: KnockoutComputed<boolean>;
     public selectAnswerMessage: KnockoutComputed<string>;
-    public labInstance: Labs.LabInstance;
 
     private appViewModel: AppViewModel;
-    private seed: KnockoutObservable<string>;
-    private labState: KnockoutComputed<IChoiceQuizState>;
     private attempt: Labs.Components.ChoiceComponentAttempt;
 
     constructor(
         appViewModel: AppViewModel,
-        labInstance: Labs.LabInstance,
-        configurationInstance: Labs.Components.ChoiceComponentInstance,
+        configuration: types.IConfiguration,
         attempt: Labs.Components.ChoiceComponentAttempt,
         state: any) {
         this.appViewModel = appViewModel;
-        this.quiz = new Quiz(configurationInstance.component.data as IQuiz);
+        this.quiz = new Quiz(((configuration.components[0]) as Labs.Components.IChoiceComponent).data as IQuiz);
         this.attempt = attempt;
-        this.labInstance = labInstance;
 
         // View state
         this.fontSize = ko.computed(() => {
@@ -248,10 +224,7 @@ class ShowViewModel {
         });
 
         // Either setup the random number generator seed or get the currently set one
-        const quizState = state ? state.data as IChoiceQuizState : null;
-        // const seed = quizState ? quizState.seed : Math.seedrandom();
-        // Math.seedrandom(seed);
-        this.seed = ko.observable("seed");
+        const quizState = state ? state.data as IChoiceQuizState : undefined;
 
         // Load the submissions from the state or set defaults
         this.submission = ko.observableArray() as any;
@@ -269,47 +242,30 @@ class ShowViewModel {
         const feedbackChoices = quizState ? quizState.feedbackChoices : [];
         this.feedbackChoices = ko.observableArray(feedbackChoices);
 
-        // The saved lab state is the seed and current set of submissions
-        this.labState = ko.computed(() => {
-            return { seed: this.seed(), submission: this.submission(), feedbackChoices: this.feedbackChoices() };
-        });
+        // TODO: We should save lab state here
 
-        // Save the current state and subscribe to future updates
-        labInstance.setState(this.labState(), (err, unused) => {
-            if (err) {
-                this.appViewModel.showError(err);
-            }
-        });
-        this.labState.subscribe((newValue) => {
-            labInstance.setState(newValue, (err, unused) => {
-                if (err) {
-                    this.appViewModel.showError(err);
-                }
-            });
-        });
+        // TODO: We should always save all states such as hints used. But not for now.
 
-        const submissions = attempt.getSubmissions();
+        // TODO: we should get the submission history from DB.
+        const submissions = [];
 
         // Setup the result field
         this.result = ko.observable("");
         this.result.extend({notify: "always"});
-        const attemptState = this.attempt.getState();
-        if (attemptState === Labs.ProblemState.Timeout) {
-            this.result("timeout");
-        } else {
-            if (submissions.length > 0) {
-                const lastSubmissions = submissions[submissions.length - 1];
-                this.submission(lastSubmissions.answer.answer);
 
-                if (this.quiz.hasAnswer()) {
-                    this.result(lastSubmissions.result.score === 1 ? "correct" : "incorrect");
-                } else {
-                    this.result("submitted");
-                }
+        if (submissions.length > 0) {
+            const lastSubmissions = submissions[submissions.length - 1];
+            this.submission(lastSubmissions.answer.answer);
+
+            if (this.quiz.hasAnswer()) {
+                this.result(lastSubmissions.result.score === 1 ? "correct" : "incorrect");
+            } else {
+                this.result("submitted");
             }
         }
 
-        const hints = attempt.getValues("hints");
+        // TODO: we should get the hints history from DB.
+        const hints = [];
         let hintsUsed = 0;
         for (const hint of hints) {
             if (hint.hasBeenRequested) {
@@ -351,9 +307,8 @@ class ShowViewModel {
         //
         // Setup the time remaining
         //
-        this.timeRemaining = ko.observable(attemptState !== Labs.ProblemState.Timeout ? this.quiz.timeLimit() : 0);
+        this.timeRemaining = ko.observable(0);
         this.timeRemainingFormatted = ko.computed(() => {
-            // const time = this.timeRemaining();
             return "No time";
         });
 
@@ -408,28 +363,6 @@ class ShowViewModel {
                 return (this.quiz.allowMultipleAnswers()) ? "QuizTextSelectOptions" : "QuizTextSelectOption";
             }
         });
-        //
-        // If the quiz is timed setup timing information
-        //
-        if (attemptState === Labs.ProblemState.InProgress && this.quiz.isTimed()) {
-            const startingTime = utils.getTimeInSeconds();
-            this.intervalId = setInterval(() => {
-                const currentTime = utils.getTimeInSeconds();
-                const elapsedTime = currentTime - startingTime;
-                const timeRemaining = Math.ceil(this.quiz.timeLimit() - elapsedTime);
-                if (timeRemaining <= 0) {
-                    clearInterval(this.intervalId);
-                    this.intervalId = null;
-                    this.result("timeout");
-                    this.attempt.timeout((err, unused) => {
-                        //
-                    });
-                }
-
-                this.timeRemaining(timeRemaining);
-            },
-                1000);
-        }
 
         this.initControlBar();
     }
@@ -615,11 +548,10 @@ class AppViewModel {
     public errorMessage: KnockoutObservable<string> = ko.observable("");
 
     public defaultQuiz: IQuiz;
-    public labEditor: Labs.LabEditor;
-    public labInstance: Labs.LabInstance;
-    public isModeSetByAuthor: KnockoutObservable<boolean>;
+    public configuration: types.IConfiguration = undefined;
+    public currentMode: types.LabMode = undefined;
 
-    private modeSwitchP: JQueryPromise<void> = $.when<void>();
+    public isModeSetByAuthor: KnockoutObservable<boolean>;
 
     constructor(defaultQuiz: IQuiz) {
         this.defaultQuiz = defaultQuiz;
@@ -630,58 +562,27 @@ class AppViewModel {
         // Initialize the current mode
         this.isModeSetByAuthor = ko.observable(false);
 
-        const quiz = new Quiz(this.defaultQuiz);
-        this.view(new AppView("editTemplate", new EditViewModel(this, null, quiz)));
-        // this.switchMode(Labs.Core.LabMode.Edit, false);
-
-        // TODO: Pass an event handler to switch button?
-        /*Labs.on(Labs.Core.EventTypes.ModeChanged, (data) => {
-            const modeChangedEvent = data as Labs.Core.ModeChangedEventData;
-            this.switchMode(Labs.Core.LabMode[modeChangedEvent.mode], false);
-        });*/
+        // Switch to desired mode
+        this.switchMode(types.LabMode.Edit, false);
     }
 
-    /* trigerredInternally is true if an author clicks "Preview"/"Edit" button in PPT, otherwise it is set to false */
     public switchMode(mode: Labs.Core.LabMode, isModeSetByAuthor: boolean) {
-        // wait for any previous mode switch to complete before performing the new one
-        this.modeSwitchP = this.modeSwitchP.then(() => {
-            const switchedStateDeferred = $.Deferred<void>();
-
-            // End any existing operations
-            if (this.labInstance) {
-                this.labInstance.done(createCallback(switchedStateDeferred));
-            } else if (this.labEditor) {
-                // serialize any pending edit changes prior to switching the mode
-                this.view().viewModel.serializeQuiz();
-
-                this.labEditor.done(createCallback(switchedStateDeferred));
-            } else {
-                switchedStateDeferred.resolve();
-            }
-
-            // and now switch the state
-            return switchedStateDeferred.promise().then(() => {
-                this.labEditor = null;
-                this.labInstance = null;
-
-                if (mode === Labs.Core.LabMode.Edit) {
-                    return this.switchToEditMode(isModeSetByAuthor);
-                } else {
-                    return this.switchToShowMode(isModeSetByAuthor);
-                }
-            });
-        });
-
-        // Display an error if it occurs
-        this.modeSwitchP.fail((error) => {
-            this.showError(error);
-        });
+        // Make sure to call serialization first in edit mode.
+        // TODO: Do something with view mode.
+        if (this.currentMode === types.LabMode.Edit) {
+            this.view().viewModel.serializeQuiz();
+        }
+        if (mode === Labs.Core.LabMode.Edit) {
+            return this.switchToEditMode(isModeSetByAuthor);
+        } else {
+            return this.switchToShowMode(isModeSetByAuthor);
+        }
     }
 
     public retry() {
-        this.crateAndShowNewAttempt().fail((error) => {
-            this.showError(error);
-        });
+        // this.crateAndShowNewAttempt().fail((error) => {
+            // this.showError(error);
+        // });
     }
 
     public showError(error: any) {
@@ -689,108 +590,34 @@ class AppViewModel {
         // $("#errorModal").modal();
     }
 
-    private switchToEditMode(isModeSetByAuthor: boolean): JQueryPromise<void> {
-        const editLabDeferred = $.Deferred<Labs.LabEditor>();
-        Labs.editLab(createCallback(editLabDeferred));
+    private switchToEditMode(isModeSetByAuthor: boolean) {
+        // Construct the quiz from the saved configuration
+        let quiz: Quiz;
+        if (this.configuration) {
+            quiz = new Quiz(((this.configuration.components[0]) as Labs.Components.IChoiceComponent).data as IQuiz);
+        } else {
+            quiz = new Quiz(this.defaultQuiz);
+        }
 
-        return editLabDeferred.promise().then((labEditor) => {
-            this.labEditor = labEditor;
-
-            const configurationDeferred = $.Deferred<Labs.Core.IConfiguration>();
-            labEditor.getConfiguration(createCallback(configurationDeferred));
-
-            return configurationDeferred.promise().then((configuration) => {
-                const configurationReadyDeferred = $.Deferred<void>();
-
-                // Construct the quiz from the saved configuration
-                let quiz: Quiz;
-                if (configuration) {
-                    quiz = new Quiz(((configuration.components[0]) as Labs.Components.IChoiceComponent).data as IQuiz);
-                    configurationReadyDeferred.resolve();
-                } else {
-                    // Store the configuration since we won't notice this change
-                    labEditor.setConfiguration(
-                        getConfiguration(this.defaultQuiz),
-                        createCallback(configurationReadyDeferred));
-                    quiz = new Quiz(this.defaultQuiz);
-                }
-
-                this.view(new AppView("editTemplate", new EditViewModel(this, labEditor, quiz)));
-                this.isModeSetByAuthor(isModeSetByAuthor);
-
-                return configurationReadyDeferred.promise();
-            });
-        });
+        this.view(new AppView("editTemplate", new EditViewModel(this, null, quiz)));
+        this.isModeSetByAuthor(isModeSetByAuthor);
+        this.currentMode = types.LabMode.Edit;
     }
 
-    private switchToShowMode(isModeSetByAuthor: boolean): JQueryPromise<void> {
-
-        const takeLabDeferred = $.Deferred<Labs.LabInstance>();
-        Labs.takeLab(createCallback(takeLabDeferred));
-
-        return takeLabDeferred.promise().then((labInstance) => {
-            this.labInstance = labInstance;
-
-            const choiceComponentInstance = this.labInstance.components[0] as Labs.Components.ChoiceComponentInstance;
-            const attemptsDeferred = $.Deferred<Labs.Components.ChoiceComponentAttempt[]>();
-            choiceComponentInstance.getAttempts(createCallback(attemptsDeferred));
-            const attemptP = attemptsDeferred.promise().then((attempts) => {
-                const currentAttemptDeferred = $.Deferred();
-                if (attempts.length > 0) {
-                    currentAttemptDeferred.resolve(attempts[attempts.length - 1]);
-                } else {
-                    choiceComponentInstance.createAttempt(createCallback(currentAttemptDeferred));
-                }
-
-                return currentAttemptDeferred.then((currentAttempt: Labs.Components.ChoiceComponentAttempt) => {
-                    const resumeDeferred = $.Deferred<void>();
-                    currentAttempt.resume(createCallback(resumeDeferred));
-                    return resumeDeferred.promise().then(() => {
-                        return currentAttempt;
-                    });
-                });
-            });
-
-            return this.resumeAndShowAttempt(attemptP, choiceComponentInstance).then(() => {
-                this.isModeSetByAuthor(isModeSetByAuthor);
-            });
-        });
-    }
-
-    private crateAndShowNewAttempt(): JQueryPromise<void> {
-        const choiceComponentInstance = this.labInstance.components[0] as Labs.Components.ChoiceComponentInstance;
-
-        const currentAttemptDeferred = $.Deferred();
-        choiceComponentInstance.createAttempt(createCallback(currentAttemptDeferred));
-        const attemptP = currentAttemptDeferred.then((currentAttempt: Labs.Components.ChoiceComponentAttempt) => {
-            const resumeDeferred = $.Deferred<void>();
-            currentAttempt.resume(createCallback(resumeDeferred));
-            return resumeDeferred.promise().then(() => {
-                return currentAttempt;
-            });
-        });
-
-        return this.resumeAndShowAttempt(attemptP, choiceComponentInstance);
-    }
-
-    private resumeAndShowAttempt(
-        attemptP: JQueryPromise<Labs.Components.ChoiceComponentAttempt>,
-        choiceComponentInstance: Labs.Components.ChoiceComponentInstance): JQueryPromise<void> {
-        const stateDeferred = $.Deferred<any>();
-        this.labInstance.getState(createCallback(stateDeferred));
-
-        return $.when(attemptP, stateDeferred.promise())
-            .then((attempt: Labs.Components.ChoiceComponentAttempt, state: any) => {
-            const deferred = $.Deferred<void>();
-            this.view(
-                new AppView(
-                    "showTemplate",
-                    new ShowViewModel(this, this.labInstance, choiceComponentInstance, attempt, state)),
-                );
-            // Call mathjax right after setting up the view
-            MathJax.Hub.Queue(["Typeset", MathJax.Hub]);
-            return deferred.resolve().promise();
-        });
+    private switchToShowMode(isModeSetByAuthor: boolean) {
+        // TODO: Ideally we should get the attempts and state from DB and populate here. But that requires some sort of
+        // user auth. We should use auth we get from AAD here.
+        const attempts = undefined;
+        const state = undefined;
+        this.view(
+            new AppView(
+                "showTemplate",
+                new ShowViewModel(this, this.configuration, attempts, state)),
+            );
+        // Call mathjax right after setting up the view
+        MathJax.Hub.Queue(["Typeset", MathJax.Hub]);
+        this.isModeSetByAuthor(isModeSetByAuthor);
+        this.currentMode = types.LabMode.View;
     }
 }
 
