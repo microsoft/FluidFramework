@@ -62,7 +62,8 @@ var Localization;
         WebViewerNote: "Note: Many popular websites allow secure access. Please click on the preview button to ensure the web page is accessible.",
         WebViewerTitle: "Insert Web Page",
         QuizFooterPrivacyLink: "https://mix.office.com/en-us/Privacy",
-        QuizFooterTermsLink: "https://mix.office.com/en-us/Terms"
+        QuizFooterTermsLink: "https://mix.office.com/en-us/Terms",
+        QuizTextPublish: "Publish"
     };
     // Spanish strings
     var ES = {

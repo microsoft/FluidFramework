@@ -1,3 +1,4 @@
+import { api } from "@prague/routerlicious";
 import * as $ from "jquery";
 import * as ko from "knockout";
 import { Choice, Hint, IQuiz } from "./choice";
@@ -169,6 +170,9 @@ class EditViewModel {
         this.controlBar.leftButtons.push(
             new ControlButton(
                 "QuizTextPreview", () => this.appViewModel.switchMode(types.LabMode.View, true), null));
+        this.controlBar.leftButtons.push(
+            new ControlButton(
+                "QuizTextPublish", () => this.appViewModel.publish(), null));
     }
 }
 
@@ -486,9 +490,13 @@ class ShowViewModel {
 
     private initControlBar() {
         this.controlBar = new ControlBarViewModel();
-        this.controlBar.leftButtons.push(new ControlButton("QuizTextEdit",
+
+        // Don't render Edit button for readonly mode.
+        if (!this.appViewModel.readonly) {
+            this.controlBar.leftButtons.push(new ControlButton("QuizTextEdit",
             () => { this.appViewModel.switchMode(types.LabMode.Edit, false); },
             () => this.appViewModel.isModeSetByAuthor()));
+        }
 
         this.controlBar.rightButtons.push(
             new ControlButton(
@@ -541,10 +549,12 @@ class AppViewModel {
     public defaultQuiz: IQuiz;
     public configuration: types.IConfiguration = undefined;
     public currentMode: types.LabMode = undefined;
+    public readonly: boolean = false;
+    public mapView: api.types.IMapView;
 
     public isModeSetByAuthor: KnockoutObservable<boolean>;
 
-    constructor(defaultQuiz: IQuiz) {
+    constructor(defaultQuiz: IQuiz, readonly: boolean, mapView: api.types.IMapView) {
         this.defaultQuiz = defaultQuiz;
 
         // The view specifies what is the current view model to make use of
@@ -554,7 +564,15 @@ class AppViewModel {
         this.isModeSetByAuthor = ko.observable(false);
 
         // Switch to desired mode
-        this.switchMode(types.LabMode.Edit, false);
+        this.mapView = mapView;
+        this.readonly = readonly;
+        if (readonly) {
+            const quizConfig = mapView.get("quiz") as string;
+            this.configuration = JSON.parse(quizConfig) as types.IConfiguration;
+            this.switchMode(types.LabMode.View, false);
+        } else {
+            this.switchMode(types.LabMode.Edit, false);
+        }
     }
 
     public switchMode(mode: types.LabMode, isModeSetByAuthor: boolean) {
@@ -577,6 +595,11 @@ class AppViewModel {
     public showError(error: any) {
         this.errorMessage(JSON.stringify(error));
         // $("#errorModal").modal();
+    }
+
+    public publish() {
+        console.log(`Publish quizzes!`);
+        this.mapView.set("quiz", JSON.stringify(this.configuration));
     }
 
     private switchToEditMode(isModeSetByAuthor: boolean) {
@@ -657,12 +680,15 @@ function getConfiguration(quiz: IQuiz): types.IConfiguration {
 }
 
 // Quiz entry point.
-export function initialize(defaultQuizConfiguration: IQuiz) {
+export function initialize(
+    readOnly: boolean,
+    view: api.types.IMapView,
+    defaultQuizConfiguration: IQuiz) {
     console.log(`Init called!`);
     $(document).ready(() => {
         console.log(`Document ready!`);
         // And initialize our view model
-        const appViewModel = new AppViewModel(defaultQuizConfiguration);
+        const appViewModel = new AppViewModel(defaultQuizConfiguration, readOnly, view);
 
         // add custom bindings
         addCustomBindings();

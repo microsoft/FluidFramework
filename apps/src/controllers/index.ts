@@ -16,5 +16,5 @@ export { snake };
 import * as todolist from "./todolist";
 export { todolist };
 
-import * as mcq from "./quizzes/mcq";
-export { mcq };
+import * as choiceQuiz from "./quizzes/choiceQuiz";
+export { choiceQuiz };
