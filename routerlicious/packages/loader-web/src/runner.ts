@@ -24,7 +24,7 @@ export async function run(
     chaincode: string): Promise<void> {
 
     const webLoader = new WebLoader();
-    const webPlatform = new WebPlatform();
+    const webPlatform = new WebPlatform(window.document.getElementById("content"));
 
     const documentP = loader.load(
         token,

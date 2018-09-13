@@ -5,10 +5,14 @@ import { Document } from "./document";
 
 class Runner {
     public async run(collabDoc: Document, platform: IPlatform) {
-        const dom = platform ? platform.queryInterface<Document>("dom") : null;
-        if (!dom) {
+        const mapHost: HTMLElement = platform ? platform.queryInterface<HTMLElement>("div") : null;
+        if (!mapHost) {
             return;
         }
+
+        const innerDiv = document.createElement("div");
+        innerDiv.style.width = "300px";
+        mapHost.appendChild(innerDiv);
 
         const rootView = await collabDoc.getRoot().getView();
         console.log("Keys");
@@ -19,7 +23,6 @@ class Runner {
             const data = {
                 "aspect-ratio": "tall",
                 "dek": "This is a test map.",
-                "el": ".test-map",
                 "hed": "The U.K. and France",
                 "lat": 51.5049378,
                 "lon": - 0.0870377,
@@ -42,10 +45,8 @@ class Runner {
             await rootView.wait("map");
         }
 
-        const mapHost = dom.getElementById("content") as HTMLElement;
-        mapHost.innerHTML = "<div class='test-map' style='width: 300px;'></div>";
-
         const mapDetails = rootView.get("map");
+        mapDetails.element = innerDiv;
         let pinpoint = new Pinpoint(mapDetails);
 
         collabDoc.getRoot().on(
@@ -53,7 +54,8 @@ class Runner {
             () => {
                 const updatedDetails = rootView.get("map");
                 pinpoint.remove();
-                mapHost.innerHTML = "<div class='test-map' style='width: 300px;'></div>";
+                innerDiv.style.width = "300px";
+                updatedDetails.element = innerDiv;
                 pinpoint = new Pinpoint(updatedDetails);
             });
 

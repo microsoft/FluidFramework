@@ -20,16 +20,19 @@
     "typescript": "^3.0.3"
   },
   "dependencies": {
-    "@prague/app-ui": "^0.1.0",
     "@prague/api-definitions": "^0.1.0",
+    "@prague/app-ui": "^0.1.0",
     "@prague/cell": "^0.1.0",
     "@prague/client-api": "^0.1.0",
     "@prague/graph": "^0.1.0",
+    "@prague/loader": "^0.1.0",
+    "@prague/loader-web": "^0.1.0",
     "@prague/map": "^0.1.0",
     "@prague/merge-tree": "^0.1.0",
     "@prague/merge-tree-utils": "^0.1.0",
     "@prague/runtime-definitions": "^0.1.0",
     "@prague/shared-string": "^0.1.0",
+    "@prague/socket-storage": "^0.1.0",
     "@prague/stream": "^0.1.0",
     "@prague/utils": "^0.1.0",
     "@types/d3": "^5.0.0",
@@ -39,6 +42,7 @@
     "d3": "^5.7.0",
     "debug": "^3.1.0",
     "jquery": "^3.3.1",
+    "jsonwebtoken": "^8.3.0",
     "performance-now": "^2.1.0",
     "shape-detector": "^0.2.1",
     "webcola": "^3.3.8"

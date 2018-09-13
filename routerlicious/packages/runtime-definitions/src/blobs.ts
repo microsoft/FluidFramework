@@ -6,7 +6,7 @@ export interface IBlobManager {
 
     // Get the metadata for all blobs on a document
     // Strip content if it exists
-    getBlobMetadata(): Promise<IGenericBlob[]>;
+    getBlobMetadata(): IGenericBlob[];
 
     // Retrieve the blob data
     getBlob(sha: string): Promise<IGenericBlob>;

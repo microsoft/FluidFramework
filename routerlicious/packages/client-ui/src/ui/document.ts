@@ -1,25 +1,57 @@
 import { Block, BoxState } from "@prague/app-ui";
-import { ResultKind } from "../../ext/calc";
-import * as Charts from "../../ext/microsoft-charts/";
-import { CollaborativeWorkbook } from "../calc";
+import { getDefaultDocumentService } from "@prague/client-api";
+import * as loader from "@prague/loader";
+import { WebLoader, WebPlatform } from "@prague/loader-web";
+import { TokenService } from "@prague/socket-storage";
+import * as jwt from "jsonwebtoken";
 import { FlowViewContext } from "./flowViewContext";
 
-const chartSym = Symbol("Chart.chart");
-
 export class DocumentState extends BoxState {
-    public [chartSym]?: Charts.Chart;
+    public id: string;
 }
 
-/** Renders a worksheet as a chart using IvyCharts service. */
 export class Document extends Block<DocumentState> {
-    private readonly host = new Charts.Host({
-        base: "https://charts.microsoft.com",
-    });
+    // TODO taking a dependency on the loader, loader-web, and socket-storage is not something we want to do.
+    // This component needs access to the core abstract loader defined in runtime-definitions
+    // but we need to update the API to provide it access and include the necessary methods.
+    // We cut some corners below to start experimenting with dynamic document loading.
+    private webLoader = new WebLoader();
+    private tokenService = new TokenService();
 
     protected mounting(self: DocumentState, context: FlowViewContext): HTMLElement {
+        console.log(`Mount value is ${self.id}`);
+
         // Create the div to which the Chart will attach the SVG rendered chart when the
         // web service responds.
         const div = document.createElement("div");
+        div.style.width = "400px";
+        div.style.height = "600px";
+
+        // TODO also something that shouldn't be direclty exposed
+        const tenant = "prague";
+        const key = "43cfc3fbf04a97c0921fd23ff10f9e4b";
+        const token = jwt.sign(
+            {
+                documentId: self.id,
+                permission: "read:write",
+                tenantId: tenant,
+                user: { id: "loader-client" },
+            },
+            key);
+
+        const webPlatform = new WebPlatform(div);
+        const documentP = loader.load(
+            token,
+            null,
+            webPlatform,
+            getDefaultDocumentService(),
+            this.webLoader,
+            this.tokenService,
+            null,
+            true);
+        documentP.then(
+            () => console.log("Document loaded"),
+            (error) => console.error("Failed to load document"));
 
         // Call 'updating' to update the contents of the div with the updated chart.
         return this.updating(self, context, div);
@@ -30,95 +62,6 @@ export class Document extends Block<DocumentState> {
     }
 
     protected updating(self: DocumentState, context: FlowViewContext, element: HTMLElement): HTMLElement {
-        const workbook = context.services.get("workbook");
-
-        // If the workbook is still loading then early exit.
-        if (workbook === undefined) {
-            // Display a placeholder message until the workbook loads.
-            element.innerText = "[ Loading... ]";
-            return element;
-        }
-
-        const height = 260;
-        if (!self[chartSym]) {
-            // We're creating the chart component for the first time.  Remove the placeholder content
-            // (if any).
-            while (element.lastChild) {
-                element.removeChild(element.lastChild);
-            }
-
-            // Explicitly set div height to match the chart that will asynchronously arrive from
-            // the web service.  This reserves the appropriate amount of vertical space in the
-            // FlowView, avoiding the need for a later invalidation/resize when the chart arrives.
-            element.style.height = `${height}px`;
-            element.style.justifyContent = "center";
-
-            self[chartSym] = new Charts.Chart(this.host, element);
-            self[chartSym].setRenderer(Charts.IvyRenderer.Svg);
-        }
-
-        // TODO: Component state should specify which region of the workbook contains
-        //       category names.  Currently hard-coded to 'A2:A(maxRows - 1)'
-        const categoryNames = [];
-        for (let r = 1; r < workbook.numRows - 1; r++) {
-            categoryNames.push(this.getAt(workbook, r, 0));
-        }
-
-        // TODO: Component state should specify which region of the workbook contains
-        //       the values for the chart.  Currently hard-coded to 'E2:E(maxRows - 1)'
-        const values = [];
-        for (let r = 1; r < workbook.numRows - 1; r++) {
-            values.push(this.getAt(workbook, r, 5));
-        }
-
-        // Configure the chart, initiating the request from the charting service.
-        self[chartSym].setConfiguration({
-            layout: "Pie",
-            legend: {
-                position: {
-                    edge: "Left",
-                    edgePosition: "Middle",
-                },
-                title: {
-                    position: {
-                        edge: "Top",
-                        edgePosition: "Middle",
-                    },
-                    text: "Player",
-                },
-            },
-            series: [{
-                data: {
-                    categoryNames: categoryNames.reverse(),
-                    values: values.reverse(),
-                },
-                id: "Series1",
-            }],
-            size: {
-                height,
-                width: Math.round(height * 1.618),        // ~= Golden ratio wrt. height
-            },
-        });
-
         return element;
-    }
-
-    /** Evaluates the cell at the given (row, col), coercing the result to a number | boolean | string. */
-    private getAt(workbook: CollaborativeWorkbook, row, col) {
-        const result = workbook.evaluateCell(row, col);
-
-        switch (result.kind) {
-            case ResultKind.Success:
-                switch (typeof result.value) {
-                    case "number":
-                    case "boolean":
-                    case "string":
-                        return result.value;
-                    default:
-                        return result.value.toString();
-                }
-            default:
-                return result.reason.toString();
-        }
     }
 }
