@@ -1,0 +1,38 @@
+{
+  "name": "@chaincode/map",
+  "version": "0.1.0",
+  "description": "Prague map sequence sample",
+  "main": "index.js",
+  "dependencies": {
+    "@prague/client-api": "^0.1.3242",
+    "@prague/socket-storage": "^0.1.3242",
+    "jsonwebtoken": "^8.2.1",
+    "pinpoint": "^0.3.0"
+  },
+  "devDependencies": {
+    "@types/debug": "0.0.30",
+    "@types/jquery": "^3.3.1",
+    "@types/jsonwebtoken": "^7.2.7",
+    "@types/node": "^8.10.10",
+    "@types/socket.io-client": "^1.4.32",
+    "css-loader": "^1.0.0",
+    "node-sass": "^4.9.3",
+    "sass-loader": "^7.1.0",
+    "source-map-loader": "^0.2.3",
+    "style-loader": "^0.23.0",
+    "ts-loader": "^4.2.0",
+    "tslint": "^5.9.1",
+    "typescript": "^2.8.3",
+    "url-loader": "^1.1.1",
+    "webpack": "^4.7.0",
+    "webpack-bundle-analyzer": "^2.13.1",
+    "webpack-cli": "^2.0.15",
+    "webpack-visualizer-plugin": "^0.1.11"
+  },
+  "scripts": {
+    "build": "npm run tslint && npm run webpack",
+    "tslint": "tslint 'src/**/*.ts'",
+    "webpack": "webpack --config webpack.config.js"
+  },
+  "author": "Microsoft"
+}
