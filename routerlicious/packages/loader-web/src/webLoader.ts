@@ -5,8 +5,11 @@ import {
 } from "@prague/runtime-definitions";
 import * as assert from "assert";
 import axios from "axios";
-import untar from "js-untar";
 import * as pako from "pako";
+
+// js-untar can't be imported in a node environment
+// tslint:disable-next-line:no-var-requires
+const untar = typeof window !== "undefined" ? require("js-untar") : undefined;
 
 interface ITarEntry {
     buffer: ArrayBuffer;
