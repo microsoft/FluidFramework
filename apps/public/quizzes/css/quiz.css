@@ -220,7 +220,6 @@ input[type="radio"].font-select:checked + label span {
 
 /* Controls */
 #quiz-controls-container {
-    position: fixed;
     bottom: 0;
     background-color: #F6F6F6;
     height: 37px;

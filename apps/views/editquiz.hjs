@@ -245,19 +245,6 @@
                                     </button>
                                     <!-- /ko -->
                                 </div>
-                                <div class="copyright-container">
-                                    <div class="copyright-container-inner">
-                                        <ul class="footer-links">
-                                            <li>
-                                                <a data-bind="localLink: 'QuizFooterTermsLink'" target="_blank"><span data-bind="localText: 'QuizFooterTerms'"></span></a>
-                                            </li>
-                                            <li>
-                                                <a data-bind="localLink: 'QuizFooterPrivacyLink'" target="_blank"><span data-bind="localText: 'QuizFooterPrivacy'"></span></a>
-                                            </li>
-                                        </ul>
-                                    </div>
-                                </div>
-
                                 <div class="btn-control-container pull-right">
                                     <!-- ko foreach: rightButtons -->
                                     <button class="btn btn-control" data-bind="visible: visible, css: {disabled: !enabled()}, click: click">
@@ -364,18 +351,6 @@
                                             <span data-bind="localText: title"></span>
                                         </button>
                                         <!-- /ko -->
-                                    </div>
-                                    <div class="copyright-container">
-                                        <div class="copyright-container-inner">
-                                            <ul class="footer-links">
-                                                <li>
-                                                    <a data-bind="localLink: 'QuizFooterTermsLink'" target="_blank"><span data-bind="localText: 'QuizFooterTerms'"></span></a>
-                                                </li>
-                                                <li>
-                                                    <a data-bind="localLink: 'QuizFooterPrivacyLink'" target="_blank"><span data-bind="localText: 'QuizFooterPrivacy'"></span></a>
-                                                </li>
-                                            </ul>
-                                        </div>
                                     </div>
 
                                     <div class="btn-control-container pull-right">

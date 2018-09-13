@@ -79,6 +79,11 @@ class EditViewModel {
             }
         });
 
+        // Set up default quiz first
+        this.pendingQuizData = quiz.serializedQuiz();
+        this.dirty = true;
+        this.serializeQuiz();
+
         // Finally register for any change notifications on the quiz and serialize it
         quiz.serializedQuiz.subscribe((changedQuiz) => {
             // Update the pending quiz data
@@ -566,9 +571,7 @@ class AppViewModel {
     }
 
     public retry() {
-        // this.crateAndShowNewAttempt().fail((error) => {
-            // this.showError(error);
-        // });
+        this.switchToShowMode(true);
     }
 
     public showError(error: any) {
