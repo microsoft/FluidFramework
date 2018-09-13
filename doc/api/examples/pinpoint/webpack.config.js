@@ -3,7 +3,9 @@ const path = require('path');
 // const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 
 module.exports = {
-    entry: './src/index.ts',
+    entry: {
+        main: './src/index.ts'
+    },
     devtool: 'source-map',
     module: {
         rules: [
@@ -45,8 +47,10 @@ module.exports = {
         extensions: [ '.tsx', '.ts', '.js' ]
     },
     output: {
-        filename: 'bundle.js',
-        path: path.resolve(__dirname, 'dist')
+        filename: '[name].bundle.js',
+        path: path.resolve(__dirname, 'dist'),
+        library: "[name]",
+        libraryTarget: "umd"
     },
     plugins: [
         // new BundleAnalyzerPlugin(),

@@ -1,11 +1,11 @@
 {
-  "name": "@chaincode/map",
+  "name": "@chaincode/pinpoint",
   "version": "0.1.0",
   "description": "Prague map sequence sample",
   "main": "index.js",
   "dependencies": {
-    "@prague/client-api": "^0.1.3242",
-    "@prague/socket-storage": "^0.1.3242",
+    "@prague/map": "^0.1.3289",
+    "@prague/runtime-definitions": "^0.1.3289",
     "jsonwebtoken": "^8.2.1",
     "pinpoint": "^0.3.0"
   },
@@ -34,5 +34,13 @@
     "tslint": "tslint 'src/**/*.ts'",
     "webpack": "webpack --config webpack.config.js"
   },
-  "author": "Microsoft"
+  "author": "Microsoft",
+  "prague": {
+    "browser": {
+      "entrypoint": "main",
+      "bundle": [
+        "dist/main.bundle.js"
+      ]
+    }
+  }
 }
