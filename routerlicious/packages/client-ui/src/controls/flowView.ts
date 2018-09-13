@@ -1213,7 +1213,6 @@ function renderSegmentIntoLine(
         if (marker.refType === MergeTree.ReferenceType.Simple) {
             const typeName = marker.properties.ref && marker.properties.ref.type.name;
             const maybeComponent = ui.refTypeNameToComponent.get(typeName);
-
             // If it is a registered external component, ask it to render itself to HTML and
             // insert the divs here.
             if (maybeComponent) {
@@ -4940,7 +4939,10 @@ export class FlowView extends ui.Component {
     public insertPhoto() {
         urlToInclusion(`${baseURI}/public/images/bennet1.jpeg`)
             .then(async (incl) => {
-                this.insertBlobInternal(await this.collabDocument.uploadBlob(incl));
+                this.collabDocument.uploadBlob(incl)
+                    .then((blob) => {
+                        this.insertBlobInternal(blob);
+                    });
             })
             .catch((error) => {
                 console.log(error);

@@ -15,8 +15,8 @@ export async function blobUploadHandler(
         const files = dt.files;
         fileToInclusion(files[0])
             .then(async (blob) => {
+                await document.uploadBlob(blob);
                 blobDisplayCB(blob);
-                document.uploadBlob(blob); // Fetches URL... Can we move the url fetch into this func
             });
     };
 

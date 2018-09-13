@@ -539,6 +539,8 @@ export class Document extends EventEmitter {
             ? await readAndParse<IGenericBlob[]>(storage, tree.blobs[".blobs"])
             : [];
 
+        console.log("in loadBlobManager");
+        console.log(blobs);
         const blobManager = new BlobManager(storage);
         blobManager.loadBlobMetadata(blobs);
 
@@ -773,17 +775,10 @@ export class Document extends EventEmitter {
                 eventArgs.push(attachChannel);
                 break;
 
-            // Message contains full metadata (no content)
-            case MessageType.BlobPrepared:
-                this.blobManager.addBlob(message.contents);
-                this.emit(MessageType.BlobPrepared, message.contents);
-                break;
-
             case MessageType.BlobUploaded:
-                // indicates that blob has been uploaded, just a flag... no blob buffer
-                // message.contents is just the hash
-                this.blobManager.createBlob(message.contents);
+                this.blobManager.addBlob(message.contents);
                 this.emit(MessageType.BlobUploaded, message.contents);
+                break;
 
             case MessageType.Operation:
                 const operationChannel = this.runtime.process(message, local, context);

@@ -364,8 +364,8 @@ export class Runtime extends EventEmitter implements IRuntime {
         file.sha = sha;
         file.url = this.storageService.getRawUrl(sha);
 
-        this.blobManager.addBlob(file).then(() => this.submit(MessageType.BlobPrepared, file));
-        this.blobManager.createBlob(file.content).then(() => this.submit(MessageType.BlobUploaded, sha));
+        await this.blobManager.createBlob(file);
+        this.submit(MessageType.BlobUploaded, await this.blobManager.createBlob(file));
 
         return file;
     }

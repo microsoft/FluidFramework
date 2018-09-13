@@ -71,8 +71,7 @@ export class GitManager {
     }
 
     public getRawUrl(sha: string): string {
-        // TODO (Sabroner): change the historian url to mimic github
-        return this.historian.endpoint + "/git/blobs/" + sha + "/image";
+        return this.historian.endpoint + "/git/blobs/raw/" + sha;
     }
 
     /**

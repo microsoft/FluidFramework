@@ -48,7 +48,7 @@ export function create(store: nconf.Provider, tenantService: ITenantService, cac
     /**
      * Retrieves the given blob as an image
      */
-    router.get("/repos/:ignored?/:tenantId/git/blobs/:sha/image", (request, response, next) => {
+    router.get("/repos/:ignored?/:tenantId/git/blobs/raw/:sha", (request, response, next) => {
         const useCache = !("disableCache" in request.query);
 
         const blobP = getBlob(request.params.tenantId, request.get("Authorization"), request.params.sha, useCache);

@@ -16,9 +16,6 @@ export enum MessageType {
     // Message used to reject a pending proposal
     Reject = "reject",
 
-    // Blob preparation message
-    BlobPrepared = "blobPrepared",
-
     // Blob uploaded
     BlobUploaded = "blobUploaded",
 

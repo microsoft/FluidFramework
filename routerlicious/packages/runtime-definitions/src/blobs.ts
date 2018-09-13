@@ -1,4 +1,4 @@
-import { ICreateBlobResponse } from "@prague/gitresources";
+// import { ICreateBlobResponse } from "@prague/gitresources";
 
 export interface IBlobManager {
     // Rehydrate a blob manager from a snapshot
@@ -15,7 +15,13 @@ export interface IBlobManager {
     addBlob(blob: IGenericBlob): Promise<void>;
 
     // Upload a blob to storage
-    createBlob(file: Buffer): Promise<ICreateBlobResponse>;
+    createBlob(blob: IGenericBlob): Promise<IGenericBlob>;
+
+    // Update blob metadata
+    updateBlob(blob: IGenericBlob): Promise<void>;
+
+    // Remove blob from storage
+    removeBlob(sha: string): Promise<void>;
 }
 
 export type IGenericBlob = IDataBlob | IImageBlob | IVideoBlob;

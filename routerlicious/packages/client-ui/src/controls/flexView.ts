@@ -62,7 +62,7 @@ export class FlexView extends ui.Component {
         const inkCanvasElement = document.createElement("div");
         this.ink = new InkCanvas(inkCanvasElement, root.get("ink"));
         this.dock.addContent(this.ink);
-        blobUploadHandler(inkCanvasElement, doc, (incl) => this.renderFunc(incl, this.ink));
+        blobUploadHandler(inkCanvasElement, doc, (file) => {return; });
 
         this.addButtons();
 
@@ -111,12 +111,8 @@ export class FlexView extends ui.Component {
 
     private addBlobListeners(doc: api.Document) {
 
-        doc.on(MessageType.BlobPrepared, (message) => {
-            this.render(message);
-        });
-
         doc.on(MessageType.BlobUploaded, async (message) => {
-            const blob = await doc.getBlob(message);
+            const blob = await doc.getBlob(message.sha);
             this.render(blob);
         });
 

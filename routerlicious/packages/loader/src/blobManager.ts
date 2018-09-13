@@ -1,4 +1,3 @@
-import { ICreateBlobResponse } from "@prague/gitresources";
 import { IBlobManager, IDocumentStorageService, IGenericBlob } from "@prague/runtime-definitions";
 
 export class BlobManager implements IBlobManager {
@@ -9,8 +8,12 @@ export class BlobManager implements IBlobManager {
     }
 
     public async loadBlobMetadata(hashes: IGenericBlob[]) {
-        for (const hash of hashes) {
-            this.blobs.set(hash.sha, hash);
+        try {
+            for (const hash of hashes) {
+                this.blobs.set(hash.sha, hash);
+            }
+        } catch (error) {
+            console.log("Error in Blob Snapshot Load");
         }
     }
 
@@ -24,11 +27,11 @@ export class BlobManager implements IBlobManager {
 
     public async getBlob(sha: string): Promise<IGenericBlob> {
         return new Promise<IGenericBlob>((resolve, reject) => {
-            if (this.blobs.has(sha) && this.blobs.get(sha).content !== null) {
-                const blob = this.blobs.get(sha);
-                if (blob.content.byteLength > 0) {
-                    resolve(blob);
-                }
+            let blob: IGenericBlob = null;
+
+            blob = this.blobs.get(sha);
+            if (blob !== null && blob.content !== null ) {
+                resolve(blob);
             }
 
             this.storage.read(sha)
@@ -36,10 +39,7 @@ export class BlobManager implements IBlobManager {
                     // Could this cause memory issues?
                     // Probably not, this code only stores images specifically requested by the client
                     const blobContent = new Buffer(blobString, "base64");
-                    const blob = this.blobs.get(sha);
                     blob.content = blobContent;
-                    blob.url = this.storage.getRawUrl(sha);
-                    this.blobs.set(sha, blob);
                     resolve(blob);
                 })
                 .catch((error) => {
@@ -48,15 +48,37 @@ export class BlobManager implements IBlobManager {
         });
     }
 
-    // TODO: sabroner add blob<t> where t is the inclusion types we add...
     public async addBlob(blob: IGenericBlob): Promise<void> {
-        if (blob.content !== null || blob.content !== undefined) {
-            blob.content = null;
-        }
         this.blobs.set(blob.sha, blob);
     }
 
-    public async createBlob(file: Buffer): Promise<ICreateBlobResponse> {
-        return this.storage.createBlob(file);
+    public async createBlob(blob: IGenericBlob): Promise<IGenericBlob> {
+        return new Promise<IGenericBlob>((resolve, reject) => {
+            this.storage.createBlob(blob.content)
+                .then((response) => {
+                    // Remove blobContent
+                    this.blobs.set(blob.sha, blob);
+                    const blobMetaData = {
+                        fileName: blob.fileName,
+                        sha: blob.sha,
+                        size: blob.size,
+                        type: blob.type,
+                        url: blob.url,
+                    } as IGenericBlob;
+                    resolve(blobMetaData);
+                })
+                .catch((reason) => {
+                    reject(reason);
+                });
+        });
+    }
+
+    public async updateBlob(blob: IGenericBlob): Promise<void> {
+        return null;
+    }
+
+    public async removeBlob(sha: string): Promise<void> {
+        // TODO: SABRONER implement removal
+        this.blobs.delete(sha);
     }
 }
