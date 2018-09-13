@@ -19,6 +19,7 @@ export function create(
      */
     router.get("/:tenantId?/:id", ensureLoggedIn(), async (request, response, next) => {
         const tenantId = request.params.tenantId || appTenants[0].id;
+        const chaincode = request.query.chaincode;
         const token = getToken(tenantId, request.params.id, appTenants);
 
         const workerConfigP = getConfig(
@@ -33,6 +34,7 @@ export function create(
             response.render(
                 "loader",
                 {
+                    chaincode,
                     config: workerConfig,
                     documentId: request.params.id,
                     partials: defaultPartials,
