@@ -66,6 +66,10 @@ class Runner {
             connectedDetails["minimap-zoom-offset"] = -5;
             rootView.set("map", connectedDetails);
         });
+
+        (platform as any).on("update", () => {
+            setTimeout(() => pinpoint.render(), 1);
+        });
     }
 }
 

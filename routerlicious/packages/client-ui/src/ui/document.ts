@@ -6,8 +6,13 @@ import { TokenService } from "@prague/socket-storage";
 import * as jwt from "jsonwebtoken";
 import { FlowViewContext } from "./flowViewContext";
 
+const documentSym = Symbol("Document.document");
+const platformSym = Symbol("Document.platform");
+
 export class DocumentState extends BoxState {
     public id: string;
+    public [documentSym]: loader.Document;
+    public [platformSym]: WebPlatform;
 }
 
 export class Document extends Block<DocumentState> {
@@ -50,7 +55,11 @@ export class Document extends Block<DocumentState> {
             null,
             true);
         documentP.then(
-            () => console.log("Document loaded"),
+            (document) => {
+                self[documentSym] = document;
+                self[platformSym] = webPlatform;
+                console.log("Document loaded");
+            },
             (error) => console.error("Failed to load document"));
 
         // Call 'updating' to update the contents of the div with the updated chart.
@@ -62,6 +71,10 @@ export class Document extends Block<DocumentState> {
     }
 
     protected updating(self: DocumentState, context: FlowViewContext, element: HTMLElement): HTMLElement {
+        if (self[platformSym]) {
+            self[platformSym].update();
+        }
+
         return element;
     }
 }

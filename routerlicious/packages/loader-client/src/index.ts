@@ -10,6 +10,7 @@ import * as driver from "@prague/socket-storage";
 import chalk from "chalk";
 import { exec } from "child_process";
 import * as commander from "commander";
+import { EventEmitter } from "events";
 import * as jwt from "jsonwebtoken";
 import * as ora from "ora";
 import * as path from "path";
@@ -35,7 +36,7 @@ class NodeCodeLoader implements ICodeLoader {
     }
 }
 
-class NodePlatform implements IPlatform {
+class NodePlatform extends EventEmitter implements IPlatform {
     public queryInterface<T>(id: string) {
         return null;
     }
