@@ -325,11 +325,11 @@
 
                     <div class="row row-splitter-30"></div>
 
-                    <div class="row row-quiz-select-answer-text" data-bind="ifnot: isFinished">
+                    <!--<div class="row row-quiz-select-answer-text" data-bind="ifnot: isFinished">
                         <div class="quiz-select-choice-text">
                             <span data-bind="localText: selectAnswerMessage()"></span>
                         </div>
-                    </div>
+                    </div>-->
 
                     <div class="quiz-choice-container" data-bind="css:fontSize">
                         <!-- ko foreach: choices -->

@@ -1,10 +1,6 @@
 import { initialize } from "./shared/editQuiz";
 
 export async function load(id: string, tenantId: string, endPoints: any, token?: string, workerConfig?: any) {
-    console.log(`Loaded`);
-    Labs.DefaultHostBuilder = () => {
-        return new Labs.PostMessageLabHost("test", parent, "*");
-    };
     initialize({
         allowChoiceEditing: true,
         allowMultipleAnswers: false,

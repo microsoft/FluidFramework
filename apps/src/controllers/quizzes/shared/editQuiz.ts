@@ -67,7 +67,7 @@ class EditViewModel {
     private timer = null;
     private pendingQuizData: IQuiz = null;
 
-    constructor(appViewModel: AppViewModel, labEditor: Labs.LabEditor, quiz: Quiz) {
+    constructor(appViewModel: AppViewModel, quiz: Quiz) {
         this.appViewModel = appViewModel;
         this.quiz = quiz;
 
@@ -163,7 +163,7 @@ class EditViewModel {
         this.controlBar = new ControlBarViewModel();
         this.controlBar.leftButtons.push(
             new ControlButton(
-                "QuizTextPreview", () => this.appViewModel.switchMode(Labs.Core.LabMode.View, true), null));
+                "QuizTextPreview", () => this.appViewModel.switchMode(types.LabMode.View, true), null));
     }
 }
 
@@ -207,15 +207,17 @@ class ShowViewModel {
     public selectAnswerMessage: KnockoutComputed<string>;
 
     private appViewModel: AppViewModel;
-    private attempt: Labs.Components.ChoiceComponentAttempt;
+
+    // TODO: Should make a type for attempt
+    private attempt: any;
 
     constructor(
         appViewModel: AppViewModel,
         configuration: types.IConfiguration,
-        attempt: Labs.Components.ChoiceComponentAttempt,
+        attempt: any,
         state: any) {
         this.appViewModel = appViewModel;
-        this.quiz = new Quiz(((configuration.components[0]) as Labs.Components.IChoiceComponent).data as IQuiz);
+        this.quiz = new Quiz(((configuration.components[0]) as types.IChoiceComponent).data as IQuiz);
         this.attempt = attempt;
 
         // View state
@@ -403,30 +405,14 @@ class ShowViewModel {
         this.attemptsMade(this.attemptsMade() + 1);
 
         // Update the current attempt result
-        const complete = correct || (this.quiz.limitAttempts() && this.attemptsRemaining() === 0);
-        this.attempt.submit(
-            new Labs.Components.ChoiceComponentAnswer(submission),
-            new Labs.Components.ChoiceComponentResult(correct ? 1 : 0, complete),
-            (err, result) => {
-            if (err) {
-                this.appViewModel.showError(err);
-            }
-        });
+        // TODO: Submit your result here.
     }
 
     //
     // Called once the quiz is over and we can move on to the next lab
     //
     public done() {
-        Labs.getTimeline().next({}, (err, unused) => {
-            if (err) {
-                if (err.hasOwnProperty("code") && err.code === 7004) {
-                    // $("#advanceFromLastSlide").modal();
-                } else {
-                    this.appViewModel.showError(err);
-                }
-            }
-        });
+        // TODO: Move to next quiz.
     }
 
     //
@@ -496,7 +482,7 @@ class ShowViewModel {
     private initControlBar() {
         this.controlBar = new ControlBarViewModel();
         this.controlBar.leftButtons.push(new ControlButton("QuizTextEdit",
-            () => { this.appViewModel.switchMode(Labs.Core.LabMode.Edit, false); },
+            () => { this.appViewModel.switchMode(types.LabMode.Edit, false); },
             () => this.appViewModel.isModeSetByAuthor()));
 
         this.controlBar.rightButtons.push(
@@ -566,13 +552,13 @@ class AppViewModel {
         this.switchMode(types.LabMode.Edit, false);
     }
 
-    public switchMode(mode: Labs.Core.LabMode, isModeSetByAuthor: boolean) {
+    public switchMode(mode: types.LabMode, isModeSetByAuthor: boolean) {
         // Make sure to call serialization first in edit mode.
         // TODO: Do something with view mode.
         if (this.currentMode === types.LabMode.Edit) {
             this.view().viewModel.serializeQuiz();
         }
-        if (mode === Labs.Core.LabMode.Edit) {
+        if (mode === types.LabMode.Edit) {
             return this.switchToEditMode(isModeSetByAuthor);
         } else {
             return this.switchToShowMode(isModeSetByAuthor);
@@ -594,12 +580,12 @@ class AppViewModel {
         // Construct the quiz from the saved configuration
         let quiz: Quiz;
         if (this.configuration) {
-            quiz = new Quiz(((this.configuration.components[0]) as Labs.Components.IChoiceComponent).data as IQuiz);
+            quiz = new Quiz(((this.configuration.components[0]) as types.IChoiceComponent).data as IQuiz);
         } else {
             quiz = new Quiz(this.defaultQuiz);
         }
 
-        this.view(new AppView("editTemplate", new EditViewModel(this, null, quiz)));
+        this.view(new AppView("editTemplate", new EditViewModel(this, quiz)));
         this.isModeSetByAuthor(isModeSetByAuthor);
         this.currentMode = types.LabMode.Edit;
     }
