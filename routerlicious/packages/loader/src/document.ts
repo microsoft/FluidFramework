@@ -539,8 +539,6 @@ export class Document extends EventEmitter {
             ? await readAndParse<IGenericBlob[]>(storage, tree.blobs[".blobs"])
             : [];
 
-        console.log("in loadBlobManager");
-        console.log(blobs);
         const blobManager = new BlobManager(storage);
         blobManager.loadBlobMetadata(blobs);
 
