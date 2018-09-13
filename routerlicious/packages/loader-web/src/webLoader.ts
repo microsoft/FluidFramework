@@ -5,8 +5,11 @@ import {
 } from "@prague/runtime-definitions";
 import * as assert from "assert";
 import axios from "axios";
-import untar from "js-untar";
 import * as pako from "pako";
+
+// js-untar can't be imported in a node environment
+// tslint:disable-next-line:no-var-requires
+const untar = typeof window !== "undefined" ? require("js-untar") : undefined;
 
 interface ITarEntry {
     buffer: ArrayBuffer;
@@ -39,11 +42,12 @@ export class WebLoader implements ICodeLoader {
             return Promise.reject("Invalid package");
         }
 
+        const auth = { username: "prague", password: "bohemia" };
         const [, scope, name, version] = components;
         const url = `http://localhost:4873/${encodeURI(scope)}/${encodeURI(name)}/${encodeURI(version)}`;
-        const details = await axios.get(url);
+        const details = await axios.get(url, { auth });
 
-        const data = await axios.get<ArrayBuffer>(details.data.dist.tarball, { responseType: "arraybuffer"});
+        const data = await axios.get<ArrayBuffer>(details.data.dist.tarball, { auth, responseType: "arraybuffer"});
         const inflateResult = pako.inflate(new Uint8Array(data.data));
         const extractedFiles = await untar(inflateResult.buffer) as ITarEntry[];
 

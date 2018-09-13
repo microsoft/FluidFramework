@@ -4606,6 +4606,11 @@ export class FlowView extends ui.Component {
                         if (searchString.startsWith("*")) {
                             this.insertSlider("=" + searchString.substring(1));
                         }
+
+                        // If it starts with &, assume it's a document ID
+                        if (searchString.startsWith("&")) {
+                            this.insertDocument(searchString.substring(1));
+                        }
                     }
                     this.activeSearchBox.dismiss();
                     this.activeSearchBox = undefined;
@@ -4907,6 +4912,11 @@ export class FlowView extends ui.Component {
     /** Insert a Chart. */
     public insertChart() {
         this.insertComponent("chart", {});
+    }
+
+    /** Insert a Document */
+    public insertDocument(id) {
+        this.insertComponent("document", { id });
     }
 
     /** Insert a Formula box to display the given 'formula'. */

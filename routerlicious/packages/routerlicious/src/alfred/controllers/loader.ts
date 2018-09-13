@@ -3,7 +3,13 @@ import * as loader from "@prague/loader-web";
 import { createDocumentService, DefaultErrorTracking, TokenService } from "@prague/socket-storage";
 import { BrowserErrorTrackingService } from "./errorTracking";
 
-export async function initialize(id: string, version: ICommit, token: string, config: any) {
+export async function initialize(
+    id: string,
+    version: ICommit,
+    token: string,
+    config: any,
+    chaincode: string) {
+
     const errorService = config.trackError
         ? new BrowserErrorTrackingService()
         : new DefaultErrorTracking();
@@ -13,6 +19,6 @@ export async function initialize(id: string, version: ICommit, token: string, co
         config.blobStorageUrl,
         errorService);
 
-    loader.run(token, null, false, documentServices, new TokenService(), version, true)
+    loader.run(token, null, false, documentServices, new TokenService(), version, true, chaincode)
         .catch((error) => console.error(error));
 }

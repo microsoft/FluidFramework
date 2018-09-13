@@ -5,6 +5,14 @@ import chalk from "chalk";
 import { WebLoader } from "./webLoader";
 import { WebPlatform } from "./webPlatform";
 
+async function proposeChaincode(document: loader.Document, chaincode: string) {
+    if (!document.connected) {
+        await new Promise<void>((resolve) => document.once("connected", () => resolve()));
+    }
+
+    await document.getQuorum().propose("code", chaincode);
+}
+
 export async function run(
     token: string,
     options: any,
@@ -12,10 +20,11 @@ export async function run(
     documentServices: IDocumentService,
     tokenServices: ITokenService,
     version: ICommit,
-    connect: boolean): Promise<void> {
+    connect: boolean,
+    chaincode: string): Promise<void> {
 
     const webLoader = new WebLoader();
-    const webPlatform = new WebPlatform();
+    const webPlatform = new WebPlatform(window.document.getElementById("content"));
 
     const documentP = loader.load(
         token,
@@ -52,4 +61,9 @@ export async function run(
         (sequenceNumber, key, value, rejections) => {
             console.log(chalk.red(`Reject ${key}=${value}@${sequenceNumber} by ${rejections}`));
         });
+
+    // Propose initial chaincode if specified
+    if (chaincode) {
+        proposeChaincode(document, chaincode).catch((error) => console.error("Error installing chaincode"));
+    }
 }
