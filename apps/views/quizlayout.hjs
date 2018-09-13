@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>{{ title }}</title>
+
+    <link href="//ajax.aspnetcdn.com/ajax/bootstrap/3.0.0/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="//e0d1.wpc.azureedge.net/80E0D1/OfficeMixProdBlobStorage/mathquill/mathquill.css" rel="stylesheet" />
+
+    {{$styles}}{{/styles}}
+</head>
+<body class="{{ optionalBodyClass }}">
+    {{$content}}{{/content}}
+    {{$scripts}}{{/scripts}}
+</body>
+</html>
