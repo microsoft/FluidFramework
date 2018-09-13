@@ -3,6 +3,7 @@ import { Marker, ReferenceType } from "@prague/merge-tree";
 
 import {
     Chart,
+    Document,
     Formula,
     Sheetlet,
     Slider,
@@ -11,6 +12,7 @@ import {
 // TODO: Component registry should not be static/global.
 export const refTypeNameToComponent = new Map<string, Box<BoxState>>([
     ["chart", new Chart()],
+    ["document", new Document()],
     ["formula", new Formula()],
     ["sheetlet", new Sheetlet()],
     ["slider", new Slider()],
