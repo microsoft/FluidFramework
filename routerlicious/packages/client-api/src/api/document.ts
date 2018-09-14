@@ -49,6 +49,26 @@ export function getDefaultDocumentService(): IDocumentService {
     return defaultDocumentService;
 }
 
+// The below are temporary calls to register loader specific data. Do not take a dependency on them.
+let defaultCredentials: { tenant: string, key: string };
+export function registerDefaultCredentials(credentials: { tenant: string, key: string }) {
+    defaultCredentials = credentials;
+}
+
+export function getDefaultCredentials(): { tenant: string, key: string } {
+    return defaultCredentials;
+}
+
+let chaincodeRepo: string;
+export function registerChaincodeRepo(repo: string) {
+    chaincodeRepo = repo;
+}
+
+export function getChaincodeRepo(): string {
+    return chaincodeRepo;
+}
+// End temporary calls
+
 /**
  * A document is a collection of collaborative types.
  */

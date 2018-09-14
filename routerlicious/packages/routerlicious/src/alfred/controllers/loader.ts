@@ -8,7 +8,8 @@ export async function initialize(
     version: ICommit,
     token: string,
     config: any,
-    chaincode: string) {
+    chaincode: string,
+    npm: string) {
 
     const errorService = config.trackError
         ? new BrowserErrorTrackingService()
@@ -19,6 +20,6 @@ export async function initialize(
         config.blobStorageUrl,
         errorService);
 
-    loader.run(token, null, false, documentServices, new TokenService(), version, true, chaincode)
+    loader.run(token, null, false, documentServices, new TokenService(), version, true, chaincode, npm)
         .catch((error) => console.error(error));
 }

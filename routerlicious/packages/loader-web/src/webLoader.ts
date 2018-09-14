@@ -36,6 +36,9 @@ interface ITarEntry {
 }
 
 export class WebLoader implements ICodeLoader {
+    constructor(private baseUrl: string) {
+    }
+
     public async load(source: string): Promise<IChaincodeFactory> {
         const components = source.match(/(.*)\/(.*)@(.*)/);
         if (!components) {
@@ -44,7 +47,8 @@ export class WebLoader implements ICodeLoader {
 
         const auth = { username: "prague", password: "bohemia" };
         const [, scope, name, version] = components;
-        const url = `http://localhost:4873/${encodeURI(scope)}/${encodeURI(name)}/${encodeURI(version)}`;
+        // tslint:disable-next-line:max-line-length
+        const url = `${this.baseUrl}/${encodeURI(scope)}/${encodeURI(name)}/${encodeURI(version)}`;
         const details = await axios.get(url, { auth });
 
         const data = await axios.get<ArrayBuffer>(details.data.dist.tarball, { auth, responseType: "arraybuffer"});

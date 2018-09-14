@@ -15,7 +15,7 @@
             var token = "{{ token }}";
             var chaincode = "{{ chaincode }}";
 
-            loader.initialize("{{ documentId }}", version, token, config, chaincode);
+            loader.initialize("{{ documentId }}", version, token, config, chaincode, config.npm);
         </script>
     {{/scripts}}
 {{/layout}}
