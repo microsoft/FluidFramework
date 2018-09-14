@@ -4,10 +4,10 @@
   "description": "Prague map sequence sample",
   "main": "index.js",
   "dependencies": {
+    "@kurtb/pinpoint": "^0.1.0",
     "@prague/map": "^0.1.3289",
     "@prague/runtime-definitions": "^0.1.3289",
-    "jsonwebtoken": "^8.2.1",
-    "pinpoint": "^0.3.0"
+    "jsonwebtoken": "^8.2.1"
   },
   "devDependencies": {
     "@types/debug": "0.0.30",

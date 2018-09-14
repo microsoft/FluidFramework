@@ -1,0 +1,39 @@
+
+<div class="panel panel-default">
+<div class="panel-heading">GeoJSON features</div>
+<div class="panel-body">
+    
+    <p><strong>For advanced users only:</strong> Paste <a href="http://geojson.org">GeoJSON</a> features below to include them on map. Point, MultiPoint and FeatureCollection types are not allowed. <a href="http://geojson.io">GeoJSON.io</a> is a good editor.</p>
+
+    <div class="panel panel-primary" ng-repeat="(i, feature) in geojsonRaw">
+        
+        <div class="panel-heading">
+            GeoJSON feature {{i+1}}
+            <button type="button" role="button" class="btn btn-link delete-marker" ng-click="removeFeature(feature)" >Delete</button>
+    
+        </div>
+        <div class="panel-body">
+            
+            <div class="form-group">
+
+                <label>Style: </label>
+                <select data-ng-model="feature.style"
+                    data-ng-options="style.class as style.name for style in geojsonStyles">
+                </select>
+
+            </div>
+            <div class="form-group" ng-class="(!feature.valid) ? 'has-error' : ''">
+
+                <label for="geojson-input{{i}}">geoJSON feature</label>
+                <textarea class="form-control geojson-input" id="geojson-input{{i}}" rows="3" onClick="this.select();" ng-model="feature.value"></textarea>
+                                
+                <p ng-if="!feature.valid" class="help-block">Invalid geoJSON</p>
+            </div>
+    
+        </div>
+    </div><!-- ng-repeat end -->
+
+            <button  type="button" role="button" class="btn btn-default" ng-click="addFeature()">Add geoJSON feature</button>
+
+    
+</div></div>

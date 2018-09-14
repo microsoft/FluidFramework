@@ -1,0 +1,18 @@
+{
+    "geojsonStyles": [
+        {
+            "class": "dashed",
+            "name": "Dashed"
+        },
+        {
+            "class": "dashed-clockwise",
+            "name": "Dashed, animated clockwise"
+        },
+        {
+            "class": "dashed-anticlockwise",
+            "name": "Dashed, animated anticlockwise"
+        }
+    ],
+    "title": "Pinpoint Editor",
+    "googleMapsAPIKey": "AIzaSyCY3kHHzocQSos6QNOzJINWmNo_a4IqN-8"
+}
