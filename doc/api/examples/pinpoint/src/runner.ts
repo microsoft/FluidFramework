@@ -1,5 +1,5 @@
+import { Pinpoint } from "@kurtb/pinpoint";
 import { IChaincode, IPlatform } from "@prague/runtime-definitions";
-import { Pinpoint } from "pinpoint";
 import { Chaincode } from "./chaincode";
 import { Document } from "./document";
 

@@ -145,6 +145,9 @@ export function create(
         const tenantId = request.params.tenantId || appTenants[0].id;
         const token = getToken(tenantId, request.params.id, appTenants);
 
+        // Temporary until we allow tokens that can access multiple documents
+        const tenant = appTenants.find((appTenant) => appTenant.id === tenantId);
+
         const workerConfigP = getConfig(
             config.get("worker"),
             tenantManager,
@@ -173,6 +176,7 @@ export function create(
                     connect: true,
                     disableCache,
                     documentId: request.params.id,
+                    key: tenant.key,
                     options: JSON.stringify(options),
                     pageInk: request.query.pageInk === "true",
                     partials: defaultPartials,

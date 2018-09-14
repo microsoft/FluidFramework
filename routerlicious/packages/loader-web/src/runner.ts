@@ -21,9 +21,10 @@ export async function run(
     tokenServices: ITokenService,
     version: ICommit,
     connect: boolean,
-    chaincode: string): Promise<void> {
+    chaincode: string,
+    loaderUrl: string): Promise<void> {
 
-    const webLoader = new WebLoader();
+    const webLoader = new WebLoader(loaderUrl);
     const webPlatform = new WebPlatform(window.document.getElementById("content"));
 
     const documentP = loader.load(

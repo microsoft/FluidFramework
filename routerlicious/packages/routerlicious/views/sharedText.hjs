@@ -14,6 +14,10 @@
             var options = {{{ options }}};
             var connect = {{{ connect }}};
             var token = "{{ token }}";
+
+            var tenant = "{{ tenantId }}";
+            var key = "{{ key }}";
+
             console.log(`Starting load at - ${performance.now()}`);
             controller.sharedText.load(
                 "{{ documentId }}",
@@ -24,7 +28,8 @@
                 config,
                 "{{ template }}",
                 connect,
-                options);
+                options,
+                { tenant, key });
         </script>
     {{/scripts}}
 {{/layout}}

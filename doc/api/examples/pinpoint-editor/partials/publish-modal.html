@@ -1,0 +1,29 @@
+    <div ng-if="publishModal" class="modal fade bs-example-modal-lg in" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" aria-hidden="false" style="display: block; padding-right: 15px;"><div class="modal-backdrop fade in" style="height: 100%;" ng-click="hidePublishModal()"></div>
+        <div class="modal-dialog modal-lg">
+          <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">
+                    Publishing settings
+                </h4>
+            </div>
+            <div class="modal-body">
+                <div class="checkbox" ng-if="config.s3enabled">
+                    <label ng-disabled="map.published"><input type="checkbox" ng-model="map.published" ng-disabled="map.published">&nbsp;Published to S3</label>
+                </div>
+                <div ng-if="map.published">
+                    <p>
+                        Live URL: &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&nbsp;<a href="{{config.linkLink}}{{map.slug}}">{{config.linkLink}}{{map.slug}}</a>
+                    </p>
+                </div>
+                <hr/>
+                <p>Raw JSON</p>
+                <textarea class="form-control json-input" rows="8">{{cleanMap}}</textarea>
+            </div>
+            <div class="modal-footer">
+              <button  type="button" role="button" type="button" class="btn btn-default" data-dismiss="modal" ng-click="hidePublishModal()">Close</button>
+            </div>
+            
+          </div><!-- /.modal-content -->
+        </div><!-- /.modal-dialog -->
+      </div>
+    

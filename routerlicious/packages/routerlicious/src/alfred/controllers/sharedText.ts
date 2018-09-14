@@ -64,7 +64,11 @@ export async function load(
     config: any,
     template: string,
     connect: boolean,
-    options: Object) {
+    options: Object,
+    credentials: { tenant: string, key: string }) {
+
+    API.registerChaincodeRepo(config.npm);
+    API.registerDefaultCredentials(credentials);
 
     console.log(`Load Option: ${JSON.stringify(options)}`);
     loadDocument(id, version, token, pageInk, disableCache, config, template, connect, options).catch((error) => {
