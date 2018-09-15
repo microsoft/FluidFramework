@@ -15,7 +15,6 @@ COPY packages/agent/package*.json packages/agent/
 COPY packages/app-ui/package*.json packages/app-ui/
 COPY packages/api-definitions/package*.json packages/api-definitions/
 COPY packages/cell/package*.json packages/cell/
-COPY packages/chaincode/package*.json packages/chaincode/
 COPY packages/client-api/package*.json packages/client-api/
 COPY packages/client-ui/package*.json packages/client-ui/
 COPY packages/gitresources/package*.json packages/gitresources/
