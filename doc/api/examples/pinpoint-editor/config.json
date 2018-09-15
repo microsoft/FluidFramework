@@ -13,6 +13,7 @@
             "name": "Dashed, animated anticlockwise"
         }
     ],
+    "basemaps": [],
     "title": "Pinpoint Editor",
     "googleMapsAPIKey": "AIzaSyCY3kHHzocQSos6QNOzJINWmNo_a4IqN-8"
 }

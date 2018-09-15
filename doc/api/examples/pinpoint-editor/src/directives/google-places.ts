@@ -1,9 +1,8 @@
 import * as ng from "angular";
-import { google as GoogleMaps } from "google-maps";
 
 export class GooglePlacesDirective implements ng.IDirective {
     public static factory(): ng.IDirectiveFactory {
-        const directive = (google: GoogleMaps) => new GooglePlacesDirective(google);
+        const directive = (google) => new GooglePlacesDirective(google);
         directive.$inject = ["google"];
         return directive;
     }
@@ -20,7 +19,7 @@ export class GooglePlacesDirective implements ng.IDirective {
     // tslint:disable-next-line:max-line-length
     public template = `<input id="google_places_ac" name="google_places_ac" type="text" class="form-control search-form" placeholder="" />`;
 
-    constructor(private google: GoogleMaps) {
+    constructor(private google) {
     }
 
     public link = ($scope, elm, attrs) => {

@@ -1,22 +1,31 @@
-import { Pinpoint } from "@kurtb/pinpoint";
+import { IPinpointOptions, Pinpoint } from "@kurtb/pinpoint";
+import { IMap, IMapView } from "@prague/map";
+import { IChaincode, IPlatform } from "@prague/runtime-definitions";
 import * as angular from "angular";
 import * as angularRoute from "angular-route";
 import "bootstrap/dist/css/bootstrap.min.css";
 import * as $ from "jquery";
 import "../style.css";
+import { Chaincode } from "./chaincode";
+import { MapDetailController, MapListController } from "./controllers";
 import * as directives from "./directives";
+import { Document } from "./document";
 
 // tslint:disable:no-var-requires
+const GoogleMapsLoader = require("google-maps");
 const mapDetail = require("../partials/map-detail.html");
 const mapList = require("../partials/map-list.html");
 const config = require("../config.json");
 // tslint:enable:no-var-requires
 
+GoogleMapsLoader.KEY = config.googleMapsAPIKey;
+GoogleMapsLoader.LIBRARIES = ["places"];
+
 const pinpointTool = angular.module("pinpointTool", [angularRoute]);
 
-pinpointTool.directive("buttonGroup", directives.ButtonGroupDirective.factory);
-pinpointTool.directive("geojsonInput", directives.GeojsonInputDirective.factory);
-pinpointTool.directive("googlePlaces", directives.GooglePlacesDirective.factory);
+pinpointTool.directive("buttonGroup", directives.ButtonGroupDirective.factory());
+pinpointTool.directive("geojsonInput", directives.GeojsonInputDirective.factory());
+pinpointTool.directive("googlePlaces", directives.GooglePlacesDirective.factory());
 pinpointTool.directive("liveLink", directives.LiveLinkDirective.factory());
 pinpointTool.directive("mapRoughPreview", directives.MapRoughPreviewDirective.factory());
 pinpointTool.directive("previewLink", directives.PreviewLinkDirective.factory());
@@ -45,14 +54,6 @@ class ConfigService implements angular.IServiceProvider {
 
 pinpointTool.provider("configService", ConfigService);
 
-angular.element(document).ready(() => {
-    angular.module("pinpointTool").config(["configServiceProvider", (configServiceProvider) => {
-        configServiceProvider.config(config);
-    }]);
-
-    angular.bootstrap(document, ["pinpointTool"]);
-});
-
 pinpointTool.config(["$routeProvider", "$locationProvider",
     ($routeProvider, $locationProvider) => {
         // $locationprovider.html5Mode({ enabled: true, requireBase: false });
@@ -72,234 +73,13 @@ pinpointTool.config(["$routeProvider", "$locationProvider",
                 templateUrl: mapDetail,
             }).
             otherwise({
-                redirectTo: "/maps",
+                redirectTo: "/maps/new",
             });
     }]);
 
 /////////////////
 // EDITOR
 /////////////////
-
-class MapDetailController implements angular.IController {
-    public static $inject = [
-        "$scope", "$routeParams", "$http", "$location", "mapHelper",
-        "markerStyles", "mapDefaults", "dataWrangler", "configService"];
-
-    constructor(
-        $scope, $routeParams, $http, $location, mapHelper, markerStyles, mapDefaults, dataWrangler, configService) {
-
-        $scope.mapId = $routeParams.mapId;
-        $scope.icons = markerStyles.icons;
-        $scope.labels = markerStyles.labels;
-        $scope.aspectRatios = ["wide", "square", "tall"];
-        $scope.pickedLocation = {};
-        $scope.config = configService;
-        const basemaps = [];
-        if ("basemaps" in $scope.config) {
-            $scope.basemapNames = $scope.config.basemaps.map((d, i) => d.name);
-        }
-        if (basemaps[0]) {
-            $scope.basemap = basemaps[0].name;
-        }
-
-        if ($scope.mapId === "new") {
-            $scope.map = $.extend({}, mapDefaults.map);
-            $scope.map.aspectRatio = $scope.map["aspect-ratio"];
-        } else {
-            $http.get("/api/maps/" + $scope.mapId)
-                .success((data) => {
-                    $scope.map = data;
-                    $.extend({}, mapDefaults.map, $scope.map);
-
-                    $scope = dataWrangler.setupExisting($scope);
-
-                })
-                .error(() => {
-                    $location.path("/maps");
-                });
-        }
-
-        $scope.$watch(() => {
-            // This is a horribly ugly hack, but I am at my wit's end
-            const selectedBasemapName = $(".basemap-selector .btn.active").text();
-
-            if ($scope.map) {
-                if ((selectedBasemapName !== "") && ($scope.map !== undefined)) {
-                    const selectedBasemap = $scope.config.basemaps.filter((basemap) => {
-                        return basemap.name === selectedBasemapName;
-                    })[0];
-                    $scope.map.basemap = selectedBasemap.url;
-                    $scope.map.basemapCredit = selectedBasemap.credit;
-                } else if (!$scope.map.basemap && $scope.config.basemaps.length) {
-                    $scope.map.basemap = $scope.config.basemaps[0].url;
-                }
-                $scope.map = dataWrangler.onWatch($scope.map);
-                $scope.cleanMap = JSON.stringify(dataWrangler.cleanMapObj($scope.map), null, 2);
-                $scope.pinpoint = mapHelper.buildPreview($scope.map, changeMap, changeMap, changeMarker);
-            }
-        });
-
-        $scope.$watch("quickstartLatLonString", (val) => {
-            if (val) {
-                $scope.map.latLonString = val;
-                const coords = {
-                    lat: val.split(",")[0],
-                    lon: val.split(",")[1],
-                };
-                $scope.addMarker(coords, $scope.quickstartName);
-
-            }
-        });
-
-        $scope.showPublishModal = () => {
-            $scope.publishModal = true;
-        };
-        $scope.hidePublishModal = () => {
-            $scope.publishModal = false;
-        };
-
-        $scope.$watch("map.published", (val) => {
-            if (val === true) {
-                $scope.save();
-            }
-        });
-
-        function changeMap(ev) {
-            const newLatLon = ev.target.getCenter();
-            const newZoom = ev.target.getZoom();
-            $scope.map.latLonString = newLatLon.lat + "," + newLatLon.lng;
-            $scope.map.zoom = newZoom;
-            $scope.$$childHead.mapform.$setDirty();
-            $scope.$apply();
-        }
-
-        function changeMarker(ev) {
-            const marker = ev.target;
-            const newLatLon = marker._latlng;
-            $.each($scope.map.markers, (i, m) => {
-                if (marker.options.title === i) {
-                    $scope.map.markers[i].latLonString = newLatLon.lat + "," + newLatLon.lng;
-                }
-            });
-            $scope.$$childHead.mapform.$setDirty();
-            $scope.$apply();
-        }
-
-        $scope.$on("$destroy", () => {
-            window.onbeforeunload = undefined;
-        });
-        $scope.$on("$locationChangeStart", (event, next, current) => {
-            if ($scope.$$childHead.mapform && !$scope.$$childHead.mapform.$pristine && !$scope.bypassSaveDialog) {
-                if (!confirm("Leave page without saving?")) {
-                    event.preventDefault();
-                }
-            }
-        });
-
-        $scope.removeMarker = (marker) => {
-            const index = $scope.map.markers.indexOf(marker);
-            if (index > -1) {
-                $scope.map.markers.splice(index, 1);
-            }
-        };
-        $scope.addMarker = (center, label) => {
-            if ($scope.map.markers.length > 4) {
-                return;
-            }
-
-            const newMarker = $.extend({}, mapDefaults.marker);
-            if ($scope.pinpoint) {
-                center = center || $scope.pinpoint.map.getCenter();
-                newMarker.lat = center.lat;
-                newMarker.lon = center.lng || center.lon;
-                newMarker.latLonString = newMarker.lat + "," + newMarker.lon;
-            }
-            newMarker.text = label || "";
-            newMarker.labelDirection = newMarker["label-direction"];
-            $scope.map.markers.push(newMarker);
-        };
-
-        $scope.save = (valid) => {
-            if (valid === false) {
-                return;
-            }
-            $scope.saving = true;
-            const dirty = JSON.parse(JSON.stringify($scope.map));
-            const clean = dataWrangler.cleanMapObj(dirty);
-            if ($scope.map.id && ($scope.map.id !== "new")) {
-                // update map
-                $http
-                    .put("/api/maps/" + $scope.mapId, clean)
-                    .success(() => {
-                        $scope.saving = false;
-                        if ($scope.$$childHead.mapform) {
-                            $scope.$$childHead.mapform.$setPristine();
-                        }
-                    });
-            } else {
-                // create a new map
-                $http
-                    .post("/api/maps/", clean)
-                    .success((d) => {
-                        $scope.map.id = d.id;
-                        $scope.saving = false;
-                        $location.path("/maps/" + d.id);
-                        $scope.$$childHead.mapform.$setPristine();
-                    });
-            }
-            if ($scope.map.published === true) {
-                $scope.publish();
-            }
-        };
-        $scope.publish = (valid) => {
-            if (valid === false) {
-                return;
-            }
-            const dirty = JSON.parse(JSON.stringify($scope.map));
-            const clean = dataWrangler.cleanMapObj(dirty);
-            if ($scope.mapId !== "new") {
-                clean.id = +$scope.mapId;
-            }
-
-            $http
-                .post("/api/publish/", clean)
-                .success((e, r) => {
-                    $scope.$$childHead.mapform.$setPristine();
-                    $scope.published = true;
-                })
-                .error(() => {
-                    alert("Not published due to error");
-                });
-        };
-        $scope.delete = () => {
-            $scope.deleteModal = true;
-        };
-        $scope.cancelDelete = () => {
-            $scope.deleteModal = false;
-        };
-        $scope.definitelyDelete = () => {
-            if ($scope.map.id && ($scope.map.id !== "new")) {
-                // existing map
-                $http
-                    .delete("/api/maps/" + $scope.map.id)
-                    .success((e, r) => {
-                        alert("Map deleted");
-                        $scope.bypassSaveDialog = true;
-                        $location.path("/maps/");
-                    })
-                    .error(() => {
-                        alert("Not deleted due to error");
-                        $scope.deleteModal = false;
-                    });
-
-            } else {
-                $scope.bypassSaveDialog = true;
-                $location.path("/maps/");
-
-            }
-        };
-    }
-}
 
 pinpointTool.controller("mapDetailCtrl", MapDetailController);
 
@@ -322,6 +102,7 @@ pinpointTool.factory("mapHelper", [() => {
         opts.el = ".map-preview";
         if ($(opts.el).length === 1) {
             $(opts.el).attr("class", opts.el.replace(".", "") + " " + opts["aspect-ratio"]);
+            console.log(`Building pinpoint ${opts.lat} ${opts.lon}`);
             p = new Pinpoint(opts);
         }
         return p;
@@ -500,48 +281,6 @@ pinpointTool.factory("dataWrangler", ["mapHelper", "markerStyles", (mapHelper, m
 // HOMEPAGE
 /////////////////
 
-class MapListController implements angular.IController {
-    public static $inject = ["$scope", "$http", "$location", "$filter", "$sce", "configService"];
-
-    constructor($scope, $http, $location, $filter, $sce, configService) {
-        $scope.config = configService;
-        $scope.listView = false;
-        $scope.changeView = () => {
-            $scope.listView = !$scope.listView;
-        };
-
-        $scope.maps = [];
-        $scope.allMaps = [];
-
-        // $http.get("/api/maps").success((data) => {
-        //     $scope.allMaps = $filter("orderBy")(data, "creation_date", true);
-        //     $scope.loadMore();
-        // });
-
-        const numberToLoadEachTime = 10;
-        $scope.loadMore = () => {
-            $scope.maps = $scope.allMaps.slice(0, $scope.maps.length + numberToLoadEachTime);
-            $scope.hideLoadMore = ($scope.maps.length === $scope.allMaps.length);
-        };
-
-        $scope.previewLink = (map) => {
-            // TODO - check to see if this wasn't used
-            // let layout: string;
-            // if (map["aspect-ratio"] === "wide") {
-            //     layout = "offset";
-            // } else {
-            //     layout = "margin";
-            // }
-            const url = configService.previewLink + map.slug;
-            return url;
-        };
-        $scope.liveLink = (map, element, attr) => {
-            const url = configService.liveLink + attr.slug;
-            return url;
-        };
-    }
-}
-
 pinpointTool.controller("mapListCtrl", MapListController);
 
 pinpointTool.filter("html", ($sce) => {
@@ -549,3 +288,116 @@ pinpointTool.filter("html", ($sce) => {
         return $sce.trustAsHtml(val);
     };
 });
+
+class MapDetailsService {
+    public details: IPinpointOptions;
+
+    constructor(private $rootScope, map: IMap, private view: IMapView) {
+        this.details = JSON.parse(view.get("map"));
+
+        map.on(
+            "valueChanged",
+            (key, local) => {
+                if (local) {
+                    return;
+                }
+
+                this.details = JSON.parse(view.get("map"));
+                console.log(`INBOUND: ${this.details.lat} ${this.details.lon}`);
+                this.$rootScope.$digest();
+            });
+    }
+
+    public get(): any {
+        return this.details;
+    }
+
+    public set(newDetails: IPinpointOptions) {
+        this.view.set("map", JSON.stringify(newDetails));
+        // this.$rootScope.$digest();
+    }
+}
+
+class Runner {
+    public async run(collabDoc: Document, platform: IPlatform) {
+        const mapHost: HTMLElement = platform ? platform.queryInterface<HTMLElement>("div") : null;
+        if (!mapHost) {
+            return;
+        }
+
+        const rootView = await collabDoc.getRoot().getView();
+        console.log("Keys");
+        console.log(rootView.keys());
+
+        // Add in the text string if it doesn't yet exist
+        if (!collabDoc.existing) {
+            const data = {
+                "aspect-ratio": "tall",
+                "dek": "This is a test map.",
+                "hed": "The U.K. and France",
+                "lat": 51.5049378,
+                "lon": - 0.0870377,
+                "markers": [{
+                    "icon": "square",
+                    "label": "plain",
+                    "label-direction": "north",
+                    "labelDirection": "north",
+                    "lat": 51.5049378,
+                    "lon": - 0.0870377,
+                    "text": "",
+                }],
+                "minimap": true,
+                "minimap-zoom-offset": -5,
+                "note": "This is a note.",
+                "zoom": 4,
+            };
+            rootView.set("map", JSON.stringify(data));
+        } else {
+            await rootView.wait("map");
+        }
+
+        if (mapHost.id === "content") {
+            mapHost.innerHTML = "<div ng-view></div>";
+
+            pinpointTool.factory("mapDetailsSvc", ["$rootScope", ($rootScope) => {
+                return new MapDetailsService($rootScope, collabDoc.getRoot(), rootView);
+            }]);
+
+            angular.element(document).ready(() => {
+                angular.module("pinpointTool").config(["configServiceProvider", (configServiceProvider) => {
+                    configServiceProvider.config(config);
+                }]);
+
+                angular.bootstrap(document, ["pinpointTool"]);
+            });
+        } else {
+            const innerDiv = document.createElement("div");
+            innerDiv.style.width = "300px";
+            mapHost.appendChild(innerDiv);
+
+            const mapDetails = JSON.parse(rootView.get("map"));
+            mapDetails.element = innerDiv;
+            let pinpoint = new Pinpoint(mapDetails);
+
+            collabDoc.getRoot().on(
+                "valueChanged",
+                () => {
+                    const updatedDetails = JSON.parse(rootView.get("map"));
+                    pinpoint.remove();
+                    innerDiv.style.width = "300px";
+                    updatedDetails.element = innerDiv;
+                    pinpoint = new Pinpoint(updatedDetails);
+                });
+
+            (platform as any).on("update", () => {
+                setTimeout(() => pinpoint.render(), 1);
+            });
+        }
+    }
+}
+
+export async function instantiate(): Promise<IChaincode> {
+    // Instantiate a new runtime per code load. That'll separate handlers, etc...
+    const chaincode = new Chaincode(new Runner());
+    return chaincode;
+}

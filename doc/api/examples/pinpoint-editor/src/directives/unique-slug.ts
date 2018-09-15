@@ -10,7 +10,8 @@ export class UniqueSlugDirective implements ng.IDirective {
     public restrict = "A";
     public require = "ngModel";
 
-    constructor(private $http) {
+    constructor($http) {
+        //
     }
 
     public link = ($scope, element, attrs, ngModel) => {
@@ -27,10 +28,10 @@ export class UniqueSlugDirective implements ng.IDirective {
             }
         }
 
-        this.$http.get("/api/slugs").success((slugs) => {
-            $scope.slug = slugs;
-            validate(ngModel.$viewValue);
-        });
+        // this.$http.get("/api/slugs").success((slugs) => {
+        //     $scope.slug = slugs;
+        //     validate(ngModel.$viewValue);
+        // });
 
         $scope.$watch(() => {
             return ngModel.$viewValue;

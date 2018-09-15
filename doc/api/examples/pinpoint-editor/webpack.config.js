@@ -57,6 +57,11 @@ module.exports = {
         library: "[name]",
         libraryTarget: "umd"
     },
+    serve: {
+        devMiddleware: {
+            publicPath: '/dist/'
+        }
+    },
     plugins: [
         // new BundleAnalyzerPlugin(),
         // new Visualizer({

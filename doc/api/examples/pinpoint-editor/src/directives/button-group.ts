@@ -1,4 +1,5 @@
 import * as ng from "angular";
+import * as $ from "jquery";
 
 export class ButtonGroupDirective implements ng.IDirective {
     public static factory(): ng.IDirectiveFactory {
@@ -28,8 +29,8 @@ export class ButtonGroupDirective implements ng.IDirective {
                 `<button type="button" data-val="` + o + `" class="btn btn-default">` + label + "</button>");
         });
         $elm.find('.btn[data-val="' + $scope.value + '"]').addClass("active");
-        $elm.find(".btn").click(() => {
-            const $this = $(this);
+        $elm.find(".btn").click((event) => {
+            const $this = $(event.target);
             $elm.find(".btn").removeClass("active");
             $this.addClass("active");
             const val = $this.attr("data-val");
