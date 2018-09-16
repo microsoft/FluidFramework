@@ -6,7 +6,7 @@ import * as sha1 from "sha.js/sha1";
  */
 export function gitHashFile(file: Buffer): string {
     const size = file.byteLength;
-    const filePrefix = "blob " + size + "\0";
+    const filePrefix = "blob " + size + String.fromCharCode(0);
     const engine = new sha1();
     return engine.update(filePrefix).update(file).digest("hex");
 }
