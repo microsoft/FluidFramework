@@ -9,7 +9,6 @@ import * as api from "./api";
 import * as canvas from "./canvas";
 import * as cell from "./cell";
 import * as demoCreator from "./democreator";
-import * as graph from "./graph";
 import * as home from "./home";
 import * as intelligence from "./intelligence";
 import * as loader from "./loader";
@@ -34,7 +33,6 @@ export interface IRoutes {
     scribe: Router;
     sharedText: Router;
     youtubeVideo: Router;
-    graph: Router;
     templates: Router;
 }
 
@@ -57,7 +55,6 @@ export function create(
         canvas: canvas.create(config, tenantManager, storage, appTenants, ensureLoggedIn),
         cell: cell.create(config, tenantManager, storage, appTenants, ensureLoggedIn),
         demoCreator: demoCreator.create(config, ensureLoggedIn),
-        graph: graph.create(config, tenantManager, storage, appTenants, ensureLoggedIn),
         home: home.create(config, ensureLoggedIn),
         intelligence: intelligence.create(config),
         loader: loader.create(config, tenantManager, storage, appTenants, ensureLoggedIn),

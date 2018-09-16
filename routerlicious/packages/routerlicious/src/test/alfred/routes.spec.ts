@@ -9,7 +9,7 @@ import { TestDbFactory, TestKafka, TestTenantManager } from "../testUtils";
 const defaultConfig = nconf.file(path.join(__dirname, "../../../config.test.json")).use("memory");
 
 describe("Routerlicious", () => {
-    describe("Alfred", () => {
+    describe.skip("Alfred", () => {
         describe("Server", () => {
             let testServer: supertest.SuperTest<supertest.Test>;
             let testKafka: TestKafka;

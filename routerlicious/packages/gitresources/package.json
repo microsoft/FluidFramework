@@ -5,7 +5,7 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "npm run tslint && npm run tsc",
+    "build": "npm run tsc && npm run tslint",
     "build:full": "npm run build",
     "tsc": "tsc",
     "tslint": "tslint 'src/**/*.ts'"

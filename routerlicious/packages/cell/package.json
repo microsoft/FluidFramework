@@ -7,11 +7,11 @@
   "types": "dist/index.d.ts",
   "sideEffects": "false",
   "scripts": {
-    "build": "npm run build:commonjs && npm run build:esnext",
-    "build:full": "npm run build && npm run tslint",
-    "build:commonjs": "tsc",
-    "build:esnext": "tsc --outDir lib --m esnext",
-    "tslint": "tslint 'src/**/*.ts'"
+      "build": "npm run tsc && npm run build:esnext && npm run tslint",
+      "build:full": "npm run build",
+      "tsc": "tsc",
+      "build:esnext": "tsc --outDir lib --m esnext",
+      "tslint": "tslint 'src/**/*.ts'"
   },
   "author": "Microsoft",
   "repository": "microsoft/prague",

@@ -203,7 +203,6 @@ export function create(
     app.use("/intelligence", routes.intelligence);
     app.use("/democreator", routes.demoCreator);
     app.use("/youtubeVideo", routes.youtubeVideo);
-    app.use("/graph", routes.graph);
     app.use("/ping", routes.ping);
     app.use("/agent", routes.agent);
     app.use(routes.home);

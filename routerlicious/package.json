@@ -11,9 +11,15 @@
     "start:debug": "docker-compose -f docker-compose.yml -f docker-compose.dev.yml -f docker-compose.debug.yml up",
     "stop": "docker-compose down",
     "stop:full": "docker-compose down && docker volume prune --force",
-    "test": "lerna run test --stream"
+    "test": "lerna run test --stream",
+    "tsc": "lerna run tsc --stream",
+    "watch": "concurrently \"npm run watch:tsc\" \"npm run watch:esnext\" \"npm run watch:webpack\"",
+    "watch:esnext": "lerna run --parallel build:esnext -- -- --watch",
+    "watch:tsc": "lerna run --parallel tsc -- -- --watch",
+    "watch:webpack": "lerna run --parallel webpack -- -- --watch"
   },
   "devDependencies": {
+    "concurrently": "^4.0.1",
     "lerna": "^3.1.4"
   }
 }

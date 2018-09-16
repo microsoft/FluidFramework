@@ -18,7 +18,6 @@ COPY packages/cell/package*.json packages/cell/
 COPY packages/client-api/package*.json packages/client-api/
 COPY packages/client-ui/package*.json packages/client-ui/
 COPY packages/gitresources/package*.json packages/gitresources/
-COPY packages/graph/package*.json packages/graph/
 COPY packages/loader/package*.json packages/loader/
 COPY packages/loader-client/package*.json packages/loader-client/
 COPY packages/loader-web/package*.json packages/loader-web/

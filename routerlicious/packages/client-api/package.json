@@ -7,10 +7,10 @@
   "types": "dist/index.d.ts",
   "sideEffects": false,
   "scripts": {
-    "build": "npm run tsc && npm run tslint && npm run build:esnext",
+    "build": "npm run tsc && npm run build:esnext && npm run tslint",
     "build:full": "npm run build",
-    "build:esnext": "tsc --outDir lib --m esnext",
     "tsc": "tsc",
+    "build:esnext": "tsc --outDir lib --m esnext",
     "tslint": "tslint 'src/**/*.ts'"
   },
   "author": "Microsoft",
