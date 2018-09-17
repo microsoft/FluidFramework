@@ -1,17 +1,27 @@
-import * as prague from "../../../../routerlicious/dist";
-import api = prague.api.api;
-import types = prague.api.types;
-import IMapView = prague.api.types.IMapView;
-import SharedString = prague.api.SharedString.SharedString;
-import mergeTree = prague.api.MergeTree;
-import MergeTree = mergeTree.MergeTree;
-import Segment = mergeTree.Segment;
-import TextSegment = mergeTree.TextSegment;
-import UniversalSequenceNumber = mergeTree.UniversalSequenceNumber;
-import socketStorage = prague.api.socketStorage;
+import { IMap, IMapView, CollaborativeMap } from "@prague/map";
+import { MergeTree, Segment, TextSegment, UniversalSequenceNumber } from "@prague/merge-tree";
+import { SharedString } from "@prague/shared-string";
+
+import * as api from "@prague/client-api";
+import * as socketStorage from "@prague/socket-storage";
 import * as jwt from "jsonwebtoken";
 
+// For local development
+// const routerlicious = "http://localhost:3000";
+// const historian = "http://localhost:3001";
+// const tenantId = "prague";
+// const secret = "43cfc3fbf04a97c0921fd23ff10f9e4b";
+const routerlicious = "https://alfred.wu2.prague.office-int.com";
+const historian = "https://historian.wu2.prague.office-int.com";
+const tenantId = "gallant-hugle";
+const secret = "03302d4ebfb6f44b662d00313aff5a46";
+
+// Register endpoint connection
+const documentServices = socketStorage.createDocumentService(routerlicious, historian);
+api.registerDocumentService(documentServices);
+
 export {
+    CollaborativeMap,
     IMapView,
     MergeTree,
     Segment,
@@ -20,32 +30,26 @@ export {
     UniversalSequenceNumber
 };
 
-export async function open(id: string): Promise<api.Document> {
-    const routerliciousUrl = "http://localhost:3000";
-    const historianUrl = "http://localhost:3001";
-    const tenantId = "prague";
-    const secret = "43cfc3fbf04a97c0921fd23ff10f9e4b";
-    
-    socketStorage.registerAsDefault(routerliciousUrl, historianUrl, tenantId);
-
-    const doc = await api.load(id, {
-        blockUpdateMarkers: true,
-        token: jwt.sign({
-            documentId: id,
+export async function open(documentId: string) {
+    const token = jwt.sign({
+            documentId,
             permission: "read:write",
             tenantId,
-            user: { id: "danlehen" },
-        }, secret)
-    });
+            user: {
+                id: "test",
+            },
+        },
+        secret);
 
+    // Load in the latest and connect to the document
+    const doc = await api.load(documentId, { blockUpdateMarkers: true, token });
     await new Promise(resolve => {
         doc.once("connected", () => resolve())
     });
 
     const rootView = await doc.getRoot().getView();
-    if (!doc.existing) {
-        rootView.set("created", new Date().toUTCString());
-    }
+    console.log("Keys");
+    console.log(rootView.keys());
 
     return doc;
 }
@@ -56,7 +60,7 @@ export async function upsertMap(document: api.Document, name: string) {
 
     const existing = rootView.get(name);
     if (existing) {
-        return { map: existing, view: await (existing as types.IMap).getView()} ;
+        return { map: existing, view: await (existing as IMap).getView()} ;
     }
 
     const newMap = document.createMap();

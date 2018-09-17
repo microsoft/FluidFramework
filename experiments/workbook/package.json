@@ -1,6 +1,6 @@
 {
-  "name": "@prague/hmr",
-  "description": "Demo of hot module reloading.  Use 'npm run dev' and view at http://localhost:8080.",
+  "name": "@prague/workbook",
+  "description": "Stand-alone sheetlet host.",
   "scripts": {
     "webpack": "webpack --config webpack.prod.js",
     "dev": "webpack-serve --config webpack.dev.js"
@@ -19,6 +19,11 @@
     "webpack-serve": "^2.0.2"
   },
   "dependencies": {
+    "@prague/api-definitions": "^0.1.3353",
+    "@prague/client-api": "^0.1.3353",
+    "@prague/map": "^0.1.3353",
+    "@prague/merge-tree": "^0.1.3353",
+    "@prague/socket-storage": "^0.1.3353",
     "jsonwebtoken": "^8.3.0"
   }
 }
