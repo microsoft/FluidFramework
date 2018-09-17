@@ -1,0 +1,29 @@
+{
+  "name": "@chaincode/reveal.js",
+  "version": "0.1.0",
+  "description": "Reveal.js based Prague chaincode",
+  "main": "index.js",
+  "scripts": {
+    "start": "http-server -c-1 -p 8000",
+    "webpack": "webpack --config webpack.config.js"
+  },
+  "author": "Microsoft",
+  "dependencies": {
+    "@prague/loader": "^0.1.3350",
+    "@prague/loader-web": "^0.1.3350",
+    "@prague/socket-storage": "^0.1.3350",
+    "@types/jsonwebtoken": "^7.2.8",
+    "jsonwebtoken": "^8.3.0",
+    "reveal.js": "^3.7.0"
+  },
+  "devDependencies": {
+    "bower": "^1.8.4",
+    "http-server": "^0.11.1",
+    "source-map-loader": "^0.2.4",
+    "ts-loader": "^5.1.1",
+    "tslint": "^5.11.0",
+    "typescript": "^3.0.3",
+    "webpack": "^4.19.0",
+    "webpack-cli": "^3.1.0"
+  }
+}

@@ -79,7 +79,7 @@ export class WebLoader implements ICodeLoader {
             // TODO using eval for now but likely will want to switch to a script import with a wrapped context
             // to isolate the code
             // tslint:disable-next-line:no-eval
-            eval(file);
+            eval.call(null, file);
         }
 
         return window[packageJson.prague.browser.entrypoint];

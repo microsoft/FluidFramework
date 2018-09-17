@@ -1,0 +1,16 @@
+{
+  "name": "reveal.js",
+  "main": "index.js",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "reveal.js-plugins": "*",
+    "headjs": "^1.0.3"
+  }
+}
