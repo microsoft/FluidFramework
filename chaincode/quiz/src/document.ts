@@ -8,6 +8,7 @@ import * as uuid from "uuid/v4";
 
 const rootMapId = "root";
 const insightsMapId = "insights";
+const responseMapId = "response";
 
 /**
  * A document is a collection of collaborative types.
@@ -22,8 +23,12 @@ export class Document extends EventEmitter implements IDocument {
 
             const insights = runtime.createChannel(insightsMapId, MapExtension.Type);
             root.set(insightsMapId, insights);
+
+            const response = runtime.createChannel(responseMapId, MapExtension.Type);
+            root.set(responseMapId, response);
         } else {
             root = await runtime.getChannel("root") as IMap;
+            await root.wait(responseMapId);
         }
 
         const document = new Document(runtime, root);

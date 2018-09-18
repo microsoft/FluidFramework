@@ -1,4 +1,4 @@
-import { IMapView } from "@prague/map";
+import { IMap, IMapView } from "@prague/map";
 import * as $ from "jquery";
 import * as ko from "knockout";
 import { Choice, Hint, IQuiz } from "./choice";
@@ -231,8 +231,11 @@ class ShowViewModel {
             allowMultipleAnswers: false,
             answer: null,
             choices: [
-                { id: 0, choice: "<p>Insert option here</p>", feedback: null },
-                { id: 1, choice: "<p>Insert option here</p>", feedback: null },
+                { id: 0, choice: "<p>Pepperoni</p>", feedback: null },
+                { id: 1, choice: "<p>Mushrooms</p>", feedback: null },
+                { id: 2, choice: "<p>Sausage</p>", feedback: null },
+                { id: 3, choice: "<p>Onions</p>", feedback: null },
+                { id: 4, choice: "<p>Bacon</p>", feedback: null },
             ],
             fontSize: "medium",
             hasAnswer: false,
@@ -240,7 +243,7 @@ class ShowViewModel {
             isTimed: false,
             limitAttempts: false,
             maxAttempts: 2,
-            question: "<p>Insert question here</p>",
+            question: "<p>Pick your favorite pizza topping!</p>",
             required: false,
             shuffleChoices: false,
             timeLimit: 120,
@@ -395,6 +398,20 @@ class ShowViewModel {
         });
 
         this.initControlBar();
+        this.updateMap();
+    }
+
+    public async updateMap() {
+        const responseMap = this.appViewModel.mapView.get("response") as IMap;
+        const choices = this.choices();
+        responseMap.set("numCols", choices.length + 1);
+        responseMap.set("0,0", "User");
+        choices.forEach((choice) => {
+            const choiceId = choice.choice.id() + 1;
+            const choiceText = choice.choice.choice().replace(/<(?:.|\n)*?>/gm, "");
+            responseMap.set(`0,${choiceId}`, choiceText );
+        });
+        responseMap.set("numRows", 1);
     }
 
     //
@@ -426,6 +443,26 @@ class ShowViewModel {
                         this.feedbackChoices.push(choice.choice.id());
                     }
                 }
+            });
+        });
+
+        // Update the map with submission.
+        const responseMap = this.appViewModel.mapView.get("response") as IMap;
+        const clientId = this.appViewModel.clientId;
+        responseMap.get("numRows").then((rowId: number) => {
+            responseMap.set(`${rowId},0`, clientId);
+            submission.forEach((submittedValue) => {
+                choices.forEach((choice) => {
+                    if (choice.choice.id().toString() === submittedValue) {
+                        console.log(`Matched: ${choice.choice.id()} ${choice.choice.choice()}`);
+                        responseMap.set(`${rowId},${choice.choice.id() + 1}`, 1);
+                    } else {
+                        console.log(`Not matched: ${choice.choice.id()} ${choice.choice.choice()}`);
+                        responseMap.set(`${rowId},${choice.choice.id() + 1}`, 0);
+                    }
+                });
+                responseMap.set("numRows", rowId + 1);
+                console.log(`Submission updated!`);
             });
         });
 
@@ -570,10 +607,11 @@ class AppViewModel {
     public currentMode: types.LabMode = undefined;
     public readonly: boolean = false;
     public mapView: IMapView;
+    public clientId: string;
 
     public isModeSetByAuthor: KnockoutObservable<boolean>;
 
-    constructor(defaultQuiz: IQuiz, readonly: boolean, mapView: IMapView) {
+    constructor(defaultQuiz: IQuiz, readonly: boolean, mapView: IMapView, cid: string) {
         this.defaultQuiz = defaultQuiz;
 
         // The view specifies what is the current view model to make use of
@@ -584,6 +622,7 @@ class AppViewModel {
 
         // Switch to desired mode
         this.mapView = mapView;
+        this.clientId = cid;
         this.readonly = readonly;
         if (readonly) {
             // tslint:disable-next-line
@@ -604,8 +643,11 @@ class AppViewModel {
                         allowMultipleAnswers: false,
                         answer: null,
                         choices: [
-                            { id: 0, choice: "<p>Insert option here</p>", feedback: null },
-                            { id: 1, choice: "<p>Insert option here</p>", feedback: null },
+                            { id: 0, choice: "<p>Pepperoni</p>", feedback: null },
+                            { id: 1, choice: "<p>Mushrooms</p>", feedback: null },
+                            { id: 2, choice: "<p>Sausage</p>", feedback: null },
+                            { id: 3, choice: "<p>Onions</p>", feedback: null },
+                            { id: 4, choice: "<p>Bacon</p>", feedback: null },
                         ],
                         fontSize: "medium",
                         hasAnswer: false,
@@ -613,7 +655,7 @@ class AppViewModel {
                         isTimed: false,
                         limitAttempts: false,
                         maxAttempts: 2,
-                        question: "<p>Insert question here</p>",
+                        question: "<p>Pick your favorite pizza topping!</p>",
                         required: false,
                         shuffleChoices: false,
                         timeLimit: 120,
@@ -738,12 +780,13 @@ function getConfiguration(quiz: IQuiz): types.IConfiguration {
 export function initialize(
     readOnly: boolean,
     view: IMapView,
+    clientId: string,
     defaultQuizConfiguration: IQuiz) {
     console.log(`Init called!`);
     $(document).ready(() => {
         console.log(`Document ready!`);
         // And initialize our view model
-        const appViewModel = new AppViewModel(defaultQuizConfiguration, readOnly, view);
+        const appViewModel = new AppViewModel(defaultQuizConfiguration, readOnly, view, clientId);
 
         // add custom bindings
         addCustomBindings();

@@ -18,7 +18,8 @@ class Runner {
 
         // access the root document
         const rootView = await collabDoc.getRoot().getView();
-        initMcqView(rootView);
+        const clientId = collabDoc.clientId;
+        initMcqView(rootView, clientId);
 
         // Add in the setup UI
         content.innerHTML = html;
