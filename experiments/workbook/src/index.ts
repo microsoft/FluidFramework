@@ -35,7 +35,7 @@ function openWorkbook(docName: string) {
 const docName = new URLSearchParams(window.location.search).toString().split("=")[0];
 if (!docName) {
     document.body.innerHTML = `
-        <input id="openBox"/>Open<button id="openButton"/>
+        <input id="openBox"/><button id="openButton">Open</button>
     `;
 
     document.getElementById('openButton').addEventListener("click", () => {

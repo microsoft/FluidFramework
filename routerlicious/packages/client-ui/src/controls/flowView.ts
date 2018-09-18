@@ -1159,6 +1159,10 @@ function allowDOMEvents(element: HTMLElement) {
     // appear above empty line divs generated after their marker.
     element.style.zIndex = "1";
 
+    // Elements of a component do not expect whitespace to be preserved.  Revert the white-space
+    // 'pre' style applied by the lineDiv.
+    element.style.whiteSpace = "normal";
+
     // Stops these events from bubbling back up to the FlowView when the <div> is focused.
     // The FlowView invokes 'preventDefault()' on these events, which blocks the behavior of
     // HTML intrinsic controls like <input />.
