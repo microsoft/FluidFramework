@@ -1,20 +1,15 @@
-import { IMap, IMapView, CollaborativeMap } from "@prague/map";
-import { MergeTree, Segment, TextSegment, UniversalSequenceNumber } from "@prague/merge-tree";
-import { SharedString } from "@prague/shared-string";
-
-import * as api from "@prague/client-api";
-import * as socketStorage from "@prague/socket-storage";
+import { IMap, IMapView, CollaborativeMap } from "../../../../routerlicious/packages/map";
+import { MergeTree, Segment, TextSegment, UniversalSequenceNumber } from "../../../../routerlicious/packages/merge-tree";
+import { SharedString } from "../../../../routerlicious/packages/shared-string";
+import * as api from "../../../../routerlicious/packages/client-api";
+import * as socketStorage from "../../../../routerlicious/packages/socket-storage";
 import * as jwt from "jsonwebtoken";
 
 // For local development
-// const routerlicious = "http://localhost:3000";
-// const historian = "http://localhost:3001";
-// const tenantId = "prague";
-// const secret = "43cfc3fbf04a97c0921fd23ff10f9e4b";
-const routerlicious = "https://alfred.wu2.prague.office-int.com";
-const historian = "https://historian.wu2.prague.office-int.com";
-const tenantId = "gallant-hugle";
-const secret = "03302d4ebfb6f44b662d00313aff5a46";
+const routerlicious = "http://localhost:3000";
+const historian = "http://localhost:3001";
+const tenantId = "prague";
+const secret = "43cfc3fbf04a97c0921fd23ff10f9e4b";
 
 // Register endpoint connection
 const documentServices = socketStorage.createDocumentService(routerlicious, historian);
@@ -48,10 +43,12 @@ export async function open(documentId: string) {
     });
 
     const rootView = await doc.getRoot().getView();
+    rootView.set("__debug", new Date())
+
     console.log("Keys");
     console.log(rootView.keys());
 
-    return doc;
+    return rootView;
 }
 
 export async function upsertMap(document: api.Document, name: string) {

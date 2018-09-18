@@ -19,11 +19,6 @@
     "webpack-serve": "^2.0.2"
   },
   "dependencies": {
-    "@prague/api-definitions": "^0.1.3353",
-    "@prague/client-api": "^0.1.3353",
-    "@prague/map": "^0.1.3353",
-    "@prague/merge-tree": "^0.1.3353",
-    "@prague/socket-storage": "^0.1.3353",
     "jsonwebtoken": "^8.3.0"
   }
 }

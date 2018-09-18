@@ -42,8 +42,13 @@ export class CollaborativeWorkbook extends Workbook {
 
         cellText.getMap().on("valueChanged", ({ key }, isLocal) => {
             if (!isLocal) {
-                const [row, col] = key.split(",").map((value) => parseInt(value, 10));
-                this.setCellText(row, col, cellText.get(key), true);
+                switch (key) {
+                    case "numRows":
+                    case "numCols":
+                    default:
+                        const [row, col] = key.split(",").map((value) => parseInt(value, 10));
+                        this.setCellText(row, col, cellText.get(key), true);
+                }
             }
         });
     }
