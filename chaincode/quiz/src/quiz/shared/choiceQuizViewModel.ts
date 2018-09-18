@@ -404,14 +404,18 @@ class ShowViewModel {
     public async updateMap() {
         const responseMap = this.appViewModel.mapView.get("response") as IMap;
         const choices = this.choices();
-        responseMap.set("numCols", choices.length + 1);
-        responseMap.set("0,0", "User");
-        choices.forEach((choice) => {
-            const choiceId = choice.choice.id() + 1;
-            const choiceText = choice.choice.choice().replace(/<(?:.|\n)*?>/gm, "");
-            responseMap.set(`0,${choiceId}`, choiceText );
+        responseMap.has("numCols").then((exist) => {
+            if (!exist) {
+                responseMap.set("numCols", choices.length + 1);
+                responseMap.set("0,0", "User");
+                choices.forEach((choice) => {
+                    const choiceId = choice.choice.id() + 1;
+                    const choiceText = choice.choice.choice().replace(/<(?:.|\n)*?>/gm, "");
+                    responseMap.set(`0,${choiceId}`, choiceText );
+                });
+                responseMap.set("numRows", 1);
+            }
         });
-        responseMap.set("numRows", 1);
     }
 
     //
