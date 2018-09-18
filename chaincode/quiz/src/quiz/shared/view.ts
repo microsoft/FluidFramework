@@ -258,7 +258,7 @@ export const html = `
                 <!-- ko if: quiz.limitAttempts -->
                 <div class="quiz-attempts">
                     <div class="col-sm-10 col-xs-10">
-                        <img src=""/>
+                        <img src="https://www.wu2-ppe.prague.office-int.com/public/quizzes/resources/attempt_16x16.svg"/>
                         <span class="attempt-remaining-text" data-bind="text: attemptsRemaining"/>
                         <span data-bind="if: attemptsRemaining() > 1">
                             <span class="attempt-remaining-text" data-bind="localText: 'QuizTextAttemptsRemaining'"></span>
@@ -323,7 +323,7 @@ export const html = `
                             </div>
                         </div>
                         <div class="col-sm-2 col-xs-2 quiz-right-options">
-                            <input role="checkbox" type="image" data-bind="attr: { 'aria-label': choice.choice(), 'aria-checked': $parent.isSelected($index())? 'true' : 'false', src: $parent.isSelected($index())? '' : '', click: function() {$parent.flipSelection($index());}" data-toggle="tooltip" data-placement="bottom" />
+                            <input role="checkbox" type="image" data-bind="attr: { 'aria-label': choice.choice(), 'aria-checked': $parent.isSelected($index())? 'true' : 'false', src: $parent.isSelected($index())? 'https://www.wu2-ppe.prague.office-int.com/public/quizzes/resources/answerchoice_correct_32x32.svg' : 'https://www.wu2-ppe.prague.office-int.com/public/quizzes/resources/answerchoice_unselected_32x32.svg'}, click: function() {$parent.flipSelection($index());}" data-toggle="tooltip" data-placement="bottom" />
                         </div>
                 </div>
                 <!-- ko if: showFeedback -->
