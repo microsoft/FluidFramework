@@ -26,26 +26,14 @@ export class BlobManager implements IBlobManager {
     }
 
     public async getBlob(sha: string): Promise<IGenericBlob> {
-        return new Promise<IGenericBlob>((resolve, reject) => {
-            let blob: IGenericBlob = null;
 
-            blob = this.blobs.get(sha);
-            if (blob !== null && blob.content !== null ) {
-                resolve(blob);
-            }
-
-            this.storage.read(sha)
-                .then((blobString) => {
-                    // Could this cause memory issues?
-                    // Probably not, this code only stores images specifically requested by the client
-                    const blobContent = new Buffer(blobString, "base64");
-                    blob.content = blobContent;
-                    resolve(blob);
-                })
-                .catch((error) => {
-                    reject(error);
-                });
-        });
+        if (this.blobs.has(sha)) {
+            const blob = this.blobs.get(sha);
+            const blobContent = await this.storage.read(sha);
+            blob.content = new Buffer(blobContent, "base64");
+            return blob;
+        }
+        Promise.reject("Blob does not exist");
     }
 
     public async addBlob(blob: IGenericBlob): Promise<void> {
@@ -53,27 +41,22 @@ export class BlobManager implements IBlobManager {
     }
 
     public async createBlob(blob: IGenericBlob): Promise<IGenericBlob> {
-        return new Promise<IGenericBlob>((resolve, reject) => {
-            this.storage.createBlob(blob.content)
-                .then((response) => {
-                    // Remove blobContent
-                    this.blobs.set(blob.sha, blob);
-                    const blobMetaData = {
-                        fileName: blob.fileName,
-                        sha: blob.sha,
-                        size: blob.size,
-                        type: blob.type,
-                        url: blob.url,
-                    } as IGenericBlob;
-                    resolve(blobMetaData);
-                })
-                .catch((reason) => {
-                    reject(reason);
-                });
-        });
+        await this.storage.createBlob(blob.content);
+
+        // Remove blobContent
+        const blobMetaData = {
+            fileName: blob.fileName,
+            sha: blob.sha,
+            size: blob.size,
+            type: blob.type,
+            url: blob.url,
+        } as IGenericBlob;
+        this.blobs.set(blob.sha, blobMetaData);
+        return blobMetaData;
     }
 
     public async updateBlob(blob: IGenericBlob): Promise<void> {
+        // TODO: SABRONER Implement Update
         return null;
     }
 
