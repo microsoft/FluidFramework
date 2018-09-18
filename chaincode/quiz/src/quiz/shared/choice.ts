@@ -53,7 +53,7 @@ export interface IQuiz {
     maxAttempts: number;
 
     // Whether or not to allow retries
-    allowRetries: boolean;
+    allowRetries?: boolean;
 
     // Whether or not to shuffle the quiz choices
     shuffleChoices: boolean;

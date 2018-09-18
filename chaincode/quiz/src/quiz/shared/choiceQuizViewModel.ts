@@ -226,7 +226,26 @@ class ShowViewModel {
         attempt: any,
         state: any) {
         this.appViewModel = appViewModel;
-        this.quiz = new Quiz(((configuration.components[0]) as types.IChoiceComponent).data as IQuiz);
+        const quizData = {
+            allowChoiceEditing: true,
+            allowMultipleAnswers: false,
+            answer: null,
+            choices: [
+                { id: 0, choice: "<p>Insert option here</p>", feedback: null },
+                { id: 1, choice: "<p>Insert option here</p>", feedback: null },
+            ],
+            fontSize: "medium",
+            hasAnswer: false,
+            hints: [],
+            isTimed: false,
+            limitAttempts: false,
+            maxAttempts: 2,
+            question: "<p>Insert question here</p>",
+            required: false,
+            shuffleChoices: false,
+            timeLimit: 120,
+        };
+        this.quiz = new Quiz(quizData);
         this.attempt = attempt;
 
         // View state
@@ -547,7 +566,7 @@ class AppViewModel {
     public errorMessage: KnockoutObservable<string> = ko.observable("");
 
     public defaultQuiz: IQuiz;
-    public configuration: types.IConfiguration = undefined;
+    public configuration: any = undefined;
     public currentMode: types.LabMode = undefined;
     public readonly: boolean = false;
     public mapView: IMapView;
@@ -567,8 +586,44 @@ class AppViewModel {
         this.mapView = mapView;
         this.readonly = readonly;
         if (readonly) {
-            const quizConfig = mapView.get("quiz") as string;
-            this.configuration = JSON.parse(quizConfig) as types.IConfiguration;
+            // tslint:disable-next-line
+           //  const quizConfig = `"{\"analytics\":null,\"appVersion\":{\"major\":0,\"minor\":1},\"components\":[{\"answer\":[],\"choices\":[{\"content\":{\"text/html\":\"<p>Insert option here</p>\",\"text/plain\":\"Insert option here\"},\"id\":\"0\",\"name\":null,\"value\":null},{\"content\":{\"text/html\":\"<p>Insert option here</p>\",\"text/plain\":\"Insert option here\"},\"id\":\"1\",\"name\":null,\"value\":null}],\"data\":{\"allowChoiceEditing\":true,\"allowMultipleAnswers\":false,\"allowRetries\":true,\"answer\":null,\"choices\":[{\"id\":0,\"choice\":\"<p>Insert option here</p>\",\"feedback\":null},{\"id\":1,\"choice\":\"<p>Insert option here</p>\",\"feedback\":null}],\"fontSize\":\"medium\",\"hasAnswer\":false,\"hints\":[],\"isTimed\":false,\"limitAttempts\":false,\"maxAttempts\":2,\"question\":\"<p>Insert question here</p>\",\"required\":false,\"shuffleChoices\":false,\"timeLimit\":120},\"hasAnswer\":false,\"maxAttempts\":0,\"maxScore\":1,\"name\":\"Choice Question\",\"question\":{\"text/html\":\"<p>Insert question here</p>\",\"text/plain\":\"Insert question here\"},\"secure\":false,\"timeLimit\":0,\"type\":\"mcq\",\"values\":{\"hints\":[]}}],\"name\":\"Choice question\",\"timeline\":null}"`;
+            // const quizConfig = mapView.get("quiz") as string;
+            // console.log(`Quiz config: ${quizConfig}`);
+            // this.configuration = JSON.parse(quizConfig) as types.IConfiguration;
+
+            const conf = {
+                analytics: null,
+                appVersion: {
+                    major: 0,
+                    minor: 0,
+                },
+                components: [
+                    {
+                        allowChoiceEditing: true,
+                        allowMultipleAnswers: false,
+                        answer: null,
+                        choices: [
+                            { id: 0, choice: "<p>Insert option here</p>", feedback: null },
+                            { id: 1, choice: "<p>Insert option here</p>", feedback: null },
+                        ],
+                        fontSize: "medium",
+                        hasAnswer: false,
+                        hints: [],
+                        isTimed: false,
+                        limitAttempts: false,
+                        maxAttempts: 2,
+                        question: "<p>Insert question here</p>",
+                        required: false,
+                        shuffleChoices: false,
+                        timeLimit: 120,
+                    },
+                ],
+                name: "Poll",
+                timeline: null,
+            };
+
+            this.configuration = conf;
             this.switchMode(types.LabMode.View, false);
         } else {
             this.switchMode(types.LabMode.Edit, false);

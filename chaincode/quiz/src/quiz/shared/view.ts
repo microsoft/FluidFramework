@@ -82,7 +82,7 @@ export const html = `
                     <div class="col-sm-2 col-xs-2">
                         <div class="quiz-right-options">
                             <!-- ko if: quiz.hasAnswer -->
-                            <input type="image" src="{{#hfurl}}/public/quizzes/resources/hint_32x32.svg{{/hfurl}}" data-bind="click: addHint, localTooltip: { title: 'QuizTooltipAddHint', placement: 'bottom' }"/>
+                            <input type="image" src="" data-bind="click: addHint, localTooltip: { title: 'QuizTooltipAddHint', placement: 'bottom' }"/>
                             <!-- /ko -->
                         </div>
                     </div>
@@ -102,7 +102,7 @@ export const html = `
                         </div>
                         <div class="col-sm-2 col-xs-2">
                             <div class="quiz-right-options">
-                                <input type="image" src="{{#hfurl}}/public/quizzes/resources/trashbox_32x32.svg{{/hfurl}}" data-bind="click: function (data, event) { $parent.removeHint($index()); }" />
+                                <input type="image" src="" data-bind="click: function (data, event) { $parent.removeHint($index()); }" />
                             </div>
                         </div>
                     </div>
@@ -174,26 +174,26 @@ export const html = `
                         <div class="col-sm-2 col-xs-2" >
                             <div class="quiz-right-options">
                                 <!-- ko if: $parent.quiz.allowChoiceEditing -->
-                                <input type="image" src="{{#hfurl}}/public/quizzes/resources/trashbox_32x32.svg{{/hfurl}}" data-bind=" click: function (data, event) { $parent.removeChoice($index()); }"/>
+                                <input type="image" src="" data-bind=" click: function (data, event) { $parent.removeChoice($index()); }"/>
                                 <!-- /ko -->
                             
                                 <!-- add feedback button -->
                                 <!-- ko if: $parent.quiz.hasAnswer -->
                                 <!-- ko if: feedback() === null -->
-                                <input type="image" src="{{#hfurl}}/public/quizzes/resources/feedback_32x32.svg{{/hfurl}}" data-bind="click: addFeedback, localTooltip: { title: 'QuizTooltipAddFeedback', placement: 'bottom' }"/>
+                                <input type="image" src="" data-bind="click: addFeedback, localTooltip: { title: 'QuizTooltipAddFeedback', placement: 'bottom' }"/>
                                 <!-- /ko -->
                                 <!-- ko ifnot: feedback() === null -->
-                                <input type="image" src="{{#hfurl}}/public/quizzes/resources/feedback_disabled_32x32.svg{{/hfurl}}" data-bind="click: function() {}" />
+                                <input type="image" src="" data-bind="click: function() {}" />
                                 <!-- /ko -->
                                 <!-- /ko -->
 
                                 <!-- choice answer button -->
                                 <!-- ko if: $parent.quiz.hasAnswer -->
                                 <!-- ko ifnot: $parent.isAnswer($index())-->
-                                <input type="image" src="{{#hfurl}}/public/quizzes/resources/answerchoice_32x32.svg{{/hfurl}}" data-bind="click: function() {$parent.flipAnswer($index());}, localTooltip: { title: 'QuizTooltipSelectAnswer', placement: 'bottom' }"/>
+                                <input type="image" src="" data-bind="click: function() {$parent.flipAnswer($index());}, localTooltip: { title: 'QuizTooltipSelectAnswer', placement: 'bottom' }"/>
                                 <!-- /ko -->
                                 <!-- ko if: $parent.isAnswer($index())-->
-                                <input type="image" src="{{#hfurl}}/public/quizzes/resources/answerchoice_correct_32x32.svg{{/hfurl}}" data-bind="click: function() {$parent.flipAnswer($index());}" />
+                                <input type="image" src="" data-bind="click: function() {$parent.flipAnswer($index());}" />
                                 <!-- /ko -->
                                 <!-- /ko -->
                             </div>
@@ -211,7 +211,7 @@ export const html = `
                         </div>
                         <div class="col-sm-2 col-xs-2" >
                             <div class="quiz-right-options">
-                                <input type="image" src="{{#hfurl}}/public/quizzes/resources/trashbox_32x32.svg{{/hfurl}}" data-bind="click: removeFeedback" />
+                                <input type="image" src="" data-bind="click: removeFeedback" />
                             </div>
                         </div>
                     </div>
@@ -223,7 +223,7 @@ export const html = `
                 <div class="row row-add-choice">
                     <div class="col-sm-10 col-xs-10" data-bind="click:addChoice">
                         <div class="btn btn-add-choice">
-                            <input class="quiz-input-add-choice" type="image" src="{{#hfurl}}/public/quizzes/resources/add_choice_16x16.svg{{/hfurl}}" />&nbsp;&nbsp;<span data-bind="localText: 'QuizTextAddAnswer'"></span>
+                            <input class="quiz-input-add-choice" type="image" src="" />&nbsp;&nbsp;<span data-bind="localText: 'QuizTextAddAnswer'"></span>
                         </div>
                     </div>
                 </div>
@@ -258,7 +258,7 @@ export const html = `
                 <!-- ko if: quiz.limitAttempts -->
                 <div class="quiz-attempts">
                     <div class="col-sm-10 col-xs-10">
-                        <img src="{{#hfurl}}/public/quizzes/resources/attempt_16x16.svg{{/hfurl}}"/>
+                        <img src=""/>
                         <span class="attempt-remaining-text" data-bind="text: attemptsRemaining"/>
                         <span data-bind="if: attemptsRemaining() > 1">
                             <span class="attempt-remaining-text" data-bind="localText: 'QuizTextAttemptsRemaining'"></span>
@@ -323,7 +323,7 @@ export const html = `
                             </div>
                         </div>
                         <div class="col-sm-2 col-xs-2 quiz-right-options">
-                            <input role="checkbox" type="image" data-bind="attr: { 'aria-label': choice.choice(), 'aria-checked': $parent.isSelected($index())? 'true' : 'false', src: $parent.isSelected($index())? '{{#hfurl}}/public/quizzes/resources/answerchoice_correct_32x32.svg{{/hfurl}}' : '{{#hfurl}}/public/quizzes/resources/answerchoice_unselected_32x32.svg{{/hfurl}}'}, click: function() {$parent.flipSelection($index());}" data-toggle="tooltip" data-placement="bottom" />
+                            <input role="checkbox" type="image" data-bind="attr: { 'aria-label': choice.choice(), 'aria-checked': $parent.isSelected($index())? 'true' : 'false', src: $parent.isSelected($index())? '' : '', click: function() {$parent.flipSelection($index());}" data-toggle="tooltip" data-placement="bottom" />
                         </div>
                 </div>
                 <!-- ko if: showFeedback -->
