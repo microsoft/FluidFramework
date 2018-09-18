@@ -1,5 +1,4 @@
-import { IPinpointOptions, Pinpoint } from "@kurtb/pinpoint";
-import { IMap, IMapView } from "@prague/map";
+import { Pinpoint } from "@kurtb/pinpoint";
 import { IChaincode, IPlatform } from "@prague/runtime-definitions";
 import * as angular from "angular";
 import * as angularRoute from "angular-route";
@@ -10,6 +9,7 @@ import { Chaincode } from "./chaincode";
 import { MapDetailController, MapListController } from "./controllers";
 import * as directives from "./directives";
 import { Document } from "./document";
+import { MapDetailsService } from "./services";
 
 // tslint:disable:no-var-requires
 const GoogleMapsLoader = require("google-maps");
@@ -31,6 +31,7 @@ pinpointTool.directive("mapRoughPreview", directives.MapRoughPreviewDirective.fa
 pinpointTool.directive("previewLink", directives.PreviewLinkDirective.factory());
 pinpointTool.directive("publishedCheck", directives.PublishedCheckDirective.factory());
 pinpointTool.directive("uniqueSlug", directives.UniqueSlugDirective.factory());
+pinpointTool.directive("pinpointMap", directives.PinpointMapDirective.factory());
 
 class ConfigService implements angular.IServiceProvider {
     public static factory(): angular.IServiceProviderFactory {
@@ -289,35 +290,6 @@ pinpointTool.filter("html", ($sce) => {
     };
 });
 
-class MapDetailsService {
-    public details: IPinpointOptions;
-
-    constructor(private $rootScope, map: IMap, private view: IMapView) {
-        this.details = JSON.parse(view.get("map"));
-
-        map.on(
-            "valueChanged",
-            (key, local) => {
-                if (local) {
-                    return;
-                }
-
-                this.details = JSON.parse(view.get("map"));
-                console.log(`INBOUND: ${this.details.lat} ${this.details.lon}`);
-                this.$rootScope.$digest();
-            });
-    }
-
-    public get(): any {
-        return this.details;
-    }
-
-    public set(newDetails: IPinpointOptions) {
-        this.view.set("map", JSON.stringify(newDetails));
-        // this.$rootScope.$digest();
-    }
-}
-
 class Runner {
     public async run(collabDoc: Document, platform: IPlatform) {
         const mapHost: HTMLElement = platform ? platform.queryInterface<HTMLElement>("div") : null;
@@ -357,12 +329,20 @@ class Runner {
         }
 
         if (mapHost.id === "content") {
+            const googleP = new Promise<void>((resolve) => {
+                GoogleMapsLoader.load((google) => {
+                    pinpointTool.value("google", google);
+                    resolve();
+                });
+            });
+
             mapHost.innerHTML = "<div ng-view></div>";
 
             pinpointTool.factory("mapDetailsSvc", ["$rootScope", ($rootScope) => {
                 return new MapDetailsService($rootScope, collabDoc.getRoot(), rootView);
             }]);
 
+            await googleP;
             angular.element(document).ready(() => {
                 angular.module("pinpointTool").config(["configServiceProvider", (configServiceProvider) => {
                     configServiceProvider.config(config);

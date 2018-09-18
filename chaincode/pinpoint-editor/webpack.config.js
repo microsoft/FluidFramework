@@ -4,6 +4,7 @@ const path = require('path');
 
 module.exports = {
     entry: {
+        local: './src/localServer.ts',
         main: './src/script.ts'
     },
     mode: 'development',

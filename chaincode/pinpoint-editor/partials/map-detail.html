@@ -1,47 +1,30 @@
 <div class="container">
   <div class="row" ng-if="map">
     <div class="col-sm-6">
-      <div class="map-preview"></div>
+      <pinpoint-map map="map"></pinpoint-map>
+
+      <div>{{lat}}</div>
+      <div>{{lon}}</div>
+      <div>{{quickstartName}}</div>
     </div>
+
     <div class="col-sm-6" style="max-width: 600px;">
       <form novalidate name="mapform" class="">
         <div class="panel panel-primary">
           <div class="panel-heading">Quickstart</div>
           <div class="panel-body">
-
             <p>Search for a location to center the map and add a marker:</p>
 
             <div class="form-group">
-
-              <google-places location="$parent.quickstartLatLonString" location-name="$parent.quickstartName"
-                placeholder="Search for location..."></google-places>
-              <p class="help-block" ng-if="map.markers.length > 4">
-                There are already five markers on the map. Delete a marker (from the list at the bottom of this page)
-                to add a new one.
-              </p>
-
+              <google-places
+                lat="map.lat" lon="map.lon" location-name="quickstartName" placeholder="Search for location...">
+              </google-places>
             </div>
-
-            <p ng-if="quickstartLatLonString">Added <strong>{{quickstartName}}</strong> to the map. Now scroll down to
-              customise the map and marker styles.</p>
-
           </div>
         </div>
 
         <div class="panel panel-default">
           <div class="panel-body">
-            <div class="form-group" ng-class="(mapform.slug.$dirty && (mapform.slug.$error.required || mapform.slug.$error.pattern || mapform.slug.$error.unique)) ? 'has-error' : ''">
-              <label for="slug">Slug for URL</label>
-              <input required ng-pattern="/^[a-z0-9-]*$/" ng-model="map.slug" name="slug" id="slug" class="form-control"
-                placeholder="Enter slug (lowercase, with dashes) " unique-slug ng-disabled="{{!!map.id}}">
-              <p class="help-block slug-error" ng-show="mapform.slug.$error.unique">That slug is already in use. Please
-                enter a different one.</p>
-              <p class="help-block" ng-show="mapform.slug.$dirty && (mapform.slug.$error.required || mapform.slug.$error.pattern)">
-                Invalid slug. Must be lowercase with dashes (eg. "london-bridge-map").
-              </p>
-
-            </div>
-
             <div class="form-group">
               <label for="hed">Hed (if needed)</label>
               <input ng-model="map.hed" id="hed" class="form-control" placeholder="Enter short hed (optional)">
@@ -56,19 +39,13 @@
               <label for="noteSource">Note/source (if needed)</label>
               <input ng-model="map.note" class="form-control" id="noteSource" placeholder="Enter short note/source (optional)">
             </div>
-
           </div>
-        </div><!-- panel -->
+        </div>
+
         <div class="panel panel-default">
           <div class="panel-body">
-
             <div class="form-group">
-              <google-places location="$parent.map.latLonString" placeholder="Set new center by location name..."></google-places>
-            </div>
-
-            <div class="form-group">
-              <label for="exampleInputPassword1">Center (latitude, longitude)</label>
-              <input ng-model="map.latLonString" class="form-control" id="" placeholder="latitude, longitude">
+              <google-places lat="map.lat" lon="map.lon" placeholder="Set new center by location name..."></google-places>
             </div>
 
             <div class="form-group">
@@ -77,22 +54,13 @@
               <input ng-model="map.zoom" type="number" size="1" class="zoom-input" />
             </div>
 
-
             <div class="form-group">
               <label>Map shape: </label>
-              <button-group options="aspectRatios" value="map.aspectRatio"></button-group>
+              <button-group options="aspectRatios" value="map['aspect-ratio']"></button-group>
             </div>
-
-            <div class="form-group" ng-if="config.basemaps">
-              <label>Map style: </label>
-              <button-group options="basemapNames" value="basemap" class="basemap-selector"></button-group>
-
-            </div>
-
-
-
           </div>
         </div>
+
         <div class="panel panel-default">
           <div class="panel-body">
             <div class="checkbox">
@@ -100,10 +68,9 @@
                 <input ng-model="map.minimap" type="checkbox"> Show zoomed-out minimap in corner
               </label>
             </div>
-
             <div ng-if="map.minimap" class="form-group">
               <label for="disabledSelect">Minimap zoom level</label>
-              <input type="range" min="-20" max="-1" value="{{map.minimapZoomOffset}}" ng-model="map.minimapZoomOffset">
+              <input type="range" min="-20" max="-1" value="{{map['minimap-zoom-offset']}}" ng-model="map['minimap-zoom-offset']">
               <span>{{ map.zoom + map['minimap-zoom-offset'] }}</span>
             </div>
           </div>
@@ -112,40 +79,27 @@
         <div class="panel panel-default">
           <div class="panel-heading">Markers</div>
           <div class="panel-body">
-
-
             <div ng-repeat="(i, marker) in map.markers" class="panel panel-primary">
               <div class="panel-heading">
                 Marker #{{i+1}}
                 <button type="button" role="button" class="btn btn-link delete-marker" ng-click="removeMarker(marker)">Delete</button>
-
               </div>
 
               <div class="panel-body">
-
                 <div class="form-group">
-                  <google-places location="$parent.map.markers[i].latLonString" location-name="$parent.map.markers[i].text"
+                  <google-places lat="marker.lat" lon="marker.lon" location-name="marker.text"
                     placeholder="Search for place..."></google-places>
                 </div>
-
-
-                <div class="form-group">
-                  <label for="markerLatLon">Location (latitude, longitude)</label>
-                  <input ng-model="marker.latLonString" class="form-control" id="markerLatLon" placeholder="latitude, longitude">
-                </div>
-
 
                 <div class="form-group">
                   <label for="marker-icon">Icon:</label>
                   <button-group options="icons" value="marker.icon" labels="['Square (feature)','Circle (city)','None']"></button-group>
                 </div>
 
-
                 <div class="form-group">
                   <label for="marker-text">Label text</label>
                   <input ng-model="marker.text" class="form-control" placeholder="Enter short label (optional)" id="marker-text">
                 </div>
-
 
                 <div class="form-group">
                   <label for="marker-label">Label style:</label>
@@ -154,30 +108,20 @@
 
                 <div class="form-group">
                   <label for="marker-label-direction">Label direction</label>
-                  <select ng-model="marker.labelDirection" ng-options="labelDirection for labelDirection in marker.labelDirections"></select>
+                  <select ng-model="marker['label-direction']" ng-options="x for x in directions[marker.label]"></select>
                 </div>
-
-
-              </div> <!-- panel-body -->
-
+              </div>
             </div>
 
             <button type="button" role="button" class="btn btn-default" ng-click="addMarker()" ng-if="map.markers.length === 0">Add
               marker</button>
             <button type="button" role="button" class="btn btn-default" ng-click="addMarker()" ng-if="map.markers.length < 5 && map.markers.length > 0">Add
               another marker</button>
-
           </div>
-        </div><!-- marker-panel -->
+        </div>
 
-        <geojson-input geojson="map.geojson"></geojson-input>
-
-
+        <!-- <geojson-input geojson="map.geojson"></geojson-input> -->
       </form>
-
-
-
-
     </div>
   </div>
-</div><!-- container & row -->
+</div>

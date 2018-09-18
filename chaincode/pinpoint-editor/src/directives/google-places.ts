@@ -9,10 +9,12 @@ export class GooglePlacesDirective implements ng.IDirective {
 
     public replace = true;
     public restrict = "E";
+
     // transclude:true,
     public scope = {
-        location: "=",
+        lat: "=",
         locationName: "=?",
+        lon: "=",
         placeholder: "@",
     };
 
@@ -26,7 +28,8 @@ export class GooglePlacesDirective implements ng.IDirective {
         const autocomplete = new this.google.maps.places.Autocomplete(elm[0], {});
         this.google.maps.event.addListener(autocomplete, "place_changed", () => {
             const place = autocomplete.getPlace();
-            $scope.location = place.geometry.location.lat() + "," + place.geometry.location.lng();
+            $scope.lat = place.geometry.location.lat();
+            $scope.lon = place.geometry.location.lng();
             $scope.locationName = place.name;
             $scope.$apply();
             elm.val(""); // clear text
