@@ -9,6 +9,8 @@ import { addCustomBindings } from "./customBindings";
 import * as types from "./definitions";
 import * as utils from "./utils";
 
+declare var MathJax;
+
 interface IChoiceQuizState {
     seed: string;
     submission: any;
@@ -66,8 +68,8 @@ class EditViewModel {
 
     // Variables used to implement quiz configuration throttling.
     private dirty = false;
-    private timer = null;
-    private pendingQuizData: IQuiz = null;
+    private timer = undefined;
+    private pendingQuizData: IQuiz = undefined;
 
     constructor(appViewModel: AppViewModel, quiz: Quiz) {
         this.appViewModel = appViewModel;
@@ -227,29 +229,7 @@ class ShowViewModel {
         attempt: any,
         state: any) {
         this.appViewModel = appViewModel;
-        const quizData = {
-            allowChoiceEditing: true,
-            allowMultipleAnswers: false,
-            answer: null,
-            choices: [
-                { id: 0, choice: "<p>Pepperoni</p>", feedback: null },
-                { id: 1, choice: "<p>Mushrooms</p>", feedback: null },
-                { id: 2, choice: "<p>Sausage</p>", feedback: null },
-                { id: 3, choice: "<p>Onions</p>", feedback: null },
-                { id: 4, choice: "<p>Bacon</p>", feedback: null },
-            ],
-            fontSize: "medium",
-            hasAnswer: false,
-            hints: [],
-            isTimed: false,
-            limitAttempts: false,
-            maxAttempts: 2,
-            question: "<p>Pick your favorite pizza topping!</p>",
-            required: false,
-            shuffleChoices: false,
-            timeLimit: 120,
-        };
-        this.quiz = new Quiz(quizData);
+        this.quiz = new Quiz(((configuration.components[0]) as types.IChoiceComponent).data as IQuiz);
         this.attempt = attempt;
 
         // View state
@@ -411,6 +391,7 @@ class ShowViewModel {
                 responseMap.set("0,0", "User");
                 choices.forEach((choice) => {
                     const choiceId = choice.choice.id() + 1;
+                    // Strip off html tags.
                     const choiceText = choice.choice.choice().replace(/<(?:.|\n)*?>/gm, "");
                     responseMap.set(`0,${choiceId}`, choiceText );
                 });
@@ -427,6 +408,7 @@ class ShowViewModel {
         const answer = this.quiz.answer();
         const choices = this.choices();
 
+        // Return early if no submission.
         if (submission.length === 0) {
             return;
         }
@@ -578,11 +560,11 @@ class ShowViewModel {
                     "QuizTextRetry", () => { this.retry(); },
                     () => (this.isFinished() && this.retriesAllowed())));
         } else {
-            // this.controlBar.rightButtons.push(
-                // new ControlButton("QuizTextEdit", () => { this.retry(); }, () => this.isFinished()));
+            if (!this.appViewModel.readonly) {
+                this.controlBar.rightButtons.push(
+                    new ControlButton("QuizTextEdit", () => { this.retry(); }, () => this.isFinished()));
+            }
         }
-        // this.controlBar.rightButtons.push(
-            // new ControlButton("QuizTextContinue", () => { this.done(); }, () => this.isFinished()));
     }
 
     private setSelection(index: number, isChecked: boolean) {
@@ -629,52 +611,19 @@ class AppViewModel {
         // Initialize the current mode
         this.isModeSetByAuthor = ko.observable(false);
 
-        // Switch to desired mode
         this.mapView = mapView;
         this.collabDoc = collabDoc;
         this.readonly = readonly;
+
+        // Set up mathjax
+        MathJax.Hub.Config({
+            tex2jax: {inlineMath: [["$", "$"], ["\\(", "\\)"]]},
+        });
+
+        // Switch to desired mode
         if (readonly) {
-            // tslint:disable-next-line
-           //  const quizConfig = `"{\"analytics\":null,\"appVersion\":{\"major\":0,\"minor\":1},\"components\":[{\"answer\":[],\"choices\":[{\"content\":{\"text/html\":\"<p>Insert option here</p>\",\"text/plain\":\"Insert option here\"},\"id\":\"0\",\"name\":null,\"value\":null},{\"content\":{\"text/html\":\"<p>Insert option here</p>\",\"text/plain\":\"Insert option here\"},\"id\":\"1\",\"name\":null,\"value\":null}],\"data\":{\"allowChoiceEditing\":true,\"allowMultipleAnswers\":false,\"allowRetries\":true,\"answer\":null,\"choices\":[{\"id\":0,\"choice\":\"<p>Insert option here</p>\",\"feedback\":null},{\"id\":1,\"choice\":\"<p>Insert option here</p>\",\"feedback\":null}],\"fontSize\":\"medium\",\"hasAnswer\":false,\"hints\":[],\"isTimed\":false,\"limitAttempts\":false,\"maxAttempts\":2,\"question\":\"<p>Insert question here</p>\",\"required\":false,\"shuffleChoices\":false,\"timeLimit\":120},\"hasAnswer\":false,\"maxAttempts\":0,\"maxScore\":1,\"name\":\"Choice Question\",\"question\":{\"text/html\":\"<p>Insert question here</p>\",\"text/plain\":\"Insert question here\"},\"secure\":false,\"timeLimit\":0,\"type\":\"mcq\",\"values\":{\"hints\":[]}}],\"name\":\"Choice question\",\"timeline\":null}"`;
-            // const quizConfig = mapView.get("quiz") as string;
-            // console.log(`Quiz config: ${quizConfig}`);
-            // this.configuration = JSON.parse(quizConfig) as types.IConfiguration;
-
-            const conf = {
-                analytics: null,
-                appVersion: {
-                    major: 0,
-                    minor: 0,
-                },
-                components: [
-                    {
-                        allowChoiceEditing: true,
-                        allowMultipleAnswers: false,
-                        answer: null,
-                        choices: [
-                            { id: 0, choice: "<p>Pepperoni</p>", feedback: null },
-                            { id: 1, choice: "<p>Mushrooms</p>", feedback: null },
-                            { id: 2, choice: "<p>Sausage</p>", feedback: null },
-                            { id: 3, choice: "<p>Onions</p>", feedback: null },
-                            { id: 4, choice: "<p>Bacon</p>", feedback: null },
-                        ],
-                        fontSize: "medium",
-                        hasAnswer: false,
-                        hints: [],
-                        isTimed: false,
-                        limitAttempts: false,
-                        maxAttempts: 2,
-                        question: "<p>Pick your favorite pizza topping!</p>",
-                        required: false,
-                        shuffleChoices: false,
-                        timeLimit: 120,
-                    },
-                ],
-                name: "Poll",
-                timeline: null,
-            };
-
-            this.configuration = conf;
+            const quizConfig = mapView.get("quiz") as string;
+            this.configuration = JSON.parse(quizConfig) as types.IConfiguration;
             this.switchMode(types.LabMode.View, false);
         } else {
             this.switchMode(types.LabMode.Edit, false);
@@ -704,8 +653,8 @@ class AppViewModel {
     }
 
     public publish() {
-        console.log(`Publish quizzes!`);
         this.mapView.set("quiz", JSON.stringify(this.configuration));
+        console.log(`Quizzes published!`);
     }
 
     private switchToEditMode(isModeSetByAuthor: boolean) {
@@ -733,7 +682,7 @@ class AppViewModel {
                 new ShowViewModel(this, this.configuration, attempts, state)),
             );
         // Disable mathjax for now.
-        // MathJax.Hub.Queue(["Typeset", MathJax.Hub]);
+        MathJax.Hub.Queue(["Typeset", MathJax.Hub]);
         this.isModeSetByAuthor(isModeSetByAuthor);
         this.currentMode = types.LabMode.View;
     }
@@ -772,7 +721,7 @@ function getConfiguration(quiz: IQuiz): types.IConfiguration {
         question: { "text/html": quiz.question, "text/plain": $(quiz.question).text() },
         secure: false,
         timeLimit: quiz.isTimed ? quiz.timeLimit : 0,
-        type: "mcq",
+        type: "poll",
         values: { hints },
     };
 
@@ -780,7 +729,7 @@ function getConfiguration(quiz: IQuiz): types.IConfiguration {
         analytics: null,
         appVersion: { major: 0, minor: 1 },
         components: [choiceComponent],
-        name: "Choice question",
+        name: "Poll Quiz",
         timeline: null,
     };
 }
@@ -792,8 +741,6 @@ export function initialize(
     defaultQuizConfiguration: IQuiz) {
     console.log(`Init called!`);
     $(document).ready(async () => {
-        console.log(`Document ready!`);
-        // And initialize our view model
 
         const mapView = await collabDoc.getRoot().getView();
         const appViewModel = new AppViewModel(defaultQuizConfiguration, readOnly, mapView, collabDoc);
@@ -803,6 +750,5 @@ export function initialize(
 
         // And start up knockout!
         ko.applyBindings(appViewModel);
-
     });
 }

@@ -48,7 +48,7 @@ export const html = `
     </div>
 </div>
 
-<div class="footer"><div>
+<div class="footer"></div>
 
 <div class="quiz-content">
     <!-- At the afterRender, after all initailzation by knockout, template elements are adjusted such as focus, scroll, etc -->
@@ -361,13 +361,4 @@ export const html = `
         </div>
     </script>
 </div>
-<script src="//ajax.aspnetcdn.com/ajax/bootstrap/3.3.7/bootstrap.min.js"></script>
-<script src="//e0d1.wpc.azureedge.net/80E0D1/OfficeMixProdBlobStorage/ckeditor/ckeditor.js"></script>
-<script src="//e0d1.wpc.azureedge.net/80E0D1/OfficeMixProdBlobStorage/mathquill/mathquill.js"></script>
-<script src="https://e0d1.wpc.azureedge.net/80E0D1/OfficeMixProdBlobStorage/mathjax/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
-<script type="text/x-mathjax-config">
-    MathJax.Hub.Config({
-    tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
-});
-</script>
 `;
