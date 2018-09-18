@@ -54,14 +54,13 @@ function initMcqEdit(view: api.types.IMapView) {
         {
             allowChoiceEditing: true,
             allowMultipleAnswers: false,
-            allowRetries: true,
-            answer: "0",
+            answer: null,
             choices: [
                 { id: 0, choice: "<p>Insert option here</p>", feedback: null },
                 { id: 1, choice: "<p>Insert option here</p>", feedback: null },
             ],
             fontSize: "medium",
-            hasAnswer: true,
+            hasAnswer: false,
             hints: [],
             isTimed: false,
             limitAttempts: false,
