@@ -236,9 +236,9 @@ input[type="radio"].font-select:checked + label span {
 }
 
 .btn-control-container {
-    position: absolute;
     display: inline-block;
     margin-top: 4px;
+    margin-right: 10px;
     vertical-align: top;
     z-index: 1;
 }

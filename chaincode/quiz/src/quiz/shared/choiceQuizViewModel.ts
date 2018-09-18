@@ -427,6 +427,10 @@ class ShowViewModel {
         const answer = this.quiz.answer();
         const choices = this.choices();
 
+        if (submission.length === 0) {
+            return;
+        }
+
         // Slice to clone the array so that we don't store the same reference
         submission = submission.slice(0);
 
@@ -574,11 +578,11 @@ class ShowViewModel {
                     "QuizTextRetry", () => { this.retry(); },
                     () => (this.isFinished() && this.retriesAllowed())));
         } else {
-            this.controlBar.rightButtons.push(
-                new ControlButton("QuizTextEdit", () => { this.retry(); }, () => this.isFinished()));
+            // this.controlBar.rightButtons.push(
+                // new ControlButton("QuizTextEdit", () => { this.retry(); }, () => this.isFinished()));
         }
-        this.controlBar.rightButtons.push(
-            new ControlButton("QuizTextContinue", () => { this.done(); }, () => this.isFinished()));
+        // this.controlBar.rightButtons.push(
+            // new ControlButton("QuizTextContinue", () => { this.done(); }, () => this.isFinished()));
     }
 
     private setSelection(index: number, isChecked: boolean) {
