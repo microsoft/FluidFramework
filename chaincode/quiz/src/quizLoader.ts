@@ -1,6 +1,6 @@
-import { IMapView } from "@prague/map";
+import { Document } from "./document";
 import { initialize } from "./quiz/shared/choiceQuizViewModel";
 
-export function initMcqView(view: IMapView, clientId: string) {
-    initialize(true, view, clientId, undefined);
+export function initMcqView(collabDoc: Document) {
+    initialize(true, collabDoc, undefined);
 }

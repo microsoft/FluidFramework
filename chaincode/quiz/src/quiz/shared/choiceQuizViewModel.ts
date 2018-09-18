@@ -1,6 +1,7 @@
 import { IMap, IMapView } from "@prague/map";
 import * as $ from "jquery";
 import * as ko from "knockout";
+import { Document } from "../../Document";
 import { Choice, Hint, IQuiz } from "./choice";
 import { Quiz } from "./choiceQuiz";
 import { ControlBarViewModel, ControlButton } from "./controlBar";
@@ -452,7 +453,7 @@ class ShowViewModel {
 
         // Update the map with submission.
         const responseMap = this.appViewModel.mapView.get("response") as IMap;
-        const clientId = this.appViewModel.clientId;
+        const clientId = this.appViewModel.collabDoc.clientId;
         responseMap.get("numRows").then((rowId: number) => {
             responseMap.set(`${rowId},0`, clientId);
             submission.forEach((submittedValue) => {
@@ -611,11 +612,11 @@ class AppViewModel {
     public currentMode: types.LabMode = undefined;
     public readonly: boolean = false;
     public mapView: IMapView;
-    public clientId: string;
+    public collabDoc: Document;
 
     public isModeSetByAuthor: KnockoutObservable<boolean>;
 
-    constructor(defaultQuiz: IQuiz, readonly: boolean, mapView: IMapView, cid: string) {
+    constructor(defaultQuiz: IQuiz, readonly: boolean, mapView: IMapView, collabDoc: Document) {
         this.defaultQuiz = defaultQuiz;
 
         // The view specifies what is the current view model to make use of
@@ -626,7 +627,7 @@ class AppViewModel {
 
         // Switch to desired mode
         this.mapView = mapView;
-        this.clientId = cid;
+        this.collabDoc = collabDoc;
         this.readonly = readonly;
         if (readonly) {
             // tslint:disable-next-line
@@ -783,14 +784,15 @@ function getConfiguration(quiz: IQuiz): types.IConfiguration {
 // Quiz entry point.
 export function initialize(
     readOnly: boolean,
-    view: IMapView,
-    clientId: string,
+    collabDoc: Document,
     defaultQuizConfiguration: IQuiz) {
     console.log(`Init called!`);
-    $(document).ready(() => {
+    $(document).ready(async () => {
         console.log(`Document ready!`);
         // And initialize our view model
-        const appViewModel = new AppViewModel(defaultQuizConfiguration, readOnly, view, clientId);
+
+        const mapView = await collabDoc.getRoot().getView();
+        const appViewModel = new AppViewModel(defaultQuizConfiguration, readOnly, mapView, collabDoc);
 
         // add custom bindings
         addCustomBindings();

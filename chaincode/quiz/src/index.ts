@@ -16,10 +16,11 @@ class Runner {
         const content = document.createElement("div");
         hostContent.appendChild(content);
 
-        // access the root document
-        const rootView = await collabDoc.getRoot().getView();
-        const clientId = collabDoc.clientId;
-        initMcqView(rootView, clientId);
+        this.initQuiz(collabDoc, content);
+    }
+
+    private async initQuiz(collabDoc: Document, content: HTMLDivElement) {
+        initMcqView(collabDoc);
 
         // Add in the setup UI
         content.innerHTML = html;
