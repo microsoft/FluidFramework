@@ -9,7 +9,7 @@ import { addCustomBindings } from "./customBindings";
 import * as types from "./definitions";
 import * as utils from "./utils";
 
-declare var MathJax;
+// declare var MathJax;
 
 interface IChoiceQuizState {
     seed: string;
@@ -379,13 +379,18 @@ class ShowViewModel {
         });
 
         this.initControlBar();
-        this.updateMap();
+
+        // Only update map for taking quizzes.
+        if (this.appViewModel.readonly) {
+            this.updateMap();
+        }
     }
 
     public async updateMap() {
         const responseMap = this.appViewModel.mapView.get("response") as IMap;
         const choices = this.choices();
         responseMap.has("numCols").then((exist) => {
+            // This should only happen once.
             if (!exist) {
                 responseMap.set("numCols", choices.length + 1);
                 responseMap.set("0,0", "User");
@@ -437,14 +442,19 @@ class ShowViewModel {
             });
         });
 
-        // Update the map with submission.
-        const responseMap = this.appViewModel.mapView.get("response") as IMap;
-        const clientId = this.appViewModel.collabDoc.clientId;
-        responseMap.get("numRows").then((rowId: number) => {
-            responseMap.set(`${rowId},0`, clientId);
-            submission.forEach((submittedValue) => {
+        // Only update response for taking quizzes.
+        if (this.appViewModel.readonly) {
+            // Update the map with submission.
+            const responseMap = this.appViewModel.mapView.get("response") as IMap;
+            const clientId = this.appViewModel.collabDoc.clientId;
+            responseMap.get("numRows").then((rowId: number) => {
+                responseMap.set(`${rowId},0`, clientId);
+                const submissionIds = [];
+                submission.forEach((submittedValue) => {
+                    submissionIds.push(submittedValue);
+                });
                 choices.forEach((choice) => {
-                    if (choice.choice.id().toString() === submittedValue) {
+                    if (submissionIds.indexOf(choice.choice.id().toString()) !== -1) {
                         console.log(`Matched: ${choice.choice.id()} ${choice.choice.choice()}`);
                         responseMap.set(`${rowId},${choice.choice.id() + 1}`, 1);
                     } else {
@@ -455,7 +465,7 @@ class ShowViewModel {
                 responseMap.set("numRows", rowId + 1);
                 console.log(`Submission updated!`);
             });
-        });
+        }
 
         // Update the attempts
         this.attemptsMade(this.attemptsMade() + 1);
@@ -559,11 +569,6 @@ class ShowViewModel {
                 new ControlButton(
                     "QuizTextRetry", () => { this.retry(); },
                     () => (this.isFinished() && this.retriesAllowed())));
-        } else {
-            if (!this.appViewModel.readonly) {
-                this.controlBar.rightButtons.push(
-                    new ControlButton("QuizTextEdit", () => { this.retry(); }, () => this.isFinished()));
-            }
         }
     }
 
@@ -616,9 +621,9 @@ class AppViewModel {
         this.readonly = readonly;
 
         // Set up mathjax
-        MathJax.Hub.Config({
-            tex2jax: {inlineMath: [["$", "$"], ["\\(", "\\)"]]},
-        });
+        // MathJax.Hub.Config({
+            // tex2jax: {inlineMath: [["$", "$"], ["\\(", "\\)"]]},
+        // });
 
         // Switch to desired mode
         if (readonly) {
@@ -682,7 +687,7 @@ class AppViewModel {
                 new ShowViewModel(this, this.configuration, attempts, state)),
             );
         // Disable mathjax for now.
-        MathJax.Hub.Queue(["Typeset", MathJax.Hub]);
+        // MathJax.Hub.Queue(["Typeset", MathJax.Hub]);
         this.isModeSetByAuthor(isModeSetByAuthor);
         this.currentMode = types.LabMode.View;
     }

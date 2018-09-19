@@ -38,9 +38,9 @@ class Runner {
         const scriptPromises = [];
 
         // tslint:disable max-line-length
-        scriptPromises.push(loadScript("mathjax", "//e0d1.wpc.azureedge.net/80E0D1/OfficeMixProdBlobStorage/mathjax/MathJax.js?config=TeX-AMS-MML_HTMLorMML"));
+        // scriptPromises.push(loadScript("mathjax", "//e0d1.wpc.azureedge.net/80E0D1/OfficeMixProdBlobStorage/mathjax/MathJax.js?config=TeX-AMS-MML_HTMLorMML"));
         scriptPromises.push(loadScript("ckeditor", "//e0d1.wpc.azureedge.net/80E0D1/OfficeMixProdBlobStorage/ckeditor/ckeditor.js"));
-        scriptPromises.push(loadScript("mathquill", "//e0d1.wpc.azureedge.net/80E0D1/OfficeMixProdBlobStorage/mathquill/mathquill.js"));
+        // scriptPromises.push(loadScript("mathquill", "//e0d1.wpc.azureedge.net/80E0D1/OfficeMixProdBlobStorage/mathquill/mathquill.js"));
 
         await Promise.all(scriptPromises);
     }
