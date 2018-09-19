@@ -48,7 +48,7 @@ export const html = `
     </div>
 </div>
 
-<div class="footer"><div>
+<div class="footer"></div>
 
 <div class="quiz-content">
     <!-- At the afterRender, after all initailzation by knockout, template elements are adjusted such as focus, scroll, etc -->
@@ -82,7 +82,7 @@ export const html = `
                     <div class="col-sm-2 col-xs-2">
                         <div class="quiz-right-options">
                             <!-- ko if: quiz.hasAnswer -->
-                            <input type="image" src="" data-bind="click: addHint, localTooltip: { title: 'QuizTooltipAddHint', placement: 'bottom' }"/>
+                            <input type="image" src="https://www.wu2-ppe.prague.office-int.com/public/quizzes/resources/hint_32x32.svg" data-bind="click: addHint, localTooltip: { title: 'QuizTooltipAddHint', placement: 'bottom' }"/>
                             <!-- /ko -->
                         </div>
                     </div>
@@ -102,7 +102,7 @@ export const html = `
                         </div>
                         <div class="col-sm-2 col-xs-2">
                             <div class="quiz-right-options">
-                                <input type="image" src="" data-bind="click: function (data, event) { $parent.removeHint($index()); }" />
+                                <input type="image" src="https://www.wu2-ppe.prague.office-int.com/public/quizzes/resources/trashbox_32x32.svg" data-bind="click: function (data, event) { $parent.removeHint($index()); }" />
                             </div>
                         </div>
                     </div>
@@ -174,26 +174,26 @@ export const html = `
                         <div class="col-sm-2 col-xs-2" >
                             <div class="quiz-right-options">
                                 <!-- ko if: $parent.quiz.allowChoiceEditing -->
-                                <input type="image" src="" data-bind=" click: function (data, event) { $parent.removeChoice($index()); }"/>
+                                <input type="image" src="https://www.wu2-ppe.prague.office-int.com/public/quizzes/resources/trashbox_32x32.svg" data-bind=" click: function (data, event) { $parent.removeChoice($index()); }"/>
                                 <!-- /ko -->
                             
                                 <!-- add feedback button -->
                                 <!-- ko if: $parent.quiz.hasAnswer -->
                                 <!-- ko if: feedback() === null -->
-                                <input type="image" src="" data-bind="click: addFeedback, localTooltip: { title: 'QuizTooltipAddFeedback', placement: 'bottom' }"/>
+                                <input type="image" src="https://www.wu2-ppe.prague.office-int.com/public/quizzes/resources/feedback_32x32.svg" data-bind="click: addFeedback, localTooltip: { title: 'QuizTooltipAddFeedback', placement: 'bottom' }"/>
                                 <!-- /ko -->
                                 <!-- ko ifnot: feedback() === null -->
-                                <input type="image" src="" data-bind="click: function() {}" />
+                                <input type="image" src="https://www.wu2-ppe.prague.office-int.com/public/quizzes/resources/feedback_disabled_32x32.svg" data-bind="click: function() {}" />
                                 <!-- /ko -->
                                 <!-- /ko -->
 
                                 <!-- choice answer button -->
                                 <!-- ko if: $parent.quiz.hasAnswer -->
                                 <!-- ko ifnot: $parent.isAnswer($index())-->
-                                <input type="image" src="" data-bind="click: function() {$parent.flipAnswer($index());}, localTooltip: { title: 'QuizTooltipSelectAnswer', placement: 'bottom' }"/>
+                                <input type="image" src="https://www.wu2-ppe.prague.office-int.com/public/quizzes/resources/answerchoice_32x32.svg" data-bind="click: function() {$parent.flipAnswer($index());}, localTooltip: { title: 'QuizTooltipSelectAnswer', placement: 'bottom' }"/>
                                 <!-- /ko -->
                                 <!-- ko if: $parent.isAnswer($index())-->
-                                <input type="image" src="" data-bind="click: function() {$parent.flipAnswer($index());}" />
+                                <input type="image" src="https://www.wu2-ppe.prague.office-int.com/public/quizzes/resources/answerchoice_correct_32x32.svg" data-bind="click: function() {$parent.flipAnswer($index());}" />
                                 <!-- /ko -->
                                 <!-- /ko -->
                             </div>
@@ -211,7 +211,7 @@ export const html = `
                         </div>
                         <div class="col-sm-2 col-xs-2" >
                             <div class="quiz-right-options">
-                                <input type="image" src="" data-bind="click: removeFeedback" />
+                                <input type="image" src="https://www.wu2-ppe.prague.office-int.com/public/quizzes/resources/trashbox_32x32.svg" data-bind="click: removeFeedback" />
                             </div>
                         </div>
                     </div>
@@ -223,7 +223,7 @@ export const html = `
                 <div class="row row-add-choice">
                     <div class="col-sm-10 col-xs-10" data-bind="click:addChoice">
                         <div class="btn btn-add-choice">
-                            <input class="quiz-input-add-choice" type="image" src="" />&nbsp;&nbsp;<span data-bind="localText: 'QuizTextAddAnswer'"></span>
+                            <input class="quiz-input-add-choice" type="image" src="https://www.wu2-ppe.prague.office-int.com/public/quizzes/resources/add_choice_16x16.svg" />&nbsp;&nbsp;<span data-bind="localText: 'QuizTextAddAnswer'"></span>
                         </div>
                     </div>
                 </div>
@@ -361,13 +361,4 @@ export const html = `
         </div>
     </script>
 </div>
-<script src="//ajax.aspnetcdn.com/ajax/bootstrap/3.3.7/bootstrap.min.js"></script>
-<script src="//e0d1.wpc.azureedge.net/80E0D1/OfficeMixProdBlobStorage/ckeditor/ckeditor.js"></script>
-<script src="//e0d1.wpc.azureedge.net/80E0D1/OfficeMixProdBlobStorage/mathquill/mathquill.js"></script>
-<script src="https://e0d1.wpc.azureedge.net/80E0D1/OfficeMixProdBlobStorage/mathjax/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
-<script type="text/x-mathjax-config">
-    MathJax.Hub.Config({
-    tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
-});
-</script>
 `;

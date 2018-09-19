@@ -1,6 +1,6 @@
 {
   "name": "@chaincode/poll",
-  "version": "1.0.9",
+  "version": "1.0.21",
   "description": "Classic Prague runtime as chaincode",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
