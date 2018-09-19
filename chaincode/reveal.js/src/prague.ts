@@ -4,10 +4,10 @@ import { IDocumentService, ITokenService } from "@prague/runtime-definitions";
 import * as socketStorage from "@prague/socket-storage";
 import * as jwt from "jsonwebtoken";
 
-const routerlicious = "http://localhost:3000";
-const historian = "http://localhost:3001";
-const tenantId = "prague";
-const secret = "43cfc3fbf04a97c0921fd23ff10f9e4b";
+const routerlicious = "https://alfred.wu2-ppe.prague.office-int.com";
+const historian = "https://historian.wu2-ppe.prague.office-int.com";
+const tenantId = "thirsty-shirley";
+const secret = "f793c1603cf75ea41a09804e94f43cd2";
 
 class PraguePlugin {
     static Create(Reveal: any): PraguePlugin {
@@ -67,7 +67,7 @@ class PraguePlugin {
             },
             secret);
 
-        const webLoader = new WebLoader("http://localhost:4873");
+        const webLoader = new WebLoader("https://packages.wu2.prague.office-int.com");
         const webPlatform = new WebPlatform(div);
 
         const documentP = loader.load(
