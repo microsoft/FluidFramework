@@ -363,7 +363,6 @@ input[type="radio"].font-select:checked + label span {
     padding: 6px 13px;
     height: 55px;
     min-width: 140px;
-    position: fixed;
     right: 10px;
     z-index: 10;
 }
