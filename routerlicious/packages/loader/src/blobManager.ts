@@ -27,13 +27,13 @@ export class BlobManager implements IBlobManager {
 
     public async getBlob(sha: string): Promise<IGenericBlob> {
 
-        if (this.blobs.has(sha)) {
-            const blob = this.blobs.get(sha);
-            const blobContent = await this.storage.read(sha);
-            blob.content = new Buffer(blobContent, "base64");
-            return blob;
+        if (!this.blobs.has(sha)) {
+            Promise.reject("Blob does not exist");
         }
-        Promise.reject("Blob does not exist");
+        const blob = this.blobs.get(sha);
+        const blobContent = await this.storage.read(sha);
+        blob.content = new Buffer(blobContent, "base64");
+        return blob;
     }
 
     public async addBlob(blob: IGenericBlob): Promise<void> {
