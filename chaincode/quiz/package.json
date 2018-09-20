@@ -1,6 +1,6 @@
 {
   "name": "@chaincode/poll",
-  "version": "1.0.21",
+  "version": "1.0.24",
   "description": "Classic Prague runtime as chaincode",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -10,7 +10,8 @@
     "tsc": "tsc",
     "webpack": "webpack --config webpack.config.js",
     "tslint": "tslint 'src/**/*.ts'",
-    "start": "webpack-serve webpack.config.js --port 8081"
+    "start": "webpack-serve webpack.config.js --port 8081",
+    "update": "npm run build && npm version patch && npm publish --registry http://localhost:4873"
   },
   "author": "Microsoft",
   "repository": "microsoft/prague",

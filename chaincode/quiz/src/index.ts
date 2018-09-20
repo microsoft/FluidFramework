@@ -3,7 +3,7 @@ import { Chaincode } from "./chaincode";
 import { Document } from "./document";
 import { html } from "./quiz/shared/view";
 import "./quiz/styles/quiz.css";
-import { initPollEdit, initPollView } from "./quizLoader";
+import { initMCQEdit, initPollEdit, InitTakingQuiz, initTFEdit } from "./quizLoader";
 import { loadScript } from "./scriptLoader";
 
 class Runner {
@@ -24,10 +24,16 @@ class Runner {
 
         // Load scripts and setup knockout binding code.
         if (collabDoc.existing) {
-            initPollView(collabDoc);
+            InitTakingQuiz(collabDoc);
         } else {
             await this.loadScripts();
-            initPollEdit(collabDoc);
+            if (collabDoc.id.startsWith("mcq")) {
+                initMCQEdit(collabDoc);
+            } else if (collabDoc.id.startsWith("tf")) {
+                initTFEdit(collabDoc);
+            } else {
+                initPollEdit(collabDoc);
+            }
         }
 
         // Add in the setup UI
