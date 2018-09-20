@@ -1,25 +1,11 @@
 import { IChaincode, IPlatform } from "@prague/runtime-definitions";
 import { Chaincode } from "./chaincode";
 import { Document } from "./document";
+import { PragueSteroids } from "./game-asteroids/app";
 
 class Runner {
     public async run(collabDoc: Document, platform: IPlatform) {
-        const hostContent: HTMLElement = platform ? platform.queryInterface<HTMLElement>("div") : null;
-        if (!hostContent) {
-            // If headless exist early
-            return;
-        }
-
-        if (!collabDoc.runtime.connected) {
-            await new Promise<void>((resolve) => collabDoc.runtime.on("connected", () => resolve()));
-        }
-
-        // const rootView = await collabDoc.getRoot().getView();
-        if (!collabDoc.existing) {
-            //
-        } else {
-            //
-        }
+        PragueSteroids.Start(collabDoc, platform);
     }
 }
 

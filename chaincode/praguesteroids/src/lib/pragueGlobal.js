@@ -29,61 +29,6 @@ window.connectToPragueGlobalMap=function(waitForLoad)
     return Promise.resolve(_globalView);
 };
 
-window.connectToDocumentRootView=function(docId, waitForLoad) {
-    var init =    {
-        method: 'POST',
-        headers: {
-            "Content-Type": "application/json; charset=utf-8"
-        },
-        body:
-        JSON.stringify({
-                payload: {
-                    documentId: docId,
-                    tenantId: globaltenantId,
-                    permission: "read:write",
-                    user: {
-                        id: "anyone", 
-                    }
-                },
-                secretKey:"24c1ebcf087132e31a7e3c25f56f6626"
-            })
-    };
-
-    return new Promise(function(resolve, reject) {
-        fetch("https://jwttokengenerator.azurewebsites.net/api/Sign?code=N85yVEYcaT1uBW5PMWrex2NGovP1Ho1kw8WjOaLaY/lvz8dTW/WFTA==",init)
-        .then(function (data) {
-            data.json().then(function (json) {
-                prague.api.api.load(docId, { encrypted: false, token: json.token }).then(
-                    collabDoc => {
-                        collabDoc.getRoot().getView().then(
-                            view => {
-                                if(!collabDoc.isConnected && waitForLoad){
-                                    console.log('waiting for document '+docId)
-                                    collabDoc.on(
-                                        "connected", 
-                                        () => 
-                                        {
-                                            console.log('connected to document '+docId+' (Waited for load)')
-                                            resolve(view)
-                                        });
-                                }
-                                else{
-                                    console.log('connected to document '+docId+' (Not waiting for load)')
-                                    resolve(view);
-                                }
-                            }
-                        )
-                    }
-                );
-            })
-        })
-        .catch(function (error) {
-            alert("Error fetching a new token to connect to prague global map :(");
-            reject();
-        });
-    });
-};
-
 window.addToGlobalMap=function(docId, clientCount){
     if (_globalView == null)
         return;
