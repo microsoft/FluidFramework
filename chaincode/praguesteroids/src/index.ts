@@ -10,6 +10,10 @@ class Runner {
             return;
         }
 
+        if (!collabDoc.runtime.connected) {
+            await new Promise<void>((resolve) => collabDoc.runtime.on("connected", () => resolve()));
+        }
+
         // const rootView = await collabDoc.getRoot().getView();
         if (!collabDoc.existing) {
             //

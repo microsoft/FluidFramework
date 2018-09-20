@@ -1,3 +1,7 @@
+// tslint:disable:no-bitwise
+import * as Stage from "stage-js";
+import { getParameterByName } from "../lib/utils";
+
 /*
  * Copyright (c) 2016-2018 Ali Shakiba http://shakiba.me/planck.js
  *
@@ -21,53 +25,48 @@
 
 const docId = getParameterByName("docId");
 
-const highScoreConst = 'HIGH_SCORE';
+const highScoreConst = "HIGH_SCORE";
 
-var _connectedClients = 0;
+let pragueConnectedClients = 0;
 
-var _friendlyName = '';
+let pragueFriendlyName = "";
 
 const SHIP_SPEED_DEFAULT = 2;
-var SHIP_SPEED = SHIP_SPEED_DEFAULT;
+let SHIP_SPEED = SHIP_SPEED_DEFAULT;
 
-var shipIdPrefix = 'ship';
-var shipUniqueId = customGuid(shipIdPrefix);
+const shipIdPrefix = "ship";
+const shipUniqueId = customGuid(shipIdPrefix);
 
-var bulletIdPrefix = 'bullet';
-var bulletUniqueId = customGuid(bulletIdPrefix);
-var bulletCounter = 0;
+const bulletIdPrefix = "bullet";
+const bulletUniqueId = customGuid(bulletIdPrefix);
+let bulletCounter = 0;
 
 // Only send every _sendLocationUpdateMod frame
-var _sendLocationUpdateMod = 2;
-var _sendLocationUpdateCount = 1;
+const pragueSendLocationUpdateMod = 2;
+let pragueSendLocationUpdateCount = 1;
 
+const ships = {};
+const bullets = {};
+let pragueView;
 
-var ships = {};
-var bullets = {};
-var _view;
-
-if(docId==null)
-{
+if (docId === null) {
   window.location.replace("../game-overview");
-}
-else
-{
-
+} else {
   connectToDocumentRootView(docId, true)
-    .then(
-      view => {
-        _view = view;
+    .then((view) => {
+        pragueView = view;
 
-        var hs = view.get(highScoreConst);
-        if (hs == null)
-          view.set(highScoreConst, JSON.stringify({ user: '', friendlyName: '', score: 0 }));
+        const hs = view.get(highScoreConst);
+        if (hs == null) {
+          view.set(highScoreConst, JSON.stringify({ user: "", friendlyName: "", score: 0 }));
+        }
 
-        _view.document.on("clientLeave", (name) => {
+        pragueView.document.on("clientLeave", (name) => {
+          // ignored
         });
 
         doStage();
-      }
-    );
+      });
 }
 
 function customGuid(prefix) {
@@ -76,97 +75,101 @@ function customGuid(prefix) {
       .toString(16)
       .substring(1);
   }
-  return prefix + '-' + s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4();
+  return prefix + "-" + s4() + s4() + "-" + s4() + "-" + s4() + "-" + s4() + "-" + s4() + s4() + s4();
 }
 
-
 function Physics(ui) {
-  var pl = planck, Vec2 = pl.Vec2;
+  const pl = planck;
+  const Vec2 = pl.Vec2;
 
-  var SHIP = 2;
-  var BULLET = 4;
-  var ASTEROID = 4;
+  const SHIP = 2;
+  const BULLET = 4;
+  const ASTEROID = 4;
 
-  var SPACE_WIDTH = 16 * 2.5;
-  var SPACE_HEIGHT = 9 * 2.5;
+  const SPACE_WIDTH = 16 * 2.5;
+  const SPACE_HEIGHT = 9 * 2.5;
 
-  var SHIP_SIZE = 0.30;
-  var FIRE_RELOAD_TIME = 400;
-  var BULLET_LIFE_TIME = 1100;
-  var BULLET_SIZE = 0.08;
+  const SHIP_SIZE = 0.30;
+  const FIRE_RELOAD_TIME = 400;
+  const BULLET_LIFE_TIME = 1100;
+  const BULLET_SIZE = 0.08;
 
   // game state
-  var state = {
-    level: 0,
-    lives: 0,
+  const state = {
     connectedClients: 0,
+    crash: () => {
+      this.lives--;
+    },
+    endGame: () => {
+      this.gameover = true;
+    },
     gameover: false,
-    startGame: function () {
+    level: 0,
+    levelUp: () => {
+      this.level++;
+    },
+    lives: 0,
+    startGame: () => {
       this.gameover = false;
       this.level = 0;
       this.lives = 3;
-      this.connectedClients = _connectedClients
+      this.connectedClients = pragueConnectedClients;
     },
-    crash: function () {
-      this.lives--;
-    },
-    levelUp: function () {
-      this.level++;
-    },
-    endGame: function () {
-      this.gameover = true;
-    }
   };
 
-  var allowCrashTime = 0;
-  var allowFireTime = 0;
+  let allowCrashTime = 0;
+  let allowFireTime = 0;
 
-  var world;
-  var bulletBodies = [];
-  var shipBody;
+  let world;
+  const bulletBodies = [];
+  let shipBody;
 
   world = pl.World();
 
   // Todo: check if several bullets hit the same asteroid in the same time step
-  world.on('pre-solve', function (contact) {
-    var fixtureA = contact.getFixtureA();
-    var fixtureB = contact.getFixtureB();
+  world.on("pre-solve", (contact) => {
+    const fixtureA = contact.getFixtureA();
+    const fixtureB = contact.getFixtureB();
 
-    var bodyA = contact.getFixtureA().getBody();
-    var bodyB = contact.getFixtureB().getBody();
+    const bodyA = contact.getFixtureA().getBody();
+    const bodyB = contact.getFixtureB().getBody();
 
-    var aship = bodyA == shipBody;
-    var bship = bodyB == shipBody;
-    var abullet = fixtureA.getFilterCategoryBits() & BULLET;
-    var bbullet = fixtureB.getFilterCategoryBits() & BULLET;
+    const aship = bodyA === shipBody;
+    const bship = bodyB === shipBody;
+    const abullet = fixtureA.getFilterCategoryBits() & BULLET;
+    const bbullet = fixtureB.getFilterCategoryBits() & BULLET;
 
     // am I hit?
     if ((aship || bship) && allowCrashTime < globalTime) {
       // Ship collided with something
-      var ship = aship ? bodyA : bodyB;
-      var ufo = !aship ? bodyA : bodyB;
+      const ship = aship ? bodyA : bodyB;
+      const ufo = !aship ? bodyA : bodyB;
 
-      setTimeout(function () {
-        crash(ship, ufo, true);
-      }, 1);
+      setTimeout(
+        () => {
+          crash(ship, ufo, true);
+        },
+        1);
     }
 
     // is the bullet hitting another ship?
     if (abullet || bbullet) {
       // Bullet collided with something
-      var ship = abullet ? bodyA : bodyB;
-      var bullet = !abullet ? bodyA : bodyB;
+      const ship = abullet ? bodyA : bodyB;
+      const bullet = !abullet ? bodyA : bodyB;
 
-      setTimeout(function () {
-        hit(ship, bullet);
-      }, 1);
+      setTimeout(
+        () => {
+          hit(ship, bullet);
+        },
+        1);
     }
   });
 
   function start() {
     state.startGame();
     ui.updateStatus();
-    setupShip(true);
+    setupShip();
     // createEnemies();
     ui.startGame();
   }
@@ -182,35 +185,35 @@ function Physics(ui) {
 
   function setupShip() {
     shipBody = world.createBody({
-      type: 'dynamic',
       angularDamping: 2.0,
       linearDamping: 0.5,
       position: Vec2(randomnumber(30), randomnumber(15)),
+      type: "dynamic",
     });
 
     shipBody.createFixture(pl.Polygon([
       Vec2(-0.15, -0.15),
       Vec2(0, -0.1),
       Vec2(0.15, -0.15),
-      Vec2(0, 0.2)
+      Vec2(0, 0.2),
     ]), {
         density: 1000,
         filterCategoryBits: SHIP,
-        filterMaskBits: ASTEROID
+        filterMaskBits: ASTEROID,
       });
 
-    shipBody.render = { fill: '#ffdd00', stroke: '#000000' };
+    shipBody.render = { fill: "#ffdd00", stroke: "#000000" };
     allowCrashTime = globalTime + 2000;
 
     updateMyShipStatus();
   }
 
-  var globalTime = 0;
+  let globalTime = 0;
   function tick(dt) {
     globalTime += dt;
 
     // resolve this before rendering the fram
-    var amIDead = amIBusted();
+    const amIDead = amIBusted();
 
     if (shipBody) {
 
@@ -223,33 +226,32 @@ function Physics(ui) {
 
       // Thrust: add some force in the ship direction
       if (ui.activeKeys.up) {
-        var f = shipBody.getWorldVector(Vec2(0.0, SHIP_SPEED));
-        var p = shipBody.getWorldPoint(Vec2(0.0, 2.0));
+        const f = shipBody.getWorldVector(Vec2(0.0, SHIP_SPEED));
+        const p = shipBody.getWorldPoint(Vec2(0.0, 2.0));
         shipBody.applyLinearImpulse(f, p, true);
       }
 
       if (ui.activeKeys.a) {
         SHIP_SPEED = 5;
-      }
-      else {
+      } else {
         SHIP_SPEED = SHIP_SPEED_DEFAULT;
       }
 
       // Fire
       if (ui.activeKeys.fire && globalTime > allowFireTime) {
 
-        var magnitude = 10, angle = shipBody.Getangle + Math.PI / 2;
+        const magnitude = 10;
 
         // Create a bullet body
-        var bulletBody = world.createDynamicBody({
+        const bulletBody = world.createDynamicBody({
+          bullet: true,
           // mass : 0.05,
-          position: shipBody.getWorldPoint(Vec2(0, SHIP_SIZE)),
           linearVelocity: shipBody.getWorldVector(Vec2(0, magnitude)),
-          bullet: true
+          position: shipBody.getWorldPoint(Vec2(0, SHIP_SIZE)),
         });
         bulletBody.createFixture(new pl.Circle(BULLET_SIZE), {
           filterCategoryBits: BULLET,
-          filterMaskBits: ASTEROID
+          filterMaskBits: ASTEROID,
         });
         bulletBodies.push(bulletBody);
 
@@ -261,61 +263,62 @@ function Physics(ui) {
 
         bulletBody.bulletNo = ++bulletCounter;
 
-
-        _view.set(
+        pragueView.set(
           bulletUniqueId + bulletBody.bulletNo,
           JSON.stringify(
             {
-              isAlive: true,
+              angle: bulletBody.c_position.a,
               bulletNo: bulletBody.bulletNo,
               dieTime: bulletBody.dieTime,
+              isAlive: true,
               position: bulletBody.getPosition(),
-              angle: bulletBody.c_position.a,
-              velocity: shipBody.getWorldVector(Vec2(0, magnitude))
+              velocity: shipBody.getWorldVector(Vec2(0, magnitude)),
             }));
 
       }
 
       wrap(shipBody);
 
-      if (_view != null) {
-
+      if (pragueView != null) {
         // Only set our position if something has changed
-        var myshipString = _view.get(shipUniqueId)
-        var myship = myshipString != null ? JSON.parse(myshipString) : null;
-        var shipBodyPosition = shipBody.getPosition();
+        const myshipString = pragueView.get(shipUniqueId);
+        const myship = myshipString != null ? JSON.parse(myshipString) : null;
+        const shipBodyPosition = shipBody.getPosition();
 
         // Send location update every other frame
-        if (_sendLocationUpdateCount == 1 && !amIDead) {
-          if (myship == null || myship.position.x != shipBodyPosition.x || myship.position.y != shipBodyPosition.y || myship.angle != shipBody.c_position.a || Date.now().valueOf() > myship.lastModified + 1000) {
+        if (pragueSendLocationUpdateCount === 1 && !amIDead) {
+          if (myship == null ||
+              myship.position.x !== shipBodyPosition.x ||
+              myship.position.y !== shipBodyPosition.y ||
+              myship.angle !== shipBody.c_position.a ||
+              Date.now().valueOf() > myship.lastModified + 1000) {
             updateMyShipStatus();
           }
         }
 
-        _sendLocationUpdateCount = (_sendLocationUpdateCount + 1) % _sendLocationUpdateMod;
+        pragueSendLocationUpdateCount = (pragueSendLocationUpdateCount + 1) % pragueSendLocationUpdateMod;
 
-        var hs = JSON.parse(_view.get(highScoreConst));
+        const hs = JSON.parse(pragueView.get(highScoreConst));
 
-        var count = 0;
-        for (var key of _view.keys()) {
+        let count = 0;
+        for (const key of pragueView.keys()) {
 
           if (key.startsWith(shipIdPrefix)) {
             count = count + 1;
 
             if (!key.startsWith(shipUniqueId)) {
 
-              var collabShip = JSON.parse(_view.get(key));
+              const collabShip = JSON.parse(pragueView.get(key));
 
               // if the other ship hasn't been updated for 60 sec
               // delete it
               if (collabShip.lastModified == null || Date.now().valueOf() - collabShip.lastModified > 5000) {
-                _view.delete(key);
+                pragueView.delete(key);
                 if (ships[key] != null) {
                   world.destroyBody(ships[key]);
                   ships[key] = null;
                 }
-              }
-              else {
+              } else {
                 if (ships[key] == null && !collabShip.busted) {
                   ships[key] = createEnemyShip(key, collabShip.isBot);
                 }
@@ -324,41 +327,36 @@ function Physics(ui) {
                   ships[key].setPosition(collabShip.position);
                   ships[key].setAngle(collabShip.angle);
 
-                  if (key == hs.user)
-                    ships[key].render = { fill: '#b2b2ff', stroke: '#000' }
-                  else
-                    ships[key].render = { fill: '#bb0000', stroke: '#000000' }
-
+                  if (key === hs.user) {
+                    ships[key].render = { fill: "#b2b2ff", stroke: "#000" };
+                  } else {
+                    ships[key].render = { fill: "#bb0000", stroke: "#000000" };
+                  }
                 }
               }
             }
-          }
-          else if (key.startsWith(bulletIdPrefix)) {
+          } else if (key.startsWith(bulletIdPrefix)) {
             if (!key.startsWith(bulletUniqueId)) {
-
-              var collabBullet = JSON.parse(_view.get(key));
+              const collabBullet = JSON.parse(pragueView.get(key));
 
               if (!collabBullet.isAlive) {
-                _view.delete(key);
+                pragueView.delete(key);
                 if (bullets[key] != null) {
                   world.destroyBody(bullets[key]);
                   bullets[key] = null;
                 }
-
-              }
-              else if (bullets[key] == null) {
+              } else if (bullets[key] == null) {
                 bullets[key] = createEnemyBullet(collabBullet.velocity, collabBullet.position);
               }
             }
           }
         }
-        if(count != _connectedClients)
-        {
-          _connectedClients = count;
-          connectToPragueGlobalMap(false).then(() => addToGlobalMap(docId, _connectedClients));
+        if (count !== pragueConnectedClients) {
+          pragueConnectedClients = count;
+          connectToPragueGlobalMap(false).then(() => addToGlobalMap(docId, pragueConnectedClients));
         }
 
-        state.connectedClients = _connectedClients;
+        state.connectedClients = pragueConnectedClients;
         ui.updateStatus();
       }
 
@@ -368,20 +366,20 @@ function Physics(ui) {
       crash(shipBody, null, false);
     }
 
-    for (var i = 0; i !== bulletBodies.length; i++) {
-      var bulletBody = bulletBodies[i];
+    for (let i = 0; i !== bulletBodies.length; i++) {
+      const bulletBody = bulletBodies[i];
 
       // If the bullet is old, delete it
       if (bulletBody.dieTime <= globalTime) {
-        _view.set(
+        pragueView.set(
           bulletUniqueId + bulletBody.bulletNo,
           JSON.stringify(
             {
-              isAlive: false,
+              angle: bulletBody.c_position.a,
               bulletNo: bulletBody.bulletNo,
               dieTime: bulletBody.dieTime,
+              isAlive: false,
               position: bulletBody.getPosition(),
-              angle: bulletBody.c_position.a
             }));
         bulletBodies.splice(i, 1);
         world.destroyBody(bulletBody);
@@ -395,105 +393,106 @@ function Physics(ui) {
   }
 
   function renderEnemies() {
-    for (var key in ships) {
-      if (ships.hasOwnProperty(key) && ships[key])
+    for (const key in ships) {
+      if (ships.hasOwnProperty(key) && ships[key]) {
         wrap(ships[key]);
+      }
     }
   }
 
   function amIBusted() {
-    if (!_view)
+    if (!pragueView) {
       return false;
+    }
 
-    var myShipString = _view.get(shipUniqueId)
-    var myShip = myShipString != null ? JSON.parse(myShipString) : null;
+    const myShipString = pragueView.get(shipUniqueId);
+    const myShip = myShipString != null ? JSON.parse(myShipString) : null;
     return (myShip != null && myShip.busted);
   }
 
   function createEnemyBullet(enemyVelocity, enemyPosition) {
-
-    var enemyBulletBody = world.createDynamicBody({
-
+    const enemyBulletBody = world.createDynamicBody({
+      bullet: true,
+      linearVelocity: enemyVelocity, // shipBody.getWorldVector(Vec2(0, magnitude)),
       // mass : 0.05,
-      position: enemyPosition, //shipBody.getWorldPoint(Vec2(0, SHIP_SIZE)),
-      linearVelocity: enemyVelocity, //shipBody.getWorldVector(Vec2(0, magnitude)),
-      bullet: true
+      position: enemyPosition, // shipBody.getWorldPoint(Vec2(0, SHIP_SIZE)),
     });
     enemyBulletBody.createFixture(new pl.Circle(BULLET_SIZE), {
       filterCategoryBits: BULLET,
-      filterMaskBits: ASTEROID
+      filterMaskBits: ASTEROID,
     });
 
-    enemyBulletBody.render = { fill: '#ff3232', stroke: '#fff' }
+    enemyBulletBody.render = { fill: "#ff3232", stroke: "#fff" };
 
     return enemyBulletBody;
   }
 
   function updateMyShipStatus() {
-    if (_view) {
-      _view.set(
+    if (pragueView) {
+      pragueView.set(
         shipUniqueId,
         JSON.stringify(
           {
+            angle: shipBody.c_position.a,
+            busted: false,
             lastModified: Date.now().valueOf(),
             position: shipBody.getPosition(),
-            angle: shipBody.c_position.a,
-            busted: false
           }));
     }
-
   }
 
   function createEnemyShip(shipId, isBot) {
+    let enemy;
     if (isBot) {
-      var enemy = world.createBody({
-        type: 'dynamic',
+      enemy = world.createBody({
         angularDamping: 2.0,
         linearDamping: 0.5,
         position: Vec2(),
+        type: "dynamic",
       });
 
-      var radius = 0.3;
+      const radius = 0.3;
 
-      var n = 8, path = [];
-      for (var i = 0; i < n; i++) {
-        var a = i * 2 * Math.PI / n;
-        var x = radius * (Math.sin(a) + rand(0.3));
-        var y = radius * (Math.cos(a) + rand(0.3));
+      const n = 8;
+      const path = [];
+      for (let i = 0; i < n; i++) {
+        const a = i * 2 * Math.PI / n;
+        const x = radius * (Math.sin(a) + rand(0.3));
+        const y = radius * (Math.cos(a) + rand(0.3));
         path.push(Vec2(x, y));
       }
       enemy.createFixture(pl.Polygon(path), {
         filterCategoryBits: ASTEROID,
-        filterMaskBits: BULLET | SHIP
+        filterMaskBits: BULLET | SHIP,
       });
 
-      var fillColor = '#00ff00';
-      var hs = _view.get(highScoreConst);
-      if (shipId == hs.user)
-        fillColor = '#0000FF';
+      let fillColor = "#00ff00";
+      const hs = pragueView.get(highScoreConst);
+      if (shipId === hs.user) {
+        fillColor = "#0000FF";
+      }
 
-      enemy.render = { fill: fillColor, stroke: '#000000' }
-
+      enemy.render = { fill: fillColor, stroke: "#000000" };
     } else {
-      var enemy = world.createBody({
-        type: 'dynamic',
+      enemy = world.createBody({
         angularDamping: 2.0,
         linearDamping: 0.5,
         position: Vec2(),
+        type: "dynamic",
       });
 
       enemy.createFixture(pl.Polygon([
         Vec2(-0.15, -0.15),
         Vec2(0, -0.1),
         Vec2(0.15, -0.15),
-        Vec2(0, 0.2)
+        Vec2(0, 0.2),
       ]), {
           density: 1000,
           filterCategoryBits: ASTEROID,
-          filterMaskBits: BULLET | SHIP
+          filterMaskBits: BULLET | SHIP,
         });
 
-      enemy.render = { fill: '#bb0000', stroke: '#000000' }
+      enemy.render = { fill: "#bb0000", stroke: "#000000" };
     }
 
     enemy.shipId = shipId;
@@ -502,10 +501,13 @@ function Physics(ui) {
   }
 
   function crash(ship, ufo, shouldBroadCastMyCrash) {
-    if (!shipBody) return;
+    if (!shipBody) {
+      return;
+    }
 
-    if (shouldBroadCastMyCrash)
+    if (shouldBroadCastMyCrash) {
       broadcastBustStatus(shipUniqueId, ship);
+    }
 
     state.crash();
     ui.updateStatus();
@@ -516,43 +518,44 @@ function Physics(ui) {
     shipBody = null;
 
     // if UFO is an enemy ship, destroy it.
-    if (ufo != null && ships[ufo.shipId])
+    if (ufo !== null && ships[ufo.shipId]) {
       destroyEnemy(ufo);
+    }
 
     if (state.lives <= 0) {
       end();
       return;
     }
-    setTimeout(function () {
+    setTimeout(() => {
       // Add ship again
       setupShip();
     }, 1000);
   }
 
   function hit(enemyShip, bulletBody) {
-    var bidx = bulletBodies.indexOf(bulletBody);
-    if (ships[enemyShip.shipId] && bidx != -1) {
+    const bidx = bulletBodies.indexOf(bulletBody);
+    if (ships[enemyShip.shipId] && bidx !== -1) {
       destroyEnemy(enemyShip);
 
       state.levelUp();
       ui.updateStatus();
 
-      var hs = JSON.parse(_view.get(highScoreConst));
+      const hs = JSON.parse(pragueView.get(highScoreConst));
       if (hs == null || hs.score < state.level) {
-        var name = _friendlyName == '' || _friendlyName == null ? '?' : _friendlyName;
-        _view.set(highScoreConst, JSON.stringify({ user: shipUniqueId, friendlyName: name, score: state.level }));
+        const name = pragueFriendlyName === "" || pragueFriendlyName == null ? "?" : pragueFriendlyName;
+        pragueView.set(highScoreConst, JSON.stringify({ user: shipUniqueId, friendlyName: name, score: state.level }));
       }
 
       // Remove bullet
-      _view.set(
+      pragueView.set(
         bulletUniqueId + bulletBody.bulletNo,
         JSON.stringify(
           {
-            isAlive: false,
+            angle: bulletBody.c_position.a,
             bulletNo: bulletBody.bulletNo,
             dieTime: bulletBody.dieTime,
+            isAlive: false,
             position: bulletBody.getPosition(),
-            angle: bulletBody.c_position.a
           }));
 
       world.destroyBody(bulletBody);
@@ -561,15 +564,15 @@ function Physics(ui) {
   }
 
   function broadcastBustStatus(shipId, shipBodyLocal) {
-    _view.set(
+    pragueView.set(
       shipId,
       JSON.stringify(
         {
-          lastModified: Date.now().valueOf(),
-          position: shipBodyLocal.getPosition(),
           angle: shipBodyLocal.getAngle(),
           busted: true,
-          isAlive: false
+          isAlive: false,
+          lastModified: Date.now().valueOf(),
+          position: shipBodyLocal.getPosition(),
         }));
   }
 
@@ -583,16 +586,16 @@ function Physics(ui) {
 
   // If the body is out of space bounds, wrap it to the other side
   function wrap(body) {
-    var p = body.getPosition();
+    const p = body.getPosition();
     p.x = wrapNumber(p.x, -SPACE_WIDTH / 2, SPACE_WIDTH / 2);
     p.y = wrapNumber(p.y, -SPACE_HEIGHT / 2, SPACE_HEIGHT / 2);
     body.setPosition(p);
   }
 
   function wrapNumber(num, min, max) {
-    if (typeof min === 'undefined') {
+    if (typeof min === "undefined") {
       max = 1, min = 0;
-    } else if (typeof max === 'undefined') {
+    } else if (typeof max === "undefined") {
       max = min, min = 0;
     }
     if (max > min) {
@@ -618,41 +621,40 @@ function Physics(ui) {
   this.ratio = 64;
 }
 
-
 function doStage() {
-
-
-  Stage(function (stage) {
-    var activeKeys = {};
-    var KEY_NAMES = {
-      32: 'fire',
-      37: 'right',
-      38: 'up',
-      39: 'left',
-      40: 'down',
-      65: 'a',
+  Stage((stage) => {
+    const activeKeys = {};
+    const KEY_NAMES = {
+      32: "fire",
+      37: "right",
+      38: "up",
+      39: "left",
+      40: "down",
+      65: "a",
     };
 
-    var physics = new Physics({
-      startGame: startGame,
-      endGame: endGame,
-      updateStatus: updateStatus,
-      activeKeys: activeKeys
+    const physics = new Physics({
+      activeKeys,
+      endGame,
+      startGame,
+      updateStatus,
     });
 
-    var world, meta, status, gameover;
+    let world;
+    let meta;
+    let gameover;
 
-    stage.background('#222222');
-    stage.on('viewport', function (size) {
+    stage.background("#222222");
+    stage.on("viewport", (size) => {
       meta.pin({
-        scaleMode: 'in-pad',
+        scaleHeight: size.height,
+        scaleMode: "in-pad",
         scaleWidth: size.width,
-        scaleHeight: size.height
       });
       world.pin({
-        scaleMode: 'in-pad',
+        scaleHeight: size.height,
+        scaleMode: "in-pad",
         scaleWidth: size.width,
-        scaleHeight: size.height
       });
     });
 
@@ -660,8 +662,8 @@ function doStage() {
       .planck(physics.world, { ratio: 80 })
       .pin({
         handle: -0.5,
+        height: physics.spaceHeight,
         width: physics.spaceWidth,
-        height: physics.spaceHeight
       })
       .appendTo(stage);
 
@@ -672,29 +674,29 @@ function doStage() {
       .pin({ width: 1000, height: 1000 })
       .appendTo(stage);
 
-    livesStatus = Stage
-      .string('text')
+    const livesStatus = Stage
+      .string("text")
       .pin({ align: 0, offset: 20 })
       .appendTo(meta);
 
-    killStatus = Stage
-      .string('text')
+    const killStatus = Stage
+      .string("text")
       .pin({ align: 0, offsetX: 20, offsetY: 50 })
       .appendTo(meta);
 
-    clientsStatus = Stage
-      .string('text')
+    const clientsStatus = Stage
+      .string("text")
       .pin({ alignX: 1, offsetX: -20, offsetY: 20 })
       .appendTo(meta);
 
-    hsStatus = Stage
-      .string('text')
+    const hsStatus = Stage
+      .string("text")
       .pin({ alignX: 1, offsetX: -20, offsetY: 50 })
       .appendTo(meta);
 
     gameover = Stage
-      .string('text')
-      .value('Game Over!')
+      .string("text")
+      .value("Game Over!")
       .pin({ align: 0.5, scale: 1.6 })
       .appendTo(meta);
 
@@ -707,35 +709,34 @@ function doStage() {
     }
 
     function updateStatus() {
-      livesStatus.value('Lives:' + getHearts(physics.state.lives));
-      killStatus.value('Kills: ' + physics.state.level);
-      clientsStatus.value('Clients: ' + physics.state.connectedClients);
+      livesStatus.value("Lives:" + getHearts(physics.state.lives));
+      killStatus.value("Kills: " + physics.state.level);
+      clientsStatus.value("Clients: " + physics.state.connectedClients);
 
-      var owner = '';
-      var score = 0;
-      var hs = JSON.parse(_view.get(highScoreConst));
+      let owner = "";
+      let score = 0;
+      const  hs = JSON.parse(pragueView.get(highScoreConst));
       if (hs != null) {
-        if (hs.user == shipUniqueId) {
-          owner = 'You';
-        }
-        else {
+        if (hs.user === shipUniqueId) {
+          owner = "You";
+        } else {
           owner = hs.friendlyName;
         }
 
         score = hs.score;
       }
 
-      hsStatus.value('High Score(' + owner + '): ' + score);
+      hsStatus.value("High Score(" + owner + "): " + score);
     }
 
-    document.onkeydown = function (evt) {
+    document.onkeydown = (evt) => {
       if (physics.state.gameover) {
         physics.start();
       }
       activeKeys[KEY_NAMES[evt.keyCode]] = true;
     };
 
-    document.onkeyup = function (evt) {
+    document.onkeyup = (evt) => {
       activeKeys[KEY_NAMES[evt.keyCode]] = false;
     };
 
@@ -744,9 +745,9 @@ function doStage() {
 }
 
 function getHearts(count) {
-  var h = '';
-  for (var i = 0; i < count; i++) {
-    h += " ♥"; //♡
+  let h = "";
+  for (let i = 0; i < count; i++) {
+    h += " ♥";
   }
 
   return h;
@@ -754,24 +755,24 @@ function getHearts(count) {
 
 Stage({
   textures: {
-    text: function (d) {
-      d += '';
-      return Stage.canvas(function (ctx) {
-        var ratio = 2;
+    text: (d) => {
+      d += "";
+      return Stage.canvas((ctx) => {
+        const ratio = 2;
         this.size(16, 24, ratio);
         ctx.scale(ratio, ratio);
-        ctx.font = 'bold 24px monospace';
-        ctx.fillStyle = '#ddd';
-        ctx.textBaseline = 'top';
+        ctx.font = "bold 24px monospace";
+        ctx.fillStyle = "#ddd";
+        ctx.textBaseline = "top";
         ctx.fillText(d, 0, 1);
       });
-    }
-  }
+    },
+  },
 });
 
-function updateFriendlyName() {
-  const name = document.getElementById("friendlyName").value;
-  _friendlyName = name;
-  document.activeElement.blur();
+export function updateFriendlyName() {
+  const name = (document.getElementById("friendlyName") as HTMLInputElement).value;
+  pragueFriendlyName = name;
+  (document.activeElement as HTMLElement).blur();
   return false;
 }
