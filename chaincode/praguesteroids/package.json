@@ -1,6 +1,13 @@
 {
-  "name": "pragstroids",
+  "name": "@chaincode/praguesteroids",
   "version": "0.8.10",
+  "scripts": {
+    "build": "npm run tsc && npm run webpack && npm run tslint",
+    "tsc": "tsc",
+    "webpack": "webpack --config webpack.config.js",
+    "tslint": "tslint 'src/**/*.ts'",
+    "start": "webpack-serve webpack.config.js --port 8081 --open"
+  },
   "keywords": [
     "html5",
     "game",
@@ -10,40 +17,22 @@
     "canvas",
     "mobile"
   ],
-  "files": [
-    "doc/",
-    "ext/",
-    "lib/",
-    "platform/",
-    "test/"
-  ],
   "devDependencies": {
-    "browserify": "^2.3.0",
-    "browserify-middleware": "^7.0.0",
-    "expect.js": "*",
-    "express": "^4.13.4",
-    "gulp": "*",
-    "gulp-browserify": "*",
-    "gulp-bump": "*",
-    "gulp-concat": "*",
-    "gulp-header": "^1.7.1",
-    "gulp-mocha": "*",
-    "gulp-rename": "^1.2.0",
-    "gulp-uglify": "*",
-    "gulp-util": "^3.0.5",
-    "gulp-wrap": "*",
-    "minimist": "*",
-    "sandboxed-module": "^2.0.0",
-    "serve-index": "^1.7.3",
-    "sinon": "*",
-    "uglifyify": "^3.0.1",
-    "vinyl-buffer": "^1.0.0",
-    "vinyl-source-stream": "^1.0.0",
-    "vinyl-transform": "^1.0.0"
+    "@prague/loader": "^0.1.3390",
+    "@prague/socket-storage": "^0.1.3390",
+    "jsonwebtoken": "^8.3.0",
+    "source-map-loader": "^0.2.4",
+    "ts-loader": "^5.1.1",
+    "tslint": "^5.11.0",
+    "typescript": "^3.0.3",
+    "webpack": "^4.19.1",
+    "webpack-cli": "^3.1.0"
   },
   "dependencies": {
-    "@prague/routerlicious": "^0.1.3084",
+    "@prague/map": "^0.1.3390",
+    "@prague/runtime-definitions": "^0.1.3390",
     "browser-resolve": "^1.11.3",
+    "planck-js": "^0.2.4",
     "stage-js": "^0.8.10"
   }
 }

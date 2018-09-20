@@ -1,9 +1,0 @@
-{
-  "name": "jwttokengenerator",
-  "version": "0.1.0",
-  "description": "jwt token generator",
-  "dependencies": {
-    "jsonwebtoken": "^8.2.1"
-  },
-  "author": "Microsoft"
-}
