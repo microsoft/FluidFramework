@@ -1,6 +1,6 @@
 import { IMapView } from "@prague/map";
 import { IPlatform } from "@prague/runtime-definitions";
-import * as Stage from "stage-js";
+import * as Stage from "stage-js/platform/web";
 import { Document } from "../document";
 import { highScoreConst, Physics } from "./physics";
 
@@ -76,128 +76,130 @@ export class PragueSteroids {
     }
 
     private doStage() {
-        Stage((stage) => {
-            const activeKeys = {};
-            const KEY_NAMES = {
-                32: "fire",
-                37: "right",
-                38: "up",
-                39: "left",
-                40: "down",
-                65: "a",
-            };
+        Stage((stage) => this.runStage(stage));
+    }
 
-            const physics = new Physics(
-                this.pragueView,
-                {
-                    activeKeys,
-                    endGame,
-                    startGame,
-                    updateStatus,
-                });
+    private runStage(stage) {
+        const activeKeys = {};
+        const KEY_NAMES = {
+            32: "fire",
+            37: "right",
+            38: "up",
+            39: "left",
+            40: "down",
+            65: "a",
+        };
 
-            let world;
-            let meta;
-            let gameover;
-
-            stage.background("#222222");
-            stage.on("viewport", (size) => {
-                meta.pin({
-                    scaleHeight: size.height,
-                    scaleMode: "in-pad",
-                    scaleWidth: size.width,
-                });
-                world.pin({
-                    scaleHeight: size.height,
-                    scaleMode: "in-pad",
-                    scaleWidth: size.width,
-                });
+        const physics = new Physics(
+            this.pragueView,
+            {
+                activeKeys,
+                endGame,
+                startGame,
+                updateStatus,
             });
 
-            world = new Stage
-                .planck(physics.world, { ratio: 80 })
-                .pin({
-                    handle: -0.5,
-                    height: physics.spaceHeight,
-                    width: physics.spaceWidth,
-                })
-                .appendTo(stage);
+        let world;
+        let meta;
+        let gameover;
 
-            stage.tick(physics.tick);
-
-            meta = Stage
-                .create()
-                .pin({ width: 1000, height: 1000 })
-                .appendTo(stage);
-
-            const livesStatus = Stage
-                .string("text")
-                .pin({ align: 0, offset: 20 })
-                .appendTo(meta);
-
-            const killStatus = Stage
-                .string("text")
-                .pin({ align: 0, offsetX: 20, offsetY: 50 })
-                .appendTo(meta);
-
-            const clientsStatus = Stage
-                .string("text")
-                .pin({ alignX: 1, offsetX: -20, offsetY: 20 })
-                .appendTo(meta);
-
-            const hsStatus = Stage
-                .string("text")
-                .pin({ alignX: 1, offsetX: -20, offsetY: 50 })
-                .appendTo(meta);
-
-            gameover = Stage
-                .string("text")
-                .value("Game Over!")
-                .pin({ align: 0.5, scale: 1.6 })
-                .appendTo(meta);
-
-            function startGame() {
-                gameover.hide();
-            }
-
-            function endGame() {
-                gameover.show();
-            }
-
-            function updateStatus() {
-                livesStatus.value("Lives:" + getHearts(physics.state.lives));
-                killStatus.value("Kills: " + physics.state.level);
-                clientsStatus.value("Clients: " + physics.state.connectedClients);
-
-                let owner = "";
-                let score = 0;
-                const hs = JSON.parse(this.pragueView.get(this.highScoreConst));
-                if (hs != null) {
-                    if (hs.user === this.shipUniqueId) {
-                        owner = "You";
-                    } else {
-                        owner = hs.friendlyName;
-                    }
-
-                    score = hs.score;
-                }
-
-                hsStatus.value("High Score(" + owner + "): " + score);
-            }
-
-            document.onkeydown = (evt) => {
-                if (physics.state.gameover) {
-                    physics.start();
-                }
-                activeKeys[KEY_NAMES[evt.keyCode]] = true;
-            };
-
-            document.onkeyup = (evt) => {
-                activeKeys[KEY_NAMES[evt.keyCode]] = false;
-            };
-
-            physics.start();
+        stage.background("#222222");
+        stage.on("viewport", (size) => {
+            meta.pin({
+                scaleHeight: size.height,
+                scaleMode: "in-pad",
+                scaleWidth: size.width,
+            });
+            world.pin({
+                scaleHeight: size.height,
+                scaleMode: "in-pad",
+                scaleWidth: size.width,
+            });
         });
+
+        world = new Stage
+            .planck(physics.world, { ratio: 80 })
+            .pin({
+                handle: -0.5,
+                height: physics.spaceHeight,
+                width: physics.spaceWidth,
+            })
+            .appendTo(stage);
+
+        stage.tick(physics.tick);
+
+        meta = Stage
+            .create()
+            .pin({ width: 1000, height: 1000 })
+            .appendTo(stage);
+
+        const livesStatus = Stage
+            .string("text")
+            .pin({ align: 0, offset: 20 })
+            .appendTo(meta);
+
+        const killStatus = Stage
+            .string("text")
+            .pin({ align: 0, offsetX: 20, offsetY: 50 })
+            .appendTo(meta);
+
+        const clientsStatus = Stage
+            .string("text")
+            .pin({ alignX: 1, offsetX: -20, offsetY: 20 })
+            .appendTo(meta);
+
+        const hsStatus = Stage
+            .string("text")
+            .pin({ alignX: 1, offsetX: -20, offsetY: 50 })
+            .appendTo(meta);
+
+        gameover = Stage
+            .string("text")
+            .value("Game Over!")
+            .pin({ align: 0.5, scale: 1.6 })
+            .appendTo(meta);
+
+        function startGame() {
+            gameover.hide();
+        }
+
+        function endGame() {
+            gameover.show();
+        }
+
+        function updateStatus() {
+            livesStatus.value("Lives:" + getHearts(physics.state.lives));
+            killStatus.value("Kills: " + physics.state.level);
+            clientsStatus.value("Clients: " + physics.state.connectedClients);
+
+            let owner = "";
+            let score = 0;
+            const hs = JSON.parse(this.pragueView.get(this.highScoreConst));
+            if (hs != null) {
+                if (hs.user === this.shipUniqueId) {
+                    owner = "You";
+                } else {
+                    owner = hs.friendlyName;
+                }
+
+                score = hs.score;
+            }
+
+            hsStatus.value("High Score(" + owner + "): " + score);
+        }
+
+        document.onkeydown = (evt) => {
+            if (physics.state.gameover) {
+                physics.start();
+            }
+            activeKeys[KEY_NAMES[evt.keyCode]] = true;
+        };
+
+        document.onkeyup = (evt) => {
+            activeKeys[KEY_NAMES[evt.keyCode]] = false;
+        };
+
+        physics.start();
     }
 }
 

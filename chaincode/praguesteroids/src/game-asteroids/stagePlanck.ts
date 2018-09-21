@@ -1,13 +1,15 @@
-(function () {
-  Stage.Planck = PlanckViewer;
-  Stage.planck = function(world, opts) {
-    return new PlanckViewer(world, opts);
-  };
+import * as Stage from "stage-js";
 
-  PlanckViewer._super = Stage;
-  PlanckViewer.prototype = Stage._create(PlanckViewer._super.prototype);
+export class PlanckViewer extends Stage {
+  constructor(world, opts) {
+    Stage.Planck = PlanckViewer;
+    Stage.planck = function(world, opts) {
+      return new PlanckViewer(world, opts);
+    };
 
-  function PlanckViewer(world, opts) {
+    PlanckViewer._super = Stage;
+    PlanckViewer.prototype = Stage._create(PlanckViewer._super.prototype);
+
     PlanckViewer._super.call(this);
     this.label('Planck');
 
@@ -46,7 +48,7 @@
     });
   }
 
-  PlanckViewer.prototype.renderWorld = function(world) {
+  private renderWorld(world) {
     var world = this._world;
     var viewer = this;
 
@@ -137,7 +139,7 @@
 
   }
 
-  PlanckViewer.prototype.drawJoint = function(joint, options) {
+  private drawJoint(joint, options) {
     var lw = options.lineWidth;
     var ratio = options.ratio;
 
@@ -162,7 +164,7 @@
     return image;
   };
 
-  PlanckViewer.prototype.drawCircle = function(shape, options) {
+  private drawCircle(shape, options) {
     var lw = options.lineWidth;
     var ratio = options.ratio;
 
@@ -193,7 +195,7 @@
     return node;
   };
 
-  PlanckViewer.prototype.drawEdge = function(edge, options) {
+  private drawEdge(edge, options) {
     var lw = options.lineWidth;
     var ratio = options.ratio;
 
@@ -230,7 +232,7 @@
     return node;
   };
 
-  PlanckViewer.prototype.drawPolygon = function(shape, options) {
+  private drawPolygon(shape, options) {
     var lw = options.lineWidth;
     var ratio = options.ratio;
 
@@ -291,7 +293,7 @@
     return node;
   };
 
-  PlanckViewer.prototype.drawChain = function(shape, options) {
+  private drawChain(shape, options) {
     var lw = options.lineWidth;
     var ratio = options.ratio;
 
@@ -352,4 +354,4 @@
     var node = Stage.create().append(image);
     return node;
   };
-})();
+}
