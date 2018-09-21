@@ -6,6 +6,17 @@ import * as jwt from "jsonwebtoken";
 import * as winston from "winston";
 import * as core from "../core";
 
+// A safety mechanism to make sure that all outbound messages from alfred adheres to the permitted schema.
+function sanitizeMessage(message: any): IDocumentMessage {
+    return {
+        clientSequenceNumber: message.clientSequenceNumber,
+        contents: message.contents,
+        referenceSequenceNumber: message.referenceSequenceNumber,
+        traces: message.traces,
+        type: message.type,
+    };
+}
+
 export function register(
     webSocketServer: core.IWebSocketServer,
     metricClientConfig: any,
@@ -91,7 +102,7 @@ export function register(
                     }
                 } else {
                     const connection = connectionsMap.get(clientId);
-                    connection.order(message);
+                    connection.order(sanitizeMessage(message));
                 }
             }
 
