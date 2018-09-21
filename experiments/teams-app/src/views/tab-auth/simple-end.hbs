@@ -1,0 +1,77 @@
+<!--
+// Copyright (c) Microsoft Corporation
+// All rights reserved.
+//
+// MIT License:
+// Permission is hereby granted, free of charge, to any person obtaining
+// a copy of this software and associated documentation files (the
+// "Software"), to deal in the Software without restriction, including
+// without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to
+// permit persons to whom the Software is furnished to do so, subject to
+// the following conditions:
+//
+// The above copyright notice and this permission notice shall be
+// included in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED ""AS IS"", WITHOUT WARRANTY OF ANY KIND,
+// EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+// NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+// OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+// WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+-->
+
+<html>
+    <head>
+        <title>Simple Authentication Sample Login</title>
+    </head>
+    <body>
+        <script src="https://statics.teams.microsoft.com/sdk/v1.0/js/MicrosoftTeams.min.js" integrity="sha384-SNENyRfvDvybst1u0LawETYF6L5yMx5Ya1dIqWoG4UDTZ/5UAMB15h37ktdBbyFh" crossorigin="anonymous"></script>
+
+        <script type="text/javascript">
+            microsoftTeams.initialize();
+            localStorage.removeItem("simple.error");
+
+            let hashParams = getHashParameters();
+            if (hashParams["error"]) {
+                // Authentication/authorization failed
+                localStorage.setItem("simple.error", JSON.stringify(hashParams));
+                microsoftTeams.authentication.notifyFailure(hashParams["error"]);
+            } else if (hashParams["access_token"]) {
+                // Get the stored state parameter and compare with incoming state
+                let expectedState = localStorage.getItem("simple.state");
+                if (expectedState !== hashParams["state"]) {
+                    // State does not match, report error
+                    localStorage.setItem("simple.error", JSON.stringify(hashParams));
+                    microsoftTeams.authentication.notifyFailure("StateDoesNotMatch");
+                } else {
+                    // Success -- return token information to the parent page
+                    microsoftTeams.authentication.notifySuccess({
+                        idToken: hashParams["id_token"],
+                        accessToken: hashParams["access_token"],
+                        tokenType: hashParams["token_type"],
+                        expiresIn: hashParams["expires_in"]
+                    })
+                }
+            } else {
+                // Unexpected condition: hash does not contain error or access_token parameter
+                localStorage.setItem("simple.error", JSON.stringify(hashParams));
+                microsoftTeams.authentication.notifyFailure("UnexpectedFailure");
+            }
+
+            // Parse hash parameters into key-value pairs
+            function getHashParameters() {
+                let hashParams = {};
+                location.hash.substr(1).split("&").forEach(function(item) {
+                    let s = item.split("="),
+                    k = s[0],
+                    v = s[1] && decodeURIComponent(s[1]);
+                    hashParams[k] = v;
+                });
+                return hashParams;
+            }
+        </script>
+    </body>
+</html>

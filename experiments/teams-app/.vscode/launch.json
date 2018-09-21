@@ -1,0 +1,116 @@
+{
+    // Use IntelliSense to learn about possible Node.js debug attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Launch - Emulator",
+            "program": "${workspaceRoot}/src/app.ts",
+            "cwd": "${workspaceRoot}/build/src",
+            "preLaunchTask": "build",
+            "sourceMaps": true,
+            "outFiles": [ "${workspaceRoot}/build/**/*.js" ],
+            "env": {
+                "BASE_URI": "",
+                "MICROSOFT_APP_ID": "",
+                "MICROSOFT_APP_PASSWORD": "",
+                "LUIS_ENDPOINT_URI": "",
+                "EXTERNAL_APP_CONSUMER_KEY": "",
+                "EXTERNAL_APP_CONSUMER_SECRET": "",
+                "EXTERNAL_APP_USER_TOKEN": "",
+                "EXTERNAL_APP_USER_TOKEN_SECRET": "",
+                "VSTS_APP_ID": "",
+                "VSTS_APP_SECRET": "",
+                "CHANNEL_STORAGE_TYPE": "",
+                "MONGODB_CONNECTION_STRING": "",
+                "MONGODB_BOT_STATE_COLLECTION": "",
+                "MONGODB_TEMP_TOKENS_COLLECTION": ""
+            }
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Launch - Teams Debug",
+            "program": "${workspaceRoot}/src/app.ts",
+            "cwd": "${workspaceRoot}/build/src",
+            "preLaunchTask": "build",
+            "sourceMaps": true,
+            "outFiles": [ "${workspaceRoot}/build/**/*.js" ],
+            "env": {
+                "BASE_URI": "https://82b19891.ngrok.io",
+                "MICROSOFT_APP_ID": "e17ee6e0-da39-4ce4-bb13-efabb7d29311",
+                "MICROSOFT_APP_PASSWORD": "",
+                "LUIS_ENDPOINT_URI": "",
+                "EXTERNAL_APP_CONSUMER_KEY": "",
+                "EXTERNAL_APP_CONSUMER_SECRET": "",
+                "EXTERNAL_APP_USER_TOKEN": "",
+                "EXTERNAL_APP_USER_TOKEN_SECRET": "",
+                "VSTS_APP_ID": "",
+                "VSTS_APP_SECRET": "",
+                "CHANNEL_STORAGE_TYPE": "",
+                "MONGODB_CONNECTION_STRING": "",
+                "MONGODB_BOT_STATE_COLLECTION": "",
+                "MONGODB_TEMP_TOKENS_COLLECTION": "",
+                "OFFICE_365_TENANT_FILTER":"#ANY#"
+            }
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Launch - Fiddler (only works when running Fiddler)",
+            "program": "${workspaceRoot}/src/app.ts",
+            "cwd": "${workspaceRoot}/build/src",
+            "preLaunchTask": "build",
+            "sourceMaps": true,
+            "outFiles": [ "${workspaceRoot}/build/**/*.js" ],
+            "env": {
+                "BASE_URI": "https://82b19891.ngrok.io",
+                "MICROSOFT_APP_ID": "e17ee6e0-da39-4ce4-bb13-efabb7d29311",
+                "MICROSOFT_APP_PASSWORD": "",
+                "LUIS_ENDPOINT_URI": "",
+                "EXTERNAL_APP_CONSUMER_KEY": "",
+                "EXTERNAL_APP_CONSUMER_SECRET": "",
+                "EXTERNAL_APP_USER_TOKEN": "",
+                "EXTERNAL_APP_USER_TOKEN_SECRET": "",
+                "VSTS_APP_ID": "",
+                "VSTS_APP_SECRET": "",
+                "CHANNEL_STORAGE_TYPE": "",
+                "MONGODB_CONNECTION_STRING": "",
+                "MONGODB_BOT_STATE_COLLECTION": "",
+                "MONGODB_TEMP_TOKENS_COLLECTION": "",
+                "http_proxy": "http://localhost:8888",
+                "no_proxy": "login.microsoftonline.com",
+                "NODE_TLS_REJECT_UNAUTHORIZED": "0"
+            }
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Launch (no build)",
+            "program": "${workspaceRoot}\\build\\src\\app.js",
+            "cwd": "${workspaceRoot}\\build\\src",
+            "sourceMaps": true,
+            "outFiles": [],
+            "env": {
+                "BASE_URI": "https://82b19891.ngrok.io",
+                "MICROSOFT_APP_ID": "e17ee6e0-da39-4ce4-bb13-efabb7d29311",
+                "MICROSOFT_APP_PASSWORD": "",
+                "LUIS_ENDPOINT_URI": "",
+                "EXTERNAL_APP_CONSUMER_KEY": "",
+                "EXTERNAL_APP_CONSUMER_SECRET": "",
+                "EXTERNAL_APP_USER_TOKEN": "",
+                "EXTERNAL_APP_USER_TOKEN_SECRET": "",
+                "VSTS_APP_ID": "",
+                "VSTS_APP_SECRET": "",
+                "CHANNEL_STORAGE_TYPE": "",
+                "MONGODB_CONNECTION_STRING": "",
+                "MONGODB_BOT_STATE_COLLECTION": "",
+                "MONGODB_TEMP_TOKENS_COLLECTION": "",
+                "OFFICE_365_TENANT_FILTER":"#ANY#"
+            }
+        }
+    ]
+}

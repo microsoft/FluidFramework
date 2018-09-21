@@ -1,0 +1,32 @@
+{
+    "app": {
+        "baseUri": "BASE_URI",
+        "appId": "MICROSOFT_APP_ID"
+    },
+    "bot": {
+        "botId": "MICROSOFT_APP_ID",
+        "botPassword": "MICROSOFT_APP_PASSWORD"
+    },
+    "luis": {
+        "endpointUri": "LUIS_ENDPOINT_URI"
+    },
+    "externalApp": {
+        "consumer_key": "EXTERNAL_APP_CONSUMER_KEY",
+        "consumer_secret": "EXTERNAL_APP_CONSUMER_SECRET"
+    },
+    "externalAppUser": {
+        "token": "EXTERNAL_APP_USER_TOKEN",
+        "token_secret": "EXTERNAL_APP_USER_TOKEN_SECRET"
+    },
+    "vstsApp": {
+        "appId": "VSTS_APP_ID",
+        "appSecret": "VSTS_APP_SECRET"
+    },
+    "channelStorageType": "CHANNEL_STORAGE_TYPE",
+    "mongoDb": {
+        "connectionString": "MONGODB_CONNECTION_STRING",
+        "botStateCollection": "MONGODB_BOT_STATE_COLLECTION",
+        "tempTokensCollection": "MONGODB_TEMP_TOKENS_COLLECTION"
+    },
+    "office365TenantFilter" :"OFFICE_365_TENANT_FILTER"
+}

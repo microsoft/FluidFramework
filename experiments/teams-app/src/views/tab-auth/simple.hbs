@@ -1,0 +1,136 @@
+<!--
+// Copyright (c) Microsoft Corporation
+// All rights reserved.
+//
+// MIT License:
+// Permission is hereby granted, free of charge, to any person obtaining
+// a copy of this software and associated documentation files (the
+// "Software"), to deal in the Software without restriction, including
+// without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to
+// permit persons to whom the Software is furnished to do so, subject to
+// the following conditions:
+//
+// The above copyright notice and this permission notice shall be
+// included in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED ""AS IS"", WITHOUT WARRANTY OF ANY KIND,
+// EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+// NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+// OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+// WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+-->
+
+<html>
+    <head>
+        <title>Simple Authentication Sample</title>
+    </head>
+    <body>
+        <p>
+            This sample shows the basics of an authentication/authorization flow in a Microsoft Teams tab.
+        </p>
+        <p>
+            Click on the "Login" button below to login to Azure AD, and grant the sample app access to your profile information.
+            The app will fetch your profile using Microsoft Graph, and display information about you below. 
+        </p>
+
+        <!-- Login button -->
+        <button onclick="login()">Login to Azure AD</button>
+        <button onclick="loginV2()">Login to Azure AD (V2 endpoint)</button>
+
+        <!-- Result -->
+        <p>
+            <div id="divError" style="display: none"></div>
+            <div id="divProfile" style="display: none">
+                <div><b>Name:</b> <span id="profileDisplayName"/></div>
+                <div><b>Job title:</b> <span id="profileJobTitle"/></div>
+                <div><b>E-mail:</b> <span id="profileMail"/></div>
+                <div><b>UPN:</b> <span id="profileUpn"/></div>
+                <div><b>Object id:</b> <span id="profileObjectId"/></div>
+            </div>
+        </p>
+
+        <script src="https://code.jquery.com/jquery-3.1.1.js" integrity="sha384-VC7EHu0lDzZyFfmjTPJq+DFyIn8TUGAJbEtpXquazFVr00Q/OOx//RjiZ9yU9+9m" crossorigin="anonymous"></script>
+        <script src="https://statics.teams.microsoft.com/sdk/v1.0/js/MicrosoftTeams.min.js" integrity="sha384-SNENyRfvDvybst1u0LawETYF6L5yMx5Ya1dIqWoG4UDTZ/5UAMB15h37ktdBbyFh" crossorigin="anonymous"></script>
+
+        <script type="text/javascript">
+            microsoftTeams.initialize();
+
+            // Login to Azure AD and get access to Microsoft Graph
+            function login() {
+                hideProfileAndError(); 
+
+                microsoftTeams.authentication.authenticate({
+                    url: window.location.origin + "/tab-auth/simple-start",
+                    width: 600,
+                    height: 535,
+                    successCallback: function (result) {
+                        console.log("Login succeeded: " + result);
+                        getUserProfile(result.accessToken);
+                    },
+                    failureCallback: function (reason) {
+                        console.log("Login failed: " + reason);
+                        handleAuthError(reason);
+                    }
+                });
+            }
+
+            // Login to Azure AD and get access to Microsoft Graph
+            function loginV2() {
+                hideProfileAndError(); 
+
+                microsoftTeams.authentication.authenticate({
+                    url: window.location.origin + "/tab-auth/simple-start-v2",
+                    width: 600,
+                    height: 535,
+                    successCallback: function (result) {
+                        console.log("Login succeeded: " + result);
+                        getUserProfile(result.accessToken);
+                    },
+                    failureCallback: function (reason) {
+                        console.log("Login failed: " + reason);
+                        handleAuthError(reason);
+                    }
+                });
+            }
+
+            // Get the user's profile information from Microsoft Graph
+            function getUserProfile(accessToken) {
+                $.ajax({
+                    url: "https://graph.microsoft.com/v1.0/me/",
+                    beforeSend: function(request) {
+                        request.setRequestHeader("Authorization", "Bearer " + accessToken);
+                    },
+                    success: function (profile) {
+                        $("#profileDisplayName").text(profile.displayName);
+                        $("#profileJobTitle").text(profile.jobTitle);
+                        $("#profileMail").text(profile.mail);
+                        $("#profileUpn").text(profile.userPrincipalName);
+                        $("#profileObjectId").text(profile.id);
+                        $("#divProfile").css({ display: "" });
+                        $("#divError").css({ display: "none" });
+                    },
+                    error: function (xhr, textStatus, errorThrown) {
+                        console.log("textStatus: " + textStatus + ", errorThrown:" + errorThrown);
+                        $("#divError").text(errorThrown).css({ display: "" });
+                        $("#divProfile").css({ display: "none" });
+                    },
+                });
+            }
+
+            // Show error information
+            function handleAuthError(reason) {
+                $("#divError").text(reason).css({ display: "" });
+                $("#divProfile").css({ display: "none" });
+            }
+
+            // Clear all information in tab
+            function hideProfileAndError() {
+                $("#divError").text("").css({ display: "none" });
+                $("#divProfile").css({ display: "none" });
+            }
+        </script>
+    </body>
+</html>

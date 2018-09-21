@@ -1,0 +1,78 @@
+<!--
+// Copyright (c) Microsoft Corporation
+// All Rights Reserved
+// Apache License 2.0
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+-->
+
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Manifest Creator</title>
+    </head>
+    <body>
+        <h1>Manifest Creator</h1>
+
+        <div style="padding: 50px 0px 0px 0px">
+        {{#if validBaseUri}}
+            <div style="height:20px; width:20px; background-color:green; float:left;"></div>
+            <p style="float:left; margin:0px 0px 0px 10px;">Endpoint to register in Bot Framework: {{baseUri}}/api/messages</p>
+        {{else}}
+            <div style="height:20px; width:20px; background-color:red; float:left;"></div>
+            <p style="float:left; margin:0px 0px 0px 10px;">Endpoint to register in Bot Framework: unknown - set environment variable BASE_URI</p>
+        {{/if}}
+        </div>
+
+        <br>
+
+        <div style="padding: 5px 0px 0px 0px">
+        {{#if validBaseUri}}
+            <div style="height:20px; width:20px; background-color:green; float:left;"></div>
+            <p style="float:left; margin:0px 0px 0px 10px;">Base URI to use in manifest: {{baseUri}}</p>
+        {{else}}
+            <div style="height:20px; width:20px; background-color:red; float:left;"></div>
+            <p style="float:left; margin:0px 0px 0px 10px;">Base URI to use in manifest: unknown - set environment variable BASE_URI</p>
+        {{/if}}
+        </div>
+
+        <br>
+
+        <div style="padding: 5px 0px 0px 0px">
+        {{#if validAppId}}
+            <div style="height:20px; width:20px; background-color:green; float:left;"></div>
+            <p style="float:left; margin:0px 0px 0px 10px;">App ID to use in manifest: {{appId}}</p>
+        {{else}}
+            <div style="height:20px; width:20px; background-color:red; float:left;"></div>
+            <p style="float:left; margin:0px 0px 0px 10px;">App ID to use in manifest: unknown - set environment variable MICROSOFT_APP_ID</p>
+        {{/if}}
+        </div>
+
+        <br>
+        <br>
+
+        {{#if createManifestEnabled}}
+            <button type="button" onclick="createManifest()">Create/Download Manifest</button>
+        {{else}}
+            <button type="button" disabled>Create/Download Manifest</button>
+            <br>
+            <p>Note: In order to create a manifest, all requirements above must be met with environment variables.</p>
+        {{/if}}
+
+        <script type="text/javascript">
+            function createManifest() {
+                window.location = window.location.protocol + '//' + window.location.host + '/createdManifest'
+            } 
+        </script>
+    </body>
+</html>

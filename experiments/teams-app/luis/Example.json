@@ -1,0 +1,50 @@
+{
+  "luis_schema_version": "1.3.1",
+  "versionId": "0.1",
+  "name": "Example",
+  "desc": "Example bot for Microsoft Teams",
+  "culture": "en-us",
+  "intents": [
+    {
+      "name": "intent1"
+    },
+    {
+      "name": "intent2"
+    }
+  ],
+  "entities": [],
+  "composites": [],
+  "closedLists": [],
+  "bing_entities": [],
+  "actions": [],
+  "model_features": [],
+  "regex_features": [
+    {
+      "name": "ExampleURLs",
+      "pattern": "https.*",
+      "activated": false
+    }
+  ],
+  "utterances": [
+    {
+      "text": "start example",
+      "intent": "intent1",
+      "entities": []
+    },
+    {
+      "text": "https://example.com",
+      "intent": "intent1",
+      "entities": []
+    },
+    {
+      "text": "start example 2",
+      "intent": "intent2",
+      "entities": []
+    },
+    {
+      "text": "begin example 2",
+      "intent": "intent2",
+      "entities": []
+    }
+  ]
+}

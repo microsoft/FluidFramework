@@ -1,0 +1,83 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <style type="text/css">
+        .row {
+            padding: 8px 0px;
+        }
+
+        .row input {
+            border: none;
+            border-bottom: 1px solid #4E9DC7;
+            background-color: transparent;
+            margin: 0 5px;
+            padding: 3px 5px;
+        }
+
+        .row input:hover {
+            background-color: rgba(0,0,0,0.05);
+        }
+
+        .row input:active {
+            background-color: rgba(0,0,0,0.1);
+        }
+
+        .row .label {
+            margin-bottom: 5px;
+        }
+
+        .primary-button {
+            background: #4C509D;
+            border: 0.125rem solid;
+            border-color: transparent;
+            border-radius: 0.1875rem;
+            color: #FFFFFF;
+            cursor: pointer;
+            font: inherit;
+            height: 2rem;
+            min-width: 6rem;
+            padding: 0.25rem;
+            white-space: nowrap;
+            font-family: 'Segoe UI', Tahoma, Helvetica, Sans-Serif;
+        }
+    </style>    
+</head>
+<!-- Purpose of this login html page is to show fake authentication when user click on signin action using popup window -->
+<!-- From popup window, user can send information from popup window to bot e.g. here we are passing random magic number to Bot -->
+<body>
+    <div class="row input-container">
+        <div>
+            User Name : <input type="text" />
+        </div>
+    </div>
+    <div class="row input-container">
+        <div>
+            Password : <input type="password" />
+        </div>
+    </div>
+    <div class="row input-container">
+        <div>
+            Magic Number : <input id="magicnumber" disabled="disabled" />
+        </div>
+    </div>
+
+    <input type="submit" class="primary-button" value="Submit" onClick="submit()">
+    <input type="submit" class="primary-button" value="Close" onClick="closeWindow()">
+
+    <script src="https://statics.teams.microsoft.com/sdk/v1.2/js/MicrosoftTeams.min.js"></script>
+    <script>
+        // magic number would not normally be shown to the user in the UI -- that is only to demonstrate the flow
+        // receiving code can compare the magic number with what it expected
+        document.getElementById('magicnumber').value = Math.floor(Math.random() * 1000000);
+        microsoftTeams.initialize();
+        function submit()
+        {
+            microsoftTeams.authentication.notifySuccess(document.getElementById('magicnumber').value);
+        }
+        function closeWindow()
+        {
+            microsoftTeams.authentication.notifyFailure();
+        }
+    </script>
+</body>
+</html>

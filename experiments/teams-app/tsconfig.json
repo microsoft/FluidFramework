@@ -1,0 +1,20 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "noImplicitAny": false,
+    "removeComments": false,
+    "preserveConstEnums": true,
+    "sourceMap": true,
+    "target": "es6",
+    "outDir": "build",
+    "types": [ "node" ]
+  },
+  "include": [
+    "src/**/*.ts",
+    "test/**/*.ts",
+    "app.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}

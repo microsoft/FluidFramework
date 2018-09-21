@@ -1,0 +1,69 @@
+{
+  "name": "example-microsoft-teams",
+  "version": "0.0.1",
+  "description": "Example for Microsoft Teams",
+  "author": {
+    "name": "Joshua Trick"
+  },
+  "license": "MIT",
+  "private": true,
+  "main": "app.js",
+  "scripts": {
+    "start": "gulp build && cd ./build/src && node app.js",
+    "expose": "ngrok http 3978 --host-header=localhost",
+    "build": "gulp build",
+    "debug": "node ./build/src/app.js"
+  },
+  "engines": {
+    "node": ">=6.9.1"
+  },
+  "dependencies": {
+    "async": "^2.4.0",
+    "bluebird": "^3.4.7",
+    "botbuilder": "^3.15.0",
+    "botbuilder-teams": "^0.2.1",
+    "chrono-node": "^1.2.5",
+    "config": "^1.25.1",
+    "crypto": "0.0.3",
+    "debug": "~2.2.0",
+    "escape-html": "^1.0.3",
+    "express": "~4.13.1",
+    "express-handlebars": "^3.0.0",
+    "jsonwebtoken": "^7.4.3",
+    "lodash": "^4.17.4",
+    "moment": "^2.17.1",
+    "mongodb": "^2.2.24",
+    "node-zip": "^1.1.1",
+    "oauth": "^0.9.15",
+    "q": "^1.4.1",
+    "random-number-csprng": "^1.0.2",
+    "serve-favicon": "^2.4.0"
+  },
+  "devDependencies": {
+    "@types/bluebird": "^3.0.37",
+    "@types/chai": "^3.4.34",
+    "@types/mocha": "^2.2.39",
+    "@types/node": "^7.0.5",
+    "@types/sinon": "^1.16.35",
+    "assert": "^1.4.1",
+    "chai": "^3.5.0",
+    "del": "^2.2.2",
+    "fs": "0.0.1-security",
+    "gulp": "^3.9.0",
+    "gulp-develop-server": "^0.5.0",
+    "gulp-json-transform": "^0.4.2",
+    "gulp-mocha": "^2.2.0",
+    "gulp-rename": "^1.2.2",
+    "gulp-sourcemaps": "^2.4.1",
+    "gulp-spawn-mocha": "^3.1.0",
+    "gulp-tslint": "^7.1.0",
+    "gulp-typescript": "^3.1.4",
+    "gulp-zip": "^4.0.0",
+    "istanbul": "^0.4.3",
+    "minimist": "^1.2.0",
+    "mocha": "^3.2.0",
+    "sinon": "^1.17.7",
+    "tslint": "^4.4.2",
+    "typescript": "^2.2.1"
+  }
+}
