@@ -256,9 +256,7 @@ export class ScriptoriumLambda implements IPartitionLambda {
     }
 
     public handler(message: utils.IMessage): void {
-        // BSON encoding does not allow any $ as the first character of a key.
-        // Replacing with private reserved characters.
-        const messageContent = message.value.toString().replace(/\$\$/g, String.fromCharCode(0xF0000));
+        const messageContent = message.value.toString();
 
         const parsedMessage = utils.safelyParseJSON(messageContent);
         if (parsedMessage === undefined) {
