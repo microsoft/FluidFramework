@@ -290,8 +290,11 @@ export class ScriptoriumLambda implements IPartitionLambda {
             this.ioManager.add(target, value.operation, message.offset);
 
             const clonedValue = _.cloneDeep(value);
-            const clonedWithTraces = clonedValue.operation as ISequencedDocumentMessage;
-            clonedWithTraces.traces = [];
+            const clonedOperation = clonedValue.operation as ISequencedDocumentMessage;
+
+            // Remove traces and serialize content before writing to mongo.
+            clonedOperation.traces = [];
+            clonedOperation.contents = JSON.stringify(clonedOperation.contents);
 
             // Batch send to MongoDB
             this.mongoManager.add(

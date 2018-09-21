@@ -31,7 +31,14 @@ export function getDeltas(
         const collection = await db.collection<any>(collectionName);
         const dbDeltas = await collection.find(query, { "operation.sequenceNumber": 1 });
 
-        return dbDeltas.map((delta) => delta.operation);
+        return dbDeltas.map((delta) => {
+            const operation = delta.operation as ISequencedDocumentMessage;
+            // Temporary workaround to handle old deltas where content type is object.
+            if (typeof operation.contents === "string") {
+                operation.contents = JSON.parse(operation.contents);
+            }
+            return operation;
+        });
     });
 
     return deltasP;
