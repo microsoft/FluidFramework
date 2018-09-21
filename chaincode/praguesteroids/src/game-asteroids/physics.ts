@@ -141,7 +141,9 @@ export class Physics {
         return false;
     }
 
-    public tick(dt) {
+    public tick = (dt) => this.tickInternal(dt);
+
+    public tickInternal(dt) {
         this.globalTime += dt;
 
         // resolve this before rendering the fram

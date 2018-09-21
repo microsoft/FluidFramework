@@ -1,8 +1,9 @@
 import { IMapView } from "@prague/map";
 import { IPlatform } from "@prague/runtime-definitions";
-import * as Stage from "stage-js/platform/web";
+import Stage from "stage-js/platform/web";
 import { Document } from "../document";
 import { highScoreConst, Physics } from "./physics";
+import { PlanckViewer } from "./stagePlanck";
 
 /*
  * Copyright (c) 2016-2018 Ali Shakiba http://shakiba.me/planck.js
@@ -46,9 +47,9 @@ export class PragueSteroids {
             textures: {
                 text: (d) => {
                     d += "";
-                    return Stage.canvas((ctx) => {
+                    return Stage.canvas(function(ctx) {
                         const ratio = 2;
-                        ctx.size(16, 24, ratio);
+                        this.size(16, 24, ratio);
                         ctx.scale(ratio, ratio);
                         ctx.font = "bold 24px monospace";
                         ctx.fillStyle = "#ddd";
@@ -94,9 +95,9 @@ export class PragueSteroids {
             this.pragueView,
             {
                 activeKeys,
-                endGame,
-                startGame,
-                updateStatus,
+                endGame: endGame.bind(this),
+                startGame: startGame.bind(this),
+                updateStatus: updateStatus.bind(this),
             });
 
         let world;
@@ -117,8 +118,7 @@ export class PragueSteroids {
             });
         });
 
-        world = new Stage
-            .planck(physics.world, { ratio: 80 })
+        world = (new PlanckViewer(physics.world, { ratio: 80 }) as Stage)
             .pin({
                 handle: -0.5,
                 height: physics.spaceHeight,
@@ -174,7 +174,7 @@ export class PragueSteroids {
 
             let owner = "";
             let score = 0;
-            const hs = JSON.parse(this.pragueView.get(this.highScoreConst));
+            const hs = JSON.parse(this.pragueView.get(highScoreConst));
             if (hs != null) {
                 if (hs.user === this.shipUniqueId) {
                     owner = "You";
