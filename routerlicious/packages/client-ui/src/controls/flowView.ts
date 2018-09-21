@@ -3104,7 +3104,7 @@ export class Cursor {
 
     public onLine(pos: number) {
         const lineDiv = this.lineDiv();
-        return (pos >= lineDiv.linePos) && (pos < lineDiv.lineEnd);
+        return lineDiv && (pos >= lineDiv.linePos) && (pos < lineDiv.lineEnd);
     }
 
     public lineDiv() {
