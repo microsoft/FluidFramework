@@ -1,0 +1,39 @@
+{
+  "name": "@chaincode/praguesteroids",
+  "version": "0.8.10",
+  "scripts": {
+    "build": "npm run tsc && npm run webpack && npm run tslint",
+    "tsc": "tsc",
+    "webpack": "webpack --config webpack.config.js",
+    "tslint": "tslint 'src/**/*.ts'",
+    "start": "webpack-serve webpack.config.js --port 8081 --open"
+  },
+  "keywords": [
+    "html5",
+    "game",
+    "rendering",
+    "engine",
+    "2d",
+    "canvas",
+    "mobile"
+  ],
+  "devDependencies": {
+    "@prague/loader": "^0.1.3390",
+    "@prague/socket-storage": "^0.1.3390",
+    "jsonwebtoken": "^8.3.0",
+    "source-map-loader": "^0.2.4",
+    "ts-loader": "^5.1.1",
+    "tslint": "^5.11.0",
+    "typescript": "^3.0.3",
+    "webpack": "^4.19.1",
+    "webpack-cli": "^3.1.0",
+    "webpack-serve": "^2.0.2"
+  },
+  "dependencies": {
+    "@prague/map": "^0.1.3390",
+    "@prague/runtime-definitions": "^0.1.3390",
+    "browser-resolve": "^1.11.3",
+    "planck-js": "^0.2.4",
+    "stage-js": "^0.8.10"
+  }
+}
