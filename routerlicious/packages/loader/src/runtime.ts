@@ -108,7 +108,9 @@ export class Runtime extends EventEmitter implements IRuntime {
         return runtime;
     }
 
-    public connected: boolean;
+    public get connected(): boolean {
+        return this.connectionState === ConnectionState.Connected;
+    }
 
     private channels = new Map<string, IChannelState>();
     private channelsDeferred = new Map<string, Deferred<IChannel>>();
@@ -216,12 +218,9 @@ export class Runtime extends EventEmitter implements IRuntime {
 
         // Resend all pending attach messages prior to notifying clients
         if (value === ConnectionState.Connected) {
-            this.connected = true;
             for (const [, message] of this.pendingAttach) {
                 this.submit(MessageType.Attach, message);
             }
-        } else {
-            this.connected = false;
         }
 
         for (const [, object] of this.channels) {
