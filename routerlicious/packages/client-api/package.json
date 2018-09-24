@@ -9,6 +9,9 @@
   "scripts": {
     "build": "npm run tsc && npm run build:esnext && npm run tslint",
     "build:full": "npm run build",
+    "clean": "rimraf dist && rimraf lib",
+    "test": "mocha --recursive dist/test",
+    "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml",
     "tsc": "tsc",
     "build:esnext": "tsc --outDir lib --m esnext",
     "tslint": "tslint 'src/**/*.ts'"
@@ -16,6 +19,11 @@
   "author": "Microsoft",
   "repository": "microsoft/prague",
   "devDependencies": {
+    "@types/mocha": "^5.2.5",
+    "mocha": "^5.2.0",
+    "mocha-junit-reporter": "^1.18.0",
+    "nyc": "^13.0.1",
+    "rimraf": "^2.6.2",
     "tslint": "^5.11.0",
     "typescript": "^3.0.3",
     "xmldoc": "^1.1.2"

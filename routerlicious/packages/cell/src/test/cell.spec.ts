@@ -1,5 +1,5 @@
-import { CellExtension, ICell } from "@prague/cell";
 import * as assert from "assert";
+import { CellExtension, ICell } from "..";
 
 describe("Routerlicious", () => {
     describe("Api", () => {

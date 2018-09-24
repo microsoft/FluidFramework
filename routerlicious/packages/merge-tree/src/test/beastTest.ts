@@ -1,12 +1,11 @@
-import * as MergeTree from "@prague/merge-tree";
-import { findRandomWord } from "@prague/merge-tree-utils";
-import * as Base from "@prague/merge-tree/dist/base";
-import { loadTextFromFile, SnapshotFS } from "@prague/merge-tree/dist/snapshot-fs";
 import * as assert from "assert";
 import * as JsDiff from "diff";
 import * as fs from "fs";
 import * as path from "path";
 import * as random from "random-js";
+import * as MergeTree from "..";
+import * as Base from "../base";
+import { loadTextFromFile, SnapshotFS } from "../snapshot-fs";
 
 // tslint:disable
 
@@ -26,6 +25,22 @@ function printStringProperty(p: Base.Property<string, string>) {
 function printStringNumProperty(p: Base.Property<string, number>) {
     console.log(`[${p.key}, ${p.data}]`);
     return true;
+}
+
+const mt = random.engines.mt19937();
+mt.seedWithArray([0xdeadbeef, 0xfeedbed]);
+
+function findRandomWord(mergeTree: MergeTree.MergeTree, clientId: number) {
+    const len = mergeTree.getLength(MergeTree.UniversalSequenceNumber, clientId);
+    const pos = random.integer(0, len)(mt);
+    // let textAtPos = mergeTree.getText(MergeTree.UniversalSequenceNumber, clientId, pos, pos + 10);
+    // console.log(textAtPos);
+    const nextWord = mergeTree.searchFromPos(pos, /\s\w+\b/);
+    if (nextWord) {
+        nextWord.pos += pos;
+        // console.log(`next word is '${nextWord.text}' len ${nextWord.text.length} at pos ${nextWord.pos}`);
+    }
+    return nextWord;
 }
 
 export function simpleTest() {
@@ -1748,6 +1763,9 @@ if (testTST) {
     tst();
 }
 
+const baseDir = "../../../routerlicious/public/literature";
+const testTimeout = 15000;
+
 describe("Routerlicious", () => {
     describe("merge-tree", () => {
         it("firstTest", () => {
@@ -1757,27 +1775,27 @@ describe("Routerlicious", () => {
 
         it("hierarchy", () => {
             assert(DocumentTree.test1() == 0);
-        }).timeout(Number.MAX_VALUE);
+        }).timeout(testTimeout);
 
         it("randolicious", () => {
             const testPack = TestPack(false);
             assert(testPack.randolicious() === 0);
-        }).timeout(Number.MAX_VALUE);
+        }).timeout(testTimeout);
 
         it("mergeTreeCheckedTest", () => {
             assert(mergeTreeCheckedTest() === 0);
-        }).timeout(Number.MAX_VALUE);
+        }).timeout(testTimeout);
 
         it("beastTest", () => {
             const testPack = TestPack(false);
-            const filename = path.join(__dirname, "../../../public/literature", "pp.txt");
-            assert(testPack.clientServer(filename, 1000) === 0);
-        }).timeout(Number.MAX_VALUE);
+            const filename = path.join(__dirname, baseDir, "pp.txt");
+            assert(testPack.clientServer(filename, 250) === 0);
+        }).timeout(testTimeout);
 
         it("findReplPerf", () => {
-            const filename = path.join(__dirname, "../../../public/literature", "pp10.txt");
+            const filename = path.join(__dirname, baseDir, "pp10.txt");
             findReplacePerf(filename);
-        }).timeout(Number.MAX_VALUE)
+        }).timeout(testTimeout)
     });
 });
 

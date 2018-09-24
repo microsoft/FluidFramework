@@ -1,5 +1,5 @@
-import * as map from "@prague/map";
 import * as assert from "assert";
+import * as map from "..";
 
 describe("Routerlicious", () => {
     describe("Map", () => {

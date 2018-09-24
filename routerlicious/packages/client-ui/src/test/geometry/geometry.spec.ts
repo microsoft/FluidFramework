@@ -1,5 +1,5 @@
-import { ui } from "@prague/client-ui";
 import * as assert from "assert";
+import { ui } from "../../";
 
 describe("Routerlicious", () => {
     describe("UI", () => {

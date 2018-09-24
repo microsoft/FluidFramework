@@ -8,6 +8,7 @@
   "scripts": {
     "build": "npm run tsc && npm run tslint",
     "build:full": "npm run build",
+    "clean": "rimraf dist",
     "tsc": "tsc",
     "tslint": "tslint 'src/**/*.ts'"
   },
@@ -38,6 +39,7 @@
     "xml2js": "^0.4.19"
   },
   "devDependencies": {
+    "rimraf": "^2.6.2",
     "tslint": "^5.11.0",
     "typescript": "^3.0.3"
   }

@@ -31,7 +31,6 @@ COPY packages/shared-string/package*.json packages/shared-string/
 COPY packages/socket-storage/package*.json packages/socket-storage/
 COPY packages/stream/package*.json packages/stream/
 COPY packages/utils/package*.json packages/utils/
-COPY packages/word/package*.json packages/word/
 
 # Need to set the --unsafe-perf flag since we are doing the install as root. Consider adding an 'app' accout so we
 # can do the install as node but then switch to 'app' to run. As app we won't be able to write to installed files

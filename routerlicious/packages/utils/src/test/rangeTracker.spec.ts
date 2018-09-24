@@ -1,13 +1,13 @@
-import * as utils from "@prague/utils";
 import * as assert from "assert";
+import { RangeTracker } from "..";
 
 describe("Routerlicious", () => {
     describe("Shared", () => {
         describe("RangeTracker", () => {
-            let rangeTracker: utils.RangeTracker;
+            let rangeTracker: RangeTracker;
 
             beforeEach(() => {
-                rangeTracker = new utils.RangeTracker(0, 0);
+                rangeTracker = new RangeTracker(0, 0);
             });
 
             describe(".base", () => {
@@ -91,7 +91,7 @@ describe("Routerlicious", () => {
 
                 it("Should be able to load a serialized copy", () => {
                     const serialized = rangeTracker.serialize();
-                    const copy = new utils.RangeTracker(serialized);
+                    const copy = new RangeTracker(serialized);
                     assert.equal(rangeTracker.get(0), copy.get(0));
                     assert.equal(rangeTracker.get(5), copy.get(5));
                     assert.equal(rangeTracker.get(10), copy.get(10));

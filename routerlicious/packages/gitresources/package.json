@@ -7,11 +7,12 @@
   "scripts": {
     "build": "npm run tsc && npm run tslint",
     "build:full": "npm run build",
+    "clean": "rimraf dist",
     "tsc": "tsc",
     "tslint": "tslint 'src/**/*.ts'"
   },
-  "dependencies": {},
   "devDependencies": {
+    "rimraf": "^2.6.2",
     "tslint": "^5.9.1",
     "typescript": "^2.8.3"
   }
