@@ -15,6 +15,8 @@
     "stop:full": "docker-compose down && docker volume prune --force",
     "test": "lerna run test --stream",
     "test:coverage": "lerna run test:coverage --stream",
+    "test:copyresults": "copyfiles 'packages/*/nyc/**' nyc",
+    "test:full": "npm run test:coverage && npm run test:copyresults",
     "tsc": "lerna run tsc --stream",
     "watch": "concurrently \"npm run watch:tsc\" \"npm run watch:esnext\" \"npm run watch:webpack\"",
     "watch:esnext": "lerna run --parallel build:esnext -- -- --watch",
@@ -23,6 +25,7 @@
   },
   "devDependencies": {
     "concurrently": "^4.0.1",
+    "copyfiles": "^2.1.0",
     "lerna": "^3.1.4"
   }
 }

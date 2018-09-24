@@ -40,9 +40,10 @@ RUN npm install --unsafe-perm
 # Expose the port the app runs under
 EXPOSE 3000
 
-# Give node user access to nyc in order to run unit tests
-RUN mkdir nyc
-RUN chown node: nyc
+# Give node user access to nyc in order to run and store coverage tests. Do this in all packages directory
+# as well as the root
+RUN for d in ./packages/*/ ; do (cd "$d" && mkdir nyc && chown node: nyc); done
+RUN mkdir nyc && chown node: nyc
 
 # Remove build tools
 RUN apk del .gyp
