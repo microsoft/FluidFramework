@@ -13,7 +13,6 @@ import * as home from "./home";
 import * as intelligence from "./intelligence";
 import * as loader from "./loader";
 import * as maps from "./maps";
-import * as ping from "./ping";
 import * as scribe from "./scribe";
 import * as sharedText from "./sharedText";
 import * as templates from "./templates";
@@ -59,7 +58,6 @@ export function create(
         intelligence: intelligence.create(config),
         loader: loader.create(config, tenantManager, storage, appTenants, ensureLoggedIn),
         maps: maps.create(config, tenantManager, storage, appTenants, ensureLoggedIn),
-        ping: ping.create(),
         scribe: scribe.create(config, tenantManager, appTenants, ensureLoggedIn),
         sharedText: sharedText.create(config, tenantManager, storage, appTenants, ensureLoggedIn),
         templates: templates.create(config),

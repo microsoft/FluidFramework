@@ -16,9 +16,6 @@ export { scribe };
 import * as sharedText from "./sharedText";
 export { sharedText };
 
-import * as ping from "./ping";
-export { ping };
-
 import * as commits from "./commits";
 export { commits };
 
