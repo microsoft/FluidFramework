@@ -1,7 +1,7 @@
 <ion-header>
   <ion-toolbar color="primary">
     <ion-title>
-      Add Item
+      Insert component name
     </ion-title>
       <ion-buttons end>
         <button ion-button icon-only (click)="close()"><ion-icon name="close"></ion-icon></button>
@@ -13,17 +13,12 @@
   <ion-list>
  
     <ion-item>
-      <ion-label floating>Title</ion-label>
-      <ion-input type="text" [(ngModel)]="title"></ion-input>
-    </ion-item>
- 
-    <ion-item>
-      <ion-label floating>Description</ion-label>
-      <ion-input type="text" [(ngModel)]="description"></ion-input>
+      <ion-label floating>Name</ion-label>
+      <ion-input type="text" [(ngModel)]="documentId"></ion-input>
     </ion-item>
  
   </ion-list>
  
-  <button full ion-button color="primary" (click)="saveItem()">Save</button>
+  <button full ion-button color="primary" (click)="saveItem()">Load</button>
  
 </ion-content>

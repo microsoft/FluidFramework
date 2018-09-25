@@ -25,25 +25,9 @@ export class HomePage {
     let addModal = this.modalCtrl.create(AddItemPage);
     addModal.onDidDismiss((item) => {
       if(item){
-        console.log(`Item to add ${JSON.stringify(item)}`);
+        console.log(`Document to add ${JSON.stringify(item)}`);
       }
     });
     addModal.present();
   }
-
-  removeItem(id: string) {
-    console.log(``);
-  }
- 
-  viewItem(item){
-    this.navCtrl.push(ItemDetailPage, {
-      item: item
-    });
-  }
-
-  doRefresh(refresher) {
-    console.log('Begin async operation', refresher);
-    refresher.complete();
-  }
- 
 }

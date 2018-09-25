@@ -7,22 +7,17 @@ import { NavController, ViewController } from 'ionic-angular';
 })
 export class AddItemPage {
  
-  title: string;
-  description: string;
- 
+  documentId: string;
+
   constructor(public navCtrl: NavController, public view: ViewController) {
  
   }
  
   saveItem(){
- 
     let newItem = {
-      title: this.title ? this.title : "",
-      description: this.description ? this.description : ""
+      id: this.documentId ? this.documentId : ""
     };
- 
     this.view.dismiss(newItem);
- 
   }
  
   close(){
