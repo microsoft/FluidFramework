@@ -1,0 +1,30 @@
+{
+  "name": "@prague/collaborative-browser",
+  "description": "",
+  "scripts": {
+    "webpack": "NODE_ENV=production && webpack --config webpack.prod.js",
+    "dev": "NODE_ENV=development && webpack --config webpack.dev.js --watch"
+  },
+  "author": "Microsoft",
+  "repository": "microsoft/prague",
+  "devDependencies": {
+    "@types/chrome": "0.0.74",
+    "@types/jsonwebtoken": "^7.2.8",
+    "clean-webpack-plugin": "^0.1.19",
+    "copy-webpack-plugin": "^4.5.2",
+    "css-loader": "^1.0.0",
+    "html-webpack-plugin": "^3.2.0",
+    "style-loader": "^0.23.0",
+    "ts-loader": "^5.1.1",
+    "typescript": "^3.0.1",
+    "typings-for-css-modules-loader": "^1.7.0",
+    "webpack": "^4.16.5",
+    "webpack-chrome-extension-reloader": "^0.8.3",
+    "webpack-cli": "^3.1.0",
+    "webpack-merge": "^4.1.4",
+    "webpack-serve": "^2.0.2"
+  },
+  "dependencies": {
+    "jsonwebtoken": "^8.3.0"
+  }
+}
