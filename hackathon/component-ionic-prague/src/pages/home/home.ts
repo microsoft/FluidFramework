@@ -1,7 +1,6 @@
 import { Component } from '@angular/core';
 import { ModalController, NavController } from 'ionic-angular';
 import { AddItemPage } from '../add-item/add-item'
-import { ItemDetailPage } from '../item-detail/item-detail';
  
 @Component({
   selector: 'page-home',
@@ -26,8 +25,14 @@ export class HomePage {
     addModal.onDidDismiss((item) => {
       if(item){
         console.log(`Document to add ${JSON.stringify(item)}`);
+        this.loadChainCode(item.id);
       }
     });
     addModal.present();
+  }
+
+  loadChainCode(id: string) {
+    const host = document.getElementById("host");
+    host.innerHTML = `<span>This is ${id} </span>`;
   }
 }
