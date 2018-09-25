@@ -13,7 +13,7 @@ const historian = "https://historian.wu2.prague.office-int.com";
 const tenantId = "gallant-hugle";
 const secret = "03302d4ebfb6f44b662d00313aff5a46";
 
-const documentId = window.location.search.slice(1) || "test-flowview-0706-1";
+const documentId = window.location.search.slice(1) || "test-flowview-test";
 
 // Register endpoint connection
 const documentServices = socketStorage.createDocumentService(routerlicious, historian);

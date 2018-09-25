@@ -25,14 +25,41 @@
   "accentColor": "#0079bf",
   "configurableTabs": [
     {
-      "configurationUrl": "https://82b19891.ngrok.io/tab/tabConfig/index.html",
+      "configurationUrl": "https://pragueteams.eu.prague.office-int.com/tab/tabConfig/index.html",
       "canUpdateConfiguration": false,
       "scopes": [ "team", "groupchat" ]
     }
   ],
   "staticTabs": [
     {
-      "contentUrl": "https://82b19891.ngrok.io/loading",
+      "contentUrl": "https://alfred.wu2.prague.office-int.com/",
+      "entityId": "r11s",
+      "name": "Prague Home",
+      "scopes": [
+        "personal",
+        "team"
+      ]
+    },
+    {
+      "contentUrl": "https://alfred.wu2.prague.office-int.com/sharedText/{subEntityId}",
+      "entityId": "flowview",
+      "name": "Flow View",
+      "scopes": [
+        "personal",
+        "team"
+      ]
+    },
+    {
+      "contentUrl": "https://alfred.wu2.prague.office-int.com/loader/{subEntityId}",
+      "entityId": "loader",
+      "name": "Loader",
+      "scopes": [
+        "personal",
+        "team"
+      ]
+    },
+    {
+      "contentUrl": "https://pragueteams.eu.prague.office-int.com/loading",
       "entityId": "1on1test123",
       "name": "Bot Info",
       "scopes": [
@@ -41,7 +68,7 @@
       ]
     },
     {
-      "contentUrl": "https://82b19891.ngrok.io/tab-auth/simple",
+      "contentUrl": "https://pragueteams.eu.prague.office-int.com/tab-auth/simple",
       "entityId": "simpleAuth",
       "name": "Simple Auth",
       "scopes": [
@@ -49,7 +76,7 @@
       ]
     },
     {
-      "contentUrl": "https://82b19891.ngrok.io/tab-auth/silent",
+      "contentUrl": "https://pragueteams.eu.prague.office-int.com/tab-auth/silent",
       "entityId": "silentAuth",
       "name": "Silent Auth",
       "scopes": [
@@ -177,6 +204,6 @@
     "messageTeamMembers"
   ],
   "validDomains": [
-    "82b19891.ngrok.io"
+    "pragueteams.eu.prague.office-int.com"
   ]
 }
