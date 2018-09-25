@@ -4,9 +4,6 @@ export { canvas };
 import * as cell from "./cell";
 export { cell };
 
-import * as youtubeVideo from "./youtubeVideo";
-export { youtubeVideo };
-
 import * as maps from "./maps";
 export { maps };
 

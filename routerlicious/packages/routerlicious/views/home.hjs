@@ -41,12 +41,6 @@
                 <li><a href="/canvas/canvas">Ink Canvas</a></li>
                 <li><a href="/sharedText/string">Shared String</a></li>
             </ul>
-
-            <h3>Example Apps</h3>
-            <ul class="list-unstyled">
-                <li><a href="/youtubeVideo/youtubeVideo">Youtube Video</a></li>
-                <li><a href="/graph/graph">Graph</a></li>
-            </ul>
         </div>
     {{/content}}
 {{/layout}}
