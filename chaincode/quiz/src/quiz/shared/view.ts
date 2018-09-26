@@ -193,8 +193,8 @@ export const html = `
     <script type="text/html" id="showTemplate">
         <div class="quiz-view-container">
             <div class="page-header row">
-                <!-- ko if: quiz.limitAttempts -->
-                <div class="quiz-attempts">
+            <!-- ko if: quiz.limitAttempts -->
+            <div class="quiz-attempts">
                     <div class="col-sm-10 col-xs-10">
                         <img src="https://www.wu2-ppe.prague.office-int.com/public/quizzes/resources/attempt_16x16.svg"/>
                         <span class="attempt-remaining-text" data-bind="text: attemptsRemaining"/>
@@ -243,8 +243,7 @@ export const html = `
 
             <div class="row row-splitter-30"></div>
 
-            <div class="quiz-choice-container" data-bind="css:fontSize">
-                <!-- ko foreach: choices -->
+            <div class="quiz-choice-container" data-bind="css: fontSize, foreach: choices">
                 <div class="row row-quiz-choice">
                         <div aria-hidden="true" class="col-sm-10 col-xs-10">
                             <div class="quiz-text-box quiz-choice" data-bind="css: {'selected': $parent.isSelected($index())}, click: function() {$parent.flipSelection($index());}">
@@ -255,35 +254,10 @@ export const html = `
                             <input role="checkbox" type="image" data-bind="attr: { 'aria-label': choice.choice(), 'aria-checked': $parent.isSelected($index())? 'true' : 'false', src: $parent.isSelected($index())? 'https://www.wu2-ppe.prague.office-int.com/public/quizzes/resources/answerchoice_correct_32x32.svg' : 'https://www.wu2-ppe.prague.office-int.com/public/quizzes/resources/answerchoice_unselected_32x32.svg'}, click: function() {$parent.flipSelection($index());}" data-toggle="tooltip" data-placement="bottom" />
                         </div>
                 </div>
-                <!-- ko if: showFeedback -->
-                <div class="row row-quiz-feedback">
+                <div class="row row-quiz-feedback" data-bind="visible: showFeedback">
                     <div class="col-sm-10 col-xs-10">
                         <div class="arrow-up pull-right" />
                         <div data-bind="text: choice.feedback" class="quiz-text-box quiz-feedback"></div>
-                    </div>
-                </div>
-                <!-- /ko -->
-                <!-- /ko -->
-            </div>
-
-            <div class="container-fluid">
-                <div id="quiz-controls-container" data-bind="with: controlBar">
-                    <div class="row" id="quiz-controls">
-                            <div class="btn-control-container">
-                                <!-- ko foreach: leftButtons -->
-                                <button class="btn btn-control" data-bind="visible: visible, css: {disabled: !enabled()}, click: click">
-                                    <span data-bind="localText: title"></span>
-                                </button>
-                                <!-- /ko -->
-                            </div>
-
-                            <div class="btn-control-container pull-right">
-                                <!-- ko foreach: rightButtons -->
-                                <button class="btn btn-control" data-bind="visible: visible, css: {disabled: !enabled()}, click: click">
-                                    <span data-bind="localText: title"></span>
-                                </button>
-                                <!-- /ko -->
-                            </div>
                     </div>
                 </div>
             </div>
