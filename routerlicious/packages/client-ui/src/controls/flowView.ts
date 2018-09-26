@@ -2004,7 +2004,8 @@ export class Viewport {
     public removeInclusions() {
         if (this.div) {
             // TODO: sabroner fix skip issue
-            for (const child of this.div.children) {
+            for (let i = 0; i < this.div.children.length; i++) {
+                const child = this.div.children.item(i);
                 if ((child.classList as DOMTokenList).contains("preserve")) {
                     if (this.excludedRects.every((e) => e.id !== child.classList[1])) {
                         this.div.removeChild(child);
@@ -2015,11 +2016,13 @@ export class Viewport {
     }
 
     public viewHasInclusion(sha: string): HTMLDivElement {
-        for (const child of this.div.children) {
+        for (let i = 0; i < this.div.children.length; i++) {
+            const child = this.div.children.item(i);
             if ((child.classList as DOMTokenList).contains(sha)) {
                 return child as HTMLDivElement;
             }
         }
+
         return null;
     }
 
