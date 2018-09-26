@@ -1,6 +1,17 @@
 import { Component } from '@angular/core';
+import * as loader from "@prague/loader";
+import { WebLoader, WebPlatform } from "@prague/loader-web";
+import * as socketStorage from "@prague/socket-storage"
 import { ModalController, NavController } from 'ionic-angular';
-import { AddItemPage } from '../add-item/add-item'
+import * as jwt from "jsonwebtoken";
+import { AddItemPage } from '../add-item/add-item';
+
+const routerlicious = "https://alfred.wu2-ppe.prague.office-int.com";
+const historian = "https://historian.wu2-ppe.prague.office-int.com";
+const tenantId = "thirsty-shirley";
+const secret = "f793c1603cf75ea41a09804e94f43cd2";
+
+const chainRepo = "https://packages.wu2.prague.office-int.com";
  
 @Component({
   selector: 'page-home',
@@ -31,8 +42,42 @@ export class HomePage {
     addModal.present();
   }
 
-  loadChainCode(id: string) {
+  loadChainCode(documentId: string) {    
     const host = document.getElementById("host");
-    host.innerHTML = `<span>This is ${id} </span>`;
+    const docDiv = document.createElement("div");
+    host.appendChild(docDiv);
+
+    this.loadDocument(documentId.toLowerCase(), docDiv)
+  }
+
+  private async loadDocument(documentId: string, div: HTMLDivElement) {
+    const token = jwt.sign(
+      {
+          documentId,
+          permission: "read:write", // use "read:write" for now
+          tenantId,
+          user: {
+              id: "test",
+          },
+      },
+      secret);
+
+    const webLoader = new WebLoader(chainRepo);
+    const webPlatform = new WebPlatform(div);
+
+    const documentServices = socketStorage.createDocumentService(routerlicious, historian);
+    const tokenService = new socketStorage.TokenService();
+
+    await loader.load(
+      token,
+      null,
+      webPlatform,
+      documentServices,
+      webLoader,
+      tokenService,
+      null,
+      true);
+
+    console.log(`Done loading the doc!`);
   }
 }
