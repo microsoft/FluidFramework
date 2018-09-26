@@ -4,7 +4,7 @@
   "scripts": {
     "build": "lerna run build --stream",
     "build:full": "lerna run build:full --stream",
-    "clean": "lerna run clean --stream",
+    "clean": "lerna run clean --stream --parallel",
     "docker-restart": "docker-compose restart alfred && docker-compose restart deli && docker-compose restart scriptorium && docker-compose restart tmz && docker-compose restart paparazzi",
     "postinstall": "lerna bootstrap",
     "registryAuth": "docker login -u prague -p /vM3i=D+K4+vj+pgha=cg=55OQLDWj3w prague.azurecr.io",

@@ -1,4 +1,3 @@
-import * as api from "@prague/client-api";
 import { IMap, IMapView } from "@prague/map";
 import * as ui from "../ui";
 import { getProposedPlaybackTime, PlayerState, YouTubeWrapper } from "../utils/youtubeHelper";
@@ -16,11 +15,10 @@ interface IVideoState {
 export class YouTubeVideoCanvas extends ui.Component {
     public player: YouTubeWrapper;
     private videoId: string;
-    private videoMap: IMap;
     private videoMapView: IMapView;
     private playerId = "player";
 
-    constructor(elem: HTMLDivElement, private doc: api.Document, private root: IMap) {
+    constructor(elem: HTMLDivElement, private videoMap: IMap) {
         super(elem);
 
         // Youtube Setup
@@ -48,14 +46,6 @@ export class YouTubeVideoCanvas extends ui.Component {
     }
 
     public async loadYoutubePlayer() {
-
-        // Create our distributed Map, called "youTubeVideo", on the root map
-        if (await this.root.has("youTubeVideo")) {
-            this.videoMap = await this.root.get<IMap>("youTubeVideo");
-        } else {
-            this.videoMap = await this.root.set<IMap>("youTubeVideo", this.doc.createMap());
-        }
-
         // Fetch a synchronous version of the youTubeVideo Map for easier use
         this.videoMapView = await this.videoMap.getView();
 

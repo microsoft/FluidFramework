@@ -13,11 +13,9 @@ import * as home from "./home";
 import * as intelligence from "./intelligence";
 import * as loader from "./loader";
 import * as maps from "./maps";
-import * as ping from "./ping";
 import * as scribe from "./scribe";
 import * as sharedText from "./sharedText";
 import * as templates from "./templates";
-import * as youtubeVideo from "./youtubeVideo";
 
 export interface IRoutes {
     agent: Router;
@@ -32,7 +30,6 @@ export interface IRoutes {
     maps: Router;
     scribe: Router;
     sharedText: Router;
-    youtubeVideo: Router;
     templates: Router;
 }
 
@@ -59,10 +56,8 @@ export function create(
         intelligence: intelligence.create(config),
         loader: loader.create(config, tenantManager, storage, appTenants, ensureLoggedIn),
         maps: maps.create(config, tenantManager, storage, appTenants, ensureLoggedIn),
-        ping: ping.create(),
         scribe: scribe.create(config, tenantManager, appTenants, ensureLoggedIn),
         sharedText: sharedText.create(config, tenantManager, storage, appTenants, ensureLoggedIn),
         templates: templates.create(config),
-        youtubeVideo: youtubeVideo.create(config, tenantManager, storage, appTenants, ensureLoggedIn),
     };
 }

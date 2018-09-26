@@ -4,9 +4,6 @@ export { canvas };
 import * as cell from "./cell";
 export { cell };
 
-import * as youtubeVideo from "./youtubeVideo";
-export { youtubeVideo };
-
 import * as maps from "./maps";
 export { maps };
 
@@ -15,9 +12,6 @@ export { scribe };
 
 import * as sharedText from "./sharedText";
 export { sharedText };
-
-import * as ping from "./ping";
-export { ping };
 
 import * as commits from "./commits";
 export { commits };
