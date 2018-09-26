@@ -256,8 +256,26 @@ export const html = `
                 </div>
                 <div class="row row-quiz-feedback" data-bind="visible: showFeedback">
                     <div class="col-sm-10 col-xs-10">
-                        <div class="arrow-up pull-right" />
-                        <div data-bind="text: choice.feedback" class="quiz-text-box quiz-feedback"></div>
+                        <div class="arrow-up pull-right">
+                            <div data-bind="text: choice.feedback" class="quiz-text-box quiz-feedback"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="container-fluid">
+                <div id="quiz-controls-container">
+                    <div class="row" id="quiz-controls">
+                            <div class="btn-control-container" data-bind="foreach: controlBar.leftButtons">
+                                <button class="btn btn-control" data-bind="visible: visible, css: {disabled: !enabled()}, click: click">
+                                    <span data-bind="localText: title"></span>
+                                </button>
+                            </div>
+                            <div class="btn-control-container pull-right" data-bind="foreach: controlBar.rightButtons">
+                                <button class="btn btn-control" data-bind="visible: visible, css: {disabled: !enabled()}, click: click">
+                                    <span data-bind="localText: title"></span>
+                                </button>
+                            </div>
                     </div>
                 </div>
             </div>
