@@ -1,4 +1,5 @@
 import { controls, ui } from "@prague/client-ui";
+import { IMap } from "@prague/map";
 import { IChaincode, IPlatform } from "@prague/runtime-definitions";
 import { Chaincode } from "./chaincode";
 import { Document } from "./document";
@@ -17,10 +18,15 @@ class Runner {
         const host = new ui.BrowserContainerHost();
         
         const root = collabDoc.getRoot();
-    
-        const element = document.getElementById("player-div") as HTMLDivElement;
-    
-        const canvas = new controls.YouTubeVideoCanvas(element, collabDoc, root);
+
+        // Create our distributed Map, called "youTubeVideo", on the root map
+        if (collabDoc.existing) {
+            await root.set<IMap>("youTubeVideo", collabDoc.createMap());
+        }
+
+        const videoMap = await root.wait<IMap>("youTubeVideo");
+        
+        const canvas = new controls.YouTubeVideoCanvas(hostContent, videoMap);
         host.attach(canvas);
     }
 }
