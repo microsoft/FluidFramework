@@ -44,6 +44,7 @@ export class HomePage {
 
   loadChainCode(documentId: string) {    
     const host = document.getElementById("host");
+    host.innerHTML = "";
     const docDiv = document.createElement("div");
     host.appendChild(docDiv);
 

@@ -1,57 +1,6 @@
 // tslint:disable
 export const html = `
-<!-- Continue from last slide modal -->
-<div class="modal fade" id="advanceFromLastSlide" tabindex="-1" role="dialog" data-backdrop="static" aria-labelledby="nextNotSupportedLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                <h4 class="modal-title" id="advanceFromLastSlideLabel">
-                    <span data-bind="localText: 'QuizTextLastSlideError'"></span>
-                </h4>
-            </div>
-            <div class="modal-body">
-                <p>
-                    <span data-bind="localText: 'QuizTextLastSlideErrorMessage1'"></span>
-                </p>
-                <p>
-                    <span data-bind="localText: 'QuizTextLastSlideErrorMessage2'"></span>
-                </p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-control" data-dismiss="modal">Close</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Error modal -->
-<div class="modal fade" id="errorModal" tabindex="-1" role="dialog" data-backdrop="static" data-keyboard="false" aria-labelledby="errorModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h4 class="modal-title" id="errorModal">
-                    <span data-bind="localText: 'QuizTextError'"></span>
-                </h4>
-            </div>
-            <div class="modal-body">
-                <p>
-                    <span data-bind="localText: 'QuizTextErrorMessage'"></span>
-                </p>
-                <p data-bind="text: errorMessage">
-                </p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-control" data-dismiss="modal" onclick="location.reload()">Reload</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="footer"></div>
-
 <div class="quiz-content">
-    <!-- At the afterRender, after all initailzation by knockout, template elements are adjusted such as focus, scroll, etc -->
     <div data-bind="template: { name: view().template, data: view().viewModel, afterRender: view().afterRender}">
     </div>
 
@@ -76,7 +25,6 @@ export const html = `
             <form class="form-horizontal" role="form" data-bind="">
                 <div class="row">
                     <div class="col-sm-10 col-xs-10">
-                        <!-- quiz question -->
                         <div id="richQuestionEditor" class="quiz-control quiz-question quiz-text-input" contenteditable="true" placeholder="Click to type question" data-bind="ckEditInliner: quiz.question, htmlValue: quiz.question"></div>
                     </div>
                     <div class="col-sm-2 col-xs-2">
@@ -88,7 +36,6 @@ export const html = `
                     </div>
                 </div>
 
-                <!-- Hints -->
                 <!-- ko foreach: quiz.hints -->
                 <div class="quiz-hint-container">
                     <div class="row row-hint">
@@ -109,11 +56,9 @@ export const html = `
                 </div>
                 <!-- /ko -->
                 
-                <!-- quiz options -->
                 <div class="row row-quiz-options">
                     <!-- ko if: quiz.allowChoiceEditing -->
                     <div class="col-sm-5">
-                        <!-- quiz properties -->
                         <div class="quiz-option">
                             <label class="right-margin-20">
                                 <input type="radio" name="allow-multiple-choices" value="single" data-bind="checked: quiz.multipleAnswerOption" /> 
@@ -126,21 +71,18 @@ export const html = `
                         </div>
                     </div>
                     <div class="col-sm-7">
-                        <!-- shuffles -->
                         <div class="quiz-option" data-bind="if: quiz.hasAnswer()">
                             <label class="right-margin-20">
                                 <input type="checkbox" data-bind="checked: quiz.shuffleChoices" />
                                     <span data-bind="localText: 'QuizTextShuffle'"></span>
                             </label>
                         </div>
-                        <!-- retries -->
                         <div class="quiz-option" data-bind="if: quiz.hasAnswer()">
                             <label class="right-margin-20">
                                 <input type="checkbox" data-bind="checked: quiz.allowRetries" />
                                     <span data-bind="localText: 'QuizTextAllowRetry'"></span>
                             </label>
                         </div>
-                        <!-- attempts -->
                         <div class="quiz-option" data-bind="if: quiz.hasAnswer()">
                             <label>
                                 <input type="checkbox" data-bind="checked: quiz.limitAttempts" />
@@ -177,7 +119,6 @@ export const html = `
                                 <input type="image" src="https://www.wu2-ppe.prague.office-int.com/public/quizzes/resources/trashbox_32x32.svg" data-bind=" click: function (data, event) { $parent.removeChoice($index()); }"/>
                                 <!-- /ko -->
                             
-                                <!-- add feedback button -->
                                 <!-- ko if: $parent.quiz.hasAnswer -->
                                 <!-- ko if: feedback() === null -->
                                 <input type="image" src="https://www.wu2-ppe.prague.office-int.com/public/quizzes/resources/feedback_32x32.svg" data-bind="click: addFeedback, localTooltip: { title: 'QuizTooltipAddFeedback', placement: 'bottom' }"/>
@@ -187,7 +128,6 @@ export const html = `
                                 <!-- /ko -->
                                 <!-- /ko -->
 
-                                <!-- choice answer button -->
                                 <!-- ko if: $parent.quiz.hasAnswer -->
                                 <!-- ko ifnot: $parent.isAnswer($index())-->
                                 <input type="image" src="https://www.wu2-ppe.prague.office-int.com/public/quizzes/resources/answerchoice_32x32.svg" data-bind="click: function() {$parent.flipAnswer($index());}, localTooltip: { title: 'QuizTooltipSelectAnswer', placement: 'bottom' }"/>
@@ -200,7 +140,6 @@ export const html = `
                         </div>
                     </div>
 
-                    <!-- Quiz feedback -->
                     <!-- ko if: feedback() != null -->
                     <div class="row row-quiz-feedback">
                         <div class="col-sm-10 col-xs-10">
@@ -216,7 +155,6 @@ export const html = `
                         </div>
                     </div>
                     <!-- /ko -->
-                    <!-- Add choice -->
                 </div>
                 <!-- /ko -->
                 <!-- ko if: quiz.allowChoiceEditing -->
@@ -273,7 +211,6 @@ export const html = `
             <div class="row">
                 <div class="col-sm-10 col-xs-10">
                     <div data-bind="css: fontSize">
-                        <!-- The quiz question -->
                         <div tabindex="0" class="quiz-question quiz-text-box" data-bind="html: quiz.question"></div>
                     </div>
                 </div>
@@ -291,7 +228,6 @@ export const html = `
                 </div>
             </div>
 
-            <!-- Hints -->
             <!-- ko if: currentHint() !== 0 -->
             <div class="quiz-section quiz-hints">
                 <!-- ko foreach: hints -->
@@ -307,16 +243,9 @@ export const html = `
 
             <div class="row row-splitter-30"></div>
 
-            <!--<div class="row row-quiz-select-answer-text" data-bind="ifnot: isFinished">
-                <div class="quiz-select-choice-text">
-                    <span data-bind="localText: selectAnswerMessage()"></span>
-                </div>
-            </div>-->
-
             <div class="quiz-choice-container" data-bind="css:fontSize">
                 <!-- ko foreach: choices -->
                 <div class="row row-quiz-choice">
-                    <!-- The choices -->
                         <div aria-hidden="true" class="col-sm-10 col-xs-10">
                             <div class="quiz-text-box quiz-choice" data-bind="css: {'selected': $parent.isSelected($index())}, click: function() {$parent.flipSelection($index());}">
                                 <span data-bind="html: choice.choice" class=""></span>
