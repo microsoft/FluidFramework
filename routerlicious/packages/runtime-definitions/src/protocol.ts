@@ -183,17 +183,6 @@ export interface ISequencedObjectMessage {
     traces: ITrace[];
 }
 
-/**
- * An envelope wraps the contents with the intended target
- */
-export interface IEnvelope {
-    // The target for the envelope
-    address: string;
-
-    // The contents of the envelope
-    contents: any;
-}
-
 export interface ISave {
     message: string;
 }
