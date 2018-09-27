@@ -33,7 +33,9 @@ export class HomePage {
   }
  
   ionViewDidLoad(){
-    console.log(`Just loaded the view!`);
+    // Clear existing component.
+    const host = document.getElementById("host");
+    host.innerHTML = "";
   }
  
   addComponent(){
@@ -60,35 +62,19 @@ export class HomePage {
 
   private addImageToDocument(documentId: string) {
     api.registerDocumentService(socketStorage.createDocumentService(routerlicious, historian));
-    const docP =  api.load(documentId, {token: this.makeToken(documentId)});
+    const docP = api.load(documentId, {token: this.makeToken(documentId)});
 
     // Clear existing component.
     const host = document.getElementById("host");
     host.innerHTML = "";
 
-    const options: CameraOptions = {
-      quality: 100,
-      destinationType: this.camera.DestinationType.DATA_URL,
-      encodingType: this.camera.EncodingType.PNG,
-      mediaType: this.camera.MediaType.PICTURE
-    };
-    this.camera.getPicture(options).then((imageData) => {
-      const imageBuffer = this.b64ToBuffer(imageData as string);
-      const sha = this.gitHashFile(imageBuffer);
-      const imageBlob: bdf.IImageBlob =  {
-        content: imageBuffer,
-        fileName: "does_not_matter.png",
-        height: 400,
-        sha,
-        size: imageBuffer.byteLength,
-        type: "image",
-        url: `https://historian.wu2.prague.office-int.com/repos/happy-chatterjee/git/blobs/raw/${sha}`,
-        width: 400,
-      };
+    this.captureImage().then((imageData) => {
       docP.then((doc: api.Document) => {
+        this.attachBlobUploadListener(doc);
         console.log(`Doc ${documentId} loaded: ${doc.clientId}`);
+        const imageBlob = this.convertToBlob(imageData);
         doc.uploadBlob(imageBlob).then((blob: bdf.IGenericBlob) => {
-          console.log(`Uploaded: ${blob.url}`);
+          console.log(blob.url);
           this.addImageHTML(host, blob);
         }, (err) => {
           console.log(`Could not upload blob ${err}`);
@@ -126,8 +112,43 @@ export class HomePage {
       tokenService,
       null,
       true);
+  }
 
-    console.log(`Done loading the doc!`);
+  private attachBlobUploadListener(doc: api.Document) {
+    doc.on("blobUploaded", (message: any) => {
+      console.log(`Uploaded event received!`);
+      console.log(JSON.stringify(message));
+    });
+  }
+
+  private async captureImage() {
+    const options: CameraOptions = {
+      quality: 100,
+      destinationType: this.camera.DestinationType.DATA_URL,
+      encodingType: this.camera.EncodingType.PNG,
+      mediaType: this.camera.MediaType.PICTURE
+    };
+    return this.camera.getPicture(options);
+  }
+
+  private convertToBlob(imageData: any): bdf.IImageBlob {
+    const imageBuffer = this.b64ToBuffer(imageData as string);
+    const sha = this.gitHashFile(imageBuffer);
+    const imageBlob: bdf.IImageBlob =  {
+      content: imageBuffer,
+      fileName: "does_not_matter.png",
+      height: 400,
+      sha,
+      size: imageBuffer.byteLength,
+      type: "image",
+      url: `https://historian.wu2.prague.office-int.com/repos/happy-chatterjee/git/blobs/raw/${sha}`,
+      width: 400,
+    };
+    return imageBlob;
+  }
+
+  private clearCanvas() {
+    
   }
 
   private addImageHTML(host: HTMLElement, blob: bdf.IGenericBlob) {
