@@ -6,10 +6,10 @@ import { ModalController, NavController } from 'ionic-angular';
 import * as jwt from "jsonwebtoken";
 import { AddItemPage } from '../add-item/add-item';
 
-const routerlicious = "https://alfred.wu2-ppe.prague.office-int.com";
-const historian = "https://historian.wu2-ppe.prague.office-int.com";
-const tenantId = "thirsty-shirley";
-const secret = "f793c1603cf75ea41a09804e94f43cd2";
+const routerlicious = "https://alfred.wu2.prague.office-int.com";
+const historian = "https://historian.wu2.prague.office-int.com";
+const tenantId = "happy-chatterjee";
+const secret = "8f69768d16e3852bc4b938cdaa0577d1";
 
 const chainRepo = "https://packages.wu2.prague.office-int.com";
  
