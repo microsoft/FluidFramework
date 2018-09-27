@@ -1,0 +1,8 @@
+{
+  "name": "component-ionic-prague",
+  "app_id": "",
+  "type": "ionic-angular",
+  "integrations": {
+    "cordova": {}
+  }
+}
