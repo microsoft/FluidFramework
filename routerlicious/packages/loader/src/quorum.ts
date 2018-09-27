@@ -1,4 +1,10 @@
-import { IClient, IQuorum, ISequencedProposal } from "@prague/runtime-definitions";
+import {
+    IClient,
+    ICommittedProposal,
+    IQuorum,
+    ISequencedDocumentMessage,
+    ISequencedProposal,
+} from "@prague/runtime-definitions";
 import { Deferred } from "@prague/utils";
 import * as assert from "assert";
 import { EventEmitter } from "events";
@@ -44,7 +50,7 @@ class PendingProposal implements IPendingProposal, ISequencedProposal {
 export interface IQuorumSnapshot {
     members: Array<[string, IClient]>;
     proposals: Array<[number, ISequencedProposal, string[]]>;
-    values: Array<[string, any]>;
+    values: Array<[string, ICommittedProposal]>;
 }
 
 /**
@@ -54,7 +60,10 @@ export interface IQuorumSnapshot {
 export class Quorum extends EventEmitter implements IQuorum {
     private members: Map<string, IClient>;
     private proposals: Map<number, PendingProposal>;
-    private values: Map<string, any>;
+    private values: Map<string, ICommittedProposal>;
+
+    // List of commits that have been approved but not yet committed
+    private pendingCommit: Map<string, ICommittedProposal>;
 
     // Locally generated proposals
     private localProposals = new Map<number, Deferred<void>>();
@@ -63,7 +72,7 @@ export class Quorum extends EventEmitter implements IQuorum {
         private minimumSequenceNumber: number,
         members: Array<[string, IClient]>,
         proposals: Array<[number, ISequencedProposal, string[]]>,
-        values: Array<[string, any]>,
+        values: Array<[string, ICommittedProposal]>,
         private sendProposal: (key: string, value: any) => number,
         private sendReject: (sequenceNumber: number) => void) {
         super();
@@ -82,6 +91,8 @@ export class Quorum extends EventEmitter implements IQuorum {
                 ] as [number, PendingProposal];
             }));
         this.values = new Map(values);
+        this.pendingCommit = new Map(values
+            .filter((value) => value[1].commitSequenceNumber === -1));
     }
 
     public snapshot(): IQuorumSnapshot {
@@ -111,7 +122,7 @@ export class Quorum extends EventEmitter implements IQuorum {
      * Returns the consensus value for the given key
      */
     public get(key: string): any {
-        return this.values.get(key);
+        return this.values.get(key).value;
     }
 
     /**
@@ -206,7 +217,17 @@ export class Quorum extends EventEmitter implements IQuorum {
     public on(event: "addMember", listener: (clientId: string, details: IClient) => void): this;
     public on(event: "removeMember", listener: (clientId: string) => void): this;
     public on(event: "addProposal", listener: (proposal: IPendingProposal) => void): this;
-    public on(event: "approveProposal", listener: (sequenceNumber: number, key: string, value: any) => void): this;
+    public on(
+        event: "approveProposal",
+        listener: (sequenceNumber: number, key: string, value: any, approvalSequenceNumber: number) => void): this;
+    public on(
+        event: "commitProposal",
+        listener: (
+            sequenceNumber: number,
+            key: string,
+            value: any,
+            approvalSequenceNumber: number,
+            commitSequenceNumber: number) => void): this;
     public on(
         event: "rejectProposal",
         listener: (sequenceNumber: number, key: string, value: any, rejections: string[]) => void): this;
@@ -218,7 +239,9 @@ export class Quorum extends EventEmitter implements IQuorum {
      * Updates the minimum sequence number. If the MSN advances past the sequence number for any proposal without
      * a rejection then it becomes an accepted consensus value.
      */
-    public updateMinimumSequenceNumber(value: number) {
+    public updateMinimumSequenceNumber(message: ISequencedDocumentMessage) {
+        const value = message.minimumSequenceNumber;
+
         assert(value >= this.minimumSequenceNumber);
         if (this.minimumSequenceNumber === value) {
             return;
@@ -250,12 +273,27 @@ export class Quorum extends EventEmitter implements IQuorum {
             }
 
             if (approved) {
-                this.values.set(proposal.key, proposal.value);
+                const committedProposal = {
+                    approvalSequenceNumber: message.sequenceNumber,
+                    commitSequenceNumber: -1,
+                    key: proposal.key,
+                    sequenceNumber: proposal.sequenceNumber,
+                    value: proposal.value,
+                } as ICommittedProposal;
+
+                // TODO do we want to notify when a proposal doesn't make it to the commit phase - i.e. because
+                // a new proposal was made before it made it to the committed phase? For now we just will never
+                // emit this message
+
+                this.values.set(committedProposal.key, committedProposal);
+                this.pendingCommit.set(committedProposal.key, committedProposal);
+
                 this.emit(
                     "approveProposal",
-                    proposal.sequenceNumber,
-                    proposal.key,
-                    proposal.value);
+                    committedProposal.sequenceNumber,
+                    committedProposal.key,
+                    committedProposal.value,
+                    committedProposal.approvalSequenceNumber);
             } else {
                 this.emit(
                     "rejectProposal",
@@ -266,6 +304,26 @@ export class Quorum extends EventEmitter implements IQuorum {
             }
 
             this.proposals.delete(proposal.sequenceNumber);
+        }
+
+        // Move values to the commited stage and notify
+        if (this.pendingCommit.size > 0) {
+            Array.from(this.pendingCommit.values())
+                .filter((pendingCommit) => pendingCommit.approvalSequenceNumber <= value)
+                .sort((a, b) => a.sequenceNumber - b.sequenceNumber)
+                .forEach((pendingCommit) => {
+                    pendingCommit.commitSequenceNumber = message.sequenceNumber;
+
+                    this.emit(
+                        "commitProposal",
+                        pendingCommit.sequenceNumber,
+                        pendingCommit.key,
+                        pendingCommit.value,
+                        pendingCommit.approvalSequenceNumber,
+                        pendingCommit.commitSequenceNumber);
+
+                    this.pendingCommit.delete(pendingCommit.key);
+                });
         }
     }
 }

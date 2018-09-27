@@ -789,7 +789,7 @@ export class Document extends EventEmitter {
 
         // Notify the quorum of the MSN from the message. We rely on it to handle duplicate values but may
         // want to move that logic to this class.
-        this.quorum.updateMinimumSequenceNumber(message.minimumSequenceNumber);
+        this.quorum.updateMinimumSequenceNumber(message);
         this.runtime.updateMinSequenceNumber(message.minimumSequenceNumber);
 
         this.emit("op", ...eventArgs);
