@@ -5,6 +5,7 @@ import { IonicStorageModule } from '@ionic/storage';
 
 import { StatusBar } from '@ionic-native/status-bar';
 import { SplashScreen } from '@ionic-native/splash-screen';
+import { Camera } from '@ionic-native/camera';
 
 import { MyApp } from './app.component';
 import { HomePage } from '../pages/home/home';
@@ -30,6 +31,6 @@ import { ItemDetailPage } from '../pages/item-detail/item-detail';
     AddItemPage,
     ItemDetailPage
   ],
-  providers: [SplashScreen, StatusBar, {provide: ErrorHandler, useClass: IonicErrorHandler}]
+  providers: [SplashScreen, StatusBar, Camera, {provide: ErrorHandler, useClass: IonicErrorHandler}]
 })
 export class AppModule {}

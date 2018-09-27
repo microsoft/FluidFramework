@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import { Camera, CameraOptions } from '@ionic-native/camera';
 import * as loader from "@prague/loader";
 import { WebLoader, WebPlatform } from "@prague/loader-web";
 import * as socketStorage from "@prague/socket-storage"
@@ -24,15 +25,16 @@ export class HomePage {
  
   constructor(
     public navCtrl: NavController,
-    public modalCtrl: ModalController,) {
+    public modalCtrl: ModalController,
+    public camera: Camera) {
   }
  
   ionViewDidLoad(){
     console.log(`Just loaded the view!`);
   }
  
-  addItem(){
-    let addModal = this.modalCtrl.create(AddItemPage);
+  addComponent(){
+    const addModal = this.modalCtrl.create(AddItemPage);
     addModal.onDidDismiss((item) => {
       if(item){
         console.log(`Document to add ${JSON.stringify(item)}`);
@@ -42,7 +44,35 @@ export class HomePage {
     addModal.present();
   }
 
-  loadChainCode(documentId: string) {    
+  addPicture() {
+    const addModal = this.modalCtrl.create(AddItemPage);
+    addModal.onDidDismiss((item) => {
+      if(item){
+        console.log(`Document to add ${JSON.stringify(item)}`);
+        this.addImageToDocument(item.id);
+      }
+    });
+    addModal.present();
+  }
+
+  private addImageToDocument(documentId: string) {
+    // Clear existing component.
+    const host = document.getElementById("host");
+    host.innerHTML = "";
+
+    const options: CameraOptions = {
+      quality: 100,
+      destinationType: this.camera.DestinationType.DATA_URL,
+      encodingType: this.camera.EncodingType.PNG,
+      mediaType: this.camera.MediaType.PICTURE
+    };
+    this.camera.getPicture(options).then((imageData) => {
+      console.log((imageData as string).substr(0, 20));
+    });
+  }
+
+
+  private loadChainCode(documentId: string) {    
     const host = document.getElementById("host");
     host.innerHTML = "";
     const docDiv = document.createElement("div");
