@@ -147,10 +147,6 @@ export class HomePage {
     return imageBlob;
   }
 
-  private clearCanvas() {
-    
-  }
-
   private addImageHTML(host: HTMLElement, blob: bdf.IGenericBlob) {
     const img = document.createElement("IMG");
     img.setAttribute("src", blob.url);
