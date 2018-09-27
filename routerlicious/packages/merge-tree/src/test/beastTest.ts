@@ -6,6 +6,7 @@ import * as random from "random-js";
 import * as MergeTree from "..";
 import * as Base from "../base";
 import { loadTextFromFile, SnapshotFS } from "../snapshot-fs";
+import { TestServer } from "./testServer";
 
 // tslint:disable
 
@@ -594,7 +595,7 @@ export function TestPack(verbose = true) {
         if (!startFile) {
             initString = "don't ask for whom the bell tolls; it tolls for thee";
         }
-        let server = new MergeTree.TestServer(initString);
+        let server = new TestServer(initString);
         server.measureOps = true;
         if (startFile) {
             loadTextFromFile(startFile, server.mergeTree, fileSegCount);
@@ -849,7 +850,7 @@ export function TestPack(verbose = true) {
                 extractSnapTime += elapsedMicroseconds(clockStart);
                 extractSnapOps++;
             }
-            /*          
+            /*
                         if (checkTextMatch()) {
                             console.log(`round: ${i}`);
                             break;
@@ -1476,9 +1477,9 @@ export type DocumentNode = string | DocumentTree;
 /**
  * Generate and model documents from the following tree grammar:
  * Row -> row[Box*];
- * Box -> box[Content]; 
- * Content -> (Row|Paragraph)*; 
- * Paragraph -> pgtile text; 
+ * Box -> box[Content];
+ * Content -> (Row|Paragraph)*;
+ * Paragraph -> pgtile text;
  * Document-> Content
  */
 export class DocumentTree {
@@ -1736,15 +1737,15 @@ function findReplacePerf(filename: string) {
             let i = text.indexOf("the");
             if (i >= 0) {
                 client.mergeTree.removeRange(
-                    pos + i, 
-                    pos + i + 3, 
-                    MergeTree.UniversalSequenceNumber, 
+                    pos + i,
+                    pos + i + 3,
+                    MergeTree.UniversalSequenceNumber,
                     client.getClientId());
                 client.mergeTree.insertText(
-                    pos + i, 
-                    MergeTree.UniversalSequenceNumber, 
-                    client.getClientId(), 
-                    1, 
+                    pos + i,
+                    MergeTree.UniversalSequenceNumber,
+                    client.getClientId(),
+                    1,
                     "teh");
                 pos = pos + i + 3;
                 cReplaces++;

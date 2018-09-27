@@ -1,4 +1,4 @@
-import * as MergeTree from "./mergeTree";
+import * as MergeTree from "./client";
 
 /**
  * Example of overlapping insertion position.  Clients A and B both insert at position 0.

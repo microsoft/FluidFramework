@@ -1,6 +1,7 @@
 // tslint:disable
 
 import * as MergeTree from "./mergeTree";
+import { Client } from "./client";
 import * as Properties from "./properties";
 import * as ops from "./ops";
 import * as path from "path";
@@ -102,7 +103,7 @@ export function propertyCopy() {
     console.log(`diff time ${perIter} us per ${propCount} properties; ${perProp} us per property`);
 }
 
-function makeBookmarks(client: MergeTree.Client, bookmarkCount: number) {
+function makeBookmarks(client: Client, bookmarkCount: number) {
     let mt = random.engines.mt19937();
     mt.seedWithArray([0xdeadbeef, 0xfeedbed]);
     let bookmarks = <MergeTree.LocalReference[]>[];
@@ -126,7 +127,7 @@ function makeBookmarks(client: MergeTree.Client, bookmarkCount: number) {
 
 function measureFetch(startFile: string, withBookmarks = false) {
     let bookmarkCount = 20000;
-    let client = new MergeTree.Client("", { blockUpdateMarkers: true });
+    let client = new Client("", { blockUpdateMarkers: true });
     loadTextFromFileWithMarkers(startFile, client.mergeTree);
     if (withBookmarks) {
         makeBookmarks(client, bookmarkCount);

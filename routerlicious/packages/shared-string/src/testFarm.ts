@@ -9,6 +9,7 @@ import * as random from "random-js";
 import * as fs from "fs";
 import * as Xmldoc from "xmldoc";
 import { SharedStringInterval } from "./intervalCollection";
+import { TestServer } from "@prague/merge-tree/dist/test/testServer"
 
 function clock() {
     return process.hrtime();
@@ -238,7 +239,7 @@ export function TestPack(verbose = true) {
         if (measureBookmarks) {
             options = { blockUpdateMarkers: true };
         }
-        let server = new MergeTree.TestServer(initString, options);
+        let server = new TestServer(initString, options);
         server.measureOps = true;
         if (startFile) {
             loadTextFromFile(startFile, server.mergeTree, fileSegCount);
@@ -630,7 +631,7 @@ export function TestPack(verbose = true) {
                 extractSnapTime += elapsedMicroseconds(clockStart);
                 extractSnapOps++;
             }
-            /*          
+            /*
                         if (checkTextMatch()) {
                             console.log(`round: ${i}`);
                             break;
@@ -813,9 +814,9 @@ export function TestPack(verbose = true) {
         if (!startFile) {
             initString = "don't ask for whom the bell tolls; it tolls for thee";
         }
-        let serverA = new MergeTree.TestServer(initString);
+        let serverA = new TestServer(initString);
         serverA.measureOps = true;
-        let serverB = new MergeTree.TestServer(initString);
+        let serverB = new TestServer(initString);
         serverB.measureOps = true;
         if (startFile) {
             loadTextFromFile(startFile, serverA.mergeTree, fileSegCount);
@@ -859,7 +860,7 @@ export function TestPack(verbose = true) {
         serverB.addClients(clientsB);
         serverB.addUpstreamClients(clientsA);
 
-        function crossBranchTextMatch(serverA: MergeTree.TestServer, serverB: MergeTree.TestServer, aClientId: string) {
+        function crossBranchTextMatch(serverA: TestServer, serverB: TestServer, aClientId: string) {
             let clockStart = clock();
             let serverAText = serverA.getText();
             getTextTime += elapsedMicroseconds(clockStart);
@@ -874,7 +875,7 @@ export function TestPack(verbose = true) {
             }
         }
 
-        function checkTextMatch(clients: MergeTree.Client[], server: MergeTree.TestServer) {
+        function checkTextMatch(clients: MergeTree.Client[], server: TestServer) {
             //console.log(`checking text match @${server.getCurrentSeq()}`);
             let clockStart = clock();
             let serverText = server.getText();
@@ -939,7 +940,7 @@ export function TestPack(verbose = true) {
             return server.applyMessages(countToApply);
         }
 
-        function randomSpateOfInserts(client: MergeTree.Client, server: MergeTree.TestServer,
+        function randomSpateOfInserts(client: MergeTree.Client, server: TestServer,
             charIndex: number) {
             let textLen = randTextLength();
             let text = randomString(textLen, String.fromCharCode(zedCode + ((client.getCurrentSeq() + charIndex) % 50)));
@@ -954,7 +955,7 @@ export function TestPack(verbose = true) {
             }
         }
 
-        function randomSpateOfRemoves(client: MergeTree.Client, server: MergeTree.TestServer) {
+        function randomSpateOfRemoves(client: MergeTree.Client, server: TestServer) {
             let dlen = randTextLength();
             let preLen = client.getLength();
             let pos = random.integer(0, preLen)(mt);
@@ -967,7 +968,7 @@ export function TestPack(verbose = true) {
             }
         }
 
-        function randomWordMove(client: MergeTree.Client, server: MergeTree.TestServer) {
+        function randomWordMove(client: MergeTree.Client, server: TestServer) {
             let word1 = findRandomWord(client.mergeTree, client.getClientId());
             if (word1) {
                 let removeStart = word1.pos;
@@ -1073,7 +1074,7 @@ export function TestPack(verbose = true) {
         }
 
         function round(roundCount: number, clients: MergeTree.Client[],
-            server: MergeTree.TestServer) {
+            server: TestServer) {
             let small = true;
             for (let client of clients) {
                 let insertSegmentCount = randSmallSegmentCount();
@@ -1577,9 +1578,9 @@ export type DocumentNode = string | DocumentTree;
 /**
  * Generate and model documents from the following tree grammar:
  * Row -> row[Box*];
- * Box -> box[Content]; 
- * Content -> (Row|Paragraph)*; 
- * Paragraph -> pgtile text; 
+ * Box -> box[Content];
+ * Content -> (Row|Paragraph)*;
+ * Paragraph -> pgtile text;
  * Document-> Content
  */
 export class DocumentTree {
@@ -2033,7 +2034,7 @@ if (clientServerTest) {
     let ppTest = true;
     let branch = false;
     let testPack = TestPack();
-    const filename = path.join(__dirname, "../../../routerlicious/public/literature", "pp.txt");
+    const filename = path.join(__dirname, "../../routerlicious/public/literature", "pp.txt");
     if (ppTest) {
         if (branch) {
             testPack.clientServerBranch(filename, 100000);
