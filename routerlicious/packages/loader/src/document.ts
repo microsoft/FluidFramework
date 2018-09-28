@@ -59,7 +59,7 @@ class RuntimeStorageService implements IDocumentStorageService {
     }
 
     public getContent(version: ICommit, path: string): Promise<string> {
-        return this.getContent(version, path);
+        return this.storageService.getContent(version, path);
     }
 
     public async read(sha: string): Promise<string> {
@@ -67,19 +67,19 @@ class RuntimeStorageService implements IDocumentStorageService {
             return this.blobs.get(sha);
         }
 
-        return this.read(sha);
+        return this.storageService.read(sha);
     }
 
     public write(root: ITree, parents: string[], message: string): Promise<ICommit> {
-        return this.write(root, parents, message);
+        return this.storageService.write(root, parents, message);
     }
 
     public createBlob(file: Buffer): Promise<ICreateBlobResponse> {
-        return this.createBlob(file);
+        return this.storageService.createBlob(file);
     }
 
     public getRawUrl(sha: string): string {
-        return this.getRawUrl(sha);
+        return this.storageService.getRawUrl(sha);
     }
 }
 
@@ -338,7 +338,7 @@ export class Document extends EventEmitter {
                 }
 
                 // Instantiate channels from chaincode and stored data
-                const runtimeStorage = new RuntimeStorageService(this.storageService, null);
+                const runtimeStorage = new RuntimeStorageService(this.storageService, new Map<string, string>());
                 this.runtime = await Runtime.LoadFromSnapshot(
                     this.tenantId,
                     this.id,
