@@ -54,13 +54,14 @@ export class Runtime extends EventEmitter implements IRuntime {
         clientId: string,
         user: IUser,
         blobManager: BlobManager,
+        pkg: string,
         chaincode: IChaincode,
         tardisMessages: Map<string, ISequencedDocumentMessage[]>,
         deltaManager: DeltaManager,
         quorum: IQuorum,
         storage: IDocumentStorageService,
         connectionState: ConnectionState,
-        tree: ISnapshotTree,
+        channels: { [path: string]: ISnapshotTree },
         branch: string,
         minimumSequenceNumber: number,
         submitFn: (type: MessageType, contents: any) => void,
@@ -78,6 +79,7 @@ export class Runtime extends EventEmitter implements IRuntime {
             blobManager,
             deltaManager,
             quorum,
+            pkg,
             chaincode,
             storage,
             connectionState,
@@ -85,17 +87,17 @@ export class Runtime extends EventEmitter implements IRuntime {
             snapshotFn,
             closeFn);
 
-        if (tree) {
-            Object.keys(tree.trees).forEach((path) => {
+        if (channels) {
+            Object.keys(channels).forEach((path) => {
                 // Reserve space for the channel
                 runtime.reserve(path);
             });
 
-            const loadSnapshotsP = Object.keys(tree.trees).map((path) => {
+            const loadSnapshotsP = Object.keys(channels).map((path) => {
                 return runtime.loadSnapshotChannel(
                     runtime,
                     path,
-                    tree.trees[path],
+                    channels[path],
                     storage,
                     tardisMessages.has(path) ? tardisMessages.get(path) : [],
                     branch,
@@ -128,6 +130,7 @@ export class Runtime extends EventEmitter implements IRuntime {
         private blobManager: BlobManager,
         public readonly deltaManager: DeltaManager,
         private quorum: IQuorum,
+        public readonly pkg: string,
         public readonly chaincode: IChaincode,
         private storageService: IDocumentStorageService,
         private connectionState: ConnectionState,
@@ -388,13 +391,12 @@ export class Runtime extends EventEmitter implements IRuntime {
         return this.blobManager.getBlobMetadata();
     }
 
-    public async stop(): Promise<any> {
+    public stop(): ITreeEntry[] {
         this.verifyNotClosed();
 
         this.closed = true;
 
-        // TODO return a snapshot to pass to next chunk of code
-        return null;
+        return this.snapshotInternal();
     }
 
     public close(): void {

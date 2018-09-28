@@ -86,8 +86,14 @@ async function run(
         });
     quorum.on(
         "approveProposal",
-        (sequenceNumber, key, value) => {
-            console.log(chalk.green(`Approve ${key}=${value}@${sequenceNumber}`));
+        (sequenceNumber, key, value, approvalSequenceNumber) => {
+            console.log(chalk.green(`Approve ${key}=${value}@${sequenceNumber}:${approvalSequenceNumber}`));
+        });
+    quorum.on(
+        "commitProposal",
+        (sequenceNumber, key, value, approvalSequenceNumber, commitSequenceNumber) => {
+            console.log(chalk.green(
+                `Commit ${key}=${value}@${sequenceNumber}:${approvalSequenceNumber}:${commitSequenceNumber}`));
         });
     quorum.on(
         "rejectProposal",

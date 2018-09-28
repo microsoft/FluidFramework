@@ -21,6 +21,16 @@ export interface IProposal {
  */
 export type ISequencedProposal = { sequenceNumber: number } & IProposal;
 
+/**
+ * Adds the sequence number at which the message was approved to an ISequencedProposal
+ */
+export type IApprovedProposal = { approvalSequenceNumber: number } & ISequencedProposal;
+
+/**
+ * Adds the sequence number at which the message was committed to an IApprovedProposal
+ */
+export type ICommittedProposal = { commitSequenceNumber: number } & IApprovedProposal;
+
 export interface IRejection {
     // The sequence number of the proposal being rejected
     sequenceNumber: number;

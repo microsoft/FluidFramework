@@ -1,33 +1,8 @@
 import * as resources from "@prague/gitresources";
 import * as api from "@prague/runtime-definitions";
+import { buildHierarchy } from "@prague/utils";
 import * as assert from "assert";
 import { IHistorian } from "./historian";
-
-export function buildHierarchy(flatTree: resources.ITree): api.ISnapshotTree {
-    const lookup: { [path: string]: api.ISnapshotTree } = {};
-    const root: api.ISnapshotTree = { blobs: {}, trees: {} };
-    lookup[""] = root;
-
-    for (const entry of flatTree.tree) {
-        const lastIndex = entry.path.lastIndexOf("/");
-        const entryPathDir = entry.path.slice(0, Math.max(0, lastIndex));
-        const entryPathBase = entry.path.slice(lastIndex  + 1);
-
-        // The flat output is breadth-first so we can assume we see tree nodes prior to their contents
-        const node = lookup[entryPathDir];
-
-        // Add in either the blob or tree
-        if (entry.type === "tree") {
-            const newTree = { blobs: {}, trees: {} };
-            node.trees[entryPathBase] = newTree;
-            lookup[entry.path] = newTree;
-        } else if (entry.type === "blob") {
-            node.blobs[entryPathBase] = entry.sha;
-        }
-    }
-
-    return root;
-}
 
 export class GitManager {
     private blobCache = new Map<string, resources.IBlob>();

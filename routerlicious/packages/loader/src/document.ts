@@ -1,4 +1,4 @@
-import { ICommit } from "@prague/gitresources";
+import { ICommit, ICreateBlobResponse } from "@prague/gitresources";
 import {
     ConnectionState,
     FileMode,
@@ -24,6 +24,7 @@ import {
     MessageType,
     TreeEntry,
 } from "@prague/runtime-definitions";
+import { buildHierarchy, flatten } from "@prague/utils";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import { BlobManager } from "./blobManager";
@@ -43,6 +44,43 @@ interface IConnectResult {
     detailsP: Promise<IConnectionDetails>;
 
     handlerAttachedP: Promise<void>;
+}
+
+class RuntimeStorageService implements IDocumentStorageService {
+    constructor(private storageService: IDocumentStorageService, private blobs: Map<string, string>) {
+    }
+
+    public getSnapshotTree(version: ICommit): Promise<ISnapshotTree> {
+        return this.storageService.getSnapshotTree(version);
+    }
+
+    public getVersions(sha: string, count: number): Promise<ICommit[]> {
+        return this.storageService.getVersions(sha, count);
+    }
+
+    public getContent(version: ICommit, path: string): Promise<string> {
+        return this.storageService.getContent(version, path);
+    }
+
+    public async read(sha: string): Promise<string> {
+        if (this.blobs.has(sha)) {
+            return this.blobs.get(sha);
+        }
+
+        return this.storageService.read(sha);
+    }
+
+    public write(root: ITree, parents: string[], message: string): Promise<ICommit> {
+        return this.storageService.write(root, parents, message);
+    }
+
+    public createBlob(file: Buffer): Promise<ICreateBlobResponse> {
+        return this.storageService.createBlob(file);
+    }
+
+    public getRawUrl(sha: string): string {
+        return this.storageService.getRawUrl(sha);
+    }
 }
 
 // TODO consider a name change for this. The document is likely built on top of this infrastructure
@@ -300,6 +338,7 @@ export class Document extends EventEmitter {
                 }
 
                 // Instantiate channels from chaincode and stored data
+                const runtimeStorage = new RuntimeStorageService(this.storageService, new Map<string, string>());
                 this.runtime = await Runtime.LoadFromSnapshot(
                     this.tenantId,
                     this.id,
@@ -309,13 +348,14 @@ export class Document extends EventEmitter {
                     this.clientId,
                     this.user,
                     this.blobManager,
-                    chaincode,
+                    chaincode.pkg,
+                    chaincode.chaincode,
                     tardisMessages,
                     this._deltaManager,
                     this.quorum,
-                    storageService,
+                    runtimeStorage,
                     this.connectionState,
-                    tree,
+                    tree ? tree.trees : null,
                     attributes.branch,
                     attributes.minimumSequenceNumber,
                     (type, contents) => this.submitMessage(type, contents),
@@ -546,11 +586,16 @@ export class Document extends EventEmitter {
     }
 
     private async transitionRuntime(pkg: string) {
-        // TODO it's possible in between the close and the resume we may be disconnected. Want to either sequence
-        // those events with ops or find a better way
-        // Close the previous runtime and return a snapshot of the data
-        /* const snapshot = */
-        await this.runtime.stop();
+        // No need to transition if package stays the same
+        if (pkg === this.runtime.pkg) {
+            return;
+        }
+
+        const extraBlobs = new Map<string, string>();
+        const snapshot = this.runtime.stop();
+        const flattened = flatten(snapshot, extraBlobs);
+        const snapshotTree = buildHierarchy(flattened);
+        const runtimeStorage = new RuntimeStorageService(this.storageService, extraBlobs);
 
         // Load the new code and create a new runtime from the previous snapshot
         const chaincode = await this.loadCode(pkg);
@@ -563,13 +608,14 @@ export class Document extends EventEmitter {
             this.clientId,
             this.user,
             this.blobManager,
+            pkg,
             chaincode,
             new Map(),
             this._deltaManager,
             this.quorum,
-            this.storageService,
+            runtimeStorage,
             this.connectionState,
-            null,
+            snapshotTree.trees,
             this.id,
             this._deltaManager.minimumSequenceNumber,
             (type, contents) => this.submitMessage(type, contents),
@@ -581,18 +627,30 @@ export class Document extends EventEmitter {
         newRuntime.start(this.platform);
     }
 
-    private loadCodeFromQuorum(quorum: Quorum, tree: ISnapshotTree, version: ICommit): Promise<IChaincode> {
+    private async loadCodeFromQuorum(
+        quorum: Quorum,
+        tree: ISnapshotTree,
+        version: ICommit): Promise<{ pkg: string, chaincode: IChaincode }> {
+
+        let pkg: string;
+        let chaincode: IChaincode;
+
         if (quorum.has("code")) {
-            return this.loadCode(quorum.get("code"));
+            pkg = quorum.get("code");
+            chaincode = await this.loadCode(pkg);
         } else {
             // For back compat if no version is specified and there are channels specified then we auto-load
             // the legacy set of code
             if (version && tree && Object.keys(tree.trees).length > 0) {
-                return this.loadCode("@prague/client-api");
+                pkg = "@prague/client-api";
+                chaincode = await this.loadCode(pkg);
             } else {
-                return Promise.resolve(new NullChaincode());
+                pkg = null;
+                chaincode = new NullChaincode();
             }
         }
+
+        return { chaincode, pkg };
     }
 
     /**
@@ -789,7 +847,7 @@ export class Document extends EventEmitter {
 
         // Notify the quorum of the MSN from the message. We rely on it to handle duplicate values but may
         // want to move that logic to this class.
-        this.quorum.updateMinimumSequenceNumber(message.minimumSequenceNumber);
+        this.quorum.updateMinimumSequenceNumber(message);
         this.runtime.updateMinSequenceNumber(message.minimumSequenceNumber);
 
         this.emit("op", ...eventArgs);

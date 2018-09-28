@@ -24,6 +24,7 @@
   "dependencies": {
     "@prague/gitresources": "^0.1.0",
     "@prague/runtime-definitions": "^0.1.0",
+    "@prague/utils": "^0.1.0",
     "@types/node": "^10.5.7",
     "axios": "^0.18.0",
     "debug": "^3.1.0"

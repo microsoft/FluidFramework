@@ -1,3 +1,5 @@
+import * as git from "@prague/gitresources";
+import { FileMode, IBlob, ISnapshotTree, ITree, ITreeEntry, TreeEntry } from "@prague/runtime-definitions";
 import * as sha1 from "sha.js/sha1";
 
 /**
@@ -9,4 +11,79 @@ export function gitHashFile(file: Buffer): string {
     const filePrefix = "blob " + size + String.fromCharCode(0);
     const engine = new sha1();
     return engine.update(filePrefix).update(file).digest("hex");
+}
+
+export function flatten(tree: ITreeEntry[], blobMap: Map<string, string>): git.ITree {
+    const entries = flattenCore("", tree, blobMap);
+    return {
+        sha: null,
+        tree: entries,
+        url: null,
+    };
+}
+
+function flattenCore(path: string, tree: ITreeEntry[], blobMap: Map<string, string>): git.ITreeEntry[] {
+    const entries = new Array<git.ITreeEntry>();
+    for (const thing of tree) {
+        const subPath = `${path}${thing.path}`;
+
+        if (thing.type === TreeEntry[TreeEntry.Blob]) {
+            const blob = thing.value as IBlob;
+            const buffer = Buffer.from(blob.contents, blob.encoding);
+            const sha = gitHashFile(buffer);
+            blobMap.set(sha, buffer.toString("base64"));
+
+            const entry: git.ITreeEntry = {
+                mode: FileMode[thing.mode],
+                path: subPath,
+                sha,
+                size: buffer.length,
+                type: "blob",
+                url: "",
+            };
+            entries.push(entry);
+        } else {
+            const t = thing.value as ITree;
+            const entry: git.ITreeEntry = {
+                mode: FileMode[thing.mode],
+                path: subPath,
+                sha: null,
+                size: -1,
+                type: "tree",
+                url: "",
+            };
+            entries.push(entry);
+
+            const subTreeEntries = flattenCore(subPath + "/", t.entries, blobMap);
+            entries.push(...subTreeEntries);
+        }
+    }
+
+    return entries;
+}
+
+export function buildHierarchy(flatTree: git.ITree): ISnapshotTree {
+    const lookup: { [path: string]: ISnapshotTree } = {};
+    const root: ISnapshotTree = { blobs: {}, trees: {} };
+    lookup[""] = root;
+
+    for (const entry of flatTree.tree) {
+        const lastIndex = entry.path.lastIndexOf("/");
+        const entryPathDir = entry.path.slice(0, Math.max(0, lastIndex));
+        const entryPathBase = entry.path.slice(lastIndex  + 1);
+
+        // The flat output is breadth-first so we can assume we see tree nodes prior to their contents
+        const node = lookup[entryPathDir];
+
+        // Add in either the blob or tree
+        if (entry.type === "tree") {
+            const newTree = { blobs: {}, trees: {} };
+            node.trees[entryPathBase] = newTree;
+            lookup[entry.path] = newTree;
+        } else if (entry.type === "blob") {
+            node.blobs[entryPathBase] = entry.sha;
+        }
+    }
+
+    return root;
 }
