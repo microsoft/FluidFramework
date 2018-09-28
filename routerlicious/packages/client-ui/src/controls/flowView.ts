@@ -3601,6 +3601,9 @@ export class FlowView extends ui.Component {
             (incl: IGenericBlob) => this.insertBlobInternal(incl),
         );
 
+        // HACK: Expose "insertComponent" via window to Collaborative Browser Extension for 2018/Oct demo.
+        window["insertComponent"] = this.insertComponent.bind(this);
+
         // TODO: Should insert a workbook into the document on demand, implement the ability
         //       to add references to pre-existing notebooks, support multiple notebooks, ...
         //

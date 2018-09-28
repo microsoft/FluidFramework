@@ -1,5 +1,4 @@
 const path = require("path");
-const webpack = require("webpack");
 const CleanWebpackPlugin = require("clean-webpack-plugin");
 const CopyWebpackPlugin = require("copy-webpack-plugin");
 
@@ -46,6 +45,9 @@ module.exports = {
         filename: "[name].bundle.js",
         path: path.resolve(__dirname, "dist"),
         library: "[name]",
+        // https://github.com/webpack/webpack/issues/5767
+        // https://github.com/webpack/webpack/issues/7939
+        devtoolNamespace: "collab-browser-extension",
         libraryTarget: "umd"
     },
     node: {

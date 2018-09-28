@@ -6,7 +6,9 @@
         "tabs",
         "activeTab",
         "<all_urls>",
-        "webNavigation"
+        "webNavigation",
+        "system.display",
+        "contextMenus"
     ],
     "content_security_policy": "script-src 'self' 'unsafe-eval'; object-src 'self'",
     "browser_action": {
