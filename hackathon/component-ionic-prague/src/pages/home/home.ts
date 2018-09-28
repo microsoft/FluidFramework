@@ -140,7 +140,7 @@ export class HomePage {
       sha,
       size: imageBuffer.byteLength,
       type: "image",
-      url: `https://historian.wu2.prague.office-int.com/repos/happy-chatterjee/git/blobs/raw/${sha}`,
+      url: `${historian}/repos/${tenantId}/git/blobs/raw/${sha}`,
       width: 400,
     };
     return imageBlob;
