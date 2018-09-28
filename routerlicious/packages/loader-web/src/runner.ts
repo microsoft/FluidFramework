@@ -3,7 +3,7 @@ import * as loader from "@prague/loader";
 import { IDocumentService, ITokenService } from "@prague/runtime-definitions";
 import chalk from "chalk";
 import { WebLoader } from "./webLoader";
-import { WebPlatform } from "./webPlatform";
+import { WebPlatformFactory } from "./webPlatform";
 
 async function proposeChaincode(document: loader.Document, chaincode: string) {
     if (!document.connected) {
@@ -25,12 +25,12 @@ export async function run(
     loaderUrl: string): Promise<void> {
 
     const webLoader = new WebLoader(loaderUrl);
-    const webPlatform = new WebPlatform(window.document.getElementById("content"));
+    const webPlatformFactory = new WebPlatformFactory(window.document.getElementById("content"));
 
     const documentP = loader.load(
         token,
         null,
-        webPlatform,
+        webPlatformFactory,
         documentServices,
         webLoader,
         tokenServices,

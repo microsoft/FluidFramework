@@ -13,7 +13,7 @@ import * as stream from "@prague/stream";
 export class Chaincode implements IChaincode {
     private modules = new Map<string, any>();
 
-    constructor(private runFn: (runtime: IRuntime, platform: IPlatform) => Promise<void>) {
+    constructor(private runFn: (runtime: IRuntime, platform: IPlatform) => Promise<IPlatform>) {
         // Register default map value types
         map.registerDefaultValueType(new map.DistributedSetValueType());
         map.registerDefaultValueType(new map.CounterValueType());
@@ -41,13 +41,13 @@ export class Chaincode implements IChaincode {
         return Promise.resolve();
     }
 
-    public run(runtime: IRuntime, platform: IPlatform): Promise<void> {
+    public run(runtime: IRuntime, platform: IPlatform): Promise<IPlatform> {
         return this.runFn(runtime, platform);
     }
 }
 
 export class ChaincodeFactory implements IChaincodeFactory {
-    constructor(private runFn: (runtime: IRuntime, platform: IPlatform) => Promise<void>) {
+    constructor(private runFn: (runtime: IRuntime, platform: IPlatform) => Promise<IPlatform>) {
     }
 
     public instantiate(): Promise<IChaincode> {
@@ -59,7 +59,7 @@ export class ChaincodeFactory implements IChaincodeFactory {
 export class CodeLoader implements ICodeLoader {
     private factory: IChaincodeFactory;
 
-    constructor(runFn: (runtime: IRuntime, platform: IPlatform) => Promise<void>) {
+    constructor(runFn: (runtime: IRuntime, platform: IPlatform) => Promise<IPlatform>) {
         this.factory = new ChaincodeFactory(runFn);
     }
 

@@ -1,7 +1,7 @@
 import { Block, BoxState } from "@prague/app-ui";
 import { getChaincodeRepo, getDefaultCredentials, getDefaultDocumentService } from "@prague/client-api";
 import * as loader from "@prague/loader";
-import { WebLoader, WebPlatform } from "@prague/loader-web";
+import { WebLoader, WebPlatformFactory } from "@prague/loader-web";
 import { TokenService } from "@prague/socket-storage";
 import * as jwt from "jsonwebtoken";
 import { FlowViewContext } from "./flowViewContext";
@@ -12,7 +12,7 @@ const platformSym = Symbol("Document.platform");
 export class DocumentState extends BoxState {
     public id: string;
     public [documentSym]: loader.Document;
-    public [platformSym]: WebPlatform;
+    public [platformSym]: WebPlatformFactory;
 }
 
 export class Document extends Block<DocumentState> {
@@ -43,7 +43,7 @@ export class Document extends Block<DocumentState> {
             credentials.key);
 
         const webLoader = new WebLoader(getChaincodeRepo());
-        const webPlatform = new WebPlatform(div);
+        const webPlatform = new WebPlatformFactory(div);
         const documentP = loader.load(
             token,
             null,

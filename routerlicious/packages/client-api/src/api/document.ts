@@ -21,7 +21,7 @@ import { EventEmitter } from "events";
 import * as uuid from "uuid/v4";
 import { CodeLoader } from "./codeLoader";
 import { debug } from "./debug";
-import { Platform } from "./platform";
+import { PlatformFactory } from "./platform";
 import { analyzeTasks, getLeader } from "./taskAnalyzer";
 import { TokenService } from "./tokenService";
 
@@ -334,13 +334,14 @@ export async function load(
     connect = true,
     service: IDocumentService = defaultDocumentService): Promise<Document> {
 
-    const classicPlatform = new Platform();
+    const classicPlatform = new PlatformFactory();
     const tokenService = new TokenService();
     const runDeferred = new Deferred<{ runtime: IRuntime, platform: IPlatform }>();
     const loader = new CodeLoader(
         async (r, p) => {
             debug("Code loaded and resolved");
             runDeferred.resolve({ runtime: r, platform: p });
+            return null;
         });
 
     // Load the Prague document

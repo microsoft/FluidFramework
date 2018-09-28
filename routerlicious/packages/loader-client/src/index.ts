@@ -4,6 +4,7 @@ import {
     ICodeLoader,
     IDocumentService,
     IPlatform,
+    IPlatformFactory,
     ITokenService,
 } from "@prague/runtime-definitions";
 import * as driver from "@prague/socket-storage";
@@ -42,6 +43,12 @@ class NodePlatform extends EventEmitter implements IPlatform {
     }
 }
 
+class NodePlatformFactory implements IPlatformFactory {
+    public async create(): Promise<IPlatform> {
+        return new NodePlatform();
+    }
+}
+
 // tslint:disable-next-line:no-var-requires
 const packageDetails = require("../package.json");
 
@@ -59,11 +66,11 @@ async function run(
     tokenServices: ITokenService): Promise<void> {
     const claims = tokenServices.extractClaims(token);
 
-    const platform = new NodePlatform();
+    const platformFactory = new NodePlatformFactory();
     const documentP = loader.load(
         token,
         null,
-        platform,
+        platformFactory,
         documentServices,
         new NodeCodeLoader(),
         tokenServices);

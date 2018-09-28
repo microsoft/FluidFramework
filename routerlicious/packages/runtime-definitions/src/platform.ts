@@ -9,3 +9,8 @@ export interface IPlatform extends EventEmitter {
      */
     queryInterface<T>(id: string);
 }
+
+export interface IPlatformFactory {
+    // Creates a new platform to be passed to the runtime
+    create(): Promise<IPlatform>;
+}
