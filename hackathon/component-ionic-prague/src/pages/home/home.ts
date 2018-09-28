@@ -14,7 +14,6 @@ const routerlicious = "https://alfred.wu2.prague.office-int.com";
 const historian = "https://historian.wu2.prague.office-int.com";
 const tenantId = "happy-chatterjee";
 const secret = "8f69768d16e3852bc4b938cdaa0577d1";
-
 const chainRepo = "https://packages.wu2.prague.office-int.com";
  
 @Component({
@@ -22,9 +21,8 @@ const chainRepo = "https://packages.wu2.prague.office-int.com";
   templateUrl: 'home.html'
 })
 export class HomePage {
- 
-  public items = [];
-  public documentId: string;
+
+  private host: HTMLElement;
  
   constructor(
     public navCtrl: NavController,
@@ -33,9 +31,8 @@ export class HomePage {
   }
  
   ionViewDidLoad(){
-    // Clear existing component.
-    const host = document.getElementById("host");
-    host.innerHTML = "";
+    this.host = document.getElementById("host");
+    this.host.innerHTML = "";
   }
  
   addComponent(){
@@ -60,13 +57,16 @@ export class HomePage {
     addModal.present();
   }
 
+  doRefresh(refresher) {
+    this.host.innerHTML = "";
+    refresher.complete();
+  }
+
   private addImageToDocument(documentId: string) {
     api.registerDocumentService(socketStorage.createDocumentService(routerlicious, historian));
     const docP = api.load(documentId, {token: this.makeToken(documentId)});
 
-    // Clear existing component.
-    const host = document.getElementById("host");
-    host.innerHTML = "";
+    this.host.innerHTML = "";
 
     this.captureImage().then((imageData) => {
       docP.then((doc: api.Document) => {
@@ -75,7 +75,7 @@ export class HomePage {
         const imageBlob = this.convertToBlob(imageData);
         doc.uploadBlob(imageBlob).then((blob: bdf.IGenericBlob) => {
           console.log(blob.url);
-          this.addImageHTML(host, blob);
+          this.addImageHTML(blob);
         }, (err) => {
           console.log(`Could not upload blob ${err}`);
         });
@@ -86,10 +86,9 @@ export class HomePage {
   }
 
   private loadChainCode(documentId: string) {    
-    const host = document.getElementById("host");
-    host.innerHTML = "";
+    this.host.innerHTML = "";
     const docDiv = document.createElement("div");
-    host.appendChild(docDiv);
+    this.host.appendChild(docDiv);
 
     this.loadDocument(documentId.toLowerCase(), docDiv)
   }
@@ -147,11 +146,11 @@ export class HomePage {
     return imageBlob;
   }
 
-  private addImageHTML(host: HTMLElement, blob: bdf.IGenericBlob) {
+  private addImageHTML(blob: bdf.IGenericBlob) {
     const img = document.createElement("IMG");
     img.setAttribute("src", blob.url);
     img.setAttribute("alt", "Blob can't be displayed");
-    host.appendChild(img);
+    this.host.appendChild(img);
   }
 
   private b64ToBuffer(base64: string): Buffer {

@@ -11,6 +11,13 @@
 </ion-header>
 
 <ion-content>
+  <ion-refresher (ionRefresh)="doRefresh($event)">
+    <ion-refresher-content pullingIcon="arrow-dropdown"
+                            pullingText="Pull to clear"
+                            refreshingSpinner="circles"
+                            refreshingText="Clearing...">
+    </ion-refresher-content>
+  </ion-refresher>
   <div id = "host">
   </div>
 </ion-content>
