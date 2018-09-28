@@ -47,6 +47,7 @@
   },
   "dependencies": {
     "@prague/gitresources": "^0.1.0",
+    "@prague/runtime-definitions": "^0.1.0",
     "@types/debug": "0.0.30",
     "@types/node": "^10.5.4",
     "lodash": "^4.17.10",
