@@ -106,6 +106,10 @@ export class DeliLambda implements IPartitionLambda {
 
         // Initialize counting context
         this.sequenceNumber = dbObject.sequenceNumber;
+        if (this.clientSeqNumbers.count() === 0) {
+            this.minimumSequenceNumber = this.sequenceNumber;
+        }
+
         this.logOffset = dbObject.logOffset;
         this.checkpointContext = new CheckpointContext(this.tenantId, this.documentId, collection, context);
     }
