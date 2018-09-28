@@ -7,6 +7,7 @@ import { findRandomWord } from "@prague/merge-tree-utils";
 import { IGenericBlob, ISequencedObjectMessage, IUser } from "@prague/runtime-definitions";
 import * as SharedString from "@prague/shared-string";
 import * as assert from "assert";
+import * as Geocoder from "geocoder";
 // tslint:disable-next-line:no-var-requires
 const performanceNow = require("performance-now");
 import { isBlock } from "@prague/app-ui";
@@ -117,6 +118,12 @@ const commands: ICmd[] = [
             f.paintFormat();
         },
         key: "paint format",
+    },
+    {
+        exec: (f) => {
+            f.geocodeAddress();
+        },
+        key: "geocode",
     },
     {
         exec: (f) => {
@@ -3625,8 +3632,8 @@ export class FlowView extends ui.Component {
                     new CollaborativeWorkbook(workbookView, 6, 6, [
                         ["Player", "Euchre", "Bridge", "Poker", "Go Fish", "Total Wins"],
                         ["Daniel", "0", "0", "0", "5", "=SUM(B2:E2)"],
-                        ["Kurt",   "2", "3", "0", "0", "=SUM(B3:E3)"],
-                        ["Sam",    "3", "4", "0", "0", "=SUM(B4:E4)"],
+                        ["Kurt", "2", "3", "0", "0", "=SUM(B3:E3)"],
+                        ["Sam", "3", "4", "0", "0", "=SUM(B4:E4)"],
                         ["Tanvir", "3", "3", "0", "0", "=SUM(B5:E5)"],
                         ["Total Played", "=SUM(B2:B5)", "=SUM(C2:C5)", "=SUM(D2:D5)", "=SUM(E2:E5)", "=SUM(F2:F5)"],
                     ]));
@@ -4883,6 +4890,15 @@ export class FlowView extends ui.Component {
 
     public cursorLocation() {
         this.statusMessage("cursor", `Cursor: ${this.cursor.pos} `);
+    }
+
+    public geocodeAddress() {
+        const sel = this.cursor.getSelection();
+        if (sel) {
+            const text = this.client.getText(sel.start, sel.end);
+            Geocoder.geocode(text, (err, data) => console.log(data),
+                { key: "AIzaSyCY3kHHzocQSos6QNOzJINWmNo_a4IqN-8" });
+        }
     }
 
     public showCommentText() {
