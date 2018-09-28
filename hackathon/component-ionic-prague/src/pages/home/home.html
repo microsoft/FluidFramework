@@ -4,12 +4,20 @@
       Chaincode Host
     </ion-title>
     <ion-buttons end>
-      <button ion-button icon-only (click)="addItem()"><ion-icon name="add-circle"></ion-icon></button>
+      <button ion-button icon-only (click)="addComponent()"><ion-icon name="add-circle"></ion-icon></button>
+      <button ion-button icon-only (click)="addPicture()"><ion-icon name="camera"></ion-icon></button>
     </ion-buttons>
   </ion-navbar>
 </ion-header>
 
 <ion-content>
+  <ion-refresher (ionRefresh)="doRefresh($event)">
+    <ion-refresher-content pullingIcon="arrow-dropdown"
+                            pullingText="Pull to clear"
+                            refreshingSpinner="circles"
+                            refreshingText="Clearing...">
+    </ion-refresher-content>
+  </ion-refresher>
   <div id = "host">
   </div>
 </ion-content>
