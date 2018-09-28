@@ -40,7 +40,7 @@ export class HomePage {
     addModal.onDidDismiss((item) => {
       if(item){
         console.log(`Document to add ${JSON.stringify(item)}`);
-        this.loadChainCode(item.id);
+        this.loadChainCode(item.id.toLowerCase());
       }
     });
     addModal.present();
@@ -51,7 +51,7 @@ export class HomePage {
     addModal.onDidDismiss((item) => {
       if(item){
         console.log(`Document to add ${JSON.stringify(item)}`);
-        this.addImageToDocument(item.id);
+        this.addImageToDocument(item.id.toLowerCase());
       }
     });
     addModal.present();
@@ -90,7 +90,7 @@ export class HomePage {
     const docDiv = document.createElement("div");
     this.host.appendChild(docDiv);
 
-    this.loadDocument(documentId.toLowerCase(), docDiv)
+    this.loadDocument(documentId, docDiv)
   }
 
   private async loadDocument(documentId: string, div: HTMLDivElement) {
