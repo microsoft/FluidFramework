@@ -29,7 +29,7 @@ export class DocumentService implements api.IDocumentService {
         id: string,
         token: string): Promise<api.IDocumentStorageService> {
 
-        const endpoint = `${this.gitUrl}/repos/${tenantId}`;
+        const endpoint = `${this.gitUrl}/repos/${encodeURIComponent(tenantId)}`;
 
         // Craft credentials - either use the direct credentials (i.e. a GitHub user + PAT) - or make use of our
         // tenant token

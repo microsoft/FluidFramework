@@ -38,7 +38,7 @@ export class TenantManager implements core.ITenantManager {
             }) as core.ITenantConfig;
 
         const historian = new Historian(
-            `${this.historianEndpoint}/repos/${tenantId}`,
+            `${this.historianEndpoint}/repos/${encodeURIComponent(tenantId)}`,
             true,
             false);
         const gitManager = new GitManager(historian);
@@ -49,7 +49,7 @@ export class TenantManager implements core.ITenantManager {
 
     public async verifyToken(tenantId: string, token: string): Promise<void> {
         await request.post(
-            `${this.endpoint}/api/tenants/${tenantId}/validate`,
+            `${this.endpoint}/api/tenants/${encodeURIComponent(tenantId)}/validate`,
             {
                 body: {
                     token,
@@ -64,7 +64,7 @@ export class TenantManager implements core.ITenantManager {
 
     public async getKey(tenantId: string): Promise<string> {
         const key = await request.get(
-            `${this.endpoint}/api/tenants/${tenantId}/key`,
+            `${this.endpoint}/api/tenants/${encodeURIComponent(tenantId)}/key`,
             {
                 headers: {
                     "Accept": "application/json",
