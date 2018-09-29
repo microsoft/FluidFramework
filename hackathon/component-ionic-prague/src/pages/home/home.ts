@@ -3,6 +3,8 @@ import { Camera, CameraOptions } from '@ionic-native/camera';
 import * as api from "@prague/client-api";
 import * as loader from "@prague/loader";
 import { WebLoader, WebPlatform } from "@prague/loader-web";
+import * as MergeTree from "@prague/merge-tree";
+import { SharedString } from "@prague/shared-string";
 import * as socketStorage from "@prague/socket-storage"
 import { ModalController, NavController } from 'ionic-angular';
 import * as jwt from "jsonwebtoken";
@@ -15,6 +17,29 @@ const historian = "https://historian.wu2.prague.office-int.com";
 const tenantId = "happy-chatterjee";
 const secret = "8f69768d16e3852bc4b938cdaa0577d1";
 const chainRepo = "https://packages.wu2.prague.office-int.com";
+
+export interface IReferenceDocType {
+  name: string;
+}
+
+export interface IRefLayoutSpec {
+  minWidth?: number;
+  minHeight?: number;
+  reqWidth?: number;
+  reqHeight?: number;
+  ar?: number;
+  dx?: number;
+  dy?: number;
+}
+
+export interface IReferenceDoc {
+  type: IReferenceDocType;
+  sha: string;
+  url: string;
+  layout?: IRefLayoutSpec;
+}
+
+const referenceProperty = "ref";
  
 @Component({
   selector: 'page-home',
@@ -63,24 +88,48 @@ export class HomePage {
   }
 
   private addImageToDocument(documentId: string) {
-    api.registerDocumentService(socketStorage.createDocumentService(routerlicious, historian));
-    const docP = api.load(documentId, {token: this.makeToken(documentId)});
-
     this.host.innerHTML = "";
+    const resP = this.loadDoc(documentId);
 
     this.captureImage().then((imageData) => {
-      docP.then((doc: api.Document) => {
-        this.attachBlobUploadListener(doc);
-        console.log(`Doc ${documentId} loaded: ${doc.clientId}`);
+      console.log(`Took picture!`);
+      resP.then((res: any) => {
+        console.log(`Got sharedText`);
+        const doc = res.doc as api.Document;
+        const ss = res.sharedString as SharedString;
+        this.attachBlobUploadListener(doc);  
         const imageBlob = this.convertToBlob(imageData);
+        console.log(`Converted! Start uploading.`);
         doc.uploadBlob(imageBlob).then((blob: bdf.IGenericBlob) => {
+          console.log(`Done uploading!`);
           console.log(blob.url);
-          this.addImageHTML(blob);
+          this.insertBlobInternal(doc, ss, blob);
         }, (err) => {
-          console.log(`Could not upload blob ${err}`);
+          this.setErrorMessage(err);
         });
       }, (error) => {
-        console.log(`Could not load doc: ${error}`);
+        this.setErrorMessage(error);
+      });
+    });
+  }
+
+  private async loadDoc(documentId: string) {
+    api.registerDocumentService(socketStorage.createDocumentService(routerlicious, historian));
+    return new Promise<any>((resolve, reject) => {
+      api.load(documentId, {token: this.makeToken(documentId)}).then(async (doc: api.Document) => {
+        if (!doc.existing) {
+          reject(`Document should already exist!`);
+        } else {
+          const root = await doc.getRoot().getView();
+          await Promise.all([root.wait("text"), root.wait("ink")]);
+          const sharedString = root.get("text") as SharedString;
+          resolve({
+            doc,
+            sharedString,
+          });
+        }
+      }, (error) => {
+        reject(error);
       });
     });
   }
@@ -112,6 +161,32 @@ export class HomePage {
       tokenService,
       null,
       true);
+  }
+
+  private insertBlobInternal(collabDocument: api.Document, ss: SharedString, blob: bdf.IGenericBlob) {
+    collabDocument.getBlob(blob.sha)
+    .then((finalBlob) => {
+      console.log(`Got Final blob to send: ${blob.url}`);
+      const irdoc = this.makeBlobRef(finalBlob);
+      const refProps = {
+        [referenceProperty]: irdoc,
+      };
+      ss.insertMarker(ss.client.getLength(), MergeTree.ReferenceType.Simple, refProps);
+      console.log(`Sent! Current length: ${ss.client.getLength()}`);
+      this.addImageHTML(blob);
+    });
+  }
+
+  private makeBlobRef(blob: bdf.IGenericBlob): IReferenceDoc {
+    const irdocType = <IReferenceDocType>{
+        name: "image",
+    };
+    const irdoc = <IReferenceDoc>{
+        sha: blob.sha,
+        type: irdocType,
+        url: blob.url,
+    };
+    return irdoc;
   }
 
   private attachBlobUploadListener(doc: api.Document) {
@@ -152,6 +227,10 @@ export class HomePage {
     img.setAttribute("src", blob.url);
     img.setAttribute("alt", "Blob can't be displayed");
     this.host.appendChild(img);
+  }
+
+  private setErrorMessage(message: string) {
+    this.host.innerHTML = message;
   }
 
   private b64ToBuffer(base64: string): Buffer {
