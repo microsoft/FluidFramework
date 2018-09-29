@@ -1,12 +1,10 @@
 import { IMap, IMapView, MapExtension } from "@prague/map";
 import { IRuntime } from "@prague/runtime-definitions";
-// import { CollaborativeStringExtension, SharedString } from "@prague/shared-string";
 import { EventEmitter } from "events";
 import { urlToInclusion } from "../../../../routerlicious/packages/client-ui/src/blob";
 
 const rootMapId = "root";
 const insightsMapId = "insights";
-// const imageStringId = "image";
 
 const createdDateKey = "__debug_created";
 const imageKey = "imageSha";
@@ -27,9 +25,6 @@ export class Component extends EventEmitter {
             console.log("existing");
             // If opening the document, get the root.
             this.rootMap = await this.runtime.getChannel(rootMapId) as IMap;
-            // console.log("1");
-            // this.imageString = await this.runtime.getChannel(imageStringId) as SharedString;
-            // console.log("2");
         } else {
             console.log("not existing");
             // If creating the document, create the initial structure.
@@ -38,17 +33,10 @@ export class Component extends EventEmitter {
 
             const insights = this.runtime.createChannel(insightsMapId, MapExtension.Type);
             this.rootMap.set(insightsMapId, insights);
-
-            // As an example, record the date/time the document was created.
             this.rootMap.set(createdDateKey, new Date());
             this.rootMap.set(widthKey, 0);
             this.rootMap.set(heightKey, 0);
             this.rootMap.set(imageKey, "");
-
-            // console.log("before createChannel");
-            // this.imageString =
-            //     this.runtime.createChannel(imageStringId, CollaborativeStringExtension.Type) as SharedString;
-            // console.log("after createChannel");
         }
 
         this.rootMap.on("valueChanged", (change) => {
@@ -58,10 +46,7 @@ export class Component extends EventEmitter {
             }
         });
 
-        console.log("before await");
         this.rootView = await this.rootMap.getView();
-
-        console.log("finished connect");
     }
 
     public async setImage(image: string, width: number, height: number) {

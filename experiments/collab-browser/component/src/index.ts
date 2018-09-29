@@ -5,28 +5,7 @@ import { StreamExtension } from "@prague/stream";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import { Component, componentSym } from "./component";
-
-const getImage = (component: Component) => {
-    const element = document.createElement("img");
-
-    const update = async ({ change: { key }}) => {
-        const { image, width, height } = await component.getImage();
-        if (image) { element.src = image; }
-        if (width) { element.style.width = `${width}px`; }
-        if (height) { element.style.height = `${height}px`; }
-
-        console.log(`*** UPDATE(${key}):`);
-        console.log(`    Image: ${element.outerHTML}`);
-    };
-
-    /* tslint:disable:variable-name */
-    component.on("valueChanged", update);
-    /* tslint:enable:variable-name */
-
-    update({ change: { key: "loaded" }});
-
-    return element;
-};
+import { UI } from "./ui";
 
 export class Chaincode extends EventEmitter implements IChaincode {
     // Maps the given type id to the factory for that type of collaborative object.
@@ -44,11 +23,8 @@ export class Chaincode extends EventEmitter implements IChaincode {
 
     // Invoked by loader after all dependencies have been imported into the script context.
     public async run(runtime: IRuntime, platform: IPlatform) {
-        console.log("run");
         const component = new Component();
-        console.log("before connect");
         await component.connect(runtime);
-        console.log("after connect");
 
         // Smuggle runtime back to self.
         const maybeComponentR = platform[componentSym] as (Component) => void;
@@ -58,15 +34,14 @@ export class Chaincode extends EventEmitter implements IChaincode {
 
         const maybeDiv = platform.queryInterface("div") as HTMLDivElement;
         if (maybeDiv) {
+            // Remove the query string (if any) to prevent accidentally re-instantiating chaincode.
             const [baseUrl, queryString] = location.href.split("?");
-
             if (queryString) {
-                // Remove the query string to prevent accidentally re-instantiating chaincode.
                 history.pushState(null, "", baseUrl);
-                window.close();
             }
 
-            maybeDiv.appendChild(getImage(component));
+            const ui = new UI(component);
+            maybeDiv.appendChild(await ui.mount());
         }
     }
 }

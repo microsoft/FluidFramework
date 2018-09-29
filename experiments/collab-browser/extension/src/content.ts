@@ -7,8 +7,8 @@ const evalInPage = (script: string) => {
 
 chrome.runtime.onMessage.addListener((msg, sender, response) => {
     switch (msg.type) {
-        case "insertComponent":
-            evalInPage(`insertComponent("${msg.componentType}", ${JSON.stringify(msg.componentState)})`);
+        case "eval":
+            evalInPage(msg.script);
             break;
     }
 });

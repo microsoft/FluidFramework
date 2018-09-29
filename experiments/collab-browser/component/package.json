@@ -1,6 +1,6 @@
 {
   "name": "@chaincode/collab-browser",
-  "version": "0.0.43",
+  "version": "0.0.47",
   "description": "Experimental collaborative browser component",
   "main": "dist/main.bundle.js",
   "types": "dist/index.d.ts",

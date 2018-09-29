@@ -1,5 +1,5 @@
 import { TabRef } from "./tabRef";
-import { navigateTab, getCurrentWindow, updateWindow, createWindow, queryTabs, windowFromTabId } from "./utils";
+import { navigateTab, getCurrentWindow, updateWindow, createWindow, queryTabs, windowFromTabId, getFocusedWindow } from "./utils";
 
 interface IBounds {
     left: number;
@@ -42,13 +42,14 @@ const getScreenBoundsForWindow = (wnd: chrome.windows.Window) => {
 
 const sideBySideBounds = async (wnd: chrome.windows.Window) => {
     const screen = await getScreenBoundsForWindow(wnd);
-    const leftBounds = Object.assign({}, screen);
-    leftBounds.width = Math.floor(leftBounds.width / 2);
+    const leftInfo = Object.assign({}, screen) as chrome.windows.UpdateInfo;
+    leftInfo.width = Math.floor(leftInfo.width / 2);
+    leftInfo.state = "normal";
     
-    const rightBounds: any = Object.assign({}, leftBounds);
-    rightBounds.left += rightBounds.width;
+    const rightInfo: any = Object.assign({}, leftInfo);
+    rightInfo.left += rightInfo.width;
 
-    return [leftBounds, rightBounds];
+    return [leftInfo, rightInfo];
 }
 
 export class SharingTab {
@@ -58,20 +59,22 @@ export class SharingTab {
 
     public async get() {
         const left = await getCurrentWindow();
-        const [leftBounds, rightBounds] = await sideBySideBounds(left);
-        await updateWindow(left.id, leftBounds);
+        const [leftInfo, rightInfo] = await sideBySideBounds(left);
+        await updateWindow(left.id, leftInfo);
 
         let right: chrome.windows.Window;
         if (this.tabRef.isClosed) {
-            right = await createWindow(rightBounds);
+            right = await createWindow(rightInfo);
             this.tabRef = new TabRef((await queryTabs({ windowId: right.id }))[0].id);
         } else {
             right = await windowFromTabId(this.tabRef.id);
-            await updateWindow(right.id, rightBounds);
+            await updateWindow(right.id, rightInfo);
         }
 
         const tab = await this.tabRef.tab;
-        if (tab.url !== this.shareDocUrl) {
+        if (tab.url.split("?")[0] !== this.shareDocUrl.split("?")[0]) {
+            console.log(`*** Navigating Share Tab:`);
+            console.log(`    ${tab.url} -> ${this.shareDocUrl}`);
             await navigateTab(this.tabRef.id, this.shareDocUrl);
         }
         

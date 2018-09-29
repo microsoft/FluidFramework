@@ -4,6 +4,7 @@ export const tabFromId = (tabId: number) => new Promise<chrome.tabs.Tab>(resolve
 export const updateWindow       = (windowId: number, updateInfo: chrome.windows.UpdateInfo) => new Promise<chrome.windows.Window>(resolve => {  chrome.windows.update(windowId, updateInfo, resolve); });
 export const getWindow          = (windowId: number) => new Promise<chrome.windows.Window>(resolve => { chrome.windows.get(windowId, resolve); });
 export const getCurrentWindow   = () => new Promise<chrome.windows.Window>(resolve => { chrome.windows.getCurrent(resolve); });
+export const getFocusedWindow   = () => new Promise<chrome.windows.Window>(resolve => { chrome.windows.getLastFocused(resolve); });
 export const createWindow       = (createData?: chrome.windows.CreateData) => new Promise<chrome.windows.Window>(resolve => { chrome.windows.create(createData, resolve); });
 export const queryTabs          = (queryInfo: chrome.tabs.QueryInfo) => new Promise<chrome.tabs.Tab[]>(resolve => { chrome.tabs.query(queryInfo, resolve); });
 export const tabFromTabId       = (tabId: number) => new Promise<chrome.tabs.Tab>(resolve => { chrome.tabs.get(tabId, resolve); });
