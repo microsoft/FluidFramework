@@ -4,6 +4,7 @@ import {
     ICodeLoader,
     IDocumentService,
     IPlatform,
+    IPlatformFactory,
     ITokenService,
 } from "@prague/runtime-definitions";
 import * as driver from "@prague/socket-storage";
@@ -37,8 +38,14 @@ class NodeCodeLoader implements ICodeLoader {
 }
 
 class NodePlatform extends EventEmitter implements IPlatform {
-    public queryInterface<T>(id: string) {
+    public async queryInterface<T>(id: string): Promise<any> {
         return null;
+    }
+}
+
+class NodePlatformFactory implements IPlatformFactory {
+    public async create(): Promise<IPlatform> {
+        return new NodePlatform();
     }
 }
 
@@ -59,11 +66,11 @@ async function run(
     tokenServices: ITokenService): Promise<void> {
     const claims = tokenServices.extractClaims(token);
 
-    const platform = new NodePlatform();
+    const platformFactory = new NodePlatformFactory();
     const documentP = loader.load(
         token,
         null,
-        platform,
+        platformFactory,
         documentServices,
         new NodeCodeLoader(),
         tokenServices);

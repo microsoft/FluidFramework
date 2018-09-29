@@ -1,4 +1,11 @@
 import { IChaincode, IPlatform, IRuntime } from "@prague/runtime-definitions";
+import { EventEmitter } from "events";
+
+class NullPlatform extends EventEmitter implements IPlatform {
+    public queryInterface<T>(id: string) {
+        return null;
+    }
+}
 
 export class NullChaincode implements IChaincode {
     public getModule(type: string): any {
@@ -9,7 +16,7 @@ export class NullChaincode implements IChaincode {
         return Promise.resolve();
     }
 
-    public run(runtime: IRuntime, platform: IPlatform): Promise<void> {
-        return Promise.resolve();
+    public run(runtime: IRuntime, platform: IPlatform): Promise<IPlatform> {
+        return Promise.resolve(new NullPlatform());
     }
 }

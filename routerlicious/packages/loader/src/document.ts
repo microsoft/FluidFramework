@@ -12,7 +12,7 @@ import {
     IDocumentStorageService,
     IEnvelope,
     IGenericBlob,
-    IPlatform,
+    IPlatformFactory,
     IProposal,
     ISequencedDocumentMessage,
     ISequencedProposal,
@@ -87,7 +87,7 @@ class RuntimeStorageService implements IDocumentStorageService {
 export class Document extends EventEmitter {
     public static async Load(
         token: string,
-        platform: IPlatform,
+        platform: IPlatformFactory,
         service: IDocumentService,
         codeLoader: ICodeLoader,
         tokenService: ITokenService,
@@ -161,7 +161,7 @@ export class Document extends EventEmitter {
 
     constructor(
         private token: string,
-        private platform: IPlatform,
+        private platform: IPlatformFactory,
         private service: IDocumentService,
         private codeLoader: ICodeLoader,
         tokenService: ITokenService,
@@ -339,9 +339,11 @@ export class Document extends EventEmitter {
 
                 // Instantiate channels from chaincode and stored data
                 const runtimeStorage = new RuntimeStorageService(this.storageService, new Map<string, string>());
+                const hostPlatform = await this.platform.create();
                 this.runtime = await Runtime.LoadFromSnapshot(
                     this.tenantId,
                     this.id,
+                    hostPlatform,
                     this.parentBranch,
                     this.existing,
                     this.options,
@@ -384,9 +386,6 @@ export class Document extends EventEmitter {
                 this.loaded = true;
 
                 debug(`Document loaded ${this.id}: ${now()} `);
-
-                // Starts the runtime
-                this.runtime.start(this.platform);
             });
     }
 
@@ -585,7 +584,7 @@ export class Document extends EventEmitter {
         return blobManager;
     }
 
-    private async transitionRuntime(pkg: string) {
+    private async transitionRuntime(pkg: string): Promise<void> {
         // No need to transition if package stays the same
         if (pkg === this.runtime.pkg) {
             return;
@@ -599,9 +598,11 @@ export class Document extends EventEmitter {
 
         // Load the new code and create a new runtime from the previous snapshot
         const chaincode = await this.loadCode(pkg);
+        const hostPlatform = await this.platform.create();
         const newRuntime = await Runtime.LoadFromSnapshot(
             this.tenantId,
             this.id,
+            hostPlatform,
             this.parentBranch,
             this.existing,
             this.options,
@@ -622,9 +623,7 @@ export class Document extends EventEmitter {
             (message) => this.snapshot(message),
             () => this.close());
         this.runtime = newRuntime;
-
-        // Start up the new runtime
-        newRuntime.start(this.platform);
+        this.emit("runtimeChanged", newRuntime);
     }
 
     private async loadCodeFromQuorum(

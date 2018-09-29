@@ -48,6 +48,7 @@ export class Runtime extends EventEmitter implements IRuntime {
     public static async LoadFromSnapshot(
         tenantId: string,
         id: string,
+        platform: IPlatform,
         parentBranch: string,
         existing: boolean,
         options: any,
@@ -107,6 +108,9 @@ export class Runtime extends EventEmitter implements IRuntime {
             await Promise.all(loadSnapshotsP);
         }
 
+        // Start the runtime
+        await runtime.start(platform);
+
         return runtime;
     }
 
@@ -114,10 +118,19 @@ export class Runtime extends EventEmitter implements IRuntime {
         return this.connectionState === ConnectionState.Connected;
     }
 
+    // Interface used to access the runtime code
+    public get platform(): IPlatform {
+        return this._platform;
+    }
+
     private channels = new Map<string, IChannelState>();
     private channelsDeferred = new Map<string, Deferred<IChannel>>();
     private closed = false;
     private pendingAttach = new Map<string, IAttachMessage>();
+
+    // tslint:disable-next-line:variable-name
+    private _platform: IPlatform;
+    // tslint:enable-next-line:variable-name
 
     private constructor(
         public readonly tenantId: string,
@@ -203,10 +216,9 @@ export class Runtime extends EventEmitter implements IRuntime {
         await Promise.all(Array.from(this.channels.values()).map((value) => value.object.ready()));
     }
 
-    public start(platform: IPlatform) {
+    public async start(platform: IPlatform): Promise<void> {
         this.verifyNotClosed();
-
-        this.chaincode.run(this, platform);
+        this._platform = await this.chaincode.run(this, platform);
     }
 
     public changeConnectionState(value: ConnectionState, clientId: string) {

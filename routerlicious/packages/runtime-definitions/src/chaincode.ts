@@ -16,9 +16,10 @@ export interface IChaincode {
     close(): Promise<void>;
 
     /**
-     * Invoked once the chaincode has been fully instantiated on the document
+     * Invoked once the chaincode has been fully instantiated on the document. Run returns a platform
+     * interface that can be used to access the running component.
      */
-    run(runtime: IRuntime, platform: IPlatform): Promise<void>;
+    run(runtime: IRuntime, platform: IPlatform): Promise<IPlatform>;
 }
 
 /**

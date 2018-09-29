@@ -22,19 +22,19 @@ export function flatten(tree: ITreeEntry[], blobMap: Map<string, string>): git.I
     };
 }
 
-function flattenCore(path: string, tree: ITreeEntry[], blobMap: Map<string, string>): git.ITreeEntry[] {
+function flattenCore(path: string, treeEntries: ITreeEntry[], blobMap: Map<string, string>): git.ITreeEntry[] {
     const entries = new Array<git.ITreeEntry>();
-    for (const thing of tree) {
-        const subPath = `${path}${thing.path}`;
+    for (const treeEntry of treeEntries) {
+        const subPath = `${path}${treeEntry.path}`;
 
-        if (thing.type === TreeEntry[TreeEntry.Blob]) {
-            const blob = thing.value as IBlob;
+        if (treeEntry.type === TreeEntry[TreeEntry.Blob]) {
+            const blob = treeEntry.value as IBlob;
             const buffer = Buffer.from(blob.contents, blob.encoding);
             const sha = gitHashFile(buffer);
             blobMap.set(sha, buffer.toString("base64"));
 
             const entry: git.ITreeEntry = {
-                mode: FileMode[thing.mode],
+                mode: FileMode[treeEntry.mode],
                 path: subPath,
                 sha,
                 size: buffer.length,
@@ -43,9 +43,9 @@ function flattenCore(path: string, tree: ITreeEntry[], blobMap: Map<string, stri
             };
             entries.push(entry);
         } else {
-            const t = thing.value as ITree;
+            const t = treeEntry.value as ITree;
             const entry: git.ITreeEntry = {
-                mode: FileMode[thing.mode],
+                mode: FileMode[treeEntry.mode],
                 path: subPath,
                 sha: null,
                 size: -1,
