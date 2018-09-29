@@ -10,7 +10,7 @@ export class WebPlatform extends EventEmitter implements IPlatform {
         super();
     }
 
-    public queryInterface<T>(id: string) {
+    public async queryInterface<T>(id: string): Promise<any> {
         switch (id) {
             case "dom":
                 return document;
@@ -104,4 +104,4 @@ export async function start(id: string, factory: IChaincodeFactory): Promise<voi
     }
 }
 
-start("chart-61", testFactory).catch((error) => console.error(error));
+start("chart-70", testFactory).catch((error) => console.error(error));

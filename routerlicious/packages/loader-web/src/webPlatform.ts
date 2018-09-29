@@ -6,7 +6,7 @@ export class WebPlatform extends EventEmitter implements IPlatform {
         super();
     }
 
-    public queryInterface<T>(id: string) {
+    public async queryInterface<T>(id: string): Promise<any> {
         switch (id) {
             case "dom":
                 return document;

@@ -46,7 +46,7 @@ export class Document extends Block<DocumentState> {
         const webPlatform = new WebPlatformFactory(div);
         const documentP = loader.load(
             token,
-            null,
+            { blockUpdateMarkers: true },
             webPlatform,
             getDefaultDocumentService(),
             webLoader,

@@ -5,12 +5,14 @@ import { EventEmitter } from "events";
  */
 export interface IPlatform extends EventEmitter {
     /**
-     * Queries the platform for an interface of the given ID. Returns it if it exists otherwise returns null.
+     * Queries the platform for an interface of the given ID.
      */
-    queryInterface<T>(id: string);
+    queryInterface<T>(id: string): Promise<T>;
 }
 
 export interface IPlatformFactory {
-    // Creates a new platform to be passed to the runtime
+    /**
+     * Creates a new platform to be passed to the runtime
+     */
     create(): Promise<IPlatform>;
 }

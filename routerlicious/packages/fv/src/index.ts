@@ -34,8 +34,12 @@ async function downloadRawText(textUrl: string): Promise<string> {
 const loadPP = false;
 
 class Runner {
-    public async run(collabDoc: API.Document, platform: IPlatform): Promise<IPlatform> {
-        const hostContent: HTMLElement = platform ? platform.queryInterface<HTMLElement>("div") : null;
+    public run(collabDoc: API.Document, platform: IPlatform) {
+        this.runCore(collabDoc, platform).catch((error) => console.error(error));
+    }
+
+    private async runCore(collabDoc: API.Document, platform: IPlatform) {
+        const hostContent: HTMLElement = await platform.queryInterface<HTMLElement>("div");
         if (!hostContent) {
             // If headless exist early
             return;

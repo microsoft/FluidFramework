@@ -29,7 +29,7 @@ export async function run(
 
     const documentP = loader.load(
         token,
-        null,
+        { blockUpdateMarkers: true },
         webPlatformFactory,
         documentServices,
         webLoader,

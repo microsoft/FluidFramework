@@ -14,7 +14,7 @@ const rootMapId = "root";
 const insightsMapId = "insights";
 
 class LocalPlatform extends EventEmitter implements IPlatform {
-    public queryInterface<T>(id: string) {
+    public async queryInterface<T>(id: string): Promise<T> {
         return null;
     }
 }
@@ -28,7 +28,7 @@ export class Chaincode extends EventEmitter implements IChaincode {
     /**
      * Constructs a new document from the provided details
      */
-    constructor(private runner: { run: (document, platofrm) => Promise<IPlatform> }) {
+    constructor(private runner: { run: (document, platofrm) => void }) {
         super();
 
         // Register default map value types

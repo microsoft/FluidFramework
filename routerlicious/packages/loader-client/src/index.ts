@@ -38,7 +38,7 @@ class NodeCodeLoader implements ICodeLoader {
 }
 
 class NodePlatform extends EventEmitter implements IPlatform {
-    public queryInterface<T>(id: string) {
+    public async queryInterface<T>(id: string): Promise<any> {
         return null;
     }
 }
