@@ -88,6 +88,7 @@ export class HomePage {
   private loadChainCode(documentId: string) {    
     this.host.innerHTML = "";
     const docDiv = document.createElement("div");
+    docDiv.id = "content";
     this.host.appendChild(docDiv);
 
     this.loadDocument(documentId, docDiv)
