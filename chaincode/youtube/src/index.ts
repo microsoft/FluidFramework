@@ -1,6 +1,7 @@
 import { controls, ui } from "@prague/client-ui";
 import { IMap } from "@prague/map";
-import { IChaincode, IPlatform } from "@prague/runtime-definitions";
+import { IChaincode, IPlatform, IRuntime } from "@prague/runtime-definitions";
+import { EventEmitter } from "events";
 import { Chaincode } from "./chaincode";
 import { Document } from "./document";
 
@@ -15,9 +16,22 @@ const template =
     </form>
 </div>`;
 
+class YoutubePlatform extends EventEmitter implements IPlatform {
+    public async queryInterface<T>(id: string): Promise<T> {
+        return null;
+    }
+}
+
 class Runner {
-    public async run(collabDoc: Document, platform: IPlatform) {
-        const hostContent: HTMLDivElement = platform ? platform.queryInterface<HTMLDivElement>("div") : null;
+    public async run(runtime: IRuntime, platform: IPlatform): Promise<IPlatform> {
+        this.start(runtime, platform).catch((error) => console.error(error));
+        return new YoutubePlatform();
+    }
+
+    private async start(runtime: IRuntime, platform: IPlatform): Promise<void> {
+        const collabDoc = await Document.Load(runtime);
+
+        const hostContent: HTMLDivElement = await platform.queryInterface<HTMLDivElement>("div");
         if (!hostContent) {
             // If headless exist early
             return;

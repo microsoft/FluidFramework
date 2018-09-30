@@ -6,7 +6,6 @@ module.exports = {
     entry: {
         main: './src/index.ts'
     },
-    mode: "development",
     devtool: 'source-map',
     module: {
         rules: [
@@ -24,6 +23,13 @@ module.exports = {
     },
     resolve: {
         extensions: [ '.tsx', '.ts', '.js' ]
+    },
+    node: {
+        dgram: 'empty',
+        fs: 'empty',
+        net: 'empty',
+        tls: 'empty',
+        child_process: 'empty',
     },
     output: {
         filename: '[name].bundle.js',

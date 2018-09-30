@@ -4,7 +4,6 @@ import { CollaborativeStringExtension } from "@prague/shared-string";
 import { StreamExtension } from "@prague/stream";
 import * as assert from "assert";
 import { EventEmitter } from "events";
-import { Document } from "./document";
 
 /**
  * A document is a collection of collaborative types.
@@ -35,8 +34,7 @@ export class Chaincode extends EventEmitter implements IChaincode {
         return Promise.resolve();
     }
 
-    public async run(runtime: IRuntime, platform: IPlatform): Promise<void> {
-        const document = await Document.Load(runtime);
-        this.runner.run(document, platform);
+    public async run(runtime: IRuntime, platform: IPlatform): Promise<IPlatform> {
+        return this.runner.run(runtime, platform);
     }
 }

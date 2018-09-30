@@ -1,6 +1,7 @@
-import { IChaincode, IPlatform } from "@prague/runtime-definitions";
+import { IChaincode, IPlatform, IRuntime } from "@prague/runtime-definitions";
+import { EventEmitter } from "events";
 import { Chaincode } from "./chaincode";
-import { Document } from "./document";
+import { Document as PragueDocument } from "./document";
 
 const html = `
 <div class="container">
@@ -29,8 +30,21 @@ const html = `
     </div>
 `;
 
+class SequencePlatform extends EventEmitter implements IPlatform {
+    public async queryInterface<T>(id: string): Promise<T> {
+        return null;
+    }
+}
+
 class Runner {
-    public async run(collabDoc: Document, platform: IPlatform) {
+    public async run(runtime: IRuntime, platform: IPlatform): Promise<IPlatform> {
+        this.start(runtime, platform).catch((error) => console.error(error));
+        return new SequencePlatform();
+    }
+
+    private async start(runtime: IRuntime, platform: IPlatform): Promise<void> {
+        const collabDoc = await PragueDocument.Load(runtime);
+
         const rootView = await collabDoc.getRoot().getView();
         console.log("Keys");
         console.log(rootView.keys());
@@ -45,7 +59,7 @@ class Runner {
         // Load the text string and listen for updates
         const text = rootView.get("text");
 
-        const dom = platform ? platform.queryInterface<Document>("dom") : null;
+        const dom = await platform.queryInterface<Document>("dom");
 
         if (dom) {
             dom.getElementById("content").innerHTML = html;

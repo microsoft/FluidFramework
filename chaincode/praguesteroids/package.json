@@ -1,6 +1,6 @@
 {
   "name": "@chaincode/praguesteroids",
-  "version": "0.8.10",
+  "version": "0.9.5",
   "scripts": {
     "build": "npm run tsc && npm run webpack && npm run tslint",
     "tsc": "tsc",
@@ -18,8 +18,8 @@
     "mobile"
   ],
   "devDependencies": {
-    "@prague/loader": "^0.1.3390",
-    "@prague/socket-storage": "^0.1.3390",
+    "@prague/loader": "^0.1.3542",
+    "@prague/socket-storage": "^0.1.3542",
     "jsonwebtoken": "^8.3.0",
     "source-map-loader": "^0.2.4",
     "ts-loader": "^5.1.1",
@@ -30,10 +30,18 @@
     "webpack-serve": "^2.0.2"
   },
   "dependencies": {
-    "@prague/map": "^0.1.3390",
-    "@prague/runtime-definitions": "^0.1.3390",
+    "@prague/map": "^0.1.3542",
+    "@prague/runtime-definitions": "^0.1.3542",
     "browser-resolve": "^1.11.3",
     "planck-js": "^0.2.4",
     "stage-js": "^0.8.10"
+  },
+  "prague": {
+    "browser": {
+      "entrypoint": "main",
+      "bundle": [
+        "dist/main.bundle.js"
+      ]
+    }
   }
 }

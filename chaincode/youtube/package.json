@@ -1,6 +1,6 @@
 {
   "name": "@chaincode/youtube",
-  "version": "0.1.2",
+  "version": "0.2.3",
   "description": "YouTube video player",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -25,12 +25,12 @@
     "webpack-visualizer-plugin": "^0.1.11"
   },
   "dependencies": {
-    "@prague/api-definitions": "^0.1.0",
-    "@prague/client-ui": "^0.1.3432",
-    "@prague/map": "^0.1.0",
-    "@prague/runtime-definitions": "^0.1.3328",
-    "@prague/shared-string": "^0.1.0",
-    "@prague/stream": "^0.1.0",
+    "@prague/api-definitions": "^0.1.3542",
+    "@prague/client-ui": "^0.1.3542",
+    "@prague/map": "^0.1.3542",
+    "@prague/runtime-definitions": "^0.1.3542",
+    "@prague/shared-string": "^0.1.3542",
+    "@prague/stream": "^0.1.3542",
     "@types/node": "^10.5.8"
   },
   "prague": {

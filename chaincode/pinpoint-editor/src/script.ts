@@ -1,8 +1,9 @@
 import { Pinpoint } from "@kurtb/pinpoint";
-import { IChaincode, IPlatform } from "@prague/runtime-definitions";
+import { IChaincode, IPlatform, IRuntime } from "@prague/runtime-definitions";
 import * as angular from "angular";
 import * as angularRoute from "angular-route";
 import "bootstrap/dist/css/bootstrap.min.css";
+import { EventEmitter } from "events";
 import * as $ from "jquery";
 import "../style.css";
 import { Chaincode } from "./chaincode";
@@ -290,9 +291,22 @@ pinpointTool.filter("html", ($sce) => {
     };
 });
 
+class PinpointPlatform extends EventEmitter implements IPlatform {
+    public async queryInterface<T>(id: string): Promise<T> {
+        return null;
+    }
+}
+
 class Runner {
-    public async run(collabDoc: Document, platform: IPlatform) {
-        const mapHost: HTMLElement = platform ? platform.queryInterface<HTMLElement>("div") : null;
+    public async run(runtime: IRuntime, platform: IPlatform) {
+        this.start(runtime, platform).catch((error) => console.error(error));
+        return new PinpointPlatform();
+    }
+
+    private async start(runtime: IRuntime, platform: IPlatform): Promise<void> {
+        const collabDoc = await Document.Load(runtime);
+
+        const mapHost: HTMLElement = await platform.queryInterface<HTMLElement>("div");
         if (!mapHost) {
             return;
         }

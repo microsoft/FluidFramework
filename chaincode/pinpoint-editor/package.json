@@ -1,6 +1,6 @@
 {
   "name": "@chaincode/pinpoint-editor",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "A web app for creating and editing Pinpoint maps.",
   "main": "server.js",
   "author": "Microsoft",
@@ -12,7 +12,7 @@
   },
   "dependencies": {
     "@kurtb/pinpoint": "^0.1.2",
-    "@prague/client-api": "^0.1.3324",
+    "@prague/client-api": "^0.1.3542",
     "@types/angular": "^1.6.50",
     "@types/angular-route": "^1.7.0",
     "@types/debug": "0.0.30",
@@ -32,8 +32,8 @@
     "leaflet": "^1.3.4"
   },
   "devDependencies": {
-    "@prague/loader": "^0.1.3353",
-    "@prague/socket-storage": "^0.1.3353",
+    "@prague/loader": "^0.1.3542",
+    "@prague/socket-storage": "^0.1.3542",
     "css-loader": "^1.0.0",
     "html-loader": "^0.5.5",
     "node-sass": "^4.9.3",

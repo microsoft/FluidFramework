@@ -1,12 +1,12 @@
 {
   "name": "@chaincode/pinpoint",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Prague map sequence sample",
   "main": "index.js",
   "dependencies": {
     "@kurtb/pinpoint": "^0.1.0",
-    "@prague/map": "^0.1.3289",
-    "@prague/runtime-definitions": "^0.1.3289",
+    "@prague/map": "^0.1.3542",
+    "@prague/runtime-definitions": "^0.1.3542",
     "jsonwebtoken": "^8.2.1"
   },
   "devDependencies": {
@@ -26,7 +26,7 @@
     "url-loader": "^1.1.1",
     "webpack": "^4.7.0",
     "webpack-bundle-analyzer": "^2.13.1",
-    "webpack-cli": "^2.0.15",
+    "webpack-cli": "^3.1.2",
     "webpack-visualizer-plugin": "^0.1.11"
   },
   "scripts": {

@@ -35,9 +35,22 @@ function getHearts(count: number) {
     return h;
 }
 
+const width = 600;
+const height = 400;
+
 export class PragueSteroids {
     public static async Start(collabDoc: Document, platform: IPlatform) {
-        if (!collabDoc.runtime.connected) {
+        const gameDiv: HTMLElement = await platform.queryInterface<HTMLElement>("div");
+        if (!gameDiv) {
+            return;
+        }
+
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        gameDiv.appendChild(canvas);
+
+        if (collabDoc.runtime.connected !== undefined && !collabDoc.runtime.connected) {
             await new Promise<void>((resolve) => collabDoc.runtime.on("connected", () => resolve()));
         }
 
@@ -60,10 +73,10 @@ export class PragueSteroids {
             },
         });
 
-        return new PragueSteroids(collabDoc, view);
+        return new PragueSteroids(collabDoc, view, canvas);
     }
 
-    constructor(document: Document, private pragueView: IMapView) {
+    constructor(document: Document, private pragueView: IMapView, canvas: HTMLCanvasElement) {
         const hs = pragueView.get(highScoreConst);
         if (hs == null) {
             pragueView.set(highScoreConst, JSON.stringify({ user: "", friendlyName: "", score: 0 }));
@@ -73,11 +86,12 @@ export class PragueSteroids {
             // ignored
         });
 
-        this.doStage();
+        this.doStage(canvas);
     }
 
-    private doStage() {
-        Stage((stage) => this.runStage(stage));
+    private doStage(canvas: HTMLCanvasElement) {
+        Stage((stage) => this.runStage(stage), { canvas });
+        Stage.start();
     }
 
     private runStage(stage) {
@@ -105,18 +119,20 @@ export class PragueSteroids {
         let gameover;
 
         stage.background("#222222");
-        stage.on("viewport", (size) => {
-            meta.pin({
-                scaleHeight: size.height,
-                scaleMode: "in-pad",
-                scaleWidth: size.width,
+        stage.on(
+            "viewport",
+            (size) => {
+                meta.pin({
+                    scaleHeight: size.height,
+                    scaleMode: "in-pad",
+                    scaleWidth: size.width,
+                });
+                world.pin({
+                    scaleHeight: size.height,
+                    scaleMode: "in-pad",
+                    scaleWidth: size.width,
+                });
             });
-            world.pin({
-                scaleHeight: size.height,
-                scaleMode: "in-pad",
-                scaleWidth: size.width,
-            });
-        });
 
         world = (new PlanckViewer(physics.world, { ratio: 80 }) as Stage)
             .pin({
@@ -200,6 +216,9 @@ export class PragueSteroids {
         };
 
         physics.start();
+
+        stage.viewbox(width, height);
+        stage.viewport(width, height);
     }
 }
 

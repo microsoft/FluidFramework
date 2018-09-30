@@ -1,5 +1,5 @@
 import * as pragueLoader from "@prague/loader";
-import { IChaincodeFactory, ICodeLoader, IPlatform } from "@prague/runtime-definitions";
+import { IChaincodeFactory, ICodeLoader, IPlatform, IPlatformFactory } from "@prague/runtime-definitions";
 import * as socketStorage from "@prague/socket-storage";
 import { EventEmitter } from "events";
 import * as jwt from "jsonwebtoken";
@@ -10,7 +10,7 @@ export class WebPlatform extends EventEmitter implements IPlatform {
         super();
     }
 
-    public queryInterface<T>(id: string) {
+    public async queryInterface<T>(id: string): Promise<any> {
         switch (id) {
             case "dom":
                 return document;
@@ -24,6 +24,15 @@ export class WebPlatform extends EventEmitter implements IPlatform {
     // Temporary measure to indicate the UI changed
     public update() {
         this.emit("update");
+    }
+}
+
+export class WebPlatformFactory implements IPlatformFactory {
+    constructor(private div: HTMLElement) {
+    }
+
+    public async create(): Promise<IPlatform> {
+        return new WebPlatform(this.div);
     }
 }
 
@@ -64,7 +73,7 @@ export async function start(id: string, factory: IChaincodeFactory): Promise<voi
 
     const service = socketStorage.createDocumentService(routerlicious, historian);
 
-    const classicPlatform = new WebPlatform(document.getElementById("content"));
+    const classicPlatform = new WebPlatformFactory(document.getElementById("content"));
     const tokenService = new socketStorage.TokenService();
     const codeLoader = new CodeLoader(factory);
 

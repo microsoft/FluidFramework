@@ -1,10 +1,23 @@
-import { IChaincode, IPlatform } from "@prague/runtime-definitions";
+import { IChaincode, IPlatform, IRuntime } from "@prague/runtime-definitions";
+import { EventEmitter } from "events";
 import { Chaincode } from "./chaincode";
 import { Document } from "./document";
 import { PragueSteroids } from "./game-asteroids/app";
 
+class PraguesteroidsPlatform extends EventEmitter implements IPlatform {
+    public async queryInterface<T>(id: string): Promise<T> {
+        return null;
+    }
+}
+
 class Runner {
-    public async run(collabDoc: Document, platform: IPlatform) {
+    public async run(runtime: IRuntime, platform: IPlatform): Promise<IPlatform> {
+        this.start(runtime, platform).catch((error) => console.error(error));
+        return new PraguesteroidsPlatform();
+    }
+
+    private async start(runtime: IRuntime, platform: IPlatform) {
+        const collabDoc = await Document.Load(runtime);
         PragueSteroids.Start(collabDoc, platform);
     }
 }

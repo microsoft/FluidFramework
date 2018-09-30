@@ -1,4 +1,5 @@
-import { IChaincode, IPlatform } from "@prague/runtime-definitions";
+import { IChaincode, IPlatform, IRuntime } from "@prague/runtime-definitions";
+import { EventEmitter } from "events";
 import { Chaincode } from "./chaincode";
 import { Document } from "./document";
 import { html } from "./quiz/shared/view";
@@ -6,9 +7,22 @@ import "./quiz/styles/quiz.css";
 import { initMCQEdit, initPollEdit, InitTakingQuiz, initTFEdit } from "./quizLoader";
 import { loadScript } from "./scriptLoader";
 
+class QuizPlatform extends EventEmitter implements IPlatform {
+    public async queryInterface<T>(id: string): Promise<T> {
+        return null;
+    }
+}
+
 class Runner {
-    public async run(collabDoc: Document, platform: IPlatform) {
-        const hostContent: HTMLElement = platform ? platform.queryInterface<HTMLElement>("div") : null;
+    public async run(runtime: IRuntime, platform: IPlatform): Promise<IPlatform> {
+        this.start(runtime, platform).catch((error) => console.error(error));
+        return new QuizPlatform();
+    }
+
+    private async start(runtime: IRuntime, platform: IPlatform): Promise<void> {
+        const collabDoc = await Document.Load(runtime);
+
+        const hostContent: HTMLElement = await platform.queryInterface<HTMLElement>("div");
         if (!hostContent) {
             // If headless exist early
             return;
