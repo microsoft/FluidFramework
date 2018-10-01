@@ -1,5 +1,4 @@
 import { ui } from "@prague/client-ui";
-import { IMap } from "@prague/map";
 import { IChaincode, IGenericBlob, IPlatform, MessageType } from "@prague/runtime-definitions";
 import { gitHashFile } from "@prague/utils";
 import { Chaincode } from "./chaincode";
@@ -70,8 +69,6 @@ class Runner {
         });
 
         const host = new ui.BrowserContainerHost();
-
-        const root = doc.getRoot();
 
         const canvas = new PhotoCarousel(hostContent.children[0] as HTMLDivElement);
         host.attach(canvas);
@@ -145,7 +142,6 @@ class Runner {
         let next = "";
 
         prior = thumbnails[(thumbnails.length - 1)].src;
-        console.log(prior);
         let getNext = false;
         for (const thumbnail of thumbnails) {
             if (getNext) {
