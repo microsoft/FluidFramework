@@ -1,4 +1,4 @@
-import { IPinpointOptions } from "@kurtb/pinpoint";
+import { IMarker, IPinpointOptions } from "@kurtb/pinpoint";
 import { IMap, IMapView } from "@prague/map";
 import * as angular from "angular";
 
@@ -38,5 +38,10 @@ export class MapDetailsService {
                 this.sequenceNumber = op.sequenceNumber;
                 this.$rootScope.$apply();
             });
+    }
+
+    public addMarker(marker: IMarker) {
+        this.details.markers.push(marker);
+        this.$rootScope.$apply();
     }
 }

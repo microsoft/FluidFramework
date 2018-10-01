@@ -13,11 +13,6 @@ export class MapListController implements angular.IController {
         $scope.maps = [];
         $scope.allMaps = [];
 
-        // $http.get("/api/maps").success((data) => {
-        //     $scope.allMaps = $filter("orderBy")(data, "creation_date", true);
-        //     $scope.loadMore();
-        // });
-
         const numberToLoadEachTime = 10;
         $scope.loadMore = () => {
             $scope.maps = $scope.allMaps.slice(0, $scope.maps.length + numberToLoadEachTime);
@@ -25,13 +20,6 @@ export class MapListController implements angular.IController {
         };
 
         $scope.previewLink = (map) => {
-            // TODO - check to see if this wasn't used
-            // let layout: string;
-            // if (map["aspect-ratio"] === "wide") {
-            //     layout = "offset";
-            // } else {
-            //     layout = "margin";
-            // }
             const url = configService.previewLink + map.slug;
             return url;
         };

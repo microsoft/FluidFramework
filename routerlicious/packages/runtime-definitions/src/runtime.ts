@@ -4,6 +4,7 @@ import { IChannel } from "./chaincode";
 import { IDistributedObjectServices } from "./channel";
 import { IQuorum } from "./consensus";
 import { IDeltaManager } from "./deltas";
+import { IPlatform } from "./platform";
 import { ISequencedDocumentMessage, MessageType } from "./protocol";
 import { IUser } from "./users";
 
@@ -34,6 +35,8 @@ export interface IRuntime extends EventEmitter {
     readonly connected: boolean;
 
     readonly deltaManager: IDeltaManager;
+
+    readonly platform: IPlatform;
 
     /**
      * Returns the channel with the given id

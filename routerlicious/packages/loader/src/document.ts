@@ -14,6 +14,7 @@ import {
     IGenericBlob,
     IPlatformFactory,
     IProposal,
+    IRuntime,
     ISequencedDocumentMessage,
     ISequencedProposal,
     ISnapshotTree,
@@ -109,7 +110,6 @@ export class Document extends EventEmitter {
 
     // Active chaincode and associated runtime
     private storageService: IDocumentStorageService;
-    private runtime: Runtime;
 
     // tslint:disable:variable-name
     private _clientId: string = "disconnected";
@@ -119,6 +119,7 @@ export class Document extends EventEmitter {
     private _parentBranch: string;
     private _tenantId: string;
     private _user: IUser;
+    private _runtime: Runtime;
     // tslint:enable:variable-name
 
     public get tenantId(): string {
@@ -143,6 +144,10 @@ export class Document extends EventEmitter {
 
     public get clientId(): string {
         return this._clientId;
+    }
+
+    public get runtime(): IRuntime {
+        return this._runtime;
     }
 
     /**
@@ -186,6 +191,7 @@ export class Document extends EventEmitter {
     public on(event: "error", listener: (error: any) => void): this;
     public on(event: "op", listener: (message: ISequencedDocumentMessage) => void): this;
     public on(event: "pong" | "processTime", listener: (latency: number) => void): this;
+    public on(event: "runtimeChanged", listener: (runtime: IRuntime) => void): this;
     public on(event: string | symbol, listener: (...args: any[]) => void): this {
         return super.on(event, listener);
     }
@@ -195,7 +201,7 @@ export class Document extends EventEmitter {
      */
     public emit(message: string | symbol, ...args: any[]): boolean {
         const superResult = super.emit(message, ...args);
-        const runtimeResult = this.runtime ? this.runtime.emit(message, ...args) : true;
+        const runtimeResult = this._runtime ? this._runtime.emit(message, ...args) : true;
 
         return superResult && runtimeResult;
     }
@@ -340,7 +346,7 @@ export class Document extends EventEmitter {
                 // Instantiate channels from chaincode and stored data
                 const runtimeStorage = new RuntimeStorageService(this.storageService, new Map<string, string>());
                 const hostPlatform = await this.platform.create();
-                this.runtime = await Runtime.LoadFromSnapshot(
+                this._runtime = await Runtime.LoadFromSnapshot(
                     this.tenantId,
                     this.id,
                     hostPlatform,
@@ -366,10 +372,10 @@ export class Document extends EventEmitter {
 
                 // given the load is async and we haven't set the runtime variable it's possible we missed the change
                 // of value. Make a call to the runtime to change the state to pick up the latest.
-                this.runtime.changeConnectionState(this.connectionState, this.clientId);
+                this._runtime.changeConnectionState(this.connectionState, this.clientId);
 
                 // Start delta processing once all channels are loaded
-                this.runtime.ready().then(
+                this._runtime.ready().then(
                     () => {
                         if (connect) {
                             assert(this._deltaManager, "DeltaManager should have been created during connect call");
@@ -435,7 +441,7 @@ export class Document extends EventEmitter {
             },
         });
 
-        const channelEntries = this.runtime.snapshotInternal();
+        const channelEntries = this._runtime.snapshotInternal();
         entries.push(...channelEntries);
 
         // Save attributes for the document
@@ -471,7 +477,7 @@ export class Document extends EventEmitter {
     private transform(message: ISequencedDocumentMessage, sequenceNumber: number): ISequencedDocumentMessage {
         // Allow the distributed data types to perform custom transformations
         if (message.type === MessageType.Operation) {
-            this.runtime.transform(message);
+            this._runtime.transform(message);
         } else {
             message.type = MessageType.NoOp;
         }
@@ -586,12 +592,12 @@ export class Document extends EventEmitter {
 
     private async transitionRuntime(pkg: string): Promise<void> {
         // No need to transition if package stays the same
-        if (pkg === this.runtime.pkg) {
+        if (pkg === this._runtime.pkg) {
             return;
         }
 
         const extraBlobs = new Map<string, string>();
-        const snapshot = this.runtime.stop();
+        const snapshot = this._runtime.stop();
         const flattened = flatten(snapshot, extraBlobs);
         const snapshotTree = buildHierarchy(flattened);
         const runtimeStorage = new RuntimeStorageService(this.storageService, extraBlobs);
@@ -622,7 +628,7 @@ export class Document extends EventEmitter {
             (type, contents) => this.submitMessage(type, contents),
             (message) => this.snapshot(message),
             () => this.close());
-        this.runtime = newRuntime;
+        this._runtime = newRuntime;
         this.emit("runtimeChanged", newRuntime);
     }
 
@@ -736,7 +742,7 @@ export class Document extends EventEmitter {
             return;
         }
 
-        this.runtime.changeConnectionState(value, this.clientId);
+        this._runtime.changeConnectionState(value, this.clientId);
 
         if (this.connectionState === ConnectionState.Connected) {
             this.emit("connected", this.pendingClientId);
@@ -759,16 +765,16 @@ export class Document extends EventEmitter {
         // This exists for backwards compatibility and will be removed going forward. We will require code to be
         // instantiated on the document in order to process channel ops.
         if ((message.type === MessageType.Operation || message.type === MessageType.Attach) &&
-            this.runtime.chaincode instanceof NullChaincode) {
+            this._runtime.chaincode instanceof NullChaincode) {
             await this.transitionRuntime("@prague/client-api");
         }
 
         switch (message.type) {
             case MessageType.Operation:
-                return this.runtime.prepare(message, local);
+                return this._runtime.prepare(message, local);
 
             case MessageType.Attach:
-                return this.runtime.prepareAttach(message, local);
+                return this._runtime.prepareAttach(message, local);
         }
     }
 
@@ -826,7 +832,7 @@ export class Document extends EventEmitter {
                 break;
 
             case MessageType.Attach:
-                const attachChannel = this.runtime.processAttach(message, local, context);
+                const attachChannel = this._runtime.processAttach(message, local, context);
                 eventArgs.push(attachChannel);
                 break;
 
@@ -836,7 +842,7 @@ export class Document extends EventEmitter {
                 break;
 
             case MessageType.Operation:
-                const operationChannel = this.runtime.process(message, local, context);
+                const operationChannel = this._runtime.process(message, local, context);
                 eventArgs.push(operationChannel);
                 break;
 
@@ -847,7 +853,7 @@ export class Document extends EventEmitter {
         // Notify the quorum of the MSN from the message. We rely on it to handle duplicate values but may
         // want to move that logic to this class.
         this.quorum.updateMinimumSequenceNumber(message);
-        this.runtime.updateMinSequenceNumber(message.minimumSequenceNumber);
+        this._runtime.updateMinSequenceNumber(message.minimumSequenceNumber);
 
         this.emit("op", ...eventArgs);
     }

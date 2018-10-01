@@ -7,12 +7,13 @@
   "types": "dist/index.d.ts",
   "sideEffects": "false",
   "scripts": {
-    "build": "npm run tsc && npm run tslint",
+    "build": "npm run tsc && npm run build:esnext && npm run tslint",
     "build:full": "npm run build",
-    "clean": "rimraf dist",
+    "clean": "rimraf dist && rimraf lib",
+    "tsc": "tsc",
+    "build:esnext": "tsc --outDir lib --m esnext",
     "test": "mocha --recursive dist/test",
     "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml",
-    "tsc": "tsc",
     "tslint": "tslint 'src/**/*.ts'"
   },
   "author": "Microsoft",

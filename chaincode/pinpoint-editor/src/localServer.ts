@@ -97,6 +97,13 @@ export async function start(id: string, factory: IChaincodeFactory): Promise<voi
         codeLoader,
         tokenService);
 
+    (loaderDoc as any).on("runtimeChanged", (runtime: any) => {
+        runtime.platform.queryInterface("pinpoint").then((markerProvider) => {
+            // tslint:disable-next-line
+            window["markers"] = markerProvider;
+        });
+    });
+
     // If this is a new document we will go and instantiate the chaincode. For old documents we assume a legacy
     // package.
     if (!loaderDoc.existing) {
@@ -104,4 +111,4 @@ export async function start(id: string, factory: IChaincodeFactory): Promise<voi
     }
 }
 
-start("test-doc-test9", testFactory).catch((error) => console.error(error));
+start("test-doc-test11", testFactory).catch((error) => console.error(error));

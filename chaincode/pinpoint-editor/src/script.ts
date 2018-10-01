@@ -1,5 +1,7 @@
-import { Pinpoint } from "@kurtb/pinpoint";
+import { IMarker, IPinpointOptions, Pinpoint } from "@kurtb/pinpoint";
+import { IMapView } from "@prague/map";
 import { IChaincode, IPlatform, IRuntime } from "@prague/runtime-definitions";
+import { Deferred } from "@prague/utils";
 import * as angular from "angular";
 import * as angularRoute from "angular-route";
 import "bootstrap/dist/css/bootstrap.min.css";
@@ -291,29 +293,57 @@ pinpointTool.filter("html", ($sce) => {
     };
 });
 
-class PinpointPlatform extends EventEmitter implements IPlatform {
-    public async queryInterface<T>(id: string): Promise<T> {
-        return null;
-    }
-}
+class PinpointRunner extends EventEmitter implements IPlatform {
+    private started = new Deferred<void>();
+    private rootView: IMapView;
+    private editor: boolean;
+    private mapHost: HTMLElement;
 
-class Runner {
     public async run(runtime: IRuntime, platform: IPlatform) {
-        this.start(runtime, platform).catch((error) => console.error(error));
-        return new PinpointPlatform();
+        this.start(runtime, platform).then(
+            () => {
+                this.started.resolve();
+            },
+            (error) => {
+                console.error(error);
+                this.started.reject(error);
+            });
+
+        return this;
+    }
+
+    public async queryInterface<T>(id: string): Promise<any> {
+        // Wait for start to complete before resolving interfaces
+        await this.started.promise;
+
+        switch (id) {
+            case "pinpoint":
+                return this;
+            default:
+                return null;
+        }
+    }
+
+    public addMarker(marker: IMarker) {
+        if (this.editor) {
+            const mapDetails = angular.element(this.mapHost).injector().get("mapDetailsSvc") as MapDetailsService;
+            mapDetails.addMarker(marker);
+        } else {
+            const currentMap = this.rootView.get("map") as IPinpointOptions;
+            currentMap.markers.push(marker);
+            this.rootView.set("map", currentMap);
+        }
     }
 
     private async start(runtime: IRuntime, platform: IPlatform): Promise<void> {
         const collabDoc = await Document.Load(runtime);
 
-        const mapHost: HTMLElement = await platform.queryInterface<HTMLElement>("div");
-        if (!mapHost) {
+        this.mapHost = await platform.queryInterface<HTMLElement>("div");
+        if (!this.mapHost) {
             return;
         }
 
-        const rootView = await collabDoc.getRoot().getView();
-        console.log("Keys");
-        console.log(rootView.keys());
+        this.rootView = await collabDoc.getRoot().getView();
 
         // Add in the text string if it doesn't yet exist
         if (!collabDoc.existing) {
@@ -337,12 +367,14 @@ class Runner {
                 "note": "This is a note.",
                 "zoom": 4,
             };
-            rootView.set("map", JSON.stringify(data));
+            this.rootView.set("map", JSON.stringify(data));
         } else {
-            await rootView.wait("map");
+            await this.rootView.wait("map");
         }
 
-        if (mapHost.id === "content") {
+        this.editor = this.mapHost.id === "content";
+
+        if (this.editor) {
             const googleP = new Promise<void>((resolve) => {
                 GoogleMapsLoader.load((google) => {
                     pinpointTool.value("google", google);
@@ -350,10 +382,10 @@ class Runner {
                 });
             });
 
-            mapHost.innerHTML = "<div ng-view></div>";
+            this.mapHost.innerHTML = "<div ng-view></div>";
 
             pinpointTool.factory("mapDetailsSvc", ["$rootScope", ($rootScope) => {
-                return new MapDetailsService($rootScope, collabDoc.getRoot(), rootView);
+                return new MapDetailsService($rootScope, collabDoc.getRoot(), this.rootView);
             }]);
 
             await googleP;
@@ -367,16 +399,16 @@ class Runner {
         } else {
             const innerDiv = document.createElement("div");
             innerDiv.style.width = "300px";
-            mapHost.appendChild(innerDiv);
+            this.mapHost.appendChild(innerDiv);
 
-            const mapDetails = JSON.parse(rootView.get("map"));
+            const mapDetails = JSON.parse(this.rootView.get("map"));
             mapDetails.element = innerDiv;
             let pinpoint = new Pinpoint(mapDetails);
 
             collabDoc.getRoot().on(
                 "valueChanged",
                 () => {
-                    const updatedDetails = JSON.parse(rootView.get("map"));
+                    const updatedDetails = JSON.parse(this.rootView.get("map"));
                     pinpoint.remove();
                     innerDiv.style.width = "300px";
                     updatedDetails.element = innerDiv;
@@ -392,6 +424,6 @@ class Runner {
 
 export async function instantiate(): Promise<IChaincode> {
     // Instantiate a new runtime per code load. That'll separate handlers, etc...
-    const chaincode = new Chaincode(new Runner());
+    const chaincode = new Chaincode(new PinpointRunner());
     return chaincode;
 }
