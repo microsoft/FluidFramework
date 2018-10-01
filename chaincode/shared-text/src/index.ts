@@ -61,6 +61,25 @@ class Runner extends EventEmitter implements IPlatform {
         this.sharedString.insertText(value, 0);
     }
 
+    public appendListItem(item: string) {
+        let endMarker = this.sharedString.client.mergeTree.getSegmentFromId("endList");
+        if (!endMarker) {
+            const endProps = MergeTree.createMap<any>();
+            endProps[MergeTree.reservedTileLabelsKey] = ["pg"];
+            endProps[MergeTree.reservedMarkerIdKey] = "endList";
+            this.sharedString.insertMarker(0, MergeTree.ReferenceType.Tile, endMarker);
+            endMarker = this.sharedString.client.mergeTree.getSegmentFromId("endList");
+        }
+        const endPos = this.sharedString.client.mergeTree.getOffset(endMarker,
+            MergeTree.UniversalSequenceNumber, this.sharedString.client.getClientId());
+        this.sharedString.insertText(item, endPos);
+        const pgProps = MergeTree.createMap<any>();
+        pgProps[MergeTree.reservedTileLabelsKey] = ["pg", "list"];
+        pgProps.indentLevel = 1;
+        pgProps.listKind = 1;
+        this.sharedString.insertMarker(endPos, MergeTree.ReferenceType.Tile, pgProps);
+    }
+
     private async start(runtime: IRuntime, platform: IPlatform) {
         const rootMapId = "root";
         const insightsMapId = "insights";
