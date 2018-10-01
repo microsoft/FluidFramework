@@ -1,4 +1,3 @@
-import { Document } from "@prague/client-api";
 import * as map from "@prague/map";
 import { IChaincode, IPlatform, IRuntime } from "@prague/runtime-definitions";
 import {
@@ -10,15 +9,6 @@ import { StreamExtension } from "@prague/stream";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 
-const rootMapId = "root";
-const insightsMapId = "insights";
-
-class LocalPlatform extends EventEmitter implements IPlatform {
-    public async queryInterface<T>(id: string): Promise<T> {
-        return null;
-    }
-}
-
 /**
  * A document is a collection of collaborative types.
  */
@@ -28,7 +18,7 @@ export class Chaincode extends EventEmitter implements IChaincode {
     /**
      * Constructs a new document from the provided details
      */
-    constructor(private runner: { run: (document, platofrm) => void }) {
+    constructor(private runner: { run: (document, platform) => Promise<IPlatform> }) {
         super();
 
         // Register default map value types
@@ -55,25 +45,6 @@ export class Chaincode extends EventEmitter implements IChaincode {
     }
 
     public async run(runtime: IRuntime, platform: IPlatform): Promise<IPlatform> {
-        this.startForReal(runtime, platform);
-        return new LocalPlatform();
-    }
-
-    private async startForReal(runtime: IRuntime, platform: IPlatform) {
-        let root: map.IMap;
-
-        if (!runtime.existing) {
-            root = runtime.createChannel(rootMapId, map.MapExtension.Type) as map.IMap;
-            root.attach();
-
-            const insights = runtime.createChannel(insightsMapId, map.MapExtension.Type);
-            root.set(insightsMapId, insights);
-        } else {
-            root = await runtime.getChannel("root") as map.IMap;
-        }
-
-        const document = new Document(runtime, root);
-
-        return this.runner.run(document, platform);
+        return this.runner.run(runtime, platform);
     }
 }

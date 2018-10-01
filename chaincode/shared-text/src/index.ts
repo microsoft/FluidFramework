@@ -2,21 +2,16 @@ import * as API from "@prague/client-api";
 import { controls, ui } from "@prague/client-ui";
 import * as DistributedMap from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
-import { IChaincode, IPlatform } from "@prague/runtime-definitions";
+import { IChaincode, IPlatform, IRuntime } from "@prague/runtime-definitions";
 import * as SharedString from "@prague/shared-string";
 import { IStream } from "@prague/stream";
+import { Deferred } from "@prague/utils";
 import { default as axios } from "axios";
+import { EventEmitter } from "events";
 // tslint:disable-next-line:no-var-requires
 const performanceNow = require("performance-now");
 import * as url from "url";
 import { Chaincode } from "./chaincode";
-
-// tslint:disable
-import "bootstrap/dist/css/bootstrap.min.css";
-import "bootstrap/dist/css/bootstrap-theme.min.css";
-import "../stylesheets/map.css";
-import "../stylesheets/style.css";
-// tslint:enable
 
 // first script loaded
 const clockStart = Date.now();
@@ -33,23 +28,61 @@ async function downloadRawText(textUrl: string): Promise<string> {
 
 const loadPP = false;
 
-class Runner {
-    public run(collabDoc: API.Document, platform: IPlatform) {
-        this.runCore(collabDoc, platform).catch((error) => console.error(error));
+class Runner extends EventEmitter implements IPlatform {
+    private started = new Deferred<void>();
+    private sharedString: SharedString.SharedString;
+
+    public async run(runtime: IRuntime, platform: IPlatform): Promise<IPlatform> {
+        this.start(runtime, platform).then(
+            () => {
+                this.started.resolve();
+            },
+            (error) => {
+                console.error(error);
+                this.started.reject(error);
+            });
+
+        return this;
+    }
+
+    public async queryInterface<T>(id: string): Promise<any> {
+        // Wait for start to complete before resolving interfaces
+        await this.started.promise;
+
+        switch (id) {
+            case "text":
+                return this;
+            default:
+                return null;
+        }
+    }
+
+    public append(value: string) {
+        this.sharedString.insertText(value, 0);
+    }
+
+    private async start(runtime: IRuntime, platform: IPlatform) {
+        const rootMapId = "root";
+        const insightsMapId = "insights";
+
+        let root: DistributedMap.IMap;
+
+        if (!runtime.existing) {
+            root = runtime.createChannel(rootMapId, DistributedMap.MapExtension.Type) as DistributedMap.IMap;
+            root.attach();
+
+            const insights = runtime.createChannel(insightsMapId, DistributedMap.MapExtension.Type);
+            root.set(insightsMapId, insights);
+        } else {
+            root = await runtime.getChannel("root") as DistributedMap.IMap;
+        }
+
+        const document = new API.Document(runtime, root);
+
+        return this.runCore(document, platform);
     }
 
     private async runCore(collabDoc: API.Document, platform: IPlatform) {
-        const hostContent: HTMLElement = await platform.queryInterface<HTMLElement>("div");
-        if (!hostContent) {
-            // If headless exist early
-            return;
-        }
-
-        const host = new ui.BrowserContainerHost();
-
-        // Register to run task only if the client type is browser.
-        // agent.registerToWork(collabDoc, client, token, config);
-
         console.log(`collabDoc loaded ${collabDoc.id} - ${performanceNow()}`);
         const root = await collabDoc.getRoot().getView();
         console.log(`Getting root ${collabDoc.id} - ${performanceNow()}`);
@@ -83,11 +116,25 @@ class Runner {
             await Promise.all([root.wait("text"), root.wait("ink")]);
         }
 
-        const sharedString = root.get("text") as SharedString.SharedString;
+        this.sharedString = root.get("text") as SharedString.SharedString;
         console.log(`Shared string ready - ${performanceNow()}`);
-        console.log(window.navigator.userAgent);
         console.log(`id is ${collabDoc.id}`);
         console.log(`Partial load fired - ${performanceNow()}`);
+
+        const hostContent: HTMLElement = await platform.queryInterface<HTMLElement>("div");
+        if (!hostContent) {
+            // If headless exist early
+            return;
+        }
+
+        // tslint:disable
+        require("bootstrap/dist/css/bootstrap.min.css");
+        require("bootstrap/dist/css/bootstrap-theme.min.css");
+        require("../stylesheets/map.css");
+        require("../stylesheets/style.css");
+        // tslint:enable
+
+        const host = new ui.BrowserContainerHost();
 
         // Higher plane ink
         const inkPlane = root.get("ink");
@@ -101,7 +148,7 @@ class Runner {
         const container = new controls.FlowContainer(
             containerDiv,
             collabDoc,
-            sharedString,
+            this.sharedString,
             inkPlane,
             image,
             root.get("pageInk") as IStream,
@@ -114,19 +161,19 @@ class Runner {
         //     console.error("Problem adding translation", error);
         // });
 
-        getInsights(collabDoc.getRoot(), sharedString.id).then(
+        getInsights(collabDoc.getRoot(), this.sharedString.id).then(
             (insightsMap) => {
                 container.trackInsights(insightsMap);
             });
 
-        if (sharedString.client.getLength() > 0) {
+        if (this.sharedString.client.getLength() > 0) {
             theFlow.render(0, true);
         }
         theFlow.timeToEdit = theFlow.timeToImpression = Date.now() - clockStart;
 
         theFlow.setEdit(root);
 
-        sharedString.loaded.then(() => {
+        this.sharedString.loaded.then(() => {
             theFlow.loadFinished(clockStart);
             console.log(`fully loaded ${collabDoc.id}: ${performanceNow()} `);
         });

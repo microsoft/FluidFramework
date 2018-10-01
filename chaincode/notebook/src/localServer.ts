@@ -1,40 +1,9 @@
 import * as pragueLoader from "@prague/loader";
-import { IChaincodeFactory, ICodeLoader, IPlatform, IPlatformFactory, IRuntime } from "@prague/runtime-definitions";
+import { IChaincodeFactory, ICodeLoader, IRuntime } from "@prague/runtime-definitions";
 import * as socketStorage from "@prague/socket-storage";
-import { EventEmitter } from "events";
 import * as jwt from "jsonwebtoken";
 import * as testFactory from "./script";
-
-export class WebPlatform extends EventEmitter implements IPlatform {
-    constructor(private div: HTMLElement) {
-        super();
-    }
-
-    public async queryInterface<T>(id: string): Promise<any> {
-        switch (id) {
-            case "dom":
-                return document;
-            case "div":
-                return this.div;
-            default:
-                return null;
-        }
-    }
-
-    // Temporary measure to indicate the UI changed
-    public update() {
-        this.emit("update");
-    }
-}
-
-export class WebPlatformFactory implements IPlatformFactory {
-    constructor(private div: HTMLElement) {
-    }
-
-    public async create(): Promise<IPlatform> {
-        return new WebPlatform(this.div);
-    }
-}
+import { WebPlatformFactory } from "./webPlatform";
 
 export class CodeLoader implements ICodeLoader {
     constructor(private factory: IChaincodeFactory) {
@@ -66,18 +35,24 @@ async function initializeChaincode(document: pragueLoader.Document, pkg: string)
     console.log(`Code is ${quorum.get("code")}`);
 }
 
-function updateMarkerProvider(runtime: IRuntime) {
-    runtime.platform.queryInterface("pinpoint").then((markerProvider) => {
-        // tslint:disable-next-line
-        window["markers"] = markerProvider;
-    });
+function updateNotebookProvider(runtime: IRuntime) {
+    console.log("updateNotebookProvider");
+
+    // Can fix this after updating the null chaincode
+    const notebookInterface = runtime.platform.queryInterface("notebook");
+
+    if (notebookInterface) {
+        runtime.platform.queryInterface("notebook").then((notebook) => {
+            // tslint:disable-next-line
+            window["notebook"] = notebook;
+        });
+    }
 }
 
 /**
  * Loads a specific version (commit) of the collaborative object
  */
 export async function start(id: string, factory: IChaincodeFactory): Promise<void> {
-
     const service = socketStorage.createDocumentService(routerlicious, historian);
 
     const classicPlatform = new WebPlatformFactory(document.getElementById("content"));
@@ -104,9 +79,9 @@ export async function start(id: string, factory: IChaincodeFactory): Promise<voi
         codeLoader,
         tokenService);
 
-    updateMarkerProvider(loaderDoc.runtime);
+    updateNotebookProvider(loaderDoc.runtime);
     loaderDoc.on("runtimeChanged", (runtime) => {
-        updateMarkerProvider(runtime);
+        updateNotebookProvider(runtime);
     });
 
     // If this is a new document we will go and instantiate the chaincode. For old documents we assume a legacy
@@ -116,4 +91,4 @@ export async function start(id: string, factory: IChaincodeFactory): Promise<voi
     }
 }
 
-start("test-doc-test11", testFactory).catch((error) => console.error(error));
+start("8", testFactory).catch((error) => console.error(error));

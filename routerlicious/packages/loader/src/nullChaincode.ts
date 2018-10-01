@@ -2,7 +2,7 @@ import { IChaincode, IPlatform, IRuntime } from "@prague/runtime-definitions";
 import { EventEmitter } from "events";
 
 class NullPlatform extends EventEmitter implements IPlatform {
-    public queryInterface<T>(id: string) {
+    public async queryInterface<T>(id: string) {
         return null;
     }
 }

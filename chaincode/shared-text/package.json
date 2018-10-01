@@ -1,6 +1,6 @@
 {
   "name": "@chaincode/shared-text",
-  "version": "0.1.0",
+  "version": "0.1.6",
   "description": "Shared text",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

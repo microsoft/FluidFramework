@@ -296,7 +296,7 @@ pinpointTool.filter("html", ($sce) => {
 class PinpointRunner extends EventEmitter implements IPlatform {
     private started = new Deferred<void>();
     private rootView: IMapView;
-    private editor: boolean;
+    private editor: boolean = false;
     private mapHost: HTMLElement;
 
     public async run(runtime: IRuntime, platform: IPlatform) {
@@ -329,20 +329,14 @@ class PinpointRunner extends EventEmitter implements IPlatform {
             const mapDetails = angular.element(this.mapHost).injector().get("mapDetailsSvc") as MapDetailsService;
             mapDetails.addMarker(marker);
         } else {
-            const currentMap = this.rootView.get("map") as IPinpointOptions;
+            const currentMap = JSON.parse(this.rootView.get("map")) as IPinpointOptions;
             currentMap.markers.push(marker);
-            this.rootView.set("map", currentMap);
+            this.rootView.set("map", JSON.stringify(currentMap));
         }
     }
 
     private async start(runtime: IRuntime, platform: IPlatform): Promise<void> {
         const collabDoc = await Document.Load(runtime);
-
-        this.mapHost = await platform.queryInterface<HTMLElement>("div");
-        if (!this.mapHost) {
-            return;
-        }
-
         this.rootView = await collabDoc.getRoot().getView();
 
         // Add in the text string if it doesn't yet exist
@@ -370,6 +364,12 @@ class PinpointRunner extends EventEmitter implements IPlatform {
             this.rootView.set("map", JSON.stringify(data));
         } else {
             await this.rootView.wait("map");
+        }
+
+        // If headless return early
+        this.mapHost = await platform.queryInterface<HTMLElement>("div");
+        if (!this.mapHost) {
+            return;
         }
 
         this.editor = this.mapHost.id === "content";

@@ -27,6 +27,7 @@
   },
   "dependencies": {
     "@prague/api-definitions": "^0.1.3542",
+    "@prague/loader-web": "^0.1.3556",
     "@prague/map": "^0.1.3542",
     "@prague/runtime-definitions": "^0.1.3542",
     "@prague/shared-string": "^0.1.3542",
