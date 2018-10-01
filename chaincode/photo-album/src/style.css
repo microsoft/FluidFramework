@@ -7,6 +7,19 @@
     display: table;
     clear: both;
   }
+
+  .row {
+    padding: 0 8px 8px;
+  }
+
+  .focus {
+      height: 35vw;
+  }
+
+  .row {
+      /* float: left; */
+      height: 25vw;
+  }
   
   /* Create four equal columns that floats next to eachother */
   .column {
@@ -14,52 +27,10 @@
     width: 25%;
   }
   
-  /* The Modal (background) */
-  .modal {
-    display: none;
-    position: fixed;
-    z-index: 1;
-    padding-top: 100px;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    overflow: auto;
-    background-color: black;
+  .thumbnail {
+      width: 100%;
   }
-  
-  /* Modal Content */
-  .modal-content {
-    position: relative;
-    background-color: #fefefe;
-    margin: auto;
-    padding: 0;
-    width: 90%;
-    max-width: 1200px;
-  }
-  
-  /* The Close Button */
-  .close {
-    color: white;
-    position: absolute;
-    top: 10px;
-    right: 25px;
-    font-size: 35px;
-    font-weight: bold;
-  }
-  
-  .close:hover,
-  .close:focus {
-    color: #999;
-    text-decoration: none;
-    cursor: pointer;
-  }
-  
-  /* Hide the slides by default */
-  .mySlides {
-    display: none;
-  }
-  
+
   /* Next & previous buttons */
   .prev,
   .next {
