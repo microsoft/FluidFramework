@@ -49,6 +49,8 @@ const sideBySideBounds = async (wnd: chrome.windows.Window) => {
     const rightInfo: any = Object.assign({}, leftInfo);
     rightInfo.left += rightInfo.width;
 
+    //leftInfo.height = Math.floor(leftInfo.height * 0.66);
+
     return [leftInfo, rightInfo];
 }
 

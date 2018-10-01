@@ -4,8 +4,16 @@ import { loadNotebook } from "./prague";
 import { chainload } from "./chainload";
 
 let sharingTab;
+let notebook;
+
+{
+    const div = document.createElement("div");
+    div.id = "content";
+    document.body.appendChild(div);
+}
+
 chainload("@chaincode/notebook").then(async id => {
-    const notebook = await loadNotebook(id)
+    notebook = await loadNotebook(id)
     sharingTab = new SharingTab(id);
     await notebook.initialize({ 
         routerlicious: "http://localhost:3000", 
@@ -17,8 +25,6 @@ chainload("@chaincode/notebook").then(async id => {
             pinpoint: "@chaincode/pinpoint-editor@latest", 
             sharedText: "@chaincode/shared-text@latest"
      }});
-
-    return { id, notebook };
 });
 
 const parentMenuId = "prague_share_menu";
@@ -34,6 +40,12 @@ const menus: chrome.contextMenus.CreateProperties[] = [{
     contexts: ["selection"],
     onclick: async (info: chrome.contextMenus.OnClickData, tab: chrome.tabs.Tab) => {
         insertText(info.selectionText);
+    }
+}, {
+    title: "pinpoint",
+    contexts: ["selection"],
+    onclick: async (info: chrome.contextMenus.OnClickData, tab: chrome.tabs.Tab) => {
+        notebook.addPinpoint(info.selectionText);
     }
 }];
 
