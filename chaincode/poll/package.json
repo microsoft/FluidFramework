@@ -33,6 +33,7 @@
     "@prague/runtime-definitions": "^0.1.3542",
     "@prague/shared-string": "^0.1.3542",
     "@prague/stream": "^0.1.3542",
+    "@prague/utils": "^0.1.3577",
     "@types/node": "^10.5.8",
     "css-loader": "^1.0.0",
     "jquery": "^3.3.1",

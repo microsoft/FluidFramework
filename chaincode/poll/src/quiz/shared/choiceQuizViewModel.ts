@@ -9,29 +9,11 @@ import { addCustomBindings } from "./customBindings";
 import * as types from "./definitions";
 import * as utils from "./utils";
 
-// declare var MathJax;
-
 interface IChoiceQuizState {
     seed: string;
     submission: any;
     feedbackChoices: number[];
 }
-
-//
-// Add a popover binding to automatically apply the bootstrap bindings to the required elements
-//
-/*
-TODO: bring binding back!
-ko.bindingHandlers["popover"] = {
-    init: (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) => {
-        $(element).popover();
-        $(element).on("click", (e) => {
-            e.preventDefault();
-            return true;
-        });
-    },
-};
-*/
 
 //
 // Class used to represent a view template and the view model bound to it. Used to switch between the edit
@@ -53,129 +35,6 @@ class AppView {
         if (this.viewModel && this.viewModel.afterRender) {
             this.viewModel.afterRender();
         }
-    }
-}
-
-// The edit view model. This is the view model used when editing choices.
-// Primarily is just a wrapper around the quiz model.
-// But also provides callbacks to add hints and choices.
-
-class EditViewModel {
-    public quiz: Quiz;
-    public controlBar: ControlBarViewModel;
-
-    private appViewModel: AppViewModel;
-
-    // Variables used to implement quiz configuration throttling.
-    private dirty = false;
-    private timer = undefined;
-    private pendingQuizData: IQuiz = undefined;
-
-    constructor(appViewModel: AppViewModel, quiz: Quiz) {
-        this.appViewModel = appViewModel;
-        this.quiz = quiz;
-
-        this.initControlBar();
-
-        quiz.allowMultipleAnswers.subscribe((allow) => {
-            if (!allow && quiz.answer().length > 1) {
-                quiz.answer([quiz.answer()[0]]);
-            }
-        });
-
-        // Set up default quiz first
-        this.pendingQuizData = quiz.serializedQuiz();
-        this.dirty = true;
-        this.serializeQuiz();
-
-        // Finally register for any change notifications on the quiz and serialize it
-        quiz.serializedQuiz.subscribe((changedQuiz) => {
-            // Update the pending quiz data
-            this.pendingQuizData = changedQuiz;
-
-            // If not already dirty, set the dirty bit and fire the update timer
-            if (!this.dirty) {
-                this.dirty = true;
-                this.timer = setTimeout(() => { this.serializeQuiz(); }, 500);
-            }
-        });
-    }
-
-    public serializeQuiz() {
-        if (this.dirty) {
-            clearTimeout(this.timer);
-            this.timer = null;
-            this.dirty = false;
-
-            this.appViewModel.configuration = getConfiguration(this.pendingQuizData);
-        }
-    }
-
-    public addChoice() {
-        // Of the current choices, get the largest ID, and then add 1 to it for the new choice
-        let greatestId = 0;
-        this.quiz.choices().forEach((choice) => {
-            const choiceId = choice.id();
-            greatestId = Math.max(choiceId, greatestId);
-        });
-
-        this.quiz.choices.push(new Choice({ id: greatestId + 1, choice: null, feedback: null }));
-    }
-
-    public removeChoice(index: number) {
-        const choices = this.quiz.choices();
-        const removeId = choices[index].id();
-        this.quiz.answer.remove(removeId.toString());
-
-        this.quiz.choices.splice(index, 1);
-    }
-
-    public addHint() {
-        this.quiz.hints.push(new Hint({ text: "" }));
-    }
-
-    public removeHint(index: number) {
-        this.quiz.hints.splice(index, 1);
-    }
-
-    public flipAnswer(index: number) {
-        const choiceIdStr = this.quiz.choices()[index].id().toString();
-        if (!this.quiz.allowMultipleAnswers()) {
-            if (this.quiz.answer.indexOf(choiceIdStr) >= 0) {
-                return;
-            } else {
-                this.quiz.answer.removeAll();
-                this.quiz.answer.push(choiceIdStr);
-            }
-        } else {
-            if (this.quiz.answer.indexOf(choiceIdStr) >= 0) {
-                this.quiz.answer.remove(choiceIdStr);
-            } else {
-                this.quiz.answer.push(choiceIdStr);
-            }
-        }
-    }
-
-    public isAnswer(index: number) {
-        const choiceIdStr = this.quiz.choices()[index].id().toString();
-        return this.quiz.answer.indexOf(choiceIdStr) !== -1;
-    }
-
-    public afterRender() {
-        setTimeout(() => {
-            $(":focus").blur();
-            window.scrollTo(0, 0);
-        }, 0);
-    }
-
-    private initControlBar() {
-        this.controlBar = new ControlBarViewModel();
-        this.controlBar.leftButtons.push(
-            new ControlButton(
-                "QuizTextPreview", () => this.appViewModel.switchMode(types.LabMode.View, true), null));
-        this.controlBar.leftButtons.push(
-            new ControlButton(
-                "QuizTextPublish", () => this.appViewModel.publish(), null));
     }
 }
 
@@ -418,30 +277,27 @@ class ShowViewModel {
             });
         });
 
-        // Only update response for taking quizzes.
-        if (this.appViewModel.readonly) {
-            // Update the map with submission.
-            const responseMap = this.appViewModel.mapView.get("response") as IMap;
-            const clientId = this.appViewModel.collabDoc.clientId;
-            responseMap.get("numRows").then((rowId: number) => {
-                responseMap.set(`${rowId}x0`, clientId);
-                const submissionIds = [];
-                submission.forEach((submittedValue) => {
-                    submissionIds.push(submittedValue);
-                });
-                choices.forEach((choice) => {
-                    if (submissionIds.indexOf(choice.choice.id().toString()) !== -1) {
-                        console.log(`Matched: ${choice.choice.id()} ${choice.choice.choice()}`);
-                        responseMap.set(`${rowId}x${choice.choice.id() + 1}`, 1);
-                    } else {
-                        console.log(`Not matched: ${choice.choice.id()} ${choice.choice.choice()}`);
-                        responseMap.set(`${rowId}x${choice.choice.id() + 1}`, 0);
-                    }
-                });
-                responseMap.set("numRows", rowId + 1);
-                console.log(`Submission updated!`);
+        // Update the map with submission.
+        const responseMap = this.appViewModel.mapView.get("response") as IMap;
+        const clientId = this.appViewModel.collabDoc.clientId;
+        responseMap.get("numRows").then((rowId: number) => {
+            responseMap.set(`${rowId}x0`, clientId);
+            const submissionIds = [];
+            submission.forEach((submittedValue) => {
+                submissionIds.push(submittedValue);
             });
-        }
+            choices.forEach((choice) => {
+                if (submissionIds.indexOf(choice.choice.id().toString()) !== -1) {
+                    console.log(`Matched: ${choice.choice.id()} ${choice.choice.choice()}`);
+                    responseMap.set(`${rowId}x${choice.choice.id() + 1}`, 1);
+                } else {
+                    console.log(`Not matched: ${choice.choice.id()} ${choice.choice.choice()}`);
+                    responseMap.set(`${rowId}x${choice.choice.id() + 1}`, 0);
+                }
+            });
+            responseMap.set("numRows", rowId + 1);
+            console.log(`Submission updated!`);
+        });
 
         // Update the attempts
         this.attemptsMade(this.attemptsMade() + 1);
@@ -524,13 +380,6 @@ class ShowViewModel {
     private initControlBar() {
         this.controlBar = new ControlBarViewModel();
 
-        // Don't render Edit button for readonly mode.
-        if (!this.appViewModel.readonly) {
-            this.controlBar.leftButtons.push(new ControlButton("QuizTextEdit",
-            () => { this.appViewModel.switchMode(types.LabMode.Edit, false); },
-            () => this.appViewModel.isModeSetByAuthor()));
-        }
-
         this.controlBar.rightButtons.push(
             new ControlButton(
                 "QuizTextHint", () => { this.giveHint(); },
@@ -574,18 +423,15 @@ class AppViewModel {
     public view: KnockoutObservable<AppView>;
     public errorMessage: KnockoutObservable<string> = ko.observable("");
 
-    public defaultQuiz: IQuiz;
     public configuration: any = undefined;
     public currentMode: types.LabMode = undefined;
-    public readonly: boolean = false;
     public mapView: IMapView;
     public rootMap: IMap;
     public collabDoc: Document;
 
     public isModeSetByAuthor: KnockoutObservable<boolean>;
 
-    constructor(defaultQuiz: IQuiz, readonly: boolean, rootMap: IMap, mapView: IMapView, collabDoc: Document) {
-        this.defaultQuiz = defaultQuiz;
+    constructor(rootMap: IMap, mapView: IMapView, collabDoc: Document) {
 
         // The view specifies what is the current view model to make use of
         this.view = ko.observable(new AppView("emptyTemplate", null));
@@ -596,35 +442,11 @@ class AppViewModel {
         this.mapView = mapView;
         this.rootMap = rootMap;
         this.collabDoc = collabDoc;
-        this.readonly = readonly;
 
-        // Set up mathjax
-        // MathJax.Hub.Config({
-            // tex2jax: {inlineMath: [["$", "$"], ["\\(", "\\)"]]},
-        // });
-
-        // Switch to desired mode
-        if (readonly) {
-            const quizConfig = mapView.get("quiz") as string;
-            this.configuration = JSON.parse(quizConfig) as types.IConfiguration;
-            this.switchMode(types.LabMode.View, false);
-            this.listenToUpdate();
-        } else {
-            this.switchMode(types.LabMode.Edit, false);
-        }
-    }
-
-    public switchMode(mode: types.LabMode, isModeSetByAuthor: boolean) {
-        // Make sure to call serialization first in edit mode.
-        // TODO: Do something with view mode.
-        if (this.currentMode === types.LabMode.Edit) {
-            this.view().viewModel.serializeQuiz();
-        }
-        if (mode === types.LabMode.Edit) {
-            return this.switchToEditMode(isModeSetByAuthor);
-        } else {
-            return this.switchToShowMode(isModeSetByAuthor);
-        }
+        const quizConfig = mapView.get("quiz") as string;
+        this.configuration = JSON.parse(quizConfig) as types.IConfiguration;
+        this.switchToShowMode(false);
+        this.listenToUpdate();
     }
 
     public retry() {
@@ -635,39 +457,7 @@ class AppViewModel {
         this.errorMessage(JSON.stringify(error));
     }
 
-    public publish() {
-        this.mapView.set("quiz", JSON.stringify(this.configuration));
-        const responseMap = this.mapView.get("response") as IMap;
-        const choices = this.view().viewModel.quiz.choices();
-        responseMap.set("numCols", choices.length + 1);
-        responseMap.set("0x0", "User");
-        choices.forEach((choice) => {
-            const choiceId = choice.id() + 1;
-            // Strip off html tags.
-            const choiceText = choice.choice().replace(/<(?:.|\n)*?>/gm, "");
-            responseMap.set(`0x${choiceId}`, choiceText );
-        });
-        responseMap.set("numRows", 1);
-        console.log(`Quizzes published!`);
-    }
-
-    private switchToEditMode(isModeSetByAuthor: boolean) {
-        // Construct the quiz from the saved configuration
-        let quiz: Quiz;
-        if (this.configuration) {
-            quiz = new Quiz(((this.configuration.components[0]) as types.IChoiceComponent).data as IQuiz);
-        } else {
-            quiz = new Quiz(this.defaultQuiz);
-        }
-
-        this.view(new AppView("editTemplate", new EditViewModel(this, quiz)));
-        this.isModeSetByAuthor(isModeSetByAuthor);
-        this.currentMode = types.LabMode.Edit;
-    }
-
     private switchToShowMode(isModeSetByAuthor: boolean) {
-        // TODO: Ideally we should get the attempts and state from DB and populate here. But that requires some sort of
-        // user auth. We should use auth we get from AAD here.
         const attempts = undefined;
         const state = undefined;
         this.view(
@@ -675,8 +465,7 @@ class AppViewModel {
                 "showTemplate",
                 new ShowViewModel(this, this.configuration, attempts, state)),
             );
-        // Disable mathjax for now.
-        // MathJax.Hub.Queue(["Typeset", MathJax.Hub]);
+
         this.isModeSetByAuthor(isModeSetByAuthor);
         this.currentMode = types.LabMode.View;
     }
@@ -684,10 +473,9 @@ class AppViewModel {
     private listenToUpdate() {
         this.rootMap.on("valueChanged", async (changed: IValueChanged ) => {
             if (changed.key === "quiz") {
-                // Get new quiz config.
                 const quizConfig = this.mapView.get("quiz") as string;
                 this.configuration = JSON.parse(quizConfig) as types.IConfiguration;
-                this.switchMode(types.LabMode.View, false);
+                this.switchToShowMode(false);
             }
         });
     }
@@ -739,22 +527,69 @@ function getConfiguration(quiz: IQuiz): types.IConfiguration {
     };
 }
 
-// Quiz entry point.
-export function initialize(
-    readOnly: boolean,
-    collabDoc: Document,
-    defaultQuizConfiguration: IQuiz) {
-    console.log(`Init called!`);
-    $(document).ready(async () => {
+export class QuizWrapper {
 
-        const rootMap = collabDoc.getRoot();
-        const mapView = await rootMap.getView();
-        const appViewModel = new AppViewModel(defaultQuizConfiguration, readOnly, rootMap, mapView, collabDoc);
+    constructor(private collabDoc: Document, private rootMap: IMap, private mapView: IMapView) {
+    }
 
-        // add custom bindings
+    public initialize() {
+        this.mapView.set("quiz", this.createEmptyQuizConfig());
+        const responseMap = this.mapView.get("response") as IMap;
+        responseMap.set("0x0", "User");
+        responseMap.set("numRows", 1);
+        responseMap.set("numCols", 1);
+    }
+
+    public start() {
+        const appViewModel = new AppViewModel(this.rootMap, this.mapView, this.collabDoc);
         addCustomBindings();
-
-        // And start up knockout!
         ko.applyBindings(appViewModel);
-    });
+    }
+
+    public setQuestion(text: string) {
+        const currentConfig = this.mapView.get("quiz") as types.IConfiguration;
+        const currentQuiz = ((currentConfig.components[0]) as types.IChoiceComponent).data as IQuiz;
+        currentQuiz.question = text;
+        this.mapView.set("quiz", this.serializeQuiz(currentQuiz));
+    }
+
+    public addChoice(text: string) {
+        const currentConfig = this.mapView.get("quiz") as types.IConfiguration;
+        const currentQuiz = ((currentConfig.components[0]) as types.IChoiceComponent).data as IQuiz;
+        const currentChoices = currentQuiz.choices;
+        const newChoice = {
+            choice: text,
+            feedback: "",
+            id: currentChoices.length,
+        };
+        currentChoices.push(newChoice);
+        this.mapView.set("quiz", this.serializeQuiz(currentQuiz));
+
+        const responseMap = this.mapView.get("response") as IMap;
+        responseMap.set(`0x${newChoice.id + 1}`, newChoice.choice);
+    }
+
+    private serializeQuiz(quiz: IQuiz): types.IConfiguration {
+        return getConfiguration(quiz);
+    }
+
+    private createEmptyQuizConfig(): types.IConfiguration {
+        const emptyQuiz: IQuiz = {
+            allowChoiceEditing: true,
+            allowMultipleAnswers: false,
+            answer: null,
+            choices: [],
+            fontSize: "small",
+            hasAnswer: false,
+            hints: [],
+            isTimed: false,
+            limitAttempts: false,
+            maxAttempts: 2,
+            question: "Insert question here",
+            required: false,
+            shuffleChoices: false,
+            timeLimit: 120,
+        };
+        return this.serializeQuiz(emptyQuiz);
+    }
 }
