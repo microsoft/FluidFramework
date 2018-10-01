@@ -1,9 +1,10 @@
 import { ui } from "@prague/client-ui";
-import { IChaincode, IGenericBlob, IPlatform, MessageType } from "@prague/runtime-definitions";
+import { IMap } from "@prague/map";
+import { IChaincode, IGenericBlob, IPlatform, IRuntime, MessageType } from "@prague/runtime-definitions";
 import { gitHashFile } from "@prague/utils";
+import { EventEmitter } from "events";
 import { Chaincode } from "./chaincode";
 import { Document } from "./document";
-// import style from "style.css";
 import "./style.css";
 
 const template =
@@ -22,16 +23,32 @@ class PhotoCarousel extends ui.Component {
 
 }
 
-class Runner {
+class AlbumPlatform extends EventEmitter implements IPlatform {
+    public async queryInterface<T>(id: string): Promise<T> {
+        return null;
+    }
+}
 
-    public async run(doc: Document, platform: IPlatform) {
-        const hostContent: HTMLDivElement = platform ? platform.queryInterface<HTMLDivElement>("div") : null;
+class Runner {
+    private album: IMap;
+
+    public async run(runtime: IRuntime, platform: IPlatform) {
+        this.start(await Document.Load(runtime), platform).catch((error) => console.error(error));
+        return new AlbumPlatform();
+    }
+
+    private async start(doc: Document, platform: IPlatform) {
+        const hostContent: HTMLDivElement = platform ? await platform.queryInterface<HTMLDivElement>("div") : null;
         if (!hostContent) {
             // If headless exist early
             return;
         }
 
         hostContent.innerHTML = template;
+        const host = new ui.BrowserContainerHost();
+
+        const canvas = new PhotoCarousel(hostContent.children[0] as HTMLDivElement);
+        host.attach(canvas);
         this.carouselBuilder(doc);
 
         const nextButton = document.getElementById("next-button");
@@ -57,21 +74,34 @@ class Runner {
                         url: "",
                     } as IGenericBlob;
 
-                    // Move this somewhere more reasonable.
                     doc.uploadBlob(incl);
                 };
                 arrayBufferReader.readAsArrayBuffer(file);
             }
         };
-
         doc.runtime.on(MessageType.BlobUploaded, (ev) => {
             this.carouselBuilder(doc);
         });
 
-        const host = new ui.BrowserContainerHost();
+        const root = doc.getRoot();
+        if (!doc.existing) {
+            await root.set<IMap>("album", doc.createMap());
+        }
 
-        const canvas = new PhotoCarousel(hostContent.children[0] as HTMLDivElement);
-        host.attach(canvas);
+        this.album = await root.wait("album") as IMap;
+
+        this.album.on("valueChanged", async (changed, local, op) => {
+            if (!local) {
+                const active = await this.album.get("active");
+                const slide = (document.getElementById("focus")) as HTMLDivElement;
+                slide.innerHTML = "";
+                slide.appendChild(this.buildSlides(active));
+            }
+        });
+
+        if (await this.album.has("active")) {
+            this.buildSlides(await this.album.get("active") );
+        }
     }
 
     private async carouselBuilder(doc: Document) {
@@ -81,7 +111,7 @@ class Runner {
         focusImage.innerHTML = "";
         focusImage.style.height = "100%";
         if (images.length > 0 ) {
-            focusImage.appendChild(this.buildSlides(images[0].url));
+            this.setCurrentSlide(images[0].url);
         }
 
         const thumbnails = document.getElementById("thumbnails") as HTMLDivElement;
@@ -92,6 +122,7 @@ class Runner {
     }
 
     private buildSlides(url: string): HTMLDivElement {
+
         const slide = document.createElement("div");
         slide.id = "main-slide";
 
@@ -124,6 +155,10 @@ class Runner {
     }
 
     private setCurrentSlide(url: string) {
+        if (this.album) {
+            this.album.set("active", url);
+        }
+
         const slide = (document.getElementById("focus")) as HTMLDivElement;
         slide.innerHTML = "";
         slide.appendChild(this.buildSlides(url));
@@ -137,7 +172,6 @@ class Runner {
     private plusSlides(moves: number) {
         const thumbnails = document.getElementsByClassName("thumbnail") as HTMLCollectionOf<HTMLImageElement>;
         const current = this.getCurrentSlideUrl();
-
         let prior = "";
         let next = "";
 
