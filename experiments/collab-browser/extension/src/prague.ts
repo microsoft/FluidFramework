@@ -3,6 +3,7 @@ import { WebLoader, WebPlatform } from "../../../../routerlicious/packages/loade
 import * as socketStorage from "../../../../routerlicious/packages/socket-storage";
 import * as jwt from "jsonwebtoken";
 import { componentSym } from "../../component/src/component"
+import { IPlatform, IPlatformFactory } from "../../../../routerlicious/packages/runtime-definitions";
 
 const routerlicious = "http://localhost:3000";
 const historian = "http://localhost:3001";
@@ -12,25 +13,33 @@ const secret = "43cfc3fbf04a97c0921fd23ff10f9e4b";
 const documentServices = socketStorage.createDocumentService(routerlicious, historian);
 const tokenService = new socketStorage.TokenService();
 
-type Concrete = string | number | boolean | symbol | object
+export class PlatformFactory<T> implements IPlatformFactory {
+    // Very much a temporary thing as we flesh out the platform interfaces
+    private lastPlatform: WebPlatform;
 
-function lazy<T extends Concrete>(fn: () => T): () => T {
-    let maybe: T | undefined;
-    return () => {
-        if (maybe === undefined) {
-            maybe = fn();
-            console.assert(maybe !== undefined);
-        }
-        return maybe!;
+    constructor(
+        private readonly div: HTMLElement,
+        private readonly componentResolver: (component: T) => void,
+    ) {
     }
-}
 
-const fn = () => undefined;
+    public async create(): Promise<IPlatform> {
+        if (this.div) {
+            this.div.innerHTML = "";
+        }
+        this.lastPlatform = new WebPlatform(this.div);
+        this.lastPlatform[componentSym] = this.componentResolver;
+        return this.lastPlatform;
+    }
 
-lazy(fn);
+    // Temporary measure to indicate the UI changed
+    public update() {
+        if (!this.lastPlatform) {
+            return;
+        }
 
-export const lazyLoad = (documentId: string) => {
-    return lazy(() => load(documentId));
+        this.lastPlatform.emit("update");
+    }
 }
 
 export const load = <T>(documentId: string) => {
@@ -46,15 +55,15 @@ export const load = <T>(documentId: string) => {
 
     const webLoader = new WebLoader("http://localhost:4873");
 
-    const platform = new WebPlatform(undefined);
+    let factory: IPlatformFactory;
     const componentP = new Promise<T>((resolver) => {
-        platform[componentSym] = resolver;
+        factory = new PlatformFactory<T>(undefined, resolver);
     });
 
     loader.load(
         token,
         null,
-        platform,
+        factory,
         documentServices,
         webLoader,
         tokenService,

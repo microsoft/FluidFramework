@@ -1,7 +1,8 @@
 import { Block, BoxState } from "@prague/app-ui";
 import { getChaincodeRepo, getDefaultCredentials, getDefaultDocumentService } from "@prague/client-api";
 import * as loader from "@prague/loader";
-import { WebLoader, WebPlatformFactory } from "@prague/loader-web";
+import { WebLoader, WebPlatform } from "@prague/loader-web";
+import { IPlatform, IPlatformFactory } from "@prague/runtime-definitions";
 import { TokenService } from "@prague/socket-storage";
 import * as jwt from "jsonwebtoken";
 import { FlowViewContext } from "./flowViewContext";
@@ -12,7 +13,50 @@ const platformSym = Symbol("Document.platform");
 export class DocumentState extends BoxState {
     public id: string;
     public [documentSym]: loader.Document;
-    public [platformSym]: WebPlatformFactory;
+    public [platformSym]: PlatformFactory;
+}
+
+export class Platform extends WebPlatform {
+    constructor(div: HTMLElement, private readonly invalidateLayout: (width, height) => void) {
+        super(div);
+    }
+
+    public async queryInterface<T>(id: string): Promise<any> {
+        switch (id) {
+            case "invalidateLayout":
+                return this.invalidateLayout;
+            default:
+                return super.queryInterface(id);
+        }
+    }
+}
+
+export class PlatformFactory implements IPlatformFactory {
+    // Very much a temporary thing as we flesh out the platform interfaces
+    private lastPlatform: Platform;
+
+    constructor(
+        private readonly div: HTMLElement,
+        private readonly invalidateLayout: (width: number, height: number) => void,
+    ) {
+    }
+
+    public async create(): Promise<IPlatform> {
+        if (this.div) {
+            this.div.innerHTML = "";
+        }
+        this.lastPlatform = new Platform(this.div, this.invalidateLayout);
+        return this.lastPlatform;
+    }
+
+    // Temporary measure to indicate the UI changed
+    public update() {
+        if (!this.lastPlatform) {
+            return;
+        }
+
+        this.lastPlatform.emit("update");
+    }
 }
 
 export class Document extends Block<DocumentState> {
@@ -43,11 +87,19 @@ export class Document extends Block<DocumentState> {
             credentials.key);
 
         const webLoader = new WebLoader(getChaincodeRepo());
-        const webPlatform = new WebPlatformFactory(div);
+
+        const invalidateLayout = (width: number, height: number) => {
+            div.style.width = `${width}px`;
+            div.style.height = `${height}px`;
+            context.services.get("invalidateLayout")();
+        };
+
+        const platformFactory = new PlatformFactory(div, invalidateLayout);
+
         const documentP = loader.load(
             token,
             { blockUpdateMarkers: true },
-            webPlatform,
+            platformFactory,
             getDefaultDocumentService(),
             webLoader,
             this.tokenService,
@@ -56,7 +108,7 @@ export class Document extends Block<DocumentState> {
         documentP.then(
             (document) => {
                 self[documentSym] = document;
-                self[platformSym] = webPlatform;
+                self[platformSym] = platformFactory;
                 console.log("Document loaded");
             },
             (error) => console.error("Failed to load document"));

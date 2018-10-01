@@ -3617,6 +3617,12 @@ export class FlowView extends ui.Component {
             this.localQueueRender(this.cursor.pos);
         };
 
+        // Expose the ability to invalidate the current layout when a component's width/height changes.
+        this.services.set("invalidateLayout", () => {
+            console.log("Component invalidated layout");
+            this.localQueueRender(FlowView.docStartPosition);
+        });
+
         // TODO: Should insert a workbook into the document on demand, implement the ability
         //       to add references to pre-existing notebooks, support multiple notebooks, ...
         //

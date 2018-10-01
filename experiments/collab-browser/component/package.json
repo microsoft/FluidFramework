@@ -1,6 +1,6 @@
 {
   "name": "@chaincode/collab-browser",
-  "version": "0.0.47",
+  "version": "0.0.68",
   "description": "Experimental collaborative browser component",
   "main": "dist/main.bundle.js",
   "types": "dist/index.d.ts",
@@ -10,7 +10,7 @@
     "webpack": "webpack --config webpack.config.js",
     "tslint": "tslint 'src/**/*.ts'",
     "update": "npm run build && npm version patch && npm publish --registry http://localhost:4873",
-    "dev": "npm run webpack && npm run tslint -- --fix && npm version patch && npm publish --registry http://localhost:4873"
+    "dev": "npm run webpack && npm run tslint -- --fix && npm version patch && npm publish --registry http://localhost:4873 && echo \"http://localhost:3000/loader/x${RANDOM}?chaincode=@chaincode/collab-browser@latest\""
   },
   "author": "Microsoft",
   "repository": "microsoft/prague",
@@ -26,13 +26,7 @@
     "webpack-serve": "^2.0.2",
     "webpack-visualizer-plugin": "^0.1.11"
   },
-  "dependencies": {
-    "@prague/api-definitions": "^0.1.0",
-    "@prague/map": "^0.1.0",
-    "@prague/runtime-definitions": "^0.1.3328",
-    "@prague/shared-string": "^0.1.0",
-    "@prague/stream": "^0.1.0"
-  },
+  "dependencies": {},
   "prague": {
     "browser": {
       "entrypoint": "main",

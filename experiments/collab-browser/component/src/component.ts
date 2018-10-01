@@ -1,7 +1,7 @@
-import { IMap, IMapView, MapExtension } from "@prague/map";
-import { IRuntime } from "@prague/runtime-definitions";
 import { EventEmitter } from "events";
 import { urlToInclusion } from "../../../../routerlicious/packages/client-ui/src/blob";
+import { IMap, IMapView, MapExtension } from "../../../../routerlicious/packages/map";
+import { IRuntime } from "../../../../routerlicious/packages/runtime-definitions";
 
 const rootMapId = "root";
 const insightsMapId = "insights";
@@ -14,30 +14,36 @@ const heightKey = "height";
 export const componentSym = "component";
 
 export class Component extends EventEmitter {
-    private runtime?: IRuntime;
-    private rootMap?: IMap;
-    private rootView?: IMapView;
 
-    public async connect(runtime: IRuntime) {
+    public static async load(runtime: IRuntime) {
         console.log("connect");
-        this.runtime = runtime;
-        if (this.runtime.existing) {
+
+        let rootMap: IMap;
+        if (runtime.existing) {
             console.log("existing");
             // If opening the document, get the root.
-            this.rootMap = await this.runtime.getChannel(rootMapId) as IMap;
+            rootMap = await runtime.getChannel(rootMapId) as IMap;
         } else {
             console.log("not existing");
             // If creating the document, create the initial structure.
-            this.rootMap = this.runtime.createChannel(rootMapId, MapExtension.Type) as IMap;
-            this.rootMap.attach();
+            rootMap = runtime.createChannel(rootMapId, MapExtension.Type) as IMap;
+            rootMap.attach();
 
-            const insights = this.runtime.createChannel(insightsMapId, MapExtension.Type);
-            this.rootMap.set(insightsMapId, insights);
-            this.rootMap.set(createdDateKey, new Date());
-            this.rootMap.set(widthKey, 0);
-            this.rootMap.set(heightKey, 0);
-            this.rootMap.set(imageKey, "");
+            const insights = runtime.createChannel(insightsMapId, MapExtension.Type);
+            rootMap.set(insightsMapId, insights);
+            rootMap.set(createdDateKey, new Date());
+            rootMap.set(widthKey, 0);
+            rootMap.set(heightKey, 0);
+            rootMap.set(imageKey, "");
         }
+
+        return new Component(runtime, await rootMap.getView());
+    }
+    private readonly rootMap: IMap;
+
+    constructor(private readonly runtime: IRuntime, private readonly rootView: IMapView) {
+        super();
+        this.rootMap = rootView.getMap();
 
         this.rootMap.on("valueChanged", (change) => {
             // When an image is updated, imageKey is the last key to be set.
@@ -46,7 +52,6 @@ export class Component extends EventEmitter {
             }
         });
 
-        this.rootView = await this.rootMap.getView();
     }
 
     public async setImage(image: string, width: number, height: number) {
@@ -65,7 +70,12 @@ export class Component extends EventEmitter {
         const sha = this.rootView.get(imageKey);
         console.log(`*** getImage(width: ${width}, height: ${height}, image: ${sha})`);
 
-        const image = (await this.runtime.getBlob(sha)).url;
+        let image = "";
+        if (sha) {
+            try {
+                image = (await this.runtime.getBlob(sha)).url;
+            } catch (error) { console.error(`Unable get blob: ${error}`); }
+        }
 
         return { height, image, width };
     }
