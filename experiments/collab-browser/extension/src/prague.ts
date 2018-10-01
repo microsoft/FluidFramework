@@ -13,7 +13,7 @@ const secret = "43cfc3fbf04a97c0921fd23ff10f9e4b";
 const documentServices = socketStorage.createDocumentService(routerlicious, historian);
 const tokenService = new socketStorage.TokenService();
 
-export class PlatformFactory<T> implements IPlatformFactory {
+class PlatformFactory<T> implements IPlatformFactory {
     // Very much a temporary thing as we flesh out the platform interfaces
     private lastPlatform: WebPlatform;
 
@@ -71,4 +71,38 @@ export const load = <T>(documentId: string) => {
         true);
 
     return componentP;
+}
+
+export const loadNotebook = async (documentId: string) => {
+    const token = jwt.sign({
+            documentId,
+            permission: "read:write", // use "read:write" for now
+            tenantId,
+            user: {
+                id: `browser-${(Math.random() * 0xFFFFFFFF) >>> 0}`,
+            },
+        },
+        secret);
+
+    const webLoader = new WebLoader("http://localhost:4873");
+
+    const factory = new PlatformFactory<any>(null, () => { /* do nothing */ });
+
+    const document = await loader.load(
+        token,
+        null,
+        factory,
+        documentServices,
+        webLoader,
+        tokenService,
+        null,
+        true);
+
+    const platform = await new Promise<IPlatform>(resolver => {
+        document.once("runtimeChanged", (runtime) => {
+            resolver(runtime.platform);
+        });
+    });
+    
+    return platform.queryInterface("notebook") as any;
 }

@@ -1,8 +1,4 @@
 import * as style from "./style.css";
-import { load } from "./prague";
-import { SessionManager, SessionList } from "../../sessions";
-
-const sessionManagerP = load<SessionManager>("x20");
 
 chrome.runtime.sendMessage({ type: "getDocId" }, (docId: string) => {
     const outer = document.createElement("div");
@@ -41,11 +37,5 @@ chrome.runtime.sendMessage({ type: "getDocId" }, (docId: string) => {
         //     });
 
         chrome.runtime.sendMessage({ type: "share" });
-    });
-
-    sessionManagerP.then(sessionManager => {
-        const sessionList = new SessionList<any>();
-        const sessionsDiv = document.getElementById("sessions");
-        sessionsDiv.appendChild(sessionList.mount(sessionManager));
     });
 });

@@ -256,6 +256,14 @@ class NotebookRunner extends EventEmitter implements IPlatform {
             return;
         }
 
+        if (location && location.href) {
+            // Remove the query string (if any) to prevent accidentally re-instantiating chaincode.
+            const [baseUrl, queryString] = location.href.split("?");
+            if (queryString) {
+                history.pushState(null, "", baseUrl);
+            }
+        }
+
         this.rootView = await collabDoc.getRoot().getView();
 
         // We rely on someone connecting to this chaincode and explicitly configuring it

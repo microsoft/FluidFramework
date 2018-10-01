@@ -10,7 +10,7 @@
         "system.display",
         "contextMenus"
     ],
-    "content_security_policy": "script-src 'self' 'unsafe-eval'; object-src 'self'",
+    "content_security_policy": "script-src 'self' 'unsafe-eval' https://maps.googleapis.com https://maps.gstatic.com; object-src 'self'",
     "browser_action": {
         "default_title": "Prague Collaborative Browsing",
         "default_popup": "popup.html"

@@ -1,5 +1,5 @@
 import { TabRef } from "./tabRef";
-import { navigateTab, getCurrentWindow, updateWindow, createWindow, queryTabs, windowFromTabId, getFocusedWindow } from "./utils";
+import { navigateTab, getCurrentWindow, updateWindow, createWindow, queryTabs, windowFromTabId } from "./utils";
 
 interface IBounds {
     left: number;
@@ -53,9 +53,12 @@ const sideBySideBounds = async (wnd: chrome.windows.Window) => {
 }
 
 export class SharingTab {
-    public readonly shareDocId = `share-${Math.random().toString(36).substring(2, 6)}`
-    public readonly shareDocUrl = `http://localhost:3000/sharedText/${this.shareDocId}?template=empty`;
+    public readonly shareDocUrl: string;
     private tabRef = new TabRef();
+
+    constructor (public readonly shareDocId: string) {
+        this.shareDocUrl = `http://localhost:3000/sharedText/${shareDocId}-text`;
+    }
 
     public async get() {
         const left = await getCurrentWindow();
