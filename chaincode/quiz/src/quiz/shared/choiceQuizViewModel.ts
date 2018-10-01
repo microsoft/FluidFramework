@@ -1,4 +1,4 @@
-import { IMap, IMapView } from "@prague/map";
+import { IMap, IMapView, IValueChanged } from "@prague/map";
 import * as $ from "jquery";
 import * as ko from "knockout";
 import { Document } from "../../Document";
@@ -379,30 +379,6 @@ class ShowViewModel {
         });
 
         this.initControlBar();
-
-        // Only update map for taking quizzes.
-        if (this.appViewModel.readonly) {
-            this.updateMap();
-        }
-    }
-
-    public async updateMap() {
-        const responseMap = this.appViewModel.mapView.get("response") as IMap;
-        const choices = this.choices();
-        responseMap.has("numCols").then((exist) => {
-            // This should only happen once.
-            if (!exist) {
-                responseMap.set("numCols", choices.length + 1);
-                responseMap.set("0,0", "User");
-                choices.forEach((choice) => {
-                    const choiceId = choice.choice.id() + 1;
-                    // Strip off html tags.
-                    const choiceText = choice.choice.choice().replace(/<(?:.|\n)*?>/gm, "");
-                    responseMap.set(`0,${choiceId}`, choiceText );
-                });
-                responseMap.set("numRows", 1);
-            }
-        });
     }
 
     //
@@ -448,7 +424,7 @@ class ShowViewModel {
             const responseMap = this.appViewModel.mapView.get("response") as IMap;
             const clientId = this.appViewModel.collabDoc.clientId;
             responseMap.get("numRows").then((rowId: number) => {
-                responseMap.set(`${rowId},0`, clientId);
+                responseMap.set(`${rowId}x0`, clientId);
                 const submissionIds = [];
                 submission.forEach((submittedValue) => {
                     submissionIds.push(submittedValue);
@@ -456,10 +432,10 @@ class ShowViewModel {
                 choices.forEach((choice) => {
                     if (submissionIds.indexOf(choice.choice.id().toString()) !== -1) {
                         console.log(`Matched: ${choice.choice.id()} ${choice.choice.choice()}`);
-                        responseMap.set(`${rowId},${choice.choice.id() + 1}`, 1);
+                        responseMap.set(`${rowId}x${choice.choice.id() + 1}`, 1);
                     } else {
                         console.log(`Not matched: ${choice.choice.id()} ${choice.choice.choice()}`);
-                        responseMap.set(`${rowId},${choice.choice.id() + 1}`, 0);
+                        responseMap.set(`${rowId}x${choice.choice.id() + 1}`, 0);
                     }
                 });
                 responseMap.set("numRows", rowId + 1);
@@ -603,11 +579,12 @@ class AppViewModel {
     public currentMode: types.LabMode = undefined;
     public readonly: boolean = false;
     public mapView: IMapView;
+    public rootMap: IMap;
     public collabDoc: Document;
 
     public isModeSetByAuthor: KnockoutObservable<boolean>;
 
-    constructor(defaultQuiz: IQuiz, readonly: boolean, mapView: IMapView, collabDoc: Document) {
+    constructor(defaultQuiz: IQuiz, readonly: boolean, rootMap: IMap, mapView: IMapView, collabDoc: Document) {
         this.defaultQuiz = defaultQuiz;
 
         // The view specifies what is the current view model to make use of
@@ -617,6 +594,7 @@ class AppViewModel {
         this.isModeSetByAuthor = ko.observable(false);
 
         this.mapView = mapView;
+        this.rootMap = rootMap;
         this.collabDoc = collabDoc;
         this.readonly = readonly;
 
@@ -630,6 +608,7 @@ class AppViewModel {
             const quizConfig = mapView.get("quiz") as string;
             this.configuration = JSON.parse(quizConfig) as types.IConfiguration;
             this.switchMode(types.LabMode.View, false);
+            this.listenToUpdate();
         } else {
             this.switchMode(types.LabMode.Edit, false);
         }
@@ -654,11 +633,21 @@ class AppViewModel {
 
     public showError(error: any) {
         this.errorMessage(JSON.stringify(error));
-        // $("#errorModal").modal();
     }
 
     public publish() {
         this.mapView.set("quiz", JSON.stringify(this.configuration));
+        const responseMap = this.mapView.get("response") as IMap;
+        const choices = this.view().viewModel.quiz.choices();
+        responseMap.set("numCols", choices.length + 1);
+        responseMap.set("0x0", "User");
+        choices.forEach((choice) => {
+            const choiceId = choice.id() + 1;
+            // Strip off html tags.
+            const choiceText = choice.choice().replace(/<(?:.|\n)*?>/gm, "");
+            responseMap.set(`0x${choiceId}`, choiceText );
+        });
+        responseMap.set("numRows", 1);
         console.log(`Quizzes published!`);
     }
 
@@ -690,6 +679,17 @@ class AppViewModel {
         // MathJax.Hub.Queue(["Typeset", MathJax.Hub]);
         this.isModeSetByAuthor(isModeSetByAuthor);
         this.currentMode = types.LabMode.View;
+    }
+
+    private listenToUpdate() {
+        this.rootMap.on("valueChanged", async (changed: IValueChanged ) => {
+            if (changed.key === "quiz") {
+                // Get new quiz config.
+                const quizConfig = this.mapView.get("quiz") as string;
+                this.configuration = JSON.parse(quizConfig) as types.IConfiguration;
+                this.switchMode(types.LabMode.View, false);
+            }
+        });
     }
 }
 
@@ -747,8 +747,9 @@ export function initialize(
     console.log(`Init called!`);
     $(document).ready(async () => {
 
-        const mapView = await collabDoc.getRoot().getView();
-        const appViewModel = new AppViewModel(defaultQuizConfiguration, readOnly, mapView, collabDoc);
+        const rootMap = collabDoc.getRoot();
+        const mapView = await rootMap.getView();
+        const appViewModel = new AppViewModel(defaultQuizConfiguration, readOnly, rootMap, mapView, collabDoc);
 
         // add custom bindings
         addCustomBindings();
