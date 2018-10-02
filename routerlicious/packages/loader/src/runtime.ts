@@ -17,6 +17,7 @@ import {
     IRuntime,
     ISave,
     ISequencedDocumentMessage,
+    ISequencedObjectMessage,
     ISnapshotTree,
     ITreeEntry,
     IUser,
@@ -396,7 +397,7 @@ export class Runtime extends EventEmitter implements IRuntime {
         envelope.contents = objectDetails.object.transform(
             envelope.contents as IObjectMessage,
             objectDetails.connection.transformDocumentSequenceNumber(
-                Math.max(message.referenceSequenceNumber, this.deltaManager.referenceSequenceNumber)));
+                Math.max(message.referenceSequenceNumber, this.deltaManager.minimumSequenceNumber)));
     }
 
     public async getBlobMetadata(): Promise<IGenericBlob[]> {
@@ -489,12 +490,20 @@ export class Runtime extends EventEmitter implements IRuntime {
         const services = this.getObjectServices(id, tree, storage);
         services.deltaConnection.setBaseMapping(channelAttributes.sequenceNumber, minimumSequenceNumber);
 
+        // Run the transformed messages through the delta connection in order to update their offsets
+        // Then pass these to the loadInternal call. Moving forward we will want to update the snapshot
+        // to include the range maps. And then make the objects responsible for storing any messages they
+        // need to transform.
+        const transformedObjectMessages = messages.map((message) => {
+            return services.deltaConnection.translateToObjectMessage(message, true);
+        });
+
         const channelDetails = await this.loadChannel(
             id,
             channelAttributes.type,
             channelAttributes.sequenceNumber,
             channelAttributes.sequenceNumber,
-            messages,
+            transformedObjectMessages,
             services,
             branch);
 
@@ -508,7 +517,7 @@ export class Runtime extends EventEmitter implements IRuntime {
         type: string,
         sequenceNumber: number,
         minSequenceNumber: number,
-        messages: ISequencedDocumentMessage[],
+        messages: ISequencedObjectMessage[],
         services: IObjectServices,
         originBranch: string): Promise<IChannelState> {
 
@@ -520,7 +529,7 @@ export class Runtime extends EventEmitter implements IRuntime {
         const value = await extension.load(
             this,
             id,
-            sequenceNumber,
+            services.deltaConnection.sequenceNumber,
             minSequenceNumber,
             messages,
             services,
