@@ -1,16 +1,13 @@
 import * as loader from "@prague/loader";
-import { WebLoader, WebPlatform } from "@prague/loader-web";
-import { IDocumentService, ITokenService } from "@prague/runtime-definitions";
+import { WebLoader, WebPlatformFactory } from "@prague/loader-web";
+import { ITokenService } from "@prague/runtime-definitions";
 import * as socketStorage from "@prague/socket-storage";
+import * as axios from "axios";
 import * as jwt from "jsonwebtoken";
-
-const routerlicious = "https://alfred.wu2-ppe.prague.office-int.com";
-const historian = "https://historian.wu2-ppe.prague.office-int.com";
-const tenantId = "thirsty-shirley";
-const secret = "f793c1603cf75ea41a09804e94f43cd2";
+import * as URL from "url-parse";
 
 class PraguePlugin {
-    static Create(Reveal: any): PraguePlugin {
+    public static Create(Reveal: any): PraguePlugin {
         const plugin = new PraguePlugin();
 
         Reveal.addEventListener(
@@ -22,12 +19,10 @@ class PraguePlugin {
         return plugin;
     }
 
-    private documentServices: IDocumentService;
     private tokenService: ITokenService;
     private documents = new Map<string, loader.Document>();
 
     constructor() {
-        this.documentServices = socketStorage.createDocumentService(routerlicious, historian);
         this.tokenService = new socketStorage.TokenService();
     }
 
@@ -38,7 +33,7 @@ class PraguePlugin {
                 pragueDoc.style.cssText =
                     "margin: 0;position: absolute; left: 50%;transform: translate(-50%,0%);" +
                     pragueDoc.style.cssText;
-                const documentId = pragueDoc.getAttribute('data-src');
+                const documentId = pragueDoc.getAttribute("data-src");
                 const docDiv = document.createElement("div");
                 pragueDoc.appendChild(docDiv);
 
@@ -46,8 +41,7 @@ class PraguePlugin {
                     this.loadDocument(documentId, docDiv);
                 }, 200);
             }
-        }
-        else {
+        } else {
             // wait for markdown to be loaded and parsed
             setTimeout(
                 () => this.load(),
@@ -55,7 +49,18 @@ class PraguePlugin {
         }
     }
 
-    private async loadDocument(documentId: string, div: HTMLDivElement) {
+    private async loadDocument(documentUrl: string, div: HTMLDivElement) {
+        // parse ID to get document location
+        const url = new URL(documentUrl);
+        const splitPath = url.pathname.split("/");
+
+        const tenantDetails = await axios.default.get(`${url.origin}/api/tenants`);
+        const routerlicious = url.origin;
+        const historian = tenantDetails.data.blobStorageUrl;
+        const tenantId = tenantDetails.data.id;
+        const secret = tenantDetails.data.key;
+        const documentId = splitPath[splitPath.length - 1];
+
         const token = jwt.sign(
             {
                 documentId,
@@ -67,14 +72,16 @@ class PraguePlugin {
             },
             secret);
 
-        const webLoader = new WebLoader("https://packages.wu2.prague.office-int.com");
-        const webPlatform = new WebPlatform(div);
+        const documentServices = socketStorage.createDocumentService(routerlicious, historian);
+
+        const webLoader = new WebLoader(tenantDetails.data.npm);
+        const webPlatform = new WebPlatformFactory(div);
 
         const documentP = loader.load(
             token,
             null,
             webPlatform,
-            this.documentServices,
+            documentServices,
             webLoader,
             this.tokenService,
             null,
@@ -85,7 +92,7 @@ class PraguePlugin {
     }
 }
 
-if (typeof window !== 'undefined') {
+if (typeof window !== "undefined") {
     const Reveal = window["Reveal"];
     window["PragueEmbed"] = window["PragueEmbed"] || PraguePlugin.Create(Reveal);
 }

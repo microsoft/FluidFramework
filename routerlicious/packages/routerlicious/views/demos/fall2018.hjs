@@ -1,0 +1,41 @@
+{{<layout}}
+    {{$content}}
+        <div class="container">
+            <h1>Fall 2018 Demos</h1>
+            <p>
+                To create a new set of links refresh this page.
+            </p>
+
+            <h2>Components</h2>
+            <p>
+                Open up the link below. Type in ctrl+m to get an input window and choose to insert a sheet. Calc.ts
+                is used to compute all of the data. Go into the flowview and use ctl+m again and now insert a formula
+                using the data from the sheet = i.e. SUM(B1:b3). Update the sheetlet to change the bindings
+            </p>
+
+            <ul class="list-unstyled">
+                <li><a href="/sharedText/{{componentsMoniker}}" target="_blank">Prague Pride and Prejudice</a></li>
+            </ul>
+
+            <h2>Code + Data</h2>
+            <p>
+                Click on the below link to open a pinpoint editor.
+            </p>
+
+            <ul class="list-unstyled">
+                <li><a href="/loader/{{pinpointMoniker}}?chaincode=@chaincode/pinpoint-editor@0.6.4" target="_blank">Pinpoint Editor</a></li>
+            </ul>
+            <p>
+                The map can then be inserted into the flow view created earlier in the demo
+            </p>
+
+            <p>
+                The charts and poll represent two other examples of components that can be included
+            </p>
+            <ul class="list-unstyled">
+                <li><a href="/loader/{{chartsMoniker}}?chaincode=@chaincode/charts@0.5.1-prod" target="_blank">Charts</a></li>
+                <li><a href="/loader/{{pollMoniker}}?chaincode=@chaincode/poll@1.2.11" target="_blank">Poll</a></li>
+            </ul>
+        </div>
+    {{/content}}
+{{/layout}}

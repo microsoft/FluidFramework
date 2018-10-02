@@ -9,12 +9,15 @@
   },
   "author": "Microsoft",
   "dependencies": {
-    "@prague/loader": "^0.1.3353",
-    "@prague/loader-web": "^0.1.3353",
-    "@prague/socket-storage": "^0.1.3353",
+    "@prague/loader": "^0.1.3592",
+    "@prague/loader-web": "^0.1.3592",
+    "@prague/socket-storage": "^0.1.3592",
     "@types/jsonwebtoken": "^7.2.8",
+    "@types/url-parse": "^1.4.1",
+    "axios": "^0.18.0",
     "jsonwebtoken": "^8.3.0",
-    "reveal.js": "^3.7.0"
+    "reveal.js": "^3.7.0",
+    "url-parse": "^1.4.3"
   },
   "devDependencies": {
     "bower": "^1.8.4",

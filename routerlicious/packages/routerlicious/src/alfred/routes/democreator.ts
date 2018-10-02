@@ -7,7 +7,7 @@ export function create(config: Provider, ensureLoggedIn: any): Router {
     const router: Router = Router();
 
     /**
-     * Loading the demo creator page.
+     * Original Prague demos from December of 2017
      */
     router.get("/", ensureLoggedIn(), (request, response, next) => {
         response.render(
@@ -26,7 +26,7 @@ export function create(config: Provider, ensureLoggedIn: any): Router {
     });
 
     /**
-     * Loading the demo creator page.
+     * Executive retreat 2018 demos
      */
     router.get("/retreat", ensureLoggedIn(), (request, response, next) => {
         response.render(
@@ -37,6 +37,22 @@ export function create(config: Provider, ensureLoggedIn: any): Router {
                 sharedTextMoniker: moniker.choose(),
                 title: "Prague Demos",
                 translateMoniker: moniker.choose(),
+            });
+    });
+
+    /**
+     * Fall 2018 demos
+     */
+    router.get("/fall2018", ensureLoggedIn(), (request, response, next) => {
+        response.render(
+            "demos/fall2018",
+            {
+                chartsMoniker: moniker.choose(),
+                componentsMoniker: moniker.choose(),
+                partials: defaultPartials,
+                pinpointMoniker: moniker.choose(),
+                pollMoniker: moniker.choose(),
+                title: "Prague Demos",
             });
     });
 
