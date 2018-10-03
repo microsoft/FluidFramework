@@ -126,6 +126,9 @@ export class Document extends EventEmitter {
     constructor(private runtime: IRuntime, private root: IMap) {
         super();
 
+        // Run task analyzer for already present clients.
+        this.runTaskAnalyzer();
+
         this.on("clientJoin", () => {
             this.runTaskAnalyzer();
         });
