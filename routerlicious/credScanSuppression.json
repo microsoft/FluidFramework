@@ -1,0 +1,16 @@
+{
+    "tool": "Credential Scanner",
+    "suppressions": [
+      {
+       "file": [
+           "routerlicious\\packages\\routerlicious\\config.test.json",
+           "routerlicious\\packages\\routerlicious\\config\\config.test.json",
+           "routerlicious\\packages\\routerlicious\\config\\config.json"],
+        "_justification": "Routerlicious contains access tokens to Azure resources (like cognitive services) so that the you can get intelligent services running locally. These all tend to be on a free tier so if someone got the secret they’d just empty our quota. When we fully open source it I would remove them (and invalidate any token we are using). But for internal usage it should be fine."
+      },
+      {
+        "file": ["routerlicious\\packages\\routerlicious\\src\\tools\\resume.ts"],
+         "_justification": "Exclude the file temporarily. Access token should be removed, and it's tracked by issue 1019"
+       }
+    ]
+}
