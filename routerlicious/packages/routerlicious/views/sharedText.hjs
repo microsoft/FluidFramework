@@ -17,7 +17,9 @@
 
             var tenant = "{{ tenantId }}";
             var key = "{{ key }}";
-
+            var from = {{ from }};
+            var to = {{ to }};
+                   
             console.log(`Starting load at - ${performance.now()}`);
             controller.sharedText.load(
                 "{{ documentId }}",
@@ -29,7 +31,10 @@
                 "{{ template }}",
                 connect,
                 options,
-                { tenant, key });
+                { tenant, key },
+                from,
+                to);
+        </script>          
         </script>
     {{/scripts}}
 {{/layout}}

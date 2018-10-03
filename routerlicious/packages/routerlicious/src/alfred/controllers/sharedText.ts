@@ -65,13 +65,16 @@ export async function load(
     template: string,
     connect: boolean,
     options: Object,
-    credentials: { tenant: string, key: string }) {
+    credentials: { tenant: string, key: string },
+    from: number,
+    to: number) {
 
     API.registerChaincodeRepo(config.npm);
     API.registerDefaultCredentials(credentials);
 
     console.log(`Load Option: ${JSON.stringify(options)}`);
-    loadDocument(id, version, token, pageInk, disableCache, config, template, connect, options).catch((error) => {
+    loadDocument(id, version, token, pageInk, disableCache, config, template, connect, options, from, to)
+    .catch((error) => {
         console.error(error);
     });
 }
@@ -85,20 +88,24 @@ async function loadDocument(
     config: any,
     template: string,
     connect: boolean,
-    options: Object) {
+    options: Object,
+    from: number,
+    to: number) {
 
     const host = new ui.BrowserContainerHost();
 
     const errorService = config.trackError
         ? new BrowserErrorTrackingService()
         : new socketStorage.DefaultErrorTracking();
-    const documentService = socketStorage.createDocumentService(
-        document.location.origin,
-        config.blobStorageUrl,
-        errorService,
-        disableCache,
-        config.historianApi,
-        config.credentials);
+    const replayMode = (from >= 0) && (to >= 0);
+    const documentService = replayMode ? socketStorage.createReplayDocumentService(document.location.origin, from, to)
+        : socketStorage.createDocumentService(
+            document.location.origin,
+            config.blobStorageUrl,
+            errorService,
+            disableCache,
+            config.historianApi,
+            config.credentials);
     API.registerDocumentService(documentService);
     console.log(`collabDoc loading ${id} - ${performanceNow()}`);
     const collabDoc = await API.load(id, { blockUpdateMarkers: true, client: config.client, token }, version, connect);

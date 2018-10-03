@@ -5,3 +5,6 @@ export * from "./documentService";
 export * from "./blobStorageService";
 export * from "./registration";
 export * from "./tokens";
+export * from "./replayDocumentStorageService";
+export * from "./replayDocumentService";
+export * from "./replayDeltaStorageService";
