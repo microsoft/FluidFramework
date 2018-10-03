@@ -8,6 +8,7 @@ import { NavController, ViewController } from 'ionic-angular';
 export class AddItemPage {
  
   documentId: string;
+  flowView: boolean;
 
   constructor(public navCtrl: NavController, public view: ViewController) {
  
@@ -15,7 +16,8 @@ export class AddItemPage {
  
   saveItem(){
     let newItem = {
-      id: this.documentId ? this.documentId : ""
+      id: this.documentId ? this.documentId : "",
+      flowView: this.flowView
     };
     this.view.dismiss(newItem);
   }

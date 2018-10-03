@@ -18,6 +18,16 @@ const tenantId = "happy-chatterjee";
 const secret = "8f69768d16e3852bc4b938cdaa0577d1";
 const chainRepo = "https://packages.wu2.prague.office-int.com";
 
+interface IAddItem {
+  id: string,
+  flowView: boolean,
+}
+
+interface IDocSS {
+  doc: api.Document,
+  sharedString: SharedString,
+}
+
 export interface IReferenceDocType {
   name: string;
 }
@@ -62,7 +72,7 @@ export class HomePage {
  
   addComponent(){
     const addModal = this.modalCtrl.create(AddItemPage);
-    addModal.onDidDismiss((item) => {
+    addModal.onDidDismiss((item: IAddItem) => {
       if(item){
         console.log(`Document to add ${JSON.stringify(item)}`);
         this.loadChainCode(item.id.toLowerCase());
@@ -73,10 +83,10 @@ export class HomePage {
 
   addPicture() {
     const addModal = this.modalCtrl.create(AddItemPage);
-    addModal.onDidDismiss((item) => {
+    addModal.onDidDismiss((item: IAddItem) => {
       if(item){
         console.log(`Document to add ${JSON.stringify(item)}`);
-        this.addImageToDocument(item.id.toLowerCase());
+        this.addImageToDocument(item.id.toLowerCase(), item.flowView);
       }
     });
     addModal.present();
@@ -87,23 +97,26 @@ export class HomePage {
     refresher.complete();
   }
 
-  private addImageToDocument(documentId: string) {
+  private addImageToDocument(documentId: string, flowView: boolean) {
     this.host.innerHTML = "";
-    const resP = this.loadDoc(documentId);
+    const resP = this.loadDoc(documentId, flowView);
 
     this.captureImage().then((imageData) => {
       console.log(`Took picture!`);
-      resP.then((res: any) => {
+      resP.then((res: IDocSS) => {
         console.log(`Got sharedText`);
         const doc = res.doc as api.Document;
-        const ss = res.sharedString as SharedString;
         this.attachBlobUploadListener(doc);  
         const imageBlob = this.convertToBlob(imageData);
         console.log(`Converted! Start uploading.`);
         doc.uploadBlob(imageBlob).then((blob: bdf.IGenericBlob) => {
           console.log(`Done uploading!`);
           console.log(blob.url);
-          this.insertBlobInternal(doc, ss, blob);
+          if (res.sharedString) {
+            console.log(`Appending to shared string!`);
+            const ss = res.sharedString as SharedString;
+            this.insertBlobInternal(doc, ss, blob);
+          }
         }, (err) => {
           this.setErrorMessage(err);
         });
@@ -113,20 +126,27 @@ export class HomePage {
     });
   }
 
-  private async loadDoc(documentId: string) {
+  private async loadDoc(documentId: string, flowView: boolean): Promise<IDocSS> {
     api.registerDocumentService(socketStorage.createDocumentService(routerlicious, historian));
-    return new Promise<any>((resolve, reject) => {
+    return new Promise<IDocSS>((resolve, reject) => {
       api.load(documentId, {token: this.makeToken(documentId)}).then(async (doc: api.Document) => {
-        if (!doc.existing) {
-          reject(`Document should already exist!`);
+        if (flowView) {
+          if (!doc.existing) {
+            reject(`Document should already exist!`);
+          } else {
+            const root = await doc.getRoot().getView();
+            await Promise.all([root.wait("text"), root.wait("ink")]);
+            const sharedString = root.get("text") as SharedString;
+            resolve({
+              doc,
+              sharedString,
+            });
+          }
         } else {
-          const root = await doc.getRoot().getView();
-          await Promise.all([root.wait("text"), root.wait("ink")]);
-          const sharedString = root.get("text") as SharedString;
           resolve({
             doc,
-            sharedString,
-          });
+            sharedString: undefined,
+          });          
         }
       }, (error) => {
         reject(error);
