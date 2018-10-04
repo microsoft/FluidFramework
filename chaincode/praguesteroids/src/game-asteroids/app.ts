@@ -35,8 +35,8 @@ function getHearts(count: number) {
     return h;
 }
 
-const width = 600;
-const height = 400;
+// const width = 600;
+// const height = 400;
 
 export class PragueSteroids {
     public static async Start(collabDoc: Document, platform: IPlatform) {
@@ -45,10 +45,10 @@ export class PragueSteroids {
             return;
         }
 
-        const canvas = document.createElement("canvas");
-        canvas.width = width;
-        canvas.height = height;
-        gameDiv.appendChild(canvas);
+        // const canvas = document.createElement("canvas");
+        // canvas.width = width;
+        // canvas.height = height;
+        // gameDiv.appendChild(canvas);
 
         if (collabDoc.runtime.connected !== undefined && !collabDoc.runtime.connected) {
             await new Promise<void>((resolve) => collabDoc.runtime.on("connected", () => resolve()));
@@ -73,10 +73,10 @@ export class PragueSteroids {
             },
         });
 
-        return new PragueSteroids(collabDoc, view, canvas);
+        return new PragueSteroids(collabDoc, view /* , canvas */);
     }
 
-    constructor(document: Document, private pragueView: IMapView, canvas: HTMLCanvasElement) {
+    constructor(document: Document, private pragueView: IMapView /*, canvas: HTMLCanvasElement */) {
         const hs = pragueView.get(highScoreConst);
         if (hs == null) {
             pragueView.set(highScoreConst, JSON.stringify({ user: "", friendlyName: "", score: 0 }));
@@ -86,11 +86,11 @@ export class PragueSteroids {
             // ignored
         });
 
-        this.doStage(canvas);
+        this.doStage(/* canvas */);
     }
 
-    private doStage(canvas: HTMLCanvasElement) {
-        Stage((stage) => this.runStage(stage), { canvas });
+    private doStage(/* canvas: HTMLCanvasElement */) {
+        Stage((stage) => this.runStage(stage) /*, { canvas } */);
         Stage.start();
     }
 
@@ -217,8 +217,8 @@ export class PragueSteroids {
 
         physics.start();
 
-        stage.viewbox(width, height);
-        stage.viewport(width, height);
+        // stage.viewbox(width, height);
+        // stage.viewport(width, height);
     }
 }
 
