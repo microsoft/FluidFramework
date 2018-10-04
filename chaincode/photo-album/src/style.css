@@ -13,12 +13,12 @@
   }
 
   .focus {
-      height: 35vw;
+      height: 35%;
   }
 
   .row {
       /* float: left; */
-      height: 25vw;
+      height: 25%;
   }
   
   /* Create four equal columns that floats next to eachother */
