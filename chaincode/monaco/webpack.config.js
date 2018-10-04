@@ -3,8 +3,8 @@ const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin');
 
 module.exports = {
     entry: {
-        local: './src/index.ts',
-        main: './src/script.ts'
+        local: './src/localServer.ts',
+        main: './src/index.ts'
     },
     mode: 'development',
     devtool: 'source-map',

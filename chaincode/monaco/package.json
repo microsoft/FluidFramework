@@ -14,6 +14,7 @@
   "dependencies": {
     "@prague/map": "^0.1.3611",
     "@prague/runtime-definitions": "^0.1.3611",
+    "@prague/shared-string": "^0.1.3613",
     "@types/debug": "0.0.30",
     "@types/google-maps": "^3.2.0",
     "@types/node": "^10.9.4",
@@ -21,7 +22,8 @@
     "debug": "^4.0.1",
     "google-maps": "^3.3.0",
     "jsonwebtoken": "^8.3.0",
-    "monaco-editor": "^0.14.3"
+    "monaco-editor": "^0.14.3",
+    "uuid": "^3.3.2"
   },
   "devDependencies": {
     "@prague/loader": "^0.1.3611",

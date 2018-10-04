@@ -1,5 +1,5 @@
 import * as pragueLoader from "@prague/loader";
-import { IChaincodeFactory, ICodeLoader, IRuntime } from "@prague/runtime-definitions";
+import { IChaincodeFactory, ICodeLoader } from "@prague/runtime-definitions";
 import * as socketStorage from "@prague/socket-storage";
 import * as jwt from "jsonwebtoken";
 import * as testFactory from "./index";
@@ -35,20 +35,6 @@ async function initializeChaincode(document: pragueLoader.Document, pkg: string)
     console.log(`Code is ${quorum.get("code")}`);
 }
 
-function updateNotebookProvider(runtime: IRuntime) {
-    console.log("updateNotebookProvider");
-
-    // Can fix this after updating the null chaincode
-    const notebookInterface = runtime.platform.queryInterface("notebook");
-
-    if (notebookInterface) {
-        runtime.platform.queryInterface("notebook").then((notebook) => {
-            // tslint:disable-next-line
-            window["notebook"] = notebook;
-        });
-    }
-}
-
 /**
  * Loads a specific version (commit) of the collaborative object
  */
@@ -79,11 +65,6 @@ export async function start(id: string, factory: IChaincodeFactory): Promise<voi
         codeLoader,
         tokenService);
 
-    updateNotebookProvider(loaderDoc.runtime);
-    loaderDoc.on("runtimeChanged", (runtime) => {
-        updateNotebookProvider(runtime);
-    });
-
     // If this is a new document we will go and instantiate the chaincode. For old documents we assume a legacy
     // package.
     if (!loaderDoc.existing) {
@@ -91,4 +72,4 @@ export async function start(id: string, factory: IChaincodeFactory): Promise<voi
     }
 }
 
-start("8", testFactory).catch((error) => console.error(error));
+start("21", testFactory).catch((error) => console.error(error));

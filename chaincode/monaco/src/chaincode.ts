@@ -1,5 +1,6 @@
 import { MapExtension } from "@prague/map";
 import { IChaincode, IPlatform, IRuntime } from "@prague/runtime-definitions";
+import { CollaborativeStringExtension } from "@prague/shared-string";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 
@@ -16,6 +17,7 @@ export class Chaincode extends EventEmitter implements IChaincode {
         super();
 
         this.modules.set(MapExtension.Type, new MapExtension());
+        this.modules.set(CollaborativeStringExtension.Type, new CollaborativeStringExtension());
     }
 
     public getModule(type: string): any {

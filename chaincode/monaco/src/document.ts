@@ -1,5 +1,7 @@
 import { IMap, MapExtension } from "@prague/map";
 import { IRuntime } from "@prague/runtime-definitions";
+import { CollaborativeStringExtension, SharedString } from "@prague/shared-string";
+import * as uuid from "uuid/v4";
 
 const rootMapId = "root";
 const insightsMapId = "insights";
@@ -41,5 +43,19 @@ export class Document {
 
     public getRoot(): IMap {
         return this.root;
+    }
+
+    /**
+     * Creates a new collaborative map
+     */
+    public createMap(): IMap {
+        return this.runtime.createChannel(uuid(), MapExtension.Type) as IMap;
+    }
+
+    /**
+     * Creates a new collaborative string
+     */
+    public createString(): SharedString {
+        return this.runtime.createChannel(uuid(), CollaborativeStringExtension.Type) as SharedString;
     }
 }
