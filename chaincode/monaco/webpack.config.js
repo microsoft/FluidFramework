@@ -1,10 +1,12 @@
 const path = require('path');
+const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin');
 
 module.exports = {
     entry: {
         local: './src/localServer.ts',
         main: './src/index.ts'
     },
+    mode: 'development',
     devtool: 'source-map',
     module: {
         rules: [
@@ -14,9 +16,11 @@ module.exports = {
                 exclude: /node_modules/
             },
             {
-                test: /\.js$/,
-                use: ["source-map-loader"],
-                enforce: "pre"
+                test: /\.css$/,
+                use: [
+                    "style-loader", // creates style nodes from JS strings
+                    "css-loader", // translates CSS into CommonJS
+                ]
             }
         ]
     },
@@ -33,5 +37,8 @@ module.exports = {
         devMiddleware: {
             publicPath: '/dist/'
         }
-    }
+    },
+    plugins: [
+        new MonacoWebpackPlugin()
+    ],
 };

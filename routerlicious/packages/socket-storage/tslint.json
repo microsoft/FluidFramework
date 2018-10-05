@@ -23,6 +23,7 @@
         "prefer-array-literal": false,
         "prefer-method-signature": false,
         "prefer-type-cast": false,
+        "promise-function-async": false,
         "strict-boolean-expressions": [true, "allow-null-union", "allow-undefined-union", "allow-string", "allow-number"],
         "underscore-consistent-invocation": false
     }

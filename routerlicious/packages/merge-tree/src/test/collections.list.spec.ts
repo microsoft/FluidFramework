@@ -3,11 +3,14 @@ import * as Collections from "../collections";
 
 describe("Test List", () => {
     const listCount = 5;
-    const list: Collections.List<number> = Collections.ListMakeHead<number>();
+    let list: Collections.List<number>;
 
-    for (let i = 0; i < listCount; i++) {
-        list.push(i);
-    }
+    beforeEach(() => {
+        list = Collections.ListMakeHead<number>();
+        for (let i = 0; i < listCount; i++) {
+            list.push(i);
+        }
+    });
 
     it("count", () => assert.equal(list.count(), listCount, "The list count doesn't match the expected count."));
 

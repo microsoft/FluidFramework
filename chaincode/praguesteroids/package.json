@@ -1,6 +1,6 @@
 {
   "name": "@chaincode/praguesteroids",
-  "version": "0.9.5",
+  "version": "0.10.0",
   "scripts": {
     "build": "npm run tsc && npm run webpack && npm run tslint",
     "tsc": "tsc",
