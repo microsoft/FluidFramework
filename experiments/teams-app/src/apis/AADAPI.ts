@@ -20,15 +20,9 @@ export class AADAPI {
         let aadRequestAPI = new AADRequestAPI();
         let aadAuthorizationInfo = await aadRequestAPI.getAsync("https://login.microsoftonline.com/common/v2.0/.well-known/openid-configuration", {}, {});
         aadAuthorizationInfo = JSON.parse(aadAuthorizationInfo);
-        // console.log(JSON.stringify(aadAuthorizationInfo));
 
         let clientId = config.get("bot.botId");
-        // let clientSecret = config.get("bot.botPassword");
-        // let authorityHostUrl = "https://login.windows.net";
-        // let tenant = "####";
-        // let authorityUrl = authorityHostUrl + "/" + tenant;
         let redirectUri = config.get("app.baseUri") + "/api/success";
-        // let templateAuthzUrl = "https://login.microsoftonline.com/" + tenant + "/oauth2/v2.0/authorize?response_type=code&client_id=" + clientId + "&redirect_uri=" + redirectUri + "&state=<state>&scope=openid%20profile";
         let queryParams = {
             response_type: "code",
             client_id: clientId,
@@ -39,11 +33,6 @@ export class AADAPI {
         // "https://login.microsoftonline.com/common/oauth2/v2.0/authorize?"
         let authorizationUrl = aadAuthorizationInfo.authorization_endpoint + "?" + querystring.stringify(queryParams);
 
-        // let createAuthorizationUrl = (state) => {
-        //     return templateAuthzUrl.replace("<state>", state);
-        // };
-
-        // let authorizationUrl = createAuthorizationUrl(validationNumber);
         return authorizationUrl;
     }
 
@@ -64,9 +53,6 @@ export class AADAPI {
 
         let clientId = config.get("bot.botId");
         let clientSecret = config.get("bot.botPassword");
-        // let authorityHostUrl = "https://login.windows.net";
-        // let tenant = "####";
-        // let authorityUrl = authorityHostUrl + "/" + tenant;
         let redirectUri = config.get("app.baseUri") + "/api/success";
 
         let body = {
@@ -77,9 +63,7 @@ export class AADAPI {
             code: code,
             scope: "openid profile",
         };
-        // let postResultData = await new AADRequestAPI().postAsync("https://login.microsoftonline.com/" + tenant + "/oauth2/v2.0/token", args);
-        // let aadRequestAPI = new AADRequestAPI();
-        // let postResultData = await aadRequestAPI.postAsync("https://login.microsoftonline.com/common/oauth2/v2.0/token", headers, body);
+
         let tokens = await aadRequestAPI.postAsync(aadAuthorizationInfo.token_endpoint, headers, body);
         tokens = JSON.parse(tokens);
         // tokens = JSON.parse(tokens);

@@ -96,15 +96,6 @@ app.get("/api/validateUser", AADUserValidation.validateUser(bot));
 app.get("/api/success", AADUserValidation.success(bot));
 app.get("/api/validateToken", ValidateAADToken.listen());
 
-// catch 404 and forward to error handler
-// app.use((req: Request, res: Response, next: Function) => {
-//     let err: any = new Error("Not Found");
-//     err.status = 404;
-//     next(err);
-// });
-
-// error handlers
-
 // development error handler
 // will print stacktrace
 if (app.get("env") === "development") {

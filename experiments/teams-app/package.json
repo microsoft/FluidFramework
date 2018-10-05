@@ -10,6 +10,9 @@
   "main": "app.js",
   "scripts": {
     "start": "gulp build && cd ./build/src && node app.js",
+    "start:light": "cd ./build/src && node app.js",
+    "dckr:build": "docker build . -t teams",
+    "dckr:start": "docker run -p 3000:3978 teams",
     "expose": "ngrok http 3978 --host-header=localhost",
     "build": "gulp build",
     "debug": "node ./build/src/app.js"
@@ -29,6 +32,7 @@
     "escape-html": "^1.0.3",
     "express": "~4.13.1",
     "express-handlebars": "^3.0.0",
+    "jsdom": "^12.1.0",
     "jsonwebtoken": "^7.4.3",
     "lodash": "^4.17.4",
     "moment": "^2.17.1",
@@ -42,6 +46,7 @@
   "devDependencies": {
     "@types/bluebird": "^3.0.37",
     "@types/chai": "^3.4.34",
+    "@types/jsdom": "^11.12.0",
     "@types/mocha": "^2.2.39",
     "@types/node": "^7.0.5",
     "@types/sinon": "^1.16.35",

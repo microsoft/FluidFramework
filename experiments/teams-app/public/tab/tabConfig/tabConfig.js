@@ -7,11 +7,9 @@ $(document).ready(function () {
         microsoftTeams.settings.setSettings({
             // Note: If you sub a content URL in here, this will be the "home screen" of the bot
             suggestedDisplayName: "Flow View",
-            contentUrl: "https://pragueteams.eu.prague.office-int.com",
-            // contentUrl: "https://alfred.wu2.prague.office-int.com/loader/abttddac",
+            contentUrl: "https://alfred.wu2.prague.office-int.com/sharedText/abttddac",
             entityId: "flowviewatdefault",
-            websiteUrl: "https://pragueteams.eu.prague.office-int.com",
-            // websiteUrl: "https://alfred.wu2.prague.office-int.com/loader/abttddac",
+            websiteUrl: "https://alfred.wu2.prague.office-int.com/sharedText/abttddac",
         });
       saveEvent.notifySuccess();
     });

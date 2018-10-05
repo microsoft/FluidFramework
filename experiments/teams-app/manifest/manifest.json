@@ -5,14 +5,14 @@
   "id": "e17ee6e0-da39-4ce4-bb13-efabb7d29311",
   "packageName": "com.Template.microsoftteams",
   "developer": {
-    "name": "Bot Template",
+    "name": "Prague Bot",
     "websiteUrl": "https://dev.botframework.com",
     "privacyUrl": "https://privacy.microsoft.com/en-us/privacystatement",
     "termsOfUseUrl": "https://www.botframework.com/Content/Microsoft-Bot-Framework-Preview-Online-Services-Agreement.htm"
   },
   "name": {
-    "short": "Bot Template",
-    "full": "Bot Template"
+    "short": "Prague Bot",
+    "full": "Prague Bot"
   },
   "description": {
     "short": "Bot Template - a template for creating a bot",
@@ -25,7 +25,7 @@
   "accentColor": "#0079bf",
   "configurableTabs": [
     {
-      "configurationUrl": "https://pragueteams.eu.prague.office-int.com/tab/tabConfig/index.html",
+      "configurationUrl": "https://cfbb4aec.ngrok.io/tab/tabConfig/index.html",
       "canUpdateConfiguration": false,
       "scopes": [ "team", "groupchat" ]
     }
@@ -59,28 +59,12 @@
       ]
     },
     {
-      "contentUrl": "https://pragueteams.eu.prague.office-int.com/loading",
-      "entityId": "1on1test123",
-      "name": "Bot Info",
+      "contentUrl": "https://cfbb4aec.ngrok.io/tab/tabConfig/index.html",
+      "entityId": "gpp",
+      "name": "tabConfig",
       "scopes": [
-        "team",
-        "personal"
-      ]
-    },
-    {
-      "contentUrl": "https://pragueteams.eu.prague.office-int.com/tab-auth/simple",
-      "entityId": "simpleAuth",
-      "name": "Simple Auth",
-      "scopes": [
-        "personal"
-      ]
-    },
-    {
-      "contentUrl": "https://pragueteams.eu.prague.office-int.com/tab-auth/silent",
-      "entityId": "silentAuth",
-      "name": "Silent Auth",
-      "scopes": [
-        "personal"
+        "personal",
+        "team"
       ]
     }
   ],
@@ -97,6 +81,10 @@
             {
               "title": "hello",
               "description": "Runs the simplest hello dialog"
+            },
+            {
+              "title": "open quiz",
+              "description": "Opens a quiz"
             },
             {
               "title": "multi dialog 2",
@@ -204,6 +192,7 @@
     "messageTeamMembers"
   ],
   "validDomains": [
-    "pragueteams.eu.prague.office-int.com"
+    "teams.eu.prague.office-int.com",
+    "cfbb4aec.ngrok.io"
   ]
 }

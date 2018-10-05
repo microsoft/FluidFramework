@@ -40,7 +40,7 @@
             "sourceMaps": true,
             "outFiles": [ "${workspaceRoot}/build/**/*.js" ],
             "env": {
-                "BASE_URI": "https://pragueteams.eu.prague.office-int.com",
+                "BASE_URI": "https://cfbb4aec.ngrok.io",
                 "MICROSOFT_APP_ID": "e17ee6e0-da39-4ce4-bb13-efabb7d29311",
                 "MICROSOFT_APP_PASSWORD": "",
                 "LUIS_ENDPOINT_URI": "",
@@ -67,7 +67,7 @@
             "sourceMaps": true,
             "outFiles": [ "${workspaceRoot}/build/**/*.js" ],
             "env": {
-                "BASE_URI": "https://pragueteams.eu.prague.office-int.com",
+                "BASE_URI": "https://cfbb4aec.ngrok.io",
                 "MICROSOFT_APP_ID": "e17ee6e0-da39-4ce4-bb13-efabb7d29311",
                 "MICROSOFT_APP_PASSWORD": "",
                 "LUIS_ENDPOINT_URI": "",
@@ -95,7 +95,7 @@
             "sourceMaps": true,
             "outFiles": [],
             "env": {
-                "BASE_URI": "https://pragueteams.eu.prague.office-int.com",
+                "BASE_URI": "https://cfbb4aec.ngrok.io",
                 "MICROSOFT_APP_ID": "e17ee6e0-da39-4ce4-bb13-efabb7d29311",
                 "MICROSOFT_APP_PASSWORD": "",
                 "LUIS_ENDPOINT_URI": "",

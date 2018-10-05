@@ -5,6 +5,7 @@ RUN apk add --no-cache tini
 
 # Copy over and build the server
 WORKDIR /usr/src/server
+# RUN adduser node root
 
 # And now copy over our actual code and build
 COPY . .
@@ -22,4 +23,4 @@ USER node
 ENTRYPOINT ["/sbin/tini", "--"]
 
 # And set the default command to start the server
-CMD ["npm", "start"]
+CMD ["npm", "run", "start:light"]
