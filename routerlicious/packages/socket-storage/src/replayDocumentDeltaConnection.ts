@@ -1,10 +1,10 @@
 import {
+    IDeltaStorageService,
     IDocumentDeltaConnection,
     IDocumentMessage,
     ISequencedDocumentMessage,
     IUser,
 } from "@prague/runtime-definitions";
-import * as api from "@prague/runtime-definitions";
 import { EventEmitter } from "events";
 import * as messages from "./messages";
 
@@ -16,13 +16,14 @@ export class ReplayDocumentDeltaConnection extends EventEmitter implements IDocu
         tenantId: string,
         id: string,
         token: string,
-        storageService: api.IDeltaStorageService,
+        storageService: IDeltaStorageService,
         replayFrom: number,
         replayTo: number,
        ): Promise<IDocumentDeltaConnection> {
 
         const connection = {user: null, clientId: "", existing: true, parentBranch: null, initialMessages: []};
         const deltaConnection = new ReplayDocumentDeltaConnection(id, connection);
+        // tslint:disable-next-line:no-floating-promises
         this.FetchAndEmitOps(deltaConnection, tenantId, id, token, storageService, replayFrom, replayTo);
 
         return deltaConnection;
@@ -32,11 +33,11 @@ export class ReplayDocumentDeltaConnection extends EventEmitter implements IDocu
         tenantId: string,
         id: string,
         token: string,
-        storageService: api.IDeltaStorageService,
+        storageService: IDeltaStorageService,
         replayFrom: number,
-        replayTo: number,
-    ) {
-        const fetchedOps = await storageService.get(tenantId, id, token, 0, replayTo );
+        replayTo: number) {
+
+        const fetchedOps = await storageService.get(tenantId, id, token, 0, replayTo);
         let current = 0;
         let playbackOps: ISequencedDocumentMessage[] = [];
         if (fetchedOps.length > 0 && replayFrom > 0) {
@@ -46,18 +47,21 @@ export class ReplayDocumentDeltaConnection extends EventEmitter implements IDocu
             current = replayFrom;
             deltaConnection.emit("op", id, playbackOps);
         }
-        const intervalHandle = setInterval(() => {
-            // Emit the ops from replay to the end every "deltainterval" milliseconds
-            // to simulate the socket stream
-            if (current < fetchedOps.length) {
-                playbackOps = [];
-                playbackOps.push(fetchedOps[current]);
-                current += 1;
-                deltaConnection.emit("op", id, playbackOps);
-            } else {
-                clearInterval(intervalHandle);
-            }
-        }, DelayInterval);
+
+        const intervalHandle = setInterval(
+            () => {
+                // Emit the ops from replay to the end every "deltainterval" milliseconds
+                // to simulate the socket stream
+                if (current < fetchedOps.length) {
+                    playbackOps = [];
+                    playbackOps.push(fetchedOps[current]);
+                    current += 1;
+                    deltaConnection.emit("op", id, playbackOps);
+                } else {
+                    clearInterval(intervalHandle);
+                }
+            },
+            DelayInterval);
     }
 
     public get clientId(): string {

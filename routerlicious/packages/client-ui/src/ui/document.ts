@@ -43,6 +43,7 @@ export class PlatformFactory implements IPlatformFactory {
 
     public async create(): Promise<IPlatform> {
         if (this.div) {
+            // tslint:disable-next-line:no-inner-html using to clear the list of children
             this.div.innerHTML = "";
         }
         this.lastPlatform = new Platform(this.div, this.invalidateLayout);
