@@ -34,14 +34,6 @@
                 <li><a href="/democreator/retreat">Retreat 2018</a></li>
                 <li><a href="/democreator/fall2018">Fall 2018</a></li>
             </ul>
-
-            <h3>Data Types</h3>
-            <ul class="list-unstyled">
-                <li><a href="/maps/maps">Collaborative Map</a></li>
-                <li><a href="/cell/cell">Collaborative Cell</a></li>
-                <li><a href="/canvas/canvas">Ink Canvas</a></li>
-                <li><a href="/sharedText/string">Shared String</a></li>
-            </ul>
         </div>
     {{/content}}
 {{/layout}}
