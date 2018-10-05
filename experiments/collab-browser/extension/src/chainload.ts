@@ -1,7 +1,6 @@
 // TODO: Replace w/ direct use of web-loader instead of using /loader/ route.
-export const chainload = (componentId) => {
-    return new Promise<string>(resolve => {
-        const docId = `cd-${Math.random().toString(36).substring(2, 6)}`
+export const chainload = (componentId: string, docId: string) => {
+    return new Promise<void>(resolve => {
         chrome.tabs.create({ url: `http://localhost:3000/loader/${docId}?chaincode=${componentId}@latest` }, tab => {
             const historyListener = (details) => {
                 if (details.tabId !== tab.id) {
@@ -14,7 +13,7 @@ export const chainload = (componentId) => {
         
                 chrome.tabs.remove(tab.id)
                 chrome.webNavigation.onHistoryStateUpdated.removeListener(historyListener);
-                resolve(docId);
+                resolve();
             }
         
             chrome.webNavigation.onHistoryStateUpdated.addListener(historyListener);

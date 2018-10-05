@@ -1,7 +1,7 @@
 {
   "name": "@chaincode/store",
-  "version": "0.0.25",
-  "description": "Experimental collaborative browser component",
+  "version": "0.0.51",
+  "description": "Experimental store / chaincodable component base class",
   "main": "dist/main.bundle.js",
   "types": "dist/index.d.ts",
   "sideEffects": "false",
@@ -9,12 +9,12 @@
     "build": "npm run webpack && npm run tslint",
     "webpack": "webpack --config webpack.config.js",
     "tslint": "tslint 'src/**/*.ts'",
-    "update": "npm run build && npm version patch && npm publish --registry http://localhost:4873",
-    "dev": "npm run webpack && npm version patch && npm publish --registry http://localhost:4873 && echo \"http://localhost:3000/loader/x${RANDOM}?chaincode=@chaincode/store@latest\""
+    "dev": "npm run webpack -- --watch"
   },
   "author": "Microsoft",
   "repository": "microsoft/prague",
   "devDependencies": {
+    "@types/jsonwebtoken": "^7.2.8",
     "@types/node": "^10.5.8",
     "clean-webpack-plugin": "^0.1.19",
     "source-map-loader": "^0.2.3",
@@ -28,13 +28,5 @@
   },
   "dependencies": {
     "jsonwebtoken": "^8.3.0"
-  },
-  "prague": {
-    "browser": {
-      "entrypoint": "main",
-      "bundle": [
-        "dist/main.bundle.js"
-      ]
-    }
   }
 }

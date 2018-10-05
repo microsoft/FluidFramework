@@ -1,6 +1,6 @@
 {
   "name": "@chaincode/collab-browser",
-  "version": "0.0.70",
+  "version": "0.0.81",
   "description": "Experimental collaborative browser component",
   "main": "dist/main.bundle.js",
   "types": "dist/index.d.ts",
@@ -15,14 +15,14 @@
   "author": "Microsoft",
   "repository": "microsoft/prague",
   "devDependencies": {
-    "@types/node": "^10.5.8",
+    "@types/node": "^10.11.4",
     "clean-webpack-plugin": "^0.1.19",
     "source-map-loader": "^0.2.3",
-    "ts-loader": "^4.2.0",
+    "ts-loader": "^5.2.1",
     "tslint": "^5.11.0",
-    "typescript": "^3.0.1",
-    "webpack": "^4.7.0",
-    "webpack-cli": "^2.0.15",
+    "typescript": "^3.1.1",
+    "webpack": "^4.20.2",
+    "webpack-cli": "^3.1.2",
     "webpack-serve": "^2.0.2",
     "webpack-visualizer-plugin": "^0.1.11"
   },

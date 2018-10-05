@@ -1,40 +1,45 @@
-import { load } from "./prague";
-import { chainload } from "./chainload";
 import { TabRef } from "./tabRef";
-import { Component } from "../../component/src/component";
+import { RemoteSession } from "../../remotesession";
+import { Store } from "../../../danlehen/store";
 import { captureVisibleTab } from "./utils";
 
-const docIdP = chainload("@chaincode/collab-browser");
-let sharedTab = new TabRef();
+const userId = `user-${Math.random().toString(36).substr(2, 4)}`;
+const store = new Store("http://localhost:3000");
+let sourceTab = new TabRef();
+let remoteId = "";
 
 export const isSharing = (tabId: number) => {
-    return sharedTab.id === tabId;
+    return sourceTab.id === tabId;
 };
 
-export const start = async (tabId: number) => {
-    sharedTab = new TabRef(tabId);
-    const docId = await docIdP;
-    const component = await load<Component>(docId);
+export const start = async (sourceTabId: number, remoteSessionId: string) => {
+    if (isSharing(sourceTabId)) {
+        return remoteId;
+    }
+
+    sourceTab = new TabRef(sourceTabId);
+    const remoteSession = await store.open<RemoteSession>(remoteSessionId, userId, `@chaincode/collab-browser@latest`);
+    console.log(`Opened ${remoteSessionId}`);
     let previousImage = "";
     let lastStart = NaN;
     
     const pollForChanges = async () => {
-        if (!(await sharedTab.isActive)) {
-            if (!sharedTab.isClosed) {
+        if (!(await sourceTab.isActive)) {
+            if (!sourceTab.isClosed) {
                 pollAgainLater();
             }
             return;
         }
 
-        const tab = await sharedTab.tab;
-        const nextImage = await captureVisibleTab(tab.windowId, { format: "jpeg", quality: 8 });
+        const tab = await sourceTab.tab;
+        const nextImage = await captureVisibleTab(tab.windowId, { format: "jpeg", quality: 75 });
         if (nextImage === previousImage) {
             const elapsed = Date.now() - lastStart;
-            if (elapsed > 100) {
+            if (elapsed > 32) {
                 console.log(`*** Capture Screenshot(high)`);
-                const tab = await sharedTab.tab;
-                const image = await captureVisibleTab(tab.windowId, { format: "jpeg", quality: 25 });
-                await component.setImage(image, tab.width, tab.height);
+                const tab = await sourceTab.tab;
+                const image = await captureVisibleTab(tab.windowId, { format: "png" });
+                await remoteSession.setImage(image, tab.width, tab.height);
                 lastStart = NaN;
             }
             pollAgainLater();
@@ -42,7 +47,7 @@ export const start = async (tabId: number) => {
         }
 
         console.log(`*** Capture Screenshot(low)`);
-        await component.setImage(nextImage, tab.width, tab.height);
+        await remoteSession.setImage(nextImage, tab.width, tab.height);
         previousImage = nextImage;
 
         window.setTimeout(pollForChanges, 8);
@@ -55,7 +60,7 @@ export const start = async (tabId: number) => {
 
     pollForChanges();
 
-    return docId;
+    return remoteSessionId;
 };
 
-export const stop = () => { sharedTab = new TabRef(); };
+export const stop = () => { sourceTab = new TabRef(); };

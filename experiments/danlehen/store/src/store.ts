@@ -2,8 +2,16 @@ import { EventEmitter } from "events";
 import * as jwt from "jsonwebtoken";
 import { ICollaborativeObjectExtension } from "../../../../routerlicious/packages/api-definitions";
 import * as loader from "../../../../routerlicious/packages/loader";
-import { WebLoader, WebPlatformFactory } from "../../../../routerlicious/packages/loader-web";
-import { IChaincode, IPlatform, IRuntime, IDocumentService, ICodeLoader } from "../../../../routerlicious/packages/runtime-definitions";
+import { WebLoader } from "../../../../routerlicious/packages/loader-web";
+import { IMap } from "../../../../routerlicious/packages/map";
+import {
+    IChaincode,
+    ICodeLoader,
+    IDocumentService,
+    IPlatform,
+    IRuntime,
+    IPlatformFactory,
+} from "../../../../routerlicious/packages/runtime-definitions";
 import * as socketStorage from "../../../../routerlicious/packages/socket-storage";
 import { Component } from "./component";
 
@@ -13,11 +21,10 @@ class Chaincode<T extends Component> extends EventEmitter implements IChaincode 
     private readonly typeToFactory: Map<string, ICollaborativeObjectExtension>;
 
     constructor(
-        collaborativeTypes: ReadonlyArray<[string, ICollaborativeObjectExtension]>,
         private readonly component: T,
     ) {
         super();
-        this.typeToFactory = new Map(collaborativeTypes);
+        this.typeToFactory = new Map(component.collaborativeTypes);
     }
 
     // Returns the CollaborativeObject factory for the given type id.
@@ -29,25 +36,32 @@ class Chaincode<T extends Component> extends EventEmitter implements IChaincode 
     public async run(runtime: IRuntime, platform: IPlatform) {
         console.log("chaincode.run");
         const platformOut = new Platform<T>();
-        this.component.open(runtime, platform).then(platformOut.resolveComponent);
+        this.component.open(runtime, platform).then(async (root: IMap) => {
+            console.log("Component.opened");
+            await this.component.opened(runtime, platform, await root.getView());
+
+            console.log("Platform.resolveComponent");
+            platformOut.resolveComponent(this.component);
+        });
+
         return platformOut;
     }
 }
 
 // Internal/resuable IPlatform implementation returned by IChainCode.run(..)
 class Platform<TComponent> extends EventEmitter implements IPlatform {
-    // IChainLoader.run(..) will invoke to resolve 'componentP' once Component.open(..) completes
-    // loading the component.
+    // Function invoked by IChainLoader.run(..) to resolve 'componentP'.
     public readonly resolveComponent: (document: TComponent) => void;
 
-    // Returned via 'queryInterface()' to Store.open(..) to return the constructed component
-    // via the loader doc's 'runtimeChanged' event.
+    // 'queryInterface("component")' returns this promise.  Invoked by Store.open(..) to
+    // retrieve the constructed component.
     private readonly componentP: Promise<TComponent>;
 
     constructor() {
         super();
 
-        let capturedResolver;
+        // 'any' to work around TS2454: TypeScript 3.0.1 does not believe 'capturedResolver' is initialized before use.
+        let capturedResolver: any;
         this.componentP = new Promise<TComponent>((resolver) => { capturedResolver = resolver; });
         this.resolveComponent = capturedResolver;
     }
@@ -56,32 +70,124 @@ class Platform<TComponent> extends EventEmitter implements IPlatform {
         console.assert(id === "component");
         console.log("QI");
 
+        // 'any' because it can not be statically proven that <T> and <TComponent> are compatible.
         return this.componentP as any;
     }
 }
 
-interface StoreConfig {
-    documentServices: IDocumentService,
-    key: string,
-    loader: ICodeLoader,
-    tenantId: string,
-    tokenService: socketStorage.TokenService,
+class HostPlatform extends EventEmitter implements IPlatform {
+    private readonly services: Map<string, Promise<any>>;
+    
+    constructor (services?: ReadonlyArray<[string, Promise<any>]>) {
+        super();
+        this.services = new Map(services);
+    }
+
+    public queryInterface<T>(id: string): Promise<T> {
+        return this.services.get(id) as Promise<T>;
+    }
+}
+
+class HostPlatformFactory implements IPlatformFactory {
+    constructor(private readonly services?: ReadonlyArray<[string, Promise<any>]>) { }
+
+    public async create(): Promise<IPlatform> {
+        return new HostPlatform(this.services);
+    }
+}
+
+interface IStoreConfig {
+    codeLoader: ICodeLoader;
+    documentService: IDocumentService;
+    key: string;
+    tenantId: string;
+    tokenService: socketStorage.TokenService;
 }
 
 /** Instance of a Prague store, required to open, create, or instantiate components. */
 export class Store {
-    private readonly config: Promise<StoreConfig>;
-
-    constructor(hostUrl: string,
-        private readonly collaborativeTypes: ReadonlyArray<[string, ICollaborativeObjectExtension]>)
-    {
-        this.config = this.getConfig(hostUrl);
+    public static instantiate<T extends IPlatform>(component: Component) {
+        console.log(`store.instantiate(${component.constructor.name})`);
+        return new Chaincode(component);
     }
 
-    // Given the 'hostUrl' of a routerlicious server (e.g., "http://localhost:3000"),
-    // discovers the necessary config/services to open the store.
+    private readonly config: Promise<IStoreConfig>;
+
+    constructor(hostUrl: string) {
+        this.config = this.getConfig(hostUrl).then((config) => {
+            return {
+                codeLoader: new WebLoader(config.npm),
+                documentService: socketStorage.createDocumentService(hostUrl, config.blobStorageUrl),
+                key: config.key,
+                tenantId: config.id,
+                tokenService: new socketStorage.TokenService(),
+            };
+        });
+    }
+
+    public async auth(tenantId: string, userId: string, documentId: string) {
+        return jwt.sign({
+            documentId,
+            permission: "read:write",       // use "read:write" for now
+            tenantId,
+            user: {
+                id: userId,
+            },
+        },
+        (await this.config).key);
+    }
+
+    // TODO: Caller should provide host IPlatform to the document
+    public async open<T>(documentId: string, userId: string, chaincodePackage: string, services?: ReadonlyArray<[string, Promise<any>]>): Promise<T> {
+        console.log(`store.open("${documentId}", "${userId}", "${chaincodePackage}")`);
+        const config = await this.config;
+        const token = await this.auth(config.tenantId, userId, documentId);
+        const factory = new HostPlatformFactory(services);
+
+        const loaderDoc = await loader.load(
+            token,
+            null,
+            factory,
+            config.documentService,
+            config.codeLoader,
+            config.tokenService,
+            undefined,
+            true);
+
+        if (!loaderDoc.existing) {
+            console.log(`  not existing`);
+
+            // Wait for connection so that proposals can be sent
+            if (!loaderDoc.connected) {
+                await new Promise<void>((resolve) => loaderDoc.once("connected", resolve));
+            }
+
+            console.log(`  now connected`);
+
+            // And then make the proposal if a code proposal has not yet been made
+            const quorum = loaderDoc.getQuorum();
+            if (!quorum.has("code")) {
+                console.log(`  prosposing code`);
+                await quorum.propose("code", chaincodePackage);
+            }
+
+            console.log(`   code is ${quorum.get("code")}`);
+        }
+
+        // Return the constructed/loaded component.  We retrieve this via queryInterface on the
+        // IPlatform created by ChainCode.run().  This arrives via the "runtimeChanged" event on
+        // the loaderDoc.
+        return new Promise<T>((resolver) => {
+            loaderDoc.once("runtimeChanged", (runtime: IRuntime) => {
+                resolver(runtime.platform.queryInterface("component"));
+            });
+        });
+    }
+
+    // Given the 'hostUrl' of a routerlicious server (e.g., "http://localhost:3000"), discovers the necessary
+    // config/services to open the store.
     private async getConfig(hostUrl: string) {
-        const result = await new Promise<{
+        return await new Promise<{
             blobStorageUrl: string,
             id: string,
             key: string,
@@ -99,63 +205,7 @@ export class Store {
                 }
             };
             xhr.onerror = () => { reject(xhr.statusText); };
-            xhr.send(null);
+            xhr.send();
         });
-
-        // TODO: Dynamically sniff web vs. node loader?
-        const webLoader = new WebLoader(result.npm);
-        const documentServices = socketStorage.createDocumentService(hostUrl, result.blobStorageUrl);
-        const tokenService = new socketStorage.TokenService();
-
-        return {
-            documentServices,
-            key: result.key,
-            loader: webLoader,
-            tenantId: result.id,
-            tokenService,
-        };
-    }
-
-    public async auth(tenantId: string, userId: string, documentId: string) {
-        return jwt.sign({
-            documentId,
-            permission: "read:write",       // use "read:write" for now
-            tenantId,
-            user: {
-                id: userId,
-            },
-        },
-        (await this.config).key);
-    }
-
-    public async open<T>(documentId: string, userId: string): Promise<T> {
-        console.log("store.open");
-        const config = await this.config;
-        const token = await this.auth(config.tenantId, userId, documentId);
-        const factory = new WebPlatformFactory(document.body);
-
-        const loaderDoc = await loader.load(
-            token,
-            null,
-            factory,
-            config.documentServices,
-            config.loader,
-            config.tokenService,
-            null,
-            true);
-
-        // Wait for the "runtimeChanged" event to deliver the IPlatform returned from ChainCode run().
-        const platform = await new Promise<IPlatform>((resolver) => {
-            loaderDoc.once("runtimeChanged", (runtime) => {
-                resolver(runtime.platform);
-            });
-        });
-
-        return platform.queryInterface("component") as Promise<T>;
-    }
-
-    public instantiate<T extends IPlatform>(component: Component) {
-        console.log("store.instantiate");
-        return new Chaincode(this.collaborativeTypes, component);
     }
 }

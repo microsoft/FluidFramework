@@ -59,7 +59,42 @@ export class SharingTab {
     private tabRef = new TabRef();
 
     constructor (public readonly shareDocId: string) {
-        this.shareDocUrl = `http://localhost:3000/sharedText/${shareDocId}-text`;
+        this.shareDocUrl = `http://localhost:3000/sharedText/${shareDocId}?template=empty`;
+    }
+    
+    public async get(resizeLeft: boolean) {
+        const left = await getCurrentWindow();
+        const [leftInfo, rightInfo] = await sideBySideBounds(left);
+        if (resizeLeft) {
+            await updateWindow(left.id, leftInfo);
+        }
+
+        let right: chrome.windows.Window;
+        if (this.tabRef.isClosed) {
+            right = await createWindow(rightInfo);
+            this.tabRef = new TabRef((await queryTabs({ windowId: right.id }))[0].id);
+        } else {
+            right = await windowFromTabId(this.tabRef.id);
+            await updateWindow(right.id, rightInfo);
+        }
+
+        const tab = await this.tabRef.tab;
+        if (tab.url.split("?")[0] !== this.shareDocUrl.split("?")[0]) {
+            console.log(`*** Navigating Share Tab:`);
+            console.log(`    ${tab.url} -> ${this.shareDocUrl}`);
+            await navigateTab(this.tabRef.id, this.shareDocUrl);
+        }
+        
+        return this.tabRef.id;
+    }
+}
+
+export class RemotingTab {
+    public readonly shareDocUrl: string;
+    private tabRef = new TabRef();
+
+    constructor (public readonly remoteDocId: string) {
+        this.shareDocUrl = `http://localhost:3000/loader/${this.remoteDocId}`
     }
 
     public async get() {

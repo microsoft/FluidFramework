@@ -2,6 +2,7 @@
   "name": "@prague/collaborative-browser",
   "description": "",
   "scripts": {
+    "build": "npm run webpack",
     "webpack": "NODE_ENV=production && webpack --config webpack.prod.js",
     "dev": "NODE_ENV=development && webpack --config webpack.dev.js --watch"
   },

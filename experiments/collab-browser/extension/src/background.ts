@@ -1,53 +1,32 @@
-import { SharingTab } from "./sharingtab";
+import { SharingTab, RemotingTab } from "./sharingtab";
 import * as screenshare from "./screenshare";
-import { loadNotebook } from "./prague";
-import { chainload } from "./chainload";
 
-let sharingTab;
-let notebook;
-
-{
-    const div = document.createElement("div");
-    div.id = "content";
-    document.body.appendChild(div);
-}
-
-chainload("@chaincode/notebook").then(async id => {
-    notebook = await loadNotebook(id)
-    sharingTab = new SharingTab(id);
-    await notebook.initialize({ 
-        routerlicious: "http://localhost:3000", 
-        historian: "http://localhost:3001", 
-        tenantId: "prague", 
-        token: "43cfc3fbf04a97c0921fd23ff10f9e4b", 
-        npm: "http://localhost:4873", 
-        versions: { 
-            pinpoint: "@chaincode/pinpoint-editor@latest", 
-            sharedText: "@chaincode/shared-text@latest"
-     }});
-});
+const remoteDocId = `remote-${Math.random().toString(36).substr(2, 4)}`;
+let sharingTab = new SharingTab(`${Math.random().toString(36).substr(2, 6)}`);
+const remotingTab = new RemotingTab(remoteDocId);
 
 const parentMenuId = "prague_share_menu";
 const menus: chrome.contextMenus.CreateProperties[] = [{
-    title: "page",
-    contexts: ["all"],
-    onclick: async (info: chrome.contextMenus.OnClickData, tab: chrome.tabs.Tab) => {
-        const id = await screenshare.start(tab.id);
-        await insertComponent("document", { id });
-    }
-}, {
-    title: "selection",
-    contexts: ["selection"],
-    onclick: async (info: chrome.contextMenus.OnClickData, tab: chrome.tabs.Tab) => {
-        insertText(info.selectionText);
-    }
-}, {
-    title: "pinpoint",
-    contexts: ["selection"],
-    onclick: async (info: chrome.contextMenus.OnClickData, tab: chrome.tabs.Tab) => {
-        notebook.addPinpoint(info.selectionText);
-    }
-}];
+        title: "component",
+        contexts: ["all"],
+        onclick: async (info: chrome.contextMenus.OnClickData, tab: chrome.tabs.Tab) => {
+            await screenshare.start(tab.id, remoteDocId);
+            await insertComponent("document", { id: remoteDocId });
+        }
+    }, {
+        title: "selection",
+        contexts: ["selection"],
+        onclick: async (info: chrome.contextMenus.OnClickData, tab: chrome.tabs.Tab) => {
+            insertText(info.selectionText);
+        }
+    }, {
+        title: "session",
+        contexts: ["all"],
+        onclick: async (info: chrome.contextMenus.OnClickData, tab: chrome.tabs.Tab) => {
+            await screenshare.start(tab.id, remoteDocId);
+            await remotingTab.get();
+        }
+    }];
 
 chrome.contextMenus.create({
     id: parentMenuId,
@@ -63,16 +42,20 @@ chrome.contextMenus.create({
 chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
     switch (request.type) {
         case "share": {
-            await sharingTab.get();
-            return true;
+            sharingTab.get(true);
+            return false;
+        }
+        case "getDocId": {
+            sendResponse(remoteDocId);
+            return false;
         }
         default:
             return false;
     }
 });
 
-const executeScript = async (script: string) => {
-    chrome.tabs.sendMessage(await sharingTab.get(), { type: "eval", script });
+const executeScript = async (script: string) => { 
+    chrome.tabs.sendMessage(await sharingTab.get(false), { type: "eval", script });
 };
 
 const insertComponent = (type: string, state: {}) => {

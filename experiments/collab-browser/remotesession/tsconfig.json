@@ -11,7 +11,7 @@
         "rootDir": "../../..",
         "outDir": "./dist",
         "declarationDir": "./dist",
-        "strict": true,
+        "strict": false,
         "sourceMap": true,
         "inlineSources": true,
         "noImplicitAny": true,

@@ -7,7 +7,7 @@ chrome.runtime.sendMessage({ type: "getDocId" }, (docId: string) => {
         <div>
             Collab-Browser: <a href="http://localhost:3000/loader/${docId}" target="_blank" rel="noopener noreferrer">${docId}</a>
             <div>
-                <button id="shareButton">Share</button>
+                <button id="shareButton">Shared Notebook</button>
             </div>
             <div id="sessions">
             </div>
@@ -18,24 +18,6 @@ chrome.runtime.sendMessage({ type: "getDocId" }, (docId: string) => {
 
     const button = document.getElementById("shareButton");
     button.addEventListener("click", async () => {
-        //const activeTab = await getActiveTab();
-
-        // sessionManagerP.then(sessionManager => {
-        //     sessionManager.addSession("new session");
-        // });
-
-        // const sessionsElm = document.getElementById("sessions");
-        // sessionsElm.innerHTML += `
-        //     <a href="http://localhost:3000/sharedText/sedate-leather?template=empty" target="_blank" rel="noopener noreferrer">session</a>
-        // `;
-    
-        // chrome.tabs.query({ active: true, currentWindow: true },
-        //     (tabs) => {
-        //         chrome.tabs.sendMessage(
-        //             tabs[0].id,
-        //             { from: 'popup', type: 'share' });
-        //     });
-
         chrome.runtime.sendMessage({ type: "share" });
     });
 });
