@@ -75,11 +75,6 @@ export function getChaincodeRepo(): string {
  * A document is a collection of collaborative types.
  */
 export class Document extends EventEmitter {
-    // Task analyzer related variables.
-    // TODO: Move this to a seperate class.
-    private lastLeaderClientId: string;
-    private helpSendDelay: number;
-    private helpTimer = null;
 
     public get clientId(): string {
         return this.runtime.clientId;
@@ -140,7 +135,6 @@ export class Document extends EventEmitter {
             // Switch to read only mode if a client receives it's own leave message.
             // Stop any pending help request.
             if (this.clientId === leftClientId) {
-                this.stopSendingHelp();
                 this.runtime.deltaManager.enableReadonlyMode();
             } else {
                 this.runTaskAnalyzer();
@@ -265,55 +259,33 @@ export class Document extends EventEmitter {
      * On a client joining/departure, decide whether this client is the new leader.
      * If so, calculate if there are any unhandled tasks for browsers and remote agents.
      * Emit local help message for this browser and submits a remote help message for agents.
-     *
-     * To prevent recurrent op sending, we use an exponential backoff timer.
      */
     private runTaskAnalyzer() {
         const currentLeader = getLeader(this.runtime.getQuorum().getMembers());
         // tslint:disable-next-line:strict-boolean-expressions
         const isLeader = currentLeader && currentLeader.clientId === this.clientId;
         if (isLeader) {
-            // Clear previous timer.
-            this.stopSendingHelp();
-
-            // On a reconnection, start with an initial timer value.
-            if (this.lastLeaderClientId !== this.clientId) {
-                console.log(`Client ${this.clientId} is the current leader!`);
-                this.helpSendDelay = 5000;
-                this.lastLeaderClientId = this.clientId;
+            // Analyze the current state and ask for local and remote help seperately.
+            const helpTasks = analyzeTasks(this.clientId, this.runtime.getQuorum().getMembers(), documentTasks);
+            // tslint:disable-next-line:strict-boolean-expressions
+            if (helpTasks && (helpTasks.browser.length > 0 || helpTasks.robot.length > 0)) {
+                if (helpTasks.browser.length > 0) {
+                    const localHelpMessage: IHelpMessage = {
+                        tasks: helpTasks.browser,
+                    };
+                    console.log(`Requesting local help for ${helpTasks.browser}`);
+                    this.emit("localHelp", localHelpMessage);
+                }
+                if (helpTasks.robot.length > 0) {
+                    const remoteHelpMessage: IHelpMessage = {
+                        tasks: helpTasks.robot,
+                    };
+                    console.log(`Requesting remote help for ${helpTasks.robot}`);
+                    this.runtime.submitMessage(MessageType.RemoteHelp, remoteHelpMessage);
+                }
             }
 
-            // Analyze the current state and ask for local and remote help seperately after the timeout.
-            // Exponentially increase the timer to prevent recurrent op sending.
-            this.helpTimer = setTimeout(() => {
-                const helpTasks = analyzeTasks(this.clientId, this.runtime.getQuorum().getMembers(), documentTasks);
-                // tslint:disable-next-line:strict-boolean-expressions
-                if (helpTasks && (helpTasks.browser.length > 0 || helpTasks.robot.length > 0)) {
-                    if (helpTasks.browser.length > 0) {
-                        const localHelpMessage: IHelpMessage = {
-                            tasks: helpTasks.browser,
-                        };
-                        console.log(`Requesting local help for ${helpTasks.browser}`);
-                        this.emit("localHelp", localHelpMessage);
-                    }
-                    if (helpTasks.robot.length > 0) {
-                        const remoteHelpMessage: IHelpMessage = {
-                            tasks: helpTasks.robot,
-                        };
-                        console.log(`Requesting remote help for ${helpTasks.robot}`);
-                        this.runtime.submitMessage(MessageType.RemoteHelp, remoteHelpMessage);
-                    }
-                    this.helpSendDelay *= 2;
-                }
-            }, this.helpSendDelay);
         }
-    }
-
-    private stopSendingHelp() {
-        if (this.helpTimer) {
-            clearTimeout(this.helpTimer);
-        }
-        this.helpTimer = undefined;
     }
 }
 
