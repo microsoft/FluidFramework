@@ -5,9 +5,14 @@ import * as core from "../core";
 import { IContext } from "../kafka-service/lambdas";
 import { SequencedLambda } from "../kafka-service/sequencedLambda";
 import * as utils from "../utils";
+import { RateLimitter } from "./rateLimitter";
+
+// TODO: Move this to config.
+const RequestWindowMS = 15000;
 
 export class TmzLambda extends SequencedLambda {
     private taskQueueMap = new Map<string, string>();
+    private rateLimitter = new RateLimitter(RequestWindowMS);
     constructor(
         private messageSender: core.ITaskMessageSender,
         private tenantManager: core.ITenantManager,
@@ -46,18 +51,17 @@ export class TmzLambda extends SequencedLambda {
         this.context.checkpoint(message.offset);
     }
 
-    // To make sure that there is only one request per document-client-task, keeps track of already requested taks
-    // for a document-client.
+    // Sends help message for a task. Uses a rate limiter to limit request per clientId.
     private async trackDocument(
         clientId: string,
         tenantId: string,
         docId: string,
         message: IHelpMessage): Promise<void> {
         const key = await this.tenantManager.getKey(tenantId);
-        const filteredTasks = this.filterTasks(message.tasks);
-        for (const queueTask of filteredTasks) {
+        const queueTasks = this.generateQueueTasks(message.tasks);
+        for (const queueTask of queueTasks) {
             const queueName = queueTask[0];
-            const tasks = queueTask[1];
+            const tasks = this.rateLimitter.filter(clientId, queueTask[1]);
             if (tasks.length > 0) {
                 const queueMessage: api.IQueueMessage = {
                     documentId: docId,
@@ -80,7 +84,7 @@ export class TmzLambda extends SequencedLambda {
     }
 
     // From a list of task requests, figure out the queue for the tasks and return a map of <queue, takss[]>
-    private filterTasks(tasks: string[]): Map<string, string[]> {
+    private generateQueueTasks(tasks: string[]): Map<string, string[]> {
         // Figure out the queue for each task and populate the map.
         const queueTaskMap = new Map<string, string[]>();
         for (const task of tasks) {
