@@ -95,6 +95,7 @@ export class Runtime extends EventEmitter implements IRuntime {
                 runtime.reserve(path);
             });
 
+            /* tslint:disable:promise-function-async */
             const loadSnapshotsP = Object.keys(channels).map((path) => {
                 return runtime.loadSnapshotChannel(
                     runtime,
@@ -219,6 +220,8 @@ export class Runtime extends EventEmitter implements IRuntime {
 
     public async start(platform: IPlatform): Promise<void> {
         this.verifyNotClosed();
+
+        // tslint:disable-next-line:no-floating-promises
         this._platform = await this.chaincode.run(this, platform);
     }
 
@@ -263,6 +266,7 @@ export class Runtime extends EventEmitter implements IRuntime {
         const objectDetails = this.channels.get(envelope.address);
         assert(objectDetails);
 
+        /* tslint:disable:no-unsafe-any */
         objectDetails.connection.process(message, local, context);
 
         return objectDetails.object;

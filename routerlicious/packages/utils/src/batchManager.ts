@@ -29,6 +29,7 @@ export class BatchManager<T> {
     /**
      * Resolves once all pending work is complete
      */
+    /* tslint:disable:promise-function-async */
     public drain(): Promise<void> {
         return this.workPending ? this.workPending.promise : Promise.resolve();
     }

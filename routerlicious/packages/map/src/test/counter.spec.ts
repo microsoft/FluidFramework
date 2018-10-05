@@ -24,6 +24,8 @@ describe("Routerlicious", () => {
                 it("Should be able to create a counter with predefined value", async () => {
                     const counterWithValue = testMap.set("defaultCounter", 50, map.CounterValueType.Name);
                     assert.ok(counterWithValue);
+
+                    /* tslint:disable:no-unsafe-any */
                     assert.equal(counterWithValue.value, 50);
                 });
             });

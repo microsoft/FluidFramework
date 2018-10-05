@@ -4,11 +4,13 @@ import {
     IPraguePackage,
 } from "@prague/runtime-definitions";
 import * as assert from "assert";
+
+// tslint:disable-next-line:match-default-export-name
 import axios from "axios";
 import * as pako from "pako";
 
 // js-untar can't be imported in a node environment
-// tslint:disable-next-line:no-var-requires
+// tslint:disable-next-line
 const untar = typeof window !== "undefined" ? require("js-untar") : undefined;
 
 interface ITarEntry {
@@ -51,6 +53,7 @@ export class WebLoader implements ICodeLoader {
         const url = `${this.baseUrl}/${encodeURI(scope)}/${encodeURI(name)}/${encodeURI(version)}`;
         const details = await axios.get(url, { auth });
 
+        /* tslint:disable:no-unsafe-any */
         const data = await axios.get<ArrayBuffer>(details.data.dist.tarball, { auth, responseType: "arraybuffer"});
         const inflateResult = pako.inflate(new Uint8Array(data.data));
         const extractedFiles = await untar(inflateResult.buffer) as ITarEntry[];
@@ -65,6 +68,7 @@ export class WebLoader implements ICodeLoader {
         }
 
         const textDecoder = new TextDecoder("utf-8");
+        // tslint:disable-next-line:no-backbone-get-set-outside-model
         const packageJson = JSON.parse(textDecoder.decode(pkg.get("package/package.json").buffer)) as IPraguePackage;
         assert(packageJson.prague && packageJson.prague.browser);
 

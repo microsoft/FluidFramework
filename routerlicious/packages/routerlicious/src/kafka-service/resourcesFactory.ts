@@ -29,6 +29,7 @@ export class KafkaResourcesFactory implements utils.IResourcesFactory<KafkaResou
     }
 
     public async create(config: Provider): Promise<KafkaResources> {
+        // tslint:disable-next-line:non-literal-require
         const plugin = require(this.lambdaModule);
         const lambdaFactory = await plugin.create(config) as IPartitionLambdaFactory;
 

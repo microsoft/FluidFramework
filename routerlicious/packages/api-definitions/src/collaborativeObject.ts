@@ -118,6 +118,8 @@ export abstract class CollaborativeObject extends EventEmitter implements IColla
 
     public on(event: "pre-op" | "op", listener: (op: ISequencedObjectMessage, local: boolean) => void): this;
     public on(event: string | symbol, listener: (...args: any[]) => void): this;
+
+    /* tslint:disable:no-unnecessary-override */
     public on(event: string | symbol, listener: (...args: any[]) => void): this {
         return super.on(event, listener);
     }
@@ -184,6 +186,7 @@ export abstract class CollaborativeObject extends EventEmitter implements IColla
     protected submitLocalMessage(contents: any): void {
         assert(!this.isLocal());
 
+        /* tslint:disable:no-increment-decrement */
         // Prep the message
         const message: IObjectMessage = {
             clientSequenceNumber: ++this.clientSequenceNumber,
@@ -268,7 +271,6 @@ export abstract class CollaborativeObject extends EventEmitter implements IColla
 
             default:
                 assert.ok(false, `Unknown ConnectionState ${state}`);
-                break;
         }
     }
 

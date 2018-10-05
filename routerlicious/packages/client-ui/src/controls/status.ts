@@ -141,6 +141,7 @@ export class Status extends ui.Component implements IStatus {
             buf += "<\span>";
         }
 
+        // tslint:disable-next-line:no-inner-html
         this.element.innerHTML = buf;
 
         // Add options

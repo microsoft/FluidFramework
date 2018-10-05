@@ -18,6 +18,8 @@ import * as sharedString from "@prague/shared-string";
 import * as stream from "@prague/stream";
 import { Deferred } from "@prague/utils";
 import { EventEmitter } from "events";
+
+// tslint:disable-next-line:no-submodule-imports
 import * as uuid from "uuid/v4";
 import { CodeLoader } from "./codeLoader";
 import { debug } from "./debug";
@@ -50,12 +52,12 @@ export function getDefaultDocumentService(): IDocumentService {
 }
 
 // The below are temporary calls to register loader specific data. Do not take a dependency on them.
-let defaultCredentials: { tenant: string, key: string };
-export function registerDefaultCredentials(credentials: { tenant: string, key: string }) {
+let defaultCredentials: { tenant: string; key: string };
+export function registerDefaultCredentials(credentials: { tenant: string; key: string }) {
     defaultCredentials = credentials;
 }
 
-export function getDefaultCredentials(): { tenant: string, key: string } {
+export function getDefaultCredentials(): { tenant: string; key: string } {
     return defaultCredentials;
 }
 
@@ -102,6 +104,7 @@ export class Document extends EventEmitter {
         return this.runtime.existing;
     }
 
+    /* tslint:disable:no-unsafe-any */
     public get options(): any {
         return this.runtime.options;
     }
@@ -227,6 +230,7 @@ export class Document extends EventEmitter {
         return this.runtime.hasUnackedOps();
     }
 
+    /* tslint:disable:promise-function-async */
     /**
      * Called to snapshot the given document
      */
@@ -266,6 +270,7 @@ export class Document extends EventEmitter {
      */
     private runTaskAnalyzer() {
         const currentLeader = getLeader(this.runtime.getQuorum().getMembers());
+        // tslint:disable-next-line:strict-boolean-expressions
         const isLeader = currentLeader && currentLeader.clientId === this.clientId;
         if (isLeader) {
             // Clear previous timer.
@@ -282,6 +287,7 @@ export class Document extends EventEmitter {
             // Exponentially increase the timer to prevent recurrent op sending.
             this.helpTimer = setTimeout(() => {
                 const helpTasks = analyzeTasks(this.clientId, this.runtime.getQuorum().getMembers(), documentTasks);
+                // tslint:disable-next-line:strict-boolean-expressions
                 if (helpTasks && (helpTasks.browser.length > 0 || helpTasks.robot.length > 0)) {
                     if (helpTasks.browser.length > 0) {
                         const localHelpMessage: IHelpMessage = {
@@ -316,6 +322,7 @@ async function initializeChaincode(document: pragueLoader.Document, pkg: string)
 
     // Wait for connection so that proposals can be sent
     if (!document.connected) {
+        // tslint:disable-next-line
         await new Promise<void>((resolve) => document.on("connected", () => resolve()));
     }
 
@@ -324,6 +331,7 @@ async function initializeChaincode(document: pragueLoader.Document, pkg: string)
         await quorum.propose("code", pkg);
     }
 
+    // tslint:disable-next-line:no-backbone-get-set-outside-model
     debug(`Code is ${quorum.get("code")}`);
 }
 
@@ -339,7 +347,7 @@ export async function load(
 
     const classicPlatform = new PlatformFactory();
     const tokenService = new TokenService();
-    const runDeferred = new Deferred<{ runtime: IRuntime, platform: IPlatform }>();
+    const runDeferred = new Deferred<{ runtime: IRuntime; platform: IPlatform }>();
     const loader = new CodeLoader(
         async (r, p) => {
             debug("Code loaded and resolved");

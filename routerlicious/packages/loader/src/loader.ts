@@ -25,6 +25,7 @@ export async function load(
     // Connect to the delta stream in parallel - can begin queue'ing events even if can't process
     // Once code package is available download and load it.
 
+    /* tslint:disable:no-unsafe-any */
     debug(`Document loading: ${now()} `);
 
     // Verify we have services to load the document with

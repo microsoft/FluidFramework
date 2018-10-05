@@ -32,6 +32,7 @@ describe("Routerlicious", () => {
                 it("Should be able to add a concurrent range", () => {
                     const start = 5;
                     const stop = 10;
+                    // tslint:disable-next-line:no-increment-decrement
                     for (let i = start; i <= stop; i++) {
                         rangeTracker.add(i, i);
                     }
@@ -39,6 +40,7 @@ describe("Routerlicious", () => {
                     assert.equal(rangeTracker.primaryHead, stop);
                     assert.equal(rangeTracker.secondaryHead, stop);
 
+                    // tslint:disable-next-line:no-increment-decrement
                     for (let i = start; i <= stop; i++) {
                         assert.equal(rangeTracker.get(i), i);
                     }
@@ -61,6 +63,7 @@ describe("Routerlicious", () => {
                 });
 
                 it("Should be able to update the primary head mapping when tracking a concurrent range", () => {
+                    // tslint:disable-next-line:no-increment-decrement
                     for (let i = 5; i <= 10; i++) {
                         rangeTracker.add(i, i);
                     }
@@ -123,11 +126,13 @@ describe("Routerlicious", () => {
 
                 it("Should be able to update base to between a concurrent range", () => {
                     rangeTracker.add(4, 2);
+                    // tslint:disable-next-line:no-increment-decrement
                     for (let i = 5; i <= 10; i++) {
                         rangeTracker.add(i, i);
                     }
                     rangeTracker.updateBase(8);
                     assert.equal(rangeTracker.base, 8);
+                    // tslint:disable-next-line:no-increment-decrement
                     for (let i = 8; i <= 10; i++) {
                         assert.equal(rangeTracker.get(i), i);
                     }

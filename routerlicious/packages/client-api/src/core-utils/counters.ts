@@ -16,6 +16,7 @@ export class Histogram {
     public add(value: number) {
         const bucket = Math.floor(value / this.increment);
         this.ensureBucket(bucket);
+        /* tslint:disable:no-increment-decrement */
         this.buckets[bucket]++;
     }
 
@@ -71,6 +72,7 @@ export class ThroughputCounter {
 
             // If there was no activity within the interval disable it
             if (this.produceCounter.getValue() === 0 && this.acknowlwedgeCounter.getValue() === 0) {
+                // tslint:disable-next-line:no-unsafe-any
                 clearInterval(this.interval);
                 this.interval = undefined;
             }

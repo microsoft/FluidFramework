@@ -23,6 +23,7 @@ export function analyzeTasks(
     const unhandledTasks = tasks.filter((task) => handledTasks.indexOf(task) === -1);
     if (unhandledTasks.length > 0) {
         const runnerClient = clients.get(runnerClientId);
+        /* tslint:disable:strict-boolean-expressions */
         const permission = runnerClient ? runnerClient.permission : [];
         const allowedTasks = unhandledTasks.filter((task) => permission && permission.indexOf(task) !== -1);
         const robotNeeded = unhandledTasks.filter((task) => permission && permission.indexOf(task) === -1);

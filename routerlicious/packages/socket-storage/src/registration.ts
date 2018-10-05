@@ -11,6 +11,7 @@ export function createDocumentService(
     historianApi = true,
     credentials?): IDocumentService {
 
+    /* tslint:disable:no-unsafe-any */
     const service = new DocumentService(
         deltaUrl,
         gitUrl,

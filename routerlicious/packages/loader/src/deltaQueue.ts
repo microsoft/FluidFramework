@@ -1,5 +1,6 @@
 import { IDeltaQueue } from "@prague/runtime-definitions";
 import { AsyncQueue, AsyncWorker } from "async";
+// tslint:disable-next-line:no-submodule-imports
 import * as queue from "async/queue";
 import { EventEmitter } from "events";
 
@@ -32,10 +33,12 @@ export class DeltaQueue<T> extends EventEmitter implements IDeltaQueue {
 
     public clear() {
         // Remove any tasks and stop the old queue
+        /* tslint:disable:strict-boolean-expressions */
         if (this.q) {
             this.q.kill();
         }
 
+        /* tslint:disable:no-unsafe-any */
         // Then create a new one
         this.q = queue<T, void>((task, callback) => {
             this.emit("pre-op", task);

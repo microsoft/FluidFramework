@@ -1,5 +1,6 @@
 import * as api from "@prague/runtime-definitions";
 import { GitManager, Historian, ICredentials } from "@prague/services-client";
+// tslint:disable-next-line:match-default-export-name
 import axios from "axios";
 import * as io from "socket.io-client";
 import { DocumentStorageService } from "./blobStorageService";

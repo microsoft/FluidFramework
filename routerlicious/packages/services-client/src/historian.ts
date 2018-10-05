@@ -69,6 +69,7 @@ export class Historian implements IHistorian {
         }
     }
 
+    /* tslint:disable:promise-function-async */
     public getHeader(sha: string): Promise<any> {
         if (this.historianApi) {
             return this.get(`/headers/${encodeURIComponent(sha)}`);
@@ -151,6 +152,7 @@ export class Historian implements IHistorian {
         const includeBlobs = [".attributes", ".blobs", ".messages", "header"];
 
         const blobsP: Array<Promise<git.IBlob>> = [];
+        /* tslint:disable:no-unsafe-any */
         for (const entry of tree.tree) {
             if (entry.type === "blob" && endsWith(entry.path, includeBlobs)) {
                 const blobP = this.getBlob(entry.sha);

@@ -2,6 +2,7 @@ import { IValueFactory, IValueOpEmitter, IValueOperation, IValueType } from "./i
 
 export class CounterFactory implements IValueFactory<Counter> {
     public load(emitter: IValueOpEmitter, raw: number): Counter {
+        // tslint:disable-next-line:strict-boolean-expressions
         return new Counter(emitter, raw || 0);
     }
 

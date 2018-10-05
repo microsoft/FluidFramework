@@ -23,6 +23,7 @@ describe("Routerlicious", () => {
                     const batchSize = 100;
                     const testId = "test";
 
+                    // tslint:disable-next-line:no-increment-decrement
                     for (let i = 0; i < batchSize; i++) {
                         batchManager.add(testId, i);
                     }

@@ -13,6 +13,7 @@ function shuffle<T>(a: T[]) {
     while (0 !== currentIndex) {
 
         // Pick a remaining element...
+        // tslint:disable-next-line:insecure-random
         randomIndex = Math.floor(Math.random() * currentIndex);
         currentIndex--;
 

@@ -1,7 +1,9 @@
 import * as assert from "assert";
+// tslint:disable-next-line:no-implicit-dependencies
 import * as JsDiff from "diff";
 import * as fs from "fs";
 import * as path from "path";
+// tslint:disable-next-line:no-implicit-dependencies
 import * as random from "random-js";
 import * as MergeTree from "..";
 import * as Base from "../base";

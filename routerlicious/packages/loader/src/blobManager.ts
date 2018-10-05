@@ -28,6 +28,7 @@ export class BlobManager implements IBlobManager {
     public async getBlob(sha: string): Promise<IGenericBlob> {
 
         if (!this.blobs.has(sha)) {
+            // tslint:disable-next-line:no-floating-promises
             Promise.reject("Blob does not exist");
         }
         const blob = this.blobs.get(sha);
@@ -43,6 +44,7 @@ export class BlobManager implements IBlobManager {
     public async createBlob(blob: IGenericBlob): Promise<IGenericBlob> {
         await this.storage.createBlob(blob.content);
 
+        /* tslint:disable:no-object-literal-type-assertion */
         // Remove blobContent
         const blobMetaData = {
             fileName: blob.fileName,

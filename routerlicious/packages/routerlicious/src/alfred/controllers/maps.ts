@@ -122,7 +122,9 @@ async function randomizeMap(map: Map.IMap) {
     const set = map.set<Map.DistributedSet<number>>("set", [1, 2, 3, 3, 2, 4], Map.DistributedSetValueType.Name);
 
     setInterval(async () => {
+        // tslint:disable-next-line:insecure-random
         const key = keys[Math.floor(Math.random() * keys.length)];
+        // tslint:disable-next-line:insecure-random
         map.set(key, Math.floor(Math.random() * 100000).toString());
         counter.increment(1);
         set.add(5);

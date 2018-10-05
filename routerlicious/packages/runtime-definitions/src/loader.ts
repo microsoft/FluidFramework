@@ -18,7 +18,7 @@ export interface IPackage {
     description: string;
     keywords: string[];
     homepage: string;
-    bugs: { url: string, email: string };
+    bugs: { url: string; email: string };
     license: string;
     author: IPerson;
     contributors: IPerson[];
@@ -28,7 +28,7 @@ export interface IPackage {
     browser: string;
     bin: { [key: string]: string };
     man: string | string[];
-    repository: string | { type: string, url: string };
+    repository: string | { type: string; url: string };
     scripts: { [key: string]: string };
     config: { [key: string]: string };
     dependencies: { [key: string]: string };
@@ -36,7 +36,7 @@ export interface IPackage {
     peerDependencies: { [key: string]: string };
     bundledDependencies: { [key: string]: string };
     optionalDependencies: { [key: string]: string };
-    engines: { node: string, npm: string };
+    engines: { node: string; npm: string };
     os: string[];
     cpu: string[];
     private: boolean;

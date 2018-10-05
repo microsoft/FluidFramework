@@ -41,6 +41,8 @@ export class Interval implements ISerializableInterval {
         if (client) {
             seq = client.getCurrentSeq();
         }
+
+        /* tslint:disable:no-object-literal-type-assertion */
         const serializedInterval = {
             end: this.end,
             intervalType: 0,
@@ -292,6 +294,7 @@ class LocalIntervalCollection<TInterval extends ISerializableInterval> {
     public serialize() {
         const client = this.client;
         const intervals = this.intervalTree.intervals.keys();
+        // tslint:disable-next-line
         return intervals.map((interval) => interval.serialize(client));
     }
 
@@ -343,12 +346,14 @@ export class SharedStringIntervalCollectionValueType
             [[
                 "add",
                 {
+                    /* tslint:disable:promise-function-async */
                     prepare: (value, params, local, op) => {
                         // Local ops were applied when the message was created
                         if (local) {
                             return;
                         }
 
+                        /* tslint:disable:no-unsafe-any */
                         return value.prepareAddInternal(params, local, op);
                     },
                     process: (value, params, context, local, op) => {
@@ -492,6 +497,7 @@ export class SharedIntervalCollectionView<TInterval extends ISerializableInterva
         return this.localCollection.nextInterval(pos);
     }
 
+    /* tslint:disable:no-unnecessary-override */
     public on(
         event: "addInterval",
         listener: (interval: ISerializedInterval, local: boolean, op: ISequencedObjectMessage) => void): this {

@@ -1,4 +1,5 @@
 import * as api from "@prague/runtime-definitions";
+// tslint:disable-next-line:match-default-export-name
 import axios from "axios";
 import * as querystring from "querystring";
 
@@ -13,6 +14,7 @@ export class DocumentDeltaStorageService implements api.IDocumentDeltaStorageSer
         private storageService: api.IDeltaStorageService) {
     }
 
+    /* tslint:disable:promise-function-async */
     public get(from?: number, to?: number): Promise<api.ISequencedDocumentMessage[]> {
         return this.storageService.get(this.tenantId, this.id, this.token, from, to);
     }
