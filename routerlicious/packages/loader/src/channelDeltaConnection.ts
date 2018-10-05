@@ -57,6 +57,7 @@ export class ChannelDeltaConnection implements IDeltaConnection {
     }
 
     public attach(handler: IDeltaHandler) {
+        /* tslint:disable:strict-boolean-expressions */
         assert(!this.handler);
         this.handler = handler;
     }

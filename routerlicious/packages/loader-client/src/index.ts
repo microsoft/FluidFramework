@@ -32,6 +32,8 @@ class NodeCodeLoader implements ICodeLoader {
         const packagesBase = path.join(__dirname, "../packages");
         await asyncExec(`npm install ${pkg}`, { cwd: packagesBase });
 
+        // tslint:disable:no-unsafe-any
+        // tslint:disable-next-line:non-literal-require
         const entry = require(`${packagesBase}/node_modules/${scope}/${name}`);
         return entry;
     }
@@ -54,6 +56,7 @@ const packageDetails = require("../package.json");
 
 async function readlineAsync(input: readline.ReadLine, prompt: string): Promise<string> {
     return new Promise<string>((resolve) => {
+        // tslint:disable-next-line:no-unnecessary-callback-wrapper
         input.question(prompt, (answer) => resolve(answer));
     });
 }
@@ -113,6 +116,7 @@ async function run(
     console.log("");
 
     const input = readline.createInterface(process.stdin, process.stdout);
+    // tslint:disable-next-line:no-constant-condition
     while (true) {
         const key = await readlineAsync(input, chalk.green("Key: "));
         const value = await readlineAsync(input, chalk.green("Value: "));

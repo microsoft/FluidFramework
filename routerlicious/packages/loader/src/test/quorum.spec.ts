@@ -15,6 +15,7 @@ describe("Loader", () => {
         });
 
         describe(".propose()", async () => {
+            /* tslint:disable:no-floating-promises */
             it("Should be able to propose a new value", () => {
                 quorum.propose("hello", "world");
             });

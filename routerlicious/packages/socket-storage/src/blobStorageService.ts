@@ -9,6 +9,7 @@ export class DocumentStorageService implements api.IDocumentStorageService  {
     constructor(tenantId: string, private id: string, public manager: gitStorage.GitManager) {
     }
 
+    /* tslint:disable:promise-function-async */
     public getSnapshotTree(version: resources.ICommit): Promise<api.ISnapshotTree> {
         return this.manager.getHeader(this.id, version ? version.sha : null);
     }

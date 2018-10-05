@@ -12,7 +12,7 @@ import {
     ITree,
     TreeEntry,
 } from "@prague/runtime-definitions";
-// tslint:disable-next-line:no-var-requires
+// tslint:disable-next-line
 const hasIn = require("lodash/hasIn");
 import { debug } from "./debug";
 import { CellExtension } from "./extension";
@@ -80,6 +80,7 @@ export class Cell extends CollaborativeObject implements ICell {
      */
     public async set(value: any): Promise<void> {
         let operationValue: ICellValue;
+        /* tslint:disable:no-unsafe-any */
         if (hasIn(value, "__collaborativeObject__")) {
             // Convert any local collaborative objects to our internal storage format
             const collaborativeObject = value as ICollaborativeObject;
@@ -117,6 +118,7 @@ export class Cell extends CollaborativeObject implements ICell {
         this.submitIfAttached(op);
     }
 
+    // tslint:disable-next-line:promise-function-async
     public ready(): Promise<void> {
         return Promise.resolve();
     }
@@ -173,6 +175,8 @@ export class Cell extends CollaborativeObject implements ICell {
         storage: IObjectStorageService): Promise<void> {
 
         const rawContent = await storage.read(snapshotFileName);
+
+        // tslint:disable-next-line:strict-boolean-expressions
         const content = rawContent
             ? JSON.parse(Buffer.from(rawContent, "base64").toString("utf-8")) as ICellValue
             : { type: CellValueType[CellValueType.Plain], value: undefined };
@@ -206,6 +210,7 @@ export class Cell extends CollaborativeObject implements ICell {
         if (message.type === OperationType && !local) {
             const op: ICellOperation = message.contents;
             if (op.type === "setCell") {
+                /* tslint:disable:no-return-await */
                 return op.value.type === CellValueType[CellValueType.Collaborative]
                     ? await this.runtime.getChannel(op.value.value)
                     : op.value.value;

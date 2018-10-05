@@ -145,6 +145,9 @@ export function create(
         const tenantId = request.params.tenantId || appTenants[0].id;
         const token = getToken(tenantId, request.params.id, appTenants);
 
+        const from = +request.query.from;
+        const to = +request.query.to;
+
         // Temporary until we allow tokens that can access multiple documents
         const tenant = appTenants.find((appTenant) => appTenant.id === tenantId);
 
@@ -176,6 +179,7 @@ export function create(
                     connect: true,
                     disableCache,
                     documentId: request.params.id,
+                    from,
                     key: tenant.key,
                     options: JSON.stringify(options),
                     pageInk: request.query.pageInk === "true",
@@ -183,6 +187,7 @@ export function create(
                     template,
                     tenantId,
                     title: request.params.id,
+                    to,
                     token,
                     version: JSON.stringify(values[1]),
                 });

@@ -9,6 +9,7 @@ export class Deferred<T> {
     private rej: (reason?: any) => void;
 
     constructor() {
+        /* tslint:disable:promise-must-complete */
         this.p = new Promise<T>((resolve, reject) => {
             this.res = resolve;
             this.rej = reject;
@@ -40,6 +41,7 @@ export class Deferred<T> {
 /**
  * Helper function that asserts that the given promise only resolves
  */
+/* tslint:disable:promise-function-async */
 export function assertNotRejected<T>(promise: Promise<T>): Promise<T> {
     // Assert that the given promise only resolves
     promise.catch((error) => {

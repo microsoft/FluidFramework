@@ -17,11 +17,13 @@ export class ChannelStorageService implements IObjectStorageService {
 
     constructor(tree: ISnapshotTree, private storage: IDocumentStorageService) {
         // Create a map from paths to blobs
+        /* tslint:disable:strict-boolean-expressions */
         if (tree) {
             ChannelStorageService.flattenTree("", tree, this.flattenedTree);
         }
     }
 
+    /* tslint:disable:promise-function-async */
     public read(path: string): Promise<string> {
         const sha = this.getShaForPath(path);
         return this.storage.read(sha);

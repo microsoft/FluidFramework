@@ -37,6 +37,7 @@ export class Chaincode implements IChaincode {
         return this.modules.get(type);
     }
 
+    /* tslint:disable:promise-function-async */
     public close(): Promise<void> {
         return Promise.resolve();
     }

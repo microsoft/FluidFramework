@@ -12,6 +12,7 @@ export class NullChaincode implements IChaincode {
         return null;
     }
 
+    /* tslint:disable:promise-function-async */
     public close(): Promise<void> {
         return Promise.resolve();
     }

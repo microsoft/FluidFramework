@@ -71,6 +71,7 @@ export class Snapshot implements ISnapshot {
         this.layerIndex[layer.id] = layerIndex;
 
         // And move any after it down by one
+        // tslint:disable-next-line:no-increment-decrement
         for (layerIndex = layerIndex + 1; layerIndex < this.layers.length; layerIndex++) {
             const layerId = this.layers[layerIndex].id;
             this.layerIndex[layerId] = this.layerIndex[layerId] + 1;

@@ -103,6 +103,7 @@ function randomizeCell(cell: ICell, element1: JQuery, element2: JQuery) {
     element2.remove();
     const keys = ["foo", "bar", "baz", "binky", "winky", "twinkie"];
     setInterval(() => {
+        // tslint:disable-next-line:insecure-random
         const key = keys[Math.floor(Math.random() * keys.length)];
         cell.set(key);
     }, 3000);

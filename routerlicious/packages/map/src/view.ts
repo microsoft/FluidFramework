@@ -1,6 +1,6 @@
 import { ICollaborativeObject } from "@prague/api-definitions";
 import { IRuntime, ISequencedObjectMessage } from "@prague/runtime-definitions";
-// tslint:disable-next-line:no-var-requires
+// tslint:disable-next-line
 const hasIn = require("lodash/hasIn");
 import { IMapOperation, IMapValue, ValueType } from "./definitions";
 import { IMapView, IValueOpEmitter, SerializeFilter } from "./interfaces";
@@ -79,6 +79,8 @@ export class MapView implements IMapView {
     public async wait<T>(key: string): Promise<T> {
         // Return immediately if the value already exists
         if (this.has(key)) {
+            /* tslint:disable:no-unsafe-any */
+            /* tslint:disable:no-object-literal-type-assertion */
             return this.get(key);
         }
 
@@ -120,6 +122,7 @@ export class MapView implements IMapView {
                 type,
                 value,
             };
+            // tslint:disable-next-line:no-parameter-reassignment
             value = valueType.factory.load(new ValueOpEmitter(type, key, this.map), value);
         } else {
             const valueType = hasIn(value, "__collaborativeObject__")

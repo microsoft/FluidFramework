@@ -51,6 +51,7 @@ class RuntimeStorageService implements IDocumentStorageService {
     constructor(private storageService: IDocumentStorageService, private blobs: Map<string, string>) {
     }
 
+    /* tslint:disable:promise-function-async */
     public getSnapshotTree(version: ICommit): Promise<ISnapshotTree> {
         return this.storageService.getSnapshotTree(version);
     }
@@ -192,6 +193,8 @@ export class Document extends EventEmitter {
     public on(event: "op", listener: (message: ISequencedDocumentMessage) => void): this;
     public on(event: "pong" | "processTime", listener: (latency: number) => void): this;
     public on(event: "runtimeChanged", listener: (runtime: IRuntime) => void): this;
+
+    /* tslint:disable:no-unnecessary-override */
     public on(event: string | symbol, listener: (...args: any[]) => void): this {
         return super.on(event, listener);
     }
@@ -201,6 +204,7 @@ export class Document extends EventEmitter {
      */
     public emit(message: string | symbol, ...args: any[]): boolean {
         const superResult = super.emit(message, ...args);
+        /* tslint:disable:strict-boolean-expressions */
         const runtimeResult = this._runtime ? this._runtime.emit(message, ...args) : true;
 
         return superResult && runtimeResult;
@@ -391,6 +395,7 @@ export class Document extends EventEmitter {
                 // Internal context is fully loaded at this point
                 this.loaded = true;
 
+                /* tslint:disable:no-unsafe-any */
                 debug(`Document loaded ${this.id}: ${now()} `);
             });
     }
@@ -585,6 +590,7 @@ export class Document extends EventEmitter {
             : [];
 
         const blobManager = new BlobManager(storage);
+        // tslint:disable-next-line:no-floating-promises
         blobManager.loadBlobMetadata(blobs);
 
         return blobManager;
@@ -641,6 +647,7 @@ export class Document extends EventEmitter {
         let chaincode: IChaincode;
 
         if (quorum.has("code")) {
+            // tslint:disable-next-line:no-backbone-get-set-outside-model
             pkg = quorum.get("code");
             chaincode = await this.loadCode(pkg);
         } else {
@@ -769,6 +776,7 @@ export class Document extends EventEmitter {
             await this.transitionRuntime("@prague/client-api");
         }
 
+        // tslint:disable:switch-default
         switch (message.type) {
             case MessageType.Operation:
                 return this._runtime.prepare(message, local);
@@ -785,6 +793,8 @@ export class Document extends EventEmitter {
         // Reset the list of messages we have received since the min sequence number changed
         this.messagesSinceMSNChange.push(message);
         let index = 0;
+
+        // tslint:disable-next-line:no-increment-decrement
         for (; index < this.messagesSinceMSNChange.length; index++) {
             if (this.messagesSinceMSNChange[index].sequenceNumber > message.minimumSequenceNumber) {
                 break;
@@ -837,6 +847,7 @@ export class Document extends EventEmitter {
                 break;
 
             case MessageType.BlobUploaded:
+                // tslint:disable-next-line:no-floating-promises
                 this.blobManager.addBlob(message.contents);
                 this.emit(MessageType.BlobUploaded, message.contents);
                 break;
@@ -847,6 +858,7 @@ export class Document extends EventEmitter {
                 break;
 
             default:
+                // tslint:disable-next-line:switch-final-break
                 break;
         }
 

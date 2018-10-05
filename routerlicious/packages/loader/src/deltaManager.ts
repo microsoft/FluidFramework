@@ -7,6 +7,7 @@ import { DeltaConnection, IConnectionDetails } from "./deltaConnection";
 import { DeltaQueue } from "./deltaQueue";
 
 // tslint:disable:no-var-requires
+// tslint:disable-next-line:no-submodule-imports
 const cloneDeep = require("lodash/cloneDeep");
 const now = require("performance-now");
 // tslint:enable:no-var-requires
@@ -99,6 +100,7 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
         private client: runtime.IClient) {
         super();
 
+        /* tslint:disable:strict-boolean-expressions */
         this.clientType = (!this.client || this.client.type === runtime.Browser)
             ? runtime.Browser
             : runtime.Robot;
@@ -109,6 +111,7 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
                     callback();
                 },
                 (error) => {
+                    /* tslint:disable:no-unsafe-any */
                     callback(error);
                 });
         });
@@ -162,6 +165,8 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
                 service: this.clientType,
                 timestamp: now(),
             }];
+
+        // tslint:disable:no-increment-decrement
         const message: runtime.IDocumentMessage = {
             clientSequenceNumber: ++this.clientSequenceNumber,
             contents,
@@ -201,6 +206,7 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
         return this.connecting.promise;
     }
 
+    /* tslint:disable:promise-function-async */
     public getDeltas(from: number, to?: number): Promise<runtime.ISequencedDocumentMessage[]> {
         const deferred = new Deferred<runtime.ISequencedDocumentMessage[]>();
         this.getDeltasCore(from, to, [], deferred, 0);
@@ -269,6 +275,7 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
                 return { from, to, retry: retry + 1 };
             });
 
+        /* tslint:disable:no-floating-promises */
         // If an error or we missed fetching ops - call back with a timer to fetch any missing values
         replayP.then(
             (replay) => {
@@ -361,7 +368,9 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
                 }
             },
             (error) => {
+                // tslint:disable-next-line:no-parameter-reassignment
                 delay = Math.min(delay, MaxReconnectDelay);
+                // tslint:disable-next-line:no-parameter-reassignment
                 reason = `Connection failed - trying again in ${delay}ms`;
                 debug(reason, error.toString());
                 setTimeout(() => this.connectCore(reason, delay * 2), delay);

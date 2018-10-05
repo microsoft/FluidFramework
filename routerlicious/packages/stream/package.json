@@ -12,13 +12,14 @@
     "clean": "rimraf dist && rimraf lib",
     "tsc": "tsc",
     "build:esnext": "tsc --outDir lib --m esnext",
-    "tslint": "tslint 'src/**/*.ts'"
+    "tslint": "tslint --project tsconfig.json --format verbose"
   },
   "author": "Microsoft",
   "repository": "microsoft/prague",
   "devDependencies": {
     "rimraf": "^2.6.2",
     "tslint": "^5.11.0",
+    "tslint-microsoft-contrib": "^5.2.1",
     "typescript": "^3.0.1"
   },
   "dependencies": {

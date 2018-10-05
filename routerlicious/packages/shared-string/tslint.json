@@ -1,7 +1,29 @@
 {
-    "extends": "tslint:recommended",
+    "extends": ["tslint-microsoft-contrib", "tslint:recommended"],
     "rules": {
+        "binary-expression-operand-order": false,
+        "completed-docs": false,
+        "export-name": false,
+        "function-name": false,
+        "import-name": false,
+        "linebreak-style": [false],
         "max-classes-per-file": [false],
-        "no-console": [false]
+        "max-func-body-length": false,
+        "missing-jsdoc": false,
+        "newline-before-return": false,
+        "no-console": false,
+        "no-default-export": false,
+        "no-empty-interface": false,
+        "no-for-in": false,
+        "no-relative-imports": false,
+        "no-reserved-keywords": false,
+        "no-suspicious-comment": false,
+        "no-unnecessary-local-variable": false,
+        "prefer-array-literal": false,
+        "prefer-method-signature": false,
+        "prefer-type-cast": false,
+        "strict-boolean-expressions": [true, "allow-null-union", "allow-undefined-union", "allow-string", "allow-number"],
+        "type-literal-delimiter": false,
+        "underscore-consistent-invocation": false
     }
 }

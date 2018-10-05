@@ -672,10 +672,12 @@ export function getRandomName(connector = "_", capitalize = false, retry = false
 
     const name = `${processString(adjective, capitalize)}${connector}${processString(surname, capitalize)}`;
 
+    // tslint:disable-next-line:insecure-random
     return retry ? `${name}${Math.floor(Math.random() * 10)}` : name;
 }
 
 function getRandomString(values: string[]) {
+    // tslint:disable-next-line:insecure-random
     return values[Math.floor(Math.random() * values.length)];
 }
 

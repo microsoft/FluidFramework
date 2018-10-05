@@ -61,6 +61,7 @@ export class ResumeIntelligentSerivce implements IIntelligentService {
     }
 
     public async sendMessage(client: Client, method: string, body: string) {
+        // tslint:disable-next-line:insecure-random
         const messageId = Math.floor((Math.random() * 10000) + 1);
         const data = JSON.stringify({
             body: body.substring(0, Math.min(body.length, 200000)),

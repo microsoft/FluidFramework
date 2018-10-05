@@ -1,4 +1,3 @@
-import { ui } from "@prague/client-ui";
 import { IMap } from "@prague/map";
 import { IChaincode, IGenericBlob, IPlatform, IRuntime, MessageType } from "@prague/runtime-definitions";
 import { gitHashFile } from "@prague/utils";
@@ -9,7 +8,6 @@ import "./style.css";
 
 const template =
 `<div id="player-div">
-    <h1> Photo-Album 2.0 </h1>
     <input id="file-uploader" type="file" type="image">
     <div id="carousel">
         <div id="focus" class="focus"></div>
@@ -19,22 +17,23 @@ const template =
     </div>
 </div>`;
 
-class PhotoCarousel extends ui.Component {
-
-}
-
-class AlbumPlatform extends EventEmitter implements IPlatform {
-    public async queryInterface<T>(id: string): Promise<T> {
-        return null;
-    }
-}
-
-class Runner {
+class PhotoPlatformRunner extends EventEmitter implements IPlatform {
     private album: IMap;
 
-    public async run(runtime: IRuntime, platform: IPlatform) {
+    public async queryInterface<T>(id: string): Promise<T> {
+        switch (id) {
+            case "document":
+                return null;
+            case "div":
+                return null;
+            default:
+                return null;
+        }
+    }
+
+    public async run(runtime: IRuntime, platform: IPlatform): Promise<IPlatform> {
         this.start(await Document.Load(runtime), platform).catch((error) => console.error(error));
-        return new AlbumPlatform();
+        return this;
     }
 
     private async start(doc: Document, platform: IPlatform) {
@@ -43,12 +42,7 @@ class Runner {
             // If headless exist early
             return;
         }
-
         hostContent.innerHTML = template;
-        const host = new ui.BrowserContainerHost();
-
-        const canvas = new PhotoCarousel(hostContent.children[0] as HTMLDivElement);
-        host.attach(canvas);
         this.carouselBuilder(doc);
 
         const nextButton = document.getElementById("next-button");
@@ -198,6 +192,6 @@ class Runner {
 
 export async function instantiate(): Promise<IChaincode> {
     // Instantiate a new runtime per code load. That'll separate handlers, etc...
-    const chaincode = new Chaincode(new Runner());
+    const chaincode = new Chaincode(new PhotoPlatformRunner());
     return chaincode;
 }

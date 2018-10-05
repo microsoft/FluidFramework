@@ -17,6 +17,7 @@ import {
 } from "@prague/runtime-definitions";
 import { Deferred } from "@prague/utils";
 import * as assert from "assert";
+// tslint:disable-next-line:no-submodule-imports
 import * as uuid from "uuid/v4";
 import { CollaborativeStringExtension } from "./extension";
 import {
@@ -66,6 +67,7 @@ export class SharedString extends CollaborativeMap {
         services?: IDistributedObjectServices) {
 
         super(id, document, CollaborativeStringExtension.Type);
+        /* tslint:disable:no-unsafe-any */
         this.client = new MergeTree.Client("", document.options);
     }
 
@@ -110,6 +112,7 @@ export class SharedString extends CollaborativeMap {
             type: MergeTree.MergeTreeDeltaType.INSERT,
         };
 
+        // tslint:disable-next-line:no-parameter-reassignment
         pos = this.client.pasteLocal(register, pos);
         this.submitIfAttached(insertMessage);
         return pos;
@@ -336,6 +339,7 @@ export class SharedString extends CollaborativeMap {
             }
         });
 
+        /* tslint:disable:no-object-literal-type-assertion */
         const segmentGroup = {
             segments: orderedSegments,
         } as MergeTree.SegmentGroup;
@@ -393,6 +397,7 @@ export class SharedString extends CollaborativeMap {
         return snap.emit();
     }
 
+    /* tslint:disable:promise-function-async */
     protected prepareContent(): Promise<void> {
         return this.loadedDeferred.promise;
     }

@@ -18,6 +18,7 @@
     "test:copyresults": "copyfiles 'packages/*/nyc/**' nyc",
     "test:full": "npm run test:coverage && npm run test:copyresults",
     "tsc": "lerna run tsc --stream",
+    "tslint": "lerna run tslint --stream",
     "watch": "concurrently \"npm run watch:tsc\" \"npm run watch:esnext\" \"npm run watch:webpack\"",
     "watch:esnext": "lerna run --parallel build:esnext -- -- --watch",
     "watch:tsc": "lerna run --parallel tsc -- -- --watch",

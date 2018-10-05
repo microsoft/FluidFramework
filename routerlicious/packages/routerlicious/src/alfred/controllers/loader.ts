@@ -4,7 +4,6 @@ import { createDocumentService, DefaultErrorTracking, TokenService } from "@prag
 import { BrowserErrorTrackingService } from "./errorTracking";
 
 export async function initialize(
-    id: string,
     version: ICommit,
     token: string,
     config: any,

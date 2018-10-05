@@ -52,7 +52,8 @@ export class GitManager {
     /**
      * Retrieves the object at the given revision number
      */
-    public getContent(commit: string, path: string): Promise<resources.IBlob> {
+    /* tslint:disable:promise-function-async */
+     public getContent(commit: string, path: string): Promise<resources.IBlob> {
         return this.historian.getContent(path, commit);
     }
 
@@ -175,6 +176,7 @@ export class GitManager {
         assert(entries.length === files.entries.length);
 
         // Construct a new tree from the collection of hashes
+        // tslint:disable-next-line:no-increment-decrement
         for (let i = 0; i < files.entries.length; i++) {
             const isTree = files.entries[i].type === api.TreeEntry[api.TreeEntry.Tree];
             tree.push({
@@ -194,6 +196,7 @@ export class GitManager {
 
     private translateSymlink(link: string, depth: number): string {
         let prefix = "";
+        // tslint:disable-next-line:no-increment-decrement
         for (let i = 0; i < depth; i++) {
             prefix += "../";
         }

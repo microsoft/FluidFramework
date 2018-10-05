@@ -2490,6 +2490,7 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
         const annotDiv = makeAnnotDiv(indentWidth, layoutContext.viewport.getLineTop(),
             contentWidth, docContext.fontstr);
         const text = endPGMarker.properties[targetTranslation];
+        // tslint:disable-next-line:no-inner-html
         annotDiv.innerHTML = text;
         const clientRect = annotDiv.getBoundingClientRect();
         return clientRect.height;
@@ -3700,6 +3701,7 @@ export class FlowView extends ui.Component {
         console.log(`clone took ${Date.now() - clock}ms`);
     }
 
+    /* tslint:disable:insecure-random */
     public createBookmarks(k: number) {
         const len = this.sharedString.client.getLength();
         for (let i = 0; i < k; i++) {

@@ -1,5 +1,6 @@
 import * as git from "@prague/gitresources";
 import { FileMode, IBlob, ISnapshotTree, ITree, ITreeEntry, TreeEntry } from "@prague/runtime-definitions";
+// tslint:disable-next-line:no-submodule-imports
 import * as sha1 from "sha.js/sha1";
 
 /**
@@ -8,7 +9,8 @@ import * as sha1 from "sha.js/sha1";
  */
 export function gitHashFile(file: Buffer): string {
     const size = file.byteLength;
-    const filePrefix = "blob " + size + String.fromCharCode(0);
+    const filePrefix = "blob " + size.toString() + String.fromCharCode(0);
+    /* tslint:disable:no-unsafe-any */
     const engine = new sha1();
     return engine.update(filePrefix).update(file).digest("hex");
 }

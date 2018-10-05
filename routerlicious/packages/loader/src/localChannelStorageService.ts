@@ -4,6 +4,7 @@ export class LocalChannelStorageService implements IObjectStorageService {
     constructor(private tree: ITree) {
     }
 
+    /* tslint:disable:promise-function-async */
     public read(path: string): Promise<string> {
         const contents = this.readSync(path);
         return contents !== undefined ? Promise.resolve(contents) : Promise.reject("Not found");
@@ -35,6 +36,7 @@ export class LocalChannelStorageService implements IObjectStorageService {
                     break;
 
                 default:
+                    // tslint:disable-next-line:switch-final-break
                     break;
             }
         }

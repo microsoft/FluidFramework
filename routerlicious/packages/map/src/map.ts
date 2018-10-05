@@ -12,7 +12,7 @@ import {
     ITree,
     TreeEntry,
 } from "@prague/runtime-definitions";
-// tslint:disable-next-line:no-var-requires
+// tslint:disable-next-line
 const hasIn = require("lodash/hasIn");
 import { debug } from "./debug";
 import { IMapOperation } from "./definitions";
@@ -29,6 +29,7 @@ const keyPath = "keys";
  */
 export function copyMap(from: IMapView, to: Map<string, any>) {
     from.forEach((value, key) => {
+        /* tslint:disable:no-unsafe-any */
         to.set(key, value);
     });
 }
@@ -37,6 +38,7 @@ class ContentObjectStorage implements IObjectStorageService {
     constructor(private storage: IObjectStorageService) {
     }
 
+    /* tslint:disable:promise-function-async */
     public read(path: string): Promise<string> {
         return this.storage.read(`content/${path}`);
     }
@@ -70,6 +72,7 @@ export class CollaborativeMap extends CollaborativeObject implements IMap {
         this.serializeFilter = (key, value, valueType) => value;
 
         this.messageHandler = new Map<string, IMapMessageHandler>();
+        // tslint:disable:no-backbone-get-set-outside-model
         this.messageHandler.set(
             "clear",
             {
@@ -215,6 +218,7 @@ export class CollaborativeMap extends CollaborativeObject implements IMap {
             : false;
 
         if (!handled) {
+            // tslint:disable-next-line:no-parameter-reassignment
             message = this.transformContent(message, sequenceNumber);
         }
 
@@ -287,6 +291,8 @@ export class CollaborativeMap extends CollaborativeObject implements IMap {
     public on(
         event: "valueChanged",
         listener: (changed: IValueChanged, local: boolean, op: ISequencedObjectMessage) => void): this;
+
+    /* tslint:disable:no-unnecessary-override */
     public on(event: string | symbol, listener: (...args: any[]) => void): this {
         return super.on(event, listener);
     }

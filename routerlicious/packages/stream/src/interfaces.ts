@@ -1,4 +1,5 @@
 import { ICollaborativeObject } from "@prague/api-definitions";
+// tslint:disable-next-line:no-submodule-imports
 import * as uuid from "uuid/v4";
 
 export interface IPoint {

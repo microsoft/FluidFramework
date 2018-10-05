@@ -123,6 +123,7 @@ export function create(
     passport.use(new passportLocal.Strategy(
         (username, password, done) => {
             for (const localAccount of localAccounts) {
+                // tslint:disable-next-line:possible-timing-attack
                 if (localAccount.username === username && localAccount.password === password) {
                     return done(null, localAccount.username);
                 }

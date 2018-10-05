@@ -1,6 +1,6 @@
 {
   "name": "@chaincode/photo-album",
-  "version": "0.1.115",
+  "version": "0.1.121",
   "description": "Photo album",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
