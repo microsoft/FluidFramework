@@ -9,7 +9,18 @@ export const createWindow       = (createData?: chrome.windows.CreateData) => ne
 export const queryTabs          = (queryInfo: chrome.tabs.QueryInfo) => new Promise<chrome.tabs.Tab[]>(resolve => { chrome.tabs.query(queryInfo, resolve); });
 export const tabFromTabId       = (tabId: number) => new Promise<chrome.tabs.Tab>(resolve => { chrome.tabs.get(tabId, resolve); });
 export const windowFromTabId    = (tabId: number) => new Promise<chrome.windows.Window>( async (resolve) => chrome.windows.get((await tabFromTabId(tabId)).windowId, resolve));
-export const captureVisibleTab  = (windowId: number, options: chrome.tabs.CaptureVisibleTabOptions) => new Promise<string>(resolve => chrome.tabs.captureVisibleTab(windowId, options, resolve));
+export const captureVisibleTab  = (windowId: number, options: chrome.tabs.CaptureVisibleTabOptions) => new Promise<string>((resolve, reject) => {
+    chrome.tabs.captureVisibleTab(windowId, options, result => {
+        // Note: If there was an error (e.g., the tab wasn't visible) and the callback does not check the value
+        //       of 'lastError', Chrome will throw an uncaught exception.  Instead, break the Promise.
+        const lastError = chrome.runtime.lastError;
+        if (lastError) {
+            reject(lastError);
+        } else {
+            resolve(result);
+        }
+    });
+});
 
 // Promisified query for the active tab in the current window.
 export const getActiveTab = () => new Promise<chrome.tabs.Tab>(

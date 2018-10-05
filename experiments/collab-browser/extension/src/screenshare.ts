@@ -24,23 +24,35 @@ export const start = async (sourceTabId: number, remoteSessionId: string) => {
     let lastStart = NaN;
     
     const pollForChanges = async () => {
-        if (!(await sourceTab.isActive)) {
-            if (!sourceTab.isClosed) {
-                pollAgainLater();
-            }
+        if (sourceTab.isClosed) {
             return;
         }
 
         const tab = await sourceTab.tab;
-        const nextImage = await captureVisibleTab(tab.windowId, { format: "jpeg", quality: 75 });
+        let nextImage: string;
+        // Note: 'captureVisibleTab' will throw if the tab is not currently visible.
+        try {
+            nextImage = await captureVisibleTab(tab.windowId, { format: "jpeg", quality: 80 });
+        } catch (error) {
+            // If unable to capture the tab, do nothing and try again later.
+            pollAgainLater();
+            return;
+        }
+
         if (nextImage === previousImage) {
             const elapsed = Date.now() - lastStart;
             if (elapsed > 32) {
                 console.log(`*** Capture Screenshot(high)`);
                 const tab = await sourceTab.tab;
-                const image = await captureVisibleTab(tab.windowId, { format: "png" });
-                await remoteSession.setImage(image, tab.width, tab.height);
-                lastStart = NaN;
+
+                // Note: 'captureVisibleTab' will throw if the tab is not currently visible.
+                try {
+                    const image = await captureVisibleTab(tab.windowId, { format: "jpeg", quality: 90 });
+
+                    // If unable to capture the tab, do nothing and try again later.
+                    await remoteSession.setImage(image, tab.width, tab.height);
+                    lastStart = NaN;
+                } catch (error) { /* do nothing */ }
             }
             pollAgainLater();
             return;
