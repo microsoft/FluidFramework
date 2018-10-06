@@ -51,6 +51,7 @@
     "@prague/api-definitions": "^0.1.0",
     "@prague/runtime-definitions": "^0.1.0",
     "@types/debug": "^0.0.30",
-    "debug": "^3.1.0"
+    "debug": "^3.1.0",
+    "lodash": "^4.17.11"
   }
 }
