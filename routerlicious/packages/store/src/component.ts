@@ -1,9 +1,9 @@
-import { EventEmitter } from "events";
-import { IMap, IMapView, MapExtension } from "../../../../routerlicious/packages/map";
 import {
     ICollaborativeObjectExtension,
-} from "../../../../routerlicious/packages/map/node_modules/@prague/api-definitions/dist/extension";
-import { IPlatform, IRuntime } from "../../../../routerlicious/packages/runtime-definitions";
+} from "@prague/api-definitions";
+import { IMap, IMapView, MapExtension } from "@prague/map";
+import { IPlatform, IRuntime } from "@prague/runtime-definitions";
+import { EventEmitter } from "events";
 
 // Base class for chainloadable components
 export abstract class Component extends EventEmitter {

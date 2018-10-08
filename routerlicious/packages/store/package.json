@@ -1,15 +1,18 @@
 {
-  "name": "@chaincode/store",
-  "version": "0.0.51",
-  "description": "Experimental store / chaincodable component base class",
+  "name": "@prague/store",
+  "version": "0.1.0",
+  "description": "Experimental store and chaincodeable component base class",
   "main": "dist/main.bundle.js",
+  "module": "lib/index.js",
   "types": "dist/index.d.ts",
   "sideEffects": "false",
   "scripts": {
     "build": "npm run webpack && npm run tslint",
     "webpack": "webpack --config webpack.config.js",
-    "tslint": "tslint 'src/**/*.ts'",
-    "dev": "npm run webpack -- --watch"
+    "tslint": "tslint --project tsconfig.json --format verbose",
+    "dev": "npm run webpack -- --watch",
+    "build:full": "npm run build && npm run build:esnext",
+    "build:esnext": "tsc --outDir lib --m esnext"
   },
   "author": "Microsoft",
   "repository": "microsoft/prague",
@@ -27,6 +30,12 @@
     "webpack-visualizer-plugin": "^0.1.11"
   },
   "dependencies": {
+    "@prague/api-definitions": "^0.1.0",
+    "@prague/loader": "^0.1.0",
+    "@prague/loader-web": "^0.1.0",
+    "@prague/map": "^0.1.0",
+    "@prague/runtime-definitions": "^0.1.0",
+    "@prague/socket-storage": "^0.1.0",
     "jsonwebtoken": "^8.3.0"
   }
 }

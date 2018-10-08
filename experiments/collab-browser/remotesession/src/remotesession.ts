@@ -1,7 +1,7 @@
 import { urlToInclusion } from "../../../../routerlicious/packages/client-ui/src/blob";
 import { IMap, IMapView, MapExtension } from "../../../../routerlicious/packages/map";
 import { IChaincode, IPlatform, IRuntime } from "../../../../routerlicious/packages/runtime-definitions";
-import { Component, Store } from "../../../danlehen/store/src";
+import { Component, Store } from "../../../../routerlicious/packages/store";
 import { UI } from "./ui";
 
 const insightsMapId = "insights";

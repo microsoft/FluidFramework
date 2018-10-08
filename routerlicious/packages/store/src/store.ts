@@ -1,18 +1,18 @@
-import { EventEmitter } from "events";
-import * as jwt from "jsonwebtoken";
-import { ICollaborativeObjectExtension } from "../../../../routerlicious/packages/api-definitions";
-import * as loader from "../../../../routerlicious/packages/loader";
-import { WebLoader } from "../../../../routerlicious/packages/loader-web";
-import { IMap } from "../../../../routerlicious/packages/map";
+import { ICollaborativeObjectExtension } from "@prague/api-definitions";
+import * as loader from "@prague/loader";
+import { WebLoader } from "@prague/loader-web";
+import { IMap } from "@prague/map";
 import {
     IChaincode,
     ICodeLoader,
     IDocumentService,
     IPlatform,
-    IRuntime,
     IPlatformFactory,
-} from "../../../../routerlicious/packages/runtime-definitions";
-import * as socketStorage from "../../../../routerlicious/packages/socket-storage";
+    IRuntime,
+} from "@prague/runtime-definitions";
+import * as socketStorage from "@prague/socket-storage";
+import { EventEmitter } from "events";
+import * as jwt from "jsonwebtoken";
 import { Component } from "./component";
 
 // Internal/reusable IChaincode implementation returned by Store.instantiate().
@@ -77,8 +77,8 @@ class Platform<TComponent> extends EventEmitter implements IPlatform {
 
 class HostPlatform extends EventEmitter implements IPlatform {
     private readonly services: Map<string, Promise<any>>;
-    
-    constructor (services?: ReadonlyArray<[string, Promise<any>]>) {
+
+    constructor(services?: ReadonlyArray<[string, Promise<any>]>) {
         super();
         this.services = new Map(services);
     }
@@ -137,8 +137,11 @@ export class Store {
         (await this.config).key);
     }
 
-    // TODO: Caller should provide host IPlatform to the document
-    public async open<T>(documentId: string, userId: string, chaincodePackage: string, services?: ReadonlyArray<[string, Promise<any>]>): Promise<T> {
+    public async open<T>(
+        documentId: string, userId: string,
+        chaincodePackage: string,
+        services?: ReadonlyArray<[string, Promise<any>]>,
+    ): Promise<T> {
         console.log(`store.open("${documentId}", "${userId}", "${chaincodePackage}")`);
         const config = await this.config;
         const token = await this.auth(config.tenantId, userId, documentId);

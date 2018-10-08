@@ -30,7 +30,7 @@ module.exports = {
         library: "[name]",
         // https://github.com/webpack/webpack/issues/5767
         // https://github.com/webpack/webpack/issues/7939
-        devtoolNamespace: "@chaincode/store",        
+        devtoolNamespace: "@prague/store",        
         libraryTarget: "umd"
     },
     plugins: [

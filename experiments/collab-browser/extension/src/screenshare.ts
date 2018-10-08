@@ -1,6 +1,6 @@
 import { TabRef } from "./tabRef";
 import { RemoteSession } from "../../remotesession";
-import { Store } from "../../../danlehen/store";
+import { Store } from "../../../../routerlicious/packages/store";
 import { captureVisibleTab } from "./utils";
 
 const userId = `user-${Math.random().toString(36).substr(2, 4)}`;
