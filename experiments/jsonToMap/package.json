@@ -1,0 +1,7 @@
+{
+  "dependencies": {
+    "@prague/client-api": "^0.1.3673",
+    "@prague/socket-storage": "^0.1.3673",
+    "jsonwebtoken": "^8.3.0"
+  }
+}
