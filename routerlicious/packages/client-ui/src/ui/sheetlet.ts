@@ -108,6 +108,7 @@ export class Sheetlet extends Block<SheetletState> {
                 if (rowIndex >= 0 && colIndex >= 0) {
                     const input = document.createElement("input");
                     input.id = `${rowIndex},${colIndex}`;
+                    input.style.width = "110px";
                     input.addEventListener("blur", updateOnBlur);
                     input.addEventListener("focus", displayFormulaOnFocus);
                     input.addEventListener("keypress", blurOnEnter);
