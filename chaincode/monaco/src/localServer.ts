@@ -72,4 +72,4 @@ export async function start(id: string, factory: IChaincodeFactory): Promise<voi
     }
 }
 
-start("21", testFactory).catch((error) => console.error(error));
+start("22", testFactory).catch((error) => console.error(error));

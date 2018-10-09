@@ -64,6 +64,8 @@ middlewares:
   audit:
     enabled: true
 
+max_body_size: 1000mb
+
 # log settings
 logs:
   - {type: stdout, format: pretty, level: http}

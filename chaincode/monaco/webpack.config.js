@@ -1,12 +1,13 @@
 const path = require('path');
-const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin');
+const webpack = require('webpack');
+// const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin');
 
 module.exports = {
     entry: {
         local: './src/localServer.ts',
         main: './src/index.ts'
     },
-    mode: 'development',
+    mode: 'production',
     devtool: 'source-map',
     module: {
         rules: [
@@ -27,18 +28,30 @@ module.exports = {
     resolve: {
         extensions: [ '.tsx', '.ts', '.js' ]
     },
+    resolveLoader: {
+		alias: {
+			'blob-url-loader': require.resolve('./loaders/blobUrl'),
+			'compile-loader': require.resolve('./loaders/compile'),
+		},
+	},
     output: {
         filename: '[name].bundle.js',
         path: path.resolve(__dirname, 'dist'),
+        publicPath: "https://pragueunpkg.blob.core.windows.net/egjncwvrnjwmqlbcugacp6ru/@chaincode/monaco@latest/dist/",
+        // publicPath: "/dist/",
         library: "[name]",
-        libraryTarget: "umd"
+        libraryTarget: "umd",
+        globalObject: 'self',
     },
     serve: {
         devMiddleware: {
-            publicPath: '/dist/'
+            publicPath: 'dist/'
         }
     },
     plugins: [
-        new MonacoWebpackPlugin()
+        new webpack.IgnorePlugin(/^((fs)|(path)|(os)|(crypto)|(source-map-support))$/, /vs\/language\/typescript\/lib/),
+		new webpack.optimize.LimitChunkCountPlugin({
+			maxChunks: 1,
+		}),
     ],
 };

@@ -2,9 +2,25 @@ import { IChaincode, IPlatform, IRuntime } from "@prague/runtime-definitions";
 import { SharedString } from "@prague/shared-string";
 import { Deferred } from "@prague/utils";
 import { EventEmitter } from "events";
-import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
+import * as monaco from "monaco-editor";
 import { Chaincode } from "./chaincode";
 import { Document } from "./document";
+
+// tslint:disable
+(self as any).MonacoEnvironment = {
+	getWorkerUrl: function (moduleId, label) {
+		switch (label) {
+			case 'json': return require('blob-url-loader?type=application/javascript!compile-loader?target=worker&emit=false!monaco-editor/esm/vs/language/json/json.worker');
+			case 'css': return require('blob-url-loader?type=application/javascript!compile-loader?target=worker&emit=false!monaco-editor/esm/vs/language/css/css.worker');
+			case 'html': return require('blob-url-loader?type=application/javascript!compile-loader?target=worker&emit=false!monaco-editor/esm/vs/language/html/html.worker');
+			case 'typescript':
+			case 'javascript': return require('blob-url-loader?type=application/javascript!compile-loader?target=worker&emit=false!monaco-editor/esm/vs/language/typescript/ts.worker');
+			default:
+				return require('blob-url-loader?type=application/javascript!compile-loader?target=worker&emit=false!monaco-editor/esm/vs/editor/editor.worker');
+		}
+	}
+};
+// tslint:enable
 
 class NotebookRunner extends EventEmitter implements IPlatform {
     private started = new Deferred<void>();
@@ -40,6 +56,10 @@ class NotebookRunner extends EventEmitter implements IPlatform {
         if (!this.mapHost) {
             return;
         }
+
+        this.mapHost.style.width = "800px";
+        this.mapHost.style.height = "600px";
+        this.mapHost.style.border = "1px solid #ccc";
 
         const root = await doc.getRoot().getView();
         if (!runtime.existing) {
