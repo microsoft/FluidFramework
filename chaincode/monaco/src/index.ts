@@ -7,6 +7,39 @@ import { Chaincode } from "./chaincode";
 import { Document } from "./document";
 
 // tslint:disable
+const defaultCompilerOptions = {
+    noImplicitAny: true,
+    strictNullChecks: true,
+    strictFunctionTypes: true,
+    strictPropertyInitialization: true,
+    noImplicitThis: true,
+    noImplicitReturns: true,
+
+    alwaysStrict: true,
+    allowUnreachableCode: false,
+    allowUnusedLabels: false,
+
+    downlevelIteration: false,
+    noEmitHelpers: false,
+    noLib: false,
+    noStrictGenericChecks: false,
+    noUnusedLocals: false,
+    noUnusedParameters: false,
+
+    esModuleInterop: false,
+    preserveConstEnums: false,
+    removeComments: false,
+    skipLibCheck: false,
+
+    experimentalDecorators: false,
+    emitDecoratorMetadata: false,
+
+    target: monaco.languages.typescript.ScriptTarget.ES2015,
+    jsx: monaco.languages.typescript.JsxEmit.None,
+};
+// tslint:enable
+
+// tslint:disable
 (self as any).MonacoEnvironment = {
 	getWorkerUrl: function (moduleId, label) {
 		switch (label) {
@@ -69,15 +102,28 @@ class NotebookRunner extends EventEmitter implements IPlatform {
         }
 
         const text = await root.wait<SharedString>("text");
+
+        monaco.languages.typescript.typescriptDefaults.setCompilerOptions(defaultCompilerOptions);
+
+        const inputModel = monaco.editor.createModel(text.getText(), "typescript", monaco.Uri.parse("code.ts"));
+        const outputModel = monaco.editor.createModel("", "javascript", monaco.Uri.parse("code.js"));
+
         const codeEditor = monaco.editor.create(
             this.mapHost,
             {
-                language: "typescript",
-                value: text.getText(),
+                model: inputModel,
             });
 
         let ignoreModelContentChanges = false;
         codeEditor.onDidChangeModelContent((e) => {
+            monaco.languages.typescript.getTypeScriptWorker().then((worker) => {
+                worker(inputModel.uri.toString()).then((client) => {
+                    client.getEmitOutput(inputModel.uri.toString()).then((r) => {
+                        outputModel.setValue(r.outputFiles[0].text);
+                    });
+                });
+            });
+
             if (ignoreModelContentChanges) {
                 return;
             }
@@ -93,8 +139,6 @@ class NotebookRunner extends EventEmitter implements IPlatform {
                     text.removeText(change.rangeOffset, change.rangeOffset + change.rangeLength);
                 }
             }
-
-            console.log(e.changes);
         });
 
         text.on(

@@ -4,7 +4,6 @@ const webpack = require('webpack');
 
 module.exports = {
     entry: {
-        local: './src/localServer.ts',
         main: './src/index.ts'
     },
     mode: 'production',
@@ -37,8 +36,8 @@ module.exports = {
     output: {
         filename: '[name].bundle.js',
         path: path.resolve(__dirname, 'dist'),
-        publicPath: "https://pragueunpkg.blob.core.windows.net/egjncwvrnjwmqlbcugacp6ru/@chaincode/monaco@latest/dist/",
-        // publicPath: "/dist/",
+        // publicPath: "https://pragueunpkg.blob.core.windows.net/egjncwvrnjwmqlbcugacp6ru/@chaincode/monaco@latest/dist/",
+        publicPath: "/dist/",
         library: "[name]",
         libraryTarget: "umd",
         globalObject: 'self',
