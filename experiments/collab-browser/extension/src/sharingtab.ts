@@ -91,14 +91,10 @@ export class SharingTab {
 }
 
 export class RemotingTab {
-    public readonly shareDocUrl: string;
+    private remoteDocUrl: string;
     private tabRef = new TabRef();
 
-    constructor (public readonly remoteDocId: string) {
-        this.shareDocUrl = `http://localhost:3000/loader/${this.remoteDocId}`
-    }
-
-    public async get() {
+    public async get(remoteDocId: string) {
         const left = await getCurrentWindow();
         const [leftInfo, rightInfo] = await sideBySideBounds(left);
         await updateWindow(left.id, leftInfo);
@@ -114,10 +110,12 @@ export class RemotingTab {
         }
 
         const tab = await this.tabRef.tab;
-        if (tab.url.split("?")[0] !== this.shareDocUrl.split("?")[0]) {
+        const url = `http://localhost:3000/loader/${remoteDocId}`;
+        if (tab.url.split("?")[0] !== url.split("?")[0]) {
+            this.remoteDocUrl = url;
             console.log(`*** Navigating Remote Tab:`);
-            console.log(`    ${tab.url} -> ${this.shareDocUrl}`);
-            await navigateTab(this.tabRef.id, this.shareDocUrl);
+            console.log(`    ${tab.url} -> ${this.remoteDocUrl}`);
+            await navigateTab(this.tabRef.id, this.remoteDocUrl);
         }
         
         return this.tabRef.id;

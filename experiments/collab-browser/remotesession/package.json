@@ -9,7 +9,9 @@
     "build": "npm run webpack && npm run tslint",
     "webpack": "webpack --config webpack.config.js",
     "tslint": "tslint 'src/**/*.ts'",
-    "update": "npm run build && npm version patch && npm publish --registry http://localhost:4873",
+    "publish-local": "npm publish --registry http://localhost:4873",
+    "publish-patch-local": "npm version patch && npm publish --registry http://localhost:4873",
+    "update": "npm run build && publish-patch-local",
     "dev": "npm run webpack && npm run tslint -- --fix && npm version patch && npm publish --registry http://localhost:4873 && echo \"http://localhost:3000/loader/x${RANDOM}?chaincode=@chaincode/collab-browser@latest\""
   },
   "author": "Microsoft",
