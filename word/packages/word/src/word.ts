@@ -27,6 +27,7 @@ export class SharedStringForWord extends EventEmitter {
     }
 
     public annotateRange(pos1: number, pos2: number, props: mergeTree.PropertySet) {
+        console.log("AnnotateRange [%s, %s)", pos1, pos2);
         this.sharedString.annotateRange(props, pos1, pos2);
         setImmediate(() => { return; });
     }
@@ -54,7 +55,7 @@ export class SharedStringForWord extends EventEmitter {
     }
 
     public insertText(text: string, position: number, props?: mergeTree.PropertySet) {
-        console.log("insert Text");
+        console.log("insert Text at %s", position);
         try {
             this.sharedString.insertText(text, position, props);
             setImmediate(() => { return; });
@@ -62,6 +63,13 @@ export class SharedStringForWord extends EventEmitter {
             console.log(e);
         }
     }
+
+    public findTile(position: number, label: string, fPreceding: boolean) {
+        return this.sharedString.client.mergeTree.findTile(position,
+                                                            this.sharedString.client.getClientId(),
+                                                            label,
+                                                            fPreceding);
+   }
 
     public insertTextBeforeMarker(text: string, markerId: string, offsetFromMarker: number,
                                   props?: mergeTree.PropertySet) {
@@ -74,9 +82,10 @@ export class SharedStringForWord extends EventEmitter {
         this.sharedString.insertTextRelative(relPos, text, props);
     }
 
-    public insertTileMarker(pos1: number, tileMarker: string, markerId: string, propsIn?: mergeTree.PropertySet) {
+    public insertTileMarker(pos1: number, label: string, markerId: string, propsIn?: mergeTree.PropertySet) {
+        console.log("insert Tile Marker at %s with label %s", pos1, label);
         const props = propsIn;
-        props[mergeTree.reservedTileLabelsKey] = [tileMarker];
+        props[mergeTree.reservedTileLabelsKey] = [label];
         props[mergeTree.reservedMarkerIdKey] = markerId;
         this.sharedString.insertMarker(pos1, mergeTree.ReferenceType.Tile, props);
         setImmediate(() => { return; });
@@ -156,9 +165,7 @@ export class SharedStringForWord extends EventEmitter {
     }
 
     public start(callbackForInitialLoadSegments: (...args: any[]) => any,
-                 callbackForInitialLoadLength: (len: number) => void,
-                 callbackForInitialLoadBegin: () => void,
-                 callbackForInitialLoadEnd: () => void) {
+                 callbackForInitialLoadLength: (len: number) => void) {
         try {
             console.log("on registration of sharedstring");
             // Update the text after being loaded as well as when receiving ops
@@ -183,21 +190,14 @@ export class SharedStringForWord extends EventEmitter {
                 console.log("Length : %s", length);
                 callbackForInitialLoadLength(length);
                 if (length !== 0) {
-                    callbackForInitialLoadBegin();
                     this.sharedString.client.mergeTree.mapRange({leaf: notifyWord },
                         segmentWindow.currentSeq, segmentWindow.clientId, undefined);
-                    callbackForInitialLoadEnd();
                 }
             });
-            console.log("Registering op");
-            this.sharedString.on("pre-op", (msg, local) => {
-                console.log("op - new text");
-                const msgCopy = JSON.parse(JSON.stringify(msg));
-                this.tardisOp(msgCopy);
-            });
+            console.log("Registering op event");
 
             this.sharedString.on("op", (msg, local) => {
-                console.log("op - new text");
+                console.log("New op of type : %s", msg.contents.type);
                 this.tardisOp(msg);
                 this.emit("op", msg, local);
             });
@@ -212,6 +212,7 @@ export class SharedStringForWord extends EventEmitter {
      }
 
      public removeText(pos1: number, pos2: number) {
+        console.log("Remove Text [%s, %s)", pos1, pos2);
         this.sharedString.removeText(pos1, pos2);
         setImmediate(() => { return; });
     }
@@ -222,34 +223,50 @@ export class SharedStringForWord extends EventEmitter {
             this.sharedString.client.mergeTree.getCollabWindow().clientId);
     }
 
+    // Tardis a group op msg and do in-place updates if a sub-op, when tardised, gets broken
+    // down into multiple segments. Adds those broken segments as individual sub op in that group.
     public tardisGroupOp(msg: any) {
         let index = 0;
         for (index = 0; index < msg.contents.ops.length;) {
-           const countOfTardisOps = this.tardisSingleOp(msg, msg.contents.ops[index], index);
-           index += countOfTardisOps;
+           const countOfOpsProcessed = this.tardisSingleOp(msg, msg.contents.ops[index], index);
+           index += countOfOpsProcessed; // As they are already added in-place in msg op.
         }
     }
 
+    // Tardis a single op and update it in-place by adding sub-ops
+    // in a group op (will make it a group if it is not one already)
+    // if tardis of that op produces more segment changes.
+    // Input/output : Original op msg
+    // Input : op (specific op in that opmsg which is getting tardised here)
+    // Input : opIndex (Index of that specific op in op msg)
+    // Returns the count of ranges that should be considered processed
+    // after tardising that single Op
     public tardisSingleOp(msg: any, op: any, opIndex: number) {
         const fromSeq = msg.referenceSequenceNumber;
         const fromClientId = msg.clientId;
-        let countOfTardisOps = 1;
+        let countOfRangesAfterTardisingOp = 1;
         switch (op.type) {
             case 0 /*INSERT */: // currently this is being handled on cpp side
                 break;
             case 1 /*REMOVE */:
             case 2 /*ANNOTATE */:
-                const ranges = this.sharedString.client.mergeTree.tardisRangeFromClient(op.pos1,
-                    op.pos2,
-                    fromSeq,
-                    -1 /*toSeqNumber*/,
-                    this.sharedString.client.getShortClientId(fromClientId),
-                    this.sharedString.client.mergeTree.getCollabWindow().clientId);
-                countOfTardisOps = ranges.length;
-                if (ranges.length > 1) {
+                const tardisedRanges = this.sharedString.client.mergeTree.tardisRangeFromClient(op.pos1,
+                                                    op.pos2,
+                                                    fromSeq,
+                                                    -1 /*toSeqNumber*/,
+                                                    this.sharedString.client.getShortClientId(fromClientId),
+                                                    this.sharedString.client.mergeTree.getCollabWindow().clientId);
+
+                countOfRangesAfterTardisingOp = tardisedRanges.length;
+
+                // Tardis resulted in multiple ranges
+                if (countOfRangesAfterTardisingOp > 1) {
                     const opsToInsert = [];
                     let cAdjust = 0;
-                    for (const range of ranges) {
+                    for (const range of tardisedRanges) {
+                        // If it was delete op, adjust the further tardised ranges based on
+                        // what has been already marked deleted as they will be used
+                        // sequentially by client
                         if (op.type === 1) {
                             range.start -= cAdjust;
                             range.end -= cAdjust;
@@ -261,22 +278,36 @@ export class SharedStringForWord extends EventEmitter {
                         opsToInsert.push(opClone);
                     }
                     let cRemove = 1;
+                    // If ops array is not there, let's create one.
                     if (typeof msg.contents.ops === "undefined") {
                         msg.contents.ops = [];
                         opIndex = 0;
-                        cRemove = 0; // Nothing to remove if just create ops
+                        cRemove = 0; // Nothing to remove if just created ops
                     }
+                    // Remove the existing op (which now has been tardised)
+                    // and put the newly created op array from tardised ranges
+                    // here.
                     msg.contents.ops.splice(opIndex, cRemove, ...opsToInsert);
                     msg.contents.type = 3; // Make msg a group op now
-                } else if (ranges.length === 1) {
-                    op.pos1 = ranges[0].start;
-                    op.pos2 = ranges[0].end;
+                } else if (countOfRangesAfterTardisingOp === 1) {
+                    op.pos1 = tardisedRanges[0].start;
+                    op.pos2 = tardisedRanges[0].end;
+                } else if (countOfRangesAfterTardisingOp === 0) {
+                    if (typeof msg.contents.ops === "undefined") {
+                        op.pos1 = 0;
+                        op.pos2 = 0;
+                    } else {
+                        msg.contents.ops.splice(opIndex, 1 /*remove that op*/);
+                    }
                 }
                 break;
             }
-        return countOfTardisOps;
+        return countOfRangesAfterTardisingOp;
     }
 
+    // Tardis an and update it in-place by adding sub-ops in
+    // the group op (will make it a group if it is not one already)
+    // if tardis produces more segment changes.
     public tardisOp(msg: any) {
         if (msg.contents.type === 3) {
             this.tardisGroupOp(msg);

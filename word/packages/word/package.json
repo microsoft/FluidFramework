@@ -1,0 +1,33 @@
+{
+  "name": "@prague/word",
+  "version": "0.1.0",
+  "description": "Word Prague model",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "sideEffects": false,
+  "scripts": {
+    "build": "npm run tsc && npm run tslint",
+    "build:full": "npm run build",
+    "clean": "rimraf dist && rimraf lib",
+    "tsc": "tsc",
+    "tslint": "tslint 'src/**/*.ts'"
+  },
+  "author": "Microsoft",
+  "repository": "microsoft/prague",
+  "devDependencies": {
+    "rimraf": "^2.6.2",
+    "tslint": "^5.11.0",
+    "typescript": "^3.0.3"
+  },
+  "dependencies": {
+    "@prague/client-api": "^0.1.0",
+    "@prague/map": "^0.1.0",
+    "@prague/merge-tree": "^0.1.0",
+    "@prague/runtime-definitions": "^0.1.0",
+    "@prague/shared-string": "^0.1.0",
+    "@prague/socket-storage": "^0.1.0",
+    "@types/jsonwebtoken": "^7.2.8",
+    "@types/node": "^10.9.4",
+    "jsonwebtoken": "^8.3.0"
+  }
+}
