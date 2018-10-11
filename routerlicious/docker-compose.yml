@@ -32,6 +32,13 @@ services:
             - DEBUG=routerlicious:*
             - NODE_ENV=development
         restart: always
+    rotograph:
+        build: .
+        command: node dist/kafka-service/index.js rotograph ../rotograph/index.js
+        environment:
+            - DEBUG=routerlicious:*
+            - NODE_ENV=development
+        restart: always
     routemaster:
         build: .
         command: node dist/kafka-service/index.js routemaster ../document-router/index.js

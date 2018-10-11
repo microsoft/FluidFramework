@@ -117,6 +117,10 @@ data:
                 "group": "{{ template "routemaster.fullname" . }}",
                 "topic": "{{ .Values.kafka.topics.deltas }}"
             },
+            "rotograph": {
+                "group": "{{ template "rotograph.fullname" . }}",
+                "topic": "{{ .Values.kafka.topics.deltas }}"
+            },
             "scriptorium": {
                 "group": "{{ template "scriptorium.fullname" . }}",
                 "topic": "{{ .Values.kafka.topics.deltas }}"
@@ -142,6 +146,16 @@ data:
             "permissions": {
                 "paparazziQueue": ["snapshot", "spell", "intel", "translation"],
                 "augloopQueue": ["augmentation"]
+            }
+        },
+        "rotograph": {
+            "alfred": "http://{{ template "alfred.fullname" . }}",
+            "topic": "{{ .Values.kafka.topics.deltas }}",
+            "kafkaClientId": "{{ template "rotograph.fullname" . }}",
+            "groupId": "{{ template "rotograph.fullname" . }}",
+            "queues": ["videoQueue"],
+            "permissions": {
+                "videoQueue": ["encoding"]
             }
         },
         "paparazzi": {

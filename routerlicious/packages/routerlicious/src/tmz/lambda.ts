@@ -30,6 +30,7 @@ export class TmzLambda extends SequencedLambda {
 
     protected async handlerCore(message: utils.IMessage): Promise<void> {
         const messageContent = message.value.toString();
+
         const parsedMessage = utils.safelyParseJSON(messageContent);
         if (parsedMessage === undefined) {
             winston.error(`Invalid JSON input: ${messageContent}`);

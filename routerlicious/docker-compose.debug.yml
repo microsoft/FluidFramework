@@ -20,6 +20,10 @@ services:
         ports:
             - "5862:5858"
         command: node --inspect=0.0.0.0:5858 dist/kafka-service/index.js tmz ../tmz/index.js
+    rotograph:
+        ports:
+            - "5862:5858"
+        command: node --inspect=0.0.0.0:5858 dist/kafka-service/index.js rotograph ../rotograph/index.js
     routemaster:
         ports:
             - "5863:5858"

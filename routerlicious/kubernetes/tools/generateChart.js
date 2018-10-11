@@ -59,6 +59,10 @@ tmz:
   host: tmz.wu2.prague.office-int.com
   cert: wu2-tls-certificate
 
+rotograph:
+  name: rotograph
+  replicas: 1
+
 paparazzi:
   name: paparazzi
   replicas: 8

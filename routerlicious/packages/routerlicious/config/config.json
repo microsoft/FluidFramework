@@ -108,6 +108,10 @@
             "group": "serviceGraph",
             "topic": "deltas"
         },
+        "rotograph": {
+            "group": "rotograph",
+            "topic": "deltas"
+        },
         "tmz": {
             "group": "tmz",
             "topic": "deltas"
@@ -126,6 +130,13 @@
         "permissions": {
             "paparazziQueue": ["snapshot", "spell", "intel", "translation"],
             "augloopQueue": ["augmentation"]
+        }
+    },
+    "rotograph": {
+        "alfred": "http://alfred:3000",
+        "queues": ["videoQueue"],
+        "permissions": {
+            "videoQueue": ["encoding"]
         }
     },
     "paparazzi": {
