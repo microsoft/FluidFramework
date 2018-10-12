@@ -1,3 +1,5 @@
+// inspiration for this example taken from https://github.com/agentcooper/typescript-play
+
 import { IChaincode, IPlatform, IRuntime } from "@prague/runtime-definitions";
 import { SharedString } from "@prague/shared-string";
 import { Deferred } from "@prague/utils";
@@ -82,6 +84,16 @@ class NotebookRunner extends EventEmitter implements IPlatform {
         }
     }
 
+    private async runCode(code: string, platform: IPlatform) {
+        const root = await platform.queryInterface<any>("root");
+        const host = root ? root.entry : null;
+        this.exec(host, code);
+    }
+
+    private async exec(host: any, code: string) {
+        eval(code);
+    }
+
     private async start(runtime: IRuntime, platform: IPlatform): Promise<void> {
         const doc = await Document.Load(runtime);
 
@@ -90,9 +102,30 @@ class NotebookRunner extends EventEmitter implements IPlatform {
             return;
         }
 
-        this.mapHost.style.width = "800px";
-        this.mapHost.style.height = "600px";
-        this.mapHost.style.border = "1px solid #ccc";
+        const hostDts = await platform.queryInterface<any>("dts");
+
+        if (!this.mapHost.style.width) {
+            this.mapHost.style.width = "100vw";
+            this.mapHost.style.height = "100vh";
+        } else {
+            this.mapHost.style.width = "100%";
+            // this.mapHost.style.height = "100%";
+        }
+
+        const hostWrapper = document.createElement("div");
+        hostWrapper.style.display = "flex";
+        hostWrapper.style.flex = "1";
+        hostWrapper.style.width = "100%";
+        hostWrapper.style.height = "100%";
+
+        const inputDiv = document.createElement("div");
+        inputDiv.style.width = "50%";
+        const outputDiv = document.createElement("div");
+        outputDiv.style.width = "50%";
+
+        this.mapHost.appendChild(hostWrapper);
+        hostWrapper.appendChild(inputDiv);
+        hostWrapper.appendChild(outputDiv);
 
         const root = await doc.getRoot().getView();
         if (!runtime.existing) {
@@ -104,15 +137,39 @@ class NotebookRunner extends EventEmitter implements IPlatform {
         const text = await root.wait<SharedString>("text");
 
         monaco.languages.typescript.typescriptDefaults.setCompilerOptions(defaultCompilerOptions);
+        if (hostDts) {
+            let disposer = monaco.languages.typescript.typescriptDefaults.addExtraLib(
+                hostDts.getDefinition(),
+                "host.d.ts");
+            hostDts.on(
+                "definitionsChanged",
+                () => {
+                    disposer.dispose();
+                    disposer = monaco.languages.typescript.typescriptDefaults.addExtraLib(
+                        hostDts.getDefinition(),
+                        "host.d.ts");
+                });
+        }
 
         const inputModel = monaco.editor.createModel(text.getText(), "typescript", monaco.Uri.parse("code.ts"));
         const outputModel = monaco.editor.createModel("", "javascript", monaco.Uri.parse("code.js"));
 
         const codeEditor = monaco.editor.create(
-            this.mapHost,
-            {
-                model: inputModel,
-            });
+            inputDiv,
+            { model: inputModel, automaticLayout: true });
+        const outputEditor = monaco.editor.create(
+            outputDiv,
+            { model: outputModel, automaticLayout: true, readOnly: true });
+
+        codeEditor.addCommand(
+            monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter,
+            () => { this.runCode(inputModel.getValue(), platform); },
+            null);
+
+        outputEditor.addCommand(
+            monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter,
+            () => { this.runCode(inputModel.getValue(), platform); },
+            null);
 
         let ignoreModelContentChanges = false;
         codeEditor.onDidChangeModelContent((e) => {

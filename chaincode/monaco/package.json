@@ -1,12 +1,12 @@
 {
   "name": "@chaincode/monaco",
-  "version": "0.1.9",
+  "version": "0.1.17",
   "description": "Monaco code editor",
   "main": "dist/index.js",
   "author": "Microsoft",
   "scripts": {
     "build": "npm run tslint && npm run webpack",
-    "start": "webpack-dev-server",
+    "start": "webpack-dev-server --config webpack.local.js",
     "tslint": "tslint 'src/**/*.ts'",
     "webpack": "webpack --config webpack.config.js --open",
     "update": "npm run build && npm version patch && npm publish --registry http://localhost:4873"
