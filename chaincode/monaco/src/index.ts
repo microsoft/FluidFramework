@@ -163,12 +163,12 @@ class NotebookRunner extends EventEmitter implements IPlatform {
 
         codeEditor.addCommand(
             monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter,
-            () => { this.runCode(inputModel.getValue(), platform); },
+            () => { this.runCode(outputModel.getValue(), platform); },
             null);
 
         outputEditor.addCommand(
             monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter,
-            () => { this.runCode(inputModel.getValue(), platform); },
+            () => { this.runCode(outputModel.getValue(), platform); },
             null);
 
         let ignoreModelContentChanges = false;
