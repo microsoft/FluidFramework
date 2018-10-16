@@ -2,6 +2,7 @@ import { IDocumentService, IErrorTrackingService } from "@prague/runtime-definit
 import { DocumentService } from "./documentService";
 import { DefaultErrorTracking } from "./errorTracking";
 import { ReplayDocumentService } from "./replayDocumentService";
+import { SharepointDocumentService } from "./sharepointDocumentService";
 
 export function createDocumentService(
     deltaUrl: string,
@@ -31,6 +32,20 @@ export function createReplayDocumentService(
 
     const service = new ReplayDocumentService(
         deltaUrl, replayFrom, replayTo);
+
+    return service;
+}
+
+export function createSharepointDocumentService(
+    snapshotUrl: string,
+    deltaFeedUrl: string,
+    webSocketUrl: string,
+    ): IDocumentService {
+
+    const service = new SharepointDocumentService(
+        snapshotUrl,
+        deltaFeedUrl,
+        webSocketUrl);
 
     return service;
 }

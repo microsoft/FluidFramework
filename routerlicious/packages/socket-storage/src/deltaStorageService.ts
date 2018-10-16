@@ -2,6 +2,7 @@ import * as api from "@prague/runtime-definitions";
 // tslint:disable-next-line:match-default-export-name
 import axios from "axios";
 import * as querystring from "querystring";
+import { IDeltaFeedResponse } from "./sharepointcontracts";
 
 /**
  * Storage service limited to only being able to fetch documents for a specific document
@@ -45,5 +46,35 @@ export class DeltaStorageService implements api.IDeltaStorageService {
         const result = await axios.get<api.ISequencedDocumentMessage[]>(
             `${this.url}/deltas/${encodeURIComponent(tenantId)}/${encodeURIComponent(id)}?${query}`, { headers });
         return result.data;
+    }
+}
+
+/**
+ * Provides access to the sharepoint delta storage
+ */
+export class SharepointDeltaStorageService implements api.IDeltaStorageService {
+    constructor(private deltaFeedUrl: string) {
+    }
+
+    public async get(
+        tenantId: string,
+        id: string,
+        token: string,
+        from?: number,
+        to?: number): Promise<api.ISequencedDocumentMessage[]> {
+        const requestUrl = this.constructUrl(from, to);
+        const result = await axios.get<IDeltaFeedResponse>(requestUrl);
+        return result.data.opStream;
+    }
+
+    public constructUrl(
+        from?: number,
+        to?: number): string {
+        let deltaFeedUrl: string;
+        const queryFilter = `sequenceNumber ge ${from} and sequenceNumber le ${to}`;
+        const query = querystring.stringify({ filter: queryFilter });
+        deltaFeedUrl = `${this.deltaFeedUrl}?$${query}`;
+
+        return deltaFeedUrl;
     }
 }

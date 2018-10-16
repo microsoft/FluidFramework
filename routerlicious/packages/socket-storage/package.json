@@ -11,11 +11,16 @@
     "build:full": "npm run build",
     "tsc": "tsc",
     "build:esnext": "tsc --outDir lib --m esnext",
+    "test": "mocha --recursive dist/test",
     "tslint": "tslint --project tsconfig.json --format verbose"
   },
   "author": "Microsoft",
   "repository": "microsoft/prague",
   "devDependencies": {
+    "@types/mocha": "^5.2.5",
+    "@types/nock": "^9.3.0",
+    "mocha": "^5.2.0",
+    "nock": "^10.0.1",
     "rimraf": "^2.6.2",
     "tslint": "^5.11.0",
     "tslint-microsoft-contrib": "^5.2.1",
