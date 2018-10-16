@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
     <metadata>
-    <id>PragueWord</id>
-    <version>0.0.1</version>
+    <id>Microsoft.Prague.Word</id>
+    <version>0.1.0</version>
     <description>Prague Word Nuget Package</description>
     <authors>Prague</authors>
     </metadata>
