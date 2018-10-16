@@ -154,6 +154,11 @@ data:
             "kafkaClientId": "{{ template "rotograph.fullname" . }}",
             "groupId": "{{ template "rotograph.fullname" . }}",
             "queues": ["videoQueue"],
+            "clientId": "339e853d-1307-4148-aa82-c6bd8a56dccc",
+            "clientSecret": "A1LGEWdAVj8doEs5zyGgmikLgwijKliqbKwgs/CKcf0=",
+            "endpoint": "https://videoblobstorage.restv2.westus2-2.media.azure.net/api/",
+            "authEndpoint": "https://login.microsoftonline.com/microsoft.onmicrosoft.com/oauth2/token",
+            "resource": "https://rest.media.azure.net",
             "permissions": {
                 "videoQueue": ["encoding"]
             }

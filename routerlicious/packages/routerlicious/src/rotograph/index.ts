@@ -10,5 +10,5 @@ export async function create(config: Provider): Promise<IPartitionLambdaFactory>
 
     // Preps message sender.
     await messageSender.initialize();
-    return new RotographLambdaFactory(messageSender, rotographConfig.permissions);
+    return new RotographLambdaFactory(messageSender, rotographConfig);
 }
