@@ -13,8 +13,17 @@
             var config = {{{ config }}};
             var version = {{{ version }}};
             var token = "{{ token }}";
-            var chaincode = "{{ chaincode }}";         
-            loader.initialize(version, token, config, chaincode, config.npm);
+            var chaincode = "{{ chaincode }}";
+            var from = {{ from }};
+            var to = {{ to }};
+            loader.initialize(
+                version,
+                token,
+                config,
+                chaincode,
+                config.npm,
+                from,
+                to);
         </script>
     {{/scripts}}
 {{/layout}}
