@@ -3,6 +3,7 @@ import {
     ConnectionState,
     FileMode,
     IChaincode,
+    IChunkedOp,
     IClient,
     IClientJoin,
     ICodeLoader,
@@ -122,6 +123,9 @@ export class Document extends EventEmitter {
     private _user: IUser;
     private _runtime: Runtime;
     // tslint:enable:variable-name
+
+    // TODO (mdaumi): This should be instantiated as a part of connect protocol.
+    private maxOpSize: number = 1024;
 
     public get tenantId(): string {
         return this._tenantId;
@@ -760,8 +764,32 @@ export class Document extends EventEmitter {
         if (this.connectionState !== ConnectionState.Connected) {
             return -1;
         }
+        const serializedContent = JSON.stringify(contents);
 
-        const clientSequenceNumber = this._deltaManager.submit(type, contents);
+        let clientSequenceNumber: number;
+        if (serializedContent.length <= this.maxOpSize) {
+            clientSequenceNumber = this._deltaManager.submit(type, serializedContent);
+        } else {
+            clientSequenceNumber = this.submitChunkedMessage(serializedContent);
+        }
+
+        return clientSequenceNumber;
+    }
+
+    private submitChunkedMessage(content: string): number {
+        const contentLength = content.length;
+        const chunkSize = (contentLength / this.maxOpSize) + ((contentLength % this.maxOpSize === 0) ? 0 : 1);
+        let offset = 0;
+        let clientSequenceNumber;
+        for (let i = 1; i <= chunkSize; i = i + 1) {
+            const chunkedOp: IChunkedOp = {
+                chunkId: i,
+                contents: content.substr(offset, this.maxOpSize),
+                totalChunks: chunkSize,
+            };
+            offset += this.maxOpSize;
+            clientSequenceNumber = this._deltaManager.submit(MessageType.ChunkedOp, JSON.stringify(chunkedOp));
+        }
         return clientSequenceNumber;
     }
 
