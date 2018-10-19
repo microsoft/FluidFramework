@@ -184,6 +184,11 @@ export class DeliLambda implements IPartitionLambda {
         // Update and retrieve the minimum sequence number
         let message = objectMessage as core.IRawOperationMessage;
 
+        /*
+        if (typeof message.operation.contents === "string") {
+            message.operation.contents = JSON.parse(message.operation.contents);
+        }*/
+
         if (this.isDuplicate(message)) {
             return;
         }
@@ -353,6 +358,7 @@ export class DeliLambda implements IPartitionLambda {
         let clientId: string;
         let clientSequenceNumber: number;
         if (message.operation.type === MessageType.Integrate) {
+            winston.info(`Integration case!`);
             clientId = getBranchClientId(message.operation.contents.documentId);
             clientSequenceNumber = message.operation.contents.operation.sequenceNumber;
         } else {
@@ -534,6 +540,7 @@ export class DeliLambda implements IPartitionLambda {
         }
 
         // And then update its values
+        winston.info(`${clientSequenceNumber}`);
         this.updateClient(clientId, timestamp, clientSequenceNumber, referenceSequenceNumber, nack);
     }
 

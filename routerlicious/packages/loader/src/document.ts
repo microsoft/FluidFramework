@@ -780,6 +780,7 @@ export class Document extends EventEmitter {
     }
 
     private submitChunkedMessage(type: MessageType, content: string): number {
+        console.log(`Submitting chunked message of size ${content.length}!`);
         const contentLength = content.length;
         const chunkSize = (contentLength / this.maxOpSize) + ((contentLength % this.maxOpSize === 0) ? 0 : 1);
         let offset = 0;
@@ -798,7 +799,10 @@ export class Document extends EventEmitter {
     }
 
     private async prepareRemoteMessage(message: ISequencedDocumentMessage): Promise<any> {
-        message.contents = JSON.parse(message.contents);
+        if (typeof message.contents === "string") {
+            message.contents = JSON.parse(message.contents);
+        }
+
         const local = this._clientId === message.clientId;
 
         // If on the null chaincode - and we just got a channel op - transition to the legacy API

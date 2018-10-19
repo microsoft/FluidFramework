@@ -42,6 +42,9 @@ export class TmzLambda extends SequencedLambda {
             const sequencedMessage = baseMessage as core.ISequencedOperationMessage;
             // Only process "Help" messages.
             if (sequencedMessage.operation.type === MessageType.RemoteHelp) {
+                if (typeof sequencedMessage.operation.contents === "string") {
+                    sequencedMessage.operation.contents = JSON.parse(sequencedMessage.operation.contents);
+                }
                 await this.trackDocument(
                     sequencedMessage.operation.clientId,
                     sequencedMessage.tenantId,
