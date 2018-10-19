@@ -1,0 +1,19 @@
+{
+    "logger": {
+        "colorize": true,
+        "morganFormat": "dev",
+        "json": false,
+        "level": "info",
+        "timestamp": true
+    },
+    "npm": {
+        "url": "https://packages.wu2.prague.office-int.com",
+        "username": "prague",
+        "password": "bohemia"
+    },
+    "requestSizeLimit": "1gb",
+    "redis": {
+        "host": "localhost",
+        "port": 6379
+    }
+}
