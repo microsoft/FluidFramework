@@ -124,8 +124,11 @@ export class Document extends EventEmitter {
     private _runtime: Runtime;
     // tslint:enable:variable-name
 
+    // Local copy of incomplete received chunks.
+    private chunkMap: Map<string, string[]> = new Map<string, string[]>();
+
     // TODO (mdaumi): This should be instantiated as a part of connect protocol.
-    private maxOpSize: number = 1024;
+    private maxOpSize: number = 1024 * 1024;
 
     public get tenantId(): string {
         return this._tenantId;
@@ -770,13 +773,13 @@ export class Document extends EventEmitter {
         if (serializedContent.length <= this.maxOpSize) {
             clientSequenceNumber = this._deltaManager.submit(type, serializedContent);
         } else {
-            clientSequenceNumber = this.submitChunkedMessage(serializedContent);
+            clientSequenceNumber = this.submitChunkedMessage(type, serializedContent);
         }
 
         return clientSequenceNumber;
     }
 
-    private submitChunkedMessage(content: string): number {
+    private submitChunkedMessage(type: MessageType, content: string): number {
         const contentLength = content.length;
         const chunkSize = (contentLength / this.maxOpSize) + ((contentLength % this.maxOpSize === 0) ? 0 : 1);
         let offset = 0;
@@ -785,6 +788,7 @@ export class Document extends EventEmitter {
             const chunkedOp: IChunkedOp = {
                 chunkId: i,
                 contents: content.substr(offset, this.maxOpSize),
+                originalType: type,
                 totalChunks: chunkSize,
             };
             offset += this.maxOpSize;
@@ -794,6 +798,7 @@ export class Document extends EventEmitter {
     }
 
     private async prepareRemoteMessage(message: ISequencedDocumentMessage): Promise<any> {
+        message.contents = JSON.parse(message.contents);
         const local = this._clientId === message.clientId;
 
         // If on the null chaincode - and we just got a channel op - transition to the legacy API
@@ -806,11 +811,30 @@ export class Document extends EventEmitter {
 
         // tslint:disable:switch-default
         switch (message.type) {
+            case MessageType.ChunkedOp:
+                return this.prepareRemoteChunkedMessage(message);
+
             case MessageType.Operation:
                 return this._runtime.prepare(message, local);
 
             case MessageType.Attach:
                 return this._runtime.prepareAttach(message, local);
+        }
+    }
+
+    private async prepareRemoteChunkedMessage(message: ISequencedDocumentMessage) {
+        const clientId = message.clientId;
+        if (!this.chunkMap.has(clientId)) {
+            this.chunkMap.set(clientId, []);
+        }
+        const chunkedContent = message.contents as IChunkedOp;
+        this.chunkMap.get(clientId).push(chunkedContent.contents);
+        if (chunkedContent.chunkId === chunkedContent.totalChunks) {
+            message.contents = this.chunkMap.get(clientId).join("");
+            message.type = chunkedContent.originalType;
+            const context = await this.prepareRemoteMessage(message);
+            this.processRemoteMessage(message, context);
+            this.chunkMap.delete(clientId);
         }
     }
 

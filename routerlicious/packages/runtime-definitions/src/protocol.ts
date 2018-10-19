@@ -110,6 +110,9 @@ export interface IChunkedOp {
 
     // The contents for the chunk
     contents: string;
+
+    // Original message type.
+    originalType: MessageType;
 }
 
 /**
