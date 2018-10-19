@@ -5,6 +5,7 @@ import { controls, ui } from "@prague/client-ui";
 import * as resources from "@prague/gitresources";
 import * as DistributedMap from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
+import * as replaySocketStorage from "@prague/replay-socket-storage";
 import { IClient } from "@prague/runtime-definitions";
 import * as SharedString from "@prague/shared-string";
 import * as socketStorage from "@prague/socket-storage";
@@ -98,7 +99,8 @@ async function loadDocument(
         ? new BrowserErrorTrackingService()
         : new socketStorage.DefaultErrorTracking();
     const replayMode = (from >= 0) && (to >= 0);
-    const documentService = replayMode ? socketStorage.createReplayDocumentService(document.location.origin, from, to)
+    const documentService = replayMode
+        ? replaySocketStorage.createReplayDocumentService(document.location.origin, from, to)
         : socketStorage.createDocumentService(
             document.location.origin,
             config.blobStorageUrl,

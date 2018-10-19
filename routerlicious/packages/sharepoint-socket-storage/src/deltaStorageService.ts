@@ -2,6 +2,7 @@ import * as api from "@prague/runtime-definitions";
 // tslint:disable-next-line:match-default-export-name
 import axios from "axios";
 import * as querystring from "querystring";
+import { IDeltaFeedResponse } from "./sharepointContracts";
 
 /**
  * Storage service limited to only being able to fetch documents for a specific document
@@ -21,10 +22,10 @@ export class DocumentDeltaStorageService implements api.IDocumentDeltaStorageSer
 }
 
 /**
- * Provides access to the underlying delta storage on the server
+ * Provides access to the sharepoint delta storage
  */
-export class DeltaStorageService implements api.IDeltaStorageService {
-    constructor(private url: string) {
+export class SharepointDeltaStorageService implements api.IDeltaStorageService {
+    constructor(private deltaFeedUrl: string) {
     }
 
     public async get(
@@ -33,17 +34,25 @@ export class DeltaStorageService implements api.IDeltaStorageService {
         token: string,
         from?: number,
         to?: number): Promise<api.ISequencedDocumentMessage[]> {
-        const query = querystring.stringify({ from, to });
-
+        const requestUrl = this.constructUrl(from, to);
         let headers = null;
         if (token) {
             headers = {
-                Authorization: `Basic ${new Buffer(`${tenantId}:${token}`).toString("base64")}`,
+                Authorization: `Bearer ${new Buffer(`${token}`)}`,
             };
         }
+        const result = await axios.get<IDeltaFeedResponse>(requestUrl, { headers });
+        return result.data.opStream;
+    }
 
-        const result = await axios.get<api.ISequencedDocumentMessage[]>(
-            `${this.url}/deltas/${encodeURIComponent(tenantId)}/${encodeURIComponent(id)}?${query}`, { headers });
-        return result.data;
+    public constructUrl(
+        from?: number,
+        to?: number): string {
+        let deltaFeedUrl: string;
+        const queryFilter = `sequenceNumber ge ${from} and sequenceNumber le ${to}`;
+        const query = querystring.stringify({ filter: queryFilter });
+        deltaFeedUrl = `${this.deltaFeedUrl}?$${query}`;
+
+        return deltaFeedUrl;
     }
 }

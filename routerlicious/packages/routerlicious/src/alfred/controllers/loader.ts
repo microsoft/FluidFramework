@@ -1,8 +1,8 @@
 import { ICommit } from "@prague/gitresources";
 import * as loader from "@prague/loader-web";
+import { createReplayDocumentService } from "@prague/replay-socket-storage";
 import {
     createDocumentService,
-    createReplayDocumentService,
     DefaultErrorTracking,
     TokenService,
 } from "@prague/socket-storage";

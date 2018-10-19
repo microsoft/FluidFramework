@@ -1,7 +1,7 @@
 import * as api from "@prague/runtime-definitions";
+import { DocumentDeltaConnection } from "@prague/socket-storage-shared";
 import { DocumentDeltaStorageService, SharepointDeltaStorageService } from "./deltaStorageService";
-import { DocumentDeltaConnection } from "./documentDeltaConnection";
-import { ReplayDocumentStorageService } from "./replayDocumentStorageService";
+import { ReplayDocumentStorageService } from "./sharepointDocumentStorageService";
 
 export class SharepointDocumentService implements api.IDocumentService {
     private deltaStorage: SharepointDeltaStorageService;

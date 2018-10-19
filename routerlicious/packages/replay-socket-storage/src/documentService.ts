@@ -1,7 +1,6 @@
 import * as api from "@prague/runtime-definitions";
-import { DeltaStorageService } from "./deltaStorageService";
-import { ReplayDeltaStorageService } from "./replayDeltaStorageService";
-import { ReplayDocumentDeltaConnection } from "./replayDocumentDeltaConnection";
+import { DeltaStorageService, ReplayDeltaStorageService } from "./deltaStorageService";
+import { ReplayDocumentDeltaConnection } from "./documentDeltaConnection";
 import { ReplayDocumentStorageService } from "./replayDocumentStorageService";
 
 /**

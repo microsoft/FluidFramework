@@ -5,8 +5,8 @@ import {
     ISequencedDocumentMessage,
     IUser,
 } from "@prague/runtime-definitions";
+import * as messages from "@prague/socket-storage-shared";
 import { EventEmitter } from "events";
-import * as messages from "./messages";
 
 // Simulated delay interval for emitting the ops
 const DelayInterval = 50;

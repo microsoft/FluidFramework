@@ -1,7 +1,7 @@
 {
-  "name": "@prague/socket-storage",
+  "name": "@prague/socket-storage-shared",
   "version": "0.1.0",
-  "description": "Socket.IO + Git implementation of Prague service API",
+  "description": "Shared package across different socket-storage implementation",
   "main": "dist/index.js",
   "module": "lib/index.js",
   "types": "dist/index.d.ts",
@@ -11,33 +11,21 @@
     "build:full": "npm run build",
     "tsc": "tsc",
     "build:esnext": "tsc --outDir lib --m esnext",
-    "test": "mocha --recursive dist/test",
     "tslint": "tslint --project tsconfig.json --format verbose"
   },
   "author": "Microsoft",
   "repository": "microsoft/prague",
+  "dependencies": {
+    "@prague/runtime-definitions": "^0.1.0",
+    "@prague/utils": "^0.1.0",
+    "@types/debug": "^0.0.30",    
+    "@types/socket.io-client": "^1.4.32",
+    "debug": "^3.1.0",
+    "socket.io-client": "^2.1.1"
+  },
   "devDependencies": {
-    "@types/mocha": "^5.2.5",
-    "@types/nock": "^9.3.0",
-    "mocha": "^5.2.0",
-    "nock": "^10.0.1",
-    "rimraf": "^2.6.2",
     "tslint": "^5.11.0",
     "tslint-microsoft-contrib": "^5.2.1",
-    "typescript": "^3.0.1"
-  },
-  "dependencies": {
-    "@prague/gitresources": "^0.1.0",
-    "@prague/runtime-definitions": "^0.1.0",
-    "@prague/services-client": "^0.1.0",
-    "@prague/socket-storage-shared": "^0.1.0",
-    "@prague/utils": "^0.1.0",
-    "@types/debug": "^0.0.30",
-    "@types/jwt-decode": "^2.2.1",
-    "@types/socket.io-client": "^1.4.32",
-    "axios": "^0.18.0",
-    "debug": "^3.1.0",
-    "jwt-decode": "^2.2.0",
-    "socket.io-client": "^2.1.1"
+    "typescript": "^3.1.3"
   }
 }

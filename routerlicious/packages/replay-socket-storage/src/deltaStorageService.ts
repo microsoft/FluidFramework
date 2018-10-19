@@ -3,20 +3,10 @@ import * as api from "@prague/runtime-definitions";
 import axios from "axios";
 import * as querystring from "querystring";
 
-/**
- * Storage service limited to only being able to fetch documents for a specific document
- */
-export class DocumentDeltaStorageService implements api.IDocumentDeltaStorageService {
-    constructor(
-        private tenantId: string,
-        private id: string,
-        private token: string,
-        private storageService: api.IDeltaStorageService) {
-    }
+export class ReplayDeltaStorageService implements api.IDocumentDeltaStorageService {
 
-    /* tslint:disable:promise-function-async */
     public get(from?: number, to?: number): Promise<api.ISequencedDocumentMessage[]> {
-        return this.storageService.get(this.tenantId, this.id, this.token, from, to);
+        return Promise.resolve([] as api.ISequencedDocumentMessage[]);
     }
 }
 
