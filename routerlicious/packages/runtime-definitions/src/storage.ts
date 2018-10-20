@@ -27,6 +27,11 @@ export interface IDocumentAttributes {
     clients: Array<[string, IClient]>;
 
     /**
+     * List of clients when the snapshot was taken
+     */
+    partialOps: Array<[string, string[]]>;
+
+    /**
      * Pending proposals at the time of the snapshot
      */
     proposals: ISequencedProposal[];
