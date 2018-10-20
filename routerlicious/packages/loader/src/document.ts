@@ -838,7 +838,6 @@ export class Document extends EventEmitter {
         }
         const chunkedContent = message.contents as IChunkedOp;
         this.chunkMap.get(clientId).push(chunkedContent.contents);
-        console.log(`${chunkedContent.chunkId} -> ${chunkedContent.totalChunks}`);
         if (chunkedContent.chunkId === chunkedContent.totalChunks) {
             const serializedContent = this.chunkMap.get(clientId).join("");
             message.contents = JSON.parse(serializedContent);
