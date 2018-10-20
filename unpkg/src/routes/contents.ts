@@ -2,6 +2,7 @@ import axios from "axios";
 import { Router } from "express";
 import * as nconf from "nconf";
 import * as npa from "npm-package-arg";
+import * as semver from "semver";
 import * as winston from "winston";
 import { ICache } from "../services";
 import { handleResponse } from "./utils";
@@ -69,13 +70,26 @@ export function create(store: nconf.Provider, cache: ICache): Router {
 
         const url = `${npmUrl}/${encodeURI(packageDetails.pkg)}`;
         const details = await axios.get(url, { auth });
-        winston.info(JSON.stringify(Object.keys(details.data.versions)));
+        const pkgInfo = details.data;
 
-        // Got the details. With the details can check for a version using the semver package.
-        // Then can download the tarball for that version. Then can crack the tarball and pull out the
-        // specified file. Can stash file and version info in redis.
+        winston.info(JSON.stringify(packageDetails, null, 2));
 
-        return details.data;
+        // extract the package details
+        let fetchVersion: string;
+        if (packageDetails.raw.type === "range") {
+            fetchVersion = semver.maxSatisfying(Object.keys(pkgInfo.versions), packageDetails.version);
+        } else if (packageDetails.raw.type === "tag") {
+            fetchVersion = pkgInfo["dist-tags"][packageDetails.version];
+        } else {
+            fetchVersion = packageDetails.version;
+        }
+
+        const fetchVersionDetails = pkgInfo.versions[fetchVersion];
+        if (!fetchVersionDetails) {
+            return Promise.reject("Invalid package version");
+        }
+
+        return fetchVersionDetails;
     }
 
     // unpkg.com/:package@:version/:file
