@@ -28,6 +28,9 @@ export enum MessageType {
     // Channel operation.
     Operation = "objOp",
 
+    // Chunked operation.
+    ChunkedOp = "chunkedOp",
+
     // Forced snapshot
     Save = "saveOp",
 
@@ -92,6 +95,24 @@ export interface IDocumentMessage {
 
     // Traces related to the packet.
     traces: ITrace[];
+}
+
+/**
+ * Chunked op.
+ */
+export interface IChunkedOp {
+
+    // Chunk sequence id.
+    chunkId: number;
+
+    // Total number of chunks.
+    totalChunks: number;
+
+    // The contents for the chunk
+    contents: string;
+
+    // Original message type.
+    originalType: MessageType;
 }
 
 /**
