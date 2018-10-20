@@ -540,7 +540,6 @@ export class DeliLambda implements IPartitionLambda {
         }
 
         // And then update its values
-        winston.info(`${clientSequenceNumber}`);
         this.updateClient(clientId, timestamp, clientSequenceNumber, referenceSequenceNumber, nack);
     }
 

@@ -33,7 +33,7 @@ const apiVersion = require("../../package.json").version;
 // TODO: All these should be enforced by server as a part of document creation.
 const rootMapId = "root";
 const insightsMapId = "insights";
-const documentTasks = ["snapshot"];
+const documentTasks = [];
 
 // Registered services to use when loading a document
 let defaultDocumentService: IDocumentService;

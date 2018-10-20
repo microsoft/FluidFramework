@@ -179,7 +179,6 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
         this.stopSequenceNumberUpdate();
         this._outbound.push(message);
 
-        console.log(message.clientSequenceNumber);
         return message.clientSequenceNumber;
     }
 

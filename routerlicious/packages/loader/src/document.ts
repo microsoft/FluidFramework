@@ -128,7 +128,7 @@ export class Document extends EventEmitter {
     private chunkMap: Map<string, string[]> = new Map<string, string[]>();
 
     // TODO (mdaumi): This should be instantiated as a part of connect protocol.
-    private maxOpSize: number = 1024 * 1024;
+    private maxOpSize: number = 1024;
 
     public get tenantId(): string {
         return this._tenantId;
@@ -763,6 +763,8 @@ export class Document extends EventEmitter {
         }
     }
 
+    // TODO (mdaumi): To play nice with rest of the protocol, we only serialize chunked message.
+    // We should do it for all messages and stop serializing on the server.
     private submitMessage(type: MessageType, contents: any): number {
         if (this.connectionState !== ConnectionState.Connected) {
             return -1;
@@ -771,7 +773,7 @@ export class Document extends EventEmitter {
 
         let clientSequenceNumber: number;
         if (serializedContent.length <= this.maxOpSize) {
-            clientSequenceNumber = this._deltaManager.submit(type, serializedContent);
+            clientSequenceNumber = this._deltaManager.submit(type, contents);
         } else {
             clientSequenceNumber = this.submitChunkedMessage(type, serializedContent);
         }
@@ -782,7 +784,7 @@ export class Document extends EventEmitter {
     private submitChunkedMessage(type: MessageType, content: string): number {
         console.log(`Submitting chunked message of size ${content.length}!`);
         const contentLength = content.length;
-        const chunkSize = (contentLength / this.maxOpSize) + ((contentLength % this.maxOpSize === 0) ? 0 : 1);
+        const chunkSize = Math.floor(contentLength / this.maxOpSize) + ((contentLength % this.maxOpSize === 0) ? 0 : 1);
         let offset = 0;
         let clientSequenceNumber;
         for (let i = 1; i <= chunkSize; i = i + 1) {
@@ -793,16 +795,12 @@ export class Document extends EventEmitter {
                 totalChunks: chunkSize,
             };
             offset += this.maxOpSize;
-            clientSequenceNumber = this._deltaManager.submit(MessageType.ChunkedOp, JSON.stringify(chunkedOp));
+            clientSequenceNumber = this._deltaManager.submit(MessageType.ChunkedOp, chunkedOp);
         }
         return clientSequenceNumber;
     }
 
     private async prepareRemoteMessage(message: ISequencedDocumentMessage): Promise<any> {
-        if (typeof message.contents === "string") {
-            message.contents = JSON.parse(message.contents);
-        }
-
         const local = this._clientId === message.clientId;
 
         // If on the null chaincode - and we just got a channel op - transition to the legacy API
@@ -813,10 +811,17 @@ export class Document extends EventEmitter {
             await this.transitionRuntime("@prague/client-api");
         }
 
+        console.log(message.type);
         // tslint:disable:switch-default
         switch (message.type) {
             case MessageType.ChunkedOp:
-                return this.prepareRemoteChunkedMessage(message);
+                const chunkComplete = this.prepareRemoteChunkedMessage(message);
+                if (!chunkComplete) {
+                    return;
+                } else  {
+                    console.log(`${message.type}`);
+                    return this.prepareRemoteMessage(message);
+                }
 
             case MessageType.Operation:
                 return this._runtime.prepare(message, local);
@@ -826,20 +831,23 @@ export class Document extends EventEmitter {
         }
     }
 
-    private async prepareRemoteChunkedMessage(message: ISequencedDocumentMessage) {
+    private prepareRemoteChunkedMessage(message: ISequencedDocumentMessage): boolean {
         const clientId = message.clientId;
         if (!this.chunkMap.has(clientId)) {
             this.chunkMap.set(clientId, []);
         }
         const chunkedContent = message.contents as IChunkedOp;
         this.chunkMap.get(clientId).push(chunkedContent.contents);
+        console.log(`${chunkedContent.chunkId} -> ${chunkedContent.totalChunks}`);
         if (chunkedContent.chunkId === chunkedContent.totalChunks) {
-            message.contents = this.chunkMap.get(clientId).join("");
+            const serializedContent = this.chunkMap.get(clientId).join("");
+            message.contents = JSON.parse(serializedContent);
             message.type = chunkedContent.originalType;
-            const context = await this.prepareRemoteMessage(message);
-            this.processRemoteMessage(message, context);
             this.chunkMap.delete(clientId);
+            console.log(`Chunk processed!`);
+            return true;
         }
+        return false;
     }
 
     private processRemoteMessage(message: ISequencedDocumentMessage, context: any) {
