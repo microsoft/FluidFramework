@@ -128,7 +128,7 @@ export class Document extends EventEmitter {
     private chunkMap: Map<string, string[]> = new Map<string, string[]>();
 
     // TODO (mdaumi): This should be instantiated as a part of connect protocol.
-    private maxOpSize: number = 1024;
+    private maxOpSize: number = 1024 * 1024;
 
     public get tenantId(): string {
         return this._tenantId;
@@ -784,17 +784,17 @@ export class Document extends EventEmitter {
     }
 
     private submitChunkedMessage(type: MessageType, content: string): number {
-        console.log(`Submitting chunked message of size ${content.length}!`);
         const contentLength = content.length;
-        const chunkSize = Math.floor(contentLength / this.maxOpSize) + ((contentLength % this.maxOpSize === 0) ? 0 : 1);
+        const chunkN = Math.floor(contentLength / this.maxOpSize) + ((contentLength % this.maxOpSize === 0) ? 0 : 1);
+        console.log(`Submitting ${content.length} size message as ${chunkN} chunks`);
         let offset = 0;
         let clientSequenceNumber;
-        for (let i = 1; i <= chunkSize; i = i + 1) {
+        for (let i = 1; i <= chunkN; i = i + 1) {
             const chunkedOp: IChunkedOp = {
                 chunkId: i,
                 contents: content.substr(offset, this.maxOpSize),
                 originalType: type,
-                totalChunks: chunkSize,
+                totalChunks: chunkN,
             };
             offset += this.maxOpSize;
             clientSequenceNumber = this._deltaManager.submit(MessageType.ChunkedOp, chunkedOp);
@@ -813,7 +813,6 @@ export class Document extends EventEmitter {
             await this.transitionRuntime("@prague/client-api");
         }
 
-        console.log(message.type);
         // tslint:disable:switch-default
         switch (message.type) {
             case MessageType.ChunkedOp:
@@ -821,7 +820,6 @@ export class Document extends EventEmitter {
                 if (!chunkComplete) {
                     return;
                 } else  {
-                    console.log(`${message.type}`);
                     return this.prepareRemoteMessage(message);
                 }
 
