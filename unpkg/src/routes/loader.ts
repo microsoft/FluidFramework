@@ -1,4 +1,3 @@
-import { Deferred } from "@prague/utils";
 import axios from "axios";
 import { Stream } from "stream";
 import * as tar from "tar-stream";
@@ -16,44 +15,42 @@ export async function fetchFile(
     const url = `${baseUrl}/${encodeURI(name)}/${encodeURI(version)}`;
     const details = await axios.get(url, { auth });
 
-    const data = await axios.get<Stream>(details.data.dist.tarball, { auth, responseType: "stream"});
+    const data = await axios.get<Stream>(details.data.dist.tarball, { auth, responseType: "stream" });
 
     const extract = tar.extract();
     const gunzip = zlib.createGunzip();
-
-    const result = new Deferred<Buffer>();
 
     data.data.pipe(gunzip).pipe(extract);
 
     const entryName = `package/${path}`;
     const chunks = new Array<Buffer>();
 
-    extract.on("entry", (header, stream, next) => {
-        stream.on("data", (entryData) => {
-            if (header.name === entryName) {
-                chunks.push(entryData);
+    return new Promise<Buffer>((resolve, reject) => {
+        extract.on("entry", (header, stream, next) => {
+            stream.on("data", (entryData) => {
+                if (header.name === entryName) {
+                    chunks.push(entryData);
+                }
+            });
+
+            stream.on("end", () => {
+                next();
+            });
+
+            stream.resume();
+        });
+
+        extract.on("error", (error) => {
+            reject(error);
+        });
+
+        extract.on("finish", () => {
+            if (chunks.length === 0) {
+                reject("Not found");
+            } else {
+                const fullChunk = Buffer.concat(chunks);
+                resolve(fullChunk);
             }
         });
-
-        stream.on("end", () => {
-            next();
-        });
-
-        stream.resume();
     });
-
-    extract.on("error", (error) => {
-        result.reject(error);
-    });
-
-    extract.on("finish", () => {
-        if (chunks.length === 0) {
-            result.reject("Not found");
-        }
-
-        const fullChunk = Buffer.concat(chunks);
-        result.resolve(fullChunk);
-    });
-
-    return result.promise;
 }
