@@ -5,7 +5,7 @@ import * as npa from "npm-package-arg";
 import * as semver from "semver";
 import * as winston from "winston";
 import { ICache } from "../services";
-import { handleResponse } from "./utils";
+import { fetchFile } from "./loader";
 
 interface IPackageDetails {
     pkg: string;
@@ -56,7 +56,7 @@ function getPackageDetails(path: string): IPackageDetails {
 export function create(store: nconf.Provider, cache: ICache): Router {
     const router: Router = Router();
 
-    async function getContent(path: string): Promise<IPackageDetails> {
+    async function getContent(path: string): Promise<string> {
         const packageDetails = getPackageDetails(path);
         if (!packageDetails) {
             return Promise.reject("Invalid package name");
@@ -89,13 +89,28 @@ export function create(store: nconf.Provider, cache: ICache): Router {
             return Promise.reject("Invalid package version");
         }
 
-        return fetchVersionDetails;
+        const file = await fetchFile(
+            packageDetails.raw.scope,
+            packageDetails.raw.name,
+            packageDetails.version,
+            packageDetails.file,
+            npmUrl,
+            auth.username,
+            auth.password).catch((error) => error.toString());
+
+        return file;
     }
 
     // unpkg.com/:package@:version/:file
     router.get("/*", (request, response) => {
         const contentP = getContent(request.params[0]);
-        handleResponse(contentP, response, false);
+        contentP.then(
+            (result) => {
+                response.status(200).end(result);
+            },
+            (error) => {
+                response.status(400).json(error.toString());
+            });
     });
 
     return router;
