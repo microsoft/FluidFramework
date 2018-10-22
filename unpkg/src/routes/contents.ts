@@ -56,7 +56,7 @@ function getPackageDetails(path: string): IPackageDetails {
 export function create(store: nconf.Provider, cache: ICache): Router {
     const router: Router = Router();
 
-    async function getContent(path: string): Promise<string> {
+    async function getContent(path: string): Promise<{ file: Buffer, type: string }> {
         const packageDetails = getPackageDetails(path);
         if (!packageDetails) {
             return Promise.reject("Invalid package name");
@@ -98,7 +98,7 @@ export function create(store: nconf.Provider, cache: ICache): Router {
             auth.username,
             auth.password).catch((error) => error.toString());
 
-        return file;
+        return { file, type: packageDetails.raw.type };
     }
 
     // unpkg.com/:package@:version/:file
@@ -106,7 +106,11 @@ export function create(store: nconf.Provider, cache: ICache): Router {
         const contentP = getContent(request.params[0]);
         contentP.then(
             (result) => {
-                response.status(200).end(result);
+                if (result.type === "version") {
+                    response.setHeader("Cache-Control", "public, max-age=31536000");
+                }
+
+                response.status(200).end(result.file);
             },
             (error) => {
                 response.status(400).json(error.toString());

@@ -1,6 +1,6 @@
 import { Deferred } from "@prague/utils";
 import axios from "axios";
-import { Duplex } from "stream";
+import { Stream } from "stream";
 import * as tar from "tar-stream";
 import * as winston from "winston";
 import * as zlib from "zlib";
@@ -12,7 +12,7 @@ export async function fetchFile(
     path: string,
     baseUrl: string,
     username: string,
-    password: string): Promise<string> {
+    password: string): Promise<Buffer> {
 
     const auth = { username, password };
 
@@ -26,15 +26,14 @@ export async function fetchFile(
     winston.info(url);
     const details = await axios.get(url, { auth });
 
-    const data = await axios.get<ArrayBuffer>(details.data.dist.tarball, { auth, responseType: "arraybuffer"});
+    const data = await axios.get<Stream>(details.data.dist.tarball, { auth, responseType: "stream"});
 
-    const inputStream = new Duplex();
     const extract = tar.extract();
     const gunzip = zlib.createGunzip();
 
-    const result = new Deferred<string>();
+    const result = new Deferred<Buffer>();
 
-    inputStream.pipe(gunzip).pipe(extract);
+    data.data.pipe(gunzip).pipe(extract);
 
     const entryName = `package/${path}`;
     const chunks = new Array<Buffer>();
@@ -64,11 +63,8 @@ export async function fetchFile(
         }
 
         const fullChunk = Buffer.concat(chunks);
-        result.resolve(fullChunk.toString("utf-8"));
+        result.resolve(fullChunk);
     });
-
-    inputStream.push(data.data);
-    inputStream.push(null);
 
     return result.promise;
 }
