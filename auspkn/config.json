@@ -11,9 +11,5 @@
         "username": "prague",
         "password": "bohemia"
     },
-    "requestSizeLimit": "1gb",
-    "redis": {
-        "host": "localhost",
-        "port": 6379
-    }
+    "requestSizeLimit": "1gb"
 }

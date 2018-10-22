@@ -1,5 +1,5 @@
 {
-  "name": "@prague/unpkg",
+  "name": "@prague/auspkn",
   "version": "0.1.0",
   "description": "Unpkg like implementation that works with historian",
   "main": "dist/www.js",
