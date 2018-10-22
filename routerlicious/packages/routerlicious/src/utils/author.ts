@@ -234,7 +234,7 @@ function combine(first: number[], second: number[], combineCb: (a, b) => number)
 async function setMetrics(doc: api.Document, token: string) {
 
     // And also load a canvas document where we will place the metrics
-    const metricsDoc = await api.load(`${doc.id}-metrics`, { token });
+    const metricsDoc = await api.load(`${doc.id}-metrics`, doc.tenantId, doc.getUser(), token, { });
     const root = await metricsDoc.getRoot().getView();
 
     const components = metricsDoc.createMap();
@@ -327,11 +327,11 @@ export async function typeFile(
         const ssList: SharedString.SharedString[] = [ss];
 
         for (let i = 1; i < writers; i++ ) {
-            docList.push(await api.load(doc.id, { token: documentToken }));
+            docList.push(await api.load(doc.id, doc.tenantId, doc.getUser(), documentToken, { }));
             ssList.push(await docList[i].getRoot().get("text") as SharedString.SharedString);
             author = {
                 ackCounter: new Counter(),
-                doc: await api.load(doc.id, { token: documentToken }),
+                doc: await api.load(doc.id, doc.tenantId, doc.getUser(), documentToken, { }),
                 latencyCounter: new Counter(),
                 metrics: clone(m),
                 pingCounter: new Counter(),

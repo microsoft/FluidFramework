@@ -109,8 +109,19 @@ async function loadDocument(
             config.historianApi,
             config.credentials);
     API.registerDocumentService(documentService);
+
+    const tokenService = new socketStorage.TokenService();
+    const claims = tokenService.extractClaims(token);
+
     console.log(`collabDoc loading ${id} - ${performanceNow()}`);
-    const collabDoc = await API.load(id, { blockUpdateMarkers: true, client: config.client, token }, version, connect);
+    const collabDoc = await API.load(
+        id,
+        claims.tenantId,
+        claims.user,
+        token,
+        { blockUpdateMarkers: true, client: config.client, token },
+        version,
+        connect);
 
     // Register to run task only if the client type is browser.
     const client = config.client as IClient;

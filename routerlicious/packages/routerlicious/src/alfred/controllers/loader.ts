@@ -29,6 +29,20 @@ export async function initialize(
             config.blobStorageUrl,
             errorService);
 
-    loader.run(token, null, false, documentServices, new TokenService(), version, true, chaincode, npm)
+    const tokenService = new TokenService();
+    const claims = tokenService.extractClaims(token);
+
+    loader.run(
+        claims.documentId,
+        claims.tenantId,
+        claims.user,
+        token,
+        null,
+        false,
+        documentServices,
+        version,
+        true,
+        chaincode,
+        npm)
         .catch((error) => console.error(error));
 }

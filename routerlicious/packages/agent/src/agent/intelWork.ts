@@ -1,7 +1,7 @@
 import { ICollaborativeObject } from "@prague/api-definitions";
 import * as api from "@prague/client-api";
 import { IMap, IMapView } from "@prague/map";
-import { IDocumentService, ISequencedDocumentMessage, MessageType } from "@prague/runtime-definitions";
+import { IDocumentService, ISequencedDocumentMessage, IUser, MessageType } from "@prague/runtime-definitions";
 import { nativeTextAnalytics, textAnalytics } from "../intelligence";
 import { BaseWork} from "./baseWork";
 import { IWork} from "./definitions";
@@ -11,13 +11,19 @@ export class IntelWork extends BaseWork implements IWork {
 
     private intelligenceManager: IntelligentServicesManager;
 
-    constructor(docId: string, private token: string, config: any, private service: IDocumentService) {
-        super(docId, config);
+    constructor(
+        docId: string,
+        tenantId: string,
+        user: IUser,
+        token: string,
+        config: any,
+        private service: IDocumentService) {
+        super(docId, tenantId, user, token, config);
     }
 
     public async start(task: string): Promise<void> {
         await this.loadDocument(
-            { localMinSeq: 0, encrypted: undefined, token: this.token, client: { type: "intel"} },
+            { localMinSeq: 0, encrypted: undefined, client: { type: "intel"} },
             this.service,
             task);
         const insightsMap = await this.document.getRoot().wait<IMap>("insights");

@@ -1,6 +1,6 @@
 import * as core from "@prague/api-definitions";
 import * as MergeTree from "@prague/merge-tree";
-import { IDocumentService, ISequencedDocumentMessage, MessageType } from "@prague/runtime-definitions";
+import { IDocumentService, ISequencedDocumentMessage, IUser, MessageType } from "@prague/runtime-definitions";
 import * as SharedString from "@prague/shared-string";
 import { BaseWork} from "./baseWork";
 import { IWork} from "./definitions";
@@ -13,12 +13,14 @@ export class SpellcheckerWork extends BaseWork implements IWork {
 
     constructor(
         docId: string,
-        private token: string,
+        tenantId: string,
+        user: IUser,
+        token: string,
         config: any,
         dictionary: MergeTree.TST<number>,
         private service: IDocumentService) {
 
-        super(docId, config);
+        super(docId, tenantId, user, token, config);
         this.dict = dictionary;
     }
 
@@ -29,7 +31,6 @@ export class SpellcheckerWork extends BaseWork implements IWork {
                 client: { type: "spell"},
                 encrypted: undefined,
                 localMinSeq: 0,
-                token: this.token,
             },
             this.service,
             task);

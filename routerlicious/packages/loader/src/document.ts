@@ -19,7 +19,6 @@ import {
     ISequencedDocumentMessage,
     ISequencedProposal,
     ISnapshotTree,
-    ITokenService,
     ITree,
     ITreeEntry,
     IUser,
@@ -89,15 +88,17 @@ class RuntimeStorageService implements IDocumentStorageService {
 // TODO consider a name change for this. The document is likely built on top of this infrastructure
 export class Document extends EventEmitter {
     public static async Load(
+        id: string,
+        tenantId: string,
+        user: IUser,
         token: string,
         platform: IPlatformFactory,
         service: IDocumentService,
         codeLoader: ICodeLoader,
-        tokenService: ITokenService,
         options: any,
         specifiedVersion: ICommit,
         connect: boolean): Promise<Document> {
-        const doc = new Document(token, platform, service, codeLoader, tokenService, options);
+        const doc = new Document(id, tenantId, user, token, platform, service, codeLoader, options);
         await doc.load(specifiedVersion, connect);
 
         return doc;
@@ -131,14 +132,14 @@ export class Document extends EventEmitter {
     private maxOpSize: number = 1024 * 1024;
 
     public get tenantId(): string {
-        return this._tenantId;
+       return this._tenantId;
     }
 
     public get id(): string {
         return this._id;
     }
 
-    public get deltaManager(): IDeltaManager {
+     public get deltaManager(): IDeltaManager {
         return this._deltaManager;
     }
 
@@ -173,18 +174,18 @@ export class Document extends EventEmitter {
     }
 
     constructor(
+        id: string,
+        tenantId: string,
+        user: IUser,
         private token: string,
         private platform: IPlatformFactory,
         private service: IDocumentService,
         private codeLoader: ICodeLoader,
-        tokenService: ITokenService,
         public readonly options: any) {
         super();
-
-        const claims = tokenService.extractClaims(token);
-        this._id = claims.documentId;
-        this._tenantId = claims.tenantId;
-        this._user = claims.user;
+        this._id = id;
+        this._tenantId = tenantId;
+        this._user = user;
     }
 
     /**

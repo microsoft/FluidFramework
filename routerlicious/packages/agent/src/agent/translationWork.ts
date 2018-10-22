@@ -1,7 +1,8 @@
 import * as core from "@prague/api-definitions";
 import * as map from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
-import { IDocumentService, ISequencedDocumentMessage, ISequencedObjectMessage } from "@prague/runtime-definitions";
+// tslint:disable-next-line:max-line-length
+import { IDocumentService, ISequencedDocumentMessage, ISequencedObjectMessage, IUser } from "@prague/runtime-definitions";
 import * as SharedString from "@prague/shared-string";
 import { EventEmitter } from "events";
 import * as request from "request";
@@ -190,13 +191,19 @@ export class TranslationWork extends BaseWork implements IWork {
     private translators = new Map<string, core.ICollaborativeObject>();
     private translator: Translator;
 
-    constructor(docId: string, private token: string, config: any, private service: IDocumentService) {
-        super(docId, config);
+    constructor(
+        docId: string,
+        tenantId: string,
+        user: IUser,
+        token: string,
+        config: any,
+        private service: IDocumentService) {
+        super(docId, tenantId, user, token, config);
     }
 
     public async start(task: string): Promise<void> {
         await this.loadDocument(
-            { encrypted: undefined, localMinSeq: 0, token: this.token, client: { type: "translation"} },
+            { encrypted: undefined, localMinSeq: 0, client: { type: "translation"} },
             this.service,
             task);
 

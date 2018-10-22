@@ -1,4 +1,5 @@
 import * as MergeTree from "@prague/merge-tree";
+import { IUser } from "@prague/runtime-definitions";
 import { EventEmitter } from "events";
 import { AgentLoader, IAgent } from "./agentLoader";
 import { IDocumentServiceFactory, IDocumentTaskInfo, IWork, IWorkManager } from "./definitions";
@@ -27,16 +28,16 @@ export class WorkManager extends EventEmitter implements IWorkManager {
         });
     }
 
-    public async startDocumentWork(tenantId: string, documentId: string, workType: string, token: string) {
+    public async startDocumentWork(tenantId: string, documentId: string, user: IUser, workType: string, token: string) {
         const services = await this.serviceFactory.getService(tenantId);
 
         switch (workType) {
             case "snapshot":
-                const snapshotWork = new SnapshotWork(documentId, token, this.config, services);
+                const snapshotWork = new SnapshotWork(documentId, tenantId, user, token, this.config, services);
                 await this.startTask(tenantId, documentId, workType, snapshotWork);
                 break;
             case "intel":
-                const intelWork = new IntelWork(documentId, token, this.config, services);
+                const intelWork = new IntelWork(documentId, tenantId, user, token, this.config, services);
                 await this.startTask(tenantId, documentId, workType, intelWork);
                 break;
             case "spell":
@@ -46,6 +47,8 @@ export class WorkManager extends EventEmitter implements IWorkManager {
                 if (this.dict) {
                     const spellcheckWork = new SpellcheckerWork(
                         documentId,
+                        tenantId,
+                        user,
                         token,
                         this.config,
                         this.dict,
@@ -54,7 +57,13 @@ export class WorkManager extends EventEmitter implements IWorkManager {
                 }
                 break;
             case "translation":
-                const translationWork = new TranslationWork(documentId, token, this.config, services);
+                const translationWork = new TranslationWork(
+                    documentId,
+                    tenantId,
+                    user,
+                    token,
+                    this.config,
+                    services);
                 await this.startTask(tenantId, documentId, workType, translationWork);
                 break;
             default:

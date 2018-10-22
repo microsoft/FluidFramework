@@ -2,8 +2,7 @@ import { Block, BoxState } from "@prague/app-ui";
 import { getChaincodeRepo, getDefaultCredentials, getDefaultDocumentService } from "@prague/client-api";
 import * as loader from "@prague/loader";
 import { WebLoader, WebPlatform } from "@prague/loader-web";
-import { IPlatform, IPlatformFactory, IRuntime } from "@prague/runtime-definitions";
-import { TokenService } from "@prague/socket-storage";
+import { IPlatform, IPlatformFactory, IRuntime, IUser } from "@prague/runtime-definitions";
 import { EventEmitter } from "events";
 import * as jwt from "jsonwebtoken";
 import { FlowViewContext } from "./flowViewContext";
@@ -126,8 +125,6 @@ export class Document extends Block<DocumentState> {
     // This component needs access to the core abstract loader defined in runtime-definitions
     // but we need to update the API to provide it access and include the necessary methods.
     // We cut some corners below to start experimenting with dynamic document loading.
-    private tokenService = new TokenService();
-
     protected mounting(self: DocumentState, context: FlowViewContext): HTMLElement {
         console.log(`Mount value is ${self.id}`);
 
@@ -139,6 +136,7 @@ export class Document extends Block<DocumentState> {
 
         // TODO also something that shouldn't be direclty exposed
         const credentials = getDefaultCredentials();
+        const user: IUser = { id: "loader-client" };
         const token = jwt.sign(
             {
                 documentId: self.id,
@@ -159,12 +157,14 @@ export class Document extends Block<DocumentState> {
         const platformFactory = new PlatformFactory(div, invalidateLayout);
 
         const documentP = loader.load(
+            self.id,
+            credentials.tenant,
+            user,
             token,
             { blockUpdateMarkers: true },
             platformFactory,
             getDefaultDocumentService(),
             webLoader,
-            this.tokenService,
             null,
             true);
         documentP.then(

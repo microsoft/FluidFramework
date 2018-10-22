@@ -1,11 +1,15 @@
 import * as api from "@prague/client-api";
 import { controls, ui } from "@prague/client-ui";
 import * as resources from "@prague/gitresources";
+import * as socketStorage from "@prague/socket-storage";
 import { registerDocumentServices } from "./utils";
 
 async function loadDocument(id: string, version: resources.ICommit, token: string, client: any): Promise<api.Document> {
     console.log("Loading in root document...");
-    const document = await api.load(id, { encrypted: false, token }, version);
+
+    const tokenService = new socketStorage.TokenService();
+    const claims = tokenService.extractClaims(token);
+    const document = await api.load(id, claims.tenantId, claims.user, token, { encrypted: false }, version);
 
     console.log("Document loaded");
     return document;

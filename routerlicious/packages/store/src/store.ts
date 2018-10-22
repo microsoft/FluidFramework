@@ -148,12 +148,14 @@ export class Store {
         const factory = new HostPlatformFactory(services);
 
         const loaderDoc = await loader.load(
+            documentId,
+            config.tenantId,
+            {id: userId},
             token,
             null,
             factory,
             config.documentService,
             config.codeLoader,
-            config.tokenService,
             undefined,
             true);
 
