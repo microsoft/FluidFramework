@@ -2,10 +2,8 @@ import * as debug from "debug";
 import * as http from "http";
 import * as nconf from "nconf";
 import * as path from "path";
-import * as redis from "redis";
 import * as winston from "winston";
 import * as app from "./app";
-import * as services from "./services";
 
 const provider = nconf.argv().env("__" as any).file(path.join(__dirname, "../config.json")).use("memory");
 
@@ -35,13 +33,8 @@ winston.configure({
   args[0] = name + " " + args[0];
 };
 
-// Create services
-const redisConfig = provider.get("redis");
-const redisClient = redis.createClient(redisConfig.port, redisConfig.host);
-const cache = new services.RedisCache(redisClient);
-
-// Create the historian app
-const historian = app.create(provider, cache);
+// Create the unpkg app
+const historian = app.create(provider);
 
 /**
  * Get port from environment and store in Express.

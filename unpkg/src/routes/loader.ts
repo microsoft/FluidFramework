@@ -2,11 +2,9 @@ import { Deferred } from "@prague/utils";
 import axios from "axios";
 import { Stream } from "stream";
 import * as tar from "tar-stream";
-import * as winston from "winston";
 import * as zlib from "zlib";
 
 export async function fetchFile(
-    scope: string,
     name: string,
     version: string,
     path: string,
@@ -15,15 +13,7 @@ export async function fetchFile(
     password: string): Promise<Buffer> {
 
     const auth = { username, password };
-
-    if (scope) {
-        name = name.slice(name.indexOf(scope) + scope.length + 1);
-    }
-
-    // tslint:disable-next-line:max-line-length
-    winston.info(baseUrl, scope, name, version);
-    const url = `${baseUrl}/${encodeURI(scope)}/${encodeURI(name)}/${encodeURI(version)}`;
-    winston.info(url);
+    const url = `${baseUrl}/${encodeURI(name)}/${encodeURI(version)}`;
     const details = await axios.get(url, { auth });
 
     const data = await axios.get<Stream>(details.data.dist.tarball, { auth, responseType: "stream"});
@@ -39,7 +29,6 @@ export async function fetchFile(
     const chunks = new Array<Buffer>();
 
     extract.on("entry", (header, stream, next) => {
-        winston.info(JSON.stringify(header, null, 2));
         stream.on("data", (entryData) => {
             if (header.name === entryName) {
                 chunks.push(entryData);

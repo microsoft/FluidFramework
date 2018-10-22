@@ -3,15 +3,14 @@ import { Router } from "express";
 import * as nconf from "nconf";
 import * as npa from "npm-package-arg";
 import * as semver from "semver";
-import * as winston from "winston";
-import { ICache } from "../services";
 import { fetchFile } from "./loader";
 
 interface IPackageDetails {
-    pkg: string;
+    name: string;
     version: string;
     file: string;
     raw: npa.Result;
+    type: "git" | "tag" | "version" | "range" | "file" | "directory" | "remote";
 }
 
 function getPackageDetails(path: string): IPackageDetails {
@@ -47,13 +46,14 @@ function getPackageDetails(path: string): IPackageDetails {
 
     return {
         file,
-        pkg: result.name,
+        name: result.name,
         raw: result,
+        type: result.type,
         version: result.fetchSpec,
     };
 }
 
-export function create(store: nconf.Provider, cache: ICache): Router {
+export function create(store: nconf.Provider): Router {
     const router: Router = Router();
 
     async function getContent(path: string): Promise<{ file: Buffer, type: string }> {
@@ -68,17 +68,15 @@ export function create(store: nconf.Provider, cache: ICache): Router {
             username: store.get("npm:username"),
         };
 
-        const url = `${npmUrl}/${encodeURI(packageDetails.pkg)}`;
+        const url = `${npmUrl}/${encodeURI(packageDetails.name)}`;
         const details = await axios.get(url, { auth });
         const pkgInfo = details.data;
 
-        winston.info(JSON.stringify(packageDetails, null, 2));
-
         // extract the package details
         let fetchVersion: string;
-        if (packageDetails.raw.type === "range") {
+        if (packageDetails.type === "range") {
             fetchVersion = semver.maxSatisfying(Object.keys(pkgInfo.versions), packageDetails.version);
-        } else if (packageDetails.raw.type === "tag") {
+        } else if (packageDetails.type === "tag") {
             fetchVersion = pkgInfo["dist-tags"][packageDetails.version];
         } else {
             fetchVersion = packageDetails.version;
@@ -90,18 +88,16 @@ export function create(store: nconf.Provider, cache: ICache): Router {
         }
 
         const file = await fetchFile(
-            packageDetails.raw.scope,
-            packageDetails.raw.name,
-            packageDetails.version,
+            packageDetails.name,
+            fetchVersion,
             packageDetails.file,
             npmUrl,
             auth.username,
             auth.password).catch((error) => error.toString());
 
-        return { file, type: packageDetails.raw.type };
+        return { file, type: packageDetails.type };
     }
 
-    // unpkg.com/:package@:version/:file
     router.get("/*", (request, response) => {
         const contentP = getContent(request.params[0]);
         contentP.then(

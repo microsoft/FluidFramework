@@ -8,7 +8,6 @@ import * as nconf from "nconf";
 import split = require("split");
 import * as winston from "winston";
 import * as routes from "./routes";
-import { ICache } from "./services";
 
 /**
  * Basic stream logging interface for libraries that require a stream to pipe output to
@@ -17,7 +16,7 @@ const stream = split().on("data", (message) => {
   winston.info(message);
 });
 
-export function create(config: nconf.Provider, cache: ICache) {
+export function create(config: nconf.Provider) {
     // Express app configuration
     const app: Express = express();
 
@@ -31,7 +30,7 @@ export function create(config: nconf.Provider, cache: ICache) {
     app.use(compression());
     app.use(cors());
 
-    const apiRoutes = routes.create(config, cache);
+    const apiRoutes = routes.create(config);
     app.use(apiRoutes.files);
 
     // catch 404 and forward to error handler
