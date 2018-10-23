@@ -834,20 +834,30 @@ export class Document extends EventEmitter {
 
     private prepareRemoteChunkedMessage(message: ISequencedDocumentMessage): boolean {
         const clientId = message.clientId;
-        if (!this.chunkMap.has(clientId)) {
-            this.chunkMap.set(clientId, []);
-        }
         const chunkedContent = message.contents as IChunkedOp;
-        this.chunkMap.get(clientId).push(chunkedContent.contents);
+        this.addChunk(clientId, chunkedContent.contents);
         if (chunkedContent.chunkId === chunkedContent.totalChunks) {
             const serializedContent = this.chunkMap.get(clientId).join("");
             message.contents = JSON.parse(serializedContent);
             message.type = chunkedContent.originalType;
-            this.chunkMap.delete(clientId);
+            this.clearPartialChunks(clientId);
             console.log(`Chunk processed!`);
             return true;
         }
         return false;
+    }
+
+    private addChunk(clientId: string, chunkedContent: string) {
+        if (!this.chunkMap.has(clientId)) {
+            this.chunkMap.set(clientId, []);
+        }
+        this.chunkMap.get(clientId).push(chunkedContent);
+    }
+
+    private clearPartialChunks(clientId: string) {
+        if (this.chunkMap.has(clientId)) {
+            this.chunkMap.delete(clientId);
+        }
     }
 
     private processRemoteMessage(message: ISequencedDocumentMessage, context: any) {
