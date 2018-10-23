@@ -1,6 +1,6 @@
 import * as pragueMap from "@prague/map";
 import { PragueFlatMapDOMTree } from "./pragueFlatMapDOMTree";
-import { PragueStreamDOMTree } from "./pragueStreamDOMTree";
+import { PragueStreamDOMTree, PragueStreamWindow } from "./pragueStreamDOMTree";
 import { getCollabDoc } from "./pragueUtil";
 import { RewriteDOMTree } from "./rewriteDOMTree";
 
@@ -27,7 +27,7 @@ export async function saveDOMToPrague(documentId: string, useFlatMap: boolean, s
     dataMapView.set("DATE", new Date());
     dataMapView.set("URL", window.location.href);
     dataMapView.set("DIMENSION", { width: window.innerWidth, height: window.innerHeight });
-    dataMapView.set("SCROLLPOS", { x: window.scrollX, y: window.scrollY });
+    dataMapView.set("SCROLLPOS", JSON.stringify([ window.scrollX, window.scrollY]));
 
     let tree;
     if (useFlatMap) {
@@ -74,42 +74,28 @@ export async function saveDOMToPrague(documentId: string, useFlatMap: boolean, s
 }
 
 let mutationObserver: MutationObserver;
+let streamWindow: PragueStreamWindow;
 function startStreamToPrague(tree: PragueStreamDOMTree, dataMapView: pragueMap.IMapView) {
     stopStreamToPrague();
     let mutation = 0;
     mutationObserver = tree.startStream(document, () => {
         dataMapView.set("MUTATION", mutation++);
     });
-    const resize = () => {
-        if (!mutationObserver) { window.removeEventListener("resize", resize); }
-        const dim = { width: window.innerWidth, height: window.innerHeight };
-        console.log("Update dimension: " + dim);
-        dataMapView.set("DIMENSION", dim);
-    };
-    window.addEventListener("resize", resize);
 
-    // Send scroll events
-    const scroll = () => {
-        if (!mutationObserver) { window.removeEventListener("scroll", scroll); }
-        const pos = { x: window.scrollX, y: window.scrollY };
-        console.log("Update scrollpos: " + pos);
-        dataMapView.set("SCROLLPOS", pos);
-    };
-    window.addEventListener("scroll", scroll);
+    streamWindow = new PragueStreamWindow(window, dataMapView, tree, false);
 
     // Receive scroll and click events
     dataMapView.getMap().on("valueChanged", (changed, local, op) => {
         if (local) { return; }
         if (changed.key === "SCROLLPOS") {
-            const pos = dataMapView.get("SCROLLPOS");
-            window.scrollTo(pos.x, pos.y);
+            PragueStreamWindow.loadScrollPos(window, dataMapView);
         } else if (changed.key === "REMOTECLICK") {
             const nodeId = dataMapView.get("REMOTECLICK");
             const n = tree.getNodeFromId(nodeId);
 
             if (n) {
                 console.log("Dispatching click to node Id: " + nodeId, n);
-                n.dispatchEvent(new MouseEvent("click"));
+                n.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true, view: window }));
             } else {
                 console.log("Click to node Id not found: " + nodeId);
             }
@@ -119,8 +105,10 @@ function startStreamToPrague(tree: PragueStreamDOMTree, dataMapView: pragueMap.I
 
 export function stopStreamToPrague() {
     if (mutationObserver) {
-        console.log("Stoping streaming");
+        console.log("Stop streaming");
         mutationObserver.disconnect();
         mutationObserver = null;
+        streamWindow.disableSync();
+        streamWindow = null;
     }
 }

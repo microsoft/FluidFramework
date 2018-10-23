@@ -36,7 +36,8 @@ chrome.runtime.onMessage.addListener((message, sender) => {
         isStreaming = false;
       } else {
         if (isStreaming && command !== "Tab" && command !== "JSON") {
-          alert("Already streaming");
+          alert("Already streaming to " + streamingDocId + " tabId: " + streamingTabId
+            + " (requested tabId: " + tabId + ")");
           return;
         }
         if (command === "PragueStreamStart") {
@@ -57,7 +58,18 @@ chrome.runtime.onMessage.addListener((message, sender) => {
 });
 
 chrome.webNavigation.onCompleted.addListener((details) => {
+  console.log("Navigate ", details);
   if (isStreaming && streamingTabId === details.tabId && details.frameId === 0) {
     chrome.tabs.sendMessage(streamingTabId, ["PragueStreamStart", streamingDocId]);
   }
 });
+
+(window as any).getIsStreaming = () => {
+  return isStreaming;
+};
+(window as any).getStreamingTabId = () => {
+  return streamingTabId;
+};
+(window as any).getStreamingDocId = () => {
+  return streamingDocId;
+};
