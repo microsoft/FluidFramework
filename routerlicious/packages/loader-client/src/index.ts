@@ -6,6 +6,7 @@ import {
     IDocumentService,
     IPlatform,
     IPlatformFactory,
+    ITokenProvider,
     IUser,
 } from "@prague/runtime-definitions";
 import * as driver from "@prague/socket-storage";
@@ -66,7 +67,7 @@ async function run(
     id: string,
     tenantId: string,
     user: IUser,
-    token: string,
+    tokenProvider: ITokenProvider,
     options: any,
     reject: boolean,
     documentServices: IDocumentService): Promise<void> {
@@ -75,7 +76,7 @@ async function run(
         id,
         tenantId,
         user,
-        token,
+        tokenProvider,
         null,
         platformFactory,
         documentServices,
@@ -160,7 +161,14 @@ commander
             },
             commander.secret);
 
-        run(documentId, commander.tenant, user, token, null, commander.reject, documentServices).catch((error) => {
+        run(
+            documentId,
+            commander.tenant,
+            user,
+            new driver.TokenProvider(token),
+            null,
+            commander.reject,
+            documentServices).catch((error) => {
             console.error(error);
             process.exit(1);
         });

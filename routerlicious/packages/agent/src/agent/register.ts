@@ -1,5 +1,5 @@
 import * as api from "@prague/client-api";
-import { IClient, IHelpMessage, IUser } from "@prague/runtime-definitions";
+import { IClient, IHelpMessage, ITokenProvider, IUser } from "@prague/runtime-definitions";
 import { loadDictionary } from "./dictionaryLoader";
 import { IntelWork } from "./intelWork";
 import { SnapshotWork } from "./snapshotWork";
@@ -7,14 +7,14 @@ import { SpellcheckerWork } from "./spellcheckerWork";
 import { TranslationWork } from "./translationWork";
 
 // If a client declares taks runnning capability in permission array, it must register to perform the task.
-export function registerToWork(doc: api.Document, client: IClient, token: string, workerConfig: any) {
+export function registerToWork(doc: api.Document, client: IClient, tokenProvider: ITokenProvider, workerConfig: any) {
     if (client.permission && client.permission.length > 0) {
         doc.on("localHelp", async (helpMessage: IHelpMessage) => {
             await performTasks(
                 doc.id,
                 doc.tenantId,
                 doc.getUser(),
-                token,
+                tokenProvider,
                 helpMessage.tasks,
                 workerConfig).catch((err) => {
                 console.error(err);
@@ -23,22 +23,34 @@ export function registerToWork(doc: api.Document, client: IClient, token: string
     }
 }
 
-async function performTasks(docId: string, tenantId: string, user: IUser, token: string, tasks: string[], config: any) {
+async function performTasks(
+    docId: string,
+    tenantId: string,
+    user: IUser,
+    tokenProvider: ITokenProvider,
+    tasks: string[],
+    config: any) {
     const taskPromises = [];
     for (const task of tasks) {
-        taskPromises.push(performTask(docId, tenantId, user, token, task, config));
+        taskPromises.push(performTask(docId, tenantId, user, tokenProvider, task, config));
     }
     await Promise.all(taskPromises);
 }
 
-async function performTask(docId: string, tenantId: string, user: IUser, token: string, task: string, config: any) {
+async function performTask(
+    docId: string,
+    tenantId: string,
+    user: IUser,
+    tokenProvider: ITokenProvider,
+    task: string,
+    config: any) {
     switch (task) {
         case "snapshot":
             const snapshotWork  = new SnapshotWork(
                 docId,
                 tenantId,
                 user,
-                token,
+                tokenProvider,
                 config,
                 api.getDefaultDocumentService());
             await snapshotWork.start(task);
@@ -48,7 +60,7 @@ async function performTask(docId: string, tenantId: string, user: IUser, token: 
                 docId,
                 tenantId,
                 user,
-                token,
+                tokenProvider,
                 config,
                 api.getDefaultDocumentService());
             await intelWork.start(task);
@@ -59,7 +71,7 @@ async function performTask(docId: string, tenantId: string, user: IUser, token: 
                     docId,
                     tenantId,
                     user,
-                    token,
+                    tokenProvider,
                     config,
                     dictionary,
                     api.getDefaultDocumentService(),
@@ -74,7 +86,7 @@ async function performTask(docId: string, tenantId: string, user: IUser, token: 
                 docId,
                 tenantId,
                 user,
-                token,
+                tokenProvider,
                 config,
                 api.getDefaultDocumentService());
             await translationWork.start(task);

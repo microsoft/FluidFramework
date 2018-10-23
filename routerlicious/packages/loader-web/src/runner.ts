@@ -1,6 +1,6 @@
 import { ICommit } from "@prague/gitresources";
 import * as loader from "@prague/loader";
-import { IDocumentService, IUser } from "@prague/runtime-definitions";
+import { IDocumentService, ITokenProvider, IUser  } from "@prague/runtime-definitions";
 import chalk from "chalk";
 import { WebLoader } from "./webLoader";
 import { WebPlatformFactory } from "./webPlatform";
@@ -18,7 +18,7 @@ export async function run(
     id: string,
     tenantId: string,
     user: IUser,
-    token: string,
+    tokenProvider: ITokenProvider,
     options: any,
     reject: boolean,
     documentServices: IDocumentService,
@@ -34,7 +34,7 @@ export async function run(
         id,
         tenantId,
         user,
-        token,
+        tokenProvider,
         { blockUpdateMarkers: true },
         webPlatformFactory,
         documentServices,

@@ -9,7 +9,13 @@ async function loadDocument(id: string, version: resources.ICommit, token: strin
 
     const tokenService = new socketStorage.TokenService();
     const claims = tokenService.extractClaims(token);
-    const document = await api.load(id, claims.tenantId, claims.user, token, { encrypted: false }, version);
+    const document = await api.load(
+        id,
+        claims.tenantId,
+        claims.user,
+        new socketStorage.TokenProvider(token),
+        { encrypted: false },
+        version);
 
     console.log("Document loaded");
     return document;

@@ -1,7 +1,13 @@
 import { ICollaborativeObject } from "@prague/api-definitions";
 import * as api from "@prague/client-api";
 import { IMap, IMapView } from "@prague/map";
-import { IDocumentService, ISequencedDocumentMessage, IUser, MessageType } from "@prague/runtime-definitions";
+import {
+    IDocumentService,
+    ISequencedDocumentMessage,
+    ITokenProvider,
+    IUser,
+    MessageType,
+} from "@prague/runtime-definitions";
 import { nativeTextAnalytics, textAnalytics } from "../intelligence";
 import { BaseWork} from "./baseWork";
 import { IWork} from "./definitions";
@@ -15,10 +21,10 @@ export class IntelWork extends BaseWork implements IWork {
         docId: string,
         tenantId: string,
         user: IUser,
-        token: string,
+        tokenProvider: ITokenProvider,
         config: any,
         private service: IDocumentService) {
-        super(docId, tenantId, user, token, config);
+        super(docId, tenantId, user, tokenProvider, config);
     }
 
     public async start(task: string): Promise<void> {

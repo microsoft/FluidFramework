@@ -95,7 +95,7 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
     constructor(
         private id: string,
         private tenantId: string,
-        private token: string,
+        private tokenProvider: runtime.ITokenProvider,
         private service: runtime.IDocumentService,
         private client: runtime.IClient) {
         super();
@@ -190,7 +190,7 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
         // Connect to the delta storage endpoint
         const storageDeferred = new Deferred<runtime.IDocumentDeltaStorageService>();
         this.deltaStorageP = storageDeferred.promise;
-        this.service.connectToDeltaStorage(this.tenantId, this.id, this.token).then(
+        this.service.connectToDeltaStorage(this.tenantId, this.id, this.tokenProvider.deltaStorageToken).then(
             (deltaStorage) => {
                 storageDeferred.resolve(deltaStorage);
             },
@@ -296,7 +296,12 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
         // Reconnection is only enabled for browser clients.
         const reconnect = this.clientType === runtime.Browser;
 
-        DeltaConnection.Connect(this.tenantId, this.id, this.token, this.service, this.client).then(
+        DeltaConnection.Connect(
+            this.tenantId,
+            this.id,
+            this.tokenProvider.deltaStreamToken,
+            this.service,
+            this.client).then(
             (connection) => {
                 this.connection = connection;
 

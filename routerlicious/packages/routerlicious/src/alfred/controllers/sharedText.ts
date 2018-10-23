@@ -114,19 +114,20 @@ async function loadDocument(
     const claims = tokenService.extractClaims(token);
 
     console.log(`collabDoc loading ${id} - ${performanceNow()}`);
+    const tokenProvider = new socketStorage.TokenProvider(token);
     const collabDoc = await API.load(
         id,
         claims.tenantId,
         claims.user,
-        token,
-        { blockUpdateMarkers: true, client: config.client, token },
+        tokenProvider,
+        { blockUpdateMarkers: true, client: config.client },
         version,
         connect);
 
     // Register to run task only if the client type is browser.
     const client = config.client as IClient;
     if (client && client.type === "browser") {
-        agent.registerToWork(collabDoc, client, token, config);
+        agent.registerToWork(collabDoc, client, tokenProvider, config);
     }
 
     console.log(`collabDoc loaded ${id} - ${performanceNow()}`);

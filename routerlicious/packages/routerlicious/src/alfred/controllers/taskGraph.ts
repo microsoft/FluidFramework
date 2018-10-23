@@ -156,7 +156,7 @@ export async function load(id: string, version: resources.ICommit, config: any, 
         id,
         claims.tenantId,
         claims.user,
-        token,
+        new socketStorage.TokenProvider(token),
         { client: { type: "visualize" }, encrypted: false },
         version);
     let prev: IGraph;

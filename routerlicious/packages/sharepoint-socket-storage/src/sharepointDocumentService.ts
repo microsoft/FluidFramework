@@ -4,15 +4,12 @@ import { DocumentDeltaStorageService, SharepointDeltaStorageService } from "./de
 import { ReplayDocumentStorageService } from "./sharepointDocumentStorageService";
 
 export class SharepointDocumentService implements api.IDocumentService {
-    private deltaStorage: SharepointDeltaStorageService;
-
     constructor(
         private snapshotUrl: string,
         private deltaFeedUrl: string,
         private webSocketUrl: string) {
         // For now just log the snapshot url until sharepoint starts supporting snapshots
         console.log(this.snapshotUrl);
-        this.deltaStorage = new SharepointDeltaStorageService(this.deltaFeedUrl);
     }
 
     public async connectToStorage(
@@ -28,8 +25,8 @@ export class SharepointDocumentService implements api.IDocumentService {
         tenantId: string,
         id: string,
         token: string): Promise<api.IDocumentDeltaStorageService> {
-
-        return new DocumentDeltaStorageService(tenantId, id, token, this.deltaStorage);
+        const deltaStorage = new SharepointDeltaStorageService(this.deltaFeedUrl);
+        return new DocumentDeltaStorageService(tenantId, id, token, deltaStorage);
     }
 
     public async connectToDeltaStream(

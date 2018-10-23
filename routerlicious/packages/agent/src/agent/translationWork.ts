@@ -2,7 +2,7 @@ import * as core from "@prague/api-definitions";
 import * as map from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
 // tslint:disable-next-line:max-line-length
-import { IDocumentService, ISequencedDocumentMessage, ISequencedObjectMessage, IUser } from "@prague/runtime-definitions";
+import { IDocumentService, ISequencedDocumentMessage, ISequencedObjectMessage, ITokenProvider, IUser } from "@prague/runtime-definitions";
 import * as SharedString from "@prague/shared-string";
 import { EventEmitter } from "events";
 import * as request from "request";
@@ -195,10 +195,10 @@ export class TranslationWork extends BaseWork implements IWork {
         docId: string,
         tenantId: string,
         user: IUser,
-        token: string,
+        tokenProvider: ITokenProvider,
         config: any,
         private service: IDocumentService) {
-        super(docId, tenantId, user, token, config);
+        super(docId, tenantId, user, tokenProvider, config);
     }
 
     public async start(task: string): Promise<void> {

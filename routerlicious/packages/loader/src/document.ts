@@ -19,6 +19,7 @@ import {
     ISequencedDocumentMessage,
     ISequencedProposal,
     ISnapshotTree,
+    ITokenProvider,
     ITree,
     ITreeEntry,
     IUser,
@@ -91,14 +92,14 @@ export class Document extends EventEmitter {
         id: string,
         tenantId: string,
         user: IUser,
-        token: string,
+        tokenProvider: ITokenProvider,
         platform: IPlatformFactory,
         service: IDocumentService,
         codeLoader: ICodeLoader,
         options: any,
         specifiedVersion: ICommit,
         connect: boolean): Promise<Document> {
-        const doc = new Document(id, tenantId, user, token, platform, service, codeLoader, options);
+        const doc = new Document(id, tenantId, user, tokenProvider, platform, service, codeLoader, options);
         await doc.load(specifiedVersion, connect);
 
         return doc;
@@ -177,7 +178,7 @@ export class Document extends EventEmitter {
         id: string,
         tenantId: string,
         user: IUser,
-        private token: string,
+        private tokenProvider: ITokenProvider,
         private platform: IPlatformFactory,
         private service: IDocumentService,
         private codeLoader: ICodeLoader,
@@ -270,7 +271,7 @@ export class Document extends EventEmitter {
     }
 
     private async load(specifiedVersion: ICommit, connect: boolean): Promise<void> {
-        const storageP = this.service.connectToStorage(this.tenantId, this.id, this.token);
+        const storageP = this.service.connectToStorage(this.tenantId, this.id, this.tokenProvider.storageToken);
 
         // If a version is specified we will load it directly - otherwise will query historian for the latest
         // version and then load it
@@ -688,7 +689,12 @@ export class Document extends EventEmitter {
     private connect(attributesP: Promise<IDocumentAttributes>): IConnectResult {
         // Create the DeltaManager and begin listening for connection events
         const clientDetails = this.options ? this.options.client : null;
-        this._deltaManager = new DeltaManager(this.id, this.tenantId, this.token, this.service, clientDetails);
+        this._deltaManager = new DeltaManager(
+            this.id,
+            this.tenantId,
+            this.tokenProvider,
+            this.service,
+            clientDetails);
 
         // Open a connection - the DeltaMananger will automatically reconnect
         const detailsP = this._deltaManager.connect("Document loading");
