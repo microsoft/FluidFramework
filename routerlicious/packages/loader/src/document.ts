@@ -896,8 +896,10 @@ export class Document extends EventEmitter {
                 break;
 
             case MessageType.ClientLeave:
-                this.quorum.removeMember(message.contents);
-                this.emit("clientLeave", message.contents);
+                const clientId = message.contents as string;
+                this.clearPartialChunks(clientId);
+                this.quorum.removeMember(clientId);
+                this.emit("clientLeave", clientId);
                 break;
 
             case MessageType.Propose:
