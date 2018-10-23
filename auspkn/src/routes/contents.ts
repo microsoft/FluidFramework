@@ -1,5 +1,6 @@
 import axios from "axios";
 import { Router } from "express";
+import * as mime from "mime";
 import * as nconf from "nconf";
 import * as npa from "npm-package-arg";
 import * as semver from "semver";
@@ -8,29 +9,29 @@ import { fetchFile } from "./loader";
 interface IPackageDetails {
     name: string;
     version: string;
-    file: string;
+    path: string;
     raw: npa.Result;
     type: "git" | "tag" | "version" | "range" | "file" | "directory" | "remote";
 }
 
-function getPackageDetails(path: string): IPackageDetails {
-    const split = path.split("/");
+function getPackageDetails(fullPath: string): IPackageDetails {
+    const split = fullPath.split("/");
     if (split.length === 0) {
         return null;
     }
 
     // include scope in package if specified
     let packageSpecifier = split[0];
-    let file: string;
+    let path: string;
     if (packageSpecifier[0] === "@") {
         if (split.length <= 1) {
             return null;
         }
 
         packageSpecifier = `${packageSpecifier}/${split[1]}`;
-        file = split.slice(2).join("/");
+        path = split.slice(2).join("/");
     } else {
-        file = split.slice(1).join("/");
+        path = split.slice(1).join("/");
     }
 
     let result: npa.Result;
@@ -45,8 +46,8 @@ function getPackageDetails(path: string): IPackageDetails {
     }
 
     return {
-        file,
         name: result.name,
+        path,
         raw: result,
         type: result.type,
         version: result.fetchSpec,
@@ -56,8 +57,8 @@ function getPackageDetails(path: string): IPackageDetails {
 export function create(store: nconf.Provider): Router {
     const router: Router = Router();
 
-    async function getContent(path: string): Promise<{ file: Buffer, type: string }> {
-        const packageDetails = getPackageDetails(path);
+    async function getContent(fullPath: string): Promise<{ contents: Buffer, path: string, type: string }> {
+        const packageDetails = getPackageDetails(fullPath);
         if (!packageDetails) {
             return Promise.reject("Invalid package name");
         }
@@ -87,15 +88,15 @@ export function create(store: nconf.Provider): Router {
             return Promise.reject("Invalid package version");
         }
 
-        const file = await fetchFile(
+        const contents = await fetchFile(
             packageDetails.name,
             fetchVersion,
-            packageDetails.file,
+            packageDetails.path,
             npmUrl,
             auth.username,
             auth.password).catch((error) => error.toString());
 
-        return { file, type: packageDetails.type };
+        return { contents, path: packageDetails.path, type: packageDetails.type };
     }
 
     router.get("/*", (request, response) => {
@@ -106,7 +107,12 @@ export function create(store: nconf.Provider): Router {
                     response.setHeader("Cache-Control", "public, max-age=31536000");
                 }
 
-                response.status(200).end(result.file);
+                const mimeType = mime.getType(result.path);
+                if (mimeType) {
+                    response.setHeader("Content-Type", mimeType);
+                }
+
+                response.status(200).end(result.contents);
             },
             (error) => {
                 response.status(400).json(error.toString());

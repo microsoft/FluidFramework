@@ -13,6 +13,7 @@
     "tslint": "tslint 'src/**/*.ts'"
   },
   "dependencies": {
+    "@types/mime": "^2.0.0",
     "@types/npm-package-arg": "^5.1.0",
     "@types/pako": "^1.0.0",
     "@types/semver": "^5.5.0",
@@ -24,6 +25,7 @@
     "debug": "^2.6.8",
     "express": "^4.16.3",
     "lodash": "^4.17.10",
+    "mime": "^2.3.1",
     "morgan": "^1.8.2",
     "nconf": "^0.8.4",
     "npm-package-arg": "^6.1.0",
