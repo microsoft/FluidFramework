@@ -1,14 +1,11 @@
-import * as pragueApi from "@prague/client-api";
-import * as pragueMap from "@prague/map";
+import { IMapViewWrapper } from "./mapWrapper";
 import * as RWDOM from "./rewriteDOMTree";
 
 export class PragueMapDOMData {
     protected nodes = [];
-    private collabDoc: pragueApi.Document;
-    private mapView: pragueMap.IMapView;
-    constructor(mapView: pragueMap.IMapView, collabDoc: pragueApi.Document) {
+    private mapView: IMapViewWrapper;
+    constructor(mapView: IMapViewWrapper) {
         this.mapView = mapView;
-        this.collabDoc = collabDoc;
         mapView.forEach((value, key) => {
             const nodeKey = JSON.parse(key);
             const nodeId = nodeKey[0];
@@ -17,10 +14,6 @@ export class PragueMapDOMData {
             }
             this.nodes[nodeId][nodeKey[1]] = value;
         });
-    }
-
-    public getCollabDoc() {
-        return this.collabDoc;
     }
 
     public getNodeData(nodeId: number) {
@@ -45,7 +38,7 @@ export class PragueMapDOMData {
 }
 
 interface IPragueFlatMapDOMNode extends RWDOM.IRewriteDOMNode {
-    setOnPragueFlatMap(map: PragueMapDOMData, tree: PragueFlatMapDOMTree): number;
+    setOnMapWrapper(map: PragueMapDOMData, tree: PragueFlatMapDOMTree): number;
 }
 
 export class PragueFlatMapDOMElement extends RWDOM.RewriteDOMElement implements IPragueFlatMapDOMNode {
@@ -56,7 +49,7 @@ export class PragueFlatMapDOMElement extends RWDOM.RewriteDOMElement implements 
         super(e, tree);
         this.emitted = false;
     }
-    public setOnPragueFlatMap(map: PragueMapDOMData, tree: PragueFlatMapDOMTree): number {
+    public setOnMapWrapper(map: PragueMapDOMData, tree: PragueFlatMapDOMTree): number {
         if (this.emitted) { return this.nodeId; }
         this.nodeId = map.addNodeData();
         map.setNodeData(this.nodeId, "tagName", this.getTagName());
@@ -86,7 +79,7 @@ export class PragueFlatMapDOMElement extends RWDOM.RewriteDOMElement implements 
         const childrenIds = [];
         this.forEachOriginalNodeChild((c) => {
             const child = c as IPragueFlatMapDOMNode;
-            childrenIds.push(child.setOnPragueFlatMap(map, tree));
+            childrenIds.push(child.setOnMapWrapper(map, tree));
         });
         map.setNodeData(this.nodeId, "children", childrenIds);
     }
@@ -113,7 +106,7 @@ export class PragueFlatMapDOMTextNode extends RWDOM.RewriteDOMTextNode implement
         super(n);
         this.emitted = false;
     }
-    public setOnPragueFlatMap(map: PragueMapDOMData, tree: PragueFlatMapDOMTree): number {
+    public setOnMapWrapper(map: PragueMapDOMData, tree: PragueFlatMapDOMTree): number {
         if (this.emitted) { return this.nodeId; }
         this.nodeId = map.addNodeData();
         this.setTextContentOnPragueFlatMap(map);
@@ -130,9 +123,9 @@ export class PragueFlatMapDOMTextNode extends RWDOM.RewriteDOMTextNode implement
 }
 
 export class PragueFlatMapDOMTree extends RWDOM.RewriteDOMTree {
-    public setOnPragueFlatMap(map: pragueMap.IMapView, collabDoc: pragueApi.Document) {
-        const mapData = new PragueMapDOMData(map, collabDoc);
-        this.getRootElement().setOnPragueFlatMap(mapData, this);
+    public setOnMapWrapper(map: IMapViewWrapper) {
+        const mapData = new PragueMapDOMData(map);
+        this.getRootElement().setOnMapWrapper(mapData, this);
     }
     public getRootElement(): PragueFlatMapDOMElement {
         return this.rootElement as PragueFlatMapDOMElement;

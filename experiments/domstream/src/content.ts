@@ -25,7 +25,7 @@ import { RewriteDOMTree } from "./rewriteDOMTree";
             return;
         }
         const tree = new RewriteDOMTree();
-        tree.initializeFromDocument(document);
+        tree.initializeFromDOM(document);
         let dom;
         if (command === "Tab") {
             dom = tree.getHTML();

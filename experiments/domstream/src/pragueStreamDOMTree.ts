@@ -1,16 +1,12 @@
-import * as pragueApi from "@prague/client-api";
-import * as pragueMap from "@prague/map";
-// import * as sharedString from "@prague/shared-string";
+import { IMapViewWrapper } from "./mapWrapper";
 import * as PFMDOM from "./pragueFlatMapDOMTree";
 
 class PragueMapSyncDOMData extends PFMDOM.PragueMapDOMData {
     private valueChangeCallback:
         (nodeId: number, key: string, value: string, deleted: boolean) => void;
-    constructor(mapView: pragueMap.IMapView, collabDoc: pragueApi.Document) {
-        super(mapView, collabDoc);
-        mapView.getMap().on("valueChanged", (changed, local) => {
-            if (local) { return; }
-            const combinedKey = changed.key;
+    constructor(mapView: IMapViewWrapper) {
+        super(mapView);
+        mapView.onNonLocalValueChanged((combinedKey: string, value: any, deleted: boolean) => {
             const combinedKeyArray = JSON.parse(combinedKey);
             const nodeId = combinedKeyArray[0];
             const key = combinedKeyArray[1];
@@ -21,12 +17,9 @@ class PragueMapSyncDOMData extends PFMDOM.PragueMapDOMData {
                 nodeData = {};
                 this.nodes[nodeId] = nodeData;
             }
-            const deleted = !mapView.has(combinedKey);
-            let value;
             if (deleted) {
                 delete nodeData[key];
             } else {
-                value = mapView.get(combinedKey);
                 nodeData[key] = value;
             }
             console.log("Map value changed: ", combinedKey, value);
@@ -112,35 +105,7 @@ class PragueStreamDOMInputElement extends PragueStreamDOMElement {
         });
     }
 }
-/*
-class PragueStreamDOMTextAreaElement extends PragueStreamDOMElement {
-    private sharedInput: sharedString.SharedString;
-    public initializeFromMap(nodeId: number, attributeId: number, map: PragueMapSyncDOMData) {
-        const input = this.element as HTMLInputElement;
-        const nodeData = map.getNodeData(nodeId);
-        this.sharedInput = nodeData["inputValue"];
-        if (this.sharedInput !== undefined) {
-            input.value = this.sharedInput.getText();
-        }
-        super.initializeFromMap(nodeId, attributeId, map);
-    }
-    protected setEmitted(map: PragueMapSyncDOMData) {
-        super.setEmitted(map);
 
-        // Set up DOM -> map updates
-        const textArea = this.element as HTMLTextAreaElement;
-        textArea.addEventListener("input", () => {
-            // Input box entries doesn't update the DOM
-            // Manually do it.
-            this.sharedInput.replaceText(textArea.value, 0, this.sharedInput.client.getLength());
-            map.setNodeData(this.nodeId, "inputValue", textArea.value);
-        });
-
-        textArea.selectionStart
-        this.sharedInput.createPositionReference()
-    }
-}
-*/
 export class PragueStreamDOMTree extends PFMDOM.PragueFlatMapDOMTree {
     private nodeMap: WeakMap<Node, any>;
     private idToNodeMap: Map<number, Node>;
@@ -162,9 +127,9 @@ export class PragueStreamDOMTree extends PFMDOM.PragueFlatMapDOMTree {
     public getNodeFromId(id: number) {
         return this.idToNodeMap.get(id);
     }
-    public setOnPragueFlatMap(mapView: pragueMap.IMapView, collabDoc: pragueApi.Document) {
-        this.mapData = new PragueMapSyncDOMData(mapView, collabDoc);
-        this.getRootElement().setOnPragueFlatMap(this.mapData, this);
+    public setOnMapWrapper(mapView: IMapViewWrapper) {
+        this.mapData = new PragueMapSyncDOMData(mapView);
+        this.getRootElement().setOnMapWrapper(this.mapData, this);
     }
     public notifyNodeEmitted(node: Node, nodeId: number) {
         this.idToNodeMap.set(nodeId, node);
@@ -233,8 +198,8 @@ export class PragueStreamDOMTree extends PFMDOM.PragueFlatMapDOMTree {
         return mutationObserver;
     }
 
-    public readFromMap(mapView: pragueMap.IMapView, collabDoc: pragueApi.Document, rootId: number, doc: Document) {
-        this.mapData = new PragueMapSyncDOMData(mapView, collabDoc);
+    public readFromMap(mapView: IMapViewWrapper, rootId: number, doc: Document) {
+        this.mapData = new PragueMapSyncDOMData(mapView);
         this.mapData.setValueChangeCallback((nodeId, key, value, deleted) => {
             this.mapValueChangeCallback(nodeId, key, value, deleted);
         });
@@ -418,8 +383,8 @@ export class PragueStreamDOMTree extends PFMDOM.PragueFlatMapDOMTree {
 }
 
 export class PragueStreamWindow {
-    public static loadScrollPos(w: Window, dataMapView: pragueMap.IMapView, scrollPosField?: HTMLSpanElement) {
-        const scrollPos = JSON.parse(dataMapView.get("SCROLLPOS"));
+    public static loadScrollPos(w: Window, scrollPosJsonStr: string, scrollPosField?: HTMLSpanElement) {
+        const scrollPos = JSON.parse(scrollPosJsonStr);
         console.log(scrollPos);
         if (scrollPos) {
             if (scrollPosField) {
@@ -434,16 +399,16 @@ export class PragueStreamWindow {
     private resizeCallback;
     private isRemote: boolean;
 
-    constructor(w: Window, dataMapView: pragueMap.IMapView, tree: PragueStreamDOMTree, isRemote: boolean) {
+    constructor(w: Window, dataMapView: IMapViewWrapper, tree: PragueStreamDOMTree, isRemote: boolean) {
         this.w = w;
         this.isRemote = isRemote;
 
         // Setup scroll syncing
         this.scrollCallback = () => {
             const pos = JSON.stringify([w.scrollX, w.scrollY]);
-            if (dataMapView.get("SCROLLPOS") === pos) { return; }
+
             console.log("Update scrollpos: " + pos);
-            dataMapView.set("SCROLLPOS", pos);
+            dataMapView.setIfChanged("SCROLLPOS", pos);
         };
         w.addEventListener("scroll", this.scrollCallback);
 
@@ -458,7 +423,7 @@ export class PragueStreamWindow {
             this.resizeCallback = () => {
                 const dim = { width: window.innerWidth, height: window.innerHeight };
                 console.log("Update dimension: " + dim);
-                dataMapView.set("DIMENSION", dim);
+                dataMapView.set("DIMENSION", JSON.stringify(dim));
             };
             this.w.addEventListener("resize", this.resizeCallback);
         }

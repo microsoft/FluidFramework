@@ -1,16 +1,59 @@
-import * as pragueMap from "@prague/map";
+import { IMapViewWrapper, IMapWrapperFactory } from "./mapWrapper";
 import { PragueFlatMapDOMTree } from "./pragueFlatMapDOMTree";
+import { PragueMapViewWrapper, PragueMapWrapperFactory } from "./pragueMapWrapper";
 import { PragueStreamDOMTree, PragueStreamWindow } from "./pragueStreamDOMTree";
 import { getCollabDoc } from "./pragueUtil";
 import { RewriteDOMTree } from "./rewriteDOMTree";
 
 const debugPragueMap = false;
-function PragueMapToObject(mapView: pragueMap.IMapView): object {
+function MapWrapperToObject(mapView: IMapViewWrapper): object {
     const obj: any = {};
     mapView.forEach((value, key) => {
         obj[key] = value;
     });
     return obj;
+}
+
+async function saveDOMToMap(dataMapWrapper: IMapViewWrapper, mapWrapperFactory: IMapWrapperFactory,
+                            useFlatMap: boolean, stream: boolean) {
+
+    dataMapWrapper.set("DATE", new Date().toString());
+    dataMapWrapper.set("URL", window.location.href);
+    dataMapWrapper.set("DIMENSION", JSON.stringify({ width: window.innerWidth, height: window.innerHeight }));
+    dataMapWrapper.set("SCROLLPOS", JSON.stringify([window.scrollX, window.scrollY]));
+
+    if (useFlatMap) {
+        let tree: PragueStreamDOMTree | PragueFlatMapDOMTree;
+        const domMapViewWrapper = await mapWrapperFactory.createMapView();
+
+        let rootNodeId;
+        if (stream) {
+            tree = new PragueStreamDOMTree();
+        } else {
+            tree = new PragueFlatMapDOMTree();
+        }
+        tree.initializeFromDOM(document);
+        tree.setOnMapWrapper(domMapViewWrapper);
+        rootNodeId = tree.getRootElement().getNodeId();
+
+        dataMapWrapper.set("DOMFLATMAPNODE", rootNodeId);
+        dataMapWrapper.setMapView("DOM", domMapViewWrapper);
+
+        if (debugPragueMap) {
+            console.log(JSON.stringify(MapWrapperToObject(domMapViewWrapper)));
+        }
+
+        if (stream) {
+            startStreamToPrague(tree as PragueStreamDOMTree, dataMapWrapper);
+        }
+    } else {
+        if (stream) {
+            throw new Error("Not Implemented");
+        }
+        const tree = new RewriteDOMTree();
+        tree.initializeFromDOM(document);
+        dataMapWrapper.setMap("DOM", tree.getMap(mapWrapperFactory));
+    }
 }
 
 export async function saveDOMToPrague(documentId: string, useFlatMap: boolean, stream: boolean) {
@@ -21,61 +64,20 @@ export async function saveDOMToPrague(documentId: string, useFlatMap: boolean, s
     const rootView = await collabDoc.getRoot().getView();
     const dataMap = collabDoc.createMap();
     const dataMapView = await dataMap.getView();
-    rootView.set("FORCEATTACH", dataMap);
+    const dataMapWrapper = new PragueMapViewWrapper(dataMapView);
 
     const startTime = performance.now();
-    dataMapView.set("DATE", new Date());
-    dataMapView.set("URL", window.location.href);
-    dataMapView.set("DIMENSION", { width: window.innerWidth, height: window.innerHeight });
-    dataMapView.set("SCROLLPOS", JSON.stringify([ window.scrollX, window.scrollY]));
 
-    let tree;
-    if (useFlatMap) {
+    await saveDOMToMap(dataMapWrapper, new PragueMapWrapperFactory(collabDoc), useFlatMap, stream);
 
-        const domMap = collabDoc.createMap();
-        const domMapView = await domMap.getView();
-
-        // dataMapView.set("DOMFORCEATTACH", domMap); // TODO: Work around the message too large problem
-
-        let rootNodeId;
-        if (stream) {
-            tree = new PragueStreamDOMTree();
-        } else {
-            tree = new PragueFlatMapDOMTree();
-        }
-        tree.initializeFromDocument(document);
-        tree.setOnPragueFlatMap(domMapView, collabDoc);
-        rootNodeId = tree.getRootElement().getNodeId();
-
-        dataMapView.set("DOMFLATMAPNODE", rootNodeId);
-        dataMapView.set("DOM", domMap);
-
-        // dataMapView.delete("DOMFORCEATTACH");  // TODO: Work around the message too large problem
-
-        if (debugPragueMap) {
-            console.log(JSON.stringify(PragueMapToObject(domMapView)));
-        }
-    } else {
-        if (stream) {
-            throw new Error("Not Implemented");
-        }
-        tree = new RewriteDOMTree();
-        tree.initializeFromDocument(document);
-        dataMapView.set("DOM", tree.getPragueMap(collabDoc));
-    }
     rootView.set("DOMSTREAM", dataMap);
-    rootView.delete("FORCEATTACH");
     collabDoc.save();
-    console.log("Finish writing to Prague - " + (performance.now() - startTime) + "ms");
-
-    if (stream) {
-        startStreamToPrague(tree as PragueStreamDOMTree, dataMapView);
-    }
+    console.log("Finish sending to Prague - " + (performance.now() - startTime) + "ms");
 }
 
 let mutationObserver: MutationObserver;
 let streamWindow: PragueStreamWindow;
-function startStreamToPrague(tree: PragueStreamDOMTree, dataMapView: pragueMap.IMapView) {
+function startStreamToPrague(tree: PragueStreamDOMTree, dataMapView: IMapViewWrapper) {
     stopStreamToPrague();
     let mutation = 0;
     mutationObserver = tree.startStream(document, () => {
@@ -85,12 +87,11 @@ function startStreamToPrague(tree: PragueStreamDOMTree, dataMapView: pragueMap.I
     streamWindow = new PragueStreamWindow(window, dataMapView, tree, false);
 
     // Receive scroll and click events
-    dataMapView.getMap().on("valueChanged", (changed, local, op) => {
-        if (local) { return; }
-        if (changed.key === "SCROLLPOS") {
-            PragueStreamWindow.loadScrollPos(window, dataMapView);
-        } else if (changed.key === "REMOTECLICK") {
-            const nodeId = dataMapView.get("REMOTECLICK");
+    dataMapView.onNonLocalValueChanged((key, value) => {
+        if (key === "SCROLLPOS") {
+            PragueStreamWindow.loadScrollPos(window, value);
+        } else if (key === "REMOTECLICK") {
+            const nodeId = value;
             const n = tree.getNodeFromId(nodeId);
 
             if (n) {
