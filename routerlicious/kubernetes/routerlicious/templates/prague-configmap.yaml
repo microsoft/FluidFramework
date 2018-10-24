@@ -35,7 +35,7 @@ data:
                 "name": "kafka-node",
                 "endpoint": "{{ .Values.zookeeper.url }}"
             },
-            "messageSize": "1MB"
+            "maxMessageSize": "1MB"
         },
         "alfred": {
             "kafkaClientId": "{{ template "alfred.fullname" . }}",
