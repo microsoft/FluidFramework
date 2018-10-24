@@ -16,7 +16,7 @@ class HTMLUtil {
     }
 
     public static patchStyleUrl(str: string) {
-        // TODO: Do this properly
+        // TODO: Do style URL patching properly
         const origin = HTMLUtil.getOrigin();
         const path = HTMLUtil.getPath();
         let outStr = str.replace(/url\(\//g, "url(" + origin + "/");
@@ -162,6 +162,12 @@ export class RewriteDOMElement implements IRewriteDOMNode {
     }
 
     public getPragueMap(collabDoc: pragueApi.Document): pragueMap.IMap {
+
+        // TODO: Dynamic CSS rules added via CSSStyleSheet.insertRule doesn't get reflect in the DOM
+        // And Mutation observer will not notify if it got change.  So we will miss those currently
+
+        // TODO: Iframe content is not recorded.  It is also inaccessable if it is cross-origin
+
         const map = collabDoc.createMap();
         map.set("tagName", this.getTagName());
 
@@ -197,6 +203,9 @@ export class RewriteDOMElement implements IRewriteDOMNode {
                 case 3: // TEXT_NODE
                     newNode = tree.getTextNode(curr);
                     break;
+                default:
+                    console.error("Unexpect node type: ", curr.nodeType);
+                    break;
             }
             if (newNode) { this.children.push(newNode); }
             curr = curr.nextSibling;
@@ -218,13 +227,9 @@ export class RewriteDOMElement implements IRewriteDOMNode {
             return HTMLUtil.patchStyleUrl(value);
         }
         switch (tagName) {
-            case "USE":
+            case "use":
                 if (name === "xlink:href") {
-                    if (value.startsWith("/")) {
-                        value = HTMLUtil.getOrigin() + value;
-                    } else {
-                        value = HTMLUtil.getOrigin() + HTMLUtil.getPath() + value;
-                    }
+                    value = this.patchPath(value);
                 }
                 break;
             case "A":
@@ -250,8 +255,12 @@ export class RewriteDOMElement implements IRewriteDOMNode {
                     return (this.element as HTMLImageElement).src;
                 }
                 if (name === "srcset") {
-                    // Strip src set for now.  having the src is enough.
-                    return null;
+                    const srcset = value.split(",");
+                    for (let i = 0; i < srcset.length; i++) {
+                        srcset[i] = this.patchPath(srcset[i].trimLeft());
+                    }
+
+                    value = srcset.join(",");
                 }
                 break;
             case "IFRAME":
@@ -277,11 +286,17 @@ export class RewriteDOMElement implements IRewriteDOMNode {
                 break;
             case "IMG":
                 // Always use the live src
-                func("src", (this.element as HTMLImageElement).src);
+                const src = (this.element as HTMLImageElement).src;
+                if (src) {
+                    func("src", (this.element as HTMLImageElement).src);
+                }
                 break;
             case "LINK":
                 // Always use the live href
                 func("href", (this.element as HTMLLinkElement).href);
+                break;
+            case "FORM":
+                func("action", "javascript:void(0)");
                 break;
         }
         const attrs = this.element.attributes;
@@ -323,5 +338,16 @@ export class RewriteDOMElement implements IRewriteDOMNode {
                 return true;
         }
         return false;
+    }
+    private patchPath(value: string) {
+        // TODO: Do URL path patching property
+        if (value.startsWith("//")) {
+            if (value.startsWith("/")) {
+                return HTMLUtil.getOrigin() + value;
+            }
+        } else if (value.indexOf("://") === -1) {
+            return HTMLUtil.getOrigin() + HTMLUtil.getPath() + value;
+        }
+        return value;
     }
 }

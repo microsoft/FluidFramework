@@ -12,6 +12,7 @@
   },
   "permissions": [
     "activeTab",
+    "storage",
     "webNavigation"
   ],
   "browser_action": {
