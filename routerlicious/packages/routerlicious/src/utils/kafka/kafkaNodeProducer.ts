@@ -12,8 +12,12 @@ export class KafkaNodeProducer extends Producer implements IProducer {
     private connecting = false;
     private connected = false;
 
-    constructor(private endpoint: string, private clientId: string, private topic: string) {
-        super();
+    constructor(
+        private endpoint: string,
+        private clientId: string,
+        private topic: string,
+        maxMessageSize: number) {
+        super(maxMessageSize);
         this.connect();
     }
 
@@ -26,15 +30,16 @@ export class KafkaNodeProducer extends Producer implements IProducer {
     }
 
     protected sendCore(key: string, pendingMessages: IPendingMessage[]) {
-        const messages = pendingMessages.map((message) => message.message);
-        const kafkaMessage = [{ topic: this.topic, messages, key }];
-        this.producer.send(kafkaMessage, (error, data) => {
-                if (error) {
-                    pendingMessages.forEach((message) => message.deferred.reject(error));
-                } else {
-                    pendingMessages.forEach((message) => message.deferred.resolve(data));
-                }
-        });
+        for (const pendMessage of pendingMessages) {
+            const kafkaMessage = [{ topic: this.topic, messages: [pendMessage.message], key }];
+            this.producer.send(kafkaMessage, (error, data) => {
+                    if (error) {
+                        pendMessage.deferred.reject(error);
+                    } else {
+                        pendMessage.deferred.resolve(data);
+                    }
+            });
+        }
     }
 
     protected canSend(): boolean {

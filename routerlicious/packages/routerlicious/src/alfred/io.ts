@@ -51,6 +51,7 @@ export function register(
             const connectedMessage: socketStorage.IConnected = {
                 clientId: connection.clientId,
                 existing: connection.existing,
+                maxMessageSize: connection.maxMessageSize,
                 parentBranch: connection.parentBranch,
                 user: claims.user,
             };
@@ -85,6 +86,8 @@ export function register(
 
         // Message sent when a new operation is submitted to the router
         socket.on("submitOp", (clientId: string, messages: IDocumentMessage[], response) => {
+            // TODO validate message size within bounds
+
             // Verify the user has connected on this object id
             if (!connectionsMap.has(clientId)) {
                 return response("Invalid client ID", null);

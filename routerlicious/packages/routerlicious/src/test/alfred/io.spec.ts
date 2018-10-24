@@ -47,7 +47,7 @@ describe("Routerlicious", () => {
                         databaseManager,
                         testTenantManager,
                         producer);
-                    const kafkaOrderer = new services.KafkaOrdererFactory(producer, testStorage);
+                    const kafkaOrderer = new services.KafkaOrdererFactory(producer, testStorage, 1024 * 1024);
                     testOrderer = new services.OrdererManager(null, kafkaOrderer);
 
                     webSocketServer = new TestWebSocketServer();

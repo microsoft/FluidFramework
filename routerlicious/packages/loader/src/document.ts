@@ -129,9 +129,6 @@ export class Document extends EventEmitter {
     // Local copy of incomplete received chunks.
     private chunkMap: Map<string, string[]> = new Map<string, string[]>();
 
-    // TODO (mdaumi): This should be instantiated as a part of connect protocol.
-    private maxOpSize: number = 1024 * 1024;
-
     public get tenantId(): string {
        return this._tenantId;
     }
@@ -778,32 +775,34 @@ export class Document extends EventEmitter {
         if (this.connectionState !== ConnectionState.Connected) {
             return -1;
         }
+
         const serializedContent = JSON.stringify(contents);
+        const maxOpSize = this._deltaManager.maxMessageSize;
 
         let clientSequenceNumber: number;
-        if (serializedContent.length <= this.maxOpSize) {
+        if (serializedContent.length <= maxOpSize) {
             clientSequenceNumber = this._deltaManager.submit(type, contents);
         } else {
-            clientSequenceNumber = this.submitChunkedMessage(type, serializedContent);
+            clientSequenceNumber = this.submitChunkedMessage(type, serializedContent, maxOpSize);
         }
 
         return clientSequenceNumber;
     }
 
-    private submitChunkedMessage(type: MessageType, content: string): number {
+    private submitChunkedMessage(type: MessageType, content: string, maxOpSize: number): number {
         const contentLength = content.length;
-        const chunkN = Math.floor(contentLength / this.maxOpSize) + ((contentLength % this.maxOpSize === 0) ? 0 : 1);
+        const chunkN = Math.floor(contentLength / maxOpSize) + ((contentLength % maxOpSize === 0) ? 0 : 1);
         console.log(`Submitting ${content.length} size message as ${chunkN} chunks`);
         let offset = 0;
         let clientSequenceNumber;
         for (let i = 1; i <= chunkN; i = i + 1) {
             const chunkedOp: IChunkedOp = {
                 chunkId: i,
-                contents: content.substr(offset, this.maxOpSize),
+                contents: content.substr(offset, maxOpSize),
                 originalType: type,
                 totalChunks: chunkN,
             };
-            offset += this.maxOpSize;
+            offset += maxOpSize;
             clientSequenceNumber = this._deltaManager.submit(MessageType.ChunkedOp, chunkedOp);
         }
         return clientSequenceNumber;

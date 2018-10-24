@@ -11,7 +11,6 @@
     "build:full": "npm run build",
     "tsc": "tsc",
     "build:esnext": "tsc --outDir lib --m esnext",
-    "test": "mocha --recursive dist/test",
     "tslint": "tslint --project tsconfig.json --format verbose"
   },
   "author": "Microsoft",

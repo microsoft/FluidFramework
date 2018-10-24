@@ -17,6 +17,7 @@ const InitialReconnectDelay = 1000;
 const MissingFetchDelay = 100;
 const MaxFetchDelay = 10000;
 const MaxBatchDeltas = 2000;
+const DefaultChunkSize = 16 * 1024;
 
 /**
  * Interface used to define a strategy for handling incoming delta messages
@@ -90,6 +91,11 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
 
     public get minimumSequenceNumber(): number {
         return this.minSequenceNumber;
+    }
+
+    public get maxMessageSize(): number {
+        assert(this.connection);
+        return this.connection.details.maxMessageSize || DefaultChunkSize;
     }
 
     constructor(

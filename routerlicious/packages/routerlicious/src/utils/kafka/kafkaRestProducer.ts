@@ -9,8 +9,8 @@ export class KafkaRestProducer extends Producer implements IProducer {
     private connecting = false;
     private connected = false;
 
-    constructor(private endpoint: string, private topic: string) {
-        super();
+    constructor(private endpoint: string, private topic: string, maxMessageSize: number) {
+        super(maxMessageSize);
         this.connect();
     }
 

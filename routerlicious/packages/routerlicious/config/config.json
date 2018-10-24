@@ -22,10 +22,12 @@
         "lib": {
             "name": "kafka-node",
             "endpoint": "zookeeper:2181"
-        }
+        },
+        "maxMessageSize": "1MB"
     },
     "alfred": {
         "kafkaClientId": "alfred",
+        "maxMessageSize": "16KB",
         "topic": "rawdeltas",
         "bucket": "snapshots",
         "restJsonSize": "50mb",

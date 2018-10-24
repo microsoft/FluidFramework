@@ -14,7 +14,8 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
         documentId: string,
         socket: core.IWebSocket,
         user: IUser,
-        client: IClient): Promise<KafkaOrdererConnection> {
+        client: IClient,
+        maxMessageSize: number): Promise<KafkaOrdererConnection> {
 
         const clientId = moniker.choose();
 
@@ -27,7 +28,8 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
             documentId,
             clientId,
             user,
-            client);
+            client,
+            maxMessageSize);
 
         // Bind the socket to the channels the connection will send to
         await Promise.all([
@@ -36,36 +38,25 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
         return connection;
     }
 
-    public get clientId(): string {
-        return this._clientId;
-    }
-
-    public get existing(): boolean {
-        return this._existing;
-    }
-
     public get parentBranch(): string {
         return this._parentBranch;
     }
 
     // tslint:disable:variable-name
-    private _clientId: string;
-    private _existing: boolean;
     private _parentBranch: string;
     // tslint:enable:variable-name
 
     constructor(
-        existing: boolean,
+        public readonly existing: boolean,
         document: core.IDocument,
         private producer: IProducer,
         private tenantId: string,
         private documentId: string,
-        clientId: string,
+        public readonly clientId: string,
         private user: IUser,
-        private client: IClient) {
+        private client: IClient,
+        public readonly maxMessageSize: number) {
 
-        this._clientId = clientId;
-        this._existing = existing;
         this._parentBranch = document.parent ? document.parent.documentId : null;
 
         const clientDetail: IClientJoin = {
@@ -138,7 +129,8 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
                 });
         }
 
-        this.producer.send(JSON.stringify(message), this.documentId);
+        const stringMessage = JSON.stringify(message);
+        this.producer.send(stringMessage, this.documentId);
     }
 }
 
@@ -147,10 +139,11 @@ export class KafkaOrderer implements core.IOrderer {
         storage: core.IDocumentStorage,
         producer: IProducer,
         tenantId: string,
-        documentId: string): Promise<KafkaOrderer> {
+        documentId: string,
+        maxMessageSize: number): Promise<KafkaOrderer> {
 
         const details = await storage.getOrCreateDocument(tenantId, documentId);
-        return new KafkaOrderer(details, producer, tenantId, documentId);
+        return new KafkaOrderer(details, producer, tenantId, documentId, maxMessageSize);
     }
 
     private existing: boolean;
@@ -159,7 +152,8 @@ export class KafkaOrderer implements core.IOrderer {
         private details: core.IDocumentDetails,
         private producer: IProducer,
         private tenantId: string,
-        private documentId: string) {
+        private documentId: string,
+        private maxMessageSize: number) {
         this.existing = details.existing;
     }
 
@@ -176,7 +170,8 @@ export class KafkaOrderer implements core.IOrderer {
             this.documentId,
             socket,
             user,
-            client);
+            client,
+            this.maxMessageSize);
 
         // document is now existing regardless of the original value
         this.existing = true;
@@ -192,13 +187,13 @@ export class KafkaOrderer implements core.IOrderer {
 export class KafkaOrdererFactory {
     private ordererMap = new Map<string, Promise<core.IOrderer>>();
 
-    constructor(private producer: IProducer, private storage: core.IDocumentStorage) {
+    constructor(private producer: IProducer, private storage: core.IDocumentStorage, private maxMessageSize: number) {
     }
 
     public async create(tenantId: string, documentId: string): Promise<core.IOrderer> {
         const fullId = `${tenantId}/${documentId}`;
         if (!this.ordererMap.has(fullId)) {
-            const orderer = KafkaOrderer.Create(this.storage, this.producer, tenantId, documentId);
+            const orderer = KafkaOrderer.Create(this.storage, this.producer, tenantId, documentId, this.maxMessageSize);
             this.ordererMap.set(fullId, orderer);
         }
 
