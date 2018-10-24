@@ -7,7 +7,7 @@ const localSettings = {
     historian: "http://localhost:3001",
     routerlicious: "http://localhost:3000",
     secret: "43cfc3fbf04a97c0921fd23ff10f9e4b",
-    tenantId: "local",
+    tenantId: "prague",
 };
 const remoteSettings = {
     historian: "https://historian.eu.prague.office-int.com",
@@ -27,7 +27,6 @@ const documentServices = socketStorage.createDocumentService(settings.routerlici
 pragueApi.registerDocumentService(documentServices);
 
 export async function getCollabDoc(documentId: string): Promise<pragueApi.Document> {
-
     const user = {
         id: "test",
     };
@@ -41,16 +40,20 @@ export async function getCollabDoc(documentId: string): Promise<pragueApi.Docume
         settings.secret);
 
     // Load in the latest and connect to the document
-    const collabDoc = await pragueApi.load(documentId, settings.tenantId, user, token, { blockUpdateMarkers: true });
+    const tokenProvider = new socketStorage.TokenProvider(token);
+    const collabDoc = await pragueApi.load(
+        documentId,
+        settings.tenantId,
+        user,
+        tokenProvider,
+        { blockUpdateMarkers: true });
 
-    if (!waitForConnect || collabDoc.isConnected) {
-        return collabDoc;
+    if (waitForConnect && !collabDoc.isConnected) {
+        const startTime = performance.now();
+        console.log("Waiting to connect " + documentId, performance.now());
+        await new Promise<void>((resolve) => collabDoc.once("connected", () => resolve()));
+        console.log("Document connected: " + (performance.now() - startTime) + "ms", performance.now());
     }
-    const startTime = performance.now();
-    console.log("Waiting to connect " + documentId);
-    return await new Promise<pragueApi.Document>((resolve, reject) =>
-        collabDoc.on("connected", async () => {
-            console.log("Document connected: " + (performance.now() - startTime) + "ms");
-            resolve(collabDoc);
-        }));
+
+    return collabDoc;
 }

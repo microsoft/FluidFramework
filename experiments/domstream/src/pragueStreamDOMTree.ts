@@ -371,6 +371,7 @@ export class PragueStreamDOMTree extends PFMDOM.PragueFlatMapDOMTree {
         let newNode;
         const nodeData = this.mapData.getNodeData(nodeId);
         const tagName = nodeData.tagName;
+
         if (tagName) {
             const namespaceURI = nodeData.namespaceURI;
             let element;

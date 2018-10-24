@@ -4,8 +4,10 @@
   "description": "DOM stream demo extension",
   "main": "background.js",
   "dependencies": {
-    "@prague/client-api": "^0.1.3762",
-    "@prague/socket-storage": "^0.1.3762",
+    "@prague/client-api": "^0.1.3785",
+    "@prague/map": "^0.1.3785",
+    "@prague/socket-storage": "^0.1.3785",
+    "debug": "^4.1.0",
     "jsonwebtoken": "^8.2.1",
     "webpack-chrome-extension-reloader": "^0.8.3"
   },

@@ -20,8 +20,8 @@ let streamingTabId;
 let streamingDocId;
 
 chrome.runtime.onMessage.addListener((message, sender) => {
-  console.log(message);
-  console.log(sender);
+  console.log(message, performance.now());
+  console.log(sender, performance.now());
   if (message && message.command) {
     const command = message.command;
     if (command === "Tab" || command === "PragueMap" || command === "PragueFlatMap" || command === "JSON"

@@ -3,9 +3,9 @@ import { RewriteDOMTree } from "./rewriteDOMTree";
 
 (() => {
     chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-        console.log(message[0]);
-        console.log(message[1]);
-        console.log(sender);
+        console.log(message[0], performance.now());
+        console.log(message[1], performance.now());
+        console.log(sender, performance.now());
         const command = message[0];
         const documentId = message[1];
         if (command === "PragueMap") {
