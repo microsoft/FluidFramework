@@ -10,7 +10,8 @@
     "build:full": "npm run build",
     "clean": "rimraf dist && rimraf lib",
     "tsc": "tsc",
-    "tslint": "tslint 'src/**/*.ts'"
+    "tslint": "tslint 'src/**/*.ts'",
+    "refreshVSToken": "vsts-npm-auth -config .npmrc"
   },
   "author": "Microsoft",
   "repository": "microsoft/prague",

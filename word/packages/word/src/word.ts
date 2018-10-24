@@ -1,7 +1,7 @@
 import * as api from "@prague/client-api";
 import { IMap, IMapView } from "@prague/map";
 import * as mergeTree from "@prague/merge-tree";
-import { ISequencedObjectMessage } from "@prague/runtime-definitions";
+import { ISequencedObjectMessage , IUser } from "@prague/runtime-definitions";
 import * as sharedString from "@prague/shared-string";
 import * as socketStorage from "@prague/socket-storage";
 import { EventEmitter } from "events";
@@ -359,18 +359,19 @@ api.registerDocumentService(documentService);
 async function OpenDocument(id: string): Promise<void> {
     // Load in the latest and connect to the document
     console.log("Open document");
+    const user: IUser = {
+        id: "jisach",
+    };
     const jwtToken = jwt.sign(
         {
             documentId: id,
             permission: "read:write", // use "read:write" for now
             tenantId,
-            user: {
-                id: "jisach",
-              },
+            user,
         },
         secret);
-
-    const collabDoc = await api.load(id, { blockUpdateMarkers: true, token: jwtToken });
+    const tokenProvider = new socketStorage.TokenProvider(jwtToken);
+    const collabDoc = await api.load(id, tenantId, user, tokenProvider, { blockUpdateMarkers: true });
     console.log("Opened document");
     const rootMap = collabDoc.getRoot();
     const rootView = await rootMap.getView();

@@ -2,12 +2,12 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
     <metadata>
     <id>Microsoft.Prague.Word</id>
-    <version>0.1.0</version>
+    <version>1.0.0</version>
     <description>Prague Word Nuget Package</description>
     <authors>Prague</authors>
     </metadata>
         <files>
-        <file src="dist\**" target="dist" />
-        <file src="node_modules\**" target="node_modules" />
+        <file src="dist\**" target="content\dist" />
+        <file src="node_modules\**" target="content\node_modules" />
 </files>
  </package>
