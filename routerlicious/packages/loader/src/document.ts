@@ -47,6 +47,12 @@ interface IConnectResult {
     handlerAttachedP: Promise<void>;
 }
 
+interface IBufferedChunk {
+    type: MessageType;
+
+    content: string;
+}
+
 class RuntimeStorageService implements IDocumentStorageService {
     constructor(private storageService: IDocumentStorageService, private blobs: Map<string, string>) {
     }
@@ -127,6 +133,9 @@ export class Document extends EventEmitter {
 
     // Local copy of incomplete received chunks.
     private chunkMap: Map<string, string[]> = new Map<string, string[]>();
+
+    // Local copy of sent but unacknowledged chunks.
+    private unackedChunks: Map<number, IBufferedChunk> = new Map<number, IBufferedChunk>();
 
     // TODO (mdaumi): This should be instantiated as a part of connect protocol.
     private maxOpSize: number = 1024 * 1024;
@@ -694,6 +703,7 @@ export class Document extends EventEmitter {
         const detailsP = this._deltaManager.connect("Document loading");
         this._deltaManager.on("connect", (details: IConnectionDetails) => {
             this.setConnectionState(ConnectionState.Connecting, "websocket established", details.clientId);
+            this.sendUnackedChunks();
         });
 
         this._deltaManager.on("disconnect", (nack: boolean) => {
@@ -766,6 +776,12 @@ export class Document extends EventEmitter {
         }
     }
 
+    private sendUnackedChunks() {
+        for (const message of this.unackedChunks) {
+            this.submitChunkedMessage(message[1].type, message[1].content);
+        }
+    }
+
     // TODO (mdaumi): To play nice with rest of the protocol, we only serialize chunked message.
     // We should do it for all messages and stop serializing on the server.
     private submitMessage(type: MessageType, contents: any): number {
@@ -779,6 +795,11 @@ export class Document extends EventEmitter {
             clientSequenceNumber = this._deltaManager.submit(type, contents);
         } else {
             clientSequenceNumber = this.submitChunkedMessage(type, serializedContent);
+            this.unackedChunks.set(clientSequenceNumber,
+                {
+                    content: serializedContent,
+                    type,
+                });
         }
 
         return clientSequenceNumber;
@@ -821,6 +842,12 @@ export class Document extends EventEmitter {
                 if (!chunkComplete) {
                     return;
                 } else  {
+                    if (local) {
+                        const clientSeqNumber = message.clientSequenceNumber;
+                        assert.ok(this.unackedChunks.has(clientSeqNumber),
+                            "Chunks should be stored locally until acked");
+                        this.unackedChunks.delete(clientSeqNumber);
+                    }
                     return this.prepareRemoteMessage(message);
                 }
 
