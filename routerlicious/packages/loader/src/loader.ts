@@ -1,5 +1,5 @@
 import { ICommit } from "@prague/gitresources";
-import { ICodeLoader, IDocumentService, IPlatformFactory, IUser } from "@prague/runtime-definitions";
+import { ICodeLoader, IDocumentService, IPlatformFactory, ITokenProvider, IUser } from "@prague/runtime-definitions";
 import { debug } from "./debug";
 import { Document } from "./document";
 
@@ -14,7 +14,7 @@ export async function load(
     id: string,
     tenantId: string,
     user: IUser,
-    token: string,
+    tokenProvider: ITokenProvider,
     options: any,
     platform: IPlatformFactory,
     documentService: IDocumentService,
@@ -41,7 +41,7 @@ export async function load(
     }
 
     // Verify a token was provided
-    if (!token) {
+    if (!tokenProvider.storageToken || !tokenProvider.deltaStorageToken || !tokenProvider.deltaStreamToken) {
         return Promise.reject("Must provide a token");
     }
 
@@ -49,7 +49,7 @@ export async function load(
         id,
         tenantId,
         user,
-        token,
+        tokenProvider,
         platform,
         documentService,
         codeLoader,

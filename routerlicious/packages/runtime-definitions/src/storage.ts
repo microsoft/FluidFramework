@@ -209,6 +209,11 @@ export interface IDocumentDeltaConnection extends EventEmitter {
     user: IUser;
 
     /**
+     * Maximum size of a message that can be sent to the server. Messages larger than this size must be chunked.
+     */
+    maxMessageSize: number;
+
+    /**
      * Messages sent during the connection
      */
     initialMessages?: ISequencedDocumentMessage[];

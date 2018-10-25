@@ -1,5 +1,5 @@
 imagePullPolicy: IfNotPresent
-image: prague.azurecr.io/auspkn:3756
+image: prague.azurecr.io/auspkn:latest
 name: auspkn
 replicas: 1
 

@@ -98,6 +98,10 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
         return this.details.parentBranch;
     }
 
+    public get maxMessageSize(): number {
+        return this.details.maxMessageSize;
+    }
+
     public get user(): IUser {
         return this.details.user;
     }

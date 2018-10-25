@@ -4,6 +4,7 @@ import { createReplayDocumentService } from "@prague/replay-socket-storage";
 import {
     createDocumentService,
     DefaultErrorTracking,
+    TokenProvider,
     TokenService,
 } from "@prague/socket-storage";
 import { BrowserErrorTrackingService } from "./errorTracking";
@@ -36,7 +37,7 @@ export async function initialize(
         claims.documentId,
         claims.tenantId,
         claims.user,
-        token,
+        new TokenProvider(token),
         null,
         false,
         documentServices,

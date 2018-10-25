@@ -10,13 +10,17 @@ export abstract class Producer implements IProducer {
     protected producer: any;
     protected sendPending = false;
 
-    constructor(private maxSendSize = 100) {
+    constructor(private maxMessageSize: number) {
     }
 
     /**
      * Sends the provided message to Kafka
      */
     public send(message: string, key: string): Promise<any> {
+        if (message.length >= this.maxMessageSize) {
+            return Promise.reject("Message too large");
+        }
+
         // Get the list of pending messages for the given key
         if (!(key in this.messages)) {
             this.messages[key] = [];
@@ -46,7 +50,16 @@ export abstract class Producer implements IProducer {
             const messages = this.messages[key];
 
             while (messages.length > 0) {
-                const sendBatch = messages.splice(0, this.maxSendSize);
+                let sendSize = 0;
+                let i = 0;
+                for (; i < messages.length; i++) {
+                    sendSize += messages[i].message.length;
+                    if (sendSize >= this.maxMessageSize) {
+                        break;
+                    }
+                }
+
+                const sendBatch = messages.splice(0, i);
                 this.sendCore(key, sendBatch);
             }
         }

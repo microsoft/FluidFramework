@@ -6,13 +6,15 @@ export interface IOrdererSocket {
 }
 
 export interface IOrdererConnection {
-    clientId: string;
+    readonly clientId: string;
 
     // TODO - this can probably be phased out in favor of an explicit create of the ordering context
     // For now it maps to whether the connection is to an existing ordering context or a new one
-    existing: boolean;
+    readonly existing: boolean;
 
-    parentBranch: string;
+    readonly parentBranch: string;
+
+    readonly maxMessageSize: number;
 
     order(message: IDocumentMessage): void;
 
@@ -21,6 +23,7 @@ export interface IOrdererConnection {
 
 export interface IOrderer {
     connect(socket: IWebSocket, user: IUser, client: IClient): Promise<IOrdererConnection>;
+
     close(): Promise<void>;
 }
 

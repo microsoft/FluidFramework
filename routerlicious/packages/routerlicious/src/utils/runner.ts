@@ -1,3 +1,4 @@
+import * as bytes from "bytes";
 import * as moniker from "moniker";
 import * as nconf from "nconf";
 import * as os from "os";
@@ -134,6 +135,7 @@ export function runService<T extends IResources>(
 
     // Initialize system bus connection
     const kafkaConfig = config.get("kafka:lib");
+    const maxMessageSize = bytes.parse(config.get("kafka:maxMessageSize"));
     const sendTopic = config.get("system:topics:send");
     const kafkaClientId = moniker.choose();
 
@@ -141,7 +143,8 @@ export function runService<T extends IResources>(
         kafkaConfig.name,
         kafkaConfig.endpoint,
         kafkaClientId,
-        sendTopic);
+        sendTopic,
+        maxMessageSize);
 
     const errorTrackingConfig = config.get("error") as IErrorTrackingConfig;
     let runningP;

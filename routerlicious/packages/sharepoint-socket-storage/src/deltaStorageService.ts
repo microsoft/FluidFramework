@@ -2,7 +2,7 @@ import * as api from "@prague/runtime-definitions";
 // tslint:disable-next-line:match-default-export-name
 import axios from "axios";
 import * as querystring from "querystring";
-import { IDeltaFeedResponse } from "./sharepointContracts";
+import { IDeltaFeedResponse, ISequencedDocumentOp } from "./sharepointContracts";
 
 /**
  * Storage service limited to only being able to fetch documents for a specific document
@@ -42,7 +42,20 @@ export class SharepointDeltaStorageService implements api.IDeltaStorageService {
             };
         }
         const result = await axios.get<IDeltaFeedResponse>(requestUrl, { headers });
-        return result.data.opStream;
+        const ops = result.data.value;
+        const sequencedMsgs: api.ISequencedDocumentMessage[] = [];
+
+        // TODO: Having to copy the "op" property on each element of the array is undesirable.
+        // SPO is looking into updating this layer of the envelope to match routerlicious
+        // The logic below takes care of n/n-1 when that change happens
+        if (ops.length > 0 && "op" in ops[0]) {
+            (ops as ISequencedDocumentOp[]).forEach((op) => {
+                sequencedMsgs.push(op.op);
+            });
+            return sequencedMsgs;
+        } else {
+            return ops as api.ISequencedDocumentMessage[];
+        }
     }
 
     public constructUrl(

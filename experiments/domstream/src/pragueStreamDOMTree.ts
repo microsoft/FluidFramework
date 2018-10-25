@@ -367,10 +367,11 @@ export class PragueStreamDOMTree extends PFMDOM.PragueFlatMapDOMTree {
     private createDOMNodeFromMapData(nodeId: number, doc: Document): Node {
         let domNode: Node = this.idToNodeMap.get(nodeId);
         if (domNode) { return domNode; }
-        console.log("Creating DOM Node: ", nodeId);
+        // console.log("Creating DOM Node: ", nodeId);
         let newNode;
         const nodeData = this.mapData.getNodeData(nodeId);
         const tagName = nodeData.tagName;
+
         if (tagName) {
             const namespaceURI = nodeData.namespaceURI;
             let element;
@@ -386,7 +387,12 @@ export class PragueStreamDOMTree extends PFMDOM.PragueFlatMapDOMTree {
             if (attributes) {
                 for (const attr of Object.keys(attributes)) {
                     try {
-                        element.setAttribute(attr, attributes[attr]);
+                        if (attr === "xlink:href") {
+                            // TODO: save the NS in the map
+                            element.setAttributeNS("http://www.w3.org/1999/xlink", attr, attributes[attr]);
+                        } else {
+                            element.setAttribute(attr, attributes[attr]);
+                        }
                     } catch (e) {
                         console.log("Invalid attribute name: " + attr);
                     }
@@ -408,5 +414,59 @@ export class PragueStreamDOMTree extends PFMDOM.PragueFlatMapDOMTree {
         }
         this.idToNodeMap.set(nodeId, domNode);
         return domNode;
+    }
+}
+
+export class PragueStreamWindow {
+    public static loadScrollPos(w: Window, dataMapView: pragueMap.IMapView, scrollPosField?: HTMLSpanElement) {
+        const scrollPos = JSON.parse(dataMapView.get("SCROLLPOS"));
+        console.log(scrollPos);
+        if (scrollPos) {
+            if (scrollPosField) {
+                scrollPosField.innerHTML = scrollPos[0] + ", " + scrollPos[1];
+            }
+            w.scrollTo(scrollPos[0], scrollPos[1]);
+        }
+    }
+
+    private w: Window;
+    private scrollCallback;
+    private resizeCallback;
+    private isRemote: boolean;
+
+    constructor(w: Window, dataMapView: pragueMap.IMapView, tree: PragueStreamDOMTree, isRemote: boolean) {
+        this.w = w;
+        this.isRemote = isRemote;
+
+        // Setup scroll syncing
+        this.scrollCallback = () => {
+            const pos = JSON.stringify([w.scrollX, w.scrollY]);
+            if (dataMapView.get("SCROLLPOS") === pos) { return; }
+            console.log("Update scrollpos: " + pos);
+            dataMapView.set("SCROLLPOS", pos);
+        };
+        w.addEventListener("scroll", this.scrollCallback);
+
+        if (this.isRemote) {
+            const click = (ev: MouseEvent) => {
+                const id = tree.getNodeId(ev.target as Node);
+                console.log("Send click to node id: " + id, ev.target);
+                dataMapView.set("REMOTECLICK", id);
+            };
+            w.addEventListener("click", click);
+        } else {
+            this.resizeCallback = () => {
+                const dim = { width: window.innerWidth, height: window.innerHeight };
+                console.log("Update dimension: " + dim);
+                dataMapView.set("DIMENSION", dim);
+            };
+            this.w.addEventListener("resize", this.resizeCallback);
+        }
+    }
+    public disableSync() {
+        this.w.removeEventListener("scroll", this.scrollCallback);
+        if (!this.isRemote) {
+            this.w.removeEventListener("resize", this.resizeCallback);
+        }
     }
 }

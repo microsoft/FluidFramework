@@ -32,6 +32,9 @@ export interface IConnected {
     // Whether or not this is an existing object
     existing: boolean;
 
+    // Maximum size of a message before chunking is required
+    maxMessageSize: number;
+
     // The parent branch for the document
     parentBranch: string;
 

@@ -18,7 +18,13 @@ async function loadDocument(
         const tokenService = new socketStorage.TokenService();
         const claims = tokenService.extractClaims(token);
 
-        const document = await api.load(id, claims.tenantId, claims.user, token, { encrypted: false}, version);
+        const document = await api.load(
+            id,
+            claims.tenantId,
+            claims.user,
+            new socketStorage.TokenProvider(token),
+            { encrypted: false},
+            version);
 
         console.log("Document loaded");
         return document;
@@ -164,7 +170,7 @@ function loadFull(id: string, version: resources.ICommit, config: any, token?: s
             // Register to run task only if the client type is browser.
             const client = config.client as IClient;
             if (client && client.type === "browser") {
-                agent.registerToWork(doc, client, token, config);
+                agent.registerToWork(doc, client, new socketStorage.TokenProvider(token), config);
             }
         }, (err) => {
             // TODO (auth): Display an error page here.

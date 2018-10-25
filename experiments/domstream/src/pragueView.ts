@@ -1,9 +1,10 @@
 import * as pragueApi from "@prague/client-api";
 import * as pragueMap from "@prague/map";
-import { PragueStreamDOMTree } from "./pragueStreamDOMTree";
+import { PragueStreamDOMTree, PragueStreamWindow } from "./pragueStreamDOMTree";
 import { getCollabDoc } from "./pragueUtil";
 
 const allowInteraction = true;
+
 async function loadDataView(rootView: pragueMap.IMapView, collabDoc: pragueApi.Document) {
     const dataMap = rootView.get("DOMSTREAM");
     if (!dataMap) {
@@ -17,8 +18,12 @@ async function loadDataView(rootView: pragueMap.IMapView, collabDoc: pragueApi.D
     setURL(dataMapView);
     setDimension(dataMapView);
     const tree = await setDOM(dataMapView, collabDoc);
-    setScrollPos(dataMapView);
 
+    const iframe = document.getElementById("view") as HTMLIFrameElement;
+    const w = iframe.contentWindow;
+    PragueStreamWindow.loadScrollPos(w, dataMapView);
+
+    const scrollPosField = document.getElementById("SCROLLPOS") as HTMLSpanElement;
     dataMapView.getMap().on("valueChanged", (changed, local, op) => {
         switch (changed.key) {
             case "URL":
@@ -29,7 +34,7 @@ async function loadDataView(rootView: pragueMap.IMapView, collabDoc: pragueApi.D
                 break;
             case "SCROLLPOS":
                 if (!local) {
-                    setScrollPos(dataMapView);
+                    PragueStreamWindow.loadScrollPos(w, dataMapView, scrollPosField);
                 }
                 break;
             case "DOM":
@@ -41,22 +46,9 @@ async function loadDataView(rootView: pragueMap.IMapView, collabDoc: pragueApi.D
         }
     });
 
-    // Send scroll events
-    const iframe = document.getElementById("view") as HTMLIFrameElement;
-    const w = iframe.contentWindow;
-    const scroll = () => {
-        if (!allowInteraction) { w.removeEventListener("scroll", scroll); }
-        const pos = { x: w.scrollX, y: w.scrollY };
-        console.log("Update scrollpos: " + pos);
-        dataMapView.set("SCROLLPOS", pos);
-    };
-    w.addEventListener("scroll", scroll);
-
-    w.addEventListener("click", (ev: MouseEvent) => {
-        const id = tree.getNodeId(ev.target as Node);
-        console.log("Send click to node id: " + id, ev.target);
-        dataMapView.set("REMOTECLICK", id);
-    });
+    if (allowInteraction) {
+        new PragueStreamWindow(iframe.contentWindow, dataMapView, tree, true); // tslint:disable-line
+    }
 }
 
 async function initFromPrague(documentId: string) {
@@ -68,6 +60,7 @@ async function initFromPrague(documentId: string) {
 
     rootView.getMap().on("valueChanged", (changed, local, op) => {
         if (changed.key === "DOMSTREAM") {
+            console.log("Loading new page");
             loadDataView(rootView, collabDoc);
         }
     });
@@ -87,20 +80,8 @@ function setDimension(dataMapView) {
         const iframe = document.getElementById("view") as HTMLIFrameElement;
         iframe.width = dimension.width;
         iframe.height = dimension.height;
-    }
-    // Also update the scroll pos after resize.
-    setScrollPos(dataMapView);
-}
-
-function setScrollPos(dataMapView) {
-    const scrollPos = dataMapView.get("SCROLLPOS");
-    console.log(scrollPos);
-    if (scrollPos) {
-        const scrollPosField = document.getElementById("SCROLLPOS") as HTMLSpanElement;
-        scrollPosField.innerHTML = scrollPos.x + ", " + scrollPos.y;
-
-        const iframe = document.getElementById("view") as HTMLIFrameElement;
-        iframe.contentWindow.scrollTo(scrollPos.x, scrollPos.y);
+        // Also update the scroll pos after resize.
+        PragueStreamWindow.loadScrollPos(iframe.contentWindow, dataMapView);
     }
 }
 
@@ -122,11 +103,12 @@ async function streamDOMFromPrague(dataMapView: pragueMap.IMapView, collabDoc: p
     }
     const domMapView = await domMap.getView();
     if (!dataMapView.has("DOMFLATMAPNODE")) { return; }
-
     const domRootNode = dataMapView.get("DOMFLATMAPNODE");
 
+    const startTime = performance.now();
     const tree = new PragueStreamDOMTree();
     tree.readFromMap(domMapView, collabDoc, domRootNode, doc);
+    document.getElementById("loadtime").innerHTML = (performance.now() - startTime) + "ms";
     return tree;
 }
 

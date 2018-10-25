@@ -114,7 +114,6 @@ class LocalContext implements IContext {
 }
 
 class LocalOrdererConnection implements IOrdererConnection {
-
     public readonly parentBranch: string;
 
     constructor(
@@ -127,7 +126,8 @@ class LocalOrdererConnection implements IOrdererConnection {
         private documentId: string,
         public readonly clientId: string,
         private user: IUser,
-        private client: IClient) {
+        private client: IClient,
+        public readonly maxMessageSize: number) {
 
         this.parentBranch = document.parent ? document.parent.documentId : null;
 
@@ -226,7 +226,8 @@ export class LocalOrderer implements core.IOrderer {
         documentId: string,
         taskMessageSender: core.ITaskMessageSender,
         tenantManager: ITenantManager,
-        permission: any) {
+        permission: any,
+        maxMessageSize: number) {
 
         const [details, documentCollection, deltasCollection] = await Promise.all([
             storage.getOrCreateDocument(tenantId, documentId),
@@ -242,7 +243,8 @@ export class LocalOrderer implements core.IOrderer {
             deltasCollection,
             taskMessageSender,
             tenantManager,
-            permission);
+            permission,
+            maxMessageSize);
     }
 
     private static pubSub = new PubSub();
@@ -269,7 +271,8 @@ export class LocalOrderer implements core.IOrderer {
         deltasCollection: ICollection<any>,
         private taskMessageSender: core.ITaskMessageSender,
         private tenantManager: ITenantManager,
-        private permission: any) {
+        private permission: any,
+        private maxMessageSize: number) {
 
         this.existing = details.existing;
 
@@ -335,7 +338,8 @@ export class LocalOrderer implements core.IOrderer {
             this.documentId,
             clientId,
             user,
-            client);
+            client,
+            this.maxMessageSize);
 
         // document is now existing regardless of the original value
         this.existing = true;

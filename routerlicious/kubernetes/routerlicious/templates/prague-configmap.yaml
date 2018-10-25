@@ -34,10 +34,12 @@ data:
             "lib": {
                 "name": "kafka-node",
                 "endpoint": "{{ .Values.zookeeper.url }}"
-            }
+            },
+            "maxMessageSize": "1MB"
         },
         "alfred": {
             "kafkaClientId": "{{ template "alfred.fullname" . }}",
+            "maxMessageSize": "16KB",
             "topic": "{{ .Values.kafka.topics.rawdeltas }}",
             "bucket": "snapshots",
             "restJsonSize": "50mb",

@@ -151,7 +151,7 @@ export class Store {
             documentId,
             config.tenantId,
             {id: userId},
-            token,
+            new socketStorage.TokenProvider(token),
             null,
             factory,
             config.documentService,

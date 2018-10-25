@@ -1,5 +1,5 @@
 import * as MergeTree from "@prague/merge-tree";
-import { IUser } from "@prague/runtime-definitions";
+import { ITokenProvider, IUser } from "@prague/runtime-definitions";
 import { EventEmitter } from "events";
 import { AgentLoader, IAgent } from "./agentLoader";
 import { IDocumentServiceFactory, IDocumentTaskInfo, IWork, IWorkManager } from "./definitions";
@@ -28,16 +28,21 @@ export class WorkManager extends EventEmitter implements IWorkManager {
         });
     }
 
-    public async startDocumentWork(tenantId: string, documentId: string, user: IUser, workType: string, token: string) {
+    public async startDocumentWork(
+        tenantId: string,
+        documentId: string,
+        user: IUser,
+        workType: string,
+        tokenProvider: ITokenProvider) {
         const services = await this.serviceFactory.getService(tenantId);
 
         switch (workType) {
             case "snapshot":
-                const snapshotWork = new SnapshotWork(documentId, tenantId, user, token, this.config, services);
+                const snapshotWork = new SnapshotWork(documentId, tenantId, user, tokenProvider, this.config, services);
                 await this.startTask(tenantId, documentId, workType, snapshotWork);
                 break;
             case "intel":
-                const intelWork = new IntelWork(documentId, tenantId, user, token, this.config, services);
+                const intelWork = new IntelWork(documentId, tenantId, user, tokenProvider, this.config, services);
                 await this.startTask(tenantId, documentId, workType, intelWork);
                 break;
             case "spell":
@@ -49,7 +54,7 @@ export class WorkManager extends EventEmitter implements IWorkManager {
                         documentId,
                         tenantId,
                         user,
-                        token,
+                        tokenProvider,
                         this.config,
                         this.dict,
                         services);
@@ -61,7 +66,7 @@ export class WorkManager extends EventEmitter implements IWorkManager {
                     documentId,
                     tenantId,
                     user,
-                    token,
+                    tokenProvider,
                     this.config,
                     services);
                 await this.startTask(tenantId, documentId, workType, translationWork);

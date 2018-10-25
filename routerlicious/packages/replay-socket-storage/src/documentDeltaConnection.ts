@@ -11,6 +11,9 @@ import { EventEmitter } from "events";
 // Simulated delay interval for emitting the ops
 const DelayInterval = 50;
 
+// Since the replay service never actually sends messages the size below is arbitrary
+const ReplayMaxMessageSize = 16 * 1024;
+
 export class ReplayDocumentDeltaConnection extends EventEmitter implements IDocumentDeltaConnection {
     public static async Create(
         tenantId: string,
@@ -21,13 +24,21 @@ export class ReplayDocumentDeltaConnection extends EventEmitter implements IDocu
         replayTo: number,
        ): Promise<IDocumentDeltaConnection> {
 
-        const connection = {user: null, clientId: "", existing: true, parentBranch: null, initialMessages: []};
+        const connection = {
+            clientId: "",
+            existing: true,
+            initialMessages: [],
+            maxMessageSize: ReplayMaxMessageSize,
+            parentBranch: null,
+            user: null,
+        };
         const deltaConnection = new ReplayDocumentDeltaConnection(id, connection);
         // tslint:disable-next-line:no-floating-promises
         this.FetchAndEmitOps(deltaConnection, tenantId, id, token, storageService, replayFrom, replayTo);
 
         return deltaConnection;
     }
+
     private static async FetchAndEmitOps(
         deltaConnection: ReplayDocumentDeltaConnection,
         tenantId: string,
@@ -83,6 +94,8 @@ export class ReplayDocumentDeltaConnection extends EventEmitter implements IDocu
     public get initialMessages(): ISequencedDocumentMessage[] {
         return this.details.initialMessages;
     }
+
+    public readonly maxMessageSize = ReplayMaxMessageSize;
 
     constructor(
         public documentId: string,

@@ -99,7 +99,7 @@ export async function create(
     const tokenService = new socketStorage.TokenService();
     const claims = tokenService.extractClaims(token);
 
-    document = await api.load(id, claims.tenantId, claims.user, token, { });
+    document = await api.load(id, claims.tenantId, claims.user, new socketStorage.TokenProvider(token), { });
     const root = await document.getRoot().getView();
 
     root.set("presence", document.createMap());

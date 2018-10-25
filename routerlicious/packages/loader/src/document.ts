@@ -19,6 +19,7 @@ import {
     ISequencedDocumentMessage,
     ISequencedProposal,
     ISnapshotTree,
+    ITokenProvider,
     ITree,
     ITreeEntry,
     IUser,
@@ -97,14 +98,14 @@ export class Document extends EventEmitter {
         id: string,
         tenantId: string,
         user: IUser,
-        token: string,
+        tokenProvider: ITokenProvider,
         platform: IPlatformFactory,
         service: IDocumentService,
         codeLoader: ICodeLoader,
         options: any,
         specifiedVersion: ICommit,
         connect: boolean): Promise<Document> {
-        const doc = new Document(id, tenantId, user, token, platform, service, codeLoader, options);
+        const doc = new Document(id, tenantId, user, tokenProvider, platform, service, codeLoader, options);
         await doc.load(specifiedVersion, connect);
 
         return doc;
@@ -135,10 +136,7 @@ export class Document extends EventEmitter {
     private chunkMap: Map<string, string[]> = new Map<string, string[]>();
 
     // Local copy of sent but unacknowledged chunks.
-    private unackedChunks: Map<number, IBufferedChunk> = new Map<number, IBufferedChunk>();
-
-    // TODO (mdaumi): This should be instantiated as a part of connect protocol.
-    private maxOpSize: number = 1024 * 1024;
+    private unackedChunkedMessages: Map<number, IBufferedChunk> = new Map<number, IBufferedChunk>();
 
     public get tenantId(): string {
        return this._tenantId;
@@ -186,7 +184,7 @@ export class Document extends EventEmitter {
         id: string,
         tenantId: string,
         user: IUser,
-        private token: string,
+        private tokenProvider: ITokenProvider,
         private platform: IPlatformFactory,
         private service: IDocumentService,
         private codeLoader: ICodeLoader,
@@ -279,7 +277,7 @@ export class Document extends EventEmitter {
     }
 
     private async load(specifiedVersion: ICommit, connect: boolean): Promise<void> {
-        const storageP = this.service.connectToStorage(this.tenantId, this.id, this.token);
+        const storageP = this.service.connectToStorage(this.tenantId, this.id, this.tokenProvider.storageToken);
 
         // If a version is specified we will load it directly - otherwise will query historian for the latest
         // version and then load it
@@ -697,7 +695,12 @@ export class Document extends EventEmitter {
     private connect(attributesP: Promise<IDocumentAttributes>): IConnectResult {
         // Create the DeltaManager and begin listening for connection events
         const clientDetails = this.options ? this.options.client : null;
-        this._deltaManager = new DeltaManager(this.id, this.tenantId, this.token, this.service, clientDetails);
+        this._deltaManager = new DeltaManager(
+            this.id,
+            this.tenantId,
+            this.tokenProvider,
+            this.service,
+            clientDetails);
 
         // Open a connection - the DeltaMananger will automatically reconnect
         const detailsP = this._deltaManager.connect("Document loading");
@@ -777,8 +780,11 @@ export class Document extends EventEmitter {
     }
 
     private sendUnackedChunks() {
-        for (const message of this.unackedChunks) {
-            this.submitChunkedMessage(message[1].type, message[1].content);
+        for (const message of this.unackedChunkedMessages) {
+            this.submitChunkedMessage(
+                message[1].type,
+                message[1].content,
+                this._deltaManager.maxMessageSize);
         }
     }
 
@@ -788,37 +794,40 @@ export class Document extends EventEmitter {
         if (this.connectionState !== ConnectionState.Connected) {
             return -1;
         }
+
         const serializedContent = JSON.stringify(contents);
+        const maxOpSize = this._deltaManager.maxMessageSize;
 
         let clientSequenceNumber: number;
-        if (serializedContent.length <= this.maxOpSize) {
+        if (serializedContent.length <= maxOpSize) {
             clientSequenceNumber = this._deltaManager.submit(type, contents);
         } else {
-            clientSequenceNumber = this.submitChunkedMessage(type, serializedContent);
-            this.unackedChunks.set(clientSequenceNumber,
+            clientSequenceNumber = this.submitChunkedMessage(type, serializedContent, maxOpSize);
+            this.unackedChunkedMessages.set(clientSequenceNumber,
                 {
                     content: serializedContent,
                     type,
                 });
+            clientSequenceNumber = this.submitChunkedMessage(type, serializedContent, maxOpSize);
         }
 
         return clientSequenceNumber;
     }
 
-    private submitChunkedMessage(type: MessageType, content: string): number {
+    private submitChunkedMessage(type: MessageType, content: string, maxOpSize: number): number {
         const contentLength = content.length;
-        const chunkN = Math.floor(contentLength / this.maxOpSize) + ((contentLength % this.maxOpSize === 0) ? 0 : 1);
+        const chunkN = Math.floor(contentLength / maxOpSize) + ((contentLength % maxOpSize === 0) ? 0 : 1);
         console.log(`Submitting ${content.length} size message as ${chunkN} chunks`);
         let offset = 0;
         let clientSequenceNumber;
         for (let i = 1; i <= chunkN; i = i + 1) {
             const chunkedOp: IChunkedOp = {
                 chunkId: i,
-                contents: content.substr(offset, this.maxOpSize),
+                contents: content.substr(offset, maxOpSize),
                 originalType: type,
                 totalChunks: chunkN,
             };
-            offset += this.maxOpSize;
+            offset += maxOpSize;
             clientSequenceNumber = this._deltaManager.submit(MessageType.ChunkedOp, chunkedOp);
         }
         return clientSequenceNumber;
@@ -844,9 +853,9 @@ export class Document extends EventEmitter {
                 } else  {
                     if (local) {
                         const clientSeqNumber = message.clientSequenceNumber;
-                        assert.ok(this.unackedChunks.has(clientSeqNumber),
+                        assert.ok(this.unackedChunkedMessages.has(clientSeqNumber),
                             "Chunks should be stored locally until acked");
-                        this.unackedChunks.delete(clientSeqNumber);
+                        this.unackedChunkedMessages.delete(clientSeqNumber);
                     }
                     return this.prepareRemoteMessage(message);
                 }

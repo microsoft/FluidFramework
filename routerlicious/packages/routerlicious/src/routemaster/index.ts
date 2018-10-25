@@ -1,3 +1,4 @@
+import * as bytes from "bytes";
 import { Provider } from "nconf";
 import { IPartitionLambdaFactory } from "../kafka-service/lambdas";
 import * as services from "../services";
@@ -11,6 +12,7 @@ export async function create(config: Provider): Promise<IPartitionLambdaFactory>
 
     const kafkaEndpoint = config.get("kafka:lib:endpoint");
     const kafkaLibrary = config.get("kafka:lib:name");
+    const maxMessageSize = bytes.parse(config.get("kafka:maxMessageSize"));
 
     const kafkaClientId = config.get("routemaster:clientId");
     const sendTopic = config.get("routemaster:topics:send");
@@ -21,7 +23,7 @@ export async function create(config: Provider): Promise<IPartitionLambdaFactory>
     const client = await mongoManager.getDatabase();
     const collection = await client.collection(documentsCollectionName);
     const deltas = await client.collection(deltasCollectionName);
-    const producer = utils.createProducer(kafkaLibrary, kafkaEndpoint, kafkaClientId, sendTopic);
+    const producer = utils.createProducer(kafkaLibrary, kafkaEndpoint, kafkaClientId, sendTopic, maxMessageSize);
 
     return new RouteMasterLambdaFactory(mongoManager, collection, deltas, producer);
 }

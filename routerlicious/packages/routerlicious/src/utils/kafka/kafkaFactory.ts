@@ -16,8 +16,13 @@ export function createConsumer(
         : new KafkaNodeConsumer(endPoint, clientId, groupId, topic, autoCommit);
 }
 
-export function createProducer(type: string, endPoint: string, clientId: string, topic: string): IProducer {
+export function createProducer(
+    type: string,
+    endPoint: string,
+    clientId: string,
+    topic: string,
+    maxKafkaMessageSize: number): IProducer {
     return type === "kafka-rest"
-        ? new KafkaRestProducer(endPoint, topic)
-        : new KafkaNodeProducer(endPoint, clientId, topic);
+        ? new KafkaRestProducer(endPoint, topic, maxKafkaMessageSize)
+        : new KafkaNodeProducer(endPoint, clientId, topic, maxKafkaMessageSize);
 }

@@ -1,3 +1,4 @@
+import * as bytes from "bytes";
 import { Provider } from "nconf";
 import * as os from "os";
 import * as core from "../core";
@@ -41,7 +42,8 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
         const kafkaClientId = config.get("alfred:kafkaClientId");
         const topic = config.get("alfred:topic");
         const metricClientConfig = config.get("metric");
-        const producer = utils.createProducer(kafkaLibrary, kafkaEndpoint, kafkaClientId, topic);
+        const maxKafkaMessageSize = bytes.parse(config.get("kafka:maxMessageSize"));
+        const producer = utils.createProducer(kafkaLibrary, kafkaEndpoint, kafkaClientId, topic, maxKafkaMessageSize);
         const redisConfig = config.get("redis");
         const webSocketLibrary = config.get("alfred:webSocketLib");
         const authEndpoint = config.get("auth:endpoint");
@@ -87,6 +89,8 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
 
         const storage = new services.DocumentStorage(databaseManager, tenantManager, producer);
 
+        const maxSendMessageSize = bytes.parse(config.get("alfred:maxMessageSize"));
+
         const address = `${await utils.getHostIp()}:4000`;
         const nodeFactory = new services.LocalNodeFactory(
             os.hostname(),
@@ -96,9 +100,10 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
             60000,
             taskMessageSender,
             tenantManager,
-            tmzConfig.permissions);
+            tmzConfig.permissions,
+            maxSendMessageSize);
         const localOrderManager = new services.LocalOrderManager(nodeFactory, reservationManager);
-        const kafkaOrdererFactory = new services.KafkaOrdererFactory(producer, storage);
+        const kafkaOrdererFactory = new services.KafkaOrdererFactory(producer, storage, maxSendMessageSize);
         const orderManager = new services.OrdererManager(localOrderManager, kafkaOrdererFactory);
 
         // Tenants attached to the apps this service exposes

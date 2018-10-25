@@ -52,6 +52,7 @@ export interface IConnectedMessage {
     clientId: string;
     existing: boolean;
     parentBranch: string;
+    maxMessageSize: number;
 }
 
 export interface INodeMessage {

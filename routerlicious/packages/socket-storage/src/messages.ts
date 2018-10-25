@@ -37,6 +37,9 @@ export interface IConnected {
 
     // Messages sent during the connection
     initialMessages?: ISequencedDocumentMessage[];
+
+    // Maximum size of a message that can be sent to the service
+    maxMessageSize: number;
 }
 
 /**
