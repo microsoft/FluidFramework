@@ -204,7 +204,7 @@ data:
             "serverUrl": "{{ .Values.alfred.externalUrl }}",
             "blobStorageUrl": "{{ .Values.historian.externalUrl }}",
             "repository": "prague",
-            "npm": "https://packages.wu2.prague.office-int.com",
+            "npm": "https://pragueauspkn-3873244262.azureedge.net",
             "permission": ["snapshot", "spell", "intel", "translation"]
         },
         "tenantConfig": [
