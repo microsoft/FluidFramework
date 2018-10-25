@@ -118,6 +118,12 @@ services:
             MINIO_ACCESS_KEY: prague
             MINIO_SECRET_KEY: mhioAkNXTwdX4dXWgKgXVtHo
         command: server /export
+    auspkn:
+        image: prague.azurecr.io/auspkn:3771
+        ports:
+            - "3002:3000"
+        environment:
+            - npm__url=http://verdaccio:4873
     verdaccio:
         image: verdaccio/verdaccio:3.8.1
         ports:

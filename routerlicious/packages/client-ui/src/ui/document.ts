@@ -3,6 +3,7 @@ import { getChaincodeRepo, getDefaultCredentials, getDefaultDocumentService } fr
 import * as loader from "@prague/loader";
 import { WebLoader, WebPlatform } from "@prague/loader-web";
 import { IPlatform, IPlatformFactory, IRuntime, IUser } from "@prague/runtime-definitions";
+import { TokenProvider } from "@prague/socket-storage";
 import { EventEmitter } from "events";
 import * as jwt from "jsonwebtoken";
 import { FlowViewContext } from "./flowViewContext";
@@ -144,7 +145,8 @@ export class Document extends Block<DocumentState> {
                 tenantId: credentials.tenant,
                 user: { id: "loader-client" },
             },
-            credentials.key);
+            credentials.key) as string;
+        const tokenProvider = new TokenProvider(token);
 
         const webLoader = new WebLoader(getChaincodeRepo());
 
@@ -160,7 +162,7 @@ export class Document extends Block<DocumentState> {
             self.id,
             credentials.tenant,
             user,
-            token,
+            tokenProvider,
             { blockUpdateMarkers: true },
             platformFactory,
             getDefaultDocumentService(),
