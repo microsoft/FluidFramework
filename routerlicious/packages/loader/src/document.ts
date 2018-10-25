@@ -808,7 +808,6 @@ export class Document extends EventEmitter {
                     content: serializedContent,
                     type,
                 });
-            clientSequenceNumber = this.submitChunkedMessage(type, serializedContent, maxOpSize);
         }
 
         return clientSequenceNumber;
