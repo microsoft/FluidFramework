@@ -852,9 +852,9 @@ export class Document extends EventEmitter {
                 } else  {
                     if (local) {
                         const clientSeqNumber = message.clientSequenceNumber;
-                        assert.ok(this.unackedChunkedMessages.has(clientSeqNumber),
-                            "Chunks should be stored locally until acked");
-                        this.unackedChunkedMessages.delete(clientSeqNumber);
+                        if (this.unackedChunkedMessages.has(clientSeqNumber)) {
+                            this.unackedChunkedMessages.delete(clientSeqNumber);
+                        }
                     }
                     return this.prepareRemoteMessage(message);
                 }
