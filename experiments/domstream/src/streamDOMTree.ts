@@ -1,6 +1,6 @@
 import { debugDOM } from "./debug";
+import * as FMDOM from "./flatMapDOMTree";
 import { IMapViewWrapper } from "./mapWrapper";
-import * as FMDOM from "./pragueFlatMapDOMTree";
 
 class MapSyncDOMData extends FMDOM.MapDOMData {
     private valueChangeCallback:

@@ -3,7 +3,7 @@ import * as pragueMap from "@prague/map";
 import { debug, debugDOM } from "./debug";
 import { PragueMapViewWrapper } from "./pragueMapWrapper";
 import { getCollabDoc } from "./pragueUtil";
-import { StreamDOMTree, StreamWindow } from "./pragueStreamDOMTree";
+import { StreamDOMTree, StreamWindow } from "./streamDOMTree";
 
 const allowInteraction = true;
 

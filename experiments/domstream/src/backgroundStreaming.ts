@@ -7,7 +7,7 @@ let collabDoc;
 
 export class BackgroundStreaming {
     public static init() {
-        chrome.runtime.onConnect.addListener((port) => {            
+        chrome.runtime.onConnect.addListener((port) => {
             const frame = ContentFrame.register(port);
             if (collabDoc) {
                 frame.startStreaming();
@@ -16,7 +16,10 @@ export class BackgroundStreaming {
     }
 
     public static async start(docId: string, tabId: number) {
-        if (collabDoc) { console.error("Shouldn't start background stream when there is already an collabDoc"); return; }
+        if (collabDoc) {
+            console.error("Shouldn't start background stream when there is already an collabDoc");
+            return;
+        }
         collabDoc = await getCollabDoc(docId);
         debug("Start streaming tab", tabId, docId);
         ContentFrame.forEachFrame(tabId, (frame) => {
@@ -25,7 +28,10 @@ export class BackgroundStreaming {
     }
 
     public static stop(tabId: number) {
-        if (!collabDoc) { console.error("Shouldn't stop background stream when there is no collabDoc"); return; }
+        if (!collabDoc) {
+            console.error("Shouldn't stop background stream when there is no collabDoc");
+            return;
+        }
         debug("Stop streaming tab", tabId);
         ContentFrame.forEachFrame(tabId, (frame) => {
             frame.stopStreaming();
@@ -37,7 +43,6 @@ export class BackgroundStreaming {
 
 class ContentFrame extends PortHolder {
     public static register(port: chrome.runtime.Port) {
-        
         const sender = port.sender;
         const tabId = sender.tab.id;
         const frameId = sender.frameId;

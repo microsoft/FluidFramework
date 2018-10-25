@@ -1,11 +1,11 @@
 import { debug, debugDOM } from "./debug";
+import { FlatMapDOMTree } from "./flatMapDOMTree";
 import { IMapViewWrapper, IMapWrapperFactory } from "./mapWrapper";
 import { PragueBackgroundMapWrapperFactory } from "./pragueBackgroundMapWrapper";
-import { FlatMapDOMTree } from "./pragueFlatMapDOMTree";
 import { PragueMapWrapperFactory } from "./pragueMapWrapper";
-import { StreamDOMTree, StreamWindow } from "./pragueStreamDOMTree";
 import { getCollabDoc } from "./pragueUtil";
 import { RewriteDOMTree } from "./rewriteDOMTree";
+import { StreamDOMTree, StreamWindow } from "./streamDOMTree";
 
 const debugPragueMap = false;
 async function MapWrapperToObject(mapView: IMapViewWrapper): Promise<object> {
@@ -81,7 +81,7 @@ async function saveDOM(mapWrapperFactory: IMapWrapperFactory, useFlatMap: boolea
 
     rootViewWrapper.setMapView("DOMSTREAM", dataMapWrapper);
     // collabDoc.save();
-    debug("Finish sending to Prague - " + (performance.now() - startTime) + "ms");    
+    debug("Finish sending to Prague - " + (performance.now() - startTime) + "ms");
 }
 
 let mutationObserver: MutationObserver;
