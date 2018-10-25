@@ -1,12 +1,19 @@
+import { debugDOM } from "./debug";
 import { IMapViewWrapper } from "./mapWrapper";
-import * as PFMDOM from "./pragueFlatMapDOMTree";
+import * as FMDOM from "./pragueFlatMapDOMTree";
 
-class PragueMapSyncDOMData extends PFMDOM.PragueMapDOMData {
+class MapSyncDOMData extends FMDOM.MapDOMData {
     private valueChangeCallback:
         (nodeId: number, key: string, value: string, deleted: boolean) => void;
     constructor(mapView: IMapViewWrapper) {
         super(mapView);
-        mapView.onNonLocalValueChanged((combinedKey: string, value: any, deleted: boolean) => {
+    }
+    public async Populate() {
+        await super.Populate();
+        this.startSync();
+    }
+    public startSync() {
+        this.mapView.onNonLocalValueChanged((combinedKey: string, value: any, deleted: boolean) => {
             const combinedKeyArray = JSON.parse(combinedKey);
             const nodeId = combinedKeyArray[0];
             const key = combinedKeyArray[1];
@@ -22,7 +29,7 @@ class PragueMapSyncDOMData extends PFMDOM.PragueMapDOMData {
             } else {
                 nodeData[key] = value;
             }
-            console.log("Map value changed: ", combinedKey, value);
+            debugDOM("Map value changed: ", combinedKey, value);
             if (this.valueChangeCallback) {
                 this.valueChangeCallback(nodeId, key, value, deleted);
             }
@@ -33,54 +40,54 @@ class PragueMapSyncDOMData extends PFMDOM.PragueMapDOMData {
     }
 }
 
-class PragueStreamDOMElement extends PFMDOM.PragueFlatMapDOMElement {
-    public initializeFromMap(nodeId: number, attributeId: number, map: PragueMapSyncDOMData) {
+class StreamDOMElement extends FMDOM.FlatMapDOMElement {
+    public initializeFromMap(nodeId: number, attributeId: number, map: MapSyncDOMData) {
         this.nodeId = nodeId;
         this.attributeId = attributeId;
         this.setEmitted(map);
     }
-    public updateChildList(map: PragueMapSyncDOMData, tree: PragueStreamDOMTree) {
+    public updateChildList(map: MapSyncDOMData, tree: StreamDOMTree) {
         this.initializeChildren(tree);
-        this.setChildListOnPragueFlatMap(map, tree);
-        console.log("Update children: node=" + this.nodeId);
+        this.setChildListOnFlatMap(map, tree);
+        debugDOM("Update children: node=" + this.nodeId);
     }
-    public updateAttribute(map: PragueMapSyncDOMData, name: string) {
+    public updateAttribute(map: MapSyncDOMData, name: string) {
         const unpatchedValue = this.element.getAttribute(name);
         const value = this.patchAttribute(this.getTagName(), name, unpatchedValue, false);
 
         if (value != null) {
-            this.setAttributeOnPragueFlatMap(map, name, value);
-            console.log("Update attribute: node=" + this.nodeId + " attributesNode=" + this.attributeId
+            this.setAttributeOnFlatMap(map, name, value);
+            debugDOM("Update attribute: node=" + this.nodeId + " attributesNode=" + this.attributeId
                 + " attribute=" + name + " value=" + value);
         } else {
-            console.log("Delete attribute: node=" + this.nodeId + " attributesNode=" + this.attributeId
+            debugDOM("Delete attribute: node=" + this.nodeId + " attributesNode=" + this.attributeId
                 + " attribute=" + name);
             map.deleteNodeData(this.attributeId, name);
         }
     }
-    protected setEmitted(map: PragueMapSyncDOMData) {
+    protected setEmitted(map: MapSyncDOMData) {
         super.setEmitted(map);
 
         // Set up DOM -> map updates
         this.element.addEventListener("scroll", () => {
-            this.setScrollPosOnPragueFlatMap(map);
+            this.setScrollPosOnFlatMap(map);
         });
     }
 }
 
-class PragueStreamDOMTextNode extends PFMDOM.PragueFlatMapDOMTextNode {
-    public initializeFromMap(nodeId: number, map: PragueMapSyncDOMData) {
+class StreamDOMTextNode extends FMDOM.FlatMapDOMTextNode {
+    public initializeFromMap(nodeId: number, map: MapSyncDOMData) {
         this.nodeId = nodeId;
         this.setEmitted(map);
     }
-    public updateText(map: PragueMapSyncDOMData) {
-        this.setTextContentOnPragueFlatMap(map);
-        console.log("Update charData: node=" + this.nodeId);
+    public updateText(map: MapSyncDOMData) {
+        this.setTextContentOnFlatMap(map);
+        debugDOM("Update charData: node=" + this.nodeId);
     }
 }
 
-class PragueStreamDOMInputElement extends PragueStreamDOMElement {
-    public initializeFromMap(nodeId: number, attributeId: number, map: PragueMapSyncDOMData) {
+class StreamDOMInputElement extends StreamDOMElement {
+    public initializeFromMap(nodeId: number, attributeId: number, map: MapSyncDOMData) {
         // Set up extra value from the map
         const input = this.element as HTMLInputElement;
         const nodeData = map.getNodeData(nodeId);
@@ -91,7 +98,7 @@ class PragueStreamDOMInputElement extends PragueStreamDOMElement {
 
         super.initializeFromMap(nodeId, attributeId, map);
     }
-    protected setEmitted(map: PragueMapSyncDOMData) {
+    protected setEmitted(map: MapSyncDOMData) {
         super.setEmitted(map);
 
         // Set up DOM -> map updates
@@ -106,11 +113,11 @@ class PragueStreamDOMInputElement extends PragueStreamDOMElement {
     }
 }
 
-export class PragueStreamDOMTree extends PFMDOM.PragueFlatMapDOMTree {
+export class StreamDOMTree extends FMDOM.FlatMapDOMTree {
     private nodeMap: WeakMap<Node, any>;
     private idToNodeMap: Map<number, Node>;
     private attrIdToNodeMap: Map<number, Element>;
-    private mapData: PragueMapSyncDOMData;
+    private mapData: MapSyncDOMData;
     private pendingMutationEvent: any[];
 
     constructor() {
@@ -128,8 +135,9 @@ export class PragueStreamDOMTree extends PFMDOM.PragueFlatMapDOMTree {
         return this.idToNodeMap.get(id);
     }
     public setOnMapWrapper(mapView: IMapViewWrapper) {
-        this.mapData = new PragueMapSyncDOMData(mapView);
+        this.mapData = new MapSyncDOMData(mapView);
         this.getRootElement().setOnMapWrapper(this.mapData, this);
+        this.mapData.startSync();
     }
     public notifyNodeEmitted(node: Node, nodeId: number) {
         this.idToNodeMap.set(nodeId, node);
@@ -166,22 +174,23 @@ export class PragueStreamDOMTree extends PFMDOM.PragueFlatMapDOMTree {
                 const n = mutation.target;
                 const node = this.nodeMap.get(n);
                 if (!node) {
-                    console.error("Target not emitted?");
+                    console.error("Target not emitted: ", mutation.type, n);
+                    continue;
                 }
                 switch (mutation.type) {
                     case "childList":
                         // Could this be a text node?
-                        (node as PragueStreamDOMElement).updateChildList(this.mapData, this);
+                        (node as StreamDOMElement).updateChildList(this.mapData, this);
                         break;
                     case "attributes":
                         const attributeName = mutation.attributeName;
-                        (node as PragueStreamDOMElement).updateAttribute(this.mapData, attributeName);
+                        (node as StreamDOMElement).updateAttribute(this.mapData, attributeName);
                         break;
                     case "characterData":
                         if (n.nodeType === 3) {
-                            (node as PragueStreamDOMTextNode).updateText(this.mapData);
+                            (node as StreamDOMTextNode).updateText(this.mapData);
                         } else {
-                            console.log("CharacterData changed in Non-Text node " + n);
+                            console.error("CharacterData changed in Non-Text node " + n);
                         }
                         break;
                 }
@@ -198,8 +207,9 @@ export class PragueStreamDOMTree extends PFMDOM.PragueFlatMapDOMTree {
         return mutationObserver;
     }
 
-    public readFromMap(mapView: IMapViewWrapper, rootId: number, doc: Document) {
-        this.mapData = new PragueMapSyncDOMData(mapView);
+    public async readFromMap(mapView: IMapViewWrapper, rootId: number, doc: Document) {
+        this.mapData = new MapSyncDOMData(mapView);
+        await this.mapData.Populate();
         this.mapData.setValueChangeCallback((nodeId, key, value, deleted) => {
             this.mapValueChangeCallback(nodeId, key, value, deleted);
         });
@@ -210,24 +220,24 @@ export class PragueStreamDOMTree extends PFMDOM.PragueFlatMapDOMTree {
     }
 
     public FlushPendingMutationEvent() {
-        console.log("Flushing Mutation event: " + this.pendingMutationEvent.length);
+        debugDOM("Flushing Mutation event: " + this.pendingMutationEvent.length);
         for (const { nodeId, key, value, deleted } of this.pendingMutationEvent) {
             this.processMutationEvent(nodeId, key, value, deleted);
         }
         this.pendingMutationEvent.length = 0;
     }
-    protected createElementNode(e: Element): PragueStreamDOMElement {
+    protected createElementNode(e: Element): StreamDOMElement {
         let newNode;
         if (e.tagName.toUpperCase() === "INPUT") {
-            newNode = new PragueStreamDOMInputElement(e, this);
+            newNode = new StreamDOMInputElement(e, this);
         } else {
-            newNode = new PragueStreamDOMElement(e, this);
+            newNode = new StreamDOMElement(e, this);
         }
         this.nodeMap.set(e, newNode);
         return newNode;
     }
-    protected createTextNode(n: Node): PragueStreamDOMTextNode {
-        const newNode = new PragueStreamDOMTextNode(n);
+    protected createTextNode(n: Node): StreamDOMTextNode {
+        const newNode = new StreamDOMTextNode(n);
         this.nodeMap.set(n, newNode);
         return newNode;
     }
@@ -240,7 +250,7 @@ export class PragueStreamDOMTree extends PFMDOM.PragueFlatMapDOMTree {
                 return;
             }
             if (key !== "children") {
-                console.error("Unknown DOM node key changed ", nodeId, key);
+                console.error("Unknown DOM node key changed ", nodeId, key, value, deleted);
                 return;
             }
 
@@ -296,7 +306,7 @@ export class PragueStreamDOMTree extends PFMDOM.PragueFlatMapDOMTree {
                 try {
                     attributeDOMNode.setAttribute(key, value);
                 } catch (e) {
-                    console.log("Invalid attribute name: " + key);
+                    console.error("Invalid attribute name: " + key);
                 }
             }
         }
@@ -332,7 +342,6 @@ export class PragueStreamDOMTree extends PFMDOM.PragueFlatMapDOMTree {
     private createDOMNodeFromMapData(nodeId: number, doc: Document): Node {
         let domNode: Node = this.idToNodeMap.get(nodeId);
         if (domNode) { return domNode; }
-        // console.log("Creating DOM Node: ", nodeId);
         let newNode;
         const nodeData = this.mapData.getNodeData(nodeId);
         const tagName = nodeData.tagName;
@@ -359,7 +368,7 @@ export class PragueStreamDOMTree extends PFMDOM.PragueFlatMapDOMTree {
                             element.setAttribute(attr, attributes[attr]);
                         }
                     } catch (e) {
-                        console.log("Invalid attribute name: " + attr);
+                        console.error("Invalid attribute name: " + attr);
                     }
                 }
             }
@@ -382,10 +391,10 @@ export class PragueStreamDOMTree extends PFMDOM.PragueFlatMapDOMTree {
     }
 }
 
-export class PragueStreamWindow {
+export class StreamWindow {
     public static loadScrollPos(w: Window, scrollPosJsonStr: string, scrollPosField?: HTMLSpanElement) {
         const scrollPos = JSON.parse(scrollPosJsonStr);
-        console.log(scrollPos);
+        debugDOM("Loading scrollPos: ", scrollPos);
         if (scrollPos) {
             if (scrollPosField) {
                 scrollPosField.innerHTML = scrollPos[0] + ", " + scrollPos[1];
@@ -399,15 +408,14 @@ export class PragueStreamWindow {
     private resizeCallback;
     private isRemote: boolean;
 
-    constructor(w: Window, dataMapView: IMapViewWrapper, tree: PragueStreamDOMTree, isRemote: boolean) {
+    constructor(w: Window, dataMapView: IMapViewWrapper, tree: StreamDOMTree, isRemote: boolean) {
         this.w = w;
         this.isRemote = isRemote;
 
         // Setup scroll syncing
         this.scrollCallback = () => {
             const pos = JSON.stringify([w.scrollX, w.scrollY]);
-
-            console.log("Update scrollpos: " + pos);
+            debugDOM("Update scrollpos: " + pos);
             dataMapView.setIfChanged("SCROLLPOS", pos);
         };
         w.addEventListener("scroll", this.scrollCallback);
@@ -415,15 +423,15 @@ export class PragueStreamWindow {
         if (this.isRemote) {
             const click = (ev: MouseEvent) => {
                 const id = tree.getNodeId(ev.target as Node);
-                console.log("Send click to node id: " + id, ev.target);
+                debugDOM("Send click to node id: " + id, ev.target);
                 dataMapView.set("REMOTECLICK", id);
             };
             w.addEventListener("click", click);
         } else {
             this.resizeCallback = () => {
                 const dim = { width: window.innerWidth, height: window.innerHeight };
-                console.log("Update dimension: " + dim);
-                dataMapView.set("DIMENSION", JSON.stringify(dim));
+                debugDOM("Update dimension: " + dim);
+                dataMapView.setIfChanged("DIMENSION", JSON.stringify(dim));
             };
             this.w.addEventListener("resize", this.resizeCallback);
         }

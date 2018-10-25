@@ -1,11 +1,21 @@
-import { saveDOMToPrague, stopStreamToPrague } from "./pragueWrite";
+import { debug, debugPopup, debugPort} from "./debug";
+import { saveDOMToPrague, stopStreamToPrague, streamDOMToBackgroundPrague } from "./pragueWrite";
 import { RewriteDOMTree } from "./rewriteDOMTree";
 
 (() => {
+    const port = chrome.runtime.connect();
+    port.onMessage.addListener((message) => {
+        if (message[0] === "BackgroundPragueStreamStart") {
+            debugPort("Execute action: ", message[0]);
+            streamDOMToBackgroundPrague(port).catch((error) => { console.error(error); });
+        } else if (message[0] === "BackgroundPragueStreamStop") {
+            debugPort("Execute action: ", message[0]);
+            stopStreamToPrague();
+        }
+    });
+
     chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-        console.log(message[0], performance.now());
-        console.log(message[1], performance.now());
-        console.log(sender, performance.now());
+        debugPopup(message[0], message[1], sender, performance.now());
         const command = message[0];
         const documentId = message[1];
         if (command === "PragueMap") {
@@ -24,26 +34,31 @@ import { RewriteDOMTree } from "./rewriteDOMTree";
             stopStreamToPrague();
             return;
         }
-        const tree = new RewriteDOMTree();
-        tree.initializeFromDOM(document);
-        let dom;
-        if (command === "Tab") {
-            dom = tree.getHTML();
-            console.log(dom);
-        } else if (command === "JSON") {
-            dom = tree.getJSONString();
-            console.log(dom);
-            dom = "<div>" + dom + "</div>";
-        }
 
-        if (dom) {
-            console.log(document.body.outerHTML);
-            const response = {
-                DOM: dom,
-                scrollX: window.scrollX,
-                scrollY: window.scrollY,
-            };
-            sendResponse(response);
+        if (window === window.top) {
+            const tree = new RewriteDOMTree();
+            tree.initializeFromDOM(document);
+            let dom;
+            if (command === "Tab") {
+                dom = tree.getHTML();
+                debugPopup(dom);
+            } else if (command === "JSON") {
+                dom = tree.getJSONString();
+                debugPopup(dom);
+                dom = "<div>" + dom + "</div>";
+            }
+
+            if (dom) {
+                debugPopup(document.body.outerHTML);
+                const response = {
+                    DOM: dom,
+                    scrollX: window.scrollX,
+                    scrollY: window.scrollY,
+                };
+                sendResponse(response);
+            }
         }
     });
+
+    debug("Content script initialized", performance.now());
 })();

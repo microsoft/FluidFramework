@@ -41,15 +41,16 @@ export class PragueMapViewWrapper implements IMapViewWrapper {
     }
     public setIfChanged(key: string, value: string) {
         const oldValue = this.mapView.get(key);
-        if (oldValue === value) { return false; }
+        if (oldValue === value) { return; }
         this.mapView.set(key, value);
-        return true;
+        return;
     }
     public delete(key: string) {
         this.mapView.delete(key);
     }
-    public forEach(callback: (value: any, key: string) => void) {
+    public forEach(callback: (value: any, key: string) => void): Promise<void> {
         this.mapView.forEach(callback);
+        return Promise.resolve();
     }
     public onNonLocalValueChanged(callback: (key: string, value: any, deleted: boolean) => void) {
         this.mapView.getMap().on("valueChanged", (changed, local, op) => {
@@ -66,6 +67,10 @@ export class PragueMapWrapperFactory implements IMapWrapperFactory {
     private collabDoc: pragueApi.Document;
     constructor(collabDoc: pragueApi.Document) {
         this.collabDoc = collabDoc;
+    }
+
+    public async getRootMapView() {
+        return new PragueMapViewWrapper(await this.collabDoc.getRoot().getView());
     }
     public createMap() {
         return new PragueMapWrapper(this.collabDoc.createMap());

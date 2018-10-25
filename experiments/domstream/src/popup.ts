@@ -16,6 +16,7 @@
     function sendCommand(commandValue: string) {
         getCurrentTab((tab) => {
             chrome.runtime.sendMessage({
+                background: (document.getElementById("background_cb") as HTMLInputElement).checked,
                 command: commandValue,
                 docId: docName.value,
                 tab,
@@ -33,8 +34,9 @@
         document.getElementById("prague_stream_stop_btn").onclick = () => sendCommand("PragueStreamStop");
         getCurrentTab((tab) => {
             const streamingTabId = (bgPage.window as any).getStreamingTabId();
-            document.getElementById("status").innerHTML = "Streaming to "
-                + (bgPage.window as any).getStreamingDocId() + " in tab " + streamingTabId
+            const pendingStreaming = (bgPage.window as any).getIsPendingStreaming();
+            document.getElementById("status").innerHTML = (pendingStreaming ? "[PENDING] " : "") +
+                "Streaming to " + (bgPage.window as any).getStreamingDocId() + " in tab " + streamingTabId
                 + (tab.id === streamingTabId ? " (Current)" : "");
         });
 

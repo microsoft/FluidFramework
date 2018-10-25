@@ -1,8 +1,9 @@
 import * as pragueApi from "@prague/client-api";
 import * as pragueMap from "@prague/map";
+import { debug, debugDOM } from "./debug";
 import { PragueMapViewWrapper } from "./pragueMapWrapper";
-import { PragueStreamDOMTree, PragueStreamWindow } from "./pragueStreamDOMTree";
 import { getCollabDoc } from "./pragueUtil";
+import { StreamDOMTree, StreamWindow } from "./pragueStreamDOMTree";
 
 const allowInteraction = true;
 
@@ -22,7 +23,7 @@ async function loadDataView(rootView: pragueMap.IMapView, collabDoc: pragueApi.D
 
     const iframe = document.getElementById("view") as HTMLIFrameElement;
     const w = iframe.contentWindow;
-    PragueStreamWindow.loadScrollPos(w, dataMapView.get("SCROLLPOS"));
+    StreamWindow.loadScrollPos(w, dataMapView.get("SCROLLPOS"));
 
     const scrollPosField = document.getElementById("SCROLLPOS") as HTMLSpanElement;
     dataMapView.getMap().on("valueChanged", (changed, local, op) => {
@@ -35,7 +36,7 @@ async function loadDataView(rootView: pragueMap.IMapView, collabDoc: pragueApi.D
                 break;
             case "SCROLLPOS":
                 if (!local) {
-                    PragueStreamWindow.loadScrollPos(w, dataMapView.get("SCROLLPOS"), scrollPosField);
+                    StreamWindow.loadScrollPos(w, dataMapView.get("SCROLLPOS"), scrollPosField);
                 }
                 break;
             case "DOM":
@@ -48,7 +49,7 @@ async function loadDataView(rootView: pragueMap.IMapView, collabDoc: pragueApi.D
     });
 
     if (allowInteraction) {
-        new PragueStreamWindow(iframe.contentWindow, new PragueMapViewWrapper(dataMapView), tree, true); // tslint:disable-line
+        new StreamWindow(iframe.contentWindow, new PragueMapViewWrapper(dataMapView), tree, true); // tslint:disable-line
     }
 }
 
@@ -61,7 +62,7 @@ async function initFromPrague(documentId: string) {
 
     rootView.getMap().on("valueChanged", (changed, local, op) => {
         if (changed.key === "DOMSTREAM") {
-            console.log("Loading new page");
+            debug("Loading new page");
             loadDataView(rootView, collabDoc);
         }
     });
@@ -74,7 +75,7 @@ function setURL(dataMapView) {
 
 function setDimension(dataMapView) {
     const dimension = JSON.parse(dataMapView.get("DIMENSION"));
-    console.log(dimension);
+    debugDOM(dimension);
     if (dimension) {
         const dimensionField = document.getElementById("DIMENSION") as HTMLSpanElement;
         dimensionField.innerHTML = dimension.width + " x " + dimension.height;
@@ -82,7 +83,7 @@ function setDimension(dataMapView) {
         iframe.width = dimension.width;
         iframe.height = dimension.height;
         // Also update the scroll pos after resize.
-        PragueStreamWindow.loadScrollPos(iframe.contentWindow, dataMapView.get("SCROLLPOS"));
+        StreamWindow.loadScrollPos(iframe.contentWindow, dataMapView.get("SCROLLPOS"));
     }
 }
 
@@ -107,8 +108,8 @@ async function streamDOMFromPrague(dataMapView: pragueMap.IMapView, doc: Documen
     const domRootNode = dataMapView.get("DOMFLATMAPNODE");
 
     const startTime = performance.now();
-    const tree = new PragueStreamDOMTree();
-    tree.readFromMap(new PragueMapViewWrapper(domMapView), domRootNode, doc);
+    const tree = new StreamDOMTree();
+    await tree.readFromMap(new PragueMapViewWrapper(domMapView), domRootNode, doc);
     document.getElementById("loadtime").innerHTML = (performance.now() - startTime) + "ms";
     return tree;
 }
