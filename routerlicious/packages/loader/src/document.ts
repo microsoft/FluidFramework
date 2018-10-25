@@ -781,6 +781,7 @@ export class Document extends EventEmitter {
 
     private sendUnackedChunks() {
         for (const message of this.unackedChunkedMessages) {
+            console.log(`Resending unacked chunks!`);
             this.submitChunkedMessage(
                 message[1].type,
                 message[1].content,
@@ -816,7 +817,6 @@ export class Document extends EventEmitter {
     private submitChunkedMessage(type: MessageType, content: string, maxOpSize: number): number {
         const contentLength = content.length;
         const chunkN = Math.floor(contentLength / maxOpSize) + ((contentLength % maxOpSize === 0) ? 0 : 1);
-        console.log(`Submitting ${content.length} size message as ${chunkN} chunks`);
         let offset = 0;
         let clientSequenceNumber;
         for (let i = 1; i <= chunkN; i = i + 1) {
@@ -876,7 +876,6 @@ export class Document extends EventEmitter {
             message.contents = JSON.parse(serializedContent);
             message.type = chunkedContent.originalType;
             this.clearPartialChunks(clientId);
-            console.log(`Chunk processed!`);
             return true;
         }
         return false;
