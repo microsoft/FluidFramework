@@ -19,15 +19,15 @@ import { RewriteDOMTree } from "./rewriteDOMTree";
         const command = message[0];
         const documentId = message[1];
         if (command === "PragueMap") {
-            saveDOMToPrague(documentId, false, false).catch((error) => { console.error(error); });
+            saveDOMToPrague(documentId, false, false, false).catch((error) => { console.error(error); });
             return;
         }
         if (command === "PragueFlatMap") {
-            saveDOMToPrague(documentId, true, false).catch((error) => { console.error(error); });
+            saveDOMToPrague(documentId, true, false, false).catch((error) => { console.error(error); });
             return;
         }
         if (command === "PragueStreamStart") {
-            saveDOMToPrague(documentId, true, true).catch((error) => { console.error(error); });
+            saveDOMToPrague(documentId, true, true, message[2]).catch((error) => { console.error(error); });
             return;
         }
         if (command === "PragueStreamStop") {

@@ -17,11 +17,11 @@ async function MapWrapperToObject(mapView: IMapViewWrapper): Promise<object> {
 }
 
 let collabDocToClose;
-export async function saveDOMToPrague(documentId: string, useFlatMap: boolean, stream: boolean) {
+export async function saveDOMToPrague(documentId: string, useFlatMap: boolean, stream: boolean, streamops: boolean) {
     if (mutationObserver) { alert("Content script already streaming"); return; }
     // Load in the latest and connect to the document
     const collabDoc = await getCollabDoc(documentId);
-    await saveDOM(new PragueMapWrapperFactory(collabDoc), useFlatMap, stream);
+    await saveDOM(new PragueMapWrapperFactory(collabDoc, streamops), useFlatMap, stream);
     if (stream) {
         collabDocToClose = collabDoc;
     } else {

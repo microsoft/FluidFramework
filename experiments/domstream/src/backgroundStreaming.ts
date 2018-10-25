@@ -4,6 +4,7 @@ import { PortHolder } from "./portHolder";
 import { getCollabDoc } from "./pragueUtil";
 
 let collabDoc;
+let mapChuckop = true;
 
 export class BackgroundStreaming {
     public static init() {
@@ -15,12 +16,13 @@ export class BackgroundStreaming {
         });
     }
 
-    public static async start(docId: string, tabId: number) {
+    public static async start(docId: string, tabId: number, chunkop: boolean) {
         if (collabDoc) {
             console.error("Shouldn't start background stream when there is already an collabDoc");
             return;
         }
         collabDoc = await getCollabDoc(docId);
+        mapChuckop = chunkop;
         debug("Start streaming tab", tabId, docId);
         ContentFrame.forEachFrame(tabId, (frame) => {
             frame.startStreaming();
@@ -147,6 +149,9 @@ class ContentFrame extends PortHolder {
         let map = this.maps[mapId];
         if (map) { return map; }
         map = collabDoc.createMap();
+        if (!mapChuckop) {
+            collabDoc.getRoot().set("FORCEATTACH", map);
+        }
         this.maps[mapId] = map;
         this.mapViews[mapId] = null;
         return map;

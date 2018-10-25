@@ -60,7 +60,7 @@ chrome.runtime.onMessage.addListener((message, sender) => {
                     if (message.background) {
                         isBackground = true;
                         pendingStreaming = true;
-                        BackgroundStreaming.start(streamingDocId, streamingTabId).then(() => {
+                        BackgroundStreaming.start(streamingDocId, streamingTabId, message.chunkop).then(() => {
                             pendingStreaming = false;
                         });
                         return;
@@ -69,7 +69,7 @@ chrome.runtime.onMessage.addListener((message, sender) => {
             }
 
             isBackground = false;
-            chrome.tabs.sendMessage(tabId, [command, message.docId], undefined,
+            chrome.tabs.sendMessage(tabId, [command, message.docId, message.chunkop], undefined,
                 (response) => {
                     if (command === "Tab" || command === "JSON") {
                         debugPopup(response);
