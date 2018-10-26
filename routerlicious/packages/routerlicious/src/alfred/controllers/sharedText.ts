@@ -113,7 +113,7 @@ async function loadDocument(
     const tokenService = new socketStorage.TokenService();
     const claims = tokenService.extractClaims(token);
 
-    console.log(`collabDoc loading ${id} - ${performanceNow()}`);
+    console.log(`Document loading ${id}: ${performanceNow()}`);
     const tokenProvider = new socketStorage.TokenProvider(token);
     const collabDoc = await API.load(
         id,
@@ -130,7 +130,7 @@ async function loadDocument(
         agent.registerToWork(collabDoc, client, tokenProvider, config);
     }
 
-    console.log(`collabDoc loaded ${id} - ${performanceNow()}`);
+    console.log(`Document loaded ${id}: ${performanceNow()}`);
     const root = await collabDoc.getRoot().getView();
     console.log(`Getting root ${id} - ${performanceNow()}`);
 

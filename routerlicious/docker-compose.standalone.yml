@@ -6,7 +6,7 @@ services:
             - "3000:3000"
         command: node dist/alfred/www.js
         environment:
-            - DEBUG=routerlicious:*
+            - DEBUG=prague:*
             - NODE_ENV=development
         restart: always
     deli:
@@ -14,7 +14,7 @@ services:
         command: node dist/kafka-service/index.js deli ../document-router/index.js
         environment:
             - worker__intelligence__resume__url=http://alfred:3000/intelligence/resume
-            - DEBUG=routerlicious:*
+            - DEBUG=prague:*
             - NODE_ENV=development
             - documentLambda=../deli/index.js
         restart: always
@@ -22,28 +22,28 @@ services:
         image: prague.azurecr.io/prague:latest
         command: node dist/kafka-service/index.js scriptorium ../scriptorium/index.js
         environment:
-            - DEBUG=routerlicious:*
+            - DEBUG=prague:*
             - NODE_ENV=development
         restart: always
     tmz:
         image: prague.azurecr.io/prague:latest
         command: node dist/kafka-service/index.js tmz ../tmz/index.js
         environment:
-            - DEBUG=routerlicious:*
+            - DEBUG=prague:*
             - NODE_ENV=development
         restart: always
     rotograph:
         image: prague.azurecr.io/prague:latest
         command: node dist/kafka-service/index.js rotograph ../rotograph/index.js
         environment:
-            - DEBUG=routerlicious:*
+            - DEBUG=prague:*
             - NODE_ENV=development
         restart: always
     routemaster:
         image: prague.azurecr.io/prague:latest
         command: node dist/kafka-service/index.js routemaster ../document-router/index.js
         environment:
-            - DEBUG=routerlicious:*
+            - DEBUG=prague:*
             - NODE_ENV=development
             - documentLambda=../routemaster/index.js
         restart: always
@@ -51,7 +51,7 @@ services:
         image: prague.azurecr.io/prague:latest
         command: node dist/paparazzi/index.js
         environment:
-            - DEBUG=routerlicious:*
+            - DEBUG=prague:*
             - worker__intelligence__resume__url=http://alfred:3000/intelligence/resume
             - NODE_ENV=development
         restart: always
@@ -61,7 +61,7 @@ services:
             - "5000:5000"
         command: node dist/riddler/www.js
         environment:
-            - DEBUG=routerlicious:*
+            - DEBUG=prague:*
             - NODE_ENV=development
         restart: always
     historian:
@@ -69,7 +69,7 @@ services:
         ports:
             - "3001:3000"
         environment:
-            - DEBUG=routerlicious:*
+            - DEBUG=prague:*
             - NODE_ENV=development
         restart: always
     cobalt:
@@ -78,7 +78,7 @@ services:
     gitrest:
         image: prague.azurecr.io/gitrest:2239
         environment:
-            - DEBUG=routerlicious:*
+            - DEBUG=prague:*
             - NODE_ENV=development
         volumes:
             - git:/home/node/documents

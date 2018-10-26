@@ -1,3 +1,3 @@
 import * as registerDebug from "debug";
 
-export const debug = registerDebug("routerlicious:api-definitinos");
+export const debug = registerDebug("prague:api-definitinos");

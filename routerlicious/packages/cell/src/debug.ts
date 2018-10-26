@@ -1,3 +1,3 @@
 import * as registerDebug from "debug";
 
-export const debug = registerDebug("routerlicious:api:cell");
+export const debug = registerDebug("prague:cell");

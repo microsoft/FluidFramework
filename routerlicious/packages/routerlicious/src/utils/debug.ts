@@ -1,3 +1,3 @@
 import * as registerDebug from "debug";
 
-export const debug = registerDebug("routerlicious:utils");
+export const debug = registerDebug("prague:utils");
