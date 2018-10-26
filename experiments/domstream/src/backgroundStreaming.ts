@@ -4,7 +4,7 @@ import { PortHolder } from "./portHolder";
 import { getCollabDoc } from "./pragueUtil";
 
 let collabDoc;
-let mapChuckop = true;
+let mapBatchOp = true;
 
 export class BackgroundStreaming {
     public static init() {
@@ -16,13 +16,13 @@ export class BackgroundStreaming {
         });
     }
 
-    public static async start(docId: string, tabId: number, chunkop: boolean) {
+    public static async start(docId: string, tabId: number, batchOp: boolean) {
         if (collabDoc) {
             console.error("Shouldn't start background stream when there is already an collabDoc");
             return;
         }
         collabDoc = await getCollabDoc(docId);
-        mapChuckop = chunkop;
+        mapBatchOp = batchOp;
         debug("Start streaming tab", tabId, docId);
         ContentFrame.forEachFrame(tabId, (frame) => {
             frame.startStreaming();
@@ -92,6 +92,11 @@ class ContentFrame extends PortHolder {
             const command = message[0];
             let handled = true;
             switch (command) {
+                case "batch":
+                    const batchedMessages: any[][] = message[1];
+                    for (const m of batchedMessages) {
+                        this.listener(m);
+                    }
                 case "set":
                     this.getPragueMap(message[1]).set(message[2], message[3]);
                     break;
@@ -135,7 +140,7 @@ class ContentFrame extends PortHolder {
         };
         this.addMessageListener(this.listener);
 
-        this.postMessage(["BackgroundPragueStreamStart"]);
+        this.postMessage(["BackgroundPragueStreamStart", mapBatchOp]);
     }
 
     public stopStreaming() {
@@ -149,7 +154,7 @@ class ContentFrame extends PortHolder {
         let map = this.maps[mapId];
         if (map) { return map; }
         map = collabDoc.createMap();
-        if (!mapChuckop) {
+        if (!mapBatchOp) {
             collabDoc.getRoot().set("FORCEATTACH", map);
         }
         this.maps[mapId] = map;

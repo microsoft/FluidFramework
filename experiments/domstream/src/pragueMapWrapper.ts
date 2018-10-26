@@ -65,10 +65,10 @@ export class PragueMapViewWrapper implements IMapViewWrapper {
 
 export class PragueMapWrapperFactory implements IMapWrapperFactory {
     private collabDoc: pragueApi.Document;
-    private chunkop: boolean;
-    constructor(collabDoc: pragueApi.Document, chunkop: boolean) {
+    private batchOp: boolean;
+    constructor(collabDoc: pragueApi.Document, batchOp: boolean) {
         this.collabDoc = collabDoc;
-        this.chunkop = chunkop;
+        this.batchOp = batchOp;
     }
 
     public async getRootMapView() {
@@ -76,14 +76,14 @@ export class PragueMapWrapperFactory implements IMapWrapperFactory {
     }
     public createMap() {
         const newMap = this.collabDoc.createMap();
-        if (!this.chunkop) {
+        if (!this.batchOp) {
             this.collabDoc.getRoot().set("FORCEATTACH", newMap);
         }
         return new PragueMapWrapper(newMap);
     }
     public async createMapView() {
         const newMap = this.collabDoc.createMap();
-        if (!this.chunkop) {
+        if (!this.batchOp) {
             this.collabDoc.getRoot().set("FORCEATTACH", newMap);
         }
         return new PragueMapViewWrapper(await newMap.getView());

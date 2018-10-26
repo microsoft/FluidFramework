@@ -8,7 +8,7 @@ import { RewriteDOMTree } from "./rewriteDOMTree";
     port.onMessage.addListener((message) => {
         if (message[0] === "BackgroundPragueStreamStart") {
             debugPort("Execute action: ", message[0]);
-            streamDOMToBackgroundPrague(port, contentScriptInitTime).catch((error) => { console.error(error); });
+            streamDOMToBackgroundPrague(port, contentScriptInitTime, message[1]).catch((error) => { console.error(error); });
         } else if (message[0] === "BackgroundPragueStreamStop") {
             debugPort("Execute action: ", message[0]);
             stopStreamToPrague();
@@ -21,7 +21,7 @@ import { RewriteDOMTree } from "./rewriteDOMTree";
         const documentId = message[1];
         if (command === "PragueMap") {
             const options = {
-                chunkop: message[2],
+                batchOp: message[2],
                 contentScriptInitTime,
                 stream: false,
                 useFlatMap: false,
@@ -31,7 +31,7 @@ import { RewriteDOMTree } from "./rewriteDOMTree";
         }
         if (command === "PragueFlatMap") {
             const options = {
-                chunkop: message[2],
+                batchOp: message[2],
                 contentScriptInitTime,
                 stream: false,
                 useFlatMap: true,
@@ -41,7 +41,7 @@ import { RewriteDOMTree } from "./rewriteDOMTree";
         }
         if (command === "PragueStreamStart") {
             const options = {
-                chunkop: message[2],
+                batchOp: message[2],
                 contentScriptInitTime,
                 stream: true,
                 useFlatMap: true,
