@@ -45,6 +45,11 @@ Nuclio and Kube experiments
             1. Because we publish to partition 0
         4. Topic = deltas
             1. Because we publish to the deltas topic
-3. Create someway of easily checking this is all working...
+3. Create some way of verifying this flow
+    1. Go into the verification Server
+    2. npm run ngrok
+        1. Note the public URL here. You're going to sub this into the consumer lambda
+    3. npm run start
+4. Trigger the producer lambda and watch the public URL
 
 ##Profit?
