@@ -22,7 +22,7 @@ export async function saveDOMToPrague(documentId: string, options: any) {
     // Load in the latest and connect to the document
     options.startSaveSignalTime = performance.now();
     const collabDoc = await getCollabDoc(documentId);
-    await saveDOM(new PragueMapWrapperFactory(collabDoc, options.chunkop), options);
+    await saveDOM(new PragueMapWrapperFactory(collabDoc, options.batchOp), options);
     if (options.stream) {
         collabDocToClose = collabDoc;
     } else {
@@ -30,15 +30,16 @@ export async function saveDOMToPrague(documentId: string, options: any) {
     }
 }
 
-export async function streamDOMToBackgroundPrague(port: chrome.runtime.Port, contentScriptInitTime) {
+export async function streamDOMToBackgroundPrague(port: chrome.runtime.Port, contentScriptInitTime, batchOp: boolean) {
     if (mutationObserver) { alert("Content script already streaming"); return; }
     const options = {
+        batchOp,
         contentScriptInitTime,
         startSaveSignalTime: performance.now(),
         stream: true,
         useFlatMap: true,
     };
-    return saveDOM(new PragueBackgroundMapWrapperFactory(port), options);
+    return saveDOM(new PragueBackgroundMapWrapperFactory(port, options.batchOp), options);
 }
 
 async function saveDOM(mapWrapperFactory: IMapWrapperFactory, options: any) {
