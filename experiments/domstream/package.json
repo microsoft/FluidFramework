@@ -4,19 +4,16 @@
   "description": "DOM stream demo extension",
   "main": "background.js",
   "dependencies": {
-    "@prague/client-api": "^0.1.3785",
-    "@prague/map": "^0.1.3785",
-    "@prague/socket-storage": "^0.1.3785",
+    "@prague/client-api": "^0.1.3812",
+    "@prague/map": "^0.1.3812",
+    "@prague/socket-storage": "^0.1.3812",
     "debug": "^4.1.0",
     "jsonwebtoken": "^8.2.1",
     "webpack-chrome-extension-reloader": "^0.8.3"
   },
   "devDependencies": {
     "@types/chrome": "0.0.74",
-    "@types/debug": "0.0.30",
-    "@types/jquery": "^3.3.14",
     "@types/jsonwebtoken": "^7.2.7",
-    "@types/node": "^8.10.36",
     "@types/socket.io-client": "^1.4.32",
     "clean-webpack-plugin": "^0.1.19",
     "copy-webpack-plugin": "^4.5.3",

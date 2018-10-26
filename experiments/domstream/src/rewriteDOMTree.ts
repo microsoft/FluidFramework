@@ -1,5 +1,4 @@
-import * as pragueApi from "@prague/client-api";
-import * as pragueMap from "@prague/map";
+import { IMapWrapper, IMapWrapperFactory } from "./mapWrapper";
 
 class HTMLUtil {
     public static getOrigin(): string {
@@ -36,7 +35,7 @@ class HTMLUtil {
 export interface IRewriteDOMNode {
     getHTML(): string;
     getJSON();
-    getPragueMap(doc: pragueApi.Document): pragueMap.IMap;
+    getMap(mapWrapperFactory: IMapWrapperFactory): IMapWrapper;
 }
 
 export interface IRewriteDOMTree {
@@ -47,7 +46,7 @@ export interface IRewriteDOMTree {
 export class RewriteDOMTree implements IRewriteDOMTree {
     protected rootElement: IRewriteDOMNode;
 
-    public initializeFromDocument(doc: Document) {
+    public initializeFromDOM(doc: Document) {
         this.rootElement = this.getElementNode(document.documentElement);
     }
 
@@ -59,8 +58,8 @@ export class RewriteDOMTree implements IRewriteDOMTree {
         return JSON.stringify(this.rootElement.getJSON());
     }
 
-    public getPragueMap(collabDoc: pragueApi.Document): pragueMap.IMap {
-        return this.rootElement.getPragueMap(collabDoc);
+    public getMap(mapWrapperFactory: IMapWrapperFactory): IMapWrapper {
+        return this.rootElement.getMap(mapWrapperFactory);
     }
     public getElementNode(e: Element): IRewriteDOMNode | undefined {
         const tagName = e.tagName.toUpperCase();
@@ -102,8 +101,8 @@ export class RewriteDOMTextNode implements IRewriteDOMNode {
             textContent: this.getTextContent(),
         };
     }
-    public getPragueMap(collabDoc: pragueApi.Document): pragueMap.IMap {
-        const map = collabDoc.createMap();
+    public getMap(mapWrapperFactory: IMapWrapperFactory): IMapWrapper {
+        const map = mapWrapperFactory.createMap();
         map.set("textContent", this.getTextContent());
         return map;
     }
@@ -161,33 +160,33 @@ export class RewriteDOMElement implements IRewriteDOMNode {
         return obj;
     }
 
-    public getPragueMap(collabDoc: pragueApi.Document): pragueMap.IMap {
+    public getMap(mapWrapperFactory: IMapWrapperFactory): IMapWrapper {
 
         // TODO: Dynamic CSS rules added via CSSStyleSheet.insertRule doesn't get reflect in the DOM
         // And Mutation observer will not notify if it got change.  So we will miss those currently
 
         // TODO: Iframe content is not recorded.  It is also inaccessable if it is cross-origin
 
-        const map = collabDoc.createMap();
+        const map = mapWrapperFactory.createMap();
         map.set("tagName", this.getTagName());
 
         if (this.needExplicitNS()) {
             map.set("namespaceURI", this.element.namespaceURI);
         }
-        const attributes = collabDoc.createMap();
+        const attributes = mapWrapperFactory.createMap();
         this.forEachOriginalNodeAttribute((key: string, value: string) => {
             attributes.set(key, value);
         });
-        map.set("attributes", attributes);
+        map.setMap("attributes", attributes);
 
-        const children = collabDoc.createMap();
+        const children = mapWrapperFactory.createMap();
         let childrenIndex = 0;
         this.forEachOriginalNodeChild((child: IRewriteDOMNode) => {
-            children.set((childrenIndex++).toString(), child.getPragueMap(collabDoc));
+            children.setMap((childrenIndex++).toString(), child.getMap(mapWrapperFactory));
         });
         children.set("length", childrenIndex);
 
-        map.set("children", children);
+        map.setMap("children", children);
         return map;
     }
     protected initializeChildren(tree: IRewriteDOMTree): void {
@@ -203,8 +202,11 @@ export class RewriteDOMElement implements IRewriteDOMNode {
                 case 3: // TEXT_NODE
                     newNode = tree.getTextNode(curr);
                     break;
+                case 8:
+                    // Don't care about comments
+                    break;
                 default:
-                    console.error("Unexpect node type: ", curr.nodeType);
+                    console.error("Unexpected node type: ", curr.nodeType);
                     break;
             }
             if (newNode) { this.children.push(newNode); }

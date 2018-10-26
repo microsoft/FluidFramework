@@ -1,6 +1,7 @@
 import * as pragueApi from "@prague/client-api";
 import * as socketStorage from "@prague/socket-storage";
 import * as jwt from "jsonwebtoken";
+import { debug } from "./debug";
 
 // For local development
 const localSettings = {
@@ -50,9 +51,9 @@ export async function getCollabDoc(documentId: string): Promise<pragueApi.Docume
 
     if (waitForConnect && !collabDoc.isConnected) {
         const startTime = performance.now();
-        console.log("Waiting to connect " + documentId, performance.now());
+        debug("Waiting to connect " + documentId, performance.now());
         await new Promise<void>((resolve) => collabDoc.once("connected", () => resolve()));
-        console.log("Document connected: " + (performance.now() - startTime) + "ms", performance.now());
+        debug("Document connected: " + (performance.now() - startTime) + "ms", performance.now());
     }
 
     return collabDoc;
