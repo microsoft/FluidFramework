@@ -1,13 +1,14 @@
-import { debug, debugPopup, debugPort} from "./debug";
+import { debug, debugPopup, debugPort } from "./debug";
 import { saveDOMToPrague, stopStreamToPrague, streamDOMToBackgroundPrague } from "./pragueWrite";
 import { RewriteDOMTree } from "./rewriteDOMTree";
 
 (() => {
+    let contentScriptInitTime;
     const port = chrome.runtime.connect();
     port.onMessage.addListener((message) => {
         if (message[0] === "BackgroundPragueStreamStart") {
             debugPort("Execute action: ", message[0]);
-            streamDOMToBackgroundPrague(port).catch((error) => { console.error(error); });
+            streamDOMToBackgroundPrague(port, contentScriptInitTime).catch((error) => { console.error(error); });
         } else if (message[0] === "BackgroundPragueStreamStop") {
             debugPort("Execute action: ", message[0]);
             stopStreamToPrague();
@@ -19,15 +20,33 @@ import { RewriteDOMTree } from "./rewriteDOMTree";
         const command = message[0];
         const documentId = message[1];
         if (command === "PragueMap") {
-            saveDOMToPrague(documentId, false, false, false).catch((error) => { console.error(error); });
+            const options = {
+                chunkop: message[2],
+                contentScriptInitTime,
+                stream: false,
+                useFlatMap: false,
+            };
+            saveDOMToPrague(documentId, options).catch((error) => { console.error(error); });
             return;
         }
         if (command === "PragueFlatMap") {
-            saveDOMToPrague(documentId, true, false, false).catch((error) => { console.error(error); });
+            const options = {
+                chunkop: message[2],
+                contentScriptInitTime,
+                stream: false,
+                useFlatMap: true,
+            };
+            saveDOMToPrague(documentId, options).catch((error) => { console.error(error); });
             return;
         }
         if (command === "PragueStreamStart") {
-            saveDOMToPrague(documentId, true, true, message[2]).catch((error) => { console.error(error); });
+            const options = {
+                chunkop: message[2],
+                contentScriptInitTime,
+                stream: true,
+                useFlatMap: true,
+            };
+            saveDOMToPrague(documentId, options).catch((error) => { console.error(error); });
             return;
         }
         if (command === "PragueStreamStop") {
@@ -60,5 +79,6 @@ import { RewriteDOMTree } from "./rewriteDOMTree";
         }
     });
 
-    debug("Content script initialized", performance.now());
+    contentScriptInitTime = performance.now();
+    debug("Content script initialized", contentScriptInitTime);
 })();

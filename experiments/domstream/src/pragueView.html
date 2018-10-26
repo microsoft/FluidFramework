@@ -3,13 +3,61 @@
 
 <head>
     <title>Copy</title>
+    <style>
+        td.label {
+            text-align: right;
+            font-weight: bold;
+        }
+    </style>
 </head>
 
 <body>
-    <label>DOM CREATION TIME:</label><span id="loadtime"></span><br />
-    <label>URL: </label><span id="URL"></span><br />
-    <label>DIMENSION: </label><span id="DIMENSION"></span><br />
-    <label>SCROLLPOS: </label><span id="SCROLLPOS"></span><br />
+    <table>
+        <tr>
+            <td class="label">Status:</td>
+            <td><span id="status"></span></td>
+        </tr>
+        <tr>
+            <td class="label">Init Elapsed Time:</td>
+            <td><span id="inittime"></span></td>
+        </tr>
+        <tr>
+            <td class="label">Start Signal Elapsed Time:</td>
+            <td><span id="signaltime"></span></td>
+        </tr>
+        <tr>
+            <td class="label">Doc Load Elapsed Time:</td>
+            <td><span id="docloadtime"></span></td>
+        </tr>
+        <tr>
+            <td class="label">Generate Elapsed Time:</td>
+            <td><span id="gentime"></span></td>
+        </tr>
+        <tr>
+            <td class="label">Attach Elapsed Time:</td>
+            <td><span id="attachtime"></span></td>
+        </tr>
+        <tr>
+            <td class="label">Latency Elapsed Time:</td>
+            <td><span id="latency"></span></td>
+        </tr>
+        <tr>
+            <td class="label">DOM Generation Elapsed Time:</td>
+            <td><span id="domgentime"></span></td>
+        </tr>
+        <tr>
+            <td class="label">URL:</td>
+            <td><span id="URL"></span></td>
+        </tr>
+        <tr>
+            <td class="label">Dimension:</td>
+            <td><span id="DIMENSION"></span></td>
+        </tr>
+        <tr>
+            <td class="label">Scroll position:</td>
+            <td><span id="SCROLLPOS"></span></td>
+        </tr>
+    </table>
     <iframe id='view'></iframe>
     <script src="pragueView.js"></script>
 </body>
