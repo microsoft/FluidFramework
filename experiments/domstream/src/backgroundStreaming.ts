@@ -1,6 +1,6 @@
 import * as pragueMap from "@prague/map";
 import { debug, debugPort } from "./debug";
-import { PortHolder } from "./portHolder";
+import { MessageEnum, PortHolder } from "./portHolder";
 import { getCollabDoc } from "./pragueUtil";
 
 let collabDoc;
@@ -92,18 +92,18 @@ class ContentFrame extends PortHolder {
             const command = message[0];
             let handled = true;
             switch (command) {
-                case "batch":
+                case MessageEnum.batch:
                     const batchedMessages: any[][] = message[1];
                     for (const m of batchedMessages) {
                         this.listener(m);
                     }
-                case "set":
+                case MessageEnum.set:
                     this.getPragueMap(message[1]).set(message[2], message[3]);
                     break;
-                case "setMap":
+                case MessageEnum.setMap:
                     this.getPragueMap(message[1]).set(message[2], this.getPragueMap(message[3]));
                     break;
-                case "setIfChanged": {
+                case MessageEnum.setIfChanged: {
                     const mapView = this.getPragueMapView(message[1]);
                     const key = message[2];
                     const value = message[3];
@@ -112,24 +112,24 @@ class ContentFrame extends PortHolder {
                     mapView.set(key, value);
                     break;
                 }
-                case "setTimeStamp":
+                case MessageEnum.setTimeStamp:
                     this.getPragueMapView(message[1]).set(message[2], new Date().valueOf());
                     break;
-                case "delete":
+                case MessageEnum.delete:
                     this.getPragueMap(message[1]).delete(message[2]);
                     break;
-                case "forEach": {
+                case MessageEnum.forEach: {
                     const mapId = message[1];
                     this.getPragueMapView(mapId).forEach((value, key) => {
-                        this.postMessage(["forEachItem", mapId, value, key]);
+                        this.postMessage([MessageEnum.forEachItem, mapId, value, key]);
                     });
-                    this.postMessage(["forEachDone", mapId]);
+                    this.postMessage([MessageEnum.forEachDone, mapId]);
                     break;
                 }
-                case "ensureMapView": {
+                case MessageEnum.ensureMapView: {
                     const mapId = message[1];
                     this.ensurePragueMapView(mapId).then(() => {
-                        this.postMessage(["ensureMapViewDone", mapId]);
+                        this.postMessage([MessageEnum.ensureMapViewDone, mapId]);
                     });
                     break;
                 }
@@ -138,19 +138,19 @@ class ContentFrame extends PortHolder {
                     break;
             }
             if (handled) {
-                debugPort("Execute action:", message);
+                debugPort("Execute action:", MessageEnum[command], message);
             }
         };
         this.addMessageListener(this.listener);
 
-        this.postMessage(["BackgroundPragueStreamStart", mapBatchOp]);
+        this.postMessage([MessageEnum.BackgroundPragueStreamStart, mapBatchOp]);
     }
 
     public stopStreaming() {
         this.maps = null;
         this.mapViews = null;
         this.removeMessageListener(this.listener);
-        this.postMessage(["BackgroundPragueStreamStop"]);
+        this.postMessage([MessageEnum.BackgroundPragueStreamStop]);
     }
 
     private getPragueMap(mapId: number) {
@@ -179,7 +179,7 @@ class ContentFrame extends PortHolder {
             const key = changed.key;
             const deleted = !mapView.has(key);
             const value = deleted ? undefined : mapView.get(key);
-            this.postMessage(["valueChanged", mapId, key, value, deleted]);
+            this.postMessage([MessageEnum.valueChanged, mapId, key, value, deleted]);
         });
     }
 }

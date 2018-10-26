@@ -1,4 +1,5 @@
 import { debug, debugPopup, debugPort } from "./debug";
+import { MessageEnum } from "./portHolder";
 import { saveDOMToPrague, stopStreamToPrague, streamDOMToBackgroundPrague } from "./pragueWrite";
 import { RewriteDOMTree } from "./rewriteDOMTree";
 
@@ -6,8 +7,8 @@ import { RewriteDOMTree } from "./rewriteDOMTree";
     let contentScriptInitTime;
     const port = chrome.runtime.connect();
     port.onMessage.addListener((message) => {
-        if (message[0] === "BackgroundPragueStreamStart") {
-            debugPort("Execute action: ", message[0]);
+        if (message[0] === MessageEnum.BackgroundPragueStreamStart) {
+            debugPort("Execute action: ", MessageEnum[message[0]]);
             const startSignalTime = performance.now();
             if (document.readyState === "loading") {
                 document.addEventListener("DOMContentLoaded", () => {
@@ -18,8 +19,8 @@ import { RewriteDOMTree } from "./rewriteDOMTree";
                 streamDOMToBackgroundPrague(port, contentScriptInitTime, startSignalTime, message[1]).catch(
                     (error) => { console.error(error); });
             }
-        } else if (message[0] === "BackgroundPragueStreamStop") {
-            debugPort("Execute action: ", message[0]);
+        } else if (message[0] === MessageEnum.BackgroundPragueStreamStop) {
+            debugPort("Execute action: ", MessageEnum[message[0]]);
             stopStreamToPrague();
         }
     });
@@ -32,7 +33,7 @@ import { RewriteDOMTree } from "./rewriteDOMTree";
             const options = {
                 background: false,
                 batchOp: message[2],
-                contentScriptInitTime,                
+                contentScriptInitTime,
                 stream: false,
                 useFlatMap: false,
             };
