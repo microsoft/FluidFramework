@@ -36,6 +36,7 @@ async function loadDataView(rootView: pragueMap.IMapView, collabDoc: pragueApi.D
         (dataMapView.get("CONFIG_BACKGROUND") ? "Background " : ""));
     setSpanText("inittime", Math.round(dataMapView.get("TIME_INIT")) + " ms");
     setSpanText("signaltime", Math.round(dataMapView.get("TIME_STARTSIGNAL")) + " ms (Nav Only)");
+    setSpanText("savetime", Math.round(dataMapView.get("TIME_STARTSAVE")) + " ms");
     setSpanText("docloadtime", Math.round(dataMapView.get("TIME_DOCLOAD")) + " ms");
     setSpanText("gentime", Math.round(dataMapView.get("TIME_GEN")) + " ms");
 

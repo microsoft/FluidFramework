@@ -8,8 +8,16 @@ import { RewriteDOMTree } from "./rewriteDOMTree";
     port.onMessage.addListener((message) => {
         if (message[0] === "BackgroundPragueStreamStart") {
             debugPort("Execute action: ", message[0]);
-            streamDOMToBackgroundPrague(port, contentScriptInitTime, message[1]).catch(
-                (error) => { console.error(error); });
+            const startSignalTime = performance.now();
+            if (document.readyState === "loading") {
+                document.addEventListener("DOMContentLoaded", () => {
+                    streamDOMToBackgroundPrague(port, contentScriptInitTime, startSignalTime, message[1]).catch(
+                        (error) => { console.error(error); });
+                });
+            } else {  // `DOMContentLoaded` already fired
+                streamDOMToBackgroundPrague(port, contentScriptInitTime, startSignalTime, message[1]).catch(
+                    (error) => { console.error(error); });
+            }
         } else if (message[0] === "BackgroundPragueStreamStop") {
             debugPort("Execute action: ", message[0]);
             stopStreamToPrague();
@@ -24,7 +32,7 @@ import { RewriteDOMTree } from "./rewriteDOMTree";
             const options = {
                 background: false,
                 batchOp: message[2],
-                contentScriptInitTime,
+                contentScriptInitTime,                
                 stream: false,
                 useFlatMap: false,
             };

@@ -20,7 +20,7 @@ let collabDocToClose;
 export async function saveDOMToPrague(documentId: string, options: any) {
     if (mutationObserver) { alert("Content script already streaming"); return; }
     // Load in the latest and connect to the document
-    options.startSaveSignalTime = performance.now();
+    options.startSignalTime = options.startSaveSignalTime = performance.now();    
     const collabDoc = await getCollabDoc(documentId);
     await saveDOM(new PragueMapWrapperFactory(collabDoc, options.batchOp), options);
     if (options.stream) {
@@ -30,12 +30,13 @@ export async function saveDOMToPrague(documentId: string, options: any) {
     }
 }
 
-export async function streamDOMToBackgroundPrague(port: chrome.runtime.Port, contentScriptInitTime, batchOp: boolean) {
+export async function streamDOMToBackgroundPrague(port: chrome.runtime.Port, contentScriptInitTime, startSignalTime, batchOp: boolean) {
     if (mutationObserver) { alert("Content script already streaming"); return; }
     const options = {
         background: true,
         batchOp,
         contentScriptInitTime,
+        startSignalTime,
         startSaveSignalTime: performance.now(),
         stream: true,
         useFlatMap: true,
@@ -52,7 +53,8 @@ async function saveDOM(mapWrapperFactory: IMapWrapperFactory, options: any) {
     dataMapWrapper.set("CONFIG_BACKGROUND", options.background);
     dataMapWrapper.set("CONFIG_BATCHOP", options.batchOp);
     dataMapWrapper.set("TIME_INIT", options.contentScriptInitTime);
-    dataMapWrapper.set("TIME_STARTSIGNAL", options.startSaveSignalTime - options.contentScriptInitTime);
+    dataMapWrapper.set("TIME_STARTSIGNAL", options.startSignalTime - options.contentScriptInitTime);
+    dataMapWrapper.set("TIME_STARTSAVE", options.startSaveSignalTime - options.startSignalTime);
     dataMapWrapper.set("TIME_DOCLOAD", startTime - options.startSaveSignalTime);
 
     dataMapWrapper.set("URL", window.location.href);
