@@ -25,7 +25,7 @@
     const pragueMapBtn = document.getElementById("prague_btn") as HTMLInputElement;
     const pragueFlatMapBtn = document.getElementById("prague_flat_btn") as HTMLInputElement;
     const streamStartBtn = document.getElementById("prague_stream_start_btn") as HTMLInputElement;
-    const streamStopBtn = document.getElementById("prague_stream_stop_btn") as HTMLInputElement;   
+    const streamStopBtn = document.getElementById("prague_stream_stop_btn") as HTMLInputElement;
 
     // Initialize button command
     tabBtn.onclick = () => sendCommand("Tab");
@@ -38,17 +38,17 @@
         window.open(chrome.runtime.getURL("pragueView.html") + "?docId=" + docName.value);
 
     const bgPage = chrome.extension.getBackgroundPage();
-    const streamState = bgPage? (bgPage.window as any).getStreamingState() : undefined;
-    if (streamState && streamState.enabled) {  
+    const streamState = bgPage ? (bgPage.window as any).getStreamingState() : undefined;
+    if (streamState && streamState.enabled) {
         streamStartBtn.style.visibility = "hidden";
-   
+
         docName.disabled = true;
         background.disabled = true;
         batchOp.disabled = true;
 
         docName.value = streamState.docId;
         background.checked = streamState.background;
-        batchOp.checked = streamState.checked;
+        batchOp.checked = streamState.batchOp;
 
         getCurrentTab((tab) => {
             document.getElementById("status").innerHTML = (streamState.pending ? "[PENDING] " : "") +
@@ -75,7 +75,7 @@
             if (items.batchOp !== undefined) {
                 batchOp.checked = items.batchOp;
             }
-        });            
+        });
     }
 
     // Hook up input sync

@@ -112,6 +112,9 @@ class ContentFrame extends PortHolder {
                     mapView.set(key, value);
                     break;
                 }
+                case "setTimeStamp":
+                    this.getPragueMapView(message[1]).set(message[2], new Date().valueOf());
+                    break;
                 case "delete":
                     this.getPragueMap(message[1]).delete(message[2]);
                     break;

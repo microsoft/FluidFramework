@@ -9,6 +9,7 @@ export interface IMapViewWrapper {
     setMap(key: string, value: IMapWrapper): void;
     setMapView(key: string, value: IMapViewWrapper): void;
     setIfChanged(key: string, value: string): void;
+    setTimeStamp(key: string);
     delete(key: string): void;
     forEach(callback: (value: any, key: string) => void): Promise<void>;
     onNonLocalValueChanged(callback: (key: string, value: any, deleted: boolean) => void): void;

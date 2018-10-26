@@ -15,6 +15,12 @@ function setStatusMessage(msg) {
     setSpanText("status", msg);
 }
 
+function setLatency(dataMapView, startLoadTime) {
+    const endTime = dataMapView.get("END_DATE");
+    setSpanText("attachtime", Math.round(dataMapView.get("TIME_ATTACH")) + " ms");
+    setSpanText("bgwkrlatency", Math.round(endTime - dataMapView.get("FG_END_DATE")) + " ms");
+    setSpanText("latency", Math.round(startLoadTime.valueOf() - endTime) + " ms (Live only)");
+}
 async function loadDataView(rootView: pragueMap.IMapView, collabDoc: pragueApi.Document) {
     const dataMap = rootView.get("DOMSTREAM");
     if (!dataMap) {
@@ -25,6 +31,9 @@ async function loadDataView(rootView: pragueMap.IMapView, collabDoc: pragueApi.D
     const startLoadTime = new Date();
     setStatusMessage("Creating DOM");
     const dataMapView = await dataMap.getView();
+    setSpanText("config",
+        (dataMapView.get("CONFIG_BATCHOP") ? "Batched " : "") +
+        (dataMapView.get("CONFIG_BACKGROUND") ? "Background " : ""));
     setSpanText("inittime", Math.round(dataMapView.get("TIME_INIT")) + " ms");
     setSpanText("signaltime", Math.round(dataMapView.get("TIME_STARTSIGNAL")) + " ms (Nav Only)");
     setSpanText("docloadtime", Math.round(dataMapView.get("TIME_DOCLOAD")) + " ms");
@@ -34,15 +43,11 @@ async function loadDataView(rootView: pragueMap.IMapView, collabDoc: pragueApi.D
     setDimension(dataMapView);
     const tree = await setDOM(dataMapView);
 
-    if (dataMapView.has("TIME_ATTACH")) {
-        setSpanText("attachtime", Math.round(dataMapView.get("TIME_ATTACH")) + " ms");
+    if (dataMapView.has("END_DATE")) {
+        setLatency(dataMapView, startLoadTime);
     } else {
         setSpanText("attachtime", "");
-    }
-
-    if (dataMapView.has("DATE")) {
-        setSpanText("latency", Math.round(startLoadTime.valueOf() - dataMapView.get("DATE")) + " ms (Live only)");
-    } else {
+        setSpanText("bgwkrlatency", "");
         setSpanText("latency", "");
     }
 
@@ -68,9 +73,11 @@ async function loadDataView(rootView: pragueMap.IMapView, collabDoc: pragueApi.D
                 setSpanText("latency", Math.round(startLoadTime.valueOf() - dataMapView.get("DATE"))
                     + " ms (Live only)");
                 break;
-            case "TIME_ATTACH":
-                setSpanText("attachtime", Math.round(dataMapView.get("TIME_ATTACH")) + " ms");
+            case "END_DATE":
+                setLatency(dataMapView, startLoadTime);
                 break;
+            case "TIME_ATTACH":
+            case "FG_END_DATE":
             case "REMOTECLICK":
                 break;
             default:

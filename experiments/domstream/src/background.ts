@@ -19,14 +19,13 @@ function exportToView(tab: chrome.tabs.Tab, response) {
 }
 
 const streamState = {
-    enabled: false,
     background: false,
     batchOp: false,
+    docId: "",
+    enabled: false,
     pending: false,
     tabId: -1,
-    docId: "",    
 };
-
 
 BackgroundStreaming.init();
 
@@ -65,9 +64,8 @@ chrome.runtime.onMessage.addListener((message, sender) => {
                     if (message.background) {
                         streamState.background = true;
                         streamState.pending = true;
-                        BackgroundStreaming.start(streamState.docId, streamState.tabId, streamState.batchOp).then(() => {
-                            streamState.pending = false;
-                        });
+                        BackgroundStreaming.start(streamState.docId, streamState.tabId, streamState.batchOp).then(
+                            () => { streamState.pending = false; });
                         return;
                     }
                 }
@@ -87,7 +85,8 @@ chrome.runtime.onMessage.addListener((message, sender) => {
 
 chrome.webNavigation.onCompleted.addListener((details) => {
     debugPopup("Navigate ", details);
-    if (streamState.enabled && !streamState.background && streamState.tabId === details.tabId && details.frameId === 0) {
+    if (streamState.enabled && !streamState.background
+        && streamState.tabId === details.tabId && details.frameId === 0) {
         chrome.tabs.sendMessage(streamState.tabId, ["PragueStreamStart", streamState.docId]);
     }
 });

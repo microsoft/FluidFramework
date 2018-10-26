@@ -33,6 +33,7 @@ export async function saveDOMToPrague(documentId: string, options: any) {
 export async function streamDOMToBackgroundPrague(port: chrome.runtime.Port, contentScriptInitTime, batchOp: boolean) {
     if (mutationObserver) { alert("Content script already streaming"); return; }
     const options = {
+        background: true,
         batchOp,
         contentScriptInitTime,
         startSaveSignalTime: performance.now(),
@@ -48,6 +49,8 @@ async function saveDOM(mapWrapperFactory: IMapWrapperFactory, options: any) {
 
     debug("Start sending to Prague");
     const startTime = performance.now();
+    dataMapWrapper.set("CONFIG_BACKGROUND", options.background);
+    dataMapWrapper.set("CONFIG_BATCHOP", options.batchOp);
     dataMapWrapper.set("TIME_INIT", options.contentScriptInitTime);
     dataMapWrapper.set("TIME_STARTSIGNAL", options.startSaveSignalTime - options.contentScriptInitTime);
     dataMapWrapper.set("TIME_DOCLOAD", startTime - options.startSaveSignalTime);
@@ -55,7 +58,7 @@ async function saveDOM(mapWrapperFactory: IMapWrapperFactory, options: any) {
     dataMapWrapper.set("URL", window.location.href);
     dataMapWrapper.set("DIMENSION", JSON.stringify({ width: window.innerWidth, height: window.innerHeight }));
     dataMapWrapper.set("SCROLLPOS", JSON.stringify([window.scrollX, window.scrollY]));
-    
+
     let endGenTime;
     if (options.useFlatMap) {
         let tree: StreamDOMTree | FlatMapDOMTree;
@@ -97,12 +100,12 @@ async function saveDOM(mapWrapperFactory: IMapWrapperFactory, options: any) {
         dataMapWrapper.setMap("DOM", tree.getMap(mapWrapperFactory));
     }
 
-
     rootViewWrapper.setMapView("DOMSTREAM", dataMapWrapper);
     // collabDoc.save();
     const endTime = performance.now();
     dataMapWrapper.set("TIME_ATTACH", endTime - endGenTime);
-    dataMapWrapper.set("DATE", new Date().valueOf());
+    dataMapWrapper.set("FG_END_DATE", new Date().valueOf());
+    dataMapWrapper.setTimeStamp("END_DATE");
     debug("Finish sending to Prague - " + (endTime - startTime) + "ms");
 }
 

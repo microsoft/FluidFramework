@@ -7,8 +7,8 @@ class BatchMessageQueue extends PortHolder {
     constructor(port: chrome.runtime.Port, batchOp: boolean) {
         super(port);
         if (batchOp) {
-            this.messageQueue = new Array();     
-        }        
+            this.messageQueue = new Array();
+        }
     }
 
     protected postMessage(message: any[]) {
@@ -19,7 +19,7 @@ class BatchMessageQueue extends PortHolder {
         super.postMessage(message);
     }
 
-    protected flushMessageQueue(parentQueue?: BatchMessageQueue) {        
+    protected flushMessageQueue(parentQueue?: BatchMessageQueue) {
         if (this.messageQueue) {
             if (parentQueue) {
                 parentQueue.postMessage(["batch", this.messageQueue]);
@@ -29,7 +29,8 @@ class BatchMessageQueue extends PortHolder {
             this.messageQueue = null;
         }
     }
-};
+}
+
 class PragueBackgroundMapWrapper extends BatchMessageQueue implements IMapWrapper {
     private mapId: number;
     constructor(port: chrome.runtime.Port, mapId: number, batchOp: boolean) {
@@ -55,7 +56,7 @@ export class PragueBackgroundMapViewWrapper extends BatchMessageQueue implements
     private mapId: number;
     private nonLocalValueChangeCallback = new Array<(key: string, value: any, deleted: boolean) => void>();
     private valueChangeListener: (message: any[]) => void;
-    
+
     constructor(port: chrome.runtime.Port, mapId: number, batchOp: boolean) {
         super(port, batchOp);
         this.mapId = mapId;
@@ -79,14 +80,17 @@ export class PragueBackgroundMapViewWrapper extends BatchMessageQueue implements
     public set(key: string, value: any) {
         this.postMessage(["set", this.mapId, key, value]);
     }
-    public setMap(key: string, value: PragueBackgroundMapWrapper) {        
+    public setMap(key: string, value: PragueBackgroundMapWrapper) {
         this.postMessage(["setMap", this.mapId, key, value.getMapId(this)]);
     }
-    public setMapView(key: string, value: PragueBackgroundMapViewWrapper) {        
+    public setMapView(key: string, value: PragueBackgroundMapViewWrapper) {
         this.postMessage(["setMap", this.mapId, key, value.getMapId(this)]);
     }
     public setIfChanged(key: string, value: string) {
         this.postMessage(["setIfChanged", this.mapId, key, value]);
+    }
+    public setTimeStamp(key: string) {
+        this.postMessage(["setTimeStamp", this.mapId, key]);
     }
     public delete(key: string) {
         this.postMessage(["delete", this.mapId, key]);
