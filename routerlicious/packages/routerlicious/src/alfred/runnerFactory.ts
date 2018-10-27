@@ -91,6 +91,20 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
 
         const maxSendMessageSize = bytes.parse(config.get("alfred:maxMessageSize"));
 
+        const opCollection = db.collection("content");
+        await opCollection.createIndex(
+            {
+                "clientId": 1,
+                "documentId": 1,
+                "op.clientSequenceNumber": 1,
+                "tenantId": 1,
+            },
+            true);
+
+        const opPublisher = new services.SocketIoRedisPublisher(redisConfig.port, redisConfig.host);
+
+        const contentPublisher = new services.ContentPublisher(opPublisher, opCollection);
+
         const address = `${await utils.getHostIp()}:4000`;
         const nodeFactory = new services.LocalNodeFactory(
             os.hostname(),
@@ -103,7 +117,11 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
             tmzConfig.permissions,
             maxSendMessageSize);
         const localOrderManager = new services.LocalOrderManager(nodeFactory, reservationManager);
-        const kafkaOrdererFactory = new services.KafkaOrdererFactory(producer, storage, maxSendMessageSize);
+        const kafkaOrdererFactory = new services.KafkaOrdererFactory(
+            producer,
+            storage,
+            maxSendMessageSize,
+            contentPublisher);
         const orderManager = new services.OrdererManager(localOrderManager, kafkaOrdererFactory);
 
         // Tenants attached to the apps this service exposes

@@ -56,6 +56,11 @@ export class DeltaConnection extends EventEmitter {
             this.emit("op", documentId, messages);
         });
 
+        connection.on("op-content", (documentId: string, messages: any) => {
+            console.log(documentId);
+            console.log(JSON.stringify(messages));
+        });
+
         connection.on("nack", (documentId: string, message: runtime.INack[]) => {
             // Mark nacked and also pause any outbound communication
             this._nacked = true;
