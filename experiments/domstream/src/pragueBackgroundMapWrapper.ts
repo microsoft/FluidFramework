@@ -3,6 +3,7 @@ import { IMapViewWrapper, IMapWrapper, IMapWrapperFactory } from "./mapWrapper";
 import { MessageEnum, PortHolder } from "./portHolder";
 
 class BatchMessageQueue extends PortHolder {
+    private static maxMessageQueueSize = 1000;
     private messageQueue: any[][];
     constructor(port: chrome.runtime.Port, batchOp: boolean) {
         super(port);
@@ -14,6 +15,10 @@ class BatchMessageQueue extends PortHolder {
     protected postMessage(message: any[]) {
         if (this.messageQueue) {
             this.messageQueue.push(message);
+            if (this.messageQueue.length >= BatchMessageQueue.maxMessageQueueSize) {
+                super.postMessage([MessageEnum.batch, this.messageQueue]);
+                this.messageQueue.length = 0;
+            }
             return;
         }
         super.postMessage(message);
@@ -22,8 +27,11 @@ class BatchMessageQueue extends PortHolder {
     protected flushMessageQueue(parentQueue?: BatchMessageQueue) {
         if (this.messageQueue) {
             if (parentQueue) {
+                // TODO: Should we force the parent to flush if the message queue is cumulatively too big?
+                debugPort("Flushing to parent: ", this.messageQueue.length);
                 parentQueue.postMessage([MessageEnum.batch, this.messageQueue]);
             } else {
+                debugPort("Flushing to port: ", this.messageQueue.length);
                 super.postMessage([MessageEnum.batch, this.messageQueue]);
             }
             this.messageQueue = null;
@@ -38,7 +46,7 @@ class PragueBackgroundMapWrapper extends BatchMessageQueue implements IMapWrappe
         this.mapId = mapId;
     }
 
-    public set(key: string, value: any) {
+    public set(key: string, value: string | number) {
         this.postMessage([MessageEnum.set, this.mapId, key, value]);
     }
 
@@ -77,7 +85,7 @@ export class PragueBackgroundMapViewWrapper extends BatchMessageQueue implements
         this.addMessageListener(this.valueChangeListener);
     }
 
-    public set(key: string, value: any) {
+    public set(key: string, value: string | number) {
         this.postMessage([MessageEnum.set, this.mapId, key, value]);
     }
     public setMap(key: string, value: PragueBackgroundMapWrapper) {

@@ -113,7 +113,7 @@ class ContentFrame extends PortHolder {
                     break;
                 }
                 case MessageEnum.setTimeStamp:
-                    this.getPragueMapView(message[1]).set(message[2], new Date().valueOf());
+                    this.getPragueMap(message[1]).set(message[2], new Date().valueOf());
                     break;
                 case MessageEnum.delete:
                     this.getPragueMap(message[1]).delete(message[2]);
