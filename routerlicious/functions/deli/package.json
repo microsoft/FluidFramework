@@ -1,0 +1,24 @@
+{
+  "name": "@prague/deli",
+  "version": "0.1.0",
+  "description": "Deli ordering service",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "npm run tsc && npm run tslint",
+    "clean": "rimraf dist",
+    "docker": "docker run --rm -it -v ${pwd}:/usr/src/server rdk /bin/sh",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "tsc": "tsc",
+    "tslint": "tslint --project tsconfig.json --format verbose"
+  },
+  "author": "Microsoft",
+  "dependencies": {
+    "@prague/routerlicious": "^0.1.3858",
+    "node-rdkafka": "^2.4.2"
+  },
+  "devDependencies": {
+    "rimraf": "^2.6.2",
+    "tslint": "^5.11.0",
+    "typescript": "^3.1.3"
+  }
+}
