@@ -134,6 +134,7 @@ async function loadDocument(
         console.log(`Not existing ${id} - ${performanceNow()}`);
         root.set("presence", collabDoc.createMap());
         root.set("users", collabDoc.createMap());
+        root.set("calendar", undefined, SharedString.SharedIntervalCollectionValueType.Name);
         const newString = collabDoc.createString() as SharedString.SharedString;
 
         const starterText = template ? await downloadRawText(template) : " ";

@@ -145,6 +145,18 @@ const commands: ICmd[] = [
     },
     {
         exec: (f) => {
+            f.addCalendarEntries();
+        },
+        key: "cal create",
+    },
+    {
+        exec: (f) => {
+            f.showCalendarEntries();
+        },
+        key: "cal show",
+    },
+    {
+        exec: (f) => {
             f.createComment();
         },
         key: "comment",
@@ -3515,6 +3527,8 @@ export class FlowView extends ui.Component {
     public tempBookmarks: SharedString.SharedStringInterval[];
     public comments: SharedString.SharedIntervalCollection<SharedString.SharedStringInterval>;
     public commentsView: SharedString.SharedIntervalCollectionView<SharedString.SharedStringInterval>;
+    public calendarIntervals: SharedString.SharedIntervalCollection<SharedString.Interval>;
+    public calendarIntervalsView: SharedString.SharedIntervalCollectionView<SharedString.Interval>;
     public presenceMapView: types.IMapView;
     public presenceVector: ILocalPresenceInfo[] = [];
     public docRoot: types.IMapView;
@@ -3826,6 +3840,26 @@ export class FlowView extends ui.Component {
             this.updateHistoryBubble(seq);
             this.cursor.pos = FlowView.docStartPosition;
             this.localQueueRender(FlowView.docStartPosition);
+        }
+    }
+
+    // assumes docRoot ready
+    public addCalendarMap() {
+        this.calendarIntervals =
+            this.docRoot.get<SharedString.SharedIntervalCollection<SharedString.Interval>>("calendar");
+        this.calendarIntervals.getView().then((v) => {
+            this.calendarIntervalsView = v;
+        });
+    }
+
+    public addCalendarEntries() {
+        this.calendarIntervalsView.add(0, 10, MergeTree.IntervalType.Simple, { text: "picnic" });
+    }
+
+    public showCalendarEntries() {
+        const intervals = this.calendarIntervalsView.findOverlappingIntervals(5, 6);
+        if (intervals && (intervals.length > 0)) {
+            this.statusMessage("cal", intervals[0].properties["text"]);
         }
     }
 
@@ -5498,6 +5532,7 @@ export class FlowView extends ui.Component {
         }
         const presenceMap = this.docRoot.get("presence") as types.IMap;
         this.addPresenceMap(presenceMap);
+        this.addCalendarMap();
         const intervalMap = this.sharedString.intervalCollections.getMap();
         intervalMap.on("valueChanged", (delta: types.IValueChanged) => {
             this.queueRender(undefined, true);
