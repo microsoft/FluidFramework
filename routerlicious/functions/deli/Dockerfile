@@ -17,6 +17,7 @@ RUN apk add --no-cache --virtual .build-deps gcc zlib-dev libc-dev bsd-compat-he
 # Copy over and build the server
 WORKDIR /usr/src/server
 
+ARG NPM_TOKEN
 COPY .npmrc .
 # COPY package-lock.json .
 COPY package.json .

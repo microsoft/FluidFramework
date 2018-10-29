@@ -6,7 +6,7 @@
   "scripts": {
     "build": "npm run tsc && npm run tslint",
     "clean": "rimraf dist",
-    "docker": "docker run --rm -it -v $(pwd):/usr/src/server deli /bin/sh",
+    "docker": "docker run --rm -it -e NPM_TOKEN=$NPM_TOKEN -v $(pwd):/usr/src/server deli /bin/sh",
     "test": "echo \"Error: no test specified\" && exit 1",
     "tsc": "tsc",
     "tslint": "tslint --project tsconfig.json --format verbose"
