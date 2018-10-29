@@ -1,5 +1,6 @@
 import * as pragueMap from "@prague/map";
-import { debug, debugPort } from "./debug";
+import { debug, debugFrame, debugPort } from "./debug";
+import { globalConfig } from "./globalConfig";
 import { MessageEnum, PortHolder } from "./portHolder";
 import { getCollabDoc } from "./pragueUtil";
 
@@ -9,6 +10,9 @@ let mapBatchOp = true;
 export class BackgroundStreaming {
     public static init() {
         chrome.runtime.onConnect.addListener((port) => {
+            if (globalConfig.disableFrame && port.sender.frameId !== 0) {
+                return;
+            }
             const frame = ContentFrame.register(port);
             if (collabDoc) {
                 frame.startStreaming();
@@ -48,7 +52,6 @@ class ContentFrame extends PortHolder {
         const sender = port.sender;
         const tabId = sender.tab.id;
         const frameId = sender.frameId;
-        debug("ContentFrame connected", tabId, frameId);
         let frameMap = ContentFrame.tabIdToFrameMap.get(tabId);
         if (!frameMap) {
             frameMap = new Map();
@@ -57,11 +60,39 @@ class ContentFrame extends PortHolder {
         const frame = new ContentFrame(port, tabId, frameId);
         frameMap.set(frameId, frame);
 
-        frame.getPort().onDisconnect.addListener(() => {
-            debug("ContentFrame discounnted", tabId, frameId);
+        port.onDisconnect.addListener(() => {
+            debugFrame(frameId, "port disconnected", tabId, sender.url);
             frameMap.delete(frameId);
             if (frameMap.size === 0) { ContentFrame.tabIdToFrameMap.delete(tabId); }
         });
+
+        if (frameId !== 0) {
+            chrome.webNavigation.getFrame({
+                frameId,
+                tabId,
+            }, (details) => {
+                // Let the content script knows about the frameId
+                // Note: parentFrameId is only for debug purpose
+                if (details) {
+                    const parentFrameId = details.parentFrameId;
+                    debugFrame(frameId, "port connected", tabId, parentFrameId, sender.url);
+                    const parentFrame = frameMap.get(parentFrameId);
+                    if (parentFrame) {
+                        parentFrame.sendMessage([MessageEnum.EnsureFrameIdListener], () => {
+                            frame.sendMessage([MessageEnum.SetFrameId, frameId, parentFrameId], () => {
+                                debugFrame(frameId, "establish with parent", parentFrameId);
+                            });
+                        });
+                    } else {
+                        debugFrame(frameId, "not establish with parent", parentFrameId);
+                    }
+                } else {
+                    debugFrame(frameId, "connected (with no frame detail)", tabId, sender.url);
+                }
+            });
+        } else {
+            debugFrame(frameId, "port connected", tabId, sender.url);
+        }
         return frame;
     }
 
@@ -76,18 +107,36 @@ class ContentFrame extends PortHolder {
     private maps: pragueMap.IMap[];
     private mapViews: pragueMap.IMapView[];
     private listener: (message: any[]) => void;
-    // private tabId: number;
-    // private frameId: number;
+    private tabId: number;
+    private frameId: number;
 
     constructor(port: chrome.runtime.Port, tabId: number, frameId: number) {
         super(port);
-        // this.tabId = tabId;
-        // this.frameId = frameId;
+        this.tabId = tabId;
+        this.frameId = frameId;
     }
 
     public async startStreaming() {
-        this.maps = [collabDoc.getRoot()];
-        this.mapViews = [await collabDoc.getRoot().getView()];
+        if (this.maps) {
+            // we already started
+            return;
+        }
+
+        if (this.frameId) {
+            const topFrame = ContentFrame.tabIdToFrameMap.get(this.tabId).get(0);
+            await topFrame.startStreaming();
+
+            // TODO: Currently we put all the frames under the top frame nodes.
+            // Might consider deleting these map once the frame goes away
+            this.maps = [topFrame.getPragueMap(1)];
+            this.mapViews = [topFrame.getPragueMapView(1)];
+        } else {
+            this.maps = [collabDoc.getRoot()];
+            this.mapViews = [await collabDoc.getRoot().getView()];
+        }
+
+        await this.ensurePragueMapView(1);
+
         this.listener = (message: any[]) => {
             const command = message[0];
             let handled = true;
@@ -143,7 +192,11 @@ class ContentFrame extends PortHolder {
         };
         this.addMessageListener(this.listener);
 
-        this.postMessage([MessageEnum.BackgroundPragueStreamStart, mapBatchOp]);
+        this.postMessage([MessageEnum.BackgroundPragueStreamStart,
+        {
+            batchOp: mapBatchOp,
+            frameId: this.frameId,
+        }]);
     }
 
     public stopStreaming() {
@@ -151,6 +204,10 @@ class ContentFrame extends PortHolder {
         this.mapViews = null;
         this.removeMessageListener(this.listener);
         this.postMessage([MessageEnum.BackgroundPragueStreamStop]);
+    }
+
+    private sendMessage(message: any[], callback?: (response: any) => void) {
+        chrome.tabs.sendMessage(this.tabId, message, { frameId: this.frameId }, callback);
     }
 
     private getPragueMap(mapId: number) {
