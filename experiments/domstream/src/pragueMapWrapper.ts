@@ -39,6 +39,9 @@ export class PragueMapViewWrapper implements IMapViewWrapper {
         // NOTE: No type safety
         this.mapView.set(key, (value as PragueMapViewWrapper).mapView.getMap());
     }
+    public setTimeStamp(key: string) {
+        this.mapView.set(key, new Date().valueOf());
+    }
     public setIfChanged(key: string, value: string) {
         const oldValue = this.mapView.get(key);
         if (oldValue === value) { return; }

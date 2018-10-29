@@ -1,35 +1,44 @@
 import { debugPort } from "./debug";
 import { IMapViewWrapper, IMapWrapper, IMapWrapperFactory } from "./mapWrapper";
-import { PortHolder } from "./portHolder";
+import { MessageEnum, PortHolder } from "./portHolder";
 
 class BatchMessageQueue extends PortHolder {
+    private static maxMessageQueueSize = 1000;
     private messageQueue: any[][];
     constructor(port: chrome.runtime.Port, batchOp: boolean) {
         super(port);
         if (batchOp) {
-            this.messageQueue = new Array();     
-        }        
+            this.messageQueue = new Array();
+        }
     }
 
     protected postMessage(message: any[]) {
         if (this.messageQueue) {
             this.messageQueue.push(message);
+            if (this.messageQueue.length >= BatchMessageQueue.maxMessageQueueSize) {
+                super.postMessage([MessageEnum.batch, this.messageQueue]);
+                this.messageQueue.length = 0;
+            }
             return;
         }
         super.postMessage(message);
     }
 
-    protected flushMessageQueue(parentQueue?: BatchMessageQueue) {        
+    protected flushMessageQueue(parentQueue?: BatchMessageQueue) {
         if (this.messageQueue) {
             if (parentQueue) {
-                parentQueue.postMessage(["batch", this.messageQueue]);
+                // TODO: Should we force the parent to flush if the message queue is cumulatively too big?
+                debugPort("Flushing to parent: ", this.messageQueue.length);
+                parentQueue.postMessage([MessageEnum.batch, this.messageQueue]);
             } else {
-                super.postMessage(["batch", this.messageQueue]);
+                debugPort("Flushing to port: ", this.messageQueue.length);
+                super.postMessage([MessageEnum.batch, this.messageQueue]);
             }
             this.messageQueue = null;
         }
     }
-};
+}
+
 class PragueBackgroundMapWrapper extends BatchMessageQueue implements IMapWrapper {
     private mapId: number;
     constructor(port: chrome.runtime.Port, mapId: number, batchOp: boolean) {
@@ -37,12 +46,12 @@ class PragueBackgroundMapWrapper extends BatchMessageQueue implements IMapWrappe
         this.mapId = mapId;
     }
 
-    public set(key: string, value: any) {
-        this.postMessage(["set", this.mapId, key, value]);
+    public set(key: string, value: string | number) {
+        this.postMessage([MessageEnum.set, this.mapId, key, value]);
     }
 
     public setMap(key: string, value: PragueBackgroundMapWrapper) {
-        this.postMessage(["setMap", this.mapId, key, value.getMapId(this)]);
+        this.postMessage([MessageEnum.setMap, this.mapId, key, value.getMapId(this)]);
     }
 
     public getMapId(parentQueue: BatchMessageQueue) {
@@ -55,20 +64,20 @@ export class PragueBackgroundMapViewWrapper extends BatchMessageQueue implements
     private mapId: number;
     private nonLocalValueChangeCallback = new Array<(key: string, value: any, deleted: boolean) => void>();
     private valueChangeListener: (message: any[]) => void;
-    
+
     constructor(port: chrome.runtime.Port, mapId: number, batchOp: boolean) {
         super(port, batchOp);
         this.mapId = mapId;
 
         this.valueChangeListener = (message: any[]) => {
-            if (message[0] !== "valueChanged") {
+            if (message[0] !== MessageEnum.valueChanged) {
                 return;
             }
             if (message[1] !== this.mapId) {
                 return;
             }
 
-            debugPort("Execute action:", message[0], this.mapId);
+            debugPort("Execute action:", MessageEnum[message[0]], this.mapId);
             for (const callback of this.nonLocalValueChangeCallback) {
                 callback(message[2], message[3], message[4]);
             }
@@ -76,20 +85,23 @@ export class PragueBackgroundMapViewWrapper extends BatchMessageQueue implements
         this.addMessageListener(this.valueChangeListener);
     }
 
-    public set(key: string, value: any) {
-        this.postMessage(["set", this.mapId, key, value]);
+    public set(key: string, value: string | number) {
+        this.postMessage([MessageEnum.set, this.mapId, key, value]);
     }
-    public setMap(key: string, value: PragueBackgroundMapWrapper) {        
-        this.postMessage(["setMap", this.mapId, key, value.getMapId(this)]);
+    public setMap(key: string, value: PragueBackgroundMapWrapper) {
+        this.postMessage([MessageEnum.setMap, this.mapId, key, value.getMapId(this)]);
     }
-    public setMapView(key: string, value: PragueBackgroundMapViewWrapper) {        
-        this.postMessage(["setMap", this.mapId, key, value.getMapId(this)]);
+    public setMapView(key: string, value: PragueBackgroundMapViewWrapper) {
+        this.postMessage([MessageEnum.setMap, this.mapId, key, value.getMapId(this)]);
     }
     public setIfChanged(key: string, value: string) {
-        this.postMessage(["setIfChanged", this.mapId, key, value]);
+        this.postMessage([MessageEnum.setIfChanged, this.mapId, key, value]);
+    }
+    public setTimeStamp(key: string) {
+        this.postMessage([MessageEnum.setTimeStamp, this.mapId, key]);
     }
     public delete(key: string) {
-        this.postMessage(["delete", this.mapId, key]);
+        this.postMessage([MessageEnum.delete, this.mapId, key]);
     }
     public forEach(callback: (value: any, key: string) => void): Promise<void> {
         this.flushMessageQueue();
@@ -98,13 +110,13 @@ export class PragueBackgroundMapViewWrapper extends BatchMessageQueue implements
                 if (message[1] !== this.mapId) {
                     return;
                 }
-                if (message[0] === "forEachItem") {
-                    debugPort("Execute action:", message[0], this.mapId);
+                if (message[0] === MessageEnum.forEachItem) {
+                    debugPort("Execute action:", MessageEnum[message[0]], this.mapId);
                     callback(message[2], message[3]);
                     return;
                 }
-                if (message[0] === "forEachDone") {
-                    debugPort("Execute action:", message[0], this.mapId);
+                if (message[0] === MessageEnum.forEachDone) {
+                    debugPort("Execute action:", MessageEnum[message[0]], this.mapId);
                     this.removeMessageListener(listener);
                     resolve();
                     return;
@@ -112,7 +124,7 @@ export class PragueBackgroundMapViewWrapper extends BatchMessageQueue implements
             };
             this.addMessageListener(listener);
         });
-        this.postMessage(["forEach", this.mapId]);
+        this.postMessage([MessageEnum.forEach, this.mapId]);
         return promise;
     }
     public onNonLocalValueChanged(newCallback: (key: string, value: any, deleted: boolean) => void) {
@@ -141,14 +153,14 @@ export class PragueBackgroundMapWrapperFactory extends PortHolder implements IMa
         const mapId = this.nextMapId++;
         return new Promise<PragueBackgroundMapViewWrapper>((resolve) => {
             const listener = (message: any[]) => {
-                if (message[0] === "ensureMapViewDone" && message[1] === mapId) {
-                    debugPort("Execute action: ", message[0], mapId);
+                if (message[0] === MessageEnum.ensureMapViewDone && message[1] === mapId) {
+                    debugPort("Execute action: ", MessageEnum[message[0]], mapId);
                     this.removeMessageListener(listener);
                     return resolve(new PragueBackgroundMapViewWrapper(this.getPort(), mapId, this.batchOp));
                 }
             };
             this.addMessageListener(listener);
-            this.postMessage(["ensureMapView", mapId]);
+            this.postMessage([MessageEnum.ensureMapView, mapId]);
         });
     }
 }
