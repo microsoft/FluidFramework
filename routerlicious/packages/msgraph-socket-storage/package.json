@@ -1,7 +1,7 @@
 {
-  "name": "@prague/sharepoint-socket-storage",
+  "name": "@prague/msgraph-socket-storage",
   "version": "0.1.0",
-  "description": "Sharepoint variant of Socket storage",
+  "description": "Microsoft Graph variant of Socket storage. Works with OneDrive and SharePoint",
   "main": "dist/index.js",
   "module": "lib/index.js",
   "types": "dist/index.d.ts",
