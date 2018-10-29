@@ -30,7 +30,7 @@ spec:
           - '../document-router/index.js'
         env:
         - name: DEBUG
-          value: "routerlicious:*"
+          value: "prague:*"
         - name: NODE_ENV
           value: production
         - name: documentLambda

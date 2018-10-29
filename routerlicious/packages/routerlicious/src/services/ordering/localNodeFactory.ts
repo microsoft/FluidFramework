@@ -12,7 +12,8 @@ export class LocalNodeFactory implements IConcreteNodeFactory {
         private timeoutLength: number,
         private taskMessageSender: core.ITaskMessageSender,
         private tenantManager: core.ITenantManager,
-        private permission: any) {
+        private permission: any,
+        private maxMessageSize: number) {
     }
 
     public async create(): Promise<LocalNode> {
@@ -24,7 +25,8 @@ export class LocalNodeFactory implements IConcreteNodeFactory {
             this.timeoutLength,
             this.taskMessageSender,
             this.tenantManager,
-            this.permission);
+            this.permission,
+            this.maxMessageSize);
 
         return node;
     }

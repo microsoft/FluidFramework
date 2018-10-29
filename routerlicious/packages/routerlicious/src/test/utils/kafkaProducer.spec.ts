@@ -24,7 +24,7 @@ describe("Routerlicious", () => {
         let producer: TestProducer;
 
         beforeEach(() => {
-            producer = new TestProducer();
+            producer = new TestProducer(1024 * 1024);
         });
 
         describe("Producer", () => {

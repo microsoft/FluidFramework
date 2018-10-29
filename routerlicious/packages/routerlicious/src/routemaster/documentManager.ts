@@ -70,6 +70,9 @@ export class DocumentManager {
             const deltasP = this.deltas.find(query, { "operation.sequenceNumber": 1 });
             deltasP.then(
                 (deltas) => {
+                    // Contents is stored as stringified json. Parse to convert back.
+                    deltas.forEach((delta) => delta.operation.contents = JSON.parse(delta.operation.contents));
+
                     result = result.concat(deltas);
                     if (result.length === finalLength) {
                         deferred.resolve(result);

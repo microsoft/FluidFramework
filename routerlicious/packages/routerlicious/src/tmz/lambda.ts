@@ -1,5 +1,5 @@
 import * as api from "@prague/client-api";
-import { IHelpMessage, MessageType } from "@prague/runtime-definitions";
+import { IHelpMessage, IUser, MessageType } from "@prague/runtime-definitions";
 import * as winston from "winston";
 import * as core from "../core";
 import { IContext } from "../kafka-service/lambdas";
@@ -30,6 +30,7 @@ export class TmzLambda extends SequencedLambda {
 
     protected async handlerCore(message: utils.IMessage): Promise<void> {
         const messageContent = message.value.toString();
+
         const parsedMessage = utils.safelyParseJSON(messageContent);
         if (parsedMessage === undefined) {
             winston.error(`Invalid JSON input: ${messageContent}`);
@@ -45,6 +46,7 @@ export class TmzLambda extends SequencedLambda {
                     sequencedMessage.operation.clientId,
                     sequencedMessage.tenantId,
                     sequencedMessage.documentId,
+                    sequencedMessage.operation.user,
                     sequencedMessage.operation.contents);
             }
         }
@@ -56,6 +58,7 @@ export class TmzLambda extends SequencedLambda {
         clientId: string,
         tenantId: string,
         docId: string,
+        user: IUser,
         message: IHelpMessage): Promise<void> {
         const key = await this.tenantManager.getKey(tenantId);
         const queueTasks = this.generateQueueTasks(message.tasks);
@@ -70,6 +73,7 @@ export class TmzLambda extends SequencedLambda {
                     },
                     tenantId,
                     token: utils.generateToken(tenantId, docId, key),
+                    user,
                 };
                 this.messageSender.sendTask(
                     queueName,

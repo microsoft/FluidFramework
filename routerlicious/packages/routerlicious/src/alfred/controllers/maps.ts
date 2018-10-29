@@ -3,6 +3,7 @@ import * as api from "@prague/client-api";
 import * as resources from "@prague/gitresources";
 import * as Map from "@prague/map";
 import { IClient } from "@prague/runtime-definitions";
+import * as socketStorage from "@prague/socket-storage";
 import * as $ from "jquery";
 // tslint:disable-next-line:no-var-requires
 const hasIn = require("lodash/hasIn");
@@ -14,7 +15,16 @@ async function loadDocument(
     client: any,
     token?: string): Promise<api.Document> {
         console.log("Loading in root document...");
-        const document = await api.load(id, { client, encrypted: false, token }, version);
+        const tokenService = new socketStorage.TokenService();
+        const claims = tokenService.extractClaims(token);
+
+        const document = await api.load(
+            id,
+            claims.tenantId,
+            claims.user,
+            new socketStorage.TokenProvider(token),
+            { encrypted: false},
+            version);
 
         console.log("Document loaded");
         return document;
@@ -160,7 +170,7 @@ function loadFull(id: string, version: resources.ICommit, config: any, token?: s
             // Register to run task only if the client type is browser.
             const client = config.client as IClient;
             if (client && client.type === "browser") {
-                agent.registerToWork(doc, client, token, config);
+                agent.registerToWork(doc, client, new socketStorage.TokenProvider(token), config);
             }
         }, (err) => {
             // TODO (auth): Display an error page here.
@@ -173,7 +183,14 @@ function loadCommit(id: string, version: resources.ICommit, config: any) {
     registerDocumentServices(config);
 
     $(document).ready(() => {
-        api.load(id, { client: config.client, encrypted: false }, version, false).then(async (doc) => {
+        api.load(
+            id,
+            undefined, // tenantId
+            undefined, // user
+            undefined, // token
+            { client: config.client, encrypted: false },
+            version,
+            false).then(async (doc) => {
             // tslint:disable-next-line
             window["doc"] = doc;
 

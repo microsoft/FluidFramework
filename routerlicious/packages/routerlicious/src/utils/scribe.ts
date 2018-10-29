@@ -2,6 +2,7 @@ import * as api from "@prague/client-api";
 import { IMapView } from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
 import * as SharedString from "@prague/shared-string";
+import * as socketStorage from "@prague/socket-storage";
 import * as childProcess from "child_process";
 import * as path from "path";
 import * as author from "./author";
@@ -95,7 +96,10 @@ export async function create(
     debug = false): Promise<void> {
 
     // Load the shared string extension we will type into
-    document = await api.load(id, { token });
+    const tokenService = new socketStorage.TokenService();
+    const claims = tokenService.extractClaims(token);
+
+    document = await api.load(id, claims.tenantId, claims.user, new socketStorage.TokenProvider(token), { });
     const root = await document.getRoot().getView();
 
     root.set("presence", document.createMap());

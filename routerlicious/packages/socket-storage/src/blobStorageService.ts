@@ -1,6 +1,7 @@
 import * as resources from "@prague/gitresources";
 import * as api from "@prague/runtime-definitions";
 import * as gitStorage from "@prague/services-client";
+import { buildHierarchy } from "@prague/utils";
 
 /**
  * Document access to underlying storage
@@ -9,9 +10,9 @@ export class DocumentStorageService implements api.IDocumentStorageService  {
     constructor(tenantId: string, private id: string, public manager: gitStorage.GitManager) {
     }
 
-    /* tslint:disable:promise-function-async */
-    public getSnapshotTree(version: resources.ICommit): Promise<api.ISnapshotTree> {
-        return this.manager.getHeader(this.id, version ? version.sha : null);
+    public async getSnapshotTree(version: resources.ICommit): Promise<api.ISnapshotTree> {
+        const tree = await this.manager.getTree(version.tree.sha);
+        return buildHierarchy(tree);
     }
 
     public async getVersions(sha: string, count: number): Promise<resources.ICommit[]> {

@@ -23,12 +23,16 @@ function openWorkbook(docName: string) {
                 <table></table>
             `;
 
-            document.body.innerHTML = "";
-            document.body.appendChild(
-                sheetlet.mount(
-                    new SheetletState(),
-                    new FlowViewContext(undefined, undefined,
-                        new Map<string, any>([["workbook", workbook]]))))
+            const state = new SheetletState();
+            const context = new FlowViewContext(undefined, undefined,
+                new Map<string, any>([["workbook", workbook]]));
+            let element = sheetlet.mount(state, context);
+
+            document.body.appendChild(element);
+
+            workbook.on("valueChanged", () => {
+                element = sheetlet.update(state, context, element);
+            });
         });
 }
 

@@ -1,7 +1,7 @@
 import { urlToInclusion } from "../../../../routerlicious/packages/client-ui/src/blob";
 import { IMap, IMapView, MapExtension } from "../../../../routerlicious/packages/map";
 import { IChaincode, IPlatform, IRuntime } from "../../../../routerlicious/packages/runtime-definitions";
-import { Component, Store } from "../../../danlehen/store/src";
+import { Component, Store } from "../../../../routerlicious/packages/store";
 import { UI } from "./ui";
 
 const insightsMapId = "insights";
@@ -68,6 +68,11 @@ export class RemoteSession extends Component {
 
         const maybeDiv = await platform.queryInterface("div") as HTMLDivElement;
         if (maybeDiv) {
+            // Wait for connection before mounting the UI.
+            if (!runtime.connected) {
+                await new Promise<void>((resolve) => runtime.once("connected", resolve));
+            }
+
             const ui = new UI(this);
             maybeDiv.appendChild(await ui.mount(platform));
         }

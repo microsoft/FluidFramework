@@ -1,16 +1,20 @@
 import { SharingTab, RemotingTab } from "./sharingtab";
-import * as screenshare from "./screenshare";
+import { ScreenShare } from "./screenshare";
 
-const remoteDocId = `remote-${Math.random().toString(36).substr(2, 4)}`;
-let sharingTab = new SharingTab(`${Math.random().toString(36).substr(2, 6)}`);
-const remotingTab = new RemotingTab(remoteDocId);
+let sharingTab = new SharingTab(`${Math.random().toString(36).substr(2, 4)}`);
+const screenCast = new ScreenShare();
+let remoteDocId: string;
+const remotingTab = new RemotingTab();
+
+const createRemoteDocId = () => { remoteDocId = `remote-${Math.random().toString(36).substr(2, 4)}` };
 
 const parentMenuId = "prague_share_menu";
 const menus: chrome.contextMenus.CreateProperties[] = [{
         title: "component",
         contexts: ["all"],
         onclick: async (info: chrome.contextMenus.OnClickData, tab: chrome.tabs.Tab) => {
-            await screenshare.start(tab.id, remoteDocId);
+            createRemoteDocId();
+            await screenCast.start(tab.id, remoteDocId);
             await insertComponent("document", { id: remoteDocId });
         }
     }, {
@@ -23,8 +27,9 @@ const menus: chrome.contextMenus.CreateProperties[] = [{
         title: "session",
         contexts: ["all"],
         onclick: async (info: chrome.contextMenus.OnClickData, tab: chrome.tabs.Tab) => {
-            await screenshare.start(tab.id, remoteDocId);
-            await remotingTab.get();
+            createRemoteDocId();
+            await screenCast.start(tab.id, remoteDocId);
+            await remotingTab.get(remoteDocId);
         }
     }];
 

@@ -1,6 +1,7 @@
 import * as api from "@prague/client-api";
 import * as resources from "@prague/gitresources";
 import { Browser, IClient } from "@prague/runtime-definitions";
+import * as socketStorage from "@prague/socket-storage";
 import * as d3 from "d3";
 import { registerDocumentServices } from "./utils";
 
@@ -148,7 +149,16 @@ function updateSimulation(graph: any) {
 export async function load(id: string, version: resources.ICommit, config: any, token?: string) {
     registerDocumentServices(config);
 
-    const doc = await api.load(id, { client: { type: "visualize" }, encrypted: false, token }, version);
+    const tokenService = new socketStorage.TokenService();
+    const claims = tokenService.extractClaims(token);
+
+    const doc = await api.load(
+        id,
+        claims.tenantId,
+        claims.user,
+        new socketStorage.TokenProvider(token),
+        { client: { type: "visualize" }, encrypted: false },
+        version);
     let prev: IGraph;
     let curr = generateGraphData(doc);
     updateSimulation(curr);

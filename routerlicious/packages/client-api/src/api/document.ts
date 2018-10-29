@@ -11,6 +11,7 @@ import {
     IHelpMessage,
     IPlatform,
     IRuntime,
+    ITokenProvider,
     IUser,
     MessageType,
 } from "@prague/runtime-definitions";
@@ -25,7 +26,6 @@ import { CodeLoader } from "./codeLoader";
 import { debug } from "./debug";
 import { PlatformFactory } from "./platform";
 import { analyzeTasks, getLeader } from "./taskAnalyzer";
-import { TokenService } from "./tokenService";
 
 // tslint:disable-next-line
 const apiVersion = require("../../package.json").version;
@@ -312,13 +312,15 @@ async function initializeChaincode(document: pragueLoader.Document, pkg: string)
  */
 export async function load(
     id: string,
+    tenantId: string,
+    user: IUser,
+    tokenProvider: ITokenProvider,
     options: any = {},
     version: resources.ICommit = null,
     connect = true,
     service: IDocumentService = defaultDocumentService): Promise<Document> {
 
     const classicPlatform = new PlatformFactory();
-    const tokenService = new TokenService();
     const runDeferred = new Deferred<{ runtime: IRuntime; platform: IPlatform }>();
     const loader = new CodeLoader(
         async (r, p) => {
@@ -329,12 +331,14 @@ export async function load(
 
     // Load the Prague document
     const loaderDoc = await pragueLoader.load(
-        options.token,
+        id,
+        tenantId,
+        user,
+        tokenProvider,
         options,
         classicPlatform,
         service,
         loader,
-        tokenService,
         version,
         connect);
 

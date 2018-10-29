@@ -120,8 +120,9 @@ export class PaparazziRunner implements utils.IRunner {
             this.workerService.startTasks(
                 requestMsg.tenantId,
                 requestMsg.documentId,
+                requestMsg.user,
                 filteredTask,
-                requestMsg.token).catch((err) => {
+                new socketStorage.TokenProvider(requestMsg.token)).catch((err) => {
                     winston.error(
                         // tslint:disable-next-line
                         `Error starting ${JSON.stringify(filteredTask)}: ${requestMsg.tenantId}/${requestMsg.documentId}: ${err}`

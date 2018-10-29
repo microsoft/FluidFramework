@@ -1,11 +1,13 @@
 import * as loader from "@prague/loader";
+
 import {
     IChaincodeFactory,
     ICodeLoader,
     IDocumentService,
     IPlatform,
     IPlatformFactory,
-    ITokenService,
+    ITokenProvider,
+    IUser,
 } from "@prague/runtime-definitions";
 import * as driver from "@prague/socket-storage";
 import chalk from "chalk";
@@ -62,22 +64,24 @@ async function readlineAsync(input: readline.ReadLine, prompt: string): Promise<
 }
 
 async function run(
-    token: string,
+    id: string,
+    tenantId: string,
+    user: IUser,
+    tokenProvider: ITokenProvider,
     options: any,
     reject: boolean,
-    documentServices: IDocumentService,
-    tokenServices: ITokenService): Promise<void> {
-    const claims = tokenServices.extractClaims(token);
-
+    documentServices: IDocumentService): Promise<void> {
     const platformFactory = new NodePlatformFactory();
     const documentP = loader.load(
-        token,
+        id,
+        tenantId,
+        user,
+        tokenProvider,
         null,
         platformFactory,
         documentServices,
-        new NodeCodeLoader(),
-        tokenServices);
-    ora.promise(documentP, `Loading ${claims.tenantId}/${claims.documentId}`);
+        new NodeCodeLoader());
+    ora.promise(documentP, `Loading ${tenantId}/${id}`);
     const document = await documentP;
 
     const quorum = document.getQuorum();
@@ -146,18 +150,25 @@ commander
     .arguments("<documentId>")
     .action((documentId) => {
         action = true;
-        const tokenServices = new driver.TokenService();
         const documentServices = driver.createDocumentService(commander.deltas, commander.snapshots);
+        const user = { id: "loader-client" };
         const token = jwt.sign(
             {
                 documentId,
                 permission: "read:write",
                 tenantId: commander.tenant,
-                user: { id: "loader-client" },
+                user,
             },
             commander.secret);
 
-        run(token, null, commander.reject, documentServices, tokenServices).catch((error) => {
+        run(
+            documentId,
+            commander.tenant,
+            user,
+            new driver.TokenProvider(token),
+            null,
+            commander.reject,
+            documentServices).catch((error) => {
             console.error(error);
             process.exit(1);
         });

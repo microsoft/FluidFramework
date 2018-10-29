@@ -1,0 +1,40 @@
+<!DOCTYPE HTML>
+<html>
+
+<body>
+    <table>
+        <tr>
+            <td>
+                <input id="doc_name" type="text" value="streamdoc" />
+            </td>
+            <td>
+                <input id="prague_flat_btn" value="Save" type="button" /> 
+            </td>
+            <td>
+                <input id="prague_view_btn" value="View" type="button" />
+            </td>
+        </tr>
+
+        <tr>
+            <td style="text-align:right">Stream:</td>
+            <td>
+                <input id="prague_stream_start_btn" value="Start" type="button" />
+            </td>
+            <td>
+                <input id="prague_stream_stop_btn" value="Stop" type="button" />
+            </td>
+        </tr>
+    </table>
+    <span id="status"></span>
+    <hr />
+    Debug:
+    <input id="tab_btn" value="Tab" type="button" />
+    <input id="json_btn" value="JSON" type="button" />
+    <input id="prague_btn" value="Map" type="button" /><br />
+    <input id="background_cb" checked type="checkbox">Background<br />
+    <input id="batch_ops_cb" checked type="checkbox">Batch Ops<br />
+
+    <script src="popup.js"></script>
+</body>
+
+</html>

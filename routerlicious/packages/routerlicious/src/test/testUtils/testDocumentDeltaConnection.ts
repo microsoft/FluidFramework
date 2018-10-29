@@ -7,6 +7,7 @@ import {
 import { EventEmitter } from "events";
 
 export class TestDocumentDeltaConnection extends EventEmitter implements IDocumentDeltaConnection {
+    public readonly maxMessageSize = 16 * 1024;
 
     constructor(
         public documentId: string,

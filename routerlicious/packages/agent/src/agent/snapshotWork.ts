@@ -1,6 +1,6 @@
-import { IDocumentService, ISequencedDocumentMessage } from "@prague/runtime-definitions";
+import { IDocumentService, ISequencedDocumentMessage, ITokenProvider, IUser } from "@prague/runtime-definitions";
 import { BaseWork} from "./baseWork";
-import { IWork} from "./definitions";
+import { IWork } from "./definitions";
 import { Serializer } from "./serializer";
 import { runAfterWait } from "./utils";
 
@@ -14,13 +14,19 @@ const MaxOpCountWithoutSnapshot = 1000;
 
 export class SnapshotWork extends BaseWork implements IWork {
     private serializer: Serializer;
-    constructor(docId: string, private token: string, config: any, private service: IDocumentService) {
-        super(docId, config);
+    constructor(
+        docId: string,
+        tenantId: string,
+        user: IUser,
+        tokenProvider: ITokenProvider,
+        config: any,
+        private service: IDocumentService) {
+        super(docId, tenantId, user, tokenProvider, config);
     }
 
     public async start(task: string): Promise<void> {
         await this.loadDocument(
-            { encrypted: undefined, localMinSeq: 0, token: this.token, client: { type: "snapshot"} },
+            { encrypted: undefined, localMinSeq: 0, client: { type: "snapshot"} },
             this.service,
             task);
         this.serializer = new Serializer(

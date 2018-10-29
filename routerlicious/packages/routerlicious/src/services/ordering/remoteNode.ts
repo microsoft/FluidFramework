@@ -22,6 +22,10 @@ class ProxySocketConnection implements IOrdererConnection {
         return this.details.parentBranch;
     }
 
+    public get maxMessageSize(): number {
+        return this.details.maxMessageSize;
+    }
+
     constructor(
         private socket: IWebSocket,
         private node: RemoteNode,

@@ -304,7 +304,12 @@ class Speller {
 let theSpeller: Speller;
 async function initSpell(id: string) {
 
-    const document = await API.load(id, { blockUpdateMarkers: true, localMinSeq: 0, encrypted: undefined });
+    const document = await API.load(
+        id,
+        undefined, // tenantId
+        undefined, // user
+        undefined, // token
+        { blockUpdateMarkers: true, localMinSeq: 0, encrypted: undefined });
     const root = await document.getRoot().getView();
     if (!root.has("text")) {
         root.set("text", document.createString());

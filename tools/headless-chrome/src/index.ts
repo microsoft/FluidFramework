@@ -16,7 +16,7 @@ async function testPage(documentUrl: string, page: puppeteer.Page, matchText: st
             return;
         }
 
-        const regEx = new RegExp(`${matchText[entry]} (.+): (\\d+.\\d+) `);
+        const regEx = new RegExp(`${matchText[entry]} (.+): (\\d+.\\d+)`);
         const matches = text.match(regEx);
         if (matches) {
             entry++;
@@ -46,7 +46,7 @@ async function loginAndInitialize(
 
     // Turn on verbose debugging across all pages
     await page.evaluate(() => {
-        localStorage.debug = "routerlicious:*";
+        localStorage.debug = "prague:*";
     });
 
     await page.type("#username", username);

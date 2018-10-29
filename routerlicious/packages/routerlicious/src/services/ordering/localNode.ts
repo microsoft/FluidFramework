@@ -51,7 +51,8 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
         timeoutLength: number,
         taskMessageSender: ITaskMessageSender,
         tenantManager: ITenantManager,
-        permission: any) {
+        permission: any,
+        maxMessageSize: number) {
 
         // Look up any existing information for the node or create a new one
         const node = await LocalNode.Create(
@@ -67,7 +68,8 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
             timeoutLength,
             taskMessageSender,
             tenantManager,
-            permission);
+            permission,
+            maxMessageSize);
     }
 
     private static async Create(
@@ -132,7 +134,8 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
         private timeoutLength: number,
         private taskMessageSender: ITaskMessageSender,
         private tenantManager: ITenantManager,
-        private permission: any) {
+        private permission: any,
+        private maxMessageSize: number) {
         super();
 
         // Schedule the first heartbeat to update the reservation
@@ -170,6 +173,7 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
                         const connected: IConnectedMessage = {
                             clientId: connection.clientId,
                             existing: connection.existing,
+                            maxMessageSize: this.maxMessageSize,
                             parentBranch: connection.parentBranch,
                         };
                         socket.send({ cid: message.cid, type: "connected", payload: connected });
@@ -213,7 +217,8 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
             documentId,
             this.taskMessageSender,
             this.tenantManager,
-            this.permission);
+            this.permission,
+            this.maxMessageSize);
         assert(!this.orderMap.has(fullId));
         this.orderMap.set(fullId, orderer);
 

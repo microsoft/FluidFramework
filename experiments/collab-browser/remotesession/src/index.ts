@@ -1,5 +1,5 @@
 import { IChaincode } from "../../../../routerlicious/packages/runtime-definitions";
-import { Store } from "../../../danlehen/store/src";
+import { Store } from "../../../../routerlicious/packages/store";
 import { RemoteSession } from "./remotesession";
 
 export { RemoteSession };

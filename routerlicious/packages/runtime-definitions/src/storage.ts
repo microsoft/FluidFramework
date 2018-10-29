@@ -27,6 +27,11 @@ export interface IDocumentAttributes {
     clients: Array<[string, IClient]>;
 
     /**
+     * List of clients when the snapshot was taken
+     */
+    partialOps: Array<[string, string[]]>;
+
+    /**
      * Pending proposals at the time of the snapshot
      */
     proposals: ISequencedProposal[];
@@ -202,6 +207,11 @@ export interface IDocumentDeltaConnection extends EventEmitter {
      * The identity of the logged-in user
      */
     user: IUser;
+
+    /**
+     * Maximum size of a message that can be sent to the server. Messages larger than this size must be chunked.
+     */
+    maxMessageSize: number;
 
     /**
      * Messages sent during the connection

@@ -1,6 +1,6 @@
 import { ICommit } from "@prague/gitresources";
 import * as loader from "@prague/loader";
-import { IDocumentService, ITokenService } from "@prague/runtime-definitions";
+import { IDocumentService, ITokenProvider, IUser  } from "@prague/runtime-definitions";
 import chalk from "chalk";
 import { WebLoader } from "./webLoader";
 import { WebPlatformFactory } from "./webPlatform";
@@ -15,11 +15,13 @@ async function proposeChaincode(document: loader.Document, chaincode: string) {
 }
 
 export async function run(
-    token: string,
+    id: string,
+    tenantId: string,
+    user: IUser,
+    tokenProvider: ITokenProvider,
     options: any,
     reject: boolean,
     documentServices: IDocumentService,
-    tokenServices: ITokenService,
     version: ICommit,
     connect: boolean,
     chaincode: string,
@@ -29,12 +31,14 @@ export async function run(
     const webPlatformFactory = new WebPlatformFactory(window.document.getElementById("content"));
 
     const documentP = loader.load(
-        token,
+        id,
+        tenantId,
+        user,
+        tokenProvider,
         { blockUpdateMarkers: true },
         webPlatformFactory,
         documentServices,
         webLoader,
-        tokenServices,
         version,
         connect);
     const document = await documentP;

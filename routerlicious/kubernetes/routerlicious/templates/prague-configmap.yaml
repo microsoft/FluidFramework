@@ -34,10 +34,12 @@ data:
             "lib": {
                 "name": "kafka-node",
                 "endpoint": "{{ .Values.zookeeper.url }}"
-            }
+            },
+            "maxMessageSize": "1MB"
         },
         "alfred": {
             "kafkaClientId": "{{ template "alfred.fullname" . }}",
+            "maxMessageSize": "16KB",
             "topic": "{{ .Values.kafka.topics.rawdeltas }}",
             "bucket": "snapshots",
             "restJsonSize": "50mb",
@@ -117,6 +119,10 @@ data:
                 "group": "{{ template "routemaster.fullname" . }}",
                 "topic": "{{ .Values.kafka.topics.deltas }}"
             },
+            "rotograph": {
+                "group": "{{ template "rotograph.fullname" . }}",
+                "topic": "{{ .Values.kafka.topics.deltas }}"
+            },
             "scriptorium": {
                 "group": "{{ template "scriptorium.fullname" . }}",
                 "topic": "{{ .Values.kafka.topics.deltas }}"
@@ -142,6 +148,21 @@ data:
             "permissions": {
                 "paparazziQueue": ["snapshot", "spell", "intel", "translation"],
                 "augloopQueue": ["augmentation"]
+            }
+        },
+        "rotograph": {
+            "alfred": "http://{{ template "alfred.fullname" . }}",
+            "topic": "{{ .Values.kafka.topics.deltas }}",
+            "kafkaClientId": "{{ template "rotograph.fullname" . }}",
+            "groupId": "{{ template "rotograph.fullname" . }}",
+            "queues": ["videoQueue"],
+            "clientId": "339e853d-1307-4148-aa82-c6bd8a56dccc",
+            "clientSecret": "A1LGEWdAVj8doEs5zyGgmikLgwijKliqbKwgs/CKcf0=",
+            "endpoint": "https://videoblobstorage.restv2.westus2-2.media.azure.net/api/",
+            "authEndpoint": "https://login.microsoftonline.com/microsoft.onmicrosoft.com/oauth2/token",
+            "resource": "https://rest.media.azure.net",
+            "permissions": {
+                "videoQueue": ["encoding"]
             }
         },
         "paparazzi": {
@@ -183,7 +204,7 @@ data:
             "serverUrl": "{{ .Values.alfred.externalUrl }}",
             "blobStorageUrl": "{{ .Values.historian.externalUrl }}",
             "repository": "prague",
-            "npm": "https://packages.wu2.prague.office-int.com",
+            "npm": "https://pragueauspkn-3873244262.azureedge.net",
             "permission": ["snapshot", "spell", "intel", "translation"]
         },
         "tenantConfig": [

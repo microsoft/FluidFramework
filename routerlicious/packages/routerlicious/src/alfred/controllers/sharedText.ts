@@ -5,6 +5,7 @@ import { controls, ui } from "@prague/client-ui";
 import * as resources from "@prague/gitresources";
 import * as DistributedMap from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
+import * as replaySocketStorage from "@prague/replay-socket-storage";
 import { IClient } from "@prague/runtime-definitions";
 import * as SharedString from "@prague/shared-string";
 import * as socketStorage from "@prague/socket-storage";
@@ -98,7 +99,8 @@ async function loadDocument(
         ? new BrowserErrorTrackingService()
         : new socketStorage.DefaultErrorTracking();
     const replayMode = (from >= 0) && (to >= 0);
-    const documentService = replayMode ? socketStorage.createReplayDocumentService(document.location.origin, from, to)
+    const documentService = replayMode
+        ? replaySocketStorage.createReplayDocumentService(document.location.origin, from, to)
         : socketStorage.createDocumentService(
             document.location.origin,
             config.blobStorageUrl,
@@ -107,16 +109,28 @@ async function loadDocument(
             config.historianApi,
             config.credentials);
     API.registerDocumentService(documentService);
-    console.log(`collabDoc loading ${id} - ${performanceNow()}`);
-    const collabDoc = await API.load(id, { blockUpdateMarkers: true, client: config.client, token }, version, connect);
+
+    const tokenService = new socketStorage.TokenService();
+    const claims = tokenService.extractClaims(token);
+
+    console.log(`Document loading ${id}: ${performanceNow()}`);
+    const tokenProvider = new socketStorage.TokenProvider(token);
+    const collabDoc = await API.load(
+        id,
+        claims.tenantId,
+        claims.user,
+        tokenProvider,
+        { blockUpdateMarkers: true, client: config.client },
+        version,
+        connect);
 
     // Register to run task only if the client type is browser.
     const client = config.client as IClient;
     if (client && client.type === "browser") {
-        agent.registerToWork(collabDoc, client, token, config);
+        agent.registerToWork(collabDoc, client, tokenProvider, config);
     }
 
-    console.log(`collabDoc loaded ${id} - ${performanceNow()}`);
+    console.log(`Document loaded ${id}: ${performanceNow()}`);
     const root = await collabDoc.getRoot().getView();
     console.log(`Getting root ${id} - ${performanceNow()}`);
 

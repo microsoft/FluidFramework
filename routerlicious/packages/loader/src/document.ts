@@ -3,6 +3,7 @@ import {
     ConnectionState,
     FileMode,
     IChaincode,
+    IChunkedOp,
     IClient,
     IClientJoin,
     ICodeLoader,
@@ -18,7 +19,7 @@ import {
     ISequencedDocumentMessage,
     ISequencedProposal,
     ISnapshotTree,
-    ITokenService,
+    ITokenProvider,
     ITree,
     ITreeEntry,
     IUser,
@@ -45,6 +46,12 @@ interface IConnectResult {
     detailsP: Promise<IConnectionDetails>;
 
     handlerAttachedP: Promise<void>;
+}
+
+interface IBufferedChunk {
+    type: MessageType;
+
+    content: string;
 }
 
 class RuntimeStorageService implements IDocumentStorageService {
@@ -88,15 +95,17 @@ class RuntimeStorageService implements IDocumentStorageService {
 // TODO consider a name change for this. The document is likely built on top of this infrastructure
 export class Document extends EventEmitter {
     public static async Load(
-        token: string,
+        id: string,
+        tenantId: string,
+        user: IUser,
+        tokenProvider: ITokenProvider,
         platform: IPlatformFactory,
         service: IDocumentService,
         codeLoader: ICodeLoader,
-        tokenService: ITokenService,
         options: any,
         specifiedVersion: ICommit,
         connect: boolean): Promise<Document> {
-        const doc = new Document(token, platform, service, codeLoader, tokenService, options);
+        const doc = new Document(id, tenantId, user, tokenProvider, platform, service, codeLoader, options);
         await doc.load(specifiedVersion, connect);
 
         return doc;
@@ -123,15 +132,21 @@ export class Document extends EventEmitter {
     private _runtime: Runtime;
     // tslint:enable:variable-name
 
+    // Local copy of incomplete received chunks.
+    private chunkMap: Map<string, string[]> = new Map<string, string[]>();
+
+    // Local copy of sent but unacknowledged chunks.
+    private unackedChunkedMessages: Map<number, IBufferedChunk> = new Map<number, IBufferedChunk>();
+
     public get tenantId(): string {
-        return this._tenantId;
+       return this._tenantId;
     }
 
     public get id(): string {
         return this._id;
     }
 
-    public get deltaManager(): IDeltaManager {
+     public get deltaManager(): IDeltaManager {
         return this._deltaManager;
     }
 
@@ -166,18 +181,18 @@ export class Document extends EventEmitter {
     }
 
     constructor(
-        private token: string,
+        id: string,
+        tenantId: string,
+        user: IUser,
+        private tokenProvider: ITokenProvider,
         private platform: IPlatformFactory,
         private service: IDocumentService,
         private codeLoader: ICodeLoader,
-        tokenService: ITokenService,
         public readonly options: any) {
         super();
-
-        const claims = tokenService.extractClaims(token);
-        this._id = claims.documentId;
-        this._tenantId = claims.tenantId;
-        this._user = claims.user;
+        this._id = id;
+        this._tenantId = tenantId;
+        this._user = user;
     }
 
     /**
@@ -262,7 +277,7 @@ export class Document extends EventEmitter {
     }
 
     private async load(specifiedVersion: ICommit, connect: boolean): Promise<void> {
-        const storageP = this.service.connectToStorage(this.tenantId, this.id, this.token);
+        const storageP = this.service.connectToStorage(this.tenantId, this.id, this.tokenProvider.storageToken);
 
         // If a version is specified we will load it directly - otherwise will query historian for the latest
         // version and then load it
@@ -285,6 +300,7 @@ export class Document extends EventEmitter {
                         branch: this.id,
                         clients: [],
                         minimumSequenceNumber: 0,
+                        partialOps: [],
                         proposals: [],
                         sequenceNumber: 0,
                         values: [],
@@ -454,6 +470,7 @@ export class Document extends EventEmitter {
             branch: this.id,
             clients: [...this.quorum.getMembers()],
             minimumSequenceNumber: this._deltaManager.minimumSequenceNumber,
+            partialOps: [...this.chunkMap],
             proposals: [],
             sequenceNumber: this._deltaManager.referenceSequenceNumber,
             values: [],
@@ -678,12 +695,18 @@ export class Document extends EventEmitter {
     private connect(attributesP: Promise<IDocumentAttributes>): IConnectResult {
         // Create the DeltaManager and begin listening for connection events
         const clientDetails = this.options ? this.options.client : null;
-        this._deltaManager = new DeltaManager(this.id, this.tenantId, this.token, this.service, clientDetails);
+        this._deltaManager = new DeltaManager(
+            this.id,
+            this.tenantId,
+            this.tokenProvider,
+            this.service,
+            clientDetails);
 
         // Open a connection - the DeltaMananger will automatically reconnect
         const detailsP = this._deltaManager.connect("Document loading");
         this._deltaManager.on("connect", (details: IConnectionDetails) => {
             this.setConnectionState(ConnectionState.Connecting, "websocket established", details.clientId);
+            this.sendUnackedChunks();
         });
 
         this._deltaManager.on("disconnect", (nack: boolean) => {
@@ -756,12 +779,56 @@ export class Document extends EventEmitter {
         }
     }
 
+    private sendUnackedChunks() {
+        for (const message of this.unackedChunkedMessages) {
+            console.log(`Resending unacked chunks!`);
+            this.submitChunkedMessage(
+                message[1].type,
+                message[1].content,
+                this._deltaManager.maxMessageSize);
+        }
+    }
+
+    // TODO (mdaumi): To play nice with rest of the protocol, we only serialize chunked message.
+    // We should do it for all messages and stop serializing on the server.
     private submitMessage(type: MessageType, contents: any): number {
         if (this.connectionState !== ConnectionState.Connected) {
             return -1;
         }
 
-        const clientSequenceNumber = this._deltaManager.submit(type, contents);
+        const serializedContent = JSON.stringify(contents);
+        const maxOpSize = this._deltaManager.maxMessageSize;
+
+        let clientSequenceNumber: number;
+        if (serializedContent.length <= maxOpSize) {
+            clientSequenceNumber = this._deltaManager.submit(type, contents);
+        } else {
+            clientSequenceNumber = this.submitChunkedMessage(type, serializedContent, maxOpSize);
+            this.unackedChunkedMessages.set(clientSequenceNumber,
+                {
+                    content: serializedContent,
+                    type,
+                });
+        }
+
+        return clientSequenceNumber;
+    }
+
+    private submitChunkedMessage(type: MessageType, content: string, maxOpSize: number): number {
+        const contentLength = content.length;
+        const chunkN = Math.floor(contentLength / maxOpSize) + ((contentLength % maxOpSize === 0) ? 0 : 1);
+        let offset = 0;
+        let clientSequenceNumber;
+        for (let i = 1; i <= chunkN; i = i + 1) {
+            const chunkedOp: IChunkedOp = {
+                chunkId: i,
+                contents: content.substr(offset, maxOpSize),
+                originalType: type,
+                totalChunks: chunkN,
+            };
+            offset += maxOpSize;
+            clientSequenceNumber = this._deltaManager.submit(MessageType.ChunkedOp, chunkedOp);
+        }
         return clientSequenceNumber;
     }
 
@@ -778,11 +845,52 @@ export class Document extends EventEmitter {
 
         // tslint:disable:switch-default
         switch (message.type) {
+            case MessageType.ChunkedOp:
+                const chunkComplete = this.prepareRemoteChunkedMessage(message);
+                if (!chunkComplete) {
+                    return;
+                } else  {
+                    if (local) {
+                        const clientSeqNumber = message.clientSequenceNumber;
+                        if (this.unackedChunkedMessages.has(clientSeqNumber)) {
+                            this.unackedChunkedMessages.delete(clientSeqNumber);
+                        }
+                    }
+                    return this.prepareRemoteMessage(message);
+                }
+
             case MessageType.Operation:
                 return this._runtime.prepare(message, local);
 
             case MessageType.Attach:
                 return this._runtime.prepareAttach(message, local);
+        }
+    }
+
+    private prepareRemoteChunkedMessage(message: ISequencedDocumentMessage): boolean {
+        const clientId = message.clientId;
+        const chunkedContent = message.contents as IChunkedOp;
+        this.addChunk(clientId, chunkedContent.contents);
+        if (chunkedContent.chunkId === chunkedContent.totalChunks) {
+            const serializedContent = this.chunkMap.get(clientId).join("");
+            message.contents = JSON.parse(serializedContent);
+            message.type = chunkedContent.originalType;
+            this.clearPartialChunks(clientId);
+            return true;
+        }
+        return false;
+    }
+
+    private addChunk(clientId: string, chunkedContent: string) {
+        if (!this.chunkMap.has(clientId)) {
+            this.chunkMap.set(clientId, []);
+        }
+        this.chunkMap.get(clientId).push(chunkedContent);
+    }
+
+    private clearPartialChunks(clientId: string) {
+        if (this.chunkMap.has(clientId)) {
+            this.chunkMap.delete(clientId);
         }
     }
 
@@ -822,8 +930,10 @@ export class Document extends EventEmitter {
                 break;
 
             case MessageType.ClientLeave:
-                this.quorum.removeMember(message.contents);
-                this.emit("clientLeave", message.contents);
+                const clientId = message.contents as string;
+                this.clearPartialChunks(clientId);
+                this.quorum.removeMember(clientId);
+                this.emit("clientLeave", clientId);
                 break;
 
             case MessageType.Propose:

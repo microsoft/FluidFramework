@@ -49,6 +49,7 @@ export function create(config: Provider, ensureLoggedIn: any): Router {
             {
                 chartsMoniker: moniker.choose(),
                 componentsMoniker: moniker.choose(),
+                monacoMoniker: moniker.choose(),
                 partials: defaultPartials,
                 pinpointMoniker: moniker.choose(),
                 pollMoniker: moniker.choose(),

@@ -63,6 +63,12 @@ configMap: |
   uplinks:
     npmjs:
       url: https://registry.npmjs.org/
+
+  # Allow publisher to publish packages when uplink(s) are down.
+  # (See: https://github.com/verdaccio/verdaccio/issues/78)
+  publish:
+    allow_offline: true
+
   packages:
     '@*/*':
       # scoped packages

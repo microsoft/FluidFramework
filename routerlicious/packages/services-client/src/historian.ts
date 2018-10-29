@@ -171,6 +171,7 @@ export class Historian implements IHistorian {
         const options: AxiosRequestConfig = {
             headers: {
             },
+            maxContentLength: 1000 * 1024 * 1024,
             method: "GET",
             url: `${this.endpoint}${url}`,
         };
@@ -182,6 +183,7 @@ export class Historian implements IHistorian {
             data: requestBody,
             headers: {
             },
+            maxContentLength: 1000 * 1024 * 1024,
             method: "POST",
             url: `${this.endpoint}${url}`,
         };
@@ -192,6 +194,7 @@ export class Historian implements IHistorian {
         const options: AxiosRequestConfig = {
             headers: {
             },
+            maxContentLength: 1000 * 1024 * 1024,
             method: "DELETE",
             url: `${this.endpoint}${url}`,
         };
@@ -203,6 +206,7 @@ export class Historian implements IHistorian {
             data: requestBody,
             headers: {
             },
+            maxContentLength: 1000 * 1024 * 1024,
             method: "PATCH",
             url: `${this.endpoint}${url}`,
         };

@@ -1,0 +1,24 @@
+{
+  "name": "DOM stream",
+  "description": "DOM stream",
+  "version": "0.3",
+  "content_scripts": [{
+    "matches": ["<all_urls>"],
+    "run_at": "document_start",
+    "js": ["content.js"]    
+  }],
+  "background": {
+    "scripts": ["background.js"],
+    "persistent": false
+  },
+  "permissions": [
+    "activeTab",
+    "storage",
+    "webNavigation"
+  ],
+  "browser_action": {
+    "default_title": "DOM stream",
+    "default_popup": "popup.html"
+  },
+  "manifest_version": 2
+}

@@ -211,13 +211,13 @@ that is making use of the library. Debug is a popular package used by most major
 
 For our node apps enabling library logging is as simple as setting the DEBUG environment variable - i.e.
 
-`DEBUG=routerlicious:*,connect:compress,connect:session`
+`DEBUG=prague:*,connect:compress,connect:session`
 
 This is already done in our docker compose files for our own internal libraries which are all under the routerlicous namespace.
 
 In the browser you can enable them by setting localStorage.debug variable.
 
-`localStorage.debug = 'routerlicious:*'`
+`localStorage.debug = 'prague:*'`
 
 After which you will need to reload the page.
 

@@ -1,11 +1,11 @@
 import * as api from "@prague/runtime-definitions";
 import { GitManager, Historian, ICredentials } from "@prague/services-client";
+import { DocumentDeltaConnection } from "@prague/socket-storage-shared";
 // tslint:disable-next-line:match-default-export-name
 import axios from "axios";
 import * as io from "socket.io-client";
 import { DocumentStorageService } from "./blobStorageService";
 import { DeltaStorageService, DocumentDeltaStorageService } from "./deltaStorageService";
-import { DocumentDeltaConnection } from "./documentDeltaConnection";
 
 /**
  * The DocumentService manages the Socket.IO connection and manages routing requests to connected

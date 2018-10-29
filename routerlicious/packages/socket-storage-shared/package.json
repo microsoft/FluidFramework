@@ -1,0 +1,31 @@
+{
+  "name": "@prague/socket-storage-shared",
+  "version": "0.1.0",
+  "description": "Shared package across different socket-storage implementation",
+  "main": "dist/index.js",
+  "module": "lib/index.js",
+  "types": "dist/index.d.ts",
+  "sideEffects": "false",
+  "scripts": {
+    "build": "npm run tsc && npm run build:esnext && npm run tslint",
+    "build:full": "npm run build",
+    "tsc": "tsc",
+    "build:esnext": "tsc --outDir lib --m esnext",
+    "tslint": "tslint --project tsconfig.json --format verbose"
+  },
+  "author": "Microsoft",
+  "repository": "microsoft/prague",
+  "dependencies": {
+    "@prague/runtime-definitions": "^0.1.0",
+    "@prague/utils": "^0.1.0",
+    "@types/debug": "^0.0.30",    
+    "@types/socket.io-client": "^1.4.32",
+    "debug": "^3.1.0",
+    "socket.io-client": "^2.1.1"
+  },
+  "devDependencies": {
+    "tslint": "^5.11.0",
+    "tslint-microsoft-contrib": "^5.2.1",
+    "typescript": "^3.1.3"
+  }
+}

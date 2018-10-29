@@ -1,12 +1,12 @@
 {
   "name": "@chaincode/monaco",
-  "version": "0.1.0",
+  "version": "0.1.18",
   "description": "Monaco code editor",
   "main": "dist/index.js",
   "author": "Microsoft",
   "scripts": {
     "build": "npm run tslint && npm run webpack",
-    "start": "webpack-dev-server",
+    "start": "webpack-dev-server --config webpack.local.js",
     "tslint": "tslint 'src/**/*.ts'",
     "webpack": "webpack --config webpack.config.js --open",
     "update": "npm run build && npm version patch && npm publish --registry http://localhost:4873"
@@ -31,6 +31,7 @@
     "@prague/socket-storage": "^0.1.3611",
     "css-loader": "^1.0.0",
     "html-loader": "^0.5.5",
+    "loader-utils": "^1.1.0",
     "monaco-editor-webpack-plugin": "^1.5.4",
     "node-sass": "^4.9.3",
     "sass-loader": "^7.1.0",

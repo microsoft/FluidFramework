@@ -28,10 +28,22 @@ export class DocumentStorage implements core.IDocumentStorage {
         return getOrCreateP;
     }
 
-    public async getLatestVersion(tenantId: string, documentId: string): Promise<ICommitDetails> {
+    public async getLatestVersion(tenantId: string, documentId: string): Promise<ICommit> {
         const versions = await this.getVersions(tenantId, documentId, 1);
+        if (!versions.length) {
+            return null;
+        }
 
-        return versions.length > 0 ? versions[0] : null;
+        const latest = versions[0];
+        return {
+            author: latest.commit.author,
+            committer: latest.commit.committer,
+            message: latest.commit.message,
+            parents: latest.parents,
+            sha: latest.sha,
+            tree: latest.commit.tree,
+            url: latest.url,
+        };
     }
 
     public async getVersions(tenantId: string, documentId: string, count: number): Promise<ICommitDetails[]> {

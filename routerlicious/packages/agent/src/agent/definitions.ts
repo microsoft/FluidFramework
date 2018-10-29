@@ -1,4 +1,4 @@
-import { IDocumentService } from "@prague/runtime-definitions";
+import { IDocumentService, ITokenProvider, IUser } from "@prague/runtime-definitions";
 
 export interface IWork {
     /**
@@ -26,8 +26,12 @@ export interface IWorkManager {
     /**
      * Starts working on a document
      */
-    startDocumentWork(tenantId: string, documentId: string, workType: string, token?: string):
-        Promise<void>;
+    startDocumentWork(
+        tenantId: string,
+        documentId: string,
+        user: IUser,
+        workType: string,
+        tokenProvider: ITokenProvider): Promise<void>;
 
     /**
      * Stops working on a document

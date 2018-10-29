@@ -13,3 +13,9 @@ export interface ITokenClaims {
 export interface ITokenService {
     extractClaims(token: string): ITokenClaims;
 }
+
+export interface ITokenProvider {
+    storageToken: string;
+    deltaStorageToken: string;
+    deltaStreamToken: string;
+}

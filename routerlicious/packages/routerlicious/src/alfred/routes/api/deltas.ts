@@ -4,7 +4,7 @@ import { Provider } from "nconf";
 import * as utils from "../../../utils";
 import { IAlfredTenant } from "../../tenant";
 
-export function getDeltas(
+export async function getDeltas(
     mongoManager: utils.MongoManager,
     collectionName: string,
     tenantId: string,
@@ -27,21 +27,18 @@ export function getDeltas(
     }
 
     // Query for the deltas and return a filtered version of just the operations field
-    const deltasP = mongoManager.getDatabase().then(async (db) => {
-        const collection = await db.collection<any>(collectionName);
-        const dbDeltas = await collection.find(query, { "operation.sequenceNumber": 1 });
+    const db = await mongoManager.getDatabase();
+    const collection = await db.collection<any>(collectionName);
+    const dbDeltas = await collection.find(query, { "operation.sequenceNumber": 1 });
 
-        return dbDeltas.map((delta) => {
-            const operation = delta.operation as ISequencedDocumentMessage;
-            // Temporary workaround to handle old deltas where content type is object.
-            if (typeof operation.contents === "string") {
-                operation.contents = JSON.parse(operation.contents);
-            }
-            return operation;
-        });
+    return dbDeltas.map((delta) => {
+        const operation = delta.operation as ISequencedDocumentMessage;
+        // Temporary workaround to handle old deltas where content type is object.
+        if (typeof operation.contents === "string") {
+            operation.contents = JSON.parse(operation.contents);
+        }
+        return operation;
     });
-
-    return deltasP;
 }
 
 export function create(config: Provider, mongoManager: utils.MongoManager, appTenants: IAlfredTenant[]): Router {
