@@ -5,6 +5,7 @@
   "main": "dist/index.js",
   "scripts": {
     "build": "npm run tsc && npm run tslint",
+    "build:container": "docker build --build-arg NPM_TOKEN=${NPM_TOKEN} -t deli .",
     "clean": "rimraf dist",
     "docker": "docker run --rm -it -e NPM_TOKEN=$NPM_TOKEN -v $(pwd):/usr/src/server deli /bin/sh",
     "test": "echo \"Error: no test specified\" && exit 1",
