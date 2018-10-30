@@ -17,8 +17,8 @@ export class RdkafkaConsumer extends EventEmitter implements IConsumer {
         public groupId: string,
         public topic: string,
         autoCommit: boolean,
-        backoffMs: number,
-        maxWaitMs: number) {
+        maxWaitMs: number = 5,
+        backoffMs: number = 20) {
         super();
 
         // https://github.com/edenhill/librdkafka/wiki/How-to-decrease-message-latency
