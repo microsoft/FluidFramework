@@ -1,7 +1,7 @@
 {
-  "name": "@prague/sharepoint-socket-storage",
+  "name": "@prague/msgraph-socket-storage",
   "version": "0.1.0",
-  "description": "Sharepoint variant of Socket storage",
+  "description": "Microsoft Graph variant of Socket storage. Works with OneDrive and SharePoint",
   "main": "dist/index.js",
   "module": "lib/index.js",
   "types": "dist/index.d.ts",
@@ -12,7 +12,27 @@
     "tsc": "tsc",
     "build:esnext": "tsc --outDir lib --m esnext",
     "test": "mocha --recursive dist/test",
+    "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml",
     "tslint": "tslint --project tsconfig.json --format verbose"
+  },
+  "nyc": {
+    "all": true,
+    "exclude": [
+      "src/test/**/*.ts",
+      "dist/test/**/*.js"
+    ],
+    "include": [
+      "src/**/*.ts",
+      "dist/**/*.js"
+    ],
+    "reporter": [
+      "cobertura",
+      "html",
+      "text"
+    ],
+    "temp-directory": "nyc/.nyc_output",
+    "cache-dir": "nyc/.cache",
+    "report-dir": "nyc/report"
   },
   "author": "Microsoft",
   "repository": "microsoft/prague",
@@ -20,7 +40,8 @@
     "@types/mocha": "^5.2.5",
     "@types/nock": "^9.3.0",
     "mocha": "^5.2.0",
-    "nock": "^10.0.1",
+    "mocha-junit-reporter": "^1.18.0",
+    "nyc": "^13.0.1",
     "rimraf": "^2.6.2",
     "tslint": "^5.11.0",
     "tslint-microsoft-contrib": "^5.2.1",

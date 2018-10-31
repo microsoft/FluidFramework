@@ -19,3 +19,25 @@ export class PortHolder {
         this.port.onMessage.removeListener(listener);
     }
 }
+
+export enum MessageEnum {
+    // client message
+    set,
+    setMap,
+    setIfChanged,
+    setTimeStamp,
+    delete,
+    forEach,
+    ensureMapView,
+    batch,
+
+    // background replies
+    forEachItem,
+    forEachDone,
+    ensureMapViewDone,
+    valueChanged,
+
+    // Initial action
+    BackgroundPragueStreamStart,
+    BackgroundPragueStreamStop,
+}

@@ -17,41 +17,58 @@ async function MapWrapperToObject(mapView: IMapViewWrapper): Promise<object> {
 }
 
 let collabDocToClose;
-export async function saveDOMToPrague(documentId: string, useFlatMap: boolean, stream: boolean, streamops: boolean) {
+export async function saveDOMToPrague(documentId: string, options: any) {
     if (mutationObserver) { alert("Content script already streaming"); return; }
     // Load in the latest and connect to the document
+    options.startSignalTime = options.startSaveSignalTime = performance.now();
     const collabDoc = await getCollabDoc(documentId);
-    await saveDOM(new PragueMapWrapperFactory(collabDoc, streamops), useFlatMap, stream);
-    if (stream) {
+    await saveDOM(new PragueMapWrapperFactory(collabDoc, options.batchOp), options);
+    if (options.stream) {
         collabDocToClose = collabDoc;
     } else {
-        collabDoc.close();
+        // collabDoc.close(); // how to wait until all the ops are done?
     }
 }
 
-export async function streamDOMToBackgroundPrague(port: chrome.runtime.Port) {
+export async function streamDOMToBackgroundPrague(port: chrome.runtime.Port,
+                                                  contentScriptInitTime, startSignalTime, batchOp: boolean) {
     if (mutationObserver) { alert("Content script already streaming"); return; }
-    return saveDOM(new PragueBackgroundMapWrapperFactory(port), true, true);
+    const options = {
+        background: true,
+        batchOp,
+        contentScriptInitTime,
+        startSaveSignalTime: performance.now(),
+        startSignalTime,
+        stream: true,
+        useFlatMap: true,
+    };
+    return saveDOM(new PragueBackgroundMapWrapperFactory(port, options.batchOp), options);
 }
 
-async function saveDOM(mapWrapperFactory: IMapWrapperFactory, useFlatMap: boolean, stream: boolean) {
+async function saveDOM(mapWrapperFactory: IMapWrapperFactory, options: any) {
     const rootViewWrapper = await mapWrapperFactory.getRootMapView();
     const dataMapWrapper = await mapWrapperFactory.createMapView();
 
     debug("Start sending to Prague");
     const startTime = performance.now();
+    dataMapWrapper.set("CONFIG_BACKGROUND", options.background);
+    dataMapWrapper.set("CONFIG_BATCHOP", options.batchOp);
+    dataMapWrapper.set("TIME_INIT", options.contentScriptInitTime);
+    dataMapWrapper.set("TIME_STARTSIGNAL", options.startSignalTime - options.contentScriptInitTime);
+    dataMapWrapper.set("TIME_STARTSAVE", options.startSaveSignalTime - options.startSignalTime);
+    dataMapWrapper.set("TIME_DOCLOAD", startTime - options.startSaveSignalTime);
 
-    dataMapWrapper.set("DATE", new Date().toString());
     dataMapWrapper.set("URL", window.location.href);
     dataMapWrapper.set("DIMENSION", JSON.stringify({ width: window.innerWidth, height: window.innerHeight }));
     dataMapWrapper.set("SCROLLPOS", JSON.stringify([window.scrollX, window.scrollY]));
 
-    if (useFlatMap) {
+    let endGenTime;
+    if (options.useFlatMap) {
         let tree: StreamDOMTree | FlatMapDOMTree;
         const domMapViewWrapper = await mapWrapperFactory.createMapView();
 
         let rootNodeId;
-        if (stream) {
+        if (options.stream) {
             tree = new StreamDOMTree();
         } else {
             tree = new FlatMapDOMTree();
@@ -60,6 +77,9 @@ async function saveDOM(mapWrapperFactory: IMapWrapperFactory, useFlatMap: boolea
         tree.setOnMapWrapper(domMapViewWrapper);
         rootNodeId = tree.getRootElement().getNodeId();
 
+        endGenTime = performance.now();
+        dataMapWrapper.set("TIME_GEN", endGenTime - startTime);
+
         dataMapWrapper.set("DOMFLATMAPNODE", rootNodeId);
         dataMapWrapper.setMapView("DOM", domMapViewWrapper);
 
@@ -67,21 +87,29 @@ async function saveDOM(mapWrapperFactory: IMapWrapperFactory, useFlatMap: boolea
             debugDOM(JSON.stringify(await MapWrapperToObject(domMapViewWrapper)));
         }
 
-        if (stream) {
+        if (options.stream) {
             startStreamToPrague(tree as StreamDOMTree, dataMapWrapper);
         }
     } else {
-        if (stream) {
+        if (options.stream) {
             throw new Error("Not Implemented");
         }
         const tree = new RewriteDOMTree();
         tree.initializeFromDOM(document);
+
+        endGenTime = performance.now();
+        dataMapWrapper.set("TIME_GEN", endGenTime - startTime);
+
         dataMapWrapper.setMap("DOM", tree.getMap(mapWrapperFactory));
     }
 
     rootViewWrapper.setMapView("DOMSTREAM", dataMapWrapper);
     // collabDoc.save();
-    debug("Finish sending to Prague - " + (performance.now() - startTime) + "ms");
+    const endTime = performance.now();
+    dataMapWrapper.set("TIME_ATTACH", endTime - endGenTime);
+    dataMapWrapper.set("FG_END_DATE", new Date().valueOf());
+    dataMapWrapper.setTimeStamp("END_DATE");
+    debug("Finish sending to Prague - " + (endTime - startTime) + "ms");
 }
 
 let mutationObserver: MutationObserver;

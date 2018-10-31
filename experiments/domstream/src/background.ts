@@ -18,11 +18,14 @@ function exportToView(tab: chrome.tabs.Tab, response) {
     };
 }
 
-let isStreaming = false;
-let streamingTabId;
-let streamingDocId;
-let isBackground;
-let pendingStreaming = false;
+const streamState = {
+    background: false,
+    batchOp: false,
+    docId: "",
+    enabled: false,
+    pending: false,
+    tabId: -1,
+};
 
 BackgroundStreaming.init();
 
@@ -36,40 +39,40 @@ chrome.runtime.onMessage.addListener((message, sender) => {
             const tab: chrome.tabs.Tab = message.tab;
             let tabId = tab.id;
             if (command === "PragueStreamStop") {
-                if (!isStreaming) { return; }
-                if (pendingStreaming) { return; }
+                if (!streamState.enabled) { return; }
+                if (streamState.pending) { return; }
 
                 // Ignore the tab passed in
-                tabId = streamingTabId;
-                isStreaming = false;
+                tabId = streamState.tabId;
+                streamState.enabled = false;
 
-                if (isBackground) {
+                if (streamState.background) {
                     BackgroundStreaming.stop(tabId);
                     return;
                 }
             } else {
-                if (isStreaming && command !== "Tab" && command !== "JSON") {
-                    alert("Already streaming to " + streamingDocId + " tabId: " + streamingTabId
+                if (streamState.enabled && command !== "Tab" && command !== "JSON") {
+                    alert("Already streaming to " + streamState.docId + " tabId: " + streamState.tabId
                         + " (requested tabId: " + tabId + ")");
                     return;
                 }
                 if (command === "PragueStreamStart") {
-                    isStreaming = true;
-                    streamingTabId = tabId;
-                    streamingDocId = message.docId;
+                    streamState.enabled = true;
+                    streamState.tabId = tabId;
+                    streamState.docId = message.docId;
+                    streamState.batchOp = message.batchOp;
                     if (message.background) {
-                        isBackground = true;
-                        pendingStreaming = true;
-                        BackgroundStreaming.start(streamingDocId, streamingTabId, message.chunkop).then(() => {
-                            pendingStreaming = false;
-                        });
+                        streamState.background = true;
+                        streamState.pending = true;
+                        BackgroundStreaming.start(streamState.docId, streamState.tabId, streamState.batchOp).then(
+                            () => { streamState.pending = false; });
                         return;
                     }
                 }
             }
 
-            isBackground = false;
-            chrome.tabs.sendMessage(tabId, [command, message.docId, message.chunkop], undefined,
+            streamState.background = false;
+            chrome.tabs.sendMessage(tabId, [command, message.docId, message.batchOp], undefined,
                 (response) => {
                     if (command === "Tab" || command === "JSON") {
                         debugPopup(response);
@@ -82,20 +85,12 @@ chrome.runtime.onMessage.addListener((message, sender) => {
 
 chrome.webNavigation.onCompleted.addListener((details) => {
     debugPopup("Navigate ", details);
-    if (isStreaming && !isBackground && streamingTabId === details.tabId && details.frameId === 0) {
-        chrome.tabs.sendMessage(streamingTabId, ["PragueStreamStart", streamingDocId]);
+    if (streamState.enabled && !streamState.background
+        && streamState.tabId === details.tabId && details.frameId === 0) {
+        chrome.tabs.sendMessage(streamState.tabId, ["PragueStreamStart", streamState.docId]);
     }
 });
 
-(window as any).getIsStreaming = () => {
-    return isStreaming;
-};
-(window as any).getIsPendingStreaming = () => {
-    return pendingStreaming;
-};
-(window as any).getStreamingTabId = () => {
-    return streamingTabId;
-};
-(window as any).getStreamingDocId = () => {
-    return streamingDocId;
+(window as any).getStreamingState = () => {
+    return streamState;
 };

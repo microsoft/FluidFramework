@@ -1,6 +1,5 @@
 import * as api from "@prague/runtime-definitions";
-// tslint:disable-next-line:match-default-export-name
-import axios from "axios";
+import Axios, { AxiosInstance } from "axios";
 import * as querystring from "querystring";
 import { IDeltaFeedResponse, ISequencedDocumentOp } from "./sharepointContracts";
 
@@ -25,7 +24,10 @@ export class DocumentDeltaStorageService implements api.IDocumentDeltaStorageSer
  * Provides access to the sharepoint delta storage
  */
 export class SharepointDeltaStorageService implements api.IDeltaStorageService {
-    constructor(private deltaFeedUrl: string) {
+
+    public constructor(
+        private readonly deltaFeedUrl: string,
+        private readonly axiosInstance: AxiosInstance = Axios) {
     }
 
     public async get(
@@ -41,7 +43,7 @@ export class SharepointDeltaStorageService implements api.IDeltaStorageService {
                 Authorization: `Bearer ${new Buffer(`${token}`)}`,
             };
         }
-        const result = await axios.get<IDeltaFeedResponse>(requestUrl, { headers });
+        const result = await this.axiosInstance.get<IDeltaFeedResponse>(requestUrl, { headers });
         const ops = result.data.value;
         const sequencedMsgs: api.ISequencedDocumentMessage[] = [];
 

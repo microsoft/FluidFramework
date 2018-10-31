@@ -31,7 +31,7 @@ COPY packages/shared-string/package*.json packages/shared-string/
 COPY packages/socket-storage/package*.json packages/socket-storage/
 COPY packages/socket-storage-shared/package*.json packages/socket-storage-shared/
 COPY packages/replay-socket-storage/package*.json packages/replay-socket-storage/
-COPY packages/sharepoint-socket-storage/package*.json packages/sharepoint-socket-storage/
+COPY packages/msgraph-socket-storage/package*.json packages/msgraph-socket-storage/
 COPY packages/store/package*.json packages/store/
 COPY packages/stream/package*.json packages/stream/
 COPY packages/utils/package*.json packages/utils/
