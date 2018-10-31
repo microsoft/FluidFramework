@@ -134,7 +134,8 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
                 });
         }
 
-        if (split) {
+        // Checking clientId is a hack for not to split deli generated client leave and noop messages.
+        if (split && message.clientId !== null) {
             this.contentPublisher.publish({
                 clientId: this.clientId,
                 documentId: this.documentId,

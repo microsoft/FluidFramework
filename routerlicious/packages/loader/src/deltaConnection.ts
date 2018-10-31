@@ -102,6 +102,11 @@ export class DeltaConnection extends EventEmitter {
             if (envelope.contents && envelope.contents !== null) {
                 ops.push(envelope);
             } else {
+                // Special case for deli noop messages. We don't split those.
+                if (envelope.clientId === null) {
+                    ops.push(envelope);
+                    continue;
+                }
                 const key = `${envelope.clientId}-${envelope.clientSequenceNumber}`;
                 console.log(key);
                 if (this.contentMap.has(key)) {

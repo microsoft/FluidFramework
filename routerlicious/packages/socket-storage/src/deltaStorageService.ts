@@ -1,5 +1,5 @@
+// tslint:disable
 import * as api from "@prague/runtime-definitions";
-// tslint:disable-next-line:match-default-export-name
 import axios from "axios";
 import * as querystring from "querystring";
 
@@ -44,6 +44,32 @@ export class DeltaStorageService implements api.IDeltaStorageService {
 
         const result = await axios.get<api.ISequencedDocumentMessage[]>(
             `${this.url}/deltas/${encodeURIComponent(tenantId)}/${encodeURIComponent(id)}?${query}`, { headers });
-        return result.data;
+        const clientIds = new Set<string>();
+        for (const data of result.data) {
+            clientIds.add(data.clientId);
+        }
+        const contentPromises = [];
+        for (const clientId of clientIds) {
+            contentPromises.push(axios.get<api.ISequencedDocumentMessage[]>(
+                `${this.url}/deltas/content/${encodeURIComponent(tenantId)}/${encodeURIComponent(id)}/${encodeURIComponent(clientId)}?${query}`, { headers }));
+        }
+        const contents = await Promise.all(contentPromises);
+        const contentMap =  new Map<string, any>();
+        for (const clientContent of contents) {
+            if (clientContent.data.length > 0) {
+                for (const content of clientContent.data) {
+                    contentMap.set(`${content.clientId}-${content.op.clientSequenceNumber}`,content.op.contents);
+                }
+            }
+        }
+        const envelops = result.data;
+        for (const envelope of envelops) {
+            if (envelope.contents && envelope.contents !== null) {
+                continue;
+            }
+            envelope.contents = contentMap.get(`${envelope.clientId}-${envelope.clientSequenceNumber}`);
+        } 
+        console.log(envelops);
+        return envelops;
     }
 }

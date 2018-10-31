@@ -1,3 +1,4 @@
+// tslint:disable
 import {
     IClient,
     IDocumentDeltaConnection,
@@ -43,12 +44,22 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
         const connection = await new Promise<messages.IConnected>((resolve, reject) => {
             // Listen for ops sent before we receive a response to connect_document
             const queuedMessages: ISequencedDocumentMessage[] = [];
+            const queuedContents: Map<string, any> = new Map<string, any>();
 
             const earlyOpHandler = (documentId: string, msgs: ISequencedDocumentMessage[]) => {
                 debug("Queued early ops", msgs.length);
                 queuedMessages.push(...msgs);
             };
             socket.on("op", earlyOpHandler);
+
+            const earlyContentHandler = (documentId: string, msgs: any[]) => {
+                debug("Queued early ops", msgs.length);
+                for (const msg of msgs) {
+                    const key = `${msg.clientId}-${msg.op.clientSequenceNumber}`;
+                    queuedContents.set(key, msg.op.contents);
+                }
+            };
+            socket.on("op-content", earlyContentHandler);
 
             // Listen for connection issues
             socket.on("connect_error", (error) => {
@@ -57,12 +68,20 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
 
             socket.on("connect_document_success", (response: messages.IConnected) => {
                 socket.removeListener("op", earlyOpHandler);
+                socket.removeListener("op-content", earlyContentHandler);
 
                 if (queuedMessages.length > 0) {
                     // some messages were queued.
                     // add them to the list of initialMessages to be processed
                     if (!response.initialMessages) {
                         response.initialMessages = [];
+                    }
+                    for (const message of queuedMessages) {
+                        if (message.contents && message.contents !== null) {
+                            continue;
+                        }
+                        const key = `${message.clientId}-${message.clientSequenceNumber}`;
+                        message.contents = queuedContents.get(key);
                     }
 
                     response.initialMessages.push(...queuedMessages);
