@@ -134,8 +134,10 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
                 });
         }
 
+        // TODO (mdaumi)
         // Checking clientId is a hack for not to split deli generated client leave and noop messages.
-        if (split && message.clientId !== null) {
+        // Checking remotehelp is for TMZ to correctly parse the message.
+        if (split && message.clientId !== null && message.operation.type !== "remoteHelp") {
             this.contentPublisher.publish({
                 clientId: this.clientId,
                 documentId: this.documentId,
