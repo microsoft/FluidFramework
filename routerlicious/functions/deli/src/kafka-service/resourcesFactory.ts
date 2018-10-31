@@ -2,6 +2,7 @@ import { IPartitionLambdaFactory } from "@prague/routerlicious/dist/kafka-servic
 import * as utils from "@prague/routerlicious/dist/utils";
 import * as moniker from "moniker";
 import { Provider } from "nconf";
+import * as winston from "winston";
 import { RdkafkaConsumer } from "../rdkafka";
 
 export interface IKafkaResources extends utils.IResources {
@@ -30,6 +31,16 @@ export class KafkaResourcesFactory implements utils.IResourcesFactory<KafkaResou
     }
 
     public async create(config: Provider): Promise<KafkaResources> {
+        const loggingConfig = config.get("logger");
+        utils.configureLogging(loggingConfig);
+
+        winston.configure({
+            format: winston.format.simple(),
+            transports: [
+                new winston.transports.Console({ handleExceptions: true, level: loggingConfig.level}),
+            ],
+        });
+
         // tslint:disable-next-line:non-literal-require
         const plugin = require(this.lambdaModule);
         const lambdaFactory = await plugin.create(config) as IPartitionLambdaFactory;

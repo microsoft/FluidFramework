@@ -5,6 +5,7 @@ import * as utils from "@prague/routerlicious/dist/utils";
 import * as bytes from "bytes";
 import { Provider } from "nconf";
 import * as os from "os";
+import { RdkafkaProducer } from "../rdkafka";
 import { JarvisRunner } from "./runner";
 
 export class JarvisResources implements utils.IResources {
@@ -37,13 +38,11 @@ export class JarvisResources implements utils.IResources {
 export class JarvisResourcesFactory implements utils.IResourcesFactory<JarvisResources> {
     public async create(config: Provider): Promise<JarvisResources> {
         // Producer used to publish messages
-        const kafkaEndpoint = config.get("kafka:lib:endpoint");
-        const kafkaLibrary = config.get("kafka:lib:name");
-        const kafkaClientId = config.get("alfred:kafkaClientId");
+        const kafkaEndpoint = config.get("kafka:endpoint");
         const topic = config.get("alfred:topic");
         const metricClientConfig = config.get("metric");
-        const maxKafkaMessageSize = bytes.parse(config.get("kafka:maxMessageSize"));
-        const producer = utils.createProducer(kafkaLibrary, kafkaEndpoint, kafkaClientId, topic, maxKafkaMessageSize);
+
+        const producer = new RdkafkaProducer(kafkaEndpoint, topic);
         const redisConfig = config.get("redis");
         const webSocketLibrary = config.get("alfred:webSocketLib");
         const authEndpoint = config.get("auth:endpoint");

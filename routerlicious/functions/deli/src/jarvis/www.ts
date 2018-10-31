@@ -13,10 +13,18 @@ export function runService<T extends utils.IResources>(
     resourceFactory: utils.IResourcesFactory<T>,
     runnerFactory: utils.IRunnerFactory<T>,
     group: string,
-    configFile = path.join(__dirname, "../../config/config.json")) {
+    configFile = path.join(__dirname, "../../config.json")) {
 
     const config = nconf.argv().env("__" as any).file(configFile).use("memory");
-    utils.configureLogging(config.get("logger"));
+    const loggingConfig = config.get("logger");
+    utils.configureLogging(loggingConfig);
+
+    winston.configure({
+        format: winston.format.simple(),
+        transports: [
+            new winston.transports.Console({ handleExceptions: true, level: loggingConfig.level}),
+        ],
+    });
 
     // Initialize system bus connection
     const kafkaEndpoint = config.get("kafka:endpoint");

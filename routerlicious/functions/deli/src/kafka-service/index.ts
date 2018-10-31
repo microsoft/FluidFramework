@@ -5,7 +5,7 @@ import * as path from "path";
 import { KafkaResourcesFactory } from "./resourcesFactory";
 
 // tslint:disable-next-line:no-var-requires
-const packageDetails = require("../package.json");
+const packageDetails = require("../../package.json");
 
 let action = false;
 commander
@@ -17,7 +17,7 @@ commander
             new KafkaResourcesFactory(name, lambda),
             new KafkaRunnerFactory(),
             name,
-            path.join(__dirname, "../config.json"));
+            path.join(__dirname, "../../config.json"));
     })
     .parse(process.argv);
 
