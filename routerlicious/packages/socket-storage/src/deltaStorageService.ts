@@ -69,7 +69,6 @@ export class DeltaStorageService implements api.IDeltaStorageService {
             }
             envelope.contents = contentMap.get(`${envelope.clientId}-${envelope.clientSequenceNumber}`);
         } 
-        console.log(envelops);
         return envelops;
     }
 }

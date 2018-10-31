@@ -2,6 +2,9 @@
 import * as runtime from "@prague/runtime-definitions";
 import { EventEmitter } from "events";
 
+// tslint:disable-next-line:no-submodule-imports
+const cloneDeep = require("lodash/cloneDeep");
+
 export interface IConnectionDetails {
     clientId: string;
     existing: boolean;
@@ -108,18 +111,15 @@ export class DeltaConnection extends EventEmitter {
                     continue;
                 }
                 const key = `${envelope.clientId}-${envelope.clientSequenceNumber}`;
-                console.log(key);
                 if (this.contentMap.has(key)) {
-                    envelope.contents = this.contentMap.get(key);
+                    envelope.contents = cloneDeep(this.contentMap.get(key));
                     ops.push(envelope);
-                    console.log(`Content found!`);
-                    // We should delete here.
+                    this.contentMap.delete(key);
                 } else {
                     this.envelopeMap.set(key, envelope);
                 }
             }
         }
-        console.log(JSON.stringify(ops));
         this.emit("op", documentId, ops);
     }
 
@@ -127,20 +127,15 @@ export class DeltaConnection extends EventEmitter {
         const ops: runtime.ISequencedDocumentMessage[] = [];
         for (const message of messages) {
             const key = `${message.clientId}-${message.op.clientSequenceNumber}`;
-            console.log(key);
             if (this.envelopeMap.has(key)) {
-                const envelope = this.envelopeMap.get(key);
+                const envelope = cloneDeep(this.envelopeMap.get(key));
                 envelope.contents = message.op.contents;
                 ops.push(envelope);
-                console.log(`Content found!`);
-                // We should delete here.
+                this.envelopeMap.delete(key);
             } else {
-                console.log(`Setting content!`);
-                console.log(message);
                 this.contentMap.set(key, message.op.contents);
             }
         }
-        console.log(JSON.stringify(ops));
         this.emit("op", documentId, ops);
     }
 }

@@ -11,6 +11,9 @@ import { EventEmitter } from "events";
 import { debug } from "./debug";
 import * as messages from "./messages";
 
+// tslint:disable-next-line:no-submodule-imports
+const cloneDeep = require("lodash/cloneDeep");
+
 /**
  * Represents a connection to a stream of delta updates
  */
@@ -81,7 +84,8 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
                             continue;
                         }
                         const key = `${message.clientId}-${message.clientSequenceNumber}`;
-                        message.contents = queuedContents.get(key);
+                        message.contents = cloneDeep(queuedContents.get(key));
+                        queuedContents.delete(key);
                     }
 
                     response.initialMessages.push(...queuedMessages);
