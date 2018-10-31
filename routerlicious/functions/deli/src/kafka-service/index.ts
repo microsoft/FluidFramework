@@ -1,8 +1,8 @@
-import { KafkaRunnerFactory } from "@prague/routerlicious/dist/kafka-service/runnerFactory";
 import * as utils from "@prague/routerlicious/dist/utils";
 import * as commander from "commander";
 import * as path from "path";
 import { KafkaResourcesFactory } from "./resourcesFactory";
+import { KafkaRunnerFactory } from "./runnerFactory";
 
 // tslint:disable-next-line:no-var-requires
 const packageDetails = require("../../package.json");

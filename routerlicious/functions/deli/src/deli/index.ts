@@ -1,11 +1,11 @@
 import * as core from "@prague/routerlicious/dist/core";
 import { DeliLambdaFactory } from "@prague/routerlicious/dist/deli/lambdaFactory";
 import { create as createDocumentRouter } from "@prague/routerlicious/dist/document-router";
-import { IPartitionLambdaFactory } from "@prague/routerlicious/dist/kafka-service/lambdas";
 import * as services from "@prague/routerlicious/dist/services";
 import * as utils from "@prague/routerlicious/dist/utils";
 import * as _ from "lodash";
 import { Provider } from "nconf";
+import { IPartitionLambdaFactory } from "../kafka-service/lambdas";
 import { RdkafkaProducer } from "../rdkafka";
 
 async function deliCreate(config: Provider): Promise<IPartitionLambdaFactory> {
