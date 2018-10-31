@@ -164,20 +164,13 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
      * Submits a new delta operation
      */
     public submit(type: string, contents: any): number {
-        // Start adding trace for the op.
-        const traces: runtime.ITrace[] = [
-            {
-                action: "start",
-                service: this.clientType,
-                timestamp: now(),
-            }];
 
         // tslint:disable:no-increment-decrement
         const message: runtime.IDocumentMessage = {
             clientSequenceNumber: ++this.clientSequenceNumber,
             contents,
             referenceSequenceNumber: this.baseSequenceNumber,
-            traces,
+            traces: undefined,
             type,
         };
         this.readonly = false;
@@ -407,13 +400,6 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
 
         // TODO handle error cases, NACK, etc...
         const context = await this.handler.prepare(message);
-
-        // Add final ack trace.
-        message.traces.push({
-            action: "end",
-            service: this.clientType,
-            timestamp: now(),
-        });
 
         // Watch the minimum sequence number and be ready to update as needed
         this.minSequenceNumber = message.minimumSequenceNumber;
