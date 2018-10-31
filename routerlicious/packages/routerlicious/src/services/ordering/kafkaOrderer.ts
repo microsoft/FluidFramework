@@ -1,4 +1,5 @@
 import { IClient, IClientJoin, IDocumentMessage, IUser, MessageType } from "@prague/runtime-definitions";
+import * as _ from "lodash";
 import * as moniker from "moniker";
 // tslint:disable-next-line:no-var-requires
 const now = require("performance-now");
@@ -98,7 +99,7 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
             user: this.user,
         };
 
-        this.submitRawOperation(rawMessage);
+        this.submitRawOperation(rawMessage, true);
     }
 
     public disconnect() {
@@ -121,7 +122,7 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
         this.submitRawOperation(message);
     }
 
-    private submitRawOperation(message: core.IRawOperationMessage) {
+    private submitRawOperation(message: core.IRawOperationMessage, split?: boolean) {
         // Add trace
         const operation = message.operation as IDocumentMessage;
         if (operation && operation.traces) {
@@ -133,14 +134,20 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
                 });
         }
 
-        const stringMessage = JSON.stringify(message);
-        this.contentPublisher.publish({
-            clientId: this.clientId,
-            documentId: this.documentId,
-            op: message.operation,
-            tenantId: this.tenantId,
-        });
-        this.producer.send(stringMessage, this.documentId);
+        if (split) {
+            this.contentPublisher.publish({
+                clientId: this.clientId,
+                documentId: this.documentId,
+                op: _.cloneDeep(message.operation),
+                tenantId: this.tenantId,
+            });
+            message.operation.contents = null;
+            const stringMessage = JSON.stringify(message);
+            this.producer.send(stringMessage, this.documentId);
+        } else {
+            const stringMessage = JSON.stringify(message);
+            this.producer.send(stringMessage, this.documentId);
+        }
     }
 }
 
