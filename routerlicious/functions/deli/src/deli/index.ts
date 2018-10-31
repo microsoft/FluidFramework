@@ -6,7 +6,7 @@ import * as services from "@prague/routerlicious/dist/services";
 import * as utils from "@prague/routerlicious/dist/utils";
 import * as _ from "lodash";
 import { Provider } from "nconf";
-import { RdkafkaProducer } from "./rdkafkaProducer";
+import { RdkafkaProducer } from "../rdkafka";
 
 async function deliCreate(config: Provider): Promise<IPartitionLambdaFactory> {
     const mongoUrl = config.get("mongo:endpoint") as string;

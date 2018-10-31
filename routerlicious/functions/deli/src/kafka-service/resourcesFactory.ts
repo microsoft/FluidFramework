@@ -2,7 +2,7 @@ import { IPartitionLambdaFactory } from "@prague/routerlicious/dist/kafka-servic
 import * as utils from "@prague/routerlicious/dist/utils";
 import * as moniker from "moniker";
 import { Provider } from "nconf";
-import { RdkafkaConsumer } from "./rdkafkaConsumer";
+import { RdkafkaConsumer } from "../rdkafka";
 
 export interface IKafkaResources extends utils.IResources {
     lambdaFactory: IPartitionLambdaFactory;

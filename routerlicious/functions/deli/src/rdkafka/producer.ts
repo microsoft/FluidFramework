@@ -43,11 +43,6 @@ export class RdkafkaProducer implements IProducer {
         this.producer.on("delivery-report", (err, report) => {
             if (err) {
                 console.error(err);
-            }
-
-            console.log(report);
-
-            if (err) {
                 report.opaque.reject(err);
             } else {
                 report.opaque.resolve();
