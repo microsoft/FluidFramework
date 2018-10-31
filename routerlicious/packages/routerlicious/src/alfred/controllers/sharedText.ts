@@ -102,7 +102,7 @@ async function loadDocument(
     const documentService = replayMode
         ? replaySocketStorage.createReplayDocumentService(document.location.origin, from, to)
         : socketStorage.createDocumentService(
-            document.location.origin,
+            config.jarvisUrl,
             config.blobStorageUrl,
             errorService,
             disableCache,

@@ -30,8 +30,8 @@ export class RdkafkaConsumer extends EventEmitter implements IConsumer {
                 "client.id": clientId,
                 "enable.auto.commit": autoCommit,
                 "event_cb": () => console.log("event_cb"),
-                "fetch.error.backoff.ms": backoffMs,
-                "fetch.wait.max.ms": maxWaitMs,
+                "fetch.min.bytes": 100000000,
+                "fetch.wait.max.ms": 100,
                 "group.id": groupId,
                 "metadata.broker.list": kafkaBroker,
                 "rebalance_cb": (err, assignment) => {
@@ -82,6 +82,7 @@ export class RdkafkaConsumer extends EventEmitter implements IConsumer {
             this.emit("data", m);
         });
 
+        // this.consumer.setDefaultConsumeTimeout(10);
         this.consumer.connect();
 
         setInterval(

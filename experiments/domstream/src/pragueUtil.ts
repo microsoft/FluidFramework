@@ -6,7 +6,7 @@ import { debug } from "./debug";
 // For local development
 const localSettings = {
     historian: "http://localhost:3001",
-    routerlicious: "http://localhost:3000",
+    routerlicious: "http://localhost:3030",
     secret: "43cfc3fbf04a97c0921fd23ff10f9e4b",
     tenantId: "prague",
 };

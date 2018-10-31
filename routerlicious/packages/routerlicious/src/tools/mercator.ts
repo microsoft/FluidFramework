@@ -37,7 +37,6 @@ async function run(
     const documentServices = socketStorage.createDocumentService(routerlicious, historian);
     api.registerDocumentService(documentServices);
 
-    const start = Date.now();
     console.log("Doc id is", id);
     const token = jwt.sign(
         {
@@ -59,6 +58,7 @@ async function run(
     }
     console.log("Connected!");
 
+    const start = Date.now();
     const newMap = collabDoc.createMap();
     rootView.set("newMap", newMap);
 
@@ -96,7 +96,7 @@ commander
     .option("-b, --batches [batches]", "total messages", parseInt, 10)
     .option("-z, --batchSize [batchSize]", "batch size", parseInt, 1000)
     .option("-p, --payload [payload]", "payload size", parseInt,  1 * 1024)
-    .option("-s, --server [server]", "server url", "http://localhost:3000")
+    .option("-s, --server [server]", "server url", "http://localhost:3030")
     .option("-t, --storage [server]", "storage server url", "http://localhost:3001")
     .option("-o, --tenant [tenant]", "tenant ID", "prague")
     .option("-k, --key [key]", "key", "43cfc3fbf04a97c0921fd23ff10f9e4b")

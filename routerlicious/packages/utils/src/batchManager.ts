@@ -1,6 +1,6 @@
 import { Deferred } from "./promises";
 
-const defaultBatchSize = 100;
+const defaultBatchSize = Number.MAX_VALUE;
 
 export class BatchManager<T> {
     private pendingWork: { [id: string]: T[] } = {};
@@ -55,6 +55,7 @@ export class BatchManager<T> {
         // TODO log to influx how much pending work there is. We want to limit the size of a batch
         // tslint:disable-next-line:forin
         for (const id in pendingWork) {
+            console.log(`BatchManager.processPendingWork ${id} ${pendingWork[id].length}`);
             this.process(id, pendingWork[id]);
         }
     }

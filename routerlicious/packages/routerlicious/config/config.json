@@ -182,7 +182,9 @@
         "blobStorageUrl": "http://historian:3000",
         "repository": "prague",
         "npm": "http://localhost:3002",
-        "permission": ["snapshot", "spell", "intel", "translation"]
+        "permission": ["snapshot", "spell", "intel", "translation"],
+        "jarvisUrl": "http://localhost:3030",
+        "jarvisUrlInternal": "http://jarvis:3030"
     },
     "tenantConfig": [
         {

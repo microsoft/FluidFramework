@@ -87,6 +87,7 @@ export function register(
         // Message sent when a new operation is submitted to the router
         socket.on("submitOp", (clientId: string, messages: IDocumentMessage[], response) => {
             // TODO validate message size within bounds
+            winston.info(`Inbound of ${messages.length} messages`);
 
             // Verify the user has connected on this object id
             if (!connectionsMap.has(clientId)) {
