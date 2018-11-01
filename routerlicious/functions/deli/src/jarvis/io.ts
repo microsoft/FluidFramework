@@ -120,5 +120,13 @@ export function register(
                 connection.disconnect();
             }
         });
+
+        socket.on("relay", (messages: any[]) => {
+            socket.emit("relaypong", messages);
+        });
+
+        socket.on("relay2", (...args: []) => {
+            socket.emit("relaypong2", ...args);
+        });
     });
 }
