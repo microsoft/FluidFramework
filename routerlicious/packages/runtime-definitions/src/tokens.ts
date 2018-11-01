@@ -15,7 +15,5 @@ export interface ITokenService {
 }
 
 export interface ITokenProvider {
-    storageToken: string;
-    deltaStorageToken: string;
-    deltaStreamToken: string;
+    isValid(): boolean;
 }

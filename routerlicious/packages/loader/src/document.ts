@@ -277,7 +277,7 @@ export class Document extends EventEmitter {
     }
 
     private async load(specifiedVersion: ICommit, connect: boolean): Promise<void> {
-        const storageP = this.service.connectToStorage(this.tenantId, this.id, this.tokenProvider.storageToken);
+        const storageP = this.service.connectToStorage(this.tenantId, this.id, this.tokenProvider);
 
         // If a version is specified we will load it directly - otherwise will query historian for the latest
         // version and then load it

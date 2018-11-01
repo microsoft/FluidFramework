@@ -14,10 +14,10 @@ export class DeltaConnection extends EventEmitter {
     public static async Connect(
         tenantId: string,
         id: string,
-        token: string,
+        tokenProvider: runtime.ITokenProvider,
         service: runtime.IDocumentService,
         client: runtime.IClient) {
-        const connection = await service.connectToDeltaStream(tenantId, id, token, client);
+        const connection = await service.connectToDeltaStream(tenantId, id, tokenProvider, client);
         return new DeltaConnection(connection);
     }
 

@@ -2,6 +2,7 @@ import * as api from "@prague/runtime-definitions";
 import { DocumentDeltaConnection } from "@prague/socket-storage-shared";
 import { DocumentDeltaStorageService, SharepointDeltaStorageService } from "./deltaStorageService";
 import { ReplayDocumentStorageService } from "./sharepointDocumentStorageService";
+import { TokenProvider } from "./token";
 
 export class SharepointDocumentService implements api.IDocumentService {
     constructor(
@@ -15,7 +16,7 @@ export class SharepointDocumentService implements api.IDocumentService {
     public async connectToStorage(
         tenantId: string,
         id: string,
-        token: string): Promise<api.IDocumentStorageService> {
+        tokenProvider: api.ITokenProvider): Promise<api.IDocumentStorageService> {
         // Use the replaydocumentstorage service to return the default values for snapshot methods
         // Replace this once sharepoint starts supporting snapshots
         return new ReplayDocumentStorageService();
@@ -24,21 +25,22 @@ export class SharepointDocumentService implements api.IDocumentService {
     public async connectToDeltaStorage(
         tenantId: string,
         id: string,
-        token: string): Promise<api.IDocumentDeltaStorageService> {
+        tokenProvider: api.ITokenProvider): Promise<api.IDocumentDeltaStorageService> {
         const deltaStorage = new SharepointDeltaStorageService(this.deltaFeedUrl);
-        return new DocumentDeltaStorageService(tenantId, id, token, deltaStorage);
+        return new DocumentDeltaStorageService(tenantId, id, tokenProvider, deltaStorage);
     }
 
     public async connectToDeltaStream(
         tenantId: string,
         id: string,
-        token: string,
+        tokenProvider: api.ITokenProvider,
         client: api.IClient): Promise<api.IDocumentDeltaConnection> {
 
+        const token = (tokenProvider as TokenProvider).deltaStreamToken;
         return DocumentDeltaConnection.Create(tenantId, id, token, io, client, this.webSocketUrl);
     }
 
-    public async branch(tenantId: string, id: string, token: string): Promise<string> {
+    public async branch(tenantId: string, id: string, tokenProvider: api.ITokenProvider): Promise<string> {
         return null;
     }
 

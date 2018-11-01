@@ -2,6 +2,7 @@ import * as api from "@prague/runtime-definitions";
 import Axios, { AxiosInstance } from "axios";
 import * as querystring from "querystring";
 import { IDeltaFeedResponse, ISequencedDocumentOp } from "./sharepointContracts";
+import { TokenProvider } from "./token";
 
 /**
  * Storage service limited to only being able to fetch documents for a specific document
@@ -10,13 +11,13 @@ export class DocumentDeltaStorageService implements api.IDocumentDeltaStorageSer
     constructor(
         private tenantId: string,
         private id: string,
-        private token: string,
+        private tokenProvider: api.ITokenProvider,
         private storageService: api.IDeltaStorageService) {
     }
 
     /* tslint:disable:promise-function-async */
     public get(from?: number, to?: number): Promise<api.ISequencedDocumentMessage[]> {
-        return this.storageService.get(this.tenantId, this.id, this.token, from, to);
+        return this.storageService.get(this.tenantId, this.id, this.tokenProvider, from, to);
     }
 }
 
@@ -33,11 +34,13 @@ export class SharepointDeltaStorageService implements api.IDeltaStorageService {
     public async get(
         tenantId: string,
         id: string,
-        token: string,
+        tokenProvider: api.ITokenProvider,
         from?: number,
         to?: number): Promise<api.ISequencedDocumentMessage[]> {
         const requestUrl = this.constructUrl(from, to);
         let headers = null;
+
+        const token = (tokenProvider as TokenProvider).deltaStorageToken;
         if (token) {
             headers = {
                 Authorization: `Bearer ${new Buffer(`${token}`)}`,

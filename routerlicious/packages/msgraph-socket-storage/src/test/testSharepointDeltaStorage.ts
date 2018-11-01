@@ -1,6 +1,7 @@
 import * as assert from "assert";
 import { AxiosInstance, AxiosResponse } from "axios";
 import { SharepointDeltaStorageService } from "../deltaStorageService";
+import { TokenProvider } from "../token";
 
 describe("SharepointDeltaStorageService", () => {
     /*
@@ -76,7 +77,8 @@ describe("SharepointDeltaStorageService", () => {
         });
 
         it("Should deserialize the delta feed response correctly", async () => {
-            const actualDeltaFeedResponse = await spoDeltaStorageService.get(null, null, null, 2, 8);
+            const tokenProvider = new TokenProvider(null, null);
+            const actualDeltaFeedResponse = await spoDeltaStorageService.get(null, null, tokenProvider, 2, 8);
             assert.equal(actualDeltaFeedResponse.length, 2, "Deseralized feed response is not of expected length");
             assert.equal(actualDeltaFeedResponse[0].sequenceNumber, 1,
                 "First element of feed response has invalid sequence number");
@@ -137,7 +139,8 @@ describe("SharepointDeltaStorageService", () => {
         });
 
         it("Should deserialize the delta feed response correctly", async () => {
-            const actualDeltaFeedResponse = await spoDeltaStorageService.get(null, null, null, 2, 8);
+            const tokenProvider = new TokenProvider(null, null);
+            const actualDeltaFeedResponse = await spoDeltaStorageService.get(null, null, tokenProvider, 2, 8);
             assert.equal(actualDeltaFeedResponse.length, 2, "Deseralized feed response is not of expected length");
             assert.equal(actualDeltaFeedResponse[0].sequenceNumber, 1,
                 "First element of feed response has invalid sequence number");
