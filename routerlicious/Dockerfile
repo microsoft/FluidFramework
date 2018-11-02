@@ -21,6 +21,7 @@ COPY packages/gitresources/package*.json packages/gitresources/
 COPY packages/loader/package*.json packages/loader/
 COPY packages/loader-client/package*.json packages/loader-client/
 COPY packages/loader-web/package*.json packages/loader-web/
+COPY packages/local-test-server/package*.json packages/local-test-server/
 COPY packages/map/package*.json packages/map/
 COPY packages/merge-tree/package*.json packages/merge-tree/
 COPY packages/merge-tree-utils/package*.json packages/merge-tree-utils/
