@@ -1,5 +1,6 @@
 import * as api from "@prague/runtime-definitions";
 import { DocumentDeltaConnection } from "@prague/socket-storage-shared";
+import * as io from "socket.io-client";
 import { DocumentDeltaStorageService, SharepointDeltaStorageService } from "./deltaStorageService";
 import { ReplayDocumentStorageService } from "./sharepointDocumentStorageService";
 import { TokenProvider } from "./token";
@@ -36,7 +37,7 @@ export class SharepointDocumentService implements api.IDocumentService {
         tokenProvider: api.ITokenProvider,
         client: api.IClient): Promise<api.IDocumentDeltaConnection> {
 
-        const token = (tokenProvider as TokenProvider).deltaStreamToken;
+        const token = (tokenProvider as TokenProvider).socketToken;
         return DocumentDeltaConnection.Create(tenantId, id, token, io, client, this.webSocketUrl);
     }
 

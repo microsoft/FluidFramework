@@ -40,7 +40,7 @@ export class SharepointDeltaStorageService implements api.IDeltaStorageService {
         const requestUrl = this.constructUrl(from, to);
         let headers = null;
 
-        const token = (tokenProvider as TokenProvider).deltaStorageToken;
+        const token = (tokenProvider as TokenProvider).storageToken;
         if (token) {
             headers = {
                 Authorization: `Bearer ${new Buffer(`${token}`)}`,
