@@ -1,12 +1,28 @@
 import { IAlfredTenant } from "@prague/routerlicious/dist/alfred/tenant";
 import { IDocumentStorage, IOrdererManager, ITenantManager } from "@prague/routerlicious/dist/core";
 import * as core from "@prague/routerlicious/dist/core";
+import * as services from "@prague/routerlicious/dist/services";
 import * as utils from "@prague/routerlicious/dist/utils";
 import { Deferred } from "@prague/utils";
 import { Provider } from "nconf";
 import * as winston from "winston";
+import * as ws from "ws";
 import * as app from "./app";
 import * as io from "./io";
+
+function createWsServer() {
+    const server = new ws.Server({ port: 4000 });
+
+    // Connections will arrive from remote nodes
+    server.on("connection", (socket) => {
+        console.log("Inbound WS connection");
+
+        // Messages will be inbound from the remote server
+        socket.on("message", (message) => {
+            socket.send(message);
+        });
+    });
+}
 
 export class JarvisRunner implements utils.IRunner {
     private server: core.IWebServer;
@@ -42,12 +58,17 @@ export class JarvisRunner implements utils.IRunner {
 
         const httpServer = this.server.httpServer;
 
+        const redisConfig = this.config.get("redis");
+        const publisher = new services.SocketIoRedisPublisher(redisConfig.port, redisConfig.host);
+
         // Register all the socket.io stuff
         io.register(
             this.server.webSocketServer,
             this.metricClientConfig,
             this.orderManager,
-            this.tenantManager);
+            this.tenantManager,
+            publisher);
+        createWsServer();
 
         // Listen on provided port, on all network interfaces.
         httpServer.listen(this.port);

@@ -16,7 +16,7 @@ export class RdkafkaProducer implements IProducer {
             {
                 "dr_cb": true,    // delivery report callback
                 "metadata.broker.list": endpoint,
-                "queue.buffering.max.ms": 100,
+                "queue.buffering.max.ms": 1,
             },
             null);
         this.producer.setPollInterval(100);

@@ -1,132 +1,60 @@
 import * as rs from "randomstring";
-import * as io from "socket.io-client";
+import * as sio from "./siotest";
+import * as ws from "./wstest";
 
-const routerlicious = "http://localhost:3030";
+function generateRandomBatchMessages(length: number): string[] {
+    const messages = new Array<string>();
 
-function send(socket: SocketIOClient.Socket, index: number, total: number, setLength: number) {
-    const messages = [];
-    for (let i = 0; i < setLength; i++) {
+    for (let i = 0; i < length; i++) {
         const str = rs.generate(1024);
-        const msg = { id: i + index * setLength, start: Date.now(), str };
-        messages.push(msg);
+        messages.push(str);
     }
-    socket.emit("relay", JSON.stringify(messages));
 
-    if (index <= total) {
-        // Starting with setTimeout - will upgrade to immediate
-        setTimeout(
-            () => {
-                send(socket, index + 1, total, setLength);
-            },
-            0);
-    }
+    return messages;
 }
 
-async function runTest(socket: SocketIOClient.Socket, batches: number, batchSize: number): Promise<any> {
-    return new Promise<any>((resolve) => {
-        const start = Date.now();
-        let latencySum = 0;
-        const totalMessages = batches * batchSize;
+document.getElementById("run").onclick = async (ev) => {
+    const batches = Number.parseInt((document.getElementById("batches") as HTMLInputElement).value, 10);
+    const messagesPerBatch = Number.parseInt((document.getElementById("batchSize") as HTMLInputElement).value, 10);
+    console.log(batches, messagesPerBatch);
 
-        send(socket, 0, batches, batchSize);
+    const newElement = document.createElement("tr");
+    const th = document.createElement("th");
+    th.innerText = `${batches} batches @ ${messagesPerBatch} messages per batch`;
+    th.scope = "row";
+    const sioTd = document.createElement("td");
+    const sioIterTd = document.createElement("td");
+    const sioRedisTd = document.createElement("td");
+    const sioRedisIterTd = document.createElement("td");
+    const wsTd = document.createElement("td");
+    const wsIterTd = document.createElement("td");
+    newElement.appendChild(th);
+    newElement.appendChild(sioTd);
+    newElement.appendChild(sioRedisTd);
+    newElement.appendChild(sioIterTd);
+    newElement.appendChild(sioRedisIterTd);
+    newElement.appendChild(wsTd);
+    newElement.appendChild(wsIterTd);
 
-        socket.on("relaypong", (msgsRaw) => {
-            const msgs = JSON.parse(msgsRaw);
-            for (const msg of msgs) {
-                const latency = Date.now() - msg.start;
-                latencySum += latency;
+    document.getElementById("output").appendChild(newElement);
 
-                if (msg.id === totalMessages - 1) {
-                    const end = Date.now();
-                    const totalTime = end - start;
-                    socket.disconnect();
+    const messages = generateRandomBatchMessages(messagesPerBatch);
 
-                    resolve({
-                        end,
-                        latency: latencySum / totalMessages,
-                        mbpsBandwidth: 1000 * (totalMessages / 1024) / totalTime,
-                        messageBandwidth: 1000 * totalMessages / totalTime,
-                        start,
-                        totalMessages,
-                        totalTime,
-                    });
-                }
-            }
-        });
-    });
-}
+    const wsresults = await ws.runTest(batches, messages, false);
+    wsTd.innerText = "WS" + JSON.stringify(wsresults, null, 2);
 
-function send2(socket: SocketIOClient.Socket, index: number, total: number, setLength: number) {
-    const messages = [];
-    for (let i = 0; i < setLength; i++) {
-        const str = rs.generate(1024);
-        const msg = JSON.stringify({ id: i + index * setLength, start: Date.now(), str });
-        messages.push(msg);
-    }
-    socket.emit("relay2", ...messages);
+    const sioresults = await sio.runTest(batches, messages, false, false);
+    sioTd.innerText = "SIO" + JSON.stringify(sioresults, null, 2);
 
-    if (index <= total) {
-        // Starting with setTimeout - will upgrade to immediate
-        // setTimeout(
-        //     () => {
-                send2(socket, index + 1, total, setLength);
-        // },
-        // 0);
-    }
-}
+    const wsresultsIter = await ws.runTest(batches, messages, true);
+    wsIterTd.innerText = "WS Iter" + JSON.stringify(wsresultsIter, null, 2);
 
-async function runTest2(socket: SocketIOClient.Socket, batches: number, batchSize: number): Promise<any> {
-    return new Promise<any>((resolve) => {
-        const start = Date.now();
-        let latencySum = 0;
-        const totalMessages = batches * batchSize;
+    const sioresultsIter = await sio.runTest(batches, messages, true, false);
+    sioIterTd.innerText = "SIO Iter" + JSON.stringify(sioresultsIter, null, 2);
 
-        send2(socket, 0, batches, batchSize);
+    const sioRedisResults = await sio.runTest(batches, messages, false, true);
+    sioRedisTd.innerText = "SIO+Redis" + JSON.stringify(sioRedisResults, null, 2);
 
-        socket.on("relaypong2", (...msgs: any[]) => {
-            for (const msgRaw of msgs) {
-                const msg = JSON.parse(msgRaw);
-                const latency = Date.now() - msg.start;
-                latencySum += latency;
-
-                if (msg.id === totalMessages - 1) {
-                    const end = Date.now();
-                    const totalTime = end - start;
-                    socket.disconnect();
-
-                    resolve({
-                        end,
-                        latency: latencySum / totalMessages,
-                        mbpsBandwidth: 1000 * (totalMessages / 1024) / totalTime,
-                        messageBandwidth: 1000 * totalMessages / totalTime,
-                        start,
-                        totalMessages,
-                        totalTime,
-                    });
-                }
-            }
-        });
-    });
-}
-
-const totalM = 10000;
-const batch = 10;
-const messagesPerBatch = totalM / batch;
-
-document.getElementById("run").onclick = (ev) => {
-    console.log(batch, messagesPerBatch);
-    // const stats = Measured.createCollection();
-    const socket = io(routerlicious, { transports: ["websocket"] });
-    runTest(socket, batch, messagesPerBatch).then((stats) => {
-        console.log(JSON.stringify(stats, null, 2));
-    });
-};
-
-document.getElementById("run2").onclick = (ev) => {
-    console.log(batch, messagesPerBatch);
-    // const stats = Measured.createCollection();
-    const socket = io(routerlicious, { transports: ["websocket"] });
-    runTest2(socket, batch, messagesPerBatch).then((stats) => {
-        console.log(JSON.stringify(stats, null, 2));
-    });
+    const sioRedisIterResults = await sio.runTest(batches, messages, true, true);
+    sioRedisIterTd.innerText = "SIO+Redis Iter" + JSON.stringify(sioRedisIterResults, null, 2);
 };

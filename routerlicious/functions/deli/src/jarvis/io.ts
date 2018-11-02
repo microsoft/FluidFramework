@@ -1,6 +1,7 @@
 import * as agent from "@prague/agent";
 import * as api from "@prague/client-api";
 import * as core from "@prague/routerlicious/dist/core";
+import * as services from "@prague/routerlicious/dist/services";
 import { IDocumentMessage, ITokenClaims } from "@prague/runtime-definitions";
 import * as socketStorage from "@prague/socket-storage";
 import * as jwt from "jsonwebtoken";
@@ -21,7 +22,8 @@ export function register(
     webSocketServer: core.IWebSocketServer,
     metricClientConfig: any,
     orderManager: core.IOrdererManager,
-    tenantManager: core.ITenantManager) {
+    tenantManager: core.ITenantManager,
+    redisPublisher: services.SocketIoRedisPublisher) {
 
     const metricLogger = agent.createMetricClient(metricClientConfig);
 
@@ -125,8 +127,8 @@ export function register(
             socket.emit("relaypong", messages);
         });
 
-        socket.on("relay2", (...args: []) => {
-            socket.emit("relaypong2", ...args);
+        socket.on("relay2", (messages: any[]) => {
+            redisPublisher.to(socket.id).emit("relaypong", messages);
         });
     });
 }

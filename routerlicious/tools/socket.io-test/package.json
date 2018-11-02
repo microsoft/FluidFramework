@@ -6,6 +6,8 @@
   "dependencies": {
     "@types/randomstring": "^1.1.6",
     "@types/socket.io-client": "^1.4.32",
+    "@types/ws": "^6.0.1",
+    "isomorphic-ws": "^4.0.1",
     "measured-core": "^1.11.2",
     "randomstring": "^1.1.5",
     "socket.io-client": "^2.1.1"

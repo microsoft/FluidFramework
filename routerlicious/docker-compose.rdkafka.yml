@@ -9,22 +9,22 @@ services:
             - DEBUG=prague:*
             - NODE_ENV=development
         restart: always
-    jarvis:
-        image: deli
-        ports:
-            - "3030:3000"
-        command: node dist/jarvis/www.js
-        environment:
-            - DEBUG=prague:*
-            - NODE_ENV=development
-        restart: always
-    deli:
-        image: deli
-        command: node dist/kafka-service/index.js deli ../deli/index.js
-        environment:
-            - DEBUG=prague:*
-            - NODE_ENV=development
-        restart: always
+    # jarvis:
+    #     image: deli
+    #     ports:
+    #         - "3030:3000"
+    #     command: node dist/jarvis/www.js
+    #     environment:
+    #         - DEBUG=prague:*
+    #         - NODE_ENV=development
+    #     restart: always
+    # deli:
+    #     image: deli
+    #     command: node dist/kafka-service/index.js deli ../deli/index.js
+    #     environment:
+    #         - DEBUG=prague:*
+    #         - NODE_ENV=development
+    #     restart: always
     # scriptorium:
     #     image: deli
     #     command: node dist/kafka-service/index.js scriptorium ../scriptorium/index.js

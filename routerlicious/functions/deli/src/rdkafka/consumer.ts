@@ -31,7 +31,7 @@ export class RdkafkaConsumer extends EventEmitter implements IConsumer {
                 "enable.auto.commit": autoCommit,
                 "event_cb": () => console.log("event_cb"),
                 "fetch.min.bytes": 100000000,
-                "fetch.wait.max.ms": 100,
+                "fetch.wait.max.ms": 1,
                 "group.id": groupId,
                 "metadata.broker.list": kafkaBroker,
                 "rebalance_cb": (err, assignment) => {
