@@ -91,9 +91,7 @@ class SocketConnection {
     }
 
     private handleMessage(data: ws.Data) {
-        const dataString = data as string;
-
-        const args = JSON.parse(dataString) as any[];
+        const args = JSON.parse(data as string) as any[];
         const op = args[0];
 
         switch (op) {
@@ -110,7 +108,7 @@ class SocketConnection {
     private handleConnectDocument(message: socketStorage.IConnect) {
         this.connectDocument(message).then(
             (connectedMessage) => {
-                this.socket.send(`connect_document_success\0${JSON.stringify(connectedMessage)}`);
+                this.socket.send(JSON.stringify(["connect_document_success", connectedMessage]));
             },
             (error) => {
                 winston.info(`connectDocument error`, error);
@@ -118,7 +116,7 @@ class SocketConnection {
             });
     }
 
-    private submitOp(clientId: string, payload: string) {
+    private submitOp(clientId: string, payload: string[]) {
         // Verify the user has connected on this object id
         if (!this.connectionsMap.has(clientId)) {
             this.socket.close(0, "Invalid client identifier");
@@ -126,7 +124,9 @@ class SocketConnection {
         }
 
         const connection = this.connectionsMap.get(clientId);
-        connection.order(payload);
+        for (const message of payload) {
+            connection.order(message);
+        }
     }
 
     private async connectDocument(message: socketStorage.IConnect): Promise<socketStorage.IConnected> {
@@ -141,6 +141,9 @@ class SocketConnection {
             return Promise.reject("Invalid claims");
         }
         await this.tenantManager.verifyToken(claims.tenantId, token);
+
+        // TODO send the response prior to attaching the orderer. Then we can avoid the complexity of the early
+        // messages on the client side
 
         // And then connect to the orderer
         const orderer = await this.orderFactory.create(claims.tenantId, claims.documentId);
