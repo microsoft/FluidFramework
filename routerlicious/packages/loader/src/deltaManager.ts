@@ -2,6 +2,7 @@ import * as runtime from "@prague/runtime-definitions";
 import { Deferred } from "@prague/utils";
 import * as assert from "assert";
 import { EventEmitter } from "events";
+import { ContentCache } from "./contentCache";
 import { debug } from "./debug";
 import { DeltaConnection, IConnectionDetails } from "./deltaConnection";
 import { DeltaQueue } from "./deltaQueue";
@@ -11,6 +12,7 @@ import { DeltaQueue } from "./deltaQueue";
 const cloneDeep = require("lodash/cloneDeep");
 const now = require("performance-now");
 // tslint:enable:no-var-requires
+// tslint:disable:no-unsafe-any
 
 const MaxReconnectDelay = 8000;
 const InitialReconnectDelay = 1000;
@@ -77,6 +79,8 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
 
     private clientType: string;
 
+    private contentCache = new ContentCache(12);
+
     public get inbound(): runtime.IDeltaQueue {
         return this._inbound;
     }
@@ -112,14 +116,25 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
             : runtime.Robot;
         // Inbound message queue
         this._inbound = new DeltaQueue<runtime.ISequencedDocumentMessage>((op, callback) => {
-            this.processMessage(op).then(
-                () => {
-                    callback();
-                },
-                (error) => {
-                    /* tslint:disable:no-unsafe-any */
-                    callback(error);
-                });
+            // TODO (mdaumi): Remove these after we fix our message types.
+            if (op.clientId === null || op.type === runtime.MessageType.NoOp || (op.contents && op.contents !== null)) {
+                this.processInboundOp(op, callback);
+            } else {
+                const opContent = this.contentCache.get(op.clientId);
+                if (opContent !== undefined) {
+                    this.appendOpContent(op, opContent);
+                    this.processInboundOp(op, callback);
+                } else {
+                    this.contentCache.on("content", (clientId) => {
+                        console.log(`Found content later: ${clientId}`);
+                        if (clientId === op.clientId) {
+                            this.appendOpContent(op, this.contentCache.get(op.clientId));
+                            this.processInboundOp(op, callback);
+                            this.contentCache.removeAllListeners();
+                        }
+                    });
+                }
+            }
         });
 
         this._inbound.on("error", (error) => {
@@ -321,6 +336,13 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
                     }
                 });
 
+                connection.on("op-content", (documentId: string, messages: any[]) => {
+                    // Need to buffer messages we receive before having the point set
+                    if (this.handler) {
+                        this.contentCache.set(cloneDeep(messages));
+                    }
+                });
+
                 connection.on("nack", (target: number) => {
                     this._outbound.systemPause();
                     this._outbound.clear();
@@ -379,6 +401,23 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
                 debug(reason, error.toString());
                 setTimeout(() => this.connectCore(reason, delay * 2), delay);
             });
+    }
+
+    private processInboundOp(op: runtime.ISequencedDocumentMessage, callback) {
+        this.processMessage(op).then(
+            () => {
+                callback();
+            },
+            (error) => {
+                /* tslint:disable:no-unsafe-any */
+                callback(error);
+            });
+    }
+
+    private appendOpContent(message: runtime.ISequencedDocumentMessage, contentOp: any) {
+        assert(contentOp, "Content op should not be empty");
+        assert.equal(message.clientSequenceNumber, contentOp.clientSequenceNumber, "Invalid op content order");
+        message.contents = contentOp.contents;
     }
 
     private enqueueMessages(messages: runtime.ISequencedDocumentMessage[]) {
