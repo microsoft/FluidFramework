@@ -1,5 +1,5 @@
 import * as core from "@prague/routerlicious/dist/core";
-import { ITokenClaims } from "@prague/runtime-definitions";
+import { IDocumentMessage, ITokenClaims } from "@prague/runtime-definitions";
 import * as socketStorage from "@prague/socket-storage";
 import * as http from "http";
 import * as jwt from "jsonwebtoken";
@@ -25,15 +25,15 @@ class WebSocket implements core.IWebSocket {
     }
 
     public on(event: string, listener: (...args: any[]) => void) {
-        throw new Error("Method not implemented.");
+        // throw new Error("Method not implemented.");
     }
 
-    public join(id: string): Promise<void> {
-        throw new Error("Method not implemented.");
+    public async join(id: string): Promise<void> {
+        // throw new Error("Method not implemented.");
     }
 
     public emit(event: string, ...args: any[]) {
-        throw new Error("Method not implemented.");
+        // throw new Error("Method not implemented.");
     }
 }
 
@@ -58,6 +58,7 @@ class SocketConnection {
         socket.on(
             "message",
             (data) => {
+                winston.info("message");
                 // Handle the message. On any exception close the socket.
                 try {
                     this.handleMessage(data);
@@ -65,10 +66,16 @@ class SocketConnection {
                     this.close(-1, error.toString());
                 }
             });
-        socket.on("close", (code, reason) => this.close(code, reason));
+        socket.on(
+            "close",
+            (code, reason) => {
+                winston.info("close", code, reason);
+                this.close(code, reason);
+            });
         socket.on(
             "error",
             (error) => {
+                winston.info("error");
                 this.close();
             });
         socket.on("ping", (data) => console.log("PING!", data.toString()));
@@ -106,17 +113,18 @@ class SocketConnection {
     }
 
     private handleConnectDocument(message: socketStorage.IConnect) {
+        winston.info("handleConnect", message);
         this.connectDocument(message).then(
             (connectedMessage) => {
                 this.socket.send(JSON.stringify(["connect_document_success", connectedMessage]));
             },
             (error) => {
                 winston.info(`connectDocument error`, error);
-                this.socket.close(0, JSON.stringify(error));
+                this.socket.close(1002, JSON.stringify(error));
             });
     }
 
-    private submitOp(clientId: string, payload: string[]) {
+    private submitOp(clientId: string, payload: IDocumentMessage[]) {
         // Verify the user has connected on this object id
         if (!this.connectionsMap.has(clientId)) {
             this.socket.close(0, "Invalid client identifier");
@@ -141,9 +149,6 @@ class SocketConnection {
             return Promise.reject("Invalid claims");
         }
         await this.tenantManager.verifyToken(claims.tenantId, token);
-
-        // TODO send the response prior to attaching the orderer. Then we can avoid the complexity of the early
-        // messages on the client side
 
         // And then connect to the orderer
         const orderer = await this.orderFactory.create(claims.tenantId, claims.documentId);
@@ -174,6 +179,7 @@ export function register(
     const webSocketServer = new ws.Server({ server: httpServer });
 
     webSocketServer.on("connection", (socket: ws) => {
+        winston.info("connection");
         SocketConnection.Attach(
             socket,
             orderFactory,

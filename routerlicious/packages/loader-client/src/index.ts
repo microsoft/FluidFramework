@@ -150,7 +150,7 @@ commander
     .arguments("<documentId>")
     .action((documentId) => {
         action = true;
-        const documentServices = driver.createDocumentService(commander.deltas, commander.snapshots);
+        const documentServices = driver.createDocumentService2(commander.deltas, commander.snapshots);
         const user = { id: "loader-client" };
         const token = jwt.sign(
             {

@@ -8,6 +8,7 @@ import {
 import { BatchManager } from "@prague/utils";
 import { EventEmitter } from "events";
 import * as ws from "isomorphic-ws";
+import * as url from "url";
 import { debug } from "./debug";
 import * as messages from "./messages";
 
@@ -20,10 +21,10 @@ export class WSDeltaConnection extends EventEmitter implements IDocumentDeltaCon
         id: string,
         token: string,
         client: IClient,
-        url: string): Promise<IDocumentDeltaConnection> {
+        urlStr: string): Promise<IDocumentDeltaConnection> {
 
         return new Promise<IDocumentDeltaConnection>((resolve, reject) => {
-            const connection = new WSDeltaConnection(tenantId, id, token, client, url);
+            const connection = new WSDeltaConnection(tenantId, id, token, client, urlStr);
 
             const resolveHandler = () => {
                 resolve(connection);
@@ -68,13 +69,17 @@ export class WSDeltaConnection extends EventEmitter implements IDocumentDeltaCon
         return this.details.initialMessages;
     }
 
-    constructor(tenantId: string, public documentId: string, token: string, client: IClient, url: string) {
+    constructor(tenantId: string, public documentId: string, token: string, client: IClient, urlStr: string) {
         super();
 
-        const socket = new ws(
-            `${url}?documentId${encodeURIComponent(documentId)}&tenantId${encodeURIComponent(tenantId)}`);
+        const p = url.parse(urlStr);
+        const protocol = p.protocol === "https:" ? "wss" : "ws";
+        const wsUrl = `${protocol}://${p.host}${p.pathname}`;
 
-        socket.on("open", () => {
+        this.socket = new ws(
+            `${wsUrl}?documentId${encodeURIComponent(documentId)}&tenantId${encodeURIComponent(tenantId)}`);
+
+        this.socket.onopen = () => {
             const connectMessage: messages.IConnect = {
                 client,
                 id: documentId,
@@ -82,32 +87,24 @@ export class WSDeltaConnection extends EventEmitter implements IDocumentDeltaCon
                 token,
             };
             this.socket.send(JSON.stringify(["connect", connectMessage]));
-        });
+        };
 
-        socket.on("message", (data) => {
-            this.handleMessage(data);
-        });
+        this.socket.onmessage = (ev) => {
+            this.handleMessage(ev.data);
+        };
 
-        socket.on("ping", (data) => {
-            debug("ping", data.toString());
-        });
+        this.socket.onclose = (ev) => {
+            this.emit("disconnect", ev.reason);
+        };
 
-        socket.on("pong", (data) => {
-            debug("pong", data.toString());
-        });
-
-        socket.on("close", (code, reason) => {
-            this.emit("disconnect", reason);
-        });
-
-        socket.on("error", (error) => {
+        this.socket.onerror = (error) => {
             // TODO need to understand if an error will always result in a close
             debug(error);
 
-            if (socket.readyState === ws.CONNECTING || socket.readyState === ws.OPEN) {
-                socket.close(-1, error.toString());
+            if (this.socket.readyState === ws.CONNECTING || this.socket.readyState === ws.OPEN) {
+                this.socket.close(-1, error.toString());
             }
-        });
+        };
 
         this.once("connect_document_success", (connectedMessage: messages.IConnected) => {
             this.details = connectedMessage;

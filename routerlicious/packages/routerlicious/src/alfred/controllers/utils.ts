@@ -43,7 +43,7 @@ export function registerDocumentServices(config: any) {
         ? new BrowserErrorTrackingService()
         : new socketStorage.DefaultErrorTracking();
 
-    const documentServices = socketStorage.createDocumentService(
+    const documentServices = socketStorage.createDocumentService2(
         config.jarvisUrl,
         config.blobStorageUrl,
         errorService);

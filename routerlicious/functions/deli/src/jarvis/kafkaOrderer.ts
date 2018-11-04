@@ -1,11 +1,7 @@
 import * as core from "@prague/routerlicious/dist/core";
 import { IProducer } from "@prague/routerlicious/dist/utils";
-import { IClient, IClientJoin, IUser, MessageType } from "@prague/runtime-definitions";
+import { IClient, IClientJoin, IDocumentMessage, IUser, MessageType } from "@prague/runtime-definitions";
 import * as moniker from "moniker";
-
-interface IKafkaMessage extends core.IObjectMessage {
-    operation: any;
-}
 
 export class KafkaOrdererConnection {
     public static async Create(
@@ -66,16 +62,16 @@ export class KafkaOrdererConnection {
             detail: this.client,
         };
 
-        const message: IKafkaMessage = {
+        const message: core.IRawOperationMessage = {
             clientId: null,
             documentId: this.documentId,
-            operation: JSON.stringify({
+            operation: {
                 clientSequenceNumber: -1,
                 contents: clientDetail,
                 referenceSequenceNumber: -1,
                 traces: [],
                 type: MessageType.ClientJoin,
-            }),
+            },
             tenantId: this.tenantId,
             timestamp: Date.now(),
             type: core.RawOperationType,
@@ -85,8 +81,8 @@ export class KafkaOrdererConnection {
         this.submitRawOperation(message);
     }
 
-    public order(message: string): void {
-        const rawMessage: IKafkaMessage = {
+    public order(message: IDocumentMessage): void {
+        const rawMessage: core.IRawOperationMessage = {
             clientId: this.clientId,
             documentId: this.documentId,
             operation: message,
@@ -100,7 +96,7 @@ export class KafkaOrdererConnection {
     }
 
     public disconnect() {
-        const message: IKafkaMessage = {
+        const message: core.IRawOperationMessage = {
             clientId: null,
             documentId: this.documentId,
             operation: {
