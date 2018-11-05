@@ -1,9 +1,9 @@
 import * as assert from "assert";
 import { AxiosInstance, AxiosResponse } from "axios";
-import { SharepointDeltaStorageService } from "../deltaStorageService";
+import { DeltaStorageService } from "../deltaStorageService";
 import { TokenProvider } from "../token";
 
-describe("SharepointDeltaStorageService", () => {
+describe("DeltaStorageService", () => {
     /*
      * Use fake urls so we don't accidental make real calls that make our tests flakey.
      * Using microsoft.com as the domain so we don't send traffic somewhere hostile on accident.
@@ -15,7 +15,7 @@ describe("SharepointDeltaStorageService", () => {
 
     it("Should build the correct sharepoint delta url", () => {
 
-        const spoDeltaStorageService = new SharepointDeltaStorageService(testDeltaStorageUrl, undefined);
+        const spoDeltaStorageService = new DeltaStorageService(testDeltaStorageUrl, undefined);
         const actualDeltaUrl = spoDeltaStorageService.constructUrl(2, 8);
         // tslint:disable-next-line:max-line-length
         const expectedDeltaUrl = `${deltaStorageBasePath}/drives/testdrive/items/testitem/opStream?$filter=sequenceNumber%20ge%202%20and%20sequenceNumber%20le%208`;
@@ -57,7 +57,7 @@ describe("SharepointDeltaStorageService", () => {
                 },
             ],
         };
-        let spoDeltaStorageService: SharepointDeltaStorageService;
+        let spoDeltaStorageService: DeltaStorageService;
         before(() => {
             const axiosMock: Partial<AxiosInstance> = {
                 get: (url, config?) => new Promise<AxiosResponse>(
@@ -73,7 +73,7 @@ describe("SharepointDeltaStorageService", () => {
                         resolve(respone);
                     }),
             };
-            spoDeltaStorageService = new SharepointDeltaStorageService(testDeltaStorageUrl, axiosMock as AxiosInstance);
+            spoDeltaStorageService = new DeltaStorageService(testDeltaStorageUrl, axiosMock as AxiosInstance);
         });
 
         it("Should deserialize the delta feed response correctly", async () => {
@@ -119,7 +119,7 @@ describe("SharepointDeltaStorageService", () => {
             ],
         };
 
-        let spoDeltaStorageService: SharepointDeltaStorageService;
+        let spoDeltaStorageService: DeltaStorageService;
         before(() => {
             const axiosMock: Partial<AxiosInstance> = {
                 get: (url, config?) => new Promise<AxiosResponse>(
@@ -135,7 +135,7 @@ describe("SharepointDeltaStorageService", () => {
                         resolve(respone);
                     }),
             };
-            spoDeltaStorageService = new SharepointDeltaStorageService(testDeltaStorageUrl, axiosMock as AxiosInstance);
+            spoDeltaStorageService = new DeltaStorageService(testDeltaStorageUrl, axiosMock as AxiosInstance);
         });
 
         it("Should deserialize the delta feed response correctly", async () => {

@@ -1,7 +1,7 @@
 import * as api from "@prague/runtime-definitions";
 import Axios, { AxiosInstance } from "axios";
 import * as querystring from "querystring";
-import { IDeltaFeedResponse, ISequencedDocumentOp } from "./sharepointContracts";
+import { IDeltaFeedResponse, ISequencedDocumentOp } from "./contracts";
 import { TokenProvider } from "./token";
 
 /**
@@ -24,7 +24,7 @@ export class DocumentDeltaStorageService implements api.IDocumentDeltaStorageSer
 /**
  * Provides access to the sharepoint delta storage
  */
-export class SharepointDeltaStorageService implements api.IDeltaStorageService {
+export class DeltaStorageService implements api.IDeltaStorageService {
 
     public constructor(
         private readonly deltaFeedUrl: string,

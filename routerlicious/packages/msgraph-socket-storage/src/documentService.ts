@@ -1,11 +1,11 @@
 import * as api from "@prague/runtime-definitions";
 import { DocumentDeltaConnection } from "@prague/socket-storage-shared";
 import * as io from "socket.io-client";
-import { DocumentDeltaStorageService, SharepointDeltaStorageService } from "./deltaStorageService";
-import { ReplayDocumentStorageService } from "./sharepointDocumentStorageService";
+import { DeltaStorageService, DocumentDeltaStorageService } from "./deltaStorageService";
+import { DocumentStorageService } from "./documentStorageService";
 import { TokenProvider } from "./token";
 
-export class SharepointDocumentService implements api.IDocumentService {
+export class DocumentService implements api.IDocumentService {
     constructor(
         private snapshotUrl: string,
         private deltaFeedUrl: string,
@@ -20,14 +20,14 @@ export class SharepointDocumentService implements api.IDocumentService {
         tokenProvider: api.ITokenProvider): Promise<api.IDocumentStorageService> {
         // Use the replaydocumentstorage service to return the default values for snapshot methods
         // Replace this once sharepoint starts supporting snapshots
-        return new ReplayDocumentStorageService();
+        return new DocumentStorageService();
     }
 
     public async connectToDeltaStorage(
         tenantId: string,
         id: string,
         tokenProvider: api.ITokenProvider): Promise<api.IDocumentDeltaStorageService> {
-        const deltaStorage = new SharepointDeltaStorageService(this.deltaFeedUrl);
+        const deltaStorage = new DeltaStorageService(this.deltaFeedUrl);
         return new DocumentDeltaStorageService(tenantId, id, tokenProvider, deltaStorage);
     }
 

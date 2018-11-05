@@ -5,7 +5,7 @@ import * as api from "@prague/runtime-definitions";
  * Document storage service for sharepoint...For now, this is just a placeholder
  * It just does a default implememtation for all the methods
  */
-export class ReplayDocumentStorageService implements api.IDocumentStorageService  {
+export class DocumentStorageService implements api.IDocumentStorageService  {
 
     public getSnapshotTree(version: resources.ICommit): Promise<api.ISnapshotTree> {
         return null;

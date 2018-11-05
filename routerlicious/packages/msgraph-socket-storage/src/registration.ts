@@ -3,7 +3,7 @@ import * as resources from "@prague/gitresources";
 import { IDocumentService, IErrorTrackingService, ITokenProvider, IUser } from "@prague/runtime-definitions";
 import { ICredentials } from "@prague/services-client";
 import * as socketStorage from "@prague/socket-storage";
-import { SharepointDocumentService } from "./sharepointDocumentService";
+import { DocumentService } from "./documentService";
 
 export interface IRouterliciousServiceRegistration {
     deltaUrl: string;
@@ -91,7 +91,7 @@ function createSharepointDocumentService(
     webSocketUrl: string,
     ): IDocumentService {
 
-    const service = new SharepointDocumentService(
+    const service = new DocumentService(
         snapshotUrl,
         deltaFeedUrl,
         webSocketUrl);
