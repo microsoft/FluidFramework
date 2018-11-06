@@ -69,13 +69,21 @@ export class PragueMapViewWrapper implements IMapViewWrapper {
 export class PragueMapWrapperFactory implements IMapWrapperFactory {
     private collabDoc: pragueApi.Document;
     private batchOp: boolean;
+    private defaultMapView: pragueMap.IMapView;
     constructor(collabDoc: pragueApi.Document, batchOp: boolean) {
         this.collabDoc = collabDoc;
         this.batchOp = batchOp;
     }
-
-    public async getRootMapView() {
+    public async getFrameContainerDataMapView() {
+        // TODO: Only support top frame
         return new PragueMapViewWrapper(await this.collabDoc.getRoot().getView());
+    }
+
+    public async getDefaultDataMapView() {
+        if (!this.defaultMapView) {
+            this.defaultMapView = await this.collabDoc.createMap().getView();
+        }
+        return new PragueMapViewWrapper(this.defaultMapView);
     }
     public createMap() {
         const newMap = this.collabDoc.createMap();

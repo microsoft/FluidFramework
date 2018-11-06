@@ -9,6 +9,7 @@ module.exports = {
     entry: {        
         background: './src/background.ts',
         content: './src/content.ts',
+        contentOptional: './src/contentOptional.ts',
         popup: './src/popup.ts',
         pragueView: './src/pragueView.ts'
     },

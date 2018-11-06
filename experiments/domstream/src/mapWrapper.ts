@@ -16,7 +16,8 @@ export interface IMapViewWrapper {
 }
 
 export interface IMapWrapperFactory {
-    getRootMapView(): Promise<IMapViewWrapper>;
+    getFrameContainerDataMapView(): Promise<IMapViewWrapper>;
+    getDefaultDataMapView(): Promise<IMapViewWrapper>;
     createMap(): IMapWrapper;
     createMapView(): Promise<IMapViewWrapper>;
 }
