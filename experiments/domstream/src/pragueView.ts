@@ -107,6 +107,7 @@ function setLatency(dataMapView, startLoadTime) {
     setSpanText("bgwkrlatency", Math.round(endTime - dataMapView.get("FG_END_DATE")) + " ms");
     setSpanText("latency", Math.round(startLoadTime.valueOf() - endTime) + " ms (Live only)");
 }
+const scale = document.getElementById("scale") as HTMLInputElement;
 
 const scrollPosField = document.getElementById("SCROLLPOS") as HTMLSpanElement;
 function setDimension(dataMapView) {
@@ -114,9 +115,22 @@ function setDimension(dataMapView) {
     debugDOM(dimension);
     if (dimension) {
         const dimensionField = document.getElementById("DIMENSION") as HTMLSpanElement;
-        dimensionField.innerHTML = dimension.width + " x " + dimension.height;
         iframe.width = dimension.width;
         iframe.height = dimension.height;
+
+        const scaleStr = dimension.devicePixelRatio === 1 ? "" :
+            " scale(" + (dimension.devicePixelRatio * 100).toFixed(0) + ")";
+        const valueScale = parseInt(scale.value, 10);
+        if (dimension.devicePixelRatio === 1 && valueScale === 100) {
+            iframe.style.transform = "";
+            iframe.style.transformOrigin = "";
+        } else {
+            iframe.style.transform = "scale(" + (valueScale / 100 * dimension.devicePixelRatio) + ")";
+            iframe.style.transformOrigin = "top left";
+        }
+
+        dimensionField.innerHTML = dimension.width + " x " + dimension.height + " " + scaleStr;
+
         // Also update the scroll pos after resize.
         StreamWindow.loadScrollPos(iframe.contentWindow, dataMapView.get("SCROLLPOS"), scrollPosField);
     }
@@ -149,6 +163,10 @@ async function loadDataView(rootView: pragueMap.IMapView, dataName: string): Pro
 
     setSpanText("URL", dataMapView.get("URL"));
     setDimension(dataMapView);
+    scale.addEventListener("change", () => {
+        setDimension(dataMapView);
+        setSpanText("scaleValue", scale.value + "%");
+    });
     const startTime = performance.now();
     const frameLoader = new FrameLoader(dataMapView);
     const tree = await frameLoader.streamDOMFromPrague(dataMapView, iframe.contentDocument);

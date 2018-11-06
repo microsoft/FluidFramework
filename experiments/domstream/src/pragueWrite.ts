@@ -33,8 +33,8 @@ export async function saveDOM(mapWrapperFactory: IMapWrapperFactory, options: an
     dataMapWrapper.set("TIME_DOCLOAD", startTime - options.startSaveSignalTime);
 
     dataMapWrapper.set("URL", window.location.href);
-    dataMapWrapper.set("DIMENSION", JSON.stringify({ width: window.innerWidth, height: window.innerHeight }));
-    dataMapWrapper.set("SCROLLPOS", JSON.stringify([window.scrollX, window.scrollY]));
+    StreamWindow.saveDimension(window, dataMapWrapper);
+    StreamWindow.saveScrollPos(window, dataMapWrapper);
 
     let endGenTime;
     if (options.useFlatMap) {

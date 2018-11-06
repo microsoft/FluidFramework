@@ -478,12 +478,25 @@ export class StreamWindow {
         }
     }
 
+    public static saveScrollPos(w: Window, dataMapView: IMapViewWrapper) {
+        const pos = JSON.stringify([w.scrollX, w.scrollY]);
+        debugDOM("Update scrollpos:", pos);
+        dataMapView.setIfChanged("SCROLLPOS", pos);
+    }
+
+    public static saveDimension(w: Window, dataMapView: IMapViewWrapper) {
+        const dim = JSON.stringify({
+            devicePixelRatio: window.devicePixelRatio,
+            height: window.innerHeight,
+            width: window.innerWidth,
+        });
+        debugDOM("Update dimension:", dim);
+        dataMapView.setIfChanged("DIMENSION", dim);
+    }
     private static installScrollListener(w: Window, dataMapView: IMapViewWrapper) {
         // Setup scroll syncing
         const scrollCallback = () => {
-            const pos = JSON.stringify([w.scrollX, w.scrollY]);
-            debugDOM("Update scrollpos: " + pos);
-            dataMapView.setIfChanged("SCROLLPOS", pos);
+            this.saveScrollPos(w, dataMapView);
         };
         w.addEventListener("scroll", scrollCallback);
         return scrollCallback;
@@ -501,9 +514,7 @@ export class StreamWindow {
 
     private static installResizeListener(w: Window, dataMapView: IMapViewWrapper) {
         const resizeCallback = () => {
-            const dim = { width: w.innerWidth, height: w.innerHeight };
-            debugDOM("Update dimension: " + dim);
-            dataMapView.setIfChanged("DIMENSION", JSON.stringify(dim));
+            this.saveDimension(w, dataMapView);
         };
         w.addEventListener("resize", resizeCallback);
         return resizeCallback;

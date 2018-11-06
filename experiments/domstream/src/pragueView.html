@@ -14,9 +14,9 @@
             border: 0px hidden;
             position: absolute;
             top: 0px;
-            left: 0px;
+            left: 0px;     
         }
-
+        
         div#side {
             display: inline-block;
             width: 250px;
@@ -71,13 +71,20 @@
                 </td>
             </tr>
         </table>
+        <table>
+            <tr>
+                <td>View Scale:</td>
+                <td><input type="range" min="0" max="200" id="scale" value="75" /></td>
+                <td><span id="scaleValue">75%</span></td>
+            </tr>
+        </table>
     </div>
     <div id="main">
         <table>
             <tr>
                 <td>
                     <div id="side" class="hide">
-                        <u><b>Status:</b></u> <span id="status"></span><br/>
+                        <u><b>Status:</b></u> <span id="status"></span><br />
                         <br />
                         <u><b>Info:</b></u>
                         <table>
