@@ -99,7 +99,7 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
             user: this.user,
         };
 
-        this.submitRawOperation(rawMessage, true);
+        this.submitRawOperation(rawMessage);
     }
 
     public disconnect() {
@@ -122,7 +122,7 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
         this.submitRawOperation(message);
     }
 
-    private submitRawOperation(message: core.IRawOperationMessage, split?: boolean) {
+    private submitRawOperation(message: core.IRawOperationMessage) {
         // Add trace
         const operation = message.operation as IDocumentMessage;
         if (operation && operation.traces) {
@@ -133,12 +133,13 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
                     timestamp: now(),
                 });
         }
-
         // TODO (mdaumi)
-        // Checking clientId is a hack for not to split deli generated client leave and noop messages.
-        // Checking remotehelp is for TMZ to correctly parse the message.
-        if (split && message.clientId !== null && message.operation.type !== "remoteHelp" &&
-            message.operation.type !== "noop" && message.operation.contents !== null) {
+        // 1. We should put system level messages (clientleave, remotehelp) in a different field
+        // so that we never have to look at the content.
+        // 2. Splitted messages should set a system level flag to simplify client logic.
+        // Checking content size to decide splitting.
+        const contentSize = JSON.stringify(message.operation.contents).length;
+        if (contentSize > 256) {
             this.contentPublisher.publish({
                 clientId: this.clientId,
                 documentId: this.documentId,
