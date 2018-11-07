@@ -287,6 +287,7 @@ export class LocalOrderer implements core.IOrderer {
         this.scriptoriumLambda = new ScriptoriumLambda(
             LocalOrderer.socketPublisher,
             deltasCollection,
+            undefined,
             LocalOrderer.scriptoriumContext);
 
         // TMZ lambda

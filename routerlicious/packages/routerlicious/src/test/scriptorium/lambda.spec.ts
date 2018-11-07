@@ -24,7 +24,7 @@ describe("Routerlicious", () => {
                 testCollection = new TestCollection([]);
                 testPublisher = new TestPublisher();
                 testContext = new TestContext();
-                lambda = new ScriptoriumLambda(testPublisher, testCollection, testContext);
+                lambda = new ScriptoriumLambda(testPublisher, testCollection, undefined, testContext);
             });
 
             function countOps(events: IEvent[]) {

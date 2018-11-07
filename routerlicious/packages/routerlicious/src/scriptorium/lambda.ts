@@ -237,7 +237,11 @@ export class ScriptoriumLambda implements IPartitionLambda {
 
     private workManager = new WorkManager();
 
-    constructor(private io: core.IPublisher, private collection: core.ICollection<any>, protected context: IContext) {
+    constructor(
+        private io: core.IPublisher,
+        private opCollection: core.ICollection<any>,
+        private contentCollection: core.ICollection<any>,
+        protected context: IContext) {
         // Listen for work errors
         this.workManager.on("error", (error) => {
             this.batchError(error);
@@ -330,15 +334,7 @@ export class ScriptoriumLambda implements IPartitionLambda {
         await batch.map(async (id, work) => {
             // tslint:disable-next-line:max-line-length
             winston.verbose(`Inserting to mongodb ${id.documentId}/${id.tenantId}@${work[0].operation.sequenceNumber}:${work.length}`);
-            return this.collection.insertMany(work, false)
-                .catch((error) => {
-                    // Duplicate key errors are ignored since a replay may cause us to insert twice into Mongo.
-                    // All other errors result in a rejected promise.
-                    if (error.name !== "MongoError" || error.code !== 11000) {
-                        // Needs to be a full rejection here
-                        return Promise.reject(error);
-                    }
-                });
+            return this.processMongoCore(work);
         });
     }
 
@@ -363,6 +359,50 @@ export class ScriptoriumLambda implements IPartitionLambda {
 
             this.io.to(id.topic).emit(id.event, id.documentId, work);
         });
+    }
+
+    private async processMongoCore(messages: core.ISequencedOperationMessage[]): Promise<void> {
+        const insertP = this.insertOp(messages);
+        const updateP = this.updateSequenceNumber(messages);
+        await Promise.all([insertP, updateP]);
+    }
+
+    private async insertOp(messages: core.ISequencedOperationMessage[]) {
+        return this.opCollection.insertMany(messages, false)
+            .catch((error) => {
+                // Duplicate key errors are ignored since a replay may cause us to insert twice into Mongo.
+                // All other errors result in a rejected promise.
+                if (error.name !== "MongoError" || error.code !== 11000) {
+                    // Needs to be a full rejection here
+                    return Promise.reject(error);
+                }
+            });
+    }
+
+    private async updateSequenceNumber(messages: core.ISequencedOperationMessage[]) {
+        // TODO (mdaumi): Temporary to back compat with local orderer.
+        if (this.contentCollection === undefined) {
+            return Promise.resolve();
+        } else {
+            const updateP = [];
+            for (const message of messages) {
+                updateP.push(this.contentCollection.update(
+                    {
+                        "clientId": message.operation.clientId,
+                        "documentId": message.documentId,
+                        "op.clientSequenceNumber": message.operation.clientSequenceNumber,
+                        "tenantId": message.tenantId,
+                    },
+                    {sequenceNumber: message.operation.sequenceNumber},
+                    null).catch((error) => {
+                        // Same reason as insertOp.
+                        if (error.name !== "MongoError" || error.code !== 11000) {
+                            return Promise.reject(error);
+                        }
+                    }));
+            }
+            await Promise.all(updateP);
+        }
     }
 
     /**
