@@ -15,6 +15,9 @@
     },
     "include": [
         "src/background.ts",
-        "src/content.ts"
+        "src/content.ts",
+        "src/contentOptional.ts",
+        "src/pragueView.ts",
+        "src/pragueViewComponent.ts"
     ]
 }

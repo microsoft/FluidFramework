@@ -229,6 +229,7 @@ export class StreamWindowClient extends StreamWindow {
 
     constructor(w: Window, dataMapView: IMapViewWrapper, tree: StreamDOMTreeClient, scrollPosField?: HTMLSpanElement) {
         super(w);
+
         if (globalConfig.allowInteraction) {
             this.scrollCallback = StreamWindow.installScrollListener(w, dataMapView);
             StreamWindowClient.installClickListener(w, dataMapView, tree);
