@@ -6,7 +6,10 @@ import * as jwt from "jsonwebtoken";
 import * as moniker from "moniker";
 import * as winston from "winston";
 import * as ws from "ws";
-import { KafkaOrdererConnection, KafkaOrdererFactory } from "./kafkaOrderer";
+import { KafkaOrdererConnection } from "./kafkaOrderer";
+import { LocalOrdererConnection } from "./localOrderer";
+import { OrdererManager } from "./orderFactory";
+import { RedisSubscriptionManager } from "./subscriptions";
 
 // TODO add validation to input message processing
 // A safety mechanism to make sure that all outbound messages from alfred adheres to the permitted schema.
@@ -21,44 +24,56 @@ import { KafkaOrdererConnection, KafkaOrdererFactory } from "./kafkaOrderer";
 // }
 
 class WebSocket implements core.IWebSocket {
-    constructor(public id: string, socket: ws) {
+    private topics = new Array<string>();
+
+    constructor(public id: string, private socket: ws, private subscriber: RedisSubscriptionManager) {
+        socket.onclose = () => {
+            for (const room of this.topics) {
+                subscriber.unsubscribe(room, socket);
+            }
+        };
     }
 
     public on(event: string, listener: (...args: any[]) => void) {
-        // throw new Error("Method not implemented.");
+        throw new Error("Method not implemented.");
     }
 
     public async join(id: string): Promise<void> {
-        // throw new Error("Method not implemented.");
+        this.topics.push(id);
+        await this.subscriber.subscribe(id, this.socket);
     }
 
     public emit(event: string, ...args: any[]) {
-        // throw new Error("Method not implemented.");
+        this.socket.send(JSON.stringify([event].concat(...args)));
     }
 }
 
 class SocketConnection {
     public static Attach(
         socket: ws,
-        orderFactory: KafkaOrdererFactory,
-        tenantManager: core.ITenantManager): SocketConnection {
+        orderFactory: OrdererManager,
+        tenantManager: core.ITenantManager,
+        subscriber: RedisSubscriptionManager): SocketConnection {
 
-        const connection = new SocketConnection(socket, orderFactory, tenantManager);
+        const connection = new SocketConnection(socket, orderFactory, tenantManager, subscriber);
         return connection;
     }
     // Map from client IDs on this connection to the object ID and user info.
-    private connectionsMap = new Map<string, KafkaOrdererConnection>();
+    private connectionsMap = new Map<string, KafkaOrdererConnection | LocalOrdererConnection>();
     private closed = false;
+    private webSocket: WebSocket;
 
     constructor(
         private socket: ws,
-        private orderFactory: KafkaOrdererFactory,
-        private tenantManager: core.ITenantManager) {
+        private orderFactory: OrdererManager,
+        private tenantManager: core.ITenantManager,
+        subscriber: RedisSubscriptionManager) {
+
+        this.webSocket = new WebSocket(moniker.choose(), this.socket, subscriber);
 
         socket.on(
             "message",
             (data) => {
-                winston.info("message");
                 // Handle the message. On any exception close the socket.
                 try {
                     this.handleMessage(data);
@@ -113,11 +128,7 @@ class SocketConnection {
     }
 
     private handleConnectDocument(message: socketStorage.IConnect) {
-        winston.info("handleConnect", message);
-        this.connectDocument(message).then(
-            (connectedMessage) => {
-                this.socket.send(JSON.stringify(["connect_document_success", connectedMessage]));
-            },
+        this.connectDocument(message).catch(
             (error) => {
                 winston.info(`connectDocument error`, error);
                 this.socket.close(1002, JSON.stringify(error));
@@ -137,7 +148,7 @@ class SocketConnection {
         }
     }
 
-    private async connectDocument(message: socketStorage.IConnect): Promise<socketStorage.IConnected> {
+    private async connectDocument(message: socketStorage.IConnect): Promise<void> {
         if (!message.token) {
             return Promise.reject("Must provide an authorization token");
         }
@@ -151,11 +162,8 @@ class SocketConnection {
         await this.tenantManager.verifyToken(claims.tenantId, token);
 
         // And then connect to the orderer
-        const orderer = await this.orderFactory.create(claims.tenantId, claims.documentId);
-        const connection = await orderer.connect(
-            new WebSocket(moniker.choose(), this.socket),
-            claims.user,
-            message.client);
+        const orderer = await this.orderFactory.getOrderer(claims.tenantId, claims.documentId);
+        const connection = await orderer.connect(claims.user, message.client);
         this.connectionsMap.set(connection.clientId, connection);
 
         // And return the connection information to the client
@@ -167,22 +175,26 @@ class SocketConnection {
             user: claims.user,
         };
 
-        return connectedMessage;
+        this.socket.send(JSON.stringify(["connect_document_success", connectedMessage]));
+
+        await connection.bind(this.webSocket);
     }
 }
 
 export function register(
     httpServer: http.Server,
-    orderFactory: KafkaOrdererFactory,
-    tenantManager: core.ITenantManager) {
+    orderFactory: OrdererManager,
+    tenantManager: core.ITenantManager,
+    redisConfig: { host: string, port: number }) {
 
     const webSocketServer = new ws.Server({ server: httpServer });
+    const subscriber = new RedisSubscriptionManager(redisConfig.host, redisConfig.port);
 
     webSocketServer.on("connection", (socket: ws) => {
-        winston.info("connection");
         SocketConnection.Attach(
             socket,
             orderFactory,
-            tenantManager);
+            tenantManager,
+            subscriber);
     });
 }

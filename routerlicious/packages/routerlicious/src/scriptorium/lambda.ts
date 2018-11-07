@@ -362,6 +362,8 @@ export class ScriptoriumLambda implements IPartitionLambda {
             });
 
             this.io.to(id.topic).emit(id.event, id.documentId, work);
+
+            await new Promise<void>((resolve) => setImmediate(() => resolve()));
         });
     }
 

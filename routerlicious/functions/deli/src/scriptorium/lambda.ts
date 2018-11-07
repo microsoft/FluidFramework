@@ -7,6 +7,7 @@ import { EventEmitter } from "events";
 import * as _ from "lodash";
 // tslint:disable-next-line:no-var-requires
 const now = require("performance-now");
+import * as redis from "redis";
 import * as winston from "winston";
 import { IContext, IPartitionLambda } from "../kafka-service/lambdas";
 
@@ -237,7 +238,7 @@ export class ScriptoriumLambda implements IPartitionLambda {
 
     private workManager = new WorkManager();
 
-    constructor(private io: core.IPublisher, private collection: core.ICollection<any>, protected context: IContext) {
+    constructor(private io: redis.RedisClient, private collection: core.ICollection<any>, protected context: IContext) {
         // Listen for work errors
         this.workManager.on("error", (error) => {
             this.batchError(error);
@@ -348,7 +349,7 @@ export class ScriptoriumLambda implements IPartitionLambda {
     private async processIoBatch(batch: Batch<IoTarget, INack | ISequencedDocumentMessage>): Promise<void> {
         // Serialize the current batch to Mongo
         await batch.map(async (id, work) => {
-            winston.verbose(`Broadcasting to socket.io ${id.documentId}@${id.topic}@${id.event}:${work.length}`);
+            winston.info(`Broadcasting to socket.io ${id.documentId}@${id.topic}@${id.event}:${work.length}`);
             // Add trace to each message before routing.
             work.map((value) => {
                 const valueAsSequenced = value as ISequencedDocumentMessage;
@@ -361,7 +362,9 @@ export class ScriptoriumLambda implements IPartitionLambda {
                 }
             });
 
-            this.io.to(id.topic).emit(id.event, id.documentId, work);
+            this.io.publish(id.topic, JSON.stringify([id.event, id.documentId, work]));
+
+            await new Promise<void>((resolve) => setImmediate(() => resolve()));
         });
     }
 

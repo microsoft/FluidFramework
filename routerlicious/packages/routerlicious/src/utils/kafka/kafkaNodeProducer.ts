@@ -1,6 +1,7 @@
 // tslint:disable:ban-types
 import * as kafkaNode from "kafka-node";
 import * as util from "util";
+import * as winston from "winston";
 import { debug } from "../debug";
 import { IPendingMessage, IProducer } from "./definitions";
 import { Producer } from "./producer";
@@ -29,16 +30,49 @@ export class KafkaNodeProducer extends Producer implements IProducer {
         await util.promisify(((callback) => client.close(callback)) as Function)();
     }
 
-    protected sendCore(key: string, pendingMessages: IPendingMessage[]) {
-        for (const pendMessage of pendingMessages) {
-            const kafkaMessage = [{ topic: this.topic, messages: [pendMessage.message], key }];
-            this.producer.send(kafkaMessage, (error, data) => {
-                    if (error) {
-                        pendMessage.deferred.reject(error);
-                    } else {
-                        pendMessage.deferred.resolve(data);
+    protected sendCore(messages: {[key: string]: IPendingMessage[] }) {
+        winston.info(`sendCore`);
+        const kafkaMessages = new Array<{ key: string, messages: string[], topic: string }>();
+
+        // tslint:disable-next-line:forin
+        for (const key in messages) {
+            const pendingMessages = messages[key].map((pendingMessage) => pendingMessage.message);
+
+            while (pendingMessages.length > 0) {
+                let sendSize = 0;
+                let i = 0;
+                for (; i < pendingMessages.length; i++) {
+                    sendSize += pendingMessages[i].length;
+                    if (sendSize >= this.maxMessageSize) {
+                        break;
                     }
-            });
+                }
+
+                const sendBatch = pendingMessages.splice(0, i);
+                winston.info(`  sendCore.batch ${key}:${sendBatch.length}`);
+                const kafkaMessage = {
+                    key,
+                    messages: sendBatch,
+                    topic: this.topic,
+                };
+                kafkaMessages.push(kafkaMessage);
+            }
+        }
+
+        const promises = new Array<Promise<void>>();
+        for (const kafkaMessage of kafkaMessages) {
+            promises.push(new Promise<void>((resolve, reject) => {
+                this.producer.send([kafkaMessage], (error, data) => error ? reject(error) : resolve(data));
+            }));
+        }
+        const doneP = Promise.all(promises);
+
+        // tslint:disable-next-line:forin
+        for (const key in messages) {
+            const pendingMessages = messages[key];
+            for (const pendingMessage of pendingMessages) {
+                pendingMessage.deferred.resolve(doneP);
+            }
         }
     }
 

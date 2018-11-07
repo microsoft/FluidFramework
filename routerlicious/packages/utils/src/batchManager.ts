@@ -1,6 +1,6 @@
 import { Deferred } from "./promises";
 
-const defaultBatchSize = Number.MAX_VALUE;
+const defaultBatchSize = 100;
 
 export class BatchManager<T> {
     private pendingWork: { [id: string]: T[] } = {};

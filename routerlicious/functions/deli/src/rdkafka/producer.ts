@@ -16,7 +16,7 @@ export class RdkafkaProducer implements IProducer {
             {
                 "dr_cb": true,    // delivery report callback
                 "metadata.broker.list": endpoint,
-                "queue.buffering.max.ms": 1,
+                "queue.buffering.max.ms": 20,
             },
             null);
         this.producer.setPollInterval(100);
@@ -63,7 +63,7 @@ export class RdkafkaProducer implements IProducer {
 
         setInterval(
             () => {
-                winston.info(`Producer ${this.topic} stats`, this.meter.toJSON());
+                winston.verbose(`Producer ${this.topic} stats`, this.meter.toJSON());
             },
             15000);
     }

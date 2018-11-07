@@ -9,8 +9,11 @@ class TestProducer extends Producer {
         return Promise.resolve();
     }
 
-    protected sendCore(key: string, messages: IPendingMessage[]) {
-        this.sentSizes.push(messages.length);
+    protected sendCore(messages: {[key: string]: IPendingMessage[] }) {
+        // tslint:disable-next-line
+        for (const key in messages) {
+            this.sentSizes.push(messages[key].length);
+        }
     }
 
     protected canSend(): boolean {

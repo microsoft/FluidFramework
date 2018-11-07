@@ -6,6 +6,8 @@ import * as bytes from "bytes";
 import { Provider } from "nconf";
 import { RdkafkaProducer } from "../rdkafka";
 import { KafkaOrdererFactory } from "./kafkaOrderer";
+import { LocalOrdererFactory } from "./localOrderer";
+import { OrdererManager } from "./orderFactory";
 import { JarvisRunner } from "./runner";
 
 export class JarvisResources implements utils.IResources {
@@ -14,7 +16,7 @@ export class JarvisResources implements utils.IResources {
         public producer: utils.IProducer,
         public redisConfig: any,
         public webSocketLibrary: string,
-        public orderManager: KafkaOrdererFactory,
+        public orderManager: OrdererManager,
         public tenantManager: core.ITenantManager,
         public storage: core.IDocumentStorage,
         public appTenants: IAlfredTenant[],
@@ -81,7 +83,16 @@ export class JarvisResourcesFactory implements utils.IResourcesFactory<JarvisRes
 
         const maxSendMessageSize = bytes.parse(config.get("alfred:maxMessageSize"));
 
+        const localOrdererFactory = new LocalOrdererFactory(
+            storage,
+            maxSendMessageSize,
+            databaseManager,
+            taskMessageSender,
+            tenantManager,
+            config.get("tmz:permissions"));
         const kafkaOrdererFactory = new KafkaOrdererFactory(producer, storage, maxSendMessageSize);
+
+        const ordererManager = new OrdererManager(localOrdererFactory, kafkaOrdererFactory);
 
         // Tenants attached to the apps this service exposes
         const appTenants = config.get("alfred:tenants") as Array<{ id: string, key: string }>;
@@ -94,7 +105,7 @@ export class JarvisResourcesFactory implements utils.IResourcesFactory<JarvisRes
             producer,
             redisConfig,
             webSocketLibrary,
-            kafkaOrdererFactory,
+            ordererManager,
             tenantManager,
             storage,
             appTenants,

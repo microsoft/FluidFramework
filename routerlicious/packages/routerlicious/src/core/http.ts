@@ -9,6 +9,7 @@ export interface IWebServerFactory {
 export interface IWebSocket {
     id: string;
 
+    // This web socket exists more for alfred than anything
     on(event: string, listener: (...args: any[]) => void);
 
     join(id: string): Promise<void>;

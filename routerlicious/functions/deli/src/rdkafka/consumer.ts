@@ -30,9 +30,10 @@ export class RdkafkaConsumer extends EventEmitter implements IConsumer {
                 "client.id": clientId,
                 "enable.auto.commit": autoCommit,
                 "event_cb": () => console.log("event_cb"),
-                "fetch.min.bytes": 100000000,
-                "fetch.wait.max.ms": 1,
+                "fetch.min.bytes": 1,
+                "fetch.wait.max.ms": 100,
                 "group.id": groupId,
+                "message.max.bytes": 1024 * 1024,
                 "metadata.broker.list": kafkaBroker,
                 "rebalance_cb": (err, assignment) => {
                     if (err.code === Kafka.CODES.ERRORS.ERR__ASSIGN_PARTITIONS) {
@@ -87,7 +88,7 @@ export class RdkafkaConsumer extends EventEmitter implements IConsumer {
 
         setInterval(
             () => {
-                winston.info(`Consumer ${this.topic} stats`, this.meter.toJSON());
+                winston.verbose(`Consumer ${this.topic} stats`, this.meter.toJSON());
             },
             15000);
     }

@@ -34,7 +34,9 @@ async function run(
     const str = randomstring.generate(payloadSize);
 
     // Register endpoint connection
-    const documentServices = socketStorage.createDocumentService(routerlicious, historian);
+    const documentServices = routerlicious === "http://localhost:3030"
+        ? socketStorage.createDocumentService2(routerlicious, historian)
+        : socketStorage.createDocumentService(routerlicious, historian);
     api.registerDocumentService(documentServices);
 
     console.log("Doc id is", id);

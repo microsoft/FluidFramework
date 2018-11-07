@@ -10,7 +10,6 @@ export class KafkaOrdererConnection {
         producer: IProducer,
         tenantId: string,
         documentId: string,
-        socket: core.IWebSocket,
         user: IUser,
         client: IClient,
         maxMessageSize: number): Promise<KafkaOrdererConnection> {
@@ -29,10 +28,6 @@ export class KafkaOrdererConnection {
             client,
             maxMessageSize);
 
-        // Bind the socket to the channels the connection will send to
-        await Promise.all([
-            socket.join(`${tenantId}/${documentId}`),
-            socket.join(`client#${clientId}`)]);
         return connection;
     }
 
@@ -79,6 +74,13 @@ export class KafkaOrdererConnection {
         };
 
         this.submitRawOperation(message);
+    }
+
+    public async bind(socket: core.IWebSocket) {
+        // Bind the socket to the channels the connection will send to
+        await Promise.all([
+            socket.join(`${this.tenantId}/${this.documentId}`),
+            socket.join(`client#${this.clientId}`)]);
     }
 
     public order(message: IDocumentMessage): void {
@@ -144,10 +146,7 @@ export class KafkaOrderer {
         this.existing = details.existing;
     }
 
-    public async connect(
-        socket: core.IWebSocket,
-        user: IUser,
-        client: IClient): Promise<KafkaOrdererConnection> {
+    public async connect(user: IUser, client: IClient): Promise<KafkaOrdererConnection> {
 
         const connection = KafkaOrdererConnection.Create(
             this.existing,
@@ -155,7 +154,6 @@ export class KafkaOrderer {
             this.producer,
             this.tenantId,
             this.documentId,
-            socket,
             user,
             client,
             this.maxMessageSize);

@@ -7,7 +7,7 @@ import { Provider } from "nconf";
 import * as winston from "winston";
 import * as app from "./app";
 import * as io from "./io";
-import { KafkaOrdererFactory } from "./kafkaOrderer";
+import { OrdererManager } from "./orderFactory";
 
 export class JarvisRunner implements utils.IRunner {
     private server: http.Server;
@@ -16,7 +16,7 @@ export class JarvisRunner implements utils.IRunner {
     constructor(
         private config: Provider,
         private port: string | number,
-        private orderManager: KafkaOrdererFactory,
+        private orderManager: OrdererManager,
         private tenantManager: ITenantManager,
         private storage: IDocumentStorage,
         private appTenants: IAlfredTenant[],
@@ -38,12 +38,14 @@ export class JarvisRunner implements utils.IRunner {
         alfred.set("port", this.port);
 
         this.server = http.createServer(alfred);
+        const redis = this.config.get("redis");
 
         // Register all the socket.io stuff
         io.register(
             this.server,
             this.orderManager,
-            this.tenantManager);
+            this.tenantManager,
+            redis);
 
         // Listen on provided port, on all network interfaces.
         this.server.listen(this.port);

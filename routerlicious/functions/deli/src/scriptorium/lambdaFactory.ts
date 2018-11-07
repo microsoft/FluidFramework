@@ -1,8 +1,8 @@
 import * as core from "@prague/routerlicious/dist/core";
-import * as services from "@prague/routerlicious/dist/services";
 import * as utils from "@prague/routerlicious/dist/utils";
 import { EventEmitter } from "events";
 import { Provider } from "nconf";
+import * as redis from "redis";
 import { IContext, IPartitionLambda, IPartitionLambdaFactory } from "../kafka-service/lambdas";
 import { ScriptoriumLambda } from "./lambda";
 
@@ -10,7 +10,7 @@ export class ScriptoriumLambdaFactory extends EventEmitter implements IPartition
     constructor(
         private mongoManager: utils.MongoManager,
         private collection: core.ICollection<any>,
-        private io: services.SocketIoRedisPublisher) {
+        private io: redis.RedisClient) {
         super();
 
         this.io.on("error", (error) => {
@@ -27,7 +27,7 @@ export class ScriptoriumLambdaFactory extends EventEmitter implements IPartition
 
     public async dispose(): Promise<void> {
         const mongoClosedP = this.mongoManager.close();
-        const publisherP = this.io.close();
+        const publisherP = this.io.quit();
         await Promise.all([mongoClosedP, publisherP]);
     }
 }
