@@ -120,6 +120,7 @@ services:
         command: server /export
     auspkn:
         image: prague.azurecr.io/auspkn:3771
+        command: node dist/www.js
         ports:
             - "3002:3000"
         environment:
