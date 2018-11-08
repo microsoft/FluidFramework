@@ -267,7 +267,7 @@ class Speller {
             if (this.verbose) {
                 console.log(`found sentence ${sentence} (start ${sentenceStartPos}, end ${sentenceStartPos + sentence.length}) around change`);
             }
-            // TODO: send this sentence to service for analysis 
+            // TODO: send this sentence to service for analysis
             let re = /\b\w+\b/g;
             let result: RegExpExecArray;
             do {

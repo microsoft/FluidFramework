@@ -797,7 +797,7 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
     /**
      * Depth-first traversal with custom action; if action returns
      * false, traversal is halted.
-     * @param action action to apply to each node 
+     * @param action action to apply to each node
      */
     walk(actions: RBNodeActions<TKey, TData>) {
         this.nodeWalk(this.root, actions);

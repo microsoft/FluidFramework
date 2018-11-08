@@ -435,7 +435,7 @@ export class Client {
                     }
                 }
                 if (op.register) {
-                    // cut 
+                    // cut
                     this.copy(op.pos1, op.pos2, op.register, msg.referenceSequenceNumber, clid, msg.clientId);
                 }
                 if (op.checkNest) {

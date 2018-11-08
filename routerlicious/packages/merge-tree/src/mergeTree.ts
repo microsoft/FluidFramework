@@ -1050,7 +1050,7 @@ export class CollaborationWindow {
     globalMinSeq?: number;
     // lowest-numbered segment in window; no client can reference a state before this one
     minSeq = 0;
-    // highest-numbered segment in window and current 
+    // highest-numbered segment in window and current
     // reference segment for this client
     currentSeq = 0;
 
@@ -1065,7 +1065,7 @@ export class CollaborationWindow {
 }
 
 /**
- * Returns the partial length whose sequence number is 
+ * Returns the partial length whose sequence number is
  * the greatest sequence number within a that is
  * less than or equal to key.
  * @param {PartialLength[]} a array of partial segment lengths
@@ -1560,7 +1560,7 @@ export class PartialSequenceLengths {
     /**
      * Combine the partial lengths of block's children
      * @param {IMergeBlock} block an interior node; it is assumed that each interior node child of this block
-     * has its partials up to date 
+     * has its partials up to date
      * @param {CollaborationWindow} collabWindow segment window fo the segment tree containing textSegmentBlock
      */
     static combineBranch(mergeTree: MergeTree, block: IMergeBlock, collabWindow: CollaborationWindow, branchId: number, recur = false) {
@@ -1630,7 +1630,7 @@ export class PartialSequenceLengths {
         if (childPartialsLen != 0) {
             // some children are interior nodes
             if (combinedPartialLengths.partialLengths.length > 0) {
-                // some children were leaves; add combined partials from these segments 
+                // some children were leaves; add combined partials from these segments
                 childPartials.push(combinedPartialLengths);
                 childPartialsLen++;
                 combinedPartialLengths = new PartialSequenceLengths(collabWindow.minSeq);
@@ -1648,7 +1648,7 @@ export class PartialSequenceLengths {
             while (outerIndexOfEarliest >= 0) {
                 outerIndexOfEarliest = -1;
                 for (let k = 0; k < childPartialsLen; k++) {
-                    // find next earliest sequence number 
+                    // find next earliest sequence number
                     if (indices[k] < childPartialsCounts[k]) {
                         let cpLen = childPartials[k].partialLengths[indices[k]];
                         if ((outerIndexOfEarliest < 0) || (cpLen.seq < earliestPartialLength.seq)) {
@@ -1941,7 +1941,7 @@ export type LocalReferenceMapper = (id: string) => LocalReference;
 
 // represents a sequence of text segments
 export class MergeTree {
-    // must be an even number   
+    // must be an even number
     static TextSegmentGranularity = 128;
     static zamboniSegmentsMaxCount = 2;
     static options = {
@@ -1975,7 +1975,7 @@ export class MergeTree {
     pendingSegments: Collections.List<SegmentGroup>;
     segmentsToScour: Collections.Heap<LRUSegment>;
     // TODO: change this to ES6 map; add remove on segment remove
-    // for now assume only markers have ids and so point directly at the Segment 
+    // for now assume only markers have ids and so point directly at the Segment
     // if we need to have pointers to non-markers, we can change to point at local refs
     idToSegment = Properties.createMap<Segment>();
     localIdToSegment = Properties.createMap<Segment>();
@@ -2099,7 +2099,7 @@ export class MergeTree {
         }
     }
 
-    // TODO: remove id when segment removed 
+    // TODO: remove id when segment removed
     mapIdToSegment(id: string, segment: Segment) {
         this.idToSegment[id] = segment;
     }
@@ -2731,7 +2731,7 @@ export class MergeTree {
             }
         }
         else {
-            // sequence number within window 
+            // sequence number within window
             let branchId = this.getBranchId(clientId);
             if (!node.isLeaf()) {
                 return (<IMergeBlock>node).partialLengths.getPartialLength(this, refSeq, clientId);
@@ -2840,7 +2840,7 @@ export class MergeTree {
     // TODO: with annotation op change value
     cherryPickedUndo(undoInfo: IUndoInfo) {
         let segment = undoInfo.seg;
-        // no branches 
+        // no branches
         if (segment.removedSeq !== undefined) {
             segment.removedSeq = undefined;
             segment.removedClientId = undefined;
@@ -3062,7 +3062,7 @@ export class MergeTree {
     }
 
     /**
-     * Given a position specified relative to a marker id, lookup the marker 
+     * Given a position specified relative to a marker id, lookup the marker
      * and convert the position to a character position.
      * @param relativePos Id of marker (may be indirect) and whether position is before or after marker.
      * @param refseq The reference sequence number at which to compute the position.
@@ -3590,7 +3590,7 @@ export class MergeTree {
                 if (this.markerModifiedHandler && (segment.getType() === SegmentType.Marker) && (seq !== UnassignedSequenceNumber)) {
                     this.markerModifiedHandler(<Marker>segment);
                 }
-                // use removal information 
+                // use removal information
                 let removalInfo = this.getRemovalInfo(this.localBranchId, segBranchId, segment);
                 if ((removalInfo.removedSeq === UnassignedSequenceNumber) && (clientId === this.collabWindow.clientId)) {
                     segmentGroup = this.addToPendingList(segment, segmentGroup);
