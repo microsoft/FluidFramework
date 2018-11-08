@@ -3,6 +3,7 @@ import {
     IDocumentDeltaConnection,
     IDocumentMessage,
     ISequencedDocumentMessage,
+    ITokenProvider,
     IUser,
 } from "@prague/runtime-definitions";
 import * as messages from "@prague/socket-storage-shared";
@@ -18,7 +19,7 @@ export class ReplayDocumentDeltaConnection extends EventEmitter implements IDocu
     public static async Create(
         tenantId: string,
         id: string,
-        token: string,
+        tokenProvider: ITokenProvider,
         storageService: IDeltaStorageService,
         replayFrom: number,
         replayTo: number,
@@ -34,7 +35,7 @@ export class ReplayDocumentDeltaConnection extends EventEmitter implements IDocu
         };
         const deltaConnection = new ReplayDocumentDeltaConnection(id, connection);
         // tslint:disable-next-line:no-floating-promises
-        this.FetchAndEmitOps(deltaConnection, tenantId, id, token, storageService, replayFrom, replayTo);
+        this.FetchAndEmitOps(deltaConnection, tenantId, id, tokenProvider, storageService, replayFrom, replayTo);
 
         return deltaConnection;
     }
@@ -43,12 +44,12 @@ export class ReplayDocumentDeltaConnection extends EventEmitter implements IDocu
         deltaConnection: ReplayDocumentDeltaConnection,
         tenantId: string,
         id: string,
-        token: string,
+        tokenProvider: ITokenProvider,
         storageService: IDeltaStorageService,
         replayFrom: number,
         replayTo: number) {
 
-        const fetchedOps = await storageService.get(tenantId, id, token, 0, replayTo);
+        const fetchedOps = await storageService.get(tenantId, id, tokenProvider, 0, replayTo);
         let current = 0;
         let playbackOps: ISequencedDocumentMessage[] = [];
         if (fetchedOps.length > 0 && replayFrom > 0) {

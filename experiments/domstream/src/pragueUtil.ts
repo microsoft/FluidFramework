@@ -2,11 +2,14 @@ import * as pragueApi from "@prague/client-api";
 import * as socketStorage from "@prague/socket-storage";
 import * as jwt from "jsonwebtoken";
 import { debug } from "./debug";
+import { globalConfig } from "./globalConfig";
+
+const localServer = "localhost";
 
 // For local development
 const localSettings = {
-    historian: "http://localhost:3001",
-    routerlicious: "http://localhost:3030",
+    historian: "http://" + localServer + ":3001",
+    routerlicious: "http://" + localServer + ":3000",
     secret: "43cfc3fbf04a97c0921fd23ff10f9e4b",
     tenantId: "prague",
 };
@@ -17,11 +20,7 @@ const remoteSettings = {
     tenantId: "trusting-tesla",
 };
 
-const useLocal = true;
-
-const settings = useLocal ? localSettings : remoteSettings;
-
-const waitForConnect = true;
+const settings = globalConfig.useLocalServer ? localSettings : remoteSettings;
 
 // Register endpoint connection
 const documentServices = socketStorage.createDocumentService(settings.routerlicious, settings.historian);
@@ -49,7 +48,7 @@ export async function getCollabDoc(documentId: string): Promise<pragueApi.Docume
         tokenProvider,
         { blockUpdateMarkers: true });
 
-    if (waitForConnect && !collabDoc.isConnected) {
+    if (globalConfig.docWaitForConnect && !collabDoc.isConnected) {
         const startTime = performance.now();
         debug("Waiting to connect " + documentId, performance.now());
         await new Promise<void>((resolve) => collabDoc.once("connected", () => resolve()));

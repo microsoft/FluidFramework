@@ -2,75 +2,155 @@
 <html>
 
 <head>
-    <title>Copy</title>
+    <title>DOM stream</title>
     <style>
         td.label {
             text-align: right;
             font-weight: bold;
+            width: 100px;
+        }
+
+        iframe.full {
+            border: 0px hidden;
+            position: absolute;
+            top: 0px;
+            left: 0px;     
+        }
+        
+        div#side {
+            display: inline-block;
+            width: 250px;
+        }
+
+        .hide {
+            visibility: hidden;
+            position: absolute;
+        }
+
+        div#viewDiv {
+            display: inline-block;
+        }
+
+        div#main {
+            overflow: visible;
+        }
+
+        span#header {
+            font-size: 12pt;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+
+        span#URL {
+            font-size: 12pt;
+            white-space: nowrap;
+        }
+
+        div#main td {
+            vertical-align: top;
+        }
+
+        div#side span {
+            white-space: nowrap;
+        }
+        div#top td {
+            vertical-align:bottom;
         }
     </style>
 </head>
 
 <body>
-    <table>
-        <tr>
-            <td class="label">Status:</td>
-            <td><span id="status"></span></td>
-        </tr>
-        <tr>
-            <td class="label">Configuration:</td>
-            <td><span id="config"></span></td>
-        </tr>
-        <tr>
-            <td class="label">Init Elapsed Time:</td>
-            <td><span id="inittime"></span></td>
-        </tr>
-        <tr>
-            <td class="label">Start Signal Elapsed Time:</td>
-            <td><span id="signaltime"></span></td>
-        </tr>
-        <tr>
-            <td class="label">Start Gen Elapsed Time:</td>
-            <td><span id="savetime"></span></td>
-        </tr>
-        <tr>
-            <td class="label">Ready Gen Elapsed Time:</td>
-            <td><span id="docloadtime"></span></td>
-        </tr>
-        <tr>
-            <td class="label">Generate Elapsed Time:</td>
-            <td><span id="gentime"></span></td>
-        </tr>
-        <tr>
-            <td class="label">Attach Elapsed Time:</td>
-            <td><span id="attachtime"></span></td>
-        </tr>
-        <tr>
-            <td class="label">BgWkr Latency Elapsed Time:</td>
-            <td><span id="bgwkrlatency"></span></td>
-        </tr>
-        <tr>
-            <td class="label">Latency Elapsed Time:</td>
-            <td><span id="latency"></span></td>
-        </tr>
-        <tr>
-            <td class="label">DOM Gen Elapsed Time:</td>
-            <td><span id="domgentime"></span></td>
-        </tr>
-        <tr>
-            <td class="label">URL:</td>
-            <td><span id="URL"></span></td>
-        </tr>
-        <tr>
-            <td class="label">Dimension:</td>
-            <td><span id="DIMENSION"></span></td>
-        </tr>
-        <tr>
-            <td class="label">Scroll position:</td>
-            <td><span id="SCROLLPOS"></span></td>
-        </tr>
-    </table>
-    <iframe id='view'></iframe>
+    <div id="top" class="hide">
+        <table>
+            <tr>
+                <td>
+                    <span id="header">Shared Browsing session: </span>
+                </td>
+                <td>
+                    <span id="URL">Loading...</span>
+                </td>
+            </tr>
+        </table>
+        <table>
+            <tr>
+                <td>View Scale:</td>
+                <td><input type="range" min="0" max="200" id="scale" value="75" /></td>
+                <td><span id="scaleValue">75%</span></td>
+            </tr>
+        </table>
+    </div>
+    <div id="main">
+        <table>
+            <tr>
+                <td>
+                    <div id="side" class="hide">
+                        <u><b>Status:</b></u> <span id="status"></span><br />
+                        <br />
+                        <u><b>Info:</b></u>
+                        <table>
+                            <tr>
+                                <td class="label">Configuration:</td>
+                                <td><span id="config"></span></td>
+                            </tr>
+                            <tr>
+                                <td class="label">Dimension:</td>
+                                <td><span id="DIMENSION"></span></td>
+                            </tr>
+                            <tr>
+                                <td class="label">Scroll position:</td>
+                                <td><span id="SCROLLPOS"></span></td>
+                            </tr>
+                        </table>
+                        <br />
+                        <u><b>Elapsed Time:</b></u>
+                        <table>
+                            <tr>
+                                <td class="label">Init:</td>
+                                <td><span id="inittime"></span></td>
+                            </tr>
+                            <tr>
+                                <td class="label">Start Signal:</td>
+                                <td><span id="signaltime"></span></td>
+                            </tr>
+                            <tr>
+                                <td class="label">Start Gen:</td>
+                                <td><span id="savetime"></span></td>
+                            </tr>
+                            <tr>
+                                <td class="label">Ready Gen:</td>
+                                <td><span id="docloadtime"></span></td>
+                            </tr>
+                            <tr>
+                                <td class="label">Generate:</td>
+                                <td><span id="gentime"></span></td>
+                            </tr>
+                            <tr>
+                                <td class="label">Attach:</td>
+                                <td><span id="attachtime"></span></td>
+                            </tr>
+                            <tr>
+                                <td class="label">BgWkr Latency:</td>
+                                <td><span id="bgwkrlatency"></span></td>
+                            </tr>
+                            <tr>
+                                <td class="label">Latency:</td>
+                                <td><span id="latency"></span></td>
+                            </tr>
+                            <tr>
+                                <td class="label">DOM Gen:</td>
+                                <td><span id="domgentime"></span></td>
+                            </tr>
+                        </table>
+                    </div>
+                </td>
+                <td>
+                    <div id="viewDiv">
+                        <iframe id='view' class="full"></iframe>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
     <script src="pragueView.js"></script>
 </body>
 

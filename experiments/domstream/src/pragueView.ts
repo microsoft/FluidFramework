@@ -1,11 +1,97 @@
-import * as pragueApi from "@prague/client-api";
 import * as pragueMap from "@prague/map";
-import { debug, debugDOM } from "./debug";
+import { debug, debugDOM, debugFrame } from "./debug";
 import { PragueMapViewWrapper } from "./pragueMapWrapper";
 import { getCollabDoc } from "./pragueUtil";
-import { StreamDOMTree, StreamWindow } from "./streamDOMTree";
+import { IFrameLoader, StreamDOMTree, StreamWindow } from "./streamDOMTree";
 
-const allowInteraction = true;
+type FrameRecord = { frame: HTMLIFrameElement, loadingFrame: Promise<StreamWindow> }; // tslint:disable-line
+
+class FrameLoader implements IFrameLoader {
+    // TODO: How to clean this map?
+    private frameStreamWindowMap = new Map<string, FrameRecord>();
+    private frameToNameMap = new WeakMap<HTMLIFrameElement, string>();
+    private frameDataContainer: pragueMap.IMapView;
+
+    constructor(frameDataContainer: pragueMap.IMapView) {
+        this.frameDataContainer = frameDataContainer;
+    }
+
+    public loadFrame(frame: HTMLIFrameElement, frameId: number) {
+        const dataName = "DOMSTREAM_" + frameId;
+        this.frameStreamWindowMap.set(dataName, { frame, loadingFrame: this.loadFrameData(dataName, frame) });
+        this.frameToNameMap.set(frame, dataName);
+    }
+    public reloadFrame(frame: HTMLIFrameElement, frameId: number) {
+        const oldName = this.frameToNameMap.get(frame);
+        if (oldName) {
+            const data = this.frameStreamWindowMap.get(oldName);
+            if (data) {
+                // iframe navigated, load new data.
+                data.loadingFrame.then((streamWindow) => {
+                    if (streamWindow) {
+                        streamWindow.stopSync();
+                    }
+                    this.loadFrame(frame, frameId);
+                });
+                return;
+            }
+        }
+        this.loadFrame(frame, frameId);
+    }
+    public reloadFrameWithDataName(dataName: string) {
+        debugFrame(-1, "Reloading frame data", dataName);
+        const data = this.frameStreamWindowMap.get(dataName);
+        if (data) {
+            // iframe navigated, load new data.
+            data.loadingFrame.then((streamWindow) => {
+                if (streamWindow) {
+                    streamWindow.stopSync();
+                }
+                this.loadFrameData(dataName, data.frame);
+            });
+
+            return true;
+        }
+        return false;
+    }
+
+    public async streamDOMFromPrague(dataMapView: pragueMap.IMapView, doc: Document) {
+        const domMap: pragueMap.IMap = dataMapView.get("DOM");
+        if (!domMap) {
+            return;
+        }
+        const domMapView = await domMap.getView();
+        if (!dataMapView.has("DOMFLATMAPNODE")) { return; }
+        const domRootNode = dataMapView.get("DOMFLATMAPNODE");
+
+        const tree = new StreamDOMTree(this);
+        await tree.readFromMap(new PragueMapViewWrapper(domMapView), domRootNode, doc);
+        return tree;
+    }
+
+    public stopSync() {
+        for (const item of this.frameStreamWindowMap) {
+            item[1].loadingFrame.then((streamWindow) => {
+                if (streamWindow) {
+                    streamWindow.stopSync();
+                }
+            });
+        }
+        this.frameStreamWindowMap = null;
+        this.frameToNameMap = null;
+    }
+    private async loadFrameData(dataName: string, frame: HTMLIFrameElement) {
+        const frameDataMap = this.frameDataContainer.get(dataName);
+        if (frameDataMap) {
+            const subDataMapView = await frameDataMap.getView();
+            const subtree = await this.streamDOMFromPrague(subDataMapView, frame.contentDocument);
+            if (subtree) {
+                const mapViewWrapper = new PragueMapViewWrapper(subDataMapView);
+                return new StreamWindow(frame.contentWindow, mapViewWrapper, subtree, true);
+            }
+        }
+    }
+}
 
 function setSpanText(spanName, message) {
     (document.getElementById(spanName) as HTMLSpanElement).innerHTML = message;
@@ -21,10 +107,45 @@ function setLatency(dataMapView, startLoadTime) {
     setSpanText("bgwkrlatency", Math.round(endTime - dataMapView.get("FG_END_DATE")) + " ms");
     setSpanText("latency", Math.round(startLoadTime.valueOf() - endTime) + " ms (Live only)");
 }
-async function loadDataView(rootView: pragueMap.IMapView, collabDoc: pragueApi.Document) {
-    const dataMap = rootView.get("DOMSTREAM");
+const scale = document.getElementById("scale") as HTMLInputElement;
+
+const scrollPosField = document.getElementById("SCROLLPOS") as HTMLSpanElement;
+function setDimension(dataMapView) {
+    const dimension = JSON.parse(dataMapView.get("DIMENSION"));
+    debugDOM(dimension);
+    if (dimension) {
+        const dimensionField = document.getElementById("DIMENSION") as HTMLSpanElement;
+        iframe.width = dimension.width;
+        iframe.height = dimension.height;
+
+        const scaleStr = dimension.devicePixelRatio === 1 ? "" :
+            " scale(" + (dimension.devicePixelRatio * 100).toFixed(0) + ")";
+        const valueScale = parseInt(scale.value, 10);
+        if (dimension.devicePixelRatio === 1 && valueScale === 100) {
+            iframe.style.transform = "";
+            iframe.style.transformOrigin = "";
+        } else {
+            iframe.style.transform = "scale(" + (valueScale / 100 * dimension.devicePixelRatio) + ")";
+            iframe.style.transformOrigin = "top left";
+        }
+
+        dimensionField.innerHTML = dimension.width + " x " + dimension.height + " " + scaleStr;
+
+        // Also update the scroll pos after resize.
+        StreamWindow.loadScrollPos(iframe.contentWindow, dataMapView.get("SCROLLPOS"), scrollPosField);
+    }
+}
+
+type LoadResult = { // tslint:disable-line
+    readonly frameLoader: FrameLoader;
+    readonly streamWindow: StreamWindow;
+};
+
+async function loadDataView(rootView: pragueMap.IMapView, dataName: string): Promise<LoadResult> {
+    const dataMap = rootView.get(dataName);
     if (!dataMap) {
         setStatusMessage("DOM not found");
+        setSpanText("URL", "Empty");
         return;
     }
 
@@ -42,7 +163,17 @@ async function loadDataView(rootView: pragueMap.IMapView, collabDoc: pragueApi.D
 
     setSpanText("URL", dataMapView.get("URL"));
     setDimension(dataMapView);
-    const tree = await setDOM(dataMapView);
+    scale.addEventListener("change", () => {
+        setDimension(dataMapView);
+        setSpanText("scaleValue", scale.value + "%");
+    });
+    const startTime = performance.now();
+    const frameLoader = new FrameLoader(dataMapView);
+    const tree = await frameLoader.streamDOMFromPrague(dataMapView, iframe.contentDocument);
+    if (tree) {
+        setSpanText("domgentime", Math.round(performance.now() - startTime) + "ms");
+        setStatusMessage("DOM generated");
+    }
 
     if (dataMapView.has("END_DATE")) {
         setLatency(dataMapView, startLoadTime);
@@ -52,23 +183,14 @@ async function loadDataView(rootView: pragueMap.IMapView, collabDoc: pragueApi.D
         setSpanText("latency", "");
     }
 
-    const iframe = document.getElementById("view") as HTMLIFrameElement;
     const w = iframe.contentWindow;
-    const scrollPosField = document.getElementById("SCROLLPOS") as HTMLSpanElement;
+
     StreamWindow.loadScrollPos(w, dataMapView.get("SCROLLPOS"), scrollPosField);
 
     dataMapView.getMap().on("valueChanged", (changed, local, op) => {
         switch (changed.key) {
             case "DIMENSION":
                 setDimension(dataMapView);
-                break;
-            case "SCROLLPOS":
-                if (!local) {
-                    StreamWindow.loadScrollPos(w, dataMapView.get("SCROLLPOS"), scrollPosField);
-                }
-                break;
-            case "MUTATION":
-                tree.FlushPendingMutationEvent();
                 break;
             case "DATE":
                 setSpanText("latency", Math.round(startLoadTime.valueOf() - dataMapView.get("DATE"))
@@ -79,17 +201,26 @@ async function loadDataView(rootView: pragueMap.IMapView, collabDoc: pragueApi.D
                 break;
             case "TIME_ATTACH":
             case "FG_END_DATE":
+
+            // These are dealt with in the StreamWindow
+            case "SCROLLPOS":
             case "REMOTECLICK":
+            case "MUTATION":
                 break;
+
             default:
-                console.error(changed.key, "shouldn't change");
+                if (!frameLoader.reloadFrameWithDataName(changed.key)) {
+                    if (dataMapView.has(changed.key)) {
+                        console.error(changed.key, "shouldn't change");
+                    }
+                }
                 break;
         }
     });
 
-    if (allowInteraction) {
-        new StreamWindow(iframe.contentWindow, new PragueMapViewWrapper(dataMapView), tree, true); // tslint:disable-line
-    }
+    const mapViewWrapper = new PragueMapViewWrapper(dataMapView);
+    const streamWindow = new StreamWindow(iframe.contentWindow, mapViewWrapper, tree, true, scrollPosField);
+    return { frameLoader, streamWindow };
 }
 
 async function initFromPrague(documentId: string) {
@@ -98,54 +229,40 @@ async function initFromPrague(documentId: string) {
     const collabDoc = await getCollabDoc(documentId);
     const rootView = await collabDoc.getRoot().getView();
 
+    const dataName = "DOMSTREAM";
+    let loadResultPromise: Promise<LoadResult>;
     rootView.getMap().on("valueChanged", (changed, local, op) => {
-        if (changed.key === "DOMSTREAM") {
+        if (changed.key === dataName) {
             debug("Loading new page");
-            loadDataView(rootView, collabDoc);
+            loadResultPromise.then((loadResult) => {
+                if (loadResult) {
+                    loadResult.streamWindow.stopSync();
+                    loadResult.frameLoader.stopSync();
+                }
+                loadResultPromise = loadDataView(rootView, dataName);
+            });
         }
     });
 
-    await loadDataView(rootView, collabDoc);
-}
-
-function setDimension(dataMapView) {
-    const dimension = JSON.parse(dataMapView.get("DIMENSION"));
-    debugDOM(dimension);
-    if (dimension) {
-        const dimensionField = document.getElementById("DIMENSION") as HTMLSpanElement;
-        dimensionField.innerHTML = dimension.width + " x " + dimension.height;
-        const iframe = document.getElementById("view") as HTMLIFrameElement;
-        iframe.width = dimension.width;
-        iframe.height = dimension.height;
-        // Also update the scroll pos after resize.
-        StreamWindow.loadScrollPos(iframe.contentWindow, dataMapView.get("SCROLLPOS"));
-    }
-}
-
-async function setDOM(dataMapView: pragueMap.IMapView) {
-    const iframe = document.getElementById("view") as HTMLIFrameElement;
-    return await streamDOMFromPrague(dataMapView, iframe.contentDocument);
+    loadResultPromise = loadDataView(rootView, dataName);
 }
 
 const query = window.location.search.substring(1);
 const search = new URLSearchParams(query);
-if (search.has("docId")) {
-    initFromPrague(search.get("docId")).catch((error) => { console.error(error); });
+const fullView = search.has("full") && search.get("full") === "true";
+const debugView = search.has("debug") && search.get("debug") === "true";
+const iframe = document.getElementById("view") as HTMLIFrameElement;
+
+if (!fullView) {
+    document.getElementById("top").className = "";
+    iframe.className = "";
+    if (debugView) {
+        document.getElementById("side").className = "";
+    }
 }
 
-async function streamDOMFromPrague(dataMapView: pragueMap.IMapView, doc: Document) {
-    const domMap: pragueMap.IMap = dataMapView.get("DOM");
-    if (!domMap) {
-        return;
-    }
-    const domMapView = await domMap.getView();
-    if (!dataMapView.has("DOMFLATMAPNODE")) { return; }
-    const domRootNode = dataMapView.get("DOMFLATMAPNODE");
-
-    const startTime = performance.now();
-    const tree = new StreamDOMTree();
-    await tree.readFromMap(new PragueMapViewWrapper(domMapView), domRootNode, doc);
-    setSpanText("domgentime", Math.round(performance.now() - startTime) + "ms");
-    setStatusMessage("DOM generated");
-    return tree;
+if (search.has("docId")) {
+    const docId = search.get("docId");
+    document.title += " - " + docId;
+    initFromPrague(docId).catch((error) => { console.error(error); });
 }

@@ -7,12 +7,51 @@ export class TestCollection implements ICollection<any> {
     }
 
     public async find(query: any, sort: any): Promise<any[]> {
-        // TODO - need to actually filter here
-        return this.collection;
+        function getValueByKey(propertyBag, key: string) {
+            const keys = key.split(".");
+            let value = propertyBag;
+            keys.forEach((splitKey) => {
+               value = value[splitKey];
+            });
+            return value;
+        }
+
+        const queryKeys = Object.keys(query);
+        let filteredCollection = this.collection;
+        queryKeys.forEach((key) => {
+            if (query[key].$gt > 0 || query[key].$lt > 0) {
+                if (query[key].$gt > 0) {
+                    filteredCollection = filteredCollection.filter(
+                        (value) => getValueByKey(value, key) > query[key].$gt);
+                }
+                if (query[key].$lt > 0) {
+                    filteredCollection = filteredCollection.filter(
+                        (value) => getValueByKey(value, key) < query[key].$lt);
+                }
+            } else {
+                filteredCollection = filteredCollection.filter(
+                    (value) => getValueByKey(value, key) === query[key]);
+            }
+        });
+
+        if (sort && Object.keys(sort).length === 1) {
+            function compare(a, b) {
+                const sortKey = Object.keys(sort)[0];
+                if (sort[sortKey] === 1 ) {
+                    // a goes before b, sorting in ascending order
+                    return getValueByKey(a, sortKey) - getValueByKey(b, sortKey);
+                } else {
+                    // b goes before a, sorting in descending order
+                    return getValueByKey(b, sortKey) - getValueByKey(a, sortKey);
+                }
+            }
+
+            filteredCollection = filteredCollection.sort(compare);
+        }
+        return filteredCollection;
     }
 
     public async findAll(): Promise<any[]> {
-        // TODO - need to actually filter here
         return this.collection;
     }
 
@@ -55,7 +94,9 @@ export class TestCollection implements ICollection<any> {
     }
 
     public async insertMany(values: any[], ordered: boolean): Promise<void> {
-        this.collection = this.collection.concat(values);
+        values.forEach((value) => {
+            this.collection.push(value);
+        });
     }
 
     public createIndex(index: any, unique: boolean): Promise<void> {

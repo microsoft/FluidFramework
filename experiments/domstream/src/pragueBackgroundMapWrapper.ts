@@ -137,14 +137,17 @@ export class PragueBackgroundMapViewWrapper extends BatchMessageQueue implements
 }
 
 export class PragueBackgroundMapWrapperFactory extends PortHolder implements IMapWrapperFactory {
-    private nextMapId: number = 1;  // 0 is ithe root
+    private nextMapId: number = 2;  // 0 is the root, 1 is the default data map
     private batchOp: boolean;
     constructor(port: chrome.runtime.Port, batchOp: boolean) {
         super(port);
         this.batchOp = batchOp;
     }
-    public async getRootMapView() {
+    public async getFrameContainerDataMapView() {
         return Promise.resolve(new PragueBackgroundMapViewWrapper(this.getPort(), 0, false));
+    }
+    public async getDefaultDataMapView() {
+        return Promise.resolve(new PragueBackgroundMapViewWrapper(this.getPort(), 1, false));
     }
     public createMap() {
         return new PragueBackgroundMapWrapper(this.getPort(), this.nextMapId++, this.batchOp);

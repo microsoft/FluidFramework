@@ -1,4 +1,5 @@
 import * as api from "@prague/runtime-definitions";
+import * as socketStorage from "@prague/socket-storage";
 // tslint:disable-next-line:match-default-export-name
 import axios from "axios";
 import * as querystring from "querystring";
@@ -20,12 +21,13 @@ export class DeltaStorageService implements api.IDeltaStorageService {
     public async get(
         tenantId: string,
         id: string,
-        token: string,
+        tokenProvider: api.ITokenProvider,
         from?: number,
         to?: number): Promise<api.ISequencedDocumentMessage[]> {
         const query = querystring.stringify({ from, to });
 
         let headers = null;
+        const token = (tokenProvider as socketStorage.TokenProvider).token;
         if (token) {
             headers = {
                 Authorization: `Basic ${new Buffer(`${tenantId}:${token}`).toString("base64")}`,

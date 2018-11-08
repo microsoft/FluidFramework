@@ -5,6 +5,7 @@ import Axios from "axios";
 import * as io from "socket.io-client";
 import { DocumentStorageService } from "./blobStorageService";
 import { DeltaStorageService, DocumentDeltaStorageService } from "./deltaStorageService";
+import { TokenProvider } from "./tokens";
 import { WSDeltaConnection } from "./wsDeltaConnection";
 
 /**
@@ -28,7 +29,7 @@ export class DocumentService implements api.IDocumentService {
     public async connectToStorage(
         tenantId: string,
         id: string,
-        token: string): Promise<api.IDocumentStorageService> {
+        tokenProvider: api.ITokenProvider): Promise<api.IDocumentStorageService> {
 
         const endpoint = `${this.gitUrl}/repos/${encodeURIComponent(tenantId)}`;
 
@@ -37,11 +38,14 @@ export class DocumentService implements api.IDocumentService {
         let credentials: ICredentials;
         if (this.directCredentials) {
             credentials = this.directCredentials;
-        } else if (token) {
-            credentials = {
-                password: token,
-                user: tenantId,
-            };
+        } else {
+            const token = (tokenProvider as TokenProvider).token;
+            if (token) {
+                credentials = {
+                    password: token,
+                    user: tenantId,
+                };
+            }
         }
 
         const historian = new Historian(
@@ -56,21 +60,23 @@ export class DocumentService implements api.IDocumentService {
     public async connectToDeltaStorage(
         tenantId: string,
         id: string,
-        token: string): Promise<api.IDocumentDeltaStorageService> {
+        tokenProvider: api.ITokenProvider): Promise<api.IDocumentDeltaStorageService> {
 
-        return new DocumentDeltaStorageService(tenantId, id, token, this.deltaStorage);
+        return new DocumentDeltaStorageService(tenantId, id, tokenProvider, this.deltaStorage);
     }
 
     public async connectToDeltaStream(
         tenantId: string,
         id: string,
-        token: string,
+        tokenProvider: api.ITokenProvider,
         client: api.IClient): Promise<api.IDocumentDeltaConnection> {
+        const token = (tokenProvider as TokenProvider).token;
         return DocumentDeltaConnection.Create(tenantId, id, token, io, client, this.deltaUrl);
     }
 
-    public async branch(tenantId: string, id: string, token: string): Promise<string> {
+    public async branch(tenantId: string, id: string, tokenProvider: api.ITokenProvider): Promise<string> {
         let headers = null;
+        const token = (tokenProvider as TokenProvider).token;
         if (token) {
             headers = {
                 Authorization: `Basic ${new Buffer(`${tenantId}:${token}`).toString("base64")}`,

@@ -10,6 +10,7 @@ export * from "./testHistorian";
 export * from "./testKafka";
 export * from "./testPublisher";
 export * from "./testRegistration";
+export * from "./testTaskMessageSender";
 export * from "./testTenantManager";
 export * from "./testWebServer";
 export * from "./utils";

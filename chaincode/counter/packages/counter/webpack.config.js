@@ -1,4 +1,4 @@
-const spawn = require("child_process").spawn;
+const spawn = require("cross-spawn");
 const path = require("path");
 const merge = require("webpack-merge");
 const CleanWebpackPlugin = require("clean-webpack-plugin");

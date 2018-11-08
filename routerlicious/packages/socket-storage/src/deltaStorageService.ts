@@ -2,7 +2,7 @@ import * as api from "@prague/runtime-definitions";
 // tslint:disable-next-line:match-default-export-name
 import axios from "axios";
 import * as querystring from "querystring";
-
+import { TokenProvider} from "./tokens";
 /**
  * Storage service limited to only being able to fetch documents for a specific document
  */
@@ -10,13 +10,13 @@ export class DocumentDeltaStorageService implements api.IDocumentDeltaStorageSer
     constructor(
         private tenantId: string,
         private id: string,
-        private token: string,
+        private tokenProvider: api.ITokenProvider,
         private storageService: api.IDeltaStorageService) {
     }
 
     /* tslint:disable:promise-function-async */
     public get(from?: number, to?: number): Promise<api.ISequencedDocumentMessage[]> {
-        return this.storageService.get(this.tenantId, this.id, this.token, from, to);
+        return this.storageService.get(this.tenantId, this.id, this.tokenProvider, from, to);
     }
 }
 
@@ -30,12 +30,15 @@ export class DeltaStorageService implements api.IDeltaStorageService {
     public async get(
         tenantId: string,
         id: string,
-        token: string,
+        tokenProvider: api.ITokenProvider,
         from?: number,
         to?: number): Promise<api.ISequencedDocumentMessage[]> {
         const query = querystring.stringify({ from, to });
 
         let headers = null;
+
+        const token = (tokenProvider as TokenProvider).token;
+
         if (token) {
             headers = {
                 Authorization: `Basic ${new Buffer(`${tenantId}:${token}`).toString("base64")}`,

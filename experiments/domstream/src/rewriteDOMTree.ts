@@ -15,10 +15,15 @@ class HTMLUtil {
     }
 
     public static patchStyleUrl(str: string) {
+        if (!str) { return str; }
         // TODO: Do style URL patching properly
         const origin = HTMLUtil.getOrigin();
         const path = HTMLUtil.getPath();
-        let outStr = str.replace(/url\(\//g, "url(" + origin + "/");
+        let outStr = str;
+        outStr = outStr.replace(/url\(\/\//g, "url(http://");
+        outStr = outStr.replace(/url\('\/\//g, "url('http://");
+        outStr = outStr.replace(/url\(\"\/\//g, "url(\"http://");
+        outStr = outStr.replace(/url\(\//g, "url(" + origin + "/");
         outStr = outStr.replace(/url\('\//g, "url('" + origin + "/");
         outStr = outStr.replace(/url\(\"\//g, "url(\"" + origin + "/");
         outStr = outStr.replace(/url\(\.\.\//g, "url(" + origin + path + "../");
@@ -32,22 +37,21 @@ class HTMLUtil {
     }
 }
 
-export interface IRewriteDOMNode {
+export interface IRewriteDOMNodeData {
     getHTML(): string;
     getJSON();
     getMap(mapWrapperFactory: IMapWrapperFactory): IMapWrapper;
 }
 
 export interface IRewriteDOMTree {
-    getElementNode(e: Element): IRewriteDOMNode | undefined;
-    getTextNode(n: Node): IRewriteDOMNode | undefined;
+    getElementNode(e: Element): IRewriteDOMNodeData | undefined;
+    getTextNode(n: Node): IRewriteDOMNodeData | undefined;
 }
 
 export class RewriteDOMTree implements IRewriteDOMTree {
-    protected rootElement: IRewriteDOMNode;
-
+    protected rootElement: IRewriteDOMNodeData;
     public initializeFromDOM(doc: Document) {
-        this.rootElement = this.getElementNode(document.documentElement);
+        this.rootElement = this.getElementNode(doc.documentElement);
     }
 
     public getHTML(): string {
@@ -61,13 +65,11 @@ export class RewriteDOMTree implements IRewriteDOMTree {
     public getMap(mapWrapperFactory: IMapWrapperFactory): IMapWrapper {
         return this.rootElement.getMap(mapWrapperFactory);
     }
-    public getElementNode(e: Element): IRewriteDOMNode | undefined {
-        const tagName = e.tagName.toUpperCase();
-        if (tagName === "SCRIPT" || tagName === "NOSCRIPT") {
-            // strip all script
+    public getElementNode(e: Element): IRewriteDOMNodeData | undefined {
+        if (this.isFiltered(e)) {
             return;
         }
-        if (tagName === "LINK") {
+        if (e.tagName === "LINK") {
             if ((e as HTMLLinkElement).rel === "prefetch" ||
                 (e.hasAttribute("as") && e.getAttribute("as").toLowerCase() === "script")) {
                 // strip preloaded script
@@ -76,19 +78,28 @@ export class RewriteDOMTree implements IRewriteDOMTree {
         }
         return this.createElementNode(e);
     }
-    public getTextNode(n: Node): IRewriteDOMNode | undefined {
+    public getTextNode(n: Node): IRewriteDOMNodeData | undefined {
         return this.createTextNode(n);
     }
 
-    protected createElementNode(e: Element): IRewriteDOMNode {
-        return new RewriteDOMElement(e, this);
+    protected createElementNode(e: Element): IRewriteDOMNodeData {
+        return new RewriteDOMElementData(e, this);
     }
-    protected createTextNode(n: Node): IRewriteDOMNode {
-        return new RewriteDOMTextNode(n);
+    protected createTextNode(n: Node): IRewriteDOMNodeData {
+        return new RewriteDOMTextNodeData(n);
+    }
+
+    protected isFiltered(e: Element) {
+        const tagName = e.tagName.toUpperCase();
+        if (tagName === "SCRIPT" || tagName === "NOSCRIPT") {
+            // strip all script
+            return true;
+        }
+        return false;
     }
 }
 
-export class RewriteDOMTextNode implements IRewriteDOMNode {
+export class RewriteDOMTextNodeData implements IRewriteDOMNodeData {
     protected node: Node;
     constructor(n: Node) {
         this.node = n;
@@ -114,9 +125,9 @@ export class RewriteDOMTextNode implements IRewriteDOMNode {
     }
 }
 
-export class RewriteDOMElement implements IRewriteDOMNode {
+export class RewriteDOMElementData implements IRewriteDOMNodeData {
     protected element: Element;
-    private children: IRewriteDOMNode[];
+    private children: IRewriteDOMNodeData[];
     constructor(e: Element, tree: IRewriteDOMTree) {
         this.element = e;
         this.initializeChildren(tree);
@@ -133,7 +144,7 @@ export class RewriteDOMElement implements IRewriteDOMNode {
             return outStr + "/>";
         }
         outStr += ">";
-        this.forEachOriginalNodeChild((child: IRewriteDOMNode) => {
+        this.forEachOriginalNodeChild((child: IRewriteDOMNodeData) => {
             outStr += child.getHTML();
         });
         return outStr + "</" + tagName + ">";
@@ -146,7 +157,7 @@ export class RewriteDOMElement implements IRewriteDOMNode {
         });
 
         const currChildren = [];
-        this.forEachOriginalNodeChild((child: IRewriteDOMNode) => {
+        this.forEachOriginalNodeChild((child: IRewriteDOMNodeData) => {
             currChildren.push(child.getJSON());
         });
 
@@ -181,7 +192,7 @@ export class RewriteDOMElement implements IRewriteDOMNode {
 
         const children = mapWrapperFactory.createMap();
         let childrenIndex = 0;
-        this.forEachOriginalNodeChild((child: IRewriteDOMNode) => {
+        this.forEachOriginalNodeChild((child: IRewriteDOMNodeData) => {
             children.setMap((childrenIndex++).toString(), child.getMap(mapWrapperFactory));
         });
         children.set("length", childrenIndex);
@@ -189,6 +200,7 @@ export class RewriteDOMElement implements IRewriteDOMNode {
         map.setMap("children", children);
         return map;
     }
+
     protected initializeChildren(tree: IRewriteDOMTree): void {
         this.children = [];
 
@@ -220,6 +232,7 @@ export class RewriteDOMElement implements IRewriteDOMNode {
         return this.element.namespaceURI && this.element.namespaceURI !== "http://www.w3.org/1999/xhtml";
     }
     protected patchAttribute(tagName: string, key: string, value: string, prepatched: boolean): string | null {
+        if (!value) { return value; }
         const name = key.toLowerCase();
         if (name.startsWith("on")) {
             // strip event handlers
@@ -247,6 +260,11 @@ export class RewriteDOMElement implements IRewriteDOMNode {
                         return null;
                     }
                     return (this.element as HTMLLinkElement).href;
+                }
+                break;
+            case "VIDEO":
+                if (name === "src") {
+                    value = this.patchPath(value);
                 }
                 break;
             case "IMG":
@@ -312,7 +330,7 @@ export class RewriteDOMElement implements IRewriteDOMNode {
         }
     }
 
-    protected forEachOriginalNodeChild(func: (child: IRewriteDOMNode) => void): void {
+    protected forEachOriginalNodeChild(func: (child: IRewriteDOMNodeData) => void): void {
         for (const i of this.children) {
             func(i);
         }
@@ -344,9 +362,9 @@ export class RewriteDOMElement implements IRewriteDOMNode {
     private patchPath(value: string) {
         // TODO: Do URL path patching property
         if (value.startsWith("//")) {
-            if (value.startsWith("/")) {
-                return HTMLUtil.getOrigin() + value;
-            }
+            return;
+        } else if (value.startsWith("/")) {
+            return HTMLUtil.getOrigin() + value;
         } else if (value.indexOf("://") === -1) {
             return HTMLUtil.getOrigin() + HTMLUtil.getPath() + value;
         }
