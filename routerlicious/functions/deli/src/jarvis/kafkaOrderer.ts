@@ -147,7 +147,6 @@ export class KafkaOrderer {
     }
 
     public async connect(user: IUser, client: IClient): Promise<KafkaOrdererConnection> {
-
         const connection = KafkaOrdererConnection.Create(
             this.existing,
             this.details.value,

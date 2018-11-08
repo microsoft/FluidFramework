@@ -6,7 +6,7 @@ import * as assert from "assert";
 import { EventEmitter } from "events";
 import * as _ from "lodash";
 // tslint:disable-next-line:no-var-requires
-const now = require("performance-now");
+// const now = require("performance-now");
 import * as redis from "redis";
 import * as winston from "winston";
 import { IContext, IPartitionLambda } from "../kafka-service/lambdas";
@@ -223,22 +223,22 @@ interface IoTarget {
     topic: string;
 }
 
-interface IMongoTarget {
-    documentId: string;
-    tenantId: string;
-}
+// interface IMongoTarget {
+//     documentId: string;
+//     tenantId: string;
+// }
 
 export class ScriptoriumLambda implements IPartitionLambda {
     // We maintain three batches of work - one for MongoDB and the other two for Socket.IO.
     // One socket.IO group is for sequenced ops and the other for nack'ed messages.
     // By splitting the two we can update each independently and on their own cadence
-    private mongoManager: BatchManager<IMongoTarget, core.ISequencedOperationMessage>;
+    // private mongoManager: BatchManager<IMongoTarget, core.ISequencedOperationMessage>;
     private ioManager: BatchManager<IoTarget, ISequencedDocumentMessage | INack>;
     private idleManager: BatchManager<string, void>;
 
     private workManager = new WorkManager();
 
-    constructor(private io: redis.RedisClient, private collection: core.ICollection<any>, protected context: IContext) {
+    constructor(private io: redis.RedisClient, collection: core.ICollection<any>, protected context: IContext) {
         // Listen for work errors
         this.workManager.on("error", (error) => {
             this.batchError(error);
@@ -251,7 +251,7 @@ export class ScriptoriumLambda implements IPartitionLambda {
         });
 
         // Create all the batched workers
-        this.mongoManager = this.workManager.createBatchedWork((batch) => this.processMongoBatch(batch));
+        // this.mongoManager = this.workManager.createBatchedWork((batch) => this.processMongoBatch(batch));
         this.ioManager = this.workManager.createBatchedWork((batch) => this.processIoBatch(batch));
         this.idleManager = this.workManager.createBatchedWork(async (batch) => { return; });
     }
@@ -275,7 +275,7 @@ export class ScriptoriumLambda implements IPartitionLambda {
                 operationWithTraces.traces.push({
                     action: "start",
                     service: "scriptorium",
-                    timestamp: now(),
+                    timestamp: 0,
                 });
             }
 
@@ -288,21 +288,21 @@ export class ScriptoriumLambda implements IPartitionLambda {
             };
             this.ioManager.add(target, value.operation, message.offset);
 
-            const clonedValue = _.cloneDeep(value);
-            const clonedOperation = clonedValue.operation as ISequencedDocumentMessage;
+            // const clonedValue = _.cloneDeep(value);
+            // const clonedOperation = clonedValue.operation as ISequencedDocumentMessage;
 
             // Remove traces and serialize content before writing to mongo.
-            clonedOperation.traces = [];
-            clonedOperation.contents = JSON.stringify(clonedOperation.contents);
+            // clonedOperation.traces = [];
+            // clonedOperation.contents = JSON.stringify(clonedOperation.contents);
 
             // Batch send to MongoDB
-            this.mongoManager.add(
-                {
-                    documentId: clonedValue.documentId,
-                    tenantId: clonedValue.tenantId,
-                },
-                clonedValue,
-                message.offset);
+            // this.mongoManager.add(
+            //     {
+            //         documentId: clonedValue.documentId,
+            //         tenantId: clonedValue.tenantId,
+            //     },
+            //     clonedValue,
+            //     message.offset);
         } else if (baseMessage.type === core.NackOperationType) {
             const value = baseMessage as core.INackMessage;
 
@@ -326,22 +326,22 @@ export class ScriptoriumLambda implements IPartitionLambda {
     /**
      * BatchManager callback invoked once a new batch is ready to be processed
      */
-    private async processMongoBatch(batch: Batch<IMongoTarget, core.ISequencedOperationMessage>): Promise<void> {
-        // Serialize the current batch to Mongo
-        await batch.map(async (id, work) => {
-            // tslint:disable-next-line:max-line-length
-            winston.verbose(`Inserting to mongodb ${id.documentId}/${id.tenantId}@${work[0].operation.sequenceNumber}:${work.length}`);
-            return this.collection.insertMany(work, false)
-                .catch((error) => {
-                    // Duplicate key errors are ignored since a replay may cause us to insert twice into Mongo.
-                    // All other errors result in a rejected promise.
-                    if (error.name !== "MongoError" || error.code !== 11000) {
-                        // Needs to be a full rejection here
-                        return Promise.reject(error);
-                    }
-                });
-        });
-    }
+    // private async processMongoBatch(batch: Batch<IMongoTarget, core.ISequencedOperationMessage>): Promise<void> {
+    //     // Serialize the current batch to Mongo
+    //     await batch.map(async (id, work) => {
+    // tslint:disable-next-line:max-line-length
+    //         winston.verbose(`Inserting to mongodb ${id.documentId}/${id.tenantId}@${work[0].operation.sequenceNumber}:${work.length}`);
+    //         return this.collection.insertMany(work, false)
+    //             .catch((error) => {
+    //                 // Duplicate key errors are ignored since a replay may cause us to insert twice into Mongo.
+    //                 // All other errors result in a rejected promise.
+    //                 if (error.name !== "MongoError" || error.code !== 11000) {
+    //                     // Needs to be a full rejection here
+    //                     return Promise.reject(error);
+    //                 }
+    //             });
+    //     });
+    // }
 
     /**
      * BatchManager callback invoked once a new batch is ready to be processed
@@ -357,7 +357,7 @@ export class ScriptoriumLambda implements IPartitionLambda {
                     valueAsSequenced.traces.push({
                         action: "end",
                         service: "scriptorium",
-                        timestamp: now(),
+                        timestamp: 0,
                     });
                 }
             });

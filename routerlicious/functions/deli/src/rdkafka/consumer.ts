@@ -33,7 +33,6 @@ export class RdkafkaConsumer extends EventEmitter implements IConsumer {
                 "fetch.min.bytes": 1,
                 "fetch.wait.max.ms": 100,
                 "group.id": groupId,
-                "message.max.bytes": 1024 * 1024,
                 "metadata.broker.list": kafkaBroker,
                 "rebalance_cb": (err, assignment) => {
                     if (err.code === Kafka.CODES.ERRORS.ERR__ASSIGN_PARTITIONS) {

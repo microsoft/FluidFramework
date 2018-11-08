@@ -103,6 +103,24 @@ export class Partition extends EventEmitter {
     private async processCore(message: utils.IMessage, context: IContext): Promise<void> {
         winston.verbose(`${message.topic}:${message.partition}@${message.offset}`);
         const lambda = await this.lambdaP;
-        lambda.handler(message);
+
+        const packagedMessages = JSON.parse(message.value) as string[];
+        if (Array.isArray(packagedMessages)) {
+            const start = process.hrtime();
+            for (const packagedMessage of packagedMessages) {
+                lambda.handler({
+                    highWaterOffset: message.highWaterOffset,
+                    key: message.key,
+                    offset: message.offset,
+                    partition: message.partition,
+                    topic: message.topic,
+                    value: packagedMessage,
+                });
+            }
+            const diff = process.hrtime(start);
+            winston.info(`Process time of [${diff[0]},${diff[1] * 1e-6}]`);
+        } else {
+            lambda.handler(message);
+        }
     }
 }
