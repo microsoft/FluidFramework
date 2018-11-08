@@ -94,12 +94,11 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
         const opCollection = db.collection("content");
         await opCollection.createIndex(
             {
-                "clientId": 1,
-                "documentId": 1,
-                "op.clientSequenceNumber": 1,
-                "tenantId": 1,
+                documentId: 1,
+                sequenceNumber: 1,
+                tenantId: 1,
             },
-            true);
+            false);
 
         const opPublisher = new services.SocketIoRedisPublisher(redisConfig.port, redisConfig.host);
 

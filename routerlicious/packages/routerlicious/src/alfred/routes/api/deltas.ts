@@ -4,37 +4,36 @@ import { Provider } from "nconf";
 import * as utils from "../../../utils";
 import { IAlfredTenant } from "../../tenant";
 
+const sequenceNumber = "sequenceNumber";
+
 export async function getDeltaContents(
     mongoManager: utils.MongoManager,
     collectionName: string,
     tenantId: string,
     documentId: string,
-    clientId: string,
     from?: number,
     to?: number): Promise<any[]> {
 
     // Create an optional filter to restrict the delta range
-    const query: any = { clientId, documentId, tenantId };
+    const query: any = { documentId, tenantId };
     if (from !== undefined || to !== undefined) {
-        query["op.clientSequenceNumber"] = {};
+        query[sequenceNumber] = {};
 
         if (from !== undefined) {
-            query["op.clientSequenceNumber"].$gt = from;
+            query[sequenceNumber].$gt = from;
         }
 
         if (to !== undefined) {
-            query["op.clientSequenceNumber"].$lt = to;
+            query[sequenceNumber].$lt = to;
         }
     }
 
     // Query for the deltas and return a filtered version of just the operations field
     const db = await mongoManager.getDatabase();
     const collection = await db.collection<any>(collectionName);
-    const dbDeltas = await collection.find(query, { "op.clientSequenceNumber": 1 });
+    const dbDeltas = await collection.find(query, { sequenceNumber: 1 });
 
-    return dbDeltas.map((delta) => {
-        return delta;
-    });
+    return dbDeltas;
 }
 
 export async function getDeltas(
@@ -112,7 +111,7 @@ export function create(config: Provider, mongoManager: utils.MongoManager, appTe
     /**
      * Retrieves delta contents for the given document. With an optional from and to range (both exclusive) specified
      */
-    router.get("/content/:tenantId?/:id/:clientId", (request, response, next) => {
+    router.get("/content/:tenantId?/:id", (request, response, next) => {
         const from = stringToSequenceNumber(request.query.from);
         const to = stringToSequenceNumber(request.query.to);
         const tenantId = request.params.tenantId || appTenants[0].id;
@@ -123,7 +122,6 @@ export function create(config: Provider, mongoManager: utils.MongoManager, appTe
             "content",
             tenantId,
             request.params.id,
-            request.params.clientId,
             from,
             to);
 
