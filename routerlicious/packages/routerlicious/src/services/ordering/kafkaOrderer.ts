@@ -1,7 +1,5 @@
 import { IClient, IClientJoin, IDocumentMessage, IUser, MessageType } from "@prague/runtime-definitions";
 import * as moniker from "moniker";
-// tslint:disable-next-line:no-var-requires
-const now = require("performance-now");
 import * as core from "../../core";
 import { IProducer } from "../../utils";
 
@@ -71,7 +69,7 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
                 clientSequenceNumber: -1,
                 contents: clientDetail,
                 referenceSequenceNumber: -1,
-                traces: [],
+                traces: undefined,
                 type: MessageType.ClientJoin,
             },
             tenantId: this.tenantId,
@@ -105,7 +103,7 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
                 clientSequenceNumber: -1,
                 contents: this.clientId,
                 referenceSequenceNumber: -1,
-                traces: [],
+                traces: undefined,
                 type: MessageType.ClientLeave,
             },
             tenantId: this.tenantId,
@@ -119,13 +117,13 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
 
     private submitRawOperation(message: core.IRawOperationMessage) {
         // Add trace
-        const operation = message.operation as any;
-        if (operation && operation.traces) {
+        const operation = message.operation as IDocumentMessage;
+        if (operation && operation.traces && operation.traces.length > 1) {
             operation.traces.push(
                 {
-                    action: "start",
+                    action: "end",
                     service: "alfred",
-                    timestamp: now(),
+                    timestamp: Date.now(),
                 });
         }
 

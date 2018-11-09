@@ -463,7 +463,8 @@ export async function typeChunk(
         });
 
         a.ss.on("op", (message: ISequencedObjectMessage, local) => {
-            if (message.clientSequenceNumber &&
+            if (message.traces &&
+                message.clientSequenceNumber &&
                 message.clientSequenceNumber > 25 &&
                 local) {
 

@@ -8,6 +8,7 @@ export * from "./logger";
 export * from "./mongo";
 export * from "./mongoDatabaseManager";
 export * from "./port";
+export * from "./random";
 export * from "./runner";
 export * from "./safeParser";
 

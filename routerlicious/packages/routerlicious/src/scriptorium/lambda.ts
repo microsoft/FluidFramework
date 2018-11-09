@@ -3,8 +3,6 @@ import { INack, ISequencedDocumentMessage } from "@prague/runtime-definitions";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import * as _ from "lodash";
-// tslint:disable-next-line:no-var-requires
-const now = require("performance-now");
 import * as winston from "winston";
 import * as core from "../core";
 import { IContext, IPartitionLambda } from "../kafka-service/lambdas";
@@ -269,12 +267,11 @@ export class ScriptoriumLambda implements IPartitionLambda {
             const value = baseMessage as core.ISequencedOperationMessage;
 
             // Add trace.
-            const operationWithTraces = value.operation as ISequencedDocumentMessage;
-            if (operationWithTraces.traces !== undefined) {
-                operationWithTraces.traces.push({
+            if (value.operation.traces && value.operation.traces.length > 1) {
+                value.operation.traces.push({
                     action: "start",
                     service: "scriptorium",
-                    timestamp: now(),
+                    timestamp: Date.now(),
                 });
             }
 
@@ -352,11 +349,11 @@ export class ScriptoriumLambda implements IPartitionLambda {
             // Add trace to each message before routing.
             work.map((value) => {
                 const valueAsSequenced = value as ISequencedDocumentMessage;
-                if (valueAsSequenced && valueAsSequenced.traces !== undefined) {
+                if (valueAsSequenced && valueAsSequenced.traces && valueAsSequenced.traces.length > 1) {
                     valueAsSequenced.traces.push({
                         action: "end",
                         service: "scriptorium",
-                        timestamp: now(),
+                        timestamp: Date.now(),
                     });
                 }
             });
