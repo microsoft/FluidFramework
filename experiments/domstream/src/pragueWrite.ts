@@ -4,7 +4,7 @@ import { FrameManager } from "./frameManager";
 import { globalConfig } from "./globalConfig";
 import { IMapViewWrapper, IMapWrapperFactory } from "./mapWrapper";
 import { RewriteDOMTree } from "./rewriteDOMTree";
-import { StreamDOMTree, StreamWindow } from "./streamDOMTree";
+import { StreamDOMTreeServer, StreamWindowServer } from "./streamDOMTreeServer";
 
 async function MapWrapperToObject(mapView: IMapViewWrapper): Promise<object> {
     const obj: any = {};
@@ -33,17 +33,17 @@ export async function saveDOM(mapWrapperFactory: IMapWrapperFactory, options: an
     dataMapWrapper.set("TIME_DOCLOAD", startTime - options.startSaveSignalTime);
 
     dataMapWrapper.set("URL", window.location.href);
-    StreamWindow.saveDimension(window, dataMapWrapper);
-    StreamWindow.saveScrollPos(window, dataMapWrapper);
+    StreamWindowServer.saveDimension(window, dataMapWrapper);
+    StreamWindowServer.saveScrollPos(window, dataMapWrapper);
 
     let endGenTime;
     if (options.useFlatMap) {
-        let tree: StreamDOMTree | FlatMapDOMTree;
+        let tree: StreamDOMTreeServer | FlatMapDOMTree;
         const domMapViewWrapper = await mapWrapperFactory.createMapView();
 
         let rootNodeId;
         if (options.stream) {
-            tree = new StreamDOMTree();
+            tree = new StreamDOMTreeServer();
         } else {
             tree = new FlatMapDOMTree();
         }
@@ -61,7 +61,7 @@ export async function saveDOM(mapWrapperFactory: IMapWrapperFactory, options: an
         }
 
         if (options.stream) {
-            startStreamToPrague(tree as StreamDOMTree, dataMapWrapper);
+            startStreamToPrague(tree as StreamDOMTreeServer, dataMapWrapper);
         }
     } else {
         if (options.stream) {
@@ -88,8 +88,8 @@ export async function saveDOM(mapWrapperFactory: IMapWrapperFactory, options: an
 }
 
 let mutationObserver: MutationObserver;
-let streamWindow: StreamWindow;
-function startStreamToPrague(tree: StreamDOMTree, dataMapView: IMapViewWrapper) {
+let streamWindow: StreamWindowServer;
+function startStreamToPrague(tree: StreamDOMTreeServer, dataMapView: IMapViewWrapper) {
     stopStreamToPrague();
     let mutation = 0;
     mutationObserver = tree.startStream(document, () => {
@@ -100,7 +100,7 @@ function startStreamToPrague(tree: StreamDOMTree, dataMapView: IMapViewWrapper) 
         FrameManager.ensureFrameIdListener();
     });
 
-    streamWindow = new StreamWindow(window, dataMapView, tree, false);
+    streamWindow = new StreamWindowServer(window, dataMapView, tree);
     FrameManager.startStream(tree);
 }
 

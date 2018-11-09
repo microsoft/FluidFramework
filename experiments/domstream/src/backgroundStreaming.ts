@@ -5,6 +5,7 @@ import { MessageEnum, PortHolder } from "./portHolder";
 import { getCollabDoc } from "./pragueUtil";
 
 let collabDoc;
+let currentTabId;
 let mapBatchOp = true;
 
 export class BackgroundStreaming {
@@ -14,7 +15,7 @@ export class BackgroundStreaming {
                 return;
             }
             const frame = ContentFrame.register(port);
-            if (collabDoc) {
+            if (collabDoc && currentTabId === port.sender.tab.id) {
                 frame.startStreaming();
             }
         });
@@ -26,6 +27,7 @@ export class BackgroundStreaming {
             return;
         }
         collabDoc = await getCollabDoc(docId);
+        currentTabId = tabId;
         mapBatchOp = batchOp;
         debug("Start streaming tab", tabId, docId);
         ContentFrame.forEachFrame(tabId, (frame) => {

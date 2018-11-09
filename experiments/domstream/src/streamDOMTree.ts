@@ -1,12 +1,6 @@
-import { debugDOM, debugFrame } from "./debug";
+import { debugDOM } from "./debug";
 import * as FMDOM from "./flatMapDOMTree";
-import { globalConfig } from "./globalConfig";
 import { IMapViewWrapper } from "./mapWrapper";
-
-export interface IFrameLoader {
-    loadFrame(frame: HTMLIFrameElement, frameId: number);
-    reloadFrame(frame: HTMLIFrameElement, frameId: number);
-}
 
 class MapSyncDOMData extends FMDOM.MapDOMData {
     private valueChangeCallback:
@@ -46,7 +40,7 @@ class MapSyncDOMData extends FMDOM.MapDOMData {
     }
 }
 
-class StreamDOMElementData extends FMDOM.FlatMapDOMElementData {
+export class StreamDOMElementData extends FMDOM.FlatMapDOMElementData {
     public initializeFromMap(nodeId: number, attributeId: number, map: MapSyncDOMData) {
         this.nodeId = nodeId;
         this.attributeId = attributeId;
@@ -87,7 +81,7 @@ class StreamDOMElementData extends FMDOM.FlatMapDOMElementData {
     }
 }
 
-class StreamDOMTextNodeData extends FMDOM.FlatMapDOMTextNodeData {
+export class StreamDOMTextNodeData extends FMDOM.FlatMapDOMTextNodeData {
     public initializeFromMap(nodeId: number, map: MapSyncDOMData) {
         this.nodeId = nodeId;
         this.setEmitted(map);
@@ -126,21 +120,18 @@ class StreamDOMInputElementData extends StreamDOMElementData {
 }
 
 export class StreamDOMTree extends FMDOM.FlatMapDOMTree {
-    private rootId: number;
-    private nodeToNodeDataMap: WeakMap<Node, any>;
-    private idToNodeMap: Map<number, Node>;
-    private attrIdToElementMap: Map<number, Element>;
-    private mapData: MapSyncDOMData;
-    private pendingMutationEvent: any[];
-    private frameLoader: IFrameLoader;
+    protected rootId: number;
+    protected nodeToNodeDataMap: WeakMap<Node, any>;
+    protected idToNodeMap: Map<number, Node>;
+    protected attrIdToElementMap: Map<number, Element>;
+    protected mapData: MapSyncDOMData;
 
-    constructor(frameLoader?: IFrameLoader) {
+    constructor() {
         super();
         this.nodeToNodeDataMap = new WeakMap();
         this.idToNodeMap = new Map();
         this.attrIdToElementMap = new Map();
-        this.pendingMutationEvent = [];
-        this.frameLoader = frameLoader;
+
     }
     public getNodeId(node: Node) {
         const n = this.nodeToNodeDataMap.get(node);
@@ -153,12 +144,7 @@ export class StreamDOMTree extends FMDOM.FlatMapDOMTree {
     public getNodeFromId(id: number) {
         return this.idToNodeMap.get(id);
     }
-    public setOnMapWrapper(mapView: IMapViewWrapper) {
-        this.mapData = new MapSyncDOMData(mapView);
-        this.rootId = this.setOnMapWrapperCommon(this.mapData);
-        this.mapData.startSync();
-        return this.rootId;
-    }
+
     public notifyNodeEmitted(node: Node, nodeId: number) {
         this.idToNodeMap.set(nodeId, node);
     }
@@ -176,105 +162,11 @@ export class StreamDOMTree extends FMDOM.FlatMapDOMTree {
         if (node) { return node; }
         return super.getTextNode(n);
     }
-    public updateFrameId(frame: HTMLIFrameElement, frameId: number) {
-        const id = this.getNodeId(frame);
-        this.mapData.setNodeData(id, "frameId", frameId);
-        debugFrame(frameId, "Node", id, "frameId updated", frame.src);
-    }
 
-    public startStream(doc: Document, mutationCallback) {
-        const mapValueChangeCallback = (nodeId, key, value, deleted) => {
-            mutationObserver.disconnect();
-            this.mapValueChangeCallback(nodeId, key, value, deleted);
-            mutationObserver.observe(doc, config);
-        };
-        this.mapData.setValueChangeCallback(mapValueChangeCallback);
-
-        // Options for the observer (which mutations to observe)
-        const config = { attributes: true, characterData: true, childList: true, subtree: true };
-
-        // Callback function to execute when mutations are observed
-        const callback = (mutationsList: Iterable<MutationRecord>, observer) => {
-            for (const mutation of mutationsList) {
-                const n = mutation.target;
-                const node = this.nodeToNodeDataMap.get(n);
-                if (!node) {
-                    if (n === doc && mutation.type === "childList") {
-                        // Reinitialize and emit the document node.
-                        this.initializeFromDOM(doc);
-                        this.mapData.setNodeData(this.rootId, "documentElementId",
-                            this.getRootElement().setOnMapWrapper(this.mapData, this));
-                    } else if (n.nodeType !== 1 || !this.isFiltered(n as Element)) {
-                        console.error("Target not emitted: ", mutation.type, n);
-                    }
-                    continue;
-                }
-                switch (mutation.type) {
-                    case "childList":
-                        // Could this be a text node?
-                        (node as StreamDOMElementData).updateChildList(this.mapData, this);
-                        break;
-                    case "attributes":
-                        const attributeName = mutation.attributeName;
-                        (node as StreamDOMElementData).updateAttribute(this.mapData, attributeName);
-                        break;
-                    case "characterData":
-                        if (n.nodeType === 3) {
-                            (node as StreamDOMTextNodeData).updateText(this.mapData);
-                        } else {
-                            console.error("CharacterData changed in Non-Text node " + n);
-                        }
-                        break;
-                }
-            }
-            mutationCallback();
-        };
-
-        // Create an observer instance linked to the callback function
-        const mutationObserver = new MutationObserver(callback);
-
-        // Start observing the target node for configured mutations
-        mutationObserver.observe(doc, config);
-
-        return mutationObserver;
-    }
-
-    public async readFromMap(mapView: IMapViewWrapper, rootId: number, doc: Document) {
+    protected setMapViewWrapper(mapView: IMapViewWrapper) {
         this.mapData = new MapSyncDOMData(mapView);
-        await this.mapData.Populate();
-        this.mapData.setValueChangeCallback((nodeId, key, value, deleted) => {
-            this.mapValueChangeCallback(nodeId, key, value, deleted);
-        });
-
-        this.rootId = rootId;
-        this.doc = doc;
-        const rootNodeData = this.mapData.getNodeData(rootId);
-        /* TODO: Why doesn't this work?
-        if (rootNodeData.docType) {
-            const docType = document.implementation.createDocumentType(
-                rootNodeData.docType[0],
-                rootNodeData.docType[1],
-                rootNodeData.docType[2]);
-            if (doc.doctype) {
-                doc.replaceChild(docType, doc.doctype);
-            } else {
-                doc.prepend(docType);
-            }
-        }
-        */
-        doc.open();
-        doc.write("<!DOCTYPE html>");
-        doc.close();
-        doc.replaceChild(this.createDOMNodeFromMapData(rootNodeData.documentElementId, doc), doc.documentElement);
     }
 
-    public FlushPendingMutationEvent() {
-        debugDOM("Flushing Mutation event: " + this.pendingMutationEvent.length);
-        for (const { nodeId, key, value, deleted } of this.pendingMutationEvent) {
-            this.processMutationEvent(nodeId, key, value, deleted);
-        }
-        this.pendingMutationEvent.length = 0;
-    }
     protected createElementNode(e: Element): StreamDOMElementData {
         let newNodeData;
         const tagName = e.tagName.toUpperCase();
@@ -292,177 +184,24 @@ export class StreamDOMTree extends FMDOM.FlatMapDOMTree {
         return newNodeData;
     }
 
-    private processMutationEvent(nodeId, key, value, deleted) {
-        const domNode = this.idToNodeMap.get(nodeId);
-        if (domNode) {
-            if (key === "textContent") {
-                domNode.textContent = value;
-                return;
-            }
-            if (key !== "children") {
-                console.error("Unknown DOM node key changed", nodeId, key, value, deleted);
-                return;
-            }
-
-            // TODO: This doesn't full replicate the order of operation on the client side.
-            // If we have move node forward from the back of the list, we would remove the
-            // rest of the node and then insert it back instead.
-            const childNodeToNewIndexMap = new Map<Node, number>();
-
-            let index = 0;
-            for (const childNodeId of value) {
-                const node = this.idToNodeMap.get(childNodeId);
-                if (node) {
-                    childNodeToNewIndexMap.set(node, index);
-                }
-                index++;
-            }
-            let currChild: Node = domNode.firstChild;
-            let lastIndex = -1;
-            while (currChild != null) {
-                const nextChild = currChild.nextSibling;
-                if (!childNodeToNewIndexMap.has(currChild)) {
-                    domNode.removeChild(currChild);
-                } else {
-                    const currChildIndex = childNodeToNewIndexMap.get(currChild);
-                    if (lastIndex < currChildIndex) {
-                        lastIndex = currChildIndex;
-                    } else {
-                        domNode.removeChild(currChild);
-                    }
-                }
-                currChild = nextChild;
-            }
-            currChild = domNode.firstChild;
-            let nextInsertIndex = 0;
-            while (currChild != null) {
-                const childIndex = childNodeToNewIndexMap.get(currChild);
-                for (let i = nextInsertIndex; i < childIndex; i++) {
-                    domNode.insertBefore(this.createDOMNodeFromMapData(value[i], domNode.ownerDocument), currChild);
-                }
-                currChild = currChild.nextSibling;
-                nextInsertIndex = childIndex + 1;
-            }
-            for (let i = nextInsertIndex; i < value.length; i++) {
-                domNode.appendChild(this.createDOMNodeFromMapData(value[i], domNode.ownerDocument));
-            }
-            return;
-        }
-        const attributeDOMNode: Element = this.attrIdToElementMap.get(nodeId);
-        if (attributeDOMNode) {
+    protected mapValueChangeCallbackCommon(domNode, key, value, deleted) {
+        if (key === "scrollPos") {
+            const element = domNode as HTMLElement;
             if (deleted) {
-                attributeDOMNode.removeAttribute(key);
+                element.scrollLeft = 0;
+                element.scrollTop = 0;
             } else {
-                try {
-                    attributeDOMNode.setAttribute(key, value);
-                } catch (e) {
-                    console.error("Invalid attribute name:", key);
-                }
+                const pos = JSON.parse(value);
+                element.scrollLeft = pos[0];
+                element.scrollTop = pos[1];
             }
-            return;
+            return true;
         }
-
-        if (nodeId === this.rootId) {
-            if (key !== "documentElementId") {
-                console.error("Unknown document node key changed", nodeId, key, value, deleted);
-                return;
-            }
-
-            const doc = this.getDocument();
-            doc.replaceChild(this.createDOMNodeFromMapData(value, doc), doc.documentElement);
+        if (key === "inputValue") {
+            (domNode as HTMLInputElement).value = value;
+            return true;
         }
-    }
-    private mapValueChangeCallback(nodeId, key, value, deleted) {
-        const domNode = this.idToNodeMap.get(nodeId);
-        if (domNode) {
-            if (key === "scrollPos") {
-                const element = domNode as HTMLElement;
-                if (deleted) {
-                    element.scrollLeft = 0;
-                    element.scrollTop = 0;
-                } else {
-                    const pos = JSON.parse(value);
-                    element.scrollLeft = pos[0];
-                    element.scrollTop = pos[1];
-                }
-                return;
-            }
-            if (key === "inputValue") {
-                (domNode as HTMLInputElement).value = value;
-                return;
-            }
-            if (key === "frameId") {
-                debugFrame(value, "Node", nodeId, "frameId updated");
-                this.frameLoader.reloadFrame(domNode as HTMLIFrameElement, value);
-                return;
-            }
-        }
-
-        this.pendingMutationEvent.push({
-            deleted,
-            key,
-            nodeId,
-            value,
-        });
-    }
-    private createDOMNodeFromMapData(nodeId: number, doc: Document): Node {
-        let domNode: Node = this.idToNodeMap.get(nodeId);
-        if (domNode) { return domNode; }
-        let newNode;
-        const nodeData = this.mapData.getNodeData(nodeId);
-        const tagName = nodeData.tagName;
-
-        if (tagName) {
-            const namespaceURI = nodeData.namespaceURI;
-            let element;
-            if (namespaceURI) {
-                element = doc.createElementNS(namespaceURI, tagName);
-            } else {
-                element = doc.createElement(tagName);
-            }
-            domNode = element;
-
-            const attributesNodeId = nodeData.attributes;
-            const attributes = this.mapData.getNodeData(attributesNodeId);
-            if (attributes) {
-                for (const attr of Object.keys(attributes)) {
-                    try {
-                        if (attr === "xlink:href") {
-                            // TODO: save the NS in the map
-                            element.setAttributeNS("http://www.w3.org/1999/xlink", attr, attributes[attr]);
-                        } else {
-                            element.setAttribute(attr, attributes[attr]);
-                        }
-                    } catch (e) {
-                        console.error("Invalid attribute name: " + attr);
-                    }
-                }
-            }
-
-            const childrenNodeIdList = nodeData.children;
-            for (const childNodeId of childrenNodeIdList) {
-                element.appendChild(this.createDOMNodeFromMapData(childNodeId, doc));
-            }
-
-            this.attrIdToElementMap.set(attributesNodeId, element);
-            newNode = this.createElementNode(element);
-            newNode.initializeFromMap(nodeId, attributesNodeId, this.mapData);
-
-            if (this.frameLoader && tagName === "IFRAME") {
-                if (nodeData.frameId > 0) {
-                    debugFrame(nodeData.frameId, "Node", nodeId, "iframe create with frameId");
-                    this.frameLoader.loadFrame(element, nodeData.frameId);
-                } else {
-                    debugFrame(-1, "Node", nodeId, "iframe created without frameId");
-                }
-            }
-        } else {
-            domNode = doc.createTextNode(nodeData.textContent);
-            newNode = this.createTextNode(domNode);
-            newNode.initializeFromMap(nodeId, this.mapData);
-        }
-        this.idToNodeMap.set(nodeId, domNode);
-        return domNode;
+        return false;
     }
 }
 
@@ -484,16 +223,7 @@ export class StreamWindow {
         dataMapView.setIfChanged("SCROLLPOS", pos);
     }
 
-    public static saveDimension(w: Window, dataMapView: IMapViewWrapper) {
-        const dim = JSON.stringify({
-            devicePixelRatio: window.devicePixelRatio,
-            height: window.innerHeight,
-            width: window.innerWidth,
-        });
-        debugDOM("Update dimension:", dim);
-        dataMapView.setIfChanged("DIMENSION", dim);
-    }
-    private static installScrollListener(w: Window, dataMapView: IMapViewWrapper) {
+    protected static installScrollListener(w: Window, dataMapView: IMapViewWrapper) {
         // Setup scroll syncing
         const scrollCallback = () => {
             this.saveScrollPos(w, dataMapView);
@@ -502,27 +232,9 @@ export class StreamWindow {
         return scrollCallback;
     }
 
-    private static installClickListener(w: Window, dataMapView: IMapViewWrapper, tree: StreamDOMTree) {
-        const clickCallback = (ev: MouseEvent) => {
-            const id = tree.getNodeId(ev.target as Node);
-            debugDOM("Send click to node id: " + id, ev.target);
-            dataMapView.set("REMOTECLICK", id);
-        };
-        w.addEventListener("click", clickCallback);
-        return clickCallback;
-    }
-
-    private static installResizeListener(w: Window, dataMapView: IMapViewWrapper) {
-        const resizeCallback = () => {
-            this.saveDimension(w, dataMapView);
-        };
-        w.addEventListener("resize", resizeCallback);
-        return resizeCallback;
-    }
-
-    private static installDataChangeResponder(
-        w: Window, dataMapView: IMapViewWrapper, tree: StreamDOMTree,
-        isRemote: boolean, scrollPosField?: HTMLSpanElement) {
+    protected static installDataChangeResponder(
+        w: Window, dataMapView: IMapViewWrapper, scrollPosField: HTMLSpanElement,
+        callback: (key: string, value: any) => void) {
 
         // Responding to scroll and click events
         dataMapView.onNonLocalValueChanged((key, value) => {
@@ -531,48 +243,16 @@ export class StreamWindow {
                 return;
             }
 
-            if (isRemote) {
-                if (key === "MUTATION") {
-                    tree.FlushPendingMutationEvent();
-                    return;
-                }
-            } else {
-                if (key === "REMOTECLICK") {
-                    const nodeId = value;
-                    const n = tree.getNodeFromId(nodeId);
-
-                    if (n) {
-                        debugDOM("Dispatching click to node Id: " + nodeId, n);
-                        n.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true, view: window }));
-                    } else {
-                        console.error("Click to node Id not found: " + nodeId);
-                    }
-                    return;
-                }
-            }
+            callback(key, value);
         });
     }
+
+    protected scrollCallback;
+    protected resizeCallback;
     private w: Window;
-    private scrollCallback;
-    private resizeCallback;
 
-    constructor(
-        w: Window, dataMapView: IMapViewWrapper, tree: StreamDOMTree,
-        isRemote: boolean, scrollPosField?: HTMLSpanElement) {
-
+    constructor(w: Window) {
         this.w = w;
-
-        if (isRemote) {
-            if (globalConfig.allowInteraction) {
-                this.scrollCallback = StreamWindow.installScrollListener(w, dataMapView);
-                StreamWindow.installClickListener(w, dataMapView, tree);
-            }
-        } else {
-            this.scrollCallback = StreamWindow.installScrollListener(w, dataMapView);
-            this.resizeCallback = StreamWindow.installResizeListener(w, dataMapView);
-        }
-
-        StreamWindow.installDataChangeResponder(w, dataMapView, tree, isRemote, scrollPosField);
     }
     public stopSync() {
         if (this.scrollCallback) {

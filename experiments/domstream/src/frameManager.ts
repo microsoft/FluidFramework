@@ -1,5 +1,5 @@
 import { debugFrame } from "./debug";
-import { StreamDOMTree } from "./streamDOMTree";
+import { StreamDOMTreeServer } from "./streamDOMTreeServer";
 
 // FrameId Discovery
 
@@ -73,7 +73,7 @@ export class FrameManager {
         iframe.contentWindow.postMessage(parentMessage, "*");
         return -1;
     }
-    public static startStream(tree: StreamDOMTree) {
+    public static startStream(tree: StreamDOMTreeServer) {
         this.tree = tree;
     }
 
@@ -97,7 +97,7 @@ export class FrameManager {
 
     private static listener;
     private static frameWindowToId: WeakMap<WindowProxy, number> = new WeakMap();
-    private static tree: StreamDOMTree;
+    private static tree: StreamDOMTreeServer;
     private static currentFrameId: number;
 
     private static sentFrameIdToParent() {
