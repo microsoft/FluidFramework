@@ -1,3 +1,12 @@
+Get a cert from //ssladmin for the uri you want.
+Turn your pfx into a pem. Turn your cert into a .key and .crt file. A private and public key.
+
+```bash
+openssl pkcs12 -in eu2_cert.pfx -out eu2-cert.pem -nodes
+openssl pkey -in eu2-cert.pem -out tls.key
+openssl x509 -in eu2-cert.pem -out tls.crt
+```
+
 Choose your desired kube cluster and install certificates and encryption form files.
 
 ```bash
