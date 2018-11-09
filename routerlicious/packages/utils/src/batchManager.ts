@@ -1,23 +1,30 @@
+const MaxBatchSize = 100;
+
 export class BatchManager<T> {
     private pendingWork = new Map<string, T[]>();
+    private pendingTimer: NodeJS.Timer;
 
     constructor(private process: (id: string, work: T[]) => void) {
     }
 
     public add(id: string, work: T) {
-        // Schedule the work callback if the pending work queue is empty
-        const shouldScheduleWork = this.pendingWork.size === 0;
-
         if (!this.pendingWork.has(id)) {
             this.pendingWork.set(id, []);
         }
 
         this.pendingWork.get(id).push(work);
 
-        if (shouldScheduleWork) {
-            process.nextTick(() => {
-                this.startWork();
-            });
+        if (this.pendingWork.get(id).length >= MaxBatchSize) {
+            clearTimeout(this.pendingTimer);
+            this.pendingTimer = undefined;
+            this.startWork();
+        } else if (this.pendingTimer === undefined) {
+            this.pendingTimer = setTimeout(
+                () => {
+                    this.pendingTimer = undefined;
+                    this.startWork();
+                },
+                0);
         }
     }
 
