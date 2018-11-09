@@ -34,7 +34,7 @@ export class PaparazziRunner implements utils.IRunner {
         this.permission = new Set(workerConfig.permission as string[]);
         const alfredUrl = workerConfig.alfredUrl;
 
-        const factory = new DocumentServiceFactory(workerConfig.jarvisUrlInternal, workerConfig.blobStorageUrl);
+        const factory = new DocumentServiceFactory(alfredUrl, workerConfig.blobStorageUrl);
 
         this.workerService = new agent.WorkerService(
             factory,

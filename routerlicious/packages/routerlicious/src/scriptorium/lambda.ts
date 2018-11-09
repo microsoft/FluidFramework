@@ -348,7 +348,7 @@ export class ScriptoriumLambda implements IPartitionLambda {
     private async processIoBatch(batch: Batch<IoTarget, INack | ISequencedDocumentMessage>): Promise<void> {
         // Serialize the current batch to Mongo
         await batch.map(async (id, work) => {
-            winston.info(`Broadcasting to socket.io ${id.documentId}@${id.topic}@${id.event}:${work.length}`);
+            winston.verbose(`Broadcasting to socket.io ${id.documentId}@${id.topic}@${id.event}:${work.length}`);
             // Add trace to each message before routing.
             work.map((value) => {
                 const valueAsSequenced = value as ISequencedDocumentMessage;

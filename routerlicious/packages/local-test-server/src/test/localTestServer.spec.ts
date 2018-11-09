@@ -36,11 +36,11 @@ describe("LocalTestServer", () => {
         rootView.set("SharedString", user1SharedString);
       });
 
-      it ("Validate document is new", () => {
+      it("Validate document is new", () => {
         assert.equal(user1Document.existing, false, "Document already exists");
       });
+    });
   });
-});
 
   describe("Load Document on Client2", () => {
     before(async () => {
@@ -52,7 +52,7 @@ describe("LocalTestServer", () => {
       user2SharedString = await rootView.wait("SharedString") as SharedString;
     });
 
-    it ("Validate document and SharedString exist", () => {
+    it("Validate document and SharedString exist", () => {
       assert.equal(user2Document.existing, true, "Document does not exist on the server");
       assert.notEqual(user2SharedString, undefined, "Document does not contain a SharedString");
     });
@@ -74,7 +74,7 @@ describe("LocalTestServer", () => {
       user2SharedString.on("op", (msg, local) => {
         if (!local) {
           if (msg.type === OperationType) {
-            user2ReceivedMsgCount = user2ReceivedMsgCount  + 1;
+            user2ReceivedMsgCount = user2ReceivedMsgCount + 1;
           }
         }
       });
@@ -84,9 +84,15 @@ describe("LocalTestServer", () => {
       user2SharedString.insertText("C", 2);
     });
 
-    it ("Validate messaging", () => {
-      assert.equal(user1ReceivedMsgCount, 1, "User1 received message count is incorrect");
-      assert.equal(user2ReceivedMsgCount, 2, "User2 received message count is incorrect");
+    it("Validate messaging", () => {
+      return new Promise<void>((resolve, reject) => {
+          setTimeout(() => {
+            assert.equal(user1ReceivedMsgCount, 1, "User1 received message count is incorrect");
+            assert.equal(user2ReceivedMsgCount, 2, "User2 received message count is incorrect");
+            resolve();
+          },
+          1000);
+      });
     });
   });
 

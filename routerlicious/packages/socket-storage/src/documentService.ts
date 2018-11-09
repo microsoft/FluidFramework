@@ -110,8 +110,10 @@ export class DocumentService2 extends DocumentService {
     public async connectToDeltaStream(
         tenantId: string,
         id: string,
-        token: string,
+        tokenProvider: api.ITokenProvider,
         client: api.IClient): Promise<api.IDocumentDeltaConnection> {
+
+        const token = (tokenProvider as TokenProvider).token;
         return WSDeltaConnection.Create(tenantId, id, token, client, this.deltaUrl);
     }
 }

@@ -101,8 +101,8 @@ async function loadDocument(
     const replayMode = (from >= 0) && (to >= 0);
     const documentService = replayMode
         ? replaySocketStorage.createReplayDocumentService(document.location.origin, from, to)
-        : socketStorage.createDocumentService2(
-            config.jarvisUrl,
+        : socketStorage.createDocumentService(
+            document.location.origin,
             config.blobStorageUrl,
             errorService,
             disableCache,

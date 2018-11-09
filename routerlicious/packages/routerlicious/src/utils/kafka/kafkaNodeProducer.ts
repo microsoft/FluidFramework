@@ -1,7 +1,6 @@
 // tslint:disable:ban-types
 import * as kafkaNode from "kafka-node";
 import * as util from "util";
-import * as winston from "winston";
 import { debug } from "../debug";
 import { IPendingMessage, IProducer } from "./definitions";
 import { Producer } from "./producer";
@@ -31,7 +30,6 @@ export class KafkaNodeProducer extends Producer implements IProducer {
     }
 
     protected sendCore(messages: {[key: string]: IPendingMessage[] }) {
-        winston.info(`sendCore`);
         const kafkaMessages = new Array<{ key: string, messages: string[], topic: string }>();
 
         // tslint:disable-next-line:forin
@@ -49,7 +47,6 @@ export class KafkaNodeProducer extends Producer implements IProducer {
                 }
 
                 const sendBatch = pendingMessages.splice(0, i);
-                winston.info(`  sendCore.batch ${key}:${sendBatch.length}`);
                 const kafkaMessage = {
                     key,
                     messages: sendBatch,
