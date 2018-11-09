@@ -1,6 +1,6 @@
 {
   "name": "@chaincode/domstream",
-  "version": "0.1.24",
+  "version": "0.1.39",
   "author": "Microsoft",
   "description": "DOM stream experimental extension",
   "repository": "microsoft/prague",
@@ -24,6 +24,7 @@
     "clean-webpack-plugin": "^0.1.19",
     "copy-webpack-plugin": "^4.6.0",
     "cross-spawn": "^6.0.5",
+    "html-webpack-plugin": "^3.2.0",
     "source-map-loader": "^0.2.3",
     "ts-loader": "^5.3.0",
     "tslint": "^5.9.1",
@@ -35,12 +36,14 @@
   },
   "scripts": {
     "build": "npm run tslint && npm run webpack",
-    "builddev": "npm run tslint && npm run webpackdev",
+    "build:pub": "npm run tslint && npm version patch && npm run webpack:pub",
+    "build:dev": "npm run tslint && npm run webpack:dev",
     "tslint": "tslint 'src/**/*.ts'",
     "webpack": "webpack --config webpack.config.js",
-    "webpackdev": "webpack --config webpack.config.js --env dev --watch",
-    "publish-local": "npm publish --registry http://localhost:4873",
-    "publish-patch-local": "npm version patch && npm run publish-local"
+    "webpack:pub": "webpack --config webpack.config.js --env.publish true",
+    "webpack:dev": "webpack --config webpack.config.js --env.target development --watch",
+    "webpack:dev:ext": "webpack --config webpack.config.js --env.target development --config-name extension --watch",
+    "publish-local": "npm publish --registry http://localhost:4873"
   },
   "prague": {
     "browser": {
