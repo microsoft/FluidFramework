@@ -7,6 +7,11 @@ openssl pkey -in eu2-cert.pem -out tls.key
 openssl x509 -in eu2-cert.pem -out tls.crt
 ```
 
+Optionally generate dhparams. Or, much quicker, just take already generated ones from another of our servers
+```bash
+openssl dhparam -out dhparam.pem 4096
+```
+
 Choose your desired kube cluster and install certificates and encryption form files.
 
 ```bash
