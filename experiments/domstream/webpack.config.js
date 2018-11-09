@@ -3,11 +3,12 @@ const path = require('path');
 const merge = require('webpack-merge');
 const CleanWebpackPlugin = require("clean-webpack-plugin");
 const CopyWebpackPlugin = require("copy-webpack-plugin");
+const HtmlWebpackPlugin = require("html-webpack-plugin");
 const ChromeExtensionReloader = require("webpack-chrome-extension-reloader");
 
 module.exports = env => {
-
-    const isProduction = env !== "dev";
+    const isProduction = !env || env.target !== "development";
+    const publish = env && env.publish;
 
     const prodOptions = {
         mode: "production",
@@ -17,10 +18,7 @@ module.exports = env => {
     const devOptions = {
         mode: "development",
         devtool: "inline-source-map",
-        devServer: {
-            contentBase: "./dist"
-        }
-    };  
+    };
 
     const commonOptions = {
         module: {
@@ -43,12 +41,13 @@ module.exports = env => {
 
     const options = merge(commonOptions, isProduction ? prodOptions : devOptions);
     let extensionBundle = {
+        name: "extension",
         entry: {
             background: './src/background.ts',
             content: './src/content.ts',
             contentOptional: './src/contentOptional.ts',
             popup: './src/popup.ts',
-            pragueView: './src/pragueView.ts',
+            pragueView: './src/pragueView.ts'
         },
         output: {
             filename: '[name].js',
@@ -56,7 +55,35 @@ module.exports = env => {
         },
         plugins: [
             new CleanWebpackPlugin(["dist/extension"]),
-            new CopyWebpackPlugin(["./src/manifest.json", "./src/view.html", "./src/popup.html", "./src/pragueView.html"])
+
+            new CopyWebpackPlugin([{
+                from: "./src/manifest.json",
+                transform: function (content, path) {
+                    // generates the manifest file using the package.json informations
+                    return Buffer.from(JSON.stringify({
+                        description: process.env.npm_package_description,
+                        version: process.env.npm_package_version,
+                        author: process.env.npm_package_author,
+                        ...JSON.parse(content.toString())
+                    }))
+                }
+            }]),
+            new HtmlWebpackPlugin({
+                template: path.join(__dirname, "src", "view.html"),
+                filename: "view.html",
+                minify: true,
+                chunks: []
+            }),
+            new HtmlWebpackPlugin({
+                template: path.join(__dirname, "src", "popup.html"),
+                filename: "popup.html",
+                chunks: ["popup"]
+            }),
+            new HtmlWebpackPlugin({
+                template: path.join(__dirname, "src", "pragueView.html"),
+                filename: "pragueView.html",
+                chunks: ["pragueView"]
+            }),
         ]
     };
 
@@ -78,7 +105,8 @@ module.exports = env => {
         });
     }
 
-    const componentBundle = {
+    let componentBundle = {
+        name: "component",
         entry: {
             pragueViewComponent: './src/pragueViewComponent.ts',
         },
@@ -91,7 +119,12 @@ module.exports = env => {
         },
         plugins: [
             new CleanWebpackPlugin(["dist/component"]),
-            {
+        ]
+    };
+
+    if (publish) {
+        componentBundle = merge(componentBundle, {
+            plugins: [{
                 apply: (compiler) => {
                     compiler.hooks.afterEmit.tapPromise("PublishChaincodePlugin",
                         (compilation) => {
@@ -102,7 +135,7 @@ module.exports = env => {
                             }
 
                             return new Promise(resolve => {
-                                const proc = spawn("npm", ["run", "publish-patch-local"], {
+                                const proc = spawn("npm", ["run", "publish-local"], {
                                     stdio: [process.stdin, process.stdout, process.stderr]
                                 });
                                 proc.on('close', resolve);
@@ -110,9 +143,9 @@ module.exports = env => {
                         }
                     );
                 }
-            }
-        ]
-    };
+            }]
+        })
+    }
 
     const bundles = [extensionBundle, componentBundle];
     return bundles.map((bundle) => merge(options, bundle));

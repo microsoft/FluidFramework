@@ -1,3 +1,8 @@
+DOM Stream
+==========
+
+An experiment chrome extension to mirror/stream/remote/share web pages via saving and updating the DOM tree thru rague.
+
 Build
 =====
   `npm i & npm run build`
@@ -9,9 +14,8 @@ Component
 
 The chaincode component output is in the `dist/component` directory after build
 
+To build and publish with version rev: `npm run build:pub`
 To publish: `npm run publish-local`
-To rev version and publish: `npm run publish-patch-local`
-
 
 Known Issues
 ============

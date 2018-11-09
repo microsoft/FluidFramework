@@ -1,10 +1,8 @@
 {
   "name": "DOM stream",
-  "description": "DOM stream",
-  "version": "0.3",
   "content_scripts": [{
     "matches": ["<all_urls>"],
-    "match_about_blank" : true,
+    "match_about_blank": true,
     "run_at": "document_start",
     "js": ["content.js"],
     "all_frames": true
