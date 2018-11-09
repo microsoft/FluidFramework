@@ -1,28 +1,27 @@
 import { IAlfredTenant } from "@prague/routerlicious/dist/alfred/tenant";
-import { IDocumentStorage, IOrdererManager, ITenantManager } from "@prague/routerlicious/dist/core";
-import * as core from "@prague/routerlicious/dist/core";
+import { IDocumentStorage, ITenantManager } from "@prague/routerlicious/dist/core";
 import * as utils from "@prague/routerlicious/dist/utils";
 import { Deferred } from "@prague/utils";
+import * as http from "http";
 import { Provider } from "nconf";
 import * as winston from "winston";
 import * as app from "./app";
 import * as io from "./io";
+import { OrdererManager } from "./orderFactory";
 
 export class JarvisRunner implements utils.IRunner {
-    private server: core.IWebServer;
+    private server: http.Server;
     private runningDeferred: Deferred<void>;
 
     constructor(
-        private serverFactory: core.IWebServerFactory,
         private config: Provider,
         private port: string | number,
-        private orderManager: IOrdererManager,
+        private orderManager: OrdererManager,
         private tenantManager: ITenantManager,
         private storage: IDocumentStorage,
         private appTenants: IAlfredTenant[],
         private mongoManager: utils.MongoManager,
-        private producer: utils.IProducer,
-        private metricClientConfig: any) {
+        private producer: utils.IProducer) {
     }
 
     public start(): Promise<void> {
@@ -38,34 +37,29 @@ export class JarvisRunner implements utils.IRunner {
             this.producer);
         alfred.set("port", this.port);
 
-        this.server = this.serverFactory.create(alfred);
-
-        const httpServer = this.server.httpServer;
+        this.server = http.createServer(alfred);
+        const redis = this.config.get("redis");
 
         // Register all the socket.io stuff
         io.register(
-            this.server.webSocketServer,
-            this.metricClientConfig,
+            this.server,
             this.orderManager,
-            this.tenantManager);
+            this.tenantManager,
+            redis);
 
         // Listen on provided port, on all network interfaces.
-        httpServer.listen(this.port);
-        httpServer.on("error", (error) => this.onError(error));
-        httpServer.on("listening", () => this.onListening());
+        this.server.listen(this.port);
+        this.server.on("error", (error) => this.onError(error));
+        this.server.on("listening", () => this.onListening());
 
         return this.runningDeferred.promise;
     }
 
     public stop(): Promise<void> {
         // Close the underlying server and then resolve the runner once closed
-        this.server.close().then(
-            () => {
-                this.runningDeferred.resolve();
-            },
-            (error) => {
-                this.runningDeferred.reject(error);
-            });
+        this.server.close(() => {
+            this.runningDeferred.resolve();
+        });
 
         return this.runningDeferred.promise;
     }
@@ -99,7 +93,7 @@ export class JarvisRunner implements utils.IRunner {
      * Event listener for HTTP server "listening" event.
      */
     private onListening() {
-        const addr = this.server.httpServer.address();
+        const addr = this.server.address();
         const bind = typeof addr === "string"
             ? "pipe " + addr
             : "port " + addr.port;

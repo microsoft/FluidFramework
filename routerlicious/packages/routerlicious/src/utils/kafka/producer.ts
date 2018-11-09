@@ -10,7 +10,8 @@ export abstract class Producer implements IProducer {
     protected producer: any;
     protected sendPending = false;
 
-    constructor(private maxMessageSize: number) {
+    constructor(protected maxMessageSize: number) {
+        this.maxMessageSize = maxMessageSize * 0.75;
     }
 
     /**
@@ -44,32 +45,14 @@ export abstract class Producer implements IProducer {
      */
     protected sendPendingMessages() {
         // TODO let's log to influx how many messages we have batched
-
-        // tslint:disable-next-line:forin
-        for (const key in this.messages) {
-            const messages = this.messages[key];
-
-            while (messages.length > 0) {
-                let sendSize = 0;
-                let i = 0;
-                for (; i < messages.length; i++) {
-                    sendSize += messages[i].message.length;
-                    if (sendSize >= this.maxMessageSize) {
-                        break;
-                    }
-                }
-
-                const sendBatch = messages.splice(0, i);
-                this.sendCore(key, sendBatch);
-            }
-        }
+        this.sendCore(this.messages);
         this.messages = {};
     }
 
     /**
      * Sends the list of messages for the given key
      */
-    protected abstract sendCore(key: string, messages: IPendingMessage[]);
+    protected abstract sendCore(messages: {[key: string]: IPendingMessage[] });
 
     /**
      * Indicates whether it's possible to send messages or not

@@ -1,12 +1,12 @@
 import * as api from "@prague/runtime-definitions";
 import { GitManager, Historian, ICredentials } from "@prague/services-client";
 import { DocumentDeltaConnection } from "@prague/socket-storage-shared";
-// tslint:disable-next-line:match-default-export-name
-import axios from "axios";
+import Axios from "axios";
 import * as io from "socket.io-client";
 import { DocumentStorageService } from "./blobStorageService";
 import { DeltaStorageService, DocumentDeltaStorageService } from "./deltaStorageService";
 import { TokenProvider } from "./tokens";
+import { WSDeltaConnection } from "./wsDeltaConnection";
 
 /**
  * The DocumentService manages the Socket.IO connection and manages routing requests to connected
@@ -16,7 +16,7 @@ export class DocumentService implements api.IDocumentService {
     private deltaStorage: DeltaStorageService;
 
     constructor(
-        private deltaUrl: string,
+        protected deltaUrl: string,
         private gitUrl: string,
         private errorTracking: api.IErrorTrackingService,
         private disableCache: boolean,
@@ -83,11 +83,37 @@ export class DocumentService implements api.IDocumentService {
             };
         }
 
-        const result = await axios.post<string>(`${this.deltaUrl}/documents/${tenantId}/${id}/forks`, { headers });
+        const result = await Axios.post<string>(`${this.deltaUrl}/documents/${tenantId}/${id}/forks`, { headers });
         return result.data;
     }
 
     public getErrorTrackingService() {
         return this.errorTracking;
+    }
+}
+
+/**
+ * The DocumentService manages the Socket.IO connection and manages routing requests to connected
+ * clients
+ */
+export class DocumentService2 extends DocumentService {
+    constructor(
+        deltaUrl: string,
+        gitUrl: string,
+        errorTracking: api.IErrorTrackingService,
+        disableCache: boolean,
+        historianApi: boolean,
+        directCredentials: ICredentials) {
+        super(deltaUrl, gitUrl, errorTracking, disableCache, historianApi, directCredentials);
+    }
+
+    public async connectToDeltaStream(
+        tenantId: string,
+        id: string,
+        tokenProvider: api.ITokenProvider,
+        client: api.IClient): Promise<api.IDocumentDeltaConnection> {
+
+        const token = (tokenProvider as TokenProvider).token;
+        return WSDeltaConnection.Create(tenantId, id, token, client, this.deltaUrl);
     }
 }

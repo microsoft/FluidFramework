@@ -120,6 +120,7 @@
     "passport-local": "^1.0.0",
     "passport-openidconnect": "0.0.2",
     "progress": "^2.0.0",
+    "randomstring": "^1.1.5",
     "raven": "^2.6.3",
     "raven-js": "^3.26.4",
     "redis": "^2.7.1",

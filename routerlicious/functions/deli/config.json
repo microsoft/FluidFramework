@@ -10,7 +10,7 @@
     "mongo": {
         "endpoint": "mongodb://mongodb:27017",
         "collectionNames": {
-            "deltas": "deltas",
+            "deltas": "deltas2",
             "documents": "documents",
             "partitions": "partitions",
             "tenants": "tenants",
@@ -29,7 +29,7 @@
     "alfred": {
         "kafkaClientId": "alfred",
         "maxMessageSize": "16KB",
-        "topic": "rawdeltas",
+        "topic": "rawdeltas2",
         "bucket": "snapshots",
         "restJsonSize": "50mb",
         "tenants": [
@@ -70,8 +70,8 @@
     },
     "deli": {
         "topics": {
-            "receive": "rawdeltas",
-            "send": "deltas"
+            "receive": "rawdeltas2",
+            "send": "deltas2"
         },
         "kafkaClientId": "deli",
         "groupId": "deli",
@@ -80,7 +80,7 @@
     },
     "system": {
         "topics": {
-            "send": "deltas"
+            "send": "deltas2"
         }
     },
     "auth": {
@@ -88,8 +88,8 @@
     },
     "routemaster": {
         "topics": {
-            "receive": "deltas",
-            "send": "rawdeltas"
+            "receive": "deltas2",
+            "send": "rawdeltas2"
         },
         "clientId": "routemaster",
         "groupId": "routemaster"
@@ -97,31 +97,31 @@
     "lambdas": {
         "deli": {
             "group": "deli",
-            "topic": "rawdeltas"
+            "topic": "rawdeltas2"
         },
         "routemaster": {
             "group": "routemaster",
-            "topic": "deltas"
+            "topic": "deltas2"
         },
         "scriptorium": {
             "group": "scriptorium",
-            "topic": "deltas"
+            "topic": "deltas2"
         },
         "serviceGraph": {
             "group": "serviceGraph",
-            "topic": "deltas"
+            "topic": "deltas2"
         },
         "rotograph": {
             "group": "rotograph",
-            "topic": "deltas"
+            "topic": "deltas2"
         },
         "tmz": {
             "group": "tmz",
-            "topic": "deltas"
+            "topic": "deltas2"
         }
     },
     "scriptorium": {
-        "topic": "deltas",
+        "topic": "deltas2",
         "kafkaClientId": "scriptorium",
         "groupId": "scriptorium",
         "checkpointBatchSize": 1,
