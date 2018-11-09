@@ -25,6 +25,13 @@ services:
             - DEBUG=prague:*
             - NODE_ENV=development
         restart: always
+    bbc:
+        build: .
+        command: node dist/kafka-service/index.js bbc ../bbc/index.js
+        environment:
+            - DEBUG=prague:*
+            - NODE_ENV=development
+        restart: always
     tmz:
         build: .
         command: node dist/kafka-service/index.js tmz ../tmz/index.js

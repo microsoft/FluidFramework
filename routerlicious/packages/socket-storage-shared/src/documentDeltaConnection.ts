@@ -116,17 +116,24 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
         public details: messages.IConnected) {
         super();
 
-        this.submitManager = new BatchManager<IDocumentMessage>((submitType, work) => {
-            this.socket.emit(
-                submitType,
-                this.details.clientId,
-                work,
-                (error) => {
-                    if (error) {
-                        debug("Emit error", error);
-                    }
-                });
-        });
+        this.submitManager = new BatchManager<IDocumentMessage>(
+            (submitType, work) => {
+                const MaxBatchSize = 100;
+                const batchLength = work.length;
+
+                for (let i = 0; i < batchLength; i += MaxBatchSize) {
+                    const sendBatch = work.length <= MaxBatchSize ? work : work.splice(0, MaxBatchSize);
+                    this.socket.emit(
+                        submitType,
+                        this.details.clientId,
+                        sendBatch,
+                        (error) => {
+                            if (error) {
+                                debug("Emit error", error);
+                            }
+                        });
+                }
+            });
     }
 
     /**

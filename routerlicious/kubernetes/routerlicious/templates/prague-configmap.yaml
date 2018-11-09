@@ -127,6 +127,10 @@ data:
                 "group": "{{ template "scriptorium.fullname" . }}",
                 "topic": "{{ .Values.kafka.topics.deltas }}"
             },
+            "bbc": {
+                "group": "{{ template "bbc.fullname" . }}",
+                "topic": "{{ .Values.kafka.topics.deltas }}"
+            },
             "tmz": {
                 "group": "{{ template "tmz.fullname" . }}",
                 "topic": "{{ .Values.kafka.topics.deltas }}"

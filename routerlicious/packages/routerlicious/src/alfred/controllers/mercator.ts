@@ -83,13 +83,10 @@ async function run(
         // tslint:disable-next-line
         if (op.contents.key == totalMessages) {
             const totalTime = Date.now() - start;
-            console.log("Total Time", totalTime);
-            console.log("Latency", sum / totalMessages);
-            console.log("Bandwidth", 1000 * totalMessages / totalTime);
-
             resultsDeferred.resolve({
-                bandwidth: 1000 * totalMessages / totalTime,
                 latency: sum / totalMessages,
+                mbPerSecond: 1000 * totalMessages * payloadSize / (1024 * 1024) / totalTime,
+                messagesPerSecond: 1000 * totalMessages / totalTime,
                 totalTime,
             });
         }
@@ -132,37 +129,37 @@ export function initialize() {
             payloadSize);
         sioTd.innerText = "SIO" + JSON.stringify(sioresults, null, 2);
 
-        const sioLocalResults = await run(
-            getRandomName(),
-            "local",
-            "43cfc3fbf04a97c0921fd23ff10f9e4b",
-            "http://localhost:3000",
-            "http://localhost:3001",
-            batches,
-            messagesPerBatch,
-            payloadSize);
-        sioLocalTd.innerText = "SIO Local" + JSON.stringify(sioLocalResults, null, 2);
+        // const sioLocalResults = await run(
+        //     getRandomName(),
+        //     "local",
+        //     "43cfc3fbf04a97c0921fd23ff10f9e4b",
+        //     "http://localhost:3000",
+        //     "http://localhost:3001",
+        //     batches,
+        //     messagesPerBatch,
+        //     payloadSize);
+        // sioLocalTd.innerText = "SIO Local" + JSON.stringify(sioLocalResults, null, 2);
 
-        const wsresults = await run(
-            getRandomName(),
-            "prague",
-            "43cfc3fbf04a97c0921fd23ff10f9e4b",
-            "http://localhost:3030",
-            "http://localhost:3001",
-            batches,
-            messagesPerBatch,
-            payloadSize);
-        wsTd.innerText = "WS" + JSON.stringify(wsresults, null, 2);
+        // const wsresults = await run(
+        //     getRandomName(),
+        //     "prague",
+        //     "43cfc3fbf04a97c0921fd23ff10f9e4b",
+        //     "http://localhost:3030",
+        //     "http://localhost:3001",
+        //     batches,
+        //     messagesPerBatch,
+        //     payloadSize);
+        // wsTd.innerText = "WS" + JSON.stringify(wsresults, null, 2);
 
-        const wsLocalResults = await run(
-            getRandomName(),
-            "local",
-            "43cfc3fbf04a97c0921fd23ff10f9e4b",
-            "http://localhost:3030",
-            "http://localhost:3001",
-            batches,
-            messagesPerBatch,
-            payloadSize);
-        wsLocalTd.innerText = "WS Local" + JSON.stringify(wsLocalResults, null, 2);
+        // const wsLocalResults = await run(
+        //     getRandomName(),
+        //     "local",
+        //     "43cfc3fbf04a97c0921fd23ff10f9e4b",
+        //     "http://localhost:3030",
+        //     "http://localhost:3001",
+        //     batches,
+        //     messagesPerBatch,
+        //     payloadSize);
+        // wsLocalTd.innerText = "WS Local" + JSON.stringify(wsLocalResults, null, 2);
     };
 }

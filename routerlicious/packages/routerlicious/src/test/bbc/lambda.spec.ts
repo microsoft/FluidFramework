@@ -1,16 +1,16 @@
 import * as assert from "assert";
+import { BBCLambda } from "../../bbc/lambda";
 import { IPartitionLambda } from "../../kafka-service/lambdas";
-import { ScriptoriumLambda } from "../../scriptorium/lambda";
-import { KafkaMessageFactory, MessageFactory, TestCollection, TestContext } from "../testUtils";
+import { IEvent, KafkaMessageFactory, MessageFactory, TestContext, TestPublisher } from "../testUtils";
 
 describe("Routerlicious", () => {
-    describe("Scriptorium", () => {
+    describe("BBC", () => {
         describe("Lambda", () => {
             const testTenantId = "test";
             const testDocumentId = "test";
             const testClientId = "test";
 
-            let testCollection: TestCollection;
+            let testPublisher: TestPublisher;
             let testContext: TestContext;
             let messageFactory: MessageFactory;
             let kafkaMessageFactory: KafkaMessageFactory;
@@ -20,13 +20,22 @@ describe("Routerlicious", () => {
                 messageFactory = new MessageFactory(testDocumentId, testClientId, testTenantId);
                 kafkaMessageFactory = new KafkaMessageFactory();
 
-                testCollection = new TestCollection([]);
+                testPublisher = new TestPublisher();
                 testContext = new TestContext();
-                lambda = new ScriptoriumLambda(testCollection, testContext);
+                lambda = new BBCLambda(testPublisher, testContext);
             });
 
+            function countOps(events: IEvent[]) {
+                let count = 0;
+                for (const event of events) {
+                    count += event.args[1].length;
+                }
+
+                return count;
+            }
+
             describe(".handler()", () => {
-                it("Should store incoming messages to database", async () => {
+                it("Should broadcast incoming messages", async () => {
                     const numMessages = 10;
                     for (let i = 0; i < numMessages; i++) {
                         const message = messageFactory.createSequencedOperation();
@@ -34,7 +43,10 @@ describe("Routerlicious", () => {
                     }
                     await testContext.waitForOffset(kafkaMessageFactory.getHeadOffset(testDocumentId));
 
-                    assert.equal(numMessages, testCollection.collection.length);
+                    console.log(kafkaMessageFactory.getHeadOffset(testDocumentId));
+                    assert.equal(
+                        numMessages,
+                        countOps(testPublisher.to(`${testTenantId}/${testDocumentId}`).getEvents("op")));
                 });
             });
         });

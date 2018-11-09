@@ -5,9 +5,6 @@ import * as utils from "../utils";
 import { ScriptoriumLambdaFactory } from "./lambdaFactory";
 
 export async function create(config: Provider): Promise<IPartitionLambdaFactory> {
-    const redisConfig = config.get("redis");
-    const publisher = new services.SocketIoRedisPublisher(redisConfig.port, redisConfig.host);
-
     const mongoUrl = config.get("mongo:endpoint") as string;
     const deltasCollectionName = config.get("mongo:collectionNames:deltas");
     const mongoFactory = new services.MongoDbFactory(mongoUrl);
@@ -23,5 +20,5 @@ export async function create(config: Provider): Promise<IPartitionLambdaFactory>
         },
         true);
 
-    return new ScriptoriumLambdaFactory(mongoManager, collection, publisher);
+    return new ScriptoriumLambdaFactory(mongoManager, collection);
 }

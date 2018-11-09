@@ -6,5 +6,4 @@ As defined by [Wikipedia](https://en.wikipedia.org/wiki/Scriptorium), "scriptori
 commonly used to refer to a room in medieval European monasteries devoted to the writing, copying and illuminating of
 manuscripts by monastic scribes."
 
-In our case scriptorium retrieves sequenced messages from Kafka. It then broadcasts the new message and writes the
-message to a database for storage. We currently make use of Redis for broadcasting and MongoDB for storage.
+In our case scriptorium retrieves sequenced messages from Kafka and then writes the message to a database for storage.

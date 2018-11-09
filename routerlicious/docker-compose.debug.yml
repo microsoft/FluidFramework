@@ -16,6 +16,10 @@ services:
         ports:
             - "5861:5858"
         command: node --inspect=0.0.0.0:5858 dist/kafka-service/index.js scriptorium ../scriptorium/index.js
+    bbc:
+        ports:
+            - "5862:5858"
+        command: node --inspect=0.0.0.0:5858 dist/kafka-service/index.js bbc ../bbc/index.js
     tmz:
         ports:
             - "5862:5858"

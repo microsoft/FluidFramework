@@ -1,61 +1,43 @@
-import { Deferred } from "./promises";
-
-const defaultBatchSize = 100;
-
 export class BatchManager<T> {
-    private pendingWork: { [id: string]: T[] } = {};
-    private workPending: Deferred<void>;
+    private pendingWork = new Map<string, T[]>();
 
-    constructor(private process: (id: string, work: T[]) => void, private batchSize: number = defaultBatchSize) {
-        // TODO should add in a max batch size to this to limit sent sizes
+    constructor(private process: (id: string, work: T[]) => void) {
     }
 
     public add(id: string, work: T) {
-        if (!(id in this.pendingWork)) {
-            this.pendingWork[id] = [];
+        // Schedule the work callback if the pending work queue is empty
+        const shouldScheduleWork = this.pendingWork.size === 0;
+
+        if (!this.pendingWork.has(id)) {
+            this.pendingWork.set(id, []);
         }
 
-        this.pendingWork[id].push(work);
+        this.pendingWork.get(id).push(work);
 
-        // Start processing either depending on the batchsize or nexttick.
-        if (this.pendingWork[id].length >= this.batchSize) {
-            this.startWork();
+        if (shouldScheduleWork) {
+            process.nextTick(() => {
+                this.startWork();
+            });
         }
-        process.nextTick(() => {
-            this.startWork();
-        });
     }
 
     /**
      * Resolves once all pending work is complete
      */
-    /* tslint:disable:promise-function-async */
-    public drain(): Promise<void> {
-        return this.workPending ? this.workPending.promise : Promise.resolve();
+    public async drain(): Promise<void> {
+        this.startWork();
     }
 
     private startWork() {
-        if (!this.workPending) {
-            this.workPending = new Deferred<void>();
-            // Clear the internal flags first to avoid issues in case any of the pending work calls back into
-            // the batch manager. We could also do this with a second setImmediate call but avodiing in order
-            // to process the work quicker.
-            const pendingWork = this.pendingWork;
-            this.pendingWork = {};
-            this.workPending.resolve();
-            this.workPending = null;
+        // Clear the internal flags first to avoid issues in case any of the pending work calls back into
+        // the batch manager. We could also do this with a second setImmediate call but avodiing in order
+        // to process the work quicker.
+        const pendingWork = this.pendingWork;
+        this.pendingWork = new Map<string, T[]>();
 
-            // TODO - I may wish to have the processing return a promise and not attempt to perform another
-            // batch of work until this current one is done (or has errored)
-            this.processPendingWork(pendingWork);
-        }
-    }
-
-    private processPendingWork(pendingWork: { [id: string]: T[] }) {
         // TODO log to influx how much pending work there is. We want to limit the size of a batch
-        // tslint:disable-next-line:forin
-        for (const id in pendingWork) {
-            this.process(id, pendingWork[id]);
+        for (const [id, batch] of pendingWork) {
+            this.process(id, batch);
         }
     }
 }
