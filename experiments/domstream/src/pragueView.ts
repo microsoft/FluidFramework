@@ -1,11 +1,6 @@
-import * as pragueApi from "@prague/client-api";
 import * as pragueMap from "@prague/map";
-import { debug, debugDOM } from "./debug";
-import { PragueMapViewWrapper } from "./pragueMapWrapper";
+import { FrameLoader, IFrameLoaderCallbacks } from "./frameLoader";
 import { getCollabDoc } from "./pragueUtil";
-import { StreamDOMTree, StreamWindow } from "./streamDOMTree";
-
-const allowInteraction = true;
 
 function setSpanText(spanName, message) {
     (document.getElementById(spanName) as HTMLSpanElement).innerHTML = message;
@@ -21,74 +16,84 @@ function setLatency(dataMapView, startLoadTime) {
     setSpanText("bgwkrlatency", Math.round(endTime - dataMapView.get("FG_END_DATE")) + " ms");
     setSpanText("latency", Math.round(startLoadTime.valueOf() - endTime) + " ms (Live only)");
 }
-async function loadDataView(rootView: pragueMap.IMapView, collabDoc: pragueApi.Document) {
-    const dataMap = rootView.get("DOMSTREAM");
-    if (!dataMap) {
+const scale = document.getElementById("scale") as HTMLInputElement;
+
+const scrollPosField = document.getElementById("SCROLLPOS") as HTMLSpanElement;
+let scaleListener;
+class FrameLoaderCallbacks implements IFrameLoaderCallbacks {
+    private startTime: number;
+    private startLoadTime: Date;
+    private dataMapView: pragueMap.IMapView;
+    public onDOMDataNotFound() {
         setStatusMessage("DOM not found");
-        return;
+        setSpanText("URL", "Empty");
+    }
+    public onDOMDataFound(startLoadTime: Date, dataMapView: pragueMap.IMapView) {
+        this.startLoadTime = startLoadTime;
+        this.dataMapView = dataMapView;
+        setStatusMessage("Creating DOM");
+        setSpanText("config",
+            (dataMapView.get("CONFIG_BATCHOP") ? "Batched " : "") +
+            (dataMapView.get("CONFIG_BACKGROUND") ? "Background " : ""));
+        setSpanText("inittime", Math.round(dataMapView.get("TIME_INIT")) + " ms");
+        setSpanText("signaltime", Math.round(dataMapView.get("TIME_STARTSIGNAL")) + " ms (Nav Only)");
+        setSpanText("savetime", Math.round(dataMapView.get("TIME_STARTSAVE")) + " ms");
+        setSpanText("docloadtime", Math.round(dataMapView.get("TIME_DOCLOAD")) + " ms");
+        setSpanText("gentime", Math.round(dataMapView.get("TIME_GEN")) + " ms");
+
+        setSpanText("URL", dataMapView.get("URL"));
+        if (scaleListener) {
+            scale.removeEventListener("change", scaleListener);
+        }
+        scaleListener = () => {
+            FrameLoader.setDimension(iframe, dataMapView, this);
+        };
+        scale.addEventListener("change", scaleListener);
+
+        this.startTime = performance.now();
     }
 
-    const startLoadTime = new Date();
-    setStatusMessage("Creating DOM");
-    const dataMapView = await dataMap.getView();
-    setSpanText("config",
-        (dataMapView.get("CONFIG_BATCHOP") ? "Batched " : "") +
-        (dataMapView.get("CONFIG_BACKGROUND") ? "Background " : ""));
-    setSpanText("inittime", Math.round(dataMapView.get("TIME_INIT")) + " ms");
-    setSpanText("signaltime", Math.round(dataMapView.get("TIME_STARTSIGNAL")) + " ms (Nav Only)");
-    setSpanText("savetime", Math.round(dataMapView.get("TIME_STARTSAVE")) + " ms");
-    setSpanText("docloadtime", Math.round(dataMapView.get("TIME_DOCLOAD")) + " ms");
-    setSpanText("gentime", Math.round(dataMapView.get("TIME_GEN")) + " ms");
+    public onTreeGenerated() {
+        setSpanText("domgentime", Math.round(performance.now() - this.startTime) + "ms");
+        setStatusMessage("DOM generated");
 
-    setSpanText("URL", dataMapView.get("URL"));
-    setDimension(dataMapView);
-    const tree = await setDOM(dataMapView);
-
-    if (dataMapView.has("END_DATE")) {
-        setLatency(dataMapView, startLoadTime);
-    } else {
-        setSpanText("attachtime", "");
-        setSpanText("bgwkrlatency", "");
-        setSpanText("latency", "");
+        if (this.dataMapView.has("END_DATE")) {
+            setLatency(this.dataMapView, this.startLoadTime);
+        } else {
+            setSpanText("attachtime", "");
+            setSpanText("bgwkrlatency", "");
+            setSpanText("latency", "");
+        }
     }
 
-    const iframe = document.getElementById("view") as HTMLIFrameElement;
-    const w = iframe.contentWindow;
-    const scrollPosField = document.getElementById("SCROLLPOS") as HTMLSpanElement;
-    StreamWindow.loadScrollPos(w, dataMapView.get("SCROLLPOS"), scrollPosField);
-
-    dataMapView.getMap().on("valueChanged", (changed, local, op) => {
-        switch (changed.key) {
-            case "DIMENSION":
-                setDimension(dataMapView);
-                break;
-            case "SCROLLPOS":
-                if (!local) {
-                    StreamWindow.loadScrollPos(w, dataMapView.get("SCROLLPOS"), scrollPosField);
-                }
-                break;
-            case "MUTATION":
-                tree.FlushPendingMutationEvent();
-                break;
+    public onValueChanged(key) {
+        switch (key) {
             case "DATE":
-                setSpanText("latency", Math.round(startLoadTime.valueOf() - dataMapView.get("DATE"))
+                setSpanText("latency", Math.round(this.startLoadTime.valueOf() - this.dataMapView.get("DATE"))
                     + " ms (Live only)");
-                break;
+                return true;
             case "END_DATE":
-                setLatency(dataMapView, startLoadTime);
-                break;
+                setLatency(this.dataMapView, this.startLoadTime);
+                return true;
             case "TIME_ATTACH":
             case "FG_END_DATE":
-            case "REMOTECLICK":
-                break;
-            default:
-                console.error(changed.key, "shouldn't change");
-                break;
+                return true;
         }
-    });
+    }
 
-    if (allowInteraction) {
-        new StreamWindow(iframe.contentWindow, new PragueMapViewWrapper(dataMapView), tree, true); // tslint:disable-line
+    public getScrollPosField() {
+        return scrollPosField;
+    }
+
+    public getViewScale() {
+        return parseInt(scale.value, 10);
+    }
+
+    public onDimensionUpdated(dimension: any, scaleStr: string, boundingRect: any, viewScaleValue: number) {
+        const dimensionField = document.getElementById("DIMENSION") as HTMLSpanElement;
+        dimensionField.innerHTML = dimension.width + " x " + dimension.height + " " + scaleStr;
+        setSpanText("scaleValue",
+            viewScaleValue + "% (" + boundingRect.width.toFixed(0) + ", " + boundingRect.height.toFixed(0) + ")");
     }
 }
 
@@ -98,54 +103,25 @@ async function initFromPrague(documentId: string) {
     const collabDoc = await getCollabDoc(documentId);
     const rootView = await collabDoc.getRoot().getView();
 
-    rootView.getMap().on("valueChanged", (changed, local, op) => {
-        if (changed.key === "DOMSTREAM") {
-            debug("Loading new page");
-            loadDataView(rootView, collabDoc);
-        }
-    });
-
-    await loadDataView(rootView, collabDoc);
-}
-
-function setDimension(dataMapView) {
-    const dimension = JSON.parse(dataMapView.get("DIMENSION"));
-    debugDOM(dimension);
-    if (dimension) {
-        const dimensionField = document.getElementById("DIMENSION") as HTMLSpanElement;
-        dimensionField.innerHTML = dimension.width + " x " + dimension.height;
-        const iframe = document.getElementById("view") as HTMLIFrameElement;
-        iframe.width = dimension.width;
-        iframe.height = dimension.height;
-        // Also update the scroll pos after resize.
-        StreamWindow.loadScrollPos(iframe.contentWindow, dataMapView.get("SCROLLPOS"));
-    }
-}
-
-async function setDOM(dataMapView: pragueMap.IMapView) {
-    const iframe = document.getElementById("view") as HTMLIFrameElement;
-    return await streamDOMFromPrague(dataMapView, iframe.contentDocument);
+    FrameLoader.syncRoot(iframe, rootView, new FrameLoaderCallbacks());
 }
 
 const query = window.location.search.substring(1);
 const search = new URLSearchParams(query);
-if (search.has("docId")) {
-    initFromPrague(search.get("docId")).catch((error) => { console.error(error); });
+const fullView = search.has("full") && search.get("full") === "true";
+const debugView = search.has("debug") && search.get("debug") === "true";
+const iframe = document.getElementById("view") as HTMLIFrameElement;
+
+if (!fullView) {
+    document.getElementById("top").className = "";
+    iframe.className = "";
+    if (debugView) {
+        document.getElementById("side").className = "";
+    }
 }
 
-async function streamDOMFromPrague(dataMapView: pragueMap.IMapView, doc: Document) {
-    const domMap: pragueMap.IMap = dataMapView.get("DOM");
-    if (!domMap) {
-        return;
-    }
-    const domMapView = await domMap.getView();
-    if (!dataMapView.has("DOMFLATMAPNODE")) { return; }
-    const domRootNode = dataMapView.get("DOMFLATMAPNODE");
-
-    const startTime = performance.now();
-    const tree = new StreamDOMTree();
-    await tree.readFromMap(new PragueMapViewWrapper(domMapView), domRootNode, doc);
-    setSpanText("domgentime", Math.round(performance.now() - startTime) + "ms");
-    setStatusMessage("DOM generated");
-    return tree;
+if (search.has("docId")) {
+    const docId = search.get("docId");
+    document.title += " - " + docId;
+    initFromPrague(docId).catch((error) => { console.error(error); });
 }

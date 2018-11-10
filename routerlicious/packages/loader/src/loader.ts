@@ -41,7 +41,7 @@ export async function load(
     }
 
     // Verify a token was provided
-    if (!tokenProvider.storageToken || !tokenProvider.deltaStorageToken || !tokenProvider.deltaStreamToken) {
+    if (!tokenProvider.isValid()) {
         return Promise.reject("Must provide a token");
     }
 

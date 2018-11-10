@@ -4,19 +4,19 @@ import * as services from "@prague/routerlicious/dist/services";
 import * as utils from "@prague/routerlicious/dist/utils";
 import * as bytes from "bytes";
 import { Provider } from "nconf";
-import * as os from "os";
 import { RdkafkaProducer } from "../rdkafka";
+import { KafkaOrdererFactory } from "./kafkaOrderer";
+import { LocalOrdererFactory } from "./localOrderer";
+import { OrdererManager } from "./orderFactory";
 import { JarvisRunner } from "./runner";
 
 export class JarvisResources implements utils.IResources {
-    public webServerFactory: core.IWebServerFactory;
-
     constructor(
         public config: Provider,
         public producer: utils.IProducer,
         public redisConfig: any,
         public webSocketLibrary: string,
-        public orderManager: core.IOrdererManager,
+        public orderManager: OrdererManager,
         public tenantManager: core.ITenantManager,
         public storage: core.IDocumentStorage,
         public appTenants: IAlfredTenant[],
@@ -24,8 +24,6 @@ export class JarvisResources implements utils.IResources {
         public port: any,
         public documentsCollectionName: string,
         public metricClientConfig: any) {
-
-        this.webServerFactory = new services.SocketIoWebServerFactory(this.redisConfig);
     }
 
     public async dispose(): Promise<void> {
@@ -71,12 +69,7 @@ export class JarvisResourcesFactory implements utils.IResourcesFactory<JarvisRes
         await taskMessageSender.initialize();
 
         const nodeCollectionName = config.get("mongo:collectionNames:nodes");
-        const nodeManager = new services.NodeManager(mongoManager, nodeCollectionName);
         // this.nodeTracker.on("invalidate", (id) => this.emit("invalidate", id));
-        const reservationManager = new services.ReservationManager(
-            nodeManager,
-            mongoManager,
-            config.get("mongo:collectionNames:reservations"));
 
         const tenantManager = new services.TenantManager(authEndpoint, config.get("worker:blobStorageUrl"));
 
@@ -90,20 +83,16 @@ export class JarvisResourcesFactory implements utils.IResourcesFactory<JarvisRes
 
         const maxSendMessageSize = bytes.parse(config.get("alfred:maxMessageSize"));
 
-        const address = `${await utils.getHostIp()}:4000`;
-        const nodeFactory = new services.LocalNodeFactory(
-            os.hostname(),
-            address,
+        const localOrdererFactory = new LocalOrdererFactory(
             storage,
+            maxSendMessageSize,
             databaseManager,
-            60000,
             taskMessageSender,
             tenantManager,
-            tmzConfig.permissions,
-            maxSendMessageSize);
-        const localOrderManager = new services.LocalOrderManager(nodeFactory, reservationManager);
-        const kafkaOrdererFactory = new services.KafkaOrdererFactory(producer, storage, maxSendMessageSize);
-        const orderManager = new services.OrdererManager(localOrderManager, kafkaOrdererFactory);
+            config.get("tmz:permissions"));
+        const kafkaOrdererFactory = new KafkaOrdererFactory(producer, storage, maxSendMessageSize);
+
+        const ordererManager = new OrdererManager(localOrdererFactory, kafkaOrdererFactory);
 
         // Tenants attached to the apps this service exposes
         const appTenants = config.get("alfred:tenants") as Array<{ id: string, key: string }>;
@@ -116,7 +105,7 @@ export class JarvisResourcesFactory implements utils.IResourcesFactory<JarvisRes
             producer,
             redisConfig,
             webSocketLibrary,
-            orderManager,
+            ordererManager,
             tenantManager,
             storage,
             appTenants,
@@ -130,7 +119,6 @@ export class JarvisResourcesFactory implements utils.IResourcesFactory<JarvisRes
 export class JarvisRunnerFactory implements utils.IRunnerFactory<JarvisResources> {
     public async create(resources: JarvisResources): Promise<utils.IRunner> {
         return new JarvisRunner(
-            resources.webServerFactory,
             resources.config,
             resources.port,
             resources.orderManager,
@@ -138,7 +126,6 @@ export class JarvisRunnerFactory implements utils.IRunnerFactory<JarvisResources
             resources.storage,
             resources.appTenants,
             resources.mongoManager,
-            resources.producer,
-            resources.metricClientConfig);
+            resources.producer);
     }
 }

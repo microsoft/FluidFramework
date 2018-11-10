@@ -204,7 +204,7 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
         // Connect to the delta storage endpoint
         const storageDeferred = new Deferred<runtime.IDocumentDeltaStorageService>();
         this.deltaStorageP = storageDeferred.promise;
-        this.service.connectToDeltaStorage(this.tenantId, this.id, this.tokenProvider.deltaStorageToken).then(
+        this.service.connectToDeltaStorage(this.tenantId, this.id, this.tokenProvider).then(
             (deltaStorage) => {
                 storageDeferred.resolve(deltaStorage);
             },
@@ -313,7 +313,7 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
         DeltaConnection.Connect(
             this.tenantId,
             this.id,
-            this.tokenProvider.deltaStreamToken,
+            this.tokenProvider,
             this.service,
             this.client).then(
             (connection) => {
@@ -439,6 +439,15 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
 
         // TODO handle error cases, NACK, etc...
         const context = await this.handler.prepare(message);
+
+        // Add final ack trace.
+        if (message.traces && message.traces.length > 0) {
+            message.traces.push({
+                action: "end",
+                service: this.clientType,
+                timestamp: now(),
+            });
+        }
 
         // Watch the minimum sequence number and be ready to update as needed
         this.minSequenceNumber = message.minimumSequenceNumber;

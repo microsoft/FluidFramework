@@ -20,6 +20,8 @@
     const docName = document.getElementById("doc_name") as HTMLInputElement;
     const background = document.getElementById("background_cb") as HTMLInputElement;
     const batchOp = document.getElementById("batch_ops_cb") as HTMLInputElement;
+    const fullView = document.getElementById("full_view_cb") as HTMLInputElement;
+    const debugView = document.getElementById("debug_view_cb") as HTMLInputElement;
     const tabBtn = document.getElementById("tab_btn") as HTMLInputElement;
     const jsonBtn = document.getElementById("json_btn") as HTMLInputElement;
     const pragueMapBtn = document.getElementById("prague_btn") as HTMLInputElement;
@@ -35,7 +37,8 @@
     streamStartBtn.onclick = () => sendCommand("PragueStreamStart");
     streamStopBtn.onclick = () => sendCommand("PragueStreamStop");
     document.getElementById("prague_view_btn").onclick = () =>
-        window.open(chrome.runtime.getURL("pragueView.html") + "?docId=" + docName.value);
+        window.open(chrome.runtime.getURL("pragueView.html") + "?full=" + fullView.checked + "&debug="
+            + debugView.checked + "&docId=" + docName.value);
 
     const bgPage = chrome.extension.getBackgroundPage();
     const streamState = bgPage ? (bgPage.window as any).getStreamingState() : undefined;
@@ -59,24 +62,33 @@
 
         // Sync from local storage
         chrome.storage.local.get("docName", (items) => {
-            console.log(items);
             if (items.docName) {
                 docName.value = items.docName;
             }
         });
         chrome.storage.local.get("background", (items) => {
-            console.log(items);
             if (items.background !== undefined) {
                 background.checked = items.background;
             }
         });
         chrome.storage.local.get("batchOp", (items) => {
-            console.log(items);
             if (items.batchOp !== undefined) {
                 batchOp.checked = items.batchOp;
             }
         });
     }
+
+    chrome.storage.local.get("fullView", (items) => {
+        if (items.fullView !== undefined) {
+            fullView.checked = items.fullView;
+        }
+    });
+
+    chrome.storage.local.get("debugView", (items) => {
+        if (items.debugView !== undefined) {
+            debugView.checked = items.debugView;
+        }
+    });
 
     // Hook up input sync
     docName.addEventListener("input", () => {
@@ -88,5 +100,10 @@
     batchOp.addEventListener("click", () => {
         chrome.storage.local.set({ batchOp: batchOp.checked });
     });
-
+    fullView.addEventListener("click", () => {
+        chrome.storage.local.set({ fullView: fullView.checked });
+    });
+    debugView.addEventListener("click", () => {
+        chrome.storage.local.set({ debugView: debugView.checked });
+    });
 })();

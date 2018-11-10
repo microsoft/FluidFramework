@@ -8,8 +8,6 @@ import {
 import { RangeTracker } from "@prague/utils";
 import * as assert from "assert";
 import * as _ from "lodash";
-// tslint:disable-next-line:no-var-requires
-const now = require("performance-now");
 import * as winston from "winston";
 import * as core from "../core";
 import { IContext, IPartitionLambda } from "../kafka-service/lambdas";
@@ -116,7 +114,7 @@ export class DeliLambda implements IPartitionLambda {
 
     public handler(message: utils.IMessage): void {
         // Ticket current message.
-        const ticketedMessage = this.ticket(message, this.createTrace());
+        const ticketedMessage = this.ticket(message, this.createTrace("start"));
 
         // Return early if message is not valid.
         if (!ticketedMessage) {
@@ -307,11 +305,9 @@ export class DeliLambda implements IPartitionLambda {
         this.minimumSequenceNumber = msn === -1 ? sequenceNumber : msn;
 
         // Add traces
-        const messageWithTraces = message.operation as IDocumentMessage;
-        const traces = messageWithTraces.traces;
-        if (traces !== undefined) {
-            traces.push(trace);
-            traces.push(this.createTrace());
+        if (message.operation.traces && message.operation.traces.length > 1) {
+            message.operation.traces.push(trace);
+            message.operation.traces.push(this.createTrace("end"));
         }
 
         // And now craft the output message
@@ -323,7 +319,7 @@ export class DeliLambda implements IPartitionLambda {
             origin,
             referenceSequenceNumber: message.operation.referenceSequenceNumber,
             sequenceNumber,
-            traces,
+            traces: message.operation.traces,
             type: message.operation.type,
             user: message.user,
         };
@@ -412,7 +408,7 @@ export class DeliLambda implements IPartitionLambda {
                 clientSequenceNumber: -1,
                 contents: clientId,
                 referenceSequenceNumber: -1,
-                traces: [],
+                traces: undefined,
                 type: MessageType.ClientLeave,
             },
             tenantId: this.tenantId,
@@ -452,7 +448,7 @@ export class DeliLambda implements IPartitionLambda {
                 clientSequenceNumber: -1,
                 contents: null,
                 referenceSequenceNumber: -1,
-                traces: [],
+                traces: undefined,
                 type: MessageType.NoOp,
             },
             tenantId: this.tenantId,
@@ -466,11 +462,11 @@ export class DeliLambda implements IPartitionLambda {
     /**
      * Creates a new trace
      */
-    private createTrace() {
+    private createTrace(action: string) {
         const trace: ITrace = {
-            action: "start",
+            action,
             service: "deli",
-            timestamp: now(),
+            timestamp: Date.now(),
         };
         return trace;
     }

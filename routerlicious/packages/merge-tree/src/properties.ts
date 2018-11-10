@@ -5,9 +5,9 @@ export interface MapLike<T> {
     [index: string]: T;
 }
 
-// we use any because when you include custom methods 
+// we use any because when you include custom methods
 // such as toJSON(), JSON.stringify accepts most types other
-// than functions 
+// than functions
 export type PropertySet = MapLike<any>;
 
 // assume these are created with Object.create(null)
@@ -21,7 +21,7 @@ export function combine(combiningInfo: ops.ICombiningOp, currentValue: any, newV
     if (currentValue === undefined) {
         currentValue = combiningInfo.defaultValue;
     }
-    // fixed set of operations for now 
+    // fixed set of operations for now
     switch (combiningInfo.name) {
         case "incr":
             currentValue += <number>newValue;

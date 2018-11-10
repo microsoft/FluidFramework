@@ -1,3 +1,5 @@
+import { debugFrame } from "./debug";
+import { FrameManager } from "./frameManager";
 import { IMapViewWrapper } from "./mapWrapper";
 import * as RWDOM from "./rewriteDOMTree";
 
@@ -40,11 +42,11 @@ export class MapDOMData {
     }
 }
 
-interface IFlatMapDOMNode extends RWDOM.IRewriteDOMNode {
+interface IFlatMapDOMNodeData extends RWDOM.IRewriteDOMNodeData {
     setOnMapWrapper(map: MapDOMData, tree: FlatMapDOMTree): number;
 }
 
-export class FlatMapDOMElement extends RWDOM.RewriteDOMElement implements IFlatMapDOMNode {
+export class FlatMapDOMElementData extends RWDOM.RewriteDOMElementData implements IFlatMapDOMNodeData {
     protected emitted: boolean;
     protected nodeId: number;
     protected attributeId: number;
@@ -71,6 +73,11 @@ export class FlatMapDOMElement extends RWDOM.RewriteDOMElement implements IFlatM
 
         this.setChildListOnFlatMap(map, tree);
 
+        // TODO: Should this be a subclass?
+        if (this.element.tagName === "IFRAME") {
+            this.setFrameIdOnMap(map);
+        }
+
         this.setEmitted(map);
         tree.notifyElementEmitted(this.element, this.nodeId, this.attributeId);
         return this.nodeId;
@@ -81,13 +88,16 @@ export class FlatMapDOMElement extends RWDOM.RewriteDOMElement implements IFlatM
     public setChildListOnFlatMap(map: MapDOMData, tree: FlatMapDOMTree) {
         const childrenIds = [];
         this.forEachOriginalNodeChild((c) => {
-            const child = c as IFlatMapDOMNode;
+            const child = c as IFlatMapDOMNodeData;
             childrenIds.push(child.setOnMapWrapper(map, tree));
         });
         map.setNodeData(this.nodeId, "children", childrenIds);
     }
-    public getNodeId() {
-        return this.nodeId;
+    protected setFrameIdOnMap(map: MapDOMData) {
+        const frame = this.element as HTMLIFrameElement;
+        const frameId = FrameManager.getFrameId(frame);
+        map.setNodeData(this.nodeId, "frameId", frameId);
+        debugFrame(frameId, "emitted for node", this.nodeId, frame.src);
     }
     protected setEmitted(map: MapDOMData) {
         this.emitted = true;
@@ -102,7 +112,7 @@ export class FlatMapDOMElement extends RWDOM.RewriteDOMElement implements IFlatM
     }
 }
 
-export class FlatMapDOMTextNode extends RWDOM.RewriteDOMTextNode implements IFlatMapDOMNode {
+export class FlatMapDOMTextNodeData extends RWDOM.RewriteDOMTextNodeData implements IFlatMapDOMNodeData {
     protected nodeId: number;
     private emitted: boolean;
     constructor(n: Node) {
@@ -126,23 +136,48 @@ export class FlatMapDOMTextNode extends RWDOM.RewriteDOMTextNode implements IFla
 }
 
 export class FlatMapDOMTree extends RWDOM.RewriteDOMTree {
+    protected doc: Document;
+
+    public initializeFromDOM(doc: Document) {
+        this.doc = doc;
+        super.initializeFromDOM(doc);
+    }
     public setOnMapWrapper(map: IMapViewWrapper) {
         const mapData = new MapDOMData(map);
-        this.getRootElement().setOnMapWrapper(mapData, this);
+        return this.setOnMapWrapperCommon(mapData);
     }
-    public getRootElement(): FlatMapDOMElement {
-        return this.rootElement as FlatMapDOMElement;
-    }
+
     public notifyNodeEmitted(node: Node, nodeId: number) {
         // Do nothing
     }
     public notifyElementEmitted(element: Element, nodeId: number, attributeId: number) {
         // Do nothing
     }
-    protected createElementNode(e: Element): FlatMapDOMElement {
-        return new FlatMapDOMElement(e, this);
+    protected createElementNode(e: Element): FlatMapDOMElementData {
+        return new FlatMapDOMElementData(e, this);
     }
-    protected createTextNode(n: Node): FlatMapDOMTextNode {
-        return new FlatMapDOMTextNode(n);
+    protected createTextNode(n: Node): FlatMapDOMTextNodeData {
+        return new FlatMapDOMTextNodeData(n);
+    }
+
+    protected setOnMapWrapperCommon(mapData: MapDOMData) {
+        const rootId = mapData.addNodeData();
+
+        const doc = this.getDocument();
+        if (doc.doctype) {
+            mapData.setNodeData(rootId, "docType",
+                [doc.doctype.name, doc.doctype.publicId, doc.doctype.systemId]);
+        }
+        mapData.setNodeData(rootId, "documentElementId",
+            this.getRootElement().setOnMapWrapper(mapData, this));
+        return rootId;
+    }
+
+    protected getRootElement(): FlatMapDOMElementData {
+        return this.rootElement as FlatMapDOMElementData;
+    }
+
+    protected getDocument() {
+        return this.doc;
     }
 }

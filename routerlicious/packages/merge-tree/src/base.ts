@@ -31,7 +31,7 @@ export interface KeyComparer<TKey> {
     (a: TKey, b: TKey): number;
 }
 /**
- * A range [start, end) 
+ * A range [start, end)
  */
 export interface IIntegerRange {
     start: number;

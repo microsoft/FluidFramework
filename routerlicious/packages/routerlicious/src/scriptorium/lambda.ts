@@ -1,10 +1,6 @@
 import * as coreUtils from "@prague/client-api";
-import { INack, ISequencedDocumentMessage } from "@prague/runtime-definitions";
 import * as assert from "assert";
 import { EventEmitter } from "events";
-import * as _ from "lodash";
-// tslint:disable-next-line:no-var-requires
-const now = require("performance-now");
 import * as winston from "winston";
 import * as core from "../core";
 import { IContext, IPartitionLambda } from "../kafka-service/lambdas";
@@ -212,16 +208,6 @@ export class WorkManager extends EventEmitter {
     }
 }
 
-/**
- * Wrapper interface to define a topic, event, and documentId to send to
- */
-interface IoTarget {
-    documentId: string;
-    tenantId: string;
-    event: string;
-    topic: string;
-}
-
 interface IMongoTarget {
     documentId: string;
     tenantId: string;
@@ -232,16 +218,15 @@ export class ScriptoriumLambda implements IPartitionLambda {
     // One socket.IO group is for sequenced ops and the other for nack'ed messages.
     // By splitting the two we can update each independently and on their own cadence
     private mongoManager: BatchManager<IMongoTarget, core.ISequencedOperationMessage>;
-    private ioManager: BatchManager<IoTarget, ISequencedDocumentMessage | INack>;
     private idleManager: BatchManager<string, void>;
 
     private workManager = new WorkManager();
 
     constructor(
-        private io: core.IPublisher,
         private opCollection: core.ICollection<any>,
         private contentCollection: core.ICollection<any>,
         protected context: IContext) {
+
         // Listen for work errors
         this.workManager.on("error", (error) => {
             this.batchError(error);
@@ -255,7 +240,6 @@ export class ScriptoriumLambda implements IPartitionLambda {
 
         // Create all the batched workers
         this.mongoManager = this.workManager.createBatchedWork((batch) => this.processMongoBatch(batch));
-        this.ioManager = this.workManager.createBatchedWork((batch) => this.processIoBatch(batch));
         this.idleManager = this.workManager.createBatchedWork(async (batch) => { return; });
     }
 
@@ -272,50 +256,18 @@ export class ScriptoriumLambda implements IPartitionLambda {
         if (baseMessage.type === core.SequencedOperationType) {
             const value = baseMessage as core.ISequencedOperationMessage;
 
-            // Add trace.
-            const operationWithTraces = value.operation as ISequencedDocumentMessage;
-            if (operationWithTraces.traces !== undefined) {
-                operationWithTraces.traces.push({
-                    action: "start",
-                    service: "scriptorium",
-                    timestamp: now(),
-                });
-            }
-
-            // Send to Socket.IO
-            const target: IoTarget = {
-                documentId: value.documentId,
-                event: "op",
-                tenantId: value.tenantId,
-                topic: `${value.tenantId}/${value.documentId}`,
-            };
-            this.ioManager.add(target, value.operation, message.offset);
-
-            const clonedValue = _.cloneDeep(value);
-            const clonedOperation = clonedValue.operation as ISequencedDocumentMessage;
-
             // Remove traces and serialize content before writing to mongo.
-            clonedOperation.traces = [];
-            clonedOperation.contents = JSON.stringify(clonedOperation.contents);
+            value.operation.traces = [];
+            value.operation.contents = JSON.stringify(value.operation.contents);
 
             // Batch send to MongoDB
             this.mongoManager.add(
                 {
-                    documentId: clonedValue.documentId,
-                    tenantId: clonedValue.tenantId,
+                    documentId: value.documentId,
+                    tenantId: value.tenantId,
                 },
-                clonedValue,
+                value,
                 message.offset);
-        } else if (baseMessage.type === core.NackOperationType) {
-            const value = baseMessage as core.INackMessage;
-
-            const target: IoTarget = {
-                documentId: value.documentId,
-                event: "nack",
-                tenantId: value.tenantId,
-                topic: `client#${value.clientId}`,
-            };
-            this.ioManager.add(target, value.operation, message.offset);
         } else {
             // Treat all other messages as an idle batch of work for simplicity
             this.idleManager.add(null, null, message.offset);
@@ -335,29 +287,6 @@ export class ScriptoriumLambda implements IPartitionLambda {
             // tslint:disable-next-line:max-line-length
             winston.verbose(`Inserting to mongodb ${id.documentId}/${id.tenantId}@${work[0].operation.sequenceNumber}:${work.length}`);
             return this.processMongoCore(work);
-        });
-    }
-
-    /**
-     * BatchManager callback invoked once a new batch is ready to be processed
-     */
-    private async processIoBatch(batch: Batch<IoTarget, INack | ISequencedDocumentMessage>): Promise<void> {
-        // Serialize the current batch to Mongo
-        await batch.map(async (id, work) => {
-            winston.verbose(`Broadcasting to socket.io ${id.documentId}@${id.topic}@${id.event}:${work.length}`);
-            // Add trace to each message before routing.
-            work.map((value) => {
-                const valueAsSequenced = value as ISequencedDocumentMessage;
-                if (valueAsSequenced && valueAsSequenced.traces !== undefined) {
-                    valueAsSequenced.traces.push({
-                        action: "end",
-                        service: "scriptorium",
-                        timestamp: now(),
-                    });
-                }
-            });
-
-            this.io.to(id.topic).emit(id.event, id.documentId, work);
         });
     }
 

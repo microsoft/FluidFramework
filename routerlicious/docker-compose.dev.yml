@@ -9,6 +9,9 @@ services:
     scriptorium:
         volumes:
             - .:/usr/src/server
+    bbc:
+        volumes:
+            - .:/usr/src/server
     tmz:
         volumes:
             - .:/usr/src/server

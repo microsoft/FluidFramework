@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>Socket.IO Sample</title>
+
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+</head>
+
+<body>
+    <div>Batch size: <input id="batchSize" type="number" value="1000" /></div>
+
+    <div>Batches <input id="batches" type="number" value="10" /></div>
+
+    <div>
+        <button id="run">Run!</button>
+    </div>
+
+    <table class="table table-dark">
+        <thead>
+            <tr>
+                <th scope="col">Test</th>
+                <th scope="col">Socket.IO</th>
+                <th scope="col">Socket.IO + Redis</th>
+                <th scope="col">Socket.IO Iter</th>
+                <th scope="col">Socket.IO + Redis Iter</th>
+                <th scope="col">WS</th>
+                <th scope="col">WS ITER</th>
+            </tr>
+        </thead>
+        <tbody id="output">
+        </tbody>
+    </table>
+
+    <script src="bundle.js"></script>
+</body>
+
+</html>

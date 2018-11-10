@@ -3,6 +3,7 @@ import { EventEmitter } from "events";
 import { IClient } from "./clients";
 import { ISequencedProposal } from "./consensus";
 import { IDocumentMessage, ISequencedDocumentMessage } from "./protocol";
+import { ITokenProvider } from "./tokens";
 import { IUser } from "./users";
 
 export interface IDocumentAttributes {
@@ -108,7 +109,12 @@ export interface IDeltaStorageService {
     /**
      * Retrieves all the delta operations within the inclusive sequence number range
      */
-    get(tenantId: string, id: string, token: string, from?: number, to?: number): Promise<ISequencedDocumentMessage[]>;
+    get(
+        tenantId: string,
+        id: string,
+        tokenProvider: ITokenProvider,
+        from?: number,
+        to?: number): Promise<ISequencedDocumentMessage[]>;
 }
 
 export interface ISnapshotTree {
@@ -241,12 +247,15 @@ export interface IDocumentService {
     /**
      * Access to storage associated with the document...
      */
-    connectToStorage(tenantId: string, id: string, token: string): Promise<IDocumentStorageService>;
+    connectToStorage(tenantId: string, id: string, tokenProvider: ITokenProvider): Promise<IDocumentStorageService>;
 
     /**
      * Access to delta storage associated with the document
      */
-    connectToDeltaStorage(tenantId: string, id: string, token: string): Promise<IDocumentDeltaStorageService>;
+    connectToDeltaStorage(
+        tenantId: string,
+        id: string,
+        tokenProvider: ITokenProvider): Promise<IDocumentDeltaStorageService>;
 
     /**
      * Subscribes to the document delta stream
@@ -254,13 +263,13 @@ export interface IDocumentService {
     connectToDeltaStream(
         tenantId: string,
         id: string,
-        token: string,
+        tokenProvider: ITokenProvider,
         client: IClient): Promise<IDocumentDeltaConnection>;
 
     /**
      * Creates a branch of the document with the given ID. Returns the new ID.
      */
-    branch(tenantId: string, id: string, token: string): Promise<string>;
+    branch(tenantId: string, id: string, tokenProvider: ITokenProvider): Promise<string>;
 
     /**
      * Returns the error tracking service

@@ -5,9 +5,18 @@ import * as socketStorage from "@prague/socket-storage";
 import * as jwt from "jsonwebtoken";
 import * as winston from "winston";
 import * as core from "../core";
+import { getRandomInt } from "../utils";
 
 // A safety mechanism to make sure that all outbound messages from alfred adheres to the permitted schema.
 function sanitizeMessage(message: any): IDocumentMessage {
+    if (getRandomInt(100) === 0 && message.operation && message.operation.traces) {
+        message.operation.traces.push(
+            {
+                action: "start",
+                service: "alfred",
+                timestamp: Date.now(),
+            });
+    }
     return {
         clientSequenceNumber: message.clientSequenceNumber,
         contents: message.contents,
@@ -96,13 +105,10 @@ export function register(
             for (const message of messages) {
                 if (message.type === api.RoundTrip) {
                     // End of tracking. Write traces.
-                    const messageWithTraces = message as IDocumentMessage;
-                    if (messageWithTraces.traces !== undefined) {
-                        metricLogger.writeLatencyMetric("latency", messageWithTraces.traces).catch(
-                            (error) => {
-                                winston.error(error.stack);
-                            });
-                    }
+                    metricLogger.writeLatencyMetric("latency", message.traces).catch(
+                        (error) => {
+                            winston.error(error.stack);
+                        });
                 } else {
                     const connection = connectionsMap.get(clientId);
                     connection.order(sanitizeMessage(message));

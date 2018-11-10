@@ -25,6 +25,13 @@ services:
             - DEBUG=prague:*
             - NODE_ENV=development
         restart: always
+    bbc:
+        build: .
+        command: node dist/kafka-service/index.js bbc ../bbc/index.js
+        environment:
+            - DEBUG=prague:*
+            - NODE_ENV=development
+        restart: always
     tmz:
         build: .
         command: node dist/kafka-service/index.js tmz ../tmz/index.js
@@ -102,7 +109,7 @@ services:
             KAFKA_ADVERTISED_HOST_NAME: "kafka"
             KAFKA_ADVERTISED_PORT: "9092"
             KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'false'
-            KAFKA_CREATE_TOPICS: "deltas:8:1,rawdeltas:8:1,testtopic:8:1"
+            KAFKA_CREATE_TOPICS: "deltas:8:1,rawdeltas:8:1,testtopic:8:1,deltas2:8:1,rawdeltas2:8:1"
             KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
     redis:
         image: "redis:alpine"
@@ -120,6 +127,7 @@ services:
         command: server /export
     auspkn:
         image: prague.azurecr.io/auspkn:3771
+        command: node dist/www.js
         ports:
             - "3002:3000"
         environment:

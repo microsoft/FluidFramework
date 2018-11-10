@@ -40,4 +40,6 @@ export enum MessageEnum {
     // Initial action
     BackgroundPragueStreamStart,
     BackgroundPragueStreamStop,
+    EnsureFrameIdListener,
+    SetFrameId,
 }

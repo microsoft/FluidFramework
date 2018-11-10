@@ -2,10 +2,10 @@ import * as resources from "@prague/gitresources";
 import * as api from "@prague/runtime-definitions";
 
 /**
- * Document storage service for sharepoint...For now, this is just a placeholder
- * It just does a default implememtation for all the methods
+ * Document storage service for the test driver...just does a default implememtation for
+ * all the methods
  */
-export class ReplayDocumentStorageService implements api.IDocumentStorageService  {
+export class TestDocumentStorageService implements api.IDocumentStorageService  {
 
     public getSnapshotTree(version: resources.ICommit): Promise<api.ISnapshotTree> {
         return null;

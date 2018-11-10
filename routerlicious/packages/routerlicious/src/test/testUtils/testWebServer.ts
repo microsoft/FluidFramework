@@ -24,6 +24,10 @@ export class TestWebSocket implements core.IWebSocket {
     public emit(event: string, ...args: any[]) {
         this.events.emit(event, ...args);
     }
+
+    public removeListener(event: string, listener: (...args: any[]) => void) {
+        this.events.removeListener(event, listener);
+    }
 }
 
 export class TestWebSocketServer implements core.IWebSocketServer {
@@ -34,6 +38,7 @@ export class TestWebSocketServer implements core.IWebSocketServer {
     }
 
     public async close(): Promise<void> {
+        this.events.removeAllListeners();
         return Promise.resolve();
     }
 
