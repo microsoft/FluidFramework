@@ -109,6 +109,10 @@ export class ReplayDocumentDeltaConnection extends EventEmitter implements IDocu
         console.log("dropping the outbound message");
     }
 
+    public async submitAsync(message: IDocumentMessage): Promise<void> {
+        console.log("dropping the outbound message and wait for response");
+    }
+
     public disconnect() {
         console.log("no implementation for disconnect...");
     }

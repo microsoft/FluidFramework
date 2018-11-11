@@ -33,6 +33,10 @@ export class TestDocumentDeltaConnection extends EventEmitter implements IDocume
         return;
     }
 
+    public async submitAsync(message: IDocumentMessage): Promise<void> {
+        return;
+    }
+
     public disconnect() {
         return;
     }
