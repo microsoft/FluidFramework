@@ -78,6 +78,16 @@ export interface INack {
 }
 
 /**
+ * System level metadata
+ */
+export interface ISystemData {
+
+    split: boolean;
+
+    content: any;
+}
+
+/**
  * Document specific message
  */
 export interface IDocumentMessage {
@@ -92,6 +102,9 @@ export interface IDocumentMessage {
 
     // The contents of the message
     contents: any;
+
+    // System level metadata.
+    metadata: ISystemData;
 
     // Traces related to the packet.
     traces: ITrace[];
