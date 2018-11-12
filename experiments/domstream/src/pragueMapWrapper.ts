@@ -1,6 +1,6 @@
-import * as pragueApi from "@prague/client-api";
 import * as pragueMap from "@prague/map";
 import { IMapViewWrapper, IMapWrapper, IMapWrapperFactory } from "./mapWrapper";
+import { PragueDocument } from "./pragueUtil";
 
 class PragueMapWrapper implements IMapWrapper {
     private map: pragueMap.IMap;
@@ -67,10 +67,10 @@ export class PragueMapViewWrapper implements IMapViewWrapper {
 }
 
 export class PragueMapWrapperFactory implements IMapWrapperFactory {
-    private collabDoc: pragueApi.Document;
+    private collabDoc: PragueDocument;
     private batchOp: boolean;
     private defaultMapView: pragueMap.IMapView;
-    constructor(collabDoc: pragueApi.Document, batchOp: boolean) {
+    constructor(collabDoc: PragueDocument, batchOp: boolean) {
         this.collabDoc = collabDoc;
         this.batchOp = batchOp;
     }
