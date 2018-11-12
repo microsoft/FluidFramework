@@ -1,7 +1,11 @@
 DOM Stream
 ==========
+An experimental chrome extension to save/stream/mirror/remote/share web pages by writing and updating the DOM tree thru Prague.
 
-An experiment chrome extension to mirror/stream/remote/share web pages via saving and updating the DOM tree thru rague.
+
+Build CI
+========
+[![Build Status](https://offnet.visualstudio.com/officenet/_apis/build/status/domstream)](https://offnet.visualstudio.com/officenet/_build/latest?definitionId=27)
 
 Build
 =====
