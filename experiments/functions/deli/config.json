@@ -107,6 +107,10 @@
             "group": "scriptorium",
             "topic": "deltas2"
         },
+        "bbc": {
+            "group": "bbc",
+            "topic": "deltas"
+        },
         "serviceGraph": {
             "group": "serviceGraph",
             "topic": "deltas2"

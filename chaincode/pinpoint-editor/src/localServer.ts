@@ -3,7 +3,7 @@ import { IChaincodeFactory, ICodeLoader, IPlatform, IPlatformFactory, IRuntime }
 import * as socketStorage from "@prague/socket-storage";
 import { EventEmitter } from "events";
 import * as jwt from "jsonwebtoken";
-import * as testFactory from "./script";
+import * as testFactory from "./index";
 
 export class WebPlatform extends EventEmitter implements IPlatform {
     constructor(private div: HTMLElement) {
