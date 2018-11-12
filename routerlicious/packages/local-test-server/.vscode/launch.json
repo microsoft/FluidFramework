@@ -9,11 +9,11 @@
             "request": "launch",
             "name": "Run Mocha tests",
             "program": "${workspaceRoot}/node_modules/mocha/bin/_mocha",
-            "stopOnEntry": false, 
-            "args": ["dist/test/*.js", "--no-timeouts"],
+            "stopOnEntry": false,
+            "args": ["dist/test/*.js", "--no-timeouts", "--exit"],
             "cwd": "${workspaceRoot}",
             "runtimeExecutable": null,
-            "env": { "NODE_ENV": "testing"}                  
+            "env": { "NODE_ENV": "testing"}
         },
     ]
 }

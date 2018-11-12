@@ -5,15 +5,20 @@ import * as utils from "@prague/routerlicious/dist/utils";
 import { SharedString } from "@prague/shared-string";
 import * as socketStorage from "@prague/socket-storage";
 import * as assert from "assert";
-import { createTestDocumentService } from "../registration";
-import { TestDeltaConnectionServer } from "../testDeltaConnectionServer";
+import {
+  createTestDocumentService,
+  DocumentDeltaEventManager,
+  ITestDeltaConnectionServer,
+  TestDeltaConnectionServer,
+} from "..";
 
 describe("LocalTestServer", () => {
   const id = "documentId";
   const tenatId = "tenantId";
   const tokenKey = "tokenLey";
 
-  let testDeltaConnectionServer: TestDeltaConnectionServer;
+  let testDeltaConnectionServer: ITestDeltaConnectionServer;
+  let documentDeltaEventManager: DocumentDeltaEventManager;
   let user1Document: api.Document;
   let user2Document: api.Document;
   let user1SharedString: SharedString;
@@ -21,6 +26,7 @@ describe("LocalTestServer", () => {
 
   before(() => {
     testDeltaConnectionServer = TestDeltaConnectionServer.Create();
+    documentDeltaEventManager = new DocumentDeltaEventManager();
   });
 
   describe("Load Document on Client1", () => {
@@ -34,6 +40,7 @@ describe("LocalTestServer", () => {
         user1SharedString = user1Document.createString();
         // tslint:disable-next-line:no-backbone-get-set-outside-model
         rootView.set("SharedString", user1SharedString);
+        documentDeltaEventManager.registerDocuments(user1Document);
       });
 
       it("Validate document is new", () => {
@@ -50,6 +57,7 @@ describe("LocalTestServer", () => {
       user2Document = await api.load(id, tenatId, undefined, tokenProvider, {}, null, true, documentService);
       const rootView = await user2Document.getRoot().getView();
       user2SharedString = await rootView.wait("SharedString") as SharedString;
+      documentDeltaEventManager.registerDocuments(user2Document);
     });
 
     it("Validate document and SharedString exist", () => {
@@ -59,10 +67,10 @@ describe("LocalTestServer", () => {
   });
 
   describe("Attach Op Handlers on Both Clients", () => {
-    let user1ReceivedMsgCount: number = 0;
-    let user2ReceivedMsgCount: number = 0;
+    it("Validate messaging", async () => {
+      let user1ReceivedMsgCount: number = 0;
+      let user2ReceivedMsgCount: number = 0;
 
-    before(() => {
       user1SharedString.on("op", (msg, local) => {
         if (!local) {
           if (msg.type === OperationType) {
@@ -79,20 +87,32 @@ describe("LocalTestServer", () => {
         }
       });
 
-      user1SharedString.insertText("A", 0);
-      user1SharedString.insertText("B", 1);
-      user2SharedString.insertText("C", 2);
-    });
+      documentDeltaEventManager.pauseProcessing();
 
-    it("Validate messaging", () => {
-      return new Promise<void>((resolve, reject) => {
-          setTimeout(() => {
-            assert.equal(user1ReceivedMsgCount, 1, "User1 received message count is incorrect");
-            assert.equal(user2ReceivedMsgCount, 2, "User2 received message count is incorrect");
-            resolve();
-          },
-          1000);
-      });
+      user1SharedString.insertText("A", 0);
+      user2SharedString.insertText("C", 0);
+      assert.equal(user1ReceivedMsgCount, 0, "User1 received message count is incorrect");
+      assert.equal(user2ReceivedMsgCount, 0, "User2 received message count is incorrect");
+
+      await documentDeltaEventManager.processOutgoing(user1Document);
+      assert.equal(user1ReceivedMsgCount, 0, "User1 received message count is incorrect");
+      assert.equal(user2ReceivedMsgCount, 0, "User2 received message count is incorrect");
+
+      await documentDeltaEventManager.process(user2Document);
+      assert.equal(user1ReceivedMsgCount, 0, "User1 received message count is incorrect");
+      assert.equal(user2ReceivedMsgCount, 1, "User2 received message count is incorrect");
+
+      await documentDeltaEventManager.processIncoming(user1Document);
+      assert.equal(user1ReceivedMsgCount, 1, "User1 received message count is incorrect");
+      assert.equal(user2ReceivedMsgCount, 1, "User2 received message count is incorrect");
+
+      user1SharedString.insertText("B", 0);
+      await documentDeltaEventManager.process(user1Document, user2Document);
+
+      assert.equal(user1SharedString.getText(), user2SharedString.getText());
+      assert.equal(user1SharedString.getText().length, 3, user1SharedString.getText());
+      assert.equal(user1ReceivedMsgCount, 1, "User1 received message count is incorrect");
+      assert.equal(user2ReceivedMsgCount, 2, "User2 received message count is incorrect");
     });
   });
 
