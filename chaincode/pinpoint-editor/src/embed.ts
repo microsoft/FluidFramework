@@ -3,9 +3,17 @@ import { IMapView } from "@prague/map";
 import { Document } from "./document";
 
 export function embed(mapHost: HTMLElement, collabDoc: Document, rootView: IMapView, platform: any) {
+    const containerDiv = document.createElement("div");
     const innerDiv = document.createElement("div");
     innerDiv.style.width = "300px";
-    mapHost.appendChild(innerDiv);
+    containerDiv.appendChild(innerDiv);
+    mapHost.appendChild(containerDiv);
+    const openDoc = document.createElement("a");
+    openDoc.href = `/loader/${encodeURIComponent(collabDoc.runtime.id)}`;
+    openDoc.target = "_blank";
+    openDoc.innerText = collabDoc.runtime.id;
+    openDoc.style.display = "block";
+    containerDiv.appendChild(openDoc);
 
     const dragEnd = (ev) => {
         const center = ev.target.getCenter();
