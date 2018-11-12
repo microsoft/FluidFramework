@@ -6,16 +6,27 @@ import * as jwt from "jsonwebtoken";
 import * as randomstring from "randomstring";
 import { getRandomName } from "./../../utils/dockerNames";
 
-function send(map: Map.IMap, index: number, total: number, setLength: number, str: string) {
-    for (let i = 0; i < setLength; i++) {
-        map.set("" + (index * setLength + i), { time: Date.now(), str });
+function generateRandomBatchMessages(length: number, payloadSize: number): string[] {
+    const messages = new Array<string>();
+
+    for (let i = 0; i < length; i++) {
+        const str = randomstring.generate(payloadSize);
+        messages.push(str);
+    }
+
+    return messages;
+}
+
+function send(map: Map.IMap, index: number, total: number, messages: string[]) {
+    for (let i = 0; i < messages.length; i++) {
+        map.set("" + (index * messages.length + i), { time: Date.now(), str: messages[i] });
     }
 
     if (index <= total) {
         // Starting with setTimeout - will upgrade to immediate
         setTimeout(
             () => {
-                send(map, index + 1, total, setLength, str);
+                send(map, index + 1, total, messages);
             },
             0);
     }
@@ -31,7 +42,7 @@ async function run(
     batchSize: number,
     payloadSize: number): Promise<any> {
 
-    const str = randomstring.generate(payloadSize);
+    const randomMessages = generateRandomBatchMessages(batchSize, payloadSize);
 
     // Register endpoint connection
     const documentServices = routerlicious === "http://localhost:3030"
@@ -65,7 +76,7 @@ async function run(
     rootView.set("newMap", newMap);
 
     const totalMessages = batches * batchSize;
-    send(newMap, 0, batches, batchSize, str);
+    send(newMap, 0, batches, randomMessages);
 
     const resultsDeferred = new Deferred<any>();
 
