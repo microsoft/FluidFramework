@@ -5,7 +5,7 @@ import chalk from "chalk";
 import { WebLoader } from "./webLoader";
 import { WebPlatformFactory } from "./webPlatform";
 
-async function proposeChaincode(document: loader.Document, chaincode: string) {
+export async function proposeChaincode(document: loader.Document, chaincode: string) {
     if (!document.connected) {
         // tslint:disable-next-line:no-unnecessary-callback-wrapper
         await new Promise<void>((resolve) => document.once("connected", () => resolve()));

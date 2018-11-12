@@ -393,6 +393,12 @@ const commands: ICmd[] = [
         },
         key: "insert chart",
     },
+    {
+        exec: (f) => {
+            f.insertMap();
+        },
+        key: "insert map",
+    },
 ];
 
 export function moveMarker(flowView: FlowView, fromPos: number, toPos: number) {
@@ -4952,6 +4958,13 @@ export class FlowView extends ui.Component {
     /** Insert a Chart. */
     public insertChart() {
         this.insertComponent("chart", {});
+    }
+
+    /** Insert a pinpoint map */
+    public insertMap() {
+        const id = `map${Date.now()}`;
+        const chaincode = "@chaincode/pinpoint-editor@0.6.14";
+        this.insertComponent("document", { id, chaincode });
     }
 
     /** Insert a Document */

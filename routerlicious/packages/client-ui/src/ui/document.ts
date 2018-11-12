@@ -1,7 +1,7 @@
 import { Block, BoxState } from "@prague/app-ui";
 import { getChaincodeRepo, getDefaultCredentials, getDefaultDocumentService } from "@prague/client-api";
 import * as loader from "@prague/loader";
-import { WebLoader, WebPlatform } from "@prague/loader-web";
+import { proposeChaincode, WebLoader, WebPlatform } from "@prague/loader-web";
 import { IPlatform, IPlatformFactory, IRuntime, IUser } from "@prague/runtime-definitions";
 import { TokenProvider } from "@prague/socket-storage";
 import { EventEmitter } from "events";
@@ -69,6 +69,7 @@ const definitionGuide = new DefinitionGuide();
 
 export class DocumentState extends BoxState {
     public id: string;
+    public chaincode?: string;
     public [documentSym]: loader.Document;
     public [platformSym]: PlatformFactory;
 }
@@ -174,6 +175,13 @@ export class Document extends Block<DocumentState> {
                 self[documentSym] = document;
                 self[platformSym] = platformFactory;
                 console.log("Document loaded");
+
+                if (self.chaincode) {
+                    proposeChaincode(document, self.chaincode).catch(
+                        (error) => {
+                            console.error("Error installing chaincode");
+                        });
+                }
 
                 // query the runtime for its definition - if it exists
                 definitionGuide.addComponent(self.id, document.runtime);
