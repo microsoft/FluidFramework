@@ -7,27 +7,23 @@ import { TokenProvider } from "./token";
 
 export class DocumentService implements api.IDocumentService {
     constructor(
-        private snapshotUrl: string,
-        private deltaFeedUrl: string,
-        private webSocketUrl: string) {
-        // For now just log the snapshot url until sharepoint starts supporting snapshots
-        console.log(this.snapshotUrl);
+        private readonly snapshotUrl: string,
+        private readonly deltaStorageUrl: string,
+        private readonly webSocketUrl: string) {
     }
 
     public async connectToStorage(
         tenantId: string,
         id: string,
         tokenProvider: api.ITokenProvider): Promise<api.IDocumentStorageService> {
-        // Use the replaydocumentstorage service to return the default values for snapshot methods
-        // Replace this once sharepoint starts supporting snapshots
-        return new DocumentStorageService();
+        return new DocumentStorageService(this.snapshotUrl, tokenProvider);
     }
 
     public async connectToDeltaStorage(
         tenantId: string,
         id: string,
         tokenProvider: api.ITokenProvider): Promise<api.IDocumentDeltaStorageService> {
-        const deltaStorage = new DeltaStorageService(this.deltaFeedUrl);
+        const deltaStorage = new DeltaStorageService(this.deltaStorageUrl);
         return new DocumentDeltaStorageService(tenantId, id, tokenProvider, deltaStorage);
     }
 
@@ -36,7 +32,6 @@ export class DocumentService implements api.IDocumentService {
         id: string,
         tokenProvider: api.ITokenProvider,
         client: api.IClient): Promise<api.IDocumentDeltaConnection> {
-
         const token = (tokenProvider as TokenProvider).socketToken;
         return DocumentDeltaConnection.Create(tenantId, id, token, io, client, this.webSocketUrl);
     }
