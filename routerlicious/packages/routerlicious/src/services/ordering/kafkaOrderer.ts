@@ -69,7 +69,7 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
                 clientSequenceNumber: -1,
                 contents: clientDetail,
                 referenceSequenceNumber: -1,
-                traces: undefined,
+                traces: [],
                 type: MessageType.ClientJoin,
             },
             tenantId: this.tenantId,
@@ -103,7 +103,7 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
                 clientSequenceNumber: -1,
                 contents: this.clientId,
                 referenceSequenceNumber: -1,
-                traces: undefined,
+                traces: [],
                 type: MessageType.ClientLeave,
             },
             tenantId: this.tenantId,
@@ -125,6 +125,9 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
                     service: "alfred",
                     timestamp: Date.now(),
                 });
+        } else {
+            // back-compat with older clients
+            operation.traces = [];
         }
 
         const stringMessage = JSON.stringify(message);
