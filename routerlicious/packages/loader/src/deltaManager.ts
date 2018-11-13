@@ -197,25 +197,14 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
      * Submits a new delta operation
      */
     public submit(type: string, contents: string): number {
+        return this.submitCore(type, contents, null);
+    }
 
-        // tslint:disable:no-increment-decrement
-        const message: runtime.IDocumentMessage = {
-            clientSequenceNumber: ++this.clientSequenceNumber,
-            contents,
-            metadata: {
-                content: undefined,
-                split: contents && (contents.length > this.maxContentSize),
-            },
-            referenceSequenceNumber: this.baseSequenceNumber,
-            traces: undefined,
-            type,
-        };
-        this.readonly = false;
-
-        this.stopSequenceNumberUpdate();
-        this._outbound.push(message);
-
-        return message.clientSequenceNumber;
+    /**
+     * Submits a new system delta operation.
+     */
+    public submitMetaData(type: string, contents: any): number {
+        return this.submitCore(type, null, contents);
     }
 
     public async connect(reason: string): Promise<IConnectionDetails> {
@@ -272,6 +261,27 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
         this._inbound.clear();
         this._outbound.clear();
         this.removeAllListeners();
+    }
+
+    private submitCore(type: string, contents: string, metaContent: any): number {
+        // tslint:disable:no-increment-decrement
+        const message: runtime.IDocumentMessage = {
+            clientSequenceNumber: ++this.clientSequenceNumber,
+            contents,
+            metadata: {
+                content: metaContent,
+                split: contents && (contents.length > this.maxContentSize),
+            },
+            referenceSequenceNumber: this.baseSequenceNumber,
+            traces: undefined,
+            type,
+        };
+        this.readonly = false;
+
+        this.stopSequenceNumberUpdate();
+        this._outbound.push(message);
+
+        return message.clientSequenceNumber;
     }
 
     private getDeltasCore(

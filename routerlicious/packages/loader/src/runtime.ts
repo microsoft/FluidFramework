@@ -66,6 +66,7 @@ export class Runtime extends EventEmitter implements IRuntime {
         branch: string,
         minimumSequenceNumber: number,
         submitFn: (type: MessageType, contents: any) => void,
+        submitMetadataFn: (type: MessageType, contents: any) => void,
         snapshotFn: (message: string) => Promise<void>,
         closeFn: () => void) {
 
@@ -85,6 +86,7 @@ export class Runtime extends EventEmitter implements IRuntime {
             storage,
             connectionState,
             submitFn,
+            submitMetadataFn,
             snapshotFn,
             closeFn);
 
@@ -149,6 +151,7 @@ export class Runtime extends EventEmitter implements IRuntime {
         private storageService: IDocumentStorageService,
         private connectionState: ConnectionState,
         private submitFn: (type: MessageType, contents: any) => void,
+        private submitMetadataFn: (type: MessageType, contents: any) => void,
         private snapshotFn: (message: string) => Promise<void>,
         private closeFn: () => void) {
         super();
@@ -467,10 +470,18 @@ export class Runtime extends EventEmitter implements IRuntime {
         this.submit(type, content);
     }
 
-    // TODO (mdaumi): We should have a submit variant for system metadata.
+    public submitSystemMessage(type: MessageType, content: any) {
+        this.submitMetadata(type, content);
+    }
+
     private submit(type: MessageType, content: any) {
         this.verifyNotClosed();
         this.submitFn(type, content);
+    }
+
+    private submitMetadata(type: MessageType, content: any) {
+        this.verifyNotClosed();
+        this.submitMetadataFn(type, content);
     }
 
     private reserve(id: string) {

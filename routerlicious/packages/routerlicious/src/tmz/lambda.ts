@@ -42,12 +42,15 @@ export class TmzLambda extends SequencedLambda {
             const sequencedMessage = baseMessage as core.ISequencedOperationMessage;
             // Only process "Help" messages.
             if (sequencedMessage.operation.type === MessageType.RemoteHelp) {
+                // Back-Compat: Temporary workaround to handle old help messages.
+                const helpContent = sequencedMessage.operation.metadata ?
+                    sequencedMessage.operation.metadata.content : sequencedMessage.operation.contents;
                 await this.trackDocument(
                     sequencedMessage.operation.clientId,
                     sequencedMessage.tenantId,
                     sequencedMessage.documentId,
                     sequencedMessage.operation.user,
-                    sequencedMessage.operation.contents);
+                    helpContent);
             }
         }
         this.context.checkpoint(message.offset);
