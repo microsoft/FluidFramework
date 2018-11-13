@@ -395,9 +395,21 @@ const commands: ICmd[] = [
     },
     {
         exec: (f) => {
-            f.insertMap();
+            f.insertChaincode("map", "@chaincode/pinpoint-editor@0.6.15");
         },
         key: "insert map",
+    },
+    {
+        exec: (f) => {
+            f.insertChaincode("code", "@chaincode/monaco@0.1.18");
+        },
+        key: "insert code",
+    },
+    {
+        exec: (f) => {
+            f.insertChaincode("chart", "@chaincode/charts@0.7.3");
+        },
+        key: "insert ivy",
     },
 ];
 
@@ -4960,10 +4972,9 @@ export class FlowView extends ui.Component {
         this.insertComponent("chart", {});
     }
 
-    /** Insert a pinpoint map */
-    public insertMap() {
-        const id = `map${Date.now()}`;
-        const chaincode = "@chaincode/pinpoint-editor@0.6.14";
+    /** Insert an external component */
+    public insertChaincode(prefix: string, chaincode: string) {
+        const id = `${prefix}${Date.now()}`;
         this.insertComponent("document", { id, chaincode });
     }
 

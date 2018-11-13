@@ -3,17 +3,9 @@ import { IMapView } from "@prague/map";
 import { Document } from "./document";
 
 export function embed(mapHost: HTMLElement, collabDoc: Document, rootView: IMapView, platform: any) {
-    const containerDiv = document.createElement("div");
-    const innerDiv = document.createElement("div");
-    innerDiv.style.width = "300px";
-    containerDiv.appendChild(innerDiv);
-    mapHost.appendChild(containerDiv);
-    const openDoc = document.createElement("a");
-    openDoc.href = `/loader/${encodeURIComponent(collabDoc.runtime.id)}`;
-    openDoc.target = "_blank";
-    openDoc.innerText = collabDoc.runtime.id;
-    openDoc.style.display = "block";
-    containerDiv.appendChild(openDoc);
+    const div = document.createElement("div");
+    div.style.width = "300px";
+    mapHost.appendChild(div);
 
     const dragEnd = (ev) => {
         const center = ev.target.getCenter();
@@ -31,7 +23,7 @@ export function embed(mapHost: HTMLElement, collabDoc: Document, rootView: IMapV
     };
 
     const mapDetails = JSON.parse(rootView.get("map")) as IPinpointOptions;
-    mapDetails.element = innerDiv;
+    mapDetails.element = div;
     mapDetails.dragend = dragEnd as any;
     mapDetails.zoomend = zoomEnd as any;
 
@@ -42,8 +34,8 @@ export function embed(mapHost: HTMLElement, collabDoc: Document, rootView: IMapV
         (key, local, op) => {
             const updatedDetails = JSON.parse(rootView.get("map"));
             pinpoint.remove();
-            innerDiv.style.width = "300px";
-            updatedDetails.element = innerDiv;
+            div.style.width = "300px";
+            updatedDetails.element = div;
             updatedDetails.dragend = dragEnd as any;
             updatedDetails.zoomend = zoomEnd as any;
             pinpoint = new Pinpoint(updatedDetails);

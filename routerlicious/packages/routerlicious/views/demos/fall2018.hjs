@@ -55,7 +55,9 @@
             <h3>Demo</h3>
             <h4>Pinpoint Maps</h4>
             <ul class="list-unstyled">
-                <li><a href="/loader/{{pinpointMoniker}}?chaincode=@chaincode/pinpoint-editor@0.6.4" target="_blank">Pinpoint Editor</a></li>
+                <li><a href="https://www.wsj.com/articles/when-napoleon-met-his-waterloo-he-was-out-of-town-1433894903" target="_blank">WSJ Article</a></li>
+                <li><a href="/sharedText/{{napoleonMoniker}}?template=napoleon.txt" target="_blank">Prague Starter Article</a></li>
+                <li><a href="/loader/{{pinpointMoniker}}?chaincode=@chaincode/pinpoint-editor@0.6.15" target="_blank">Pinpoint Editor</a></li>
             </ul>
             <p>
                 A first example of a Prague component is the pinpoint map editor. This component was created by the Wall
@@ -103,7 +105,7 @@
                 Another example of Prague components is creating a poll and then a chart that binds to the poll data.
             </p>
             <ul class="list-unstyled">
-                <li><a href="/loader/{{chartsMoniker}}?chaincode=@chaincode/charts@0.7.0" target="_blank">Charts</a></li>
+                <li><a href="/loader/{{chartsMoniker}}?chaincode=@chaincode/charts@0.7.3" target="_blank">Charts</a></li>
                 <li><a href="/loader/{{pollMoniker}}?chaincode=@chaincode/poll@1.2.11" target="_blank">Poll</a></li>
             </ul>
             <p>
@@ -131,7 +133,7 @@
                 The Monaco code editor is also available as a Prague document.
             </p>
             <ul class="list-unstyled">
-                <li><a href="/loader/{{monacoMoniker}}?chaincode=@chaincode/monaco@0.1.9" target="_blank">Charts</a></li>
+                <li><a href="/loader/{{monacoMoniker}}?chaincode=@chaincode/monaco@0.1.18" target="_blank">Monaco</a></li>
             </ul>
 
             <h2>SharePoint</h2>

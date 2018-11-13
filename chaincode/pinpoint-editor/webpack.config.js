@@ -7,7 +7,7 @@ module.exports = {
         local: './src/localServer.ts',
         main: './src/index.ts'
     },
-    mode: 'development',
+    mode: 'production',
     devtool: 'source-map',
     module: {
         rules: [
