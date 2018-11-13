@@ -22,7 +22,8 @@ export class AlfredResources implements utils.IResources {
         public mongoManager: utils.MongoManager,
         public port: any,
         public documentsCollectionName: string,
-        public metricClientConfig: any) {
+        public metricClientConfig: any,
+        public contentCollection: core.ICollection<any>) {
 
         this.webServerFactory = new services.SocketIoWebServerFactory(this.redisConfig);
     }
@@ -91,18 +92,14 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
 
         const maxSendMessageSize = bytes.parse(config.get("alfred:maxMessageSize"));
 
-        const opCollection = db.collection("content");
-        await opCollection.createIndex(
+        const contentCollection = db.collection("content");
+        await contentCollection.createIndex(
             {
                 documentId: 1,
                 sequenceNumber: 1,
                 tenantId: 1,
             },
             false);
-
-        const opPublisher = new services.SocketIoRedisPublisher(redisConfig.port, redisConfig.host);
-
-        const contentPublisher = new services.ContentPublisher(opPublisher, opCollection);
 
         const address = `${await utils.getHostIp()}:4000`;
         const nodeFactory = new services.LocalNodeFactory(
@@ -119,8 +116,7 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
         const kafkaOrdererFactory = new services.KafkaOrdererFactory(
             producer,
             storage,
-            maxSendMessageSize,
-            contentPublisher);
+            maxSendMessageSize);
         const orderManager = new services.OrdererManager(localOrderManager, kafkaOrdererFactory);
 
         // Tenants attached to the apps this service exposes
@@ -141,7 +137,8 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
             mongoManager,
             port,
             documentsCollectionName,
-            metricClientConfig);
+            metricClientConfig,
+            contentCollection);
     }
 }
 
@@ -157,6 +154,7 @@ export class AlfredRunnerFactory implements utils.IRunnerFactory<AlfredResources
             resources.appTenants,
             resources.mongoManager,
             resources.producer,
-            resources.metricClientConfig);
+            resources.metricClientConfig,
+            resources.contentCollection);
     }
 }

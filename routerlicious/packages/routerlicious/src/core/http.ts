@@ -14,6 +14,8 @@ export interface IWebSocket {
     join(id: string): Promise<void>;
 
     emit(event: string, ...args);
+
+    broadcast(event: string, ...args);
 }
 
 export interface IWebServer {

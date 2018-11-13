@@ -258,7 +258,11 @@ export class ScriptoriumLambda implements IPartitionLambda {
 
             // Remove traces and serialize content before writing to mongo.
             value.operation.traces = [];
-            value.operation.contents = JSON.stringify(value.operation.contents);
+
+            // Back-Compat: Older message does not have metadata field and not serialized.
+            if (!value.operation.metadata) {
+                value.operation.contents = JSON.stringify(value.operation.contents);
+            }
 
             // Batch send to MongoDB
             this.mongoManager.add(

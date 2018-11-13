@@ -25,6 +25,10 @@ export class TestWebSocket implements core.IWebSocket {
         this.events.emit(event, ...args);
     }
 
+    public broadcast(event: string, ...args: any[]) {
+        this.events.emit(event, ...args);
+    }
+
     public removeListener(event: string, listener: (...args: any[]) => void) {
         this.events.removeListener(event, listener);
     }

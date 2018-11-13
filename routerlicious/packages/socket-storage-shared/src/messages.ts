@@ -1,4 +1,4 @@
-import { IClient, ISequencedDocumentMessage, IUser } from "@prague/runtime-definitions";
+import { IClient, IContentMessage, ISequencedDocumentMessage, IUser } from "@prague/runtime-definitions";
 
 /**
  * Message sent to connect to the given object
@@ -40,6 +40,9 @@ export interface IConnected {
 
     // Messages sent during the connection
     initialMessages?: ISequencedDocumentMessage[];
+
+    // Contents sent during the connection
+    initialContents?: IContentMessage[];
 }
 
 /**

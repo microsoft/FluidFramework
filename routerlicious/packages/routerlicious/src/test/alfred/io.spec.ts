@@ -8,6 +8,7 @@ import * as services from "../../services";
 import * as utils from "../../utils";
 import {
     MessageFactory,
+    TestCollection,
     TestDbFactory,
     TestKafka,
     TestTenantManager,
@@ -27,6 +28,7 @@ describe("Routerlicious", () => {
                 let deliKafka: TestKafka;
                 let testOrderer: core.IOrdererManager;
                 let testTenantManager: TestTenantManager;
+                let contentCollection: TestCollection;
 
                 beforeEach(() => {
                     const collectionNames = "test";
@@ -51,12 +53,14 @@ describe("Routerlicious", () => {
                     testOrderer = new services.OrdererManager(null, kafkaOrderer);
 
                     webSocketServer = new TestWebSocketServer();
+                    contentCollection = new TestCollection([]);
 
                     io.register(
                         webSocketServer,
                         metricClientConfig,
                         testOrderer,
-                        testTenantManager);
+                        testTenantManager,
+                        contentCollection);
                 });
 
                 function connectToServer(

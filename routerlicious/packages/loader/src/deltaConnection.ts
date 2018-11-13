@@ -56,8 +56,8 @@ export class DeltaConnection extends EventEmitter {
             this.emit("op", documentId, messages);
         });
 
-        connection.on("op-content", (documentId: string, messages: any[]) => {
-            this.emit("op-content", documentId, messages);
+        connection.on("op-content", (message: runtime.IContentMessage) => {
+            this.emit("op-content", message);
         });
 
         connection.on("nack", (documentId: string, message: runtime.INack[]) => {
@@ -89,5 +89,9 @@ export class DeltaConnection extends EventEmitter {
 
     public submit(message: runtime.IDocumentMessage): void {
         this.connection.submit(message);
+    }
+
+    public async submitAsync(message: runtime.IDocumentMessage): Promise<void> {
+        return this.connection.submitAsync(message);
     }
 }

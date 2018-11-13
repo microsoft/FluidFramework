@@ -1,4 +1,5 @@
 // tslint:disable
+import { IContentMessage } from "@prague/runtime-definitions";
 import { EventEmitter } from "events";
 
 export class ContentCache extends EventEmitter {
@@ -8,18 +9,16 @@ export class ContentCache extends EventEmitter {
         super();
     }
 
-    public set(messages: any[]) {
-        for (const message of messages) {
-            const clientId = message.clientId;
-            if (!this.cache.has(clientId)) {
-                this.cache.set(clientId, new RingBuffer(this.log2Capacity));
-            }
-            this.cache.get(clientId).enqueue(message.op);
-            this.emit("content", clientId);
+    public set(message: IContentMessage) {
+        const clientId = message.clientId;
+        if (!this.cache.has(clientId)) {
+            this.cache.set(clientId, new RingBuffer(this.log2Capacity));
         }
+        this.cache.get(clientId).enqueue(message);
+        this.emit("content", clientId);
     }
 
-    public get(clientId: string) {
+    public get(clientId: string): IContentMessage {
         return this.cache.has(clientId) ? this.cache.get(clientId).dequeue() : undefined;
     }
 }
@@ -30,7 +29,7 @@ class RingBuffer {
     private lengthMask: number;
     private head = 0;
     private tail = 0;
-    private buffer = [];
+    private buffer: IContentMessage[] = [];
     
     constructor(log2Cap: number) {
         this.log2Capacity = log2Cap;
@@ -41,7 +40,7 @@ class RingBuffer {
         }
     }
 
-    public enqueue(data: any): void {
+    public enqueue(data: IContentMessage): void {
         const newHead = (this.head + 1) & this.lengthMask;
         if (newHead !== this.tail) {
             this.buffer[this.head] = data;
@@ -53,7 +52,7 @@ class RingBuffer {
         }
     }
 
-    public dequeue() {
+    public dequeue(): IContentMessage {
         if (this.head === this.tail) {
             return undefined;
         } else {

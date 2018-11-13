@@ -123,8 +123,8 @@ class LocalOrdererConnection implements IOrdererConnection {
         public readonly existing: boolean,
         document: core.IDocument,
         private producer: IProducer,
-        private tenantId: string,
-        private documentId: string,
+        public readonly tenantId: string,
+        public readonly documentId: string,
         public readonly clientId: string,
         private user: IUser,
         private client: IClient,
@@ -147,7 +147,11 @@ class LocalOrdererConnection implements IOrdererConnection {
             documentId: this.documentId,
             operation: {
                 clientSequenceNumber: -1,
-                contents: clientDetail,
+                contents: null,
+                metadata: {
+                    content: clientDetail,
+                    split: false,
+                },
                 referenceSequenceNumber: -1,
                 traces: [],
                 type: MessageType.ClientJoin,
@@ -182,7 +186,11 @@ class LocalOrdererConnection implements IOrdererConnection {
             documentId: this.documentId,
             operation: {
                 clientSequenceNumber: -1,
-                contents: this.clientId,
+                contents: null,
+                metadata: {
+                    content: this.clientId,
+                    split: false,
+                },
                 referenceSequenceNumber: -1,
                 traces: [],
                 type: MessageType.ClientLeave,

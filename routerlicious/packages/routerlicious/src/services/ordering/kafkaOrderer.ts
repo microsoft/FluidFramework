@@ -3,7 +3,6 @@ import * as _ from "lodash";
 import * as moniker from "moniker";
 import * as core from "../../core";
 import { IProducer } from "../../utils";
-import { ContentPublisher } from "../contentPublisher";
 
 export class KafkaOrdererConnection implements core.IOrdererConnection {
     public static async Create(
@@ -15,8 +14,7 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
         socket: core.IWebSocket,
         user: IUser,
         client: IClient,
-        maxMessageSize: number,
-        contentPublisher: ContentPublisher): Promise<KafkaOrdererConnection> {
+        maxMessageSize: number): Promise<KafkaOrdererConnection> {
 
         const clientId = moniker.choose();
 
@@ -30,7 +28,6 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
             clientId,
             user,
             client,
-            contentPublisher,
             maxMessageSize);
 
         // Bind the socket to the channels the connection will send to
@@ -52,12 +49,11 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
         public readonly existing: boolean,
         document: core.IDocument,
         private producer: IProducer,
-        private tenantId: string,
-        private documentId: string,
+        public readonly tenantId: string,
+        public readonly documentId: string,
         public readonly clientId: string,
         private user: IUser,
         private client: IClient,
-        private contentPublisher: ContentPublisher,
         public readonly maxMessageSize: number) {
 
         this._parentBranch = document.parent ? document.parent.documentId : null;
@@ -72,7 +68,11 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
             documentId: this.documentId,
             operation: {
                 clientSequenceNumber: -1,
-                contents: clientDetail,
+                contents: null,
+                metadata: {
+                    content: clientDetail,
+                    split: false,
+                },
                 referenceSequenceNumber: -1,
                 traces: undefined,
                 type: MessageType.ClientJoin,
@@ -106,7 +106,11 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
             documentId: this.documentId,
             operation: {
                 clientSequenceNumber: -1,
-                contents: this.clientId,
+                contents: null,
+                metadata: {
+                    content: this.clientId,
+                    split: false,
+                },
                 referenceSequenceNumber: -1,
                 traces: undefined,
                 type: MessageType.ClientLeave,
@@ -131,26 +135,8 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
                     timestamp: Date.now(),
                 });
         }
-        // TODO (mdaumi)
-        // 1. We should put system level messages (clientleave, remotehelp) in a different field
-        // so that we never have to look at the content.
-        // 2. Splitted messages should set a system level flag to simplify client logic.
-        // Checking content size to decide splitting.
-        const contentSize = JSON.stringify(message.operation.contents).length;
-        if (contentSize > 256) {
-            this.contentPublisher.publish({
-                clientId: this.clientId,
-                documentId: this.documentId,
-                op: _.cloneDeep(message.operation),
-                tenantId: this.tenantId,
-            });
-            message.operation.contents = null;
-            const stringMessage = JSON.stringify(message);
-            this.producer.send(stringMessage, this.documentId);
-        } else {
-            const stringMessage = JSON.stringify(message);
-            this.producer.send(stringMessage, this.documentId);
-        }
+        const stringMessage = JSON.stringify(message);
+        this.producer.send(stringMessage, this.documentId);
     }
 }
 
@@ -160,11 +146,10 @@ export class KafkaOrderer implements core.IOrderer {
         producer: IProducer,
         tenantId: string,
         documentId: string,
-        maxMessageSize: number,
-        contentPublisher: ContentPublisher): Promise<KafkaOrderer> {
+        maxMessageSize: number): Promise<KafkaOrderer> {
 
         const details = await storage.getOrCreateDocument(tenantId, documentId);
-        return new KafkaOrderer(details, producer, tenantId, documentId, maxMessageSize, contentPublisher);
+        return new KafkaOrderer(details, producer, tenantId, documentId, maxMessageSize);
     }
 
     private existing: boolean;
@@ -174,8 +159,7 @@ export class KafkaOrderer implements core.IOrderer {
         private producer: IProducer,
         private tenantId: string,
         private documentId: string,
-        private maxMessageSize: number,
-        private contentPublisher: ContentPublisher) {
+        private maxMessageSize: number) {
         this.existing = details.existing;
     }
 
@@ -193,8 +177,7 @@ export class KafkaOrderer implements core.IOrderer {
             socket,
             user,
             client,
-            this.maxMessageSize,
-            this.contentPublisher);
+            this.maxMessageSize);
 
         // document is now existing regardless of the original value
         this.existing = true;
@@ -213,8 +196,7 @@ export class KafkaOrdererFactory {
     constructor(
         private producer: IProducer,
         private storage: core.IDocumentStorage,
-        private maxMessageSize: number,
-        private contentPublisher?: ContentPublisher) {
+        private maxMessageSize: number) {
     }
 
     public async create(tenantId: string, documentId: string): Promise<core.IOrderer> {
@@ -225,8 +207,7 @@ export class KafkaOrdererFactory {
                 this.producer,
                 tenantId,
                 documentId,
-                this.maxMessageSize,
-                this.contentPublisher);
+                this.maxMessageSize);
             this.ordererMap.set(fullId, orderer);
         }
 

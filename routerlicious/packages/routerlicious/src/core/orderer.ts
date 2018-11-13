@@ -8,6 +8,10 @@ export interface IOrdererSocket {
 export interface IOrdererConnection {
     readonly clientId: string;
 
+    readonly tenantId: string;
+
+    readonly documentId: string;
+
     // TODO - this can probably be phased out in favor of an explicit create of the ordering context
     // For now it maps to whether the connection is to an existing ordering context or a new one
     readonly existing: boolean;

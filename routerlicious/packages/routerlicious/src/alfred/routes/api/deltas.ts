@@ -65,10 +65,12 @@ export async function getDeltas(
 
     return dbDeltas.map((delta) => {
         const operation = delta.operation as ISequencedDocumentMessage;
-        // Temporary workaround to handle old deltas where content type is object.
-        if (typeof operation.contents === "string") {
+
+        // Back-Compat: Temporary workaround to handle old deltas where content type is object.
+        if (!operation.metadata && typeof operation.contents === "string") {
             operation.contents = JSON.parse(operation.contents);
         }
+
         return operation;
     });
 }

@@ -1,6 +1,7 @@
 // tslint:disable
 import {
     IClient,
+    IContentMessage,
     IDocumentDeltaConnection,
     IDocumentMessage,
     ISequencedDocumentMessage,
@@ -10,9 +11,6 @@ import { BatchManager } from "@prague/utils";
 import { EventEmitter } from "events";
 import { debug } from "./debug";
 import * as messages from "./messages";
-
-// tslint:disable-next-line:no-submodule-imports
-const cloneDeep = require("lodash/cloneDeep");
 
 /**
  * Represents a connection to a stream of delta updates
@@ -47,7 +45,7 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
         const connection = await new Promise<messages.IConnected>((resolve, reject) => {
             // Listen for ops sent before we receive a response to connect_document
             const queuedMessages: ISequencedDocumentMessage[] = [];
-            const queuedContents: Map<string, any> = new Map<string, any>();
+            const queuedContents: IContentMessage[] = [];
 
             const earlyOpHandler = (documentId: string, msgs: ISequencedDocumentMessage[]) => {
                 debug("Queued early ops", msgs.length);
@@ -55,12 +53,9 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
             };
             socket.on("op", earlyOpHandler);
 
-            const earlyContentHandler = (documentId: string, msgs: any[]) => {
-                debug("Queued early ops", msgs.length);
-                for (const msg of msgs) {
-                    const key = `${msg.clientId}-${msg.op.clientSequenceNumber}`;
-                    queuedContents.set(key, msg.op.contents);
-                }
+            const earlyContentHandler = (msg: IContentMessage) => {
+                debug("Queued early contents");
+                queuedContents.push(msg);
             };
             socket.on("op-content", earlyContentHandler);
 
@@ -79,18 +74,19 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
                     if (!response.initialMessages) {
                         response.initialMessages = [];
                     }
-                    for (const message of queuedMessages) {
-                        if (message.contents && message.contents !== null) {
-                            continue;
-                        }
-                        const key = `${message.clientId}-${message.clientSequenceNumber}`;
-                        message.contents = cloneDeep(queuedContents.get(key));
-                        queuedContents.delete(key);
-                    }
 
                     response.initialMessages.push(...queuedMessages);
 
                     response.initialMessages.sort((a, b) => a.sequenceNumber - b.sequenceNumber);
+
+                    if (!response.initialContents) {
+                        response.initialContents = [];
+                    }
+
+                    response.initialContents.push(...queuedContents);
+
+                    response.initialContents.sort((a, b) => (a.clientId === b.clientId) ? 0 : ((a.clientId < b.clientId)? -1 : 1) || a.clientSequenceNumber - b.clientSequenceNumber);
+
                 }
 
                 resolve(response);

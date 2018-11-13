@@ -15,7 +15,6 @@ import {
     IPlatform,
     IQuorum,
     IRuntime,
-    ISave,
     ISequencedDocumentMessage,
     ISequencedObjectMessage,
     ISnapshotTree,
@@ -371,9 +370,7 @@ export class Runtime extends EventEmitter implements IRuntime {
 
     public save(tag: string) {
         this.verifyNotClosed();
-
-        const message: ISave = { message: tag };
-        this.submit(MessageType.Save, message);
+        this.submit(MessageType.Save, tag);
     }
 
     public async uploadBlob(file: IGenericBlob): Promise<IGenericBlob> {
@@ -470,6 +467,7 @@ export class Runtime extends EventEmitter implements IRuntime {
         this.submit(type, content);
     }
 
+    // TODO (mdaumi): We should have a submit variant for system metadata.
     private submit(type: MessageType, content: any) {
         this.verifyNotClosed();
         this.submitFn(type, content);
