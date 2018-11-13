@@ -1,6 +1,6 @@
 import * as pragueMap from "@prague/map";
 import { FrameLoader, IFrameLoaderCallbacks } from "./frameLoader";
-import { getCollabDoc } from "./pragueUtil";
+import { PragueDocument } from "./pragueUtil";
 
 function setSpanText(spanName, message) {
     (document.getElementById(spanName) as HTMLSpanElement).innerHTML = message;
@@ -97,10 +97,10 @@ class FrameLoaderCallbacks implements IFrameLoaderCallbacks {
     }
 }
 
-async function initFromPrague(documentId: string) {
-    setStatusMessage("Loading document " + documentId);
+async function initFromPrague(server: string, documentId: string) {
+    setStatusMessage("Loading document " + documentId + " from server " + server);
 
-    const collabDoc = await getCollabDoc(documentId);
+    const collabDoc = await PragueDocument.Load(server, documentId);
     const rootView = await collabDoc.getRoot().getView();
 
     FrameLoader.syncRoot(iframe, rootView, new FrameLoaderCallbacks());
@@ -111,6 +111,7 @@ const search = new URLSearchParams(query);
 const fullView = search.has("full") && search.get("full") === "true";
 const debugView = search.has("debug") && search.get("debug") === "true";
 const iframe = document.getElementById("view") as HTMLIFrameElement;
+let serverInput = "local";
 
 if (!fullView) {
     document.getElementById("top").className = "";
@@ -120,8 +121,14 @@ if (!fullView) {
     }
 }
 
+if (search.has("server")) {
+    serverInput = search.get("server");
+}
+
+setSpanText("server", serverInput);
+
 if (search.has("docId")) {
     const docId = search.get("docId");
     document.title += " - " + docId;
-    initFromPrague(docId).catch((error) => { console.error(error); });
+    initFromPrague(serverInput, docId).catch((error) => { console.error(error); });
 }

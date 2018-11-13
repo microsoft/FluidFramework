@@ -1,7 +1,7 @@
 import { debug, debugFrame, debugPopup } from "./debug";
 import { MessageEnum } from "./portHolder";
 import { PragueMapWrapperFactory } from "./pragueMapWrapper";
-import { getCollabDoc } from "./pragueUtil";
+import { PragueDocument } from "./pragueUtil";
 import { saveDOM, stopStreamToPrague } from "./pragueWrite";
 import { RewriteDOMTree } from "./rewriteDOMTree";
 
@@ -98,7 +98,7 @@ import { RewriteDOMTree } from "./rewriteDOMTree";
     async function saveDOMToPrague(documentId: string, options: any) {
         // Load in the latest and connect to the document
         options.startSignalTime = options.startSaveSignalTime = performance.now();
-        const collabDoc = await getCollabDoc(documentId);
+        const collabDoc = await PragueDocument.Load("local", documentId);
         await saveDOM(new PragueMapWrapperFactory(collabDoc, options.batchOp), options);
         if (options.stream) {
             collabDocToClose = collabDoc;

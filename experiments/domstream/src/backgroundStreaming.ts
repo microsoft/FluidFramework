@@ -2,9 +2,9 @@ import * as pragueMap from "@prague/map";
 import { debug, debugFrame, debugPort } from "./debug";
 import { globalConfig } from "./globalConfig";
 import { MessageEnum, PortHolder } from "./portHolder";
-import { getCollabDoc } from "./pragueUtil";
+import { PragueDocument } from "./pragueUtil";
 
-let collabDoc;
+let collabDoc: PragueDocument;
 let currentTabId;
 let mapBatchOp = true;
 
@@ -21,12 +21,12 @@ export class BackgroundStreaming {
         });
     }
 
-    public static async start(docId: string, tabId: number, batchOp: boolean) {
+    public static async start(server: string, docId: string, tabId: number, batchOp: boolean) {
         if (collabDoc) {
             console.error("Shouldn't start background stream when there is already an collabDoc");
             return;
         }
-        collabDoc = await getCollabDoc(docId);
+        collabDoc = await PragueDocument.Load(server, docId);
         currentTabId = tabId;
         mapBatchOp = batchOp;
         debug("Start streaming tab", tabId, docId);
