@@ -8,7 +8,7 @@ class PragueMapWrapper implements IMapWrapper {
         this.map = map;
     }
 
-    public set(key: string, value: any) {
+    public set(key: string, value: string | number | boolean) {
         this.map.set(key, value);
     }
 
@@ -28,7 +28,7 @@ export class PragueMapViewWrapper implements IMapViewWrapper {
         this.mapView = mapView;
     }
 
-    public set(key: string, value: any) {
+    public set(key: string, value: string | number | boolean) {
         this.mapView.set(key, value);
     }
     public setMap(key: string, value: IMapWrapper) {
@@ -40,7 +40,8 @@ export class PragueMapViewWrapper implements IMapViewWrapper {
         this.mapView.set(key, (value as PragueMapViewWrapper).mapView.getMap());
     }
     public setTimeStamp(key: string) {
-        this.mapView.set(key, new Date().valueOf());
+        const date = Date.now();
+        this.mapView.set(key, [date, date]);
     }
     public setIfChanged(key: string, value: string) {
         const oldValue = this.mapView.get(key);
@@ -68,11 +69,11 @@ export class PragueMapViewWrapper implements IMapViewWrapper {
 
 export class PragueMapWrapperFactory implements IMapWrapperFactory {
     private collabDoc: PragueDocument;
-    private batchOp: boolean;
+    private batchOps: boolean;
     private defaultMapView: pragueMap.IMapView;
-    constructor(collabDoc: PragueDocument, batchOp: boolean) {
+    constructor(collabDoc: PragueDocument, batchOps: boolean) {
         this.collabDoc = collabDoc;
-        this.batchOp = batchOp;
+        this.batchOps = batchOps;
     }
     public async getFrameContainerDataMapView() {
         // TODO: Only support top frame
@@ -87,14 +88,14 @@ export class PragueMapWrapperFactory implements IMapWrapperFactory {
     }
     public createMap() {
         const newMap = this.collabDoc.createMap();
-        if (!this.batchOp) {
+        if (!this.batchOps) {
             this.collabDoc.getRoot().set("FORCEATTACH", newMap);
         }
         return new PragueMapWrapper(newMap);
     }
     public async createMapView() {
         const newMap = this.collabDoc.createMap();
-        if (!this.batchOp) {
+        if (!this.batchOps) {
             this.collabDoc.getRoot().set("FORCEATTACH", newMap);
         }
         return new PragueMapViewWrapper(await newMap.getView());

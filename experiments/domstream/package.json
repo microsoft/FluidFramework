@@ -1,6 +1,6 @@
 {
   "name": "@chaincode/domstream",
-  "version": "0.1.40",
+  "version": "0.1.41",
   "author": "Microsoft",
   "description": "DOM stream experimental extension",
   "repository": "microsoft/prague",
