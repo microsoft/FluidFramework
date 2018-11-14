@@ -3647,27 +3647,35 @@ export class FlowView extends ui.Component {
         //
         //       Instead, we currently check to see if a workbook already exists.  If not, we
         //       insert one up front.
-        this.collabDocument.getRoot().getView().then((rootView) => {
-            let workbookMap = rootView.get("workbook");
-            if (!workbookMap) {
+        this.collabDocument.getRoot().getView().then(async (rootView) => {
+            let workbookMap: types.IMap;
+
+            if (!this.collabDocument.existing) {
                 workbookMap = this.collabDocument.createMap();
+            } else {
+                workbookMap = await rootView.wait<types.IMap>("workbook");
+            }
+
+            const workbookView = await workbookMap.getView();
+            this.services.set(
+                "workbook",
+                new CollaborativeWorkbook(workbookView, 6, 6, [
+                    ["Player", "Euchre", "Bridge", "Poker", "Go Fish", "Total Wins"],
+                    ["Daniel", "0", "0", "0", "5", "=SUM(B2:E2)"],
+                    ["Kurt", "2", "3", "0", "0", "=SUM(B3:E3)"],
+                    ["Sam", "3", "4", "0", "0", "=SUM(B4:E4)"],
+                    ["Tanvir", "3", "3", "0", "0", "=SUM(B5:E5)"],
+                    ["Total Played", "=SUM(B2:B5)", "=SUM(C2:C5)", "=SUM(D2:D5)", "=SUM(E2:E5)", "=SUM(F2:F5)"],
+                ]));
+
+            // Set the map after loading data so it's populated when other clients load it
+            if (!this.collabDocument.existing) {
                 rootView.set("workbook", workbookMap);
             }
+
             workbookMap.on("valueChanged", () => {
                 // TODO: Track which cells are visible and damp invalidation for off-screen cells.
                 this.queueRender(undefined, true);
-            });
-            workbookMap.getView().then((workbookView) => {
-                this.services.set("workbook",
-                    // If empty, seed the workbook w/some initial data for demos.
-                    new CollaborativeWorkbook(workbookView, 6, 6, [
-                        ["Player", "Euchre", "Bridge", "Poker", "Go Fish", "Total Wins"],
-                        ["Daniel", "0", "0", "0", "5", "=SUM(B2:E2)"],
-                        ["Kurt", "2", "3", "0", "0", "=SUM(B3:E3)"],
-                        ["Sam", "3", "4", "0", "0", "=SUM(B4:E4)"],
-                        ["Tanvir", "3", "3", "0", "0", "=SUM(B5:E5)"],
-                        ["Total Played", "=SUM(B2:B5)", "=SUM(C2:C5)", "=SUM(D2:D5)", "=SUM(E2:E5)", "=SUM(F2:F5)"],
-                    ]));
             });
         });
     }
