@@ -5,17 +5,18 @@
     <!-- Comment -->
     <table>
         <tr>
-            <td>
+            <td colspan="2">
                 <input id="doc_name" type="text" value="streamdoc" />
             </td>
             <td>
-                <input id="prague_flat_btn" value="Save" type="button" /> 
+                <input id="prague_flat_btn" value="Save" type="button" />
             </td>
             <td>
                 <input id="prague_view_btn" value="View" type="button" />
             </td>
         </tr>
         <tr>
+            <td>Server: <select id="server_dd"></select></td>
             <td style="text-align:right">Stream:</td>
             <td>
                 <input id="prague_stream_start_btn" value="Start" type="button" />
@@ -35,6 +36,7 @@
     <input id="batch_ops_cb" checked type="checkbox">Batch Ops<br />
     <input id="full_view_cb" checked type="checkbox">Full view<br />
     <input id="debug_view_cb" checked type="checkbox">Debug view<br />
+
 </body>
 
 </html>

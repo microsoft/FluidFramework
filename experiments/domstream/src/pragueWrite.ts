@@ -79,7 +79,6 @@ export async function saveDOM(mapWrapperFactory: IMapWrapperFactory, options: an
     const dataName = options.frameId ? "DOMSTREAM_" + options.frameId : "DOMSTREAM";
     frameDataContainer.setMapView(dataName, dataMapWrapper);
 
-    // collabDoc.save();
     const endTime = performance.now();
     dataMapWrapper.set("TIME_ATTACH", endTime - endGenTime);
     dataMapWrapper.set("FG_END_DATE", new Date().valueOf());

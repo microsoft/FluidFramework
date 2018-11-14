@@ -24,6 +24,7 @@ const streamState = {
     docId: "",
     enabled: false,
     pending: false,
+    server: "",
     tabId: -1,
 };
 
@@ -57,16 +58,17 @@ function executeCommand(message) {
             streamState.tabId = tabId;
             streamState.docId = message.docId;
             streamState.batchOp = message.batchOp;
+            streamState.server = message.server;
             if (message.background) {
                 streamState.background = true;
                 streamState.pending = true;
-                BackgroundStreaming.start(streamState.docId, streamState.tabId, streamState.batchOp).then(
-                    () => { streamState.pending = false; });
+                BackgroundStreaming.start(streamState.server, streamState.docId, streamState.tabId, streamState.batchOp)
+                    .then(() => { streamState.pending = false; })
+                    .catch(() => { streamState.pending = false; streamState.enabled = false; });
                 return;
             }
         }
     }
-
     streamState.background = false;
     chrome.tabs.sendMessage(tabId, [command, message.docId, message.batchOp], { frameId: 0 },
         (response) => {

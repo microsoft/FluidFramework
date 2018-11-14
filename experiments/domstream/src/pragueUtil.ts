@@ -7,8 +7,6 @@ import {
     IPlatform,
     IPlatformFactory,
     IRuntime,
-    ITokenProvider,
-    IUser,
 } from "@prague/runtime-definitions";
 import * as socketStorage from "@prague/socket-storage";
 import { Deferred } from "@prague/utils";
@@ -17,27 +15,7 @@ import * as jwt from "jsonwebtoken";
 import * as uuid from "uuid/v4";
 import { debug } from "./debug";
 import { globalConfig } from "./globalConfig";
-
-const localServer = "localhost";
-
-// For local development
-const localSettings = {
-    historian: "http://" + localServer + ":3001",
-    routerlicious: "http://" + localServer + ":3000",
-    secret: "43cfc3fbf04a97c0921fd23ff10f9e4b",
-    tenantId: "prague",
-};
-const remoteSettings = {
-    historian: "https://historian.eu.prague.office-int.com",
-    routerlicious: "https://alfred.eu.prague.office-int.com",
-    secret: "04d35da60eed66c9a2272bdf310d076e",
-    tenantId: "trusting-tesla",
-};
-
-const settings = globalConfig.useLocalServer ? localSettings : remoteSettings;
-
-// Register endpoint connection
-const documentServices = socketStorage.createDocumentService(settings.routerlicious, settings.historian);
+import { settingCollection } from "./pragueServerSettings";
 
 export class Platform extends EventEmitter implements IPlatform {
     public queryInterface<T>(id: string) {
@@ -135,13 +113,21 @@ async function initializeChaincode(loaderDoc: pragueLoader.Document, pkg: string
 }
 
 export class PragueDocument {
-    public static async Load(
-        id: string,
-        tenantId: string,
-        user: IUser,
-        tokenProvider: ITokenProvider,
-        options: any = {},
-        waitForConnected = true) {
+    public static async Load(server: string, documentId: string) {
+
+        const settings = settingCollection[server];
+        const user = {
+            id: "test",
+        };
+        const token = jwt.sign(
+            {
+                documentId,
+                permission: "read:write", // use "read:write" for now
+                tenantId: settings.tenantId,
+                user,
+            },
+            settings.secret);
+        const tokenProvider = new socketStorage.TokenProvider(token);
         const classicPlatform = new PlatformFactory();
         const runDeferred = new Deferred<{ runtime: IRuntime; platform: IPlatform }>();
         const loader = new CodeLoader(
@@ -152,12 +138,13 @@ export class PragueDocument {
             });
 
         // Load the Prague document
+        const documentServices = socketStorage.createDocumentService(settings.routerlicious, settings.historian);
         const loaderDoc = await pragueLoader.load(
-            id,
-            tenantId,
+            documentId,
+            settings.tenantId,
             user,
             tokenProvider,
-            options,
+            { blockUpdateMarkers: true },
             classicPlatform,
             documentServices,
             loader);
@@ -184,7 +171,7 @@ export class PragueDocument {
             root = await runtime.getChannel("root") as IMap;
         }
 
-        if (!loaderDoc.connected && waitForConnected) {
+        if (!loaderDoc.connected && globalConfig.docWaitForConnect) {
             await new Promise<void>((resolve) => loaderDoc.once("connected", () => resolve()));
         }
 
@@ -204,30 +191,11 @@ export class PragueDocument {
     public createMap(): IMap {
         return this.runtime.createChannel(uuid(), MapExtension.Type) as IMap;
     }
-}
 
-export async function getCollabDoc(documentId: string): Promise<PragueDocument> {
-    const user = {
-        id: "test",
-    };
-    const token = jwt.sign(
-        {
-            documentId,
-            permission: "read:write", // use "read:write" for now
-            tenantId: settings.tenantId,
-            user,
-        },
-        settings.secret);
-
-    // Load in the latest and connect to the document
-    const tokenProvider = new socketStorage.TokenProvider(token);
-    const collabDoc = await PragueDocument.Load(
-        documentId,
-        settings.tenantId,
-        user,
-        tokenProvider,
-        { blockUpdateMarkers: true },
-        globalConfig.docWaitForConnect);
-
-    return collabDoc;
+    public snapshot() {
+        this.runtime.snapshot("");
+    }
+    public close() {
+        this.runtime.close();
+    }
 }
