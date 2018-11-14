@@ -118,16 +118,15 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
     private submitRawOperation(message: core.IRawOperationMessage) {
         // Add trace
         const operation = message.operation as IDocumentMessage;
-        if (operation && operation.traces && operation.traces.length > 1) {
+        if (operation && operation.traces === undefined) {
+            operation.traces = [];
+        } else if (operation && operation.traces && operation.traces.length > 1) {
             operation.traces.push(
                 {
                     action: "end",
                     service: "alfred",
                     timestamp: Date.now(),
                 });
-        } else {
-            // back-compat with older clients
-            operation.traces = [];
         }
 
         const stringMessage = JSON.stringify(message);
