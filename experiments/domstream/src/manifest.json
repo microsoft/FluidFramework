@@ -14,7 +14,9 @@
   "permissions": [
     "activeTab",
     "storage",
-    "webNavigation"
+    "webNavigation",
+    "http://*/*", 
+    "https://*/*"
   ],
   "browser_action": {
     "default_title": "DOM stream",

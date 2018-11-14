@@ -6,7 +6,7 @@
     <table>
         <tr>
             <td colspan="2">
-                <input id="doc_name" type="text" value="streamdoc" />
+                <input id="docId" type="text" />
             </td>
             <td>
                 <input id="prague_flat_btn" value="Save" type="button" />
@@ -16,7 +16,7 @@
             </td>
         </tr>
         <tr>
-            <td>Server: <select id="server_dd"></select></td>
+            <td>Server: <select id="server"></select></td>
             <td style="text-align:right">Stream:</td>
             <td>
                 <input id="prague_stream_start_btn" value="Start" type="button" />
@@ -32,10 +32,14 @@
     <input id="tab_btn" value="Tab" type="button" />
     <input id="json_btn" value="JSON" type="button" />
     <input id="prague_btn" value="Map" type="button" /><br />
-    <input id="background_cb" checked type="checkbox">Background<br />
-    <input id="batch_ops_cb" checked type="checkbox">Batch Ops<br />
-    <input id="full_view_cb" checked type="checkbox">Full view<br />
-    <input id="debug_view_cb" checked type="checkbox">Debug view<br />
+    <input id="background" checked type="checkbox">Background<br />
+    <input id="batchOps" checked type="checkbox">Batch Ops<br />
+    <input id="fullView" type="checkbox">Full view<br />
+    <input id="debugView" type="checkbox">Debug view<br />
+    <input id="autoIncrement" type="checkbox">Auto Increment Name<br />
+
+    <input id="clear_btn" value="Reset settings" type="button" />
+
 
 </body>
 

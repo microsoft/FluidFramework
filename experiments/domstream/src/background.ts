@@ -20,7 +20,7 @@ function exportToView(tab: chrome.tabs.Tab, response) {
 
 const streamState = {
     background: false,
-    batchOp: false,
+    batchOps: false,
     docId: "",
     enabled: false,
     pending: false,
@@ -57,12 +57,14 @@ function executeCommand(message) {
             streamState.enabled = true;
             streamState.tabId = tabId;
             streamState.docId = message.docId;
-            streamState.batchOp = message.batchOp;
+            streamState.batchOps = message.batchOps;
+            streamState.server = message.server;
             streamState.server = message.server;
             if (message.background) {
                 streamState.background = true;
                 streamState.pending = true;
-                BackgroundStreaming.start(streamState.server, streamState.docId, streamState.tabId, streamState.batchOp)
+                BackgroundStreaming.start(
+                    streamState.server, streamState.docId, streamState.tabId, streamState.batchOps)
                     .then(() => { streamState.pending = false; })
                     .catch(() => { streamState.pending = false; streamState.enabled = false; });
                 return;
@@ -70,7 +72,7 @@ function executeCommand(message) {
         }
     }
     streamState.background = false;
-    chrome.tabs.sendMessage(tabId, [command, message.docId, message.batchOp], { frameId: 0 },
+    chrome.tabs.sendMessage(tabId, [command, message.docId, message.batchOps, message.server], { frameId: 0 },
         (response) => {
             if (command === "Tab" || command === "JSON") {
                 debugPopup(response);
@@ -79,6 +81,19 @@ function executeCommand(message) {
         });
 }
 
+function ensureInject(tabId: number, needInject: boolean, callback) {
+
+    if (needInject && !contentOptionalInjectedTabIds.has(tabId)) {
+        contentOptionalInjectedTabIds.add(tabId);
+        chrome.tabs.executeScript(tabId, {
+            file: "contentOptional.js",
+        }, () => {
+            callback();
+        });
+    } else {
+        callback();
+    }
+}
 const contentOptionalInjectedTabIds = new Set<number>();
 chrome.runtime.onMessage.addListener((message, sender) => {
     debugPopup(message, sender, performance.now());
@@ -105,16 +120,7 @@ chrome.runtime.onMessage.addListener((message, sender) => {
 
         const tab: chrome.tabs.Tab = message.tab;
         const tabId = tab.id;
-        if (needInject && !contentOptionalInjectedTabIds.has(tabId)) {
-            contentOptionalInjectedTabIds.add(tabId);
-            chrome.tabs.executeScript(tabId, {
-                file: "contentOptional.js",
-            }, () => {
-                executeCommand(message);
-            });
-        } else {
-            executeCommand(message);
-        }
+        ensureInject(tabId, needInject, () => { executeCommand(message); });
     }
 });
 
@@ -129,8 +135,12 @@ chrome.webNavigation.onCompleted.addListener((details) => {
     // Trigger streaming on a new page in foreground mode.  Only support the main frame and not subframes
     if (streamState.enabled && !streamState.background
         && streamState.tabId === details.tabId && details.frameId === 0) {
-        chrome.tabs.sendMessage(streamState.tabId, ["PragueStreamStart", streamState.docId, streamState.batchOp],
-            { frameId: 0 });
+        ensureInject(streamState.tabId, true, () => {
+            chrome.tabs.sendMessage(
+                streamState.tabId,
+                ["PragueStreamStart", streamState.docId, streamState.batchOps, streamState.server],
+                { frameId: 0 });
+        });
     }
 });
 

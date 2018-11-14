@@ -27,7 +27,7 @@ import { saveDOM, stopStreamToPrague } from "./pragueWrite";
     async function streamDOMToBackgroundPrague(startSignalTime, streamOptions) {
         const options = {
             background: true,
-            batchOp: streamOptions.batchOp,
+            batchOps: streamOptions.batchOps,
             contentScriptInitTime,
             frameId: streamOptions.frameId,
             startSaveSignalTime: performance.now(),
@@ -35,7 +35,7 @@ import { saveDOM, stopStreamToPrague } from "./pragueWrite";
             stream: true,
             useFlatMap: true,
         };
-        return saveDOM(new PragueBackgroundMapWrapperFactory(port, options.batchOp), options);
+        return saveDOM(new PragueBackgroundMapWrapperFactory(port, options.batchOps), options);
     }
 
     let contentScriptInitTime;

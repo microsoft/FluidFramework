@@ -117,12 +117,12 @@ export class FrameLoader implements IFrameLoader {
                 case "DATE":
                 case "END_DATE":
                 case "TIME_ATTACH":
-                case "FG_END_DATE":
 
                 // These are dealt with in the StreamWindow
                 case "SCROLLPOS":
                 case "REMOTECLICK":
                 case "MUTATION":
+                case "MUTATION_DATE":
                     break;
 
                 default:
