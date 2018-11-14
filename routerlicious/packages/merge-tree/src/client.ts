@@ -865,4 +865,8 @@ export class Client {
         this.clientNameToIds.put(longClientId, oldData);
         this.shortClientIdMap[oldData.clientId] = longClientId;
     }
+    findTile(startPos: number, tileLabel: string, preceding = true){
+        const clientId = this.getClientId();
+        return this.mergeTree.findTile(startPos,clientId,tileLabel,preceding);
+    }
 }

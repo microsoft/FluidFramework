@@ -360,6 +360,10 @@ export class SharedString extends CollaborativeMap {
         this.submitIfAttached(groupOp);
     }
 
+    public findTile(startPos: number, tileLabel: string, preceding = true) {
+        return this.client.findTile(startPos, tileLabel, preceding);
+    }
+
     protected transformContent(message: IObjectMessage, toSequenceNumber: number): IObjectMessage {
         if (message.contents) {
             this.client.transform(message as ISequencedObjectMessage, toSequenceNumber);

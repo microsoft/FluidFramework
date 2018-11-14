@@ -3418,7 +3418,7 @@ function getContainingSegment(flowView: FlowView, pos: number): ISegmentOffset {
 }
 
 function findTile(flowView: FlowView, startPos: number, tileType: string, preceding = true) {
-    return flowView.client.mergeTree.findTile(startPos, flowView.client.getClientId(), tileType, preceding);
+    return flowView.sharedString.findTile(startPos, tileType, preceding);
 }
 
 export function annotateMarker(flowView: FlowView, props: MergeTree.PropertySet, marker: MergeTree.Marker) {
