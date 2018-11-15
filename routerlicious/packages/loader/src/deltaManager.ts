@@ -81,7 +81,7 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
 
     private clientType: string;
 
-    private contentCache = new ContentCache(12);
+    private contentCache = new ContentCache(2);
 
     public get inbound(): runtime.IDeltaQueue {
         return this._inbound;
@@ -271,6 +271,13 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
     }
 
     private submitCore(type: string, contents: string, metaContent: any): number {
+        // Start adding trace for the op.
+        const traces: runtime.ITrace[] = [
+            {
+                action: "start",
+                service: this.clientType,
+                timestamp: now(),
+            }];
         // tslint:disable:no-increment-decrement
         const message: runtime.IDocumentMessage = {
             clientSequenceNumber: ++this.clientSequenceNumber,
@@ -280,7 +287,7 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
                 split: (contents !== null) && (contents.length > this.maxContentSize),
             },
             referenceSequenceNumber: this.baseSequenceNumber,
-            traces: undefined,
+            traces,
             type,
         };
         this.readonly = false;
@@ -455,7 +462,10 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
 
     private appendOpContent(message: runtime.ISequencedDocumentMessage, contentOp: runtime.IContentMessage) {
         assert(contentOp, "Content op should not be empty");
-        assert.equal(message.clientSequenceNumber, contentOp.clientSequenceNumber, "Invalid op content order");
+        if (contentOp.clientSequenceNumber !== message.clientSequenceNumber) {
+            console.log(`Actual: ${contentOp.clientSequenceNumber}, Expected: ${message.clientSequenceNumber}`);
+        }
+        assert.equal(contentOp.clientSequenceNumber, message.clientSequenceNumber, "Invalid op content order");
         message.contents = contentOp.contents;
         message.metadata.split = false;
     }

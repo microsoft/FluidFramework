@@ -1,5 +1,6 @@
 // tslint:disable
 import { IContentMessage } from "@prague/runtime-definitions";
+import * as assert from "assert";
 import { EventEmitter } from "events";
 
 export class ContentCache extends EventEmitter {
@@ -35,9 +36,7 @@ class RingBuffer {
         this.log2Capacity = log2Cap;
         this.length = (1 << log2Cap);
         this.lengthMask = this.length - 1;
-        for (let i = 0; i < this.length; ++i) {
-            this.buffer.push(undefined);
-        }
+        this.buffer = Array(this.length).fill(undefined);
     }
 
     public enqueue(data: IContentMessage): void {
@@ -64,23 +63,21 @@ class RingBuffer {
 
     private resize() {
         console.log(`Resizing content buffer from ${this.length}!`);
-        const tempBuffer = [];
-        for (let i = this.tail; i < this.length; ++i) {
-            if (i == this.head) continue;
-            tempBuffer.push(this.buffer[i]);
-        }
-        for (let i = 0; i < this.tail; ++i) {
-            if (i == this.head) continue;
-            tempBuffer.push(this.buffer[i]);
+        assert.notStrictEqual(this.head, this.tail, "Content buffer size error");
+        let newBuffer = [];
+        if (this.head < this.tail) {
+            newBuffer = this.buffer.slice(this.tail);
+            newBuffer.push(...this.buffer.slice(0, this.head));
+        } else {
+            assert.equal(this.tail, 0, "Buffer tail should point at start");
+            newBuffer = this.buffer.slice(0, this.head);
         }
         ++this.log2Capacity;
         this.length = (1 << this.log2Capacity);
         this.lengthMask = this.length - 1;
-        this.head = tempBuffer.length;
+        this.head = newBuffer.length;
         this.tail = 0;
-        for (let i = tempBuffer.length; i < this.length; ++i) {
-            tempBuffer.push(undefined);
-        }
-        this.buffer = tempBuffer;
+        newBuffer.push(...Array(this.head).fill(undefined));
+        this.buffer = newBuffer;
     }
 }

@@ -196,7 +196,7 @@ export class DeliLambda implements IPartitionLambda {
             if (!message.clientId) {
                 if (message.operation.type === MessageType.ClientLeave) {
                     // Return if the client has already been removed due to a prior leave message.
-                    if (!this.removeClient(message.operation.contents)) {
+                    if (!this.removeClient(messageContent)) {
                         return;
                     }
                 } else if (message.operation.type === MessageType.ClientJoin) {
