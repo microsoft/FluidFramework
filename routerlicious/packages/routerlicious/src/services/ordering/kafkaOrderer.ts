@@ -74,7 +74,7 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
                     split: false,
                 },
                 referenceSequenceNumber: -1,
-                traces: undefined,
+                traces: [],
                 type: MessageType.ClientJoin,
             },
             tenantId: this.tenantId,
@@ -112,7 +112,7 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
                     split: false,
                 },
                 referenceSequenceNumber: -1,
-                traces: undefined,
+                traces: [],
                 type: MessageType.ClientLeave,
             },
             tenantId: this.tenantId,
@@ -127,7 +127,9 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
     private submitRawOperation(message: core.IRawOperationMessage) {
         // Add trace
         const operation = message.operation as IDocumentMessage;
-        if (operation && operation.traces && operation.traces.length > 1) {
+        if (operation && operation.traces === undefined) {
+            operation.traces = [];
+        } else if (operation && operation.traces && operation.traces.length > 1) {
             operation.traces.push(
                 {
                     action: "end",

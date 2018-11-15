@@ -74,8 +74,8 @@
         <table>
             <tr>
                 <td>View Scale:</td>
-                <td><input type="range" min="0" max="200" id="scale" value="75" /></td>
-                <td><span id="scaleValue">75%</span></td>
+                <td><input type="range" min="0" max="200" id="scale" value="100" /></td>
+                <td><span id="scaleValue">100%</span></td>
             </tr>
         </table>
     </div>
@@ -88,6 +88,10 @@
                         <br />
                         <u><b>Info:</b></u>
                         <table>
+                            <tr>
+                                <td class="label">Server:</td>
+                                <td><span id="server"></span></td>
+                            </tr>
                             <tr>
                                 <td class="label">Configuration:</td>
                                 <td><span id="config"></span></td>
@@ -118,7 +122,7 @@
                             </tr>
                             <tr>
                                 <td class="label">Ready Gen:</td>
-                                <td><span id="docloadtime"></span></td>
+                                <td><span id="readygentime"></span></td>
                             </tr>
                             <tr>
                                 <td class="label">Generate:</td>
@@ -140,6 +144,38 @@
                                 <td class="label">DOM Gen:</td>
                                 <td><span id="domgentime"></span></td>
                             </tr>
+                        </table>
+
+                        <u><b>Mutation: (Live only)</b></u>
+                        <table>
+                            <tr>
+                                <td class="label">Count:</td>
+                                <td><span id="mutationLatencyCount"></span></td>
+                            </tr>
+                            <tr>
+                                <td class="label">BgLatency Last:</td>
+                                <td><span id="mutationBgLatencyLast"></span></td>
+                            </tr>
+                            <tr>
+                                <td class="label">BgLatency Avg:</td>
+                                <td><span id="mutationBgLatencyAvg"></span></td>
+                            </tr>
+                            <tr>
+                                <td class="label">BgLatency Max:</td>
+                                <td><span id="mutationBgLatencyMax"></span></td>
+                            </tr>  
+                            <tr>
+                                <td class="label">Latency Last:</td>
+                                <td><span id="mutationLatencyLast"></span></td>
+                            </tr>
+                            <tr>
+                                <td class="label">Latency Avg:</td>
+                                <td><span id="mutationLatencyAvg"></span></td>
+                            </tr>
+                            <tr>
+                                <td class="label">Latency Max:</td>
+                                <td><span id="mutationLatencyMax"></span></td>
+                            </tr>                            
                         </table>
                     </div>
                 </td>

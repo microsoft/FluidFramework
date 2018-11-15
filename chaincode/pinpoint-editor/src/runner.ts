@@ -1,6 +1,6 @@
 import { IMarker, IPinpointOptions, Pinpoint } from "@kurtb/pinpoint";
 import { IMapView } from "@prague/map";
-import { IChaincode, IPlatform, IRuntime } from "@prague/runtime-definitions";
+import { IPlatform, IRuntime } from "@prague/runtime-definitions";
 import { Deferred } from "@prague/utils";
 import * as angular from "angular";
 import * as angularRoute from "angular-route";
@@ -8,10 +8,10 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import { EventEmitter } from "events";
 import * as $ from "jquery";
 import "../style.css";
-import { Chaincode } from "./chaincode";
 import { MapDetailController, MapListController } from "./controllers";
 import * as directives from "./directives";
 import { Document } from "./document";
+import { embed } from "./embed";
 import { MapDetailsService } from "./services";
 
 // tslint:disable:no-var-requires
@@ -293,7 +293,7 @@ pinpointTool.filter("html", ($sce) => {
     };
 });
 
-class PinpointRunner extends EventEmitter implements IPlatform {
+export class PinpointRunner extends EventEmitter implements IPlatform {
     private started = new Deferred<void>();
     private rootView: IMapView;
     private editor: boolean = false;
@@ -397,33 +397,7 @@ class PinpointRunner extends EventEmitter implements IPlatform {
                 angular.bootstrap(document, ["pinpointTool"]);
             });
         } else {
-            const innerDiv = document.createElement("div");
-            innerDiv.style.width = "300px";
-            this.mapHost.appendChild(innerDiv);
-
-            const mapDetails = JSON.parse(this.rootView.get("map"));
-            mapDetails.element = innerDiv;
-            let pinpoint = new Pinpoint(mapDetails);
-
-            collabDoc.getRoot().on(
-                "valueChanged",
-                () => {
-                    const updatedDetails = JSON.parse(this.rootView.get("map"));
-                    pinpoint.remove();
-                    innerDiv.style.width = "300px";
-                    updatedDetails.element = innerDiv;
-                    pinpoint = new Pinpoint(updatedDetails);
-                });
-
-            (platform as any).on("update", () => {
-                setTimeout(() => pinpoint.render(), 1);
-            });
+            embed(this.mapHost, collabDoc, this.rootView, platform);
         }
     }
-}
-
-export async function instantiate(): Promise<IChaincode> {
-    // Instantiate a new runtime per code load. That'll separate handlers, etc...
-    const chaincode = new Chaincode(new PinpointRunner());
-    return chaincode;
 }

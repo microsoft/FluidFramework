@@ -1,4 +1,4 @@
 persistence:
-  storageClass: unmanaged-premium
-  size: 1024Gi
+  storageClass: managed-premium
+  size: 2048Gi
 usePassword: false

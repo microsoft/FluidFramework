@@ -1,15 +1,28 @@
 import * as api from "@prague/runtime-definitions";
 
 /**
- * Datacontract for sharepoint delta feed response
+ * Socket storage discovery api response
  */
+export interface ISocketStorageDiscovery {
+    id: string;
+    tenantId: string;
 
-export interface ISequencedDocumentOp {
-    op: api.ISequencedDocumentMessage;
-    sequenceNumber: number;
+    snapshotStorageUrl: string;
+    deltaStorageUrl: string;
+    storageToken: string;
+
+    deltaStreamSocketUrl: string;
+    socketToken: string;
 }
 
-export interface IDeltaFeedResponse {
-    // There are 2 possible types that c
-    value: api.ISequencedDocumentMessage[] | ISequencedDocumentOp[];
+/**
+ * Delta storage get response
+ */
+export interface IDeltaStorageGetResponse {
+    value: api.ISequencedDocumentMessage[] | ISequencedDeltaOpMessage[];
+}
+
+export interface ISequencedDeltaOpMessage {
+    op: api.ISequencedDocumentMessage;
+    sequenceNumber: number;
 }

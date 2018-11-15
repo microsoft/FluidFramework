@@ -1,8 +1,8 @@
 import { debug, debugFrame, debugPopup } from "./debug";
 import { MessageEnum } from "./portHolder";
 import { PragueMapWrapperFactory } from "./pragueMapWrapper";
-import { getCollabDoc } from "./pragueUtil";
-import { saveDOM, stopStreamToPrague } from "./pragueWrite";
+import { PragueDocument } from "./pragueUtil";
+import { ISaveDOMOptions, saveDOM, stopStreamToPrague } from "./pragueWrite";
 import { RewriteDOMTree } from "./rewriteDOMTree";
 
 (() => {
@@ -22,41 +22,50 @@ import { RewriteDOMTree } from "./rewriteDOMTree";
         }
         debugPopup(command, message[1], sender, performance.now());
 
+        const startSignalTime = performance.now();
+        const startSaveSignalTime = startSignalTime;
         const documentId = message[1];
+        const server = message[3];
         if (command === "PragueMap") {
             const options = {
                 background: false,
-                batchOp: message[2],
+                batchOps: message[2],
                 contentScriptInitTime,
                 frameId: 0,
+                startSaveSignalTime,
+                startSignalTime,
                 stream: false,
                 useFlatMap: false,
             };
-            saveDOMToPrague(documentId, options).catch((error) => { console.error(error); });
+            saveDOMToPrague(server, documentId, options).catch((error) => { console.error(error); });
             return;
         }
         if (command === "PragueFlatMap") {
             const options = {
                 background: false,
-                batchOp: message[2],
+                batchOps: message[2],
                 contentScriptInitTime,
                 frameId: 0,
+                startSaveSignalTime,
+                startSignalTime,
                 stream: false,
                 useFlatMap: true,
             };
-            saveDOMToPrague(documentId, options).catch((error) => { console.error(error); });
+            saveDOMToPrague(server, documentId, options).catch((error) => { console.error(error); });
             return;
         }
         if (command === "PragueStreamStart") {
             const options = {
                 background: false,
-                batchOp: message[2],
+                batchOps: message[2],
                 contentScriptInitTime,
                 frameId: 0,
+                startSaveSignalTime,
+                startSignalTime,
                 stream: true,
                 useFlatMap: true,
             };
-            saveDOMToPrague(documentId, options).catch((error) => { console.error(error); });
+            saveDOMToPrague(server, documentId, options).catch((error) => { console.error(error); });
             return;
         }
         if (command === "PragueStreamStop") {
@@ -95,11 +104,10 @@ import { RewriteDOMTree } from "./rewriteDOMTree";
 
     let contentScriptInitTime;
     let collabDocToClose;
-    async function saveDOMToPrague(documentId: string, options: any) {
+    async function saveDOMToPrague(server: string, documentId: string, options: ISaveDOMOptions) {
         // Load in the latest and connect to the document
-        options.startSignalTime = options.startSaveSignalTime = performance.now();
-        const collabDoc = await getCollabDoc(documentId);
-        await saveDOM(new PragueMapWrapperFactory(collabDoc, options.batchOp), options);
+        const collabDoc = await PragueDocument.Load(server, documentId);
+        await saveDOM(new PragueMapWrapperFactory(collabDoc, options.batchOps), options);
         if (options.stream) {
             collabDocToClose = collabDoc;
         } else {

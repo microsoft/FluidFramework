@@ -5,9 +5,9 @@ const path = require('path');
 module.exports = {
     entry: {
         local: './src/localServer.ts',
-        main: './src/script.ts'
+        main: './src/index.ts'
     },
-    mode: 'development',
+    mode: 'production',
     devtool: 'source-map',
     module: {
         rules: [

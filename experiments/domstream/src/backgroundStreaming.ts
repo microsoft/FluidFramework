@@ -2,11 +2,11 @@ import * as pragueMap from "@prague/map";
 import { debug, debugFrame, debugPort } from "./debug";
 import { globalConfig } from "./globalConfig";
 import { MessageEnum, PortHolder } from "./portHolder";
-import { getCollabDoc } from "./pragueUtil";
+import { PragueDocument } from "./pragueUtil";
 
-let collabDoc;
+let collabDoc: PragueDocument;
 let currentTabId;
-let mapBatchOp = true;
+let mapBatchOps = true;
 
 export class BackgroundStreaming {
     public static init() {
@@ -21,14 +21,14 @@ export class BackgroundStreaming {
         });
     }
 
-    public static async start(docId: string, tabId: number, batchOp: boolean) {
+    public static async start(server: string, docId: string, tabId: number, batchOps: boolean) {
         if (collabDoc) {
             console.error("Shouldn't start background stream when there is already an collabDoc");
             return;
         }
-        collabDoc = await getCollabDoc(docId);
+        collabDoc = await PragueDocument.Load(server, docId);
         currentTabId = tabId;
-        mapBatchOp = batchOp;
+        mapBatchOps = batchOps;
         debug("Start streaming tab", tabId, docId);
         ContentFrame.forEachFrame(tabId, (frame) => {
             frame.startStreaming();
@@ -164,7 +164,7 @@ class ContentFrame extends PortHolder {
                     break;
                 }
                 case MessageEnum.setTimeStamp:
-                    this.getPragueMap(message[1]).set(message[2], new Date().valueOf());
+                    this.getPragueMap(message[1]).set(message[2], [message[3], Date.now()]);
                     break;
                 case MessageEnum.delete:
                     this.getPragueMap(message[1]).delete(message[2]);
@@ -196,7 +196,7 @@ class ContentFrame extends PortHolder {
 
         this.postMessage([MessageEnum.BackgroundPragueStreamStart,
         {
-            batchOp: mapBatchOp,
+            batchOps: mapBatchOps,
             frameId: this.frameId,
         }]);
     }
@@ -216,7 +216,7 @@ class ContentFrame extends PortHolder {
         let map = this.maps[mapId];
         if (map) { return map; }
         map = collabDoc.createMap();
-        if (!mapBatchOp) {
+        if (!mapBatchOps) {
             collabDoc.getRoot().set("FORCEATTACH", map);
         }
         this.maps[mapId] = map;

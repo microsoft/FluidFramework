@@ -393,6 +393,24 @@ const commands: ICmd[] = [
         },
         key: "insert chart",
     },
+    {
+        exec: (f) => {
+            f.insertChaincode("map", "@chaincode/pinpoint-editor@0.6.15");
+        },
+        key: "insert map",
+    },
+    {
+        exec: (f) => {
+            f.insertChaincode("code", "@chaincode/monaco@0.1.18");
+        },
+        key: "insert code",
+    },
+    {
+        exec: (f) => {
+            f.insertChaincode("chart", "@chaincode/charts@0.7.3");
+        },
+        key: "insert ivy",
+    },
 ];
 
 export function moveMarker(flowView: FlowView, fromPos: number, toPos: number) {
@@ -3400,7 +3418,7 @@ function getContainingSegment(flowView: FlowView, pos: number): ISegmentOffset {
 }
 
 function findTile(flowView: FlowView, startPos: number, tileType: string, preceding = true) {
-    return flowView.client.mergeTree.findTile(startPos, flowView.client.getClientId(), tileType, preceding);
+    return flowView.sharedString.findTile(startPos, tileType, preceding);
 }
 
 export function annotateMarker(flowView: FlowView, props: MergeTree.PropertySet, marker: MergeTree.Marker) {
@@ -3629,27 +3647,35 @@ export class FlowView extends ui.Component {
         //
         //       Instead, we currently check to see if a workbook already exists.  If not, we
         //       insert one up front.
-        this.collabDocument.getRoot().getView().then((rootView) => {
-            let workbookMap = rootView.get("workbook");
-            if (!workbookMap) {
+        this.collabDocument.getRoot().getView().then(async (rootView) => {
+            let workbookMap: types.IMap;
+
+            if (!this.collabDocument.existing) {
                 workbookMap = this.collabDocument.createMap();
+            } else {
+                workbookMap = await rootView.wait<types.IMap>("workbook");
+            }
+
+            const workbookView = await workbookMap.getView();
+            this.services.set(
+                "workbook",
+                new CollaborativeWorkbook(workbookView, 6, 6, [
+                    ["Player", "Euchre", "Bridge", "Poker", "Go Fish", "Total Wins"],
+                    ["Daniel", "0", "0", "0", "5", "=SUM(B2:E2)"],
+                    ["Kurt", "2", "3", "0", "0", "=SUM(B3:E3)"],
+                    ["Sam", "3", "4", "0", "0", "=SUM(B4:E4)"],
+                    ["Tanvir", "3", "3", "0", "0", "=SUM(B5:E5)"],
+                    ["Total Played", "=SUM(B2:B5)", "=SUM(C2:C5)", "=SUM(D2:D5)", "=SUM(E2:E5)", "=SUM(F2:F5)"],
+                ]));
+
+            // Set the map after loading data so it's populated when other clients load it
+            if (!this.collabDocument.existing) {
                 rootView.set("workbook", workbookMap);
             }
+
             workbookMap.on("valueChanged", () => {
                 // TODO: Track which cells are visible and damp invalidation for off-screen cells.
                 this.queueRender(undefined, true);
-            });
-            workbookMap.getView().then((workbookView) => {
-                this.services.set("workbook",
-                    // If empty, seed the workbook w/some initial data for demos.
-                    new CollaborativeWorkbook(workbookView, 6, 6, [
-                        ["Player", "Euchre", "Bridge", "Poker", "Go Fish", "Total Wins"],
-                        ["Daniel", "0", "0", "0", "5", "=SUM(B2:E2)"],
-                        ["Kurt", "2", "3", "0", "0", "=SUM(B3:E3)"],
-                        ["Sam", "3", "4", "0", "0", "=SUM(B4:E4)"],
-                        ["Tanvir", "3", "3", "0", "0", "=SUM(B5:E5)"],
-                        ["Total Played", "=SUM(B2:B5)", "=SUM(C2:C5)", "=SUM(D2:D5)", "=SUM(E2:E5)", "=SUM(F2:F5)"],
-                    ]));
             });
         });
     }
@@ -4952,6 +4978,12 @@ export class FlowView extends ui.Component {
     /** Insert a Chart. */
     public insertChart() {
         this.insertComponent("chart", {});
+    }
+
+    /** Insert an external component */
+    public insertChaincode(prefix: string, chaincode: string) {
+        const id = `${prefix}${Date.now()}`;
+        this.insertComponent("document", { id, chaincode });
     }
 
     /** Insert a Document */

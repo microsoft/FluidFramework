@@ -14,12 +14,11 @@ describe("DeltaStorageService", () => {
     const testDeltaStorageUrl = `${deltaStorageBasePath}${deltaStorageRelativePath}`;
 
     it("Should build the correct sharepoint delta url", () => {
-
-        const spoDeltaStorageService = new DeltaStorageService(testDeltaStorageUrl, undefined);
-        const actualDeltaUrl = spoDeltaStorageService.constructUrl(2, 8);
+        const deltaStorageService = new DeltaStorageService(testDeltaStorageUrl, undefined);
+        const actualDeltaUrl = deltaStorageService.buildUrl(2, 8);
         // tslint:disable-next-line:max-line-length
         const expectedDeltaUrl = `${deltaStorageBasePath}/drives/testdrive/items/testitem/opStream?$filter=sequenceNumber%20ge%202%20and%20sequenceNumber%20le%208`;
-        assert.equal(actualDeltaUrl, expectedDeltaUrl, "The constructed SPO delta url is invalid");
+        assert.equal(actualDeltaUrl, expectedDeltaUrl, "The constructed delta url is invalid");
     });
 
     describe("Get Returns Response With Op Envelope", () => {
@@ -57,7 +56,8 @@ describe("DeltaStorageService", () => {
                 },
             ],
         };
-        let spoDeltaStorageService: DeltaStorageService;
+
+        let deltaStorageService: DeltaStorageService;
         before(() => {
             const axiosMock: Partial<AxiosInstance> = {
                 get: (url, config?) => new Promise<AxiosResponse>(
@@ -73,12 +73,12 @@ describe("DeltaStorageService", () => {
                         resolve(respone);
                     }),
             };
-            spoDeltaStorageService = new DeltaStorageService(testDeltaStorageUrl, axiosMock as AxiosInstance);
+            deltaStorageService = new DeltaStorageService(testDeltaStorageUrl, axiosMock as AxiosInstance);
         });
 
         it("Should deserialize the delta feed response correctly", async () => {
             const tokenProvider = new TokenProvider(null, null);
-            const actualDeltaFeedResponse = await spoDeltaStorageService.get(null, null, tokenProvider, 2, 8);
+            const actualDeltaFeedResponse = await deltaStorageService.get(null, null, tokenProvider, 2, 8);
             assert.equal(actualDeltaFeedResponse.length, 2, "Deseralized feed response is not of expected length");
             assert.equal(actualDeltaFeedResponse[0].sequenceNumber, 1,
                 "First element of feed response has invalid sequence number");
@@ -119,7 +119,7 @@ describe("DeltaStorageService", () => {
             ],
         };
 
-        let spoDeltaStorageService: DeltaStorageService;
+        let deltaStorageService: DeltaStorageService;
         before(() => {
             const axiosMock: Partial<AxiosInstance> = {
                 get: (url, config?) => new Promise<AxiosResponse>(
@@ -135,12 +135,12 @@ describe("DeltaStorageService", () => {
                         resolve(respone);
                     }),
             };
-            spoDeltaStorageService = new DeltaStorageService(testDeltaStorageUrl, axiosMock as AxiosInstance);
+            deltaStorageService = new DeltaStorageService(testDeltaStorageUrl, axiosMock as AxiosInstance);
         });
 
         it("Should deserialize the delta feed response correctly", async () => {
             const tokenProvider = new TokenProvider(null, null);
-            const actualDeltaFeedResponse = await spoDeltaStorageService.get(null, null, tokenProvider, 2, 8);
+            const actualDeltaFeedResponse = await deltaStorageService.get(null, null, tokenProvider, 2, 8);
             assert.equal(actualDeltaFeedResponse.length, 2, "Deseralized feed response is not of expected length");
             assert.equal(actualDeltaFeedResponse[0].sequenceNumber, 1,
                 "First element of feed response has invalid sequence number");

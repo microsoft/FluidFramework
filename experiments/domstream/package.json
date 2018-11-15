@@ -1,6 +1,6 @@
 {
   "name": "@chaincode/domstream",
-  "version": "0.1.39",
+  "version": "0.1.41",
   "author": "Microsoft",
   "description": "DOM stream experimental extension",
   "repository": "microsoft/prague",
@@ -9,12 +9,15 @@
     "dist/component/*"
   ],
   "dependencies": {
-    "@prague/client-api": "^0.1.3929",
-    "@prague/map": "^0.1.3929",
-    "@prague/socket-storage": "^0.1.3929",
-    "@prague/store": "^0.1.3929",
+    "@prague/loader": "^0.1.3981",
+    "@prague/map": "^0.1.3981",
+    "@prague/runtime-definitions": "^0.1.3981",
+    "@prague/socket-storage": "^0.1.3981",
+    "@prague/store": "^0.1.3981",
+    "@prague/utils": "^0.1.3981",
     "debug": "^4.1.0",
     "jsonwebtoken": "^8.2.1",
+    "uuid": "^3.3.2",
     "webpack-chrome-extension-reloader": "^0.8.3"
   },
   "devDependencies": {

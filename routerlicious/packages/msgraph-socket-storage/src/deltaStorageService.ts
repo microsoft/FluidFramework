@@ -1,7 +1,7 @@
 import * as api from "@prague/runtime-definitions";
 import Axios, { AxiosInstance } from "axios";
 import * as querystring from "querystring";
-import { IDeltaFeedResponse, ISequencedDocumentOp } from "./contracts";
+import { IDeltaStorageGetResponse, ISequencedDeltaOpMessage } from "./contracts";
 import { TokenProvider } from "./token";
 
 /**
@@ -9,10 +9,10 @@ import { TokenProvider } from "./token";
  */
 export class DocumentDeltaStorageService implements api.IDocumentDeltaStorageService {
     constructor(
-        private tenantId: string,
-        private id: string,
-        private tokenProvider: api.ITokenProvider,
-        private storageService: api.IDeltaStorageService) {
+        private readonly tenantId: string,
+        private readonly id: string,
+        private readonly tokenProvider: api.ITokenProvider,
+        private readonly storageService: api.IDeltaStorageService) {
     }
 
     /* tslint:disable:promise-function-async */
@@ -22,55 +22,49 @@ export class DocumentDeltaStorageService implements api.IDocumentDeltaStorageSer
 }
 
 /**
- * Provides access to the sharepoint delta storage
+ * Provides access to delta storage
  */
 export class DeltaStorageService implements api.IDeltaStorageService {
 
-    public constructor(
-        private readonly deltaFeedUrl: string,
-        private readonly axiosInstance: AxiosInstance = Axios) {
+    constructor(private readonly deltaFeedUrl: string, private readonly axiosInstance: AxiosInstance = Axios) {
     }
 
+    /**
+     * Retrieves all the delta operations within the inclusive sequence number range
+     */
     public async get(
         tenantId: string,
         id: string,
         tokenProvider: api.ITokenProvider,
         from?: number,
         to?: number): Promise<api.ISequencedDocumentMessage[]> {
-        const requestUrl = this.constructUrl(from, to);
-        let headers = null;
+        const url = this.buildUrl(from, to);
+
+        let headers;
 
         const token = (tokenProvider as TokenProvider).storageToken;
-        if (token) {
+        if (token && token.length > 0) {
             headers = {
-                Authorization: `Bearer ${new Buffer(`${token}`)}`,
+                Authorization: `Bearer ${token}`,
             };
         }
-        const result = await this.axiosInstance.get<IDeltaFeedResponse>(requestUrl, { headers });
-        const ops = result.data.value;
-        const sequencedMsgs: api.ISequencedDocumentMessage[] = [];
 
-        // TODO: Having to copy the "op" property on each element of the array is undesirable.
-        // SPO is looking into updating this layer of the envelope to match routerlicious
-        // The logic below takes care of n/n-1 when that change happens
-        if (ops.length > 0 && "op" in ops[0]) {
-            (ops as ISequencedDocumentOp[]).forEach((op) => {
-                sequencedMsgs.push(op.op);
-            });
-            return sequencedMsgs;
-        } else {
-            return ops as api.ISequencedDocumentMessage[];
+        const result = await this.axiosInstance.get<IDeltaStorageGetResponse>(url, { headers });
+        if (result.status !== 200) {
+            throw new Error(`Invalid opStream response status "${result.status}".`);
         }
+
+        const operations = result.data.value;
+        if (operations.length > 0 && "op" in operations[0]) {
+            return (operations as ISequencedDeltaOpMessage[]).map((operation) => operation.op);
+        }
+
+        return operations as api.ISequencedDocumentMessage[];
     }
 
-    public constructUrl(
-        from?: number,
-        to?: number): string {
-        let deltaFeedUrl: string;
-        const queryFilter = `sequenceNumber ge ${from} and sequenceNumber le ${to}`;
-        const query = querystring.stringify({ filter: queryFilter });
-        deltaFeedUrl = `${this.deltaFeedUrl}?$${query}`;
+    public buildUrl(from?: number, to?: number) {
+        const query = querystring.stringify({ filter: `sequenceNumber ge ${from} and sequenceNumber le ${to}` });
 
-        return deltaFeedUrl;
+        return `${this.deltaFeedUrl}?$${query}`;
     }
 }

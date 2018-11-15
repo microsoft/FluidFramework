@@ -14,7 +14,18 @@ async function MapWrapperToObject(mapView: IMapViewWrapper): Promise<object> {
     return obj;
 }
 
-export async function saveDOM(mapWrapperFactory: IMapWrapperFactory, options: any) {
+export interface ISaveDOMOptions {
+    background: boolean;
+    batchOps: boolean;
+    contentScriptInitTime: number;
+    frameId: number;
+    startSignalTime: number;
+    startSaveSignalTime: number;
+    stream: boolean;
+    useFlatMap: boolean;
+}
+
+export async function saveDOM(mapWrapperFactory: IMapWrapperFactory, options: ISaveDOMOptions) {
 
     if (mutationObserver) {
         alert("Content script already streaming");
@@ -26,7 +37,7 @@ export async function saveDOM(mapWrapperFactory: IMapWrapperFactory, options: an
     debug("Start sending to Prague for frame ", options.frameId);
     const startTime = performance.now();
     dataMapWrapper.set("CONFIG_BACKGROUND", options.background);
-    dataMapWrapper.set("CONFIG_BATCHOP", options.batchOp);
+    dataMapWrapper.set("CONFIG_BATCHOPS", options.batchOps);
     dataMapWrapper.set("TIME_INIT", options.contentScriptInitTime);
     dataMapWrapper.set("TIME_STARTSIGNAL", options.startSignalTime - options.contentScriptInitTime);
     dataMapWrapper.set("TIME_STARTSAVE", options.startSaveSignalTime - options.startSignalTime);
@@ -79,10 +90,8 @@ export async function saveDOM(mapWrapperFactory: IMapWrapperFactory, options: an
     const dataName = options.frameId ? "DOMSTREAM_" + options.frameId : "DOMSTREAM";
     frameDataContainer.setMapView(dataName, dataMapWrapper);
 
-    // collabDoc.save();
     const endTime = performance.now();
     dataMapWrapper.set("TIME_ATTACH", endTime - endGenTime);
-    dataMapWrapper.set("FG_END_DATE", new Date().valueOf());
     dataMapWrapper.setTimeStamp("END_DATE");
     debug("Finish sending to Prague - " + (endTime - startTime) + "ms");
 }
@@ -94,6 +103,7 @@ function startStreamToPrague(tree: StreamDOMTreeServer, dataMapView: IMapViewWra
     let mutation = 0;
     mutationObserver = tree.startStream(document, () => {
         dataMapView.set("MUTATION", mutation++);
+        dataMapView.setTimeStamp("MUTATION_DATE");
 
         // document.write causes us to lose the listener, try to add it back after mutation
         // TODO: See if there is better way of frameId discovery
