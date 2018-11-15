@@ -78,7 +78,11 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
                     response.initialMessages.push(...queuedMessages);
 
                     response.initialMessages.sort((a, b) => a.sequenceNumber - b.sequenceNumber);
+                }
 
+                if (queuedContents.length > 0) {
+                    // some contents were queued.
+                    // add them to the list of initialContents to be processed
                     if (!response.initialContents) {
                         response.initialContents = [];
                     }
@@ -86,7 +90,6 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
                     response.initialContents.push(...queuedContents);
 
                     response.initialContents.sort((a, b) => (a.clientId === b.clientId) ? 0 : ((a.clientId < b.clientId)? -1 : 1) || a.clientSequenceNumber - b.clientSequenceNumber);
-
                 }
 
                 resolve(response);
@@ -127,6 +130,10 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
 
     public get initialMessages(): ISequencedDocumentMessage[] {
         return this.details.initialMessages;
+    }
+
+    public get initialContents(): IContentMessage[] {
+        return this.details.initialContents;
     }
 
     constructor(

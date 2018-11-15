@@ -419,25 +419,10 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
                     this.emit("pong", latency);
                 });
 
+                this.processInitialOps(connection.details.initialMessages, connection.details.initialContents);
+
                 // Notify of the connection
                 this.emit("connect", connection.details);
-
-                const initialMessages = connection.details.initialMessages;
-                if (initialMessages && initialMessages.length > 0) {
-                    // the "connect_document_success" message sent us some deltas
-                    debug("Catching up on initial messages", initialMessages);
-
-                    // confirm the status of the handler and inbound queue
-                    if (!this.handler || this._inbound.paused) {
-                        // process them once the queue is ready
-                        this._inbound.once("resume", () => {
-                            this.catchUp(initialMessages);
-                        });
-
-                    } else {
-                        this.catchUp(initialMessages);
-                    }
-                }
             },
             (error) => {
                 // tslint:disable-next-line:no-parameter-reassignment
@@ -447,6 +432,29 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
                 debug(reason, error.toString());
                 setTimeout(() => this.connectCore(reason, delay * 2), delay);
             });
+    }
+
+    private processInitialOps(messages: runtime.ISequencedDocumentMessage[], contents: runtime.IContentMessage[]) {
+        // confirm the status of the handler and inbound queue
+        if (!this.handler || this._inbound.paused) {
+            // process them once the queue is ready
+            this._inbound.once("resume", () => {
+                this.enqueInitalOps(messages, contents);
+            });
+        } else {
+            this.enqueInitalOps(messages, contents);
+        }
+    }
+
+    private enqueInitalOps(messages: runtime.ISequencedDocumentMessage[], contents: runtime.IContentMessage[]) {
+        if (contents && contents.length > 0) {
+            for (const content of contents) {
+                this.contentCache.set(content);
+            }
+        }
+        if (messages && messages.length > 0) {
+            this.catchUp(messages);
+        }
     }
 
     private processInboundOp(op: runtime.ISequencedDocumentMessage, callback) {

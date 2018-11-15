@@ -1,5 +1,6 @@
 import {
     IClient,
+    IContentMessage,
     IDocumentDeltaConnection,
     IDocumentMessage,
     ISequencedDocumentMessage,
@@ -67,6 +68,10 @@ export class WSDeltaConnection extends EventEmitter implements IDocumentDeltaCon
 
     public get initialMessages(): ISequencedDocumentMessage[] {
         return this.details.initialMessages;
+    }
+
+    public get initialContents(): IContentMessage[] {
+        return this.details.initialContents;
     }
 
     constructor(tenantId: string, public documentId: string, token: string, client: IClient, urlStr: string) {

@@ -1,4 +1,5 @@
 import {
+    IContentMessage,
     IDocumentDeltaConnection,
     IDocumentMessage,
     ISequencedDocumentMessage,
@@ -15,7 +16,8 @@ export class TestDocumentDeltaConnection extends EventEmitter implements IDocume
         public existing: boolean,
         public parentBranch: string,
         public user: IUser,
-        public initialMessages: ISequencedDocumentMessage[] | undefined) {
+        public initialMessages: ISequencedDocumentMessage[] | undefined,
+        public initialContents: IContentMessage[] | undefined) {
         super();
     }
 

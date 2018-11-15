@@ -2,7 +2,7 @@ import * as resources from "@prague/gitresources";
 import { EventEmitter } from "events";
 import { IClient } from "./clients";
 import { ISequencedProposal } from "./consensus";
-import { IDocumentMessage, ISequencedDocumentMessage } from "./protocol";
+import { IContentMessage, IDocumentMessage, ISequencedDocumentMessage } from "./protocol";
 import { ITokenProvider } from "./tokens";
 import { IUser } from "./users";
 
@@ -223,6 +223,11 @@ export interface IDocumentDeltaConnection extends EventEmitter {
      * Messages sent during the connection
      */
     initialMessages?: ISequencedDocumentMessage[];
+
+    /**
+     * Messages sent during the connection
+     */
+    initialContents?: IContentMessage[];
 
     /**
      * Submit a new message to the server

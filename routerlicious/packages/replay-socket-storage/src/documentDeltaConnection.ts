@@ -1,4 +1,5 @@
 import {
+    IContentMessage,
     IDeltaStorageService,
     IDocumentDeltaConnection,
     IDocumentMessage,
@@ -28,6 +29,7 @@ export class ReplayDocumentDeltaConnection extends EventEmitter implements IDocu
         const connection = {
             clientId: "",
             existing: true,
+            initialContents: [],
             initialMessages: [],
             maxMessageSize: ReplayMaxMessageSize,
             parentBranch: null,
@@ -90,6 +92,10 @@ export class ReplayDocumentDeltaConnection extends EventEmitter implements IDocu
 
     public get user(): IUser {
         return this.details.user;
+    }
+
+    public get initialContents(): IContentMessage[] {
+        return this.details.initialContents;
     }
 
     public get initialMessages(): ISequencedDocumentMessage[] {
