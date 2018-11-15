@@ -125,18 +125,22 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
         this._inbound = new DeltaQueue<runtime.ISequencedDocumentMessage>((op, callback) => {
             if (op.metadata.split) {
                 const opContent = this.contentCache.get(op.clientId);
-                if (opContent !== undefined) {
-                    this.appendOpContent(op, opContent);
+                if (!opContent || opContent.clientSequenceNumber > op.clientSequenceNumber) {
+                    console.log(op.clientSequenceNumber);
+                    console.log(opContent);
+                    assert.fail("Not handled yet");
+                } else if (opContent.clientSequenceNumber < op.clientSequenceNumber) {
+                    let nextContent = this.contentCache.get(op.clientId);
+                    while (nextContent && nextContent.clientSequenceNumber < op.clientSequenceNumber) {
+                        nextContent = this.contentCache.get(op.clientId);
+                    }
+                    assert(nextContent, "No content found");
+                    assert.equal(op.clientSequenceNumber, nextContent.clientSequenceNumber, "Invalid op content order");
+                    this.appendOpContent(op, nextContent);
                     this.processInboundOp(op, callback);
                 } else {
-                    const lateContentHandler = (clientId: string) => {
-                        if (clientId === op.clientId) {
-                            this.contentCache.removeListener("content", lateContentHandler);
-                            this.appendOpContent(op, this.contentCache.get(op.clientId));
-                            this.processInboundOp(op, callback);
-                        }
-                    };
-                    this.contentCache.on("content", lateContentHandler);
+                    this.appendOpContent(op, opContent);
+                    this.processInboundOp(op, callback);
                 }
             } else {
                 this.processInboundOp(op, callback);
@@ -469,11 +473,6 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
     }
 
     private appendOpContent(message: runtime.ISequencedDocumentMessage, contentOp: runtime.IContentMessage) {
-        assert(contentOp, "Content op should not be empty");
-        if (contentOp.clientSequenceNumber !== message.clientSequenceNumber) {
-            console.log(`Actual: ${contentOp.clientSequenceNumber}, Expected: ${message.clientSequenceNumber}`);
-        }
-        assert.equal(contentOp.clientSequenceNumber, message.clientSequenceNumber, "Invalid op content order");
         message.contents = contentOp.contents;
         message.metadata.split = false;
     }
