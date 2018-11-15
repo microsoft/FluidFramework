@@ -319,22 +319,27 @@ export class ScriptoriumLambda implements IPartitionLambda {
         } else {
             const updateP = [];
             for (const message of messages) {
-                updateP.push(this.contentCollection.update(
-                    {
-                        "clientId": message.operation.clientId,
-                        "documentId": message.documentId,
-                        "op.clientSequenceNumber": message.operation.clientSequenceNumber,
-                        "tenantId": message.tenantId,
-                    },
-                    {sequenceNumber: message.operation.sequenceNumber},
-                    null).catch((error) => {
-                        // Same reason as insertOp.
-                        if (error.name !== "MongoError" || error.code !== 11000) {
-                            return Promise.reject(error);
-                        }
-                    }));
+                // Back-Compat: Temporary workaround to handle old clients.
+                if (message.operation.metadata && message.operation.metadata.split) {
+                    updateP.push(this.contentCollection.update(
+                        {
+                            "clientId": message.operation.clientId,
+                            "documentId": message.documentId,
+                            "op.clientSequenceNumber": message.operation.clientSequenceNumber,
+                            "tenantId": message.tenantId,
+                        },
+                        {sequenceNumber: message.operation.sequenceNumber},
+                        null).catch((error) => {
+                            // Same reason as insertOp.
+                            if (error.name !== "MongoError" || error.code !== 11000) {
+                                return Promise.reject(error);
+                            }
+                        }));
+                }
             }
-            await Promise.all(updateP);
+            if (updateP.length > 0) {
+                await Promise.all(updateP);
+            }
         }
     }
 

@@ -20,7 +20,8 @@ const MissingFetchDelay = 100;
 const MaxFetchDelay = 10000;
 const MaxBatchDeltas = 2000;
 const DefaultChunkSize = 16 * 1024;
-const DefaultMaxContentSize = 256;
+// TODO (mdaumi): Make this larger and should come from connect protocol.
+const DefaultMaxContentSize = 8;
 
 /**
  * Interface used to define a strategy for handling incoming delta messages
@@ -151,6 +152,12 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
             if (message.metadata.split) {
                 this.connection.submitAsync(message).then(
                     () => {
+                        this.contentCache.set({
+                            clientId: this.connection.details.clientId,
+                            clientSequenceNumber: message.clientSequenceNumber,
+                            contents: message.contents,
+                        });
+                        message.contents = null;
                         this.connection.submit(message);
                         callback();
                     },
@@ -270,7 +277,7 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
             contents,
             metadata: {
                 content: metaContent,
-                split: contents && (contents.length > this.maxContentSize),
+                split: (contents !== null) && (contents.length > this.maxContentSize),
             },
             referenceSequenceNumber: this.baseSequenceNumber,
             traces: undefined,
