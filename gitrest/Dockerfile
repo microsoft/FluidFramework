@@ -1,8 +1,11 @@
-FROM node:8.11.1-alpine
+FROM node:8.12.0-slim
 
-RUN apk --no-cache add tini
-RUN apk --no-cache add gcc libc-dev libressl-dev
-RUN apk --no-cache add make python curl-dev g++
+# Add Tini
+ENV TINI_VERSION v0.18.0
+ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
+RUN chmod +x /tini
+
+RUN apt-get update && apt-get install -y build-essential libssl-dev python libcurl4-openssl-dev
 
 # Copy over and build the server
 WORKDIR /home/node/server
@@ -29,7 +32,7 @@ EXPOSE 3000
 
 # Node wasn't designed to be run as PID 1. Tini is a tiny init wrapper. You can also set --init on docker later than
 # 1.13 but Kubernetes is at 1.12 so we prefer tini for now.
-ENTRYPOINT ["/sbin/tini", "--"]
+ENTRYPOINT ["/tini", "--"]
 
 # And set the default command to start the server
 CMD ["node", "dist/www.js"]
