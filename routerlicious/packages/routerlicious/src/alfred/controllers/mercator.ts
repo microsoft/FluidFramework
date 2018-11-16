@@ -10,7 +10,7 @@ export function initialize() {
 
         const newElement = document.createElement("tr");
         const th = document.createElement("th");
-        th.innerText = `${batches} batches @ ${messagesPerBatch} messages per batch`;
+        th.innerText = `${batches} batches @ ${messagesPerBatch} ${payloadSize} byte messages per batch`;
         th.scope = "row";
         const sioTd = document.createElement("td");
         const sioLocalTd = document.createElement("td");

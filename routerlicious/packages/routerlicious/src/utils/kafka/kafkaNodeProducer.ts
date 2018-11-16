@@ -1,14 +1,17 @@
-// tslint:disable:ban-types
+import * as utils from "@prague/utils";
 import * as kafkaNode from "kafka-node";
 import * as util from "util";
 import { debug } from "../debug";
 import { IPendingMessage, IProducer } from "./definitions";
-import { Producer } from "./producer";
 
 /**
  * Kafka-Node Producer.
  */
-export class KafkaNodeProducer extends Producer implements IProducer {
+export class KafkaNodeProducer implements IProducer {
+    private messages = new Map<string, IPendingMessage[]>();
+    private client: any;
+    private producer: any;
+    private sendPending = false;
     private connecting = false;
     private connected = false;
 
@@ -16,25 +19,76 @@ export class KafkaNodeProducer extends Producer implements IProducer {
         private endpoint: string,
         private clientId: string,
         private topic: string,
-        maxMessageSize: number) {
-        super(maxMessageSize);
+        private maxMessageSize: number) {
+        this.maxMessageSize = maxMessageSize * 0.75;
         this.connect();
+    }
+
+    /**
+     * Sends the provided message to Kafka
+     */
+    public send(message: string, key: string): Promise<any> {
+        if (message.length >= this.maxMessageSize) {
+            return Promise.reject("Message too large");
+        }
+
+        // Get the list of pending messages for the given key
+        if (!this.messages.has(key)) {
+            this.messages.set(key, []);
+        }
+        const pending = this.messages.get(key);
+
+        // Insert a new pending message
+        const deferred = new utils.Deferred<any>();
+        pending.push({ deferred, message });
+
+        // Mark the need to send a message
+        this.requestSend();
+
+        return deferred.promise;
     }
 
     public async close(): Promise<void> {
         const producer = this.producer as kafkaNode.Producer;
         const client = this.client as kafkaNode.Client;
 
-        await util.promisify(((callback) => producer.close(callback)) as (Function))();
-        await util.promisify(((callback) => client.close(callback)) as Function)();
+        await util.promisify(((callback) => producer.close(callback)) as any)();
+        await util.promisify(((callback) => client.close(callback)) as any)();
     }
 
-    protected sendCore(messages: {[key: string]: IPendingMessage[] }) {
+    /**
+     * Notifies of the need to send pending messages. We defer sending messages to batch together messages
+     * to the same partition.
+     */
+    private requestSend() {
+        // Exit early if there is a pending send
+        if (this.sendPending) {
+            return;
+        }
+
+        // If we aren't connected yet defer sending until connected
+        if (!this.connected) {
+            return;
+        }
+
+        this.sendPending = true;
+
+        // use setImmediate to play well with the node event loop
+        setImmediate(() => {
+            this.sendPendingMessages();
+            this.sendPending = false;
+        });
+    }
+
+    /**
+     * Sends all pending messages
+     */
+    private sendPendingMessages() {
+        // TODO let's log to influx how many messages we have batched
         const kafkaMessages = new Array<{ key: string, messages: string[], topic: string }>();
 
-        // tslint:disable-next-line:forin
-        for (const key in messages) {
-            const pendingMessages = messages[key].map((pendingMessage) => pendingMessage.message);
+        for (const [key, value] of this.messages) {
+            const pendingMessages = value.map((pendingMessage) => pendingMessage.message);
 
             while (pendingMessages.length > 0) {
                 let sendSize = 0;
@@ -64,17 +118,13 @@ export class KafkaNodeProducer extends Producer implements IProducer {
         }
         const doneP = Promise.all(promises);
 
-        // tslint:disable-next-line:forin
-        for (const key in messages) {
-            const pendingMessages = messages[key];
+        for (const [, pendingMessages] of this.messages) {
             for (const pendingMessage of pendingMessages) {
                 pendingMessage.deferred.resolve(doneP);
             }
         }
-    }
 
-    protected canSend(): boolean {
-        return this.connected;
+        this.messages.clear();
     }
 
     /**
