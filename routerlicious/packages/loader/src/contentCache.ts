@@ -22,6 +22,10 @@ export class ContentCache extends EventEmitter {
     public get(clientId: string): IContentMessage {
         return this.cache.has(clientId) ? this.cache.get(clientId).dequeue() : undefined;
     }
+
+    public peek(clientId: string): IContentMessage {
+        return this.cache.has(clientId) ? this.cache.get(clientId).peek() : undefined;
+    }
 }
 
 class RingBuffer {    
@@ -57,6 +61,15 @@ class RingBuffer {
         } else {
             const data = this.buffer[this.tail];
             this.tail = (this.tail + 1) & this.lengthMask;
+            return data;
+        }       
+    }
+
+    public peek(): IContentMessage {
+        if (this.head === this.tail) {
+            return undefined;
+        } else {
+            const data = this.buffer[this.tail];
             return data;
         }       
     }

@@ -81,7 +81,7 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
 
     private clientType: string;
 
-    private contentCache = new ContentCache(2);
+    private contentCache = new ContentCache(10);
 
     public get inbound(): runtime.IDeltaQueue {
         return this._inbound;
@@ -124,24 +124,7 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
         // Inbound message queue
         this._inbound = new DeltaQueue<runtime.ISequencedDocumentMessage>((op, callback) => {
             if (op.metadata.split) {
-                const opContent = this.contentCache.get(op.clientId);
-                if (!opContent || opContent.clientSequenceNumber > op.clientSequenceNumber) {
-                    console.log(op.clientSequenceNumber);
-                    console.log(opContent);
-                    assert.fail("Not handled yet");
-                } else if (opContent.clientSequenceNumber < op.clientSequenceNumber) {
-                    let nextContent = this.contentCache.get(op.clientId);
-                    while (nextContent && nextContent.clientSequenceNumber < op.clientSequenceNumber) {
-                        nextContent = this.contentCache.get(op.clientId);
-                    }
-                    assert(nextContent, "No content found");
-                    assert.equal(op.clientSequenceNumber, nextContent.clientSequenceNumber, "Invalid op content order");
-                    this.appendOpContent(op, nextContent);
-                    this.processInboundOp(op, callback);
-                } else {
-                    this.appendOpContent(op, opContent);
-                    this.processInboundOp(op, callback);
-                }
+                this.handleOpContent(op, callback);
             } else {
                 this.processInboundOp(op, callback);
             }
@@ -461,6 +444,35 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
         }
     }
 
+    private handleOpContent(op: runtime.ISequencedDocumentMessage, callback) {
+        const opContent = this.contentCache.peek(op.clientId);
+        if (!opContent) {
+            this.waitForContent(op.clientId, op.clientSequenceNumber, op.sequenceNumber).then((content) => {
+                this.mergeAndProcess(op, content, callback);
+            }, (err) => {
+                callback(err);
+            });
+        } else if (opContent.clientSequenceNumber > op.clientSequenceNumber) {
+            this.fetchContent(op.clientId, op.clientSequenceNumber, op.sequenceNumber).then((content) => {
+                this.mergeAndProcess(op, content, callback);
+            }, (err) => {
+                callback(err);
+            });
+        } else if (opContent.clientSequenceNumber < op.clientSequenceNumber) {
+            let nextContent = this.contentCache.get(op.clientId);
+            while (nextContent && nextContent.clientSequenceNumber < op.clientSequenceNumber) {
+                nextContent = this.contentCache.get(op.clientId);
+                console.log(`Popped ${nextContent.clientSequenceNumber}`);
+            }
+            assert(nextContent, "No content found");
+            console.log(`${op.clientSequenceNumber} : ${nextContent.clientSequenceNumber}`);
+            assert.equal(op.clientSequenceNumber, nextContent.clientSequenceNumber, "Invalid op content order");
+            this.mergeAndProcess(op, nextContent, callback);
+        } else {
+            this.mergeAndProcess(op, this.contentCache.get(op.clientId), callback);
+        }
+    }
+
     private processInboundOp(op: runtime.ISequencedDocumentMessage, callback) {
         this.processMessage(op).then(
             () => {
@@ -472,9 +484,10 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
             });
     }
 
-    private appendOpContent(message: runtime.ISequencedDocumentMessage, contentOp: runtime.IContentMessage) {
+    private mergeAndProcess(message: runtime.ISequencedDocumentMessage, contentOp: runtime.IContentMessage, callback) {
         message.contents = contentOp.contents;
         message.metadata.split = false;
+        this.processInboundOp(message, callback);
     }
 
     private enqueueMessages(messages: runtime.ISequencedDocumentMessage[]) {
@@ -566,6 +579,56 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
                 this.fetching = false;
                 this.fetchMissingDeltas(from, to);
             });
+    }
+
+    private async waitForContent(
+        clientId: string,
+        clientSeqNumber: number,
+        seqNumber: number): Promise<runtime.IContentMessage> {
+        return new Promise<runtime.IContentMessage>((resolve, reject) => {
+            const lateContentHandler = (clId: string) => {
+                if (clientId === clId) {
+                    const lateContent = this.contentCache.peek(clId);
+                    if (lateContent && lateContent.clientSequenceNumber === clientSeqNumber) {
+                        this.contentCache.removeListener("content", lateContentHandler);
+                        console.log(`Late content: Buffer ${clientId}: ${clientSeqNumber}`);
+                        resolve(this.contentCache.get(clientId));
+                    }
+                }
+            };
+            this.contentCache.on("content", lateContentHandler);
+            this.fetchContent(clientId, clientSeqNumber, seqNumber).then((content) => {
+                this.contentCache.removeListener("content", lateContentHandler);
+                resolve(content);
+            });
+
+        });
+    }
+
+    private async fetchContent(
+        clientId: string,
+        clientSeqNumber: number,
+        seqNumber: number): Promise<runtime.IContentMessage> {
+        return new Promise<runtime.IContentMessage>((resolve, reject) => {
+            this.getDeltas(seqNumber, seqNumber).then(
+                (messages) => {
+                    assert.ok(messages.length > 0, "Content not found in DB");
+                    const message = messages[0];
+                    assert.equal(message.clientId, clientId, "Invalid fetched content");
+                    assert.equal(message.clientSequenceNumber, clientSeqNumber, "Invalid fetched content");
+                    console.log(`Late content: Fetched from DB ${clientId}: ${clientSeqNumber}`);
+                    resolve({
+                        clientId: message.clientId,
+                        clientSequenceNumber: message.clientSequenceNumber,
+                        contents: message.contents,
+                    });
+                },
+                (error) => {
+                    // Retry on failure
+                    debug(error.toString());
+                    this.fetchContent(clientId, clientSeqNumber, seqNumber);
+                });
+        });
     }
 
     private catchUp(messages: runtime.ISequencedDocumentMessage[]) {
