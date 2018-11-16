@@ -14,6 +14,7 @@ import { IContext, IPartitionLambda, IPartitionLambdaFactory } from "./lambdas";
 export class Partition extends EventEmitter {
     private q: AsyncQueue<utils.IMessage>;
     private lambdaP: Promise<IPartitionLambda>;
+    private lambda: IPartitionLambda;
     private checkpointManager: CheckpointManager;
     private context: Context;
 
@@ -30,21 +31,24 @@ export class Partition extends EventEmitter {
             this.emit("error", error, restart);
         });
 
-        this.lambdaP = factory.create(config, this.context);
-        this.lambdaP.catch((error) => {
-            this.emit("error", error, true);
-        });
-
         // Create the incoming message queue
-        this.q = queue((message: utils.IMessage, callback) => {
-            this.processCore(message, this.context).then(
-                () => {
-                    callback();
-                },
-                (error) => {
-                    callback(error);
-                });
-        }, 1);
+        this.q = queue(
+            (message: utils.IMessage, callback) => {
+                this.processCore(message, this.context);
+                callback();
+            },
+            1);
+        this.q.pause();
+
+        this.lambdaP = factory.create(config, this.context);
+        this.lambdaP.then(
+            (lambda) => {
+                this.lambda = lambda;
+                this.q.resume();
+            },
+            (error) => {
+                this.emit("error", error, true);
+            });
 
         this.q.error = (error) => {
             this.emit("error", error, true);
@@ -100,9 +104,8 @@ export class Partition extends EventEmitter {
         await this.checkpointManager.flush();
     }
 
-    private async processCore(message: utils.IMessage, context: IContext): Promise<void> {
+    private processCore(message: utils.IMessage, context: IContext): void {
         winston.verbose(`${message.topic}:${message.partition}@${message.offset}`);
-        const lambda = await this.lambdaP;
-        lambda.handler(message);
+        this.lambda.handler(message);
     }
 }

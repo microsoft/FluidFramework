@@ -4,6 +4,8 @@ import * as util from "util";
 import { debug } from "../debug";
 import { IPendingMessage, IProducer } from "./definitions";
 
+const MaxBatchSize = Number.MAX_VALUE;
+
 /**
  * Kafka-Node Producer.
  */
@@ -11,9 +13,10 @@ export class KafkaNodeProducer implements IProducer {
     private messages = new Map<string, IPendingMessage[]>();
     private client: any;
     private producer: any;
-    private sendPending = false;
+    private sendPending: NodeJS.Immediate;
     private connecting = false;
     private connected = false;
+    private pendingMessageCount = 0;
 
     constructor(
         private endpoint: string,
@@ -41,6 +44,7 @@ export class KafkaNodeProducer implements IProducer {
         // Insert a new pending message
         const deferred = new utils.Deferred<any>();
         pending.push({ deferred, message });
+        this.pendingMessageCount++;
 
         // Mark the need to send a message
         this.requestSend();
@@ -61,22 +65,28 @@ export class KafkaNodeProducer implements IProducer {
      * to the same partition.
      */
     private requestSend() {
-        // Exit early if there is a pending send
-        if (this.sendPending) {
-            return;
-        }
-
         // If we aren't connected yet defer sending until connected
         if (!this.connected) {
             return;
         }
 
-        this.sendPending = true;
+        // Limit max queued up batch size
+        if (this.pendingMessageCount >= MaxBatchSize) {
+            clearImmediate(this.sendPending);
+            this.sendPending = undefined;
+            this.sendPendingMessages();
+            return;
+        }
+
+        // Exit early if there is a pending send
+        if (this.sendPending) {
+            return;
+        }
 
         // use setImmediate to play well with the node event loop
-        setImmediate(() => {
+        this.sendPending = setImmediate(() => {
             this.sendPendingMessages();
-            this.sendPending = false;
+            this.sendPending = undefined;
         });
     }
 
@@ -124,6 +134,7 @@ export class KafkaNodeProducer implements IProducer {
             }
         }
 
+        this.pendingMessageCount = 0;
         this.messages.clear();
     }
 
