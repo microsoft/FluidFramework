@@ -19,7 +19,7 @@ WORKDIR /usr/src/server
 
 ARG NPM_TOKEN
 COPY .npmrc .
-# COPY package-lock.json .
+COPY package-lock.json .
 COPY package.json .
 RUN npm install
 

@@ -1,5 +1,4 @@
 import * as core from "@prague/routerlicious/dist/core";
-import { DeliLambdaFactory } from "@prague/routerlicious/dist/deli/lambdaFactory";
 import * as services from "@prague/routerlicious/dist/services";
 import * as utils from "@prague/routerlicious/dist/utils";
 import * as _ from "lodash";
@@ -7,6 +6,7 @@ import { Provider } from "nconf";
 import { create as createDocumentRouter } from "../document-router";
 import { IPartitionLambdaFactory } from "../kafka-service/lambdas";
 import { RdkafkaProducer } from "../rdkafka";
+import { DeliLambdaFactory } from "./lambdaFactory";
 
 async function deliCreate(config: Provider): Promise<IPartitionLambdaFactory> {
     const mongoUrl = config.get("mongo:endpoint") as string;
