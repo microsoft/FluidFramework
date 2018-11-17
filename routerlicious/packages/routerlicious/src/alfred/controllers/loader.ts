@@ -16,15 +16,16 @@ export async function initialize(
     chaincode: string,
     npm: string,
     from: number,
-    to: number) {
+    to: number,
+    unitIsTime: boolean) {
 
     const errorService = config.trackError
         ? new BrowserErrorTrackingService()
         : new DefaultErrorTracking();
 
-    const replay = from >= 0 && to >= 0;
+    const replay = from >= 0 || to >= 0;
     const documentServices = replay
-        ? createReplayDocumentService(document.location.origin, from, to)
+        ? createReplayDocumentService(document.location.origin, from, to, unitIsTime)
         : createDocumentService(
             document.location.origin,
             config.blobStorageUrl,

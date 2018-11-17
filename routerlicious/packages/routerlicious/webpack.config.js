@@ -73,10 +73,12 @@ module.exports = env => {
             publicPath: false
         },
         plugins: [
+/*
             new ForkTsCheckerWebpackPlugin({
                 checkSyntacticErrors: true,
                 workers: typeCheckingCores
             }),
+*/
         ]
     };
 

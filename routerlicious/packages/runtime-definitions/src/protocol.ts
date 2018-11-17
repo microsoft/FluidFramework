@@ -175,6 +175,9 @@ export interface ISequencedDocumentMessage {
 
     // Traces related to the packet.
     traces: ITrace[];
+
+    // Timestamp when the server ticketed the message
+    timestamp: number;
 }
 
 /**

@@ -22,6 +22,7 @@ export function create(
         const chaincode = request.query.chaincode;
         const from = Number.parseInt(request.query.from, 10);
         const to = Number.parseInt(request.query.to, 10);
+        const unitIsTime = request.query.unit === "time";
         const token = getToken(tenantId, request.params.id, appTenants);
 
         const workerConfigP = getConfig(
@@ -45,6 +46,7 @@ export function create(
                     title: request.params.id,
                     to,
                     token,
+                    unitIsTime,
                     version: JSON.stringify(version),
                 });
             }, (error) => {
