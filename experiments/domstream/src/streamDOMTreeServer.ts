@@ -46,7 +46,8 @@ export class StreamDOMTreeServer extends StreamDOMTree {
                         this.initializeFromDOM(doc);
                         this.mapData.setNodeData(this.rootId, "documentElementId",
                             this.getRootElement().setOnMapWrapper(this.mapData, this));
-                    } else if (n.nodeType !== 1 || !this.isFiltered(n as Element)) {
+                    } else if (doc.documentElement.contains(n)
+                        && (n.nodeType !== 1 || !this.isFiltered(n as Element))) {
                         console.error("Target not emitted: ", mutation.type, n);
                     }
                     continue;
