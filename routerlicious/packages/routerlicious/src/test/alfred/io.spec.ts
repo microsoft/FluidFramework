@@ -130,7 +130,7 @@ describe("Routerlicious", () => {
                         assert.equal(message.documentId, testId);
                         assert.equal(message.operation.clientId, null);
                         assert.equal(message.operation.type, MessageType.ClientJoin);
-                        assert.equal(message.operation.contents.clientId, connectMessage.clientId);
+                        assert.equal(message.operation.metadata.content.clientId, connectMessage.clientId);
                     });
 
                     it("Should connect to and set existing flag to true when connecting to an existing document",
@@ -162,7 +162,7 @@ describe("Routerlicious", () => {
                         assert.equal(message.documentId, testId);
                         assert.equal(message.operation.clientId, null);
                         assert.equal(message.operation.type, MessageType.ClientLeave);
-                        assert.equal(message.operation.contents, connectMessage.clientId);
+                        assert.equal(message.operation.metadata.content, connectMessage.clientId);
                     });
                 });
 

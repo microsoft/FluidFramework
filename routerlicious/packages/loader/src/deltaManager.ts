@@ -20,8 +20,11 @@ const MissingFetchDelay = 100;
 const MaxFetchDelay = 10000;
 const MaxBatchDeltas = 2000;
 const DefaultChunkSize = 16 * 1024;
-// TODO (mdaumi): Make this larger and should come from connect protocol.
-const DefaultMaxContentSize = 8;
+
+// TODO (mdaumi): These two should come from connect protocol. For now, splitting will never occur since
+// it's bigger than DefaultChunkSize
+const DefaultMaxContentSize = 32 * 1024;
+const DefaultContentBufferSize = 10;
 
 /**
  * Interface used to define a strategy for handling incoming delta messages
@@ -81,7 +84,7 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
 
     private clientType: string;
 
-    private contentCache = new ContentCache(10);
+    private contentCache = new ContentCache(DefaultContentBufferSize);
 
     public get inbound(): runtime.IDeltaQueue {
         return this._inbound;
@@ -137,6 +140,7 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
         // Outbound message queue
         this._outbound = new DeltaQueue<runtime.IDocumentMessage>((message, callback) => {
             if (message.metadata.split) {
+                console.log(`Splitting content from envelope.`);
                 this.connection.submitAsync(message).then(
                     () => {
                         this.contentCache.set({
@@ -149,7 +153,6 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
                         callback();
                     },
                     (error) => {
-                        /* tslint:disable:no-unsafe-any */
                         callback(error);
                     });
             } else {
@@ -462,10 +465,8 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
             let nextContent = this.contentCache.get(op.clientId);
             while (nextContent && nextContent.clientSequenceNumber < op.clientSequenceNumber) {
                 nextContent = this.contentCache.get(op.clientId);
-                console.log(`Popped ${nextContent.clientSequenceNumber}`);
             }
             assert(nextContent, "No content found");
-            console.log(`${op.clientSequenceNumber} : ${nextContent.clientSequenceNumber}`);
             assert.equal(op.clientSequenceNumber, nextContent.clientSequenceNumber, "Invalid op content order");
             this.mergeAndProcess(op, nextContent, callback);
         } else {
@@ -507,7 +508,8 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
         assert.equal(message.sequenceNumber, this.baseSequenceNumber + 1);
         const startTime = now();
 
-        if (message.contents) {
+        // Back-compat: Client might open an old document.
+        if (message.contents && typeof message.contents === "string") {
             message.contents = JSON.parse(message.contents);
         }
 
@@ -591,7 +593,7 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
                     const lateContent = this.contentCache.peek(clId);
                     if (lateContent && lateContent.clientSequenceNumber === clientSeqNumber) {
                         this.contentCache.removeListener("content", lateContentHandler);
-                        console.log(`Late content: Buffer ${clientId}: ${clientSeqNumber}`);
+                        debug(`Late content fetched from buffer ${clientId}: ${clientSeqNumber}`);
                         resolve(this.contentCache.get(clientId));
                     }
                 }
@@ -616,7 +618,7 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
                     const message = messages[0];
                     assert.equal(message.clientId, clientId, "Invalid fetched content");
                     assert.equal(message.clientSequenceNumber, clientSeqNumber, "Invalid fetched content");
-                    console.log(`Late content: Fetched from DB ${clientId}: ${clientSeqNumber}`);
+                    debug(`Late content fetched from DB ${clientId}: ${clientSeqNumber}`);
                     resolve({
                         clientId: message.clientId,
                         clientSequenceNumber: message.clientSequenceNumber,

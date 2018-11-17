@@ -7,4 +7,3 @@ export * from "./webServer";
 export * from "./messageSender";
 export * from "./messageReceiver";
 export * from "./agentUploader";
-export * from "./contentPublisher";

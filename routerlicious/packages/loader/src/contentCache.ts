@@ -1,4 +1,4 @@
-// tslint:disable
+// tslint:disable no-bitwise
 import { IContentMessage } from "@prague/runtime-definitions";
 import * as assert from "assert";
 import { EventEmitter } from "events";
@@ -28,14 +28,14 @@ export class ContentCache extends EventEmitter {
     }
 }
 
-class RingBuffer {    
+class RingBuffer {
     private log2Capacity: number;
     private length: number;
     private lengthMask: number;
     private head = 0;
     private tail = 0;
     private buffer: IContentMessage[] = [];
-    
+
     constructor(log2Cap: number) {
         this.log2Capacity = log2Cap;
         this.length = (1 << log2Cap);
@@ -62,7 +62,7 @@ class RingBuffer {
             const data = this.buffer[this.tail];
             this.tail = (this.tail + 1) & this.lengthMask;
             return data;
-        }       
+        }
     }
 
     public peek(): IContentMessage {
@@ -71,7 +71,7 @@ class RingBuffer {
         } else {
             const data = this.buffer[this.tail];
             return data;
-        }       
+        }
     }
 
     private resize() {
@@ -85,7 +85,7 @@ class RingBuffer {
             assert.equal(this.tail, 0, "Buffer tail should point at start");
             newBuffer = this.buffer.slice(0, this.head);
         }
-        ++this.log2Capacity;
+        this.log2Capacity += 1;
         this.length = (1 << this.log2Capacity);
         this.lengthMask = this.length - 1;
         this.head = newBuffer.length;
