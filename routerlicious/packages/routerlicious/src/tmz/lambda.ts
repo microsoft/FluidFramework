@@ -1,5 +1,5 @@
 import * as api from "@prague/client-api";
-import { IHelpMessage, IUser, MessageType } from "@prague/runtime-definitions";
+import { IUser, MessageType } from "@prague/runtime-definitions";
 import * as winston from "winston";
 import * as core from "../core";
 import { IContext } from "../kafka-service/lambdas";
@@ -42,9 +42,16 @@ export class TmzLambda extends SequencedLambda {
             const sequencedMessage = baseMessage as core.ISequencedOperationMessage;
             // Only process "Help" messages.
             if (sequencedMessage.operation.type === MessageType.RemoteHelp) {
-                // Back-Compat: Temporary workaround to handle old help messages.
-                const helpContent = sequencedMessage.operation.metadata ?
-                    sequencedMessage.operation.metadata.content : sequencedMessage.operation.contents;
+                // Back-compat: Temporary workaround to handle old help messages.
+                // Back-compat: Only "snapshot" will be available to old clients.
+                let helpContent: string[];
+                if (sequencedMessage.operation.metadata) {
+                    helpContent = sequencedMessage.operation.metadata.content.tasks;
+                } else {
+                    helpContent = sequencedMessage.operation.contents.tasks;
+                    helpContent = helpContent.indexOf("snapshot") === -1 ? [] : ["snapshot"];
+                }
+
                 await this.trackDocument(
                     sequencedMessage.operation.clientId,
                     sequencedMessage.tenantId,
@@ -62,9 +69,9 @@ export class TmzLambda extends SequencedLambda {
         tenantId: string,
         docId: string,
         user: IUser,
-        message: IHelpMessage): Promise<void> {
+        helpTasks: string[]): Promise<void> {
         const key = await this.tenantManager.getKey(tenantId);
-        const queueTasks = this.generateQueueTasks(message.tasks);
+        const queueTasks = this.generateQueueTasks(helpTasks);
         for (const queueTask of queueTasks) {
             const queueName = queueTask[0];
             const tasks = this.rateLimitter.filter(clientId, queueTask[1]);
