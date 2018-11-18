@@ -63,12 +63,13 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
             detail: this.client,
         };
 
+        // Back-compat: Replicate the same info in content and metadata.
         const message: core.IRawOperationMessage = {
             clientId: null,
             documentId: this.documentId,
             operation: {
                 clientSequenceNumber: -1,
-                contents: null,
+                contents: clientDetail,
                 metadata: {
                     content: clientDetail,
                     split: false,
@@ -100,13 +101,14 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
         this.submitRawOperation(rawMessage);
     }
 
+    // Back-compat: Replicate the same info in content and metadata.
     public disconnect() {
         const message: core.IRawOperationMessage = {
             clientId: null,
             documentId: this.documentId,
             operation: {
                 clientSequenceNumber: -1,
-                contents: null,
+                contents: this.clientId,
                 metadata: {
                     content: this.clientId,
                     split: false,

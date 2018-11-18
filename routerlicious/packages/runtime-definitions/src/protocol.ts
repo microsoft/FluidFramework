@@ -101,7 +101,8 @@ export interface IDocumentMessage {
     type: string;
 
     // The contents of the message
-    contents: string;
+    // back-compat: This should be string.
+    contents: any;
 
     // System level metadata.
     metadata: ISystemData;

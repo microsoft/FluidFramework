@@ -405,13 +405,14 @@ export class DeliLambda implements IPartitionLambda {
     /**
      * Creates a leave message for inactive clients.
      */
+    // back-compat: Puts the same content in metadata and contents.
     private createLeaveMessage(clientId: string): core.IRawOperationMessage {
         const leaveMessage: core.IRawOperationMessage = {
             clientId: null,
             documentId: this.documentId,
             operation: {
                 clientSequenceNumber: -1,
-                contents: null,
+                contents: clientId,
                 metadata: {
                     content: clientId,
                     split: false,

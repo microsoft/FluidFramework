@@ -126,7 +126,8 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
             : runtime.Robot;
         // Inbound message queue
         this._inbound = new DeltaQueue<runtime.ISequencedDocumentMessage>((op, callback) => {
-            if (op.metadata.split) {
+            // Back-compat: First check is for paparazzi to support old documents.
+            if (op.metadata && op.metadata.split) {
                 this.handleOpContent(op, callback);
             } else {
                 this.processInboundOp(op, callback);
@@ -509,7 +510,8 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
         const startTime = now();
 
         // Back-compat: Client might open an old document.
-        if (message.contents && typeof message.contents === "string") {
+        // tslint:disable:max-line-length
+        if (message.contents && typeof message.contents === "string" && message.type !== runtime.MessageType.ClientLeave) {
             message.contents = JSON.parse(message.contents);
         }
 
