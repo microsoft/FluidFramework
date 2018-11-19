@@ -281,7 +281,7 @@ export class Document extends EventEmitter {
                         tasks: helpTasks.robot,
                     };
                     console.log(`Requesting remote help for ${helpTasks.robot}`);
-                    this.runtime.submitMessage(MessageType.RemoteHelp, remoteHelpMessage);
+                    this.runtime.submitSystemMessage(MessageType.RemoteHelp, remoteHelpMessage);
                 }
             }
 

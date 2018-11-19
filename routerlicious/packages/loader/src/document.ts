@@ -387,6 +387,7 @@ export class Document extends EventEmitter {
                     attributes.branch,
                     attributes.minimumSequenceNumber,
                     (type, contents) => this.submitMessage(type, contents),
+                    (type, contents) => this.submitMetadataMessage(type, contents),
                     (message) => this.snapshot(message),
                     () => this.close());
 
@@ -649,6 +650,7 @@ export class Document extends EventEmitter {
             this.id,
             this._deltaManager.minimumSequenceNumber,
             (type, contents) => this.submitMessage(type, contents),
+            (type, contents) => this.submitMetadataMessage(type, contents),
             (message) => this.snapshot(message),
             () => this.close());
         this._runtime = newRuntime;
@@ -789,8 +791,6 @@ export class Document extends EventEmitter {
         }
     }
 
-    // TODO (mdaumi): To play nice with rest of the protocol, we only serialize chunked message.
-    // We should do it for all messages and stop serializing on the server.
     private submitMessage(type: MessageType, contents: any): number {
         if (this.connectionState !== ConnectionState.Connected) {
             return -1;
@@ -801,7 +801,7 @@ export class Document extends EventEmitter {
 
         let clientSequenceNumber: number;
         if (serializedContent.length <= maxOpSize) {
-            clientSequenceNumber = this._deltaManager.submit(type, contents);
+            clientSequenceNumber = this._deltaManager.submit(type, serializedContent);
         } else {
             clientSequenceNumber = this.submitChunkedMessage(type, serializedContent, maxOpSize);
             this.unackedChunkedMessages.set(clientSequenceNumber,
@@ -812,6 +812,13 @@ export class Document extends EventEmitter {
         }
 
         return clientSequenceNumber;
+    }
+
+    private submitMetadataMessage(type: MessageType, contents: any) {
+        if (this.connectionState !== ConnectionState.Connected) {
+            return -1;
+        }
+        return this._deltaManager.submitMetaData(type, contents);
     }
 
     private submitChunkedMessage(type: MessageType, content: string, maxOpSize: number): number {
@@ -827,7 +834,7 @@ export class Document extends EventEmitter {
                 totalChunks: chunkN,
             };
             offset += maxOpSize;
-            clientSequenceNumber = this._deltaManager.submit(MessageType.ChunkedOp, chunkedOp);
+            clientSequenceNumber = this._deltaManager.submit(MessageType.ChunkedOp, JSON.stringify(chunkedOp));
         }
         return clientSequenceNumber;
     }
@@ -915,7 +922,7 @@ export class Document extends EventEmitter {
         const eventArgs: any[] = [message];
         switch (message.type) {
             case MessageType.ClientJoin:
-                const join = message.contents as IClientJoin;
+                const join = message.metadata.content as IClientJoin;
                 this.quorum.addMember(join.clientId, join.detail);
 
                 // This is the only one that requires the pending client ID
@@ -930,7 +937,7 @@ export class Document extends EventEmitter {
                 break;
 
             case MessageType.ClientLeave:
-                const clientId = message.contents as string;
+                const clientId = message.metadata.content as string;
                 this.clearPartialChunks(clientId);
                 this.quorum.removeMember(clientId);
                 this.emit("clientLeave", clientId);

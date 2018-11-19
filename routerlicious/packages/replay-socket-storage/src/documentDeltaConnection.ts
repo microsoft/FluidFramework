@@ -1,4 +1,5 @@
 import {
+    IContentMessage,
     IDeltaStorageService,
     IDocumentDeltaConnection,
     IDocumentMessage,
@@ -28,6 +29,7 @@ export class ReplayDocumentDeltaConnection extends EventEmitter implements IDocu
         const connection = {
             clientId: "",
             existing: true,
+            initialContents: [],
             initialMessages: [],
             maxMessageSize: ReplayMaxMessageSize,
             parentBranch: null,
@@ -92,6 +94,10 @@ export class ReplayDocumentDeltaConnection extends EventEmitter implements IDocu
         return this.details.user;
     }
 
+    public get initialContents(): IContentMessage[] {
+        return this.details.initialContents;
+    }
+
     public get initialMessages(): ISequencedDocumentMessage[] {
         return this.details.initialMessages;
     }
@@ -107,6 +113,10 @@ export class ReplayDocumentDeltaConnection extends EventEmitter implements IDocu
 
     public submit(message: IDocumentMessage): void {
         console.log("dropping the outbound message");
+    }
+
+    public async submitAsync(message: IDocumentMessage): Promise<void> {
+        console.log("dropping the outbound message and wait for response");
     }
 
     public disconnect() {

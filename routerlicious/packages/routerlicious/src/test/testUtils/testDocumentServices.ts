@@ -1,5 +1,6 @@
 import * as git from "@prague/gitresources";
 import {
+    IContentMessage,
     IDocumentDeltaConnection,
     IDocumentDeltaStorageService,
     IDocumentMessage,
@@ -20,6 +21,7 @@ export class TestDocumentDeltaConnection extends EventEmitter implements IDocume
     public user: IUser;
     public clientId: string;
     public initialMessages: ISequencedDocumentMessage[] | undefined;
+    public initialContents: IContentMessage[] | undefined;
     public documentId: string;
     public encrypted: boolean;
     public privateKey: string;
@@ -30,6 +32,10 @@ export class TestDocumentDeltaConnection extends EventEmitter implements IDocume
     }
 
     public submit(message: IDocumentMessage): void {
+        throw new Error("Method not implemented.");
+    }
+
+    public async submitAsync(message: IDocumentMessage): Promise<void> {
         throw new Error("Method not implemented.");
     }
 

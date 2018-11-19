@@ -2,6 +2,7 @@ import * as runtime from "@prague/runtime-definitions";
 import { Deferred } from "@prague/utils";
 import * as assert from "assert";
 import { EventEmitter } from "events";
+import { ContentCache } from "./contentCache";
 import { debug } from "./debug";
 import { DeltaConnection, IConnectionDetails } from "./deltaConnection";
 import { DeltaQueue } from "./deltaQueue";
@@ -11,6 +12,7 @@ import { DeltaQueue } from "./deltaQueue";
 const cloneDeep = require("lodash/cloneDeep");
 const now = require("performance-now");
 // tslint:enable:no-var-requires
+// tslint:disable:no-unsafe-any
 
 const MaxReconnectDelay = 8000;
 const InitialReconnectDelay = 1000;
@@ -18,6 +20,11 @@ const MissingFetchDelay = 100;
 const MaxFetchDelay = 10000;
 const MaxBatchDeltas = 2000;
 const DefaultChunkSize = 16 * 1024;
+
+// TODO (mdaumi): These two should come from connect protocol. For now, splitting will never occur since
+// it's bigger than DefaultChunkSize
+const DefaultMaxContentSize = 32 * 1024;
+const DefaultContentBufferSize = 10;
 
 /**
  * Interface used to define a strategy for handling incoming delta messages
@@ -77,6 +84,8 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
 
     private clientType: string;
 
+    private contentCache = new ContentCache(DefaultContentBufferSize);
+
     public get inbound(): runtime.IDeltaQueue {
         return this._inbound;
     }
@@ -98,6 +107,11 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
         return this.connection.details.maxMessageSize || DefaultChunkSize;
     }
 
+    // TODO (mdaumi): This should be instantiated as a part of connection protocol.
+    public get maxContentSize(): number {
+        return DefaultMaxContentSize;
+    }
+
     constructor(
         private id: string,
         private tenantId: string,
@@ -112,14 +126,12 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
             : runtime.Robot;
         // Inbound message queue
         this._inbound = new DeltaQueue<runtime.ISequencedDocumentMessage>((op, callback) => {
-            this.processMessage(op).then(
-                () => {
-                    callback();
-                },
-                (error) => {
-                    /* tslint:disable:no-unsafe-any */
-                    callback(error);
-                });
+            // Back-compat: First check is for paparazzi to support old documents.
+            if (op.metadata && op.metadata.split) {
+                this.handleOpContent(op, callback);
+            } else {
+                this.processInboundOp(op, callback);
+            }
         });
 
         this._inbound.on("error", (error) => {
@@ -128,8 +140,27 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
 
         // Outbound message queue
         this._outbound = new DeltaQueue<runtime.IDocumentMessage>((message, callback) => {
-            this.connection.submit(message);
-            callback();
+            if (message.metadata.split) {
+                console.log(`Splitting content from envelope.`);
+                this.connection.submitAsync(message).then(
+                    () => {
+                        this.contentCache.set({
+                            clientId: this.connection.details.clientId,
+                            clientSequenceNumber: message.clientSequenceNumber,
+                            contents: message.contents,
+                        });
+                        message.contents = null;
+                        this.connection.submit(message);
+                        callback();
+                    },
+                    (error) => {
+                        callback(error);
+                    });
+            } else {
+                this.connection.submit(message);
+                callback();
+            }
+
         });
 
         this._outbound.on("error", (error) => {
@@ -163,29 +194,15 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
     /**
      * Submits a new delta operation
      */
-    public submit(type: string, contents: any): number {
-        // Start adding trace for the op.
-        const traces: runtime.ITrace[] = [
-            {
-                action: "start",
-                service: this.clientType,
-                timestamp: now(),
-            }];
+    public submit(type: string, contents: string): number {
+        return this.submitCore(type, contents, null);
+    }
 
-        // tslint:disable:no-increment-decrement
-        const message: runtime.IDocumentMessage = {
-            clientSequenceNumber: ++this.clientSequenceNumber,
-            contents,
-            referenceSequenceNumber: this.baseSequenceNumber,
-            traces,
-            type,
-        };
-        this.readonly = false;
-
-        this.stopSequenceNumberUpdate();
-        this._outbound.push(message);
-
-        return message.clientSequenceNumber;
+    /**
+     * Submits a new system delta operation.
+     */
+    public submitMetaData(type: string, contents: any): number {
+        return this.submitCore(type, null, contents);
     }
 
     public async connect(reason: string): Promise<IConnectionDetails> {
@@ -242,6 +259,34 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
         this._inbound.clear();
         this._outbound.clear();
         this.removeAllListeners();
+    }
+
+    private submitCore(type: string, contents: string, metaContent: any): number {
+        // Start adding trace for the op.
+        const traces: runtime.ITrace[] = [
+            {
+                action: "start",
+                service: this.clientType,
+                timestamp: now(),
+            }];
+        // tslint:disable:no-increment-decrement
+        const message: runtime.IDocumentMessage = {
+            clientSequenceNumber: ++this.clientSequenceNumber,
+            contents,
+            metadata: {
+                content: metaContent,
+                split: (contents !== null) && (contents.length > this.maxContentSize),
+            },
+            referenceSequenceNumber: this.baseSequenceNumber,
+            traces,
+            type,
+        };
+        this.readonly = false;
+
+        this.stopSequenceNumberUpdate();
+        this._outbound.push(message);
+
+        return message.clientSequenceNumber;
     }
 
     private getDeltasCore(
@@ -328,6 +373,13 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
                     }
                 });
 
+                connection.on("op-content", (message: runtime.IContentMessage) => {
+                    // Need to buffer messages we receive before having the point set
+                    if (this.handler) {
+                        this.contentCache.set(cloneDeep(message));
+                    }
+                });
+
                 connection.on("nack", (target: number) => {
                     this._outbound.systemPause();
                     this._outbound.clear();
@@ -358,25 +410,10 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
                     this.emit("pong", latency);
                 });
 
+                this.processInitialOps(connection.details.initialMessages, connection.details.initialContents);
+
                 // Notify of the connection
                 this.emit("connect", connection.details);
-
-                const initialMessages = connection.details.initialMessages;
-                if (initialMessages && initialMessages.length > 0) {
-                    // the "connect_document_success" message sent us some deltas
-                    debug("Catching up on initial messages", initialMessages);
-
-                    // confirm the status of the handler and inbound queue
-                    if (!this.handler || this._inbound.paused) {
-                        // process them once the queue is ready
-                        this._inbound.once("resume", () => {
-                            this.catchUp(initialMessages);
-                        });
-
-                    } else {
-                        this.catchUp(initialMessages);
-                    }
-                }
             },
             (error) => {
                 // tslint:disable-next-line:no-parameter-reassignment
@@ -386,6 +423,73 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
                 debug(reason, error.toString());
                 setTimeout(() => this.connectCore(reason, delay * 2), delay);
             });
+    }
+
+    private processInitialOps(messages: runtime.ISequencedDocumentMessage[], contents: runtime.IContentMessage[]) {
+        // confirm the status of the handler and inbound queue
+        if (!this.handler || this._inbound.paused) {
+            // process them once the queue is ready
+            this._inbound.once("resume", () => {
+                this.enqueInitalOps(messages, contents);
+            });
+        } else {
+            this.enqueInitalOps(messages, contents);
+        }
+    }
+
+    private enqueInitalOps(messages: runtime.ISequencedDocumentMessage[], contents: runtime.IContentMessage[]) {
+        if (contents && contents.length > 0) {
+            for (const content of contents) {
+                this.contentCache.set(content);
+            }
+        }
+        if (messages && messages.length > 0) {
+            this.catchUp(messages);
+        }
+    }
+
+    private handleOpContent(op: runtime.ISequencedDocumentMessage, callback) {
+        const opContent = this.contentCache.peek(op.clientId);
+        if (!opContent) {
+            this.waitForContent(op.clientId, op.clientSequenceNumber, op.sequenceNumber).then((content) => {
+                this.mergeAndProcess(op, content, callback);
+            }, (err) => {
+                callback(err);
+            });
+        } else if (opContent.clientSequenceNumber > op.clientSequenceNumber) {
+            this.fetchContent(op.clientId, op.clientSequenceNumber, op.sequenceNumber).then((content) => {
+                this.mergeAndProcess(op, content, callback);
+            }, (err) => {
+                callback(err);
+            });
+        } else if (opContent.clientSequenceNumber < op.clientSequenceNumber) {
+            let nextContent = this.contentCache.get(op.clientId);
+            while (nextContent && nextContent.clientSequenceNumber < op.clientSequenceNumber) {
+                nextContent = this.contentCache.get(op.clientId);
+            }
+            assert(nextContent, "No content found");
+            assert.equal(op.clientSequenceNumber, nextContent.clientSequenceNumber, "Invalid op content order");
+            this.mergeAndProcess(op, nextContent, callback);
+        } else {
+            this.mergeAndProcess(op, this.contentCache.get(op.clientId), callback);
+        }
+    }
+
+    private processInboundOp(op: runtime.ISequencedDocumentMessage, callback) {
+        this.processMessage(op).then(
+            () => {
+                callback();
+            },
+            (error) => {
+                /* tslint:disable:no-unsafe-any */
+                callback(error);
+            });
+    }
+
+    private mergeAndProcess(message: runtime.ISequencedDocumentMessage, contentOp: runtime.IContentMessage, callback) {
+        message.contents = contentOp.contents;
+        message.metadata.split = false;
+        this.processInboundOp(message, callback);
     }
 
     private enqueueMessages(messages: runtime.ISequencedDocumentMessage[]) {
@@ -404,6 +508,12 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
     private async processMessage(message: runtime.ISequencedDocumentMessage): Promise<void> {
         assert.equal(message.sequenceNumber, this.baseSequenceNumber + 1);
         const startTime = now();
+
+        // Back-compat: Client might open an old document.
+        // tslint:disable:max-line-length
+        if (message.contents && typeof message.contents === "string" && message.type !== runtime.MessageType.ClientLeave) {
+            message.contents = JSON.parse(message.contents);
+        }
 
         // TODO handle error cases, NACK, etc...
         const context = await this.handler.prepare(message);
@@ -473,6 +583,56 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
                 this.fetching = false;
                 this.fetchMissingDeltas(from, to);
             });
+    }
+
+    private async waitForContent(
+        clientId: string,
+        clientSeqNumber: number,
+        seqNumber: number): Promise<runtime.IContentMessage> {
+        return new Promise<runtime.IContentMessage>((resolve, reject) => {
+            const lateContentHandler = (clId: string) => {
+                if (clientId === clId) {
+                    const lateContent = this.contentCache.peek(clId);
+                    if (lateContent && lateContent.clientSequenceNumber === clientSeqNumber) {
+                        this.contentCache.removeListener("content", lateContentHandler);
+                        debug(`Late content fetched from buffer ${clientId}: ${clientSeqNumber}`);
+                        resolve(this.contentCache.get(clientId));
+                    }
+                }
+            };
+            this.contentCache.on("content", lateContentHandler);
+            this.fetchContent(clientId, clientSeqNumber, seqNumber).then((content) => {
+                this.contentCache.removeListener("content", lateContentHandler);
+                resolve(content);
+            });
+
+        });
+    }
+
+    private async fetchContent(
+        clientId: string,
+        clientSeqNumber: number,
+        seqNumber: number): Promise<runtime.IContentMessage> {
+        return new Promise<runtime.IContentMessage>((resolve, reject) => {
+            this.getDeltas(seqNumber, seqNumber).then(
+                (messages) => {
+                    assert.ok(messages.length > 0, "Content not found in DB");
+                    const message = messages[0];
+                    assert.equal(message.clientId, clientId, "Invalid fetched content");
+                    assert.equal(message.clientSequenceNumber, clientSeqNumber, "Invalid fetched content");
+                    debug(`Late content fetched from DB ${clientId}: ${clientSeqNumber}`);
+                    resolve({
+                        clientId: message.clientId,
+                        clientSequenceNumber: message.clientSequenceNumber,
+                        contents: message.contents,
+                    });
+                },
+                (error) => {
+                    // Retry on failure
+                    debug(error.toString());
+                    this.fetchContent(clientId, clientSeqNumber, seqNumber);
+                });
+        });
     }
 
     private catchUp(messages: runtime.ISequencedDocumentMessage[]) {

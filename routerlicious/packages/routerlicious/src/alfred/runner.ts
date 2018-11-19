@@ -22,7 +22,8 @@ export class AlfredRunner implements utils.IRunner {
         private appTenants: IAlfredTenant[],
         private mongoManager: utils.MongoManager,
         private producer: utils.IProducer,
-        private metricClientConfig: any) {
+        private metricClientConfig: any,
+        private contentCollection: core.ICollection<any>) {
     }
 
     public start(): Promise<void> {
@@ -47,7 +48,8 @@ export class AlfredRunner implements utils.IRunner {
             this.server.webSocketServer,
             this.metricClientConfig,
             this.orderManager,
-            this.tenantManager);
+            this.tenantManager,
+            this.contentCollection);
 
         // Listen on provided port, on all network interfaces.
         httpServer.listen(this.port);

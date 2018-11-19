@@ -6,6 +6,7 @@ import * as core from "@prague/routerlicious/dist/core";
 import * as services from "@prague/routerlicious/dist/services";
 
 import {
+    TestCollection,
     TestDbFactory,
     TestKafka,
     TestTaskMessageSender,
@@ -66,11 +67,14 @@ export class TestDeltaConnectionServer implements ITestDeltaConnectionServer {
         const localOrderManager = new services.LocalOrderManager(nodeFactory, reservationManager);
         const testOrderer = new services.OrdererManager(localOrderManager);
 
+        const testCollection = new TestCollection([]);
+
         io.register(
             webSocketServer,
             metricClientConfig,
             testOrderer,
-            testTenantManager);
+            testTenantManager,
+            testCollection);
 
         return new TestDeltaConnectionServer(webSocketServer, databaseManager);
     }

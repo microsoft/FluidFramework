@@ -8,6 +8,7 @@ import * as services from "../../services";
 import * as utils from "../../utils";
 import {
     MessageFactory,
+    TestCollection,
     TestDbFactory,
     TestKafka,
     TestTenantManager,
@@ -27,6 +28,7 @@ describe("Routerlicious", () => {
                 let deliKafka: TestKafka;
                 let testOrderer: core.IOrdererManager;
                 let testTenantManager: TestTenantManager;
+                let contentCollection: TestCollection;
 
                 beforeEach(() => {
                     const collectionNames = "test";
@@ -51,12 +53,14 @@ describe("Routerlicious", () => {
                     testOrderer = new services.OrdererManager(null, kafkaOrderer);
 
                     webSocketServer = new TestWebSocketServer();
+                    contentCollection = new TestCollection([]);
 
                     io.register(
                         webSocketServer,
                         metricClientConfig,
                         testOrderer,
-                        testTenantManager);
+                        testTenantManager,
+                        contentCollection);
                 });
 
                 function connectToServer(
@@ -126,7 +130,7 @@ describe("Routerlicious", () => {
                         assert.equal(message.documentId, testId);
                         assert.equal(message.operation.clientId, null);
                         assert.equal(message.operation.type, MessageType.ClientJoin);
-                        assert.equal(message.operation.contents.clientId, connectMessage.clientId);
+                        assert.equal(message.operation.metadata.content.clientId, connectMessage.clientId);
                     });
 
                     it("Should connect to and set existing flag to true when connecting to an existing document",
@@ -158,7 +162,7 @@ describe("Routerlicious", () => {
                         assert.equal(message.documentId, testId);
                         assert.equal(message.operation.clientId, null);
                         assert.equal(message.operation.type, MessageType.ClientLeave);
-                        assert.equal(message.operation.contents, connectMessage.clientId);
+                        assert.equal(message.operation.metadata.content, connectMessage.clientId);
                     });
                 });
 

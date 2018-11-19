@@ -78,6 +78,16 @@ export interface INack {
 }
 
 /**
+ * System level metadata
+ */
+export interface ISystemData {
+
+    split: boolean;
+
+    content: any;
+}
+
+/**
  * Document specific message
  */
 export interface IDocumentMessage {
@@ -91,10 +101,23 @@ export interface IDocumentMessage {
     type: string;
 
     // The contents of the message
+    // back-compat: This should be string.
     contents: any;
+
+    // System level metadata.
+    metadata: ISystemData;
 
     // Traces related to the packet.
     traces: ITrace[];
+}
+
+export interface IContentMessage {
+
+    clientId: string;
+
+    clientSequenceNumber: number;
+
+    contents: string;
 }
 
 /**
@@ -146,6 +169,9 @@ export interface ISequencedDocumentMessage {
     // Origin branch information for the message. Can be marked undefined if the current
     // message is also the origin.
     origin: IBranchOrigin;
+
+    // Message metadata
+    metadata: ISystemData;
 
     // Traces related to the packet.
     traces: ITrace[];

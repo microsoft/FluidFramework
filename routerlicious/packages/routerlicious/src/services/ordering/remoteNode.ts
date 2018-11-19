@@ -27,6 +27,8 @@ class ProxySocketConnection implements IOrdererConnection {
     }
 
     constructor(
+        public readonly tenantId: string,
+        public readonly documentId: string,
         private socket: IWebSocket,
         private node: RemoteNode,
         private cid: number,
@@ -125,6 +127,8 @@ export class RemoteNode extends EventEmitter implements IConcreteNode {
                         this.connectMap.delete(message.cid);
 
                         const socketConnection = new ProxySocketConnection(
+                            pendingConnect.tenantId,
+                            pendingConnect.documentId,
                             pendingConnect.socket,
                             this,
                             message.cid,

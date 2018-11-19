@@ -357,7 +357,9 @@ export class SharedString extends CollaborativeMap {
             type: MergeTree.MergeTreeDeltaType.GROUP,
         } as MergeTree.IMergeTreeGroupMsg;
         this.client.mergeTree.pendingSegments.enqueue(segmentGroup);
-        this.submitIfAttached(groupOp);
+        if (groupOp.ops.length > 0) {
+            this.submitIfAttached(groupOp);
+        }
     }
 
     public findTile(startPos: number, tileLabel: string, preceding = true) {

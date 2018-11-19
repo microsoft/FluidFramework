@@ -1,5 +1,6 @@
+// tslint:disable
 import * as api from "@prague/runtime-definitions";
-// tslint:disable-next-line:match-default-export-name
+import * as assert from "assert";
 import axios from "axios";
 import * as querystring from "querystring";
 import { TokenProvider} from "./tokens";
@@ -45,8 +46,29 @@ export class DeltaStorageService implements api.IDeltaStorageService {
             };
         }
 
-        const result = await axios.get<api.ISequencedDocumentMessage[]>(
+        const opPromise = axios.get<api.ISequencedDocumentMessage[]>(
             `${this.url}/deltas/${encodeURIComponent(tenantId)}/${encodeURIComponent(id)}?${query}`, { headers });
-        return result.data;
+
+        const contentPromise = axios.get<any[]>(
+            `${this.url}/deltas/content/${encodeURIComponent(tenantId)}/${encodeURIComponent(id)}?${query}`, { headers });
+
+        const [opData, contentData] = await Promise.all([opPromise, contentPromise]);
+
+        const contents = contentData.data;
+        const ops = opData.data;
+        let contentIndex = 0;
+        for (const op of ops) {
+            // Back-compat: First check is for paparazzi to support old documents.
+            if (op.metadata && op.metadata.split) {
+                assert.ok(contentIndex < contents.length, "Delta content not found");
+                const content = contents[contentIndex];
+                assert.equal(op.sequenceNumber, content.sequenceNumber, "Invalid delta content order");
+                op.metadata.split = false;
+                op.contents = content.op.contents;
+                ++contentIndex;
+            }
+        }
+
+        return ops;
     }
 }

@@ -1,4 +1,5 @@
 import { IClient, IClientJoin, IDocumentMessage, IUser, MessageType } from "@prague/runtime-definitions";
+import * as _ from "lodash";
 import * as moniker from "moniker";
 import * as core from "../../core";
 import { IProducer } from "../../utils";
@@ -48,8 +49,8 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
         public readonly existing: boolean,
         document: core.IDocument,
         private producer: IProducer,
-        private tenantId: string,
-        private documentId: string,
+        public readonly tenantId: string,
+        public readonly documentId: string,
         public readonly clientId: string,
         private user: IUser,
         private client: IClient,
@@ -62,12 +63,17 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
             detail: this.client,
         };
 
+        // Back-compat: Replicate the same info in content and metadata.
         const message: core.IRawOperationMessage = {
             clientId: null,
             documentId: this.documentId,
             operation: {
                 clientSequenceNumber: -1,
                 contents: clientDetail,
+                metadata: {
+                    content: clientDetail,
+                    split: false,
+                },
                 referenceSequenceNumber: -1,
                 traces: [],
                 type: MessageType.ClientJoin,
@@ -95,6 +101,7 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
         this.submitRawOperation(rawMessage);
     }
 
+    // Back-compat: Replicate the same info in content and metadata.
     public disconnect() {
         const message: core.IRawOperationMessage = {
             clientId: null,
@@ -102,6 +109,10 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
             operation: {
                 clientSequenceNumber: -1,
                 contents: this.clientId,
+                metadata: {
+                    content: this.clientId,
+                    split: false,
+                },
                 referenceSequenceNumber: -1,
                 traces: [],
                 type: MessageType.ClientLeave,
@@ -128,7 +139,6 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
                     timestamp: Date.now(),
                 });
         }
-
         const stringMessage = JSON.stringify(message);
         this.producer.send(stringMessage, this.documentId);
     }
@@ -187,13 +197,21 @@ export class KafkaOrderer implements core.IOrderer {
 export class KafkaOrdererFactory {
     private ordererMap = new Map<string, Promise<core.IOrderer>>();
 
-    constructor(private producer: IProducer, private storage: core.IDocumentStorage, private maxMessageSize: number) {
+    constructor(
+        private producer: IProducer,
+        private storage: core.IDocumentStorage,
+        private maxMessageSize: number) {
     }
 
     public async create(tenantId: string, documentId: string): Promise<core.IOrderer> {
         const fullId = `${tenantId}/${documentId}`;
         if (!this.ordererMap.has(fullId)) {
-            const orderer = KafkaOrderer.Create(this.storage, this.producer, tenantId, documentId, this.maxMessageSize);
+            const orderer = KafkaOrderer.Create(
+                this.storage,
+                this.producer,
+                tenantId,
+                documentId,
+                this.maxMessageSize);
             this.ordererMap.set(fullId, orderer);
         }
 

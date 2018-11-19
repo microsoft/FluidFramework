@@ -182,7 +182,11 @@ export class DeliLambda implements IPartitionLambda {
         // Update and retrieve the minimum sequence number
         let message = objectMessage as core.IRawOperationMessage;
 
-        if (this.isDuplicate(message)) {
+        // Back-Compat: Older message does not have metadata field. So use the content field.
+        const messageContent = message.operation.metadata ?
+        message.operation.metadata.content : message.operation.contents;
+
+        if (this.isDuplicate(message, messageContent)) {
             return;
         }
 
@@ -192,18 +196,18 @@ export class DeliLambda implements IPartitionLambda {
             if (!message.clientId) {
                 if (message.operation.type === MessageType.ClientLeave) {
                     // Return if the client has already been removed due to a prior leave message.
-                    if (!this.removeClient(message.operation.contents)) {
+                    if (!this.removeClient(messageContent)) {
                         return;
                     }
                 } else if (message.operation.type === MessageType.ClientJoin) {
                     this.upsertClient(
-                        message.operation.contents.clientId,
+                        messageContent.clientId,
                         0,
                         this.minimumSequenceNumber,
                         message.timestamp,
                         true);
                 } else if (message.operation.type === MessageType.Fork) {
-                    winston.info(`Fork ${message.documentId} -> ${message.operation.contents.name}`);
+                    winston.info(`Fork ${message.documentId} -> ${messageContent.name}`);
                 }
             } else {
                 // Nack handling
@@ -235,7 +239,7 @@ export class DeliLambda implements IPartitionLambda {
 
         if (message.operation.type === MessageType.Integrate) {
             // Branch operation is the original message
-            const branchOperation = message.operation.contents as core.ISequencedOperationMessage;
+            const branchOperation = messageContent as core.ISequencedOperationMessage;
             const branchDocumentMessage = branchOperation.operation as ISequencedDocumentMessage;
             const branchClientId = getBranchClientId(branchOperation.documentId);
 
@@ -315,6 +319,7 @@ export class DeliLambda implements IPartitionLambda {
             clientId: message.clientId,
             clientSequenceNumber: message.operation.clientSequenceNumber,
             contents: message.operation.contents,
+            metadata: message.operation.metadata,
             minimumSequenceNumber: this.minimumSequenceNumber,
             origin,
             referenceSequenceNumber: message.operation.referenceSequenceNumber,
@@ -341,7 +346,7 @@ export class DeliLambda implements IPartitionLambda {
         };
     }
 
-    private isDuplicate(message: core.IRawOperationMessage): boolean {
+    private isDuplicate(message: core.IRawOperationMessage, content: any): boolean {
         if (message.operation.type !== MessageType.Integrate && !message.clientId) {
             return false;
         }
@@ -349,8 +354,8 @@ export class DeliLambda implements IPartitionLambda {
         let clientId: string;
         let clientSequenceNumber: number;
         if (message.operation.type === MessageType.Integrate) {
-            clientId = getBranchClientId(message.operation.contents.documentId);
-            clientSequenceNumber = message.operation.contents.operation.sequenceNumber;
+            clientId = getBranchClientId(content.documentId);
+            clientSequenceNumber = content.operation.sequenceNumber;
         } else {
             clientId = message.clientId;
             clientSequenceNumber = message.operation.clientSequenceNumber;
@@ -400,6 +405,7 @@ export class DeliLambda implements IPartitionLambda {
     /**
      * Creates a leave message for inactive clients.
      */
+    // back-compat: Puts the same content in metadata and contents.
     private createLeaveMessage(clientId: string): core.IRawOperationMessage {
         const leaveMessage: core.IRawOperationMessage = {
             clientId: null,
@@ -407,6 +413,10 @@ export class DeliLambda implements IPartitionLambda {
             operation: {
                 clientSequenceNumber: -1,
                 contents: clientId,
+                metadata: {
+                    content: clientId,
+                    split: false,
+                },
                 referenceSequenceNumber: -1,
                 traces: [],
                 type: MessageType.ClientLeave,
@@ -447,6 +457,10 @@ export class DeliLambda implements IPartitionLambda {
             operation: {
                 clientSequenceNumber: -1,
                 contents: null,
+                metadata: {
+                    content: null,
+                    split: false,
+                },
                 referenceSequenceNumber: -1,
                 traces: [],
                 type: MessageType.NoOp,

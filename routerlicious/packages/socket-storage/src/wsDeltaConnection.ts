@@ -1,5 +1,6 @@
 import {
     IClient,
+    IContentMessage,
     IDocumentDeltaConnection,
     IDocumentMessage,
     ISequencedDocumentMessage,
@@ -69,6 +70,10 @@ export class WSDeltaConnection extends EventEmitter implements IDocumentDeltaCon
         return this.details.initialMessages;
     }
 
+    public get initialContents(): IContentMessage[] {
+        return this.details.initialContents;
+    }
+
     constructor(tenantId: string, public documentId: string, token: string, client: IClient, urlStr: string) {
         super();
 
@@ -120,6 +125,19 @@ export class WSDeltaConnection extends EventEmitter implements IDocumentDeltaCon
      */
     public submit(message: IDocumentMessage): void {
         this.submitManager.add("submitOp", message);
+    }
+
+    public async submitAsync(message: IDocumentMessage): Promise<void> {
+        return new Promise<void>((resolve, reject) => {
+            this.socket.send(JSON.stringify(["submitContent", this.details.clientId, message]), (error) => {
+                if (error) {
+                    reject();
+                } else {
+                    resolve();
+                }
+            });
+        });
+
     }
 
     public disconnect() {

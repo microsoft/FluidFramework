@@ -92,7 +92,11 @@ export class RouteMasterLambda extends SequencedLambda {
             documentId: fork,
             operation: {
                 clientSequenceNumber: -1,
-                contents: message,
+                contents: null,
+                metadata: {
+                    content: message,
+                    split: false,
+                },
                 referenceSequenceNumber: -1,
                 traces: [],
                 type: MessageType.Integrate,
