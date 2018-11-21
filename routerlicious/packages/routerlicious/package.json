@@ -6,7 +6,7 @@
   "types": "dist/index.d.ts",
   "sideEffects": false,
   "scripts": {
-    "clean": "rimraf dist",
+    "clean": "rimraf dist public/scripts/dist",
     "webpack": "webpack --config webpack.config.js",
     "webpack:watch": "webpack --config webpack.config.js --watch",
     "webpack:min": "webpack --config webpack.config.js --env.target production",
