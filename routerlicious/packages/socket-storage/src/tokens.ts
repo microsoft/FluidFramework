@@ -8,13 +8,11 @@ export class TokenService implements ITokenService {
 }
 
 export class TokenProvider implements ITokenProvider {
-    public storageToken: string;
-    public deltaStorageToken: string;
-    public deltaStreamToken: string;
 
-    constructor(token: string) {
-        this.storageToken = token;
-        this.deltaStorageToken = token;
-        this.deltaStreamToken = token;
+    constructor(public token: string) {
+    }
+
+    public isValid(): boolean {
+        return (this.token !== undefined && this.token !== null);
     }
 }

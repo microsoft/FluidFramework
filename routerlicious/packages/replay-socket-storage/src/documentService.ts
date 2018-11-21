@@ -12,32 +12,33 @@ export class ReplayDocumentService implements api.IDocumentService {
     private deltaStorage: DeltaStorageService;
     constructor(private deltaUrl: string,
                 private replayFrom: number,
-                private replayTo: number) {
+                private replayTo: number,
+                private unitIsTime: boolean) {
         this.deltaStorage = new DeltaStorageService(this.deltaUrl);
     }
     public async connectToStorage(
         tenantId: string,
         id: string,
-        token: string): Promise<api.IDocumentStorageService> {
+        tokenProvider: api.ITokenProvider): Promise<api.IDocumentStorageService> {
 
         return new ReplayDocumentStorageService();
     }
     public async connectToDeltaStorage(
         tenantId: string,
         id: string,
-        token: string): Promise<api.IDocumentDeltaStorageService> {
+        tokenProvider: api.ITokenProvider): Promise<api.IDocumentDeltaStorageService> {
 
         return new ReplayDeltaStorageService();
     }
     public async connectToDeltaStream(
         tenantId: string,
         id: string,
-        token: string,
+        tokenProvider: api.ITokenProvider,
         client: api.IClient): Promise<api.IDocumentDeltaConnection> {
-        return ReplayDocumentDeltaConnection.Create(tenantId, id, token, this.deltaStorage,
-             this.replayFrom, this.replayTo);
+        return ReplayDocumentDeltaConnection.Create(tenantId, id, tokenProvider, this.deltaStorage,
+             this.replayFrom, this.replayTo, this.unitIsTime);
     }
-    public async branch(tenantId: string, id: string, token: string): Promise<string> {
+    public async branch(tenantId: string, id: string, tokenProvider: api.ITokenProvider): Promise<string> {
         return null;
     }
     public getErrorTrackingService() {

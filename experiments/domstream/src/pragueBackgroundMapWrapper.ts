@@ -5,9 +5,9 @@ import { MessageEnum, PortHolder } from "./portHolder";
 class BatchMessageQueue extends PortHolder {
     private static maxMessageQueueSize = 1000;
     private messageQueue: any[][];
-    constructor(port: chrome.runtime.Port, batchOp: boolean) {
+    constructor(port: chrome.runtime.Port, batchOps: boolean) {
         super(port);
-        if (batchOp) {
+        if (batchOps) {
             this.messageQueue = new Array();
         }
     }
@@ -41,12 +41,12 @@ class BatchMessageQueue extends PortHolder {
 
 class PragueBackgroundMapWrapper extends BatchMessageQueue implements IMapWrapper {
     private mapId: number;
-    constructor(port: chrome.runtime.Port, mapId: number, batchOp: boolean) {
-        super(port, batchOp);
+    constructor(port: chrome.runtime.Port, mapId: number, batchOps: boolean) {
+        super(port, batchOps);
         this.mapId = mapId;
     }
 
-    public set(key: string, value: string | number) {
+    public set(key: string, value: string | number | boolean) {
         this.postMessage([MessageEnum.set, this.mapId, key, value]);
     }
 
@@ -65,8 +65,8 @@ export class PragueBackgroundMapViewWrapper extends BatchMessageQueue implements
     private nonLocalValueChangeCallback = new Array<(key: string, value: any, deleted: boolean) => void>();
     private valueChangeListener: (message: any[]) => void;
 
-    constructor(port: chrome.runtime.Port, mapId: number, batchOp: boolean) {
-        super(port, batchOp);
+    constructor(port: chrome.runtime.Port, mapId: number, batchOps: boolean) {
+        super(port, batchOps);
         this.mapId = mapId;
 
         this.valueChangeListener = (message: any[]) => {
@@ -85,7 +85,7 @@ export class PragueBackgroundMapViewWrapper extends BatchMessageQueue implements
         this.addMessageListener(this.valueChangeListener);
     }
 
-    public set(key: string, value: string | number) {
+    public set(key: string, value: string | number | boolean) {
         this.postMessage([MessageEnum.set, this.mapId, key, value]);
     }
     public setMap(key: string, value: PragueBackgroundMapWrapper) {
@@ -98,7 +98,7 @@ export class PragueBackgroundMapViewWrapper extends BatchMessageQueue implements
         this.postMessage([MessageEnum.setIfChanged, this.mapId, key, value]);
     }
     public setTimeStamp(key: string) {
-        this.postMessage([MessageEnum.setTimeStamp, this.mapId, key]);
+        this.postMessage([MessageEnum.setTimeStamp, this.mapId, key, Date.now()]);
     }
     public delete(key: string) {
         this.postMessage([MessageEnum.delete, this.mapId, key]);
@@ -137,17 +137,20 @@ export class PragueBackgroundMapViewWrapper extends BatchMessageQueue implements
 }
 
 export class PragueBackgroundMapWrapperFactory extends PortHolder implements IMapWrapperFactory {
-    private nextMapId: number = 1;  // 0 is ithe root
-    private batchOp: boolean;
-    constructor(port: chrome.runtime.Port, batchOp: boolean) {
+    private nextMapId: number = 2;  // 0 is the root, 1 is the default data map
+    private batchOps: boolean;
+    constructor(port: chrome.runtime.Port, batchOps: boolean) {
         super(port);
-        this.batchOp = batchOp;
+        this.batchOps = batchOps;
     }
-    public async getRootMapView() {
+    public async getFrameContainerDataMapView() {
         return Promise.resolve(new PragueBackgroundMapViewWrapper(this.getPort(), 0, false));
     }
+    public async getDefaultDataMapView() {
+        return Promise.resolve(new PragueBackgroundMapViewWrapper(this.getPort(), 1, false));
+    }
     public createMap() {
-        return new PragueBackgroundMapWrapper(this.getPort(), this.nextMapId++, this.batchOp);
+        return new PragueBackgroundMapWrapper(this.getPort(), this.nextMapId++, this.batchOps);
     }
     public async createMapView() {
         const mapId = this.nextMapId++;
@@ -156,7 +159,7 @@ export class PragueBackgroundMapWrapperFactory extends PortHolder implements IMa
                 if (message[0] === MessageEnum.ensureMapViewDone && message[1] === mapId) {
                     debugPort("Execute action: ", MessageEnum[message[0]], mapId);
                     this.removeMessageListener(listener);
-                    return resolve(new PragueBackgroundMapViewWrapper(this.getPort(), mapId, this.batchOp));
+                    return resolve(new PragueBackgroundMapViewWrapper(this.getPort(), mapId, this.batchOps));
                 }
             };
             this.addMessageListener(listener);

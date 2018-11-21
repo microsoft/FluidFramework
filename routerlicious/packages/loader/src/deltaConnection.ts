@@ -7,6 +7,7 @@ export interface IConnectionDetails {
     parentBranch: string;
     user: runtime.IUser;
     initialMessages?: runtime.ISequencedDocumentMessage[];
+    initialContents?: runtime.IContentMessage[];
     maxMessageSize: number;
 }
 
@@ -14,10 +15,10 @@ export class DeltaConnection extends EventEmitter {
     public static async Connect(
         tenantId: string,
         id: string,
-        token: string,
+        tokenProvider: runtime.ITokenProvider,
         service: runtime.IDocumentService,
         client: runtime.IClient) {
-        const connection = await service.connectToDeltaStream(tenantId, id, token, client);
+        const connection = await service.connectToDeltaStream(tenantId, id, tokenProvider, client);
         return new DeltaConnection(connection);
     }
 
@@ -45,6 +46,7 @@ export class DeltaConnection extends EventEmitter {
         this._details = {
             clientId: connection.clientId,
             existing: connection.existing,
+            initialContents: connection.initialContents,
             initialMessages: connection.initialMessages,
             maxMessageSize: connection.maxMessageSize,
             parentBranch: connection.parentBranch,
@@ -54,6 +56,10 @@ export class DeltaConnection extends EventEmitter {
         // listen for new messages
         connection.on("op", (documentId: string, messages: runtime.ISequencedDocumentMessage[]) => {
             this.emit("op", documentId, messages);
+        });
+
+        connection.on("op-content", (message: runtime.IContentMessage) => {
+            this.emit("op-content", message);
         });
 
         connection.on("nack", (documentId: string, message: runtime.INack[]) => {
@@ -85,5 +91,9 @@ export class DeltaConnection extends EventEmitter {
 
     public submit(message: runtime.IDocumentMessage): void {
         this.connection.submit(message);
+    }
+
+    public async submitAsync(message: runtime.IDocumentMessage): Promise<void> {
+        return this.connection.submitAsync(message);
     }
 }

@@ -4,6 +4,7 @@ import { EventEmitter } from "events";
 import * as moniker from "moniker";
 // tslint:disable-next-line:no-var-requires
 const now = require("performance-now");
+import { BBCLambda } from "../../bbc/lambda";
 import { ICollection, IOrdererConnection, ITenantManager } from "../../core";
 import * as core from "../../core";
 import { DeliLambda } from "../../deli/lambda";
@@ -122,8 +123,8 @@ class LocalOrdererConnection implements IOrdererConnection {
         public readonly existing: boolean,
         document: core.IDocument,
         private producer: IProducer,
-        private tenantId: string,
-        private documentId: string,
+        public readonly tenantId: string,
+        public readonly documentId: string,
         public readonly clientId: string,
         private user: IUser,
         private client: IClient,
@@ -146,7 +147,11 @@ class LocalOrdererConnection implements IOrdererConnection {
             documentId: this.documentId,
             operation: {
                 clientSequenceNumber: -1,
-                contents: clientDetail,
+                contents: null,
+                metadata: {
+                    content: clientDetail,
+                    split: false,
+                },
                 referenceSequenceNumber: -1,
                 traces: [],
                 type: MessageType.ClientJoin,
@@ -181,7 +186,11 @@ class LocalOrdererConnection implements IOrdererConnection {
             documentId: this.documentId,
             operation: {
                 clientSequenceNumber: -1,
-                contents: this.clientId,
+                contents: null,
+                metadata: {
+                    content: this.clientId,
+                    split: false,
+                },
                 referenceSequenceNumber: -1,
                 traces: [],
                 type: MessageType.ClientLeave,
@@ -250,6 +259,7 @@ export class LocalOrderer implements core.IOrderer {
     private static pubSub = new PubSub();
     private static socketPublisher = new LocalSocketPublisher(LocalOrderer.pubSub);
 
+    private static bbcContext = new LocalContext();
     private static scriptoriumContext = new LocalContext();
     private static tmzContext = new LocalContext();
     private static deliContext = new LocalContext();
@@ -257,6 +267,7 @@ export class LocalOrderer implements core.IOrderer {
     private scriptoriumLambda: ScriptoriumLambda;
     private tmzLambda: TmzLambda;
     private deliLambda: DeliLambda;
+    private bbcLambda: BBCLambda;
 
     private alfredToDeliKafka: InMemoryKafka;
     private deliToScriptoriumKafka: InMemoryKafka;
@@ -283,11 +294,9 @@ export class LocalOrderer implements core.IOrderer {
         this.alfredToDeliKafka = new InMemoryKafka(this.existing ? details.value.sequenceNumber : 0);
         this.deliToScriptoriumKafka = new InMemoryKafka();
 
-        // Scriptorium Lambda
-        this.scriptoriumLambda = new ScriptoriumLambda(
-            LocalOrderer.socketPublisher,
-            deltasCollection,
-            LocalOrderer.scriptoriumContext);
+        // Scriptorium + BBC Lambda
+        this.scriptoriumLambda = new ScriptoriumLambda(deltasCollection, undefined, LocalOrderer.scriptoriumContext);
+        this.bbcLambda = new BBCLambda(LocalOrderer.socketPublisher, LocalOrderer.bbcContext);
 
         // TMZ lambda
         this.tmzLambda = new TmzLambda(
@@ -353,6 +362,7 @@ export class LocalOrderer implements core.IOrderer {
         this.deliToScriptoriumKafka.close();
 
         // close lambas
+        this.bbcLambda.close();
         this.scriptoriumLambda.close();
         this.tmzLambda.close();
         this.deliLambda.close();
@@ -364,6 +374,7 @@ export class LocalOrderer implements core.IOrderer {
         });
 
         this.deliToScriptoriumKafka.on("message", (message: IMessage) => {
+            this.bbcLambda.handler(message);
             this.scriptoriumLambda.handler(message);
             this.tmzLambda.handler(message);
         });
@@ -373,7 +384,6 @@ export class LocalOrderer implements core.IOrderer {
 // Dumb local in memory kafka.
 // TODO: Make this real.
 class InMemoryKafka extends EventEmitter implements IProducer {
-
     constructor(private offset = 0) {
         super();
     }

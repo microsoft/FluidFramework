@@ -7,6 +7,8 @@ import { UnboxedOper, Workbook } from "../../ext/calc";
  */
 export class CollaborativeWorkbook extends Workbook {
     private readonly cellText: map.IMapView;
+    private ready;
+    private existing;
 
     /**
      * Constructs a new Workbook with the prescribed dimensions, optionally initializing it
@@ -18,7 +20,8 @@ export class CollaborativeWorkbook extends Workbook {
 
         // If the the IMapView already contains Workbook data, preserve it by replacing
         // the initial values passed to the ctor w/the existing data.
-        if (typeof existingRows !== "undefined") {
+        const existing = typeof existingRows !== "undefined";
+        if (existing) {
             console.assert(typeof existingCols !== "undefined");
             numRows = existingRows;
             numCols = existingCols;
@@ -37,14 +40,17 @@ export class CollaborativeWorkbook extends Workbook {
         }
 
         super(numRows, numCols);
+        this.existing = existing;
         this.cellText = cellText;
         this.init(init);
+        this.ready = true;
 
         cellText.getMap().on("valueChanged", ({ key }, isLocal) => {
             if (!isLocal) {
                 switch (key) {
                     case "numRows":
                     case "numCols":
+                        break;
                     default:
                         const [row, col] = key.split(",").map((value) => parseInt(value, 10));
                         this.setCellText(row, col, cellText.get(key), true);
@@ -68,6 +74,10 @@ export class CollaborativeWorkbook extends Workbook {
     }
 
     protected storeCellText(row: number, col: number, value: UnboxedOper) {
+        if (!this.ready && this.existing) {
+            return;
+        }
+
         this.cellText.set(`${row},${col}`, value);
     }
 }

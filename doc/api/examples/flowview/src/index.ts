@@ -65,6 +65,15 @@ async function run(id: string): Promise<void> {
         await Promise.all([rootView.wait("text"), rootView.wait("ink")]);
     }
 
+    collabDoc.on("clientJoin", (message) => {
+        console.log(`${JSON.stringify(message)} joined`);
+        console.log(`${Array.from(collabDoc.getClients().keys())}`);
+    });
+    collabDoc.on("clientLeave", (message) => {
+        console.log(`${JSON.stringify(message)} left`);
+        console.log(`${Array.from(collabDoc.getClients().keys())}`);
+    });
+
     // Load the text string and listen for updates
     const text = rootView.get("text");
     const ink = rootView.get("ink");

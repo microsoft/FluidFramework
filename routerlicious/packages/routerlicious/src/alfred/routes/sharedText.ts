@@ -1,4 +1,5 @@
 import { Router } from "express";
+import * as safeStringify from "json-stringify-safe";
 import { Provider } from "nconf";
 import * as path from "path";
 import { IDocumentStorage, ITenantManager } from "../../core";
@@ -40,7 +41,7 @@ export function create(
                     });
             },
             (error) => {
-                response.status(400).json(error);
+                response.status(400).json(safeStringify(error));
             });
     });
 
@@ -72,7 +73,7 @@ export function create(
                     version: JSON.stringify(values[1]),
                 });
         }, (error) => {
-            response.status(400).json(error);
+            response.status(400).json(safeStringify(error));
         });
     });
 
@@ -120,7 +121,7 @@ export function create(
                     version: JSON.stringify(values[1]),
                 });
         }, (error) => {
-            response.status(400).json(error);
+            response.status(400).json(safeStringify(error));
         });
     });
 
@@ -133,7 +134,7 @@ export function create(
                 response.redirect(`/sharedText/${fork}`);
             },
             (error) => {
-                response.status(400).json(error);
+                response.status(400).json(safeStringify(error));
             });
     });
 
@@ -194,7 +195,7 @@ export function create(
                     version: JSON.stringify(values[1]),
                 });
             }, (error) => {
-                response.status(400).json(error);
+                response.status(400).json(safeStringify(error));
         });
     });
 

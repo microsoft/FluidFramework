@@ -1,0 +1,24 @@
+Todays Notes
+1. Let's get a demo wrapped...
+2. Let's decide what the demo is
+3. Let's get Daniel engaged
+4. Look up RCS? IRC? 
+    a. RCS = Rich Communication Services
+    b. IRC = Internet Relay Chat
+5. Let's get a stock market link going on...
+
+
+Notes:
+How to build a docker container in cluster... Docker sock kind of screws with this...
+What's rbac? some sort of role based access control
+
+
+Stock market link strategy...
+1. "Request for Information" or does it listen to all ops?
+    { Blob: helpNeeded }
+2. "Writer... with a webhook"
+
+
+Next Steps
+1. Try to do a direct consumer... i.e. download and run off each op.
+2. try to deploy using nuctl, perhaps that gives you more control?

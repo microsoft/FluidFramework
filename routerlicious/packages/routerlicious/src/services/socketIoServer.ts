@@ -32,6 +32,10 @@ class SocketIoSocket implements core.IWebSocket {
     public async emit(event: string, ...args) {
         this.socket.emit(event, ...args);
     }
+
+    public async broadcast(event: string, ...args) {
+        this.socket.broadcast.emit(event, ...args);
+    }
 }
 
 class SocketIoServer implements core.IWebSocketServer {

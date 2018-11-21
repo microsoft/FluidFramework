@@ -1,6 +1,6 @@
 {
   "name": "@chaincode/pinpoint-editor",
-  "version": "0.6.4",
+  "version": "0.6.15",
   "description": "A web app for creating and editing Pinpoint maps.",
   "main": "server.js",
   "author": "Microsoft",

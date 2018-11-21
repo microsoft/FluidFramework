@@ -48,6 +48,10 @@ scriptorium:
   name: scriptorium
   replicas: 8
 
+bbc:
+  name: bbc
+  replicas: 8
+
 routemaster:
   name: routemaster
   replicas: 8

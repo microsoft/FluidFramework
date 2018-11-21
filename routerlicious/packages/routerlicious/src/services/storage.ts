@@ -186,7 +186,11 @@ export class DocumentStorage implements core.IDocumentStorage {
             documentId: id,
             operation: {
                 clientSequenceNumber: -1,
-                contents,
+                contents: null,
+                metadata: {
+                    content: contents,
+                    split: false,
+                },
                 referenceSequenceNumber: -1,
                 traces: [],
                 type: MessageType.Fork,

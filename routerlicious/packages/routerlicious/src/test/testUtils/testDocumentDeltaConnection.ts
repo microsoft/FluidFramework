@@ -1,4 +1,5 @@
 import {
+    IContentMessage,
     IDocumentDeltaConnection,
     IDocumentMessage,
     ISequencedDocumentMessage,
@@ -15,7 +16,8 @@ export class TestDocumentDeltaConnection extends EventEmitter implements IDocume
         public existing: boolean,
         public parentBranch: string,
         public user: IUser,
-        public initialMessages: ISequencedDocumentMessage[] | undefined) {
+        public initialMessages: ISequencedDocumentMessage[] | undefined,
+        public initialContents: IContentMessage[] | undefined) {
         super();
     }
 
@@ -30,6 +32,10 @@ export class TestDocumentDeltaConnection extends EventEmitter implements IDocume
      * Submits a new delta operation to the server
      */
     public submit(message: IDocumentMessage): void {
+        return;
+    }
+
+    public async submitAsync(message: IDocumentMessage): Promise<void> {
         return;
     }
 

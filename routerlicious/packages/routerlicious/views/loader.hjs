@@ -16,6 +16,7 @@
             var chaincode = "{{ chaincode }}";
             var from = {{ from }};
             var to = {{ to }};
+            var unitIsTime = {{ unitIsTime }};
             loader.initialize(
                 version,
                 token,
@@ -23,7 +24,8 @@
                 chaincode,
                 config.npm,
                 from,
-                to);
+                to,
+                unitIsTime);
         </script>
     {{/scripts}}
 {{/layout}}

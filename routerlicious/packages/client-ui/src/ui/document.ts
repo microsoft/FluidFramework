@@ -1,7 +1,7 @@
 import { Block, BoxState } from "@prague/app-ui";
 import { getChaincodeRepo, getDefaultCredentials, getDefaultDocumentService } from "@prague/client-api";
 import * as loader from "@prague/loader";
-import { WebLoader, WebPlatform } from "@prague/loader-web";
+import { proposeChaincode, WebLoader, WebPlatform } from "@prague/loader-web";
 import { IPlatform, IPlatformFactory, IRuntime, IUser } from "@prague/runtime-definitions";
 import { TokenProvider } from "@prague/socket-storage";
 import { EventEmitter } from "events";
@@ -69,6 +69,7 @@ const definitionGuide = new DefinitionGuide();
 
 export class DocumentState extends BoxState {
     public id: string;
+    public chaincode?: string;
     public [documentSym]: loader.Document;
     public [platformSym]: PlatformFactory;
 }
@@ -135,6 +136,20 @@ export class Document extends Block<DocumentState> {
         div.style.width = "400px";
         div.style.height = "600px";
 
+        const openDoc = document.createElement("a");
+        openDoc.href = `/loader/${encodeURIComponent(self.id)}`;
+        openDoc.target = "_blank";
+        openDoc.innerText = self.id;
+        openDoc.style.display = "block";
+        openDoc.style.width = "100%";
+        openDoc.classList.add("component-link");
+
+        const mountDiv = document.createElement("div");
+        mountDiv.classList.add("mount-point");
+        mountDiv.style.flexWrap = "wrap";
+        mountDiv.appendChild(openDoc);
+        mountDiv.appendChild(div);
+
         // TODO also something that shouldn't be direclty exposed
         const credentials = getDefaultCredentials();
         const user: IUser = { id: "loader-client" };
@@ -175,6 +190,13 @@ export class Document extends Block<DocumentState> {
                 self[platformSym] = platformFactory;
                 console.log("Document loaded");
 
+                if (self.chaincode) {
+                    proposeChaincode(document, self.chaincode).catch(
+                        (error) => {
+                            console.error("Error installing chaincode");
+                        });
+                }
+
                 // query the runtime for its definition - if it exists
                 definitionGuide.addComponent(self.id, document.runtime);
                 document.on("runtimeChanged", (runtime) => {
@@ -184,7 +206,7 @@ export class Document extends Block<DocumentState> {
             (error) => console.error("Failed to load document"));
 
         // Call 'updating' to update the contents of the div with the updated chart.
-        return this.updating(self, context, div);
+        return this.updating(self, context, mountDiv);
     }
 
     protected unmounting(self: BoxState, context: FlowViewContext, element: HTMLElement): void {

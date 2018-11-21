@@ -1,10 +1,15 @@
-FROM node:8.11.4-alpine
+FROM node:8.12.0-slim
 
 # node-gyp dependencies
-RUN apk add --no-cache --virtual .gyp python make g++
+RUN apt-get update && apt-get install -y \
+        python \
+        make \
+        g++
 
-# tini so node doesn't run as PID 1 
-RUN apk add --no-cache tini python make g++
+# Add Tini
+ENV TINI_VERSION v0.18.0
+ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
+RUN chmod +x /tini
 
 # Copy over and build the server
 WORKDIR /usr/src/server
@@ -21,6 +26,7 @@ COPY packages/gitresources/package*.json packages/gitresources/
 COPY packages/loader/package*.json packages/loader/
 COPY packages/loader-client/package*.json packages/loader-client/
 COPY packages/loader-web/package*.json packages/loader-web/
+COPY packages/local-test-server/package*.json packages/local-test-server/
 COPY packages/map/package*.json packages/map/
 COPY packages/merge-tree/package*.json packages/merge-tree/
 COPY packages/merge-tree-utils/package*.json packages/merge-tree-utils/
@@ -31,12 +37,12 @@ COPY packages/shared-string/package*.json packages/shared-string/
 COPY packages/socket-storage/package*.json packages/socket-storage/
 COPY packages/socket-storage-shared/package*.json packages/socket-storage-shared/
 COPY packages/replay-socket-storage/package*.json packages/replay-socket-storage/
-COPY packages/msgraph-socket-storage/package*.json packages/msgraph-socket-storage/
+COPY packages/standard-socket-storage/package*.json packages/standard-socket-storage/
 COPY packages/store/package*.json packages/store/
 COPY packages/stream/package*.json packages/stream/
 COPY packages/utils/package*.json packages/utils/
 
-# Need to set the --unsafe-perf flag since we are doing the install as root. Consider adding an 'app' accout so we
+# Need to set the --unsafe-perm flag since we are doing the install as root. Consider adding an 'app' accout so we
 # can do the install as node but then switch to 'app' to run. As app we won't be able to write to installed files
 # and be able to change them.
 RUN npm install --unsafe-perm
@@ -48,9 +54,6 @@ EXPOSE 3000
 # as well as the root
 RUN for d in ./packages/*/ ; do (cd "$d" && mkdir nyc && chown node: nyc); done
 RUN mkdir nyc && chown node: nyc
-
-# Remove build tools
-RUN apk del .gyp
 
 # And now copy over our actual code and build
 COPY . .
@@ -64,7 +67,7 @@ WORKDIR /usr/src/server/packages/routerlicious
 
 # Node wasn't designed to be run as PID 1. Tini is a tiny init wrapper. You can also set --init on docker later than
 # 1.13 but Kubernetes is at 1.12 so we prefer tini for now.
-ENTRYPOINT ["/sbin/tini", "--"]
+ENTRYPOINT ["/tini", "--"]
 
 # And set the default command to start the server
 CMD ["npm", "run", "alfred"]

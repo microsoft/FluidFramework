@@ -435,7 +435,7 @@ export class Client {
                     }
                 }
                 if (op.register) {
-                    // cut 
+                    // cut
                     this.copy(op.pos1, op.pos2, op.register, msg.referenceSequenceNumber, clid, msg.clientId);
                 }
                 if (op.checkNest) {
@@ -864,5 +864,9 @@ export class Client {
         this.longClientId = longClientId;
         this.clientNameToIds.put(longClientId, oldData);
         this.shortClientIdMap[oldData.clientId] = longClientId;
+    }
+    findTile(startPos: number, tileLabel: string, preceding = true){
+        const clientId = this.getClientId();
+        return this.mergeTree.findTile(startPos,clientId,tileLabel,preceding);
     }
 }

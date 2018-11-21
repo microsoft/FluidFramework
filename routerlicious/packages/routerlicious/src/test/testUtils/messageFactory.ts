@@ -49,6 +49,10 @@ export class MessageFactory {
         const operation: IDocumentMessage = {
             clientSequenceNumber: this.clientSequenceNumber++,
             contents: null,
+            metadata: {
+                content: null,
+                split: false,
+            },
             referenceSequenceNumber,
             traces: [],
             type: MessageType.NoOp,
@@ -64,7 +68,11 @@ export class MessageFactory {
     public createJoin(timestamp = Date.now()) {
         const operation: IDocumentMessage = {
             clientSequenceNumber: -1,
-            contents: { clientId: this.clientId },
+            contents: null,
+            metadata: {
+                content: { clientId: this.clientId },
+                split: false,
+            },
             referenceSequenceNumber: -1,
             traces: [],
             type: MessageType.ClientJoin,
@@ -77,6 +85,10 @@ export class MessageFactory {
         const operation: IDocumentMessage = {
             clientSequenceNumber: -1,
             contents: this.clientId,
+            metadata: {
+                content: this.clientId,
+                split: false,
+            },
             referenceSequenceNumber: -1,
             traces: [],
             type: MessageType.ClientLeave,
@@ -102,8 +114,10 @@ export class MessageFactory {
     public createSave(): ISequencedOperationMessage {
         const operation: IDocumentMessage = {
             clientSequenceNumber: this.clientSequenceNumber++,
-            contents: {
-                message: "Test Save",
+            contents: "Test Save",
+            metadata: {
+                content: null,
+                split: false,
             },
             referenceSequenceNumber: 0,
             traces: [],
@@ -114,10 +128,12 @@ export class MessageFactory {
             clientId: this.clientId,
             clientSequenceNumber: operation.clientSequenceNumber,
             contents: operation.contents,
+            metadata: operation.metadata,
             minimumSequenceNumber: 0,
             origin: undefined,
             referenceSequenceNumber: operation.referenceSequenceNumber,
             sequenceNumber: this.sequenceNumber++,
+            timestamp: Date.now(),
             traces: [],
             type: operation.type,
             user: null,
@@ -139,10 +155,12 @@ export class MessageFactory {
             clientId: this.clientId,
             clientSequenceNumber: operation.clientSequenceNumber,
             contents: operation.contents,
+            metadata: operation.metadata,
             minimumSequenceNumber: 0,
             origin: undefined,
             referenceSequenceNumber: operation.referenceSequenceNumber,
             sequenceNumber: this.sequenceNumber++,
+            timestamp: Date.now(),
             traces: [],
             type: operation.type,
             user: null,

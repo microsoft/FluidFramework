@@ -111,7 +111,7 @@ export class Serializer extends EventEmitter {
         if (op.type === MessageType.Save) {
             // Forced snapshot.
             return {
-                message: `;${op.clientId}: ${op.contents.message}`,
+                message: `;${op.clientId}: ${op.contents}`,
                 required: true,
                 shouldSnapshot: true,
             };

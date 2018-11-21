@@ -1,16 +1,26 @@
 import * as agent from "@prague/agent";
 import * as api from "@prague/client-api";
-import { IDocumentMessage, ITokenClaims } from "@prague/runtime-definitions";
+import { IContentMessage, IDocumentMessage, ITokenClaims } from "@prague/runtime-definitions";
 import * as socketStorage from "@prague/socket-storage";
 import * as jwt from "jsonwebtoken";
 import * as winston from "winston";
 import * as core from "../core";
+import { getRandomInt } from "../utils";
 
 // A safety mechanism to make sure that all outbound messages from alfred adheres to the permitted schema.
 function sanitizeMessage(message: any): IDocumentMessage {
+    if (getRandomInt(100) === 0 && message.operation && message.operation.traces) {
+        message.operation.traces.push(
+            {
+                action: "start",
+                service: "alfred",
+                timestamp: Date.now(),
+            });
+    }
     return {
         clientSequenceNumber: message.clientSequenceNumber,
         contents: message.contents,
+        metadata: message.metadata,
         referenceSequenceNumber: message.referenceSequenceNumber,
         traces: message.traces,
         type: message.type,
@@ -21,7 +31,8 @@ export function register(
     webSocketServer: core.IWebSocketServer,
     metricClientConfig: any,
     orderManager: core.IOrdererManager,
-    tenantManager: core.ITenantManager) {
+    tenantManager: core.ITenantManager,
+    contentCollection: core.ICollection<any>) {
 
     const metricLogger = agent.createMetricClient(metricClientConfig);
 
@@ -96,13 +107,10 @@ export function register(
             for (const message of messages) {
                 if (message.type === api.RoundTrip) {
                     // End of tracking. Write traces.
-                    const messageWithTraces = message as IDocumentMessage;
-                    if (messageWithTraces.traces !== undefined) {
-                        metricLogger.writeLatencyMetric("latency", messageWithTraces.traces).catch(
-                            (error) => {
-                                winston.error(error.stack);
-                            });
-                    }
+                    metricLogger.writeLatencyMetric("latency", message.traces).catch(
+                        (error) => {
+                            winston.error(error.stack);
+                        });
                 } else {
                     const connection = connectionsMap.get(clientId);
                     connection.order(sanitizeMessage(message));
@@ -110,6 +118,39 @@ export function register(
             }
 
             response(null);
+        });
+
+        // Message sent when a new splitted operation is submitted to the router
+        socket.on("submitContent", (clientId: string, message: IDocumentMessage, response) => {
+            // Verify the user has connected on this object id
+            if (!connectionsMap.has(clientId)) {
+                return response("Invalid client ID", null);
+            }
+
+            const broadCastMessage: IContentMessage = {
+                clientId,
+                clientSequenceNumber: message.clientSequenceNumber,
+                contents: message.contents,
+            };
+
+            const connection = connectionsMap.get(clientId);
+
+            const dbMessage = {
+                clientId,
+                documentId: connection.documentId,
+                op: broadCastMessage,
+                tenantId: connection.tenantId,
+            };
+
+            contentCollection.insertOne(dbMessage).then(() => {
+                socket.broadcast("op-content", broadCastMessage);
+                return response(null);
+            }, (error) => {
+                if (error.name !== "MongoError" || error.code !== 11000) {
+                    // Needs to be a full rejection here
+                    return response("Could not write to DB", null);
+                }
+            });
         });
 
         socket.on("disconnect", () => {

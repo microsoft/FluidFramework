@@ -1,11 +1,11 @@
 
 export interface IMapWrapper {
-    set(key: string, value: string | number): void;
+    set(key: string, value: string | number | boolean): void;
     setMap(key: string, value: IMapWrapper): void;
 }
 
 export interface IMapViewWrapper {
-    set(key: string, value: string | number): void;
+    set(key: string, value: string | number | boolean): void;
     setMap(key: string, value: IMapWrapper): void;
     setMapView(key: string, value: IMapViewWrapper): void;
     setIfChanged(key: string, value: string): void;
@@ -16,7 +16,8 @@ export interface IMapViewWrapper {
 }
 
 export interface IMapWrapperFactory {
-    getRootMapView(): Promise<IMapViewWrapper>;
+    getFrameContainerDataMapView(): Promise<IMapViewWrapper>;
+    getDefaultDataMapView(): Promise<IMapViewWrapper>;
     createMap(): IMapWrapper;
     createMapView(): Promise<IMapViewWrapper>;
 }

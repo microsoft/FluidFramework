@@ -6,6 +6,7 @@ import {
     IDocumentService,
     IDocumentStorageService,
     ISnapshotTree,
+    ITokenProvider,
     ITree,
 } from "@prague/runtime-definitions";
 import * as socketStorage from "@prague/socket-storage";
@@ -63,26 +64,29 @@ export class TestDocumentService implements IDocumentService {
     constructor(private deltaStorage: IDeltaStorageService) {
     }
 
-    public async connectToStorage(tenantId: string, id: string, token: string): Promise<IDocumentStorageService> {
+    public async connectToStorage(
+        tenantId: string,
+        id: string,
+        tokenProvider: ITokenProvider): Promise<IDocumentStorageService> {
         return new TestDocumentStorageService();
     }
 
     public async connectToDeltaStorage(
         tenantId: string,
         id: string,
-        token: string): Promise<IDocumentDeltaStorageService> {
-        return new socketStorage.DocumentDeltaStorageService(tenantId, id, token, this.deltaStorage);
+        tokenProvider: ITokenProvider): Promise<IDocumentDeltaStorageService> {
+        return new socketStorage.DocumentDeltaStorageService(tenantId, id, tokenProvider, this.deltaStorage);
     }
 
     public async connectToDeltaStream(
         tenantId: string,
         id: string,
-        token: string): Promise<IDocumentDeltaConnection> {
+        tokenProvider: ITokenProvider): Promise<IDocumentDeltaConnection> {
 
-        return new TestDocumentDeltaConnection(id, "test-client", false, "", null, undefined);
+        return new TestDocumentDeltaConnection(id, "test-client", false, "", null, undefined, undefined);
     }
 
-    public branch(tenantId: string, id: string, token: string): Promise<string> {
+    public branch(tenantId: string, id: string, tokenProvider: ITokenProvider): Promise<string> {
         return Promise.reject("Not implemented");
     }
 

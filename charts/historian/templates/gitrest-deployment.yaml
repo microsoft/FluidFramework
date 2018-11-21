@@ -45,6 +45,9 @@ spec:
         - name: config
           mountPath: /home/node/server/config.json
           subPath: config.json
+      dnsConfig:
+        options:
+        - name: single-request-reopen
       imagePullSecrets:
       - name: regsecret
       volumes:

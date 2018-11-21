@@ -1,8 +1,6 @@
 import { IConsumer, IProducer } from "./definitions";
 import { KafkaNodeConsumer } from "./kafkaNodeConsumer";
 import { KafkaNodeProducer } from "./kafkaNodeProducer";
-import { KafkaRestConsumer } from "./kafkaRestConsumer";
-import { KafkaRestProducer } from "./kafkaRestProducer";
 
 export function createConsumer(
     type: string,
@@ -11,9 +9,7 @@ export function createConsumer(
     groupId: string,
     topic: string,
     autoCommit: boolean): IConsumer {
-    return type === "kafka-rest"
-        ? new KafkaRestConsumer(endPoint, groupId, topic, autoCommit)
-        : new KafkaNodeConsumer(endPoint, clientId, groupId, topic, autoCommit);
+    return new KafkaNodeConsumer(endPoint, clientId, groupId, topic, autoCommit);
 }
 
 export function createProducer(
@@ -22,7 +18,5 @@ export function createProducer(
     clientId: string,
     topic: string,
     maxKafkaMessageSize: number): IProducer {
-    return type === "kafka-rest"
-        ? new KafkaRestProducer(endPoint, topic, maxKafkaMessageSize)
-        : new KafkaNodeProducer(endPoint, clientId, topic, maxKafkaMessageSize);
+    return new KafkaNodeProducer(endPoint, clientId, topic, maxKafkaMessageSize);
 }
