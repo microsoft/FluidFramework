@@ -5,7 +5,7 @@ import * as winston from "winston";
 import * as utils from "../utils";
 import { CheckpointManager } from "./checkpointManager";
 import { Context } from "./context";
-import { IContext, IPartitionLambda, IPartitionLambdaFactory } from "./lambdas";
+import { IPartitionLambda, IPartitionLambdaFactory } from "./lambdas";
 
 /**
  * Partition of a message stream. Manages routing messages to individual handlers. And then maintaining the
@@ -34,8 +34,14 @@ export class Partition extends EventEmitter {
         // Create the incoming message queue
         this.q = queue(
             (message: utils.IMessage, callback) => {
-                this.processCore(message, this.context);
-                callback();
+                // winston.verbose(`${message.topic}:${message.partition}@${message.offset}`);
+
+                try {
+                    this.lambda.handler(message);
+                    callback();
+                } catch (error) {
+                    callback(error);
+                }
             },
             1);
         this.q.pause();
@@ -48,6 +54,7 @@ export class Partition extends EventEmitter {
             },
             (error) => {
                 this.emit("error", error, true);
+                this.q.kill();
             });
 
         this.q.error = (error) => {
@@ -102,10 +109,5 @@ export class Partition extends EventEmitter {
 
         // checkpoint at the latest offset
         await this.checkpointManager.flush();
-    }
-
-    private processCore(message: utils.IMessage, context: IContext): void {
-        winston.verbose(`${message.topic}:${message.partition}@${message.offset}`);
-        this.lambda.handler(message);
     }
 }
