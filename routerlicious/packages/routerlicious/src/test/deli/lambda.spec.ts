@@ -68,6 +68,7 @@ describe("Routerlicious", () => {
             });
 
             afterEach(async () => {
+                lambda.close();
                 await factory.dispose();
             });
 

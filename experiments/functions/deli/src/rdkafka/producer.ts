@@ -1,26 +1,17 @@
 import { IProducer } from "@prague/routerlicious/dist/utils";
-import { Deferred } from "@prague/utils";
-import * as Measured from "measured-core";
+// import { Deferred } from "@prague/utils";
+// import * as Measured from "measured-core";
 import * as Kafka from "node-rdkafka";
-import * as winston from "winston";
-
-interface IBoxcar {
-    deferred: Deferred<void>;
-    messages: string[];
-    size: number;
-}
-
-// 1MB max message size with a little bit of hacked scaling to account for UTF8 -> binary
-const MaxMessageSize = 1024 * 1024 * 0.75;
+// import * as winston from "winston";
 
 export class RdkafkaProducer implements IProducer {
     private producer: Kafka.Producer;
     private connected = false;
-    private meter = new Measured.Meter();
-    private boxcars = new Map<string, IBoxcar[]>();
+    // private meter = new Measured.Meter();
+    private pending = new Array<{ message: string, key: string }>();
+    private resolved = Promise.resolve();
 
     constructor(endpoint: string, private topic: string) {
-
         this.producer = new Kafka.Producer(
             {
                 "dr_cb": true,    // delivery report callback
@@ -59,47 +50,33 @@ export class RdkafkaProducer implements IProducer {
                 this.sendPending();
             });
 
-        this.producer.on("delivery-report", (err, report) => {
-            this.meter.mark();
+        // this.producer.on("delivery-report", (err, report) => {
+        //     this.meter.mark();
 
-            if (err) {
-                console.error(err);
-                report.opaque.reject(err);
-            } else {
-                report.opaque.resolve();
-            }
-        });
+        //     if (err) {
+        //         console.error(err);
+        //         report.opaque.reject(err);
+        //     } else {
+        //         report.opaque.resolve();
+        //     }
+        // });
 
-        setInterval(
-            () => {
-                winston.verbose(`Producer ${this.topic} stats`, this.meter.toJSON());
-            },
-            15000);
+        // setInterval(
+        //     () => {
+        //         winston.verbose(`Producer ${this.topic} stats`, this.meter.toJSON());
+        //     },
+        //     15000);
     }
 
     public async send(message: string, key: string): Promise<any> {
-        const empty = this.boxcars.size === 0;
-
-        // TODO Depending on boxcar'ing key needs to also include tenant ID
-        if (!this.boxcars.has(key)) {
-            this.boxcars.set(key, []);
+        if (!this.connected) {
+            this.pending.push({ message, key });
+            return this.resolved;
         }
 
-        const boxcars = this.boxcars.get(key);
-        if (boxcars.length === 0 || boxcars[boxcars.length - 1].size + message.length > MaxMessageSize) {
-            boxcars.push({ deferred: new Deferred<void>(), messages: [], size: 0 });
-        }
+        this.sendCore(message, key);
 
-        const last = boxcars[boxcars.length - 1];
-        last.size += message.length;
-        last.messages.push(message);
-
-        // schedule the send if not yet scheduled
-        if (empty && this.connected) {
-            setImmediate(() => this.sendPending());
-        }
-
-        return last.deferred.promise;
+        return this.resolved;
     }
 
     public close(): Promise<void> {
@@ -109,30 +86,18 @@ export class RdkafkaProducer implements IProducer {
     }
 
     private sendPending() {
-        for (const [key, value] of this.boxcars) {
-            for (const boxcar of value) {
-                winston.info(`Boxcar send to ${key} of ${boxcar.messages.length} messages`);
-                this.sendCore(JSON.stringify(boxcar.messages), key, boxcar.deferred);
-            }
+        for (const pending of this.pending) {
+            this.sendCore(pending.message, pending.key);
         }
-
-        this.boxcars.clear();
+        this.pending = null;
     }
 
-    private sendCore(message: string, key: string, deferred: Deferred<void>) {
-        try {
-            this.producer.produce(
-                this.topic,
-                null,
-                Buffer.from(message),
-                key,
-                Date.now(),
-                deferred);
-        } catch (error) {
-            winston.error(error);
-            if (Kafka.CODES.ERRORS.ERR__QUEUE_FULL === error.code) {
-                console.log("BUFFER FULL!!! -- need to store or provide back pressure");
-            }
-        }
+    private sendCore(message: string, key: string) {
+        this.producer.produce(
+            this.topic,
+            null,
+            Buffer.from(message),
+            key,
+            Date.now());
     }
 }

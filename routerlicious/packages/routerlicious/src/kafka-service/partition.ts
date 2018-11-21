@@ -5,7 +5,7 @@ import * as winston from "winston";
 import * as utils from "../utils";
 import { CheckpointManager } from "./checkpointManager";
 import { Context } from "./context";
-import { IContext, IPartitionLambda, IPartitionLambdaFactory } from "./lambdas";
+import { IPartitionLambda, IPartitionLambdaFactory } from "./lambdas";
 
 /**
  * Partition of a message stream. Manages routing messages to individual handlers. And then maintaining the
@@ -14,6 +14,7 @@ import { IContext, IPartitionLambda, IPartitionLambdaFactory } from "./lambdas";
 export class Partition extends EventEmitter {
     private q: AsyncQueue<utils.IMessage>;
     private lambdaP: Promise<IPartitionLambda>;
+    private lambda: IPartitionLambda;
     private checkpointManager: CheckpointManager;
     private context: Context;
 
@@ -30,21 +31,31 @@ export class Partition extends EventEmitter {
             this.emit("error", error, restart);
         });
 
-        this.lambdaP = factory.create(config, this.context);
-        this.lambdaP.catch((error) => {
-            this.emit("error", error, true);
-        });
-
         // Create the incoming message queue
-        this.q = queue((message: utils.IMessage, callback) => {
-            this.processCore(message, this.context).then(
-                () => {
+        this.q = queue(
+            (message: utils.IMessage, callback) => {
+                // winston.verbose(`${message.topic}:${message.partition}@${message.offset}`);
+
+                try {
+                    this.lambda.handler(message);
                     callback();
-                },
-                (error) => {
+                } catch (error) {
                     callback(error);
-                });
-        }, 1);
+                }
+            },
+            1);
+        this.q.pause();
+
+        this.lambdaP = factory.create(config, this.context);
+        this.lambdaP.then(
+            (lambda) => {
+                this.lambda = lambda;
+                this.q.resume();
+            },
+            (error) => {
+                this.emit("error", error, true);
+                this.q.kill();
+            });
 
         this.q.error = (error) => {
             this.emit("error", error, true);
@@ -98,11 +109,5 @@ export class Partition extends EventEmitter {
 
         // checkpoint at the latest offset
         await this.checkpointManager.flush();
-    }
-
-    private async processCore(message: utils.IMessage, context: IContext): Promise<void> {
-        winston.verbose(`${message.topic}:${message.partition}@${message.offset}`);
-        const lambda = await this.lambdaP;
-        lambda.handler(message);
     }
 }

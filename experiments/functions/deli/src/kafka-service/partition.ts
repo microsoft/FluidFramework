@@ -5,7 +5,7 @@ import { Provider } from "nconf";
 import * as winston from "winston";
 import { CheckpointManager } from "./checkpointManager";
 import { Context } from "./context";
-import { IContext, IPartitionLambda, IPartitionLambdaFactory } from "./lambdas";
+import { IPartitionLambda, IPartitionLambdaFactory } from "./lambdas";
 
 /**
  * Partition of a message stream. Manages routing messages to individual handlers. And then maintaining the
@@ -14,6 +14,7 @@ import { IContext, IPartitionLambda, IPartitionLambdaFactory } from "./lambdas";
 export class Partition extends EventEmitter {
     private q: AsyncQueue<utils.IMessage>;
     private lambdaP: Promise<IPartitionLambda>;
+    private lambda: IPartitionLambda;
     private checkpointManager: CheckpointManager;
     private context: Context;
 
@@ -31,20 +32,21 @@ export class Partition extends EventEmitter {
         });
 
         this.lambdaP = factory.create(config, this.context);
-        this.lambdaP.catch((error) => {
-            this.emit("error", error, true);
-        });
+        this.lambdaP.then(
+            (lambda) => {
+                this.lambda = lambda;
+                this.q.resume();
+            },
+            (error) => {
+                this.emit("error", error, true);
+            });
 
         // Create the incoming message queue
         this.q = queue((message: utils.IMessage, callback) => {
-            this.processCore(message, this.context).then(
-                () => {
-                    callback();
-                },
-                (error) => {
-                    callback(error);
-                });
+            this.lambda.handler(message);
+            callback();
         }, 1);
+        this.q.pause();
 
         this.q.error = (error) => {
             this.emit("error", error, true);
@@ -98,29 +100,5 @@ export class Partition extends EventEmitter {
 
         // checkpoint at the latest offset
         await this.checkpointManager.flush();
-    }
-
-    private async processCore(message: utils.IMessage, context: IContext): Promise<void> {
-        winston.verbose(`${message.topic}:${message.partition}@${message.offset}`);
-        const lambda = await this.lambdaP;
-
-        const packagedMessages = JSON.parse(message.value) as string[];
-        if (Array.isArray(packagedMessages)) {
-            const start = process.hrtime();
-            for (const packagedMessage of packagedMessages) {
-                lambda.handler({
-                    highWaterOffset: message.highWaterOffset,
-                    key: message.key,
-                    offset: message.offset,
-                    partition: message.partition,
-                    topic: message.topic,
-                    value: packagedMessage,
-                });
-            }
-            const diff = process.hrtime(start);
-            winston.info(`Process time of [${diff[0]},${diff[1] * 1e-6}]`);
-        } else {
-            lambda.handler(message);
-        }
     }
 }

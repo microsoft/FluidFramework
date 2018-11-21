@@ -1,110 +1,5 @@
-import * as api from "@prague/client-api";
-import * as Map from "@prague/map";
-import * as socketStorage from "@prague/socket-storage";
-import { Deferred } from "@prague/utils";
-import * as jwt from "jsonwebtoken";
-import * as randomstring from "randomstring";
+import { run } from "../../utils/mercator";
 import { getRandomName } from "./../../utils/dockerNames";
-
-function generateRandomBatchMessages(length: number, payloadSize: number): string[] {
-    const messages = new Array<string>();
-
-    for (let i = 0; i < length; i++) {
-        const str = randomstring.generate(payloadSize);
-        messages.push(str);
-    }
-
-    return messages;
-}
-
-function send(map: Map.IMap, index: number, total: number, messages: string[]) {
-    for (let i = 0; i < messages.length; i++) {
-        map.set("" + (index * messages.length + i), { time: Date.now(), str: messages[i] });
-    }
-
-    if (index <= total) {
-        // Starting with setTimeout - will upgrade to immediate
-        setTimeout(
-            () => {
-                send(map, index + 1, total, messages);
-            },
-            0);
-    }
-}
-
-async function run(
-    id: string,
-    tenantId: string,
-    secret: string,
-    routerlicious: string,
-    historian: string,
-    batches: number,
-    batchSize: number,
-    payloadSize: number): Promise<any> {
-
-    const randomMessages = generateRandomBatchMessages(batchSize, payloadSize);
-
-    // Register endpoint connection
-    const documentServices = routerlicious === "http://localhost:3030"
-        ? socketStorage.createDocumentService2(routerlicious, historian)
-        : socketStorage.createDocumentService(routerlicious, historian);
-    api.registerDocumentService(documentServices);
-
-    console.log("Doc id is", id);
-    const token = jwt.sign(
-        {
-            documentId: id,
-            permission: "read:write", // use "read:write" for now
-            tenantId,
-            user: {
-                id: "test",
-            },
-        },
-        secret);
-
-    // Load in the latest and connect to the document
-    const tokenThing = new socketStorage.TokenProvider(token);
-    const collabDoc = await api.load(id, tenantId, { id: "test" }, tokenThing, { blockUpdateMarkers: true, token });
-    const rootView = await collabDoc.getRoot().getView();
-    if (!collabDoc.isConnected) {
-        await new Promise<void>((resolve) => collabDoc.once("connected", () => resolve()));
-    }
-    console.log("Connected!");
-
-    const start = Date.now();
-    const newMap = collabDoc.createMap();
-    rootView.set("newMap", newMap);
-
-    const totalMessages = batches * batchSize;
-    send(newMap, 0, batches, randomMessages);
-
-    const resultsDeferred = new Deferred<any>();
-
-    let sum = 0;
-    newMap.on("op", (op, local) => {
-        if (!local) {
-            return;
-        }
-
-        if (op.contents.type === "set") {
-            // console.log(Date.now() - op.contents.value.value);
-            sum += Date.now() - op.contents.value.value.time;
-        }
-
-        // tslint:disable-next-line
-        if (op.contents.key == totalMessages) {
-            const totalTime = Date.now() - start;
-            resultsDeferred.resolve({
-                latency: sum / totalMessages,
-                mbPerSecond: 1000 * totalMessages * payloadSize / (1024 * 1024) / totalTime,
-                messagesPerSecond: 1000 * totalMessages / totalTime,
-                totalTime,
-            });
-        }
-    });
-
-    return resultsDeferred.promise;
-}
 
 export function initialize() {
     document.getElementById("run").onclick = async (ev) => {
@@ -115,7 +10,7 @@ export function initialize() {
 
         const newElement = document.createElement("tr");
         const th = document.createElement("th");
-        th.innerText = `${batches} batches @ ${messagesPerBatch} messages per batch`;
+        th.innerText = `${batches} batches @ ${messagesPerBatch} ${payloadSize} byte messages per batch`;
         th.scope = "row";
         const sioTd = document.createElement("td");
         const sioLocalTd = document.createElement("td");
