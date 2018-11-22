@@ -191,9 +191,8 @@ export class MapView implements IMapView {
         this.map.emit("valueChanged", { key }, local, op);
     }
 
-    public async prepareSetCore(key: string, value: IMapValue): Promise<ILocalViewElement> {
-        const translation = await this.fill(key, value);
-        return translation;
+    public prepareSetCore(key: string, value: IMapValue): Promise<ILocalViewElement> {
+        return this.fill(key, value);
     }
 
     public clearCore(local: boolean, op: ISequencedObjectMessage) {

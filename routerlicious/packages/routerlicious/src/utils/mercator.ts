@@ -22,12 +22,10 @@ export function send(map: Map.IMap, index: number, total: number, messages: stri
     }
 
     if (index <= total) {
-        // Starting with setTimeout - will upgrade to immediate
-        setTimeout(
+        setImmediate(
             () => {
                 send(map, index + 1, total, messages);
-            },
-            0);
+            });
     }
 }
 

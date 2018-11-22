@@ -735,7 +735,7 @@ export class Document extends EventEmitter {
             this._deltaManager.attachOpHandler(
                 attributes.sequenceNumber,
                 {
-                    prepare: async (message) => {
+                    prepare: (message) => {
                         return this.prepareRemoteMessage(message);
                     },
                     process: (message, context) => {
@@ -839,23 +839,26 @@ export class Document extends EventEmitter {
         return clientSequenceNumber;
     }
 
-    private async prepareRemoteMessage(message: ISequencedDocumentMessage): Promise<any> {
-        const local = this._clientId === message.clientId;
-
+    private prepareRemoteMessage(message: ISequencedDocumentMessage): Promise<any> {
         // If on the null chaincode - and we just got a channel op - transition to the legacy API
         // This exists for backwards compatibility and will be removed going forward. We will require code to be
         // instantiated on the document in order to process channel ops.
         if ((message.type === MessageType.Operation || message.type === MessageType.Attach) &&
             this._runtime.chaincode instanceof NullChaincode) {
-            await this.transitionRuntime("@prague/client-api");
+            return this.transitionRuntime("@prague/client-api").then(() => this.prepareRemoteMessageCore(message));
+        } else {
+            return this.prepareRemoteMessageCore(message);
         }
+    }
 
-        // tslint:disable:switch-default
+    private prepareRemoteMessageCore(message: ISequencedDocumentMessage): Promise<any> {
+        const local = this._clientId === message.clientId;
+
         switch (message.type) {
             case MessageType.ChunkedOp:
                 const chunkComplete = this.prepareRemoteChunkedMessage(message);
                 if (!chunkComplete) {
-                    return;
+                    return Promise.resolve();
                 } else  {
                     if (local) {
                         const clientSeqNumber = message.clientSequenceNumber;
@@ -871,6 +874,9 @@ export class Document extends EventEmitter {
 
             case MessageType.Attach:
                 return this._runtime.prepareAttach(message, local);
+
+            default:
+                return Promise.resolve();
         }
     }
 

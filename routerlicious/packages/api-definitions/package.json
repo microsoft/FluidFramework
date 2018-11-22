@@ -23,7 +23,9 @@
   "dependencies": {
     "@prague/runtime-definitions": "^0.1.0",
     "@types/debug": "^0.0.30",
+    "@types/double-ended-queue": "^2.1.0",
     "@types/node": "^10.9.4",
-    "debug": "^3.1.0"
+    "debug": "^3.1.0",
+    "double-ended-queue": "^2.1.0-0"
   }
 }

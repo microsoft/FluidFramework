@@ -64,8 +64,8 @@ export class CounterValueType implements IValueType<Counter> {
             [[
                 "increment",
                 {
-                    prepare: async (value, params: number, local, op) => {
-                        return;
+                    prepare: (value, params: number, local, op) => {
+                        return Promise.resolve();
                     },
                     process: (value, params: number, context, local, op) => {
                         // Local ops were applied when the message was created
