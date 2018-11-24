@@ -1,0 +1,47 @@
+const path = require('path');
+// var Visualizer = require('webpack-visualizer-plugin');
+// const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
+
+module.exports = {
+    entry: {
+        main: './src/index.ts'
+    },
+    mode: "development",
+    devtool: 'source-map',
+    module: {
+        rules: [
+            {
+                test: /\.tsx?$/,
+                use: 'ts-loader',
+                exclude: /node_modules/
+            },
+            {
+                test: /\.js$/,
+                use: ["source-map-loader"],
+                enforce: "pre"
+            },
+            {
+                test: /\.css$/,
+                use: [
+                    "style-loader", // creates style nodes from JS strings
+                    "css-loader", // translates CSS into CommonJS
+                ]
+            },
+        ]
+    },
+    resolve: {
+        extensions: [ '.tsx', '.ts', '.js' ]
+    },
+    output: {
+        filename: '[name].bundle.js',
+        path: path.resolve(__dirname, 'dist'),
+        library: "[name]",
+        libraryTarget: "umd"
+    },
+    plugins: [
+        // new BundleAnalyzerPlugin(),
+        // new Visualizer({
+        //     filename: './statistics.html'
+        // })
+    ],
+};
