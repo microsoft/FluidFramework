@@ -17,6 +17,8 @@ export class Document extends EventEmitter implements IDocument {
             root = runtime.createChannel(rootMapId, MapExtension.Type) as IMap;
             root.attach();
             root.set("clicks", 0);
+        } else {
+            root = await runtime.getChannel(rootMapId) as IMap;
         }
 
         const document = new Document(runtime, root);
