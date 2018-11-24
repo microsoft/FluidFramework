@@ -3,7 +3,7 @@ import { EventEmitter } from "events";
 import { Chaincode } from "./chaincode";
 import { Document } from "./document";
 
-class QuizPlatform extends EventEmitter implements IPlatform {
+class SimplePlatform extends EventEmitter implements IPlatform {
     public async queryInterface<T>(id: string): Promise<T> {
         return null;
     }
@@ -12,7 +12,7 @@ class QuizPlatform extends EventEmitter implements IPlatform {
 class Runner {
     public async run(runtime: IRuntime, platform: IPlatform): Promise<IPlatform> {
         this.start(runtime, platform).catch((error) => console.error(error));
-        return new QuizPlatform();
+        return new SimplePlatform();
     }
 
     private async start(runtime: IRuntime, platform: IPlatform): Promise<void> {
