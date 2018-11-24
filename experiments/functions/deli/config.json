@@ -109,7 +109,7 @@
         },
         "bbc": {
             "group": "bbc",
-            "topic": "deltas"
+            "topic": "deltas2"
         },
         "serviceGraph": {
             "group": "serviceGraph",

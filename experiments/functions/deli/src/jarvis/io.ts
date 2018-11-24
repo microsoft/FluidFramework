@@ -7,7 +7,6 @@ import * as moniker from "moniker";
 import * as winston from "winston";
 import * as ws from "ws";
 import { KafkaOrdererConnection } from "./kafkaOrderer";
-import { LocalOrdererConnection } from "./localOrderer";
 import { OrdererManager } from "./orderFactory";
 import { RedisSubscriptionManager } from "./subscriptions";
 
@@ -46,6 +45,10 @@ class WebSocket implements core.IWebSocket {
     public emit(event: string, ...args: any[]) {
         this.socket.send(JSON.stringify([event].concat(...args)));
     }
+
+    public broadcast(event: string, ...args: any[]) {
+        throw new Error("Method not implemented.");
+    }
 }
 
 class SocketConnection {
@@ -59,7 +62,7 @@ class SocketConnection {
         return connection;
     }
     // Map from client IDs on this connection to the object ID and user info.
-    private connectionsMap = new Map<string, KafkaOrdererConnection | LocalOrdererConnection>();
+    private connectionsMap = new Map<string, KafkaOrdererConnection>();
     private closed = false;
     private webSocket: WebSocket;
 

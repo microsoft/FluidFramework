@@ -3,7 +3,7 @@ import { IProducer } from "@prague/routerlicious/dist/utils";
 import { IClient, IClientJoin, IDocumentMessage, IUser, MessageType } from "@prague/runtime-definitions";
 import * as moniker from "moniker";
 
-export class KafkaOrdererConnection {
+export class KafkaOrdererConnection implements core.IOrdererConnection {
     public static async Create(
         existing: boolean,
         document: core.IDocument,
@@ -43,8 +43,8 @@ export class KafkaOrdererConnection {
         public readonly existing: boolean,
         document: core.IDocument,
         private producer: IProducer,
-        private tenantId: string,
-        private documentId: string,
+        public readonly tenantId: string,
+        public readonly documentId: string,
         public readonly clientId: string,
         private user: IUser,
         private client: IClient,
@@ -57,12 +57,17 @@ export class KafkaOrdererConnection {
             detail: this.client,
         };
 
+        // Back-compat: Replicate the same info in content and metadata.
         const message: core.IRawOperationMessage = {
             clientId: null,
             documentId: this.documentId,
             operation: {
                 clientSequenceNumber: -1,
                 contents: clientDetail,
+                metadata: {
+                    content: clientDetail,
+                    split: false,
+                },
                 referenceSequenceNumber: -1,
                 traces: [],
                 type: MessageType.ClientJoin,
@@ -97,6 +102,7 @@ export class KafkaOrdererConnection {
         this.submitRawOperation(rawMessage);
     }
 
+    // Back-compat: Replicate the same info in content and metadata.
     public disconnect() {
         const message: core.IRawOperationMessage = {
             clientId: null,
@@ -104,6 +110,10 @@ export class KafkaOrdererConnection {
             operation: {
                 clientSequenceNumber: -1,
                 contents: this.clientId,
+                metadata: {
+                    content: this.clientId,
+                    split: false,
+                },
                 referenceSequenceNumber: -1,
                 traces: [],
                 type: MessageType.ClientLeave,
@@ -117,7 +127,19 @@ export class KafkaOrdererConnection {
         this.submitRawOperation(message);
     }
 
-    private submitRawOperation(message) {
+    private submitRawOperation(message: core.IRawOperationMessage) {
+        // Add trace
+        const operation = message.operation as IDocumentMessage;
+        if (operation && operation.traces === undefined) {
+            operation.traces = [];
+        } else if (operation && operation.traces && operation.traces.length > 1) {
+            operation.traces.push(
+                {
+                    action: "end",
+                    service: "alfred",
+                    timestamp: Date.now(),
+                });
+        }
         const stringMessage = JSON.stringify(message);
         this.producer.send(stringMessage, this.documentId);
     }
@@ -171,13 +193,21 @@ export class KafkaOrderer {
 export class KafkaOrdererFactory {
     private ordererMap = new Map<string, Promise<KafkaOrderer>>();
 
-    constructor(private producer: IProducer, private storage: core.IDocumentStorage, private maxMessageSize: number) {
+    constructor(
+        private producer: IProducer,
+        private storage: core.IDocumentStorage,
+        private maxMessageSize: number) {
     }
 
     public async create(tenantId: string, documentId: string): Promise<KafkaOrderer> {
         const fullId = `${tenantId}/${documentId}`;
         if (!this.ordererMap.has(fullId)) {
-            const orderer = KafkaOrderer.Create(this.storage, this.producer, tenantId, documentId, this.maxMessageSize);
+            const orderer = KafkaOrderer.Create(
+                this.storage,
+                this.producer,
+                tenantId,
+                documentId,
+                this.maxMessageSize);
             this.ordererMap.set(fullId, orderer);
         }
 

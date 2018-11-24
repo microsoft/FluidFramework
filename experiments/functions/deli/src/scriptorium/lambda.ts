@@ -1,13 +1,8 @@
 import * as coreUtils from "@prague/client-api";
 import * as core from "@prague/routerlicious/dist/core";
 import * as utils from "@prague/routerlicious/dist/utils";
-import { INack, ISequencedDocumentMessage } from "@prague/runtime-definitions";
 import * as assert from "assert";
 import { EventEmitter } from "events";
-import * as _ from "lodash";
-// tslint:disable-next-line:no-var-requires
-// const now = require("performance-now");
-import * as redis from "redis";
 import * as winston from "winston";
 import { IContext, IPartitionLambda } from "../kafka-service/lambdas";
 
@@ -213,32 +208,25 @@ export class WorkManager extends EventEmitter {
     }
 }
 
-/**
- * Wrapper interface to define a topic, event, and documentId to send to
- */
-interface IoTarget {
+interface IMongoTarget {
     documentId: string;
     tenantId: string;
-    event: string;
-    topic: string;
 }
-
-// interface IMongoTarget {
-//     documentId: string;
-//     tenantId: string;
-// }
 
 export class ScriptoriumLambda implements IPartitionLambda {
     // We maintain three batches of work - one for MongoDB and the other two for Socket.IO.
     // One socket.IO group is for sequenced ops and the other for nack'ed messages.
     // By splitting the two we can update each independently and on their own cadence
-    // private mongoManager: BatchManager<IMongoTarget, core.ISequencedOperationMessage>;
-    private ioManager: BatchManager<IoTarget, ISequencedDocumentMessage | INack>;
+    private mongoManager: BatchManager<IMongoTarget, core.ISequencedOperationMessage>;
     private idleManager: BatchManager<string, void>;
 
     private workManager = new WorkManager();
 
-    constructor(private io: redis.RedisClient, collection: core.ICollection<any>, protected context: IContext) {
+    constructor(
+        private opCollection: core.ICollection<any>,
+        private contentCollection: core.ICollection<any>,
+        protected context: IContext) {
+
         // Listen for work errors
         this.workManager.on("error", (error) => {
             this.batchError(error);
@@ -251,8 +239,7 @@ export class ScriptoriumLambda implements IPartitionLambda {
         });
 
         // Create all the batched workers
-        // this.mongoManager = this.workManager.createBatchedWork((batch) => this.processMongoBatch(batch));
-        this.ioManager = this.workManager.createBatchedWork((batch) => this.processIoBatch(batch));
+        this.mongoManager = this.workManager.createBatchedWork((batch) => this.processMongoBatch(batch));
         this.idleManager = this.workManager.createBatchedWork(async (batch) => { return; });
     }
 
@@ -269,50 +256,22 @@ export class ScriptoriumLambda implements IPartitionLambda {
         if (baseMessage.type === core.SequencedOperationType) {
             const value = baseMessage as core.ISequencedOperationMessage;
 
-            // Add trace.
-            const operationWithTraces = value.operation as ISequencedDocumentMessage;
-            if (operationWithTraces.traces !== undefined) {
-                operationWithTraces.traces.push({
-                    action: "start",
-                    service: "scriptorium",
-                    timestamp: 0,
-                });
+            // Remove traces and serialize content before writing to mongo.
+            value.operation.traces = [];
+
+            // Back-Compat: Older message does not have metadata field and not serialized.
+            if (!value.operation.metadata) {
+                value.operation.contents = JSON.stringify(value.operation.contents);
             }
 
-            // Send to Socket.IO
-            const target: IoTarget = {
-                documentId: value.documentId,
-                event: "op",
-                tenantId: value.tenantId,
-                topic: `${value.tenantId}/${value.documentId}`,
-            };
-            this.ioManager.add(target, value.operation, message.offset);
-
-            // const clonedValue = _.cloneDeep(value);
-            // const clonedOperation = clonedValue.operation as ISequencedDocumentMessage;
-
-            // Remove traces and serialize content before writing to mongo.
-            // clonedOperation.traces = [];
-            // clonedOperation.contents = JSON.stringify(clonedOperation.contents);
-
             // Batch send to MongoDB
-            // this.mongoManager.add(
-            //     {
-            //         documentId: clonedValue.documentId,
-            //         tenantId: clonedValue.tenantId,
-            //     },
-            //     clonedValue,
-            //     message.offset);
-        } else if (baseMessage.type === core.NackOperationType) {
-            const value = baseMessage as core.INackMessage;
-
-            const target: IoTarget = {
-                documentId: value.documentId,
-                event: "nack",
-                tenantId: value.tenantId,
-                topic: `client#${value.clientId}`,
-            };
-            this.ioManager.add(target, value.operation, message.offset);
+            this.mongoManager.add(
+                {
+                    documentId: value.documentId,
+                    tenantId: value.tenantId,
+                },
+                value,
+                message.offset);
         } else {
             // Treat all other messages as an idle batch of work for simplicity
             this.idleManager.add(null, null, message.offset);
@@ -326,46 +285,62 @@ export class ScriptoriumLambda implements IPartitionLambda {
     /**
      * BatchManager callback invoked once a new batch is ready to be processed
      */
-    // private async processMongoBatch(batch: Batch<IMongoTarget, core.ISequencedOperationMessage>): Promise<void> {
-    //     // Serialize the current batch to Mongo
-    //     await batch.map(async (id, work) => {
-    // tslint:disable-next-line:max-line-length
-    //         winston.verbose(`Inserting to mongodb ${id.documentId}/${id.tenantId}@${work[0].operation.sequenceNumber}:${work.length}`);
-    //         return this.collection.insertMany(work, false)
-    //             .catch((error) => {
-    //                 // Duplicate key errors are ignored since a replay may cause us to insert twice into Mongo.
-    //                 // All other errors result in a rejected promise.
-    //                 if (error.name !== "MongoError" || error.code !== 11000) {
-    //                     // Needs to be a full rejection here
-    //                     return Promise.reject(error);
-    //                 }
-    //             });
-    //     });
-    // }
-
-    /**
-     * BatchManager callback invoked once a new batch is ready to be processed
-     */
-    private async processIoBatch(batch: Batch<IoTarget, INack | ISequencedDocumentMessage>): Promise<void> {
+    private async processMongoBatch(batch: Batch<IMongoTarget, core.ISequencedOperationMessage>): Promise<void> {
         // Serialize the current batch to Mongo
         await batch.map(async (id, work) => {
-            winston.info(`Broadcasting to socket.io ${id.documentId}@${id.topic}@${id.event}:${work.length}`);
-            // Add trace to each message before routing.
-            work.map((value) => {
-                const valueAsSequenced = value as ISequencedDocumentMessage;
-                if (valueAsSequenced && valueAsSequenced.traces !== undefined) {
-                    valueAsSequenced.traces.push({
-                        action: "end",
-                        service: "scriptorium",
-                        timestamp: 0,
-                    });
+            // tslint:disable-next-line:max-line-length
+            winston.verbose(`Inserting to mongodb ${id.documentId}/${id.tenantId}@${work[0].operation.sequenceNumber}:${work.length}`);
+            return this.processMongoCore(work);
+        });
+    }
+
+    private async processMongoCore(messages: core.ISequencedOperationMessage[]): Promise<void> {
+        const insertP = this.insertOp(messages);
+        const updateP = this.updateSequenceNumber(messages);
+        await Promise.all([insertP, updateP]);
+    }
+
+    private async insertOp(messages: core.ISequencedOperationMessage[]) {
+        return this.opCollection.insertMany(messages, false)
+            .catch((error) => {
+                // Duplicate key errors are ignored since a replay may cause us to insert twice into Mongo.
+                // All other errors result in a rejected promise.
+                if (error.name !== "MongoError" || error.code !== 11000) {
+                    // Needs to be a full rejection here
+                    return Promise.reject(error);
                 }
             });
+    }
 
-            this.io.publish(id.topic, JSON.stringify([id.event, id.documentId, work]));
-
-            await new Promise<void>((resolve) => setImmediate(() => resolve()));
-        });
+    private async updateSequenceNumber(messages: core.ISequencedOperationMessage[]) {
+        // TODO (mdaumi): Temporary to back compat with local orderer.
+        if (this.contentCollection === undefined) {
+            return Promise.resolve();
+        } else {
+            const updateP = [];
+            for (const message of messages) {
+                // Back-Compat: Temporary workaround to handle old clients.
+                if (message.operation.metadata && message.operation.metadata.split) {
+                    updateP.push(this.contentCollection.update(
+                        {
+                            "clientId": message.operation.clientId,
+                            "documentId": message.documentId,
+                            "op.clientSequenceNumber": message.operation.clientSequenceNumber,
+                            "tenantId": message.tenantId,
+                        },
+                        {sequenceNumber: message.operation.sequenceNumber},
+                        null).catch((error) => {
+                            // Same reason as insertOp.
+                            if (error.name !== "MongoError" || error.code !== 11000) {
+                                return Promise.reject(error);
+                            }
+                        }));
+                }
+            }
+            if (updateP.length > 0) {
+                await Promise.all(updateP);
+            }
+        }
     }
 
     /**

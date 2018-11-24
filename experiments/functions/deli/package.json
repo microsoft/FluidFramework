@@ -14,7 +14,7 @@
   },
   "author": "Microsoft",
   "dependencies": {
-    "@prague/routerlicious": "^0.1.3858",
+    "@prague/routerlicious": "^0.1.4111",
     "bytes": "^3.0.0",
     "commander": "^2.19.0",
     "isomorphic-ws": "^4.0.1",

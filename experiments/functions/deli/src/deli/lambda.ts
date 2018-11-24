@@ -4,6 +4,7 @@ import {
     IBranchOrigin,
     IDocumentMessage,
     ISequencedDocumentMessage,
+    ITrace,
     MessageType,
 } from "@prague/runtime-definitions";
 import { RangeTracker } from "@prague/utils";
@@ -11,7 +12,7 @@ import * as assert from "assert";
 import * as _ from "lodash";
 import * as winston from "winston";
 import { IContext, IPartitionLambda } from "../kafka-service/lambdas";
-import { CheckpointContext, IClientSequenceNumber } from "./checkpointContext";
+import { CheckpointContext, ICheckpoint, IClientSequenceNumber } from "./checkpointContext";
 
 export interface ITicketedMessageOutput {
 
@@ -113,7 +114,7 @@ export class DeliLambda implements IPartitionLambda {
 
     public handler(message: utils.IMessage): void {
         // Ticket current message.
-        const ticketedMessage = this.ticket(message);
+        const ticketedMessage = this.ticket(message, this.createTrace("start"));
 
         // Return early if message is not valid.
         if (!ticketedMessage) {
@@ -155,7 +156,7 @@ export class DeliLambda implements IPartitionLambda {
         }
     }
 
-    private ticket(rawMessage: utils.IMessage): ITicketedMessageOutput {
+    private ticket(rawMessage: utils.IMessage, trace: ITrace): ITicketedMessageOutput {
         // In cases where we are reprocessing messages we have already checkpointed exit early
         if (rawMessage.offset < this.logOffset) {
             return;
@@ -163,13 +164,15 @@ export class DeliLambda implements IPartitionLambda {
 
         this.logOffset = rawMessage.offset;
 
-        if (rawMessage.value === undefined) {
-            winston.error(`Invalid JSON input: ${rawMessage}`);
+        const rawMessageContent = rawMessage.value.toString();
+        const parsedRawMessage = utils.safelyParseJSON(rawMessageContent);
+        if (parsedRawMessage === undefined) {
+            winston.error(`Invalid JSON input: ${rawMessageContent}`);
             return;
         }
 
         // Update the client's reference sequence number based on the message type
-        const objectMessage = (rawMessage.value as any) as core.IObjectMessage;
+        const objectMessage = parsedRawMessage as core.IObjectMessage;
 
         // Exit out early for unknown messages
         if (objectMessage.type !== core.RawOperationType) {
@@ -179,7 +182,11 @@ export class DeliLambda implements IPartitionLambda {
         // Update and retrieve the minimum sequence number
         let message = objectMessage as core.IRawOperationMessage;
 
-        if (this.isDuplicate(message)) {
+        // Back-Compat: Older message does not have metadata field. So use the content field.
+        const messageContent = message.operation.metadata ?
+        message.operation.metadata.content : message.operation.contents;
+
+        if (this.isDuplicate(message, messageContent)) {
             return;
         }
 
@@ -189,18 +196,18 @@ export class DeliLambda implements IPartitionLambda {
             if (!message.clientId) {
                 if (message.operation.type === MessageType.ClientLeave) {
                     // Return if the client has already been removed due to a prior leave message.
-                    if (!this.removeClient(message.operation.contents)) {
+                    if (!this.removeClient(messageContent)) {
                         return;
                     }
                 } else if (message.operation.type === MessageType.ClientJoin) {
                     this.upsertClient(
-                        message.operation.contents.clientId,
+                        messageContent.clientId,
                         0,
                         this.minimumSequenceNumber,
                         message.timestamp,
                         true);
                 } else if (message.operation.type === MessageType.Fork) {
-                    winston.info(`Fork ${message.documentId} -> ${message.operation.contents.name}`);
+                    winston.info(`Fork ${message.documentId} -> ${messageContent.name}`);
                 }
             } else {
                 // Nack handling
@@ -232,7 +239,7 @@ export class DeliLambda implements IPartitionLambda {
 
         if (message.operation.type === MessageType.Integrate) {
             // Branch operation is the original message
-            const branchOperation = message.operation.contents as core.ISequencedOperationMessage;
+            const branchOperation = messageContent as core.ISequencedOperationMessage;
             const branchDocumentMessage = branchOperation.operation as ISequencedDocumentMessage;
             const branchClientId = getBranchClientId(branchOperation.documentId);
 
@@ -301,22 +308,30 @@ export class DeliLambda implements IPartitionLambda {
         const msn = this.getMinimumSequenceNumber();
         this.minimumSequenceNumber = msn === -1 ? sequenceNumber : msn;
 
+        // Add traces
+        if (message.operation.traces && message.operation.traces.length > 1) {
+            message.operation.traces.push(trace);
+            message.operation.traces.push(this.createTrace("end"));
+        }
+
         // And now craft the output message
         const outputMessage: ISequencedDocumentMessage = {
             clientId: message.clientId,
             clientSequenceNumber: message.operation.clientSequenceNumber,
             contents: message.operation.contents,
+            metadata: message.operation.metadata,
             minimumSequenceNumber: this.minimumSequenceNumber,
             origin,
             referenceSequenceNumber: message.operation.referenceSequenceNumber,
             sequenceNumber,
+            timestamp: Date.now(),
             traces: message.operation.traces,
             type: message.operation.type,
             user: message.user,
         };
 
         // tslint:disable-next-line:max-line-length
-        // winston.verbose(`Assigning ticket ${objectMessage.documentId}@${sequenceNumber}:${this.minimumSequenceNumber} at topic@${this.logOffset}`);
+        winston.verbose(`Assigning ticket ${objectMessage.documentId}@${sequenceNumber}:${this.minimumSequenceNumber} at topic@${this.logOffset}`);
 
         const sequencedMessage: core.ISequencedOperationMessage = {
             documentId: objectMessage.documentId,
@@ -332,7 +347,7 @@ export class DeliLambda implements IPartitionLambda {
         };
     }
 
-    private isDuplicate(message: core.IRawOperationMessage): boolean {
+    private isDuplicate(message: core.IRawOperationMessage, content: any): boolean {
         if (message.operation.type !== MessageType.Integrate && !message.clientId) {
             return false;
         }
@@ -340,8 +355,8 @@ export class DeliLambda implements IPartitionLambda {
         let clientId: string;
         let clientSequenceNumber: number;
         if (message.operation.type === MessageType.Integrate) {
-            clientId = getBranchClientId(message.operation.contents.documentId);
-            clientSequenceNumber = message.operation.contents.operation.sequenceNumber;
+            clientId = getBranchClientId(content.documentId);
+            clientSequenceNumber = content.operation.sequenceNumber;
         } else {
             clientId = message.clientId;
             clientSequenceNumber = message.operation.clientSequenceNumber;
@@ -367,17 +382,17 @@ export class DeliLambda implements IPartitionLambda {
     private sendToScriptorium(message: core.ITicketedMessage) {
         // TODO optimize this to aviod doing per message
         // Checkpoint the current state
-        // const checkpoint = this.generateCheckpoint();
+        const checkpoint = this.generateCheckpoint();
 
-        this.forwardProducer.send(JSON.stringify(message), message.documentId);
-        // this.forwardProducer.send(JSON.stringify(message), message.documentId).then(
-        //     (result) => {
-        //         this.checkpointContext.checkpoint(checkpoint);
-        //     },
-        //     (error) => {
-        //         // TODO issue with Kafka - need to propagate the issue somehow
-        //         winston.error("Could not send message to scriptorium", error);
-        //     });
+        // Otherwise send the message to the event hub
+        this.forwardProducer.send(JSON.stringify(message), message.documentId).then(
+            (result) => {
+                this.checkpointContext.checkpoint(checkpoint);
+            },
+            (error) => {
+                // TODO issue with Kafka - need to propagate the issue somehow
+                winston.error("Could not send message to scriptorium", error);
+            });
     }
 
     private sendToAlfred(message: core.IRawOperationMessage) {
@@ -391,6 +406,7 @@ export class DeliLambda implements IPartitionLambda {
     /**
      * Creates a leave message for inactive clients.
      */
+    // back-compat: Puts the same content in metadata and contents.
     private createLeaveMessage(clientId: string): core.IRawOperationMessage {
         const leaveMessage: core.IRawOperationMessage = {
             clientId: null,
@@ -398,6 +414,10 @@ export class DeliLambda implements IPartitionLambda {
             operation: {
                 clientSequenceNumber: -1,
                 contents: clientId,
+                metadata: {
+                    content: clientId,
+                    split: false,
+                },
                 referenceSequenceNumber: -1,
                 traces: [],
                 type: MessageType.ClientLeave,
@@ -438,6 +458,10 @@ export class DeliLambda implements IPartitionLambda {
             operation: {
                 clientSequenceNumber: -1,
                 contents: null,
+                metadata: {
+                    content: null,
+                    split: false,
+                },
                 referenceSequenceNumber: -1,
                 traces: [],
                 type: MessageType.NoOp,
@@ -451,21 +475,33 @@ export class DeliLambda implements IPartitionLambda {
     }
 
     /**
+     * Creates a new trace
+     */
+    private createTrace(action: string) {
+        const trace: ITrace = {
+            action,
+            service: "deli",
+            timestamp: Date.now(),
+        };
+        return trace;
+    }
+
+    /**
      * Generates a checkpoint of the current ticketing state
      */
-    // private generateCheckpoint(): ICheckpoint {
-    //     const clients: IClientSequenceNumber[] = [];
-    //     for (const [, value] of this.clientNodeMap) {
-    //         clients.push(_.clone(value.value));
-    //     }
+    private generateCheckpoint(): ICheckpoint {
+        const clients: IClientSequenceNumber[] = [];
+        for (const [, value] of this.clientNodeMap) {
+            clients.push(_.clone(value.value));
+        }
 
-    //     return {
-    //         branchMap: this.branchMap ? this.branchMap.serialize() : undefined,
-    //         clients,
-    //         logOffset: this.logOffset,
-    //         sequenceNumber: this.sequenceNumber,
-    //     };
-    // }
+        return {
+            branchMap: this.branchMap ? this.branchMap.serialize() : undefined,
+            clients,
+            logOffset: this.logOffset,
+            sequenceNumber: this.sequenceNumber,
+        };
+    }
 
     /**
      * Returns a new sequence number

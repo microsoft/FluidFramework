@@ -1,11 +1,11 @@
-import * as services from "@prague/routerlicious/dist/services";
 import { EventEmitter } from "events";
 import { Provider } from "nconf";
+import * as redis from "redis";
 import { IContext, IPartitionLambda, IPartitionLambdaFactory } from "../kafka-service/lambdas";
 import { BBCLambda } from "./lambda";
 
 export class BBCLambdaFactory extends EventEmitter implements IPartitionLambdaFactory {
-    constructor(private io: services.SocketIoRedisPublisher) {
+    constructor(private io: redis.RedisClient) {
         super();
 
         this.io.on("error", (error) => {
@@ -19,6 +19,6 @@ export class BBCLambdaFactory extends EventEmitter implements IPartitionLambdaFa
     }
 
     public async dispose(): Promise<void> {
-        await this.io.close();
+        await this.io.quit();
     }
 }

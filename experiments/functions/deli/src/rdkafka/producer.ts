@@ -1,5 +1,5 @@
 import { IProducer } from "@prague/routerlicious/dist/utils";
-// import { Deferred } from "@prague/utils";
+import { Deferred } from "@prague/utils";
 // import * as Measured from "measured-core";
 import * as Kafka from "node-rdkafka";
 // import * as winston from "winston";
@@ -8,7 +8,7 @@ export class RdkafkaProducer implements IProducer {
     private producer: Kafka.Producer;
     private connected = false;
     // private meter = new Measured.Meter();
-    private pending = new Array<{ message: string, key: string }>();
+    private pending = new Array<{ message: string, key: string, deferred: Deferred<void> }>();
     private resolved = Promise.resolve();
 
     constructor(endpoint: string, private topic: string) {
@@ -50,16 +50,14 @@ export class RdkafkaProducer implements IProducer {
                 this.sendPending();
             });
 
-        // this.producer.on("delivery-report", (err, report) => {
-        //     this.meter.mark();
-
-        //     if (err) {
-        //         console.error(err);
-        //         report.opaque.reject(err);
-        //     } else {
-        //         report.opaque.resolve();
-        //     }
-        // });
+        this.producer.on("delivery-report", (err, report) => {
+            if (err) {
+                console.error(err);
+                report.opaque.reject(err);
+            } else {
+                report.opaque.resolve();
+            }
+        });
 
         // setInterval(
         //     () => {
@@ -69,14 +67,16 @@ export class RdkafkaProducer implements IProducer {
     }
 
     public async send(message: string, key: string): Promise<any> {
+        const deferred = new Deferred<void>();
+
         if (!this.connected) {
-            this.pending.push({ message, key });
+            this.pending.push({ message, key, deferred });
             return this.resolved;
         }
 
-        this.sendCore(message, key);
+        this.sendCore(message, key, deferred);
 
-        return this.resolved;
+        return deferred.promise;
     }
 
     public close(): Promise<void> {
@@ -87,17 +87,18 @@ export class RdkafkaProducer implements IProducer {
 
     private sendPending() {
         for (const pending of this.pending) {
-            this.sendCore(pending.message, pending.key);
+            this.sendCore(pending.message, pending.key, pending.deferred);
         }
         this.pending = null;
     }
 
-    private sendCore(message: string, key: string) {
+    private sendCore(message: string, key: string, deferred: Deferred<void>) {
         this.producer.produce(
             this.topic,
             null,
             Buffer.from(message),
             key,
-            Date.now());
+            Date.now(),
+            deferred);
     }
 }

@@ -32,7 +32,7 @@ export class DocumentLambda implements IPartitionLambda {
 
     private handlerCore(kafkaMessage: utils.IMessage): void {
         const parsedKafkaMessage = utils.safelyParseJSON(kafkaMessage.value);
-        kafkaMessage.value = parsedKafkaMessage;
+        // kafkaMessage.value = parsedKafkaMessage;
 
         if (parsedKafkaMessage === undefined) {
             winston.error(`Invalid JSON input: ${kafkaMessage.value}`);

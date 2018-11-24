@@ -5,6 +5,7 @@ import { INack, ISequencedDocumentMessage } from "@prague/runtime-definitions";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import * as _ from "lodash";
+import * as redis from "redis";
 import * as winston from "winston";
 import { IContext, IPartitionLambda } from "../kafka-service/lambdas";
 
@@ -224,12 +225,12 @@ export class BBCLambda implements IPartitionLambda {
     // We maintain three batches of work - one for MongoDB and the other two for Socket.IO.
     // One socket.IO group is for sequenced ops and the other for nack'ed messages.
     // By splitting the two we can update each independently and on their own cadence
+    // private mongoManager: BatchManager<IMongoTarget, core.ISequencedOperationMessage>;
     private ioManager: BatchManager<IoTarget, ISequencedDocumentMessage | INack>;
     private idleManager: BatchManager<string, void>;
-
     private workManager = new WorkManager();
 
-    constructor(private io: core.IPublisher, protected context: IContext) {
+    constructor(private io: redis.RedisClient, protected context: IContext) {
         // Listen for work errors
         this.workManager.on("error", (error) => {
             this.batchError(error);
@@ -293,8 +294,19 @@ export class BBCLambda implements IPartitionLambda {
     private async processIoBatch(batch: Batch<IoTarget, INack | ISequencedDocumentMessage>): Promise<void> {
         // Serialize the current batch to Mongo
         await batch.map(async (id, work) => {
-            winston.verbose(`Broadcasting to socket.io ${id.documentId}@${id.topic}@${id.event}:${work.length}`);
-            this.io.to(id.topic).emit(id.event, id.documentId, work);
+            // Add trace to each message before routing.
+            work.map((value) => {
+                const valueAsSequenced = value as ISequencedDocumentMessage;
+                if (valueAsSequenced && valueAsSequenced.traces !== undefined) {
+                    valueAsSequenced.traces.push({
+                        action: "end",
+                        service: "scriptorium",
+                        timestamp: 0,
+                    });
+                }
+            });
+
+            this.io.publish(id.topic, JSON.stringify([id.event, id.documentId, work]));
 
             await new Promise<void>((resolve) => setImmediate(() => resolve()));
         });

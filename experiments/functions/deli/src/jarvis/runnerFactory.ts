@@ -6,7 +6,6 @@ import * as bytes from "bytes";
 import { Provider } from "nconf";
 import { RdkafkaProducer } from "../rdkafka";
 import { KafkaOrdererFactory } from "./kafkaOrderer";
-import { LocalOrdererFactory } from "./localOrderer";
 import { OrdererManager } from "./orderFactory";
 import { JarvisRunner } from "./runner";
 
@@ -83,16 +82,9 @@ export class JarvisResourcesFactory implements utils.IResourcesFactory<JarvisRes
 
         const maxSendMessageSize = bytes.parse(config.get("alfred:maxMessageSize"));
 
-        const localOrdererFactory = new LocalOrdererFactory(
-            storage,
-            maxSendMessageSize,
-            databaseManager,
-            taskMessageSender,
-            tenantManager,
-            config.get("tmz:permissions"));
         const kafkaOrdererFactory = new KafkaOrdererFactory(producer, storage, maxSendMessageSize);
 
-        const ordererManager = new OrdererManager(localOrdererFactory, kafkaOrdererFactory);
+        const ordererManager = new OrdererManager(kafkaOrdererFactory);
 
         // Tenants attached to the apps this service exposes
         const appTenants = config.get("alfred:tenants") as Array<{ id: string, key: string }>;
