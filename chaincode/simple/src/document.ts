@@ -3,6 +3,7 @@ import { IMap, MapExtension } from "@prague/map";
 import { IDistributedObjectServices, IRuntime, IUser } from "@prague/runtime-definitions";
 import { EventEmitter } from "events";
 import * as uuid from "uuid/v4";
+import { runTaskAnalyzer } from "./taskHelper";
 
 const rootMapId = "root";
 
@@ -22,6 +23,16 @@ export class Document extends EventEmitter implements IDocument {
         }
 
         const document = new Document(runtime, root);
+        const quorum = runtime.getQuorum();
+        runTaskAnalyzer(runtime);
+        quorum.on("addMember", (clientId, details) => {
+            console.log(`${clientId} : ${JSON.stringify(details)} joined!`);
+            runTaskAnalyzer(runtime);
+        });
+        quorum.on("removeMember", (clientId) => {
+            console.log(`${clientId} left`);
+            runTaskAnalyzer(runtime);
+        });
         return document;
     }
 
