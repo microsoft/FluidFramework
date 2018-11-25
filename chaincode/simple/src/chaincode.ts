@@ -1,6 +1,5 @@
 import { MapExtension } from "@prague/map";
 import { IChaincode, IPlatform, IRuntime } from "@prague/runtime-definitions";
-import * as assert from "assert";
 import { EventEmitter } from "events";
 
 /**
@@ -19,7 +18,6 @@ export class Chaincode extends EventEmitter implements IChaincode {
     }
 
     public getModule(type: string): any {
-        assert(this.modules.has(type));
         return this.modules.get(type);
     }
 
