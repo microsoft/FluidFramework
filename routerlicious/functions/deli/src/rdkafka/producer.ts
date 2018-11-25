@@ -1,7 +1,7 @@
 import { IProducer } from "@prague/routerlicious/dist/utils";
 import { Deferred } from "@prague/utils";
-// import * as Measured from "measured-core";
 import * as Kafka from "node-rdkafka";
+// import * as Measured from "measured-core";
 // import * as winston from "winston";
 
 export class RdkafkaProducer implements IProducer {

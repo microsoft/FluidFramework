@@ -1,25 +1,15 @@
+import { IPartitionLambdaFactory } from "@prague/routerlicious/dist/kafka-service/lambdas";
+import { KafkaResources } from "@prague/routerlicious/dist/kafka-service/resourcesFactory";
 import * as utils from "@prague/routerlicious/dist/utils";
 import * as moniker from "moniker";
 import { Provider } from "nconf";
-import * as winston from "winston";
 import { RdkafkaConsumer } from "../rdkafka";
-import { IPartitionLambdaFactory } from "./lambdas";
 
 export class KafkaResourcesFactory implements utils.IResourcesFactory<KafkaResources> {
     constructor(private name, private lambdaModule) {
     }
 
     public async create(config: Provider): Promise<KafkaResources> {
-        const loggingConfig = config.get("logger");
-        utils.configureLogging(loggingConfig);
-
-        winston.configure({
-            format: winston.format.simple(),
-            transports: [
-                new winston.transports.Console({ handleExceptions: true, level: loggingConfig.level}),
-            ],
-        });
-
         // tslint:disable-next-line:non-literal-require
         const plugin = require(this.lambdaModule);
         const lambdaFactory = await plugin.create(config) as IPartitionLambdaFactory;

@@ -226,7 +226,6 @@ export class BBCLambda implements IPartitionLambda {
     // By splitting the two we can update each independently and on their own cadence
     private ioManager: BatchManager<IoTarget, ISequencedDocumentMessage | INack>;
     private idleManager: BatchManager<string, void>;
-
     private workManager = new WorkManager();
 
     constructor(private io: core.IPublisher, protected context: IContext) {
