@@ -71,6 +71,9 @@ export class WorkManager extends EventEmitter implements IWorkManager {
                     services);
                 await this.startTask(tenantId, documentId, workType, translationWork);
                 break;
+            case "chaincode":
+                console.log(`Paparazzi will load chaincode here`);
+                break;
             default:
                 throw new Error(`Unknown work type: ${workType}`);
         }

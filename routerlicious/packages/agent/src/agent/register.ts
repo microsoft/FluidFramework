@@ -91,6 +91,8 @@ async function performTask(
                 api.getDefaultDocumentService());
             await translationWork.start(task);
             break;
+        case "chaincode":
+            throw new Error(`Not implemented yet: ${task}`);
         default:
             throw new Error(`Unknown task type: ${task}`);
     }
