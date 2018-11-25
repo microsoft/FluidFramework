@@ -1,6 +1,6 @@
 {
   "name": "@chaincode/simple",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "Simplest example of chaincode",
   "main": "babel-dist/index.js",
   "types": "dist/index.d.ts",

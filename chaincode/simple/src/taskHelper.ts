@@ -6,9 +6,9 @@ export function runTaskAnalyzer(runtime: IRuntime) {
     const isLeader = currentLeader && currentLeader.clientId === runtime.clientId;
     if (isLeader) {
         const remoteHelpMessage: IHelpMessage = {
-            tasks: ["chaintask"],
+            tasks: ["chaincode"],
         };
-        this.runtime.submitSystemMessage(MessageType.RemoteHelp, remoteHelpMessage);
+        runtime.submitSystemMessage(MessageType.RemoteHelp, remoteHelpMessage);
     }
 }
 
