@@ -5,27 +5,6 @@ import * as winston from "winston";
 import { RdkafkaConsumer } from "../rdkafka";
 import { IPartitionLambdaFactory } from "./lambdas";
 
-export interface IKafkaResources extends utils.IResources {
-    lambdaFactory: IPartitionLambdaFactory;
-
-    consumer: utils.IConsumer;
-
-    config: Provider;
-}
-
-export class KafkaResources implements IKafkaResources {
-    constructor(
-        public lambdaFactory: IPartitionLambdaFactory,
-        public consumer: utils.IConsumer,
-        public config: Provider) {
-    }
-
-    public async dispose(): Promise<void> {
-        const consumerClosedP = this.consumer.close();
-        await Promise.all([consumerClosedP]);
-    }
-}
-
 export class KafkaResourcesFactory implements utils.IResourcesFactory<KafkaResources> {
     constructor(private name, private lambdaModule) {
     }

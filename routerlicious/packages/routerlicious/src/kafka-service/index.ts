@@ -1,17 +1,26 @@
-import * as winston from "winston";
+import * as commander from "commander";
+import * as path from "path";
 import * as utils from "../utils";
 import { KafkaResourcesFactory } from "./resourcesFactory";
 import { KafkaRunnerFactory } from "./runnerFactory";
 
-if (process.argv.length !== 4) {
-    winston.error("node index.js <name> <lambda>");
-    process.exit(1);
+// tslint:disable-next-line:no-var-requires
+const packageDetails = require("../../package.json");
+
+let action = false;
+commander
+    .version(packageDetails.version)
+    .arguments("<name> <lambda>")
+    .action((name: string, lambda: string) => {
+        action = true;
+        utils.runService(
+            new KafkaResourcesFactory(name, lambda),
+            new KafkaRunnerFactory(),
+            name,
+            path.join(__dirname, "../../config.json"));
+    })
+    .parse(process.argv);
+
+if (!action) {
+    commander.help();
 }
-
-const name = process.argv[2];
-const lambda = process.argv[3];
-
-utils.runService(
-    new KafkaResourcesFactory(name, lambda),
-    new KafkaRunnerFactory(),
-    name);
