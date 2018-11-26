@@ -1,7 +1,8 @@
 import * as MergeTree from "@prague/merge-tree";
-import { ITokenProvider, IUser } from "@prague/runtime-definitions";
+import { ICodeLoader, IPlatformFactory, ITokenProvider, IUser } from "@prague/runtime-definitions";
 import { EventEmitter } from "events";
 import { AgentLoader, IAgent } from "./agentLoader";
+import { ChaincodeWork } from "./chaincodeWork";
 import { IDocumentServiceFactory, IDocumentTaskInfo, IWork, IWorkManager } from "./definitions";
 import { loadDictionary } from "./dictionaryLoader";
 import { IntelWork } from "./intelWork";
@@ -21,7 +22,9 @@ export class WorkManager extends EventEmitter implements IWorkManager {
     constructor(private serviceFactory: IDocumentServiceFactory,
                 private config: any,
                 private serverUrl: string,
-                private agentModuleLoader: (id: string) => Promise<any>) {
+                private agentModuleLoader: (id: string) => Promise<any>,
+                private codeLoader: ICodeLoader,
+                private platformFactory: IPlatformFactory) {
         super();
         this.loadUploadedAgents().catch((err) => {
             this.emit("error", err);
@@ -72,7 +75,15 @@ export class WorkManager extends EventEmitter implements IWorkManager {
                 await this.startTask(tenantId, documentId, workType, translationWork);
                 break;
             case "chaincode":
-                console.log(`Paparazzi will load chaincode here`);
+                const chaincodeWork = new ChaincodeWork(
+                    documentId,
+                    tenantId,
+                    user,
+                    tokenProvider,
+                    services,
+                    this.codeLoader,
+                    this.platformFactory);
+                await this.startTask(tenantId, documentId, workType, chaincodeWork);
                 break;
             default:
                 throw new Error(`Unknown work type: ${workType}`);
