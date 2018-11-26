@@ -27,7 +27,7 @@ export class RouteMasterLambda extends SequencedLambda {
     }
 
     private async createFork(message: core.ISequencedOperationMessage): Promise<void> {
-        const contents = message.operation.contents as core.IForkOperation;
+        const contents = message.operation.metadata.content as core.IForkOperation;
         const forkId = contents.documentId;
         const forkSequenceNumber = message.operation.sequenceNumber;
 

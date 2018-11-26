@@ -1,6 +1,5 @@
 import {
     IBranchOrigin,
-    IDocumentMessage,
     ISequencedDocumentMessage,
     ITrace,
     MessageType,
@@ -176,8 +175,9 @@ export class DeliLambda implements IPartitionLambda {
         let message = objectMessage as core.IRawOperationMessage;
 
         // Back-Compat: Older message does not have metadata field. So use the content field.
-        const messageContent = message.operation.metadata ?
-        message.operation.metadata.content : message.operation.contents;
+        const messageContent = message.operation.metadata
+            ? message.operation.metadata.content
+            : message.operation.contents;
 
         if (this.isDuplicate(message, messageContent)) {
             return;
@@ -254,10 +254,11 @@ export class DeliLambda implements IPartitionLambda {
                 operation: {
                     clientSequenceNumber: branchDocumentMessage.sequenceNumber,
                     contents: branchDocumentMessage.contents,
+                    metadata: branchDocumentMessage.metadata,
                     referenceSequenceNumber: transformedRefSeqNumber,
                     traces: message.operation.traces,
                     type: branchDocumentMessage.type,
-                } as IDocumentMessage,
+                },
                 tenantId: message.tenantId,
                 timestamp: message.timestamp,
                 type: core.RawOperationType,
