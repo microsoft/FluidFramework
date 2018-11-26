@@ -4,8 +4,5 @@
   "description": "Headless chaincode loader",
   "main": "index.js",
   "author": "Microsoft",
-  "license": "ISC",
-  "dependencies": {
-    "@chaincode/simple": "0.0.9"
-  }
+  "license": "ISC"
 }
