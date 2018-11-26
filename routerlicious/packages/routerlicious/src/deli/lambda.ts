@@ -164,15 +164,8 @@ export class DeliLambda implements IPartitionLambda {
 
         this.logOffset = rawMessage.offset;
 
-        const rawMessageContent = rawMessage.value.toString();
-        const parsedRawMessage = utils.safelyParseJSON(rawMessageContent);
-        if (parsedRawMessage === undefined) {
-            winston.error(`Invalid JSON input: ${rawMessageContent}`);
-            return;
-        }
-
         // Update the client's reference sequence number based on the message type
-        const objectMessage = parsedRawMessage as core.IObjectMessage;
+        const objectMessage = rawMessage.value as core.IObjectMessage;
 
         // Exit out early for unknown messages
         if (objectMessage.type !== core.RawOperationType) {
@@ -329,9 +322,6 @@ export class DeliLambda implements IPartitionLambda {
             type: message.operation.type,
             user: message.user,
         };
-
-        // tslint:disable-next-line:max-line-length
-        winston.verbose(`Assigning ticket ${objectMessage.documentId}@${sequenceNumber}:${this.minimumSequenceNumber} at topic@${this.logOffset}`);
 
         const sequencedMessage: core.ISequencedOperationMessage = {
             documentId: objectMessage.documentId,

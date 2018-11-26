@@ -292,9 +292,7 @@ export class BBCLambda implements IPartitionLambda {
     private async processIoBatch(batch: Batch<IoTarget, INack | ISequencedDocumentMessage>): Promise<void> {
         // Serialize the current batch to Mongo
         await batch.map(async (id, work) => {
-            winston.verbose(`Broadcasting to socket.io ${id.documentId}@${id.topic}@${id.event}:${work.length}`);
             this.io.to(id.topic).emit(id.event, id.documentId, work);
-
             await new Promise<void>((resolve) => setImmediate(() => resolve()));
         });
     }

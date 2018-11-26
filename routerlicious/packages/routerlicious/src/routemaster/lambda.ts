@@ -1,5 +1,4 @@
 import { MessageType } from "@prague/runtime-definitions";
-import * as winston from "winston";
 import * as core from "../core";
 import { IContext } from "../kafka-service/lambdas";
 import { SequencedLambda } from "../kafka-service/sequencedLambda";
@@ -12,13 +11,7 @@ export class RouteMasterLambda extends SequencedLambda {
     }
 
     protected async handlerCore(rawMessage: utils.IMessage): Promise<void> {
-        const parsedRawMessage = utils.safelyParseJSON(rawMessage.value);
-        if (parsedRawMessage === undefined) {
-            winston.error(`Invalid JSON input: ${rawMessage.value}`);
-            return;
-        }
-
-        const message = parsedRawMessage as core.ISequencedOperationMessage;
+        const message = rawMessage.value as core.ISequencedOperationMessage;
         if (message.type === core.SequencedOperationType) {
             // Create the fork first then route any messages. This will make the fork creation the first message
             // routed to the fork. We only process the fork on the route branch it is defined.

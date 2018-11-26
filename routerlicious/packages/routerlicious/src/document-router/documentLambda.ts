@@ -31,16 +31,19 @@ export class DocumentLambda implements IPartitionLambda {
     }
 
     private handlerCore(kafkaMessage: utils.IMessage): void {
-
         const parsedKafkaMessage = utils.safelyParseJSON(kafkaMessage.value);
         if (parsedKafkaMessage === undefined) {
             winston.error(`Invalid JSON input: ${kafkaMessage.value}`);
             return;
         }
+
         const message = parsedKafkaMessage as core.IMessage;
         if (!("documentId" in message) || !("tenantId" in message)) {
             return;
         }
+
+        // Stash the parsed value for down stream lambdas
+        kafkaMessage.value = parsedKafkaMessage;
 
         const sequencedMessage = message as core.ISequencedOperationMessage;
 

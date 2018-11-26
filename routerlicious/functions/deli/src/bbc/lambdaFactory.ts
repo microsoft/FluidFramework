@@ -10,7 +10,6 @@ class RedisTopic implements ITopic {
     }
 
     public emit(event: string, ...args: any[]) {
-        console.log(this.topic, JSON.stringify([event, ...args]));
         this.io.publish(this.topic, JSON.stringify([event, ...args]));
     }
 }
