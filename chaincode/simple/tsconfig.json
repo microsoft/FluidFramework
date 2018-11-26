@@ -5,11 +5,13 @@
     ],
     "compilerOptions": {
         "target": "es6",
+        "declaration": true,
+        "module": "commonjs",
+        "moduleResolution": "node",
         "noImplicitAny": false,
         "noUnusedLocals": true,
-        "module": "esnext",
-        "moduleResolution": "node",
         "outDir": "dist",
+        "rootDir": "./src",
         "sourceMap": true,
         "inlineSources": true
     },

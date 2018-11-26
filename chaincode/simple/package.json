@@ -1,24 +1,21 @@
 {
   "name": "@chaincode/simple",
-  "version": "0.0.6",
+  "version": "0.0.9",
   "description": "Simplest example of chaincode",
-  "main": "babel-dist/index.js",
+  "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "sideEffects": "false",
   "scripts": {
-    "build": "npm run tsc && npm run webpack && npm run tslint && npm run babel",
+    "build": "npm run tsc && npm run webpack && npm run tslint",
     "tsc": "tsc",
     "webpack": "webpack --config webpack.config.js",
     "tslint": "tslint 'src/**/*.ts'",
-    "babel": "babel dist -d babel-dist",
     "start": "webpack-serve webpack.config.js --port 8081",
     "update": "npm run build && npm version patch && npm publish --registry http://localhost:4873"
   },
   "author": "Microsoft",
   "repository": "microsoft/prague",
   "devDependencies": {
-    "babel-cli": "^6.26.0",
-    "babel-preset-env": "^1.7.0",
     "source-map-loader": "^0.2.3",
     "ts-loader": "^4.2.0",
     "tslint": "^5.11.0",
