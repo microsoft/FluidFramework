@@ -58,7 +58,7 @@ describe("Routerlicious", () => {
                 testForwardProducer = testKafka.createProducer();
                 testReverseProducer = testKafka.createProducer();
                 messageFactory = new MessageFactory(testId, testClientId);
-                kafkaMessageFactory = new KafkaMessageFactory();
+                kafkaMessageFactory = new KafkaMessageFactory("test", 1, false);
                 factory = new DeliLambdaFactory(mongoManager, testCollection, testForwardProducer, testReverseProducer);
 
                 testContext = new TestContext();

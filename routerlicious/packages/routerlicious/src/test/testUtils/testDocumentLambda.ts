@@ -19,7 +19,7 @@ export class TestLambda implements IPartitionLambda {
 
     public handler(message: utils.IMessage): void {
         this.handleCalls++;
-        const sequencedMessage = JSON.parse(message.value) as core.ISequencedOperationMessage;
+        const sequencedMessage = message.value as core.ISequencedOperationMessage;
         assert.equal(this.documentId, sequencedMessage.documentId);
 
         if (this.failHandler) {

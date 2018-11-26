@@ -164,7 +164,9 @@ export class DeliLambda implements IPartitionLambda {
         this.logOffset = rawMessage.offset;
 
         // Update the client's reference sequence number based on the message type
-        const objectMessage = rawMessage.value as core.IObjectMessage;
+        const objectMessage = typeof rawMessage.value === "string"
+            ? JSON.parse(rawMessage.value)
+            : rawMessage.value as core.IObjectMessage;
 
         // Exit out early for unknown messages
         if (objectMessage.type !== core.RawOperationType) {
