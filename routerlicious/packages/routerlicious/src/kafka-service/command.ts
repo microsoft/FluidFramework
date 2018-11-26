@@ -1,6 +1,6 @@
 import * as commander from "commander";
 import * as utils from "../utils";
-import { IKafkaResources, KafkaResourcesFactory } from "./resourcesFactory";
+import { IKafkaResources } from "./resourcesFactory";
 import { KafkaRunnerFactory } from "./runnerFactory";
 
 export function execute(
@@ -16,7 +16,7 @@ export function execute(
         .action((name: string, lambda: string) => {
             action = true;
             utils.runService(
-                new KafkaResourcesFactory(name, lambda),
+                factoryFn(name, lambda),
                 new KafkaRunnerFactory(),
                 name,
                 configFile);
