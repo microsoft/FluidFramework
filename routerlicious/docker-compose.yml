@@ -11,12 +11,10 @@ services:
         restart: always
     deli:
         build: .
-        command: node dist/kafka-service/index.js deli ../document-router/index.js
+        command: node dist/kafka-service/index.js deli ../deli/index.js
         environment:
-            - worker__intelligence__resume__url=http://alfred:3000/intelligence/resume
             - DEBUG=prague:*
             - NODE_ENV=development
-            - documentLambda=../deli/index.js
         restart: always
     scriptorium:
         build: .

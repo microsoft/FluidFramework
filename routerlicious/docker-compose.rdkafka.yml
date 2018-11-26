@@ -1,106 +1,60 @@
 version: '3'
 services:
-    alfred:
-        image: prague.azurecr.io/prague:latest
+    jarvis:
+        build:
+            context: .
+            dockerfile: ./functions/Dockerfile
+            args:
+                - NPM_TOKEN=${NPM_TOKEN}
         ports:
-            - "3000:3000"
-        command: node dist/alfred/www.js
+            - "3030:3000"
+        command: node deli/dist/jarvis/www.js
         environment:
             - DEBUG=prague:*
             - NODE_ENV=development
         restart: always
-    # jarvis:
-    #     image: deli
-    #     ports:
-    #         - "3030:3000"
-    #     command: node dist/jarvis/www.js
-    #     environment:
-    #         - DEBUG=prague:*
-    #         - NODE_ENV=development
-    #     restart: always
-    # deli:
-    #     image: deli
-    #     command: node dist/kafka-service/index.js deli ../deli/index.js
-    #     environment:
-    #         - DEBUG=prague:*
-    #         - NODE_ENV=development
-    #     restart: always
-    # scriptorium:
-    #     image: deli
-    #     command: node dist/kafka-service/index.js scriptorium ../scriptorium/index.js
-    #     environment:
-    #         - DEBUG=prague:*
-    #         - NODE_ENV=development
-    #     restart: always
-    riddler:
-        image: prague.azurecr.io/prague:latest
-        ports:
-            - "5000:5000"
-        command: node dist/riddler/www.js
-        environment:
-            - DEBUG=prague:*
-            - NODE_ENV=development
-        restart: always
-    historian:
-        image: prague.azurecr.io/historian:3301
-        ports:
-            - "3001:3000"
-        environment:
-            - DEBUG=prague:*
-            - NODE_ENV=development
-        restart: always
-    cobalt:
-        image: prague.azurecr.io/cobalt:1544
-        restart: always
-    gitrest:
-        image: prague.azurecr.io/gitrest:2239
-        environment:
-            - DEBUG=prague:*
-            - NODE_ENV=development
         volumes:
-            - git:/home/node/documents
-        restart: always
-    git:
-        image: prague.azurecr.io/gitssh:654
-        ports:
-            - "3022:22"
-        volumes:
-            - git:/home/git
-        restart: always
-    zookeeper:
-        image: wurstmeister/zookeeper:latest
-        ports:
-            - "2181:2181"
-    kafka:
-        image: wurstmeister/kafka:2.11-1.1.1
-        ports:
-            - "9092:9092"
+            - ./functions/deli/dist:/usr/src/server/functions/deli/dist
+            - ./packages:/usr/src/server/packages
+    deli2:
+        build:
+            context: .
+            dockerfile: ./functions/Dockerfile
+            args:
+                - NPM_TOKEN=${NPM_TOKEN}
+        command: node deli/dist/kafka-service/index.js deli /usr/src/server/functions/deli/dist/deli/index.js
         environment:
-            KAFKA_ADVERTISED_HOST_NAME: "kafka"
-            KAFKA_ADVERTISED_PORT: "9092"
-            KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'false'
-            KAFKA_CREATE_TOPICS: "deltas:8:1,rawdeltas:8:1,testtopic:8:1"
-            KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-    redis:
-        image: "redis:alpine"
-    mongodb:
-        image: "mongo:3.4.3"
-    rabbitmq:
-        image: "rabbitmq:alpine"
-    minio:
-        image: minio/minio:RELEASE.2018-09-12T18-49-56Z
-        ports:
-            - "9000:9000"
-        environment:
-            MINIO_ACCESS_KEY: prague
-            MINIO_SECRET_KEY: mhioAkNXTwdX4dXWgKgXVtHo
-        command: server /export
-    verdaccio:
-        image: verdaccio/verdaccio:3.8.1
-        ports:
-            - "4873:4873"
+            - DEBUG=prague:*
+            - NODE_ENV=development
+        restart: always
         volumes:
-            - ./verdaccio/conf:/verdaccio/conf
-volumes:
-  git:
-    driver: local
+            - ./functions/deli/dist:/usr/src/server/functions/deli/dist
+            - ./packages:/usr/src/server/packages
+    scriptorium2:
+        build:
+            context: .
+            dockerfile: ./functions/Dockerfile
+            args:
+                - NPM_TOKEN=${NPM_TOKEN}
+        command: node deli/dist/kafka-service/index.js scriptorium ../scriptorium/index.js
+        environment:
+            - DEBUG=prague:*
+            - NODE_ENV=development
+        restart: always
+        volumes:
+            - ./functions/deli/dist:/usr/src/server/functions/deli/dist
+            - ./packages:/usr/src/server/packages
+    bbc2:
+        build:
+            context: .
+            dockerfile: ./functions/Dockerfile
+            args:
+                - NPM_TOKEN=${NPM_TOKEN}
+        command: node deli/dist/kafka-service/index.js bbc /usr/src/server/functions/deli/dist/bbc/index.js
+        environment:
+            - DEBUG=prague:*
+            - NODE_ENV=development
+        restart: always
+        volumes:
+            - ./functions/deli/dist:/usr/src/server/functions/deli/dist
+            - ./packages:/usr/src/server/packages
