@@ -34,8 +34,6 @@ export class Partition extends EventEmitter {
         // Create the incoming message queue
         this.q = queue(
             (message: utils.IMessage, callback) => {
-                // winston.verbose(`${message.topic}:${message.partition}@${message.offset}`);
-
                 try {
                     this.lambda.handler(message);
                     callback();

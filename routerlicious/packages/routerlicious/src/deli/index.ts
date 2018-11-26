@@ -1,12 +1,13 @@
 import * as bytes from "bytes";
 import { Provider } from "nconf";
 import * as core from "../core";
+import { create as createDocumentRouter } from "../document-router";
 import { IPartitionLambdaFactory } from "../kafka-service/lambdas";
 import * as services from "../services";
 import * as utils from "../utils";
 import { DeliLambdaFactory } from "./lambdaFactory";
 
-export async function create(config: Provider): Promise<IPartitionLambdaFactory> {
+export async function deliCreate(config: Provider): Promise<IPartitionLambdaFactory> {
     const mongoUrl = config.get("mongo:endpoint") as string;
     const kafkaEndpoint = config.get("kafka:lib:endpoint");
     const kafkaLibrary = config.get("kafka:lib:name");
@@ -40,4 +41,10 @@ export async function create(config: Provider): Promise<IPartitionLambdaFactory>
         maxMessageSize);
 
     return new DeliLambdaFactory(mongoManager, collection, forwardProducer, reverseProducer);
+}
+
+export async function create(config: Provider): Promise<IPartitionLambdaFactory> {
+    // nconf has problems with prototype methods which prevents us from storing this as a class
+    config.set("documentLambda", { create: deliCreate });
+    return createDocumentRouter(config);
 }

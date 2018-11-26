@@ -1,3 +1,4 @@
+import { ISequencedDocumentMessage } from "@prague/runtime-definitions";
 import { Deferred } from "@prague/utils";
 import * as core from "../core";
 
@@ -71,7 +72,14 @@ export class DocumentManager {
             deltasP.then(
                 (deltas) => {
                     // Contents is stored as stringified json. Parse to convert back.
-                    deltas.forEach((delta) => delta.operation.contents = JSON.parse(delta.operation.contents));
+                    deltas.forEach((delta) => {
+                        const operation = delta.operation as ISequencedDocumentMessage;
+
+                        // Back-Compat: Temporary workaround to handle old deltas where content type is object.
+                        if (!operation.metadata && typeof operation.contents === "string") {
+                            operation.contents = JSON.parse(operation.contents);
+                        }
+                    });
 
                     result = result.concat(deltas);
                     if (result.length === finalLength) {

@@ -3,7 +3,7 @@ import * as utils from "@prague/utils";
 
 export interface IMessage {
     topic: string;
-    value: string;
+    value: string | any;
     offset: number;
     partition: number;
     highWaterOffset: number;
