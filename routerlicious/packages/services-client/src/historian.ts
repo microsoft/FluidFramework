@@ -1,6 +1,6 @@
 import * as git from "@prague/gitresources";
-import { AxiosRequestConfig, default as axios } from "axios";
 import * as querystring from "querystring";
+import { RestWrapper } from "./restWrapper";
 
 function endsWith(value: string, endings: string[]): boolean {
     for (const ending of endings) {
@@ -55,40 +55,52 @@ export interface ICredentials {
  * Implementation of the IHistorian interface that calls out to a REST interface
  */
 export class Historian implements IHistorian {
-    private authorization: string;
+    private rw: RestWrapper;
 
     constructor(
         public endpoint: string,
         private historianApi: boolean,
-        private disableCache: boolean,
+        disableCache: boolean,
         credentials?: ICredentials) {
 
+        let defaultHeaders = {};
         if (credentials) {
-            this.authorization =
-                `Basic ${new Buffer(`${credentials.user}:${credentials.password}`).toString("base64")}`;
+            defaultHeaders = {
+                Authorization:
+                    `Basic ${new Buffer(`${credentials.user}:${credentials.password}`).toString("base64")}`,
+            };
         }
+
+        let defaultQueryString = {};
+        if (disableCache && this.historianApi) {
+            defaultQueryString = { disableCache };
+        } else if (disableCache) {
+            defaultQueryString = { cacheBust: () => Date.now() };
+        }
+
+        this.rw = new RestWrapper(this.endpoint, defaultHeaders, defaultQueryString);
     }
 
     /* tslint:disable:promise-function-async */
     public getHeader(sha: string): Promise<any> {
         if (this.historianApi) {
-            return this.get(`/headers/${encodeURIComponent(sha)}`);
+            return this.rw.get(`/headers/${encodeURIComponent(sha)}`);
         } else {
             return this.getHeaderDirect(sha);
         }
     }
 
     public getBlob(sha: string): Promise<git.IBlob> {
-        return this.get<git.IBlob>(`/git/blobs/${encodeURIComponent(sha)}`);
+        return this.rw.get<git.IBlob>(`/git/blobs/${encodeURIComponent(sha)}`);
     }
 
     public createBlob(blob: git.ICreateBlobParams): Promise<git.ICreateBlobResponse> {
-        return this.post<git.ICreateBlobResponse>(`/git/blobs`, blob);
+        return this.rw.post<git.ICreateBlobResponse>(`/git/blobs`, blob);
     }
 
     public getContent(path: string, ref: string): Promise<any> {
         const query = querystring.stringify({ ref });
-        return this.get(`/contents/${path}?${query}`);
+        return this.rw.get(`/contents/${path}?${query}`);
     }
 
     public getCommits(sha: string, count: number): Promise<git.ICommitDetails[]> {
@@ -96,53 +108,53 @@ export class Historian implements IHistorian {
             count,
             sha,
         });
-        return this.get<git.ICommitDetails[]>(`/commits?${query}`)
+        return this.rw.get<git.ICommitDetails[]>(`/commits?${query}`)
             .catch((error) => error === 400 ? [] as git.ICommitDetails[] : Promise.reject<git.ICommitDetails[]>(error));
     }
 
     public getCommit(sha: string): Promise<git.ICommit> {
-        return this.get<git.ICommit>(`/git/commits/${encodeURIComponent(sha)}`);
+        return this.rw.get<git.ICommit>(`/git/commits/${encodeURIComponent(sha)}`);
     }
 
     public createCommit(commit: git.ICreateCommitParams): Promise<git.ICommit> {
-        return this.post<git.ICommit>(`/git/commits`, commit);
+        return this.rw.post<git.ICommit>(`/git/commits`, commit);
     }
 
     public getRefs(): Promise<git.IRef[]> {
-        return this.get(`/git/refs`);
+        return this.rw.get(`/git/refs`);
     }
 
     public getRef(ref: string): Promise<git.IRef> {
-        return this.get(`/git/refs/${ref}`);
+        return this.rw.get(`/git/refs/${ref}`);
     }
 
     public createRef(params: git.ICreateRefParams): Promise<git.IRef> {
-        return this.post(`/git/refs`, params);
+        return this.rw.post(`/git/refs`, params);
     }
 
     public updateRef(ref: string, params: git.IPatchRefParams): Promise<git.IRef> {
-        return this.patch(`/git/refs/${ref}`, params);
+        return this.rw.patch(`/git/refs/${ref}`, params);
     }
 
     public async deleteRef(ref: string): Promise<void> {
-        await this.delete(`/git/refs/${ref}`);
+        await this.rw.delete(`/git/refs/${ref}`);
     }
 
     public createTag(tag: git.ICreateTagParams): Promise<git.ITag> {
-        return this.post(`/git/tags`, tag);
+        return this.rw.post(`/git/tags`, tag);
     }
 
     public getTag(tag: string): Promise<git.ITag> {
-        return this.get(`/git/tags/${tag}`);
+        return this.rw.get(`/git/tags/${tag}`);
     }
 
     public createTree(tree: git.ICreateTreeParams): Promise<git.ITree> {
-        return this.post<git.ITree>(`/git/trees`, tree);
+        return this.rw.post<git.ITree>(`/git/trees`, tree);
     }
 
     public getTree(sha: string, recursive: boolean): Promise<git.ITree> {
         const query = querystring.stringify({ recursive: recursive ? 1 : 0 });
-        return this.get<git.ITree>(
+        return this.rw.get<git.ITree>(
             `/git/trees/${encodeURIComponent(sha)}?${query}`);
     }
 
@@ -165,70 +177,5 @@ export class Historian implements IHistorian {
             blobs,
             tree,
         };
-    }
-
-    private get<T>(url: string): Promise<T> {
-        const options: AxiosRequestConfig = {
-            headers: {
-            },
-            maxContentLength: 1000 * 1024 * 1024,
-            method: "GET",
-            url: `${this.endpoint}${url}`,
-        };
-        return this.request(options, 200);
-    }
-
-    private post<T>(url: string, requestBody: any): Promise<T> {
-        const options: AxiosRequestConfig = {
-            data: requestBody,
-            headers: {
-            },
-            maxContentLength: 1000 * 1024 * 1024,
-            method: "POST",
-            url: `${this.endpoint}${url}`,
-        };
-        return this.request(options, 201);
-    }
-
-    private delete<T>(url: string): Promise<T> {
-        const options: AxiosRequestConfig = {
-            headers: {
-            },
-            maxContentLength: 1000 * 1024 * 1024,
-            method: "DELETE",
-            url: `${this.endpoint}${url}`,
-        };
-        return this.request(options, 204);
-    }
-
-    private patch<T>(url: string, requestBody: any): Promise<T> {
-        const options: AxiosRequestConfig = {
-            data: requestBody,
-            headers: {
-            },
-            maxContentLength: 1000 * 1024 * 1024,
-            method: "PATCH",
-            url: `${this.endpoint}${url}`,
-        };
-        return this.request(options, 200);
-    }
-
-    private async request<T>(options: AxiosRequestConfig, statusCode: number): Promise<T> {
-        if (this.authorization) {
-            options.headers.Authorization = this.authorization;
-        }
-
-        // Append cache param if requested
-        if (this.disableCache && this.historianApi) {
-            options.url = `${options.url}?disableCache`;
-        } else if (this.disableCache) {
-            options.url = `${options.url}?cacheBust=${Date.now()}`;
-        }
-
-        const response = await axios.request<T>(options)
-            .catch((error) => error.response && error.response.status !== statusCode
-                ? Promise.reject(error.response.status)
-                : Promise.reject(error));
-        return response.data;
     }
 }
