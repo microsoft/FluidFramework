@@ -101,7 +101,7 @@ export class CollaborativeMap extends CollaborativeObject implements IMap {
             "set",
             {
                 prepare: (op, local) => {
-                    return local ? null : this.view.prepareSetCore(op.key, op.value);
+                    return local ? Promise.resolve(null) : this.view.prepareSetCore(op.key, op.value);
                 },
                 process: (op, context, local, message) => {
                     if (local) {
@@ -413,7 +413,7 @@ export class CollaborativeMap extends CollaborativeObject implements IMap {
     }
 
     protected async prepareContent(message: ISequencedObjectMessage, local: boolean): Promise<any> {
-        return;
+        return Promise.resolve();
     }
 
     /**

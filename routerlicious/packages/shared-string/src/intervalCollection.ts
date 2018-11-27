@@ -604,7 +604,7 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval> {
         return !!this.view;
     }
 
-    constructor(private helpers: IIntervalHelpers<TInterval>, private requiresAttach: boolean,
+    constructor(private helpers: IIntervalHelpers<TInterval>, private requiresClient: boolean,
         private emitter: IValueOpEmitter,
         serializedIntervals: ISerializedInterval[]) {
         this.savedSerializedIntervals = serializedIntervals;
@@ -615,7 +615,7 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval> {
             throw new Error("Only supports one SharedString attach");
         }
 
-        if ((client === undefined) && (this.requiresAttach)) {
+        if ((client === undefined) && (this.requiresClient)) {
             throw new Error("Client required for this collection");
         }
 

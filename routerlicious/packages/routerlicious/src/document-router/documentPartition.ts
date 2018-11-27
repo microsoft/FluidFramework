@@ -9,6 +9,7 @@ import { DocumentContext } from "./documentContext";
 export class DocumentPartition {
     private q: AsyncQueue<utils.IMessage>;
     private lambdaP: Promise<IPartitionLambda>;
+    private lambda: IPartitionLambda;
     private corrupt = false;
 
     constructor(
@@ -24,19 +25,12 @@ export class DocumentPartition {
         clonedConfig.documentId = documentId;
         const documentConfig = new Provider({}).defaults(clonedConfig).use("memory");
 
-        // Create the lambda to handle the document messages
-        this.lambdaP = factory.create(documentConfig, context);
-        this.lambdaP.catch((error) => {
-            context.error(error, true);
-            this.q.kill();
-        });
-
-        this.q = queue((message: utils.IMessage, callback) => {
-            winston.verbose(`${message.topic}:${message.partition}@${message.offset}`);
-            this.lambdaP.then((lambda) => {
+        this.q = queue(
+            (message: utils.IMessage, callback) => {
+                // winston.verbose(`${message.topic}:${message.partition}@${message.offset}`);
                 try {
                     if (!this.corrupt) {
-                        lambda.handler(message);
+                        this.lambda.handler(message);
                     } else {
                         // Until we can dead letter - simply checkpoint as handled
                         this.context.checkpoint(message.offset);
@@ -50,8 +44,21 @@ export class DocumentPartition {
 
                 // handle the next message
                 callback();
+            },
+            1);
+        this.q.pause();
+
+        // Create the lambda to handle the document messages
+        this.lambdaP = factory.create(documentConfig, context);
+        this.lambdaP.then(
+            (lambda) => {
+                this.lambda = lambda;
+                this.q.resume();
+            },
+            (error) => {
+                context.error(error, true);
+                this.q.kill();
             });
-        }, 1);
     }
 
     public process(message: utils.IMessage) {

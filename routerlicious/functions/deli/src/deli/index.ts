@@ -1,20 +1,15 @@
-import * as bytes from "bytes";
+import * as core from "@prague/routerlicious/dist/core";
+import { DeliLambdaFactory } from "@prague/routerlicious/dist/deli/lambdaFactory";
+import { create as createDocumentRouter } from "@prague/routerlicious/dist/document-router";
+import { IPartitionLambdaFactory } from "@prague/routerlicious/dist/kafka-service/lambdas";
+import * as services from "@prague/routerlicious/dist/services";
+import * as utils from "@prague/routerlicious/dist/utils";
+import * as _ from "lodash";
 import { Provider } from "nconf";
-import * as core from "../core";
-import { create as createDocumentRouter } from "../document-router";
-import { IPartitionLambdaFactory } from "../kafka-service/lambdas";
-import * as services from "../services";
-import * as utils from "../utils";
-import { DeliLambdaFactory } from "./lambdaFactory";
+import { RdkafkaProducer } from "../rdkafka";
 
 export async function deliCreate(config: Provider): Promise<IPartitionLambdaFactory> {
     const mongoUrl = config.get("mongo:endpoint") as string;
-    const kafkaEndpoint = config.get("kafka:lib:endpoint");
-    const kafkaLibrary = config.get("kafka:lib:name");
-    const maxMessageSize = bytes.parse(config.get("kafka:maxMessageSize"));
-
-    const kafkaForwardClientId = config.get("deli:kafkaClientId");
-    const kafkaReverseClientId = config.get("alfred:kafkaClientId");
 
     const forwardSendTopic = config.get("deli:topics:send");
     const reverseSendTopic = config.get("alfred:topic");
@@ -27,18 +22,9 @@ export async function deliCreate(config: Provider): Promise<IPartitionLambdaFact
     const client = await mongoManager.getDatabase();
     const collection = await client.collection<core.IDocument>(documentsCollectionName);
 
-    const forwardProducer = utils.createProducer(
-        kafkaLibrary,
-        kafkaEndpoint,
-        kafkaForwardClientId,
-        forwardSendTopic,
-        maxMessageSize);
-    const reverseProducer = utils.createProducer(
-        kafkaLibrary,
-        kafkaEndpoint,
-        kafkaReverseClientId,
-        reverseSendTopic,
-        maxMessageSize);
+    const kafkaEndpoint = config.get("kafka:endpoint");
+    const forwardProducer = new RdkafkaProducer(kafkaEndpoint, forwardSendTopic);
+    const reverseProducer = new RdkafkaProducer(kafkaEndpoint, reverseSendTopic);
 
     return new DeliLambdaFactory(mongoManager, collection, forwardProducer, reverseProducer);
 }

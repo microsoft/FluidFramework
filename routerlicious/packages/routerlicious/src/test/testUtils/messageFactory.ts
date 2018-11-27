@@ -7,7 +7,7 @@ import * as utils from "../../utils";
 export class KafkaMessageFactory {
     private offsets: number[] = [];
 
-    constructor(public topic = "test", partitions = 1) {
+    constructor(public topic = "test", partitions = 1, private stringify = true) {
         for (let i = 0; i < partitions; i++) {
             this.offsets.push(0);
         }
@@ -23,7 +23,7 @@ export class KafkaMessageFactory {
             offset,
             partition,
             topic: this.topic,
-            value: JSON.stringify(value),
+            value: this.stringify ? JSON.stringify(value) : value,
         };
 
         return kafkaMessage;

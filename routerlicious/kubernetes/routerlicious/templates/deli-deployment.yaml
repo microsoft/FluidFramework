@@ -27,14 +27,12 @@ spec:
           - 'node'
           - 'dist/kafka-service/index.js'
           - 'deli'
-          - '../document-router/index.js'
+          - '../deli/index.js'
         env:
         - name: DEBUG
           value: "prague:*"
         - name: NODE_ENV
           value: production
-        - name: documentLambda
-          value: "../deli/index.js"
         volumeMounts:
         - name: config
           mountPath: /usr/src/server/packages/routerlicious/config/config.json

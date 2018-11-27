@@ -7,13 +7,6 @@ import { debug } from "./debug";
 import { DeltaConnection, IConnectionDetails } from "./deltaConnection";
 import { DeltaQueue } from "./deltaQueue";
 
-// tslint:disable:no-var-requires
-// tslint:disable-next-line:no-submodule-imports
-const cloneDeep = require("lodash/cloneDeep");
-const now = require("performance-now");
-// tslint:enable:no-var-requires
-// tslint:disable:no-unsafe-any
-
 const MaxReconnectDelay = 8000;
 const InitialReconnectDelay = 1000;
 const MissingFetchDelay = 100;
@@ -61,7 +54,7 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
     // The minimum sequence number and last sequence number received from the server
     private minSequenceNumber = 0;
 
-    private heartbeatTimer: any;
+    private heartbeatTimer: NodeJS.Timer;
 
     // There are three numbers we track
     // * lastQueuedSequenceNumber is the last queued sequence number
@@ -139,29 +132,29 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
         });
 
         // Outbound message queue
-        this._outbound = new DeltaQueue<runtime.IDocumentMessage>((message, callback) => {
-            if (message.metadata.split) {
-                console.log(`Splitting content from envelope.`);
-                this.connection.submitAsync(message).then(
-                    () => {
-                        this.contentCache.set({
-                            clientId: this.connection.details.clientId,
-                            clientSequenceNumber: message.clientSequenceNumber,
-                            contents: message.contents,
+        this._outbound = new DeltaQueue<runtime.IDocumentMessage>(
+            (message, callback: (error?) => void) => {
+                if (message.metadata.split) {
+                    console.log(`Splitting content from envelope.`);
+                    this.connection.submitAsync(message).then(
+                        () => {
+                            this.contentCache.set({
+                                clientId: this.connection.details.clientId,
+                                clientSequenceNumber: message.clientSequenceNumber,
+                                contents: message.contents as string,
+                            });
+                            message.contents = null;
+                            this.connection.submit(message);
+                            callback();
+                        },
+                        (error) => {
+                            callback(error);
                         });
-                        message.contents = null;
-                        this.connection.submit(message);
-                        callback();
-                    },
-                    (error) => {
-                        callback(error);
-                    });
-            } else {
-                this.connection.submit(message);
-                callback();
-            }
-
-        });
+                } else {
+                    this.connection.submit(message);
+                    callback();
+                }
+            });
 
         this._outbound.on("error", (error) => {
             this.emit("error", error);
@@ -267,7 +260,7 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
             {
                 action: "start",
                 service: this.clientType,
-                timestamp: now(),
+                timestamp: Date.now(),
             }];
         // tslint:disable:no-increment-decrement
         const message: runtime.IDocumentMessage = {
@@ -369,14 +362,14 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
                 connection.on("op", (documentId: string, messages: runtime.ISequencedDocumentMessage[]) => {
                     // Need to buffer messages we receive before having the point set
                     if (this.handler) {
-                        this.enqueueMessages(cloneDeep(messages));
+                        this.enqueueMessages(messages);
                     }
                 });
 
                 connection.on("op-content", (message: runtime.IContentMessage) => {
                     // Need to buffer messages we receive before having the point set
                     if (this.handler) {
-                        this.contentCache.set(cloneDeep(message));
+                        this.contentCache.set(message);
                     }
                 });
 
@@ -420,7 +413,7 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
                 delay = Math.min(delay, MaxReconnectDelay);
                 // tslint:disable-next-line:no-parameter-reassignment
                 reason = `Connection failed - trying again in ${delay}ms`;
-                debug(reason, error.toString());
+                debug(reason, error);
                 setTimeout(() => this.connectCore(reason, delay * 2), delay);
             });
     }
@@ -448,7 +441,7 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
         }
     }
 
-    private handleOpContent(op: runtime.ISequencedDocumentMessage, callback) {
+    private handleOpContent(op: runtime.ISequencedDocumentMessage, callback: (error?) => void) {
         const opContent = this.contentCache.peek(op.clientId);
         if (!opContent) {
             this.waitForContent(op.clientId, op.clientSequenceNumber, op.sequenceNumber).then((content) => {
@@ -475,7 +468,7 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
         }
     }
 
-    private processInboundOp(op: runtime.ISequencedDocumentMessage, callback) {
+    private processInboundOp(op: runtime.ISequencedDocumentMessage, callback: (error?) => void) {
         this.processMessage(op).then(
             () => {
                 callback();
@@ -505,45 +498,48 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
         }
     }
 
-    private async processMessage(message: runtime.ISequencedDocumentMessage): Promise<void> {
+    private processMessage(message: runtime.ISequencedDocumentMessage): Promise<void> {
         assert.equal(message.sequenceNumber, this.baseSequenceNumber + 1);
-        const startTime = now();
+        const startTime = Date.now();
 
         // Back-compat: Client might open an old document.
-        // tslint:disable:max-line-length
-        if (message.contents && typeof message.contents === "string" && message.type !== runtime.MessageType.ClientLeave) {
+        if (message.contents &&
+            typeof message.contents === "string" &&
+            message.type !== runtime.MessageType.ClientLeave) {
             message.contents = JSON.parse(message.contents);
         }
 
         // TODO handle error cases, NACK, etc...
-        const context = await this.handler.prepare(message);
+        const contextP = this.handler.prepare(message);
+        return contextP.then((context) => {
+            // Add final ack trace.
+            if (message.traces && message.traces.length > 0) {
+                message.traces.push({
+                    action: "end",
+                    service: this.clientType,
+                    timestamp: Date.now(),
+                });
+            }
 
-        // Add final ack trace.
-        if (message.traces && message.traces.length > 0) {
-            message.traces.push({
-                action: "end",
-                service: this.clientType,
-                timestamp: now(),
-            });
-        }
+            // Watch the minimum sequence number and be ready to update as needed
+            this.minSequenceNumber = message.minimumSequenceNumber;
+            this.baseSequenceNumber = message.sequenceNumber;
 
-        // Watch the minimum sequence number and be ready to update as needed
-        this.minSequenceNumber = message.minimumSequenceNumber;
-        this.baseSequenceNumber = message.sequenceNumber;
+            this.handler.process(message, context);
 
-        this.handler.process(message, context);
+            // We will queue a message to update our reference sequence number upon receiving a server operation. This
+            // allows the server to know our true reference sequence number and be able to correctly update the minimum
+            // sequence number (MSN). We don't ackowledge other message types similarly (like a min sequence number
+            // update) to avoid ackowledgement cycles (i.e. ack the MSN update, which updates the MSN, then ack the
+            // update, etc...).
+            if (message.type === runtime.MessageType.Operation ||
+                message.type === runtime.MessageType.Propose) {
+                this.updateSequenceNumber();
+            }
 
-        // We will queue a message to update our reference sequence number upon receiving a server operation. This
-        // allows the server to know our true reference sequence number and be able to correctly update the minimum
-        // sequence number (MSN). We don't ackowledge other message types similarly (like a min sequence number update)
-        // to avoid ackowledgement cycles (i.e. ack the MSN update, which updates the MSN, then ack the update, etc...).
-        if (message.type === runtime.MessageType.Operation ||
-            message.type === runtime.MessageType.Propose) {
-            this.updateSequenceNumber();
-        }
-
-        const endTime = now();
-        this.emit("processTime", endTime - startTime);
+            const endTime = Date.now();
+            this.emit("processTime", endTime - startTime);
+        });
     }
 
     /**
@@ -658,12 +654,14 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
 
         // The server maintains a time based window for the min sequence number. As such we want to periodically
         // send a heartbeat to get the latest sequence number once the window has moved past where we currently are.
-        if (this.heartbeatTimer) {
-            clearTimeout(this.heartbeatTimer);
+        if (!this.heartbeatTimer) {
+            this.heartbeatTimer = setTimeout(
+                () => {
+                    this.submit(runtime.MessageType.NoOp, null);
+                    this.heartbeatTimer = undefined;
+                },
+                2000 + 1000);
         }
-        this.heartbeatTimer = setTimeout(() => {
-            this.submit(runtime.MessageType.NoOp, null);
-        }, 2000 + 1000);
 
         // If an update has already been requeested then mark this fact. We will wait until no updates have
         // been requested before sending the updated sequence number.
@@ -697,9 +695,7 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
     }
 
     private stopHeartbeatSending() {
-        if (this.heartbeatTimer) {
-            clearTimeout(this.heartbeatTimer);
-        }
+        clearTimeout(this.heartbeatTimer);
         this.heartbeatTimer = undefined;
     }
 }

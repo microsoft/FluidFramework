@@ -1,6 +1,5 @@
 import {
     IBranchOrigin,
-    IDocumentMessage,
     ISequencedDocumentMessage,
     ITrace,
     MessageType,
@@ -164,15 +163,10 @@ export class DeliLambda implements IPartitionLambda {
 
         this.logOffset = rawMessage.offset;
 
-        const rawMessageContent = rawMessage.value.toString();
-        const parsedRawMessage = utils.safelyParseJSON(rawMessageContent);
-        if (parsedRawMessage === undefined) {
-            winston.error(`Invalid JSON input: ${rawMessageContent}`);
-            return;
-        }
-
         // Update the client's reference sequence number based on the message type
-        const objectMessage = parsedRawMessage as core.IObjectMessage;
+        const objectMessage = typeof rawMessage.value === "string"
+            ? JSON.parse(rawMessage.value)
+            : rawMessage.value as core.IObjectMessage;
 
         // Exit out early for unknown messages
         if (objectMessage.type !== core.RawOperationType) {
@@ -183,8 +177,9 @@ export class DeliLambda implements IPartitionLambda {
         let message = objectMessage as core.IRawOperationMessage;
 
         // Back-Compat: Older message does not have metadata field. So use the content field.
-        const messageContent = message.operation.metadata ?
-        message.operation.metadata.content : message.operation.contents;
+        const messageContent = message.operation.metadata
+            ? message.operation.metadata.content
+            : message.operation.contents;
 
         if (this.isDuplicate(message, messageContent)) {
             return;
@@ -261,10 +256,11 @@ export class DeliLambda implements IPartitionLambda {
                 operation: {
                     clientSequenceNumber: branchDocumentMessage.sequenceNumber,
                     contents: branchDocumentMessage.contents,
+                    metadata: branchDocumentMessage.metadata,
                     referenceSequenceNumber: transformedRefSeqNumber,
                     traces: message.operation.traces,
                     type: branchDocumentMessage.type,
-                } as IDocumentMessage,
+                },
                 tenantId: message.tenantId,
                 timestamp: message.timestamp,
                 type: core.RawOperationType,
@@ -329,9 +325,6 @@ export class DeliLambda implements IPartitionLambda {
             type: message.operation.type,
             user: message.user,
         };
-
-        // tslint:disable-next-line:max-line-length
-        winston.verbose(`Assigning ticket ${objectMessage.documentId}@${sequenceNumber}:${this.minimumSequenceNumber} at topic@${this.logOffset}`);
 
         const sequencedMessage: core.ISequencedOperationMessage = {
             documentId: objectMessage.documentId,

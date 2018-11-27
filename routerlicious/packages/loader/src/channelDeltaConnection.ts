@@ -74,17 +74,19 @@ export class ChannelDeltaConnection implements IDeltaConnection {
         return !!this.rangeTracker;
     }
 
-    public async prepare(message: ISequencedDocumentMessage, local: boolean): Promise<IMessageContext> {
+    public prepare(message: ISequencedDocumentMessage, local: boolean): Promise<IMessageContext> {
         assert(this.baseMappingIsSet());
         assert(this.handler);
 
         const objectMessage = this.translateToObjectMessage(message);
-        const handlerContext = await this.handler.prepare(objectMessage, local);
+        const handlerContextP = this.handler.prepare(objectMessage, local);
 
-        return {
-            handlerContext,
-            objectMessage,
-        };
+        return handlerContextP.then((handlerContext) => {
+            return {
+                handlerContext,
+                objectMessage,
+            };
+        });
     }
 
     public process(message: ISequencedDocumentMessage, local: boolean, context: IMessageContext) {

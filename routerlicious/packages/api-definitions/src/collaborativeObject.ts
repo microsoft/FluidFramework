@@ -8,6 +8,7 @@ import {
     ITree,
 } from "@prague/runtime-definitions";
 import * as assert from "assert";
+import * as Deque from "double-ended-queue";
 import { EventEmitter } from "events";
 import { debug } from "./debug";
 import { ICollaborativeObject } from "./types";
@@ -27,7 +28,7 @@ export abstract class CollaborativeObject extends EventEmitter implements IColla
     // tslint:enable:variable-name
 
     // Locally applied operations not yet ACK'd by the server
-    private pendingOps: IObjectMessage[] = [];
+    private pendingOps = new Deque<IObjectMessage>();
 
     private services: IDistributedObjectServices;
 
@@ -211,7 +212,7 @@ export abstract class CollaborativeObject extends EventEmitter implements IColla
             minSequenceNumberChanged: (value) => {
                 this.processMinSequenceNumberChanged(value);
             },
-            prepare: async (message, local) => {
+            prepare: (message, local) => {
                 return this.prepare(message, local);
             },
             process: (message, local, context) => {
@@ -226,7 +227,7 @@ export abstract class CollaborativeObject extends EventEmitter implements IColla
         this.setConnectionState(this.services.deltaConnection.state);
     }
 
-    private async prepare(message: ISequencedObjectMessage, local: boolean): Promise<any> {
+    private prepare(message: ISequencedObjectMessage, local: boolean): Promise<any> {
         return this.prepareCore(message, local);
     }
 
@@ -259,8 +260,8 @@ export abstract class CollaborativeObject extends EventEmitter implements IColla
                 debug(`${this.id} had ${this.pendingOps.length} pending ops`);
 
                 // Extract all un-ack'd payload operation
-                const pendingOps = this.pendingOps;
-                this.pendingOps = [];
+                const pendingOps = this.pendingOps.toArray();
+                this.pendingOps.clear();
                 this.clientSequenceNumber = 0;
 
                 // And now we are fully connected
@@ -286,7 +287,7 @@ export abstract class CollaborativeObject extends EventEmitter implements IColla
             // One of our messages was sequenced. We can remove it from the local message list. Given these arrive
             // in order we only need to check the beginning of the local list.
             if (this.pendingOps.length > 0 &&
-                this.pendingOps[0].clientSequenceNumber === message.clientSequenceNumber) {
+                this.pendingOps.peekFront().clientSequenceNumber === message.clientSequenceNumber) {
                 this.pendingOps.shift();
                 if (this.pendingOps.length === 0) {
                     this.emit("processed");
