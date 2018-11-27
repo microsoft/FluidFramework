@@ -56,6 +56,9 @@ export class BaseWork extends EventEmitter {
             if (this.readonlyMode) {
                 this.closeDocument();
             } else {
+                this.closeDocument();
+                // TODO (mdaumi): Bring back "processed signal"
+                /*
                 await runAfterWait(
                     this.document.hasUnackedOps,
                     this.document,
@@ -63,6 +66,7 @@ export class BaseWork extends EventEmitter {
                     async () => {
                         this.closeDocument();
                     });
+                */
             }
         }
     }

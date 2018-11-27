@@ -10,6 +10,7 @@ import * as url from "url";
 import * as winston from "winston";
 import * as core from "../core";
 import * as utils from "../utils";
+import { NodeCodeLoader, NodePlatformFactory } from "./chaincodeHost";
 
 class DocumentServiceFactory implements agent.IDocumentServiceFactory {
     constructor(private serverUrl: string, private historianUrl: string) {
@@ -40,7 +41,9 @@ export class PaparazziRunner implements utils.IRunner {
             factory,
             this.workerConfig,
             alfredUrl,
-            this.initLoadModule(alfredUrl));
+            this.initLoadModule(alfredUrl),
+            new NodeCodeLoader(),
+            new NodePlatformFactory());
     }
 
     public async start(): Promise<void> {

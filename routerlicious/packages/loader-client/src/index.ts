@@ -32,11 +32,12 @@ class NodeCodeLoader implements ICodeLoader {
         const [, scope, name] = components;
 
         const packagesBase = path.join(__dirname, "../packages");
-        await asyncExec(`npm install ${pkg}`, { cwd: packagesBase });
+        // tslint:disable max-line-length
+        await asyncExec(`npm install ${pkg} --registry https://packages.wu2.prague.office-int.com`, { cwd: packagesBase });
 
         // tslint:disable:no-unsafe-any
         // tslint:disable-next-line:non-literal-require
-        const entry = require(`${packagesBase}/node_modules/${scope}/${name}`);
+        const entry = import(`${packagesBase}/node_modules/${scope}/${name}`);
         return entry;
     }
 }

@@ -134,7 +134,7 @@
         "alfred": "http://alfred:3000",
         "queues": ["paparazziQueue", "augloopQueue"],
         "permissions": {
-            "paparazziQueue": ["snapshot", "spell", "intel", "translation"],
+            "paparazziQueue": ["snapshot", "spell", "intel", "translation", "chaincode"],
             "augloopQueue": ["augmentation"]
         }
     },
@@ -186,7 +186,7 @@
         "blobStorageUrl": "http://historian:3000",
         "repository": "prague",
         "npm": "http://localhost:3002",
-        "permission": ["snapshot", "spell", "intel", "translation"]
+        "permission": ["snapshot", "spell", "intel", "translation", "chaincode"]
     },
     "tenantConfig": [
         {

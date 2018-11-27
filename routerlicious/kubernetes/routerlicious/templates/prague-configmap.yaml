@@ -150,7 +150,7 @@ data:
             "groupId": "{{ template "tmz.fullname" . }}",
             "queues": ["paparazziQueue", "augloopQueue"],
             "permissions": {
-                "paparazziQueue": ["snapshot", "spell", "intel", "translation"],
+                "paparazziQueue": ["snapshot", "spell", "intel", "translation", "chaincode"],
                 "augloopQueue": ["augmentation"]
             }
         },
@@ -209,7 +209,7 @@ data:
             "blobStorageUrl": "{{ .Values.historian.externalUrl }}",
             "repository": "prague",
             "npm": "https://pragueauspkn-3873244262.azureedge.net",
-            "permission": ["snapshot", "spell", "intel", "translation"]
+            "permission": ["snapshot", "spell", "intel", "translation", "chaincode"]
         },
         "tenantConfig": [
             {
