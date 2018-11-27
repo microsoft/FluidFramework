@@ -1,6 +1,6 @@
 Nuclio and Kube experiments
 
-##Get Nuclio Running
+## Get Nuclio Running
 
 1. Apply Nuclio Access Policy (RBAC) (minikube and AKS respectively)
     1. `kubectl apply -f https://raw.githubusercontent.com/nuclio/nuclio/master/hack/minikube/resources/kubedns-rbac.yaml`

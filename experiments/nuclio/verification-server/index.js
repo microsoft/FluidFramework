@@ -1,12 +1,8 @@
 const express = require('express');
-<<<<<<< HEAD
-var stringify = require('json-stringify-safe');
-const bodyParser = require('body-parser');
-=======
->>>>>>> 7b804ca49733dd3a8a2807a80c6a432f30e2aba4
 const app = express();
-const port = 3333;
+const bodyParser = require('body-parser');
 
+const port = 3333;
 var tunnelURL = "";
 
 // Get NGROK Address
