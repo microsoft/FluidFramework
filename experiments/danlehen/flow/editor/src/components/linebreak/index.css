@@ -1,0 +1,10 @@
+.lineBreak { }
+.afterLineBreak::after { 
+    content: "⏎";
+    font-size: 0.7rem;
+    padding: 0px 1px 0px 1px;
+}
+
+.afterLineBreak::after, .afterParagraph::after {
+    color: #ccc;
+}

@@ -1,0 +1,11 @@
+.document { }
+.documentContent { 
+    user-select: none;
+}
+.documentOverlay {
+    pointer-events: none;
+}
+
+.leadingSpan::after, .trailingSpan::after {
+    content: "\200b"  /* zero-width space to force leading/trailing span to be line height. */
+}
