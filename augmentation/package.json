@@ -19,7 +19,7 @@
         "@types/node": "^8.0.14",
         "@types/request": "^2.0.3",
         "concurrently": "^3.4.0",
-        "nodemon": "^1.17.5",
+        "nodemon": "^1.18.7",
         "tslint": "^4.5.1",
         "typescript": "2.3.x"
     },
