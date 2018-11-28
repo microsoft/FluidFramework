@@ -6,7 +6,6 @@ import {
 } from "@prague/runtime-definitions";
 import { exec } from "child_process";
 import { EventEmitter } from "events";
-import * as path from "path";
 import { promisify } from "util";
 
 const asyncExec = promisify(exec);
@@ -21,8 +20,7 @@ export class NodeCodeLoader implements ICodeLoader {
         }
         const [, scope, name] = components;
 
-        const packagesBase = path.join(__dirname, "../../../../chaincode");
-
+        const packagesBase = `/tmp/chaincode`;
         await asyncExec(`npm install ${pkg} --registry ${npmRegistry}`, { cwd: packagesBase });
 
         // tslint:disable:no-unsafe-any
