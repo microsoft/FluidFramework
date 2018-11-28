@@ -1,5 +1,4 @@
 import * as git from "@prague/gitresources";
-import * as querystring from "querystring";
 import { RestWrapper } from "./restWrapper";
 
 function endsWith(value: string, endings: string[]): boolean {
@@ -60,7 +59,7 @@ export class Historian implements IHistorian {
     constructor(
         public endpoint: string,
         private historianApi: boolean,
-        disableCache: boolean,
+        private disableCache: boolean,
         credentials?: ICredentials) {
 
         let defaultHeaders = {};
@@ -71,91 +70,79 @@ export class Historian implements IHistorian {
             };
         }
 
-        let defaultQueryString = {};
-        if (disableCache && this.historianApi) {
-            defaultQueryString = { disableCache };
-        } else if (disableCache) {
-            defaultQueryString = { cacheBust: () => Date.now() };
-        }
-
-        this.rw = new RestWrapper(this.endpoint, defaultHeaders, defaultQueryString);
+        this.rw = new RestWrapper(this.endpoint, defaultHeaders);
     }
 
     /* tslint:disable:promise-function-async */
     public getHeader(sha: string): Promise<any> {
         if (this.historianApi) {
-            return this.rw.get(`/headers/${encodeURIComponent(sha)}`);
+            return this.rw.get(`/headers/${encodeURIComponent(sha)}`, this.appendCacheQueryString());
         } else {
             return this.getHeaderDirect(sha);
         }
     }
 
     public getBlob(sha: string): Promise<git.IBlob> {
-        return this.rw.get<git.IBlob>(`/git/blobs/${encodeURIComponent(sha)}`);
+        return this.rw.get<git.IBlob>(`/git/blobs/${encodeURIComponent(sha)}`, this.appendCacheQueryString());
     }
 
     public createBlob(blob: git.ICreateBlobParams): Promise<git.ICreateBlobResponse> {
-        return this.rw.post<git.ICreateBlobResponse>(`/git/blobs`, blob);
+        return this.rw.post<git.ICreateBlobResponse>(`/git/blobs`, blob, this.appendCacheQueryString());
     }
 
     public getContent(path: string, ref: string): Promise<any> {
-        const query = querystring.stringify({ ref });
-        return this.rw.get(`/contents/${path}?${query}`);
+        return this.rw.get(`/contents/${path}`, { ...{ ref }, ...this.appendCacheQueryString() });
     }
 
     public getCommits(sha: string, count: number): Promise<git.ICommitDetails[]> {
-        const query = querystring.stringify({
-            count,
-            sha,
-        });
-        return this.rw.get<git.ICommitDetails[]>(`/commits?${query}`)
+        return this.rw.get<git.ICommitDetails[]>(`/commits`, { ...{ count, sha }, ...this.appendCacheQueryString() })
             .catch((error) => error === 400 ? [] as git.ICommitDetails[] : Promise.reject<git.ICommitDetails[]>(error));
     }
 
     public getCommit(sha: string): Promise<git.ICommit> {
-        return this.rw.get<git.ICommit>(`/git/commits/${encodeURIComponent(sha)}`);
+        return this.rw.get<git.ICommit>(`/git/commits/${encodeURIComponent(sha)}`, this.appendCacheQueryString());
     }
 
     public createCommit(commit: git.ICreateCommitParams): Promise<git.ICommit> {
-        return this.rw.post<git.ICommit>(`/git/commits`, commit);
+        return this.rw.post<git.ICommit>(`/git/commits`, commit, this.appendCacheQueryString());
     }
 
     public getRefs(): Promise<git.IRef[]> {
-        return this.rw.get(`/git/refs`);
+        return this.rw.get(`/git/refs`, this.appendCacheQueryString());
     }
 
     public getRef(ref: string): Promise<git.IRef> {
-        return this.rw.get(`/git/refs/${ref}`);
+        return this.rw.get(`/git/refs/${ref}`, this.appendCacheQueryString());
     }
 
     public createRef(params: git.ICreateRefParams): Promise<git.IRef> {
-        return this.rw.post(`/git/refs`, params);
+        return this.rw.post(`/git/refs`, params, this.appendCacheQueryString());
     }
 
     public updateRef(ref: string, params: git.IPatchRefParams): Promise<git.IRef> {
-        return this.rw.patch(`/git/refs/${ref}`, params);
+        return this.rw.patch(`/git/refs/${ref}`, params, this.appendCacheQueryString());
     }
 
     public async deleteRef(ref: string): Promise<void> {
-        await this.rw.delete(`/git/refs/${ref}`);
+        await this.rw.delete(`/git/refs/${ref}`, this.appendCacheQueryString());
     }
 
     public createTag(tag: git.ICreateTagParams): Promise<git.ITag> {
-        return this.rw.post(`/git/tags`, tag);
+        return this.rw.post(`/git/tags`, tag, this.appendCacheQueryString());
     }
 
     public getTag(tag: string): Promise<git.ITag> {
-        return this.rw.get(`/git/tags/${tag}`);
+        return this.rw.get(`/git/tags/${tag}`, this.appendCacheQueryString());
     }
 
     public createTree(tree: git.ICreateTreeParams): Promise<git.ITree> {
-        return this.rw.post<git.ITree>(`/git/trees`, tree);
+        return this.rw.post<git.ITree>(`/git/trees`, tree, this.appendCacheQueryString());
     }
 
     public getTree(sha: string, recursive: boolean): Promise<git.ITree> {
-        const query = querystring.stringify({ recursive: recursive ? 1 : 0 });
+        const queryString = { ...{ recursive: recursive ? 1 : 0 }, ...this.appendCacheQueryString() };
         return this.rw.get<git.ITree>(
-            `/git/trees/${encodeURIComponent(sha)}?${query}`);
+            `/git/trees/${encodeURIComponent(sha)}`, queryString);
     }
 
     private async getHeaderDirect(sha: string): Promise<git.IHeader> {
@@ -177,5 +164,16 @@ export class Historian implements IHistorian {
             blobs,
             tree,
         };
+    }
+
+    private appendCacheQueryString() {
+        let queryString: {};
+        if (this.disableCache && this.historianApi) {
+            queryString = { disableCache: this.disableCache };
+        } else if (this.disableCache) {
+            queryString = { cacheBust: Date.now() };
+        }
+
+        return queryString;
     }
 }
