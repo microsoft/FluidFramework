@@ -115,3 +115,7 @@ export interface IForkOperation {
     // The name of the target tenant
     tenantId: string;
 }
+
+export interface IBoxcar {
+    contents: IMessage[];
+}
