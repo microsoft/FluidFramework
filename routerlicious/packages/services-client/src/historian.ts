@@ -61,16 +61,15 @@ export class Historian implements IHistorian {
         private historianApi: boolean,
         private disableCache: boolean,
         credentials?: ICredentials) {
+        this.rw = new RestWrapper();
+        this.rw.baseurl = this.endpoint;
 
-        let defaultHeaders = {};
         if (credentials) {
-            defaultHeaders = {
+            this.rw.defaultHeaders = {
                 Authorization:
                     `Basic ${new Buffer(`${credentials.user}:${credentials.password}`).toString("base64")}`,
             };
         }
-
-        this.rw = new RestWrapper(this.endpoint, defaultHeaders);
     }
 
     /* tslint:disable:promise-function-async */

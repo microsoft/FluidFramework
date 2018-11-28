@@ -3,13 +3,12 @@ import { AxiosInstance, AxiosRequestConfig, default as Axios } from "axios";
 import * as qs from "querystring";
 
 export class RestWrapper {
-
-    private maxContentLength = 1000 * 1024 * 1024;
+    public maxContentLength = 1000 * 1024 * 1024;
+    public baseurl?: string;
+    public defaultHeaders?: {};
+    public defaultQueryString?: {};
 
     constructor(
-        private baseurl: string,
-        private defaultHeaders?: {},
-        private defaultQueryString?: {},
         private axios: AxiosInstance = Axios) {
     }
 
@@ -61,7 +60,7 @@ export class RestWrapper {
 
     private async request<T>(options: AxiosRequestConfig, statusCode: number): Promise<T> {
         if (this.defaultHeaders) {
-            options.headers = { ...options.headers, ...this.defaultHeaders }
+            options.headers = { ...this.defaultHeaders, ...options.headers }
         }
 
         const response = await this.axios.request<T>(options)
