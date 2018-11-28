@@ -1,6 +1,6 @@
 {
   "name": "@chaincode/simple",
-  "version": "0.0.9",
+  "version": "0.0.13",
   "description": "Simplest example of chaincode",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -16,6 +16,7 @@
   "author": "Microsoft",
   "repository": "microsoft/prague",
   "devDependencies": {
+    "@types/uuid": "^3.4.4",
     "source-map-loader": "^0.2.3",
     "ts-loader": "^4.2.0",
     "tslint": "^5.11.0",
@@ -26,8 +27,10 @@
     "webpack-visualizer-plugin": "^0.1.11"
   },
   "dependencies": {
+    "@prague/api-definitions": "^0.1.4111",
     "@prague/map": "^0.1.4111",
-    "@prague/runtime-definitions": "^0.1.4111"
+    "@prague/runtime-definitions": "^0.1.4111",
+    "uuid": "^3.3.2"
   },
   "prague": {
     "browser": {
