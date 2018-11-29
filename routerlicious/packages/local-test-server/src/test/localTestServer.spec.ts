@@ -15,7 +15,7 @@ import {
 describe("LocalTestServer", () => {
   const id = "documentId";
   const tenatId = "tenantId";
-  const tokenKey = "tokenLey";
+  const tokenKey = "tokenKey";
 
   let testDeltaConnectionServer: ITestDeltaConnectionServer;
   let documentDeltaEventManager: DocumentDeltaEventManager;
@@ -24,47 +24,34 @@ describe("LocalTestServer", () => {
   let user1SharedString: SharedString;
   let user2SharedString: SharedString;
 
-  before(() => {
+  beforeEach(async () => {
     testDeltaConnectionServer = TestDeltaConnectionServer.Create();
     documentDeltaEventManager = new DocumentDeltaEventManager();
+
+    const user1Token = utils.generateToken(tenatId, id, tokenKey);
+    const documentService = createTestDocumentService(testDeltaConnectionServer);
+    user1Document = await api.load(
+      id, tenatId, undefined, new socketStorage.TokenProvider(user1Token), {}, null, true, documentService);
+    let rootView = await user1Document.getRoot().getView();
+    user1SharedString = user1Document.createString();
+    rootView.set("SharedString", user1SharedString);
+    documentDeltaEventManager.registerDocuments(user1Document);
+
+    const user2Token = utils.generateToken(tenatId, id, tokenKey);
+    user2Document = await api.load(
+      id, tenatId, undefined, new socketStorage.TokenProvider(user2Token), {}, null, true, documentService);
+    rootView = await user2Document.getRoot().getView();
+    user2SharedString = await rootView.wait("SharedString") as SharedString;
+    documentDeltaEventManager.registerDocuments(user2Document);
   });
 
-  describe("Load Document on Client1", () => {
-    describe("Create SharedString", () => {
-      before(async () => {
-        const token = utils.generateToken(tenatId, id, tokenKey);
-        const documentService = createTestDocumentService(testDeltaConnectionServer);
-        const tokenProvider = new socketStorage.TokenProvider(token);
-        user1Document = await api.load(id, tenatId, undefined, tokenProvider, {}, null, true, documentService);
-        const rootView = await user1Document.getRoot().getView();
-        user1SharedString = user1Document.createString();
-        // tslint:disable-next-line:no-backbone-get-set-outside-model
-        rootView.set("SharedString", user1SharedString);
-        documentDeltaEventManager.registerDocuments(user1Document);
-      });
-
-      it("Validate document is new", () => {
+  describe("Document.existing", () => {
+      it("Validate document is new for user1 1 and exists for client 2", () => {
         assert.equal(user1Document.existing, false, "Document already exists");
-      });
+        assert.equal(user2Document.existing, true, "Document does not exist on the server");
+        assert.notEqual(user2SharedString, undefined, "Document does not contain a SharedString");
+        });
     });
-  });
-
-  describe("Load Document on Client2", () => {
-    before(async () => {
-      const token = utils.generateToken(tenatId, id, tokenKey);
-      const documentService = createTestDocumentService(testDeltaConnectionServer);
-      const tokenProvider = new socketStorage.TokenProvider(token);
-      user2Document = await api.load(id, tenatId, undefined, tokenProvider, {}, null, true, documentService);
-      const rootView = await user2Document.getRoot().getView();
-      user2SharedString = await rootView.wait("SharedString") as SharedString;
-      documentDeltaEventManager.registerDocuments(user2Document);
-    });
-
-    it("Validate document and SharedString exist", () => {
-      assert.equal(user2Document.existing, true, "Document does not exist on the server");
-      assert.notEqual(user2SharedString, undefined, "Document does not contain a SharedString");
-    });
-  });
 
   describe("Attach Op Handlers on Both Clients", () => {
     it("Validate messaging", async () => {
@@ -116,7 +103,7 @@ describe("LocalTestServer", () => {
     });
   });
 
-  after(async () => {
+  afterEach(async () => {
     user1Document.close();
     user2Document.close();
     await testDeltaConnectionServer.webSocketServer.close();
