@@ -11,19 +11,34 @@ export class RouteMasterLambda extends SequencedLambda {
     }
 
     protected async handlerCore(rawMessage: utils.IMessage): Promise<void> {
-        const message = rawMessage.value as core.ISequencedOperationMessage;
-        if (message.type === core.SequencedOperationType) {
-            // Create the fork first then route any messages. This will make the fork creation the first message
-            // routed to the fork. We only process the fork on the route branch it is defined.
-            if (!message.operation.origin && message.operation.type === MessageType.Fork) {
-                await this.createFork(message);
-            }
+        const boxcar = utils.extractBoxcar(rawMessage);
 
-            // Route the fork message to all clients
-            // TODO - routing the message keeps the sequenced messages exact - but should all clients see fork requests
-            // ont he parent?
-            this.routeToForks(message, rawMessage.offset);
+        const boxcarProcessed = new Array<Promise<void>>();
+        for (const message of boxcar.contents) {
+            if (message.type === core.SequencedOperationType) {
+                const sequencedOpMessage = message as core.ISequencedOperationMessage;
+                // Create the fork first then route any messages. This will make the fork creation the first message
+                // routed to the fork. We only process the fork on the route branch it is defined.
+                if (!sequencedOpMessage.operation.origin && sequencedOpMessage.operation.type === MessageType.Fork) {
+                    await this.createFork(sequencedOpMessage);
+                }
+
+                // Route the fork message to all clients
+                // TODO - routing the message keeps the sequenced messages exact - but should all clients see
+                // fork requests on the parent?
+                const routeP = this.routeToForks(sequencedOpMessage, rawMessage.offset);
+                boxcarProcessed.push(routeP);
+            }
         }
+
+        // TODO can checkpoint here
+        Promise.all(boxcarProcessed).then(
+            () => {
+                this.context.checkpoint(rawMessage.offset);
+            },
+            (error) => {
+                this.context.error(error, true);
+            });
     }
 
     private async createFork(message: core.ISequencedOperationMessage): Promise<void> {
@@ -54,7 +69,7 @@ export class RouteMasterLambda extends SequencedLambda {
     /**
      * Routes the provided message to all active forks
      */
-    private routeToForks(message: core.ISequencedOperationMessage, offset: number): void {
+    private async routeToForks(message: core.ISequencedOperationMessage, offset: number): Promise<void> {
         const document = this.document;
         const forks = document.getActiveForks();
 
@@ -64,14 +79,7 @@ export class RouteMasterLambda extends SequencedLambda {
             maps.push(routeP);
         }
 
-        // TODO can checkpoint here
-        Promise.all(maps).then(
-            () => {
-                this.context.checkpoint(offset);
-            },
-            (error) => {
-                this.context.error(error, true);
-            });
+        await Promise.all(maps);
     }
 
     /**

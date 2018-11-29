@@ -25,32 +25,28 @@ export class RotographLambda extends SequencedLambda {
     }
 
     protected async handlerCore(message: utils.IMessage): Promise<void> {
+        const boxcar = utils.extractBoxcar(message);
 
-        const messageContent = message.value.toString();
-        const parsedMessage = utils.safelyParseJSON(messageContent);
-        if (parsedMessage === undefined) {
-            winston.error(`Invalid JSON input: ${messageContent}`);
-            return;
-        }
+        for (const baseMessage of boxcar.contents) {
+            if (baseMessage.type === core.SequencedOperationType) {
+                const sequencedMessage = baseMessage as core.ISequencedOperationMessage;
 
-        const baseMessage = parsedMessage as core.IMessage;
-        if (baseMessage.type === core.SequencedOperationType) {
-            const sequencedMessage = baseMessage as core.ISequencedOperationMessage;
+                if (sequencedMessage.operation.type === MessageType.BlobUploaded) {
 
-            if (sequencedMessage.operation.type === MessageType.BlobUploaded) {
+                    const blobMessage = sequencedMessage.operation.contents as IDataBlob;
+                    if (blobMessage.fileName.includes("upload")) {
+                        const blobP = this.getBlob(sequencedMessage.tenantId, blobMessage.sha);
+                        const uriP = this.blobHandler(blobMessage);
 
-                const blobMessage = sequencedMessage.operation.contents as IDataBlob;
-                if (blobMessage.fileName.includes("upload")) {
-                    const blobP = this.getBlob(sequencedMessage.tenantId, blobMessage.sha);
-                    const uriP = this.blobHandler(blobMessage);
-
-                    Promise.all([blobP, uriP])
-                        .then(([blob, uri]) => {
-                            this.AMSHelper.uploadContent(uri, blob);
-                        });
+                        Promise.all([blobP, uriP])
+                            .then(([blob, uri]) => {
+                                this.AMSHelper.uploadContent(uri, blob);
+                            });
+                    }
                 }
             }
         }
+
         this.context.checkpoint(message.offset);
     }
 
