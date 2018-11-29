@@ -1,0 +1,26 @@
+{
+  "name": "scribe",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "webpack --config webpack.config.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/uuid": "^3.4.4",
+    "ts-loader": "^5.3.1",
+    "typescript": "^3.1.6",
+    "webpack": "^4.26.1",
+    "webpack-cli": "^3.1.2"
+  },
+  "dependencies": {
+    "@prague/client-api": "^0.1.4184",
+    "@prague/runtime-definitions": "^0.1.4184",
+    "@prague/socket-storage": "^0.1.4184",
+    "jsonwebtoken": "^8.4.0",
+    "uuid": "^3.3.2"
+  }
+}
