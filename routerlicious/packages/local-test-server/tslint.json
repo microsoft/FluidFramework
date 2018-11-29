@@ -26,6 +26,7 @@
         "promise-function-async": false,
         "strict-boolean-expressions": [true, "allow-null-union", "allow-undefined-union", "allow-string", "allow-number"],
         "underscore-consistent-invocation": false,
-        "no-implicit-dependencies": [true, "dev"]
+        "no-implicit-dependencies": [true, "dev"],
+        "no-backbone-get-set-outside-model": false
     }
 }
