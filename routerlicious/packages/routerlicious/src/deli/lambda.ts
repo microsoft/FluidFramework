@@ -10,7 +10,14 @@ import * as _ from "lodash";
 import * as winston from "winston";
 import * as core from "../core";
 import { IContext, IPartitionLambda } from "../kafka-service/lambdas";
-import * as utils from "../utils";
+import {
+    extractBoxcar,
+    Heap,
+    IComparer,
+    IHeapNode,
+    IMessage,
+    IProducer,
+} from "../utils";
 import { CheckpointContext, ICheckpoint, IClientSequenceNumber } from "./checkpointContext";
 
 export interface ITicketedMessageOutput {
@@ -22,7 +29,7 @@ export interface ITicketedMessageOutput {
     type: string;
 }
 
-const SequenceNumberComparer: utils.IComparer<IClientSequenceNumber> = {
+const SequenceNumberComparer: IComparer<IClientSequenceNumber> = {
     compare: (a, b) => a.referenceSequenceNumber - b.referenceSequenceNumber,
     min: {
         canEvict: true,
@@ -46,8 +53,8 @@ export class DeliLambda implements IPartitionLambda {
     private logOffset: number;
 
     // Client sequence number mapping
-    private clientNodeMap = new Map<string, utils.IHeapNode<IClientSequenceNumber>>();
-    private clientSeqNumbers = new utils.Heap<IClientSequenceNumber>(SequenceNumberComparer);
+    private clientNodeMap = new Map<string, IHeapNode<IClientSequenceNumber>>();
+    private clientSeqNumbers = new Heap<IClientSequenceNumber>(SequenceNumberComparer);
     private minimumSequenceNumber = 0;
     private branchMap: RangeTracker;
     private checkpointContext: CheckpointContext;
@@ -59,8 +66,8 @@ export class DeliLambda implements IPartitionLambda {
         private documentId: string,
         dbObject: core.IDocument,
         collection: core.ICollection<core.IDocument>,
-        private forwardProducer: utils.IProducer,
-        private reverseProducer: utils.IProducer,
+        private forwardProducer: IProducer,
+        private reverseProducer: IProducer,
         private clientTimeout: number,
         private activityTimeout: number) {
 
@@ -111,28 +118,52 @@ export class DeliLambda implements IPartitionLambda {
         this.checkpointContext = new CheckpointContext(this.tenantId, this.documentId, collection, context);
     }
 
-    public handler(message: utils.IMessage): void {
-        // Ticket current message.
-        const ticketedMessage = this.ticket(message, this.createTrace("start"));
-
-        // Return early if message is not valid.
-        if (!ticketedMessage) {
+    public handler(rawMessage: IMessage): void {
+        // In cases where we are reprocessing messages we have already checkpointed exit early
+        if (rawMessage.offset < this.logOffset) {
             return;
         }
 
-        // Send ticketed message to scriptorium.
-        this.sendToScriptorium(ticketedMessage.message);
+        this.logOffset = rawMessage.offset;
 
-        // Check if there are any old/idle clients. Craft and send a leave message to alfred.
-        // To prevent recurrent leave message sending, leave messages are only piggybacked with
-        // other message type.
-        if (ticketedMessage.type !== MessageType.ClientLeave) {
-            const idleClient = this.getIdleClient(ticketedMessage.timestamp);
-            if (idleClient) {
-                const leaveMessage = this.createLeaveMessage(idleClient.clientId);
-                this.sendToAlfred(leaveMessage);
+        const boxcar = extractBoxcar(rawMessage);
+        let lastSendP = Promise.resolve();
+
+        for (const message of boxcar.contents) {
+            // Ticket current message.
+            const ticketedMessage = this.ticket(message, this.createTrace("start"));
+
+            // Return early if message is not valid.
+            if (!ticketedMessage) {
+                return;
+            }
+
+            // Send tick1eted message to scriptorium.
+            lastSendP = this.sendToScriptorium(ticketedMessage.message);
+
+            // Check if there are any old/idle clients. Craft and send a leave message to alfred.
+            // To prevent recurrent leave message sending, leave messages are only piggybacked with
+            // other message type.
+            if (ticketedMessage.type !== MessageType.ClientLeave) {
+                const idleClient = this.getIdleClient(ticketedMessage.timestamp);
+                if (idleClient) {
+                    const leaveMessage = this.createLeaveMessage(idleClient.clientId);
+                    this.sendToDeli(leaveMessage);
+                }
             }
         }
+
+        const checkpoint = this.generateCheckpoint();
+        // TODO optimize this to aviod doing per message
+        // Checkpoint the current state
+        lastSendP.then(
+            () => {
+                this.checkpointContext.checkpoint(checkpoint);
+            },
+            (error) => {
+                // TODO issue with Kafka - need to propagate the issue somehow
+                winston.error("Could not send message to scriptorium", error);
+            });
 
         // Start a timer to check inactivity on the document. To trigger idle client leave message,
         // we send a noop back to alfred. The noop should trigger a client leave message if there are any.
@@ -142,7 +173,7 @@ export class DeliLambda implements IPartitionLambda {
 
         this.idleTimer = setTimeout(() => {
             const noOpMessage = this.createNoOpMessage();
-            this.sendToAlfred(noOpMessage);
+            this.sendToDeli(noOpMessage);
         }, this.activityTimeout);
     }
 
@@ -155,26 +186,14 @@ export class DeliLambda implements IPartitionLambda {
         }
     }
 
-    private ticket(rawMessage: utils.IMessage, trace: ITrace): ITicketedMessageOutput {
-        // In cases where we are reprocessing messages we have already checkpointed exit early
-        if (rawMessage.offset < this.logOffset) {
-            return;
-        }
-
-        this.logOffset = rawMessage.offset;
-
-        // Update the client's reference sequence number based on the message type
-        const objectMessage = typeof rawMessage.value === "string"
-            ? JSON.parse(rawMessage.value)
-            : rawMessage.value as core.IObjectMessage;
-
+    private ticket(rawMessage: core.IMessage, trace: ITrace): ITicketedMessageOutput {
         // Exit out early for unknown messages
-        if (objectMessage.type !== core.RawOperationType) {
+        if (rawMessage.type !== core.RawOperationType) {
             return;
         }
 
         // Update and retrieve the minimum sequence number
-        let message = objectMessage as core.IRawOperationMessage;
+        let message = rawMessage as core.IRawOperationMessage;
 
         // Back-Compat: Older message does not have metadata field. So use the content field.
         const messageContent = message.operation.metadata
@@ -327,15 +346,15 @@ export class DeliLambda implements IPartitionLambda {
         };
 
         const sequencedMessage: core.ISequencedOperationMessage = {
-            documentId: objectMessage.documentId,
+            documentId: message.documentId,
             operation: outputMessage,
-            tenantId: objectMessage.tenantId,
+            tenantId: message.tenantId,
             type: core.SequencedOperationType,
         };
 
         return {
             message: sequencedMessage,
-            timestamp: objectMessage.timestamp,
+            timestamp: message.timestamp,
             type: message.operation.type,
         };
     }
@@ -372,23 +391,11 @@ export class DeliLambda implements IPartitionLambda {
         return false;
     }
 
-    private sendToScriptorium(message: core.ITicketedMessage) {
-        // TODO optimize this to aviod doing per message
-        // Checkpoint the current state
-        const checkpoint = this.generateCheckpoint();
-
-        // Otherwise send the message to the event hub
-        this.forwardProducer.send(JSON.stringify(message), message.documentId).then(
-            (result) => {
-                this.checkpointContext.checkpoint(checkpoint);
-            },
-            (error) => {
-                // TODO issue with Kafka - need to propagate the issue somehow
-                winston.error("Could not send message to scriptorium", error);
-            });
+    private sendToScriptorium(message: core.ITicketedMessage): Promise<void> {
+        return this.forwardProducer.send(JSON.stringify(message), message.documentId);
     }
 
-    private sendToAlfred(message: core.IRawOperationMessage) {
+    private sendToDeli(message: core.IRawOperationMessage) {
         // Otherwise send the message to the event hub
         this.reverseProducer.send(JSON.stringify(message), message.documentId).catch((error) => {
             // TODO issue with Kafka - need to propagate the issue somehow

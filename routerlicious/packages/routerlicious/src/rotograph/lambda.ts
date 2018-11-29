@@ -1,5 +1,4 @@
 import { IDataBlob, MessageType } from "@prague/runtime-definitions";
-import * as winston from "winston";
 import * as core from "../core";
 import { ITenantManager } from "../core";
 import { IContext } from "../kafka-service/lambdas";
