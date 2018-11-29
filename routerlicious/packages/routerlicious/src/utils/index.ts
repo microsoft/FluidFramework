@@ -1,5 +1,4 @@
 export * from "./auth";
-export * from "./batch";
 export * from "./conversion";
 export * from "./dns";
 export * from "./dockerNames";
