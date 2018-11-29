@@ -1,0 +1,50 @@
+html, body {
+	height: 100%;
+    width: 100%;
+    padding: 0px;
+    margin: 0px;
+}
+
+.container {
+    width: 100%;
+    height: 100%;
+    display: grid;
+    justify-content: stretch;
+    grid-template-columns: 1fr auto;
+    grid-template-rows: auto;
+    grid-template-areas:
+      "main";
+    background: pink;
+}
+
+.editor {
+    width: 100%;
+    height: 100%;
+    grid-area: main;
+}
+
+.before, .after {
+    color: white;
+    padding: 0px 4px 0px 4px;
+}
+
+.before {
+    background: #400;
+}
+
+.after {
+    background: #00F;
+    padding: 0px 4px 0px 4px;
+}
+
+.includeLeft, .includeRight {
+    margin: 8px;
+}
+
+.includeLeft {
+    float: left;
+}
+
+.includeRight {
+    float: right;
+}

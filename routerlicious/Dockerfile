@@ -42,8 +42,12 @@ COPY packages/store/package*.json packages/store/
 COPY packages/stream/package*.json packages/stream/
 COPY packages/utils/package*.json packages/utils/
 
-# Copy over chaincode npmrc and package.json to dynamically install packages
-COPY chaincode/* chaincode/
+# Copy over chaincode npmrc and package.json to dynamically install packages.
+COPY chaincode/* /tmp/chaincode/
+
+# Give write permission to node user.
+RUN chown -R node:node /tmp/chaincode/
+RUN chmod -R 755 /tmp/chaincode/*
 
 # Need to set the --unsafe-perm flag since we are doing the install as root. Consider adding an 'app' accout so we
 # can do the install as node but then switch to 'app' to run. As app we won't be able to write to installed files
