@@ -8,10 +8,10 @@ const localSettings = {
     tenantId: "prague",
 };
 const remoteSettings = {
-    historian: "https://historian.eu.prague.office-int.com",
-    routerlicious: "https://alfred.eu.prague.office-int.com",
-    secret: "04d35da60eed66c9a2272bdf310d076e",
-    tenantId: "trusting-tesla",
+    historian: "https://historian.eu2.prague.office-int.com",
+    routerlicious: "https://alfred.eu2.prague.office-int.com",
+    secret: "6b423d81f626ad6e6f8a9637a32f00a9",
+    tenantId: "heuristic-noyce",
 };
 
 export const settingCollection = {
