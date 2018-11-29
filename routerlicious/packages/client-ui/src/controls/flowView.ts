@@ -3874,7 +3874,6 @@ export class FlowView extends ui.Component {
         this.calendarIntervals =
             this.docRoot.get<SharedString.SharedIntervalCollection<SharedString.Interval>>("calendar");
         if (this.calendarIntervals) {
-            this.calendarIntervals.attach(undefined, "calendar");
             this.calendarIntervals.getView().then((v) => {
                 this.calendarIntervalsView = v;
             });

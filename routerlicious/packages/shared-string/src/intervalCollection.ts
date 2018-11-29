@@ -284,7 +284,9 @@ class LocalIntervalCollection<TInterval extends ISerializableInterval> {
         const interval = this.createInterval(start, end, intervalType);
         if (interval) {
             interval.addProperties(props);
-            interval.properties[MergeTree.reservedRangeLabelsKey] = [this.label];
+            if (this.label && (this.label.length > 0)) {
+                interval.properties[MergeTree.reservedRangeLabelsKey] = [this.label];
+            }
             this.intervalTree.put(interval);
             this.endIntervalTree.put(interval, interval);
         }
@@ -374,9 +376,12 @@ function compareIntervalEnds(a: Interval, b: Interval) {
 }
 
 function createInterval(label: string, start: number, end: number, client: MergeTree.Client): Interval {
-    const rangeProp = {
-        [MergeTree.reservedRangeLabelsKey]: [label],
-    };
+    let rangeProp: MergeTree.PropertySet;
+    if (label && (label.length > 0)) {
+        rangeProp = {
+            [MergeTree.reservedRangeLabelsKey]: [label],
+        };
+    }
     return new Interval(start, end, rangeProp);
 }
 
@@ -387,7 +392,9 @@ class SharedIntervalCollectionFactory
             compareEnds: compareIntervalEnds,
             create: createInterval,
         };
-        return new SharedIntervalCollection<Interval>(helpers, false, emitter, raw || []);
+        const collection = new SharedIntervalCollection<Interval>(helpers, false, emitter, raw || []);
+        collection.attach(undefined, "");
+        return collection;
     }
 
     public store(value: SharedIntervalCollection<Interval>): ISerializedInterval[] {
