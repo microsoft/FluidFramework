@@ -98,7 +98,7 @@ export async function runTracked<T extends IResources>(
         operation: core.SystemOperations[core.SystemOperations.Join],
         type: core.SystemType,
     };
-    await producer.send(JSON.stringify(joinMessage), "__system__").catch((error) => {
+    await producer.send(JSON.stringify(joinMessage), null, "__system__").catch((error) => {
         winston.error(error);
     });
 
@@ -113,7 +113,7 @@ export async function runTracked<T extends IResources>(
         operation: core.SystemOperations[core.SystemOperations.Leave],
         type: core.SystemType,
     };
-    await producer.send(JSON.stringify(leaveMessage), "__system__").catch((error) => {
+    await producer.send(JSON.stringify(leaveMessage), null, "__system__").catch((error) => {
         winston.error(error);
     });
 

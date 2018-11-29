@@ -1,16 +1,25 @@
 import * as utils from "@prague/utils";
 import * as kafkaNode from "kafka-node";
 import * as util from "util";
+import { BoxcarType, IBoxcarMessage } from "../../core";
 import { debug } from "../debug";
-import { IPendingMessage, IProducer } from "./definitions";
+import { IProducer } from "./definitions";
 
 const MaxBatchSize = Number.MAX_VALUE;
+
+interface IPendingBoxcar {
+    documentId: string;
+    tenantId: string;
+    deferred: utils.Deferred<void>;
+    messages: string[];
+    size: number;
+}
 
 /**
  * Kafka-Node Producer.
  */
 export class KafkaNodeProducer implements IProducer {
-    private messages = new Map<string, IPendingMessage[]>();
+    private messages = new Map<string, IPendingBoxcar[]>();
     private client: any;
     private producer: any;
     private sendPending: NodeJS.Immediate;
@@ -30,26 +39,39 @@ export class KafkaNodeProducer implements IProducer {
     /**
      * Sends the provided message to Kafka
      */
-    public send(message: string, key: string): Promise<any> {
+    public send(message: string, tenantId: string, documentId: string): Promise<any> {
         if (message.length >= this.maxMessageSize) {
             return Promise.reject("Message too large");
         }
 
-        // Get the list of pending messages for the given key
+        const key = `${tenantId}/${documentId}`;
+
+        // Get the list of boxcars for the given key
         if (!this.messages.has(key)) {
             this.messages.set(key, []);
         }
-        const pending = this.messages.get(key);
+        const boxcars = this.messages.get(key);
 
-        // Insert a new pending message
-        const deferred = new utils.Deferred<any>();
-        pending.push({ deferred, message });
+        // Create a new boxcar if necessary
+        if (boxcars.length === 0 || boxcars[boxcars.length - 1].size + message.length > this.maxMessageSize) {
+            boxcars.push({
+                deferred: new utils.Deferred<void>(),
+                documentId,
+                messages: [],
+                size: 0,
+                tenantId,
+            });
+        }
+
+        // Add the message to the boxcar
+        const boxcar = boxcars[boxcars.length - 1];
+        boxcar.messages.push(message);
         this.pendingMessageCount++;
 
         // Mark the need to send a message
         this.requestSend();
 
-        return deferred.promise;
+        return boxcar.deferred.promise;
     }
 
     public async close(): Promise<void> {
@@ -94,43 +116,18 @@ export class KafkaNodeProducer implements IProducer {
      * Sends all pending messages
      */
     private sendPendingMessages() {
-        // TODO let's log to influx how many messages we have batched
-        const kafkaMessages = new Array<{ key: string, messages: string[], topic: string }>();
-
-        for (const [key, value] of this.messages) {
-            const pendingMessages = value.map((pendingMessage) => pendingMessage.message);
-
-            while (pendingMessages.length > 0) {
-                let sendSize = 0;
-                let i = 0;
-                for (; i < pendingMessages.length; i++) {
-                    sendSize += pendingMessages[i].length;
-                    if (sendSize >= this.maxMessageSize) {
-                        break;
-                    }
-                }
-
-                const sendBatch = pendingMessages.splice(0, i);
-                const kafkaMessage = {
-                    key,
-                    messages: sendBatch,
-                    topic: this.topic,
+        for (const [, value] of this.messages) {
+            for (const boxcar of value) {
+                const boxcarMessage: IBoxcarMessage = {
+                    contents: boxcar.messages,
+                    documentId: boxcar.documentId,
+                    tenantId: boxcar.tenantId,
+                    type: BoxcarType,
                 };
-                kafkaMessages.push(kafkaMessage);
-            }
-        }
 
-        const promises = new Array<Promise<void>>();
-        for (const kafkaMessage of kafkaMessages) {
-            promises.push(new Promise<void>((resolve, reject) => {
-                this.producer.send([kafkaMessage], (error, data) => error ? reject(error) : resolve(data));
-            }));
-        }
-        const doneP = Promise.all(promises);
-
-        for (const [, pendingMessages] of this.messages) {
-            for (const pendingMessage of pendingMessages) {
-                pendingMessage.deferred.resolve(doneP);
+                this.producer.send(
+                    [{ key: boxcar.documentId, messages: JSON.stringify(boxcarMessage), topic: this.topic }],
+                    (error, data) => error ? boxcar.deferred.reject(error) : boxcar.deferred.resolve());
             }
         }
 

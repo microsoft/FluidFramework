@@ -119,5 +119,9 @@ export interface IForkOperation {
 }
 
 export interface IBoxcarMessage extends ITicketedMessage {
+    contents: string[];
+}
+
+export interface IParsedBoxcarMessage extends ITicketedMessage {
     contents: IMessage[];
 }

@@ -392,12 +392,12 @@ export class DeliLambda implements IPartitionLambda {
     }
 
     private sendToScriptorium(message: core.ITicketedMessage): Promise<void> {
-        return this.forwardProducer.send(JSON.stringify(message), message.documentId);
+        return this.forwardProducer.send(JSON.stringify(message), message.tenantId, message.documentId);
     }
 
     private sendToDeli(message: core.IRawOperationMessage) {
         // Otherwise send the message to the event hub
-        this.reverseProducer.send(JSON.stringify(message), message.documentId).catch((error) => {
+        this.reverseProducer.send(JSON.stringify(message), message.tenantId, message.documentId).catch((error) => {
             // TODO issue with Kafka - need to propagate the issue somehow
             winston.error("Could not send message to alfred", error);
         });

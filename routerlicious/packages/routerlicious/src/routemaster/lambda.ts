@@ -85,12 +85,12 @@ export class RouteMasterLambda extends SequencedLambda {
     /**
      * Routes the provided messages to deli
      */
-    private routeToDeli(fork: string, message: core.ISequencedOperationMessage): Promise<void> {
+    private routeToDeli(forkId: string, message: core.ISequencedOperationMessage): Promise<void> {
         // Create the integration message that sends a sequenced operation from an upstream branch to
         // the downstream branch
         const rawMessage: core.IRawOperationMessage = {
             clientId: null,
-            documentId: fork,
+            documentId: forkId,
             operation: {
                 clientSequenceNumber: -1,
                 contents: null,
@@ -108,6 +108,6 @@ export class RouteMasterLambda extends SequencedLambda {
             user: null,
         };
 
-        return this.producer.send(JSON.stringify(rawMessage), fork);
+        return this.producer.send(JSON.stringify(rawMessage), message.tenantId, forkId);
     }
 }

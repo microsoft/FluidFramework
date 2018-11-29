@@ -1,8 +1,8 @@
-import { BoxcarType, IBoxcarMessage, IMessage as ICoreMessage } from "../core";
+import { BoxcarType, IBoxcarMessage, IMessage as ICoreMessage, IParsedBoxcarMessage } from "../core";
 import { IMessage } from "./kafka/definitions";
 import { safelyParseJSON } from "./safeParser";
 
-export function extractBoxcar(message: IMessage): IBoxcarMessage {
+export function extractBoxcar(message: IMessage): IParsedBoxcarMessage {
     if (typeof message.value !== "string") {
         return message.value;
     }
@@ -21,12 +21,20 @@ export function extractBoxcar(message: IMessage): IBoxcarMessage {
         };
     }
 
-    return parsedMessage.type === BoxcarType
-        ? parsedMessage as IBoxcarMessage
-        : {
+    if (parsedMessage.type === BoxcarType) {
+        const boxcarMessage = parsedMessage as IBoxcarMessage;
+        return {
+            contents: boxcarMessage.contents.map((json) => JSON.parse(json)),
+            documentId: boxcarMessage.documentId,
+            tenantId: boxcarMessage.tenantId,
+            type: boxcarMessage.type,
+        };
+    } else {
+        return {
             contents: [parsedMessage],
             documentId: rawMessage.documentId,
             tenantId: rawMessage.tenantId,
             type: BoxcarType,
         };
+    }
 }
