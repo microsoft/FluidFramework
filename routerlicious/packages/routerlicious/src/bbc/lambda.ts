@@ -16,9 +16,6 @@ class BBCBatch {
 }
 
 export class BBCLambda implements IPartitionLambda {
-    // We maintain three batches of work - one for MongoDB and the other two for Socket.IO.
-    // One socket.IO group is for sequenced ops and the other for nack'ed messages.
-    // By splitting the two we can update each independently and on their own cadence
     private pending = new Map<string, BBCBatch>();
     private pendingOffset: number;
     private current = new Map<string, BBCBatch>();
