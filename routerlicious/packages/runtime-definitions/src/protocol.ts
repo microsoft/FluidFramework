@@ -1,4 +1,3 @@
-import { IClientJoin } from "./clients";
 import { IUser } from "./users";
 
 export enum MessageType {
@@ -102,29 +101,10 @@ export interface IDocumentMessage {
 /**
  * Document client Join message.
  */
-export interface IDocumentJoinMessage extends IDocumentMessage {
+export interface IOutboundDocumentMessage extends IDocumentMessage {
 
-    detail: IClientJoin;
+    detail?: string;
 }
-
-/**
- * Document client leave message.
- */
-export interface IDocumentLeaveMessage extends IDocumentMessage {
-
-    clientId: string;
-}
-
-/**
- * Document help message.
- */
-export interface IDocumentHelpMessage extends IDocumentMessage {
-
-    detail: IHelpMessage;
-}
-
-// tslint:disable max-line-length
-export type IOutboundDocumentMessage = IDocumentJoinMessage | IDocumentLeaveMessage | IDocumentHelpMessage | IDocumentMessage;
 
 export interface IContentMessage {
 

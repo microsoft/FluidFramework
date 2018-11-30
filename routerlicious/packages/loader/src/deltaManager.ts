@@ -65,7 +65,7 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
 
     // tslint:disable:variable-name
     private _inbound: DeltaQueue<runtime.IDocumentMessage>;
-    private _outbound: DeltaQueue<runtime.IDocumentMessage>;
+    private _outbound: DeltaQueue<runtime.IOutboundDocumentMessage>;
     // tslint:enable:variable-name
 
     private connecting: Deferred<IConnectionDetails>;
@@ -120,7 +120,7 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
         // Inbound message queue
         this._inbound = new DeltaQueue<runtime.ISequencedDocumentMessage>((op, callback) => {
             // Back-compat: First check is for paparazzi to support old documents.
-            if (op.metadata && op.metadata.split) {
+            if (op.contents === undefined) {
                 this.handleOpContent(op, callback);
             } else {
                 this.processInboundOp(op, callback);
@@ -132,10 +132,10 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
         });
 
         // Outbound message queue
-        this._outbound = new DeltaQueue<runtime.IDocumentMessage>(
+        this._outbound = new DeltaQueue<runtime.IOutboundDocumentMessage>(
             (message, callback: (error?) => void) => {
-                if (message.metadata.split) {
-                    console.log(`Splitting content from envelope.`);
+                if (this.shouldSplit(message.contents)) {
+                    debug(`Splitting content from envelope.`);
                     this.connection.submitAsync(message).then(
                         () => {
                             this.contentCache.set({
@@ -143,7 +143,7 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
                                 clientSequenceNumber: message.clientSequenceNumber,
                                 contents: message.contents as string,
                             });
-                            message.contents = null;
+                            message.contents = undefined;
                             this.connection.submit(message);
                             callback();
                         },
@@ -187,14 +187,14 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
     /**
      * Submits a new delta operation
      */
-    public submit(type: string, contents: string): number {
+    public submit(type: runtime.MessageType, contents: string): number {
         return this.submitCore(type, contents, null);
     }
 
     /**
      * Submits a new system delta operation.
      */
-    public submitMetaData(type: string, contents: any): number {
+    public submitMetaData(type: runtime.MessageType, contents: any): number {
         return this.submitCore(type, null, contents);
     }
 
@@ -254,7 +254,11 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
         this.removeAllListeners();
     }
 
-    private submitCore(type: string, contents: string, metaContent: any): number {
+    private shouldSplit(contents: string) {
+        return (contents) && (contents.length > this.maxContentSize);
+    }
+
+    private submitCore(type: runtime.MessageType, contents: string, metaContent: any): number {
         // Start adding trace for the op.
         const traces: runtime.ITrace[] = [
             {
@@ -263,23 +267,38 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
                 timestamp: Date.now(),
             }];
         // tslint:disable:no-increment-decrement
-        const message: runtime.IDocumentMessage = {
+        const coreMessage: runtime.IDocumentMessage = {
             clientSequenceNumber: ++this.clientSequenceNumber,
             contents,
-            metadata: {
-                content: metaContent,
-                split: (contents !== null) && (contents.length > this.maxContentSize),
-            },
             referenceSequenceNumber: this.baseSequenceNumber,
             traces,
             type,
         };
+
+        const message = this.createOutboundMessage(type, coreMessage);
         this.readonly = false;
 
         this.stopSequenceNumberUpdate();
         this._outbound.push(message);
 
         return message.clientSequenceNumber;
+    }
+
+    // Specific system level message contents are separated and promoted to top level attributes.
+    private createOutboundMessage(
+        type: runtime.MessageType,
+        coreMessage: runtime.IDocumentMessage): runtime.IOutboundDocumentMessage {
+        if (type === runtime.MessageType.RemoteHelp) {
+            const detail = coreMessage.contents;
+            coreMessage.contents = null;
+            const outboundMessage: runtime.IOutboundDocumentMessage = {
+                ...coreMessage,
+                detail,
+            };
+            return outboundMessage;
+        } else {
+            return coreMessage;
+        }
     }
 
     private getDeltasCore(
@@ -481,7 +500,6 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
 
     private mergeAndProcess(message: runtime.ISequencedDocumentMessage, contentOp: runtime.IContentMessage, callback) {
         message.contents = contentOp.contents;
-        message.metadata.split = false;
         this.processInboundOp(message, callback);
     }
 
