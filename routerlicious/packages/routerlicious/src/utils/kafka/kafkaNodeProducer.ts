@@ -3,17 +3,9 @@ import * as kafkaNode from "kafka-node";
 import * as util from "util";
 import { BoxcarType, IBoxcarMessage } from "../../core";
 import { debug } from "../debug";
-import { IProducer } from "./definitions";
+import { IPendingBoxcar, IProducer } from "./definitions";
 
 const MaxBatchSize = Number.MAX_VALUE;
-
-interface IPendingBoxcar {
-    documentId: string;
-    tenantId: string;
-    deferred: utils.Deferred<void>;
-    messages: string[];
-    size: number;
-}
 
 /**
  * Kafka-Node Producer.
@@ -66,6 +58,7 @@ export class KafkaNodeProducer implements IProducer {
         // Add the message to the boxcar
         const boxcar = boxcars[boxcars.length - 1];
         boxcar.messages.push(message);
+        boxcar.size += message.length;
         this.pendingMessageCount++;
 
         // Mark the need to send a message

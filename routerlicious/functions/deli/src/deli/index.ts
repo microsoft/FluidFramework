@@ -4,6 +4,7 @@ import { create as createDocumentRouter } from "@prague/routerlicious/dist/docum
 import { IPartitionLambdaFactory } from "@prague/routerlicious/dist/kafka-service/lambdas";
 import * as services from "@prague/routerlicious/dist/services";
 import * as utils from "@prague/routerlicious/dist/utils";
+import * as bytes from "bytes";
 import * as _ from "lodash";
 import { Provider } from "nconf";
 import { RdkafkaProducer } from "../rdkafka";
@@ -22,9 +23,10 @@ export async function deliCreate(config: Provider): Promise<IPartitionLambdaFact
     const client = await mongoManager.getDatabase();
     const collection = await client.collection<core.IDocument>(documentsCollectionName);
 
+    const maxSendMessageSize = bytes.parse(config.get("alfred:maxMessageSize"));
     const kafkaEndpoint = config.get("kafka:endpoint");
-    const forwardProducer = new RdkafkaProducer(kafkaEndpoint, forwardSendTopic);
-    const reverseProducer = new RdkafkaProducer(kafkaEndpoint, reverseSendTopic);
+    const forwardProducer = new RdkafkaProducer(kafkaEndpoint, forwardSendTopic, maxSendMessageSize);
+    const reverseProducer = new RdkafkaProducer(kafkaEndpoint, reverseSendTopic, maxSendMessageSize);
 
     return new DeliLambdaFactory(mongoManager, collection, forwardProducer, reverseProducer);
 }

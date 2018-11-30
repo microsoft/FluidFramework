@@ -71,3 +71,11 @@ export interface IProducer {
      */
     close(): Promise<void>;
 }
+
+export interface IPendingBoxcar {
+    documentId: string;
+    tenantId: string;
+    deferred: utils.Deferred<void>;
+    messages: string[];
+    size: number;
+}

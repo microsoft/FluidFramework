@@ -61,7 +61,7 @@ export class DeliLambda implements IPartitionLambda {
     private idleTimer: any;
 
     constructor(
-        context: IContext,
+        private context: IContext,
         private tenantId: string,
         private documentId: string,
         dbObject: core.IDocument,
@@ -161,8 +161,8 @@ export class DeliLambda implements IPartitionLambda {
                 this.checkpointContext.checkpoint(checkpoint);
             },
             (error) => {
-                // TODO issue with Kafka - need to propagate the issue somehow
                 winston.error("Could not send message to scriptorium", error);
+                this.context.error(error, true);
             });
 
         // Start a timer to check inactivity on the document. To trigger idle client leave message,
@@ -398,8 +398,8 @@ export class DeliLambda implements IPartitionLambda {
     private sendToDeli(message: core.IRawOperationMessage) {
         // Otherwise send the message to the event hub
         this.reverseProducer.send(JSON.stringify(message), message.tenantId, message.documentId).catch((error) => {
-            // TODO issue with Kafka - need to propagate the issue somehow
             winston.error("Could not send message to alfred", error);
+            this.context.error(error, true);
         });
     }
 

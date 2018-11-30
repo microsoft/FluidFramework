@@ -1,8 +1,6 @@
 import { IConsumer } from "@prague/routerlicious/dist/utils";
 import { EventEmitter } from "events";
-import * as Measured from "measured-core";
 import * as Kafka from "node-rdkafka";
-import * as winston from "winston";
 
 interface ITopicPartition {
     topic: string;
@@ -12,7 +10,6 @@ interface ITopicPartition {
 
 export class RdkafkaConsumer extends EventEmitter implements IConsumer {
     private consumer: Kafka.KafkaConsumer;
-    private meter = new Measured.Meter();
 
     constructor(
         kafkaBroker: string,
@@ -78,18 +75,11 @@ export class RdkafkaConsumer extends EventEmitter implements IConsumer {
         });
 
         this.consumer.on("data", (m) => {
-            this.meter.mark();
             this.emit("data", m);
         });
 
         // this.consumer.setDefaultConsumeTimeout(10);
         this.consumer.connect();
-
-        setInterval(
-            () => {
-                winston.verbose(`Consumer ${this.topic} stats`, this.meter.toJSON());
-            },
-            15000);
     }
 
     public commitOffset(data: any[]): Promise<void> {

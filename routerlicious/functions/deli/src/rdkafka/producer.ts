@@ -1,17 +1,20 @@
-import { IProducer } from "@prague/routerlicious/dist/utils";
+import { BoxcarType, IBoxcarMessage } from "@prague/routerlicious/dist/core";
+import { IPendingBoxcar, IProducer } from "@prague/routerlicious/dist/utils";
 import { Deferred } from "@prague/utils";
 import * as Kafka from "node-rdkafka";
-// import * as Measured from "measured-core";
-// import * as winston from "winston";
+
+const MaxBatchSize = Number.MAX_VALUE;
 
 export class RdkafkaProducer implements IProducer {
+    private messages = new Map<string, IPendingBoxcar[]>();
     private producer: Kafka.Producer;
     private connected = false;
-    // private meter = new Measured.Meter();
-    private pending = new Array<{ message: string, key: string, deferred: Deferred<void> }>();
-    private resolved = Promise.resolve();
+    private sendPending: NodeJS.Immediate;
+    private pendingMessageCount = 0;
 
-    constructor(endpoint: string, private topic: string) {
+    constructor(endpoint: string, private topic: string, private maxMessageSize: number) {
+        this.maxMessageSize = maxMessageSize * 0.75;
+
         this.producer = new Kafka.Producer(
             {
                 "dr_cb": true,    // delivery report callback
@@ -47,7 +50,7 @@ export class RdkafkaProducer implements IProducer {
             (error, data) => {
                 console.log(`Connected`, error, data);
                 this.connected = true;
-                this.sendPending();
+                this.requestSend();
             });
 
         this.producer.on("delivery-report", (err, report) => {
@@ -58,25 +61,42 @@ export class RdkafkaProducer implements IProducer {
                 report.opaque.resolve();
             }
         });
-
-        // setInterval(
-        //     () => {
-        //         winston.verbose(`Producer ${this.topic} stats`, this.meter.toJSON());
-        //     },
-        //     15000);
     }
 
-    public async send(message: string, key: string): Promise<any> {
-        const deferred = new Deferred<void>();
-
-        if (!this.connected) {
-            this.pending.push({ message, key, deferred });
-            return this.resolved;
+    public async send(message: string, tenantId: string, documentId: string): Promise<any> {
+        if (message.length >= this.maxMessageSize) {
+            return Promise.reject("Message too large");
         }
 
-        this.sendCore(message, key, deferred);
+        const key = `${tenantId}/${documentId}`;
 
-        return deferred.promise;
+        // Get the list of boxcars for the given key
+        if (!this.messages.has(key)) {
+            this.messages.set(key, []);
+        }
+        const boxcars = this.messages.get(key);
+
+        // Create a new boxcar if necessary
+        if (boxcars.length === 0 || boxcars[boxcars.length - 1].size + message.length > this.maxMessageSize) {
+            boxcars.push({
+                deferred: new Deferred<void>(),
+                documentId,
+                messages: [],
+                size: 0,
+                tenantId,
+            });
+        }
+
+        // Add the message to the boxcar
+        const boxcar = boxcars[boxcars.length - 1];
+        boxcar.messages.push(message);
+        boxcar.size += message.length;
+        this.pendingMessageCount++;
+
+        // Mark the need to send a message
+        this.requestSend();
+
+        return boxcar.deferred.promise;
     }
 
     public close(): Promise<void> {
@@ -85,20 +105,60 @@ export class RdkafkaProducer implements IProducer {
         });
     }
 
-    private sendPending() {
-        for (const pending of this.pending) {
-            this.sendCore(pending.message, pending.key, pending.deferred);
+    /**
+     * Notifies of the need to send pending messages. We defer sending messages to batch together messages
+     * to the same partition.
+     */
+    private requestSend() {
+        // If we aren't connected yet defer sending until connected
+        if (!this.connected) {
+            return;
         }
-        this.pending = null;
+
+        // Limit max queued up batch size
+        if (this.pendingMessageCount >= MaxBatchSize) {
+            clearImmediate(this.sendPending);
+            this.sendPending = undefined;
+            this.sendPendingMessages();
+            return;
+        }
+
+        // Exit early if there is a pending send
+        if (this.sendPending) {
+            return;
+        }
+
+        // use setImmediate to play well with the node event loop
+        this.sendPending = setImmediate(() => {
+            this.sendPendingMessages();
+            this.sendPending = undefined;
+        });
     }
 
-    private sendCore(message: string, key: string, deferred: Deferred<void>) {
-        this.producer.produce(
-            this.topic,
-            null,
-            Buffer.from(message),
-            key,
-            Date.now(),
-            deferred);
+    /**
+     * Sends all pending messages
+     */
+    private sendPendingMessages() {
+        for (const [, value] of this.messages) {
+            for (const boxcar of value) {
+                const boxcarMessage: IBoxcarMessage = {
+                    contents: boxcar.messages,
+                    documentId: boxcar.documentId,
+                    tenantId: boxcar.tenantId,
+                    type: BoxcarType,
+                };
+
+                this.producer.produce(
+                    this.topic,
+                    null,
+                    Buffer.from(JSON.stringify(boxcarMessage)),
+                    boxcar.documentId,
+                    Date.now(),
+                    boxcar.deferred);
+            }
+        }
+
+        this.pendingMessageCount = 0;
+        this.messages.clear();
     }
 }

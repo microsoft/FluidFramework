@@ -3,7 +3,7 @@ import { IMessage } from "./kafka/definitions";
 import { safelyParseJSON } from "./safeParser";
 
 export function extractBoxcar(message: IMessage): IParsedBoxcarMessage {
-    if (typeof message.value !== "string") {
+    if (typeof message.value !== "string" && !Buffer.isBuffer(message.value)) {
         return message.value;
     }
 
