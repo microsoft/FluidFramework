@@ -29,37 +29,33 @@ export class TmzLambda extends SequencedLambda {
     }
 
     protected async handlerCore(message: utils.IMessage): Promise<void> {
-        const messageContent = message.value.toString();
+        const boxcar = utils.extractBoxcar(message);
 
-        const parsedMessage = utils.safelyParseJSON(messageContent);
-        if (parsedMessage === undefined) {
-            winston.error(`Invalid JSON input: ${messageContent}`);
-            return;
-        }
+        for (const baseMessage of boxcar.contents) {
+            if (baseMessage.type === core.SequencedOperationType) {
+                const sequencedMessage = baseMessage as core.ISequencedOperationMessage;
+                // Only process "Help" messages.
+                if (sequencedMessage.operation.type === MessageType.RemoteHelp) {
+                    // Back-compat: Temporary workaround to handle old help messages.
+                    // Back-compat: Only "snapshot" will be available to old clients.
+                    let helpContent: string[];
+                    if (sequencedMessage.operation.metadata) {
+                        helpContent = sequencedMessage.operation.metadata.content.tasks;
+                    } else {
+                        helpContent = sequencedMessage.operation.contents.tasks;
+                        helpContent = helpContent.indexOf("snapshot") === -1 ? [] : ["snapshot"];
+                    }
 
-        const baseMessage = parsedMessage as core.IMessage;
-        if (baseMessage.type === core.SequencedOperationType) {
-            const sequencedMessage = baseMessage as core.ISequencedOperationMessage;
-            // Only process "Help" messages.
-            if (sequencedMessage.operation.type === MessageType.RemoteHelp) {
-                // Back-compat: Temporary workaround to handle old help messages.
-                // Back-compat: Only "snapshot" will be available to old clients.
-                let helpContent: string[];
-                if (sequencedMessage.operation.metadata) {
-                    helpContent = sequencedMessage.operation.metadata.content.tasks;
-                } else {
-                    helpContent = sequencedMessage.operation.contents.tasks;
-                    helpContent = helpContent.indexOf("snapshot") === -1 ? [] : ["snapshot"];
+                    await this.trackDocument(
+                        sequencedMessage.operation.clientId,
+                        sequencedMessage.tenantId,
+                        sequencedMessage.documentId,
+                        sequencedMessage.operation.user,
+                        helpContent);
                 }
-
-                await this.trackDocument(
-                    sequencedMessage.operation.clientId,
-                    sequencedMessage.tenantId,
-                    sequencedMessage.documentId,
-                    sequencedMessage.operation.user,
-                    helpContent);
             }
         }
+
         this.context.checkpoint(message.offset);
     }
 

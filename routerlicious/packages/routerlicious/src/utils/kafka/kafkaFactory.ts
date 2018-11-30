@@ -18,5 +18,5 @@ export function createProducer(
     clientId: string,
     topic: string,
     maxKafkaMessageSize: number): IProducer {
-    return new KafkaNodeProducer(endPoint, clientId, topic, maxKafkaMessageSize);
+    return new KafkaNodeProducer(endPoint, clientId, topic);
 }

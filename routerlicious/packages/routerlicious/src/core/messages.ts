@@ -10,6 +10,8 @@ export const NackOperationType: string = "Nack";
 
 export const SystemType: string = "System";
 
+export const BoxcarType: string = "boxcar";
+
 /**
  * Base class for messages placed on the distributed log
  */
@@ -114,4 +116,8 @@ export interface IForkOperation {
 
     // The name of the target tenant
     tenantId: string;
+}
+
+export interface IBoxcarMessage extends ITicketedMessage {
+    contents: IMessage[];
 }

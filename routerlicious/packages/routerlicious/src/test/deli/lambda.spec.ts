@@ -110,7 +110,7 @@ describe("Routerlicious", () => {
 
                     const sent = testKafka.getRawMessages();
                     assert.equal(2, sent.length);
-                    const sequencedMessage = JSON.parse(sent[1].value.toString()) as core.ISequencedOperationMessage;
+                    const sequencedMessage = sent[1].value as core.ISequencedOperationMessage;
                     assert.equal(sequencedMessage.documentId, testId);
                     assert.equal(sequencedMessage.type, core.SequencedOperationType);
                     assert.equal(sequencedMessage.operation.clientId, testClientId);

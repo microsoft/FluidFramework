@@ -4,6 +4,7 @@ export * from "./dns";
 export * from "./dockerNames";
 export * from "./errorTrackingService";
 export * from "./heap";
+export * from "./lambdas";
 export * from "./logger";
 export * from "./mongo";
 export * from "./mongoDatabaseManager";

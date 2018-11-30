@@ -1,13 +1,25 @@
 import { IDocumentMessage, ISequencedDocumentMessage, MessageType } from "@prague/runtime-definitions";
 // tslint:disable-next-line:no-var-requires
 const hash = require("string-hash");
-import { IRawOperationMessage, ISequencedOperationMessage, RawOperationType, SequencedOperationType } from "../../core";
+import {
+    BoxcarType,
+    IBoxcarMessage,
+    IRawOperationMessage,
+    ISequencedOperationMessage,
+    RawOperationType,
+    SequencedOperationType,
+} from "../../core";
 import * as utils from "../../utils";
 
 export class KafkaMessageFactory {
     private offsets: number[] = [];
 
-    constructor(public topic = "test", partitions = 1, private stringify = true) {
+    constructor(
+        public topic = "test",
+        partitions = 1,
+        private stringify = true,
+        private tenantId: string = null,
+        private documentId: string = null) {
         for (let i = 0; i < partitions; i++) {
             this.offsets.push(0);
         }
@@ -23,7 +35,14 @@ export class KafkaMessageFactory {
             offset,
             partition,
             topic: this.topic,
-            value: this.stringify ? JSON.stringify(value) : value,
+            value: this.stringify
+                ? JSON.stringify(value)
+                : ({
+                    contents: [value],
+                    documentId: this.documentId,
+                    tenantId: this.tenantId,
+                    type: BoxcarType,
+                } as IBoxcarMessage),
         };
 
         return kafkaMessage;

@@ -47,7 +47,8 @@ function sendBatch(current: number, batches: number, messages: string[]) {
         for (let i = 0; i < messages.length; i++) {
             // pubMsg.push({ time: Date.now(), i: current * messages.length + i, m: messages[i] });
             producer.send(
-                JSON.stringify({ time: Date.now(), i: current * messages.length + i, m: messages[i] }),
+                { time: Date.now(), i: current * messages.length + i, m: messages[i] },
+                "test",
                 "test");
         }
     }

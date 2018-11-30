@@ -93,7 +93,7 @@ export class TestProducer implements utils.IProducer {
     constructor(private kafka: TestKafka) {
     }
 
-    public send(message: string, key: string): Promise<any> {
+    public send(message: object, key: string): Promise<any> {
         this.kafka.addMessage(message, key);
         return Promise.resolve();
     }
@@ -126,7 +126,7 @@ export class TestKafka {
         return this.messages;
     }
 
-    public addMessage(message: string, topic: string) {
+    public addMessage(message: any, topic: string) {
         const offset = this.offset++;
         const storedMessage: utils.IMessage = {
             highWaterOffset: offset,
@@ -148,6 +148,6 @@ export class TestKafka {
     }
 
     public getMessage(index: number): core.ISequencedOperationMessage {
-        return JSON.parse(this.messages[index].value.toString()) as core.ISequencedOperationMessage;
+        return this.messages[index].value as core.ISequencedOperationMessage;
     }
 }

@@ -28,7 +28,7 @@ describe("kafka-service", () => {
 
                 const messageCount = 10;
                 for (let i = 0; i < messageCount; i++) {
-                    testProducer.send("{}", "test");
+                    testProducer.send({}, "test");
                 }
 
                 await testRunner.stop();
@@ -52,7 +52,7 @@ describe("kafka-service", () => {
                 const startP = testRunner.start();
                 testConsumer.rebalance();
 
-                testProducer.send("{}", "test");
+                testProducer.send({}, "test");
                 testConsumer.emitError("Test error");
 
                 await verifyRejection(startP);
@@ -63,7 +63,7 @@ describe("kafka-service", () => {
                 testFactory.setThrowHandler(true);
                 testConsumer.rebalance();
 
-                testProducer.send("{}", "test");
+                testProducer.send({}, "test");
 
                 await verifyRejection(startP);
             });

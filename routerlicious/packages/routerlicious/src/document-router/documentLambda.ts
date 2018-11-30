@@ -1,8 +1,6 @@
 import { Provider } from "nconf";
-import * as winston from "winston";
-import * as core from "../core";
 import { IContext, IPartitionLambda, IPartitionLambdaFactory } from "../kafka-service/lambdas";
-import * as utils from "../utils";
+import { extractBoxcar, IMessage } from "../utils";
 import { DocumentContextManager } from "./contextManager";
 import { DocumentPartition } from "./documentPartition";
 
@@ -17,7 +15,7 @@ export class DocumentLambda implements IPartitionLambda {
         });
     }
 
-    public handler(message: utils.IMessage): void {
+    public handler(message: IMessage): void {
         this.contextManager.setHead(message.offset);
         this.handlerCore(message);
         this.contextManager.setTail(message.offset);
@@ -30,25 +28,17 @@ export class DocumentLambda implements IPartitionLambda {
         }
     }
 
-    private handlerCore(kafkaMessage: utils.IMessage): void {
-        const parsedKafkaMessage = utils.safelyParseJSON(kafkaMessage.value);
-        if (parsedKafkaMessage === undefined) {
-            winston.error(`Invalid JSON input: ${kafkaMessage.value}`);
-            return;
-        }
-
-        const message = parsedKafkaMessage as core.IMessage;
-        if (!("documentId" in message) || !("tenantId" in message)) {
+    private handlerCore(kafkaMessage: IMessage): void {
+        const boxcar = extractBoxcar(kafkaMessage);
+        if (!boxcar.documentId || !boxcar.tenantId) {
             return;
         }
 
         // Stash the parsed value for down stream lambdas
-        kafkaMessage.value = parsedKafkaMessage;
-
-        const sequencedMessage = message as core.ISequencedOperationMessage;
+        kafkaMessage.value = boxcar;
 
         // Create the routing key from tenantId + documentId
-        const routingKey = `${sequencedMessage.tenantId}/${sequencedMessage.documentId}`;
+        const routingKey = `${boxcar.tenantId}/${boxcar.documentId}`;
 
         // Create or update the DocumentPartition
         let document: DocumentPartition;
@@ -59,8 +49,8 @@ export class DocumentLambda implements IPartitionLambda {
             document = new DocumentPartition(
                 this.factory,
                 this.config,
-                sequencedMessage.tenantId,
-                sequencedMessage.documentId,
+                boxcar.tenantId,
+                boxcar.documentId,
                 documentContext);
             this.documents.set(routingKey, document);
         } else {
