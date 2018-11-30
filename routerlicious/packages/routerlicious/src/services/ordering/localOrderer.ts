@@ -5,7 +5,7 @@ import * as moniker from "moniker";
 // tslint:disable-next-line:no-var-requires
 const now = require("performance-now");
 import { BBCLambda } from "../../bbc/lambda";
-import { ICollection, IOrdererConnection, ITenantManager } from "../../core";
+import { BoxcarType, IBoxcarMessage, ICollection, IOrdererConnection, ITenantManager } from "../../core";
 import * as core from "../../core";
 import { DeliLambda } from "../../deli/lambda";
 import { ActivityCheckingTimeout, ClientSequenceTimeout } from "../../deli/lambdaFactory";
@@ -218,8 +218,15 @@ class LocalOrdererConnection implements IOrdererConnection {
                 });
         }
 
+        const boxcar: IBoxcarMessage = {
+            contents: [message],
+            documentId: this.documentId,
+            tenantId: this.tenantId,
+            type: BoxcarType,
+        };
+
         // Submits the message.
-        this.producer.send(JSON.stringify(message), this.tenantId, this.documentId);
+        this.producer.send(boxcar, this.tenantId, this.documentId);
     }
 }
 
@@ -388,14 +395,14 @@ class InMemoryKafka extends EventEmitter implements IProducer {
         super();
     }
 
-    public async send(message: string, topic: string): Promise<any> {
+    public async send(message: any, topic: string): Promise<any> {
         const kafkaMessage: IMessage = {
             highWaterOffset: this.offset,
             key: topic,
             offset: this.offset,
             partition: 0,
             topic,
-            value: message,
+            value: JSON.stringify(message),
         };
         this.emit("message", kafkaMessage);
         this.offset++;

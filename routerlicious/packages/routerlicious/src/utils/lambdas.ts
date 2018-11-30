@@ -1,8 +1,8 @@
-import { BoxcarType, IBoxcarMessage, IMessage as ICoreMessage, IParsedBoxcarMessage } from "../core";
+import { BoxcarType, IBoxcarMessage, IMessage as ICoreMessage } from "../core";
 import { IMessage } from "./kafka/definitions";
 import { safelyParseJSON } from "./safeParser";
 
-export function extractBoxcar(message: IMessage): IParsedBoxcarMessage {
+export function extractBoxcar(message: IMessage): IBoxcarMessage {
     if (typeof message.value !== "string" && !Buffer.isBuffer(message.value)) {
         return message.value;
     }
@@ -23,8 +23,14 @@ export function extractBoxcar(message: IMessage): IParsedBoxcarMessage {
 
     if (parsedMessage.type === BoxcarType) {
         const boxcarMessage = parsedMessage as IBoxcarMessage;
+
+        // Contents used to be a string - handle accordingly
+        const contents = boxcarMessage.contents.length > 0 && typeof boxcarMessage.contents[0] === "string"
+            ? boxcarMessage.contents.map((content: any) => JSON.parse(content))
+            : boxcarMessage.contents;
+
         return {
-            contents: boxcarMessage.contents.map((json) => JSON.parse(json)),
+            contents,
             documentId: boxcarMessage.documentId,
             tenantId: boxcarMessage.tenantId,
             type: boxcarMessage.type,

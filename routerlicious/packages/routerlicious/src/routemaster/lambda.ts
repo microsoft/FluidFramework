@@ -108,6 +108,6 @@ export class RouteMasterLambda extends SequencedLambda {
             user: null,
         };
 
-        return this.producer.send(JSON.stringify(rawMessage), message.tenantId, forkId);
+        return this.producer.send(rawMessage, message.tenantId, forkId);
     }
 }

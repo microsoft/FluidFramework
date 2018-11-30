@@ -1,10 +1,7 @@
-// tslint:disable-next-line:no-submodule-imports
+// tslint:disable:no-submodule-imports
 import * as io from "@prague/routerlicious/dist/alfred/io";
-// tslint:disable-next-line:no-submodule-imports
 import * as core from "@prague/routerlicious/dist/core";
-// tslint:disable-next-line:no-submodule-imports
 import * as services from "@prague/routerlicious/dist/services";
-
 import {
     TestCollection,
     TestDbFactory,
@@ -12,10 +9,9 @@ import {
     TestTaskMessageSender,
     TestTenantManager,
     TestWebSocketServer,
-// tslint:disable-next-line:no-submodule-imports
 } from "@prague/routerlicious/dist/test/testUtils";
-// tslint:disable-next-line:no-submodule-imports
 import * as utils from "@prague/routerlicious/dist/utils";
+// tslint:enable:no-submodule-imports
 
 export interface ITestDeltaConnectionServer {
     webSocketServer: core.IWebSocketServer;

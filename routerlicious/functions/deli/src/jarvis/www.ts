@@ -1,5 +1,4 @@
 import * as utils from "@prague/routerlicious/dist/utils";
-import * as bytes from "bytes";
 import * as nconf from "nconf";
 import * as path from "path";
 import * as winston from "winston";
@@ -31,8 +30,7 @@ export function runService<T extends utils.IResources>(
     const kafkaEndpoint = config.get("kafka:endpoint");
     const sendTopic = config.get("system:topics:send");
 
-    const maxSendMessageSize = bytes.parse(config.get("alfred:maxMessageSize"));
-    const producer = new RdkafkaProducer(kafkaEndpoint, sendTopic, maxSendMessageSize);
+    const producer = new RdkafkaProducer(kafkaEndpoint, sendTopic);
 
     const errorTrackingConfig = config.get("error");
     let runningP;

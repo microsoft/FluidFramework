@@ -5,7 +5,8 @@ import { BoxcarType, IBoxcarMessage } from "../../core";
 import { debug } from "../debug";
 import { IPendingBoxcar, IProducer } from "./definitions";
 
-const MaxBatchSize = Number.MAX_VALUE;
+// 1MB batch size / (16KB max message size + overhead)
+const MaxBatchSize = 45;
 
 /**
  * Kafka-Node Producer.
@@ -17,25 +18,18 @@ export class KafkaNodeProducer implements IProducer {
     private sendPending: NodeJS.Immediate;
     private connecting = false;
     private connected = false;
-    private pendingMessageCount = 0;
 
     constructor(
         private endpoint: string,
         private clientId: string,
-        private topic: string,
-        private maxMessageSize: number) {
-        this.maxMessageSize = maxMessageSize * 0.25;
+        private topic: string) {
         this.connect();
     }
 
     /**
      * Sends the provided message to Kafka
      */
-    public send(message: string, tenantId: string, documentId: string): Promise<any> {
-        if (message.length >= this.maxMessageSize) {
-            return Promise.reject("Message too large");
-        }
-
+    public send(message: object, tenantId: string, documentId: string): Promise<any> {
         const key = `${tenantId}/${documentId}`;
 
         // Get the list of boxcars for the given key
@@ -45,12 +39,11 @@ export class KafkaNodeProducer implements IProducer {
         const boxcars = this.messages.get(key);
 
         // Create a new boxcar if necessary
-        if (boxcars.length === 0 || boxcars[boxcars.length - 1].size + message.length > this.maxMessageSize) {
+        if (boxcars.length === 0 || boxcars[boxcars.length - 1].messages.length >= MaxBatchSize) {
             boxcars.push({
                 deferred: new utils.Deferred<void>(),
                 documentId,
                 messages: [],
-                size: 0,
                 tenantId,
             });
         }
@@ -58,8 +51,6 @@ export class KafkaNodeProducer implements IProducer {
         // Add the message to the boxcar
         const boxcar = boxcars[boxcars.length - 1];
         boxcar.messages.push(message);
-        boxcar.size += message.length;
-        this.pendingMessageCount++;
 
         // Mark the need to send a message
         this.requestSend();
@@ -82,14 +73,6 @@ export class KafkaNodeProducer implements IProducer {
     private requestSend() {
         // If we aren't connected yet defer sending until connected
         if (!this.connected) {
-            return;
-        }
-
-        // Limit max queued up batch size
-        if (this.pendingMessageCount >= MaxBatchSize) {
-            clearImmediate(this.sendPending);
-            this.sendPending = undefined;
-            this.sendPendingMessages();
             return;
         }
 
@@ -118,13 +101,13 @@ export class KafkaNodeProducer implements IProducer {
                     type: BoxcarType,
                 };
 
+                const stringifiedMessage = Buffer.from(JSON.stringify(boxcarMessage));
                 this.producer.send(
-                    [{ key: boxcar.documentId, messages: JSON.stringify(boxcarMessage), topic: this.topic }],
+                    [{ key: boxcar.documentId, messages: stringifiedMessage, topic: this.topic }],
                     (error, data) => error ? boxcar.deferred.reject(error) : boxcar.deferred.resolve());
             }
         }
 
-        this.pendingMessageCount = 0;
         this.messages.clear();
     }
 

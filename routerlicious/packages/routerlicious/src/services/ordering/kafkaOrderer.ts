@@ -139,8 +139,8 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
                     timestamp: Date.now(),
                 });
         }
-        const stringMessage = JSON.stringify(message);
-        this.producer.send(stringMessage, this.tenantId, this.documentId);
+
+        this.producer.send(message, this.tenantId, this.documentId);
     }
 }
 

@@ -201,6 +201,6 @@ export class DocumentStorage implements core.IDocumentStorage {
             user: null,
         };
 
-        await producer.send(JSON.stringify(integrateMessage), tenantId, id);
+        await producer.send(integrateMessage, tenantId, id);
     }
 }

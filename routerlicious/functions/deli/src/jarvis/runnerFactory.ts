@@ -40,7 +40,7 @@ export class JarvisResourcesFactory implements utils.IResourcesFactory<JarvisRes
         const metricClientConfig = config.get("metric");
 
         const maxSendMessageSize = bytes.parse(config.get("alfred:maxMessageSize"));
-        const producer = new RdkafkaProducer(kafkaEndpoint, topic, maxSendMessageSize);
+        const producer = new RdkafkaProducer(kafkaEndpoint, topic);
         const redisConfig = config.get("redis");
         const webSocketLibrary = config.get("alfred:webSocketLib");
         const authEndpoint = config.get("auth:endpoint");

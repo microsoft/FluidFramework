@@ -3,18 +3,16 @@ import { IPendingBoxcar, IProducer } from "@prague/routerlicious/dist/utils";
 import { Deferred } from "@prague/utils";
 import * as Kafka from "node-rdkafka";
 
-const MaxBatchSize = Number.MAX_VALUE;
+// 1MB batch size / 16KB max message size
+const MaxBatchSize = 64;
 
 export class RdkafkaProducer implements IProducer {
     private messages = new Map<string, IPendingBoxcar[]>();
     private producer: Kafka.Producer;
     private connected = false;
     private sendPending: NodeJS.Immediate;
-    private pendingMessageCount = 0;
 
-    constructor(endpoint: string, private topic: string, private maxMessageSize: number) {
-        this.maxMessageSize = maxMessageSize * 0.75;
-
+    constructor(endpoint: string, private topic: string) {
         this.producer = new Kafka.Producer(
             {
                 "dr_cb": true,    // delivery report callback
@@ -63,11 +61,7 @@ export class RdkafkaProducer implements IProducer {
         });
     }
 
-    public async send(message: string, tenantId: string, documentId: string): Promise<any> {
-        if (message.length >= this.maxMessageSize) {
-            return Promise.reject("Message too large");
-        }
-
+    public async send(message: object, tenantId: string, documentId: string): Promise<any> {
         const key = `${tenantId}/${documentId}`;
 
         // Get the list of boxcars for the given key
@@ -77,12 +71,11 @@ export class RdkafkaProducer implements IProducer {
         const boxcars = this.messages.get(key);
 
         // Create a new boxcar if necessary
-        if (boxcars.length === 0 || boxcars[boxcars.length - 1].size + message.length > this.maxMessageSize) {
+        if (boxcars.length === 0 || boxcars[boxcars.length - 1].messages.length >= MaxBatchSize) {
             boxcars.push({
                 deferred: new Deferred<void>(),
                 documentId,
                 messages: [],
-                size: 0,
                 tenantId,
             });
         }
@@ -90,8 +83,6 @@ export class RdkafkaProducer implements IProducer {
         // Add the message to the boxcar
         const boxcar = boxcars[boxcars.length - 1];
         boxcar.messages.push(message);
-        boxcar.size += message.length;
-        this.pendingMessageCount++;
 
         // Mark the need to send a message
         this.requestSend();
@@ -112,14 +103,6 @@ export class RdkafkaProducer implements IProducer {
     private requestSend() {
         // If we aren't connected yet defer sending until connected
         if (!this.connected) {
-            return;
-        }
-
-        // Limit max queued up batch size
-        if (this.pendingMessageCount >= MaxBatchSize) {
-            clearImmediate(this.sendPending);
-            this.sendPending = undefined;
-            this.sendPendingMessages();
             return;
         }
 
@@ -158,7 +141,6 @@ export class RdkafkaProducer implements IProducer {
             }
         }
 
-        this.pendingMessageCount = 0;
         this.messages.clear();
     }
 }
