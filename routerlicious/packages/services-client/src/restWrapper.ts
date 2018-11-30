@@ -1,78 +1,80 @@
-// tslint:disable
-import { AxiosInstance, AxiosRequestConfig, default as Axios } from "axios";
-import * as qs from "querystring";
+import { AxiosError, AxiosInstance, AxiosRequestConfig, default as Axios } from "axios";
+import * as querystring from "querystring";
 
 export class RestWrapper {
-    public maxContentLength = 1000 * 1024 * 1024;
-    public baseurl?: string;
-    public defaultHeaders?: {};
-    public defaultQueryString?: {};
-
     constructor(
+        private baseurl?: string,
+        private defaultHeaders?: {},
+        private defaultQueryString?: {},
+        private maxContentLength = 1000 * 1024 * 1024,
         private axios: AxiosInstance = Axios) {
     }
 
-    public get<T>(url: string, queryString?: {}, headers?: {}): Promise<T> {
+    public async get<T>(url: string, queryString?: {}, headers?: {}): Promise<T> {
         const options: AxiosRequestConfig = {
+            baseURL: this.baseurl,
             headers,
             maxContentLength: this.maxContentLength,
             method: "GET",
-            baseURL: this.baseurl,
-            url: `${url}${this.appendQueryString(queryString)}`,
+            url: `${url}${this.generateQueryString(queryString)}`,
         };
-        return this.request(options, 200);
+        return this.request<T>(options, 200);
     }
 
-    public post<T>(url: string, requestBody: any, queryString?: {}, headers?: {}): Promise<T> {
+    public async post<T>(url: string, requestBody: any, queryString?: {}, headers?: {}): Promise<T> {
         const options: AxiosRequestConfig = {
+            baseURL: this.baseurl,
             data: requestBody,
             headers,
             maxContentLength: this.maxContentLength,
             method: "POST",
-            baseURL: this.baseurl,
-            url: `${url}${this.appendQueryString(queryString)}`,
+            url: `${url}${this.generateQueryString(queryString)}`,
         };
-        return this.request(options, 201);
+        return this.request<T>(options, 201);
     }
 
-    public delete<T>(url: string, queryString?: {}, headers?: {}): Promise<T> {
+    public async delete<T>(url: string, queryString?: {}, headers?: {}): Promise<T> {
         const options: AxiosRequestConfig = {
+            baseURL: this.baseurl,
             headers,
             maxContentLength: this.maxContentLength,
             method: "DELETE",
-            baseURL: this.baseurl,
-            url: `${url}${this.appendQueryString(queryString)}`,
+            url: `${url}${this.generateQueryString(queryString)}`,
         };
-        return this.request(options, 204);
+        return this.request<T>(options, 204);
     }
 
-    public patch<T>(url: string, requestBody: any, queryString?: {}, headers?: {}): Promise<T> {
+    public async patch<T>(url: string, requestBody: any, queryString?: {}, headers?: {}): Promise<T> {
         const options: AxiosRequestConfig = {
+            baseURL: this.baseurl,
             data: requestBody,
             headers,
             maxContentLength: this.maxContentLength,
             method: "PATCH",
-            baseURL: this.baseurl,
-            url: `${url}${this.appendQueryString(queryString)}`,
+            url: `${url}${this.generateQueryString(queryString)}`,
         };
-        return this.request(options, 200);
+        return this.request<T>(options, 200);
     }
 
     private async request<T>(options: AxiosRequestConfig, statusCode: number): Promise<T> {
         if (this.defaultHeaders) {
-            options.headers = { ...this.defaultHeaders, ...options.headers }
+            options.headers = { ...this.defaultHeaders, ...options.headers };
         }
 
         const response = await this.axios.request<T>(options)
-            .catch((error) => error.response && error.response.status !== statusCode
+            .catch(async (error: AxiosError) => error.response && error.response.status !== statusCode
                 ? Promise.reject(error.response.status)
                 : Promise.reject(error));
         return response.data;
     }
 
-    private appendQueryString(queryString: {}) {
-        if (this.defaultQueryString || queryString) {
-            return `?${qs.stringify({...this.defaultQueryString, ...queryString})}`;
+    private generateQueryString(queryStringValues: {}) {
+        if (this.defaultQueryString || queryStringValues) {
+            const queryString = querystring.stringify({ ...this.defaultQueryString, ...queryStringValues });
+
+            if (queryString !== "") {
+                return `?${queryString}`;
+            }
         }
 
         return "";

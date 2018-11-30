@@ -54,93 +54,99 @@ export interface ICredentials {
  * Implementation of the IHistorian interface that calls out to a REST interface
  */
 export class Historian implements IHistorian {
-    private rw: RestWrapper;
+    private restWrapper: RestWrapper;
 
     constructor(
         public endpoint: string,
         private historianApi: boolean,
         private disableCache: boolean,
         credentials?: ICredentials) {
-        this.rw = new RestWrapper();
-        this.rw.baseurl = this.endpoint;
 
+        let defaultHeaders: {};
         if (credentials) {
-            this.rw.defaultHeaders = {
+            defaultHeaders = {
                 Authorization:
                     `Basic ${new Buffer(`${credentials.user}:${credentials.password}`).toString("base64")}`,
             };
         }
+
+        this.restWrapper = new RestWrapper(endpoint, defaultHeaders);
     }
 
     /* tslint:disable:promise-function-async */
     public getHeader(sha: string): Promise<any> {
         if (this.historianApi) {
-            return this.rw.get(`/headers/${encodeURIComponent(sha)}`, this.appendCacheQueryString());
+            return this.restWrapper.get(`/headers/${encodeURIComponent(sha)}`, this.generateCacheQueryString());
         } else {
             return this.getHeaderDirect(sha);
         }
     }
 
     public getBlob(sha: string): Promise<git.IBlob> {
-        return this.rw.get<git.IBlob>(`/git/blobs/${encodeURIComponent(sha)}`, this.appendCacheQueryString());
+        const queryString = this.generateCacheQueryString();
+        return this.restWrapper.get<git.IBlob>(`/git/blobs/${encodeURIComponent(sha)}`, queryString);
     }
 
     public createBlob(blob: git.ICreateBlobParams): Promise<git.ICreateBlobResponse> {
-        return this.rw.post<git.ICreateBlobResponse>(`/git/blobs`, blob, this.appendCacheQueryString());
+        const queryString = this.generateCacheQueryString();
+        return this.restWrapper.post<git.ICreateBlobResponse>(`/git/blobs`, blob, queryString);
     }
 
     public getContent(path: string, ref: string): Promise<any> {
-        return this.rw.get(`/contents/${path}`, { ...{ ref }, ...this.appendCacheQueryString() });
+        const queryString = { ...{ ref }, ...this.generateCacheQueryString() };
+        return this.restWrapper.get(`/contents/${path}`, queryString);
     }
 
     public getCommits(sha: string, count: number): Promise<git.ICommitDetails[]> {
-        return this.rw.get<git.ICommitDetails[]>(`/commits`, { ...{ count, sha }, ...this.appendCacheQueryString() })
+        const queryString = { ...{ count, sha }, ...this.generateCacheQueryString() };
+        return this.restWrapper.get<git.ICommitDetails[]>(`/commits`, queryString)
             .catch((error) => error === 400 ? [] as git.ICommitDetails[] : Promise.reject<git.ICommitDetails[]>(error));
     }
 
     public getCommit(sha: string): Promise<git.ICommit> {
-        return this.rw.get<git.ICommit>(`/git/commits/${encodeURIComponent(sha)}`, this.appendCacheQueryString());
+        const queryString = this.generateCacheQueryString();
+        return this.restWrapper.get<git.ICommit>(`/git/commits/${encodeURIComponent(sha)}`, queryString);
     }
 
     public createCommit(commit: git.ICreateCommitParams): Promise<git.ICommit> {
-        return this.rw.post<git.ICommit>(`/git/commits`, commit, this.appendCacheQueryString());
+        return this.restWrapper.post<git.ICommit>(`/git/commits`, commit, this.generateCacheQueryString());
     }
 
     public getRefs(): Promise<git.IRef[]> {
-        return this.rw.get(`/git/refs`, this.appendCacheQueryString());
+        return this.restWrapper.get(`/git/refs`, this.generateCacheQueryString());
     }
 
     public getRef(ref: string): Promise<git.IRef> {
-        return this.rw.get(`/git/refs/${ref}`, this.appendCacheQueryString());
+        return this.restWrapper.get(`/git/refs/${ref}`, this.generateCacheQueryString());
     }
 
     public createRef(params: git.ICreateRefParams): Promise<git.IRef> {
-        return this.rw.post(`/git/refs`, params, this.appendCacheQueryString());
+        return this.restWrapper.post(`/git/refs`, params, this.generateCacheQueryString());
     }
 
     public updateRef(ref: string, params: git.IPatchRefParams): Promise<git.IRef> {
-        return this.rw.patch(`/git/refs/${ref}`, params, this.appendCacheQueryString());
+        return this.restWrapper.patch(`/git/refs/${ref}`, params, this.generateCacheQueryString());
     }
 
     public async deleteRef(ref: string): Promise<void> {
-        await this.rw.delete(`/git/refs/${ref}`, this.appendCacheQueryString());
+        await this.restWrapper.delete(`/git/refs/${ref}`, this.generateCacheQueryString());
     }
 
     public createTag(tag: git.ICreateTagParams): Promise<git.ITag> {
-        return this.rw.post(`/git/tags`, tag, this.appendCacheQueryString());
+        return this.restWrapper.post(`/git/tags`, tag, this.generateCacheQueryString());
     }
 
     public getTag(tag: string): Promise<git.ITag> {
-        return this.rw.get(`/git/tags/${tag}`, this.appendCacheQueryString());
+        return this.restWrapper.get(`/git/tags/${tag}`, this.generateCacheQueryString());
     }
 
     public createTree(tree: git.ICreateTreeParams): Promise<git.ITree> {
-        return this.rw.post<git.ITree>(`/git/trees`, tree, this.appendCacheQueryString());
+        return this.restWrapper.post<git.ITree>(`/git/trees`, tree, this.generateCacheQueryString());
     }
 
     public getTree(sha: string, recursive: boolean): Promise<git.ITree> {
-        const queryString = { ...{ recursive: recursive ? 1 : 0 }, ...this.appendCacheQueryString() };
-        return this.rw.get<git.ITree>(
+        const queryString = { ...{ recursive: recursive ? 1 : 0 }, ...this.generateCacheQueryString() };
+        return this.restWrapper.get<git.ITree>(
             `/git/trees/${encodeURIComponent(sha)}`, queryString);
     }
 
@@ -165,7 +171,7 @@ export class Historian implements IHistorian {
         };
     }
 
-    private appendCacheQueryString() {
+    private generateCacheQueryString() {
         let queryString: {};
         if (this.disableCache && this.historianApi) {
             queryString = { disableCache: this.disableCache };

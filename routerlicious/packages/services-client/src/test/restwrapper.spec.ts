@@ -5,68 +5,65 @@ import { RestWrapper } from "../restWrapper";
 describe("RestWrapper", () => {
     const baseurl = "https://fake.microsoft.com";
     const requestUrl = "/fakerequesturl/";
-    let rw: RestWrapper;
+    const maxContentLength = 1000 * 1024 * 1024;
     let axiosMock: Partial<AxiosInstance>;
+    let axiosErrorMock: Partial<AxiosInstance>;
     let requestOptions: AxiosRequestConfig;
+
+    before(() => {
+        axiosMock = {
+            request: async (options?) => new Promise<AxiosResponse>(
+                (resolve, reject) => {
+                    requestOptions = options;
+                    const response: AxiosResponse = {
+                        config: {},
+                        data: {},
+                        headers: {},
+                        request: options.responseType,
+                        status: 200,
+                        statusText: "OK",
+                    };
+
+                    resolve(response);
+                },
+            ),
+        };
+
+        axiosErrorMock = {
+            // tslint:disable-next-line:promise-must-complete
+            request: async (options?) => new Promise<AxiosResponse>(
+                (resolve, reject) => {
+                    requestOptions = options;
+
+                    const response: AxiosResponse = {
+                        config: options,
+                        data: {},
+                        headers: {},
+                        request: options.responseType,
+                        status: 500,
+                        statusText: "ServerError",
+                    };
+
+                    const err: AxiosError = {
+                        code: "500",
+                        config: options,
+                        message: "",
+                        name: "ServerError",
+                        request: {},
+                        response,
+                    };
+
+                    throw err;
+                },
+            ),
+        };
+    });
 
     describe(".get", () => {
 
-        beforeEach(() => {
-            axiosMock = {
-                request: async (options?) => new Promise<AxiosResponse>(
-                    (resolve, reject) => {
-                        requestOptions = options;
-                        const response: AxiosResponse = {
-                            config: {},
-                            data: {},
-                            headers: {},
-                            request: options.responseType,
-                            status: 200,
-                            statusText: "OK",
-                        };
-
-                        resolve(response);
-                    },
-                ),
-            };
-
-            rw = new RestWrapper(axiosMock as AxiosInstance);
-        });
-
         it("Invalid Response Code should reject Promise", async () => {
             // arrange
-            rw.baseurl = baseurl;
-
-            axiosMock = {
-                // tslint:disable-next-line:promise-must-complete
-                request: async (options?) => new Promise<AxiosResponse>(
-                    (resolve, reject) => {
-                        requestOptions = options;
-
-                        const response: AxiosResponse = {
-                            config: options,
-                            data: {},
-                            headers: {},
-                            request: options.responseType,
-                            status: 500,
-                            statusText: "ServerError",
-                        };
-
-                        const err: AxiosError = {
-                            code: "500",
-                            config: options,
-                            message: "",
-                            name: "ServerError",
-                            request: {},
-                            response,
-                        };
-
-                        throw err;
-                    },
-                ),
-            };
-
-            rw = new RestWrapper(axiosMock as AxiosInstance);
+            const rw = new RestWrapper(baseurl, {}, {}, maxContentLength, axiosErrorMock as AxiosInstance);
 
             // act/assert
             await rw.get(requestUrl).then(
@@ -79,7 +76,7 @@ describe("RestWrapper", () => {
 
         it("Standard properties should not change", async () => {
             // arrange
-            rw.baseurl = baseurl;
+            const rw = new RestWrapper(baseurl, undefined, {}, maxContentLength, axiosMock as AxiosInstance);
 
             // act
             await rw.get(requestUrl);
@@ -94,9 +91,13 @@ describe("RestWrapper", () => {
             // arrange
             const defaultHeaders = { h1: "valueh1", h2: "valueh2" };
             const defaultQueryString = { q1: "valueq1", q2: "valueq2" };
-
-            rw.defaultHeaders = defaultHeaders;
-            rw.defaultQueryString = defaultQueryString;
+            const rw = new RestWrapper(
+                baseurl,
+                defaultHeaders,
+                defaultQueryString,
+                maxContentLength,
+                axiosMock as AxiosInstance,
+            );
 
             // act
             await rw.get(requestUrl);
@@ -115,9 +116,13 @@ describe("RestWrapper", () => {
             const requestHeaders = { h1: "valueh11", h3: "valueh3" };
             const defaultQueryString = { q1: "valueq1", q2: "valueq2" };
             const requestQueryString = { q1: "valueq11", q3: "valueq3" };
-
-            rw.defaultHeaders = defaultHeaders;
-            rw.defaultQueryString = defaultQueryString;
+            const rw = new RestWrapper(
+                baseurl,
+                defaultHeaders,
+                defaultQueryString,
+                maxContentLength,
+                axiosMock as AxiosInstance,
+            );
 
             // act
             await rw.get(requestUrl, requestQueryString, requestHeaders);
@@ -139,65 +144,12 @@ describe("RestWrapper", () => {
 
     describe(".post", () => {
 
-        beforeEach(() => {
-            axiosMock = {
-                request: async (options?) => new Promise<AxiosResponse>(
-                    (resolve, reject) => {
-                        requestOptions = options;
-                        const response: AxiosResponse = {
-                            config: {},
-                            data: {},
-                            headers: {},
-                            request: options.responseType,
-                            status: 201,
-                            statusText: "OK",
-                        };
-
-                        resolve(response);
-                    },
-                ),
-            };
-
-            rw = new RestWrapper(axiosMock as AxiosInstance);
-        });
-
         it("Invalid Response Code should reject Promise", async () => {
             // arrange
-            rw.baseurl = baseurl;
-
-            axiosMock = {
-                // tslint:disable-next-line:promise-must-complete
-                request: async (options?) => new Promise<AxiosResponse>(
-                    (resolve, reject) => {
-                        requestOptions = options;
-
-                        const response: AxiosResponse = {
-                            config: options,
-                            data: {},
-                            headers: {},
-                            request: options.responseType,
-                            status: 500,
-                            statusText: "ServerError",
-                        };
-
-                        const err: AxiosError = {
-                            code: "500",
-                            config: options,
-                            message: "",
-                            name: "ServerError",
-                            request: {},
-                            response,
-                        };
-
-                        throw err;
-                    },
-                ),
-            };
-
-            rw = new RestWrapper(axiosMock as AxiosInstance);
+            const rw = new RestWrapper(baseurl, {}, {}, maxContentLength, axiosErrorMock as AxiosInstance);
 
             // act/assert
-            await rw.get(requestUrl).then(
+            await rw.post(requestUrl, {}).then(
                 // tslint:disable-next-line:no-void-expression
                 () => assert.fail("Promise was not rejected"),
                 // tslint:disable-next-line:no-void-expression
@@ -207,7 +159,7 @@ describe("RestWrapper", () => {
 
         it("Standard properties should not change", async () => {
             // arrange
-            rw.baseurl = baseurl;
+            const rw = new RestWrapper(baseurl, undefined, {}, maxContentLength, axiosMock as AxiosInstance);
 
             // act
             await rw.post(requestUrl, {});
@@ -222,9 +174,13 @@ describe("RestWrapper", () => {
             // arrange
             const defaultHeaders = { h1: "valueh1", h2: "valueh2" };
             const defaultQueryString = { q1: "valueq1", q2: "valueq2" };
-
-            rw.defaultHeaders = defaultHeaders;
-            rw.defaultQueryString = defaultQueryString;
+            const rw = new RestWrapper(
+                baseurl,
+                defaultHeaders,
+                defaultQueryString,
+                maxContentLength,
+                axiosMock as AxiosInstance,
+            );
 
             // act
             await rw.post(requestUrl, {});
@@ -243,9 +199,13 @@ describe("RestWrapper", () => {
             const requestHeaders = { h1: "valueh11", h3: "valueh3" };
             const defaultQueryString = { q1: "valueq1", q2: "valueq2" };
             const requestQueryString = { q1: "valueq11", q3: "valueq3" };
-
-            rw.defaultHeaders = defaultHeaders;
-            rw.defaultQueryString = defaultQueryString;
+            const rw = new RestWrapper(
+                baseurl,
+                defaultHeaders,
+                defaultQueryString,
+                maxContentLength,
+                axiosMock as AxiosInstance,
+            );
 
             // act
             await rw.post(requestUrl, {}, requestQueryString, requestHeaders);
@@ -267,65 +227,12 @@ describe("RestWrapper", () => {
 
     describe(".delete", () => {
 
-        beforeEach(() => {
-            axiosMock = {
-                request: async (options?) => new Promise<AxiosResponse>(
-                    (resolve, reject) => {
-                        requestOptions = options;
-                        const response: AxiosResponse = {
-                            config: {},
-                            data: {},
-                            headers: {},
-                            request: options.responseType,
-                            status: 204,
-                            statusText: "OK",
-                        };
-
-                        resolve(response);
-                    },
-                ),
-            };
-
-            rw = new RestWrapper(axiosMock as AxiosInstance);
-        });
-
         it("Invalid Response Code should reject Promise", async () => {
             // arrange
-            rw.baseurl = baseurl;
-
-            axiosMock = {
-                // tslint:disable-next-line:promise-must-complete
-                request: async (options?) => new Promise<AxiosResponse>(
-                    (resolve, reject) => {
-                        requestOptions = options;
-
-                        const response: AxiosResponse = {
-                            config: options,
-                            data: {},
-                            headers: {},
-                            request: options.responseType,
-                            status: 500,
-                            statusText: "ServerError",
-                        };
-
-                        const err: AxiosError = {
-                            code: "500",
-                            config: options,
-                            message: "",
-                            name: "ServerError",
-                            request: {},
-                            response,
-                        };
-
-                        throw err;
-                    },
-                ),
-            };
-
-            rw = new RestWrapper(axiosMock as AxiosInstance);
+            const rw = new RestWrapper(baseurl, {}, {}, maxContentLength, axiosErrorMock as AxiosInstance);
 
             // act/assert
-            await rw.get(requestUrl).then(
+            await rw.delete(requestUrl, {}).then(
                 // tslint:disable-next-line:no-void-expression
                 () => assert.fail("Promise was not rejected"),
                 // tslint:disable-next-line:no-void-expression
@@ -335,10 +242,10 @@ describe("RestWrapper", () => {
 
         it("Standard properties should not change", async () => {
             // arrange
-            rw.baseurl = baseurl;
+            const rw = new RestWrapper(baseurl, undefined, {}, maxContentLength, axiosMock as AxiosInstance);
 
             // act
-            await rw.post(requestUrl, {});
+            await rw.delete(requestUrl);
 
             // assert
             assert.equal(baseurl, requestOptions.baseURL, "baseURL should be the same");
@@ -350,12 +257,16 @@ describe("RestWrapper", () => {
             // arrange
             const defaultHeaders = { h1: "valueh1", h2: "valueh2" };
             const defaultQueryString = { q1: "valueq1", q2: "valueq2" };
-
-            rw.defaultHeaders = defaultHeaders;
-            rw.defaultQueryString = defaultQueryString;
+            const rw = new RestWrapper(
+                baseurl,
+                defaultHeaders,
+                defaultQueryString,
+                maxContentLength,
+                axiosMock as AxiosInstance,
+            );
 
             // act
-            await rw.post(requestUrl, {});
+            await rw.delete(requestUrl);
 
             // assert
             assert.equal(`${requestUrl}?q1=valueq1&q2=valueq2`, requestOptions.url, "requestUrl should be the same");
@@ -371,12 +282,16 @@ describe("RestWrapper", () => {
             const requestHeaders = { h1: "valueh11", h3: "valueh3" };
             const defaultQueryString = { q1: "valueq1", q2: "valueq2" };
             const requestQueryString = { q1: "valueq11", q3: "valueq3" };
-
-            rw.defaultHeaders = defaultHeaders;
-            rw.defaultQueryString = defaultQueryString;
+            const rw = new RestWrapper(
+                baseurl,
+                defaultHeaders,
+                defaultQueryString,
+                maxContentLength,
+                axiosMock as AxiosInstance,
+            );
 
             // act
-            await rw.post(requestUrl, {}, requestQueryString, requestHeaders);
+            await rw.delete(requestUrl, requestQueryString, requestHeaders);
 
             // assert
             assert.equal(
@@ -395,65 +310,12 @@ describe("RestWrapper", () => {
 
     describe(".patch", () => {
 
-        beforeEach(() => {
-            axiosMock = {
-                request: async (options?) => new Promise<AxiosResponse>(
-                    (resolve, reject) => {
-                        requestOptions = options;
-                        const response: AxiosResponse = {
-                            config: {},
-                            data: {},
-                            headers: {},
-                            request: options.responseType,
-                            status: 200,
-                            statusText: "OK",
-                        };
-
-                        resolve(response);
-                    },
-                ),
-            };
-
-            rw = new RestWrapper(axiosMock as AxiosInstance);
-        });
-
         it("Invalid Response Code should reject Promise", async () => {
             // arrange
-            rw.baseurl = baseurl;
-
-            axiosMock = {
-                // tslint:disable-next-line:promise-must-complete
-                request: async (options?) => new Promise<AxiosResponse>(
-                    (resolve, reject) => {
-                        requestOptions = options;
-
-                        const response: AxiosResponse = {
-                            config: options,
-                            data: {},
-                            headers: {},
-                            request: options.responseType,
-                            status: 500,
-                            statusText: "ServerError",
-                        };
-
-                        const err: AxiosError = {
-                            code: "500",
-                            config: options,
-                            message: "",
-                            name: "ServerError",
-                            request: {},
-                            response,
-                        };
-
-                        throw err;
-                    },
-                ),
-            };
-
-            rw = new RestWrapper(axiosMock as AxiosInstance);
+            const rw = new RestWrapper(baseurl, {}, {}, maxContentLength, axiosErrorMock as AxiosInstance);
 
             // act/assert
-            await rw.get(requestUrl).then(
+            await rw.patch(requestUrl, {}).then(
                 // tslint:disable-next-line:no-void-expression
                 () => assert.fail("Promise was not rejected"),
                 // tslint:disable-next-line:no-void-expression
@@ -463,10 +325,10 @@ describe("RestWrapper", () => {
 
         it("Standard properties should not change", async () => {
             // arrange
-            rw.baseurl = baseurl;
+            const rw = new RestWrapper(baseurl, undefined, {}, maxContentLength, axiosMock as AxiosInstance);
 
             // act
-            await rw.post(requestUrl, {});
+            await rw.patch(requestUrl, {});
 
             // assert
             assert.equal(baseurl, requestOptions.baseURL, "baseURL should be the same");
@@ -478,12 +340,16 @@ describe("RestWrapper", () => {
             // arrange
             const defaultHeaders = { h1: "valueh1", h2: "valueh2" };
             const defaultQueryString = { q1: "valueq1", q2: "valueq2" };
-
-            rw.defaultHeaders = defaultHeaders;
-            rw.defaultQueryString = defaultQueryString;
+            const rw = new RestWrapper(
+                baseurl,
+                defaultHeaders,
+                defaultQueryString,
+                maxContentLength,
+                axiosMock as AxiosInstance,
+            );
 
             // act
-            await rw.post(requestUrl, {});
+            await rw.patch(requestUrl, {});
 
             // assert
             assert.equal(`${requestUrl}?q1=valueq1&q2=valueq2`, requestOptions.url, "requestUrl should be the same");
@@ -499,12 +365,16 @@ describe("RestWrapper", () => {
             const requestHeaders = { h1: "valueh11", h3: "valueh3" };
             const defaultQueryString = { q1: "valueq1", q2: "valueq2" };
             const requestQueryString = { q1: "valueq11", q3: "valueq3" };
-
-            rw.defaultHeaders = defaultHeaders;
-            rw.defaultQueryString = defaultQueryString;
+            const rw = new RestWrapper(
+                baseurl,
+                defaultHeaders,
+                defaultQueryString,
+                maxContentLength,
+                axiosMock as AxiosInstance,
+            );
 
             // act
-            await rw.post(requestUrl, {}, requestQueryString, requestHeaders);
+            await rw.patch(requestUrl, {}, requestQueryString, requestHeaders);
 
             // assert
             assert.equal(
