@@ -1,3 +1,4 @@
+import { IClientJoin } from "./clients";
 import { IUser } from "./users";
 
 export enum MessageType {
@@ -78,16 +79,6 @@ export interface INack {
 }
 
 /**
- * System level metadata
- */
-export interface ISystemData {
-
-    split: boolean;
-
-    content: any;
-}
-
-/**
  * Document specific message
  */
 export interface IDocumentMessage {
@@ -104,12 +95,36 @@ export interface IDocumentMessage {
     // back-compat: This should be string.
     contents: any;
 
-    // System level metadata.
-    metadata: ISystemData;
-
     // Traces related to the packet.
     traces: ITrace[];
 }
+
+/**
+ * Document client Join message.
+ */
+export interface IDocumentJoinMessage extends IDocumentMessage {
+
+    detail: IClientJoin;
+}
+
+/**
+ * Document client leave message.
+ */
+export interface IDocumentLeaveMessage extends IDocumentMessage {
+
+    clientId: string;
+}
+
+/**
+ * Document help message.
+ */
+export interface IDocumentHelpMessage extends IDocumentMessage {
+
+    detail: IHelpMessage;
+}
+
+// tslint:disable max-line-length
+export type IOutboundDocumentMessage = IDocumentJoinMessage | IDocumentLeaveMessage | IDocumentHelpMessage | IDocumentMessage;
 
 export interface IContentMessage {
 
@@ -169,9 +184,6 @@ export interface ISequencedDocumentMessage {
     // Origin branch information for the message. Can be marked undefined if the current
     // message is also the origin.
     origin: IBranchOrigin;
-
-    // Message metadata
-    metadata: ISystemData;
 
     // Traces related to the packet.
     traces: ITrace[];
