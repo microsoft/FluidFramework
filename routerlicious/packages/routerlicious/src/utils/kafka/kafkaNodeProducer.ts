@@ -24,7 +24,7 @@ export class KafkaNodeProducer implements IProducer {
         private clientId: string,
         private topic: string,
         private maxMessageSize: number) {
-        this.maxMessageSize = maxMessageSize * 0.75;
+        this.maxMessageSize = maxMessageSize * 0.25;
         this.connect();
     }
 
