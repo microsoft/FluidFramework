@@ -39,7 +39,8 @@ export class JarvisResourcesFactory implements utils.IResourcesFactory<JarvisRes
         const topic = config.get("alfred:topic");
         const metricClientConfig = config.get("metric");
 
-        const producer = new RdkafkaProducer(kafkaEndpoint, topic);
+        const maxSendMessageSize = bytes.parse(config.get("alfred:maxMessageSize"));
+        const producer = new RdkafkaProducer(kafkaEndpoint, topic, maxSendMessageSize);
         const redisConfig = config.get("redis");
         const webSocketLibrary = config.get("alfred:webSocketLib");
         const authEndpoint = config.get("auth:endpoint");
@@ -79,8 +80,6 @@ export class JarvisResourcesFactory implements utils.IResourcesFactory<JarvisRes
             deltasCollectionName);
 
         const storage = new services.DocumentStorage(databaseManager, tenantManager, producer);
-
-        const maxSendMessageSize = bytes.parse(config.get("alfred:maxMessageSize"));
 
         const kafkaOrdererFactory = new KafkaOrdererFactory(producer, storage, maxSendMessageSize);
 

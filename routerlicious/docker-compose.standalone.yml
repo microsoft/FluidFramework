@@ -11,16 +11,21 @@ services:
         restart: always
     deli:
         image: prague.azurecr.io/prague:latest
-        command: node dist/kafka-service/index.js deli ../document-router/index.js
+        command: node dist/kafka-service/index.js deli ../deli/index.js
         environment:
-            - worker__intelligence__resume__url=http://alfred:3000/intelligence/resume
             - DEBUG=prague:*
             - NODE_ENV=development
-            - documentLambda=../deli/index.js
         restart: always
     scriptorium:
         image: prague.azurecr.io/prague:latest
         command: node dist/kafka-service/index.js scriptorium ../scriptorium/index.js
+        environment:
+            - DEBUG=prague:*
+            - NODE_ENV=development
+        restart: always
+    bbc:
+        image: prague.azurecr.io/prague:latest
+        command: node dist/kafka-service/index.js bbc ../bbc/index.js
         environment:
             - DEBUG=prague:*
             - NODE_ENV=development

@@ -64,10 +64,18 @@ export interface IProducer {
     /**
      * Sends the message to kafka
      */
-    send(message: string, key: string): Promise<any>;
+    send(message: string, tenantId: string, documentId: string): Promise<any>;
 
     /**
      * Closes the underlying connection
      */
     close(): Promise<void>;
+}
+
+export interface IPendingBoxcar {
+    documentId: string;
+    tenantId: string;
+    deferred: utils.Deferred<void>;
+    messages: string[];
+    size: number;
 }

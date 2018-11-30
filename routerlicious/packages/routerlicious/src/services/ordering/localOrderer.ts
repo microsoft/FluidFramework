@@ -219,7 +219,7 @@ class LocalOrdererConnection implements IOrdererConnection {
         }
 
         // Submits the message.
-        this.producer.send(JSON.stringify(message), this.documentId);
+        this.producer.send(JSON.stringify(message), this.tenantId, this.documentId);
     }
 }
 

@@ -25,7 +25,7 @@ console.log(commander.batches);
 console.log(commander.size);
 
 const topic = "testtopic";
-const producer = new RdkafkaProducer("kafka:9092", topic);
+const producer = new RdkafkaProducer("kafka:9092", topic, 1024 * 1024);
 const consumer = new RdkafkaConsumer(
     "kafka:9092",
     "tester",
@@ -48,6 +48,7 @@ function sendBatch(current: number, batches: number, messages: string[]) {
             // pubMsg.push({ time: Date.now(), i: current * messages.length + i, m: messages[i] });
             producer.send(
                 JSON.stringify({ time: Date.now(), i: current * messages.length + i, m: messages[i] }),
+                "test",
                 "test");
         }
     }
