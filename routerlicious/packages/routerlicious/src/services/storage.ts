@@ -1,5 +1,5 @@
 import { ICommit, ICommitDetails } from "@prague/gitresources";
-import { IDocumentAttributes, MessageType } from "@prague/runtime-definitions";
+import { IDocumentAttributes, IDocumentSystemMessage, MessageType } from "@prague/runtime-definitions";
 import * as moniker from "moniker";
 import * as winston from "winston";
 import * as core from "../core";
@@ -181,20 +181,23 @@ export class DocumentStorage implements core.IDocumentStorage {
             tenantId,
         };
 
+        const operation: IDocumentSystemMessage = {
+            clientSequenceNumber: -1,
+            contents: null,
+            data: JSON.stringify(contents),
+            metadata: {
+                content: contents,
+                split: false,
+            },
+            referenceSequenceNumber: -1,
+            traces: [],
+            type: MessageType.Fork,
+        };
+
         const integrateMessage: core.IRawOperationMessage = {
             clientId: null,
             documentId: id,
-            operation: {
-                clientSequenceNumber: -1,
-                contents: null,
-                metadata: {
-                    content: contents,
-                    split: false,
-                },
-                referenceSequenceNumber: -1,
-                traces: [],
-                type: MessageType.Fork,
-            },
+            operation,
             tenantId,
             timestamp: Date.now(),
             type: core.RawOperationType,
