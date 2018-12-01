@@ -121,7 +121,6 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
             : runtime.Robot;
         // Inbound message queue
         this._inbound = new DeltaQueue<runtime.ISequencedDocumentMessage>((op, callback) => {
-            // Back-compat: First check is for paparazzi to support old documents.
             if (op.contents === undefined) {
                 this.handleOpContent(op, callback);
             } else {
@@ -186,20 +185,6 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
         this.fetchMissingDeltas(sequenceNumber);
     }
 
-    /**
-     * Submits a new delta operation
-     */
-    public submit(type: runtime.MessageType, contents: string): number {
-        return this.submitCore(type, contents, null);
-    }
-
-    /**
-     * Submits a new system delta operation.
-     */
-    public submitMetaData(type: runtime.MessageType, contents: any): number {
-        return this.submitCore(type, null, contents);
-    }
-
     public async connect(reason: string): Promise<IConnectionDetails> {
         if (this.connecting) {
             return this.connecting.promise;
@@ -222,6 +207,32 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
         this.connectCore(reason, InitialReconnectDelay);
 
         return this.connecting.promise;
+    }
+
+    public submit(type: runtime.MessageType, contents: string): number {
+        // Start adding trace for the op.
+        const traces: runtime.ITrace[] = [
+            {
+                action: "start",
+                service: this.clientType,
+                timestamp: Date.now(),
+            }];
+        // tslint:disable:no-increment-decrement
+        const coreMessage: runtime.IDocumentMessage = {
+            clientSequenceNumber: ++this.clientSequenceNumber,
+            contents,
+            referenceSequenceNumber: this.baseSequenceNumber,
+            traces,
+            type,
+        };
+
+        const message = this.createOutboundMessage(type, coreMessage);
+        this.readonly = false;
+
+        this.stopSequenceNumberUpdate();
+        this._outbound.push(message);
+
+        return message.clientSequenceNumber;
     }
 
     /* tslint:disable:promise-function-async */
@@ -258,32 +269,6 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
 
     private shouldSplit(contents: string) {
         return (contents) && (contents.length > this.maxContentSize);
-    }
-
-    private submitCore(type: runtime.MessageType, contents: string, metaContent: any): number {
-        // Start adding trace for the op.
-        const traces: runtime.ITrace[] = [
-            {
-                action: "start",
-                service: this.clientType,
-                timestamp: Date.now(),
-            }];
-        // tslint:disable:no-increment-decrement
-        const coreMessage: runtime.IDocumentMessage = {
-            clientSequenceNumber: ++this.clientSequenceNumber,
-            contents,
-            referenceSequenceNumber: this.baseSequenceNumber,
-            traces,
-            type,
-        };
-
-        const message = this.createOutboundMessage(type, coreMessage);
-        this.readonly = false;
-
-        this.stopSequenceNumberUpdate();
-        this._outbound.push(message);
-
-        return message.clientSequenceNumber;
     }
 
     // Specific system level message attributes are need to be looked at by the server.

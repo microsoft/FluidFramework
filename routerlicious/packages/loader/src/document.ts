@@ -388,7 +388,6 @@ export class Document extends EventEmitter {
                     attributes.branch,
                     attributes.minimumSequenceNumber,
                     (type, contents) => this.submitMessage(type, contents),
-                    (type, contents) => this.submitMetadataMessage(type, contents),
                     (message) => this.snapshot(message),
                     () => this.close());
 
@@ -651,7 +650,6 @@ export class Document extends EventEmitter {
             this.id,
             this._deltaManager.minimumSequenceNumber,
             (type, contents) => this.submitMessage(type, contents),
-            (type, contents) => this.submitMetadataMessage(type, contents),
             (message) => this.snapshot(message),
             () => this.close());
         this._runtime = newRuntime;
@@ -813,13 +811,6 @@ export class Document extends EventEmitter {
         }
 
         return clientSequenceNumber;
-    }
-
-    private submitMetadataMessage(type: MessageType, contents: any) {
-        if (this.connectionState !== ConnectionState.Connected) {
-            return -1;
-        }
-        return this._deltaManager.submitMetaData(type, contents);
     }
 
     private submitChunkedMessage(type: MessageType, content: string, maxOpSize: number): number {
