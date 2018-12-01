@@ -5,8 +5,9 @@ import {
     IDocumentMessage,
     IDocumentSystemMessage,
     ITokenClaims,
-    MessageType } from "@prague/runtime-definitions";
+} from "@prague/runtime-definitions";
 import * as socketStorage from "@prague/socket-storage";
+import { isSystemType } from "@prague/utils";
 import * as jwt from "jsonwebtoken";
 import * as winston from "winston";
 import * as core from "../core";
@@ -31,7 +32,7 @@ function sanitizeMessage(message: any): IDocumentMessage {
         type: message.type,
     };
     // back-compat: Should be consolidated with other system messages.
-    if (sanitizedMessage.type === MessageType.RemoteHelp) {
+    if (isSystemType(sanitizedMessage.type)) {
         const systemMessage = sanitizedMessage as IDocumentSystemMessage;
         systemMessage.data = message.data;
         return systemMessage;

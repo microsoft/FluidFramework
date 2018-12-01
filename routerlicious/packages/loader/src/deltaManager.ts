@@ -1,5 +1,5 @@
 import * as runtime from "@prague/runtime-definitions";
-import { Deferred } from "@prague/utils";
+import { Deferred, isSystemType } from "@prague/utils";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import { ContentCache } from "./contentCache";
@@ -288,11 +288,10 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
 
     // Specific system level message attributes are need to be looked at by the server.
     // Hence they are separated and promoted as top level attributes.
-    // back-compat: consolidate this with alfred sanitization.
     private createOutboundMessage(
         type: runtime.MessageType,
         coreMessage: runtime.IDocumentMessage): runtime.IDocumentMessage {
-        if (type === runtime.MessageType.RemoteHelp) {
+        if (isSystemType(type)) {
             const data = coreMessage.contents;
             coreMessage.contents = null;
             const outboundMessage: runtime.IDocumentSystemMessage = {
