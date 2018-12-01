@@ -4,16 +4,16 @@ import * as socketStorage from "@prague/socket-storage";
 import * as jwt from "jsonwebtoken";
 
 // For local development
-// const routerlicious = "http://localhost:3000";
-// const historian = "http://localhost:3001";
-// const tenantId = "prague";
-// const secret = "43cfc3fbf04a97c0921fd23ff10f9e4b";
-const routerlicious = "https://alfred.wu2.prague.office-int.com";
-const historian = "https://historian.wu2.prague.office-int.com";
-const tenantId = "gallant-hugle";
-const secret = "03302d4ebfb6f44b662d00313aff5a46";
+const routerlicious = "http://localhost:3000";
+const historian = "http://localhost:3001";
+const tenantId = "prague";
+const secret = "43cfc3fbf04a97c0921fd23ff10f9e4b";
+// const routerlicious = "https://alfred.wu2.prague.office-int.com";
+// const historian = "https://historian.wu2.prague.office-int.com";
+// const tenantId = "gallant-hugle";
+// const secret = "03302d4ebfb6f44b662d00313aff5a46";
 
-const documentId = window.location.search.slice(1) || "test-flowview-test";
+const documentId = window.location.search.slice(1) || "test-00";
 
 // Register endpoint connection
 const documentServices = socketStorage.createDocumentService(routerlicious, historian);

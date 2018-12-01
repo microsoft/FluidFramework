@@ -1,10 +1,12 @@
 import {
     IBranchOrigin,
+    IDocumentSystemMessage,
     ISequencedDocumentMessage,
+    ISequencedDocumentSystemMessage,
     ITrace,
     MessageType,
 } from "@prague/runtime-definitions";
-import { RangeTracker } from "@prague/utils";
+import { isSystemType, RangeTracker } from "@prague/utils";
 import * as assert from "assert";
 import * as _ from "lodash";
 import * as winston from "winston";
@@ -195,12 +197,9 @@ export class DeliLambda implements IPartitionLambda {
         // Update and retrieve the minimum sequence number
         let message = rawMessage as core.IRawOperationMessage;
 
-        // Back-Compat: Older message does not have metadata field. So use the content field.
-        const messageContent = message.operation.metadata
-            ? message.operation.metadata.content
-            : message.operation.contents;
+        const systemContent = this.extractSystemContent(message);
 
-        if (this.isDuplicate(message, messageContent)) {
+        if (this.isDuplicate(message, systemContent)) {
             return;
         }
 
@@ -210,18 +209,18 @@ export class DeliLambda implements IPartitionLambda {
             if (!message.clientId) {
                 if (message.operation.type === MessageType.ClientLeave) {
                     // Return if the client has already been removed due to a prior leave message.
-                    if (!this.removeClient(messageContent)) {
+                    if (!this.removeClient(systemContent)) {
                         return;
                     }
                 } else if (message.operation.type === MessageType.ClientJoin) {
                     this.upsertClient(
-                        messageContent.clientId,
+                        systemContent.clientId,
                         0,
                         this.minimumSequenceNumber,
                         message.timestamp,
                         true);
                 } else if (message.operation.type === MessageType.Fork) {
-                    winston.info(`Fork ${message.documentId} -> ${messageContent.name}`);
+                    winston.info(`Fork ${message.documentId} -> ${systemContent.name}`);
                 }
             } else {
                 // Nack handling
@@ -253,7 +252,7 @@ export class DeliLambda implements IPartitionLambda {
 
         if (message.operation.type === MessageType.Integrate) {
             // Branch operation is the original message
-            const branchOperation = messageContent as core.ISequencedOperationMessage;
+            const branchOperation = systemContent as core.ISequencedOperationMessage;
             const branchDocumentMessage = branchOperation.operation as ISequencedDocumentMessage;
             const branchClientId = getBranchClientId(branchOperation.documentId);
 
@@ -330,6 +329,44 @@ export class DeliLambda implements IPartitionLambda {
         }
 
         // And now craft the output message
+        const outputMessage = this.createOutputMessage(message, origin, sequenceNumber, systemContent);
+
+        const sequencedMessage: core.ISequencedOperationMessage = {
+            documentId: message.documentId,
+            operation: outputMessage,
+            tenantId: message.tenantId,
+            type: core.SequencedOperationType,
+        };
+
+        return {
+            message: sequencedMessage,
+            timestamp: message.timestamp,
+            type: message.operation.type,
+        };
+    }
+
+    // Back-Compat: Older message does not have metadata field. So use the content field.
+    private extractSystemContent(message: core.IRawOperationMessage) {
+        if (isSystemType(message.operation.type)) {
+            if (message.operation.metadata) {
+                return message.operation.metadata.content;
+            } else {
+                const operation = message.operation as IDocumentSystemMessage;
+                if (operation.data) {
+                    return JSON.parse(operation.data);
+                } else {
+                    return message.operation.contents;
+                }
+            }
+        }
+    }
+
+    // Back-compat: We should consolidate it better when we remove back-compat.
+    private createOutputMessage(
+        message: core.IRawOperationMessage,
+        origin: IBranchOrigin,
+        sequenceNumber: number,
+        systemContent): ISequencedDocumentMessage {
         const outputMessage: ISequencedDocumentMessage = {
             clientId: message.clientId,
             clientSequenceNumber: message.operation.clientSequenceNumber,
@@ -344,19 +381,13 @@ export class DeliLambda implements IPartitionLambda {
             type: message.operation.type,
             user: message.user,
         };
-
-        const sequencedMessage: core.ISequencedOperationMessage = {
-            documentId: message.documentId,
-            operation: outputMessage,
-            tenantId: message.tenantId,
-            type: core.SequencedOperationType,
-        };
-
-        return {
-            message: sequencedMessage,
-            timestamp: message.timestamp,
-            type: message.operation.type,
-        };
+        if (systemContent !== undefined) {
+            const systemOutputMessage = outputMessage as ISequencedDocumentSystemMessage;
+            systemOutputMessage.data = JSON.stringify(systemContent);
+            return systemOutputMessage;
+        } else {
+            return outputMessage;
+        }
     }
 
     private isDuplicate(message: core.IRawOperationMessage, content: any): boolean {
@@ -408,20 +439,22 @@ export class DeliLambda implements IPartitionLambda {
      */
     // back-compat: Puts the same content in metadata and contents.
     private createLeaveMessage(clientId: string): core.IRawOperationMessage {
+        const operation: IDocumentSystemMessage = {
+            clientSequenceNumber: -1,
+            contents: clientId,
+            data: JSON.stringify(clientId),
+            metadata: {
+                content: clientId,
+                split: false,
+            },
+            referenceSequenceNumber: -1,
+            traces: [],
+            type: MessageType.ClientLeave,
+        };
         const leaveMessage: core.IRawOperationMessage = {
             clientId: null,
             documentId: this.documentId,
-            operation: {
-                clientSequenceNumber: -1,
-                contents: clientId,
-                metadata: {
-                    content: clientId,
-                    split: false,
-                },
-                referenceSequenceNumber: -1,
-                traces: [],
-                type: MessageType.ClientLeave,
-            },
+            operation,
             tenantId: this.tenantId,
             timestamp: Date.now(),
             type: core.RawOperationType,
