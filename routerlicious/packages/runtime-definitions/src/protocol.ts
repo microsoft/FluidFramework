@@ -78,6 +78,16 @@ export interface INack {
 }
 
 /**
+ * System level metadata
+ */
+export interface ISystemData {
+
+    split: boolean;
+
+    content: any;
+}
+
+/**
  * Document specific message
  */
 export interface IDocumentMessage {
@@ -94,16 +104,19 @@ export interface IDocumentMessage {
     // back-compat: This should be string.
     contents: any;
 
+    // back-compat: Remove this optional field once clients are up to date.
+    metadata?: ISystemData;
+
     // Traces related to the packet.
     traces: ITrace[];
 }
 
 /**
- * Document client Join message.
+ * Document Message with optional system level data field.
  */
-export interface IOutboundDocumentMessage extends IDocumentMessage {
+export interface IDocumentSystemMessage extends IDocumentMessage {
 
-    detail?: string;
+    data: string;
 }
 
 export interface IContentMessage {
@@ -165,11 +178,19 @@ export interface ISequencedDocumentMessage {
     // message is also the origin.
     origin: IBranchOrigin;
 
+    // back-compat: Remove this optional field once clients are up to date.
+    metadata?: ISystemData;
+
     // Traces related to the packet.
     traces: ITrace[];
 
     // Timestamp when the server ticketed the message
     timestamp: number;
+}
+
+export interface ISequencedDocumentSystemMessage extends ISequencedDocumentMessage {
+
+    data: string;
 }
 
 /**
