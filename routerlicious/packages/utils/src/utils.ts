@@ -5,5 +5,6 @@ export function isSystemType(type: string) {
         type === MessageType.RemoteHelp ||
         type === MessageType.Integrate ||
         type === MessageType.ClientJoin ||
-        type === MessageType.ClientLeave);
+        type === MessageType.ClientLeave ||
+        type === MessageType.Fork);
 }
