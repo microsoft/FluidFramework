@@ -6,7 +6,15 @@ import { debug } from "../debug";
 import { IPendingBoxcar, IProducer } from "./definitions";
 
 // 1MB batch size / (16KB max message size + overhead)
-const MaxBatchSize = 45;
+const MaxBatchSize = 32;
+
+class PendingBoxcar implements IPendingBoxcar {
+    public deferred = new utils.Deferred<void>();
+    public messages = [];
+
+    constructor(public tenantId: string, public documentId: string) {
+    }
+}
 
 /**
  * Kafka-Node Producer.
@@ -34,26 +42,29 @@ export class KafkaNodeProducer implements IProducer {
 
         // Get the list of boxcars for the given key
         if (!this.messages.has(key)) {
-            this.messages.set(key, []);
+            this.messages.set(key, [new PendingBoxcar(tenantId, documentId)]);
         }
         const boxcars = this.messages.get(key);
 
-        // Create a new boxcar if necessary
-        if (boxcars.length === 0 || boxcars[boxcars.length - 1].messages.length >= MaxBatchSize) {
-            boxcars.push({
-                deferred: new utils.Deferred<void>(),
-                documentId,
-                messages: [],
-                tenantId,
-            });
+        // Create a new boxcar if necessary (will only happen when not connected)
+        if (boxcars[boxcars.length - 1].messages.length >= MaxBatchSize) {
+            boxcars.push(new PendingBoxcar(tenantId, documentId));
         }
 
         // Add the message to the boxcar
         const boxcar = boxcars[boxcars.length - 1];
         boxcar.messages.push(message);
 
-        // Mark the need to send a message
-        this.requestSend();
+        // If adding a new message to the boxcar filled it up, and we are connected, then send immediately. Otherwise
+        // request a send
+        if (this.connected && boxcar.messages.length >= MaxBatchSize) {
+            // Send all the boxcars
+            this.sendBoxcars(boxcars);
+            this.messages.delete(key);
+        } else {
+            // Mark the need to send a message
+            this.requestSend();
+        }
 
         return boxcar.deferred.promise;
     }
@@ -93,22 +104,26 @@ export class KafkaNodeProducer implements IProducer {
      */
     private sendPendingMessages() {
         for (const [, value] of this.messages) {
-            for (const boxcar of value) {
-                const boxcarMessage: IBoxcarMessage = {
-                    contents: boxcar.messages,
-                    documentId: boxcar.documentId,
-                    tenantId: boxcar.tenantId,
-                    type: BoxcarType,
-                };
-
-                const stringifiedMessage = Buffer.from(JSON.stringify(boxcarMessage));
-                this.producer.send(
-                    [{ key: boxcar.documentId, messages: stringifiedMessage, topic: this.topic }],
-                    (error, data) => error ? boxcar.deferred.reject(error) : boxcar.deferred.resolve());
-            }
+            this.sendBoxcars(value);
         }
 
         this.messages.clear();
+    }
+
+    private sendBoxcars(boxcars: IPendingBoxcar[]) {
+        for (const boxcar of boxcars) {
+            const boxcarMessage: IBoxcarMessage = {
+                contents: boxcar.messages,
+                documentId: boxcar.documentId,
+                tenantId: boxcar.tenantId,
+                type: BoxcarType,
+            };
+
+            const stringifiedMessage = Buffer.from(JSON.stringify(boxcarMessage));
+            this.producer.send(
+                [{ key: boxcar.documentId, messages: stringifiedMessage, topic: this.topic }],
+                (error, data) => error ? boxcar.deferred.reject(error) : boxcar.deferred.resolve());
+        }
     }
 
     /**
