@@ -17,6 +17,7 @@ import {
     IProposal,
     IRuntime,
     ISequencedDocumentMessage,
+    ISequencedDocumentSystemMessage,
     ISequencedProposal,
     ISnapshotTree,
     ITokenProvider,
@@ -928,7 +929,8 @@ export class Document extends EventEmitter {
         const eventArgs: any[] = [message];
         switch (message.type) {
             case MessageType.ClientJoin:
-                const join = message.metadata.content as IClientJoin;
+                const systemJoinMessage = message as ISequencedDocumentSystemMessage;
+                const join = JSON.parse(systemJoinMessage.data) as IClientJoin;
                 this.quorum.addMember(join.clientId, join.detail);
 
                 // This is the only one that requires the pending client ID
@@ -943,7 +945,8 @@ export class Document extends EventEmitter {
                 break;
 
             case MessageType.ClientLeave:
-                const clientId = message.metadata.content as string;
+                const systemLeaveMessage = message as ISequencedDocumentSystemMessage;
+                const clientId = JSON.parse(systemLeaveMessage.data) as string;
                 this.clearPartialChunks(clientId);
                 this.quorum.removeMember(clientId);
                 this.emit("clientLeave", clientId);

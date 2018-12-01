@@ -19,6 +19,8 @@ const DefaultChunkSize = 16 * 1024;
 const DefaultMaxContentSize = 32 * 1024;
 const DefaultContentBufferSize = 10;
 
+// tslint:disable no-unsafe-any
+
 /**
  * Interface used to define a strategy for handling incoming delta messages
  */
@@ -65,7 +67,7 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
 
     // tslint:disable:variable-name
     private _inbound: DeltaQueue<runtime.IDocumentMessage>;
-    private _outbound: DeltaQueue<runtime.IOutboundDocumentMessage>;
+    private _outbound: DeltaQueue<runtime.IDocumentMessage>;
     // tslint:enable:variable-name
 
     private connecting: Deferred<IConnectionDetails>;
@@ -132,7 +134,7 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
         });
 
         // Outbound message queue
-        this._outbound = new DeltaQueue<runtime.IOutboundDocumentMessage>(
+        this._outbound = new DeltaQueue<runtime.IDocumentMessage>(
             (message, callback: (error?) => void) => {
                 if (this.shouldSplit(message.contents)) {
                     debug(`Splitting content from envelope.`);
@@ -284,16 +286,18 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
         return message.clientSequenceNumber;
     }
 
-    // Specific system level message contents are separated and promoted to top level attributes.
+    // Specific system level message attributes are need to be looked at by the server.
+    // Hence they are separated and promoted as top level attributes.
+    // back-compat: consolidate this with alfred sanitization.
     private createOutboundMessage(
         type: runtime.MessageType,
-        coreMessage: runtime.IDocumentMessage): runtime.IOutboundDocumentMessage {
+        coreMessage: runtime.IDocumentMessage): runtime.IDocumentMessage {
         if (type === runtime.MessageType.RemoteHelp) {
-            const detail = coreMessage.contents;
+            const data = coreMessage.contents;
             coreMessage.contents = null;
-            const outboundMessage: runtime.IOutboundDocumentMessage = {
+            const outboundMessage: runtime.IDocumentSystemMessage = {
                 ...coreMessage,
-                detail,
+                data,
             };
             return outboundMessage;
         } else {
