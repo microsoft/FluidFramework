@@ -24,8 +24,8 @@ export class ScriptoriumLambda implements IPartitionLambda {
                 // Remove traces and serialize content before writing to mongo.
                 value.operation.traces = [];
 
-                // Back-Compat: Older message does not have metadata field and not serialized.
-                if (!value.operation.metadata) {
+                // Back-Compat: Remove this when everybody is up to date.
+                if (value.operation && value.operation.contents !== undefined) {
                     value.operation.contents = JSON.stringify(value.operation.contents);
                 }
 
@@ -109,7 +109,8 @@ export class ScriptoriumLambda implements IPartitionLambda {
         const allUpdates = [];
         for (const message of messages) {
             // Back-Compat: Temporary workaround to handle old clients.
-            if (message.operation.metadata && message.operation.metadata.split) {
+            // tslint:disable max-line-length
+            if ((message.operation.metadata && message.operation.metadata.split) || message.operation.contents === undefined) {
                 const updateP = this.contentCollection.update(
                     {
                         "clientId": message.operation.clientId,

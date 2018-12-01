@@ -75,8 +75,8 @@ export class DocumentManager {
                     deltas.forEach((delta) => {
                         const operation = delta.operation as ISequencedDocumentMessage;
 
-                        // Back-Compat: Temporary workaround to handle old deltas where content type is object.
-                        if (!operation.metadata && typeof operation.contents === "string") {
+                        // Back-Compat: Perf killer. Remove it later.
+                        if (operation.contents !== undefined) {
                             operation.contents = JSON.parse(operation.contents);
                         }
                     });
