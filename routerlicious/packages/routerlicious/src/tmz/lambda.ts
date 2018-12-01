@@ -1,5 +1,5 @@
 import * as api from "@prague/client-api";
-import { IUser, MessageType } from "@prague/runtime-definitions";
+import { ISequencedDocumentSystemMessage, IUser, MessageType } from "@prague/runtime-definitions";
 import * as winston from "winston";
 import * as core from "../core";
 import { IContext } from "../kafka-service/lambdas";
@@ -41,9 +41,15 @@ export class TmzLambda extends SequencedLambda {
                     let helpContent: string[];
                     if (sequencedMessage.operation.metadata) {
                         helpContent = sequencedMessage.operation.metadata.content.tasks;
-                    } else {
-                        helpContent = sequencedMessage.operation.contents.tasks;
                         helpContent = helpContent.indexOf("snapshot") === -1 ? [] : ["snapshot"];
+                    } else {
+                        if (sequencedMessage.operation.contents) {
+                            helpContent = sequencedMessage.operation.contents.tasks;
+                            helpContent = helpContent.indexOf("snapshot") === -1 ? [] : ["snapshot"];
+                        } else {
+                            // tslint:disable max-line-length
+                            helpContent = JSON.parse((sequencedMessage.operation as ISequencedDocumentSystemMessage).data).tasks;
+                        }
                     }
 
                     await this.trackDocument(
