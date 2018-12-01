@@ -285,7 +285,7 @@ export class Document extends EventEmitter {
             ? Promise.resolve(specifiedVersion)
             : storageP.then(async (storage) => {
                 const versions = await storage.getVersions(this.id, 1);
-                return versions.length > 0 ? versions[1] : null;
+                return versions.length > 0 ? versions[0] : null;
             });
 
         // Get the snapshot tree
