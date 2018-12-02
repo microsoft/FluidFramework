@@ -43,25 +43,21 @@ module.exports = env => {
             new CleanWebpackPlugin(["dist"]),
             {
                 apply: (compiler) => {
-                    if (!isProduction) {
-                        compiler.hooks.afterEmit.tapPromise("PublishChaincodePlugin",
-                            (compilation) => {
-                                if (compilation.errors.length > 0) {
-                                    console.warn(`Skipping @chaincode publication due to compilation errors.`);
-                                    console.warn(`${JSON.stringify(compilation.errors)}`);
-                                    return Promise.resolve();
-                                }
-                                
-                                return new Promise(resolve => {
-                                    const proc = spawn("npm", ["run", "publish-patch-local"],
-                                        { stdio: [process.stdin, process.stdout, process.stderr] });
-                                    proc.on('close', resolve);
-                                });
+                    compiler.hooks.afterEmit.tapPromise("PublishChaincodePlugin",
+                        (compilation) => {
+                            if (compilation.errors.length > 0) {
+                                console.warn(`Skipping @chaincode publication due to compilation errors.`);
+                                console.warn(`${JSON.stringify(compilation.errors)}`);
+                                return Promise.resolve();
                             }
-                        );
-                    } else {
-                        console.warn("Not publishing chaincode.");
-                    }
+                            
+                            return new Promise(resolve => {
+                                const proc = spawn("npm", ["run", "publish-patch-local"],
+                                    { stdio: [process.stdin, process.stdout, process.stderr] });
+                                proc.on('close', resolve);
+                            });
+                        }
+                    );
                 }
             }
         ],

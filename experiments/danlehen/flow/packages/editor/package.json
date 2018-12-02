@@ -24,7 +24,7 @@
     "webpack-serve": "^2.0.2"
   },
   "dependencies": {
-    "@chaincode/flow-document": "^0.0.63",
+    "@chaincode/flow-document": "*",
     "@prague/merge-tree": "^0.1.0"
   }
 }

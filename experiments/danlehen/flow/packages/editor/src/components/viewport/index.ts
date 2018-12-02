@@ -55,7 +55,7 @@ export class ViewportView implements IView<IViewportProps, IViewportViewState> {
     update(props: Readonly<IViewportProps>, state: Readonly<IViewportViewState>): IViewportViewState {
         const { root, slot } = state;
         const scrollbar = ScrollbarView.instance.update(this.getScrollbarProps(props), state.scrollbar);
-        slot.style.transform = `translate(0px,${-props.scrollY}px)`;
+        slot.style.marginTop = `${-props.scrollY}px)`;
         return { root, slot, scrollbar };
     }
 

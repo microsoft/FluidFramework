@@ -43,6 +43,8 @@ export class Editor {
         }
     }
 
+    public get cursorPosition() { return this.cursor.position; }
+
     private readonly onScroll = (position: number) => {
         Object.assign(this.docProps, { start: position });
         this.invalidate();
@@ -60,16 +62,12 @@ export class Editor {
             console.log(`    top: ${bounds.top}, scrollY: ${this.scrollY}`);
             if (bounds) {
                 // The CSS transform is returned in the from "matrix(m00, m01, m10, m11, tx, ty)"
-                const currentY = window.getComputedStyle(this.viewportState.slot)
-                    .transform!
-                    .split('(')[1]
-                    .split(')')[0]
-                    .split(',')
-                    .map(value => Number(value))[5];
+                const currentY = parseFloat(this.viewportState.slot.style.marginTop);
+                const relativeTop = bounds.top                                  // The current top of the viewport slot in screen coordinates
+                    - this.viewportState.root.getBoundingClientRect().top       // The current top of the viewport in screen coordinates
+                    - currentY;                                                 // The current transform
 
-                const top = bounds.top - currentY;
-
-                this.viewportState = ViewportView.instance.update(this.getViewportProps(top), this.viewportState);
+                this.viewportState = ViewportView.instance.update(this.getViewportProps(relativeTop), this.viewportState);
                 console.log(`        -> scrollY: ${this.scrollY} (currentY: ${currentY})`);
             }
         });

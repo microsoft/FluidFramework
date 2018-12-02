@@ -79,6 +79,15 @@ export class Cursor {
         this.domRange.setEnd(container, this.clampToText(container, position));
     }
 
+    /** 
+     * Returns the top/left offset of nearest ancestor that is a CSS containing block, used to
+     * adjust absolute the x/y position of the caret/highlight.
+     */
+    private getOffset(): { top: number, left: number } {
+        // Note: Could generalize by walking parentElement chain and probing style properties.
+        return this.root.parentElement.parentElement.getBoundingClientRect();
+    }
+
     private updateSelection() {
         this.highlightRootElement.innerHTML = "";
 
@@ -94,12 +103,13 @@ export class Cursor {
             this.setRangeStart(this.endContainer, this.relativeEndOffset);
         }
 
+        const offset = this.getOffset();
         for (const rect of this.domRange.getClientRects()) {
             console.log(`highlight: ${JSON.stringify(rect)}`);
             const div = e({ tag: "div", props: { className: styles.highlightRect }});
 
-            div.style.top = `${rect.top}px`;
-            div.style.left = `${rect.left}px`;
+            div.style.top = `${rect.top - offset.top}px`;
+            div.style.left = `${rect.left - offset.left}px`;
             div.style.width = `${rect.width}px`;
             div.style.height = `${rect.height}px`;
 
@@ -122,9 +132,10 @@ export class Cursor {
         // appropriate location.
         this.cursorBounds = this.getCursorBounds();
         if (this.cursorBounds) {
+            const offset = this.getOffset();
             this.cursorElement.style.visibility = "visible";
-            this.cursorElement.style.top = `${this.cursorBounds.top}px`;
-            this.cursorElement.style.left = `${this.cursorBounds.left}px`;
+            this.cursorElement.style.top = `${this.cursorBounds.top - offset.top}px`;
+            this.cursorElement.style.left = `${this.cursorBounds.left - offset.left}px`;
             this.cursorElement.style.height = `${this.cursorBounds.height}px`;
         } else {
             // Otherwise hide it.

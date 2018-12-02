@@ -3,24 +3,30 @@ html, body {
     width: 100%;
     padding: 0px;
     margin: 0px;
+    font-family: arial, helvetica, sans-serif;
+    text-align: justify;
+    text-justify: inter-word;    
 }
 
-.container {
-    width: 100%;
-    height: 100%;
-    display: grid;
-    justify-content: stretch;
-    grid-template-columns: 1fr auto;
-    grid-template-rows: auto;
-    grid-template-areas:
-      "main";
-    background: pink;
+*, *:before, *:after {
+    box-sizing: border-box;
 }
 
-.editor {
-    width: 100%;
+.fill, .app {
+    display: flex;
     height: 100%;
-    grid-area: main;
+    width: 100%;
+}
+
+.app {
+    flex-direction: column;
+    flex: 1 auto;
+}
+
+.toolbarPane {}
+
+.editorPane {
+    position: relative;
 }
 
 .before, .after {
@@ -47,4 +53,52 @@ html, body {
 
 .includeRight {
     float: right;
+}
+
+.wedgeLeft {
+    width: 400px;
+    height: 800px;
+    background: #e3f5f1;
+    float: left;
+    margin-right: 5px;
+    animation: wedgeLeftAnim 10s infinite;
+}
+
+@keyframes wedgeLeftAnim {
+    0% {
+        shape-outside: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+        clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+    }
+    50% {
+        shape-outside: polygon(0 0, 100% 50%, 100% 50%, 0 100%);
+        clip-path: polygon(0 0, 100% 50%, 100% 50%, 0 100%);
+      }
+    100% {
+        shape-outside: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+        clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+    }
+}
+
+.wedgeRight {
+    width: 400px;
+    height: 800px;
+    background: #e3f5f1;
+    float: right;
+    margin-right: 5px;
+    animation: wedgeRightAnim 10s infinite;
+}
+  
+@keyframes wedgeRightAnim {
+    0% {
+        shape-outside: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+        clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+    }
+    50% {
+        shape-outside: polygon(0 50%, 100% 0, 100% 100%, 0 50%);
+        clip-path: polygon(0 50%, 100% 0, 100% 100%, 0 50%);
+      }
+    100% {
+        shape-outside: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+        clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+    }
 }
