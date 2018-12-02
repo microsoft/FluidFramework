@@ -1,4 +1,4 @@
-import { IDocumentSystemMessage, MessageType } from "@prague/runtime-definitions";
+import { IDocumentSystemMessage, ISequencedDocumentSystemMessage, MessageType } from "@prague/runtime-definitions";
 import * as core from "../core";
 import { IContext } from "../kafka-service/lambdas";
 import { SequencedLambda } from "../kafka-service/sequencedLambda";
@@ -42,7 +42,14 @@ export class RouteMasterLambda extends SequencedLambda {
     }
 
     private async createFork(message: core.ISequencedOperationMessage): Promise<void> {
-        const contents = message.operation.metadata.content as core.IForkOperation;
+        const operation = message.operation as ISequencedDocumentSystemMessage;
+        let contents: core.IForkOperation;
+        // back-compat: Support two versions.
+        if (operation.data) {
+            contents = JSON.parse(operation.data);
+        } else {
+            contents = operation.metadata.content;
+        }
         const forkId = contents.documentId;
         const forkSequenceNumber = message.operation.sequenceNumber;
 

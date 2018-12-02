@@ -253,7 +253,7 @@ export class DeliLambda implements IPartitionLambda {
         if (message.operation.type === MessageType.Integrate) {
             // Branch operation is the original message
             const branchOperation = systemContent as core.ISequencedOperationMessage;
-            const branchDocumentMessage = branchOperation.operation as ISequencedDocumentMessage;
+            const branchDocumentMessage = branchOperation.operation as ISequencedDocumentSystemMessage;
             const branchClientId = getBranchClientId(branchOperation.documentId);
 
             // Do I transform the ref or the MSN - I guess the ref here because it's that key space
@@ -268,17 +268,20 @@ export class DeliLambda implements IPartitionLambda {
 
             // A merge message contains the sequencing information in the target branch's (i.e. this)
             // coordinate space. But contains the original message in the contents.
+            // back-compat: Copying over both field.
+            const operation: IDocumentSystemMessage = {
+                clientSequenceNumber: branchDocumentMessage.sequenceNumber,
+                contents: branchDocumentMessage.contents,
+                data: branchDocumentMessage.data,
+                metadata: branchDocumentMessage.metadata,
+                referenceSequenceNumber: transformedRefSeqNumber,
+                traces: message.operation.traces,
+                type: branchDocumentMessage.type,
+            };
             const transformed: core.IRawOperationMessage = {
                 clientId: branchDocumentMessage.clientId,
                 documentId: this.documentId,
-                operation: {
-                    clientSequenceNumber: branchDocumentMessage.sequenceNumber,
-                    contents: branchDocumentMessage.contents,
-                    metadata: branchDocumentMessage.metadata,
-                    referenceSequenceNumber: transformedRefSeqNumber,
-                    traces: message.operation.traces,
-                    type: branchDocumentMessage.type,
-                },
+                operation,
                 tenantId: message.tenantId,
                 timestamp: message.timestamp,
                 type: core.RawOperationType,
