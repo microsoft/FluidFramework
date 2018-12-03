@@ -1,6 +1,6 @@
 import { IMap, IMapView, MapExtension } from "@prague/map";
 import { IChaincode, IPlatform, IRuntime } from "@prague/runtime-definitions";
-import { Component, Store } from "@prague/store";
+import { Component, DataStore } from "@prague/datastore";
 import { FrameLoader } from "./frameLoader";
 
 export class DOMStreamViewer extends Component {
@@ -30,5 +30,5 @@ export class DOMStreamViewer extends Component {
 
 // Example chainloader bootstrap.
 export async function instantiate(): Promise<IChaincode> {
-    return Store.instantiate(new DOMStreamViewer());
+    return DataStore.instantiate(new DOMStreamViewer());
 }

@@ -15,7 +15,7 @@ import { EventEmitter } from "events";
 import * as jwt from "jsonwebtoken";
 import { Component } from "./component";
 
-// Internal/reusable IChaincode implementation returned by Store.instantiate().
+// Internal/reusable IChaincode implementation returned by DataStore.instantiate().
 class Chaincode<T extends Component> extends EventEmitter implements IChaincode {
     // Maps the given type id to the factory for that type of collaborative object.
     private readonly typeToFactory: Map<string, ICollaborativeObjectExtension>;
@@ -34,7 +34,7 @@ class Chaincode<T extends Component> extends EventEmitter implements IChaincode 
     public close() { return Promise.resolve(); }
 
     public async run(runtime: IRuntime, platform: IPlatform) {
-        console.log("chaincode.run");
+        console.log("Chaincode.run");
         const platformOut = new Platform<T>();
         this.component.open(runtime, platform).then(async (root: IMap) => {
             console.log("Component.opened");
@@ -53,7 +53,7 @@ class Platform<TComponent> extends EventEmitter implements IPlatform {
     // Function invoked by IChainLoader.run(..) to resolve 'componentP'.
     public readonly resolveComponent: (document: TComponent) => void;
 
-    // 'queryInterface("component")' returns this promise.  Invoked by Store.open(..) to
+    // 'queryInterface("component")' returns this promise.  Invoked by DataStore.open(..) to
     // retrieve the constructed component.
     private readonly componentP: Promise<TComponent>;
 
@@ -96,7 +96,7 @@ class HostPlatformFactory implements IPlatformFactory {
     }
 }
 
-interface IStoreConfig {
+interface IDataStoreConfig {
     codeLoader: ICodeLoader;
     documentService: IDocumentService;
     key: string;
@@ -104,25 +104,59 @@ interface IStoreConfig {
     tokenService: socketStorage.TokenService;
 }
 
-/** Instance of a Prague store, required to open, create, or instantiate components. */
-export class Store {
-    public static instantiate<T extends IPlatform>(component: Component) {
-        console.log(`store.instantiate(${component.constructor.name})`);
+/** Instance of a Prague data store, required to open, create, or instantiate components. */
+export class DataStore {
+    public static instantiate(component: Component) {
+        console.log(`DataStore.instantiate(${component.constructor.name})`);
         return new Chaincode(component);
     }
 
-    private readonly config: Promise<IStoreConfig>;
+    public static async From(hostUrl: string) {
+        const config = await this.getConfig(hostUrl);
 
-    constructor(hostUrl: string) {
-        this.config = this.getConfig(hostUrl).then((config) => {
-            return {
-                codeLoader: new WebLoader(config.npm),
-                documentService: socketStorage.createDocumentService(hostUrl, config.blobStorageUrl),
-                key: config.key,
-                tenantId: config.id,
-                tokenService: new socketStorage.TokenService(),
+        return new DataStore(
+            new WebLoader(config.npm),
+            socketStorage.createDocumentService(hostUrl, config.blobStorageUrl),
+            config.key,
+            config.id,
+        );
+    }
+
+    // Given the 'hostUrl' of a routerlicious server (e.g., "http://localhost:3000"), discovers the necessary
+    // config/services to open the data store.
+    private static async getConfig(hostUrl: string) {
+        return await new Promise<{
+            blobStorageUrl: string,
+            id: string,
+            key: string,
+            npm: string,
+        }>((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+            xhr.open("GET", `${hostUrl}/api/tenants`, true);
+            xhr.onload = () => {
+                if (xhr.readyState === 4) {
+                    if (xhr.status === 200) {
+                        resolve(JSON.parse(xhr.responseText));
+                    } else {
+                        reject(xhr.statusText);
+                    }
+                }
             };
+            xhr.onerror = () => { reject(xhr.statusText); };
+            xhr.send();
         });
+    }
+
+    private readonly config: IDataStoreConfig;
+
+    constructor(codeLoader: ICodeLoader, documentService: any, key: string, tenantId: string) {
+        this.config = {
+            codeLoader,
+            documentService,
+            key,
+            tenantId,
+            tokenService: new socketStorage.TokenService(),
+        };
     }
 
     public async auth(tenantId: string, userId: string, documentId: string) {
@@ -142,7 +176,7 @@ export class Store {
         chaincodePackage: string,
         services?: ReadonlyArray<[string, Promise<any>]>,
     ): Promise<T> {
-        console.log(`store.open("${documentId}", "${userId}", "${chaincodePackage}")`);
+        console.log(`DataStore.open("${documentId}", "${userId}", "${chaincodePackage}")`);
         const config = await this.config;
         const token = await this.auth(config.tenantId, userId, documentId);
         const factory = new HostPlatformFactory(services);
@@ -186,31 +220,6 @@ export class Store {
             loaderDoc.once("runtimeChanged", (runtime: IRuntime) => {
                 resolver(runtime.platform.queryInterface("component"));
             });
-        });
-    }
-
-    // Given the 'hostUrl' of a routerlicious server (e.g., "http://localhost:3000"), discovers the necessary
-    // config/services to open the store.
-    private async getConfig(hostUrl: string) {
-        return await new Promise<{
-            blobStorageUrl: string,
-            id: string,
-            key: string,
-            npm: string,
-        }>((resolve, reject) => {
-            const xhr = new XMLHttpRequest();
-            xhr.open("GET", `${hostUrl}/api/tenants`, true);
-            xhr.onload = () => {
-                if (xhr.readyState === 4) {
-                    if (xhr.status === 200) {
-                        resolve(JSON.parse(xhr.responseText));
-                    } else {
-                        reject(xhr.statusText);
-                    }
-                }
-            };
-            xhr.onerror = () => { reject(xhr.statusText); };
-            xhr.send();
         });
     }
 }

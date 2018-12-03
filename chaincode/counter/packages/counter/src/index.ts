@@ -1,6 +1,6 @@
 import { IMap, IMapView, MapExtension } from "@prague/map";
 import { IChaincode, IPlatform, IRuntime } from "@prague/runtime-definitions";
-import { Component, Store } from "@prague/store";
+import { Component, DataStore } from "@prague/datastore";
 
 export class Clicker extends Component {
     constructor() {
@@ -42,5 +42,5 @@ export class Clicker extends Component {
 
 // Example chainloader bootstrap.
 export async function instantiate(): Promise<IChaincode> {
-    return Store.instantiate(new Clicker());
+    return DataStore.instantiate(new Clicker());
 }

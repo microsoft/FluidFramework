@@ -2,7 +2,7 @@ const spawn = require("cross-spawn");
 const path = require("path");
 const merge = require("webpack-merge");
 const CleanWebpackPlugin = require("clean-webpack-plugin");
-const HtmlWebpackPlugin = require("html-webpack-plugin");
+const { name } = require("./package.json");
 
 module.exports = env => {
     const isProduction = env === "production";
@@ -47,7 +47,10 @@ module.exports = env => {
                             return new Promise(resolve => {
                                 const proc = spawn("npm", ["run", "publish-patch-local"],
                                     { stdio: [process.stdin, process.stdout, process.stderr] });
-                                proc.on('close', resolve);
+                                proc.on('close', () => {
+                                    console.log(`Open: http://localhost:3000/loader/x0?chaincode=${name}@latest`);
+                                    resolve()
+                                });
                             });
                         }
                     );
@@ -60,7 +63,7 @@ module.exports = env => {
             library: "[name]",
             // https://github.com/webpack/webpack/issues/5767
             // https://github.com/webpack/webpack/issues/7939            
-            devtoolNamespace: "prague/flow/document",
+            devtoolNamespace: "chaincode/counter",
             libraryTarget: "umd"
         },
         node: {

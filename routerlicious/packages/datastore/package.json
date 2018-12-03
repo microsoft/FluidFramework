@@ -1,7 +1,7 @@
 {
-  "name": "@prague/store",
+  "name": "@prague/datastore",
   "version": "0.1.0",
-  "description": "Experimental store and chaincodeable component base class",
+  "description": "Experimental data store and chaincodeable component base class",
   "main": "dist/main.bundle.js",
   "module": "lib/index.js",
   "types": "dist/index.d.ts",

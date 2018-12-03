@@ -22,6 +22,7 @@ COPY packages/api-definitions/package*.json packages/api-definitions/
 COPY packages/cell/package*.json packages/cell/
 COPY packages/client-api/package*.json packages/client-api/
 COPY packages/client-ui/package*.json packages/client-ui/
+COPY packages/datastore/package*.json packages/datastore/
 COPY packages/gitresources/package*.json packages/gitresources/
 COPY packages/loader/package*.json packages/loader/
 COPY packages/loader-client/package*.json packages/loader-client/
@@ -38,7 +39,6 @@ COPY packages/socket-storage/package*.json packages/socket-storage/
 COPY packages/socket-storage-shared/package*.json packages/socket-storage-shared/
 COPY packages/replay-socket-storage/package*.json packages/replay-socket-storage/
 COPY packages/standard-socket-storage/package*.json packages/standard-socket-storage/
-COPY packages/store/package*.json packages/store/
 COPY packages/stream/package*.json packages/stream/
 COPY packages/utils/package*.json packages/utils/
 

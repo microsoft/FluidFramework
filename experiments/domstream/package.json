@@ -13,7 +13,7 @@
     "@prague/map": "^0.1.3981",
     "@prague/runtime-definitions": "^0.1.3981",
     "@prague/socket-storage": "^0.1.3981",
-    "@prague/store": "^0.1.3981",
+    "@prague/datastore": "^0.1.3981",
     "@prague/utils": "^0.1.3981",
     "debug": "^4.1.0",
     "jsonwebtoken": "^8.2.1",

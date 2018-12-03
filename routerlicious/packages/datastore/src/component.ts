@@ -22,7 +22,7 @@ export abstract class Component extends EventEmitter {
             console.log("Component.open(existing)");
             root = await runtime.getChannel(Component.rootMapId) as IMap;
         } else {
-            console.log("Component.open(create)");
+            console.log("Component.open(new)");
             root = runtime.createChannel(Component.rootMapId, MapExtension.Type) as IMap;
             root.attach();
             await this.create(runtime, platform, root);
@@ -31,9 +31,9 @@ export abstract class Component extends EventEmitter {
         return root;
     }
 
-    // Subclass implements 'opened()' to finish initialization after the component has been opened/created.
+    /** Subclass implements 'opened()' to finish initialization after the component has been opened/created. */
     public abstract async opened(runtime: IRuntime, platform: IPlatform, root: IMapView): Promise<void>;
 
-    // Subclass implements 'create()' to put initial document structure in place.
+    /** Subclass implements 'create()' to put initial document structure in place. */
     protected abstract create(runtime: IRuntime, platform: IPlatform, root: IMap): Promise<void>;
 }
