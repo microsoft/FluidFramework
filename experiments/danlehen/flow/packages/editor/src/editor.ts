@@ -61,8 +61,7 @@ export class Editor {
             const bounds = Dom.getClientRect(node, nodeOffset);
             console.log(`    top: ${bounds.top}, scrollY: ${this.scrollY}`);
             if (bounds) {
-                // The CSS transform is returned in the from "matrix(m00, m01, m10, m11, tx, ty)"
-                const currentY = parseFloat(this.viewportState.slot.style.marginTop);
+                const currentY = parseFloat(this.viewportState.slot.style.marginTop || "0");
                 const relativeTop = bounds.top                                  // The current top of the viewport slot in screen coordinates
                     - this.viewportState.root.getBoundingClientRect().top       // The current top of the viewport in screen coordinates
                     - currentY;                                                 // The current transform

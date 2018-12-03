@@ -85,7 +85,7 @@ export class Cursor {
      */
     private getOffset(): { top: number, left: number } {
         // Note: Could generalize by walking parentElement chain and probing style properties.
-        return this.root.parentElement.parentElement.getBoundingClientRect();
+        return this.root.parentElement!.parentElement!.getBoundingClientRect();
     }
 
     private updateSelection() {

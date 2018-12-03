@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Store } from "@prague/store";
+import { DataStore } from "@prague/datastore";
 import { FlowDocument } from "@chaincode/flow-document";
 import { Editor, Scheduler } from "@prague/flow-editor";
 import * as style from "./index.css";
@@ -27,23 +27,15 @@ export class FlowEditor extends React.Component<IProps, IState> {
 
     componentWillMount() {
         const { docUrl, docId } = this.props;
-        const store = new Store(docUrl);
-        store
-            .open<FlowDocument>(docId, "danlehen", "@chaincode/flow-document@latest")
-            .then((doc) => {
-                buildTestParagraph(doc);
-                const editor = new Editor(new Scheduler(), doc);
-                this.setState({ doc, editor });
-            });
-
-        const updateLoop = () => {
-            if (this.state.editor) {
-                this.state.editor.invalidate();
-            }
-            requestAnimationFrame(updateLoop);
-        }
-
-        //updateLoop();
+        DataStore.From(docUrl).then(store => {
+            store
+                .open<FlowDocument>(docId, "danlehen", "@chaincode/flow-document@latest")
+                .then((doc) => {
+                    buildTestParagraph(doc);
+                    const editor = new Editor(new Scheduler(), doc);
+                    this.setState({ doc, editor });
+                });
+        });
     }
 
     render() { return <span className={`${style.fill} ${style.editorPane}`} ref={this.ref}></span> }

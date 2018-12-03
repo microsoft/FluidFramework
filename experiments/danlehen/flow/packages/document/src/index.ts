@@ -1,7 +1,7 @@
 import { IMap, IMapView, MapExtension } from "@prague/map";
 import { SharedString, CollaborativeStringExtension } from "@prague/shared-string";
 import { IChaincode, IPlatform, IRuntime } from "@prague/runtime-definitions";
-import { Component, Store } from "@prague/store";
+import { Component, DataStore } from "@prague/datastore";
 import {
     MergeTree,
     UniversalSequenceNumber,
@@ -202,5 +202,5 @@ export class FlowDocument extends Component {
 
 // Chainloader bootstrap.
 export async function instantiate(): Promise<IChaincode> {
-    return Store.instantiate(new FlowDocument());
+    return DataStore.instantiate(new FlowDocument());
 }
