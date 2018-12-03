@@ -49,3 +49,6 @@ We're currently in the middle of [Sprint 5](./doc/sprints/sprint5/readme.md) and
 [Prague demo](https://microsoft-my.sharepoint-df.com/:v:/p/kurtb/Ea-uge_KI31EuEBQFFQN9zQB_drBcnC6wBStB2Ur9ZWffw?e=OiDEWu)
 
 [Translations](https://microsoft-my.sharepoint-df.com/:v:/p/kurtb/Ea-uge_KI31EuEBQFFQN9zQB_drBcnC6wBStB2Ur9ZWffw?e=OiDEWu)
+
+## Stack Overflow
+The Prague team answers questions on the [Microsoft internal stack overflow](https://stackoverflow.microsoft.com/) using the [tag Prague](https://stackoverflow.microsoft.com/questions/tagged/prague)

@@ -14,6 +14,8 @@ via Redis.
 
 The services follow the [twelve factor](https://12factor.net) methodology and are considered [cattle and not pets](http://cloudscaling.com/blog/cloud-computing/the-history-of-pets-vs-cattle/).
 
+#### Questions can be directed to [Stack Overflow](https://stackoverflow.microsoft.com/questions/tagged/prague)
+
 ## Build and Deployment Status
 
 |Environment|Status|
