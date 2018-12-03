@@ -1,7 +1,13 @@
 import * as agent from "@prague/agent";
 import * as api from "@prague/client-api";
-import { IContentMessage, IDocumentMessage, ITokenClaims } from "@prague/runtime-definitions";
+import {
+    IContentMessage,
+    IDocumentMessage,
+    IDocumentSystemMessage,
+    ITokenClaims,
+} from "@prague/runtime-definitions";
 import * as socketStorage from "@prague/socket-storage";
+import { isSystemType } from "@prague/utils";
 import * as jwt from "jsonwebtoken";
 import * as winston from "winston";
 import * as core from "../core";
@@ -17,7 +23,7 @@ function sanitizeMessage(message: any): IDocumentMessage {
                 timestamp: Date.now(),
             });
     }
-    return {
+    const sanitizedMessage: IDocumentMessage = {
         clientSequenceNumber: message.clientSequenceNumber,
         contents: message.contents,
         metadata: message.metadata,
@@ -25,6 +31,14 @@ function sanitizeMessage(message: any): IDocumentMessage {
         traces: message.traces,
         type: message.type,
     };
+    // back-compat: Should be consolidated with other system messages.
+    if (isSystemType(sanitizedMessage.type)) {
+        const systemMessage = sanitizedMessage as IDocumentSystemMessage;
+        systemMessage.data = message.data;
+        return systemMessage;
+    } else {
+        return sanitizedMessage;
+    }
 }
 
 export function register(

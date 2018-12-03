@@ -87,9 +87,4 @@ export interface IRuntime extends EventEmitter {
      * Submits a message on the document channel
      */
     submitMessage(type: MessageType, content: any);
-
-    /**
-     * Submits a system message on the document channel
-     */
-    submitSystemMessage(type: MessageType, content: any);
 }

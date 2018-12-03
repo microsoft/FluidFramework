@@ -104,11 +104,19 @@ export interface IDocumentMessage {
     // back-compat: This should be string.
     contents: any;
 
-    // System level metadata.
-    metadata: ISystemData;
+    // back-compat: Remove this optional field once clients are up to date.
+    metadata?: ISystemData;
 
     // Traces related to the packet.
     traces: ITrace[];
+}
+
+/**
+ * Document Message with optional system level data field.
+ */
+export interface IDocumentSystemMessage extends IDocumentMessage {
+
+    data: string;
 }
 
 export interface IContentMessage {
@@ -170,14 +178,19 @@ export interface ISequencedDocumentMessage {
     // message is also the origin.
     origin: IBranchOrigin;
 
-    // Message metadata
-    metadata: ISystemData;
+    // back-compat: Remove this optional field once clients are up to date.
+    metadata?: ISystemData;
 
     // Traces related to the packet.
     traces: ITrace[];
 
     // Timestamp when the server ticketed the message
     timestamp: number;
+}
+
+export interface ISequencedDocumentSystemMessage extends ISequencedDocumentMessage {
+
+    data: string;
 }
 
 /**

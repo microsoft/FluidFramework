@@ -1,4 +1,4 @@
-import { MessageType } from "@prague/runtime-definitions";
+import { IDocumentSystemMessage, ISequencedDocumentSystemMessage, MessageType } from "@prague/runtime-definitions";
 import * as core from "../core";
 import { IContext } from "../kafka-service/lambdas";
 import { SequencedLambda } from "../kafka-service/sequencedLambda";
@@ -42,7 +42,14 @@ export class RouteMasterLambda extends SequencedLambda {
     }
 
     private async createFork(message: core.ISequencedOperationMessage): Promise<void> {
-        const contents = message.operation.metadata.content as core.IForkOperation;
+        const operation = message.operation as ISequencedDocumentSystemMessage;
+        let contents: core.IForkOperation;
+        // back-compat: Support two versions.
+        if (operation.data) {
+            contents = JSON.parse(operation.data);
+        } else {
+            contents = operation.metadata.content;
+        }
         const forkId = contents.documentId;
         const forkSequenceNumber = message.operation.sequenceNumber;
 
@@ -88,20 +95,22 @@ export class RouteMasterLambda extends SequencedLambda {
     private routeToDeli(forkId: string, message: core.ISequencedOperationMessage): Promise<void> {
         // Create the integration message that sends a sequenced operation from an upstream branch to
         // the downstream branch
+        const operation: IDocumentSystemMessage = {
+            clientSequenceNumber: -1,
+            contents: null,
+            data: JSON.stringify(message),
+            metadata: {
+                content: message,
+                split: false,
+            },
+            referenceSequenceNumber: -1,
+            traces: [],
+            type: MessageType.Integrate,
+        };
         const rawMessage: core.IRawOperationMessage = {
             clientId: null,
             documentId: forkId,
-            operation: {
-                clientSequenceNumber: -1,
-                contents: null,
-                metadata: {
-                    content: message,
-                    split: false,
-                },
-                referenceSequenceNumber: -1,
-                traces: [],
-                type: MessageType.Integrate,
-            },
+            operation,
             tenantId: message.tenantId,
             timestamp: Date.now(),
             type: core.RawOperationType,

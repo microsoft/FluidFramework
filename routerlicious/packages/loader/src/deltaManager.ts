@@ -1,5 +1,5 @@
 import * as runtime from "@prague/runtime-definitions";
-import { Deferred } from "@prague/utils";
+import { Deferred, isSystemType } from "@prague/utils";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import { ContentCache } from "./contentCache";
@@ -18,6 +18,8 @@ const DefaultChunkSize = 16 * 1024;
 // it's bigger than DefaultChunkSize
 const DefaultMaxContentSize = 32 * 1024;
 const DefaultContentBufferSize = 10;
+
+// tslint:disable no-unsafe-any
 
 /**
  * Interface used to define a strategy for handling incoming delta messages
@@ -119,8 +121,7 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
             : runtime.Robot;
         // Inbound message queue
         this._inbound = new DeltaQueue<runtime.ISequencedDocumentMessage>((op, callback) => {
-            // Back-compat: First check is for paparazzi to support old documents.
-            if (op.metadata && op.metadata.split) {
+            if (op.contents === undefined) {
                 this.handleOpContent(op, callback);
             } else {
                 this.processInboundOp(op, callback);
@@ -134,8 +135,8 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
         // Outbound message queue
         this._outbound = new DeltaQueue<runtime.IDocumentMessage>(
             (message, callback: (error?) => void) => {
-                if (message.metadata.split) {
-                    console.log(`Splitting content from envelope.`);
+                if (this.shouldSplit(message.contents)) {
+                    debug(`Splitting content from envelope.`);
                     this.connection.submitAsync(message).then(
                         () => {
                             this.contentCache.set({
@@ -143,7 +144,7 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
                                 clientSequenceNumber: message.clientSequenceNumber,
                                 contents: message.contents as string,
                             });
-                            message.contents = null;
+                            message.contents = undefined;
                             this.connection.submit(message);
                             callback();
                         },
@@ -184,20 +185,6 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
         this.fetchMissingDeltas(sequenceNumber);
     }
 
-    /**
-     * Submits a new delta operation
-     */
-    public submit(type: string, contents: string): number {
-        return this.submitCore(type, contents, null);
-    }
-
-    /**
-     * Submits a new system delta operation.
-     */
-    public submitMetaData(type: string, contents: any): number {
-        return this.submitCore(type, null, contents);
-    }
-
     public async connect(reason: string): Promise<IConnectionDetails> {
         if (this.connecting) {
             return this.connecting.promise;
@@ -220,6 +207,32 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
         this.connectCore(reason, InitialReconnectDelay);
 
         return this.connecting.promise;
+    }
+
+    public submit(type: runtime.MessageType, contents: string): number {
+        // Start adding trace for the op.
+        const traces: runtime.ITrace[] = [
+            {
+                action: "start",
+                service: this.clientType,
+                timestamp: Date.now(),
+            }];
+        // tslint:disable:no-increment-decrement
+        const coreMessage: runtime.IDocumentMessage = {
+            clientSequenceNumber: ++this.clientSequenceNumber,
+            contents,
+            referenceSequenceNumber: this.baseSequenceNumber,
+            traces,
+            type,
+        };
+
+        const message = this.createOutboundMessage(type, coreMessage);
+        this.readonly = false;
+
+        this.stopSequenceNumberUpdate();
+        this._outbound.push(message);
+
+        return message.clientSequenceNumber;
     }
 
     /* tslint:disable:promise-function-async */
@@ -254,32 +267,26 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
         this.removeAllListeners();
     }
 
-    private submitCore(type: string, contents: string, metaContent: any): number {
-        // Start adding trace for the op.
-        const traces: runtime.ITrace[] = [
-            {
-                action: "start",
-                service: this.clientType,
-                timestamp: Date.now(),
-            }];
-        // tslint:disable:no-increment-decrement
-        const message: runtime.IDocumentMessage = {
-            clientSequenceNumber: ++this.clientSequenceNumber,
-            contents,
-            metadata: {
-                content: metaContent,
-                split: (contents !== null) && (contents.length > this.maxContentSize),
-            },
-            referenceSequenceNumber: this.baseSequenceNumber,
-            traces,
-            type,
-        };
-        this.readonly = false;
+    private shouldSplit(contents: string) {
+        return (contents) && (contents.length > this.maxContentSize);
+    }
 
-        this.stopSequenceNumberUpdate();
-        this._outbound.push(message);
-
-        return message.clientSequenceNumber;
+    // Specific system level message attributes are need to be looked at by the server.
+    // Hence they are separated and promoted as top level attributes.
+    private createOutboundMessage(
+        type: runtime.MessageType,
+        coreMessage: runtime.IDocumentMessage): runtime.IDocumentMessage {
+        if (isSystemType(type)) {
+            const data = coreMessage.contents;
+            coreMessage.contents = null;
+            const outboundMessage: runtime.IDocumentSystemMessage = {
+                ...coreMessage,
+                data,
+            };
+            return outboundMessage;
+        } else {
+            return coreMessage;
+        }
     }
 
     private getDeltasCore(
@@ -481,7 +488,6 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
 
     private mergeAndProcess(message: runtime.ISequencedDocumentMessage, contentOp: runtime.IContentMessage, callback) {
         message.contents = contentOp.contents;
-        message.metadata.split = false;
         this.processInboundOp(message, callback);
     }
 

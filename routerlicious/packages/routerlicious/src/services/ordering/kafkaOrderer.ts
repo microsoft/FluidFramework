@@ -1,4 +1,10 @@
-import { IClient, IClientJoin, IDocumentMessage, IUser, MessageType } from "@prague/runtime-definitions";
+import {
+    IClient,
+    IClientJoin,
+    IDocumentMessage,
+    IDocumentSystemMessage,
+    IUser,
+    MessageType } from "@prague/runtime-definitions";
 import * as _ from "lodash";
 import * as moniker from "moniker";
 import * as core from "../../core";
@@ -63,21 +69,24 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
             detail: this.client,
         };
 
-        // Back-compat: Replicate the same info in content and metadata.
+        // Back-compat: Replicate the same info in content, metadata, and data.
+        const operation: IDocumentSystemMessage = {
+            clientSequenceNumber: -1,
+            contents: clientDetail,
+            data: JSON.stringify(clientDetail),
+            metadata: {
+                content: clientDetail,
+                split: false,
+            },
+            referenceSequenceNumber: -1,
+            traces: [],
+            type: MessageType.ClientJoin,
+        };
+
         const message: core.IRawOperationMessage = {
             clientId: null,
             documentId: this.documentId,
-            operation: {
-                clientSequenceNumber: -1,
-                contents: clientDetail,
-                metadata: {
-                    content: clientDetail,
-                    split: false,
-                },
-                referenceSequenceNumber: -1,
-                traces: [],
-                type: MessageType.ClientJoin,
-            },
+            operation,
             tenantId: this.tenantId,
             timestamp: Date.now(),
             type: core.RawOperationType,
@@ -101,22 +110,24 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
         this.submitRawOperation(rawMessage);
     }
 
-    // Back-compat: Replicate the same info in content and metadata.
     public disconnect() {
+        // Back-compat: Replicate the same info in content and metadata.
+        const operation: IDocumentSystemMessage = {
+            clientSequenceNumber: -1,
+            contents: this.clientId,
+            data: JSON.stringify(this.clientId),
+            metadata: {
+                content: this.clientId,
+                split: false,
+            },
+            referenceSequenceNumber: -1,
+            traces: [],
+            type: MessageType.ClientLeave,
+        };
         const message: core.IRawOperationMessage = {
             clientId: null,
             documentId: this.documentId,
-            operation: {
-                clientSequenceNumber: -1,
-                contents: this.clientId,
-                metadata: {
-                    content: this.clientId,
-                    split: false,
-                },
-                referenceSequenceNumber: -1,
-                traces: [],
-                type: MessageType.ClientLeave,
-            },
+            operation,
             tenantId: this.tenantId,
             timestamp: Date.now(),
             type: core.RawOperationType,
