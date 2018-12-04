@@ -1,0 +1,22 @@
+{
+    "include": [
+        "src/index.ts"
+    ],
+    "exclude": [
+        "**/dist",
+        "**/node_modules"
+    ],
+    "compilerOptions": {
+        "rootDir": "./src",
+        "outDir": "./dist",
+        "target": "esnext",
+        "declaration": true,
+        "module": "commonjs",
+        "moduleResolution": "node",
+        "sourceMap": true,
+        "forceConsistentCasingInFileNames": true,
+        "strict": true,
+        "noImplicitAny": true,
+        "noUnusedLocals": true
+    }
+}

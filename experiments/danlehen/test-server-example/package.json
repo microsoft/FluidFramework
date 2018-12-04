@@ -1,0 +1,11 @@
+{
+  "name": "root",
+  "private": true,
+  "scripts": {
+    "postinstall": "lerna bootstrap",
+    "build": "npx lerna run build --scope test-server-example --stream"
+  },
+  "devDependencies": {
+    "lerna": "^3.4.3"
+  }
+}
