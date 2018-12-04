@@ -4,7 +4,6 @@ const path = require('path');
 
 module.exports = {
     entry: {
-        local: './src/localServer.ts',
         main: './src/index.ts'
     },
     mode: 'production',
@@ -58,10 +57,8 @@ module.exports = {
         library: "[name]",
         libraryTarget: "umd"
     },
-    serve: {
-        devMiddleware: {
-            publicPath: '/dist/'
-        }
+    devServer: {
+        publicPath: '/dist'
     },
     plugins: [
         // new BundleAnalyzerPlugin(),

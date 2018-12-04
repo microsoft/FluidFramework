@@ -42,10 +42,8 @@ module.exports = {
         libraryTarget: "umd",
         globalObject: 'self',
     },
-    serve: {
-        devMiddleware: {
-            publicPath: 'dist/'
-        }
+    devServer: {
+        publicPath: '/dist'
     },
     plugins: [
         new webpack.IgnorePlugin(/^((fs)|(path)|(os)|(crypto)|(source-map-support))$/, /vs\/language\/typescript\/lib/),

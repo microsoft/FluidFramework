@@ -2,7 +2,6 @@ const path = require('path');
 
 module.exports = {
     entry: {
-        local: './src/localServer.ts',
         main: './src/index.ts'
     },
     devtool: 'source-map',
@@ -28,6 +27,9 @@ module.exports = {
         path: path.resolve(__dirname, 'dist'),
         library: "[name]",
         libraryTarget: "umd"
+    },
+    devServer: {
+        publicPath: '/dist'
     },
     serve: {
         devMiddleware: {

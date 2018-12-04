@@ -29,10 +29,8 @@ module.exports = {
         library: "[name]",
         libraryTarget: "umd"
     },
-    serve: {
-        devMiddleware: {
-            publicPath: '/dist/'
-        }
+    devServer: {
+        publicPath: '/dist'
     },
     plugins: [new Visualizer({
         filename: './statistics.html'

@@ -6,7 +6,7 @@
   "author": "Microsoft",
   "scripts": {
     "build": "npm run tslint && npm run webpack",
-    "start": "webpack-dev-server --config webpack.local.js",
+    "start": "prague-dev-server --config webpack.config.js --package package.json",
     "tslint": "tslint 'src/**/*.ts'",
     "webpack": "webpack --config webpack.config.js --open",
     "update": "npm run build && npm version patch && npm publish --registry http://localhost:4873"
@@ -15,6 +15,7 @@
     "@prague/map": "^0.1.3611",
     "@prague/runtime-definitions": "^0.1.3611",
     "@prague/shared-string": "^0.1.3613",
+    "@prague/utils": "^0.1.4239",
     "@types/debug": "0.0.30",
     "@types/google-maps": "^3.2.0",
     "@types/node": "^10.9.4",
@@ -26,9 +27,7 @@
     "uuid": "^3.3.2"
   },
   "devDependencies": {
-    "@prague/loader": "^0.1.3611",
-    "@prague/loader-web": "^0.1.3611",
-    "@prague/socket-storage": "^0.1.3611",
+    "@prague/prague-dev-server": "^3.1.13",
     "css-loader": "^1.0.0",
     "html-loader": "^0.5.5",
     "loader-utils": "^1.1.0",

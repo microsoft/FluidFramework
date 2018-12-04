@@ -6,7 +6,7 @@
     "tsc": "tsc",
     "webpack": "webpack --config webpack.config.js",
     "tslint": "tslint 'src/**/*.ts'",
-    "start": "webpack-serve webpack.config.js --port 8081 --open"
+    "start": "prague-dev-server --config webpack.config.js --package package.json"
   },
   "keywords": [
     "html5",
@@ -18,8 +18,7 @@
     "mobile"
   ],
   "devDependencies": {
-    "@prague/loader": "^0.1.3542",
-    "@prague/socket-storage": "^0.1.3542",
+    "@prague/prague-dev-server": "^3.1.13",
     "jsonwebtoken": "^8.3.0",
     "source-map-loader": "^0.2.4",
     "ts-loader": "^5.1.1",
