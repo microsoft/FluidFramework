@@ -1,8 +1,11 @@
-import * as prague from "@prague/client-api";
-import * as pragueUi from "@prague/client-ui";
+import * as API from "@prague/client-api";
+import { controls, ui } from "@prague/client-ui";
+import * as MergeTree from "@prague/merge-tree";
+import * as SharedString from "@prague/shared-string";
 import * as socketStorage from "@prague/socket-storage";
 import * as jwt from "jsonwebtoken";
 
+// Using package verions published in 11/26/2018
 // For local development
 // const routerlicious = "http://localhost:3000";
 // const historian = "http://localhost:3001";
@@ -13,11 +16,11 @@ const historian = "https://historian.wu2.prague.office-int.com";
 const tenantId = "gallant-hugle";
 const secret = "03302d4ebfb6f44b662d00313aff5a46";
 
-const documentId = window.location.search.slice(1) || "test-flowview-test";
+const documentId = window.location.search.slice(1) || "flow-test-12032018";
 
 // Register endpoint connection
 const documentServices = socketStorage.createDocumentService(routerlicious, historian);
-prague.api.registerDocumentService(documentServices);
+API.registerDocumentService(documentServices);
 
 async function run(id: string): Promise<void> {
     const token = jwt.sign(
@@ -31,10 +34,15 @@ async function run(id: string): Promise<void> {
         },
         secret);
 
-    const host = new pragueUi.ui.BrowserContainerHost();
+    const host = new ui.BrowserContainerHost();
 
     // Load in the latest and connect to the document
-    const collabDoc = await prague.api.load(id, { blockUpdateMarkers: true, token });
+    const collabDoc = await API.load(
+        id,
+        tenantId,
+        { id: "test" },
+        new socketStorage.TokenProvider(token),
+        { blockUpdateMarkers: true });
 
     const rootView = await collabDoc.getRoot().getView();
     console.log("Keys");
@@ -42,17 +50,17 @@ async function run(id: string): Promise<void> {
 
     // Add in the text string if it doesn't yet exist
     if (!collabDoc.existing) {
-        const newString = collabDoc.createString() as prague.SharedString.SharedString;
+        const newString = collabDoc.createString() as SharedString.SharedString;
         const starterText = " ";
-        const segments = prague.MergeTree.loadSegments(starterText, 0, true);
+        const segments = MergeTree.loadSegments(starterText, 0, true);
         for (const segment of segments) {
-            if (segment.getType() === prague.MergeTree.SegmentType.Text) {
-                const textSegment = segment as prague.MergeTree.TextSegment;
+            if (segment.getType() === MergeTree.SegmentType.Text) {
+                const textSegment = segment as MergeTree.TextSegment;
                 newString.insertText(textSegment.text, newString.client.getLength(),
                     textSegment.properties);
             } else {
                 // assume marker
-                const marker = segment as prague.MergeTree.Marker;
+                const marker = segment as MergeTree.Marker;
                 newString.insertMarker(newString.client.getLength(), marker.refType, marker.properties);
             }
         }
@@ -78,12 +86,12 @@ async function run(id: string): Promise<void> {
     const text = rootView.get("text");
     const ink = rootView.get("ink");
 
-    const image = new pragueUi.controls.Image(
+    const image = new controls.Image(
         document.createElement("div"),
         "https://alfred.wu2.prague.office-int.com/public/images/bindy.svg");
 
     const textElement = document.getElementById("text") as HTMLDivElement;
-    const container = new pragueUi.controls.FlowContainer(
+    const container = new controls.FlowContainer(
         textElement,
         collabDoc,
         text,

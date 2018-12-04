@@ -4,9 +4,13 @@
   "description": "Prague API sequence sample",
   "main": "index.js",
   "dependencies": {
-    "@prague/client-api": "^0.1.3270",
-    "@prague/client-ui": "^0.1.3270",
-    "@prague/socket-storage": "^0.1.3270",
+    "@prague/client-api": "0.1.4138",
+    "@prague/client-ui": "0.1.4138",
+    "@prague/loader": "0.1.4138",
+    "@prague/loader-web": "0.1.4138",
+    "@prague/socket-storage": "0.1.4138",
+    "@prague/merge-tree": "0.1.4138",
+    "@prague/shared-string": "0.1.4138",
     "jsonwebtoken": "^8.2.1"
   },
   "devDependencies": {
@@ -18,8 +22,8 @@
     "ts-loader": "^4.2.0",
     "tslint": "^5.9.1",
     "typescript": "^2.8.3",
-    "webpack": "^4.7.0",
-    "webpack-cli": "^2.0.15"
+    "webpack": "^4.8.2",
+    "webpack-cli": "^3.1.2"
   },
   "scripts": {
     "build": "npm run tslint && npm run webpack",
