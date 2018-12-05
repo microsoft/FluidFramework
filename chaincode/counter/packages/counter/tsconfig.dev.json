@@ -1,9 +1,0 @@
-{
-    "extends": "./tsconfig.common.json",
-    "compilerOptions": {
-        "inlineSources": true,
-        "strict": false,
-        "noImplicitAny": false,
-        "noUnusedLocals": false,
-    }
-}

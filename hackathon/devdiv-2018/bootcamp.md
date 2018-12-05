@@ -41,6 +41,8 @@ Distributed data structures - 10 minutes
 * sequence (string)
 * stream
 
+### Publishing the Counter
+
 #### Common gotchas
 
 Overwriteing fields on connect: 5 minutes 

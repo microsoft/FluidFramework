@@ -1,7 +1,7 @@
 {
   "name": "@chaincode/counter",
   "description": "Minimal @chaincode sample to implement a collaborative counter.",
-  "version": "0.0.46",
+  "version": "0.0.50",
   "author": "Microsoft",
   "repository": "microsoft/prague",
   "main": "dist/main.bundle.js",
@@ -9,10 +9,11 @@
   "scripts": {
     "build": "webpack --env=\"production\"",
     "dev": "webpack --env=\"development\" --watch",
-    "publish-local": "npm publish --registry http://localhost:4873",
-    "publish-patch-local": "npm version patch && npm run publish-local"
+    "start": "prague-dev-server --config webpack.config.js --package package.json",
+    "tsc": "tsc"
   },
   "devDependencies": {
+    "@prague/prague-dev-server": "^3.1.13",
     "@types/node": "^10.11.5",
     "clean-webpack-plugin": "^0.1.19",
     "cross-spawn": "^6.0.5",

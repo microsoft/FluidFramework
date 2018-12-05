@@ -3,7 +3,7 @@
   "private": true,
   "scripts": {
     "postinstall": "lerna bootstrap",
-    "build": "npx lerna run build --scope @chaincode/counter --stream"
+    "build": "npx lerna run build --scope @chaincode/counter --stream --include-filtered-dependencies"
   },
   "devDependencies": {
     "lerna": "^3.4.3"

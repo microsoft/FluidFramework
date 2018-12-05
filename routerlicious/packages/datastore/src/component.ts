@@ -1,39 +1,90 @@
 import {
     ICollaborativeObjectExtension,
 } from "@prague/api-definitions";
-import { IMap, IMapView, MapExtension } from "@prague/map";
+import { IMap, MapExtension } from "@prague/map";
 import { IPlatform, IRuntime } from "@prague/runtime-definitions";
 import { EventEmitter } from "events";
+import { debug } from "./debug";
 
 // Base class for chainloadable components
-export abstract class Component extends EventEmitter {
+export abstract class Component extends EventEmitter implements IPlatform {
     private static readonly rootMapId = "root";
 
-    constructor(
-        public readonly collaborativeTypes: ReadonlyArray<[string, ICollaborativeObjectExtension]>,
-    ) {
-        super();
+    public readonly collaborativeTypes: ReadonlyMap<string, ICollaborativeObjectExtension>;
+
+    public get runtime(): IRuntime {
+        return this._runtime;
     }
 
-    public async open(runtime: IRuntime, platform: IPlatform) {
-        let root: IMap;
+    public get platform(): IPlatform {
+        return this._platform;
+    }
+
+    public get root(): IMap {
+        return this._root;
+    }
+
+    public get id(): string {
+        return this.runtime.id;
+    }
+
+    public get existing(): boolean {
+        return this.runtime.existing;
+    }
+
+    // tslint:disable:variable-name
+    private _runtime: IRuntime = null;
+    private _platform: IPlatform = null;
+    private _root: IMap = null;
+    // tslint:enable:variable-name
+
+    constructor(types: ReadonlyArray<[string, ICollaborativeObjectExtension]>) {
+        super();
+
+        // Add in the map if not already specified
+        const collaborativeTypes = new Map<string, ICollaborativeObjectExtension>(types);
+        if (!collaborativeTypes.has(MapExtension.Type)) {
+            collaborativeTypes.set(MapExtension.Type, new MapExtension());
+        }
+        this.collaborativeTypes = collaborativeTypes;
+    }
+
+    public async open(runtime: IRuntime, platform: IPlatform): Promise<void> {
+        this._runtime = runtime;
+        this._platform = platform;
 
         if (runtime.existing) {
-            console.log("Component.open(existing)");
-            root = await runtime.getChannel(Component.rootMapId) as IMap;
+            debug("Component.open(existing)");
+            this._root = await runtime.getChannel(Component.rootMapId) as IMap;
         } else {
-            console.log("Component.open(new)");
-            root = runtime.createChannel(Component.rootMapId, MapExtension.Type) as IMap;
-            root.attach();
-            await this.create(runtime, platform, root);
+            debug("Component.open(new)");
+            this._root = runtime.createChannel(Component.rootMapId, MapExtension.Type) as IMap;
+            this.root.attach();
+            await this.create();
         }
 
-        return root;
+        debug("Component.opened");
+        await this.opened();
     }
 
-    /** Subclass implements 'opened()' to finish initialization after the component has been opened/created. */
-    public abstract async opened(runtime: IRuntime, platform: IPlatform, root: IMapView): Promise<void>;
+    /**
+     * Retrieves the root collaborative object that the document is based on
+     */
+    public getRoot(): IMap {
+        return this.root;
+    }
 
-    /** Subclass implements 'create()' to put initial document structure in place. */
-    protected abstract create(runtime: IRuntime, platform: IPlatform, root: IMap): Promise<void>;
+    /**
+     * Subclass implements 'opened()' to finish initialization after the component has been opened/created.
+     */
+    public abstract async opened(): Promise<void>;
+
+    public queryInterface<T>(id: string): Promise<T> {
+        return Promise.resolve(null);
+    }
+
+    /**
+     * Subclass implements 'create()' to put initial document structure in place.
+     */
+    protected abstract create(): Promise<void>;
 }

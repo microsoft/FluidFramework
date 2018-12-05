@@ -1,19 +1,8 @@
 import { ICollaborativeObjectExtension } from "@prague/api-definitions";
-import * as loader from "@prague/loader";
-import { WebLoader } from "@prague/loader-web";
-import { IMap } from "@prague/map";
-import {
-    IChaincode,
-    ICodeLoader,
-    IDocumentService,
-    IPlatform,
-    IPlatformFactory,
-    IRuntime,
-} from "@prague/runtime-definitions";
-import * as socketStorage from "@prague/socket-storage";
+import { IChaincode, IPlatform, IRuntime } from "@prague/runtime-definitions";
 import { EventEmitter } from "events";
-import * as jwt from "jsonwebtoken";
 import { Component } from "./component";
+import { debug } from "./debug";
 
 // Internal/reusable IChaincode implementation returned by DataStore.instantiate().
 class Chaincode<T extends Component> extends EventEmitter implements IChaincode {
@@ -33,193 +22,22 @@ class Chaincode<T extends Component> extends EventEmitter implements IChaincode 
     // NYI?
     public close() { return Promise.resolve(); }
 
-    public async run(runtime: IRuntime, platform: IPlatform) {
-        console.log("Chaincode.run");
-        const platformOut = new Platform<T>();
-        this.component.open(runtime, platform).then(async (root: IMap) => {
-            console.log("Component.opened");
-            await this.component.opened(runtime, platform, await root.getView());
+    public async run(runtime: IRuntime, platform: IPlatform): Promise<IPlatform> {
+        debug("Chaincode.run");
 
-            console.log("Platform.resolveComponent");
-            platformOut.resolveComponent(this.component);
+        this.component.open(runtime, platform).then((componentPlatform) => {
+            // TODO open should take in the component
+            debug("Platform.resolveComponent");
         });
 
-        return platformOut;
+        return this.component;
     }
-}
-
-// Internal/resuable IPlatform implementation returned by IChainCode.run(..)
-class Platform<TComponent> extends EventEmitter implements IPlatform {
-    // Function invoked by IChainLoader.run(..) to resolve 'componentP'.
-    public readonly resolveComponent: (document: TComponent) => void;
-
-    // 'queryInterface("component")' returns this promise.  Invoked by DataStore.open(..) to
-    // retrieve the constructed component.
-    private readonly componentP: Promise<TComponent>;
-
-    constructor() {
-        super();
-
-        // 'any' to work around TS2454: TypeScript 3.0.1 does not believe 'capturedResolver' is initialized before use.
-        let capturedResolver: any;
-        this.componentP = new Promise<TComponent>((resolver) => { capturedResolver = resolver; });
-        this.resolveComponent = capturedResolver;
-    }
-
-    public queryInterface<T>(id: string): Promise<T> {
-        console.assert(id === "component");
-        console.log("QI");
-
-        // 'any' because it can not be statically proven that <T> and <TComponent> are compatible.
-        return this.componentP as any;
-    }
-}
-
-class HostPlatform extends EventEmitter implements IPlatform {
-    private readonly services: Map<string, Promise<any>>;
-
-    constructor(services?: ReadonlyArray<[string, Promise<any>]>) {
-        super();
-        this.services = new Map(services);
-    }
-
-    public queryInterface<T>(id: string): Promise<T> {
-        return this.services.get(id) as Promise<T>;
-    }
-}
-
-class HostPlatformFactory implements IPlatformFactory {
-    constructor(private readonly services?: ReadonlyArray<[string, Promise<any>]>) { }
-
-    public async create(): Promise<IPlatform> {
-        return new HostPlatform(this.services);
-    }
-}
-
-interface IDataStoreConfig {
-    codeLoader: ICodeLoader;
-    documentService: IDocumentService;
-    key: string;
-    tenantId: string;
-    tokenService: socketStorage.TokenService;
 }
 
 /** Instance of a Prague data store, required to open, create, or instantiate components. */
 export class DataStore {
     public static instantiate(component: Component) {
-        console.log(`DataStore.instantiate(${component.constructor.name})`);
+        debug(`DataStore.instantiate(${component.constructor.name})`);
         return new Chaincode(component);
-    }
-
-    public static async From(hostUrl: string) {
-        const config = await this.getConfig(hostUrl);
-
-        return new DataStore(
-            new WebLoader(config.npm),
-            socketStorage.createDocumentService(hostUrl, config.blobStorageUrl),
-            config.key,
-            config.id,
-        );
-    }
-
-    // Given the 'hostUrl' of a routerlicious server (e.g., "http://localhost:3000"), discovers the necessary
-    // config/services to open the data store.
-    private static async getConfig(hostUrl: string) {
-        return await new Promise<{
-            blobStorageUrl: string,
-            id: string,
-            key: string,
-            npm: string,
-        }>((resolve, reject) => {
-            const xhr = new XMLHttpRequest();
-            xhr.open("GET", `${hostUrl}/api/tenants`, true);
-            xhr.onload = () => {
-                if (xhr.readyState === 4) {
-                    if (xhr.status === 200) {
-                        resolve(JSON.parse(xhr.responseText));
-                    } else {
-                        reject(xhr.statusText);
-                    }
-                }
-            };
-            xhr.onerror = () => { reject(xhr.statusText); };
-            xhr.send();
-        });
-    }
-
-    private readonly config: IDataStoreConfig;
-
-    constructor(codeLoader: ICodeLoader, documentService: any, key: string, tenantId: string) {
-        this.config = {
-            codeLoader,
-            documentService,
-            key,
-            tenantId,
-            tokenService: new socketStorage.TokenService(),
-        };
-    }
-
-    public async auth(tenantId: string, userId: string, documentId: string) {
-        return jwt.sign({
-            documentId,
-            permission: "read:write",       // use "read:write" for now
-            tenantId,
-            user: {
-                id: userId,
-            },
-        },
-        (await this.config).key);
-    }
-
-    public async open<T>(
-        documentId: string, userId: string,
-        chaincodePackage: string,
-        services?: ReadonlyArray<[string, Promise<any>]>,
-    ): Promise<T> {
-        console.log(`DataStore.open("${documentId}", "${userId}", "${chaincodePackage}")`);
-        const config = await this.config;
-        const token = await this.auth(config.tenantId, userId, documentId);
-        const factory = new HostPlatformFactory(services);
-
-        const loaderDoc = await loader.load(
-            documentId,
-            config.tenantId,
-            {id: userId},
-            new socketStorage.TokenProvider(token),
-            null,
-            factory,
-            config.documentService,
-            config.codeLoader,
-            undefined,
-            true);
-
-        if (!loaderDoc.existing) {
-            console.log(`  not existing`);
-
-            // Wait for connection so that proposals can be sent
-            if (!loaderDoc.connected) {
-                await new Promise<void>((resolve) => loaderDoc.once("connected", resolve));
-            }
-
-            console.log(`  now connected`);
-
-            // And then make the proposal if a code proposal has not yet been made
-            const quorum = loaderDoc.getQuorum();
-            if (!quorum.has("code")) {
-                console.log(`  prosposing code`);
-                await quorum.propose("code", chaincodePackage);
-            }
-
-            console.log(`   code is ${quorum.get("code")}`);
-        }
-
-        // Return the constructed/loaded component.  We retrieve this via queryInterface on the
-        // IPlatform created by ChainCode.run().  This arrives via the "runtimeChanged" event on
-        // the loaderDoc.
-        return new Promise<T>((resolver) => {
-            loaderDoc.once("runtimeChanged", (runtime: IRuntime) => {
-                resolver(runtime.platform.queryInterface("component"));
-            });
-        });
     }
 }

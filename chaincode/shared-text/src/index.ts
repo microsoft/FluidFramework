@@ -1,17 +1,17 @@
 import * as API from "@prague/client-api";
 import { controls, ui } from "@prague/client-ui";
+import { DataStore, Document } from "@prague/datastore";
 import * as DistributedMap from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
-import { IChaincode, IPlatform, IRuntime } from "@prague/runtime-definitions";
+import { IChaincode } from "@prague/runtime-definitions";
 import * as SharedString from "@prague/shared-string";
 import { IStream } from "@prague/stream";
-import { Deferred } from "@prague/utils";
 import { default as axios } from "axios";
-import { EventEmitter } from "events";
-// tslint:disable-next-line:no-var-requires
+// tslint:disable:no-var-requires
 const performanceNow = require("performance-now");
+const debug = require("debug")("chaincode:shared-text");
+// tslint:enable:no-var-requires
 import * as url from "url";
-import { Chaincode } from "./chaincode";
 
 // first script loaded
 const clockStart = Date.now();
@@ -28,119 +28,22 @@ async function downloadRawText(textUrl: string): Promise<string> {
 
 const loadPP = false;
 
-class Runner extends EventEmitter implements IPlatform {
-    private started = new Deferred<void>();
+class SharedText extends Document {
     private sharedString: SharedString.SharedString;
 
-    public async run(runtime: IRuntime, platform: IPlatform): Promise<IPlatform> {
-        this.start(runtime, platform).then(
-            () => {
-                this.started.resolve();
-            },
-            (error) => {
-                console.error(error);
-                this.started.reject(error);
-            });
+    public async opened() {
+        debug(`collabDoc loaded ${this.id} - ${performanceNow()}`);
+        const root = await this.getRoot().getView();
+        debug(`Getting root ${this.id} - ${performanceNow()}`);
 
-        return this;
-    }
-
-    public async queryInterface<T>(id: string): Promise<any> {
-        // Wait for start to complete before resolving interfaces
-        await this.started.promise;
-
-        switch (id) {
-            case "text":
-                return this;
-            default:
-                return null;
-        }
-    }
-
-    public append(value: string) {
-        this.sharedString.insertText(value, 0);
-    }
-
-    public appendListItem(item: string) {
-        let endMarker = this.sharedString.client.mergeTree.getSegmentFromId("endList");
-        if (!endMarker) {
-            const endProps = MergeTree.createMap<any>();
-            endProps[MergeTree.reservedTileLabelsKey] = ["pg"];
-            endProps[MergeTree.reservedMarkerIdKey] = "endList";
-            this.sharedString.insertMarker(0, MergeTree.ReferenceType.Tile, endMarker);
-            endMarker = this.sharedString.client.mergeTree.getSegmentFromId("endList");
-        }
-        const endPos = this.sharedString.client.mergeTree.getOffset(endMarker,
-            MergeTree.UniversalSequenceNumber, this.sharedString.client.getClientId());
-        this.sharedString.insertText(item, endPos);
-        const pgProps = MergeTree.createMap<any>();
-        pgProps[MergeTree.reservedTileLabelsKey] = ["pg", "list"];
-        pgProps.indentLevel = 1;
-        pgProps.listKind = 1;
-        this.sharedString.insertMarker(endPos, MergeTree.ReferenceType.Tile, pgProps);
-    }
-
-    private async start(runtime: IRuntime, platform: IPlatform) {
-        const rootMapId = "root";
-        const insightsMapId = "insights";
-
-        let root: DistributedMap.IMap;
-
-        if (!runtime.existing) {
-            root = runtime.createChannel(rootMapId, DistributedMap.MapExtension.Type) as DistributedMap.IMap;
-            root.attach();
-
-            const insights = runtime.createChannel(insightsMapId, DistributedMap.MapExtension.Type);
-            root.set(insightsMapId, insights);
-        } else {
-            root = await runtime.getChannel("root") as DistributedMap.IMap;
-        }
-
-        const document = new API.Document(runtime, root);
-
-        return this.runCore(document, platform);
-    }
-
-    private async runCore(collabDoc: API.Document, platform: IPlatform) {
-        console.log(`collabDoc loaded ${collabDoc.id} - ${performanceNow()}`);
-        const root = await collabDoc.getRoot().getView();
-        console.log(`Getting root ${collabDoc.id} - ${performanceNow()}`);
-
-        // If a text element already exists load it directly - otherwise load in pride + prejudice
-        if (!collabDoc.existing) {
-            console.log(`Not existing ${collabDoc.id} - ${performanceNow()}`);
-            root.set("presence", collabDoc.createMap());
-            root.set("users", collabDoc.createMap());
-            const newString = collabDoc.createString() as SharedString.SharedString;
-
-            const starterText = loadPP
-                ? await downloadRawText("https://alfred.wu2-ppe.prague.office-int.com/public/literature/pp.txt")
-                : " ";
-
-            const segments = MergeTree.loadSegments(starterText, 0, true);
-            for (const segment of segments) {
-                if (segment.getType() === MergeTree.SegmentType.Text) {
-                    const textSegment = segment as MergeTree.TextSegment;
-                    newString.insertText(textSegment.text, newString.client.getLength(),
-                        textSegment.properties);
-                } else {
-                    // assume marker
-                    const marker = segment as MergeTree.Marker;
-                    newString.insertMarker(newString.client.getLength(), marker.refType, marker.properties);
-                }
-            }
-            root.set("text", newString);
-            root.set("ink", collabDoc.createMap());
-        } else {
-            await Promise.all([root.wait("text"), root.wait("ink")]);
-        }
+        await Promise.all([root.wait("text"), root.wait("ink")]);
 
         this.sharedString = root.get("text") as SharedString.SharedString;
-        console.log(`Shared string ready - ${performanceNow()}`);
-        console.log(`id is ${collabDoc.id}`);
-        console.log(`Partial load fired - ${performanceNow()}`);
+        debug(`Shared string ready - ${performanceNow()}`);
+        debug(`id is ${this.id}`);
+        debug(`Partial load fired - ${performanceNow()}`);
 
-        const hostContent: HTMLElement = await platform.queryInterface<HTMLElement>("div");
+        const hostContent: HTMLElement = await this.platform.queryInterface<HTMLElement>("div");
         if (!hostContent) {
             // If headless exist early
             return;
@@ -166,7 +69,7 @@ class Runner extends EventEmitter implements IPlatform {
         const containerDiv = document.createElement("div");
         const container = new controls.FlowContainer(
             containerDiv,
-            collabDoc,
+            new API.Document(this.runtime, this.root),
             this.sharedString,
             inkPlane,
             image,
@@ -175,12 +78,7 @@ class Runner extends EventEmitter implements IPlatform {
         const theFlow = container.flowView;
         host.attach(container);
 
-        // const translationLanguage = "translationLanguage";
-        // addTranslation(collabDoc, sharedString.id, options[translationLanguage]).catch((error) => {
-        //     console.error("Problem adding translation", error);
-        // });
-
-        getInsights(collabDoc.getRoot(), this.sharedString.id).then(
+        getInsights(this.getRoot(), this.sharedString.id).then(
             (insightsMap) => {
                 container.trackInsights(insightsMap);
             });
@@ -194,13 +92,42 @@ class Runner extends EventEmitter implements IPlatform {
 
         this.sharedString.loaded.then(() => {
             theFlow.loadFinished(clockStart);
-            console.log(`fully loaded ${collabDoc.id}: ${performanceNow()} `);
+            debug(`fully loaded ${this.id}: ${performanceNow()} `);
         });
+    }
+
+    protected async create() {
+        const insightsMapId = "insights";
+
+        const insights = this.createMap(insightsMapId);
+        this.root.set(insightsMapId, insights);
+
+        debug(`Not existing ${this.id} - ${performanceNow()}`);
+        this.root.set("presence", this.createMap());
+        this.root.set("users", this.createMap());
+        const newString = this.createString() as SharedString.SharedString;
+
+        const starterText = loadPP
+            ? await downloadRawText("https://alfred.wu2-ppe.prague.office-int.com/public/literature/pp.txt")
+            : " ";
+
+        const segments = MergeTree.loadSegments(starterText, 0, true);
+        for (const segment of segments) {
+            if (segment.getType() === MergeTree.SegmentType.Text) {
+                const textSegment = segment as MergeTree.TextSegment;
+                newString.insertText(textSegment.text, newString.client.getLength(),
+                    textSegment.properties);
+            } else {
+                // assume marker
+                const marker = segment as MergeTree.Marker;
+                newString.insertMarker(newString.client.getLength(), marker.refType, marker.properties);
+            }
+        }
+        this.root.set("text", newString);
+        this.root.set("ink", this.createMap());
     }
 }
 
 export async function instantiate(): Promise<IChaincode> {
-    // Instantiate a new runtime per code load. That'll separate handlers, etc...
-    const chaincode = new Chaincode(new Runner());
-    return chaincode;
+    return DataStore.instantiate(new SharedText());
 }

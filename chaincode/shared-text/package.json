@@ -43,9 +43,11 @@
     "@prague/runtime-definitions": "^0.1.0",
     "@prague/shared-string": "^0.1.0",
     "@prague/stream": "^0.1.0",
+    "@types/debug": "0.0.31",
     "@types/node": "^10.5.8",
     "axios": "^0.18.0",
     "bootstrap": "^3.3.7",
+    "debug": "^4.1.0",
     "performance-now": "^2.1.0",
     "uuid": "^3.3.2"
   },

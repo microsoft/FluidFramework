@@ -11,14 +11,12 @@
         "rootDir": "./src",
         "outDir": "./dist",
         "declarationDir": "./dist",
-        "strict": true,
         "sourceMap": true,
         "inlineSources": true,
-        "noImplicitAny": true,
-        "noUnusedLocals": true,
-        "forceConsistentCasingInFileNames": true
+        "noImplicitAny": false,
+        "noUnusedLocals": true
     },
     "include": [
-        "src/index.ts"
+        "src/**/*"
     ]
 }

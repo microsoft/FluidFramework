@@ -1,19 +1,22 @@
 import { Component } from "@prague/datastore";
-import { IMap, IMapView, MapExtension } from "@prague/map";
-import { IPlatform, IRuntime } from "@prague/runtime-definitions";
+import { IMapView, MapExtension } from "@prague/map";
+import { Deferred } from "@prague/utils";
 
 export class TestComponent extends Component {
     public static readonly type = "@chaincode/test-component";
-    public root?: IMapView;
-    public get count(): number { return this.root.get("count"); }
+    public rootView?: IMapView;
+    public get count(): number { return this.rootView.get("count"); }
+
+    private ready = new Deferred<void>();
 
     constructor() {
         super([[MapExtension.Type, new MapExtension()]]);
     }
 
-    public async opened(runtime: IRuntime, platform: IPlatform, root: IMapView) {
-        await root.wait("count");
-        this.root = root;
+    public async opened() {
+        this.rootView = await this.root.getView();
+        await this.rootView.wait("count");
+        this.ready.resolve();
     }
 
     public increment() {
@@ -29,8 +32,17 @@ export class TestComponent extends Component {
         this.root.set(key, true);
     }
 
-    protected async create(runtime: IRuntime, platform: IPlatform, root: IMap) {
+    public async queryInterface(id: string): Promise<any> {
+        if (id === "component") {
+            await this.ready.promise;
+            return this;
+        } else {
+            return super.queryInterface(id);
+        }
+    }
+
+    protected async create() {
         // tslint:disable-next-line:no-backbone-get-set-outside-model
-        root.set("count", 0);
+        this.root.set("count", 0);
     }
 }
