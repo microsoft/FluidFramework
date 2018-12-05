@@ -61,3 +61,7 @@ Datastore
 ### Q & A
 
 15 minutes 
+
+### Hackathon Ideas
+
+[Hackathon Ideas](./project-ideas.md)
