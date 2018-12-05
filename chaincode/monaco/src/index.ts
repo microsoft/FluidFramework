@@ -1,12 +1,9 @@
 // inspiration for this example taken from https://github.com/agentcooper/typescript-play
 
-import { IChaincode, IPlatform, IRuntime } from "@prague/runtime-definitions";
+import { DataStore, Document } from "@prague/datastore";
+import { IChaincode, IPlatform } from "@prague/runtime-definitions";
 import { SharedString } from "@prague/shared-string";
-import { Deferred } from "@prague/utils";
-import { EventEmitter } from "events";
 import * as monaco from "monaco-editor";
-import { Chaincode } from "./chaincode";
-import { Document } from "./document";
 
 // tslint:disable
 const defaultCompilerOptions = {
@@ -57,52 +54,16 @@ const defaultCompilerOptions = {
 };
 // tslint:enable
 
-class NotebookRunner extends EventEmitter implements IPlatform {
-    private started = new Deferred<void>();
+class MonacoDocument extends Document {
     private mapHost: HTMLElement;
 
-    public async run(runtime: IRuntime, platform: IPlatform) {
-        this.start(runtime, platform).then(
-            () => {
-                this.started.resolve();
-            },
-            (error) => {
-                console.error(error);
-                this.started.reject(error);
-            });
-
-        return this;
-    }
-
-    public async queryInterface<T>(id: string): Promise<any> {
-        // Wait for start to complete before resolving interfaces
-        await this.started.promise;
-
-        switch (id) {
-            default:
-                return null;
-        }
-    }
-
-    private async runCode(code: string, platform: IPlatform) {
-        const root = await platform.queryInterface<any>("root");
-        const host = root ? root.entry : null;
-        this.exec(host, code);
-    }
-
-    private async exec(host: any, code: string) {
-        eval(code);
-    }
-
-    private async start(runtime: IRuntime, platform: IPlatform): Promise<void> {
-        const doc = await Document.Load(runtime);
-
-        this.mapHost = await platform.queryInterface<HTMLElement>("div");
+    public async opened(): Promise<void> {
+        this.mapHost = await this.platform.queryInterface<HTMLElement>("div");
         if (!this.mapHost) {
             return;
         }
 
-        const hostDts = await platform.queryInterface<any>("dts");
+        const hostDts = await this.platform.queryInterface<any>("dts");
 
         if (!this.mapHost.style.width) {
             this.mapHost.style.width = "100vw";
@@ -127,13 +88,7 @@ class NotebookRunner extends EventEmitter implements IPlatform {
         hostWrapper.appendChild(inputDiv);
         hostWrapper.appendChild(outputDiv);
 
-        const root = await doc.getRoot().getView();
-        if (!runtime.existing) {
-            const codeString = doc.createString();
-            codeString.insertText('console.log("Hello, world!");', 0);
-            root.set("text", codeString);
-        }
-
+        const root = await this.getRoot().getView();
         const text = await root.wait<SharedString>("text");
 
         monaco.languages.typescript.typescriptDefaults.setCompilerOptions(defaultCompilerOptions);
@@ -163,12 +118,12 @@ class NotebookRunner extends EventEmitter implements IPlatform {
 
         codeEditor.addCommand(
             monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter,
-            () => { this.runCode(outputModel.getValue(), platform); },
+            () => { this.runCode(outputModel.getValue(), this.platform); },
             null);
 
         outputEditor.addCommand(
             monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter,
-            () => { this.runCode(outputModel.getValue(), platform); },
+            () => { this.runCode(outputModel.getValue(), this.platform); },
             null);
 
         let ignoreModelContentChanges = false;
@@ -213,10 +168,24 @@ class NotebookRunner extends EventEmitter implements IPlatform {
                 }
             });
     }
+
+    protected async create(): Promise<void> {
+        const codeString = this.createString();
+        codeString.insertText('console.log("Hello, world!");', 0);
+        this.root.set("text", codeString);
+    }
+
+    private async runCode(code: string, platform: IPlatform) {
+        const root = await platform.queryInterface<any>("root");
+        const host = root ? root.entry : null;
+        this.exec(host, code);
+    }
+
+    private async exec(host: any, code: string) {
+        eval(code);
+    }
 }
 
 export async function instantiate(): Promise<IChaincode> {
-    // Instantiate a new runtime per code load. That'll separate handlers, etc...
-    const chaincode = new Chaincode(new NotebookRunner());
-    return chaincode;
+    return DataStore.instantiate(new MonacoDocument());
 }

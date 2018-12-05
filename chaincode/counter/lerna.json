@@ -1,7 +1,0 @@
-{
-  "packages": [
-    "../../routerlicious/packages/*",
-    "packages/*"
-  ],
-  "version": "0.1.0"
-}

@@ -12,10 +12,11 @@
     "update": "npm run build && npm version patch && npm publish --registry http://localhost:4873"
   },
   "dependencies": {
-    "@prague/map": "^0.1.3611",
-    "@prague/runtime-definitions": "^0.1.3611",
-    "@prague/shared-string": "^0.1.3613",
-    "@prague/utils": "^0.1.4239",
+    "@prague/datastore": "^0.1.4276",
+    "@prague/map": "^0.1.4276",
+    "@prague/runtime-definitions": "^0.1.4276",
+    "@prague/shared-string": "^0.1.4276",
+    "@prague/utils": "^0.1.4276",
     "@types/debug": "0.0.30",
     "@types/google-maps": "^3.2.0",
     "@types/node": "^10.9.4",

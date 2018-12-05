@@ -1,10 +1,11 @@
 import { IChaincode } from "@prague/runtime-definitions";
 import { Document, DataStore } from "@prague/datastore";
+import { Counter, CounterValueType } from "@prague/map";
 
 export class Clicker extends Document {
     // Initialize the document/component (only called when document is initially created).
     protected async create() {
-        this.root.set("clicks", 0);
+        this.root.set<Counter>("clicks", 0, CounterValueType.Name);
     }
 
     // Once document/component is opened, finish any remaining initialization required before the
@@ -13,20 +14,19 @@ export class Clicker extends Document {
         // If the host provided a <div>, display a minimual UI.
         const maybeDiv = await this.platform.queryInterface<HTMLElement>("div");        
         if (maybeDiv) {
-            const rootView = await this.root.getView();
+            const counter = await this.root.wait<Counter>("clicks");
 
             // Create a <span> that displays the current value of 'clicks'.
             const span = document.createElement("span");           
-            const update = () => { span.textContent = rootView.get("clicks"); }
-            rootView.getMap().on("valueChanged", update);
+            const update = () => { span.textContent = counter.value.toString(); }
+            this.root.on("valueChanged", update);
             update();
             
             // Create a button that increments the value of 'clicks' when pressed.
             const btn = document.createElement("button");
             btn.textContent = "+";
             btn.addEventListener("click", () => {
-                const clicks = rootView.get("clicks");
-                this.root.set("clicks", clicks + 1);
+                counter.increment(1);
             });
 
             // Add both to the <div> provided by the host:

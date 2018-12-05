@@ -27,12 +27,13 @@
     "webpack-visualizer-plugin": "^0.1.11"
   },
   "dependencies": {
-    "@prague/api-definitions": "^0.1.3542",
-    "@prague/loader-web": "^0.1.3556",
-    "@prague/map": "^0.1.3542",
-    "@prague/runtime-definitions": "^0.1.3542",
-    "@prague/shared-string": "^0.1.3542",
-    "@prague/stream": "^0.1.3542",
+    "@prague/api-definitions": "^0.1.4276",
+    "@prague/datastore": "^0.1.4276",
+    "@prague/loader-web": "^0.1.4276",
+    "@prague/map": "^0.1.4276",
+    "@prague/runtime-definitions": "^0.1.4276",
+    "@prague/shared-string": "^0.1.4276",
+    "@prague/stream": "^0.1.4276",
     "@types/node": "^10.5.8"
   },
   "prague": {
