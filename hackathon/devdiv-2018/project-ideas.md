@@ -1,5 +1,24 @@
 ## Hackathon Ideas
 
+### SDK Scenarios (This especially for you DevDiv-ers!)
+* Direct firebase scenario (Realtime JSON DB)
+* Anything with Distributed DataStructure interfaces
+* Adaptor for React
+* Adaptor for AngularJS
+* Any adaptation with common webframeworks
+* Making any large group of components (Bootstrap, styled-components, etc) collaborative
+* Cleaning up chaincode setup and startup
+* IFTT hookups to common infrastructure
+    * Send an email from a prague doc
+    * Create excel doc
+
+### Core Infrastructure
+* Throttling ops per tenant
+* Advanced Metrics
+* Tenant Generation
+* Create your own distributed datastructure
+* Create a remote object graph (Partner with Steve Lucco!)
+
 ### Text Editor Related
 * Any Text Editor, but Collaborative
 * VSCode - Collab
@@ -44,17 +63,6 @@
 * Collaborative shopping cart
 * Wikipedia Groking
 * Chat about active tabs
-
-### SDK Scenarios
-* Direct firebase scenario
-* IFTT hookups to common infrastructure
-    * Send an email from a prague doc
-    * Create excel doc
-
-### Core Infrastructure
-* Throttling ops per tenant
-* Advanced Metrics
-* Tenant Generation
 
 ### "Snacks"
 * Build a Collab color picker
