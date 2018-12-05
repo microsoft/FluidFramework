@@ -52,3 +52,16 @@ We're currently in the middle of [Sprint 5](./doc/sprints/sprint5/readme.md) and
 
 ## Stack Overflow
 The Prague team answers questions on the [Microsoft internal stack overflow](https://stackoverflow.microsoft.com/) using the [tag Prague](https://stackoverflow.microsoft.com/questions/tagged/prague)
+
+## Deployment Regions
+To ensure minimal latency and smoother user experience, we deploy our backend in a few different Azure regions. If you are closer to west coast, use the following endpoints located at Washington:
+* https://alfred.wu2.prague.office-int.com
+* https://historian.wu2.prague.office-int.com
+
+East coast developers are encouraged to use the following endpoints(located at Virginia):
+* https://alfred.eu2.prague.office-int.com
+* https://historian.eu2.prague.office-int.com
+
+Developers in Europe can use the following endpoints (Located at Netherlands):
+* https://alfred.we.prague.office-int.com
+* https://historian.we.prague.office-int.com
