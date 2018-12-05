@@ -4,8 +4,8 @@
   "description": "Prague API sequence sample",
   "main": "index.js",
   "dependencies": {
-    "@prague/client-api": "^0.1.3242",
-    "@prague/socket-storage": "^0.1.3242",
+    "@prague/client-api": "^0.1.4272",
+    "@prague/socket-storage": "^0.1.4272",
     "jsonwebtoken": "^8.2.1"
   },
   "devDependencies": {
@@ -20,7 +20,7 @@
     "typescript": "^2.8.3",
     "webpack": "^4.7.0",
     "webpack-bundle-analyzer": "^2.13.1",
-    "webpack-cli": "^2.0.15",
+    "webpack-cli": "^3.1.2",
     "webpack-visualizer-plugin": "^0.1.11"
   },
   "scripts": {

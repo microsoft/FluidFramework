@@ -1,6 +1,5 @@
 import * as loader from "@prague/loader";
 import { WebLoader, WebPlatformFactory } from "@prague/loader-web";
-import { ITokenService } from "@prague/runtime-definitions";
 import * as socketStorage from "@prague/socket-storage";
 import * as axios from "axios";
 import * as jwt from "jsonwebtoken";
@@ -19,12 +18,7 @@ class PraguePlugin {
         return plugin;
     }
 
-    private tokenService: ITokenService;
     private documents = new Map<string, loader.Document>();
-
-    constructor() {
-        this.tokenService = new socketStorage.TokenService();
-    }
 
     private load() {
         if (!document.querySelector("section[data-markdown]:not([data-markdown-parsed])")) {
@@ -60,15 +54,16 @@ class PraguePlugin {
         const tenantId = tenantDetails.data.id;
         const secret = tenantDetails.data.key;
         const documentId = splitPath[splitPath.length - 1];
+        const user = {
+            id: "test",
+        };
 
         const token = jwt.sign(
             {
                 documentId,
                 permission: "read:write", // use "read:write" for now
                 tenantId,
-                user: {
-                    id: "test",
-                },
+                user,
             },
             secret);
 
@@ -78,12 +73,14 @@ class PraguePlugin {
         const webPlatform = new WebPlatformFactory(div);
 
         const documentP = loader.load(
-            token,
-            null,
+            documentId,
+            tenantId,
+            user,
+            new socketStorage.TokenProvider(token),
+            { blockUpdateMarkers: true },
             webPlatform,
             documentServices,
             webLoader,
-            this.tokenService,
             null,
             true);
         const document = await documentP;

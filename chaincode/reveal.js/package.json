@@ -9,9 +9,9 @@
   },
   "author": "Microsoft",
   "dependencies": {
-    "@prague/loader": "^0.1.3598",
-    "@prague/loader-web": "^0.1.3598",
-    "@prague/socket-storage": "^0.1.3598",
+    "@prague/loader": "^0.1.4272",
+    "@prague/loader-web": "^0.1.4272",
+    "@prague/socket-storage": "^0.1.4272",
     "@types/jsonwebtoken": "^7.2.8",
     "@types/url-parse": "^1.4.1",
     "axios": "^0.18.0",
