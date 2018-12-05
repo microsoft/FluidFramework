@@ -17,6 +17,11 @@
 * Create your own distributed datastructure
 * Create a remote object graph (Sparse Matrix) (Partner with Steve Lucco!)
 
+### Tech for Tech Hacks
+* Peer to Peer Routterlicious
+* Fully encrypted Prague
+* Distributed Storage
+
 ### Text Editor Related
 * Any Text Editor, but Collaborative
 * VSCode - Collab
