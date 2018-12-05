@@ -1,13 +1,13 @@
 ## Hackathon Ideas
 
-### SDK Scenarios (This especially for you DevDiv-ers!)
+### SDK Scenarios (Especially for DevDiv-ers!)
 * Direct firebase scenario (Realtime JSON DB)
 * Anything with Distributed DataStructure interfaces
-* Adaptor for React
-* Adaptor for AngularJS
+* Adaptor for React, AngularJS, Vue.JS
 * Any adaptation with common webframeworks
-* Making any large group of components (Bootstrap, styled-components, etc) collaborative
-* Cleaning up chaincode setup and startup
+* Better debugging for Chaincode
+* Clean up chaincode setup and startup
+* Make any large group of components (Bootstrap, styled-components, etc) collaborative
 * IFTT hookups to common infrastructure
     * Send an email from a prague doc
     * Create excel doc
