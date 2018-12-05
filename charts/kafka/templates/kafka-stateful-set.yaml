@@ -42,11 +42,10 @@ spec:
   volumeClaimTemplates:
   - metadata:
       name: data
-      annotations:
-        volume.beta.kubernetes.io/storage-class: unmanaged-premium
     spec:
+      storageClassName: managed-premium
       accessModes: 
         - ReadWriteOnce
       resources:
         requests:
-          storage: 128Gi
+          storage: 2048Gi

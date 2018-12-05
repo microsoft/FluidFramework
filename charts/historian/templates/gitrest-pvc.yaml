@@ -8,9 +8,8 @@ metadata:
     component: "{{ .Values.gitrest.name }}"
     release: "{{ .Release.Name }}"
     heritage: "{{ .Release.Service }}"
-  annotations:
-    volume.beta.kubernetes.io/storage-class: {{ .Values.gitrest.persistence.storageClass | quote }}
 spec:
+  storageClassName: managed-premium
   accessModes:
     - {{ .Values.gitrest.persistence.accessMode | quote }}
   resources:

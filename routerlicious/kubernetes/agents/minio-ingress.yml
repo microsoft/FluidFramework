@@ -13,9 +13,9 @@ spec:
    secretName: wu2-tls-certificate
  rules:
  - host: "minio.wu2.prague.office-int.com"
-   http:
+ http:
      paths:
      - path: /
        backend:
-         serviceName: agents-storage-minio-svc
+         serviceName: agents-storage-minio
          servicePort: 9000

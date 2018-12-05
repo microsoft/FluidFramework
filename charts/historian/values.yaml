@@ -15,8 +15,8 @@ gitrest:
   name: gitrest
   image: prague.azurecr.io/gitrest:4048
   persistence:
-    storageClass: unmanaged-premium
-    size: 128Gi
+    storageClass: managed-premium
+    size: 1024Gi
     accessMode: ReadWriteOnce
 
 gitssh:
@@ -27,6 +27,6 @@ cobalt:
   name: cobalt
   image: prague.azurecr.io/cobalt:1544
   persistence:
-    storageClass: unmanaged-premium
+    storageClass: managed-premium
     size: 128Gi
     accessMode: ReadWriteOnce
