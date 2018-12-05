@@ -2,13 +2,13 @@
 
 ### SDK Scenarios (Especially for DevDiv-ers!)
 * Direct firebase scenario (Realtime JSON DB)
-* Anything with Distributed DataStructure interfaces
+* Make Datastructure interfaces better
 * Adaptor for React, AngularJS, Vue.JS 
 * Any adaptation with common webframeworks
-* Better debugging for Chaincode
+* Better debugging for Chaincode (!!)
 * Clean up chaincode setup and startup
 * Make any large group of components (Bootstrap, styled-components, etc) collaborative
-* New and easier ways of uploading Chaincode
+* New and easier ways of uploading Chaincode (Tarball, zip, other)
 
 ### Core Infrastructure
 * Throttling ops per tenant
@@ -18,9 +18,10 @@
 * Create a remote object graph (Sparse Matrix) (Partner with Steve Lucco!)
 
 ### Tech for Tech Hacks
-* Peer to Peer Routterlicious
+* Peer to Peer Routerlicious
 * Fully encrypted Prague
 * Distributed Storage
+* Move some processing to Child Processes
 
 ### Text Editor Related
 * Any Text Editor, but Collaborative
