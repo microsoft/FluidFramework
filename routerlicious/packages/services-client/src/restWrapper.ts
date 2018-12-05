@@ -70,8 +70,18 @@ export class RestWrapper {
 
     private generateQueryString(queryStringValues: {}) {
         if (this.defaultQueryString || queryStringValues) {
-            const queryString = querystring.stringify({ ...this.defaultQueryString, ...queryStringValues });
+            const queryStringMap = { ...this.defaultQueryString, ...queryStringValues };
 
+            // if the value is a function we will execute the function and use the output as the new value
+            Object.keys(queryStringMap).forEach((key) => {
+                const value = queryStringMap[key];
+                if (value instanceof Function) {
+                    // tslint:disable-next-line:no-unsafe-any
+                    queryStringMap[key] = value();
+                }
+            });
+
+            const queryString = querystring.stringify(queryStringMap);
             if (queryString !== "") {
                 return `?${queryString}`;
             }

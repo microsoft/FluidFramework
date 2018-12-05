@@ -90,7 +90,7 @@ describe("RestWrapper", () => {
         it("Default QueryString and Default Headers", async () => {
             // arrange
             const defaultHeaders = { h1: "valueh1", h2: "valueh2" };
-            const defaultQueryString = { q1: "valueq1", q2: "valueq2" };
+            const defaultQueryString = { q1: "valueq1", q2: "valueq2", qfun: () => "valueqfun" };
             const rw = new RestWrapper(
                 baseurl,
                 defaultHeaders,
@@ -103,7 +103,8 @@ describe("RestWrapper", () => {
             await rw.get(requestUrl);
 
             // assert
-            assert.equal(`${requestUrl}?q1=valueq1&q2=valueq2`, requestOptions.url, "requestUrl should be the same");
+            // tslint:disable-next-line:max-line-length
+            assert.equal(`${requestUrl}?q1=valueq1&q2=valueq2&qfun=valueqfun`, requestOptions.url, "requestUrl should be the same");
             // tslint:disable-next-line:no-unsafe-any
             assert.equal(defaultHeaders.h1, requestOptions.headers.h1 as string, "Header1 value should be correct");
             // tslint:disable-next-line:no-unsafe-any
@@ -115,7 +116,7 @@ describe("RestWrapper", () => {
             const defaultHeaders = { h1: "valueh1", h2: "valueh2" };
             const requestHeaders = { h1: "valueh11", h3: "valueh3" };
             const defaultQueryString = { q1: "valueq1", q2: "valueq2" };
-            const requestQueryString = { q1: "valueq11", q3: "valueq3" };
+            const requestQueryString = { q1: "valueq11", q3: "valueq3", qfun: () => "valueqfun" };
             const rw = new RestWrapper(
                 baseurl,
                 defaultHeaders,
@@ -129,7 +130,7 @@ describe("RestWrapper", () => {
 
             // assert
             assert.equal(
-                `${requestUrl}?q1=valueq11&q2=valueq2&q3=valueq3`,
+                `${requestUrl}?q1=valueq11&q2=valueq2&q3=valueq3&qfun=valueqfun`,
                 requestOptions.url,
                 "requestUrl should be the same",
             );
