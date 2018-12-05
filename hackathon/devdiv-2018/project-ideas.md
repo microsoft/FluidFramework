@@ -3,21 +3,19 @@
 ### SDK Scenarios (Especially for DevDiv-ers!)
 * Direct firebase scenario (Realtime JSON DB)
 * Anything with Distributed DataStructure interfaces
-* Adaptor for React, AngularJS, Vue.JS
+* Adaptor for React, AngularJS, Vue.JS 
 * Any adaptation with common webframeworks
 * Better debugging for Chaincode
 * Clean up chaincode setup and startup
 * Make any large group of components (Bootstrap, styled-components, etc) collaborative
-* IFTT hookups to common infrastructure
-    * Send an email from a prague doc
-    * Create excel doc
+* New and easier ways of uploading Chaincode
 
 ### Core Infrastructure
 * Throttling ops per tenant
 * Advanced Metrics
 * Tenant Generation
 * Create your own distributed datastructure
-* Create a remote object graph (Partner with Steve Lucco!)
+* Create a remote object graph (Sparse Matrix) (Partner with Steve Lucco!)
 
 ### Text Editor Related
 * Any Text Editor, but Collaborative
@@ -51,7 +49,6 @@
 * Sonos style sync up
 * Recording sessions and broadcasting audio/video (Time Stamps on Ops?)
   
-
 ### Games
 * Any game at all!
 * Snake
@@ -81,3 +78,7 @@
 * Build word.ts pretty please with fidelity to the word model
 * Always on Prague apps, linking a client id to a person, and devices to devices,
 * Intelligent services (entity extraction) (Louis)
+* IFTT hookups to common infrastructure
+    * Send an email from a prague doc
+    * Create excel doc
+
