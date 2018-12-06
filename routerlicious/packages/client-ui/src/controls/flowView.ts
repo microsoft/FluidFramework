@@ -423,6 +423,12 @@ const commands: ICmd[] = [
         },
         key: "insert ivy",
     },
+    {
+        exec: (f) => {
+            f.insertChaincode("scriptor", "@ms/scriptor@0.23.19");
+        },
+        key: "insert scriptor",
+    },
 ];
 
 export function moveMarker(flowView: FlowView, fromPos: number, toPos: number) {
