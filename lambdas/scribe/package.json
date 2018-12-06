@@ -4,8 +4,11 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "webpack --config webpack.config.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "docker build . -t praguelambdas.azurecr.io/scribe:latest",
+    "push": "docker push praguelambdas.azurecr.io/scribe:latest",
+    "deploy": "nuctl deploy scribe -n nuclio --run-image praguelambdas.azurecr.io/scribe:latest --runtime nodejs --handler handler:handler --platform kube",
+    "upload": "npm run build && npm run push && npm run deploy && npm run endpoint",
+    "endpoint": "kubectl get endpoints -n nuclio scribe"
   },
   "author": "",
   "license": "ISC",
