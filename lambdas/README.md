@@ -19,5 +19,5 @@ We deploy serverless functions using [Nuclio](https://nuclio.io). Nuclio lets us
 
 ## Debugging Tips
 * Unit Test
-* If you deployed through the dashboard, restart the connection
+* Restart the connection to dashboard (if you're using it)
 * Restart the pod in kube
