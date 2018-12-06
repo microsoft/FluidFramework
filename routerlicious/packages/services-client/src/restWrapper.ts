@@ -6,6 +6,7 @@ export class RestWrapper {
         private baseurl?: string,
         private defaultHeaders?: {},
         private defaultQueryString?: {},
+        private cacheBust = false,
         private maxContentLength = 1000 * 1024 * 1024,
         private axios: AxiosInstance = Axios) {
     }
@@ -70,16 +71,9 @@ export class RestWrapper {
 
     private generateQueryString(queryStringValues: {}) {
         if (this.defaultQueryString || queryStringValues) {
-            const queryStringMap = { ...this.defaultQueryString, ...queryStringValues };
-
-            // if the value is a function we will execute the function and use the output as the new value
-            Object.keys(queryStringMap).forEach((key) => {
-                const value = queryStringMap[key];
-                if (value instanceof Function) {
-                    // tslint:disable-next-line:no-unsafe-any
-                    queryStringMap[key] = value();
-                }
-            });
+            const queryStringMap = this.cacheBust
+                ? { ...this.defaultQueryString, ...queryStringValues, ...{ cacheBust: Date.now() } }
+                : { ...this.defaultQueryString, ...queryStringValues };
 
             const queryString = querystring.stringify(queryStringMap);
             if (queryString !== "") {

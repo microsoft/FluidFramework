@@ -71,13 +71,14 @@ export class Historian implements IHistorian {
         }
 
         let queryString: {};
+        let cacheBust = false;
         if (this.disableCache && this.historianApi) {
             queryString = { disableCache: this.disableCache };
         } else if (this.disableCache) {
-            queryString = { cacheBust: () => Date.now() };
+            cacheBust = true;
         }
 
-        this.restWrapper = new RestWrapper(endpoint, headers, queryString);
+        this.restWrapper = new RestWrapper(endpoint, headers, queryString, cacheBust);
     }
 
     /* tslint:disable:promise-function-async */
