@@ -1,6 +1,7 @@
 import {
     IClient,
     IClientJoin,
+    IDocumentMessage,
     IDocumentSystemMessage,
     IUser,
     MessageType,
@@ -34,6 +35,28 @@ export function create(
         // Send join message.
         const joinMessage = craftSystemMessage(tenantId, documentId, clientDetail);
         producer.send(joinMessage, tenantId, documentId);
+
+        // Craft and send op
+        const opContent = {
+            key: "foo",
+            type: "set",
+            value: {
+                type: "Plain",
+                value: "777",
+            },
+        };
+
+        const op = {
+            address: "root",
+            contents: {
+                clientSequenceNumber: 1,
+                contents: opContent,
+                referenceSequenceNumber: 1,
+                type: "op",
+            },
+        };
+        const opMessage = craftMessage(tenantId, documentId, clientId, JSON.stringify(op));
+        producer.send(opMessage, tenantId, documentId);
 
         // Send leave message.
         const leaveMessage = craftSystemMessage(tenantId, documentId, clientId);
@@ -70,6 +93,36 @@ function craftSystemMessage(
 
         const message: core.IRawOperationMessage = {
             clientId: null,
+            documentId,
+            operation,
+            tenantId,
+            timestamp: Date.now(),
+            type: core.RawOperationType,
+            user,
+        };
+
+        return message;
+}
+
+function craftMessage(
+    tenantId: string,
+    documentId: string,
+    clientId: string,
+    contents: string): core.IRawOperationMessage {
+        const operation: IDocumentMessage = {
+            clientSequenceNumber: 1,
+            contents,
+            referenceSequenceNumber: -1,
+            traces: [],
+            type: MessageType.Operation,
+        };
+
+        const user: IUser = {
+            id: "test",
+        };
+
+        const message: core.IRawOperationMessage = {
+            clientId,
             documentId,
             operation,
             tenantId,
