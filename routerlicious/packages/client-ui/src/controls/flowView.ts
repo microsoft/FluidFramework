@@ -425,7 +425,7 @@ const commands: ICmd[] = [
     },
     {
         exec: (f) => {
-            f.insertChaincode("scriptor", "@ms/scriptor@0.23.19");
+            f.insertChaincode("scriptor", "@ms/scriptor@0.23.25");
         },
         key: "insert scriptor",
     },
