@@ -229,8 +229,11 @@ export class DeliLambda implements IPartitionLambda {
                     return this.createNackMessage(message);
                 }
 
-                // Verify that the message is within the current window
-                if (message.clientId && message.operation.referenceSequenceNumber < this.minimumSequenceNumber) {
+                // Verify that the message is within the current window.
+                // -1 check just for directly sent ops (e.g., using REST API).
+                if (message.clientId &&
+                    message.operation.referenceSequenceNumber !== -1 &&
+                    message.operation.referenceSequenceNumber < this.minimumSequenceNumber) {
                     // Add in a placeholder for the nack'ed client to allow them to rejoin at the current MSN
                     this.upsertClient(
                         message.clientId,
@@ -306,7 +309,13 @@ export class DeliLambda implements IPartitionLambda {
                 false);
         } else {
             if (message.clientId) {
-                // We checked earlier for the below case
+                // We checked earlier for the below case. Why checking again?
+                // Only for directly sent ops (e.g., using REST API). To avoid getting nacked,
+                // We rev the refseq number to current sequence number.
+                if (message.operation.referenceSequenceNumber === -1) {
+                    message.operation.referenceSequenceNumber = sequenceNumber;
+                }
+
                 assert(
                     message.operation.referenceSequenceNumber >= this.minimumSequenceNumber,
                     `${message.operation.referenceSequenceNumber} >= ${this.minimumSequenceNumber}`);
