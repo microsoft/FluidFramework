@@ -5,6 +5,24 @@ import {
 } from "@prague/runtime-definitions";
 import Axios from "axios";
 
+async function loadScript(scriptUrl: string): Promise<{}> {
+    return new Promise((resolve, reject) => {
+      const script = document.createElement("script");
+      script.src = scriptUrl;
+
+      // Dynamically added scripts are async by default. By setting async to false, we are enabling the scripts
+      // to be downloaded in parallel, but executed in order. This ensures that a script is executed after all of
+      // its dependencies have been loaded and executed.
+      script.async = false;
+
+      script.onload = resolve;
+      script.onerror = () =>
+        reject(new Error(`Failed to download the script at url: ${scriptUrl}`));
+
+      document.head.appendChild(script);
+    });
+}
+
 export class WebLoader implements ICodeLoader {
     constructor(private baseUrl: string) {
     }
@@ -19,21 +37,8 @@ export class WebLoader implements ICodeLoader {
         const packageUrl = `${this.baseUrl}/${encodeURI(scope)}/${encodeURI(`${name}@${version}`)}`;
         const packageJson = await Axios.get<IPraguePackage>(`${packageUrl}/package.json`);
 
-        const fetchedFiles = new Array<Promise<string>>();
-        for (const bundle of packageJson.data.prague.browser.bundle) {
-            const file = Axios.get<string>(
-                `${packageUrl}/${bundle}`,
-                { responseType: "string" }).then((data) => data.data);
-            fetchedFiles.push(file);
-        }
-
-        const files = await Promise.all(fetchedFiles);
-        for (const file of files) {
-            // TODO using eval for now but likely will want to switch to a script import with a wrapped context
-            // to isolate the code
-            // tslint:disable-next-line:no-eval
-            eval.call(null, file);
-        }
+        await Promise.all(
+            packageJson.data.prague.browser.bundle.map(async (bundle) => loadScript(`${packageUrl}/${bundle}`)));
 
         // tslint:disable-next-line:no-unsafe-any
         return window[packageJson.data.prague.browser.entrypoint];
