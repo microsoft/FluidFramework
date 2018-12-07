@@ -31,7 +31,7 @@ export class BatchManager<T> {
     /**
      * Resolves once all pending work is complete
      */
-    public async drain(): Promise<void> {
+    public drain(): void {
         this.startWork();
     }
 

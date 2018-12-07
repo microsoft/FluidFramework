@@ -7,7 +7,7 @@ import { EventEmitter } from "events";
 export class TestDeltaQueue extends EventEmitter implements IDeltaQueue {
     public paused: boolean;
     public length: number;
-    public empty: boolean;
+    public idle: boolean;
     private resumeDeferred: utils.Deferred<void>;
 
     public pause() {
