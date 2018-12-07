@@ -1,5 +1,5 @@
+import { IOrderer } from "@prague/services-core";
 import * as assert from "assert";
-import { IOrderer } from "../../core";
 import { IConcreteNode, IConcreteNodeFactory, IReservationManager } from "./interfaces";
 
 // The LocalOrderManager maintains a set of nodes and their set of ownerships of documents

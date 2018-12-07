@@ -1,5 +1,4 @@
 import * as core from "@prague/services-core";
-import { INode } from "../services";
 import { MongoManager } from "./mongo";
 
 /**
@@ -14,8 +13,8 @@ export class MongoDatabaseManager implements core.IDatabaseManager {
         private deltasCollectionName: string) {
     }
 
-    public async getNodeCollection(): Promise<core.ICollection<INode>> {
-        return this.getCollection<INode>(this.nodeCollectionName);
+    public async getNodeCollection(): Promise<core.ICollection<core.INode>> {
+        return this.getCollection<core.INode>(this.nodeCollectionName);
     }
 
     public async getDocumentCollection(): Promise<core.ICollection<core.IDocument>> {

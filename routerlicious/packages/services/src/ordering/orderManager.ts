@@ -1,4 +1,4 @@
-import { IOrderer, IOrdererManager } from "../../core";
+import { IOrderer, IOrdererManager } from "@prague/services-core";
 import { KafkaOrdererFactory } from "./kafkaOrderer";
 import { LocalOrderManager } from "./localOrderManager";
 

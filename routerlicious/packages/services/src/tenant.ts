@@ -1,6 +1,6 @@
 import { GitManager, Historian } from "@prague/services-client";
+import * as core from "@prague/services-core";
 import * as request from "request-promise-native";
-import * as core from "../core";
 
 export class Tenant implements core.ITenant {
     public get id(): string {

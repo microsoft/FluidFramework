@@ -8,13 +8,12 @@ import {
 import * as core from "@prague/services-core";
 import * as _ from "lodash";
 import * as moniker from "moniker";
-import { IProducer } from "../../utils";
 
 export class KafkaOrdererConnection implements core.IOrdererConnection {
     public static async Create(
         existing: boolean,
         document: core.IDocument,
-        producer: IProducer,
+        producer: core.IProducer,
         tenantId: string,
         documentId: string,
         socket: core.IWebSocket,
@@ -54,7 +53,7 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
     constructor(
         public readonly existing: boolean,
         document: core.IDocument,
-        private producer: IProducer,
+        private producer: core.IProducer,
         public readonly tenantId: string,
         public readonly documentId: string,
         public readonly clientId: string,
@@ -158,7 +157,7 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
 export class KafkaOrderer implements core.IOrderer {
     public static async Create(
         storage: core.IDocumentStorage,
-        producer: IProducer,
+        producer: core.IProducer,
         tenantId: string,
         documentId: string,
         maxMessageSize: number): Promise<KafkaOrderer> {
@@ -171,7 +170,7 @@ export class KafkaOrderer implements core.IOrderer {
 
     constructor(
         private details: core.IDocumentDetails,
-        private producer: IProducer,
+        private producer: core.IProducer,
         private tenantId: string,
         private documentId: string,
         private maxMessageSize: number) {

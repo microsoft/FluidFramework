@@ -1,8 +1,7 @@
-// tslint:disable:ban-types
+import * as core from "@prague/services-core";
 import * as http from "http";
 import { AddressInfo } from "net";
 import * as util from "util";
-import * as core from "../core";
 import * as socketIo from "./socketIoServer";
 
 export type RequestListener = (request: http.IncomingMessage, response: http.ServerResponse) => void;

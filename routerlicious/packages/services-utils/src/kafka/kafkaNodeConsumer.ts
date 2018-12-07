@@ -1,9 +1,8 @@
-// tslint:disable:ban-types
+import { IConsumer, IPartition } from "@prague/services-core";
 import { EventEmitter } from "events";
 import * as kafkaNode from "kafka-node";
 import * as util from "util";
 import { debug } from "../debug";
-import { IConsumer, IPartition } from "./definitions";
 
 export class KafkaNodeConsumer implements IConsumer {
     private client: kafkaNode.Client;

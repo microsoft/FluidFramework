@@ -1,5 +1,5 @@
+import { ICollection } from "@prague/services-core";
 import { EventEmitter } from "events";
-import { ICollection } from "../../core";
 import { MongoManager } from "../../utils";
 import { IConcreteNode, IReservationManager } from "./interfaces";
 import { NodeManager } from "./nodeManager";

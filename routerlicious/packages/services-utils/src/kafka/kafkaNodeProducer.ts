@@ -1,9 +1,8 @@
-import { BoxcarType, IBoxcarMessage } from "@prague/services-core";
+import { BoxcarType, IBoxcarMessage, IPendingBoxcar, IProducer } from "@prague/services-core";
 import * as utils from "@prague/utils";
 import * as kafkaNode from "kafka-node";
 import * as util from "util";
 import { debug } from "../debug";
-import { IPendingBoxcar, IProducer } from "./definitions";
 
 // 1MB batch size / (16KB max message size + overhead)
 const MaxBatchSize = 32;

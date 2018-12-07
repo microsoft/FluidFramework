@@ -1,4 +1,4 @@
-// tslint:disable:ban-types
+import * as core from "@prague/services-core";
 import { EventEmitter } from "events";
 import * as http from "http";
 import * as _ from "lodash";
@@ -6,7 +6,6 @@ import * as redis from "redis";
 import * as socketIo from "socket.io";
 import * as socketIoRedis from "socket.io-redis";
 import * as util from "util";
-import * as core from "../core";
 
 const socketJoin = util.promisify(
     (socket: SocketIO.Socket, roomId: string, callback: (err: NodeJS.ErrnoException) => void) => {

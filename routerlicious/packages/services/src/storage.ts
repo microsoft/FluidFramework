@@ -1,8 +1,8 @@
 import { ICommit, ICommitDetails } from "@prague/gitresources";
 import { IDocumentAttributes, IDocumentSystemMessage, MessageType } from "@prague/runtime-definitions";
+import * as core from "@prague/services-core";
 import * as moniker from "moniker";
 import * as winston from "winston";
-import * as core from "../core";
 import * as utils from "../utils";
 
 const StartingSequenceNumber = 0;

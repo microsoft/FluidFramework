@@ -5,7 +5,7 @@ import * as nconf from "nconf";
 import * as os from "os";
 import * as path from "path";
 import * as winston from "winston";
-import { createProducer, IProducer } from "./kafka";
+import { createProducer } from "./kafka";
 import { NodeErrorTrackingService } from "./errorTrackingService";
 import { configureLogging } from "./logger";
 
@@ -86,7 +86,7 @@ export async function run<T extends IResources>(
 
 export async function runTracked<T extends IResources>(
     config: nconf.Provider,
-    producer: IProducer,
+    producer: core.IProducer,
     group: string,
     resourceFactory: IResourcesFactory<T>,
     runnerFactory: IRunnerFactory<T>): Promise<void> {

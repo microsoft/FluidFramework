@@ -1,4 +1,4 @@
-import { IConsumer, IProducer } from "./definitions";
+import { IConsumer, IProducer } from "@prague/services-core";
 import { KafkaNodeConsumer } from "./kafkaNodeConsumer";
 import { KafkaNodeProducer } from "./kafkaNodeProducer";
 

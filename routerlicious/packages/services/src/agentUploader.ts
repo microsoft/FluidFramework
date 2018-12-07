@@ -1,6 +1,6 @@
+import { IAgentUploader } from "@prague/services-core";
 import { EventEmitter } from "events";
 import * as minio from "minio";
-import { IAgentUploader } from "../core";
 import { getOrCreateMinioBucket } from "../utils";
 
 class MinioUploader implements IAgentUploader {

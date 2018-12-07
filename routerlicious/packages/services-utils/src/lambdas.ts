@@ -1,8 +1,7 @@
-import { BoxcarType, IBoxcarMessage, IMessage as ICoreMessage } from "@prague/services-core";
-import { IMessage } from "./kafka/definitions";
+import { BoxcarType, IBoxcarMessage, IKafkaMessage, IMessage } from "@prague/services-core";
 import { safelyParseJSON } from "./safeParser";
 
-export function extractBoxcar(message: IMessage): IBoxcarMessage {
+export function extractBoxcar(message: IKafkaMessage): IBoxcarMessage {
     if (typeof message.value !== "string" && !Buffer.isBuffer(message.value)) {
         return message.value;
     }
@@ -10,7 +9,7 @@ export function extractBoxcar(message: IMessage): IBoxcarMessage {
     const messageContent = message.value.toString();
 
     const rawMessage = safelyParseJSON(messageContent);
-    const parsedMessage = rawMessage as ICoreMessage;
+    const parsedMessage = rawMessage as IMessage;
 
     if (!parsedMessage) {
         return {

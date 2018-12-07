@@ -1,9 +1,8 @@
-// tslint:disable:ban-types
+import * as core from "@prague/services-core";
 import { EventEmitter } from "events";
 import * as redis from "redis";
 import * as socketIoEmitter from "socket.io-emitter";
 import * as util from "util";
-import * as core from "../core";
 
 export class SocketIoRedisTopic implements core.ITopic {
     constructor(private topic: any) {

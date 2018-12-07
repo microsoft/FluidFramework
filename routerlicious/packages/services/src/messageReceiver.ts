@@ -1,7 +1,7 @@
+import { ITaskMessage, ITaskMessageReceiver } from "@prague/services-core";
 import * as amqp from "amqplib";
 import { EventEmitter } from "events";
 import * as winston from "winston";
-import { ITaskMessage, ITaskMessageReceiver } from "../core";
 
 class RabbitmqReceiver implements ITaskMessageReceiver {
 

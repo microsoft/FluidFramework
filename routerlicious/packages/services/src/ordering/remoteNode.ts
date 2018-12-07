@@ -1,11 +1,11 @@
 import { IClient, IDocumentMessage, IUser } from "@prague/runtime-definitions";
+import { INode, IOrderer, IOrdererConnection, IWebSocket } from "@prague/services-core";
 import { Deferred } from "@prague/utils";
 import * as assert from "assert";
 import { EventEmitter } from "events";
-import { IOrderer, IOrdererConnection, IWebSocket } from "../../core";
 import { MongoManager } from "../../utils";
 import { debug } from "../debug";
-import { IConcreteNode, IConnectedMessage, IConnectMessage, INode, INodeMessage, IOpMessage } from "./interfaces";
+import { IConcreteNode, IConnectedMessage, IConnectMessage, INodeMessage, IOpMessage } from "./interfaces";
 import { IOrdererConnectionFactory, ProxyOrderer } from "./proxyOrderer";
 import { Socket } from "./socket";
 

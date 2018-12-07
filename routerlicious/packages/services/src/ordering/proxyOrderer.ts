@@ -1,5 +1,5 @@
 import { IClient, IUser } from "@prague/runtime-definitions";
-import { IOrderer, IOrdererConnection, IWebSocket } from "../../core";
+import { IOrderer, IOrdererConnection, IWebSocket } from "@prague/services-core";
 
 export interface IOrdererConnectionFactory {
     connect(socket: IWebSocket, user: IUser, client: IClient): Promise<IOrdererConnection>;

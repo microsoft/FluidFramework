@@ -1,6 +1,5 @@
-// tslint:disable:ban-types
+import * as core from "@prague/services-core";
 import { Collection, Db, MongoClient, MongoClientOptions } from "mongodb";
-import * as core from "../core";
 
 const MaxFetchSize = 2000;
 
