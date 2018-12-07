@@ -150,6 +150,15 @@
             "outFiles": [ "${workspaceRoot}/dist/**/*.js" ],
             "protocol":"inspector",
             "trace": "sm"
-        }
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Debug Current Test",
+            "program": "${workspaceRoot}/node_modules/mocha/bin/_mocha",
+            "stopOnEntry": false,
+            "args": ["--no-timeouts", "--exit", "--require", "ts-node\\register", "${file}", ],
+            "cwd": "${fileDirname}"
+        },
     ]
 }
