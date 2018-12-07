@@ -12,6 +12,12 @@ import * as core from "../../../core";
 import * as utils from "../../../utils";
 import { IAlfredTenant } from "../../tenant";
 
+interface IOperation {
+    op: string;
+    path: string;
+    value: string;
+}
+
 export function create(
     producer: utils.IProducer,
     appTenants: IAlfredTenant[]): Router {
@@ -22,6 +28,9 @@ export function create(
         const tenantId = request.params.tenantId || appTenants[0].id;
         const documentId = request.params.id;
         const clientId = moniker.choose();
+
+        const reqOp = request.body as IOperation;
+        console.log(JSON.stringify(reqOp));
 
         const detail: IClient = {
             permission: [],
@@ -38,11 +47,11 @@ export function create(
 
         // Craft and send op
         const opContent = {
-            key: "foo",
+            key: reqOp.path,
             type: "set",
             value: {
                 type: "Plain",
-                value: "777",
+                value: reqOp.value,
             },
         };
 
