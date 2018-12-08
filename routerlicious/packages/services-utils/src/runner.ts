@@ -1,11 +1,6 @@
-import * as core from "@prague/services-core";
-import * as bytes from "bytes";
-import * as moniker from "moniker";
 import * as nconf from "nconf";
-import * as os from "os";
 import * as path from "path";
 import * as winston from "winston";
-import { createProducer } from "./kafka";
 import { NodeErrorTrackingService } from "./errorTrackingService";
 import { configureLogging } from "./logger";
 
@@ -84,42 +79,6 @@ export async function run<T extends IResources>(
     await resources.dispose();
 }
 
-export async function runTracked<T extends IResources>(
-    config: nconf.Provider,
-    producer: core.IProducer,
-    group: string,
-    resourceFactory: IResourcesFactory<T>,
-    runnerFactory: IRunnerFactory<T>): Promise<void> {
-
-    // Notify of the join
-    const joinMessage: core.ISystemMessage = {
-        group,
-        id: os.hostname(),
-        operation: core.SystemOperations[core.SystemOperations.Join],
-        type: core.SystemType,
-    };
-    await producer.send(joinMessage, null, "__system__").catch((error) => {
-        winston.error(error);
-    });
-
-    // Run the service. The return result is null if run ran to completion. Or the error itself. We await on it
-    // so that we won't send the leave message until the run completes.
-    const runError = await run(config, resourceFactory, runnerFactory).then(() => null, (error) => error);
-
-    // Notify of the leave
-    const leaveMessage: core.ISystemMessage = {
-        group,
-        id: os.hostname(),
-        operation: core.SystemOperations[core.SystemOperations.Leave],
-        type: core.SystemType,
-    };
-    await producer.send(leaveMessage, null, "__system__").catch((error) => {
-        winston.error(error);
-    });
-
-    return runError ? Promise.reject(runError) : Promise.resolve();
-}
-
 /**
  * Variant of run that is used to fully run a service. It configures base settings such as logging. And then will
  * exit the service once the runner completes.
@@ -133,28 +92,15 @@ export function runService<T extends IResources>(
     const config = nconf.argv().env("__" as any).file(configFile).use("memory");
     configureLogging(config.get("logger"));
 
-    // Initialize system bus connection
-    const kafkaConfig = config.get("kafka:lib");
-    const maxMessageSize = bytes.parse(config.get("kafka:maxMessageSize"));
-    const sendTopic = config.get("system:topics:send");
-    const kafkaClientId = moniker.choose();
-
-    const producer = createProducer(
-        kafkaConfig.name,
-        kafkaConfig.endpoint,
-        kafkaClientId,
-        sendTopic,
-        maxMessageSize);
-
     const errorTrackingConfig = config.get("error") as IErrorTrackingConfig;
     let runningP;
     if (errorTrackingConfig.track) {
         const errorTracker = new NodeErrorTrackingService(errorTrackingConfig.endpoint);
         errorTracker.track(() => {
-            runningP = runTracked(config, producer, group, resourceFactory, runnerFactory);
+            runningP = run(config, resourceFactory, runnerFactory);
         });
     } else {
-        runningP = runTracked(config, producer, group, resourceFactory, runnerFactory);
+        runningP = run(config, resourceFactory, runnerFactory);
     }
 
     // notify of connection

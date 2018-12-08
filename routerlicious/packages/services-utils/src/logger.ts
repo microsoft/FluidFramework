@@ -13,17 +13,26 @@ export interface IWinstonConfig {
  * Configures the default behavior of the Winston logger based on the provided config
  */
 export function configureLogging(config: IWinstonConfig) {
-    // Configure default winston logger
+    const formatters = [ winston.format.label({ label: config.label }) ];
+
+    if (config.colorize) {
+        formatters.push(winston.format.colorize());
+    }
+
+    if (config.json) {
+        formatters.push(winston.format.json());
+    }
+
+    if (config.timestamp) {
+        formatters.push(winston.format.timestamp());
+    }
+
     winston.configure({
+        format: winston.format.combine(...formatters),
         transports: [
             new winston.transports.Console({
-                colorize: config.colorize,
                 handleExceptions: true,
-                json: config.json,
-                label: config.label,
                 level: config.level,
-                stringify: (obj) => JSON.stringify(obj),
-                timestamp: config.timestamp,
             }),
         ],
     });
