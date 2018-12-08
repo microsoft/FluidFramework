@@ -1,7 +1,8 @@
 const api = require("@prague/client-api");
-const socketStorage = require("@prague/socket-storage")
+const socketStorage = require("@prague/socket-storage");
+const MergeTree = require("@prague/merge-tree");
 const jwt = require('jsonwebtoken');
-const uuidv4 = require('uuid/v4')
+const uuidv4 = require('uuid/v4');
 
 const tenantId = "xenodochial-lewin";
 const key = "48fb191e6897e15777fbdaa792ce82ee"; // What is this?
@@ -22,7 +23,11 @@ function generateToken(tenantId, documentId, key) {
     return jwt.sign(claims, key);
 }
 
-exports.setup = async function(docId) {
+/**
+ *  @param {string} docId
+ *  @param {string} text
+ */
+exports.setup = async function(docId, text) {
     const token = generateToken(tenantId, docId, key );
 
     // Load the shared string extension we will type into
@@ -33,13 +38,20 @@ exports.setup = async function(docId) {
 
     const doc = await api.load(docId, claims.tenantId, claims.user, new socketStorage.TokenProvider(token), { });
     const root = await doc.getRoot().getView();
-    let map;
+    var ss;
+
+    var returnBody = "";
+
     if (!doc.existing){
-        await root.set("chunkMap", doc.createMap());
-        return "Doc Didn't Exist"
-    } else {
-        await root.wait("chunkMap");
-        return "Doc Existed";        
+        await root.set("text", doc.createString());
+        returnBody += "Doc Didn't Exist";
     }
+    else {
+        returnBody += "Doc Existed";
+    }
+
+    ss = await root.wait("text");
+
+    return returnBody + ": " + ss.getText().length;
 }
  
