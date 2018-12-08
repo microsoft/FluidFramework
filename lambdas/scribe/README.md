@@ -13,7 +13,7 @@ Nuclio forces us to use handler.js as the entry file. With our current implement
 
 ### Test
 // Get into the cluster... There should be a way to do this from an external IP
-kubectl exec -it broken-molly-tmz-f4d98fd49-6n24v -- /bin/sh
+kubectl exec -it broken-molly-tmz-854945c997-txrmd -- /bin/sh
 // Curl the internal url
 curl --data-ascii "{docId}" http://10.240.0.4:32753
 
@@ -24,3 +24,12 @@ nuctl deploy scribe -n nuclio --run-image praguelambdas.azurecr.io/scribe:latest
     --runtime nodejs \
     --handler handler:handler \
     --platform kube
+
+
+### Input
+{
+  "DocumentId": "test-doc",
+  "Text": "Hey, I wrote this text" 
+}
+
+curl --data '{"DocumentId": "test-doc-d", "Text": "Hey, I wrote this text"}' -H "x-nuclio-log-level:debug" -v 
