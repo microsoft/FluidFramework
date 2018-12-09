@@ -1,6 +1,4 @@
 import {
-    createTestModule,
-    ITestLambdaModule,
     KafkaMessageFactory,
     MessageFactory,
     TestContext,
@@ -9,6 +7,7 @@ import * as assert from "assert";
 import * as nconf from "nconf";
 import * as plugin from "../../document-router";
 import { IPartitionLambda, IPartitionLambdaFactory } from "../../kafka-service/lambdas";
+import { createTestModule, ITestLambdaModule } from "./testDocumentLambda";
 
 describe("document-router", () => {
     describe("DocumentLambda", () => {

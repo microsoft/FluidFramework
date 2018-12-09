@@ -8,7 +8,7 @@ import { IPartitionLambdaFactory } from "../../kafka-service/lambdas";
 describe("document-router", () => {
     describe("Plugin", () => {
         const defaultConfig = {
-            documentLambda: path.join(__dirname, "../testUtils/testDocumentLambda"),
+            documentLambda: path.join(__dirname, "./testDocumentLambda"),
         };
 
         let factory: IPartitionLambdaFactory;
