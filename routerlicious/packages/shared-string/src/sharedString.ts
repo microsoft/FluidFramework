@@ -347,7 +347,8 @@ export class SharedString extends CollaborativeMap {
         let prevSeg: MergeTree.Segment;
         for (const segment of orderedSegments) {
             if (prevSeg !== segment) {
-                segment.segmentGroup = segmentGroup;
+                segment.segmentGroups.clear();
+                segment.segmentGroups.enqueue(segmentGroup);
                 this.client.segmentToOps(segment, opList);
                 prevSeg = segment;
             }

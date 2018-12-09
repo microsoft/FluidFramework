@@ -31,7 +31,7 @@ export class DocumentDeltaEventManager {
         }
         await this.yeildWhileDocumentsHaveWork(
             documents,
-            (doc) => !doc.deltaManager.inbound.empty || !doc.deltaManager.outbound.empty);
+            (doc) => !doc.deltaManager.inbound.idle || !doc.deltaManager.outbound.idle);
     }
 
     public async processIncoming(...docs: IDocumentDeltaEvent[]): Promise<void> {
@@ -42,7 +42,7 @@ export class DocumentDeltaEventManager {
         }
         await this.yeildWhileDocumentsHaveWork(
             documents,
-            (doc) => !doc.deltaManager.inbound.empty);
+            (doc) => !doc.deltaManager.inbound.idle);
     }
 
     public async processOutgoing(...docs: IDocumentDeltaEvent[]): Promise<void> {
@@ -53,7 +53,7 @@ export class DocumentDeltaEventManager {
         }
         await this.yeildWhileDocumentsHaveWork(
             documents,
-            (doc) => !doc.deltaManager.outbound.empty);
+            (doc) => !doc.deltaManager.outbound.idle);
     }
 
     public pauseProcessing(...docs: IDocumentDeltaEvent[]) {

@@ -165,6 +165,7 @@ export class TestDocumentDeltaConnection extends EventEmitter implements IDocume
      */
     public submit(message: IDocumentMessage): void {
         this.submitManager.add("submitOp", message);
+        this.submitManager.drain();
     }
 
     public async submitAsync(message: IDocumentMessage): Promise<void> {
