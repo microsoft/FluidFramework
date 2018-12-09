@@ -12,7 +12,9 @@ export function gitHashFile(file: Buffer): string {
     const filePrefix = "blob " + size.toString() + String.fromCharCode(0);
     /* tslint:disable:no-unsafe-any */
     const engine = new sha1();
-    return engine.update(filePrefix).update(file).digest("hex");
+    return engine.update(filePrefix)
+        .update(file)
+        .digest("hex");
 }
 
 export function flatten(tree: ITreeEntry[], blobMap: Map<string, string>): git.ITree {

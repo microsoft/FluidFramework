@@ -11,9 +11,9 @@ export class DistributedSetFactory<T> implements IValueFactory<DistributedSet<T>
 }
 
 export class DistributedSet<T> {
-    private internalSet: Set<T>;
+    private readonly internalSet: Set<T>;
 
-    constructor(private emitter: IValueOpEmitter, value: T[]) {
+    constructor(private readonly emitter: IValueOpEmitter, value: T[]) {
         this.internalSet = new Set(value);
     }
 
@@ -68,8 +68,8 @@ export class DistributedSetValueType implements IValueType<DistributedSet<any>> 
     }
 
     // tslint:disable:variable-name
-    private _factory: IValueFactory<DistributedSet<any>>;
-    private _ops: Map<string, IValueOperation<DistributedSet<any>>>;
+    private readonly _factory: IValueFactory<DistributedSet<any>>;
+    private readonly _ops: Map<string, IValueOperation<DistributedSet<any>>>;
     // tslint:enable:variable-name
 
     constructor() {

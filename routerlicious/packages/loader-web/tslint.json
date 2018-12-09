@@ -15,6 +15,7 @@
         "no-default-export": false,
         "no-empty-interface": false,
         "no-for-in": false,
+        "no-null-keyword": false,
         "no-relative-imports": false,
         "no-require-imports": false,
         "no-reserved-keywords": false,
@@ -23,6 +24,7 @@
         "no-void-expression": false,
         "prefer-array-literal": false,
         "prefer-method-signature": false,
+        "prefer-readonly": false,
         "prefer-type-cast": false,
         "strict-boolean-expressions": [true, "allow-null-union", "allow-undefined-union", "allow-string", "allow-number"],
         "underscore-consistent-invocation": false

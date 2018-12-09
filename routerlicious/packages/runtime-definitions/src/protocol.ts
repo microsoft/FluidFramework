@@ -128,21 +128,13 @@ export interface IContentMessage {
     contents: string;
 }
 
-/**
- * Chunked op.
- */
 export interface IChunkedOp {
-
-    // Chunk sequence id.
     chunkId: number;
 
-    // Total number of chunks.
     totalChunks: number;
 
-    // The contents for the chunk
     contents: string;
 
-    // Original message type.
     originalType: MessageType;
 }
 

@@ -61,7 +61,8 @@ export class Stream extends CollaborativeMap implements IStream {
         const header = await storage.read(snapshotFileName);
         /* tslint:disable:no-unsafe-any */
         const data: ISnapshot = header
-            ? JSON.parse(Buffer.from(header, "base64").toString("utf-8"))
+            ? JSON.parse(Buffer.from(header, "base64")
+                .toString("utf-8"))
             : emptySnapshot;
         this.initialize(data);
     }

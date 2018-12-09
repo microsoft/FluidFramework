@@ -21,9 +21,8 @@ export class WebLoader implements ICodeLoader {
 
         const fetchedFiles = new Array<Promise<string>>();
         for (const bundle of packageJson.data.prague.browser.bundle) {
-            const file = Axios.get<string>(
-                `${packageUrl}/${bundle}`,
-                { responseType: "string" }).then((data) => data.data);
+            const file = Axios.get<string>(`${packageUrl}/${bundle}`, { responseType: "string" })
+                .then((data) => data.data);
             fetchedFiles.push(file);
         }
 
