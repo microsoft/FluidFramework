@@ -1,4 +1,4 @@
-FROM node:8.12.0-slim
+FROM node:8.14.0-slim
 
 # node-gyp dependencies
 RUN apt-get update && apt-get install -y \

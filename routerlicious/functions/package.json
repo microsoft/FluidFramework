@@ -4,7 +4,7 @@
   "scripts": {
     "build": "lerna run build --stream --include-filtered-dependencies --scope @prague/deli",
     "tsc": "lerna run tsc --stream --include-filtered-dependencies --scope @prague/deli",
-    "postinstall": "lerna bootstrap"
+    "postinstall": "lerna bootstrap --hoist"
   },
   "devDependencies": {
     "lerna": "^3.4.3"

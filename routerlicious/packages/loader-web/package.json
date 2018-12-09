@@ -18,18 +18,19 @@
   "repository": "microsoft/prague",
   "devDependencies": {
     "@types/chalk": "^2.2.0",
-    "@types/node": "^10.5.8",
     "rimraf": "^2.6.2",
     "source-map-loader": "^0.2.3",
     "tslint": "^5.11.0",
-    "tslint-microsoft-contrib": "^5.2.1",
-    "typescript": "^3.0.1"
+    "tslint-microsoft-contrib": "^6.0.0",
+    "typescript": "^3.2.2"
   },
   "dependencies": {
     "@prague/gitresources": "^0.1.0",
     "@prague/loader": "^0.1.0",
     "@prague/runtime-definitions": "^0.1.0",
+    "@types/node": "^10.12.12",
     "axios": "^0.18.0",
-    "chalk": "^2.4.1"
+    "chalk": "^2.4.1",
+    "source-map-loader": "^0.2.4"
   }
 }
