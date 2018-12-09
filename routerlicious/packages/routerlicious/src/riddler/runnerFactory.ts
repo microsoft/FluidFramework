@@ -1,7 +1,7 @@
+import * as services from "@prague/services";
 import { getOrCreateRepository } from "@prague/services-client";
+import * as utils from "@prague/services-utils";
 import { Provider } from "nconf";
-import * as services from "../services";
-import * as utils from "../utils";
 import { RiddlerRunner } from "./runner";
 import { ITenantDocument } from "./tenantManager";
 

@@ -30,7 +30,7 @@ spec:
           - 'node'
           - 'dist/kafka-service/index.js'
           - 'rotograph'
-          - '../rotograph/index.js'
+          - '/usr/src/server/packages/routerlicious/dist/rotograph/index.js'
         env:
         - name: DEBUG
           value: "prague:*"

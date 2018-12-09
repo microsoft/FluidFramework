@@ -1,20 +1,7 @@
-import { IHelpMessage, ITrace, IUser } from "@prague/runtime-definitions";
+import { ITrace } from "@prague/runtime-definitions";
 
 // Message to indicate successful round trip.
 export const RoundTrip = "tripComplete";
-
-export interface IQueueMessage {
-
-    message: IHelpMessage;
-
-    tenantId: string;
-
-    documentId: string;
-
-    token: string;
-
-    user: IUser;
-}
 
 export interface ILatencyMessage {
     // Latency traces.

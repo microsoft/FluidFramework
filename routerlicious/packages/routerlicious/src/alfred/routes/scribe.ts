@@ -1,7 +1,7 @@
+import { ITenantManager } from "@prague/services-core";
 import { Router } from "express";
 import * as moniker from "moniker";
 import { Provider } from "nconf";
-import { ITenantManager } from "../../core";
 import { IAlfredTenant } from "../tenant";
 import * as utils from "../utils";
 import { defaultPartials } from "./partials";

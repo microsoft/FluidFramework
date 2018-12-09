@@ -169,10 +169,11 @@ commander
             new driver.TokenProvider(token),
             null,
             commander.reject,
-            documentServices).catch((error) => {
-            console.error(error);
-            process.exit(1);
-        });
+            documentServices)
+            .catch((error) => {
+                console.error(error);
+                process.exit(1);
+            });
     })
     .parse(process.argv);
 

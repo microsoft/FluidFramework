@@ -7,7 +7,7 @@ import { IMapView, IValueOpEmitter, SerializeFilter } from "./interfaces";
 import { CollaborativeMap } from "./map";
 
 class ValueOpEmitter implements IValueOpEmitter {
-    constructor(private type: string, private key: string, private map: CollaborativeMap) {
+    constructor(private readonly type: string, private readonly key: string, private readonly map: CollaborativeMap) {
     }
 
     public emit(name: string, params: any) {
@@ -34,9 +34,9 @@ export interface ILocalViewElement {
 }
 
 export class MapView implements IMapView {
-    private data = new Map<string, ILocalViewElement>();
+    private readonly data = new Map<string, ILocalViewElement>();
 
-    constructor(private map: CollaborativeMap, private runtime: IRuntime, id: string) {
+    constructor(private readonly map: CollaborativeMap, private readonly runtime: IRuntime, id: string) {
     }
 
     public async populate(data: {[key: string]: IMapValue }): Promise<void> {
@@ -45,7 +45,8 @@ export class MapView implements IMapView {
         // tslint:disable-next-line:forin
         for (const key in data) {
             const value = data[key];
-            const localValueP = this.fill(key, value).then((filledValue) => ({key, value: filledValue}));
+            const localValueP = this.fill(key, value)
+                .then((filledValue) => ({key, value: filledValue}));
             localValuesP.push(localValueP);
         }
 

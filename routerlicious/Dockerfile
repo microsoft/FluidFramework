@@ -1,4 +1,4 @@
-FROM node:8.12.0-slim
+FROM node:8.14.0-slim
 
 # node-gyp dependencies
 RUN apt-get update && apt-get install -y \
@@ -17,29 +17,37 @@ WORKDIR /usr/src/server
 # Copy over the package and package-lock and install prior to the other code to optimize Docker's file system cache on rebuilds
 COPY *.json ./
 COPY packages/agent/package*.json packages/agent/
-COPY packages/app-ui/package*.json packages/app-ui/
 COPY packages/api-definitions/package*.json packages/api-definitions/
+COPY packages/app-ui/package*.json packages/app-ui/
 COPY packages/cell/package*.json packages/cell/
 COPY packages/client-api/package*.json packages/client-api/
 COPY packages/client-ui/package*.json packages/client-ui/
 COPY packages/datastore/package*.json packages/datastore/
 COPY packages/gitresources/package*.json packages/gitresources/
+COPY packages/kafka-orderer/package*.json packages/kafka-orderer/
+COPY packages/lambdas/package*.json packages/lambdas/
 COPY packages/loader/package*.json packages/loader/
 COPY packages/loader-client/package*.json packages/loader-client/
 COPY packages/loader-web/package*.json packages/loader-web/
 COPY packages/local-test-server/package*.json packages/local-test-server/
 COPY packages/map/package*.json packages/map/
+COPY packages/memory-orderer/package*.json packages/memory-orderer/
 COPY packages/merge-tree/package*.json packages/merge-tree/
 COPY packages/merge-tree-utils/package*.json packages/merge-tree-utils/
+COPY packages/replay-socket-storage/package*.json packages/replay-socket-storage/
 COPY packages/routerlicious/package*.json packages/routerlicious/
 COPY packages/runtime-definitions/package*.json packages/runtime-definitions/
+COPY packages/services/package*.json packages/services/
 COPY packages/services-client/package*.json packages/services-client/
+COPY packages/services-core/package*.json packages/services-core/
+COPY packages/services-utils/package*.json packages/services-utils/
 COPY packages/shared-string/package*.json packages/shared-string/
 COPY packages/socket-storage/package*.json packages/socket-storage/
 COPY packages/socket-storage-shared/package*.json packages/socket-storage-shared/
-COPY packages/replay-socket-storage/package*.json packages/replay-socket-storage/
 COPY packages/standard-socket-storage/package*.json packages/standard-socket-storage/
 COPY packages/stream/package*.json packages/stream/
+COPY packages/test-utils/package*.json packages/test-utils/
+COPY packages/tools-core/package*.json packages/tools-core/
 COPY packages/utils/package*.json packages/utils/
 
 # Copy over chaincode npmrc and package.json to dynamically install packages.

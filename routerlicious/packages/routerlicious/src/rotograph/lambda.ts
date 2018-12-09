@@ -1,9 +1,12 @@
+import { IContext, SequencedLambda } from "@prague/lambdas";
 import { IDataBlob, MessageType } from "@prague/runtime-definitions";
-import * as core from "../core";
-import { ITenantManager } from "../core";
-import { IContext } from "../kafka-service/lambdas";
-import { SequencedLambda } from "../kafka-service/sequencedLambda";
-import * as utils from "../utils";
+import {
+    IKafkaMessage,
+    ISequencedOperationMessage,
+    ITenantManager,
+    SequencedOperationType,
+} from "@prague/services-core";
+import * as utils from "@prague/services-utils";
 import { AzureMediaServicesManager, Permission } from "./amsUtils";
 
 export class RotographLambda extends SequencedLambda {
@@ -23,12 +26,12 @@ export class RotographLambda extends SequencedLambda {
         }
     }
 
-    protected async handlerCore(message: utils.IMessage): Promise<void> {
+    protected async handlerCore(message: IKafkaMessage): Promise<void> {
         const boxcar = utils.extractBoxcar(message);
 
         for (const baseMessage of boxcar.contents) {
-            if (baseMessage.type === core.SequencedOperationType) {
-                const sequencedMessage = baseMessage as core.ISequencedOperationMessage;
+            if (baseMessage.type === SequencedOperationType) {
+                const sequencedMessage = baseMessage as ISequencedOperationMessage;
 
                 if (sequencedMessage.operation.type === MessageType.BlobUploaded) {
 

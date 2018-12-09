@@ -1,6 +1,6 @@
+import { run } from "@prague/tools-core";
 import * as commander from "commander";
 import * as moniker from "moniker";
-import { run } from "../utils/mercator";
 
 // Process command line input
 commander

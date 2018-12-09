@@ -1,16 +1,15 @@
+import { IContext, SequencedLambda } from "@prague/lambdas";
 import { IDocumentSystemMessage, ISequencedDocumentSystemMessage, MessageType } from "@prague/runtime-definitions";
-import * as core from "../core";
-import { IContext } from "../kafka-service/lambdas";
-import { SequencedLambda } from "../kafka-service/sequencedLambda";
-import * as utils from "../utils";
+import * as core from "@prague/services-core";
+import * as utils from "@prague/services-utils";
 import { DocumentManager } from "./documentManager";
 
 export class RouteMasterLambda extends SequencedLambda {
-    constructor(private document: DocumentManager, private producer: utils.IProducer, context: IContext) {
+    constructor(private document: DocumentManager, private producer: core.IProducer, context: IContext) {
         super(context);
     }
 
-    protected async handlerCore(rawMessage: utils.IMessage): Promise<void> {
+    protected async handlerCore(rawMessage: core.IKafkaMessage): Promise<void> {
         const boxcar = utils.extractBoxcar(rawMessage);
 
         const boxcarProcessed = new Array<Promise<void>>();

@@ -1,7 +1,7 @@
+import * as services from "@prague/services";
+import * as core from "@prague/services-core";
+import * as utils from "@prague/services-utils";
 import { Provider } from "nconf";
-import * as core from "../core";
-import * as services from "../services";
-import * as utils from "../utils";
 import { PaparazziRunner } from "./runner";
 
 export class PaparazziResources implements utils.IResources {

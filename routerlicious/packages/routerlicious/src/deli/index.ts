@@ -1,11 +1,9 @@
+import { create as createDocumentRouter, DeliLambdaFactory, IPartitionLambdaFactory } from "@prague/lambdas";
+import * as services from "@prague/services";
+import * as core from "@prague/services-core";
+import * as utils from "@prague/services-utils";
 import * as bytes from "bytes";
 import { Provider } from "nconf";
-import * as core from "../core";
-import { create as createDocumentRouter } from "../document-router";
-import { IPartitionLambdaFactory } from "../kafka-service/lambdas";
-import * as services from "../services";
-import * as utils from "../utils";
-import { DeliLambdaFactory } from "./lambdaFactory";
 
 export async function deliCreate(config: Provider): Promise<IPartitionLambdaFactory> {
     const mongoUrl = config.get("mongo:endpoint") as string;
@@ -27,13 +25,13 @@ export async function deliCreate(config: Provider): Promise<IPartitionLambdaFact
     const client = await mongoManager.getDatabase();
     const collection = await client.collection<core.IDocument>(documentsCollectionName);
 
-    const forwardProducer = utils.createProducer(
+    const forwardProducer = services.createProducer(
         kafkaLibrary,
         kafkaEndpoint,
         kafkaForwardClientId,
         forwardSendTopic,
         maxMessageSize);
-    const reverseProducer = utils.createProducer(
+    const reverseProducer = services.createProducer(
         kafkaLibrary,
         kafkaEndpoint,
         kafkaReverseClientId,

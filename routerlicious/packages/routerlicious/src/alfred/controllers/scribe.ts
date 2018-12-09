@@ -1,7 +1,6 @@
+import * as scribe from "@prague/tools-core";
 import * as request from "request";
 import * as url from "url";
-import { IScribeMetrics } from "../../utils/author";
-import * as scribe from "../../utils/scribe";
 import { registerDocumentServices } from "./utils";
 
 // Text represents the loaded file text
@@ -38,7 +37,7 @@ function resetProgressBar(progressBar: HTMLElement) {
     progressBar.classList.add("active");
 }
 
-function updateMetrics(metrics: IScribeMetrics, ackProgressBar: HTMLElement, typingProgressBar: HTMLElement) {
+function updateMetrics(metrics: scribe.IScribeMetrics, ackProgressBar: HTMLElement, typingProgressBar: HTMLElement) {
     if (authorCount === 1) {
         updateProgressBar(ackProgressBar, metrics.ackProgress);
         updateProgressBar(typingProgressBar, metrics.typingProgress);

@@ -10,7 +10,10 @@ export function loadSegments(content: string, segLimit: number, markers: boolean
     const paragraphs = content.split("\r\n");
     // tslint:disable-next-line:no-increment-decrement
     for (let i = 0, len = paragraphs.length; i < len; i++) {
-        paragraphs[i] = paragraphs[i].replace(/\r\n/g, " ").replace(/\u201c|\u201d/g, '"').replace(/\u2019/g, "'");
+        paragraphs[i] = paragraphs[i]
+            .replace(/\r\n/g, " ")
+            .replace(/\u201c|\u201d/g, '"')
+            .replace(/\u2019/g, "'");
         if (!markers && i !== paragraphs.length - 1) {
             paragraphs[i] += "\n";
         }

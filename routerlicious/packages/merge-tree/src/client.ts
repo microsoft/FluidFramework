@@ -515,6 +515,8 @@ export class Client {
             }
             msgCount--;
         }
+
+        return true;
     }
     getLocalSequenceNumber() {
         let segWindow = this.mergeTree.getCollabWindow();

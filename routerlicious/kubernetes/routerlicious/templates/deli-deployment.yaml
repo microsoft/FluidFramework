@@ -27,7 +27,7 @@ spec:
           - 'node'
           - 'dist/kafka-service/index.js'
           - 'deli'
-          - '../deli/index.js'
+          - '/usr/src/server/packages/routerlicious/dist/deli/index.js'
         env:
         - name: DEBUG
           value: "prague:*"

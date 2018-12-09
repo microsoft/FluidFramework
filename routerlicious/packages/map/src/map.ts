@@ -35,7 +35,7 @@ export function copyMap(from: IMapView, to: Map<string, any>) {
 }
 
 class ContentObjectStorage implements IObjectStorageService {
-    constructor(private storage: IObjectStorageService) {
+    constructor(private readonly storage: IObjectStorageService) {
     }
 
     /* tslint:disable:promise-function-async */
@@ -53,10 +53,10 @@ interface IMapMessageHandler {
  * Implementation of a map collaborative object
  */
 export class CollaborativeMap extends CollaborativeObject implements IMap {
-    private messageHandler: Map<string, IMapMessageHandler>;
-    private view: MapView;
+    private readonly messageHandler: Map<string, IMapMessageHandler>;
+    private readonly view: MapView;
     private serializeFilter: SerializeFilter;
-    private valueTypes = new Map<string, IValueType<any>>();
+    private readonly valueTypes = new Map<string, IValueType<any>>();
 
     /**
      * Constructs a new collaborative map. If the object is non-local an id and service interfaces will
@@ -338,7 +338,8 @@ export class CollaborativeMap extends CollaborativeObject implements IMap {
 
         const header = await storage.read(snapshotFileName);
 
-        const data = header ? JSON.parse(Buffer.from(header, "base64").toString("utf-8")) : {};
+        const data = header ? JSON.parse(Buffer.from(header, "base64")
+            .toString("utf-8")) : {};
         await this.view.populate(data);
 
         const contentMessages = messages.filter((message) => !this.messageHandler.has(message.contents.type));
@@ -377,7 +378,8 @@ export class CollaborativeMap extends CollaborativeObject implements IMap {
         if (message.type === OperationType) {
             const op: IMapOperation = message.contents;
             if (this.messageHandler.has(op.type)) {
-                return this.messageHandler.get(op.type).prepare(op, local, message);
+                return this.messageHandler.get(op.type)
+                    .prepare(op, local, message);
             }
         }
 
@@ -389,7 +391,8 @@ export class CollaborativeMap extends CollaborativeObject implements IMap {
         if (message.type === OperationType) {
             const op: IMapOperation = message.contents;
             if (this.messageHandler.has(op.type)) {
-                this.messageHandler.get(op.type).process(op, context, local, message);
+                this.messageHandler.get(op.type)
+                    .process(op, context, local, message);
                 handled = true;
             }
         }

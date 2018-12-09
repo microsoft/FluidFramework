@@ -23,7 +23,7 @@ export interface IContentModelExtension extends IExtension {
 export class Registry<TExtension extends IExtension> {
     public extensions: TExtension[] = [];
 
-    private extensionsMap: { [key: string]: TExtension } = {};
+    private readonly extensionsMap: { [key: string]: TExtension } = {};
 
     /**
      * Registers a new extension
