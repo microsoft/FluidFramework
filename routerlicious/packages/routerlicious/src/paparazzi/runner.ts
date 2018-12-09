@@ -46,7 +46,6 @@ export class PaparazziRunner implements utils.IRunner {
     }
 
     public async start(): Promise<void> {
-
         // Preps message receiver and agent uploader.
         const messageReceiverP = this.messageReceiver.initialize();
         const agentUploaderP = this.agentUploader.initialize();

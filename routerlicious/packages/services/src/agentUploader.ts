@@ -4,11 +4,11 @@ import * as minio from "minio";
 
 async function bucketExists(minioClient, bucket: string) {
     return new Promise<boolean>((resolve, reject) => {
-        minioClient.bucketExists(bucket, (error) => {
-            if (error && error.code !== "NoSuchBucket") {
+        minioClient.bucketExists(bucket, (error, exists) => {
+            if (error) {
                 reject(error);
             } else {
-                resolve(error ? false : true);
+                resolve(exists);
             }
         });
     });
@@ -26,6 +26,36 @@ async function makeBucket(minioClient, bucket: string) {
     });
 }
 
+function createReadWritePolicy(bucketName: string): string {
+    const policy = {
+        Statement: [
+            {
+                Action: [
+                    "s3:GetBucketLocation",
+                    "s3:ListBucket",
+                ],
+                Effect: "Allow",
+                Principal: { AWS: [ "*" ] },
+                Resource: [ `arn:aws:s3:::${bucketName}` ],
+                Sid: "",
+            },
+            {
+                Action: [
+                    "s3:PutObject",
+                    "s3:GetObject",
+                ],
+                Effect: "Allow",
+                Principal: { AWS: [ "*" ] },
+                Resource: [ `arn:aws:s3:::${bucketName}/*` ],
+                Sid: "",
+            },
+        ],
+        Version: "2012-10-17",
+    };
+
+    return JSON.stringify(policy);
+}
+
 export async function getOrCreateMinioBucket(minioClient, bucket: string) {
     const exists = await bucketExists(minioClient, bucket);
     if (!exists) {
@@ -36,7 +66,7 @@ export async function getOrCreateMinioBucket(minioClient, bucket: string) {
 class MinioUploader implements IAgentUploader {
 
     private events = new EventEmitter();
-    private minioClient: any;
+    private minioClient: minio.Client;
     private minioBucket: string;
 
     constructor(config: any) {
@@ -45,35 +75,40 @@ class MinioUploader implements IAgentUploader {
             endPoint: config.endpoint,
             port: config.port,
             secretKey: config.secretKey,
+            useSSL: false,
         });
         this.minioBucket = config.bucket;
     }
 
     public async initialize() {
         await getOrCreateMinioBucket(this.minioClient, this.minioBucket);
+
+        const policy = createReadWritePolicy(this.minioBucket);
+
         // Set up bucket policy to readwrite.
-        this.minioClient.setBucketPolicy(this.minioBucket, "", minio.Policy.READWRITE, (err) => {
+        this.minioClient.setBucketPolicy(this.minioBucket, policy, (err) => {
             if (err) {
                 this.events.emit("error", `Error setting up minio bucket policy: ${err}`);
             }
         });
+
         // Set up notification.
         this.minioClient.listenBucketNotification(this.minioBucket, "", ".zip", ["s3:ObjectCreated:*"])
-        .on("notification", (record) => {
-            this.events.emit("agentAdded", { type: "server", name: record.s3.object.key});
-        });
+            .on("notification", (record) => {
+                this.events.emit("agentAdded", { type: "server", name: record.s3.object.key});
+            });
         this.minioClient.listenBucketNotification(this.minioBucket, "", ".zip", ["s3:ObjectRemoved:*"])
-        .on("notification", (record) => {
-            this.events.emit("agentRemoved", { type: "server", name: record.s3.object.key});
-        });
+            .on("notification", (record) => {
+                this.events.emit("agentRemoved", { type: "server", name: record.s3.object.key});
+            });
         this.minioClient.listenBucketNotification(this.minioBucket, "", ".js", ["s3:ObjectCreated:*"])
-        .on("notification", (record) => {
-            this.events.emit("agentAdded", { type: "client", name: record.s3.object.key});
-        });
+            .on("notification", (record) => {
+                this.events.emit("agentAdded", { type: "client", name: record.s3.object.key});
+            });
         this.minioClient.listenBucketNotification(this.minioBucket, "", ".js", ["s3:ObjectRemoved:*"])
-        .on("notification", (record) => {
-            this.events.emit("agentRemoved", { type: "client", name: record.s3.object.key});
-        });
+            .on("notification", (record) => {
+                this.events.emit("agentRemoved", { type: "client", name: record.s3.object.key});
+            });
     }
 
     public on(event: string, listener: (...args: any[]) => void): this {

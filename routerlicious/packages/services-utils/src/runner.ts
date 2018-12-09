@@ -1,5 +1,4 @@
 import * as nconf from "nconf";
-import * as path from "path";
 import * as winston from "winston";
 import { NodeErrorTrackingService } from "./errorTrackingService";
 import { configureLogging } from "./logger";
@@ -87,7 +86,7 @@ export function runService<T extends IResources>(
     resourceFactory: IResourcesFactory<T>,
     runnerFactory: IRunnerFactory<T>,
     group: string,
-    configFile = path.join(__dirname, "../../config/config.json")) {
+    configFile: string) {
 
     const config = nconf.argv().env("__" as any).file(configFile).use("memory");
     configureLogging(config.get("logger"));

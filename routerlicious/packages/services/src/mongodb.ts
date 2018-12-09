@@ -91,7 +91,7 @@ export class MongoDb implements core.IDb {
     }
 
     public collection<T>(name: string): core.ICollection<T> {
-        const collection = this.client.db().collection<T>(name);
+        const collection = this.client.db("admin").collection<T>(name);
         return new MongoCollection<T>(collection);
     }
 }
@@ -105,7 +105,8 @@ export class MongoDbFactory implements core.IDbFactory {
         const options: MongoClientOptions = {
             autoReconnect: false,
             bufferMaxEntries: 0,
-        } as any;
+            useNewUrlParser: true,
+        };
 
         const connection = await MongoClient.connect(this.endpoint, options);
 
