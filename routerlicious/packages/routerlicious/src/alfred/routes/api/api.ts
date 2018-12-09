@@ -29,8 +29,7 @@ export function create(
         const documentId = request.params.id;
         const clientId = moniker.choose();
 
-        const reqOp = request.body as IOperation;
-        console.log(JSON.stringify(reqOp));
+        const reqOps = request.body as IOperation[];
 
         const detail: IClient = {
             permission: [],
@@ -45,27 +44,12 @@ export function create(
         const joinMessage = craftSystemMessage(tenantId, documentId, clientDetail);
         producer.send(joinMessage, tenantId, documentId);
 
-        // Craft and send op
-        const opContent = {
-            key: reqOp.path,
-            type: "set",
-            value: {
-                type: "Plain",
-                value: reqOp.value,
-            },
-        };
-
-        const op = {
-            address: "root",
-            contents: {
-                clientSequenceNumber: 1,
-                contents: opContent,
-                referenceSequenceNumber: 1,
-                type: "op",
-            },
-        };
-        const opMessage = craftMessage(tenantId, documentId, clientId, JSON.stringify(op));
-        producer.send(opMessage, tenantId, documentId);
+        let clSeqNum = 1;
+        for (const reqOp of reqOps) {
+            const op = craftOp(reqOp);
+            const opMessage = craftMessage(tenantId, documentId, clientId, JSON.stringify(op), clSeqNum++);
+            producer.send(opMessage, tenantId, documentId);
+        }
 
         // Send leave message.
         const leaveMessage = craftSystemMessage(tenantId, documentId, clientId);
@@ -75,6 +59,30 @@ export function create(
     });
 
     return router;
+}
+
+function craftOp(reqOp: IOperation) {
+    // Craft and send op
+    const opContent = {
+        key: reqOp.path,
+        type: "set",
+        value: {
+            type: "Plain",
+            value: reqOp.value,
+        },
+    };
+
+    const op = {
+        address: "root",
+        contents: {
+            clientSequenceNumber: 1,
+            contents: opContent,
+            referenceSequenceNumber: 1,
+            type: "op",
+        },
+    };
+
+    return op;
 }
 
 // Back-compat: Replicate the same info in content, metadata, and data.
@@ -117,9 +125,10 @@ function craftMessage(
     tenantId: string,
     documentId: string,
     clientId: string,
-    contents: string): core.IRawOperationMessage {
+    contents: string,
+    clientSequenceNumber: number): core.IRawOperationMessage {
         const operation: IDocumentMessage = {
-            clientSequenceNumber: 1,
+            clientSequenceNumber,
             contents,
             referenceSequenceNumber: -1,
             traces: [],
