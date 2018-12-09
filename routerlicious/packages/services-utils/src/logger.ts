@@ -19,12 +19,14 @@ export function configureLogging(config: IWinstonConfig) {
         formatters.push(winston.format.colorize());
     }
 
-    if (config.json) {
-        formatters.push(winston.format.json());
-    }
-
     if (config.timestamp) {
         formatters.push(winston.format.timestamp());
+    }
+
+    if (config.json) {
+        formatters.push(winston.format.json());
+    } else {
+        formatters.push(winston.format.simple());
     }
 
     winston.configure({
