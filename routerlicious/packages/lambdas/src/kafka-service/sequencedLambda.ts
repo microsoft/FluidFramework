@@ -1,15 +1,15 @@
+import { IKafkaMessage } from "@prague/services-core";
 import { AsyncQueue, queue } from "async";
-import * as utils from "../utils";
 import { IContext, IPartitionLambda } from "./lambdas";
 
 /**
  * A sequenced lambda processes incoming messages one at a time based on a promise returned by the message handler.
  */
 export abstract class SequencedLambda implements IPartitionLambda {
-    private q: AsyncQueue<utils.IMessage>;
+    private q: AsyncQueue<IKafkaMessage>;
 
     constructor(protected context: IContext) {
-        this.q = queue((message: utils.IMessage, callback) => {
+        this.q = queue((message: IKafkaMessage, callback) => {
             this.handlerCore(message).then(
                 () => {
                     callback();
@@ -24,7 +24,7 @@ export abstract class SequencedLambda implements IPartitionLambda {
         };
     }
 
-    public handler(message: utils.IMessage): void {
+    public handler(message: IKafkaMessage): void {
         this.q.push(message);
     }
 
@@ -36,5 +36,5 @@ export abstract class SequencedLambda implements IPartitionLambda {
      * Derived classes override this method to do per message processing. The sequenced lambda will only move on
      * to the next message once the returned promise is resolved.
      */
-    protected abstract handlerCore(message: utils.IMessage): Promise<void>;
+    protected abstract handlerCore(message: IKafkaMessage): Promise<void>;
 }

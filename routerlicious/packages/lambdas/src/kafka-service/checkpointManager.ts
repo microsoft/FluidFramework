@@ -1,6 +1,6 @@
+import { IConsumer } from "@prague/services-core";
 import { Deferred } from "@prague/utils";
 import * as assert from "assert";
-import * as utils from "../utils";
 
 export class CheckpointManager {
     private checkpointing = false;
@@ -10,7 +10,7 @@ export class CheckpointManager {
     private pendingCheckpoint: Deferred<void>;
     private error: any;
 
-    constructor(private id: number, private consumer: utils.IConsumer) {
+    constructor(private id: number, private consumer: IConsumer) {
     }
 
     /**

@@ -1,11 +1,12 @@
-import * as winston from "winston";
 import {
     ICollection,
+    IKafkaMessage,
     ISequencedOperationMessage,
     SequencedOperationType,
-} from "../core";
+} from "@prague/services-core";
+import { extractBoxcar } from "@prague/services-utils";
+import * as winston from "winston";
 import { IContext, IPartitionLambda } from "../kafka-service/lambdas";
-import { extractBoxcar, IMessage } from "../utils";
 
 export class ScriptoriumLambda implements IPartitionLambda {
     private pending = new Map<string, ISequencedOperationMessage[]>();
@@ -18,7 +19,7 @@ export class ScriptoriumLambda implements IPartitionLambda {
         protected context: IContext) {
     }
 
-    public handler(message: IMessage): void {
+    public handler(message: IKafkaMessage): void {
         const boxcar = extractBoxcar(message);
 
         for (const baseMessage of boxcar.contents) {

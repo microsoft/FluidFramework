@@ -2,6 +2,7 @@ export * from "./database";
 export * from "./document";
 export * from "./http";
 export * from "./kafka";
+export * from "./lambdas";
 export * from "./messages";
 export * from "./mongo";
 export * from "./orderer";

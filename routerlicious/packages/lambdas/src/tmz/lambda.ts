@@ -1,10 +1,9 @@
-import * as api from "@prague/client-api";
-import { ISequencedDocumentSystemMessage, IUser, MessageType } from "@prague/runtime-definitions";
+import { IQueueMessage, ISequencedDocumentSystemMessage, IUser, MessageType } from "@prague/runtime-definitions";
+import * as core from "@prague/services-core";
+import * as utils from "@prague/services-utils";
 import * as winston from "winston";
-import * as core from "../core";
 import { IContext } from "../kafka-service/lambdas";
 import { SequencedLambda } from "../kafka-service/sequencedLambda";
-import * as utils from "../utils";
 import { RateLimitter } from "./rateLimitter";
 
 // TODO: Move this to config.
@@ -28,7 +27,7 @@ export class TmzLambda extends SequencedLambda {
         }
     }
 
-    protected async handlerCore(message: utils.IMessage): Promise<void> {
+    protected async handlerCore(message: core.IKafkaMessage): Promise<void> {
         const boxcar = utils.extractBoxcar(message);
 
         for (const baseMessage of boxcar.contents) {
@@ -78,7 +77,7 @@ export class TmzLambda extends SequencedLambda {
             const queueName = queueTask[0];
             const tasks = this.rateLimitter.filter(clientId, queueTask[1]);
             if (tasks.length > 0) {
-                const queueMessage: api.IQueueMessage = {
+                const queueMessage: IQueueMessage = {
                     documentId: docId,
                     message: {
                         tasks,

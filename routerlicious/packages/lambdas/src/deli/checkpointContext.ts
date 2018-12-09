@@ -1,9 +1,9 @@
-import { IRangeTrackerSnapshot } from "@prague/utils";
-import * as winston from "winston";
 import {
     ICollection,
     IDocument,
-} from "../core";
+} from "@prague/services-core";
+import { IRangeTrackerSnapshot } from "@prague/utils";
+import * as winston from "winston";
 import { IContext } from "../kafka-service/lambdas";
 
 export interface IClientSequenceNumber {

@@ -11,7 +11,7 @@ export class HttpServer implements core.IHttpServer {
     }
 
     public async close(): Promise<void> {
-        await util.promisify(((callback) => this.server.close(callback)) as Function)();
+        await util.promisify(((callback) => this.server.close(callback)) as any)();
     }
 
     public listen(port: any) {

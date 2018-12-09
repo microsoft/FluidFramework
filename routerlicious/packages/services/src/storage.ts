@@ -1,9 +1,9 @@
 import { ICommit, ICommitDetails } from "@prague/gitresources";
 import { IDocumentAttributes, IDocumentSystemMessage, MessageType } from "@prague/runtime-definitions";
+import { IProducer } from "@prague/services-core";
 import * as core from "@prague/services-core";
 import * as moniker from "moniker";
 import * as winston from "winston";
-import * as utils from "../utils";
 
 const StartingSequenceNumber = 0;
 
@@ -11,7 +11,7 @@ export class DocumentStorage implements core.IDocumentStorage {
     constructor(
         private databaseManager: core.IDatabaseManager,
         private tenantManager: core.ITenantManager,
-        private producer: utils.IProducer) {
+        private producer: IProducer) {
     }
 
     /**
@@ -172,7 +172,7 @@ export class DocumentStorage implements core.IDocumentStorage {
         sequenceNumber: number,
         minSequenceNumber: number,
         name: string,
-        producer: utils.IProducer): Promise<void> {
+        producer: IProducer): Promise<void> {
 
         const contents: core.IForkOperation = {
             documentId: name,

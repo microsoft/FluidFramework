@@ -1,5 +1,5 @@
 import * as core from "@prague/services-core";
-import { Collection, Db, MongoClient, MongoClientOptions } from "mongodb";
+import { Collection, MongoClient, MongoClientOptions } from "mongodb";
 
 const MaxFetchSize = 2000;
 
@@ -7,7 +7,7 @@ export class MongoCollection<T> implements core.ICollection<T> {
     constructor(private collection: Collection<T>) {
     }
 
-    public find(query: Object, sort: any, limit = MaxFetchSize): Promise<T[]> {
+    public find(query: object, sort: any, limit = MaxFetchSize): Promise<T[]> {
         return this.collection
             .find(query)
             .sort(sort)
@@ -15,7 +15,7 @@ export class MongoCollection<T> implements core.ICollection<T> {
             .toArray();
     }
 
-    public findOne(query: Object): Promise<T> {
+    public findOne(query: object): Promise<T> {
         return this.collection.findOne(query);
     }
 
@@ -23,11 +23,11 @@ export class MongoCollection<T> implements core.ICollection<T> {
         return this.collection.find({}).toArray();
     }
 
-    public async update(filter: Object, set: any, addToSet: any): Promise<void> {
+    public async update(filter: object, set: any, addToSet: any): Promise<void> {
         return this.updateCore(filter, set, addToSet, false);
     }
 
-    public async upsert(filter: Object, set: any, addToSet: any): Promise<void> {
+    public async upsert(filter: object, set: any, addToSet: any): Promise<void> {
         return this.updateCore(filter, set, addToSet, true);
     }
 
@@ -79,19 +79,19 @@ export class MongoCollection<T> implements core.ICollection<T> {
 }
 
 export class MongoDb implements core.IDb {
-    constructor(private db: Db) {
+    constructor(private client: MongoClient) {
     }
 
     public close(): Promise<void> {
-        return this.db.close();
+        return this.client.close();
     }
 
     public on(event: string, listener: (...args: any[]) => void) {
-        this.db.on(event, listener);
+        this.client.on(event, listener);
     }
 
     public collection<T>(name: string): core.ICollection<T> {
-        const collection = this.db.collection<T>(name);
+        const collection = this.client.db().collection<T>(name);
         return new MongoCollection<T>(collection);
     }
 }

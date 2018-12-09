@@ -1,7 +1,7 @@
+import { TestKafka } from "@prague/test-utils";
 import * as assert from "assert";
 import { Provider } from "nconf";
 import { KafkaRunnerFactory } from "../../kafka-service/runnerFactory";
-import { TestKafka } from "../testUtils";
 import { TestPartitionLambdaFactory } from "./testPartitionLambdaFactory";
 
 describe("kafka-service", () => {

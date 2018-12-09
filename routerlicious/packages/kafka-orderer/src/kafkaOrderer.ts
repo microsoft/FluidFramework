@@ -208,7 +208,7 @@ export class KafkaOrdererFactory {
     private ordererMap = new Map<string, Promise<core.IOrderer>>();
 
     constructor(
-        private producer: IProducer,
+        private producer: core.IProducer,
         private storage: core.IDocumentStorage,
         private maxMessageSize: number) {
     }

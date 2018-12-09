@@ -1,7 +1,7 @@
+import { TestConsumer, TestKafka } from "@prague/test-utils";
 import * as assert from "assert";
 import { CheckpointManager } from "../../kafka-service/checkpointManager";
 import { Context } from "../../kafka-service/context";
-import { TestConsumer, TestKafka } from "../testUtils";
 
 describe("kafka-service", () => {
     describe("Context", () => {

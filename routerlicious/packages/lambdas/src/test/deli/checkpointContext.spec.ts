@@ -1,5 +1,5 @@
+import * as testUtils from "@prague/test-utils";
 import { CheckpointContext, ICheckpoint } from "../../deli/checkpointContext";
-import * as testUtils from "../testUtils";
 
 describe("Routerlicious", () => {
     describe("Deli", () => {

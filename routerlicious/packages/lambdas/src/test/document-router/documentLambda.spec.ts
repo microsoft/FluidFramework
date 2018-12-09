@@ -1,14 +1,14 @@
-import * as assert from "assert";
-import * as nconf from "nconf";
-import * as plugin from "../../document-router";
-import { IPartitionLambda, IPartitionLambdaFactory } from "../../kafka-service/lambdas";
 import {
     createTestModule,
     ITestLambdaModule,
     KafkaMessageFactory,
     MessageFactory,
     TestContext,
-} from "../testUtils";
+} from "@prague/test-utils";
+import * as assert from "assert";
+import * as nconf from "nconf";
+import * as plugin from "../../document-router";
+import { IPartitionLambda, IPartitionLambdaFactory } from "../../kafka-service/lambdas";
 
 describe("document-router", () => {
     describe("DocumentLambda", () => {

@@ -1,13 +1,13 @@
+import { IKafkaMessage } from "@prague/services-core";
 import { AsyncQueue, queue } from "async";
 import * as _ from "lodash";
 import { Provider } from "nconf";
 import * as winston from "winston";
 import { IPartitionLambda, IPartitionLambdaFactory } from "../kafka-service/lambdas";
-import * as utils from "../utils";
 import { DocumentContext } from "./documentContext";
 
 export class DocumentPartition {
-    private q: AsyncQueue<utils.IMessage>;
+    private q: AsyncQueue<IKafkaMessage>;
     private lambdaP: Promise<IPartitionLambda>;
     private lambda: IPartitionLambda;
     private corrupt = false;
@@ -26,7 +26,7 @@ export class DocumentPartition {
         const documentConfig = new Provider({}).defaults(clonedConfig).use("memory");
 
         this.q = queue(
-            (message: utils.IMessage, callback) => {
+            (message: IKafkaMessage, callback) => {
                 // winston.verbose(`${message.topic}:${message.partition}@${message.offset}`);
                 try {
                     if (!this.corrupt) {
@@ -61,7 +61,7 @@ export class DocumentPartition {
             });
     }
 
-    public process(message: utils.IMessage) {
+    public process(message: IKafkaMessage) {
         this.q.push(message);
     }
 

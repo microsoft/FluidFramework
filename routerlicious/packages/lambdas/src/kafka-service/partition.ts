@@ -1,8 +1,8 @@
+import { IConsumer, IKafkaMessage } from "@prague/services-core";
 import { AsyncQueue, queue } from "async";
 import { EventEmitter } from "events";
 import { Provider } from "nconf";
 import * as winston from "winston";
-import * as utils from "../utils";
 import { CheckpointManager } from "./checkpointManager";
 import { Context } from "./context";
 import { IPartitionLambda, IPartitionLambdaFactory } from "./lambdas";
@@ -12,7 +12,7 @@ import { IPartitionLambda, IPartitionLambdaFactory } from "./lambdas";
  * overall partition offset.
  */
 export class Partition extends EventEmitter {
-    private q: AsyncQueue<utils.IMessage>;
+    private q: AsyncQueue<IKafkaMessage>;
     private lambdaP: Promise<IPartitionLambda>;
     private lambda: IPartitionLambda;
     private checkpointManager: CheckpointManager;
@@ -21,7 +21,7 @@ export class Partition extends EventEmitter {
     constructor(
         id: number,
         factory: IPartitionLambdaFactory,
-        consumer: utils.IConsumer,
+        consumer: IConsumer,
         config: Provider) {
         super();
 
@@ -33,7 +33,7 @@ export class Partition extends EventEmitter {
 
         // Create the incoming message queue
         this.q = queue(
-            (message: utils.IMessage, callback) => {
+            (message: IKafkaMessage, callback) => {
                 try {
                     this.lambda.handler(message);
                     callback();
@@ -60,7 +60,7 @@ export class Partition extends EventEmitter {
         };
     }
 
-    public process(rawMessage: utils.IMessage) {
+    public process(rawMessage: IKafkaMessage) {
         this.q.push(rawMessage);
     }
 

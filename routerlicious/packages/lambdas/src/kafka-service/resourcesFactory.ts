@@ -1,12 +1,14 @@
+import { createConsumer } from "@prague/services";
+import { IConsumer } from "@prague/services-core";
+import { IResources, IResourcesFactory } from "@prague/services-utils";
 import * as moniker from "moniker";
 import { Provider } from "nconf";
-import * as utils from "../utils";
 import { IPartitionLambdaFactory } from "./lambdas";
 
-export interface IKafkaResources extends utils.IResources {
+export interface IKafkaResources extends IResources {
     lambdaFactory: IPartitionLambdaFactory;
 
-    consumer: utils.IConsumer;
+    consumer: IConsumer;
 
     config: Provider;
 }
@@ -14,7 +16,7 @@ export interface IKafkaResources extends utils.IResources {
 export class KafkaResources implements IKafkaResources {
     constructor(
         public lambdaFactory: IPartitionLambdaFactory,
-        public consumer: utils.IConsumer,
+        public consumer: IConsumer,
         public config: Provider) {
     }
 
@@ -24,7 +26,7 @@ export class KafkaResources implements IKafkaResources {
     }
 }
 
-export class KafkaResourcesFactory implements utils.IResourcesFactory<KafkaResources> {
+export class KafkaResourcesFactory implements IResourcesFactory<KafkaResources> {
     constructor(private name, private lambdaModule) {
     }
 
@@ -44,7 +46,7 @@ export class KafkaResourcesFactory implements utils.IResourcesFactory<KafkaResou
         const receiveTopic = streamConfig.topic;
 
         const clientId = moniker.choose();
-        const consumer = utils.createConsumer(kafkaLibrary, kafkaEndpoint, clientId, groupId, receiveTopic, false);
+        const consumer = createConsumer(kafkaLibrary, kafkaEndpoint, clientId, groupId, receiveTopic, false);
 
         return new KafkaResources(
             lambdaFactory,

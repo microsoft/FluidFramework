@@ -1,7 +1,7 @@
+import { IConsumer, IKafkaMessage, IPartition } from "@prague/services-core";
 import { EventEmitter } from "events";
 import { Provider } from "nconf";
 import * as winston from "winston";
-import * as utils from "../utils";
 import { IPartitionLambdaFactory } from "./lambdas";
 import { Partition } from "./partition";
 
@@ -16,7 +16,7 @@ export class PartitionManager extends EventEmitter {
 
     constructor(
         private factory: IPartitionLambdaFactory,
-        private consumer: utils.IConsumer,
+        private consumer: IConsumer,
         private config: Provider) {
         super();
 
@@ -54,7 +54,7 @@ export class PartitionManager extends EventEmitter {
         }
     }
 
-    private process(message: utils.IMessage) {
+    private process(message: IKafkaMessage) {
         if (this.isRebalancing) {
             winston.info(`Ignoring ${message.topic}:${message.partition}@${message.offset} due to pending rebalance`);
             return;
@@ -71,7 +71,7 @@ export class PartitionManager extends EventEmitter {
         partition.process(message);
     }
 
-    private rebalancing(partitions: utils.IPartition[]) {
+    private rebalancing(partitions: IPartition[]) {
         winston.info("rebalancing", partitions);
         this.isRebalancing = true;
 
@@ -81,7 +81,7 @@ export class PartitionManager extends EventEmitter {
         }
     }
 
-    private rebalanced(partitions: utils.IPartition[]) {
+    private rebalanced(partitions: IPartition[]) {
         this.isRebalancing = false;
 
         this.partitions = new Map<number, Partition>();

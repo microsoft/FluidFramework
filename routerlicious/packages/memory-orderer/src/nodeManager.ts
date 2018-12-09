@@ -1,6 +1,6 @@
+import { MongoManager } from "@prague/services-utils";
 import * as assert from "assert";
 import { EventEmitter } from "events";
-import { MongoManager } from "../../utils";
 import { IConcreteNode } from "./interfaces";
 import { RemoteNode } from "./remoteNode";
 

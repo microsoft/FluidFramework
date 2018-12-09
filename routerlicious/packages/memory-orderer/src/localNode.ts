@@ -1,15 +1,15 @@
 import { IDocumentMessage } from "@prague/runtime-definitions";
 import {
-    IDatabaseManager, IDocumentStorage, IOrderer, IOrdererConnection, ITaskMessageSender, ITenantManager,
+    IDatabaseManager, IDocumentStorage, INode, IOrderer, IOrdererConnection, ITaskMessageSender, ITenantManager,
 } from "@prague/services-core";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import * as _ from "lodash";
 import * as uuid from "uuid/v4";
 import * as ws from "ws";
-import { debug } from "../debug";
+import { debug } from "./debug";
 import {
-    IConcreteNode, IConnectedMessage, IConnectMessage, INode, INodeMessage, IOpMessage,
+    IConcreteNode, IConnectedMessage, IConnectMessage, INodeMessage, IOpMessage,
 } from "./interfaces";
 import { ISubscriber, LocalOrderer } from "./localOrderer";
 import { Socket } from "./socket";

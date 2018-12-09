@@ -1,6 +1,6 @@
+import { ITaskMessageSender, ITenantManager } from "@prague/services-core";
 import { EventEmitter } from "events";
 import { Provider } from "nconf";
-import { ITaskMessageSender, ITenantManager } from "../core";
 import { IContext, IPartitionLambda, IPartitionLambdaFactory } from "../kafka-service/lambdas";
 import { TmzLambda } from "./lambda";
 

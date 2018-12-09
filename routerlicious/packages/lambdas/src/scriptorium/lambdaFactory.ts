@@ -1,13 +1,13 @@
+import * as core from "@prague/services-core";
+import { MongoManager } from "@prague/services-utils";
 import { EventEmitter } from "events";
 import { Provider } from "nconf";
-import * as core from "../core";
 import { IContext, IPartitionLambda, IPartitionLambdaFactory } from "../kafka-service/lambdas";
-import * as utils from "../utils";
 import { ScriptoriumLambda } from "./lambda";
 
 export class ScriptoriumLambdaFactory extends EventEmitter implements IPartitionLambdaFactory {
     constructor(
-        private mongoManager: utils.MongoManager,
+        private mongoManager: MongoManager,
         private opCollection: core.ICollection<any>,
         private contentCollection: core.ICollection<any>) {
         super();

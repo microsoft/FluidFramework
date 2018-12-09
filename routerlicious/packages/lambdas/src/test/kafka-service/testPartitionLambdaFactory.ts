@@ -1,8 +1,8 @@
+import { IKafkaMessage } from "@prague/services-core";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import { Provider } from "nconf";
 import { IContext, IPartitionLambda, IPartitionLambdaFactory } from "../../kafka-service/lambdas";
-import * as utils from "../../utils";
 
 export class TestLambda implements IPartitionLambda {
     private lastOffset: number;
@@ -10,7 +10,7 @@ export class TestLambda implements IPartitionLambda {
     constructor(private factory: TestPartitionLambdaFactory, private throwHandler: boolean, private context: IContext) {
     }
 
-    public handler(message: utils.IMessage): void {
+    public handler(message: IKafkaMessage): void {
         if (this.throwHandler) {
             throw new Error("Requested failure");
         }

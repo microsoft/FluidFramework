@@ -1,17 +1,18 @@
+import { IConsumer } from "@prague/services-core";
+import { IRunner } from "@prague/services-utils";
 import { Deferred } from "@prague/utils";
 import { Provider } from "nconf";
 import * as winston from "winston";
-import * as utils from "../utils";
 import { IPartitionLambdaFactory } from "./lambdas";
 import { PartitionManager } from "./partitionManager";
 
-export class KafkaRunner implements utils.IRunner {
+export class KafkaRunner implements IRunner {
     private deferred: Deferred<void>;
     private partitionManager: PartitionManager;
 
     constructor(
         private factory: IPartitionLambdaFactory,
-        private consumer: utils.IConsumer,
+        private consumer: IConsumer,
         private config: Provider) {
     }
 

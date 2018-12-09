@@ -1,23 +1,43 @@
 import {
+    ActivityCheckingTimeout,
+    BBCLambda,
+    ClientSequenceTimeout,
+    DeliLambda,
+    ScriptoriumLambda,
+    TmzLambda,
+} from "@prague/lambdas";
+import {
     IClient,
     IClientJoin,
     IDocumentMessage,
     IDocumentSystemMessage,
     IUser, MessageType } from "@prague/runtime-definitions";
+import {
+    BoxcarType,
+    IBoxcarMessage,
+    ICollection,
+    IContext,
+    IDatabaseManager,
+    IDocument,
+    IDocumentDetails,
+    IDocumentStorage,
+    IKafkaMessage,
+    IOrderer,
+    IOrdererConnection,
+    IProducer,
+    IPublisher,
+    IRawOperationMessage,
+    ITaskMessageSender,
+    ITenantManager,
+    ITopic,
+    IWebSocket,
+    RawOperationType,
+} from "@prague/services-core";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import * as moniker from "moniker";
 // tslint:disable-next-line:no-var-requires
 const now = require("performance-now");
-import { BBCLambda } from "../../bbc/lambda";
-import { BoxcarType, IBoxcarMessage, ICollection, IOrdererConnection, ITenantManager } from "../../core";
-import * as core from "../../core";
-import { DeliLambda } from "../../deli/lambda";
-import { ActivityCheckingTimeout, ClientSequenceTimeout } from "../../deli/lambdaFactory";
-import { IContext } from "../../kafka-service/lambdas";
-import { ScriptoriumLambda } from "../../scriptorium/lambda";
-import { TmzLambda } from "../../tmz/lambda";
-import { IMessage, IProducer } from "../../utils";
 
 export interface ISubscriber {
     id: string;
@@ -30,7 +50,7 @@ class WebSocketSubscriber implements ISubscriber {
         return this.socket.id;
     }
 
-    constructor(private socket: core.IWebSocket) {
+    constructor(private socket: IWebSocket) {
     }
 
     public send(topic: string, ...args: any[]): void {
@@ -93,7 +113,7 @@ class PubSub implements IPubSub {
     }
 }
 
-class LocalSocketPublisher implements core.IPublisher {
+class LocalSocketPublisher implements IPublisher {
     constructor(private publisher: IPubSub) {
     }
 
@@ -101,7 +121,7 @@ class LocalSocketPublisher implements core.IPublisher {
         return;
     }
 
-    public to(topic: string): core.ITopic {
+    public to(topic: string): ITopic {
         return {
             emit: (event: string, ...args: any[]) => this.publisher.publish(topic, event, ...args),
         };
@@ -126,7 +146,7 @@ class LocalOrdererConnection implements IOrdererConnection {
         private pubsub: IPubSub,
         public socket: ISubscriber,
         public readonly existing: boolean,
-        document: core.IDocument,
+        document: IDocument,
         private producer: IProducer,
         public readonly tenantId: string,
         public readonly documentId: string,
@@ -161,13 +181,13 @@ class LocalOrdererConnection implements IOrdererConnection {
             type: MessageType.ClientJoin,
         };
 
-        const message: core.IRawOperationMessage = {
+        const message: IRawOperationMessage = {
             clientId: null,
             documentId: this.documentId,
             operation,
             tenantId: this.tenantId,
             timestamp: Date.now(),
-            type: core.RawOperationType,
+            type: RawOperationType,
             user: this.user,
         };
 
@@ -176,13 +196,13 @@ class LocalOrdererConnection implements IOrdererConnection {
     }
 
     public order(message: IDocumentMessage): void {
-        const rawMessage: core.IRawOperationMessage = {
+        const rawMessage: IRawOperationMessage = {
             clientId: this.clientId,
             documentId: this.documentId,
             operation: message,
             tenantId: this.tenantId,
             timestamp: Date.now(),
-            type: core.RawOperationType,
+            type: RawOperationType,
             user: this.user,
         };
 
@@ -203,13 +223,13 @@ class LocalOrdererConnection implements IOrdererConnection {
             traces: [],
             type: MessageType.ClientLeave,
         };
-        const message: core.IRawOperationMessage = {
+        const message: IRawOperationMessage = {
             clientId: null,
             documentId: this.documentId,
             operation,
             tenantId: this.tenantId,
             timestamp: Date.now(),
-            type: core.RawOperationType,
+            type: RawOperationType,
             user: this.user,
         };
         this.submitRawOperation(message);
@@ -218,7 +238,7 @@ class LocalOrdererConnection implements IOrdererConnection {
         this.pubsub.unsubscribe(`client#${this.clientId}`, this.socket);
     }
 
-    private submitRawOperation(message: core.IRawOperationMessage) {
+    private submitRawOperation(message: IRawOperationMessage) {
         // Add trace
         const operation = message.operation as IDocumentMessage;
         if (operation && operation.traces) {
@@ -245,14 +265,14 @@ class LocalOrdererConnection implements IOrdererConnection {
 /**
  * Performs local ordering of messages based on an in-memory stream of operations.
  */
-export class LocalOrderer implements core.IOrderer {
+export class LocalOrderer implements IOrderer {
 
     public static async Load(
-        storage: core.IDocumentStorage,
-        databaseManager: core.IDatabaseManager,
+        storage: IDocumentStorage,
+        databaseManager: IDatabaseManager,
         tenantId: string,
         documentId: string,
-        taskMessageSender: core.ITaskMessageSender,
+        taskMessageSender: ITaskMessageSender,
         tenantManager: ITenantManager,
         permission: any,
         maxMessageSize: number) {
@@ -294,12 +314,12 @@ export class LocalOrderer implements core.IOrderer {
     private existing: boolean;
 
     constructor(
-        private details: core.IDocumentDetails,
+        private details: IDocumentDetails,
         private tenantId: string,
         private documentId: string,
-        documentCollection: ICollection<core.IDocument>,
+        documentCollection: ICollection<IDocument>,
         deltasCollection: ICollection<any>,
-        private taskMessageSender: core.ITaskMessageSender,
+        private taskMessageSender: ITaskMessageSender,
         private tenantManager: ITenantManager,
         private permission: any,
         private maxMessageSize: number) {
@@ -340,7 +360,7 @@ export class LocalOrderer implements core.IOrderer {
     }
 
     public async connect(
-        socket: core.IWebSocket,
+        socket: IWebSocket,
         user: IUser,
         client: IClient): Promise<IOrdererConnection> {
 
@@ -388,11 +408,11 @@ export class LocalOrderer implements core.IOrderer {
     }
 
     private startLambdas() {
-        this.alfredToDeliKafka.on("message", (message: IMessage) => {
+        this.alfredToDeliKafka.on("message", (message: IKafkaMessage) => {
             this.deliLambda.handler(message);
         });
 
-        this.deliToScriptoriumKafka.on("message", (message: IMessage) => {
+        this.deliToScriptoriumKafka.on("message", (message: IKafkaMessage) => {
             this.bbcLambda.handler(message);
             this.scriptoriumLambda.handler(message);
             this.tmzLambda.handler(message);
@@ -408,7 +428,7 @@ class InMemoryKafka extends EventEmitter implements IProducer {
     }
 
     public async send(message: any, topic: string): Promise<any> {
-        const kafkaMessage: IMessage = {
+        const kafkaMessage: IKafkaMessage = {
             highWaterOffset: this.offset,
             key: topic,
             offset: this.offset,

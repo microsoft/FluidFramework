@@ -1,7 +1,7 @@
+import { KafkaMessageFactory, MessageFactory, TestCollection, TestContext } from "@prague/test-utils";
 import * as assert from "assert";
 import { IPartitionLambda } from "../../kafka-service/lambdas";
 import { ScriptoriumLambda } from "../../scriptorium/lambda";
-import { KafkaMessageFactory, MessageFactory, TestCollection, TestContext } from "../testUtils";
 
 describe("Routerlicious", () => {
     describe("Scriptorium", () => {

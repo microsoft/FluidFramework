@@ -2,7 +2,7 @@ import { IConsumer, IPartition } from "@prague/services-core";
 import { EventEmitter } from "events";
 import * as kafkaNode from "kafka-node";
 import * as util from "util";
-import { debug } from "../debug";
+import { debug } from "./debug";
 
 export class KafkaNodeConsumer implements IConsumer {
     private client: kafkaNode.Client;
@@ -37,8 +37,8 @@ export class KafkaNodeConsumer implements IConsumer {
     }
 
     public async close(): Promise<void> {
-        await util.promisify(((callback) => this.instance.close(false, callback)) as Function)();
-        await util.promisify(((callback) => this.client.close(callback)) as Function)();
+        await util.promisify(((callback) => this.instance.close(false, callback)) as any)();
+        await util.promisify(((callback) => this.client.close(callback)) as any)();
     }
 
     public on(event: string, listener: (...args: any[]) => void): this {

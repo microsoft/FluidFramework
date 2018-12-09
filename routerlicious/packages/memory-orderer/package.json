@@ -1,0 +1,61 @@
+{
+  "name": "@prague/memory-orderer",
+  "version": "0.1.0",
+  "description": "Prague ordering services",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "npm run tsc && npm run tslint",
+    "build:full": "npm run build",
+    "clean": "rimraf dist && rimraf lib",
+    "test": "mocha --recursive dist/test",
+    "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml",
+    "tsc": "tsc",
+    "tslint": "tslint --project tsconfig.json --format verbose"
+  },
+  "author": "Microsoft",
+  "repository": "microsoft/prague",
+  "nyc": {
+    "all": true,
+    "exclude": [
+      "src/test/**/*.ts",
+      "dist/test/**/*.js"
+    ],
+    "include": [
+      "src/**/*.ts",
+      "dist/**/*.js"
+    ],
+    "reporter": [
+      "cobertura",
+      "html",
+      "text"
+    ],
+    "temp-directory": "nyc/.nyc_output",
+    "cache-dir": "nyc/.cache",
+    "report-dir": "nyc/report"
+  },
+  "devDependencies": {
+    "rimraf": "^2.6.2",
+    "tslint": "^5.11.0",
+    "tslint-microsoft-contrib": "^6.0.0",
+    "typescript": "^3.2.2"
+  },
+  "dependencies": {
+    "@prague/lambdas": "^0.1.0",
+    "@prague/runtime-definitions": "^0.1.0",
+    "@prague/services-core": "^0.1.0",
+    "@prague/services-utils": "^0.1.0",
+    "@prague/utils": "^0.1.0",
+    "@types/debug": "^0.0.31",
+    "@types/lodash": "^4.14.118",
+    "@types/node": "^10.12.12",
+    "@types/uuid": "^3.4.4",
+    "@types/ws": "^6.0.1",
+    "debug": "^4.1.0",
+    "lodash": "^4.17.11",
+    "moniker": "^0.1.2",
+    "performance-now": "^2.1.0",
+    "uuid": "^3.3.2",
+    "ws": "^6.1.2"
+  }
+}

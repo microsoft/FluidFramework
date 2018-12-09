@@ -1,6 +1,6 @@
 import { EventEmitter } from "events";
 import * as ws from "ws";
-import { debug } from "../debug";
+import { debug } from "./debug";
 
 // I want this thing to compute statistics
 // import * as utils from "../../core-utils";

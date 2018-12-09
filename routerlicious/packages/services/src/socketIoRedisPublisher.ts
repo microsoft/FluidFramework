@@ -38,6 +38,6 @@ export class SocketIoRedisPublisher implements core.IPublisher {
     }
 
     public close(): Promise<void> {
-        return util.promisify(((callback) => this.redisClient.quit(callback)) as Function)();
+        return util.promisify(((callback) => this.redisClient.quit(callback)) as any)();
     }
 }

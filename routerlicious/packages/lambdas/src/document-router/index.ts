@@ -3,7 +3,7 @@ import { IPartitionLambdaFactory, IPlugin } from "../kafka-service/lambdas";
 import { DocumentLambdaFactory } from "./lambdaFactory";
 
 export async function create(config: Provider): Promise<IPartitionLambdaFactory> {
-    const pluginConfig = config.get("documentLambda") as string | Object;
+    const pluginConfig = config.get("documentLambda") as string | object;
     // tslint:disable-next-line:non-literal-require
     const plugin = (typeof pluginConfig === "object" ? pluginConfig : require(pluginConfig)) as IPlugin;
 

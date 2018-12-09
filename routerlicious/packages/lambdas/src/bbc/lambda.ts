@@ -1,15 +1,16 @@
 
 import { INack, ISequencedDocumentMessage } from "@prague/runtime-definitions";
-import * as _ from "lodash";
 import {
+    IKafkaMessage,
     INackMessage,
     IPublisher,
     ISequencedOperationMessage,
     NackOperationType,
     SequencedOperationType,
-} from "../core";
+} from "@prague/services-core";
+import { extractBoxcar } from "@prague/services-utils";
+import * as _ from "lodash";
 import { IContext, IPartitionLambda } from "../kafka-service/lambdas";
-import { extractBoxcar, IMessage } from "../utils";
 
 class BBCBatch {
     public messages: Array<ISequencedDocumentMessage | INack> = [];
@@ -29,7 +30,7 @@ export class BBCLambda implements IPartitionLambda {
     constructor(private io: IPublisher, protected context: IContext) {
     }
 
-    public handler(message: IMessage): void {
+    public handler(message: IKafkaMessage): void {
         const boxcar = extractBoxcar(message);
 
         for (const baseMessage of boxcar.contents) {

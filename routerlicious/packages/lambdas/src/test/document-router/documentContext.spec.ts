@@ -1,8 +1,7 @@
-// tslint:disable:ban-types
 import * as assert from "assert";
 import { DocumentContext } from "../../document-router/documentContext";
 
-function validateException(fn: Function) {
+function validateException(fn: () => void) {
     try {
         fn();
         assert.ok(false);

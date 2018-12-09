@@ -1,9 +1,8 @@
+import { create, TestContext, TestLambdaFactory } from "@prague/test-utils";
 import * as assert from "assert";
 import { Provider } from "nconf";
 import { DocumentLambdaFactory } from "../../document-router/lambdaFactory";
 import { IPartitionLambdaFactory } from "../../kafka-service/lambdas";
-import { TestContext } from "../testUtils/testContext";
-import { create, TestLambdaFactory } from "../testUtils/testDocumentLambda";
 
 describe("document-router", () => {
     describe("DocumentLambdaFactory", () => {

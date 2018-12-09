@@ -1,6 +1,7 @@
+import { IKafkaMessage } from "@prague/services-core";
+import { extractBoxcar } from "@prague/services-utils";
 import { Provider } from "nconf";
 import { IContext, IPartitionLambda, IPartitionLambdaFactory } from "../kafka-service/lambdas";
-import { extractBoxcar, IMessage } from "../utils";
 import { DocumentContextManager } from "./contextManager";
 import { DocumentPartition } from "./documentPartition";
 
@@ -15,7 +16,7 @@ export class DocumentLambda implements IPartitionLambda {
         });
     }
 
-    public handler(message: IMessage): void {
+    public handler(message: IKafkaMessage): void {
         this.contextManager.setHead(message.offset);
         this.handlerCore(message);
         this.contextManager.setTail(message.offset);
@@ -28,7 +29,7 @@ export class DocumentLambda implements IPartitionLambda {
         }
     }
 
-    private handlerCore(kafkaMessage: IMessage): void {
+    private handlerCore(kafkaMessage: IKafkaMessage): void {
         const boxcar = extractBoxcar(kafkaMessage);
         if (!boxcar.documentId || !boxcar.tenantId) {
             return;

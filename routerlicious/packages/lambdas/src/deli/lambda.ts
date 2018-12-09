@@ -6,31 +6,31 @@ import {
     ITrace,
     MessageType,
 } from "@prague/runtime-definitions";
-import { isSystemType, RangeTracker } from "@prague/utils";
-import * as assert from "assert";
-import * as _ from "lodash";
-import * as winston from "winston";
 import {
     ICollection,
     IDocument,
+    IKafkaMessage,
     IMessage,
     INackMessage,
+    IProducer,
     IRawOperationMessage,
     ISequencedOperationMessage,
     ITicketedMessage,
     NackOperationType,
     RawOperationType,
     SequencedOperationType,
-} from "../core";
-import { IContext, IPartitionLambda } from "../kafka-service/lambdas";
+} from "@prague/services-core";
 import {
     extractBoxcar,
     Heap,
     IComparer,
     IHeapNode,
-    IMessage as IKafkaMessage,
-    IProducer,
-} from "../utils";
+} from "@prague/services-utils";
+import { isSystemType, RangeTracker } from "@prague/utils";
+import * as assert from "assert";
+import * as _ from "lodash";
+import * as winston from "winston";
+import { IContext, IPartitionLambda } from "../kafka-service/lambdas";
 import { CheckpointContext, ICheckpoint, IClientSequenceNumber } from "./checkpointContext";
 
 export interface ITicketedMessageOutput {

@@ -1,6 +1,6 @@
+import { IKafkaMessage } from "@prague/services-core";
 import { EventEmitter } from "events";
 import * as nconf from "nconf";
-import * as utils from "../utils";
 
 export interface IContext {
     /**
@@ -19,7 +19,7 @@ export interface IPartitionLambda {
     /**
      * Processes an incoming message
      */
-    handler(message: utils.IMessage): void;
+    handler(message: IKafkaMessage): void;
 
     /**
      * Closes the lambda. After being called handler will no longer be invoked and the lambda is expected to cancel
