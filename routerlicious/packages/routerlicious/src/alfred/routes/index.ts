@@ -1,8 +1,8 @@
+import { IDocumentStorage, IProducer, ITenantManager } from "@prague/services-core";
+import * as utils from "@prague/services-utils";
 import * as ensureAuth from "connect-ensure-login";
 import { Router } from "express";
 import { Provider } from "nconf";
-import { IDocumentStorage, ITenantManager } from "../../core";
-import * as utils from "../../utils";
 import { IAlfredTenant } from "../tenant";
 import * as agent from "./agent";
 import * as api from "./api";
@@ -10,7 +10,6 @@ import * as canvas from "./canvas";
 import * as cell from "./cell";
 import * as demoCreator from "./democreator";
 import * as home from "./home";
-import * as intelligence from "./intelligence";
 import * as loader from "./loader";
 import * as maps from "./maps";
 import * as scribe from "./scribe";
@@ -25,7 +24,6 @@ export interface IRoutes {
     demoCreator: Router;
     loader: Router;
     home: Router;
-    intelligence: Router;
     signUp: Router;
     maps: Router;
     scribe: Router;
@@ -38,7 +36,7 @@ export function create(
     tenantManager: ITenantManager,
     mongoManager: utils.MongoManager,
     storage: IDocumentStorage,
-    producer: utils.IProducer,
+    producer: IProducer,
     appTenants: IAlfredTenant[]) {
 
     const ensureLoggedIn = config.get("login:enabled") ? ensureAuth.ensureLoggedIn :
@@ -53,7 +51,6 @@ export function create(
         cell: cell.create(config, tenantManager, storage, appTenants, ensureLoggedIn),
         demoCreator: demoCreator.create(config, ensureLoggedIn),
         home: home.create(config, ensureLoggedIn),
-        intelligence: intelligence.create(config),
         loader: loader.create(config, tenantManager, storage, appTenants, ensureLoggedIn),
         maps: maps.create(config, tenantManager, storage, appTenants, ensureLoggedIn),
         scribe: scribe.create(config, tenantManager, appTenants, ensureLoggedIn),

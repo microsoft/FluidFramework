@@ -1,5 +1,5 @@
+import * as utils from "@prague/services-utils";
 import { Response, Router } from "express";
-import * as utils from "../utils";
 import { TenantManager } from "./tenantManager";
 
 export function create(collectionName: string, mongoManager: utils.MongoManager): Router {

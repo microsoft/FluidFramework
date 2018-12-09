@@ -146,5 +146,5 @@ export async function type(
  * Toggle between play and pause.
  */
 export function togglePlay() {
-    author.togglePlay();
+    author.toggleAuthorPlay();
 }

@@ -1,7 +1,6 @@
+import { IKafkaResources, KafkaRunnerFactory } from "@prague/lambdas";
+import * as utils from "@prague/services-utils";
 import * as commander from "commander";
-import * as utils from "../utils";
-import { IKafkaResources } from "./resourcesFactory";
-import { KafkaRunnerFactory } from "./runnerFactory";
 
 export function execute(
     factoryFn: (name: string, lambda: string) => utils.IResourcesFactory<IKafkaResources>,

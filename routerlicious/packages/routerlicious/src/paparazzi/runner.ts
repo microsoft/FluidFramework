@@ -1,6 +1,7 @@
 import * as agent from "@prague/agent";
-import * as api from "@prague/client-api";
-import { IDocumentService } from "@prague/runtime-definitions";
+import { IDocumentService, IQueueMessage } from "@prague/runtime-definitions";
+import * as core from "@prague/services-core";
+import * as utils from "@prague/services-utils";
 import * as socketStorage from "@prague/socket-storage";
 import { Deferred } from "@prague/utils";
 import * as fs from "fs";
@@ -8,8 +9,6 @@ import * as request from "request";
 import * as unzip from "unzip-stream";
 import * as url from "url";
 import * as winston from "winston";
-import * as core from "../core";
-import * as utils from "../utils";
 import { NodeCodeLoader, NodePlatformFactory } from "./chaincodeHost";
 
 class DocumentServiceFactory implements agent.IDocumentServiceFactory {
@@ -64,7 +63,7 @@ export class PaparazziRunner implements utils.IRunner {
         this.messageReceiver.on("message", (message: core.ITaskMessage) => {
             const type = message.type;
             if (type === "tasks:start") {
-                const requestMessage = message.content as api.IQueueMessage;
+                const requestMessage = message.content as IQueueMessage;
                 this.startDocumentWork(requestMessage);
             }
         });
@@ -114,7 +113,7 @@ export class PaparazziRunner implements utils.IRunner {
         return this.running.promise;
     }
 
-    private startDocumentWork(requestMsg: api.IQueueMessage) {
+    private startDocumentWork(requestMsg: IQueueMessage) {
         // Only start tasks that are allowed to run.
         const filteredTask = requestMsg.message.tasks.filter((task) => this.permission.has(task));
 

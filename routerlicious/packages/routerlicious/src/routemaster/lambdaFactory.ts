@@ -1,8 +1,8 @@
+import { IContext, IPartitionLambda, IPartitionLambdaFactory } from "@prague/lambdas";
+import * as core from "@prague/services-core";
+import * as utils from "@prague/services-utils";
 import { EventEmitter } from "events";
 import { Provider } from "nconf";
-import * as core from "../core";
-import { IContext, IPartitionLambda, IPartitionLambdaFactory } from "../kafka-service/lambdas";
-import * as utils from "../utils";
 import { DocumentManager } from "./documentManager";
 import { RouteMasterLambda } from "./lambda";
 
@@ -11,7 +11,7 @@ export class RouteMasterLambdaFactory extends EventEmitter implements IPartition
         private mongoManager: utils.MongoManager,
         private collection: core.ICollection<any>,
         private deltas: core.ICollection<any>,
-        private producer: utils.IProducer) {
+        private producer: core.IProducer) {
         super();
     }
 

@@ -1,7 +1,6 @@
 import { OperationType } from "@prague/api-definitions";
 import * as api from "@prague/client-api";
-// tslint:disable-next-line:no-submodule-imports
-import * as utils from "@prague/routerlicious/dist/utils";
+import * as utils from "@prague/services-utils";
 import { SharedString } from "@prague/shared-string";
 import * as socketStorage from "@prague/socket-storage";
 import * as assert from "assert";

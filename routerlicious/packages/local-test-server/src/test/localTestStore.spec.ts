@@ -1,4 +1,3 @@
-// tslint:disable:no-unsafe-any
 import { DataStore } from "@prague/datastore";
 import * as loader from "@prague/loader";
 import {
@@ -55,7 +54,7 @@ class HostPlatformFactory implements IPlatformFactory {
 class ChaincodeLoader {
     private readonly config: IChaincodeLoaderConfig;
 
-    constructor(codeLoader: ICodeLoader, documentService: any, key: string, tenantId: string) {
+    constructor(codeLoader: ICodeLoader, documentService: IDocumentService, key: string, tenantId: string) {
         this.config = {
             codeLoader,
             documentService,

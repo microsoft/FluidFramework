@@ -54,7 +54,7 @@ export interface IAuthor {
 /**
  * Toggle between play and pause.
  */
-export function togglePlay() {
+export function toggleAuthorPlay() {
     play = !play;
 }
 

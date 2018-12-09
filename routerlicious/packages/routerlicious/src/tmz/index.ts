@@ -1,7 +1,6 @@
+import { IPartitionLambdaFactory, TmzLambdaFactory } from "@prague/lambdas";
 import * as services from "@prague/services";
 import { Provider } from "nconf";
-import { IPartitionLambdaFactory } from "../kafka-service/lambdas";
-import { TmzLambdaFactory } from "./lambdaFactory";
 
 export async function create(config: Provider): Promise<IPartitionLambdaFactory> {
     const authEndpoint = config.get("auth:endpoint");

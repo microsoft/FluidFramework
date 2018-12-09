@@ -1,8 +1,8 @@
+import { ITenantConfig, ITenantStorage } from "@prague/services-core";
+import * as utils from "@prague/services-utils";
 import * as crypto from "crypto";
 import * as jwt from "jsonwebtoken";
 import * as _ from "lodash";
-import { ITenantConfig, ITenantStorage } from "../core";
-import * as utils from "../utils";
 
 export interface ITenantStorageDocument {
     // Historian backed URL to the storage provider

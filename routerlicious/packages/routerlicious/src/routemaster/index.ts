@@ -1,8 +1,8 @@
+import { IPartitionLambdaFactory } from "@prague/lambdas";
+import * as services from "@prague/services";
+import * as utils from "@prague/services-utils";
 import * as bytes from "bytes";
 import { Provider } from "nconf";
-import { IPartitionLambdaFactory } from "../kafka-service/lambdas";
-import * as services from "../services";
-import * as utils from "../utils";
 import { RouteMasterLambdaFactory } from "./lambdaFactory";
 
 export async function create(config: Provider): Promise<IPartitionLambdaFactory> {
@@ -23,7 +23,7 @@ export async function create(config: Provider): Promise<IPartitionLambdaFactory>
     const client = await mongoManager.getDatabase();
     const collection = await client.collection(documentsCollectionName);
     const deltas = await client.collection(deltasCollectionName);
-    const producer = utils.createProducer(kafkaLibrary, kafkaEndpoint, kafkaClientId, sendTopic, maxMessageSize);
+    const producer = services.createProducer(kafkaLibrary, kafkaEndpoint, kafkaClientId, sendTopic, maxMessageSize);
 
     return new RouteMasterLambdaFactory(mongoManager, collection, deltas, producer);
 }
