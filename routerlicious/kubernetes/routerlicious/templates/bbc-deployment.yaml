@@ -27,7 +27,7 @@ spec:
           - 'node'
           - 'dist/kafka-service/index.js'
           - 'bbc'
-          - '../bbc/index.js'
+          - '/usr/src/server/packages/routerlicious/dist/bbc/index.js'
         env:
         - name: DEBUG
           value: "prague:*"
