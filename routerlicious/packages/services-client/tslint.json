@@ -11,6 +11,7 @@
         "max-func-body-length": false,
         "missing-jsdoc": false,
         "newline-before-return": false,
+        "newline-per-chained-call": false,
         "no-console": false,
         "no-default-export": false,
         "no-empty-interface": false,
