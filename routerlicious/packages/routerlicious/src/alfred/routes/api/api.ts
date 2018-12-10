@@ -7,11 +7,11 @@ import {
     IUser,
     MessageType,
     Robot } from "@prague/runtime-definitions";
+import * as core from "@prague/services-core";
+import * as utils from "@prague/services-utils";
 import { Router } from "express";
 import * as jwt from "jsonwebtoken";
 import * as moniker from "moniker";
-import * as core from "../../../core";
-import * as utils from "../../../utils";
 import { IAlfredTenant } from "../../tenant";
 
 interface IOperation {
