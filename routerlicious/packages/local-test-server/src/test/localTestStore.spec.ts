@@ -78,26 +78,9 @@ class ChaincodeLoader {
     }
 
     public async open<T>(
-        documentId: string, userId: string,
         chaincodePackage: string,
-        services?: ReadonlyArray<[string, Promise<any>]>,
+        loaderDoc: loader.Document,
     ): Promise<T> {
-        console.log(`DataStore.open("${documentId}", "${userId}", "${chaincodePackage}")`);
-        const config = this.config;
-        const token = await this.auth(config.tenantId, userId, documentId);
-        const factory = new HostPlatformFactory(services);
-
-        const loaderDoc = await loader.load(
-            documentId,
-            config.tenantId,
-            {id: userId},
-            new socketStorage.TokenProvider(token),
-            null,
-            factory,
-            config.documentService,
-            config.codeLoader,
-            undefined,
-            true);
 
         if (!loaderDoc.existing) {
             console.log(`  not existing`);
@@ -128,47 +111,54 @@ class ChaincodeLoader {
             });
         });
     }
+
+    public async createDoc<T>(documentId: string, userId: string,
+                              chaincodePackage: string, services?: ReadonlyArray<[string, Promise<any>]>) {
+        console.log(`DataStore.open("${documentId}", "${userId}", "${chaincodePackage}")`);
+        const config = this.config;
+        const token = await this.auth(config.tenantId, userId, documentId);
+        const factory = new HostPlatformFactory(services);
+        return loader.load(documentId, config.tenantId, { id: userId },
+                                      new socketStorage.TokenProvider(token), null,
+                                      factory, config.documentService, config.codeLoader, undefined, true);
+    }
 }
 
 describe("LocalTestDataStore", () => {
-    before(() => {
+    it("open 2 Documents", async () => {
         testDeltaConnectionServer = TestDeltaConnectionServer.Create();
         testLoader = new TestLoader([
             [TestComponent.type, { instantiate: () => Promise.resolve(DataStore.instantiate(new TestComponent())) }],
         ]);
-    });
-
-    it("open", async () => {
-        const datastore = new ChaincodeLoader(
+        const datastore1 = new ChaincodeLoader(
             testLoader,
             createTestDocumentService(testDeltaConnectionServer),
             "tokenKey",
             "tenantId");
+        const loaderDoc1 = await datastore1.createDoc<TestComponent>("documentId", "userId", TestComponent.type);
+        const doc1 = await datastore1.open<TestComponent>(TestComponent.type, loaderDoc1);
+        assert.equal(doc1.count, 0, "Incorrect count in Doc1");
 
-        const doc = await datastore.open<TestComponent>("documentId", "userId", TestComponent.type);
-        assert.equal(doc.count, 0);
+        doc1.increment();
+        assert.equal(doc1.count, 1, "Incorrect count in Doc1 after increment");
 
-        doc.increment();
-        assert.equal(doc.count, 1);
-
-        doc.set("done1");
-    });
-
-    it("open 2", async () => {
-        const datastore = new ChaincodeLoader(
+        doc1.set("done1");
+        const datastore2 = new ChaincodeLoader(
             testLoader,
             createTestDocumentService(testDeltaConnectionServer),
             "tokenKey",
             "tenantId");
+        const loaderDoc2 = await datastore2.createDoc<TestComponent>("documentId", "userId", TestComponent.type);
+        const doc2 = await datastore2.open<TestComponent>(TestComponent.type, loaderDoc2);
+        await doc2.wait("done1");
+        console.log("sync completed");
+        assert.equal(doc2.count, 1, "Incorrect count in Doc2");
 
-        const doc = await datastore.open<TestComponent>("documentId", "userId", TestComponent.type);
-        await doc.wait("done1");
-        console.log("sync compoleted");
-        assert.equal(doc.count, 1);
-
-        doc.increment();
-        assert.equal(doc.count, 2);
-    });
+        doc2.increment();
+        assert.equal(doc2.count, 2, "Incorrect count in Doc2 after increment");
+        loaderDoc1.close();
+        loaderDoc2.close();
+     });
 
     after(async () => {
         await testDeltaConnectionServer.webSocketServer.close();
