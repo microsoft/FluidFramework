@@ -28,7 +28,7 @@ export function create(
 
     const router: Router = Router();
 
-    router.post("/:tenantId?/:id", (request, response) => {
+    router.patch("/:tenantId?/:id", (request, response) => {
         const token = request.headers["access-token"] as string;
         if (token) {
             const tenantId = request.params.tenantId || appTenants[0].id;
