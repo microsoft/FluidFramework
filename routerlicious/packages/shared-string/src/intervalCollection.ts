@@ -591,8 +591,8 @@ export class SharedIntervalCollectionView<TInterval extends ISerializableInterva
         // Trigger the async prepare work across all values in the collection
         const preparedIntervalsP: Array<Promise<{ context: any, interval: TInterval }>> = [];
         this.localCollection.map((interval) => {
-            const preparedIntervalP = onPrepareDeserialize(interval.properties).then(
-                (context) => ({ context, interval }));
+            const preparedIntervalP = onPrepareDeserialize(interval.properties)
+                .then((context) => ({ context, interval }));
             preparedIntervalsP.push(preparedIntervalP);
         });
 

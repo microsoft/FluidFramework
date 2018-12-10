@@ -1,18 +1,38 @@
+import { KafkaOrdererFactory } from "@prague/kafka-orderer";
+import {
+    LocalNodeFactory,
+    LocalOrderManager,
+    NodeManager,
+    ReservationManager,
+} from "@prague/memory-orderer";
+import * as services from "@prague/services";
+import * as core from "@prague/services-core";
+import * as utils from "@prague/services-utils";
 import * as bytes from "bytes";
 import { Provider } from "nconf";
 import * as os from "os";
-import * as core from "../core";
-import * as services from "../services";
-import * as utils from "../utils";
 import { AlfredRunner } from "./runner";
 import { IAlfredTenant } from "./tenant";
+
+export class OrdererManager implements core.IOrdererManager {
+    constructor(private localOrderManager: LocalOrderManager, private kafkaFactory?: KafkaOrdererFactory) {
+    }
+
+    public async getOrderer(tenantId: string, documentId: string): Promise<core.IOrderer> {
+        if (tenantId === "local" || !this.kafkaFactory) {
+            return this.localOrderManager.get(tenantId, documentId);
+        } else {
+            return this.kafkaFactory.create(tenantId, documentId);
+        }
+    }
+}
 
 export class AlfredResources implements utils.IResources {
     public webServerFactory: core.IWebServerFactory;
 
     constructor(
         public config: Provider,
-        public producer: utils.IProducer,
+        public producer: core.IProducer,
         public redisConfig: any,
         public webSocketLibrary: string,
         public orderManager: core.IOrdererManager,
@@ -44,7 +64,12 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
         const topic = config.get("alfred:topic");
         const metricClientConfig = config.get("metric");
         const maxKafkaMessageSize = bytes.parse(config.get("kafka:maxMessageSize"));
-        const producer = utils.createProducer(kafkaLibrary, kafkaEndpoint, kafkaClientId, topic, maxKafkaMessageSize);
+        const producer = services.createProducer(
+            kafkaLibrary,
+            kafkaEndpoint,
+            kafkaClientId,
+            topic,
+            maxKafkaMessageSize);
         const redisConfig = config.get("redis");
         const webSocketLibrary = config.get("alfred:webSocketLib");
         const authEndpoint = config.get("auth:endpoint");
@@ -73,9 +98,9 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
         await taskMessageSender.initialize();
 
         const nodeCollectionName = config.get("mongo:collectionNames:nodes");
-        const nodeManager = new services.NodeManager(mongoManager, nodeCollectionName);
+        const nodeManager = new NodeManager(mongoManager, nodeCollectionName);
         // this.nodeTracker.on("invalidate", (id) => this.emit("invalidate", id));
-        const reservationManager = new services.ReservationManager(
+        const reservationManager = new ReservationManager(
             nodeManager,
             mongoManager,
             config.get("mongo:collectionNames:reservations"));
@@ -102,7 +127,7 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
             false);
 
         const address = `${await utils.getHostIp()}:4000`;
-        const nodeFactory = new services.LocalNodeFactory(
+        const nodeFactory = new LocalNodeFactory(
             os.hostname(),
             address,
             storage,
@@ -112,12 +137,12 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
             tenantManager,
             tmzConfig.permissions,
             maxSendMessageSize);
-        const localOrderManager = new services.LocalOrderManager(nodeFactory, reservationManager);
-        const kafkaOrdererFactory = new services.KafkaOrdererFactory(
+        const localOrderManager = new LocalOrderManager(nodeFactory, reservationManager);
+        const kafkaOrdererFactory = new KafkaOrdererFactory(
             producer,
             storage,
             maxSendMessageSize);
-        const orderManager = new services.OrdererManager(localOrderManager, kafkaOrdererFactory);
+        const orderManager = new OrdererManager(localOrderManager, kafkaOrdererFactory);
 
         // Tenants attached to the apps this service exposes
         const appTenants = config.get("alfred:tenants") as Array<{ id: string, key: string }>;

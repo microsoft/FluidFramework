@@ -1,7 +1,7 @@
+import * as utils from "@prague/services-utils";
 import { Deferred } from "@prague/utils";
 import * as http from "http";
 import * as winston from "winston";
-import * as utils from "../utils";
 import * as app from "./app";
 
 export class RiddlerRunner implements utils.IRunner {

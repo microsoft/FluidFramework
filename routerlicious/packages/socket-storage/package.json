@@ -22,8 +22,8 @@
     "nock": "^10.0.1",
     "rimraf": "^2.6.2",
     "tslint": "^5.11.0",
-    "tslint-microsoft-contrib": "^5.2.1",
-    "typescript": "^3.0.1"
+    "tslint-microsoft-contrib": "^6.0.0",
+    "typescript": "^3.2.2"
   },
   "dependencies": {
     "@prague/gitresources": "^0.1.0",
@@ -31,15 +31,15 @@
     "@prague/services-client": "^0.1.0",
     "@prague/socket-storage-shared": "^0.1.0",
     "@prague/utils": "^0.1.0",
-    "@types/debug": "^0.0.30",
+    "@types/debug": "^0.0.31",
     "@types/jwt-decode": "^2.2.1",
     "@types/socket.io-client": "^1.4.32",
     "@types/ws": "^6.0.1",
     "axios": "^0.18.0",
-    "debug": "^3.1.0",
+    "debug": "^4.1.0",
     "isomorphic-ws": "^4.0.1",
     "jwt-decode": "^2.2.0",
     "socket.io-client": "^2.1.1",
-    "ws": "^6.1.0"
+    "ws": "^6.1.2"
   }
 }

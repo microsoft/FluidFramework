@@ -1,0 +1,40 @@
+{
+  "name": "@prague/test-utils",
+  "version": "0.1.0",
+  "description": "Prague test utility methods",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "npm run tsc && npm run tslint",
+    "build:full": "npm run build",
+    "clean": "rimraf dist && rimraf lib",
+    "tsc": "tsc",
+    "tslint": "tslint --project tsconfig.json --format verbose"
+  },
+  "author": "Microsoft",
+  "repository": "microsoft/prague",
+  "devDependencies": {
+    "rimraf": "^2.6.2",
+    "tslint": "^5.11.0",
+    "tslint-microsoft-contrib": "^6.0.0",
+    "typescript": "^3.2.2"
+  },
+  "dependencies": {
+    "@prague/agent": "^0.1.0",
+    "@prague/client-api": "^0.1.0",
+    "@prague/gitresources": "^0.1.0",
+    "@prague/runtime-definitions": "^0.1.0",
+    "@prague/services-client": "^0.1.0",
+    "@prague/services-core": "^0.1.0",
+    "@prague/socket-storage": "^0.1.0",
+    "@prague/utils": "^0.1.0",
+    "@types/lodash": "^4.14.118",
+    "@types/nconf": "^0.0.37",
+    "@types/node": "^10.12.12",
+    "@types/string-hash": "^1.1.1",
+    "lodash": "^4.17.11",
+    "moniker": "^0.1.2",
+    "nconf": "^0.10.0",
+    "string-hash": "^1.1.3"
+  }
+}

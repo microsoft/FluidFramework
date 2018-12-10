@@ -1,7 +1,7 @@
 import { ISequencedDocumentMessage } from "@prague/runtime-definitions";
+import * as utils from "@prague/services-utils";
 import { Router } from "express";
 import { Provider } from "nconf";
-import * as utils from "../../../utils";
 import { IAlfredTenant } from "../../tenant";
 
 const sequenceNumber = "sequenceNumber";

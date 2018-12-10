@@ -347,7 +347,8 @@ export class SharedString extends CollaborativeMap {
         let prevSeg: MergeTree.Segment;
         for (const segment of orderedSegments) {
             if (prevSeg !== segment) {
-                segment.segmentGroup = segmentGroup;
+                segment.segmentGroups.clear();
+                segment.segmentGroups.enqueue(segmentGroup);
                 this.client.segmentToOps(segment, opList);
                 prevSeg = segment;
             }
@@ -391,8 +392,8 @@ export class SharedString extends CollaborativeMap {
         const intervalCollections = this.runtime.createChannel(uuid(), MapExtension.Type) as IMap;
         this.set("intervalCollections", intervalCollections);
         // TODO will want to update initialize to operate synchronously
-        this.initialize(0, 0, [], null, false, this.id, null).catch(
-            (error) => {
+        this.initialize(0, 0, [], null, false, this.id, null)
+            .catch((error) => {
                 console.error("initializeContent", error);
             });
     }
@@ -525,7 +526,8 @@ export class SharedString extends CollaborativeMap {
             messages,
             collaborative,
             originBranch,
-            services).then(
+            services)
+            .then(
                 () => {
                     this.loadFinished();
                 },

@@ -1,0 +1,40 @@
+import * as core from "@prague/services-core";
+import { EventEmitter } from "events";
+
+export interface IEvent {
+    event: string;
+    args: any[];
+}
+
+export class TestTopic implements core.ITopic {
+    public events = new Map<string, IEvent[]>();
+
+    public emit(event: string, ...args: any[]) {
+        if (!this.events.has(event)) {
+            this.events.set(event, []);
+        }
+
+        this.events.get(event).push({ args, event });
+    }
+
+    public getEvents(key: string) {
+        return this.events.get(key);
+    }
+}
+
+export class TestPublisher implements core.IPublisher {
+    private events = new EventEmitter();
+    private topics: { [topic: string]: TestTopic } = {};
+
+    public on(event: string, listener: (...args: any[]) => void) {
+        this.events.on(event, listener);
+    }
+
+    public to(topic: string): TestTopic {
+        if (!(topic in this.topics)) {
+            this.topics[topic] = new TestTopic();
+        }
+
+        return this.topics[topic];
+    }
+}

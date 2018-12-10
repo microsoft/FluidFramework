@@ -423,6 +423,12 @@ const commands: ICmd[] = [
         },
         key: "insert ivy",
     },
+    {
+        exec: (f) => {
+            f.insertChaincode("scriptor", "@ms/scriptor@0.23.25");
+        },
+        key: "insert scriptor",
+    },
 ];
 
 export function moveMarker(flowView: FlowView, fromPos: number, toPos: number) {
@@ -4370,7 +4376,8 @@ export class FlowView extends ui.Component {
         window.oncontextmenu = preventD;
         this.element.onmousemove = preventD;
         this.element.onmouseup = preventD;
-        this.element.onselectstart = preventD;
+        // TODO onmousewheel does not appear on DOM d.ts
+        (this.element as any).onselectstart = preventD;
         let prevX = Nope;
         let prevY = Nope;
         let downX = Nope;
@@ -4510,7 +4517,8 @@ export class FlowView extends ui.Component {
             this.cursor.show();
         };
 
-        this.element.onmousewheel = (e) => {
+        // TODO onmousewheel does not appear on DOM d.ts
+        (this.element as any).onmousewheel = (e) => {
             if (!this.wheelTicking) {
                 const factor = 20;
                 let inputDelta = e.wheelDelta;

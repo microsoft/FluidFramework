@@ -25,9 +25,9 @@ export interface IDeltaQueue extends EventEmitter {
     length: number;
 
     /**
-     * Flag indicating whether or not the queue is empty
+     * Flag indicating whether or not the queue is idle
      */
-    empty: boolean;
+    idle: boolean;
 
     /**
      * Pauses processing on the queue

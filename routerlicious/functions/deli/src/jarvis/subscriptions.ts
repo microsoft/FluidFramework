@@ -12,7 +12,7 @@ export class RedisSubscriptionManager {
     private subscriptions = new Map<string, ISubscriptionDetails>();
 
     constructor(host: string, port: number) {
-        this.client = redis.createClient(6379, "redis");
+        this.client = redis.createClient(port, host);
 
         this.client.on("message", (topic, messageStr) => {
             const details = this.subscriptions.get(topic);

@@ -1,0 +1,224 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "routerlicious.fullname" . }}
+  labels:
+    app: {{ template "routerlicious.name" . }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    component: "{{ .Values.name }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+data:
+  config.json: |
+    {
+        "logger": {
+            "colorize": false,
+            "morganFormat": "short",
+            "json": true,
+            "level": "info",
+            "timestamp": false,
+            "label": "winston"
+        },
+        "mongo": {
+            "endpoint": "{{ .Values.mongodb.url }}",
+            "collectionNames": {
+                "deltas": "deltas",
+                "documents": "documents",
+                "partitions": "partitions",
+                "tenants": "tenants",
+                "nodes": "nodes",
+                "reservations": "reservations"
+            }
+        },
+        "kafka": {
+            "endpoint": "{{ .Values.kafka.url }}:9092",
+            "lib": {
+                "name": "kafka-node",
+                "endpoint": "{{ .Values.zookeeper.url }}"
+            },
+            "maxMessageSize": "1MB"
+        },
+        "alfred": {
+            "kafkaClientId": "{{ template "jarvis.fullname" . }}",
+            "maxMessageSize": "16KB",
+            "topic": "{{ .Values.kafka.topics.rawdeltas }}",
+            "bucket": "snapshots",
+            "restJsonSize": "50mb",
+            "tenants": [
+                {{- range $index, $tenant := .Values.jarvis.tenants }}
+                {{ toJson . }},
+                {{- end }}
+                {
+                    "id": "prague",
+                    "key": "43cfc3fbf04a97c0921fd23ff10f9e4b"
+                },
+                {
+                    "id": "github",
+                    "key": "0bea3f87c186991a69245a29dc3f61d2"
+                },
+                {
+                    "id": "cobalt",
+                    "key": "0e3c439e9ba63d85936c7e7e9c79478c"
+                },
+                {
+                    "id": "local",
+                    "key": "43cfc3fbf04a97c0921fd23ff10f9e4b"
+                }
+            ]
+        },
+        "client": {
+            "type": "browser",
+            "permission": []
+        },
+        "login": {
+            "enabled": true,
+            "microsoft": {
+                "clientId": "3d642166-9884-4463-8248-78961b8c1300",
+                "secret": "IefegJIsumWtD1Of/9AIUWvm6ryR624vgMtKRmcNEsQ="
+            },
+            "accounts": [
+                {
+                    "username": "test",
+                    "password": "mRTvhfDTE3FYbVc"
+                }
+            ]
+        },
+        "deli": {
+            "topics": {
+                "receive": "{{ .Values.kafka.topics.rawdeltas }}",
+                "send": "{{ .Values.kafka.topics.deltas }}"
+            },
+            "kafkaClientId": "{{ template "deli.fullname" . }}",
+            "groupId": "{{ template "deli.fullname" . }}",
+            "checkpointBatchSize": 10,
+            "checkpointTimeIntervalMsec": 1000
+        },
+        "tmz": {
+            "queues": ["paparazziQueue2", "augloopQueue2"],
+            "permissions": {
+                "paparazziQueue": ["snapshot", "spell", "intel", "translation", "chaincode"],
+                "augloopQueue": ["augmentation"]
+            }
+        },
+        "system": {
+            "topics": {
+                "send": "{{ .Values.kafka.topics.deltas }}"
+            }
+        },
+        "auth": {
+            "endpoint": "{{ .Values.riddler.url }}"
+        },
+        "lambdas": {
+            "deli": {
+                "group": "{{ template "deli.fullname" . }}",
+                "topic": "{{ .Values.kafka.topics.rawdeltas }}"
+            },
+            "scriptorium": {
+                "group": "{{ template "scriptorium.fullname" . }}",
+                "topic": "{{ .Values.kafka.topics.deltas }}"
+            },
+            "bbc": {
+                "group": "{{ template "bbc.fullname" . }}",
+                "topic": "{{ .Values.kafka.topics.deltas }}"
+            }
+        },
+        "scriptorium": {
+            "topic": "{{ .Values.kafka.topics.deltas }}",
+            "kafkaClientId": "{{ template "scriptorium.fullname" . }}",
+            "groupId": "{{ template "scriptorium.fullname" . }}",
+            "checkpointBatchSize": 1,
+            "checkpointTimeIntervalMsec": 1000
+        },
+        "rabbitmq": {
+            "connectionString": "{{ .Values.rabbitmq.connectionString }}"
+        },
+        "redis": {
+            "host": "{{ .Values.redis.url }}",
+            "port": 6379
+        },
+        "error": {
+            "track": true,
+            "endpoint" : "https://25f5c231660f474fb85fb4daeb070029:3301d25c7ed9434688e4f5bd998b9739@sentry.wu2.prague.office-int.com/2"
+        },
+        "worker": {
+            "intelligence": {
+                "resume": {
+                    "deviceId": "routerlicious",
+                    "host": "pkarimov-paidIOT.azure-devices.net",
+                    "sharedAccessKeyName": "iothubowner",
+                    "sharedAccessKey": "8mvOmNnUklwnuzY+U96V51w+qCq262ZUpSkdw8nTZ18=",
+                    "url": "{{ .Values.jarvis.externalUrl }}/intelligence/resume"
+                },
+                "textAnalytics": {
+                    "key": "c8b60dc5e49849ce903d7d29a2dce550"
+                },
+                "nativeTextAnalytics": {
+                    "enable": false,
+                    "url": "http://praguepy.westus2.cloudapp.azure.com/"
+                }
+            },
+            "alfredUrl": "http://{{ template "jarvis.fullname" . }}",
+            "serverUrl": "{{ .Values.jarvis.externalUrl }}",
+            "blobStorageUrl": "{{ .Values.historian.externalUrl }}",
+            "repository": "prague",
+            "npm": "https://pragueauspkn-3873244262.azureedge.net",
+            "permission": ["snapshot", "spell", "intel", "translation", "chaincode"]
+        },
+        "tenantConfig": [
+            {
+                "_id": "prague",
+                "key": "43cfc3fbf04a97c0921fd23ff10f9e4b",
+                "storage": {
+                    "url": "{{ .Values.gitrest.url }}",
+                    "owner": "prague",
+                    "repository": "prague"
+                }
+            },
+            {
+                "_id": "github",
+                "key": "0bea3f87c186991a69245a29dc3f61d2",
+                "storage": {
+                    "url": "https://api.github.com",
+                    "owner": "kurtb",
+                    "repository": "praguedocs",
+                    "direct": "https://api.github.com",
+                    "credentials": {
+                        "user": "praguegit",
+                        "password": "8d043006d0a2704d4dd9972f848f1982026672a1"
+                    }
+                }
+            },
+            {
+                "_id": "cobalt",
+                "key": "0e3c439e9ba63d85936c7e7e9c79478c",
+                "storage": {
+                    "url": "{{ .Values.cobalt.url }}",
+                    "owner": "prague",
+                    "repository": "prague"
+                }
+            },
+            {
+                "_id": "local",
+                "key": "43cfc3fbf04a97c0921fd23ff10f9e4b",
+                "storage": {
+                    "url": "{{ .Values.gitrest.url }}",
+                    "owner": "prague",
+                    "repository": "local"
+                }
+            }
+        ],
+        "metric": {
+            "client": "telegraf",
+            "telegraf": {
+                "host": "polling-telegraf-service.metric",
+                "port": 8094
+            }
+        },
+        "minio": {
+            "endpoint": "{{ .Values.minio.endpoint }}",
+            "port": 9000,
+            "accessKey": "prague",
+            "secretKey": "mhioAkNXTwdX4dXWgKgXVtHo",
+            "bucket": "agents"
+        }
+    }

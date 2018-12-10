@@ -51,8 +51,8 @@ module.exports = env => {
                         }
                     }],
                     exclude: [
-                        "/node_modules/",
-                        "/dist/",
+                        /node_modules/,
+                        /dist/,
                     ]
                 }
             ]
@@ -73,12 +73,10 @@ module.exports = env => {
             publicPath: false
         },
         plugins: [
-/*
             new ForkTsCheckerWebpackPlugin({
                 checkSyntacticErrors: true,
                 workers: typeCheckingCores
             }),
-*/
         ]
     };
 
