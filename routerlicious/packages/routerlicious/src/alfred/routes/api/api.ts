@@ -3,10 +3,12 @@ import {
     IClientJoin,
     IDocumentMessage,
     IDocumentSystemMessage,
+    ITokenClaims,
     IUser,
     MessageType,
     Robot } from "@prague/runtime-definitions";
 import { Router } from "express";
+import * as jwt from "jsonwebtoken";
 import * as moniker from "moniker";
 import * as core from "../../../core";
 import * as utils from "../../../utils";
@@ -20,42 +22,59 @@ interface IOperation {
 
 export function create(
     producer: utils.IProducer,
-    appTenants: IAlfredTenant[]): Router {
+    appTenants: IAlfredTenant[],
+    tenantManager: core.ITenantManager): Router {
 
     const router: Router = Router();
 
     router.post("/:tenantId?/:id", (request, response) => {
-        const tenantId = request.params.tenantId || appTenants[0].id;
-        const documentId = request.params.id;
-        const clientId = moniker.choose();
+        const token = request.headers["access-token"] as string;
+        console.log(token);
+        if (token) {
+            const tenantId = request.params.tenantId || appTenants[0].id;
+            const documentId = request.params.id;
+            const claims = jwt.decode(token) as ITokenClaims;
+            if (!claims || claims.documentId !== documentId || claims.tenantId !== tenantId) {
+                response.status(400).json( {error: "Invalid access token"} );
+            } else {
+                const validP = tenantManager.verifyToken(tenantId, token);
+                validP.then(() => {
+                    const clientId = moniker.choose();
 
-        const reqOps = request.body as IOperation[];
+                    const reqOps = request.body as IOperation[];
 
-        const detail: IClient = {
-            permission: [],
-            type: Robot,
-        };
-        const clientDetail: IClientJoin = {
-            clientId,
-            detail,
-        };
+                    const detail: IClient = {
+                        permission: [],
+                        type: Robot,
+                    };
+                    const clientDetail: IClientJoin = {
+                        clientId,
+                        detail,
+                    };
 
-        // Send join message.
-        const joinMessage = craftSystemMessage(tenantId, documentId, clientDetail);
-        producer.send(joinMessage, tenantId, documentId);
+                    // Send join message.
+                    const joinMessage = craftSystemMessage(tenantId, documentId, clientDetail);
+                    producer.send(joinMessage, tenantId, documentId);
 
-        let clSeqNum = 1;
-        for (const reqOp of reqOps) {
-            const op = craftOp(reqOp);
-            const opMessage = craftMessage(tenantId, documentId, clientId, JSON.stringify(op), clSeqNum++);
-            producer.send(opMessage, tenantId, documentId);
+                    let clSeqNum = 1;
+                    for (const reqOp of reqOps) {
+                        const op = craftOp(reqOp);
+                        const opMessage = craftMessage(tenantId, documentId, clientId, JSON.stringify(op), clSeqNum++);
+                        producer.send(opMessage, tenantId, documentId);
+                    }
+
+                    // Send leave message.
+                    const leaveMessage = craftSystemMessage(tenantId, documentId, clientId);
+                    producer.send(leaveMessage, tenantId, documentId);
+
+                    response.status(200).json();
+                }, () => {
+                    response.status(401).json();
+                });
+            }
+        } else {
+            response.status(400).json( {error: "Missing access token"} );
         }
-
-        // Send leave message.
-        const leaveMessage = craftSystemMessage(tenantId, documentId, clientId);
-        producer.send(leaveMessage, tenantId, documentId);
-
-        response.status(200).json( {status: "Sent client join and leave"} );
     });
 
     return router;
