@@ -23,13 +23,13 @@ interface IOperation {
 export function create(
     producer: utils.IProducer,
     appTenants: IAlfredTenant[],
-    tenantManager: core.ITenantManager): Router {
+    tenantManager: core.ITenantManager,
+    storage: core.IDocumentStorage): Router {
 
     const router: Router = Router();
 
     router.post("/:tenantId?/:id", (request, response) => {
         const token = request.headers["access-token"] as string;
-        console.log(token);
         if (token) {
             const tenantId = request.params.tenantId || appTenants[0].id;
             const documentId = request.params.id;
@@ -37,37 +37,48 @@ export function create(
             if (!claims || claims.documentId !== documentId || claims.tenantId !== tenantId) {
                 response.status(400).json( {error: "Invalid access token"} );
             } else {
-                const validP = tenantManager.verifyToken(tenantId, token);
-                validP.then(() => {
-                    const clientId = moniker.choose();
+                const tokenP = tenantManager.verifyToken(tenantId, token);
+                const docP = storage.getDocument(tenantId, documentId);
+                Promise.all([docP, tokenP]).then((data) => {
+                    // Check document existence.
+                    if (data[0]) {
+                        const clientId = moniker.choose();
 
-                    const reqOps = request.body as IOperation[];
+                        const reqOps = request.body as IOperation[];
 
-                    const detail: IClient = {
-                        permission: [],
-                        type: Robot,
-                    };
-                    const clientDetail: IClientJoin = {
-                        clientId,
-                        detail,
-                    };
+                        const detail: IClient = {
+                            permission: [],
+                            type: Robot,
+                        };
+                        const clientDetail: IClientJoin = {
+                            clientId,
+                            detail,
+                        };
 
-                    // Send join message.
-                    const joinMessage = craftSystemMessage(tenantId, documentId, clientDetail);
-                    producer.send(joinMessage, tenantId, documentId);
+                        // Send join message.
+                        const joinMessage = craftSystemMessage(tenantId, documentId, clientDetail);
+                        producer.send(joinMessage, tenantId, documentId);
 
-                    let clSeqNum = 1;
-                    for (const reqOp of reqOps) {
-                        const op = craftOp(reqOp);
-                        const opMessage = craftMessage(tenantId, documentId, clientId, JSON.stringify(op), clSeqNum++);
-                        producer.send(opMessage, tenantId, documentId);
+                        let clSeqNum = 1;
+                        for (const reqOp of reqOps) {
+                            const op = craftOp(reqOp);
+                            const opMessage = craftMessage(
+                                tenantId,
+                                documentId,
+                                clientId,
+                                JSON.stringify(op),
+                                clSeqNum++);
+                            producer.send(opMessage, tenantId, documentId);
+                        }
+
+                        // Send leave message.
+                        const leaveMessage = craftSystemMessage(tenantId, documentId, clientId);
+                        producer.send(leaveMessage, tenantId, documentId);
+
+                        response.status(200).json();
+                    } else {
+                        response.status(400).json( {error: "Document not found"} );
                     }
-
-                    // Send leave message.
-                    const leaveMessage = craftSystemMessage(tenantId, documentId, clientId);
-                    producer.send(leaveMessage, tenantId, documentId);
-
-                    response.status(200).json();
                 }, () => {
                     response.status(401).json();
                 });
