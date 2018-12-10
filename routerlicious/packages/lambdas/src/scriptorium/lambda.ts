@@ -98,7 +98,7 @@ export class ScriptoriumLambda implements IPartitionLambda {
             .catch((error) => {
                 // Duplicate key errors are ignored since a replay may cause us to insert twice into Mongo.
                 // All other errors result in a rejected promise.
-                if (error.name !== "MongoError" || error.code !== 11000) {
+                if (error.code !== 11000) {
                     // Needs to be a full rejection here
                     return Promise.reject(error);
                 }
@@ -128,7 +128,7 @@ export class ScriptoriumLambda implements IPartitionLambda {
                     },
                     null).catch((error) => {
                         // Same reason as insertOp.
-                        if (error.name !== "MongoError" || error.code !== 11000) {
+                        if (error.code !== 11000) {
                             return Promise.reject(error);
                         }
                     });
