@@ -8,7 +8,6 @@ import {
     MessageType,
     Robot } from "@prague/runtime-definitions";
 import * as core from "@prague/services-core";
-import * as utils from "@prague/services-utils";
 import { Router } from "express";
 import * as jwt from "jsonwebtoken";
 import * as moniker from "moniker";
@@ -21,7 +20,7 @@ interface IOperation {
 }
 
 export function create(
-    producer: utils.IProducer,
+    producer: core.IProducer,
     appTenants: IAlfredTenant[],
     tenantManager: core.ITenantManager,
     storage: core.IDocumentStorage): Router {
