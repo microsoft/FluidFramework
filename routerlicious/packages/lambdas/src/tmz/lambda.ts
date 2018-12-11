@@ -2,7 +2,6 @@ import { IQueueMessage, ISequencedDocumentSystemMessage, IUser, MessageType } fr
 import * as core from "@prague/services-core";
 import * as utils from "@prague/services-utils";
 import * as winston from "winston";
-import { IContext } from "../kafka-service/lambdas";
 import { SequencedLambda } from "../kafka-service/sequencedLambda";
 import { RateLimitter } from "./rateLimitter";
 
@@ -16,7 +15,7 @@ export class TmzLambda extends SequencedLambda {
         private messageSender: core.ITaskMessageSender,
         private tenantManager: core.ITenantManager,
         private permissions: any,
-        protected context: IContext) {
+        protected context: core.IContext) {
         super(context);
         // Make a map of every task and their intended queue.
         // tslint:disable-next-line:forin

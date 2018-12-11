@@ -1,6 +1,6 @@
+import { IContext } from "@prague/services-core";
 import * as assert from "assert";
 import { EventEmitter } from "events";
-import { IContext } from "../kafka-service/lambdas";
 import { DocumentContext } from "./documentContext";
 
 // Constant representing the previous checkpointed offset

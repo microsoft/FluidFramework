@@ -1,11 +1,10 @@
-import { IConsumer, IKafkaMessage } from "@prague/services-core";
+import { IConsumer, IKafkaMessage, IPartitionLambda, IPartitionLambdaFactory } from "@prague/services-core";
 import { AsyncQueue, queue } from "async";
 import { EventEmitter } from "events";
 import { Provider } from "nconf";
 import * as winston from "winston";
 import { CheckpointManager } from "./checkpointManager";
 import { Context } from "./context";
-import { IPartitionLambda, IPartitionLambdaFactory } from "./lambdas";
 
 /**
  * Partition of a message stream. Manages routing messages to individual handlers. And then maintaining the

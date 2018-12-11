@@ -1,5 +1,6 @@
 import {
     ICollection,
+    IPartitionLambda,
     IProducer,
     ISequencedOperationMessage,
     NackOperationType,
@@ -11,7 +12,6 @@ import * as assert from "assert";
 import * as _ from "lodash";
 import * as nconf from "nconf";
 import { ClientSequenceTimeout, DeliLambdaFactory } from "../../deli/lambdaFactory";
-import { IPartitionLambda } from "../../kafka-service/lambdas";
 
 const MinSequenceNumberWindow = 2000;
 

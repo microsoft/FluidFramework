@@ -1,6 +1,6 @@
+import { IContext, IPartitionLambda, IPartitionLambdaFactory } from "@prague/services-core";
 import { EventEmitter } from "events";
 import { Provider } from "nconf";
-import { IContext, IPartitionLambda, IPartitionLambdaFactory } from "../kafka-service/lambdas";
 import { DocumentLambda } from "./documentLambda";
 
 export class DocumentLambdaFactory extends EventEmitter implements IPartitionLambdaFactory {

@@ -1,6 +1,5 @@
-import { BBCLambda } from "@prague/routerlicious/dist/bbc/lambda";
-import { IPublisher, ITopic } from "@prague/routerlicious/dist/core";
-import { IContext, IPartitionLambda, IPartitionLambdaFactory } from "@prague/routerlicious/dist/kafka-service/lambdas";
+import { BBCLambda } from "@prague/lambdas";
+import { IContext, IPartitionLambda, IPartitionLambdaFactory, IPublisher, ITopic } from "@prague/services-core";
 import { EventEmitter } from "events";
 import { Provider } from "nconf";
 import * as redis from "redis";

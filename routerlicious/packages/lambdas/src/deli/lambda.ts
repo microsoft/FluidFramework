@@ -8,10 +8,12 @@ import {
 } from "@prague/runtime-definitions";
 import {
     ICollection,
+    IContext,
     IDocument,
     IKafkaMessage,
     IMessage,
     INackMessage,
+    IPartitionLambda,
     IProducer,
     IRawOperationMessage,
     ISequencedOperationMessage,
@@ -30,7 +32,6 @@ import { isSystemType, RangeTracker } from "@prague/utils";
 import * as assert from "assert";
 import * as _ from "lodash";
 import * as winston from "winston";
-import { IContext, IPartitionLambda } from "../kafka-service/lambdas";
 import { CheckpointContext, ICheckpoint, IClientSequenceNumber } from "./checkpointContext";
 
 export interface ITicketedMessageOutput {

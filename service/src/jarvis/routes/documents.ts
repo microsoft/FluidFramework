@@ -1,6 +1,6 @@
-import { IAlfredTenant } from "@prague/routerlicious/dist/alfred/tenant";
-import { IDocumentStorage } from "@prague/routerlicious/dist/core";
+import { IDocumentStorage } from "@prague/services-core";
 import { Router } from "express";
+import { IAlfredTenant } from "../tenant";
 
 export function create(storage: IDocumentStorage, appTenants: IAlfredTenant[]): Router {
 

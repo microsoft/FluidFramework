@@ -1,8 +1,7 @@
-import { IConsumer, IKafkaMessage, IPartition } from "@prague/services-core";
+import { IConsumer, IKafkaMessage, IPartition, IPartitionLambdaFactory } from "@prague/services-core";
 import { EventEmitter } from "events";
 import { Provider } from "nconf";
 import * as winston from "winston";
-import { IPartitionLambdaFactory } from "./lambdas";
 import { Partition } from "./partition";
 
 /**

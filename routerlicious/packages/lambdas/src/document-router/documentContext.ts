@@ -1,6 +1,6 @@
+import { IContext } from "@prague/services-core";
 import * as assert from "assert";
 import { EventEmitter } from "events";
-import { IContext } from "../kafka-service/lambdas";
 
 export class DocumentContext extends EventEmitter implements IContext {
     // We track two offsets - head and tail. Head represents the largest offset related to this document we

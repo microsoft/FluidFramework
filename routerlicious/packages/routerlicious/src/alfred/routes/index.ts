@@ -1,9 +1,8 @@
-import { IDocumentStorage, IProducer, ITenantManager } from "@prague/services-core";
+import { IAlfredTenant, IDocumentStorage, IProducer, ITenantManager } from "@prague/services-core";
 import * as utils from "@prague/services-utils";
 import * as ensureAuth from "connect-ensure-login";
 import { Router } from "express";
 import { Provider } from "nconf";
-import { IAlfredTenant } from "../tenant";
 import * as agent from "./agent";
 import * as api from "./api";
 import * as canvas from "./canvas";

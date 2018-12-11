@@ -1,18 +1,18 @@
-import { IAlfredTenant } from "@prague/routerlicious/dist/alfred/tenant";
-import * as core from "@prague/routerlicious/dist/core";
-import * as services from "@prague/routerlicious/dist/services";
-import * as utils from "@prague/routerlicious/dist/utils";
+import * as services from "@prague/services";
+import * as core from "@prague/services-core";
+import * as utils from "@prague/services-utils";
 import * as bytes from "bytes";
 import { Provider } from "nconf";
 import { RdkafkaProducer } from "../rdkafka";
 import { KafkaOrdererFactory } from "./kafkaOrderer";
 import { OrdererManager } from "./orderFactory";
 import { JarvisRunner } from "./runner";
+import { IAlfredTenant } from "./tenant";
 
 export class JarvisResources implements utils.IResources {
     constructor(
         public config: Provider,
-        public producer: utils.IProducer,
+        public producer: core.IProducer,
         public redisConfig: any,
         public webSocketLibrary: string,
         public orderManager: OrdererManager,

@@ -1,5 +1,5 @@
+import { IPartitionLambdaFactory, IPlugin } from "@prague/services-core";
 import { Provider } from "nconf";
-import { IPartitionLambdaFactory, IPlugin } from "../kafka-service/lambdas";
 import { DocumentLambdaFactory } from "./lambdaFactory";
 
 export async function create(config: Provider): Promise<IPartitionLambdaFactory> {

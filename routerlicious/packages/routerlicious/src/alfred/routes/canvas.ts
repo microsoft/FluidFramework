@@ -1,7 +1,6 @@
-import { IDocumentStorage, ITenantManager } from "@prague/services-core";
+import { IAlfredTenant, IDocumentStorage, ITenantManager } from "@prague/services-core";
 import { Router } from "express";
 import { Provider } from "nconf";
-import { IAlfredTenant } from "../tenant";
 import * as utils from "../utils";
 import { defaultPartials } from "./partials";
 

@@ -1,5 +1,5 @@
-import { IPartitionLambdaFactory } from "@prague/lambdas";
 import * as services from "@prague/services";
+import { IPartitionLambdaFactory } from "@prague/services-core";
 import * as utils from "@prague/services-utils";
 import * as bytes from "bytes";
 import { Provider } from "nconf";

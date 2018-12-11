@@ -1,8 +1,7 @@
-import { IKafkaMessage } from "@prague/services-core";
+import { IContext, IKafkaMessage, IPartitionLambda, IPartitionLambdaFactory } from "@prague/services-core";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import { Provider } from "nconf";
-import { IContext, IPartitionLambda, IPartitionLambdaFactory } from "../../kafka-service/lambdas";
 
 export class TestLambda implements IPartitionLambda {
     private lastOffset: number;

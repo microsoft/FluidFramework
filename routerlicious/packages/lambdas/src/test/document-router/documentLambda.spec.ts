@@ -1,3 +1,4 @@
+import { IPartitionLambda, IPartitionLambdaFactory } from "@prague/services-core";
 import {
     KafkaMessageFactory,
     MessageFactory,
@@ -6,7 +7,6 @@ import {
 import * as assert from "assert";
 import * as nconf from "nconf";
 import * as plugin from "../../document-router";
-import { IPartitionLambda, IPartitionLambdaFactory } from "../../kafka-service/lambdas";
 import { createTestModule, ITestLambdaModule } from "./testDocumentLambda";
 
 describe("document-router", () => {

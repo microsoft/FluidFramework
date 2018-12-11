@@ -1,6 +1,7 @@
-import { IContext, SequencedLambda } from "@prague/lambdas";
+import { SequencedLambda } from "@prague/lambdas";
 import { IDataBlob, MessageType } from "@prague/runtime-definitions";
 import {
+    IContext,
     IKafkaMessage,
     ISequencedOperationMessage,
     ITenantManager,

@@ -1,10 +1,10 @@
 import {
     ICollection,
+    IContext,
     IDocument,
 } from "@prague/services-core";
 import { IRangeTrackerSnapshot } from "@prague/utils";
 import * as winston from "winston";
-import { IContext } from "../kafka-service/lambdas";
 
 export interface IClientSequenceNumber {
     // Whether or not the object can expire

@@ -1,7 +1,7 @@
+import { IPartitionLambda } from "@prague/services-core";
 import { IEvent, KafkaMessageFactory, MessageFactory, TestContext, TestPublisher } from "@prague/test-utils";
 import * as assert from "assert";
 import { BBCLambda } from "../../bbc/lambda";
-import { IPartitionLambda } from "../../kafka-service/lambdas";
 
 describe("Routerlicious", () => {
     describe("BBC", () => {

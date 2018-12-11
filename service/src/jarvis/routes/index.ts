@@ -1,9 +1,9 @@
-import { IAlfredTenant } from "@prague/routerlicious/dist/alfred/tenant";
-import { IDocumentStorage, ITenantManager } from "@prague/routerlicious/dist/core";
-import * as utils from "@prague/routerlicious/dist/utils";
+import { IDocumentStorage, IProducer, ITenantManager } from "@prague/services-core";
+import * as utils from "@prague/services-utils";
 import * as cors from "cors";
 import { Router } from "express";
 import { Provider } from "nconf";
+import { IAlfredTenant } from "../tenant";
 import * as deltas from "./deltas";
 import * as documents from "./documents";
 import * as tenants from "./tenants";
@@ -13,7 +13,7 @@ export function create(
     tenantManager: ITenantManager,
     storage: IDocumentStorage,
     mongoManager: utils.MongoManager,
-    producer: utils.IProducer,
+    producer: IProducer,
     appTenants: IAlfredTenant[]): Router {
 
     const router: Router = Router();

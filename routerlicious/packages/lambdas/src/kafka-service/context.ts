@@ -1,6 +1,6 @@
+import { IContext } from "@prague/services-core";
 import { EventEmitter } from "events";
 import { CheckpointManager } from "./checkpointManager";
-import { IContext } from "./lambdas";
 
 export class Context extends EventEmitter implements IContext {
     private closed = false;

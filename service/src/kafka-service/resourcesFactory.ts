@@ -1,6 +1,6 @@
-import { IPartitionLambdaFactory } from "@prague/routerlicious/dist/kafka-service/lambdas";
-import { KafkaResources } from "@prague/routerlicious/dist/kafka-service/resourcesFactory";
-import * as utils from "@prague/routerlicious/dist/utils";
+import { KafkaResources } from "@prague/lambdas";
+import { IPartitionLambdaFactory } from "@prague/services-core";
+import * as utils from "@prague/services-utils";
 import * as moniker from "moniker";
 import { Provider } from "nconf";
 import { RdkafkaConsumer } from "../rdkafka";

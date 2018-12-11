@@ -1,9 +1,9 @@
+import { IPartitionLambdaFactory } from "@prague/services-core";
 import { TestContext } from "@prague/test-utils";
 import * as assert from "assert";
 import * as nconf from "nconf";
 import * as path from "path";
 import * as plugin from "../../document-router";
-import { IPartitionLambdaFactory } from "../../kafka-service/lambdas";
 
 describe("document-router", () => {
     describe("Plugin", () => {

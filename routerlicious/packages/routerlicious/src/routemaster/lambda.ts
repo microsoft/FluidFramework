@@ -1,11 +1,11 @@
-import { IContext, SequencedLambda } from "@prague/lambdas";
+import { SequencedLambda } from "@prague/lambdas";
 import { IDocumentSystemMessage, ISequencedDocumentSystemMessage, MessageType } from "@prague/runtime-definitions";
 import * as core from "@prague/services-core";
 import * as utils from "@prague/services-utils";
 import { DocumentManager } from "./documentManager";
 
 export class RouteMasterLambda extends SequencedLambda {
-    constructor(private document: DocumentManager, private producer: core.IProducer, context: IContext) {
+    constructor(private document: DocumentManager, private producer: core.IProducer, context: core.IContext) {
         super(context);
     }
 

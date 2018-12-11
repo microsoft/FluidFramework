@@ -1,8 +1,9 @@
-import { IAlfredTenant } from "@prague/routerlicious/dist/alfred/tenant";
-import * as utils from "@prague/routerlicious/dist/utils";
 import { ISequencedDocumentMessage } from "@prague/runtime-definitions";
+import * as utils from "@prague/services-utils";
 import { Router } from "express";
 import { Provider } from "nconf";
+import { IAlfredTenant } from "../tenant";
+
 const sequenceNumber = "sequenceNumber";
 
 export async function getDeltaContents(

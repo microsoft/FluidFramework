@@ -1,16 +1,15 @@
-import { IAlfredTenant } from "@prague/routerlicious/dist/alfred/tenant";
-import { IDocumentStorage, ITenantManager } from "@prague/routerlicious/dist/core";
-import * as utils from "@prague/routerlicious/dist/utils";
+import { IDocumentStorage, IProducer, ITenantManager } from "@prague/services-core";
+import * as utils from "@prague/services-utils";
 import * as bodyParser from "body-parser";
 import * as compression from "compression";
 import * as express from "express";
 import { Express } from "express";
 import * as morgan from "morgan";
 import { Provider } from "nconf";
-// tslint:disable-next-line:no-var-requires
-const split = require("split");
+import split = require("split");
 import * as winston from "winston";
 import * as alfredRoutes from "./routes";
+import { IAlfredTenant } from "./tenant";
 
 /**
  * Basic stream logging interface for libraries that require a stream to pipe output to (re: Morgan)
@@ -25,7 +24,7 @@ export function create(
     storage: IDocumentStorage,
     appTenants: IAlfredTenant[],
     mongoManager: utils.MongoManager,
-    producer: utils.IProducer) {
+    producer: IProducer) {
 
     // Maximum REST request size
     const requestSize = config.get("alfred:restJsonSize");

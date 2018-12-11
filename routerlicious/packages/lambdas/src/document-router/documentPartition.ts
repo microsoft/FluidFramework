@@ -1,9 +1,8 @@
-import { IKafkaMessage } from "@prague/services-core";
+import { IKafkaMessage, IPartitionLambda, IPartitionLambdaFactory } from "@prague/services-core";
 import { AsyncQueue, queue } from "async";
 import * as _ from "lodash";
 import { Provider } from "nconf";
 import * as winston from "winston";
-import { IPartitionLambda, IPartitionLambdaFactory } from "../kafka-service/lambdas";
 import { DocumentContext } from "./documentContext";
 
 export class DocumentPartition {

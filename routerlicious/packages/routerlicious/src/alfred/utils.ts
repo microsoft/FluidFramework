@@ -1,7 +1,6 @@
-import { ITenantManager } from "@prague/services-core";
+import { IAlfredTenant, ITenantManager } from "@prague/services-core";
 import { generateToken } from "@prague/services-utils";
 import * as _ from "lodash";
-import { IAlfredTenant } from "./tenant";
 
 /**
  * Helper function to return tenant specific configuration

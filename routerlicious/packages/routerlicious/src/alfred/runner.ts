@@ -1,4 +1,5 @@
 import {
+    IAlfredTenant,
     ICollection,
     IDocumentStorage,
     IOrdererManager,
@@ -13,7 +14,6 @@ import { Provider } from "nconf";
 import * as winston from "winston";
 import * as app from "./app";
 import * as io from "./io";
-import { IAlfredTenant } from "./tenant";
 
 export class AlfredRunner implements utils.IRunner {
     private server: IWebServer;

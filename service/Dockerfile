@@ -1,5 +1,5 @@
 # Note that the build of this file is assumed to have happend from the parent directory
-FROM node:8.12.0-slim
+FROM node:8.14.0-slim
 
 # node-gyp dependencies
 RUN apt-get update && apt-get install -y \
@@ -19,8 +19,7 @@ ARG NPM_TOKEN
 WORKDIR /usr/src/server
 COPY . .
 
-WORKDIR /usr/src/server/functions
-RUN npm install --unsafe-perm
+RUN npm install
 RUN npm run build
 
 # Don't run as root user

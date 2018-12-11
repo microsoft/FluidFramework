@@ -1,4 +1,4 @@
-import { IPartitionLambdaFactory } from "@prague/routerlicious/dist/kafka-service/lambdas";
+import { IPartitionLambdaFactory } from "@prague/services-core";
 import { Provider } from "nconf";
 import * as redis from "redis";
 import { BBCLambdaFactory } from "./lambdaFactory";

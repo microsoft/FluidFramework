@@ -1,6 +1,5 @@
-import { IAlfredTenant } from "@prague/routerlicious/dist/alfred/tenant";
-import { IDocumentStorage, ITenantManager } from "@prague/routerlicious/dist/core";
-import * as utils from "@prague/routerlicious/dist/utils";
+import { IDocumentStorage, IProducer, ITenantManager } from "@prague/services-core";
+import * as utils from "@prague/services-utils";
 import { Deferred } from "@prague/utils";
 import * as http from "http";
 import { Provider } from "nconf";
@@ -8,6 +7,7 @@ import * as winston from "winston";
 import * as app from "./app";
 import * as io from "./io";
 import { OrdererManager } from "./orderFactory";
+import { IAlfredTenant } from "./tenant";
 
 export class JarvisRunner implements utils.IRunner {
     private server: http.Server;
@@ -21,7 +21,7 @@ export class JarvisRunner implements utils.IRunner {
         private storage: IDocumentStorage,
         private appTenants: IAlfredTenant[],
         private mongoManager: utils.MongoManager,
-        private producer: utils.IProducer) {
+        private producer: IProducer) {
     }
 
     public start(): Promise<void> {

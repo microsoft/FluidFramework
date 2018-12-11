@@ -1,11 +1,11 @@
-import { create as createDocumentRouter, DeliLambdaFactory, IPartitionLambdaFactory } from "@prague/lambdas";
+import { create as createDocumentRouter, DeliLambdaFactory } from "@prague/lambdas";
 import * as services from "@prague/services";
 import * as core from "@prague/services-core";
 import * as utils from "@prague/services-utils";
 import * as bytes from "bytes";
 import { Provider } from "nconf";
 
-export async function deliCreate(config: Provider): Promise<IPartitionLambdaFactory> {
+export async function deliCreate(config: Provider): Promise<core.IPartitionLambdaFactory> {
     const mongoUrl = config.get("mongo:endpoint") as string;
     const kafkaEndpoint = config.get("kafka:lib:endpoint");
     const kafkaLibrary = config.get("kafka:lib:name");
@@ -41,7 +41,7 @@ export async function deliCreate(config: Provider): Promise<IPartitionLambdaFact
     return new DeliLambdaFactory(mongoManager, collection, forwardProducer, reverseProducer);
 }
 
-export async function create(config: Provider): Promise<IPartitionLambdaFactory> {
+export async function create(config: Provider): Promise<core.IPartitionLambdaFactory> {
     // nconf has problems with prototype methods which prevents us from storing this as a class
     config.set("documentLambda", { create: deliCreate });
     return createDocumentRouter(config);

@@ -1,7 +1,7 @@
 import * as services from "@prague/services";
+import { IContext, IPartitionLambda, IPartitionLambdaFactory } from "@prague/services-core";
 import { EventEmitter } from "events";
 import { Provider } from "nconf";
-import { IContext, IPartitionLambda, IPartitionLambdaFactory } from "../kafka-service/lambdas";
 import { BBCLambda } from "./lambda";
 
 export class BBCLambdaFactory extends EventEmitter implements IPartitionLambdaFactory {

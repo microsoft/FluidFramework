@@ -1,5 +1,5 @@
-import * as core from "@prague/routerlicious/dist/core";
 import { IDocumentMessage, ITokenClaims } from "@prague/runtime-definitions";
+import * as core from "@prague/services-core";
 import * as socketStorage from "@prague/socket-storage";
 import * as http from "http";
 import * as jwt from "jsonwebtoken";

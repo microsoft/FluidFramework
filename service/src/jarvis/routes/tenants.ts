@@ -1,5 +1,5 @@
-import { IAlfredTenant } from "@prague/routerlicious/dist/alfred/tenant";
 import { Router } from "express";
+import { IAlfredTenant } from "../tenant";
 
 export function create(config: any, appTenants: IAlfredTenant[]): Router {
     const router: Router = Router();

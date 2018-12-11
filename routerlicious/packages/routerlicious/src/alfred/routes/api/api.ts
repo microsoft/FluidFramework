@@ -11,7 +11,6 @@ import * as core from "@prague/services-core";
 import { Router } from "express";
 import * as jwt from "jsonwebtoken";
 import * as moniker from "moniker";
-import { IAlfredTenant } from "../../tenant";
 
 interface IOperation {
     op: string;
@@ -21,7 +20,7 @@ interface IOperation {
 
 export function create(
     producer: core.IProducer,
-    appTenants: IAlfredTenant[],
+    appTenants: core.IAlfredTenant[],
     tenantManager: core.ITenantManager,
     storage: core.IDocumentStorage): Router {
 

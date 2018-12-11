@@ -1,8 +1,7 @@
-import * as utils from "@prague/routerlicious/dist/utils";
+import * as utils from "@prague/services-utils";
 import * as nconf from "nconf";
 import * as path from "path";
 import * as winston from "winston";
-import { RdkafkaProducer } from "../rdkafka";
 import { JarvisResourcesFactory, JarvisRunnerFactory } from "./runnerFactory";
 
 /**
@@ -26,21 +25,17 @@ export function runService<T extends utils.IResources>(
         ],
     });
 
-    // Initialize system bus connection
-    const kafkaEndpoint = config.get("kafka:endpoint");
-    const sendTopic = config.get("system:topics:send");
-
-    const producer = new RdkafkaProducer(kafkaEndpoint, sendTopic);
-
     const errorTrackingConfig = config.get("error");
     let runningP;
+
+    // TODO enable once error tracking is exported
     if (errorTrackingConfig.track) {
-        const errorTracker = new utils.NodeErrorTrackingService(errorTrackingConfig.endpoint);
-        errorTracker.track(() => {
-            runningP = utils.runTracked(config, producer, group, resourceFactory, runnerFactory);
-        });
+        // const errorTracker = new utils.NodeErrorTrackingService(errorTrackingConfig.endpoint);
+        // errorTracker.track(() => {
+        runningP = utils.run(config, resourceFactory, runnerFactory);
+        // });
     } else {
-        runningP = utils.runTracked(config, producer, group, resourceFactory, runnerFactory);
+        runningP = utils.run(config, resourceFactory, runnerFactory);
     }
 
     // notify of connection

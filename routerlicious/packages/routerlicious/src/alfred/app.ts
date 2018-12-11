@@ -1,4 +1,4 @@
-import { IDocumentStorage, IProducer, ITenantManager } from "@prague/services-core";
+import { IAlfredTenant, IDocumentStorage, IProducer, ITenantManager } from "@prague/services-core";
 import * as utils from "@prague/services-utils";
 import * as bodyParser from "body-parser";
 import * as compression from "compression";
@@ -21,7 +21,6 @@ const split = require("split");
 import * as expiry from "static-expiry";
 import * as winston from "winston";
 import * as alfredRoutes from "./routes";
-import { IAlfredTenant } from "./tenant";
 
 // Base endpoint to expose static files at
 const staticFilesEndpoint = "/public";

@@ -12,7 +12,6 @@ import * as bytes from "bytes";
 import { Provider } from "nconf";
 import * as os from "os";
 import { AlfredRunner } from "./runner";
-import { IAlfredTenant } from "./tenant";
 
 export class OrdererManager implements core.IOrdererManager {
     constructor(private localOrderManager: LocalOrderManager, private kafkaFactory?: KafkaOrdererFactory) {
@@ -38,7 +37,7 @@ export class AlfredResources implements utils.IResources {
         public orderManager: core.IOrdererManager,
         public tenantManager: core.ITenantManager,
         public storage: core.IDocumentStorage,
-        public appTenants: IAlfredTenant[],
+        public appTenants: core.IAlfredTenant[],
         public mongoManager: utils.MongoManager,
         public port: any,
         public documentsCollectionName: string,

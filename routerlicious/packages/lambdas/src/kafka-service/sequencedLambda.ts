@@ -1,6 +1,5 @@
-import { IKafkaMessage } from "@prague/services-core";
+import { IContext, IKafkaMessage, IPartitionLambda } from "@prague/services-core";
 import { AsyncQueue, queue } from "async";
-import { IContext, IPartitionLambda } from "./lambdas";
 
 /**
  * A sequenced lambda processes incoming messages one at a time based on a promise returned by the message handler.

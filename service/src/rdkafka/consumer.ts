@@ -1,4 +1,4 @@
-import { IConsumer } from "@prague/routerlicious/dist/utils";
+import { IConsumer } from "@prague/services-core";
 import { EventEmitter } from "events";
 import * as Kafka from "node-rdkafka";
 

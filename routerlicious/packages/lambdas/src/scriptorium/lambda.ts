@@ -1,12 +1,13 @@
 import {
     ICollection,
+    IContext,
     IKafkaMessage,
+    IPartitionLambda,
     ISequencedOperationMessage,
     SequencedOperationType,
 } from "@prague/services-core";
 import { extractBoxcar } from "@prague/services-utils";
 import * as winston from "winston";
-import { IContext, IPartitionLambda } from "../kafka-service/lambdas";
 
 export class ScriptoriumLambda implements IPartitionLambda {
     private pending = new Map<string, ISequencedOperationMessage[]>();

@@ -1,6 +1,6 @@
+import { IContext } from "@prague/services-core";
 import * as assert from "assert";
 import { DocumentContextManager } from "../../document-router/contextManager";
-import { IContext } from "../../kafka-service/lambdas";
 
 class TestContext implements IContext {
     public offset = -1;

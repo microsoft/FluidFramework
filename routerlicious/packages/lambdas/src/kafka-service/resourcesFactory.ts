@@ -1,9 +1,8 @@
 import { createConsumer } from "@prague/services";
-import { IConsumer } from "@prague/services-core";
+import { IConsumer, IPartitionLambdaFactory } from "@prague/services-core";
 import { IResources, IResourcesFactory } from "@prague/services-utils";
 import * as moniker from "moniker";
 import { Provider } from "nconf";
-import { IPartitionLambdaFactory } from "./lambdas";
 
 export interface IKafkaResources extends IResources {
     lambdaFactory: IPartitionLambdaFactory;

@@ -1,8 +1,14 @@
-import * as core from "@prague/services-core";
+import {
+    ICollection,
+    IContext,
+    IDocument,
+    IPartitionLambda,
+    IPartitionLambdaFactory,
+    IProducer,
+} from "@prague/services-core";
 import * as utils from "@prague/services-utils";
 import { EventEmitter } from "events";
 import { Provider } from "nconf";
-import { IContext, IPartitionLambda, IPartitionLambdaFactory } from "../kafka-service/lambdas";
 import { DeliLambda } from "./lambda";
 
 // We expire clients after 5 minutes of no activity
@@ -14,9 +20,9 @@ export const ActivityCheckingTimeout = 30 * 1000;
 export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaFactory {
     constructor(
         private mongoManager: utils.MongoManager,
-        private collection: core.ICollection<core.IDocument>,
-        private forwardProducer: core.IProducer,
-        private reverseProducer: core.IProducer) {
+        private collection: ICollection<IDocument>,
+        private forwardProducer: IProducer,
+        private reverseProducer: IProducer) {
         super();
     }
 

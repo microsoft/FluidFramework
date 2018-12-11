@@ -1,5 +1,10 @@
 // import { GitManager } from "@prague/services-client";
 
+export interface IAlfredTenant {
+    id: string;
+    key: string;
+}
+
 export interface ITenantConfig {
     id: string;
 
