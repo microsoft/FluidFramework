@@ -3,7 +3,6 @@ import {
     ICodeLoader,
     IPraguePackage,
 } from "@prague/runtime-definitions";
-import Axios from "axios";
 
 async function loadScript(scriptUrl: string): Promise<{}> {
     return new Promise((resolve, reject) => {
@@ -33,14 +32,17 @@ export class WebLoader implements ICodeLoader {
             return Promise.reject("Invalid package");
         }
 
+        // TODO: Add caching so you don't download the same chaincode multiple times in a given session.
         const [, scope, name, version] = components;
         const packageUrl = `${this.baseUrl}/${encodeURI(scope)}/${encodeURI(`${name}@${version}`)}`;
-        const packageJson = await Axios.get<IPraguePackage>(`${packageUrl}/package.json`);
+
+        const response = await fetch(`${packageUrl}/package.json`);
+        const packageJson = await response.json() as IPraguePackage;
 
         await Promise.all(
-            packageJson.data.prague.browser.bundle.map(async (bundle) => loadScript(`${packageUrl}/${bundle}`)));
+            packageJson.prague.browser.bundle.map(async (bundle) => loadScript(`${packageUrl}/${bundle}`)));
 
         // tslint:disable-next-line:no-unsafe-any
-        return window[packageJson.data.prague.browser.entrypoint];
+        return window[packageJson.prague.browser.entrypoint];
     }
 }

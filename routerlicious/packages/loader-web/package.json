@@ -29,7 +29,6 @@
     "@prague/gitresources": "^0.1.0",
     "@prague/loader": "^0.1.0",
     "@prague/runtime-definitions": "^0.1.0",
-    "axios": "^0.18.0",
     "chalk": "^2.4.1"
   }
 }
