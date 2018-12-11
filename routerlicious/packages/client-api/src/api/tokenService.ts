@@ -3,7 +3,6 @@ import * as jwtDecode from "jwt-decode";
 
 export class TokenService implements ITokenService {
     public extractClaims(token: string): ITokenClaims {
-        // tslint:disable-next-line:no-unsafe-any
-        return jwtDecode(token) as ITokenClaims;
+        return jwtDecode(token);
     }
 }

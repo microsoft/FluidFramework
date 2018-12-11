@@ -1,5 +1,5 @@
-import { run } from "../../utils/mercator";
-import { getRandomName } from "./../../utils/dockerNames";
+import { getRandomName } from "@prague/services-utils/dist/dockerNames";
+import { run } from "@prague/tools-core";
 
 export function initialize() {
     document.getElementById("run").onclick = async (ev) => {

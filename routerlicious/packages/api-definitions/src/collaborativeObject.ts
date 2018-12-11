@@ -28,7 +28,7 @@ export abstract class CollaborativeObject extends EventEmitter implements IColla
     // tslint:enable:variable-name
 
     // Locally applied operations not yet ACK'd by the server
-    private pendingOps = new Deque<IObjectMessage>();
+    private readonly pendingOps = new Deque<IObjectMessage>();
 
     private services: IDistributedObjectServices;
 

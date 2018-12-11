@@ -1,0 +1,26 @@
+{
+  "name": "token-generator",
+  "version": "1.0.0",
+  "description": "An utility to generate jwt token for authorizing against prague endpoint.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "npm run tsc && npm run tslint",
+    "tsc": "tsc",
+    "tslint": "tslint --project tsconfig.json --format verbose"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "chalk": "^2.4.1",
+    "commander": "^2.19.0",
+    "jsonwebtoken": "^8.4.0"
+  },
+  "devDependencies": {
+    "@types/chalk": "^2.2.0",
+    "@types/commander": "^2.12.2",
+    "@types/jsonwebtoken": "^8.3.0",
+    "tslint": "^5.11.0",
+    "typescript": "^3.2.2"
+  }
+}

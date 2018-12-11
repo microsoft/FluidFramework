@@ -1,6 +1,5 @@
+import { IAlfredTenant, IDocumentStorage } from "@prague/services-core";
 import { Router } from "express";
-import { IDocumentStorage } from "../../../core";
-import { IAlfredTenant } from "../../tenant";
 
 export function create(storage: IDocumentStorage, appTenants: IAlfredTenant[]): Router {
 

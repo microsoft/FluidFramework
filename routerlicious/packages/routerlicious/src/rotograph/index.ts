@@ -1,6 +1,6 @@
+import * as services from "@prague/services";
+import { IPartitionLambdaFactory } from "@prague/services-core";
 import { Provider } from "nconf";
-import { IPartitionLambdaFactory } from "../kafka-service/lambdas";
-import * as services from "../services";
 import { RotographLambdaFactory } from "./lambdaFactory";
 
 export async function create(config: Provider): Promise<IPartitionLambdaFactory> {

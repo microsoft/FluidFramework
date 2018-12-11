@@ -6,6 +6,7 @@ import * as ops from "./ops";
 import * as Properties from "./properties";
 import * as assert from "assert";
 import { IRelativePosition } from "./index";
+import { SegmentGroupCollection } from "./segmentGroupCollection";
 
 export interface ReferencePosition {
     properties: Properties.PropertySet;
@@ -154,7 +155,7 @@ export interface IRemovalInfo {
 }
 
 export interface Segment extends IMergeNode, IRemovalInfo {
-    segmentGroup?: SegmentGroup;
+    readonly segmentGroups: SegmentGroupCollection;
     seq?: number;  // if not present assumed to be previous to window min
     clientId?: number;
     localRefs?: LocalReference[];
@@ -483,7 +484,7 @@ export abstract class BaseSegment extends MergeNode implements Segment {
     removedSeq: number;
     removedClientId: number;
     removedClientOverlap: number[];
-    segmentGroup: SegmentGroup;
+    readonly segmentGroups: SegmentGroupCollection = new SegmentGroupCollection(this);
     properties: Properties.PropertySet;
     localRefs: LocalReference[];
     hierRefCount?: number;
@@ -842,7 +843,7 @@ export class TextSegment extends BaseSegment {
             if (this.properties) {
                 leafSegment.addProperties(Properties.extend(Properties.createMap<any>(), this.properties));
             }
-            segmentCopy(this, leafSegment, true);
+            segmentCopy(this, leafSegment);
             if (this.localRefs) {
                 this.splitLocalRefs(pos, leafSegment);
             }
@@ -950,7 +951,7 @@ export class TextSegment extends BaseSegment {
     }
 }
 
-function segmentCopy(from: Segment, to: Segment, propSegGroup = false) {
+function segmentCopy(from: Segment, to: Segment) {
     to.parent = from.parent;
     to.removedClientId = from.removedClientId;
     to.removedSeq = from.removedSeq;
@@ -970,15 +971,7 @@ function segmentCopy(from: Segment, to: Segment, propSegGroup = false) {
     to.seq = from.seq;
     to.clientId = from.clientId;
     to.removedClientOverlap = from.removedClientOverlap;
-    to.segmentGroup = from.segmentGroup;
-    if (to.segmentGroup) {
-        if (propSegGroup) {
-            addToSegmentGroup(to);
-        }
-        else {
-            segmentGroupReplace(from, to);
-        }
-    }
+    from.segmentGroups.copyTo(to);
 }
 
 function incrementalGatherText(segment: Segment, state: IncrementalMapState<TextSegment>) {
@@ -1678,29 +1671,6 @@ export class PartialSequenceLengths {
     }
 }
 
-function addToSegmentGroup(segment: Segment) {
-    segment.segmentGroup.segments.push(segment);
-}
-
-function removeFromSegmentGroup(segmentGroup: SegmentGroup, toRemove: Segment) {
-    let index = segmentGroup.segments.indexOf(toRemove);
-    if (index >= 0) {
-        segmentGroup.segments.splice(index, 1);
-    }
-    toRemove.segmentGroup = undefined;
-}
-
-function segmentGroupReplace(currentSeg: Segment, newSegment: Segment) {
-    let segmentGroup = currentSeg.segmentGroup;
-    for (let i = 0, len = segmentGroup.segments.length; i < len; i++) {
-        if (segmentGroup.segments[i] == currentSeg) {
-            segmentGroup.segments[i] = newSegment;
-            break;
-        }
-    }
-    currentSeg.segmentGroup = undefined;
-}
-
 export function clock() {
     if (process.hrtime) {
         return process.hrtime();
@@ -2227,7 +2197,7 @@ export class MergeTree {
                 }
                 else {
                     if ((segment.seq <= this.collabWindow.minSeq) &&
-                        (!segment.segmentGroup) && (segment.seq != UnassignedSequenceNumber)) {
+                        segment.segmentGroups.empty && (segment.seq != UnassignedSequenceNumber)) {
                         if (prevSegment && prevSegment.canAppend(segment, this)) {
                             if (MergeTree.traceAppend) {
                                 console.log(`${this.getLongClientId(this.collabWindow.clientId)}: append ${(<TextSegment>prevSegment).text} + ${(<TextSegment>segment).text}; cli ${this.getLongClientId(prevSegment.clientId)} + cli ${this.getLongClientId(segment.clientId)}`);
@@ -3010,7 +2980,8 @@ export class MergeTree {
                         }
                     }
                 }
-                pendingSegment.segmentGroup = undefined;
+                const segmentGroup = pendingSegment.segmentGroups.dequeue();
+                assert.equal(segmentGroup, pendingSegmentGroup);
                 clientId = this.collabWindow.clientId;
                 if (nodesToUpdate.indexOf(pendingSegment.parent) < 0) {
                     nodesToUpdate.push(pendingSegment.parent);
@@ -3033,8 +3004,7 @@ export class MergeTree {
             }
         }
         // TODO: share this group with UNDO
-        segment.segmentGroup = segmentGroup;
-        addToSegmentGroup(segment);
+        segment.segmentGroups.enqueue(segmentGroup);
         return segmentGroup;
     }
 
@@ -3563,12 +3533,6 @@ export class MergeTree {
                         // replace because comes later
                         removalInfo.removedClientId = clientId;
                         removalInfo.removedSeq = seq;
-                        if (segment.segmentGroup) {
-                            removeFromSegmentGroup(segment.segmentGroup, segment);
-                        }
-                        else {
-                            console.log(`missing segment group for seq ${seq} ref seq ${refSeq}`);
-                        }
                     }
                     else {
                         // do not replace earlier sequence number for remove

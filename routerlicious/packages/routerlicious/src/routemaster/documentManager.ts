@@ -1,6 +1,6 @@
 import { ISequencedDocumentMessage } from "@prague/runtime-definitions";
+import * as core from "@prague/services-core";
 import { Deferred } from "@prague/utils";
-import * as core from "../core";
 
 export class DocumentManager {
     public static async Create(

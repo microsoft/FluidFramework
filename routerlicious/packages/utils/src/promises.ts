@@ -4,7 +4,7 @@ import * as assert from "assert";
  * A deferred creates a promise and the ability to resolve or reject it
  */
 export class Deferred<T> {
-    private p: Promise<T>;
+    private readonly p: Promise<T>;
     private res: (value?: T | PromiseLike<T>) => void;
     private rej: (reason?: any) => void;
 

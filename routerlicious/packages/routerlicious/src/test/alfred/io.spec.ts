@@ -1,11 +1,9 @@
+import { KafkaOrdererFactory } from "@prague/kafka-orderer";
 import { IDocumentMessage, MessageType } from "@prague/runtime-definitions";
+import * as services from "@prague/services";
+import * as core from "@prague/services-core";
+import * as utils from "@prague/services-utils";
 import * as socketStorage from "@prague/socket-storage";
-import { Deferred } from "@prague/utils";
-import * as assert from "assert";
-import * as io from "../../alfred/io";
-import * as core from "../../core";
-import * as services from "../../services";
-import * as utils from "../../utils";
 import {
     MessageFactory,
     TestCollection,
@@ -14,7 +12,11 @@ import {
     TestTenantManager,
     TestWebSocket,
     TestWebSocketServer,
-} from "../testUtils";
+} from "@prague/test-utils";
+import { Deferred } from "@prague/utils";
+import * as assert from "assert";
+import * as io from "../../alfred/io";
+import { OrdererManager } from "../../alfred/runnerFactory";
 
 describe("Routerlicious", () => {
     describe("Alfred", () => {
@@ -49,8 +51,8 @@ describe("Routerlicious", () => {
                         databaseManager,
                         testTenantManager,
                         producer);
-                    const kafkaOrderer = new services.KafkaOrdererFactory(producer, testStorage, 1024 * 1024);
-                    testOrderer = new services.OrdererManager(null, kafkaOrderer);
+                    const kafkaOrderer = new KafkaOrdererFactory(producer, testStorage, 1024 * 1024);
+                    testOrderer = new OrdererManager(null, kafkaOrderer);
 
                     webSocketServer = new TestWebSocketServer();
                     contentCollection = new TestCollection([]);

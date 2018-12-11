@@ -1,7 +1,3 @@
-// tslint:disable-next-line:no-submodule-imports
-// tslint:disable-next-line:no-submodule-imports
-import * as core from "@prague/routerlicious/dist/core";
-// tslint:disable-next-line:no-submodule-imports
 import {
     IClient,
     IContentMessage,
@@ -10,15 +6,11 @@ import {
     ISequencedDocumentMessage,
     IUser,
 } from "@prague/runtime-definitions";
+import * as core from "@prague/services-core";
+import { debug, IConnect, IConnected } from "@prague/socket-storage-shared";
+import { TestWebSocketServer } from "@prague/test-utils";
 import { BatchManager } from "@prague/utils";
 import { EventEmitter } from "events";
-
-import {
-    TestWebSocketServer,
-// tslint:disable-next-line:no-submodule-imports
-} from "@prague/routerlicious/dist/test/testUtils";
-
-import { debug, IConnect, IConnected } from "@prague/socket-storage-shared";
 
 export class TestDocumentDeltaConnection extends EventEmitter implements IDocumentDeltaConnection {
 
@@ -173,6 +165,7 @@ export class TestDocumentDeltaConnection extends EventEmitter implements IDocume
      */
     public submit(message: IDocumentMessage): void {
         this.submitManager.add("submitOp", message);
+        this.submitManager.drain();
     }
 
     public async submitAsync(message: IDocumentMessage): Promise<void> {

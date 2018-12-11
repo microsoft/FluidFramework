@@ -6,12 +6,12 @@ import {
     IDocumentSystemMessage,
     ITokenClaims,
 } from "@prague/runtime-definitions";
+import * as core from "@prague/services-core";
+import { getRandomInt } from "@prague/services-utils";
 import * as socketStorage from "@prague/socket-storage";
 import { isSystemType } from "@prague/utils";
 import * as jwt from "jsonwebtoken";
 import * as winston from "winston";
-import * as core from "../core";
-import { getRandomInt } from "../utils";
 
 // A safety mechanism to make sure that all outbound messages from alfred adheres to the permitted schema.
 function sanitizeMessage(message: any): IDocumentMessage {
@@ -160,7 +160,7 @@ export function register(
                 socket.broadcast("op-content", broadCastMessage);
                 return response(null);
             }, (error) => {
-                if (error.name !== "MongoError" || error.code !== 11000) {
+                if (error.code !== 11000) {
                     // Needs to be a full rejection here
                     return response("Could not write to DB", null);
                 }

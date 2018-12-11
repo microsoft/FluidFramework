@@ -1,0 +1,42 @@
+{
+  "name": "@prague/tools-core",
+  "version": "0.1.0",
+  "description": "Prague service lambdas",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "sideEffects": false,
+  "scripts": {
+    "build": "npm run tsc && npm run tslint",
+    "build:full": "npm run build",
+    "clean": "rimraf dist && rimraf lib",
+    "tsc": "tsc",
+    "tslint": "tslint --project tsconfig.json --format verbose"
+  },
+  "author": "Microsoft",
+  "repository": "microsoft/prague",
+  "devDependencies": {
+    "rimraf": "^2.6.2",
+    "tslint": "^5.11.0",
+    "tslint-microsoft-contrib": "^6.0.0",
+    "typescript": "^3.2.2"
+  },
+  "dependencies": {
+    "@prague/cell": "^0.1.0",
+    "@prague/client-api": "^0.1.0",
+    "@prague/map": "^0.1.0",
+    "@prague/merge-tree": "^0.1.0",
+    "@prague/runtime-definitions": "^0.1.0",
+    "@prague/shared-string": "^0.1.0",
+    "@prague/socket-storage": "^0.1.0",
+    "@prague/utils": "^0.1.0",
+    "@types/debug": "^0.0.31",
+    "@types/jsonwebtoken": "^8.3.0",
+    "@types/lodash": "^4.14.118",
+    "@types/randomstring": "^1.1.6",
+    "async": "^2.6.1",
+    "debug": "^4.1.0",
+    "jsonwebtoken": "^8.4.0",
+    "lodash": "^4.17.11",
+    "randomstring": "^1.1.5"
+  }
+}

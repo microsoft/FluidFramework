@@ -166,9 +166,6 @@ export interface IPen {
     thickness: number;
 }
 
-/**
- * Type of action
- */
 export enum ActionType {
     // Action of placing the stylus on the canvas
     StylusDown,

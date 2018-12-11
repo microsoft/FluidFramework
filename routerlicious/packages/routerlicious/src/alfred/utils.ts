@@ -1,7 +1,6 @@
+import { IAlfredTenant, ITenantManager } from "@prague/services-core";
+import { generateToken } from "@prague/services-utils";
 import * as _ from "lodash";
-import { ITenantManager } from "../core";
-import * as utils from "../utils";
-import { IAlfredTenant } from "./tenant";
 
 /**
  * Helper function to return tenant specific configuration
@@ -36,7 +35,7 @@ export async function getConfig(
 export function getToken(tenantId: string, documentId: string, tenants: IAlfredTenant[]): string {
     for (const tenant of tenants) {
         if (tenantId === tenant.id) {
-            return utils.generateToken(tenantId, documentId, tenant.key);
+            return generateToken(tenantId, documentId, tenant.key);
         }
     }
 
