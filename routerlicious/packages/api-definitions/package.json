@@ -25,7 +25,7 @@
     "@types/debug": "^0.0.31",
     "@types/double-ended-queue": "^2.1.0",
     "@types/node": "^10.12.12",
-    "debug": "^4.1.0",
+    "debug": "^3.1.0",
     "double-ended-queue": "^2.1.0-0"
   }
 }

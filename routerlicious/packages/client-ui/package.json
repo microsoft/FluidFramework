@@ -68,7 +68,7 @@
     "@types/node": "^10.12.12",
     "@types/node-geocoder": "^3.19.0",
     "d3": "^5.7.0",
-    "debug": "^4.1.0",
+    "debug": "^3.1.0",
     "geocoder": "^0.2.3",
     "jquery": "^3.3.1",
     "jsonwebtoken": "^8.4.0",
