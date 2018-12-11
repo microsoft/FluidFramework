@@ -1,7 +1,7 @@
 {
   "name": "@chaincode/flow-document",
   "description": "Experimental flow editor for collaborative journaling.",
-  "version": "0.0.75",
+  "version": "0.0.93",
   "author": "Microsoft",
   "repository": "microsoft/prague",
   "main": "dist/main.bundle.js",
@@ -33,10 +33,11 @@
     }
   },
   "dependencies": {
+    "@prague/app-datastore": "^0.1.0",
+    "@prague/datastore": "^0.1.0",
     "@prague/map": "^0.1.0",
     "@prague/merge-tree": "^0.1.0",
     "@prague/runtime-definitions": "^0.1.0",
-    "@prague/shared-string": "^0.1.0",
-    "@prague/datastore": "^0.1.0"
+    "@prague/shared-string": "^0.1.0"
   }
 }

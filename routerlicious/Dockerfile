@@ -18,6 +18,7 @@ WORKDIR /usr/src/server
 COPY *.json ./
 COPY packages/agent/package*.json packages/agent/
 COPY packages/api-definitions/package*.json packages/api-definitions/
+COPY packages/app-datastore/package*.json packages/app-datastore/
 COPY packages/app-ui/package*.json packages/app-ui/
 COPY packages/cell/package*.json packages/cell/
 COPY packages/client-api/package*.json packages/client-api/

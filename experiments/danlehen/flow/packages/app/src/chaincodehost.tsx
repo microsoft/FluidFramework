@@ -1,5 +1,5 @@
 import * as React from "react";
-import { DataStore } from "@prague/datastore"
+import { DataStore } from "@prague/app-datastore"
 
 interface IProps { docId: string, chaincode: string }
 interface IState { }

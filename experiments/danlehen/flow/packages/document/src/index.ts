@@ -1,7 +1,8 @@
-import { IMap, IMapView, MapExtension } from "@prague/map";
+import { MapExtension } from "@prague/map";
 import { SharedString, CollaborativeStringExtension } from "@prague/shared-string";
-import { IChaincode, IPlatform, IRuntime } from "@prague/runtime-definitions";
-import { Component, DataStore } from "@prague/datastore";
+import { IChaincode } from "@prague/runtime-definitions";
+import { Component } from "@prague/datastore";
+import { DataStore } from "@prague/app-datastore";
 import {
     MergeTree,
     UniversalSequenceNumber,
@@ -20,10 +21,25 @@ export enum DocSegmentKind {
     Paragraph = "<p>",
     LineBreak = "<br>",
     Inclusion = "<?>",
+    EOF = "<eof>"
 };
 
-const inclusionSymbol = Symbol.for("FlowDocument.inclusion");
-export const getInclusionContent = (marker: Marker): HTMLElement => marker.properties[inclusionSymbol as any];
+export enum InclusionKind {
+    HTML = "<html>",
+    Chaincode = "<@chaincode>"
+}
+
+export const getInclusionKind = (marker: Marker): InclusionKind => marker.properties.kind;
+export const getInclusionHtml = (marker: Marker) => {
+    const template = document.createElement("template");
+    template.innerHTML = marker.properties.content;
+    return template.content.firstElementChild as HTMLElement;
+};
+export const getInclusionComponent = async (marker: Marker, services: ReadonlyArray<[string, Promise<any>]>) => {
+    DataStore.From("http://localhost:3000").then(store => {
+        store.open(marker.properties.docId, "danlehen", marker.properties.chaincode, services);
+    });
+};
 
 const styleProperty = "style";
 export const getStyle = (segment: BaseSegment): CSSStyleDeclaration => segment.properties && segment.properties[styleProperty];
@@ -46,6 +62,7 @@ export const getDocSegmentKind = (segment: Segment): DocSegmentKind => {
                     switch (tileLabel) {
                         case DocSegmentKind.Paragraph:
                         case DocSegmentKind.LineBreak:
+                        case DocSegmentKind.EOF:
                             return tileLabel;
                         default:
                             throw new Error(`Unknown Marker.tileLabel '${tileLabel}'.`);
@@ -58,7 +75,7 @@ export const getDocSegmentKind = (segment: Segment): DocSegmentKind => {
         }
         default:
             throw new Error(`Unknown SegmentType '${segmentType}'.`);
-    }   
+    }
 }
 
 type LeafAction = (position: number, segment: Segment, start: number, end: number) => boolean;
@@ -85,7 +102,8 @@ export class FlowDocument extends Component {
     private maybeMergeTree?: MergeTree;
     private maybeClientId?: number;
     private static readonly paragraphTileProperties = { [reservedTileLabelsKey]: [DocSegmentKind.Paragraph] };
-    private static readonly linebreakTileProperties = { [reservedTileLabelsKey]: [DocSegmentKind.Paragraph] };
+    private static readonly lineBreakTileProperties = { [reservedTileLabelsKey]: [DocSegmentKind.LineBreak] };
+    private static readonly eofTileProperties       = { [reservedTileLabelsKey]: [DocSegmentKind.EOF] };
 
     constructor() {
         super([
@@ -94,18 +112,21 @@ export class FlowDocument extends Component {
         ]);
     }
     
-    protected async create(runtime: IRuntime, platform: IPlatform, root: IMap) {
+    protected async create() {
         // For 'findTile(..)', we must enable tracking of left/rightmost tiles:
         // (See: https://github.com/Microsoft/Prague/pull/1118)
-        Object.assign(runtime, { options: Object.assign(runtime.options || {}, { blockUpdateMarkers: true }) });
+        Object.assign(this.runtime, { options: Object.assign(this.runtime.options || {}, { blockUpdateMarkers: true }) });
 
-        root.set("text", runtime.createChannel("text", CollaborativeStringExtension.Type));
+        const text = this.runtime.createChannel("text", CollaborativeStringExtension.Type) as SharedString;
+        text.insertMarker(0, ReferenceType.Tile, FlowDocument.eofTileProperties);
+        this.root.set("text", text);
     }
 
-    public async opened(runtime: IRuntime, platform: IPlatform, root: IMapView) {
+    public async opened() {
         console.log("component loaded");
 
-        this.maybeSharedString = await root.wait("text") as SharedString;
+        this.maybeSharedString = await this.root.wait("text") as SharedString;
+        this.maybeSharedString.on("op", (op, local) => { this.emit("op", op, local) });
         const client = this.sharedString.client;
         this.maybeClientId = client.getClientId();
         this.maybeMergeTree = client.mergeTree;
@@ -164,13 +185,16 @@ export class FlowDocument extends Component {
     }
 
     public insertLineBreak(position: number) {
-        this.sharedString.insertMarker(position, ReferenceType.Tile, FlowDocument.linebreakTileProperties);
+        this.sharedString.insertMarker(position, ReferenceType.Tile, FlowDocument.lineBreakTileProperties);
     }
 
-    public insertInclusion(position: number, content: HTMLElement) {
-        this.sharedString.insertMarker(position, ReferenceType.Simple, { });
-        const { segment } = this.getSegmentAndOffset(position);
-        (segment as Marker).properties[inclusionSymbol as any] = content;
+    public insertHTML(position: number, content: HTMLElement) {
+        this.sharedString.insertMarker(position, ReferenceType.Simple, { kind: InclusionKind.HTML, content: content.outerHTML });
+    }
+
+    public insertComponent(position: number, docId: string, chaincode?: string) {
+        const docInfo = { kind: InclusionKind.Chaincode, docId, chaincode };
+        this.sharedString.insertMarker(position, ReferenceType.Simple, docInfo);
     }
 
     public annotate(start: number, end: number, props: PropertySet) {
@@ -202,5 +226,5 @@ export class FlowDocument extends Component {
 
 // Chainloader bootstrap.
 export async function instantiate(): Promise<IChaincode> {
-    return DataStore.instantiate(new FlowDocument());
+    return Component.instantiate(new FlowDocument());
 }

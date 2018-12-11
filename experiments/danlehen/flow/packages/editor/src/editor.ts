@@ -2,15 +2,17 @@ import { FlowDocument } from "@chaincode/flow-document";
 import { Cursor } from "./cursor";
 import { Scheduler } from "./scheduler";
 import { IDocumentViewState, DocumentView, IDocumentProps } from "./components/document";
-import { ViewportView, IViewportViewState } from "./components/viewport";
-import { Dom } from "./dom";
+// import { ViewportView, IViewportViewState } from "./components/viewport";
+// import { Dom } from "./dom";
+import { ISequencedObjectMessage } from "@prague/runtime-definitions";
 
 export class Editor {
     private readonly cursor: Cursor;
-    private viewportState: IViewportViewState;
+//    private viewportState: IViewportViewState;
     private readonly docProps: IDocumentProps;
     private readonly docState: IDocumentViewState;
-    private scrollY = 0;
+    private readonly eventSink: HTMLElement;
+//    private scrollY = 0;
 
     public constructor (private readonly scheduler: Scheduler, private readonly doc: FlowDocument) {
         this.cursor = new Cursor(doc);
@@ -20,20 +22,30 @@ export class Editor {
         this.docState = DocumentView.instance.mount(this.docProps);
         this.docState.overlay.appendChild(this.cursor.root);
 
-        this.viewportState = ViewportView.instance.mount(this.getViewportProps(0));
-        this.viewportState.slot.appendChild(this.docState.root);
+        // this.viewportState = ViewportView.instance.mount(this.getViewportProps(0));
+        // this.viewportState.slot.appendChild(this.docState.root);
 
-        const eventSink = this.docState.root;
-        eventSink.addEventListener("keydown",   this.onKeyDown as any);
-        eventSink.addEventListener("keypress",  this.onKeyPress as any);
-        eventSink.addEventListener("mousedown", this.onMouseDown as any);
+        this.eventSink = this.docState.slot;
+        this.eventSink.addEventListener("keydown",   this.onKeyDown as any);
+        this.eventSink.addEventListener("keypress",  this.onKeyPress as any);
+        this.eventSink.addEventListener("mousedown", this.onMouseDown as any);
+        
+        // this.eventSink.addEventListener("focusin", this.onFocus);
+        // this.syncFocus();
+
         window.addEventListener("resize", this.invalidate);
+
+        doc.on("op", (op: ISequencedObjectMessage, local: boolean) => {
+            if (local) { return; }
+            this.invalidate()
+        });
 
         this.invalidate();
     }
 
-    public get root() { return this.viewportState.root; }
-
+    // public get root() { return this.viewportState.root; }
+    public get root() { return this.docState.root; }
+/*
     private getViewportProps(scrollY: number) {
         return {
             yMin: 0,
@@ -42,42 +54,42 @@ export class Editor {
             scrollY
         }
     }
-
+*/
     public get cursorPosition() { return this.cursor.position; }
-
+/*
     private readonly onScroll = (position: number) => {
         Object.assign(this.docProps, { start: position });
         this.invalidate();
     };
-
+*/
     public readonly invalidate = () => {
         this.scheduler.requestFrame(this.render);
     }
 
-    private readonly scrollToPositionCallback = (node: Node, nodeOffset: number) => {
-        requestAnimationFrame(() => {
-            console.log(`Scrolling to: ${node}@${nodeOffset}`)
+    // private readonly scrollToPositionCallback = (node: Node, nodeOffset: number) => {
+    //     requestAnimationFrame(() => {
+    //         console.log(`Scrolling to: ${node}@${nodeOffset}`);
 
-            const bounds = Dom.getClientRect(node, nodeOffset);
-            console.log(`    top: ${bounds.top}, scrollY: ${this.scrollY}`);
-            if (bounds) {
-                const currentY = parseFloat(this.viewportState.slot.style.marginTop || "0");
-                const relativeTop = bounds.top                                  // The current top of the viewport slot in screen coordinates
-                    - this.viewportState.root.getBoundingClientRect().top       // The current top of the viewport in screen coordinates
-                    - currentY;                                                 // The current transform
+    //         const bounds = Dom.getClientRect(node, nodeOffset);
+    //         console.log(`    top: ${bounds.top}, scrollY: ${this.scrollY}`);
+    //         if (bounds) {
+    //             const currentY = parseFloat(this.viewportState.slot.style.marginTop || "0");
+    //             const relativeTop = bounds.top                                  // The current top of the viewport slot in screen coordinates
+    //                 - this.viewportState.root.getBoundingClientRect().top       // The current top of the viewport in screen coordinates
+    //                 - currentY;                                                 // The current transform
 
-                this.viewportState = ViewportView.instance.update(this.getViewportProps(relativeTop), this.viewportState);
-                console.log(`        -> scrollY: ${this.scrollY} (currentY: ${currentY})`);
-            }
-        });
-    };
+    //             this.viewportState = ViewportView.instance.update(this.getViewportProps(relativeTop), this.viewportState);
+    //             console.log(`        -> scrollY: ${this.scrollY} (currentY: ${currentY})`);
+    //         }
+    //     });
+    // };
 
     private readonly render = () => {
         this.docProps.trackedPositions = this.cursor.getTracked();
-        this.docProps.trackedPositions.push({
-            position: this.docProps.start,
-            callback: this.scrollToPositionCallback
-        });
+        // this.docProps.trackedPositions.push({
+        //     position: this.docProps.start,
+        //     callback: this.scrollToPositionCallback
+        // });
         DocumentView.instance.update(this.docProps, this.docState);
         this.cursor.render();
 
@@ -93,7 +105,7 @@ export class Editor {
                 const end = this.cursor.position;
 
                 if (start === end) {
-                    // If no range is currently selected, delete the preceeding character (if any).
+                    // If no range is currently selected, delete the preceding character (if any).
                     this.doc.remove(start - 1, start);
                 } else {
                     // Otherwise, delete the selected range.
@@ -156,6 +168,7 @@ export class Editor {
                 this.doc.insertText(this.cursor.position, ev.key);
                 this.invalidate();
                 ev.stopPropagation();
+                ev.preventDefault();
                 break;
             }
         }
@@ -165,8 +178,10 @@ export class Editor {
         const maybeSegmentAndOffset = DocumentView.instance.hitTest(this.docState, ev.x, ev.y);
         if (maybeSegmentAndOffset) {
             const { segment, offset } = maybeSegmentAndOffset;
-            const position = this.doc.getPosition(segment);
-            this.cursor.moveTo(position + offset, false);
+            const position = Math.min(
+                this.doc.getPosition(segment) + offset,
+                this.doc.length - 1);
+            this.cursor.moveTo(position, false);
             this.invalidate();
             ev.stopPropagation();
         }

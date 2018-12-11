@@ -37,16 +37,24 @@ export class Cursor {
         this.endRef = doc.addLocalRef(0);
     }
 
+    private clampPosition(position: number) {
+        return Math.min(Math.max(position, 0), this.doc.length - 1);
+    }
+
+    private addLocalRef(position: number) {
+        return this.doc.addLocalRef(this.clampPosition(position));
+    }
+
     public get selectionStart() { return this.doc.localRefToPosition(this.startRef); }
     private setSelectionStart(newStart: number) { 
         this.doc.removeLocalRef(this.startRef);
-        this.startRef = this.doc.addLocalRef(newStart);
+        this.startRef = this.addLocalRef(newStart);
     }
 
     public get position() { return this.doc.localRefToPosition(this.endRef); }
     private setPosition(newEnd: number) {
         this.doc.removeLocalRef(this.endRef);
-        this.endRef = this.doc.addLocalRef(newEnd);
+        this.endRef = this.addLocalRef(newEnd);
     }
     
     public moveTo(position: number, extendSelection: boolean) {
@@ -85,7 +93,7 @@ export class Cursor {
      */
     private getOffset(): { top: number, left: number } {
         // Note: Could generalize by walking parentElement chain and probing style properties.
-        return this.root.parentElement!.parentElement!.getBoundingClientRect();
+        return this.root.offsetParent.getBoundingClientRect();
     }
 
     private updateSelection() {
@@ -103,18 +111,22 @@ export class Cursor {
             this.setRangeStart(this.endContainer, this.relativeEndOffset);
         }
 
-        const offset = this.getOffset();
-        for (const rect of this.domRange.getClientRects()) {
-            console.log(`highlight: ${JSON.stringify(rect)}`);
-            const div = e({ tag: "div", props: { className: styles.highlightRect }});
+        const selection = window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(this.domRange);
 
-            div.style.top = `${rect.top - offset.top}px`;
-            div.style.left = `${rect.left - offset.left}px`;
-            div.style.width = `${rect.width}px`;
-            div.style.height = `${rect.height}px`;
+        // const offset = this.getOffset();
+        // for (const rect of this.domRange.getClientRects()) {
+        //     console.log(`highlight: ${JSON.stringify(rect)}`);
+        //     const div = e({ tag: "div", props: { className: styles.highlightRect }});
 
-            this.highlightRootElement.appendChild(div);
-        }
+        //     div.style.top = `${rect.top - offset.top}px`;
+        //     div.style.left = `${rect.left - offset.left}px`;
+        //     div.style.width = `${rect.width}px`;
+        //     div.style.height = `${rect.height}px`;
+
+        //     this.highlightRootElement.appendChild(div);
+        // }
     }
 
     private getCursorBounds() {       
@@ -133,7 +145,9 @@ export class Cursor {
         this.cursorBounds = this.getCursorBounds();
         if (this.cursorBounds) {
             const offset = this.getOffset();
-            this.cursorElement.style.visibility = "visible";
+            console.log(`cursor: (${this.cursorBounds.top} - ${offset.top} -> ${this.cursorBounds.top - offset.top},`);
+            console.log(`        (${this.cursorBounds.left} - ${offset.left} -> ${this.cursorBounds.left - offset.left},`);
+            this.cursorElement.style.visibility = "inherit";
             this.cursorElement.style.top = `${this.cursorBounds.top - offset.top}px`;
             this.cursorElement.style.left = `${this.cursorBounds.left - offset.left}px`;
             this.cursorElement.style.height = `${this.cursorBounds.height}px`;
@@ -141,6 +155,16 @@ export class Cursor {
             // Otherwise hide it.
             this.cursorElement.style.visibility = "hidden";
         }
+    }
+
+    public show() {
+        console.log("show cursor"); 
+        this.root.style.visibility = "inherit";
+    }
+    
+    public hide() { 
+        console.log("hide cursor"); 
+        this.root.style.visibility = "hidden";
     }
 
     private readonly updateDomRangeStart = (node: Node, nodeOffset: number) => {

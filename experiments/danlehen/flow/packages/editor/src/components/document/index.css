@@ -1,6 +1,6 @@
 .document { }
 .documentContent { 
-    user-select: none;
+    /* user-select: none; */
 }
 .documentOverlay {
     pointer-events: none;

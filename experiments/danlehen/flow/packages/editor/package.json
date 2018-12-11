@@ -1,12 +1,22 @@
 {
   "name": "@prague/flow-editor",
-  "version": "0.1.0",
+  "version": "0.1.57",
   "description": "Experimental flow editor for collaborative journaling.",
   "main": "dist/main.bundle.js",
   "types": "dist/index.d.ts",
+  "prague": {
+    "browser": {
+      "entrypoint": "main",
+      "bundle": [
+        "dist/main.bundle.js"
+      ]
+    }
+  },
   "scripts": {
     "build": "webpack --env=\"production\"",
-    "dev": "webpack --env=\"development\" --watch"
+    "dev": "webpack --env=\"development\" --watch",
+    "publish-local": "npm publish --registry http://localhost:4873",
+    "publish-patch-local": "npm version patch && npm run publish-local"
   },
   "author": "Microsoft",
   "repository": "microsoft/prague",
@@ -25,6 +35,10 @@
   },
   "dependencies": {
     "@chaincode/flow-document": "*",
-    "@prague/merge-tree": "^0.1.0"
+    "@prague/app-datastore": "^0.1.0",
+    "@prague/datastore": "^0.1.0",
+    "@prague/map": "^0.1.0",
+    "@prague/merge-tree": "^0.1.0",
+    "@prague/runtime-definitions": "^0.1.0"
   }
 }

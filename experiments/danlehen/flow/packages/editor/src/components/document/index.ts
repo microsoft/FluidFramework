@@ -5,7 +5,7 @@ import {
     ReferenceType,
 } from "@prague/merge-tree";
 import { e, Dom } from "../../dom";
-import { getInclusionContent, FlowDocument, DocSegmentKind, getDocSegmentKind } from "@chaincode/flow-document";
+import { getInclusionKind, getInclusionHtml, getInclusionComponent, FlowDocument, DocSegmentKind, getDocSegmentKind, InclusionKind } from "@chaincode/flow-document";
 import { ParagraphView, IParagraphProps, IParagraphViewState } from "../paragraph";
 import { LineBreakView } from "../linebreak";
 import { TextView, ITextProps, ITextViewState } from "../text";
@@ -75,7 +75,7 @@ export interface IViewInfo<TProps, TState extends IViewState> {
  */
 export interface IDocumentViewState extends IViewState {
     /** The root element into which segments are rendered. */
-    slot: Element,
+    slot: HTMLElement,
 
     /** The root element into which overlays are attached. */
     overlay: Element,
@@ -110,7 +110,7 @@ export class DocumentView implements IView<IDocumentProps, IDocumentViewState> {
         
         // Note: The below Element references cannot be null due to the structure of the cloned 'template'.
         const leadingSpan = root.firstElementChild!;
-        const slot = leadingSpan.nextElementSibling!;
+        const slot = leadingSpan.nextElementSibling! as HTMLElement;
         const overlay = root.lastElementChild!;
         const trailingSpan = overlay.previousElementSibling!;
 
@@ -162,7 +162,12 @@ export class DocumentView implements IView<IDocumentProps, IDocumentViewState> {
     /** Returns the { segment, offset } currently visible at the given x/y coordinates (if any). */
     public hitTest(state: IDocumentViewState, x: number, y: number) {
         const range = document.caretRangeFromPoint(x, y);
-        return this.nodeOffsetToSegmentOffset(state, range.startContainer, range.startOffset);
+        const segmentAndOffset = this.nodeOffsetToSegmentOffset(state, range.startContainer, range.startOffset);
+        console.log(`  (${x},${y}) -> "${range.startContainer.textContent}":${range.startOffset} -> ${
+            segmentAndOffset
+                ? `${(segmentAndOffset.segment as TextSegment).text}:${segmentAndOffset.offset}`
+                : `undefined`}`);
+        return segmentAndOffset;
     }
  
     /** Returns the closest { segment, offset } to the 0-width rect described by x/top/bottom. */
@@ -515,17 +520,38 @@ export class DocumentLayout {
     }
 
     /** Ensures that the text's view is mounted and up to date. */
-    private static syncText(context: LayoutContext, position: number, segments: TextSegment[], text: string) {
+    private static syncText(context: LayoutContext, position: number, segments: Segment[], text: string) {
        this.syncInline<ITextProps, ITextViewState>(context, position, segments, TextView.instance, { text });
     }
 
+    private static readonly inclusionRootSym = Symbol("Flow.Editor.Marker.InclusionRoot");
+
     /** Ensures that a foreign inclusion's view is mounted and up to date. */
     private static syncInclusion(context: LayoutContext, position: number, marker: Marker) {
-        this.syncInline(context, position, [ marker ], InclusionView.instance, { root: getInclusionContent(marker) });
+        let root: HTMLElement;
+        const kind = getInclusionKind(marker);
+
+        root = (marker.properties as any)[this.inclusionRootSym];
+        if (!root) {
+            switch (kind) {
+                case InclusionKind.HTML:
+                    root = getInclusionHtml(marker);
+                    break;
+                
+                default:
+                    console.assert(kind === InclusionKind.Chaincode);
+                    root = document.createElement("span");
+                    getInclusionComponent(marker, [["div", Promise.resolve(root)]]);
+                    break;
+            }
+            (marker.properties as any)[this.inclusionRootSym] = root;
+        }
+
+        this.syncInline(context, position, [ marker ], InclusionView.instance, { root });
     }
 
     /** 
-     * Finds the largest contigious run of TextSegments that share the same style as 'first', starting at
+     * Finds the largest contiguous run of TextSegments that share the same style as 'first', starting at
      * the given 'start' position and returns the concatenated text.
      */
     private static concatTextSegments(context: LayoutContext, position: number, first: TextSegment, relativeStartOffset: number, relativeEndOffset: number)
@@ -558,6 +584,10 @@ export class DocumentLayout {
 
             case DocSegmentKind.Inclusion:
                 this.syncInclusion(context, position, segment as Marker);
+                break;
+          
+            case DocSegmentKind.EOF:
+                this.syncText(context, position, [segment], "\u200B");
                 break;
           
             default:

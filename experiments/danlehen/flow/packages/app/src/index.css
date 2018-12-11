@@ -27,6 +27,8 @@ html, body {
 
 .editorPane {
     position: relative;
+    padding: 18px;
+    overflow-y: auto;
 }
 
 .before, .after {
