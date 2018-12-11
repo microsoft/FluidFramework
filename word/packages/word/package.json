@@ -18,7 +18,7 @@
   "devDependencies": {
     "rimraf": "^2.6.2",
     "tslint": "^5.11.0",
-    "typescript": "^3.0.3"
+    "typescript": "^3.2.2"
   },
   "dependencies": {
     "@prague/client-api": "^0.1.0",
