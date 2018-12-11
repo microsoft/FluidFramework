@@ -31,7 +31,7 @@
     "@types/randomstring": "^1.1.6",
     "@types/raven": "^2.5.1",
     "bytes": "^3.0.0",
-    "debug": "^4.1.0",
+    "debug": "^3.1.0",
     "jsonwebtoken": "^8.4.0",
     "kafka-node": "^3.0.1",
     "moniker": "^0.1.2",
