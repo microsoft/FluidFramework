@@ -61,15 +61,17 @@ exports.setup = async function(docId, text) {
     const lines = text.split("\n");
     ss.insertMarker(0, MergeTree.ReferenceType.Tile, {[MergeTree.reservedTileLabelsKey]: ["pg"] });
 
-    for (let line of lines) {
-        setTimeout(()=> {
-            ss.insertText(line, position);
-            position += line.length;
-            ss.insertMarker(position, MergeTree.ReferenceType.Tile, {[MergeTree.reservedTileLabelsKey]: ["pg"] });
-            position += 1;
-        }, 1000);
+    const intervalId = setInterval(async () => {
+        if (lines.length === 0) {
+            clearInterval(intervalId);
+        }
+        const line = lines.shift();
+        ss.insertText(line, position);
+        position += line.length;
+        ss.insertMarker(position, MergeTree.ReferenceType.Tile, {[MergeTree.reservedTileLabelsKey]: ["pg"] });
+        position += 1;
+    }, 5000);
 
-    }
     ss.insertMarker(text.length, MergeTree.ReferenceType.Tile, {[MergeTree.reservedTileLabelsKey]: ["pg"] });
 
     let keys = lines.length;
