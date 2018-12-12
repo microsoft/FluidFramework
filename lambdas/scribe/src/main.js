@@ -59,11 +59,14 @@ exports.setup = async function(docId, text) {
 
     let position = 0;
     const lines = text.split("\n");
+    ss.insertMarker(0, MergeTree.ReferenceType.Tile, {[MergeTree.reservedTileLabelsKey]: ["pg"] });
+
     for (let line of lines) {
         setTimeout(()=> {
-            ss.insertMarker(position - 1, MergeTree.ReferenceType.Tile, {[MergeTree.reservedTileLabelsKey]: ["pg"] });
             ss.insertText(line, position);
             position += line.length;
+            ss.insertMarker(position, MergeTree.ReferenceType.Tile, {[MergeTree.reservedTileLabelsKey]: ["pg"] });
+            position += 1;
         }, 1000);
 
     }
