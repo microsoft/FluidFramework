@@ -36,22 +36,40 @@ exports.setup = async function(docId, text) {
     const documentService = socketStorage.createDocumentService(server, storage);
     api.registerDocumentService(documentService);
 
-    const doc = await api.load(docId, claims.tenantId, claims.user, new socketStorage.TokenProvider(token), { });
+    const doc = await api.load(docId, claims.tenantId, claims.user, new socketStorage.TokenProvider(token), { blockUpdateMarkers: true, token });
     const root = await doc.getRoot().getView();
-    var ss;
 
     var returnBody = "";
 
     if (!doc.existing){
         await root.set("text", doc.createString());
         returnBody += "Doc Didn't Exist";
+        await root.set("ink", doc.createMap());
+        await root.set("pageInk", doc.createStream());
+        await root.set("presence", doc.createMap());
+
     }
     else {
         returnBody += "Doc Existed";
+        await Promise.all([root.wait("text"), root.wait("ink")]);
+
     }
 
-    ss = await root.wait("text");
+    const ss = await root.get("text");
 
-    return returnBody + ": " + ss.getText().length;
+    let position = 0;
+    const lines = text.split("\n");
+    for (let line of lines) {
+        setTimeout(()=> {
+            ss.insertMarker(position - 1, MergeTree.ReferenceType.Tile, {[MergeTree.reservedTileLabelsKey]: ["pg"] });
+            ss.insertText(line, position);
+            position += line.length;
+        }, 1000);
+
+    }
+    ss.insertMarker(text.length, MergeTree.ReferenceType.Tile, {[MergeTree.reservedTileLabelsKey]: ["pg"] });
+
+    let keys = lines.length;
+
+    return returnBody + ": " + ss.getText().length + " \nKeys: " + keys + "\n ClientId: " + doc.clientId;
 }
- 
