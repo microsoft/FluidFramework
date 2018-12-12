@@ -29,7 +29,6 @@
     "@prague/loader": "^0.1.0",
     "@prague/runtime-definitions": "^0.1.0",
     "@types/node": "^10.12.12",
-    "axios": "^0.18.0",
     "chalk": "^2.4.1",
     "source-map-loader": "^0.2.4"
   }
