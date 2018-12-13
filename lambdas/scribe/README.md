@@ -32,4 +32,5 @@ nuctl deploy scribe -n nuclio --run-image praguelambdas.azurecr.io/scribe:latest
   "Text": "Hey, I wrote this text" 
 }
 
-curl --data '{"DocumentId": "test-doc-d", "Text": "Hey, I wrote this text"}' -H "x-nuclio-log-level:debug" -v 
+curl --data '{"DocumentId": "test-sequence-1204-2", "Text": "Hey, I wrote this text"}' -H "x-nuclio-log-level:debug" -v  137.117.40.210:8080
+

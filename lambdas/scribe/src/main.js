@@ -26,8 +26,9 @@ function generateToken(tenantId, documentId, key) {
 /**
  *  @param {string} docId
  *  @param {string} text
+ *  @param {number} time
  */
-exports.setup = async function(docId, text) {
+exports.setup = async function(docId, text, time) {
     const token = generateToken(tenantId, docId, key );
 
     // Load the shared string extension we will type into
@@ -47,29 +48,33 @@ exports.setup = async function(docId, text) {
         await root.set("ink", doc.createMap());
         await root.set("pageInk", doc.createStream());
         await root.set("presence", doc.createMap());
-
     }
     else {
         returnBody += "Doc Existed";
         await Promise.all([root.wait("text"), root.wait("ink")]);
-
     }
 
     const ss = await root.get("text");
 
     let position = 0;
     const lines = text.split("\n");
+    const chars = text.split("");
+
     ss.insertMarker(0, MergeTree.ReferenceType.Tile, {[MergeTree.reservedTileLabelsKey]: ["pg"] });
 
-    for (let line of lines) {
-        setTimeout(()=> {
-            ss.insertText(line, position);
-            position += line.length;
+    const intervalId = setInterval((async () => {
+        if (chars.length === 0) {
+            clearInterval(intervalId);
+        }
+        const char = chars.shift();
+        if (char === "\n") {
             ss.insertMarker(position, MergeTree.ReferenceType.Tile, {[MergeTree.reservedTileLabelsKey]: ["pg"] });
-            position += 1;
-        }, 1000);
+        } else {
+            ss.insertText(char, position);
+        }
+        position++;
+    }), time);
 
-    }
     ss.insertMarker(text.length, MergeTree.ReferenceType.Tile, {[MergeTree.reservedTileLabelsKey]: ["pg"] });
 
     let keys = lines.length;
