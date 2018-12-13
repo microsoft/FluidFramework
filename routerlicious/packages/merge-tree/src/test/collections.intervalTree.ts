@@ -1,7 +1,7 @@
 import * as assert from "assert";
-import * as Collections from "../collections";
+import { IInterval, IntervalTree } from "../collections";
 
-class TestInterval implements Collections.IInterval {
+class TestInterval implements IInterval {
     constructor(
         public start: number,
         public end: number) { }
@@ -32,10 +32,10 @@ class TestInterval implements Collections.IInterval {
 }
 
 describe("Collections.IntervalTree", () => {
-    let intervalTree: Collections.IntervalTree<Collections.IInterval>;
+    let intervalTree: IntervalTree<IInterval>;
 
     beforeEach(() => {
-       intervalTree = new Collections.IntervalTree<Collections.IInterval>();
+       intervalTree = new IntervalTree<IInterval>();
     });
 
     describe(".map", () => {
