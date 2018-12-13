@@ -1,7 +1,9 @@
+import { LocalNodeFactory, LocalOrderManager, NodeManager, ReservationManager } from "@prague/memory-orderer";
 // tslint:disable:no-submodule-imports
 import * as io from "@prague/routerlicious/dist/alfred/io";
-import * as core from "@prague/routerlicious/dist/core";
-import * as services from "@prague/routerlicious/dist/services";
+import * as services from "@prague/services";
+import * as core from "@prague/services-core";
+import * as utils from "@prague/services-utils";
 import {
     TestCollection,
     TestDbFactory,
@@ -9,13 +11,20 @@ import {
     TestTaskMessageSender,
     TestTenantManager,
     TestWebSocketServer,
-} from "@prague/routerlicious/dist/test/testUtils";
-import * as utils from "@prague/routerlicious/dist/utils";
-// tslint:enable:no-submodule-imports
+} from "@prague/test-utils";
 
 export interface ITestDeltaConnectionServer {
     webSocketServer: core.IWebSocketServer;
     databaseManager: core.IDatabaseManager;
+}
+
+class TestOrderManager implements core.IOrdererManager {
+    constructor(private orderer: LocalOrderManager) {
+    }
+
+    public getOrderer(tenantId: string, documentId: string): Promise<core.IOrderer> {
+        return this.orderer.get(tenantId, documentId);
+    }
 }
 
 export class TestDeltaConnectionServer implements ITestDeltaConnectionServer {
@@ -44,13 +53,13 @@ export class TestDeltaConnectionServer implements ITestDeltaConnectionServer {
             testTenantManager,
             producer);
 
-        const nodeManager = new services.NodeManager(mongoManager, nodesCollectionName);
-        const reservationManager = new services.ReservationManager(
+        const nodeManager = new NodeManager(mongoManager, nodesCollectionName);
+        const reservationManager = new ReservationManager(
             nodeManager,
             mongoManager,
             reservationsCollectionName);
 
-        const nodeFactory = new services.LocalNodeFactory(
+        const nodeFactory = new LocalNodeFactory(
             "os",
             "http://localhost:4000",
             testStorage,
@@ -60,8 +69,8 @@ export class TestDeltaConnectionServer implements ITestDeltaConnectionServer {
             testTenantManager,
             {},
             16 * 1024);
-        const localOrderManager = new services.LocalOrderManager(nodeFactory, reservationManager);
-        const testOrderer = new services.OrdererManager(localOrderManager);
+        const localOrderManager = new LocalOrderManager(nodeFactory, reservationManager);
+        const testOrderer = new TestOrderManager(localOrderManager);
 
         const testCollection = new TestCollection([]);
 

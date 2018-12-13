@@ -15,9 +15,6 @@ export interface ISocketStorageDiscovery {
     socketToken: string;
 }
 
-/**
- * Delta storage get response
- */
 export interface IDeltaStorageGetResponse {
     value: api.ISequencedDocumentMessage[] | ISequencedDeltaOpMessage[];
 }

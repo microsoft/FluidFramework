@@ -73,6 +73,7 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
     private connecting: Deferred<IConnectionDetails>;
     private connection: DeltaConnection;
     private clientSequenceNumber = 0;
+    private closed = false;
 
     private handler: IDeltaHandlerStrategy;
     private deltaStorageP: Promise<runtime.IDocumentDeltaStorageService>;
@@ -257,6 +258,7 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
      * Closes the connection and clears inbound & outbound queues.
      */
     public close() {
+        this.closed = true;
         this.stopHeartbeatSending();
         this.stopSequenceNumberUpdate();
         if (this.connection) {
@@ -295,6 +297,9 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
         allDeltas: runtime.ISequencedDocumentMessage[],
         deferred: Deferred<runtime.ISequencedDocumentMessage[]>,
         retry: number) {
+        if (this.closed) {
+            return;
+        }
 
         // Grab a chunk of deltas - limit the number fetched to MaxBatchDeltas
         const deltasP = this.deltaStorageP.then((deltaStorage) => {

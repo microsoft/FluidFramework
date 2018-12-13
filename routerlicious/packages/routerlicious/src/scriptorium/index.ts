@@ -1,8 +1,8 @@
+import { ScriptoriumLambdaFactory } from "@prague/lambdas";
+import * as services from "@prague/services";
+import { IPartitionLambdaFactory } from "@prague/services-core";
+import * as utils from "@prague/services-utils";
 import { Provider } from "nconf";
-import { IPartitionLambdaFactory } from "../kafka-service/lambdas";
-import * as services from "../services";
-import * as utils from "../utils";
-import { ScriptoriumLambdaFactory } from "./lambdaFactory";
 
 export async function create(config: Provider): Promise<IPartitionLambdaFactory> {
     const mongoUrl = config.get("mongo:endpoint") as string;

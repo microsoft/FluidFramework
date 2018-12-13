@@ -1,19 +1,26 @@
+import {
+    IAlfredTenant,
+    ICollection,
+    IDocumentStorage,
+    IOrdererManager,
+    IProducer,
+    ITenantManager,
+    IWebServer,
+    IWebServerFactory,
+} from "@prague/services-core";
+import * as utils from "@prague/services-utils";
 import { Deferred } from "@prague/utils";
 import { Provider } from "nconf";
 import * as winston from "winston";
-import { IDocumentStorage, IOrdererManager, ITenantManager } from "../core";
-import * as core from "../core";
-import * as utils from "../utils";
 import * as app from "./app";
 import * as io from "./io";
-import { IAlfredTenant } from "./tenant";
 
 export class AlfredRunner implements utils.IRunner {
-    private server: core.IWebServer;
+    private server: IWebServer;
     private runningDeferred: Deferred<void>;
 
     constructor(
-        private serverFactory: core.IWebServerFactory,
+        private serverFactory: IWebServerFactory,
         private config: Provider,
         private port: string | number,
         private orderManager: IOrdererManager,
@@ -21,9 +28,9 @@ export class AlfredRunner implements utils.IRunner {
         private storage: IDocumentStorage,
         private appTenants: IAlfredTenant[],
         private mongoManager: utils.MongoManager,
-        private producer: utils.IProducer,
+        private producer: IProducer,
         private metricClientConfig: any,
-        private contentCollection: core.ICollection<any>) {
+        private contentCollection: ICollection<any>) {
     }
 
     public start(): Promise<void> {

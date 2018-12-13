@@ -1,4 +1,5 @@
-// tslint:disable:ban-types
+import { IAlfredTenant, IDocumentStorage, IProducer, ITenantManager } from "@prague/services-core";
+import * as utils from "@prague/services-utils";
 import * as bodyParser from "body-parser";
 import * as compression from "compression";
 import * as connectRedis from "connect-redis";
@@ -19,10 +20,7 @@ import * as favicon from "serve-favicon";
 const split = require("split");
 import * as expiry from "static-expiry";
 import * as winston from "winston";
-import { IDocumentStorage, ITenantManager } from "../core";
-import * as utils from "../utils";
 import * as alfredRoutes from "./routes";
-import { IAlfredTenant } from "./tenant";
 
 // Base endpoint to expose static files at
 const staticFilesEndpoint = "/public";
@@ -32,7 +30,7 @@ const staticFilesEndpoint = "/public";
 export function translateStaticUrl(
     url: string,
     cache: { [key: string]: string },
-    furl: Function,
+    furl: (val: string) => string,
     production: boolean): string {
 
     const local = url.substring(staticFilesEndpoint.length);
@@ -72,7 +70,7 @@ export function create(
     storage: IDocumentStorage,
     appTenants: IAlfredTenant[],
     mongoManager: utils.MongoManager,
-    producer: utils.IProducer) {
+    producer: IProducer) {
 
     // Authentication is disabled for local run and test. Only use redis when authentication is enabled.
     let sessionStore: any;
@@ -201,7 +199,6 @@ export function create(
     app.use("/cell", routes.cell);
     app.use("/loader", routes.loader);
     app.use("/scribe", routes.scribe);
-    app.use("/intelligence", routes.intelligence);
     app.use("/democreator", routes.demoCreator);
     app.use("/agent", routes.agent);
     app.use(routes.home);

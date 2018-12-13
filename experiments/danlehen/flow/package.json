@@ -6,7 +6,6 @@
     "build:full": "lerna run build --stream",
     "clean": "lerna run clean --stream --parallel",
     "postinstall": "(true) && lerna bootstrap",
-    "start": "cd packages/app && npm run dev",
     "test": "lerna run test --stream",
     "tslint": "lerna run tslint --stream"
   },

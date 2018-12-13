@@ -1,7 +1,6 @@
 import { OperationType } from "@prague/api-definitions";
 import * as api from "@prague/client-api";
-// tslint:disable-next-line:no-submodule-imports
-import * as utils from "@prague/routerlicious/dist/utils";
+import * as utils from "@prague/services-utils";
 import { SharedString } from "@prague/shared-string";
 import * as socketStorage from "@prague/socket-storage";
 import * as assert from "assert";
@@ -90,13 +89,13 @@ describe("LocalTestServer", () => {
       assert.equal(user2ReceivedMsgCount, 1, "User2 received message count is incorrect");
 
       await documentDeltaEventManager.processIncoming(user1Document);
-      // assert.equal(user1ReceivedMsgCount, 1, "User1 received message count is incorrect");
+      assert.equal(user1ReceivedMsgCount, 1, "User1 received message count is incorrect");
       assert.equal(user2ReceivedMsgCount, 1, "User2 received message count is incorrect");
 
       user1SharedString.insertText("B", 0);
       await documentDeltaEventManager.process(user1Document, user2Document);
 
-      // assert.equal(user1SharedString.getText(), user2SharedString.getText());
+      assert.equal(user1SharedString.getText(), user2SharedString.getText());
       assert.equal(user1SharedString.getText().length, 3, user1SharedString.getText());
       assert.equal(user1ReceivedMsgCount, 1, "User1 received message count is incorrect");
       assert.equal(user2ReceivedMsgCount, 2, "User2 received message count is incorrect");

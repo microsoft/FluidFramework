@@ -1,6 +1,6 @@
 import * as agent from "@prague/agent";
+import { MessageFactory, TestDocument } from "@prague/test-utils";
 import * as assert from "assert";
-import { MessageFactory, TestDocument } from "../testUtils";
 
 describe("Routerlicious", () => {
     describe("Agent", () => {

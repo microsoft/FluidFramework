@@ -4,7 +4,7 @@ import * as minio from "minio";
 import { Provider } from "nconf";
 import * as path from "path";
 import * as rimraf from "rimraf";
-import { Readable } from "stream";
+import { Readable, Stream } from "stream";
 import * as unzip from "unzip-stream";
 import * as webpack from "webpack";
 import * as winston from "winston";
@@ -18,7 +18,7 @@ export function create(config: Provider): Router {
         endPoint: minioConfig.endpoint,
         port: minioConfig.port,
         secretKey: minioConfig.secretKey,
-        secure: false,
+        useSSL: false,
     });
 
     // Uploads the webpacked script to minio and delete the temorary script.
@@ -59,10 +59,12 @@ export function create(config: Provider): Router {
         objectsStream.on("data", (obj) => {
             names.push(obj.name as string);
         });
+
         objectsStream.on("error", (error) => {
             response.status(500).json(error);
         });
-        objectsStream.on("end", (data) => {
+
+        (objectsStream as Stream).on("end", (data) => {
             response.status(200).json( { names } );
         });
     });
@@ -72,7 +74,7 @@ export function create(config: Provider): Router {
      */
     router.get("/:id", async (request, response, next) => {
         // Returns the stream.
-        minioClient.getObject(storageBucket, request.params.id, (error, stream: Readable) => {
+        minioClient.getObject(storageBucket, request.params.id, (error: any, stream: Readable) => {
             if (error) {
                 // tslint:disable-next-line
                 return error.code === "NoSuchKey" ? response.status(200).send(null) : response.status(400).json({ error });
@@ -87,7 +89,7 @@ export function create(config: Provider): Router {
     router.post("/js/:id", async (request, response, next) => {
         const moduleFile = request.params.id;
         const moduleName = moduleFile.split(".")[0];
-        minioClient.getObject(storageBucket, request.params.id, (error, stream: Readable) => {
+        minioClient.getObject(storageBucket, request.params.id, (error: any, stream: Readable) => {
             if (error) {
                 // tslint:disable-next-line
                 return error.code === "NoSuchKey" ? response.status(200).send(null) : response.status(400).json({ error });

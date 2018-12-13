@@ -1,11 +1,12 @@
-import { Component } from "@prague/datastore";
+import { Component } from "@prague/app-component";
 import { IMapView, MapExtension } from "@prague/map";
 import { Deferred } from "@prague/utils";
 
 export class TestComponent extends Component {
-    public static readonly type = "@chaincode/test-component";
-    public rootView?: IMapView;
     public get count(): number { return this.rootView.get("count"); }
+    public static readonly type = "@chaincode/test-component";
+
+    public rootView?: IMapView;
 
     private ready = new Deferred<void>();
 
@@ -30,15 +31,6 @@ export class TestComponent extends Component {
 
     public set(key: string) {
         this.root.set(key, true);
-    }
-
-    public async queryInterface(id: string): Promise<any> {
-        if (id === "component") {
-            await this.ready.promise;
-            return this;
-        } else {
-            return super.queryInterface(id);
-        }
     }
 
     protected async create() {

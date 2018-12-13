@@ -1,10 +1,10 @@
+import * as services from "@prague/services";
+import * as utils from "@prague/services-utils";
+import { TestDbFactory, TestKafka, TestTenantManager } from "@prague/test-utils";
 import * as nconf from "nconf";
 import * as path from "path";
 import * as supertest from "supertest";
 import * as app from "../../alfred/app";
-import * as services from "../../services";
-import * as utils from "../../utils";
-import { TestDbFactory, TestKafka, TestTenantManager } from "../testUtils";
 
 const defaultConfig = nconf.file(path.join(__dirname, "../../../config.test.json")).use("memory");
 

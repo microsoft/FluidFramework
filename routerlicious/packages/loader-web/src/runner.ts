@@ -11,7 +11,8 @@ export async function proposeChaincode(document: loader.Document, chaincode: str
         await new Promise<void>((resolve) => document.once("connected", () => resolve()));
     }
 
-    await document.getQuorum().propose("code", chaincode);
+    await document.getQuorum()
+        .propose("code", chaincode);
 }
 
 export async function run(
@@ -70,6 +71,7 @@ export async function run(
 
     // Propose initial chaincode if specified
     if (chaincode) {
-        proposeChaincode(document, chaincode).catch((error) => console.error("Error installing chaincode"));
+        proposeChaincode(document, chaincode)
+            .catch((error) => console.error("Error installing chaincode"));
     }
 }

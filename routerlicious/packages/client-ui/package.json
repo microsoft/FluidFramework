@@ -36,7 +36,7 @@
     "report-dir": "nyc/report"
   },
   "devDependencies": {
-    "@types/jsdom": "^11.12.0",
+    "@types/jsdom": "^12.0.0",
     "@types/mocha": "^5.2.5",
     "jsdom": "^12.0.0",
     "mocha": "^5.2.0",
@@ -44,8 +44,8 @@
     "nyc": "^13.0.1",
     "rimraf": "^2.6.2",
     "tslint": "^5.11.0",
-    "tslint-microsoft-contrib": "^5.2.1",
-    "typescript": "^3.0.3"
+    "tslint-microsoft-contrib": "^6.0.0",
+    "typescript": "^3.2.2"
   },
   "dependencies": {
     "@prague/api-definitions": "^0.1.0",
@@ -63,15 +63,15 @@
     "@prague/stream": "^0.1.0",
     "@prague/utils": "^0.1.0",
     "@types/d3": "^5.0.0",
-    "@types/debug": "^0.0.30",
+    "@types/debug": "^0.0.31",
     "@types/jquery": "^3.3.6",
-    "@types/node": "^10.9.4",
+    "@types/node": "^10.12.12",
     "@types/node-geocoder": "^3.19.0",
     "d3": "^5.7.0",
     "debug": "^3.1.0",
     "geocoder": "^0.2.3",
     "jquery": "^3.3.1",
-    "jsonwebtoken": "^8.3.0",
+    "jsonwebtoken": "^8.4.0",
     "node-geocoder": "^3.22.0",
     "parse-address": "^1.1.0",
     "performance-now": "^2.1.0",

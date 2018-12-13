@@ -1,11 +1,11 @@
 import * as api from "@prague/client-api";
+import * as utils from "@prague/services-utils";
 import * as socketStorage from "@prague/socket-storage";
+import * as scribe from "@prague/tools-core";
 import * as commander from "commander";
 import * as fs from "fs";
 import * as path from "path";
-import * as ProgressBar from "progress";
-import * as utils from "../utils";
-import { scribe } from "../utils";
+import ProgressBar from "progress";
 
 // Process command line input
 let sharedStringId;

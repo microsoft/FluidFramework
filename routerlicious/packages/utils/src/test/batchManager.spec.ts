@@ -18,7 +18,7 @@ describe("Routerlicious", () => {
                 });
             });
 
-            describe(".add()", async () => {
+            describe(".add()", () => {
                 it("Should be able to add pending work", async () => {
                     const batchSize = 100;
                     const testId = "test";
@@ -27,7 +27,7 @@ describe("Routerlicious", () => {
                     for (let i = 0; i < batchSize; i++) {
                         batchManager.add(testId, i);
                     }
-                    await batchManager.drain();
+                    batchManager.drain();
 
                     assert.ok(testId in pending);
                     assert.equal(pending[testId].length, 1);

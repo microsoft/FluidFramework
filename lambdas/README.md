@@ -6,6 +6,10 @@ We deploy serverless functions using [Nuclio](https://nuclio.io). Nuclio lets us
     * docker run -it praguebuild.azurecr.io/kubedeploy  /bin/sh -c "cd ../bin; kubectl config use-context praguekubeeastus2; nuctl get function -n nuclio"
 * Run Nuclio Dashboard
     * kubectl port-forward -n nuclio $(kubectl get pods -n nuclio -l nuclio.io/app=dashboard -o jsonpath='{.items[0].metadata.name}') 8070:8070
+* Create a Load Balancer for your deployment
+    * kubectl expose svc scribe --port 8080 --name=scribe-balancer --type=LoadBalancer -n nuclio
+    * kubectl expose svc {name of svc running lambda} --port {port of svc} --name={name of loadbalancer} --type=LoadBalancer -n {namespace}
+
 
 ## How To Deploy
 
@@ -19,5 +23,5 @@ We deploy serverless functions using [Nuclio](https://nuclio.io). Nuclio lets us
 
 ## Debugging Tips
 * Unit Test
-* If you deployed through the dashboard, restart the connection
+* Restart the connection to dashboard (if you're using it)
 * Restart the pod in kube

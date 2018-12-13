@@ -30,7 +30,7 @@ spec:
           - 'node'
           - 'dist/kafka-service/index.js'
           - 'tmz'
-          - '../tmz/index.js'
+          - '/usr/src/server/packages/routerlicious/dist/tmz/index.js'
         env:
         - name: DEBUG
           value: "prague:*"

@@ -178,7 +178,8 @@ export class Cell extends CollaborativeObject implements ICell {
 
         // tslint:disable-next-line:strict-boolean-expressions
         const content = rawContent
-            ? JSON.parse(Buffer.from(rawContent, "base64").toString("utf-8")) as ICellValue
+            ? JSON.parse(Buffer.from(rawContent, "base64")
+                .toString("utf-8")) as ICellValue
             : { type: CellValueType[CellValueType.Plain], value: undefined };
 
         this.data = content.type === CellValueType[CellValueType.Collaborative]

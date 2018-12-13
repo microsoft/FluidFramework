@@ -346,7 +346,9 @@ export async function load(
     // package.
     if (!loaderDoc.existing) {
         initializeChaincode(loaderDoc, `@prague/client-api@${apiVersion}`)
-            .catch((error) => debug("chaincode error", error));
+            .catch((error) => {
+                debug("chaincode error", error);
+            });
     }
 
     // Wait for loader to start us

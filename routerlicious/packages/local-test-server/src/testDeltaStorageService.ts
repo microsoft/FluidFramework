@@ -1,6 +1,5 @@
-// tslint:disable-next-line:no-submodule-imports
-import { IDatabaseManager } from "@prague/routerlicious/dist/core";
 import * as api from "@prague/runtime-definitions";
+import { IDatabaseManager } from "@prague/services-core";
 
 export class TestDeltaStorageService implements api.IDocumentDeltaStorageService {
     constructor(

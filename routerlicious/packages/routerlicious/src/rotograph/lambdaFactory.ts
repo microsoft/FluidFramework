@@ -1,7 +1,12 @@
+import {
+    IContext,
+    IPartitionLambda,
+    IPartitionLambdaFactory,
+    ITaskMessageSender,
+    ITenantManager,
+} from "@prague/services-core";
 import { EventEmitter } from "events";
 import { Provider } from "nconf";
-import { ITaskMessageSender, ITenantManager } from "../core";
-import { IContext, IPartitionLambda, IPartitionLambdaFactory } from "../kafka-service/lambdas";
 import { AzureMediaServicesManager } from "./amsUtils";
 import { RotographLambda } from "./lambda";
 

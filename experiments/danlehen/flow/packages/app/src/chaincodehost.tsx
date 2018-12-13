@@ -1,5 +1,5 @@
 import * as React from "react";
-import { DataStore } from "@prague/datastore"
+import { DataStore } from "@prague/app-datastore"
 
 interface IProps { docId: string, chaincode: string }
 interface IState { }
@@ -18,7 +18,7 @@ export class ChaincodeHost extends React.Component<IProps, IState> {
     componentDidMount() {
         const { docId, chaincode } = this.props;
         const div = document.createElement("div");
-        DataStore.From("http://localhost:3000").then(store => {
+        DataStore.from("http://localhost:3000").then(store => {
             store.open(docId, "danlehen", chaincode, [
                 ["dom", Promise.resolve(document)],
                 ["div", Promise.resolve(this.rootRef.current)]

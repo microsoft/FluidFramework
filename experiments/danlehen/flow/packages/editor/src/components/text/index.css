@@ -1,2 +1,9 @@
-.text { white-space: pre-wrap; overflow-wrap: break-word; }
-.text { outline: 1px solid rgba(0, 0, 0, 0.05); } /* */
+.text { 
+    white-space: pre-wrap;
+    overflow-wrap: break-word;
+}
+
+/* Outline span boundaries for debugging */
+.text { 
+    outline: 1px solid rgba(0, 0, 0, 0.05);
+}
