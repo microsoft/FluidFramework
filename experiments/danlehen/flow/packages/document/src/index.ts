@@ -1,7 +1,7 @@
 import { MapExtension } from "@prague/map";
 import { SharedString, CollaborativeStringExtension } from "@prague/shared-string";
 import { IChaincode } from "@prague/runtime-definitions";
-import { Component } from "@prague/datastore";
+import { Component } from "@prague/app-component";
 import { DataStore } from "@prague/app-datastore";
 import {
     MergeTree,
@@ -36,7 +36,7 @@ export const getInclusionHtml = (marker: Marker) => {
     return template.content.firstElementChild as HTMLElement;
 };
 export const getInclusionComponent = async (marker: Marker, services: ReadonlyArray<[string, Promise<any>]>) => {
-    DataStore.From("http://localhost:3000").then(store => {
+    DataStore.from("http://localhost:3000").then(store => {
         store.open(marker.properties.docId, "danlehen", marker.properties.chaincode, services);
     });
 };

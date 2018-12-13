@@ -1,5 +1,5 @@
+import { Component } from "@prague/app-component";
 import { DataStore } from "@prague/app-datastore";
-import { Component } from "@prague/datastore";
 import * as assert from "assert";
 import {
     createTestDocumentService,

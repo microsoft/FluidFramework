@@ -35,8 +35,8 @@
   },
   "dependencies": {
     "@chaincode/flow-document": "*",
+    "@prague/app-component": "^0.1.0",
     "@prague/app-datastore": "^0.1.0",
-    "@prague/datastore": "^0.1.0",
     "@prague/map": "^0.1.0",
     "@prague/merge-tree": "^0.1.0",
     "@prague/runtime-definitions": "^0.1.0"

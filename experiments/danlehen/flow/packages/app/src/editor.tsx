@@ -31,7 +31,7 @@ export class FlowEditor extends React.Component<IProps, IState> {
 
     componentWillMount() {
         const { docUrl, docId } = this.props;
-        DataStore.From(docUrl).then(store => {
+        DataStore.from(docUrl).then(store => {
             store
                 .open<FlowDocument>(docId, "danlehen", "@chaincode/flow-document@latest")
                 .then((doc) => {

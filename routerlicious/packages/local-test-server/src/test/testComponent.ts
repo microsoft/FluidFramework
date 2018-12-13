@@ -1,4 +1,4 @@
-import { Component } from "@prague/datastore";
+import { Component } from "@prague/app-component";
 import { IMapView, MapExtension } from "@prague/map";
 import { Deferred } from "@prague/utils";
 
