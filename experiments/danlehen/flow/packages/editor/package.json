@@ -1,6 +1,6 @@
 {
-  "name": "@prague/flow-editor",
-  "version": "0.1.57",
+  "name": "@chaincode/flow-editor",
+  "version": "0.1.62",
   "description": "Experimental flow editor for collaborative journaling.",
   "main": "dist/main.bundle.js",
   "types": "dist/index.d.ts",

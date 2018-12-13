@@ -1,6 +1,5 @@
 import { MapExtension } from "@prague/map";
 import { SharedString, CollaborativeStringExtension } from "@prague/shared-string";
-import { IChaincode } from "@prague/runtime-definitions";
 import { Component } from "@prague/app-component";
 import { DataStore } from "@prague/app-datastore";
 import {
@@ -222,9 +221,11 @@ export class FlowDocument extends Component {
             startPosition,
             endPosition);
     }
+
+    public static readonly type = `${require("../package.json").name}@latest`;
 }
 
 // Chainloader bootstrap.
-export async function instantiate(): Promise<IChaincode> {
+export async function instantiate() {
     return Component.instantiate(new FlowDocument());
 }
