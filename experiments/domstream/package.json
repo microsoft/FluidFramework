@@ -9,12 +9,12 @@
     "dist/component/*"
   ],
   "dependencies": {
-    "@prague/loader": "^0.1.3981",
-    "@prague/map": "^0.1.3981",
-    "@prague/runtime-definitions": "^0.1.3981",
-    "@prague/socket-storage": "^0.1.3981",
-    "@prague/datastore": "^0.1.3981",
-    "@prague/utils": "^0.1.3981",
+    "@prague/datastore": "^0.1.4408",
+    "@prague/loader": "^0.1.4408",
+    "@prague/map": "^0.1.4408",
+    "@prague/runtime-definitions": "^0.1.4408",
+    "@prague/socket-storage": "^0.1.4408",
+    "@prague/utils": "^0.1.4408",
     "debug": "^4.1.0",
     "jsonwebtoken": "^8.2.1",
     "uuid": "^3.3.2",
