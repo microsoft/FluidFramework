@@ -1,8 +1,8 @@
-import { e, Dom } from "@prague/flow-util";
+import { Template, Dom } from "@prague/flow-util";
 import * as styles from "./index.css";
 import { IViewState, IView } from "..";
 
-const template = e({ 
+const template = new Template({ 
     tag: "p",
     props: { className: styles.inclusion },
 });
@@ -18,7 +18,7 @@ export class InclusionView implements IView<IInclusionProps, IInclusionViewState
     constructor() {}
 
     mount(props: IInclusionProps): IInclusionViewState {
-        const root = template.cloneNode(true) as Element;
+        const root = template.clone();
         return this.update( props, { root });
     }
 

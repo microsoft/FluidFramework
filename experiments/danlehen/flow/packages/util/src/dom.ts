@@ -1,7 +1,3 @@
-function isDomNode(maybeNode: any): maybeNode is Node {
-    return maybeNode.nodeType !== undefined;
-}
-
 function isElement(node: Node): node is Element {
     return node.nodeType === Node.ELEMENT_NODE;
 }
@@ -59,45 +55,3 @@ export class Dom {
         return measurementRange.getClientRects()[0];
     }
 }
-
-export interface VNode {
-    tag: string;
-    classList?: string[];
-    props?: {};
-    listeners?: {
-        type: string,
-        listener: EventListenerOrEventListenerObject,
-        options?: boolean | AddEventListenerOptions
-    }[];
-    children?: (VNode | Node)[];
-}
-
-export const e = (vnode: VNode): HTMLElement => {
-    // Create the HTML element and assign all properties.
-    const element = Object.assign(
-        document.createElement(vnode.tag),
-        vnode.props);
-    
-    if (vnode.classList) {
-        element.classList.add(...vnode.classList);
-    }
-
-    // Add children (if any).
-    if (vnode.children) {
-        for (const child of vnode.children) {
-            element.appendChild(
-                isDomNode(child)
-                    ? child             // 'child' is already an HTMLElement
-                    : e(child));        // 'child' is VNode, recursively create it.
-        }
-    }
-
-    // Add event listeners (if any).
-    if (vnode.listeners) {
-        for (const item of vnode.listeners) {
-            element.addEventListener(item.type, item.listener, item.options);
-        }
-    }
-    
-    return element;
-};

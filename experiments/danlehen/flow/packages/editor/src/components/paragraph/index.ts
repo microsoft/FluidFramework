@@ -1,13 +1,13 @@
-import { e } from "@prague/flow-util";
+import { Template } from "@prague/flow-util";
 import * as styles from "./index.css";
 import { IView, IViewState } from "..";
 
-const template = e({
+const template = new Template({
     tag: "p",
     props: { className: styles.paragraph },
     children: [
-        { tag: "span", props: { className: styles.paragraphContents }},
-        { tag: "span", props: { className: styles.afterParagraph, textContent: "\u200b" }}
+        { tag: "span", ref: "slot", props: { className: styles.paragraphContents }},
+        { tag: "span", ref: "cursorTarget", props: { className: styles.afterParagraph, textContent: "\u200b" }}
     ]
 });
 
@@ -24,11 +24,9 @@ export class ParagraphView implements IView<IParagraphProps, IParagraphViewState
     constructor() {}
 
     mount(props: Readonly<IParagraphProps>): IParagraphViewState {
-        const root = template.cloneNode(true) as Element;
-
-        // Note: 'slot' and cursorTarget' cannot be 'null' per the structure of the 'template'.
-        const slot = root.firstElementChild!;
-        const cursorTarget = root.lastElementChild!.firstChild!;
+        const root = template.clone();
+        const slot = template.get(root, "slot");
+        const cursorTarget = template.get(root, "cursorTarget");
 
         return { root, slot, cursorTarget }
     }

@@ -4,7 +4,7 @@ import {
     TextSegment,
     ReferenceType,
 } from "@prague/merge-tree";
-import { e, Dom } from "@prague/flow-util";
+import { Template, Dom } from "@prague/flow-util";
 import { getInclusionKind, getInclusionHtml, getInclusionComponent, FlowDocument, DocSegmentKind, getDocSegmentKind, InclusionKind } from "@chaincode/flow-document";
 import { ParagraphView, IParagraphProps, IParagraphViewState } from "../paragraph";
 import { LineBreakView } from "../linebreak";
@@ -14,19 +14,14 @@ import { InclusionView } from "../inclusion";
 import { TextAccumulator } from "./textaccumulator";
 import * as styles from "./index.css";
 
-const template = e({
+const template = new Template({
     tag: "span",
-    props: {
-        className: styles.document,
-    },
+    props: { className: styles.document, },
     children: [
-        { tag: "span", props: { className: styles.leadingSpan }},
-        { 
-            tag: "span",
-            props: { className: styles.documentContent, tabIndex: 0 },
-        },
-        { tag: "span", props: { className: styles.trailingSpan }},
-        { tag: "span", props: { className: styles.documentOverlay }}
+        { tag: "span", ref: "leadingSpan", props: { className: styles.leadingSpan }},
+        { tag: "span", ref: "slot", props: { className: styles.documentContent, tabIndex: 0 }},
+        { tag: "span", ref: "trailingSpan", props: { className: styles.trailingSpan }},
+        { tag: "span", ref: "overlay", props: { className: styles.documentOverlay }}
     ]
 });
 
@@ -106,19 +101,17 @@ export class DocumentView implements IView<IDocumentProps, IDocumentViewState> {
     constructor() {}
 
     public mount(props: IDocumentProps): IDocumentViewState {
-        const root = template.cloneNode(true) as Element;
-        
-        // Note: The below Element references cannot be null due to the structure of the cloned 'template'.
-        const leadingSpan = root.firstElementChild!;
-        const slot = leadingSpan.nextElementSibling! as HTMLElement;
-        const overlay = root.lastElementChild!;
-        const trailingSpan = overlay.previousElementSibling!;
+        const root = template.clone();
+        const leadingSpan = template.get(root, "leadingSpan");
+        const slot = template.get(root, "slot") as HTMLElement;
+        const overlay = template.get(root, "overlay");
+        const trailingSpan = template.get(root, "trailingSpan");
 
         const leadingParagraph = FlowDocument.markAsParagraph(new Marker(ReferenceType.Tile));
         const trailingParagraph = FlowDocument.markAsParagraph(new Marker(ReferenceType.Tile));
 
         return this.update(props, {
-            root: root,
+            root,
             slot,
             leadingSpan,
             trailingSpan,

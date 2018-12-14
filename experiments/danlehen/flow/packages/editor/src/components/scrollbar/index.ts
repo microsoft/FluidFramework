@@ -1,11 +1,12 @@
-import { e } from "@prague/flow-util";
+import { Template } from "@prague/flow-util";
 import * as styles from "./index.css";
 import { IViewState, IView } from "..";
 
-const template = e({ 
+const template = new Template({ 
     tag: "div", 
     children: [{
         tag: "div",
+        ref: "content",
         props: { className: styles.scrollbarContent }
     }]
 });
@@ -65,12 +66,10 @@ export class ScrollbarView implements IView<IScrollBarProps, IScrollBarViewState
     }
 
     public mount(props: Readonly<IScrollBarProps>): IScrollBarViewState {
-        const root = template.cloneNode(true) as Element;
+        const root = template.clone();
+        const content = template.get(root, "content") as HTMLElement;
 
-        return this.update(props, { 
-            root,
-            content: root.firstElementChild as HTMLElement,
-        });
+        return this.update(props, { root, content });
     }
 
     private readonly onScrollVert = (state: Readonly<IScrollBarViewState>) => this.fireOnScroll(state, state.root.scrollTop);

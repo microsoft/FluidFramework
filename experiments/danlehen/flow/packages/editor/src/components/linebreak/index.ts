@@ -1,12 +1,12 @@
-import { e } from "@prague/flow-util";
+import { Template } from "@prague/flow-util";
 import * as styles from "./index.css";
 import { IViewState, IView } from "..";
 
-const template = e({ 
+const template = new Template({ 
     tag: "span",
     props: { innerHTML: "&nbsp", className: styles.lineBreak },
     children: [
-        { tag: "span", props: { className: styles.afterLineBreak }},
+        { tag: "span", ref: "cursorTarget", props: { className: styles.afterLineBreak }},
         { tag: "br" }
     ]
 });
@@ -22,8 +22,9 @@ export class LineBreakView implements IView<ILineBreakProps, ILineBreakViewState
     constructor() {}
 
     mount(props: Readonly<ILineBreakProps>): ILineBreakViewState {
-        const root = template.cloneNode(true) as Element;
-        return { root, cursorTarget: root.firstChild! }
+        const root = template.clone();
+        const cursorTarget = template.get(root, "cursorTarget");
+        return { root, cursorTarget }
     }
 
     update(props: Readonly<ILineBreakProps>, state: Readonly<ILineBreakViewState>): ILineBreakViewState {

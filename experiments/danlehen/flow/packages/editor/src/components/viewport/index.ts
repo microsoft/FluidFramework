@@ -1,13 +1,13 @@
-import { e } from "@prague/flow-util";
+import { Template } from "@prague/flow-util";
 import { IViewState, IView } from "..";
 import { IScrollBarViewState, ScrollbarView, IScrollBarProps, ScrollbarOrientation } from "../scrollbar";
 import * as styles from "./index.css";
 
-const template = e({
+const template = new Template({
     tag: "div",
     props: { className: styles.viewport },
     children: [
-        { tag: "div", props: { className: styles.viewportSlot }},
+        { tag: "div", ref: "slot", props: { className: styles.viewportSlot }},
     ]
 });
 
@@ -40,14 +40,15 @@ export class ViewportView implements IView<IViewportProps, IViewportViewState> {
     }
 
     mount(props: Readonly<IViewportProps>): IViewportViewState {
-        const root = template.cloneNode(true) as Element;
+        const root = template.clone();
+        const slot = template.get(root, "slot") as HTMLElement;
         const scrollbar = ScrollbarView.instance.mount(this.getScrollbarProps(props));
         (scrollbar.root as HTMLElement).style.gridArea = "scrollbar";
         root.appendChild(scrollbar.root);
 
         return this.update(props, {
             root,
-            slot: root.firstElementChild as HTMLElement,
+            slot,
             scrollbar
         });
     }

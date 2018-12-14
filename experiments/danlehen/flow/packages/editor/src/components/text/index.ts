@@ -1,8 +1,8 @@
-import { e } from "@prague/flow-util";
+import { Template } from "@prague/flow-util";
 import * as styles from "./index.css";
 import { IViewState, IView } from "..";
 
-const template = e({ tag: "span", props: { className: styles.text }});
+const template = new Template({ tag: "span", props: { className: styles.text }});
 
 export interface ITextProps {
     text: string
@@ -19,8 +19,7 @@ export class TextView implements IView<ITextProps, ITextViewState> {
     constructor() {}
 
     mount(props: Readonly<ITextProps>): ITextViewState {
-        const root = template.cloneNode(true) as Element;
-        return this.update(props, { root });
+        return this.update(props, { root: template.clone() });
     }
 
     update(props: Readonly<ITextProps>, state: Readonly<ITextViewState>): ITextViewState {

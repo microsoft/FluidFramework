@@ -1,7 +1,16 @@
 import { LocalReference } from "@prague/merge-tree";
-import { e, Dom } from "@prague/flow-util";
+import { Template, Dom } from "@prague/flow-util";
 import * as styles from "./editor.css";
 import { FlowDocument } from "@chaincode/flow-document";
+
+const template = new Template({
+    tag: "span",
+    props: { className: styles.cursorOverlay },
+    children: [
+        { tag: "span", ref: "highlights", props: { className: styles.cursorHighlightRoot }},
+        { tag: "span", ref: "cursor", props: { className: styles.cursor }}
+    ]
+});
 
 export class Cursor {
     private startRef: LocalReference;
@@ -21,17 +30,9 @@ export class Cursor {
     private readonly cursorElement: HTMLElement;
 
     constructor (private readonly doc: FlowDocument) {
-        this.root = e({
-            tag: "span",
-            props: { className: styles.cursorOverlay },
-            children: [
-                { tag: "span", props: { className: styles.cursorHighlightRoot }},
-                { tag: "span", props: { className: styles.cursor }}
-            ]
-        });
-
-        this.highlightRootElement = this.root.firstElementChild as Element;
-        this.cursorElement = this.root.lastElementChild as HTMLElement;
+        this.root = template.clone() as HTMLElement;
+        this.highlightRootElement = template.get(this.root, "highlights");
+        this.cursorElement = template.get(this.root, "cursor") as HTMLElement;
 
         this.startRef = doc.addLocalRef(0);
         this.endRef = doc.addLocalRef(0);
@@ -93,7 +94,7 @@ export class Cursor {
      */
     private getOffset(): { top: number, left: number } {
         // Note: Could generalize by walking parentElement chain and probing style properties.
-        return this.root.offsetParent.getBoundingClientRect();
+        return this.root.offsetParent!.getBoundingClientRect();
     }
 
     private updateSelection() {
