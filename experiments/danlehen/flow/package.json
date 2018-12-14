@@ -3,7 +3,7 @@
   "private": true,
   "scripts": {
     "build": "lerna run build --stream --scope '@chaincode/flow-*' --scope '@prague/flow-*'",
-    "postinstall": "(true) && lerna bootstrap --scope '@chaincode/flow-*' --scope '@prague/flow-*'",
+    "postinstall": "(true) && lerna bootstrap --hoist --scope '@chaincode/flow-*' --scope '@prague/flow-*'",
     "publish-patch-local": "lerna run publish-patch-local --stream --scope '@chaincode/flow-*' --scope '@prague/flow-*'"
   },
   "devDependencies": {
