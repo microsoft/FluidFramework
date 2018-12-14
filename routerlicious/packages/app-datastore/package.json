@@ -29,9 +29,9 @@
   },
   "dependencies": {
     "@prague/api-definitions": "^0.1.0",
+    "@prague/app-component": "^0.1.0",
     "@prague/cell": "^0.1.0",
     "@prague/client-api": "^0.1.0",
-    "@prague/datastore": "^0.1.0",
     "@prague/gitresources": "^0.1.0",
     "@prague/loader": "^0.1.0",
     "@prague/loader-web": "^0.1.0",

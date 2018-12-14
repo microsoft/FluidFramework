@@ -5,7 +5,7 @@ import * as scribe from "@prague/tools-core";
 import * as commander from "commander";
 import * as fs from "fs";
 import * as path from "path";
-import * as ProgressBar from "progress";
+import ProgressBar from "progress";
 
 // Process command line input
 let sharedStringId;

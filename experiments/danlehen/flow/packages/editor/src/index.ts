@@ -5,7 +5,7 @@ export { e } from "./dom";
 
 import { MapExtension } from "@prague/map";
 import { IChaincode } from "@prague/runtime-definitions";
-import { Component } from "@prague/datastore";
+import { Component } from "@prague/app-component";
 import { DataStore } from "@prague/app-datastore";
 import { FlowDocument } from "@chaincode/flow-document";
 import { Editor } from "./editor";

@@ -48,7 +48,8 @@ export class DataStore {
      *
      * @param hostUrl The url of the routerlicious service to (e.g., "http://localhost:3000")
      */
-    public static async From(hostUrl: string) {
+    // tslint:disable-next-line:no-reserved-keywords
+    public static async from(hostUrl: string) {
         // Given the 'hostUrl' of a routerlicious server (e.g., ), discovers
         // the necessary config/services to open the data store.
         const response = await fetch(`${hostUrl}/api/tenants`);
