@@ -1,5 +1,5 @@
 import { IDocumentService, IErrorTrackingService } from "@prague/runtime-definitions";
-import { DocumentService2 } from "./DocumentService2";
+import { DocumentService2 } from "./documentService2";
 import { DefaultErrorTracking } from "./errorTracking";
 
 export function createDocumentService2(
