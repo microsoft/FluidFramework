@@ -4,7 +4,7 @@ import {
     TextSegment,
     ReferenceType,
 } from "@prague/merge-tree";
-import { e, Dom } from "../../dom";
+import { e, Dom } from "@prague/flow-util";
 import { getInclusionKind, getInclusionHtml, getInclusionComponent, FlowDocument, DocSegmentKind, getDocSegmentKind, InclusionKind } from "@chaincode/flow-document";
 import { ParagraphView, IParagraphProps, IParagraphViewState } from "../paragraph";
 import { LineBreakView } from "../linebreak";

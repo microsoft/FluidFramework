@@ -1,6 +1,6 @@
 {
   "name": "@chaincode/flow-editor",
-  "version": "0.1.62",
+  "version": "0.1.66",
   "description": "Experimental flow editor for collaborative journaling.",
   "main": "dist/main.bundle.js",
   "types": "dist/index.d.ts",
@@ -37,6 +37,7 @@
     "@chaincode/flow-document": "*",
     "@prague/app-component": "^0.1.0",
     "@prague/app-datastore": "^0.1.0",
+    "@prague/flow-util": "^0.1.0",
     "@prague/map": "^0.1.0",
     "@prague/merge-tree": "^0.1.0",
     "@prague/runtime-definitions": "^0.1.0"

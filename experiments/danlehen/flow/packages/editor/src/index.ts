@@ -1,14 +1,12 @@
 export { Editor } from "./editor";
 export { ViewportView, IViewportProps } from "./components/viewport";
-export { Scheduler } from "./scheduler";
-export { e } from "./dom";
 
 import { MapExtension } from "@prague/map";
 import { Component } from "@prague/app-component";
 import { DataStore } from "@prague/app-datastore";
 import { FlowDocument } from "@chaincode/flow-document";
 import { Editor } from "./editor";
-import { Scheduler } from "./scheduler";
+import { Scheduler } from "@prague/flow-util";
 
 export class FlowEditor extends Component {
     constructor() {

@@ -1,4 +1,4 @@
-import { e } from "../../dom";
+import { e } from "@prague/flow-util";
 import * as styles from "./index.css";
 import { IView, IViewState } from "..";
 

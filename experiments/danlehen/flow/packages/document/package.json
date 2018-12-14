@@ -1,7 +1,7 @@
 {
   "name": "@chaincode/flow-document",
   "description": "Experimental flow editor for collaborative journaling.",
-  "version": "0.0.98",
+  "version": "0.0.103",
   "author": "Microsoft",
   "repository": "microsoft/prague",
   "main": "dist/main.bundle.js",

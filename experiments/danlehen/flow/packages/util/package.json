@@ -1,0 +1,17 @@
+{
+  "name": "@prague/flow-util",
+  "version": "0.1.62",
+  "description": "Shared utility code for Flow-* packages.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "clean": "git clean -fXd -e \\!**/node_modules/**",
+    "build": "tsc --project tsconfig.prod.json",
+    "dev": "tsc --project tsconfig.dev.json --watch"
+  },
+  "author": "Microsoft",
+  "repository": "microsoft/prague",
+  "devDependencies": {
+    "typescript": "^3.0.1"
+  }
+}

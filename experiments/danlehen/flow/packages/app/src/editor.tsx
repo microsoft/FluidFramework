@@ -1,7 +1,8 @@
 import * as React from "react";
 import { DataStore } from "@prague/app-datastore";
 import { FlowDocument } from "@chaincode/flow-document";
-import { Editor, Scheduler } from "@chaincode/flow-editor";
+import { Editor } from "@chaincode/flow-editor";
+import { Scheduler } from "@prague/flow-util";
 import * as style from "./index.css";
 import * as ReactDOM from "react-dom";
 

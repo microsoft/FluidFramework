@@ -1,6 +1,6 @@
 import { FlowDocument } from "@chaincode/flow-document";
 import { Cursor } from "./cursor";
-import { Scheduler } from "./scheduler";
+import { Scheduler } from "@prague/flow-util";
 import { IDocumentViewState, DocumentView, IDocumentProps } from "./components/document";
 // import { ViewportView, IViewportViewState } from "./components/viewport";
 // import { Dom } from "./dom";

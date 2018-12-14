@@ -1,4 +1,4 @@
-import { e } from "../../dom";
+import { e } from "@prague/flow-util";
 import { IViewState, IView } from "..";
 import { IScrollBarViewState, ScrollbarView, IScrollBarProps, ScrollbarOrientation } from "../scrollbar";
 import * as styles from "./index.css";

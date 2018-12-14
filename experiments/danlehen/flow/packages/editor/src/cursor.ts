@@ -1,5 +1,5 @@
 import { LocalReference } from "@prague/merge-tree";
-import { e, Dom } from "./dom";
+import { e, Dom } from "@prague/flow-util";
 import * as styles from "./editor.css";
 import { FlowDocument } from "@chaincode/flow-document";
 
