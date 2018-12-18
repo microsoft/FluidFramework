@@ -20,9 +20,10 @@
     "webpack-cli": "^3.1.2"
   },
   "dependencies": {
-    "@prague/client-api": "^0.1.4184",
-    "@prague/merge-tree": "^0.1.4312",
-    "@prague/runtime-definitions": "^0.1.4184",
+    "@prague/client-api": "^0.1.4408",
+    "@prague/merge-tree": "^0.1.4408",
+    "@prague/runtime-definitions": "^0.1.4408",
+    "@prague/shared-string": "^0.1.4408",
     "@prague/socket-storage": "^0.1.4184",
     "jsonwebtoken": "^8.4.0",
     "uuid": "^3.3.2"

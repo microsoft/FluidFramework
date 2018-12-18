@@ -2,33 +2,21 @@ const api = require("@prague/client-api");
 const socketStorage = require("@prague/socket-storage");
 const MergeTree = require("@prague/merge-tree");
 const jwt = require('jsonwebtoken');
+const sharedString = require("@prague/shared-string")
 const uuidv4 = require('uuid/v4');
 
-const tenantId = "xenodochial-lewin";
-const key = "48fb191e6897e15777fbdaa792ce82ee"; // What is this?
+const tenantId = "happy-chatterjee"; // "xenodochial-lewin";
+const key = "8f69768d16e3852bc4b938cdaa0577d1"; // "48fb191e6897e15777fbdaa792ce82ee"; // What is this?
 const server = "https://alfred.wu2.prague.office-int.com";
 const storage = "https://historian.wu2.prague.office-int.com";
-
-function generateToken(tenantId, documentId, key) {
-    const userId = uuidv4();
-    const claims = {
-        documentId,
-        permission: "read:write",
-        tenantId,
-        user: {
-            id: userId,
-        },
-    };
-
-    return jwt.sign(claims, key);
-}
 
 /**
  *  @param {string} docId
  *  @param {string} text
  *  @param {number} time
+ *  @param {string} startMarker
  */
-exports.setup = async function(docId, text, time) {
+exports.setup = async function(docId, text, time, startMarker) {
     const token = generateToken(tenantId, docId, key );
 
     // Load the shared string extension we will type into
@@ -44,23 +32,26 @@ exports.setup = async function(docId, text, time) {
 
     if (!doc.existing){
         await root.set("text", doc.createString());
-        returnBody += "Doc Didn't Exist";
+        returnBody += "Doc Didn't Exist\n";
         await root.set("ink", doc.createMap());
         await root.set("pageInk", doc.createStream());
         await root.set("presence", doc.createMap());
     }
     else {
-        returnBody += "Doc Existed";
+        returnBody += "Doc Existed\n";
         await Promise.all([root.wait("text"), root.wait("ink")]);
     }
 
     const ss = await root.get("text");
 
-    let position = 0;
+    let position = ss.getText().length; // getPos(ss, paragraphKey);
     const lines = text.split("\n");
     const chars = text.split("");
 
-    ss.insertMarker(0, MergeTree.ReferenceType.Tile, {[MergeTree.reservedTileLabelsKey]: ["pg"] });
+    ss.insertMarker(position, MergeTree.ReferenceType.Tile, {
+        [MergeTree.reservedMarkerIdKey]: ["startMarker"],
+        [MergeTree.reservedTileLabelsKey]: ["pg"] 
+    });
 
     const intervalId = setInterval((async () => {
         if (chars.length === 0) {
@@ -68,7 +59,9 @@ exports.setup = async function(docId, text, time) {
         }
         const char = chars.shift();
         if (char === "\n") {
-            ss.insertMarker(position, MergeTree.ReferenceType.Tile, {[MergeTree.reservedTileLabelsKey]: ["pg"] });
+            ss.insertMarker(position, MergeTree.ReferenceType.Tile, {
+                [MergeTree.reservedTileLabelsKey]: ["pg"] 
+            });
         } else {
             ss.insertText(char, position);
         }
@@ -79,5 +72,41 @@ exports.setup = async function(docId, text, time) {
 
     let keys = lines.length;
 
-    return returnBody + ": " + ss.getText().length + " \nKeys: " + keys + "\n ClientId: " + doc.clientId;
+    return returnBody + ": " + ss.getText().length + " \nKeys: " + keys + "\nstartMarker: " + getPos(ss, "p-0") + "\nClientId: " + doc.clientId;
+}
+
+/**
+ * 
+ * @param {sharedString.SharedString} ss 
+ * @param {string} paragraphKey 
+ * @returns {number}
+ */
+function getPos(ss, paragraphKey) {
+    const relPosit = {
+        before: true,
+        id: paragraphKey,
+        offset: 0,
+    };
+    return ss.client.mergeTree.posFromRelativePos(relPosit);
+}
+
+/**
+ * 
+ * @param {string} tenantId 
+ * @param {string} documentId 
+ * @param {string} key 
+ * @returns {string}
+ */
+function generateToken(tenantId, documentId, key) {
+    const userId = uuidv4();
+    const claims = {
+        documentId,
+        permission: "read:write",
+        tenantId,
+        user: {
+            id: userId,
+        },
+    };
+
+    return jwt.sign(claims, key);
 }
