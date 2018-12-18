@@ -1,6 +1,7 @@
 import * as resources from "@prague/gitresources";
 import * as api from "@prague/runtime-definitions";
 import { RestWrapper } from "@prague/services-client";
+import { IDocumentStorageGetVersionsResponse } from "./contracts";
 import { TokenProvider } from "./token";
 
 export interface IDocumentStorageManager {
@@ -34,14 +35,9 @@ export class StandardDocumentStorageManager implements IDocumentStorageManager {
     }
 
     public async getTree(version?: resources.ICommit): Promise<resources.ITree> {
-        // header-id is the id( or version) of the snapshot. To retrieve the latest version of the snapshot header, use the keyword "latest" as the header-id.
-        let id = "latest";
-        if (!version && !version.sha) {
-            id = version.sha;
-        }
-
-        // TODO: update this to call /trees/ when SPO implements that over headers
-        return this.restWrapper.get<resources.ITree>(`/headers/${id}`);
+        // header-id is the id (or version) of the snapshot. To retrieve the latest version of the snapshot header, use the keyword "latest" as the header-id.
+        const id = (version && version.sha) ? version.sha : "latest";
+        return this.restWrapper.get<resources.ITree>(`/trees/${id}`);
     }
 
     public async getBlob(blobid: string): Promise<resources.IBlob> {
@@ -49,7 +45,14 @@ export class StandardDocumentStorageManager implements IDocumentStorageManager {
     }
 
     public async getVersions(blobid: string, count: number): Promise<resources.ICommit[]> {
-        return this.restWrapper.get<resources.ICommit[]>("/versions", { count });
+        const versionsResponse = await this.restWrapper
+            .get<IDocumentStorageGetVersionsResponse>("/versions", { count })
+            .catch((error) => error === 400 ? undefined : Promise.reject(error));
+        if (versionsResponse && Array.isArray(versionsResponse.value)) {
+            return versionsResponse.value;
+        }
+
+        return [];
     }
 
     public async getContent(version: resources.ICommit, path: string): Promise<resources.IBlob> {
