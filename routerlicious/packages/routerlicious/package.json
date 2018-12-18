@@ -81,7 +81,7 @@
     "@types/nconf": "^0.0.37",
     "@types/passport": "^0.4.5",
     "@types/passport-local": "^1.0.33",
-    "@types/progress": "^2.0.1",
+    "@types/progress": "^2.0.3",
     "@types/random-js": "^1.0.31",
     "@types/raven": "^2.5.1",
     "@types/redis": "^2.8.8",
