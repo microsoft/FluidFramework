@@ -5,13 +5,13 @@ exports.handler = function(context, event) {
     const docId = body.DocumentId;
     const text = body.Text;
     const msPerChar = body.Time;
-    // const paragraph = body.Paragraph;
+    const startMarker = body.Start;
 
-    docGetter.setup(docId, text, msPerChar)
+    docGetter.setup(docId, text, msPerChar, startMarker)
         .then((value) => {
             context.callback("Value: " + value);
         })
         .catch((error) => {
-            context.callback("Error: " + error);
+            context.callback(error.toString());
         })
 };
