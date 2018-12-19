@@ -1,7 +1,7 @@
 import { FlowDocument } from "@chaincode/flow-document";
 import { Cursor } from "./cursor";
 import { Scheduler } from "@prague/flow-util";
-import { IDocumentViewState, DocumentView, IDocumentProps } from "./components/document";
+import { DocumentView, IDocumentProps } from "./components/document";
 // import { ViewportView, IViewportViewState } from "./components/viewport";
 // import { Dom } from "./dom";
 import { ISequencedObjectMessage } from "@prague/runtime-definitions";
@@ -10,7 +10,7 @@ export class Editor {
     private readonly cursor: Cursor;
 //    private viewportState: IViewportViewState;
     private readonly docProps: IDocumentProps;
-    private readonly docState: IDocumentViewState;
+    private readonly docView: DocumentView;
     private readonly eventSink: HTMLElement;
 //    private scrollY = 0;
 
@@ -19,13 +19,14 @@ export class Editor {
         this.cursor.moveTo(0, false);
 
         this.docProps = { doc, trackedPositions: [], start: 0 };
-        this.docState = DocumentView.instance.mount(this.docProps);
-        this.docState.overlay.appendChild(this.cursor.root);
+        this.docView = new DocumentView();
+        this.docView.mount(this.docProps);
+        this.docView.overlay.appendChild(this.cursor.root);
 
         // this.viewportState = ViewportView.instance.mount(this.getViewportProps(0));
         // this.viewportState.slot.appendChild(this.docState.root);
 
-        this.eventSink = this.docState.slot;
+        this.eventSink = this.docView.slot;
         this.eventSink.addEventListener("keydown",   this.onKeyDown as any);
         this.eventSink.addEventListener("keypress",  this.onKeyPress as any);
         this.eventSink.addEventListener("mousedown", this.onMouseDown as any);
@@ -44,7 +45,7 @@ export class Editor {
     }
 
     // public get root() { return this.viewportState.root; }
-    public get root() { return this.docState.root; }
+    public get root() { return this.docView.root; }
 /*
     private getViewportProps(scrollY: number) {
         return {
@@ -90,10 +91,10 @@ export class Editor {
         //     position: this.docProps.start,
         //     callback: this.scrollToPositionCallback
         // });
-        DocumentView.instance.update(this.docProps, this.docState);
+        this.docView.update(this.docProps);
         this.cursor.render();
 
-        return this.docState.root;
+        return this.docView.root;
     }
 
     private readonly onKeyDown = async (ev: KeyboardEvent) => {
@@ -130,7 +131,7 @@ export class Editor {
             case 40: {
                 const cursorBounds = await this.cursor.bounds;
                 if (cursorBounds) {
-                    const segmentAndOffset = DocumentView.instance.findBelow(this.docState, cursorBounds.left, cursorBounds.top, cursorBounds.bottom);
+                    const segmentAndOffset = this.docView.findBelow(cursorBounds.left, cursorBounds.top, cursorBounds.bottom);
                     if (segmentAndOffset) {
                         const position = this.doc.getPosition(segmentAndOffset.segment!);
                         this.cursor.moveTo(position + segmentAndOffset.offset, ev.shiftKey);
@@ -175,7 +176,7 @@ export class Editor {
     }
 
     private readonly onMouseDown = (ev: MouseEvent) => {
-        const maybeSegmentAndOffset = DocumentView.instance.hitTest(this.docState, ev.x, ev.y);
+        const maybeSegmentAndOffset = this.docView.hitTest(ev.x, ev.y);
         if (maybeSegmentAndOffset) {
             const { segment, offset } = maybeSegmentAndOffset;
             const position = Math.min(

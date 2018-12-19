@@ -68,7 +68,7 @@ export interface IViewInfo<TProps, TState extends IViewState> {
 /**
  * The state maintained by the DocumentView instance.
  */
-export interface IDocumentViewState extends IViewState {
+interface IDocumentViewState extends IViewState {
     /** The root element into which segments are rendered. */
     slot: HTMLElement,
 
@@ -95,12 +95,10 @@ export interface IDocumentViewState extends IViewState {
 }
 
 /** IView that renders a FlowDocument. */
-export class DocumentView implements IView<IDocumentProps, IDocumentViewState> {
-    public static readonly instance = new DocumentView();
+export class DocumentView {
+    private state?: IDocumentViewState;
 
-    constructor() {}
-
-    public mount(props: IDocumentProps): IDocumentViewState {
+    public mount(props: IDocumentProps) {
         const root = template.clone();
         const leadingSpan = template.get(root, "leadingSpan");
         const slot = template.get(root, "slot") as HTMLElement;
@@ -110,7 +108,7 @@ export class DocumentView implements IView<IDocumentProps, IDocumentViewState> {
         const leadingParagraph = FlowDocument.markAsParagraph(new Marker(ReferenceType.Tile));
         const trailingParagraph = FlowDocument.markAsParagraph(new Marker(ReferenceType.Tile));
 
-        return this.update(props, {
+        this.state = {
             root,
             slot,
             leadingSpan,
@@ -120,18 +118,24 @@ export class DocumentView implements IView<IDocumentProps, IDocumentViewState> {
             trailingParagraph,
             segmentToViewInfo: new Map<Segment, IViewInfo<any, IViewState>>(),
             elementToViewInfo: new Map<Element, IViewInfo<any, IViewState>>()
-        });
+        };
+
+        return this.update(props);
     }
 
-    public update(props: Readonly<IDocumentProps>, state: Readonly<IDocumentViewState>): IDocumentViewState {
-        DocumentLayout.sync(props, state);
-        return state;
+    public get root()       { return this.state!.root; }
+    public get slot()       { return this.state!.slot; }
+    public get overlay()    { return this.state!.overlay; }
+
+    public update(props: Readonly<IDocumentProps>) {
+        DocumentLayout.sync(props, this.state!);
     }
 
-    public unmount(state: IDocumentViewState) { }
+    public unmount() { }
 
     /** Map a node/nodeOffset to the corresponding segment/segmentOffset that rendered it. */
-    private nodeOffsetToSegmentOffset(state: IDocumentViewState, node: Node | null, nodeOffset: number) {
+    private nodeOffsetToSegmentOffset(node: Node | null, nodeOffset: number) {
+        const state = this.state!;
         let viewInfo: IViewInfo<any, IViewState> | undefined;
         while (node && !(viewInfo = state.elementToViewInfo.get(node as Element))) {
             node = node.parentElement;
@@ -153,9 +157,9 @@ export class DocumentView implements IView<IDocumentProps, IDocumentViewState> {
     }
 
     /** Returns the { segment, offset } currently visible at the given x/y coordinates (if any). */
-    public hitTest(state: IDocumentViewState, x: number, y: number) {
+    public hitTest(x: number, y: number) {
         const range = document.caretRangeFromPoint(x, y);
-        const segmentAndOffset = this.nodeOffsetToSegmentOffset(state, range.startContainer, range.startOffset);
+        const segmentAndOffset = this.nodeOffsetToSegmentOffset(range.startContainer, range.startOffset);
         console.log(`  (${x},${y}) -> "${range.startContainer.textContent}":${range.startOffset} -> ${
             segmentAndOffset
                 ? `${(segmentAndOffset.segment as TextSegment).text}:${segmentAndOffset.offset}`
@@ -164,9 +168,8 @@ export class DocumentView implements IView<IDocumentProps, IDocumentViewState> {
     }
  
     /** Returns the closest { segment, offset } to the 0-width rect described by x/top/bottom. */
-    private findDomPosition(state: IDocumentViewState, node: Node, x: number, yMin: number, yMax: number) {
+    private findDomPosition(node: Node, x: number, yMin: number, yMax: number) {
         // Note: Caller must pass a 'node' that was previously rendered for a TextSegment.
-
         const domRange = document.createRange();
         let left = 0
         let right = node.textContent!.length;
@@ -188,12 +191,13 @@ export class DocumentView implements IView<IDocumentProps, IDocumentViewState> {
             }
         }
 
-        return this.nodeOffsetToSegmentOffset(state, node, left);
+        return this.nodeOffsetToSegmentOffset(node, left);
     }
 
     /** Get the ClientRects that define the boundary of the given 'element', using cached information if we have it. */
-    private getClientRects(state: IDocumentViewState, element: Element) {
+    private getClientRects(element: Element) {
         // Note: Caller must only request clientRects for elements we've previously rendered.
+        const state = this.state!;
         const viewInfo = state.elementToViewInfo.get(element)!;
         if (!viewInfo.clientRects) {
             viewInfo.clientRects = element.getClientRects();
@@ -213,9 +217,10 @@ export class DocumentView implements IView<IDocumentProps, IDocumentViewState> {
      * Returns the closest { segment, offset } below the text cursor occupying the 0-width rect
      * described by x/top/bottom.
      */
-    public findBelow(state: IDocumentViewState, x: number, top: number, bottom: number) {
+    public findBelow(x: number, top: number, bottom: number) {
         console.log(`looking below: ${bottom}`);
 
+        const state = this.state!;
         let bestRect = { top: +Infinity, bottom: -Infinity, left: +Infinity, right: -Infinity };
         let bestDx = +Infinity;
         let bestViewInfo: IViewInfo<any, IViewState> | undefined = undefined;
@@ -227,7 +232,7 @@ export class DocumentView implements IView<IDocumentProps, IDocumentViewState> {
             }
 
             const node = viewInfo.state.root;
-            const rects = this.getClientRects(state, node);
+            const rects = this.getClientRects(node);
             console.log(`rects: ${rects.length} for ${viewInfo.state.root.textContent}`);
             
             for (const rect of rects) {
@@ -260,7 +265,7 @@ export class DocumentView implements IView<IDocumentProps, IDocumentViewState> {
         }
 
         // Note: Attempting to hit test using 'caretRangeFromPoint()' against the reported client rect's top/bottom
-        //       produced inconsistent results, presumably due to internal fixed-point -> Float32 rounding discrepencies.
+        //       produced inconsistent results, presumably due to internal fixed-point -> Float32 rounding discrepancies.
         // 
         // Reported edge: 487.99713134765625
         //
@@ -276,7 +281,6 @@ export class DocumentView implements IView<IDocumentProps, IDocumentViewState> {
         console.log(`    rect: ${JSON.stringify(bestRect)}`);
 
         return this.findDomPosition(
-            state,
             this.getCursorTarget(bestViewInfo),
             Math.min(Math.max(x, bestRect.left), bestRect.right),
             bestRect.top, bestRect.bottom);    
