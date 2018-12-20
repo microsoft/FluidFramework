@@ -18,11 +18,11 @@
     "url": "https://github.com/Microsoft/Prague.git"
   },
   "dependencies": {
-    "@prague/lambdas": "^0.1.4376",
-    "@prague/services": "^0.1.4376",
-    "@prague/services-core": "^0.1.4376",
-    "@prague/services-utils": "^0.1.4376",
-    "@prague/socket-storage": "^0.1.4376",
+    "@prague/lambdas": "^0.1.4434",
+    "@prague/services": "^0.1.4434",
+    "@prague/services-core": "^0.1.4434",
+    "@prague/services-utils": "^0.1.4434",
+    "@prague/socket-storage": "^0.1.4434",
     "@types/commander": "^2.12.2",
     "@types/compression": "0.0.36",
     "@types/cors": "^2.8.4",

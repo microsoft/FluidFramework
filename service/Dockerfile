@@ -14,12 +14,14 @@ RUN chmod +x /tini
 
 ARG NPM_TOKEN
 
-# Copy over and build the server
-# Eventually we can better optimzie this. For now we just copy everything.
+# Copy over package dependencies and install
 WORKDIR /usr/src/server
-COPY . .
-
+COPY *.json ./
+COPY .npmrc .
 RUN npm install
+
+# Then copy remaining files and build
+COPY . .
 RUN npm run build
 
 # Don't run as root user
