@@ -17,7 +17,7 @@ export interface ILineBreakViewState extends IViewState {
 }
 
 export class LineBreakView extends View<ILineBreakProps, ILineBreakViewState> {
-    public static readonly instance = new LineBreakView();
+    public static readonly factory = () => new LineBreakView();
 
     mounting(props: Readonly<ILineBreakProps>): ILineBreakViewState {
         const root = template.clone();

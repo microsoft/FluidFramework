@@ -3,21 +3,28 @@ export interface IViewState {
 }
 
 export abstract class View<TProps, TState extends IViewState> {
-    constructor() { }
+    private _state?: TState;
 
-    public mount(props: TProps): TState {
-        return this.mounting(props);
+    public get state(): Readonly<TState> { return this._state!; }
+
+    protected setState(state: TState) {
+        this._state = state;
     }
 
-    public unmount(state: TState) {
-        this.unmounting(state);
+    public mount(props: Readonly<TProps>) {
+        this._state = this.mounting(props);
     }
 
-    public update(props: TProps, state: TState) {
-        return this.updating(props, state);
+    public update(props: Readonly<TProps>) {
+        this._state = this.updating(props, this.state);
+    }
+    
+    public unmount() {
+        this.unmounting(this.state);
+        this._state = undefined;
     }
 
-    protected abstract mounting(props: TProps): TState;
-    protected abstract updating(props: TProps, state: TState): TState;
+    protected abstract mounting(props: Readonly<TProps>): TState;
+    protected abstract updating(props: Readonly<TProps>, state: TState): TState;
     protected abstract unmounting(state: TState): void;
 }

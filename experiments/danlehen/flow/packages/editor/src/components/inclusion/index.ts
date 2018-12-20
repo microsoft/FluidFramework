@@ -13,20 +13,20 @@ export interface IInclusionViewState extends IViewState {
 }
 
 export class InclusionView extends View<IInclusionProps, IInclusionViewState> {
-    public static readonly instance = new InclusionView();
+    public static readonly factory = () => new InclusionView();
 
     mounting(props: Readonly<IInclusionProps>): IInclusionViewState {
         const root = template.clone();
-        return this.update( props, { root });
+        return this.updating( props, { root });
     }
 
     updating(props: Readonly<IInclusionProps>, state: Readonly<IInclusionViewState>): IInclusionViewState {
-        const parent = state.root;
+        const root = state.root;
         const desiredChild = props.root;
 
-        if (parent.firstChild !== desiredChild) {
-            Dom.replaceFirstChild(parent, desiredChild);
-            state = { root: state.root, cursorTarget: desiredChild };
+        if (root.firstChild !== desiredChild) {
+            Dom.replaceFirstChild(root, desiredChild);
+            state = { root, cursorTarget: desiredChild };
         }
         
         return state;

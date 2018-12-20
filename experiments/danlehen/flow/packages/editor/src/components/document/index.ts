@@ -58,9 +58,6 @@ export interface IViewInfo<TProps, TState extends IViewState, TView extends View
     /** The IView instance that rendered this set of segments. */
     view: TView;
 
-    /** The ViewState for this child view. */
-    state: TState;
-
     /** Cached ClientRects that bound this view. */
     clientRects?: ClientRectList | DOMRectList;
 }
@@ -206,7 +203,7 @@ export class DocumentView {
     }
 
     private getCursorTarget<TProps, TState extends IViewState, TView extends View<TProps, TState>>(viewInfo: IViewInfo<TProps, TState, TView>) {
-        const state = viewInfo.state;
+        const state = viewInfo.view.state;
         const maybeCursorTarget = (state as any)["cursorTarget"];
 
         // Note: 'root.firstChild' expected to be non-null 
@@ -227,13 +224,14 @@ export class DocumentView {
 
         for (const viewInfo of state.elementToViewInfo.values()) {
             // Only consider text segments.
-            if (viewInfo.view !== TextView.instance) {
+            if (viewInfo.view instanceof TextView) {
                 continue;
             }
 
-            const node = viewInfo.state.root;
+            const state = viewInfo.view.state;
+            const node = state.root;
             const rects = this.getClientRects(node);
-            console.log(`rects: ${rects.length} for ${viewInfo.state.root.textContent}`);
+            console.log(`rects: ${rects.length} for ${node.textContent}`);
             
             for (const rect of rects) {
                 console.log(`    ${JSON.stringify(rect)}`);
@@ -257,7 +255,7 @@ export class DocumentView {
                     bestRect = rect;
                     bestDx = dx;
                     bestViewInfo = viewInfo;
-                    console.log(`    ==> Best candidate: ${bestViewInfo.state.root.id}: ${bestViewInfo.state.root.textContent}`);
+                    console.log(`    ==> Best candidate: ${bestViewInfo.view.state.root.id}: ${bestViewInfo.view.state.root.textContent}`);
                 } else {
                     console.log(`        Rejected d^2: (${dx} > ${bestDx})`);
                 }
@@ -277,7 +275,7 @@ export class DocumentView {
             return undefined;
         }
         
-        console.log(`Best candidate: ${bestViewInfo.state.root.id}: ${bestViewInfo.state.root.textContent}`);
+        console.log(`Best candidate: ${bestViewInfo.view.state.root.id}: ${bestViewInfo.view.state.root.textContent}`);
         console.log(`    rect: ${JSON.stringify(bestRect)}`);
 
         return this.findDomPosition(
@@ -366,7 +364,7 @@ class LayoutContext {
             const toUnmountInfo = this.elementToViewInfo(toUnmount)!;
             this.state.elementToViewInfo.delete(toUnmount);
             toUnmount.remove();
-            toUnmountInfo.view.unmount(toUnmountInfo.state);
+            toUnmountInfo.view.unmount();
         }
         
         this.pendingLayout.clear();
@@ -386,7 +384,7 @@ class LayoutContext {
     public maybeReuseViewInfo<TProps, TState extends IViewState, TView extends View<TProps, TState>>(segment: Segment) {
         const viewInfo = this.state.segmentToViewInfo.get(segment);
         if (viewInfo) {
-            this.pendingLayout.delete(viewInfo.state.root);
+            this.pendingLayout.delete(viewInfo.view.state.root);
         }
         return viewInfo as IViewInfo<TProps, TState, TView>;
     }
@@ -394,7 +392,7 @@ class LayoutContext {
     public pushParagraph(paragraphInfo: IViewInfo<IParagraphProps, IParagraphViewState, View<IParagraphProps, IParagraphViewState>>) {
         this._currentParagraph = paragraphInfo;
         this._currentInline = null;
-        this.pushParent(paragraphInfo.state.slot);
+        this.pushParent(paragraphInfo.view.state.slot);
     }
 
     public get currentParagraph() { return this._currentParagraph; }
@@ -408,7 +406,7 @@ class LayoutContext {
 
     public setViewInfo<TProps, TState extends IViewState, TView extends View<TProps, TState>>(viewInfo: IViewInfo<TProps, TState, TView>) {
         this.state.segmentToViewInfo.set(viewInfo.segments[0], viewInfo);
-        this.state.elementToViewInfo.set(viewInfo.state.root, viewInfo);
+        this.state.elementToViewInfo.set(viewInfo.view.state.root, viewInfo);
         return viewInfo;
     }
 }
@@ -418,13 +416,15 @@ export class DocumentLayout {
     private static mountView<TProps, TState extends IViewState, TView extends View<TProps, TState>>(
         context: LayoutContext,
         segments: Segment[],
-        view: TView,
+        factory: () => TView,
         props: TProps): IViewInfo<TProps, TState, TView>
     {
+        const view = factory();
+        view.mount(props);
+
         return context.setViewInfo({
             view,
-            state: view.mount(props),
-            segments,
+            segments
         });
     }
 
@@ -436,7 +436,7 @@ export class DocumentLayout {
         context: LayoutContext,
         previous: Node | null,
         segments: Segment[],
-        view: TView,
+        factory: () => TView,
         props: TProps): IViewInfo<TProps, TState, TView>
     {
         const parent = context.parent;
@@ -445,15 +445,16 @@ export class DocumentLayout {
         let viewInfo = context.maybeReuseViewInfo<TProps, TState, TView>(segments[0]);
         if (!viewInfo) {
             // Segment was not previously in the rendered window.  Create it.
-            viewInfo = this.mountView(context, segments, view, props);
+            viewInfo = this.mountView(context, segments, factory, props);
 
             // Insert the node for the new segment after the previous block.
-            Dom.insertAfter(parent, viewInfo.state.root, previous);
+            Dom.insertAfter(parent, viewInfo.view.state.root, previous);
         } else {
             viewInfo.segments = segments;
-            viewInfo.state = view.update(props, viewInfo.state);
+            const view = viewInfo.view;
+            view.update(props);
 
-            const node = viewInfo.state.root;
+            const node = viewInfo.view.state.root;
 
             // The node was previously inside the rendered window.  See if it is already in the correct location.
             if (!Dom.isAfterNode(parent, node, previous)) {
@@ -481,15 +482,15 @@ export class DocumentLayout {
         const viewInfo = context.pushParagraph(
             this.syncNode<IParagraphProps, IParagraphViewState, ParagraphView>(
                 context,
-                previousInfo && previousInfo.state.root,
+                previousInfo && previousInfo.view.state.root,
                 [marker],
-                ParagraphView.instance,
+                ParagraphView.factory,
                 {}
             )
         );
 
         const cursorTarget = previousInfo
-            ? previousInfo.state.cursorTarget
+            ? previousInfo.view.state.cursorTarget
             : context.state.leadingSpan;
             
         context.notifyTrackedPositionListeners(cursorTarget, position, [marker]);
@@ -498,27 +499,27 @@ export class DocumentLayout {
     }
 
     /** Ensures that the given inline 'view' is mounted and up to date. */
-    private static syncInline<TProps, TState extends IViewState, TView extends View<TProps, TState>>(context: LayoutContext, position: number, segments: Segment[], view: TView, props: TProps) {
+    private static syncInline<TProps, TState extends IViewState, TView extends View<TProps, TState>>(context: LayoutContext, position: number, segments: Segment[], factory: () => TView, props: TProps) {
         const viewInfo = context.setCurrentInline(
             this.syncNode<TProps, TState, TView>(
                 context,
-                context.currentInline && context.currentInline.state.root!,
+                context.currentInline && context.currentInline.view.state.root!,
                 segments,
-                view,
+                factory,
                 props));
 
-        const maybeCursorTarget = (viewInfo.state as any).cursorTarget;
-        context.notifyTrackedPositionListeners(maybeCursorTarget || viewInfo.state.root, position, segments);
+        const maybeCursorTarget = (viewInfo.view.state as any).cursorTarget;
+        context.notifyTrackedPositionListeners(maybeCursorTarget || viewInfo.view.state.root, position, segments);
     }
 
     /** Ensures that the lineBreak's view is mounted and up to date. */
     private static syncLineBreak(context: LayoutContext, position: number, marker: Marker) {
-        this.syncInline(context, position, [ marker ], LineBreakView.instance, {});
+        this.syncInline(context, position, [ marker ], LineBreakView.factory, {});
     }
 
     /** Ensures that the text's view is mounted and up to date. */
     private static syncText(context: LayoutContext, position: number, segments: Segment[], text: string) {
-       this.syncInline(context, position, segments, TextView.instance, { text });
+       this.syncInline(context, position, segments, TextView.factory, { text });
     }
 
     private static readonly inclusionRootSym = Symbol("Flow.Editor.Marker.InclusionRoot");
@@ -544,7 +545,7 @@ export class DocumentLayout {
             (marker.properties as any)[this.inclusionRootSym] = root;
         }
 
-        this.syncInline(context, position, [ marker ], InclusionView.instance, { root });
+        this.syncInline(context, position, [ marker ], InclusionView.factory, { root });
     }
 
     /** 
@@ -627,7 +628,7 @@ export class DocumentLayout {
         } while (nextStart >= 0);
 
         // Notify listeners whose tracked positions were after our rendered window.
-        context.notifyTrackedPositionListeners(context.currentParagraph!.state.cursorTarget!, +Infinity, []);
+        context.notifyTrackedPositionListeners(context.currentParagraph!.view.state.cursorTarget!, +Infinity, []);
 
         // Any nodes not re-used from the previous layout are unmounted and removed.
         context.unmount();

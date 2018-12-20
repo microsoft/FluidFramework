@@ -1,6 +1,6 @@
 import { Template } from "@prague/flow-util";
 import { IViewState, View } from "..";
-import { IScrollBarViewState, ScrollbarView, IScrollBarProps, ScrollbarOrientation } from "../scrollbar";
+import { ScrollbarView, IScrollBarProps, ScrollbarOrientation } from "../scrollbar";
 import * as styles from "./index.css";
 
 const template = new Template({
@@ -21,11 +21,11 @@ export interface IViewportProps {
 export interface IViewportViewState extends IViewState {
     readonly root: Element;
     readonly slot: HTMLElement;
-    readonly scrollbar: IScrollBarViewState;
+    readonly scrollbar: ScrollbarView;
 }
 
 export class ViewportView extends View<IViewportProps, IViewportViewState> {
-    public static readonly instance = new ViewportView();
+    public static readonly factory = () => new ViewportView();
 
     private getScrollbarProps(props: Readonly<IViewportProps>): IScrollBarProps {
         return {
@@ -40,11 +40,12 @@ export class ViewportView extends View<IViewportProps, IViewportViewState> {
     mounting(props: Readonly<IViewportProps>): IViewportViewState {
         const root = template.clone();
         const slot = template.get(root, "slot") as HTMLElement;
-        const scrollbar = ScrollbarView.instance.mount(this.getScrollbarProps(props));
-        (scrollbar.root as HTMLElement).style.gridArea = "scrollbar";
-        root.appendChild(scrollbar.root);
+        const scrollbar = new ScrollbarView();
+        scrollbar.mount(this.getScrollbarProps(props));
+        scrollbar.state.root.style.gridArea = "scrollbar";
+        root.appendChild(scrollbar.state.root);
 
-        return this.update(props, {
+        return this.updating(props, {
             root,
             slot,
             scrollbar
@@ -52,8 +53,8 @@ export class ViewportView extends View<IViewportProps, IViewportViewState> {
     }
 
     updating(props: Readonly<IViewportProps>, state: Readonly<IViewportViewState>): IViewportViewState {
-        const { root, slot } = state;
-        const scrollbar = ScrollbarView.instance.update(this.getScrollbarProps(props), state.scrollbar);
+        const { root, slot, scrollbar } = state;
+        scrollbar.update(this.getScrollbarProps(props));
         slot.style.marginTop = `${-props.scrollY}px)`;
         return { root, slot, scrollbar };
     }

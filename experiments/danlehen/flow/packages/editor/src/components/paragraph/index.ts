@@ -19,7 +19,7 @@ export interface IParagraphViewState extends IViewState {
 }
 
 export class ParagraphView extends View<IParagraphProps, IParagraphViewState> {
-    public static readonly instance = new ParagraphView();
+    public static readonly factory = () => new ParagraphView();
 
     mounting(props: Readonly<IParagraphProps>): IParagraphViewState {
         const root = template.clone();

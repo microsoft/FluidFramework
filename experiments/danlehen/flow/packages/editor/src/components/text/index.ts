@@ -14,10 +14,10 @@ export interface ITextViewState extends IViewState {
 }
 
 export class TextView extends View<ITextProps, ITextViewState> {
-    public static readonly instance = new TextView();
+    public static readonly factory = () => new TextView();
 
     mounting(props: Readonly<ITextProps>): ITextViewState {
-        return this.update(props, { root: template.clone() });
+        return this.updating(props, { root: template.clone() });
     }
 
     updating(props: Readonly<ITextProps>, state: Readonly<ITextViewState>): ITextViewState {

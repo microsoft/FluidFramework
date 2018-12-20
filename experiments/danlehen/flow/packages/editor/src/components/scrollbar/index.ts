@@ -30,14 +30,14 @@ export interface IScrollBarProps {
 }
 
 export interface IScrollBarViewState extends IViewState {
-    readonly root: Element;
+    readonly root: HTMLElement;
     readonly content: HTMLElement;
     onScroll?: (value: number) => void;
     onScrollRaw?: EventListener;
 }
 
 export class ScrollbarView extends View<IScrollBarProps, IScrollBarViewState> {
-    public static readonly instance = new ScrollbarView();
+    public static readonly factory = () => new ScrollbarView();
 
     private adjust(props: IScrollBarProps, length: number) {
         const delta = props.max - props.min;
@@ -64,10 +64,10 @@ export class ScrollbarView extends View<IScrollBarProps, IScrollBarViewState> {
     }
 
     public mounting(props: Readonly<IScrollBarProps>): IScrollBarViewState {
-        const root = template.clone();
+        const root = template.clone() as HTMLElement;
         const content = template.get(root, "content") as HTMLElement;
 
-        return this.update(props, { root, content });
+        return this.updating(props, { root, content });
     }
 
     private readonly onScrollVert = (state: Readonly<IScrollBarViewState>) => this.fireOnScroll(state, state.root.scrollTop);
