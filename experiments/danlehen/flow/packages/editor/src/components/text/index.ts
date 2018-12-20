@@ -1,6 +1,6 @@
 import { Template } from "@prague/flow-util";
 import * as styles from "./index.css";
-import { IViewState, IView } from "..";
+import { IViewState, View } from "..";
 
 const template = new Template({ tag: "span", props: { className: styles.text }});
 
@@ -13,16 +13,14 @@ export interface ITextViewState extends IViewState {
     readonly cursorTarget?: Node;
 }
 
-export class TextView implements IView<ITextProps, ITextViewState> {
+export class TextView extends View<ITextProps, ITextViewState> {
     public static readonly instance = new TextView();
 
-    constructor() {}
-
-    mount(props: Readonly<ITextProps>): ITextViewState {
+    mounting(props: Readonly<ITextProps>): ITextViewState {
         return this.update(props, { root: template.clone() });
     }
 
-    update(props: Readonly<ITextProps>, state: Readonly<ITextViewState>): ITextViewState {
+    updating(props: Readonly<ITextProps>, state: Readonly<ITextViewState>): ITextViewState {
         console.assert(props.text !== "",
             "Should not emit a TextView for empty text.");
 
@@ -37,5 +35,5 @@ export class TextView implements IView<ITextProps, ITextViewState> {
         return { root, cursorTarget: root.firstChild! };
     }
 
-    unmount(state: Readonly<ITextViewState>) { }
+    unmounting(state: Readonly<ITextViewState>) { }
 }

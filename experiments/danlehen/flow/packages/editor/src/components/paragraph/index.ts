@@ -1,6 +1,6 @@
 import { Template } from "@prague/flow-util";
 import * as styles from "./index.css";
-import { IView, IViewState } from "..";
+import { View, IViewState } from "..";
 
 const template = new Template({
     tag: "p",
@@ -18,12 +18,10 @@ export interface IParagraphViewState extends IViewState {
     readonly cursorTarget: Node;
 }
 
-export class ParagraphView implements IView<IParagraphProps, IParagraphViewState> {
+export class ParagraphView extends View<IParagraphProps, IParagraphViewState> {
     public static readonly instance = new ParagraphView();
 
-    constructor() {}
-
-    mount(props: Readonly<IParagraphProps>): IParagraphViewState {
+    mounting(props: Readonly<IParagraphProps>): IParagraphViewState {
         const root = template.clone();
         const slot = template.get(root, "slot");
         const cursorTarget = template.get(root, "cursorTarget");
@@ -31,9 +29,9 @@ export class ParagraphView implements IView<IParagraphProps, IParagraphViewState
         return { root, slot, cursorTarget }
     }
 
-    update(props: Readonly<IParagraphProps>, state: Readonly<IParagraphViewState>): IParagraphViewState {
+    updating(props: Readonly<IParagraphProps>, state: Readonly<IParagraphViewState>): IParagraphViewState {
         return state;
     }
 
-    unmount(state: Readonly<IParagraphViewState>) { }
+    unmounting(state: Readonly<IParagraphViewState>) { }
 }

@@ -1,6 +1,6 @@
 import { Template, Dom } from "@prague/flow-util";
 import * as styles from "./index.css";
-import { IViewState, IView } from "..";
+import { IViewState, View } from "..";
 
 const template = new Template({ 
     tag: "p",
@@ -12,17 +12,15 @@ export interface IInclusionViewState extends IViewState {
     cursorTarget?: Node;
 }
 
-export class InclusionView implements IView<IInclusionProps, IInclusionViewState> {
+export class InclusionView extends View<IInclusionProps, IInclusionViewState> {
     public static readonly instance = new InclusionView();
 
-    constructor() {}
-
-    mount(props: IInclusionProps): IInclusionViewState {
+    mounting(props: Readonly<IInclusionProps>): IInclusionViewState {
         const root = template.clone();
         return this.update( props, { root });
     }
 
-    update(props: Readonly<IInclusionProps>, state: Readonly<IInclusionViewState>): IInclusionViewState {
+    updating(props: Readonly<IInclusionProps>, state: Readonly<IInclusionViewState>): IInclusionViewState {
         const parent = state.root;
         const desiredChild = props.root;
 
@@ -34,5 +32,5 @@ export class InclusionView implements IView<IInclusionProps, IInclusionViewState
         return state;
     }
 
-    unmount(state: IInclusionViewState) { }
+    unmounting(state: Readonly<IInclusionViewState>) { }
 }

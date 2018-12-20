@@ -1,5 +1,5 @@
 import { Template } from "@prague/flow-util";
-import { IViewState, IView } from "..";
+import { IViewState, View } from "..";
 import { IScrollBarViewState, ScrollbarView, IScrollBarProps, ScrollbarOrientation } from "../scrollbar";
 import * as styles from "./index.css";
 
@@ -24,10 +24,8 @@ export interface IViewportViewState extends IViewState {
     readonly scrollbar: IScrollBarViewState;
 }
 
-export class ViewportView implements IView<IViewportProps, IViewportViewState> {
+export class ViewportView extends View<IViewportProps, IViewportViewState> {
     public static readonly instance = new ViewportView();
-
-    constructor() {}
 
     private getScrollbarProps(props: Readonly<IViewportProps>): IScrollBarProps {
         return {
@@ -39,7 +37,7 @@ export class ViewportView implements IView<IViewportProps, IViewportViewState> {
         };
     }
 
-    mount(props: Readonly<IViewportProps>): IViewportViewState {
+    mounting(props: Readonly<IViewportProps>): IViewportViewState {
         const root = template.clone();
         const slot = template.get(root, "slot") as HTMLElement;
         const scrollbar = ScrollbarView.instance.mount(this.getScrollbarProps(props));
@@ -53,12 +51,12 @@ export class ViewportView implements IView<IViewportProps, IViewportViewState> {
         });
     }
 
-    update(props: Readonly<IViewportProps>, state: Readonly<IViewportViewState>): IViewportViewState {
+    updating(props: Readonly<IViewportProps>, state: Readonly<IViewportViewState>): IViewportViewState {
         const { root, slot } = state;
         const scrollbar = ScrollbarView.instance.update(this.getScrollbarProps(props), state.scrollbar);
         slot.style.marginTop = `${-props.scrollY}px)`;
         return { root, slot, scrollbar };
     }
 
-    unmount(state: Readonly<IViewportViewState>) { }
+    unmounting(state: Readonly<IViewportViewState>) { }
 }

@@ -1,6 +1,6 @@
 import { Template } from "@prague/flow-util";
 import * as styles from "./index.css";
-import { IViewState, IView } from "..";
+import { IViewState, View } from "..";
 
 const template = new Template({ 
     tag: "div", 
@@ -36,10 +36,8 @@ export interface IScrollBarViewState extends IViewState {
     onScrollRaw?: EventListener;
 }
 
-export class ScrollbarView implements IView<IScrollBarProps, IScrollBarViewState> {
+export class ScrollbarView extends View<IScrollBarProps, IScrollBarViewState> {
     public static readonly instance = new ScrollbarView();
-
-    constructor() {}
 
     private adjust(props: IScrollBarProps, length: number) {
         const delta = props.max - props.min;
@@ -65,7 +63,7 @@ export class ScrollbarView implements IView<IScrollBarProps, IScrollBarViewState
         }
     }
 
-    public mount(props: Readonly<IScrollBarProps>): IScrollBarViewState {
+    public mounting(props: Readonly<IScrollBarProps>): IScrollBarViewState {
         const root = template.clone();
         const content = template.get(root, "content") as HTMLElement;
 
@@ -81,7 +79,7 @@ export class ScrollbarView implements IView<IScrollBarProps, IScrollBarViewState
         (state.onScroll as (value: number) => void)(value);
     }
 
-    public update(props: Readonly<IScrollBarProps>, state: Readonly<IScrollBarViewState>): IScrollBarViewState {
+    public updating(props: Readonly<IScrollBarProps>, state: Readonly<IScrollBarViewState>): IScrollBarViewState {
         const root = state.root;
         root.className = orientationToClass[props.orientation];
 
@@ -104,5 +102,5 @@ export class ScrollbarView implements IView<IScrollBarProps, IScrollBarViewState
         return state;
     }
 
-    public unmount(state: Readonly<IScrollBarViewState>) { }
+    public unmounting(state: Readonly<IScrollBarViewState>) { }
 }

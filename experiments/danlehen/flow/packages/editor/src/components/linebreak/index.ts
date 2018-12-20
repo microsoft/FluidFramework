@@ -1,6 +1,6 @@
 import { Template } from "@prague/flow-util";
 import * as styles from "./index.css";
-import { IViewState, IView } from "..";
+import { IViewState, View } from "..";
 
 const template = new Template({ 
     tag: "span",
@@ -16,20 +16,18 @@ export interface ILineBreakViewState extends IViewState {
     cursorTarget?: Node;
 }
 
-export class LineBreakView implements IView<ILineBreakProps, ILineBreakViewState> {
+export class LineBreakView extends View<ILineBreakProps, ILineBreakViewState> {
     public static readonly instance = new LineBreakView();
 
-    constructor() {}
-
-    mount(props: Readonly<ILineBreakProps>): ILineBreakViewState {
+    mounting(props: Readonly<ILineBreakProps>): ILineBreakViewState {
         const root = template.clone();
         const cursorTarget = template.get(root, "cursorTarget");
         return { root, cursorTarget }
     }
 
-    update(props: Readonly<ILineBreakProps>, state: Readonly<ILineBreakViewState>): ILineBreakViewState {
+    updating(props: Readonly<ILineBreakProps>, state: Readonly<ILineBreakViewState>): ILineBreakViewState {
         return state;
     }
 
-    unmount(state: Readonly<ILineBreakViewState>) { }
+    unmounting(state: Readonly<ILineBreakViewState>) { }
 }
