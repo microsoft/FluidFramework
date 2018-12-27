@@ -49,10 +49,13 @@ import failure = util.failure;
 import Result = util.Result;
 import success = util.success;
 import ResultKind = util.ResultKind;
+import NotImplemented = util.NotImplemented;
+import notImplemented = util.notImplemented;
 
 import blankOper = value.blankOper;
 import BlankOper = value.BlankOper;
 import ErrorOper = value.ErrorOper;
+import errorOper = value.errorOper;
 import Oper = value.Oper;
 import OperKind = value.OperKind;
 import Precedents = value.Precedents;
@@ -64,7 +67,7 @@ import WriteOper = value.WriteOper;
 import { jaggedArray } from "@ms/excel-online-calc/lib/common/arrayUtils";
 import { Config } from "@ms/excel-online-calc/lib/lang/config";
 import { NotFormulaString } from "@ms/excel-online-calc/lib/parse/serviceTypes";
-import { EvalFormulaPaused, illFormedFormula, IllFormedFormula, NotImplemented } from "@ms/excel-online-calc/lib/runtime/serviceTypes";
+import { EvalFormulaPaused, illFormedFormula, IllFormedFormula } from "@ms/excel-online-calc/lib/runtime/serviceTypes";
 import { isErrorOper } from "@ms/excel-online-calc/lib/runtime/util";
 import { createLocaleInfo } from "@ms/excel-online-calc/lib/test/config";
 import { errorNames } from "@ms/excel-online-calc/lib/test/config";
@@ -111,6 +114,7 @@ export {
     NameLoc,
     notFormulaString,
     NotImplemented,             // TODO: Avoid exporting test/internal modules?
+    notImplemented,
     NotFormulaString,           // TODO: Avoid exporting test/internal modules?
     Oper,
     OperKind,
@@ -135,6 +139,7 @@ export {
     UnboxedOper,
     value,
     WriteOper,
+    errorOper
 };
 
 /** True if the given oper is the BlankOper. */
