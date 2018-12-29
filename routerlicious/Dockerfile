@@ -35,6 +35,7 @@ COPY packages/map/package*.json packages/map/
 COPY packages/memory-orderer/package*.json packages/memory-orderer/
 COPY packages/merge-tree/package*.json packages/merge-tree/
 COPY packages/merge-tree-utils/package*.json packages/merge-tree-utils/
+COPY packages/pinpoint-editor/package*.json packages/pinpoint-editor/
 COPY packages/replay-socket-storage/package*.json packages/replay-socket-storage/
 COPY packages/routerlicious/package*.json packages/routerlicious/
 COPY packages/runtime-definitions/package*.json packages/runtime-definitions/
