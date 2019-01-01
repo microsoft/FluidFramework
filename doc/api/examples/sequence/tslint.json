@@ -3,5 +3,6 @@
     "rules": {
         "max-classes-per-file": [false],
         "no-console": [false]
-    }
+    },
+    "defaultSeverity": "warning"
 }
