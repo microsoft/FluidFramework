@@ -1,4 +1,5 @@
-﻿using System.Collections.Immutable;
+﻿using System;
+using System.Collections.Immutable;
 using System.Text;
 
 using System.IdentityModel.Tokens.Jwt;
@@ -7,6 +8,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 using Quobject.SocketIoClientDotNet.Client;
+using Quobject.EngineIoClientDotNet.ComponentEmitter;
 
 namespace PragueProtoClient
 {
@@ -16,18 +18,44 @@ namespace PragueProtoClient
       public string id;
       public string token;
    }
-   
+
+   class OpListener : IListener
+   {
+      public void Call( params object[] args )
+      {
+         if( args.Length >=2 )
+         {
+            System.Console.WriteLine( args[ 1 ] );
+         }
+      }
+
+      public int CompareTo( IListener other )
+      {
+         throw new NotImplementedException();
+      }
+
+      public int GetId()
+      {
+         throw new NotImplementedException();
+      }
+   }
+
+
    class PragueProtoClient
    {
       static void Main( string[] args )
       {
+         string docID         = "DefaultDoc";
+         string tenantID      = "gallant-hugle";
+         string routerlicious = "https://alfred.wu2.prague.office-int.com";
+
          var options = new IO.Options();
-         options.QueryString = "documentId=test-sequence-1204-2&tenantId=prague";
+         options.QueryString = string.Format( "documentId={0}&tenantId={0}", docID, tenantID );
          options.Transports = new string[] { "websocket" }.ToImmutableList();
 
-         var socket = IO.Socket( "http://localhost:3000", options );
+         var socket = IO.Socket( routerlicious, options );
 
-         socket.On( "op", () => { System.Console.WriteLine( "OP" ); } );
+         socket.On( "op", new OpListener() );
 
          socket.On( Socket.EVENT_CONNECT, () => { System.Console.WriteLine( "Connected" ); } );
          socket.On( Socket.EVENT_CONNECT_ERROR, () => { System.Console.WriteLine( "ConnectionError" ); } );
@@ -44,10 +72,10 @@ namespace PragueProtoClient
          
          var payload = new JwtPayload
          {
-            { "documentId", "test-sequence-1204-2" },
+            { "documentId", docID },
             { "permission", "read:write" },
-            { "tenantId",   "prague" },
-            { "user",        new JwtPayload { { "id", "test" } } },
+            { "tenantId",   tenantID },
+            { "user",       new JwtPayload { { "id", "test" } } },
             //{ "iat",        Convert.ToUInt64( ( DateTime.UtcNow - new DateTime( 1970, 1, 1, 0, 0, 0, DateTimeKind.Utc ) ).TotalSeconds ).ToString() }
          };
 
@@ -56,8 +84,8 @@ namespace PragueProtoClient
 
          var tokenString = handler.WriteToken( secToken );
 
-         IConnect connect = new IConnect { id       = "test-sequence-1204-2",
-                                           tenantId = "prague",
+         IConnect connect = new IConnect { id       = docID,
+                                           tenantId = tenantID,
                                            token    = tokenString } ;
 
          string connectStr = JsonConvert.SerializeObject( connect );
