@@ -5,11 +5,9 @@ import { DocumentView, IDocumentProps } from "./components/document";
 
 export class Editor {
     private readonly cursor: Cursor;
-//    private viewportState: IViewportViewState;
     private readonly docProps: IDocumentProps;
     private readonly docView: DocumentView;
     private readonly eventSink: HTMLElement;
-//    private scrollY = 0;
 
     public constructor (private readonly scheduler: Scheduler, private readonly doc: FlowDocument) {
         this.cursor = new Cursor(doc);
@@ -20,62 +18,22 @@ export class Editor {
         this.docView.mount(this.docProps);
         this.docView.overlay.appendChild(this.cursor.root);
 
-        // this.viewportState = ViewportView.instance.mount(this.getViewportProps(0));
-        // this.viewportState.slot.appendChild(this.docState.root);
-
         this.eventSink = this.docView.eventsink;
         this.eventSink.addEventListener("keydown",   this.onKeyDown as any);
         this.eventSink.addEventListener("keypress",  this.onKeyPress as any);
         this.eventSink.addEventListener("mousedown", this.onMouseDown as any);
         
-        // this.eventSink.addEventListener("focusin", this.onFocus);
-        // this.syncFocus();
-
         window.addEventListener("resize", this.invalidate);
 
         doc.on("op", this.invalidate);
     }
 
-    // public get root() { return this.viewportState.root; }
     public get root() { return this.docView.root; }
-/*
-    private getViewportProps(scrollY: number) {
-        return {
-            yMin: 0,
-            yMax: this.doc.length,
-            onScroll: this.onScroll,
-            scrollY
-        }
-    }
-*/
     public get cursorPosition() { return this.cursor.position; }
-/*
-    private readonly onScroll = (position: number) => {
-        Object.assign(this.docProps, { start: position });
-        this.invalidate();
-    };
-*/
+
     public readonly invalidate = () => {
         this.scheduler.requestFrame(this.render);
     }
-
-    // private readonly scrollToPositionCallback = (node: Node, nodeOffset: number) => {
-    //     requestAnimationFrame(() => {
-    //         console.log(`Scrolling to: ${node}@${nodeOffset}`);
-
-    //         const bounds = Dom.getClientRect(node, nodeOffset);
-    //         console.log(`    top: ${bounds.top}, scrollY: ${this.scrollY}`);
-    //         if (bounds) {
-    //             const currentY = parseFloat(this.viewportState.slot.style.marginTop || "0");
-    //             const relativeTop = bounds.top                                  // The current top of the viewport slot in screen coordinates
-    //                 - this.viewportState.root.getBoundingClientRect().top       // The current top of the viewport in screen coordinates
-    //                 - currentY;                                                 // The current transform
-
-    //             this.viewportState = ViewportView.instance.update(this.getViewportProps(relativeTop), this.viewportState);
-    //             console.log(`        -> scrollY: ${this.scrollY} (currentY: ${currentY})`);
-    //         }
-    //     });
-    // };
 
     private readonly render = () => {
         this.docProps.trackedPositions = this.cursor.getTracked();
