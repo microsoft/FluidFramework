@@ -1,28 +1,26 @@
 import { Template, Dom } from "@prague/flow-util";
 import * as styles from "./index.css";
-import { IViewState, View } from "..";
+import { IFlowViewComponentState, FlowViewComponent } from "..";
 
 const template = new Template({ 
     tag: "p",
     props: { className: styles.inclusion },
 });
 
-export interface IInclusionProps { root: Node }
-export interface IInclusionViewState extends IViewState {
-    cursorTarget?: Node;
-}
+export interface IInclusionProps { child: Node }
+export interface IInclusionViewState extends IFlowViewComponentState { } 
 
-export class InclusionView extends View<IInclusionProps, IInclusionViewState> {
+export class InclusionView extends FlowViewComponent<IInclusionProps, IInclusionViewState> {
     public static readonly factory = () => new InclusionView();
 
-    mounting(props: Readonly<IInclusionProps>): IInclusionViewState {
+    public mounting(props: Readonly<IInclusionProps>): IInclusionViewState {
         const root = template.clone();
-        return this.updating( props, { root });
+        return this.updating( props, { root, cursorTarget: props.child });
     }
 
-    updating(props: Readonly<IInclusionProps>, state: Readonly<IInclusionViewState>): IInclusionViewState {
+    public updating(props: Readonly<IInclusionProps>, state: Readonly<IInclusionViewState>): IInclusionViewState {
         const root = state.root;
-        const desiredChild = props.root;
+        const desiredChild = props.child;
 
         if (root.firstChild !== desiredChild) {
             Dom.replaceFirstChild(root, desiredChild);
@@ -32,5 +30,5 @@ export class InclusionView extends View<IInclusionProps, IInclusionViewState> {
         return state;
     }
 
-    unmounting(state: Readonly<IInclusionViewState>) { }
+    public unmounting(state: Readonly<IInclusionViewState>) { }
 }

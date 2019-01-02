@@ -37,13 +37,13 @@ export class ViewportView extends View<IViewportProps, IViewportViewState> {
         };
     }
 
-    mounting(props: Readonly<IViewportProps>): IViewportViewState {
+    public mounting(props: Readonly<IViewportProps>): IViewportViewState {
         const root = template.clone();
         const slot = template.get(root, "slot") as HTMLElement;
         const scrollbar = new ScrollbarView();
         scrollbar.mount(this.getScrollbarProps(props));
-        scrollbar.state.root.style.gridArea = "scrollbar";
-        root.appendChild(scrollbar.state.root);
+        scrollbar.root.style.gridArea = "scrollbar";
+        root.appendChild(scrollbar.root);
 
         return this.updating(props, {
             root,
@@ -52,12 +52,12 @@ export class ViewportView extends View<IViewportProps, IViewportViewState> {
         });
     }
 
-    updating(props: Readonly<IViewportProps>, state: Readonly<IViewportViewState>): IViewportViewState {
+    public updating(props: Readonly<IViewportProps>, state: Readonly<IViewportViewState>): IViewportViewState {
         const { root, slot, scrollbar } = state;
         scrollbar.update(this.getScrollbarProps(props));
         slot.style.marginTop = `${-props.scrollY}px)`;
         return { root, slot, scrollbar };
     }
 
-    unmounting(state: Readonly<IViewportViewState>) { }
+    public unmounting(state: Readonly<IViewportViewState>) { }
 }

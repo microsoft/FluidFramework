@@ -1,6 +1,6 @@
 import { Template } from "@prague/flow-util";
 import * as styles from "./index.css";
-import { View, IViewState } from "..";
+import { FlowViewComponent, IFlowViewComponentState } from "..";
 
 const template = new Template({
     tag: "p",
@@ -13,15 +13,14 @@ const template = new Template({
 
 export interface IParagraphProps {}
 
-export interface IParagraphViewState extends IViewState {
+export interface IParagraphViewState extends IFlowViewComponentState {
     readonly slot: Element;
-    readonly cursorTarget: Node;
 }
 
-export class ParagraphView extends View<IParagraphProps, IParagraphViewState> {
+export class ParagraphView extends FlowViewComponent<IParagraphProps, IParagraphViewState> {
     public static readonly factory = () => new ParagraphView();
 
-    mounting(props: Readonly<IParagraphProps>): IParagraphViewState {
+    public mounting(props: Readonly<IParagraphProps>): IParagraphViewState {
         const root = template.clone();
         const slot = template.get(root, "slot");
         const cursorTarget = template.get(root, "cursorTarget");
@@ -29,9 +28,11 @@ export class ParagraphView extends View<IParagraphProps, IParagraphViewState> {
         return { root, slot, cursorTarget }
     }
 
-    updating(props: Readonly<IParagraphProps>, state: Readonly<IParagraphViewState>): IParagraphViewState {
+    public updating(props: Readonly<IParagraphProps>, state: Readonly<IParagraphViewState>): IParagraphViewState {
         return state;
     }
 
-    unmounting(state: Readonly<IParagraphViewState>) { }
+    public unmounting(state: Readonly<IParagraphViewState>) { }
+
+    public get slot() { return this.state.slot; }
 }
