@@ -1,7 +1,8 @@
 import * as React from "react";
 import { DataStore } from "@prague/app-datastore";
 import { FlowDocument } from "@chaincode/flow-document";
-import { Editor, Scheduler } from "@prague/flow-editor";
+import { Editor } from "@chaincode/flow-editor";
+import { Scheduler } from "@prague/flow-util";
 import * as style from "./index.css";
 import * as ReactDOM from "react-dom";
 
@@ -33,7 +34,7 @@ export class FlowEditor extends React.Component<IProps, IState> {
         const { docUrl, docId } = this.props;
         DataStore.from(docUrl).then(store => {
             store
-                .open<FlowDocument>(docId, "danlehen", "@chaincode/flow-document@latest")
+                .open<FlowDocument>(docId, "danlehen", FlowDocument.type)
                 .then((doc) => {
                     // buildTestParagraph(doc);
                     const editor = new Editor(new Scheduler(), doc);

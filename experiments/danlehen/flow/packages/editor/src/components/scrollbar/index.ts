@@ -1,11 +1,12 @@
-import { e } from "../../dom";
+import { Template } from "@prague/flow-util";
 import * as styles from "./index.css";
-import { IViewState, IView } from "..";
+import { IViewState, View } from "..";
 
-const template = e({ 
+const template = new Template({ 
     tag: "div", 
     children: [{
         tag: "div",
+        ref: "content",
         props: { className: styles.scrollbarContent }
     }]
 });
@@ -29,16 +30,14 @@ export interface IScrollBarProps {
 }
 
 export interface IScrollBarViewState extends IViewState {
-    readonly root: Element;
+    readonly root: HTMLElement;
     readonly content: HTMLElement;
     onScroll?: (value: number) => void;
     onScrollRaw?: EventListener;
 }
 
-export class ScrollbarView implements IView<IScrollBarProps, IScrollBarViewState> {
-    public static readonly instance = new ScrollbarView();
-
-    constructor() {}
+export class ScrollbarView extends View<IScrollBarProps, IScrollBarViewState> {
+    public static readonly factory = () => new ScrollbarView();
 
     private adjust(props: IScrollBarProps, length: number) {
         const delta = props.max - props.min;
@@ -64,13 +63,11 @@ export class ScrollbarView implements IView<IScrollBarProps, IScrollBarViewState
         }
     }
 
-    public mount(props: Readonly<IScrollBarProps>): IScrollBarViewState {
-        const root = template.cloneNode(true) as Element;
+    public mounting(props: Readonly<IScrollBarProps>): IScrollBarViewState {
+        const root = template.clone() as HTMLElement;
+        const content = template.get(root, "content") as HTMLElement;
 
-        return this.update(props, { 
-            root,
-            content: root.firstElementChild as HTMLElement,
-        });
+        return this.updating(props, { root, content });
     }
 
     private readonly onScrollVert = (state: Readonly<IScrollBarViewState>) => this.fireOnScroll(state, state.root.scrollTop);
@@ -82,7 +79,7 @@ export class ScrollbarView implements IView<IScrollBarProps, IScrollBarViewState
         (state.onScroll as (value: number) => void)(value);
     }
 
-    public update(props: Readonly<IScrollBarProps>, state: Readonly<IScrollBarViewState>): IScrollBarViewState {
+    public updating(props: Readonly<IScrollBarProps>, state: Readonly<IScrollBarViewState>): IScrollBarViewState {
         const root = state.root;
         root.className = orientationToClass[props.orientation];
 
@@ -105,5 +102,5 @@ export class ScrollbarView implements IView<IScrollBarProps, IScrollBarViewState
         return state;
     }
 
-    public unmount(state: Readonly<IScrollBarViewState>) { }
+    public unmounting(state: Readonly<IScrollBarViewState>) { }
 }

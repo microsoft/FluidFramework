@@ -1,41 +1,32 @@
-import { e } from "../../dom";
+import { Template } from "@prague/flow-util";
 import * as styles from "./index.css";
-import { IView, IViewState } from "..";
+import { FlowViewComponent, IFlowViewComponentState } from "..";
 
-const template = e({
-    tag: "p",
+const template = new Template({
+    tag: "span",
     props: { className: styles.paragraph },
     children: [
-        { tag: "span", props: { className: styles.paragraphContents }},
-        { tag: "span", props: { className: styles.afterParagraph, textContent: "\u200b" }}
+        { tag: "span", ref: "cursorTarget", props: { className: styles.afterParagraph, textContent: "\u200b" }},
+        { tag: "p" }
     ]
 });
 
 export interface IParagraphProps {}
+export interface IParagraphViewState extends IFlowViewComponentState {}
 
-export interface IParagraphViewState extends IViewState {
-    readonly slot: Element;
-    readonly cursorTarget: Node;
-}
+export class ParagraphView extends FlowViewComponent<IParagraphProps, IParagraphViewState> {
+    public static readonly factory = () => new ParagraphView();
 
-export class ParagraphView implements IView<IParagraphProps, IParagraphViewState> {
-    public static readonly instance = new ParagraphView();
+    public mounting(props: Readonly<IParagraphProps>): IParagraphViewState {
+        const root = template.clone();
+        const cursorTarget = template.get(root, "cursorTarget");
 
-    constructor() {}
-
-    mount(props: Readonly<IParagraphProps>): IParagraphViewState {
-        const root = template.cloneNode(true) as Element;
-
-        // Note: 'slot' and cursorTarget' cannot be 'null' per the structure of the 'template'.
-        const slot = root.firstElementChild!;
-        const cursorTarget = root.lastElementChild!.firstChild!;
-
-        return { root, slot, cursorTarget }
+        return { root, cursorTarget }
     }
 
-    update(props: Readonly<IParagraphProps>, state: Readonly<IParagraphViewState>): IParagraphViewState {
+    public updating(props: Readonly<IParagraphProps>, state: Readonly<IParagraphViewState>): IParagraphViewState {
         return state;
     }
 
-    unmount(state: Readonly<IParagraphViewState>) { }
+    public unmounting(state: Readonly<IParagraphViewState>) { }
 }

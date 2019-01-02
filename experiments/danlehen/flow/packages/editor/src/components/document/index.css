@@ -1,4 +1,6 @@
-.document { }
+.document { 
+    width: 100%;
+}
 .documentContent { 
     /* user-select: none; */
 }

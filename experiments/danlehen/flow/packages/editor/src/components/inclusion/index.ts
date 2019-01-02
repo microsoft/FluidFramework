@@ -1,38 +1,34 @@
-import { e, Dom } from "../../dom";
+import { Template, Dom } from "@prague/flow-util";
 import * as styles from "./index.css";
-import { IViewState, IView } from "..";
+import { IFlowViewComponentState, FlowViewComponent } from "..";
 
-const template = e({ 
-    tag: "p",
+const template = new Template({ 
+    tag: "span",
     props: { className: styles.inclusion },
 });
 
-export interface IInclusionProps { root: Node }
-export interface IInclusionViewState extends IViewState {
-    cursorTarget?: Node;
-}
+export interface IInclusionProps { child: Node }
+export interface IInclusionViewState extends IFlowViewComponentState { } 
 
-export class InclusionView implements IView<IInclusionProps, IInclusionViewState> {
-    public static readonly instance = new InclusionView();
+export class InclusionView extends FlowViewComponent<IInclusionProps, IInclusionViewState> {
+    public static readonly factory = () => new InclusionView();
 
-    constructor() {}
-
-    mount(props: IInclusionProps): IInclusionViewState {
-        const root = template.cloneNode(true) as Element;
-        return this.update( props, { root });
+    public mounting(props: Readonly<IInclusionProps>): IInclusionViewState {
+        const root = template.clone();
+        return this.updating( props, { root, cursorTarget: props.child });
     }
 
-    update(props: Readonly<IInclusionProps>, state: Readonly<IInclusionViewState>): IInclusionViewState {
-        const parent = state.root;
-        const desiredChild = props.root;
+    public updating(props: Readonly<IInclusionProps>, state: Readonly<IInclusionViewState>): IInclusionViewState {
+        const root = state.root;
+        const desiredChild = props.child;
 
-        if (parent.firstChild !== desiredChild) {
-            Dom.replaceFirstChild(parent, desiredChild);
-            state = { root: state.root, cursorTarget: desiredChild };
+        if (root.firstChild !== desiredChild) {
+            Dom.replaceFirstChild(root, desiredChild);
+            state = { root, cursorTarget: desiredChild };
         }
         
         return state;
     }
 
-    unmount(state: IInclusionViewState) { }
+    public unmounting(state: Readonly<IInclusionViewState>) { }
 }

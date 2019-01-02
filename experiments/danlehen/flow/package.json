@@ -2,12 +2,9 @@
   "name": "flow-root",
   "private": true,
   "scripts": {
-    "build": "lerna run build --stream --scope '@chaincode/flow-document' --scope '@prague/flow-*' --scope '@prague/flow-app'",
-    "build:full": "lerna run build --stream",
-    "clean": "lerna run clean --stream --parallel",
-    "postinstall": "(true) && lerna bootstrap",
-    "test": "lerna run test --stream",
-    "tslint": "lerna run tslint --stream"
+    "build": "lerna run build --stream --scope '@chaincode/flow-*' --scope '@prague/flow-*'",
+    "postinstall": "(true) && lerna bootstrap --hoist --scope '@chaincode/flow-*' --scope '@prague/flow-*'",
+    "publish-patch-local": "lerna run publish-patch-local --stream --scope '@chaincode/flow-*' --scope '@prague/flow-*'"
   },
   "devDependencies": {
     "lerna": "^3.1.4"

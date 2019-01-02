@@ -2,31 +2,32 @@ import {
     Segment,
     Marker,
     TextSegment,
-    ReferenceType,
 } from "@prague/merge-tree";
-import { e, Dom } from "../../dom";
+import { Template, Dom } from "@prague/flow-util";
 import { getInclusionKind, getInclusionHtml, getInclusionComponent, FlowDocument, DocSegmentKind, getDocSegmentKind, InclusionKind } from "@chaincode/flow-document";
-import { ParagraphView, IParagraphProps, IParagraphViewState } from "../paragraph";
+import { ParagraphView } from "../paragraph";
 import { LineBreakView } from "../linebreak";
-import { TextView, ITextProps, ITextViewState } from "../text";
-import { IView, IViewState } from "../";
+import { TextView } from "../text";
+import { IFlowViewComponent, IViewState, View } from "../";
 import { InclusionView } from "../inclusion";
 import { TextAccumulator } from "./textaccumulator";
 import * as styles from "./index.css";
 
-const template = e({
+const template = new Template({
     tag: "span",
-    props: {
-        className: styles.document,
-    },
+    props: { className: styles.document, },
     children: [
-        { tag: "span", props: { className: styles.leadingSpan }},
-        { 
+        {
             tag: "span",
-            props: { className: styles.documentContent, tabIndex: 0 },
-        },
-        { tag: "span", props: { className: styles.trailingSpan }},
-        { tag: "span", props: { className: styles.documentOverlay }}
+            ref: "eventsink",
+            props: { tabIndex: 0 },
+            children: [
+                { tag: "span", ref: "leadingSpan", props: { className: styles.leadingSpan }},
+                { tag: "span", ref: "slot", props: { className: styles.documentContent }},
+                { tag: "span", ref: "trailingSpan", props: { className: styles.trailingSpan }},
+                { tag: "span", ref: "overlay", props: { className: styles.documentOverlay }}
+            ]
+        }
     ]
 });
 
@@ -52,7 +53,7 @@ export interface IDocumentProps {
  * The state that is calculated/cached for each segment within the currently rendered
  * window.
  */
-export interface IViewInfo<TProps, TState extends IViewState> {
+export interface IViewInfo<TProps, TView extends IFlowViewComponent<TProps>> {
     /** 
      * The document-ordered list of segments visualized by the cached 'view' instance.
      * (Currently, only TextSegments are combined into a single view/element.  Other segment
@@ -61,10 +62,7 @@ export interface IViewInfo<TProps, TState extends IViewState> {
     segments: Segment[];
 
     /** The IView instance that rendered this set of segments. */
-    view: IView<TProps, TState>;
-
-    /** The ViewState for this child view. */
-    state: TState;
+    view: TView;
 
     /** Cached ClientRects that bound this view. */
     clientRects?: ClientRectList | DOMRectList;
@@ -73,73 +71,71 @@ export interface IViewInfo<TProps, TState extends IViewState> {
 /**
  * The state maintained by the DocumentView instance.
  */
-export interface IDocumentViewState extends IViewState {
+interface IDocumentViewState extends IViewState {
     /** The root element into which segments are rendered. */
     slot: HTMLElement,
 
     /** The root element into which overlays are attached. */
     overlay: Element,
 
+    /** The element to which event handlers are to be attached. */
+    eventsink: HTMLElement;
+
     /** Leading span */
     leadingSpan: Element,
     trailingSpan: Element,
-    leadingParagraph: Marker,
-    trailingParagraph: Marker,
 
     /** 
      * Mapping from segments to their IViewInfo, if the segment is currently within the rendered window.
      * Note that when a range of segments are rendered by a single view (as is the case with TextSegments
      * that share the same style), only the first segment in the range appears in this map.
      */
-    segmentToViewInfo: Map<Segment, IViewInfo<any, IViewState>>;
+    segmentToViewInfo: Map<Segment, IViewInfo<any, IFlowViewComponent<any>>>;
 
     /**
      * Mapping from the root element produced by an IView to it's IViewInfo.
      */
-    elementToViewInfo: Map<Element, IViewInfo<any, IViewState>>;
+    elementToViewInfo: Map<Element, IViewInfo<any, IFlowViewComponent<any>>>;
 }
 
 /** IView that renders a FlowDocument. */
-export class DocumentView implements IView<IDocumentProps, IDocumentViewState> {
-    public static readonly instance = new DocumentView();
+export class DocumentView extends View<IDocumentProps, IDocumentViewState> {
+    protected mounting(props: IDocumentProps) {
+        const root = template.clone();
+        const eventsink = template.get(root, "eventsink") as HTMLElement;
+        const leadingSpan = template.get(root, "leadingSpan");
+        const slot = template.get(root, "slot") as HTMLElement;
+        const overlay = template.get(root, "overlay");
+        const trailingSpan = template.get(root, "trailingSpan");
 
-    constructor() {}
-
-    public mount(props: IDocumentProps): IDocumentViewState {
-        const root = template.cloneNode(true) as Element;
-        
-        // Note: The below Element references cannot be null due to the structure of the cloned 'template'.
-        const leadingSpan = root.firstElementChild!;
-        const slot = leadingSpan.nextElementSibling! as HTMLElement;
-        const overlay = root.lastElementChild!;
-        const trailingSpan = overlay.previousElementSibling!;
-
-        const leadingParagraph = FlowDocument.markAsParagraph(new Marker(ReferenceType.Tile));
-        const trailingParagraph = FlowDocument.markAsParagraph(new Marker(ReferenceType.Tile));
-
-        return this.update(props, {
-            root: root,
+        return this.updating(props, {
+            root,
             slot,
             leadingSpan,
             trailingSpan,
+            eventsink,
             overlay,
-            leadingParagraph,
-            trailingParagraph,
-            segmentToViewInfo: new Map<Segment, IViewInfo<any, IViewState>>(),
-            elementToViewInfo: new Map<Element, IViewInfo<any, IViewState>>()
+            segmentToViewInfo: new Map<Segment, IViewInfo<any, IFlowViewComponent<any>>>(),
+            elementToViewInfo: new Map<Element, IViewInfo<any, IFlowViewComponent<any>>>()
         });
     }
 
-    public update(props: Readonly<IDocumentProps>, state: Readonly<IDocumentViewState>): IDocumentViewState {
+    public get root()       { return this.state.root; }
+    public get slot()       { return this.state.slot; }
+    public get overlay()    { return this.state.overlay; }
+    public get eventsink()  { return this.state.eventsink; }
+
+    protected updating(props: Readonly<IDocumentProps>, state: Readonly<IDocumentViewState>) {
         DocumentLayout.sync(props, state);
         return state;
     }
 
-    public unmount(state: IDocumentViewState) { }
+    protected unmounting() { }
 
     /** Map a node/nodeOffset to the corresponding segment/segmentOffset that rendered it. */
-    private nodeOffsetToSegmentOffset(state: IDocumentViewState, node: Node | null, nodeOffset: number) {
-        let viewInfo: IViewInfo<any, IViewState> | undefined;
+    private nodeOffsetToSegmentOffset(node: Node | null, nodeOffset: number) {
+        const state = this.state;
+        let viewInfo: IViewInfo<any, IFlowViewComponent<any>> | undefined;
         while (node && !(viewInfo = state.elementToViewInfo.get(node as Element))) {
             node = node.parentElement;
         }
@@ -160,9 +156,9 @@ export class DocumentView implements IView<IDocumentProps, IDocumentViewState> {
     }
 
     /** Returns the { segment, offset } currently visible at the given x/y coordinates (if any). */
-    public hitTest(state: IDocumentViewState, x: number, y: number) {
+    public hitTest(x: number, y: number) {
         const range = document.caretRangeFromPoint(x, y);
-        const segmentAndOffset = this.nodeOffsetToSegmentOffset(state, range.startContainer, range.startOffset);
+        const segmentAndOffset = this.nodeOffsetToSegmentOffset(range.startContainer, range.startOffset);
         console.log(`  (${x},${y}) -> "${range.startContainer.textContent}":${range.startOffset} -> ${
             segmentAndOffset
                 ? `${(segmentAndOffset.segment as TextSegment).text}:${segmentAndOffset.offset}`
@@ -171,9 +167,8 @@ export class DocumentView implements IView<IDocumentProps, IDocumentViewState> {
     }
  
     /** Returns the closest { segment, offset } to the 0-width rect described by x/top/bottom. */
-    private findDomPosition(state: IDocumentViewState, node: Node, x: number, yMin: number, yMax: number) {
+    private findDomPosition(node: Node, x: number, yMin: number, yMax: number) {
         // Note: Caller must pass a 'node' that was previously rendered for a TextSegment.
-
         const domRange = document.createRange();
         let left = 0
         let right = node.textContent!.length;
@@ -195,12 +190,13 @@ export class DocumentView implements IView<IDocumentProps, IDocumentViewState> {
             }
         }
 
-        return this.nodeOffsetToSegmentOffset(state, node, left);
+        return this.nodeOffsetToSegmentOffset(node, left);
     }
 
     /** Get the ClientRects that define the boundary of the given 'element', using cached information if we have it. */
-    private getClientRects(state: IDocumentViewState, element: Element) {
+    private getClientRects(element: Element) {
         // Note: Caller must only request clientRects for elements we've previously rendered.
+        const state = this.state;
         const viewInfo = state.elementToViewInfo.get(element)!;
         if (!viewInfo.clientRects) {
             viewInfo.clientRects = element.getClientRects();
@@ -208,34 +204,28 @@ export class DocumentView implements IView<IDocumentProps, IDocumentViewState> {
         return viewInfo.clientRects;
     }
 
-    private getCursorTarget<TProps, TState extends IViewState>(viewInfo: IViewInfo<TProps, TState>) {
-        const state = viewInfo.state;
-        const maybeCursorTarget = (state as any)["cursorTarget"];
-
-        // Note: 'root.firstChild' expected to be non-null 
-        return maybeCursorTarget || state.root.firstChild!;
-    }
-
     /**
      * Returns the closest { segment, offset } below the text cursor occupying the 0-width rect
      * described by x/top/bottom.
      */
-    public findBelow(state: IDocumentViewState, x: number, top: number, bottom: number) {
+    public findBelow(x: number, top: number, bottom: number) {
         console.log(`looking below: ${bottom}`);
 
+        const state = this.state;
         let bestRect = { top: +Infinity, bottom: -Infinity, left: +Infinity, right: -Infinity };
         let bestDx = +Infinity;
-        let bestViewInfo: IViewInfo<any, IViewState> | undefined = undefined;
+        let bestViewInfo: IViewInfo<any, IFlowViewComponent<any>> | undefined = undefined;
 
         for (const viewInfo of state.elementToViewInfo.values()) {
-            // Only consider text segments.
-            if (viewInfo.view !== TextView.instance) {
+            // TODO: Better filter for potential cursor targets?
+            if (!(viewInfo.view instanceof TextView)) {
                 continue;
             }
 
-            const node = viewInfo.state.root;
-            const rects = this.getClientRects(state, node);
-            console.log(`rects: ${rects.length} for ${viewInfo.state.root.textContent}`);
+            const view = viewInfo.view;
+            const node = view.root;
+            const rects = this.getClientRects(node);
+            console.log(`rects: ${rects.length} for ${node.textContent}`);
             
             for (const rect of rects) {
                 console.log(`    ${JSON.stringify(rect)}`);
@@ -259,7 +249,7 @@ export class DocumentView implements IView<IDocumentProps, IDocumentViewState> {
                     bestRect = rect;
                     bestDx = dx;
                     bestViewInfo = viewInfo;
-                    console.log(`    ==> Best candidate: ${bestViewInfo.state.root.id}: ${bestViewInfo.state.root.textContent}`);
+                    console.log(`    ==> Best candidate: ${bestViewInfo.view.root.id}: ${bestViewInfo.view.root.textContent}`);
                 } else {
                     console.log(`        Rejected d^2: (${dx} > ${bestDx})`);
                 }
@@ -267,7 +257,7 @@ export class DocumentView implements IView<IDocumentProps, IDocumentViewState> {
         }
 
         // Note: Attempting to hit test using 'caretRangeFromPoint()' against the reported client rect's top/bottom
-        //       produced inconsistent results, presumably due to internal fixed-point -> Float32 rounding discrepencies.
+        //       produced inconsistent results, presumably due to internal fixed-point -> Float32 rounding discrepancies.
         // 
         // Reported edge: 487.99713134765625
         //
@@ -279,12 +269,11 @@ export class DocumentView implements IView<IDocumentProps, IDocumentViewState> {
             return undefined;
         }
         
-        console.log(`Best candidate: ${bestViewInfo.state.root.id}: ${bestViewInfo.state.root.textContent}`);
+        console.log(`Best candidate: ${bestViewInfo.view.root.id}: ${bestViewInfo.view.root.textContent}`);
         console.log(`    rect: ${JSON.stringify(bestRect)}`);
 
         return this.findDomPosition(
-            state,
-            this.getCursorTarget(bestViewInfo),
+            LayoutContext.getCursorTarget(bestViewInfo.view),
             Math.min(Math.max(x, bestRect.left), bestRect.right),
             bestRect.top, bestRect.bottom);    
     }
@@ -306,15 +295,9 @@ class LayoutContext {
     private readonly pendingLayout: Set<Element>;
 
     /** The IViewInfo for the last rendered inline view. */
-    private _currentInline: IViewInfo<any, IViewState> | null = null;
+    private _currentInline: IViewInfo<any, IFlowViewComponent<any>> | null = null;
 
-    /** The IViewInfo for the last rendered paragraph. */
-    private _currentParagraph: IViewInfo<any, IParagraphViewState> | null = null;
-
-    /** The stack of parent Elements. */
-    private readonly parentStack: Element[];
-
-    constructor (readonly props: IDocumentProps, readonly state: IDocumentViewState, root: Element) {
+    constructor (readonly props: IDocumentProps, readonly state: IDocumentViewState, public root: Element) {
         // Initialize 'pendingTrackedPositions' by copying and sorting the tracked positions.
         this.pendingTrackedPositions = props.trackedPositions
             .slice(0)
@@ -322,16 +305,15 @@ class LayoutContext {
         
         // Initialize 'pendingLayout' with the set of root elements rendered in the last layout pass.
         this.pendingLayout = new Set<Element>(state.elementToViewInfo.keys());
-
-        // Initialize 'parentStack' with the root elment.  We push it twice because the first paragraph
-        // will indiscriminately pop it.
-        this.parentStack = [root, root];
     }
 
-    // Stack of parent Elements
-    public get parent() { return this.parentStack[this.parentStack.length - 1]; }
-    public pushParent(newParent: Element) { this.parentStack.push(newParent); }
-    public popParent() { return this.parentStack.pop(); }
+    /** 
+     * Returns the given view's designated cursor target, if any.  This is the node within the view that
+     * should receive the text caret.
+     */
+    public static getCursorTarget<TProps>(view: IFlowViewComponent<TProps>): Node {
+        return (view as any)["cursorTarget"];
+    }
 
     /** The next tracked position we're looking for. */
     private get nextTrackedPosition() {
@@ -369,14 +351,14 @@ class LayoutContext {
             const toUnmountInfo = this.elementToViewInfo(toUnmount)!;
             this.state.elementToViewInfo.delete(toUnmount);
             toUnmount.remove();
-            toUnmountInfo.view.unmount(toUnmountInfo.state);
+            toUnmountInfo.view.unmount();
         }
         
         this.pendingLayout.clear();
 
         // Rebuild the segment -> ViewInfo map from the remaining visible elements.
-        this.state.segmentToViewInfo = new Map<Segment, IViewInfo<any, IViewState>>(
-            [...this.state.elementToViewInfo.values()].map<[Segment, IViewInfo<any, IViewState>]>(
+        this.state.segmentToViewInfo = new Map<Segment, IViewInfo<any, IFlowViewComponent<any>>>(
+            [...this.state.elementToViewInfo.values()].map<[Segment, IViewInfo<any, IFlowViewComponent<any>>]>(
                 viewInfo => [viewInfo.segments[0], viewInfo]));
     }
 
@@ -386,48 +368,42 @@ class LayoutContext {
      * If the given 'segment' is at the head of a list of previously rendered segments, return it's
      * cached ViewInfo and remove that IView from the pendingLayout list.
      */
-    public maybeReuseViewInfo<TProps, TState extends IViewState>(segment: Segment) {
+    public maybeReuseViewInfo<TProps, TView extends IFlowViewComponent<TProps>>(segment: Segment) {
         const viewInfo = this.state.segmentToViewInfo.get(segment);
         if (viewInfo) {
-            this.pendingLayout.delete(viewInfo.state.root);
+            this.pendingLayout.delete(viewInfo.view.root);
         }
-        return viewInfo as IViewInfo<TProps, TState>;
+        return viewInfo as IViewInfo<TProps, TView>;
     }
 
-    public pushParagraph(paragraphInfo: IViewInfo<IParagraphProps, IParagraphViewState>) {
-        this._currentParagraph = paragraphInfo;
-        this._currentInline = null;
-        this.pushParent(paragraphInfo.state.slot);
-    }
-
-    public get currentParagraph() { return this._currentParagraph; }
-
-    public setCurrentInline<TProps, TState extends IViewState>(viewInfo: IViewInfo<TProps, TState>) {
+    public setCurrentInline<TProps>(viewInfo: IViewInfo<TProps, IFlowViewComponent<TProps>>) {
         this._currentInline = viewInfo;
         return viewInfo;
     }
 
     public get currentInline() { return this._currentInline; }
 
-    public setViewInfo<TProps, TState extends IViewState>(viewInfo: IViewInfo<TProps, TState>) {
+    public setViewInfo<TProps, TView extends IFlowViewComponent<TProps>>(viewInfo: IViewInfo<TProps, TView>) {
         this.state.segmentToViewInfo.set(viewInfo.segments[0], viewInfo);
-        this.state.elementToViewInfo.set(viewInfo.state.root, viewInfo);
+        this.state.elementToViewInfo.set(viewInfo.view.root, viewInfo);
         return viewInfo;
     }
 }
 
 /** State machine that synchronizes the DOM with the visible portion of the FlowDocument. */
 export class DocumentLayout {
-    private static mountView<TProps, TState extends IViewState>(
+    private static mountView<TProps, TView extends IFlowViewComponent<TProps>>(
         context: LayoutContext,
         segments: Segment[],
-        view: IView<TProps, TState>,
-        props: TProps): IViewInfo<TProps, TState>
+        factory: () => TView,
+        props: TProps): IViewInfo<TProps, TView>
     {
+        const view = factory();
+        view.mount(props);
+
         return context.setViewInfo({
-            view: view,
-            state: view.mount(props),
-            segments,
+            view,
+            segments
         });
     }
 
@@ -435,28 +411,29 @@ export class DocumentLayout {
      * Ensure that the IView for the given set of Segments has been created and that it's root DOM node
      * is at the correct position within the current parent.
      */
-    private static syncNode<TProps, TState extends IViewState>(
+    private static syncNode<TProps, TView extends IFlowViewComponent<TProps>>(
         context: LayoutContext,
         previous: Node | null,
         segments: Segment[],
-        view: IView<TProps, TState>,
-        props: TProps): IViewInfo<TProps, TState>
+        factory: () => TView,
+        props: TProps): IViewInfo<TProps, TView>
     {
-        const parent = context.parent;
+        const parent = context.root;
 
         // TODO: Check all non-head segments to look for best match?
-        let viewInfo = context.maybeReuseViewInfo<TProps, TState>(segments[0]);
+        let viewInfo = context.maybeReuseViewInfo<TProps, TView>(segments[0]);
         if (!viewInfo) {
             // Segment was not previously in the rendered window.  Create it.
-            viewInfo = this.mountView(context, segments, view, props);
+            viewInfo = this.mountView(context, segments, factory, props);
 
-            // Insert the node for the new segemnt after the previous block.
-            Dom.insertAfter(parent, viewInfo.state.root, previous);
+            // Insert the node for the new segment after the previous block.
+            Dom.insertAfter(parent, viewInfo.view.root, previous);
         } else {
             viewInfo.segments = segments;
-            viewInfo.state = view.update(props, viewInfo.state);
+            const view = viewInfo.view;
+            view.update(props);
 
-            const node = viewInfo.state.root;
+            const node = viewInfo.view.root;
 
             // The node was previously inside the rendered window.  See if it is already in the correct location.
             if (!Dom.isAfterNode(parent, node, previous)) {
@@ -475,79 +452,59 @@ export class DocumentLayout {
         return viewInfo;
     }
 
-    /** Ensures that the paragraph's view is mounted and up to date. */
-    private static syncParagraph(context: LayoutContext, position: number, marker: Marker) {
-        const previousInfo = context.currentParagraph;
-        
-        context.popParent();
-
-        const viewInfo = context.pushParagraph(
-            this.syncNode<IParagraphProps, IParagraphViewState>(
-                context,
-                previousInfo && previousInfo.state.root,
-                [marker],
-                ParagraphView.instance,
-                {}
-            )
-        );
-
-        const cursorTarget = previousInfo
-            ? previousInfo.state.cursorTarget
-            : context.state.leadingSpan;
-            
-        context.notifyTrackedPositionListeners(cursorTarget, position, [marker]);
-
-        return viewInfo;
-    }
-
     /** Ensures that the given inline 'view' is mounted and up to date. */
-    private static syncInline<TProps, TState extends IViewState>(context: LayoutContext, position: number, segments: Segment[], view: IView<TProps, TState>, props: TProps) {
+    private static syncInline<TProps, TView extends IFlowViewComponent<TProps>>(context: LayoutContext, position: number, segments: Segment[], factory: () => TView, props: TProps) {
         const viewInfo = context.setCurrentInline(
-            this.syncNode<TProps, TState>(
+            this.syncNode<TProps, TView>(
                 context,
-                context.currentInline && context.currentInline.state.root!,
+                context.currentInline && context.currentInline.view.root!,
                 segments,
-                view,
+                factory,
                 props));
 
-        const maybeCursorTarget = (viewInfo.state as any).cursorTarget;
-        context.notifyTrackedPositionListeners(maybeCursorTarget || viewInfo.state.root, position, segments);
+        const maybeCursorTarget = LayoutContext.getCursorTarget(viewInfo.view);
+        context.notifyTrackedPositionListeners(maybeCursorTarget || viewInfo.view.root, position, segments);
+    }
+
+    /** Ensures that the paragraph's view is mounted and up to date. */
+    private static syncParagraph(context: LayoutContext, position: number, marker: Marker) {
+        this.syncInline(context, position, [ marker ], ParagraphView.factory, {});
     }
 
     /** Ensures that the lineBreak's view is mounted and up to date. */
     private static syncLineBreak(context: LayoutContext, position: number, marker: Marker) {
-        this.syncInline(context, position, [ marker ], LineBreakView.instance, {});
+        this.syncInline(context, position, [ marker ], LineBreakView.factory, {});
     }
 
     /** Ensures that the text's view is mounted and up to date. */
     private static syncText(context: LayoutContext, position: number, segments: Segment[], text: string) {
-       this.syncInline<ITextProps, ITextViewState>(context, position, segments, TextView.instance, { text });
+       this.syncInline(context, position, segments, TextView.factory, { text });
     }
 
     private static readonly inclusionRootSym = Symbol("Flow.Editor.Marker.InclusionRoot");
 
     /** Ensures that a foreign inclusion's view is mounted and up to date. */
     private static syncInclusion(context: LayoutContext, position: number, marker: Marker) {
-        let root: HTMLElement;
+        let child: HTMLElement;
         const kind = getInclusionKind(marker);
 
-        root = (marker.properties as any)[this.inclusionRootSym];
-        if (!root) {
+        child = (marker.properties as any)[this.inclusionRootSym];
+        if (!child) {
             switch (kind) {
                 case InclusionKind.HTML:
-                    root = getInclusionHtml(marker);
+                    child = getInclusionHtml(marker);
                     break;
                 
                 default:
                     console.assert(kind === InclusionKind.Chaincode);
-                    root = document.createElement("span");
-                    getInclusionComponent(marker, [["div", Promise.resolve(root)]]);
+                    child = document.createElement("span");
+                    getInclusionComponent(marker, [["div", Promise.resolve(child)]]);
                     break;
             }
-            (marker.properties as any)[this.inclusionRootSym] = root;
+            (marker.properties as any)[this.inclusionRootSym] = child;
         }
 
-        this.syncInline(context, position, [ marker ], InclusionView.instance, { root });
+        this.syncInline(context, position, [ marker ], InclusionView.factory, { child });
     }
 
     /** 
@@ -600,23 +557,15 @@ export class DocumentLayout {
 
     /** Runs state machine, starting with the paragraph at 'start'. */
     public static sync(props: IDocumentProps, state: IDocumentViewState) {
-        let paragraphStart = props.doc.findParagraphStart(props.start);
-        console.log(`Sync starting paragraph @ position ${paragraphStart} (requested start: ${props.start})`);
+        console.log(`Sync: [${props.start}..?)`);
 
         const context = new LayoutContext(props, state, state.slot);
         
-        if (paragraphStart === undefined) {
-            console.log(`    -> synthetic leading paragraph`);
-            paragraphStart = props.start;
-            this.syncSegment(context, -1, state.leadingParagraph, -1, -1);
-        }
-
-        let nextStart = paragraphStart;
+        let start = props.start;
         do {
-            const start = nextStart;
-
             // Ensure that we exit the outer do..while loop if there are no remaining segments.
-            nextStart = -1;
+            let nextStart = -1;
+            
             context.props.doc.visitRange((position, segment, startOffset, endOffset) => {
                 nextStart = this.syncSegment(context, position, segment, startOffset, endOffset);
 
@@ -627,10 +576,12 @@ export class DocumentLayout {
                 // 'next' position.
                 return nextStart < 0;
             }, start);
-        } while (nextStart >= 0);
+
+            start = nextStart;
+        } while (start >= 0);
 
         // Notify listeners whose tracked positions were after our rendered window.
-        context.notifyTrackedPositionListeners(context.currentParagraph!.state.cursorTarget!, +Infinity, []);
+        context.notifyTrackedPositionListeners(LayoutContext.getCursorTarget(context.currentInline!.view)!, +Infinity, []);
 
         // Any nodes not re-used from the previous layout are unmounted and removed.
         context.unmount();
