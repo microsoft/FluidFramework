@@ -557,17 +557,15 @@ export class DocumentLayout {
 
     /** Runs state machine, starting with the paragraph at 'start'. */
     public static sync(props: IDocumentProps, state: IDocumentViewState) {
-        let paragraphStart = props.doc.findParagraphStart(props.start);
-        console.log(`Sync starting paragraph @ position ${paragraphStart} (requested start: ${props.start})`);
+        console.log(`Sync: [${props.start}..?)`);
 
         const context = new LayoutContext(props, state, state.slot);
         
-        let nextStart = paragraphStart;
+        let start = props.start;
         do {
-            const start = nextStart;
-
             // Ensure that we exit the outer do..while loop if there are no remaining segments.
-            nextStart = -1;
+            let nextStart = -1;
+            
             context.props.doc.visitRange((position, segment, startOffset, endOffset) => {
                 nextStart = this.syncSegment(context, position, segment, startOffset, endOffset);
 
@@ -578,7 +576,9 @@ export class DocumentLayout {
                 // 'next' position.
                 return nextStart < 0;
             }, start);
-        } while (nextStart >= 0);
+
+            start = nextStart;
+        } while (start >= 0);
 
         // Notify listeners whose tracked positions were after our rendered window.
         context.notifyTrackedPositionListeners(LayoutContext.getCursorTarget(context.currentInline!.view)!, +Infinity, []);
