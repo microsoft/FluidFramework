@@ -9,7 +9,3 @@
     color: #ccc;
     padding: 0px 2px 0px 3px;
 }
-
-p:last-of-type, p:first-of-type {
-    display: inline;
-}

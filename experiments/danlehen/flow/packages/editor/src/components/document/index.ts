@@ -2,11 +2,10 @@ import {
     Segment,
     Marker,
     TextSegment,
-    ReferenceType,
 } from "@prague/merge-tree";
 import { Template, Dom } from "@prague/flow-util";
 import { getInclusionKind, getInclusionHtml, getInclusionComponent, FlowDocument, DocSegmentKind, getDocSegmentKind, InclusionKind } from "@chaincode/flow-document";
-import { ParagraphView, IParagraphProps } from "../paragraph";
+import { ParagraphView } from "../paragraph";
 import { LineBreakView } from "../linebreak";
 import { TextView } from "../text";
 import { IFlowViewComponent, IViewState } from "../";
@@ -18,10 +17,17 @@ const template = new Template({
     tag: "span",
     props: { className: styles.document, },
     children: [
-        { tag: "span", ref: "leadingSpan", props: { className: styles.leadingSpan }},
-        { tag: "span", ref: "slot", props: { className: styles.documentContent, tabIndex: 0 }},
-        { tag: "span", ref: "trailingSpan", props: { className: styles.trailingSpan }},
-        { tag: "span", ref: "overlay", props: { className: styles.documentOverlay }}
+        {
+            tag: "span",
+            ref: "eventsink",
+            props: { tabIndex: 0 },
+            children: [
+                { tag: "span", ref: "leadingSpan", props: { className: styles.leadingSpan }},
+                { tag: "span", ref: "slot", props: { className: styles.documentContent }},
+                { tag: "span", ref: "trailingSpan", props: { className: styles.trailingSpan }},
+                { tag: "span", ref: "overlay", props: { className: styles.documentOverlay }}
+            ]
+        }
     ]
 });
 
@@ -72,11 +78,12 @@ interface IDocumentViewState extends IViewState {
     /** The root element into which overlays are attached. */
     overlay: Element,
 
+    /** The element to which event handlers are to be attached. */
+    eventsink: HTMLElement;
+
     /** Leading span */
     leadingSpan: Element,
     trailingSpan: Element,
-    leadingParagraph: Marker,
-    trailingParagraph: Marker,
 
     /** 
      * Mapping from segments to their IViewInfo, if the segment is currently within the rendered window.
@@ -97,22 +104,19 @@ export class DocumentView {
 
     public mount(props: IDocumentProps) {
         const root = template.clone();
+        const eventsink = template.get(root, "eventsink") as HTMLElement;
         const leadingSpan = template.get(root, "leadingSpan");
         const slot = template.get(root, "slot") as HTMLElement;
         const overlay = template.get(root, "overlay");
         const trailingSpan = template.get(root, "trailingSpan");
-
-        const leadingParagraph = FlowDocument.markAsParagraph(new Marker(ReferenceType.Tile));
-        const trailingParagraph = FlowDocument.markAsParagraph(new Marker(ReferenceType.Tile));
 
         this.state = {
             root,
             slot,
             leadingSpan,
             trailingSpan,
+            eventsink,
             overlay,
-            leadingParagraph,
-            trailingParagraph,
             segmentToViewInfo: new Map<Segment, IViewInfo<any, IFlowViewComponent<any>>>(),
             elementToViewInfo: new Map<Element, IViewInfo<any, IFlowViewComponent<any>>>()
         };
@@ -123,6 +127,7 @@ export class DocumentView {
     public get root()       { return this.state!.root; }
     public get slot()       { return this.state!.slot; }
     public get overlay()    { return this.state!.overlay; }
+    public get eventsink()  { return this.state!.eventsink; }
 
     public update(props: Readonly<IDocumentProps>) {
         DocumentLayout.sync(props, this.state!);
@@ -295,13 +300,7 @@ class LayoutContext {
     /** The IViewInfo for the last rendered inline view. */
     private _currentInline: IViewInfo<any, IFlowViewComponent<any>> | null = null;
 
-    /** The IViewInfo for the last rendered paragraph. */
-    private _currentParagraph: IViewInfo<IParagraphProps, IFlowViewComponent<IParagraphProps>> | null = null;
-
-    /** The stack of parent Elements. */
-    private readonly parentStack: Element[];
-
-    constructor (readonly props: IDocumentProps, readonly state: IDocumentViewState, root: Element) {
+    constructor (readonly props: IDocumentProps, readonly state: IDocumentViewState, public root: Element) {
         // Initialize 'pendingTrackedPositions' by copying and sorting the tracked positions.
         this.pendingTrackedPositions = props.trackedPositions
             .slice(0)
@@ -309,16 +308,7 @@ class LayoutContext {
         
         // Initialize 'pendingLayout' with the set of root elements rendered in the last layout pass.
         this.pendingLayout = new Set<Element>(state.elementToViewInfo.keys());
-
-        // Initialize 'parentStack' with the root element.  We push it twice because the first paragraph
-        // will indiscriminately pop it.
-        this.parentStack = [root, root];
     }
-
-    // Stack of parent Elements
-    public get parent() { return this.parentStack[this.parentStack.length - 1]; }
-    public pushParent(newParent: Element) { this.parentStack.push(newParent); }
-    public popParent() { return this.parentStack.pop(); }
 
     /** 
      * Returns the given view's designated cursor target, if any.  This is the node within the view that
@@ -389,14 +379,6 @@ class LayoutContext {
         return viewInfo as IViewInfo<TProps, TView>;
     }
 
-    public pushParagraph(paragraphInfo: IViewInfo<IParagraphProps, ParagraphView>) {
-        this._currentParagraph = paragraphInfo;
-        this._currentInline = null;
-        this.pushParent(paragraphInfo.view.slot);
-    }
-
-    public get currentParagraph() { return this._currentParagraph; }
-
     public setCurrentInline<TProps>(viewInfo: IViewInfo<TProps, IFlowViewComponent<TProps>>) {
         this._currentInline = viewInfo;
         return viewInfo;
@@ -439,7 +421,7 @@ export class DocumentLayout {
         factory: () => TView,
         props: TProps): IViewInfo<TProps, TView>
     {
-        const parent = context.parent;
+        const parent = context.root;
 
         // TODO: Check all non-head segments to look for best match?
         let viewInfo = context.maybeReuseViewInfo<TProps, TView>(segments[0]);
@@ -473,35 +455,6 @@ export class DocumentLayout {
         return viewInfo;
     }
 
-    /** Ensures that the paragraph's view is mounted and up to date. */
-    private static syncParagraph(context: LayoutContext, position: number, marker: Marker) {
-        const previousInfo = context.currentParagraph;
-        
-        context.popParent();
-
-        const viewInfo = context.pushParagraph(
-            this.syncNode<IParagraphProps, ParagraphView>(
-                context,
-                previousInfo && previousInfo.view.root,
-                [marker],
-                ParagraphView.factory,
-                {}
-            )
-        );
-
-        // Move the cursor to the previous paragraph's cursor target (if any).
-        let cursorTarget = previousInfo && LayoutContext.getCursorTarget(previousInfo.view);
-
-        // If there is no previous paragraph, we're at the beginning of the document.  Move the cursor to the leading span.
-        if (!cursorTarget) {
-            cursorTarget = context.state.leadingSpan;
-        }
-            
-        context.notifyTrackedPositionListeners(cursorTarget, position, [marker]);
-
-        return viewInfo;
-    }
-
     /** Ensures that the given inline 'view' is mounted and up to date. */
     private static syncInline<TProps, TView extends IFlowViewComponent<TProps>>(context: LayoutContext, position: number, segments: Segment[], factory: () => TView, props: TProps) {
         const viewInfo = context.setCurrentInline(
@@ -514,6 +467,11 @@ export class DocumentLayout {
 
         const maybeCursorTarget = LayoutContext.getCursorTarget(viewInfo.view);
         context.notifyTrackedPositionListeners(maybeCursorTarget || viewInfo.view.root, position, segments);
+    }
+
+    /** Ensures that the paragraph's view is mounted and up to date. */
+    private static syncParagraph(context: LayoutContext, position: number, marker: Marker) {
+        this.syncInline(context, position, [ marker ], ParagraphView.factory, {});
     }
 
     /** Ensures that the lineBreak's view is mounted and up to date. */
@@ -607,12 +565,6 @@ export class DocumentLayout {
 
         const context = new LayoutContext(props, state, state.slot);
         
-        if (paragraphStart === undefined) {
-            console.log(`    -> synthetic leading paragraph`);
-            paragraphStart = props.start;
-            this.syncSegment(context, -1, state.leadingParagraph, -1, -1);
-        }
-
         let nextStart = paragraphStart;
         do {
             const start = nextStart;
@@ -632,7 +584,7 @@ export class DocumentLayout {
         } while (nextStart >= 0);
 
         // Notify listeners whose tracked positions were after our rendered window.
-        context.notifyTrackedPositionListeners(LayoutContext.getCursorTarget(context.currentParagraph!.view)!, +Infinity, []);
+        context.notifyTrackedPositionListeners(LayoutContext.getCursorTarget(context.currentInline!.view)!, +Infinity, []);
 
         // Any nodes not re-used from the previous layout are unmounted and removed.
         context.unmount();

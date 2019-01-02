@@ -2,7 +2,7 @@ import { Template } from "@prague/flow-util";
 import * as styles from "./index.css";
 import { IFlowViewComponentState, FlowViewComponent } from "..";
 
-const template = new Template({ tag: "span", props: { className: styles.text }});
+const template = new Template({ tag: "p", props: { className: styles.text }});
 
 export interface ITextProps {
     text: string

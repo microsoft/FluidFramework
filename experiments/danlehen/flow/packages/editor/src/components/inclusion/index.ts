@@ -3,7 +3,7 @@ import * as styles from "./index.css";
 import { IFlowViewComponentState, FlowViewComponent } from "..";
 
 const template = new Template({ 
-    tag: "p",
+    tag: "span",
     props: { className: styles.inclusion },
 });
 

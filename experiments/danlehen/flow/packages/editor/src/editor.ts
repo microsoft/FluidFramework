@@ -2,9 +2,6 @@ import { FlowDocument } from "@chaincode/flow-document";
 import { Cursor } from "./cursor";
 import { Scheduler } from "@prague/flow-util";
 import { DocumentView, IDocumentProps } from "./components/document";
-// import { ViewportView, IViewportViewState } from "./components/viewport";
-// import { Dom } from "./dom";
-import { ISequencedObjectMessage } from "@prague/runtime-definitions";
 
 export class Editor {
     private readonly cursor: Cursor;
@@ -26,7 +23,7 @@ export class Editor {
         // this.viewportState = ViewportView.instance.mount(this.getViewportProps(0));
         // this.viewportState.slot.appendChild(this.docState.root);
 
-        this.eventSink = this.docView.slot;
+        this.eventSink = this.docView.eventsink;
         this.eventSink.addEventListener("keydown",   this.onKeyDown as any);
         this.eventSink.addEventListener("keypress",  this.onKeyPress as any);
         this.eventSink.addEventListener("mousedown", this.onMouseDown as any);
@@ -36,12 +33,7 @@ export class Editor {
 
         window.addEventListener("resize", this.invalidate);
 
-        doc.on("op", (op: ISequencedObjectMessage, local: boolean) => {
-            if (local) { return; }
-            this.invalidate()
-        });
-
-        this.invalidate();
+        doc.on("op", this.invalidate);
     }
 
     // public get root() { return this.viewportState.root; }
@@ -112,7 +104,6 @@ export class Editor {
                     // Otherwise, delete the selected range.
                     this.doc.remove(Math.min(start, end), Math.max(start, end));
                 }
-                this.invalidate();
                 ev.stopPropagation();
                 break;
             }
@@ -160,14 +151,12 @@ export class Editor {
                 } else {
                     this.doc.insertParagraph(this.cursor.position);
                 }
-                this.invalidate();
                 ev.stopPropagation();
                 break;
             }
             default: {
                 console.log(`Key: ${ev.key} (${ev.keyCode})`);
                 this.doc.insertText(this.cursor.position, ev.key);
-                this.invalidate();
                 ev.stopPropagation();
                 ev.preventDefault();
                 break;
