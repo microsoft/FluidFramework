@@ -1,6 +1,6 @@
 import { LocalReference } from "@prague/merge-tree";
 import { Template, Dom } from "@prague/flow-util";
-import * as styles from "./editor.css";
+import * as styles from "./index.css";
 import { FlowDocument } from "@chaincode/flow-document";
 
 const template = new Template({

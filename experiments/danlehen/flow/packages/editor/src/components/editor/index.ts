@@ -1,7 +1,7 @@
 import { FlowDocument } from "@chaincode/flow-document";
 import { Cursor } from "./cursor";
 import { Scheduler } from "@prague/flow-util";
-import { DocumentView, IDocumentProps } from "./components/document";
+import { DocumentView, IDocumentProps } from "../document";
 
 export class Editor {
     private readonly cursor: Cursor;
