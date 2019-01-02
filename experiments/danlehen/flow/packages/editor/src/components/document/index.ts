@@ -8,7 +8,7 @@ import { getInclusionKind, getInclusionHtml, getInclusionComponent, FlowDocument
 import { ParagraphView } from "../paragraph";
 import { LineBreakView } from "../linebreak";
 import { TextView } from "../text";
-import { IFlowViewComponent, IViewState } from "../";
+import { IFlowViewComponent, IViewState, View } from "../";
 import { InclusionView } from "../inclusion";
 import { TextAccumulator } from "./textaccumulator";
 import * as styles from "./index.css";
@@ -99,10 +99,8 @@ interface IDocumentViewState extends IViewState {
 }
 
 /** IView that renders a FlowDocument. */
-export class DocumentView {
-    private state?: IDocumentViewState;
-
-    public mount(props: IDocumentProps) {
+export class DocumentView extends View<IDocumentProps, IDocumentViewState> {
+    protected mounting(props: IDocumentProps) {
         const root = template.clone();
         const eventsink = template.get(root, "eventsink") as HTMLElement;
         const leadingSpan = template.get(root, "leadingSpan");
@@ -110,7 +108,7 @@ export class DocumentView {
         const overlay = template.get(root, "overlay");
         const trailingSpan = template.get(root, "trailingSpan");
 
-        this.state = {
+        return this.updating(props, {
             root,
             slot,
             leadingSpan,
@@ -119,25 +117,24 @@ export class DocumentView {
             overlay,
             segmentToViewInfo: new Map<Segment, IViewInfo<any, IFlowViewComponent<any>>>(),
             elementToViewInfo: new Map<Element, IViewInfo<any, IFlowViewComponent<any>>>()
-        };
-
-        return this.update(props);
+        });
     }
 
-    public get root()       { return this.state!.root; }
-    public get slot()       { return this.state!.slot; }
-    public get overlay()    { return this.state!.overlay; }
-    public get eventsink()  { return this.state!.eventsink; }
+    public get root()       { return this.state.root; }
+    public get slot()       { return this.state.slot; }
+    public get overlay()    { return this.state.overlay; }
+    public get eventsink()  { return this.state.eventsink; }
 
-    public update(props: Readonly<IDocumentProps>) {
-        DocumentLayout.sync(props, this.state!);
+    protected updating(props: Readonly<IDocumentProps>, state: Readonly<IDocumentViewState>) {
+        DocumentLayout.sync(props, state);
+        return state;
     }
 
-    public unmount() { }
+    protected unmounting() { }
 
     /** Map a node/nodeOffset to the corresponding segment/segmentOffset that rendered it. */
     private nodeOffsetToSegmentOffset(node: Node | null, nodeOffset: number) {
-        const state = this.state!;
+        const state = this.state;
         let viewInfo: IViewInfo<any, IFlowViewComponent<any>> | undefined;
         while (node && !(viewInfo = state.elementToViewInfo.get(node as Element))) {
             node = node.parentElement;
@@ -199,7 +196,7 @@ export class DocumentView {
     /** Get the ClientRects that define the boundary of the given 'element', using cached information if we have it. */
     private getClientRects(element: Element) {
         // Note: Caller must only request clientRects for elements we've previously rendered.
-        const state = this.state!;
+        const state = this.state;
         const viewInfo = state.elementToViewInfo.get(element)!;
         if (!viewInfo.clientRects) {
             viewInfo.clientRects = element.getClientRects();
@@ -214,7 +211,7 @@ export class DocumentView {
     public findBelow(x: number, top: number, bottom: number) {
         console.log(`looking below: ${bottom}`);
 
-        const state = this.state!;
+        const state = this.state;
         let bestRect = { top: +Infinity, bottom: -Infinity, left: +Infinity, right: -Infinity };
         let bestDx = +Infinity;
         let bestViewInfo: IViewInfo<any, IFlowViewComponent<any>> | undefined = undefined;
