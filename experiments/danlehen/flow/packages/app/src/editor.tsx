@@ -37,7 +37,8 @@ export class FlowEditor extends React.Component<IProps, IState> {
                 .open<FlowDocument>(docId, "danlehen", FlowDocument.type)
                 .then((doc) => {
                     // buildTestParagraph(doc);
-                    const editor = new Editor(new Scheduler(), doc);
+                    const editor = new Editor();
+                    editor.mount({ scheduler: new Scheduler(), doc, trackedPositions: [], start: 0 });
                     this.setState({ doc, editor });
                 });
         });
