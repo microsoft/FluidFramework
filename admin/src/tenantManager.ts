@@ -1,7 +1,7 @@
-import * as utils from "@prague/routerlicious/dist/utils";
+import * as utils from "@prague/services-utils";
 import * as moniker from "moniker";
 import * as request from "request-promise-native";
-import { ITenant, ITenantInput, ITenantStorage } from "../definitions";
+import { IOrderer, ITenant, ITenantInput, ITenantStorage } from "./definitions";
 import { ITenantConfig, RiddlerManager} from "./riddlerManager";
 
 /**
@@ -53,7 +53,10 @@ export class TenantManager {
         private tenantCollection: string,
         private riddlerEndpoint: string,
         private gitrestEndpoint: string,
-        private cobaltEndpoint: string) {
+        private cobaltEndpoint: string,
+        private historianEndpoint: string,
+        private alfredEndpoint: string,
+        private jarvisEndpoint: string) {
 
         this.riddlerManager = new RiddlerManager(this.riddlerEndpoint);
     }
@@ -72,12 +75,20 @@ export class TenantManager {
         const key = newTenant.key;
 
         // create the tenant storage
+        const orderer = this.createTenantOrderer(newTenant.id, inputParams.ordererType);
         const storage = await this.createTenantStorage(newTenant.id, inputParams);
-        await this.riddlerManager.updateTenantStorage(newTenant.id, storage);
+
+        const tenantUpdateP = this.riddlerManager.updateTenantStorage(newTenant.id, storage);
+        const ordererUpdateP = this.riddlerManager.updateTenantOrderer(newTenant.id, orderer);
+        await Promise.all([tenantUpdateP, ordererUpdateP]);
+
         const tenant = await this.riddlerManager.getTenant(newTenant.id);
 
         await this.addNewTenantForOrg(orgId, newTenant.id);
-        const details = await this.addToTenantDB(tenant.id, inputParams.name, inputParams.storageType);
+        const details = await this.addToTenantDB(
+            tenant.id,
+            inputParams.name,
+            inputParams.storageType);
 
         return this.convertToITenant(details, tenant, key);
     }
@@ -126,12 +137,19 @@ export class TenantManager {
     private convertToITenant(details: ITenantDetails, tenant: ITenantConfig, key: string): ITenant {
         return {
             deleted: details.deleted,
+            historianUrl: this.historianEndpoint,
             id: tenant.id,
             key,
             name: details.name,
+            orderer: tenant.orderer,
             provider: this.getProviderForEndpoint(tenant.storage.url),
             storage: tenant.storage,
         };
+    }
+
+    private createTenantOrderer(tenantId: string, type: string): IOrderer {
+        const url = type === "kafka2" ? this.jarvisEndpoint : this.alfredEndpoint;
+        return { type, url };
     }
 
     /**

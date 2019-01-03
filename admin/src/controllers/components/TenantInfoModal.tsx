@@ -17,6 +17,9 @@ export class TenantInfoModal extends React.Component<ITenantInfoProps, {}> {
         const name = !record ? "" : record.name;
         const id = !record ? "" : record.id;
         const key = !record ? "" : record.key;
+        const orderer = !record ? "" : record.orderer.url;
+        const storage = !record ? "" : record.historianUrl;
+
         return (
           <div>
             <Modal
@@ -32,6 +35,8 @@ export class TenantInfoModal extends React.Component<ITenantInfoProps, {}> {
             >
               <p><b>Id:</b> {id}</p>
               <p><b>Key:</b> {key}</p>
+              <p><b>Orderer:</b> {orderer}</p>
+              <p><b>Storage:</b> {storage}</p>
               <a href="https://github.com/Microsoft/Prague/blob/master/admin/INSTRUCTION.md" target="_blank">
                 Getting started with Prague API
               </a>

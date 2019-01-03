@@ -1,5 +1,5 @@
-import * as services from "@prague/routerlicious/dist/services";
-import * as utils from "@prague/routerlicious/dist/utils";
+import * as services from "@prague/services";
+import * as utils from "@prague/services-utils";
 import { Provider } from "nconf";
 import { AdminRunner } from "./runner";
 import { IWebServerFactory, WebServerFactory } from "./webServer";

@@ -37,6 +37,10 @@ export class TenantManager extends React.Component<ITableProps, ITableState > {
           title: "Storage",
         },
         {
+          dataIndex: "orderer.type",
+          title: "Orderer",
+        },
+        {
           dataIndex: "operation",
           render: (text, record: ITenant) => {
             return (

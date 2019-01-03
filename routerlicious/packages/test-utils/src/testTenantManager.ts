@@ -1,14 +1,13 @@
 import { GitManager } from "@prague/services-client";
-import { ITenant, ITenantManager, ITenantStorage } from "@prague/services-core";
+import { ITenant, ITenantManager, ITenantOrderer, ITenantStorage } from "@prague/services-core";
 import { TestHistorian } from "./testHistorian";
 
 export class TestTenant implements ITenant {
-    private url = "http://test";
     private owner = "test";
     private repository = "test";
     private manager: GitManager;
 
-    constructor() {
+    constructor(private url: string) {
         const testHistorian = new TestHistorian();
         this.manager = new GitManager(testHistorian);
     }
@@ -26,10 +25,21 @@ export class TestTenant implements ITenant {
             url: this.url,
         };
     }
+
+    public get orderer(): ITenantOrderer {
+        return {
+            type: "kafka",
+            url: this.url,
+        };
+    }
 }
 
 export class TestTenantManager implements ITenantManager {
-    private tenant = new TestTenant();
+    private tenant: TestTenant;
+
+    constructor(url = "http://test") {
+        this.tenant = new TestTenant(url);
+    }
 
     public verifyToken(token: string): Promise<void> {
         return Promise.resolve();

@@ -1,5 +1,5 @@
-import {Deferred } from "@prague/routerlicious/dist/core-utils";
-import * as utils from "@prague/routerlicious/dist/utils";
+import * as utils from "@prague/services-utils";
+import { Deferred } from "@prague/utils";
 import { Provider } from "nconf";
 import * as winston from "winston";
 import * as app from "./app";

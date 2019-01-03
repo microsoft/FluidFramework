@@ -1,31 +1,8 @@
-import { ITenantConfig, ITenantStorage } from "@prague/services-core";
+import { ITenantConfig, ITenantOrderer, ITenantStorage } from "@prague/services-core";
 import * as utils from "@prague/services-utils";
 import * as crypto from "crypto";
 import * as jwt from "jsonwebtoken";
 import * as _ from "lodash";
-
-export interface ITenantStorageDocument {
-    // Historian backed URL to the storage provider
-    url: string;
-
-    // Direct access URL to the storage provider
-    direct: string;
-
-    // Storage provider owner
-    owner: string;
-
-    // Storage provider repository
-    repository: string;
-
-    // Access credentials to the storage provider
-    credentials: {
-        // User accessing the storage provider
-        user: string;
-
-        // Password for the storage provider
-        password: string;
-    };
-}
 
 /**
  * Tenant details stored to the document database
@@ -39,11 +16,17 @@ export interface ITenantDocument {
     key: string;
 
     // Storage provider details
-    storage: ITenantStorageDocument;
+    storage: ITenantStorage;
+
+    // Orderer details
+    orderer: ITenantOrderer;
 }
 
 export class TenantManager {
-    constructor(private mongoManager: utils.MongoManager, private collectionName: string) {
+    constructor(
+        private mongoManager: utils.MongoManager,
+        private collectionName: string,
+        private baseOrdererUrl: string) {
     }
 
     /**
@@ -71,6 +54,7 @@ export class TenantManager {
 
         return {
             id: tenant._id,
+            orderer: tenant.orderer,
             storage: tenant.storage,
         };
     }
@@ -86,6 +70,7 @@ export class TenantManager {
         const id = await collection.insertOne({
             _id: utils.getRandomName("-"),
             key,
+            orderer: null,
             storage: null,
         });
 
@@ -96,13 +81,22 @@ export class TenantManager {
     /**
      * Updates the tenant configured storage provider
      */
-    public async updateStorage(tenantId: string, storage: any): Promise<ITenantStorage> {
+    public async updateStorage(tenantId: string, storage: ITenantStorage): Promise<ITenantStorage> {
         const db = await this.mongoManager.getDatabase();
         const collection = db.collection<ITenantDocument>(this.collectionName);
 
         await collection.update({ _id: tenantId }, { storage }, null);
 
         return (await this.getTenantDocument(tenantId)).storage;
+    }
+
+    public async updateOrderer(tenantId: string, orderer: ITenantOrderer): Promise<ITenantOrderer> {
+        const db = await this.mongoManager.getDatabase();
+        const collection = db.collection<ITenantDocument>(this.collectionName);
+
+        await collection.update({ _id: tenantId }, { orderer }, null);
+
+        return (await this.getTenantDocument(tenantId)).orderer;
     }
 
     /**
@@ -120,6 +114,16 @@ export class TenantManager {
         const collection = db.collection<ITenantDocument>(this.collectionName);
 
         const found = await collection.findOne({ _id: tenantId });
+
+        // Ordering information was historically not included with the tenant. In the case where it is empty
+        // we default it to the kafka orderer at the base server URL.
+        if (!found.orderer) {
+            found.orderer = {
+                type: "kafka",
+                url: this.baseOrdererUrl,
+            };
+        }
+
         return found;
     }
 }

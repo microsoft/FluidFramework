@@ -2,9 +2,13 @@ import * as utils from "@prague/services-utils";
 import { Response, Router } from "express";
 import { TenantManager } from "./tenantManager";
 
-export function create(collectionName: string, mongoManager: utils.MongoManager): Router {
+export function create(
+    collectionName: string,
+    mongoManager: utils.MongoManager,
+    baseOrderUrl: string,
+): Router {
     const router: Router = Router();
-    const manager = new TenantManager(mongoManager, collectionName);
+    const manager = new TenantManager(mongoManager, collectionName, baseOrderUrl);
 
     function returnResponse<T>(resultP: Promise<T>, response: Response) {
         resultP.then(
@@ -42,6 +46,14 @@ export function create(collectionName: string, mongoManager: utils.MongoManager)
      */
     router.put("/tenants/:id/storage", (request, response) => {
         const storageP = manager.updateStorage(request.params.id, request.body);
+        returnResponse(storageP, response);
+    });
+
+    /**
+     * Updates the orderer for the given tenant
+     */
+    router.put("/tenants/:id/orderer", (request, response) => {
+        const storageP = manager.updateOrderer(request.params.id, request.body);
         returnResponse(storageP, response);
     });
 

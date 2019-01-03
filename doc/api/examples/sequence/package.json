@@ -4,8 +4,8 @@
   "description": "Prague API sequence sample",
   "main": "index.js",
   "dependencies": {
-    "@prague/client-api": "^0.1.4272",
-    "@prague/socket-storage": "^0.1.4272",
+    "@prague/client-api": "^0.1.4468",
+    "@prague/socket-storage": "^0.1.4468",
     "jsonwebtoken": "^8.2.1"
   },
   "devDependencies": {

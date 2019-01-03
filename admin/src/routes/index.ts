@@ -1,7 +1,8 @@
-import * as utils from "@prague/routerlicious/dist/utils";
+import * as utils from "@prague/services-utils";
 import * as ensureAuth from "connect-ensure-login";
 import { Router } from "express";
 import { Provider } from "nconf";
+import { TenantManager } from "../tenantManager";
 import * as api from "./api";
 import * as home from "./home";
 
@@ -10,9 +11,9 @@ export interface IRoutes {
     api: Router;
 }
 
-export function create(config: Provider, mongoManager: utils.MongoManager): IRoutes {
+export function create(config: Provider, mongoManager: utils.MongoManager, manager: TenantManager): IRoutes {
     return {
-        api: api.create(config, mongoManager, ensureAuth.ensureLoggedIn),
-        home: home.create(config, mongoManager, ensureAuth.ensureLoggedIn),
+        api: api.create(config, mongoManager, ensureAuth.ensureLoggedIn, manager),
+        home: home.create(config, mongoManager, ensureAuth.ensureLoggedIn, manager),
     };
 }

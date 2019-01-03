@@ -5,6 +5,7 @@ export interface ITenantInput {
     repository: string;
     username: string;
     password: string;
+    ordererType: string;
 }
 
 export interface IUser {
@@ -34,6 +35,14 @@ export interface ITenantStorage {
     };
 }
 
+export interface IOrderer {
+    // URL to the ordering service
+    url: string;
+
+    // Type of ordering service
+    type: string;
+}
+
 export interface ITenant {
     // Database ID for the tenant.
     id: string;
@@ -50,6 +59,12 @@ export interface ITenant {
     // storage
     storage: ITenantStorage;
 
+    // ordering service
+    orderer: IOrderer;
+
     // Type of underlying storage
     provider: string;
+
+    // Historian URL endpoint
+    historianUrl: string;
 }

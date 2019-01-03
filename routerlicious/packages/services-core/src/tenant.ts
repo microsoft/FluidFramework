@@ -9,6 +9,8 @@ export interface ITenantConfig {
     id: string;
 
     storage: ITenantStorage;
+
+    orderer: ITenantOrderer;
 }
 
 export interface ITenantStorage {
@@ -34,11 +36,21 @@ export interface ITenantStorage {
     };
 }
 
+export interface ITenantOrderer {
+    // URL to the ordering service
+    url: string;
+
+    // The type of ordering service
+    type: string;
+}
+
 export interface ITenant {
     // TODO KURTB This needs to take in the GitManager/IHistorian/etc... once packages have been split
     gitManager: any;
 
     storage: ITenantStorage;
+
+    orderer: ITenantOrderer;
 }
 
 export interface ITenantManager {

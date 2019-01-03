@@ -15,8 +15,12 @@ const stream = split().on("data", (message) => {
     winston.info(message);
 });
 
-export function create(collectionName: string, mongoManager: utils.MongoManager, loggerFormat: string) {
-
+export function create(
+    collectionName: string,
+    mongoManager: utils.MongoManager,
+    loggerFormat: string,
+    baseOrdererUrl: string,
+) {
     // Express app configuration
     const app: Express = express();
 
@@ -29,7 +33,7 @@ export function create(collectionName: string, mongoManager: utils.MongoManager,
     app.use(morgan(loggerFormat, { stream }));
     app.use(bodyParser.json());
     app.use(bodyParser.urlencoded({ extended: false }));
-    app.use("/api", api.create(collectionName, mongoManager));
+    app.use("/api", api.create(collectionName, mongoManager, baseOrdererUrl));
 
     // catch 404 and forward to error handler
     app.use((req, res, next) => {
