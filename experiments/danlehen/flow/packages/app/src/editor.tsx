@@ -1,14 +1,16 @@
 import * as React from "react";
 import { DataStore } from "@prague/app-datastore";
 import { FlowDocument } from "@chaincode/flow-document";
-import { Editor } from "@chaincode/flow-editor";
+import { VirtualizedView } from "@chaincode/flow-editor";
 import { Scheduler } from "@prague/flow-util";
 import * as style from "./index.css";
 import * as ReactDOM from "react-dom";
+import { IVirtualizedProps } from "@chaincode/flow-editor";
 
 interface IProps {
     docId: string;
     docUrl: string;
+    virtualize: boolean;
     cmds: { 
         insert: (element: JSX.Element) => void,
         insertText: (lines: string[]) => void
@@ -17,7 +19,8 @@ interface IProps {
 
 interface IState {
     doc?: FlowDocument;
-    editor?: Editor;
+    editor?: VirtualizedView;
+    editorProps?: IVirtualizedProps;
 }
 
 export class FlowEditor extends React.Component<IProps, IState> {
@@ -37,9 +40,10 @@ export class FlowEditor extends React.Component<IProps, IState> {
                 .open<FlowDocument>(docId, "danlehen", FlowDocument.type)
                 .then((doc) => {
                     // buildTestParagraph(doc);
-                    const editor = new Editor();
-                    editor.mount({ scheduler: new Scheduler(), doc, trackedPositions: [], start: 0 });
-                    this.setState({ doc, editor });
+                    const editor = new VirtualizedView();
+                    const editorProps: IVirtualizedProps = { virtualize: this.props.virtualize, scheduler: new Scheduler(), doc, trackedPositions: [], start: 0 };
+                    editor.mount(editorProps);
+                    this.setState({ doc, editor, editorProps });
                 });
         });
     }
@@ -49,6 +53,9 @@ export class FlowEditor extends React.Component<IProps, IState> {
     componentDidUpdate() {
         const editor = this.state.editor;
         if (editor) {
+            this.state.editorProps.virtualize = this.props.virtualize;
+            editor.update(this.state.editorProps);
+
             const parent = this.ref.current;
             if (parent.firstElementChild && parent.firstElementChild !== editor.root) {
                 parent.replaceChild(editor.root, parent.firstElementChild);
@@ -73,8 +80,6 @@ export class FlowEditor extends React.Component<IProps, IState> {
             ReactDOM.render(asAny, root);
             this.state.doc.insertHTML(position, root);   
         }
-
-        this.state.editor.invalidate();
     }
 
     insertText = (lines: string[]) => {
@@ -86,7 +91,5 @@ export class FlowEditor extends React.Component<IProps, IState> {
                 doc.insertParagraph(position);
             }
         }
-
-        this.state.editor.invalidate();
     }
 }

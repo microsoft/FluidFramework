@@ -3,7 +3,7 @@ import { Scheduler } from "@prague/flow-util";
 import { DocumentView, IDocumentProps } from "../document";
 import { View, IViewState } from "..";
 
-interface IEditorProps extends IDocumentProps { 
+export interface IEditorProps extends IDocumentProps { 
     scheduler: Scheduler;
 }
 
@@ -71,7 +71,7 @@ export class Editor extends View<IEditorProps, IEditorViewState> {
     }
 
     private get cursor()         { return this.state.cursor; }
-    private get doc()            { return this.state.props.doc; }
+    public get doc()            { return this.state.props.doc; }
     private get props()          { return this.state.props; }
     public  get cursorPosition() { return this.state.cursor.position; }
 

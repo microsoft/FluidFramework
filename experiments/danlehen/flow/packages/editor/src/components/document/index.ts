@@ -120,10 +120,9 @@ export class DocumentView extends View<IDocumentProps, IDocumentViewState> {
         });
     }
 
-    public get root()       { return this.state.root; }
-    public get slot()       { return this.state.slot; }
-    public get overlay()    { return this.state.overlay; }
-    public get eventsink()  { return this.state.eventsink; }
+    public  get root()       { return this.state.root; }
+    public  get overlay()    { return this.state.overlay; }
+    public  get eventsink()  { return this.state.eventsink; }
 
     protected updating(props: Readonly<IDocumentProps>, state: Readonly<IDocumentViewState>) {
         DocumentLayout.sync(props, state);
@@ -242,17 +241,17 @@ export class DocumentView extends View<IDocumentProps, IDocumentViewState> {
                     continue;
                 }
 
-                // Accept the new candidate if it is higher than the previous best, or if it's the same
-                // height and closer on the x-axis.
+                // Disqualify the new rect if its horizontal distance is greater than the best match
                 const dx = Math.max(rect.left - x, 0, x - rect.right);
-                if (rect.top < bestRect.top || dx < bestDx) {
-                    bestRect = rect;
-                    bestDx = dx;
-                    bestViewInfo = viewInfo;
-                    console.log(`    ==> Best candidate: ${bestViewInfo.view.root.id}: ${bestViewInfo.view.root.textContent}`);
-                } else {
-                    console.log(`        Rejected d^2: (${dx} > ${bestDx})`);
+                if (dx > bestDx) {
+                    console.log(`        Rejected dx (${dx} > ${bestDx})`);
+                    continue;
                 }
+
+                bestRect = rect;
+                bestDx = dx;
+                bestViewInfo = viewInfo;
+                console.log(`    ==> Best candidate: ${bestViewInfo.view.root.id}: ${bestViewInfo.view.root.textContent}`);
             }
         }
 

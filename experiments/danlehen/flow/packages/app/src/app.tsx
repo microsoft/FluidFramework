@@ -6,7 +6,9 @@ import * as style from "./index.css";
 import { ChaincodeDialog } from "./chaincodedialog";
 
 interface IProps { }
-interface IState { }
+interface IState { 
+    virtualize: boolean
+}
 
 export class App extends React.Component<IProps, IState> {
     private readonly cmds = { 
@@ -19,6 +21,8 @@ export class App extends React.Component<IProps, IState> {
     
     constructor(props: Readonly<IProps>) {
         super(props);
+
+        this.state = { virtualize: true };
 
         // Extract docId from query parameters
         const queryParams = window.location.search.substr(1).split('&');
@@ -42,7 +46,7 @@ export class App extends React.Component<IProps, IState> {
                     overflowItems={this.getOverlflowItems()}
                     farItems={this.getFarItems()} />
                 <div className={`${style.fill}`}>
-                    <FlowEditor cmds={this.cmds} docUrl="http://localhost:3000" docId={this.docId}></FlowEditor>
+                    <FlowEditor cmds={this.cmds} docUrl="http://localhost:3000" docId={this.docId} virtualize={this.state.virtualize}></FlowEditor>
                 </div>
                 <ChaincodeDialog ref={this.chaincodeDlg} addComponent={this.addComponent} />
             </div>
@@ -82,6 +86,14 @@ export class App extends React.Component<IProps, IState> {
                     items: this.insertables
                 }
             },
+            {
+                key: "virtualizeItem",
+                name: "Virtualize",
+                cacheKey: "myCacheKey", // changing this key will invalidate this items cache
+                canCheck: true,
+                checked: this.state.virtualize,
+                onClick: () => { this.setState({ virtualize: !this.state.virtualize }) }
+            }
         ];
     };
 

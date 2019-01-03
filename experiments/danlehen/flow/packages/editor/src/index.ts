@@ -1,5 +1,5 @@
 export { Editor } from "./components/editor";
-export { ViewportView, IViewportProps } from "./components/viewport";
+export { VirtualizedView, IVirtualizedProps } from "./components/virtualized";
 
 import { MapExtension } from "@prague/map";
 import { Component } from "@prague/app-component";
@@ -29,7 +29,12 @@ export class FlowEditor extends Component {
         }
     }
 
-    public static readonly type = `${require("../package.json").name}@latest`;
+    public static readonly type = "@chaincode/flow-editor@latest";
+
+    // The below works, but causes 'webpack --watch' to build in an infinite loop when
+    // build automatically publishes.
+    //
+    // public static readonly type = `${require("../package.json").name}@latest`;
 }
 
 // Chainloader bootstrap.
