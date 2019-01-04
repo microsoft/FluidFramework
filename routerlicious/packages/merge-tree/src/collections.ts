@@ -1024,10 +1024,11 @@ export class IntervalTree<T extends IInterval> implements IRBAugmentation<T, Aug
         }
     }
 
-    map(fn: (x:T)=>any) {
+    map(fn: (x:T)=>void) {
         let actions = <RBNodeActions<T, AugmentedIntervalNode>> {
             infix: (node) => {
-                return fn(node.key);
+                fn(node.key);
+                return true;
             },
             showStructure: true,
         };
