@@ -24,7 +24,7 @@ export class FlowEditor extends Component {
             const store = await DataStore.from("http://localhost:3000");
             const doc = await store.open<FlowDocument>(docId, "danlehen", FlowDocument.type);
             const editor = new Editor();
-            const root = editor.mount({ doc, scheduler: new Scheduler(), trackedPositions: [], start: 0 })
+            const root = editor.mount({ doc, scheduler: new Scheduler(), trackedPositions: [] });
             maybeDiv.appendChild(root);
         }
     }

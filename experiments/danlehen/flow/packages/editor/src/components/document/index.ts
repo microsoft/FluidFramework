@@ -12,6 +12,7 @@ import { IFlowViewComponent, IViewState, View } from "../";
 import { InclusionView } from "../inclusion";
 import { TextAccumulator } from "./textaccumulator";
 import * as styles from "./index.css";
+import { Paginator } from "./paginator";
 
 const template = new Template({
     tag: "span",
@@ -46,7 +47,7 @@ export interface ITrackedPosition {
 export interface IDocumentProps {
     doc: FlowDocument;
     trackedPositions: ITrackedPosition[];
-    start: number;
+    paginator?: Paginator;
 }
 
 /**
@@ -556,11 +557,14 @@ export class DocumentLayout {
 
     /** Runs state machine, starting with the paragraph at 'start'. */
     public static sync(props: IDocumentProps, state: IDocumentViewState) {
-        console.log(`Sync: [${props.start}..?)`);
+        const paginator = props.paginator;
+        const desiredStart = (paginator && paginator.startPosition) || 0;
+        let start = (paginator && paginator.startingBlockPosition) || 0;
+
+        console.log(`Sync(${desiredStart}): [${start}..?)`);
 
         const context = new LayoutContext(props, state, state.slot);
         
-        let start = props.start;
         do {
             // Ensure that we exit the outer do..while loop if there are no remaining segments.
             let nextStart = -1;

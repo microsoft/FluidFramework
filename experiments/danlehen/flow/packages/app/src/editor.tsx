@@ -41,7 +41,7 @@ export class FlowEditor extends React.Component<IProps, IState> {
                 .then((doc) => {
                     // buildTestParagraph(doc);
                     const editor = new VirtualizedView();
-                    const editorProps: IVirtualizedProps = { virtualize: this.props.virtualize, scheduler: new Scheduler(), doc, trackedPositions: [], start: 0 };
+                    const editorProps: IVirtualizedProps = { virtualize: this.props.virtualize, scheduler: new Scheduler(), doc, trackedPositions: [] };
                     editor.mount(editorProps);
                     this.setState({ doc, editor, editorProps });
                 });

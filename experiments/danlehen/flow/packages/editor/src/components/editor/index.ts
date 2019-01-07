@@ -59,6 +59,8 @@ export class Editor extends View<IEditorProps, IEditorViewState> {
             state = this.mounting(props);
         }
 
+        state.docView.update(props);
+
         return state;
     }
 
