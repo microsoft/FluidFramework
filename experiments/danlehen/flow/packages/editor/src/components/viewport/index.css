@@ -1,24 +1,46 @@
 .viewport {
     position: relative;
-    top: 0px;
-    left: 0px;
-    right: 0px;
-    bottom: 0px;
+    background: pink;
+    height: 100%;
+    
     display: grid;
     justify-content: stretch;
-    grid-template-columns: 1fr auto;
+    grid-template-columns: 1fr;
     grid-template-rows: 100%;
     grid-template-areas:
-      "main scrollbar";
-      width: 100%;
-      
-    /* The viewport is 100% height and clips the slot.  The slot's height is unconstrained so we can scroll it. */
+      "main";
+  
+    width: 100%;
+    
+    /* Clip slot contents to bounds of viewport. */
     overflow-y: hidden;
-    height: 100%;
 }
   
-.viewportSlot {
+.slot {
+    /* Position relative so script can use 'style.top' to translate in Y. */
+    position: relative;
+    background: #EEE;
+    
+    /* The additional +15px right padding is to compensate for overlaying the 15px scrollbar. */
+    padding: 15px 30px 0px 15px;
+
     width: 100%;
-    overflow: hidden;
-    grid-area: main;
+}
+  
+.scrollPane {
+    /* Scrollbar should overlap right 15px of 'slot'.  We need to force the
+       15px width due to Chrome's auto-hide behavior when using touchpad. */
+    position: absolute;
+    right: 0px;
+    height: 100%;
+    width: 15px;
+    background: rgba(128, 128, 128, 0.5);
+    
+    /* Show vertical scrollbar. */
+    overflow-y: scroll;
+    overflow-x: hidden;
+}
+  
+.space {
+    height: 8192px;
 }

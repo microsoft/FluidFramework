@@ -65,8 +65,7 @@ export class VirtualizedView extends View<IVirtualizedProps, IVirtualizedViewSta
         return {
             slot: state.docView.root,
             onScroll: this.onScroll,
-            yMin: 0,
-            yMax: 8192
+            sizeY: 8192
         }
     }
 
