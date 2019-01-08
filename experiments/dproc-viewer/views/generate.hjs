@@ -1,0 +1,18 @@
+{{<layout}}
+    {{$content}}
+        <div id="content"></div>
+    {{/content}}
+
+    {{$scripts}}
+        <script src="/public{{#hfurl}}/scripts/dist/main.bundle.js{{/hfurl}}"></script>
+        <script>
+            var npm = "{{ npm }}";
+            var orderer = "{{ orderer }}";
+            var storage = "{{ storage }}";
+            var chaincode = "{{ chaincode }}";
+            var token = "{{ token }}";
+
+            main.createAndNavigate(orderer, storage, npm, token, chaincode);
+        </script>
+    {{/scripts}}
+{{/layout}}

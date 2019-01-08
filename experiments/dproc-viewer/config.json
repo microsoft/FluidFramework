@@ -1,0 +1,30 @@
+{
+    "orderer": "https://alfred.wu2-ppe.prague.office-int.com",
+    "storage": "https://historian.wu2-ppe.prague.office-int.com",
+    "tenantId": "heuristic-curie",
+    "secret": "951d090ed6e327036da7ab1d66db5faf",
+    "login": {
+        "callbackURL": "http://localhost:3000/auth/callback",
+        "clientId": "dbefc4f6-7de2-456d-a0cd-b81ced6000be",
+        "secret": "zfotPGIY262)*uvcEHZ58={"
+    },
+    "clients": [
+        { "secret": "dogs" }
+    ],
+    "logger": {
+        "colorize": true,
+        "morganFormat": "dev",
+        "json": false,
+        "level": "info",
+        "timestamp": true,
+        "label": "winston"
+    },
+    "error": {
+        "track": false
+    },
+    "npm": {
+        "url": "https://pragueauspkn-3873244262.azureedge.net",
+        "username": "prague",
+        "password": "bohemia"
+    }
+}
