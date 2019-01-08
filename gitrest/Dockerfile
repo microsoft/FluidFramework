@@ -1,4 +1,4 @@
-FROM node:8.12.0-slim
+FROM node:8.15.0-slim
 
 # Add Tini
 ENV TINI_VERSION v0.18.0

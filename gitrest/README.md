@@ -20,7 +20,7 @@ You can build the container by running.
 
 And then mount it for development by running.
 
-`docker run -it -v "$(pwd):/home/node/server" -p 3000:3000 gitrest /bin/bash`
+`docker run -it -v "$(pwd):/home/node/server" -p 3000:3000 -e NPM_TOKEN=${NPM_TOKEN} gitrest /bin/bash`
 
 If you want to debug and test
 
