@@ -449,6 +449,7 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
             }
         }
     }
+
     nodePut(node: RBNode<TKey, TData>, key: TKey, data: TData, conflict?: Base.ConflictAction<TKey, TData>) {
         if (!node) {
             return this.makeNode(key, data, RBColor.RED, 1);
@@ -463,7 +464,15 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
             }
             else {
                 if (conflict) {
-                    node.data = conflict(key, node.data, data);
+                    const kd = conflict(key, node.key, data, node.data);
+                    if (kd.key) {
+                        node.key = kd.key;
+                    }
+                    if (kd.data) {
+                        node.data = kd.data;
+                    } else {
+                        node.data = data;
+                    }
                 }
                 else {
                     node.data = data;
@@ -616,7 +625,7 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
         }
     }
 
-    nodeFloor(node: RBNode<TKey, TData>, key: TKey): RBNode<TKey,TData> {
+    nodeFloor(node: RBNode<TKey, TData>, key: TKey): RBNode<TKey, TData> {
         if (node) {
             let cmp = this.compareKeys(key, node.key);
             if (cmp == 0) {
@@ -643,7 +652,7 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
         }
     }
 
-    nodeCeil(node: RBNode<TKey, TData>, key: TKey): RBNode<TKey,TData> {
+    nodeCeil(node: RBNode<TKey, TData>, key: TKey): RBNode<TKey, TData> {
         if (node) {
             let cmp = this.compareKeys(key, node.key);
             if (cmp == 0) {
@@ -985,6 +994,7 @@ export class IntegerRangeTree implements IRBAugmentation<Base.IIntegerRange, Aug
     }
 }
 
+
 export interface IInterval {
     clone(): IInterval;
     compare(b: IInterval): number;
@@ -996,6 +1006,7 @@ export function intervalComparer(a: IInterval, b: IInterval) {
     return a.compare(b);
 }
 export type IntervalNode<T extends IInterval> = RBNode<T, AugmentedIntervalNode>;
+export type IntervalConflictResolver<TInterval> = (a: TInterval, b: TInterval) => TInterval;
 
 export class IntervalTree<T extends IInterval> implements IRBAugmentation<T, AugmentedIntervalNode>,
     IRBMatcher<T, AugmentedIntervalNode> {
@@ -1013,19 +1024,25 @@ export class IntervalTree<T extends IInterval> implements IRBAugmentation<T, Aug
         this.intervals.remove(x);
     }
 
-    put(x: T) {
+    put(x: T, conflict?: IntervalConflictResolver<T>) {
+        const rbConflict = (key: T, currentKey: T) => {
+            const ival = conflict(key, currentKey);
+            return {
+                key: ival,
+            };
+        }
         if (this.timePut) {
             let clockStart = MergeTree.clock();
-            this.intervals.put(x, { minmax: x.clone() });
+            this.intervals.put(x, { minmax: x.clone() }, rbConflict);
             this.putTime += MergeTree.elapsedMicroseconds(clockStart);
             this.putCount++;
         } else {
-            this.intervals.put(x, { minmax: x.clone() });
+            this.intervals.put(x, { minmax: x.clone() }, rbConflict);
         }
     }
 
-    map(fn: (x:T)=>void) {
-        let actions = <RBNodeActions<T, AugmentedIntervalNode>> {
+    map(fn: (x: T) => void) {
+        let actions = <RBNodeActions<T, AugmentedIntervalNode>>{
             infix: (node) => {
                 fn(node.key);
                 return true;

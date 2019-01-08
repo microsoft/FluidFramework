@@ -5,13 +5,18 @@ export interface Property<TKey, TData> {
     data: TData;
 }
 
+
+export interface QProperty<TKey, TData> {
+    key?: TKey;
+    data?: TData;
+}
+
 export interface PropertyAction<TKey, TData> {
     <TAccum>(p: Property<TKey, TData>, accum?: TAccum): boolean;
 }
 
-export interface ConflictAction<TKey, TData> {
-    (key: TKey, current: TData, proposed: TData): TData;
-}
+export type ConflictAction<TKey, TData> =
+    (key: TKey, currentKey: TKey, data: TData, currentData: TData) => QProperty<TKey, TData>;
 
 export interface Dictionary<TKey, TData> {
     get(key: TKey): Property<TKey, TData>;

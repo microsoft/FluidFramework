@@ -26,7 +26,7 @@ export interface IIntervalHelpers<TInterval extends ISerializableInterval> {
 
 export class Interval implements ISerializableInterval {
     public properties: MergeTree.PropertySet;
-
+    public auxProps: MergeTree.PropertySet[];
     constructor(
         public start: number,
         public end: number,
@@ -34,6 +34,17 @@ export class Interval implements ISerializableInterval {
         if (props) {
             this.addProperties(props);
         }
+    }
+
+    public getAdditionalPropertySets() {
+        return this.auxProps;
+    }
+
+    public addPropertySet(props: MergeTree.PropertySet) {
+        if (this.auxProps===undefined) {
+            this.auxProps=[];
+        }
+        this.auxProps.push(props);
     }
 
     public serialize(client: MergeTree.Client) {
@@ -77,6 +88,10 @@ export class Interval implements ISerializableInterval {
     public union(b: Interval) {
         return new Interval(Math.min(this.start, b.start),
             Math.max(this.end, b.end), this.properties);
+    }
+
+    public getProperties() {
+        return this.properties;
     }
 
     public addProperties(newProps: MergeTree.PropertySet, op?: MergeTree.ICombiningOp) {
@@ -227,14 +242,48 @@ function createSharedStringInterval(
     }
 }
 
-class LocalIntervalCollection<TInterval extends ISerializableInterval> {
+export function defaultIntervalConflictResolver(a: Interval, b: Interval) {
+    a.addPropertySet(b.properties);
+    return a;
+}
+
+export function createIntervalIndex(conflict?: MergeTree.IntervalConflictResolver<Interval>) {
+    const helpers: IIntervalHelpers<Interval> = {
+        compareEnds: compareIntervalEnds,
+        create: createInterval,
+    };
+    const lc = new LocalIntervalCollection<Interval>(undefined, "", helpers);
+    if (conflict) {
+        lc.addConflictResolver(conflict);
+    } else {
+        lc.addConflictResolver(defaultIntervalConflictResolver);
+    }
+    return lc;
+}
+
+export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
     private intervalTree = new MergeTree.IntervalTree<TInterval>();
     private endIntervalTree: MergeTree.RedBlackTree<TInterval, TInterval>;
+    private conflictResolver: MergeTree.IntervalConflictResolver<TInterval>;
+    private endConflictResolver: MergeTree.ConflictAction<TInterval, TInterval>;
 
     constructor(private client: MergeTree.Client, private label: string,
         private helpers: IIntervalHelpers<TInterval>) {
+
         this.endIntervalTree =
             new MergeTree.RedBlackTree<TInterval, TInterval>(helpers.compareEnds);
+    }
+
+    public addConflictResolver(conflictResolver: MergeTree.IntervalConflictResolver<TInterval>) {
+        this.conflictResolver = conflictResolver;
+        this.endConflictResolver =
+            (key: TInterval, currentKey: TInterval) => {
+                const ival = this.conflictResolver(key, currentKey);
+                return {
+                    data: ival,
+                    key: ival,
+                };
+            };
     }
 
     public map(fn: (interval: TInterval) => void) {
@@ -270,6 +319,13 @@ class LocalIntervalCollection<TInterval extends ISerializableInterval> {
         }
     }
 
+    public removeInterval(startPosition: number, endPosition: number) {
+        const transientInterval = this.helpers.create(
+            "transient", startPosition, endPosition, this.client, MergeTree.IntervalType.Transient);
+        this.intervalTree.remove(transientInterval);
+        this.endIntervalTree.remove(transientInterval);
+    }
+
     public createInterval(start: number, end: number, intervalType: MergeTree.IntervalType) {
         return this.helpers.create(this.label, start, end, this.client, intervalType);
     }
@@ -287,8 +343,8 @@ class LocalIntervalCollection<TInterval extends ISerializableInterval> {
             if (this.label && (this.label.length > 0)) {
                 interval.properties[MergeTree.reservedRangeLabelsKey] = [this.label];
             }
-            this.intervalTree.put(interval);
-            this.endIntervalTree.put(interval, interval);
+            this.intervalTree.put(interval, this.conflictResolver);
+            this.endIntervalTree.put(interval, interval, this.endConflictResolver);
         }
         return interval;
     }
@@ -299,7 +355,6 @@ class LocalIntervalCollection<TInterval extends ISerializableInterval> {
         // tslint:disable-next-line
         return intervals.map((interval) => interval.serialize(client));
     }
-
 }
 
 function compareSharedStringIntervalEnds(a: SharedStringInterval, b: SharedStringInterval): number {

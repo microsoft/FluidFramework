@@ -8,7 +8,7 @@ import * as path from "path";
 import * as random from "random-js";
 import * as fs from "fs";
 import * as Xmldoc from "xmldoc";
-import { SharedStringInterval } from "./intervalCollection";
+import * as SharedString from "./intervalCollection";
 import { TestServer } from "@prague/merge-tree/dist/test/testServer"
 
 function clock() {
@@ -72,7 +72,7 @@ export function propertyCopy() {
 function makeBookmarks(client: MergeTree.Client, bookmarkCount: number) {
     let mt = random.engines.mt19937();
     mt.seedWithArray([0xdeadbeef, 0xfeedbed]);
-    let bookmarks = <SharedStringInterval[]>[];
+    let bookmarks = <SharedString.SharedStringInterval[]>[];
     let refseq = client.getCurrentSeq();
     let clientId = client.getClientId();
     let len = client.mergeTree.getLength(MergeTree.UniversalSequenceNumber, MergeTree.NonCollabClient);
@@ -105,7 +105,7 @@ function makeBookmarks(client: MergeTree.Client, bookmarkCount: number) {
             lref2.addProperties({ [MergeTree.reservedRangeLabelsKey]: ["bookmark"] });
             client.mergeTree.addLocalReference(lref1);
             client.mergeTree.addLocalReference(lref2);
-            bookmarks.push(new SharedStringInterval(lref1, lref2, MergeTree.IntervalType.Simple));
+            bookmarks.push(new SharedString.SharedStringInterval(lref1, lref2, MergeTree.IntervalType.Simple));
         } else {
             i--;
         }
@@ -212,8 +212,8 @@ export function TestPack(verbose = true) {
         let extractSnap = false;
         let includeMarkers = false;
         let measureBookmarks = true;
-        let bookmarks: SharedStringInterval[];
-        let bookmarkRangeTree = new  MergeTree.IntervalTree<SharedStringInterval>();
+        let bookmarks: SharedString.SharedStringInterval[];
+        let bookmarkRangeTree = new MergeTree.IntervalTree<SharedString.SharedStringInterval>();
         let testOrdinals = true;
         let ordErrors = 0;
         let ordSuccess = 0;
@@ -552,8 +552,8 @@ export function TestPack(verbose = true) {
                     let len = server.mergeTree.getLength(MergeTree.UniversalSequenceNumber, server.getClientId());
                     let checkPos = <number[]>[];
                     let checkRange = <number[][]>[];
-                    let checkPosRanges = <SharedStringInterval[]>[];
-                    let checkRangeRanges = <SharedStringInterval[]>[];
+                    let checkPosRanges = <SharedString.SharedStringInterval[]>[];
+                    let checkRangeRanges = <SharedString.SharedStringInterval[]>[];
                     for (let i = 0; i < posChecksPerRound; i++) {
                         checkPos[i] = random.integer(0, len - 2)(mt);
                         let segoff1 = server.mergeTree.getContainingSegment(checkPos[i], MergeTree.UniversalSequenceNumber,
@@ -563,7 +563,7 @@ export function TestPack(verbose = true) {
                         if (segoff1 && segoff1.segment && segoff2 && segoff2.segment) {
                             let lrefPos1 = new MergeTree.LocalReference(<MergeTree.BaseSegment>segoff1.segment, segoff1.offset);
                             let lrefPos2 = new MergeTree.LocalReference(<MergeTree.BaseSegment>segoff2.segment, segoff2.offset);
-                            checkPosRanges[i] = new SharedStringInterval(lrefPos1, lrefPos2, MergeTree.IntervalType.Simple);
+                            checkPosRanges[i] = new SharedString.SharedStringInterval(lrefPos1, lrefPos2, MergeTree.IntervalType.Simple);
                         } else {
                             i--;
                         }
@@ -583,7 +583,7 @@ export function TestPack(verbose = true) {
                         if (segoff1 && segoff1.segment && segoff2 && segoff2.segment) {
                             let lrefPos1 = new MergeTree.LocalReference(<MergeTree.BaseSegment>segoff1.segment, segoff1.offset);
                             let lrefPos2 = new MergeTree.LocalReference(<MergeTree.BaseSegment>segoff2.segment, segoff2.offset);
-                            checkRangeRanges[i] = new SharedStringInterval(lrefPos1, lrefPos2, MergeTree.IntervalType.Simple);
+                            checkRangeRanges[i] = new SharedString.SharedStringInterval(lrefPos1, lrefPos2, MergeTree.IntervalType.Simple);
                         } else {
                             i--;
                         }
@@ -1956,6 +1956,41 @@ function testRangeTree() {
     }
 }
 
+export function intervalTest() {
+    let mt = random.engines.mt19937();
+    mt.seedWithArray([0xdeadbeef, 0xfeedbed]);
+    const imin = 0;
+    const imax = 10000000;
+    const intCount = 50000;
+    const arr = [] as SharedString.Interval[];
+    let distribution = random.integer(imin, imax);
+    function randInt() {
+        return distribution(mt);
+    }
+    const intervalIndex = SharedString.createIntervalIndex();
+
+    for (let i = 0; i < intCount; i++) {
+        let a = randInt();
+        let b = randInt();
+        while (a === b) {
+            b = randInt();
+        }
+        if (a > b) {
+            const temp = a;
+            a = b;
+            b = temp;
+        }
+        arr.push(intervalIndex.addInterval(a, b, MergeTree.IntervalType.Simple, { id: i }));
+    }
+    let dup=0;
+    for (let i = 0; i < intCount; i++) {
+        if (arr[i].getAdditionalPropertySets()) {
+            dup++;
+        }
+    }
+    console.log(`dup: ${dup}`);
+}
+
 export interface ICmd {
     description?: string;
     iconURL?: string;
@@ -1997,13 +2032,18 @@ let testPropCopy = false;
 let overlayTree = false;
 let docTree = false;
 let chktst = false;
-let clientServerTest = true;
+let clientServerTest = false;
 let tstTest = false;
 let firstTest = false;
+let ivalTest = true;
 
 if (firstTest) {
     let testPack = TestPack(true);
     testPack.firstTest();
+}
+
+if (ivalTest) {
+    intervalTest();
 }
 
 if (tstTest) {
