@@ -1,6 +1,5 @@
 {{<layout}}
     {{$styles}}
-        <script src="/public{{#hfurl}}/scripts/dist/main.bundle.js{{/hfurl}}"></script>
         <link href="https://ajax.aspnetcdn.com/ajax/bootstrap/4.1.1/css/bootstrap.css" rel="stylesheet" />
         <style>
             .row.chaincode {

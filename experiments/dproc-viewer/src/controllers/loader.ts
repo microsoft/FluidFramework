@@ -7,6 +7,7 @@ import {
     TokenProvider,
     TokenService,
 } from "@prague/socket-storage";
+import Axios from "axios";
 
 export async function proposeChaincode(document: loader.Document, chaincode: string) {
     if (!document.connected) {
@@ -127,4 +128,38 @@ export async function createAndNavigate(
             window.top.location.href = `/${encodeURIComponent(claims.documentId)}`;
         },
         3000);
+}
+
+export function meta() {
+    const form = document.getElementById("process-form") as HTMLFormElement;
+
+    form.addEventListener("submit", (event) => {
+        event.preventDefault();
+
+        const fetchUrl = form.process_url.value;
+        Axios.get(fetchUrl, { responseType: "text" }).then((result) => {
+            const template = document.createElement("template");
+            template.innerHTML = result.data;
+            const content = template.content;
+
+            const output = document.getElementById("output");
+            output.innerHTML = "";
+            content.querySelectorAll("meta").forEach((value) => {
+                const property = value.getAttribute("property");
+                const metaContent = value.content;
+
+                if (property && property.indexOf("prague:") === 0) {
+                    const appendDiv = document.createElement("div");
+                    appendDiv.innerHTML =
+                        `<div class="row">
+                            <div class="col">${property}</div>
+                            <div class="col">${metaContent}</div>
+                        </div>`;
+                    output.appendChild(appendDiv);
+                }
+            });
+        });
+    });
+
+    return;
 }

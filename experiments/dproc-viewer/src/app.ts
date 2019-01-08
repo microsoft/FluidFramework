@@ -156,6 +156,17 @@ export function create(config: Provider) {
             });
     });
 
+    app.get("/meta", ensureLoggedIn(), (request, response) => {
+        response.render(
+            "meta",
+            {
+                partials: {
+                    layout: "layout",
+                },
+                title: "Meta",
+            });
+    });
+
     app.post("/create", ensureLoggedIn(), (request, response) => {
         const documentId = moniker.choose();
         const token = generateToken(documentId, tenantId, tenantSecret, request.user.name);

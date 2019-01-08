@@ -1,0 +1,28 @@
+{{<layout}}
+    {{$styles}}
+        <link href="https://ajax.aspnetcdn.com/ajax/bootstrap/4.1.1/css/bootstrap.css" rel="stylesheet" />
+    {{/styles}}
+
+    {{$content}}
+        <div class="container">
+            <h1>Process metadata extractor</h1>
+
+            <form id="process-form">
+                <div class="form-group">
+                    <label for="process-url">URL</label>
+                    <input type="url" class="form-control" name="process_url" id="process-url" placeholder="Enter process URL">
+                </div>
+                <button type="submit" class="btn btn-primary">Extract</button>
+            </form>
+
+            <div id="output"></div>
+        </div>
+    {{/content}}
+
+    {{$scripts}}
+        <script src="/public{{#hfurl}}/scripts/dist/main.bundle.js{{/hfurl}}"></script>
+        <script>
+            main.meta();
+        </script>
+    {{/scripts}}
+{{/layout}}
