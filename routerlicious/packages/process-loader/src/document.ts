@@ -59,9 +59,9 @@ class RuntimeStorageService implements IDocumentStorageService {
     constructor(private storageService: IDocumentStorageService, private blobs: Map<string, string>) {
     }
 
-    /* tslint:disable:promise-function-async */
-    public getSnapshotTree(version: ICommit): Promise<ISnapshotTree> {
-        return this.storageService.getSnapshotTree(version);
+    // TODO Will a subcomponent ever need this? Or we can probably restrict the ref to itself
+    public getSnapshotTree(version: ICommit, ref: string): Promise<ISnapshotTree> {
+        return this.storageService.getSnapshotTree(version, ref);
     }
 
     public getVersions(sha: string, count: number): Promise<ICommit[]> {
@@ -80,8 +80,9 @@ class RuntimeStorageService implements IDocumentStorageService {
         return this.storageService.read(sha);
     }
 
-    public write(root: ITree, parents: string[], message: string): Promise<ICommit> {
-        return this.storageService.write(root, parents, message);
+    // TODO the write as well potentially doesn't seem necessary
+    public write(root: ITree, parents: string[], message: string, ref: string): Promise<ICommit> {
+        return this.storageService.write(root, parents, message, ref);
     }
 
     public createBlob(file: Buffer): Promise<ICreateBlobResponse> {
@@ -241,40 +242,85 @@ export class Document extends EventEmitter {
             return;
         }
 
-        // Grab the snapshot of the current state
-        const snapshotSequenceNumber = this._deltaManager.referenceSequenceNumber;
-        const root = this.snapshotCore();
+        // NOTE I believe I did the explicit then here so that the snapshot held the turn until it got the data
+        // it needed
 
+        // Generate snapshots for each channel
+        const channelEntries = this._runtime.snapshotInternal();
+
+        // Snapshots base document state
+        const root = this.snapshotBase();
+
+        const snapshotSequenceNumber = this._deltaManager.referenceSequenceNumber;
         const deltaDetails =
             `${this._deltaManager.referenceSequenceNumber}:${this._deltaManager.minimumSequenceNumber}`;
         const message = `Commit @${deltaDetails} ${tagMessage}`;
 
-        return this.storageService.getVersions(this.id, 1).then(async (lastVersion) => {
-            // Pull the sequence number stored with the previous version
-            let sequenceNumber = 0;
-            if (lastVersion.length > 0) {
-                const attributesAsString = await this.storageService.getContent(lastVersion[0], ".attributes");
-                const decoded = Buffer.from(attributesAsString, "base64").toString();
-                const attributes = JSON.parse(decoded) as IDocumentAttributes;
-                sequenceNumber = attributes.sequenceNumber;
-            }
+        // Pull in the prior version and snapshot tree to store against
+        const lastVersion = await this.storageService.getVersions(this.id, 1);
 
-            // Retrieve all deltas from sequenceNumber to snapshotSequenceNumber. Range is exclusive so we increment
-            // the snapshotSequenceNumber by 1 to include it.
-            const deltas = await this._deltaManager.getDeltas(sequenceNumber, snapshotSequenceNumber + 1);
-            const parents = lastVersion.length > 0 ? [lastVersion[0].sha] : [];
+        const tree = lastVersion.length > 0
+            ? await this.storageService.getSnapshotTree(lastVersion[0], "")
+            : { blobs: {}, commits: {}, trees: {} };
+
+        const channelCommitsP = new Array<Promise<{ id: string, commit: ICommit }>>();
+        for (const [channelId, channelSnapshot] of channelEntries) {
+            const parent = channelId in tree.commits ? [tree.commits[channelId]] : [];
+            const channelCommitP = this.storageService.write(channelSnapshot, parent, "", channelId)
+                .then((commit) => ({ id: channelId, commit }));
+            channelCommitsP.push(channelCommitP);
+        }
+
+        // Pull the sequence number stored with the previous version
+        let sequenceNumber = 0;
+        if (lastVersion.length > 0) {
+            const attributesAsString = await this.storageService.getContent(lastVersion[0], ".attributes");
+            const decoded = Buffer.from(attributesAsString, "base64").toString();
+            const attributes = JSON.parse(decoded) as IDocumentAttributes;
+            sequenceNumber = attributes.sequenceNumber;
+        }
+
+        // Retrieve all deltas from sequenceNumber to snapshotSequenceNumber. Range is exclusive so we increment
+        // the snapshotSequenceNumber by 1 to include it.
+        const deltas = await this._deltaManager.getDeltas(sequenceNumber, snapshotSequenceNumber + 1);
+        const parents = lastVersion.length > 0 ? [lastVersion[0].sha] : [];
+        root.entries.push({
+            mode: FileMode.File,
+            path: "deltas",
+            type: TreeEntry[TreeEntry.Blob],
+            value: {
+                contents: JSON.stringify(deltas),
+                encoding: "utf-8",
+            },
+        });
+
+        const channelCommits = await Promise.all(channelCommitsP);
+        let gitModules = "";
+        for (const channelCommit of channelCommits) {
             root.entries.push({
-                mode: FileMode.File,
-                path: "deltas",
-                type: TreeEntry[TreeEntry.Blob],
+                mode: FileMode.Commit,
+                path: channelCommit.id,
+                type: TreeEntry[TreeEntry.Commit],
                 value: {
-                    contents: JSON.stringify(deltas),
+                    contents: channelCommit.commit.sha,
                     encoding: "utf-8",
                 },
             });
+            // tslint:disable-next-line:max-line-length
+            gitModules += `[submodule "${channelCommit.id}"]\n\tpath = ${channelCommit.id}\n\turl = ssh://git@localhost:3022/home/git/prague/test\n\n`;
+        }
 
-            await this.storageService.write(root, parents, message);
+        root.entries.push({
+            mode: FileMode.File,
+            path: ".gitmodules",
+            type: TreeEntry[TreeEntry.Blob],
+            value: {
+                contents: gitModules,
+                encoding: "utf-8",
+            },
         });
+
+        await this.storageService.write(root, parents, message, "");
     }
 
     private async load(specifiedVersion: ICommit, connect: boolean): Promise<void> {
@@ -291,7 +337,7 @@ export class Document extends EventEmitter {
 
         // Get the snapshot tree
         const treeP = Promise.all([storageP, versionP]).then(
-            ([storage, version]) => version ? storage.getSnapshotTree(version) : null);
+            ([storage, version]) => version ? storage.getSnapshotTree(version, "") : null);
 
         const attributesP = Promise.all([storageP, treeP]).then<IDocumentAttributes>(
             ([storage, tree]) => {
@@ -364,6 +410,8 @@ export class Document extends EventEmitter {
                     this._parentBranch = details.parentBranch;
                 }
 
+                // tree.commits <-- These are the true components. Need to pull these in and pass to runtime
+
                 // Instantiate channels from chaincode and stored data
                 const runtimeStorage = new RuntimeStorageService(this.storageService, new Map<string, string>());
                 const hostPlatform = await this.platform.create();
@@ -417,7 +465,7 @@ export class Document extends EventEmitter {
             });
     }
 
-    private snapshotCore(): ITree {
+    private snapshotBase(): ITree {
         const entries: ITreeEntry[] = [];
 
         // Craft the .messages file for the document
@@ -462,9 +510,6 @@ export class Document extends EventEmitter {
                 encoding: "utf-8",
             },
         });
-
-        const channelEntries = this._runtime.snapshotInternal();
-        entries.push(...channelEntries);
 
         // Save attributes for the document
         const documentAttributes: IDocumentAttributes = {
@@ -620,8 +665,10 @@ export class Document extends EventEmitter {
             return;
         }
 
-        const extraBlobs = new Map<string, string>();
         const snapshot = this._runtime.stop();
+
+        // Need to rip through snapshot and use that to populate extraBlobs
+        const extraBlobs = new Map<string, string>();
         const flattened = flatten(snapshot, extraBlobs);
         const snapshotTree = buildHierarchy(flattened);
         const runtimeStorage = new RuntimeStorageService(this.storageService, extraBlobs);
@@ -646,7 +693,7 @@ export class Document extends EventEmitter {
             this.quorum,
             runtimeStorage,
             this.connectionState,
-            snapshotTree.trees,
+            snapshotTree.trees,     // I think this becomes snapshot
             this.id,
             this._deltaManager.minimumSequenceNumber,
             (type, contents) => this.submitMessage(type, contents),

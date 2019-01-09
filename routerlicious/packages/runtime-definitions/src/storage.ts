@@ -55,6 +55,7 @@ export interface IObjectAttributes {
  */
 export enum TreeEntry {
     Blob,
+    Commit,
     Tree,
 }
 
@@ -119,6 +120,7 @@ export interface IDeltaStorageService {
 
 export interface ISnapshotTree {
     blobs: { [path: string]: string };
+    commits: { [path: string]: string };
     trees: { [path: string]: ISnapshotTree };
 }
 
@@ -141,11 +143,10 @@ export interface IDistributedObject {
  * Interface to provide access to snapshots saved for a collaborative object
  */
 export interface IDocumentStorageService {
-
     /**
      * Returns the snapshot tree.
      */
-    getSnapshotTree(version: resources.ICommit): Promise<ISnapshotTree>;
+    getSnapshotTree(version: resources.ICommit, ref: string): Promise<ISnapshotTree>;
 
     /**
      * Retrieves all versions of the document starting at the specified sha - or null if from the head
@@ -165,7 +166,7 @@ export interface IDocumentStorageService {
     /**
      * Writes to the object with the given ID
      */
-    write(root: ITree, parents: string[], message: string): Promise<resources.ICommit>;
+    write(root: ITree, parents: string[], message: string, ref: string): Promise<resources.ICommit>;
 
     /**
      * Creates a blob out of the given buffer

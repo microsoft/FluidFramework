@@ -18,7 +18,7 @@ import {
     ISequencedDocumentMessage,
     ISequencedObjectMessage,
     ISnapshotTree,
-    ITreeEntry,
+    ITree,
     IUser,
     MessageType,
     TreeEntry,
@@ -405,7 +405,7 @@ export class Runtime extends EventEmitter implements IRuntime {
         return this.blobManager.getBlobMetadata();
     }
 
-    public stop(): ITreeEntry[] {
+    public stop(): Map<string, ITree> {
         this.verifyNotClosed();
 
         this.closed = true;
@@ -425,8 +425,8 @@ export class Runtime extends EventEmitter implements IRuntime {
         }
     }
 
-    public snapshotInternal(): ITreeEntry[] {
-        const entries = new Array<ITreeEntry>();
+    public snapshotInternal(): Map<string, ITree> {
+        const entries = new Map<string, ITree>();
 
         // Craft the .attributes file for each distributed object
         for (const [objectId, object] of this.channels) {
@@ -451,12 +451,7 @@ export class Runtime extends EventEmitter implements IRuntime {
                 });
 
                 // And then store the tree
-                entries.push({
-                    mode: FileMode.Directory,
-                    path: objectId,
-                    type: TreeEntry[TreeEntry.Tree],
-                    value: snapshot,
-                });
+                entries.set(objectId, snapshot);
             }
         }
 
