@@ -73,7 +73,7 @@ export class Editor extends View<IEditorProps, IEditorViewState> {
     }
 
     private get cursor()         { return this.state.cursor; }
-    public get doc()            { return this.state.props.doc; }
+    public  get doc()            { return this.state.props.doc; }
     private get props()          { return this.state.props; }
     public  get cursorPosition() { return this.state.cursor.position; }
 

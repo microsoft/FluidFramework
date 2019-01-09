@@ -205,8 +205,9 @@ export class FlowDocument extends Component {
     }
    
     public findParagraphStart(position: number) {
+        position = Math.min(position, this.length - 1);
         const maybePosAndTile = this.findTile(position, DocSegmentKind.Paragraph);
-        return maybePosAndTile && maybePosAndTile.pos;
+        return (maybePosAndTile && maybePosAndTile.pos) || 0;
     }
 
     public visitRange(callback: LeafAction, startPosition?: number, endPosition?: number) {

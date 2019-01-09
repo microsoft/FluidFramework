@@ -14,16 +14,42 @@
     
     /* Clip slot contents to bounds of viewport. */
     overflow-y: hidden;
+
+    --scroll-bar-width: 15px;
 }
-  
+
+.contentPadding {
+    touch-action: none;
+    padding: 15px;
+    width: 100%;
+}
+
+.contentPane {
+    /* Additional right padding is to compensate for overlaying the scrollPane.
+       along the right edge of the content. */
+    padding-right: var(--scroll-bar-width);
+    margin: 0px;
+    width: 100%;
+}
+
+.slotBorderPosition {
+    position: relative;
+}
+
+.slotBorder {
+    position: absolute;
+    pointer-events: none;
+    top: 0px;
+    bottom: 0px;
+    left: 0px;
+    right: 0px;
+    border: 1px solid black;
+}
+
 .slot {
     /* Position relative so script can use 'style.top' to translate in Y. */
     position: relative;
     background: #EEE;
-    
-    /* The additional +15px right padding is to compensate for overlaying the 15px scrollbar. */
-    padding: 15px 30px 0px 15px;
-
     width: 100%;
 }
   
@@ -33,7 +59,7 @@
     position: absolute;
     right: 0px;
     height: 100%;
-    width: 15px;
+    width: var(--scroll-bar-width);
     background: rgba(128, 128, 128, 0.5);
     
     /* Show vertical scrollbar. */

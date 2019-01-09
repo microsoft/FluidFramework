@@ -15,6 +15,7 @@ interface IVirtualizedViewState extends IViewState {
     docView: Editor,
     viewport: ViewportView,
     virtualized: boolean,
+    offsetY: number
 }
 
 export class VirtualizedView extends View<IVirtualizedProps, IVirtualizedViewState> {
@@ -25,7 +26,6 @@ export class VirtualizedView extends View<IVirtualizedProps, IVirtualizedViewSta
     private onScroll = (value: number) => {
         this.state.props.paginator.startPosition = value | 0;
         this.update(this.state.props);
-        return 0;
     };
 
     public get cursorPosition() { return this.state.docView.cursorPosition; }
@@ -40,7 +40,7 @@ export class VirtualizedView extends View<IVirtualizedProps, IVirtualizedViewSta
 
                 state.root.appendChild(
                     state.viewport.mount(
-                        this.getViewportProps(props, state)));
+                        this.getViewportProps(state)));
             } else {
                 Object.assign(props, { paginator: undefined });
 
@@ -61,7 +61,18 @@ export class VirtualizedView extends View<IVirtualizedProps, IVirtualizedViewSta
         docView.mount(props);
 
         const viewport = new ViewportView();
-        const state = { props, root, docView, viewport, virtualized: !props.virtualize, paginator: new Paginator(props.doc) };
+        const paginator = new Paginator(props.doc);
+        paginator.startPosition = 0;
+
+        const state = { 
+            props,
+            root,
+            docView,
+            viewport,
+            virtualized: !props.virtualize,
+            paginator,
+            offsetY: 0
+        };
         this.ensureVirtualizationMode(props, state, /* isMounting */ true);
 
         // Note: We set 'virtualized' to the opposite of the requested state to force 'updating()' to
@@ -69,11 +80,12 @@ export class VirtualizedView extends View<IVirtualizedProps, IVirtualizedViewSta
         return this.updating(props, state);
     }
 
-    private getViewportProps(props: Readonly<IVirtualizedProps>, state: Readonly<IVirtualizedViewState>): IViewportProps {
+    private getViewportProps(state: Readonly<IVirtualizedViewState>): IViewportProps {
         return {
             slot: state.docView.root,
             onScroll: this.onScroll,
-            sizeY: 8192
+            sizeY: 8192,
+            offsetY: state.offsetY
         }
     }
 
@@ -84,8 +96,23 @@ export class VirtualizedView extends View<IVirtualizedProps, IVirtualizedViewSta
             if (!props.paginator) {
                 Object.assign(props, { paginator: state.props.paginator });
             }
+
+            // Reset viewport scroll to 0 
+            Object.assign(state, { offsetY: 0 });
+            state.viewport.update(this.getViewportProps(state));
             state.docView.update(state.props);
-            state.viewport.update(this.getViewportProps(props, state));
+
+            const dy = state.props.paginator.deltaY;
+            console.log(`dy: ${dy}`);
+
+            const top = state.viewport.contentPaneTop;
+            console.log(`top: ${top}`)
+
+            const sum = -dy + top;
+            console.log(`sum: ${sum}`);
+
+            Object.assign(state, { offsetY: sum });
+            state.viewport.update(this.getViewportProps(state));
         } else {
             Object.assign(props, { paginator: undefined });
         }

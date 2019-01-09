@@ -7,8 +7,15 @@ const template = new Template({
     tag: "div",
     props: { className: styles.viewport },
     children: [
-        { tag: "div", ref: "slot", props: { className: styles.slot }},
-        { 
+        { tag: "div", ref: "contentPadding", props: { className: styles.contentPadding }, children: [
+            { tag: "div", ref: "contentPane", props: { className: styles.contentPane }, children: [
+                { tag: "div", ref: "slotBorderPosition", props: { className: styles.slotBorderPosition }, children: [
+                    { tag: "div", ref: "slot", props: { className: styles.slot }},
+                    { tag: "div", ref: "slotBorder", props: { className: styles.slotBorder }}
+                ]},
+            ]},
+        ]},
+        {
             tag: "div",
             ref: "scrollPane",
             props: { className: styles.scrollPane },
@@ -22,13 +29,15 @@ const template = new Template({
 export interface IViewportProps { 
     slot: Element,
     sizeY: number,
-    onScroll: (position: number) => number;
+    offsetY: number;
+    onScroll: (position: number) => void;
 }
 
 export interface IViewportViewState extends IViewState {
     props: IViewportProps;
     root: Element;
     slot: HTMLElement;
+    contentPane: HTMLElement;
     space: HTMLElement;
     scrollPane: HTMLElement;
     sizeY: number;
@@ -40,14 +49,17 @@ export class ViewportView extends View<IViewportProps, IViewportViewState> {
 
     private readonly onScroll = (e: MouseEvent) => {
         const state = this.state;
-        const offsetY = state.props.onScroll(state.scrollPane.scrollTop);
-        Object.assign(this.state, { offsetY })
-        this.update(state.props);
+        state.props.onScroll(state.scrollPane.scrollTop);
     };
+
+    public get contentPaneTop() { 
+        return this.state.contentPane.getBoundingClientRect().top;
+    }
 
     public mounting(props: Readonly<IViewportProps>): IViewportViewState {
         const root = template.clone();
         const slot = template.get(root, "slot") as HTMLElement;
+        const contentPane = template.get(root, "contentPane") as HTMLElement;
         const scrollPane = template.get(root, "scrollPane") as HTMLElement;
         const space = template.get(root, "space") as HTMLElement;
 
@@ -62,6 +74,7 @@ export class ViewportView extends View<IViewportProps, IViewportViewState> {
             props,
             root,
             slot,
+            contentPane: contentPane,
             scrollPane,
             space,
             offsetY: 0,
@@ -72,7 +85,8 @@ export class ViewportView extends View<IViewportProps, IViewportViewState> {
     public updating(props: Readonly<IViewportProps>, state: Readonly<IViewportViewState>): IViewportViewState {
         Dom.ensureFirstChild(state.slot, props.slot);
         state.space.style.height = `${props.sizeY}px`;
-        state.slot.style.top = `${state.offsetY}px`;
+        console.log(`  offset: ${props.offsetY}`)
+        state.slot.style.top = `${props.offsetY}px`;
         return state;
     }
 

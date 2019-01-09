@@ -126,7 +126,19 @@ export class DocumentView extends View<IDocumentProps, IDocumentViewState> {
     public  get eventsink()  { return this.state.eventsink; }
 
     protected updating(props: Readonly<IDocumentProps>, state: Readonly<IDocumentViewState>) {
+        const originalTrackedPositions = props.trackedPositions;
+        const trackedPositions = originalTrackedPositions.slice(0).concat(
+            (props.paginator && props.paginator.trackedPositions) || []);
+
+        Object.assign(props, { trackedPositions: [] });
         DocumentLayout.sync(props, state);
+
+        // 2nd pass does not mutate DOM.
+        Object.assign(props, { trackedPositions });
+        DocumentLayout.sync(props, state);
+
+        Object.assign(props, { trackedPositions: originalTrackedPositions });
+
         return state;
     }
 
@@ -297,9 +309,9 @@ class LayoutContext {
     /** The IViewInfo for the last rendered inline view. */
     private _currentInline: IViewInfo<any, IFlowViewComponent<any>> | null = null;
 
-    constructor (readonly props: IDocumentProps, readonly state: IDocumentViewState, public root: Element) {
+    constructor (readonly doc: FlowDocument, readonly state: IDocumentViewState, public root: Element, trackedPositions: ITrackedPosition[]) {
         // Initialize 'pendingTrackedPositions' by copying and sorting the tracked positions.
-        this.pendingTrackedPositions = props.trackedPositions
+        this.pendingTrackedPositions = trackedPositions
             .slice(0)
             .sort((left, right) => right.position - left.position);
         
@@ -515,7 +527,7 @@ export class DocumentLayout {
         : { text: string, style: CSSStyleDeclaration, segments: TextSegment[], nextPosition: number, startPosition: number }
     {
         const accumulator = new TextAccumulator(position, first, relativeStartOffset, relativeEndOffset);
-        context.props.doc.visitRange(accumulator.tryConcat, accumulator.nextPosition, position + relativeEndOffset);
+        context.doc.visitRange(accumulator.tryConcat, accumulator.nextPosition, position + relativeEndOffset);
         return accumulator;
     }
 
@@ -563,13 +575,17 @@ export class DocumentLayout {
 
         console.log(`Sync(${desiredStart}): [${start}..?)`);
 
-        const context = new LayoutContext(props, state, state.slot);
+        const context = new LayoutContext(
+            props.doc,
+            state,
+            state.slot,
+            props.trackedPositions);
         
         do {
             // Ensure that we exit the outer do..while loop if there are no remaining segments.
             let nextStart = -1;
             
-            context.props.doc.visitRange((position, segment, startOffset, endOffset) => {
+            context.doc.visitRange((position, segment, startOffset, endOffset) => {
                 nextStart = this.syncSegment(context, position, segment, startOffset, endOffset);
 
                 // TODO: Halt synchronization once we're off-screen.
