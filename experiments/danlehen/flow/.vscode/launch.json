@@ -5,7 +5,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Mocha (Test single file)",
+            "name": "Mocha (Template)",
             "type": "node",
             "request": "launch",
             "runtimeArgs": [
@@ -14,6 +14,21 @@
               "packages/util/tsconfig.dev.json",
               "--inspect-brk",
               "packages/util/test/template.spec.ts",
+            ],
+            "console": "integratedTerminal",
+            "internalConsoleOptions": "neverOpen",
+            "port": 9229
+        },
+        {
+            "name": "Mocha (LIS)",
+            "type": "node",
+            "request": "launch",
+            "runtimeArgs": [
+              "${workspaceRoot}/node_modules/.bin/ts-mocha",
+              "-p",
+              "packages/util/tsconfig.dev.json",
+              "--inspect-brk",
+              "packages/util/test/lis.spec.ts",
             ],
             "console": "integratedTerminal",
             "internalConsoleOptions": "neverOpen",
