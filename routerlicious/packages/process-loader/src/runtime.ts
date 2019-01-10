@@ -62,7 +62,7 @@ export class Runtime extends EventEmitter implements IRuntime {
         quorum: IQuorum,
         storage: IDocumentStorageService,
         connectionState: ConnectionState,
-        channels: { [path: string]: ISnapshotTree },
+        channels: Map<string, ISnapshotTree>,
         branch: string,
         minimumSequenceNumber: number,
         submitFn: (type: MessageType, contents: any) => void,
@@ -88,26 +88,26 @@ export class Runtime extends EventEmitter implements IRuntime {
             snapshotFn,
             closeFn);
 
-        if (channels) {
-            Object.keys(channels).forEach((path) => {
-                // Reserve space for the channel
-                runtime.reserve(path);
-            });
+        // First pass to reserve space for all channels
+        channels.forEach((value, key) => {
+            runtime.reserve(key);
+        });
 
-            /* tslint:disable:promise-function-async */
-            const loadSnapshotsP = Object.keys(channels).map((path) => {
-                return runtime.loadSnapshotChannel(
-                    runtime,
-                    path,
-                    channels[path],
-                    storage,
-                    tardisMessages.has(path) ? tardisMessages.get(path) : [],
-                    branch,
-                    minimumSequenceNumber);
-            });
+        // Second pass loads the channels
+        const loadSnapshotsP = new Array<Promise<void>>();
+        channels.forEach((value, key) => {
+            const loadSnapshotP = runtime.loadSnapshotChannel(
+                runtime,
+                key,
+                channels.get(key),
+                storage,
+                tardisMessages.has(key) ? tardisMessages.get(key) : [],
+                branch,
+                minimumSequenceNumber);
+            loadSnapshotsP.push(loadSnapshotP);
+        });
 
-            await Promise.all(loadSnapshotsP);
-        }
+        await Promise.all(loadSnapshotsP);
 
         // Start the runtime
         await runtime.start(platform);

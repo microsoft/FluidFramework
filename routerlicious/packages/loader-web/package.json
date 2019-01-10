@@ -27,6 +27,7 @@
   "dependencies": {
     "@prague/gitresources": "^0.1.0",
     "@prague/loader": "^0.1.0",
+    "@prague/process-loader": "^0.1.0",
     "@prague/runtime-definitions": "^0.1.0",
     "@types/node": "^10.12.12",
     "chalk": "^2.4.1",

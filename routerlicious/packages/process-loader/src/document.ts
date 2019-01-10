@@ -39,10 +39,6 @@ import { IQuorumSnapshot, Quorum } from "./quorum";
 import { Runtime } from "./runtime";
 import { readAndParse } from "./utils";
 
-// tslint:disable:no-var-requires
-const now = require("performance-now");
-// tslint:enable:no-var-requires
-
 interface IConnectResult {
     detailsP: Promise<IConnectionDetails>;
 
@@ -60,8 +56,8 @@ class RuntimeStorageService implements IDocumentStorageService {
     }
 
     // TODO Will a subcomponent ever need this? Or we can probably restrict the ref to itself
-    public getSnapshotTree(version: ICommit, ref: string): Promise<ISnapshotTree> {
-        return this.storageService.getSnapshotTree(version, ref);
+    public getSnapshotTree(version: ICommit): Promise<ISnapshotTree> {
+        return this.storageService.getSnapshotTree(version);
     }
 
     public getVersions(sha: string, count: number): Promise<ICommit[]> {
@@ -260,13 +256,14 @@ export class Document extends EventEmitter {
         const lastVersion = await this.storageService.getVersions(this.id, 1);
 
         const tree = lastVersion.length > 0
-            ? await this.storageService.getSnapshotTree(lastVersion[0], "")
+            ? await this.storageService.getSnapshotTree(lastVersion[0])
             : { blobs: {}, commits: {}, trees: {} };
 
         const channelCommitsP = new Array<Promise<{ id: string, commit: ICommit }>>();
         for (const [channelId, channelSnapshot] of channelEntries) {
             const parent = channelId in tree.commits ? [tree.commits[channelId]] : [];
-            const channelCommitP = this.storageService.write(channelSnapshot, parent, "", channelId)
+            const channelCommitP = this.storageService
+                .write(channelSnapshot, parent, `${channelId} commit`, channelId)
                 .then((commit) => ({ id: channelId, commit }));
             channelCommitsP.push(channelCommitP);
         }
@@ -301,13 +298,10 @@ export class Document extends EventEmitter {
                 mode: FileMode.Commit,
                 path: channelCommit.id,
                 type: TreeEntry[TreeEntry.Commit],
-                value: {
-                    contents: channelCommit.commit.sha,
-                    encoding: "utf-8",
-                },
+                value: channelCommit.commit.sha,
             });
             // tslint:disable-next-line:max-line-length
-            gitModules += `[submodule "${channelCommit.id}"]\n\tpath = ${channelCommit.id}\n\turl = ssh://git@localhost:3022/home/git/prague/test\n\n`;
+            gitModules += `[submodule "${channelCommit.id}"]\n\tpath = ${channelCommit.id}\n\turl = https://github.com/kurtb/praguedocs.git\n\n`;
         }
 
         root.entries.push({
@@ -337,7 +331,7 @@ export class Document extends EventEmitter {
 
         // Get the snapshot tree
         const treeP = Promise.all([storageP, versionP]).then(
-            ([storage, version]) => version ? storage.getSnapshotTree(version, "") : null);
+            ([storage, version]) => version ? storage.getSnapshotTree(version) : null);
 
         const attributesP = Promise.all([storageP, treeP]).then<IDocumentAttributes>(
             ([storage, tree]) => {
@@ -373,11 +367,32 @@ export class Document extends EventEmitter {
         const tardisMessagesP = Promise.all([attributesP, storageP, treeP]).then(
             ([attributes, storage, tree]) => this.loadTardisMessages(attributes, storage, tree));
 
+        const submodulesP = Promise.all([storageP, treeP]).then(async ([storage, tree]) => {
+            if (!tree || !tree.commits) {
+                return new Map<string, ISnapshotTree>();
+            }
+
+            const snapshotTreesP = Object.keys(tree.commits).map(async (key) => {
+                const moduleSha = tree.commits[key];
+                const commit = (await storage.getVersions(moduleSha, 1))[0];
+                const moduleTree = await storage.getSnapshotTree(commit);
+                return { id: key, tree: moduleTree };
+            });
+
+            const submodules = new Map<string, ISnapshotTree>();
+            const snapshotTree = await Promise.all(snapshotTreesP);
+            for (const value of snapshotTree) {
+                submodules.set(value.id, value.tree);
+            }
+
+            return submodules;
+        });
+
         // Wait for all the loading promises to finish
         return Promise
             .all([
                 storageP,
-                treeP,
+                submodulesP,
                 versionP,
                 attributesP,
                 quorumP,
@@ -432,7 +447,7 @@ export class Document extends EventEmitter {
                     this.quorum,
                     runtimeStorage,
                     this.connectionState,
-                    tree ? tree.trees : null,
+                    tree,
                     attributes.branch,
                     attributes.minimumSequenceNumber,
                     (type, contents) => this.submitMessage(type, contents),
@@ -461,7 +476,7 @@ export class Document extends EventEmitter {
                 this.loaded = true;
 
                 /* tslint:disable:no-unsafe-any */
-                debug(`Document loaded ${this.id}: ${now()} `);
+                debug(`Document loaded ${this.id}: ${Date.now} `);
             });
     }
 
@@ -665,12 +680,17 @@ export class Document extends EventEmitter {
             return;
         }
 
+        const extraBlobs = new Map<string, string>();
+
         const snapshot = this._runtime.stop();
+        const modules = new Map<string, ISnapshotTree>();
+        for (const [key, value] of snapshot) {
+            const flattened = flatten(value.entries, extraBlobs);
+            const snapshotTree = buildHierarchy(flattened);
+            modules.set(key, snapshotTree);
+        }
 
         // Need to rip through snapshot and use that to populate extraBlobs
-        const extraBlobs = new Map<string, string>();
-        const flattened = flatten(snapshot, extraBlobs);
-        const snapshotTree = buildHierarchy(flattened);
         const runtimeStorage = new RuntimeStorageService(this.storageService, extraBlobs);
 
         // Load the new code and create a new runtime from the previous snapshot
@@ -693,7 +713,7 @@ export class Document extends EventEmitter {
             this.quorum,
             runtimeStorage,
             this.connectionState,
-            snapshotTree.trees,     // I think this becomes snapshot
+            modules,
             this.id,
             this._deltaManager.minimumSequenceNumber,
             (type, contents) => this.submitMessage(type, contents),

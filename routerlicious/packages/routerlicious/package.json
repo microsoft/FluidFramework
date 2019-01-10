@@ -50,6 +50,7 @@
     "@prague/merge-tree": "^0.1.0",
     "@prague/merge-tree-utils": "^0.1.0",
     "@prague/pinpoint-editor": "^0.1.0",
+    "@prague/process-loader": "^0.1.0",
     "@prague/replay-socket-storage": "^0.1.0",
     "@prague/runtime-definitions": "^0.1.0",
     "@prague/services": "^0.1.0",

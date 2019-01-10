@@ -30,8 +30,9 @@ export class DocumentStorageService implements api.IDocumentStorageService  {
         return value.content;
     }
 
-    public write(tree: api.ITree, parents: string[], message: string): Promise<resources.ICommit> {
-        return this.manager.write(this.id, tree, parents, message);
+    public write(tree: api.ITree, parents: string[], message: string, ref: string): Promise<resources.ICommit> {
+        const branch = ref ? `components/${this.id}/${ref}` : this.id;
+        return this.manager.write(branch, tree, parents, message);
     }
 
     public async createBlob(file: Buffer): Promise<resources.ICreateBlobResponse> {

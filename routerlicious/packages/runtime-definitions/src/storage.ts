@@ -85,7 +85,7 @@ export interface ITreeEntry {
     type: string;
 
     // The value of the entry - either a tree or a blob
-    value: IBlob | ITree;
+    value: IBlob | ITree | string;
 
     // The file mode; one of 100644 for file (blob), 100755 for executable (blob), 040000 for subdirectory (tree),
     // 160000 for submodule (commit), or 120000 for a blob that specifies the path of a symlink
@@ -146,7 +146,7 @@ export interface IDocumentStorageService {
     /**
      * Returns the snapshot tree.
      */
-    getSnapshotTree(version: resources.ICommit, ref: string): Promise<ISnapshotTree>;
+    getSnapshotTree(version: resources.ICommit): Promise<ISnapshotTree>;
 
     /**
      * Retrieves all versions of the document starting at the specified sha - or null if from the head

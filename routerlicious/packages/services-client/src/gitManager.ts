@@ -2,6 +2,7 @@ import * as resources from "@prague/gitresources";
 import * as api from "@prague/runtime-definitions";
 import { buildHierarchy } from "@prague/utils";
 import * as assert from "assert";
+import { debug } from "./debug";
 import { IHistorian } from "./historian";
 
 export class GitManager {
@@ -113,7 +114,9 @@ export class GitManager {
         parents: string[],
         message: string): Promise<resources.ICommit> {
 
+        debug(`Write to ${branch}`);
         const tree = await this.createTree(inputTree);
+        debug(`Tree created ${branch} ${JSON.stringify(tree)}`);
 
         // Construct a commit for the tree
         const commitParams: resources.ICreateCommitParams = {
@@ -127,16 +130,24 @@ export class GitManager {
             tree: tree.sha,
         };
 
+        debug(`createCommit ${branch}`);
         const commit = await this.historian.createCommit(commitParams);
+        debug(`Commit created ${branch} ${JSON.stringify(commit)}`);
 
         // Create or update depending on if ref exists.
         // TODO optimize the update to know up front if the ref exists
+        debug(`getRef ${branch}`);
         const existingRef = await this.getRef(branch);
+        debug(`getRef done ${existingRef} ${branch}`);
+
         if (existingRef) {
             await this.upsertRef(branch, commit.sha);
         } else {
+            debug(`createRef ${branch} ${commit.sha}`);
             await this.createRef(branch, commit.sha);
         }
+
+        debug(`DONE! ${branch}`);
 
         return commit;
     }
@@ -165,6 +176,10 @@ export class GitManager {
                     entriesP.push(treeBlobP);
                     break;
 
+                case api.TreeEntry.Commit:
+                    entriesP.push(Promise.resolve({ sha: entry.value as string, url: "" }));
+                    break;
+
                 default:
                     return Promise.reject("Unknown entry type");
             }
@@ -178,14 +193,19 @@ export class GitManager {
         // Construct a new tree from the collection of hashes
         // tslint:disable-next-line:no-increment-decrement
         for (let i = 0; i < files.entries.length; i++) {
-            const isTree = files.entries[i].type === api.TreeEntry[api.TreeEntry.Tree];
+            const type = files.entries[i].type === api.TreeEntry[api.TreeEntry.Tree]
+                ? "tree"
+                : (files.entries[i].type === api.TreeEntry[api.TreeEntry.Blob] ? "blob" : "commit");
+
             tree.push({
                 mode: files.entries[i].mode,
                 path: files.entries[i].path,
                 sha: entries[i].sha,
-                type: isTree ? "tree" : "blob",
+                type,
             });
         }
+
+        console.log(JSON.stringify(tree, null, 2));
 
         const requestBody: resources.ICreateTreeParams = {
             tree,
@@ -197,7 +217,7 @@ export class GitManager {
     private translateSymlink(link: string, depth: number): string {
         let prefix = "";
         // tslint:disable-next-line:no-increment-decrement
-        for (let i = 0; i < depth; i++) {
+        for (let i = 0; i <= depth; i++) {
             prefix += "../";
         }
 

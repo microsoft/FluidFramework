@@ -25,6 +25,7 @@
 	},
 	"dependencies": {
 		"@prague/loader": "^0.1.0",
+		"@prague/process-loader": "^0.1.0",
 		"@prague/runtime-definitions": "^0.1.0",
 		"@prague/socket-storage": "^0.1.0",
 		"@types/chalk": "^2.2.0",

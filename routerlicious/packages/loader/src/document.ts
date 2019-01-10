@@ -81,7 +81,7 @@ class RuntimeStorageService implements IDocumentStorageService {
     }
 
     public write(root: ITree, parents: string[], message: string): Promise<ICommit> {
-        return this.storageService.write(root, parents, message);
+        return this.storageService.write(root, parents, message, "");
     }
 
     public createBlob(file: Buffer): Promise<ICreateBlobResponse> {
@@ -273,7 +273,7 @@ export class Document extends EventEmitter {
                 },
             });
 
-            await this.storageService.write(root, parents, message);
+            await this.storageService.write(root, parents, message, "");
         });
     }
 
