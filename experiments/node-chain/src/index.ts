@@ -1,62 +1,22 @@
 import * as loader from "@prague/loader";
 import { IMap } from "@prague/map";
 import {
-    IChaincodeFactory,
-    ICodeLoader,
     IDocumentService,
-    IPlatform,
-    IPlatformFactory,
     ITokenProvider,
     IUser,
 } from "@prague/runtime-definitions";
 import * as driver from "@prague/socket-storage";
-import chalk from "chalk";
-import { exec } from "child_process";
 import * as commander from "commander";
-import { EventEmitter } from "events";
 import * as jwt from "jsonwebtoken";
 import * as ora from "ora";
-import * as path from "path";
 import * as process from "process";
 import * as readline from "readline";
-import { promisify } from "util";
-
-const asyncExec = promisify(exec);
-
-const npmRegistry = "https://packages.wu2.prague.office-int.com";
+import { NodeCodeLoader } from "./nodeCodeLoader";
+import { NodePlatformFactory } from "./nodePlatformFactory";
 
 const rootMapId = "root";
 
-class NodeCodeLoader implements ICodeLoader {
-    public async load(pkg: string): Promise<IChaincodeFactory> {
-        const components = pkg.match(/(.*)\/(.*)@(.*)/);
-        if (!components) {
-            return Promise.reject("Invalid package");
-        }
-        const [, scope, name] = components;
-
-        const packagesBase = path.join(__dirname, "../packages");
-        console.log(`Loading package...`);
-        await asyncExec(`npm install ${pkg} --registry ${npmRegistry}`, { cwd: packagesBase });
-
-        // tslint:disable:no-unsafe-any
-        // tslint:disable-next-line:non-literal-require
-        const entry = import(`${packagesBase}/node_modules/${scope}/${name}`);
-        return entry;
-    }
-}
-
-class NodePlatform extends EventEmitter implements IPlatform {
-    public async queryInterface<T>(id: string): Promise<any> {
-        return null;
-    }
-}
-
-class NodePlatformFactory implements IPlatformFactory {
-    public async create(): Promise<IPlatform> {
-        return new NodePlatform();
-    }
-}
+// tslint:disable:no-unsafe-any
 
 async function readlineAsync(input: readline.ReadLine, prompt: string): Promise<string> {
     return new Promise<string>((resolve) => {
@@ -84,17 +44,9 @@ async function run(
     ora.promise(documentP, `Loading ${tenantId}/${id}`);
     const document = await documentP;
 
-    /*
-    setTimeout(async () => {
-        console.log(`Timed`);
-    }, 20000);*/
-
     document.on("runtimeChanged", async (newRuntime) => {
-        console.log(`New runtime: ${newRuntime.tenantId}`);
         const root = await newRuntime.getChannel(rootMapId) as IMap;
-        console.log(`Root loaded!`);
         const rootView = await root.getView();
-        console.log(rootView.keys());
 
         console.log("");
         console.log("Enter increment amount (ctrl+c to quit)");
@@ -103,16 +55,14 @@ async function run(
         const input = readline.createInterface(process.stdin, process.stdout);
         // tslint:disable-next-line:no-constant-condition
         while (true) {
-            const value = await readlineAsync(input, chalk.green("Value: "));
+            const value = await readlineAsync(input, "Value: ");
 
-            // Accept both raw strings and JSON input
+            // Only accepts number as input.
             let parsedValue: number;
             try {
                 parsedValue = Number(value);
-                console.log(parsedValue);
-                // tslint:disable-next-line
-                const clicks = rootView.get("clicks");
-                // tslint:disable-next-line
+                // tslint:disable no-backbone-get-set-outside-model
+                const clicks = Number(rootView.get("clicks"));
                 rootView.set("clicks", clicks + parsedValue);
             } catch {
                 console.log(`Only integer value is allowed`);
