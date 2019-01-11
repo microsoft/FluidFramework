@@ -1,6 +1,6 @@
 .viewport {
     position: relative;
-    background: pink;
+    background: #aaa;
     height: 100%;
     
     display: grid;
@@ -11,49 +11,66 @@
       "main";
   
     width: 100%;
-    
-    /* Clip slot contents to bounds of viewport. */
-    overflow-y: hidden;
 
     --scroll-bar-width: 15px;
-}
 
-.contentPadding {
+    /* Padding to allow for scrollbar overlaying the right edge of the viewport. */
+    padding: 0 var(--scroll-bar-width) 0 0;
+    
+    /* Clip viewport contents to bounds of viewport. */
+    overflow-y: hidden;
+
+    /* TODO: Cancel scroll events rather than set touch-action?  Allow horizontal scrolling? */
     touch-action: none;
-    padding: 15px;
-    width: 100%;
 }
 
-.contentPane {
-    /* Additional right padding is to compensate for overlaying the scrollPane.
-       along the right edge of the content. */
-    padding-right: var(--scroll-bar-width);
-    margin: 0px;
-    width: 100%;
-}
-
-.slotBorderPosition {
+/* Provides a relative frame of reference for the contained absolute positioned block.
+   Without this, absolute top/left/right/bottom will ignore the parent element's padding. */
+.ref {
     position: relative;
-    overflow: hidden;
 }
 
-.slotBorder {
+.transform {
+    /* Fill the viewport...  why is viewport using Grid?  Should this use grid-area instead? */
     position: absolute;
-    pointer-events: none;
     top: 0px;
-    bottom: 0px;
     left: 0px;
     right: 0px;
-    border: 1px solid black;
-}
+    bottom: 0px;
+ }
 
-.slot {
-    /* Position relative so script can use 'style.top' to translate in Y. */
+ .document {
     position: relative;
     background: #EEE;
-    width: 100%;
+    border: 1px solid #888;
+    box-shadow: 5px 5px 20px 0px #555;
+
+    /* Center with small gap at top. */
+    margin: 3% auto;
+
+    /* Emulate paper document proportions. */
+    max-width: 8.5in;
+    padding: 1in;
 }
-  
+
+.slot { }
+
+/* We layout overlapping slot & document elements in order to position the pre-scrolled frame
+   of reference for the 'origin' element.  When doing this, we add the 'position' class to make
+   the overlapping elements transparent.  TODO: Use z-order instead? */
+.position {
+    pointer-events: none;
+    background: transparent;
+    border-color: transparent;
+    box-shadow: none;
+}
+
+/* Div used as the stable frame of reference when scrolling. */
+.origin {
+    background: green;
+    padding: 1px;
+}
+
 .scrollPane {
     /* Scrollbar should overlap right 15px of 'slot'.  We need to force the
        15px width due to Chrome's auto-hide behavior when using touchpad. */
@@ -61,7 +78,6 @@
     right: 0px;
     height: 100%;
     width: var(--scroll-bar-width);
-    background: rgba(128, 128, 128, 0.5);
     
     /* Show vertical scrollbar. */
     overflow-y: scroll;

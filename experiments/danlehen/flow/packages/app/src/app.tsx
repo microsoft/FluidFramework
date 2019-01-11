@@ -4,6 +4,7 @@ import { CommandBar, ICommandBarItemProps } from "office-ui-fabric-react/lib/Com
 import { initializeIcons } from "@uifabric/icons";
 import * as style from "./index.css";
 import { ChaincodeDialog } from "./chaincodedialog";
+import * as styles from "./index.css";
 
 interface IProps { }
 interface IState { 
@@ -45,7 +46,7 @@ export class App extends React.Component<IProps, IState> {
                     items={this.getItems()}
                     overflowItems={this.getOverlflowItems()}
                     farItems={this.getFarItems()} />
-                <div className={`${style.fill}`}>
+                <div className={`${style.fill} ${ this.state.virtualize ? styles.virtualized : styles.normal }`}>
                     <FlowEditor cmds={this.cmds} docUrl="http://localhost:3000" docId={this.docId} virtualize={this.state.virtualize}></FlowEditor>
                 </div>
                 <ChaincodeDialog ref={this.chaincodeDlg} addComponent={this.addComponent} />
@@ -59,7 +60,14 @@ export class App extends React.Component<IProps, IState> {
 
     private readonly insertables = [
         { name: "Text", iconName: "Video", onClick: () => { this.cmds.insertText(App.exampleText); }},
-        { name: "Video", iconName: "Video", onClick: () => this.cmds.insert(<video style={{ float: "left" }} autoPlay={true} loop={true} controls={true} src="https://www.tutorialrepublic.com//examples/video/shuttle.mp4"></video>) },
+        { name: "Video", iconName: "Video", onClick: () => this.cmds.insert(
+            <div className={styles.video}>
+              <figure style={{ marginInlineStart: 0, marginInlineEnd: 0 }}>
+                <video style={{ width: "100%" }} autoPlay={true} loop={true} controls={true} src="http://localhost:8080/assets/outrun.mp4"></video>
+              </figure>
+              <figcaption>Figure 1 - Turbo Outrun by Jeroen Tel</figcaption>
+            </div>
+        ) },
         /*{ name: "Wedge Left", iconName: "CaretRight", onClick: () => this.cmds.insert(<div className={style.wedgeLeft}></div>) },*/
         { name: "Wedge Right", iconName: "CaretLeft", onClick: () => this.cmds.insert(<div className={style.wedgeRight}></div>) },
         /*{ name: "Flow", iconName: "Text", onClick: () => this.cmds.insert(<FlowEditor cmds={this.cmds} docUrl="http://localhost:3000" docId={Math.random().toString(36).substr(2, 4)}></FlowEditor>) },*/

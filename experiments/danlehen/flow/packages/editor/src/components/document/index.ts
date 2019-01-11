@@ -1,3 +1,5 @@
+// This pen illustrates an attempt to render the cursor as an inline span in the document's content flow without impacting kerning or ligatures due to splitting the word into separate spans.
+
 import {
     Segment,
     Marker,
@@ -21,7 +23,7 @@ const template = new Template({
         {
             tag: "span",
             ref: "eventsink",
-            props: { tabIndex: 0 },
+            props: { tabIndex: 0, className: styles.eventSink },
             children: [
                 { tag: "span", ref: "leadingSpan", props: { className: styles.leadingSpan }},
                 { tag: "span", ref: "slot", props: { className: styles.documentContent }},

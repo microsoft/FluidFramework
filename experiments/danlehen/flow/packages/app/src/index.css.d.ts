@@ -10,3 +10,6 @@ export const wedgeLeft: string;
 export const wedgeLeftAnim: string;
 export const wedgeRight: string;
 export const wedgeRightAnim: string;
+export const video: string;
+export const normal: string;
+export const virtualized: string;

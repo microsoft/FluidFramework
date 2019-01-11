@@ -60,6 +60,9 @@ module.exports = env => {
             dgram: "empty",
             net: "empty",
             tls: "empty"
+        },
+        devServer: {
+            contentBase: [path.resolve(__dirname, 'assets')],
         }
     }, isProduction
         ? require("./webpack.prod")

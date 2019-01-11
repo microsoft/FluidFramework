@@ -1,9 +1,15 @@
 .document { 
     width: 100%;
 }
+
+.eventSink:focus {
+    outline: 1px solid rgba(64, 128, 255, 0.3);
+}
+
 .documentContent { 
     /* user-select: none; */
 }
+
 .documentOverlay {
     pointer-events: none;
 }

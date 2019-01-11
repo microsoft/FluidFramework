@@ -5,7 +5,11 @@ html, body {
     margin: 0px;
     font-family: arial, helvetica, sans-serif;
     text-align: justify;
-    text-justify: inter-word;    
+    text-justify: inter-word;
+
+    /* Must set 'overflow:hidden' on body to prevent cartoon physics action when using two
+       finger scrolling in viewport on MacOS/Chrome 71. */
+    overflow: hidden;
 }
 
 *, *:before, *:after {
@@ -103,3 +107,20 @@ html, body {
         clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
     }
 }
+
+.video {
+    float: left;
+    border: none;
+    width: 60%;
+    margin-right: 1em;
+}
+
+figcaption {
+    text-align: center
+}
+
+.normal {
+    padding: 3%;
+}
+
+.virtualized { }

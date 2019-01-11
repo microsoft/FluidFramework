@@ -7,11 +7,15 @@ const template = new Template({
     tag: "div",
     props: { className: styles.viewport },
     children: [
-        { tag: "div", ref: "contentPadding", props: { className: styles.contentPadding }, children: [
-            { tag: "div", ref: "contentPane", props: { className: styles.contentPane }, children: [
-                { tag: "div", ref: "slotBorderPosition", props: { className: styles.slotBorderPosition }, children: [
+        { tag: "div", props: { className: styles.ref }, children: [
+            { tag: "div", ref: "transform", props: { className: styles.transform }, children: [
+                { tag: "div", props: { className: styles.document }, children: [
                     { tag: "div", ref: "slot", props: { className: styles.slot }},
-                    { tag: "div", ref: "slotBorder", props: { className: styles.slotBorder }}
+                ]},
+            ]},
+            { tag: "div", props: { className: `${styles.slot} ${styles.position}` }, children: [
+                { tag: "div", props: { className: `${styles.document} ${styles.position}` }, children: [
+                    { tag: "div", ref: "origin", props: { className: styles.origin }},
                 ]},
             ]},
         ]},
@@ -36,8 +40,9 @@ export interface IViewportProps {
 export interface IViewportViewState extends IViewState {
     props: IViewportProps;
     root: Element;
+    transform: HTMLElement,
     slot: HTMLElement;
-    contentPane: HTMLElement;
+    origin: HTMLElement;
     space: HTMLElement;
     scrollPane: HTMLElement;
     sizeY: number;
@@ -52,14 +57,15 @@ export class ViewportView extends View<IViewportProps, IViewportViewState> {
         state.props.onScroll(state.scrollPane.scrollTop);
     };
 
-    public get contentPaneTop() { 
-        return this.state.contentPane.getBoundingClientRect().top;
+    public get slotOriginTop() { 
+        return this.state.origin.getBoundingClientRect().top;
     }
 
     public mounting(props: Readonly<IViewportProps>): IViewportViewState {
         const root = template.clone();
         const slot = template.get(root, "slot") as HTMLElement;
-        const contentPane = template.get(root, "contentPane") as HTMLElement;
+        const transform = template.get(root, "transform") as HTMLElement;
+        const origin = template.get(root, "origin") as HTMLElement;
         const scrollPane = template.get(root, "scrollPane") as HTMLElement;
         const space = template.get(root, "space") as HTMLElement;
 
@@ -74,7 +80,8 @@ export class ViewportView extends View<IViewportProps, IViewportViewState> {
             props,
             root,
             slot,
-            contentPane: contentPane,
+            transform,
+            origin,
             scrollPane,
             space,
             offsetY: 0,
@@ -86,7 +93,7 @@ export class ViewportView extends View<IViewportProps, IViewportViewState> {
         Dom.ensureFirstChild(state.slot, props.slot);
         state.space.style.height = `${props.sizeY}px`;
         console.log(`  offset: ${props.offsetY}`)
-        state.slot.style.top = `${props.offsetY}px`;
+        state.transform.style.top = `${props.offsetY}px`;
         return state;
     }
 

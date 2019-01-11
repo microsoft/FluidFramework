@@ -105,7 +105,7 @@ export class VirtualizedView extends View<IVirtualizedProps, IVirtualizedViewSta
             const dy = state.props.paginator.deltaY;
             console.log(`dy: ${dy}`);
 
-            const top = state.viewport.contentPaneTop;
+            const top = state.viewport.slotOriginTop;
             console.log(`top: ${top}`)
 
             const sum = -dy + top;
