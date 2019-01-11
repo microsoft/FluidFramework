@@ -70,8 +70,6 @@ async function run(
     tenantId: string,
     user: IUser,
     tokenProvider: ITokenProvider,
-    options: any,
-    reject: boolean,
     documentServices: IDocumentService): Promise<void> {
     const platformFactory = new NodePlatformFactory();
     const documentP = loader.load(
@@ -86,11 +84,6 @@ async function run(
     ora.promise(documentP, `Loading ${tenantId}/${id}`);
     const document = await documentP;
 
-    const runtime  = document.runtime;
-    console.log(runtime.existing);
-    const quorum = runtime.getQuorum();
-    quorum.on("addMember", (clientId, details) => console.log(`${clientId} : ${details} joined`));
-    quorum.on("removeMember", (clientId) => console.log(`${clientId} left`));
     /*
     setTimeout(async () => {
         console.log(`Timed`);
@@ -135,7 +128,6 @@ commander
     .option("-h, --snapshots [snapshots]", "Snapshots URL", "https://historian.wu2.prague.office-int.com")
     .option("-t, --tenant [tenant]", "Tenant", "happy-chatterjee")
     .option("-s, --secret [secret]", "Secret", "8f69768d16e3852bc4b938cdaa0577d1")
-    .option("-r, --reject", "Reject")
     .arguments("<documentId>")
     .action((documentId) => {
         action = true;
@@ -155,8 +147,6 @@ commander
             commander.tenant,
             user,
             new driver.TokenProvider(token),
-            null,
-            commander.reject,
             documentServices)
             .catch((error) => {
                 console.error(error);
