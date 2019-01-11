@@ -1,0 +1,11 @@
+{
+  "name": "chaincode-loader",
+  "version": "0.0.1",
+  "description": "Headless chaincode loader",
+  "main": "index.js",
+  "author": "Microsoft",
+  "license": "ISC",
+  "dependencies": {
+    "@chaincode/simple": "0.0.14"
+  }
+}
