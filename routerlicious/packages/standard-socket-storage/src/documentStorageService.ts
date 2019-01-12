@@ -1,41 +1,44 @@
 import * as resources from "@prague/gitresources";
 import * as api from "@prague/runtime-definitions";
+import { buildHierarchy } from "@prague/utils";
+import { IDocumentStorageManager } from "./standardDocumentStorageManager";
 
 /**
- * For now, this is just a placeholder
- * It will be implemented once snapshot apis are created in ODC/SPO
+ * The current implementation of this aligns with SPO's implmentation of SnapShot
  */
 export class DocumentStorageService implements api.IDocumentStorageService {
 
-    // @ts-ignore ignore unused variable for now
-    constructor(private readonly snapshotUrl: string, private readonly tokenProvider: api.ITokenProvider) {
+    constructor(private readonly storageManager: IDocumentStorageManager) {
     }
 
-    public getSnapshotTree(version: resources.ICommit): Promise<api.ISnapshotTree> {
-        return null;
+    public async getSnapshotTree(version?: resources.ICommit): Promise<api.ISnapshotTree> {
+        const tree = await this.storageManager.getTree(version);
+        return buildHierarchy(tree);
     }
 
     public async getVersions(sha: string, count: number): Promise<resources.ICommit[]> {
-        return [];
+        return this.storageManager.getVersions(sha, count);
     }
 
     public async read(sha: string): Promise<string> {
-        return "";
+        const response = await this.storageManager.getBlob(sha);
+        return response.content;
     }
 
     public async getContent(version: resources.ICommit, path: string): Promise<string> {
-        return "";
+        const response = await this.storageManager.getContent(version, path);
+        return response.content;
     }
 
     public write(tree: api.ITree, parents: string[], message: string): Promise<resources.ICommit> {
-        return null;
+        return this.storageManager.write(tree, parents, message);
     }
 
     public async createBlob(file: Buffer): Promise<resources.ICreateBlobResponse> {
-        return null;
+        return this.storageManager.createBlob(file);
     }
 
     public getRawUrl(sha: string): string {
-        return null;
+        return this.storageManager.getRawUrl(sha);
     }
 }

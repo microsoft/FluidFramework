@@ -1,9 +1,8 @@
-import { IDocumentStorage, IProducer, ITenantManager } from "@prague/services-core";
+import { IAlfredTenant, IDocumentStorage, IProducer, ITenantManager } from "@prague/services-core";
 import * as utils from "@prague/services-utils";
 import * as cors from "cors";
 import { Router } from "express";
 import { Provider } from "nconf";
-import { IAlfredTenant } from "../tenant";
 import * as deltas from "./deltas";
 import * as documents from "./documents";
 import * as tenants from "./tenants";

@@ -1,4 +1,4 @@
-import * as core from "@prague/routerlicious/dist/core";
+import * as core from "@prague/services-core";
 import * as http from "http";
 import { AddressInfo } from "net";
 import * as util from "util";

@@ -1,4 +1,4 @@
-import * as utils from "@prague/routerlicious/dist/utils";
+import * as utils from "@prague/services-utils";
 import * as bodyParser from "body-parser";
 import * as compression from "compression";
 import * as connectRedis from "connect-redis";
@@ -18,6 +18,7 @@ import split = require("split");
 import * as expiry from "static-expiry";
 import * as winston from "winston";
 import * as appRoutes from "./routes";
+import { TenantManager } from "./tenantManager";
 
 // Base endpoint to expose static files at
 const staticFilesEndpoint = "/public";
@@ -62,6 +63,17 @@ const stream = split().on("data", (message) => {
 });
 
 export function create(config: Provider, mongoManager: utils.MongoManager) {
+    const manager = new TenantManager(
+        mongoManager,
+        config.get("mongo:collectionNames:users"),
+        config.get("mongo:collectionNames:orgs"),
+        config.get("mongo:collectionNames:tenants"),
+        config.get("app:riddlerUrl"),
+        config.get("app:gitUrl"),
+        config.get("app:cobaltUrl"),
+        config.get("app:historianUrl"),
+        config.get("app:alfredUrl"),
+        config.get("app:jarvisUrl"));
 
     // Create a redis session store.
     const redisStore = connectRedis(expressSession);
@@ -155,7 +167,7 @@ export function create(config: Provider, mongoManager: utils.MongoManager) {
         }
     });
 
-    const routes = appRoutes.create(config, mongoManager);
+    const routes = appRoutes.create(config, mongoManager, manager);
     app.use("/api", routes.api);
     app.use("/", routes.home);
 

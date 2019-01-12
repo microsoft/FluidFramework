@@ -1,4 +1,4 @@
-import { IDocumentStorage, IProducer, ITenantManager } from "@prague/services-core";
+import { IAlfredTenant, IDocumentStorage, IProducer, ITenantManager } from "@prague/services-core";
 import * as utils from "@prague/services-utils";
 import * as bodyParser from "body-parser";
 import * as compression from "compression";
@@ -9,7 +9,6 @@ import { Provider } from "nconf";
 import split = require("split");
 import * as winston from "winston";
 import * as alfredRoutes from "./routes";
-import { IAlfredTenant } from "./tenant";
 
 /**
  * Basic stream logging interface for libraries that require a stream to pipe output to (re: Morgan)

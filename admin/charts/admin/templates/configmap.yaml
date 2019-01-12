@@ -14,7 +14,10 @@ data:
         "app": {
             "riddlerUrl": "{{ .Values.endpoints.riddlerUrl }}",
             "gitUrl": "{{ .Values.endpoints.gitUrl }}",
-            "cobaltUrl": "{{ .Values.endpoints.cobaltUrl }}"
+            "cobaltUrl": "{{ .Values.endpoints.cobaltUrl }}",
+            "historianUrl": "{{ .Values.endpoints.historianUrl }}",
+            "alfredUrl": "{{ .Values.endpoints.alfredUrl }}",
+            "jarvisUrl": "{{ .Values.endpoints.jarvisUrl }}"
         },
         "login": {
             "microsoft": {

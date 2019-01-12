@@ -1,0 +1,39 @@
+{{<layout}}
+    {{$styles}}
+        <link href="https://ajax.aspnetcdn.com/ajax/bootstrap/4.1.1/css/bootstrap.css" rel="stylesheet" />
+        <style>
+            .row.chaincode {
+                margin-top: 10px;
+            }
+
+            .create-iframe {
+                display: none;
+            }
+        </style>
+    {{/styles}}
+
+    {{$content}}
+        <div class="container">
+            <div class="row">
+                <div class="col">Name</div>
+                <div class="col">Description</div>
+                <div class="col">Create</div>
+            </div>
+
+            {{#packages}}
+            <div class="row chaincode">
+                <div class="col">{{name}}@{{version}}</div>
+                <div class="col">{{description}}</div>
+                <div class="col">
+                    <form target="create-iframe" action="/create" method="POST">
+                        <input type="hidden" name="chaincode" value="{{name}}@{{version}}">
+                        <button type="submit" class="btn btn-primary">Create</button>
+                    </form>
+                </div>
+            </div>
+            {{/packages}}
+        </div>
+
+        <iframe name="create-iframe" class="create-iframe"></iframe>
+    {{/content}}
+{{/layout}}

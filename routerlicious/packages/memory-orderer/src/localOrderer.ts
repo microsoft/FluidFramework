@@ -275,7 +275,8 @@ export class LocalOrderer implements IOrderer {
         taskMessageSender: ITaskMessageSender,
         tenantManager: ITenantManager,
         permission: any,
-        maxMessageSize: number) {
+        maxMessageSize: number,
+        clientTimeout: number = ClientSequenceTimeout) {
 
         const [details, documentCollection, deltasCollection] = await Promise.all([
             storage.getOrCreateDocument(tenantId, documentId),
@@ -292,7 +293,8 @@ export class LocalOrderer implements IOrderer {
             taskMessageSender,
             tenantManager,
             permission,
-            maxMessageSize);
+            maxMessageSize,
+            clientTimeout);
     }
 
     private static pubSub = new PubSub();
@@ -322,7 +324,8 @@ export class LocalOrderer implements IOrderer {
         private taskMessageSender: ITaskMessageSender,
         private tenantManager: ITenantManager,
         private permission: any,
-        private maxMessageSize: number) {
+        private maxMessageSize: number,
+        clientTimeout: number) {
 
         this.existing = details.existing;
 
@@ -353,7 +356,7 @@ export class LocalOrderer implements IOrderer {
             documentCollection,
             this.deliToScriptoriumKafka,
             this.alfredToDeliKafka,
-            ClientSequenceTimeout,
+            clientTimeout,
             ActivityCheckingTimeout);
 
         this.startLambdas();

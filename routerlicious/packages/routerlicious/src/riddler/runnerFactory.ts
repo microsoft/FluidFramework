@@ -10,7 +10,8 @@ export class RiddlerResources implements utils.IResources {
         public tenantsCollectionName: string ,
         public mongoManager: utils.MongoManager,
         public port: any,
-        public loggerFormat: string) {
+        public loggerFormat: string,
+        public baseOrdererUrl: string) {
     }
 
     public async dispose(): Promise<void> {
@@ -43,8 +44,9 @@ export class RiddlerResourcesFactory implements utils.IResourcesFactory<RiddlerR
 
         const loggerFormat = config.get("logger:morganFormat");
         const port = utils.normalizePort(process.env.PORT || "5000");
+        const serverUrl = config.get("worker:serverUrl");
 
-        return new RiddlerResources(tenantsCollectionName, mongoManager, port, loggerFormat);
+        return new RiddlerResources(tenantsCollectionName, mongoManager, port, loggerFormat, serverUrl);
     }
 }
 
@@ -54,6 +56,7 @@ export class RiddlerRunnerFactory implements utils.IRunnerFactory<RiddlerResourc
             resources.tenantsCollectionName,
             resources.port,
             resources.mongoManager,
-            resources.loggerFormat);
+            resources.loggerFormat,
+            resources.baseOrdererUrl);
     }
 }

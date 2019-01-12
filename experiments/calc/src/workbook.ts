@@ -32,6 +32,7 @@ import {
     notFormulaString,
     NotFormulaString,
     NotImplemented,
+    notImplemented,
     pendingValue,
     Precedents,
     previousFailure,
@@ -50,10 +51,10 @@ import {
     UnboxedOper,
     WriteOper,
     //isBlankOper,
-    isErrorOper,
     OperKind,
     //BlankOper,
     Oper,
+    errorOper,
 } from "./types";
 
 // Local imports.
@@ -90,6 +91,7 @@ export abstract class Workbook {
         setCellFailure: this.setCellFailure.bind(this),
         setDynamicPrecs: this.setDynamicPrecs.bind(this),
         loadObjects: () => false,
+        getUsedRange: () => failure(notImplemented(["getUsedRange"]))
     });
 
     // Workbook state
@@ -142,9 +144,7 @@ export abstract class Workbook {
             ? { kind: OperKind.Blank }
             : cell.oper;
 
-        return isErrorOper(oper)
-            ? failure(cell.reason)
-            : success(oper as ReadOper);
+        return success(oper);
     }
 
     /**
@@ -153,7 +153,7 @@ export abstract class Workbook {
      */
     public evaluateFormulaText(formulaText: string, row = 0, col = 0): Result<ReadOper, FailureReason | NotImplemented | NotFormulaString | IllFormedFormula> | EvalFormulaPaused {
         this.ensureEvaluated();
-        
+
         const compileResult = this.compileFormulaText(formulaText, row, col);
         if (compileResult.kind === ResultKind.Success) {
             const formulaLocation = this.getCellLoc(row, col);
@@ -164,9 +164,8 @@ export abstract class Workbook {
                 undefined,
             );
             return evalResult;
-        } else {
-            return failure(compileResult.reason);
         }
+        return failure(compileResult.reason);
     }
 
     /**
@@ -261,10 +260,9 @@ export abstract class Workbook {
                 console.error(`Formula at ${printSheetGridRange(formulaLocation)} is not well-formed.`);
                 return failure(illFormedFormula("Formula is not well-formed."));
             }
-        } else {
-            console.error(`Could not parse formula at ${printSheetGridRange(formulaLocation)}. Here's the full parseResult: `, parseResult);
-            return failure(notFormulaString(parseResult.kind));
         }
+        console.error(`Could not parse formula at ${printSheetGridRange(formulaLocation)}. Here's the full parseResult: `, parseResult);
+        return failure(notFormulaString(parseResult.kind));
     }
 
     /**
@@ -302,28 +300,57 @@ export abstract class Workbook {
     }
 
     /**
-     * Coerce strings representing booleans or numbers to their primitive types.
-     * Other string values are return as-is.
+     * Primitive value parser for excel values. Handles booleans,
+     * strings, numbers and errors.
+     * @param inputStr
      */
-    private coersceStringToUnboxedOper(input: string): UnboxedOper {
-        const trimmedInput = input.trim();
-
-        // First, try boolean values.
-        if (trimmedInput === "True" || trimmedInput === "true") {
+    private parseValue(inputStr: string): WriteOper {
+        const input = inputStr.trim();
+        if (input === this.config.localeInfo.trueName) {
             return true;
-        } else if (trimmedInput === "False" || trimmedInput === "false") {
+        }
+        if (input === this.config.localeInfo.falseName) {
             return false;
         }
-
-        // Then try to parse as a number.
+        const error = this.config.localeInfo.errorNames.indexOf(input);
+        if (error > 0) {
+            return errorOper(error);
+        }
         const parseAttempt = Number(input);
         if (typeof parseAttempt === "number" && !isNaN(parseAttempt)) {
             return parseAttempt;
-
-        // If everything fails, just return the string.
-        } else {
-            return input;
         }
+        return input;
+    }
+
+
+    public serialiseValue(input: ReadOper): string {
+        switch(typeof input) {
+            case "string":
+                return input;
+
+            case "number":
+                // 3 dp for numbers.
+                return (Math.round(input * 1000) / 1000).toString();
+
+            case "boolean":
+                return input ? this.config.localeInfo.trueName : this.config.localeInfo.falseName
+
+            default:
+                switch (input.kind) {
+                    case OperKind.Error:
+                        return this.config.localeInfo.errorNames[input.type];
+
+                    case OperKind.Array:
+                        return '{ARR}';
+
+                    case OperKind.Blank:
+                        return "";
+                    case OperKind.Rich:
+                        return this.serialiseValue(input.getFallback());
+                }
+        }
+        return input // never;
     }
 
     /** Returns the pre-parsed 'string | number | boolean' as originally provided to setCellText. */
@@ -349,11 +376,13 @@ export abstract class Workbook {
         const cellLoc = this.getCellLoc(row, col);
         this.removeDependents(cellLoc, cell.precedents);
 
+        // Handle Blank
         if (newValue === "") {
             cell.oper = blankOper;
             cell.formulaText = undefined;
             cell.precedents = undefined;
             cell.state = CellState.Final;
+
 
         // Handle formula input
         } else if (isFormulaString(newValue)) {
@@ -367,25 +396,29 @@ export abstract class Workbook {
             cell.compiledFormula = compiledFormula;
             cell.state = CellState.Dirty;
 
-        // Handle numbers and booleans.
-        } else if (typeof newValue === "number" || typeof newValue === "boolean") {
-            cell.oper = newValue;
-            cell.formulaText = undefined;
-            cell.precedents = undefined;
-            cell.state = CellState.Final;
-
-        // Handle strings.
-        } else if (typeof newValue === "string") {
-            cell.oper = this.coersceStringToUnboxedOper(newValue);
-            cell.formulaText = undefined;
-            cell.precedents = undefined;
-            cell.state = CellState.Final;
-
-        // This code should never be hit.
+        // Handle numbers, boolean, and strings.
         } else {
-            console.error("newValue was an unexpected type!");
-        }
+            switch (typeof newValue) {
+                case "number":
+                case "boolean":
+                    cell.oper = newValue;
+                    cell.formulaText = undefined;
+                    cell.precedents = undefined;
+                    cell.state = CellState.Final;
+                    break;
 
+                case "string":
+                    cell.oper = this.parseValue(newValue);
+                    cell.formulaText = undefined;
+                    cell.precedents = undefined;
+                    cell.state = CellState.Final;
+                    break;
+
+                default:
+                    const proof: never = newValue
+                    console.error("newValue was an unexpected type! " + proof);
+            }
+        }
         this.addDependentsToAccumulatorAndMarkDirty([cellLoc], dependents);
         if (!isExternalUpdate) {
             this.storeCellText(row, col, newValue);

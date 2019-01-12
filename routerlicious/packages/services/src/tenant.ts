@@ -15,6 +15,10 @@ export class Tenant implements core.ITenant {
         return this.config.storage;
     }
 
+    public get orderer(): core.ITenantOrderer {
+        return this.config.orderer;
+    }
+
     constructor(private config: core.ITenantConfig, private manager: GitManager) {
     }
 }

@@ -62,6 +62,8 @@ endpoints:
   riddlerUrl: http://pesky-platypus-riddler
   gitUrl: http://smelly-wolf-gitrest
   cobaltUrl: http://smelly-wolf-cobalt
+  alfredUrl: https://alfred.wu2.prague.office-int.com
+  jarvisUrl: https://jarvis.wu2.prague.office-int.com
 `;
 
 const writeFileAsync = util.promisify(fs.writeFile);

@@ -2,7 +2,10 @@
     "app": {
         "riddlerUrl": "http://riddler:5000",
         "gitUrl": "http://gitrest:3000",
-        "cobaltUrl": "http://cobalt"
+        "cobaltUrl": "http://cobalt",
+        "historianUrl": "http://localhost:3001",
+        "alfredUrl": "http://localhost:3000",
+        "jarvisUrl": "http://localhost:3030"
     },
     "login": {
         "microsoft": {

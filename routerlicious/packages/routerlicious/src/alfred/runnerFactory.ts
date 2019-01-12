@@ -14,15 +14,23 @@ import * as os from "os";
 import { AlfredRunner } from "./runner";
 
 export class OrdererManager implements core.IOrdererManager {
-    constructor(private localOrderManager: LocalOrderManager, private kafkaFactory?: KafkaOrdererFactory) {
+    constructor(
+        private ordererUrl: string,
+        private tenantManager: core.ITenantManager,
+        private localOrderManager: LocalOrderManager,
+        private kafkaFactory: KafkaOrdererFactory) {
     }
 
     public async getOrderer(tenantId: string, documentId: string): Promise<core.IOrderer> {
-        if (tenantId === "local" || !this.kafkaFactory) {
-            return this.localOrderManager.get(tenantId, documentId);
-        } else {
-            return this.kafkaFactory.create(tenantId, documentId);
+        const tenant = await this.tenantManager.getTenant(tenantId);
+
+        if (tenant.orderer.url !== this.ordererUrl) {
+            return Promise.reject("Invalid ordering service endpoint");
         }
+
+        return tenant.orderer.type === "kafka"
+            ? this.kafkaFactory.create(tenantId, documentId)
+            : this.localOrderManager.get(tenantId, documentId);
     }
 }
 
@@ -141,7 +149,12 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
             producer,
             storage,
             maxSendMessageSize);
-        const orderManager = new OrdererManager(localOrderManager, kafkaOrdererFactory);
+        const serverUrl = config.get("worker:serverUrl");
+        const orderManager = new OrdererManager(
+            serverUrl,
+            tenantManager,
+            localOrderManager,
+            kafkaOrdererFactory);
 
         // Tenants attached to the apps this service exposes
         const appTenants = config.get("alfred:tenants") as Array<{ id: string, key: string }>;

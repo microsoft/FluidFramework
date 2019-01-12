@@ -64,7 +64,7 @@ export class Sheetlet extends Block<SheetletState> {
 
                 switch (result.kind) {
                     case ResultKind.Success:
-                        input.value = result.value.toString();
+                        input.value = workbook.serialiseValue(result.value);
                         break;
                     default:
                         input.value = result.reason.toString();

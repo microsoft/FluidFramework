@@ -8,7 +8,7 @@ export function runTaskAnalyzer(runtime: IRuntime) {
         const remoteHelpMessage: IHelpMessage = {
             tasks: ["chaincode"],
         };
-        runtime.submitSystemMessage(MessageType.RemoteHelp, remoteHelpMessage);
+        runtime.submitMessage(MessageType.RemoteHelp, remoteHelpMessage);
     }
 }
 

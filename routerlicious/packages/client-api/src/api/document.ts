@@ -121,7 +121,7 @@ export class Document extends EventEmitter {
     /**
      * Constructs a new document from the provided details
      */
-    constructor(private runtime: IRuntime, private root: IMap) {
+    constructor(public readonly runtime: IRuntime, private root: IMap) {
         super();
 
         // Run task analyzer for already present clients.

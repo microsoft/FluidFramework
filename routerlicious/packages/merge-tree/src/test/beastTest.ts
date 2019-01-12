@@ -103,9 +103,9 @@ export function integerTest1() {
     let pos = new Array<number>(intCount);
     let i = 0;
     let redo = false;
-    function onConflict(key: number, current: number, proposed: number) {
+    function onConflict(key: number, currentKey: number) {
         redo = true;
-        return current;
+        return { data: currentKey};
     }
     let conflictCount = 0;
     let start = clock();

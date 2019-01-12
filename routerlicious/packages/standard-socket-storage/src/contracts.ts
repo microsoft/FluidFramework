@@ -1,3 +1,4 @@
+import * as resources from "@prague/gitresources";
 import * as api from "@prague/runtime-definitions";
 
 /**
@@ -22,4 +23,8 @@ export interface IDeltaStorageGetResponse {
 export interface ISequencedDeltaOpMessage {
     op: api.ISequencedDocumentMessage;
     sequenceNumber: number;
+}
+
+export interface IDocumentStorageGetVersionsResponse {
+    value: resources.ICommit[];
 }

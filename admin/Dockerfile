@@ -1,10 +1,9 @@
-FROM node:8.9.3-alpine
+FROM node:8.15.0-slim
 
-# node-gyp dependencies
-RUN apk add --no-cache --virtual .gyp python make g++
-
-# tini so node doesn't run as PID 1
-RUN apk add --no-cache tini python make g++
+# Add Tini
+ENV TINI_VERSION v0.18.0
+ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
+RUN chmod +x /tini
 
 # Copy over and build the server
 WORKDIR /usr/src/server
@@ -23,9 +22,6 @@ RUN npm run build
 # Remove the npmrc following the build
 RUN rm -f .npmrc
 
-# Remove build tools
-RUN apk del .gyp
-
 # Expose the port the app runs under
 EXPOSE 3000
 
@@ -34,7 +30,7 @@ USER node
 
 # Node wasn't designed to be run as PID 1. Tini is a tiny init wrapper. You can also set --init on docker later than
 # 1.13 but Kubernetes is at 1.12 so we prefer tini for now.
-ENTRYPOINT ["/sbin/tini", "--"]
+ENTRYPOINT ["/tini", "--"]
 
 # And set the default command to start the server
 CMD ["node", "dist/www.js"]

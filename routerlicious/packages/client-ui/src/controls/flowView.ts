@@ -413,6 +413,12 @@ const commands: ICmd[] = [
     },
     {
         exec: (f) => {
+            f.insertInnerComponent("map", "@chaincode/pinpoint-editor@0.6.15");
+        },
+        key: "insert inner map",
+    },
+    {
+        exec: (f) => {
             f.insertChaincode("code", "@chaincode/monaco@0.1.18");
         },
         key: "insert code",
@@ -3662,6 +3668,9 @@ export class FlowView extends ui.Component {
             this.localQueueRender(FlowView.docStartPosition);
         });
 
+        // Provide access to the containing collaborative object
+        this.services.set("document", this.collabDocument);
+
         // TODO: Should insert a workbook into the document on demand, implement the ability
         //       to add references to pre-existing notebooks, support multiple notebooks, ...
         //
@@ -5030,6 +5039,11 @@ export class FlowView extends ui.Component {
         this.insertComponent("document", { id, chaincode });
     }
 
+    public insertInnerComponent(prefix: string, chaincode: string) {
+        const id = `${prefix}${Date.now()}`;
+        this.insertComponent("innerComponent", { id, chaincode });
+    }
+
     /** Insert a Document */
     public insertDocument(id) {
         this.insertComponent("document", { id });
@@ -5543,7 +5557,8 @@ export class FlowView extends ui.Component {
 
         const bookmarksCollection = this.sharedString.getSharedIntervalCollection("bookmarks");
         this.bookmarks = await bookmarksCollection.getView();
-
+    
+        // Takes a collaborative Object from OnPrepareDeserialize and inserts back into the interval's "Story" Property
         const onDeserialize: SharedString.DeserializeCallback = (interval, commentSharedString: ICollaborativeObject) => {
             if (interval.properties && interval.properties["story"]) {
                 assert(commentSharedString);
@@ -5553,6 +5568,7 @@ export class FlowView extends ui.Component {
             return true;
         };
 
+        // Fetches the collaborative object with the key story["value"];
         const onPrepareDeserialize: SharedString.PrepareDeserializeCallback = (properties) => {
             if (properties && properties["story"]) {
                 const story = properties["story"];

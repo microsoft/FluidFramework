@@ -228,6 +228,10 @@
                 "url": "http://gitrest:3000",
                 "owner": "prague",
                 "repository": "local"
+            },
+            "orderer": {
+                "type": "memory",
+                "url": "http://localhost:3000"
             }
         }
     ],

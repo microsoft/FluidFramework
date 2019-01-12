@@ -7,7 +7,6 @@ import { RdkafkaProducer } from "../rdkafka";
 import { KafkaOrdererFactory } from "./kafkaOrderer";
 import { OrdererManager } from "./orderFactory";
 import { JarvisRunner } from "./runner";
-import { IAlfredTenant } from "./tenant";
 
 export class JarvisResources implements utils.IResources {
     constructor(
@@ -18,7 +17,7 @@ export class JarvisResources implements utils.IResources {
         public orderManager: OrdererManager,
         public tenantManager: core.ITenantManager,
         public storage: core.IDocumentStorage,
-        public appTenants: IAlfredTenant[],
+        public appTenants: core.IAlfredTenant[],
         public mongoManager: utils.MongoManager,
         public port: any,
         public documentsCollectionName: string,

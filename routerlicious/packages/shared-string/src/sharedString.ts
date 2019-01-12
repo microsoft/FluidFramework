@@ -52,6 +52,7 @@ export class SharedString extends CollaborativeMap {
     public intervalCollections: IMapView;
     private isLoaded = false;
     private collabStarted = false;
+    private autoApply = true;
     private pendingMinSequenceNumber: number = 0;
     // Deferred that triggers once the object is loaded
     private loadedDeferred = new Deferred<void>();
@@ -368,6 +369,17 @@ export class SharedString extends CollaborativeMap {
         return this.client.findTile(startPos, tileLabel, preceding);
     }
 
+    public setAutoApply(aa: boolean) {
+        this.autoApply = aa;
+    }
+
+    public applyMessage(message: ISequencedObjectMessage) {
+        const svAuto = this.autoApply;
+        this.autoApply = true;
+        this.processContent(message);
+        this.autoApply = svAuto;
+    }
+
     protected transformContent(message: IObjectMessage, toSequenceNumber: number): IObjectMessage {
         if (message.contents) {
             this.client.transform(message as ISequencedObjectMessage, toSequenceNumber);
@@ -411,9 +423,11 @@ export class SharedString extends CollaborativeMap {
     }
 
     protected processContent(message: ISequencedObjectMessage) {
-        this.client.applyMsg(message);
-        if (this.client.mergeTree.minSeqPending) {
-            this.client.mergeTree.notifyMinSeqListeners();
+        if (this.autoApply) {
+            this.client.applyMsg(message);
+            if (this.client.mergeTree.minSeqPending) {
+                this.client.mergeTree.notifyMinSeqListeners();
+            }
         }
     }
 

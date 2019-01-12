@@ -6,7 +6,6 @@ import * as io from "socket.io-client";
 import { DocumentStorageService } from "./blobStorageService";
 import { DeltaStorageService, DocumentDeltaStorageService } from "./deltaStorageService";
 import { TokenProvider } from "./tokens";
-import { WSDeltaConnection } from "./wsDeltaConnection";
 
 /**
  * The DocumentService manages the Socket.IO connection and manages routing requests to connected
@@ -89,31 +88,5 @@ export class DocumentService implements api.IDocumentService {
 
     public getErrorTrackingService() {
         return this.errorTracking;
-    }
-}
-
-/**
- * The DocumentService manages the Socket.IO connection and manages routing requests to connected
- * clients
- */
-export class DocumentService2 extends DocumentService {
-    constructor(
-        deltaUrl: string,
-        gitUrl: string,
-        errorTracking: api.IErrorTrackingService,
-        disableCache: boolean,
-        historianApi: boolean,
-        directCredentials: ICredentials) {
-        super(deltaUrl, gitUrl, errorTracking, disableCache, historianApi, directCredentials);
-    }
-
-    public async connectToDeltaStream(
-        tenantId: string,
-        id: string,
-        tokenProvider: api.ITokenProvider,
-        client: api.IClient): Promise<api.IDocumentDeltaConnection> {
-
-        const token = (tokenProvider as TokenProvider).token;
-        return WSDeltaConnection.Create(tenantId, id, token, client, this.deltaUrl);
     }
 }

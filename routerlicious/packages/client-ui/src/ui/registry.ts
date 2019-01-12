@@ -5,6 +5,7 @@ import {
     Chart,
     Document,
     Formula,
+    InnerComponent,
     Sheetlet,
     Slider,
 } from ".";
@@ -16,6 +17,7 @@ export const refTypeNameToComponent = new Map<string, Box<BoxState>>([
     ["formula", new Formula()],
     ["sheetlet", new Sheetlet()],
     ["slider", new Slider()],
+    ["innerComponent", new InnerComponent()],
 ]);
 
 /**

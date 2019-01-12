@@ -1,4 +1,4 @@
-import { IDocumentStorage, IProducer, ITenantManager } from "@prague/services-core";
+import { IAlfredTenant, IDocumentStorage, IProducer, ITenantManager } from "@prague/services-core";
 import * as utils from "@prague/services-utils";
 import { Deferred } from "@prague/utils";
 import * as http from "http";
@@ -7,7 +7,6 @@ import * as winston from "winston";
 import * as app from "./app";
 import * as io from "./io";
 import { OrdererManager } from "./orderFactory";
-import { IAlfredTenant } from "./tenant";
 
 export class JarvisRunner implements utils.IRunner {
     private server: http.Server;

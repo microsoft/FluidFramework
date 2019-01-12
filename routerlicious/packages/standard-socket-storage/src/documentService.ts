@@ -3,6 +3,7 @@ import { DocumentDeltaConnection } from "@prague/socket-storage-shared";
 import * as io from "socket.io-client";
 import { DeltaStorageService, DocumentDeltaStorageService } from "./deltaStorageService";
 import { DocumentStorageService } from "./documentStorageService";
+import { StandardDocumentStorageManager } from "./standardDocumentStorageManager";
 import { TokenProvider } from "./token";
 
 export class DocumentService implements api.IDocumentService {
@@ -16,7 +17,8 @@ export class DocumentService implements api.IDocumentService {
         tenantId: string,
         id: string,
         tokenProvider: api.ITokenProvider): Promise<api.IDocumentStorageService> {
-        return new DocumentStorageService(this.snapshotUrl, tokenProvider);
+        const documentManager = new StandardDocumentStorageManager(this.snapshotUrl, tokenProvider);
+        return new DocumentStorageService(documentManager);
     }
 
     public async connectToDeltaStorage(

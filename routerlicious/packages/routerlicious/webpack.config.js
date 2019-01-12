@@ -54,6 +54,32 @@ module.exports = env => {
                         /node_modules/,
                         /dist/,
                     ]
+                },
+                {
+                    test: /\.css$/,
+                    use: [
+                        "style-loader", // creates style nodes from JS strings
+                        "css-loader", // translates CSS into CommonJS
+                    ]
+                },
+                {
+                    test: /\.scss$/,
+                    use: [
+                        "style-loader", // creates style nodes from JS strings
+                        "css-loader", // translates CSS into CommonJS
+                        "sass-loader" // compiles Sass to CSS, using Node Sass by default
+                    ]
+                },
+                {
+                    test: /\.(png|jpg|gif|svg|eot|ttf|woff|woff2)$/,
+                    loader: 'url-loader',
+                    options: {
+                        limit: 10000
+                    }
+                },
+                {
+                    test: /\.html$/,
+                    loader: 'html-loader'
                 }
             ]
         },

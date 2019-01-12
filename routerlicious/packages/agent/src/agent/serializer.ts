@@ -26,7 +26,7 @@ export interface ISnapshotDocument {
 }
 
 /**
- * Mananges snapshot creation for a distributed document
+ * Manages snapshot creation for a distributed document
  */
 export class Serializer extends EventEmitter {
     // Use the current time on initialization since we will be loading off a snapshot

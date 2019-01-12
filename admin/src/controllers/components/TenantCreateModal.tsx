@@ -51,7 +51,7 @@ export class CreateTenantModal extends React.Component<ITenantCreateProps, ITena
               <Input />,
             )}
           </FormItem>
-          <FormItem className="collection-create-form_last-form-item">
+          <FormItem className="collection-create-form_last-form-item" label="Storage Service">
             {getFieldDecorator("storageType", {
               initialValue: "git",
             })(
@@ -101,6 +101,17 @@ export class CreateTenantModal extends React.Component<ITenantCreateProps, ITena
               )}
             </FormItem>
           }
+          <FormItem className="collection-create-form_last-form-item" label="Ordering Service">
+            {getFieldDecorator("ordererType", {
+              initialValue: "kafka",
+            })(
+              <Radio.Group>
+                <Radio value="kafka">kafka</Radio>
+                <Radio value="memory">memory</Radio>
+                <Radio value="kafka2">kafka (experimental)</Radio>
+              </Radio.Group>,
+            )}
+          </FormItem>
         </Form>
       </Modal>
     );

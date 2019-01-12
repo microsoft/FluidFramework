@@ -27,6 +27,10 @@
                         <input type="text" class="form-control" id="authors">
                     </div>
                     <div class="form-group">
+                        <label for="distributed">Distributed</label>
+                        <input type="checkbox" class="form-control" id="distributed">
+                    </div>
+                    <div class="form-group">
                         <label for="translation">Translation language</label>
                         <input type="text" class="form-control" id="translation" value="">
                     </div>
@@ -46,6 +50,10 @@
                     <div class="form-group">
                         <label for="authors">Number of Authors</label>
                         <input type="text" class="form-control" id="authors">
+                    </div>
+                    <div class="form-group">
+                        <label for="distributed">Distributed</label>
+                        <input type="checkbox" class="form-control" id="distributed">
                     </div>
                     <button class="btn btn-default hidden" id="create" style="margin-bottom: 10px;">Create</button>
                 </form>
@@ -110,7 +118,8 @@
                 "{{ template }}",
                 "{{ speed }}",
                 "{{ authors }}",
-                "{{ languages }}");
+                "{{ languages }}",
+                "{{ distributed }}");
         </script>
     {{/scripts}}
 {{/layout}}

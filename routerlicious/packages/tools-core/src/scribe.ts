@@ -130,8 +130,12 @@ export async function type(
     processes: number,
     documentToken: string,
     metricsToken: string,
-    callback: author.ScribeMetricsCallback): Promise<author.IScribeMetrics> {
+    callback: author.ScribeMetricsCallback,
+    distributed = false): Promise<author.IScribeMetrics> {
 
+    if (distributed) {
+        console.log("distributed");
+    }
     return conductor(
         text,
         intervalTime,

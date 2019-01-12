@@ -1,10 +1,12 @@
 import * as request from "request-promise-native";
-import { ITenantStorage } from "../definitions";
+import { IOrderer, ITenantStorage } from "./definitions";
 
 export interface ITenantConfig {
     id: string;
 
     storage: ITenantStorage;
+
+    orderer: IOrderer;
 }
 
 /**
@@ -46,6 +48,20 @@ export class RiddlerManager {
             `${this.endpoint}/api/tenants/${tenantId}/storage`,
             {
                 body: storage,
+                headers: {
+                    "Accept": "application/json",
+                    "Content-Type": "application/json",
+                },
+                json: true,
+            },
+        );
+    }
+
+    public async updateTenantOrderer(tenantId: string, orderer: IOrderer): Promise<void> {
+        await request.put(
+            `${this.endpoint}/api/tenants/${tenantId}/orderer`,
+            {
+                body: orderer,
                 headers: {
                     "Accept": "application/json",
                     "Content-Type": "application/json",

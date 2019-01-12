@@ -25,6 +25,7 @@ describe("Routerlicious", () => {
                 const testTenantId = "test";
                 const testSecret = "test";
                 const testId = "test";
+                const url = "http://test";
 
                 let webSocketServer: TestWebSocketServer;
                 let deliKafka: TestKafka;
@@ -39,7 +40,7 @@ describe("Routerlicious", () => {
 
                     deliKafka = new TestKafka();
                     const producer = deliKafka.createProducer();
-                    testTenantManager = new TestTenantManager();
+                    testTenantManager = new TestTenantManager(url);
                     const testDbFactory = new TestDbFactory(testData);
                     const mongoManager = new utils.MongoManager(testDbFactory);
                     const databaseManager = new utils.MongoDatabaseManager(
@@ -52,7 +53,7 @@ describe("Routerlicious", () => {
                         testTenantManager,
                         producer);
                     const kafkaOrderer = new KafkaOrdererFactory(producer, testStorage, 1024 * 1024);
-                    testOrderer = new OrdererManager(null, kafkaOrderer);
+                    testOrderer = new OrdererManager(url, testTenantManager, null, kafkaOrderer);
 
                     webSocketServer = new TestWebSocketServer();
                     contentCollection = new TestCollection([]);

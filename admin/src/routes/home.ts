@@ -1,22 +1,19 @@
-import * as utils from "@prague/routerlicious/dist/utils";
+import * as utils from "@prague/services-utils";
 import { Router } from "express";
 import { Provider } from "nconf";
 import * as passport from "passport";
 import * as winston from "winston";
+import { TenantManager } from "../tenantManager";
 import { defaultPartials } from "./partials";
-import { TenantManager } from "./tenantManager";
 
-export function create(config: Provider, mongoManager: utils.MongoManager, ensureLoggedIn: any): Router {
+export function create(
+    config: Provider,
+    mongoManager: utils.MongoManager,
+    ensureLoggedIn: any,
+    manager: TenantManager,
+): Router {
 
     const router: Router = Router();
-    const manager = new TenantManager(
-        mongoManager,
-        config.get("mongo:collectionNames:users"),
-        config.get("mongo:collectionNames:orgs"),
-        config.get("mongo:collectionNames:tenants"),
-        config.get("app:riddlerUrl"),
-        config.get("app:gitUrl"),
-        config.get("app:cobaltUrl"));
 
     /**
      * Route to retrieve the home page for the app
