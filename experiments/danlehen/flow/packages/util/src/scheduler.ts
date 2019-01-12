@@ -1,14 +1,7 @@
-import { BitOps } from "./bits"
-
-enum SchedulerFlags {
-    None = 0,
-    FramePending = 1
-}
-
 type TaskCallback = () => void;
 
 export class Scheduler {
-    private flags: SchedulerFlags = SchedulerFlags.None;
+    private framePending = false;
     private frameTasks: TaskCallback[] = [];
 
     private readonly processFrameTasks = () => {
@@ -18,17 +11,20 @@ export class Scheduler {
 
         console.log(`Processed ${this.frameTasks.length} frame tasks.`);
         this.frameTasks.length = 0;
-        this.flags = BitOps.clear(this.flags, SchedulerFlags.FramePending);
+        this.framePending = false;
     }
 
     public requestFrame(callback: TaskCallback) {
-        if (BitOps.test(this.flags, SchedulerFlags.FramePending)) {
+        // Record the new task.
+        this.frameTasks.push(callback);
+
+        // If the next animation frame callback is already scheduled, do nothing.
+        if (this.framePending) {
             return;
         }
 
-        this.frameTasks.push(callback);
-
+        // Otherwise...
         requestAnimationFrame(this.processFrameTasks);
-        this.flags = BitOps.set(this.flags, SchedulerFlags.FramePending);
+        this.framePending = true;
     }
 }

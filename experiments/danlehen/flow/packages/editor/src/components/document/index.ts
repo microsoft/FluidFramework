@@ -1,3 +1,5 @@
+// This pen illustrates an attempt to render the cursor as an inline span in the document's content flow without impacting kerning or ligatures due to splitting the word into separate spans.
+
 import {
     Segment,
     Marker,
@@ -12,6 +14,7 @@ import { IFlowViewComponent, IViewState, View } from "../";
 import { InclusionView } from "../inclusion";
 import { TextAccumulator } from "./textaccumulator";
 import * as styles from "./index.css";
+import { Paginator } from "./paginator";
 
 const template = new Template({
     tag: "span",
@@ -20,7 +23,7 @@ const template = new Template({
         {
             tag: "span",
             ref: "eventsink",
-            props: { tabIndex: 0 },
+            props: { tabIndex: 0, className: styles.eventSink },
             children: [
                 { tag: "span", ref: "leadingSpan", props: { className: styles.leadingSpan }},
                 { tag: "span", ref: "slot", props: { className: styles.documentContent }},
@@ -46,7 +49,7 @@ export interface ITrackedPosition {
 export interface IDocumentProps {
     doc: FlowDocument;
     trackedPositions: ITrackedPosition[];
-    start: number;
+    paginator?: Paginator;
 }
 
 /**
@@ -120,13 +123,24 @@ export class DocumentView extends View<IDocumentProps, IDocumentViewState> {
         });
     }
 
-    public get root()       { return this.state.root; }
-    public get slot()       { return this.state.slot; }
-    public get overlay()    { return this.state.overlay; }
-    public get eventsink()  { return this.state.eventsink; }
+    public  get root()       { return this.state.root; }
+    public  get overlay()    { return this.state.overlay; }
+    public  get eventsink()  { return this.state.eventsink; }
 
     protected updating(props: Readonly<IDocumentProps>, state: Readonly<IDocumentViewState>) {
+        const originalTrackedPositions = props.trackedPositions;
+        const trackedPositions = originalTrackedPositions.slice(0).concat(
+            (props.paginator && props.paginator.trackedPositions) || []);
+
+        Object.assign(props, { trackedPositions: [] });
         DocumentLayout.sync(props, state);
+
+        // 2nd pass does not mutate DOM.
+        Object.assign(props, { trackedPositions });
+        DocumentLayout.sync(props, state);
+
+        Object.assign(props, { trackedPositions: originalTrackedPositions });
+
         return state;
     }
 
@@ -242,17 +256,17 @@ export class DocumentView extends View<IDocumentProps, IDocumentViewState> {
                     continue;
                 }
 
-                // Accept the new candidate if it is higher than the previous best, or if it's the same
-                // height and closer on the x-axis.
+                // Disqualify the new rect if its horizontal distance is greater than the best match
                 const dx = Math.max(rect.left - x, 0, x - rect.right);
-                if (rect.top < bestRect.top || dx < bestDx) {
-                    bestRect = rect;
-                    bestDx = dx;
-                    bestViewInfo = viewInfo;
-                    console.log(`    ==> Best candidate: ${bestViewInfo.view.root.id}: ${bestViewInfo.view.root.textContent}`);
-                } else {
-                    console.log(`        Rejected d^2: (${dx} > ${bestDx})`);
+                if (dx > bestDx) {
+                    console.log(`        Rejected dx (${dx} > ${bestDx})`);
+                    continue;
                 }
+
+                bestRect = rect;
+                bestDx = dx;
+                bestViewInfo = viewInfo;
+                console.log(`    ==> Best candidate: ${bestViewInfo.view.root.id}: ${bestViewInfo.view.root.textContent}`);
             }
         }
 
@@ -297,9 +311,9 @@ class LayoutContext {
     /** The IViewInfo for the last rendered inline view. */
     private _currentInline: IViewInfo<any, IFlowViewComponent<any>> | null = null;
 
-    constructor (readonly props: IDocumentProps, readonly state: IDocumentViewState, public root: Element) {
+    constructor (readonly doc: FlowDocument, readonly state: IDocumentViewState, public root: Element, trackedPositions: ITrackedPosition[]) {
         // Initialize 'pendingTrackedPositions' by copying and sorting the tracked positions.
-        this.pendingTrackedPositions = props.trackedPositions
+        this.pendingTrackedPositions = trackedPositions
             .slice(0)
             .sort((left, right) => right.position - left.position);
         
@@ -515,7 +529,7 @@ export class DocumentLayout {
         : { text: string, style: CSSStyleDeclaration, segments: TextSegment[], nextPosition: number, startPosition: number }
     {
         const accumulator = new TextAccumulator(position, first, relativeStartOffset, relativeEndOffset);
-        context.props.doc.visitRange(accumulator.tryConcat, accumulator.nextPosition, position + relativeEndOffset);
+        context.doc.visitRange(accumulator.tryConcat, accumulator.nextPosition, position + relativeEndOffset);
         return accumulator;
     }
 
@@ -557,16 +571,23 @@ export class DocumentLayout {
 
     /** Runs state machine, starting with the paragraph at 'start'. */
     public static sync(props: IDocumentProps, state: IDocumentViewState) {
-        console.log(`Sync: [${props.start}..?)`);
+        const paginator = props.paginator;
+        const desiredStart = (paginator && paginator.startPosition) || 0;
+        let start = (paginator && paginator.startingBlockPosition) || 0;
 
-        const context = new LayoutContext(props, state, state.slot);
+        console.log(`Sync(${desiredStart}): [${start}..?)`);
+
+        const context = new LayoutContext(
+            props.doc,
+            state,
+            state.slot,
+            props.trackedPositions);
         
-        let start = props.start;
         do {
             // Ensure that we exit the outer do..while loop if there are no remaining segments.
             let nextStart = -1;
             
-            context.props.doc.visitRange((position, segment, startOffset, endOffset) => {
+            context.doc.visitRange((position, segment, startOffset, endOffset) => {
                 nextStart = this.syncSegment(context, position, segment, startOffset, endOffset);
 
                 // TODO: Halt synchronization once we're off-screen.

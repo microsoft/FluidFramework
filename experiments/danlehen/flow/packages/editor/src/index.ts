@@ -1,5 +1,5 @@
 export { Editor } from "./components/editor";
-export { ViewportView, IViewportProps } from "./components/viewport";
+export { VirtualizedView, IVirtualizedProps } from "./components/virtualized";
 
 import { MapExtension } from "@prague/map";
 import { Component } from "@prague/app-component";
@@ -18,17 +18,23 @@ export class FlowEditor extends Component {
     }
 
     public async opened() {
-        const docId = await this.root.get("docId");
-        const store = await DataStore.from("http://localhost:3000");
-        const doc = await store.open<FlowDocument>(docId, "danlehen", FlowDocument.type);
-        const editor = new Editor(new Scheduler(), doc);
         const maybeDiv = await this.platform.queryInterface<HTMLElement>("div");
         if (maybeDiv) {
-            maybeDiv.appendChild(editor.root);
+            const docId = await this.root.get("docId");
+            const store = await DataStore.from("http://localhost:3000");
+            const doc = await store.open<FlowDocument>(docId, "danlehen", FlowDocument.type);
+            const editor = new Editor();
+            const root = editor.mount({ doc, scheduler: new Scheduler(), trackedPositions: [] });
+            maybeDiv.appendChild(root);
         }
     }
 
-    public static readonly type = `${require("../package.json").name}@latest`;
+    public static readonly type = "@chaincode/flow-editor@latest";
+
+    // The below works, but causes 'webpack --watch' to build in an infinite loop when
+    // build automatically publishes.
+    //
+    // public static readonly type = `${require("../package.json").name}@latest`;
 }
 
 // Chainloader bootstrap.

@@ -26,6 +26,7 @@ export abstract class View<TProps, TState extends IViewState> implements IView<T
     
     public unmount() {
         this.unmounting(this.state);
+        this.root.remove();
         this._state = undefined;
     }
 

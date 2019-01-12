@@ -29,6 +29,12 @@ export class Dom {
         }
     }
 
+    public static ensureFirstChild(parent: Node, desiredChild: Node) {
+        if (parent.firstChild !== desiredChild) {
+            this.replaceFirstChild(parent, desiredChild);
+        }
+    }
+
     /** 
      * Inserts the given 'newChild' immediately after the given 'refChild'.  If 'refChild' is undefined,
      * inserts 'newChild' as the first child of 'parent'.

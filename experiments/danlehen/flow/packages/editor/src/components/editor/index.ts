@@ -1,50 +1,90 @@
-import { FlowDocument } from "@chaincode/flow-document";
 import { Cursor } from "./cursor";
 import { Scheduler } from "@prague/flow-util";
 import { DocumentView, IDocumentProps } from "../document";
+import { View, IViewState } from "..";
 
-export class Editor {
-    private readonly cursor: Cursor;
-    private readonly docProps: IDocumentProps;
-    private readonly docView: DocumentView;
-    private readonly eventSink: HTMLElement;
+export interface IEditorProps extends IDocumentProps { 
+    scheduler: Scheduler;
+}
 
-    public constructor (private readonly scheduler: Scheduler, private readonly doc: FlowDocument) {
-        this.cursor = new Cursor(doc);
-        this.cursor.moveTo(0, false);
+interface ListenerRegistration { 
+    target: EventTarget,
+    type: string,
+    listener: EventListenerOrEventListenerObject
+}
 
-        this.docProps = { doc, trackedPositions: [], start: 0 };
-        this.docView = new DocumentView();
-        this.docView.mount(this.docProps);
-        this.docView.overlay.appendChild(this.cursor.root);
+interface IEditorViewState extends IViewState {
+    cursor: Cursor;
+    docView: DocumentView;
+    props: IEditorProps;
+    listeners: ListenerRegistration[];
+}
 
-        this.eventSink = this.docView.eventsink;
-        this.eventSink.addEventListener("keydown",   this.onKeyDown as any);
-        this.eventSink.addEventListener("keypress",  this.onKeyPress as any);
-        this.eventSink.addEventListener("mousedown", this.onMouseDown as any);
-        
-        window.addEventListener("resize", this.invalidate);
-
-        doc.on("op", this.invalidate);
+export class Editor extends View<IEditorProps, IEditorViewState> {
+    private on(listeners: ListenerRegistration[], target: EventTarget, type: string, listener: EventListenerOrEventListenerObject) {
+        target.addEventListener(type, listener);
+        listeners.push({ target, type, listener });
     }
 
-    public get root() { return this.docView.root; }
-    public get cursorPosition() { return this.cursor.position; }
+    protected mounting(props: Readonly<IEditorProps>): IEditorViewState {
+        const cursor = new Cursor(props.doc);
+        cursor.moveTo(0, false);
+
+        const docView = new DocumentView();
+        const root = docView.mount(props);
+        docView.overlay.appendChild(cursor.root);
+
+        const listeners: ListenerRegistration[] = [];
+        const eventSink = docView.eventsink;
+        this.on(listeners, eventSink, "keydown",   this.onKeyDown as any);
+        this.on(listeners, eventSink, "keypress",  this.onKeyPress as any);
+        this.on(listeners, eventSink, "mousedown", this.onMouseDown as any);
+        this.on(listeners, window,    "resize",    this.invalidate);
+
+        props.doc.on("op", this.invalidate);
+
+        return this.updating(props, {
+            root,
+            listeners,
+            docView,
+            props,
+            cursor
+        });
+    }
+
+    protected updating(props: Readonly<IEditorProps>, state: IEditorViewState): IEditorViewState {
+        // If the document has changed, remount the document view.
+        if (props.doc !== state.props.doc) {
+            this.unmounting(state);
+            state = this.mounting(props);
+        }
+
+        state.docView.update(props);
+
+        return state;
+    }
+
+    protected unmounting(state: IEditorViewState): void {
+        for (const listener of state.listeners) {
+            listener.target.removeEventListener(listener.type, listener.listener);
+        }
+
+        this.doc.off("op", this.invalidate);
+    }
+
+    private get cursor()         { return this.state.cursor; }
+    public  get doc()            { return this.state.props.doc; }
+    private get props()          { return this.state.props; }
+    public  get cursorPosition() { return this.state.cursor.position; }
 
     public readonly invalidate = () => {
-        this.scheduler.requestFrame(this.render);
+        this.props.scheduler.requestFrame(this.render);
     }
 
     private readonly render = () => {
-        this.docProps.trackedPositions = this.cursor.getTracked();
-        // this.docProps.trackedPositions.push({
-        //     position: this.docProps.start,
-        //     callback: this.scrollToPositionCallback
-        // });
-        this.docView.update(this.docProps);
+        this.props.trackedPositions = this.cursor.getTracked();
+        this.state.docView.update(this.props);
         this.cursor.render();
-
-        return this.docView.root;
     }
 
     private readonly onKeyDown = async (ev: KeyboardEvent) => {
@@ -80,7 +120,7 @@ export class Editor {
             case 40: {
                 const cursorBounds = await this.cursor.bounds;
                 if (cursorBounds) {
-                    const segmentAndOffset = this.docView.findBelow(cursorBounds.left, cursorBounds.top, cursorBounds.bottom);
+                    const segmentAndOffset = this.state.docView.findBelow(cursorBounds.left, cursorBounds.top, cursorBounds.bottom);
                     if (segmentAndOffset) {
                         const position = this.doc.getPosition(segmentAndOffset.segment!);
                         this.cursor.moveTo(position + segmentAndOffset.offset, ev.shiftKey);
@@ -123,7 +163,7 @@ export class Editor {
     }
 
     private readonly onMouseDown = (ev: MouseEvent) => {
-        const maybeSegmentAndOffset = this.docView.hitTest(ev.x, ev.y);
+        const maybeSegmentAndOffset = this.state.docView.hitTest(ev.x, ev.y);
         if (maybeSegmentAndOffset) {
             const { segment, offset } = maybeSegmentAndOffset;
             const position = Math.min(

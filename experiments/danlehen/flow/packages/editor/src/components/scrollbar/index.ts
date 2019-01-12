@@ -25,7 +25,6 @@ export interface IScrollBarProps {
     orientation: ScrollbarOrientation;
     min: number;
     max: number;
-    value: number;
     onScroll?: (value: number) => void;
 }
 
@@ -45,7 +44,42 @@ export class ScrollbarView extends View<IScrollBarProps, IScrollBarViewState> {
         return `${size}px`; 
     }
 
-    private sync(props: IScrollBarProps, state: IScrollBarViewState) {
+    public mounting(props: Readonly<IScrollBarProps>): IScrollBarViewState {
+        const root = template.clone() as HTMLElement;
+        const content = template.get(root, "content") as HTMLElement;
+
+        return this.updating(props, { root, content });
+    }
+
+    private readonly onScrollVert = (state: Readonly<IScrollBarViewState>) => this.fireOnScroll(state, state.root.scrollTop);
+    private readonly onScrollHoriz = (state: Readonly<IScrollBarViewState>) => this.fireOnScroll(state, state.root.scrollLeft);
+
+    private readonly fireOnScroll = (state: Readonly<IScrollBarViewState>, value: number) => {
+        value = Math.round(value);
+        console.log(`scrollbar: ${value}`);
+        state.onScroll!(value);
+    }
+
+    public updating(props: Readonly<IScrollBarProps>, state: Readonly<IScrollBarViewState>): IScrollBarViewState {
+        const root = state.root;
+        root.className = orientationToClass[props.orientation];
+
+        if (state.onScrollRaw) {
+            state.root.removeEventListener("scroll", state.onScrollRaw);
+        }
+
+        let onScrollRaw: undefined | (() => void) = undefined;
+        if (props.onScroll) {
+            onScrollRaw = 
+                props.orientation === ScrollbarOrientation.Vertical
+                    ? () => this.onScrollVert(state)
+                    : () => this.onScrollHoriz(state);
+
+            state.root.addEventListener("scroll", onScrollRaw);
+        }
+
+        Object.assign(state, { onScroll: props.onScroll, onScrollRaw });
+
         const bounds = state.root.getBoundingClientRect();
         const content = state.content;
         
@@ -61,46 +95,13 @@ export class ScrollbarView extends View<IScrollBarProps, IScrollBarViewState> {
                 break;
             }
         }
-    }
-
-    public mounting(props: Readonly<IScrollBarProps>): IScrollBarViewState {
-        const root = template.clone() as HTMLElement;
-        const content = template.get(root, "content") as HTMLElement;
-
-        return this.updating(props, { root, content });
-    }
-
-    private readonly onScrollVert = (state: Readonly<IScrollBarViewState>) => this.fireOnScroll(state, state.root.scrollTop);
-    private readonly onScrollHoriz = (state: Readonly<IScrollBarViewState>) => this.fireOnScroll(state, state.root.scrollLeft);
-
-    private readonly fireOnScroll = (state: Readonly<IScrollBarViewState>, value: number) => {
-        value = Math.round(value);
-        console.log(`scrollbar: ${value}`);
-        (state.onScroll as (value: number) => void)(value);
-    }
-
-    public updating(props: Readonly<IScrollBarProps>, state: Readonly<IScrollBarViewState>): IScrollBarViewState {
-        const root = state.root;
-        root.className = orientationToClass[props.orientation];
-
-        if (state.onScrollRaw) {
-            state.root.removeEventListener("scroll", state.onScrollRaw);
-        }
-
-        let onScrollRaw: undefined | (() => void) = undefined;
-        if (props.onScroll) {
-            onScrollRaw = props.orientation === ScrollbarOrientation.Vertical
-                ? () => this.onScrollVert(state)
-                : () => this.onScrollHoriz(state);
-
-            state.root.addEventListener("scroll", onScrollRaw);
-        }
-
-        Object.assign(state, { onScroll: props.onScroll, onScrollRaw });
-        requestAnimationFrame(() => this.sync(props, state));
         
         return state;
     }
 
-    public unmounting(state: Readonly<IScrollBarViewState>) { }
+    public unmounting(state: Readonly<IScrollBarViewState>) { 
+        if (state.onScrollRaw) {
+            state.root.removeEventListener("scroll", state.onScrollRaw);
+        }
+    }
 }
