@@ -12,6 +12,44 @@ using Quobject.EngineIoClientDotNet.ComponentEmitter;
 
 namespace PragueProtoClient
 {
+   class SequencedDocumentMessage
+   {
+      public object   user; // TODO IUser
+      public string   clientId;
+      public Int64    sequenceNumber;
+      public Int64    minimumSequenceNumber;
+      public Int64    clientSequenceNumber;
+      public Int64    referenceSequenceNumber;
+      public string   type;
+      public object   any;
+      public object   metadata;
+      public object[] traces;
+      public Int64    timestamp;
+   }
+
+   class SequencedObjectMessage
+   {
+      public object   user;
+      public Int64    sequenceNumber;
+      public Int64    minimumSequenceNumber;
+      public Int64    clientSequenceNumber;
+      public Int64    referenceSequenceNumber;
+      public string   clientId;
+      public string   type;
+      public object   contents;
+      public object   origin;
+      public object[] traces;
+   }
+
+   interface IPragueDocument
+   {
+   }
+
+   interface IMap
+   {
+
+   }
+
    class IConnect
    {
       public string tenantId;
@@ -23,9 +61,31 @@ namespace PragueProtoClient
    {
       public void Call( params object[] args )
       {
-         if( args.Length >=2 )
+         System.Console.WriteLine( "OpListener::Call " );
+
+         foreach( object arg in args )
          {
-            System.Console.WriteLine( args[ 1 ] );
+            System.Console.WriteLine( "\t{0}", arg );
+
+            JArray objArray = arg as JArray;
+
+            if( objArray != null )
+            {
+               foreach( JObject obj in objArray )
+               {
+                  string type = obj[ "type" ].Value< string >();
+                  System.Console.WriteLine( "Type:{0}", type );
+
+                  if( type == "objOp" )
+                  {
+                     SequencedObjectMessage objMessage = obj.ToObject< SequencedObjectMessage >();
+                  }
+                  else
+                  {
+                     System.Console.WriteLine( "Type:{0} Unhandled", type );
+                  }
+               }
+            }
          }
       }
 
@@ -40,14 +100,18 @@ namespace PragueProtoClient
       }
    }
 
-
    class PragueProtoClient
    {
       static void Main( string[] args )
       {
-         string docID         = "DefaultDoc";
-         string tenantID      = "gallant-hugle";
-         string routerlicious = "https://alfred.wu2.prague.office-int.com";
+         //string docID         = "DefaultDoc";
+         //string tenantID      = "gallant-hugle";
+         //string routerlicious = "https://alfred.wu2.prague.office-int.com";
+
+         string docID         = "doc7";
+         string tenantID      = "prague";
+         string routerlicious = "http://localhost:3000";
+
 
          var options = new IO.Options();
          options.QueryString = string.Format( "documentId={0}&tenantId={0}", docID, tenantID );
