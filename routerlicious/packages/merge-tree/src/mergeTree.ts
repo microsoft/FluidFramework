@@ -1877,7 +1877,7 @@ function tileShift(node: MergeNode, segpos: number, refSeq: number, clientId: nu
                 searchInfo.tile = marker;
             }
         }
-    } else {
+    } else if(this.blockUpdateMarkers) {
         let block = <IHierBlock>node;
         let marker: Marker;
         if (searchInfo.preceding) {
