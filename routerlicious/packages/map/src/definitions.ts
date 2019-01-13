@@ -7,20 +7,6 @@ export interface IMapOperation {
     value?: IMapValue;
 }
 
-export enum ValueType {
-    // The value is a collaborative object
-    Collaborative,
-
-    // The value is a plain JavaScript object
-    Plain,
-
-    // The value is a counter
-    Counter,
-
-    // The value is a set
-    Set,
-}
-
 export interface IMapValue {
     // The type of the value
     type: string;

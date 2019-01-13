@@ -1,8 +1,8 @@
-import { ICollaborativeObject } from "@prague/api-definitions";
+import { ICollaborativeObject, ValueType } from "@prague/api-definitions";
 import { IRuntime, ISequencedObjectMessage } from "@prague/runtime-definitions";
 // tslint:disable-next-line
 const hasIn = require("lodash/hasIn");
-import { IMapOperation, IMapValue, ValueType } from "./definitions";
+import { IMapOperation, IMapValue } from "./definitions";
 import { IMapView, IValueOpEmitter, SerializeFilter } from "./interfaces";
 import { CollaborativeMap } from "./map";
 
