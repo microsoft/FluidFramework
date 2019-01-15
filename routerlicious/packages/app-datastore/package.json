@@ -37,7 +37,6 @@
     "@prague/loader-web": "^0.1.0",
     "@prague/map": "^0.1.0",
     "@prague/memory-orderer": "^0.1.0",
-    "@prague/routerlicious": "^0.1.0",
     "@prague/runtime-definitions": "^0.1.0",
     "@prague/services": "^0.1.0",
     "@prague/services-core": "^0.1.0",
