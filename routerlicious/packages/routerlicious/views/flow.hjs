@@ -1,6 +1,5 @@
 {{<layout}}
     {{$styles}}
-        <link href="{{#hfurl}}/public/stylesheets/dist/style.css{{/hfurl}}" rel="stylesheet" />
     {{/styles}}
 
     {{$content}}
@@ -21,7 +20,7 @@
             var to = {{ to }};
                    
             console.log(`Starting load at - ${performance.now()}`);
-            controller.sharedText.load(
+            controller.flow.load(
                 "{{ documentId }}",
                 version,
                 token,
