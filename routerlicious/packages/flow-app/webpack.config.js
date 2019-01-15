@@ -1,6 +1,7 @@
 const path = require("path");
 const merge = require("webpack-merge");
 const CleanWebpackPlugin = require("clean-webpack-plugin");
+const HtmlWebpackPlugin = require("html-webpack-plugin");
 
 module.exports = env => {
     const isProduction = env === "production";
@@ -29,15 +30,7 @@ module.exports = env => {
                 {
                     test: /\.tsx?$/,
                     loader: "ts-loader",
-                    options: { 
-                        configFile: tsconfig,
-                        // ts-loader v4.4.2 resolves the 'declarationDir' for .d.ts files relative to 'outDir'.
-                        // This is different than 'tsc', which resolves 'declarationDir' relative to the location
-                        // of the tsconfig. 
-                        compilerOptions: {
-                            declarationDir: ".",
-                        }
-                    },
+                    options: { configFile: tsconfig },
                 },
                 {
                     test: /\.css$/,
@@ -56,13 +49,14 @@ module.exports = env => {
         },
         plugins: [
             new CleanWebpackPlugin(["dist"]),
+            new HtmlWebpackPlugin({ title: "Production" }),
         ],
         output: {
             filename: "[name].bundle.js",
             path: path.resolve(__dirname, "dist"),
             library: "[name]",
             // https://github.com/webpack/webpack/issues/5767
-            // https://github.com/webpack/webpack/issues/7939
+            // https://github.com/webpack/webpack/issues/7939            
             devtoolNamespace: "flow-app",
             libraryTarget: "umd"
         },

@@ -2,14 +2,14 @@
   "name": "@prague/flow-app",
   "description": "App hosting experimental flow-editor for collaborative journaling.",
   "version": "0.1.0",
+  "author": "Microsoft",
+  "repository": "microsoft/prague",
   "main": "dist/main.bundle.js",
   "types": "dist/index.d.ts",
-  "scripts": {
+   "scripts": {
     "build": "webpack --env=\"production\"",
     "dev": "webpack-serve --config"
   },
-  "author": "Microsoft",
-  "repository": "microsoft/prague",
   "devDependencies": {
     "@types/react": "^16.7.7",
     "@types/react-dom": "^16.0.11",
@@ -27,6 +27,12 @@
     "webpack-serve": "^2.0.2"
   },
   "dependencies": {
+    "@chaincode/flow-document": "*",
+    "@chaincode/flow-editor": "*",
+    "@prague/app-component": "^0.1.0",
+    "@prague/app-datastore": "^0.1.0",
+    "@prague/flow-util": "^0.1.0",
+    "office-ui-fabric-react": "^6.108.0",
     "react": "^16.6.3",
     "react-dom": "^16.6.3"
   }
