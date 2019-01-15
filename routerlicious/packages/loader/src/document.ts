@@ -56,6 +56,10 @@ interface IBufferedChunk {
 }
 
 class RuntimeStorageService implements IDocumentStorageService {
+    public get repositoryUrl(): string {
+        return this.storageService.repositoryUrl;
+    }
+
     constructor(private storageService: IDocumentStorageService, private blobs: Map<string, string>) {
     }
 

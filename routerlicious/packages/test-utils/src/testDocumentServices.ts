@@ -45,6 +45,10 @@ export class TestDocumentDeltaConnection extends EventEmitter implements IDocume
 }
 
 export class TestDocumentStorageService implements IDocumentStorageService {
+    public get repositoryUrl(): string {
+        return "";
+    }
+
     public getSnapshotTree(version: git.ICommit): Promise<ISnapshotTree> {
         throw new Error("Method not implemented.");
     }

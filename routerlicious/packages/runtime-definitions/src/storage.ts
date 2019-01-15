@@ -143,6 +143,8 @@ export interface IDistributedObject {
  * Interface to provide access to snapshots saved for a collaborative object
  */
 export interface IDocumentStorageService {
+    repositoryUrl: string;
+
     /**
      * Returns the snapshot tree.
      */

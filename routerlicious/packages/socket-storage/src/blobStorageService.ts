@@ -7,6 +7,10 @@ import { buildHierarchy } from "@prague/utils";
  * Document access to underlying storage
  */
 export class DocumentStorageService implements api.IDocumentStorageService  {
+    public get repositoryUrl(): string {
+        return "";
+    }
+
     constructor(tenantId: string, private id: string, public manager: gitStorage.GitManager) {
     }
 

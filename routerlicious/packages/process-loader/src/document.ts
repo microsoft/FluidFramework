@@ -31,12 +31,12 @@ import { buildHierarchy, flatten } from "@prague/utils";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import { BlobManager } from "./blobManager";
+import { Component } from "./component";
 import { debug } from "./debug";
 import { IConnectionDetails } from "./deltaConnection";
 import { DeltaManager } from "./deltaManager";
 import { NullChaincode } from "./nullChaincode";
 import { IQuorumSnapshot, Quorum } from "./quorum";
-import { Runtime } from "./runtime";
 import { readAndParse } from "./utils";
 
 interface IConnectResult {
@@ -52,6 +52,10 @@ interface IBufferedChunk {
 }
 
 class RuntimeStorageService implements IDocumentStorageService {
+    public get repositoryUrl(): string {
+        return this.storageService.repositoryUrl;
+    }
+
     constructor(private storageService: IDocumentStorageService, private blobs: Map<string, string>) {
     }
 
@@ -109,6 +113,8 @@ export class Document extends EventEmitter {
         return doc;
     }
 
+    public runtime: any = null;
+
     private pendingClientId: string;
     private loaded = false;
     private connectionState = ConnectionState.Disconnected;
@@ -127,11 +133,15 @@ export class Document extends EventEmitter {
     private _parentBranch: string;
     private _tenantId: string;
     private _user: IUser;
-    private _runtime: Runtime;
     // tslint:enable:variable-name
 
+    private pkg: string;
+
+    // Components tracked by the Domain
+    private components = new Map<string, Component>();
+
     // Local copy of incomplete received chunks.
-    private chunkMap: Map<string, string[]> = new Map<string, string[]>();
+    private chunkMap = new Map<string, string[]>();
 
     // Local copy of sent but unacknowledged chunks.
     private unackedChunkedMessages: Map<number, IBufferedChunk> = new Map<number, IBufferedChunk>();
@@ -158,10 +168,6 @@ export class Document extends EventEmitter {
 
     public get clientId(): string {
         return this._clientId;
-    }
-
-    public get runtime(): IRuntime {
-        return this._runtime;
     }
 
     /**
@@ -216,11 +222,11 @@ export class Document extends EventEmitter {
      * Modifies emit to also forward to the active runtime.
      */
     public emit(message: string | symbol, ...args: any[]): boolean {
-        const superResult = super.emit(message, ...args);
-        /* tslint:disable:strict-boolean-expressions */
-        const runtimeResult = this._runtime ? this._runtime.emit(message, ...args) : true;
-
-        return superResult && runtimeResult;
+        // Still need to emit down to a runtime?
+        // const runtimeResult = this._runtime ? this._runtime.emit(message, ...args) : true;
+        // Returns true if the event had listeners, false otherwise.
+        // return superResult && runtimeResult;
+        return super.emit(message, ...args);
     }
 
     public close() {
@@ -241,12 +247,14 @@ export class Document extends EventEmitter {
         // NOTE I believe I did the explicit then here so that the snapshot held the turn until it got the data
         // it needed
 
-        // Generate snapshots for each channel
-        const channelEntries = this._runtime.snapshotInternal();
+        // Iterate over each component and ask it to snapshot
+        const channelEntries = new Map<string, ITree>();
+        this.components.forEach((component, key) => channelEntries.set(key, component.snapshot()));
 
         // Snapshots base document state
         const root = this.snapshotBase();
 
+        // Generate base snapshot message
         const snapshotSequenceNumber = this._deltaManager.referenceSequenceNumber;
         const deltaDetails =
             `${this._deltaManager.referenceSequenceNumber}:${this._deltaManager.minimumSequenceNumber}`;
@@ -254,19 +262,9 @@ export class Document extends EventEmitter {
 
         // Pull in the prior version and snapshot tree to store against
         const lastVersion = await this.storageService.getVersions(this.id, 1);
-
         const tree = lastVersion.length > 0
             ? await this.storageService.getSnapshotTree(lastVersion[0])
             : { blobs: {}, commits: {}, trees: {} };
-
-        const channelCommitsP = new Array<Promise<{ id: string, commit: ICommit }>>();
-        for (const [channelId, channelSnapshot] of channelEntries) {
-            const parent = channelId in tree.commits ? [tree.commits[channelId]] : [];
-            const channelCommitP = this.storageService
-                .write(channelSnapshot, parent, `${channelId} commit`, channelId)
-                .then((commit) => ({ id: channelId, commit }));
-            channelCommitsP.push(channelCommitP);
-        }
 
         // Pull the sequence number stored with the previous version
         let sequenceNumber = 0;
@@ -279,6 +277,7 @@ export class Document extends EventEmitter {
 
         // Retrieve all deltas from sequenceNumber to snapshotSequenceNumber. Range is exclusive so we increment
         // the snapshotSequenceNumber by 1 to include it.
+        // TODO We likely then want to filter the operation list to each component to use in its snapshot
         const deltas = await this._deltaManager.getDeltas(sequenceNumber, snapshotSequenceNumber + 1);
         const parents = lastVersion.length > 0 ? [lastVersion[0].sha] : [];
         root.entries.push({
@@ -291,6 +290,17 @@ export class Document extends EventEmitter {
             },
         });
 
+        // Use base tree to know previous component snapshot and then snapshot each component
+        const channelCommitsP = new Array<Promise<{ id: string, commit: ICommit }>>();
+        for (const [channelId, channelSnapshot] of channelEntries) {
+            const parent = channelId in tree.commits ? [tree.commits[channelId]] : [];
+            const channelCommitP = this.storageService
+                .write(channelSnapshot, parent, `${channelId} commit @${deltaDetails} ${tagMessage}`, channelId)
+                .then((commit) => ({ id: channelId, commit }));
+            channelCommitsP.push(channelCommitP);
+        }
+
+        // Add in module references to the component snapshots
         const channelCommits = await Promise.all(channelCommitsP);
         let gitModules = "";
         for (const channelCommit of channelCommits) {
@@ -301,9 +311,10 @@ export class Document extends EventEmitter {
                 value: channelCommit.commit.sha,
             });
             // tslint:disable-next-line:max-line-length
-            gitModules += `[submodule "${channelCommit.id}"]\n\tpath = ${channelCommit.id}\n\turl = https://github.com/kurtb/praguedocs.git\n\n`;
+            gitModules += `[submodule "${channelCommit.id}"]\n\tpath = ${channelCommit.id}\n\turl = ${this.storageService.repositoryUrl}\n\n`;
         }
 
+        // Write the module lookup details
         root.entries.push({
             mode: FileMode.File,
             path: ".gitmodules",
@@ -314,6 +325,7 @@ export class Document extends EventEmitter {
             },
         });
 
+        // Write the full snapshot
         await this.storageService.write(root, parents, message, "");
     }
 
@@ -388,6 +400,48 @@ export class Document extends EventEmitter {
             return submodules;
         });
 
+        const componentsP = Promise
+            .all([submodulesP, attributesP, chaincodeP, tardisMessagesP])
+            .then(async ([submodules, attributes, chaincode, tardisMessages]) => {
+                const componentLoadP = new Array<Promise<Component>>();
+                const hostPlatform = await this.platform.create();
+
+                for (const [, value] of submodules) {
+                    // Instantiate channels from chaincode and stored data
+                    const runtimeStorage = new RuntimeStorageService(
+                        this.storageService,
+                        new Map<string, string>());
+
+                    const componentP = Component.LoadFromSnapshot(
+                        this.tenantId,
+                        this.id,
+                        hostPlatform,
+                        this.parentBranch,
+                        this.existing,
+                        this.options,
+                        this.clientId,
+                        this.user,
+                        this.blobManager,
+                        chaincode.pkg,
+                        chaincode.chaincode,
+                        tardisMessages,
+                        this._deltaManager,
+                        this.quorum,
+                        runtimeStorage,
+                        this.connectionState,
+                        value,
+                        attributes.branch,
+                        attributes.minimumSequenceNumber,
+                        (type, contents) => this.submitMessage(type, contents),
+                        (message) => this.snapshot(message),
+                        () => this.close());
+
+                    componentLoadP.push(componentP);
+                }
+
+                return Promise.all(componentLoadP);
+            });
+
         // Wait for all the loading promises to finish
         return Promise
             .all([
@@ -397,8 +451,8 @@ export class Document extends EventEmitter {
                 attributesP,
                 quorumP,
                 blobManagerP,
+                componentsP,
                 chaincodeP,
-                tardisMessagesP,
                 connectResult.handlerAttachedP])
             .then(async ([
                 storageService,
@@ -407,12 +461,13 @@ export class Document extends EventEmitter {
                 attributes,
                 quorum,
                 blobManager,
-                chaincode,
-                tardisMessages]) => {
+                components,
+                chaincode]) => {
 
                 this.quorum = quorum;
                 this.storageService = storageService;
                 this.blobManager = blobManager;
+                this.pkg = chaincode.pkg;
 
                 // Initialize document details - if loading a snapshot use that - otherwise we need to wait on
                 // the initial details
@@ -425,41 +480,16 @@ export class Document extends EventEmitter {
                     this._parentBranch = details.parentBranch;
                 }
 
-                // tree.commits <-- These are the true components. Need to pull these in and pass to runtime
-
-                // Instantiate channels from chaincode and stored data
-                const runtimeStorage = new RuntimeStorageService(this.storageService, new Map<string, string>());
-                const hostPlatform = await this.platform.create();
-                this._runtime = await Runtime.LoadFromSnapshot(
-                    this.tenantId,
-                    this.id,
-                    hostPlatform,
-                    this.parentBranch,
-                    this.existing,
-                    this.options,
-                    this.clientId,
-                    this.user,
-                    this.blobManager,
-                    chaincode.pkg,
-                    chaincode.chaincode,
-                    tardisMessages,
-                    this._deltaManager,
-                    this.quorum,
-                    runtimeStorage,
-                    this.connectionState,
-                    tree,
-                    attributes.branch,
-                    attributes.minimumSequenceNumber,
-                    (type, contents) => this.submitMessage(type, contents),
-                    (message) => this.snapshot(message),
-                    () => this.close());
-
-                // given the load is async and we haven't set the runtime variable it's possible we missed the change
-                // of value. Make a call to the runtime to change the state to pick up the latest.
-                this._runtime.changeConnectionState(this.connectionState, this.clientId);
+                const componentsReady = Promise.all(Array.from(components).map((component) => {
+                    // given the load is async and we haven't set the runtime variable it's possible we missed the
+                    // change of value. Make a call to the runtime to change the state to pick up the latest.
+                    // TODOTODO state changes also maybe happen individually? Or components inherit this information?
+                    component.changeConnectionState(this.connectionState, this.clientId);
+                    return component.ready();
+                }));
 
                 // Start delta processing once all channels are loaded
-                this._runtime.ready().then(
+                componentsReady.then(
                     () => {
                         if (connect) {
                             assert(this._deltaManager, "DeltaManager should have been created during connect call");
@@ -560,7 +590,9 @@ export class Document extends EventEmitter {
     private transform(message: ISequencedDocumentMessage, sequenceNumber: number): ISequencedDocumentMessage {
         // Allow the distributed data types to perform custom transformations
         if (message.type === MessageType.Operation) {
-            this._runtime.transform(message);
+            const envelope = message.contents as IEnvelope;
+            const component = this.components.get(envelope.address);
+            component.transform(message);
         } else {
             message.type = MessageType.NoOp;
         }
@@ -676,51 +708,61 @@ export class Document extends EventEmitter {
 
     private async transitionRuntime(pkg: string): Promise<void> {
         // No need to transition if package stays the same
-        if (pkg === this._runtime.pkg) {
+        if (pkg === this.pkg) {
             return;
         }
 
         const extraBlobs = new Map<string, string>();
 
-        const snapshot = this._runtime.stop();
-        const modules = new Map<string, ISnapshotTree>();
-        for (const [key, value] of snapshot) {
-            const flattened = flatten(value.entries, extraBlobs);
-            const snapshotTree = buildHierarchy(flattened);
-            modules.set(key, snapshotTree);
-        }
-
-        // Need to rip through snapshot and use that to populate extraBlobs
-        const runtimeStorage = new RuntimeStorageService(this.storageService, extraBlobs);
-
         // Load the new code and create a new runtime from the previous snapshot
         const chaincode = await this.loadCode(pkg);
         const hostPlatform = await this.platform.create();
-        const newRuntime = await Runtime.LoadFromSnapshot(
-            this.tenantId,
-            this.id,
-            hostPlatform,
-            this.parentBranch,
-            this.existing,
-            this.options,
-            this.clientId,
-            this.user,
-            this.blobManager,
-            pkg,
-            chaincode,
-            new Map(),
-            this._deltaManager,
-            this.quorum,
-            runtimeStorage,
-            this.connectionState,
-            modules,
-            this.id,
-            this._deltaManager.minimumSequenceNumber,
-            (type, contents) => this.submitMessage(type, contents),
-            (message) => this.snapshot(message),
-            () => this.close());
-        this._runtime = newRuntime;
-        this.emit("runtimeChanged", newRuntime);
+
+        const componentsP = new Array<Promise<{ id: string, component: Component }>>();
+        for (const [id, component] of this.components) {
+            const snapshot = component.stop();
+            const flattened = flatten(snapshot.entries, extraBlobs);
+            const snapshotTree = buildHierarchy(flattened);
+
+            // Need to rip through snapshot and use that to populate extraBlobs
+            const runtimeStorage = new RuntimeStorageService(this.storageService, extraBlobs);
+
+            const newComponentP = Component.LoadFromSnapshot(
+                this.tenantId,
+                this.id,
+                hostPlatform,
+                this.parentBranch,
+                this.existing,
+                this.options,
+                this.clientId,
+                this.user,
+                this.blobManager,
+                pkg,
+                chaincode,
+                new Map(),
+                this._deltaManager,
+                this.quorum,
+                runtimeStorage,
+                this.connectionState,
+                snapshotTree,
+                this.id,
+                this._deltaManager.minimumSequenceNumber,
+                (type, contents) => this.submitMessage(type, contents),
+                (message) => this.snapshot(message),
+                () => this.close());
+            componentsP.push(newComponentP.then((newComponent) => ({ id, component: newComponent })));
+        }
+
+        // Refresh component array
+        const newComponents = await Promise.all(componentsP);
+        const newComponentsMap = new Map<string, Component>();
+        for (const newComponent of newComponents) {
+            newComponentsMap.set(newComponent.id, newComponent.component);
+        }
+
+        // Fully update
+        this.components = newComponentsMap;
+        this.emit("runtimeChanged", newComponentsMap);
     }
 
     private async loadCodeFromQuorum(
@@ -840,7 +882,9 @@ export class Document extends EventEmitter {
             return;
         }
 
-        this._runtime.changeConnectionState(value, this.clientId);
+        for (const [, component] of this.components) {
+            component.changeConnectionState(value, this.clientId);
+        }
 
         if (this.connectionState === ConnectionState.Connected) {
             this.emit("connected", this.pendingClientId);
@@ -898,19 +942,15 @@ export class Document extends EventEmitter {
         return clientSequenceNumber;
     }
 
-    private prepareRemoteMessage(message: ISequencedDocumentMessage): Promise<any> {
-        // If on the null chaincode - and we just got a channel op - transition to the legacy API
-        // This exists for backwards compatibility and will be removed going forward. We will require code to be
-        // instantiated on the document in order to process channel ops.
-        if ((message.type === MessageType.Operation || message.type === MessageType.Attach) &&
-            this._runtime.chaincode instanceof NullChaincode) {
-            return this.transitionRuntime("@prague/client-api").then(() => this.prepareRemoteMessageCore(message));
-        } else {
-            return this.prepareRemoteMessageCore(message);
-        }
+    private async prepareAttach(message: ISequencedDocumentMessage, local: boolean): Promise<any> {
+        return;
     }
 
-    private prepareRemoteMessageCore(message: ISequencedDocumentMessage): Promise<any> {
+    private processAttach(message: ISequencedDocumentMessage, local: boolean, context: any) {
+        return;
+    }
+
+    private prepareRemoteMessage(message: ISequencedDocumentMessage): Promise<any> {
         const local = this._clientId === message.clientId;
 
         switch (message.type) {
@@ -929,10 +969,14 @@ export class Document extends EventEmitter {
                 }
 
             case MessageType.Operation:
-                return this._runtime.prepare(message, local);
+                const envelope = message.contents as IEnvelope;
+                const component = this.components.get(envelope.address);
+                assert(component);
+
+                return component.prepare(message, local);
 
             case MessageType.Attach:
-                return this._runtime.prepareAttach(message, local);
+                return this.prepareAttach(message, local);
 
             default:
                 return Promise.resolve();
@@ -1026,8 +1070,7 @@ export class Document extends EventEmitter {
                 break;
 
             case MessageType.Attach:
-                const attachChannel = this._runtime.processAttach(message, local, context);
-                eventArgs.push(attachChannel);
+                this.processAttach(message, local, context);
                 break;
 
             case MessageType.BlobUploaded:
@@ -1037,8 +1080,12 @@ export class Document extends EventEmitter {
                 break;
 
             case MessageType.Operation:
-                const operationChannel = this._runtime.process(message, local, context);
-                eventArgs.push(operationChannel);
+                const envelope = message.contents as IEnvelope;
+                const component = this.components.get(envelope.address);
+                assert(component);
+
+                component.process(message, local, context);
+
                 break;
 
             default:
@@ -1049,7 +1096,12 @@ export class Document extends EventEmitter {
         // Notify the quorum of the MSN from the message. We rely on it to handle duplicate values but may
         // want to move that logic to this class.
         this.quorum.updateMinimumSequenceNumber(message);
-        this._runtime.updateMinSequenceNumber(message.minimumSequenceNumber);
+
+        // TODOTODO do we really need this anymore? Should we just have the component listen for MSN events
+        // on the parent if it cares?
+        for (const [, component] of this.components) {
+            component.updateMinSequenceNumber(message.minimumSequenceNumber);
+        }
 
         this.emit("op", ...eventArgs);
     }
