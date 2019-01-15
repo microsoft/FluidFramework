@@ -1,4 +1,4 @@
-import * as loader from "@prague/process-loader";
+import * as loader from "@prague/loader";
 import {
     IChaincodeFactory,
     ICodeLoader,

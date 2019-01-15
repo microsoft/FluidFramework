@@ -1,5 +1,5 @@
 import { ICommit } from "@prague/gitresources";
-import * as loader from "@prague/process-loader";
+import * as loader from "@prague/loader";
 import { IDocumentService, ITokenProvider, IUser  } from "@prague/runtime-definitions";
 import chalk from "chalk";
 import { WebLoader } from "./webLoader";

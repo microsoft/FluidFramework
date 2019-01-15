@@ -1,5 +1,5 @@
+import * as loader from "@prague/loader";
 import { WebLoader } from "@prague/loader-web";
-import * as loader from "@prague/process-loader";
 import {
     ICodeLoader,
     IDocumentService,

@@ -1,8 +1,8 @@
 import { ICollaborativeObject } from "@prague/api-definitions";
 import * as cell from "@prague/cell";
 import * as resources from "@prague/gitresources";
+import * as pragueLoader from "@prague/loader";
 import { IMap, MapExtension } from "@prague/map";
-import * as pragueLoader from "@prague/process-loader";
 import {
     IClient,
     IDeltaManager,
