@@ -1,50 +1,27 @@
 import { IChaincode } from "@prague/runtime-definitions";
 import { Document, DataStore } from "@prague/datastore";
-import { Counter, CounterValueType } from "@prague/map";
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import GraphiQL from 'graphiql';
+import { buildSchema } from "graphql";
 
 require("../node_modules/graphiql/graphiql.css");
 
 export class Graphiql extends Document {
     // Initialize the document/component (only called when document is initially created).
     protected async create() {
-        this.root.set<Counter>("clicks", 0, CounterValueType.Name);
     }
 
-    // Once document/component is opened, finish any remaining initialization required before the
-    // document/component is returned to to the host.
     public async opened() {
-        // If the host provided a <div>, display a minimual UI.
+
         const maybeDiv = await this.platform.queryInterface<HTMLElement>("div");        
         if (maybeDiv) {
-            // const counter = await this.root.wait<Counter>("clicks");
-
-            // // Create a <span> that displays the current value of 'clicks'.
-            // const span = document.createElement("span");           
-            // const update = () => { span.textContent = counter.value.toString(); }
-            // this.root.on("valueChanged", update);
-            // update();
-            
-            // // Create a button that increments the value of 'clicks' when pressed.
-            // const btn = document.createElement("button");
-            // btn.textContent = "+";
-            // btn.addEventListener("click", () => {
-            //     counter.increment(1);
-            // });
-
-            // // Add both to the <div> provided by the host:
-            // maybeDiv.appendChild(span);
-            // maybeDiv.appendChild(btn);
-
-            // const props = {
-            //     schema: "schema",
-            //     query: "default query",
-            // }
-            ReactDOM.render( React.createElement(GraphiQL, {} ),  maybeDiv);
-
-            // maybeDiv.appendChild(GraphiQL)
+        
+            ReactDOM.render(
+                React.createElement(GraphiQL, {
+                    fetcher: graphQLFetcher,
+                    schema: schema
+            } ),  maybeDiv);
         }
     }
 }
@@ -53,3 +30,79 @@ export class Graphiql extends Document {
 export async function instantiate(): Promise<IChaincode> {
     return DataStore.instantiate(new Graphiql());
 }
+
+async function graphQLFetcher(params) {
+    console.log("What happens here");
+    console.log(params);
+
+    return new Promise((resolve) => {
+        resolve(root);
+    });
+}
+
+const root = [
+    {
+        key: "insights",
+        type: "map",
+        fields: [
+            {
+                key: "translations",
+                type: "map",
+                fields: [
+                    {
+                        greek: "this is greek"
+                    }
+                ]
+            },
+            {
+                key: "TextAnalytics",
+                type: "map",
+                fields: [
+                    {
+                        keyPhrases: "a"
+                    }
+                ]
+            },{
+                key: "Special Value",
+                type: "scalar",
+                value: 12
+            }
+        ]
+    },
+    {
+        key: "presence",
+        type: "map",
+        fields: [
+            {
+                key: "users",
+                type: "map",
+                fields: [
+                    {
+                        name: "sam"
+                    }
+                ]
+            },
+        ]
+    }
+];
+
+const schema = buildSchema(`
+type Map {
+    key: String
+    type: String
+    fields: [ Map ]
+}
+
+type Query {
+    map(key: String): Map
+    maps: [ Map ]
+}
+`);
+
+// // TODO: is there a none root resolver?
+// const rootResolvers = {
+//     map: (params) => {
+//         return root.find((value) => value.key === params.key );
+//     },
+//     maps: () => root,
+// };
