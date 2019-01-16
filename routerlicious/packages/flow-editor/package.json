@@ -14,6 +14,7 @@
   },
   "scripts": {
     "build": "webpack --env=\"production\"",
+    "build:full": "webpack --env=\"production\"",
     "build:dev": "webpack --env=\"development\"",
     "dev": "webpack --env=\"development\" --watch",
     "publish-local": "npm publish --registry http://localhost:4873",

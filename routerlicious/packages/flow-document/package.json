@@ -8,6 +8,7 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "webpack --env=\"production\"",
+    "build:full": "webpack --env=\"production\"",
     "dev": "webpack --env=\"development\" --watch",
     "publish-local": "npm publish --registry http://localhost:4873",
     "publish-patch-local": "npm version patch && npm run publish-local"

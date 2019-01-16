@@ -7,6 +7,7 @@
   "scripts": {
     "clean": "git clean -fXd -e \\!**/node_modules/**",
     "build": "tsc --project tsconfig.prod.json",
+    "build:full": "tsc --project tsconfig.prod.json",
     "dev": "tsc --project tsconfig.dev.json --watch",
     "bench": "ts-node --project tsconfig.prod.json bench/index.ts",
     "test": "ts-mocha -p tsconfig.dev.json \"test/**/*.{ts,tsx}\""

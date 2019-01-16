@@ -8,6 +8,7 @@
   "types": "dist/index.d.ts",
    "scripts": {
     "build": "webpack --env=\"production\"",
+    "build:full": "webpack --env=\"production\"",
     "dev": "webpack-serve --config"
   },
   "devDependencies": {
