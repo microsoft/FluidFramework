@@ -2,7 +2,6 @@ import * as resources from "@prague/gitresources";
 import * as api from "@prague/runtime-definitions";
 import { buildHierarchy } from "@prague/utils";
 import * as assert from "assert";
-import { debug } from "./debug";
 import { IHistorian } from "./historian";
 
 export class GitManager {
@@ -114,9 +113,7 @@ export class GitManager {
         parents: string[],
         message: string): Promise<resources.ICommit> {
 
-        debug(`Write to ${branch}`);
         const tree = await this.createTree(inputTree);
-        debug(`Tree created ${branch} ${JSON.stringify(tree)}`);
 
         // Construct a commit for the tree
         const commitParams: resources.ICreateCommitParams = {
@@ -130,24 +127,17 @@ export class GitManager {
             tree: tree.sha,
         };
 
-        debug(`createCommit ${branch}`);
         const commit = await this.historian.createCommit(commitParams);
-        debug(`Commit created ${branch} ${JSON.stringify(commit)}`);
 
         // Create or update depending on if ref exists.
         // TODO optimize the update to know up front if the ref exists
-        debug(`getRef ${branch}`);
         const existingRef = await this.getRef(branch);
-        debug(`getRef done ${existingRef} ${branch}`);
 
         if (existingRef) {
             await this.upsertRef(branch, commit.sha);
         } else {
-            debug(`createRef ${branch} ${commit.sha}`);
             await this.createRef(branch, commit.sha);
         }
-
-        debug(`DONE! ${branch}`);
 
         return commit;
     }
@@ -204,8 +194,6 @@ export class GitManager {
                 type,
             });
         }
-
-        console.log(JSON.stringify(tree, null, 2));
 
         const requestBody: resources.ICreateTreeParams = {
             tree,
