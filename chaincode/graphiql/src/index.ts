@@ -14,9 +14,9 @@ export class Graphiql extends Document {
 
     public async opened() {
 
-        const maybeDiv = await this.platform.queryInterface<HTMLElement>("div");        
+        const maybeDiv = await this.platform.queryInterface<HTMLElement>("div");
+        maybeDiv.style.height = "700px";
         if (maybeDiv) {
-        
             ReactDOM.render(
                 React.createElement(GraphiQL, {
                     fetcher: graphQLFetcher,
@@ -32,9 +32,9 @@ export async function instantiate(): Promise<IChaincode> {
 }
 
 async function graphQLFetcher(params) {
-    console.log("What happens here");
-    console.log(params);
-
+    if (params) {
+        console.error("Ignore params");
+    }
     return new Promise((resolve) => {
         resolve(root);
     });
