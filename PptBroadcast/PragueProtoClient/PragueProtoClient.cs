@@ -12,7 +12,28 @@ using Quobject.EngineIoClientDotNet.ComponentEmitter;
 
 namespace PragueProtoClient
 {
-   class SequencedDocumentMessage
+   class IEnvelope
+   {
+      public string address;
+      public object contents;
+   }
+
+   class IObjectMessage
+   {
+      public Int64  clientSequenceNumber;
+      public Int64  referenceSequenceNumber;
+      public string type;
+      public object contents;
+   }
+
+   class IMapOperation
+   {
+      public string key;
+      public string type;
+      public object value;
+   }
+
+   class ISequencedDocumentMessage
    {
       public object   user; // TODO IUser
       public string   clientId;
@@ -27,7 +48,7 @@ namespace PragueProtoClient
       public Int64    timestamp;
    }
 
-   class SequencedObjectMessage
+   class ISequencedObjectMessage
    {
       public object   user;
       public Int64    sequenceNumber;
@@ -39,15 +60,6 @@ namespace PragueProtoClient
       public object   contents;
       public object   origin;
       public object[] traces;
-   }
-
-   interface IPragueDocument
-   {
-   }
-
-   interface IMap
-   {
-
    }
 
    class IConnect
@@ -65,20 +77,29 @@ namespace PragueProtoClient
 
          foreach( object arg in args )
          {
-            System.Console.WriteLine( "\t{0}", arg );
-
             JArray objArray = arg as JArray;
 
             if( objArray != null )
             {
                foreach( JObject obj in objArray )
                {
+                  System.Console.WriteLine( "===\n{0}\n===", obj );
+
                   string type = obj[ "type" ].Value< string >();
-                  System.Console.WriteLine( "Type:{0}", type );
 
                   if( type == "objOp" )
                   {
-                     SequencedObjectMessage objMessage = obj.ToObject< SequencedObjectMessage >();
+                     ISequencedObjectMessage seqObjMessage = obj.ToObject< ISequencedObjectMessage >();
+                     System.Console.WriteLine( JsonConvert.SerializeObject( seqObjMessage, Formatting.Indented ) );
+
+                     IEnvelope env = JsonConvert.DeserializeObject< IEnvelope >( ( string )seqObjMessage.contents );
+                     System.Console.WriteLine( "Env: {0}", JsonConvert.SerializeObject( env, Formatting.Indented ) );
+
+                     IObjectMessage objMessage = ( ( JObject )env.contents ).ToObject< IObjectMessage >();
+                     System.Console.WriteLine( "OM:{0}", JsonConvert.SerializeObject( objMessage, Formatting.Indented ) );
+
+                     IMapOperation mapOp = ( (JObject )objMessage.contents ).ToObject< IMapOperation >();
+                     System.Console.WriteLine( "MapOp:{0}", JsonConvert.SerializeObject( mapOp, Formatting.Indented ) );
                   }
                   else
                   {
@@ -108,7 +129,7 @@ namespace PragueProtoClient
          //string tenantID      = "gallant-hugle";
          //string routerlicious = "https://alfred.wu2.prague.office-int.com";
 
-         string docID         = "doc7";
+         string docID         = "doc13";
          string tenantID      = "prague";
          string routerlicious = "http://localhost:3000";
 
