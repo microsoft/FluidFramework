@@ -1,4 +1,4 @@
-import { ICommit, ICreateBlobResponse } from "@prague/gitresources";
+import { ICommit } from "@prague/gitresources";
 import { IChaincodeHost, ICodeLoader } from "@prague/process-definitions";
 import {
     ConnectionState,
@@ -26,11 +26,10 @@ import {
     MessageType,
     TreeEntry,
 } from "@prague/runtime-definitions";
-import { buildHierarchy, flatten } from "@prague/utils";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import { BlobManager } from "./blobManager";
-import { Component } from "./component";
+import { Context } from "./context";
 import { debug } from "./debug";
 import { IConnectionDetails } from "./deltaConnection";
 import { DeltaManager } from "./deltaManager";
@@ -48,49 +47,6 @@ interface IBufferedChunk {
     type: MessageType;
 
     content: string;
-}
-
-class RuntimeStorageService implements IDocumentStorageService {
-    public get repositoryUrl(): string {
-        return this.storageService.repositoryUrl;
-    }
-
-    constructor(private storageService: IDocumentStorageService, private blobs: Map<string, string>) {
-    }
-
-    // TODO Will a subcomponent ever need this? Or we can probably restrict the ref to itself
-    public getSnapshotTree(version: ICommit): Promise<ISnapshotTree> {
-        return this.storageService.getSnapshotTree(version);
-    }
-
-    public getVersions(sha: string, count: number): Promise<ICommit[]> {
-        return this.storageService.getVersions(sha, count);
-    }
-
-    public getContent(version: ICommit, path: string): Promise<string> {
-        return this.storageService.getContent(version, path);
-    }
-
-    public async read(sha: string): Promise<string> {
-        if (this.blobs.has(sha)) {
-            return this.blobs.get(sha);
-        }
-
-        return this.storageService.read(sha);
-    }
-
-    // TODO the write as well potentially doesn't seem necessary
-    public write(root: ITree, parents: string[], message: string, ref: string): Promise<ICommit> {
-        return this.storageService.write(root, parents, message, ref);
-    }
-
-    public createBlob(file: Buffer): Promise<ICreateBlobResponse> {
-        return this.storageService.createBlob(file);
-    }
-
-    public getRawUrl(sha: string): string {
-        return this.storageService.getRawUrl(sha);
-    }
 }
 
 // TODO consider a name change for this. The document is likely built on top of this infrastructure
@@ -134,10 +90,8 @@ export class Document extends EventEmitter {
     private _user: IUser;
     // tslint:enable:variable-name
 
+    private context: Context;
     private pkg: string;
-
-    // Components tracked by the Domain
-    private components = new Map<string, Component>();
 
     // Local copy of incomplete received chunks.
     private chunkMap = new Map<string, string[]>();
@@ -247,8 +201,7 @@ export class Document extends EventEmitter {
         // it needed
 
         // Iterate over each component and ask it to snapshot
-        const channelEntries = new Map<string, ITree>();
-        this.components.forEach((component, key) => channelEntries.set(key, component.snapshot()));
+        const componentEntries = this.context.snapshot();
 
         // Snapshots base document state
         const root = this.snapshotBase();
@@ -291,7 +244,7 @@ export class Document extends EventEmitter {
 
         // Use base tree to know previous component snapshot and then snapshot each component
         const channelCommitsP = new Array<Promise<{ id: string, commit: ICommit }>>();
-        for (const [channelId, channelSnapshot] of channelEntries) {
+        for (const [channelId, channelSnapshot] of componentEntries) {
             const parent = channelId in tree.commits ? [tree.commits[channelId]] : [];
             const channelCommitP = this.storageService
                 .write(channelSnapshot, parent, `${channelId} commit @${deltaDetails} ${tagMessage}`, channelId)
@@ -399,48 +352,6 @@ export class Document extends EventEmitter {
             return submodules;
         });
 
-        const componentsP = Promise
-            .all([submodulesP, attributesP, chaincodeP, tardisMessagesP])
-            .then(async ([submodules, attributes, chaincode, tardisMessages]) => {
-                const componentLoadP = new Array<Promise<Component>>();
-                const hostPlatform = await this.platform.create();
-
-                for (const [, value] of submodules) {
-                    // Instantiate channels from chaincode and stored data
-                    const runtimeStorage = new RuntimeStorageService(
-                        this.storageService,
-                        new Map<string, string>());
-
-                    const componentP = Component.LoadFromSnapshot(
-                        this.tenantId,
-                        this.id,
-                        hostPlatform,
-                        this.parentBranch,
-                        this.existing,
-                        this.options,
-                        this.clientId,
-                        this.user,
-                        this.blobManager,
-                        chaincode.pkg,
-                        chaincode.chaincode,
-                        tardisMessages,
-                        this._deltaManager,
-                        this.quorum,
-                        runtimeStorage,
-                        this.connectionState,
-                        value,
-                        attributes.branch,
-                        attributes.minimumSequenceNumber,
-                        (type, contents) => this.submitMessage(type, contents),
-                        (message) => this.snapshot(message),
-                        () => this.close());
-
-                    componentLoadP.push(componentP);
-                }
-
-                return Promise.all(componentLoadP);
-            });
-
         // Wait for all the loading promises to finish
         return Promise
             .all([
@@ -450,9 +361,10 @@ export class Document extends EventEmitter {
                 attributesP,
                 quorumP,
                 blobManagerP,
-                componentsP,
                 chaincodeP,
-                connectResult.handlerAttachedP])
+                tardisMessagesP,
+                connectResult.handlerAttachedP,
+                ])
             .then(async ([
                 storageService,
                 tree,
@@ -460,8 +372,8 @@ export class Document extends EventEmitter {
                 attributes,
                 quorum,
                 blobManager,
-                components,
-                chaincode]) => {
+                chaincode,
+                tardisMessages]) => {
 
                 this.quorum = quorum;
                 this.storageService = storageService;
@@ -479,16 +391,36 @@ export class Document extends EventEmitter {
                     this._parentBranch = details.parentBranch;
                 }
 
-                const componentsReady = Promise.all(Array.from(components).map((component) => {
-                    // given the load is async and we haven't set the runtime variable it's possible we missed the
-                    // change of value. Make a call to the runtime to change the state to pick up the latest.
-                    // TODOTODO state changes also maybe happen individually? Or components inherit this information?
-                    component.changeConnectionState(this.connectionState, this.clientId);
-                    return component.ready();
-                }));
+                const hostPlatform = await this.platform.create();
+
+                this.context = await Context.Load(
+                    this.tenantId,
+                    this.id,
+                    hostPlatform,
+                    this.parentBranch,
+                    this.existing,
+                    this.options,
+                    this.clientId,
+                    this.user,
+                    this.blobManager,
+                    chaincode.pkg,
+                    chaincode.chaincode,
+                    tardisMessages,
+                    this._deltaManager,
+                    this.quorum,
+                    storageService,
+                    this.connectionState,
+                    tree,
+                    new Map(),
+                    attributes.branch,
+                    attributes.minimumSequenceNumber,
+                    (type, contents) => this.submitMessage(type, contents),
+                    (message) => this.snapshot(message),
+                    () => this.close());
+                this.context.changeConnectionState(this.connectionState, this.clientId);
 
                 // Start delta processing once all channels are loaded
-                componentsReady.then(
+                this.context.ready.then(
                     () => {
                         if (connect) {
                             assert(this._deltaManager, "DeltaManager should have been created during connect call");
@@ -589,9 +521,7 @@ export class Document extends EventEmitter {
     private transform(message: ISequencedDocumentMessage, sequenceNumber: number): ISequencedDocumentMessage {
         // Allow the distributed data types to perform custom transformations
         if (message.type === MessageType.Operation) {
-            const envelope = message.contents as IEnvelope;
-            const component = this.components.get(envelope.address);
-            component.transform(message);
+            this.context.transform(message, sequenceNumber);
         } else {
             message.type = MessageType.NoOp;
         }
@@ -677,11 +607,11 @@ export class Document extends EventEmitter {
                 if (key === "code") {
                     console.log(`loadCode ${JSON.stringify(value)}`);
 
-                    // TODO quorum needs prepare/process events
                     // Stop processing inbound messages as we transition to the new code
                     this.deltaManager.inbound.pause();
                     this.transitionRuntime(value).then(
                         () => {
+                            // Resume once transition is complete
                             this.deltaManager.inbound.resume();
                         },
                         (error) => {
@@ -706,64 +636,45 @@ export class Document extends EventEmitter {
     }
 
     private async transitionRuntime(pkg: string): Promise<void> {
-        // No need to transition if package stays the same
+        debug(`Transitioning runtime from ${this.pkg} to ${pkg}`);
+        // No need to transition if package stayed the same
         if (pkg === this.pkg) {
             return;
         }
 
-        const extraBlobs = new Map<string, string>();
-
-        // Load the new code and create a new runtime from the previous snapshot
+        // Load in the new host code and initialize the platform
         const chaincode = await this.loadCode(pkg);
         const hostPlatform = await this.platform.create();
+        this.pkg = pkg;
 
-        const componentsP = new Array<Promise<{ id: string, component: Component }>>();
-        for (const [id, component] of this.components) {
-            const snapshot = component.stop();
-            const flattened = flatten(snapshot.entries, extraBlobs);
-            const snapshotTree = buildHierarchy(flattened);
+        const previousContextState = this.context.stop();
+        const newContext = await Context.Load(
+            this.tenantId,
+            this.id,
+            hostPlatform,
+            this.parentBranch,
+            this.existing,
+            this.options,
+            this.clientId,
+            this.user,
+            this.blobManager,
+            this.pkg,
+            chaincode,
+            new Map(),
+            this._deltaManager,
+            this.quorum,
+            this.storageService,
+            this.connectionState,
+            previousContextState.snapshot,
+            previousContextState.blobs,
+            this.id,
+            this._deltaManager.minimumSequenceNumber,
+            (type, contents) => this.submitMessage(type, contents),
+            (message) => this.snapshot(message),
+            () => this.close());
+        this.context = newContext;
 
-            // Need to rip through snapshot and use that to populate extraBlobs
-            const runtimeStorage = new RuntimeStorageService(this.storageService, extraBlobs);
-
-            const newComponentP = Component.LoadFromSnapshot(
-                this.tenantId,
-                this.id,
-                hostPlatform,
-                this.parentBranch,
-                this.existing,
-                this.options,
-                this.clientId,
-                this.user,
-                this.blobManager,
-                pkg,
-                chaincode,
-                new Map(),
-                this._deltaManager,
-                this.quorum,
-                runtimeStorage,
-                this.connectionState,
-                snapshotTree,
-                this.id,
-                this._deltaManager.minimumSequenceNumber,
-                (type, contents) => this.submitMessage(type, contents),
-                (message) => this.snapshot(message),
-                () => this.close());
-            componentsP.push(newComponentP.then((newComponent) => ({ id, component: newComponent })));
-        }
-
-        await chaincode.run(null, hostPlatform);
-
-        // Refresh component array
-        const newComponents = await Promise.all(componentsP);
-        const newComponentsMap = new Map<string, Component>();
-        for (const newComponent of newComponents) {
-            newComponentsMap.set(newComponent.id, newComponent.component);
-        }
-
-        // Fully update
-        this.components = newComponentsMap;
-        this.emit("runtimeChanged", newComponentsMap);
+        this.emit("runtimeChanged", newContext);
     }
 
     private async loadCodeFromQuorum(
@@ -775,26 +686,18 @@ export class Document extends EventEmitter {
         let chaincode: IChaincodeHost;
 
         if (quorum.has("code")) {
-            // tslint:disable-next-line:no-backbone-get-set-outside-model
             pkg = quorum.get("code");
             chaincode = await this.loadCode(pkg);
         } else {
-            // For back compat if no version is specified and there are channels specified then we auto-load
-            // the legacy set of code
-            if (version && tree && Object.keys(tree.trees).length > 0) {
-                pkg = "@prague/client-api";
-                chaincode = await this.loadCode(pkg);
-            } else {
-                pkg = null;
-                chaincode = new NullChaincode();
-            }
+            pkg = null;
+            chaincode = new NullChaincode();
         }
 
         return { chaincode, pkg };
     }
 
     /**
-     * Code to apply to the document has changed. Load it in now.
+     * Loads the code for the provided package
      */
     private async loadCode(pkg: string): Promise<IChaincodeHost> {
         const module = await this.codeLoader.load(pkg);
@@ -883,9 +786,7 @@ export class Document extends EventEmitter {
             return;
         }
 
-        for (const [, component] of this.components) {
-            component.changeConnectionState(value, this.clientId);
-        }
+        this.context.changeConnectionState(value, this.clientId);
 
         if (this.connectionState === ConnectionState.Connected) {
             this.emit("connected", this.pendingClientId);
@@ -970,11 +871,7 @@ export class Document extends EventEmitter {
                 }
 
             case MessageType.Operation:
-                const envelope = message.contents as IEnvelope;
-                const component = this.components.get(envelope.address);
-                assert(component);
-
-                return component.prepare(message, local);
+                return this.context.prepareRemoteMessage(message, local);
 
             case MessageType.Attach:
                 return this.prepareAttach(message, local);
@@ -1081,12 +978,7 @@ export class Document extends EventEmitter {
                 break;
 
             case MessageType.Operation:
-                const envelope = message.contents as IEnvelope;
-                const component = this.components.get(envelope.address);
-                assert(component);
-
-                component.process(message, local, context);
-
+                this.context.process(message, local, context);
                 break;
 
             default:
@@ -1100,9 +992,7 @@ export class Document extends EventEmitter {
 
         // TODOTODO do we really need this anymore? Should we just have the component listen for MSN events
         // on the parent if it cares?
-        for (const [, component] of this.components) {
-            component.updateMinSequenceNumber(message.minimumSequenceNumber);
-        }
+        this.context.updateMinSequenceNumber(message.minimumSequenceNumber);
 
         this.emit("op", ...eventArgs);
     }

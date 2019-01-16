@@ -3,6 +3,7 @@ import {
     IChaincodeFactory,
     IChaincodeHost,
     ICodeLoader,
+    IHostRuntime,
 } from "@prague/process-definitions";
 import * as loader from "@prague/process-loader";
 import {
@@ -56,7 +57,7 @@ class MyChaincodeHost implements IChaincodeHost {
         return;
     }
 
-    public async run(runtime: IRuntime, platform: IPlatform): Promise<IPlatform> {
+    public async run(runtime: IHostRuntime, platform: IPlatform): Promise<IPlatform> {
         console.log("MyChaincodeHost WE RUNNIN!");
         return new MyPlatform();
     }

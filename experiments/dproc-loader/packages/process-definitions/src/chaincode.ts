@@ -20,6 +20,9 @@ export interface IChaincodeComponent {
     run(runtime: IRuntime, platform: IPlatform): Promise<IPlatform>;
 }
 
+export interface IHostRuntime {
+}
+
 export interface IChaincodeHost {
     /**
      * Retrieves the module by type name
@@ -35,7 +38,9 @@ export interface IChaincodeHost {
      * Invoked once the chaincode has been fully instantiated on the document. Run returns a platform
      * interface that can be used to access the running component.
      */
-    run(runtime: IRuntime, platform: IPlatform): Promise<IPlatform>;
+    // When loading multiple of these the platform is interesting. Is this something that gets attached as opposed
+    // to returned? Is there then a detach call?
+    run(runtime: IHostRuntime, platform: IPlatform): Promise<IPlatform>;
 }
 
 /**

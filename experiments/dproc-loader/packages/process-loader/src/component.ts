@@ -1,6 +1,6 @@
+import { IChaincodeHost } from "@prague/process-definitions";
 import {
     ConnectionState,
-    IChaincode,
     IChannel,
     IDocumentStorageService,
     IGenericBlob,
@@ -36,7 +36,7 @@ export class Component extends EventEmitter {
         user: IUser,
         blobManager: BlobManager,
         pkg: string,
-        chaincode: IChaincode,
+        chaincode: IChaincodeHost,
         tardisMessages: Map<string, ISequencedDocumentMessage[]>,
         deltaManager: DeltaManager,
         quorum: IQuorum,
@@ -100,7 +100,7 @@ export class Component extends EventEmitter {
         public readonly deltaManager: DeltaManager,
         private quorum: IQuorum,
         public readonly pkg: string,
-        public readonly chaincode: IChaincode,
+        public readonly chaincode: IChaincodeHost,
         storageService: IDocumentStorageService,
         private connectionState: ConnectionState,
         private submitFn: (type: MessageType, contents: any) => void,
@@ -154,7 +154,7 @@ export class Component extends EventEmitter {
         return this.quorum;
     }
 
-    public transform(message: ISequencedDocumentMessage) {
+    public transform(message: ISequencedDocumentMessage, sequenceNumber: number) {
         // TODOTODO transfer on to the runtime
     }
 

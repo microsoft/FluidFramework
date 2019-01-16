@@ -10,6 +10,7 @@
         "max-func-body-length": false,
         "missing-jsdoc": false,
         "newline-before-return": false,
+        "no-backbone-get-set-outside-model": false,
         "no-console": false,
         "no-for-in": false,
         "no-null-keyword": false,
