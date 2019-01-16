@@ -753,6 +753,8 @@ export class Document extends EventEmitter {
             componentsP.push(newComponentP.then((newComponent) => ({ id, component: newComponent })));
         }
 
+        await chaincode.run(null, hostPlatform);
+
         // Refresh component array
         const newComponents = await Promise.all(componentsP);
         const newComponentsMap = new Map<string, Component>();

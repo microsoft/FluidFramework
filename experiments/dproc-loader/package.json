@@ -6,6 +6,6 @@
   },
   "scripts": {
     "postinstall": "lerna bootstrap --hoist --nohoist tslint-microsoft-contrib",
-    "tsc": "lerna run tsc --stream --scope @prague/process-loader --include-filtered-dependencies"
+    "tsc": "lerna run tsc --stream --scope @prague/dproc-client --include-filtered-dependencies"
   }
 }
