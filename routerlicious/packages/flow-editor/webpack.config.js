@@ -54,6 +54,7 @@ module.exports = env => {
         },
         plugins: [
             new CleanWebpackPlugin(["dist"]),
+/*
             {
                 apply: (compiler) => {
                     compiler.hooks.afterEmit.tapPromise("PublishChaincodePlugin",
@@ -73,6 +74,7 @@ module.exports = env => {
                     );
                 }
             }
+*/
         ],
         output: {
             filename: "[name].bundle.js",
@@ -80,7 +82,7 @@ module.exports = env => {
             library: "[name]",
             // https://github.com/webpack/webpack/issues/5767
             // https://github.com/webpack/webpack/issues/7939            
-            devtoolNamespace: "flow/editor",
+            devtoolNamespace: "flow-editor",
             libraryTarget: "umd"
         },
         node: {

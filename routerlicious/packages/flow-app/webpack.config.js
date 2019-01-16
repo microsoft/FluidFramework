@@ -14,7 +14,7 @@ module.exports = env => {
 
     return merge({
         entry: {
-            app: "./src/index.tsx"
+            main: "./src/index.tsx"
         },
         resolve: {
             extensions: [".ts", ".tsx", ".js"],
@@ -54,6 +54,11 @@ module.exports = env => {
         output: {
             filename: "[name].bundle.js",
             path: path.resolve(__dirname, "dist"),
+            library: "[name]",
+            // https://github.com/webpack/webpack/issues/5767
+            // https://github.com/webpack/webpack/issues/7939            
+            devtoolNamespace: "flow-app",
+            libraryTarget: "umd"
         },
         node: {
             fs: "empty",

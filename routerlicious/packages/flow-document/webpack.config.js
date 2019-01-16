@@ -41,6 +41,7 @@ module.exports = env => {
         },
         plugins: [
             new CleanWebpackPlugin(["dist"]),
+            /*
             {
                 apply: (compiler) => {
                     compiler.hooks.afterEmit.tapPromise("PublishChaincodePlugin",
@@ -60,6 +61,7 @@ module.exports = env => {
                     );
                 }
             }
+            */
         ],
         output: {
             filename: "[name].bundle.js",

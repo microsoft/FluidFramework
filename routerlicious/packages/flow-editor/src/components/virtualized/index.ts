@@ -24,7 +24,7 @@ export class VirtualizedView extends View<IVirtualizedProps, IVirtualizedViewSta
     public static readonly factory = () => new VirtualizedView();
 
     private onScroll = (value: number) => {
-        this.state.props.paginator.startPosition = value | 0;
+        this.state.paginator.startPosition = value | 0;
         this.update(this.state.props);
     };
 
@@ -36,6 +36,8 @@ export class VirtualizedView extends View<IVirtualizedProps, IVirtualizedViewSta
             docRoot.remove();
     
             if (props.virtualize) {
+                // Assign our cached paginator to our props, which are passed through to
+                // the FlowEditor component.
                 Object.assign(props, { paginator: state.paginator });
 
                 state.root.appendChild(
@@ -64,7 +66,7 @@ export class VirtualizedView extends View<IVirtualizedProps, IVirtualizedViewSta
         const paginator = new Paginator(props.doc);
         paginator.startPosition = 0;
 
-        const state = { 
+        const state = {
             props,
             root,
             docView,
@@ -93,16 +95,12 @@ export class VirtualizedView extends View<IVirtualizedProps, IVirtualizedViewSta
         this.ensureVirtualizationMode(props, state, /* isMounting */ false);
 
         if (props.virtualize) {
-            if (!props.paginator) {
-                Object.assign(props, { paginator: state.props.paginator });
-            }
-
             // Reset viewport scroll to 0 
             Object.assign(state, { offsetY: 0 });
             state.viewport.update(this.getViewportProps(state));
             state.docView.update(state.props);
 
-            const dy = state.props.paginator.deltaY;
+            const dy = state.paginator.deltaY;
             console.log(`dy: ${dy}`);
 
             const top = state.viewport.slotOriginTop;

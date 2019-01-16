@@ -52,7 +52,7 @@ export interface IViewportViewState extends IViewState {
 export class ViewportView extends View<IViewportProps, IViewportViewState> {
     public static readonly factory = () => new ViewportView();
 
-    private readonly onScroll = (e: MouseEvent) => {
+    private readonly onScroll = () => {
         const state = this.state;
         state.props.onScroll(state.scrollPane.scrollTop);
     };
@@ -70,11 +70,14 @@ export class ViewportView extends View<IViewportProps, IViewportViewState> {
         const space = template.get(root, "space") as HTMLElement;
 
         scrollPane.addEventListener("scroll", this.onScroll);
-          
-        root.addEventListener("wheel", (e: WheelEvent) => {
+        
+        // TypeScript 3.2.2 'lib.dom.d.ts' does not type "wheel" event as WheelEvent.
+        const onWheel = ((e: WheelEvent) => {
             const delta = e.deltaY;
             scrollPane.scrollTop += delta;
-        });
+        }) as EventListener;
+
+        root.addEventListener("wheel", onWheel);
 
         return this.updating(props, {
             props,

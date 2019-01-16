@@ -1,0 +1,39 @@
+{{<layout}}
+    {{$styles}}
+    {{/styles}}
+
+    {{$content}}
+    {{/content}}
+
+    {{$scripts}}
+        <script src="{{#hfurl}}/public/scripts/dist/controller.js{{/hfurl}}"></script>
+        <script>
+            var config = {{{ config }}};
+            var version = {{{ version }}};
+            var options = {{{ options }}};
+            var connect = {{{ connect }}};
+            var token = "{{ token }}";
+
+            var tenant = "{{ tenantId }}";
+            var key = "{{ key }}";
+            var from = {{ from }};
+            var to = {{ to }};
+                   
+            console.log(`Starting load at - ${performance.now()}`);
+            controller.flow.load(
+                "{{ documentId }}",
+                version,
+                token,
+                {{ pageInk }},
+                {{ disableCache }},
+                config,
+                "{{ template }}",
+                connect,
+                options,
+                { tenant, key },
+                from,
+                to);
+        </script>          
+        </script>
+    {{/scripts}}
+{{/layout}}
