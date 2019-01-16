@@ -1,12 +1,11 @@
 import { ICommit, ICreateBlobResponse } from "@prague/gitresources";
+import { IChaincodeHost, ICodeLoader } from "@prague/process-definitions";
 import {
     ConnectionState,
     FileMode,
-    IChaincode,
     IChunkedOp,
     IClient,
     IClientJoin,
-    ICodeLoader,
     IDeltaManager,
     IDocumentAttributes,
     IDocumentService,
@@ -770,10 +769,10 @@ export class Document extends EventEmitter {
     private async loadCodeFromQuorum(
         quorum: Quorum,
         tree: ISnapshotTree,
-        version: ICommit): Promise<{ pkg: string, chaincode: IChaincode }> {
+        version: ICommit): Promise<{ pkg: string, chaincode: IChaincodeHost }> {
 
         let pkg: string;
-        let chaincode: IChaincode;
+        let chaincode: IChaincodeHost;
 
         if (quorum.has("code")) {
             // tslint:disable-next-line:no-backbone-get-set-outside-model
@@ -797,9 +796,9 @@ export class Document extends EventEmitter {
     /**
      * Code to apply to the document has changed. Load it in now.
      */
-    private async loadCode(pkg: string): Promise<IChaincode> {
+    private async loadCode(pkg: string): Promise<IChaincodeHost> {
         const module = await this.codeLoader.load(pkg);
-        const chaincode = await module.instantiate();
+        const chaincode = await module.instantiateHost();
 
         return chaincode;
     }

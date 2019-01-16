@@ -21,6 +21,7 @@
 		"typescript": "^3.2.2"
 	},
 	"dependencies": {
+		"@prague/process-definitions": "^0.1.0",
 		"@prague/process-loader": "^0.1.0",
 		"@prague/runtime-definitions": "^0.1.0",
 		"@prague/socket-storage": "^0.1.0",

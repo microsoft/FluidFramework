@@ -1,8 +1,11 @@
+import {
+    IChaincodeComponent,
+    IChaincodeFactory,
+    IChaincodeHost,
+    ICodeLoader,
+} from "@prague/process-definitions";
 import * as loader from "@prague/process-loader";
 import {
-    IChaincode,
-    IChaincodeFactory,
-    ICodeLoader,
     IDocumentService,
     IPlatform,
     IPlatformFactory,
@@ -25,7 +28,7 @@ class MyPlatform extends EventEmitter implements IPlatform {
     }
 }
 
-class MyChaincode implements IChaincode {
+class MyChaincodeComponent implements IChaincodeComponent {
     public getModule(type: string) {
         console.log("getModule");
         return null;
@@ -42,9 +45,30 @@ class MyChaincode implements IChaincode {
     }
 }
 
+class MyChaincodeHost implements IChaincodeHost {
+    public getModule(type: string) {
+        console.log("getModule");
+        return null;
+    }
+
+    public async close(): Promise<void> {
+        console.log("close");
+        return;
+    }
+
+    public async run(runtime: IRuntime, platform: IPlatform): Promise<IPlatform> {
+        console.log("MyChaincodeHost WE RUNNIN!");
+        return new MyPlatform();
+    }
+}
+
 class MyChaincodeFactory implements IChaincodeFactory {
-    public async instantiate(): Promise<IChaincode> {
-        return new MyChaincode();
+    public async instantiateComponent(): Promise<IChaincodeComponent> {
+        return new MyChaincodeComponent();
+    }
+
+    public async instantiateHost(): Promise<IChaincodeHost> {
+        return new MyChaincodeHost();
     }
 }
 

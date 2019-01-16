@@ -1,5 +1,6 @@
 import { ICommit } from "@prague/gitresources";
-import { ICodeLoader, IDocumentService, IPlatformFactory, ITokenProvider, IUser } from "@prague/runtime-definitions";
+import { ICodeLoader } from "@prague/process-definitions";
+import { IDocumentService, IPlatformFactory, ITokenProvider, IUser } from "@prague/runtime-definitions";
 import { debug } from "./debug";
 import { Document } from "./document";
 
