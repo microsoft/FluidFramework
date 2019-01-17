@@ -790,14 +790,6 @@ export class DistributedProcess extends EventEmitter {
         return clientSequenceNumber;
     }
 
-    private async prepareAttach(message: ISequencedDocumentMessage, local: boolean): Promise<any> {
-        return;
-    }
-
-    private processAttach(message: ISequencedDocumentMessage, local: boolean, context: any) {
-        return;
-    }
-
     private prepareRemoteMessage(message: ISequencedDocumentMessage): Promise<any> {
         const local = this._clientId === message.clientId;
 
@@ -817,10 +809,10 @@ export class DistributedProcess extends EventEmitter {
                 }
 
             case MessageType.Operation:
-                return this.context.prepareRemoteMessage(message, local);
+                return this.context.prepare(message, local);
 
             case MessageType.Attach:
-                return this.prepareAttach(message, local);
+                return this.context.prepareAttach(message, local);
 
             default:
                 return Promise.resolve();
@@ -914,7 +906,7 @@ export class DistributedProcess extends EventEmitter {
                 break;
 
             case MessageType.Attach:
-                this.processAttach(message, local, context);
+                this.context.processAttach(message, local, context);
                 break;
 
             case MessageType.BlobUploaded:

@@ -99,8 +99,7 @@ class MyChaincodeHost implements IChaincodeHost {
 
     public async doWork(runtime: IHostRuntime) {
         if (!runtime.existing) {
-            const root = await runtime.createProcess("root", "@prague/test-component");
-            runtime.attachProcess(root);
+            await runtime.createAndAttachProcess("root", "@prague/test-component");
         } else {
             await runtime.getProcess("root");
         }

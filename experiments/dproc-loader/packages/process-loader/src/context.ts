@@ -5,6 +5,7 @@ import {
 } from "@prague/process-definitions";
 import {
     ConnectionState,
+    IAttachMessage,
     IDocumentStorageService,
     IEnvelope,
     IPlatform,
@@ -207,7 +208,7 @@ export class Context implements IHostRuntime {
         }
     }
 
-    public prepareRemoteMessage(message: ISequencedDocumentMessage, local: boolean): Promise<any> {
+    public prepare(message: ISequencedDocumentMessage, local: boolean): Promise<any> {
         const envelope = message.contents as IEnvelope;
         const component = this.components.get(envelope.address);
         assert(component);
@@ -221,6 +222,79 @@ export class Context implements IHostRuntime {
         assert(component);
 
         component.process(message, local, context);
+    }
+
+    public async prepareAttach(message: ISequencedDocumentMessage, local: boolean): Promise<IChannelState> {
+        this.verifyNotClosed();
+
+        if (local) {
+            return;
+        }
+
+        const attachMessage = message.contents as IAttachMessage;
+
+        // create storage service that wraps the attach data
+        const localStorage = new LocalChannelStorageService(attachMessage.snapshot);
+        const connection = new ChannelDeltaConnection(
+            attachMessage.id,
+            this.connectionState,
+            (submitMessage) => {
+                const submitEnvelope: IEnvelope = { address: attachMessage.id, contents: submitMessage };
+                this.submit(MessageType.Operation, submitEnvelope);
+            });
+
+        // Document sequence number references <= message.sequenceNumber should map to the object's 0
+        // sequence number. We cap to the MSN to keep a tighter window and because no references should
+        // be below it.
+        connection.setBaseMapping(0, message.minimumSequenceNumber);
+
+        const services: IObjectServices = {
+            deltaConnection: connection,
+            objectStorage: localStorage,
+        };
+
+        const origin = message.origin ? message.origin.id : this.id;
+        const value = await this.loadChannel(
+            attachMessage.id,
+            attachMessage.type,
+            0,
+            0,
+            [],
+            services,
+            origin);
+
+        return value;
+    }
+
+    public processAttach(message: ISequencedDocumentMessage, local: boolean, context: IChannelState): IChannel {
+        this.verifyNotClosed();
+
+        const attachMessage = message.contents as IAttachMessage;
+
+        // If a non-local operation then go and create the object - otherwise mark it as officially attached.
+        if (local) {
+            assert(this.pendingAttach.has(attachMessage.id));
+            this.pendingAttach.delete(attachMessage.id);
+
+            // Document sequence number references <= message.sequenceNumber should map to the
+            // object's 0 sequence number. We cap to the MSN to keep a tighter window and because
+            // no references should be below it.
+            this.channels.get(attachMessage.id).connection.setBaseMapping(
+                0,
+                message.minimumSequenceNumber);
+        } else {
+            const channelState = context as IChannelState;
+            this.channels.set(channelState.object.id, channelState);
+            if (this.channelsDeferred.has(channelState.object.id)) {
+                this.channelsDeferred.get(channelState.object.id).resolve(channelState.object);
+            } else {
+                const deferred = new Deferred<IChannel>();
+                deferred.resolve(channelState.object);
+                this.channelsDeferred.set(channelState.object.id, deferred);
+            }
+        }
+
+        return this.channels.get(attachMessage.id).object;
     }
 
     public updateMinSequenceNumber(minimumSequenceNumber: number) {
@@ -249,8 +323,27 @@ export class Context implements IHostRuntime {
         return this.processDeferred.get(id).promise;
     }
 
-    public async createProcess(id: string, pkg: string): Promise<IProcess> {
+    public async createAndAttachProcess(id: string, pkg: string): Promise<IProcess> {
         this.verifyNotClosed();
+
+        const message: IAttachMessage = {
+            id: channel.id,
+            snapshot,
+            type: channel.type,
+        };
+        this.pendingAttach.set(channel.id, message);
+        this.submit(MessageType.Attach, message);
+
+        // Store a reference to the object in our list of objects and then get the services
+        // used to attach it to the stream
+        const services = this.getObjectServices(channel.id, null, this.storageService);
+
+        const entry = this.channels.get(channel.id);
+        assert.equal(entry.object, channel);
+        entry.connection = services.deltaConnection;
+        entry.storage = services.objectStorage;
+
+        // return services;
 
         const runtimeStorage = new ComponentStorageService(this.storage, new Map());
         const component = await Component.create(
@@ -287,34 +380,6 @@ export class Context implements IHostRuntime {
         await component.start();
 
         return component;
-    }
-
-    public attachProcess(process: IProcess) {
-        this.verifyNotClosed();
-
-        debug(`attachProcess()`);
-
-        // Get the object snapshot and include it in the initial attach
-        // const snapshot = channel.snapshot();
-
-        // const message: IAttachMessage = {
-        //     id: channel.id,
-        //     snapshot,
-        //     type: channel.type,
-        // };
-        // this.pendingAttach.set(channel.id, message);
-        // this.submit(MessageType.Attach, message);
-
-        // // Store a reference to the object in our list of objects and then get the services
-        // // used to attach it to the stream
-        // const services = this.getObjectServices(channel.id, null, this.storageService);
-
-        // const entry = this.channels.get(channel.id);
-        // assert.equal(entry.object, channel);
-        // entry.connection = services.deltaConnection;
-        // entry.storage = services.objectStorage;
-
-        // return services;
     }
 
     public getQuorum(): IQuorum {

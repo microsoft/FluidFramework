@@ -93,9 +93,11 @@ export interface IHostRuntime {
 
     getProcess(id: string): Promise<IProcess>;
 
-    createProcess(id: string, pkg: string): Promise<IProcess>;
+    createAndAttachProcess(id: string, pkg: string): Promise<IProcess>;
 
-    attachProcess(process: IProcess);
+    // TODO at some point we may ant to split create from attach for processes. But the distributed data
+    // structures aren't yet prepared for this. For simplicity we just offer a createAndAttach
+    // attachProcess(process: IProcess);
 
     getQuorum(): IQuorum;
 
