@@ -16,6 +16,7 @@ export class ChaincodeDialog extends React.Component<IProps, IState> {
     constructor(props: Readonly<IProps>) {
         super(props);
 
+        // TODO-Fix-Flow
         fetch("http://localhost:4873/-/verdaccio/packages", {
                 method: "GET",
                 headers: new Headers([[

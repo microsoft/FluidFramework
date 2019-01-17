@@ -40,6 +40,8 @@ export class App extends React.Component<IProps, IState> {
     }
 
     render() {
+        // TODO-Fix-Flow
+
         return (
             <div className={style.app}>
                 <CommandBar
@@ -58,6 +60,7 @@ export class App extends React.Component<IProps, IState> {
         this.cmds.insert({ chaincode, docId });
     }
 
+    // TODO-Fix-Flow
     private readonly insertables = [
         { name: "Text", iconName: "Video", onClick: () => { this.cmds.insertText(App.exampleText); }},
         { name: "Video", iconName: "Video", onClick: () => this.cmds.insert(
