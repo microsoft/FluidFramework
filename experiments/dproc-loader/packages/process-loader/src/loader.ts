@@ -2,7 +2,7 @@ import { ICommit } from "@prague/gitresources";
 import { ICodeLoader } from "@prague/process-definitions";
 import { IDocumentService, IPlatformFactory, ITokenProvider, IUser } from "@prague/runtime-definitions";
 import { debug } from "./debug";
-import { Document } from "./document";
+import { DistributedProcess } from "./distributedProcess";
 
 /**
  * Loads a new interactive document
@@ -17,9 +17,9 @@ export async function load(
     documentService: IDocumentService,
     codeLoader: ICodeLoader,
     specifiedVersion: ICommit = null,
-    connect = true): Promise<Document> {
+    connect = true): Promise<DistributedProcess> {
 
-    debug(`Document loading: ${Date.now} `);
+    debug(`Document loading: ${Date.now()} `);
 
     // Verify we have services to load the document with
     if (!documentService) {
@@ -36,7 +36,7 @@ export async function load(
         return Promise.reject("Must provide a token");
     }
 
-    const document = await Document.Load(
+    const document = await DistributedProcess.Load(
         id,
         tenantId,
         user,

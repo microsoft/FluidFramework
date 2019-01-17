@@ -1,16 +1,12 @@
 import {
-    IChaincodeComponent,
     IChaincodeFactory,
-    IChaincodeHost,
     ICodeLoader,
-    IHostRuntime,
 } from "@prague/process-definitions";
 import * as loader from "@prague/process-loader";
 import {
     IDocumentService,
     IPlatform,
     IPlatformFactory,
-    IRuntime,
     ITokenProvider,
     IUser,
 } from "@prague/runtime-definitions";
@@ -22,61 +18,15 @@ import * as jwt from "jsonwebtoken";
 import * as ora from "ora";
 import * as process from "process";
 import * as readline from "readline";
+import * as testComponent from "./testComponent";
 
-class MyPlatform extends EventEmitter implements IPlatform {
-    public async queryInterface<T>(id: string): Promise<T> {
-        return null;
-    }
-}
+// tslint:disable-next-line:no-var-requires
+const packageDetails = require("../package.json");
 
-class MyChaincodeComponent implements IChaincodeComponent {
-    public getModule(type: string) {
-        console.log("getModule");
-        return null;
-    }
-
-    public async close(): Promise<void> {
-        console.log("close");
-        return;
-    }
-
-    public async run(runtime: IRuntime, platform: IPlatform): Promise<IPlatform> {
-        console.log("WE RUNNIN!");
-        return new MyPlatform();
-    }
-}
-
-class MyChaincodeHost implements IChaincodeHost {
-    public getModule(type: string) {
-        console.log("getModule");
-        return null;
-    }
-
-    public async close(): Promise<void> {
-        console.log("close");
-        return;
-    }
-
-    public async run(runtime: IHostRuntime, platform: IPlatform): Promise<IPlatform> {
-        console.log("MyChaincodeHost WE RUNNIN!");
-        return new MyPlatform();
-    }
-}
-
-class MyChaincodeFactory implements IChaincodeFactory {
-    public async instantiateComponent(): Promise<IChaincodeComponent> {
-        return new MyChaincodeComponent();
-    }
-
-    public async instantiateHost(): Promise<IChaincodeHost> {
-        return new MyChaincodeHost();
-    }
-}
-
-class NodeCodeLoader implements ICodeLoader {
+class TestCodeLoader implements ICodeLoader {
     public async load(pkg: string): Promise<IChaincodeFactory> {
         console.log(`Loading ${pkg}`);
-        return new MyChaincodeFactory();
+        return testComponent;
     }
 }
 
@@ -91,9 +41,6 @@ class NodePlatformFactory implements IPlatformFactory {
         return new NodePlatform();
     }
 }
-
-// tslint:disable-next-line:no-var-requires
-const packageDetails = require("../package.json");
 
 async function readlineAsync(input: readline.ReadLine, prompt: string): Promise<string> {
     return new Promise<string>((resolve) => {
@@ -120,7 +67,7 @@ async function run(
         null,
         platformFactory,
         documentServices,
-        new NodeCodeLoader());
+        new TestCodeLoader());
     ora.promise(documentP, `Loading ${tenantId}/${id}`);
     const document = await documentP;
 
@@ -160,7 +107,6 @@ async function run(
     console.log("");
 
     const input = readline.createInterface(process.stdin, process.stdout);
-    // tslint:disable-next-line:no-constant-condition
     while (true) {
         const key = await readlineAsync(input, chalk.green("Key: "));
         const value = await readlineAsync(input, chalk.green("Value: "));

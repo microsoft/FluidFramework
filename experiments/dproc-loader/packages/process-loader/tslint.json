@@ -14,6 +14,7 @@
         "newline-per-chained-call": false,
         "no-backbone-get-set-outside-model": false,
         "no-console": false,
+        "no-constant-condition": false,
         "no-default-export": false,
         "no-empty-interface": false,
         "no-for-in": false,

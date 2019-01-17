@@ -33,7 +33,7 @@ import { Context } from "./context";
 import { debug } from "./debug";
 import { IConnectionDetails } from "./deltaConnection";
 import { DeltaManager } from "./deltaManager";
-import { NullChaincode } from "./nullChaincode";
+import * as nullPackage from "./nullChaincode";
 import { IQuorumSnapshot, Quorum } from "./quorum";
 import { readAndParse } from "./utils";
 
@@ -50,7 +50,7 @@ interface IBufferedChunk {
 }
 
 // TODO consider a name change for this. The document is likely built on top of this infrastructure
-export class Document extends EventEmitter {
+export class DistributedProcess extends EventEmitter {
     public static async Load(
         id: string,
         tenantId: string,
@@ -61,8 +61,8 @@ export class Document extends EventEmitter {
         codeLoader: ICodeLoader,
         options: any,
         specifiedVersion: ICommit,
-        connect: boolean): Promise<Document> {
-        const doc = new Document(id, tenantId, user, tokenProvider, platform, service, codeLoader, options);
+        connect: boolean): Promise<DistributedProcess> {
+        const doc = new DistributedProcess(id, tenantId, user, tokenProvider, platform, service, codeLoader, options);
         await doc.load(specifiedVersion, connect);
 
         return doc;
@@ -682,16 +682,10 @@ export class Document extends EventEmitter {
         tree: ISnapshotTree,
         version: ICommit): Promise<{ pkg: string, chaincode: IChaincodeHost }> {
 
-        let pkg: string;
         let chaincode: IChaincodeHost;
 
-        if (quorum.has("code")) {
-            pkg = quorum.get("code");
-            chaincode = await this.loadCode(pkg);
-        } else {
-            pkg = null;
-            chaincode = new NullChaincode();
-        }
+        const pkg = quorum.has("code") ? quorum.get("code") : null;
+        chaincode = await this.loadCode(pkg);
 
         return { chaincode, pkg };
     }
@@ -700,7 +694,7 @@ export class Document extends EventEmitter {
      * Loads the code for the provided package
      */
     private async loadCode(pkg: string): Promise<IChaincodeHost> {
-        const module = await this.codeLoader.load(pkg);
+        const module = pkg ? await this.codeLoader.load(pkg) : nullPackage;
         const chaincode = await module.instantiateHost();
 
         return chaincode;

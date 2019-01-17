@@ -1,4 +1,8 @@
-import { IChaincodeHost } from "@prague/process-definitions";
+import {
+    IChaincodeComponent,
+    IChaincodeHost,
+    IProcess,
+} from "@prague/process-definitions";
 import {
     ConnectionState,
     IChannel,
@@ -24,7 +28,14 @@ export interface IChannelState {
     connection: ChannelDeltaConnection;
 }
 
-export class Component extends EventEmitter {
+export class Component extends EventEmitter implements IProcess {
+    public static async create(id: string, pkg: string, chaincode: IChaincodeHost) {
+        const extension = await chaincode.getModule(pkg) as IChaincodeComponent;
+        extension.run(null, null);
+
+        return null;
+    }
+
     public static async LoadFromSnapshot(
         tenantId: string,
         id: string,
