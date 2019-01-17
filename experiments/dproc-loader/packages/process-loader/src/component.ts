@@ -82,7 +82,6 @@ export class Component extends EventEmitter implements IComponentRuntime, IProce
         tenantId: string,
         documentId: string,
         id: string,
-        platform: IPlatform,
         parentBranch: string,
         existing: boolean,
         options: any,

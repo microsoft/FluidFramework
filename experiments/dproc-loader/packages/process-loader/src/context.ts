@@ -104,6 +104,7 @@ export class Context implements IHostRuntime {
     private components = new Map<string, Component>();
     private processDeferred = new Map<string, Deferred<Component>>();
     private closed = false;
+    private pendingAttach = new Map<string, IAttachMessage>();
 
     public get connected(): boolean {
         return this.connectionState === ConnectionState.Connected;
@@ -148,7 +149,6 @@ export class Context implements IHostRuntime {
             this.tenantId,
             this.id,
             id,
-            this.platform,
             this.parentBranch,
             this.existing,
             this.options,
@@ -203,6 +203,22 @@ export class Context implements IHostRuntime {
     }
 
     public changeConnectionState(value: ConnectionState, clientId: string) {
+        this.verifyNotClosed();
+
+        if (value === this.connectionState) {
+            return;
+        }
+
+        this._connectionState = value;
+        this.clientId = clientId;
+
+        // Resend all pending attach messages prior to notifying clients
+        if (value === ConnectionState.Connected) {
+            for (const [, message] of this.pendingAttach) {
+                this.submit(MessageType.Attach, message);
+            }
+        }
+
         for (const [, component] of this.components) {
             component.changeConnectionState(value, clientId);
         }
@@ -224,50 +240,56 @@ export class Context implements IHostRuntime {
         component.process(message, local, context);
     }
 
-    public async prepareAttach(message: ISequencedDocumentMessage, local: boolean): Promise<IChannelState> {
+    public async prepareAttach(message: ISequencedDocumentMessage, local: boolean): Promise<Component> {
         this.verifyNotClosed();
 
+        // the local object has already been attached
         if (local) {
             return;
         }
 
         const attachMessage = message.contents as IAttachMessage;
+        let snapshotTree: ISnapshotTree = null;
+        if (attachMessage.snapshot) {
+            const flattened = flatten(attachMessage.snapshot.entries, new Map());
+            snapshotTree = buildHierarchy(flattened);
+        }
 
         // create storage service that wraps the attach data
-        const localStorage = new LocalChannelStorageService(attachMessage.snapshot);
-        const connection = new ChannelDeltaConnection(
+        const runtimeStorage = new ComponentStorageService(this.storage, new Map());
+        const component = await Component.LoadFromSnapshot(
+            this.tenantId,
+            this.id,
             attachMessage.id,
-            this.connectionState,
-            (submitMessage) => {
-                const submitEnvelope: IEnvelope = { address: attachMessage.id, contents: submitMessage };
-                this.submit(MessageType.Operation, submitEnvelope);
-            });
-
-        // Document sequence number references <= message.sequenceNumber should map to the object's 0
-        // sequence number. We cap to the MSN to keep a tighter window and because no references should
-        // be below it.
-        connection.setBaseMapping(0, message.minimumSequenceNumber);
-
-        const services: IObjectServices = {
-            deltaConnection: connection,
-            objectStorage: localStorage,
-        };
-
-        const origin = message.origin ? message.origin.id : this.id;
-        const value = await this.loadChannel(
-            attachMessage.id,
+            this.parentBranch,
+            this.existing,
+            this.options,
+            this.clientId,
+            this.user,
+            this.blobManager,
             attachMessage.type,
-            0,
-            0,
-            [],
-            services,
-            origin);
+            this.chaincode,
+            this.deltaManager,
+            this.quorum,
+            runtimeStorage,
+            this.connectionState,
+            snapshotTree,
+            this.id,
+            this.deltaManager.minimumSequenceNumber,
+            this.submitFn,
+            this.snapshotFn,
+            this.closeFn);
 
-        return value;
+        // Start the component code
+        await component.start();
+
+        return component;
     }
 
-    public processAttach(message: ISequencedDocumentMessage, local: boolean, context: IChannelState): IChannel {
+    public processAttach(message: ISequencedDocumentMessage, local: boolean, context: Component): void {
         this.verifyNotClosed();
+
+        debug("processAttach");
 
         const attachMessage = message.contents as IAttachMessage;
 
@@ -275,26 +297,18 @@ export class Context implements IHostRuntime {
         if (local) {
             assert(this.pendingAttach.has(attachMessage.id));
             this.pendingAttach.delete(attachMessage.id);
-
-            // Document sequence number references <= message.sequenceNumber should map to the
-            // object's 0 sequence number. We cap to the MSN to keep a tighter window and because
-            // no references should be below it.
-            this.channels.get(attachMessage.id).connection.setBaseMapping(
-                0,
-                message.minimumSequenceNumber);
         } else {
-            const channelState = context as IChannelState;
-            this.channels.set(channelState.object.id, channelState);
-            if (this.channelsDeferred.has(channelState.object.id)) {
-                this.channelsDeferred.get(channelState.object.id).resolve(channelState.object);
+            this.components.set(attachMessage.id, context);
+
+            // Resolve pending gets and store off any new ones
+            if (this.processDeferred.has(attachMessage.id)) {
+                this.processDeferred.get(attachMessage.id).resolve(context);
             } else {
-                const deferred = new Deferred<IChannel>();
-                deferred.resolve(channelState.object);
-                this.channelsDeferred.set(channelState.object.id, deferred);
+                const deferred = new Deferred<Component>();
+                deferred.resolve(context);
+                this.processDeferred.set(attachMessage.id, deferred);
             }
         }
-
-        return this.channels.get(attachMessage.id).object;
     }
 
     public updateMinSequenceNumber(minimumSequenceNumber: number) {
@@ -326,25 +340,6 @@ export class Context implements IHostRuntime {
     public async createAndAttachProcess(id: string, pkg: string): Promise<IProcess> {
         this.verifyNotClosed();
 
-        const message: IAttachMessage = {
-            id: channel.id,
-            snapshot,
-            type: channel.type,
-        };
-        this.pendingAttach.set(channel.id, message);
-        this.submit(MessageType.Attach, message);
-
-        // Store a reference to the object in our list of objects and then get the services
-        // used to attach it to the stream
-        const services = this.getObjectServices(channel.id, null, this.storageService);
-
-        const entry = this.channels.get(channel.id);
-        assert.equal(entry.object, channel);
-        entry.connection = services.deltaConnection;
-        entry.storage = services.objectStorage;
-
-        // return services;
-
         const runtimeStorage = new ComponentStorageService(this.storage, new Map());
         const component = await Component.create(
             this.tenantId,
@@ -368,6 +363,22 @@ export class Context implements IHostRuntime {
             this.snapshotFn,
             this.closeFn);
 
+        // Store off the component
+        this.components.set(id, component);
+
+        // Generate the attach message
+        const message: IAttachMessage = {
+            id,
+            snapshot: null,
+            type: pkg,
+        };
+        this.pendingAttach.set(id, message);
+        this.submit(MessageType.Attach, message);
+
+        // Start up the component
+        await component.start();
+
+        // Resolve any pending requests for the component
         if (this.processDeferred.has(id)) {
             this.processDeferred.get(id).resolve(component);
         } else {
@@ -375,9 +386,6 @@ export class Context implements IHostRuntime {
             deferred.resolve(component);
             this.processDeferred.set(id, deferred);
         }
-
-        // this.components.set(id, component);
-        await component.start();
 
         return component;
     }
@@ -387,7 +395,13 @@ export class Context implements IHostRuntime {
     }
 
     public error(error: any) {
+        // TODO bubble up to parent
         debug("Context has encountered a non-recoverable error");
+    }
+
+    private submit(type: MessageType, content: any) {
+        this.verifyNotClosed();
+        this.submitFn(type, content);
     }
 
     private verifyNotClosed() {
