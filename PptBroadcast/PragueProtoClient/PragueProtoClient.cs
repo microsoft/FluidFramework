@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Net.Http;
 using System.Text;
 
 using System.IdentityModel.Tokens.Jwt;
@@ -12,6 +14,49 @@ using Quobject.EngineIoClientDotNet.ComponentEmitter;
 
 namespace PragueProtoClient
 {
+   interface ICollaborativeObject
+   {
+      string id { get; }
+
+      void ProcessCore( ISequencedObjectMessage message, bool local, object context );
+   }
+
+   class CollaborativeMap : ICollaborativeObject
+   {
+      private readonly string                        m_id;
+      private readonly IDictionary< string, object > m_values = new Dictionary< string, object >();
+
+      public CollaborativeMap( string id )
+      {
+         m_id = id;
+      }
+
+      public string id { get { return m_id; } }
+
+      public void ProcessCore( ISequencedObjectMessage message, bool local, object context )
+      {
+         IEnvelope env = JsonConvert.DeserializeObject< IEnvelope >( ( string )message.contents );
+         System.Console.WriteLine( "Env: {0}", JsonConvert.SerializeObject( env, Formatting.Indented ) );
+
+         IObjectMessage objMessage = ( ( JObject )env.contents ).ToObject< IObjectMessage >();
+         System.Console.WriteLine( "OM:{0}", JsonConvert.SerializeObject( objMessage, Formatting.Indented ) );
+
+         IMapOperation mapOp = ( (JObject )objMessage.contents ).ToObject< IMapOperation >();
+         System.Console.WriteLine( "MapOp:{0}", JsonConvert.SerializeObject( mapOp, Formatting.Indented ) );
+
+         m_values[ mapOp.key ] = mapOp.value;
+
+         System.Console.WriteLine( "CollaborativeMap::ProcessCore Key:{0} Value:{1}", mapOp.key, mapOp.value );
+      }
+   }
+
+   class IAttachMessage
+   {
+      public string id;
+      public string type;
+      public object snapshot;
+   }
+
    class IEnvelope
    {
       public string address;
@@ -71,6 +116,13 @@ namespace PragueProtoClient
 
    class OpListener : IListener
    {
+      private readonly IDictionary< string, ICollaborativeObject > m_objs;
+
+      public OpListener( IDictionary< string, ICollaborativeObject > objs )
+      {
+         m_objs = objs;
+      }
+
       public void Call( params object[] args )
       {
          System.Console.WriteLine( "OpListener::Call " );
@@ -95,11 +147,39 @@ namespace PragueProtoClient
                      IEnvelope env = JsonConvert.DeserializeObject< IEnvelope >( ( string )seqObjMessage.contents );
                      System.Console.WriteLine( "Env: {0}", JsonConvert.SerializeObject( env, Formatting.Indented ) );
 
-                     IObjectMessage objMessage = ( ( JObject )env.contents ).ToObject< IObjectMessage >();
-                     System.Console.WriteLine( "OM:{0}", JsonConvert.SerializeObject( objMessage, Formatting.Indented ) );
+                     ICollaborativeObject collabObj;
+                     bool fGotValue = m_objs.TryGetValue( env.address, out collabObj );
+                     if( fGotValue )
+                     {
+                        collabObj.ProcessCore( seqObjMessage, false, null );
+                     }
+                     else
+                     {
+                        throw new NotImplementedException( "obj not found" );
+                     }
+                  }
+                  else if( type == "attach" )
+                  {
+                     ISequencedObjectMessage seqObjMessage = obj.ToObject< ISequencedObjectMessage >();
+                     System.Console.WriteLine( JsonConvert.SerializeObject( seqObjMessage, Formatting.Indented ) );
 
-                     IMapOperation mapOp = ( (JObject )objMessage.contents ).ToObject< IMapOperation >();
-                     System.Console.WriteLine( "MapOp:{0}", JsonConvert.SerializeObject( mapOp, Formatting.Indented ) );
+                     IAttachMessage attachMessage = JsonConvert.DeserializeObject< IAttachMessage >( ( string )seqObjMessage.contents );
+                     System.Console.WriteLine( "attachMessage: {0}", JsonConvert.SerializeObject( attachMessage, Formatting.Indented ) );
+
+                     if( attachMessage.type == "https://graph.microsoft.com/types/map" )
+                     {
+                        if( m_objs.ContainsKey( attachMessage.id ) )
+                        {
+                           throw new NotImplementedException( "obj already exists" );
+                        }
+
+                        ICollaborativeObject newObj = new CollaborativeMap( attachMessage.id );
+                        m_objs.Add( attachMessage.id, newObj );
+                     }
+                     else
+                     {
+                        throw new NotImplementedException();
+                     }
                   }
                   else
                   {
@@ -129,10 +209,25 @@ namespace PragueProtoClient
          //string tenantID      = "gallant-hugle";
          //string routerlicious = "https://alfred.wu2.prague.office-int.com";
 
-         string docID         = "doc13";
+         string docID         = "Doc1";
          string tenantID      = "prague";
          string routerlicious = "http://localhost:3000";
 
+         HttpClient httpClient = new HttpClient();
+         HttpResponseMessage responseMessage = httpClient.GetAsync( $"http://localhost:3000/deltas/{docID}" ).Result;
+
+         if( responseMessage.StatusCode != System.Net.HttpStatusCode.OK )
+         {
+            throw new InvalidOperationException( "Invalid return code" );
+         }
+
+         IDictionary< string, ICollaborativeObject > objects = new Dictionary< string, ICollaborativeObject >();
+
+         IListener opListener = new OpListener( objects );
+
+         object deltasObj = JsonConvert.DeserializeObject( responseMessage.Content.ReadAsStringAsync().Result );
+
+         opListener.Call( deltasObj );
 
          var options = new IO.Options();
          options.QueryString = string.Format( "documentId={0}&tenantId={0}", docID, tenantID );
@@ -140,7 +235,7 @@ namespace PragueProtoClient
 
          var socket = IO.Socket( routerlicious, options );
 
-         socket.On( "op", new OpListener() );
+         socket.On( "op", opListener );
 
          socket.On( Socket.EVENT_CONNECT, () => { System.Console.WriteLine( "Connected" ); } );
          socket.On( Socket.EVENT_CONNECT_ERROR, () => { System.Console.WriteLine( "ConnectionError" ); } );
