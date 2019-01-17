@@ -239,6 +239,7 @@ export class Runtime extends EventEmitter implements IRuntime {
             for (const [, message] of this.pendingAttach) {
                 this.submit(MessageType.Attach, message);
             }
+            this.emit("connected", clientId);
         }
 
         for (const [, object] of this.channels) {

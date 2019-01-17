@@ -68,6 +68,7 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
     // tslint:disable:variable-name
     private _inbound: DeltaQueue<runtime.IDocumentMessage>;
     private _outbound: DeltaQueue<runtime.IDocumentMessage>;
+    private _clientType: string;
     // tslint:enable:variable-name
 
     private connecting: Deferred<IConnectionDetails>;
@@ -77,8 +78,6 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
 
     private handler: IDeltaHandlerStrategy;
     private deltaStorageP: Promise<runtime.IDocumentDeltaStorageService>;
-
-    private clientType: string;
 
     private contentCache = new ContentCache(DefaultContentBufferSize);
 
@@ -108,6 +107,10 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
         return DefaultMaxContentSize;
     }
 
+    public get clientType(): string {
+        return this._clientType;
+    }
+
     constructor(
         private id: string,
         private tenantId: string,
@@ -117,7 +120,7 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
         super();
 
         /* tslint:disable:strict-boolean-expressions */
-        this.clientType = (!this.client || this.client.type === runtime.Browser)
+        this._clientType = (!this.client || this.client.type === runtime.Browser)
             ? runtime.Browser
             : runtime.Robot;
         // Inbound message queue
@@ -215,7 +218,7 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
         const traces: runtime.ITrace[] = [
             {
                 action: "start",
-                service: this.clientType,
+                service: this._clientType,
                 timestamp: Date.now(),
             }];
         // tslint:disable:no-increment-decrement
@@ -350,7 +353,7 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
 
     private connectCore(reason: string, delay: number) {
         // Reconnection is only enabled for browser clients.
-        const reconnect = this.clientType === runtime.Browser;
+        const reconnect = this._clientType === runtime.Browser;
 
         DeltaConnection.Connect(
             this.tenantId,
@@ -527,7 +530,7 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
             if (message.traces && message.traces.length > 0) {
                 message.traces.push({
                     action: "end",
-                    service: this.clientType,
+                    service: this._clientType,
                     timestamp: Date.now(),
                 });
             }

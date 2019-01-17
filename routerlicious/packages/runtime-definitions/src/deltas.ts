@@ -7,6 +7,9 @@ export interface IDeltaManager {
     // the queue of outbound delta messages
     outbound: IDeltaQueue;
 
+    // Type of client
+    clientType: string;
+
     /**
      * Puts the delta manager in read only mode
      */
