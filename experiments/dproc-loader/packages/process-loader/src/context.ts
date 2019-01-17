@@ -36,7 +36,6 @@ export class Context implements IHostRuntime {
         blobManager: BlobManager,
         pkg: string,
         chaincode: IChaincodeHost,
-        tardisMessages: Map<string, ISequencedDocumentMessage[]>,
         deltaManager: DeltaManager,
         quorum: IQuorum,
         storage: IDocumentStorageService,

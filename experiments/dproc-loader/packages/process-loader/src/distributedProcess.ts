@@ -10,7 +10,6 @@ import {
     IDocumentAttributes,
     IDocumentService,
     IDocumentStorageService,
-    IEnvelope,
     IGenericBlob,
     IPlatformFactory,
     IProposal,
@@ -329,9 +328,6 @@ export class DistributedProcess extends EventEmitter {
         const blobManagerP = Promise.all([storageP, treeP]).then(
             ([storage, tree]) => this.loadBlobManager(storage, tree));
 
-        const tardisMessagesP = Promise.all([attributesP, storageP, treeP]).then(
-            ([attributes, storage, tree]) => this.loadTardisMessages(attributes, storage, tree));
-
         const submodulesP = Promise.all([storageP, treeP]).then(async ([storage, tree]) => {
             if (!tree || !tree.commits) {
                 return new Map<string, ISnapshotTree>();
@@ -363,7 +359,6 @@ export class DistributedProcess extends EventEmitter {
                 quorumP,
                 blobManagerP,
                 chaincodeP,
-                tardisMessagesP,
                 connectResult.handlerAttachedP,
                 ])
             .then(async ([
@@ -373,8 +368,7 @@ export class DistributedProcess extends EventEmitter {
                 attributes,
                 quorum,
                 blobManager,
-                chaincode,
-                tardisMessages]) => {
+                chaincode]) => {
 
                 this.quorum = quorum;
                 this.storageService = storageService;
@@ -406,7 +400,6 @@ export class DistributedProcess extends EventEmitter {
                     this.blobManager,
                     chaincode.pkg,
                     chaincode.chaincode,
-                    tardisMessages,
                     this._deltaManager,
                     this.quorum,
                     storageService,
@@ -533,47 +526,6 @@ export class DistributedProcess extends EventEmitter {
         return message;
     }
 
-    private async loadTardisMessages(
-        attributes: IDocumentAttributes,
-        storage: IDocumentStorageService,
-        tree: ISnapshotTree): Promise<Map<string, ISequencedDocumentMessage[]>> {
-
-        const messages: ISequencedDocumentMessage[] = tree
-            ? await readAndParse<ISequencedDocumentMessage[]>(storage, tree.blobs[".messages"])
-            : [];
-
-        // Update message information based on branch details
-        if (attributes.branch !== this.id) {
-            for (const message of messages) {
-                // Append branch information when transforming for the case of messages stashed with the snapshot
-                if (attributes.branch) {
-                    message.origin = {
-                        id: attributes.branch,
-                        minimumSequenceNumber: message.minimumSequenceNumber,
-                        sequenceNumber: message.sequenceNumber,
-                    };
-                }
-            }
-        }
-
-        // Make a reservation for the root object as well as all distributed objects in the snapshot
-        const transformedMap = new Map<string, ISequencedDocumentMessage[]>();
-
-        // Filter messages per distributed data type
-        for (const message of messages) {
-            if (message.type === MessageType.Operation) {
-                const envelope = message.contents as IEnvelope;
-                if (!transformedMap.has(envelope.address)) {
-                    transformedMap.set(envelope.address, []);
-                }
-
-                transformedMap.get(envelope.address).push(message);
-            }
-        }
-
-        return transformedMap;
-    }
-
     private async loadQuorum(
         attributes: IDocumentAttributes,
         storage: IDocumentStorageService,
@@ -662,7 +614,6 @@ export class DistributedProcess extends EventEmitter {
             this.blobManager,
             this.pkg,
             chaincode,
-            new Map(),
             this._deltaManager,
             this.quorum,
             this.storageService,
