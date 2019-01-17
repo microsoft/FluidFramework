@@ -41,6 +41,11 @@ export interface IDocumentAttributes {
      * Quorum values at the time of the snapshot
      */
     values: Array<[string, any]>;
+
+    /**
+     * Component package type
+     */
+    package: string;
 }
 
 // TODO consider a rename to channel

@@ -65,6 +65,8 @@ export class Context implements IHostRuntime {
             chaincode,
             storage,
             connectionState,
+            branch,
+            minimumSequenceNumber,
             submitFn,
             snapshotFn,
             closeFn);
@@ -94,6 +96,10 @@ export class Context implements IHostRuntime {
         return Promise.resolve();
     }
 
+    public get connectionState(): ConnectionState {
+        return this._connectionState;
+    }
+
     // Components tracked by the Domain
     private components = new Map<string, Component>();
     private processDeferred = new Map<string, Deferred<Component>>();
@@ -111,17 +117,20 @@ export class Context implements IHostRuntime {
         public readonly options: any,
         public clientId: string,
         public readonly user: IUser,
-        private blobManager: BlobManager,
+        public readonly blobManager: BlobManager,
         public readonly deltaManager: DeltaManager,
         private quorum: IQuorum,
         public readonly pkg: string,
         public readonly platform: IPlatform,
         public readonly chaincode: IChaincodeHost,
-        private readonly storageService: IDocumentStorageService,
-        private connectionState: ConnectionState,
-        private submitFn: (type: MessageType, contents: any) => void,
-        private snapshotFn: (message: string) => Promise<void>,
-        private closeFn: () => void,
+        public readonly storage: IDocumentStorageService,
+        // tslint:disable-next-line:variable-name
+        private _connectionState: ConnectionState,
+        public readonly branch: string,
+        public readonly minimumSequenceNumber: number,
+        public readonly submitFn: (type: MessageType, contents: any) => void,
+        public readonly snapshotFn: (message: string) => Promise<void>,
+        public readonly closeFn: () => void,
     ) {
     }
 
@@ -131,9 +140,13 @@ export class Context implements IHostRuntime {
         extraBlobs: Map<string, string>,
     ): Promise<void> {
         // Need to rip through snapshot and use that to populate extraBlobs
-        const runtimeStorage = new ComponentStorageService(this.storageService, extraBlobs);
+        const runtimeStorage = new ComponentStorageService(this.storage, extraBlobs);
+
+        // Load in the type of component
 
         const component = await Component.LoadFromSnapshot(
+            this.tenantId,
+            this.id,
             id,
             this.platform,
             this.parentBranch,
@@ -241,8 +254,10 @@ export class Context implements IHostRuntime {
     public async createProcess(id: string, pkg: string): Promise<IProcess> {
         this.verifyNotClosed();
 
-        const runtimeStorage = new ComponentStorageService(this.storageService, new Map());
+        const runtimeStorage = new ComponentStorageService(this.storage, new Map());
         const component = await Component.create(
+            this.tenantId,
+            this.id,
             id,
             this.platform,
             this.parentBranch,
@@ -251,7 +266,7 @@ export class Context implements IHostRuntime {
             this.clientId,
             this.user,
             this.blobManager,
-            this.pkg,
+            pkg,
             this.chaincode,
             new Map(),
             this.deltaManager,

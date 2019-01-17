@@ -1,9 +1,10 @@
 import {
     IChaincodeComponent,
     IChaincodeHost,
+    IComponentRuntime,
     IHostRuntime,
 } from "@prague/process-definitions";
-import { IPlatform, IRuntime } from "@prague/runtime-definitions";
+import { IChaincode, IPlatform, IRuntime } from "@prague/runtime-definitions";
 import { EventEmitter } from "events";
 import { ComponentHost } from "./componentHost";
 import { debug } from "./debug";
@@ -11,6 +12,20 @@ import { debug } from "./debug";
 class MyPlatform extends EventEmitter implements IPlatform {
     public async queryInterface<T>(id: string): Promise<T> {
         return null;
+    }
+}
+
+class MyChaincode implements IChaincode {
+    public getModule(type: string) {
+        throw new Error("Method not implemented.");
+    }
+
+    public close(): Promise<void> {
+        throw new Error("Method not implemented.");
+    }
+
+    public run(runtime: IRuntime, platform: IPlatform): Promise<IPlatform> {
+        throw new Error("Method not implemented.");
     }
 }
 
@@ -25,9 +40,36 @@ class MyChaincodeComponent implements IChaincodeComponent {
         return;
     }
 
-    public async run(runtime: IRuntime, platform: IPlatform): Promise<IPlatform> {
+    public async run(runtime: IComponentRuntime, platform: IPlatform): Promise<IPlatform> {
         debug("WE RUNNIN YO!!! :)");
-        return new MyPlatform();
+
+        const chaincode = new MyChaincode();
+
+        // All of the below would be hidden from a developer
+        // Is this an await or does it just go?
+        const component = await ComponentHost.LoadFromSnapshot(
+            runtime.tenantId,
+            runtime.id,
+            runtime.platform,
+            runtime.parentBranch,
+            runtime.existing,
+            runtime.options,
+            runtime.clientId,
+            runtime.user,
+            runtime.blobManager,
+            runtime.baseSnapshot,
+            chaincode,
+            runtime.deltaManager,
+            runtime.getQuorum(),
+            runtime.storage,
+            runtime.connectionState,
+            runtime.branch,
+            runtime.minimumSequenceNumber,
+            runtime.submitFn,
+            runtime.snapshotFn,
+            runtime.closeFn);
+
+        return component.platform;
     }
 }
 
@@ -50,32 +92,7 @@ class MyChaincodeHost implements IChaincodeHost {
             runtime.error(error);
         });
 
-        // Is this an await or does it just go?
-        const component = await ComponentHost.LoadFromSnapshot(
-            runtime.tenantId,
-            runtime.id,
-            runtime.platform,
-            runtime.parentBranch,
-            runtime.existing,
-            runtime.options,
-            runtime.clientId,
-            runtime.user,
-            null, // runtime.blobManager,
-            null, // runtime.pkg <- no need since we are IN the code
-            null, // chaincode <- also no need since we are in the code
-            null, // runtime.tardisMessages,
-            runtime.deltaManager,
-            runtime.getQuorum(),
-            null, // rutnime.storage <- need to provide this
-            null, // runtime.connectionState,
-            null, // runtime.channels <- this is coming out of the snapshot
-            null, // runtime.branch,
-            null, // runtime.mininumSequenceNumber
-            null, // runtime.submitFn
-            null, // runtime.snapshotFn
-            null); // runtime.closeFn
-
-        return component.platform;
+        return new MyPlatform();
     }
 
     public async doWork(runtime: IHostRuntime) {

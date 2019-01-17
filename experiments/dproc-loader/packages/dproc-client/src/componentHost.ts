@@ -8,6 +8,7 @@ import {
     IChannel,
     IDeltaManager,
     IDistributedObjectServices,
+    IDocumentAttributes,
     IDocumentStorageService,
     IEnvelope,
     IGenericBlob,
@@ -55,19 +56,21 @@ export class ComponentHost extends EventEmitter {
         clientId: string,
         user: IUser,
         blobManager: IBlobManager,
-        pkg: string,
+        tree: ISnapshotTree,
         chaincode: IChaincode,
-        tardisMessages: Map<string, ISequencedDocumentMessage[]>,
         deltaManager: IDeltaManager,
         quorum: IQuorum,
         storage: IDocumentStorageService,
         connectionState: ConnectionState,
-        channels: { [path: string]: ISnapshotTree },
         branch: string,
         minimumSequenceNumber: number,
         submitFn: (type: MessageType, contents: any) => void,
         snapshotFn: (message: string) => Promise<void>,
-        closeFn: () => void) {
+        closeFn: () => void,
+    ) {
+        // pkg and chaincode also probably available from the snapshot?
+        const attributes = await readAndParse<IDocumentAttributes>(storage, tree.blobs[".attributes"]);
+        const tardisMessagesP = ComponentHost.loadTardisMessages(id, attributes, storage, tree);
 
         const runtime = new ComponentHost(
             tenantId,
@@ -80,7 +83,6 @@ export class ComponentHost extends EventEmitter {
             blobManager,
             deltaManager,
             quorum,
-            pkg,
             chaincode,
             storage,
             connectionState,
@@ -88,18 +90,20 @@ export class ComponentHost extends EventEmitter {
             snapshotFn,
             closeFn);
 
-        if (channels) {
-            Object.keys(channels).forEach((path) => {
+        // Must always receive the component type inside of the attributes
+        const tardisMessages = await tardisMessagesP;
+        if (tree.trees) {
+            Object.keys(tree.trees).forEach((path) => {
                 // Reserve space for the channel
                 runtime.reserve(path);
             });
 
             /* tslint:disable:promise-function-async */
-            const loadSnapshotsP = Object.keys(channels).map((path) => {
+            const loadSnapshotsP = Object.keys(tree.trees).map((path) => {
                 return runtime.loadSnapshotChannel(
                     runtime,
                     path,
-                    channels[path],
+                    tree.trees[path],
                     storage,
                     tardisMessages.has(path) ? tardisMessages.get(path) : [],
                     branch,
@@ -113,6 +117,48 @@ export class ComponentHost extends EventEmitter {
         await runtime.start(platform);
 
         return runtime;
+    }
+
+    private static async loadTardisMessages(
+        id: string,
+        attributes: IDocumentAttributes,
+        storage: IDocumentStorageService,
+        tree: ISnapshotTree): Promise<Map<string, ISequencedDocumentMessage[]>> {
+
+        const messages: ISequencedDocumentMessage[] = tree
+            ? await readAndParse<ISequencedDocumentMessage[]>(storage, tree.blobs[".messages"])
+            : [];
+
+        // Update message information based on branch details
+        if (attributes.branch !== id) {
+            for (const message of messages) {
+                // Append branch information when transforming for the case of messages stashed with the snapshot
+                if (attributes.branch) {
+                    message.origin = {
+                        id: attributes.branch,
+                        minimumSequenceNumber: message.minimumSequenceNumber,
+                        sequenceNumber: message.sequenceNumber,
+                    };
+                }
+            }
+        }
+
+        // Make a reservation for the root object as well as all distributed objects in the snapshot
+        const transformedMap = new Map<string, ISequencedDocumentMessage[]>();
+
+        // Filter messages per distributed data type
+        for (const message of messages) {
+            if (message.type === MessageType.Operation) {
+                const envelope = message.contents as IEnvelope;
+                if (!transformedMap.has(envelope.address)) {
+                    transformedMap.set(envelope.address, []);
+                }
+
+                transformedMap.get(envelope.address).push(message);
+            }
+        }
+
+        return transformedMap;
     }
 
     public get connected(): boolean {
@@ -144,8 +190,7 @@ export class ComponentHost extends EventEmitter {
         private blobManager: IBlobManager,
         public readonly deltaManager: IDeltaManager,
         private quorum: IQuorum,
-        public readonly pkg: string,
-        public readonly chaincode: IChaincode,
+        private readonly chaincode: IChaincode,
         private storageService: IDocumentStorageService,
         private connectionState: ConnectionState,
         private submitFn: (type: MessageType, contents: any) => void,

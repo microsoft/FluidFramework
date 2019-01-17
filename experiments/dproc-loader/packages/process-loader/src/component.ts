@@ -1,6 +1,7 @@
 import {
     IChaincodeComponent,
     IChaincodeHost,
+    IComponentRuntime,
     IProcess,
 } from "@prague/process-definitions";
 import {
@@ -28,8 +29,10 @@ export interface IChannelState {
     connection: ChannelDeltaConnection;
 }
 
-export class Component extends EventEmitter implements IProcess {
+export class Component extends EventEmitter implements IComponentRuntime, IProcess {
     public static async create(
+        tenantId: string,
+        documentId: string,
         id: string,
         platform: IPlatform,
         parentBranch: string,
@@ -54,6 +57,8 @@ export class Component extends EventEmitter implements IProcess {
     ) {
         const extension = await chaincode.getModule(pkg) as IChaincodeComponent;
         const component = new Component(
+            tenantId,
+            documentId,
             id,
             parentBranch,
             existing,
@@ -63,11 +68,12 @@ export class Component extends EventEmitter implements IProcess {
             blobManager,
             deltaManager,
             quorum,
-            pkg,
-            chaincode,
+            extension,
             storage,
             connectionState,
-            extension,
+            branch,
+            minimumSequenceNumber,
+            null,       // no snapshot
             submitFn,
             snapshotFn,
             closeFn);
@@ -76,6 +82,8 @@ export class Component extends EventEmitter implements IProcess {
     }
 
     public static async LoadFromSnapshot(
+        tenantId: string,
+        documentId: string,
         id: string,
         platform: IPlatform,
         parentBranch: string,
@@ -100,6 +108,8 @@ export class Component extends EventEmitter implements IProcess {
     ): Promise<Component> {
         const extension = await chaincode.getModule(pkg) as IChaincodeComponent;
         const component = new Component(
+            tenantId,
+            documentId,
             id,
             parentBranch,
             existing,
@@ -109,11 +119,12 @@ export class Component extends EventEmitter implements IProcess {
             blobManager,
             deltaManager,
             quorum,
-            pkg,
-            chaincode,
+            extension,
             storage,
             connectionState,
-            extension,
+            branch,
+            minimumSequenceNumber,
+            channels,
             submitFn,
             snapshotFn,
             closeFn);
@@ -122,12 +133,16 @@ export class Component extends EventEmitter implements IProcess {
     }
 
     public get connected(): boolean {
-        return this.connectionState === ConnectionState.Connected;
+        return this._connectionState === ConnectionState.Connected;
     }
 
     // Interface used to access the runtime code
     public get platform(): IPlatform {
         return this._platform;
+    }
+
+    public get connectionState(): ConnectionState {
+        return this._connectionState;
     }
 
     private closed = false;
@@ -137,23 +152,27 @@ export class Component extends EventEmitter implements IProcess {
     // tslint:enable-next-line:variable-name
 
     private constructor(
+        public readonly tenantId: string,
+        public readonly documentId: string,
         public readonly id: string,
         public readonly parentBranch: string,
-        public existing: boolean,
+        public readonly existing: boolean,
         public readonly options: any,
         public clientId: string,
         public readonly user: IUser,
-        private blobManager: BlobManager,
+        public readonly blobManager: BlobManager,
         public readonly deltaManager: DeltaManager,
         private quorum: IQuorum,
-        public readonly pkg: string,
-        public readonly chaincode: IChaincodeHost,
-        storageService: IDocumentStorageService,
-        private connectionState: ConnectionState,
-        private extension: IChaincodeComponent,
-        private submitFn: (type: MessageType, contents: any) => void,
-        snapshotFn: (message: string) => Promise<void>,
-        private closeFn: () => void) {
+        public readonly chaincode: IChaincodeComponent,
+        public readonly storage: IDocumentStorageService,
+        // tslint:disable-next-line:variable-name
+        private _connectionState: ConnectionState,
+        public readonly branch: string,
+        public readonly minimumSequenceNumber: number,
+        public readonly baseSnapshot: ISnapshotTree,
+        public readonly submitFn: (type: MessageType, contents: any) => void,
+        public readonly snapshotFn: (message: string) => Promise<void>,
+        public readonly closeFn: () => void) {
         super();
     }
 
@@ -172,7 +191,7 @@ export class Component extends EventEmitter implements IProcess {
         //  Some trigger can happen to then allow it to take part in the UI
 
         // TODOTODO need to understand start logic
-        this.extension.run(null, null);
+        this.chaincode.run(this, null);
     }
 
     public changeConnectionState(value: ConnectionState, clientId: string) {
@@ -182,7 +201,7 @@ export class Component extends EventEmitter implements IProcess {
             return;
         }
 
-        this.connectionState = value;
+        this._connectionState = value;
         this.clientId = clientId;
 
         // TODOTODO pass on to runtime
@@ -239,6 +258,10 @@ export class Component extends EventEmitter implements IProcess {
 
     public submitMessage(type: MessageType, content: any) {
         this.submit(type, content);
+    }
+
+    public error(err: any): void {
+        return;
     }
 
     private submit(type: MessageType, content: any) {

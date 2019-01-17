@@ -1,9 +1,10 @@
 import {
     IChaincodeComponent,
     IChaincodeHost,
+    IComponentRuntime,
     IHostRuntime,
 } from "@prague/process-definitions";
-import { IPlatform, IRuntime } from "@prague/runtime-definitions";
+import { IPlatform } from "@prague/runtime-definitions";
 import { EventEmitter } from "events";
 import { debug } from "./debug";
 
@@ -22,7 +23,7 @@ class NullChaincodeComponent implements IChaincodeComponent {
         return Promise.reject("Not supported");
     }
 
-    public async run(runtime: IRuntime, platform: IPlatform): Promise<IPlatform> {
+    public async run(runtime: IComponentRuntime, platform: IPlatform): Promise<IPlatform> {
         return Promise.reject("Not supported");
     }
 }

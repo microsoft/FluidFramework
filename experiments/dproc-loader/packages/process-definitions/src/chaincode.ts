@@ -1,11 +1,15 @@
 import {
+    ConnectionState,
+    IBlobManager,
     IDeltaManager,
+    IDocumentStorageService,
     IObjectMessage,
     IPlatform,
     IQuorum,
-    IRuntime,
+    ISnapshotTree,
     ITree,
     IUser,
+    MessageType,
 } from "@prague/runtime-definitions";
 
 export interface IChaincodeComponent {
@@ -25,11 +29,42 @@ export interface IChaincodeComponent {
      * Invoked once the chaincode has been fully instantiated on the document. Run returns a platform
      * interface that can be used to access the running component.
      */
-    run(runtime: IRuntime, platform: IPlatform): Promise<IPlatform>;
+    run(runtime: IComponentRuntime, platform: IPlatform): Promise<IPlatform>;
 }
 
 export interface IProcess {
     readonly id: string;
+}
+
+export interface IComponentRuntime {
+    // TODOTODO do I also need the component ID? Does the tenant ID even show up?
+    readonly tenantId: string;
+    readonly documentId: string;
+    readonly id: string;
+    readonly existing: boolean;
+    readonly options: any;
+    readonly clientId: string;
+    readonly user: IUser;
+    readonly parentBranch: string;
+    readonly connected: boolean;
+    readonly deltaManager: IDeltaManager;
+    readonly platform: IPlatform;
+    readonly blobManager: IBlobManager;
+    readonly storage: IDocumentStorageService;
+    readonly connectionState: ConnectionState;
+    readonly branch: string;
+    readonly minimumSequenceNumber: number;
+    readonly chaincode: IChaincodeComponent;
+    readonly baseSnapshot: ISnapshotTree;
+    readonly submitFn: (type: MessageType, contents: any) => void;
+    readonly snapshotFn: (message: string) => Promise<void>;
+    readonly closeFn: () => void;
+
+    // I believe these next two things won't be necessary
+
+    getQuorum(): IQuorum;
+
+    error(err: any): void;
 }
 
 export interface IHostRuntime {
@@ -44,6 +79,17 @@ export interface IHostRuntime {
     readonly connected: boolean;
     readonly deltaManager: IDeltaManager;
     readonly platform: IPlatform;
+    readonly blobManager: IBlobManager;
+    readonly storage: IDocumentStorageService;
+    readonly connectionState: ConnectionState;
+    readonly branch: string;
+    readonly minimumSequenceNumber: number;
+    readonly chaincode: IChaincodeHost;
+    readonly submitFn: (type: MessageType, contents: any) => void;
+    readonly snapshotFn: (message: string) => Promise<void>;
+    readonly closeFn: () => void;
+
+    // I believe these next two things won't be necessary
 
     getProcess(id: string): Promise<IProcess>;
 
