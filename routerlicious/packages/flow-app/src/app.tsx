@@ -6,7 +6,11 @@ import * as style from "./index.css";
 import { ChaincodeDialog } from "./chaincodedialog";
 import * as styles from "./index.css";
 
-interface IProps { }
+interface IProps { 
+    alfredUrl: string,
+    mediaUrl: string, // TODO: find this url,
+    verdaccioUrl: string,
+}
 interface IState { 
     virtualize: boolean
 }
@@ -40,6 +44,8 @@ export class App extends React.Component<IProps, IState> {
     }
 
     render() {
+        // TODO-Fix-Flow: fix alfredURL
+
         return (
             <div className={style.app}>
                 <CommandBar
@@ -47,9 +53,9 @@ export class App extends React.Component<IProps, IState> {
                     overflowItems={this.getOverlflowItems()}
                     farItems={this.getFarItems()} />
                 <div className={`${style.fill} ${ this.state.virtualize ? styles.virtualized : styles.normal }`}>
-                    <FlowEditor cmds={this.cmds} docUrl="http://localhost:3000" docId={this.docId} virtualize={this.state.virtualize}></FlowEditor>
+                    <FlowEditor cmds={this.cmds} docUrl={this.props.alfredUrl} docId={this.docId} virtualize={this.state.virtualize}></FlowEditor>
                 </div>
-                <ChaincodeDialog ref={this.chaincodeDlg} addComponent={this.addComponent} />
+                <ChaincodeDialog verdaccioUrl={this.props.verdaccioUrl} ref={this.chaincodeDlg} addComponent={this.addComponent} />
             </div>
         );
     }    
@@ -58,12 +64,13 @@ export class App extends React.Component<IProps, IState> {
         this.cmds.insert({ chaincode, docId });
     }
 
+    // TODO-Fix-Flow: unclear where media lives
     private readonly insertables = [
         { name: "Text", iconName: "Video", onClick: () => { this.cmds.insertText(App.exampleText); }},
         { name: "Video", iconName: "Video", onClick: () => this.cmds.insert(
             <div className={styles.video}>
               <figure style={{ marginInlineStart: 0, marginInlineEnd: 0 }}>
-                <video style={{ width: "100%" }} autoPlay={true} loop={true} controls={true} src="http://localhost:8080/assets/outrun.mp4"></video>
+                <video style={{ width: "100%" }} autoPlay={true} loop={true} controls={true} src={this.props.mediaUrl + "/assets/outrun.mp4"}></video>
               </figure>
               <figcaption>Figure 1 - Turbo Outrun by Jeroen Tel</figcaption>
             </div>

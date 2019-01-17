@@ -35,6 +35,7 @@ export const getInclusionHtml = (marker: Marker) => {
     return template.content.firstElementChild as HTMLElement;
 };
 export const getInclusionComponent = async (marker: Marker, services: ReadonlyArray<[string, Promise<any>]>) => {
+    // TODO-Fix-Flow
     DataStore.from("http://localhost:3000").then(store => {
         store.open(marker.properties.docId, "danlehen", marker.properties.chaincode, services);
     });
