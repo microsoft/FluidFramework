@@ -29,15 +29,7 @@ export interface IChannelState {
 }
 
 export class Component extends EventEmitter implements IProcess {
-    public static async create(id: string, pkg: string, chaincode: IChaincodeHost) {
-        const extension = await chaincode.getModule(pkg) as IChaincodeComponent;
-        extension.run(null, null);
-
-        return null;
-    }
-
-    public static async LoadFromSnapshot(
-        tenantId: string,
+    public static async create(
         id: string,
         platform: IPlatform,
         parentBranch: string,
@@ -58,10 +50,10 @@ export class Component extends EventEmitter implements IProcess {
         minimumSequenceNumber: number,
         submitFn: (type: MessageType, contents: any) => void,
         snapshotFn: (message: string) => Promise<void>,
-        closeFn: () => void): Promise<Component> {
-
+        closeFn: () => void,
+    ) {
+        const extension = await chaincode.getModule(pkg) as IChaincodeComponent;
         const component = new Component(
-            tenantId,
             id,
             parentBranch,
             existing,
@@ -75,11 +67,56 @@ export class Component extends EventEmitter implements IProcess {
             chaincode,
             storage,
             connectionState,
+            extension,
             submitFn,
             snapshotFn,
             closeFn);
 
-        await component.start(platform);
+        return component;
+    }
+
+    public static async LoadFromSnapshot(
+        id: string,
+        platform: IPlatform,
+        parentBranch: string,
+        existing: boolean,
+        options: any,
+        clientId: string,
+        user: IUser,
+        blobManager: BlobManager,
+        pkg: string,
+        chaincode: IChaincodeHost,
+        tardisMessages: Map<string, ISequencedDocumentMessage[]>,
+        deltaManager: DeltaManager,
+        quorum: IQuorum,
+        storage: IDocumentStorageService,
+        connectionState: ConnectionState,
+        channels: ISnapshotTree,
+        branch: string,
+        minimumSequenceNumber: number,
+        submitFn: (type: MessageType, contents: any) => void,
+        snapshotFn: (message: string) => Promise<void>,
+        closeFn: () => void,
+    ): Promise<Component> {
+        const extension = await chaincode.getModule(pkg) as IChaincodeComponent;
+        const component = new Component(
+            id,
+            parentBranch,
+            existing,
+            options,
+            clientId,
+            user,
+            blobManager,
+            deltaManager,
+            quorum,
+            pkg,
+            chaincode,
+            storage,
+            connectionState,
+            extension,
+            submitFn,
+            snapshotFn,
+            closeFn);
 
         return component;
     }
@@ -100,7 +137,6 @@ export class Component extends EventEmitter implements IProcess {
     // tslint:enable-next-line:variable-name
 
     private constructor(
-        public readonly tenantId: string,
         public readonly id: string,
         public readonly parentBranch: string,
         public existing: boolean,
@@ -114,6 +150,7 @@ export class Component extends EventEmitter implements IProcess {
         public readonly chaincode: IChaincodeHost,
         storageService: IDocumentStorageService,
         private connectionState: ConnectionState,
+        private extension: IChaincodeComponent,
         private submitFn: (type: MessageType, contents: any) => void,
         snapshotFn: (message: string) => Promise<void>,
         private closeFn: () => void) {
@@ -126,10 +163,16 @@ export class Component extends EventEmitter implements IProcess {
         // TODOTODO this needs to defer to the runtime
     }
 
-    public async start(platform: IPlatform): Promise<void> {
+    public async start(): Promise<void> {
         this.verifyNotClosed();
 
+        //  The component needs to have both a create and a load call (I believe). Or load can be invoked
+        // with no starting data.
+        //  Once the above are called it can begin processing events and model data
+        //  Some trigger can happen to then allow it to take part in the UI
+
         // TODOTODO need to understand start logic
+        this.extension.run(null, null);
     }
 
     public changeConnectionState(value: ConnectionState, clientId: string) {

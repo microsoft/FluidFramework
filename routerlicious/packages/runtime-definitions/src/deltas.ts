@@ -7,6 +7,9 @@ export interface IDeltaManager {
     // the queue of outbound delta messages
     outbound: IDeltaQueue;
 
+    // The current minimum sequence number
+    minimumSequenceNumber: number;
+
     /**
      * Puts the delta manager in read only mode
      */

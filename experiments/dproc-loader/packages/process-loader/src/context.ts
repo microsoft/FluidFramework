@@ -134,8 +134,7 @@ export class Context implements IHostRuntime {
         const runtimeStorage = new ComponentStorageService(this.storageService, extraBlobs);
 
         const component = await Component.LoadFromSnapshot(
-            this.tenantId,
-            this.id,
+            id,
             this.platform,
             this.parentBranch,
             this.existing,
@@ -157,6 +156,8 @@ export class Context implements IHostRuntime {
             this.snapshotFn,
             this.closeFn);
         this.components.set(id, component);
+
+        await component.start();
     }
 
     public snapshot(): Map<string, ITree> {
@@ -240,7 +241,29 @@ export class Context implements IHostRuntime {
     public async createProcess(id: string, pkg: string): Promise<IProcess> {
         this.verifyNotClosed();
 
-        const component = await Component.create(id, pkg, this.chaincode);
+        const runtimeStorage = new ComponentStorageService(this.storageService, new Map());
+        const component = await Component.create(
+            id,
+            this.platform,
+            this.parentBranch,
+            this.existing,
+            this.options,
+            this.clientId,
+            this.user,
+            this.blobManager,
+            this.pkg,
+            this.chaincode,
+            new Map(),
+            this.deltaManager,
+            this.quorum,
+            runtimeStorage,
+            this.connectionState,
+            { blobs: {}, commits: {}, trees: {} },
+            this.id,
+            this.deltaManager.minimumSequenceNumber,
+            this.submitFn,
+            this.snapshotFn,
+            this.closeFn);
 
         if (this.processDeferred.has(id)) {
             this.processDeferred.get(id).resolve(component);
@@ -251,6 +274,7 @@ export class Context implements IHostRuntime {
         }
 
         // this.components.set(id, component);
+        await component.start();
 
         return component;
     }

@@ -33,6 +33,7 @@ export interface IProcess {
 }
 
 export interface IHostRuntime {
+    // TODOTODO do I also need the component ID? Does the tenant ID even show up?
     readonly tenantId: string;
     readonly id: string;
     readonly existing: boolean;
