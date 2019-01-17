@@ -486,7 +486,6 @@ export class DistributedProcess extends EventEmitter {
             branch: this.id,
             clients: [...this.quorum.getMembers()],
             minimumSequenceNumber: this._deltaManager.minimumSequenceNumber,
-            package: "",
             partialOps: [...this.chunkMap],
             proposals: [],
             sequenceNumber: this._deltaManager.referenceSequenceNumber,

@@ -48,6 +48,7 @@ interface IObjectServices {
 export class ComponentHost extends EventEmitter {
     public static async LoadFromSnapshot(
         tenantId: string,
+        documentId: string,
         id: string,
         platform: IPlatform,
         parentBranch: string,
@@ -69,8 +70,18 @@ export class ComponentHost extends EventEmitter {
         closeFn: () => void,
     ) {
         // pkg and chaincode also probably available from the snapshot?
-        const attributes = await readAndParse<IDocumentAttributes>(storage, tree.blobs[".attributes"]);
-        const tardisMessagesP = ComponentHost.loadTardisMessages(id, attributes, storage, tree);
+        const attributes = tree !== null
+            ? await readAndParse<IDocumentAttributes>(storage, tree.blobs[".attributes"])
+            : {
+                branch: documentId,
+                clients: [],
+                minimumSequenceNumber: 0,
+                partialOps: [],
+                proposals: [],
+                sequenceNumber: 0,
+                values: [],
+            };
+        const tardisMessagesP = ComponentHost.loadTardisMessages(documentId, attributes, storage, tree);
 
         const runtime = new ComponentHost(
             tenantId,
@@ -92,7 +103,7 @@ export class ComponentHost extends EventEmitter {
 
         // Must always receive the component type inside of the attributes
         const tardisMessages = await tardisMessagesP;
-        if (tree.trees) {
+        if (tree && tree.trees) {
             Object.keys(tree.trees).forEach((path) => {
                 // Reserve space for the channel
                 runtime.reserve(path);

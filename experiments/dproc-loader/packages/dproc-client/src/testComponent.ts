@@ -17,15 +17,16 @@ class MyPlatform extends EventEmitter implements IPlatform {
 
 class MyChaincode implements IChaincode {
     public getModule(type: string) {
-        throw new Error("Method not implemented.");
+        return null;
     }
 
-    public close(): Promise<void> {
-        throw new Error("Method not implemented.");
+    public async close(): Promise<void> {
+        return;
     }
 
-    public run(runtime: IRuntime, platform: IPlatform): Promise<IPlatform> {
-        throw new Error("Method not implemented.");
+    public async run(runtime: IRuntime, platform: IPlatform): Promise<IPlatform> {
+        debug("BINGO!!!!");
+        return new MyPlatform();
     }
 }
 
@@ -49,6 +50,7 @@ class MyChaincodeComponent implements IChaincodeComponent {
         // Is this an await or does it just go?
         const component = await ComponentHost.LoadFromSnapshot(
             runtime.tenantId,
+            runtime.documentId,
             runtime.id,
             runtime.platform,
             runtime.parentBranch,
