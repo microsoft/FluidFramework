@@ -45,7 +45,7 @@ export enum ParagraphItemType {
 export interface IParagraphItem {
     type: ParagraphItemType;
     width: number;
-    segment: MergeTree.Segment;
+    segment: MergeTree.ISegment;
     pos?: number;
     // present if not default
     height?: number;
@@ -537,7 +537,7 @@ export function isReference(marker: MergeTree.Marker) {
 }
 
 export function segmentToItems(
-    segment: MergeTree.Segment, segpos: number, refSeq: number, clientId: number,
+    segment: MergeTree.ISegment, segpos: number, refSeq: number, clientId: number,
     start: number, end: number, context: IItemsContext) {
     if (segment.getType() === MergeTree.SegmentType.Text) {
         let textSegment = <MergeTree.TextSegment>segment;

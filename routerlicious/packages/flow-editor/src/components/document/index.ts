@@ -1,7 +1,7 @@
 // This pen illustrates an attempt to render the cursor as an inline span in the document's content flow without impacting kerning or ligatures due to splitting the word into separate spans.
 
 import {
-    Segment,
+    ISegment,
     Marker,
     TextSegment,
 } from "@prague/merge-tree";
@@ -62,7 +62,7 @@ export interface IViewInfo<TProps, TView extends IFlowViewComponent<TProps>> {
      * (Currently, only TextSegments are combined into a single view/element.  Other segment
      * types are 1:1.)
      */
-    segments: Segment[];
+    segments: ISegment[];
 
     /** The IView instance that rendered this set of segments. */
     view: TView;
@@ -93,7 +93,7 @@ interface IDocumentViewState extends IViewState {
      * Note that when a range of segments are rendered by a single view (as is the case with TextSegments
      * that share the same style), only the first segment in the range appears in this map.
      */
-    segmentToViewInfo: Map<Segment, IViewInfo<any, IFlowViewComponent<any>>>;
+    segmentToViewInfo: Map<ISegment, IViewInfo<any, IFlowViewComponent<any>>>;
 
     /**
      * Mapping from the root element produced by an IView to it's IViewInfo.
@@ -118,7 +118,7 @@ export class DocumentView extends View<IDocumentProps, IDocumentViewState> {
             trailingSpan,
             eventsink,
             overlay,
-            segmentToViewInfo: new Map<Segment, IViewInfo<any, IFlowViewComponent<any>>>(),
+            segmentToViewInfo: new Map<ISegment, IViewInfo<any, IFlowViewComponent<any>>>(),
             elementToViewInfo: new Map<Element, IViewInfo<any, IFlowViewComponent<any>>>()
         });
     }
@@ -158,7 +158,7 @@ export class DocumentView extends View<IDocumentProps, IDocumentViewState> {
             return undefined;
         }
 
-        let segment: Segment | undefined = undefined;
+        let segment: ISegment | undefined = undefined;
         for (segment of viewInfo.segments) {
             if (nodeOffset < segment.cachedLength) {
                 return { segment, offset: nodeOffset };
@@ -371,8 +371,8 @@ class LayoutContext {
         this.pendingLayout.clear();
 
         // Rebuild the segment -> ViewInfo map from the remaining visible elements.
-        this.state.segmentToViewInfo = new Map<Segment, IViewInfo<any, IFlowViewComponent<any>>>(
-            [...this.state.elementToViewInfo.values()].map<[Segment, IViewInfo<any, IFlowViewComponent<any>>]>(
+        this.state.segmentToViewInfo = new Map<ISegment, IViewInfo<any, IFlowViewComponent<any>>>(
+            [...this.state.elementToViewInfo.values()].map<[ISegment, IViewInfo<any, IFlowViewComponent<any>>]>(
                 viewInfo => [viewInfo.segments[0], viewInfo]));
     }
 
@@ -382,7 +382,7 @@ class LayoutContext {
      * If the given 'segment' is at the head of a list of previously rendered segments, return it's
      * cached ViewInfo and remove that IView from the pendingLayout list.
      */
-    public maybeReuseViewInfo<TProps, TView extends IFlowViewComponent<TProps>>(segment: Segment) {
+    public maybeReuseViewInfo<TProps, TView extends IFlowViewComponent<TProps>>(segment: ISegment) {
         const viewInfo = this.state.segmentToViewInfo.get(segment);
         if (viewInfo) {
             this.pendingLayout.delete(viewInfo.view.root);
@@ -408,7 +408,7 @@ class LayoutContext {
 export class DocumentLayout {
     private static mountView<TProps, TView extends IFlowViewComponent<TProps>>(
         context: LayoutContext,
-        segments: Segment[],
+        segments: ISegment[],
         factory: () => TView,
         props: TProps): IViewInfo<TProps, TView>
     {
@@ -428,7 +428,7 @@ export class DocumentLayout {
     private static syncNode<TProps, TView extends IFlowViewComponent<TProps>>(
         context: LayoutContext,
         previous: Node | null,
-        segments: Segment[],
+        segments: ISegment[],
         factory: () => TView,
         props: TProps): IViewInfo<TProps, TView>
     {
@@ -467,7 +467,7 @@ export class DocumentLayout {
     }
 
     /** Ensures that the given inline 'view' is mounted and up to date. */
-    private static syncInline<TProps, TView extends IFlowViewComponent<TProps>>(context: LayoutContext, position: number, segments: Segment[], factory: () => TView, props: TProps) {
+    private static syncInline<TProps, TView extends IFlowViewComponent<TProps>>(context: LayoutContext, position: number, segments: ISegment[], factory: () => TView, props: TProps) {
         const viewInfo = context.setCurrentInline(
             this.syncNode<TProps, TView>(
                 context,
@@ -491,7 +491,7 @@ export class DocumentLayout {
     }
 
     /** Ensures that the text's view is mounted and up to date. */
-    private static syncText(context: LayoutContext, position: number, segments: Segment[], text: string) {
+    private static syncText(context: LayoutContext, position: number, segments: ISegment[], text: string) {
        this.syncInline(context, position, segments, TextView.factory, { text });
     }
 
@@ -533,7 +533,7 @@ export class DocumentLayout {
         return accumulator;
     }
 
-    private static syncSegment(context: LayoutContext, position: number, segment: Segment, start: number, end: number) {
+    private static syncSegment(context: LayoutContext, position: number, segment: ISegment, start: number, end: number) {
         const kind = getDocSegmentKind(segment);
         switch (kind) {
             case DocSegmentKind.Text:

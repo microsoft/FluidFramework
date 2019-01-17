@@ -2,7 +2,7 @@
 import { OperationType } from "@prague/api-definitions";
 import { ISequencedObjectMessage, IUser } from "@prague/runtime-definitions";
 import { IRelativePosition } from "./index";
-import { MergeTree, ClientIds, compareStrings, RegisterCollection, UnassignedSequenceNumber, Marker, IConsensusInfo, IUndoInfo, Segment, BaseSegment, SegmentType, TextSegment, UniversalSequenceNumber, SegmentGroup, clock, elapsedMicroseconds } from "./mergeTree";
+import { MergeTree, ClientIds, compareStrings, RegisterCollection, UnassignedSequenceNumber, Marker, IConsensusInfo, IUndoInfo, ISegment, SegmentType, TextSegment, UniversalSequenceNumber, SegmentGroup, clock, elapsedMicroseconds } from "./mergeTree";
 import * as Collections from "./collections";
 import * as ops from "./ops";
 import * as Properties from "./properties";
@@ -102,7 +102,7 @@ export class Client {
     }
     cloneFromSegments() {
         let clone = new Client("", this.mergeTree.options);
-        let segments = <Segment[]>[];
+        let segments = <ISegment[]>[];
         let newRoot = this.mergeTree.blockClone(this.mergeTree.root, segments);
         clone.mergeTree.root = newRoot;
         let undoSeg = <IUndoInfo[]>[];
@@ -265,11 +265,10 @@ export class Client {
     enqueueTestString() {
         this.checkQ.enqueue(this.getText());
     }
-    segmentToOps(segment: Segment, opList: ops.IMergeTreeOp[]) {
+    segmentToOps(segment: ISegment, opList: ops.IMergeTreeOp[]) {
         // TODO: branches
         if (segment.seq === UnassignedSequenceNumber) {
             let pos = this.mergeTree.getOffset(segment, this.getCurrentSeq(), this.getClientId());
-            let baseSegment = <BaseSegment>segment;
             let insertOp = <ops.IMergeTreeInsertMsg>{
                 pos1: pos,
                 type: ops.MergeTreeDeltaType.INSERT,
@@ -283,8 +282,8 @@ export class Client {
                 let marker = <Marker>segment;
                 insertOp.marker = { refType: marker.refType };
             }
-            if (baseSegment.properties) {
-                insertOp.props = baseSegment.properties;
+            if (segment.properties) {
+                insertOp.props = segment.properties;
             }
             opList.push(insertOp);
         }

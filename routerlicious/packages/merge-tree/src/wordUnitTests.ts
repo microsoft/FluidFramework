@@ -117,8 +117,7 @@ function makeBookmarks(client: Client, bookmarkCount: number) {
         if (i&1) {
             refType = ops.ReferenceType.SlideOnRemove;
         }
-        let baseSegment = <MergeTree.BaseSegment>segoff.segment;
-        let lref = new MergeTree.LocalReference(baseSegment, segoff.offset, refType);
+        let lref = new MergeTree.LocalReference(segoff.segment, segoff.offset, refType);
         client.mergeTree.addLocalReference(lref);
         bookmarks.push(lref);
     }
@@ -149,7 +148,7 @@ function measureFetch(startFile: string, withBookmarks = false) {
             let curPG = client.mergeTree.findTile(pos, client.getClientId(), "pg", false);
             let properties = curPG.tile.properties;
             let curSegOff = client.mergeTree.getContainingSegment(pos, MergeTree.UniversalSequenceNumber, client.getClientId());
-            let curSeg = <MergeTree.BaseSegment>curSegOff.segment;
+            let curSeg = curSegOff.segment;
             // combine paragraph and direct properties
             Properties.extend(properties, curSeg.properties);
             pos += (curSeg.cachedLength - curSegOff.offset);

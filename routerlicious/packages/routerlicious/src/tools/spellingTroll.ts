@@ -114,7 +114,7 @@ class Speller {
         let pgText = "";
         let endMarkerFound = false;
         let mergeTree = this.sharedString.client.mergeTree;
-        function gatherPG(segment: MergeTree.Segment, segpos: number) {
+        function gatherPG(segment: MergeTree.ISegment, segpos: number) {
             switch (segment.getType()) {
                 case MergeTree.SegmentType.Marker:
                     let marker = <MergeTree.Marker>segment;
@@ -182,7 +182,7 @@ class Speller {
         let wordsFound = false;
         let mergeTree = this.sharedString.client.mergeTree;
 
-        let gatherReverse = (segment: MergeTree.Segment) => {
+        let gatherReverse = (segment: MergeTree.ISegment) => {
             switch (segment.getType()) {
                 case MergeTree.SegmentType.Marker:
                     if (!wordsFound) {
@@ -215,7 +215,7 @@ class Speller {
             return true;
         };
 
-        let gatherForward = (segment: MergeTree.Segment) => {
+        let gatherForward = (segment: MergeTree.ISegment) => {
             switch (segment.getType()) {
                 case MergeTree.SegmentType.Marker:
                     if (!wordsFound) {

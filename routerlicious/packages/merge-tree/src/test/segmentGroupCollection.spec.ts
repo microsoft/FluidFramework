@@ -1,8 +1,8 @@
 import * as assert from "assert";
-import { Segment,  TextSegment } from "../mergeTree";
+import { ISegment,  TextSegment } from "../mergeTree";
 
 describe("segmentGroupCollection", () => {
-    let segment: Segment;
+    let segment: ISegment;
     beforeEach(() => {
         segment = TextSegment.make("abc");
     });
