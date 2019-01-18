@@ -6,10 +6,11 @@ import { Scheduler } from "@prague/flow-util";
 import * as style from "./index.css";
 import * as ReactDOM from "react-dom";
 import { IVirtualizedProps } from "@chaincode/flow-editor";
+import { IAppConfig } from "./app";
 
 interface IProps {
+    config: IAppConfig;
     docId: string;
-    docUrl: string;
     virtualize: boolean;
     cmds: { 
         insert: (element: JSX.Element) => void,
@@ -34,8 +35,8 @@ export class FlowEditor extends React.Component<IProps, IState> {
     }
 
     componentWillMount() {
-        const { docUrl, docId } = this.props;
-        DataStore.from(docUrl).then(store => {
+        const { config, docId } = this.props;
+        DataStore.from(config.serverUrl).then(store => {
             store
                 .open<FlowDocument>(docId, "danlehen", FlowDocument.type)
                 .then((doc) => {
@@ -78,7 +79,7 @@ export class FlowEditor extends React.Component<IProps, IState> {
             //         to enable testing.  (This won't persist correctly in the document.)
             const root = document.createElement("span");
             ReactDOM.render(asAny, root);
-            this.state.doc.insertHTML(position, root);   
+            this.state.doc.insertHTML(position, root);
         }
     }
 

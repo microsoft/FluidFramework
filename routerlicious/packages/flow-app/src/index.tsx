@@ -1,10 +1,15 @@
-import * as ReactDOM from "react-dom";
-import * as React from "react";
-import { App } from "./app";
+// Note: 'index.tsx' is only imported when testing with the local WebPack dev server.
+//       In production it is Alfred's '/controllers/view.ts' that calls 'start(..)'
 
-export function start() {
-    ReactDOM.render(
-        <App alfredUrl="http://localhost:3000" mediaUrl="http://localhost:8080" verdaccioUrl="http://localhost:4873"/>,
-        document.body
-    );
-}
+import { start } from "./app";
+
+const serverUrl = new URL(document.location.href);
+serverUrl.port = "3000";
+
+const verdaccioUrl = new URL(serverUrl.origin);
+verdaccioUrl.port = "4873";
+
+start({
+    serverUrl: serverUrl.origin,
+    verdaccioUrl: verdaccioUrl.toString()
+}, document.body);
