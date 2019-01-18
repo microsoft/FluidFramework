@@ -56,35 +56,12 @@ export class Graphiql extends Document {
             });
         }
     }
-
-    public async graphqlBase(params) {
-        // console.log(this.root.serialize());
-        const rootJson = this.root.serialize();
-        const rootResolvers = {
-            map: (params) => {
-                return rootJson.find((value) => value.key === params.key );
-            },
-            maps: () => rootJson,
-        };
-
-        return graphql(schema, params.query, rootResolvers).then((response) => {
-            return response;
-        });
-        
-    }
 }
 
 // Example chainloader bootstrap.
 export async function instantiate(): Promise<IChaincode> {
     return DataStore.instantiate(new Graphiql());
 }
-
-// const rootResolvers = {
-//     map: (params) => {
-//         return root.find((value) => value.key === params.key );
-//     },
-//     maps: () => root,
-// };
 
 let root = [
     {
