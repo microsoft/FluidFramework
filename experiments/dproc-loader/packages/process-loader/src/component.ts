@@ -52,7 +52,9 @@ export class Component extends EventEmitter implements IComponentRuntime, IProce
         snapshotFn: (message: string) => Promise<void>,
         closeFn: () => void,
     ) {
-        const extension = await chaincode.getModule(pkg) as IChaincodeComponent;
+        const module = await chaincode.getModule(pkg);
+        const extension = (await module.instantiateComponent()) as IChaincodeComponent;
+
         const component = new Component(
             tenantId,
             documentId,
@@ -101,7 +103,9 @@ export class Component extends EventEmitter implements IComponentRuntime, IProce
         snapshotFn: (message: string) => Promise<void>,
         closeFn: () => void,
     ): Promise<Component> {
-        const extension = await chaincode.getModule(pkg) as IChaincodeComponent;
+        const module = await chaincode.getModule(pkg);
+        const extension = (await module.instantiateComponent()) as IChaincodeComponent;
+
         const component = new Component(
             tenantId,
             documentId,

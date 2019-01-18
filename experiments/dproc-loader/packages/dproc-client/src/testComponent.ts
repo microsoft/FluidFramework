@@ -1,84 +1,24 @@
-import {
-    IChaincodeComponent,
-    IChaincodeHost,
-    IComponentRuntime,
-    IHostRuntime,
-} from "@prague/process-definitions";
-import { IChaincode, IPlatform, IRuntime } from "@prague/runtime-definitions";
-import { EventEmitter } from "events";
-import { ComponentHost } from "./componentHost";
+import { IChaincodeComponent, IChaincodeHost, IHostRuntime } from "@prague/process-definitions";
+import { IPlatform } from "@prague/runtime-definitions";
+import * as uuid from "uuid/v4";
 import { debug } from "./debug";
-
-class MyPlatform extends EventEmitter implements IPlatform {
-    public async queryInterface<T>(id: string): Promise<T> {
-        return null;
-    }
-}
-
-class MyChaincode implements IChaincode {
-    public getModule(type: string) {
-        return null;
-    }
-
-    public async close(): Promise<void> {
-        return;
-    }
-
-    public async run(runtime: IRuntime, platform: IPlatform): Promise<IPlatform> {
-        debug("BINGO!!!!");
-        return new MyPlatform();
-    }
-}
-
-class MyChaincodeComponent implements IChaincodeComponent {
-    public getModule(type: string) {
-        debug("getModule");
-        return null;
-    }
-
-    public async close(): Promise<void> {
-        debug("close");
-        return;
-    }
-
-    public async run(runtime: IComponentRuntime, platform: IPlatform): Promise<IPlatform> {
-        debug("WE RUNNIN YO!!! :)");
-
-        const chaincode = new MyChaincode();
-
-        // All of the below would be hidden from a developer
-        // Is this an await or does it just go?
-        const component = await ComponentHost.LoadFromSnapshot(
-            runtime.tenantId,
-            runtime.documentId,
-            runtime.id,
-            runtime.platform,
-            runtime.parentBranch,
-            runtime.existing,
-            runtime.options,
-            runtime.clientId,
-            runtime.user,
-            runtime.blobManager,
-            runtime.baseSnapshot,
-            chaincode,
-            runtime.deltaManager,
-            runtime.getQuorum(),
-            runtime.storage,
-            runtime.connectionState,
-            runtime.branch,
-            runtime.minimumSequenceNumber,
-            runtime.submitFn,
-            runtime.snapshotFn,
-            runtime.closeFn);
-
-        return component.platform;
-    }
-}
+import { instantiateComponent as ic } from "./legacy1";
+import * as rootComponent from "./legacy1";
+import * as testComponent from "./legacy2";
+import { MyPlatform } from "./legacyPlatform";
 
 class MyChaincodeHost implements IChaincodeHost {
     public async getModule(type: string) {
-        debug("getModule");
-        return new MyChaincodeComponent();
+        debug(`getModule ${type}`);
+
+        switch (type) {
+            case "@prague/root-component":
+                return rootComponent;
+            case "@prague/test-component":
+                return testComponent;
+            default:
+                return Promise.reject("Unknown component");
+        }
     }
 
     public async close(): Promise<void> {
@@ -99,15 +39,16 @@ class MyChaincodeHost implements IChaincodeHost {
 
     public async doWork(runtime: IHostRuntime) {
         if (!runtime.existing) {
-            await runtime.createAndAttachProcess("root", "@prague/test-component");
+            await runtime.createAndAttachProcess("root", "@prague/root-component");
         } else {
             await runtime.getProcess("root");
+            await runtime.createAndAttachProcess(uuid(), "@prague/test-component");
         }
     }
 }
 
 export async function instantiateComponent(): Promise<IChaincodeComponent> {
-    return new MyChaincodeComponent();
+    return ic();
 }
 
 export async function instantiateHost(): Promise<IChaincodeHost> {
