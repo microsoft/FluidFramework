@@ -121,6 +121,7 @@ const rootResolvers = {
     maps: () => root,
 };
 
+// Public queries are map(key) and maps ** the s is important!
 const schema = buildSchema(`
 type Map {
     key: String
