@@ -1,3 +1,4 @@
+import { IComponentRuntime } from "@prague/process-definitions";
 import {
     ConnectionState,
     FileMode,
@@ -47,6 +48,7 @@ interface IObjectServices {
 
 export class ComponentHost extends EventEmitter {
     public static async LoadFromSnapshot(
+        componentRuntime: IComponentRuntime,
         tenantId: string,
         documentId: string,
         id: string,
@@ -65,7 +67,6 @@ export class ComponentHost extends EventEmitter {
         connectionState: ConnectionState,
         branch: string,
         minimumSequenceNumber: number,
-        submitFn: (type: MessageType, contents: any) => void,
         snapshotFn: (message: string) => Promise<void>,
         closeFn: () => void,
     ) {
@@ -84,6 +85,7 @@ export class ComponentHost extends EventEmitter {
         const tardisMessagesP = ComponentHost.loadTardisMessages(documentId, attributes, storage, tree);
 
         const runtime = new ComponentHost(
+            componentRuntime,
             tenantId,
             id,
             parentBranch,
@@ -97,7 +99,6 @@ export class ComponentHost extends EventEmitter {
             chaincode,
             storage,
             connectionState,
-            submitFn,
             snapshotFn,
             closeFn);
 
@@ -191,6 +192,7 @@ export class ComponentHost extends EventEmitter {
     // tslint:enable-next-line:variable-name
 
     private constructor(
+        private readonly componentRuntime: IComponentRuntime,
         public readonly tenantId: string,
         public readonly id: string,
         public readonly parentBranch: string,
@@ -204,7 +206,6 @@ export class ComponentHost extends EventEmitter {
         private readonly chaincode: IChaincode,
         private storageService: IDocumentStorageService,
         private connectionState: ConnectionState,
-        private submitFn: (type: MessageType, contents: any) => void,
         private snapshotFn: (message: string) => Promise<void>,
         private closeFn: () => void) {
         super();
@@ -275,6 +276,25 @@ export class ComponentHost extends EventEmitter {
 
     public async start(platform: IPlatform): Promise<void> {
         this.verifyNotClosed();
+
+        this.componentRuntime.attach({
+            minSequenceNumberChanged: (value) => {
+                this.updateMinSequenceNumber(value);
+            },
+            prepare: (message, local) => {
+                return message.type === MessageType.Attach
+                    ? this.prepareAttach(message, local)
+                    : this.prepare(message, local);
+            },
+            process: (message, local, context) => {
+                message.type === MessageType.Attach
+                    ? this.processAttach(message, local, context)
+                    : this.process(message, local, context);
+            },
+            setConnectionState: (state) => {
+                this.changeConnectionState(state, this.componentRuntime.clientId);
+            },
+        });
 
         // tslint:disable-next-line:no-floating-promises
         this._platform = await this.chaincode.run(this, platform);
@@ -525,7 +545,7 @@ export class ComponentHost extends EventEmitter {
 
     private submit(type: MessageType, content: any) {
         this.verifyNotClosed();
-        this.submitFn(type, content);
+        this.componentRuntime.submitMessage(type, content);
     }
 
     private reserve(id: string) {

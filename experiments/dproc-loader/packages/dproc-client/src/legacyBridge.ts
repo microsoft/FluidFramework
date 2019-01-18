@@ -28,6 +28,7 @@ export class LegacyChaincodeBridge implements IChaincodeComponent {
         // All of the below would be hidden from a developer
         // Is this an await or does it just go?
         const component = await ComponentHost.LoadFromSnapshot(
+            runtime,
             runtime.tenantId,
             runtime.documentId,
             runtime.id,
@@ -46,7 +47,6 @@ export class LegacyChaincodeBridge implements IChaincodeComponent {
             runtime.connectionState,
             runtime.branch,
             runtime.minimumSequenceNumber,
-            runtime.submitFn,
             runtime.snapshotFn,
             runtime.closeFn);
 

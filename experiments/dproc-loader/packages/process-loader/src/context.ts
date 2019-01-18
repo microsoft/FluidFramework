@@ -164,9 +164,7 @@ export class Context implements IHostRuntime {
             snapshotTree,
             this.id,
             this.deltaManager.minimumSequenceNumber,
-            (type, contents) => {
-                debug("MESSAGE!!!");
-            },
+            this.submitFn,
             this.snapshotFn,
             this.closeFn);
         this.components.set(id, component);
@@ -198,12 +196,6 @@ export class Context implements IHostRuntime {
         return { blobs, snapshot: result };
     }
 
-    public transform(message: ISequencedDocumentMessage, sequenceNumber: number) {
-        const envelope = message.contents as IEnvelope;
-        const component = this.components.get(envelope.address);
-        component.transform(message, sequenceNumber);
-    }
-
     public changeConnectionState(value: ConnectionState, clientId: string) {
         this.verifyNotClosed();
 
@@ -231,7 +223,22 @@ export class Context implements IHostRuntime {
         const component = this.components.get(envelope.address);
         assert(component);
 
-        return component.prepare(message, local);
+        const transformed: ISequencedDocumentMessage = {
+            clientId: message.clientId,
+            clientSequenceNumber: message.clientSequenceNumber,
+            contents: envelope.contents.content,
+            metadata: message.metadata,
+            minimumSequenceNumber: message.minimumSequenceNumber,
+            origin: message.origin,
+            referenceSequenceNumber: message.referenceSequenceNumber,
+            sequenceNumber: message.sequenceNumber,
+            timestamp: message.timestamp,
+            traces: message.traces,
+            type: envelope.contents.type,
+            user: message.user,
+        };
+
+        return component.prepare(transformed, local);
     }
 
     public process(message: ISequencedDocumentMessage, local: boolean, context: any) {
@@ -239,7 +246,22 @@ export class Context implements IHostRuntime {
         const component = this.components.get(envelope.address);
         assert(component);
 
-        component.process(message, local, context);
+        const transformed: ISequencedDocumentMessage = {
+            clientId: message.clientId,
+            clientSequenceNumber: message.clientSequenceNumber,
+            contents: envelope.contents.content,
+            metadata: message.metadata,
+            minimumSequenceNumber: message.minimumSequenceNumber,
+            origin: message.origin,
+            referenceSequenceNumber: message.referenceSequenceNumber,
+            sequenceNumber: message.sequenceNumber,
+            timestamp: message.timestamp,
+            traces: message.traces,
+            type: envelope.contents.type,
+            user: message.user,
+        };
+
+        component.process(transformed, local, context);
     }
 
     public async prepareAttach(message: ISequencedDocumentMessage, local: boolean): Promise<Component> {
@@ -278,9 +300,7 @@ export class Context implements IHostRuntime {
             snapshotTree,
             this.id,
             this.deltaManager.minimumSequenceNumber,
-            (type, contents) => {
-                debug("MESSAGE!!!");
-            },
+            this.submitFn,
             this.snapshotFn,
             this.closeFn);
 
@@ -363,9 +383,7 @@ export class Context implements IHostRuntime {
             this.connectionState,
             this.id,
             this.deltaManager.minimumSequenceNumber,
-            () => {
-                debug("MESSAGE!!!!");
-            },
+            this.submitFn,
             this.snapshotFn,
             this.closeFn);
 

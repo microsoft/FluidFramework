@@ -438,27 +438,6 @@ export class DistributedProcess extends EventEmitter {
     private snapshotBase(): ITree {
         const entries: ITreeEntry[] = [];
 
-        // Craft the .messages file for the document
-        // Transform ops in the window relative to the MSN - the window is all ops between the min sequence number
-        // and the current sequence number
-        assert.equal(
-            this._deltaManager.referenceSequenceNumber - this._deltaManager.minimumSequenceNumber,
-            this.messagesSinceMSNChange.length);
-        const transformedMessages: ISequencedDocumentMessage[] = [];
-        debug(`Transforming up to ${this._deltaManager.minimumSequenceNumber}`);
-        for (const message of this.messagesSinceMSNChange) {
-            transformedMessages.push(this.transform(message, this._deltaManager.minimumSequenceNumber));
-        }
-        entries.push({
-            mode: FileMode.File,
-            path: ".messages",
-            type: TreeEntry[TreeEntry.Blob],
-            value: {
-                contents: JSON.stringify(transformedMessages),
-                encoding: "utf-8",
-            },
-        });
-
         const blobMetaData = this.blobManager.getBlobMetadata();
         entries.push({
             mode: FileMode.File,
@@ -507,22 +486,6 @@ export class DistributedProcess extends EventEmitter {
         };
 
         return root;
-    }
-
-    /**
-     * Transforms the given message relative to the provided sequence number
-     */
-    private transform(message: ISequencedDocumentMessage, sequenceNumber: number): ISequencedDocumentMessage {
-        // Allow the distributed data types to perform custom transformations
-        if (message.type === MessageType.Operation) {
-            this.context.transform(message, sequenceNumber);
-        } else {
-            message.type = MessageType.NoOp;
-        }
-
-        message.referenceSequenceNumber = sequenceNumber;
-
-        return message;
     }
 
     private async loadQuorum(

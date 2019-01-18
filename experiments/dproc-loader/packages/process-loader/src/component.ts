@@ -7,7 +7,9 @@ import {
 import {
     ConnectionState,
     IChannel,
+    IDeltaHandler,
     IDocumentStorageService,
+    IEnvelope,
     IGenericBlob,
     IObjectStorageService,
     IPlatform,
@@ -145,6 +147,7 @@ export class Component extends EventEmitter implements IComponentRuntime, IProce
     }
 
     private closed = false;
+    private handler: IDeltaHandler;
 
     // tslint:disable-next-line:variable-name
     private _platform: IPlatform;
@@ -190,7 +193,7 @@ export class Component extends EventEmitter implements IComponentRuntime, IProce
         //  Some trigger can happen to then allow it to take part in the UI
 
         // TODOTODO need to understand start logic
-        this.chaincode.run(this, null);
+        await this.chaincode.run(this, null);
     }
 
     public changeConnectionState(value: ConnectionState, clientId: string) {
@@ -208,26 +211,18 @@ export class Component extends EventEmitter implements IComponentRuntime, IProce
 
     public prepare(message: ISequencedDocumentMessage, local: boolean): Promise<any> {
         this.verifyNotClosed();
-
-        // TODOTODO need to forward to runtime
-
-        return Promise.resolve();
+        return this.handler.prepare(message, local);
     }
 
     public process(message: ISequencedDocumentMessage, local: boolean, context: any): void {
         this.verifyNotClosed();
-
-        // TODOTODO need to forward to runtime
+        return this.handler.process(message, local, context);
     }
 
     public getQuorum(): IQuorum {
         this.verifyNotClosed();
 
         return this.quorum;
-    }
-
-    public transform(message: ISequencedDocumentMessage, sequenceNumber: number) {
-        // TODOTODO transfer on to the runtime
     }
 
     public async getBlobMetadata(): Promise<IGenericBlob[]> {
@@ -247,12 +242,15 @@ export class Component extends EventEmitter implements IComponentRuntime, IProce
     }
 
     public updateMinSequenceNumber(msn: number) {
-        // TODOTODO forward on to channel
+        this.handler.minSequenceNumberChanged(msn);
     }
 
     public snapshot(): ITree {
-        // TODOTODO rip through the channel
         return null;
+    }
+
+    public attach(handler: IDeltaHandler) {
+        this.handler = handler;
     }
 
     public submitMessage(type: MessageType, content: any) {
@@ -265,7 +263,14 @@ export class Component extends EventEmitter implements IComponentRuntime, IProce
 
     private submit(type: MessageType, content: any) {
         this.verifyNotClosed();
-        this.submitFn(type, content);
+        const envelope: IEnvelope = {
+            address: this.id,
+            contents: {
+                content,
+                type,
+            },
+        };
+        this.submitFn(MessageType.Operation, envelope);
     }
 
     private verifyNotClosed() {
