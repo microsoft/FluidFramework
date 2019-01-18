@@ -19,22 +19,28 @@ export class Graphiql extends Document {
         if (maybeDiv) {
             ReactDOM.render(
                 React.createElement(GraphiQL, {
-                    fetcher: this.graphQLFetcher,
+                    fetcher: this.graphqlBase,
                     schema: schema
             } ),  maybeDiv);
         }
     }
 
-    async graphQLFetcher(params) {
+    async graphQLFetcher(params): Promise<{}> {
         if (params) {
             console.error("Ignore params");
         }
+        // this.graphqlBase(params).then((response) => {
+        //     console.log(response);
+        //     return response;
+        // })
         return new Promise((resolve) => {
+
             resolve(root);
         });
     }
 
-    public async graphqlBase() {
+    public async graphqlBase(params) {
+        console.log(params);
         const query = `
     {
         map(key: "insights") {
@@ -46,8 +52,12 @@ export class Graphiql extends Document {
           }
         }
       }`;
-        graphql(schema, query, rootResolvers).then((response) => {
+      // map(Key) works. map does not
+        console.log(query);
+        console.log(params.query);
+        return graphql(schema, params.query, rootResolvers).then((response) => {
             console.log(response);
+            return response;
         });
         
     }
