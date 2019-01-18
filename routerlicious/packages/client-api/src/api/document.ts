@@ -4,7 +4,6 @@ import * as resources from "@prague/gitresources";
 import * as pragueLoader from "@prague/loader";
 import { IMap, MapExtension } from "@prague/map";
 import {
-    Browser,
     IClient,
     IDeltaManager,
     IDocumentService,
@@ -263,7 +262,8 @@ export class Document extends EventEmitter {
     }
 
     private startLeaderElection() {
-        if (this.runtime.deltaManager.clientType === Browser) {
+        // Temporary disable of quorum leader election.
+        if (this.runtime.deltaManager.clientType === "Test") {
             if (this.runtime.connected) {
                 this.startVoting();
             } else {
