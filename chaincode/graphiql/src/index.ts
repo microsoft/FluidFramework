@@ -3,7 +3,7 @@ import { Document, DataStore } from "@prague/datastore";
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import GraphiQL from 'graphiql';
-import { buildSchema } from "graphql";
+import { buildSchema, graphql } from "graphql";
 
 require("../node_modules/graphiql/graphiql.css");
 
@@ -32,6 +32,24 @@ export class Graphiql extends Document {
         return new Promise((resolve) => {
             resolve(root);
         });
+    }
+
+    public async graphqlBase() {
+        const query = `
+    {
+        map(key: "insights") {
+          key
+          type
+          fields {
+            key
+            type
+          }
+        }
+      }`;
+        graphql(schema, query, rootResolvers).then((response) => {
+            console.log(response);
+        });
+        
     }
 }
 
@@ -85,6 +103,13 @@ const root = [
         ]
     }
 ];
+
+const rootResolvers = {
+    map: (params) => {
+        return root.find((value) => value.key === params.key );
+    },
+    maps: () => root,
+};
 
 const schema = buildSchema(`
 type Map {
