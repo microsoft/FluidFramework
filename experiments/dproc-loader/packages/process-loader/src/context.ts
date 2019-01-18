@@ -164,7 +164,9 @@ export class Context implements IHostRuntime {
             snapshotTree,
             this.id,
             this.deltaManager.minimumSequenceNumber,
-            this.submitFn,
+            (type, contents) => {
+                debug("MESSAGE!!!");
+            },
             this.snapshotFn,
             this.closeFn);
         this.components.set(id, component);
@@ -276,7 +278,9 @@ export class Context implements IHostRuntime {
             snapshotTree,
             this.id,
             this.deltaManager.minimumSequenceNumber,
-            this.submitFn,
+            (type, contents) => {
+                debug("MESSAGE!!!");
+            },
             this.snapshotFn,
             this.closeFn);
 
@@ -359,7 +363,9 @@ export class Context implements IHostRuntime {
             this.connectionState,
             this.id,
             this.deltaManager.minimumSequenceNumber,
-            this.submitFn,
+            () => {
+                debug("MESSAGE!!!!");
+            },
             this.snapshotFn,
             this.closeFn);
 

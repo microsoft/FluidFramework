@@ -1,10 +1,11 @@
 import { IChaincodeComponent, IChaincodeHost, IHostRuntime } from "@prague/process-definitions";
 import { IPlatform } from "@prague/runtime-definitions";
-import * as uuid from "uuid/v4";
+// import * as uuid from "uuid/v4";
 import { debug } from "./debug";
 import { instantiateComponent as ic } from "./legacy1";
 import * as rootComponent from "./legacy1";
 import * as testComponent from "./legacy2";
+import * as counter from "./legacyCounter";
 import { MyPlatform } from "./legacyPlatform";
 
 class MyChaincodeHost implements IChaincodeHost {
@@ -12,6 +13,8 @@ class MyChaincodeHost implements IChaincodeHost {
         debug(`getModule ${type}`);
 
         switch (type) {
+            case "@chaincode/counter":
+                return counter;
             case "@prague/root-component":
                 return rootComponent;
             case "@prague/test-component":
@@ -39,10 +42,9 @@ class MyChaincodeHost implements IChaincodeHost {
 
     public async doWork(runtime: IHostRuntime) {
         if (!runtime.existing) {
-            await runtime.createAndAttachProcess("root", "@prague/root-component");
+            await runtime.createAndAttachProcess("counter", "@chaincode/counter");
         } else {
-            await runtime.getProcess("root");
-            await runtime.createAndAttachProcess(uuid(), "@prague/test-component");
+            await runtime.getProcess("counter");
         }
     }
 }
