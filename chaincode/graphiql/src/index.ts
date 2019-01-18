@@ -19,11 +19,6 @@ export class Graphiql extends Document {
     public async opened() {
 
         const maybeDiv = await this.platform.queryInterface<HTMLElement>("div");
-        let users = await this.root.wait<IMap>("users");
-
-        console.log(users);
-        await this.root.get("users");
-        await this.serializable();
 
         maybeDiv.style.height = "700px";
         if (maybeDiv) {
@@ -35,15 +30,10 @@ export class Graphiql extends Document {
         }
     }
 
-    public async serializable() {
-        root = this.root.serialize();
-        return root;
-    }
-
     public fetcherFactory(root: IMap): (params: any) => Promise<any> {
-        let rootLocal = this.root;
+
         return (params) => {
-            const rootJson = rootLocal.serialize();
+            const rootJson = root.serialize();
             const rootResolvers = {
                 map: (params) => {
                     return rootJson.find((value) => value.key === params.key );
@@ -62,52 +52,6 @@ export class Graphiql extends Document {
 export async function instantiate(): Promise<IChaincode> {
     return DataStore.instantiate(new Graphiql());
 }
-
-let root = [
-    {
-        key: "insights",
-        type: "map",
-        fields: [
-            {
-                key: "translations",
-                type: "map",
-                fields: [
-                    {
-                        greek: "this is greek"
-                    }
-                ]
-            },
-            {
-                key: "TextAnalytics",
-                type: "map",
-                fields: [
-                    {
-                        keyPhrases: "a"
-                    }
-                ]
-            },{
-                key: "Special Value",
-                type: "scalar",
-                value: 12
-            }
-        ]
-    },
-    {
-        key: "presence",
-        type: "map",
-        fields: [
-            {
-                key: "users",
-                type: "map",
-                fields: [
-                    {
-                        name: "sam"
-                    }
-                ]
-            },
-        ]
-    }
-];
 
 // Public queries are map(key) and maps ** the s is important!
 const schema = buildSchema(`
