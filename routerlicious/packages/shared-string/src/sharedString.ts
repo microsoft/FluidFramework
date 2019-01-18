@@ -27,9 +27,9 @@ import {
 } from "./intervalCollection";
 
 function textsToSegments(texts: MergeTree.IPropertyString[]) {
-    const segments: MergeTree.Segment[] = [];
+    const segments: MergeTree.ISegment[] = [];
     for (const ptext of texts) {
-        let segment: MergeTree.Segment;
+        let segment: MergeTree.ISegment;
         if (ptext.text !== undefined) {
             segment = MergeTree.TextSegment.make(ptext.text, ptext.props as MergeTree.PropertySet,
                 MergeTree.UniversalSequenceNumber,
@@ -322,7 +322,7 @@ export class SharedString extends CollaborativeMap {
     }
 
     public sendNACKed() {
-        const orderedSegments = [] as MergeTree.Segment[];
+        const orderedSegments = [] as MergeTree.ISegment[];
         while (!this.client.mergeTree.pendingSegments.empty()) {
             const NACKedSegmentGroup = this.client.mergeTree.pendingSegments.dequeue();
             for (const segment of NACKedSegmentGroup.segments) {
@@ -345,7 +345,7 @@ export class SharedString extends CollaborativeMap {
             segments: orderedSegments,
         } as MergeTree.SegmentGroup;
         const opList = [] as MergeTree.IMergeTreeOp[];
-        let prevSeg: MergeTree.Segment;
+        let prevSeg: MergeTree.ISegment;
         for (const segment of orderedSegments) {
             if (prevSeg !== segment) {
                 segment.segmentGroups.clear();

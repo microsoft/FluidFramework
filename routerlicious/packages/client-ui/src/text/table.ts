@@ -28,7 +28,7 @@ let cellIdSuffix = 0;
 let rowIdSuffix = 0;
 let columnIdSuffix = 0;
 
-function getOffset(sharedString: SharedString, segment: MergeTree.Segment) {
+function getOffset(sharedString: SharedString, segment: MergeTree.ISegment) {
     return sharedString.client.mergeTree.getOffset(segment, MergeTree.UniversalSequenceNumber,
         sharedString.client.getClientId());
 }
@@ -668,7 +668,7 @@ function parseRow(rowStartPos: number, sharedString: SharedString, table: Table,
 
 export function parseColumns(sharedString: SharedString, pos: number, table: Table) {
     let nextPos = pos;
-    function addColumn(segment: MergeTree.Segment, segpos: number) {
+    function addColumn(segment: MergeTree.ISegment, segpos: number) {
         nextPos = segpos;
         if (segment.getType() === MergeTree.SegmentType.Marker) {
             let marker = <IColumnMarker>segment;
@@ -694,7 +694,7 @@ export function succinctPrintTable(tableMarker: ITableMarker, tableMarkerPos: nu
     let lineBuf = "";
     let lastWasCO = false;
     let reqPos = true;
-    function printTableSegment(segment: MergeTree.Segment, segpos: number) {
+    function printTableSegment(segment: MergeTree.ISegment, segpos: number) {
         if (segment.getType() === MergeTree.SegmentType.Marker) {
             let marker = <MergeTree.Marker>segment;
             let endLine = false;

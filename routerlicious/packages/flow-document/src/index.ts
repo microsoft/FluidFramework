@@ -5,7 +5,7 @@ import { DataStore } from "@prague/app-datastore";
 import {
     MergeTree,
     UniversalSequenceNumber,
-    Segment,
+    ISegment,
     LocalReference,
     BaseSegment,
     ReferenceType,
@@ -47,7 +47,7 @@ export const setStyle = (segment: BaseSegment, style: CSSStyleDeclaration) => {
     segment.properties = Object.assign(segment.properties || {}, { [styleProperty]: style });
 };
 
-export const getDocSegmentKind = (segment: Segment): DocSegmentKind => {
+export const getDocSegmentKind = (segment: ISegment): DocSegmentKind => {
     const segmentType = segment.getType();
     switch (segmentType) {
         case SegmentType.Text:
@@ -78,7 +78,7 @@ export const getDocSegmentKind = (segment: Segment): DocSegmentKind => {
     }
 }
 
-type LeafAction = (position: number, segment: Segment, start: number, end: number) => boolean;
+type LeafAction = (position: number, segment: ISegment, start: number, end: number) => boolean;
 
 /** 
  * Used by 'FlowDocument.visitRange'.  Uses the otherwise unused 'accum' object to pass the
@@ -87,7 +87,7 @@ type LeafAction = (position: number, segment: Segment, start: number, end: numbe
  */
 const accumAsLeafAction = {
     leaf: (
-        segment: Segment,
+        segment: ISegment,
         position: number,
         refSeq: number,
         clientId: number,
@@ -140,7 +140,7 @@ export class FlowDocument extends Component {
         return this.mergeTree.getContainingSegment(position, UniversalSequenceNumber, this.clientId);        
     }
 
-    public getPosition(segment: Segment) {
+    public getPosition(segment: ISegment) {
         return this.mergeTree.getOffset(segment, UniversalSequenceNumber, this.clientId);
     }
 

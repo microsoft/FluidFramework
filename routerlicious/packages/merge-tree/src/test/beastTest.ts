@@ -1732,7 +1732,7 @@ function findReplacePerf(filename: string) {
         let curSegOff = client.mergeTree.getContainingSegment(pos, MergeTree.UniversalSequenceNumber, client.getClientId());
         cFetches++;
 
-        let curSeg = <MergeTree.BaseSegment>curSegOff.segment;
+        let curSeg = curSegOff.segment;
         let textSeg = <MergeTree.TextSegment>curSeg;
         if (textSeg != null) {
             let text = textSeg.text;

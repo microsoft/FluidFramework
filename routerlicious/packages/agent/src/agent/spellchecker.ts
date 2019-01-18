@@ -60,7 +60,7 @@ class Speller {
         let pgText = "";
         let endMarkerFound = false;
         const mergeTree = this.sharedString.client.mergeTree;
-        function gatherPG(segment: MergeTree.Segment, segpos: number) {
+        function gatherPG(segment: MergeTree.ISegment, segpos: number) {
             switch (segment.getType()) {
                 case MergeTree.SegmentType.Marker:
                     const marker = segment as MergeTree.Marker;

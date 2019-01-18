@@ -1,4 +1,4 @@
-import { TextSegment, Segment, SegmentType } from "@prague/merge-tree";
+import { TextSegment, ISegment, SegmentType } from "@prague/merge-tree";
 import { getStyle } from "@chaincode/flow-document";
 
 /** 
@@ -19,7 +19,7 @@ export class TextAccumulator {
         this.tryConcat(position, first, startOffset, relativeEndOffset);
     }
 
-    public readonly tryConcat = (position: number, segment: Segment, relativeStartOffset: number, relativeEndOffset: number) => {
+    public readonly tryConcat = (position: number, segment: ISegment, relativeStartOffset: number, relativeEndOffset: number) => {
         console.assert(position === this._nextPosition);
         
         // Terminate if the next segment is not a text segment.
