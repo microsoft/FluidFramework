@@ -19,10 +19,19 @@ export class Graphiql extends Document {
         if (maybeDiv) {
             ReactDOM.render(
                 React.createElement(GraphiQL, {
-                    fetcher: graphQLFetcher,
+                    fetcher: this.graphQLFetcher,
                     schema: schema
             } ),  maybeDiv);
         }
+    }
+
+    async graphQLFetcher(params) {
+        if (params) {
+            console.error("Ignore params");
+        }
+        return new Promise((resolve) => {
+            resolve(root);
+        });
     }
 }
 
@@ -31,14 +40,6 @@ export async function instantiate(): Promise<IChaincode> {
     return DataStore.instantiate(new Graphiql());
 }
 
-async function graphQLFetcher(params) {
-    if (params) {
-        console.error("Ignore params");
-    }
-    return new Promise((resolve) => {
-        resolve(root);
-    });
-}
 
 const root = [
     {
