@@ -32,20 +32,26 @@ export async function load(
     from: number,
     to: number,
 ) {
+    // 'npm' contains a URL like "http://localhost:3002", but the Verdaccio rest API is on port 4873.
+    const verdaccioUrl = new URL(config.npm);
+    verdaccioUrl.port = "4873";
+    config.verdaccioUrl = verdaccioUrl.toString();
+
     console.log(`id: ${id} version: ${version} token: ${token} pageInk: ${pageInk} disableCache: ${disableCache}`);
-    console.log(`config: ${JSON.stringify(config)} template: ${template} connect: ${connect}`);
-    console.log(`credentials: ${JSON.stringify(credentials)} from: ${from} to: ${to}`);
+    console.log(`template: ${template} connect: ${connect} from: ${from} to: ${to}`);
+    console.log(`config: ${JSON.stringify(config, null, 2)}`);
+    console.log(`credentials: ${JSON.stringify(credentials, null, 2)}`);
 
     API.registerChaincodeRepo(config.npm);
     API.registerDefaultCredentials(credentials);
 
     console.log(`Load Option: ${JSON.stringify(options)}`);
-    loadDocument()
+    loadDocument(config)
     .catch((error) => {
         console.error(error);
     });
 }
 
-async function loadDocument() {
-    start();
+async function loadDocument(config) {
+    start(config, document.getElementById("host-root"));
 }

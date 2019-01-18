@@ -14,7 +14,8 @@ module.exports = env => {
 
     return merge({
         entry: {
-            main: "./src/index.tsx"
+            main: "./src/app.tsx",
+            index: "./src/index.tsx"
         },
         resolve: {
             extensions: [".ts", ".tsx", ".js"],
@@ -49,7 +50,7 @@ module.exports = env => {
         },
         plugins: [
             new CleanWebpackPlugin(["dist"]),
-            new HtmlWebpackPlugin({ title: "Production" }),
+            new HtmlWebpackPlugin({ title: "Production", chunks: "index" }),
         ],
         output: {
             filename: "[name].bundle.js",

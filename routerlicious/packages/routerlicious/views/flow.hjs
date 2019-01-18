@@ -3,6 +3,8 @@
     {{/styles}}
 
     {{$content}}
+      <!-- The target element into which the 'flow-app' will mount it's root element. -->
+      <div id="host-root" style="height: 100%"></div>
     {{/content}}
 
     {{$scripts}}
@@ -33,7 +35,6 @@
                 { tenant, key },
                 from,
                 to);
-        </script>          
         </script>
     {{/scripts}}
 {{/layout}}

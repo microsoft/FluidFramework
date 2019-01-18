@@ -3,11 +3,14 @@ import { Dialog, DialogType, DialogFooter } from "office-ui-fabric-react/lib/Dia
 import { PrimaryButton } from "office-ui-fabric-react/lib/Button";
 import { TextField } from "office-ui-fabric-react/lib/TextField";
 import { ComboBox, IComboBoxOption, VirtualizedComboBox, IComboBox } from "office-ui-fabric-react/lib/ComboBox";
+import { IAppConfig } from "./app";
+import { url } from "inspector";
 
 interface IProps { 
+    config: IAppConfig;
     addComponent: (docId: string, chaincode: string) => void,
-    verdaccioUrl: string,
 }
+
 interface IState { 
     docId: string;
     chaincode: string;
@@ -19,13 +22,14 @@ export class ChaincodeDialog extends React.Component<IProps, IState> {
     constructor(props: Readonly<IProps>) {
         super(props);
 
-        // TODO-Fix-Flow: this probably would work if it was just localhost:3002 because docker aliases it
-        // 
-        fetch("http://localhost:4873/-/verdaccio/packages", {
-                method: "GET",
-                headers: new Headers([[
-                    "Authorization", `Basic ${btoa("prague:bohemia")}`]
-                ]),
+        const queryUrl = new URL(props.config.verdaccioUrl);
+        queryUrl.pathname = "/-/verdaccio/packages";
+
+        fetch(`${queryUrl}`, {
+            method: "GET",
+            headers: new Headers([[
+                "Authorization", `Basic ${btoa("prague:bohemia")}`]
+            ]),
         })
         .then(response => response.json())
         .then(json => {

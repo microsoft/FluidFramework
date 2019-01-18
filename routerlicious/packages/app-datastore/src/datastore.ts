@@ -50,9 +50,11 @@ export class DataStore {
      */
     // tslint:disable-next-line:no-reserved-keywords
     public static async from(hostUrl: string) {
-        // Given the 'hostUrl' of a routerlicious server (e.g., ), discovers
-        // the necessary config/services to open the data store.
-        const response = await fetch(`${hostUrl}/api/tenants`);
+        // Routerlicious currently exposes it's configuration parameters as a JSON file at "<serverUrl>/api/tenants".
+        const url = new URL(hostUrl);
+        url.pathname = "/api/tenants";
+
+        const response = await fetch(url.toString());
         const config = (await response.json()) as {
             blobStorageUrl: string;
             id: string;
