@@ -40,7 +40,6 @@ export async function instantiate(): Promise<IChaincode> {
     return DataStore.instantiate(new Graphiql());
 }
 
-
 const root = [
     {
         key: "insights",
