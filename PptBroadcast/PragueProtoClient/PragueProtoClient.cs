@@ -14,6 +14,120 @@ using Quobject.EngineIoClientDotNet.ComponentEmitter;
 
 namespace PragueProtoClient
 {
+   interface IPragueDocument
+   {
+      IMap CreateMap();
+      IMap GetRoot();
+
+      ICollaborativeObject Get( string ID );
+   }
+
+   class PragueDocument : IPragueDocument
+   {
+      private readonly IDictionary< string, ICollaborativeObject > m_objects = new Dictionary< string, ICollaborativeObject >();
+
+      public PragueDocument( string docID, string tenantID, Uri routerlicious )
+      {
+         m_objects[ "root" ] = new CollaborativeMap( "root", this );
+
+         HttpClient httpClient = new HttpClient();
+         HttpResponseMessage responseMessage = httpClient.GetAsync( new Uri( routerlicious, new Uri( $"deltas/{docID}", UriKind.Relative ) ) ).Result;
+
+         if( responseMessage.StatusCode != System.Net.HttpStatusCode.OK )
+         {
+            throw new InvalidOperationException( "Invalid return code" );
+         }
+
+         IListener opListener = new OpListener( m_objects, this );
+
+         object deltasObj = JsonConvert.DeserializeObject( responseMessage.Content.ReadAsStringAsync().Result );
+
+         opListener.Call( deltasObj );
+
+         Connect( docID, tenantID, routerlicious, "03302d4ebfb6f44b662d00313aff5a46", opListener );
+      }
+
+      private static void Connect( string docID, string tenantID, Uri routerlicious, string secret, IListener opListener )
+      {
+         var options = new IO.Options();
+         options.QueryString = string.Format( "documentId={0}&tenantId={0}", docID, tenantID );
+         options.Transports = new string[] { "websocket" }.ToImmutableList();
+
+         var socket = IO.Socket( routerlicious.AbsoluteUri, options );
+
+         socket.On( "op", opListener );
+
+         socket.On( Socket.EVENT_CONNECT, () => { System.Console.WriteLine( "Connected" ); } );
+         socket.On( Socket.EVENT_CONNECT_ERROR, () => { System.Console.WriteLine( "ConnectionError" ); } );
+         socket.On( Socket.EVENT_MESSAGE, () => { System.Console.WriteLine( "Event_Message" ); } );
+         socket.On( Socket.EVENT_ERROR, () => { System.Console.WriteLine( "Error" ); } );
+         
+         string key = "03302d4ebfb6f44b662d00313aff5a46";
+
+         var securityKey = new Microsoft.IdentityModel.Tokens.SymmetricSecurityKey( Encoding.UTF8.GetBytes( key ) );
+
+         var credentials = new Microsoft.IdentityModel.Tokens.SigningCredentials( securityKey, Microsoft.IdentityModel.Tokens.SecurityAlgorithms.HmacSha256 );
+
+         var header = new JwtHeader( credentials );
+         
+         var payload = new JwtPayload
+         {
+            { "documentId", docID },
+            { "permission", "read:write" },
+            { "tenantId",   tenantID },
+            { "user",       new JwtPayload { { "id", "test" } } },
+            //{ "iat",        Convert.ToUInt64( ( DateTime.UtcNow - new DateTime( 1970, 1, 1, 0, 0, 0, DateTimeKind.Utc ) ).TotalSeconds ).ToString() }
+         };
+
+         var secToken = new JwtSecurityToken(header, payload );
+         var handler = new JwtSecurityTokenHandler();
+
+         var tokenString = handler.WriteToken( secToken );
+
+         IConnect connect = new IConnect { id       = docID,
+                                           tenantId = tenantID,
+                                           token    = tokenString } ;
+
+         string connectStr = JsonConvert.SerializeObject( connect );
+
+         socket.On( "connect_document_success", () => { System.Console.WriteLine( "Connect_Success" ); } );
+         socket.On( "connect_document_error", data => { System.Console.WriteLine( "Connect doc error {0}", data ); } );
+
+         JObject jobj = JObject.Parse( JsonConvert.SerializeObject( connect ) );
+
+         socket.Emit( "connect_document", jobj );
+      }
+
+      public IMap CreateMap()
+      {
+         throw new NotImplementedException();
+      }
+
+      public IMap GetRoot()
+      {
+         return ( IMap )m_objects[ "root" ];
+      }
+
+      public ICollaborativeObject Get( string ID )
+      {
+         return m_objects[ ID ];
+      }
+   }
+
+   class ValueChangedEventArgs : EventArgs
+   {
+      public string Key;
+   }
+
+   interface IMap
+   {
+      void Set( string key, object value );
+
+      object Get( string key );
+
+      event EventHandler< ValueChangedEventArgs > OnValueChanged;
+   }
+
    interface ICollaborativeObject
    {
       string id { get; }
@@ -21,17 +135,41 @@ namespace PragueProtoClient
       void ProcessCore( ISequencedObjectMessage message, bool local, object context );
    }
 
-   class CollaborativeMap : ICollaborativeObject
+   class CollaborativeMap : ICollaborativeObject, IMap
    {
       private readonly string                        m_id;
       private readonly IDictionary< string, object > m_values = new Dictionary< string, object >();
+      private readonly PragueDocument                m_pragueDoc;
 
-      public CollaborativeMap( string id )
+      public CollaborativeMap( string id, PragueDocument pragueDoc )
       {
-         m_id = id;
+         if( string.IsNullOrEmpty( id ) )
+            throw new ArgumentNullException( "id" );
+
+         if( pragueDoc == null )
+            throw new ArgumentNullException( "pragueDoc" );
+
+         m_id        = id;
+         m_pragueDoc = pragueDoc;
       }
 
       public string id { get { return m_id; } }
+
+      public void Set( string key, object value )
+      {
+         m_values[ key ] = value;
+      }
+
+      public object Get( string key )
+      {
+         object obj;
+         if( m_values.TryGetValue( key, out obj ) )
+            return obj;
+         else
+            return null;
+      }
+
+      public event EventHandler< ValueChangedEventArgs > OnValueChanged;
 
       public void ProcessCore( ISequencedObjectMessage message, bool local, object context )
       {
@@ -45,6 +183,9 @@ namespace PragueProtoClient
          System.Console.WriteLine( "MapOp:{0}", JsonConvert.SerializeObject( mapOp, Formatting.Indented ) );
 
          m_values[ mapOp.key ] = mapOp.value;
+
+         if( OnValueChanged != null )
+            OnValueChanged( this, new ValueChangedEventArgs{ Key = mapOp.key } );
 
          System.Console.WriteLine( "CollaborativeMap::ProcessCore Key:{0} Value:{1}", mapOp.key, mapOp.value );
       }
@@ -117,10 +258,18 @@ namespace PragueProtoClient
    class OpListener : IListener
    {
       private readonly IDictionary< string, ICollaborativeObject > m_objs;
+      private readonly PragueDocument                              m_pragueDoc;
 
-      public OpListener( IDictionary< string, ICollaborativeObject > objs )
+      public OpListener( IDictionary< string, ICollaborativeObject > objs, PragueDocument pragueDoc )
       {
-         m_objs = objs;
+         if( objs == null )
+            throw new ArgumentNullException( "objs" );
+
+         if( pragueDoc == null )
+            throw new ArgumentNullException( "pragueDoc" );
+
+         m_objs      = objs;
+         m_pragueDoc = pragueDoc;
       }
 
       public void Call( params object[] args )
@@ -168,13 +317,11 @@ namespace PragueProtoClient
 
                      if( attachMessage.type == "https://graph.microsoft.com/types/map" )
                      {
-                        if( m_objs.ContainsKey( attachMessage.id ) )
+                        if( !m_objs.ContainsKey( attachMessage.id ) )
                         {
-                           throw new NotImplementedException( "obj already exists" );
+                           ICollaborativeObject newObj = new CollaborativeMap( attachMessage.id, m_pragueDoc );
+                           m_objs.Add( attachMessage.id, newObj );
                         }
-
-                        ICollaborativeObject newObj = new CollaborativeMap( attachMessage.id );
-                        m_objs.Add( attachMessage.id, newObj );
                      }
                      else
                      {
@@ -205,80 +352,19 @@ namespace PragueProtoClient
    {
       static void Main( string[] args )
       {
-         //string docID         = "DefaultDoc";
-         //string tenantID      = "gallant-hugle";
-         //string routerlicious = "https://alfred.wu2.prague.office-int.com";
+         IPragueDocument doc = new PragueDocument( "Doc22", "prague", new Uri( "http://localhost:3000" ) );
+         IMap rootMap = doc.GetRoot();
 
-         string docID         = "Doc1";
-         string tenantID      = "prague";
-         string routerlicious = "http://localhost:3000";
+         JObject mapID = ( JObject )rootMap.Get( "obj2" );
 
-         HttpClient httpClient = new HttpClient();
-         HttpResponseMessage responseMessage = httpClient.GetAsync( $"http://localhost:3000/deltas/{docID}" ).Result;
+         string addressValue = mapID[ "value" ].Value< string >();
 
-         if( responseMessage.StatusCode != System.Net.HttpStatusCode.OK )
-         {
-            throw new InvalidOperationException( "Invalid return code" );
-         }
+         IMap dummyMap = ( IMap )doc.Get( addressValue );
 
-         IDictionary< string, ICollaborativeObject > objects = new Dictionary< string, ICollaborativeObject >();
+         dummyMap.OnValueChanged += ( sender, ea ) => { System.Console.WriteLine( "Some value changed {0}", ea.Key ); };
 
-         IListener opListener = new OpListener( objects );
-
-         object deltasObj = JsonConvert.DeserializeObject( responseMessage.Content.ReadAsStringAsync().Result );
-
-         opListener.Call( deltasObj );
-
-         var options = new IO.Options();
-         options.QueryString = string.Format( "documentId={0}&tenantId={0}", docID, tenantID );
-         options.Transports = new string[] { "websocket" }.ToImmutableList();
-
-         var socket = IO.Socket( routerlicious, options );
-
-         socket.On( "op", opListener );
-
-         socket.On( Socket.EVENT_CONNECT, () => { System.Console.WriteLine( "Connected" ); } );
-         socket.On( Socket.EVENT_CONNECT_ERROR, () => { System.Console.WriteLine( "ConnectionError" ); } );
-         socket.On( Socket.EVENT_MESSAGE, () => { System.Console.WriteLine( "Event_Message" ); } );
-         socket.On( Socket.EVENT_ERROR, () => { System.Console.WriteLine( "Error" ); } );
-         
-         string key = "03302d4ebfb6f44b662d00313aff5a46";
-
-         var securityKey = new Microsoft.IdentityModel.Tokens.SymmetricSecurityKey( Encoding.UTF8.GetBytes( key ) );
-
-         var credentials = new Microsoft.IdentityModel.Tokens.SigningCredentials( securityKey, Microsoft.IdentityModel.Tokens.SecurityAlgorithms.HmacSha256 );
-
-         var header = new JwtHeader( credentials );
-         
-         var payload = new JwtPayload
-         {
-            { "documentId", docID },
-            { "permission", "read:write" },
-            { "tenantId",   tenantID },
-            { "user",       new JwtPayload { { "id", "test" } } },
-            //{ "iat",        Convert.ToUInt64( ( DateTime.UtcNow - new DateTime( 1970, 1, 1, 0, 0, 0, DateTimeKind.Utc ) ).TotalSeconds ).ToString() }
-         };
-
-         var secToken = new JwtSecurityToken(header, payload );
-         var handler = new JwtSecurityTokenHandler();
-
-         var tokenString = handler.WriteToken( secToken );
-
-         IConnect connect = new IConnect { id       = docID,
-                                           tenantId = tenantID,
-                                           token    = tokenString } ;
-
-         string connectStr = JsonConvert.SerializeObject( connect );
-
-         socket.On( "connect_document_success", () => { System.Console.WriteLine( "Connect_Success" ); } );
-         socket.On( "connect_document_error", data => { System.Console.WriteLine( "Connect doc error {0}", data ); } );
-
-         JObject jobj = JObject.Parse( JsonConvert.SerializeObject( connect ) );
-
-         socket.Emit( "connect_document", jobj );
-
-         System.Console.WriteLine( "Press any key to continue..." );
-         System.Console.ReadKey();
+         System.Console.WriteLine( "Press any key to continue" );
+         System.Console.ReadLine();
       }
    }
 }
