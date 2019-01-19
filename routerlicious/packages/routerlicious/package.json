@@ -34,6 +34,28 @@
   },
   "author": "Microsoft",
   "repository": "microsoft/prague",
+  "browser": {
+    "request": "xhr"
+  },
+  "nyc": {
+    "all": true,
+    "exclude": [
+      "src/test/**/*.ts",
+      "dist/test/**/*.js"
+    ],
+    "include": [
+      "src/**/*.ts",
+      "dist/**/*.js"
+    ],
+    "reporter": [
+      "cobertura",
+      "html",
+      "text"
+    ],
+    "temp-directory": "nyc/.nyc_output",
+    "cache-dir": "nyc/.cache",
+    "report-dir": "nyc/report"
+  },
   "dependencies": {
     "@prague/agent": "^0.1.0",
     "@prague/api-definitions": "^0.1.0",
@@ -130,6 +152,7 @@
     "passport": "^0.3.2",
     "passport-local": "^1.0.0",
     "passport-openidconnect": "0.0.2",
+    "performance-now": "^2.1.0",
     "progress": "^2.0.3",
     "randomstring": "^1.1.5",
     "raven": "^2.6.4",
@@ -150,31 +173,10 @@
     "ws": "^6.1.2",
     "xhr": "^2.5.0"
   },
-  "browser": {
-    "request": "xhr"
-  },
-  "nyc": {
-    "all": true,
-    "exclude": [
-      "src/test/**/*.ts",
-      "dist/test/**/*.js"
-    ],
-    "include": [
-      "src/**/*.ts",
-      "dist/**/*.js"
-    ],
-    "reporter": [
-      "cobertura",
-      "html",
-      "text"
-    ],
-    "temp-directory": "nyc/.nyc_output",
-    "cache-dir": "nyc/.cache",
-    "report-dir": "nyc/report"
-  },
   "devDependencies": {
     "@types/diff": "^3.5.1",
     "@types/mocha": "^5.2.5",
+    "@types/node": "^10.12.12",
     "@types/random-js": "^1.0.31",
     "@types/supertest": "^2.0.5",
     "cache-loader": "^1.2.2",
