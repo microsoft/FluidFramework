@@ -656,6 +656,9 @@ export class DistributedProcess extends EventEmitter {
             this._deltaManager.attachOpHandler(
                 attributes.sequenceNumber,
                 {
+                    postProcess: (message, context) => {
+                        return this.postProcessRemoteMessage(message, context);
+                    },
                     prepare: (message) => {
                         return this.prepareRemoteMessage(message);
                     },
@@ -896,5 +899,19 @@ export class DistributedProcess extends EventEmitter {
         this.context.updateMinSequenceNumber(message.minimumSequenceNumber);
 
         this.emit("op", ...eventArgs);
+    }
+
+    private async postProcessRemoteMessage(message: ISequencedDocumentMessage, context: any) {
+        const local = this._clientId === message.clientId;
+
+        switch (message.type) {
+            case MessageType.Attach:
+                await this.context.postProcessAttach(message, local, context);
+                break;
+
+            default:
+                // tslint:disable-next-line:switch-final-break
+                break;
+        }
     }
 }

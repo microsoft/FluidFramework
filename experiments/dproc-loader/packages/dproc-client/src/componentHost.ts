@@ -1,4 +1,4 @@
-import { IComponentRuntime } from "@prague/process-definitions";
+import { IComponentRuntime, IDeltaHandler } from "@prague/process-definitions";
 import {
     ConnectionState,
     FileMode,
@@ -46,7 +46,7 @@ interface IObjectServices {
     objectStorage: IObjectStorageService;
 }
 
-export class ComponentHost extends EventEmitter {
+export class ComponentHost extends EventEmitter implements IDeltaHandler {
     public static async LoadFromSnapshot(
         componentRuntime: IComponentRuntime,
         tenantId: string,
@@ -276,27 +276,6 @@ export class ComponentHost extends EventEmitter {
 
     public async start(platform: IPlatform): Promise<void> {
         this.verifyNotClosed();
-
-        this.componentRuntime.attach({
-            minSequenceNumberChanged: (value) => {
-                this.updateMinSequenceNumber(value);
-            },
-            prepare: (message, local) => {
-                return message.type === MessageType.Attach
-                    ? this.prepareAttach(message, local)
-                    : this.prepare(message, local);
-            },
-            process: (message, local, context) => {
-                message.type === MessageType.Attach
-                    ? this.processAttach(message, local, context)
-                    : this.process(message, local, context);
-            },
-            setConnectionState: (state) => {
-                this.changeConnectionState(state, this.componentRuntime.clientId);
-            },
-        });
-
-        // tslint:disable-next-line:no-floating-promises
         this._platform = await this.chaincode.run(this, platform);
     }
 
@@ -322,102 +301,6 @@ export class ComponentHost extends EventEmitter {
                 object.connection.setConnectionState(value);
             }
         }
-    }
-
-    public prepare(message: ISequencedDocumentMessage, local: boolean) {
-        this.verifyNotClosed();
-
-        const envelope = message.contents as IEnvelope;
-        const objectDetails = this.channels.get(envelope.address);
-        assert(objectDetails);
-
-        return objectDetails.connection.prepare(message, local);
-    }
-
-    public process(message: ISequencedDocumentMessage, local: boolean, context: any): IChannel {
-        this.verifyNotClosed();
-
-        const envelope = message.contents as IEnvelope;
-        const objectDetails = this.channels.get(envelope.address);
-        assert(objectDetails);
-
-        /* tslint:disable:no-unsafe-any */
-        objectDetails.connection.process(message, local, context);
-
-        return objectDetails.object;
-    }
-
-    public processAttach(message: ISequencedDocumentMessage, local: boolean, context: IChannelState): IChannel {
-        this.verifyNotClosed();
-
-        const attachMessage = message.contents as IAttachMessage;
-
-        // If a non-local operation then go and create the object - otherwise mark it as officially attached.
-        if (local) {
-            assert(this.pendingAttach.has(attachMessage.id));
-            this.pendingAttach.delete(attachMessage.id);
-
-            // Document sequence number references <= message.sequenceNumber should map to the
-            // object's 0 sequence number. We cap to the MSN to keep a tighter window and because
-            // no references should be below it.
-            this.channels.get(attachMessage.id).connection.setBaseMapping(
-                0,
-                message.minimumSequenceNumber);
-        } else {
-            const channelState = context as IChannelState;
-            this.channels.set(channelState.object.id, channelState);
-            if (this.channelsDeferred.has(channelState.object.id)) {
-                this.channelsDeferred.get(channelState.object.id).resolve(channelState.object);
-            } else {
-                const deferred = new Deferred<IChannel>();
-                deferred.resolve(channelState.object);
-                this.channelsDeferred.set(channelState.object.id, deferred);
-            }
-        }
-
-        return this.channels.get(attachMessage.id).object;
-    }
-
-    public async prepareAttach(message: ISequencedDocumentMessage, local: boolean): Promise<IChannelState> {
-        this.verifyNotClosed();
-
-        if (local) {
-            return;
-        }
-
-        const attachMessage = message.contents as IAttachMessage;
-
-        // create storage service that wraps the attach data
-        const localStorage = new LocalChannelStorageService(attachMessage.snapshot);
-        const connection = new ChannelDeltaConnection(
-            attachMessage.id,
-            this.connectionState,
-            (submitMessage) => {
-                const submitEnvelope: IEnvelope = { address: attachMessage.id, contents: submitMessage };
-                this.submit(MessageType.Operation, submitEnvelope);
-            });
-
-        // Document sequence number references <= message.sequenceNumber should map to the object's 0
-        // sequence number. We cap to the MSN to keep a tighter window and because no references should
-        // be below it.
-        connection.setBaseMapping(0, message.minimumSequenceNumber);
-
-        const services: IObjectServices = {
-            deltaConnection: connection,
-            objectStorage: localStorage,
-        };
-
-        const origin = message.origin ? message.origin.id : this.id;
-        const value = await this.loadChannel(
-            attachMessage.id,
-            attachMessage.type,
-            0,
-            0,
-            [],
-            services,
-            origin);
-
-        return value;
     }
 
     public getQuorum(): IQuorum {
@@ -493,6 +376,18 @@ export class ComponentHost extends EventEmitter {
         this.closeFn();
     }
 
+    public prepare(message: ISequencedDocumentMessage, local: boolean): Promise<any> {
+        return message.type === MessageType.Attach
+            ? this.prepareAttach(message, local)
+            : this.prepareOp(message, local);
+    }
+
+    public process(message: ISequencedDocumentMessage, local: boolean, context: any) {
+        message.type === MessageType.Attach
+            ? this.processAttach(message, local, context)
+            : this.processOp(message, local, context);
+    }
+
     public updateMinSequenceNumber(msn: number) {
         for (const [, object] of this.channels) {
             if (!object.object.isLocal() && object.connection.baseMappingIsSet()) {
@@ -552,6 +447,102 @@ export class ComponentHost extends EventEmitter {
         if (!this.channelsDeferred.has(id)) {
             this.channelsDeferred.set(id, new Deferred<IChannel>());
         }
+    }
+
+    private prepareOp(message: ISequencedDocumentMessage, local: boolean) {
+        this.verifyNotClosed();
+
+        const envelope = message.contents as IEnvelope;
+        const objectDetails = this.channels.get(envelope.address);
+        assert(objectDetails);
+
+        return objectDetails.connection.prepare(message, local);
+    }
+
+    private processOp(message: ISequencedDocumentMessage, local: boolean, context: any): IChannel {
+        this.verifyNotClosed();
+
+        const envelope = message.contents as IEnvelope;
+        const objectDetails = this.channels.get(envelope.address);
+        assert(objectDetails);
+
+        /* tslint:disable:no-unsafe-any */
+        objectDetails.connection.process(message, local, context);
+
+        return objectDetails.object;
+    }
+
+    private processAttach(message: ISequencedDocumentMessage, local: boolean, context: IChannelState): IChannel {
+        this.verifyNotClosed();
+
+        const attachMessage = message.contents as IAttachMessage;
+
+        // If a non-local operation then go and create the object - otherwise mark it as officially attached.
+        if (local) {
+            assert(this.pendingAttach.has(attachMessage.id));
+            this.pendingAttach.delete(attachMessage.id);
+
+            // Document sequence number references <= message.sequenceNumber should map to the
+            // object's 0 sequence number. We cap to the MSN to keep a tighter window and because
+            // no references should be below it.
+            this.channels.get(attachMessage.id).connection.setBaseMapping(
+                0,
+                message.minimumSequenceNumber);
+        } else {
+            const channelState = context as IChannelState;
+            this.channels.set(channelState.object.id, channelState);
+            if (this.channelsDeferred.has(channelState.object.id)) {
+                this.channelsDeferred.get(channelState.object.id).resolve(channelState.object);
+            } else {
+                const deferred = new Deferred<IChannel>();
+                deferred.resolve(channelState.object);
+                this.channelsDeferred.set(channelState.object.id, deferred);
+            }
+        }
+
+        return this.channels.get(attachMessage.id).object;
+    }
+
+    private async prepareAttach(message: ISequencedDocumentMessage, local: boolean): Promise<IChannelState> {
+        this.verifyNotClosed();
+
+        if (local) {
+            return;
+        }
+
+        const attachMessage = message.contents as IAttachMessage;
+
+        // create storage service that wraps the attach data
+        const localStorage = new LocalChannelStorageService(attachMessage.snapshot);
+        const connection = new ChannelDeltaConnection(
+            attachMessage.id,
+            this.connectionState,
+            (submitMessage) => {
+                const submitEnvelope: IEnvelope = { address: attachMessage.id, contents: submitMessage };
+                this.submit(MessageType.Operation, submitEnvelope);
+            });
+
+        // Document sequence number references <= message.sequenceNumber should map to the object's 0
+        // sequence number. We cap to the MSN to keep a tighter window and because no references should
+        // be below it.
+        connection.setBaseMapping(0, message.minimumSequenceNumber);
+
+        const services: IObjectServices = {
+            deltaConnection: connection,
+            objectStorage: localStorage,
+        };
+
+        const origin = message.origin ? message.origin.id : this.id;
+        const value = await this.loadChannel(
+            attachMessage.id,
+            attachMessage.type,
+            0,
+            0,
+            [],
+            services,
+            origin);
+
+        return value;
     }
 
     private async loadSnapshotChannel(

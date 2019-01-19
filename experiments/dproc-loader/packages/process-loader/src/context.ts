@@ -168,8 +168,6 @@ export class Context implements IHostRuntime {
             this.snapshotFn,
             this.closeFn);
         this.components.set(id, component);
-
-        await component.start();
     }
 
     public snapshot(): Map<string, ITree> {
@@ -221,6 +219,11 @@ export class Context implements IHostRuntime {
     public prepare(message: ISequencedDocumentMessage, local: boolean): Promise<any> {
         const envelope = message.contents as IEnvelope;
         const component = this.components.get(envelope.address);
+
+        if (!component) {
+            console.log(JSON.stringify(message, null, 2));
+        }
+
         assert(component);
 
         const transformed: ISequencedDocumentMessage = {
@@ -304,17 +307,19 @@ export class Context implements IHostRuntime {
             this.snapshotFn,
             this.closeFn);
 
-        // Start the component code
-        await component.start();
-
         return component;
     }
 
     public processAttach(message: ISequencedDocumentMessage, local: boolean, context: Component): void {
         this.verifyNotClosed();
-
         debug("processAttach");
+    }
 
+    public async postProcessAttach(
+        message: ISequencedDocumentMessage,
+        local: boolean,
+        context: Component,
+    ): Promise<void> {
         const attachMessage = message.contents as IAttachMessage;
 
         // If a non-local operation then go and create the object - otherwise mark it as officially attached.
@@ -322,6 +327,8 @@ export class Context implements IHostRuntime {
             assert(this.pendingAttach.has(attachMessage.id));
             this.pendingAttach.delete(attachMessage.id);
         } else {
+            await context.start();
+
             this.components.set(attachMessage.id, context);
 
             // Resolve pending gets and store off any new ones
@@ -387,9 +394,6 @@ export class Context implements IHostRuntime {
             this.snapshotFn,
             this.closeFn);
 
-        // Store off the component
-        this.components.set(id, component);
-
         // Generate the attach message
         const message: IAttachMessage = {
             id,
@@ -399,8 +403,11 @@ export class Context implements IHostRuntime {
         this.pendingAttach.set(id, message);
         this.submit(MessageType.Attach, message);
 
-        // Start up the component
+        // Start the component
         await component.start();
+
+        // Store off the component
+        this.components.set(id, component);
 
         // Resolve any pending requests for the component
         if (this.processDeferred.has(id)) {

@@ -2,12 +2,12 @@ import {
     IChaincodeComponent,
     IChaincodeHost,
     IComponentRuntime,
+    IDeltaHandler,
     IProcess,
 } from "@prague/process-definitions";
 import {
     ConnectionState,
     IChannel,
-    IDeltaHandler,
     IDocumentStorageService,
     IEnvelope,
     IGenericBlob,
@@ -184,18 +184,6 @@ export class Component extends EventEmitter implements IComponentRuntime, IProce
         // TODOTODO this needs to defer to the runtime
     }
 
-    public async start(): Promise<void> {
-        this.verifyNotClosed();
-
-        //  The component needs to have both a create and a load call (I believe). Or load can be invoked
-        // with no starting data.
-        //  Once the above are called it can begin processing events and model data
-        //  Some trigger can happen to then allow it to take part in the UI
-
-        // TODOTODO need to understand start logic
-        await this.chaincode.run(this, null);
-    }
-
     public changeConnectionState(value: ConnectionState, clientId: string) {
         this.verifyNotClosed();
 
@@ -205,8 +193,7 @@ export class Component extends EventEmitter implements IComponentRuntime, IProce
 
         this._connectionState = value;
         this.clientId = clientId;
-
-        // TODOTODO pass on to runtime
+        this.handler.changeConnectionState(value, clientId);
     }
 
     public prepare(message: ISequencedDocumentMessage, local: boolean): Promise<any> {
@@ -242,15 +229,11 @@ export class Component extends EventEmitter implements IComponentRuntime, IProce
     }
 
     public updateMinSequenceNumber(msn: number) {
-        this.handler.minSequenceNumberChanged(msn);
+        this.handler.updateMinSequenceNumber(msn);
     }
 
     public snapshot(): ITree {
         return null;
-    }
-
-    public attach(handler: IDeltaHandler) {
-        this.handler = handler;
     }
 
     public submitMessage(type: MessageType, content: any) {
@@ -259,6 +242,18 @@ export class Component extends EventEmitter implements IComponentRuntime, IProce
 
     public error(err: any): void {
         return;
+    }
+
+    public async start(): Promise<void> {
+        this.verifyNotClosed();
+
+        //  The component needs to have both a create and a load call (I believe). Or load can be invoked
+        // with no starting data.
+        //  Once the above are called it can begin processing events and model data
+        //  Some trigger can happen to then allow it to take part in the UI
+
+        // TODOTODO need to understand start logic
+        this.handler = await this.chaincode.run(this, null);
     }
 
     private submit(type: MessageType, content: any) {

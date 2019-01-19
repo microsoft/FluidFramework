@@ -1,6 +1,7 @@
 import {
     IChaincodeComponent,
     IComponentRuntime,
+    IDeltaHandler,
 } from "@prague/process-definitions";
 import { IChaincode, IPlatform } from "@prague/runtime-definitions";
 import { ComponentHost } from "./componentHost";
@@ -20,7 +21,7 @@ export class LegacyChaincodeBridge implements IChaincodeComponent {
         return;
     }
 
-    public async run(runtime: IComponentRuntime, platform: IPlatform): Promise<IPlatform> {
+    public async run(runtime: IComponentRuntime, platform: IPlatform): Promise<IDeltaHandler> {
         debug("WE RUNNIN YO!!! :)");
 
         const chaincode = this.chaincode;
@@ -50,6 +51,6 @@ export class LegacyChaincodeBridge implements IChaincodeComponent {
             runtime.snapshotFn,
             runtime.closeFn);
 
-        return component.platform;
+        return component;
     }
 }

@@ -13,7 +13,14 @@ export class Clicker extends Document {
     public async opened() {
         const counter = await this.root.wait<Counter>("clicks");
 
-        setInterval(() => counter.increment(1), 5000);
+        const interval = this.runtime.existing ? 1000 : 10000;
+        console.log(`Interval of ${interval}`);
+        setInterval(
+            () => {
+                console.log(`Increment ${this.runtime.clientId}`);
+                counter.increment(1)
+            },
+            interval);
 
         counter.onIncrement = () => { console.log(`Counter === ${counter.value}`) };
     }

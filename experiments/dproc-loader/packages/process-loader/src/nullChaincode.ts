@@ -2,6 +2,7 @@ import {
     IChaincodeComponent,
     IChaincodeHost,
     IComponentRuntime,
+    IDeltaHandler,
     IHostRuntime,
 } from "@prague/process-definitions";
 import { IPlatform } from "@prague/runtime-definitions";
@@ -23,7 +24,7 @@ class NullChaincodeComponent implements IChaincodeComponent {
         return Promise.reject("Not supported");
     }
 
-    public async run(runtime: IComponentRuntime, platform: IPlatform): Promise<IPlatform> {
+    public async run(runtime: IComponentRuntime, platform: IPlatform): Promise<IDeltaHandler> {
         return Promise.reject("Not supported");
     }
 }

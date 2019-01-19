@@ -35,6 +35,11 @@ export interface IDeltaHandlerStrategy {
      * Processes the message. The return value from prepare is passed in the context parameter.
      */
     process: (message: runtime.ISequencedDocumentMessage, context: any) => void;
+
+    /**
+     * Called immediately after process.
+     */
+    postProcess: (message: runtime.ISequencedDocumentMessage, context: any) => Promise<void>;
 }
 
 /**
@@ -550,6 +555,9 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
 
             const endTime = Date.now();
             this.emit("processTime", endTime - startTime);
+
+            // Call the post-process function
+            return this.handler.postProcess(message, context);
         });
     }
 

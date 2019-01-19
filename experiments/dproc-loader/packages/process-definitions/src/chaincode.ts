@@ -30,7 +30,7 @@ export interface IChaincodeComponent {
      * Invoked once the chaincode has been fully instantiated on the document. Run returns a platform
      * interface that can be used to access the running component.
      */
-    run(runtime: IComponentRuntime, platform: IPlatform): Promise<IPlatform>;
+    run(runtime: IComponentRuntime, platform: IPlatform): Promise<IDeltaHandler>;
 }
 
 export interface IProcess {
@@ -40,11 +40,8 @@ export interface IProcess {
 export interface IDeltaHandler {
     prepare: (message: ISequencedDocumentMessage, local: boolean) => Promise<any>;
     process: (message: ISequencedDocumentMessage, local: boolean, context: any) => void;
-    minSequenceNumberChanged: (value: number) => void;
-    /**
-     * State change events to indicate changes to the delta connection
-     */
-    setConnectionState(state: ConnectionState): void;
+    updateMinSequenceNumber: (value: number) => void;
+    changeConnectionState(value: ConnectionState, clientId: string);
 }
 
 export interface IComponentRuntime {
@@ -76,8 +73,6 @@ export interface IComponentRuntime {
     error(err: any): void;
 
     submitMessage(type: MessageType, content: any): any;
-
-    attach(handler: IDeltaHandler);
 }
 
 export interface IHostRuntime {
