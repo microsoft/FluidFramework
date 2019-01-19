@@ -1,7 +1,5 @@
-const spawn = require("child_process").spawn;
 const path = require("path");
 const merge = require("webpack-merge");
-const CleanWebpackPlugin = require("clean-webpack-plugin");
 
 module.exports = env => {
     const isProduction = env === "production";
@@ -39,30 +37,6 @@ module.exports = env => {
                 }
             ]
         },
-        plugins: [
-            new CleanWebpackPlugin(["dist"]),
-            /*
-            {
-                apply: (compiler) => {
-                    compiler.hooks.afterEmit.tapPromise("PublishChaincodePlugin",
-                        (compilation) => {
-                            if (compilation.errors.length > 0) {
-                                console.warn(`Skipping @chaincode publication due to compilation errors.`);
-                                console.warn(`${JSON.stringify(compilation.errors)}`);
-                                return Promise.resolve();
-                            }
-                            
-                            return new Promise(resolve => {
-                                const proc = spawn("npm", ["run", "publish-patch-local"],
-                                    { stdio: [process.stdin, process.stdout, process.stderr] });
-                                proc.on('close', resolve);
-                            });
-                        }
-                    );
-                }
-            }
-            */
-        ],
         output: {
             filename: "[name].bundle.js",
             path: path.resolve(__dirname, "dist"),

@@ -38,8 +38,10 @@
     "report-dir": "nyc/report"
   },
   "devDependencies": {
+    "@types/diff": "^3.5.1",
     "@types/mocha": "^5.2.5",
     "@types/random-js": "^1.0.31",
+    "diff": "^3.5.0",
     "mocha": "^5.2.0",
     "mocha-junit-reporter": "^1.18.0",
     "nyc": "^13.0.1",

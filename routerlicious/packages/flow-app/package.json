@@ -6,10 +6,21 @@
   "repository": "microsoft/prague",
   "main": "dist/main.bundle.js",
   "types": "dist/index.d.ts",
-   "scripts": {
+  "scripts": {
     "build": "webpack --env=\"production\"",
     "build:full": "webpack --env=\"production\"",
     "dev": "webpack-serve --config"
+  },
+  "dependencies": {
+    "@chaincode/flow-document": "*",
+    "@chaincode/flow-editor": "*",
+    "@prague/app-component": "^0.1.0",
+    "@prague/app-datastore": "^0.1.0",
+    "@prague/flow-util": "^0.1.0",
+    "@uifabric/icons": "~6.3.0",
+    "office-ui-fabric-react": "^6.108.0",
+    "react": "^16.6.3",
+    "react-dom": "^16.6.3"
   },
   "devDependencies": {
     "@types/react": "^16.7.7",
@@ -26,15 +37,5 @@
     "webpack-cli": "^3.1.2",
     "webpack-merge": "^4.1.2",
     "webpack-serve": "^2.0.2"
-  },
-  "dependencies": {
-    "@chaincode/flow-document": "*",
-    "@chaincode/flow-editor": "*",
-    "@prague/app-component": "^0.1.0",
-    "@prague/app-datastore": "^0.1.0",
-    "@prague/flow-util": "^0.1.0",
-    "office-ui-fabric-react": "^6.108.0",
-    "react": "^16.6.3",
-    "react-dom": "^16.6.3"
   }
 }
