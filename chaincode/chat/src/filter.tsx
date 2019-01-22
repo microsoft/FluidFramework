@@ -9,7 +9,7 @@ const profane_words = [
     "patriots",
 ];
 
-const profanExp = new RegExp(profane_words.join("|"), "g");
+const profanExp = new RegExp(profane_words.join("|"), "gi");
 let cheating = false;
 
 export function filter(input: string): string {
