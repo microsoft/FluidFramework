@@ -1,7 +1,7 @@
 // Note: 'index.tsx' is only imported when testing with the local WebPack dev server.
 //       In production it is Alfred's '/controllers/view.ts' that calls 'start(..)'
 
-import { start } from "./app";
+import { start } from "@prague/flow-host";
 
 const serverUrl = new URL(document.location.href);
 serverUrl.port = "3000";

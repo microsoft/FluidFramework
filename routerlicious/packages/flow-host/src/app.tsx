@@ -5,7 +5,6 @@ import { initializeIcons } from "@uifabric/icons";
 import * as style from "./index.css";
 import { ChaincodeDialog } from "./chaincodedialog";
 import * as styles from "./index.css";
-import * as ReactDOM from "react-dom";
 
 export interface IAppConfig {
     serverUrl: string;              // Url of routerlicious front door (e.g., "http://localhost:3000")
@@ -20,7 +19,7 @@ interface IState {
     virtualize: boolean
 }
 
-class App extends React.Component<IProps, IState> {
+export class App extends React.Component<IProps, IState> {
     private readonly cmds = { 
         insert: (element: JSX.Element | HTMLElement | { docId: string, chaincode?: string }) => { alert("insert(?)"); },
         insertText: (lines: string[]) => { alert("insert(text)"); }
@@ -134,9 +133,4 @@ class App extends React.Component<IProps, IState> {
         "The consumer version of the 8580 was rebadged the 6582, even though the die on the chip is identical to a stock 8580 chip, including the '8580R5' mark. Dr. Evil Laboratories used it in their SID Symphony expansion cartridge (sold to Creative Micro Designs in 1991), and it was used in a few other places as well, including one PC sound-card.",
         "Despite its documented shortcomings, many SID musicians prefer the flawed 6581 chip over the corrected 8580 chip. The main reason for this is that the filter produces strong distortion that is sometimes used to produce simulation of instruments such as a distorted electric guitar. Also, the highpass component of the filter was mixed in 3 dB attenuated compared to the other outputs, making the sound more bassy. In addition to nonlinearities in filter, the D/A circuitry used in the waveform generators produces yet more additional distortion that made its sound richer in character.",
     ];
-}
-
-/** Invoked be either Alfred's '/controllers/view.ts' or local 'index.tsx' when using WebPack dev server. */
-export function start(config: IAppConfig, root: HTMLElement) {
-    ReactDOM.render(<App config={config} />, root);
 }

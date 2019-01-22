@@ -1,7 +1,7 @@
 {
-  "name": "@chaincode/flow-document",
-  "description": "Experimental flow editor for collaborative journaling.",
-  "version": "0.0.125",
+  "name": "@chaincode/table-document",
+  "description": "Chaincode component containing a table's data",
+  "version": "0.1.20",
   "author": "Microsoft",
   "repository": "microsoft/prague",
   "main": "dist/main.bundle.js",
@@ -9,7 +9,8 @@
   "scripts": {
     "build": "webpack --env=\"production\"",
     "build:full": "webpack --env=\"production\"",
-    "dev": "webpack --env=\"development\" --watch",
+    "build:dev": "webpack --env=\"development\"",
+    "dev": "npm run build:dev -- --watch",
     "publish-local": "npm publish --registry http://localhost:4873",
     "publish-patch-local": "npm version patch && npm run publish-local"
   },
@@ -32,9 +33,10 @@
   "dependencies": {
     "@prague/app-component": "^0.1.0",
     "@prague/app-datastore": "^0.1.0",
+    "@prague/client-ui": "^0.1.0",
     "@prague/map": "^0.1.0",
     "@prague/merge-tree": "^0.1.0",
     "@prague/runtime-definitions": "^0.1.0",
-    "@prague/sequence": "^0.1.0"
+    "@prague/shared-string": "^0.1.0"
   }
 }

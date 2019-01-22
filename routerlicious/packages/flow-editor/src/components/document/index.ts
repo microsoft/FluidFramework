@@ -6,7 +6,7 @@ import {
     TextSegment,
 } from "@prague/merge-tree";
 import { Template, Dom } from "@prague/flow-util";
-import { getInclusionKind, getInclusionHtml, getInclusionComponent, FlowDocument, DocSegmentKind, getDocSegmentKind, InclusionKind } from "@chaincode/flow-document";
+import { getInclusionKind, getInclusionHtml, FlowDocument, DocSegmentKind, getDocSegmentKind, InclusionKind } from "@chaincode/flow-document";
 import { ParagraphView } from "../paragraph";
 import { LineBreakView } from "../linebreak";
 import { TextView } from "../text";
@@ -512,7 +512,7 @@ export class DocumentLayout {
                 default:
                     console.assert(kind === InclusionKind.Chaincode);
                     child = document.createElement("span");
-                    getInclusionComponent(marker, [["div", Promise.resolve(child)]]);
+                    context.doc.getInclusionComponent(marker, [["div", Promise.resolve(child)]]);
                     break;
             }
             (marker.properties as any)[this.inclusionRootSym] = child;

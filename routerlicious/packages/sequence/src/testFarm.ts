@@ -2,7 +2,7 @@
 import * as MergeTree from "@prague/merge-tree";
 import { findRandomWord } from "@prague/merge-tree-utils";
 import { insertOverlayNode, onodeTypeKey, OverlayNodePosition } from "@prague/merge-tree/dist/overlayTree";
-import { loadTextFromFile } from "@prague/merge-tree/dist/snapshot-fs";
+import { loadTextFromFile } from "@prague/merge-tree/dist/text";
 import * as JsDiff from "diff";
 import * as path from "path";
 import * as random from "random-js";

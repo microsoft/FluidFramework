@@ -1,6 +1,6 @@
 {
-  "name": "@prague/flow-app",
-  "description": "App hosting experimental flow-editor for collaborative journaling.",
+  "name": "@prague/flow-host",
+  "description": "App UI for experimental flow-editor for collaborative journaling.",
   "version": "0.1.0",
   "author": "Microsoft",
   "repository": "microsoft/prague",
@@ -9,10 +9,16 @@
   "scripts": {
     "build": "webpack --env=\"production\"",
     "build:full": "webpack --env=\"production\"",
-    "dev": "cd ../flow-document && npm run publish-patch-local && cd ../flow-editor && npm run publish-patch-local && cd ../table-document && npm run publish-patch-local && cd ../table-view && npm run publish-patch-local && cd ../flow-app && webpack-dev-server"
+    "dev": "webpack-dev-server"
   },
   "dependencies": {
-    "@prague/flow-host": "^0.1.0",
+    "@chaincode/flow-document": "*",
+    "@chaincode/flow-editor": "*",
+    "@prague/app-component": "^0.1.0",
+    "@prague/app-datastore": "^0.1.0",
+    "@prague/flow-util": "^0.1.0",
+    "@uifabric/icons": "~6.3.0",
+    "office-ui-fabric-react": "^6.108.0",
     "react": "^16.6.3",
     "react-dom": "^16.6.3"
   },
@@ -20,7 +26,6 @@
     "@types/react": "^16.7.7",
     "@types/react-dom": "^16.0.11",
     "css-loader": "^1.0.0",
-    "html-webpack-plugin": "^3.2.0",
     "source-map-loader": "^0.2.4",
     "style-loader": "^0.23.0",
     "ts-loader": "^4.5.0",
@@ -28,7 +33,7 @@
     "typings-for-css-modules-loader": "^1.7.0",
     "webpack": "^4.8.2",
     "webpack-cli": "^3.1.2",
-    "webpack-dev-server": "^3.1.14",
-    "webpack-merge": "^4.1.2"
+    "webpack-merge": "^4.1.2",
+    "webpack-node-externals": "^1.7.2"
   }
 }

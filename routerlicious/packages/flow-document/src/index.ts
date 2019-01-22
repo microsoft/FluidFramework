@@ -34,12 +34,6 @@ export const getInclusionHtml = (marker: Marker) => {
     template.innerHTML = marker.properties.content;
     return template.content.firstElementChild as HTMLElement;
 };
-export const getInclusionComponent = async (marker: Marker, services: ReadonlyArray<[string, Promise<any>]>) => {
-    // TODO-Fix-Flow
-    DataStore.from("http://localhost:3000").then(store => {
-        store.open(marker.properties.docId, "danlehen", marker.properties.chaincode, services);
-    });
-};
 
 const styleProperty = "style";
 export const getStyle = (segment: BaseSegment): CSSStyleDeclaration => segment.properties && segment.properties[styleProperty];
@@ -136,6 +130,14 @@ export class FlowDocument extends Component {
     private get mergeTree() { return this.maybeMergeTree as MergeTree; }
     private get clientId() { return this.maybeClientId as number; }
 
+    public async getInclusionComponent(marker: Marker, services: ReadonlyArray<[string, Promise<any>]>) {
+        const store = await DataStore.from(marker.properties.serverUrl);
+
+        // TODO: Component should record serverUrl, not rely on passed-through datastore instance?
+        return store.open(marker.properties.docId, "danlehen", marker.properties.chaincode, 
+            services.concat([["datastore", Promise.resolve(store)]]));
+    };
+
     public getSegmentAndOffset(position: number) {
         return this.mergeTree.getContainingSegment(position, UniversalSequenceNumber, this.clientId);        
     }
@@ -192,8 +194,8 @@ export class FlowDocument extends Component {
         this.sharedString.insertMarker(position, ReferenceType.Simple, { kind: InclusionKind.HTML, content: content.outerHTML });
     }
 
-    public insertComponent(position: number, docId: string, chaincode?: string) {
-        const docInfo = { kind: InclusionKind.Chaincode, docId, chaincode };
+    public insertComponent(position: number, serverUrl: string, docId: string, chaincode?: string) {
+        const docInfo = { kind: InclusionKind.Chaincode, serverUrl, docId, chaincode };
         this.sharedString.insertMarker(position, ReferenceType.Simple, docInfo);
     }
 
