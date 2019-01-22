@@ -11334,13 +11334,15 @@ packages:
       passport: 0.3.2
       passport-local: 1.0.0
       passport-openidconnect: 0.0.2
+      performance-now: 2.1.0
       progress: 2.0.3
       random-js: 1.0.8
       randomstring: 1.1.5
       raven: 2.6.4
       raven-js: 3.27.0
       redis: 2.8.0
-      request-promise-native: 1.0.5
+      request: 2.88.0
+      request-promise-native: /request-promise-native/1.0.5/request@2.88.0
       rimraf: 2.6.3
       sass-loader: /sass-loader/7.1.0/webpack@4.28.4
       serve-favicon: 2.5.0
@@ -11373,7 +11375,7 @@ packages:
     dev: false
     name: '@rush-temp/routerlicious'
     resolution:
-      integrity: sha512-qyhp8GzeQ1bHR9RGN05TpowAJ/eB3PwVpEy8lcI6z5ej0XcxEUr9CzyOXSriEva63tTJt3f53EBmb02CHE2IyQ==
+      integrity: sha512-KxrzuUfGqhCiXral1B4gGeHRfHu02oP1TbgvP12k4oJwakKxYwtWveMIecx4rSr/3TjP0EyOW7xKYsderHtCvQ==
       tarball: 'file:projects/routerlicious.tgz'
     version: 0.0.0
   'file:projects/runtime-definitions.tgz':

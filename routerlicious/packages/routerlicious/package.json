@@ -158,6 +158,7 @@
     "raven": "^2.6.4",
     "raven-js": "^3.26.4",
     "redis": "^2.8.0",
+    "request": "^2.88.0",
     "request-promise-native": "^1.0.5",
     "serve-favicon": "^2.5.0",
     "socket.io": "^2.2.0",
