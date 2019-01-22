@@ -6,6 +6,7 @@
     "compilerOptions": {
         "target": "esnext",
         "declaration": true,
+        "declarationMap": true,
         "module": "commonjs",
         "moduleResolution": "node",
         "sourceMap": true,
