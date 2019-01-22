@@ -1,0 +1,373 @@
+// tslint:disable:whitespace align no-bitwise
+import {
+    IMapView,
+} from "@prague/map";
+import * as MergeTree from "@prague/merge-tree";
+import {
+    IDistributedObjectServices,
+    IRuntime,
+} from "@prague/runtime-definitions";
+import {
+    CollaborativeStringExtension,
+} from "./extension";
+import {
+    SharedIntervalCollection,
+    SharedStringInterval,
+    SharedStringIntervalCollectionValueType,
+} from "./intervalCollection";
+import {
+    SegmentSequence,
+} from "./sequence";
+
+export type SharedStringSegment = MergeTree.TextSegment | MergeTree.Marker | MergeTree.ExternalSegment;
+type SharedStringJSONSegment = MergeTree.IJSONTextSegment & MergeTree.IJSONMarkerSegment;
+
+function textsToSegments(texts: SharedStringJSONSegment[]) {
+    const segments: MergeTree.ISegment[] = [];
+    for (const ptext of texts) {
+        let segment: MergeTree.ISegment;
+        if (ptext.text !== undefined) {
+            segment = MergeTree.TextSegment.make(ptext.text, ptext.props as MergeTree.PropertySet,
+                MergeTree.UniversalSequenceNumber,
+                MergeTree.LocalClientId);
+        } else {
+            // for now assume marker
+            segment = MergeTree.Marker.make(
+                ptext.marker.refType,
+                ptext.props as MergeTree.PropertySet,
+                MergeTree.UniversalSequenceNumber,
+                MergeTree.LocalClientId);
+        }
+        segments.push(segment);
+    }
+    return segments;
+}
+
+export class SharedString extends SegmentSequence<SharedStringSegment> {
+    constructor(
+        document: IRuntime,
+        public id: string,
+        sequenceNumber: number,
+        services?: IDistributedObjectServices) {
+
+        super(document, id, sequenceNumber, CollaborativeStringExtension.Type, services);
+    }
+
+    public appendSegment(segSpec: SharedStringJSONSegment) {
+        const mergeTree = this.client.mergeTree;
+        const pos = mergeTree.root.cachedLength;
+
+        if (segSpec.text) {
+            mergeTree.insertText(pos, MergeTree.UniversalSequenceNumber,
+                mergeTree.collabWindow.clientId, MergeTree.UniversalSequenceNumber, segSpec.text,
+                segSpec.props as MergeTree.PropertySet);
+        } else {
+            // assume marker for now
+            mergeTree.insertMarker(pos, MergeTree.UniversalSequenceNumber, mergeTree.collabWindow.clientId,
+                MergeTree.UniversalSequenceNumber, segSpec.marker.refType, segSpec.props as MergeTree.PropertySet);
+        }
+
+    }
+
+    public segmentsFromSpecs(segSpecs: SharedStringJSONSegment[]) {
+        return textsToSegments(segSpecs);
+    }
+
+    public insertMarkerRelative(relativePos1: MergeTree.IRelativePosition, refType, props?: MergeTree.PropertySet) {
+        const insertMessage: MergeTree.IMergeTreeInsertMsg = {
+            marker: { refType },
+            props,
+            relativePos1,
+            type: MergeTree.MergeTreeDeltaType.INSERT,
+        };
+
+        const pos = this.client.mergeTree.posFromRelativePos(relativePos1);
+        this.client.insertMarkerLocal(pos, refType, props);
+        this.submitIfAttached(insertMessage);
+
+    }
+
+    public insertMarker(
+        pos: number,
+        refType: MergeTree.ReferenceType,
+        props?: MergeTree.PropertySet) {
+
+        const insertMessage: MergeTree.IMergeTreeInsertMsg = {
+            marker: { refType },
+            pos1: pos,
+            props,
+            type: MergeTree.MergeTreeDeltaType.INSERT,
+        };
+
+        this.client.insertMarkerLocal(pos, refType, props);
+        this.submitIfAttached(insertMessage);
+    }
+
+    public getText(start?: number, end?: number): string {
+        return this.client.getText(start, end);
+    }
+
+    public paste(register: string, pos: number) {
+        const insertMessage: MergeTree.IMergeTreeInsertMsg = {
+            pos1: pos,
+            register,
+            type: MergeTree.MergeTreeDeltaType.INSERT,
+        };
+
+        // tslint:disable-next-line:no-parameter-reassignment
+        pos = this.client.pasteLocal(register, pos);
+        this.submitIfAttached(insertMessage);
+        return pos;
+    }
+
+    public copy(register: string, start: number, end: number) {
+        const insertMessage: MergeTree.IMergeTreeInsertMsg = {
+            pos1: start,
+            pos2: end,
+            register,
+            type: MergeTree.MergeTreeDeltaType.INSERT,
+        };
+
+        this.client.copy(start, end, register, this.client.getCurrentSeq(),
+            this.client.getClientId(), this.client.longClientId);
+        this.submitIfAttached(insertMessage);
+    }
+
+    public insertTextRelative(relativePos1: MergeTree.IRelativePosition, text: string, props?: MergeTree.PropertySet) {
+        const insertMessage: MergeTree.IMergeTreeInsertMsg = {
+            props,
+            relativePos1,
+            text,
+            type: MergeTree.MergeTreeDeltaType.INSERT,
+        };
+
+        const pos = this.client.mergeTree.posFromRelativePos(relativePos1);
+        this.client.insertTextLocal(text, pos, props);
+        this.submitIfAttached(insertMessage);
+    }
+
+    public insertText(text: string, pos: number, props?: MergeTree.PropertySet) {
+        const insertMessage: MergeTree.IMergeTreeInsertMsg = {
+            pos1: pos,
+            props,
+            text,
+            type: MergeTree.MergeTreeDeltaType.INSERT,
+        };
+
+        this.client.insertTextLocal(text, pos, props);
+        this.submitIfAttached(insertMessage);
+    }
+
+    public replaceText(text: string, start: number, end: number, props?: MergeTree.PropertySet) {
+        const insertMessage: MergeTree.IMergeTreeInsertMsg = {
+            pos1: start,
+            pos2: end,
+            props,
+            text,
+            type: MergeTree.MergeTreeDeltaType.INSERT,
+        };
+        this.client.mergeTree.startGroupOperation();
+        this.client.removeSegmentLocal(start, end);
+        this.client.insertTextLocal(text, start, props);
+        this.client.mergeTree.endGroupOperation();
+        this.submitIfAttached(insertMessage);
+    }
+
+    public cut(register: string, start: number, end: number) {
+        const removeMessage: MergeTree.IMergeTreeRemoveMsg = {
+            pos1: start,
+            pos2: end,
+            register,
+            type: MergeTree.MergeTreeDeltaType.REMOVE,
+        };
+        this.client.copy(start, end, register, this.client.getCurrentSeq(),
+            this.client.getClientId(), this.client.longClientId);
+        this.client.removeSegmentLocal(start, end);
+        this.submitIfAttached(removeMessage);
+    }
+
+    public removeNest(nestStart: MergeTree.Marker, nestEnd: MergeTree.Marker) {
+        const start = this.client.mergeTree.getOffset(nestStart,
+            MergeTree.UniversalSequenceNumber, this.client.getClientId());
+        const end = nestEnd.cachedLength + this.client.mergeTree.getOffset(nestEnd,
+            MergeTree.UniversalSequenceNumber, this.client.getClientId());
+        console.log(`removing nest ${nestStart.getId()} from [${start},${end})`);
+        const removeMessage: MergeTree.IMergeTreeRemoveMsg = {
+            checkNest: { id1: nestStart.getId(), id2: nestEnd.getId() },
+            pos1: start,
+            pos2: end,
+            type: MergeTree.MergeTreeDeltaType.REMOVE,
+        };
+        this.client.removeSegmentLocal(start, end);
+        this.submitIfAttached(removeMessage);
+    }
+
+    public removeText(start: number, end: number) {
+        const removeMessage: MergeTree.IMergeTreeRemoveMsg = {
+            pos1: start,
+            pos2: end,
+            type: MergeTree.MergeTreeDeltaType.REMOVE,
+        };
+
+        this.client.removeSegmentLocal(start, end);
+        this.submitIfAttached(removeMessage);
+    }
+
+    public annotateRangeFromPast(
+        props: MergeTree.PropertySet,
+        start: number,
+        end: number,
+        fromSeq: number) {
+
+        const ranges = this.client.mergeTree.tardisRange(start, end, fromSeq, this.client.getCurrentSeq(),
+            this.client.getClientId());
+        ranges.map((range: MergeTree.IIntegerRange) => {
+            this.annotateRange(props, range.start, range.end);
+        });
+    }
+
+    public transaction(groupOp: MergeTree.IMergeTreeGroupMsg): MergeTree.SegmentGroup {
+        const segmentGroup = this.client.localTransaction(groupOp);
+        this.submitIfAttached(groupOp);
+        return segmentGroup;
+    }
+
+    public annotateMarkerNotifyConsensus(marker: MergeTree.Marker, props: MergeTree.PropertySet,
+        callback: (m: MergeTree.Marker) => void) {
+        const id = marker.getId();
+        const annotateMessage: MergeTree.IMergeTreeAnnotateMsg = {
+            combiningOp: { name: "consensus" },
+            props,
+            relativePos1: { id, before: true },
+            relativePos2: { id },
+            type: MergeTree.MergeTreeDeltaType.ANNOTATE,
+        };
+        this.client.annotateMarkerNotifyConsensus(marker, props, callback);
+        this.submitIfAttached(annotateMessage);
+    }
+
+    public annotateMarker(props: MergeTree.PropertySet, marker: MergeTree.Marker, op?: MergeTree.ICombiningOp) {
+        const id = marker.getId();
+        const annotateMessage: MergeTree.IMergeTreeAnnotateMsg = {
+            props,
+            relativePos1: { id, before: true },
+            relativePos2: { id },
+            type: MergeTree.MergeTreeDeltaType.ANNOTATE,
+        };
+
+        if (op) {
+            annotateMessage.combiningOp = op;
+        }
+        this.client.annotateMarker(props, marker, op);
+        this.submitIfAttached(annotateMessage);
+    }
+
+    public annotateRange(props: MergeTree.PropertySet, start: number, end: number, op?: MergeTree.ICombiningOp) {
+        const annotateMessage: MergeTree.IMergeTreeAnnotateMsg = {
+            pos1: start,
+            pos2: end,
+            props,
+            type: MergeTree.MergeTreeDeltaType.ANNOTATE,
+        };
+
+        if (op) {
+            annotateMessage.combiningOp = op;
+        }
+        this.client.annotateSegmentLocal(props, start, end, op);
+        this.submitIfAttached(annotateMessage);
+    }
+
+    public setLocalMinSeq(lmseq: number) {
+        this.client.mergeTree.updateLocalMinSeq(lmseq);
+    }
+
+    public createPositionReference(pos: number, refType: MergeTree.ReferenceType, refSeq = this.client.getCurrentSeq(),
+        clientId = this.client.getClientId()): MergeTree.LocalReference {
+        const segoff = this.client.mergeTree.getContainingSegment(pos,
+            refSeq, this.client.getClientId());
+        if (segoff && segoff.segment) {
+            const baseSegment = segoff.segment as MergeTree.BaseSegment;
+            const lref = new MergeTree.LocalReference(baseSegment, segoff.offset, refType);
+            if (refType !== MergeTree.ReferenceType.Transient) {
+                this.client.mergeTree.addLocalReference(lref);
+            }
+            return lref;
+        }
+    }
+
+    public localRefToPos(localRef: MergeTree.LocalReference) {
+        if (localRef.segment) {
+            return localRef.offset + this.client.mergeTree.getOffset(localRef.segment,
+                this.client.getCurrentSeq(), this.client.getClientId());
+        } else {
+            return -1;
+        }
+    }
+
+    public getIntervalCollections(): IMapView {
+        return this.intervalCollections;
+    }
+
+    // TODO: fix race condition on creation by putting type on every operation
+    public getSharedIntervalCollection(label: string): SharedIntervalCollection<SharedStringInterval> {
+        if (!this.intervalCollections.has(label)) {
+            this.intervalCollections.set<SharedIntervalCollection<SharedStringInterval>>(
+                label,
+                undefined,
+                SharedStringIntervalCollectionValueType.Name);
+        }
+
+        const sharedCollection =
+            this.intervalCollections.get<SharedIntervalCollection<SharedStringInterval>>(label);
+        return sharedCollection;
+    }
+
+    public sendNACKed() {
+        const orderedSegments = [] as MergeTree.ISegment[];
+        while (!this.client.mergeTree.pendingSegments.empty()) {
+            const NACKedSegmentGroup = this.client.mergeTree.pendingSegments.dequeue();
+            for (const segment of NACKedSegmentGroup.segments) {
+                orderedSegments.push(segment);
+            }
+        }
+
+        orderedSegments.sort((a, b) => {
+            if (a === b) {
+                return 0;
+            } else if (a.ordinal < b.ordinal) {
+                return -1;
+            } else {
+                return 1;
+            }
+        });
+
+        /* tslint:disable:no-object-literal-type-assertion */
+        const segmentGroup = {
+            segments: orderedSegments,
+        } as MergeTree.SegmentGroup;
+        const opList = [] as MergeTree.IMergeTreeOp[];
+        let prevSeg: MergeTree.ISegment;
+        for (const segment of orderedSegments) {
+            if (prevSeg !== segment) {
+                segment.segmentGroups.clear();
+                segment.segmentGroups.enqueue(segmentGroup);
+                this.client.segmentToOps(segment, opList);
+                prevSeg = segment;
+            }
+        }
+        const groupOp = {
+            ops: opList,
+            type: MergeTree.MergeTreeDeltaType.GROUP,
+        } as MergeTree.IMergeTreeGroupMsg;
+
+        if (groupOp.ops.length > 0) {
+            this.client.mergeTree.pendingSegments.enqueue(segmentGroup);
+            this.submitIfAttached(groupOp);
+        }
+    }
+
+    public findTile(startPos: number, tileLabel: string, preceding = true) {
+        return this.client.findTile(startPos, tileLabel, preceding);
+    }
+
+}

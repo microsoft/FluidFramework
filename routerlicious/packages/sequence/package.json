@@ -1,5 +1,5 @@
 {
-  "name": "@prague/shared-string",
+  "name": "@prague/sequence",
   "version": "0.1.0",
   "description": "Distributed map",
   "main": "dist/index.js",
