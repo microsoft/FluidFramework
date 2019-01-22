@@ -14,7 +14,7 @@ import {
 } from "..";
 import { IMapView } from "../../../map/dist";
 
-describe("Map", () => {
+describe.skip("Map", () => {
     const id = "documentId";
     const tenatId = "tenantId";
     const tokenKey = "tokenKey";
