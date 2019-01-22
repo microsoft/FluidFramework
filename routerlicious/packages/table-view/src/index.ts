@@ -1,14 +1,10 @@
-export { Editor } from "./components/editor";
-export { VirtualizedView, IVirtualizedProps } from "./components/virtualized";
-
 import { MapExtension } from "@prague/map";
 import { Component } from "@prague/app-component";
 import { DataStore } from "@prague/app-datastore";
-import { FlowDocument } from "@chaincode/flow-document";
-import { Editor } from "./components/editor";
-import { Scheduler } from "@prague/flow-util";
+import { TableDocument } from "@chaincode/table-document";
+import { GridView } from "./grid";
 
-export class FlowEditor extends Component {
+export class TableView extends Component {
     constructor() {
         super([[MapExtension.Type, new MapExtension()]]);
     }
@@ -20,19 +16,16 @@ export class FlowEditor extends Component {
     public async opened() {
         const store = await this.platform.queryInterface<DataStore>("datastore");
         const maybeDiv = await this.platform.queryInterface<HTMLElement>("div");
-        
+
         if (maybeDiv) {
             const docId = await this.root.get("docId");
-            // TODO: 'hostUrl' (or possibly DataStore) should be passed from the host, not
-            //       derived here.
-            const doc = await store.open<FlowDocument>(docId, "danlehen", FlowDocument.type, [["datastore", Promise.resolve(store)]]);
-            const editor = new Editor();
-            const root = editor.mount({ doc, scheduler: new Scheduler(), trackedPositions: [] });
-            maybeDiv.appendChild(root);
+            const doc = await store.open<TableDocument>(docId, "danlehen", TableDocument.type);
+            const grid = new GridView(doc);
+            maybeDiv.appendChild(grid.root);
         }
     }
 
-    public static readonly type = "@chaincode/flow-editor@latest";
+    public static readonly type = "@chaincode/flow-table@latest";
 
     // The below works, but causes 'webpack --watch' to build in an infinite loop when
     // build automatically publishes.
@@ -42,5 +35,5 @@ export class FlowEditor extends Component {
 
 // Chainloader bootstrap.
 export async function instantiate() {
-    return Component.instantiate(new FlowEditor());
+    return Component.instantiate(new TableView());
 }

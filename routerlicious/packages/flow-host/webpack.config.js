@@ -1,6 +1,6 @@
 const path = require("path");
 const merge = require("webpack-merge");
-const HtmlWebpackPlugin = require("html-webpack-plugin");
+const nodeExternals = require("webpack-node-externals");
 
 module.exports = env => {
     const isProduction = env === "production";
@@ -12,12 +12,14 @@ module.exports = env => {
         : "[path][name]-[local]-[hash:base64:5]"
 
     return merge({
-        entry: {
-            index: "./src/index.tsx"
-        },
-        resolve: {
-            extensions: [".ts", ".tsx", ".js"],
-        },
+        entry: { main: "./src/index.tsx" },
+        resolve: { extensions: [".ts", ".tsx", ".js"] },
+        
+        // We use WebPack to bundle assets like CSS, but do not require WebPack to bundle our dependencies since
+        // the output of this pack package is rebundled by the consuming apps ('routerlicious' and 'flow-app')
+        target: "node",                 // Do not bundle built-in node modules (e.g., 'fs', 'path', etc.)
+        externals: [nodeExternals()],   // Do not bundle modules in /node_modules/ folder 
+
         module: {
             rules: [
                 {
@@ -29,7 +31,15 @@ module.exports = env => {
                 {
                     test: /\.tsx?$/,
                     loader: "ts-loader",
-                    options: { configFile: tsconfig },
+                    options: { 
+                        configFile: tsconfig,
+                        // ts-loader v4.4.2 resolves the 'declarationDir' for .d.ts files relative to 'outDir'.
+                        // This is different than 'tsc', which resolves 'declarationDir' relative to the location
+                        // of the tsconfig. 
+                        compilerOptions: {
+                            declarationDir: ".",
+                        }
+                    },
                 },
                 {
                     test: /\.css$/,
@@ -46,23 +56,14 @@ module.exports = env => {
                     ]
                 }]
         },
-        plugins: [
-            new HtmlWebpackPlugin({ title: "Production", chunks: "index" }),
-        ],
         output: {
             filename: "[name].bundle.js",
             path: path.resolve(__dirname, "dist"),
             library: "[name]",
             // https://github.com/webpack/webpack/issues/5767
             // https://github.com/webpack/webpack/issues/7939            
-            devtoolNamespace: "flow-app",
+            devtoolNamespace: "flow-host",
             libraryTarget: "umd"
-        },
-        node: {
-            fs: "empty",
-            dgram: "empty",
-            net: "empty",
-            tls: "empty"
         },
         devServer: {
             contentBase: [path.resolve(__dirname, 'assets')],

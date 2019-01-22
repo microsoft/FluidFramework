@@ -50,6 +50,10 @@
       "projectFolder": "packages/flow-editor"
     },
     {
+      "packageName": "@prague/flow-host",
+      "projectFolder": "packages/flow-host"
+    },
+    {
       "packageName": "@prague/flow-util",
       "projectFolder": "packages/flow-util"
     },
@@ -148,6 +152,14 @@
     {
       "packageName": "@prague/stream",
       "projectFolder": "packages/stream"
+    },
+    {
+      "packageName": "@chaincode/table-document",
+      "projectFolder": "packages/table-document"
+    },
+    {
+      "packageName": "@chaincode/table-view",
+      "projectFolder": "packages/table-view"
     },
     {
       "packageName": "@prague/test-utils",

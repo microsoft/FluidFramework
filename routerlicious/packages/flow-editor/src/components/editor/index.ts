@@ -2,6 +2,7 @@ import { Cursor } from "./cursor";
 import { Scheduler } from "@prague/flow-util";
 import { DocumentView, IDocumentProps } from "../document";
 import { View, IViewState } from "..";
+import { shouldIgnoreEvent } from "../inclusion";
 
 export interface IEditorProps extends IDocumentProps { 
     scheduler: Scheduler;
@@ -10,7 +11,7 @@ export interface IEditorProps extends IDocumentProps {
 interface ListenerRegistration { 
     target: EventTarget,
     type: string,
-    listener: EventListenerOrEventListenerObject
+    listener: EventListener
 }
 
 interface IEditorViewState extends IViewState {
@@ -21,9 +22,18 @@ interface IEditorViewState extends IViewState {
 }
 
 export class Editor extends View<IEditorProps, IEditorViewState> {
-    private on(listeners: ListenerRegistration[], target: EventTarget, type: string, listener: EventListenerOrEventListenerObject) {
-        target.addEventListener(type, listener);
-        listeners.push({ target, type, listener });
+    private on(listeners: ListenerRegistration[], target: EventTarget, type: string, listener: EventListener) {
+        const wrappedListener = (e: Event) => {
+            // Ignore events that bubble up from inclusions
+            if (shouldIgnoreEvent(e)) {
+                return;
+            }
+
+            listener(e);
+        }
+        
+        target.addEventListener(type, wrappedListener);
+        listeners.push({ target, type, listener: wrappedListener });
     }
 
     protected mounting(props: Readonly<IEditorProps>): IEditorViewState {

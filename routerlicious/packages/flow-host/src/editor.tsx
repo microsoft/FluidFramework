@@ -38,7 +38,7 @@ export class FlowEditor extends React.Component<IProps, IState> {
         const { config, docId } = this.props;
         DataStore.from(config.serverUrl).then(store => {
             store
-                .open<FlowDocument>(docId, "danlehen", FlowDocument.type)
+                .open<FlowDocument>(docId, "danlehen", FlowDocument.type, [["datastore", Promise.resolve(store)]])
                 .then((doc) => {
                     // buildTestParagraph(doc);
                     const editor = new VirtualizedView();
@@ -71,7 +71,7 @@ export class FlowEditor extends React.Component<IProps, IState> {
         const asAny = inclusion as any;
         
         if (asAny.chaincode) {
-            this.state.doc.insertComponent(position, asAny.docId, asAny.chaincode);
+            this.state.doc.insertComponent(position, this.props.config.serverUrl, asAny.docId, asAny.chaincode);
         } else if (asAny.innerHTML) {
             this.state.doc.insertHTML(position, asAny);
         } else {

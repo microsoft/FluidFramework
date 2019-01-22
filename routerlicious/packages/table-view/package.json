@@ -1,7 +1,7 @@
 {
-  "name": "@chaincode/flow-editor",
-  "version": "0.1.388",
-  "description": "Experimental flow editor for collaborative journaling.",
+  "name": "@chaincode/table-view",
+  "version": "0.1.38",
+  "description": "Chaincode component that provides a view for a table-document.",
   "main": "dist/main.bundle.js",
   "types": "dist/index.d.ts",
   "prague": {
@@ -16,7 +16,7 @@
     "build": "webpack --env=\"production\"",
     "build:full": "webpack --env=\"production\"",
     "build:dev": "webpack --env=\"development\"",
-    "dev": "npm run build:dev -- --watch",
+    "dev": "webpack --env=\"development\" --watch",
     "publish-local": "npm publish --registry http://localhost:4873",
     "publish-patch-local": "npm version patch && npm run publish-local",
     "bench": "ts-node --project tsconfig.prod.json bench/index.ts",
@@ -44,7 +44,7 @@
     "webpack-merge": "^4.1.2"
   },
   "dependencies": {
-    "@chaincode/flow-document": "*",
+    "@chaincode/table-document": "*",
     "@prague/app-component": "^0.1.0",
     "@prague/app-datastore": "^0.1.0",
     "@prague/flow-util": "^0.1.0",

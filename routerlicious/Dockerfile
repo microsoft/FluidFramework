@@ -27,6 +27,7 @@ COPY packages/client-ui/package*.json packages/client-ui/
 COPY packages/flow-app/package*.json packages/flow-app/
 COPY packages/flow-document/package*.json packages/flow-document/
 COPY packages/flow-editor/package*.json packages/flow-editor/
+COPY packages/flow-host/package*.json packages/flow-host/
 COPY packages/flow-util/package*.json packages/flow-util/
 COPY packages/gitresources/package*.json packages/gitresources/
 COPY packages/kafka-orderer/package*.json packages/kafka-orderer/
@@ -52,6 +53,8 @@ COPY packages/socket-storage/package*.json packages/socket-storage/
 COPY packages/socket-storage-shared/package*.json packages/socket-storage-shared/
 COPY packages/standard-socket-storage/package*.json packages/standard-socket-storage/
 COPY packages/stream/package*.json packages/stream/
+COPY packages/table-document/package*.json packages/table-document/
+COPY packages/table-view/package*.json packages/table-view/
 COPY packages/test-utils/package*.json packages/test-utils/
 COPY packages/tools-core/package*.json packages/tools-core/
 COPY packages/utils/package*.json packages/utils/

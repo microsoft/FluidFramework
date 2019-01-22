@@ -1,5 +1,5 @@
 import * as API from "@prague/client-api";
-import { start } from "@prague/flow-app";
+import { start } from "@prague/flow-host";
 import * as resources from "@prague/gitresources";
 
 /*
