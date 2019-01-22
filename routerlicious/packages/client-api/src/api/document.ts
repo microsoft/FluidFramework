@@ -24,6 +24,7 @@ import { EventEmitter } from "events";
 import * as uuid from "uuid/v4";
 import { CodeLoader } from "./codeLoader";
 import { debug } from "./debug";
+import { LeaderElector } from "./leaderElection";
 import { PlatformFactory } from "./platform";
 import { analyzeTasks, getLeader } from "./taskAnalyzer";
 
@@ -118,11 +119,16 @@ export class Document extends EventEmitter {
         return this.runtime.connected;
     }
 
+    private leaderElector: LeaderElector;
+
     /**
      * Constructs a new document from the provided details
      */
     constructor(public readonly runtime: IRuntime, private root: IMap) {
         super();
+
+        // Experimental leader election.
+        this.startLeaderElection();
 
         // Run task analyzer for already present clients.
         this.runTaskAnalyzer();
@@ -253,6 +259,26 @@ export class Document extends EventEmitter {
 
     public getBlobMetadata(): Promise<IGenericBlob[]> {
         return this.runtime.getBlobMetadata();
+    }
+
+    private startLeaderElection() {
+        // Temporary disable of quorum leader election.
+        if (this.runtime.deltaManager.clientType === "Test") {
+            if (this.runtime.connected) {
+                this.startVoting();
+            } else {
+                this.runtime.on("connected", () => {
+                    this.startVoting();
+                });
+            }
+        }
+    }
+
+    private startVoting() {
+        this.leaderElector = new LeaderElector(this.runtime.getQuorum(), this.runtime.clientId);
+        this.leaderElector.on("leader", (clientId: string) => {
+            // console.log(`Event received: ${clientId}`);
+        });
     }
 
     /**

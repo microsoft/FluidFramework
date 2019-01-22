@@ -1,0 +1,126 @@
+html, body {
+	height: 100%;
+    width: 100%;
+    padding: 0px;
+    margin: 0px;
+    font-family: arial, helvetica, sans-serif;
+    text-align: justify;
+    text-justify: inter-word;
+
+    /* Must set 'overflow:hidden' on body to prevent cartoon physics action when using two
+       finger scrolling in viewport on MacOS/Chrome 71. */
+    overflow: hidden;
+}
+
+*, *:before, *:after {
+    box-sizing: border-box;
+}
+
+.fill, .app {
+    display: flex;
+    height: 100%;
+    width: 100%;
+}
+
+.app {
+    flex-direction: column;
+    flex: 1 auto;
+}
+
+.toolbarPane {}
+
+.editorPane {
+    position: relative;
+    overflow-y: auto;
+}
+
+.before, .after {
+    color: white;
+    padding: 0px 4px 0px 4px;
+}
+
+.before {
+    background: #400;
+}
+
+.after {
+    background: #00F;
+    padding: 0px 4px 0px 4px;
+}
+
+.includeLeft, .includeRight {
+    margin: 8px;
+}
+
+.includeLeft {
+    float: left;
+}
+
+.includeRight {
+    float: right;
+}
+
+.wedgeLeft {
+    width: 400px;
+    height: 800px;
+    background: #e3f5f1;
+    float: left;
+    margin-right: 5px;
+    animation: wedgeLeftAnim 10s infinite;
+}
+
+@keyframes wedgeLeftAnim {
+    0% {
+        shape-outside: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+        clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+    }
+    50% {
+        shape-outside: polygon(0 0, 100% 50%, 100% 50%, 0 100%);
+        clip-path: polygon(0 0, 100% 50%, 100% 50%, 0 100%);
+      }
+    100% {
+        shape-outside: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+        clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+    }
+}
+
+.wedgeRight {
+    width: 400px;
+    height: 800px;
+    background: #e3f5f1;
+    float: right;
+    margin-right: 5px;
+    animation: wedgeRightAnim 10s infinite;
+}
+  
+@keyframes wedgeRightAnim {
+    0% {
+        shape-outside: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+        clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+    }
+    50% {
+        shape-outside: polygon(0 50%, 100% 0, 100% 100%, 0 50%);
+        clip-path: polygon(0 50%, 100% 0, 100% 100%, 0 50%);
+      }
+    100% {
+        shape-outside: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+        clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+    }
+}
+
+.video {
+    float: left;
+    border: none;
+    width: 60%;
+    margin-right: 1em;
+}
+
+figcaption {
+    text-align: center
+}
+
+.normal {
+    padding: 3%;
+}
+
+.virtualized { }

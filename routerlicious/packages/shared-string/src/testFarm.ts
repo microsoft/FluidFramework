@@ -1857,7 +1857,7 @@ function printOverlayTree(client: MergeTree.Client) {
         }
         return attrStrbuf;
     }
-    function leaf(segment: MergeTree.Segment) {
+    function leaf(segment: MergeTree.ISegment) {
         if (segment.getType() == MergeTree.SegmentType.Text) {
             let textSegment = <MergeTree.TextSegment>segment;
             strbuf += MergeTree.internedSpaces(indentAmt);
@@ -2032,10 +2032,10 @@ let testPropCopy = false;
 let overlayTree = false;
 let docTree = false;
 let chktst = false;
-let clientServerTest = false;
+let clientServerTest = true;
 let tstTest = false;
 let firstTest = false;
-let ivalTest = true;
+let ivalTest = false;
 
 if (firstTest) {
     let testPack = TestPack(true);

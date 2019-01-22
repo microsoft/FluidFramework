@@ -1,10 +1,10 @@
-import { Segment, SegmentGroup } from ".";
+import { ISegment, SegmentGroup } from ".";
 import { ListMakeHead } from "./collections";
 
 export class SegmentGroupCollection {
     private readonly segmentGroups = ListMakeHead<SegmentGroup>();
 
-    constructor(private readonly segment: Segment) {}
+    constructor(private readonly segment: ISegment) {}
 
     public get size() {
         return this.segmentGroups.count();
@@ -27,7 +27,7 @@ export class SegmentGroupCollection {
         this.segmentGroups.clear();
     }
 
-    public copyTo(segment: Segment) {
+    public copyTo(segment: ISegment) {
         this.segmentGroups.walk((sg) => segment.segmentGroups.enqueue(sg));
     }
 }

@@ -1226,7 +1226,7 @@ function allowDOMEvents(element: HTMLElement) {
 }
 
 function renderSegmentIntoLine(
-    segment: MergeTree.Segment, segpos: number, refSeq: number,
+    segment: MergeTree.ISegment, segpos: number, refSeq: number,
     clientId: number, start: number, end: number, lineContext: ILineContext) {
     if (lineContext.lineDiv.linePos === undefined) {
         lineContext.lineDiv.linePos = segpos + start;
@@ -1920,7 +1920,7 @@ function renderTree(
 }
 
 function gatherOverlayLayer(
-    segment: MergeTree.Segment,
+    segment: MergeTree.ISegment,
     segpos: number,
     refSeq: number,
     clientId: number,
@@ -3332,7 +3332,7 @@ export interface ILocalPresenceInfo {
 }
 
 interface ISegmentOffset {
-    segment: MergeTree.Segment;
+    segment: MergeTree.ISegment;
     offset: number;
 }
 
@@ -3371,7 +3371,7 @@ function getCurrentWord(pos: number, mergeTree: MergeTree.MergeTree) {
         return { wordStart: segWordStart, wordEnd: segWordEnd } as IWordRange;
     }
 
-    const expandWordBackward = (segment: MergeTree.Segment) => {
+    const expandWordBackward = (segment: MergeTree.ISegment) => {
         if (mergeTree.localNetLength(segment)) {
             switch (segment.getType()) {
                 case MergeTree.SegmentType.Marker:
@@ -3391,7 +3391,7 @@ function getCurrentWord(pos: number, mergeTree: MergeTree.MergeTree) {
         return true;
     };
 
-    const expandWordForward = (segment: MergeTree.Segment) => {
+    const expandWordForward = (segment: MergeTree.ISegment) => {
         if (mergeTree.localNetLength(segment)) {
             switch (segment.getType()) {
                 case MergeTree.SegmentType.Marker:
@@ -3451,7 +3451,7 @@ export function annotateMarker(flowView: FlowView, props: MergeTree.PropertySet,
     flowView.sharedString.annotateRange(props, start, end);
 }
 
-function getOffset(flowView: FlowView, segment: MergeTree.Segment) {
+function getOffset(flowView: FlowView, segment: MergeTree.ISegment) {
     return flowView.client.mergeTree.getOffset(segment, MergeTree.UniversalSequenceNumber,
         flowView.client.getClientId());
 }
@@ -4938,7 +4938,7 @@ export class FlowView extends ui.Component {
 
     public toggleRange(name: string, valueOn: string, valueOff: string, start: number, end: number) {
         let someSet = false;
-        const findPropSet = (segment: MergeTree.Segment) => {
+        const findPropSet = (segment: MergeTree.ISegment) => {
             if (segment.getType() === MergeTree.SegmentType.Text) {
                 const textSegment = segment as MergeTree.TextSegment;
                 if (textSegment.properties && textSegment.properties[name] === valueOn) {
@@ -5558,6 +5558,7 @@ export class FlowView extends ui.Component {
         const bookmarksCollection = this.sharedString.getSharedIntervalCollection("bookmarks");
         this.bookmarks = await bookmarksCollection.getView();
 
+        // Takes a collaborative Object from OnPrepareDeserialize and inserts back into the interval's "Story" Property
         const onDeserialize: SharedString.DeserializeCallback = (interval, commentSharedString: ICollaborativeObject) => {
             if (interval.properties && interval.properties["story"]) {
                 assert(commentSharedString);
@@ -5567,6 +5568,7 @@ export class FlowView extends ui.Component {
             return true;
         };
 
+        // Fetches the collaborative object with the key story["value"];
         const onPrepareDeserialize: SharedString.PrepareDeserializeCallback = (properties) => {
             if (properties && properties["story"]) {
                 const story = properties["story"];

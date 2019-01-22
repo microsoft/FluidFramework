@@ -19,7 +19,7 @@ export function loadSegments(content: string, segLimit: number, markers: boolean
         }
     }
 
-    const segments = [] as MergeTree.Segment[];
+    const segments = [] as MergeTree.ISegment[];
     for (const paragraph of paragraphs) {
         let pgMarker: MergeTree.Marker;
         if (markers) {

@@ -35,6 +35,8 @@ export class TestDeltaManager implements IDeltaManager {
 
     public outbound = new TestDeltaQueue();
 
+    public clientType = "Browser";
+
     public enableReadonlyMode() {
         return;
     }

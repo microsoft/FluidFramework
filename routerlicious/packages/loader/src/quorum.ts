@@ -1,6 +1,7 @@
 import {
     IClient,
     ICommittedProposal,
+    IPendingProposal,
     IQuorum,
     ISequencedDocumentMessage,
     ISequencedProposal,
@@ -8,10 +9,6 @@ import {
 import { Deferred } from "@prague/utils";
 import * as assert from "assert";
 import { EventEmitter } from "events";
-
-export interface IPendingProposal extends ISequencedProposal {
-    reject();
-}
 
 // Appends a deferred and rejection count to a sequenced proposal. For locally generated promises this allows us to
 // attach a Deferred which we will resolve once the proposal is either accepted or rejected.

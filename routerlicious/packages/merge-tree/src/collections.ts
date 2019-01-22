@@ -1025,11 +1025,14 @@ export class IntervalTree<T extends IInterval> implements IRBAugmentation<T, Aug
     }
 
     put(x: T, conflict?: IntervalConflictResolver<T>) {
-        const rbConflict = (key: T, currentKey: T) => {
-            const ival = conflict(key, currentKey);
-            return {
-                key: ival,
-            };
+        let rbConflict: Base.ConflictAction<T, AugmentedIntervalNode>;
+        if (conflict) {
+            rbConflict = (key: T, currentKey: T) => {
+                const ival = conflict(key, currentKey);
+                return {
+                    key: ival,
+                };
+            }
         }
         if (this.timePut) {
             let clockStart = MergeTree.clock();

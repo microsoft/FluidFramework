@@ -1,0 +1,43 @@
+{
+  "name": "@chaincode/flow-document",
+  "description": "Experimental flow editor for collaborative journaling.",
+  "version": "0.0.108",
+  "author": "Microsoft",
+  "repository": "microsoft/prague",
+  "main": "dist/main.bundle.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "webpack --env=\"production\"",
+    "build:full": "webpack --env=\"production\"",
+    "dev": "webpack --env=\"development\" --watch",
+    "publish-local": "npm publish --registry http://localhost:4873",
+    "publish-patch-local": "npm version patch && npm run publish-local"
+  },
+  "devDependencies": {
+    "clean-webpack-plugin": "^0.1.19",
+    "html-webpack-plugin": "^3.2.0",
+    "source-map-loader": "^0.2.4",
+    "ts-loader": "^4.5.0",
+    "typescript": "^3.2.2",
+    "webpack": "^4.8.2",
+    "webpack-cli": "^3.1.2",
+    "webpack-merge": "^4.1.2",
+    "webpack-serve": "^2.0.2"
+  },
+  "prague": {
+    "browser": {
+      "entrypoint": "main",
+      "bundle": [
+        "dist/main.bundle.js"
+      ]
+    }
+  },
+  "dependencies": {
+    "@prague/app-component": "^0.1.0",
+    "@prague/app-datastore": "^0.1.0",
+    "@prague/map": "^0.1.0",
+    "@prague/merge-tree": "^0.1.0",
+    "@prague/runtime-definitions": "^0.1.0",
+    "@prague/shared-string": "^0.1.0"
+  }
+}

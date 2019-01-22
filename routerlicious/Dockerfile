@@ -24,6 +24,10 @@ COPY packages/app-ui/package*.json packages/app-ui/
 COPY packages/cell/package*.json packages/cell/
 COPY packages/client-api/package*.json packages/client-api/
 COPY packages/client-ui/package*.json packages/client-ui/
+COPY packages/flow-app/package*.json packages/flow-app/
+COPY packages/flow-document/package*.json packages/flow-document/
+COPY packages/flow-editor/package*.json packages/flow-editor/
+COPY packages/flow-util/package*.json packages/flow-util/
 COPY packages/gitresources/package*.json packages/gitresources/
 COPY packages/kafka-orderer/package*.json packages/kafka-orderer/
 COPY packages/lambdas/package*.json packages/lambdas/

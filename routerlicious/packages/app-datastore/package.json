@@ -15,18 +15,6 @@
   },
   "author": "Microsoft",
   "repository": "microsoft/prague",
-  "devDependencies": {
-    "@types/mocha": "^5.2.5",
-    "@types/nock": "^9.3.0",
-    "mocha": "^5.2.0",
-    "mocha-junit-reporter": "^1.18.0",
-    "nock": "^10.0.1",
-    "nyc": "^13.0.1",
-    "rimraf": "^2.6.2",
-    "tslint": "^5.11.0",
-    "tslint-microsoft-contrib": "^6.0.0",
-    "typescript": "^3.2.2"
-  },
   "dependencies": {
     "@prague/api-definitions": "^0.1.0",
     "@prague/app-component": "^0.1.0",
@@ -37,7 +25,6 @@
     "@prague/loader-web": "^0.1.0",
     "@prague/map": "^0.1.0",
     "@prague/memory-orderer": "^0.1.0",
-    "@prague/routerlicious": "^0.1.0",
     "@prague/runtime-definitions": "^0.1.0",
     "@prague/services": "^0.1.0",
     "@prague/services-core": "^0.1.0",
@@ -51,5 +38,19 @@
     "axios": "^0.18.0",
     "debug": "^3.1.0",
     "jsonwebtoken": "^8.4.0"
+  },
+  "devDependencies": {
+    "@types/debug": "^0.0.31",
+    "@types/mocha": "^5.2.5",
+    "@types/nock": "^9.3.0",
+    "@types/node": "^10.12.12",
+    "mocha": "^5.2.0",
+    "mocha-junit-reporter": "^1.18.0",
+    "nock": "^10.0.1",
+    "nyc": "^13.0.1",
+    "rimraf": "^2.6.2",
+    "tslint": "^5.11.0",
+    "tslint-microsoft-contrib": "^6.0.0",
+    "typescript": "^3.2.2"
   }
 }

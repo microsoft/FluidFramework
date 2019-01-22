@@ -1,0 +1,57 @@
+{
+  "name": "@chaincode/flow-editor",
+  "version": "0.1.371",
+  "description": "Experimental flow editor for collaborative journaling.",
+  "main": "dist/main.bundle.js",
+  "types": "dist/index.d.ts",
+  "prague": {
+    "browser": {
+      "entrypoint": "main",
+      "bundle": [
+        "dist/main.bundle.js"
+      ]
+    }
+  },
+  "scripts": {
+    "build": "webpack --env=\"production\"",
+    "build:full": "webpack --env=\"production\"",
+    "build:dev": "webpack --env=\"development\"",
+    "dev": "webpack --env=\"development\" --watch",
+    "publish-local": "npm publish --registry http://localhost:4873",
+    "publish-patch-local": "npm version patch && npm run publish-local",
+    "bench": "ts-node --project tsconfig.prod.json bench/index.ts",
+    "test": "ts-mocha -p tsconfig.dev.json \"test/**/*.{ts,tsx}\""
+  },
+  "author": "Microsoft",
+  "repository": "microsoft/prague",
+  "devDependencies": {
+    "@types/benchmark": "^1.0.31",
+    "@types/mocha": "^5.2.5",
+    "benchmark": "^2.1.4",
+    "clean-webpack-plugin": "^0.1.19",
+    "css-loader": "^1.0.0",
+    "jsdom": "^12.0.0",
+    "jsdom-global": "^3.0.2",
+    "mocha": "^5.2.0",
+    "source-map-loader": "^0.2.4",
+    "style-loader": "^0.23.0",
+    "ts-loader": "^4.5.0",
+    "ts-mocha": "^2.0.0",
+    "ts-node": "^7.0.1",
+    "typescript": "^3.2.2",
+    "typings-for-css-modules-loader": "^1.7.0",
+    "webpack": "^4.8.2",
+    "webpack-cli": "^3.1.2",
+    "webpack-merge": "^4.1.2",
+    "webpack-serve": "^2.0.2"
+  },
+  "dependencies": {
+    "@chaincode/flow-document": "*",
+    "@prague/app-component": "^0.1.0",
+    "@prague/app-datastore": "^0.1.0",
+    "@prague/flow-util": "^0.1.0",
+    "@prague/map": "^0.1.0",
+    "@prague/merge-tree": "^0.1.0",
+    "@prague/runtime-definitions": "^0.1.0"
+  }
+}

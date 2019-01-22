@@ -36,6 +36,10 @@ export interface IRejection {
     sequenceNumber: number;
 }
 
+export interface IPendingProposal extends ISequencedProposal {
+    reject();
+}
+
 /**
  * Class representing agreed upon values in a quorum
  */

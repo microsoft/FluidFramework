@@ -106,7 +106,7 @@ export class Snapshot {
             seq: this.mergeTree.collabWindow.minSeq,
         };
         let texts = <ops.IPropertyString[]>[];
-        let extractSegment = (segment: MergeTree.Segment, pos: number, refSeq: number, clientId: number,
+        let extractSegment = (segment: MergeTree.ISegment, pos: number, refSeq: number, clientId: number,
             start: number, end: number) => {
             if ((segment.seq != MergeTree.UnassignedSequenceNumber) && (segment.seq <= this.seq) &&
                 ((segment.removedSeq === undefined) || (segment.removedSeq == MergeTree.UnassignedSequenceNumber) ||
@@ -153,7 +153,7 @@ export class Snapshot {
     }
 
     // TODO: generalize beyond strings
-    emitSegment(segment: MergeTree.Segment, state: MergeTree.IncrementalMapState<Snapshot>) {
+    emitSegment(segment: MergeTree.ISegment, state: MergeTree.IncrementalMapState<Snapshot>) {
         if ((segment.seq != MergeTree.UnassignedSequenceNumber) && (segment.seq <= this.seq) &&
             (segment.getType() == MergeTree.SegmentType.Text)) {
             if ((segment.removedSeq === undefined) ||

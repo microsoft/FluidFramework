@@ -5,8 +5,13 @@ import { EventEmitter } from "events";
 import { debug } from "./debug";
 
 // Symbols used to internally expose APIs from Component to Chaincode
-const typeToFactorySym: unique symbol = Symbol("Component.typeToFactory()");
-const openSym: unique symbol = Symbol("Component.open()");
+// TODO: Node v8 does not support 'unique symbol'?
+// const typeToFactorySym: unique symbol = Symbol("Component.typeToFactory()");
+const typeToFactorySym = "Component.typeToFactory()";
+
+// TODO: Node v8 does not support 'unique symbol'?
+// const openSym: unique symbol = Symbol("Component.open()");
+const openSym = "Component.open()";
 
 // Internal IPlatform implementation used to defer returning the component
 // from DataStore.open() until after the component's async 'opened()' method has

@@ -10,6 +10,9 @@ export interface IDeltaManager {
     // The current minimum sequence number
     minimumSequenceNumber: number;
 
+    // Type of client
+    clientType: string;
+
     /**
      * Puts the delta manager in read only mode
      */

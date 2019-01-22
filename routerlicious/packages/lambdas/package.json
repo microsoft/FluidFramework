@@ -35,14 +35,6 @@
     "cache-dir": "nyc/.cache",
     "report-dir": "nyc/report"
   },
-  "devDependencies": {
-    "@prague/test-utils": "^0.1.0",
-    "mocha": "^5.2.0",
-    "rimraf": "^2.6.2",
-    "tslint": "^5.11.0",
-    "tslint-microsoft-contrib": "^6.0.0",
-    "typescript": "^3.2.2"
-  },
   "dependencies": {
     "@prague/gitresources": "^0.1.0",
     "@prague/runtime-definitions": "^0.1.0",
@@ -50,14 +42,23 @@
     "@prague/services-core": "^0.1.0",
     "@prague/services-utils": "^0.1.0",
     "@prague/utils": "^0.1.0",
-    "@types/async": "^2.0.50",
-    "@types/lodash": "^4.14.118",
-    "@types/nconf": "^0.0.37",
-    "@types/node": "^10.12.12",
     "async": "^2.6.1",
     "lodash": "^4.17.11",
     "moniker": "^0.1.2",
     "nconf": "^0.10.0",
     "winston": "^3.1.0"
+  },
+  "devDependencies": {
+    "@prague/test-utils": "^0.1.0",
+    "@types/async": "^2.0.50",
+    "@types/lodash": "^4.14.118",
+    "@types/mocha": "^5.2.5",
+    "@types/nconf": "^0.0.37",
+    "@types/node": "^10.12.12",
+    "mocha": "^5.2.0",
+    "rimraf": "^2.6.2",
+    "tslint": "^5.11.0",
+    "tslint-microsoft-contrib": "^6.0.0",
+    "typescript": "^3.2.2"
   }
 }

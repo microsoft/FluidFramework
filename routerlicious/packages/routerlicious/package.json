@@ -34,12 +34,36 @@
   },
   "author": "Microsoft",
   "repository": "microsoft/prague",
+  "browser": {
+    "request": "xhr"
+  },
+  "nyc": {
+    "all": true,
+    "exclude": [
+      "src/test/**/*.ts",
+      "dist/test/**/*.js"
+    ],
+    "include": [
+      "src/**/*.ts",
+      "dist/**/*.js"
+    ],
+    "reporter": [
+      "cobertura",
+      "html",
+      "text"
+    ],
+    "temp-directory": "nyc/.nyc_output",
+    "cache-dir": "nyc/.cache",
+    "report-dir": "nyc/report"
+  },
   "dependencies": {
     "@prague/agent": "^0.1.0",
     "@prague/api-definitions": "^0.1.0",
+    "@prague/app-datastore": "^0.1.0",
     "@prague/cell": "^0.1.0",
     "@prague/client-api": "^0.1.0",
     "@prague/client-ui": "^0.1.0",
+    "@prague/flow-app": "^0.1.0",
     "@prague/gitresources": "^0.1.0",
     "@prague/kafka-orderer": "^0.1.0",
     "@prague/lambdas": "^0.1.0",
@@ -65,7 +89,6 @@
     "@types/amqplib": "^0.5.9",
     "@types/async": "^2.0.50",
     "@types/bytes": "^3.0.0",
-    "@types/commander": "^2.12.2",
     "@types/compression": "0.0.33",
     "@types/connect-redis": "0.0.7",
     "@types/cookie-parser": "^1.4.1",
@@ -95,7 +118,6 @@
     "@types/split": "^0.3.28",
     "@types/uuid": "^3.4.4",
     "@types/webpack": "^4.4.11",
-    "@types/winston": "^2.3.9",
     "@types/ws": "^6.0.1",
     "amqplib": "^0.5.3",
     "async": "^2.6.1",
@@ -130,6 +152,7 @@
     "passport": "^0.3.2",
     "passport-local": "^1.0.0",
     "passport-openidconnect": "0.0.2",
+    "performance-now": "^2.1.0",
     "progress": "^2.0.3",
     "randomstring": "^1.1.5",
     "raven": "^2.6.4",
@@ -150,32 +173,11 @@
     "ws": "^6.1.2",
     "xhr": "^2.5.0"
   },
-  "browser": {
-    "request": "xhr"
-  },
-  "nyc": {
-    "all": true,
-    "exclude": [
-      "src/test/**/*.ts",
-      "dist/test/**/*.js"
-    ],
-    "include": [
-      "src/**/*.ts",
-      "dist/**/*.js"
-    ],
-    "reporter": [
-      "cobertura",
-      "html",
-      "text"
-    ],
-    "temp-directory": "nyc/.nyc_output",
-    "cache-dir": "nyc/.cache",
-    "report-dir": "nyc/report"
-  },
   "devDependencies": {
     "@types/diff": "^3.5.1",
     "@types/mocha": "^5.2.5",
-    "@types/random-js": "^1.0.30",
+    "@types/node": "^10.12.12",
+    "@types/random-js": "^1.0.31",
     "@types/supertest": "^2.0.5",
     "cache-loader": "^1.2.2",
     "concurrently": "^4.0.1",

@@ -1,6 +1,6 @@
 {
   "name": "@chaincode/simple",
-  "version": "0.0.13",
+  "version": "0.0.14",
   "description": "Simplest example of chaincode",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -27,9 +27,9 @@
     "webpack-visualizer-plugin": "^0.1.11"
   },
   "dependencies": {
-    "@prague/api-definitions": "^0.1.4111",
-    "@prague/map": "^0.1.4111",
-    "@prague/runtime-definitions": "^0.1.4111",
+    "@prague/api-definitions": "^0.1.4493",
+    "@prague/map": "^0.1.4493",
+    "@prague/runtime-definitions": "^0.1.4493",
     "uuid": "^3.3.2"
   },
   "prague": {
