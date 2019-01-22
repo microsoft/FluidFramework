@@ -1,5 +1,4 @@
 import * as loader from "@prague/loader";
-
 import {
     IChaincodeFactory,
     ICodeLoader,

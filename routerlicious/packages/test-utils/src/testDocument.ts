@@ -29,6 +29,8 @@ export class TestDeltaQueue extends EventEmitter implements IDeltaQueue {
 }
 
 export class TestDeltaManager implements IDeltaManager {
+    public minimumSequenceNumber: number;
+
     public inbound = new TestDeltaQueue();
 
     public outbound = new TestDeltaQueue();

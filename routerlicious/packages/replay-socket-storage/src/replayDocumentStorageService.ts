@@ -6,6 +6,9 @@ import * as api from "@prague/runtime-definitions";
  * all the methods
  */
 export class ReplayDocumentStorageService implements api.IDocumentStorageService  {
+    public get repositoryUrl(): string {
+        return "";
+    }
 
     public getSnapshotTree(version: resources.ICommit): Promise<api.ISnapshotTree> {
         return null;

@@ -132,6 +132,7 @@ export class GitManager {
         // Create or update depending on if ref exists.
         // TODO optimize the update to know up front if the ref exists
         const existingRef = await this.getRef(branch);
+
         if (existingRef) {
             await this.upsertRef(branch, commit.sha);
         } else {
@@ -165,6 +166,10 @@ export class GitManager {
                     entriesP.push(treeBlobP);
                     break;
 
+                case api.TreeEntry.Commit:
+                    entriesP.push(Promise.resolve({ sha: entry.value as string, url: "" }));
+                    break;
+
                 default:
                     return Promise.reject("Unknown entry type");
             }
@@ -178,12 +183,15 @@ export class GitManager {
         // Construct a new tree from the collection of hashes
         // tslint:disable-next-line:no-increment-decrement
         for (let i = 0; i < files.entries.length; i++) {
-            const isTree = files.entries[i].type === api.TreeEntry[api.TreeEntry.Tree];
+            const type = files.entries[i].type === api.TreeEntry[api.TreeEntry.Tree]
+                ? "tree"
+                : (files.entries[i].type === api.TreeEntry[api.TreeEntry.Blob] ? "blob" : "commit");
+
             tree.push({
                 mode: files.entries[i].mode,
                 path: files.entries[i].path,
                 sha: entries[i].sha,
-                type: isTree ? "tree" : "blob",
+                type,
             });
         }
 
@@ -197,7 +205,7 @@ export class GitManager {
     private translateSymlink(link: string, depth: number): string {
         let prefix = "";
         // tslint:disable-next-line:no-increment-decrement
-        for (let i = 0; i < depth; i++) {
+        for (let i = 0; i <= depth; i++) {
             prefix += "../";
         }
 

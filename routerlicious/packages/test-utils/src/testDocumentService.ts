@@ -13,6 +13,10 @@ import * as socketStorage from "@prague/socket-storage";
 import { TestDocumentDeltaConnection } from "./";
 
 class TestDocumentStorageService implements IDocumentStorageService {
+    public get repositoryUrl(): string {
+        return "";
+    }
+
     public async getSnapshotTree(version: resources.ICommit): Promise<ISnapshotTree> {
         return null;
     }
