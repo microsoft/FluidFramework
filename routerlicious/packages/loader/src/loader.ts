@@ -22,11 +22,6 @@ export async function load(
     specifiedVersion: ICommit = null,
     connect = true): Promise<Document> {
 
-    // Need to go and load in the last snapshot
-    // The snapshot *must* contain the consensus data. This will allows us to load in the code package
-    // Connect to the delta stream in parallel - can begin queue'ing events even if can't process
-    // Once code package is available download and load it.
-
     /* tslint:disable:no-unsafe-any */
     debug(`Document loading: ${now()} `);
 

@@ -1,0 +1,11 @@
+{
+  "name": "root",
+  "private": true,
+  "devDependencies": {
+    "lerna": "^3.10.5"
+  },
+  "scripts": {
+    "postinstall": "lerna bootstrap --hoist --nohoist tslint-microsoft-contrib",
+    "tsc": "lerna run tsc --stream --scope @prague/dproc-client --include-filtered-dependencies"
+  }
+}

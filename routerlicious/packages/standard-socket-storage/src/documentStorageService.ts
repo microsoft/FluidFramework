@@ -7,6 +7,9 @@ import { IDocumentStorageManager } from "./standardDocumentStorageManager";
  * The current implementation of this aligns with SPO's implmentation of SnapShot
  */
 export class DocumentStorageService implements api.IDocumentStorageService {
+    public get repositoryUrl(): string {
+        return "";
+    }
 
     constructor(private readonly storageManager: IDocumentStorageManager) {
     }

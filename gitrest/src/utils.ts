@@ -29,16 +29,16 @@ export enum GitObjectType {
 function authorToIAuthor(author: git.Signature, time: Date): resources.IAuthor {
     return {
         date: time.toISOString(),
-        email: author.email,
-        name: author.name,
+        email: author.email(),
+        name: author.name(),
     };
 }
 
 function committerToICommitter(committer: git.Signature, time: Date): resources.ICommitter {
     return {
         date: time.toISOString(),
-        email: committer.email,
-        name: committer.name,
+        email: committer.email(),
+        name: committer.name(),
     };
 }
 

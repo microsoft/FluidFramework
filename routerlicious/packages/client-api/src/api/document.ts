@@ -263,7 +263,7 @@ export class Document extends EventEmitter {
 
     private startLeaderElection() {
         // Temporary disable of quorum leader election.
-        if (this.runtime.deltaManager.clientType === "Test") {
+        if (this.runtime.deltaManager && this.runtime.deltaManager.clientType === "Test") {
             if (this.runtime.connected) {
                 this.startVoting();
             } else {

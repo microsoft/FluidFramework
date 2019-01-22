@@ -1,0 +1,62 @@
+{
+  "name": "@chaincode/shared-text",
+  "version": "0.1.6",
+  "description": "Shared text",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "sideEffects": "false",
+  "scripts": {
+    "build": "npm run tsc && npm run webpack && npm run tslint",
+    "tsc": "tsc",
+    "webpack": "webpack --config webpack.config.js",
+    "tslint": "tslint 'src/**/*.ts'",
+    "start": "prague-dev-server --config webpack.config.js --package package.json"
+  },
+  "author": "Microsoft",
+  "repository": "microsoft/prague",
+  "devDependencies": {
+    "css-loader": "^1.0.0",
+    "file-loader": "^2.0.0",
+    "html-loader": "^0.5.5",
+    "source-map-loader": "^0.2.4",
+    "style-loader": "^0.23.0",
+    "ts-loader": "^4.5.0",
+    "tslint": "^5.11.0",
+    "typescript": "^3.0.1",
+    "url-loader": "^1.1.1",
+    "webpack": "^4.7.0",
+    "webpack-cli": "^3.0.0",
+    "webpack-visualizer-plugin": "^0.1.11"
+  },
+  "dependencies": {
+    "@prague/agent": "^0.1.0",
+    "@prague/api-definitions": "^0.1.0",
+    "@prague/app-component": "^0.1.0",
+    "@prague/client-api": "^0.1.0",
+    "@prague/client-ui": "^0.1.0",
+    "@prague/loader": "^0.1.0",
+    "@prague/map": "^0.1.0",
+    "@prague/merge-tree": "^0.1.0",
+    "@prague/runtime-definitions": "^0.1.0",
+    "@prague/shared-string": "^0.1.0",
+    "@prague/socket-storage": "^0.1.0",
+    "@prague/stream": "^0.1.0",
+    "@types/debug": "0.0.31",
+    "@types/jsonwebtoken": "^7.2.8",
+    "@types/node": "^10.5.8",
+    "axios": "^0.18.0",
+    "bootstrap": "^3.3.7",
+    "debug": "^4.1.0",
+    "jsonwebtoken": "^8.3.0",
+    "performance-now": "^2.1.0",
+    "uuid": "^3.3.2"
+  },
+  "prague": {
+    "browser": {
+      "entrypoint": "main",
+      "bundle": [
+        "dist/main.bundle.js"
+      ]
+    }
+  }
+}

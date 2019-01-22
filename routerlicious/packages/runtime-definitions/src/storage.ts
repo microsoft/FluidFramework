@@ -55,6 +55,7 @@ export interface IObjectAttributes {
  */
 export enum TreeEntry {
     Blob,
+    Commit,
     Tree,
 }
 
@@ -84,7 +85,7 @@ export interface ITreeEntry {
     type: string;
 
     // The value of the entry - either a tree or a blob
-    value: IBlob | ITree;
+    value: IBlob | ITree | string;
 
     // The file mode; one of 100644 for file (blob), 100755 for executable (blob), 040000 for subdirectory (tree),
     // 160000 for submodule (commit), or 120000 for a blob that specifies the path of a symlink
@@ -119,6 +120,7 @@ export interface IDeltaStorageService {
 
 export interface ISnapshotTree {
     blobs: { [path: string]: string };
+    commits: { [path: string]: string };
     trees: { [path: string]: ISnapshotTree };
 }
 
@@ -141,6 +143,7 @@ export interface IDistributedObject {
  * Interface to provide access to snapshots saved for a collaborative object
  */
 export interface IDocumentStorageService {
+    repositoryUrl: string;
 
     /**
      * Returns the snapshot tree.
@@ -165,7 +168,7 @@ export interface IDocumentStorageService {
     /**
      * Writes to the object with the given ID
      */
-    write(root: ITree, parents: string[], message: string): Promise<resources.ICommit>;
+    write(root: ITree, parents: string[], message: string, ref: string): Promise<resources.ICommit>;
 
     /**
      * Creates a blob out of the given buffer
