@@ -1,4 +1,5 @@
 import { IDeltaManager } from "@prague/container-definitions";
+import { ITestDeltaConnectionServer } from "./testDeltaConnectionServer";
 
 export interface IDocumentDeltaEvent {
     deltaManager: IDeltaManager;
@@ -16,6 +17,8 @@ export class DocumentDeltaEventManager {
     private readonly documents: Set<IDocumentDeltaEvent> =
         new Set<IDocumentDeltaEvent>();
 
+    public constructor(private testDeltaConnectionServer: ITestDeltaConnectionServer) { }
+
     public registerDocuments(...docs: IDocumentDeltaEvent[]) {
         docs.forEach((doc) => {
             this.documents.add(doc);
@@ -29,7 +32,7 @@ export class DocumentDeltaEventManager {
             doc.deltaManager.inbound.resume();
             doc.deltaManager.outbound.resume();
         }
-        await this.yeildWhileDocumentsHaveWork(
+        await this.yieldWhileDocumentsHaveWork(
             documents,
             (doc) => !doc.deltaManager.inbound.idle || !doc.deltaManager.outbound.idle);
     }
@@ -40,7 +43,7 @@ export class DocumentDeltaEventManager {
         for (const doc of documents) {
             doc.deltaManager.inbound.resume();
         }
-        await this.yeildWhileDocumentsHaveWork(
+        await this.yieldWhileDocumentsHaveWork(
             documents,
             (doc) => !doc.deltaManager.inbound.idle);
     }
@@ -51,7 +54,7 @@ export class DocumentDeltaEventManager {
         for (const doc of documents) {
             doc.deltaManager.outbound.resume();
         }
-        await this.yeildWhileDocumentsHaveWork(
+        await this.yieldWhileDocumentsHaveWork(
             documents,
             (doc) => !doc.deltaManager.outbound.idle);
     }
@@ -61,7 +64,7 @@ export class DocumentDeltaEventManager {
     }
 
     private pauseAndValidateDocs(...docs: IDocumentDeltaEvent[]):
-        Iterable<IDocumentDeltaEvent>  {
+        Iterable<IDocumentDeltaEvent> {
 
         for (const doc of this.documents) {
             this.pauseDocument(doc);
@@ -71,7 +74,7 @@ export class DocumentDeltaEventManager {
             docs.forEach((doc) => {
                 if (!this.documents.has(doc)) {
                     throw new Error(
-                        "All documents must be registerd with the test server to deterministically control processing");
+                        "All documents must be registered with test server to deterministically control processing");
                 }
             });
             return docs;
@@ -79,17 +82,20 @@ export class DocumentDeltaEventManager {
         return this.documents;
     }
 
-    private async yeildWhileDocumentsHaveWork(
+    private async yieldWhileDocumentsHaveWork(
         docs: Iterable<IDocumentDeltaEvent>,
         hasWork: (doc: IDocumentDeltaEvent) => boolean,
     ): Promise<void> {
         let working: boolean;
         do {
             await DocumentDeltaEventManager.yieldEventLoop();
-            working = false;
-            for (const doc of docs) {
-                if (hasWork(doc)) {
-                    working = true;
+            working = await this.testDeltaConnectionServer.hasPendingWork();
+            if (!working) {
+                for (const doc of docs) {
+                    if (hasWork(doc)) {
+                        working = true;
+                        break;
+                    }
                 }
             }
         } while (working);
