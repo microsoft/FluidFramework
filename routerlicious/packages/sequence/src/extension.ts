@@ -1,6 +1,7 @@
 import { ICollaborativeObject, ICollaborativeObjectExtension } from "@prague/api-definitions";
 import { IDistributedObjectServices, IRuntime, ISequencedObjectMessage } from "@prague/runtime-definitions";
-import { SharedNumberSequence, SharedObjectSequence, SharedString } from "./sharedString";
+import { SharedNumberSequence, SharedObjectSequence} from "./sequence";
+import { SharedString } from "./sharedString";
 
 export class CollaborativeStringExtension implements ICollaborativeObjectExtension {
     public static Type = "https://graph.microsoft.com/types/mergeTree/string";

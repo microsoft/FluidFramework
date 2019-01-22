@@ -11,4 +11,5 @@ export {
 export {
     SharedString,
 } from "./sharedString";
+export * from "./sequence";
 export * from "./extension";

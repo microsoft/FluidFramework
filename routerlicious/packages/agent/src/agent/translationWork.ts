@@ -3,7 +3,7 @@ import * as map from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
 // tslint:disable-next-line:max-line-length
 import { IDocumentService, ISequencedDocumentMessage, ISequencedObjectMessage, ITokenProvider, IUser } from "@prague/runtime-definitions";
-import * as SharedString from "@prague/shared-string";
+import * as Sequence from "@prague/sequence";
 import { EventEmitter } from "events";
 import * as request from "request";
 import { Builder, parseString } from "xml2js";
@@ -75,7 +75,7 @@ class Translator extends EventEmitter {
 
     constructor(
         private insights: map.IMap,
-        private sharedString: SharedString.SharedString) {
+        private sharedString: Sequence.SharedString) {
             super();
     }
 
@@ -228,10 +228,10 @@ export class TranslationWork extends BaseWork implements IWork {
 
     private trackEvents(insights: map.IMap): Promise<void> {
         const eventHandler = (op: ISequencedDocumentMessage, object: core.ICollaborativeObject) => {
-            if (object && object.type === SharedString.CollaborativeStringExtension.Type) {
+            if (object && object.type === Sequence.CollaborativeStringExtension.Type) {
                 if (!this.translationSet.has(object)) {
                     this.translationSet.add(object);
-                    this.translator = new Translator(insights, object as SharedString.SharedString);
+                    this.translator = new Translator(insights, object as Sequence.SharedString);
                     this.translators.set(object.id, object);
                     this.translator.start();
                 }

@@ -7,7 +7,7 @@ import * as DistributedMap from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
 import * as replaySocketStorage from "@prague/replay-socket-storage";
 import { IClient } from "@prague/runtime-definitions";
-import * as SharedString from "@prague/shared-string";
+import * as Sequence from "@prague/sequence";
 import * as socketStorage from "@prague/socket-storage";
 import { IStream } from "@prague/stream";
 // tslint:disable-next-line:no-var-requires
@@ -148,8 +148,8 @@ async function loadDocument(
         console.log(`Not existing ${id} - ${performanceNow()}`);
         root.set("presence", collabDoc.createMap());
         root.set("users", collabDoc.createMap());
-        root.set("calendar", undefined, SharedString.SharedIntervalCollectionValueType.Name);
-        const newString = collabDoc.createString() as SharedString.SharedString;
+        root.set("calendar", undefined, Sequence.SharedIntervalCollectionValueType.Name);
+        const newString = collabDoc.createString() as Sequence.SharedString;
 
         const starterText = template ? await downloadRawText(template) : " ";
         const segments = MergeTree.loadSegments(starterText, 0, true);
@@ -174,7 +174,7 @@ async function loadDocument(
         await Promise.all([root.wait("text"), root.wait("ink")]);
     }
 
-    const sharedString = root.get("text") as SharedString.SharedString;
+    const sharedString = root.get("text") as Sequence.SharedString;
     console.log(`Shared string ready - ${performanceNow()}`);
     console.log(window.navigator.userAgent);
     console.log(`id is ${id}`);

@@ -1,5 +1,5 @@
 import { MapExtension } from "@prague/map";
-import { SharedString, CollaborativeStringExtension } from "@prague/shared-string";
+import { SharedString, CollaborativeStringExtension } from "@prague/sequence";
 import { Component } from "@prague/app-component";
 import { DataStore } from "@prague/app-datastore";
 import {

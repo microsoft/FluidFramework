@@ -29,7 +29,7 @@
     "@prague/services": "^0.1.0",
     "@prague/services-core": "^0.1.0",
     "@prague/services-utils": "^0.1.0",
-    "@prague/shared-string": "^0.1.0",
+    "@prague/sequence": "^0.1.0",
     "@prague/socket-storage": "^0.1.0",
     "@prague/socket-storage-shared": "^0.1.0",
     "@prague/test-utils": "^0.1.0",

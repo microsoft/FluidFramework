@@ -30,7 +30,7 @@
     "@prague/cell": "^0.1.0",
     "@prague/map": "^0.1.0",
     "@prague/runtime-definitions": "^0.1.0",
-    "@prague/shared-string": "^0.1.0",
+    "@prague/sequence": "^0.1.0",
     "@prague/stream": "^0.1.0",
     "debug": "^3.1.0",
     "uuid": "^3.3.2"

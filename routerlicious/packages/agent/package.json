@@ -24,7 +24,7 @@
     "@prague/map": "^0.1.0",
     "@prague/merge-tree": "^0.1.0",
     "@prague/runtime-definitions": "^0.1.0",
-    "@prague/shared-string": "^0.1.0",
+    "@prague/sequence": "^0.1.0",
     "@prague/utils": "^0.1.0",
     "azure-iot-device": "^1.7.3",
     "azure-iot-device-mqtt": "^1.7.3",

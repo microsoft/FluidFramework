@@ -1,7 +1,7 @@
 import { ICollaborativeObject } from "@prague/api-definitions";
 import * as api from "@prague/client-api";
 import { IMap, IMapView } from "@prague/map";
-import * as SharedString from "@prague/shared-string";
+import * as Sequence from "@prague/sequence";
 import * as intelligence from "../intelligence";
 import { RateLimiter } from "./rateLimiter";
 import { runAfterWait } from "./utils";
@@ -27,9 +27,9 @@ export class IntelligentServicesManager {
 
     public process(object: ICollaborativeObject) {
         // TODO expose way for intelligent services to express their supported document types
-        if (object.type === SharedString.CollaborativeStringExtension.Type) {
+        if (object.type === Sequence.CollaborativeStringExtension.Type) {
             if (!this.intelInvoked) {
-                const sharedString = object as SharedString.SharedString;
+                const sharedString = object as Sequence.SharedString;
 
                 // And then run plugin insights rate limited
                 this.rateLimiter = new RateLimiter(

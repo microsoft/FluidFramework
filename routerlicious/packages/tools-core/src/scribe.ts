@@ -1,14 +1,14 @@
 import * as api from "@prague/client-api";
 import { IMapView } from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
-import * as SharedString from "@prague/shared-string";
+import * as Sequence from "@prague/sequence";
 import * as socketStorage from "@prague/socket-storage";
 import * as childProcess from "child_process";
 import * as path from "path";
 import * as author from "./author";
 
 let document: api.Document;
-let sharedString: SharedString.SharedString;
+let sharedString: Sequence.SharedString;
 
 function setParagraphs(chunks: string[]) {
     let props;
@@ -104,7 +104,7 @@ export async function create(
 
     root.set("presence", document.createMap());
     root.set("users", document.createMap());
-    sharedString = document.createString() as SharedString.SharedString;
+    sharedString = document.createString() as Sequence.SharedString;
 
     // p-start might break something
     sharedString.insertMarker(0, MergeTree.ReferenceType.Tile, {[MergeTree.reservedTileLabelsKey]: ["pg"] });

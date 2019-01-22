@@ -7,7 +7,7 @@ import {
     IUser,
     MessageType,
 } from "@prague/runtime-definitions";
-import * as SharedString from "@prague/shared-string";
+import * as Sequence from "@prague/sequence";
 import { BaseWork} from "./baseWork";
 import { IWork} from "./definitions";
 import { Spellcheker } from "./spellchecker";
@@ -70,8 +70,8 @@ export class SpellcheckerWork extends BaseWork implements IWork {
     // Enable spell checking for the document
     // TODO will want to configure this as a pluggable insight
     private spellCheck(object: core.ICollaborativeObject) {
-        if (object.type === SharedString.CollaborativeStringExtension.Type && !this.spellchecker) {
-            const sharedString = object as SharedString.SharedString;
+        if (object.type === Sequence.CollaborativeStringExtension.Type && !this.spellchecker) {
+            const sharedString = object as Sequence.SharedString;
             this.spellchecker = new Spellcheker(sharedString, this.dict);
             this.spellchecker.run();
         }

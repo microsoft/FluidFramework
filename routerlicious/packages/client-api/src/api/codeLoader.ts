@@ -7,7 +7,7 @@ import {
     IPlatform,
     IRuntime,
 } from "@prague/runtime-definitions";
-import * as sharedString from "@prague/shared-string";
+import * as sequence from "@prague/sequence";
 import * as stream from "@prague/stream";
 
 export class Chaincode implements IChaincode {
@@ -17,20 +17,24 @@ export class Chaincode implements IChaincode {
         // Register default map value types
         map.registerDefaultValueType(new map.DistributedSetValueType());
         map.registerDefaultValueType(new map.CounterValueType());
-        map.registerDefaultValueType(new sharedString.SharedStringIntervalCollectionValueType());
-        map.registerDefaultValueType(new sharedString.SharedIntervalCollectionValueType());
+        map.registerDefaultValueType(new sequence.SharedStringIntervalCollectionValueType());
+        map.registerDefaultValueType(new sequence.SharedIntervalCollectionValueType());
 
         // Create channel extensions
         const mapExtension = new map.MapExtension();
-        const sharedStringExtension = new sharedString.CollaborativeStringExtension();
+        const sharedStringExtension = new sequence.CollaborativeStringExtension();
         const streamExtension = new stream.StreamExtension();
         const cellExtension = new cell.CellExtension();
+        const objectSequenceExtension = new sequence.CollaborativeObjectSequenceExtension();
+        const numberSequenceExtension = new sequence.CollaborativeNumberSequenceExtension();
 
         // Register channel extensions
         this.modules.set(mapExtension.type, mapExtension);
         this.modules.set(sharedStringExtension.type, sharedStringExtension);
         this.modules.set(streamExtension.type, streamExtension);
         this.modules.set(cellExtension.type, cellExtension);
+        this.modules.set(objectSequenceExtension.type, objectSequenceExtension);
+        this.modules.set(numberSequenceExtension.type, numberSequenceExtension);
     }
 
     public getModule(type: string): any {

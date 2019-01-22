@@ -2,7 +2,7 @@
 import * as api from "@prague/client-api";
 import { IMap } from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
-import * as SharedString from "@prague/shared-string";
+import * as Sequence from "@prague/sequence";
 import { IStream } from "@prague/stream";
 import * as ui from "../ui";
 import { debug } from "./debug";
@@ -36,7 +36,7 @@ export class FlowContainer extends ui.Component {
     constructor(
         element: HTMLDivElement,
         private collabDocument: api.Document,
-        sharedString: SharedString.SharedString,
+        sharedString: Sequence.SharedString,
         private overlayMap: IMap,
         private image: Image,
         ink: IStream,

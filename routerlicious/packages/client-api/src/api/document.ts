@@ -15,7 +15,7 @@ import {
     IUser,
     MessageType,
 } from "@prague/runtime-definitions";
-import * as sharedString from "@prague/shared-string";
+import * as sequence from "@prague/sequence";
 import * as stream from "@prague/stream";
 import { Deferred } from "@prague/utils";
 import { EventEmitter } from "events";
@@ -193,8 +193,8 @@ export class Document extends EventEmitter {
     /**
      * Creates a new collaborative string
      */
-    public createString(): sharedString.SharedString {
-        return this.create(sharedString.CollaborativeStringExtension.Type) as sharedString.SharedString;
+    public createString(): sequence.SharedString {
+        return this.create(sequence.CollaborativeStringExtension.Type) as sequence.SharedString;
     }
 
     /**

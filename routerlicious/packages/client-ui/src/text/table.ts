@@ -1,9 +1,9 @@
 // tslint:disable
 import * as MergeTree from "@prague/merge-tree";
-import * as SharedStringModule from "@prague/shared-string";
+import * as Sequence from "@prague/sequence";
 import * as Paragraph from "./paragraph";
 
-type SharedString = SharedStringModule.SharedString;
+type SharedString = Sequence.SharedString;
 
 export interface ITableMarker extends MergeTree.Marker {
     table?: Table;

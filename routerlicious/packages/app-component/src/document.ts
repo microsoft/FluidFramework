@@ -6,7 +6,7 @@ import {
     MapExtension,
     registerDefaultValueType,
 } from "@prague/map";
-import * as sharedString from "@prague/shared-string";
+import * as sequence from "@prague/sequence";
 import * as stream from "@prague/stream";
 import * as uuid from "uuid/v4";
 import { Component } from "./component";
@@ -16,14 +16,16 @@ export class Document extends Component {
         // Register default map value types
         registerDefaultValueType(new DistributedSetValueType());
         registerDefaultValueType(new CounterValueType());
-        registerDefaultValueType(new sharedString.SharedStringIntervalCollectionValueType());
-        registerDefaultValueType(new sharedString.SharedIntervalCollectionValueType());
+        registerDefaultValueType(new sequence.SharedStringIntervalCollectionValueType());
+        registerDefaultValueType(new sequence.SharedIntervalCollectionValueType());
 
         // Create channel extensions
         const mapExtension = new MapExtension();
-        const sharedStringExtension = new sharedString.CollaborativeStringExtension();
+        const sharedStringExtension = new sequence.CollaborativeStringExtension();
         const streamExtension = new stream.StreamExtension();
         const cellExtension = new cell.CellExtension();
+        const objectSequenceExtension = new sequence.CollaborativeObjectSequenceExtension();
+        const numberSequenceExtension = new sequence.CollaborativeNumberSequenceExtension();
 
         // Register channel extensions
         super([
@@ -31,6 +33,8 @@ export class Document extends Component {
             [sharedStringExtension.type, sharedStringExtension],
             [streamExtension.type, streamExtension],
             [cellExtension.type, cellExtension],
+            [objectSequenceExtension.type, objectSequenceExtension],
+            [numberSequenceExtension.type, numberSequenceExtension],
         ]);
     }
 
@@ -58,10 +62,10 @@ export class Document extends Component {
     /**
      * Creates a new collaborative string
      */
-    public createString(id: string = uuid()): sharedString.SharedString {
+    public createString(id: string = uuid()): sequence.SharedString {
         return this.runtime.createChannel(
             id,
-            sharedString.CollaborativeStringExtension.Type) as sharedString.SharedString;
+            sequence.CollaborativeStringExtension.Type) as sequence.SharedString;
     }
 
     /**

@@ -1,7 +1,7 @@
 import { OperationType } from "@prague/api-definitions";
 import * as api from "@prague/client-api";
+import { SharedString } from "@prague/sequence";
 import * as utils from "@prague/services-utils";
-import { SharedString } from "@prague/shared-string";
 import * as socketStorage from "@prague/socket-storage";
 import * as assert from "assert";
 import {

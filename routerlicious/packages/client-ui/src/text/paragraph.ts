@@ -1,11 +1,11 @@
 // tslint:disable
 import * as MergeTree from "@prague/merge-tree";
-import * as SharedStringModule from "@prague/shared-string";
+import * as Sequence from "@prague/sequence";
 import { CharacterCodes } from "./characterCodes";
 import * as ui from "../ui";
 import { isInline } from "@prague/app-ui";
 
-type SharedString = SharedStringModule.SharedString;
+type SharedString = Sequence.SharedString;
 
 export interface IBreakInfo {
     posInPG: number;

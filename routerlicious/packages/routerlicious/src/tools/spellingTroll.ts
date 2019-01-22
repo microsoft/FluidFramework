@@ -1,7 +1,7 @@
 // tslint:disable
 import * as API from "@prague/client-api";
 import * as MergeTree from "@prague/merge-tree";
-import * as SharedString from "@prague/shared-string";
+import * as Sequence from "@prague/sequence";
 import * as socketStorage from "@prague/socket-storage";
 import { ISequencedObjectMessage } from "@prague/runtime-definitions";
 import * as fs from "fs";
@@ -29,7 +29,7 @@ class Speller {
     dict = new MergeTree.TST<number>();
     verbose = true;
 
-    constructor(public sharedString: SharedString.SharedString) {
+    constructor(public sharedString: Sequence.SharedString) {
     }
 
     spellingError(word: string) {
@@ -314,7 +314,7 @@ async function initSpell(id: string) {
     if (!root.has("text")) {
         root.set("text", document.createString());
     }
-    const sharedString = root.get("text") as SharedString.SharedString;
+    const sharedString = root.get("text") as Sequence.SharedString;
     console.log("partial load fired");
     sharedString.loaded.then(() => {
         theSpeller = new Speller(sharedString);

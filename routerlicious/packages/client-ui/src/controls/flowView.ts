@@ -5,7 +5,7 @@ import * as types from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
 import { findRandomWord } from "@prague/merge-tree-utils";
 import { IGenericBlob, ISequencedObjectMessage, IUser } from "@prague/runtime-definitions";
-import * as SharedString from "@prague/shared-string";
+import * as Sequence from "@prague/sequence";
 import * as assert from "assert";
 import * as Geocoder from "geocoder";
 // tslint:disable-next-line:no-var-requires
@@ -3553,12 +3553,12 @@ export class FlowView extends ui.Component {
     public wheelTicking = false;
     public topChar = -1;
     public cursor: Cursor;
-    public bookmarks: SharedString.SharedIntervalCollectionView<SharedString.SharedStringInterval>;
-    public tempBookmarks: SharedString.SharedStringInterval[];
-    public comments: SharedString.SharedIntervalCollection<SharedString.SharedStringInterval>;
-    public commentsView: SharedString.SharedIntervalCollectionView<SharedString.SharedStringInterval>;
-    public calendarIntervals: SharedString.SharedIntervalCollection<SharedString.Interval>;
-    public calendarIntervalsView: SharedString.SharedIntervalCollectionView<SharedString.Interval>;
+    public bookmarks: Sequence.SharedIntervalCollectionView<Sequence.SharedStringInterval>;
+    public tempBookmarks: Sequence.SharedStringInterval[];
+    public comments: Sequence.SharedIntervalCollection<Sequence.SharedStringInterval>;
+    public commentsView: Sequence.SharedIntervalCollectionView<Sequence.SharedStringInterval>;
+    public calendarIntervals: Sequence.SharedIntervalCollection<Sequence.Interval>;
+    public calendarIntervalsView: Sequence.SharedIntervalCollectionView<Sequence.Interval>;
     public presenceMapView: types.IMapView;
     public presenceVector: ILocalPresenceInfo[] = [];
     public docRoot: types.IMapView;
@@ -3594,7 +3594,7 @@ export class FlowView extends ui.Component {
     constructor(
         element: HTMLDivElement,
         public collabDocument: api.Document,
-        public sharedString: SharedString.SharedString,
+        public sharedString: Sequence.SharedString,
         public status: Status,
         public options?: Object) {
 
@@ -3887,7 +3887,7 @@ export class FlowView extends ui.Component {
     // assumes docRoot ready
     public addCalendarMap() {
         this.calendarIntervals =
-            this.docRoot.get<SharedString.SharedIntervalCollection<SharedString.Interval>>("calendar");
+            this.docRoot.get<Sequence.SharedIntervalCollection<Sequence.Interval>>("calendar");
         if (this.calendarIntervals) {
             this.calendarIntervals.getView().then((v) => {
                 this.calendarIntervalsView = v;
@@ -4959,7 +4959,7 @@ export class FlowView extends ui.Component {
 
     public showAdjacentBookmark(before = true) {
         if (this.bookmarks) {
-            let result: SharedString.SharedStringInterval;
+            let result: Sequence.SharedStringInterval;
             if (before) {
                 result = this.bookmarks.previousInterval(this.cursor.pos);
             } else {
@@ -5559,7 +5559,7 @@ export class FlowView extends ui.Component {
         this.bookmarks = await bookmarksCollection.getView();
 
         // Takes a collaborative Object from OnPrepareDeserialize and inserts back into the interval's "Story" Property
-        const onDeserialize: SharedString.DeserializeCallback = (interval, commentSharedString: ICollaborativeObject) => {
+        const onDeserialize: Sequence.DeserializeCallback = (interval, commentSharedString: ICollaborativeObject) => {
             if (interval.properties && interval.properties["story"]) {
                 assert(commentSharedString);
                 interval.properties["story"] = commentSharedString;
@@ -5569,7 +5569,7 @@ export class FlowView extends ui.Component {
         };
 
         // Fetches the collaborative object with the key story["value"];
-        const onPrepareDeserialize: SharedString.PrepareDeserializeCallback = (properties) => {
+        const onPrepareDeserialize: Sequence.PrepareDeserializeCallback = (properties) => {
             if (properties && properties["story"]) {
                 const story = properties["story"];
                 return this.collabDocument.get(story["value"]);

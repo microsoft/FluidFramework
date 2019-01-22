@@ -1,6 +1,6 @@
 import * as MergeTree from "@prague/merge-tree";
 import { ISequencedObjectMessage } from "@prague/runtime-definitions";
-import * as SharedString from "@prague/shared-string";
+import * as Sequence from "@prague/sequence";
 
 export interface IPgMarker {
     tile: MergeTree.Marker;
@@ -31,7 +31,7 @@ class Speller {
     private verbose = false;
 
     constructor(
-        public sharedString: SharedString.SharedString,
+        public sharedString: Sequence.SharedString,
         private dict: MergeTree.TST<number>) {
     }
 
@@ -251,7 +251,7 @@ export class Spellcheker {
     private speller: Speller;
 
     constructor(
-        private root: SharedString.SharedString,
+        private root: Sequence.SharedString,
         private dict: MergeTree.TST<number>) {
     }
 

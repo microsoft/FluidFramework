@@ -73,7 +73,8 @@ export class SharedString extends SegmentSequence<SharedStringSegment> {
         return textsToSegments(segSpecs);
     }
 
-    public insertMarkerRelative(relativePos1: MergeTree.IRelativePosition, refType, props?: MergeTree.PropertySet) {
+    public insertMarkerRelative(relativePos1: MergeTree.IRelativePosition,
+        refType: MergeTree.ReferenceType, props?: MergeTree.PropertySet) {
         const insertMessage: MergeTree.IMergeTreeInsertMsg = {
             marker: { refType },
             props,

@@ -778,7 +778,7 @@ export class Marker extends BaseSegment implements ReferencePosition {
         return this.properties;
     }
 
-    getId() {
+    getId(): string {
         if (this.properties && this.properties[reservedMarkerIdKey]) {
             return this.properties[reservedMarkerIdKey];
         }

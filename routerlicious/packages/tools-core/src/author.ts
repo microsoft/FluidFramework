@@ -3,7 +3,7 @@ import * as api from "@prague/client-api";
 import { IMap } from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
 import { ISequencedObjectMessage } from "@prague/runtime-definitions";
-import * as SharedString from "@prague/shared-string";
+import * as Sequence from "@prague/sequence";
 import * as socketStorage from "@prague/socket-storage";
 import * as queue from "async/queue";
 import clone = require("lodash/clone");
@@ -48,7 +48,7 @@ export interface IAuthor {
     metrics: IScribeMetrics;
 
     doc: api.Document;
-    ss: SharedString.SharedString;
+    ss: Sequence.SharedString;
 }
 
 /**
@@ -265,7 +265,7 @@ async function setMetrics(doc: api.Document, token: string) {
 
 export async function typeFile(
     doc: api.Document,
-    ss: SharedString.SharedString,
+    ss: Sequence.SharedString,
     fileText: string,
     intervalTime: number,
     writers: number,
@@ -329,19 +329,19 @@ export async function typeFile(
         };
         const authors: IAuthor[] = [author];
         const docList: api.Document[] = [doc];
-        const ssList: SharedString.SharedString[] = [ss];
+        const ssList: Sequence.SharedString[] = [ss];
 
         for (let i = 1; i < writers; i++ ) {
             const tokenProvider = new socketStorage.TokenProvider(documentToken);
             docList.push(await api.load(doc.id, doc.tenantId, doc.getUser(), tokenProvider, { }));
-            ssList.push(await docList[i].getRoot().get("text") as SharedString.SharedString);
+            ssList.push(await docList[i].getRoot().get("text") as Sequence.SharedString);
             author = {
                 ackCounter: new Counter(),
                 doc: await api.load(doc.id, doc.tenantId, doc.getUser(), tokenProvider, { }),
                 latencyCounter: new Counter(),
                 metrics: clone(m),
                 pingCounter: new Counter(),
-                ss: await docList[i].getRoot().get("text") as SharedString.SharedString,
+                ss: await docList[i].getRoot().get("text") as Sequence.SharedString,
                 typingCounter: new Counter(),
             };
             authors.push(author);

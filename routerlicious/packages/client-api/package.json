@@ -45,7 +45,7 @@
     "@prague/map": "^0.1.0",
     "@prague/merge-tree": "^0.1.0",
     "@prague/runtime-definitions": "^0.1.0",
-    "@prague/shared-string": "^0.1.0",
+    "@prague/sequence": "^0.1.0",
     "@prague/stream": "^0.1.0",
     "@prague/utils": "^0.1.0",
     "@types/async": "^2.0.50",
