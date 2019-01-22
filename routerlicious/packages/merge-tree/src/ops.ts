@@ -104,21 +104,22 @@ export interface IMergeTreeGroupMsg extends IMergeTreeDelta {
     ops: IMergeTreeOp[];
 }
 
-export type IMergeTreeOp = IMergeTreeInsertMsg | IMergeTreeRemoveMsg | IMergeTreeAnnotateMsg | IMergeTreeGroupMsg;
-
-export interface IPropertyString {
+export interface IJSONSegment {
     props?: Object;
-    text?: string;
-    marker?: IMarkerDef;
 }
+
+export type IMergeTreeOp = IMergeTreeInsertMsg | IMergeTreeRemoveMsg | IMergeTreeAnnotateMsg | IMergeTreeGroupMsg;
 
 // tslint:disable-next-line:interface-name
 export interface MergeTreeChunk {
     chunkStartSegmentIndex: number;
     chunkSegmentCount: number;
+    // back-compat name: change to chunkSequenceLength
     chunkLengthChars: number;
+    // back-compat name: change to totalSequenceLength
     totalLengthChars: number;
     totalSegmentCount: number;
     chunkSequenceNumber: number;
-    segmentTexts: IPropertyString[];
+    // back-compat name: change to segments
+    segmentTexts: IJSONSegment[];
 }

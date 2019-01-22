@@ -147,6 +147,7 @@ export enum SegmentType {
     Marker,
     External,
     Custom,
+    Run,
 }
 
 export interface IRemovalInfo {
@@ -171,6 +172,7 @@ export interface ISegment extends IMergeNode, IRemovalInfo {
     getType(): SegmentType;
     removeRange(start: number, end: number): boolean;
     splitAt(pos: number): ISegment;
+    toJSONObject(): ops.IJSONSegment;
 }
 
 export interface IMarkerModifiedAction {
@@ -538,6 +540,22 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
         }
     }
 
+    splitLocalRefs(pos: number, leafSegment: BaseSegment) {
+        let aRefs = <LocalReference[]>[];
+        let bRefs = <LocalReference[]>[];
+        for (let localRef of this.localRefs) {
+            if (localRef.offset < pos) {
+                aRefs.push(localRef);
+            } else {
+                localRef.segment = leafSegment;
+                localRef.offset -= pos;
+                bRefs.push(localRef);
+            }
+        }
+        this.localRefs = aRefs;
+        leafSegment.localRefs = bRefs;
+    }
+
     addProperties(newProps: Properties.PropertySet, op?: ops.ICombiningOp, seq?: number) {
         this.properties = Properties.addProperties(this.properties, newProps, op, seq);
     }
@@ -564,6 +582,47 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
         return false;
     }
 
+    addSerializedProps(jseg: ops.IJSONSegment) {
+        if (this.properties) {
+            jseg.props = this.properties;
+        }
+    }
+
+    toJSONObject(): ops.IJSONSegment {
+        let obj = <ops.IJSONSegment>Properties.createMap();
+        this.addSerializedProps(obj);
+        return obj;
+    }
+
+    // TODO: use function in properties.ts
+    matchProperties(b: BaseSegment) {
+        if (this.properties) {
+            if (!b.properties) {
+                return false;
+            } else {
+                let bProps = b.properties;
+                // for now, straightforward; later use hashing
+                for (let key in this.properties) {
+                    if (bProps[key] === undefined) {
+                        return false;
+                    } else if (bProps[key] !== this.properties[key]) {
+                        return false;
+                    }
+                }
+                for (let key in bProps) {
+                    if (this.properties[key] === undefined) {
+                        return false;
+                    }
+                }
+            }
+        } else {
+            if (b.properties) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     abstract clone(): ISegment;
     abstract append(segment: ISegment): ISegment;
     abstract getType(): SegmentType;
@@ -571,13 +630,23 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
     abstract splitAt(pos: number): ISegment;
 }
 
+interface IJSONExternalSegment extends ops.IJSONSegment {
+    sequenceIndex: number;
+    sequenceLength: number;
+}
 /**
  * A non-collaborative placeholder for external content.
  */
 export class ExternalSegment extends BaseSegment {
-    constructor(public placeholderSeq, public charLength: number, public lengthBytes: number,
-        public binPosition: number) {
+    constructor(public placeholderSeq, public sequenceLength: number,
+        public sequenceIndex: number) {
         super();
+    }
+
+    toJSONObject() {
+        let obj = <IJSONExternalSegment>{ sequenceIndex: this.sequenceIndex, sequenceLength: this.sequenceLength };
+        super.addSerializedProps(obj);
+        return obj;
     }
 
     mergeTreeInsert(mergeTree: MergeTree, pos: number, refSeq: number, clientId: number, seq: number) {
@@ -660,6 +729,10 @@ function refGetRangeLabels(refPos: ReferencePosition) {
     }
 }
 
+export interface IJSONMarkerSegment extends ops.IJSONSegment {
+    marker: ops.IMarkerDef;
+}
+
 export class Marker extends BaseSegment implements ReferencePosition {
     nestBuddy: Marker;
     public static make(refType: ops.ReferenceType, props?: Properties.PropertySet,
@@ -674,6 +747,12 @@ export class Marker extends BaseSegment implements ReferencePosition {
     constructor(public refType: ops.ReferenceType, seq?: number, clientId?: number) {
         super(seq, clientId);
         this.cachedLength = 1;
+    }
+
+    toJSONObject() {
+        let obj = <IJSONMarkerSegment>{ marker: <ops.IMarkerDef>{ refType: this.refType } };
+        super.addSerializedProps(obj);
+        return obj;
     }
 
     clone() {
@@ -810,6 +889,10 @@ export class Marker extends BaseSegment implements ReferencePosition {
 
 }
 
+export interface IJSONTextSegment extends ops.IJSONSegment {
+    text: string;
+}
+
 export class TextSegment extends BaseSegment {
     public static make(text: string, props?: Properties.PropertySet, seq?: number, clientId?: number) {
         let tseg = new TextSegment(text, seq, clientId);
@@ -819,25 +902,15 @@ export class TextSegment extends BaseSegment {
         return tseg;
     }
 
+    toJSONObject() {
+        let obj = <IJSONTextSegment>{ text: this.text };
+        super.addSerializedProps(obj);
+        return obj;
+    }
+
     constructor(public text: string, seq?: number, clientId?: number) {
         super(seq, clientId);
         this.cachedLength = text.length;
-    }
-
-    splitLocalRefs(pos: number, leafSegment: TextSegment) {
-        let aRefs = <LocalReference[]>[];
-        let bRefs = <LocalReference[]>[];
-        for (let localRef of this.localRefs) {
-            if (localRef.offset < pos) {
-                aRefs.push(localRef);
-            } else {
-                localRef.segment = leafSegment;
-                localRef.offset -= pos;
-                bRefs.push(localRef);
-            }
-        }
-        this.localRefs = aRefs;
-        leafSegment.localRefs = bRefs;
     }
 
     splitAt(pos: number) {
@@ -871,35 +944,6 @@ export class TextSegment extends BaseSegment {
 
     getType() {
         return SegmentType.Text;
-    }
-
-    // TODO: use function in properties.ts
-    matchProperties(b: TextSegment) {
-        if (this.properties) {
-            if (!b.properties) {
-                return false;
-            } else {
-                let bProps = b.properties;
-                // for now, straightforward; later use hashing
-                for (let key in this.properties) {
-                    if (bProps[key] === undefined) {
-                        return false;
-                    } else if (bProps[key] !== this.properties[key]) {
-                        return false;
-                    }
-                }
-                for (let key in bProps) {
-                    if (this.properties[key] === undefined) {
-                        return false;
-                    }
-                }
-            }
-        } else {
-            if (b.properties) {
-                return false;
-            }
-        }
-        return true;
     }
 
     canAppend(segment: ISegment, mergeTree: MergeTree) {
@@ -957,7 +1001,7 @@ export class TextSegment extends BaseSegment {
     }
 }
 
-function segmentCopy(from: ISegment, to: ISegment) {
+export function segmentCopy(from: ISegment, to: ISegment) {
     to.parent = from.parent;
     to.removedClientId = from.removedClientId;
     to.removedSeq = from.removedSeq;
@@ -3012,20 +3056,6 @@ export class MergeTree {
         // TODO: share this group with UNDO
         segment.segmentGroups.enqueue(segmentGroup);
         return segmentGroup;
-    }
-
-    // assumes collaborating!
-    appendSegment(segSpec: ops.IPropertyString, seq = UniversalSequenceNumber) {
-        let pos = this.root.cachedLength;
-        if (segSpec.text) {
-            this.insertText(pos, UniversalSequenceNumber, this.collabWindow.clientId, seq, segSpec.text,
-                segSpec.props as Properties.PropertySet);
-        }
-        else {
-            // assume marker for now
-            this.insertMarker(pos, UniversalSequenceNumber, this.collabWindow.clientId,
-                seq, segSpec.marker.refType, segSpec.props as Properties.PropertySet);
-        }
     }
 
     // TODO: error checking

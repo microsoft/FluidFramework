@@ -7,7 +7,7 @@ import * as path from "path";
 import * as random from "random-js";
 import * as MergeTree from "..";
 import * as Base from "../base";
-import { loadTextFromFile, SnapshotFS } from "../snapshot-fs";
+import { loadTextFromFile } from "../text";
 import { TestServer } from "./testServer";
 
 // tslint:disable
@@ -492,6 +492,9 @@ export function mergeTreeCheckedTest() {
     return errorCount;
 }
 
+
+type SharedStringJSONSegment = MergeTree.IJSONTextSegment & MergeTree.IJSONMarkerSegment;
+
 // enum AsyncRoundState {
 //     Insert,
 //     Remove,
@@ -585,14 +588,8 @@ export function TestPack(verbose = true) {
         const clientCount = 5;
         const fileSegCount = 0;
         let initString = "";
-        let snapInProgress = false;
         let asyncExec = false;
-        let addSnapClient = false;
-        let extractSnap = false;
         let includeMarkers = false;
-
-        let testSyncload = false;
-        let snapClient: MergeTree.Client;
 
         if (!startFile) {
             initString = "don't ask for whom the bell tolls; it tolls for thee";
@@ -614,26 +611,6 @@ export function TestPack(verbose = true) {
         }
         server.startCollaboration("theServer");
         server.addClients(clients);
-        if (testSyncload) {
-            let clockStart = clock();
-            let segs = SnapshotFS.loadSync("snap-initial");
-            console.log(`sync load time ${elapsedMicroseconds(clockStart)}`);
-            let fromLoad = new MergeTree.MergeTree("");
-            fromLoad.reloadFromSegments(segs);
-            let fromLoadText = fromLoad.getText(MergeTree.UniversalSequenceNumber, MergeTree.NonCollabClient);
-            let serverText = server.getText();
-            if (fromLoadText != serverText) {
-                console.log('snap file vs. text file mismatch');
-            }
-        }
-        if (addSnapClient) {
-            snapClient = new MergeTree.Client(initString);
-            if (startFile) {
-                loadTextFromFile(startFile, snapClient.mergeTree, fileSegCount);
-            }
-            snapClient.startCollaboration("snapshot");
-            server.addListeners([snapClient]);
-        }
         function incrGetText(client: MergeTree.Client) {
             let collabWindow = client.mergeTree.getCollabWindow();
             return client.mergeTree.incrementalGetText(collabWindow.currentSeq, collabWindow.clientId);
@@ -845,13 +822,6 @@ export function TestPack(verbose = true) {
                 clientProcessSome(client, true);
             }
 
-            if (extractSnap) {
-                let clockStart = clock();
-                let snapshot = new MergeTree.Snapshot(snapClient.mergeTree);
-                snapshot.extractSync();
-                extractSnapTime += elapsedMicroseconds(clockStart);
-                extractSnapOps++;
-            }
             /*
                         if (checkTextMatch()) {
                             console.log(`round: ${i}`);
@@ -943,42 +913,9 @@ export function TestPack(verbose = true) {
         let startTime = Date.now();
         let checkTime = 0;
         let asyncRoundCount = 0;
-        let lastSnap = 0;
-        let checkSnapText = true;
-
-        function snapFinished() {
-            snapInProgress = false;
-            let curmin = snapClient.mergeTree.getCollabWindow().minSeq;
-            console.log(`snap finished round ${asyncRoundCount} server seq ${server.getCurrentSeq()} seq ${snapClient.getCurrentSeq()} minseq ${curmin}`);
-            let clockStart = clock();
-            //snapClient.verboseOps = true;
-            clientProcessSome(snapClient, true);
-            catchUpTime += elapsedMicroseconds(clockStart);
-            catchUps++;
-            if (checkSnapText) {
-                let serverText = server.getText();
-                let snapText = snapClient.getText();
-                if (serverText != snapText) {
-                    console.log(`mismatch @${server.getCurrentSeq()} client @${snapClient.getCurrentSeq()} id: ${snapClient.getClientId()}`);
-                }
-            }
-        }
-
-        function ohSnap(filename: string) {
-            snapInProgress = true;
-            let curmin = snapClient.mergeTree.getCollabWindow().minSeq;
-            lastSnap = curmin;
-            console.log(`snap started seq ${snapClient.getCurrentSeq()} minseq ${curmin}`);
-            let snapshot = new SnapshotFS(snapClient.mergeTree, filename, snapFinished);
-            snapshot.start();
-        }
 
         function asyncStep() {
             round(asyncRoundCount);
-            let curmin = server.mergeTree.getCollabWindow().minSeq;
-            if ((!snapInProgress) && (lastSnap < curmin)) {
-                ohSnap("snapit");
-            }
             asyncRoundCount++;
             if (asyncRoundCount < rounds) {
                 setImmediate(asyncStep);
@@ -986,7 +923,6 @@ export function TestPack(verbose = true) {
         }
 
         if (asyncExec) {
-            ohSnap("snap-initial");
             setImmediate(asyncStep);
         }
         else {
@@ -1203,7 +1139,7 @@ export function TestPack(verbose = true) {
             }
         }
         cli.updateMinSeq(6);
-        let segs = new MergeTree.Snapshot(cli.mergeTree).extractSync();
+        let segs = <SharedStringJSONSegment[]>new MergeTree.Snapshot(cli.mergeTree).extractSync();
         if (verbose) {
             for (let seg of segs) {
                 if (seg.text !== undefined) {

@@ -1,5 +1,18 @@
+import * as fs from "fs";
 import * as MergeTree from "./mergeTree";
 import * as ops from "./ops";
+
+export function loadTextFromFile(filename: string, mergeTree: MergeTree.MergeTree, segLimit = 0) {
+    // tslint:disable-next-line:non-literal-fs-path
+    const content = fs.readFileSync(filename, "utf8");
+    return loadText(content, mergeTree, segLimit);
+}
+
+export function loadTextFromFileWithMarkers(filename: string, mergeTree: MergeTree.MergeTree, segLimit = 0) {
+    // tslint:disable-next-line:non-literal-fs-path
+    const content = fs.readFileSync(filename, "utf8");
+    return loadText(content, mergeTree, segLimit, true);
+}
 
 export function loadSegments(content: string, segLimit: number, markers: boolean = false, withProps: boolean = true) {
     // tslint:disable-next-line:no-parameter-reassignment
