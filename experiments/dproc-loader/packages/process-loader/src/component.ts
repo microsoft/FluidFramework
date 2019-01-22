@@ -48,6 +48,7 @@ export class Component extends EventEmitter implements IComponentRuntime, IProce
         quorum: IQuorum,
         storage: IDocumentStorageService,
         connectionState: ConnectionState,
+        platform: IPlatform,
         branch: string,
         minimumSequenceNumber: number,
         submitFn: (type: MessageType, contents: any) => void,
@@ -72,6 +73,7 @@ export class Component extends EventEmitter implements IComponentRuntime, IProce
             extension,
             storage,
             connectionState,
+            platform,
             branch,
             minimumSequenceNumber,
             null,
@@ -98,6 +100,7 @@ export class Component extends EventEmitter implements IComponentRuntime, IProce
         quorum: IQuorum,
         storage: IDocumentStorageService,
         connectionState: ConnectionState,
+        platform: IPlatform,
         channels: ISnapshotTree,
         branch: string,
         minimumSequenceNumber: number,
@@ -123,6 +126,7 @@ export class Component extends EventEmitter implements IComponentRuntime, IProce
             extension,
             storage,
             connectionState,
+            platform,
             branch,
             minimumSequenceNumber,
             channels,
@@ -149,10 +153,6 @@ export class Component extends EventEmitter implements IComponentRuntime, IProce
     private closed = false;
     private handler: IDeltaHandler;
 
-    // tslint:disable-next-line:variable-name
-    private _platform: IPlatform;
-    // tslint:enable-next-line:variable-name
-
     private constructor(
         public readonly tenantId: string,
         public readonly documentId: string,
@@ -167,8 +167,10 @@ export class Component extends EventEmitter implements IComponentRuntime, IProce
         private quorum: IQuorum,
         public readonly chaincode: IChaincodeComponent,
         public readonly storage: IDocumentStorageService,
-        // tslint:disable-next-line:variable-name
+        // tslint:disable:variable-name
         private _connectionState: ConnectionState,
+        private _platform: IPlatform,
+        // tslint:enable:variable-name
         public readonly branch: string,
         public readonly minimumSequenceNumber: number,
         public readonly baseSnapshot: ISnapshotTree,
@@ -253,7 +255,7 @@ export class Component extends EventEmitter implements IComponentRuntime, IProce
         //  Some trigger can happen to then allow it to take part in the UI
 
         // TODOTODO need to understand start logic
-        this.handler = await this.chaincode.run(this, null);
+        this.handler = await this.chaincode.run(this, this.platform);
     }
 
     private submit(type: MessageType, content: any) {
