@@ -4,6 +4,7 @@ import { Counter, CounterValueType, IMap, IMapView } from "@prague/map";
 import { Chat, Divider, Input, Provider, themes } from "@stardust-ui/react";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
+import { filter } from "./filter";
 
 interface IMessage {
   author: string;
@@ -37,6 +38,10 @@ class ChatWrapper extends React.Component<ChatWrapperProps, ChatWrapperState> {
 
     this.props.messages.on("valueChanged", changed => {
       let message = this.props.messageView.get(changed.key) as IMessage;
+
+      // Filter out Boston words
+      message.content = filter(message.content);
+      
       const chatProp = {
         message,
         key: changed.key
@@ -107,6 +112,10 @@ class ChatWrapper extends React.Component<ChatWrapperProps, ChatWrapperState> {
     let items: ChatProps[] = [];
 
     this.props.messageView.forEach((value: IMessage, key: string) => {
+      
+      // Filter out Boston Words
+      value.content = filter(value.content);
+      
       let chatProp: ChatProps = {
         message: value,
         key
@@ -135,8 +144,6 @@ export class ChatApp extends Document {
   protected async create() {
     this.root.set<Counter>("msgCtr", 1, CounterValueType.Name);
     this.root.set("messages", this.createMap());
-    // let messages = await this.root.get("messages");
-    // messages.set("0",  <Divider content="Today" color="primary" important />,);
   }
 
   // Once document/component is opened, finish any remaining initialization required before the

@@ -1,7 +1,7 @@
 {
-  "name": "@chaincode/counter",
-  "description": "Minimal @chaincode sample to implement a collaborative counter.",
-  "version": "0.0.50",
+  "name": "@chaincode/chat",
+  "description": "Prague Chat!",
+  "version": "0.0.55",
   "author": "Microsoft",
   "repository": "microsoft/prague",
   "main": "dist/main.bundle.js",
