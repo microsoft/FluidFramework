@@ -44,11 +44,11 @@ COPY packages/pinpoint-editor/package*.json packages/pinpoint-editor/
 COPY packages/replay-socket-storage/package*.json packages/replay-socket-storage/
 COPY packages/routerlicious/package*.json packages/routerlicious/
 COPY packages/runtime-definitions/package*.json packages/runtime-definitions/
+COPY packages/sequence/package*.json packages/sequence/
 COPY packages/services/package*.json packages/services/
 COPY packages/services-client/package*.json packages/services-client/
 COPY packages/services-core/package*.json packages/services-core/
 COPY packages/services-utils/package*.json packages/services-utils/
-COPY packages/shared-string/package*.json packages/shared-string/
 COPY packages/socket-storage/package*.json packages/socket-storage/
 COPY packages/socket-storage-shared/package*.json packages/socket-storage-shared/
 COPY packages/standard-socket-storage/package*.json packages/standard-socket-storage/

@@ -28,11 +28,11 @@ dependencies:
   '@rush-temp/replay-socket-storage': 'file:projects/replay-socket-storage.tgz'
   '@rush-temp/routerlicious': 'file:projects/routerlicious.tgz'
   '@rush-temp/runtime-definitions': 'file:projects/runtime-definitions.tgz'
+  '@rush-temp/sequence': 'file:projects/sequence.tgz'
   '@rush-temp/services': 'file:projects/services.tgz'
   '@rush-temp/services-client': 'file:projects/services-client.tgz'
   '@rush-temp/services-core': 'file:projects/services-core.tgz'
   '@rush-temp/services-utils': 'file:projects/services-utils.tgz'
-  '@rush-temp/shared-string': 'file:projects/shared-string.tgz'
   '@rush-temp/socket-storage': 'file:projects/socket-storage.tgz'
   '@rush-temp/socket-storage-shared': 'file:projects/socket-storage-shared.tgz'
   '@rush-temp/standard-socket-storage': 'file:projects/standard-socket-storage.tgz'
@@ -11257,7 +11257,7 @@ packages:
     dev: false
     name: '@rush-temp/agent'
     resolution:
-      integrity: sha512-MPO43+ytaoDhkDfXN1zB6ZNtbUP99H6xiAmR0oCDBRt5xYbY3q+8uB6Gki0/rKsDY1ui5HvG5G2LqsA9w876sw==
+      integrity: sha512-OUCOti1vKyC73mmoB/x+Jz47BVKin1kHeOANwPlV5mVHXypO44Qcp44Y3KEoTSQlGYbSgrvN2xCPLzNNdaCBZA==
       tarball: 'file:projects/agent.tgz'
     version: 0.0.0
   'file:projects/api-definitions.tgz':
@@ -11291,7 +11291,7 @@ packages:
     dev: false
     name: '@rush-temp/app-component'
     resolution:
-      integrity: sha512-eRPBAZWM7HMDjCLUSiFm1LH2tgiEf6e0GGINIMsKpNico34xC2CpJt1yRhT/lyGTU2pjYktX09zOuG8z+rQryQ==
+      integrity: sha512-Rjy+pg88XiWjTCh/4W+3QrSpOjrsKkpYaQIin6zFWh5rmXFFafl5Xeeg1adLkqkf8CZKJYcDVaOGh8qgAToePw==
       tarball: 'file:projects/app-component.tgz'
     version: 0.0.0
   'file:projects/app-datastore.tgz':
@@ -11315,7 +11315,7 @@ packages:
     dev: false
     name: '@rush-temp/app-datastore'
     resolution:
-      integrity: sha512-vnf1sAU3g/i/cm7XcBmYY0Vg9b6QmDaGq5nwFcBG6DswGytFauxpBfFHJ5lQVWMbAwVlxjAlfsWeMmtjDk5YQw==
+      integrity: sha512-bb+r+3XDc3gMz0OCJICl/BPfmjqyDwHy2h8BCpdsATESxt3U8Hcql6q7f+e8O0Pmfg2JXX5w5JPKRHyT4FyGeQ==
       tarball: 'file:projects/app-datastore.tgz'
     version: 0.0.0
   'file:projects/app-ui.tgz':
@@ -11380,7 +11380,7 @@ packages:
     dev: false
     name: '@rush-temp/client-api'
     resolution:
-      integrity: sha512-dH0GeCv8zRDglFgh6B8f7E0zllyVZ2paMRK89SLgzR8EMZzJd2zUbop5ApNPnEhkc6/Lz8xZuB65ipIMtmDdSA==
+      integrity: sha512-Lk8PV3KczVlYXb0YAEECXwTjt+V8IPgAgAR4KT/NKnj23/Spr+y1L1qD4HfQ9AoAqjCCzA3fjkkmovb/P7LlNg==
       tarball: 'file:projects/client-api.tgz'
     version: 0.0.0
   'file:projects/client-ui.tgz':
@@ -11413,7 +11413,7 @@ packages:
     dev: false
     name: '@rush-temp/client-ui'
     resolution:
-      integrity: sha512-r4iB+a9uIuaP1gKTe2laxkQbzcVQWqSsEes9r2D+eHCz8AKaFJWBqWMx7g4hhxN3jdZm5S/3YK5/AFRclmqcqQ==
+      integrity: sha512-RmuWEbOcBzgbTjXN8sH1fd7hZ4PfSwWFXLA2du9ZBkDUfCr/PA6x8kkGDxtmSUYbCSm/kd9mrD2MJzNECgtwew==
       tarball: 'file:projects/client-ui.tgz'
     version: 0.0.0
   'file:projects/flow-app.tgz':
@@ -11450,7 +11450,7 @@ packages:
     dev: false
     name: '@rush-temp/flow-document'
     resolution:
-      integrity: sha512-9PedJndovyvjyeJZm2ALn/mFG27CjdACAmrd8Yyk1F4aosC0zqCMdsejBo/hrBn1d5FBg268aUCTBwNQp+DL6g==
+      integrity: sha512-BChucYNNKp/ys+OVDymWTJ9niS0rTQm9ORmZJjFhObKyfyPvfNQIAWhOezQb0GuHKHGRfnFR9sckFZ5YVW2+Xw==
       tarball: 'file:projects/flow-document.tgz'
     version: 0.0.0
   'file:projects/flow-editor.tgz':
@@ -11648,7 +11648,7 @@ packages:
     dev: false
     name: '@rush-temp/local-test-server'
     resolution:
-      integrity: sha512-Fs0Dn8HienvyuE7J68fULBLwtG0m0a4dOiYhTlLhGmUy6MyEQ/T4DcUB0lXhnVdNGuKi411X25y3xY1kKStLmA==
+      integrity: sha512-Te/3ZkcdV4ygTsKJDi4GzWncoYydeYHiGPTJiFw7O6/Hu4OeZTopDTDx8K9GT7VMM0y67ZiZqwWaOP9jjnTK9w==
       tarball: 'file:projects/local-test-server.tgz'
     version: 0.0.0
   'file:projects/map.tgz':
@@ -11910,7 +11910,7 @@ packages:
     dev: false
     name: '@rush-temp/routerlicious'
     resolution:
-      integrity: sha512-0u7OCrdcYh0ageyxfMLVKkqZmUKIUzDaHfBAVAdcMSRCNYuQMQjvA8OWxFbSK1Z5/6EtuGQ9cqwxDOLxdCHh4g==
+      integrity: sha512-PIxMVhX0xtYlLhJIWNhKxYFwRzUmkZILxj6+zztvqwqSnnyRf450f0+H01jdDERQdz1X1o074h442D6QTftDfA==
       tarball: 'file:projects/routerlicious.tgz'
     version: 0.0.0
   'file:projects/runtime-definitions.tgz':
@@ -11925,6 +11925,26 @@ packages:
     resolution:
       integrity: sha512-bGoPFqKYrptWDfdPMvKRTAqyVC9C/fMCBhOUA46pahrnPpPmA5mYWNVwOAL7OkjaziE6/nZgbnfIV3bK7ewmZg==
       tarball: 'file:projects/runtime-definitions.tgz'
+    version: 0.0.0
+  'file:projects/sequence.tgz':
+    dependencies:
+      '@types/diff': 3.5.2
+      '@types/random-js': 1.0.31
+      '@types/uuid': 3.4.4
+      '@types/xmldoc': 1.1.3
+      diff: 3.5.0
+      random-js: 1.0.8
+      rimraf: 2.6.3
+      tslint: /tslint/5.12.1/typescript@3.2.4
+      tslint-microsoft-contrib: /tslint-microsoft-contrib/6.0.0/tslint@5.12.1+typescript@3.2.4
+      typescript: 3.2.4
+      uuid: 3.3.2
+      xmldoc: 1.1.2
+    dev: false
+    name: '@rush-temp/sequence'
+    resolution:
+      integrity: sha512-dvdT5zi1r2lgLTLZIXR87rJmKwvWmIX+9me5IO/Ftlsycxq6bN11Kmika93pwFQISYRlllC4JVlrfYWOM9DSKA==
+      tarball: 'file:projects/sequence.tgz'
     version: 0.0.0
   'file:projects/services-client.tgz':
     dependencies:
@@ -12024,26 +12044,6 @@ packages:
       integrity: sha512-eubTtyWAs1dv9yOSoQwAaSafSHnxwo9ydwDz6MS7Cz2kxIaJnTc2QilfgEtWN//j9VfP6uVeJ7lj1uUhf29o0A==
       tarball: 'file:projects/services.tgz'
     version: 0.0.0
-  'file:projects/shared-string.tgz':
-    dependencies:
-      '@types/diff': 3.5.2
-      '@types/random-js': 1.0.31
-      '@types/uuid': 3.4.4
-      '@types/xmldoc': 1.1.3
-      diff: 3.5.0
-      random-js: 1.0.8
-      rimraf: 2.6.3
-      tslint: /tslint/5.12.1/typescript@3.2.4
-      tslint-microsoft-contrib: /tslint-microsoft-contrib/6.0.0/tslint@5.12.1+typescript@3.2.4
-      typescript: 3.2.4
-      uuid: 3.3.2
-      xmldoc: 1.1.2
-    dev: false
-    name: '@rush-temp/shared-string'
-    resolution:
-      integrity: sha512-0Acmjh/hm07zQfOABAwDBQiMR+iYzjQiV9Ghyg05vMWwAHwuGZQI0oO8d1hwEqHjXlJcEXYCMZu+9zSvjhrdHA==
-      tarball: 'file:projects/shared-string.tgz'
-    version: 0.0.0
   'file:projects/socket-storage-shared.tgz':
     dependencies:
       '@types/debug': 0.0.31
@@ -12132,7 +12132,7 @@ packages:
     dev: false
     name: '@rush-temp/table-document'
     resolution:
-      integrity: sha512-MoiLT4rzoYWnDmS8+iKPv5HA2dVvAYP2CfvuinmKypnvwBxdVFp/vWGrhrEEhCzgQd9bcSLV104rJAI8p4yLxg==
+      integrity: sha512-ss4nlD2AgBjgtuWnutDCiD/EETqD9R6YrcF3w8x00yarEDANjbww5sz3fBIXxPIA9RGKeDtu3simGNhCPRwDwg==
       tarball: 'file:projects/table-document.tgz'
     version: 0.0.0
   'file:projects/table-view.tgz':
@@ -12199,7 +12199,7 @@ packages:
     dev: false
     name: '@rush-temp/tools-core'
     resolution:
-      integrity: sha512-SVeaSFmsr/ZUr6fz8bIYtZ2TxXhSd+k9fHyL+zzwMem+vBrkMcZXkL643dPN/HdOy85MuosjoaTNqub2/suncg==
+      integrity: sha512-0MoHRCBdR+HB0KKo7ZucQcCNZYjHTRKIkKhVnmWypmd9/MxoSQNkUH9dRXRE6101Fn49MXk6dbvOCHx+WaCowA==
       tarball: 'file:projects/tools-core.tgz'
     version: 0.0.0
   'file:projects/utils.tgz':
@@ -12255,11 +12255,11 @@ specifiers:
   '@rush-temp/replay-socket-storage': 'file:./projects/replay-socket-storage.tgz'
   '@rush-temp/routerlicious': 'file:./projects/routerlicious.tgz'
   '@rush-temp/runtime-definitions': 'file:./projects/runtime-definitions.tgz'
+  '@rush-temp/sequence': 'file:./projects/sequence.tgz'
   '@rush-temp/services': 'file:./projects/services.tgz'
   '@rush-temp/services-client': 'file:./projects/services-client.tgz'
   '@rush-temp/services-core': 'file:./projects/services-core.tgz'
   '@rush-temp/services-utils': 'file:./projects/services-utils.tgz'
-  '@rush-temp/shared-string': 'file:./projects/shared-string.tgz'
   '@rush-temp/socket-storage': 'file:./projects/socket-storage.tgz'
   '@rush-temp/socket-storage-shared': 'file:./projects/socket-storage-shared.tgz'
   '@rush-temp/standard-socket-storage': 'file:./projects/standard-socket-storage.tgz'

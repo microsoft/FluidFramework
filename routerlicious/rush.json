@@ -134,8 +134,8 @@
       "projectFolder": "packages/services"
     },
     {
-      "packageName": "@prague/shared-string",
-      "projectFolder": "packages/shared-string"
+      "packageName": "@prague/sequence",
+      "projectFolder": "packages/sequence"
     },
     {
       "packageName": "@prague/socket-storage-shared",

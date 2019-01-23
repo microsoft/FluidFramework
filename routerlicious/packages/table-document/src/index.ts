@@ -1,6 +1,6 @@
 import { UnboxedOper, Workbook, ResultKind } from "@prague/client-ui/ext/calc";
 import { MapExtension, IMapView, registerDefaultValueType,  } from "@prague/map";
-import { SharedString, CollaborativeStringExtension } from "@prague/shared-string";
+import { SharedString, CollaborativeStringExtension } from "@prague/sequence";
 import { Component } from "@prague/app-component";
 import { Counter, CounterValueType } from "@prague/map";
 import {
