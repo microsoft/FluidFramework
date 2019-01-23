@@ -1,18 +1,9 @@
-import {
-    IChaincodeComponent,
-    IChaincodeFactory,
-    IChaincodeHost,
-    ICodeLoader,
-    IHostRuntime,
-} from "@prague/process-definitions";
+import * as sharedText from "@chaincode/shared-text";
+import { IChaincodeFactory, ICodeLoader } from "@prague/process-definitions";
 import * as pragueLoader from "@prague/process-loader";
-import { IPlatform } from "@prague/runtime-definitions";
+import { WebPlatformFactory } from "@prague/process-utils";
 import * as socketStorage from "@prague/socket-storage";
 import * as jwt from "jsonwebtoken";
-import { MyPlatform } from "./legacyPlatform";
-import * as sharedText from "./legacySharedText";
-import * as pinpoint from "./pinpointEditor";
-import { WebPlatformFactory } from "./webPlatform";
 
 export class CodeLoader implements ICodeLoader {
     constructor(private factory: IChaincodeFactory) {
@@ -20,58 +11,6 @@ export class CodeLoader implements ICodeLoader {
 
     public async load(source: string): Promise<IChaincodeFactory> {
         return this.factory;
-    }
-}
-
-const sharedTextPkg = true;
-const basePackage = sharedTextPkg ? "@chaincode/shared-text" : "@prague/pinpoint-editor";
-
-class MyChaincodeHost implements IChaincodeHost {
-    public async getModule(type: string) {
-        switch (type) {
-            case "@chaincode/shared-text":
-                return sharedText;
-
-            case "@prague/pinpoint-editor":
-                return pinpoint;
-
-                default:
-            return Promise.reject("Unknown component");
-        }
-    }
-
-    public async close(): Promise<void> {
-        return;
-    }
-
-    // I believe that runtime needs to have everything necessary for this thing to actually load itself once this
-    // method is called
-    public async run(runtime: IHostRuntime, platform: IPlatform): Promise<IPlatform> {
-        this.doWork(runtime).catch((error) => {
-            runtime.error(error);
-        });
-
-        return new MyPlatform();
-    }
-
-    public async doWork(runtime: IHostRuntime) {
-        if (!runtime.existing) {
-            await runtime.createAndAttachProcess("text", basePackage);
-        } else {
-            await runtime.getProcess("text");
-        }
-
-        console.log("Running, running, running");
-    }
-}
-
-export class TestCode implements IChaincodeFactory {
-    public instantiateComponent(): Promise<IChaincodeComponent> {
-        throw new Error("Method not implemented.");
-    }
-
-    public async instantiateHost(): Promise<IChaincodeHost> {
-        return new MyChaincodeHost();
     }
 }
 
@@ -130,11 +69,11 @@ export async function start(id: string, factory: IChaincodeFactory): Promise<voi
     // If this is a new document we will go and instantiate the chaincode. For old documents we assume a legacy
     // package.
     if (!loaderDoc.existing) {
-        await initializeChaincode(loaderDoc, `@local/test`).catch((error) => console.log("chaincode error", error));
+        await initializeChaincode(loaderDoc, `@chaincode/shared-text`)
+            .catch((error) => console.log("chaincode error", error));
     }
 }
 
-const testCode = new TestCode();
 const documentId = window.location.search ? window.location.search.substr(1) : "test-document";
 console.log(`Loading ${documentId}`);
-start(documentId, testCode).catch((err) => console.error(err));
+start(documentId, sharedText).catch((err) => console.error(err));

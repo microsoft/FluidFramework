@@ -1,6 +1,6 @@
 // tslint:disable
 import * as MergeTree from "@prague/merge-tree";
-import * as SharedStringModule from "@prague/shared-string";
+import * as SharedStringModule from "@prague/sequence";
 import { CharacterCodes } from "./characterCodes";
 import * as ui from "../ui";
 import { isInline } from "@prague/app-ui";

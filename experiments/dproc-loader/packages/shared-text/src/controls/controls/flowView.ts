@@ -5,7 +5,7 @@ import * as types from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
 import { findRandomWord } from "@prague/merge-tree-utils";
 import { IGenericBlob, ISequencedObjectMessage, IUser } from "@prague/runtime-definitions";
-import * as SharedString from "@prague/shared-string";
+import * as SharedString from "@prague/sequence";
 import * as assert from "assert";
 import * as Geocoder from "geocoder";
 // tslint:disable-next-line:no-var-requires

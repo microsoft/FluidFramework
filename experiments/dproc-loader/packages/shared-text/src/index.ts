@@ -3,10 +3,13 @@ import * as API from "@prague/client-api";
 import { controls, ui } from "@prague/client-ui";
 import * as DistributedMap from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
-import { IChaincode } from "@prague/runtime-definitions";
-import * as SharedString from "@prague/shared-string";
+import { IChaincodeComponent, IChaincodeHost, IHostRuntime } from "@prague/process-definitions";
+import { LegacyChaincodeBridge } from "@prague/process-utils";
+import { IChaincode, IPlatform } from "@prague/runtime-definitions";
+import * as SharedString from "@prague/sequence";
 import { IStream } from "@prague/stream";
 import { default as axios } from "axios";
+import { EventEmitter } from "events";
 // tslint:disable:no-var-requires
 const performanceNow = require("performance-now");
 const debug = require("debug")("chaincode:shared-text");
@@ -128,6 +131,66 @@ class SharedText extends Document {
     }
 }
 
+class MyPlatform extends EventEmitter implements IPlatform {
+    public async queryInterface<T>(id: string): Promise<T> {
+        return null;
+    }
+}
+
+class SharedTextHost implements IChaincodeHost {
+    public async getModule(type: string) {
+        switch (type) {
+            case "@chaincode/shared-text":
+                return { instantiateComponent };
+
+            // case "@chaincode/pinpoint-editor":
+            //     return pinpoint;
+
+            default:
+                return Promise.reject("Unknown component");
+        }
+    }
+
+    public async close(): Promise<void> {
+        return;
+    }
+
+    // I believe that runtime needs to have everything necessary for this thing to actually load itself once this
+    // method is called
+    public async run(runtime: IHostRuntime, platform: IPlatform): Promise<IPlatform> {
+        this.doWork(runtime).catch((error) => {
+            runtime.error(error);
+        });
+
+        return new MyPlatform();
+    }
+
+    public async doWork(runtime: IHostRuntime) {
+        if (!runtime.existing) {
+            await runtime.createAndAttachProcess("text", "@chaincode/shared-text");
+        } else {
+            await runtime.getProcess("text");
+        }
+
+        console.log("Running, running, running");
+    }
+}
+
 export async function instantiate(): Promise<IChaincode> {
     return Component.instantiate(new SharedText());
+}
+
+/**
+ * Instantiates a new chaincode component
+ */
+export async function instantiateComponent(): Promise<IChaincodeComponent> {
+    const code = await instantiate();
+    return new LegacyChaincodeBridge(code);
+}
+
+/**
+ * Instantiates a new chaincode host
+ */
+export async function instantiateHost(): Promise<IChaincodeHost> {
+    return new SharedTextHost();
 }

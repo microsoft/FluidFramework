@@ -6,6 +6,7 @@
     "compilerOptions": {
         "target": "es6",
         "declaration": true,
+        "declarationMap": true,
         "noImplicitAny": false,
         "noUnusedLocals": true,
         "module": "esnext",

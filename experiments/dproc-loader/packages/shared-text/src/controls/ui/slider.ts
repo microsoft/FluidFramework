@@ -1,6 +1,6 @@
 import { BoxState, Inline } from "@prague/app-ui";
 import { FlowViewContext } from ".";
-import { IllFormedFormula, NotImplemented, ResultKind, Workbook } from "../../ext/calc";
+import { IllFormedFormula, NotImplemented, ResultKind, Workbook } from "../../../ext/calc";
 
 export class SliderState extends BoxState {
     public value: string;
