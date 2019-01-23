@@ -5,6 +5,7 @@ const path = require('path');
 module.exports = {
     entry: './src/index.ts',
     devtool: 'source-map',
+    mode: "development",
     module: {
         rules: [
             {
@@ -44,6 +45,13 @@ module.exports = {
                 loader: 'html-loader'
             }
         ]
+    },
+    node: {
+        dgram: 'empty',
+        fs: 'empty',
+        net: 'empty',
+        tls: 'empty',
+        child_process: 'empty',
     },
     resolve: {
         extensions: [ '.tsx', '.ts', '.js' ]

@@ -5,6 +5,7 @@
     ],
     "compilerOptions": {
         "target": "es6",
+        "declaration": true,
         "noImplicitAny": false,
         "noUnusedLocals": true,
         "module": "esnext",

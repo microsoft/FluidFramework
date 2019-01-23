@@ -47,6 +47,8 @@ export interface IDeltaHandlerStrategy {
  * messages in order regardless of possible network conditions or timings causing out of order delivery.
  */
 export class DeltaManager extends EventEmitter implements runtime.IDeltaManager {
+    public readonly clientType: string;
+
     private pending: runtime.ISequencedDocumentMessage[] = [];
     private fetching = false;
 
@@ -82,8 +84,6 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
 
     private handler: IDeltaHandlerStrategy;
     private deltaStorageP: Promise<runtime.IDocumentDeltaStorageService>;
-
-    private clientType: string;
 
     private contentCache = new ContentCache(DefaultContentBufferSize);
 
