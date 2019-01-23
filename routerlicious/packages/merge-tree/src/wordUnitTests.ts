@@ -6,7 +6,7 @@ import * as Properties from "./properties";
 import * as ops from "./ops";
 import * as path from "path";
 import * as random from "random-js";
-import { loadTextFromFileWithMarkers } from "./text";
+import { loadTextFromFileWithMarkers } from "./test/testUtils";
 
 function clock() {
     return process.hrtime();

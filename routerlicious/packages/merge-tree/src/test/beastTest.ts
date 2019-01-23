@@ -7,8 +7,8 @@ import * as path from "path";
 import * as random from "random-js";
 import * as MergeTree from "..";
 import * as Base from "../base";
-import { loadTextFromFile } from "../text";
 import { TestServer } from "./testServer";
+import { loadTextFromFile } from "./testUtils";
 
 // tslint:disable
 
