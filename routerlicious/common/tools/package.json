@@ -1,0 +1,7 @@
+{
+  "name": "tools",
+  "private": true,
+  "devDependencies": {
+    "@microsoft/rush": "^5.5.4"
+  }
+}

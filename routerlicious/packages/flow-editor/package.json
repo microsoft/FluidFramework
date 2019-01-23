@@ -19,8 +19,7 @@
     "dev": "npm run build:dev -- --watch",
     "publish-local": "npm publish --registry http://localhost:4873",
     "publish-patch-local": "npm version patch && npm run publish-local",
-    "bench": "ts-node --project tsconfig.prod.json bench/index.ts",
-    "test": "ts-mocha -p tsconfig.dev.json \"test/**/*.{ts,tsx}\""
+    "bench": "ts-node --project tsconfig.prod.json bench/index.ts"
   },
   "author": "Microsoft",
   "repository": "microsoft/prague",
