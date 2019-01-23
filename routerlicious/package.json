@@ -33,9 +33,10 @@
     "watch:webpack": "lerna run --parallel webpack -- -- --watch"
   },
   "devDependencies": {
+    "@microsoft/rush": "^5.5.4",
     "concurrently": "^4.0.1",
     "copyfiles": "^2.1.0",
-    "lerna": "^3.1.4",
-    "rush": "^0.0.2"
-  }
+    "lerna": "^3.1.4"
+  },
+  "dependencies": {}
 }
