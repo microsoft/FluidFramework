@@ -4,6 +4,7 @@ import * as resources from "@prague/gitresources";
 import * as pragueLoader from "@prague/loader";
 import { IMap, MapExtension } from "@prague/map";
 import {
+    Browser,
     IClient,
     IDeltaManager,
     IDocumentService,
@@ -26,7 +27,7 @@ import { CodeLoader } from "./codeLoader";
 import { debug } from "./debug";
 import { LeaderElector } from "./leaderElection";
 import { PlatformFactory } from "./platform";
-import { analyzeTasks, getLeader } from "./taskAnalyzer";
+import { analyzeTasks } from "./taskAnalyzer";
 
 // tslint:disable-next-line
 const apiVersion = require("../../package.json").version;
@@ -130,20 +131,10 @@ export class Document extends EventEmitter {
         // Experimental leader election.
         this.startLeaderElection();
 
-        // Run task analyzer for already present clients.
-        this.runTaskAnalyzer();
-
-        this.on("clientJoin", () => {
-            this.runTaskAnalyzer();
-        });
-
         this.on("clientLeave", (leftClientId) => {
             // Switch to read only mode if a client receives it's own leave message.
-            // Stop any pending help request.
             if (this.clientId === leftClientId) {
                 this.runtime.deltaManager.enableReadonlyMode();
-            } else {
-                this.runTaskAnalyzer();
             }
         });
     }
@@ -263,7 +254,7 @@ export class Document extends EventEmitter {
 
     private startLeaderElection() {
         // Temporary disable of quorum leader election.
-        if (this.runtime.deltaManager && this.runtime.deltaManager.clientType === "Test") {
+        if (this.runtime.deltaManager && this.runtime.deltaManager.clientType === Browser) {
             if (this.runtime.connected) {
                 this.startVoting();
             } else {
@@ -276,8 +267,15 @@ export class Document extends EventEmitter {
 
     private startVoting() {
         this.leaderElector = new LeaderElector(this.runtime.getQuorum(), this.runtime.clientId);
+        debug(`Initial leadership proposal`);
+        this.leaderElector.proposeLeadership().then(() => {
+            debug(`Proposal accepted`);
+        }, (err) => {
+            debug(`Proposal rejected: ${err}`);
+        });
         this.leaderElector.on("leader", (clientId: string) => {
-            // console.log(`Event received: ${clientId}`);
+            debug(`New leader elected: ${clientId}`);
+            this.runTaskAnalyzer(clientId);
         });
     }
 
@@ -286,11 +284,9 @@ export class Document extends EventEmitter {
      * If so, calculate if there are any unhandled tasks for browsers and remote agents.
      * Emit local help message for this browser and submits a remote help message for agents.
      */
-    private runTaskAnalyzer() {
-        const currentLeader = getLeader(this.runtime.getQuorum().getMembers());
-        // tslint:disable-next-line:strict-boolean-expressions
-        const isLeader = currentLeader && currentLeader.clientId === this.clientId;
-        if (isLeader) {
+    private runTaskAnalyzer(clientId: string) {
+
+        if (clientId === this.clientId) {
             // Analyze the current state and ask for local and remote help seperately.
             const helpTasks = analyzeTasks(this.clientId, this.runtime.getQuorum().getMembers(), documentTasks);
             // tslint:disable-next-line:strict-boolean-expressions
