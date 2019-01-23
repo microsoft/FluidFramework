@@ -10,6 +10,9 @@
     "postinstall": "(npm run registryAuth || true) && lerna bootstrap --hoist --nohoist tslint-microsoft-contrib",
     "publish-local": "lerna run publish-local --stream",
     "registryAuth": "docker login -u prague -p /vM3i=D+K4+vj+pgha=cg=55OQLDWj3w prague.azurecr.io",
+    "rush:build": "rush build",
+    "rush:install": "rush install",
+    "rush:update": "rush update && rush check",
     "start": "docker-compose -f docker-compose.yml -f docker-compose.dev.yml up",
     "start:standalone": "docker-compose -f docker-compose.standalone.yml up",
     "start:rdkafka": "docker-compose -f docker-compose.rdkafka.yml -f docker-compose.dev.yml up",
@@ -23,6 +26,8 @@
     "tsc": "lerna run tsc --stream",
     "tslint": "lerna run tslint --stream",
     "watch": "concurrently \"npm run watch:tsc\" \"npm run watch:esnext\" \"npm run watch:webpack\"",
+    "use:lerna": "git clean -Xdf && npm i",
+    "use:rush": "git clean -Xdf && (npm run registryAuth || true) && rush install",
     "watch:esnext": "lerna run --parallel build:esnext -- -- --watch",
     "watch:tsc": "lerna run --parallel tsc -- -- --watch",
     "watch:webpack": "lerna run --parallel webpack -- -- --watch"
@@ -30,6 +35,7 @@
   "devDependencies": {
     "concurrently": "^4.0.1",
     "copyfiles": "^2.1.0",
-    "lerna": "^3.1.4"
+    "lerna": "^3.1.4",
+    "rush": "^0.0.2"
   }
 }
