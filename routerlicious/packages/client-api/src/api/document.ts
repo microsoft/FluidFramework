@@ -122,6 +122,8 @@ export class Document extends EventEmitter {
 
     private leaderElector: LeaderElector;
 
+    private leaderClientId: string;
+
     /**
      * Constructs a new document from the provided details
      */
@@ -136,6 +138,7 @@ export class Document extends EventEmitter {
             if (this.clientId === leftClientId) {
                 this.runtime.deltaManager.enableReadonlyMode();
             }
+            this.runTaskAnalyzer();
         });
     }
 
@@ -275,7 +278,8 @@ export class Document extends EventEmitter {
         });
         this.leaderElector.on("leader", (clientId: string) => {
             debug(`New leader elected: ${clientId}`);
-            this.runTaskAnalyzer(clientId);
+            this.leaderClientId = clientId;
+            this.runTaskAnalyzer();
         });
     }
 
@@ -284,9 +288,8 @@ export class Document extends EventEmitter {
      * If so, calculate if there are any unhandled tasks for browsers and remote agents.
      * Emit local help message for this browser and submits a remote help message for agents.
      */
-    private runTaskAnalyzer(clientId: string) {
-
-        if (clientId === this.clientId) {
+    private runTaskAnalyzer() {
+        if (this.leaderClientId === this.clientId) {
             // Analyze the current state and ask for local and remote help seperately.
             const helpTasks = analyzeTasks(this.clientId, this.runtime.getQuorum().getMembers(), documentTasks);
             // tslint:disable-next-line:strict-boolean-expressions
@@ -306,7 +309,6 @@ export class Document extends EventEmitter {
                     this.runtime.submitMessage(MessageType.RemoteHelp, remoteHelpMessage);
                 }
             }
-
         }
     }
 }
