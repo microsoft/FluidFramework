@@ -376,16 +376,28 @@ export class ComponentHost extends EventEmitter implements IDeltaHandler {
         this.closeFn();
     }
 
-    public prepare(message: ISequencedDocumentMessage, local: boolean): Promise<any> {
-        return message.type === MessageType.Attach
-            ? this.prepareAttach(message, local)
-            : this.prepareOp(message, local);
+    public async prepare(message: ISequencedDocumentMessage, local: boolean): Promise<any> {
+        switch (message.type) {
+            case MessageType.Attach:
+                return this.prepareAttach(message, local);
+            case MessageType.Operation:
+                return this.prepareOp(message, local);
+            default:
+                return;
+        }
     }
 
     public process(message: ISequencedDocumentMessage, local: boolean, context: any) {
-        message.type === MessageType.Attach
-            ? this.processAttach(message, local, context)
-            : this.processOp(message, local, context);
+        switch (message.type) {
+            case MessageType.Attach:
+                this.processAttach(message, local, context);
+                break;
+            case MessageType.Operation:
+                this.processOp(message, local, context);
+                break;
+            default:
+                return;
+        }
     }
 
     public updateMinSequenceNumber(msn: number) {

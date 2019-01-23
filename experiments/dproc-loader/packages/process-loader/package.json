@@ -3,15 +3,13 @@
   "version": "0.1.0",
   "description": "Prague distributed process loader",
   "main": "dist/index.js",
-  "module": "lib/index.js",
   "types": "dist/index.d.ts",
   "sideEffects": "false",
   "scripts": {
-    "build": "npm run tsc && npm run build:esnext && npm run tslint",
+    "build": "npm run tsc && npm run tslint",
     "build:full": "npm run build",
     "clean": "rimraf dist && rimraf lib",
     "tsc": "tsc",
-    "build:esnext": "tsc --outDir lib --m esnext",
     "test": "mocha --recursive dist/test",
     "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml",
     "tslint": "tslint --project tsconfig.json --format verbose"

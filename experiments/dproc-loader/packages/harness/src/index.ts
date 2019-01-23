@@ -10,6 +10,7 @@ import { IPlatform } from "@prague/runtime-definitions";
 import * as socketStorage from "@prague/socket-storage";
 import * as jwt from "jsonwebtoken";
 import { MyPlatform } from "./legacyPlatform";
+import * as sharedText from "./legacySharedText";
 import * as pinpoint from "./pinpointEditor";
 import { WebPlatformFactory } from "./webPlatform";
 
@@ -22,13 +23,20 @@ export class CodeLoader implements ICodeLoader {
     }
 }
 
+const sharedTextPkg = true;
+const basePackage = sharedTextPkg ? "@chaincode/shared-text" : "@prague/pinpoint-editor";
+
 class MyChaincodeHost implements IChaincodeHost {
     public async getModule(type: string) {
         switch (type) {
-            case "@chaincode/pinpoint-editor":
+            case "@chaincode/shared-text":
+                return sharedText;
+
+            case "@prague/pinpoint-editor":
                 return pinpoint;
-            default:
-                return Promise.reject("Unknown component");
+
+                default:
+            return Promise.reject("Unknown component");
         }
     }
 
@@ -48,9 +56,9 @@ class MyChaincodeHost implements IChaincodeHost {
 
     public async doWork(runtime: IHostRuntime) {
         if (!runtime.existing) {
-            await runtime.createAndAttachProcess("pinpoint", "@chaincode/pinpoint-editor");
+            await runtime.createAndAttachProcess("text", basePackage);
         } else {
-            await runtime.getProcess("pinpoint");
+            await runtime.getProcess("text");
         }
 
         console.log("Running, running, running");
@@ -127,5 +135,6 @@ export async function start(id: string, factory: IChaincodeFactory): Promise<voi
 }
 
 const testCode = new TestCode();
-const documentId = window.location.hash ? window.location.hash.substr(1) : "test-document";
+const documentId = window.location.search ? window.location.search.substr(1) : "test-document";
+console.log(`Loading ${documentId}`);
 start(documentId, testCode).catch((err) => console.error(err));

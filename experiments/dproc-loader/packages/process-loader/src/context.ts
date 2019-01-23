@@ -226,11 +226,12 @@ export class Context implements IHostRuntime {
         }
 
         assert(component);
+        const innerContents = envelope.contents as { content: any, type: string };
 
         const transformed: ISequencedDocumentMessage = {
             clientId: message.clientId,
             clientSequenceNumber: message.clientSequenceNumber,
-            contents: envelope.contents.content,
+            contents: innerContents.content,
             metadata: message.metadata,
             minimumSequenceNumber: message.minimumSequenceNumber,
             origin: message.origin,
@@ -238,7 +239,7 @@ export class Context implements IHostRuntime {
             sequenceNumber: message.sequenceNumber,
             timestamp: message.timestamp,
             traces: message.traces,
-            type: envelope.contents.type,
+            type: innerContents.type,
             user: message.user,
         };
 
@@ -249,11 +250,12 @@ export class Context implements IHostRuntime {
         const envelope = message.contents as IEnvelope;
         const component = this.components.get(envelope.address);
         assert(component);
+        const innerContents = envelope.contents as { content: any, type: string };
 
         const transformed: ISequencedDocumentMessage = {
             clientId: message.clientId,
             clientSequenceNumber: message.clientSequenceNumber,
-            contents: envelope.contents.content,
+            contents: innerContents.content,
             metadata: message.metadata,
             minimumSequenceNumber: message.minimumSequenceNumber,
             origin: message.origin,
@@ -261,7 +263,7 @@ export class Context implements IHostRuntime {
             sequenceNumber: message.sequenceNumber,
             timestamp: message.timestamp,
             traces: message.traces,
-            type: envelope.contents.type,
+            type: innerContents.type,
             user: message.user,
         };
 
