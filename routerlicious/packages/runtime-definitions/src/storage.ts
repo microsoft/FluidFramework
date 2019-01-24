@@ -1,6 +1,6 @@
 import * as resources from "@prague/gitresources";
 import { EventEmitter } from "events";
-import { IClient } from "./clients";
+import { IClient, ISequencedClient } from "./clients";
 import { ISequencedProposal } from "./consensus";
 import { IContentMessage, IDocumentMessage, ISequencedDocumentMessage } from "./protocol";
 import { ITokenProvider } from "./tokens";
@@ -25,7 +25,7 @@ export interface IDocumentAttributes {
     /**
      * List of clients when the snapshot was taken
      */
-    clients: Array<[string, IClient]>;
+    clients: Array<[string, ISequencedClient]>;
 
     /**
      * List of clients when the snapshot was taken
