@@ -1,0 +1,74 @@
+<div class="container">
+
+<div class="page-header">
+  <h2>{{config.title}} 
+      <div class="btn btn-default viewToggle" ng-click="changeView()">
+          <span ng-if="listView">Expanded view</span>
+          <span ng-if="!listView">List view</span>
+      </div>
+  </h2>
+  <p ng-bind-html="config.greeting | html"></p>
+</div>
+
+<div ng-if="!listView">
+	
+	<div class="row">
+    
+	    <div class="col-md-4">
+	        <div class="thumbnail new-map">
+	            <p><a class="btn btn-primary" href="/#/maps/new">Create new map</a></p>
+	        </div>
+	    </div>
+
+	    <div ng-repeat="(i, map) in maps" class="col-md-4">
+	        <a href="/#/maps/{{map.id}}" class="thumbnail">
+	            <!-- <div class="prevmap" id="prevmap-{{i}}"></div> -->
+	            <map-rough-preview lat="{{map.lat}}" lon="{{map.lon}}" zoom="{{map.zoom}}" basemap="{{map.basemap}}"></map-rough-preview>
+	            <div class="caption">
+	                <h4 ng-if="map.hed">{{map.hed}} <small>{{map.slug}}</small></h4>
+	                <h4 ng-if="!map.hed">{{map.slug}}</h4>
+	                <p>Created {{map.creation_date | date:"dd MMM 'at' hh:mm"}} <br/>
+	                    <span class="published-label label label-default" published-check slug="{{map.slug}}"></span></p>
+	            </div>
+
+	        </a>
+	    </div>
+	
+	</div>
+	
+	<div class="btn btn-primary btn-block btn-lg" ng-click="loadMore()" ng-if="!hideLoadMore">Load more</div>
+	<div class="btn btn-default btn-block btn-lg" ng-click="changeView()">Switch to list view</div>
+
+</div>
+
+<div ng-if="listView">
+    
+    <p><a href="/#/maps/new">Create new map</a></p>
+    
+    
+    <table class="table">
+        <tr>
+            <th>Slug</th>
+            <th>Hed</th>
+            <th>Last updated</th>
+            <th></th>
+            <th></th>
+        </tr>
+        <tr ng-repeat="(i, map) in allMaps">
+            <td><a href="/#/maps/{{map.id}}">{{map.slug}}</a></td>
+            <td>{{map.hed}}</td>
+            <td>{{map.modification_date | date:"MM/dd/yyyy 'at' h:mma"}}</td>
+            <td><a preview-link slug="{{map.slug}}" aspect-ratio="{{map['aspect-ratio']}}">Preview</a></td>
+            <td><a live-link slug="{{map.slug}}">Live link</a></td>
+            
+            
+        </tr>
+    </table>
+
+	<div class="btn btn-default btn-block btn-lg" ng-click="changeView()">Switch to expanded view</div>
+
+</div>
+
+
+
+</div>

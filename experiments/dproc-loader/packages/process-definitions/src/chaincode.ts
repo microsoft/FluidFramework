@@ -26,11 +26,18 @@ export interface IChaincodeComponent {
      */
     close(): Promise<void>;
 
+    // TODO it's not clear what platform is passed on load. Does it get access to the platform given to the context?
+    // or the actual host platform?
     /**
      * Invoked once the chaincode has been fully instantiated on the document. Run returns a platform
      * interface that can be used to access the running component.
      */
     run(runtime: IComponentRuntime, platform: IPlatform): Promise<IDeltaHandler>;
+
+    /**
+     * Allows code to attach to the given component.
+     */
+    attach(platform: IComponentPlatform): Promise<IComponentPlatform>;
 }
 
 export interface IProcess {
@@ -42,6 +49,16 @@ export interface IDeltaHandler {
     process: (message: ISequencedDocumentMessage, local: boolean, context: any) => void;
     updateMinSequenceNumber: (value: number) => void;
     changeConnectionState(value: ConnectionState, clientId: string);
+}
+
+/**
+ * The platform interface exposes access to underlying pl
+ */
+export interface IComponentPlatform extends IPlatform {
+    /**
+     * Detaches the given platform
+     */
+    detach();
 }
 
 export interface IComponentRuntime {
@@ -73,6 +90,15 @@ export interface IComponentRuntime {
     error(err: any): void;
 
     submitMessage(type: MessageType, content: any): any;
+
+    createAndAttachProcess(id: string, pkg: string): Promise<IComponentRuntime>;
+
+    getProcess(id: string, wait: boolean): Promise<IComponentRuntime>;
+
+    /**
+     * Allows for attachment to the given component
+     */
+    attach(platform: IComponentPlatform): Promise<IComponentPlatform>;
 }
 
 export interface IHostRuntime {
@@ -99,9 +125,9 @@ export interface IHostRuntime {
 
     // I believe these next two things won't be necessary
 
-    getProcess(id: string): Promise<IProcess>;
+    getProcess(id: string, wait?: boolean): Promise<IComponentRuntime>;
 
-    createAndAttachProcess(id: string, pkg: string): Promise<IProcess>;
+    createAndAttachProcess(id: string, pkg: string): Promise<IComponentRuntime>;
 
     // TODO at some point we may ant to split create from attach for processes. But the distributed data
     // structures aren't yet prepared for this. For simplicity we just offer a createAndAttach

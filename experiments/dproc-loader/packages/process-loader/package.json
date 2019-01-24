@@ -10,6 +10,7 @@
     "build:full": "npm run build",
     "clean": "rimraf dist && rimraf lib",
     "tsc": "tsc",
+    "tsc:watch": "tsc --watch",
     "test": "mocha --recursive dist/test",
     "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml",
     "tslint": "tslint --project tsconfig.json --format verbose"

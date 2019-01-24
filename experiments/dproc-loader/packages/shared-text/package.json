@@ -8,6 +8,7 @@
   "scripts": {
     "build": "npm run tsc && npm run webpack && npm run tslint",
     "tsc": "tsc",
+    "tsc:watch": "tsc --watch",
     "webpack": "webpack --config webpack.config.js",
     "tslint": "tslint 'src/**/*.ts'",
     "start": "prague-dev-server --config webpack.config.js --package package.json"
@@ -29,6 +30,9 @@
     "webpack-visualizer-plugin": "^0.1.11"
   },
   "dependencies": {
+    "@chaincode/charts": "^0.1.0",
+    "@chaincode/monaco": "^0.1.0",
+    "@chaincode/pinpoint-editor": "^0.1.0",
     "@prague/agent": "^0.1.0",
     "@prague/api-definitions": "^0.1.0",
     "@prague/app-component": "^0.1.0",
@@ -41,8 +45,10 @@
     "@prague/map": "^0.1.0",
     "@prague/merge-tree": "^0.1.0",
     "@prague/merge-tree-utils": "^0.1.0",
+    "@prague/process-definitions": "^0.1.0",
+    "@prague/process-utils": "^0.1.0",
     "@prague/runtime-definitions": "^0.1.0",
-    "@prague/shared-string": "^0.1.0",
+    "@prague/sequence": "^0.1.0",
     "@prague/socket-storage": "^0.1.0",
     "@prague/stream": "^0.1.0",
     "@prague/utils": "^0.1.0",

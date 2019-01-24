@@ -2,7 +2,7 @@
 import * as api from "@prague/client-api";
 import { IMap } from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
-import * as SharedString from "@prague/shared-string";
+import * as SharedString from "@prague/sequence";
 import { IStream } from "@prague/stream";
 import * as ui from "../ui";
 import { debug } from "./debug";

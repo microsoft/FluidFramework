@@ -13,7 +13,6 @@ import { Image } from "./image";
 import { InkCanvas } from "./inkCanvas";
 import { Popup } from "./popup";
 import { Orientation, StackPanel } from "./stackPanel";
-import { Video } from "./video";
 
 const colors: IColor[] = [
     { r: 253 / 255, g:   0 / 255, b:  12 / 255, a: 1 },
@@ -45,9 +44,8 @@ export class FlexView extends ui.Component {
     private popup: Popup;
     private colorStack: StackPanel;
     private components: IFlexViewComponent[] = [];
-    private insightsMap: IMapView;
 
-    constructor(element: HTMLDivElement, private doc: api.Document, root: IMapView) {
+    constructor(element: HTMLDivElement, doc: api.Document, root: IMapView) {
         super(element);
 
         const dockElement = document.createElement("div");
@@ -74,10 +72,6 @@ export class FlexView extends ui.Component {
         if (!root.has("insights")) {
             root.set("insights", doc.createMap());
         }
-        root.get<IMap>("insights").getView()
-            .then((insightsView) => {
-                this.insightsMap = insightsView;
-            });
         this.processComponents(root.get("components"));
     }
 
@@ -231,29 +225,6 @@ export class FlexView extends ui.Component {
                 }
             }
 
-        } else if (incl.type === "video") {
-            if (document.getElementById(incl.sha) === null) {
-                const videoDiv = document.createElement("div");
-                videoDiv.id = incl.sha;
-                videoDiv.style.height = incl.height + 40 + "px";
-                videoDiv.style.width = incl.width + 15 + "px";
-                videoDiv.style.border = "3px solid black";
-
-                if (!this.insightsMap.has(incl.sha)) {
-                    this.insightsMap.set(incl.sha, this.doc.createMap());
-                }
-                const videoMap = this.insightsMap.get<IMap>(incl.sha);
-
-                const video = new Video(videoDiv, videoMap, incl.url);
-                ink.addVideo(video);
-            } else {
-                const videoDiv = document.getElementById(incl.sha);
-                const video = videoDiv.getElementsByTagName("video").item(0);
-                if (video.height === 0) {
-                    video.src = video.src;
-                    video.load();
-                }
-            }
         }
     }
 }

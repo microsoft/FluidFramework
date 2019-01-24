@@ -1,6 +1,6 @@
 // tslint:disable:no-empty-interface
 import { Block, BoxState } from "@prague/app-ui";
-import { ResultKind } from "../../ext/calc";
+import { ResultKind } from "../../../ext/calc";
 import { CollaborativeWorkbook } from "../calc";
 import { FlowViewContext } from "./flowViewContext";
 

@@ -1,6 +1,6 @@
 import { Block, BoxState } from "@prague/app-ui";
-import { ResultKind } from "../../ext/calc";
-import * as Charts from "../../ext/microsoft-charts/";
+import { ResultKind } from "../../../ext/calc";
+import * as Charts from "../../../ext/microsoft-charts/";
 import { CollaborativeWorkbook } from "../calc";
 import { FlowViewContext } from "./flowViewContext";
 

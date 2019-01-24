@@ -1,6 +1,6 @@
 // TODO: Should move Formula to a separate file.
 import { BoxState, Inline } from "@prague/app-ui";
-import { IllFormedFormula, NotImplemented, ResultKind, Workbook } from "../../ext/calc";
+import { IllFormedFormula, NotImplemented, ResultKind, Workbook } from "../../../ext/calc";
 import { FlowViewContext } from "./flowViewContext";
 
 export class FormulaState extends BoxState {

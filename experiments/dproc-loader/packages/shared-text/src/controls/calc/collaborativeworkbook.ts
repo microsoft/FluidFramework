@@ -1,5 +1,5 @@
 import * as map from "@prague/map";
-import { UnboxedOper, Workbook } from "../../ext/calc";
+import { UnboxedOper, Workbook } from "../../../ext/calc";
 
 /**
  * To avoid a cyclic build dependency, the Workbook base class has no knowledge of Prague.

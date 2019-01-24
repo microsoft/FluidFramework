@@ -1,8 +1,10 @@
 import {
     IChaincodeComponent,
     IChaincodeHost,
+    IComponentPlatform,
     IComponentRuntime,
     IDeltaHandler,
+    IHostRuntime,
     IProcess,
 } from "@prague/process-definitions";
 import {
@@ -33,6 +35,7 @@ export interface IChannelState {
 
 export class Component extends EventEmitter implements IComponentRuntime, IProcess {
     public static async create(
+        hostRuntime: IHostRuntime,
         tenantId: string,
         documentId: string,
         id: string,
@@ -59,6 +62,7 @@ export class Component extends EventEmitter implements IComponentRuntime, IProce
         const extension = await module.instantiateComponent();
 
         const component = new Component(
+            hostRuntime,
             tenantId,
             documentId,
             id,
@@ -85,6 +89,7 @@ export class Component extends EventEmitter implements IComponentRuntime, IProce
     }
 
     public static async LoadFromSnapshot(
+        hostRuntime: IHostRuntime,
         tenantId: string,
         documentId: string,
         id: string,
@@ -112,6 +117,7 @@ export class Component extends EventEmitter implements IComponentRuntime, IProce
         const extension = await module.instantiateComponent();
 
         const component = new Component(
+            hostRuntime,
             tenantId,
             documentId,
             id,
@@ -154,6 +160,7 @@ export class Component extends EventEmitter implements IComponentRuntime, IProce
     private handler: IDeltaHandler;
 
     private constructor(
+        private readonly hostRuntime: IHostRuntime,
         public readonly tenantId: string,
         public readonly documentId: string,
         public readonly id: string,
@@ -178,6 +185,14 @@ export class Component extends EventEmitter implements IComponentRuntime, IProce
         public readonly snapshotFn: (message: string) => Promise<void>,
         public readonly closeFn: () => void) {
         super();
+    }
+
+    public createAndAttachProcess(id: string, pkg: string): Promise<IComponentRuntime> {
+        return this.hostRuntime.createAndAttachProcess(id, pkg);
+    }
+
+    public getProcess(id: string, wait: boolean): Promise<IComponentRuntime> {
+        return this.hostRuntime.getProcess(id, wait);
     }
 
     public async ready(): Promise<void> {
@@ -256,6 +271,10 @@ export class Component extends EventEmitter implements IComponentRuntime, IProce
 
         // TODOTODO need to understand start logic
         this.handler = await this.chaincode.run(this, this.platform);
+    }
+
+    public async attach(platform: IComponentPlatform): Promise<IComponentPlatform> {
+        return this.chaincode.attach(platform);
     }
 
     private submit(type: MessageType, content: any) {

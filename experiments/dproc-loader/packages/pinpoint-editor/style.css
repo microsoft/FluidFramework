@@ -1,0 +1,145 @@
+
+body {
+    padding-bottom: 20px;    
+}
+
+
+
+/* menu */
+
+.thumbnail {
+    min-height: 240px !important;
+}
+.thumbnail:hover {
+    text-decoration: none;
+}
+
+h4 small {
+    white-space: nowrap;
+}
+
+.published-label {
+    opacity: 0.75;
+}
+
+
+/* map editor */
+
+.map-outer {
+    // height: 400px;
+}
+
+#map {
+    height: 100%;
+}
+
+.container {
+    margin-top: 40px;
+}
+
+.marker-box {
+    // border: 1px solid #ddd;
+    // padding: 20px;
+}
+
+.map-preview {
+    width: 300px;
+    background: white;
+}
+
+.map-preview.wide {
+    // width: 540px;
+}
+
+.delete-marker {
+    float: right;
+    padding: 0;
+    color: white;
+}
+.delete-marker:hover {
+    color: white;
+}
+.viewToggle {
+    float: right;
+}
+.prevmap {
+    height: 100px;
+    pointer-events: none;
+}
+.new-map {
+    text-align: center;
+    padding: 60px 0;
+}
+
+
+.search-form {
+    border-radius: 30px;
+}
+
+.save-button {
+    margin-left: 20px;
+}
+
+.save-notice {
+    font-size: 12px;
+    color: #777;
+    display: inline-block;
+    margin-left: 10px;
+}
+
+.delete-true-button {
+    margin-right: 50px !important;
+}
+
+input[type="range"] {
+    width: 25%;
+    display: inline-block;
+    vertical-align: middle;
+    margin-left: 10px;
+}
+
+.help-button {
+    float: right;
+}
+
+.zoom-input {
+    width: 40px;
+    text-align: center;
+}
+
+div.leaflet-control-minimap.leaflet-container.leaflet-retina.leaflet-fade-anim.leaflet-control,
+a.leaflet-control-zoom-in {
+    box-sizing: content-box;
+}
+
+label[disabled] {
+    cursor: default;
+    color: #aaa;
+}
+
+.json-input {
+    font-family: 'Andale Mono', monospace;
+    font-size: 11px;
+    -webkit-user-select: all;
+    -moz-user-select: all;
+    -ms-user-select: all;
+    user-select: all;
+}
+
+.geojson-input {
+    font-family: 'Andale Mono', monospace;
+    font-size: 10px;
+}
+
+.modal-dialog {
+    z-index: 50000;
+}
+
+@media (min-width: 800px) {
+    .map-preview {
+        position: fixed;
+        right: 60%;
+    }
+}
+
+

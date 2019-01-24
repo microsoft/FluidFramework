@@ -4,8 +4,9 @@ import * as api from "@prague/client-api";
 import * as types from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
 import { findRandomWord } from "@prague/merge-tree-utils";
+import { ILegacyRuntime } from "@prague/process-definitions";
 import { IGenericBlob, ISequencedObjectMessage, IUser } from "@prague/runtime-definitions";
-import * as SharedString from "@prague/shared-string";
+import * as SharedString from "@prague/sequence";
 import * as assert from "assert";
 import * as Geocoder from "geocoder";
 // tslint:disable-next-line:no-var-requires
@@ -413,9 +414,21 @@ const commands: ICmd[] = [
     },
     {
         exec: (f) => {
-            f.insertInnerComponent("map", "@chaincode/pinpoint-editor@0.6.15");
+            f.insertInnerComponent("map", "@chaincode/pinpoint-editor");
         },
         key: "insert inner map",
+    },
+    {
+        exec: (f) => {
+            f.insertInnerComponent("chart", "@chaincode/charts");
+        },
+        key: "insert inner chart",
+    },
+    {
+        exec: (f) => {
+            f.insertInnerComponent("chart", "@chaincode/monaco");
+        },
+        key: "insert inner monaco",
     },
     {
         exec: (f) => {
@@ -5041,6 +5054,10 @@ export class FlowView extends ui.Component {
 
     public insertInnerComponent(prefix: string, chaincode: string) {
         const id = `${prefix}${Date.now()}`;
+
+        const runtime = this.collabDocument.runtime as ILegacyRuntime;
+        runtime.createAndAttachProcess(id, chaincode);
+
         this.insertComponent("innerComponent", { id, chaincode });
     }
 

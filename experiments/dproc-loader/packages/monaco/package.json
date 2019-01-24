@@ -1,0 +1,58 @@
+{
+  "name": "@chaincode/monaco",
+  "version": "0.1.0",
+  "description": "Monaco code editor",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "author": "Microsoft",
+  "scripts": {
+    "build": "npm run tsc && npm run tslint && npm run webpack",
+    "start": "prague-dev-server --config webpack.config.js --package package.json",
+    "tsc": "tsc",
+    "tslint": "tslint 'src/**/*.ts'",
+    "webpack": "webpack --config webpack.config.js --open",
+    "update": "npm run build && npm version patch && npm publish --registry http://localhost:4873"
+  },
+  "dependencies": {
+    "@prague/app-component": "^0.1.0",
+    "@prague/map": "^0.1.0",
+    "@prague/merge-tree": "^0.1.0",
+    "@prague/process-definitions": "^0.1.0",
+    "@prague/process-utils": "^0.1.0",
+    "@prague/runtime-definitions": "^0.1.0",
+    "@prague/sequence": "^0.1.0",
+    "@prague/utils": "^0.1.0",
+    "@types/debug": "0.0.31",
+    "@types/google-maps": "^3.2.0",
+    "@types/node": "^10.12.12",
+    "axios": "^0.18.0",
+    "debug": "^3.1.0",
+    "monaco-editor": "^0.15.6",
+    "uuid": "^3.3.2"
+  },
+  "devDependencies": {
+    "css-loader": "^1.0.0",
+    "html-loader": "^0.5.5",
+    "loader-utils": "^1.1.0",
+    "monaco-editor-webpack-plugin": "^1.5.4",
+    "node-sass": "^4.9.3",
+    "sass-loader": "^7.1.0",
+    "source-map-loader": "^0.2.4",
+    "style-loader": "^0.23.0",
+    "ts-loader": "^4.5.0",
+    "tslint": "^5.11.0",
+    "typescript": "^3.2.2",
+    "url-loader": "^1.1.1",
+    "webpack": "^4.8.2",
+    "webpack-cli": "^3.1.2",
+    "webpack-dev-server": "^3.1.14"
+  },
+  "prague": {
+    "browser": {
+      "entrypoint": "main",
+      "bundle": [
+        "dist/main.bundle.js"
+      ]
+    }
+  }
+}

@@ -1,0 +1,134 @@
+<div data-bind="template: { name: template, data: $data }">
+</div>
+        
+<!-- Knockout templates -->
+<script type="text/html" id="loading-template">
+    <h2>Loading...</h2>
+</script>
+
+<script type="text/html" id="error-template">
+    <div class="container">
+        <div class="alert alert-danger">Cannot establish connection to Charting API service.</div>
+    </div>
+</script>
+
+<script type="text/html" id="chart-template">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-sm-9 col-sm-push-3">
+                <div>
+                    <div data-bind="chart: generatedChart"></div>
+                </div>
+            </div>
+            <div class="col-sm-3 col-sm-pull-9">
+                <form>
+                    <!-- Base properties -->
+                    <h3>Base Properties</h3>
+                    <div class="form-group">
+                        <label for="apiEndpoint">API Endpoint</label>
+                        <select class="form-control" data-bind="options: endpoints, value: endpoint" id="apiEndpoint"></select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="seriesLayout">Series Layout</label>
+                        <select class="form-control" data-bind="options: layouts, value: seriesLayout" id="seriesLayout"></select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="mapDataBind">Map Binding</label>
+                        <input class="form-control" data-bind="value: mapDataBind" id="mapDataBind">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="numSeries">Number of Series</label>
+                        <input type="number" class="form-control" data-bind="value: numSeries" id="numSeries">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="numDataPoints">Data Points</label>
+                        <input type="number" class="form-control" data-bind="value: numDataPoints" id="numDataPoints">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="width">Width</label>
+                        <input type="number" class="form-control" data-bind="value: width" id="width">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="height">Height</label>
+                        <input type="number" class="form-control" data-bind="value: height" id="height">
+                    </div>
+
+                    <!-- Chart title components -->
+                    <h3>Chart Title</h3>
+                    <div class="form-group">
+                        <div class="checkbox">
+                            <label>
+                                <input type="checkbox" data-bind="checked: hasChartTitle" id="hasChartTitle">Enabled
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="chartTitleText">Text</label>
+                        <input type="text" class="form-control" data-bind="enable: hasChartTitle, value: chartTitleText, valueUpdate: 'keyup'" id="chartTitleText">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="chartTitleEdge">Edge</label>
+                        <select class="form-control" data-bind="enable: hasChartTitle, options: edges, value: chartTitleEdge" id="chartTitleEdge"></select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="chartTitlePosition">Position</label>
+                        <select class="form-control" data-bind="enable: hasChartTitle, options: positions, value: chartTitlePosition" id="chartTitlePosition"></select>
+                    </div>
+
+                    <!-- Chart legend components -->
+                    <h3>Chart Legend</h3>
+                    <div class="form-group">
+                        <div class="checkbox">
+                            <label>
+                                <input type="checkbox" data-bind="checked: hasLegend" id="hasChartLegend">Enabled
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="chartLegendEdge">Edge</label>
+                        <select class="form-control" data-bind="enable: hasLegend, options: edges, value: legendEdge" id="chartLegendEdge"></select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="chartLegendPosition">Position</label>
+                        <select class="form-control" data-bind="enable: hasLegend, options: positions, value: legendPosition" id="chartLegendPosition"></select>
+                    </div>
+
+                    <h4>Legend Title</h4>                            
+                    <div class="form-group">
+                        <div class="checkbox">
+                            <label>
+                                <input type="checkbox" data-bind="checked: hasLegendTitle, enable: hasLegend" id="hasChartLegend">Enabled
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="legendTitleText">Text</label>
+                        <input type="text" class="form-control" data-bind="enable: hasLegend() && hasLegendTitle(), value: legendTitleText, valueUpdate: 'keyup'" id="legendTitleText">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="chartLegendTitleEdge">Edge</label>
+                        <select class="form-control" data-bind="enable: hasLegend() && hasLegendTitle(), options: edges, value: legendTitleEdge" id="chartLegendTitleEdge"></select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="chartLegendTitlePosition">Position</label>
+                        <select class="form-control" data-bind="enable: hasLegend() && hasLegendTitle(), options: positions, value: legendTitlePosition" id="chartLegendTitlePosition"></select>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</script>
