@@ -1,5 +1,6 @@
-import { IMarker, IPinpointOptions, Pinpoint } from "@kurtb/pinpoint";
+import { Pinpoint } from "@kurtb/pinpoint";
 import { IMapView } from "@prague/map";
+import { IComponentPlatform } from "@prague/process-definitions";
 import { IPlatform, IRuntime } from "@prague/runtime-definitions";
 import { Deferred } from "@prague/utils";
 import * as angular from "angular";
@@ -294,77 +295,24 @@ pinpointTool.filter("html", ($sce) => {
 });
 
 export class PinpointRunner extends EventEmitter implements IPlatform {
-    private started = new Deferred<void>();
     private rootView: IMapView;
     private editor: boolean = false;
     private mapHost: HTMLElement;
+    private collabDocDeferred = new Deferred<Document>();
 
     public async run(runtime: IRuntime, platform: IPlatform) {
-        this.start(runtime, platform).then(
-            () => {
-                this.started.resolve();
-            },
-            (error) => {
-                console.error(error);
-                this.started.reject(error);
-            });
-
+        this.initialize(runtime).then(
+            (doc) => this.collabDocDeferred.resolve(doc),
+            (error) => this.collabDocDeferred.reject(error));
         return this;
     }
 
     public async queryInterface<T>(id: string): Promise<any> {
-        // Wait for start to complete before resolving interfaces
-        await this.started.promise;
-
-        switch (id) {
-            case "pinpoint":
-                return this;
-            default:
-                return null;
-        }
+        return null;
     }
 
-    public addMarker(marker: IMarker) {
-        if (this.editor) {
-            const mapDetails = angular.element(this.mapHost).injector().get("mapDetailsSvc") as MapDetailsService;
-            mapDetails.addMarker(marker);
-        } else {
-            const currentMap = JSON.parse(this.rootView.get("map")) as IPinpointOptions;
-            currentMap.markers.push(marker);
-            this.rootView.set("map", JSON.stringify(currentMap));
-        }
-    }
-
-    private async start(runtime: IRuntime, platform: IPlatform): Promise<void> {
-        const collabDoc = await Document.Load(runtime);
-        this.rootView = await collabDoc.getRoot().getView();
-
-        // Add in the text string if it doesn't yet exist
-        if (!collabDoc.existing) {
-            const data = {
-                "aspect-ratio": "tall",
-                "dek": "This is a test map.",
-                "hed": "The U.K. and France",
-                "lat": 51.5049378,
-                "lon": - 0.0870377,
-                "markers": [{
-                    "icon": "square",
-                    "label": "plain",
-                    "label-direction": "north",
-                    "labelDirection": "north",
-                    "lat": 51.5049378,
-                    "lon": - 0.0870377,
-                    "text": "",
-                }],
-                "minimap": true,
-                "minimap-zoom-offset": -5,
-                "note": "This is a note.",
-                "zoom": 4,
-            };
-            this.rootView.set("map", JSON.stringify(data));
-        } else {
-            await this.rootView.wait("map");
-        }
+    public async attach(platform: IComponentPlatform): Promise<IComponentPlatform> {
+        const collabDoc = await this.collabDocDeferred.promise;
 
         // If headless return early
         this.mapHost = await platform.queryInterface<HTMLElement>("div");
@@ -399,5 +347,39 @@ export class PinpointRunner extends EventEmitter implements IPlatform {
         } else {
             embed(this.mapHost, collabDoc, this.rootView, platform);
         }
+    }
+
+    private async initialize(runtime: IRuntime): Promise<Document> {
+        const collabDoc = await Document.Load(runtime);
+        this.rootView = await collabDoc.getRoot().getView();
+
+        // Add in the text string if it doesn't yet exist
+        if (!collabDoc.existing) {
+            const data = {
+                "aspect-ratio": "tall",
+                "dek": "This is a test map.",
+                "hed": "The U.K. and France",
+                "lat": 51.5049378,
+                "lon": - 0.0870377,
+                "markers": [{
+                    "icon": "square",
+                    "label": "plain",
+                    "label-direction": "north",
+                    "labelDirection": "north",
+                    "lat": 51.5049378,
+                    "lon": - 0.0870377,
+                    "text": "",
+                }],
+                "minimap": true,
+                "minimap-zoom-offset": -5,
+                "note": "This is a note.",
+                "zoom": 4,
+            };
+            this.rootView.set("map", JSON.stringify(data));
+        } else {
+            await this.rootView.wait("map");
+        }
+
+        return collabDoc;
     }
 }

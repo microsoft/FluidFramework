@@ -1,6 +1,7 @@
 import {
     IChaincodeComponent,
     IChaincodeHost,
+    IComponentPlatform,
     IComponentRuntime,
     IDeltaHandler,
     IHostRuntime,
@@ -26,6 +27,10 @@ class NullChaincodeComponent implements IChaincodeComponent {
 
     public async run(runtime: IComponentRuntime, platform: IPlatform): Promise<IDeltaHandler> {
         return Promise.reject("Not supported");
+    }
+
+    public attach(platform: IComponentPlatform): Promise<IComponentPlatform> {
+        throw new Error("Method not implemented.");
     }
 }
 

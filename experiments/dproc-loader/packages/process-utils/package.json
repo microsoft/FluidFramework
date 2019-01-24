@@ -10,6 +10,7 @@
     "build:full": "npm run build",
     "clean": "rimraf dist",
     "tsc": "tsc",
+    "tsc:watch": "tsc --watch",
     "tslint": "tslint --project tsconfig.json --format verbose"
   },
   "author": "Microsoft",

@@ -1,4 +1,4 @@
-import { IComponentRuntime, IDeltaHandler } from "@prague/process-definitions";
+import { IComponentRuntime, IDeltaHandler, ILegacyRuntime } from "@prague/process-definitions";
 import {
     ConnectionState,
     FileMode,
@@ -46,7 +46,7 @@ interface IObjectServices {
     objectStorage: IObjectStorageService;
 }
 
-export class ComponentHost extends EventEmitter implements IDeltaHandler {
+export class ComponentHost extends EventEmitter implements IDeltaHandler, ILegacyRuntime {
     public static async LoadFromSnapshot(
         componentRuntime: IComponentRuntime,
         tenantId: string,
@@ -209,6 +209,14 @@ export class ComponentHost extends EventEmitter implements IDeltaHandler {
         private snapshotFn: (message: string) => Promise<void>,
         private closeFn: () => void) {
         super();
+    }
+
+    public createAndAttachProcess(id: string, pkg: string): Promise<IComponentRuntime> {
+        return this.componentRuntime.createAndAttachProcess(id, pkg);
+    }
+
+    public getProcess(id: string, wait: boolean): Promise<IComponentRuntime> {
+        return this.componentRuntime.getProcess(id, wait);
     }
 
     public getChannel(id: string): Promise<IChannel> {

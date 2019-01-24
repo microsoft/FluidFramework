@@ -12,6 +12,7 @@ export class CodeLoader implements ICodeLoader {
     public async load(source: string): Promise<IChaincodeFactory> {
         return this.factory;
     }
+
 }
 
 const routerlicious = "http://localhost:3000";

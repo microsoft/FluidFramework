@@ -1,6 +1,6 @@
+import * as pinpoint from "@chaincode/pinpoint-editor";
 import { Component, Document } from "@prague/app-component";
 import * as API from "@prague/client-api";
-import { controls, ui } from "@prague/client-ui";
 import * as DistributedMap from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
 import { IChaincodeComponent, IChaincodeHost, IHostRuntime } from "@prague/process-definitions";
@@ -15,6 +15,7 @@ const performanceNow = require("performance-now");
 const debug = require("debug")("chaincode:shared-text");
 // tslint:enable:no-var-requires
 import * as url from "url";
+import { controls, ui } from "./controls";
 
 // first script loaded
 const clockStart = Date.now();
@@ -143,8 +144,8 @@ class SharedTextHost implements IChaincodeHost {
             case "@chaincode/shared-text":
                 return { instantiateComponent };
 
-            // case "@chaincode/pinpoint-editor":
-            //     return pinpoint;
+            case "@chaincode/pinpoint-editor":
+                return pinpoint;
 
             default:
                 return Promise.reject("Unknown component");

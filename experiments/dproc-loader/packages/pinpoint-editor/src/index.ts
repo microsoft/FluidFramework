@@ -1,9 +1,16 @@
-import { IChaincode } from "@prague/runtime-definitions";
-import { Chaincode } from "./chaincode";
-import { PinpointRunner } from "./runner";
+import { IChaincodeComponent, IChaincodeHost } from "@prague/process-definitions";
+import { PinpointComponent } from "./chaincode";
 
-export async function instantiate(): Promise<IChaincode> {
-    // Instantiate a new runtime per code load. That'll separate handlers, etc...
-    const chaincode = new Chaincode(new PinpointRunner());
-    return chaincode;
+/**
+ * Instantiates a new chaincode component
+ */
+export async function instantiateComponent(): Promise<IChaincodeComponent> {
+    return new PinpointComponent();
+}
+
+/**
+ * Instantiates a new chaincode host
+ */
+export async function instantiateHost(): Promise<IChaincodeHost> {
+    return Promise.reject("Not yet implemented");
 }

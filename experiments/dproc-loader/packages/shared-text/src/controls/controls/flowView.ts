@@ -4,6 +4,7 @@ import * as api from "@prague/client-api";
 import * as types from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
 import { findRandomWord } from "@prague/merge-tree-utils";
+import { ILegacyRuntime } from "@prague/process-definitions";
 import { IGenericBlob, ISequencedObjectMessage, IUser } from "@prague/runtime-definitions";
 import * as SharedString from "@prague/sequence";
 import * as assert from "assert";
@@ -413,7 +414,7 @@ const commands: ICmd[] = [
     },
     {
         exec: (f) => {
-            f.insertInnerComponent("map", "@chaincode/pinpoint-editor@0.6.15");
+            f.insertInnerComponent("map", "@chaincode/pinpoint-editor");
         },
         key: "insert inner map",
     },
@@ -5041,6 +5042,10 @@ export class FlowView extends ui.Component {
 
     public insertInnerComponent(prefix: string, chaincode: string) {
         const id = `${prefix}${Date.now()}`;
+
+        const runtime = this.collabDocument.runtime as ILegacyRuntime;
+        runtime.createAndAttachProcess(id, "@chaincode/pinpoint-editor");
+
         this.insertComponent("innerComponent", { id, chaincode });
     }
 

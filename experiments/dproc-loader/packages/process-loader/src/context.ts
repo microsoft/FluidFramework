@@ -1,7 +1,7 @@
 import {
     IChaincodeHost,
+    IComponentRuntime,
     IHostRuntime,
-    IProcess,
 } from "@prague/process-definitions";
 import {
     ConnectionState,
@@ -146,6 +146,7 @@ export class Context implements IHostRuntime {
         // Load in the type of component
 
         const component = await Component.LoadFromSnapshot(
+            this,
             this.tenantId,
             this.id,
             id,
@@ -288,6 +289,7 @@ export class Context implements IHostRuntime {
         // create storage service that wraps the attach data
         const runtimeStorage = new ComponentStorageService(this.storage, new Map());
         const component = await Component.LoadFromSnapshot(
+            this,
             this.tenantId,
             this.id,
             attachMessage.id,
@@ -357,7 +359,7 @@ export class Context implements IHostRuntime {
         await this.chaincode.run(this, this.platform);
     }
 
-    public getProcess(id: string, wait = true): Promise<IProcess> {
+    public getProcess(id: string, wait = true): Promise<IComponentRuntime> {
         this.verifyNotClosed();
 
         if (!this.processDeferred.has(id)) {
@@ -372,11 +374,12 @@ export class Context implements IHostRuntime {
         return this.processDeferred.get(id).promise;
     }
 
-    public async createAndAttachProcess(id: string, pkg: string): Promise<IProcess> {
+    public async createAndAttachProcess(id: string, pkg: string): Promise<IComponentRuntime> {
         this.verifyNotClosed();
 
         const runtimeStorage = new ComponentStorageService(this.storage, new Map());
         const component = await Component.create(
+            this,
             this.tenantId,
             this.id,
             id,
