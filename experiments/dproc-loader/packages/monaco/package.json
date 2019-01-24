@@ -6,8 +6,9 @@
   "types": "dist/index.d.ts",
   "author": "Microsoft",
   "scripts": {
-    "build": "npm run tslint && npm run webpack",
+    "build": "npm run tsc && npm run tslint && npm run webpack",
     "start": "prague-dev-server --config webpack.config.js --package package.json",
+    "tsc": "tsc",
     "tslint": "tslint 'src/**/*.ts'",
     "webpack": "webpack --config webpack.config.js --open",
     "update": "npm run build && npm version patch && npm publish --registry http://localhost:4873"
@@ -21,14 +22,12 @@
     "@prague/runtime-definitions": "^0.1.0",
     "@prague/sequence": "^0.1.0",
     "@prague/utils": "^0.1.0",
-    "@types/debug": "0.0.30",
+    "@types/debug": "0.0.31",
     "@types/google-maps": "^3.2.0",
-    "@types/node": "^10.9.4",
+    "@types/node": "^10.12.12",
     "axios": "^0.18.0",
-    "debug": "^4.0.1",
-    "google-maps": "^3.3.0",
-    "jsonwebtoken": "^8.3.0",
-    "monaco-editor": "^0.14.3",
+    "debug": "^3.1.0",
+    "monaco-editor": "^0.15.6",
     "uuid": "^3.3.2"
   },
   "devDependencies": {
@@ -40,13 +39,13 @@
     "sass-loader": "^7.1.0",
     "source-map-loader": "^0.2.4",
     "style-loader": "^0.23.0",
-    "ts-loader": "^5.1.0",
+    "ts-loader": "^4.5.0",
     "tslint": "^5.11.0",
-    "typescript": "^3.0.3",
+    "typescript": "^3.2.2",
     "url-loader": "^1.1.1",
-    "webpack": "^4.19.0",
-    "webpack-cli": "^3.1.0",
-    "webpack-dev-server": "^3.1.9"
+    "webpack": "^4.8.2",
+    "webpack-cli": "^3.1.2",
+    "webpack-dev-server": "^3.1.14"
   },
   "prague": {
     "browser": {

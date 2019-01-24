@@ -197,11 +197,11 @@ class Chaincode extends EventEmitter implements IChaincode {
  * A document is a collection of collaborative types.
  */
 export class ChartComponent implements IChaincodeComponent {
-    private pinpoint = new ChartRunner();
+    private chart = new ChartRunner();
     private chaincode: Chaincode;
 
     constructor() {
-        this.chaincode = new Chaincode(this.pinpoint);
+        this.chaincode = new Chaincode(this.chart);
     }
 
     public getModule(type: string) {
@@ -244,6 +244,6 @@ export class ChartComponent implements IChaincodeComponent {
     }
 
     public async attach(platform: IComponentPlatform): Promise<IComponentPlatform> {
-        return this.pinpoint.attach(platform);
+        return this.chart.attach(platform);
     }
 }

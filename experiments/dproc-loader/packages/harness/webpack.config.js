@@ -1,6 +1,7 @@
 const path = require('path');
 // var Visualizer = require('webpack-visualizer-plugin');
 // const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
+const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin');
 
 module.exports = {
     entry: './src/index.ts',
@@ -61,9 +62,6 @@ module.exports = {
         path: path.resolve(__dirname, 'dist')
     },
     plugins: [
-        // new BundleAnalyzerPlugin(),
-        // new Visualizer({
-        //     filename: './statistics.html'
-        // })
-    ],
+        new MonacoWebpackPlugin()
+    ]
 };

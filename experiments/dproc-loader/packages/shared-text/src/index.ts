@@ -1,4 +1,5 @@
 import * as charts from "@chaincode/charts";
+import * as monaco from "@chaincode/monaco";
 import * as pinpoint from "@chaincode/pinpoint-editor";
 import { Component, Document } from "@prague/app-component";
 import * as API from "@prague/client-api";
@@ -144,13 +145,12 @@ class SharedTextHost implements IChaincodeHost {
         switch (type) {
             case "@chaincode/charts":
                 return charts;
-
             case "@chaincode/shared-text":
                 return { instantiateComponent };
-
             case "@chaincode/pinpoint-editor":
                 return pinpoint;
-
+            case "@chaincode/monaco":
+                return monaco;
             default:
                 return Promise.reject("Unknown component");
         }
