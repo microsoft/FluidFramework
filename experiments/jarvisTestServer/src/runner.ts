@@ -1,13 +1,13 @@
-import { IDocumentStorage, IProducer, ITenantManager } from "@prague/services-core";
+import { /*IDocumentStorage, IProducer,*/ ITenantManager } from "@prague/services-core";
 import * as utils from "@prague/services-utils";
 import { Deferred } from "@prague/utils";
 import * as http from "http";
 import { Provider } from "nconf";
 import * as winston from "winston";
 import * as app from "./app";
-import * as io from "./io";
-import { OrdererManager } from "./orderFactory";
-import { IAlfredTenant } from "./tenant";
+// import * as io from "./io";
+// import { OrdererManager } from "./orderFactory";
+// import { IAlfredTenant } from "./tenant";
 
 export class JarvisRunner implements utils.IRunner {
     private server: http.Server;
@@ -16,12 +16,13 @@ export class JarvisRunner implements utils.IRunner {
     constructor(
         private config: Provider,
         private port: string | number,
-        private orderManager: OrdererManager,
+        // private orderManager: OrdererManager,
         private tenantManager: ITenantManager,
-        private storage: IDocumentStorage,
-        private appTenants: IAlfredTenant[],
-        private mongoManager: utils.MongoManager,
-        private producer: IProducer) {
+        // private storage: IDocumentStorage,
+        // private appTenants: IAlfredTenant[],
+        // private mongoManager: utils.MongoManager,
+        // private producer: 
+        ) {
     }
 
     public start(): Promise<void> {
@@ -31,21 +32,22 @@ export class JarvisRunner implements utils.IRunner {
         const alfred = app.create(
             this.config,
             this.tenantManager,
-            this.storage,
-            this.appTenants,
-            this.mongoManager,
-            this.producer);
+            //this.storage,
+            //this.appTenants,
+            //this.mongoManager,
+            //this.producer
+            );
         alfred.set("port", this.port);
 
         this.server = http.createServer(alfred);
-        const redis = this.config.get("redis");
+        //const redis = this.config.get("redis");
 
         // Register all the socket.io stuff
-        io.register(
-            this.server,
-            this.orderManager,
-            this.tenantManager,
-            redis);
+        // io.register(
+        //     this.server,
+        //     this.orderManager,
+        //     this.tenantManager,
+        //     redis);
 
         // Listen on provided port, on all network interfaces.
         this.server.listen(this.port);

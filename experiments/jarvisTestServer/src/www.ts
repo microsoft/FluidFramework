@@ -51,4 +51,4 @@ export function runService<T extends utils.IResources>(
         });
 }
 
-runService(new JarvisResourcesFactory(), new JarvisRunnerFactory(), "jarvis");
+runService(new JarvisResourcesFactory(), new JarvisRunnerFactory(), "jarvis", "config.json");

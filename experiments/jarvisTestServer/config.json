@@ -1,0 +1,16 @@
+{
+    "logger" : {
+        "colorize" : true,
+        "json" : true,
+        "label" : "JarvistTest",
+        "level" : "Info",
+        "timestamp" : true,
+        "morganFormat" : "tiny"
+    },
+    "error" : {
+        "track" : false
+    },
+    "alfred" : {
+        "restJsonSize" : 1048576
+    }
+}

@@ -5,37 +5,56 @@ import * as utils from "@prague/services-utils";
 import { Provider } from "nconf";
 // import { RdkafkaProducer } from "../rdkafka";
 // import { KafkaOrdererFactory } from "./kafkaOrderer";
-import { OrdererManager } from "./orderFactory";
+// import { OrdererManager } from "./orderFactory";
 import { JarvisRunner } from "./runner";
-import { IAlfredTenant } from "./tenant";
+// import { IAlfredTenant } from "./tenant";
+import { ITenant, ITenantManager } from "@prague/services-core";
 // import { ExceptionHandler, exceptions } from "winston";
 
 export class JarvisResources implements utils.IResources {
     constructor(
         public config: Provider,
-        public producer: core.IProducer,
-        public redisConfig: any,
-        public webSocketLibrary: string,
-        public orderManager: OrdererManager,
+        // public producer: core.IProducer,
+        // public redisConfig: any,
+        // public webSocketLibrary: string,
+        // public orderManager: OrdererManager,
         public tenantManager: core.ITenantManager,
-        public storage: core.IDocumentStorage,
-        public appTenants: IAlfredTenant[],
-        public mongoManager: utils.MongoManager,
+        // public storage: core.IDocumentStorage,
+        // public appTenants: IAlfredTenant[],
+        // public mongoManager: utils.MongoManager,
         public port: any,
-        public documentsCollectionName: string,
-        public metricClientConfig: any) {
+        // public documentsCollectionName: string,
+        // public metricClientConfig: any
+        ) {
     }
 
     public async dispose(): Promise<void> {
-        const producerClosedP = this.producer.close();
-        const mongoClosedP = this.mongoManager.close();
-        await Promise.all([producerClosedP, mongoClosedP]);
+        // const producerClosedP = this.producer.close();
+        // const mongoClosedP = this.mongoManager.close();
+        // await Promise.all([producerClosedP, mongoClosedP]);
+    }
+}
+
+class DummyTenantManager implements ITenantManager
+{
+    getTenant(tenantId: string): Promise<ITenant>
+    {
+        throw new Error( "NYI" );
+    }
+
+    verifyToken(tenantId: string, token: string): Promise<void>
+    {
+        throw new Error( "NYI" );
+    }
+
+    getKey(tenantId: string): Promise<string>
+    {
+        throw new Error( "NYI" );
     }
 }
 
 export class JarvisResourcesFactory implements utils.IResourcesFactory<JarvisResources> {
     public async create(config: Provider): Promise<JarvisResources> {
-        throw new Error("Not implemented");
         // // Producer used to publish messages
         // const kafkaEndpoint = config.get("kafka:endpoint");
         // const topic = config.get("alfred:topic");
@@ -73,7 +92,7 @@ export class JarvisResourcesFactory implements utils.IResourcesFactory<JarvisRes
         // const nodeCollectionName = config.get("mongo:collectionNames:nodes");
         // // this.nodeTracker.on("invalidate", (id) => this.emit("invalidate", id));
 
-        // const tenantManager = new services.TenantManager(authEndpoint, config.get("worker:blobStorageUrl"));
+        const tenantManager = new DummyTenantManager();
 
         // const databaseManager = new utils.MongoDatabaseManager(
         //     mongoManager,
@@ -91,21 +110,9 @@ export class JarvisResourcesFactory implements utils.IResourcesFactory<JarvisRes
         // const appTenants = config.get("alfred:tenants") as Array<{ id: string, key: string }>;
 
         // // This wanst to create stuff
-        // const port = utils.normalizePort(process.env.PORT || "3000");
+        const port = utils.normalizePort(process.env.PORT || "3000");
 
-        // return new JarvisResources(
-        //     config,
-        //     producer,
-        //     redisConfig,
-        //     webSocketLibrary,
-        //     ordererManager,
-        //     tenantManager,
-        //     storage,
-        //     appTenants,
-        //     mongoManager,
-        //     port,
-        //     documentsCollectionName,
-        //     metricClientConfig);
+        return new JarvisResources( config, tenantManager, port );
     }
 }
 
@@ -114,11 +121,12 @@ export class JarvisRunnerFactory implements utils.IRunnerFactory<JarvisResources
         return new JarvisRunner(
             resources.config,
             resources.port,
-            resources.orderManager,
+            // resources.orderManager,
             resources.tenantManager,
-            resources.storage,
-            resources.appTenants,
-            resources.mongoManager,
-            resources.producer);
+            // resources.storage,
+            // resources.appTenants,
+            // resources.mongoManager,
+            // resources.producer
+            );
     }
 }
