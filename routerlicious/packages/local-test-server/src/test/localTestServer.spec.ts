@@ -11,7 +11,7 @@ import {
   TestDeltaConnectionServer,
 } from "..";
 
-describe("LocalTestServer", () => {
+describe.skip("LocalTestServer", () => {
   const id = "documentId";
   const tenatId = "tenantId";
   const tokenKey = "tokenKey";
