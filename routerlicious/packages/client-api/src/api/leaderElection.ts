@@ -16,13 +16,18 @@ export class LeaderElector extends EventEmitter {
         return this.quorum.propose(QuorumKey, this.clientId);
     }
 
+    public getLeader() {
+        return this.leader;
+    }
+
     private attachQuorumListeners() {
         this.quorum.on("approveProposal", (sequenceNumber: number, key: string, value: any) => {
             if (key === QuorumKey) {
                 this.leader = value as string;
-                this.emit(QuorumKey, this.leader);
+                this.emit("newLeader", this.leader);
             }
         });
+
         this.quorum.on("addProposal", (proposal: IPendingProposal) => {
             if (proposal.key === QuorumKey) {
                 if (this.leader !== undefined) {
@@ -33,13 +38,10 @@ export class LeaderElector extends EventEmitter {
 
         this.quorum.on("removeMember", (removedClientId: string) => {
             if (this.leader === undefined || removedClientId === this.leader) {
-                debug(`${removedClientId} Left! Proposing new leadership.`);
                 this.leader = undefined;
-                this.quorum.propose(QuorumKey, this.clientId).then(() => {
-                    debug(`Proposal accepted: ${this.clientId}!`);
-                }, (err) => {
-                    debug(`Error proposing new leadership: ${err}`);
-                });
+                this.emit("leaderLeft", removedClientId);
+            } else {
+                this.emit("memberLeft", removedClientId);
             }
         });
 
