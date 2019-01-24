@@ -7,8 +7,8 @@ import * as moniker from "moniker";
 import * as winston from "winston";
 import * as ws from "ws";
 import { KafkaOrdererConnection } from "./kafkaOrderer";
-import { OrdererManager } from "./orderFactory";
-import { RedisSubscriptionManager } from "./subscriptions";
+// import { OrdererManager } from "./orderFactory";
+// import { RedisSubscriptionManager } from "./subscriptions";
 
 // TODO add validation to input message processing
 // A safety mechanism to make sure that all outbound messages from alfred adheres to the permitted schema.
@@ -25,11 +25,12 @@ import { RedisSubscriptionManager } from "./subscriptions";
 class WebSocket implements core.IWebSocket {
     private topics = new Array<string>();
 
-    constructor(public id: string, private socket: ws, private subscriber: RedisSubscriptionManager) {
+    constructor(public id: string, private socket: ws /*, private subscriber: RedisSubscriptionManager*/) {
         socket.onclose = () => {
-            for (const room of this.topics) {
-                subscriber.unsubscribe(room, socket);
-            }
+            throw new Error( "NYI" );
+            // for (const room of this.topics) {
+            //    subscriber.unsubscribe(room, socket);
+            // }
         };
     }
 
@@ -39,7 +40,8 @@ class WebSocket implements core.IWebSocket {
 
     public async join(id: string): Promise<void> {
         this.topics.push(id);
-        await this.subscriber.subscribe(id, this.socket);
+        throw new Error( "NYI" );
+        // await this.subscriber.subscribe(id, this.socket);
     }
 
     public emit(event: string, ...args: any[]) {
@@ -54,11 +56,12 @@ class WebSocket implements core.IWebSocket {
 class SocketConnection {
     public static Attach(
         socket: ws,
-        orderFactory: OrdererManager,
+        //orderFactory: OrdererManager,
         tenantManager: core.ITenantManager,
-        subscriber: RedisSubscriptionManager): SocketConnection {
+        //subscriber: RedisSubscriptionManager
+        ): SocketConnection {
 
-        const connection = new SocketConnection(socket, orderFactory, tenantManager, subscriber);
+        const connection = new SocketConnection(socket, /*orderFactory,*/ tenantManager/*, subscriber*/);
         return connection;
     }
     // Map from client IDs on this connection to the object ID and user info.
@@ -68,11 +71,14 @@ class SocketConnection {
 
     constructor(
         private socket: ws,
-        private orderFactory: OrdererManager,
+        //private orderFactory: OrdererManager,
         private tenantManager: core.ITenantManager,
-        subscriber: RedisSubscriptionManager) {
+        //subscriber: RedisSubscriptionManager
+        ) {
 
-        this.webSocket = new WebSocket(moniker.choose(), this.socket, subscriber);
+        this.webSocket = new WebSocket(moniker.choose(), this.socket /*, subscriber*/ );
+
+        this.webSocket;
 
         socket.on(
             "message",
@@ -164,40 +170,44 @@ class SocketConnection {
         }
         await this.tenantManager.verifyToken(claims.tenantId, token);
 
+        throw new Error( "NYI" );
+
         // And then connect to the orderer
-        const orderer = await this.orderFactory.getOrderer(claims.tenantId, claims.documentId);
-        const connection = await orderer.connect(claims.user, message.client);
-        this.connectionsMap.set(connection.clientId, connection);
+        // const orderer = await this.orderFactory.getOrderer(claims.tenantId, claims.documentId);
+        // const connection = await orderer.connect(claims.user, message.client);
+        // this.connectionsMap.set(connection.clientId, connection);
 
         // And return the connection information to the client
-        const connectedMessage: socketStorage.IConnected = {
-            clientId: connection.clientId,
-            existing: connection.existing,
-            maxMessageSize: connection.maxMessageSize,
-            parentBranch: connection.parentBranch,
-            user: claims.user,
-        };
+        // const connectedMessage: socketStorage.IConnected = {
+        //     clientId: connection.clientId,
+        //     existing: connection.existing,
+        //     maxMessageSize: connection.maxMessageSize,
+        //     parentBranch: connection.parentBranch,
+        //     user: claims.user,
+        // };
 
-        this.socket.send(JSON.stringify(["connect_document_success", connectedMessage]));
+        // this.socket.send(JSON.stringify(["connect_document_success", connectedMessage]));
 
-        await connection.bind(this.webSocket);
+        // await connection.bind(this.webSocket);
     }
 }
 
 export function register(
     httpServer: http.Server,
-    orderFactory: OrdererManager,
+    //orderFactory: OrdererManager,
     tenantManager: core.ITenantManager,
-    redisConfig: { host: string, port: number }) {
+    //redisConfig: { host: string, port: number }
+    ) {
 
     const webSocketServer = new ws.Server({ server: httpServer });
-    const subscriber = new RedisSubscriptionManager(redisConfig.host, redisConfig.port);
+    //const subscriber = new RedisSubscriptionManager(redisConfig.host, redisConfig.port);
 
     webSocketServer.on("connection", (socket: ws) => {
         SocketConnection.Attach(
             socket,
-            orderFactory,
+            //orderFactory,
             tenantManager,
-            subscriber);
+            //subscriber
+            );
     });
 }

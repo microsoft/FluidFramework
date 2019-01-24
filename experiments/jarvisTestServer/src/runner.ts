@@ -5,7 +5,7 @@ import * as http from "http";
 import { Provider } from "nconf";
 import * as winston from "winston";
 import * as app from "./app";
-// import * as io from "./io";
+import * as io from "./io";
 // import { OrdererManager } from "./orderFactory";
 // import { IAlfredTenant } from "./tenant";
 
@@ -43,11 +43,12 @@ export class JarvisRunner implements utils.IRunner {
         //const redis = this.config.get("redis");
 
         // Register all the socket.io stuff
-        // io.register(
-        //     this.server,
-        //     this.orderManager,
-        //     this.tenantManager,
-        //     redis);
+        io.register(
+            this.server,
+            //this.orderManager,
+            this.tenantManager,
+            //redis
+            );
 
         // Listen on provided port, on all network interfaces.
         this.server.listen(this.port);
