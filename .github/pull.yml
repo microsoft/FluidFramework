@@ -4,3 +4,7 @@ rules:
     upstream: Microsoft:master
     autoMerge: true
     autoMergeHardReset: true
+    assignees:
+      - tjhwork
+    reviewers:
+      - tjhwork
