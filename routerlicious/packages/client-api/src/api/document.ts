@@ -257,9 +257,11 @@ export class Document extends EventEmitter {
             if (this.runtime.connected) {
                 this.initLeaderElection();
             } else {
-                this.runtime.on("connected", () => {
+                const leaderElectionHandler = () => {
                     this.initLeaderElection();
-                });
+                    this.runtime.removeListener("connected", leaderElectionHandler);
+                };
+                this.runtime.on("connected", leaderElectionHandler);
             }
         }
     }
