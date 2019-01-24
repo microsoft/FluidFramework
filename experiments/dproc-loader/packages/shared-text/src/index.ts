@@ -1,3 +1,4 @@
+import * as charts from "@chaincode/charts";
 import * as pinpoint from "@chaincode/pinpoint-editor";
 import { Component, Document } from "@prague/app-component";
 import * as API from "@prague/client-api";
@@ -141,6 +142,9 @@ class MyPlatform extends EventEmitter implements IPlatform {
 class SharedTextHost implements IChaincodeHost {
     public async getModule(type: string) {
         switch (type) {
+            case "@chaincode/charts":
+                return charts;
+
             case "@chaincode/shared-text":
                 return { instantiateComponent };
 

@@ -1,15 +1,14 @@
 // inspiration for this example taken from https://github.com/agentcooper/typescript-play
-
-import { DataStore, Document } from "@prague/datastore";
-import { IChaincode, IPlatform } from "@prague/runtime-definitions";
-import { SharedString } from "@prague/shared-string";
+import { Component, Document } from "@prague/app-component";
 import {
-     IMergeTreeOp,
-     MergeTreeDeltaType,
-     IMergeTreeInsertMsg,
-     IMergeTreeRemoveMsg,
-     IMergeTreeGroupMsg,
+    IMergeTreeGroupMsg,
+    IMergeTreeInsertMsg,
+    IMergeTreeOp,
+    IMergeTreeRemoveMsg,
+    MergeTreeDeltaType,
 } from "@prague/merge-tree";
+import { IChaincode, IPlatform } from "@prague/runtime-definitions";
+import { SharedString } from "@prague/sequence";
 import * as monaco from "monaco-editor";
 
 // tslint:disable
@@ -97,7 +96,7 @@ class MonacoDocument extends Document {
         hostWrapper.appendChild(inputDiv);
         hostWrapper.appendChild(outputDiv);
 
-        const root = await this.getRoot().getView();
+        const root = await this.root.getView();
         const text = await root.wait<SharedString>("text");
 
         monaco.languages.typescript.typescriptDefaults.setCompilerOptions(defaultCompilerOptions);
@@ -176,9 +175,14 @@ class MonacoDocument extends Document {
         });
     }
 
+    protected async create(): Promise<void> {
+        const codeString = this.createString();
+        codeString.insertText('console.log("Hello, world!");', 0);
+        this.root.set("text", codeString);
+    }
+
     private mergeDelta(delta: IMergeTreeOp) {
-        switch (delta.type)
-        {
+        switch (delta.type) {
             case MergeTreeDeltaType.GROUP:
                 this.mergeDeltaGroup(delta as IMergeTreeGroupMsg);
                 break;
@@ -192,46 +196,40 @@ class MonacoDocument extends Document {
     }
 
     private mergeDeltaGroup(delta: IMergeTreeGroupMsg): void {
-        for (let op of delta.ops) {
+        for (const op of delta.ops) {
             this.mergeDelta(op);
         }
     }
 
     private mergeInsertDelta(delta: IMergeTreeInsertMsg): void {
-        if (typeof delta.pos1 !== 'number' ||
-            typeof delta.text !== 'string'
+        if (typeof delta.pos1 !== "number" ||
+            typeof delta.text !== "string"
         ) {
             return;
         }
 
         const range = this.offsetsToRange(delta.pos1, delta.pos2);
-        const text = delta.text || '';
-        this.codeEditor.executeEdits('remote', [ { range, text } ]);
+        const text = delta.text || "";
+        this.codeEditor.executeEdits("remote", [ { range, text } ]);
     }
 
     private mergeRemoveDelta(delta: IMergeTreeRemoveMsg): void {
-        if (typeof delta.pos1 !== 'number' ||
-            typeof delta.pos2 !== 'number'
+        if (typeof delta.pos1 !== "number" ||
+            typeof delta.pos2 !== "number"
         ) {
             return;
         }
 
         const range = this.offsetsToRange(delta.pos1, delta.pos2);
-        const text = '';
-        this.codeEditor.executeEdits('remote', [ { range, text } ]);
+        const text = "";
+        this.codeEditor.executeEdits("remote", [ { range, text } ]);
     }
 
     private offsetsToRange(offset1: number, offset2?: number): monaco.Range {
         const pos1 = this.codeModel.getPositionAt(offset1);
-        const pos2 = (typeof offset2 === 'number') ? this.codeModel.getPositionAt(offset2) : pos1;
+        const pos2 = (typeof offset2 === "number") ? this.codeModel.getPositionAt(offset2) : pos1;
         const range = new monaco.Range(pos1.lineNumber, pos1.column, pos2.lineNumber, pos2.column);
         return range;
-    }
-
-    protected async create(): Promise<void> {
-        const codeString = this.createString();
-        codeString.insertText('console.log("Hello, world!");', 0);
-        this.root.set("text", codeString);
     }
 
     private async runCode(code: string, platform: IPlatform) {
@@ -246,5 +244,5 @@ class MonacoDocument extends Document {
 }
 
 export async function instantiate(): Promise<IChaincode> {
-    return DataStore.instantiate(new MonacoDocument());
+    return Component.instantiate(new MonacoDocument());
 }

@@ -8,13 +8,13 @@
         "declaration": true,
         "noImplicitAny": false,
         "noUnusedLocals": true,
-        "module": "esnext",
+        "module": "commonjs",
         "moduleResolution": "node",
         "outDir": "dist",
         "sourceMap": true,
         "inlineSources": true
     },
     "include": [
-        "src/**/*.ts"
+        "src/index.ts"
     ]
 }

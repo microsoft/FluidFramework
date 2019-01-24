@@ -420,6 +420,12 @@ const commands: ICmd[] = [
     },
     {
         exec: (f) => {
+            f.insertInnerComponent("chart", "@chaincode/charts");
+        },
+        key: "insert inner chart",
+    },
+    {
+        exec: (f) => {
             f.insertChaincode("code", "@chaincode/monaco@0.1.18");
         },
         key: "insert code",
@@ -5044,7 +5050,7 @@ export class FlowView extends ui.Component {
         const id = `${prefix}${Date.now()}`;
 
         const runtime = this.collabDocument.runtime as ILegacyRuntime;
-        runtime.createAndAttachProcess(id, "@chaincode/pinpoint-editor");
+        runtime.createAndAttachProcess(id, chaincode);
 
         this.insertComponent("innerComponent", { id, chaincode });
     }

@@ -1,8 +1,9 @@
 {
   "name": "@chaincode/monaco",
-  "version": "0.1.18",
+  "version": "0.1.0",
   "description": "Monaco code editor",
   "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "author": "Microsoft",
   "scripts": {
     "build": "npm run tslint && npm run webpack",
@@ -12,8 +13,9 @@
     "update": "npm run build && npm version patch && npm publish --registry http://localhost:4873"
   },
   "dependencies": {
-    "@prague/datastore": "^0.1.0",
+    "@prague/app-component": "^0.1.0",
     "@prague/map": "^0.1.0",
+    "@prague/merge-tree": "^0.1.0",
     "@prague/process-definitions": "^0.1.0",
     "@prague/process-utils": "^0.1.0",
     "@prague/runtime-definitions": "^0.1.0",
@@ -30,7 +32,6 @@
     "uuid": "^3.3.2"
   },
   "devDependencies": {
-    "@prague/prague-dev-server": "^3.1.13",
     "css-loader": "^1.0.0",
     "html-loader": "^0.5.5",
     "loader-utils": "^1.1.0",
