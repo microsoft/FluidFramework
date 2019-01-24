@@ -4,13 +4,14 @@ import * as resources from "@prague/gitresources";
 import * as pragueLoader from "@prague/loader";
 import { IMap, MapExtension } from "@prague/map";
 import {
-    IClient,
+    Browser,
     IDeltaManager,
     IDocumentService,
     IGenericBlob,
     IHelpMessage,
     IPlatform,
     IRuntime,
+    ISequencedClient,
     ITokenProvider,
     IUser,
     MessageType,
@@ -26,7 +27,7 @@ import { CodeLoader } from "./codeLoader";
 import { debug } from "./debug";
 import { LeaderElector } from "./leaderElection";
 import { PlatformFactory } from "./platform";
-import { analyzeTasks, getLeader } from "./taskAnalyzer";
+import { analyzeTasks, getLeaderCandidate } from "./taskAnalyzer";
 
 // tslint:disable-next-line
 const apiVersion = require("../../package.json").version;
@@ -120,7 +121,6 @@ export class Document extends EventEmitter {
     }
 
     private leaderElector: LeaderElector;
-
     /**
      * Constructs a new document from the provided details
      */
@@ -130,20 +130,10 @@ export class Document extends EventEmitter {
         // Experimental leader election.
         this.startLeaderElection();
 
-        // Run task analyzer for already present clients.
-        this.runTaskAnalyzer();
-
-        this.on("clientJoin", () => {
-            this.runTaskAnalyzer();
-        });
-
         this.on("clientLeave", (leftClientId) => {
             // Switch to read only mode if a client receives it's own leave message.
-            // Stop any pending help request.
             if (this.clientId === leftClientId) {
                 this.runtime.deltaManager.enableReadonlyMode();
-            } else {
-                this.runTaskAnalyzer();
             }
         });
     }
@@ -218,7 +208,7 @@ export class Document extends EventEmitter {
         return this.runtime.user;
     }
 
-    public getClients(): Map<string, IClient> {
+    public getClients(): Map<string, ISequencedClient> {
         const quorum = this.runtime.getQuorum();
         return quorum.getMembers();
     }
@@ -263,22 +253,44 @@ export class Document extends EventEmitter {
 
     private startLeaderElection() {
         // Temporary disable of quorum leader election.
-        if (this.runtime.deltaManager && this.runtime.deltaManager.clientType === "Test") {
+        if (this.runtime.deltaManager && this.runtime.deltaManager.clientType === Browser) {
             if (this.runtime.connected) {
-                this.startVoting();
+                this.initLeaderElection();
             } else {
-                this.runtime.on("connected", () => {
-                    this.startVoting();
-                });
+                const leaderElectionHandler = () => {
+                    this.initLeaderElection();
+                    this.runtime.removeListener("connected", leaderElectionHandler);
+                };
+                this.runtime.on("connected", leaderElectionHandler);
             }
         }
     }
 
-    private startVoting() {
+    private initLeaderElection() {
         this.leaderElector = new LeaderElector(this.runtime.getQuorum(), this.runtime.clientId);
-        this.leaderElector.on("leader", (clientId: string) => {
-            // console.log(`Event received: ${clientId}`);
+        this.leaderElector.on("newLeader", (clientId: string) => {
+            debug(`New leader elected: ${clientId}`);
+            this.runTaskAnalyzer();
         });
+        this.leaderElector.on("leaderLeft", (clientId: string) => {
+            debug(`Leader ${clientId} left`);
+            this.proposeLeadership();
+        });
+        this.leaderElector.on("memberLeft", (clientId: string) => {
+            debug(`Member ${clientId} left`);
+            this.runTaskAnalyzer();
+        });
+        this.proposeLeadership();
+    }
+
+    private proposeLeadership() {
+        if (getLeaderCandidate(this.runtime.getQuorum().getMembers()) === this.clientId) {
+            this.leaderElector.proposeLeadership().then(() => {
+                debug(`Proposal accepted`);
+            }, (err) => {
+                debug(`Proposal rejected: ${err}`);
+            });
+        }
     }
 
     /**
@@ -287,10 +299,7 @@ export class Document extends EventEmitter {
      * Emit local help message for this browser and submits a remote help message for agents.
      */
     private runTaskAnalyzer() {
-        const currentLeader = getLeader(this.runtime.getQuorum().getMembers());
-        // tslint:disable-next-line:strict-boolean-expressions
-        const isLeader = currentLeader && currentLeader.clientId === this.clientId;
-        if (isLeader) {
+        if (this.leaderElector.getLeader() === this.clientId) {
             // Analyze the current state and ask for local and remote help seperately.
             const helpTasks = analyzeTasks(this.clientId, this.runtime.getQuorum().getMembers(), documentTasks);
             // tslint:disable-next-line:strict-boolean-expressions
@@ -310,7 +319,6 @@ export class Document extends EventEmitter {
                     this.runtime.submitMessage(MessageType.RemoteHelp, remoteHelpMessage);
                 }
             }
-
         }
     }
 }

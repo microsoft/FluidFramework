@@ -4,7 +4,6 @@ import {
     FileMode,
     IChaincode,
     IChunkedOp,
-    IClient,
     IClientJoin,
     ICodeLoader,
     IDeltaManager,
@@ -16,6 +15,7 @@ import {
     IPlatformFactory,
     IProposal,
     IRuntime,
+    ISequencedClient,
     ISequencedDocumentMessage,
     ISequencedDocumentSystemMessage,
     ISequencedProposal,
@@ -560,7 +560,7 @@ export class Document extends EventEmitter {
         storage: IDocumentStorageService,
         tree: ISnapshotTree): Promise<Quorum> {
 
-        let members: Array<[string, IClient]>;
+        let members: Array<[string, ISequencedClient]>;
         let proposals: Array<[number, ISequencedProposal, string[]]>;
         let values: Array<[string, any]>;
 
@@ -926,7 +926,11 @@ export class Document extends EventEmitter {
             case MessageType.ClientJoin:
                 const systemJoinMessage = message as ISequencedDocumentSystemMessage;
                 const join = JSON.parse(systemJoinMessage.data) as IClientJoin;
-                this.quorum.addMember(join.clientId, join.detail);
+                const member: ISequencedClient = {
+                    client: join.detail,
+                    sequenceNumber: systemJoinMessage.sequenceNumber,
+                };
+                this.quorum.addMember(join.clientId, member);
 
                 // This is the only one that requires the pending client ID
                 if (join.clientId === this.pendingClientId) {

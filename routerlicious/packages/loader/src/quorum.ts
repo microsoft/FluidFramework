@@ -1,8 +1,8 @@
 import {
-    IClient,
     ICommittedProposal,
     IPendingProposal,
     IQuorum,
+    ISequencedClient,
     ISequencedDocumentMessage,
     ISequencedProposal,
 } from "@prague/runtime-definitions";
@@ -45,7 +45,7 @@ class PendingProposal implements IPendingProposal, ISequencedProposal {
 }
 
 export interface IQuorumSnapshot {
-    members: Array<[string, IClient]>;
+    members: Array<[string, ISequencedClient]>;
     proposals: Array<[number, ISequencedProposal, string[]]>;
     values: Array<[string, ICommittedProposal]>;
 }
@@ -55,7 +55,7 @@ export interface IQuorumSnapshot {
  * they have agreed upon and any pending proposals.
  */
 export class Quorum extends EventEmitter implements IQuorum {
-    private members: Map<string, IClient>;
+    private members: Map<string, ISequencedClient>;
     private proposals: Map<number, PendingProposal>;
     private values: Map<string, ICommittedProposal>;
 
@@ -67,7 +67,7 @@ export class Quorum extends EventEmitter implements IQuorum {
 
     constructor(
         private minimumSequenceNumber: number,
-        members: Array<[string, IClient]>,
+        members: Array<[string, ISequencedClient]>,
         proposals: Array<[number, ISequencedProposal, string[]]>,
         values: Array<[string, ICommittedProposal]>,
         private sendProposal: (key: string, value: any) => number,
@@ -125,7 +125,7 @@ export class Quorum extends EventEmitter implements IQuorum {
     /**
      * Adds a new client to the quorum
      */
-    public addMember(clientId: string, details: IClient) {
+    public addMember(clientId: string, details: ISequencedClient) {
         assert(!this.members.has(clientId));
         this.members.set(clientId, details);
         this.emit("addMember", clientId, details);
@@ -143,7 +143,7 @@ export class Quorum extends EventEmitter implements IQuorum {
     /**
      * Retrieves all the members in the quorum
      */
-    public getMembers(): Map<string, IClient> {
+    public getMembers(): Map<string, ISequencedClient> {
         return new Map(this.members);
     }
 
@@ -212,7 +212,7 @@ export class Quorum extends EventEmitter implements IQuorum {
         return;
     }
 
-    public on(event: "addMember", listener: (clientId: string, details: IClient) => void): this;
+    public on(event: "addMember", listener: (clientId: string, details: ISequencedClient) => void): this;
     public on(event: "removeMember", listener: (clientId: string) => void): this;
     public on(event: "addProposal", listener: (proposal: IPendingProposal) => void): this;
     public on(

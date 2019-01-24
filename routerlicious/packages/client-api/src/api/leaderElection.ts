@@ -1,5 +1,8 @@
 import { IPendingProposal, IQuorum } from "@prague/runtime-definitions";
 import { EventEmitter } from "events";
+import { debug } from "./debug";
+
+export const QuorumKey = "leader";
 
 export class LeaderElector extends EventEmitter {
 
@@ -7,11 +10,10 @@ export class LeaderElector extends EventEmitter {
     constructor(private quorum: IQuorum, private clientId: string) {
         super();
         this.attachQuorumListeners();
-        this.quorum.propose("leader", this.clientId).then(() => {
-            // console.log(`Proposal accepted: ${this.clientId}!`);
-        }, (err) => {
-            // console.log(`Error proposing new leadership: ${err}`);
-        });
+    }
+
+    public async proposeLeadership() {
+        return this.quorum.propose(QuorumKey, this.clientId);
     }
 
     public getLeader() {
@@ -20,14 +22,14 @@ export class LeaderElector extends EventEmitter {
 
     private attachQuorumListeners() {
         this.quorum.on("approveProposal", (sequenceNumber: number, key: string, value: any) => {
-            if (key === "leader") {
+            if (key === QuorumKey) {
                 this.leader = value as string;
-                this.emit("leader", this.leader);
-                // console.log(`New leader elected: ${value}`);
+                this.emit("newLeader", this.leader);
             }
         });
+
         this.quorum.on("addProposal", (proposal: IPendingProposal) => {
-            if (proposal.key === "leader") {
+            if (proposal.key === QuorumKey) {
                 if (this.leader !== undefined) {
                     proposal.reject();
                 }
@@ -37,16 +39,14 @@ export class LeaderElector extends EventEmitter {
         this.quorum.on("removeMember", (removedClientId: string) => {
             if (this.leader === undefined || removedClientId === this.leader) {
                 this.leader = undefined;
-                this.quorum.propose("leader", this.clientId).then(() => {
-                    // console.log(`Proposal accepted: ${this.clientId}!`);
-                }, (err) => {
-                    // console.log(`Error proposing new leadership: ${err}`);
-                });
+                this.emit("leaderLeft", removedClientId);
+            } else {
+                this.emit("memberLeft", removedClientId);
             }
         });
 
         this.quorum.on("rejectProposal", (sequenceNumber: number, key: string, value: any) => {
-            // console.log(`Proposal rejected @${sequenceNumber}. ${key}:${value}`);
+            debug(`Proposal rejected @${sequenceNumber}. ${key}:${value}`);
         });
     }
 }

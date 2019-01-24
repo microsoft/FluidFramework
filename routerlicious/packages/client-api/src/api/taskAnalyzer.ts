@@ -1,4 +1,4 @@
-import { Browser, IClient, IClientJoin } from "@prague/runtime-definitions";
+import { Browser, ISequencedClient } from "@prague/runtime-definitions";
 
 export interface IHelpTasks {
     robot: string[];
@@ -16,15 +16,15 @@ export interface IHelpTasks {
 // TODO: Make this run on all clients once services are hardened better.
 export function analyzeTasks(
     runnerClientId: string,
-    clients: Map<string, IClient>,
+    clients: Map<string, ISequencedClient>,
     tasks: string[]): IHelpTasks {
     const robotClients = [...clients].filter((client) => isRobot(client[1]));
-    const handledTasks = robotClients.map((robot) => robot[1].type);
+    const handledTasks = robotClients.map((robot) => robot[1].client.type);
     const unhandledTasks = tasks.filter((task) => handledTasks.indexOf(task) === -1);
     if (unhandledTasks.length > 0) {
         const runnerClient = clients.get(runnerClientId);
         /* tslint:disable:strict-boolean-expressions */
-        const permission = runnerClient ? runnerClient.permission : [];
+        const permission = runnerClient.client ? runnerClient.client.permission : [];
         const allowedTasks = unhandledTasks.filter((task) => permission && permission.indexOf(task) !== -1);
         const robotNeeded = unhandledTasks.filter((task) => permission && permission.indexOf(task) === -1);
         return {
@@ -34,17 +34,17 @@ export function analyzeTasks(
     }
 }
 
-export function getLeader(clients: Map<string, IClient>): IClientJoin {
-    for (const client of clients) {
-        if (!isRobot(client[1])) {
-            return {
-                clientId: client[0],
-                detail: client[1],
-            };
-        }
+export function getLeaderCandidate(clients: Map<string, ISequencedClient>) {
+    const browserClients = [...clients].filter((client) => !isRobot(client[1]));
+    if (browserClients.length > 0) {
+        const candidate = browserClients.reduce((prev, curr) => {
+            return prev[1].sequenceNumber < curr[1].sequenceNumber ? prev : curr;
+        });
+        return candidate[0];
     }
+
 }
 
-function isRobot(client: IClient): boolean {
-    return client && client.type !== Browser;
+function isRobot(client: ISequencedClient): boolean {
+    return client.client && client.client.type !== Browser;
 }

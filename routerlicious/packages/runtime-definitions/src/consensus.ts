@@ -1,5 +1,5 @@
 import { EventEmitter } from "events";
-import { IClient } from "./clients";
+import { ISequencedClient } from "./clients";
 
 /**
  * Proposal to set the given key/value pair.
@@ -50,5 +50,5 @@ export interface IQuorum extends EventEmitter {
 
     get(key: string): any;
 
-    getMembers(): Map<string, IClient>;
+    getMembers(): Map<string, ISequencedClient>;
 }

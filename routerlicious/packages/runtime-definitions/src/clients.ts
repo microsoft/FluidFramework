@@ -7,6 +7,13 @@ export interface IClient {
     permission: string[];
 }
 
+export interface ISequencedClient {
+
+    client: IClient;
+
+    sequenceNumber: number;
+}
+
 /**
  * Contents sent with a ClientJoin message
  */
