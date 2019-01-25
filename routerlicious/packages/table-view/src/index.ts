@@ -25,7 +25,7 @@ export class TableView extends Component {
         }
     }
 
-    public static readonly type = "@chaincode/flow-table@latest";
+    public static readonly type = "@chaincode/table-view@latest";
 
     // The below works, but causes 'webpack --watch' to build in an infinite loop when
     // build automatically publishes.

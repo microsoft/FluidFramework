@@ -1,7 +1,7 @@
 {
   "name": "@chaincode/table-document",
   "description": "Chaincode component containing a table's data",
-  "version": "0.1.20",
+  "version": "0.1.34",
   "author": "Microsoft",
   "repository": "microsoft/prague",
   "main": "dist/main.bundle.js",
@@ -12,6 +12,7 @@
     "build:dev": "webpack --env=\"development\"",
     "dev": "npm run build:dev -- --watch",
     "publish-local": "npm publish --registry http://localhost:4873",
+    "publish-wu2": "npm run build && npm publish --registry https://packages.wu2.prague.office-int.com",
     "publish-patch-local": "npm version patch && npm run publish-local"
   },
   "devDependencies": {

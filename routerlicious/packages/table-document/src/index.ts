@@ -10,18 +10,41 @@ import {
     Marker
 } from "@prague/merge-tree";
 
+const loadCellTextSym = Symbol("TableDocument.loadCellText");
+const storeCellTextSym = Symbol("TableDocument.storeCellText");
+
 class WorkbookAdapter extends Workbook {
+    // TODO: Our base class has a bug that calls 'storeCellText' during init(), overwriting
+    //       incoming collaborative data.
+    private isInitializing = true;
+
     constructor (private readonly doc: TableDocument) {
         // Note: The row/col provided here is only used by the '.init()' method.
-        super(NaN, NaN);
+        super(doc.numRows, doc.numCols);
+
+        const init = [];
+        for (let row = 0; row < doc.numRows; row++) {
+            const rowArray: string[] = [];
+            init.push(rowArray);
+            for (let col = 0; col < doc.numCols; col++) {
+                rowArray.push(this.doc[loadCellTextSym](row, col));
+            }
+        }
+
+        this.init(init);
+        this.isInitializing = false;
     }
 
     protected loadCellText(row: number, col: number): string {
-        return this.doc.loadCellText(row, col);
+        return this.doc[loadCellTextSym](row, col);
     }
     
     protected storeCellText(row: number, col: number, value: UnboxedOper) {
-        this.doc.storeCellText(row, col, value);
+        if (this.isInitializing) {
+            return;
+        }
+
+        this.doc[storeCellTextSym](row, col, value);
     }
 }
 
@@ -53,22 +76,20 @@ export class TableDocument extends Component {
 
     public async opened() {
         this.maybeSharedString = await this.root.wait("text") as SharedString;
-        this.maybeSharedString.on("op", (op, local) => { this.emit("op", op, local) });
+        this.maybeSharedString.on("op", (op, local) => { 
+            this.emit("op", op, local)
+        });
         const client = this.sharedString.client;
         this.maybeClientId = client.getClientId();
         this.maybeMergeTree = client.mergeTree;
         this.maybeRootView = await this.root.getView();
-        this.maybeWorkbook = new WorkbookAdapter(this);
-        
         if (!this.runtime.connected) {
-            console.log("*** awaiting connection");
-            return new Promise<void>(accept => {
-                console.log("connected!");
+            await new Promise<void>(accept => {
                 this.runtime.on("connected", accept);
-            })
-        } else {
-            console.log("*** already connected?");
+            });
         }
+
+        this.maybeWorkbook = new WorkbookAdapter(this);
     }
 
     private get length() { return this.mergeTree.getLength(UniversalSequenceNumber, this.clientId); }
@@ -85,14 +106,17 @@ export class TableDocument extends Component {
         }
     }
 
-    public loadCellText(row: number, col: number): string {
+    private [loadCellTextSym](row: number, col: number): string {
         const { segment } = this.mergeTree.getContainingSegment(row * this.numRows + col, UniversalSequenceNumber, this.clientId);
         return (segment as Marker).properties["value"];
     }
+
+    public getCellText(row: number, col: number) { return this.workbook.getCellText(row, col); }
+    public setCellText(row: number, col: number, value: UnboxedOper) { return this.workbook.setCellText(row, col, value); }
     
-    public storeCellText(row: number, col: number, value: UnboxedOper) {
+    private [storeCellTextSym](row: number, col: number, value: UnboxedOper) {
         const { segment } = this.mergeTree.getContainingSegment(row * this.numRows + col, UniversalSequenceNumber, this.clientId);
-        (segment as Marker).properties["value"] = value.toString();
+        this.sharedString.annotateMarker({ value: value.toString() }, segment as Marker);
     }
 
     private get sharedString() { return this.maybeSharedString!; }

@@ -1,0 +1,126 @@
+// Please do not use this for character code of KeyPress event, because KeyPress character code
+// is not "key specific", which may be entirely different with from the key code in the KeyDown/KeyUp events.
+// If you do not find the KeyCode you need, please add them into the list, please pay attention to browser/OS
+// compatibility when adding any new key code.
+
+// TODO:INPUT:
+// This may not be as simple as a enum. Some key's KeyCode are different across browsers,
+// and we also need to consider different OS, e.g. handling mapping of "windows" key in MacOS.
+// For now let's just use an enum with above fixed values, since most common keys are safe to use across browsers.
+// In future we should either use a different data type or initialize an enum dynamically based on Browser/OS.
+export const enum KeyCode {
+    Backspace = 8,
+    Tab = 9,
+    Enter = 13,
+    Shift = 16,
+    Ctrl = 17,
+    Alt = 18,
+    PauseBreak = 19,
+    CapsLock = 20,
+    Escape = 27,
+    Space = 32,
+    PageUp = 33,
+    PageDown = 34,
+    End = 35,
+    Home = 36,
+    LeftArrow = 37,
+    UpArrow = 38,
+    RightArrow = 39,
+    DownArrow = 40,
+
+    PrintScreen = 44 /*In most browser this key only fires in keyup event.*/,
+    Insert = 45,
+    Delete = 46,
+
+    KEY_0 = 48,
+    KEY_1 = 49,
+    KEY_2 = 50,
+    KEY_3 = 51,
+    KEY_4 = 52,
+    KEY_5 = 53,
+    KEY_6 = 54,
+    KEY_7 = 55,
+    KEY_8 = 56,
+    KEY_9 = 57,
+
+    KEY_A = 65,
+    KEY_B = 66,
+    KEY_C = 67,
+    KEY_D = 68,
+    KEY_E = 69,
+    KEY_F = 70,
+    KEY_G = 71,
+    KEY_H = 72,
+    KEY_I = 73,
+    KEY_J = 74,
+    KEY_K = 75,
+    KEY_L = 76,
+    KEY_M = 77,
+    KEY_N = 78,
+    KEY_O = 79,
+    KEY_P = 80,
+    KEY_Q = 81,
+    KEY_R = 82,
+    KEY_S = 83,
+    KEY_T = 84,
+    KEY_U = 85,
+    KEY_V = 86,
+    KEY_W = 87,
+    KEY_X = 88,
+    KEY_Y = 89,
+    KEY_Z = 90,
+
+    // TODO:INPUT: If not MacOS, then:
+    // LeftWinKey = 91,
+    // RightWinKey = 92,
+
+    ContextMenu = 93,
+
+    NUMPAD_0 = 96,
+    NUMPAD_1 = 97,
+    NUMPAD_2 = 98,
+    NUMPAD_3 = 99,
+    NUMPAD_4 = 100,
+    NUMPAD_5 = 101,
+    NUMPAD_6 = 102,
+    NUMPAD_7 = 103,
+    NUMPAD_8 = 104,
+    NUMPAD_9 = 105,
+    NUMPAD_MULTIPLY = 106,
+    NUMPAD_ADD = 107,
+    NUMPAD_SEPARATOR = 108,
+    NUMPAD_SUBTRACT = 109,
+    NUMPAD_DECIMAL = 110,
+    NUMPAD_DIVIDE = 111,
+
+    F1 = 112,
+    F2 = 113,
+    F3 = 114,
+    F4 = 115,
+    F5 = 116,
+    F6 = 117,
+    F7 = 118,
+    F8 = 119,
+    F9 = 120,
+    F10 = 121,
+    F11 = 122,
+    F12 = 123,
+
+    NumLock = 144,
+    ScrollLock = 145,
+
+    US_SEMICOLON = 186,
+    US_EQUAL = 187,
+    US_COMMA = 188,
+    US_MINUS = 189,
+    US_DOT = 190,
+    US_SLASH = 191,
+    US_BACKTICK = 192,
+
+    US_OPEN_SQUARE_BRACKET = 219,
+    US_BACKSLASH = 220,
+    US_CLOSE_SQUARE_BRACKET = 221,
+    US_QUOTE = 222,
+
+    Composition = 229
+}
