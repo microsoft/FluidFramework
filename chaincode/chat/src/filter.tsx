@@ -1,5 +1,4 @@
-// TODO: Find a way to implemengt a content filter without the clients having the profanity list
-
+// TODO: Consider hashing this list and matching it to hashed messages so that clients don't have the list.
 const profane_words = ["belichick", "boston", "brady", "bruins", "celtics", "new england", "red sox", "patriots"];
 
 const profanExp = new RegExp(profane_words.join("|"), "gi");
@@ -17,6 +16,9 @@ export function filter(input: string): string {
   return input;
 }
 
+/**
+ * If you cheat, active client can publish profane language, but others will scrub it.
+ */
 function cheat() {
   cheating = !cheating;
   if (cheating) {

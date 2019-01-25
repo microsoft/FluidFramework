@@ -1,7 +1,7 @@
 {
   "name": "@chaincode/chat",
   "description": "Prague Chat!",
-  "version": "0.0.55",
+  "version": "0.0.63",
   "author": "Microsoft",
   "repository": "microsoft/prague",
   "main": "dist/main.bundle.js",
@@ -35,6 +35,7 @@
     }
   },
   "dependencies": {
+    "@prague/app-datastore": "^0.1.4276",
     "@prague/datastore": "^0.1.4276",
     "@prague/map": "^0.1.4276",
     "@prague/runtime-definitions": "^0.1.4276",

@@ -3,9 +3,11 @@ import { Chat } from "@stardust-ui/react";
 import { ChatRenderer } from "./chat-renderer";
 import { filter } from "./filter";
 import * as React from "react";
+import { LoaderComponent } from "./component-loader";
 
 interface IMessage {
   author: string;
+  component?: string;
   content: string;
   time: string;
 }
@@ -59,7 +61,18 @@ export class ChatContainer extends React.Component<ChatContainerProps, ChatConta
       messagesToRender.push({
         message: {
           content: (
-            <Chat.Message content={message.message.content} author={message.message.author} timestamp={tss} mine={isMine} />
+            <Chat.Message 
+              content={
+                message.message.component ? 
+                  <LoaderComponent
+                    docId={message.message.component}
+                    >
+                  </LoaderComponent>
+                : message.message.content
+              }
+              author={message.message.author}
+              timestamp={tss}
+              mine={isMine} />
           )
         },
         key: message.key
@@ -106,6 +119,9 @@ export class ChatContainer extends React.Component<ChatContainerProps, ChatConta
     counter.increment(1);
     messageView.set<IMessage>(counter.value.toString(), {
       author: clientId,
+      component: (inputMessage.startsWith("add component ")) ? 
+        inputMessage.replace("add component ", "")
+        : undefined,
       content: inputMessage,
       time: Date.now().toString()
     });
