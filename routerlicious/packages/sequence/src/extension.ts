@@ -4,7 +4,9 @@ import { SharedNumberSequence, SharedObjectSequence} from "./sequence";
 import { SharedString } from "./sharedString";
 
 export class CollaborativeStringExtension implements ICollaborativeObjectExtension {
-    public static Type = "https://graph.microsoft.com/types/mergeTree/string";
+    // TODO rename back to https://graph.microsoft.com/types/mergeTree/string once paparazzi is able to dynamically
+    // load code
+    public static Type = "https://graph.microsoft.com/types/mergeTree";
 
     public type: string = CollaborativeStringExtension.Type;
 
