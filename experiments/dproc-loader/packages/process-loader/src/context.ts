@@ -145,7 +145,7 @@ export class Context implements IHostRuntime {
         const runtimeStorage = new ComponentStorageService(this.storage, extraBlobs);
         const details = await readAndParse<{ pkg: string }>(this.storage, snapshotTree.blobs[".component"]);
 
-        const component = await Component.LoadFromSnapshot(
+        const componentP = Component.LoadFromSnapshot(
             this,
             this.tenantId,
             this.id,
@@ -169,6 +169,12 @@ export class Context implements IHostRuntime {
             this.submitFn,
             this.snapshotFn,
             this.closeFn);
+        const deferred = new Deferred<Component>();
+        deferred.resolve(componentP);
+        this.processDeferred.set(id, deferred);
+
+        const component = await componentP;
+
         this.components.set(id, component);
 
         await component.start();
