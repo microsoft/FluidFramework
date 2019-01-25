@@ -15,7 +15,6 @@ let cheating = false;
 export function filter(input: string): string {
     if (!cheating) {
         return input.replace(profanExp, (match: string, matchStart: number, matchedPhrase: string ) => {
-
             let cleaned = match.slice(0, 1);
             cleaned += "*".repeat(match.length - 2);
             cleaned += match.slice(match.length - 1, match.length);
