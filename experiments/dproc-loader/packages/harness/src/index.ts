@@ -12,13 +12,12 @@ export class CodeLoader implements ICodeLoader {
     public async load(source: string): Promise<IChaincodeFactory> {
         return this.factory;
     }
-
 }
 
 const routerlicious = "http://localhost:3000";
 const historian = "http://localhost:3001";
-const tenantId = "prague";
-const secret = "43cfc3fbf04a97c0921fd23ff10f9e4b";
+const tenantId = "github";
+const secret = "0bea3f87c186991a69245a29dc3f61d2";
 
 async function initializeChaincode(document: pragueLoader.DistributedProcess, pkg: string): Promise<void> {
     const quorum = document.getQuorum();
@@ -73,6 +72,15 @@ export async function start(id: string, factory: IChaincodeFactory): Promise<voi
         await initializeChaincode(loaderDoc, `@chaincode/shared-text`)
             .catch((error) => console.log("chaincode error", error));
     }
+
+    document.addEventListener("keyup", (event) => {
+        console.log(event.key);
+
+        const keyName = event.key;
+        if (event.ctrlKey && keyName === "s") {
+            loaderDoc.snapshot("Manual snapshot");
+        }
+    });
 }
 
 const documentId = window.location.search ? window.location.search.substr(1) : "test-document";

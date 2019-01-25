@@ -6,7 +6,7 @@ import {
     IDeltaHandler,
     IHostRuntime,
 } from "@prague/process-definitions";
-import { IPlatform } from "@prague/runtime-definitions";
+import { IPlatform, ITree } from "@prague/runtime-definitions";
 import { EventEmitter } from "events";
 import { debug } from "./debug";
 
@@ -31,6 +31,10 @@ class NullChaincodeComponent implements IChaincodeComponent {
 
     public attach(platform: IComponentPlatform): Promise<IComponentPlatform> {
         throw new Error("Method not implemented.");
+    }
+
+    public snapshot(): ITree {
+        return null;
     }
 }
 

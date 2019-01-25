@@ -9,6 +9,7 @@ import {
 } from "@prague/process-definitions";
 import {
     ConnectionState,
+    FileMode,
     IChannel,
     IDocumentStorageService,
     IEnvelope,
@@ -21,6 +22,7 @@ import {
     ITree,
     IUser,
     MessageType,
+    TreeEntry,
 } from "@prague/runtime-definitions";
 import { EventEmitter } from "events";
 import { BlobManager } from "./blobManager";
@@ -62,6 +64,7 @@ export class Component extends EventEmitter implements IComponentRuntime, IProce
         const extension = await module.instantiateComponent();
 
         const component = new Component(
+            pkg,
             hostRuntime,
             tenantId,
             documentId,
@@ -117,6 +120,7 @@ export class Component extends EventEmitter implements IComponentRuntime, IProce
         const extension = await module.instantiateComponent();
 
         const component = new Component(
+            pkg,
             hostRuntime,
             tenantId,
             documentId,
@@ -160,6 +164,7 @@ export class Component extends EventEmitter implements IComponentRuntime, IProce
     private handler: IDeltaHandler;
 
     private constructor(
+        private readonly pkg: string,
         private readonly hostRuntime: IHostRuntime,
         public readonly tenantId: string,
         public readonly documentId: string,
@@ -250,7 +255,20 @@ export class Component extends EventEmitter implements IComponentRuntime, IProce
     }
 
     public snapshot(): ITree {
-        return null;
+        const componentAttributes = { pkg: this.pkg };
+
+        const snapshot = this.chaincode.snapshot();
+        snapshot.entries.push({
+            mode: FileMode.File,
+            path: ".component",
+            type: TreeEntry[TreeEntry.Blob],
+            value: {
+                contents: JSON.stringify(componentAttributes),
+                encoding: "utf-8",
+            },
+        });
+
+        return snapshot;
     }
 
     public submitMessage(type: MessageType, content: any) {

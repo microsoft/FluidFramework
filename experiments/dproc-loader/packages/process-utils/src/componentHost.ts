@@ -46,6 +46,9 @@ interface IObjectServices {
     objectStorage: IObjectStorageService;
 }
 
+// This needs to deal with transformed messages
+// And also output attributes
+
 export class ComponentHost extends EventEmitter implements IDeltaHandler, ILegacyRuntime {
     public static async LoadFromSnapshot(
         componentRuntime: IComponentRuntime,
@@ -186,6 +189,7 @@ export class ComponentHost extends EventEmitter implements IDeltaHandler, ILegac
     private channelsDeferred = new Map<string, Deferred<IChannel>>();
     private closed = false;
     private pendingAttach = new Map<string, IAttachMessage>();
+    private messagesSinceMSNChange = new Array<ISequencedDocumentMessage>();
 
     // tslint:disable-next-line:variable-name
     private _platform: IPlatform;
@@ -359,13 +363,22 @@ export class ComponentHost extends EventEmitter implements IDeltaHandler, ILegac
         return this.blobManager.getBlob(sha);
     }
 
-    public transform(message: ISequencedDocumentMessage) {
-        const envelope = message.contents as IEnvelope;
-        const objectDetails = this.channels.get(envelope.address);
-        envelope.contents = objectDetails.object.transform(
-            envelope.contents as IObjectMessage,
-            objectDetails.connection.transformDocumentSequenceNumber(
-                Math.max(message.referenceSequenceNumber, this.deltaManager.minimumSequenceNumber)));
+    public transform(message: ISequencedDocumentMessage, sequenceNumber: number) {
+        // Allow the distributed data types to perform custom transformations
+        if (message.type === MessageType.Operation) {
+            const envelope = message.contents as IEnvelope;
+            const objectDetails = this.channels.get(envelope.address);
+            envelope.contents = objectDetails.object.transform(
+                envelope.contents as IObjectMessage,
+                objectDetails.connection.transformDocumentSequenceNumber(
+                    Math.max(message.referenceSequenceNumber, this.deltaManager.minimumSequenceNumber)));
+        } else {
+            message.type = MessageType.NoOp;
+        }
+
+        message.referenceSequenceNumber = sequenceNumber;
+
+        return message;
     }
 
     public async getBlobMetadata(): Promise<IGenericBlob[]> {
@@ -396,6 +409,8 @@ export class ComponentHost extends EventEmitter implements IDeltaHandler, ILegac
     }
 
     public process(message: ISequencedDocumentMessage, local: boolean, context: any) {
+        this.messagesSinceMSNChange.push(message);
+
         switch (message.type) {
             case MessageType.Attach:
                 this.processAttach(message, local, context);
@@ -409,6 +424,16 @@ export class ComponentHost extends EventEmitter implements IDeltaHandler, ILegac
     }
 
     public updateMinSequenceNumber(msn: number) {
+        let index = 0;
+        for (; index < this.messagesSinceMSNChange.length; index++) {
+            if (this.messagesSinceMSNChange[index].sequenceNumber > msn) {
+                break;
+            }
+        }
+        if (index !== 0) {
+            this.messagesSinceMSNChange = this.messagesSinceMSNChange.slice(index);
+        }
+
         for (const [, object] of this.channels) {
             if (!object.object.isLocal() && object.connection.baseMappingIsSet()) {
                 object.connection.updateMinSequenceNumber(msn);
@@ -418,6 +443,43 @@ export class ComponentHost extends EventEmitter implements IDeltaHandler, ILegac
 
     public snapshotInternal(): ITreeEntry[] {
         const entries = new Array<ITreeEntry>();
+
+        this.updateMinSequenceNumber(this.deltaManager.minimumSequenceNumber);
+
+        const transformedMessages: ISequencedDocumentMessage[] = [];
+        // debug(`Transforming up to ${this.deltaManager.minimumSequenceNumber}`);
+        for (const message of this.messagesSinceMSNChange) {
+            transformedMessages.push(this.transform(message, this.deltaManager.minimumSequenceNumber));
+        }
+        entries.push({
+            mode: FileMode.File,
+            path: ".messages",
+            type: TreeEntry[TreeEntry.Blob],
+            value: {
+                contents: JSON.stringify(transformedMessages),
+                encoding: "utf-8",
+            },
+        });
+
+        // Save attributes for the document
+        const documentAttributes: IDocumentAttributes = {
+            branch: this.id,
+            clients: [],
+            minimumSequenceNumber: -101,
+            partialOps: [],
+            proposals: [],
+            sequenceNumber: -101,
+            values: [],
+        };
+        entries.push({
+            mode: FileMode.File,
+            path: ".attributes",
+            type: TreeEntry[TreeEntry.Blob],
+            value: {
+                contents: JSON.stringify(documentAttributes),
+                encoding: "utf-8",
+            },
+        });
 
         // Craft the .attributes file for each distributed object
         for (const [objectId, object] of this.channels) {

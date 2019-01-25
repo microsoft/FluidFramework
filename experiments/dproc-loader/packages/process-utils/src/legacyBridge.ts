@@ -4,10 +4,12 @@ import {
     IComponentRuntime,
     IDeltaHandler,
 } from "@prague/process-definitions";
-import { IChaincode, IPlatform } from "@prague/runtime-definitions";
+import { IChaincode, IPlatform, ITree } from "@prague/runtime-definitions";
 import { ComponentHost } from "./componentHost";
 
 export class LegacyChaincodeBridge implements IChaincodeComponent {
+    private component: ComponentHost;
+
     constructor(private chaincode: IChaincode) {
     }
 
@@ -46,11 +48,18 @@ export class LegacyChaincodeBridge implements IChaincodeComponent {
             runtime.minimumSequenceNumber,
             runtime.snapshotFn,
             runtime.closeFn);
+        this.component = component;
 
         return component;
     }
 
     public async attach(platform: IComponentPlatform): Promise<IComponentPlatform> {
         return null;
+    }
+
+    // TODO the attach and the snapshot may want to be exposed on the return value from the run call
+    public snapshot(): ITree {
+        const entries = this.component.snapshotInternal();
+        return { entries };
     }
 }

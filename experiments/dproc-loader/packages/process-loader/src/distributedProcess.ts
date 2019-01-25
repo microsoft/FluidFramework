@@ -261,8 +261,9 @@ export class DistributedProcess extends EventEmitter {
                 type: TreeEntry[TreeEntry.Commit],
                 value: channelCommit.commit.sha,
             });
-            // tslint:disable-next-line:max-line-length
-            gitModules += `[submodule "${channelCommit.id}"]\n\tpath = ${channelCommit.id}\n\turl = ${this.storageService.repositoryUrl}\n\n`;
+
+            const repoUrl = "https://github.com/kurtb/praguedocs.git"; // this.storageService.repositoryUrl
+            gitModules += `[submodule "${channelCommit.id}"]\n\tpath = ${channelCommit.id}\n\turl = ${repoUrl}\n\n`;
         }
 
         // Write the module lookup details

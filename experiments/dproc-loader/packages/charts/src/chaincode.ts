@@ -2,7 +2,7 @@ import * as charts from "@ms/charts";
 import { IMapView, MapExtension } from "@prague/map";
 import { IChaincodeComponent, IComponentPlatform, IComponentRuntime, IDeltaHandler } from "@prague/process-definitions";
 import { ComponentHost } from "@prague/process-utils";
-import { IChaincode, IPlatform, IRuntime } from "@prague/runtime-definitions";
+import { IChaincode, IPlatform, IRuntime, ITree } from "@prague/runtime-definitions";
 import { Deferred } from "@prague/utils";
 import * as assert from "assert";
 import { EventEmitter } from "events";
@@ -199,6 +199,7 @@ class Chaincode extends EventEmitter implements IChaincode {
 export class ChartComponent implements IChaincodeComponent {
     private chart = new ChartRunner();
     private chaincode: Chaincode;
+    private component: ComponentHost;
 
     constructor() {
         this.chaincode = new Chaincode(this.chart);
@@ -239,11 +240,17 @@ export class ChartComponent implements IChaincodeComponent {
             runtime.minimumSequenceNumber,
             runtime.snapshotFn,
             runtime.closeFn);
+        this.component = component;
 
         return component;
     }
 
     public async attach(platform: IComponentPlatform): Promise<IComponentPlatform> {
         return this.chart.attach(platform);
+    }
+
+    public snapshot(): ITree {
+        const entries = this.component.snapshotInternal();
+        return { entries };
     }
 }
