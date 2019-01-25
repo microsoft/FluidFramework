@@ -6,7 +6,7 @@
   "types": "dist/index.d.ts",
   "author": "Microsoft",
   "scripts": {
-    "build": "npm run tsc && npm run tslint && npm run webpack",
+    "build": "npm run tsc && npm run tslint",
     "start": "prague-dev-server --config webpack.config.js --package package.json",
     "tsc": "tsc",
     "tslint": "tslint 'src/**/*.ts'",
@@ -43,7 +43,7 @@
     "tslint": "^5.11.0",
     "typescript": "^3.2.2",
     "url-loader": "^1.1.1",
-    "webpack": "^4.8.2",
+    "webpack": "^4.7.0",
     "webpack-cli": "^3.1.2",
     "webpack-dev-server": "^3.1.14"
   },

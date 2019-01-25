@@ -2705,6 +2705,11 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
                 layoutContext.flowView.services,
             );
 
+            // Workaround for client side code snapshotting cachedElement
+            if (!(asMarker.properties.cachedElement instanceof HTMLElement)) {
+                asMarker.properties.cachedElement = undefined;
+            }
+
             const componentDiv = maybeComponent.upsert(
                 asMarker.properties.state,
                 context,

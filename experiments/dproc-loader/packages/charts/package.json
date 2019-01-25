@@ -6,7 +6,7 @@
   "types": "dist/index.d.ts",
   "sideEffects": "false",
   "scripts": {
-    "build": "npm run tsc && npm run webpack && npm run tslint",
+    "build": "npm run tsc && npm run tslint",
     "tsc": "tsc",
     "webpack": "webpack --config webpack.config.js",
     "tslint": "tslint 'src/**/*.ts'",
@@ -22,10 +22,10 @@
     "style-loader": "^0.23.0",
     "ts-loader": "^4.5.0",
     "tslint": "^5.11.0",
-    "typescript": "^3.0.1",
+    "typescript": "^3.2.2",
     "url-loader": "^1.1.1",
     "webpack": "^4.7.0",
-    "webpack-cli": "^3.0.0",
+    "webpack-cli": "^3.1.2",
     "webpack-visualizer-plugin": "^0.1.11"
   },
   "dependencies": {
@@ -38,13 +38,13 @@
     "@prague/process-utils": "^0.1.0",
     "@prague/runtime-definitions": "^0.1.0",
     "@prague/utils": "^0.1.0",
-    "@types/jsonwebtoken": "^8.3.0",
+    "@types/jsonwebtoken": "^7.2.8",
     "@types/knockout": "^3.4.59",
-    "@types/node": "^10.5.8",
+    "@types/node": "^10.12.12",
     "@types/url-parse": "^1.4.1",
     "axios": "^0.18.0",
     "bootstrap": "^3.3.7",
-    "jsonwebtoken": "^8.4.0",
+    "jsonwebtoken": "^8.3.0",
     "knockout": "^3.4.2",
     "lodash": "^4.17.11",
     "url-parse": "^1.4.3"

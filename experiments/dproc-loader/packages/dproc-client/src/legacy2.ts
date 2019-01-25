@@ -1,7 +1,7 @@
 import { IChaincodeComponent } from "@prague/process-definitions";
+import { LegacyChaincodeBridge } from "@prague/process-utils";
 import { IChaincode, IPlatform, IRuntime } from "@prague/runtime-definitions";
 import { debug } from "./debug";
-import { LegacyChaincodeBridge } from "./legacyBridge";
 import { MyPlatform } from "./legacyPlatform";
 
 class MyChaincode implements IChaincode {

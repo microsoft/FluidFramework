@@ -4,7 +4,6 @@ import {
     ConnectionState,
     FileMode,
     IChunkedOp,
-    IClient,
     IClientJoin,
     IDeltaManager,
     IDocumentAttributes,
@@ -14,6 +13,7 @@ import {
     IPlatformFactory,
     IProposal,
     IRuntime,
+    ISequencedClient,
     ISequencedDocumentMessage,
     ISequencedDocumentSystemMessage,
     ISequencedProposal,
@@ -261,8 +261,9 @@ export class DistributedProcess extends EventEmitter {
                 type: TreeEntry[TreeEntry.Commit],
                 value: channelCommit.commit.sha,
             });
-            // tslint:disable-next-line:max-line-length
-            gitModules += `[submodule "${channelCommit.id}"]\n\tpath = ${channelCommit.id}\n\turl = ${this.storageService.repositoryUrl}\n\n`;
+
+            const repoUrl = "https://github.com/kurtb/praguedocs.git"; // this.storageService.repositoryUrl
+            gitModules += `[submodule "${channelCommit.id}"]\n\tpath = ${channelCommit.id}\n\turl = ${repoUrl}\n\n`;
         }
 
         // Write the module lookup details
@@ -493,7 +494,7 @@ export class DistributedProcess extends EventEmitter {
         storage: IDocumentStorageService,
         tree: ISnapshotTree): Promise<Quorum> {
 
-        let members: Array<[string, IClient]>;
+        let members: Array<[string, ISequencedClient]>;
         let proposals: Array<[number, ISequencedProposal, string[]]>;
         let values: Array<[string, any]>;
 
@@ -835,7 +836,11 @@ export class DistributedProcess extends EventEmitter {
             case MessageType.ClientJoin:
                 const systemJoinMessage = message as ISequencedDocumentSystemMessage;
                 const join = JSON.parse(systemJoinMessage.data) as IClientJoin;
-                this.quorum.addMember(join.clientId, join.detail);
+                const member: ISequencedClient = {
+                    client: join.detail,
+                    sequenceNumber: systemJoinMessage.sequenceNumber,
+                };
+                this.quorum.addMember(join.clientId, member);
 
                 // This is the only one that requires the pending client ID
                 if (join.clientId === this.pendingClientId) {

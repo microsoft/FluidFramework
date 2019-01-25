@@ -1,7 +1,7 @@
 import { MapExtension } from "@prague/map";
 import { IChaincodeComponent, IComponentPlatform, IComponentRuntime, IDeltaHandler } from "@prague/process-definitions";
 import { ComponentHost } from "@prague/process-utils";
-import { IChaincode, IPlatform, IRuntime } from "@prague/runtime-definitions";
+import { IChaincode, IPlatform, IRuntime, ITree } from "@prague/runtime-definitions";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import { PinpointRunner } from "./runner";
@@ -41,6 +41,7 @@ class Chaincode extends EventEmitter implements IChaincode {
 export class PinpointComponent implements IChaincodeComponent {
     private pinpoint = new PinpointRunner();
     private chaincode: Chaincode;
+    private component: ComponentHost;
 
     constructor() {
         this.chaincode = new Chaincode(this.pinpoint);
@@ -81,11 +82,17 @@ export class PinpointComponent implements IChaincodeComponent {
             runtime.minimumSequenceNumber,
             runtime.snapshotFn,
             runtime.closeFn);
+        this.component = component;
 
         return component;
     }
 
     public async attach(platform: IComponentPlatform): Promise<IComponentPlatform> {
         return this.pinpoint.attach(platform);
+    }
+
+    public snapshot(): ITree {
+        const entries = this.component.snapshotInternal();
+        return { entries };
     }
 }

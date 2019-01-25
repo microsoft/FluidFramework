@@ -38,6 +38,11 @@ export interface IChaincodeComponent {
      * Allows code to attach to the given component.
      */
     attach(platform: IComponentPlatform): Promise<IComponentPlatform>;
+
+    /**
+     * Generates a snapshot of the given component
+     */
+    snapshot(): ITree;
 }
 
 export interface IProcess {

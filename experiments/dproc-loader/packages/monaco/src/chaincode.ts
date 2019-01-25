@@ -9,7 +9,7 @@ import {
 } from "@prague/merge-tree";
 import { IChaincodeComponent, IComponentPlatform, IComponentRuntime, IDeltaHandler } from "@prague/process-definitions";
 import { ComponentHost } from "@prague/process-utils";
-import { IChaincode, IPlatform } from "@prague/runtime-definitions";
+import { IChaincode, IPlatform, ITree } from "@prague/runtime-definitions";
 import { SharedString } from "@prague/sequence";
 import * as monaco from "monaco-editor";
 
@@ -237,6 +237,7 @@ class MonacoRunner extends Document {
 export class MonacoComponent implements IChaincodeComponent {
     private monaco = new MonacoRunner();
     private chaincode: IChaincode;
+    private component: ComponentHost;
 
     constructor() {
         this.chaincode = Component.instantiate(this.monaco);
@@ -277,11 +278,17 @@ export class MonacoComponent implements IChaincodeComponent {
             runtime.minimumSequenceNumber,
             runtime.snapshotFn,
             runtime.closeFn);
+        this.component = component;
 
         return component;
     }
 
     public async attach(platform: IComponentPlatform): Promise<IComponentPlatform> {
         return this.monaco.attach(platform);
+    }
+
+    public snapshot(): ITree {
+        const entries = this.component.snapshotInternal();
+        return { entries };
     }
 }

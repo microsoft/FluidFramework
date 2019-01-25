@@ -23,6 +23,7 @@ import { Component } from "./component";
 import { ComponentStorageService } from "./componentStorageService";
 import { debug } from "./debug";
 import { DeltaManager } from "./deltaManager";
+import { readAndParse } from "./utils";
 
 export class Context implements IHostRuntime {
     public static async Load(
@@ -142,10 +143,9 @@ export class Context implements IHostRuntime {
     ): Promise<void> {
         // Need to rip through snapshot and use that to populate extraBlobs
         const runtimeStorage = new ComponentStorageService(this.storage, extraBlobs);
+        const details = await readAndParse<{ pkg: string }>(this.storage, snapshotTree.blobs[".component"]);
 
-        // Load in the type of component
-
-        const component = await Component.LoadFromSnapshot(
+        const componentP = Component.LoadFromSnapshot(
             this,
             this.tenantId,
             this.id,
@@ -156,7 +156,7 @@ export class Context implements IHostRuntime {
             this.clientId,
             this.user,
             this.blobManager,
-            null,           // TODO need to read package attribute prior to load
+            details.pkg,
             this.chaincode,
             this.deltaManager,
             this.quorum,
@@ -169,7 +169,15 @@ export class Context implements IHostRuntime {
             this.submitFn,
             this.snapshotFn,
             this.closeFn);
+        const deferred = new Deferred<Component>();
+        deferred.resolve(componentP);
+        this.processDeferred.set(id, deferred);
+
+        const component = await componentP;
+
         this.components.set(id, component);
+
+        await component.start();
     }
 
     public snapshot(): Map<string, ITree> {
