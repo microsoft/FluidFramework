@@ -35,6 +35,7 @@ import { debug } from "./debug";
 import { IConnectionDetails } from "./deltaConnection";
 import { DeltaManager } from "./deltaManager";
 import { NullChaincode } from "./nullChaincode";
+import { PrefetchDocumentStorageService } from "./prefetchDocumentStorageService";
 import { IQuorumSnapshot, Quorum } from "./quorum";
 import { Runtime } from "./runtime";
 import { readAndParse } from "./utils";
@@ -144,14 +145,14 @@ export class Document extends EventEmitter {
     private unackedChunkedMessages: Map<number, IBufferedChunk> = new Map<number, IBufferedChunk>();
 
     public get tenantId(): string {
-       return this._tenantId;
+        return this._tenantId;
     }
 
     public get id(): string {
         return this._id;
     }
 
-     public get deltaManager(): IDeltaManager {
+    public get deltaManager(): IDeltaManager {
         return this._deltaManager;
     }
 
@@ -282,7 +283,8 @@ export class Document extends EventEmitter {
     }
 
     private async load(specifiedVersion: ICommit, connect: boolean): Promise<void> {
-        const storageP = this.service.connectToStorage(this.tenantId, this.id, this.tokenProvider);
+        const storageP = this.service.connectToStorage(this.tenantId, this.id, this.tokenProvider).then(
+            (storage) => storage ? new PrefetchDocumentStorageService(storage) : null);
 
         // If a version is specified we will load it directly - otherwise will query historian for the latest
         // version and then load it
@@ -745,7 +747,7 @@ export class Document extends EventEmitter {
                         this.processRemoteMessage(message, context);
                     },
                 });
-            });
+        });
 
         return { detailsP, handlerAttachedP };
     }
@@ -855,7 +857,7 @@ export class Document extends EventEmitter {
                 const chunkComplete = this.prepareRemoteChunkedMessage(message);
                 if (!chunkComplete) {
                     return Promise.resolve();
-                } else  {
+                } else {
                     if (local) {
                         const clientSeqNumber = message.clientSequenceNumber;
                         if (this.unackedChunkedMessages.has(clientSeqNumber)) {
