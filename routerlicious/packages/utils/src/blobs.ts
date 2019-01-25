@@ -74,7 +74,7 @@ export function buildHierarchy(flatTree: git.ITree): ISnapshotTree {
     for (const entry of flatTree.tree) {
         const lastIndex = entry.path.lastIndexOf("/");
         const entryPathDir = entry.path.slice(0, Math.max(0, lastIndex));
-        const entryPathBase = entry.path.slice(lastIndex  + 1);
+        const entryPathBase = entry.path.slice(lastIndex + 1);
 
         // The flat output is breadth-first so we can assume we see tree nodes prior to their contents
         const node = lookup[entryPathDir];
