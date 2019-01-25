@@ -1,8 +1,8 @@
 // A rate limiter to make sure that a client can only request help for one task within a time window.
 export class RateLimitter {
-    private requestMap = new Map<string, number>();
+    private readonly requestMap = new Map<string, number>();
 
-    constructor(private windowMSec: number) {
+    constructor(private readonly windowMSec: number) {
 
     }
 

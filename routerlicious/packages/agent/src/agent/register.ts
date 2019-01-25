@@ -1,25 +1,32 @@
 import * as api from "@prague/client-api";
 import { IClient, IHelpMessage, ITokenProvider, IUser } from "@prague/runtime-definitions";
+import { RateLimitter } from "@prague/utils";
 import { loadDictionary } from "./dictionaryLoader";
 import { IntelWork } from "./intelWork";
 import { SnapshotWork } from "./snapshotWork";
 import { SpellcheckerWork } from "./spellcheckerWork";
 import { TranslationWork } from "./translationWork";
 
+// TODO: Move this to config.
+const RequestWindowMS = 15000;
+
 // If a client declares taks runnning capability in permission array, it must register to perform the task.
 export function registerToWork(doc: api.Document, client: IClient, tokenProvider: ITokenProvider, workerConfig: any) {
     if (client.permission && client.permission.length > 0) {
+        const rateLimitter = new RateLimitter(RequestWindowMS);
         doc.on("localHelp", async (helpMessage: IHelpMessage) => {
+            const filteredTasks = rateLimitter.filter(doc.clientId, helpMessage.tasks);
             await performTasks(
                 doc.id,
                 doc.tenantId,
                 doc.getUser(),
                 tokenProvider,
-                helpMessage.tasks,
+                filteredTasks,
                 workerConfig).catch((err) => {
                 console.error(err);
             });
         });
+        console.log(`Registered to perform tasks!`);
     }
 }
 

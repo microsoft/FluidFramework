@@ -1,9 +1,9 @@
 import { IQueueMessage, ISequencedDocumentSystemMessage, IUser, MessageType } from "@prague/runtime-definitions";
 import * as core from "@prague/services-core";
 import * as utils from "@prague/services-utils";
+import { RateLimitter } from "@prague/utils";
 import * as winston from "winston";
 import { SequencedLambda } from "../kafka-service/sequencedLambda";
-import { RateLimitter } from "./rateLimitter";
 
 // TODO: Move this to config.
 const RequestWindowMS = 15000;
