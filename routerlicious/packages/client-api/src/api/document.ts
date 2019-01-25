@@ -309,7 +309,7 @@ export class Document extends EventEmitter {
                         tasks: helpTasks.browser,
                     };
                     console.log(`Requesting local help for ${helpTasks.browser}`);
-                    this.emit("localHelp", localHelpMessage);
+                    this.runtime.emit("localHelp", localHelpMessage);
                 }
                 if (helpTasks.robot.length > 0) {
                     const remoteHelpMessage: IHelpMessage = {
