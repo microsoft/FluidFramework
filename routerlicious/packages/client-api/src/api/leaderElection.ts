@@ -46,6 +46,8 @@ export class LeaderElector extends EventEmitter {
         });
 
         this.quorum.on("rejectProposal", (sequenceNumber: number, key: string, value: any) => {
+            // Use of 'any' in template literal should be as safe as ("" + value) coercion.
+            // tslint:disable-next-line:no-unsafe-any
             debug(`Proposal rejected @${sequenceNumber}. ${key}:${value}`);
         });
     }
