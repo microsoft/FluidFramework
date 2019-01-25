@@ -1,5 +1,6 @@
 import {
     IChaincodeComponent,
+    IComponentPlatform,
     IComponentRuntime,
     IDeltaHandler,
 } from "@prague/process-definitions";
@@ -52,5 +53,9 @@ export class LegacyChaincodeBridge implements IChaincodeComponent {
             runtime.closeFn);
 
         return component;
+    }
+
+    public attach(platform: IComponentPlatform): Promise<IComponentPlatform> {
+        throw new Error("Method not implemented.");
     }
 }

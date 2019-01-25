@@ -6,7 +6,7 @@
   "types": "dist/index.d.ts",
   "sideEffects": "false",
   "scripts": {
-    "build": "npm run tsc && npm run webpack && npm run tslint",
+    "build": "npm run tsc && npm run tslint",
     "tsc": "tsc",
     "tsc:watch": "tsc --watch",
     "webpack": "webpack --config webpack.config.js",
