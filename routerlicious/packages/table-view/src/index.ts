@@ -3,23 +3,40 @@ import { Component } from "@prague/app-component";
 import { DataStore } from "@prague/app-datastore";
 import { TableDocument } from "@chaincode/table-document";
 import { GridView } from "./grid";
+import { ConfigView } from "./config";
+import { ConfigKeys } from "./configKeys";
 
 export class TableView extends Component {
     constructor() {
         super([[MapExtension.Type, new MapExtension()]]);
     }
     
-    protected async create() { 
-        this.root.set("docId", Math.random().toString(36).substr(2, 4));
-    }
+    protected async create() {}
 
     public async opened() {
-        const store = await this.platform.queryInterface<DataStore>("datastore");
         const maybeDiv = await this.platform.queryInterface<HTMLElement>("div");
+        if (!maybeDiv) {
+            console.error(`No <div> provided`);
+            return;
+        }
 
+        await this.connected;
+        const docId = await this.root.get(ConfigKeys.docId);
+        if (!docId) {
+            const configView = new ConfigView(this.root);
+            maybeDiv.appendChild(configView.root);
+            await configView.done;
+            while (maybeDiv.lastChild) {
+                maybeDiv.lastChild.remove();
+            }
+        }
+
+        const store = await DataStore.from(await this.root.get(ConfigKeys.serverUrl));
         if (maybeDiv) {
-            const docId = await this.root.get("docId");
-            const doc = await store.open<TableDocument>(docId, "danlehen", TableDocument.type);
+            const doc = await store.open<TableDocument>(
+                await this.root.get(ConfigKeys.docId), 
+                await this.root.get(ConfigKeys.userId),
+                TableDocument.type);
             const grid = new GridView(doc);
             maybeDiv.appendChild(grid.root);
         }

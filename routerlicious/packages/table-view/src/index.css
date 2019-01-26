@@ -9,6 +9,7 @@
 table.view {
     font: normal 11pt sanserif;
     margin: auto;
+    border-collapse: separate;
     border-spacing: 0px;
     --select-border: ridge thin #88F;
     user-select: none;
@@ -63,14 +64,16 @@ table.view td {
     left: 0px;
     right: 0px;
     bottom: 0px;
-    background-color: white;
-}
-
-.inputBox {
+    background-color: transparent;
     border: none;
     font: normal 11pt sanserif;
     width: 100%;
     border: 0px;
+}
+
+table.view caption {
+    text-align: center;
+    padding: 4px 0px 0px 0px;
 }
 
 /* Note: Must use 'table.view td.' in selector to override default style (more specific styles win). */

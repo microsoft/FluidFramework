@@ -50,7 +50,35 @@ export class GridView {
         this.inputBox.addEventListener("input", this.cellInput);
 
         this.doc.on("op", this.invalidate);
-        this.update();
+
+        const numRows = this.numRows;
+        const numCols = this.numCols;
+        console.log(`table-view: ctor ${numRows}x${this.numCols}`);
+
+        const blank = headerTemplate.clone();
+        this.cols.appendChild(blank);
+
+        for (let c = 0; c < numCols; c++) {
+            const th = headerTemplate.clone();
+            th.textContent = String.fromCharCode(65 + c);
+            this.cols.appendChild(th);
+        }
+
+        for (let r = 0; r < numRows; r++) {
+            const row = rowTemplate.clone();
+
+            const th = headerTemplate.clone();
+            th.textContent = `${r + 1}`;
+            row.appendChild(th);
+            
+            for (let c = 0; c < numCols; c++) {
+                row.appendChild(cellTemplate.clone());
+            }
+
+            this.tbody.appendChild(row);
+        }
+
+        this.refreshCells();
     }
 
     private get numRows() { return this.doc.numRows; }
@@ -61,31 +89,36 @@ export class GridView {
         this.refreshCells();
     }
 
-    private refreshCells() {
-        let r = 0;
-        for (const tr of this.tbody.children) {
-            let c = -1;
-            for (const td of tr.children) {
-                if (c >= 0) {
-                    const className = this.selection.getStyle(r, c);
-                    if (td.className !== className) {
-                        td.className = className;
-                    }
+    private refreshCell(td: HTMLTableCellElement, row: number, col: number) {
+        const className = this.selection.getStyle(row, col);
+        if (td.className !== className) {
+            td.className = className;
+        }
 
-                    const text = `\u200B${this.doc.evaluateCell(r, c)}`;
-                    if (td.textContent !== text) {
-                        td.textContent = text;
-                    }
-                }
-                c++;
+        // While the cell is being edited, we use the <td>'s content to size the table to the
+        // formula.  Don't synchronize it now.
+        if (this.inputBox.parentElement !== td) {
+            const text = `\u200B${this.doc.evaluateCell(row, col)}`;
+            if (td.textContent !== text) {
+                td.textContent = text;
             }
-            r++;
         }
     }
 
-    private setCell(row: number, col: number, value: string) {
-        this.doc.setCellText(row, col, value);
-        console.log(`[${row}, ${col}] := ${value}`);
+    private refreshCells() {
+        let row = 0;
+        for (const tr of this.tbody.children) {
+            let col = -1;
+            for (const td of tr.children) {
+                // While editing a cell, we use the 'td' to size the table to the current formula.
+                // Do not synchronize it at this time.
+                if (col >= 0 && this.inputBox.parentElement !== td) {
+                    this.refreshCell(td as HTMLTableCellElement, row, col);
+                }
+                col++;
+            }
+            row++;
+        }
     }
 
     private readonly onClick = (e: MouseEvent) => {
@@ -101,7 +134,7 @@ export class GridView {
                 this.selection.end   = [row, this.numCols - 1];
                 this.refreshCells();
             } else if (col >= 0) {
-                this.moveInputToPosition(row, col);
+                this.moveInputToPosition(row, col, e.shiftKey);
             }
         }
     };
@@ -127,21 +160,37 @@ export class GridView {
         if (maybeTd) {
             const [row, col] = this.getRowColFromTd(maybeTd);
             if (col >= 0) {
+                this.commitInput();
+                this.inputBox.remove();
                 this.selection.end = [row, col];
                 this.refreshCells();
             }
-        }    
-    }
-
-    private commitInput() {
-        const maybeParent = this.inputBox.parentElement;
-        if (maybeParent) {
-            const [row, col] = this.getRowColFromTd(maybeParent as HTMLTableCellElement);
-            this.setCell(row, col, this.inputBox.value);
         }
     }
 
-    private moveInputToPosition(row: number, col: number) {
+    private readonly cancelInput = () => {
+        const maybeParent = this.inputBox.parentElement as HTMLTableCellElement;
+        if (maybeParent) {
+            this.inputBox.remove();
+            const [row, col] = this.getRowColFromTd(maybeParent);
+            this.refreshCell(maybeParent, row, col);
+        }
+    }
+
+    private commitInput() {
+        const maybeParent = this.inputBox.parentElement as HTMLTableCellElement;
+        if (maybeParent) {
+            const [row, col] = this.getRowColFromTd(maybeParent);
+            const previous = this.doc.getCellText(row, col);
+            const current = this.inputBox.value;
+            if (previous !== current) {
+                this.doc.setCellText(row, col, current);
+            }
+            this.refreshCell(maybeParent, row, col);
+        }
+    }
+
+    private moveInputToPosition(row: number, col: number, extendSelection: boolean) {
         const newParent = this.getTdFromRowCol(row, col);
         if (newParent) {
             this.commitInput();
@@ -154,14 +203,46 @@ export class GridView {
             this.cellInput();
             this.tdText.textContent = this.inputBox.value;
             this.inputBox.focus();
+
+            this.selection.end = [row, col];
+            if (!extendSelection) {
+                this.selection.start = this.selection.end;
+            }
+
+            this.refreshCells();
         }
-        return newParent !== undefined;
+
+        // 'getTdFromRowCol(..)' return false if row/col are outside the sheet range.
+        return !!newParent;
     }
 
-    private moveInputByOffset(rowOffset: number, colOffset: number) {
+    private moveInputByOffset(e: KeyboardEvent, rowOffset: number, colOffset: number) {
+        // Allow the left/right arrow keys to move the caret inside the inputBox until the caret
+        // is in the first/last character position.  Then move the inputBox.
+        if ((e.target === this.inputBox) && this.inputBox.selectionStart! >= 0) {
+            const x = this.inputBox.selectionStart! + colOffset;
+            if (0 <= x && x <= this.inputBox.value.length) {
+                colOffset = 0;
+                if (rowOffset === 0) {
+                    return;
+                }
+            }
+        }
+
+        // If we're moving 'inputBox' prevent the arrow keys from moving the caret.  If we don't do this,
+        // our 'setSelectionRange()' below will appear off-by-one, and up/down in the top/bottom cells
+        // will behave like home/end respectively.
+        e.preventDefault();
+
         const parent = this.inputBox.parentElement as HTMLTableCellElement;
         const [row, col] = this.getRowColFromTd(parent);
-        this.moveInputToPosition(row + rowOffset, col + colOffset);
+        if (this.moveInputToPosition(row + rowOffset, col + colOffset, e.shiftKey)) {
+            // If we moved horizontally, move the caret to the beginning/end of the input as appropriate.
+            const caretPosition = colOffset > 0
+                ? 0
+                : this.inputBox.value.length;
+            this.inputBox.setSelectionRange(caretPosition, caretPosition);
+        }
     }
 
     private readonly cellInput = () => { 
@@ -170,13 +251,13 @@ export class GridView {
 
     private readonly cellKeyDown = (e: KeyboardEvent) => {
         switch (e.keyCode) {
-            case KeyCode.Escape:     { this.inputBox.remove(); this.selection.reset(); this.refreshCells(); break; }
-            case KeyCode.UpArrow:    { this.moveInputByOffset(/* rowOffset: */ -1, /* colOffset */  0); break; }
-            case KeyCode.Enter:
-            case KeyCode.DownArrow:  { this.moveInputByOffset(/* rowOffset: */  1, /* colOffset */  0); break; }
-            case KeyCode.LeftArrow:  { this.moveInputByOffset(/* rowOffset: */  0, /* colOffset */ -1); break; }
-            case KeyCode.Tab:
-            case KeyCode.RightArrow: { this.moveInputByOffset(/* rowOffset: */  0, /* colOffset */  1); break; }
+            case KeyCode.Escape:     { this.cancelInput(); break; }
+            case KeyCode.UpArrow:    { this.moveInputByOffset(e, /* rowOffset: */ -1, /* colOffset */  0); break; }
+            case KeyCode.Enter:      { this.commitInput(); /* fall-through */ }
+            case KeyCode.DownArrow:  { this.moveInputByOffset(e, /* rowOffset: */  1, /* colOffset */  0); break; }
+            case KeyCode.LeftArrow:  { this.moveInputByOffset(e, /* rowOffset: */  0, /* colOffset */ -1); break; }
+            case KeyCode.Tab:        { e.preventDefault(); /* fall-through */ }
+            case KeyCode.RightArrow: { this.moveInputByOffset(e, /* rowOffset: */  0, /* colOffset */  1); break; }
         }
     };
 
@@ -211,36 +292,5 @@ export class GridView {
         // Row headings are inside the <tbody>, therefore we need to adjust our column
         // index by +/-1 to skip them.
         return 0 <= col && col < (cols.length - 1) && cols.item(col + 1);
-    }
-
-    public update() {
-        const numRows = this.numRows;
-        const numCols = this.numCols;
-        console.log(`table-view: update: ${numRows}x${this.numCols}`);
-
-        const blank = headerTemplate.clone();
-        this.cols.appendChild(blank);
-
-        for (let c = 0; c < numCols; c++) {
-            const th = headerTemplate.clone();
-            th.textContent = String.fromCharCode(65 + c);
-            this.cols.appendChild(th);
-        }
-
-        for (let r = 0; r < numRows; r++) {
-            const row = rowTemplate.clone();
-
-            const th = headerTemplate.clone();
-            th.textContent = `${r + 1}`;
-            row.appendChild(th);
-            
-            for (let c = 0; c < numCols; c++) {
-                row.appendChild(cellTemplate.clone());
-            }
-
-            this.tbody.appendChild(row);
-        }
-
-        this.refreshCells();
     }
 }

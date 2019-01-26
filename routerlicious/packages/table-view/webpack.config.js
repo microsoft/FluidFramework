@@ -59,8 +59,6 @@ module.exports = env => {
             devtoolNamespace: "table-view",
             libraryTarget: "umd"
         },
-        plugins: [
-        ],
         node: {
             fs: "empty",
             dgram: "empty",

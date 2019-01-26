@@ -151,4 +151,23 @@ export abstract class Component extends EventEmitter {
      * Subclass implements 'opened()' to finish initialization after the component has been opened/created.
      */
     protected abstract async opened(): Promise<void>;
+
+    /**
+     * Returns a promise that resolves once the component is synchronized with its date store.
+     * If the component is already connected, returns a resolved promise.
+     */
+    protected get connected(): Promise<void> {
+        if (this._runtime.connected) {
+            debug("Component.connected: Already connected.");
+            return Promise.resolve();
+        }
+
+        debug("Component.connected: Waiting...");
+        return new Promise((accept) => {
+                this._runtime.on("connected", () => {
+                    debug("Component.connected: Now connected.");
+                    accept();
+                });
+            });
+    }
 }
