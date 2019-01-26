@@ -9,6 +9,11 @@ interface ChatRendererProps {
 }
 
 export class ChatRenderer extends React.Component<ChatRendererProps> {
+
+  componentDidUpdate() {
+    window.scrollTo(0,document.body.scrollHeight);
+  }
+
   render() {
     const { messagesToRender, inputMessage, addMessageHandler, onChangeHandler } = this.props;
 
