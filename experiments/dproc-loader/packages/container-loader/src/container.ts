@@ -49,7 +49,7 @@ interface IBufferedChunk {
 }
 
 // TODO consider a name change for this. The document is likely built on top of this infrastructure
-export class DistributedProcess extends EventEmitter {
+export class Container extends EventEmitter {
     public static async Load(
         id: string,
         tenantId: string,
@@ -60,8 +60,8 @@ export class DistributedProcess extends EventEmitter {
         codeLoader: ICodeLoader,
         options: any,
         specifiedVersion: ICommit,
-        connect: boolean): Promise<DistributedProcess> {
-        const doc = new DistributedProcess(id, tenantId, user, tokenProvider, platform, service, codeLoader, options);
+        connect: boolean): Promise<Container> {
+        const doc = new Container(id, tenantId, user, tokenProvider, platform, service, codeLoader, options);
         await doc.load(specifiedVersion, connect);
 
         return doc;
@@ -775,11 +775,10 @@ export class DistributedProcess extends EventEmitter {
                     return this.prepareRemoteMessage(message);
                 }
 
+            // Merge attach and operation together
             case MessageType.Operation:
-                return this.context.prepare(message, local);
-
             case MessageType.Attach:
-                return this.context.prepareAttach(message, local);
+                return this.context.prepare(message, local);
 
             default:
                 return Promise.resolve();
@@ -876,16 +875,14 @@ export class DistributedProcess extends EventEmitter {
                 this.quorum.rejectProposal(message.clientId, sequenceNumber);
                 break;
 
-            case MessageType.Attach:
-                this.context.processAttach(message, local, context);
-                break;
-
             case MessageType.BlobUploaded:
                 // tslint:disable-next-line:no-floating-promises
                 this.blobManager.addBlob(message.contents);
                 this.emit(MessageType.BlobUploaded, message.contents);
                 break;
 
+            // Merge attach and operation together
+            case MessageType.Attach:
             case MessageType.Operation:
                 this.context.process(message, local, context);
                 break;
@@ -910,8 +907,9 @@ export class DistributedProcess extends EventEmitter {
         const local = this._clientId === message.clientId;
 
         switch (message.type) {
+            // Merge attach and operation together
             case MessageType.Attach:
-                await this.context.postProcessAttach(message, local, context);
+                await this.context.postProcess(message, local, context);
                 break;
 
             default:

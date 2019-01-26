@@ -1,6 +1,6 @@
 import * as sharedText from "@chaincode/shared-text";
+import * as pragueLoader from "@prague/container-loader";
 import { IChaincodeFactory, ICodeLoader } from "@prague/process-definitions";
-import * as pragueLoader from "@prague/process-loader";
 import { WebPlatformFactory } from "@prague/process-utils";
 import * as socketStorage from "@prague/socket-storage";
 import * as jwt from "jsonwebtoken";
@@ -19,7 +19,7 @@ const historian = "http://localhost:3001";
 const tenantId = "github";
 const secret = "0bea3f87c186991a69245a29dc3f61d2";
 
-async function initializeChaincode(document: pragueLoader.DistributedProcess, pkg: string): Promise<void> {
+async function initializeChaincode(document: pragueLoader.Container, pkg: string): Promise<void> {
     const quorum = document.getQuorum();
 
     // Wait for connection so that proposals can be sent

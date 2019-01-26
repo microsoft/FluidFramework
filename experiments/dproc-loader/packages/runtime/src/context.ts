@@ -6,6 +6,8 @@ import {
 import {
     ConnectionState,
     IAttachMessage,
+    IBlobManager,
+    IDeltaManager,
     IDocumentStorageService,
     IEnvelope,
     IPlatform,
@@ -18,11 +20,9 @@ import {
 } from "@prague/runtime-definitions";
 import { buildHierarchy, Deferred, flatten } from "@prague/utils";
 import * as assert from "assert";
-import { BlobManager } from "./blobManager";
 import { Component } from "./component";
 import { ComponentStorageService } from "./componentStorageService";
 import { debug } from "./debug";
-import { DeltaManager } from "./deltaManager";
 import { readAndParse } from "./utils";
 
 export class Context implements IHostRuntime {
@@ -35,10 +35,10 @@ export class Context implements IHostRuntime {
         options: any,
         clientId: string,
         user: IUser,
-        blobManager: BlobManager,
+        blobManager: IBlobManager,
         pkg: string,
         chaincode: IChaincodeHost,
-        deltaManager: DeltaManager,
+        deltaManager: IDeltaManager,
         quorum: IQuorum,
         storage: IDocumentStorageService,
         connectionState: ConnectionState,
@@ -119,8 +119,8 @@ export class Context implements IHostRuntime {
         public readonly options: any,
         public clientId: string,
         public readonly user: IUser,
-        public readonly blobManager: BlobManager,
-        public readonly deltaManager: DeltaManager,
+        public readonly blobManager: IBlobManager,
+        public readonly deltaManager: IDeltaManager,
         private quorum: IQuorum,
         public readonly pkg: string,
         public readonly platform: IPlatform,

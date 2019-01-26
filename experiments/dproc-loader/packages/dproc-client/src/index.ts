@@ -1,8 +1,8 @@
+import * as loader from "@prague/container-loader";
 import {
     IChaincodeFactory,
     ICodeLoader,
 } from "@prague/process-definitions";
-import * as loader from "@prague/process-loader";
 import {
     IDocumentService,
     IPlatform,

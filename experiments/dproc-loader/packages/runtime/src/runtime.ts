@@ -2,9 +2,11 @@ import {
     ConnectionState,
     FileMode,
     IAttachMessage,
+    IBlobManager,
     IChaincode,
     IChaincodeModule,
     IChannel,
+    IDeltaManager,
     IDistributedObjectServices,
     IDocumentStorageService,
     IEnvelope,
@@ -26,10 +28,8 @@ import {
 import { Deferred, gitHashFile } from "@prague/utils";
 import * as assert from "assert";
 import { EventEmitter } from "events";
-import { BlobManager } from "./blobManager";
 import { ChannelDeltaConnection } from "./channelDeltaConnection";
 import { ChannelStorageService } from "./channelStorageService";
-import { DeltaManager } from "./deltaManager";
 import { LocalChannelStorageService } from "./localChannelStorageService";
 import { readAndParse } from "./utils";
 
@@ -54,11 +54,11 @@ export class Runtime extends EventEmitter implements IRuntime {
         options: any,
         clientId: string,
         user: IUser,
-        blobManager: BlobManager,
+        blobManager: IBlobManager,
         pkg: string,
         chaincode: IChaincode,
         tardisMessages: Map<string, ISequencedDocumentMessage[]>,
-        deltaManager: DeltaManager,
+        deltaManager: IDeltaManager,
         quorum: IQuorum,
         storage: IDocumentStorageService,
         connectionState: ConnectionState,
@@ -141,8 +141,8 @@ export class Runtime extends EventEmitter implements IRuntime {
         public readonly options: any,
         public clientId: string,
         public readonly user: IUser,
-        private blobManager: BlobManager,
-        public readonly deltaManager: DeltaManager,
+        private blobManager: IBlobManager,
+        public readonly deltaManager: IDeltaManager,
         private quorum: IQuorum,
         public readonly pkg: string,
         public readonly chaincode: IChaincode,
