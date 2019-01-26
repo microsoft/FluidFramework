@@ -12,11 +12,11 @@
     "update": "npm run build && npm version patch && npm publish --registry http://localhost:4873"
   },
   "dependencies": {
-    "@prague/datastore": "^0.1.4276",
-    "@prague/map": "^0.1.4276",
-    "@prague/runtime-definitions": "^0.1.4276",
-    "@prague/shared-string": "^0.1.4276",
-    "@prague/utils": "^0.1.4276",
+    "@prague/app-component": "^0.1.4668",
+    "@prague/map": "^0.1.4668",
+    "@prague/runtime-definitions": "^0.1.4668",
+    "@prague/sequence": "^0.1.4668",
+    "@prague/utils": "^0.1.4668",
     "@types/debug": "0.0.30",
     "@types/google-maps": "^3.2.0",
     "@types/node": "^10.9.4",
@@ -42,8 +42,7 @@
     "typescript": "^3.0.3",
     "url-loader": "^1.1.1",
     "webpack": "^4.19.0",
-    "webpack-cli": "^3.1.0",
-    "webpack-dev-server": "^3.1.9"
+    "webpack-cli": "^3.1.0"
   },
   "prague": {
     "browser": {

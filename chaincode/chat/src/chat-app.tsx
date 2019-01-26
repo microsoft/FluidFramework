@@ -1,4 +1,4 @@
-import { Document } from "@prague/datastore";
+import { Document } from "@prague/app-component";
 import { Counter, CounterValueType, IMap } from "@prague/map";
 import { Provider, themes } from "@stardust-ui/react";
 import { ChatContainer } from "./chat-container";

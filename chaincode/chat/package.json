@@ -17,14 +17,11 @@
     "@types/node": "^10.11.5",
     "@types/react-dom": "^16.0.11",
     "clean-webpack-plugin": "^0.1.19",
-    "cross-spawn": "^6.0.5",
-    "lerna": "^3.4.3",
     "ts-loader": "^4.4.2",
     "typescript": "^3.0.1",
     "webpack": "^4.16.5",
     "webpack-cli": "^3.1.0",
-    "webpack-merge": "^4.1.4",
-    "webpack-serve": "^2.0.2"
+    "webpack-merge": "^4.1.4"
   },
   "prague": {
     "browser": {
@@ -35,10 +32,10 @@
     }
   },
   "dependencies": {
-    "@prague/app-datastore": "^0.1.4276",
-    "@prague/datastore": "^0.1.4276",
-    "@prague/map": "^0.1.4276",
-    "@prague/runtime-definitions": "^0.1.4276",
+    "@prague/app-component": "^0.1.4668",
+    "@prague/app-datastore": "^0.1.4668",
+    "@prague/map": "^0.1.4668",
+    "@prague/runtime-definitions": "^0.1.4668",
     "@stardust-ui/react": "^0.17.0",
     "react": "^16.7.0",
     "react-dom": "^16.7.0"

@@ -22,18 +22,16 @@
     "tslint": "^5.11.0",
     "typescript": "^3.0.1",
     "webpack": "^4.7.0",
-    "webpack-cli": "^3.1.2",
-    "webpack-serve": "^2.0.2",
-    "webpack-visualizer-plugin": "^0.1.11"
+    "webpack-cli": "^3.1.2"
   },
   "dependencies": {
-    "@prague/api-definitions": "^0.1.4276",
-    "@prague/datastore": "^0.1.4276",
-    "@prague/loader-web": "^0.1.4276",
-    "@prague/map": "^0.1.4276",
-    "@prague/runtime-definitions": "^0.1.4276",
-    "@prague/shared-string": "^0.1.4276",
-    "@prague/stream": "^0.1.4276",
+    "@prague/api-definitions": "^0.1.4668",
+    "@prague/app-component": "^0.1.4668",
+    "@prague/loader-web": "^0.1.4668",
+    "@prague/map": "^0.1.4668",
+    "@prague/runtime-definitions": "^0.1.4668",
+    "@prague/sequence": "^0.1.4668",
+    "@prague/stream": "^0.1.4668",
     "@types/node": "^10.5.8"
   },
   "prague": {
