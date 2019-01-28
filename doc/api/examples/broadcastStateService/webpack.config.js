@@ -3,7 +3,8 @@ const path = require('path');
 // const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 
 const broadcastStateServiceConfig = {
-    entry: './src/broadcastStateService.ts',
+    entry: './src/testapp.ts',
+    mode: 'development',
     devtool: 'source-map',
     target: 'node',
     module: {
@@ -24,7 +25,7 @@ const broadcastStateServiceConfig = {
         extensions: [ '.tsx', '.ts', '.js' ]
     },
     output: {
-        filename: 'attendee.js',
+        filename: 'stateserviceproxy.js',
         path: path.resolve(__dirname, 'dist')
     },
     plugins: [

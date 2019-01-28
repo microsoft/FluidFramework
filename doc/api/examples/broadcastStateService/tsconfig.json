@@ -14,7 +14,7 @@
         "inlineSources": true
     },
     "include": [
-        "src/broadcastStateService.ts",
-        "src/IBroadcastStateService.ts"
+        "src/ibroadcaststateservice.ts",
+        "src/testapp.ts"
     ]
 }
