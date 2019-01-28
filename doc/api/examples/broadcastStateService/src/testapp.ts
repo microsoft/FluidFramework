@@ -1,4 +1,4 @@
-import * as bcs from "./ibroadcaststateservice"
+import * as bcs from "./broadcaststateservice"
 
 async function Run()
 {
@@ -33,6 +33,15 @@ async function Run()
    newMap.set( "Key", "value" );
 
    await valueChangedPromise;
+
+   const c2 = await ss2.CreateCell( "currentSlide" );
+   const c1 = await stateService.WaitCell( "currentSlide" );
+
+   const slideNavPromise = new Promise< void >( resolve => { c1.on( "valueChanged", value => { resolve(); } ) } );
+
+   c2.set( "256" );
+
+   await slideNavPromise;
 }
 
 Run().then( () => { console.log( "Complete" ); process.exit(); } );

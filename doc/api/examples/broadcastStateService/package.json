@@ -2,7 +2,7 @@
   "name": "sequence",
   "version": "0.1.0",
   "description": "Ppt Broadcast State Service",
-  "types" : "dist/stateserviceproxy.d.ts",
+  "types": "dist/stateserviceproxy.d.ts",
   "main": "index.js",
   "dependencies": {
     "@prague/client-api": "^0.1.4272",
