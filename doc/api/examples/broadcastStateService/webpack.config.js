@@ -37,7 +37,7 @@ const testBroadcastStateServiceConfig = {
 };
 
 const broadcastStateServiceConfig = {
-    entry: './src/ibroadcaststateservice.ts',
+    entry: './src/broadcaststateservice.ts',
     mode: 'development',
     devtool: 'source-map',
     target: 'web',
