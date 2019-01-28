@@ -1,6 +1,7 @@
 const path = require('path');
 // var Visualizer = require('webpack-visualizer-plugin');
 // const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
+const webpack = require("webpack");
 
 module.exports = {
     entry: {
@@ -61,6 +62,14 @@ module.exports = {
         publicPath: '/dist'
     },
     plugins: [
+        new webpack.DllReferencePlugin({
+            context: process.cwd(),
+            manifest: require(path.resolve(__dirname, "../external-dll/dist", "External.json"))
+        }),
+        new webpack.DllReferencePlugin({
+            context: process.cwd(),
+            manifest: require(path.resolve(__dirname, "../runtime-dll/dist", "PragueRuntime.json"))
+        }),
         // new BundleAnalyzerPlugin(),
         // new Visualizer({
         //     filename: './statistics.html'

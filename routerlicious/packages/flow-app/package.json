@@ -12,7 +12,9 @@
     "dev": "cd ../flow-document && npm run publish-patch-local && cd ../flow-editor && npm run publish-patch-local && cd ../table-document && npm run publish-patch-local && cd ../table-view && npm run publish-patch-local && cd ../flow-app && webpack-dev-server"
   },
   "dependencies": {
+    "@prague/external-dll": "^0.1.0",
     "@prague/flow-host": "^0.1.0",
+    "@prague/runtime-dll": "^0.1.0",
     "react": "^16.6.3",
     "react-dom": "^16.6.3"
   },

@@ -103,6 +103,14 @@ module.exports = env => {
                 checkSyntacticErrors: true,
                 workers: typeCheckingCores
             }),
+            new webpack.DllReferencePlugin({
+                context: process.cwd(),
+                manifest: require(path.resolve(__dirname, "../external-dll/dist", "External.json"))
+            }),
+            new webpack.DllReferencePlugin({
+                context: process.cwd(),
+                manifest: require(path.resolve(__dirname, "../runtime-dll/dist", "PragueRuntime.json"))
+            })
         ]
     };
 
@@ -142,7 +150,7 @@ module.exports = env => {
                     openAnalyzer: false,
                     generateStatsFile: true,
                     statsFilename: 'loader.stats.json'
-                  })
+                })
             ],
         }];
 

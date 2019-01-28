@@ -42,6 +42,10 @@
       "projectFolder": "packages/client-ui"
     },
     {
+      "packageName": "@prague/external-dll",
+      "projectFolder": "packages/external-dll"
+    },
+    {
       "packageName": "@prague/flow-app",
       "projectFolder": "packages/flow-app"
     },
@@ -120,6 +124,10 @@
     {
       "packageName": "@prague/runtime-definitions",
       "projectFolder": "packages/runtime-definitions"
+    },
+    {
+      "packageName": "@prague/runtime-dll",
+      "projectFolder": "packages/runtime-dll"
     },
     {
       "packageName": "@prague/services-client",
