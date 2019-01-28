@@ -2,7 +2,7 @@ const path = require('path');
 // var Visualizer = require('webpack-visualizer-plugin');
 // const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 
-const broadcastStateServiceConfig = {
+const testBroadcastStateServiceConfig = {
     entry: './src/testapp.ts',
     mode: 'development',
     devtool: 'source-map',
@@ -25,7 +25,7 @@ const broadcastStateServiceConfig = {
         extensions: [ '.tsx', '.ts', '.js' ]
     },
     output: {
-        filename: 'stateserviceproxy.js',
+        filename: 'test.js',
         path: path.resolve(__dirname, 'dist')
     },
     plugins: [
@@ -36,5 +36,41 @@ const broadcastStateServiceConfig = {
     ],
 };
 
-module.exports = [ broadcastStateServiceConfig ];
+const broadcastStateServiceConfig = {
+    entry: './src/ibroadcaststateservice.ts',
+    mode: 'development',
+    devtool: 'source-map',
+    target: 'web',
+    module: {
+        rules: [
+            {
+                test: /\.tsx?$/,
+                use: 'ts-loader',
+                exclude: /node_modules/
+            },
+            {
+                test: /\.js$/,
+                use: ["source-map-loader"],
+                enforce: "pre"
+            }
+        ]
+    },
+    resolve: {
+        extensions: [ '.tsx', '.ts', '.js' ]
+    },
+    output: {
+        filename: 'stateserviceproxy.js',
+        path: path.resolve(__dirname, 'dist'),
+        libraryTarget : "var",
+        library : "BroadcastStateService"
+    },
+    plugins: [
+        // new BundleAnalyzerPlugin(),
+        // new Visualizer({
+        //     filename: './statistics.html'
+        // })
+    ]
+};
+
+module.exports = [ testBroadcastStateServiceConfig, broadcastStateServiceConfig ];
 
