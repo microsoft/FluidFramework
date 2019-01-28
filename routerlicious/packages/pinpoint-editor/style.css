@@ -26,7 +26,7 @@ h4 small {
 /* map editor */
 
 .map-outer {
-    // height: 400px;
+    /* height: 400px; */
 }
 
 #map {
@@ -38,8 +38,8 @@ h4 small {
 }
 
 .marker-box {
-    // border: 1px solid #ddd;
-    // padding: 20px;
+    /* border: 1px solid #ddd; */
+    /* padding: 20px; */
 }
 
 .map-preview {
@@ -48,7 +48,7 @@ h4 small {
 }
 
 .map-preview.wide {
-    // width: 540px;
+    /* width: 540px; */
 }
 
 .delete-marker {
