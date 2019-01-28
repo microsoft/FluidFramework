@@ -30,6 +30,10 @@
       "projectFolder": "packages/cell"
     },
     {
+      "packageName": "@chaincode/chart-view",
+      "projectFolder": "packages/chart-view"
+    },
+    {
       "packageName": "@prague/client-api",
       "projectFolder": "packages/client-api"
     },

@@ -1,7 +1,7 @@
 {
   "name": "@chaincode/table-document",
   "description": "Chaincode component containing a table's data",
-  "version": "0.1.95",
+  "version": "0.1.96",
   "author": "Microsoft",
   "repository": "microsoft/prague",
   "main": "dist/main.bundle.js",

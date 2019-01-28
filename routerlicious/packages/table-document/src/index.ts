@@ -1,4 +1,4 @@
-import { UnboxedOper, Workbook, ResultKind } from "@prague/client-ui/ext/calc";
+import { UnboxedOper, Workbook, ResultKind, ReadOper } from "@prague/client-ui/ext/calc";
 import { MapExtension, IMapView, registerDefaultValueType,  } from "@prague/map";
 import { SharedString, CollaborativeStringExtension } from "@prague/sequence";
 import { Component } from "@prague/app-component";
@@ -105,11 +105,23 @@ export class TableDocument extends Component {
     public get numCols() { return Math.min(this.rootView.get("stride").value, this.length); }
     public get numRows() { return Math.floor(this.length / this.numCols); }
 
+    private parseResult(input: ReadOper): string | number | boolean {
+        switch(typeof input) {
+            case "string":
+            case "number":
+            case "boolean":
+                return input;
+
+            default:
+                return this.workbook.serialiseValue(input);
+        }
+    }
+
     public evaluateCell(row: number, col: number) {
         const result = this.workbook.evaluateCell(row, col);
         switch (result.kind) {
             case ResultKind.Success:
-                return this.workbook.serialiseValue(result.value);
+                return this.parseResult(result.value);
             default:
                 return result.reason.toString();
         }

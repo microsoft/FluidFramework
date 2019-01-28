@@ -22,6 +22,7 @@ COPY packages/app-component/package*.json packages/app-component/
 COPY packages/app-datastore/package*.json packages/app-datastore/
 COPY packages/app-ui/package*.json packages/app-ui/
 COPY packages/cell/package*.json packages/cell/
+COPY packages/chart-view/package*.json packages/chart-view/
 COPY packages/client-api/package*.json packages/client-api/
 COPY packages/client-ui/package*.json packages/client-ui/
 COPY packages/flow-app/package*.json packages/flow-app/
