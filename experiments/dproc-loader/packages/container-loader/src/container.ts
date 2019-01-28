@@ -25,6 +25,7 @@ import {
     MessageType,
     TreeEntry,
 } from "@prague/runtime-definitions";
+import { buildHierarchy, flatten } from "@prague/utils";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import { BlobManager } from "./blobManager";
@@ -199,11 +200,12 @@ export class Container extends EventEmitter {
         // NOTE I believe I did the explicit then here so that the snapshot held the turn until it got the data
         // it needed
 
-        // Iterate over each component and ask it to snapshot
+        // Snapshots base document state and currently running context
+        const root = this.snapshotBase();
         const componentEntries = this.context.snapshot();
 
-        // Snapshots base document state
-        const root = this.snapshotBase();
+        // And then combine
+        root.entries.push(...componentEntries.entries);
 
         // Generate base snapshot message
         const snapshotSequenceNumber = this._deltaManager.referenceSequenceNumber;
@@ -213,9 +215,6 @@ export class Container extends EventEmitter {
 
         // Pull in the prior version and snapshot tree to store against
         const lastVersion = await this.storageService.getVersions(this.id, 1);
-        const tree = lastVersion.length > 0
-            ? await this.storageService.getSnapshotTree(lastVersion[0])
-            : { blobs: {}, commits: {}, trees: {} };
 
         // Pull the sequence number stored with the previous version
         let sequenceNumber = 0;
@@ -237,42 +236,6 @@ export class Container extends EventEmitter {
             type: TreeEntry[TreeEntry.Blob],
             value: {
                 contents: JSON.stringify(deltas),
-                encoding: "utf-8",
-            },
-        });
-
-        // Use base tree to know previous component snapshot and then snapshot each component
-        const channelCommitsP = new Array<Promise<{ id: string, commit: ICommit }>>();
-        for (const [channelId, channelSnapshot] of componentEntries) {
-            const parent = channelId in tree.commits ? [tree.commits[channelId]] : [];
-            const channelCommitP = this.storageService
-                .write(channelSnapshot, parent, `${channelId} commit @${deltaDetails} ${tagMessage}`, channelId)
-                .then((commit) => ({ id: channelId, commit }));
-            channelCommitsP.push(channelCommitP);
-        }
-
-        // Add in module references to the component snapshots
-        const channelCommits = await Promise.all(channelCommitsP);
-        let gitModules = "";
-        for (const channelCommit of channelCommits) {
-            root.entries.push({
-                mode: FileMode.Commit,
-                path: channelCommit.id,
-                type: TreeEntry[TreeEntry.Commit],
-                value: channelCommit.commit.sha,
-            });
-
-            const repoUrl = "https://github.com/kurtb/praguedocs.git"; // this.storageService.repositoryUrl
-            gitModules += `[submodule "${channelCommit.id}"]\n\tpath = ${channelCommit.id}\n\turl = ${repoUrl}\n\n`;
-        }
-
-        // Write the module lookup details
-        root.entries.push({
-            mode: FileMode.File,
-            path: ".gitmodules",
-            type: TreeEntry[TreeEntry.Blob],
-            value: {
-                contents: gitModules,
                 encoding: "utf-8",
             },
         });
@@ -329,32 +292,11 @@ export class Container extends EventEmitter {
         const blobManagerP = Promise.all([storageP, treeP]).then(
             ([storage, tree]) => this.loadBlobManager(storage, tree));
 
-        const submodulesP = Promise.all([storageP, treeP]).then(async ([storage, tree]) => {
-            if (!tree || !tree.commits) {
-                return new Map<string, ISnapshotTree>();
-            }
-
-            const snapshotTreesP = Object.keys(tree.commits).map(async (key) => {
-                const moduleSha = tree.commits[key];
-                const commit = (await storage.getVersions(moduleSha, 1))[0];
-                const moduleTree = await storage.getSnapshotTree(commit);
-                return { id: key, tree: moduleTree };
-            });
-
-            const submodules = new Map<string, ISnapshotTree>();
-            const snapshotTree = await Promise.all(snapshotTreesP);
-            for (const value of snapshotTree) {
-                submodules.set(value.id, value.tree);
-            }
-
-            return submodules;
-        });
-
         // Wait for all the loading promises to finish
         return Promise
             .all([
                 storageP,
-                submodulesP,
+                treeP,
                 versionP,
                 attributesP,
                 quorumP,
@@ -399,7 +341,6 @@ export class Container extends EventEmitter {
                     this.clientId,
                     this.user,
                     this.blobManager,
-                    chaincode.pkg,
                     chaincode.chaincode,
                     this._deltaManager,
                     this.quorum,
@@ -565,6 +506,10 @@ export class Container extends EventEmitter {
         this.pkg = pkg;
 
         const previousContextState = this.context.stop();
+        const blobs = new Map();
+        const flattened = flatten(previousContextState.entries, blobs);
+        const snapshotTree = buildHierarchy(flattened);
+
         const newContext = await Context.Load(
             this.tenantId,
             this.id,
@@ -575,14 +520,13 @@ export class Container extends EventEmitter {
             this.clientId,
             this.user,
             this.blobManager,
-            this.pkg,
             chaincode,
             this._deltaManager,
             this.quorum,
             this.storageService,
             this.connectionState,
-            previousContextState.snapshot,
-            previousContextState.blobs,
+            snapshotTree,
+            blobs,
             this.id,
             this._deltaManager.minimumSequenceNumber,
             (type, contents) => this.submitMessage(type, contents),

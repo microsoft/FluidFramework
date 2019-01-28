@@ -1,5 +1,6 @@
 import {
     IChaincodeHost,
+    IComponentContext,
     IComponentRuntime,
     IHostRuntime,
 } from "@prague/process-definitions";
@@ -20,12 +21,14 @@ import {
 } from "@prague/runtime-definitions";
 import { buildHierarchy, Deferred, flatten } from "@prague/utils";
 import * as assert from "assert";
+import { EventEmitter } from "events";
 import { Component } from "./component";
 import { ComponentStorageService } from "./componentStorageService";
 import { debug } from "./debug";
 import { readAndParse } from "./utils";
 
-export class Context implements IHostRuntime {
+// Context will define the component level mappings
+export class Context extends EventEmitter implements IComponentContext, IHostRuntime, IPlatform {
     public static async Load(
         tenantId: string,
         id: string,
@@ -36,7 +39,6 @@ export class Context implements IHostRuntime {
         clientId: string,
         user: IUser,
         blobManager: IBlobManager,
-        pkg: string,
         chaincode: IChaincodeHost,
         deltaManager: IDeltaManager,
         quorum: IQuorum,
@@ -61,7 +63,6 @@ export class Context implements IHostRuntime {
             blobManager,
             deltaManager,
             quorum,
-            pkg,
             platform,
             chaincode,
             storage,
@@ -82,10 +83,6 @@ export class Context implements IHostRuntime {
         }
 
         await Promise.all(componentsP);
-
-        // Start the context
-        debug("Starting context");
-        await context.start();
 
         return context;
     }
@@ -122,7 +119,6 @@ export class Context implements IHostRuntime {
         public readonly blobManager: IBlobManager,
         public readonly deltaManager: IDeltaManager,
         private quorum: IQuorum,
-        public readonly pkg: string,
         public readonly platform: IPlatform,
         public readonly chaincode: IChaincodeHost,
         public readonly storage: IDocumentStorageService,
@@ -134,6 +130,7 @@ export class Context implements IHostRuntime {
         public readonly snapshotFn: (message: string) => Promise<void>,
         public readonly closeFn: () => void,
     ) {
+        super();
     }
 
     public async loadComponent(
@@ -180,10 +177,61 @@ export class Context implements IHostRuntime {
         await component.start();
     }
 
-    public snapshot(): Map<string, ITree> {
+    public async queryInterface<T>(id: string): Promise<any> {
+        switch (id) {
+            case "context":
+                return this as IComponentContext;
+            default:
+                return null;
+        }
+    }
+
+    public snapshot(): ITree {
+        // Pull in the prior version and snapshot tree to store against
+        const lastVersion = await this.storageService.getVersions(this.id, 1);
+        const tree = lastVersion.length > 0
+            ? await this.storageService.getSnapshotTree(lastVersion[0])
+            : { blobs: {}, commits: {}, trees: {} };
+
         // Iterate over each component and ask it to snapshot
         const channelEntries = new Map<string, ITree>();
         this.components.forEach((component, key) => channelEntries.set(key, component.snapshot()));
+
+        // Use base tree to know previous component snapshot and then snapshot each component
+        const channelCommitsP = new Array<Promise<{ id: string, commit: ICommit }>>();
+        for (const [channelId, channelSnapshot] of componentEntries) {
+            const parent = channelId in tree.commits ? [tree.commits[channelId]] : [];
+            const channelCommitP = this.storageService
+                .write(channelSnapshot, parent, `${channelId} commit @${deltaDetails} ${tagMessage}`, channelId)
+                .then((commit) => ({ id: channelId, commit }));
+            channelCommitsP.push(channelCommitP);
+        }
+
+        // Add in module references to the component snapshots
+        const channelCommits = await Promise.all(channelCommitsP);
+        let gitModules = "";
+        for (const channelCommit of channelCommits) {
+            root.entries.push({
+                mode: FileMode.Commit,
+                path: channelCommit.id,
+                type: TreeEntry[TreeEntry.Commit],
+                value: channelCommit.commit.sha,
+            });
+
+            const repoUrl = "https://github.com/kurtb/praguedocs.git"; // this.storageService.repositoryUrl
+            gitModules += `[submodule "${channelCommit.id}"]\n\tpath = ${channelCommit.id}\n\turl = ${repoUrl}\n\n`;
+        }
+
+        // Write the module lookup details
+        root.entries.push({
+            mode: FileMode.File,
+            path: ".gitmodules",
+            type: TreeEntry[TreeEntry.Blob],
+            value: {
+                contents: gitModules,
+                encoding: "utf-8",
+            },
+        });
 
         return channelEntries;
     }
@@ -279,6 +327,10 @@ export class Context implements IHostRuntime {
         component.process(transformed, local, context);
     }
 
+    public postProcess(message: ISequencedDocumentMessage, local: boolean, context: any): Promise<void> {
+        return;
+    }
+
     public async prepareAttach(message: ISequencedDocumentMessage, local: boolean): Promise<Component> {
         this.verifyNotClosed();
 
@@ -360,11 +412,6 @@ export class Context implements IHostRuntime {
         for (const [, component] of this.components) {
             component.updateMinSequenceNumber(minimumSequenceNumber);
         }
-    }
-
-    public async start(): Promise<void> {
-        // Once all components and prepared invoke the run function on the chaincode
-        await this.chaincode.run(this, this.platform);
     }
 
     public getProcess(id: string, wait = true): Promise<IComponentRuntime> {

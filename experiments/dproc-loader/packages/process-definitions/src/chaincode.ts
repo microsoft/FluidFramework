@@ -106,6 +106,43 @@ export interface IComponentRuntime {
     attach(platform: IComponentPlatform): Promise<IComponentPlatform>;
 }
 
+export interface IComponentContext {
+    // TODO should just be a ITree
+    ready: Promise<void>;
+    snapshot(): ITree;
+    changeConnectionState(value: ConnectionState, clientId: string);
+    stop();
+    prepare(message: ISequencedDocumentMessage, local: boolean): Promise<any>;
+    process(message: ISequencedDocumentMessage, local: boolean, context: any);
+    postProcess(message: ISequencedDocumentMessage, local: boolean, context: any): Promise<void>;
+    updateMinSequenceNumber(minimumSequenceNumber: number);
+}
+
+export interface IContext {
+    // TODOTODO do I also need the component ID? Does the tenant ID even show up?
+    readonly tenantId: string;
+    readonly id: string;
+    readonly existing: boolean;
+    readonly options: any;
+    readonly clientId: string;
+    readonly user: IUser;
+    readonly parentBranch: string;
+    readonly deltaManager: IDeltaManager;
+    readonly platform: IPlatform;
+    readonly blobManager: IBlobManager;
+    readonly storage: IDocumentStorageService;
+    readonly connectionState: ConnectionState;
+    readonly branch: string;
+    readonly minimumSequenceNumber: number;
+    readonly chaincode: IChaincodeHost;
+    readonly submitFn: (type: MessageType, contents: any) => void;
+    readonly snapshotFn: (message: string) => Promise<void>;
+    readonly closeFn: () => void;
+    readonly quorum: IQuorum;
+
+    error(err: any): void;
+}
+
 export interface IHostRuntime {
     // TODOTODO do I also need the component ID? Does the tenant ID even show up?
     readonly tenantId: string;
@@ -160,7 +197,7 @@ export interface IChaincodeHost {
      */
     // When loading multiple of these the platform is interesting. Is this something that gets attached as opposed
     // to returned? Is there then a detach call?
-    run(runtime: IHostRuntime, platform: IPlatform): Promise<IPlatform>;
+    run(context: IContext): Promise<IPlatform>;
 }
 
 /**

@@ -16,8 +16,10 @@ export class CodeLoader implements ICodeLoader {
 
 const routerlicious = "http://localhost:3000";
 const historian = "http://localhost:3001";
-const tenantId = "github";
-const secret = "0bea3f87c186991a69245a29dc3f61d2";
+// const tenantId = "github";
+// const secret = "0bea3f87c186991a69245a29dc3f61d2";
+const tenantId = "prague";
+const secret = "43cfc3fbf04a97c0921fd23ff10f9e4b";
 
 async function initializeChaincode(document: pragueLoader.Container, pkg: string): Promise<void> {
     const quorum = document.getQuorum();
