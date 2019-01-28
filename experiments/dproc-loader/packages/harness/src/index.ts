@@ -76,8 +76,6 @@ export async function start(id: string, factory: IChaincodeFactory): Promise<voi
     }
 
     document.addEventListener("keyup", (event) => {
-        console.log(event.key);
-
         const keyName = event.key;
         if (event.ctrlKey && keyName === "s") {
             loaderDoc.snapshot("Manual snapshot");

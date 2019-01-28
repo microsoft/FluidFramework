@@ -53,6 +53,7 @@ export class Context implements IContext {
             storage,
             connectionState,
             components,
+            blobs,
             branch,
             minimumSequenceNumber,
             submitFn,
@@ -115,7 +116,8 @@ export class Context implements IContext {
         public readonly quorum: IQuorum,
         public readonly storage: IDocumentStorageService,
         private _connectionState: ConnectionState,
-        components: ISnapshotTree,
+        public readonly baseSnapshot: ISnapshotTree,
+        public readonly blobs: Map<string, string>,
         public readonly branch: string,
         private _minimumSequenceNumber: number,
         public readonly submitFn: (type: MessageType, contents: any) => void,
@@ -127,18 +129,18 @@ export class Context implements IContext {
 
     public get ready(): Promise<void> {
         if (!this.componentContext) {
-            return;
+            return Promise.resolve();
         }
 
         return this.componentContext.ready;
     }
 
-    public snapshot(): ITree {
+    public async snapshot(tagMessage: string): Promise<ITree> {
         if (!this.componentContext) {
             return null;
         }
 
-        return this.componentContext.snapshot();
+        return this.componentContext.snapshot(tagMessage);
     }
 
     public changeConnectionState(value: ConnectionState, clientId: string) {
@@ -149,13 +151,13 @@ export class Context implements IContext {
         this.componentContext.changeConnectionState(value, clientId);
     }
 
-    public stop(): ITree {
+    public async stop(): Promise<ITree> {
         if (!this.componentContext) {
             return null;
         }
 
-        const snapshot = this.componentContext.snapshot();
-        this.componentContext.stop();
+        const snapshot = await this.componentContext.snapshot("");
+        await this.componentContext.stop();
 
         return snapshot;
     }

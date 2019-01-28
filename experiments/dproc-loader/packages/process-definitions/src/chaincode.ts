@@ -109,9 +109,9 @@ export interface IComponentRuntime {
 export interface IComponentContext {
     // TODO should just be a ITree
     ready: Promise<void>;
-    snapshot(): ITree;
+    snapshot(tagMessage: string): Promise<ITree>;
     changeConnectionState(value: ConnectionState, clientId: string);
-    stop();
+    stop(): Promise<void>;
     prepare(message: ISequencedDocumentMessage, local: boolean): Promise<any>;
     process(message: ISequencedDocumentMessage, local: boolean, context: any);
     postProcess(message: ISequencedDocumentMessage, local: boolean, context: any): Promise<void>;
@@ -135,6 +135,8 @@ export interface IContext {
     readonly branch: string;
     readonly minimumSequenceNumber: number;
     readonly chaincode: IChaincodeHost;
+    readonly baseSnapshot: ISnapshotTree;
+    readonly blobs: Map<string, string>;
     readonly submitFn: (type: MessageType, contents: any) => void;
     readonly snapshotFn: (message: string) => Promise<void>;
     readonly closeFn: () => void;

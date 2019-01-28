@@ -49,7 +49,6 @@ interface IBufferedChunk {
     content: string;
 }
 
-// TODO consider a name change for this. The document is likely built on top of this infrastructure
 export class Container extends EventEmitter {
     public static async Load(
         id: string,
@@ -197,15 +196,25 @@ export class Container extends EventEmitter {
             return;
         }
 
+        // Stop inbound message processing while we complete the snapshot
+        // TODO I should verify that when paused, if we are in the middle of a prepare, we will not process the message
+        this.deltaManager.inbound.pause();
+        await this.snapshotCore(tagMessage).catch((error) => debug("Snapshot error", error));
+        this.deltaManager.inbound.resume();
+    }
+
+    private async snapshotCore(tagMessage: string) {
         // NOTE I believe I did the explicit then here so that the snapshot held the turn until it got the data
         // it needed
 
         // Snapshots base document state and currently running context
         const root = this.snapshotBase();
-        const componentEntries = this.context.snapshot();
+        const componentEntries = await this.context.snapshot(tagMessage);
 
         // And then combine
-        root.entries.push(...componentEntries.entries);
+        if (componentEntries) {
+            root.entries.push(...componentEntries.entries);
+        }
 
         // Generate base snapshot message
         const snapshotSequenceNumber = this._deltaManager.referenceSequenceNumber;
@@ -505,10 +514,15 @@ export class Container extends EventEmitter {
         const hostPlatform = await this.platform.create();
         this.pkg = pkg;
 
-        const previousContextState = this.context.stop();
+        const previousContextState = await this.context.stop();
+        let snapshotTree: ISnapshotTree;
         const blobs = new Map();
-        const flattened = flatten(previousContextState.entries, blobs);
-        const snapshotTree = buildHierarchy(flattened);
+        if (previousContextState) {
+            const flattened = flatten(previousContextState.entries, blobs);
+            snapshotTree = buildHierarchy(flattened);
+        } else {
+            snapshotTree = { blobs: {}, commits: {}, trees: {} };
+        }
 
         const newContext = await Context.Load(
             this.tenantId,

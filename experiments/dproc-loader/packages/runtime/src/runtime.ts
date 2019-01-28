@@ -1,51 +1,38 @@
+import { ICommit } from "@prague/gitresources";
+import {
+    IChaincodeHost,
+    IComponentContext,
+    IComponentRuntime,
+    IHostRuntime,
+} from "@prague/process-definitions";
 import {
     ConnectionState,
     FileMode,
     IAttachMessage,
     IBlobManager,
-    IChaincode,
-    IChaincodeModule,
-    IChannel,
     IDeltaManager,
-    IDistributedObjectServices,
     IDocumentStorageService,
     IEnvelope,
-    IGenericBlob,
-    IObjectAttributes,
-    IObjectMessage,
-    IObjectStorageService,
     IPlatform,
     IQuorum,
-    IRuntime,
     ISequencedDocumentMessage,
-    ISequencedObjectMessage,
     ISnapshotTree,
-    ITreeEntry,
+    ITree,
     IUser,
     MessageType,
     TreeEntry,
 } from "@prague/runtime-definitions";
-import { Deferred, gitHashFile } from "@prague/utils";
+import { buildHierarchy, Deferred, flatten } from "@prague/utils";
 import * as assert from "assert";
 import { EventEmitter } from "events";
-import { ChannelDeltaConnection } from "./channelDeltaConnection";
-import { ChannelStorageService } from "./channelStorageService";
-import { LocalChannelStorageService } from "./localChannelStorageService";
+import { Component } from "./component";
+import { ComponentStorageService } from "./componentStorageService";
+import { debug } from "./debug";
 import { readAndParse } from "./utils";
 
-export interface IChannelState {
-    object: IChannel;
-    storage: IObjectStorageService;
-    connection: ChannelDeltaConnection;
-}
-
-interface IObjectServices {
-    deltaConnection: ChannelDeltaConnection;
-    objectStorage: IObjectStorageService;
-}
-
-export class Runtime extends EventEmitter implements IRuntime {
-    public static async LoadFromSnapshot(
+// Context will define the component level mappings
+export class Runtime extends EventEmitter implements IComponentContext, IHostRuntime, IPlatform {
+    public static async Load(
         tenantId: string,
         id: string,
         platform: IPlatform,
@@ -55,21 +42,20 @@ export class Runtime extends EventEmitter implements IRuntime {
         clientId: string,
         user: IUser,
         blobManager: IBlobManager,
-        pkg: string,
-        chaincode: IChaincode,
-        tardisMessages: Map<string, ISequencedDocumentMessage[]>,
+        chaincode: IChaincodeHost,
         deltaManager: IDeltaManager,
         quorum: IQuorum,
         storage: IDocumentStorageService,
         connectionState: ConnectionState,
-        channels: { [path: string]: ISnapshotTree },
+        baseSnapshot: ISnapshotTree,
+        extraBlobs: Map<string, string>,
         branch: string,
         minimumSequenceNumber: number,
         submitFn: (type: MessageType, contents: any) => void,
         snapshotFn: (message: string) => Promise<void>,
-        closeFn: () => void) {
-
-        const runtime = new Runtime(
+        closeFn: () => void,
+    ): Promise<Runtime> {
+        const context = new Runtime(
             tenantId,
             id,
             parentBranch,
@@ -80,58 +66,60 @@ export class Runtime extends EventEmitter implements IRuntime {
             blobManager,
             deltaManager,
             quorum,
-            pkg,
+            platform,
             chaincode,
             storage,
             connectionState,
+            branch,
+            minimumSequenceNumber,
             submitFn,
             snapshotFn,
             closeFn);
 
-        if (channels) {
-            Object.keys(channels).forEach((path) => {
-                // Reserve space for the channel
-                runtime.reserve(path);
-            });
+        const components = new Map<string, ISnapshotTree>();
+        const snapshotTreesP = Object.keys(baseSnapshot.commits).map(async (key) => {
+            const moduleSha = baseSnapshot.commits[key];
+            const commit = (await storage.getVersions(moduleSha, 1))[0];
+            const moduleTree = await storage.getSnapshotTree(commit);
+            return { id: key, tree: moduleTree };
+        });
 
-            /* tslint:disable:promise-function-async */
-            const loadSnapshotsP = Object.keys(channels).map((path) => {
-                return runtime.loadSnapshotChannel(
-                    runtime,
-                    path,
-                    channels[path],
-                    storage,
-                    tardisMessages.has(path) ? tardisMessages.get(path) : [],
-                    branch,
-                    minimumSequenceNumber);
-            });
-
-            await Promise.all(loadSnapshotsP);
+        const snapshotTree = await Promise.all(snapshotTreesP);
+        for (const value of snapshotTree) {
+            components.set(value.id, value.tree);
         }
 
-        // Start the runtime
-        await runtime.start(platform);
+        const componentsP = new Array<Promise<void>>();
+        for (const [componentId, snapshot] of components) {
+            const componentP = context.loadComponent(componentId, snapshot, extraBlobs);
+            componentsP.push(componentP);
+        }
 
-        return runtime;
+        await Promise.all(componentsP);
+
+        return context;
     }
+
+    public get ready(): Promise<void> {
+        this.verifyNotClosed();
+
+        // TODOTODO this needs to defer to the runtime
+        return Promise.resolve();
+    }
+
+    public get connectionState(): ConnectionState {
+        return this._connectionState;
+    }
+
+    // Components tracked by the Domain
+    private components = new Map<string, Component>();
+    private processDeferred = new Map<string, Deferred<Component>>();
+    private closed = false;
+    private pendingAttach = new Map<string, IAttachMessage>();
 
     public get connected(): boolean {
         return this.connectionState === ConnectionState.Connected;
     }
-
-    // Interface used to access the runtime code
-    public get platform(): IPlatform {
-        return this._platform;
-    }
-
-    private channels = new Map<string, IChannelState>();
-    private channelsDeferred = new Map<string, Deferred<IChannel>>();
-    private closed = false;
-    private pendingAttach = new Map<string, IAttachMessage>();
-
-    // tslint:disable-next-line:variable-name
-    private _platform: IPlatform;
-    // tslint:enable-next-line:variable-name
 
     private constructor(
         public readonly tenantId: string,
@@ -141,87 +129,131 @@ export class Runtime extends EventEmitter implements IRuntime {
         public readonly options: any,
         public clientId: string,
         public readonly user: IUser,
-        private blobManager: IBlobManager,
+        public readonly blobManager: IBlobManager,
         public readonly deltaManager: IDeltaManager,
         private quorum: IQuorum,
-        public readonly pkg: string,
-        public readonly chaincode: IChaincode,
-        private storageService: IDocumentStorageService,
-        private connectionState: ConnectionState,
-        private submitFn: (type: MessageType, contents: any) => void,
-        private snapshotFn: (message: string) => Promise<void>,
-        private closeFn: () => void) {
+        public readonly platform: IPlatform,
+        public readonly chaincode: IChaincodeHost,
+        public readonly storage: IDocumentStorageService,
+        // tslint:disable-next-line:variable-name
+        private _connectionState: ConnectionState,
+        public readonly branch: string,
+        public readonly minimumSequenceNumber: number,
+        public readonly submitFn: (type: MessageType, contents: any) => void,
+        public readonly snapshotFn: (message: string) => Promise<void>,
+        public readonly closeFn: () => void,
+    ) {
         super();
     }
 
-    public getChannel(id: string): Promise<IChannel> {
-        this.verifyNotClosed();
+    public async loadComponent(
+        id: string,
+        snapshotTree: ISnapshotTree,
+        extraBlobs: Map<string, string>,
+    ): Promise<void> {
+        // Need to rip through snapshot and use that to populate extraBlobs
+        const runtimeStorage = new ComponentStorageService(this.storage, extraBlobs);
+        const details = await readAndParse<{ pkg: string }>(this.storage, snapshotTree.blobs[".component"]);
 
-        // TODO we don't assume any channels (even root) in the runtime. If you request a channel that doesn't exist
-        // we will never resolve the promise. May want a flag to getChannel that doesn't wait for the promise if
-        // it doesn't exist
-        if (!this.channelsDeferred.has(id)) {
-            this.channelsDeferred.set(id, new Deferred<IChannel>());
+        const componentP = Component.LoadFromSnapshot(
+            this,
+            this.tenantId,
+            this.id,
+            id,
+            this.parentBranch,
+            this.existing,
+            this.options,
+            this.clientId,
+            this.user,
+            this.blobManager,
+            details.pkg,
+            this.chaincode,
+            this.deltaManager,
+            this.quorum,
+            runtimeStorage,
+            this.connectionState,
+            this.platform,
+            snapshotTree,
+            this.id,
+            this.deltaManager.minimumSequenceNumber,
+            this.submitFn,
+            this.snapshotFn,
+            this.closeFn);
+        const deferred = new Deferred<Component>();
+        deferred.resolve(componentP);
+        this.processDeferred.set(id, deferred);
+
+        const component = await componentP;
+
+        this.components.set(id, component);
+
+        await component.start();
+    }
+
+    public async queryInterface<T>(id: string): Promise<any> {
+        switch (id) {
+            case "context":
+                return this as IComponentContext;
+            default:
+                return null;
+        }
+    }
+
+    public async snapshot(tagMessage: string): Promise<ITree> {
+        // Pull in the prior version and snapshot tree to store against
+        const lastVersion = await this.storage.getVersions(this.id, 1);
+        const tree = lastVersion.length > 0
+            ? await this.storage.getSnapshotTree(lastVersion[0])
+            : { blobs: {}, commits: {}, trees: {} };
+
+        // Iterate over each component and ask it to snapshot
+        const channelEntries = new Map<string, ITree>();
+        this.components.forEach((component, key) => channelEntries.set(key, component.snapshot()));
+
+        // Use base tree to know previous component snapshot and then snapshot each component
+        const channelCommitsP = new Array<Promise<{ id: string, commit: ICommit }>>();
+        for (const [channelId, channelSnapshot] of channelEntries) {
+            const parent = channelId in tree.commits ? [tree.commits[channelId]] : [];
+            const channelCommitP = this.storage
+                .write(channelSnapshot, parent, `${channelId} commit ${tagMessage}`, channelId)
+                .then((commit) => ({ id: channelId, commit }));
+            channelCommitsP.push(channelCommitP);
         }
 
-        return this.channelsDeferred.get(id).promise;
-    }
+        const root: ITree = { entries: [] };
 
-    public createChannel(id: string, type: string): IChannel {
-        this.verifyNotClosed();
+        // Add in module references to the component snapshots
+        const channelCommits = await Promise.all(channelCommitsP);
+        let gitModules = "";
+        for (const channelCommit of channelCommits) {
+            root.entries.push({
+                mode: FileMode.Commit,
+                path: channelCommit.id,
+                type: TreeEntry[TreeEntry.Commit],
+                value: channelCommit.commit.sha,
+            });
 
-        const extension = this.chaincode.getModule(type) as IChaincodeModule;
-        const channel = extension.create(this, id);
-        this.channels.set(id, { object: channel, connection: null, storage: null });
-
-        if (this.channelsDeferred.has(id)) {
-            this.channelsDeferred.get(id).resolve(channel);
-        } else {
-            const deferred = new Deferred<IChannel>();
-            deferred.resolve(channel);
-            this.channelsDeferred.set(id, deferred);
+            const repoUrl = "https://github.com/kurtb/praguedocs.git"; // this.storageService.repositoryUrl
+            gitModules += `[submodule "${channelCommit.id}"]\n\tpath = ${channelCommit.id}\n\turl = ${repoUrl}\n\n`;
         }
 
-        return channel;
+        // Write the module lookup details
+        root.entries.push({
+            mode: FileMode.File,
+            path: ".gitmodules",
+            type: TreeEntry[TreeEntry.Blob],
+            value: {
+                contents: gitModules,
+                encoding: "utf-8",
+            },
+        });
+
+        return root;
     }
 
-    public attachChannel(channel: IChannel): IDistributedObjectServices {
+    public async stop(): Promise<void> {
         this.verifyNotClosed();
-
-        // Get the object snapshot and include it in the initial attach
-        const snapshot = channel.snapshot();
-
-        const message: IAttachMessage = {
-            id: channel.id,
-            snapshot,
-            type: channel.type,
-        };
-        this.pendingAttach.set(channel.id, message);
-        this.submit(MessageType.Attach, message);
-
-        // Store a reference to the object in our list of objects and then get the services
-        // used to attach it to the stream
-        const services = this.getObjectServices(channel.id, null, this.storageService);
-
-        const entry = this.channels.get(channel.id);
-        assert.equal(entry.object, channel);
-        entry.connection = services.deltaConnection;
-        entry.storage = services.objectStorage;
-
-        return services;
-    }
-
-    public async ready(): Promise<void> {
-        this.verifyNotClosed();
-
-        await Promise.all(Array.from(this.channels.values()).map((value) => value.object.ready()));
-    }
-
-    public async start(platform: IPlatform): Promise<void> {
-        this.verifyNotClosed();
-
-        // tslint:disable-next-line:no-floating-promises
-        this._platform = await this.chaincode.run(this, platform);
+        this.closed = true;
     }
 
     public changeConnectionState(value: ConnectionState, clientId: string) {
@@ -231,7 +263,7 @@ export class Runtime extends EventEmitter implements IRuntime {
             return;
         }
 
-        this.connectionState = value;
+        this._connectionState = value;
         this.clientId = clientId;
 
         // Resend all pending attach messages prior to notifying clients
@@ -241,230 +273,129 @@ export class Runtime extends EventEmitter implements IRuntime {
             }
         }
 
-        for (const [, object] of this.channels) {
-            if (object.connection) {
-                object.connection.setConnectionState(value);
+        for (const [, component] of this.components) {
+            component.changeConnectionState(value, clientId);
+        }
+    }
+
+    public prepare(message: ISequencedDocumentMessage, local: boolean): Promise<any> {
+        switch (message.type) {
+            case MessageType.Operation:
+                return this.prepareOperation(message, local);
+
+            case MessageType.Attach:
+                return this.prepareAttach(message, local);
+
+            default:
+                return Promise.resolve();
+        }
+    }
+
+    public process(message: ISequencedDocumentMessage, local: boolean, context: Component) {
+        switch (message.type) {
+            case MessageType.Operation:
+                this.processOperation(message, local, context);
+                break;
+
+            case MessageType.Attach:
+                this.processAttach(message, local, context);
+                break;
+
+            default:
+        }
+    }
+
+    public async postProcess(message: ISequencedDocumentMessage, local: boolean, context: Component): Promise<void> {
+        switch (message.type) {
+            case MessageType.Attach:
+                return this.postProcessAttach(message, local, context);
+            default:
+        }
+    }
+
+    public updateMinSequenceNumber(minimumSequenceNumber: number) {
+        for (const [, component] of this.components) {
+            component.updateMinSequenceNumber(minimumSequenceNumber);
+        }
+    }
+
+    public getProcess(id: string, wait = true): Promise<IComponentRuntime> {
+        this.verifyNotClosed();
+
+        if (!this.processDeferred.has(id)) {
+            if (!wait) {
+                return Promise.reject(`Process ${id} does not exist`);
             }
-        }
-    }
 
-    public prepare(message: ISequencedDocumentMessage, local: boolean) {
-        this.verifyNotClosed();
-
-        const envelope = message.contents as IEnvelope;
-        const objectDetails = this.channels.get(envelope.address);
-        assert(objectDetails);
-
-        return objectDetails.connection.prepare(message, local);
-    }
-
-    public process(message: ISequencedDocumentMessage, local: boolean, context: any): IChannel {
-        this.verifyNotClosed();
-
-        const envelope = message.contents as IEnvelope;
-        const objectDetails = this.channels.get(envelope.address);
-        assert(objectDetails);
-
-        /* tslint:disable:no-unsafe-any */
-        objectDetails.connection.process(message, local, context);
-
-        return objectDetails.object;
-    }
-
-    public processAttach(message: ISequencedDocumentMessage, local: boolean, context: IChannelState): IChannel {
-        this.verifyNotClosed();
-
-        const attachMessage = message.contents as IAttachMessage;
-
-        // If a non-local operation then go and create the object - otherwise mark it as officially attached.
-        if (local) {
-            assert(this.pendingAttach.has(attachMessage.id));
-            this.pendingAttach.delete(attachMessage.id);
-
-            // Document sequence number references <= message.sequenceNumber should map to the
-            // object's 0 sequence number. We cap to the MSN to keep a tighter window and because
-            // no references should be below it.
-            this.channels.get(attachMessage.id).connection.setBaseMapping(
-                0,
-                message.minimumSequenceNumber);
-        } else {
-            const channelState = context as IChannelState;
-            this.channels.set(channelState.object.id, channelState);
-            if (this.channelsDeferred.has(channelState.object.id)) {
-                this.channelsDeferred.get(channelState.object.id).resolve(channelState.object);
-            } else {
-                const deferred = new Deferred<IChannel>();
-                deferred.resolve(channelState.object);
-                this.channelsDeferred.set(channelState.object.id, deferred);
-            }
+            // Add in a deferred that will resolve once the process ID arrives
+            this.processDeferred.set(id, new Deferred<Component>());
         }
 
-        return this.channels.get(attachMessage.id).object;
+        return this.processDeferred.get(id).promise;
     }
 
-    public async prepareAttach(message: ISequencedDocumentMessage, local: boolean): Promise<IChannelState> {
+    public async createAndAttachProcess(id: string, pkg: string): Promise<IComponentRuntime> {
         this.verifyNotClosed();
 
-        if (local) {
-            return;
-        }
-
-        const attachMessage = message.contents as IAttachMessage;
-
-        // create storage service that wraps the attach data
-        const localStorage = new LocalChannelStorageService(attachMessage.snapshot);
-        const connection = new ChannelDeltaConnection(
-            attachMessage.id,
+        const runtimeStorage = new ComponentStorageService(this.storage, new Map());
+        const component = await Component.create(
+            this,
+            this.tenantId,
+            this.id,
+            id,
+            this.parentBranch,
+            this.existing,
+            this.options,
+            this.clientId,
+            this.user,
+            this.blobManager,
+            pkg,
+            this.chaincode,
+            this.deltaManager,
+            this.quorum,
+            runtimeStorage,
             this.connectionState,
-            (submitMessage) => {
-                const submitEnvelope: IEnvelope = { address: attachMessage.id, contents: submitMessage };
-                this.submit(MessageType.Operation, submitEnvelope);
-            });
+            this.platform,
+            this.id,
+            this.deltaManager.minimumSequenceNumber,
+            this.submitFn,
+            this.snapshotFn,
+            this.closeFn);
 
-        // Document sequence number references <= message.sequenceNumber should map to the object's 0
-        // sequence number. We cap to the MSN to keep a tighter window and because no references should
-        // be below it.
-        connection.setBaseMapping(0, message.minimumSequenceNumber);
-
-        const services: IObjectServices = {
-            deltaConnection: connection,
-            objectStorage: localStorage,
+        // Generate the attach message
+        const message: IAttachMessage = {
+            id,
+            snapshot: null,
+            type: pkg,
         };
+        this.pendingAttach.set(id, message);
+        this.submit(MessageType.Attach, message);
 
-        const origin = message.origin ? message.origin.id : this.id;
-        const value = await this.loadChannel(
-            attachMessage.id,
-            attachMessage.type,
-            0,
-            0,
-            [],
-            services,
-            origin);
+        // Start the component
+        await component.start();
 
-        return value;
+        // Store off the component
+        this.components.set(id, component);
+
+        // Resolve any pending requests for the component
+        if (this.processDeferred.has(id)) {
+            this.processDeferred.get(id).resolve(component);
+        } else {
+            const deferred = new Deferred<Component>();
+            deferred.resolve(component);
+            this.processDeferred.set(id, deferred);
+        }
+
+        return component;
     }
 
     public getQuorum(): IQuorum {
-        this.verifyNotClosed();
-
         return this.quorum;
     }
 
-    public hasUnackedOps(): boolean {
-        this.verifyNotClosed();
-
-        for (const state of this.channels.values()) {
-            if (state.object.dirty) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    public snapshot(message: string): Promise<void> {
-        this.verifyNotClosed();
-
-        return this.snapshotFn(message);
-    }
-
-    public save(tag: string) {
-        this.verifyNotClosed();
-        this.submit(MessageType.Save, tag);
-    }
-
-    public async uploadBlob(file: IGenericBlob): Promise<IGenericBlob> {
-        this.verifyNotClosed();
-
-        const sha = gitHashFile(file.content);
-        file.sha = sha;
-        file.url = this.storageService.getRawUrl(sha);
-
-        await this.blobManager.createBlob(file);
-        this.submit(MessageType.BlobUploaded, await this.blobManager.createBlob(file));
-
-        return file;
-    }
-
-    public getBlob(sha: string): Promise<IGenericBlob> {
-        this.verifyNotClosed();
-
-        return this.blobManager.getBlob(sha);
-    }
-
-    public transform(message: ISequencedDocumentMessage) {
-        const envelope = message.contents as IEnvelope;
-        const objectDetails = this.channels.get(envelope.address);
-        envelope.contents = objectDetails.object.transform(
-            envelope.contents as IObjectMessage,
-            objectDetails.connection.transformDocumentSequenceNumber(
-                Math.max(message.referenceSequenceNumber, this.deltaManager.minimumSequenceNumber)));
-    }
-
-    public async getBlobMetadata(): Promise<IGenericBlob[]> {
-        return this.blobManager.getBlobMetadata();
-    }
-
-    public stop(): ITreeEntry[] {
-        this.verifyNotClosed();
-
-        this.closed = true;
-
-        return this.snapshotInternal();
-    }
-
-    public close(): void {
-        this.closeFn();
-    }
-
-    public updateMinSequenceNumber(msn: number) {
-        for (const [, object] of this.channels) {
-            if (!object.object.isLocal() && object.connection.baseMappingIsSet()) {
-                object.connection.updateMinSequenceNumber(msn);
-            }
-        }
-    }
-
-    public snapshotInternal(): ITreeEntry[] {
-        const entries = new Array<ITreeEntry>();
-
-        // Craft the .attributes file for each distributed object
-        for (const [objectId, object] of this.channels) {
-            // If the object isn't local - and we have received the sequenced op creating the object (i.e. it has a
-            // base mapping) - then we go ahead and snapshot
-            if (!object.object.isLocal() && object.connection.baseMappingIsSet()) {
-                const snapshot = object.object.snapshot();
-
-                // Add in the object attributes to the returned tree
-                const objectAttributes: IObjectAttributes = {
-                    sequenceNumber: object.connection.minimumSequenceNumber,
-                    type: object.object.type,
-                };
-                snapshot.entries.push({
-                    mode: FileMode.File,
-                    path: ".attributes",
-                    type: TreeEntry[TreeEntry.Blob],
-                    value: {
-                        contents: JSON.stringify(objectAttributes),
-                        encoding: "utf-8",
-                    },
-                });
-
-                // And then store the tree
-                entries.push({
-                    mode: FileMode.Directory,
-                    path: objectId,
-                    type: TreeEntry[TreeEntry.Tree],
-                    value: snapshot,
-                });
-            }
-        }
-
-        return entries;
-    }
-
-    public submitMessage(type: MessageType, content: any) {
-        this.submit(type, content);
+    public error(error: any) {
+        // TODO bubble up to parent
+        debug("Context has encountered a non-recoverable error");
     }
 
     private submit(type: MessageType, content: any) {
@@ -472,96 +403,134 @@ export class Runtime extends EventEmitter implements IRuntime {
         this.submitFn(type, content);
     }
 
-    private reserve(id: string) {
-        if (!this.channelsDeferred.has(id)) {
-            this.channelsDeferred.set(id, new Deferred<IChannel>());
-        }
-    }
-
-    private async loadSnapshotChannel(
-        runtime: IRuntime,
-        id: string,
-        tree: ISnapshotTree,
-        storage: IDocumentStorageService,
-        messages: ISequencedDocumentMessage[],
-        branch: string,
-        minimumSequenceNumber: number): Promise<void> {
-
-        const channelAttributes = await readAndParse<IObjectAttributes>(storage, tree.blobs[".attributes"]);
-        const services = this.getObjectServices(id, tree, storage);
-        services.deltaConnection.setBaseMapping(channelAttributes.sequenceNumber, minimumSequenceNumber);
-
-        // Run the transformed messages through the delta connection in order to update their offsets
-        // Then pass these to the loadInternal call. Moving forward we will want to update the snapshot
-        // to include the range maps. And then make the objects responsible for storing any messages they
-        // need to transform.
-        const transformedObjectMessages = messages.map((message) => {
-            return services.deltaConnection.translateToObjectMessage(message, true);
-        });
-
-        const channelDetails = await this.loadChannel(
-            id,
-            channelAttributes.type,
-            channelAttributes.sequenceNumber,
-            channelAttributes.sequenceNumber,
-            transformedObjectMessages,
-            services,
-            branch);
-
-        assert(!this.channels.has(id));
-        this.channels.set(id, channelDetails);
-        this.channelsDeferred.get(id).resolve(channelDetails.object);
-    }
-
-    private async loadChannel(
-        id: string,
-        type: string,
-        sequenceNumber: number,
-        minSequenceNumber: number,
-        messages: ISequencedObjectMessage[],
-        services: IObjectServices,
-        originBranch: string): Promise<IChannelState> {
-
-        // Pass the transformedMessages - but the object really should be storing this
-        const extension = this.chaincode.getModule(type) as IChaincodeModule;
-
-        // TODO need to fix up the SN vs. MSN stuff here. If want to push messages to object also need
-        // to store the mappings from channel ID to doc ID.
-        const value = await extension.load(
-            this,
-            id,
-            services.deltaConnection.sequenceNumber,
-            minSequenceNumber,
-            messages,
-            services,
-            originBranch);
-
-        return { object: value, storage: services.objectStorage, connection: services.deltaConnection };
-    }
-
-    private getObjectServices(
-        id: string,
-        tree: ISnapshotTree,
-        storage: IDocumentStorageService): IObjectServices {
-
-        const deltaConnection = new ChannelDeltaConnection(
-            id,
-            this.connectionState,
-            (message) => {
-                const envelope: IEnvelope = { address: id, contents: message };
-                this.submit(MessageType.Operation, envelope);
-            });
-        const objectStorage = new ChannelStorageService(tree, storage);
-
-        return {
-            deltaConnection,
-            objectStorage,
-        };
-    }
-
     private verifyNotClosed() {
         if (this.closed) {
             throw new Error("Runtime is closed");
+        }
+    }
+
+    private async prepareOperation(message: ISequencedDocumentMessage, local: boolean): Promise<Component> {
+        const envelope = message.contents as IEnvelope;
+        const component = this.components.get(envelope.address);
+        assert(component);
+        const innerContents = envelope.contents as { content: any, type: string };
+
+        const transformed: ISequencedDocumentMessage = {
+            clientId: message.clientId,
+            clientSequenceNumber: message.clientSequenceNumber,
+            contents: innerContents.content,
+            metadata: message.metadata,
+            minimumSequenceNumber: message.minimumSequenceNumber,
+            origin: message.origin,
+            referenceSequenceNumber: message.referenceSequenceNumber,
+            sequenceNumber: message.sequenceNumber,
+            timestamp: message.timestamp,
+            traces: message.traces,
+            type: innerContents.type,
+            user: message.user,
+        };
+
+        return component.prepare(transformed, local);
+    }
+
+    private processOperation(message: ISequencedDocumentMessage, local: boolean, context: any) {
+        const envelope = message.contents as IEnvelope;
+        const component = this.components.get(envelope.address);
+        assert(component);
+        const innerContents = envelope.contents as { content: any, type: string };
+
+        const transformed: ISequencedDocumentMessage = {
+            clientId: message.clientId,
+            clientSequenceNumber: message.clientSequenceNumber,
+            contents: innerContents.content,
+            metadata: message.metadata,
+            minimumSequenceNumber: message.minimumSequenceNumber,
+            origin: message.origin,
+            referenceSequenceNumber: message.referenceSequenceNumber,
+            sequenceNumber: message.sequenceNumber,
+            timestamp: message.timestamp,
+            traces: message.traces,
+            type: innerContents.type,
+            user: message.user,
+        };
+
+        component.process(transformed, local, context);
+    }
+
+    private async prepareAttach(message: ISequencedDocumentMessage, local: boolean): Promise<Component> {
+        this.verifyNotClosed();
+
+        // the local object has already been attached
+        if (local) {
+            return;
+        }
+
+        const attachMessage = message.contents as IAttachMessage;
+        let snapshotTree: ISnapshotTree = null;
+        if (attachMessage.snapshot) {
+            const flattened = flatten(attachMessage.snapshot.entries, new Map());
+            snapshotTree = buildHierarchy(flattened);
+        }
+
+        // create storage service that wraps the attach data
+        const runtimeStorage = new ComponentStorageService(this.storage, new Map());
+        const component = await Component.LoadFromSnapshot(
+            this,
+            this.tenantId,
+            this.id,
+            attachMessage.id,
+            this.parentBranch,
+            this.existing,
+            this.options,
+            this.clientId,
+            this.user,
+            this.blobManager,
+            attachMessage.type,
+            this.chaincode,
+            this.deltaManager,
+            this.quorum,
+            runtimeStorage,
+            this.connectionState,
+            this.platform,
+            snapshotTree,
+            this.id,
+            this.deltaManager.minimumSequenceNumber,
+            this.submitFn,
+            this.snapshotFn,
+            this.closeFn);
+
+        return component;
+    }
+
+    private processAttach(message: ISequencedDocumentMessage, local: boolean, context: Component): void {
+        this.verifyNotClosed();
+        debug("processAttach");
+    }
+
+    private async postProcessAttach(
+        message: ISequencedDocumentMessage,
+        local: boolean,
+        context: Component,
+    ): Promise<void> {
+        const attachMessage = message.contents as IAttachMessage;
+
+        // If a non-local operation then go and create the object - otherwise mark it as officially attached.
+        if (local) {
+            assert(this.pendingAttach.has(attachMessage.id));
+            this.pendingAttach.delete(attachMessage.id);
+        } else {
+            await context.start();
+
+            this.components.set(attachMessage.id, context);
+
+            // Resolve pending gets and store off any new ones
+            if (this.processDeferred.has(attachMessage.id)) {
+                this.processDeferred.get(attachMessage.id).resolve(context);
+            } else {
+                const deferred = new Deferred<Component>();
+                deferred.resolve(context);
+                this.processDeferred.set(attachMessage.id, deferred);
+            }
         }
     }
 }

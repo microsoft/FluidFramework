@@ -7,7 +7,7 @@ import * as DistributedMap from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
 import { IChaincodeComponent, IChaincodeHost, IContext, IHostRuntime } from "@prague/process-definitions";
 import { LegacyChaincodeBridge } from "@prague/process-utils";
-import { Context } from "@prague/runtime";
+import { Runtime } from "@prague/runtime";
 import { IChaincode, IPlatform } from "@prague/runtime-definitions";
 import * as SharedString from "@prague/sequence";
 import { IStream } from "@prague/stream";
@@ -162,7 +162,7 @@ class SharedTextHost implements IChaincodeHost {
         // to get going once the run happens.
         // We may want to do this in a postProcess step
 
-        const ctx = await Context.Load(
+        const ctx = await Runtime.Load(
             context.tenantId,
             context.id,
             context.platform,
@@ -172,14 +172,13 @@ class SharedTextHost implements IChaincodeHost {
             context.clientId,
             context.user,
             context.blobManager,
-            null,
             context.chaincode,
             context.deltaManager,
             context.quorum,
             context.storage,
             context.connectionState,
-            null,
-            null,
+            context.baseSnapshot,
+            context.blobs,
             context.branch,
             context.minimumSequenceNumber,
             context.submitFn,
