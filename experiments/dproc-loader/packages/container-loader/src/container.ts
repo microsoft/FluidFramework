@@ -25,6 +25,7 @@ import {
     MessageType,
     TreeEntry,
 } from "@prague/runtime-definitions";
+import { buildHierarchy, flatten } from "@prague/utils";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import { BlobManager } from "./blobManager";
@@ -48,8 +49,7 @@ interface IBufferedChunk {
     content: string;
 }
 
-// TODO consider a name change for this. The document is likely built on top of this infrastructure
-export class DistributedProcess extends EventEmitter {
+export class Container extends EventEmitter {
     public static async Load(
         id: string,
         tenantId: string,
@@ -60,8 +60,8 @@ export class DistributedProcess extends EventEmitter {
         codeLoader: ICodeLoader,
         options: any,
         specifiedVersion: ICommit,
-        connect: boolean): Promise<DistributedProcess> {
-        const doc = new DistributedProcess(id, tenantId, user, tokenProvider, platform, service, codeLoader, options);
+        connect: boolean): Promise<Container> {
+        const doc = new Container(id, tenantId, user, tokenProvider, platform, service, codeLoader, options);
         await doc.load(specifiedVersion, connect);
 
         return doc;
@@ -196,14 +196,25 @@ export class DistributedProcess extends EventEmitter {
             return;
         }
 
+        // Stop inbound message processing while we complete the snapshot
+        // TODO I should verify that when paused, if we are in the middle of a prepare, we will not process the message
+        this.deltaManager.inbound.pause();
+        await this.snapshotCore(tagMessage).catch((error) => debug("Snapshot error", error));
+        this.deltaManager.inbound.resume();
+    }
+
+    private async snapshotCore(tagMessage: string) {
         // NOTE I believe I did the explicit then here so that the snapshot held the turn until it got the data
         // it needed
 
-        // Iterate over each component and ask it to snapshot
-        const componentEntries = this.context.snapshot();
-
-        // Snapshots base document state
+        // Snapshots base document state and currently running context
         const root = this.snapshotBase();
+        const componentEntries = await this.context.snapshot(tagMessage);
+
+        // And then combine
+        if (componentEntries) {
+            root.entries.push(...componentEntries.entries);
+        }
 
         // Generate base snapshot message
         const snapshotSequenceNumber = this._deltaManager.referenceSequenceNumber;
@@ -213,9 +224,6 @@ export class DistributedProcess extends EventEmitter {
 
         // Pull in the prior version and snapshot tree to store against
         const lastVersion = await this.storageService.getVersions(this.id, 1);
-        const tree = lastVersion.length > 0
-            ? await this.storageService.getSnapshotTree(lastVersion[0])
-            : { blobs: {}, commits: {}, trees: {} };
 
         // Pull the sequence number stored with the previous version
         let sequenceNumber = 0;
@@ -237,42 +245,6 @@ export class DistributedProcess extends EventEmitter {
             type: TreeEntry[TreeEntry.Blob],
             value: {
                 contents: JSON.stringify(deltas),
-                encoding: "utf-8",
-            },
-        });
-
-        // Use base tree to know previous component snapshot and then snapshot each component
-        const channelCommitsP = new Array<Promise<{ id: string, commit: ICommit }>>();
-        for (const [channelId, channelSnapshot] of componentEntries) {
-            const parent = channelId in tree.commits ? [tree.commits[channelId]] : [];
-            const channelCommitP = this.storageService
-                .write(channelSnapshot, parent, `${channelId} commit @${deltaDetails} ${tagMessage}`, channelId)
-                .then((commit) => ({ id: channelId, commit }));
-            channelCommitsP.push(channelCommitP);
-        }
-
-        // Add in module references to the component snapshots
-        const channelCommits = await Promise.all(channelCommitsP);
-        let gitModules = "";
-        for (const channelCommit of channelCommits) {
-            root.entries.push({
-                mode: FileMode.Commit,
-                path: channelCommit.id,
-                type: TreeEntry[TreeEntry.Commit],
-                value: channelCommit.commit.sha,
-            });
-
-            const repoUrl = "https://github.com/kurtb/praguedocs.git"; // this.storageService.repositoryUrl
-            gitModules += `[submodule "${channelCommit.id}"]\n\tpath = ${channelCommit.id}\n\turl = ${repoUrl}\n\n`;
-        }
-
-        // Write the module lookup details
-        root.entries.push({
-            mode: FileMode.File,
-            path: ".gitmodules",
-            type: TreeEntry[TreeEntry.Blob],
-            value: {
-                contents: gitModules,
                 encoding: "utf-8",
             },
         });
@@ -329,32 +301,11 @@ export class DistributedProcess extends EventEmitter {
         const blobManagerP = Promise.all([storageP, treeP]).then(
             ([storage, tree]) => this.loadBlobManager(storage, tree));
 
-        const submodulesP = Promise.all([storageP, treeP]).then(async ([storage, tree]) => {
-            if (!tree || !tree.commits) {
-                return new Map<string, ISnapshotTree>();
-            }
-
-            const snapshotTreesP = Object.keys(tree.commits).map(async (key) => {
-                const moduleSha = tree.commits[key];
-                const commit = (await storage.getVersions(moduleSha, 1))[0];
-                const moduleTree = await storage.getSnapshotTree(commit);
-                return { id: key, tree: moduleTree };
-            });
-
-            const submodules = new Map<string, ISnapshotTree>();
-            const snapshotTree = await Promise.all(snapshotTreesP);
-            for (const value of snapshotTree) {
-                submodules.set(value.id, value.tree);
-            }
-
-            return submodules;
-        });
-
         // Wait for all the loading promises to finish
         return Promise
             .all([
                 storageP,
-                submodulesP,
+                treeP,
                 versionP,
                 attributesP,
                 quorumP,
@@ -399,7 +350,6 @@ export class DistributedProcess extends EventEmitter {
                     this.clientId,
                     this.user,
                     this.blobManager,
-                    chaincode.pkg,
                     chaincode.chaincode,
                     this._deltaManager,
                     this.quorum,
@@ -564,7 +514,16 @@ export class DistributedProcess extends EventEmitter {
         const hostPlatform = await this.platform.create();
         this.pkg = pkg;
 
-        const previousContextState = this.context.stop();
+        const previousContextState = await this.context.stop();
+        let snapshotTree: ISnapshotTree;
+        const blobs = new Map();
+        if (previousContextState) {
+            const flattened = flatten(previousContextState.entries, blobs);
+            snapshotTree = buildHierarchy(flattened);
+        } else {
+            snapshotTree = { blobs: {}, commits: {}, trees: {} };
+        }
+
         const newContext = await Context.Load(
             this.tenantId,
             this.id,
@@ -575,14 +534,13 @@ export class DistributedProcess extends EventEmitter {
             this.clientId,
             this.user,
             this.blobManager,
-            this.pkg,
             chaincode,
             this._deltaManager,
             this.quorum,
             this.storageService,
             this.connectionState,
-            previousContextState.snapshot,
-            previousContextState.blobs,
+            snapshotTree,
+            blobs,
             this.id,
             this._deltaManager.minimumSequenceNumber,
             (type, contents) => this.submitMessage(type, contents),
@@ -775,11 +733,10 @@ export class DistributedProcess extends EventEmitter {
                     return this.prepareRemoteMessage(message);
                 }
 
+            // Merge attach and operation together
             case MessageType.Operation:
-                return this.context.prepare(message, local);
-
             case MessageType.Attach:
-                return this.context.prepareAttach(message, local);
+                return this.context.prepare(message, local);
 
             default:
                 return Promise.resolve();
@@ -876,16 +833,14 @@ export class DistributedProcess extends EventEmitter {
                 this.quorum.rejectProposal(message.clientId, sequenceNumber);
                 break;
 
-            case MessageType.Attach:
-                this.context.processAttach(message, local, context);
-                break;
-
             case MessageType.BlobUploaded:
                 // tslint:disable-next-line:no-floating-promises
                 this.blobManager.addBlob(message.contents);
                 this.emit(MessageType.BlobUploaded, message.contents);
                 break;
 
+            // Merge attach and operation together
+            case MessageType.Attach:
             case MessageType.Operation:
                 this.context.process(message, local, context);
                 break;
@@ -910,8 +865,9 @@ export class DistributedProcess extends EventEmitter {
         const local = this._clientId === message.clientId;
 
         switch (message.type) {
+            // Merge attach and operation together
             case MessageType.Attach:
-                await this.context.postProcessAttach(message, local, context);
+                await this.context.postProcess(message, local, context);
                 break;
 
             default:

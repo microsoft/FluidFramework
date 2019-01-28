@@ -3,8 +3,8 @@ import {
     IChaincodeHost,
     IComponentPlatform,
     IComponentRuntime,
+    IContext,
     IDeltaHandler,
-    IHostRuntime,
 } from "@prague/process-definitions";
 import { IPlatform, ITree } from "@prague/runtime-definitions";
 import { EventEmitter } from "events";
@@ -49,7 +49,7 @@ class NullChaincodeHost implements IChaincodeHost {
         return;
     }
 
-    public async run(runtime: IHostRuntime, platform: IPlatform): Promise<IPlatform> {
+    public async run(context: IContext): Promise<IPlatform> {
         debug("I BE NULL!!!");
         return new NullPlatform();
     }

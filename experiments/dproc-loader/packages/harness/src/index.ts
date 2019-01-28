@@ -1,6 +1,6 @@
 import * as sharedText from "@chaincode/shared-text";
+import * as pragueLoader from "@prague/container-loader";
 import { IChaincodeFactory, ICodeLoader } from "@prague/process-definitions";
-import * as pragueLoader from "@prague/process-loader";
 import { WebPlatformFactory } from "@prague/process-utils";
 import * as socketStorage from "@prague/socket-storage";
 import * as jwt from "jsonwebtoken";
@@ -16,10 +16,12 @@ export class CodeLoader implements ICodeLoader {
 
 const routerlicious = "http://localhost:3000";
 const historian = "http://localhost:3001";
-const tenantId = "github";
-const secret = "0bea3f87c186991a69245a29dc3f61d2";
+// const tenantId = "github";
+// const secret = "0bea3f87c186991a69245a29dc3f61d2";
+const tenantId = "prague";
+const secret = "43cfc3fbf04a97c0921fd23ff10f9e4b";
 
-async function initializeChaincode(document: pragueLoader.DistributedProcess, pkg: string): Promise<void> {
+async function initializeChaincode(document: pragueLoader.Container, pkg: string): Promise<void> {
     const quorum = document.getQuorum();
 
     // Wait for connection so that proposals can be sent
@@ -74,8 +76,6 @@ export async function start(id: string, factory: IChaincodeFactory): Promise<voi
     }
 
     document.addEventListener("keyup", (event) => {
-        console.log(event.key);
-
         const keyName = event.key;
         if (event.ctrlKey && keyName === "s") {
             loaderDoc.snapshot("Manual snapshot");
