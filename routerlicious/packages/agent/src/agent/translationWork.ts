@@ -6,46 +6,66 @@ import { IDocumentService, ISequencedDocumentMessage, ISequencedObjectMessage, I
 import * as Sequence from "@prague/sequence";
 import { EventEmitter } from "events";
 import * as request from "request";
-import { Builder, parseString } from "xml2js";
 import { BaseWork} from "./baseWork";
 import { IWork} from "./definitions";
 import { runAfterWait } from "./utils";
 
-const subscriptionKey = "bd099a1e38724333b253fcff7523f76a";
-
-function createRequestBody(from: string, to: string, texts: string[]): string {
-    const builder = new Builder({ rootName: "TranslateArrayRequest", headless: true });
-
-    const object = {
-        AppId: "",
-        From: from,
-        Options: {
-            ContentType: "text/xml",
-        },
-        Texts: {
-            string: texts,
-        },
-        To: to,
-    };
-
-    return builder.buildObject(object);
+interface ITranslatorInput {
+    Text: string;
 }
 
-async function translate(from: string, to: string, text: string[]): Promise<string[]> {
-    const uri = `https://api.microsofttranslator.com/V2/Http.svc/TranslateArray`;
+interface ITranslatorOutputUnit {
+    text: string;
+    to: string;
+}
 
-    const requestBody = createRequestBody(from, to, text).replace(
-        /<string>/g,
-        "<string xmlns=\"http://schemas.microsoft.com/2003/10/Serialization/Arrays\">");
+interface ITranslatorOutput {
+    translations: ITranslatorOutputUnit[];
+}
 
-    return new Promise<string[]>((resolve, reject) => {
+const subscriptionKey = "bd099a1e38724333b253fcff7523f76a";
+
+function createRequestUri(from: string, to: string[]): string {
+    const uri = `https://api.cognitive.microsofttranslator.com/translate?api-version=3.0`;
+    const fromLanguage = `&from=${from}&to=`;
+    const toLanguages = to.join(`&to=`);
+    return uri.concat(fromLanguage, toLanguages);
+}
+
+function createRequestBody(texts: string[]): ITranslatorInput[] {
+    return texts.map((text: string) => {
+        const input: ITranslatorInput = {Text: text};
+        return input;
+    });
+}
+
+function processTranslationOutput(input: ITranslatorOutput[]): Map<string, string[]> {
+    const languageText = new Map<string, string[]>();
+    for (const unit of input) {
+        for (const translation of unit.translations) {
+            if (!languageText.has(translation.to)) {
+                languageText.set(translation.to, []);
+            }
+            languageText.get(translation.to).push(translation.text);
+        }
+    }
+    return languageText;
+}
+
+async function translate(from: string, to: string[], text: string[]): Promise<ITranslatorOutput[]> {
+    const uri = createRequestUri(from, to);
+
+    const requestBody = createRequestBody(text);
+
+    return new Promise<ITranslatorOutput[]>((resolve, reject) => {
         request(
             {
                 body: requestBody,
                 headers: {
-                    "Content-Type": "text/xml",
+                    "Content-Type": "application/json",
                     "Ocp-Apim-Subscription-Key" : subscriptionKey,
                 },
+                json: true,
                 method: "POST",
                 uri,
             },
@@ -53,15 +73,7 @@ async function translate(from: string, to: string, text: string[]): Promise<stri
                 if (err || resp.statusCode !== 200) {
                     reject(err || body);
                 } else {
-                    parseString(body, (parseErr, result) => {
-                        if (parseErr) {
-                            reject(parseErr);
-                        } else {
-                            const translations = result.ArrayOfTranslateArrayResponse.TranslateArrayResponse.map(
-                                (value) => value.TranslatedText[0]);
-                            resolve(translations);
-                        }
-                    });
+                    resolve(body as ITranslatorOutput[]);
                 }
             });
     });
@@ -150,7 +162,7 @@ class Translator extends EventEmitter {
 
             // Run translation on all other operations
             this.translating = true;
-            const translationsP = Promise.all(languages.entries().map((language) => this.translate(language)));
+            const translationsP = this.translate(languages.entries());
             const doneP = translationsP.catch((error) => {
                 this.translating = false;
                 console.error(error);
@@ -165,24 +177,31 @@ class Translator extends EventEmitter {
         }, 30);
     }
 
-    private async translate(language: string): Promise<void> {
+    private async translate(languages: string[]): Promise<void> {
         const from = "en";
 
         const textAndMarkers = this.sharedString.client.getTextAndMarkers("pg");
 
-        const translations = await translate(from, language, textAndMarkers.paralellText);
-        for (let i = 0; i < translations.length; i++) {
-            const translation = translations[i];
+        const rawTranslations = await translate(from, languages, textAndMarkers.paralellText);
+        const processedTranslations = processTranslationOutput(rawTranslations);
 
-            const pos = this.sharedString.client.mergeTree.getOffset(
-                textAndMarkers.parallelMarkers[i],
-                this.sharedString.client.getCurrentSeq(),
-                this.sharedString.client.getClientId());
+        for (const languageTranslations of processedTranslations) {
+            const language = languageTranslations[0];
+            const translations = languageTranslations[1];
+            for (let i = 0; i < translations.length; i++) {
+                const translation = translations[i];
 
-            const props: any = {};
-            props[`translation-${language}`] = translation;
-            this.sharedString.annotateRange(props, pos, pos + 1);
+                const pos = this.sharedString.client.mergeTree.getOffset(
+                    textAndMarkers.parallelMarkers[i],
+                    this.sharedString.client.getCurrentSeq(),
+                    this.sharedString.client.getClientId());
+
+                const props: any = {};
+                props[`translation-${language}`] = translation;
+                this.sharedString.annotateRange(props, pos, pos + 1);
+            }
         }
+
     }
 }
 
