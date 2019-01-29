@@ -5,6 +5,7 @@
     ],
     "compilerOptions": {
         "declaration": true,
+        "declarationDir":".",
         "target": "es6",
         "noImplicitAny": false,
         "noUnusedLocals": true,

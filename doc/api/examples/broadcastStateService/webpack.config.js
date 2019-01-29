@@ -36,9 +36,9 @@ const testBroadcastStateServiceConfig = {
     ],
 };
 
-const broadcastStateServiceConfig = {
+const broadcastStateServiceConfig = env => { return {
     entry: './src/broadcaststateservice.ts',
-    mode: 'development',
+    mode: env.production ? 'production' : 'development',
     devtool: 'source-map',
     target: 'web',
     module: {
@@ -59,7 +59,7 @@ const broadcastStateServiceConfig = {
         extensions: [ '.tsx', '.ts', '.js' ]
     },
     output: {
-        filename: 'stateserviceproxy.js',
+        filename: 'stateserviceproxy_' + ( env.production ? 'prod' : 'dev' ) + '.js',
         path: path.resolve(__dirname, 'dist'),
         libraryTarget : "var",
         library : "BroadcastStateService"
@@ -70,7 +70,7 @@ const broadcastStateServiceConfig = {
         //     filename: './statistics.html'
         // })
     ]
-};
+} };
 
 module.exports = [ testBroadcastStateServiceConfig, broadcastStateServiceConfig ];
 
