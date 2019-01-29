@@ -18,19 +18,12 @@ import { Paginator } from "./paginator";
 
 const template = new Template({
     tag: "span",
-    props: { className: styles.document, },
+    props: { tabIndex: 0, className: styles.document, },
     children: [
-        {
-            tag: "span",
-            ref: "eventsink",
-            props: { tabIndex: 0, className: styles.eventSink },
-            children: [
-                { tag: "span", ref: "leadingSpan", props: { className: styles.leadingSpan }},
-                { tag: "span", ref: "slot", props: { className: styles.documentContent }},
-                { tag: "span", ref: "trailingSpan", props: { className: styles.trailingSpan }},
-                { tag: "span", ref: "overlay", props: { className: styles.documentOverlay }}
-            ]
-        }
+        { tag: "span", ref: "leadingSpan", props: { className: styles.leadingSpan }},
+        { tag: "span", ref: "slot", props: { className: styles.documentContent }},
+        { tag: "span", ref: "trailingSpan", props: { className: styles.trailingSpan }},
+        { tag: "span", ref: "overlay", props: { className: styles.documentOverlay }}
     ]
 });
 
@@ -81,9 +74,6 @@ interface IDocumentViewState extends IViewState {
     /** The root element into which overlays are attached. */
     overlay: Element,
 
-    /** The element to which event handlers are to be attached. */
-    eventsink: HTMLElement;
-
     /** Leading span */
     leadingSpan: Element,
     trailingSpan: Element,
@@ -105,7 +95,6 @@ interface IDocumentViewState extends IViewState {
 export class DocumentView extends View<IDocumentProps, IDocumentViewState> {
     protected mounting(props: IDocumentProps) {
         const root = template.clone();
-        const eventsink = template.get(root, "eventsink") as HTMLElement;
         const leadingSpan = template.get(root, "leadingSpan");
         const slot = template.get(root, "slot") as HTMLElement;
         const overlay = template.get(root, "overlay");
@@ -116,7 +105,6 @@ export class DocumentView extends View<IDocumentProps, IDocumentViewState> {
             slot,
             leadingSpan,
             trailingSpan,
-            eventsink,
             overlay,
             segmentToViewInfo: new Map<ISegment, IViewInfo<any, IFlowViewComponent<any>>>(),
             elementToViewInfo: new Map<Element, IViewInfo<any, IFlowViewComponent<any>>>()
@@ -125,7 +113,6 @@ export class DocumentView extends View<IDocumentProps, IDocumentViewState> {
 
     public  get root()       { return this.state.root; }
     public  get overlay()    { return this.state.overlay; }
-    public  get eventsink()  { return this.state.eventsink; }
 
     protected updating(props: Readonly<IDocumentProps>, state: Readonly<IDocumentViewState>) {
         const originalTrackedPositions = props.trackedPositions;

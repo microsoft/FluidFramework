@@ -49,7 +49,9 @@ export class FlowEditor extends React.Component<IProps, IState> {
         });
     }
 
-    render() { return <span className={`${style.fill} ${style.editorPane}`} ref={this.ref}></span> }
+    render() { 
+        return <span className={`${style.fill} ${style.editorPane}`} ref={this.ref}></span>
+    }
 
     componentDidUpdate() {
         const editor = this.state.editor;
