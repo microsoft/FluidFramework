@@ -1,6 +1,5 @@
 export * from "./chart";
 export * from "./document";
-export * from "./innie";
 export * from "./formula";
 export * from "./sheetlet";
 export * from "./slider";

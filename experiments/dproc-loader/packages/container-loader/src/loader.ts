@@ -1,29 +1,42 @@
+import { ICodeLoader, IContainerHost } from "@prague/container-definitions";
 import { ICommit } from "@prague/gitresources";
-import { ICodeLoader } from "@prague/process-definitions";
-import { IDocumentService, IPlatformFactory, ITokenProvider, IUser } from "@prague/runtime-definitions";
+import { IDocumentService, IPlatformFactory } from "@prague/runtime-definitions";
+// tslint:disable-next-line:no-var-requires
+const now = require("performance-now") as () => number;
 import { Container } from "./container";
 import { debug } from "./debug";
 
 /**
- * Loads a new interactive document
+ * Loads a new component
  */
 export async function load(
-    id: string,
-    tenantId: string,
-    user: IUser,
-    tokenProvider: ITokenProvider,
+    uri: string,
     options: any,
+    containerHost: IContainerHost,
     platform: IPlatformFactory,
     documentService: IDocumentService,
     codeLoader: ICodeLoader,
     specifiedVersion: ICommit = null,
-    connect = true): Promise<Container> {
-
-    debug(`Document loading: ${Date.now()} `);
+    connect = true,
+): Promise<Container> {
+    debug(`Container loading: ${now()} `);
 
     // Verify we have services to load the document with
+
+    if (!containerHost) {
+        return Promise.reject("An IContainerHost must be provided");
+    }
+
+    if (!platform) {
+        return Promise.reject("An IPlatformFactory must be provided");
+    }
+
     if (!documentService) {
         return Promise.reject("An IDocumentService must be provided");
+    }
+
+    if (!codeLoader) {
+        return Promise.reject("An ICodeLoader must be provided");
     }
 
     // Connect to the document
@@ -31,22 +44,15 @@ export async function load(
         return Promise.reject("Must specify a version if connect is set to false");
     }
 
-    // Verify a token was provided
-    if (!tokenProvider.isValid()) {
-        return Promise.reject("Must provide a token");
-    }
-
-    const document = await Container.Load(
-        id,
-        tenantId,
-        user,
-        tokenProvider,
+    const container = await Container.Load(
+        uri,
+        options,
+        containerHost,
         platform,
         documentService,
         codeLoader,
-        options,
         specifiedVersion,
         connect);
 
-    return document;
+    return container;
 }

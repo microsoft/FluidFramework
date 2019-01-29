@@ -1,5 +1,13 @@
 import * as git from "@prague/gitresources";
-import { FileMode, IBlob, ISnapshotTree, ITree, ITreeEntry, TreeEntry } from "@prague/runtime-definitions";
+import {
+    FileMode,
+    IBlob,
+    IDocumentStorageService,
+    ISnapshotTree,
+    ITree,
+    ITreeEntry,
+    TreeEntry,
+} from "@prague/runtime-definitions";
 // tslint:disable-next-line:no-submodule-imports
 import * as sha1 from "sha.js/sha1";
 
@@ -24,6 +32,14 @@ export function flatten(tree: ITreeEntry[], blobMap: Map<string, string>): git.I
         tree: entries,
         url: null,
     };
+}
+
+export async function readAndParse<T>(storage: IDocumentStorageService, sha: string): Promise<T> {
+    const encoded = await storage.read(sha);
+    const decoded = Buffer
+        .from(encoded, "base64")
+        .toString();
+    return JSON.parse(decoded) as T;
 }
 
 function flattenCore(path: string, treeEntries: ITreeEntry[], blobMap: Map<string, string>): git.ITreeEntry[] {

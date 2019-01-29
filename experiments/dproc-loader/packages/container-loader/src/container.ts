@@ -1,5 +1,5 @@
+import { IChaincodeHost, ICodeLoader, IContainerHost } from "@prague/container-definitions";
 import { ICommit } from "@prague/gitresources";
-import { IChaincodeHost, ICodeLoader } from "@prague/process-definitions";
 import {
     ConnectionState,
     FileMode,
@@ -18,7 +18,6 @@ import {
     ISequencedDocumentSystemMessage,
     ISequencedProposal,
     ISnapshotTree,
-    ITokenProvider,
     ITree,
     ITreeEntry,
     IUser,
@@ -28,6 +27,7 @@ import {
 import { buildHierarchy, flatten } from "@prague/utils";
 import * as assert from "assert";
 import { EventEmitter } from "events";
+import * as url from "url";
 import { BlobManager } from "./blobManager";
 import { Context } from "./context";
 import { debug } from "./debug";
@@ -51,23 +51,23 @@ interface IBufferedChunk {
 
 export class Container extends EventEmitter {
     public static async Load(
-        id: string,
-        tenantId: string,
-        user: IUser,
-        tokenProvider: ITokenProvider,
+        uri: string,
+        options: any,
+        containerHost: IContainerHost,
         platform: IPlatformFactory,
         service: IDocumentService,
         codeLoader: ICodeLoader,
-        options: any,
         specifiedVersion: ICommit,
-        connect: boolean): Promise<Container> {
-        const doc = new Container(id, tenantId, user, tokenProvider, platform, service, codeLoader, options);
+        connect: boolean,
+    ): Promise<Container> {
+        const doc = new Container(uri, options, containerHost, platform, service, codeLoader);
         await doc.load(specifiedVersion, connect);
 
         return doc;
     }
 
     public runtime: any = null;
+    public readonly path: string;
 
     private pendingClientId: string;
     private loaded = false;
@@ -86,7 +86,6 @@ export class Container extends EventEmitter {
     private _id: string;
     private _parentBranch: string;
     private _tenantId: string;
-    private _user: IUser;
     // tslint:enable:variable-name
 
     private context: Context;
@@ -99,19 +98,19 @@ export class Container extends EventEmitter {
     private unackedChunkedMessages: Map<number, IBufferedChunk> = new Map<number, IBufferedChunk>();
 
     public get tenantId(): string {
-       return this._tenantId;
+        return this._tenantId;
     }
 
     public get id(): string {
         return this._id;
     }
 
-     public get deltaManager(): IDeltaManager {
+    public get deltaManager(): IDeltaManager {
         return this._deltaManager;
     }
 
     public get user(): IUser {
-        return this._user;
+        return this.containerHost.user;
     }
 
     public get connected(): boolean {
@@ -137,18 +136,23 @@ export class Container extends EventEmitter {
     }
 
     constructor(
-        id: string,
-        tenantId: string,
-        user: IUser,
-        private tokenProvider: ITokenProvider,
+        public readonly uri: string,
+        public readonly options: any,
+        private containerHost: IContainerHost,
         private platform: IPlatformFactory,
         private service: IDocumentService,
         private codeLoader: ICodeLoader,
-        public readonly options: any) {
+    ) {
         super();
-        this._id = id;
-        this._tenantId = tenantId;
-        this._user = user;
+
+        const parsed = url.parse(uri);
+        const splitPath = parsed.pathname.split("/");
+
+        this._tenantId = splitPath[1];
+        this._id = splitPath[2];
+        this.path = parsed.pathname.substr(splitPath[1].length + splitPath[2].length + 2);
+
+        console.log(`${this._tenantId} ${this._id} ${this.path}`);
     }
 
     /**
@@ -254,7 +258,8 @@ export class Container extends EventEmitter {
     }
 
     private async load(specifiedVersion: ICommit, connect: boolean): Promise<void> {
-        const storageP = this.service.connectToStorage(this.tenantId, this.id, this.tokenProvider);
+        // TODO connect to storage needs the token provider
+        const storageP = this.service.connectToStorage(this.tenantId, this.id, this.containerHost.tokenProvider);
 
         // If a version is specified we will load it directly - otherwise will query historian for the latest
         // version and then load it
@@ -580,7 +585,7 @@ export class Container extends EventEmitter {
         this._deltaManager = new DeltaManager(
             this.id,
             this.tenantId,
-            this.tokenProvider,
+            this.containerHost.tokenProvider,
             this.service,
             clientDetails);
 

@@ -6,7 +6,7 @@
   "dependencies": {
     "@chaincode/shared-text": "^0.1.0",
     "@prague/pinpoint-editor": "^0.1.0",
-    "@prague/process-definitions": "^0.1.0",
+    "@prague/container-definitions": "^0.1.0",
     "@prague/container-loader": "^0.1.0",
     "@prague/process-utils": "^0.1.0",
     "@prague/runtime-definitions": "^0.1.0",

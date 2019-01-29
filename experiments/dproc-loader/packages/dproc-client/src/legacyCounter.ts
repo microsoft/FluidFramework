@@ -1,5 +1,5 @@
 import * as counter from "@chaincode/counter";
-import { IChaincodeComponent } from "@prague/process-definitions";
+import { IChaincodeComponent } from "@prague/container-definitions";
 import { LegacyChaincodeBridge } from "@prague/process-utils";
 
 export async function instantiateComponent(): Promise<IChaincodeComponent> {

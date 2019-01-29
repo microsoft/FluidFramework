@@ -1,10 +1,10 @@
-import { ICommit } from "@prague/gitresources";
 import {
     IChaincodeHost,
     IComponentContext,
     IComponentRuntime,
     IHostRuntime,
-} from "@prague/process-definitions";
+} from "@prague/container-definitions";
+import { ICommit } from "@prague/gitresources";
 import {
     ConnectionState,
     FileMode,

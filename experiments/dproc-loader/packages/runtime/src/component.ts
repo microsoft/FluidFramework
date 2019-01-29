@@ -6,7 +6,7 @@ import {
     IDeltaHandler,
     IHostRuntime,
     IProcess,
-} from "@prague/process-definitions";
+} from "@prague/container-definitions";
 import {
     ConnectionState,
     FileMode,

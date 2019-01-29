@@ -1,4 +1,4 @@
-import { IChaincodeHost, IComponentContext, IContext } from "@prague/process-definitions";
+import { IChaincodeHost, IComponentContext, IContext } from "@prague/container-definitions";
 import {
     ConnectionState,
     IDocumentStorageService,
@@ -59,28 +59,7 @@ export class Context implements IContext {
             submitFn,
             snapshotFn,
             closeFn);
-        await context.start();
-
-        // const submodulesP = Promise.all([storageP, treeP]).then(async ([storage, tree]) => {
-        //     if (!tree || !tree.commits) {
-        //         return new Map<string, ISnapshotTree>();
-        //     }
-
-        //     const snapshotTreesP = Object.keys(tree.commits).map(async (key) => {
-        //         const moduleSha = tree.commits[key];
-        //         const commit = (await storage.getVersions(moduleSha, 1))[0];
-        //         const moduleTree = await storage.getSnapshotTree(commit);
-        //         return { id: key, tree: moduleTree };
-        //     });
-
-        //     const submodules = new Map<string, ISnapshotTree>();
-        //     const snapshotTree = await Promise.all(snapshotTreesP);
-        //     for (const value of snapshotTree) {
-        //         submodules.set(value.id, value.tree);
-        //     }
-
-        //     return submodules;
-        // });
+        await context.load();
 
         return context;
     }
@@ -198,7 +177,7 @@ export class Context implements IContext {
         throw new Error("Not implemented");
     }
 
-    private async start() {
+    private async load() {
         this.contextPlatform = await this.chaincode.run(this);
         this.componentContext = await this.contextPlatform.queryInterface<IComponentContext>("context");
     }

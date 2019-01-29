@@ -45,7 +45,7 @@
     "@prague/map": "^0.1.0",
     "@prague/merge-tree": "^0.1.0",
     "@prague/merge-tree-utils": "^0.1.0",
-    "@prague/process-definitions": "^0.1.0",
+    "@prague/container-definitions": "^0.1.0",
     "@prague/process-utils": "^0.1.0",
     "@prague/runtime": "^0.1.0",
     "@prague/runtime-definitions": "^0.1.0",

@@ -1,3 +1,4 @@
+import { ITokenProvider, IUser } from "@prague/runtime-definitions";
 import { IChaincodeFactory } from "./chaincode";
 
 /**
@@ -12,4 +13,10 @@ export interface ICodeLoader {
      * data contained in the document.
      */
     load(source: string): Promise<IChaincodeFactory>;
+}
+
+export interface IContainerHost {
+    tokenProvider: ITokenProvider;
+
+    user: IUser;
 }

@@ -1,6 +1,6 @@
 import * as sharedText from "@chaincode/shared-text";
+import { IChaincodeFactory, ICodeLoader } from "@prague/container-definitions";
 import * as pragueLoader from "@prague/container-loader";
-import { IChaincodeFactory, ICodeLoader } from "@prague/process-definitions";
 import { WebPlatformFactory } from "@prague/process-utils";
 import * as socketStorage from "@prague/socket-storage";
 import * as jwt from "jsonwebtoken";
@@ -14,7 +14,8 @@ export class CodeLoader implements ICodeLoader {
     }
 }
 
-const routerlicious = "http://localhost:3000";
+const domain = "localhost:3000";
+const routerlicious = `http://${domain}`;
 const historian = "http://localhost:3001";
 // const tenantId = "github";
 // const secret = "0bea3f87c186991a69245a29dc3f61d2";
@@ -59,11 +60,9 @@ export async function start(id: string, factory: IChaincodeFactory): Promise<voi
 
     // Load the Prague document
     const loaderDoc = await pragueLoader.load(
-        id,
-        tenantId,
-        user,
-        tokenProvider,
+        `prague://${domain}/${encodeURIComponent(tenantId)}/${encodeURIComponent(id)}/test/test/test`,
         { blockUpdateMarkers: true },
+        { tokenProvider, user },
         classicPlatform,
         service,
         codeLoader);

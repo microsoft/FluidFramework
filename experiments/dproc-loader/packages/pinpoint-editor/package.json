@@ -16,7 +16,7 @@
     "@kurtb/pinpoint": "^0.1.2",
     "@prague/client-api": "^0.1.0",
     "@prague/map": "^0.1.0",
-    "@prague/process-definitions": "^0.1.0",
+    "@prague/container-definitions": "^0.1.0",
     "@prague/process-utils": "^0.1.0",
     "@prague/runtime-definitions": "^0.1.0",
     "@prague/utils": "^0.1.0",

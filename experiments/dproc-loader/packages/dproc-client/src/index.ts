@@ -1,8 +1,8 @@
-import * as loader from "@prague/container-loader";
 import {
     IChaincodeFactory,
     ICodeLoader,
-} from "@prague/process-definitions";
+} from "@prague/container-definitions";
+import * as loader from "@prague/container-loader";
 import {
     IDocumentService,
     IPlatform,
@@ -60,11 +60,9 @@ async function run(
 ): Promise<void> {
     const platformFactory = new NodePlatformFactory();
     const documentP = loader.load(
-        id,
-        tenantId,
-        user,
-        tokenProvider,
-        null,
+        `prague://${encodeURIComponent(tenantId)}/${encodeURIComponent(id)}`,
+        options,
+        { tokenProvider, user },
         platformFactory,
         documentServices,
         new TestCodeLoader());

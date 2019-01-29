@@ -3,7 +3,7 @@ import {
     IComponentPlatform,
     IComponentRuntime,
     IDeltaHandler,
-} from "@prague/process-definitions";
+} from "@prague/container-definitions";
 import { IChaincode, IPlatform, ITree } from "@prague/runtime-definitions";
 import { ComponentHost } from "./componentHost";
 

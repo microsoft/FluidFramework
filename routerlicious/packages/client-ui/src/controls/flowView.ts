@@ -425,12 +425,6 @@ const commands: ICmd[] = [
     },
     {
         exec: (f) => {
-            f.insertInnerComponent("map", "@chaincode/pinpoint-editor@0.6.15");
-        },
-        key: "insert inner map",
-    },
-    {
-        exec: (f) => {
             f.insertChaincode("code", "@chaincode/monaco@0.1.18");
         },
         key: "insert code",
@@ -5075,11 +5069,6 @@ export class FlowView extends ui.Component {
     public insertChaincode(prefix: string, chaincode: string) {
         const id = `${prefix}${Date.now()}`;
         this.insertComponent("document", { id, chaincode });
-    }
-
-    public insertInnerComponent(prefix: string, chaincode: string) {
-        const id = `${prefix}${Date.now()}`;
-        this.insertComponent("innerComponent", { id, chaincode });
     }
 
     /** Insert a Document */

@@ -1,4 +1,4 @@
-import { IChaincodeComponent, IChaincodeHost, IContext, IHostRuntime } from "@prague/process-definitions";
+import { IChaincodeComponent, IChaincodeHost, IContext, IHostRuntime } from "@prague/container-definitions";
 import { IPlatform } from "@prague/runtime-definitions";
 import { debug } from "./debug";
 import { instantiateComponent as ic } from "./legacy1";

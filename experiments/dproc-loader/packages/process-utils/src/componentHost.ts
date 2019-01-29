@@ -1,4 +1,4 @@
-import { IComponentRuntime, IDeltaHandler, ILegacyRuntime } from "@prague/process-definitions";
+import { IComponentRuntime, IDeltaHandler, ILegacyRuntime } from "@prague/container-definitions";
 import {
     ConnectionState,
     FileMode,

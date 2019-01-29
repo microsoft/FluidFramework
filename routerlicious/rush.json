@@ -110,10 +110,6 @@
       "projectFolder": "packages/merge-tree"
     },
     {
-      "packageName": "@prague/pinpoint-editor",
-      "projectFolder": "packages/pinpoint-editor"
-    },
-    {
       "packageName": "@prague/replay-socket-storage",
       "projectFolder": "packages/replay-socket-storage"
     },

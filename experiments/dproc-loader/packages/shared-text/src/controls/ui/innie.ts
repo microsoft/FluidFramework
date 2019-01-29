@@ -1,6 +1,6 @@
 import { Block, BoxState } from "@prague/app-ui";
 import { Document } from "@prague/client-api";
-import { IComponentPlatform, ILegacyRuntime } from "@prague/process-definitions";
+import { IComponentPlatform, ILegacyRuntime } from "@prague/container-definitions";
 import { WebPlatform } from "@prague/process-utils";
 import { FlowViewContext } from "./flowViewContext";
 

@@ -1,5 +1,10 @@
+import {
+    IChaincodeComponent,
+    IComponentPlatform,
+    IComponentRuntime,
+    IDeltaHandler,
+} from "@prague/container-definitions";
 import { MapExtension } from "@prague/map";
-import { IChaincodeComponent, IComponentPlatform, IComponentRuntime, IDeltaHandler } from "@prague/process-definitions";
 import { ComponentHost } from "@prague/process-utils";
 import { IChaincode, IPlatform, IRuntime, ITree } from "@prague/runtime-definitions";
 import * as assert from "assert";
