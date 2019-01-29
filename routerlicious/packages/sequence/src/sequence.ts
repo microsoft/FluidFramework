@@ -68,6 +68,32 @@ export abstract class SegmentSequence<T extends MergeTree.ISegment> extends Coll
         this.submitIfAttached(removeMessage);
     }
 
+    public paste(register: string, pos: number) {
+        const insertMessage: MergeTree.IMergeTreeInsertMsg = {
+            pos1: pos,
+            register,
+            type: MergeTree.MergeTreeDeltaType.INSERT,
+        };
+
+        // tslint:disable-next-line:no-parameter-reassignment
+        pos = this.client.pasteLocal(register, pos);
+        this.submitIfAttached(insertMessage);
+        return pos;
+    }
+
+    public copy(register: string, start: number, end: number) {
+        const insertMessage: MergeTree.IMergeTreeInsertMsg = {
+            pos1: start,
+            pos2: end,
+            register,
+            type: MergeTree.MergeTreeDeltaType.INSERT,
+        };
+
+        this.client.copy(start, end, register, this.client.getCurrentSeq(),
+            this.client.getClientId(), this.client.longClientId);
+        this.submitIfAttached(insertMessage);
+    }
+
     public transaction(groupOp: MergeTree.IMergeTreeGroupMsg): MergeTree.SegmentGroup {
         const segmentGroup = this.client.localTransaction(groupOp);
         this.submitIfAttached(groupOp);
@@ -386,122 +412,9 @@ export abstract class SegmentSequence<T extends MergeTree.ISegment> extends Coll
     }
 }
 
-export interface IJSONRunSegment<T> extends MergeTree.IJSONSegment {
-    items: T[];
-}
+export class SharedSequence<T extends MergeTree.SequenceItem> extends SegmentSequence<MergeTree.SubSequence<T>> {
+    public isNumeric;
 
-const MaxRun = 128;
-
-export class SubSequence<T> extends MergeTree.BaseSegment {
-    constructor(public items: T[], seq?: number, clientId?: number) {
-        super(seq, clientId);
-        this.cachedLength = items.length;
-    }
-
-    public toJSONObject() {
-        const obj = { items: this.items } as IJSONRunSegment<T>;
-        super.addSerializedProps(obj);
-        return obj;
-    }
-
-    public splitAt(pos: number) {
-        if (pos > 0) {
-            const remainingItems = this.items.slice(pos);
-            this.items = this.items.slice(0, pos);
-            this.cachedLength = this.items.length;
-            const leafSegment = new SubSequence(remainingItems, this.seq, this.clientId);
-            if (this.properties) {
-                leafSegment.addProperties(MergeTree.extend(MergeTree.createMap<any>(), this.properties));
-            }
-            MergeTree.segmentCopy(this, leafSegment);
-            if (this.localRefs) {
-                this.splitLocalRefs(pos, leafSegment);
-            }
-            return leafSegment;
-        }
-    }
-
-    public clone(start = 0, end?: number) {
-        let clonedItems = this.items;
-        if (end === undefined) {
-            clonedItems = clonedItems.slice(start);
-        } else {
-            clonedItems = clonedItems.slice(start, end);
-        }
-        const b = new SubSequence(clonedItems, this.seq, this.clientId);
-        this.cloneInto(b);
-        return b;
-    }
-
-    public getType() {
-        return MergeTree.SegmentType.Run;
-    }
-
-    public canAppend(segment: MergeTree.ISegment, mergeTree: MergeTree.MergeTree) {
-        if (!this.removedSeq) {
-            if (segment.getType() === MergeTree.SegmentType.Run) {
-                if (this.matchProperties(segment as SubSequence<T>)) {
-                    const branchId = mergeTree.getBranchId(this.clientId);
-                    const segBranchId = mergeTree.getBranchId(segment.clientId);
-                    if ((segBranchId === branchId) && (mergeTree.localNetLength(segment) > 0)) {
-                        return ((this.cachedLength <= MaxRun) ||
-                            (segment.cachedLength <= MaxRun));
-                    }
-                }
-            }
-        }
-        return false;
-    }
-
-    public toString() {
-        return this.items.toString();
-    }
-
-    public append(segment: MergeTree.ISegment) {
-        if (segment.getType() === MergeTree.SegmentType.Run) {
-            const rseg = segment as SubSequence<T>;
-            if (segment.localRefs) {
-                const adj = this.cachedLength;
-                for (const localRef of segment.localRefs) {
-                    localRef.offset += adj;
-                    localRef.segment = this;
-                }
-            }
-            this.items= this.items.concat(rseg.items);
-            this.cachedLength = this.items.length;
-                        return this;
-        } else {
-            throw new Error("can only append another run segment");
-        }
-    }
-
-    // TODO: retain removed items for undo
-    // returns true if entire run removed
-    public removeRange(start: number, end: number) {
-        let remnantItems = [] as T[];
-        const len = this.items.length;
-        if (start > 0) {
-            remnantItems = remnantItems.concat(this.items.slice(0,start));
-        }
-        if (end < len) {
-            remnantItems= remnantItems.concat(this.items.slice(end));
-        }
-        this.items = remnantItems;
-        this.cachedLength = this.items.length;
-        return (this.items.length === 0);
-    }
-
-}
-
-function runToSeg<T>(segSpec: IJSONRunSegment<T>) {
-    const seg = new SubSequence<T>(segSpec.items);
-    if (segSpec.props) {
-        seg.addProperties(segSpec.props);
-    }
-    return seg;
-}
-
-export class SharedSequence<T> extends SegmentSequence<SubSequence<T>> {
     constructor(
         document: IRuntime,
         public id: string,
@@ -509,22 +422,53 @@ export class SharedSequence<T> extends SegmentSequence<SubSequence<T>> {
         extensionType: string,
         services?: IDistributedObjectServices) {
         super(document, id, sequenceNumber, extensionType, services);
+        if (extensionType === CollaborativeNumberSequenceExtension.Type) {
+            this.isNumeric = true;
+        }
     }
 
-    public appendSegment(segSpec: IJSONRunSegment<T>) {
+    public appendSegment(segSpec: MergeTree.IJSONRunSegment<T>) {
         const mergeTree = this.client.mergeTree;
         const pos = mergeTree.root.cachedLength;
         mergeTree.insertSegment(pos, MergeTree.UniversalSequenceNumber,
             mergeTree.collabWindow.clientId, MergeTree.UniversalSequenceNumber,
-            runToSeg(segSpec));
+            MergeTree.runToSeg(segSpec));
     }
 
-    public segmentsFromSpecs(segSpecs: Array<IJSONRunSegment<T>>) {
-        return segSpecs.map(runToSeg);
+    public insert(pos: number, items: T[], props?: MergeTree.PropertySet) {
+        const insertMessage: MergeTree.IMergeTreeInsertMsg = {
+            items,
+            pos1: pos,
+            props,
+            type: MergeTree.MergeTreeDeltaType.INSERT,
+        };
+        if (this.isNumeric) {
+            insertMessage.isNumberSequence = true;
+        }
+        const segment = new MergeTree.SubSequence<T>(items);
+        this.client.insertSegmentLocal(pos, segment, props);
+        this.submitIfAttached(insertMessage);
+    }
+
+    public getItemCount() {
+        return this.client.mergeTree.getLength(this.client.getCurrentSeq(), this.client.getClientId());
+    }
+
+    // tslint:disable: no-parameter-reassignment
+    public getItems<U>(start: number, end?: number) {
+        if (end === undefined) {
+            end = this.getItemCount();
+        }
+        return this.client.mergeTree.getItems<U>(this.client.getCurrentSeq(), this.client.getClientId(),
+            start, end);
+    }
+
+    public segmentsFromSpecs(segSpecs: Array<MergeTree.IJSONRunSegment<T>>) {
+        return segSpecs.map(MergeTree.runToSeg);
     }
 }
 
-export class SharedObjectSequence extends SharedSequence<object> {
+export class SharedObjectSequence<T extends MergeTree.SequenceItem> extends SharedSequence<T> {
     constructor(
         document: IRuntime,
         public id: string,
@@ -532,6 +476,11 @@ export class SharedObjectSequence extends SharedSequence<object> {
         services?: IDistributedObjectServices) {
         super(document, id, sequenceNumber, CollaborativeObjectSequenceExtension.Type, services);
     }
+
+    public getRange(start: number, end?: number) {
+        return this.getItems<T>(start,end);
+    }
+
 }
 
 export class SharedNumberSequence extends SharedSequence<number> {
@@ -541,5 +490,9 @@ export class SharedNumberSequence extends SharedSequence<number> {
         sequenceNumber: number,
         services?: IDistributedObjectServices) {
         super(document, id, sequenceNumber, CollaborativeNumberSequenceExtension.Type, services);
+    }
+
+    public getRange(start: number, end?: number) {
+        return this.getItems<number>(start, end);
     }
 }

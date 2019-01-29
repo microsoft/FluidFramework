@@ -108,32 +108,6 @@ export class SharedString extends SegmentSequence<SharedStringSegment> {
         return this.client.getText(start, end);
     }
 
-    public paste(register: string, pos: number) {
-        const insertMessage: MergeTree.IMergeTreeInsertMsg = {
-            pos1: pos,
-            register,
-            type: MergeTree.MergeTreeDeltaType.INSERT,
-        };
-
-        // tslint:disable-next-line:no-parameter-reassignment
-        pos = this.client.pasteLocal(register, pos);
-        this.submitIfAttached(insertMessage);
-        return pos;
-    }
-
-    public copy(register: string, start: number, end: number) {
-        const insertMessage: MergeTree.IMergeTreeInsertMsg = {
-            pos1: start,
-            pos2: end,
-            register,
-            type: MergeTree.MergeTreeDeltaType.INSERT,
-        };
-
-        this.client.copy(start, end, register, this.client.getCurrentSeq(),
-            this.client.getClientId(), this.client.longClientId);
-        this.submitIfAttached(insertMessage);
-    }
-
     public insertTextRelative(relativePos1: MergeTree.IRelativePosition, text: string, props?: MergeTree.PropertySet) {
         const insertMessage: MergeTree.IMergeTreeInsertMsg = {
             props,
@@ -172,19 +146,6 @@ export class SharedString extends SegmentSequence<SharedStringSegment> {
         this.client.insertTextLocal(text, start, props);
         this.client.mergeTree.endGroupOperation();
         this.submitIfAttached(insertMessage);
-    }
-
-    public cut(register: string, start: number, end: number) {
-        const removeMessage: MergeTree.IMergeTreeRemoveMsg = {
-            pos1: start,
-            pos2: end,
-            register,
-            type: MergeTree.MergeTreeDeltaType.REMOVE,
-        };
-        this.client.copy(start, end, register, this.client.getCurrentSeq(),
-            this.client.getClientId(), this.client.longClientId);
-        this.client.removeSegmentLocal(start, end);
-        this.submitIfAttached(removeMessage);
     }
 
     public removeNest(nestStart: MergeTree.Marker, nestEnd: MergeTree.Marker) {

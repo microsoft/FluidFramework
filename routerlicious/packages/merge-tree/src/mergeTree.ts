@@ -630,6 +630,121 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
     abstract splitAt(pos: number): ISegment;
 }
 
+export interface IJSONRunSegment<T> extends ops.IJSONSegment {
+    items: T[];
+}
+
+const MaxRun = 128;
+
+export class SubSequence<T> extends BaseSegment {
+    constructor(public items: T[], seq?: number, clientId?: number) {
+        super(seq, clientId);
+        this.cachedLength = items.length;
+    }
+
+    public toJSONObject() {
+        const obj = { items: this.items } as IJSONRunSegment<T>;
+        super.addSerializedProps(obj);
+        return obj;
+    }
+
+    public splitAt(pos: number) {
+        if (pos > 0) {
+            const remainingItems = this.items.slice(pos);
+            this.items = this.items.slice(0, pos);
+            this.cachedLength = this.items.length;
+            const leafSegment = new SubSequence(remainingItems, this.seq, this.clientId);
+            if (this.properties) {
+                leafSegment.addProperties(Properties.extend(Properties.createMap<any>(), this.properties));
+            }
+            segmentCopy(this, leafSegment);
+            if (this.localRefs) {
+                this.splitLocalRefs(pos, leafSegment);
+            }
+            return leafSegment;
+        }
+    }
+
+    public clone(start = 0, end?: number) {
+        let clonedItems = this.items;
+        if (end === undefined) {
+            clonedItems = clonedItems.slice(start);
+        } else {
+            clonedItems = clonedItems.slice(start, end);
+        }
+        const b = new SubSequence(clonedItems, this.seq, this.clientId);
+        this.cloneInto(b);
+        return b;
+    }
+
+    public getType() {
+        return SegmentType.Run;
+    }
+
+    public canAppend(segment: ISegment, mergeTree: MergeTree) {
+        if (!this.removedSeq) {
+            if (segment.getType() === SegmentType.Run) {
+                if (this.matchProperties(segment as SubSequence<T>)) {
+                    const branchId = mergeTree.getBranchId(this.clientId);
+                    const segBranchId = mergeTree.getBranchId(segment.clientId);
+                    if ((segBranchId === branchId) && (mergeTree.localNetLength(segment) > 0)) {
+                        return ((this.cachedLength <= MaxRun) ||
+                            (segment.cachedLength <= MaxRun));
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    public toString() {
+        return this.items.toString();
+    }
+
+    public append(segment: ISegment) {
+        if (segment.getType() === SegmentType.Run) {
+            const rseg = segment as SubSequence<T>;
+            if (segment.localRefs) {
+                const adj = this.cachedLength;
+                for (const localRef of segment.localRefs) {
+                    localRef.offset += adj;
+                    localRef.segment = this;
+                }
+            }
+            this.items = this.items.concat(rseg.items);
+            this.cachedLength = this.items.length;
+            return this;
+        } else {
+            throw new Error("can only append another run segment");
+        }
+    }
+
+    // TODO: retain removed items for undo
+    // returns true if entire run removed
+    public removeRange(start: number, end: number) {
+        let remnantItems = [] as T[];
+        const len = this.items.length;
+        if (start > 0) {
+            remnantItems = remnantItems.concat(this.items.slice(0, start));
+        }
+        if (end < len) {
+            remnantItems = remnantItems.concat(this.items.slice(end));
+        }
+        this.items = remnantItems;
+        this.cachedLength = this.items.length;
+        return (this.items.length === 0);
+    }
+
+}
+
+export function runToSeg<T>(segSpec: IJSONRunSegment<T>) {
+    const seg = new SubSequence<T>(segSpec.items);
+    if (segSpec.props) {
+        seg.addProperties(segSpec.props);
+    }
+    return seg;
+}
+
 interface IJSONExternalSegment extends ops.IJSONSegment {
     sequenceIndex: number;
     sequenceLength: number;
@@ -2685,6 +2800,22 @@ export class MergeTree {
         };
         this.mapRange<SegmentAccumulator>({ leaf: this.gatherSegment }, refSeq, clientId, accum, start, end);
         return accum.segments;
+    }
+
+    getItems<T>(refSeq: number, clientId: number, start?: number, end?: number) {
+        let accum = [] as T[];
+        function gatherItems(segment: ISegment, pos: number, refSeq: number, clientId: number, start: number,
+            end: number) {
+            if (segment.getType() === SegmentType.Run) {
+                const runSeg = segment as SubSequence<T>;
+                for (const item of runSeg.items) {
+                    accum.push(item);
+                }
+                return true;
+            }
+        }
+        this.mapRange({ leaf: gatherItems }, refSeq, clientId, accum, start, end);
+        return accum;
     }
 
     getText(refSeq: number, clientId: number, placeholder = "", start?: number, end?: number) {

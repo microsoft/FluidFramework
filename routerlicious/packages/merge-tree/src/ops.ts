@@ -60,16 +60,20 @@ export interface IRelativePosition {
     offset?: number;
 }
 
+export type SequenceItem = object | number;
+
 export interface IMergeTreeInsertMsg extends IMergeTreeDelta {
     type: MergeTreeDeltaType.INSERT;
     pos1?: number;
     relativePos1?: IRelativePosition;
-    props?: Object;
+    pos2?: number;
+    relativePos2?: IRelativePosition;
+    items?: SequenceItem[];
+    isNumberSequence?: boolean;
+    props?: object;
     text?: string;
     marker?: IMarkerDef;
     register?: string;
-    pos2?: number;
-    relativePos2?: IRelativePosition;
 }
 
 export interface IMergeTreeRemoveMsg extends IMergeTreeDelta {

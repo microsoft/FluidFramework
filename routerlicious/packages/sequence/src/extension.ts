@@ -45,13 +45,13 @@ export class CollaborativeObjectSequenceExtension implements ICollaborativeObjec
         services: IDistributedObjectServices,
         headerOrigin: string): Promise<ICollaborativeObject> {
 
-        const collaborativeSeq = new SharedObjectSequence(document, id, sequenceNumber, services);
+        const collaborativeSeq = new SharedObjectSequence<object>(document, id, sequenceNumber, services);
         await collaborativeSeq.load(sequenceNumber, minimumSequenceNumber, messages, headerOrigin, services);
         return collaborativeSeq;
     }
 
     public create(document: IRuntime, id: string, options?: any): ICollaborativeObject {
-        const collaborativeString = new SharedString(document, id, 0);
+        const collaborativeString = new SharedObjectSequence(document, id, 0);
         collaborativeString.initializeLocal();
         return collaborativeString;
     }
@@ -77,7 +77,7 @@ export class CollaborativeNumberSequenceExtension implements ICollaborativeObjec
     }
 
     public create(document: IRuntime, id: string, options?: any): ICollaborativeObject {
-        const collaborativeString = new SharedString(document, id, 0);
+        const collaborativeString = new SharedNumberSequence(document, id, 0);
         collaborativeString.initializeLocal();
         return collaborativeString;
     }

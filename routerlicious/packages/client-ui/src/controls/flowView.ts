@@ -157,6 +157,18 @@ const commands: ICmd[] = [
     },
     {
         exec: (f) => {
+            f.addSequenceEntry();
+        },
+        key: "seq +",
+    },
+    {
+        exec: (f) => {
+            f.showSequenceEntries();
+        },
+        key: "seq show",
+    },
+    {
+        exec: (f) => {
             f.createComment();
         },
         key: "comment",
@@ -3531,6 +3543,11 @@ export interface IFlowViewModes {
     showCursorLocation?: boolean;
 }
 
+export interface ISeqTestItem {
+    x: string;
+    v: number;
+}
+
 export class FlowView extends ui.Component {
     public static docStartPosition = 0;
     public timeToImpression: number;
@@ -3559,6 +3576,8 @@ export class FlowView extends ui.Component {
     public commentsView: Sequence.SharedIntervalCollectionView<Sequence.SharedStringInterval>;
     public calendarIntervals: Sequence.SharedIntervalCollection<Sequence.Interval>;
     public calendarIntervalsView: Sequence.SharedIntervalCollectionView<Sequence.Interval>;
+    public sequenceTest: Sequence.SharedNumberSequence;
+    public sequenceObjTest: Sequence.SharedObjectSequence<ISeqTestItem>;
     public presenceMapView: types.IMapView;
     public presenceVector: ILocalPresenceInfo[] = [];
     public docRoot: types.IMapView;
@@ -3893,6 +3912,25 @@ export class FlowView extends ui.Component {
                 this.calendarIntervalsView = v;
             });
         }
+    }
+
+    public addSeqObjEntry() {
+        const len = this.sequenceObjTest.getItemCount();
+        const pos = Math.floor(Math.random() * len);
+        const item = <ISeqTestItem>{ x: "veal", v: Math.floor(Math.random() * 10) };
+        this.sequenceObjTest.insert(pos, [item]);
+    }
+
+    public addSequenceEntry() {
+        const len = this.sequenceTest.getItemCount();
+        const pos = Math.floor(Math.random() * len);
+        const item = Math.floor(Math.random() * 10);
+        this.sequenceTest.insert(pos, [item]);
+    }
+
+    public showSequenceEntries() {
+        const items = this.sequenceTest.getItems(0);
+        this.statusMessage("seq", `seq: ${items.toString()}`);
     }
 
     public addCalendarEntries() {
@@ -5583,6 +5621,10 @@ export class FlowView extends ui.Component {
         this.comments = this.sharedString.getSharedIntervalCollection("comments");
         this.commentsView = await this.comments.getView(onDeserialize, onPrepareDeserialize);
 
+        this.sequenceTest = this.docRoot.get("sequence-test") as Sequence.SharedNumberSequence;
+        this.sequenceTest.on("op", (op) => {
+            this.showSequenceEntries();
+        });
         this.render(0, true);
         if (clockStart > 0) {
             // tslint:disable-next-line:max-line-length

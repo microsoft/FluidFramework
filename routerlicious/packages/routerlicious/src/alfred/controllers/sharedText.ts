@@ -75,9 +75,9 @@ export async function load(
 
     console.log(`Load Option: ${JSON.stringify(options)}`);
     loadDocument(id, version, token, pageInk, disableCache, config, template, connect, options, from, to)
-    .catch((error) => {
-        console.error(error);
-    });
+        .catch((error) => {
+            console.error(error);
+        });
 }
 
 async function loadDocument(
@@ -149,6 +149,9 @@ async function loadDocument(
         root.set("presence", collabDoc.createMap());
         root.set("users", collabDoc.createMap());
         root.set("calendar", undefined, Sequence.SharedIntervalCollectionValueType.Name);
+        const seq = collabDoc.create(Sequence.CollaborativeNumberSequenceExtension.Type) as
+            Sequence.SharedNumberSequence;
+        root.set("sequence-test", seq);
         const newString = collabDoc.createString() as Sequence.SharedString;
 
         const starterText = template ? await downloadRawText(template) : " ";
@@ -171,7 +174,7 @@ async function loadDocument(
             root.set("pageInk", collabDoc.createStream());
         }
     } else {
-        await Promise.all([root.wait("text"), root.wait("ink")]);
+        await Promise.all([root.wait("text"), root.wait("ink"), root.wait("sequence-test")]);
     }
 
     const sharedString = root.get("text") as Sequence.SharedString;
