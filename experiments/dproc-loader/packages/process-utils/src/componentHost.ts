@@ -27,13 +27,12 @@ import {
     MessageType,
     TreeEntry,
 } from "@prague/runtime-definitions";
-import { Deferred, gitHashFile } from "@prague/utils";
+import { Deferred, gitHashFile, readAndParse } from "@prague/utils";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import { ChannelDeltaConnection } from "./channelDeltaConnection";
 import { ChannelStorageService } from "./channelStorageService";
 import { LocalChannelStorageService } from "./localChanelStorageService";
-import { readAndParse } from "./utils";
 
 export interface IChannelState {
     object: IChannel;
