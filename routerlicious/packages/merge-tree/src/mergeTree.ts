@@ -738,7 +738,7 @@ export class SubSequence<T> extends BaseSegment {
 }
 
 export function runToSeg<T>(segSpec: IJSONRunSegment<T>) {
-    const seg = new SubSequence<T>(segSpec.items);
+    const seg = new SubSequence<T>(segSpec.items,UniversalSequenceNumber, LocalClientId);
     if (segSpec.props) {
         seg.addProperties(segSpec.props);
     }
@@ -3242,8 +3242,11 @@ export class MergeTree {
     }
 
     insertSegment(pos: number, refSeq: number, clientId: number, seq: number, segment: ISegment) {
+        // const tt = MergeTree.traceTraversal;
+        // MergeTree.traceTraversal = true;    
         this.insert(pos, refSeq, clientId, seq, segment, (block, pos, refSeq, clientId, seq, seg) =>
             this.blockInsert(block, pos, refSeq, clientId, seq, seg));
+        // MergeTree.traceTraversal = tt;
     }
 
     insertMarker(pos: number, refSeq: number, clientId: number, seq: number,

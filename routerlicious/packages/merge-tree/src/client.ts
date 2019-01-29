@@ -787,8 +787,8 @@ export class Client {
 
     insertItemsRemote(items: ops.SequenceItem[], isNumberSequence: boolean, pos: number, props: Properties.PropertySet, seq: number,
         refSeq: number, clientId: number) {
-            const traceItems = true;
-            let clockStart;
+        const traceItems = false;
+        let clockStart;
         if (this.measureOps) {
             clockStart = clock();
         }
@@ -802,11 +802,11 @@ export class Client {
             segment.addProperties(props);
         }
         if (traceItems) {
-            console.log(`pre-length: ${this.mergeTree.getLength(UniversalSequenceNumber,this.mergeTree.collabWindow.clientId)} pos: ${pos}`);
+            console.log(`pre-length: ${this.mergeTree.getLength(UniversalSequenceNumber, this.mergeTree.collabWindow.clientId)} pos: ${pos}`);
         }
         this.mergeTree.insertSegment(pos, refSeq, clientId, seq, segment);
         if (traceItems) {
-            console.log(`post-length: ${this.mergeTree.getLength(UniversalSequenceNumber,this.mergeTree.collabWindow.clientId)} pos: ${pos}`);
+            console.log(`post-length: ${this.mergeTree.getLength(UniversalSequenceNumber, this.mergeTree.collabWindow.clientId)} pos: ${pos}`);
         }
         this.mergeTree.getCollabWindow().currentSeq = seq;
         if (this.measureOps) {
@@ -918,6 +918,9 @@ export class Client {
     }
     relText(clientId: number, refSeq: number) {
         return `cli: ${this.getLongClientId(clientId)} refSeq: ${refSeq}: ` + this.mergeTree.getText(refSeq, clientId);
+    }
+    relItems(clientId: number, refSeq: number) {
+        return `cli: ${this.getLongClientId(clientId)} refSeq: ${refSeq}: ` + this.mergeTree.getItems(refSeq, clientId).toString();
     }
     startCollaboration(longClientId: string, userInfo: IUser = null, minSeq = 0, branchId = 0) {
         this.longClientId = longClientId;
