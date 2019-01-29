@@ -347,6 +347,7 @@ export class Container extends EventEmitter {
                 this.context = await Context.Load(
                     this.tenantId,
                     this.id,
+                    this.path,
                     hostPlatform,
                     this.parentBranch,
                     this.existing,
@@ -531,6 +532,7 @@ export class Container extends EventEmitter {
         const newContext = await Context.Load(
             this.tenantId,
             this.id,
+            this.path,
             hostPlatform,
             this.parentBranch,
             this.existing,

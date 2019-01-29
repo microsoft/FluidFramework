@@ -17,6 +17,7 @@ export class Context implements IContext {
     public static async Load(
         tenantId: string,
         id: string,
+        path: string,
         platform: IPlatform,
         parentBranch: string,
         existing: boolean,
@@ -40,6 +41,7 @@ export class Context implements IContext {
         const context = new Context(
             tenantId,
             id,
+            path,
             platform,
             parentBranch,
             existing,
@@ -83,6 +85,7 @@ export class Context implements IContext {
     constructor(
         public readonly tenantId: string,
         public readonly id: string,
+        public readonly path: string,
         public readonly platform: IPlatform,
         public readonly parentBranch: string,
         public readonly existing: boolean,

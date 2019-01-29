@@ -157,6 +157,8 @@ class SharedTextHost implements IChaincodeHost {
     // I believe that runtime needs to have everything necessary for this thing to actually load itself once this
     // method is called
     public async run(context: IContext): Promise<IPlatform> {
+        console.log("PATH IS", context.path);
+
         // Context is the base runtime. Might want to rename.
         // We need to load it. It'll go load any intermediate stuff. And then it needs to invoke some runner code
         // to get going once the run happens.
@@ -204,8 +206,6 @@ class SharedTextHost implements IChaincodeHost {
         } else {
             await runtime.getProcess("text");
         }
-
-        console.log("Running, running, running");
     }
 }
 

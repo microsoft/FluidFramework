@@ -41,7 +41,7 @@ async function initializeChaincode(document: pragueLoader.Container, pkg: string
 /**
  * Loads a specific version (commit) of the collaborative object
  */
-export async function start(id: string, factory: IChaincodeFactory): Promise<void> {
+export async function start(id: string, path: string, factory: IChaincodeFactory): Promise<void> {
     const service = socketStorage.createDocumentService(routerlicious, historian);
 
     const classicPlatform = new WebPlatformFactory(document.getElementById("content"));
@@ -60,7 +60,7 @@ export async function start(id: string, factory: IChaincodeFactory): Promise<voi
 
     // Load the Prague document
     const loaderDoc = await pragueLoader.load(
-        `prague://${domain}/${encodeURIComponent(tenantId)}/${encodeURIComponent(id)}/test/test/test`,
+        `prague://${domain}/${encodeURIComponent(tenantId)}/${encodeURIComponent(id)}/${path}`,
         { blockUpdateMarkers: true },
         { tokenProvider, user },
         classicPlatform,
@@ -83,5 +83,6 @@ export async function start(id: string, factory: IChaincodeFactory): Promise<voi
 }
 
 const documentId = window.location.search ? window.location.search.substr(1) : "test-document";
+const documentPath = window.location.hash ? window.location.hash.substr(1) : "";
 console.log(`Loading ${documentId}`);
-start(documentId, sharedText).catch((err) => console.error(err));
+start(documentId, documentPath, sharedText).catch((err) => console.error(err));
