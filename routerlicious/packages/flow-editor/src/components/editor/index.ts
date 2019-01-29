@@ -24,6 +24,15 @@ interface IEditorViewState extends IViewState {
 }
 
 export class Editor extends View<IEditorProps, IEditorViewState> {
+    public invalidate: () => void;
+
+    constructor () {
+        super();
+
+        // TODO: Kludge: We temporarily assign invalidate -> render until we get our scheduler in mount().
+        this.invalidate = this.render;
+    }
+
     private on(listeners: ListenerRegistration[], target: EventTarget, type: string, listener: EventListener) {
         const wrappedListener = (e: Event) => {
             // Ignore events that bubble up from inclusions
@@ -39,6 +48,9 @@ export class Editor extends View<IEditorProps, IEditorViewState> {
     }
 
     protected mounting(props: Readonly<IEditorProps>): IEditorViewState {
+        const scheduler = props.scheduler;
+        this.invalidate = scheduler.coalesce(this.render);
+        
         const cursor = new Cursor(props.doc);
         cursor.moveTo(0, false);
 
@@ -89,10 +101,6 @@ export class Editor extends View<IEditorProps, IEditorViewState> {
     public  get doc()            { return this.state.props.doc; }
     private get props()          { return this.state.props; }
     public  get cursorPosition() { return this.state.cursor.position; }
-
-    public readonly invalidate = () => {
-        this.props.scheduler.requestFrame(this.render);
-    }
 
     private readonly render = () => {
         this.props.trackedPositions = this.cursor.getTracked();
