@@ -1,7 +1,6 @@
 const path = require("path");
 const merge = require("webpack-merge");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
-const webpack = require("webpack");
 
 module.exports = env => {
     const isProduction = env === "production";
@@ -65,16 +64,6 @@ module.exports = env => {
             net: "empty",
             tls: "empty"
         },
-        plugins: [
-            new webpack.DllReferencePlugin({
-                context: process.cwd(),
-                manifest: require(path.resolve(__dirname, "../external-dll/dist", "External.json"))
-            }),
-            new webpack.DllReferencePlugin({
-                context: process.cwd(),
-                manifest: require(path.resolve(__dirname, "../runtime-dll/dist", "PragueRuntime.json"))
-            })
-        ],
         devServer: {
             contentBase: [path.resolve(__dirname, 'assets')],
         }

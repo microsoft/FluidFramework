@@ -25,7 +25,6 @@ COPY packages/cell/package*.json packages/cell/
 COPY packages/chart-view/package*.json packages/chart-view/
 COPY packages/client-api/package*.json packages/client-api/
 COPY packages/client-ui/package*.json packages/client-ui/
-COPY packages/external-dll/package*.json packages/external-dll/
 COPY packages/flow-app/package*.json packages/flow-app/
 COPY packages/flow-document/package*.json packages/flow-document/
 COPY packages/flow-editor/package*.json packages/flow-editor/
@@ -45,7 +44,6 @@ COPY packages/merge-tree-utils/package*.json packages/merge-tree-utils/
 COPY packages/replay-socket-storage/package*.json packages/replay-socket-storage/
 COPY packages/routerlicious/package*.json packages/routerlicious/
 COPY packages/runtime-definitions/package*.json packages/runtime-definitions/
-COPY packages/runtime-dll/package*.json packages/runtime-dll/
 COPY packages/sequence/package*.json packages/sequence/
 COPY packages/services/package*.json packages/services/
 COPY packages/services-client/package*.json packages/services-client/
