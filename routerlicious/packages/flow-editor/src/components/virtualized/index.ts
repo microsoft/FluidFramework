@@ -19,7 +19,7 @@ interface IVirtualizedViewState extends IViewState {
 }
 
 export class VirtualizedView extends View<IVirtualizedProps, IVirtualizedViewState> {
-    private readonly template = new Template({ tag: "div", props: { className: styles.virtualized }});
+    private readonly template = new Template({ tag: "div", props: { tabIndex: 0, className: styles.virtualized }});
 
     public static readonly factory = () => new VirtualizedView();
 
@@ -59,6 +59,7 @@ export class VirtualizedView extends View<IVirtualizedProps, IVirtualizedViewSta
 
     public mounting(props: Readonly<IVirtualizedProps>): IVirtualizedViewState {
         const root = this.template.clone();
+        Object.assign(props, { eventSink: root });
         const docView = new Editor();
         docView.mount(props);
 

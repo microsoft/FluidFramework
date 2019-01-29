@@ -4,12 +4,19 @@
   "version": "0.1.0",
   "author": "Microsoft",
   "repository": "microsoft/prague",
-  "main": "dist/main.bundle.js",
+  "main": "dist/index.bundle.js",
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "webpack --env=\"production\"",
     "build:full": "webpack --env=\"production\"",
-    "dev": "cd ../flow-document && npm run publish-patch-local && cd ../flow-editor && npm run publish-patch-local && cd ../table-document && npm run publish-patch-local && cd ../table-view && npm run publish-patch-local && cd ../flow-app && webpack-dev-server"
+    "republish-local": "docker-compose stop verdaccio && docker-compose rm -f -v verdaccio && docker-compose create --force-recreate verdaccio && docker-compose start verdaccio && npm run publish-local",
+    "publish-chain-flow-document": "cd ../flow-document && npm run publish-local",
+    "publish-chain-flow-editor": "cd ../flow-editor && npm run publish-local",
+    "publish-chain-table-document": "cd ../table-document && npm run publish-local",
+    "publish-chain-table-view": "cd ../table-view && npm run publish-local",
+    "publish-chain-chart-view": "cd ../chart-view && npm run publish-local",
+    "publish-local": "run-p publish-chain-*",
+    "dev": "webpack-dev-server"
   },
   "dependencies": {
     "@prague/flow-host": "^0.1.0",
@@ -21,6 +28,7 @@
     "@types/react-dom": "^16.0.11",
     "css-loader": "^1.0.0",
     "html-webpack-plugin": "^3.2.0",
+    "npm-run-all": "^4.1.5",
     "source-map-loader": "^0.2.4",
     "style-loader": "^0.23.0",
     "ts-loader": "^4.5.0",

@@ -6,6 +6,7 @@ import { shouldIgnoreEvent } from "../inclusion";
 
 export interface IEditorProps extends IDocumentProps { 
     scheduler: Scheduler;
+    eventSink?: HTMLElement;
 }
 
 interface ListenerRegistration { 
@@ -17,6 +18,7 @@ interface ListenerRegistration {
 interface IEditorViewState extends IViewState {
     cursor: Cursor;
     docView: DocumentView;
+    eventSink: Element;
     props: IEditorProps;
     listeners: ListenerRegistration[];
 }
@@ -45,7 +47,7 @@ export class Editor extends View<IEditorProps, IEditorViewState> {
         docView.overlay.appendChild(cursor.root);
 
         const listeners: ListenerRegistration[] = [];
-        const eventSink = docView.eventsink;
+        const eventSink = props.eventSink || root;
         this.on(listeners, eventSink, "keydown",   this.onKeyDown as any);
         this.on(listeners, eventSink, "keypress",  this.onKeyPress as any);
         this.on(listeners, eventSink, "mousedown", this.onMouseDown as any);
@@ -57,6 +59,7 @@ export class Editor extends View<IEditorProps, IEditorViewState> {
             root,
             listeners,
             docView,
+            eventSink,
             props,
             cursor
         });

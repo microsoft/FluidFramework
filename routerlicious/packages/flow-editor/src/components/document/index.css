@@ -2,7 +2,7 @@
     width: 100%;
 }
 
-.eventSink:focus {
+.document:focus {
     outline: 1px solid rgba(64, 128, 255, 0.3);
 }
 
