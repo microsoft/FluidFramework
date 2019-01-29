@@ -1,7 +1,7 @@
 {
-  "name": "@prague/process-utils",
+  "name": "@prague/container-utils",
   "version": "0.1.0",
-  "description": "Prague process definitions",
+  "description": "Prague container utilities",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "sideEffects": "false",

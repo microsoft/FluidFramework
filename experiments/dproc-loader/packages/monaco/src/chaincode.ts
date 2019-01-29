@@ -6,6 +6,7 @@ import {
     IComponentRuntime,
     IDeltaHandler,
 } from "@prague/container-definitions";
+import { ComponentHost } from "@prague/container-utils";
 import {
     IMergeTreeGroupMsg,
     IMergeTreeInsertMsg,
@@ -13,7 +14,6 @@ import {
     IMergeTreeRemoveMsg,
     MergeTreeDeltaType,
 } from "@prague/merge-tree";
-import { ComponentHost } from "@prague/process-utils";
 import { IChaincode, IPlatform, ITree } from "@prague/runtime-definitions";
 import { SharedString } from "@prague/sequence";
 import * as monaco from "monaco-editor";

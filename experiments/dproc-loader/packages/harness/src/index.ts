@@ -1,7 +1,7 @@
 import * as sharedText from "@chaincode/shared-text";
 import { IChaincodeFactory, ICodeLoader } from "@prague/container-definitions";
 import * as pragueLoader from "@prague/container-loader";
-import { WebPlatformFactory } from "@prague/process-utils";
+import { WebPlatformFactory } from "@prague/container-utils";
 import * as socketStorage from "@prague/socket-storage";
 import * as jwt from "jsonwebtoken";
 
