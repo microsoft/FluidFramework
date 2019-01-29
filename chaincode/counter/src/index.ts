@@ -1,5 +1,5 @@
 import { IChaincode } from "@prague/runtime-definitions";
-import { Document, DataStore } from "@prague/datastore";
+import { Component, Document } from "@prague/app-component";
 import { Counter, CounterValueType } from "@prague/map";
 
 export class Clicker extends Document {
@@ -38,5 +38,5 @@ export class Clicker extends Document {
 
 // Example chainloader bootstrap.
 export async function instantiate(): Promise<IChaincode> {
-    return DataStore.instantiate(new Clicker());
+    return Component.instantiate(new Clicker());
 }

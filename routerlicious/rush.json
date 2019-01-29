@@ -30,12 +30,20 @@
       "projectFolder": "packages/cell"
     },
     {
+      "packageName": "@chaincode/chart-view",
+      "projectFolder": "packages/chart-view"
+    },
+    {
       "packageName": "@prague/client-api",
       "projectFolder": "packages/client-api"
     },
     {
       "packageName": "@prague/client-ui",
       "projectFolder": "packages/client-ui"
+    },
+    {
+      "packageName": "@prague/external-dll",
+      "projectFolder": "packages/external-dll"
     },
     {
       "packageName": "@prague/flow-app",
@@ -116,6 +124,10 @@
     {
       "packageName": "@prague/runtime-definitions",
       "projectFolder": "packages/runtime-definitions"
+    },
+    {
+      "packageName": "@prague/runtime-dll",
+      "projectFolder": "packages/runtime-dll"
     },
     {
       "packageName": "@prague/services-client",

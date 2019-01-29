@@ -1,7 +1,7 @@
 {
   "name": "@chaincode/table-document",
   "description": "Chaincode component containing a table's data",
-  "version": "0.1.34",
+  "version": "0.1.96",
   "author": "Microsoft",
   "repository": "microsoft/prague",
   "main": "dist/main.bundle.js",
@@ -35,9 +35,11 @@
     "@prague/app-component": "^0.1.0",
     "@prague/app-datastore": "^0.1.0",
     "@prague/client-ui": "^0.1.0",
+    "@prague/external-dll": "^0.1.0",
     "@prague/map": "^0.1.0",
     "@prague/merge-tree": "^0.1.0",
     "@prague/runtime-definitions": "^0.1.0",
-    "@prague/sequence": "^0.1.0"
+    "@prague/sequence": "^0.1.0",
+    "@prague/runtime-dll": "^0.1.0"
   }
 }

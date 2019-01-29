@@ -1,4 +1,4 @@
-import { UnboxedOper, Workbook, ResultKind } from "@prague/client-ui/ext/calc";
+import { UnboxedOper, Workbook, ResultKind, ReadOper } from "@prague/client-ui/ext/calc";
 import { MapExtension, IMapView, registerDefaultValueType,  } from "@prague/map";
 import { SharedString, CollaborativeStringExtension } from "@prague/sequence";
 import { Component } from "@prague/app-component";
@@ -22,6 +22,7 @@ class WorkbookAdapter extends Workbook {
         // Note: The row/col provided here is only used by the '.init()' method.
         super(doc.numRows, doc.numCols);
 
+        this.isInitializing = true;
         const init = [];
         for (let row = 0; row < doc.numRows; row++) {
             const rowArray: string[] = [];
@@ -67,28 +68,36 @@ export class TableDocument extends Component {
     protected async create() {
         const text = this.runtime.createChannel("text", CollaborativeStringExtension.Type) as SharedString;
         this.root.set("text", text);
-        this.root.set<Counter>("stride", 4, CounterValueType.Name);
 
-        for (let i = 0; i < 16; i++) {
+        const numRows = 7;
+        const numCols = 8;
+        this.root.set<Counter>("stride", numCols, CounterValueType.Name);
+        
+        for (let i = numRows * numCols; i > 0; i--) {
             text.insertMarker(0, ReferenceType.Simple, { value: "" });
         }
     }
 
     public async opened() {
+        this.maybeRootView = await this.root.getView();
+        
+        await this.connected;
         this.maybeSharedString = await this.root.wait("text") as SharedString;
-        this.maybeSharedString.on("op", (op, local) => { 
-            this.emit("op", op, local)
-        });
         const client = this.sharedString.client;
         this.maybeClientId = client.getClientId();
         this.maybeMergeTree = client.mergeTree;
-        this.maybeRootView = await this.root.getView();
-        if (!this.runtime.connected) {
-            await new Promise<void>(accept => {
-                this.runtime.on("connected", accept);
-            });
-        }
+        this.sharedString.on("op", (op, local) => { 
+            if (!local) {
+                for (let row = 0; row < this.numRows; row++) {
+                    for (let col = 0; col < this.numCols; col++) {
+                        this.workbook.setCellText(row, col, this[loadCellTextSym](row, col), /* isExternal: */ true);
+                    }
+                }
+            }
 
+            this.emit("op", op, local)
+        });
+        
         this.maybeWorkbook = new WorkbookAdapter(this);
     }
 
@@ -96,27 +105,50 @@ export class TableDocument extends Component {
     public get numCols() { return Math.min(this.rootView.get("stride").value, this.length); }
     public get numRows() { return Math.floor(this.length / this.numCols); }
 
+    private parseResult(input: ReadOper): string | number | boolean {
+        switch(typeof input) {
+            case "string":
+            case "number":
+            case "boolean":
+                return input;
+
+            default:
+                return this.workbook.serialiseValue(input);
+        }
+    }
+
     public evaluateCell(row: number, col: number) {
         const result = this.workbook.evaluateCell(row, col);
         switch (result.kind) {
             case ResultKind.Success:
-                return this.workbook.serialiseValue(result.value);
+                return this.parseResult(result.value);
             default:
                 return result.reason.toString();
         }
     }
 
+    private rowColToPosition(row: number, col: number) {
+        return row * this.numCols + col;
+    }
+
     private [loadCellTextSym](row: number, col: number): string {
-        const { segment } = this.mergeTree.getContainingSegment(row * this.numRows + col, UniversalSequenceNumber, this.clientId);
+        const { segment } = this.mergeTree.getContainingSegment(this.rowColToPosition(row, col), UniversalSequenceNumber, this.clientId);
         return (segment as Marker).properties["value"];
     }
 
-    public getCellText(row: number, col: number) { return this.workbook.getCellText(row, col); }
-    public setCellText(row: number, col: number, value: UnboxedOper) { return this.workbook.setCellText(row, col, value); }
+    public getCellText(row: number, col: number) { 
+        return this.workbook.getCellText(row, col);
+    }
+    
+    public setCellText(row: number, col: number, value: UnboxedOper) {
+        console.log(`[${row}, ${col}] := ${value}`);
+        this.workbook.setCellText(row, col, value);
+    }
     
     private [storeCellTextSym](row: number, col: number, value: UnboxedOper) {
-        const { segment } = this.mergeTree.getContainingSegment(row * this.numRows + col, UniversalSequenceNumber, this.clientId);
-        this.sharedString.annotateMarker({ value: value.toString() }, segment as Marker);
+        const position = this.rowColToPosition(row, col);
+        this.sharedString.removeText(position, position + 1);
+        this.sharedString.insertMarker(position, ReferenceType.Simple, { value: value.toString() });
     }
 
     private get sharedString() { return this.maybeSharedString!; }
@@ -125,12 +157,7 @@ export class TableDocument extends Component {
     private get workbook() { return this.maybeWorkbook!; }
     private get rootView() { return this.maybeRootView!; }
 
-    public static readonly type = "@chaincode/table-document@latest";
-
-    // The below works, but causes 'webpack --watch' to build in an infinite loop when
-    // build automatically publishes.
-    //
-    // public static readonly type = `${require("../package.json").name}@latest`;
+    public static readonly type = `${require("../package.json").name}@${require("../package.json").version}`;
 }
 
 // Chainloader bootstrap.

@@ -1,6 +1,5 @@
-import { IChaincodeComponent, IChaincodeHost, IHostRuntime } from "@prague/process-definitions";
+import { IChaincodeComponent, IChaincodeHost, IContext, IHostRuntime } from "@prague/process-definitions";
 import { IPlatform } from "@prague/runtime-definitions";
-// import * as uuid from "uuid/v4";
 import { debug } from "./debug";
 import { instantiateComponent as ic } from "./legacy1";
 import * as rootComponent from "./legacy1";
@@ -31,11 +30,11 @@ class MyChaincodeHost implements IChaincodeHost {
 
     // I believe that runtime needs to have everything necessary for this thing to actually load itself once this
     // method is called
-    public async run(runtime: IHostRuntime, platform: IPlatform): Promise<IPlatform> {
-        debug(`MyChaincodeHost ${runtime.existing ? "" : "NOT"} existing document`);
-        this.doWork(runtime).catch((error) => {
-            runtime.error(error);
-        });
+    public async run(context: IContext): Promise<IPlatform> {
+        // debug(`MyChaincodeHost ${runtime.existing ? "" : "NOT"} existing document`);
+        // this.doWork(runtime).catch((error) => {
+        //     runtime.error(error);
+        // });
 
         return new MyPlatform();
     }

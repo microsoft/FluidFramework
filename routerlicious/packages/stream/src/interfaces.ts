@@ -239,11 +239,3 @@ export interface IInkLayer {
 export interface IDelta {
     operations: IOperation[];
 }
-
-export interface IStream extends ICollaborativeObject {
-    getLayers(): IInkLayer[];
-
-    getLayer(key: string): IInkLayer;
-
-    submitOp(op: IDelta);
-}

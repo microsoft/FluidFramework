@@ -10,7 +10,9 @@ import {
 import {
     ConnectionState,
     FileMode,
+    IBlobManager,
     IChannel,
+    IDeltaManager,
     IDocumentStorageService,
     IEnvelope,
     IGenericBlob,
@@ -25,9 +27,7 @@ import {
     TreeEntry,
 } from "@prague/runtime-definitions";
 import { EventEmitter } from "events";
-import { BlobManager } from "./blobManager";
 import { ChannelDeltaConnection } from "./channelDeltaConnection";
-import { DeltaManager } from "./deltaManager";
 
 export interface IChannelState {
     object: IChannel;
@@ -46,10 +46,10 @@ export class Component extends EventEmitter implements IComponentRuntime, IProce
         options: any,
         clientId: string,
         user: IUser,
-        blobManager: BlobManager,
+        blobManager: IBlobManager,
         pkg: string,
         chaincode: IChaincodeHost,
-        deltaManager: DeltaManager,
+        deltaManager: IDeltaManager,
         quorum: IQuorum,
         storage: IDocumentStorageService,
         connectionState: ConnectionState,
@@ -101,10 +101,10 @@ export class Component extends EventEmitter implements IComponentRuntime, IProce
         options: any,
         clientId: string,
         user: IUser,
-        blobManager: BlobManager,
+        blobManager: IBlobManager,
         pkg: string,
         chaincode: IChaincodeHost,
-        deltaManager: DeltaManager,
+        deltaManager: IDeltaManager,
         quorum: IQuorum,
         storage: IDocumentStorageService,
         connectionState: ConnectionState,
@@ -174,8 +174,8 @@ export class Component extends EventEmitter implements IComponentRuntime, IProce
         public readonly options: any,
         public clientId: string,
         public readonly user: IUser,
-        public readonly blobManager: BlobManager,
-        public readonly deltaManager: DeltaManager,
+        public readonly blobManager: IBlobManager,
+        public readonly deltaManager: IDeltaManager,
         private quorum: IQuorum,
         public readonly chaincode: IChaincodeComponent,
         public readonly storage: IDocumentStorageService,

@@ -226,12 +226,7 @@ export class FlowDocument extends Component {
             endPosition);
     }
 
-    public static readonly type = "@chaincode/flow-document@latest";
-
-    // The below works, but causes 'webpack --watch' to build in an infinite loop when
-    // build automatically publishes.
-    //
-    // public static readonly type = `${require("../package.json").name}@latest`;
+    public static readonly type = `${require("../package.json").name}@${require("../package.json").version}`;
 }
 
 // Chainloader bootstrap.

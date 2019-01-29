@@ -1,10 +1,10 @@
+import { Component, Document } from "@prague/app-component";
 import * as API from "@prague/client-api";
 import { controls, ui } from "@prague/client-ui";
-import { DataStore, Document } from "@prague/datastore";
 import * as DistributedMap from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
 import { IChaincode } from "@prague/runtime-definitions";
-import * as SharedString from "@prague/shared-string";
+import * as SharedString from "@prague/sequence";
 import { IStream } from "@prague/stream";
 import { default as axios } from "axios";
 // tslint:disable:no-var-requires
@@ -32,15 +32,14 @@ class SharedText extends Document {
     private sharedString: SharedString.SharedString;
 
     public async opened() {
-        debug(`collabDoc loaded ${this.id} - ${performanceNow()}`);
-        const root = await this.getRoot().getView();
-        debug(`Getting root ${this.id} - ${performanceNow()}`);
+        debug(`collabDoc loaded - ${performanceNow()}`);
+        const root = await this.root.getView();
+        debug(`Getting root - ${performanceNow()}`);
 
         await Promise.all([root.wait("text"), root.wait("ink")]);
 
         this.sharedString = root.get("text") as SharedString.SharedString;
         debug(`Shared string ready - ${performanceNow()}`);
-        debug(`id is ${this.id}`);
         debug(`Partial load fired - ${performanceNow()}`);
 
         const hostContent: HTMLElement = await this.platform.queryInterface<HTMLElement>("div");
@@ -78,7 +77,7 @@ class SharedText extends Document {
         const theFlow = container.flowView;
         host.attach(container);
 
-        getInsights(this.getRoot(), this.sharedString.id).then(
+        getInsights(this.root, this.sharedString.id).then(
             (insightsMap) => {
                 container.trackInsights(insightsMap);
             });
@@ -92,7 +91,7 @@ class SharedText extends Document {
 
         this.sharedString.loaded.then(() => {
             theFlow.loadFinished(clockStart);
-            debug(`fully loaded ${this.id}: ${performanceNow()} `);
+            debug(`fully loaded - ${performanceNow()} `);
         });
     }
 
@@ -102,7 +101,7 @@ class SharedText extends Document {
         const insights = this.createMap(insightsMapId);
         this.root.set(insightsMapId, insights);
 
-        debug(`Not existing ${this.id} - ${performanceNow()}`);
+        debug(`Not existing - ${performanceNow()}`);
         this.root.set("presence", this.createMap());
         this.root.set("users", this.createMap());
         const newString = this.createString() as SharedString.SharedString;
@@ -129,5 +128,5 @@ class SharedText extends Document {
 }
 
 export async function instantiate(): Promise<IChaincode> {
-    return DataStore.instantiate(new SharedText());
+    return Component.instantiate(new SharedText());
 }

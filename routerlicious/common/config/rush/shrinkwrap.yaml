@@ -6,8 +6,10 @@ dependencies:
   '@rush-temp/app-datastore': 'file:projects/app-datastore.tgz'
   '@rush-temp/app-ui': 'file:projects/app-ui.tgz'
   '@rush-temp/cell': 'file:projects/cell.tgz'
+  '@rush-temp/chart-view': 'file:projects/chart-view.tgz'
   '@rush-temp/client-api': 'file:projects/client-api.tgz'
   '@rush-temp/client-ui': 'file:projects/client-ui.tgz'
+  '@rush-temp/external-dll': 'file:projects/external-dll.tgz'
   '@rush-temp/flow-app': 'file:projects/flow-app.tgz'
   '@rush-temp/flow-document': 'file:projects/flow-document.tgz'
   '@rush-temp/flow-editor': 'file:projects/flow-editor.tgz'
@@ -28,6 +30,7 @@ dependencies:
   '@rush-temp/replay-socket-storage': 'file:projects/replay-socket-storage.tgz'
   '@rush-temp/routerlicious': 'file:projects/routerlicious.tgz'
   '@rush-temp/runtime-definitions': 'file:projects/runtime-definitions.tgz'
+  '@rush-temp/runtime-dll': 'file:projects/runtime-dll.tgz'
   '@rush-temp/sequence': 'file:projects/sequence.tgz'
   '@rush-temp/services': 'file:projects/services.tgz'
   '@rush-temp/services-client': 'file:projects/services-client.tgz'
@@ -978,6 +981,13 @@ packages:
     dev: false
     resolution:
       integrity: sha512-VtwdCPhEkfNk8l9qSw2Ix/R7a3/GguvQ2avR5RxLs7jSMmW2Oc3B0CwROB6h4zajwZK7OBR+a6UsiT7H6VN4vg==
+  /@uifabric/merge-styles/6.15.1:
+    dependencies:
+      '@uifabric/set-version': 1.1.3
+      tslib: 1.9.3
+    dev: false
+    resolution:
+      integrity: sha512-8Wgw+tOExd8j0j6ShtICZY6lZlvXamJgtgk8t2jGFHGS1VJ6KNG1D9zPQw0+p6xkn8PLGbMPKtQyor9Y0gddXQ==
   /@uifabric/set-version/1.1.3:
     dependencies:
       tslib: 1.9.3
@@ -1021,6 +1031,21 @@ packages:
       react-dom: '>=16.3.2-0 <17.0.0'
     resolution:
       integrity: sha512-HHC4J7L9UQcV5rNe0YlmW8mCswLTTPvO/SdfCU4alMrkkmrOAB/Z1OSryvIcXnLLPlqmnyoW2PwXyQrO5nBl0Q==
+  /@uifabric/utilities/6.28.1/react-dom@16.7.0+react@16.7.0:
+    dependencies:
+      '@uifabric/merge-styles': 6.15.1
+      '@uifabric/set-version': 1.1.3
+      prop-types: 15.6.2
+      react: 16.7.0
+      react-dom: /react-dom/16.7.0/react@16.7.0
+      tslib: 1.9.3
+    dev: false
+    id: registry.npmjs.org/@uifabric/utilities/6.28.1
+    peerDependencies:
+      react: '>=16.3.2-0 <17.0.0'
+      react-dom: '>=16.3.2-0 <17.0.0'
+    resolution:
+      integrity: sha512-33THWLBWwQW24lZQXE4VgdKNi/EEDe05dUlmRxvgZyD9p/e7RiRY9Bc0jhMAv70uU+Fsx5WBUwg8wX6WjCzwTQ==
   /@webassemblyjs/ast/1.7.11:
     dependencies:
       '@webassemblyjs/helper-module-context': 1.7.11
@@ -1337,6 +1362,15 @@ packages:
       ajv: ^6.0.0
     resolution:
       integrity: sha1-6GuBnGAs+IIa1jdBNpjx3sAhhHo=
+  /ajv-keywords/3.3.0/ajv@6.7.0:
+    dependencies:
+      ajv: 6.7.0
+    dev: false
+    id: registry.npmjs.org/ajv-keywords/3.3.0
+    peerDependencies:
+      ajv: ^6.0.0
+    resolution:
+      integrity: sha512-CMzN9S62ZOO4sA/mJZIO4S++ZM7KFWzH3PPWkveLhy4OZ9i1/VatgwWMD46w/XbGCBy7Ye0gCk+Za6mmyfKK7g==
   /ajv/4.11.8:
     dependencies:
       co: 4.6.0
@@ -7248,6 +7282,25 @@ packages:
       react-dom: '>=16.3.2-0 <17.0.0'
     resolution:
       integrity: sha512-PuQne4hdA/9K54925ycADght3uEJHhTEfBoquna1kCdjOgVflNc/GDzhMFidAVKryHUhbeFky+Tnm8039PeY+w==
+  /office-ui-fabric-react/6.130.0/react-dom@16.7.0+react@16.7.0:
+    dependencies:
+      '@microsoft/load-themed-styles': 1.8.55
+      '@uifabric/icons': 6.3.0
+      '@uifabric/merge-styles': 6.15.1
+      '@uifabric/set-version': 1.1.3
+      '@uifabric/styling': 6.41.0
+      '@uifabric/utilities': /@uifabric/utilities/6.28.1/react-dom@16.7.0+react@16.7.0
+      prop-types: 15.6.2
+      react: 16.7.0
+      react-dom: /react-dom/16.7.0/react@16.7.0
+      tslib: 1.9.3
+    dev: false
+    id: registry.npmjs.org/office-ui-fabric-react/6.130.0
+    peerDependencies:
+      react: '>=16.3.2-0 <17.0.0'
+      react-dom: '>=16.3.2-0 <17.0.0'
+    resolution:
+      integrity: sha512-zhsKtc7pUHLoa1djnShMQn/3ChrnlKEk3WUxRfbyWQKPbsmvOcpWU29ADBdRd4o72pd+BLnrc+IpWKabR3vZYQ==
   /on-finished/2.3.0:
     dependencies:
       ee-first: 1.1.1
@@ -8737,7 +8790,7 @@ packages:
   /schema-utils/0.4.7:
     dependencies:
       ajv: 6.7.0
-      ajv-keywords: /ajv-keywords/3.2.0/ajv@6.7.0
+      ajv-keywords: /ajv-keywords/3.3.0/ajv@6.7.0
     dev: false
     engines:
       node: '>= 4'
@@ -8747,7 +8800,7 @@ packages:
     dependencies:
       ajv: 6.7.0
       ajv-errors: /ajv-errors/1.0.1/ajv@6.7.0
-      ajv-keywords: /ajv-keywords/3.2.0/ajv@6.7.0
+      ajv-keywords: /ajv-keywords/3.3.0/ajv@6.7.0
     dev: false
     engines:
       node: '>= 4'
@@ -11350,6 +11403,23 @@ packages:
       integrity: sha512-PKFpO/YBTBEeswTOybS7VFNn0m3ih0UTqFfO3XHrZlAScxf48XNiFrq3JDsqZUzOP/6gZRFgXYZfrebTXzcOZg==
       tarball: 'file:projects/cell.tgz'
     version: 0.0.0
+  'file:projects/chart-view.tgz':
+    dependencies:
+      css-loader: /css-loader/1.0.1/webpack@4.29.0
+      source-map-loader: 0.2.4
+      style-loader: 0.23.1
+      ts-loader: 4.5.0
+      typescript: 3.2.4
+      typings-for-css-modules-loader: /typings-for-css-modules-loader/1.7.0/css-loader@1.0.1
+      webpack: 4.29.0
+      webpack-cli: /webpack-cli/3.2.1/webpack@4.29.0
+      webpack-merge: 4.2.1
+    dev: false
+    name: '@rush-temp/chart-view'
+    resolution:
+      integrity: sha512-93KEc2ybvNbXp10kOOeibUoIQevSMQ0xdCTOrGAC0ksqFtCqm6Tc9gkujk7KfhZ085T1yWLJbS2z0KUbF5iWiw==
+      tarball: 'file:projects/chart-view.tgz'
+    version: 0.0.0
   'file:projects/client-api.tgz':
     dependencies:
       '@types/async': 2.4.0
@@ -11416,6 +11486,32 @@ packages:
       integrity: sha512-RmuWEbOcBzgbTjXN8sH1fd7hZ4PfSwWFXLA2du9ZBkDUfCr/PA6x8kkGDxtmSUYbCSm/kd9mrD2MJzNECgtwew==
       tarball: 'file:projects/client-ui.tgz'
     version: 0.0.0
+  'file:projects/external-dll.tgz':
+    dependencies:
+      '@uifabric/icons': 6.3.0
+      angular: 1.7.6
+      angular-route: 1.7.6
+      bootstrap: 3.4.0
+      debug: 3.2.6
+      file-loader: /file-loader/2.0.0/webpack@4.29.0
+      google-maps: 3.3.0
+      jquery: 3.3.1
+      leaflet: 1.4.0
+      office-ui-fabric-react: /office-ui-fabric-react/6.130.0/react-dom@16.7.0+react@16.7.0
+      react: 16.7.0
+      react-dom: /react-dom/16.7.0/react@16.7.0
+      source-map-loader: 0.2.4
+      ts-loader: 4.5.0
+      typescript: 3.2.4
+      webpack: 4.29.0
+      webpack-cli: /webpack-cli/3.2.1/webpack@4.29.0
+      webpack-merge: 4.2.1
+    dev: false
+    name: '@rush-temp/external-dll'
+    resolution:
+      integrity: sha512-bkSA33GMWsPxyql2EKFy5M9dg/9ORNqkLswyt6yseCInP++sE1zkmytpAw2MZ7Wih9ntZe0Ryrn6ZgThsuqH6g==
+      tarball: 'file:projects/external-dll.tgz'
+    version: 0.0.0
   'file:projects/flow-app.tgz':
     dependencies:
       '@types/react': 16.7.20
@@ -11436,7 +11532,7 @@ packages:
     dev: false
     name: '@rush-temp/flow-app'
     resolution:
-      integrity: sha512-jmd3ZWpD7HQxwU/uLiQU3FaSm9vTr03tTjxbtsAvnqUUsK1S9ET/E9EIX31eS6oX4IAECHbDva1pf5xCNB0s2Q==
+      integrity: sha512-RBlB/HySsxros/IVzdk6bH9Tmj1FHs7UcW8gZkjafN1wyf/OsnlgQORJANFCOVQERwaKq+VE7bNlc3BGayZYCA==
       tarball: 'file:projects/flow-app.tgz'
     version: 0.0.0
   'file:projects/flow-document.tgz':
@@ -11450,7 +11546,7 @@ packages:
     dev: false
     name: '@rush-temp/flow-document'
     resolution:
-      integrity: sha512-BChucYNNKp/ys+OVDymWTJ9niS0rTQm9ORmZJjFhObKyfyPvfNQIAWhOezQb0GuHKHGRfnFR9sckFZ5YVW2+Xw==
+      integrity: sha512-AzmVnINgrbsROUTur9VM5Nj72bEwTIWyvenBVJ7hyz6Lc0zY7NBUYBY7S1LZNONGc8RtIIKIQMu+dXtIvQn4uA==
       tarball: 'file:projects/flow-document.tgz'
     version: 0.0.0
   'file:projects/flow-editor.tgz':
@@ -11460,12 +11556,12 @@ packages:
       benchmark: 2.1.4
       css-loader: /css-loader/1.0.1/webpack@4.29.0
       jsdom: 12.2.0
-      jsdom-global: /jsdom-global/3.0.2/jsdom@12.2.0
+      jsdom-global: 3.0.2
       mocha: 5.2.0
       source-map-loader: 0.2.4
       style-loader: 0.23.1
       ts-loader: 4.5.0
-      ts-mocha: /ts-mocha/2.0.0/mocha@5.2.0
+      ts-mocha: 2.0.0
       ts-node: 7.0.1
       typescript: 3.2.4
       typings-for-css-modules-loader: /typings-for-css-modules-loader/1.7.0/css-loader@1.0.1
@@ -11475,7 +11571,7 @@ packages:
     dev: false
     name: '@rush-temp/flow-editor'
     resolution:
-      integrity: sha512-HG1zJP+7/5UqAxyL2mPYmawAiwomytf4ZW+GQZXVyGG7FRv96jpYCS/7sp/fssb7ox6nlMuEJrCFZuRFM2uTkg==
+      integrity: sha512-lKZKQdEV0IDNqm7nbaaoqE0z7yVRNWh3jzokIF+tnvu8IqaSOhmURb4Vf0mP1a4EEySGMFkHTcZKEU/Za/d6ng==
       tarball: 'file:projects/flow-editor.tgz'
     version: 0.0.0
   'file:projects/flow-host.tgz':
@@ -11499,7 +11595,7 @@ packages:
     dev: false
     name: '@rush-temp/flow-host'
     resolution:
-      integrity: sha512-QyQLFUQjYPLtFxVOttBA8qJmW7ctLxu8ZUt1+kOPSCh+sK4CWww/RTedhdgD4kLa1la1Qt6zep2wvrUjYgZ5eg==
+      integrity: sha512-g1Z7jLq6roEvrBJpsXCXJ6Tydu6tPRlm9vUfDAnHCzR2lubbflJrMJsVAorlmg31Q9lcgAN1rLIw1KWf/XkdZg==
       tarball: 'file:projects/flow-host.tgz'
     version: 0.0.0
   'file:projects/flow-util.tgz':
@@ -11764,7 +11860,7 @@ packages:
     dev: false
     name: '@rush-temp/pinpoint-editor'
     resolution:
-      integrity: sha512-ASDg/h2WI67tAPb/zeqwsM499uE6N1QHQvCeZxo9I2z0rMaFBkGrWtn2VoKakJWbb2iUJ1kGMu8UUJNspn5IZw==
+      integrity: sha512-atH1KBbqG1m/fhyu+hsCWclGtO/HR/C+hbw+NgPidtd+WWQpacc32AnYadnMCCloWbaGOlwJAsS+Wr7x13rvXw==
       tarball: 'file:projects/pinpoint-editor.tgz'
     version: 0.0.0
   'file:projects/replay-socket-storage.tgz':
@@ -11910,7 +12006,7 @@ packages:
     dev: false
     name: '@rush-temp/routerlicious'
     resolution:
-      integrity: sha512-PIxMVhX0xtYlLhJIWNhKxYFwRzUmkZILxj6+zztvqwqSnnyRf450f0+H01jdDERQdz1X1o074h442D6QTftDfA==
+      integrity: sha512-SR9X0nQgQx9vXWbFbmQJZHYaigWPXmeQAGsDyeqL9tJAjM+9Ie4/FlwZj5oEAG1yWL0nlsrPKn/G05d2tjt46g==
       tarball: 'file:projects/routerlicious.tgz'
     version: 0.0.0
   'file:projects/runtime-definitions.tgz':
@@ -11925,6 +12021,20 @@ packages:
     resolution:
       integrity: sha512-bGoPFqKYrptWDfdPMvKRTAqyVC9C/fMCBhOUA46pahrnPpPmA5mYWNVwOAL7OkjaziE6/nZgbnfIV3bK7ewmZg==
       tarball: 'file:projects/runtime-definitions.tgz'
+    version: 0.0.0
+  'file:projects/runtime-dll.tgz':
+    dependencies:
+      source-map-loader: 0.2.4
+      ts-loader: 4.5.0
+      typescript: 3.2.4
+      webpack: 4.29.0
+      webpack-cli: /webpack-cli/3.2.1/webpack@4.29.0
+      webpack-merge: 4.2.1
+    dev: false
+    name: '@rush-temp/runtime-dll'
+    resolution:
+      integrity: sha512-NPtGByl3mSLErh8e2AKIkeVCP+lKB32hw61E4jEdixfkeiN717PLqw6HJRtUXKFHnuOkEvS6iPkWZQ234DKUIg==
+      tarball: 'file:projects/runtime-dll.tgz'
     version: 0.0.0
   'file:projects/sequence.tgz':
     dependencies:
@@ -12132,7 +12242,7 @@ packages:
     dev: false
     name: '@rush-temp/table-document'
     resolution:
-      integrity: sha512-ss4nlD2AgBjgtuWnutDCiD/EETqD9R6YrcF3w8x00yarEDANjbww5sz3fBIXxPIA9RGKeDtu3simGNhCPRwDwg==
+      integrity: sha512-6hu2PtxOC3hnwTt/YaGylBvlI3mFe8gAkgtJQQqNW+NgDopzJ8aPDbtn8Rv86ZZHXz5anwQIKmC4yQJQ3Cf3Lw==
       tarball: 'file:projects/table-document.tgz'
     version: 0.0.0
   'file:projects/table-view.tgz':
@@ -12142,12 +12252,12 @@ packages:
       benchmark: 2.1.4
       css-loader: /css-loader/1.0.1/webpack@4.29.0
       jsdom: 12.2.0
-      jsdom-global: /jsdom-global/3.0.2/jsdom@12.2.0
+      jsdom-global: 3.0.2
       mocha: 5.2.0
       source-map-loader: 0.2.4
       style-loader: 0.23.1
       ts-loader: 4.5.0
-      ts-mocha: /ts-mocha/2.0.0/mocha@5.2.0
+      ts-mocha: 2.0.0
       ts-node: 7.0.1
       typescript: 3.2.4
       typings-for-css-modules-loader: /typings-for-css-modules-loader/1.7.0/css-loader@1.0.1
@@ -12157,7 +12267,7 @@ packages:
     dev: false
     name: '@rush-temp/table-view'
     resolution:
-      integrity: sha512-Jbj1IlcxFyrbl+UNDhvmFeCp6En3AOBu/Oxwrb3KqUnomOfDmnh+2uHoAXACLW5XKvJo4gV8GRc6WcKPvvel6Q==
+      integrity: sha512-J8N3RKLsfB/TT6cWug015+GmMLc3vb4lia2NfkTZB8e2WlLHszlwv9cSzE/Pd3BQy2Q+aMkIxFhFytddqZCDEQ==
       tarball: 'file:projects/table-view.tgz'
     version: 0.0.0
   'file:projects/test-utils.tgz':
@@ -12233,8 +12343,10 @@ specifiers:
   '@rush-temp/app-datastore': 'file:./projects/app-datastore.tgz'
   '@rush-temp/app-ui': 'file:./projects/app-ui.tgz'
   '@rush-temp/cell': 'file:./projects/cell.tgz'
+  '@rush-temp/chart-view': 'file:./projects/chart-view.tgz'
   '@rush-temp/client-api': 'file:./projects/client-api.tgz'
   '@rush-temp/client-ui': 'file:./projects/client-ui.tgz'
+  '@rush-temp/external-dll': 'file:./projects/external-dll.tgz'
   '@rush-temp/flow-app': 'file:./projects/flow-app.tgz'
   '@rush-temp/flow-document': 'file:./projects/flow-document.tgz'
   '@rush-temp/flow-editor': 'file:./projects/flow-editor.tgz'
@@ -12255,6 +12367,7 @@ specifiers:
   '@rush-temp/replay-socket-storage': 'file:./projects/replay-socket-storage.tgz'
   '@rush-temp/routerlicious': 'file:./projects/routerlicious.tgz'
   '@rush-temp/runtime-definitions': 'file:./projects/runtime-definitions.tgz'
+  '@rush-temp/runtime-dll': 'file:./projects/runtime-dll.tgz'
   '@rush-temp/sequence': 'file:./projects/sequence.tgz'
   '@rush-temp/services': 'file:./projects/services.tgz'
   '@rush-temp/services-client': 'file:./projects/services-client.tgz'

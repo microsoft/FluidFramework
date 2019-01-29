@@ -32,12 +32,7 @@ export class FlowEditor extends Component {
         }
     }
 
-    public static readonly type = "@chaincode/flow-editor@latest";
-
-    // The below works, but causes 'webpack --watch' to build in an infinite loop when
-    // build automatically publishes.
-    //
-    // public static readonly type = `${require("../package.json").name}@latest`;
+    public static readonly type = `${require("../package.json").name}@${require("../package.json").version}`;
 }
 
 // Chainloader bootstrap.

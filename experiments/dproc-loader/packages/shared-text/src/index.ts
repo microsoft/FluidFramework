@@ -5,13 +5,13 @@ import { Component, Document } from "@prague/app-component";
 import * as API from "@prague/client-api";
 import * as DistributedMap from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
-import { IChaincodeComponent, IChaincodeHost, IHostRuntime } from "@prague/process-definitions";
+import { IChaincodeComponent, IChaincodeHost, IContext, IHostRuntime } from "@prague/process-definitions";
 import { LegacyChaincodeBridge } from "@prague/process-utils";
+import { Runtime } from "@prague/runtime";
 import { IChaincode, IPlatform } from "@prague/runtime-definitions";
 import * as SharedString from "@prague/sequence";
 import { IStream } from "@prague/stream";
 import { default as axios } from "axios";
-import { EventEmitter } from "events";
 // tslint:disable:no-var-requires
 const performanceNow = require("performance-now");
 const debug = require("debug")("chaincode:shared-text");
@@ -134,12 +134,6 @@ class SharedText extends Document {
     }
 }
 
-class MyPlatform extends EventEmitter implements IPlatform {
-    public async queryInterface<T>(id: string): Promise<T> {
-        return null;
-    }
-}
-
 class SharedTextHost implements IChaincodeHost {
     public async getModule(type: string) {
         switch (type) {
@@ -162,12 +156,46 @@ class SharedTextHost implements IChaincodeHost {
 
     // I believe that runtime needs to have everything necessary for this thing to actually load itself once this
     // method is called
-    public async run(runtime: IHostRuntime, platform: IPlatform): Promise<IPlatform> {
-        this.doWork(runtime).catch((error) => {
-            runtime.error(error);
+    public async run(context: IContext): Promise<IPlatform> {
+        // Context is the base runtime. Might want to rename.
+        // We need to load it. It'll go load any intermediate stuff. And then it needs to invoke some runner code
+        // to get going once the run happens.
+        // We may want to do this in a postProcess step
+
+        const ctx = await Runtime.Load(
+            context.tenantId,
+            context.id,
+            context.platform,
+            context.parentBranch,
+            context.existing,
+            context.options,
+            context.clientId,
+            context.user,
+            context.blobManager,
+            context.chaincode,
+            context.deltaManager,
+            context.quorum,
+            context.storage,
+            context.connectionState,
+            context.baseSnapshot,
+            context.blobs,
+            context.branch,
+            context.minimumSequenceNumber,
+            context.submitFn,
+            context.snapshotFn,
+            context.closeFn);
+
+        // Can go and return ctx
+
+        // As part of this we should also run any of the code associated with this.
+
+        // It should take in a load path separator
+
+        this.doWork(ctx).catch((error) => {
+            context.error(error);
         });
 
-        return new MyPlatform();
+        return ctx;
     }
 
     public async doWork(runtime: IHostRuntime) {

@@ -1,6 +1,6 @@
-import { DataStore, Document as DatastoreDocument } from "@prague/datastore";
+import { Component, Document as DatastoreDocument } from "@prague/app-component";
 import { IChaincode } from "@prague/runtime-definitions";
-import { SharedString } from "@prague/shared-string";
+import { SharedString } from "@prague/sequence";
 
 const html = `
     <div>
@@ -31,7 +31,7 @@ const html = `
 
 class Sequence extends DatastoreDocument {
     public async opened(): Promise<void> {
-        const rootView = await this.getRoot().getView();
+        const rootView = await this.root.getView();
         console.log("Keys");
         console.log(rootView.keys());
 
@@ -79,5 +79,5 @@ class Sequence extends DatastoreDocument {
 }
 
 export async function instantiate(): Promise<IChaincode> {
-    return DataStore.instantiate(new Sequence());
+    return Component.instantiate(new Sequence());
 }

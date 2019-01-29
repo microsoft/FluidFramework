@@ -1,6 +1,4 @@
 const path = require('path');
-// var Visualizer = require('webpack-visualizer-plugin');
-// const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 
 module.exports = {
     entry: {
@@ -66,11 +64,5 @@ module.exports = {
     },
     devServer: {
         publicPath: '/dist'
-    },
-    plugins: [
-        // new BundleAnalyzerPlugin(),
-        // new Visualizer({
-        //     filename: './statistics.html'
-        // })
-    ],
+    }
 };

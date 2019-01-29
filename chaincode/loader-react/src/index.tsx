@@ -1,5 +1,5 @@
 import { IChaincode } from "@prague/runtime-definitions";
-import { Document, DataStore as DataStoreInstantiateOnly } from "@prague/datastore";
+import { Component, Document } from "@prague/app-component";
 import { DataStore } from "@prague/app-datastore";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
@@ -173,5 +173,5 @@ export class LoaderChaincode extends Document {
 
 // Example chainloader bootstrap.
 export async function instantiate(): Promise<IChaincode> {
-    return DataStoreInstantiateOnly.instantiate(new LoaderChaincode());
+    return Component.instantiate(new LoaderChaincode());
 }

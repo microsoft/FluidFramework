@@ -1,6 +1,6 @@
 {
   "name": "@chaincode/table-view",
-  "version": "0.1.280",
+  "version": "0.1.444",
   "description": "Chaincode component that provides a view for a table-document.",
   "main": "dist/main.bundle.js",
   "types": "dist/index.d.ts",
@@ -19,25 +19,15 @@
     "dev": "webpack --env=\"development\" --watch",
     "publish-local": "npm publish --registry http://localhost:4873",
     "publish-wu2": "npm run build && npm publish --registry https://packages.wu2.prague.office-int.com",
-    "publish-patch-local": "npm version patch && npm run publish-local",
-    "bench": "ts-node --project tsconfig.prod.json bench/index.ts",
-    "test": "ts-mocha -p tsconfig.dev.json \"test/**/*.{ts,tsx}\""
+    "publish-patch-local": "npm version patch && npm run publish-local"
   },
   "author": "Microsoft",
   "repository": "microsoft/prague",
   "devDependencies": {
-    "@types/benchmark": "^1.0.31",
-    "@types/mocha": "^5.2.5",
-    "benchmark": "^2.1.4",
     "css-loader": "^1.0.0",
-    "jsdom": "^12.0.0",
-    "jsdom-global": "^3.0.2",
-    "mocha": "^5.2.0",
     "source-map-loader": "^0.2.4",
     "style-loader": "^0.23.0",
     "ts-loader": "^4.5.0",
-    "ts-mocha": "^2.0.0",
-    "ts-node": "^7.0.1",
     "typescript": "^3.2.2",
     "typings-for-css-modules-loader": "^1.7.0",
     "webpack": "^4.8.2",
@@ -48,9 +38,11 @@
     "@chaincode/table-document": "*",
     "@prague/app-component": "^0.1.0",
     "@prague/app-datastore": "^0.1.0",
+    "@prague/external-dll": "^0.1.0",
     "@prague/flow-util": "^0.1.0",
     "@prague/map": "^0.1.0",
     "@prague/merge-tree": "^0.1.0",
-    "@prague/runtime-definitions": "^0.1.0"
+    "@prague/runtime-definitions": "^0.1.0",
+    "@prague/runtime-dll": "^0.1.0"
   }
 }
