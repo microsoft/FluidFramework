@@ -1176,11 +1176,12 @@ export function TestPack(verbose = true) {
                 }
             }
         }
-        cli.updateMinSeq(5);
+        cli.removeSegmentRemote(3, 6, 6, 5, 3);
+        cli.updateMinSeq(6);
         if (verbose) {
             console.log(cli.mergeTree.toString());
             for (let clientId = 0; clientId < 4; clientId++) {
-                for (let refSeq = 0; refSeq < 6; refSeq++) {
+                for (let refSeq = 0; refSeq < 7; refSeq++) {
                     console.log(cli.relItems(clientId, refSeq));
                 }
             }
