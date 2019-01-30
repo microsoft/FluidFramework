@@ -1,7 +1,6 @@
-import { ICollaborativeObject, ValueType } from "@prague/api-definitions";
+import { CollaborativeObject, ICollaborativeObject, ValueType } from "@prague/api-definitions";
 import { IRuntime, ISequencedObjectMessage } from "@prague/runtime-definitions";
 // tslint:disable-next-line
-const hasIn = require("lodash/hasIn");
 import { IMapOperation, IMapValue } from "./definitions";
 import { IMapView, IValueOpEmitter, SerializeFilter } from "./interfaces";
 import { CollaborativeMap } from "./map";
@@ -104,8 +103,8 @@ export class MapView implements IMapView {
 
     public attachAll() {
         for (const [, value] of this.data) {
-            if (hasIn(value.localValue, "__collaborativeObject__")) {
-                (value.localValue as ICollaborativeObject).attach();
+            if (value.localValue instanceof CollaborativeObject) {
+                value.localValue.attach();
             }
         }
     }
@@ -126,7 +125,7 @@ export class MapView implements IMapView {
             // tslint:disable-next-line:no-parameter-reassignment
             value = valueType.factory.load(new ValueOpEmitter(type, key, this.map), value);
         } else {
-            const valueType = hasIn(value, "__collaborativeObject__")
+            const valueType = value instanceof CollaborativeObject
                 ? ValueType[ValueType.Collaborative]
                 : ValueType[ValueType.Plain];
             operationValue = this.spill({ localType: valueType, localValue: value });

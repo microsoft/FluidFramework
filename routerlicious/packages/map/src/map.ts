@@ -1,6 +1,5 @@
 import {
     CollaborativeObject,
-    ICollaborativeObject,
     OperationType,
 } from "@prague/api-definitions";
 import {
@@ -13,7 +12,6 @@ import {
     TreeEntry,
 } from "@prague/runtime-definitions";
 // tslint:disable-next-line
-const hasIn = require("lodash/hasIn");
 import { debug } from "./debug";
 import { IMapOperation } from "./definitions";
 import { MapExtension } from "./extension";
@@ -173,9 +171,8 @@ export class CollaborativeMap extends CollaborativeObject implements IMap {
             entries: [],
         };
         this.view.forEach((value, key) => {
-            if (hasIn(value, "__collaborativeObject__")) {
-                const collabObject = value as ICollaborativeObject;
-                const id = collabObject.id;
+            if (value instanceof CollaborativeObject) {
+                const id = value.id;
                 const path = encodeURIComponent(key);
 
                 keysTree.entries.push({

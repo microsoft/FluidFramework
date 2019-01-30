@@ -1,6 +1,5 @@
 import {
     CollaborativeObject,
-    ICollaborativeObject,
     OperationType,
 } from "@prague/api-definitions";
 import {
@@ -13,7 +12,6 @@ import {
     TreeEntry,
 } from "@prague/runtime-definitions";
 // tslint:disable-next-line
-const hasIn = require("lodash/hasIn");
 import { debug } from "./debug";
 import { CellExtension } from "./extension";
 import { ICell } from "./interfaces";
@@ -81,16 +79,15 @@ export class Cell extends CollaborativeObject implements ICell {
     public async set(value: any): Promise<void> {
         let operationValue: ICellValue;
         /* tslint:disable:no-unsafe-any */
-        if (hasIn(value, "__collaborativeObject__")) {
+        if (value instanceof CollaborativeObject) {
             // Convert any local collaborative objects to our internal storage format
-            const collaborativeObject = value as ICollaborativeObject;
             if (!this.isLocal()) {
-                collaborativeObject.attach();
+                value.attach();
             }
 
             operationValue = {
                 type: CellValueType[CellValueType.Collaborative],
-                value: collaborativeObject.id,
+                value: value.id,
             };
         } else {
             operationValue = {
@@ -133,10 +130,10 @@ export class Cell extends CollaborativeObject implements ICell {
     public snapshot(): ITree {
         // Get a serializable form of data
         let content: ICellValue;
-        if (this.data && hasIn(this.data, "__collaborativeObject__")) {
+        if (this.data instanceof CollaborativeObject) {
             content = {
                 type: CellValueType[CellValueType.Collaborative],
-                value: (this.data as ICollaborativeObject).id,
+                value: this.data.id, // (this.data as ICollaborativeObject).id,
             };
         } else {
             content = {
