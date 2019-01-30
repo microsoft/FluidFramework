@@ -3,15 +3,25 @@ import * as monaco from "@chaincode/monaco";
 import * as pinpoint from "@chaincode/pinpoint-editor";
 import { Component, Document } from "@prague/app-component";
 import * as API from "@prague/client-api";
-import { IChaincodeComponent, IChaincodeHost, IContext, IHostRuntime } from "@prague/container-definitions";
-import { LegacyChaincodeBridge } from "@prague/container-utils";
+import {
+    IChaincodeComponent,
+    IChaincodeHost,
+    IComponentPlatform,
+    IComponentRuntime,
+    IContext,
+    IDeltaHandler,
+    IHostRuntime,
+} from "@prague/container-definitions";
+import { ComponentHost } from "@prague/container-utils";
 import * as DistributedMap from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
 import { Runtime } from "@prague/runtime";
-import { IChaincode, IPlatform } from "@prague/runtime-definitions";
+import { IChaincode, IPlatform, ITree } from "@prague/runtime-definitions";
 import * as SharedString from "@prague/sequence";
 import { IStream } from "@prague/stream";
+import { Deferred } from "@prague/utils";
 import { default as axios } from "axios";
+import { EventEmitter } from "events";
 // tslint:disable:no-var-requires
 const performanceNow = require("performance-now");
 const debug = require("debug")("chaincode:shared-text");
@@ -36,8 +46,15 @@ const loadPP = false;
 
 class SharedText extends Document {
     private sharedString: SharedString.SharedString;
+    private ready = new Deferred<void>();
 
     public async opened() {
+        this.ready.resolve();
+    }
+
+    public async attach(platform: IComponentPlatform): Promise<IComponentPlatform> {
+        await this.ready.promise;
+
         debug(`collabDoc loaded ${this.runtime.id} - ${performanceNow()}`);
         const root = await this.root.getView();
         debug(`Getting root ${this.runtime.id} - ${performanceNow()}`);
@@ -134,6 +151,20 @@ class SharedText extends Document {
     }
 }
 
+class ComponentPlatformWrapper extends EventEmitter implements IComponentPlatform {
+    constructor(private platform: IPlatform) {
+        super();
+    }
+
+    public detach() {
+        return;
+    }
+
+    public queryInterface<T>(id: string): Promise<T> {
+        return this.platform.queryInterface(id);
+    }
+}
+
 class SharedTextHost implements IChaincodeHost {
     public async getModule(type: string) {
         switch (type) {
@@ -157,14 +188,12 @@ class SharedTextHost implements IChaincodeHost {
     // I believe that runtime needs to have everything necessary for this thing to actually load itself once this
     // method is called
     public async run(context: IContext): Promise<IPlatform> {
-        console.log("PATH IS", context.path);
-
         // Context is the base runtime. Might want to rename.
         // We need to load it. It'll go load any intermediate stuff. And then it needs to invoke some runner code
         // to get going once the run happens.
         // We may want to do this in a postProcess step
 
-        const ctx = await Runtime.Load(
+        const runtime = await Runtime.Load(
             context.tenantId,
             context.id,
             context.platform,
@@ -193,32 +222,92 @@ class SharedTextHost implements IChaincodeHost {
 
         // It should take in a load path separator
 
-        this.doWork(ctx).catch((error) => {
+        this.doWork(context, runtime).catch((error) => {
             context.error(error);
         });
 
-        return ctx;
+        return runtime;
     }
 
-    public async doWork(runtime: IHostRuntime) {
+    public async doWork(context: IContext, runtime: IHostRuntime) {
         if (!runtime.existing) {
             await runtime.createAndAttachProcess("text", "@chaincode/shared-text");
-        } else {
-            await runtime.getProcess("text");
+        }
+
+        console.log("PATH IS", context.path);
+
+        if (context.path) {
+            const component = await runtime.getProcess(context.path.substr(1));
+            component.attach(new ComponentPlatformWrapper(context.platform));
         }
     }
 }
 
-export async function instantiate(): Promise<IChaincode> {
-    return Component.instantiate(new SharedText());
+export class SharedTextComponent implements IChaincodeComponent {
+    private sharedText = new SharedText();
+    private chaincode: IChaincode;
+    private component: ComponentHost;
+
+    constructor() {
+        this.sharedText = new SharedText();
+        this.chaincode = Component.instantiate(this.sharedText);
+    }
+
+    public getModule(type: string) {
+        return null;
+    }
+
+    public async close(): Promise<void> {
+        return;
+    }
+
+    public async run(runtime: IComponentRuntime, platform: IPlatform): Promise<IDeltaHandler> {
+        const chaincode = this.chaincode;
+
+        // All of the below would be hidden from a developer
+        // Is this an await or does it just go?
+        const component = await ComponentHost.LoadFromSnapshot(
+            runtime,
+            runtime.tenantId,
+            runtime.documentId,
+            runtime.id,
+            runtime.platform,
+            runtime.parentBranch,
+            runtime.existing,
+            runtime.options,
+            runtime.clientId,
+            runtime.user,
+            runtime.blobManager,
+            runtime.baseSnapshot,
+            chaincode,
+            runtime.deltaManager,
+            runtime.getQuorum(),
+            runtime.storage,
+            runtime.connectionState,
+            runtime.branch,
+            runtime.minimumSequenceNumber,
+            runtime.snapshotFn,
+            runtime.closeFn);
+        this.component = component;
+
+        return component;
+    }
+
+    public async attach(platform: IComponentPlatform): Promise<IComponentPlatform> {
+        return this.sharedText.attach(platform);
+    }
+
+    public snapshot(): ITree {
+        const entries = this.component.snapshotInternal();
+        return { entries };
+    }
 }
 
 /**
  * Instantiates a new chaincode component
  */
 export async function instantiateComponent(): Promise<IChaincodeComponent> {
-    const code = await instantiate();
-    return new LegacyChaincodeBridge(code);
+    return new SharedTextComponent();
 }
 
 /**

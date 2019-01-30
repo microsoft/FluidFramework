@@ -16,6 +16,7 @@ import {
 } from "@prague/merge-tree";
 import { IChaincode, IPlatform, ITree } from "@prague/runtime-definitions";
 import { SharedString } from "@prague/sequence";
+import { Deferred } from "@prague/utils";
 import * as monaco from "monaco-editor";
 
 // tslint:disable
@@ -57,8 +58,15 @@ class MonacoRunner extends Document {
     private mapHost: HTMLElement;
     private codeModel: monaco.editor.ITextModel;
     private codeEditor: monaco.editor.IStandaloneCodeEditor;
+    private ready = new Deferred<void>();
+
+    public async opened() {
+        this.ready.resolve();
+    }
 
     public async attach(platform: IComponentPlatform): Promise<IComponentPlatform> {
+        await this.ready.promise;
+
         this.mapHost = await platform.queryInterface<HTMLElement>("div");
         if (!this.mapHost) {
             return;
