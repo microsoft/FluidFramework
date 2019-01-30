@@ -213,6 +213,11 @@ export class Document extends EventEmitter {
         return quorum.getMembers();
     }
 
+    public getClient(clientId: string): ISequencedClient {
+        const quorum = this.runtime.getQuorum();
+        return quorum.getMember(clientId);
+    }
+
     /**
      * Flag indicating whether all submitted ops for this document is acked.
      */

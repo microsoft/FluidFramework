@@ -5,7 +5,6 @@ import {
     IDocumentMessage,
     ISequencedDocumentMessage,
     ITokenProvider,
-    IUser,
 } from "@prague/runtime-definitions";
 import * as messages from "@prague/socket-storage-shared";
 import { EventEmitter } from "events";
@@ -222,10 +221,6 @@ export class ReplayDocumentDeltaConnection extends EventEmitter implements IDocu
 
     public get parentBranch(): string {
         return this.details.parentBranch;
-    }
-
-    public get user(): IUser {
-        return this.details.user;
     }
 
     public get initialContents(): IContentMessage[] {

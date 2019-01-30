@@ -1,6 +1,7 @@
 import * as agent from "@prague/agent";
 import * as api from "@prague/client-api";
 import {
+    IClient,
     IContentMessage,
     IDocumentMessage,
     IDocumentSystemMessage,
@@ -67,9 +68,14 @@ export function register(
             }
             await tenantManager.verifyToken(claims.tenantId, token);
 
+            // todo: should all the client details come from the claims???
+            // we are still trusting the users permissions and type here.
+            const messageClient: Partial<IClient> = message.client ? message.client : {};
+            messageClient.user = claims.user;
+
             // And then connect to the orderer
             const orderer = await orderManager.getOrderer(claims.tenantId, claims.documentId);
-            const connection = await orderer.connect(socket, claims.user, message.client);
+            const connection = await orderer.connect(socket, messageClient as IClient);
             connectionsMap.set(connection.clientId, connection);
 
             // And return the connection information to the client
@@ -78,7 +84,6 @@ export function register(
                 existing: connection.existing,
                 maxMessageSize: connection.maxMessageSize,
                 parentBranch: connection.parentBranch,
-                user: claims.user,
             };
 
             return connectedMessage;

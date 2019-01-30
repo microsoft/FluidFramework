@@ -51,4 +51,6 @@ export interface IQuorum extends EventEmitter {
     get(key: string): any;
 
     getMembers(): Map<string, ISequencedClient>;
+
+    getMember(clientId: string): ISequencedClient;
 }

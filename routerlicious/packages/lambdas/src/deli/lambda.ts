@@ -300,7 +300,6 @@ export class DeliLambda implements IPartitionLambda {
                 tenantId: message.tenantId,
                 timestamp: message.timestamp,
                 type: RawOperationType,
-                user: branchDocumentMessage.user,
             };
 
             // Set origin information for the message
@@ -403,7 +402,6 @@ export class DeliLambda implements IPartitionLambda {
             timestamp: Date.now(),
             traces: message.operation.traces,
             type: message.operation.type,
-            user: message.user,
         };
         if (systemContent !== undefined) {
             const systemOutputMessage = outputMessage as ISequencedDocumentSystemMessage;
@@ -482,7 +480,6 @@ export class DeliLambda implements IPartitionLambda {
             tenantId: this.tenantId,
             timestamp: Date.now(),
             type: RawOperationType,
-            user: null,
         };
         return leaveMessage;
     }
@@ -526,7 +523,6 @@ export class DeliLambda implements IPartitionLambda {
             tenantId: this.tenantId,
             timestamp: Date.now(),
             type: RawOperationType,
-            user: null,
         };
         return noOpMessage;
     }

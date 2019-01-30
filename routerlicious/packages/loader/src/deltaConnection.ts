@@ -5,7 +5,6 @@ export interface IConnectionDetails {
     clientId: string;
     existing: boolean;
     parentBranch: string;
-    user: runtime.IUser;
     initialMessages?: runtime.ISequencedDocumentMessage[];
     initialContents?: runtime.IContentMessage[];
     maxMessageSize: number;
@@ -50,7 +49,6 @@ export class DeltaConnection extends EventEmitter {
             initialMessages: connection.initialMessages,
             maxMessageSize: connection.maxMessageSize,
             parentBranch: connection.parentBranch,
-            user: connection.user,
         };
 
         // listen for new messages

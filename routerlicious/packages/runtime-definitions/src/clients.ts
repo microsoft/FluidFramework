@@ -1,10 +1,12 @@
+import { IUser } from "./users";
+
 export const Browser = "browser";
 export const Robot = "robot";
 
 export interface IClient {
     type: string;
-
     permission: string[];
+    user: IUser;
 }
 
 export interface ISequencedClient {

@@ -4,7 +4,6 @@ import { IClient, ISequencedClient } from "./clients";
 import { ISequencedProposal } from "./consensus";
 import { IContentMessage, IDocumentMessage, ISequencedDocumentMessage } from "./protocol";
 import { ITokenProvider } from "./tokens";
-import { IUser } from "./users";
 
 export interface IDocumentAttributes {
     /**
@@ -211,11 +210,6 @@ export interface IDocumentDeltaConnection extends EventEmitter {
      * The parent branch for the document
      */
     parentBranch: string;
-
-    /**
-     * The identity of the logged-in user
-     */
-    user: IUser;
 
     /**
      * Maximum size of a message that can be sent to the server. Messages larger than this size must be chunked.

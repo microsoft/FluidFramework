@@ -5,7 +5,6 @@ import {
     IDocumentDeltaConnection,
     IDocumentMessage,
     ISequencedDocumentMessage,
-    IUser,
 } from "@prague/runtime-definitions";
 import { BatchManager } from "@prague/utils";
 import { EventEmitter } from "events";
@@ -122,10 +121,6 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
 
     public get maxMessageSize(): number {
         return this.details.maxMessageSize;
-    }
-
-    public get user(): IUser {
-        return this.details.user;
     }
 
     public get initialMessages(): ISequencedDocumentMessage[] {

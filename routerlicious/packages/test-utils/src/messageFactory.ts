@@ -123,7 +123,6 @@ export class MessageFactory {
             tenantId: this.tenantId,
             timestamp,
             type: RawOperationType,
-            user: null,
         };
 
         return objectMessage;
@@ -154,7 +153,6 @@ export class MessageFactory {
             timestamp: Date.now(),
             traces: [],
             type: operation.type,
-            user: null,
         };
 
         const message: ISequencedOperationMessage = {
@@ -181,7 +179,6 @@ export class MessageFactory {
             timestamp: Date.now(),
             traces: [],
             type: operation.type,
-            user: null,
         };
 
         const message: ISequencedOperationMessage = {

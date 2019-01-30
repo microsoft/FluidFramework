@@ -5767,10 +5767,11 @@ export class FlowView extends ui.Component {
         }
 
         const remotePresenceBase = this.presenceMapView.get(delta.key) as IRemotePresenceBase;
+        const docClient = this.collabDocument.getClient(op.clientId);
         if (remotePresenceBase.type === "selection") {
-            this.remotePresenceToLocal(delta.key, op.user, remotePresenceBase as IRemotePresenceInfo);
+            this.remotePresenceToLocal(delta.key, docClient.client.user, remotePresenceBase as IRemotePresenceInfo);
         } else if (remotePresenceBase.type === "drag") {
-            this.remoteDragToLocal(delta.key, op.user, remotePresenceBase as IRemoteDragInfo);
+            this.remoteDragToLocal(delta.key, docClient.client.user, remotePresenceBase as IRemoteDragInfo);
         }
     }
 
@@ -5909,7 +5910,12 @@ export class FlowView extends ui.Component {
                         adjLength = len;
                     }
                 }
-                this.remotePresenceFromEdit(msg.clientId, msg.user, msg.referenceSequenceNumber, delta.pos1, adjLength);
+                this.remotePresenceFromEdit(
+                    msg.clientId,
+                    this.collabDocument.getClient(msg.clientId).client.user,
+                    msg.referenceSequenceNumber,
+                    delta.pos1,
+                    adjLength);
                 this.updatePGInfo(delta.pos1);
                 if (adjLength > 1) {
                     this.updatePGInfo(delta.pos1 + adjLength);
@@ -5922,7 +5928,11 @@ export class FlowView extends ui.Component {
                 } else if (this.cursor.pos >= delta.pos1) {
                     this.cursor.pos = delta.pos1;
                 }
-                this.remotePresenceFromEdit(msg.clientId, msg.user, msg.referenceSequenceNumber, delta.pos1);
+                this.remotePresenceFromEdit(
+                    msg.clientId,
+                    this.collabDocument.getClient(msg.clientId).client.user,
+                    msg.referenceSequenceNumber,
+                    delta.pos1);
                 this.updatePGInfo(delta.pos1);
                 return true;
             case MergeTree.MergeTreeDeltaType.GROUP: {

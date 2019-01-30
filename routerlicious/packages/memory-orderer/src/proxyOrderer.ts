@@ -1,8 +1,8 @@
-import { IClient, IUser } from "@prague/runtime-definitions";
+import { IClient } from "@prague/runtime-definitions";
 import { IOrderer, IOrdererConnection, IWebSocket } from "@prague/services-core";
 
 export interface IOrdererConnectionFactory {
-    connect(socket: IWebSocket, user: IUser, client: IClient): Promise<IOrdererConnection>;
+    connect(socket: IWebSocket, client: IClient): Promise<IOrdererConnection>;
 }
 
 /**
@@ -14,10 +14,9 @@ export class ProxyOrderer implements IOrderer {
 
     public async connect(
         socket: IWebSocket,
-        user: IUser,
         client: IClient): Promise<IOrdererConnection> {
 
-        const proxiedSocket = await this.factory.connect(socket, user, client);
+        const proxiedSocket = await this.factory.connect(socket, client);
         return proxiedSocket;
     }
 

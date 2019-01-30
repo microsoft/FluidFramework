@@ -4,7 +4,6 @@ import {
     IDocumentMessage,
     IDocumentSystemMessage,
     ITokenClaims,
-    IUser,
     MessageType,
     Robot } from "@prague/runtime-definitions";
 import * as core from "@prague/services-core";
@@ -47,6 +46,7 @@ export function create(
                         const detail: IClient = {
                             permission: [],
                             type: Robot,
+                            user: claims.user,
                         };
                         const clientDetail: IClientJoin = {
                             clientId,
@@ -132,10 +132,6 @@ function craftSystemMessage(
             type,
         };
 
-        const user: IUser = {
-            id: "test",
-        };
-
         const message: core.IRawOperationMessage = {
             clientId: null,
             documentId,
@@ -143,7 +139,6 @@ function craftSystemMessage(
             tenantId,
             timestamp: Date.now(),
             type: core.RawOperationType,
-            user,
         };
 
         return message;
@@ -163,10 +158,6 @@ function craftMessage(
             type: MessageType.Operation,
         };
 
-        const user: IUser = {
-            id: "test",
-        };
-
         const message: core.IRawOperationMessage = {
             clientId,
             documentId,
@@ -174,7 +165,6 @@ function craftMessage(
             tenantId,
             timestamp: Date.now(),
             type: core.RawOperationType,
-            user,
         };
 
         return message;

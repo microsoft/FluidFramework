@@ -113,7 +113,6 @@ export class RouteMasterLambda extends SequencedLambda {
             tenantId: message.tenantId,
             timestamp: Date.now(),
             type: core.RawOperationType,
-            user: null,
         };
 
         return this.producer.send(rawMessage, message.tenantId, forkId);

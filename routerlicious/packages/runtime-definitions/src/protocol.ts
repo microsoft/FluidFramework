@@ -1,4 +1,4 @@
-import { IUser } from "./users";
+import { IUser } from ".";
 
 export enum MessageType {
     // Empty operation message. Used to send an updated reference sequence number.
@@ -142,9 +142,6 @@ export interface IChunkedOp {
  * Sequenced message for a distributed document
  */
 export interface ISequencedDocumentMessage {
-    // The user that submitted the delta
-    user: IUser;
-
     // The client ID that submitted the delta
     clientId: string;
 
@@ -206,8 +203,6 @@ export interface IObjectMessage {
  * Sequenced message for a distributed data type
  */
 export interface ISequencedObjectMessage {
-    // User who sent the message.
-    user: IUser;
 
     // The sequenced identifier
     sequenceNumber: number;
