@@ -22,13 +22,12 @@ import {
     MessageType,
     TreeEntry,
 } from "@prague/runtime-definitions";
-import { buildHierarchy, Deferred, flatten } from "@prague/utils";
+import { buildHierarchy, Deferred, flatten, readAndParse } from "@prague/utils";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import { Component } from "./component";
 import { ComponentStorageService } from "./componentStorageService";
 import { debug } from "./debug";
-import { readAndParse } from "./utils";
 
 // Context will define the component level mappings
 export class Runtime extends EventEmitter implements IComponentContext, IHostRuntime, IPlatform {

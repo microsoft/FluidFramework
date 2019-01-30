@@ -24,7 +24,7 @@ import {
     MessageType,
     TreeEntry,
 } from "@prague/runtime-definitions";
-import { buildHierarchy, flatten } from "@prague/utils";
+import { buildHierarchy, flatten, readAndParse } from "@prague/utils";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import * as url from "url";
@@ -35,7 +35,6 @@ import { IConnectionDetails } from "./deltaConnection";
 import { DeltaManager } from "./deltaManager";
 import * as nullPackage from "./nullChaincode";
 import { IQuorumSnapshot, Quorum } from "./quorum";
-import { readAndParse } from "./utils";
 
 interface IConnectResult {
     detailsP: Promise<IConnectionDetails>;
@@ -348,6 +347,7 @@ export class Container extends EventEmitter {
                 this.context = await Context.Load(
                     this.tenantId,
                     this.id,
+                    this.path,
                     hostPlatform,
                     this.parentBranch,
                     this.existing,
@@ -532,6 +532,7 @@ export class Container extends EventEmitter {
         const newContext = await Context.Load(
             this.tenantId,
             this.id,
+            this.path,
             hostPlatform,
             this.parentBranch,
             this.existing,
