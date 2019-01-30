@@ -1,10 +1,11 @@
-import { IChaincodeHost, ICodeLoader, IContainerHost } from "@prague/container-definitions";
-import { ICommit } from "@prague/gitresources";
 import {
     ConnectionState,
     FileMode,
+    IChaincodeHost,
     IChunkedOp,
     IClientJoin,
+    ICodeLoader,
+    IContainerHost,
     IDeltaManager,
     IDocumentAttributes,
     IDocumentService,
@@ -12,7 +13,6 @@ import {
     IGenericBlob,
     IPlatformFactory,
     IProposal,
-    IRuntime,
     ISequencedClient,
     ISequencedDocumentMessage,
     ISequencedDocumentSystemMessage,
@@ -23,7 +23,8 @@ import {
     IUser,
     MessageType,
     TreeEntry,
-} from "@prague/runtime-definitions";
+} from "@prague/container-definitions";
+import { ICommit } from "@prague/gitresources";
 import { buildHierarchy, flatten, readAndParse } from "@prague/utils";
 import * as assert from "assert";
 import { EventEmitter } from "events";
@@ -166,7 +167,6 @@ export class Container extends EventEmitter {
     public on(event: "error", listener: (error: any) => void): this;
     public on(event: "op", listener: (message: ISequencedDocumentMessage) => void): this;
     public on(event: "pong" | "processTime", listener: (latency: number) => void): this;
-    public on(event: "runtimeChanged", listener: (runtime: IRuntime) => void): this;
 
     /* tslint:disable:no-unnecessary-override */
     public on(event: string | symbol, listener: (...args: any[]) => void): this {
@@ -739,13 +739,10 @@ export class Container extends EventEmitter {
                     return this.prepareRemoteMessage(message);
                 }
 
-            // Merge attach and operation together
-            case MessageType.Operation:
-            case MessageType.Attach:
-                return this.context.prepare(message, local);
+            // TODO handle loader specific messages
 
             default:
-                return Promise.resolve();
+                return this.context.prepare(message, local);
         }
     }
 
@@ -845,15 +842,8 @@ export class Container extends EventEmitter {
                 this.emit(MessageType.BlobUploaded, message.contents);
                 break;
 
-            // Merge attach and operation together
-            case MessageType.Attach:
-            case MessageType.Operation:
-                this.context.process(message, local, context);
-                break;
-
             default:
-                // tslint:disable-next-line:switch-final-break
-                break;
+                this.context.process(message, local, context);
         }
 
         // Notify the quorum of the MSN from the message. We rely on it to handle duplicate values but may
@@ -871,14 +861,9 @@ export class Container extends EventEmitter {
         const local = this._clientId === message.clientId;
 
         switch (message.type) {
-            // Merge attach and operation together
-            case MessageType.Attach:
-                await this.context.postProcess(message, local, context);
-                break;
-
+            // TODO handle loader specific messages
             default:
-                // tslint:disable-next-line:switch-final-break
-                break;
+                await this.context.postProcess(message, local, context);
         }
     }
 }

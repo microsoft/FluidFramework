@@ -1,6 +1,5 @@
-import { ICodeLoader, IContainerHost } from "@prague/container-definitions";
+import { ICodeLoader, IContainerHost, IDocumentService, IPlatformFactory } from "@prague/container-definitions";
 import { ICommit } from "@prague/gitresources";
-import { IDocumentService, IPlatformFactory } from "@prague/runtime-definitions";
 // tslint:disable-next-line:no-var-requires
 const now = require("performance-now") as () => number;
 import { Container } from "./container";

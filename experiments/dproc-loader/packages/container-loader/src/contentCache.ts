@@ -1,5 +1,4 @@
-// tslint:disable no-bitwise
-import { IContentMessage } from "@prague/runtime-definitions";
+import { IContentMessage } from "@prague/container-definitions";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 
@@ -28,6 +27,7 @@ export class ContentCache extends EventEmitter {
     }
 }
 
+// tslint:disable:no-bitwise
 class RingBuffer {
     private log2Capacity: number;
     private length: number;
@@ -94,3 +94,4 @@ class RingBuffer {
         this.buffer = newBuffer;
     }
 }
+// tslint:enable:no-bitwise

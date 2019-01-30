@@ -1,6 +1,8 @@
-import { IChaincodeHost, IComponentContext, IContext } from "@prague/container-definitions";
 import {
     ConnectionState,
+    IChaincodeHost,
+    IComponentContext,
+    IContext,
     IDocumentStorageService,
     IPlatform,
     IQuorum,
@@ -9,7 +11,7 @@ import {
     ITree,
     IUser,
     MessageType,
-} from "@prague/runtime-definitions";
+} from "@prague/container-definitions";
 import { BlobManager } from "./blobManager";
 import { DeltaManager } from "./deltaManager";
 
