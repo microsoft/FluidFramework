@@ -10,7 +10,7 @@
     "postinstall": "(npm run registryAuth || true) && lerna bootstrap --hoist --nohoist tslint-microsoft-contrib",
     "publish-local": "lerna run publish-local --stream",
     "registryAuth": "docker login -u prague -p /vM3i=D+K4+vj+pgha=cg=55OQLDWj3w prague.azurecr.io",
-    "rush": "./common/tools/node_modules/@microsoft/rush/bin/rush",
+    "rush": "node ./common/tools/node_modules/@microsoft/rush/bin/rush",
     "rush:build": "npm run rush -- build",
     "rush:install": "npm run rush -- install",
     "rush:rebuild": "npm run rush -- rebuild",
