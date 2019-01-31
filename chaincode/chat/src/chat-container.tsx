@@ -109,19 +109,17 @@ export class ChatContainer extends React.Component<ChatContainerProps, ChatConta
 
   inputChangeHandler = (event: React.ChangeEvent<HTMLInputElement>) => this.setState({ inputMessage: event.target.value });
 
-  addMessageHandler = () => {
+  addMessageHandler = (component?: string) => {
     const { inputMessage } = this.state;
     const { counter, messageView, clientId } = this.props;
 
-    if (inputMessage.length === 0) return;
+    if (!component && inputMessage.length === 0) return;
 
     this.setState({ inputMessage: "" });
     counter.increment(1);
     messageView.set<IMessage>(counter.value.toString(), {
       author: clientId,
-      component: (inputMessage.startsWith("add component ")) ? 
-        inputMessage.replace("add component ", "")
-        : undefined,
+      component: component,
       content: inputMessage,
       time: Date.now().toString()
     });
