@@ -5759,9 +5759,15 @@ export class FlowView extends ui.Component {
 
         const remotePresenceBase = this.presenceMapView.get(delta.key) as IRemotePresenceBase;
         if (remotePresenceBase.type === "selection") {
-            this.remotePresenceToLocal(delta.key, op.user, remotePresenceBase as IRemotePresenceInfo);
+            this.remotePresenceToLocal(
+                delta.key,
+                this.collabDocument.runtime.getQuorum().getMember(op.clientId).client.user,
+                remotePresenceBase as IRemotePresenceInfo);
         } else if (remotePresenceBase.type === "drag") {
-            this.remoteDragToLocal(delta.key, op.user, remotePresenceBase as IRemoteDragInfo);
+            this.remoteDragToLocal(
+                delta.key,
+                this.collabDocument.runtime.getQuorum().getMember(op.clientId).client.user,
+                remotePresenceBase as IRemoteDragInfo);
         }
     }
 
@@ -5876,6 +5882,8 @@ export class FlowView extends ui.Component {
     // TODO: paragraph spanning changes and annotations
     // TODO: generalize this by using transform fwd
     private applyOp(delta: MergeTree.IMergeTreeOp, msg: ISequencedObjectMessage) {
+        const user = this.collabDocument.runtime.getQuorum().getMember(msg.clientId).client.user;
+
         // tslint:disable:switch-default
         switch (delta.type) {
             case MergeTree.MergeTreeDeltaType.INSERT:
@@ -5900,7 +5908,8 @@ export class FlowView extends ui.Component {
                         adjLength = len;
                     }
                 }
-                this.remotePresenceFromEdit(msg.clientId, msg.user, msg.referenceSequenceNumber, delta.pos1, adjLength);
+
+                this.remotePresenceFromEdit(msg.clientId, user, msg.referenceSequenceNumber, delta.pos1, adjLength);
                 this.updatePGInfo(delta.pos1);
                 if (adjLength > 1) {
                     this.updatePGInfo(delta.pos1 + adjLength);
@@ -5913,7 +5922,7 @@ export class FlowView extends ui.Component {
                 } else if (this.cursor.pos >= delta.pos1) {
                     this.cursor.pos = delta.pos1;
                 }
-                this.remotePresenceFromEdit(msg.clientId, msg.user, msg.referenceSequenceNumber, delta.pos1);
+                this.remotePresenceFromEdit(msg.clientId, user, msg.referenceSequenceNumber, delta.pos1);
                 this.updatePGInfo(delta.pos1);
                 return true;
             case MergeTree.MergeTreeDeltaType.GROUP: {

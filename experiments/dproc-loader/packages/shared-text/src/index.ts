@@ -165,6 +165,12 @@ class ComponentPlatformWrapper extends EventEmitter implements IComponentPlatfor
     }
 }
 
+class LegacyEmptyPlatform extends EventEmitter implements IPlatform {
+    public async queryInterface<T>(id: string): Promise<T> {
+        return null;
+    }
+}
+
 class SharedTextHost implements IChaincodeHost {
     public async getModule(type: string) {
         switch (type) {
@@ -196,7 +202,7 @@ class SharedTextHost implements IChaincodeHost {
         const runtime = await Runtime.Load(
             context.tenantId,
             context.id,
-            context.platform,
+            new LegacyEmptyPlatform(),      // platform will be sent on attach in future
             context.parentBranch,
             context.existing,
             context.options,
@@ -238,7 +244,9 @@ class SharedTextHost implements IChaincodeHost {
 
         if (context.path) {
             const component = await runtime.getProcess(context.path.substr(1));
-            component.attach(new ComponentPlatformWrapper(context.platform));
+            // host will directly attach in future
+            component.attach(
+                new ComponentPlatformWrapper(new LegacyEmptyPlatform()));
         }
     }
 }

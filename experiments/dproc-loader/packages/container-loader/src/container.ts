@@ -5,13 +5,13 @@ import {
     IChunkedOp,
     IClientJoin,
     ICodeLoader,
-    IContainerHost,
     IDeltaManager,
     IDocumentAttributes,
     IDocumentService,
     IDocumentStorageService,
     IGenericBlob,
-    IPlatformFactory,
+    IHost,
+    ILoadResponse,
     IProposal,
     ISequencedClient,
     ISequencedDocumentMessage,
@@ -52,18 +52,25 @@ interface IBufferedChunk {
 export class Container extends EventEmitter {
     public static async Load(
         uri: string,
-        options: any,
-        containerHost: IContainerHost,
-        platform: IPlatformFactory,
+        containerHost: IHost,
         service: IDocumentService,
         codeLoader: ICodeLoader,
-        specifiedVersion: ICommit,
-        connect: boolean,
-    ): Promise<Container> {
-        const doc = new Container(uri, options, containerHost, platform, service, codeLoader);
-        await doc.load(specifiedVersion, connect);
+        options: any,
+    ): Promise<ILoadResponse> {
+        const doc = new Container(
+            uri,
+            options,
+            containerHost,
+            service,
+            codeLoader);
 
-        return doc;
+        // TODO need to crack the version and connection flag out of the URL
+        await doc.load(null, true);
+
+        return {
+            mimeType: "",
+            value: doc,
+        };
     }
 
     public runtime: any = null;
@@ -71,7 +78,6 @@ export class Container extends EventEmitter {
 
     private pendingClientId: string;
     private loaded = false;
-    private connectionState = ConnectionState.Disconnected;
     private quorum: Quorum;
     private blobManager: BlobManager;
     private messagesSinceMSNChange = new Array<ISequencedDocumentMessage>();
@@ -86,6 +92,7 @@ export class Container extends EventEmitter {
     private _id: string;
     private _parentBranch: string;
     private _tenantId: string;
+    private _connectionState = ConnectionState.Disconnected;
     // tslint:enable:variable-name
 
     private context: Context;
@@ -113,6 +120,10 @@ export class Container extends EventEmitter {
         return this.containerHost.user;
     }
 
+    public get connectionState(): ConnectionState {
+        return this._connectionState;
+    }
+
     public get connected(): boolean {
         return this.connectionState === ConnectionState.Connected;
     }
@@ -138,8 +149,7 @@ export class Container extends EventEmitter {
     constructor(
         public readonly uri: string,
         public readonly options: any,
-        private containerHost: IContainerHost,
-        private platform: IPlatformFactory,
+        private containerHost: IHost,
         private service: IDocumentService,
         private codeLoader: ICodeLoader,
     ) {
@@ -342,28 +352,17 @@ export class Container extends EventEmitter {
                     this._parentBranch = details.parentBranch;
                 }
 
-                const hostPlatform = await this.platform.create();
-
                 this.context = await Context.Load(
-                    this.tenantId,
-                    this.id,
+                    this,
                     this.path,
-                    hostPlatform,
-                    this.parentBranch,
-                    this.existing,
-                    this.options,
-                    this.clientId,
-                    this.user,
-                    this.blobManager,
                     chaincode.chaincode,
+                    tree,
+                    new Map(),
+                    attributes,
+                    this.blobManager,
                     this._deltaManager,
                     this.quorum,
                     storageService,
-                    this.connectionState,
-                    tree,
-                    new Map(),
-                    attributes.branch,
-                    attributes.minimumSequenceNumber,
                     (type, contents) => this.submitMessage(type, contents),
                     (message) => this.snapshot(message),
                     () => this.close());
@@ -476,7 +475,7 @@ export class Container extends EventEmitter {
             "approveProposal",
             (sequenceNumber, key, value) => {
                 console.log(`approve ${key}`);
-                if (key === "code") {
+                if (key === "code2") {
                     console.log(`loadCode ${JSON.stringify(value)}`);
 
                     // Stop processing inbound messages as we transition to the new code
@@ -516,7 +515,6 @@ export class Container extends EventEmitter {
 
         // Load in the new host code and initialize the platform
         const chaincode = await this.loadCode(pkg);
-        const hostPlatform = await this.platform.create();
         this.pkg = pkg;
 
         const previousContextState = await this.context.stop();
@@ -529,26 +527,27 @@ export class Container extends EventEmitter {
             snapshotTree = { blobs: {}, commits: {}, trees: {} };
         }
 
+        const attributes: IDocumentAttributes = {
+            branch: this.id,
+            clients: null,
+            minimumSequenceNumber: this._deltaManager.minimumSequenceNumber,
+            partialOps: null,
+            proposals: null,
+            sequenceNumber: null,
+            values: null,
+        };
+
         const newContext = await Context.Load(
-            this.tenantId,
-            this.id,
+            this,
             this.path,
-            hostPlatform,
-            this.parentBranch,
-            this.existing,
-            this.options,
-            this.clientId,
-            this.user,
-            this.blobManager,
             chaincode,
+            snapshotTree,
+            blobs,
+            attributes,
+            this.blobManager,
             this._deltaManager,
             this.quorum,
             this.storageService,
-            this.connectionState,
-            snapshotTree,
-            blobs,
-            this.id,
-            this._deltaManager.minimumSequenceNumber,
             (type, contents) => this.submitMessage(type, contents),
             (message) => this.snapshot(message),
             () => this.close());
@@ -564,7 +563,7 @@ export class Container extends EventEmitter {
 
         let chaincode: IChaincodeHost;
 
-        const pkg = quorum.has("code") ? quorum.get("code") : null;
+        const pkg = quorum.has("code2") ? quorum.get("code2") : null;
         chaincode = await this.loadCode(pkg);
 
         return { chaincode, pkg };
@@ -647,7 +646,7 @@ export class Container extends EventEmitter {
         }
 
         debug(`Changing from ${ConnectionState[this.connectionState]} to ${ConnectionState[value]}: ${reason}`);
-        this.connectionState = value;
+        this._connectionState = value;
 
         // Stash the clientID to detect when transitioning from connecting (socket.io channel open) to connected
         // (have received the join message for the client ID)
@@ -725,6 +724,13 @@ export class Container extends EventEmitter {
         const local = this._clientId === message.clientId;
 
         switch (message.type) {
+            case MessageType.ClientJoin:
+            case MessageType.ClientLeave:
+            case MessageType.Propose:
+            case MessageType.Reject:
+            case MessageType.BlobUploaded:
+                break;
+
             case MessageType.ChunkedOp:
                 const chunkComplete = this.prepareRemoteChunkedMessage(message);
                 if (!chunkComplete) {
@@ -738,8 +744,6 @@ export class Container extends EventEmitter {
                     }
                     return this.prepareRemoteMessage(message);
                 }
-
-            // TODO handle loader specific messages
 
             default:
                 return this.context.prepare(message, local);
@@ -842,6 +846,9 @@ export class Container extends EventEmitter {
                 this.emit(MessageType.BlobUploaded, message.contents);
                 break;
 
+            case MessageType.ChunkedOp:
+                break;
+
             default:
                 this.context.process(message, local, context);
         }
@@ -861,7 +868,13 @@ export class Container extends EventEmitter {
         const local = this._clientId === message.clientId;
 
         switch (message.type) {
-            // TODO handle loader specific messages
+            case MessageType.ClientJoin:
+            case MessageType.ClientLeave:
+            case MessageType.Propose:
+            case MessageType.Reject:
+            case MessageType.BlobUploaded:
+            case MessageType.ChunkedOp:
+                break;
             default:
                 await this.context.postProcess(message, local, context);
         }

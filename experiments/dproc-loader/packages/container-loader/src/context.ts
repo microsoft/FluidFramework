@@ -3,6 +3,7 @@ import {
     IChaincodeHost,
     IComponentContext,
     IContext,
+    IDocumentAttributes,
     IDocumentStorageService,
     IPlatform,
     IQuorum,
@@ -13,53 +14,36 @@ import {
     MessageType,
 } from "@prague/container-definitions";
 import { BlobManager } from "./blobManager";
+import { Container } from "./container";
 import { DeltaManager } from "./deltaManager";
 
 export class Context implements IContext {
     public static async Load(
-        tenantId: string,
-        id: string,
-        path: string,
-        platform: IPlatform,
-        parentBranch: string,
-        existing: boolean,
-        options: any,
-        clientId: string,
-        user: IUser,
-        blobManager: BlobManager,
-        chaincode: IChaincodeHost,
-        deltaManager: DeltaManager,
-        quorum: IQuorum,
-        storage: IDocumentStorageService,
-        connectionState: ConnectionState,
-        components: ISnapshotTree,
-        blobs: Map<string, string>,
-        branch: string,
-        minimumSequenceNumber: number,
-        submitFn: (type: MessageType, contents: any) => void,
-        snapshotFn: (message: string) => Promise<void>,
-        closeFn: () => void,
+        container: Container,
+        path: string,                               // Aspect of loading return type - probably not part of this
+        chaincode: IChaincodeHost,                  // pass directly
+        baseSnapshot: ISnapshotTree,                // pass directly
+        blobs: Map<string, string>,                 // pass directly or combine with driver
+        attributes: IDocumentAttributes,            // Potentially can be reloaded from snapshot
+        blobManager: BlobManager,                   // inherit and/or limit
+        deltaManager: DeltaManager,                 // inherit and/or limit
+        quorum: IQuorum,                            // inherit and/or limit
+        storage: IDocumentStorageService,           // inherit and/or limit
+        submitFn: (type: MessageType, contents: any) => void,   // Following three are used to restrict access after
+        snapshotFn: (message: string) => Promise<void>,         // a context transition
+        closeFn: () => void,                        // When would the context ever close?
     ): Promise<Context> {
         const context = new Context(
-            tenantId,
-            id,
+            container,
             path,
-            platform,
-            parentBranch,
-            existing,
-            options,
-            clientId,
-            user,
-            blobManager,
             chaincode,
+            baseSnapshot,
+            blobs,
+            attributes,
+            blobManager,
             deltaManager,
             quorum,
             storage,
-            connectionState,
-            components,
-            blobs,
-            branch,
-            minimumSequenceNumber,
             submitFn,
             snapshotFn,
             closeFn);
@@ -68,8 +52,28 @@ export class Context implements IContext {
         return context;
     }
 
+    public get tenantId(): string {
+        return this.container.tenantId;
+    }
+
+    public get id(): string {
+        return this.container.id;
+    }
+
     public get clientId(): string {
-        return this._clientId;
+        return this.container.clientId;
+    }
+
+    public get existing(): boolean {
+        return this.container.existing;
+    }
+
+    public get branch(): string {
+        return this.attributes.branch;
+    }
+
+    public get parentBranch(): string {
+        return this.container.parentBranch;
     }
 
     public get minimumSequenceNumber(): number {
@@ -77,39 +81,42 @@ export class Context implements IContext {
     }
 
     public get connectionState(): ConnectionState {
-        return this._connectionState;
+        return this.container.connectionState;
+    }
+
+    public get user(): IUser {
+        return this.container.user;
+    }
+
+    // tslint:disable-next-line:no-unsafe-any
+    public get options(): any {
+        return this._options;
     }
 
     private contextPlatform: IPlatform;
     private componentContext: IComponentContext;
-
     // tslint:disable:variable-name allowing _ for params exposed with getter
+    private _minimumSequenceNumber: number;
+    private _options: any = null;
+    // tslint:enable:variable-name
+
     constructor(
-        public readonly tenantId: string,
-        public readonly id: string,
+        private container: Container,
         public readonly path: string,
-        public readonly platform: IPlatform,
-        public readonly parentBranch: string,
-        public readonly existing: boolean,
-        public readonly options: any,
-        private _clientId: string,
-        public readonly user: IUser,
-        public readonly blobManager: BlobManager,
         public readonly chaincode: IChaincodeHost,
+        public readonly baseSnapshot: ISnapshotTree,
+        public readonly blobs: Map<string, string>,
+        private readonly attributes: IDocumentAttributes,
+        public readonly blobManager: BlobManager,
         public readonly deltaManager: DeltaManager,
         public readonly quorum: IQuorum,
         public readonly storage: IDocumentStorageService,
-        private _connectionState: ConnectionState,
-        public readonly baseSnapshot: ISnapshotTree,
-        public readonly blobs: Map<string, string>,
-        public readonly branch: string,
-        private _minimumSequenceNumber: number,
         public readonly submitFn: (type: MessageType, contents: any) => void,
         public readonly snapshotFn: (message: string) => Promise<void>,
         public readonly closeFn: () => void,
     ) {
+        this._minimumSequenceNumber = attributes.minimumSequenceNumber;
     }
-    // tslint:enable:variable-name
 
     public get ready(): Promise<void> {
         if (!this.componentContext) {

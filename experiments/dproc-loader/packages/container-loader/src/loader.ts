@@ -1,33 +1,36 @@
-import { ICodeLoader, IContainerHost, IDocumentService, IPlatformFactory } from "@prague/container-definitions";
-import { ICommit } from "@prague/gitresources";
+import {
+    ICodeLoader,
+    IDocumentService,
+    IHost,
+    ILoadResponse,
+} from "@prague/container-definitions";
 // tslint:disable-next-line:no-var-requires
 const now = require("performance-now") as () => number;
 import { Container } from "./container";
 import { debug } from "./debug";
 
 /**
+ * Manages Prague resource loading
+ */
+// class Loader {
+// }
+
+/**
  * Loads a new component
  */
 export async function load(
     uri: string,
-    options: any,
-    containerHost: IContainerHost,
-    platform: IPlatformFactory,
+    containerHost: IHost,
     documentService: IDocumentService,
     codeLoader: ICodeLoader,
-    specifiedVersion: ICommit = null,
-    connect = true,
-): Promise<Container> {
+    options: any,
+): Promise<ILoadResponse> {
     debug(`Container loading: ${now()} `);
 
     // Verify we have services to load the document with
 
     if (!containerHost) {
         return Promise.reject("An IContainerHost must be provided");
-    }
-
-    if (!platform) {
-        return Promise.reject("An IPlatformFactory must be provided");
     }
 
     if (!documentService) {
@@ -38,20 +41,15 @@ export async function load(
         return Promise.reject("An ICodeLoader must be provided");
     }
 
-    // Connect to the document
-    if (!connect && !specifiedVersion) {
-        return Promise.reject("Must specify a version if connect is set to false");
-    }
-
+    // We should parse out the container details from the path. Then stash it away somewhere. Then go
+    // and load the object referenced by the given path.
+    // Care will need to be taken for specific versions vs. live versions.
     const container = await Container.Load(
         uri,
-        options,
         containerHost,
-        platform,
         documentService,
         codeLoader,
-        specifiedVersion,
-        connect);
+        options);
 
     return container;
 }

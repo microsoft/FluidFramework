@@ -1,7 +1,8 @@
 import * as sharedText from "@chaincode/shared-text";
 import { IChaincodeFactory, ICodeLoader } from "@prague/container-definitions";
+import { Container } from "@prague/container-loader";
 import * as pragueLoader from "@prague/container-loader";
-import { WebPlatformFactory } from "@prague/container-utils";
+// import { WebPlatformFactory } from "@prague/container-utils";
 import * as socketStorage from "@prague/socket-storage";
 import * as jwt from "jsonwebtoken";
 
@@ -31,11 +32,11 @@ async function initializeChaincode(document: pragueLoader.Container, pkg: string
     }
 
     // And then make the proposal if a code proposal has not yet been made
-    if (!quorum.has("code")) {
-        await quorum.propose("code", pkg);
+    if (!quorum.has("code2")) {
+        await quorum.propose("code2", pkg);
     }
 
-    console.log(`Code is ${quorum.get("code")}`);
+    console.log(`Code is ${quorum.get("code2")}`);
 }
 
 /**
@@ -44,7 +45,7 @@ async function initializeChaincode(document: pragueLoader.Container, pkg: string
 export async function start(id: string, path: string, factory: IChaincodeFactory): Promise<void> {
     const service = socketStorage.createDocumentService(routerlicious, historian);
 
-    const classicPlatform = new WebPlatformFactory(document.getElementById("content"));
+    // const classicPlatform = new WebPlatformFactory(document.getElementById("content"));
     const codeLoader = new CodeLoader(factory);
 
     const user = { id: "test" };
@@ -61,23 +62,24 @@ export async function start(id: string, path: string, factory: IChaincodeFactory
     // Load the Prague document
     const loaderDoc = await pragueLoader.load(
         `prague://${domain}/${encodeURIComponent(tenantId)}/${encodeURIComponent(id)}/${path}`,
-        { blockUpdateMarkers: true },
         { tokenProvider, user },
-        classicPlatform,
         service,
-        codeLoader);
+        codeLoader,
+        { blockUpdateMarkers: true });
+
+    const container = loaderDoc.value as Container;
 
     // If this is a new document we will go and instantiate the chaincode. For old documents we assume a legacy
     // package.
-    if (!loaderDoc.existing) {
-        await initializeChaincode(loaderDoc, `@chaincode/shared-text`)
+    if (!container.existing) {
+        await initializeChaincode(container, `@chaincode/shared-text`)
             .catch((error) => console.log("chaincode error", error));
     }
 
     document.addEventListener("keyup", (event) => {
         const keyName = event.key;
         if (event.ctrlKey && keyName === "s") {
-            loaderDoc.snapshot("Manual snapshot");
+            container.snapshot("Manual snapshot");
         }
     });
 }

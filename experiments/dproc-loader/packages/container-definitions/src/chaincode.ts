@@ -122,14 +122,12 @@ export interface IContext {
     readonly tenantId: string;
     readonly id: string;
     readonly path: string;
-
     readonly existing: boolean;
     readonly options: any;
     readonly clientId: string;
     readonly user: IUser;
     readonly parentBranch: string;
     readonly deltaManager: IDeltaManager;
-    readonly platform: IPlatform;
     readonly blobManager: IBlobManager;
     readonly storage: IDocumentStorageService;
     readonly connectionState: ConnectionState;

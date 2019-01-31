@@ -426,7 +426,6 @@ export class Runtime extends EventEmitter implements IComponentContext, IHostRun
             timestamp: message.timestamp,
             traces: message.traces,
             type: innerContents.type,
-            user: message.user,
         };
 
         return component.prepare(transformed, local);
@@ -450,7 +449,6 @@ export class Runtime extends EventEmitter implements IComponentContext, IHostRun
             timestamp: message.timestamp,
             traces: message.traces,
             type: innerContents.type,
-            user: message.user,
         };
 
         component.process(transformed, local, context);
