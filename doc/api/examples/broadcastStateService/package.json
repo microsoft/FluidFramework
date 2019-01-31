@@ -1,0 +1,34 @@
+{
+  "name": "sequence",
+  "version": "0.1.0",
+  "description": "Ppt Broadcast State Service",
+  "types": "dist/stateserviceproxy.d.ts",
+  "main": "index.js",
+  "dependencies": {
+    "@prague/client-api": "^0.1.4272",
+    "@prague/socket-storage": "^0.1.4272",
+    "jsonwebtoken": "^8.2.1"
+  },
+  "devDependencies": {
+    "@types/debug": "0.0.30",
+    "@types/jquery": "^3.3.1",
+    "@types/jsonwebtoken": "^7.2.7",
+    "@types/node": "^8.10.10",
+    "@types/socket.io-client": "^1.4.32",
+    "source-map-loader": "^0.2.3",
+    "ts-loader": "^4.2.0",
+    "tslint": "^5.9.1",
+    "typescript": "^2.8.3",
+    "webpack": "^4.7.0",
+    "webpack-bundle-analyzer": "^2.13.1",
+    "webpack-cli": "^3.1.2",
+    "webpack-visualizer-plugin": "^0.1.11"
+  },
+  "scripts": {
+    "build": "npm run tslint && npm run webpack",
+    "tslint": "tslint 'src/**/*.ts'",
+    "webpack": "webpack --config webpack.config.js --env.production=0",
+    "webpack-prod": "webpack --config webpack.config.js --env.production"
+  },
+  "author": "Microsoft"
+}

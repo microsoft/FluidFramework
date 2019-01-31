@@ -2,40 +2,9 @@ const path = require('path');
 // var Visualizer = require('webpack-visualizer-plugin');
 // const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 
-const sequenceConfig = {
-    entry: './src/index.ts',
-    devtool: 'source-map',
-    module: {
-        rules: [
-            {
-                test: /\.tsx?$/,
-                use: 'ts-loader',
-                exclude: /node_modules/
-            },
-            {
-                test: /\.js$/,
-                use: ["source-map-loader"],
-                enforce: "pre"
-            }
-        ]
-    },
-    resolve: {
-        extensions: [ '.tsx', '.ts', '.js' ]
-    },
-    output: {
-        filename: 'bundle.js',
-        path: path.resolve(__dirname, 'dist')
-    },
-    plugins: [
-        // new BundleAnalyzerPlugin(),
-        // new Visualizer({
-        //     filename: './statistics.html'
-        // })
-    ],
-};
-
-const mapClient = {
-    entry: './src/mapclient.ts',
+const testBroadcastStateServiceConfig = {
+    entry: './src/testapp.ts',
+    mode: 'development',
     devtool: 'source-map',
     target: 'node',
     module: {
@@ -56,7 +25,7 @@ const mapClient = {
         extensions: [ '.tsx', '.ts', '.js' ]
     },
     output: {
-        filename: 'attendee.js',
+        filename: 'test.js',
         path: path.resolve(__dirname, 'dist')
     },
     plugins: [
@@ -67,5 +36,41 @@ const mapClient = {
     ],
 };
 
-module.exports = [ mapClient, sequenceConfig ];
+const broadcastStateServiceConfig = env => { return {
+    entry: './src/broadcaststateservice.ts',
+    mode: env.production ? 'production' : 'development',
+    devtool: 'source-map',
+    target: 'web',
+    module: {
+        rules: [
+            {
+                test: /\.tsx?$/,
+                use: 'ts-loader',
+                exclude: /node_modules/
+            },
+            {
+                test: /\.js$/,
+                use: ["source-map-loader"],
+                enforce: "pre"
+            }
+        ]
+    },
+    resolve: {
+        extensions: [ '.tsx', '.ts', '.js' ]
+    },
+    output: {
+        filename: 'stateserviceproxy_' + ( env.production ? 'prod' : 'dev' ) + '.js',
+        path: path.resolve(__dirname, 'dist'),
+        libraryTarget : "var",
+        library : "BroadcastStateService"
+    },
+    plugins: [
+        // new BundleAnalyzerPlugin(),
+        // new Visualizer({
+        //     filename: './statistics.html'
+        // })
+    ]
+} };
+
+module.exports = [ testBroadcastStateServiceConfig, broadcastStateServiceConfig ];
 
