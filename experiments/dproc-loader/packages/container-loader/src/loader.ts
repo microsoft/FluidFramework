@@ -2,54 +2,68 @@ import {
     ICodeLoader,
     IDocumentService,
     IHost,
-    ILoadResponse,
+    IResponse,
 } from "@prague/container-definitions";
+import { EventEmitter } from "events";
 // tslint:disable-next-line:no-var-requires
 const now = require("performance-now") as () => number;
+import * as url from "url";
 import { Container } from "./container";
 import { debug } from "./debug";
 
 /**
  * Manages Prague resource loading
  */
-// class Loader {
-// }
+export class Loader extends EventEmitter {
+    private containers = new Map<string, Promise<Container>>();
 
-/**
- * Loads a new component
- */
-export async function load(
-    uri: string,
-    containerHost: IHost,
-    documentService: IDocumentService,
-    codeLoader: ICodeLoader,
-    options: any,
-): Promise<ILoadResponse> {
-    debug(`Container loading: ${now()} `);
+    constructor(
+        private readonly containerHost: IHost,
+        private readonly documentService: IDocumentService,
+        private readonly codeLoader: ICodeLoader,
+        private readonly options: any,
+    ) {
+        super();
 
-    // Verify we have services to load the document with
+        if (!containerHost) {
+            throw new Error("An IContainerHost must be provided");
+        }
 
-    if (!containerHost) {
-        return Promise.reject("An IContainerHost must be provided");
+        if (!documentService) {
+            throw new Error("An IDocumentService must be provided");
+        }
+
+        if (!codeLoader) {
+            throw new Error("An ICodeLoader must be provided");
+        }
     }
 
-    if (!documentService) {
-        return Promise.reject("An IDocumentService must be provided");
+    public async load(uri: string): Promise<IResponse> {
+        debug(`Container loading: ${now()} `);
+
+        const parsed = url.parse(uri);
+
+        const regex = /^\/([^\/]*\/[^\/]*)\/?(.*)$/;
+        const match = parsed.pathname.match(regex);
+
+        if (!match || match.length !== 3) {
+            return Promise.reject("Invalid URI");
+        }
+
+        const id = match[1];
+        const path = match[2];
+
+        if (!this.containers.has(id)) {
+            const containerP = Container.Load(
+                id,
+                this.containerHost,
+                this.documentService,
+                this.codeLoader,
+                this.options);
+            this.containers.set(id, containerP);
+        }
+
+        const container = await this.containers.get(id);
+        return container.request(path);
     }
-
-    if (!codeLoader) {
-        return Promise.reject("An ICodeLoader must be provided");
-    }
-
-    // We should parse out the container details from the path. Then stash it away somewhere. Then go
-    // and load the object referenced by the given path.
-    // Care will need to be taken for specific versions vs. live versions.
-    const container = await Container.Load(
-        uri,
-        containerHost,
-        documentService,
-        codeLoader,
-        options);
-
-    return container;
 }

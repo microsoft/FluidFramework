@@ -7,6 +7,7 @@ import {
     IDocumentStorageService,
     IPlatform,
     IQuorum,
+    IResponse,
     ISequencedDocumentMessage,
     ISnapshotTree,
     ITree,
@@ -20,7 +21,6 @@ import { DeltaManager } from "./deltaManager";
 export class Context implements IContext {
     public static async Load(
         container: Container,
-        path: string,                               // Aspect of loading return type - probably not part of this
         chaincode: IChaincodeHost,                  // pass directly
         baseSnapshot: ISnapshotTree,                // pass directly
         blobs: Map<string, string>,                 // pass directly or combine with driver
@@ -35,7 +35,6 @@ export class Context implements IContext {
     ): Promise<Context> {
         const context = new Context(
             container,
-            path,
             chaincode,
             baseSnapshot,
             blobs,
@@ -90,19 +89,17 @@ export class Context implements IContext {
 
     // tslint:disable-next-line:no-unsafe-any
     public get options(): any {
-        return this._options;
+        return this.container.options;
     }
 
     private contextPlatform: IPlatform;
     private componentContext: IComponentContext;
     // tslint:disable:variable-name allowing _ for params exposed with getter
     private _minimumSequenceNumber: number;
-    private _options: any = null;
     // tslint:enable:variable-name
 
     constructor(
         private container: Container,
-        public readonly path: string,
         public readonly chaincode: IChaincodeHost,
         public readonly baseSnapshot: ISnapshotTree,
         public readonly blobs: Map<string, string>,
@@ -153,7 +150,7 @@ export class Context implements IContext {
         return snapshot;
     }
 
-    public prepare(message: ISequencedDocumentMessage, local: boolean): Promise<any> {
+    public async prepare(message: ISequencedDocumentMessage, local: boolean): Promise<any> {
         if (!this.componentContext) {
             return;
         }
@@ -183,6 +180,14 @@ export class Context implements IContext {
         }
 
         this.componentContext.updateMinSequenceNumber(minimumSequenceNumber);
+    }
+
+    public async request(path: string): Promise<IResponse> {
+        if (!this.componentContext) {
+            return { status: 404, mimeType: "text/plain", value: `${path} not found` };
+        }
+
+        return this.componentContext.request(path);
     }
 
     public error(err: any): void {

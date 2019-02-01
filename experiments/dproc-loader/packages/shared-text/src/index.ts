@@ -66,7 +66,7 @@ class SharedText extends Document {
         debug(`id is ${this.runtime.id}`);
         debug(`Partial load fired - ${performanceNow()}`);
 
-        const hostContent: HTMLElement = await this.platform.queryInterface<HTMLElement>("div");
+        const hostContent: HTMLElement = await platform.queryInterface<HTMLElement>("div");
         if (!hostContent) {
             // If headless exist early
             return;
@@ -151,20 +151,6 @@ class SharedText extends Document {
     }
 }
 
-class ComponentPlatformWrapper extends EventEmitter implements IComponentPlatform {
-    constructor(private platform: IPlatform) {
-        super();
-    }
-
-    public detach() {
-        return;
-    }
-
-    public queryInterface<T>(id: string): Promise<T> {
-        return this.platform.queryInterface(id);
-    }
-}
-
 class LegacyEmptyPlatform extends EventEmitter implements IPlatform {
     public async queryInterface<T>(id: string): Promise<T> {
         return null;
@@ -238,15 +224,6 @@ class SharedTextHost implements IChaincodeHost {
     public async doWork(context: IContext, runtime: IHostRuntime) {
         if (!runtime.existing) {
             await runtime.createAndAttachProcess("text", "@chaincode/shared-text");
-        }
-
-        console.log("PATH IS", context.path);
-
-        if (context.path) {
-            const component = await runtime.getProcess(context.path.substr(1));
-            // host will directly attach in future
-            component.attach(
-                new ComponentPlatformWrapper(new LegacyEmptyPlatform()));
         }
     }
 }

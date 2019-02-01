@@ -11,8 +11,8 @@ import {
     IDocumentStorageService,
     IGenericBlob,
     IHost,
-    ILoadResponse,
     IProposal,
+    IResponse,
     ISequencedClient,
     ISequencedDocumentMessage,
     ISequencedDocumentSystemMessage,
@@ -28,7 +28,6 @@ import { ICommit } from "@prague/gitresources";
 import { buildHierarchy, flatten, readAndParse } from "@prague/utils";
 import * as assert from "assert";
 import { EventEmitter } from "events";
-import * as url from "url";
 import { BlobManager } from "./blobManager";
 import { Context } from "./context";
 import { debug } from "./debug";
@@ -51,30 +50,26 @@ interface IBufferedChunk {
 
 export class Container extends EventEmitter {
     public static async Load(
-        uri: string,
+        id: string,
         containerHost: IHost,
         service: IDocumentService,
         codeLoader: ICodeLoader,
         options: any,
-    ): Promise<ILoadResponse> {
-        const doc = new Container(
-            uri,
+    ): Promise<Container> {
+        const container = new Container(
+            id,
             options,
             containerHost,
             service,
             codeLoader);
 
         // TODO need to crack the version and connection flag out of the URL
-        await doc.load(null, true);
+        await container.load(null, true);
 
-        return {
-            mimeType: "",
-            value: doc,
-        };
+        return container;
     }
 
     public runtime: any = null;
-    public readonly path: string;
 
     private pendingClientId: string;
     private loaded = false;
@@ -96,7 +91,7 @@ export class Container extends EventEmitter {
     // tslint:enable:variable-name
 
     private context: Context;
-    private pkg: string;
+    private pkg: string = null;
 
     // Local copy of incomplete received chunks.
     private chunkMap = new Map<string, string[]>();
@@ -132,6 +127,10 @@ export class Container extends EventEmitter {
         return this._clientId;
     }
 
+    public get chaincodePackage(): string {
+        return this.pkg;
+    }
+
     /**
      * Flag indicating whether the document already existed at the time of load
      */
@@ -147,7 +146,7 @@ export class Container extends EventEmitter {
     }
 
     constructor(
-        public readonly uri: string,
+        id: string,
         public readonly options: any,
         private containerHost: IHost,
         private service: IDocumentService,
@@ -155,14 +154,9 @@ export class Container extends EventEmitter {
     ) {
         super();
 
-        const parsed = url.parse(uri);
-        const splitPath = parsed.pathname.split("/");
-
-        this._tenantId = splitPath[1];
-        this._id = splitPath[2];
-        this.path = parsed.pathname.substr(splitPath[1].length + splitPath[2].length + 2);
-
-        console.log(`${this._tenantId} ${this._id} ${this.path}`);
+        const [tenantId, documentId] = id.split("/");
+        this._tenantId = decodeURIComponent(tenantId);
+        this._id = decodeURI(documentId);
     }
 
     /**
@@ -172,7 +166,7 @@ export class Container extends EventEmitter {
         return this.quorum;
     }
 
-    public on(event: "connected", listener: (clientId: string) => void): this;
+    public on(event: "connected" | "contextChanged", listener: (clientId: string) => void): this;
     public on(event: "disconnect", listener: () => void): this;
     public on(event: "error", listener: (error: any) => void): this;
     public on(event: "op", listener: (message: ISequencedDocumentMessage) => void): this;
@@ -214,6 +208,14 @@ export class Container extends EventEmitter {
         this.deltaManager.inbound.pause();
         await this.snapshotCore(tagMessage).catch((error) => debug("Snapshot error", error));
         this.deltaManager.inbound.resume();
+    }
+
+    public async request(path: string): Promise<IResponse> {
+        if (!path) {
+            return { mimeType: "prague/container", status: 200, value: this };
+        }
+
+        return this.context.request(path);
     }
 
     private async snapshotCore(tagMessage: string) {
@@ -354,7 +356,6 @@ export class Container extends EventEmitter {
 
                 this.context = await Context.Load(
                     this,
-                    this.path,
                     chaincode.chaincode,
                     tree,
                     new Map(),
@@ -515,7 +516,6 @@ export class Container extends EventEmitter {
 
         // Load in the new host code and initialize the platform
         const chaincode = await this.loadCode(pkg);
-        this.pkg = pkg;
 
         const previousContextState = await this.context.stop();
         let snapshotTree: ISnapshotTree;
@@ -539,7 +539,6 @@ export class Container extends EventEmitter {
 
         const newContext = await Context.Load(
             this,
-            this.path,
             chaincode,
             snapshotTree,
             blobs,
@@ -553,7 +552,8 @@ export class Container extends EventEmitter {
             () => this.close());
         this.context = newContext;
 
-        this.emit("runtimeChanged", newContext);
+        this.pkg = pkg;
+        this.emit("contextChanged", this.pkg);
     }
 
     private async loadCodeFromQuorum(
@@ -720,7 +720,7 @@ export class Container extends EventEmitter {
         return clientSequenceNumber;
     }
 
-    private prepareRemoteMessage(message: ISequencedDocumentMessage): Promise<any> {
+    private async prepareRemoteMessage(message: ISequencedDocumentMessage): Promise<any> {
         const local = this._clientId === message.clientId;
 
         switch (message.type) {
@@ -800,8 +800,9 @@ export class Container extends EventEmitter {
             case MessageType.ClientJoin:
                 const systemJoinMessage = message as ISequencedDocumentSystemMessage;
                 const join = JSON.parse(systemJoinMessage.data) as IClientJoin;
+                // TODO this needs to be fixed
                 const member: ISequencedClient = {
-                    client: join.detail,
+                    client: (systemJoinMessage as any).user,
                     sequenceNumber: systemJoinMessage.sequenceNumber,
                 };
                 this.quorum.addMember(join.clientId, member);

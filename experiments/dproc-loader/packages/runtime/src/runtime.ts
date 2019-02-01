@@ -3,6 +3,7 @@ import {
     IComponentContext,
     IComponentRuntime,
     IHostRuntime,
+    IResponse,
 } from "@prague/container-definitions";
 import { ICommit } from "@prague/gitresources";
 import {
@@ -196,6 +197,14 @@ export class Runtime extends EventEmitter implements IComponentContext, IHostRun
             default:
                 return null;
         }
+    }
+
+    public async request(path: string): Promise<IResponse> {
+        const index = path.indexOf("/");
+        const lookup = decodeURIComponent(path.substr(0, index !== -1 ? index : path.length));
+
+        const component = this.getProcess(lookup);
+        return { status: 200, value: component, mimeType: "prague/component" };
     }
 
     public async snapshot(tagMessage: string): Promise<ITree> {

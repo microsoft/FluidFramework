@@ -24,7 +24,8 @@ export interface IHost {
     user: IUser;
 }
 
-export interface ILoadResponse {
+export interface IResponse {
     mimeType: string;
+    status: number;
     value: any;
 }

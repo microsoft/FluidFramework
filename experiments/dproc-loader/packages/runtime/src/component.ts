@@ -6,6 +6,7 @@ import {
     IDeltaHandler,
     IHostRuntime,
     IProcess,
+    IResponse,
 } from "@prague/container-definitions";
 import {
     ConnectionState,
@@ -269,6 +270,17 @@ export class Component extends EventEmitter implements IComponentRuntime, IProce
         });
 
         return snapshot;
+    }
+
+    public async request(path: string): Promise<IResponse> {
+        if (!path) {
+            return { status: 200, mimeType: "prague/component", value: this };
+        }
+
+        // TODO chaincode run should return ability to make requests
+        // return this.chaincode.request(path);
+
+        return { status: 404, mimeType: "text/plain", value: `${path} not found` };
     }
 
     public submitMessage(type: MessageType, content: any) {
