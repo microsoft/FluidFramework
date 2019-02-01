@@ -12,7 +12,7 @@ import {
     IUser,
     MessageType,
 } from "@prague/runtime-definitions";
-import { IResponse } from "./loader";
+import { IRequest, IResponse } from "./loader";
 
 export interface IChaincodeComponent {
     // I'm not sure how many of the below we'll even need
@@ -78,7 +78,6 @@ export interface IComponentRuntime {
     readonly parentBranch: string;
     readonly connected: boolean;
     readonly deltaManager: IDeltaManager;
-    readonly platform: IPlatform;
     readonly blobManager: IBlobManager;
     readonly storage: IDocumentStorageService;
     readonly connectionState: ConnectionState;
@@ -113,7 +112,7 @@ export interface IComponentContext {
     snapshot(tagMessage: string): Promise<ITree>;
     changeConnectionState(value: ConnectionState, clientId: string);
     stop(): Promise<void>;
-    request(path: string): Promise<IResponse>;
+    request(request: IRequest): Promise<IResponse>;
     prepare(message: ISequencedDocumentMessage, local: boolean): Promise<any>;
     process(message: ISequencedDocumentMessage, local: boolean, context: any);
     postProcess(message: ISequencedDocumentMessage, local: boolean, context: any): Promise<void>;
@@ -156,7 +155,6 @@ export interface IHostRuntime {
     readonly parentBranch: string;
     readonly connected: boolean;
     readonly deltaManager: IDeltaManager;
-    readonly platform: IPlatform;
     readonly blobManager: IBlobManager;
     readonly storage: IDocumentStorageService;
     readonly connectionState: ConnectionState;

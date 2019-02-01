@@ -12,6 +12,7 @@ import {
     IGenericBlob,
     IHost,
     IProposal,
+    IRequest,
     IResponse,
     ISequencedClient,
     ISequencedDocumentMessage,
@@ -210,7 +211,7 @@ export class Container extends EventEmitter {
         this.deltaManager.inbound.resume();
     }
 
-    public async request(path: string): Promise<IResponse> {
+    public async request(path: IRequest): Promise<IResponse> {
         if (!path) {
             return { mimeType: "prague/container", status: 200, value: this };
         }

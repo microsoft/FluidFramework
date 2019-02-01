@@ -39,8 +39,8 @@ async function initializeChaincode(document: Container, pkg: string): Promise<vo
     console.log(`Code is ${quorum.get("code2")}`);
 }
 
-async function attach(loader: Loader, uri: string, platform: LocalPlatform) {
-    const response = await loader.load(uri);
+async function attach(loader: Loader, url: string, platform: LocalPlatform) {
+    const response = await loader.request({ url });
 
     if (response.status === 200) {
         const componentP = response.value as Promise<IComponentRuntime>;
@@ -92,15 +92,10 @@ export async function start(id: string, path: string, factory: IChaincodeFactory
         codeLoader,
         { blockUpdateMarkers: true });
 
-    const containerResponse = await loader.load(
-        `prague://${domain}/${encodeURIComponent(tenantId)}/${encodeURIComponent(id)}`);
-
-    if (containerResponse.status !== 200 || containerResponse.mimeType !== "prague/container") {
-        return Promise.reject(containerResponse.value);
-    }
+    const container = await loader.resolve(
+        { url: `prague://${domain}/${encodeURIComponent(tenantId)}/${encodeURIComponent(id)}` });
 
     const platform = new LocalPlatform(document.getElementById("content"));
-    const container = containerResponse.value as Container;
     registerAttach(
         loader,
         container,

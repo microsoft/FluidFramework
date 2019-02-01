@@ -24,6 +24,10 @@ export interface IHost {
     user: IUser;
 }
 
+export interface IRequest {
+    url: string;
+}
+
 export interface IResponse {
     mimeType: string;
     status: number;

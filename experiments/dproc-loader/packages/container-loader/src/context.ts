@@ -7,6 +7,7 @@ import {
     IDocumentStorageService,
     IPlatform,
     IQuorum,
+    IRequest,
     IResponse,
     ISequencedDocumentMessage,
     ISnapshotTree,
@@ -182,7 +183,7 @@ export class Context implements IContext {
         this.componentContext.updateMinSequenceNumber(minimumSequenceNumber);
     }
 
-    public async request(path: string): Promise<IResponse> {
+    public async request(path: IRequest): Promise<IResponse> {
         if (!this.componentContext) {
             return { status: 404, mimeType: "text/plain", value: `${path} not found` };
         }

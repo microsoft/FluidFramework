@@ -11,6 +11,7 @@ import {
     IContext,
     IDeltaHandler,
     IHostRuntime,
+    IRequest,
 } from "@prague/container-definitions";
 import { ComponentHost } from "@prague/container-utils";
 import * as DistributedMap from "@prague/map";
@@ -21,7 +22,6 @@ import * as SharedString from "@prague/sequence";
 import { IStream } from "@prague/stream";
 import { Deferred } from "@prague/utils";
 import { default as axios } from "axios";
-import { EventEmitter } from "events";
 import * as uuid from "uuid/v4";
 // tslint:disable:no-var-requires
 const performanceNow = require("performance-now");
@@ -157,12 +157,6 @@ class SharedText extends Document {
     }
 }
 
-class LegacyEmptyPlatform extends EventEmitter implements IPlatform {
-    public async queryInterface<T>(id: string): Promise<T> {
-        return null;
-    }
-}
-
 class SharedTextHost implements IChaincodeHost {
     public async getModule(type: string) {
         switch (type) {
@@ -186,15 +180,9 @@ class SharedTextHost implements IChaincodeHost {
     // I believe that runtime needs to have everything necessary for this thing to actually load itself once this
     // method is called
     public async run(context: IContext): Promise<IPlatform> {
-        // Context is the base runtime. Might want to rename.
-        // We need to load it. It'll go load any intermediate stuff. And then it needs to invoke some runner code
-        // to get going once the run happens.
-        // We may want to do this in a postProcess step
-
         const runtime = await Runtime.Load(
             context.tenantId,
             context.id,
-            new LegacyEmptyPlatform(),      // platform will be sent on attach in future
             context.parentBranch,
             context.existing,
             context.options,
@@ -214,11 +202,14 @@ class SharedTextHost implements IChaincodeHost {
             context.snapshotFn,
             context.closeFn);
 
-        // Can go and return ctx
-
-        // As part of this we should also run any of the code associated with this.
-
-        // It should take in a load path separator
+        runtime.registerRequestHandler(async (request: IRequest) => {
+            console.log(request.url);
+            const requestUrl = request.url.length > 0 && request.url.charAt(0) === "/"
+                ? request.url.substr(1)
+                : request.url;
+            const componentId = requestUrl ? requestUrl : "text";
+            return { status: 200, mimeType: "prague/component", value: runtime.getProcess(componentId, true) };
+        });
 
         this.doWork(context, runtime).catch((error) => {
             context.error(error);
@@ -262,7 +253,6 @@ export class SharedTextComponent implements IChaincodeComponent {
             runtime.tenantId,
             runtime.documentId,
             runtime.id,
-            runtime.platform,
             runtime.parentBranch,
             runtime.existing,
             runtime.options,

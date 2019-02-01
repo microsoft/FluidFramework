@@ -3,6 +3,7 @@ import {
     IComponentContext,
     IComponentRuntime,
     IHostRuntime,
+    IRequest,
     IResponse,
 } from "@prague/container-definitions";
 import { ICommit } from "@prague/gitresources";
@@ -35,7 +36,6 @@ export class Runtime extends EventEmitter implements IComponentContext, IHostRun
     public static async Load(
         tenantId: string,
         id: string,
-        platform: IPlatform,
         parentBranch: string,
         existing: boolean,
         options: any,
@@ -66,7 +66,6 @@ export class Runtime extends EventEmitter implements IComponentContext, IHostRun
             blobManager,
             deltaManager,
             quorum,
-            platform,
             chaincode,
             storage,
             connectionState,
@@ -116,6 +115,7 @@ export class Runtime extends EventEmitter implements IComponentContext, IHostRun
     private processDeferred = new Map<string, Deferred<Component>>();
     private closed = false;
     private pendingAttach = new Map<string, IAttachMessage>();
+    private requestHandler: (request: IRequest) => Promise<IResponse>;
 
     public get connected(): boolean {
         return this.connectionState === ConnectionState.Connected;
@@ -132,7 +132,6 @@ export class Runtime extends EventEmitter implements IComponentContext, IHostRun
         public readonly blobManager: IBlobManager,
         public readonly deltaManager: IDeltaManager,
         private quorum: IQuorum,
-        public readonly platform: IPlatform,
         public readonly chaincode: IChaincodeHost,
         public readonly storage: IDocumentStorageService,
         // tslint:disable-next-line:variable-name
@@ -172,7 +171,6 @@ export class Runtime extends EventEmitter implements IComponentContext, IHostRun
             this.quorum,
             runtimeStorage,
             this.connectionState,
-            this.platform,
             snapshotTree,
             this.id,
             this.deltaManager.minimumSequenceNumber,
@@ -199,12 +197,16 @@ export class Runtime extends EventEmitter implements IComponentContext, IHostRun
         }
     }
 
-    public async request(path: string): Promise<IResponse> {
-        const index = path.indexOf("/");
-        const lookup = decodeURIComponent(path.substr(0, index !== -1 ? index : path.length));
+    public registerRequestHandler(handler: (request: IRequest) => Promise<IResponse>) {
+        this.requestHandler = handler;
+    }
 
-        const component = this.getProcess(lookup);
-        return { status: 200, value: component, mimeType: "prague/component" };
+    public async request(request: IRequest): Promise<IResponse> {
+        if (!this.requestHandler) {
+            return { status: 404, mimeType: "text/plain", value: `${request.url} not found` };
+        } else {
+            return this.requestHandler(request);
+        }
     }
 
     public async snapshot(tagMessage: string): Promise<ITree> {
@@ -363,7 +365,6 @@ export class Runtime extends EventEmitter implements IComponentContext, IHostRun
             this.quorum,
             runtimeStorage,
             this.connectionState,
-            this.platform,
             this.id,
             this.deltaManager.minimumSequenceNumber,
             this.submitFn,
@@ -497,7 +498,6 @@ export class Runtime extends EventEmitter implements IComponentContext, IHostRun
             this.quorum,
             runtimeStorage,
             this.connectionState,
-            this.platform,
             snapshotTree,
             this.id,
             this.deltaManager.minimumSequenceNumber,

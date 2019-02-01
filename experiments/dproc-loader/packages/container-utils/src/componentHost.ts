@@ -54,7 +54,6 @@ export class ComponentHost extends EventEmitter implements IDeltaHandler, ILegac
         tenantId: string,
         documentId: string,
         id: string,
-        platform: IPlatform,
         parentBranch: string,
         existing: boolean,
         options: any,
@@ -128,7 +127,7 @@ export class ComponentHost extends EventEmitter implements IDeltaHandler, ILegac
         }
 
         // Start the runtime
-        await runtime.start(platform);
+        await runtime.start();
 
         return runtime;
     }
@@ -285,9 +284,9 @@ export class ComponentHost extends EventEmitter implements IDeltaHandler, ILegac
         await Promise.all(Array.from(this.channels.values()).map((value) => value.object.ready()));
     }
 
-    public async start(platform: IPlatform): Promise<void> {
+    public async start(): Promise<void> {
         this.verifyNotClosed();
-        this._platform = await this.chaincode.run(this, platform);
+        this._platform = await this.chaincode.run(this, null);
     }
 
     public changeConnectionState(value: ConnectionState, clientId: string) {

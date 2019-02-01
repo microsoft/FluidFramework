@@ -2,14 +2,20 @@ import {
     ICodeLoader,
     IDocumentService,
     IHost,
+    IRequest,
     IResponse,
 } from "@prague/container-definitions";
 import { EventEmitter } from "events";
 // tslint:disable-next-line:no-var-requires
 const now = require("performance-now") as () => number;
-import * as url from "url";
+import { parse } from "url";
 import { Container } from "./container";
 import { debug } from "./debug";
+
+interface IParsedUrl {
+    id: string;
+    path: string;
+}
 
 /**
  * Manages Prague resource loading
@@ -38,21 +44,39 @@ export class Loader extends EventEmitter {
         }
     }
 
-    public async load(uri: string): Promise<IResponse> {
-        debug(`Container loading: ${now()} `);
+    public async resolve(request: IRequest): Promise<Container> {
+        debug(`Container resolve: ${now()} `);
 
-        const parsed = url.parse(uri);
-
-        const regex = /^\/([^\/]*\/[^\/]*)\/?(.*)$/;
-        const match = parsed.pathname.match(regex);
-
-        if (!match || match.length !== 3) {
+        const parsed = this.parseUrl(request.url);
+        if (!parsed) {
             return Promise.reject("Invalid URI");
         }
 
-        const id = match[1];
-        const path = match[2];
+        return this.resolveCore(parsed.id);
+    }
 
+    public async request(request: IRequest): Promise<IResponse> {
+        debug(`Container loading: ${now()} `);
+
+        const parsed = this.parseUrl(request.url);
+        if (!parsed) {
+            return Promise.reject("Invalid URI");
+        }
+
+        const container = await this.resolveCore(parsed.id);
+        return container.request({ url: parsed.path });
+    }
+
+    private parseUrl(url: string): IParsedUrl {
+        const parsed = parse(url);
+
+        const regex = /^\/([^\/]*\/[^\/]*)(\/?.*)$/;
+        const match = parsed.pathname.match(regex);
+
+        return (match && match.length === 3) ? { id: match[1], path: match[2] } : null;
+    }
+
+    private resolveCore(id: string) {
         if (!this.containers.has(id)) {
             const containerP = Container.Load(
                 id,
@@ -63,7 +87,6 @@ export class Loader extends EventEmitter {
             this.containers.set(id, containerP);
         }
 
-        const container = await this.containers.get(id);
-        return container.request(path);
+        return this.containers.get(id);
     }
 }
