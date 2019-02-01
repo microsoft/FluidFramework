@@ -6,6 +6,7 @@ import {
     IDeltaHandler,
     IHostRuntime,
     IProcess,
+    IResponse,
 } from "@prague/container-definitions";
 import {
     ConnectionState,
@@ -17,7 +18,6 @@ import {
     IEnvelope,
     IGenericBlob,
     IObjectStorageService,
-    IPlatform,
     IQuorum,
     ISequencedDocumentMessage,
     ISnapshotTree,
@@ -42,7 +42,6 @@ export class Component extends EventEmitter implements IComponentRuntime, IProce
         documentId: string,
         id: string,
         parentBranch: string,
-        existing: boolean,
         options: any,
         clientId: string,
         user: IUser,
@@ -53,7 +52,6 @@ export class Component extends EventEmitter implements IComponentRuntime, IProce
         quorum: IQuorum,
         storage: IDocumentStorageService,
         connectionState: ConnectionState,
-        platform: IPlatform,
         branch: string,
         minimumSequenceNumber: number,
         submitFn: (type: MessageType, contents: any) => void,
@@ -70,7 +68,7 @@ export class Component extends EventEmitter implements IComponentRuntime, IProce
             documentId,
             id,
             parentBranch,
-            existing,
+            false,
             options,
             clientId,
             user,
@@ -80,7 +78,6 @@ export class Component extends EventEmitter implements IComponentRuntime, IProce
             extension,
             storage,
             connectionState,
-            platform,
             branch,
             minimumSequenceNumber,
             null,
@@ -97,7 +94,6 @@ export class Component extends EventEmitter implements IComponentRuntime, IProce
         documentId: string,
         id: string,
         parentBranch: string,
-        existing: boolean,
         options: any,
         clientId: string,
         user: IUser,
@@ -108,7 +104,6 @@ export class Component extends EventEmitter implements IComponentRuntime, IProce
         quorum: IQuorum,
         storage: IDocumentStorageService,
         connectionState: ConnectionState,
-        platform: IPlatform,
         channels: ISnapshotTree,
         branch: string,
         minimumSequenceNumber: number,
@@ -126,7 +121,7 @@ export class Component extends EventEmitter implements IComponentRuntime, IProce
             documentId,
             id,
             parentBranch,
-            existing,
+            true,
             options,
             clientId,
             user,
@@ -136,7 +131,6 @@ export class Component extends EventEmitter implements IComponentRuntime, IProce
             extension,
             storage,
             connectionState,
-            platform,
             branch,
             minimumSequenceNumber,
             channels,
@@ -149,11 +143,6 @@ export class Component extends EventEmitter implements IComponentRuntime, IProce
 
     public get connected(): boolean {
         return this._connectionState === ConnectionState.Connected;
-    }
-
-    // Interface used to access the runtime code
-    public get platform(): IPlatform {
-        return this._platform;
     }
 
     public get connectionState(): ConnectionState {
@@ -181,7 +170,6 @@ export class Component extends EventEmitter implements IComponentRuntime, IProce
         public readonly storage: IDocumentStorageService,
         // tslint:disable:variable-name
         private _connectionState: ConnectionState,
-        private _platform: IPlatform,
         // tslint:enable:variable-name
         public readonly branch: string,
         public readonly minimumSequenceNumber: number,
@@ -271,6 +259,17 @@ export class Component extends EventEmitter implements IComponentRuntime, IProce
         return snapshot;
     }
 
+    public async request(path: string): Promise<IResponse> {
+        if (!path) {
+            return { status: 200, mimeType: "prague/component", value: this };
+        }
+
+        // TODO chaincode run should return ability to make requests
+        // return this.chaincode.request(path);
+
+        return { status: 404, mimeType: "text/plain", value: `${path} not found` };
+    }
+
     public submitMessage(type: MessageType, content: any) {
         this.submit(type, content);
     }
@@ -281,14 +280,7 @@ export class Component extends EventEmitter implements IComponentRuntime, IProce
 
     public async start(): Promise<void> {
         this.verifyNotClosed();
-
-        //  The component needs to have both a create and a load call (I believe). Or load can be invoked
-        // with no starting data.
-        //  Once the above are called it can begin processing events and model data
-        //  Some trigger can happen to then allow it to take part in the UI
-
-        // TODOTODO need to understand start logic
-        this.handler = await this.chaincode.run(this, this.platform);
+        this.handler = await this.chaincode.run(this, null);
     }
 
     public async attach(platform: IComponentPlatform): Promise<IComponentPlatform> {

@@ -70,7 +70,6 @@ export class PinpointComponent implements IChaincodeComponent {
             runtime.tenantId,
             runtime.documentId,
             runtime.id,
-            runtime.platform,
             runtime.parentBranch,
             runtime.existing,
             runtime.options,

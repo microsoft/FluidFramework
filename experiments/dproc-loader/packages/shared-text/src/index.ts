@@ -11,6 +11,7 @@ import {
     IContext,
     IDeltaHandler,
     IHostRuntime,
+    IRequest,
 } from "@prague/container-definitions";
 import { ComponentHost } from "@prague/container-utils";
 import * as DistributedMap from "@prague/map";
@@ -21,7 +22,7 @@ import * as SharedString from "@prague/sequence";
 import { IStream } from "@prague/stream";
 import { Deferred } from "@prague/utils";
 import { default as axios } from "axios";
-import { EventEmitter } from "events";
+import * as uuid from "uuid/v4";
 // tslint:disable:no-var-requires
 const performanceNow = require("performance-now");
 const debug = require("debug")("chaincode:shared-text");
@@ -66,7 +67,7 @@ class SharedText extends Document {
         debug(`id is ${this.runtime.id}`);
         debug(`Partial load fired - ${performanceNow()}`);
 
-        const hostContent: HTMLElement = await this.platform.queryInterface<HTMLElement>("div");
+        const hostContent: HTMLElement = await platform.queryInterface<HTMLElement>("div");
         if (!hostContent) {
             // If headless exist early
             return;
@@ -128,6 +129,11 @@ class SharedText extends Document {
         debug(`Not existing ${this.runtime.id} - ${performanceNow()}`);
         this.root.set("presence", this.createMap());
         this.root.set("users", this.createMap());
+        this.root.set("calendar", undefined, SharedString.SharedIntervalCollectionValueType.Name);
+        const seq = this.runtime.createChannel(
+            uuid(), SharedString.CollaborativeNumberSequenceExtension.Type) as
+            SharedString.SharedNumberSequence;
+        this.root.set("sequence-test", seq);
         const newString = this.createString() as SharedString.SharedString;
 
         const starterText = loadPP
@@ -148,20 +154,6 @@ class SharedText extends Document {
         }
         this.root.set("text", newString);
         this.root.set("ink", this.createMap());
-    }
-}
-
-class ComponentPlatformWrapper extends EventEmitter implements IComponentPlatform {
-    constructor(private platform: IPlatform) {
-        super();
-    }
-
-    public detach() {
-        return;
-    }
-
-    public queryInterface<T>(id: string): Promise<T> {
-        return this.platform.queryInterface(id);
     }
 }
 
@@ -188,15 +180,9 @@ class SharedTextHost implements IChaincodeHost {
     // I believe that runtime needs to have everything necessary for this thing to actually load itself once this
     // method is called
     public async run(context: IContext): Promise<IPlatform> {
-        // Context is the base runtime. Might want to rename.
-        // We need to load it. It'll go load any intermediate stuff. And then it needs to invoke some runner code
-        // to get going once the run happens.
-        // We may want to do this in a postProcess step
-
         const runtime = await Runtime.Load(
             context.tenantId,
             context.id,
-            context.platform,
             context.parentBranch,
             context.existing,
             context.options,
@@ -216,11 +202,14 @@ class SharedTextHost implements IChaincodeHost {
             context.snapshotFn,
             context.closeFn);
 
-        // Can go and return ctx
-
-        // As part of this we should also run any of the code associated with this.
-
-        // It should take in a load path separator
+        runtime.registerRequestHandler(async (request: IRequest) => {
+            console.log(request.url);
+            const requestUrl = request.url.length > 0 && request.url.charAt(0) === "/"
+                ? request.url.substr(1)
+                : request.url;
+            const componentId = requestUrl ? requestUrl : "text";
+            return { status: 200, mimeType: "prague/component", value: runtime.getProcess(componentId, true) };
+        });
 
         this.doWork(context, runtime).catch((error) => {
             context.error(error);
@@ -232,13 +221,6 @@ class SharedTextHost implements IChaincodeHost {
     public async doWork(context: IContext, runtime: IHostRuntime) {
         if (!runtime.existing) {
             await runtime.createAndAttachProcess("text", "@chaincode/shared-text");
-        }
-
-        console.log("PATH IS", context.path);
-
-        if (context.path) {
-            const component = await runtime.getProcess(context.path.substr(1));
-            component.attach(new ComponentPlatformWrapper(context.platform));
         }
     }
 }
@@ -271,7 +253,6 @@ export class SharedTextComponent implements IChaincodeComponent {
             runtime.tenantId,
             runtime.documentId,
             runtime.id,
-            runtime.platform,
             runtime.parentBranch,
             runtime.existing,
             runtime.options,
