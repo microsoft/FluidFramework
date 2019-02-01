@@ -12,7 +12,6 @@ async function loadDocument(id: string, version: resources.ICommit, token: strin
     const document = await api.load(
         id,
         claims.tenantId,
-        claims.user,
         new socketStorage.TokenProvider(token),
         { encrypted: false },
         version);

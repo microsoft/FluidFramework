@@ -1,5 +1,5 @@
 import { ICommit } from "@prague/gitresources";
-import { ICodeLoader, IDocumentService, IPlatformFactory, ITokenProvider, IUser } from "@prague/runtime-definitions";
+import { ICodeLoader, IDocumentService, IPlatformFactory, ITokenProvider } from "@prague/runtime-definitions";
 import { debug } from "./debug";
 import { Document } from "./document";
 
@@ -13,7 +13,6 @@ const now = require("performance-now");
 export async function load(
     id: string,
     tenantId: string,
-    user: IUser,
     tokenProvider: ITokenProvider,
     options: any,
     platform: IPlatformFactory,
@@ -43,7 +42,6 @@ export async function load(
     const document = await Document.Load(
         id,
         tenantId,
-        user,
         tokenProvider,
         platform,
         documentService,

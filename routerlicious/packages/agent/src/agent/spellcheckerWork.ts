@@ -4,7 +4,6 @@ import {
     IDocumentService,
     ISequencedDocumentMessage,
     ITokenProvider,
-    IUser,
     MessageType,
 } from "@prague/runtime-definitions";
 import * as Sequence from "@prague/sequence";
@@ -20,13 +19,12 @@ export class SpellcheckerWork extends BaseWork implements IWork {
     constructor(
         docId: string,
         tenantId: string,
-        user: IUser,
         tokenProvider: ITokenProvider,
         config: any,
         dictionary: MergeTree.TST<number>,
         private service: IDocumentService) {
 
-        super(docId, tenantId, user, tokenProvider, config);
+        super(docId, tenantId, tokenProvider, config);
         this.dict = dictionary;
     }
 

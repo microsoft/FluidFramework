@@ -307,7 +307,6 @@ async function initSpell(id: string) {
     const document = await API.load(
         id,
         undefined, // tenantId
-        undefined, // user
         undefined, // token
         { blockUpdateMarkers: true, localMinSeq: 0, encrypted: undefined });
     const root = await document.getRoot().getView();

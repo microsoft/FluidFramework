@@ -5,7 +5,6 @@ import {
     IDocumentService,
     ISequencedDocumentMessage,
     ITokenProvider,
-    IUser,
     MessageType,
 } from "@prague/runtime-definitions";
 import { nativeTextAnalytics, textAnalytics } from "../intelligence";
@@ -20,11 +19,10 @@ export class IntelWork extends BaseWork implements IWork {
     constructor(
         docId: string,
         tenantId: string,
-        user: IUser,
         tokenProvider: ITokenProvider,
         config: any,
         private service: IDocumentService) {
-        super(docId, tenantId, user, tokenProvider, config);
+        super(docId, tenantId, tokenProvider, config);
     }
 
     public async start(task: string): Promise<void> {

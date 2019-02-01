@@ -9,7 +9,6 @@ import {
     ISequencedDocumentMessage,
     ISnapshotTree,
     ITree,
-    IUser,
 } from "@prague/runtime-definitions";
 import * as socketStorage from "@prague/socket-storage";
 import { EventEmitter } from "events";
@@ -18,7 +17,6 @@ export class TestDocumentDeltaConnection extends EventEmitter implements IDocume
     public readonly maxMessageSize = 16 * 1024;
     public existing: boolean;
     public parentBranch: string;
-    public user: IUser;
     public clientId: string;
     public initialMessages: ISequencedDocumentMessage[] | undefined;
     public initialContents: IContentMessage[] | undefined;

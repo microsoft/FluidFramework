@@ -103,7 +103,6 @@ export class Document extends EventEmitter {
     public static async Load(
         id: string,
         tenantId: string,
-        user: IUser,
         tokenProvider: ITokenProvider,
         platform: IPlatformFactory,
         service: IDocumentService,
@@ -111,7 +110,7 @@ export class Document extends EventEmitter {
         options: any,
         specifiedVersion: ICommit,
         connect: boolean): Promise<Document> {
-        const doc = new Document(id, tenantId, user, tokenProvider, platform, service, codeLoader, options);
+        const doc = new Document(id, tenantId, tokenProvider, platform, service, codeLoader, options);
         await doc.load(specifiedVersion, connect);
 
         return doc;
@@ -189,7 +188,6 @@ export class Document extends EventEmitter {
     constructor(
         id: string,
         tenantId: string,
-        user: IUser,
         private tokenProvider: ITokenProvider,
         private platform: IPlatformFactory,
         private service: IDocumentService,
@@ -198,7 +196,6 @@ export class Document extends EventEmitter {
         super();
         this._id = id;
         this._tenantId = tenantId;
-        this._user = user;
     }
 
     /**
@@ -381,7 +378,6 @@ export class Document extends EventEmitter {
                     this.existing,
                     this.options,
                     this.clientId,
-                    this.user,
                     this.blobManager,
                     chaincode.pkg,
                     chaincode.chaincode,
@@ -643,7 +639,6 @@ export class Document extends EventEmitter {
             this.existing,
             this.options,
             this.clientId,
-            this.user,
             this.blobManager,
             pkg,
             chaincode,

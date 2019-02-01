@@ -155,7 +155,6 @@ export async function load(id: string, version: resources.ICommit, config: any, 
     const doc = await api.load(
         id,
         claims.tenantId,
-        claims.user,
         new socketStorage.TokenProvider(token),
         { client: { type: "visualize" }, encrypted: false },
         version);

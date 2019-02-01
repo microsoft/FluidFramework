@@ -1,4 +1,4 @@
-import { IDocumentService, ISequencedDocumentMessage, ITokenProvider, IUser } from "@prague/runtime-definitions";
+import { IDocumentService, ISequencedDocumentMessage, ITokenProvider } from "@prague/runtime-definitions";
 import { BaseWork} from "./baseWork";
 import { IWork } from "./definitions";
 import { Serializer } from "./serializer";
@@ -17,11 +17,10 @@ export class SnapshotWork extends BaseWork implements IWork {
     constructor(
         docId: string,
         tenantId: string,
-        user: IUser,
         tokenProvider: ITokenProvider,
         config: any,
         private service: IDocumentService) {
-        super(docId, tenantId, user, tokenProvider, config);
+        super(docId, tenantId, tokenProvider, config);
     }
 
     public async start(task: string): Promise<void> {

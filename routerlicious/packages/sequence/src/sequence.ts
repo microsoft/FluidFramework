@@ -275,7 +275,7 @@ export abstract class SegmentSequence<T extends MergeTree.ISegment> extends Coll
     }
 
     protected attachContent() {
-        this.client.startCollaboration(this.runtime.clientId, this.runtime.user, 0);
+        this.client.startCollaboration(this.runtime.clientId, 0);
         this.collabStarted = true;
     }
 
@@ -325,7 +325,7 @@ export abstract class SegmentSequence<T extends MergeTree.ISegment> extends Coll
             const branchId = originBranch === this.runtime.id ? 0 : 1;
             this.collabStarted = true;
             this.client.startCollaboration(
-                this.runtime.clientId, this.runtime.user, minimumSequenceNumber, branchId);
+                this.runtime.clientId, minimumSequenceNumber, branchId);
         }
     }
 

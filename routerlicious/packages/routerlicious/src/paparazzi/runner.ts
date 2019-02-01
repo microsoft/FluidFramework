@@ -121,7 +121,6 @@ export class PaparazziRunner implements utils.IRunner {
             this.workerService.startTasks(
                 requestMsg.tenantId,
                 requestMsg.documentId,
-                requestMsg.user,
                 filteredTask,
                 new socketStorage.TokenProvider(requestMsg.token)).catch((err) => {
                     winston.error(

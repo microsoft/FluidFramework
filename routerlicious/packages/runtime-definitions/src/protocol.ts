@@ -1,5 +1,3 @@
-import { IUser } from ".";
-
 export enum MessageType {
     // Empty operation message. Used to send an updated reference sequence number.
     NoOp = "noop",
@@ -265,6 +263,4 @@ export interface IQueueMessage {
     documentId: string;
 
     token: string;
-
-    user: IUser;
 }

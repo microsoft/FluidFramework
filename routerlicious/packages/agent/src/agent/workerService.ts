@@ -1,4 +1,4 @@
-import { ICodeLoader, IPlatformFactory, ITokenProvider, IUser } from "@prague/runtime-definitions";
+import { ICodeLoader, IPlatformFactory, ITokenProvider } from "@prague/runtime-definitions";
 import { EventEmitter } from "events";
 import { IDocumentServiceFactory, IDocumentTaskInfo, IWorkManager } from "./definitions";
 import { WorkManager } from "./workManager";
@@ -28,12 +28,11 @@ export class WorkerService extends EventEmitter {
     public async startTasks(
         tenantId: string,
         documentId: string,
-        user: IUser,
         tasks: string[],
         tokenProvider: ITokenProvider) {
         const tasksP = [];
         for (const task of tasks) {
-            tasksP.push(this.workManager.startDocumentWork(tenantId, documentId, user, task, tokenProvider));
+            tasksP.push(this.workManager.startDocumentWork(tenantId, documentId, task, tokenProvider));
         }
         await Promise.all(tasksP);
     }

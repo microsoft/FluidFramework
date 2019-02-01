@@ -841,7 +841,7 @@ export function TestPack(verbose = true) {
             if (startFile) {
                 loadTextFromFile(startFile, clientsB[i].mergeTree, fileSegCount);
             }
-            clientsB[i].startCollaboration(`FredB${i}`, null, 0, 1);
+            clientsB[i].startCollaboration(`FredB${i}`, 0, 1);
         }
         for (let i = 0; i < clientCountB; i++) {
             let clientB = clientsB[i];
@@ -856,7 +856,7 @@ export function TestPack(verbose = true) {
         serverA.startCollaboration("theServerA");
         serverA.addClients(clientsA);
         serverA.addListeners([serverB]);
-        serverB.startCollaboration("theServerB", null, 0, 1);
+        serverB.startCollaboration("theServerB", 0, 1);
         serverB.addClients(clientsB);
         serverB.addUpstreamClients(clientsA);
 

@@ -6,7 +6,6 @@ import {
     IPlatform,
     IPlatformFactory,
     ITokenProvider,
-    IUser,
 } from "@prague/runtime-definitions";
 import * as driver from "@prague/socket-storage";
 import chalk from "chalk";
@@ -66,7 +65,6 @@ async function readlineAsync(input: readline.ReadLine, prompt: string): Promise<
 async function run(
     id: string,
     tenantId: string,
-    user: IUser,
     tokenProvider: ITokenProvider,
     options: any,
     reject: boolean,
@@ -75,7 +73,6 @@ async function run(
     const documentP = loader.load(
         id,
         tenantId,
-        user,
         tokenProvider,
         null,
         platformFactory,
@@ -164,7 +161,6 @@ commander
         run(
             documentId,
             commander.tenant,
-            user,
             new driver.TokenProvider(token),
             null,
             commander.reject,

@@ -82,7 +82,6 @@ export class TmzLambda extends SequencedLambda {
                     },
                     tenantId,
                     token: utils.generateToken(tenantId, docId, key, user),
-                    user,
                 };
                 this.messageSender.sendTask(
                     queueName,

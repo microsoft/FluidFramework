@@ -21,7 +21,6 @@ async function loadDocument(
         const document = await api.load(
             id,
             claims.tenantId,
-            claims.user,
             new socketStorage.TokenProvider(token),
             { encrypted: false},
             version);
@@ -186,7 +185,6 @@ function loadCommit(id: string, version: resources.ICommit, config: any) {
         api.load(
             id,
             undefined, // tenantId
-            undefined, // user
             undefined, // token
             { client: config.client, encrypted: false },
             version,

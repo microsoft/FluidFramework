@@ -3,7 +3,6 @@ import {
     IDocumentDeltaConnection,
     IDocumentMessage,
     ISequencedDocumentMessage,
-    IUser,
 } from "@prague/runtime-definitions";
 import { EventEmitter } from "events";
 
@@ -15,7 +14,6 @@ export class TestDocumentDeltaConnection extends EventEmitter implements IDocume
         public clientId: string,
         public existing: boolean,
         public parentBranch: string,
-        public user: IUser,
         public initialMessages: ISequencedDocumentMessage[] | undefined,
         public initialContents: IContentMessage[] | undefined) {
         super();
