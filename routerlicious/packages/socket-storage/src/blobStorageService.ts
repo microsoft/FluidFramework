@@ -19,7 +19,7 @@ export class DocumentStorageService implements api.IDocumentStorageService  {
         if (!requestVerion) {
             const versions = await this.getVersions(this.id, 1);
             if (versions.length === 0) {
-                return Promise.resolve<api.ISnapshotTree>(undefined);
+                return Promise.resolve<api.ISnapshotTree>(null);
             }
             requestVerion = versions[0];
         }
