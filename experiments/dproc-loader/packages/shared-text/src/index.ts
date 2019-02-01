@@ -22,6 +22,7 @@ import { IStream } from "@prague/stream";
 import { Deferred } from "@prague/utils";
 import { default as axios } from "axios";
 import { EventEmitter } from "events";
+import * as uuid from "uuid/v4";
 // tslint:disable:no-var-requires
 const performanceNow = require("performance-now");
 const debug = require("debug")("chaincode:shared-text");
@@ -128,6 +129,11 @@ class SharedText extends Document {
         debug(`Not existing ${this.runtime.id} - ${performanceNow()}`);
         this.root.set("presence", this.createMap());
         this.root.set("users", this.createMap());
+        this.root.set("calendar", undefined, SharedString.SharedIntervalCollectionValueType.Name);
+        const seq = this.runtime.createChannel(
+            uuid(), SharedString.CollaborativeNumberSequenceExtension.Type) as
+            SharedString.SharedNumberSequence;
+        this.root.set("sequence-test", seq);
         const newString = this.createString() as SharedString.SharedString;
 
         const starterText = loadPP

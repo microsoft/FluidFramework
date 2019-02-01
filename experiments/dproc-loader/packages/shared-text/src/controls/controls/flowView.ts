@@ -6,7 +6,7 @@ import * as types from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
 import { findRandomWord } from "@prague/merge-tree-utils";
 import { IGenericBlob, ISequencedObjectMessage, IUser } from "@prague/runtime-definitions";
-import * as SharedString from "@prague/sequence";
+import * as Sequence from "@prague/sequence";
 import * as assert from "assert";
 import * as Geocoder from "geocoder";
 // tslint:disable-next-line:no-var-requires
@@ -155,6 +155,18 @@ const commands: ICmd[] = [
             f.showCalendarEntries();
         },
         key: "cal show",
+    },
+    {
+        exec: (f) => {
+            f.addSequenceEntry();
+        },
+        key: "seq +",
+    },
+    {
+        exec: (f) => {
+            f.showSequenceEntries();
+        },
+        key: "seq show",
     },
     {
         exec: (f) => {
@@ -3549,6 +3561,11 @@ export interface IFlowViewModes {
     showCursorLocation?: boolean;
 }
 
+export interface ISeqTestItem {
+    x: string;
+    v: number;
+}
+
 export class FlowView extends ui.Component {
     public static docStartPosition = 0;
     public timeToImpression: number;
@@ -3571,12 +3588,14 @@ export class FlowView extends ui.Component {
     public wheelTicking = false;
     public topChar = -1;
     public cursor: Cursor;
-    public bookmarks: SharedString.SharedIntervalCollectionView<SharedString.SharedStringInterval>;
-    public tempBookmarks: SharedString.SharedStringInterval[];
-    public comments: SharedString.SharedIntervalCollection<SharedString.SharedStringInterval>;
-    public commentsView: SharedString.SharedIntervalCollectionView<SharedString.SharedStringInterval>;
-    public calendarIntervals: SharedString.SharedIntervalCollection<SharedString.Interval>;
-    public calendarIntervalsView: SharedString.SharedIntervalCollectionView<SharedString.Interval>;
+    public bookmarks: Sequence.SharedIntervalCollectionView<Sequence.SharedStringInterval>;
+    public tempBookmarks: Sequence.SharedStringInterval[];
+    public comments: Sequence.SharedIntervalCollection<Sequence.SharedStringInterval>;
+    public commentsView: Sequence.SharedIntervalCollectionView<Sequence.SharedStringInterval>;
+    public calendarIntervals: Sequence.SharedIntervalCollection<Sequence.Interval>;
+    public calendarIntervalsView: Sequence.SharedIntervalCollectionView<Sequence.Interval>;
+    public sequenceTest: Sequence.SharedNumberSequence;
+    public sequenceObjTest: Sequence.SharedObjectSequence<ISeqTestItem>;
     public presenceMapView: types.IMapView;
     public presenceVector: ILocalPresenceInfo[] = [];
     public docRoot: types.IMapView;
@@ -3612,7 +3631,7 @@ export class FlowView extends ui.Component {
     constructor(
         element: HTMLDivElement,
         public collabDocument: api.Document,
-        public sharedString: SharedString.SharedString,
+        public sharedString: Sequence.SharedString,
         public status: Status,
         public options?: Object) {
 
@@ -3905,12 +3924,31 @@ export class FlowView extends ui.Component {
     // assumes docRoot ready
     public addCalendarMap() {
         this.calendarIntervals =
-            this.docRoot.get<SharedString.SharedIntervalCollection<SharedString.Interval>>("calendar");
+            this.docRoot.get<Sequence.SharedIntervalCollection<Sequence.Interval>>("calendar");
         if (this.calendarIntervals) {
             this.calendarIntervals.getView().then((v) => {
                 this.calendarIntervalsView = v;
             });
         }
+    }
+
+    public addSeqObjEntry() {
+        const len = this.sequenceObjTest.getItemCount();
+        const pos = Math.floor(Math.random() * len);
+        const item = <ISeqTestItem>{ x: "veal", v: Math.floor(Math.random() * 10) };
+        this.sequenceObjTest.insert(pos, [item]);
+    }
+
+    public addSequenceEntry() {
+        const len = this.sequenceTest.getItemCount();
+        const pos = Math.floor(Math.random() * len);
+        const item = Math.floor(Math.random() * 10);
+        this.sequenceTest.insert(pos, [item]);
+    }
+
+    public showSequenceEntries() {
+        const items = this.sequenceTest.getItems(0);
+        this.statusMessage("seq", `seq: ${items.toString()}`);
     }
 
     public addCalendarEntries() {
@@ -4977,7 +5015,7 @@ export class FlowView extends ui.Component {
 
     public showAdjacentBookmark(before = true) {
         if (this.bookmarks) {
-            let result: SharedString.SharedStringInterval;
+            let result: Sequence.SharedStringInterval;
             if (before) {
                 result = this.bookmarks.previousInterval(this.cursor.pos);
             } else {
@@ -5581,7 +5619,7 @@ export class FlowView extends ui.Component {
         this.bookmarks = await bookmarksCollection.getView();
 
         // Takes a collaborative Object from OnPrepareDeserialize and inserts back into the interval's "Story" Property
-        const onDeserialize: SharedString.DeserializeCallback = (interval, commentSharedString: ICollaborativeObject) => {
+        const onDeserialize: Sequence.DeserializeCallback = (interval, commentSharedString: ICollaborativeObject) => {
             if (interval.properties && interval.properties["story"]) {
                 assert(commentSharedString);
                 interval.properties["story"] = commentSharedString;
@@ -5591,7 +5629,7 @@ export class FlowView extends ui.Component {
         };
 
         // Fetches the collaborative object with the key story["value"];
-        const onPrepareDeserialize: SharedString.PrepareDeserializeCallback = (properties) => {
+        const onPrepareDeserialize: Sequence.PrepareDeserializeCallback = (properties) => {
             if (properties && properties["story"]) {
                 const story = properties["story"];
                 return this.collabDocument.get(story["value"]);
@@ -5605,6 +5643,10 @@ export class FlowView extends ui.Component {
         this.comments = this.sharedString.getSharedIntervalCollection("comments");
         this.commentsView = await this.comments.getView(onDeserialize, onPrepareDeserialize);
 
+        this.sequenceTest = this.docRoot.get("sequence-test") as Sequence.SharedNumberSequence;
+        this.sequenceTest.on("op", (op) => {
+            this.showSequenceEntries();
+        });
         this.render(0, true);
         if (clockStart > 0) {
             // tslint:disable-next-line:max-line-length
@@ -5758,16 +5800,11 @@ export class FlowView extends ui.Component {
         }
 
         const remotePresenceBase = this.presenceMapView.get(delta.key) as IRemotePresenceBase;
+        const docClient = this.collabDocument.getClient(op.clientId);
         if (remotePresenceBase.type === "selection") {
-            this.remotePresenceToLocal(
-                delta.key,
-                this.collabDocument.runtime.getQuorum().getMember(op.clientId).client.user,
-                remotePresenceBase as IRemotePresenceInfo);
+            this.remotePresenceToLocal(delta.key, docClient.client.user, remotePresenceBase as IRemotePresenceInfo);
         } else if (remotePresenceBase.type === "drag") {
-            this.remoteDragToLocal(
-                delta.key,
-                this.collabDocument.runtime.getQuorum().getMember(op.clientId).client.user,
-                remotePresenceBase as IRemoteDragInfo);
+            this.remoteDragToLocal(delta.key, docClient.client.user, remotePresenceBase as IRemoteDragInfo);
         }
     }
 
@@ -5882,8 +5919,6 @@ export class FlowView extends ui.Component {
     // TODO: paragraph spanning changes and annotations
     // TODO: generalize this by using transform fwd
     private applyOp(delta: MergeTree.IMergeTreeOp, msg: ISequencedObjectMessage) {
-        const user = this.collabDocument.runtime.getQuorum().getMember(msg.clientId).client.user;
-
         // tslint:disable:switch-default
         switch (delta.type) {
             case MergeTree.MergeTreeDeltaType.INSERT:
@@ -5908,8 +5943,12 @@ export class FlowView extends ui.Component {
                         adjLength = len;
                     }
                 }
-
-                this.remotePresenceFromEdit(msg.clientId, user, msg.referenceSequenceNumber, delta.pos1, adjLength);
+                this.remotePresenceFromEdit(
+                    msg.clientId,
+                    this.collabDocument.getClient(msg.clientId).client.user,
+                    msg.referenceSequenceNumber,
+                    delta.pos1,
+                    adjLength);
                 this.updatePGInfo(delta.pos1);
                 if (adjLength > 1) {
                     this.updatePGInfo(delta.pos1 + adjLength);
@@ -5922,7 +5961,11 @@ export class FlowView extends ui.Component {
                 } else if (this.cursor.pos >= delta.pos1) {
                     this.cursor.pos = delta.pos1;
                 }
-                this.remotePresenceFromEdit(msg.clientId, user, msg.referenceSequenceNumber, delta.pos1);
+                this.remotePresenceFromEdit(
+                    msg.clientId,
+                    this.collabDocument.getClient(msg.clientId).client.user,
+                    msg.referenceSequenceNumber,
+                    delta.pos1);
                 this.updatePGInfo(delta.pos1);
                 return true;
             case MergeTree.MergeTreeDeltaType.GROUP: {

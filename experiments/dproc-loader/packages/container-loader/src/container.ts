@@ -524,7 +524,7 @@ export class Container extends EventEmitter {
             const flattened = flatten(previousContextState.entries, blobs);
             snapshotTree = buildHierarchy(flattened);
         } else {
-            snapshotTree = { blobs: {}, commits: {}, trees: {} };
+            snapshotTree = { sha: null, blobs: {}, commits: {}, trees: {} };
         }
 
         const attributes: IDocumentAttributes = {
@@ -802,7 +802,7 @@ export class Container extends EventEmitter {
                 const join = JSON.parse(systemJoinMessage.data) as IClientJoin;
                 // TODO this needs to be fixed
                 const member: ISequencedClient = {
-                    client: (systemJoinMessage as any).user,
+                    client: join.detail,
                     sequenceNumber: systemJoinMessage.sequenceNumber,
                 };
                 this.quorum.addMember(join.clientId, member);
