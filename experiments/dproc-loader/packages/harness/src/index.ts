@@ -1,8 +1,10 @@
 import * as sharedText from "@chaincode/shared-text";
+import { CollaborativeObject } from "@prague/api-definitions";
 import { IChaincodeFactory, ICodeLoader, IComponentRuntime } from "@prague/container-definitions";
 import { Container } from "@prague/container-loader";
 import { Loader } from "@prague/container-loader";
 import { WebPlatform } from "@prague/container-utils";
+import { CollaborativeMap, IMapView } from "@prague/map";
 import * as socketStorage from "@prague/socket-storage";
 import * as jwt from "jsonwebtoken";
 
@@ -39,13 +41,50 @@ async function initializeChaincode(document: Container, pkg: string): Promise<vo
     console.log(`Code is ${quorum.get("code2")}`);
 }
 
+function renderMap(view: IMapView) {
+    const div = document.getElementById("content");
+    div.innerHTML = "";
+
+    const dl = document.createElement("dl");
+    view.forEach((value, key) => {
+        const dt = document.createElement("dt");
+        const dd = document.createElement("dd");
+        dt.innerText = key;
+
+        if (value instanceof CollaborativeObject) {
+            dd.innerText = `${value.type}/${value.id}`;
+        } else {
+            try {
+                dd.innerText = JSON.stringify(value);
+            } catch {
+                dd.innerText = "!Circular";
+            }
+        }
+
+        dl.appendChild(dt).appendChild(dd);
+    });
+
+    div.appendChild(dl);
+}
+
 async function attach(loader: Loader, url: string, platform: LocalPlatform) {
     const response = await loader.request({ url });
 
-    if (response.status === 200) {
-        const componentP = response.value as Promise<IComponentRuntime>;
-        const component = await componentP;
-        component.attach(platform);
+    if (response.status !== 200) {
+        return;
+    }
+
+    switch (response.mimeType) {
+        case "prague/component":
+            const component = response.value as IComponentRuntime;
+            component.attach(platform);
+            break;
+        case "prague/dataType":
+            const dataType = response.value as CollaborativeMap;
+            const view = await dataType.getView();
+            renderMap(view);
+            dataType.on("valueChanged", (key) => renderMap(view));
+            break;
     }
 }
 

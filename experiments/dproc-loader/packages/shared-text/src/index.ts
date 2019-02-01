@@ -207,8 +207,19 @@ class SharedTextHost implements IChaincodeHost {
             const requestUrl = request.url.length > 0 && request.url.charAt(0) === "/"
                 ? request.url.substr(1)
                 : request.url;
-            const componentId = requestUrl ? requestUrl : "text";
-            return { status: 200, mimeType: "prague/component", value: runtime.getProcess(componentId, true) };
+            const trailingSlash = requestUrl.indexOf("/");
+
+            const componentId = requestUrl
+                ? requestUrl.substr(0, trailingSlash === -1 ? requestUrl.length : trailingSlash)
+                : "text";
+            const component = await runtime.getProcess(componentId, true);
+
+            // If there is a trailing slash forward to the component. Otherwise handle directly.
+            if (trailingSlash === -1) {
+                return { status: 200, mimeType: "prague/component", value: component };
+            } else {
+                return component.request({ url: requestUrl.substr(trailingSlash) });
+            }
         });
 
         this.doWork(context, runtime).catch((error) => {

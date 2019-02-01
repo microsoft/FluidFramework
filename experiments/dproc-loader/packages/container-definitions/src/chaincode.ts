@@ -55,6 +55,7 @@ export interface IDeltaHandler {
     process: (message: ISequencedDocumentMessage, local: boolean, context: any) => void;
     updateMinSequenceNumber: (value: number) => void;
     changeConnectionState(value: ConnectionState, clientId: string);
+    request(request: IRequest): Promise<IResponse>;
 }
 
 /**
@@ -104,6 +105,8 @@ export interface IComponentRuntime {
      * Allows for attachment to the given component
      */
     attach(platform: IComponentPlatform): Promise<IComponentPlatform>;
+
+    request(request: IRequest): Promise<IResponse>;
 }
 
 export interface IComponentContext {

@@ -1,4 +1,4 @@
-import { IComponentRuntime, IDeltaHandler, ILegacyRuntime } from "@prague/container-definitions";
+import { IComponentRuntime, IDeltaHandler, ILegacyRuntime, IRequest, IResponse } from "@prague/container-definitions";
 import {
     ConnectionState,
     FileMode,
@@ -219,6 +219,12 @@ export class ComponentHost extends EventEmitter implements IDeltaHandler, ILegac
 
     public getProcess(id: string, wait: boolean): Promise<IComponentRuntime> {
         return this.componentRuntime.getProcess(id, wait);
+    }
+
+    public async request(request: IRequest): Promise<IResponse> {
+        const id = request.url.substr(1);
+        const value = await this.getChannel(id);
+        return { mimeType: "prague/dataType", status: 200, value };
     }
 
     public getChannel(id: string): Promise<IChannel> {
