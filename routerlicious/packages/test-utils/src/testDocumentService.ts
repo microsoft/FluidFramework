@@ -17,7 +17,7 @@ class TestDocumentStorageService implements IDocumentStorageService {
         return "";
     }
 
-    public async getSnapshotTree(version: resources.ICommit): Promise<ISnapshotTree> {
+    public async getSnapshotTree(version?: resources.ICommit): Promise<ISnapshotTree> {
         return null;
     }
 

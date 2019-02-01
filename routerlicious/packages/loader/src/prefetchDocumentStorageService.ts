@@ -13,9 +13,9 @@ export class PrefetchDocumentStorageService implements IDocumentStorageService {
         return this.storage.repositoryUrl;
     }
 
-    public getSnapshotTree(version: ICommit): Promise<ISnapshotTree> {
+    public getSnapshotTree(version?: ICommit): Promise<ISnapshotTree> {
         const p = this.storage.getSnapshotTree(version);
-        if (this.prefetchEnabled) {
+        if (p && this.prefetchEnabled) {
             // We don't care if the prefetch succeed
             // tslint:disable-next-line:no-floating-promises
             p.then((tree: ISnapshotTree) => {

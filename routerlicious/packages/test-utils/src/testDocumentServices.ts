@@ -49,7 +49,7 @@ export class TestDocumentStorageService implements IDocumentStorageService {
         return "";
     }
 
-    public getSnapshotTree(version: git.ICommit): Promise<ISnapshotTree> {
+    public getSnapshotTree(version?: git.ICommit): Promise<ISnapshotTree> {
         throw new Error("Method not implemented.");
     }
 

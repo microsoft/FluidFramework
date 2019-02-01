@@ -65,7 +65,7 @@ class RuntimeStorageService implements IDocumentStorageService {
     }
 
     /* tslint:disable:promise-function-async */
-    public getSnapshotTree(version: ICommit): Promise<ISnapshotTree> {
+    public getSnapshotTree(version?: ICommit): Promise<ISnapshotTree> {
         return this.storageService.getSnapshotTree(version);
     }
 
@@ -286,18 +286,18 @@ export class Document extends EventEmitter {
         const storageP = this.service.connectToStorage(this.tenantId, this.id, this.tokenProvider).then(
             (storage) => storage ? new PrefetchDocumentStorageService(storage) : null);
 
-        // If a version is specified we will load it directly - otherwise will query historian for the latest
-        // version and then load it
-        const versionP = specifiedVersion
-            ? Promise.resolve(specifiedVersion)
-            : storageP.then(async (storage) => {
-                const versions = await storage.getVersions(this.id, 1);
-                return versions.length > 0 ? versions[0] : null;
-            });
-
         // Get the snapshot tree
-        const treeP = Promise.all([storageP, versionP]).then(
-            ([storage, version]) => version ? storage.getSnapshotTree(version) : null);
+        const treeP = storageP.then((storage) => storage.getSnapshotTree(specifiedVersion));
+
+        const versionP: Promise<ICommit> = specifiedVersion
+            ? Promise.resolve(specifiedVersion)
+            : treeP.then((tree) => {
+                if (tree) {
+                    const commit: Partial<ICommit> = { sha: tree.sha };
+                    return commit as ICommit;
+                }
+                return null;
+            });
 
         const attributesP = Promise.all([storageP, treeP]).then<IDocumentAttributes>(
             ([storage, tree]) => {
