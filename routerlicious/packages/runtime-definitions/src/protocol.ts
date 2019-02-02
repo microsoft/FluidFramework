@@ -254,6 +254,9 @@ export interface ITrace {
 export interface IHelpMessage {
 
     tasks: string[];
+
+    // Temporary version field for back-compat.
+    version?: string;
 }
 
 export interface IQueueMessage {
