@@ -74,17 +74,65 @@ export class WorkManager extends EventEmitter implements IWorkManager {
                     services);
                 await this.startTask(tenantId, documentId, workType, translationWork);
                 break;
-            case "chaincode":
-                const chaincodeWork = new ChaincodeWork(
-                    documentId,
+            case "chain-snapshot":
+                await this.startTask(
                     tenantId,
-                    user,
-                    tokenProvider,
-                    services,
-                    this.codeLoader,
-                    this.platformFactory);
-                await this.startTask(tenantId, documentId, workType, chaincodeWork);
+                    documentId,
+                    workType,
+                    new SnapshotWork(documentId, tenantId, user, tokenProvider, this.config, services));
                 break;
+            case "chain-intel":
+                await this.startTask(
+                    tenantId,
+                    documentId,
+                    workType,
+                    new IntelWork(documentId, tenantId, user, tokenProvider, this.config, services));
+                break;
+            case "chain-spell":
+                await this.loadSpellings().catch((err) => {
+                    this.events.emit(err);
+                });
+                if (this.dict) {
+                    await this.startTask(
+                        tenantId,
+                        documentId,
+                        workType,
+                        new SpellcheckerWork(
+                            documentId,
+                            tenantId,
+                            user,
+                            tokenProvider,
+                            this.config,
+                            this.dict,
+                            services));
+                }
+                break;
+            case "chain-translation":
+                await this.startTask(
+                    tenantId,
+                    documentId,
+                    workType,
+                    new TranslationWork(
+                        documentId,
+                        tenantId,
+                        user,
+                        tokenProvider,
+                        this.config,
+                        services));
+                break;
+            case "chaincode":
+                await this.startTask(
+                    tenantId,
+                    documentId,
+                    workType,
+                    new ChaincodeWork(
+                        documentId,
+                        tenantId,
+                        user,
+                        tokenProvider,
+                        services,
+                        this.codeLoader,
+                        this.platformFactory));
             default:
                 throw new Error(`Unknown work type: ${workType}`);
         }

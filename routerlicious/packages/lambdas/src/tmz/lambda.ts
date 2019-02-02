@@ -1,4 +1,4 @@
-import { IQueueMessage, ISequencedDocumentSystemMessage, MessageType } from "@prague/runtime-definitions";
+import { IHelpMessage, IQueueMessage, ISequencedDocumentSystemMessage, MessageType } from "@prague/runtime-definitions";
 import * as core from "@prague/services-core";
 import * as utils from "@prague/services-utils";
 import { RateLimitter } from "@prague/utils";
@@ -45,8 +45,14 @@ export class TmzLambda extends SequencedLambda {
                             helpContent = sequencedMessage.operation.contents.tasks;
                             helpContent = helpContent.indexOf("snapshot") === -1 ? [] : ["snapshot"];
                         } else {
+                            // Another back-compat to play well with older client.
                             // tslint:disable max-line-length
-                            helpContent = JSON.parse((sequencedMessage.operation as ISequencedDocumentSystemMessage).data).tasks;
+                            const helpMessage: IHelpMessage = JSON.parse((sequencedMessage.operation as ISequencedDocumentSystemMessage).data);
+                            if (helpMessage.version) {
+                                helpContent = helpMessage.tasks.map((task: string) => `chain-${task}`);
+                            } else {
+                                helpContent = helpMessage.tasks;
+                            }
                         }
                     }
 
