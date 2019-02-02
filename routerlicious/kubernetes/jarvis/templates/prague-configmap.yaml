@@ -96,7 +96,7 @@ data:
         "tmz": {
             "queues": ["paparazziQueue2", "augloopQueue2"],
             "permissions": {
-                "paparazziQueue": ["snapshot", "spell", "intel", "translation", "chaincode"],
+                "paparazziQueue": ["snapshot", "spell", "intel", "translation", "chain-snapshot", "chain-spell", "chain-intel", "chain-translation"],
                 "augloopQueue": ["augmentation"]
             }
         },
@@ -162,7 +162,7 @@ data:
             "blobStorageUrl": "{{ .Values.historian.externalUrl }}",
             "repository": "prague",
             "npm": "https://pragueauspkn-3873244262.azureedge.net",
-            "permission": ["snapshot", "spell", "intel", "translation", "chaincode"]
+            "permission": ["snapshot", "spell", "intel", "translation", "chain-snapshot", "chain-spell", "chain-intel", "chain-translation"]
         },
         "tenantConfig": [
             {
