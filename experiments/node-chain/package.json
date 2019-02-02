@@ -24,11 +24,10 @@
 		"typescript": "^3.2.2"
 	},
 	"dependencies": {
-		"@chaincode/simple": "0.0.14",
-		"@prague/loader": "^0.1.4493",
-		"@prague/map": "^0.1.4493",
-		"@prague/runtime-definitions": "^0.1.4493",
-		"@prague/socket-storage": "^0.1.4493",
+		"@prague/loader": "^0.1.4668",
+		"@prague/map": "^0.1.4668",
+		"@prague/runtime-definitions": "^0.1.4668",
+		"@prague/socket-storage": "^0.1.4668",
 		"@types/commander": "^2.12.2",
 		"@types/jsonwebtoken": "^8.3.0",
 		"@types/node": "^10.12.12",
