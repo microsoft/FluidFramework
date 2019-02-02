@@ -17,7 +17,7 @@ describe("DeltaStorageService", () => {
         const deltaStorageService = new DeltaStorageService(testDeltaStorageUrl, undefined);
         const actualDeltaUrl = deltaStorageService.buildUrl(2, 8);
         // tslint:disable-next-line:max-line-length
-        const expectedDeltaUrl = `${deltaStorageBasePath}/drives/testdrive/items/testitem/opStream?$filter=sequenceNumber%20ge%202%20and%20sequenceNumber%20le%208`;
+        const expectedDeltaUrl = `${deltaStorageBasePath}/drives/testdrive/items/testitem/opStream?$filter=sequenceNumber%20ge%203%20and%20sequenceNumber%20le%207`;
         assert.equal(actualDeltaUrl, expectedDeltaUrl, "The constructed delta url is invalid");
     });
 

@@ -178,9 +178,9 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
 
         // The MSN starts at the base the manager is initialized to
         this.baseSequenceNumber = sequenceNumber;
-        this.minSequenceNumber = this.baseSequenceNumber;
-        this.lastQueuedSequenceNumber = this.baseSequenceNumber;
-        this.largestSequenceNumber = this.baseSequenceNumber;
+        this.minSequenceNumber = sequenceNumber;
+        this.lastQueuedSequenceNumber = sequenceNumber;
+        this.largestSequenceNumber = sequenceNumber;
         this.handler = handler;
 
         // We are ready to process inbound messages
@@ -304,9 +304,11 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
             return;
         }
 
+        const maxFetchTo = from + MaxBatchDeltas;
+
         // Grab a chunk of deltas - limit the number fetched to MaxBatchDeltas
         const deltasP = this.deltaStorageP.then((deltaStorage) => {
-            const fetchTo = to === undefined ? MaxBatchDeltas : Math.min(from + MaxBatchDeltas, to);
+            const fetchTo = to === undefined ? maxFetchTo : Math.min(maxFetchTo, to);
             return deltaStorage.get(from, fetchTo);
         });
 
@@ -320,7 +322,7 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
                 // If we have no upper bound and fetched less than the max deltas - meaning we got as many as exit -
                 // then we can resolve the promise. We also resolve if we fetched up to the expected to. Otherwise
                 // we will look to try again
-                if ((to === undefined && Math.max(0, lastFetch - from - 1) < MaxBatchDeltas) || to === lastFetch + 1) {
+                if ((to === undefined && maxFetchTo !== lastFetch + 1) || to === lastFetch + 1) {
                     deferred.resolve(allDeltas);
                     return null;
                 } else {
