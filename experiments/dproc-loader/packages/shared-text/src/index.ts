@@ -5,13 +5,13 @@ import { Component, Document } from "@prague/app-component";
 import * as API from "@prague/client-api";
 import {
     IChaincodeComponent,
-    IChaincodeHost,
     IComponentPlatform,
     IComponentRuntime,
     IContext,
     IDeltaHandler,
     IHostRuntime,
     IRequest,
+    IChaincodeFactory,
 } from "@prague/container-definitions";
 import { ComponentHost } from "@prague/container-utils";
 import * as DistributedMap from "@prague/map";
@@ -157,7 +157,7 @@ class SharedText extends Document {
     }
 }
 
-class SharedTextHost implements IChaincodeHost {
+class SharedTextHost implements IChaincodeFactory {
     public async getModule(type: string) {
         switch (type) {
             case "@chaincode/charts":
@@ -179,7 +179,7 @@ class SharedTextHost implements IChaincodeHost {
 
     // I believe that runtime needs to have everything necessary for this thing to actually load itself once this
     // method is called
-    public async run(context: IContext): Promise<IPlatform> {
+    public async instantiateContainer(context: IContext): Promise<IPlatform> {
         const runtime = await Runtime.Load(
             context.tenantId,
             context.id,
@@ -189,7 +189,6 @@ class SharedTextHost implements IChaincodeHost {
             context.clientId,
             context.user,
             context.blobManager,
-            context.chaincode,
             context.deltaManager,
             context.quorum,
             context.storage,
@@ -229,7 +228,7 @@ class SharedTextHost implements IChaincodeHost {
         return runtime;
     }
 
-    public async doWork(context: IContext, runtime: IHostRuntime) {
+    private async doWork(context: IContext, runtime: IHostRuntime) {
         if (!runtime.existing) {
             await runtime.createAndAttachProcess("text", "@chaincode/shared-text");
         }
@@ -293,13 +292,6 @@ export class SharedTextComponent implements IChaincodeComponent {
         const entries = this.component.snapshotInternal();
         return { entries };
     }
-}
-
-/**
- * Instantiates a new chaincode component
- */
-export async function instantiateComponent(): Promise<IChaincodeComponent> {
-    return new SharedTextComponent();
 }
 
 /**

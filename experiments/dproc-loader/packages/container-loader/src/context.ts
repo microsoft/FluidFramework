@@ -1,6 +1,6 @@
 import {
     ConnectionState,
-    IChaincodeHost,
+    IChaincodeFactory,
     IComponentContext,
     IContext,
     IDocumentAttributes,
@@ -22,16 +22,17 @@ import { DeltaManager } from "./deltaManager";
 export class Context implements IContext {
     public static async Load(
         container: Container,
-        chaincode: IChaincodeHost,                  // pass directly
-        baseSnapshot: ISnapshotTree,                // pass directly
-        blobs: Map<string, string>,                 // pass directly or combine with driver
-        attributes: IDocumentAttributes,            // Potentially can be reloaded from snapshot
-        blobManager: BlobManager,                   // inherit and/or limit
-        deltaManager: DeltaManager,                 // inherit and/or limit
-        quorum: IQuorum,                            // inherit and/or limit
-        storage: IDocumentStorageService,           // inherit and/or limit
-        submitFn: (type: MessageType, contents: any) => void,   // Following three are used to restrict access after
-        snapshotFn: (message: string) => Promise<void>,         // a context transition
+        chaincode: IChaincodeFactory,
+        baseSnapshot: ISnapshotTree,
+        blobs: Map<string, string>,
+        attributes: IDocumentAttributes,
+        blobManager: BlobManager,
+        deltaManager: DeltaManager,
+        quorum: IQuorum,
+        storage: IDocumentStorageService,
+        errorFn: (err: any) => void,
+        submitFn: (type: MessageType, contents: any) => void,
+        snapshotFn: (message: string) => Promise<void>,
         closeFn: () => void,                        // When would the context ever close?
     ): Promise<Context> {
         const context = new Context(
@@ -44,6 +45,7 @@ export class Context implements IContext {
             deltaManager,
             quorum,
             storage,
+            errorFn,
             submitFn,
             snapshotFn,
             closeFn);
@@ -101,7 +103,7 @@ export class Context implements IContext {
 
     constructor(
         private container: Container,
-        public readonly chaincode: IChaincodeHost,
+        public readonly chaincode: IChaincodeFactory,
         public readonly baseSnapshot: ISnapshotTree,
         public readonly blobs: Map<string, string>,
         private readonly attributes: IDocumentAttributes,
@@ -109,6 +111,7 @@ export class Context implements IContext {
         public readonly deltaManager: DeltaManager,
         public readonly quorum: IQuorum,
         public readonly storage: IDocumentStorageService,
+        private readonly errorFn: (err: any) => void,
         public readonly submitFn: (type: MessageType, contents: any) => void,
         public readonly snapshotFn: (message: string) => Promise<void>,
         public readonly closeFn: () => void,
@@ -192,11 +195,11 @@ export class Context implements IContext {
     }
 
     public error(err: any): void {
-        throw new Error("Not implemented");
+        this.errorFn(err);
     }
 
     private async load() {
-        this.contextPlatform = await this.chaincode.run(this);
+        this.contextPlatform = await this.chaincode.instantiateContainer(this);
         this.componentContext = await this.contextPlatform.queryInterface<IComponentContext>("context");
     }
 }

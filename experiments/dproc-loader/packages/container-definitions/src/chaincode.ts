@@ -136,7 +136,6 @@ export interface IContext {
     readonly connectionState: ConnectionState;
     readonly branch: string;
     readonly minimumSequenceNumber: number;
-    readonly chaincode: IChaincodeHost;
     readonly baseSnapshot: ISnapshotTree;
     readonly blobs: Map<string, string>;
     readonly submitFn: (type: MessageType, contents: any) => void;
@@ -163,7 +162,6 @@ export interface IHostRuntime {
     readonly connectionState: ConnectionState;
     readonly branch: string;
     readonly minimumSequenceNumber: number;
-    readonly chaincode: IChaincodeHost;
     readonly submitFn: (type: MessageType, contents: any) => void;
     readonly snapshotFn: (message: string) => Promise<void>;
     readonly closeFn: () => void;
@@ -183,45 +181,6 @@ export interface IHostRuntime {
     error(err: any): void;
 }
 
-export interface IChaincodeHost {
-    /**
-     * Retrieves the module by type name.
-     */
-    getModule(type: string): Promise<any>;
-
-    /**
-     * Stops the instantiated chaincode from running
-     */
-    close(): Promise<void>;
-
-    /**
-     * Invoked once the chaincode has been fully instantiated on the document. Run returns a platform
-     * interface that can be used to access the running component.
-     */
-    // When loading multiple of these the platform is interesting. Is this something that gets attached as opposed
-    // to returned? Is there then a detach call?
-    run(context: IContext): Promise<IPlatform>;
-}
-
-/**
- * Exported module definition
- */
-export interface IChaincodeFactory {
-    // We're really loading an instruction set into our CPU. Does that give better names?
-    // The base thing preps the instruction set loader. Then each component delay loads aspects of it.
-
-    /**
-     * Instantiates a new chaincode component
-     */
-    // Very possible this isn't required
-    instantiateComponent(): Promise<IChaincodeComponent>;
-
-    /**
-     * Instantiates a new chaincode host
-     */
-    instantiateHost(): Promise<IChaincodeHost>;
-}
-
 export interface IChannel {
     /**
      * A readonly identifier for the collaborative object
@@ -239,4 +198,14 @@ export interface IChannel {
     transform(message: IObjectMessage, sequenceNumber: number): IObjectMessage;
 
     isLocal(): boolean;
+}
+
+/**
+ * Exported module definition
+ */
+export interface IChaincodeFactory {
+    /**
+     * Instantiates a new chaincode container
+     */
+    instantiateContainer(context: IContext): Promise<IPlatform>;
 }

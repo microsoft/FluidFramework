@@ -1,5 +1,4 @@
 import {
-    IChaincodeHost,
     IComponentContext,
     IComponentRuntime,
     IHostRuntime,
@@ -33,6 +32,8 @@ import { debug } from "./debug";
 
 // Context will define the component level mappings
 export class Runtime extends EventEmitter implements IComponentContext, IHostRuntime, IPlatform {
+    // TODO Runtime should have a component registry. Type -> component.
+
     public static async Load(
         tenantId: string,
         id: string,
@@ -42,7 +43,6 @@ export class Runtime extends EventEmitter implements IComponentContext, IHostRun
         clientId: string,
         user: IUser,
         blobManager: IBlobManager,
-        chaincode: IChaincodeHost,
         deltaManager: IDeltaManager,
         quorum: IQuorum,
         storage: IDocumentStorageService,
@@ -66,7 +66,6 @@ export class Runtime extends EventEmitter implements IComponentContext, IHostRun
             blobManager,
             deltaManager,
             quorum,
-            chaincode,
             storage,
             connectionState,
             branch,
@@ -132,7 +131,6 @@ export class Runtime extends EventEmitter implements IComponentContext, IHostRun
         public readonly blobManager: IBlobManager,
         public readonly deltaManager: IDeltaManager,
         private quorum: IQuorum,
-        public readonly chaincode: IChaincodeHost,
         public readonly storage: IDocumentStorageService,
         // tslint:disable-next-line:variable-name
         private _connectionState: ConnectionState,
@@ -165,7 +163,6 @@ export class Runtime extends EventEmitter implements IComponentContext, IHostRun
             this.user,
             this.blobManager,
             details.pkg,
-            this.chaincode,
             this.deltaManager,
             this.quorum,
             runtimeStorage,
@@ -358,7 +355,6 @@ export class Runtime extends EventEmitter implements IComponentContext, IHostRun
             this.user,
             this.blobManager,
             pkg,
-            this.chaincode,
             this.deltaManager,
             this.quorum,
             runtimeStorage,
@@ -490,7 +486,6 @@ export class Runtime extends EventEmitter implements IComponentContext, IHostRun
             this.user,
             this.blobManager,
             attachMessage.type,
-            this.chaincode,
             this.deltaManager,
             this.quorum,
             runtimeStorage,

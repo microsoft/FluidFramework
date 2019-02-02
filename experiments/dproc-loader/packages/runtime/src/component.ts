@@ -1,6 +1,5 @@
 import {
     IChaincodeComponent,
-    IChaincodeHost,
     IComponentPlatform,
     IComponentRuntime,
     IDeltaHandler,
@@ -30,6 +29,8 @@ import {
 import { EventEmitter } from "events";
 import { ChannelDeltaConnection } from "./channelDeltaConnection";
 
+// tslint:disable:no-unsafe-any
+
 export interface IChannelState {
     object: IChannel;
     storage: IObjectStorageService;
@@ -48,7 +49,6 @@ export class Component extends EventEmitter implements IComponentRuntime, IProce
         user: IUser,
         blobManager: IBlobManager,
         pkg: string,
-        chaincode: IChaincodeHost,
         deltaManager: IDeltaManager,
         quorum: IQuorum,
         storage: IDocumentStorageService,
@@ -59,7 +59,8 @@ export class Component extends EventEmitter implements IComponentRuntime, IProce
         snapshotFn: (message: string) => Promise<void>,
         closeFn: () => void,
     ) {
-        const module = (await chaincode.getModule(pkg)) as { instantiateComponent: () => Promise<IChaincodeComponent>};
+        // (await chaincode.getModule(pkg)) as { instantiateComponent: () => Promise<IChaincodeComponent>};
+        const module = { instantiateComponent: () => null };
         const extension = await module.instantiateComponent();
 
         const component = new Component(
@@ -100,7 +101,6 @@ export class Component extends EventEmitter implements IComponentRuntime, IProce
         user: IUser,
         blobManager: IBlobManager,
         pkg: string,
-        chaincode: IChaincodeHost,
         deltaManager: IDeltaManager,
         quorum: IQuorum,
         storage: IDocumentStorageService,
@@ -112,7 +112,8 @@ export class Component extends EventEmitter implements IComponentRuntime, IProce
         snapshotFn: (message: string) => Promise<void>,
         closeFn: () => void,
     ): Promise<Component> {
-        const module = (await chaincode.getModule(pkg)) as { instantiateComponent: () => Promise<IChaincodeComponent>};
+        // (await chaincode.getModule(pkg)) as { instantiateComponent: () => Promise<IChaincodeComponent>};
+        const module = { instantiateComponent: () => null };
         const extension = await module.instantiateComponent();
 
         const component = new Component(

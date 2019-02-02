@@ -1,7 +1,7 @@
 import {
     ConnectionState,
     FileMode,
-    IChaincodeHost,
+    IChaincodeFactory,
     IChunkedOp,
     IClientJoin,
     ICodeLoader,
@@ -312,8 +312,7 @@ export class Container extends EventEmitter {
             ([attributes, storage, tree]) => this.loadQuorum(attributes, storage, tree));
 
         // ...instantiate the chaincode defined on the document
-        const chaincodeP = Promise.all([quorumP, treeP, versionP]).then(
-            ([quorum, tree, version]) => this.loadCodeFromQuorum(quorum, tree, version));
+        const chaincodeP = quorumP.then((quorum) => this.loadCodeFromQuorum(quorum));
 
         const blobManagerP = Promise.all([storageP, treeP]).then(
             ([storage, tree]) => this.loadBlobManager(storage, tree));
@@ -365,6 +364,7 @@ export class Container extends EventEmitter {
                     this._deltaManager,
                     this.quorum,
                     storageService,
+                    (err) => debug("Context error", err),
                     (type, contents) => this.submitMessage(type, contents),
                     (message) => this.snapshot(message),
                     () => this.close());
@@ -548,6 +548,7 @@ export class Container extends EventEmitter {
             this._deltaManager,
             this.quorum,
             this.storageService,
+            (err) => debug("Context error", err),
             (type, contents) => this.submitMessage(type, contents),
             (message) => this.snapshot(message),
             () => this.close());
@@ -557,15 +558,9 @@ export class Container extends EventEmitter {
         this.emit("contextChanged", this.pkg);
     }
 
-    private async loadCodeFromQuorum(
-        quorum: Quorum,
-        tree: ISnapshotTree,
-        version: ICommit): Promise<{ pkg: string, chaincode: IChaincodeHost }> {
-
-        let chaincode: IChaincodeHost;
-
+    private async loadCodeFromQuorum(quorum: Quorum): Promise<{ pkg: string, chaincode: IChaincodeFactory }> {
         const pkg = quorum.has("code2") ? quorum.get("code2") : null;
-        chaincode = await this.loadCode(pkg);
+        const chaincode = await this.loadCode(pkg);
 
         return { chaincode, pkg };
     }
@@ -573,11 +568,8 @@ export class Container extends EventEmitter {
     /**
      * Loads the code for the provided package
      */
-    private async loadCode(pkg: string): Promise<IChaincodeHost> {
-        const module = pkg ? await this.codeLoader.load(pkg) : nullPackage;
-        const chaincode = await module.instantiateHost();
-
-        return chaincode;
+    private async loadCode(pkg: string): Promise<IChaincodeFactory> {
+        return pkg ? this.codeLoader.load(pkg) : nullPackage;
     }
 
     private connect(attributesP: Promise<IDocumentAttributes>): IConnectResult {
