@@ -206,7 +206,7 @@ function generateGraphData(document: api.Document): IGraph {
 }
 
 function getLeaderId(clients: Map<string, ISequencedClient>) {
-    const leader = api.getLeaderCandidate(clients);
+    const leader = getLeaderCandidate(clients);
     return leader;
 }
 
@@ -244,4 +244,18 @@ function sameGraph(prev: IGraph, curr: IGraph) {
     }
 
     return true;
+}
+
+function getLeaderCandidate(clients: Map<string, ISequencedClient>) {
+    const browserClients = [...clients].filter((client) => !isRobot(client[1]));
+    if (browserClients.length > 0) {
+        const candidate = browserClients.reduce((prev, curr) => {
+            return prev[1].sequenceNumber < curr[1].sequenceNumber ? prev : curr;
+        });
+        return candidate[0];
+    }
+}
+
+function isRobot(client: ISequencedClient): boolean {
+    return client.client && client.client.type !== Browser;
 }

@@ -42,7 +42,6 @@ export function getLeaderCandidate(clients: Map<string, ISequencedClient>) {
         });
         return candidate[0];
     }
-
 }
 
 function isRobot(client: ISequencedClient): boolean {
