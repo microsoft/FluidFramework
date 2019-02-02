@@ -1,4 +1,4 @@
-import { IComponentRuntime, IDeltaHandler, ILegacyRuntime } from "@prague/container-definitions";
+import { IComponentRuntime, IDeltaHandler, ILegacyRuntime, IRequest, IResponse } from "@prague/container-definitions";
 import {
     ConnectionState,
     FileMode,
@@ -54,7 +54,6 @@ export class ComponentHost extends EventEmitter implements IDeltaHandler, ILegac
         tenantId: string,
         documentId: string,
         id: string,
-        platform: IPlatform,
         parentBranch: string,
         existing: boolean,
         options: any,
@@ -128,7 +127,7 @@ export class ComponentHost extends EventEmitter implements IDeltaHandler, ILegac
         }
 
         // Start the runtime
-        await runtime.start(platform);
+        await runtime.start();
 
         return runtime;
     }
@@ -222,6 +221,12 @@ export class ComponentHost extends EventEmitter implements IDeltaHandler, ILegac
         return this.componentRuntime.getProcess(id, wait);
     }
 
+    public async request(request: IRequest): Promise<IResponse> {
+        const id = request.url.substr(1);
+        const value = await this.getChannel(id);
+        return { mimeType: "prague/dataType", status: 200, value };
+    }
+
     public getChannel(id: string): Promise<IChannel> {
         this.verifyNotClosed();
 
@@ -285,9 +290,9 @@ export class ComponentHost extends EventEmitter implements IDeltaHandler, ILegac
         await Promise.all(Array.from(this.channels.values()).map((value) => value.object.ready()));
     }
 
-    public async start(platform: IPlatform): Promise<void> {
+    public async start(): Promise<void> {
         this.verifyNotClosed();
-        this._platform = await this.chaincode.run(this, platform);
+        this._platform = await this.chaincode.run(this, null);
     }
 
     public changeConnectionState(value: ConnectionState, clientId: string) {

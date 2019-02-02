@@ -1,6 +1,6 @@
 import { ICommit } from "@prague/gitresources";
 import * as loader from "@prague/loader";
-import { IDocumentService, ITokenProvider, IUser  } from "@prague/runtime-definitions";
+import { IDocumentService, ITokenProvider } from "@prague/runtime-definitions";
 import chalk from "chalk";
 import { WebLoader } from "./webLoader";
 import { WebPlatformFactory } from "./webPlatform";
@@ -18,7 +18,6 @@ export async function proposeChaincode(document: loader.Document, chaincode: str
 export async function run(
     id: string,
     tenantId: string,
-    user: IUser,
     tokenProvider: ITokenProvider,
     options: any,
     reject: boolean,
@@ -34,7 +33,6 @@ export async function run(
     const documentP = loader.load(
         id,
         tenantId,
-        user,
         tokenProvider,
         { blockUpdateMarkers: true },
         webPlatformFactory,

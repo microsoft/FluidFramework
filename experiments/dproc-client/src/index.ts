@@ -5,15 +5,15 @@ import {
 import * as loader from "@prague/container-loader";
 import {
     IDocumentService,
-    IPlatform,
-    IPlatformFactory,
+    // IPlatform,
+    // IPlatformFactory,
     ITokenProvider,
     IUser,
 } from "@prague/runtime-definitions";
 import * as driver from "@prague/socket-storage";
 import chalk from "chalk";
 import * as commander from "commander";
-import { EventEmitter } from "events";
+// import { EventEmitter } from "events";
 import * as jwt from "jsonwebtoken";
 import * as ora from "ora";
 import * as process from "process";
@@ -30,17 +30,17 @@ class TestCodeLoader implements ICodeLoader {
     }
 }
 
-class NodePlatform extends EventEmitter implements IPlatform {
-    public async queryInterface<T>(id: string): Promise<any> {
-        return null;
-    }
-}
+// class NodePlatform extends EventEmitter implements IPlatform {
+//     public async queryInterface<T>(id: string): Promise<any> {
+//         return null;
+//     }
+// }
 
-class NodePlatformFactory implements IPlatformFactory {
-    public async create(): Promise<IPlatform> {
-        return new NodePlatform();
-    }
-}
+// class NodePlatformFactory implements IPlatformFactory {
+//     public async create(): Promise<IPlatform> {
+//         return new NodePlatform();
+//     }
+// }
 
 async function readlineAsync(input: readline.ReadLine, prompt: string): Promise<string> {
     return new Promise<string>((resolve) => {
@@ -58,18 +58,16 @@ async function run(
     reject: boolean,
     documentServices: IDocumentService,
 ): Promise<void> {
-    const platformFactory = new NodePlatformFactory();
     const documentP = loader.load(
         `prague://${encodeURIComponent(tenantId)}/${encodeURIComponent(id)}`,
-        options,
         { tokenProvider, user },
-        platformFactory,
         documentServices,
-        new TestCodeLoader());
+        new TestCodeLoader(),
+        options);
     ora.promise(documentP, `Loading ${tenantId}/${id}`);
     const document = await documentP;
 
-    const quorum = document.getQuorum();
+    const quorum = document.value.getQuorum();
     console.log(chalk.yellow("Initial clients"), chalk.bgBlue(JSON.stringify(Array.from(quorum.getMembers()))));
     quorum.on("addMember", (clientId, details) => console.log(chalk.bgBlue(`${clientId} joined`)));
     quorum.on("removeMember", (clientId) => console.log(chalk.bgBlue(`${clientId} left`)));

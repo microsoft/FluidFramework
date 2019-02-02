@@ -1,13 +1,21 @@
-import * as runtime from "@prague/runtime-definitions";
+import {
+    IClient,
+    IContentMessage,
+    IDocumentDeltaConnection,
+    IDocumentMessage,
+    IDocumentService,
+    INack,
+    ISequencedDocumentMessage,
+    ITokenProvider,
+} from "@prague/container-definitions";
 import { EventEmitter } from "events";
 
 export interface IConnectionDetails {
     clientId: string;
     existing: boolean;
     parentBranch: string;
-    user: runtime.IUser;
-    initialMessages?: runtime.ISequencedDocumentMessage[];
-    initialContents?: runtime.IContentMessage[];
+    initialMessages?: ISequencedDocumentMessage[];
+    initialContents?: IContentMessage[];
     maxMessageSize: number;
 }
 
@@ -15,9 +23,9 @@ export class DeltaConnection extends EventEmitter {
     public static async Connect(
         tenantId: string,
         id: string,
-        tokenProvider: runtime.ITokenProvider,
-        service: runtime.IDocumentService,
-        client: runtime.IClient) {
+        tokenProvider: ITokenProvider,
+        service: IDocumentService,
+        client: IClient) {
         const connection = await service.connectToDeltaStream(tenantId, id, tokenProvider, client);
         return new DeltaConnection(connection);
     }
@@ -40,7 +48,7 @@ export class DeltaConnection extends EventEmitter {
     private _connected = true;
     // tslint:enable:variable-name
 
-    private constructor(private connection: runtime.IDocumentDeltaConnection) {
+    private constructor(private connection: IDocumentDeltaConnection) {
         super();
 
         this._details = {
@@ -50,19 +58,18 @@ export class DeltaConnection extends EventEmitter {
             initialMessages: connection.initialMessages,
             maxMessageSize: connection.maxMessageSize,
             parentBranch: connection.parentBranch,
-            user: connection.user,
         };
 
         // listen for new messages
-        connection.on("op", (documentId: string, messages: runtime.ISequencedDocumentMessage[]) => {
+        connection.on("op", (documentId: string, messages: ISequencedDocumentMessage[]) => {
             this.emit("op", documentId, messages);
         });
 
-        connection.on("op-content", (message: runtime.IContentMessage) => {
+        connection.on("op-content", (message: IContentMessage) => {
             this.emit("op-content", message);
         });
 
-        connection.on("nack", (documentId: string, message: runtime.INack[]) => {
+        connection.on("nack", (documentId: string, message: INack[]) => {
             // Mark nacked and also pause any outbound communication
             this._nacked = true;
             const target = message[0].sequenceNumber;
@@ -89,11 +96,11 @@ export class DeltaConnection extends EventEmitter {
         this.removeAllListeners();
     }
 
-    public submit(message: runtime.IDocumentMessage): void {
+    public submit(message: IDocumentMessage): void {
         this.connection.submit(message);
     }
 
-    public async submitAsync(message: runtime.IDocumentMessage): Promise<void> {
+    public async submitAsync(message: IDocumentMessage): Promise<void> {
         return this.connection.submitAsync(message);
     }
 }

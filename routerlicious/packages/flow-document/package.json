@@ -11,7 +11,8 @@
     "build:full": "webpack --env=\"production\"",
     "dev": "webpack --env=\"development\" --watch",
     "publish-local": "npm publish --registry http://localhost:4873",
-    "publish-patch-local": "npm version patch && npm run publish-local"
+    "publish-patch-local": "npm version patch && npm run publish-local",
+    "publish-wu2": "npm run build && npm publish --registry https://packages.wu2.prague.office-int.com"
   },
   "devDependencies": {
     "source-map-loader": "^0.2.4",

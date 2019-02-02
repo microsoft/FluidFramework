@@ -61,7 +61,7 @@ export async function run(
 
     // Load in the latest and connect to the document
     const tokenThing = new socketStorage.TokenProvider(token);
-    const collabDoc = await api.load(id, tenantId, { id: "test" }, tokenThing, { blockUpdateMarkers: true, token });
+    const collabDoc = await api.load(id, tenantId, tokenThing, { blockUpdateMarkers: true, token });
     const rootView = await collabDoc.getRoot().getView();
     if (!collabDoc.isConnected) {
         await new Promise<void>((resolve) => collabDoc.once("connected", () => resolve()));

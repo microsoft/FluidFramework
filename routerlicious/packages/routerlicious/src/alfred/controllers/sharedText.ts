@@ -118,7 +118,6 @@ async function loadDocument(
     const collabDoc = await API.load(
         id,
         claims.tenantId,
-        claims.user,
         tokenProvider,
         { blockUpdateMarkers: true, client: config.client },
         version,

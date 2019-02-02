@@ -237,7 +237,6 @@ async function setMetrics(doc: api.Document, token: string) {
     const metricsDoc = await api.load(
         `${doc.id}-metrics`,
         doc.tenantId,
-        doc.getUser(),
         new socketStorage.TokenProvider(token),
         { });
     const root = await metricsDoc.getRoot().getView();
@@ -333,11 +332,11 @@ export async function typeFile(
 
         for (let i = 1; i < writers; i++ ) {
             const tokenProvider = new socketStorage.TokenProvider(documentToken);
-            docList.push(await api.load(doc.id, doc.tenantId, doc.getUser(), tokenProvider, { }));
+            docList.push(await api.load(doc.id, doc.tenantId, tokenProvider, { }));
             ssList.push(await docList[i].getRoot().get("text") as Sequence.SharedString);
             author = {
                 ackCounter: new Counter(),
-                doc: await api.load(doc.id, doc.tenantId, doc.getUser(), tokenProvider, { }),
+                doc: await api.load(doc.id, doc.tenantId, tokenProvider, { }),
                 latencyCounter: new Counter(),
                 metrics: clone(m),
                 pingCounter: new Counter(),

@@ -6,7 +6,6 @@ import { IQuorum } from "./consensus";
 import { IDeltaManager } from "./deltas";
 import { IPlatform } from "./platform";
 import { ISequencedDocumentMessage, MessageType } from "./protocol";
-import { IUser } from "./users";
 
 /**
  * Message handler definition
@@ -27,8 +26,6 @@ export interface IRuntime extends EventEmitter {
     readonly options: any;
 
     readonly clientId: string;
-
-    readonly user: IUser;
 
     readonly parentBranch: string;
 

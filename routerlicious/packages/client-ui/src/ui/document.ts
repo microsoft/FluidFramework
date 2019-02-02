@@ -2,7 +2,7 @@ import { Block, BoxState } from "@prague/app-ui";
 import { getChaincodeRepo, getDefaultCredentials, getDefaultDocumentService } from "@prague/client-api";
 import * as loader from "@prague/loader";
 import { proposeChaincode, WebLoader, WebPlatform } from "@prague/loader-web";
-import { IPlatform, IPlatformFactory, IRuntime, IUser } from "@prague/runtime-definitions";
+import { IPlatform, IPlatformFactory, IRuntime } from "@prague/runtime-definitions";
 import { TokenProvider } from "@prague/socket-storage";
 import { EventEmitter } from "events";
 import * as jwt from "jsonwebtoken";
@@ -152,7 +152,6 @@ export class Document extends Block<DocumentState> {
 
         // TODO also something that shouldn't be direclty exposed
         const credentials = getDefaultCredentials();
-        const user: IUser = { id: "loader-client" };
         const token = jwt.sign(
             {
                 documentId: self.id,
@@ -176,7 +175,6 @@ export class Document extends Block<DocumentState> {
         const documentP = loader.load(
             self.id,
             credentials.tenant,
-            user,
             tokenProvider,
             { blockUpdateMarkers: true },
             platformFactory,

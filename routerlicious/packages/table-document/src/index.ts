@@ -1,4 +1,15 @@
-import { UnboxedOper, Workbook, ResultKind, ReadOper } from "@prague/client-ui/ext/calc";
+import { 
+    UnboxedOper,
+    Workbook,
+    ResultKind,
+    ReadOper,
+    Result,
+    FailureReason,
+    NotImplemented,
+    NotFormulaString,
+    IllFormedFormula,
+    EvalFormulaPaused
+} from "@prague/client-ui/ext/calc";
 import { MapExtension, IMapView, registerDefaultValueType,  } from "@prague/map";
 import { SharedString, CollaborativeStringExtension } from "@prague/sequence";
 import { Component } from "@prague/app-component";
@@ -12,6 +23,8 @@ import {
 
 const loadCellTextSym = Symbol("TableDocument.loadCellText");
 const storeCellTextSym = Symbol("TableDocument.storeCellText");
+
+type EvaluationResult = Result<ReadOper, FailureReason | NotImplemented | NotFormulaString | IllFormedFormula> | EvalFormulaPaused;
 
 class WorkbookAdapter extends Workbook {
     // TODO: Our base class has a bug that calls 'storeCellText' during init(), overwriting
@@ -105,26 +118,31 @@ export class TableDocument extends Component {
     public get numCols() { return Math.min(this.rootView.get("stride").value, this.length); }
     public get numRows() { return Math.floor(this.length / this.numCols); }
 
-    private parseResult(input: ReadOper): string | number | boolean {
-        switch(typeof input) {
-            case "string":
-            case "number":
-            case "boolean":
-                return input;
-
+    private parseResult(result: EvaluationResult): string | number | boolean {
+        switch (result.kind) {
+            case ResultKind.Success: {
+                const value = result.value;
+                switch(typeof value) {
+                    case "string":
+                    case "number":
+                    case "boolean":
+                        return value;
+        
+                    default:
+                        return this.workbook.serialiseValue(value);
+                }
+            }
             default:
-                return this.workbook.serialiseValue(input);
+                return result.reason.toString();
         }
     }
 
     public evaluateCell(row: number, col: number) {
-        const result = this.workbook.evaluateCell(row, col);
-        switch (result.kind) {
-            case ResultKind.Success:
-                return this.parseResult(result.value);
-            default:
-                return result.reason.toString();
-        }
+        return this.parseResult(this.workbook.evaluateCell(row, col));
+    }
+
+    public evaluateFormula(formula: string) {
+        return this.parseResult(this.workbook.evaluateFormulaText(formula, 0, 0));
     }
 
     private rowColToPosition(row: number, col: number) {

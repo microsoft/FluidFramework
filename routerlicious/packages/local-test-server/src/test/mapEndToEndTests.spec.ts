@@ -36,13 +36,13 @@ describe.skip("Map", () => {
         const tokenProvider1 = new socketStorage.TokenProvider(utils.generateToken(tenatId, id, tokenKey));
         const tokenProvider2 = new socketStorage.TokenProvider(utils.generateToken(tenatId, id, tokenKey));
         const tokenProvider3 = new socketStorage.TokenProvider(utils.generateToken(tenatId, id, tokenKey));
-        user1Document = await api.load(id, tenatId, undefined, tokenProvider1, {}, null, true, documentService);
+        user1Document = await api.load(id, tenatId, tokenProvider1, {}, null, true, documentService);
         documentDeltaEventManager.registerDocuments(user1Document);
 
-        user2Document = await api.load(id, tenatId, undefined, tokenProvider2, {}, null, true, documentService);
+        user2Document = await api.load(id, tenatId, tokenProvider2, {}, null, true, documentService);
         documentDeltaEventManager.registerDocuments(user2Document);
 
-        user3Document = await api.load(id, tenatId, undefined, tokenProvider3, {}, null, true, documentService);
+        user3Document = await api.load(id, tenatId, tokenProvider3, {}, null, true, documentService);
         documentDeltaEventManager.registerDocuments(user3Document);
         rootView1 = await user1Document.getRoot().getView();
         rootView2 = await user2Document.getRoot().getView();

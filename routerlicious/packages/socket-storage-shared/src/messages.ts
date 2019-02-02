@@ -1,4 +1,4 @@
-import { IClient, IContentMessage, ISequencedDocumentMessage, IUser } from "@prague/runtime-definitions";
+import { IClient, IContentMessage, ISequencedDocumentMessage } from "@prague/runtime-definitions";
 
 /**
  * Message sent to connect to the given object
@@ -23,9 +23,6 @@ export interface IConnect {
  * TODO Is the below a connection to the actual Kafka stream?
  */
 export interface IConnected {
-    // The user who is sending the message
-    user: IUser;
-
     // The client who is sending the message
     clientId: string;
 

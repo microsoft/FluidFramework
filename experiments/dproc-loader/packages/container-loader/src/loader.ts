@@ -1,58 +1,92 @@
-import { ICodeLoader, IContainerHost } from "@prague/container-definitions";
-import { ICommit } from "@prague/gitresources";
-import { IDocumentService, IPlatformFactory } from "@prague/runtime-definitions";
+import {
+    ICodeLoader,
+    IDocumentService,
+    IHost,
+    IRequest,
+    IResponse,
+} from "@prague/container-definitions";
+import { EventEmitter } from "events";
 // tslint:disable-next-line:no-var-requires
 const now = require("performance-now") as () => number;
+import { parse } from "url";
 import { Container } from "./container";
 import { debug } from "./debug";
 
+interface IParsedUrl {
+    id: string;
+    path: string;
+}
+
 /**
- * Loads a new component
+ * Manages Prague resource loading
  */
-export async function load(
-    uri: string,
-    options: any,
-    containerHost: IContainerHost,
-    platform: IPlatformFactory,
-    documentService: IDocumentService,
-    codeLoader: ICodeLoader,
-    specifiedVersion: ICommit = null,
-    connect = true,
-): Promise<Container> {
-    debug(`Container loading: ${now()} `);
+export class Loader extends EventEmitter {
+    private containers = new Map<string, Promise<Container>>();
 
-    // Verify we have services to load the document with
+    constructor(
+        private readonly containerHost: IHost,
+        private readonly documentService: IDocumentService,
+        private readonly codeLoader: ICodeLoader,
+        private readonly options: any,
+    ) {
+        super();
 
-    if (!containerHost) {
-        return Promise.reject("An IContainerHost must be provided");
+        if (!containerHost) {
+            throw new Error("An IContainerHost must be provided");
+        }
+
+        if (!documentService) {
+            throw new Error("An IDocumentService must be provided");
+        }
+
+        if (!codeLoader) {
+            throw new Error("An ICodeLoader must be provided");
+        }
     }
 
-    if (!platform) {
-        return Promise.reject("An IPlatformFactory must be provided");
+    public async resolve(request: IRequest): Promise<Container> {
+        debug(`Container resolve: ${now()} `);
+
+        const parsed = this.parseUrl(request.url);
+        if (!parsed) {
+            return Promise.reject("Invalid URI");
+        }
+
+        return this.resolveCore(parsed.id);
     }
 
-    if (!documentService) {
-        return Promise.reject("An IDocumentService must be provided");
+    public async request(request: IRequest): Promise<IResponse> {
+        debug(`Container loading: ${now()} `);
+
+        const parsed = this.parseUrl(request.url);
+        if (!parsed) {
+            return Promise.reject("Invalid URI");
+        }
+
+        const container = await this.resolveCore(parsed.id);
+        return container.request({ url: parsed.path });
     }
 
-    if (!codeLoader) {
-        return Promise.reject("An ICodeLoader must be provided");
+    private parseUrl(url: string): IParsedUrl {
+        const parsed = parse(url);
+
+        const regex = /^\/([^\/]*\/[^\/]*)(\/?.*)$/;
+        const match = parsed.pathname.match(regex);
+
+        return (match && match.length === 3) ? { id: match[1], path: match[2] } : null;
     }
 
-    // Connect to the document
-    if (!connect && !specifiedVersion) {
-        return Promise.reject("Must specify a version if connect is set to false");
+    private resolveCore(id: string) {
+        if (!this.containers.has(id)) {
+            const containerP = Container.Load(
+                id,
+                this.containerHost,
+                this.documentService,
+                this.codeLoader,
+                this.options);
+            this.containers.set(id, containerP);
+        }
+
+        return this.containers.get(id);
     }
-
-    const container = await Container.Load(
-        uri,
-        options,
-        containerHost,
-        platform,
-        documentService,
-        codeLoader,
-        specifiedVersion,
-        connect);
-
-    return container;
 }

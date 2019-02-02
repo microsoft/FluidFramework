@@ -1,5 +1,5 @@
 import * as api from "@prague/client-api";
-import { IClient, IHelpMessage, ITokenProvider, IUser } from "@prague/runtime-definitions";
+import { IClient, IHelpMessage, ITokenProvider } from "@prague/runtime-definitions";
 import { RateLimitter } from "@prague/utils";
 import { loadDictionary } from "./dictionaryLoader";
 import { IntelWork } from "./intelWork";
@@ -19,7 +19,6 @@ export function registerToWork(doc: api.Document, client: IClient, tokenProvider
             await performTasks(
                 doc.id,
                 doc.tenantId,
-                doc.getUser(),
                 tokenProvider,
                 filteredTasks,
                 workerConfig).catch((err) => {
@@ -33,13 +32,12 @@ export function registerToWork(doc: api.Document, client: IClient, tokenProvider
 async function performTasks(
     docId: string,
     tenantId: string,
-    user: IUser,
     tokenProvider: ITokenProvider,
     tasks: string[],
     config: any) {
     const taskPromises = [];
     for (const task of tasks) {
-        taskPromises.push(performTask(docId, tenantId, user, tokenProvider, task, config));
+        taskPromises.push(performTask(docId, tenantId, tokenProvider, task, config));
     }
     await Promise.all(taskPromises);
 }
@@ -47,7 +45,6 @@ async function performTasks(
 async function performTask(
     docId: string,
     tenantId: string,
-    user: IUser,
     tokenProvider: ITokenProvider,
     task: string,
     config: any) {
@@ -56,7 +53,6 @@ async function performTask(
             const snapshotWork  = new SnapshotWork(
                 docId,
                 tenantId,
-                user,
                 tokenProvider,
                 config,
                 api.getDefaultDocumentService());
@@ -66,7 +62,6 @@ async function performTask(
             const intelWork  = new IntelWork(
                 docId,
                 tenantId,
-                user,
                 tokenProvider,
                 config,
                 api.getDefaultDocumentService());
@@ -77,7 +72,6 @@ async function performTask(
                 const spellWork = new SpellcheckerWork(
                     docId,
                     tenantId,
-                    user,
                     tokenProvider,
                     config,
                     dictionary,
@@ -92,7 +86,6 @@ async function performTask(
             const translationWork = new TranslationWork(
                 docId,
                 tenantId,
-                user,
                 tokenProvider,
                 config,
                 api.getDefaultDocumentService());

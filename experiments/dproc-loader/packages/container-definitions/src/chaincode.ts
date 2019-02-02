@@ -12,6 +12,7 @@ import {
     IUser,
     MessageType,
 } from "@prague/runtime-definitions";
+import { IRequest, IResponse } from "./loader";
 
 export interface IChaincodeComponent {
     // I'm not sure how many of the below we'll even need
@@ -54,6 +55,7 @@ export interface IDeltaHandler {
     process: (message: ISequencedDocumentMessage, local: boolean, context: any) => void;
     updateMinSequenceNumber: (value: number) => void;
     changeConnectionState(value: ConnectionState, clientId: string);
+    request(request: IRequest): Promise<IResponse>;
 }
 
 /**
@@ -77,7 +79,6 @@ export interface IComponentRuntime {
     readonly parentBranch: string;
     readonly connected: boolean;
     readonly deltaManager: IDeltaManager;
-    readonly platform: IPlatform;
     readonly blobManager: IBlobManager;
     readonly storage: IDocumentStorageService;
     readonly connectionState: ConnectionState;
@@ -104,6 +105,8 @@ export interface IComponentRuntime {
      * Allows for attachment to the given component
      */
     attach(platform: IComponentPlatform): Promise<IComponentPlatform>;
+
+    request(request: IRequest): Promise<IResponse>;
 }
 
 export interface IComponentContext {
@@ -112,6 +115,7 @@ export interface IComponentContext {
     snapshot(tagMessage: string): Promise<ITree>;
     changeConnectionState(value: ConnectionState, clientId: string);
     stop(): Promise<void>;
+    request(request: IRequest): Promise<IResponse>;
     prepare(message: ISequencedDocumentMessage, local: boolean): Promise<any>;
     process(message: ISequencedDocumentMessage, local: boolean, context: any);
     postProcess(message: ISequencedDocumentMessage, local: boolean, context: any): Promise<void>;
@@ -121,15 +125,12 @@ export interface IComponentContext {
 export interface IContext {
     readonly tenantId: string;
     readonly id: string;
-    readonly path: string;
-
     readonly existing: boolean;
     readonly options: any;
     readonly clientId: string;
     readonly user: IUser;
     readonly parentBranch: string;
     readonly deltaManager: IDeltaManager;
-    readonly platform: IPlatform;
     readonly blobManager: IBlobManager;
     readonly storage: IDocumentStorageService;
     readonly connectionState: ConnectionState;
@@ -157,7 +158,6 @@ export interface IHostRuntime {
     readonly parentBranch: string;
     readonly connected: boolean;
     readonly deltaManager: IDeltaManager;
-    readonly platform: IPlatform;
     readonly blobManager: IBlobManager;
     readonly storage: IDocumentStorageService;
     readonly connectionState: ConnectionState;

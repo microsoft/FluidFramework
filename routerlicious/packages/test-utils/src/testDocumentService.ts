@@ -17,7 +17,7 @@ class TestDocumentStorageService implements IDocumentStorageService {
         return "";
     }
 
-    public async getSnapshotTree(version: resources.ICommit): Promise<ISnapshotTree> {
+    public async getSnapshotTree(version?: resources.ICommit): Promise<ISnapshotTree> {
         return null;
     }
 
@@ -87,7 +87,7 @@ export class TestDocumentService implements IDocumentService {
         id: string,
         tokenProvider: ITokenProvider): Promise<IDocumentDeltaConnection> {
 
-        return new TestDocumentDeltaConnection(id, "test-client", false, "", null, undefined, undefined);
+        return new TestDocumentDeltaConnection(id, "test-client", false, "", undefined, undefined);
     }
 
     public branch(tenantId: string, id: string, tokenProvider: ITokenProvider): Promise<string> {

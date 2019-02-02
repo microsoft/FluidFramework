@@ -195,7 +195,7 @@ export function insertColumn(sharedString: SharedString, prevCell: Cell, row: Ro
         ops: opList,
         type: MergeTree.MergeTreeDeltaType.GROUP,
     };
-    sharedString.transaction(groupOp);
+    sharedString.groupOperation(groupOp);
 
     // flush cache
     table.tableMarker.table = undefined;
@@ -235,7 +235,7 @@ export function deleteColumn(sharedString: SharedString, cell: Cell, row: Row,
         ops: opList,
         type: MergeTree.MergeTreeDeltaType.GROUP,
     };
-    sharedString.transaction(groupOp);
+    sharedString.groupOperation(groupOp);
     table.tableMarker.table = undefined;
 }
 
@@ -254,7 +254,7 @@ export function deleteCellShiftLeft(sharedString: SharedString, cell: Cell,
         ops: opList,
         type: MergeTree.MergeTreeDeltaType.GROUP,
     };
-    sharedString.transaction(groupOp);
+    sharedString.groupOperation(groupOp);
     table.tableMarker.table = undefined;
 }
 
@@ -275,7 +275,7 @@ export function deleteRow(sharedString: SharedString, row: Row, table: Table) {
         ops: opList,
         type: MergeTree.MergeTreeDeltaType.GROUP,
     };
-    sharedString.transaction(groupOp);
+    sharedString.groupOperation(groupOp);
     table.tableMarker.table = undefined;
 }
 
@@ -295,7 +295,7 @@ export function insertRow(sharedString: SharedString, prevRow: Row, table: Table
         ops: opList,
         type: MergeTree.MergeTreeDeltaType.GROUP,
     };
-    sharedString.transaction(groupOp);
+    sharedString.groupOperation(groupOp);
 
     // flush cache
     table.tableMarker.table = undefined;
@@ -364,7 +364,7 @@ export function createTable(pos: number, sharedString: SharedString, nrows = 3, 
         ops: opList,
         type: MergeTree.MergeTreeDeltaType.GROUP,
     };
-    sharedString.transaction(groupOp);
+    sharedString.groupOperation(groupOp);
 }
 
 export class Table {
@@ -768,7 +768,7 @@ export function insertHoleFixer(sharedString: SharedString, prevMarker: MergeTre
         ops: opList,
         type: MergeTree.MergeTreeDeltaType.GROUP,
     };
-    sharedString.transaction(groupOp);
+    sharedString.groupOperation(groupOp);
 }
 
 export function parseTable(

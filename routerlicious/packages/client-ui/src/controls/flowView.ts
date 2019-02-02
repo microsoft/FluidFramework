@@ -3775,7 +3775,7 @@ export class FlowView extends ui.Component {
         for (let i = 0; i < k; i++) {
             const pos1 = Math.floor(Math.random() * (len - 1));
             const intervalLen = Math.max(1, Math.floor(Math.random() * Math.min(len - pos1, 150)));
-            const props = { clid: this.sharedString.client.longClientId, user: this.sharedString.client.userInfo };
+            const props = { clid: this.sharedString.client.longClientId };
             this.bookmarks.add(pos1, pos1 + intervalLen, MergeTree.IntervalType.Simple,
                 props);
         }

@@ -96,7 +96,6 @@ export class DataStore {
         const loaderDoc = await loader.load(
             componentId,
             this.tenantId,
-            {id: userId},
             new socketStorage.TokenProvider(token),
             null,
             factory,

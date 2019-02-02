@@ -1,7 +1,10 @@
 import * as sharedText from "@chaincode/shared-text";
-import { IChaincodeFactory, ICodeLoader } from "@prague/container-definitions";
-import * as pragueLoader from "@prague/container-loader";
-import { WebPlatformFactory } from "@prague/container-utils";
+import { CollaborativeObject } from "@prague/api-definitions";
+import { IChaincodeFactory, ICodeLoader, IComponentRuntime } from "@prague/container-definitions";
+import { Container } from "@prague/container-loader";
+import { Loader } from "@prague/container-loader";
+import { WebPlatform } from "@prague/container-utils";
+import { CollaborativeMap, IMapView } from "@prague/map";
 import * as socketStorage from "@prague/socket-storage";
 import * as jwt from "jsonwebtoken";
 
@@ -22,7 +25,7 @@ const historian = "http://localhost:3001";
 const tenantId = "prague";
 const secret = "43cfc3fbf04a97c0921fd23ff10f9e4b";
 
-async function initializeChaincode(document: pragueLoader.Container, pkg: string): Promise<void> {
+async function initializeChaincode(document: Container, pkg: string): Promise<void> {
     const quorum = document.getQuorum();
 
     // Wait for connection so that proposals can be sent
@@ -31,11 +34,75 @@ async function initializeChaincode(document: pragueLoader.Container, pkg: string
     }
 
     // And then make the proposal if a code proposal has not yet been made
-    if (!quorum.has("code")) {
-        await quorum.propose("code", pkg);
+    if (!quorum.has("code2")) {
+        await quorum.propose("code2", pkg);
     }
 
-    console.log(`Code is ${quorum.get("code")}`);
+    console.log(`Code is ${quorum.get("code2")}`);
+}
+
+function renderMap(view: IMapView) {
+    const div = document.getElementById("content");
+    div.innerHTML = "";
+
+    const dl = document.createElement("dl");
+    view.forEach((value, key) => {
+        const dt = document.createElement("dt");
+        const dd = document.createElement("dd");
+        dt.innerText = key;
+
+        if (value instanceof CollaborativeObject) {
+            dd.innerText = `${value.type}/${value.id}`;
+        } else {
+            try {
+                dd.innerText = JSON.stringify(value);
+            } catch {
+                dd.innerText = "!Circular";
+            }
+        }
+
+        dl.appendChild(dt).appendChild(dd);
+    });
+
+    div.appendChild(dl);
+}
+
+async function attach(loader: Loader, url: string, platform: LocalPlatform) {
+    const response = await loader.request({ url });
+
+    if (response.status !== 200) {
+        return;
+    }
+
+    switch (response.mimeType) {
+        case "prague/component":
+            const component = response.value as IComponentRuntime;
+            component.attach(platform);
+            break;
+        case "prague/dataType":
+            const dataType = response.value as CollaborativeMap;
+            const view = await dataType.getView();
+            renderMap(view);
+            dataType.on("valueChanged", (key) => renderMap(view));
+            break;
+    }
+}
+
+async function registerAttach(loader: Loader, container: Container, uri: string, platform: LocalPlatform) {
+    attach(loader, uri, platform);
+    container.on("contextChanged", (value) => {
+        attach(loader, uri, platform);
+    });
+}
+
+class LocalPlatform extends WebPlatform {
+    constructor(div: HTMLElement) {
+        super(div);
+    }
+
+    public async detach() {
+        return;
+    }
 }
 
 /**
@@ -44,7 +111,7 @@ async function initializeChaincode(document: pragueLoader.Container, pkg: string
 export async function start(id: string, path: string, factory: IChaincodeFactory): Promise<void> {
     const service = socketStorage.createDocumentService(routerlicious, historian);
 
-    const classicPlatform = new WebPlatformFactory(document.getElementById("content"));
+    // const classicPlatform = new WebPlatformFactory(document.getElementById("content"));
     const codeLoader = new CodeLoader(factory);
 
     const user = { id: "test" };
@@ -58,26 +125,33 @@ export async function start(id: string, path: string, factory: IChaincodeFactory
         secret);
     const tokenProvider = new socketStorage.TokenProvider(token);
 
-    // Load the Prague document
-    const loaderDoc = await pragueLoader.load(
-        `prague://${domain}/${encodeURIComponent(tenantId)}/${encodeURIComponent(id)}/${path}`,
-        { blockUpdateMarkers: true },
+    const loader = new Loader(
         { tokenProvider, user },
-        classicPlatform,
         service,
-        codeLoader);
+        codeLoader,
+        { blockUpdateMarkers: true });
+
+    const container = await loader.resolve(
+        { url: `prague://${domain}/${encodeURIComponent(tenantId)}/${encodeURIComponent(id)}` });
+
+    const platform = new LocalPlatform(document.getElementById("content"));
+    registerAttach(
+        loader,
+        container,
+        `prague://${domain}/${encodeURIComponent(tenantId)}/${encodeURIComponent(id)}/${path}`,
+        platform);
 
     // If this is a new document we will go and instantiate the chaincode. For old documents we assume a legacy
     // package.
-    if (!loaderDoc.existing) {
-        await initializeChaincode(loaderDoc, `@chaincode/shared-text`)
+    if (!container.existing) {
+        await initializeChaincode(container, `@chaincode/shared-text`)
             .catch((error) => console.log("chaincode error", error));
     }
 
     document.addEventListener("keyup", (event) => {
         const keyName = event.key;
         if (event.ctrlKey && keyName === "s") {
-            loaderDoc.snapshot("Manual snapshot");
+            container.snapshot("Manual snapshot");
         }
     });
 }

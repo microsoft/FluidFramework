@@ -30,7 +30,7 @@ describe.skip("LocalTestServer", () => {
     const user1Token = utils.generateToken(tenatId, id, tokenKey);
     const documentService = createTestDocumentService(testDeltaConnectionServer);
     user1Document = await api.load(
-      id, tenatId, undefined, new socketStorage.TokenProvider(user1Token), {}, null, true, documentService);
+      id, tenatId, new socketStorage.TokenProvider(user1Token), {}, null, true, documentService);
     let rootView = await user1Document.getRoot().getView();
     user1SharedString = user1Document.createString();
     rootView.set("SharedString", user1SharedString);
@@ -38,7 +38,7 @@ describe.skip("LocalTestServer", () => {
 
     const user2Token = utils.generateToken(tenatId, id, tokenKey);
     user2Document = await api.load(
-      id, tenatId, undefined, new socketStorage.TokenProvider(user2Token), {}, null, true, documentService);
+      id, tenatId, new socketStorage.TokenProvider(user2Token), {}, null, true, documentService);
     rootView = await user2Document.getRoot().getView();
     user2SharedString = await rootView.wait("SharedString") as SharedString;
     documentDeltaEventManager.registerDocuments(user2Document);

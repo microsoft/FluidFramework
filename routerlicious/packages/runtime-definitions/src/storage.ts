@@ -118,6 +118,7 @@ export interface IDeltaStorageService {
 }
 
 export interface ISnapshotTree {
+    sha: string;
     blobs: { [path: string]: string };
     commits: { [path: string]: string };
     trees: { [path: string]: ISnapshotTree };
@@ -147,7 +148,7 @@ export interface IDocumentStorageService {
     /**
      * Returns the snapshot tree.
      */
-    getSnapshotTree(version: resources.ICommit): Promise<ISnapshotTree>;
+    getSnapshotTree(version?: resources.ICommit): Promise<ISnapshotTree>;
 
     /**
      * Retrieves all versions of the document starting at the specified sha - or null if from the head

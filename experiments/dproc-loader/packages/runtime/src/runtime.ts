@@ -3,6 +3,8 @@ import {
     IComponentContext,
     IComponentRuntime,
     IHostRuntime,
+    IRequest,
+    IResponse,
 } from "@prague/container-definitions";
 import { ICommit } from "@prague/gitresources";
 import {
@@ -34,7 +36,6 @@ export class Runtime extends EventEmitter implements IComponentContext, IHostRun
     public static async Load(
         tenantId: string,
         id: string,
-        platform: IPlatform,
         parentBranch: string,
         existing: boolean,
         options: any,
@@ -65,7 +66,6 @@ export class Runtime extends EventEmitter implements IComponentContext, IHostRun
             blobManager,
             deltaManager,
             quorum,
-            platform,
             chaincode,
             storage,
             connectionState,
@@ -115,6 +115,7 @@ export class Runtime extends EventEmitter implements IComponentContext, IHostRun
     private processDeferred = new Map<string, Deferred<Component>>();
     private closed = false;
     private pendingAttach = new Map<string, IAttachMessage>();
+    private requestHandler: (request: IRequest) => Promise<IResponse>;
 
     public get connected(): boolean {
         return this.connectionState === ConnectionState.Connected;
@@ -131,7 +132,6 @@ export class Runtime extends EventEmitter implements IComponentContext, IHostRun
         public readonly blobManager: IBlobManager,
         public readonly deltaManager: IDeltaManager,
         private quorum: IQuorum,
-        public readonly platform: IPlatform,
         public readonly chaincode: IChaincodeHost,
         public readonly storage: IDocumentStorageService,
         // tslint:disable-next-line:variable-name
@@ -160,7 +160,6 @@ export class Runtime extends EventEmitter implements IComponentContext, IHostRun
             this.id,
             id,
             this.parentBranch,
-            this.existing,
             this.options,
             this.clientId,
             this.user,
@@ -171,7 +170,6 @@ export class Runtime extends EventEmitter implements IComponentContext, IHostRun
             this.quorum,
             runtimeStorage,
             this.connectionState,
-            this.platform,
             snapshotTree,
             this.id,
             this.deltaManager.minimumSequenceNumber,
@@ -195,6 +193,18 @@ export class Runtime extends EventEmitter implements IComponentContext, IHostRun
                 return this as IComponentContext;
             default:
                 return null;
+        }
+    }
+
+    public registerRequestHandler(handler: (request: IRequest) => Promise<IResponse>) {
+        this.requestHandler = handler;
+    }
+
+    public async request(request: IRequest): Promise<IResponse> {
+        if (!this.requestHandler) {
+            return { status: 404, mimeType: "text/plain", value: `${request.url} not found` };
+        } else {
+            return this.requestHandler(request);
         }
     }
 
@@ -343,7 +353,6 @@ export class Runtime extends EventEmitter implements IComponentContext, IHostRun
             this.id,
             id,
             this.parentBranch,
-            this.existing,
             this.options,
             this.clientId,
             this.user,
@@ -354,7 +363,6 @@ export class Runtime extends EventEmitter implements IComponentContext, IHostRun
             this.quorum,
             runtimeStorage,
             this.connectionState,
-            this.platform,
             this.id,
             this.deltaManager.minimumSequenceNumber,
             this.submitFn,
@@ -426,7 +434,6 @@ export class Runtime extends EventEmitter implements IComponentContext, IHostRun
             timestamp: message.timestamp,
             traces: message.traces,
             type: innerContents.type,
-            user: message.user,
         };
 
         return component.prepare(transformed, local);
@@ -450,7 +457,6 @@ export class Runtime extends EventEmitter implements IComponentContext, IHostRun
             timestamp: message.timestamp,
             traces: message.traces,
             type: innerContents.type,
-            user: message.user,
         };
 
         component.process(transformed, local, context);
@@ -479,7 +485,6 @@ export class Runtime extends EventEmitter implements IComponentContext, IHostRun
             this.id,
             attachMessage.id,
             this.parentBranch,
-            this.existing,
             this.options,
             this.clientId,
             this.user,
@@ -490,7 +495,6 @@ export class Runtime extends EventEmitter implements IComponentContext, IHostRun
             this.quorum,
             runtimeStorage,
             this.connectionState,
-            this.platform,
             snapshotTree,
             this.id,
             this.deltaManager.minimumSequenceNumber,

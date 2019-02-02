@@ -11,7 +11,6 @@ import {
     IRuntime,
     ISequencedClient,
     ITokenProvider,
-    IUser,
 } from "@prague/runtime-definitions";
 import * as sequence from "@prague/sequence";
 import * as stream from "@prague/stream";
@@ -192,13 +191,6 @@ export class Document extends EventEmitter {
         return this.root;
     }
 
-    /**
-     * Returns the user id connected to the document.
-     */
-    public getUser(): IUser {
-        return this.runtime.user;
-    }
-
     public getClients(): Map<string, ISequencedClient> {
         const quorum = this.runtime.getQuorum();
         return quorum.getMembers();
@@ -272,7 +264,6 @@ async function initializeChaincode(document: pragueLoader.Document, pkg: string)
 export async function load(
     id: string,
     tenantId: string,
-    user: IUser,
     tokenProvider: ITokenProvider,
     options: any = {},
     version: resources.ICommit = null,
@@ -292,7 +283,6 @@ export async function load(
     const loaderDoc = await pragueLoader.load(
         id,
         tenantId,
-        user,
         tokenProvider,
         options,
         classicPlatform,

@@ -18,7 +18,8 @@
     "build:dev": "webpack --env=\"development\"",
     "dev": "npm run build:dev -- --watch",
     "publish-local": "npm publish --registry http://localhost:4873",
-    "publish-patch-local": "npm version patch && npm run publish-local"
+    "publish-patch-local": "npm version patch && npm run publish-local",
+    "publish-wu2": "npm run build && npm publish --registry https://packages.wu2.prague.office-int.com"
   },
   "author": "Microsoft",
   "repository": "microsoft/prague",

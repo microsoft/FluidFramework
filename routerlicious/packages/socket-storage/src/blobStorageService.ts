@@ -14,8 +14,16 @@ export class DocumentStorageService implements api.IDocumentStorageService  {
     constructor(tenantId: string, private id: string, public manager: gitStorage.GitManager) {
     }
 
-    public async getSnapshotTree(version: resources.ICommit): Promise<api.ISnapshotTree> {
-        const tree = await this.manager.getTree(version.tree.sha);
+    public async getSnapshotTree(version?: resources.ICommit): Promise<api.ISnapshotTree> {
+        let requestVerion = version;
+        if (!requestVerion) {
+            const versions = await this.getVersions(this.id, 1);
+            if (versions.length === 0) {
+                return Promise.resolve<api.ISnapshotTree>(null);
+            }
+            requestVerion = versions[0];
+        }
+        const tree = await this.manager.getTree(requestVerion.tree.sha);
         return buildHierarchy(tree);
     }
 

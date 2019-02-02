@@ -84,7 +84,7 @@ function flattenCore(path: string, treeEntries: ITreeEntry[], blobMap: Map<strin
 
 export function buildHierarchy(flatTree: git.ITree): ISnapshotTree {
     const lookup: { [path: string]: ISnapshotTree } = {};
-    const root: ISnapshotTree = { blobs: {}, commits: {}, trees: {} };
+    const root: ISnapshotTree = { sha: flatTree.sha, blobs: {}, commits: {}, trees: {} };
     lookup[""] = root;
 
     for (const entry of flatTree.tree) {
@@ -97,7 +97,7 @@ export function buildHierarchy(flatTree: git.ITree): ISnapshotTree {
 
         // Add in either the blob or tree
         if (entry.type === "tree") {
-            const newTree = { blobs: {}, commits: {}, trees: {} };
+            const newTree = { sha: entry.sha, blobs: {}, commits: {}, trees: {} };
             node.trees[entryPathBase] = newTree;
             lookup[entry.path] = newTree;
         } else if (entry.type === "blob") {
