@@ -1,18 +1,19 @@
-import { IChaincodeHost, ICodeLoader, IContainerHost } from "@prague/container-definitions";
-import { ICommit } from "@prague/gitresources";
 import {
     ConnectionState,
     FileMode,
+    IChaincodeHost,
     IChunkedOp,
     IClientJoin,
+    ICodeLoader,
     IDeltaManager,
     IDocumentAttributes,
     IDocumentService,
     IDocumentStorageService,
     IGenericBlob,
-    IPlatformFactory,
+    IHost,
     IProposal,
-    IRuntime,
+    IRequest,
+    IResponse,
     ISequencedClient,
     ISequencedDocumentMessage,
     ISequencedDocumentSystemMessage,
@@ -23,11 +24,11 @@ import {
     IUser,
     MessageType,
     TreeEntry,
-} from "@prague/runtime-definitions";
-import { buildHierarchy, flatten } from "@prague/utils";
+} from "@prague/container-definitions";
+import { ICommit } from "@prague/gitresources";
+import { buildHierarchy, flatten, readAndParse } from "@prague/utils";
 import * as assert from "assert";
 import { EventEmitter } from "events";
-import * as url from "url";
 import { BlobManager } from "./blobManager";
 import { Context } from "./context";
 import { debug } from "./debug";
@@ -35,7 +36,6 @@ import { IConnectionDetails } from "./deltaConnection";
 import { DeltaManager } from "./deltaManager";
 import * as nullPackage from "./nullChaincode";
 import { IQuorumSnapshot, Quorum } from "./quorum";
-import { readAndParse } from "./utils";
 
 interface IConnectResult {
     detailsP: Promise<IConnectionDetails>;
@@ -51,27 +51,29 @@ interface IBufferedChunk {
 
 export class Container extends EventEmitter {
     public static async Load(
-        uri: string,
-        options: any,
-        containerHost: IContainerHost,
-        platform: IPlatformFactory,
+        id: string,
+        containerHost: IHost,
         service: IDocumentService,
         codeLoader: ICodeLoader,
-        specifiedVersion: ICommit,
-        connect: boolean,
+        options: any,
     ): Promise<Container> {
-        const doc = new Container(uri, options, containerHost, platform, service, codeLoader);
-        await doc.load(specifiedVersion, connect);
+        const container = new Container(
+            id,
+            options,
+            containerHost,
+            service,
+            codeLoader);
 
-        return doc;
+        // TODO need to crack the version and connection flag out of the URL
+        await container.load(null, true);
+
+        return container;
     }
 
     public runtime: any = null;
-    public readonly path: string;
 
     private pendingClientId: string;
     private loaded = false;
-    private connectionState = ConnectionState.Disconnected;
     private quorum: Quorum;
     private blobManager: BlobManager;
     private messagesSinceMSNChange = new Array<ISequencedDocumentMessage>();
@@ -86,10 +88,11 @@ export class Container extends EventEmitter {
     private _id: string;
     private _parentBranch: string;
     private _tenantId: string;
+    private _connectionState = ConnectionState.Disconnected;
     // tslint:enable:variable-name
 
     private context: Context;
-    private pkg: string;
+    private pkg: string = null;
 
     // Local copy of incomplete received chunks.
     private chunkMap = new Map<string, string[]>();
@@ -113,12 +116,20 @@ export class Container extends EventEmitter {
         return this.containerHost.user;
     }
 
+    public get connectionState(): ConnectionState {
+        return this._connectionState;
+    }
+
     public get connected(): boolean {
         return this.connectionState === ConnectionState.Connected;
     }
 
     public get clientId(): string {
         return this._clientId;
+    }
+
+    public get chaincodePackage(): string {
+        return this.pkg;
     }
 
     /**
@@ -136,23 +147,17 @@ export class Container extends EventEmitter {
     }
 
     constructor(
-        public readonly uri: string,
+        id: string,
         public readonly options: any,
-        private containerHost: IContainerHost,
-        private platform: IPlatformFactory,
+        private containerHost: IHost,
         private service: IDocumentService,
         private codeLoader: ICodeLoader,
     ) {
         super();
 
-        const parsed = url.parse(uri);
-        const splitPath = parsed.pathname.split("/");
-
-        this._tenantId = splitPath[1];
-        this._id = splitPath[2];
-        this.path = parsed.pathname.substr(splitPath[1].length + splitPath[2].length + 2);
-
-        console.log(`${this._tenantId} ${this._id} ${this.path}`);
+        const [tenantId, documentId] = id.split("/");
+        this._tenantId = decodeURIComponent(tenantId);
+        this._id = decodeURI(documentId);
     }
 
     /**
@@ -162,12 +167,11 @@ export class Container extends EventEmitter {
         return this.quorum;
     }
 
-    public on(event: "connected", listener: (clientId: string) => void): this;
+    public on(event: "connected" | "contextChanged", listener: (clientId: string) => void): this;
     public on(event: "disconnect", listener: () => void): this;
     public on(event: "error", listener: (error: any) => void): this;
     public on(event: "op", listener: (message: ISequencedDocumentMessage) => void): this;
     public on(event: "pong" | "processTime", listener: (latency: number) => void): this;
-    public on(event: "runtimeChanged", listener: (runtime: IRuntime) => void): this;
 
     /* tslint:disable:no-unnecessary-override */
     public on(event: string | symbol, listener: (...args: any[]) => void): this {
@@ -205,6 +209,14 @@ export class Container extends EventEmitter {
         this.deltaManager.inbound.pause();
         await this.snapshotCore(tagMessage).catch((error) => debug("Snapshot error", error));
         this.deltaManager.inbound.resume();
+    }
+
+    public async request(path: IRequest): Promise<IResponse> {
+        if (!path) {
+            return { mimeType: "prague/container", status: 200, value: this };
+        }
+
+        return this.context.request(path);
     }
 
     private async snapshotCore(tagMessage: string) {
@@ -343,27 +355,16 @@ export class Container extends EventEmitter {
                     this._parentBranch = details.parentBranch;
                 }
 
-                const hostPlatform = await this.platform.create();
-
                 this.context = await Context.Load(
-                    this.tenantId,
-                    this.id,
-                    hostPlatform,
-                    this.parentBranch,
-                    this.existing,
-                    this.options,
-                    this.clientId,
-                    this.user,
-                    this.blobManager,
+                    this,
                     chaincode.chaincode,
+                    tree,
+                    new Map(),
+                    attributes,
+                    this.blobManager,
                     this._deltaManager,
                     this.quorum,
                     storageService,
-                    this.connectionState,
-                    tree,
-                    new Map(),
-                    attributes.branch,
-                    attributes.minimumSequenceNumber,
                     (type, contents) => this.submitMessage(type, contents),
                     (message) => this.snapshot(message),
                     () => this.close());
@@ -476,7 +477,7 @@ export class Container extends EventEmitter {
             "approveProposal",
             (sequenceNumber, key, value) => {
                 console.log(`approve ${key}`);
-                if (key === "code") {
+                if (key === "code2") {
                     console.log(`loadCode ${JSON.stringify(value)}`);
 
                     // Stop processing inbound messages as we transition to the new code
@@ -516,8 +517,6 @@ export class Container extends EventEmitter {
 
         // Load in the new host code and initialize the platform
         const chaincode = await this.loadCode(pkg);
-        const hostPlatform = await this.platform.create();
-        this.pkg = pkg;
 
         const previousContextState = await this.context.stop();
         let snapshotTree: ISnapshotTree;
@@ -526,34 +525,36 @@ export class Container extends EventEmitter {
             const flattened = flatten(previousContextState.entries, blobs);
             snapshotTree = buildHierarchy(flattened);
         } else {
-            snapshotTree = { blobs: {}, commits: {}, trees: {} };
+            snapshotTree = { sha: null, blobs: {}, commits: {}, trees: {} };
         }
 
+        const attributes: IDocumentAttributes = {
+            branch: this.id,
+            clients: null,
+            minimumSequenceNumber: this._deltaManager.minimumSequenceNumber,
+            partialOps: null,
+            proposals: null,
+            sequenceNumber: null,
+            values: null,
+        };
+
         const newContext = await Context.Load(
-            this.tenantId,
-            this.id,
-            hostPlatform,
-            this.parentBranch,
-            this.existing,
-            this.options,
-            this.clientId,
-            this.user,
-            this.blobManager,
+            this,
             chaincode,
+            snapshotTree,
+            blobs,
+            attributes,
+            this.blobManager,
             this._deltaManager,
             this.quorum,
             this.storageService,
-            this.connectionState,
-            snapshotTree,
-            blobs,
-            this.id,
-            this._deltaManager.minimumSequenceNumber,
             (type, contents) => this.submitMessage(type, contents),
             (message) => this.snapshot(message),
             () => this.close());
         this.context = newContext;
 
-        this.emit("runtimeChanged", newContext);
+        this.pkg = pkg;
+        this.emit("contextChanged", this.pkg);
     }
 
     private async loadCodeFromQuorum(
@@ -563,7 +564,7 @@ export class Container extends EventEmitter {
 
         let chaincode: IChaincodeHost;
 
-        const pkg = quorum.has("code") ? quorum.get("code") : null;
+        const pkg = quorum.has("code2") ? quorum.get("code2") : null;
         chaincode = await this.loadCode(pkg);
 
         return { chaincode, pkg };
@@ -646,7 +647,7 @@ export class Container extends EventEmitter {
         }
 
         debug(`Changing from ${ConnectionState[this.connectionState]} to ${ConnectionState[value]}: ${reason}`);
-        this.connectionState = value;
+        this._connectionState = value;
 
         // Stash the clientID to detect when transitioning from connecting (socket.io channel open) to connected
         // (have received the join message for the client ID)
@@ -720,10 +721,17 @@ export class Container extends EventEmitter {
         return clientSequenceNumber;
     }
 
-    private prepareRemoteMessage(message: ISequencedDocumentMessage): Promise<any> {
+    private async prepareRemoteMessage(message: ISequencedDocumentMessage): Promise<any> {
         const local = this._clientId === message.clientId;
 
         switch (message.type) {
+            case MessageType.ClientJoin:
+            case MessageType.ClientLeave:
+            case MessageType.Propose:
+            case MessageType.Reject:
+            case MessageType.BlobUploaded:
+                break;
+
             case MessageType.ChunkedOp:
                 const chunkComplete = this.prepareRemoteChunkedMessage(message);
                 if (!chunkComplete) {
@@ -738,13 +746,8 @@ export class Container extends EventEmitter {
                     return this.prepareRemoteMessage(message);
                 }
 
-            // Merge attach and operation together
-            case MessageType.Operation:
-            case MessageType.Attach:
-                return this.context.prepare(message, local);
-
             default:
-                return Promise.resolve();
+                return this.context.prepare(message, local);
         }
     }
 
@@ -798,6 +801,7 @@ export class Container extends EventEmitter {
             case MessageType.ClientJoin:
                 const systemJoinMessage = message as ISequencedDocumentSystemMessage;
                 const join = JSON.parse(systemJoinMessage.data) as IClientJoin;
+                // TODO this needs to be fixed
                 const member: ISequencedClient = {
                     client: join.detail,
                     sequenceNumber: systemJoinMessage.sequenceNumber,
@@ -844,15 +848,11 @@ export class Container extends EventEmitter {
                 this.emit(MessageType.BlobUploaded, message.contents);
                 break;
 
-            // Merge attach and operation together
-            case MessageType.Attach:
-            case MessageType.Operation:
-                this.context.process(message, local, context);
+            case MessageType.ChunkedOp:
                 break;
 
             default:
-                // tslint:disable-next-line:switch-final-break
-                break;
+                this.context.process(message, local, context);
         }
 
         // Notify the quorum of the MSN from the message. We rely on it to handle duplicate values but may
@@ -870,14 +870,15 @@ export class Container extends EventEmitter {
         const local = this._clientId === message.clientId;
 
         switch (message.type) {
-            // Merge attach and operation together
-            case MessageType.Attach:
-                await this.context.postProcess(message, local, context);
+            case MessageType.ClientJoin:
+            case MessageType.ClientLeave:
+            case MessageType.Propose:
+            case MessageType.Reject:
+            case MessageType.BlobUploaded:
+            case MessageType.ChunkedOp:
                 break;
-
             default:
-                // tslint:disable-next-line:switch-final-break
-                break;
+                await this.context.postProcess(message, local, context);
         }
     }
 }

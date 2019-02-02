@@ -1,7 +1,7 @@
-// tslint:disable no-bitwise
-import { IContentMessage } from "@prague/runtime-definitions";
+import { IContentMessage } from "@prague/container-definitions";
 import * as assert from "assert";
 import { EventEmitter } from "events";
+import { debug } from "./debug";
 
 export class ContentCache extends EventEmitter {
     private cache = new Map<string, RingBuffer>();
@@ -28,6 +28,7 @@ export class ContentCache extends EventEmitter {
     }
 }
 
+// tslint:disable:no-bitwise
 class RingBuffer {
     private log2Capacity: number;
     private length: number;
@@ -75,7 +76,7 @@ class RingBuffer {
     }
 
     private resize() {
-        console.log(`Resizing content buffer from ${this.length}!`);
+        debug(`Resizing content buffer from ${this.length}!`);
         assert.notStrictEqual(this.head, this.tail, "Content buffer size error");
         let newBuffer = [];
         if (this.head < this.tail) {
@@ -94,3 +95,4 @@ class RingBuffer {
         this.buffer = newBuffer;
     }
 }
+// tslint:enable:no-bitwise

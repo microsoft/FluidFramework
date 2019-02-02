@@ -4,8 +4,8 @@ import {
     IComponentRuntime,
     IDeltaHandler,
 } from "@prague/container-definitions";
+import { ComponentHost } from "@prague/container-utils";
 import { MapExtension } from "@prague/map";
-import { ComponentHost } from "@prague/process-utils";
 import { IChaincode, IPlatform, IRuntime, ITree } from "@prague/runtime-definitions";
 import * as assert from "assert";
 import { EventEmitter } from "events";
@@ -70,7 +70,6 @@ export class PinpointComponent implements IChaincodeComponent {
             runtime.tenantId,
             runtime.documentId,
             runtime.id,
-            runtime.platform,
             runtime.parentBranch,
             runtime.existing,
             runtime.options,

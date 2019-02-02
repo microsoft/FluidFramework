@@ -1,7 +1,4 @@
 // tslint:disable:whitespace align no-bitwise
-import {
-    IMapView,
-} from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
 import {
     IDistributedObjectServices,
@@ -10,11 +7,6 @@ import {
 import {
     CollaborativeStringExtension,
 } from "./extension";
-import {
-    SharedIntervalCollection,
-    SharedStringInterval,
-    SharedStringIntervalCollectionValueType,
-} from "./intervalCollection";
 import {
     SegmentSequence,
 } from "./sequence";
@@ -165,14 +157,7 @@ export class SharedString extends SegmentSequence<SharedStringSegment> {
     }
 
     public removeText(start: number, end: number) {
-        const removeMessage: MergeTree.IMergeTreeRemoveMsg = {
-            pos1: start,
-            pos2: end,
-            type: MergeTree.MergeTreeDeltaType.REMOVE,
-        };
-
-        this.client.removeSegmentLocal(start, end);
-        this.submitIfAttached(removeMessage);
+        this.removeRange(start, end);
     }
 
     public annotateRangeFromPast(
@@ -186,12 +171,6 @@ export class SharedString extends SegmentSequence<SharedStringSegment> {
         ranges.map((range: MergeTree.IIntegerRange) => {
             this.annotateRange(props, range.start, range.end);
         });
-    }
-
-    public transaction(groupOp: MergeTree.IMergeTreeGroupMsg): MergeTree.SegmentGroup {
-        const segmentGroup = this.client.localTransaction(groupOp);
-        this.submitIfAttached(groupOp);
-        return segmentGroup;
     }
 
     public annotateMarkerNotifyConsensus(marker: MergeTree.Marker, props: MergeTree.PropertySet,
@@ -224,112 +203,7 @@ export class SharedString extends SegmentSequence<SharedStringSegment> {
         this.submitIfAttached(annotateMessage);
     }
 
-    public annotateRange(props: MergeTree.PropertySet, start: number, end: number, op?: MergeTree.ICombiningOp) {
-        const annotateMessage: MergeTree.IMergeTreeAnnotateMsg = {
-            pos1: start,
-            pos2: end,
-            props,
-            type: MergeTree.MergeTreeDeltaType.ANNOTATE,
-        };
-
-        if (op) {
-            annotateMessage.combiningOp = op;
-        }
-        this.client.annotateSegmentLocal(props, start, end, op);
-        this.submitIfAttached(annotateMessage);
-    }
-
-    public setLocalMinSeq(lmseq: number) {
-        this.client.mergeTree.updateLocalMinSeq(lmseq);
-    }
-
-    public createPositionReference(pos: number, refType: MergeTree.ReferenceType, refSeq = this.client.getCurrentSeq(),
-        clientId = this.client.getClientId()): MergeTree.LocalReference {
-        const segoff = this.client.mergeTree.getContainingSegment(pos,
-            refSeq, this.client.getClientId());
-        if (segoff && segoff.segment) {
-            const baseSegment = segoff.segment as MergeTree.BaseSegment;
-            const lref = new MergeTree.LocalReference(baseSegment, segoff.offset, refType);
-            if (refType !== MergeTree.ReferenceType.Transient) {
-                this.client.mergeTree.addLocalReference(lref);
-            }
-            return lref;
-        }
-    }
-
-    public localRefToPos(localRef: MergeTree.LocalReference) {
-        if (localRef.segment) {
-            return localRef.offset + this.client.mergeTree.getOffset(localRef.segment,
-                this.client.getCurrentSeq(), this.client.getClientId());
-        } else {
-            return -1;
-        }
-    }
-
-    public getIntervalCollections(): IMapView {
-        return this.intervalCollections;
-    }
-
-    // TODO: fix race condition on creation by putting type on every operation
-    public getSharedIntervalCollection(label: string): SharedIntervalCollection<SharedStringInterval> {
-        if (!this.intervalCollections.has(label)) {
-            this.intervalCollections.set<SharedIntervalCollection<SharedStringInterval>>(
-                label,
-                undefined,
-                SharedStringIntervalCollectionValueType.Name);
-        }
-
-        const sharedCollection =
-            this.intervalCollections.get<SharedIntervalCollection<SharedStringInterval>>(label);
-        return sharedCollection;
-    }
-
-    public sendNACKed() {
-        const orderedSegments = [] as MergeTree.ISegment[];
-        while (!this.client.mergeTree.pendingSegments.empty()) {
-            const NACKedSegmentGroup = this.client.mergeTree.pendingSegments.dequeue();
-            for (const segment of NACKedSegmentGroup.segments) {
-                orderedSegments.push(segment);
-            }
-        }
-
-        orderedSegments.sort((a, b) => {
-            if (a === b) {
-                return 0;
-            } else if (a.ordinal < b.ordinal) {
-                return -1;
-            } else {
-                return 1;
-            }
-        });
-
-        /* tslint:disable:no-object-literal-type-assertion */
-        const segmentGroup = {
-            segments: orderedSegments,
-        } as MergeTree.SegmentGroup;
-        const opList = [] as MergeTree.IMergeTreeOp[];
-        let prevSeg: MergeTree.ISegment;
-        for (const segment of orderedSegments) {
-            if (prevSeg !== segment) {
-                segment.segmentGroups.clear();
-                segment.segmentGroups.enqueue(segmentGroup);
-                this.client.segmentToOps(segment, opList);
-                prevSeg = segment;
-            }
-        }
-        const groupOp = {
-            ops: opList,
-            type: MergeTree.MergeTreeDeltaType.GROUP,
-        } as MergeTree.IMergeTreeGroupMsg;
-
-        if (groupOp.ops.length > 0) {
-            this.client.mergeTree.pendingSegments.enqueue(segmentGroup);
-            this.submitIfAttached(groupOp);
-        }
-    }
-
     public findTile(startPos: number, tileLabel: string, preceding = true) {
         return this.client.findTile(startPos, tileLabel, preceding);
     }
-
 }

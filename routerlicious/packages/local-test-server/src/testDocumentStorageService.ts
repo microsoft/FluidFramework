@@ -10,7 +10,7 @@ export class TestDocumentStorageService implements api.IDocumentStorageService  
         return "";
     }
 
-    public getSnapshotTree(version: resources.ICommit): Promise<api.ISnapshotTree> {
+    public getSnapshotTree(version?: resources.ICommit): Promise<api.ISnapshotTree> {
         return null;
     }
 

@@ -17,7 +17,7 @@
     "@prague/client-api": "^0.1.0",
     "@prague/map": "^0.1.0",
     "@prague/container-definitions": "^0.1.0",
-    "@prague/process-utils": "^0.1.0",
+    "@prague/container-utils": "^0.1.0",
     "@prague/runtime-definitions": "^0.1.0",
     "@prague/utils": "^0.1.0",
     "@types/angular": "^1.6.50",

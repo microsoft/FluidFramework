@@ -55,6 +55,17 @@ export abstract class SegmentSequence<T extends MergeTree.ISegment> extends Coll
         this.client = new MergeTree.Client("", document.options);
     }
 
+    public removeRange(start: number, end: number) {
+        const removeMessage: MergeTree.IMergeTreeRemoveMsg = {
+            pos1: start,
+            pos2: end,
+            type: MergeTree.MergeTreeDeltaType.REMOVE,
+        };
+
+        this.client.removeSegmentLocal(start, end);
+        this.submitIfAttached(removeMessage);
+    }
+
     public cut(register: string, start: number, end: number) {
         const removeMessage: MergeTree.IMergeTreeRemoveMsg = {
             pos1: start,
@@ -94,7 +105,7 @@ export abstract class SegmentSequence<T extends MergeTree.ISegment> extends Coll
         this.submitIfAttached(insertMessage);
     }
 
-    public transaction(groupOp: MergeTree.IMergeTreeGroupMsg): MergeTree.SegmentGroup {
+    public groupOperation(groupOp: MergeTree.IMergeTreeGroupMsg): MergeTree.SegmentGroup {
         const segmentGroup = this.client.localTransaction(groupOp);
         this.submitIfAttached(groupOp);
         return segmentGroup;
@@ -264,7 +275,7 @@ export abstract class SegmentSequence<T extends MergeTree.ISegment> extends Coll
     }
 
     protected attachContent() {
-        this.client.startCollaboration(this.runtime.clientId, this.runtime.user, 0);
+        this.client.startCollaboration(this.runtime.clientId, 0);
         this.collabStarted = true;
     }
 
@@ -314,7 +325,7 @@ export abstract class SegmentSequence<T extends MergeTree.ISegment> extends Coll
             const branchId = originBranch === this.runtime.id ? 0 : 1;
             this.collabStarted = true;
             this.client.startCollaboration(
-                this.runtime.clientId, this.runtime.user, minimumSequenceNumber, branchId);
+                this.runtime.clientId, minimumSequenceNumber, branchId);
         }
     }
 
@@ -448,6 +459,10 @@ export class SharedSequence<T extends MergeTree.SequenceItem> extends SegmentSeq
         const segment = new MergeTree.SubSequence<T>(items);
         this.client.insertSegmentLocal(pos, segment, props);
         this.submitIfAttached(insertMessage);
+    }
+
+    public remove(start: number, end: number) {
+        this.removeRange(start, end);
     }
 
     public getItemCount() {

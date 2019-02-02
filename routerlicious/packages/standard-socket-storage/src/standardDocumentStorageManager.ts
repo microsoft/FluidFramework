@@ -9,7 +9,7 @@ export interface IDocumentStorageManager {
     getBlob(blobid: string): Promise<resources.IBlob>;
     getContent(version: resources.ICommit, path: string): Promise<resources.IBlob>;
     getRawUrl(blobid: string): string;
-    getTree(version: resources.ICommit): Promise<resources.ITree>;
+    getTree(version?: resources.ICommit): Promise<resources.ITree>;
     getVersions(blobid: string, count: number): Promise<resources.ICommit[]>;
     write(tree: api.ITree, parents: string[], message: string): Promise<resources.ICommit>;
 }

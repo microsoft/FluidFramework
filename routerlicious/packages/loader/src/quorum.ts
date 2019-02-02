@@ -148,6 +148,13 @@ export class Quorum extends EventEmitter implements IQuorum {
     }
 
     /**
+     * Retrieves the member of the quorum with the specified client id
+     */
+    public getMember(clientId: string): ISequencedClient {
+        return this.members.get(clientId);
+    }
+
+    /**
      * Proposes a new value. Returns a promise that will resolve when the proposal is either accepted or rejected.
      *
      * TODO: Right now we will only submit proposals for connected clients and not attempt to resubmit on any

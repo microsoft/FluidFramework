@@ -1,4 +1,4 @@
-import { IQueueMessage, ISequencedDocumentSystemMessage, IUser, MessageType } from "@prague/runtime-definitions";
+import { IHelpMessage, IQueueMessage, ISequencedDocumentSystemMessage, MessageType } from "@prague/runtime-definitions";
 import * as core from "@prague/services-core";
 import * as utils from "@prague/services-utils";
 import { RateLimitter } from "@prague/utils";
@@ -45,8 +45,14 @@ export class TmzLambda extends SequencedLambda {
                             helpContent = sequencedMessage.operation.contents.tasks;
                             helpContent = helpContent.indexOf("snapshot") === -1 ? [] : ["snapshot"];
                         } else {
+                            // Another back-compat to play well with older client.
                             // tslint:disable max-line-length
-                            helpContent = JSON.parse((sequencedMessage.operation as ISequencedDocumentSystemMessage).data).tasks;
+                            const helpMessage: IHelpMessage = JSON.parse((sequencedMessage.operation as ISequencedDocumentSystemMessage).data);
+                            if (helpMessage.version) {
+                                helpContent = helpMessage.tasks.map((task: string) => `chain-${task}`);
+                            } else {
+                                helpContent = helpMessage.tasks;
+                            }
                         }
                     }
 
@@ -54,7 +60,6 @@ export class TmzLambda extends SequencedLambda {
                         sequencedMessage.operation.clientId,
                         sequencedMessage.tenantId,
                         sequencedMessage.documentId,
-                        sequencedMessage.operation.user,
                         helpContent);
                 }
             }
@@ -68,7 +73,6 @@ export class TmzLambda extends SequencedLambda {
         clientId: string,
         tenantId: string,
         docId: string,
-        user: IUser,
         helpTasks: string[]): Promise<void> {
         const key = await this.tenantManager.getKey(tenantId);
         const queueTasks = this.generateQueueTasks(helpTasks);
@@ -76,14 +80,14 @@ export class TmzLambda extends SequencedLambda {
             const queueName = queueTask[0];
             const tasks = this.rateLimitter.filter(clientId, queueTask[1]);
             if (tasks.length > 0) {
+                const user = utils.generateUser();
                 const queueMessage: IQueueMessage = {
                     documentId: docId,
                     message: {
                         tasks,
                     },
                     tenantId,
-                    token: utils.generateToken(tenantId, docId, key),
-                    user,
+                    token: utils.generateToken(tenantId, docId, key, user),
                 };
                 this.messageSender.sendTask(
                     queueName,

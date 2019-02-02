@@ -1,5 +1,5 @@
 import { TableDocument } from "@chaincode/table-document";
-import { KeyCode, Template } from "@prague/flow-util";
+import { KeyCode, Scheduler, Template } from "@prague/flow-util";
 import * as styles from "./index.css";
 import { BorderRect } from "./borderstyle";
 
@@ -42,7 +42,12 @@ export class GridView {
         [ `${styles.selectedBL}`, `${styles.selectedB}`, `${styles.selectedBR}` ]
     ]);
 
-    constructor (private readonly doc: TableDocument, ) {
+    private readonly invalidate: () => void;
+
+    constructor (private readonly doc: TableDocument) {
+        const scheduler = new Scheduler;
+        this.invalidate = scheduler.coalesce(this.refreshCells);
+
         this.root.addEventListener("click", this.onClick as EventListener);        
         this.tbody.addEventListener("pointerdown", this.cellDown as EventListener);
         this.tbody.addEventListener("pointermove", this.cellMove as EventListener);
@@ -84,11 +89,6 @@ export class GridView {
     private get numRows() { return this.doc.numRows; }
     private get numCols() { return this.doc.numCols; }
 
-    private readonly invalidate = () => {
-        console.log(`table-view: invalidated`);
-        this.refreshCells();
-    }
-
     private refreshCell(td: HTMLTableCellElement, row: number, col: number) {
         const className = this.selection.getStyle(row, col);
         if (td.className !== className) {
@@ -105,7 +105,7 @@ export class GridView {
         }
     }
 
-    private refreshCells() {
+    private readonly refreshCells = () => {
         let row = 0;
         for (const tr of this.tbody.children) {
             let col = -1;

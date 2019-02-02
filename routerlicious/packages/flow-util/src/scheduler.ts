@@ -14,7 +14,7 @@ export class Scheduler {
         this.framePending = false;
     }
 
-    public requestFrame(callback: TaskCallback) {
+    public schedule(callback: TaskCallback) {
         // Record the new task.
         this.frameTasks.push(callback);
 
@@ -26,5 +26,22 @@ export class Scheduler {
         // Otherwise...
         requestAnimationFrame(this.processFrameTasks);
         this.framePending = true;
+    }
+
+    public coalesce(callback: TaskCallback) {
+        let scheduled = false;
+        
+        return () => {
+            if (scheduled) {
+                return;
+            }
+
+            this.schedule(() => {
+                callback();
+                scheduled = false;
+            });
+
+            scheduled = true;
+        }
     }
 }

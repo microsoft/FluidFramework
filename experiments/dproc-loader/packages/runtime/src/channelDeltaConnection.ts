@@ -160,7 +160,6 @@ export class ChannelDeltaConnection implements IDeltaConnection {
             sequenceNumber: this._sequenceNumber + 1,
             traces: documentMessage.traces,
             type: message.type,
-            user: documentMessage.user,
         };
 
         // TODO remove this when making method private

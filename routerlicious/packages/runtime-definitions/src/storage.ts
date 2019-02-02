@@ -4,7 +4,6 @@ import { IClient, ISequencedClient } from "./clients";
 import { ISequencedProposal } from "./consensus";
 import { IContentMessage, IDocumentMessage, ISequencedDocumentMessage } from "./protocol";
 import { ITokenProvider } from "./tokens";
-import { IUser } from "./users";
 
 export interface IDocumentAttributes {
     /**
@@ -119,6 +118,7 @@ export interface IDeltaStorageService {
 }
 
 export interface ISnapshotTree {
+    sha: string;
     blobs: { [path: string]: string };
     commits: { [path: string]: string };
     trees: { [path: string]: ISnapshotTree };
@@ -148,7 +148,7 @@ export interface IDocumentStorageService {
     /**
      * Returns the snapshot tree.
      */
-    getSnapshotTree(version: resources.ICommit): Promise<ISnapshotTree>;
+    getSnapshotTree(version?: resources.ICommit): Promise<ISnapshotTree>;
 
     /**
      * Retrieves all versions of the document starting at the specified sha - or null if from the head
@@ -211,11 +211,6 @@ export interface IDocumentDeltaConnection extends EventEmitter {
      * The parent branch for the document
      */
     parentBranch: string;
-
-    /**
-     * The identity of the logged-in user
-     */
-    user: IUser;
 
     /**
      * Maximum size of a message that can be sent to the server. Messages larger than this size must be chunked.

@@ -3,7 +3,6 @@ import {
     IClientJoin,
     IDocumentMessage,
     IDocumentSystemMessage,
-    IUser,
     MessageType } from "@prague/runtime-definitions";
 import * as core from "@prague/services-core";
 import * as _ from "lodash";
@@ -17,7 +16,6 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
         tenantId: string,
         documentId: string,
         socket: core.IWebSocket,
-        user: IUser,
         client: IClient,
         maxMessageSize: number): Promise<KafkaOrdererConnection> {
 
@@ -31,7 +29,6 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
             tenantId,
             documentId,
             clientId,
-            user,
             client,
             maxMessageSize);
 
@@ -57,7 +54,6 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
         public readonly tenantId: string,
         public readonly documentId: string,
         public readonly clientId: string,
-        private user: IUser,
         private client: IClient,
         public readonly maxMessageSize: number) {
 
@@ -89,7 +85,6 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
             tenantId: this.tenantId,
             timestamp: Date.now(),
             type: core.RawOperationType,
-            user: this.user,
         };
 
         this.submitRawOperation(message);
@@ -103,7 +98,6 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
             tenantId: this.tenantId,
             timestamp: Date.now(),
             type: core.RawOperationType,
-            user: this.user,
         };
 
         this.submitRawOperation(rawMessage);
@@ -130,7 +124,6 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
             tenantId: this.tenantId,
             timestamp: Date.now(),
             type: core.RawOperationType,
-            user: this.user,
         };
 
         this.submitRawOperation(message);
@@ -179,7 +172,6 @@ export class KafkaOrderer implements core.IOrderer {
 
     public async connect(
         socket: core.IWebSocket,
-        user: IUser,
         client: IClient): Promise<core.IOrdererConnection> {
 
         const connection = KafkaOrdererConnection.Create(
@@ -189,7 +181,6 @@ export class KafkaOrderer implements core.IOrderer {
             this.tenantId,
             this.documentId,
             socket,
-            user,
             client,
             this.maxMessageSize);
 

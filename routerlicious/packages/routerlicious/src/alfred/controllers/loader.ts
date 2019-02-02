@@ -37,7 +37,6 @@ export async function initialize(
     loader.run(
         claims.documentId,
         claims.tenantId,
-        claims.user,
         new TokenProvider(token),
         null,
         false,

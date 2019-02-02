@@ -5,8 +5,8 @@ import {
     IComponentRuntime,
     IDeltaHandler,
 } from "@prague/container-definitions";
+import { ComponentHost } from "@prague/container-utils";
 import { IMapView, MapExtension } from "@prague/map";
-import { ComponentHost } from "@prague/process-utils";
 import { IChaincode, IPlatform, IRuntime, ITree } from "@prague/runtime-definitions";
 import { Deferred } from "@prague/utils";
 import * as assert from "assert";
@@ -228,7 +228,6 @@ export class ChartComponent implements IChaincodeComponent {
             runtime.tenantId,
             runtime.documentId,
             runtime.id,
-            runtime.platform,
             runtime.parentBranch,
             runtime.existing,
             runtime.options,

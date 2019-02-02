@@ -1,6 +1,6 @@
 {
   "name": "@chaincode/table-view",
-  "version": "0.1.444",
+  "version": "0.1.4753",
   "description": "Chaincode component that provides a view for a table-document.",
   "main": "dist/main.bundle.js",
   "types": "dist/index.d.ts",

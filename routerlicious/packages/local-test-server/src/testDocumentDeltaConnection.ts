@@ -4,7 +4,6 @@ import {
     IDocumentDeltaConnection,
     IDocumentMessage,
     ISequencedDocumentMessage,
-    IUser,
 } from "@prague/runtime-definitions";
 import * as core from "@prague/services-core";
 import { debug, IConnect, IConnected } from "@prague/socket-storage-shared";
@@ -110,10 +109,6 @@ export class TestDocumentDeltaConnection extends EventEmitter implements IDocume
 
     public get maxMessageSize(): number {
         return this.details.maxMessageSize;
-    }
-
-    public get user(): IUser {
-        return this.details.user;
     }
 
     public get initialMessages(): ISequencedDocumentMessage[] {

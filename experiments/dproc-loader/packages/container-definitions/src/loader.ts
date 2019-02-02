@@ -15,8 +15,21 @@ export interface ICodeLoader {
     load(source: string): Promise<IChaincodeFactory>;
 }
 
-export interface IContainerHost {
+/**
+ * Host provider interfaces
+ */
+export interface IHost {
     tokenProvider: ITokenProvider;
 
     user: IUser;
+}
+
+export interface IRequest {
+    url: string;
+}
+
+export interface IResponse {
+    mimeType: string;
+    status: number;
+    value: any;
 }

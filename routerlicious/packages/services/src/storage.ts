@@ -201,7 +201,6 @@ export class DocumentStorage implements core.IDocumentStorage {
             tenantId,
             timestamp: Date.now(),
             type: core.RawOperationType,
-            user: null,
         };
 
         await producer.send(integrateMessage, tenantId, id);

@@ -1,4 +1,5 @@
 import * as agent from "@prague/agent";
+import { CollaborativeObject } from "@prague/api-definitions";
 import * as api from "@prague/client-api";
 import * as resources from "@prague/gitresources";
 import * as Map from "@prague/map";
@@ -6,7 +7,6 @@ import { IClient } from "@prague/runtime-definitions";
 import * as socketStorage from "@prague/socket-storage";
 import * as $ from "jquery";
 // tslint:disable-next-line:no-var-requires
-const hasIn = require("lodash/hasIn");
 import { registerDocumentServices } from "./utils";
 
 async function loadDocument(
@@ -21,7 +21,6 @@ async function loadDocument(
         const document = await api.load(
             id,
             claims.tenantId,
-            claims.user,
             new socketStorage.TokenProvider(token),
             { encrypted: false},
             version);
@@ -35,7 +34,7 @@ async function updateOrCreateKey(key: string, map: Map.IMap, container: JQuery, 
 
     let keyElement = container.find(`>.${key}`);
     const newElement = keyElement.length === 0;
-    const isCollab = hasIn(value, "__collaborativeObject__");
+    const isCollab = value instanceof CollaborativeObject;
 
     if (newElement) {
         keyElement = $(`<div class="${key} ${isCollab ? "collab-object" : ""}"></div>`);
@@ -186,7 +185,6 @@ function loadCommit(id: string, version: resources.ICommit, config: any) {
         api.load(
             id,
             undefined, // tenantId
-            undefined, // user
             undefined, // token
             { client: config.client, encrypted: false },
             version,

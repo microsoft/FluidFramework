@@ -6,6 +6,7 @@ import { shouldIgnoreEvent } from "../inclusion";
 
 export interface IEditorProps extends IDocumentProps { 
     scheduler: Scheduler;
+    eventSink?: HTMLElement;
 }
 
 interface ListenerRegistration { 
@@ -17,11 +18,21 @@ interface ListenerRegistration {
 interface IEditorViewState extends IViewState {
     cursor: Cursor;
     docView: DocumentView;
+    eventSink: Element;
     props: IEditorProps;
     listeners: ListenerRegistration[];
 }
 
 export class Editor extends View<IEditorProps, IEditorViewState> {
+    public invalidate: () => void;
+
+    constructor () {
+        super();
+
+        // TODO: Kludge: We temporarily assign invalidate -> render until we get our scheduler in mount().
+        this.invalidate = this.render;
+    }
+
     private on(listeners: ListenerRegistration[], target: EventTarget, type: string, listener: EventListener) {
         const wrappedListener = (e: Event) => {
             // Ignore events that bubble up from inclusions
@@ -37,6 +48,9 @@ export class Editor extends View<IEditorProps, IEditorViewState> {
     }
 
     protected mounting(props: Readonly<IEditorProps>): IEditorViewState {
+        const scheduler = props.scheduler;
+        this.invalidate = scheduler.coalesce(this.render);
+        
         const cursor = new Cursor(props.doc);
         cursor.moveTo(0, false);
 
@@ -45,7 +59,7 @@ export class Editor extends View<IEditorProps, IEditorViewState> {
         docView.overlay.appendChild(cursor.root);
 
         const listeners: ListenerRegistration[] = [];
-        const eventSink = docView.eventsink;
+        const eventSink = props.eventSink || root;
         this.on(listeners, eventSink, "keydown",   this.onKeyDown as any);
         this.on(listeners, eventSink, "keypress",  this.onKeyPress as any);
         this.on(listeners, eventSink, "mousedown", this.onMouseDown as any);
@@ -57,6 +71,7 @@ export class Editor extends View<IEditorProps, IEditorViewState> {
             root,
             listeners,
             docView,
+            eventSink,
             props,
             cursor
         });
@@ -86,10 +101,6 @@ export class Editor extends View<IEditorProps, IEditorViewState> {
     public  get doc()            { return this.state.props.doc; }
     private get props()          { return this.state.props; }
     public  get cursorPosition() { return this.state.cursor.position; }
-
-    public readonly invalidate = () => {
-        this.props.scheduler.requestFrame(this.render);
-    }
 
     private readonly render = () => {
         this.props.trackedPositions = this.cursor.getTracked();

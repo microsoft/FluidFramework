@@ -841,7 +841,7 @@ export function TestPack(verbose = true) {
             if (startFile) {
                 loadTextFromFile(startFile, clientsB[i].mergeTree, fileSegCount);
             }
-            clientsB[i].startCollaboration(`FredB${i}`, null, 0, 1);
+            clientsB[i].startCollaboration(`FredB${i}`, 0, 1);
         }
         for (let i = 0; i < clientCountB; i++) {
             let clientB = clientsB[i];
@@ -856,7 +856,7 @@ export function TestPack(verbose = true) {
         serverA.startCollaboration("theServerA");
         serverA.addClients(clientsA);
         serverA.addListeners([serverB]);
-        serverB.startCollaboration("theServerB", null, 0, 1);
+        serverB.startCollaboration("theServerB", 0, 1);
         serverB.addClients(clientsB);
         serverB.addUpstreamClients(clientsA);
 
@@ -1138,6 +1138,56 @@ export function TestPack(verbose = true) {
 
     }
     let clientNames = ["Ed", "Ted", "Ned", "Harv", "Marv", "Glenda", "Susan"];
+    
+    function firstItemTest() {
+        let cli = new MergeTree.Client("");
+        cli.startCollaboration("Fred1");
+        for (let cname of clientNames) {
+            cli.addLongClientId(cname);
+        }
+        cli.insertItemsRemote([2,11], true, 0, undefined, 1, 0, 1);
+        if (verbose) {
+            console.log(cli.mergeTree.toString());
+        }
+        cli.insertItemsRemote([4,5,6],true, 0, undefined, 2, 0, 2);
+        if (verbose) {
+            console.log(cli.mergeTree.toString());
+        }
+        const segment = new MergeTree.SubSequence<number>([3,4,1,1]);
+        cli.insertSegmentLocal(4,segment);
+        if (verbose) {
+            console.log(cli.mergeTree.toString());
+        }
+        if (verbose) {
+            for (let i = 0; i < 4; i++) {
+                for (let j = 0; j < 3; j++) {
+                    console.log(cli.relItems(i, j));
+                }
+            }
+        }
+        cli.mergeTree.ackPendingSegment(3);
+        cli.insertItemsRemote([1,5,6,2,3], true, 6, undefined, 4, 2, 2);
+        cli.insertItemsRemote([9], true, 0, undefined, 5, 0, 2);
+        if (verbose) {
+            console.log(cli.mergeTree.toString());
+            for (let clientId = 0; clientId < 4; clientId++) {
+                for (let refSeq = 0; refSeq < 6; refSeq++) {
+                    console.log(cli.relItems(clientId, refSeq));
+                }
+            }
+        }
+        cli.removeSegmentRemote(3, 6, 6, 5, 3);
+        cli.updateMinSeq(6);
+        if (verbose) {
+            console.log(cli.mergeTree.toString());
+            for (let clientId = 0; clientId < 4; clientId++) {
+                for (let refSeq = 0; refSeq < 7; refSeq++) {
+                    console.log(cli.relItems(clientId, refSeq));
+                }
+            }
+        }
+    }
+
     function firstTest() {
         let cli = new MergeTree.Client("on the mat.");
         cli.startCollaboration("Fred1");
@@ -1314,6 +1364,7 @@ export function TestPack(verbose = true) {
 
     return {
         firstTest,
+        firstItemTest,
         clientServer,
         clientServerBranch,
         manyMergeTrees,
@@ -2032,10 +2083,16 @@ let testPropCopy = false;
 let overlayTree = false;
 let docTree = false;
 let chktst = false;
-let clientServerTest = true;
+let clientServerTest = false;
 let tstTest = false;
 let firstTest = false;
 let ivalTest = false;
+const itemTest = true;
+
+if (itemTest) {
+    let testPack = TestPack(true);
+    testPack.firstItemTest();
+}
 
 if (firstTest) {
     let testPack = TestPack(true);

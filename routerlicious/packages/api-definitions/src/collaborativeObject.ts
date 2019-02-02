@@ -19,7 +19,7 @@ export const OperationType = "op";
 
 export abstract class CollaborativeObject extends EventEmitter implements ICollaborativeObject {
     // tslint:disable-next-line:variable-name
-    public __collaborativeObject__ = true;
+    public readonly __collaborativeObject__ = true;
 
     // Private fields exposed via getters
     // tslint:disable:variable-name

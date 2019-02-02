@@ -162,7 +162,6 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
                         // Create a new socket and bind it to a relay on the node
                         const connection = orderer.connectInternal(
                             subscriber,
-                            connectMessage.user,
                             connectMessage.client);
 
                         // Need to subscribe to both channels. Then broadcast subscription across pipe

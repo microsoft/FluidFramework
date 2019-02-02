@@ -1,0 +1,23 @@
+{    
+    "exclude": [
+        "dist",
+        "node_modules"
+    ],
+    "compilerOptions": {
+        "declaration": true,
+        "declarationDir":".",
+        "target": "es6",
+        "noImplicitAny": false,
+        "noUnusedLocals": true,
+        "module": "esnext",
+        "moduleResolution": "node",
+        "outDir": "dist",
+        "sourceMap": true,
+        "inlineSources": true
+    },
+    "include": [
+        "src/broadcaststateservice.ts",
+        "src/ibroadcaststateservice.ts",
+        "src/testapp.ts"
+    ]
+}

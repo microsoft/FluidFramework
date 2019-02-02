@@ -5,7 +5,7 @@ import {
     ISequencedClient,
     ISequencedDocumentMessage,
     ISequencedProposal,
-} from "@prague/runtime-definitions";
+} from "@prague/container-definitions";
 import { Deferred } from "@prague/utils";
 import * as assert from "assert";
 import { EventEmitter } from "events";
@@ -145,6 +145,13 @@ export class Quorum extends EventEmitter implements IQuorum {
      */
     public getMembers(): Map<string, ISequencedClient> {
         return new Map(this.members);
+    }
+
+    /**
+     * Retrieves a specific member of the quorum
+     */
+    public getMember(clientId: string): ISequencedClient {
+        return this.members.get(clientId);
     }
 
     /**

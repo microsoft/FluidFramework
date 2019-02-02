@@ -1,5 +1,3 @@
-import { IUser } from "./users";
-
 export enum MessageType {
     // Empty operation message. Used to send an updated reference sequence number.
     NoOp = "noop",
@@ -142,9 +140,6 @@ export interface IChunkedOp {
  * Sequenced message for a distributed document
  */
 export interface ISequencedDocumentMessage {
-    // The user that submitted the delta
-    user: IUser;
-
     // The client ID that submitted the delta
     clientId: string;
 
@@ -206,8 +201,6 @@ export interface IObjectMessage {
  * Sequenced message for a distributed data type
  */
 export interface ISequencedObjectMessage {
-    // User who sent the message.
-    user: IUser;
 
     // The sequenced identifier
     sequenceNumber: number;
@@ -259,6 +252,9 @@ export interface ITrace {
 export interface IHelpMessage {
 
     tasks: string[];
+
+    // Temporary version field for back-compat.
+    version?: string;
 }
 
 export interface IQueueMessage {
@@ -270,6 +266,4 @@ export interface IQueueMessage {
     documentId: string;
 
     token: string;
-
-    user: IUser;
 }

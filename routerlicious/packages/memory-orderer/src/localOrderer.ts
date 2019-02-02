@@ -11,7 +11,7 @@ import {
     IClientJoin,
     IDocumentMessage,
     IDocumentSystemMessage,
-    IUser, MessageType } from "@prague/runtime-definitions";
+    MessageType } from "@prague/runtime-definitions";
 import {
     BoxcarType,
     IBoxcarMessage,
@@ -151,7 +151,6 @@ class LocalOrdererConnection implements IOrdererConnection {
         public readonly tenantId: string,
         public readonly documentId: string,
         public readonly clientId: string,
-        private user: IUser,
         private client: IClient,
         public readonly maxMessageSize: number) {
 
@@ -188,7 +187,6 @@ class LocalOrdererConnection implements IOrdererConnection {
             tenantId: this.tenantId,
             timestamp: Date.now(),
             type: RawOperationType,
-            user: this.user,
         };
 
         // Submit on next tick to sequence behind connect response
@@ -203,7 +201,6 @@ class LocalOrdererConnection implements IOrdererConnection {
             tenantId: this.tenantId,
             timestamp: Date.now(),
             type: RawOperationType,
-            user: this.user,
         };
 
         this.submitRawOperation(rawMessage);
@@ -230,7 +227,6 @@ class LocalOrdererConnection implements IOrdererConnection {
             tenantId: this.tenantId,
             timestamp: Date.now(),
             type: RawOperationType,
-            user: this.user,
         };
         this.submitRawOperation(message);
 
@@ -364,17 +360,15 @@ export class LocalOrderer implements IOrderer {
 
     public async connect(
         socket: IWebSocket,
-        user: IUser,
         client: IClient): Promise<IOrdererConnection> {
 
         const socketSubscriber = new WebSocketSubscriber(socket);
-        const orderer = this.connectInternal(socketSubscriber, user, client);
+        const orderer = this.connectInternal(socketSubscriber, client);
         return orderer;
     }
 
     public connectInternal(
         subscriber: ISubscriber,
-        user: IUser,
         client: IClient): IOrdererConnection {
         const clientId = moniker.choose();
 
@@ -388,7 +382,6 @@ export class LocalOrderer implements IOrderer {
             this.tenantId,
             this.documentId,
             clientId,
-            user,
             client,
             this.maxMessageSize);
 
