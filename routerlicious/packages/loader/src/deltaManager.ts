@@ -120,7 +120,7 @@ export class DeltaManager extends EventEmitter implements runtime.IDeltaManager 
         super();
 
         /* tslint:disable:strict-boolean-expressions */
-        this._clientType = (!this.client || this.client.type === runtime.Browser)
+        this._clientType = (!this.client || !this.client.type || this.client.type === runtime.Browser)
             ? runtime.Browser
             : runtime.Robot;
         // Inbound message queue

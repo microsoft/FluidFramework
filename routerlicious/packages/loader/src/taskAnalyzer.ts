@@ -24,7 +24,7 @@ export function analyzeTasks(
     if (unhandledTasks.length > 0) {
         const runnerClient = clients.get(runnerClientId);
         /* tslint:disable:strict-boolean-expressions */
-        const permission = runnerClient.client ? runnerClient.client.permission : [];
+        const permission = runnerClient.client && runnerClient.client.permission ? runnerClient.client.permission : [];
         const allowedTasks = unhandledTasks.filter((task) => permission && permission.indexOf(task) !== -1);
         const robotNeeded = unhandledTasks.filter((task) => permission && permission.indexOf(task) === -1);
         return {
@@ -45,5 +45,5 @@ export function getLeaderCandidate(clients: Map<string, ISequencedClient>) {
 }
 
 function isRobot(client: ISequencedClient): boolean {
-    return client.client && client.client.type !== Browser;
+    return client.client && client.client.type && client.client.type !== Browser;
 }

@@ -193,7 +193,7 @@ function generateGraphData(document: api.Document): IGraph {
     const leaderId = getLeaderId(clients);
     for (const client of clients) {
         const leader = leaderId === client[0];
-        const nodeType = (client[1].client && client[1].client.type !== Browser) ?
+        const nodeType = (client[1].client && client[1].client.type && client[1].client.type !== Browser) ?
             client[1].client.type : (leader ? "leader" : undefined);
         nodes.push({ label: nodeType, id: client[0], group: ++groupId, radius: leader ? 75 : 50, leader });
         links.push({ source: document.id, target: client[0], strength: 0.1});
@@ -257,5 +257,5 @@ function getLeaderCandidate(clients: Map<string, ISequencedClient>) {
 }
 
 function isRobot(client: ISequencedClient): boolean {
-    return client.client && client.client.type !== Browser;
+    return client.client && client.client.type && client.client.type !== Browser;
 }

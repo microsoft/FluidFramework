@@ -6,7 +6,7 @@ import * as resources from "@prague/gitresources";
 import * as DistributedMap from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
 import * as replaySocketStorage from "@prague/replay-socket-storage";
-import { IClient } from "@prague/runtime-definitions";
+import { Browser, IClient } from "@prague/runtime-definitions";
 import * as Sequence from "@prague/sequence";
 import * as socketStorage from "@prague/socket-storage";
 import { IStream } from "@prague/stream";
@@ -125,7 +125,7 @@ async function loadDocument(
 
     // Register to run task only if the client type is browser.
     const client = config.client as IClient;
-    if (client && client.type === "browser") {
+    if (client && client.type === Browser) {
         agent.registerToWork(collabDoc, client, tokenProvider, config);
     }
 
