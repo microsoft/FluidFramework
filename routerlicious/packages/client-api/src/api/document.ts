@@ -4,17 +4,14 @@ import * as resources from "@prague/gitresources";
 import * as pragueLoader from "@prague/loader";
 import { IMap, MapExtension } from "@prague/map";
 import {
-    Browser,
     IDeltaManager,
     IDocumentService,
     IGenericBlob,
-    IHelpMessage,
     IPlatform,
     IRuntime,
     ISequencedClient,
     ITokenProvider,
     IUser,
-    MessageType,
 } from "@prague/runtime-definitions";
 import * as sequence from "@prague/sequence";
 import * as stream from "@prague/stream";
@@ -25,9 +22,7 @@ import { EventEmitter } from "events";
 import * as uuid from "uuid/v4";
 import { CodeLoader } from "./codeLoader";
 import { debug } from "./debug";
-import { LeaderElector } from "./leaderElection";
 import { PlatformFactory } from "./platform";
-import { analyzeTasks, getLeaderCandidate } from "./taskAnalyzer";
 
 // tslint:disable-next-line
 const apiVersion = require("../../package.json").version;
@@ -120,15 +115,11 @@ export class Document extends EventEmitter {
         return this.runtime.connected;
     }
 
-    private leaderElector: LeaderElector;
     /**
      * Constructs a new document from the provided details
      */
     constructor(public readonly runtime: IRuntime, private root: IMap) {
         super();
-
-        // Experimental leader election.
-        this.startLeaderElection();
 
         this.on("clientLeave", (leftClientId) => {
             // Switch to read only mode if a client receives it's own leave message.
@@ -255,77 +246,6 @@ export class Document extends EventEmitter {
     public getBlobMetadata(): Promise<IGenericBlob[]> {
         return this.runtime.getBlobMetadata();
     }
-
-    private startLeaderElection() {
-        // Temporary disable of quorum leader election.
-        if (this.runtime.deltaManager && this.runtime.deltaManager.clientType === Browser) {
-            if (this.runtime.connected) {
-                this.initLeaderElection();
-            } else {
-                const leaderElectionHandler = () => {
-                    this.initLeaderElection();
-                    this.runtime.removeListener("connected", leaderElectionHandler);
-                };
-                this.runtime.on("connected", leaderElectionHandler);
-            }
-        }
-    }
-
-    private initLeaderElection() {
-        this.leaderElector = new LeaderElector(this.runtime.getQuorum(), this.runtime.clientId);
-        this.leaderElector.on("newLeader", (clientId: string) => {
-            debug(`New leader elected: ${clientId}`);
-            this.runTaskAnalyzer();
-        });
-        this.leaderElector.on("leaderLeft", (clientId: string) => {
-            debug(`Leader ${clientId} left`);
-            this.proposeLeadership();
-        });
-        this.leaderElector.on("memberLeft", (clientId: string) => {
-            debug(`Member ${clientId} left`);
-            this.runTaskAnalyzer();
-        });
-        this.proposeLeadership();
-    }
-
-    private proposeLeadership() {
-        if (getLeaderCandidate(this.runtime.getQuorum().getMembers()) === this.clientId) {
-            this.leaderElector.proposeLeadership().then(() => {
-                debug(`Proposal accepted`);
-            }, (err) => {
-                debug(`Proposal rejected: ${err}`);
-            });
-        }
-    }
-
-    /**
-     * On a client joining/departure, decide whether this client is the new leader.
-     * If so, calculate if there are any unhandled tasks for browsers and remote agents.
-     * Emit local help message for this browser and submits a remote help message for agents.
-     */
-    private runTaskAnalyzer() {
-        if (this.leaderElector.getLeader() === this.clientId) {
-            // Analyze the current state and ask for local and remote help seperately.
-            const helpTasks = analyzeTasks(this.clientId, this.runtime.getQuorum().getMembers(), documentTasks);
-            // tslint:disable-next-line:strict-boolean-expressions
-            if (helpTasks && (helpTasks.browser.length > 0 || helpTasks.robot.length > 0)) {
-                if (helpTasks.browser.length > 0) {
-                    const localHelpMessage: IHelpMessage = {
-                        tasks: helpTasks.browser,
-                    };
-                    console.log(`Requesting local help for ${helpTasks.browser}`);
-                    this.runtime.emit("localHelp", localHelpMessage);
-                }
-                if (helpTasks.robot.length > 0) {
-                    const remoteHelpMessage: IHelpMessage = {
-                        tasks: helpTasks.robot,
-                    };
-                    console.log(`Requesting remote help for ${helpTasks.robot}`);
-                    this.runtime.submitMessage(MessageType.RemoteHelp, remoteHelpMessage);
-                }
-            }
-        }
-    }
 }
 
 async function initializeChaincode(document: pragueLoader.Document, pkg: string): Promise<void> {
@@ -404,6 +324,9 @@ export async function load(
     } else {
         root = await runtime.getChannel("root") as IMap;
     }
+
+    // Register tasks for the non-chaincode documents.
+    runtime.registerTasks(documentTasks);
 
     // Return the document
     const document = new Document(runtime, root);
