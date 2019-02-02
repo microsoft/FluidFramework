@@ -5,7 +5,6 @@ import {
     IDocumentService,
     IPlatformFactory,
     ITokenProvider,
-    IUser,
 } from "@prague/runtime-definitions";
 import { EventEmitter } from "events";
 import { IDocumentTaskInfo } from "../definitions";
@@ -20,7 +19,6 @@ export class ChaincodeWork extends EventEmitter {
     constructor(
         private docId: string,
         private tenantId: string,
-        private user: IUser,
         private tokenProvider: ITokenProvider,
         private service: IDocumentService,
         private codeLoader: ICodeLoader,
@@ -34,7 +32,6 @@ export class ChaincodeWork extends EventEmitter {
             const documentP = loader.load(
                 this.docId,
                 this.tenantId,
-                this.user,
                 this.tokenProvider,
                 options,
                 this.platformFactory,

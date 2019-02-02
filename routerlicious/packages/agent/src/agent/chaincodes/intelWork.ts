@@ -6,7 +6,6 @@ import {
     IPlatformFactory,
     ISequencedDocumentMessage,
     ITokenProvider,
-    IUser,
     MessageType,
 } from "@prague/runtime-definitions";
 import * as Sequence from "@prague/sequence";
@@ -22,14 +21,13 @@ export class IntelWork extends ChaincodeWork implements IWork {
     constructor(
         docId: string,
         tenantId: string,
-        user: IUser,
         tokenProvider: ITokenProvider,
         service: IDocumentService,
         codeLoader: ICodeLoader,
         platformFactory: IPlatformFactory,
         task: string,
         private config: any) {
-        super(docId, tenantId, user, tokenProvider, service, codeLoader, platformFactory, task);
+        super(docId, tenantId, tokenProvider, service, codeLoader, platformFactory, task);
     }
 
     public async start(): Promise<void> {
