@@ -114,7 +114,7 @@ export class MapView implements IMapView {
         if (type) {
             const valueType = this.map.getValueType(type);
             if (!valueType) {
-                throw new Error("Unknown value type specified");
+                throw new Error(`Unknown type '${type}' specified`);
             }
 
             // set operationValue first with the raw value params prior to doing the load
