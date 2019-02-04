@@ -1,7 +1,7 @@
 {
   "name": "@chaincode/chat",
   "description": "Prague Chat!",
-  "version": "0.0.63",
+  "version": "0.0.67",
   "author": "Microsoft",
   "repository": "microsoft/prague",
   "main": "dist/main.bundle.js",
@@ -10,10 +10,12 @@
     "build": "webpack --env=\"production\"",
     "dev": "webpack --env=\"development\" --watch",
     "start": "prague-dev-server --config webpack.config.js --package package.json",
+    "publish": "npm publish --registry https://packages.wu2.prague.office-int.com",
+    "publish:local": "npm publish --registry http://localhost:4873",
     "tsc": "tsc"
   },
   "devDependencies": {
-    "@prague/prague-dev-server": "^3.1.13",
+    "@prague/prague-dev-server": "^3.1.14",
     "@types/node": "^10.11.5",
     "@types/react-dom": "^16.0.11",
     "clean-webpack-plugin": "^0.1.19",
@@ -32,10 +34,10 @@
     }
   },
   "dependencies": {
-    "@prague/app-component": "^0.1.4668",
-    "@prague/app-datastore": "^0.1.4668",
-    "@prague/map": "^0.1.4668",
-    "@prague/runtime-definitions": "^0.1.4668",
+    "@prague/app-component": "^0.1.4800",
+    "@prague/app-datastore": "^0.1.4800",
+    "@prague/map": "^0.1.4800",
+    "@prague/runtime-definitions": "^0.1.4800",
     "@stardust-ui/react": "^0.17.0",
     "react": "^16.7.0",
     "react-dom": "^16.7.0"
