@@ -34,7 +34,7 @@ import { Context } from "./context";
 import { debug } from "./debug";
 import { IConnectionDetails } from "./deltaConnection";
 import { DeltaManager } from "./deltaManager";
-import * as nullPackage from "./nullChaincode";
+import { NullChaincode } from "./nullChaincode";
 import { IQuorumSnapshot, Quorum } from "./quorum";
 
 interface IConnectResult {
@@ -370,19 +370,12 @@ export class Container extends EventEmitter {
                     () => this.close());
                 this.context.changeConnectionState(this.connectionState, this.clientId);
 
-                // Start delta processing once all channels are loaded
-                this.context.ready.then(
-                    () => {
-                        if (connect) {
-                            assert(this._deltaManager, "DeltaManager should have been created during connect call");
-                            debug("Everyone ready - resuming inbound messages");
-                            this._deltaManager.inbound.resume();
-                            this._deltaManager.outbound.resume();
-                        }
-                    },
-                    (error) => {
-                        this.emit("error", error);
-                    });
+                if (connect) {
+                    assert(this._deltaManager, "DeltaManager should have been created during connect call");
+                    debug("Everyone ready - resuming inbound messages");
+                    this._deltaManager.inbound.resume();
+                    this._deltaManager.outbound.resume();
+                }
 
                 // Internal context is fully loaded at this point
                 this.loaded = true;
@@ -569,7 +562,7 @@ export class Container extends EventEmitter {
      * Loads the code for the provided package
      */
     private async loadCode(pkg: string): Promise<IChaincodeFactory> {
-        return pkg ? this.codeLoader.load(pkg) : nullPackage;
+        return pkg ? this.codeLoader.load(pkg) : new NullChaincode();
     }
 
     private connect(attributesP: Promise<IDocumentAttributes>): IConnectResult {
@@ -722,6 +715,7 @@ export class Container extends EventEmitter {
             case MessageType.Propose:
             case MessageType.Reject:
             case MessageType.BlobUploaded:
+            case MessageType.NoOp:
                 break;
 
             case MessageType.ChunkedOp:
@@ -841,6 +835,7 @@ export class Container extends EventEmitter {
                 break;
 
             case MessageType.ChunkedOp:
+            case MessageType.NoOp:
                 break;
 
             default:
@@ -850,10 +845,6 @@ export class Container extends EventEmitter {
         // Notify the quorum of the MSN from the message. We rely on it to handle duplicate values but may
         // want to move that logic to this class.
         this.quorum.updateMinimumSequenceNumber(message);
-
-        // TODOTODO do we really need this anymore? Should we just have the component listen for MSN events
-        // on the parent if it cares?
-        this.context.updateMinSequenceNumber(message.minimumSequenceNumber);
 
         this.emit("op", ...eventArgs);
     }
@@ -868,6 +859,7 @@ export class Container extends EventEmitter {
             case MessageType.Reject:
             case MessageType.BlobUploaded:
             case MessageType.ChunkedOp:
+            case MessageType.NoOp:
                 break;
             default:
                 await this.context.postProcess(message, local, context);

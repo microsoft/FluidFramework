@@ -4,19 +4,20 @@ import * as pinpoint from "@chaincode/pinpoint-editor";
 import { Component, Document } from "@prague/app-component";
 import * as API from "@prague/client-api";
 import {
+    IContainerContext,
+    IRequest,
+    IRuntime,
+} from "@prague/container-definitions";
+import * as DistributedMap from "@prague/map";
+import * as MergeTree from "@prague/merge-tree";
+import {
+    ComponentHost,
     IChaincodeComponent,
     IComponentPlatform,
     IComponentRuntime,
-    IContext,
     IDeltaHandler,
-    IHostRuntime,
-    IRequest,
-    IChaincodeFactory,
-} from "@prague/container-definitions";
-import { ComponentHost } from "@prague/container-utils";
-import * as DistributedMap from "@prague/map";
-import * as MergeTree from "@prague/merge-tree";
-import { Runtime } from "@prague/runtime";
+    Runtime,
+} from "@prague/runtime";
 import { IChaincode, IPlatform, ITree } from "@prague/runtime-definitions";
 import * as SharedString from "@prague/sequence";
 import { IStream } from "@prague/stream";
@@ -157,84 +158,6 @@ class SharedText extends Document {
     }
 }
 
-class SharedTextHost implements IChaincodeFactory {
-    public async getModule(type: string) {
-        switch (type) {
-            case "@chaincode/charts":
-                return charts;
-            case "@chaincode/shared-text":
-                return { instantiateComponent };
-            case "@chaincode/pinpoint-editor":
-                return pinpoint;
-            case "@chaincode/monaco":
-                return monaco;
-            default:
-                return Promise.reject("Unknown component");
-        }
-    }
-
-    public async close(): Promise<void> {
-        return;
-    }
-
-    // I believe that runtime needs to have everything necessary for this thing to actually load itself once this
-    // method is called
-    public async instantiateContainer(context: IContext): Promise<IPlatform> {
-        const runtime = await Runtime.Load(
-            context.tenantId,
-            context.id,
-            context.parentBranch,
-            context.existing,
-            context.options,
-            context.clientId,
-            context.user,
-            context.blobManager,
-            context.deltaManager,
-            context.quorum,
-            context.storage,
-            context.connectionState,
-            context.baseSnapshot,
-            context.blobs,
-            context.branch,
-            context.minimumSequenceNumber,
-            context.submitFn,
-            context.snapshotFn,
-            context.closeFn);
-
-        runtime.registerRequestHandler(async (request: IRequest) => {
-            console.log(request.url);
-            const requestUrl = request.url.length > 0 && request.url.charAt(0) === "/"
-                ? request.url.substr(1)
-                : request.url;
-            const trailingSlash = requestUrl.indexOf("/");
-
-            const componentId = requestUrl
-                ? requestUrl.substr(0, trailingSlash === -1 ? requestUrl.length : trailingSlash)
-                : "text";
-            const component = await runtime.getProcess(componentId, true);
-
-            // If there is a trailing slash forward to the component. Otherwise handle directly.
-            if (trailingSlash === -1) {
-                return { status: 200, mimeType: "prague/component", value: component };
-            } else {
-                return component.request({ url: requestUrl.substr(trailingSlash) });
-            }
-        });
-
-        this.doWork(context, runtime).catch((error) => {
-            context.error(error);
-        });
-
-        return runtime;
-    }
-
-    private async doWork(context: IContext, runtime: IHostRuntime) {
-        if (!runtime.existing) {
-            await runtime.createAndAttachProcess("text", "@chaincode/shared-text");
-        }
-    }
-}
-
 export class SharedTextComponent implements IChaincodeComponent {
     private sharedText = new SharedText();
     private chaincode: IChaincode;
@@ -294,9 +217,69 @@ export class SharedTextComponent implements IChaincodeComponent {
     }
 }
 
+export async function instantiateComponent(): Promise<IChaincodeComponent> {
+    return new SharedTextComponent();
+}
+
 /**
  * Instantiates a new chaincode host
  */
-export async function instantiateHost(): Promise<IChaincodeHost> {
-    return new SharedTextHost();
+export async function instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
+    const registry = new Map<string, any>([
+        ["@chaincode/charts", charts],
+        ["@chaincode/shared-text", { instantiateComponent }],
+        ["@chaincode/pinpoint-editor", pinpoint],
+        ["@chaincode/monaco", monaco]]);
+
+    const runtime = await Runtime.Load(
+        registry,
+        context.tenantId,
+        context.id,
+        context.parentBranch,
+        context.existing,
+        context.options,
+        context.clientId,
+        context.user,
+        context.blobManager,
+        context.deltaManager,
+        context.quorum,
+        context.storage,
+        context.connectionState,
+        context.baseSnapshot,
+        context.blobs,
+        context.branch,
+        context.minimumSequenceNumber,
+        context.submitFn,
+        context.snapshotFn,
+        context.closeFn);
+
+    // Register path handler for inbound messages
+    runtime.registerRequestHandler(async (request: IRequest) => {
+        console.log(request.url);
+        const requestUrl = request.url.length > 0 && request.url.charAt(0) === "/"
+            ? request.url.substr(1)
+            : request.url;
+        const trailingSlash = requestUrl.indexOf("/");
+
+        const componentId = requestUrl
+            ? requestUrl.substr(0, trailingSlash === -1 ? requestUrl.length : trailingSlash)
+            : "text";
+        const component = await runtime.getProcess(componentId, true);
+
+        // If there is a trailing slash forward to the component. Otherwise handle directly.
+        if (trailingSlash === -1) {
+            return { status: 200, mimeType: "prague/component", value: component };
+        } else {
+            return component.request({ url: requestUrl.substr(trailingSlash) });
+        }
+    });
+
+    // On first boot create the base component
+    if (!runtime.existing) {
+        runtime.createAndAttachProcess("text", "@chaincode/shared-text").catch((error) => {
+            context.error(error);
+        });
+    }
+
+    return runtime;
 }

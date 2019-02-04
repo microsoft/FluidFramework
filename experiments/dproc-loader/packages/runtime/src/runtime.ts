@@ -1,7 +1,4 @@
 import {
-    IComponentContext,
-    IComponentRuntime,
-    IHostRuntime,
     IRequest,
     IResponse,
 } from "@prague/container-definitions";
@@ -14,7 +11,6 @@ import {
     IDeltaManager,
     IDocumentStorageService,
     IEnvelope,
-    IPlatform,
     IQuorum,
     ISequencedDocumentMessage,
     ISnapshotTree,
@@ -29,12 +25,18 @@ import { EventEmitter } from "events";
 import { Component } from "./component";
 import { ComponentStorageService } from "./componentStorageService";
 import { debug } from "./debug";
+import {
+    IComponentFactory,
+    IComponentRuntime,
+    IHostRuntime,
+} from "./definitions";
 
 // Context will define the component level mappings
-export class Runtime extends EventEmitter implements IComponentContext, IHostRuntime, IPlatform {
+export class Runtime extends EventEmitter implements IHostRuntime {
     // TODO Runtime should have a component registry. Type -> component.
 
     public static async Load(
+        registry: Map<string, IComponentFactory>,
         tenantId: string,
         id: string,
         parentBranch: string,
@@ -56,6 +58,7 @@ export class Runtime extends EventEmitter implements IComponentContext, IHostRun
         closeFn: () => void,
     ): Promise<Runtime> {
         const context = new Runtime(
+            registry,
             tenantId,
             id,
             parentBranch,
@@ -121,6 +124,7 @@ export class Runtime extends EventEmitter implements IComponentContext, IHostRun
     }
 
     private constructor(
+        private readonly registry: Map<string, IComponentFactory>,
         public readonly tenantId: string,
         public readonly id: string,
         public readonly parentBranch: string,
@@ -153,6 +157,7 @@ export class Runtime extends EventEmitter implements IComponentContext, IHostRun
         const details = await readAndParse<{ pkg: string }>(this.storage, snapshotTree.blobs[".component"]);
 
         const componentP = Component.LoadFromSnapshot(
+            this.registry.get(details.pkg),
             this,
             this.tenantId,
             this.id,
@@ -182,15 +187,6 @@ export class Runtime extends EventEmitter implements IComponentContext, IHostRun
         this.components.set(id, component);
 
         await component.start();
-    }
-
-    public async queryInterface<T>(id: string): Promise<any> {
-        switch (id) {
-            case "context":
-                return this as IComponentContext;
-            default:
-                return null;
-        }
     }
 
     public registerRequestHandler(handler: (request: IRequest) => Promise<IResponse>) {
@@ -345,6 +341,7 @@ export class Runtime extends EventEmitter implements IComponentContext, IHostRun
 
         const runtimeStorage = new ComponentStorageService(this.storage, new Map());
         const component = await Component.create(
+            this.registry.get(pkg),
             this,
             this.tenantId,
             this.id,
@@ -476,6 +473,7 @@ export class Runtime extends EventEmitter implements IComponentContext, IHostRun
         // create storage service that wraps the attach data
         const runtimeStorage = new ComponentStorageService(this.storage, new Map());
         const component = await Component.LoadFromSnapshot(
+            this.registry.get(attachMessage.type),
             this,
             this.tenantId,
             this.id,

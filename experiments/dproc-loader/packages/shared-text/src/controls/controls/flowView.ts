@@ -1,10 +1,10 @@
 // tslint:disable:no-bitwise whitespace align switch-default no-string-literal ban-types no-angle-bracket-type-assertion
 import { ICollaborativeObject } from "@prague/api-definitions";
 import * as api from "@prague/client-api";
-import { ILegacyRuntime } from "@prague/container-definitions";
 import * as types from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
 import { findRandomWord } from "@prague/merge-tree-utils";
+import { ILegacyRuntime } from "@prague/runtime";
 import { IGenericBlob, ISequencedObjectMessage, IUser } from "@prague/runtime-definitions";
 import * as Sequence from "@prague/sequence";
 import * as assert from "assert";

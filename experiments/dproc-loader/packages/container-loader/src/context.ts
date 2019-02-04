@@ -1,14 +1,13 @@
 import {
     ConnectionState,
     IChaincodeFactory,
-    IComponentContext,
-    IContext,
+    IContainerContext,
     IDocumentAttributes,
     IDocumentStorageService,
-    IPlatform,
     IQuorum,
     IRequest,
     IResponse,
+    IRuntime,
     ISequencedDocumentMessage,
     ISnapshotTree,
     ITree,
@@ -19,7 +18,7 @@ import { BlobManager } from "./blobManager";
 import { Container } from "./container";
 import { DeltaManager } from "./deltaManager";
 
-export class Context implements IContext {
+export class Context implements IContainerContext {
     public static async Load(
         container: Container,
         chaincode: IChaincodeFactory,
@@ -95,8 +94,7 @@ export class Context implements IContext {
         return this.container.options;
     }
 
-    private contextPlatform: IPlatform;
-    private componentContext: IComponentContext;
+    private runtime: IRuntime;
     // tslint:disable:variable-name allowing _ for params exposed with getter
     private _minimumSequenceNumber: number;
     // tslint:enable:variable-name
@@ -119,87 +117,46 @@ export class Context implements IContext {
         this._minimumSequenceNumber = attributes.minimumSequenceNumber;
     }
 
-    public get ready(): Promise<void> {
-        if (!this.componentContext) {
-            return Promise.resolve();
-        }
-
-        return this.componentContext.ready;
-    }
-
     public async snapshot(tagMessage: string): Promise<ITree> {
-        if (!this.componentContext) {
-            return null;
-        }
-
-        return this.componentContext.snapshot(tagMessage);
+        return this.runtime.snapshot(tagMessage);
     }
 
     public changeConnectionState(value: ConnectionState, clientId: string) {
-        if (!this.componentContext) {
-            return;
-        }
-
-        this.componentContext.changeConnectionState(value, clientId);
+        this.runtime.changeConnectionState(value, clientId);
     }
 
     public async stop(): Promise<ITree> {
-        if (!this.componentContext) {
-            return null;
-        }
-
-        const snapshot = await this.componentContext.snapshot("");
-        await this.componentContext.stop();
+        const snapshot = await this.runtime.snapshot("");
+        await this.runtime.stop();
 
         return snapshot;
     }
 
     public async prepare(message: ISequencedDocumentMessage, local: boolean): Promise<any> {
-        if (!this.componentContext) {
-            return;
-        }
-
-        return this.componentContext.prepare(message, local);
+        return this.runtime.prepare(message, local);
     }
 
     public process(message: ISequencedDocumentMessage, local: boolean, context: any) {
-        if (!this.componentContext) {
-            return;
-        }
-
-        this.componentContext.process(message, local, context);
+        this.runtime.process(message, local, context);
     }
 
     public async postProcess(message: ISequencedDocumentMessage, local: boolean, context: any): Promise<void> {
-        if (!this.componentContext) {
-            return;
-        }
-
-        return this.componentContext.postProcess(message, local, context);
-    }
-
-    public updateMinSequenceNumber(minimumSequenceNumber: number) {
-        if (!this.componentContext) {
-            return;
-        }
-
-        this.componentContext.updateMinSequenceNumber(minimumSequenceNumber);
+        return this.runtime.postProcess(message, local, context);
     }
 
     public async request(path: IRequest): Promise<IResponse> {
-        if (!this.componentContext) {
-            return { status: 404, mimeType: "text/plain", value: `${path} not found` };
-        }
-
-        return this.componentContext.request(path);
+        return this.runtime.request(path);
     }
 
     public error(err: any): void {
         this.errorFn(err);
     }
 
+    public registerTasks(tasks: string[]): any {
+        return;
+    }
+
     private async load() {
-        this.contextPlatform = await this.chaincode.instantiateContainer(this);
-        this.componentContext = await this.contextPlatform.queryInterface<IComponentContext>("context");
+        this.runtime = await this.chaincode.instantiateRuntime(this);
     }
 }

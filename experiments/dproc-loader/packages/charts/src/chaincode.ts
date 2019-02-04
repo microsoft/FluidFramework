@@ -1,12 +1,12 @@
 import * as charts from "@ms/charts";
+import { IMapView, MapExtension } from "@prague/map";
 import {
+    ComponentHost,
     IChaincodeComponent,
     IComponentPlatform,
     IComponentRuntime,
     IDeltaHandler,
-} from "@prague/container-definitions";
-import { ComponentHost } from "@prague/container-utils";
-import { IMapView, MapExtension } from "@prague/map";
+} from "@prague/runtime";
 import { IChaincode, IPlatform, IRuntime, ITree } from "@prague/runtime-definitions";
 import { Deferred } from "@prague/utils";
 import * as assert from "assert";

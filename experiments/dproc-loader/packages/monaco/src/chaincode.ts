@@ -1,19 +1,19 @@
 // inspiration for this example taken from https://github.com/agentcooper/typescript-play
 import { Component, Document } from "@prague/app-component";
 import {
-    IChaincodeComponent,
-    IComponentPlatform,
-    IComponentRuntime,
-    IDeltaHandler,
-} from "@prague/container-definitions";
-import { ComponentHost } from "@prague/container-utils";
-import {
     IMergeTreeGroupMsg,
     IMergeTreeInsertMsg,
     IMergeTreeOp,
     IMergeTreeRemoveMsg,
     MergeTreeDeltaType,
 } from "@prague/merge-tree";
+import {
+    ComponentHost,
+    IChaincodeComponent,
+    IComponentPlatform,
+    IComponentRuntime,
+    IDeltaHandler,
+} from "@prague/runtime";
 import { IChaincode, IPlatform, ITree } from "@prague/runtime-definitions";
 import { SharedString } from "@prague/sequence";
 import { Deferred } from "@prague/utils";

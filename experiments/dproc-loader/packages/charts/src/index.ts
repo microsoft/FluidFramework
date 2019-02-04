@@ -1,4 +1,4 @@
-import { IChaincodeComponent } from "@prague/container-definitions";
+import { IChaincodeComponent } from "@prague/runtime";
 import { ChartComponent } from "./chaincode";
 
 /**

@@ -1,11 +1,11 @@
+import { IChaincode, IPlatform, ITree } from "@prague/runtime-definitions";
+import { ComponentHost } from "./componentHost";
 import {
     IChaincodeComponent,
     IComponentPlatform,
     IComponentRuntime,
     IDeltaHandler,
-} from "@prague/container-definitions";
-import { IChaincode, IPlatform, ITree } from "@prague/runtime-definitions";
-import { ComponentHost } from "./componentHost";
+} from "./definitions";
 
 export class LegacyChaincodeBridge implements IChaincodeComponent {
     private component: ComponentHost;

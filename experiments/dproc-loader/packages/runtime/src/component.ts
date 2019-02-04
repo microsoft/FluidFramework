@@ -1,10 +1,4 @@
 import {
-    IChaincodeComponent,
-    IComponentPlatform,
-    IComponentRuntime,
-    IDeltaHandler,
-    IHostRuntime,
-    IProcess,
     IRequest,
     IResponse,
 } from "@prague/container-definitions";
@@ -28,6 +22,14 @@ import {
 } from "@prague/runtime-definitions";
 import { EventEmitter } from "events";
 import { ChannelDeltaConnection } from "./channelDeltaConnection";
+import {
+    IChaincodeComponent,
+    IComponentFactory,
+    IComponentPlatform,
+    IComponentRuntime,
+    IDeltaHandler,
+    IHostRuntime,
+} from "./definitions";
 
 // tslint:disable:no-unsafe-any
 
@@ -37,8 +39,9 @@ export interface IChannelState {
     connection: ChannelDeltaConnection;
 }
 
-export class Component extends EventEmitter implements IComponentRuntime, IProcess {
+export class Component extends EventEmitter implements IComponentRuntime {
     public static async create(
+        factory: IComponentFactory,
         hostRuntime: IHostRuntime,
         tenantId: string,
         documentId: string,
@@ -59,10 +62,7 @@ export class Component extends EventEmitter implements IComponentRuntime, IProce
         snapshotFn: (message: string) => Promise<void>,
         closeFn: () => void,
     ) {
-        // (await chaincode.getModule(pkg)) as { instantiateComponent: () => Promise<IChaincodeComponent>};
-        const module = { instantiateComponent: () => null };
-        const extension = await module.instantiateComponent();
-
+        const extension = await factory.instantiateComponent();
         const component = new Component(
             pkg,
             hostRuntime,
@@ -91,6 +91,7 @@ export class Component extends EventEmitter implements IComponentRuntime, IProce
     }
 
     public static async LoadFromSnapshot(
+        factory: IComponentFactory,
         hostRuntime: IHostRuntime,
         tenantId: string,
         documentId: string,
@@ -112,10 +113,7 @@ export class Component extends EventEmitter implements IComponentRuntime, IProce
         snapshotFn: (message: string) => Promise<void>,
         closeFn: () => void,
     ): Promise<Component> {
-        // (await chaincode.getModule(pkg)) as { instantiateComponent: () => Promise<IChaincodeComponent>};
-        const module = { instantiateComponent: () => null };
-        const extension = await module.instantiateComponent();
-
+        const extension = await factory.instantiateComponent();
         const component = new Component(
             pkg,
             hostRuntime,
