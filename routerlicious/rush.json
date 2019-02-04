@@ -162,6 +162,10 @@
       "projectFolder": "packages/table-document"
     },
     {
+      "packageName": "@chaincode/table-slice",
+      "projectFolder": "packages/table-slice"
+    },
+    {
       "packageName": "@chaincode/table-view",
       "projectFolder": "packages/table-view"
     },
