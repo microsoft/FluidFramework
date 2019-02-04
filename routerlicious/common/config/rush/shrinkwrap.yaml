@@ -37,6 +37,7 @@ dependencies:
   '@rush-temp/standard-socket-storage': 'file:projects/standard-socket-storage.tgz'
   '@rush-temp/stream': 'file:projects/stream.tgz'
   '@rush-temp/table-document': 'file:projects/table-document.tgz'
+  '@rush-temp/table-slice': 'file:projects/table-slice.tgz'
   '@rush-temp/table-view': 'file:projects/table-view.tgz'
   '@rush-temp/test-utils': 'file:projects/test-utils.tgz'
   '@rush-temp/tools-core': 'file:projects/tools-core.tgz'
@@ -6258,6 +6259,15 @@ packages:
     dev: false
     resolution:
       integrity: sha512-9jjUFbTPfEy3R/ad/2oNbKtW9Hgovl5O1FvFWKkKblNXoN/Oou6+9+KKohPK13Yc3/TyunyWhJp6gvRNR/PPAw==
+  /normalize-package-data/2.4.2:
+    dependencies:
+      hosted-git-info: 2.7.1
+      is-builtin-module: 1.0.0
+      semver: 5.6.0
+      validate-npm-package-license: 3.0.4
+    dev: false
+    resolution:
+      integrity: sha512-YcMnjqeoUckXTPKZSAsPjUPLxH85XotbpqK3w4RyCwdFQSU5FxxBys8buehkSfg0j9fKvV1hn7O0+8reEgkAiw==
   /normalize-path/2.1.1:
     dependencies:
       remove-trailing-separator: 1.1.0
@@ -7357,7 +7367,7 @@ packages:
   /read-pkg/3.0.0:
     dependencies:
       load-json-file: 4.0.0
-      normalize-package-data: 2.4.0
+      normalize-package-data: 2.4.2
       path-type: 3.0.0
     dev: false
     engines:
@@ -9151,6 +9161,13 @@ packages:
     hasBin: true
     resolution:
       integrity: sha512-0RNDbSdEokBeEAkgNbxJ+BLwSManFy9TeXz8uW+48j/xhEXv1ePME60olyzw2XzUqUBNAYFeJadIqAgNqIACwg==
+  /typescript/3.3.1:
+    dev: false
+    engines:
+      node: '>=4.2.0'
+    hasBin: true
+    resolution:
+      integrity: sha512-cTmIDFW7O0IHbn1DPYjkiebHxwtCMU+eTy30ZtJNBPF9j2O1ITu5XH2YnBeVRKWHqF+3JQwWJv0Q0aUgX8W7IA==
   /typings-for-css-modules-loader/1.7.0:
     dependencies:
       colour: 0.7.1
@@ -10205,7 +10222,7 @@ packages:
     dev: false
     name: '@rush-temp/chart-view'
     resolution:
-      integrity: sha512-93KEc2ybvNbXp10kOOeibUoIQevSMQ0xdCTOrGAC0ksqFtCqm6Tc9gkujk7KfhZ085T1yWLJbS2z0KUbF5iWiw==
+      integrity: sha512-5ufO1IKNsg1pEfllSw4XVkAYrjVozvCxkL92Ji14JwMS37aoJYKysHoLwQlqZQoVuvQ/NjY26b1XJeJvmDmTVA==
       tarball: 'file:projects/chart-view.tgz'
     version: 0.0.0
   'file:projects/client-api.tgz':
@@ -10295,7 +10312,7 @@ packages:
     dev: false
     name: '@rush-temp/flow-app'
     resolution:
-      integrity: sha512-omIZUtrJYYR77+vXmMd0fUBZWaF1Sw9R79E7ijCC8BhmdOqLdY3zeGJmCx5dZR+o8xr1LwooUonGCjZsXu9CRA==
+      integrity: sha512-pX5Xri3PgJzCgwd/OJsGONvm2bo5iBkWEnaC2CTNGn4ixYL2BDRIs+wiLCSUHJS23XFqmDpNIO47gtuTXa14eQ==
       tarball: 'file:projects/flow-app.tgz'
     version: 0.0.0
   'file:projects/flow-document.tgz':
@@ -10957,6 +10974,23 @@ packages:
       integrity: sha512-ss4nlD2AgBjgtuWnutDCiD/EETqD9R6YrcF3w8x00yarEDANjbww5sz3fBIXxPIA9RGKeDtu3simGNhCPRwDwg==
       tarball: 'file:projects/table-document.tgz'
     version: 0.0.0
+  'file:projects/table-slice.tgz':
+    dependencies:
+      css-loader: /css-loader/1.0.1/webpack@4.29.0
+      source-map-loader: 0.2.4
+      style-loader: 0.23.1
+      ts-loader: 4.5.0
+      typescript: 3.3.1
+      typings-for-css-modules-loader: /typings-for-css-modules-loader/1.7.0/css-loader@1.0.1
+      webpack: 4.29.0
+      webpack-cli: /webpack-cli/3.2.1/webpack@4.29.0
+      webpack-merge: 4.2.1
+    dev: false
+    name: '@rush-temp/table-slice'
+    resolution:
+      integrity: sha512-qiHNSNrq+/DuPuibmDi3feGNP1GKoDxhuUF7+Z0DEpz12KrNPzdQDN6hG1GGL7HU0nmUpPQFOQH2h3OVy1a4+w==
+      tarball: 'file:projects/table-slice.tgz'
+    version: 0.0.0
   'file:projects/table-view.tgz':
     dependencies:
       '@types/benchmark': 1.0.31
@@ -11086,6 +11120,7 @@ specifiers:
   '@rush-temp/standard-socket-storage': 'file:./projects/standard-socket-storage.tgz'
   '@rush-temp/stream': 'file:./projects/stream.tgz'
   '@rush-temp/table-document': 'file:./projects/table-document.tgz'
+  '@rush-temp/table-slice': 'file:./projects/table-slice.tgz'
   '@rush-temp/table-view': 'file:./projects/table-view.tgz'
   '@rush-temp/test-utils': 'file:./projects/test-utils.tgz'
   '@rush-temp/tools-core': 'file:./projects/tools-core.tgz'
@@ -11195,7 +11230,7 @@ specifiers:
   nock: ^10.0.1
   node-geocoder: ^3.22.0
   node-sass: ^4.9.3
-  npm-run-all: ~4.1.5
+  npm-run-all: ^4.1.5
   nyc: ^13.0.1
   office-ui-fabric-react: ^6.108.0
   ora: ^3.0.0
