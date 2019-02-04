@@ -28,7 +28,7 @@ import {
     LocalReference
 } from "@prague/merge-tree";
 
-import { CellRange } from "./cellRange";
+import { CellRange } from "./cellrange";
 export { CellRange };
 
 const loadCellTextSym = Symbol("TableDocument.loadCellText");
