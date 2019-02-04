@@ -4,4 +4,6 @@ export interface IUser {
     name?: string;
 
     oid?: string;
+
+    funName?: string;
 }

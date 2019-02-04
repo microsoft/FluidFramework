@@ -27,14 +27,14 @@ export class ChatApp extends Document {
       setTimeout(() => {
         const quorum = this.runtime.getQuorum();
         const user = quorum.getMember(this.runtime.clientId);        
-        
+
         ReactDOM.render(
           <Provider theme={themes.teams}>
             <ChatContainer
               messages={messages}
               messageView={messagesView}
               counter={msgCtr}
-              clientId= {user.client.user.id} // this.runtime.clientId}
+              clientId= {user.client.user.id}
             />
           </Provider>,
           maybeDiv
