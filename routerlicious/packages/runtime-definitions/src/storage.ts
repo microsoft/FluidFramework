@@ -186,7 +186,7 @@ export interface IDocumentStorageService {
  */
 export interface IDocumentDeltaStorageService {
     /**
-     * Retrieves all the delta operations within the inclusive sequence number range
+     * Retrieves all the delta operations within the exclusive sequence number range
      */
     get(from?: number, to?: number): Promise<ISequencedDocumentMessage[]>;
 }

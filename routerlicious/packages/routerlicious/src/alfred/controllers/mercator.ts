@@ -1,4 +1,4 @@
-import { getRandomName } from "@prague/services-utils/dist/dockerNames";
+import { getRandomName } from "@prague/services-core";
 import { run } from "@prague/tools-core";
 
 export function initialize() {

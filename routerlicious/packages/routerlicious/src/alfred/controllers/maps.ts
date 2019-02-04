@@ -3,7 +3,7 @@ import { CollaborativeObject } from "@prague/api-definitions";
 import * as api from "@prague/client-api";
 import * as resources from "@prague/gitresources";
 import * as Map from "@prague/map";
-import { IClient } from "@prague/runtime-definitions";
+import { Browser, IClient } from "@prague/runtime-definitions";
 import * as socketStorage from "@prague/socket-storage";
 import * as $ from "jquery";
 // tslint:disable-next-line:no-var-requires
@@ -168,7 +168,7 @@ function loadFull(id: string, version: resources.ICommit, config: any, token?: s
 
             // Register to run task only if the client type is browser.
             const client = config.client as IClient;
-            if (client && client.type === "browser") {
+            if (client && client.type === Browser) {
                 agent.registerToWork(doc, client, new socketStorage.TokenProvider(token), config);
             }
         }, (err) => {

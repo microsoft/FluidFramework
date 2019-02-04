@@ -46,7 +46,7 @@ services:
         restart: always
     routemaster:
         build: .
-        command: node dist/kafka-service/index.js routemaster /usr/src/server/packages/lambdas/dist/document-router/index.js
+        command: node dist/kafka-service/index.js routemaster /usr/src/server/packages/lambdas-driver/dist/document-router/index.js
         environment:
             - DEBUG=prague:*
             - NODE_ENV=development

@@ -1,5 +1,4 @@
-import { IAlfredTenant, IDocumentStorage, IProducer, ITenantManager } from "@prague/services-core";
-import * as utils from "@prague/services-utils";
+import { IAlfredTenant, IDocumentStorage, IProducer, ITenantManager, MongoManager } from "@prague/services-core";
 import * as cors from "cors";
 import { Router } from "express";
 import { Provider } from "nconf";
@@ -12,7 +11,7 @@ export function create(
     config: Provider,
     tenantManager: ITenantManager,
     storage: IDocumentStorage,
-    mongoManager: utils.MongoManager,
+    mongoManager: MongoManager,
     producer: IProducer,
     appTenants: IAlfredTenant[]): Router {
 

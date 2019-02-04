@@ -1,5 +1,6 @@
 import * as services from "@prague/services";
 import { getOrCreateRepository } from "@prague/services-client";
+import { MongoManager } from "@prague/services-core";
 import * as utils from "@prague/services-utils";
 import { Provider } from "nconf";
 import { RiddlerRunner } from "./runner";
@@ -8,7 +9,7 @@ import { ITenantDocument } from "./tenantManager";
 export class RiddlerResources implements utils.IResources {
     constructor(
         public tenantsCollectionName: string ,
-        public mongoManager: utils.MongoManager,
+        public mongoManager: MongoManager,
         public port: any,
         public loggerFormat: string,
         public baseOrdererUrl: string) {
@@ -24,7 +25,7 @@ export class RiddlerResourcesFactory implements utils.IResourcesFactory<RiddlerR
         // Database connection
         const mongoUrl = config.get("mongo:endpoint") as string;
         const mongoFactory = new services.MongoDbFactory(mongoUrl);
-        const mongoManager = new utils.MongoManager(mongoFactory);
+        const mongoManager = new MongoManager(mongoFactory);
         const tenantsCollectionName = config.get("mongo:collectionNames:tenants");
 
         // Load configs for default tenants

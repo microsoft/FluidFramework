@@ -1,5 +1,11 @@
-import { ICollection, IContext, IPartitionLambda, IPartitionLambdaFactory, IProducer } from "@prague/services-core";
-import * as utils from "@prague/services-utils";
+import {
+    ICollection,
+    IContext,
+    IPartitionLambda,
+    IPartitionLambdaFactory,
+    IProducer,
+    MongoManager,
+} from "@prague/services-core";
 import { EventEmitter } from "events";
 import { Provider } from "nconf";
 import { DocumentManager } from "./documentManager";
@@ -7,7 +13,7 @@ import { RouteMasterLambda } from "./lambda";
 
 export class RouteMasterLambdaFactory extends EventEmitter implements IPartitionLambdaFactory {
     constructor(
-        private mongoManager: utils.MongoManager,
+        private mongoManager: MongoManager,
         private collection: ICollection<any>,
         private deltas: ICollection<any>,
         private producer: IProducer) {

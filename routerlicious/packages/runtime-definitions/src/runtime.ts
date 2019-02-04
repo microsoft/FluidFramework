@@ -85,5 +85,5 @@ export interface IRuntime extends EventEmitter {
      */
     submitMessage(type: MessageType, content: any);
 
-    registerTasks(tasks: string[]);
+    registerTasks(tasks: string[], version?: string);
 }

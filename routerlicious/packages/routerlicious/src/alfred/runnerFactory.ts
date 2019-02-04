@@ -11,7 +11,23 @@ import * as utils from "@prague/services-utils";
 import * as bytes from "bytes";
 import { Provider } from "nconf";
 import * as os from "os";
+import * as ws from "ws";
 import { AlfredRunner } from "./runner";
+
+class NodeWebSocketServer implements core.IWebSocketServer {
+    private webSocketServer: ws.Server;
+
+    constructor(portNumber: number) {
+        this.webSocketServer = new ws.Server({ port: portNumber });
+    }
+    public on(event: string, listener: (...args: any[]) => void) {
+        this.webSocketServer.on(event, listener);
+    }
+    public close(): Promise<void> {
+        this.webSocketServer.close();
+        return Promise.resolve();
+    }
+}
 
 export class OrdererManager implements core.IOrdererManager {
     constructor(
@@ -46,7 +62,7 @@ export class AlfredResources implements utils.IResources {
         public tenantManager: core.ITenantManager,
         public storage: core.IDocumentStorage,
         public appTenants: core.IAlfredTenant[],
-        public mongoManager: utils.MongoManager,
+        public mongoManager: core.MongoManager,
         public port: any,
         public documentsCollectionName: string,
         public metricClientConfig: any,
@@ -84,7 +100,7 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
         // Database connection
         const mongoUrl = config.get("mongo:endpoint") as string;
         const mongoFactory = new services.MongoDbFactory(mongoUrl);
-        const mongoManager = new utils.MongoManager(mongoFactory);
+        const mongoManager = new core.MongoManager(mongoFactory);
         const documentsCollectionName = config.get("mongo:collectionNames:documents");
 
         // create the index on the documents collection
@@ -114,7 +130,7 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
 
         const tenantManager = new services.TenantManager(authEndpoint, config.get("worker:blobStorageUrl"));
 
-        const databaseManager = new utils.MongoDatabaseManager(
+        const databaseManager = new core.MongoDatabaseManager(
             mongoManager,
             nodeCollectionName,
             documentsCollectionName,
@@ -140,6 +156,7 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
             storage,
             databaseManager,
             60000,
+            () => new NodeWebSocketServer(4000),
             taskMessageSender,
             tenantManager,
             tmzConfig.permissions,

@@ -1,5 +1,4 @@
-import { IAlfredTenant, IDocumentStorage, IProducer, ITenantManager } from "@prague/services-core";
-import * as utils from "@prague/services-utils";
+import { IAlfredTenant, IDocumentStorage, IProducer, ITenantManager, MongoManager } from "@prague/services-core";
 import * as bodyParser from "body-parser";
 import * as compression from "compression";
 import * as connectRedis from "connect-redis";
@@ -69,7 +68,7 @@ export function create(
     tenantManager: ITenantManager,
     storage: IDocumentStorage,
     appTenants: IAlfredTenant[],
-    mongoManager: utils.MongoManager,
+    mongoManager: MongoManager,
     producer: IProducer) {
 
     // Authentication is disabled for local run and test. Only use redis when authentication is enabled.
@@ -110,8 +109,8 @@ export function create(
                 skipUserProfile: true,
                 tokenURL: "https://login.microsoftonline.com/organizations/oauth2/v2.0/token",
             },
-            (token, tokenSecret, profile, cb) => {
-                return cb(null, profile);
+            (req, iss, sub, profile, jwtClaims, accessToken, refreshToken, params, done) => {
+                return done(null, jwtClaims);
             },
         ),
     );

@@ -1,13 +1,13 @@
 import { SequencedLambda } from "@prague/lambdas";
 import { IDataBlob, MessageType } from "@prague/runtime-definitions";
 import {
+    extractBoxcar,
     IContext,
     IKafkaMessage,
     ISequencedOperationMessage,
     ITenantManager,
     SequencedOperationType,
 } from "@prague/services-core";
-import * as utils from "@prague/services-utils";
 import { AzureMediaServicesManager, Permission } from "./amsUtils";
 
 export class RotographLambda extends SequencedLambda {
@@ -28,7 +28,7 @@ export class RotographLambda extends SequencedLambda {
     }
 
     protected async handlerCore(message: IKafkaMessage): Promise<void> {
-        const boxcar = utils.extractBoxcar(message);
+        const boxcar = extractBoxcar(message);
 
         for (const baseMessage of boxcar.contents) {
             if (baseMessage.type === SequencedOperationType) {

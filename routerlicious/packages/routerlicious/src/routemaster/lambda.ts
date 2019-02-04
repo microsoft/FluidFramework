@@ -1,7 +1,6 @@
 import { SequencedLambda } from "@prague/lambdas";
 import { IDocumentSystemMessage, ISequencedDocumentSystemMessage, MessageType } from "@prague/runtime-definitions";
 import * as core from "@prague/services-core";
-import * as utils from "@prague/services-utils";
 import { DocumentManager } from "./documentManager";
 
 export class RouteMasterLambda extends SequencedLambda {
@@ -10,7 +9,7 @@ export class RouteMasterLambda extends SequencedLambda {
     }
 
     protected async handlerCore(rawMessage: core.IKafkaMessage): Promise<void> {
-        const boxcar = utils.extractBoxcar(rawMessage);
+        const boxcar = core.extractBoxcar(rawMessage);
 
         const boxcarProcessed = new Array<Promise<void>>();
         for (const message of boxcar.contents) {

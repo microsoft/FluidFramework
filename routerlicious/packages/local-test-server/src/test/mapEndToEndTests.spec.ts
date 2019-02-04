@@ -2,7 +2,8 @@
 /* tslint:disable:no-backbone-get-set-outside-model  */
 import { OperationType } from "@prague/api-definitions";
 import * as api from "@prague/client-api";
-import * as utils from "@prague/services-utils";
+import { IMapView } from "@prague/map";
+import { generateToken } from "@prague/services-core";
 import * as socketStorage from "@prague/socket-storage";
 import * as assert from "assert";
 
@@ -12,7 +13,6 @@ import {
     ITestDeltaConnectionServer,
     TestDeltaConnectionServer,
 } from "..";
-import { IMapView } from "../../../map/dist";
 
 describe.skip("Map", () => {
     const id = "documentId";
@@ -33,9 +33,9 @@ describe.skip("Map", () => {
         testDeltaConnectionServer = TestDeltaConnectionServer.Create();
         documentDeltaEventManager = new DocumentDeltaEventManager();
         const documentService = createTestDocumentService(testDeltaConnectionServer);
-        const tokenProvider1 = new socketStorage.TokenProvider(utils.generateToken(tenatId, id, tokenKey));
-        const tokenProvider2 = new socketStorage.TokenProvider(utils.generateToken(tenatId, id, tokenKey));
-        const tokenProvider3 = new socketStorage.TokenProvider(utils.generateToken(tenatId, id, tokenKey));
+        const tokenProvider1 = new socketStorage.TokenProvider(generateToken(tenatId, id, tokenKey));
+        const tokenProvider2 = new socketStorage.TokenProvider(generateToken(tenatId, id, tokenKey));
+        const tokenProvider3 = new socketStorage.TokenProvider(generateToken(tenatId, id, tokenKey));
         user1Document = await api.load(id, tenatId, tokenProvider1, {}, null, true, documentService);
         documentDeltaEventManager.registerDocuments(user1Document);
 

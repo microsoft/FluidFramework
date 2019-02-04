@@ -1,5 +1,6 @@
-import { ITokenProvider, IUser } from "@prague/runtime-definitions";
 import { IChaincodeFactory } from "./chaincode";
+import { ITokenProvider } from "./tokens";
+import { IUser } from "./users";
 
 /**
  * Code loading interface

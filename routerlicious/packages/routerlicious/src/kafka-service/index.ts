@@ -1,4 +1,4 @@
-import { KafkaResourcesFactory } from "@prague/lambdas";
+import { KafkaResourcesFactory } from "@prague/lambdas-driver";
 import * as path from "path";
 import { execute } from "./command";
 

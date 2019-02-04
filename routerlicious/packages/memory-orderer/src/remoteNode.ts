@@ -1,6 +1,5 @@
 import { IClient, IDocumentMessage } from "@prague/runtime-definitions";
-import { INode, IOrderer, IOrdererConnection, IWebSocket } from "@prague/services-core";
-import { MongoManager } from "@prague/services-utils";
+import { INode, IOrderer, IOrdererConnection, IWebSocket, MongoManager } from "@prague/services-core";
 import { Deferred } from "@prague/utils";
 import * as assert from "assert";
 import { EventEmitter } from "events";

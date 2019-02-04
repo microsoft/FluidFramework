@@ -1,5 +1,5 @@
 import * as api from "@prague/client-api";
-import * as utils from "@prague/services-utils";
+import * as core from "@prague/services-core";
 import * as socketStorage from "@prague/socket-storage";
 import * as scribe from "@prague/tools-core";
 import * as commander from "commander";
@@ -57,8 +57,8 @@ fs.readFile(commander.file, "utf8", async (error, data: string) => {
             });
     }
 
-    const token = utils.generateToken(commander.tenant, sharedStringId, commander.key);
-    const metricsToken = utils.generateToken(commander.tenant, `${sharedStringId}-metrics`, commander.key);
+    const token = core.generateToken(commander.tenant, sharedStringId, commander.key);
+    const metricsToken = core.generateToken(commander.tenant, `${sharedStringId}-metrics`, commander.key);
 
     await scribe.create(sharedStringId, token, data, debug);
     scribe.togglePlay();

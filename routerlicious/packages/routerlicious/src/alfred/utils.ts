@@ -1,5 +1,6 @@
+import { IUser } from "@prague/runtime-definitions";
 import { IAlfredTenant, ITenantManager } from "@prague/services-core";
-import { generateToken } from "@prague/services-utils";
+import { generateToken } from "@prague/services-core";
 import * as _ from "lodash";
 
 /**
@@ -32,10 +33,10 @@ export async function getConfig(
     return JSON.stringify(updatedConfig);
 }
 
-export function getToken(tenantId: string, documentId: string, tenants: IAlfredTenant[]): string {
+export function getToken(tenantId: string, documentId: string, tenants: IAlfredTenant[], user?: IUser): string {
     for (const tenant of tenants) {
         if (tenantId === tenant.id) {
-            return generateToken(tenantId, documentId, tenant.key);
+            return generateToken(tenantId, documentId, tenant.key, user);
         }
     }
 

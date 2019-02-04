@@ -1,10 +1,10 @@
-import * as utils from "@prague/services-utils";
+import { MongoManager } from "@prague/services-core";
 import { Response, Router } from "express";
 import { TenantManager } from "./tenantManager";
 
 export function create(
     collectionName: string,
-    mongoManager: utils.MongoManager,
+    mongoManager: MongoManager,
     baseOrderUrl: string,
 ): Router {
     const router: Router = Router();

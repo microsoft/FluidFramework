@@ -1,5 +1,5 @@
 import * as services from "@prague/services";
-import * as utils from "@prague/services-utils";
+import { MongoDatabaseManager, MongoManager} from "@prague/services-core";
 import { TestDbFactory, TestKafka, TestTenantManager } from "@prague/test-utils";
 import * as nconf from "nconf";
 import * as path from "path";
@@ -20,11 +20,11 @@ describe("Routerlicious", () => {
                 };
 
                 const testDbFactory = new TestDbFactory(testData);
-                const mongoManager = new utils.MongoManager(testDbFactory);
+                const mongoManager = new MongoManager(testDbFactory);
                 const testTenantManager = new TestTenantManager();
                 testKafka = new TestKafka();
                 const producer = testKafka.createProducer();
-                const databaseManager = new utils.MongoDatabaseManager(
+                const databaseManager = new MongoDatabaseManager(
                     mongoManager,
                     "nodes",
                     "documents",
