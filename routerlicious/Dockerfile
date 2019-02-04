@@ -55,6 +55,7 @@ COPY packages/socket-storage-shared/package*.json packages/socket-storage-shared
 COPY packages/standard-socket-storage/package*.json packages/standard-socket-storage/
 COPY packages/stream/package*.json packages/stream/
 COPY packages/table-document/package*.json packages/table-document/
+COPY packages/table-slice/package*.json packages/table-slice/
 COPY packages/table-view/package*.json packages/table-view/
 COPY packages/test-utils/package*.json packages/test-utils/
 COPY packages/tools-core/package*.json packages/tools-core/
