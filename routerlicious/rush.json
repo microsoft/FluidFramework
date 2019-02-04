@@ -74,6 +74,10 @@
       "projectFolder": "packages/lambdas"
     },
     {
+      "packageName": "@prague/lambdas-driver",
+      "projectFolder": "packages/lambdas-driver"
+    },
+    {
       "packageName": "@prague/loader-client",
       "projectFolder": "packages/loader-client"
     },

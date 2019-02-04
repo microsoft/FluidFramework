@@ -16,6 +16,7 @@ dependencies:
   '@rush-temp/gitresources': 'file:projects/gitresources.tgz'
   '@rush-temp/kafka-orderer': 'file:projects/kafka-orderer.tgz'
   '@rush-temp/lambdas': 'file:projects/lambdas.tgz'
+  '@rush-temp/lambdas-driver': 'file:projects/lambdas-driver.tgz'
   '@rush-temp/loader': 'file:projects/loader.tgz'
   '@rush-temp/loader-client': 'file:projects/loader-client.tgz'
   '@rush-temp/loader-web': 'file:projects/loader-web.tgz'
@@ -10197,6 +10198,7 @@ packages:
     version: 0.0.0
   'file:projects/chart-view.tgz':
     dependencies:
+      '@types/node': 10.12.21
       css-loader: /css-loader/1.0.1/webpack@4.29.1
       source-map-loader: 0.2.4
       style-loader: 0.23.1
@@ -10209,7 +10211,7 @@ packages:
     dev: false
     name: '@rush-temp/chart-view'
     resolution:
-      integrity: sha512-93KEc2ybvNbXp10kOOeibUoIQevSMQ0xdCTOrGAC0ksqFtCqm6Tc9gkujk7KfhZ085T1yWLJbS2z0KUbF5iWiw==
+      integrity: sha512-haS/8Hoo2dj+uscRl+M4nTMIM76X0yk/dbp5l7kZiuTI9MH8xX9P+09UQZKoi3n9ASkxIy/WYU2bxnYvkF7Vtw==
       tarball: 'file:projects/chart-view.tgz'
     version: 0.0.0
   'file:projects/client-api.tgz':
@@ -10304,6 +10306,7 @@ packages:
     version: 0.0.0
   'file:projects/flow-document.tgz':
     dependencies:
+      '@types/node': 10.12.21
       source-map-loader: 0.2.4
       ts-loader: 4.5.0
       typescript: 3.3.1
@@ -10313,11 +10316,12 @@ packages:
     dev: false
     name: '@rush-temp/flow-document'
     resolution:
-      integrity: sha512-BChucYNNKp/ys+OVDymWTJ9niS0rTQm9ORmZJjFhObKyfyPvfNQIAWhOezQb0GuHKHGRfnFR9sckFZ5YVW2+Xw==
+      integrity: sha512-TOhKLRNr6sz+YjUMnJ/W5GIrKHmxJXy2pUV3smGCVtHKbhao+SdevOrt6rZ9YtxwXJav6ByXQnTqu2Fg2nn85A==
       tarball: 'file:projects/flow-document.tgz'
     version: 0.0.0
   'file:projects/flow-editor.tgz':
     dependencies:
+      '@types/node': 10.12.21
       css-loader: /css-loader/1.0.1/webpack@4.29.1
       source-map-loader: 0.2.4
       style-loader: 0.23.1
@@ -10330,7 +10334,7 @@ packages:
     dev: false
     name: '@rush-temp/flow-editor'
     resolution:
-      integrity: sha512-O0Tss6g+GGLTCBBe/XIKO+3Jj0jyliZVk50aTIiFjG2cVteC/rJfE1NhcLcV1dpINZVxofAHkfP3iYZQno5RFA==
+      integrity: sha512-E4tXimegUID5FmL+EhSij31nqxUMWQvgaWp3s2PE0c/BnDRJ1F64TSG0B+PlmSqn4McXFgwOftEq0jyzc4cEBA==
       tarball: 'file:projects/flow-editor.tgz'
     version: 0.0.0
   'file:projects/flow-host.tgz':
@@ -10401,6 +10405,29 @@ packages:
     resolution:
       integrity: sha512-XFA4tZoNDtAqDIdxxrfQARSxIAX/F76SVICfmIWjG4aOeYgeQMHs2MGGqpMjVlwUh7iIQUmrAtQmnbQbtShuIg==
       tarball: 'file:projects/kafka-orderer.tgz'
+    version: 0.0.0
+  'file:projects/lambdas-driver.tgz':
+    dependencies:
+      '@types/async': 2.4.0
+      '@types/lodash': 4.14.120
+      '@types/mocha': 5.2.5
+      '@types/nconf': 0.0.37
+      '@types/node': 10.12.21
+      async: 2.6.1
+      lodash: 4.17.11
+      mocha: 5.2.0
+      moniker: 0.1.2
+      nconf: 0.10.0
+      rimraf: 2.6.3
+      tslint: /tslint/5.12.1/typescript@3.3.1
+      tslint-microsoft-contrib: /tslint-microsoft-contrib/6.0.0/tslint@5.12.1+typescript@3.3.1
+      typescript: 3.3.1
+      winston: 3.2.1
+    dev: false
+    name: '@rush-temp/lambdas-driver'
+    resolution:
+      integrity: sha512-VsIYejhr8pKwUQn+8BdGslSU65G7eLcxusfLm5HPwz7pAHnes58kC2J5xQq793qPznfccVdecsCVTDmG+X+kKQ==
+      tarball: 'file:projects/lambdas-driver.tgz'
     version: 0.0.0
   'file:projects/lambdas.tgz':
     dependencies:
@@ -10497,13 +10524,16 @@ packages:
       nock: 10.0.6
       nyc: 13.1.0
       rimraf: 2.6.3
+      ts-loader: 4.5.0
       tslint: /tslint/5.12.1/typescript@3.3.1
       tslint-microsoft-contrib: /tslint-microsoft-contrib/6.0.0/tslint@5.12.1+typescript@3.3.1
       typescript: 3.3.1
+      webpack: 4.29.1
+      webpack-cli: /webpack-cli/3.2.1/webpack@4.29.1
     dev: false
     name: '@rush-temp/local-test-server'
     resolution:
-      integrity: sha512-Te/3ZkcdV4ygTsKJDi4GzWncoYydeYHiGPTJiFw7O6/Hu4OeZTopDTDx8K9GT7VMM0y67ZiZqwWaOP9jjnTK9w==
+      integrity: sha512-ejRrVCE7irHWFc6Haz2EiPR27bLOssq7GI8pXVQNYQw+yhhmExJMsnGKsRkXguQi4ne+9nA4+5lfLc7G7UAS2Q==
       tarball: 'file:projects/local-test-server.tgz'
     version: 0.0.0
   'file:projects/map.tgz':
@@ -10546,7 +10576,7 @@ packages:
     dev: false
     name: '@rush-temp/memory-orderer'
     resolution:
-      integrity: sha512-Et0DMrGcmZi1+NJcLSFNu29dB8ZSa27+59fgt/GZ/wspoR3KHyc6g8G54mq8+JVN4I4+Ru1vb/gKSj6mVtC37g==
+      integrity: sha512-aquojG2IZiMydro/eEHOmRCTCzSWwH3mM5g0xvAihI2Ipf9m0W6XjtWNYN7NVHClTCQBTHDjUgchpgRBkEEMzA==
       tarball: 'file:projects/memory-orderer.tgz'
     version: 0.0.0
   'file:projects/merge-tree-utils.tgz':
@@ -10730,7 +10760,7 @@ packages:
     dev: false
     name: '@rush-temp/routerlicious'
     resolution:
-      integrity: sha512-hRzUCPf4xz1nPlzyNo205dISFun68E8MCK6egGHpxViQPq0WNJZYP8Fb2eH6SWZY4wK8n5j/UZNjLWZqqLvISQ==
+      integrity: sha512-zPf34QekVlhFZHo9xpXvjgvBkGzDbpAB6JBf8afMVH1SQQndnamP6aC/aQbG211yDi9pk8IAoWv+ThPdeuiVMQ==
       tarball: 'file:projects/routerlicious.tgz'
     version: 0.0.0
   'file:projects/runtime-definitions.tgz':
@@ -10784,9 +10814,11 @@ packages:
     version: 0.0.0
   'file:projects/services-core.tgz':
     dependencies:
+      '@types/jsonwebtoken': 8.3.0
       '@types/nconf': 0.0.37
       '@types/node': 10.12.21
       debug: 3.2.6
+      jsonwebtoken: 8.4.0
       rimraf: 2.6.3
       tslint: /tslint/5.12.1/typescript@3.3.1
       tslint-microsoft-contrib: /tslint-microsoft-contrib/6.0.0/tslint@5.12.1+typescript@3.3.1
@@ -10794,7 +10826,7 @@ packages:
     dev: false
     name: '@rush-temp/services-core'
     resolution:
-      integrity: sha512-ug72RpwDQgp38b5Ha5ntmuqfUO5ijnL2pas9FK2eoFrnl2IgJJIhA85UYdQfLGgpWEHAD6Wn1vu3+pNJ9LWoBA==
+      integrity: sha512-7E4Y3yfTMBmqfss4n6dSH7y2mTKfzgC0NLvc4PNjipyCl/2nKzpA3SGCF+SvR7BRUPUITeBD7zgbOw57JjM5bg==
       tarball: 'file:projects/services-core.tgz'
     version: 0.0.0
   'file:projects/services-utils.tgz':
@@ -10823,7 +10855,7 @@ packages:
     dev: false
     name: '@rush-temp/services-utils'
     resolution:
-      integrity: sha512-E9z4uGLgig5DfoEy3PLuBa0vzsPlQP69wUN/TyEE+c8n2XUXZKwLgfk5vojbBz5pkys/20Z2m7vAixpYD09rXA==
+      integrity: sha512-3C8+7l46AyltyLZY3+V54crxv6AlsQfNBWL++pQMxGcSMiFCDJ3R4QO38X557eH+ND7Coaf+65pNr23FmpNy+Q==
       tarball: 'file:projects/services-utils.tgz'
     version: 0.0.0
   'file:projects/services.tgz':
@@ -10943,6 +10975,7 @@ packages:
     version: 0.0.0
   'file:projects/table-document.tgz':
     dependencies:
+      '@types/node': 10.12.21
       source-map-loader: 0.2.4
       ts-loader: 4.5.0
       typescript: 3.3.1
@@ -10952,11 +10985,12 @@ packages:
     dev: false
     name: '@rush-temp/table-document'
     resolution:
-      integrity: sha512-ss4nlD2AgBjgtuWnutDCiD/EETqD9R6YrcF3w8x00yarEDANjbww5sz3fBIXxPIA9RGKeDtu3simGNhCPRwDwg==
+      integrity: sha512-so6Fj4YCbCSalgCZY1wTtqA8XjyFQ/Ib8cNoqFQZP0IIAOqA9aLIHeZcBsVee9YmjmWfc93AYEi6VoDoThnfmQ==
       tarball: 'file:projects/table-document.tgz'
     version: 0.0.0
   'file:projects/table-view.tgz':
     dependencies:
+      '@types/node': 10.12.21
       css-loader: /css-loader/1.0.1/webpack@4.29.1
       source-map-loader: 0.2.4
       style-loader: 0.23.1
@@ -10969,7 +11003,7 @@ packages:
     dev: false
     name: '@rush-temp/table-view'
     resolution:
-      integrity: sha512-t984K2bO09KSQHeTSrdPt2Fa9Xt/++qUHpMFbsU5cc55oIvyVb8YhPZTPIflS0L3rE5W/VTHKirYvKahabYXvw==
+      integrity: sha512-/tUGIhSmQgTlAG6eCIuRfyV0K4Er3nsavp2rqUA5KHwX6e/nlgoCOYCp0qFl71dH/QeeQSxsm/s+DCjEYJJ1kw==
       tarball: 'file:projects/table-view.tgz'
     version: 0.0.0
   'file:projects/test-utils.tgz':
@@ -11055,6 +11089,7 @@ specifiers:
   '@rush-temp/gitresources': 'file:./projects/gitresources.tgz'
   '@rush-temp/kafka-orderer': 'file:./projects/kafka-orderer.tgz'
   '@rush-temp/lambdas': 'file:./projects/lambdas.tgz'
+  '@rush-temp/lambdas-driver': 'file:./projects/lambdas-driver.tgz'
   '@rush-temp/loader': 'file:./projects/loader.tgz'
   '@rush-temp/loader-client': 'file:./projects/loader-client.tgz'
   '@rush-temp/loader-web': 'file:./projects/loader-web.tgz'
