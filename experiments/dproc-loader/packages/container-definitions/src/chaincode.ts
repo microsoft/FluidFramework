@@ -1,17 +1,27 @@
-import {
-    ConnectionState,
-    IBlobManager,
-    IDeltaManager,
-    IDocumentStorageService,
-    IObjectMessage,
-    IQuorum,
-    ISequencedDocumentMessage,
-    ISnapshotTree,
-    ITree,
-    IUser,
-    MessageType,
-} from "@prague/runtime-definitions";
+import { IBlobManager } from "./blobs";
+import { IQuorum } from "./consensus";
+import { IDeltaManager } from "./deltas";
 import { IRequest, IResponse } from "./loader";
+import { ISequencedDocumentMessage, MessageType } from "./protocol";
+import { IDocumentStorageService, ISnapshotTree, ITree } from "./storage";
+import { IUser } from "./users";
+
+export enum ConnectionState {
+    /**
+     * The document is no longer connected to the delta server
+     */
+    Disconnected,
+
+    /**
+     * The document has an inbound connection but is still pending for outbound deltas
+     */
+    Connecting,
+
+    /**
+     * The document is fully connected
+     */
+    Connected,
+}
 
 /**
  * The IRuntime represents an instantiation of a code package within a container.
@@ -76,25 +86,6 @@ export interface IContainerContext {
     readonly quorum: IQuorum;
 
     error(err: any): void;
-}
-
-export interface IChannel {
-    /**
-     * A readonly identifier for the collaborative object
-     */
-    readonly id: string;
-
-    readonly type: string;
-
-    dirty: boolean;
-
-    ready(): Promise<void>;
-
-    snapshot(): ITree;
-
-    transform(message: IObjectMessage, sequenceNumber: number): IObjectMessage;
-
-    isLocal(): boolean;
 }
 
 /**
