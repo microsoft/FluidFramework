@@ -1,5 +1,4 @@
-import { IAlfredTenant, IDocumentStorage, IProducer, ITenantManager } from "@prague/services-core";
-import * as utils from "@prague/services-utils";
+import { IAlfredTenant, IDocumentStorage, IProducer, ITenantManager, MongoManager } from "@prague/services-core";
 import * as ensureAuth from "connect-ensure-login";
 import { Router } from "express";
 import { Provider } from "nconf";
@@ -35,7 +34,7 @@ export interface IRoutes {
 export function create(
     config: Provider,
     tenantManager: ITenantManager,
-    mongoManager: utils.MongoManager,
+    mongoManager: MongoManager,
     storage: IDocumentStorage,
     producer: IProducer,
     appTenants: IAlfredTenant[]) {

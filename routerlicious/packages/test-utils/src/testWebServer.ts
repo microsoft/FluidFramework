@@ -47,7 +47,8 @@ export class TestWebSocketServer implements core.IWebSocketServer {
 
     public createConnection(): TestWebSocket {
         const socket = new TestWebSocket(moniker.choose());
-        this.events.emit("connection", socket);
+        const mockRequest = {url: "TestWebSocket"};
+        this.events.emit("connection", socket, mockRequest);
         return socket;
     }
 }

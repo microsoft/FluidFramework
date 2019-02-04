@@ -13,7 +13,8 @@
     "build:esnext": "tsc --outDir lib --m esnext",
     "test": "mocha --recursive dist/test --exit",
     "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml",
-    "tslint": "tslint --project tsconfig.json --format verbose"
+    "tslint": "tslint --project tsconfig.json --format verbose",
+    "webpack": "webpack --config webpack.config.js"
   },
   "author": "Microsoft",
   "nyc": {
@@ -72,6 +73,9 @@
     "rimraf": "^2.6.2",
     "tslint": "^5.11.0",
     "tslint-microsoft-contrib": "^6.0.0",
-    "typescript": "^3.2.2"
+    "ts-loader": "^4.5.0",
+    "typescript": "^3.2.2",
+    "webpack": "^4.8.2",
+    "webpack-cli": "^3.1.2"
   }
 }

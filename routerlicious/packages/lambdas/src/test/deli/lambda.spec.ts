@@ -3,10 +3,10 @@ import {
     IPartitionLambda,
     IProducer,
     ISequencedOperationMessage,
+    MongoManager,
     NackOperationType,
     SequencedOperationType,
 } from "@prague/services-core";
-import * as utils from "@prague/services-utils";
 import { KafkaMessageFactory, MessageFactory, TestContext, TestDbFactory, TestKafka } from "@prague/test-utils";
 import * as assert from "assert";
 import * as _ from "lodash";
@@ -57,7 +57,7 @@ describe("Routerlicious", () => {
 
             beforeEach(async () => {
                 const dbFactory = new TestDbFactory(_.cloneDeep({ documents: testData }));
-                const mongoManager = new utils.MongoManager(dbFactory);
+                const mongoManager = new MongoManager(dbFactory);
                 const database = await mongoManager.getDatabase();
                 testCollection = database.collection("documents");
 

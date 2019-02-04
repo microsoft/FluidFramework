@@ -1,7 +1,7 @@
 {
-  "name": "@prague/lambdas",
+  "name": "@prague/lambdas-driver",
   "version": "0.1.0",
-  "description": "Prague service lambdas",
+  "description": "Driver components for the prague service lambdas.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "sideEffects": false,
@@ -60,8 +60,5 @@
     "tslint": "^5.11.0",
     "tslint-microsoft-contrib": "^6.0.0",
     "typescript": "^3.2.2"
-  },
-  "browser": {
-    "winston": false
   }
 }

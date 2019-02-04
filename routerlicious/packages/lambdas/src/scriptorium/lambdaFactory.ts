@@ -3,8 +3,8 @@ import {
     IContext,
     IPartitionLambda,
     IPartitionLambdaFactory,
+    MongoManager,
 } from "@prague/services-core";
-import { MongoManager } from "@prague/services-utils";
 import { EventEmitter } from "events";
 import { Provider } from "nconf";
 import { ScriptoriumLambda } from "./lambda";

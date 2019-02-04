@@ -1,6 +1,5 @@
 import * as services from "@prague/services";
-import { IPartitionLambdaFactory } from "@prague/services-core";
-import * as utils from "@prague/services-utils";
+import { IPartitionLambdaFactory, MongoManager } from "@prague/services-core";
 import * as bytes from "bytes";
 import { Provider } from "nconf";
 import { RouteMasterLambdaFactory } from "./lambdaFactory";
@@ -19,7 +18,7 @@ export async function create(config: Provider): Promise<IPartitionLambdaFactory>
 
     // Connection to stored document details
     const mongoFactory = new services.MongoDbFactory(mongoUrl);
-    const mongoManager = new utils.MongoManager(mongoFactory, false);
+    const mongoManager = new MongoManager(mongoFactory, false);
     const client = await mongoManager.getDatabase();
     const collection = await client.collection(documentsCollectionName);
     const deltas = await client.collection(deltasCollectionName);

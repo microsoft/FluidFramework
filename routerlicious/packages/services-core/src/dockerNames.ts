@@ -677,6 +677,12 @@ export function getRandomName(connector = "_", capitalize = false, retry = false
     return retry ? `${name}${Math.floor(Math.random() * 10)}` : name;
 }
 
+// Exposing a choose() function to align with moniker's API. Moniker is
+// server-only, and we can swap it out with this function for the browser.
+export function choose(): string {
+    return getRandomName();
+}
+
 function getRandomString(values: string[]) {
     // tslint:disable-next-line:insecure-random
     return values[Math.floor(Math.random() * values.length)];

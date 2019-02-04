@@ -1,5 +1,10 @@
-import { IContext, IKafkaMessage, IPartitionLambda, IPartitionLambdaFactory } from "@prague/services-core";
-import { extractBoxcar } from "@prague/services-utils";
+import {
+    extractBoxcar,
+    IContext,
+    IKafkaMessage,
+    IPartitionLambda,
+    IPartitionLambdaFactory,
+} from "@prague/services-core";
 import { Provider } from "nconf";
 import { DocumentContextManager } from "./contextManager";
 import { DocumentPartition } from "./documentPartition";

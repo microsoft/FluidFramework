@@ -1,6 +1,7 @@
 
 import { INack, ISequencedDocumentMessage } from "@prague/runtime-definitions";
 import {
+    extractBoxcar,
     IContext,
     IKafkaMessage,
     INackMessage,
@@ -10,7 +11,6 @@ import {
     NackOperationType,
     SequencedOperationType,
 } from "@prague/services-core";
-import { extractBoxcar } from "@prague/services-utils";
 import * as _ from "lodash";
 
 class BBCBatch {

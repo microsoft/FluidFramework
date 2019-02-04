@@ -5,6 +5,7 @@ export * from "./testDeltaStorageService";
 export * from "./testDocumentDeltaConnection";
 export * from "./testDocument";
 export * from "./testDocumentService";
+export * from "./testDocumentStorage";
 export * from "./testHistorian";
 export * from "./testKafka";
 export * from "./testPublisher";

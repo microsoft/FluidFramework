@@ -2,7 +2,6 @@ import { KafkaOrdererFactory } from "@prague/kafka-orderer";
 import { IDocumentMessage, MessageType } from "@prague/runtime-definitions";
 import * as services from "@prague/services";
 import * as core from "@prague/services-core";
-import * as utils from "@prague/services-utils";
 import * as socketStorage from "@prague/socket-storage";
 import {
     MessageFactory,
@@ -42,8 +41,8 @@ describe("Routerlicious", () => {
                     const producer = deliKafka.createProducer();
                     testTenantManager = new TestTenantManager(url);
                     const testDbFactory = new TestDbFactory(testData);
-                    const mongoManager = new utils.MongoManager(testDbFactory);
-                    const databaseManager = new utils.MongoDatabaseManager(
+                    const mongoManager = new core.MongoManager(testDbFactory);
+                    const databaseManager = new core.MongoDatabaseManager(
                         mongoManager,
                         collectionNames,
                         collectionNames,
@@ -71,7 +70,7 @@ describe("Routerlicious", () => {
                     tenantId: string,
                     secret: string,
                     socket: TestWebSocket): Promise<socketStorage.IConnected> {
-                    const token = utils.generateToken(tenantId, id, secret);
+                    const token = core.generateToken(tenantId, id, secret);
 
                     const connectMessage: socketStorage.IConnect = {
                         client: undefined,

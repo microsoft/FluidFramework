@@ -67,6 +67,7 @@
     "@prague/gitresources": "^0.1.0",
     "@prague/kafka-orderer": "^0.1.0",
     "@prague/lambdas": "^0.1.0",
+    "@prague/lambdas-driver": "^0.1.0",
     "@prague/loader": "^0.1.0",
     "@prague/loader-web": "^0.1.0",
     "@prague/map": "^0.1.0",
@@ -207,6 +208,7 @@
     "url-loader": "^1.1.1",
     "webpack-bundle-analyzer": "^2.13.1",
     "webpack-cli": "^3.1.2",
-    "webpack-merge": "^4.1.2"
+    "webpack-merge": "^4.1.2",
+    "ws": "^6.1.2"
   }
 }

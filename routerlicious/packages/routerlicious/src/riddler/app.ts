@@ -1,4 +1,4 @@
-import * as utils from "@prague/services-utils";
+import { MongoManager } from "@prague/services-core";
 import * as bodyParser from "body-parser";
 import * as express from "express";
 import { Express } from "express";
@@ -17,7 +17,7 @@ const stream = split().on("data", (message) => {
 
 export function create(
     collectionName: string,
-    mongoManager: utils.MongoManager,
+    mongoManager: MongoManager,
     loggerFormat: string,
     baseOrdererUrl: string,
 ) {

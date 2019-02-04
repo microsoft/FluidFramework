@@ -43,6 +43,8 @@ if you'd like to run a local version of the service or need to make changes to i
 Standalone 
 * [Git LFS](https://git-lfs.github.com/) (comes by default with most git installations)
 * [Docker](https://www.docker.com/)
+    * In Docker Settings -> Advanced Settings, give Docker at least 4GB of Memory--the more the better. You can give additional CPUs as well. 
+    * In Docker Settings -> Shared Drives, check the hard drive where your repository lives.
 
 For Development
 * [Node v8.x](https://nodejs.org/en/)

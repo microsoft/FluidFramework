@@ -7,6 +7,7 @@ import {
     MessageType,
 } from "@prague/runtime-definitions";
 import {
+    extractBoxcar,
     ICollection,
     IContext,
     IDocument,
@@ -23,11 +24,10 @@ import {
     SequencedOperationType,
 } from "@prague/services-core";
 import {
-    extractBoxcar,
     Heap,
     IComparer,
     IHeapNode,
-} from "@prague/services-utils";
+} from "@prague/utils";
 import { isSystemType, RangeTracker } from "@prague/utils";
 import * as assert from "assert";
 import * as _ from "lodash";
