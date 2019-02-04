@@ -13,6 +13,7 @@
     "publish-local-flow-document": "cd ../flow-document && npm run publish-local",
     "publish-local-flow-editor": "cd ../flow-editor && npm run publish-local",
     "publish-local-table-document": "cd ../table-document && npm run publish-local",
+    "publish-local-table-slice": "cd ../table-slice && npm run publish-local",
     "publish-local-table-view": "cd ../table-view && npm run publish-local",
     "publish-local-chart-view": "cd ../chart-view && npm run publish-local",
     "publish-local": "run-p publish-local-*",

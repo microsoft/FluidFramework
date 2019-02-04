@@ -15,32 +15,38 @@ export class TableSlice extends Component {
         super([[MapExtension.Type, new MapExtension()]]);
     }
     
-    protected async create() {}
+    protected async create() { }
 
     private async getRange(key: ConfigKeys) {
         let id = this.rootView.get(key);
-        if (!this.rootView.has(key)) {
+
+        if (!id) {
             id = `${Math.random().toString(36).substr(2)}`;
             this.rootView.set(key, id);
-        } else {
-            id = this.rootView.get(key);
+            await this.doc.createRange(id, 0, 0, 0, 0);                
         }
+
         return await this.doc.getRange(id);
     }
 
     public async opened() {
         await this.connected;
         this.maybeRootView = await this.root.getView();
-        
-        const maybeDiv = await this.platform.queryInterface<HTMLElement>("div");
-        if (maybeDiv) {            
-            const docId = this.rootView.get(ConfigKeys.docId);
-            if (!docId) {
-                const configView = new ConfigView(this.root);
-                maybeDiv.appendChild(configView.root);
-                await configView.done;
-                while (maybeDiv.lastChild) {
-                    maybeDiv.lastChild.remove();
+     
+        {
+            const maybeServerUrl = await this.root.get(ConfigKeys.serverUrl);
+            if (!maybeServerUrl) {
+                const maybeDiv = await this.platform.queryInterface<HTMLElement>("div");
+                if (maybeDiv) {            
+                    const docId = this.rootView.get(ConfigKeys.docId);
+                    if (!docId) {
+                        const configView = new ConfigView(this.root);
+                        maybeDiv.appendChild(configView.root);
+                        await configView.done;
+                        while (maybeDiv.lastChild) {
+                            maybeDiv.lastChild.remove();
+                        }
+                    }
                 }
             }
         }

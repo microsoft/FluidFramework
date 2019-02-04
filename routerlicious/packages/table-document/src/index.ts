@@ -11,7 +11,12 @@ import {
     EvalFormulaPaused
 } from "@prague/client-ui/ext/calc";
 import { MapExtension, IMapView, registerDefaultValueType,  } from "@prague/map";
-import { SharedString, CollaborativeStringExtension } from "@prague/sequence";
+import { 
+    SharedString,
+    CollaborativeStringExtension, 
+    SharedStringIntervalCollectionValueType,
+    SharedIntervalCollectionValueType
+} from "@prague/sequence";
 import { Component } from "@prague/app-component";
 import { Counter, CounterValueType } from "@prague/map";
 import {
@@ -81,6 +86,8 @@ export class TableDocument extends Component {
         ]);
 
         registerDefaultValueType(new CounterValueType());
+        registerDefaultValueType(new SharedStringIntervalCollectionValueType());
+        registerDefaultValueType(new SharedIntervalCollectionValueType());
     }
     
     protected async create() {
