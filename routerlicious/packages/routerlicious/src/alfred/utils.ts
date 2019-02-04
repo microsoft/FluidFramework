@@ -1,6 +1,6 @@
 import { IUser } from "@prague/runtime-definitions";
 import { IAlfredTenant, ITenantManager } from "@prague/services-core";
-import { generateToken } from "@prague/services-utils";
+import { generateToken } from "@prague/services-core";
 import * as _ from "lodash";
 
 /**

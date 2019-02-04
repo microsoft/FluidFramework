@@ -1,7 +1,6 @@
 import { Block, BoxState } from "@prague/app-ui";
 import { Document } from "@prague/client-api";
-import { IComponentPlatform, ILegacyRuntime } from "@prague/container-definitions";
-import { WebPlatform } from "@prague/container-utils";
+import { IComponentPlatform, ILegacyRuntime, WebPlatform } from "@prague/runtime";
 import { FlowViewContext } from "./flowViewContext";
 
 const platformSym = Symbol("Document.platform");

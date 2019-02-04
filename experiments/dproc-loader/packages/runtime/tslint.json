@@ -18,6 +18,7 @@
         "no-default-export": false,
         "no-empty-interface": false,
         "no-for-in": false,
+        "no-increment-decrement": false,
         "no-null-keyword": false,
         "no-relative-imports": false,
         "no-require-imports": false,

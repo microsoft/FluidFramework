@@ -7,6 +7,7 @@ import {
     ITenantManager,
     IWebServer,
     IWebServerFactory,
+    MongoManager,
 } from "@prague/services-core";
 import * as utils from "@prague/services-utils";
 import { Deferred } from "@prague/utils";
@@ -27,7 +28,7 @@ export class AlfredRunner implements utils.IRunner {
         private tenantManager: ITenantManager,
         private storage: IDocumentStorage,
         private appTenants: IAlfredTenant[],
-        private mongoManager: utils.MongoManager,
+        private mongoManager: MongoManager,
         private producer: IProducer,
         private metricClientConfig: any,
         private contentCollection: ICollection<any>) {

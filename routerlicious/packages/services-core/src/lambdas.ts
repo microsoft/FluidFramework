@@ -1,6 +1,8 @@
+import { safelyParseJSON } from "@prague/utils";
 import { EventEmitter } from "events";
 import * as nconf from "nconf";
 import { IKafkaMessage } from "./kafka";
+import { BoxcarType, IBoxcarMessage, IMessage } from "./messages";
 
 export interface IContext {
     /**
@@ -52,4 +54,47 @@ export interface IPlugin {
      * prior to being fully constructed.
      */
     create(config: nconf.Provider): Promise<IPartitionLambdaFactory>;
+}
+
+export function extractBoxcar(message: IKafkaMessage): IBoxcarMessage {
+    if (typeof message.value !== "string" && !Buffer.isBuffer(message.value)) {
+        return message.value;
+    }
+
+    const messageContent = message.value.toString();
+
+    const rawMessage = safelyParseJSON(messageContent);
+    const parsedMessage = rawMessage as IMessage;
+
+    if (!parsedMessage) {
+        return {
+            contents: [],
+            documentId: null,
+            tenantId: null,
+            type: BoxcarType,
+        };
+    }
+
+    if (parsedMessage.type === BoxcarType) {
+        const boxcarMessage = parsedMessage as IBoxcarMessage;
+
+        // Contents used to be a string - handle accordingly
+        const contents = boxcarMessage.contents.length > 0 && typeof boxcarMessage.contents[0] === "string"
+            ? boxcarMessage.contents.map((content: any) => JSON.parse(content))
+            : boxcarMessage.contents;
+
+        return {
+            contents,
+            documentId: boxcarMessage.documentId,
+            tenantId: boxcarMessage.tenantId,
+            type: boxcarMessage.type,
+        };
+    } else {
+        return {
+            contents: [parsedMessage],
+            documentId: rawMessage.documentId,
+            tenantId: rawMessage.tenantId,
+            type: BoxcarType,
+        };
+    }
 }

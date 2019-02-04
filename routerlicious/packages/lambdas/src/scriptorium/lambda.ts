@@ -1,4 +1,5 @@
 import {
+    extractBoxcar,
     ICollection,
     IContext,
     IKafkaMessage,
@@ -6,7 +7,6 @@ import {
     ISequencedOperationMessage,
     SequencedOperationType,
 } from "@prague/services-core";
-import { extractBoxcar } from "@prague/services-utils";
 import * as winston from "winston";
 
 export class ScriptoriumLambda implements IPartitionLambda {

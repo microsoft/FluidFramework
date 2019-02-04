@@ -1,12 +1,18 @@
 import { IDocumentMessage } from "@prague/runtime-definitions";
 import {
-    IDatabaseManager, IDocumentStorage, INode, IOrderer, IOrdererConnection, ITaskMessageSender, ITenantManager,
+    IDatabaseManager,
+    IDocumentStorage,
+    INode,
+    IOrderer,
+    IOrdererConnection,
+    ITaskMessageSender,
+    ITenantManager,
+    IWebSocketServer,
 } from "@prague/services-core";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import * as _ from "lodash";
 import * as uuid from "uuid/v4";
-import * as ws from "ws";
 import { debug } from "./debug";
 import {
     IConcreteNode, IConnectedMessage, IConnectMessage, INodeMessage, IOpMessage,
@@ -49,6 +55,7 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
         storage: IDocumentStorage,
         databaseManager: IDatabaseManager,
         timeoutLength: number,
+        webSocketServerFactory: () => IWebSocketServer,
         taskMessageSender: ITaskMessageSender,
         tenantManager: ITenantManager,
         permission: any,
@@ -62,6 +69,7 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
             timeoutLength);
 
         return new LocalNode(
+            webSocketServerFactory,
             node,
             storage,
             databaseManager,
@@ -123,11 +131,12 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
         return true;
     }
 
-    private webSocketServer: ws.Server;
+    private webSocketServer: IWebSocketServer;
     private orderMap = new Map<string, LocalOrderer>();
     private connectionMap = new Map<number, IOrdererConnection>();
 
     private constructor(
+        private webSocketServerFactory: () => IWebSocketServer,
         private node: INode,
         private storage: IDocumentStorage,
         private databaseManager: IDatabaseManager,
@@ -142,7 +151,7 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
         this.scheduleHeartbeat();
 
         // Start up the peer-to-peer socket server to listen to inbound messages
-        this.webSocketServer = new ws.Server({ port: 4000 });
+        this.webSocketServer = this.webSocketServerFactory();
 
         // Connections will arrive from remote nodes
         this.webSocketServer.on("connection", (wsSocket, request) => {

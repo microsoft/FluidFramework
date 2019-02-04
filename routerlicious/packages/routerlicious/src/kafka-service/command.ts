@@ -1,4 +1,4 @@
-import { IKafkaResources, KafkaRunnerFactory } from "@prague/lambdas";
+import { IKafkaResources, KafkaRunnerFactory } from "@prague/lambdas-driver";
 import * as utils from "@prague/services-utils";
 import * as commander from "commander";
 

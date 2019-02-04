@@ -1,7 +1,7 @@
 import { OperationType } from "@prague/api-definitions";
 import * as api from "@prague/client-api";
 import { SharedString } from "@prague/sequence";
-import * as utils from "@prague/services-utils";
+import { generateToken } from "@prague/services-core";
 import * as socketStorage from "@prague/socket-storage";
 import * as assert from "assert";
 import {
@@ -13,7 +13,7 @@ import {
 
 describe.skip("LocalTestServer", () => {
   const id = "documentId";
-  const tenatId = "tenantId";
+  const tenantId = "tenantId";
   const tokenKey = "tokenKey";
 
   let testDeltaConnectionServer: ITestDeltaConnectionServer;
@@ -27,18 +27,18 @@ describe.skip("LocalTestServer", () => {
     testDeltaConnectionServer = TestDeltaConnectionServer.Create();
     documentDeltaEventManager = new DocumentDeltaEventManager();
 
-    const user1Token = utils.generateToken(tenatId, id, tokenKey);
+    const user1Token = generateToken(tenantId, id, tokenKey);
     const documentService = createTestDocumentService(testDeltaConnectionServer);
     user1Document = await api.load(
-      id, tenatId, new socketStorage.TokenProvider(user1Token), {}, null, true, documentService);
+      id, tenantId, new socketStorage.TokenProvider(user1Token), {}, null, true, documentService);
     let rootView = await user1Document.getRoot().getView();
     user1SharedString = user1Document.createString();
     rootView.set("SharedString", user1SharedString);
     documentDeltaEventManager.registerDocuments(user1Document);
 
-    const user2Token = utils.generateToken(tenatId, id, tokenKey);
+    const user2Token = generateToken(tenantId, id, tokenKey);
     user2Document = await api.load(
-      id, tenatId, new socketStorage.TokenProvider(user2Token), {}, null, true, documentService);
+      id, tenantId, new socketStorage.TokenProvider(user2Token), {}, null, true, documentService);
     rootView = await user2Document.getRoot().getView();
     user2SharedString = await rootView.wait("SharedString") as SharedString;
     documentDeltaEventManager.registerDocuments(user2Document);

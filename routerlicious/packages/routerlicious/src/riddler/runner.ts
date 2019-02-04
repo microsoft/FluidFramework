@@ -1,3 +1,4 @@
+import { MongoManager } from "@prague/services-core";
 import * as utils from "@prague/services-utils";
 import { Deferred } from "@prague/utils";
 import * as http from "http";
@@ -11,7 +12,7 @@ export class RiddlerRunner implements utils.IRunner {
     constructor(
         private collectionName: string,
         private port: string | number,
-        private mongoManager: utils.MongoManager,
+        private mongoManager: MongoManager,
         private loggerFormat: string,
         private baseOrdererUrl: string) {
     }

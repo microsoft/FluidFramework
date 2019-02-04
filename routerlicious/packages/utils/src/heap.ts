@@ -1,4 +1,6 @@
 // tslint:disable:no-bitwise
+// tslint:disable:no-increment-decrement
+// tslint:disable:no-parameter-reassignment
 
 export interface IComparer<T> {
     min: T;

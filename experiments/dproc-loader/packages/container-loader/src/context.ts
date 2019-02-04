@@ -1,14 +1,13 @@
 import {
     ConnectionState,
-    IChaincodeHost,
-    IComponentContext,
-    IContext,
+    IChaincodeFactory,
+    IContainerContext,
     IDocumentAttributes,
     IDocumentStorageService,
-    IPlatform,
     IQuorum,
     IRequest,
     IResponse,
+    IRuntime,
     ISequencedDocumentMessage,
     ISnapshotTree,
     ITree,
@@ -19,19 +18,20 @@ import { BlobManager } from "./blobManager";
 import { Container } from "./container";
 import { DeltaManager } from "./deltaManager";
 
-export class Context implements IContext {
+export class Context implements IContainerContext {
     public static async Load(
         container: Container,
-        chaincode: IChaincodeHost,                  // pass directly
-        baseSnapshot: ISnapshotTree,                // pass directly
-        blobs: Map<string, string>,                 // pass directly or combine with driver
-        attributes: IDocumentAttributes,            // Potentially can be reloaded from snapshot
-        blobManager: BlobManager,                   // inherit and/or limit
-        deltaManager: DeltaManager,                 // inherit and/or limit
-        quorum: IQuorum,                            // inherit and/or limit
-        storage: IDocumentStorageService,           // inherit and/or limit
-        submitFn: (type: MessageType, contents: any) => void,   // Following three are used to restrict access after
-        snapshotFn: (message: string) => Promise<void>,         // a context transition
+        chaincode: IChaincodeFactory,
+        baseSnapshot: ISnapshotTree,
+        blobs: Map<string, string>,
+        attributes: IDocumentAttributes,
+        blobManager: BlobManager,
+        deltaManager: DeltaManager,
+        quorum: IQuorum,
+        storage: IDocumentStorageService,
+        errorFn: (err: any) => void,
+        submitFn: (type: MessageType, contents: any) => void,
+        snapshotFn: (message: string) => Promise<void>,
         closeFn: () => void,                        // When would the context ever close?
     ): Promise<Context> {
         const context = new Context(
@@ -44,6 +44,7 @@ export class Context implements IContext {
             deltaManager,
             quorum,
             storage,
+            errorFn,
             submitFn,
             snapshotFn,
             closeFn);
@@ -93,15 +94,14 @@ export class Context implements IContext {
         return this.container.options;
     }
 
-    private contextPlatform: IPlatform;
-    private componentContext: IComponentContext;
+    private runtime: IRuntime;
     // tslint:disable:variable-name allowing _ for params exposed with getter
     private _minimumSequenceNumber: number;
     // tslint:enable:variable-name
 
     constructor(
         private container: Container,
-        public readonly chaincode: IChaincodeHost,
+        public readonly chaincode: IChaincodeFactory,
         public readonly baseSnapshot: ISnapshotTree,
         public readonly blobs: Map<string, string>,
         private readonly attributes: IDocumentAttributes,
@@ -109,6 +109,7 @@ export class Context implements IContext {
         public readonly deltaManager: DeltaManager,
         public readonly quorum: IQuorum,
         public readonly storage: IDocumentStorageService,
+        private readonly errorFn: (err: any) => void,
         public readonly submitFn: (type: MessageType, contents: any) => void,
         public readonly snapshotFn: (message: string) => Promise<void>,
         public readonly closeFn: () => void,
@@ -116,87 +117,46 @@ export class Context implements IContext {
         this._minimumSequenceNumber = attributes.minimumSequenceNumber;
     }
 
-    public get ready(): Promise<void> {
-        if (!this.componentContext) {
-            return Promise.resolve();
-        }
-
-        return this.componentContext.ready;
-    }
-
     public async snapshot(tagMessage: string): Promise<ITree> {
-        if (!this.componentContext) {
-            return null;
-        }
-
-        return this.componentContext.snapshot(tagMessage);
+        return this.runtime.snapshot(tagMessage);
     }
 
     public changeConnectionState(value: ConnectionState, clientId: string) {
-        if (!this.componentContext) {
-            return;
-        }
-
-        this.componentContext.changeConnectionState(value, clientId);
+        this.runtime.changeConnectionState(value, clientId);
     }
 
     public async stop(): Promise<ITree> {
-        if (!this.componentContext) {
-            return null;
-        }
-
-        const snapshot = await this.componentContext.snapshot("");
-        await this.componentContext.stop();
+        const snapshot = await this.runtime.snapshot("");
+        await this.runtime.stop();
 
         return snapshot;
     }
 
     public async prepare(message: ISequencedDocumentMessage, local: boolean): Promise<any> {
-        if (!this.componentContext) {
-            return;
-        }
-
-        return this.componentContext.prepare(message, local);
+        return this.runtime.prepare(message, local);
     }
 
     public process(message: ISequencedDocumentMessage, local: boolean, context: any) {
-        if (!this.componentContext) {
-            return;
-        }
-
-        this.componentContext.process(message, local, context);
+        this.runtime.process(message, local, context);
     }
 
     public async postProcess(message: ISequencedDocumentMessage, local: boolean, context: any): Promise<void> {
-        if (!this.componentContext) {
-            return;
-        }
-
-        return this.componentContext.postProcess(message, local, context);
-    }
-
-    public updateMinSequenceNumber(minimumSequenceNumber: number) {
-        if (!this.componentContext) {
-            return;
-        }
-
-        this.componentContext.updateMinSequenceNumber(minimumSequenceNumber);
+        return this.runtime.postProcess(message, local, context);
     }
 
     public async request(path: IRequest): Promise<IResponse> {
-        if (!this.componentContext) {
-            return { status: 404, mimeType: "text/plain", value: `${path} not found` };
-        }
-
-        return this.componentContext.request(path);
+        return this.runtime.request(path);
     }
 
     public error(err: any): void {
-        throw new Error("Not implemented");
+        this.errorFn(err);
+    }
+
+    public registerTasks(tasks: string[]): any {
+        return;
     }
 
     private async load() {
-        this.contextPlatform = await this.chaincode.run(this);
-        this.componentContext = await this.contextPlatform.queryInterface<IComponentContext>("context");
+        this.runtime = await this.chaincode.instantiateRuntime(this);
     }
 }

@@ -1,5 +1,5 @@
 import { ITenantConfig, ITenantOrderer, ITenantStorage } from "@prague/services-core";
-import * as utils from "@prague/services-utils";
+import { getRandomName, MongoManager } from "@prague/services-core";
 import * as crypto from "crypto";
 import * as jwt from "jsonwebtoken";
 import * as _ from "lodash";
@@ -24,7 +24,7 @@ export interface ITenantDocument {
 
 export class TenantManager {
     constructor(
-        private mongoManager: utils.MongoManager,
+        private mongoManager: MongoManager,
         private collectionName: string,
         private baseOrdererUrl: string) {
     }
@@ -68,7 +68,7 @@ export class TenantManager {
 
         const key = crypto.randomBytes(16).toString("hex");
         const id = await collection.insertOne({
-            _id: utils.getRandomName("-"),
+            _id: getRandomName("-"),
             key,
             orderer: null,
             storage: null,

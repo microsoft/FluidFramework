@@ -20,7 +20,6 @@
     "@prague/utils": "^0.1.0",
     "bytes": "^3.0.0",
     "debug": "^3.1.0",
-    "jsonwebtoken": "^8.4.0",
     "kafka-node": "^3.0.1",
     "moniker": "^0.1.2",
     "nconf": "^0.10.0",
@@ -31,7 +30,6 @@
   "devDependencies": {
     "@types/bytes": "^3.0.0",
     "@types/debug": "^0.0.31",
-    "@types/jsonwebtoken": "^8.3.0",
     "@types/logform": "^1.2.0",
     "@types/nconf": "^0.0.37",
     "@types/node": "^10.12.12",

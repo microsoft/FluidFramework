@@ -27,7 +27,7 @@ spec:
           - 'node'
           - 'dist/kafka-service/index.js'
           - 'routemaster'
-          - '/usr/src/server/packages/lambdas/dist/document-router/index.js'
+          - '/usr/src/server/packages/lambdas-driver/dist/document-router/index.js'
         env:
         - name: DEBUG
           value: "prague:*"

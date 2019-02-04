@@ -4,7 +4,6 @@ import { PrimaryButton } from "office-ui-fabric-react/lib/Button";
 import { TextField } from "office-ui-fabric-react/lib/TextField";
 import { ComboBox, IComboBoxOption, VirtualizedComboBox, IComboBox } from "office-ui-fabric-react/lib/ComboBox";
 import { IAppConfig } from "./app";
-import { url } from "inspector";
 
 interface IProps { 
     config: IAppConfig;

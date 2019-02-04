@@ -1,9 +1,8 @@
 import { IHelpMessage, IQueueMessage, ISequencedDocumentSystemMessage, MessageType } from "@prague/runtime-definitions";
 import * as core from "@prague/services-core";
-import * as utils from "@prague/services-utils";
 import { RateLimitter } from "@prague/utils";
 import * as winston from "winston";
-import { SequencedLambda } from "../kafka-service/sequencedLambda";
+import { SequencedLambda } from "../sequencedLambda";
 
 // TODO: Move this to config.
 const RequestWindowMS = 15000;
@@ -27,7 +26,7 @@ export class TmzLambda extends SequencedLambda {
     }
 
     protected async handlerCore(message: core.IKafkaMessage): Promise<void> {
-        const boxcar = utils.extractBoxcar(message);
+        const boxcar = core.extractBoxcar(message);
 
         for (const baseMessage of boxcar.contents) {
             if (baseMessage.type === core.SequencedOperationType) {
@@ -80,14 +79,14 @@ export class TmzLambda extends SequencedLambda {
             const queueName = queueTask[0];
             const tasks = this.rateLimitter.filter(clientId, queueTask[1]);
             if (tasks.length > 0) {
-                const user = utils.generateUser();
+                const user = core.generateUser();
                 const queueMessage: IQueueMessage = {
                     documentId: docId,
                     message: {
                         tasks,
                     },
                     tenantId,
-                    token: utils.generateToken(tenantId, docId, key, user),
+                    token: core.generateToken(tenantId, docId, key, user),
                 };
                 this.messageSender.sendTask(
                     queueName,

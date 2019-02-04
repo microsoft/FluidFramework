@@ -35,6 +35,8 @@ describe("LocalTestDataStore", () => {
             createTestDocumentService(testDeltaConnectionServer),
             "tokenKey",
             "tenantId");
+
+        // TODO: this line is hanging after using a test web socket in LocalNode.
         const doc2 = await datastore2.open<TestComponent>("documentId", "userId", TestComponent.type);
         await doc2.wait("done1");
         console.log("sync completed");
@@ -44,6 +46,7 @@ describe("LocalTestDataStore", () => {
         assert.equal(doc2.count, 2, "Incorrect count in Doc2 after increment");
         doc1.close();
         doc2.close();
+
      });
 
     after(async () => {

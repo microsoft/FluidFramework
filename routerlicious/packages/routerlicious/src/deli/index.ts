@@ -1,7 +1,7 @@
-import { create as createDocumentRouter, DeliLambdaFactory } from "@prague/lambdas";
+import { DeliLambdaFactory } from "@prague/lambdas";
+import { create as createDocumentRouter } from "@prague/lambdas-driver";
 import * as services from "@prague/services";
 import * as core from "@prague/services-core";
-import * as utils from "@prague/services-utils";
 import * as bytes from "bytes";
 import { Provider } from "nconf";
 
@@ -21,7 +21,7 @@ export async function deliCreate(config: Provider): Promise<core.IPartitionLambd
 
     // Connection to stored document details
     const mongoFactory = new services.MongoDbFactory(mongoUrl);
-    const mongoManager = new utils.MongoManager(mongoFactory, false);
+    const mongoManager = new core.MongoManager(mongoFactory, false);
     const client = await mongoManager.getDatabase();
     const collection = await client.collection<core.IDocument>(documentsCollectionName);
 

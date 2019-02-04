@@ -32,6 +32,7 @@ COPY packages/flow-host/package*.json packages/flow-host/
 COPY packages/flow-util/package*.json packages/flow-util/
 COPY packages/gitresources/package*.json packages/gitresources/
 COPY packages/kafka-orderer/package*.json packages/kafka-orderer/
+COPY packages/lambdas-driver/package*.json packages/lambdas-driver/
 COPY packages/lambdas/package*.json packages/lambdas/
 COPY packages/loader/package*.json packages/loader/
 COPY packages/loader-client/package*.json packages/loader-client/

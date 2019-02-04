@@ -1,4 +1,4 @@
-import { IChaincodeComponent, IChaincodeHost } from "@prague/container-definitions";
+import { IChaincodeComponent } from "@prague/runtime";
 import { ChartComponent } from "./chaincode";
 
 /**
@@ -6,11 +6,4 @@ import { ChartComponent } from "./chaincode";
  */
 export async function instantiateComponent(): Promise<IChaincodeComponent> {
     return new ChartComponent();
-}
-
-/**
- * Instantiates a new chaincode host
- */
-export async function instantiateHost(): Promise<IChaincodeHost> {
-    return Promise.reject("Not yet implemented");
 }

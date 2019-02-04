@@ -1,13 +1,12 @@
 import { ISequencedDocumentMessage } from "@prague/runtime-definitions";
-import { IAlfredTenant } from "@prague/services-core";
-import * as utils from "@prague/services-utils";
+import { IAlfredTenant, MongoManager } from "@prague/services-core";
 import { Router } from "express";
 import { Provider } from "nconf";
 
 const sequenceNumber = "sequenceNumber";
 
 export async function getDeltaContents(
-    mongoManager: utils.MongoManager,
+    mongoManager: MongoManager,
     collectionName: string,
     tenantId: string,
     documentId: string,
@@ -37,7 +36,7 @@ export async function getDeltaContents(
 }
 
 export async function getDeltas(
-    mongoManager: utils.MongoManager,
+    mongoManager: MongoManager,
     collectionName: string,
     tenantId: string,
     documentId: string,
@@ -75,7 +74,7 @@ export async function getDeltas(
     });
 }
 
-export function create(config: Provider, mongoManager: utils.MongoManager, appTenants: IAlfredTenant[]): Router {
+export function create(config: Provider, mongoManager: MongoManager, appTenants: IAlfredTenant[]): Router {
     const deltasCollectionName = config.get("mongo:collectionNames:deltas");
     const router: Router = Router();
 

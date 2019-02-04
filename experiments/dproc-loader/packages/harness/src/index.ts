@@ -1,10 +1,10 @@
 import * as sharedText from "@chaincode/shared-text";
 import { CollaborativeObject } from "@prague/api-definitions";
-import { IChaincodeFactory, ICodeLoader, IComponentRuntime } from "@prague/container-definitions";
+import { IChaincodeFactory, ICodeLoader } from "@prague/container-definitions";
 import { Container } from "@prague/container-loader";
 import { Loader } from "@prague/container-loader";
-import { WebPlatform } from "@prague/container-utils";
 import { CollaborativeMap, IMapView } from "@prague/map";
+import { IComponentRuntime, WebPlatform } from "@prague/runtime";
 import * as socketStorage from "@prague/socket-storage";
 import * as jwt from "jsonwebtoken";
 

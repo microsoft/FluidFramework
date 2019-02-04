@@ -63,7 +63,9 @@ export class DeltaStorageService implements api.IDeltaStorageService {
     }
 
     public buildUrl(from?: number, to?: number) {
-        const query = querystring.stringify({ filter: `sequenceNumber ge ${from} and sequenceNumber le ${to}` });
+        const fromInclusive = from === undefined ? undefined : from + 1;
+        const toInclusive = to === undefined ? undefined : to - 1;
+        const query = querystring.stringify({ filter: `sequenceNumber ge ${fromInclusive} and sequenceNumber le ${toInclusive}` });
 
         return `${this.deltaFeedUrl}?$${query}`;
     }
