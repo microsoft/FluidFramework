@@ -25,8 +25,8 @@ export class ChatApp extends Document {
       await this.root.set("connected", true);
 
       setTimeout(() => {
-        const user = this.runtime.getQuorum().getMember(this.runtime.clientId).client.user.name;
-        
+        const quorum = this.runtime.getQuorum();
+        const user = quorum.getMember(this.runtime.clientId);        
         
         ReactDOM.render(
           <Provider theme={themes.teams}>
@@ -34,7 +34,7 @@ export class ChatApp extends Document {
               messages={messages}
               messageView={messagesView}
               counter={msgCtr}
-              clientId= {user} // this.runtime.clientId}
+              clientId= {user.client.user.id} // this.runtime.clientId}
             />
           </Provider>,
           maybeDiv
