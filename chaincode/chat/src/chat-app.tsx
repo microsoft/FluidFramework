@@ -15,6 +15,7 @@ export class ChatApp extends Document {
   // Once document/component is opened, finish any remaining initialization required before the
   // document/component is returned to to the host.
   public async opened() {
+
     // If the host provided a <div>, display a minimal UI.
     const maybeDiv = await this.platform.queryInterface<HTMLElement>("div");
     if (maybeDiv) {
@@ -24,13 +25,16 @@ export class ChatApp extends Document {
       await this.root.set("connected", true);
 
       setTimeout(() => {
+        const user = this.runtime.getQuorum().getMember(this.runtime.clientId).client.user.name;
+        
+        
         ReactDOM.render(
           <Provider theme={themes.teams}>
             <ChatContainer
               messages={messages}
               messageView={messagesView}
               counter={msgCtr}
-              clientId={this.runtime.clientId}
+              clientId= {user} // this.runtime.clientId}
             />
           </Provider>,
           maybeDiv

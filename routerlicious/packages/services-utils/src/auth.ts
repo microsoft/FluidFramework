@@ -7,6 +7,10 @@ import { getRandomName } from "./dockerNames";
  */
 export function generateToken(tenantId: string, documentId: string, key: string, user?: IUser): string {
     user = (user) ? user : generateUser();
+    if (user.id === "" || user.id === undefined) {
+        user.id = getRandomName(" ", true);
+    }
+
     const claims: ITokenClaims = {
         documentId,
         permission: "read:write",
