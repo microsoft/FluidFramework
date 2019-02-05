@@ -12,6 +12,8 @@ import { EventEmitter } from "events";
  */
 export class SharedStringForWord extends EventEmitter {
     private sharedString: sequence.SharedString;
+    private opList = [];
+    private isInGroup: boolean;
 
     /**
      * Creates an instance of shared string for word.
@@ -42,7 +44,21 @@ export class SharedStringForWord extends EventEmitter {
      */
     public annotateRange(pos1: number, pos2: number, props: mergeTree.PropertySet) {
         console.log("AnnotateRange [%s, %s)", pos1, pos2);
-        this.sharedString.annotateRange(props, pos1, pos2);
+
+        if (!this.isInGroup) {
+            this.sharedString.annotateRange(props, pos1, pos2);
+        } else if (!this.sharedString.isLocal()) {
+
+            const annotateMessage: mergeTree.IMergeTreeAnnotateMsg = {
+                pos1,
+                pos2,
+                props,
+                type: mergeTree.MergeTreeDeltaType.ANNOTATE,
+            };
+
+            this.opList.push(annotateMessage);
+        }
+
         setImmediate(() => { return; });
     }
 
@@ -97,7 +113,20 @@ export class SharedStringForWord extends EventEmitter {
     public insertText(text: string, position: number, props?: mergeTree.PropertySet) {
         console.log("insert Text at %s", position);
         try {
-            this.sharedString.insertText(text, position, props);
+
+            if (!this.isInGroup) {
+                this.sharedString.insertText(text, position, props);
+            } else if (!this.sharedString.isLocal()) {
+
+                const insertMessage: mergeTree.IMergeTreeInsertMsg = {
+                    pos1: position,
+                    props,
+                    text,
+                    type: mergeTree.MergeTreeDeltaType.INSERT,
+                };
+                this.opList.push(insertMessage);
+            }
+
             setImmediate(() => { return; });
         } catch (e) {
             console.log(e);
@@ -119,6 +148,36 @@ export class SharedStringForWord extends EventEmitter {
     }
 
     /**
+     * Starts group
+     */
+    public startGroup() {
+        this.isInGroup = true;
+    }
+
+    /**
+     * Ends group
+     */
+    public endGroup() {
+        if (!this.isInGroup) {
+            return;
+        }
+
+        this.isInGroup = false;
+
+        if (this.opList.length === 0) {
+            return;
+        }
+
+        const groupOp = {
+            ops: this.opList,
+            type: mergeTree.MergeTreeDeltaType.GROUP,
+        } as mergeTree.IMergeTreeGroupMsg;
+
+        this.sharedString.groupOperation(groupOp);
+        this.opList = [];
+    }
+
+    /**
      * Inserts text before marker
      * @param text
      * @param markerId
@@ -136,7 +195,19 @@ export class SharedStringForWord extends EventEmitter {
             id: markerId,
             offset: offsetFromMarker,
         } as mergeTree.IRelativePosition;
-        this.sharedString.insertTextRelative(relPos, text, props);
+
+        if (!this.isInGroup) {
+            this.sharedString.insertTextRelative(relPos, text, props);
+        } else if (!this.sharedString.isLocal()) {
+
+            const insertMessage: mergeTree.IMergeTreeInsertMsg = {
+                props,
+                relativePos1: relPos,
+                text,
+                type: mergeTree.MergeTreeDeltaType.INSERT,
+            };
+            this.opList.push(insertMessage);
+        }
     }
 
     /**
@@ -151,7 +222,20 @@ export class SharedStringForWord extends EventEmitter {
         const props = propsIn;
         props[mergeTree.reservedTileLabelsKey] = [label];
         props[mergeTree.reservedMarkerIdKey] = markerId;
-        this.sharedString.insertMarker(pos1, mergeTree.ReferenceType.Tile, props);
+
+        if (!this.isInGroup) {
+            this.sharedString.insertMarker(pos1, mergeTree.ReferenceType.Tile, props);
+        } else if (!this.sharedString.isLocal()) {
+
+            const insertMessage: mergeTree.IMergeTreeInsertMsg = {
+                marker: { refType: mergeTree.ReferenceType.Tile },
+                pos1,
+                props,
+                type: mergeTree.MergeTreeDeltaType.INSERT,
+            };
+            this.opList.push(insertMessage);
+        }
+
         setImmediate(() => { return; });
     }
 
@@ -162,11 +246,27 @@ export class SharedStringForWord extends EventEmitter {
      * @param markerId
      */
     public insertRangeBeginMarker(pos1: number, rangeMarker: string, markerId: string) {
-        this.sharedString.insertMarker(pos1, mergeTree.ReferenceType.RangeBegin,
-            {
-                [mergeTree.reservedRangeLabelsKey]: [rangeMarker],
-                [mergeTree.reservedMarkerIdKey]: markerId,
-            });
+
+        if (!this.isInGroup) {
+            this.sharedString.insertMarker(pos1, mergeTree.ReferenceType.RangeBegin,
+                {
+                    [mergeTree.reservedRangeLabelsKey]: [rangeMarker],
+                    [mergeTree.reservedMarkerIdKey]: markerId,
+                });
+        } else if (!this.sharedString.isLocal()) {
+
+            const insertMessage: mergeTree.IMergeTreeInsertMsg = {
+                marker: { refType: mergeTree.ReferenceType.RangeBegin },
+                pos1,
+                props: {
+                    [mergeTree.reservedRangeLabelsKey]: [rangeMarker],
+                    [mergeTree.reservedMarkerIdKey]: markerId,
+                },
+                type: mergeTree.MergeTreeDeltaType.INSERT,
+            };
+            this.opList.push(insertMessage);
+        }
+
         setImmediate(() => { return; });
     }
 
@@ -177,11 +277,26 @@ export class SharedStringForWord extends EventEmitter {
      * @param markerId
      */
     public insertRangeEndMarker(pos1: number, rangeMarker: string, markerId: string) {
-        this.sharedString.insertMarker(pos1, mergeTree.ReferenceType.RangeEnd,
-            {
-                [mergeTree.reservedRangeLabelsKey]: [rangeMarker],
-                [mergeTree.reservedMarkerIdKey]: "end-" + markerId,
-            });
+
+        if (!this.isInGroup) {
+            this.sharedString.insertMarker(pos1, mergeTree.ReferenceType.RangeEnd,
+                {
+                    [mergeTree.reservedRangeLabelsKey]: [rangeMarker],
+                    [mergeTree.reservedMarkerIdKey]: "end-" + markerId,
+                });
+        } else if (!this.sharedString.isLocal()) {
+            const insertMessage: mergeTree.IMergeTreeInsertMsg = {
+                marker: { refType: mergeTree.ReferenceType.RangeBegin },
+                pos1,
+                props: {
+                    [mergeTree.reservedRangeLabelsKey]: [rangeMarker],
+                    [mergeTree.reservedMarkerIdKey]: "end-" + markerId,
+                },
+                type: mergeTree.MergeTreeDeltaType.INSERT,
+            };
+            this.opList.push(insertMessage);
+        }
+
         setImmediate(() => { return; });
     }
 
@@ -322,7 +437,19 @@ export class SharedStringForWord extends EventEmitter {
 
     public removeText(pos1: number, pos2: number) {
         console.log("Remove Text [%s, %s)", pos1, pos2);
-        this.sharedString.removeText(pos1, pos2);
+
+        if (!this.isInGroup) {
+            this.sharedString.removeText(pos1, pos2);
+        } else if (!this.sharedString.isLocal()) {
+
+            const removeMessage: mergeTree.IMergeTreeRemoveMsg = {
+                pos1,
+                pos2,
+                type: mergeTree.MergeTreeDeltaType.REMOVE,
+            };
+            this.opList.push(removeMessage);
+        }
+
         setImmediate(() => { return; });
     }
 
