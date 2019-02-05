@@ -1,8 +1,7 @@
-import { IUser } from "@prague/container-definitions";
 import { IAlfredTenant, IDocumentStorage, ITenantManager } from "@prague/services-core";
 import { Router } from "express";
 import { Provider } from "nconf";
-import { getConfig, getToken } from "../utils";
+import { getConfig, getToken, IAlfredUser } from "../utils";
 import { defaultPartials } from "./partials";
 
 export function create(
@@ -30,10 +29,10 @@ export function create(
         const to = Number.parseInt(request.query.to, 10);
         const unitIsTime = request.query.unit === "time";
 
-        const user: IUser = (request.user) ? {
-            id: request.user.name,
+        const user: IAlfredUser = (request.user) ? {
+            displayName: request.user.name,
+            id: request.user.oid,
             name: request.user.name,
-            oid: request.user.oid,
         } : undefined;
 
         const token = getToken(tenantId, documentId, appTenants, user);

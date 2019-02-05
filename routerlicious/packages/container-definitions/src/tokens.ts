@@ -8,7 +8,7 @@ export interface ITokenClaims {
 }
 
 /**
- * The ITokenService abstracts the discovery of cliams contained within a token
+ * The ITokenService abstracts the discovery of claims contained within a token
  */
 export interface ITokenService {
     extractClaims(token: string): ITokenClaims;
