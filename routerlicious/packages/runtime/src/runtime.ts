@@ -1,24 +1,21 @@
 import {
-    IRequest,
-    IResponse,
-} from "@prague/container-definitions";
-import { ICommit } from "@prague/gitresources";
-import {
     ConnectionState,
     FileMode,
-    IAttachMessage,
     IBlobManager,
     IDeltaManager,
     IDocumentStorageService,
-    IEnvelope,
     IQuorum,
+    IRequest,
+    IResponse,
     ISequencedDocumentMessage,
     ISnapshotTree,
     ITree,
     IUser,
     MessageType,
     TreeEntry,
-} from "@prague/runtime-definitions";
+} from "@prague/container-definitions";
+import { ICommit } from "@prague/gitresources";
+import { IAttachMessage, IEnvelope } from "@prague/runtime-definitions";
 import { buildHierarchy, Deferred, flatten, readAndParse } from "@prague/utils";
 import * as assert from "assert";
 import { EventEmitter } from "events";

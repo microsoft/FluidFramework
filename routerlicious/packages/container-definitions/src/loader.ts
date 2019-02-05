@@ -1,6 +1,5 @@
 import { IChaincodeFactory } from "./chaincode";
 import { ITokenProvider } from "./tokens";
-import { IUser } from "./users";
 
 /**
  * Code loading interface
@@ -21,8 +20,6 @@ export interface ICodeLoader {
  */
 export interface IHost {
     tokenProvider: ITokenProvider;
-
-    user: IUser;
 }
 
 export interface IRequest {

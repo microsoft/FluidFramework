@@ -21,7 +21,6 @@ import {
     ISnapshotTree,
     ITree,
     ITreeEntry,
-    IUser,
     MessageType,
     TreeEntry,
 } from "@prague/container-definitions";
@@ -110,10 +109,6 @@ export class Container extends EventEmitter {
 
     public get deltaManager(): IDeltaManager {
         return this._deltaManager;
-    }
-
-    public get user(): IUser {
-        return this.containerHost.user;
     }
 
     public get connectionState(): ConnectionState {

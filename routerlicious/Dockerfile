@@ -46,6 +46,7 @@ COPY packages/merge-tree/package*.json packages/merge-tree/
 COPY packages/merge-tree-utils/package*.json packages/merge-tree-utils/
 COPY packages/replay-socket-storage/package*.json packages/replay-socket-storage/
 COPY packages/routerlicious/package*.json packages/routerlicious/
+COPY packages/runtime/package*.json packages/runtime/
 COPY packages/runtime-definitions/package*.json packages/runtime-definitions/
 COPY packages/sequence/package*.json packages/sequence/
 COPY packages/services/package*.json packages/services/
