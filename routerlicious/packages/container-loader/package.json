@@ -26,7 +26,7 @@
     "@prague/container-definitions": "^0.2.0",
     "@prague/utils": "^0.2.0",
     "@types/async": "^2.0.50",
-    "@types/debug": "0.0.31",
+    "@types/debug": "^0.0.31",
     "@types/lodash": "^4.14.118",
     "@types/node": "^10.12.12",
     "async": "^2.6.1",
