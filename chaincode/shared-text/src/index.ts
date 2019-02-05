@@ -93,6 +93,9 @@ class SharedText extends Document {
             theFlow.loadFinished(clockStart);
             debug(`fully loaded - ${performanceNow()} `);
         });
+
+        this.runtime.registerTasks(["snapshot", "spell", "intel", "translation"], "1.0");
+
     }
 
     protected async create() {

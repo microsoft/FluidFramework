@@ -26,7 +26,6 @@
   "dependencies": {
     "@prague/container-definitions": "^0.2.0",
     "@prague/gitresources": "^0.2.0",
-    "@prague/runtime-definitions": "^0.2.0",
     "@prague/utils": "^0.2.0",
     "@types/node": "^10.12.12",
     "axios": "^0.18.0",

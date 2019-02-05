@@ -1,12 +1,12 @@
 import {
-    ICommit,
-    ICreateBlobResponse,
-} from "@prague/gitresources";
-import {
     IDocumentStorageService,
     ISnapshotTree,
     ITree,
-} from "@prague/runtime-definitions";
+} from "@prague/container-definitions";
+import {
+    ICommit,
+    ICreateBlobResponse,
+} from "@prague/gitresources";
 
 export class ComponentStorageService implements IDocumentStorageService {
     public get repositoryUrl(): string {

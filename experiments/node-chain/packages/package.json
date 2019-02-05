@@ -6,6 +6,5 @@
   "author": "Microsoft",
   "license": "ISC",
   "dependencies": {
-    "@chaincode/simple": "0.0.14"
   }
 }

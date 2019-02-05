@@ -1,25 +1,21 @@
 import {
-    IRequest,
-    IResponse,
-} from "@prague/container-definitions";
-import {
     ConnectionState,
     FileMode,
     IBlobManager,
-    IChannel,
     IDeltaManager,
     IDocumentStorageService,
-    IEnvelope,
     IGenericBlob,
-    IObjectStorageService,
     IQuorum,
+    IRequest,
+    IResponse,
     ISequencedDocumentMessage,
     ISnapshotTree,
     ITree,
     IUser,
     MessageType,
     TreeEntry,
-} from "@prague/runtime-definitions";
+} from "@prague/container-definitions";
+import { IChannel, IEnvelope, IObjectStorageService } from "@prague/runtime-definitions";
 import { EventEmitter } from "events";
 import { ChannelDeltaConnection } from "./channelDeltaConnection";
 import {

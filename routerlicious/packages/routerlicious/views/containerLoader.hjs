@@ -1,0 +1,37 @@
+{{<layout}}
+    {{$content}}
+        <div id="content"></div>
+    {{/content}}
+
+    {{$scripts}}
+        <script src="{{#hfurl}}/public/scripts/dist/loader.js{{/hfurl}}"></script>
+        <script>
+            var config = {{{ config }}};
+            var version = {{{ version }}};
+
+            var token = "{{ token }}";
+            var chaincode = "{{ chaincode }}";
+
+            var tenantId = "{{ tenantId }}";
+            var documentId = "{{ documentId }}";
+            var path = "{{ path }}";
+
+            var from = {{ from }};
+            var to = {{ to }};
+            var unitIsTime = {{ unitIsTime }};
+
+            loader.containerInitialize(
+                tenantId,
+                documentId,
+                path,
+                version,
+                token,
+                config,
+                chaincode,
+                config.npm,
+                from,
+                to,
+                unitIsTime);
+        </script>
+    {{/scripts}}
+{{/layout}}

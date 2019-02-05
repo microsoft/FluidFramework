@@ -3,6 +3,7 @@ import * as MergeTree from "@prague/merge-tree";
 import { ICodeLoader } from "@prague/runtime-definitions";
 import { EventEmitter } from "events";
 import { AgentLoader, IAgent } from "./agentLoader";
+import * as chaincode from "./chaincodes";
 import { ChaincodeWork } from "./chaincodeWork";
 import { IDocumentServiceFactory, IDocumentTaskInfo, IWork, IWorkManager } from "./definitions";
 import { loadDictionary } from "./dictionaryLoader";
@@ -77,14 +78,29 @@ export class WorkManager extends EventEmitter implements IWorkManager {
                     tenantId,
                     documentId,
                     workType,
-                    new SnapshotWork(documentId, tenantId, tokenProvider, this.config, services));
+                    new chaincode.SnapshotWork(
+                        documentId,
+                        tenantId,
+                        tokenProvider,
+                        services,
+                        this.codeLoader,
+                        this.platformFactory,
+                        workType));
                 break;
             case "chain-intel":
                 await this.startTask(
                     tenantId,
                     documentId,
                     workType,
-                    new IntelWork(documentId, tenantId, tokenProvider, this.config, services));
+                    new chaincode.IntelWork(
+                        documentId,
+                        tenantId,
+                        tokenProvider,
+                        services,
+                        this.codeLoader,
+                        this.platformFactory,
+                        workType,
+                        this.config));
                 break;
             case "chain-spell":
                 await this.loadSpellings().catch((err) => {
@@ -95,13 +111,15 @@ export class WorkManager extends EventEmitter implements IWorkManager {
                         tenantId,
                         documentId,
                         workType,
-                        new SpellcheckerWork(
+                        new chaincode.SpellcheckerWork(
                             documentId,
                             tenantId,
                             tokenProvider,
-                            this.config,
-                            this.dict,
-                            services));
+                            services,
+                            this.codeLoader,
+                            this.platformFactory,
+                            workType,
+                            this.dict));
                 }
                 break;
             case "chain-translation":
@@ -109,12 +127,14 @@ export class WorkManager extends EventEmitter implements IWorkManager {
                     tenantId,
                     documentId,
                     workType,
-                    new TranslationWork(
+                    new chaincode.TranslationWork(
                         documentId,
                         tenantId,
                         tokenProvider,
-                        this.config,
-                        services));
+                        services,
+                        this.codeLoader,
+                        this.platformFactory,
+                        workType));
                 break;
             case "chaincode":
                 await this.startTask(

@@ -1,5 +1,6 @@
 // inspiration for this example taken from https://github.com/agentcooper/typescript-play
 import { Component, Document } from "@prague/app-component";
+import { IPlatform, ITree } from "@prague/container-definitions";
 import {
     IMergeTreeGroupMsg,
     IMergeTreeInsertMsg,
@@ -14,7 +15,7 @@ import {
     IComponentRuntime,
     IDeltaHandler,
 } from "@prague/runtime";
-import { IChaincode, IPlatform, ITree } from "@prague/runtime-definitions";
+import { IChaincode } from "@prague/runtime-definitions";
 import { SharedString } from "@prague/sequence";
 import { Deferred } from "@prague/utils";
 import * as monaco from "monaco-editor";

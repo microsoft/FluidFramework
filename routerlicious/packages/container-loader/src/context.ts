@@ -11,7 +11,6 @@ import {
     ISequencedDocumentMessage,
     ISnapshotTree,
     ITree,
-    IUser,
     MessageType,
 } from "@prague/container-definitions";
 import { BlobManager } from "./blobManager";
@@ -83,10 +82,6 @@ export class Context implements IContainerContext {
 
     public get connectionState(): ConnectionState {
         return this.container.connectionState;
-    }
-
-    public get user(): IUser {
-        return this.container.user;
     }
 
     // tslint:disable-next-line:no-unsafe-any

@@ -4,7 +4,6 @@ import { IDeltaManager } from "./deltas";
 import { IRequest, IResponse } from "./loader";
 import { ISequencedDocumentMessage, MessageType } from "./protocol";
 import { IDocumentStorageService, ISnapshotTree, ITree } from "./storage";
-import { IUser } from "./users";
 
 export enum ConnectionState {
     /**
@@ -70,7 +69,6 @@ export interface IContainerContext {
     readonly existing: boolean;
     readonly options: any;
     readonly clientId: string;
-    readonly user: IUser;
     readonly parentBranch: string;
     readonly deltaManager: IDeltaManager;
     readonly blobManager: IBlobManager;

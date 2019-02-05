@@ -1,4 +1,5 @@
-import { IChaincode, IPlatform, ITree } from "@prague/runtime-definitions";
+import { IPlatform, ITree } from "@prague/container-definitions";
+import { IChaincode } from "@prague/runtime-definitions";
 import { ComponentHost } from "./componentHost";
 import {
     IChaincodeComponent,
