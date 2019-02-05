@@ -11,15 +11,25 @@ import {
     EvalFormulaPaused
 } from "@prague/client-ui/ext/calc";
 import { MapExtension, IMapView, registerDefaultValueType,  } from "@prague/map";
-import { SharedString, CollaborativeStringExtension } from "@prague/sequence";
+import { 
+    SharedString,
+    CollaborativeStringExtension, 
+    SharedStringIntervalCollectionValueType,
+    SharedIntervalCollectionValueType
+} from "@prague/sequence";
 import { Component } from "@prague/app-component";
 import { Counter, CounterValueType } from "@prague/map";
 import {
     MergeTree,
     UniversalSequenceNumber,
     ReferenceType,
-    Marker
+    Marker,
+    IntervalType,
+    LocalReference
 } from "@prague/merge-tree";
+
+import { CellRange } from "./cellrange";
+export { CellRange };
 
 const loadCellTextSym = Symbol("TableDocument.loadCellText");
 const storeCellTextSym = Symbol("TableDocument.storeCellText");
@@ -76,6 +86,8 @@ export class TableDocument extends Component {
         ]);
 
         registerDefaultValueType(new CounterValueType());
+        registerDefaultValueType(new SharedStringIntervalCollectionValueType());
+        registerDefaultValueType(new SharedIntervalCollectionValueType());
     }
     
     protected async create() {
@@ -110,13 +122,19 @@ export class TableDocument extends Component {
 
             this.emit("op", op, local)
         });
-        
+
         this.maybeWorkbook = new WorkbookAdapter(this);
     }
 
-    private get length() { return this.mergeTree.getLength(UniversalSequenceNumber, this.clientId); }
-    public get numCols() { return Math.min(this.rootView.get("stride").value, this.length); }
-    public get numRows() { return Math.floor(this.length / this.numCols); }
+    private localRefToPosition(localRef: LocalReference) {
+        return localRef.toPosition(this.mergeTree, UniversalSequenceNumber, this.clientId);
+    }
+
+    private readonly localRefToRowCol = (localRef: LocalReference) => this.positionToRowCol(this.localRefToPosition(localRef));
+
+    private get length()     { return this.mergeTree.getLength(UniversalSequenceNumber, this.clientId); }
+    public  get numCols()    { return Math.min(this.rootView.get("stride").value, this.length); }
+    public  get numRows()    { return Math.floor(this.length / this.numCols); }
 
     private parseResult(result: EvaluationResult): string | number | boolean {
         switch (result.kind) {
@@ -149,6 +167,12 @@ export class TableDocument extends Component {
         return row * this.numCols + col;
     }
 
+    private positionToRowCol(position: number) {
+        const row = Math.floor(position / this.numCols);
+        const col = position - (row * this.numCols);
+        return {row, col};
+    }
+
     private [loadCellTextSym](row: number, col: number): string {
         const { segment } = this.mergeTree.getContainingSegment(this.rowColToPosition(row, col), UniversalSequenceNumber, this.clientId);
         return (segment as Marker).properties["value"];
@@ -169,11 +193,24 @@ export class TableDocument extends Component {
         this.sharedString.insertMarker(position, ReferenceType.Simple, { value: value.toString() });
     }
 
-    private get sharedString() { return this.maybeSharedString!; }
-    private get mergeTree() { return this.maybeMergeTree!; }
-    private get clientId() { return this.maybeClientId!; }
-    private get workbook() { return this.maybeWorkbook!; }
-    private get rootView() { return this.maybeRootView!; }
+    public createRange(label: string, minRow: number, minCol: number, maxRow: number, maxCol: number) {
+        const start = this.rowColToPosition(minRow, minCol);
+        const end = this.rowColToPosition(maxRow, maxCol);
+        const intervals = this.sharedString.getSharedIntervalCollection(label);
+        intervals.add(start, end, IntervalType.Simple);
+    }
+
+    public async getRange(label: string) {
+        const intervals = this.sharedString.getSharedIntervalCollection(label);
+        const interval = (await intervals.getView()).nextInterval(0);
+        return new CellRange(interval, this.localRefToRowCol);
+    }
+
+    private get sharedString()  { return this.maybeSharedString!; }
+    private get mergeTree()     { return this.maybeMergeTree!; }
+    private get clientId()      { return this.maybeClientId!; }
+    private get workbook()      { return this.maybeWorkbook!; }
+    private get rootView()      { return this.maybeRootView!; }
 
     public static readonly type = `${require("../package.json").name}@${require("../package.json").version}`;
 }

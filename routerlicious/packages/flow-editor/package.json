@@ -24,7 +24,7 @@
   "author": "Microsoft",
   "repository": "microsoft/prague",
   "dependencies": {
-    "@chaincode/flow-document": "*",
+    "@chaincode/flow-document": "^0.2.0",
     "@prague/app-component": "^0.2.0",
     "@prague/app-datastore": "^0.2.0",
     "@prague/flow-util": "^0.2.0",

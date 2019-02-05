@@ -1,3 +1,4 @@
+import { IUser } from "@prague/runtime-definitions";
 import { IAlfredTenant, IDocumentStorage, ITenantManager } from "@prague/services-core";
 import { Router } from "express";
 import { Provider } from "nconf";
@@ -22,7 +23,14 @@ export function create(
         const from = Number.parseInt(request.query.from, 10);
         const to = Number.parseInt(request.query.to, 10);
         const unitIsTime = request.query.unit === "time";
-        const token = getToken(tenantId, request.params.id, appTenants);
+
+        const user: IUser = (request.user) ? {
+            id: request.user.name,
+            name: request.user.name,
+            oid: request.user.oid,
+        } : undefined;
+
+        const token = getToken(tenantId, request.params.id, appTenants, user);
 
         const workerConfigP = getConfig(
             config.get("worker"),

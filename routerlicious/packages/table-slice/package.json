@@ -1,7 +1,7 @@
 {
-  "name": "@chaincode/table-view",
+  "name": "@chaincode/table-slice",
   "version": "0.2.0",
-  "description": "Chaincode component that provides a view for a table-document.",
+  "description": "Chaincode component that provides a slice of table-document.",
   "main": "dist/main.bundle.js",
   "types": "dist/index.d.ts",
   "prague": {
