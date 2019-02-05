@@ -22,6 +22,7 @@
   },
   "dependencies": {
     "@prague/client-api": "^0.1.0",
+    "@prague/gitresources": "^0.1.0",
     "@prague/map": "^0.1.0",
     "@prague/merge-tree": "^0.1.0",
     "@prague/runtime-definitions": "^0.1.0",
