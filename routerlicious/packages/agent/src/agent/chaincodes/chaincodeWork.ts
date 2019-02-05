@@ -102,7 +102,7 @@ export class ChaincodeWork extends EventEmitter {
     // a browser client connected.
     private noLeader(): boolean {
         for (const client of this.document.getQuorum().getMembers()) {
-            if (!client[1].client || client[1].client.type === Browser) {
+            if (!client[1].client || !client[1].client.type || client[1].client.type === Browser) {
                 return false;
             }
         }
