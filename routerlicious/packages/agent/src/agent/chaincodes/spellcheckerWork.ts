@@ -1,13 +1,13 @@
 import * as core from "@prague/api-definitions";
-import * as MergeTree from "@prague/merge-tree";
 import {
-    ICodeLoader,
     IDocumentService,
     IPlatformFactory,
     ISequencedDocumentMessage,
     ITokenProvider,
     MessageType,
-} from "@prague/runtime-definitions";
+} from "@prague/container-definitions";
+import * as MergeTree from "@prague/merge-tree";
+import { ICodeLoader } from "@prague/runtime-definitions";
 import * as Sequence from "@prague/sequence";
 import { IWork} from "../definitions";
 import { Spellcheker } from "../spellchecker";

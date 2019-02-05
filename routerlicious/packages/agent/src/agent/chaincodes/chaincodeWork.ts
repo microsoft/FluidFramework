@@ -1,11 +1,11 @@
-import * as loader from "@prague/loader";
 import {
     Browser,
-    ICodeLoader,
     IDocumentService,
     IPlatformFactory,
     ITokenProvider,
-} from "@prague/runtime-definitions";
+} from "@prague/container-definitions";
+import * as loader from "@prague/loader";
+import { ICodeLoader } from "@prague/runtime-definitions";
 import { EventEmitter } from "events";
 import { IDocumentTaskInfo } from "../definitions";
 

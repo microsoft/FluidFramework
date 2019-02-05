@@ -1,7 +1,6 @@
 import {
     ConnectionState,
     FileMode,
-    IChannel,
     IChunkedOp,
     IClientJoin,
     IDeltaManager,
@@ -26,6 +25,7 @@ import {
 import { ICommit, ICreateBlobResponse } from "@prague/gitresources";
 import {
     IChaincode,
+    IChannel,
     ICodeLoader,
     IEnvelope,
     IRuntime,

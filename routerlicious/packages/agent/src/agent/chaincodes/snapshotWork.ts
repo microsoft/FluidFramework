@@ -1,10 +1,10 @@
 import {
-    ICodeLoader,
     IDocumentService,
     IPlatformFactory,
     ISequencedDocumentMessage,
     ITokenProvider,
-} from "@prague/runtime-definitions";
+} from "@prague/container-definitions";
+import { ICodeLoader } from "@prague/runtime-definitions";
 import { IWork} from "../definitions";
 import { Serializer } from "../serializer";
 import { runAfterWait } from "../utils";

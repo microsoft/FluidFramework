@@ -1,14 +1,14 @@
 import { ICollaborativeObject } from "@prague/api-definitions";
-import * as loader from "@prague/loader";
-import { IMap, IMapView } from "@prague/map";
 import {
-    ICodeLoader,
     IDocumentService,
     IPlatformFactory,
     ISequencedDocumentMessage,
     ITokenProvider,
     MessageType,
-} from "@prague/runtime-definitions";
+} from "@prague/container-definitions";
+import * as loader from "@prague/loader";
+import { IMap, IMapView } from "@prague/map";
+import { ICodeLoader } from "@prague/runtime-definitions";
 import { textAnalytics } from "../../intelligence";
 import { IWork} from "../definitions";
 import { ChaincodeWork } from "./chaincodeWork";
