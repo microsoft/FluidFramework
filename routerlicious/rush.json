@@ -42,6 +42,14 @@
       "projectFolder": "packages/client-ui"
     },
     {
+      "packageName": "@prague/container-definitions",
+      "projectFolder": "packages/container-definitions"
+    },
+    {
+      "packageName": "@prague/container-loader",
+      "projectFolder": "packages/container-loader"
+    },
+    {
       "packageName": "@prague/flow-app",
       "projectFolder": "packages/flow-app"
     },
@@ -116,6 +124,10 @@
     {
       "packageName": "@prague/routerlicious",
       "projectFolder": "packages/routerlicious"
+    },
+    {
+      "packageName": "@prague/runtime",
+      "projectFolder": "packages/runtime"
     },
     {
       "packageName": "@prague/runtime-definitions",
