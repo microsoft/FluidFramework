@@ -1,4 +1,5 @@
-import { IBlob, IObjectStorageService, ITree, TreeEntry } from "@prague/runtime-definitions";
+import { IBlob, ITree, TreeEntry } from "@prague/container-definitions";
+import { IObjectStorageService } from "@prague/runtime-definitions";
 
 export class LocalChannelStorageService implements IObjectStorageService {
     constructor(private tree: ITree) {

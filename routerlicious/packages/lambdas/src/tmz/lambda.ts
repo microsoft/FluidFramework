@@ -1,4 +1,5 @@
-import { IHelpMessage, IQueueMessage, ISequencedDocumentSystemMessage, MessageType } from "@prague/runtime-definitions";
+import { ISequencedDocumentSystemMessage, MessageType } from "@prague/container-definitions";
+import { IHelpMessage, IQueueMessage } from "@prague/runtime-definitions";
 import * as core from "@prague/services-core";
 import { RateLimitter } from "@prague/utils";
 import * as winston from "winston";

@@ -17,11 +17,29 @@ export enum MessageType {
     // Blob uploaded
     BlobUploaded = "blobUploaded",
 
+    // TODO the attach and operation names are partially historican. We may want to rename to align with changes
+    // coming from code loading.
+
+    // Creates a new channel and attaches chaincode to it
+    Attach = "attach",
+
     // Channel operation.
     Operation = "objOp",
 
     // Chunked operation.
     ChunkedOp = "chunkedOp",
+
+    // Forced snapshot
+    Save = "saveOp",
+
+    // System message to indicate the creation of a new fork
+    Fork = "fork",
+
+    // Message sent when forwarding a sequenced message to an upstream branch
+    Integrate = "integrate",
+
+    // Message to indicate the need of a remote agent for a document.
+    RemoteHelp = "remoteHelp",
 }
 
 export interface IChunkedOp {

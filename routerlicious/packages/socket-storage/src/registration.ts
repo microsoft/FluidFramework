@@ -1,4 +1,4 @@
-import { IDocumentService, IErrorTrackingService } from "@prague/runtime-definitions";
+import { IDocumentService, IErrorTrackingService } from "@prague/container-definitions";
 import { DocumentService } from "./documentService";
 import { DefaultErrorTracking } from "./errorTracking";
 

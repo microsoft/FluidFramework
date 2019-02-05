@@ -1,4 +1,5 @@
-import { IChaincode, IPlatform, IRuntime } from "@prague/runtime-definitions";
+import { IPlatform } from "@prague/container-definitions";
+import { IChaincode, IRuntime } from "@prague/runtime-definitions";
 import { EventEmitter } from "events";
 
 class NullPlatform extends EventEmitter implements IPlatform {

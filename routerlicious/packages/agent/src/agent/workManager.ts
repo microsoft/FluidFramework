@@ -1,5 +1,6 @@
+import { IPlatformFactory, ITokenProvider } from "@prague/container-definitions";
 import * as MergeTree from "@prague/merge-tree";
-import { ICodeLoader, IPlatformFactory, ITokenProvider } from "@prague/runtime-definitions";
+import { ICodeLoader } from "@prague/runtime-definitions";
 import { EventEmitter } from "events";
 import { AgentLoader, IAgent } from "./agentLoader";
 import { ChaincodeWork } from "./chaincodeWork";

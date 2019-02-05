@@ -1,4 +1,4 @@
-import { IClient, IDocumentMessage } from "@prague/runtime-definitions";
+import { IClient, IDocumentMessage } from "@prague/container-definitions";
 import { INode, IOrderer, IOrdererConnection, IWebSocket, MongoManager } from "@prague/services-core";
 import { Deferred } from "@prague/utils";
 import * as assert from "assert";

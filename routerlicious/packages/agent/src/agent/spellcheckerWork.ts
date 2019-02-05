@@ -1,11 +1,11 @@
 import * as core from "@prague/api-definitions";
-import * as MergeTree from "@prague/merge-tree";
 import {
     IDocumentService,
     ISequencedDocumentMessage,
     ITokenProvider,
     MessageType,
-} from "@prague/runtime-definitions";
+} from "@prague/container-definitions";
+import * as MergeTree from "@prague/merge-tree";
 import * as Sequence from "@prague/sequence";
 import { BaseWork} from "./baseWork";
 import { IWork} from "./definitions";

@@ -2,7 +2,7 @@ import {
     IDeltaStorageService,
     ISequencedDocumentMessage,
     ITokenProvider,
-} from "@prague/runtime-definitions";
+} from "@prague/container-definitions";
 
 export class TestDeltaStorageService implements IDeltaStorageService {
     public get(

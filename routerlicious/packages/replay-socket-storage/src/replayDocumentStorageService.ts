@@ -1,5 +1,5 @@
+import * as api from "@prague/container-definitions";
 import * as resources from "@prague/gitresources";
-import * as api from "@prague/runtime-definitions";
 
 /**
  * Document storage service for the replay driver...just does a default implememtation for

@@ -1,23 +1,5 @@
+import { ConnectionState, ITree } from "@prague/container-definitions";
 import { IObjectMessage, ISequencedObjectMessage } from "./protocol";
-import { ITree } from "./storage";
-
-// NOTE this may want to move to the protocol
-export enum ConnectionState {
-    /**
-     * The document is no longer connected to the delta server
-     */
-    Disconnected,
-
-    /**
-     * The document has an inbound connection but is still pending for outbound deltas
-     */
-    Connecting,
-
-    /**
-     * The document is fully connected
-     */
-    Connected,
-}
 
 export interface IAttachMessage {
     // The identifier for the object

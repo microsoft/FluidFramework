@@ -1,4 +1,4 @@
-import * as api from "@prague/runtime-definitions";
+import * as api from "@prague/container-definitions";
 import { IDatabaseManager } from "@prague/services-core";
 
 export class TestDeltaStorageService implements api.IDocumentDeltaStorageService {

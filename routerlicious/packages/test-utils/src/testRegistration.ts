@@ -1,5 +1,5 @@
 import * as api from "@prague/client-api";
-import { IDocumentService } from "@prague/runtime-definitions";
+import { IDocumentService } from "@prague/container-definitions";
 import { TestDeltaStorageService } from "./testDeltaStorageService";
 import { TestDocumentService } from "./testDocumentService";
 

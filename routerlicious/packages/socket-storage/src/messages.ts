@@ -1,4 +1,4 @@
-import { IClient, IContentMessage, ISequencedDocumentMessage } from "@prague/runtime-definitions";
+import { IClient, IContentMessage, ISequencedDocumentMessage } from "@prague/container-definitions";
 
 /**
  * Message sent to connect to the given object

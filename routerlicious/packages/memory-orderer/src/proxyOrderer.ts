@@ -1,4 +1,4 @@
-import { IClient } from "@prague/runtime-definitions";
+import { IClient } from "@prague/container-definitions";
 import { IOrderer, IOrdererConnection, IWebSocket } from "@prague/services-core";
 
 export interface IOrdererConnectionFactory {

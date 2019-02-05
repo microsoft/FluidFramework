@@ -5,7 +5,7 @@ import {
     IDocumentDeltaConnection,
     IDocumentMessage,
     ISequencedDocumentMessage,
-} from "@prague/runtime-definitions";
+} from "@prague/container-definitions";
 import { BatchManager } from "@prague/utils";
 import { EventEmitter } from "events";
 import { debug } from "./debug";

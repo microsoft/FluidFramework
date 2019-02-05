@@ -1,5 +1,5 @@
 import * as api from "@prague/client-api";
-import { getFileBlobType, IGenericBlob, IImageBlob, IVideoBlob } from "@prague/runtime-definitions";
+import { getFileBlobType, IGenericBlob, IImageBlob, IVideoBlob } from "@prague/container-definitions";
 import { gitHashFile } from "@prague/utils";
 
 export async function blobUploadHandler(

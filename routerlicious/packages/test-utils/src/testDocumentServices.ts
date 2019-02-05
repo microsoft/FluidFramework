@@ -1,4 +1,3 @@
-import * as git from "@prague/gitresources";
 import {
     IContentMessage,
     IDocumentDeltaConnection,
@@ -9,7 +8,8 @@ import {
     ISequencedDocumentMessage,
     ISnapshotTree,
     ITree,
-} from "@prague/runtime-definitions";
+} from "@prague/container-definitions";
+import * as git from "@prague/gitresources";
 import * as socketStorage from "@prague/socket-storage";
 import { EventEmitter } from "events";
 

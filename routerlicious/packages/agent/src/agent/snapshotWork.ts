@@ -1,4 +1,4 @@
-import { IDocumentService, ISequencedDocumentMessage, ITokenProvider } from "@prague/runtime-definitions";
+import { IDocumentService, ISequencedDocumentMessage, ITokenProvider } from "@prague/container-definitions";
 import { BaseWork} from "./baseWork";
 import { IWork } from "./definitions";
 import { Serializer } from "./serializer";

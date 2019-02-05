@@ -1,6 +1,6 @@
 {
   "name": "@prague/kafka-orderer",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Prague ordering services",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -20,8 +20,8 @@
     "typescript": "^3.2.2"
   },
   "dependencies": {
-    "@prague/runtime-definitions": "^0.1.0",
-    "@prague/services-core": "^0.1.0",
+    "@prague/container-definitions": "^0.2.0",
+    "@prague/services-core": "^0.2.0",
     "@types/lodash": "^4.14.118",
     "@types/node": "^10.12.12",
     "lodash": "^4.17.11",

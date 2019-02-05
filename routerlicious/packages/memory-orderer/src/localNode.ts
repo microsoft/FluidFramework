@@ -1,4 +1,4 @@
-import { IDocumentMessage } from "@prague/runtime-definitions";
+import { IDocumentMessage } from "@prague/container-definitions";
 import {
     IDatabaseManager,
     IDocumentStorage,

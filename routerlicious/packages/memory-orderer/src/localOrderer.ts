@@ -1,4 +1,11 @@
 import {
+    IClient,
+    IClientJoin,
+    IDocumentMessage,
+    IDocumentSystemMessage,
+    MessageType,
+} from "@prague/container-definitions";
+import {
     ActivityCheckingTimeout,
     BBCLambda,
     ClientSequenceTimeout,
@@ -6,12 +13,6 @@ import {
     ScriptoriumLambda,
     TmzLambda,
 } from "@prague/lambdas";
-import {
-    IClient,
-    IClientJoin,
-    IDocumentMessage,
-    IDocumentSystemMessage,
-    MessageType } from "@prague/runtime-definitions";
 import {
     BoxcarType,
     IBoxcarMessage,

@@ -1,8 +1,8 @@
 import * as core from "@prague/api-definitions";
+import { IDocumentService, ISequencedDocumentMessage, ITokenProvider } from "@prague/container-definitions";
 import * as map from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
-// tslint:disable-next-line:max-line-length
-import { IDocumentService, ISequencedDocumentMessage, ISequencedObjectMessage, ITokenProvider } from "@prague/runtime-definitions";
+import { ISequencedObjectMessage } from "@prague/runtime-definitions";
 import * as Sequence from "@prague/sequence";
 import { EventEmitter } from "events";
 import * as request from "request";

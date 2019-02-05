@@ -1,4 +1,4 @@
-import { ITokenClaims, ITokenProvider, ITokenService } from "@prague/runtime-definitions";
+import { ITokenClaims, ITokenProvider, ITokenService } from "@prague/container-definitions";
 import * as jwtDecode from "jwt-decode";
 
 export class TokenService implements ITokenService {

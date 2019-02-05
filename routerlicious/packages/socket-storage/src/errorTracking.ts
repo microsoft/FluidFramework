@@ -1,4 +1,4 @@
-import { IErrorTrackingService } from "@prague/runtime-definitions";
+import { IErrorTrackingService } from "@prague/container-definitions";
 
 /**
  * The default service does not track errors.

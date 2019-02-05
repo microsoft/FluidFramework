@@ -1,5 +1,3 @@
-// import { ICreateBlobResponse } from "@prague/gitresources";
-
 export interface IBlobManager {
     // Rehydrate a blob manager from a snapshot
     loadBlobMetadata(hashes: IGenericBlob[]);

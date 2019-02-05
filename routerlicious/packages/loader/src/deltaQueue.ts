@@ -1,4 +1,4 @@
-import { IDeltaQueue } from "@prague/runtime-definitions";
+import { IDeltaQueue } from "@prague/container-definitions";
 import { AsyncQueue, AsyncWorker } from "async";
 // tslint:disable-next-line:no-submodule-imports
 import * as queue from "async/queue";

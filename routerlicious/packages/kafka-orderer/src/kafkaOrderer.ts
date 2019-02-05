@@ -3,7 +3,7 @@ import {
     IClientJoin,
     IDocumentMessage,
     IDocumentSystemMessage,
-    MessageType } from "@prague/runtime-definitions";
+    MessageType } from "@prague/container-definitions";
 import * as core from "@prague/services-core";
 import * as _ from "lodash";
 import * as moniker from "moniker";

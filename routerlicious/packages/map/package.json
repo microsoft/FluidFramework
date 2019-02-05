@@ -1,6 +1,6 @@
 {
   "name": "@prague/map",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Distributed map",
   "main": "dist/index.js",
   "module": "lib/index.js",
@@ -38,8 +38,9 @@
     "report-dir": "nyc/report"
   },
   "dependencies": {
-    "@prague/api-definitions": "^0.1.0",
-    "@prague/runtime-definitions": "^0.1.0",
+    "@prague/api-definitions": "^0.2.0",
+    "@prague/container-definitions": "^0.2.0",
+    "@prague/runtime-definitions": "^0.2.0",
     "debug": "^3.1.0",
     "lodash": "^4.17.11"
   },

@@ -1,4 +1,4 @@
-import { IDeltaManager, ISequencedDocumentMessage, MessageType } from "@prague/runtime-definitions";
+import { IDeltaManager, ISequencedDocumentMessage, MessageType } from "@prague/container-definitions";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 

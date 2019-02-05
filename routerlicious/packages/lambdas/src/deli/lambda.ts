@@ -5,7 +5,7 @@ import {
     ISequencedDocumentSystemMessage,
     ITrace,
     MessageType,
-} from "@prague/runtime-definitions";
+} from "@prague/container-definitions";
 import {
     extractBoxcar,
     ICollection,

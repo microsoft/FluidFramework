@@ -1,4 +1,4 @@
-import * as api from "@prague/runtime-definitions";
+import * as api from "@prague/container-definitions";
 import Axios, { AxiosInstance } from "axios";
 import * as querystring from "querystring";
 import { IDeltaStorageGetResponse, ISequencedDeltaOpMessage } from "./contracts";

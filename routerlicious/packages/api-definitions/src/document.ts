@@ -1,4 +1,5 @@
-import { IDistributedObjectServices, IRuntime, IUser } from "@prague/runtime-definitions";
+import { IUser } from "@prague/container-definitions";
+import { IDistributedObjectServices, IRuntime } from "@prague/runtime-definitions";
 import { EventEmitter } from "events";
 import { ICollaborativeObject } from "./types";
 

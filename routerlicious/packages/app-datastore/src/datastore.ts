@@ -1,12 +1,7 @@
+import { IDocumentService, IPlatform, IPlatformFactory } from "@prague/container-definitions";
 import * as loader from "@prague/loader";
 import { WebLoader } from "@prague/loader-web";
-import {
-    ICodeLoader,
-    IDocumentService,
-    IPlatform,
-    IPlatformFactory,
-    IRuntime,
-} from "@prague/runtime-definitions";
+import { ICodeLoader, IRuntime } from "@prague/runtime-definitions";
 import * as socketStorage from "@prague/socket-storage";
 import { EventEmitter } from "events";
 import * as jwt from "jsonwebtoken";

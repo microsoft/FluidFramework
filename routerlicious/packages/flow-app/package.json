@@ -1,7 +1,7 @@
 {
   "name": "@prague/flow-app",
   "description": "App hosting experimental flow-editor for collaborative journaling.",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "author": "Microsoft",
   "repository": "microsoft/prague",
   "main": "dist/index.bundle.js",
@@ -26,7 +26,7 @@
     "dev": "webpack-dev-server"
   },
   "dependencies": {
-    "@prague/flow-host": "^0.1.0",
+    "@prague/flow-host": "^0.2.0",
     "react": "^16.6.3",
     "react-dom": "^16.6.3"
   },

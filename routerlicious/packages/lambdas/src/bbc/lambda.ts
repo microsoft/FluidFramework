@@ -1,5 +1,5 @@
 
-import { INack, ISequencedDocumentMessage } from "@prague/runtime-definitions";
+import { INack, ISequencedDocumentMessage } from "@prague/container-definitions";
 import {
     extractBoxcar,
     IContext,

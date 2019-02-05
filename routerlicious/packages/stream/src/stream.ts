@@ -1,13 +1,15 @@
 import { OperationType } from "@prague/api-definitions";
-import { CollaborativeMap } from "@prague/map";
 import {
     FileMode,
+    ITree,
+    TreeEntry,
+} from "@prague/container-definitions";
+import { CollaborativeMap } from "@prague/map";
+import {
     IObjectMessage,
     IObjectStorageService,
     IRuntime,
     ISequencedObjectMessage,
-    ITree,
-    TreeEntry,
 } from "@prague/runtime-definitions";
 import { StreamExtension } from "./extension";
 import { IDelta, IInkLayer, IStream } from "./interfaces";

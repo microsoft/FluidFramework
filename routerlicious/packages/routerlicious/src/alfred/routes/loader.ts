@@ -1,4 +1,4 @@
-import { IUser } from "@prague/runtime-definitions";
+import { IUser } from "@prague/container-definitions";
 import { IAlfredTenant, IDocumentStorage, ITenantManager } from "@prague/services-core";
 import { Router } from "express";
 import { Provider } from "nconf";

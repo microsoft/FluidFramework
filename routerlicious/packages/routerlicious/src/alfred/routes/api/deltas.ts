@@ -1,4 +1,4 @@
-import { ISequencedDocumentMessage } from "@prague/runtime-definitions";
+import { ISequencedDocumentMessage } from "@prague/container-definitions";
 import { IAlfredTenant, MongoManager } from "@prague/services-core";
 import { Router } from "express";
 import { Provider } from "nconf";

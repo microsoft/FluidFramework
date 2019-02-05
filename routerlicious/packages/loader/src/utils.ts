@@ -1,4 +1,4 @@
-import { IDocumentStorageService } from "@prague/runtime-definitions";
+import { IDocumentStorageService } from "@prague/container-definitions";
 
 export async function readAndParse<T>(storage: IDocumentStorageService, sha: string): Promise<T> {
     const encoded = await storage.read(sha);

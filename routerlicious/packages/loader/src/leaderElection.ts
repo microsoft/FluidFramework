@@ -1,4 +1,4 @@
-import { IPendingProposal, IQuorum } from "@prague/runtime-definitions";
+import { IPendingProposal, IQuorum } from "@prague/container-definitions";
 import { EventEmitter } from "events";
 import { debug } from "./debug";
 

@@ -1,6 +1,6 @@
 {
   "name": "@prague/merge-tree",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Merge tree",
   "main": "dist/index.js",
   "module": "lib/index.js",
@@ -52,8 +52,9 @@
     "typescript": "^3.2.2"
   },
   "dependencies": {
-    "@prague/api-definitions": "^0.1.0",
-    "@prague/runtime-definitions": "^0.1.0",
+    "@prague/api-definitions": "^0.2.0",
+    "@prague/container-definitions": "^0.2.0",
+    "@prague/runtime-definitions": "^0.2.0",
     "@types/debug": "^0.0.31",
     "@types/node": "^10.12.12",
     "debug": "^3.1.0"
