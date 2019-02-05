@@ -1,7 +1,7 @@
 import { ITokenClaims, IUser } from "@prague/container-definitions";
-import { Guid } from "guid-typescript";
 import * as jwt from "jsonwebtoken";
 import { debug } from "util";
+import * as uuid from "uuid/v4";
 import { getRandomName } from "./dockerNames";
 
 /**
@@ -26,7 +26,7 @@ export function generateToken(tenantId: string, documentId: string, key: string,
 
 export function generateUser(): IUser {
     return {
-        id: Guid.raw(),
+        id: uuid(),
         name: getRandomName(" ", true),
     };
 }

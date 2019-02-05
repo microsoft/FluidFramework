@@ -29,7 +29,7 @@
     "@types/nconf": "^0.0.37",
     "@types/node": "^10.12.12",
     "debug": "^3.1.0",
-    "guid-typescript": "^1.0.9",
-    "tslint-microsoft-contrib": "^6.0.0"
+    "tslint-microsoft-contrib": "^6.0.0",
+    "uuid": "^3.3.2"
   }
 }
