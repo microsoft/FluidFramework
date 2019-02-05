@@ -83,6 +83,10 @@ function flattenCore(path: string, treeEntries: ITreeEntry[], blobMap: Map<strin
 }
 
 export function buildHierarchy(flatTree: git.ITree): ISnapshotTree {
+    if (!flatTree) {
+        return null;
+    }
+
     const lookup: { [path: string]: ISnapshotTree } = {};
     const root: ISnapshotTree = { sha: flatTree.sha, blobs: {}, commits: {}, trees: {} };
     lookup[""] = root;
