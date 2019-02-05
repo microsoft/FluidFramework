@@ -1,6 +1,6 @@
+import { IDocumentService, ITokenProvider } from "@prague/container-definitions";
 import { ICommit } from "@prague/gitresources";
 import * as loader from "@prague/loader";
-import { IDocumentService, ITokenProvider } from "@prague/runtime-definitions";
 import chalk from "chalk";
 import { WebLoader } from "./webLoader";
 import { WebPlatformFactory } from "./webPlatform";

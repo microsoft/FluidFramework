@@ -1,6 +1,7 @@
 // tslint:disable
 import { OperationType } from "@prague/api-definitions";
-import { ISequencedObjectMessage, IUser } from "@prague/runtime-definitions";
+import { IUser } from "@prague/container-definitions";
+import { ISequencedObjectMessage } from "@prague/runtime-definitions";
 import { IRelativePosition } from "./index";
 import {
     MergeTree, ClientIds, compareStrings, RegisterCollection, UnassignedSequenceNumber, Marker, SubSequence,

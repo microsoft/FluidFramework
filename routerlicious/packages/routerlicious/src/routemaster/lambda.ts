@@ -1,5 +1,5 @@
+import { IDocumentSystemMessage, ISequencedDocumentSystemMessage, MessageType } from "@prague/container-definitions";
 import { SequencedLambda } from "@prague/lambdas";
-import { IDocumentSystemMessage, ISequencedDocumentSystemMessage, MessageType } from "@prague/runtime-definitions";
 import * as core from "@prague/services-core";
 import { DocumentManager } from "./documentManager";
 

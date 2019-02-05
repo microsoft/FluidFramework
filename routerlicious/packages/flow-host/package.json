@@ -1,7 +1,7 @@
 {
   "name": "@prague/flow-host",
   "description": "App UI for experimental flow-editor for collaborative journaling.",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "author": "Microsoft",
   "repository": "microsoft/prague",
   "main": "dist/main.bundle.js",
@@ -12,11 +12,11 @@
     "dev": "webpack-dev-server"
   },
   "dependencies": {
-    "@chaincode/flow-document": "*",
-    "@chaincode/flow-editor": "*",
-    "@prague/app-component": "^0.1.0",
-    "@prague/app-datastore": "^0.1.0",
-    "@prague/flow-util": "^0.1.0",
+    "@chaincode/flow-document": "^0.2.0",
+    "@chaincode/flow-editor": "^0.2.0",
+    "@prague/app-component": "^0.2.0",
+    "@prague/app-datastore": "^0.2.0",
+    "@prague/flow-util": "^0.2.0",
     "@uifabric/icons": "~6.3.0",
     "office-ui-fabric-react": "^6.108.0",
     "react": "^16.6.3",

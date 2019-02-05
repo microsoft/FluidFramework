@@ -1,4 +1,5 @@
-import { IChannel, IObjectMessage, ITree } from "@prague/runtime-definitions";
+import { ITree } from "@prague/container-definitions";
+import { IChannel, IObjectMessage } from "@prague/runtime-definitions";
 
 /**
  * Helper interface to wrap a snapshot with the sequence number it was taken at

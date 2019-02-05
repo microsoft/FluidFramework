@@ -1,4 +1,4 @@
-import { MessageType } from "@prague/runtime-definitions";
+import { MessageType } from "@prague/container-definitions";
 
 export function isSystemType(type: string) {
     return (

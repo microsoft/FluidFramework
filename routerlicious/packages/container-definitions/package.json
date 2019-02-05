@@ -1,6 +1,6 @@
 {
   "name": "@prague/container-definitions",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Prague container definitions",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -22,7 +22,7 @@
     "typescript": "^3.2.2"
   },
   "dependencies": {
-    "@prague/gitresources": "^0.1.0",
+    "@prague/gitresources": "^0.2.0",
     "@types/node": "^10.12.12"
   }
 }

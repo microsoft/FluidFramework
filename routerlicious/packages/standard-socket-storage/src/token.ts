@@ -1,4 +1,4 @@
-import { ITokenProvider } from "@prague/runtime-definitions";
+import { ITokenProvider } from "@prague/container-definitions";
 
 export class TokenProvider implements ITokenProvider {
 

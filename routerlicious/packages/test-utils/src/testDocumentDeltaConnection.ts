@@ -3,7 +3,7 @@ import {
     IDocumentDeltaConnection,
     IDocumentMessage,
     ISequencedDocumentMessage,
-} from "@prague/runtime-definitions";
+} from "@prague/container-definitions";
 import { EventEmitter } from "events";
 
 export class TestDocumentDeltaConnection extends EventEmitter implements IDocumentDeltaConnection {

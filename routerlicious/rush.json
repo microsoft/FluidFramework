@@ -74,6 +74,10 @@
       "projectFolder": "packages/lambdas"
     },
     {
+      "packageName": "@prague/lambdas-driver",
+      "projectFolder": "packages/lambdas-driver"
+    },
+    {
       "packageName": "@prague/loader-client",
       "projectFolder": "packages/loader-client"
     },
@@ -156,6 +160,10 @@
     {
       "packageName": "@chaincode/table-document",
       "projectFolder": "packages/table-document"
+    },
+    {
+      "packageName": "@chaincode/table-slice",
+      "projectFolder": "packages/table-slice"
     },
     {
       "packageName": "@chaincode/table-view",

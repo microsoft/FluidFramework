@@ -6,7 +6,7 @@ import {
     IDocumentMessage,
     IDocumentSystemMessage,
     ITokenClaims,
-} from "@prague/runtime-definitions";
+} from "@prague/container-definitions";
 import * as core from "@prague/services-core";
 import { getRandomInt } from "@prague/services-utils";
 import * as socketStorage from "@prague/socket-storage";

@@ -1,4 +1,4 @@
-import { IClient, IDocumentMessage } from "@prague/runtime-definitions";
+import { IClient, IDocumentMessage } from "@prague/container-definitions";
 import { IWebSocket } from "./http";
 
 /**

@@ -1,4 +1,4 @@
-import * as runtime from "@prague/runtime-definitions";
+import * as runtime from "@prague/container-definitions";
 import { Deferred, isSystemType } from "@prague/utils";
 import * as assert from "assert";
 import { EventEmitter } from "events";

@@ -5,7 +5,7 @@ import {
     IDocumentSystemMessage,
     ITokenClaims,
     MessageType,
-    Robot } from "@prague/runtime-definitions";
+    Robot } from "@prague/container-definitions";
 import * as core from "@prague/services-core";
 import { Router } from "express";
 import * as jwt from "jsonwebtoken";

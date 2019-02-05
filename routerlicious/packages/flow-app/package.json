@@ -1,7 +1,7 @@
 {
   "name": "@prague/flow-app",
   "description": "App hosting experimental flow-editor for collaborative journaling.",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "author": "Microsoft",
   "repository": "microsoft/prague",
   "main": "dist/index.bundle.js",
@@ -13,6 +13,7 @@
     "publish-local-flow-document": "cd ../flow-document && npm run publish-local",
     "publish-local-flow-editor": "cd ../flow-editor && npm run publish-local",
     "publish-local-table-document": "cd ../table-document && npm run publish-local",
+    "publish-local-table-slice": "cd ../table-slice && npm run publish-local",
     "publish-local-table-view": "cd ../table-view && npm run publish-local",
     "publish-local-chart-view": "cd ../chart-view && npm run publish-local",
     "publish-local": "run-p publish-local-*",
@@ -25,7 +26,7 @@
     "dev": "webpack-dev-server"
   },
   "dependencies": {
-    "@prague/flow-host": "^0.1.0",
+    "@prague/flow-host": "^0.2.0",
     "react": "^16.6.3",
     "react-dom": "^16.6.3"
   },

@@ -1,8 +1,9 @@
 import { Block, BoxState } from "@prague/app-ui";
 import { getChaincodeRepo, getDefaultCredentials, getDefaultDocumentService } from "@prague/client-api";
+import { IPlatform, IPlatformFactory } from "@prague/container-definitions";
 import * as loader from "@prague/loader";
 import { proposeChaincode, WebLoader, WebPlatform } from "@prague/loader-web";
-import { IPlatform, IPlatformFactory, IRuntime } from "@prague/runtime-definitions";
+import { IRuntime } from "@prague/runtime-definitions";
 import { TokenProvider } from "@prague/socket-storage";
 import { EventEmitter } from "events";
 import * as jwt from "jsonwebtoken";

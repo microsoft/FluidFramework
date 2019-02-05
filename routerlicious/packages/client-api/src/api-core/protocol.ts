@@ -1,4 +1,4 @@
-import { ITrace } from "@prague/runtime-definitions";
+import { ITrace } from "@prague/container-definitions";
 
 // Message to indicate successful round trip.
 export const RoundTrip = "tripComplete";

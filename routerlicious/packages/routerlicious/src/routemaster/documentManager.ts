@@ -1,4 +1,4 @@
-import { ISequencedDocumentMessage } from "@prague/runtime-definitions";
+import { ISequencedDocumentMessage } from "@prague/container-definitions";
 import * as core from "@prague/services-core";
 import { Deferred } from "@prague/utils";
 

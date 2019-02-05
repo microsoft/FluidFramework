@@ -1,0 +1,47 @@
+{
+  "name": "@chaincode/table-slice",
+  "version": "0.2.0",
+  "description": "Chaincode component that provides a slice of table-document.",
+  "main": "dist/main.bundle.js",
+  "types": "dist/index.d.ts",
+  "prague": {
+    "browser": {
+      "entrypoint": "main",
+      "bundle": [
+        "dist/main.bundle.js"
+      ]
+    }
+  },
+  "scripts": {
+    "build": "webpack --env=\"production\"",
+    "build:full": "webpack --env=\"production\"",
+    "build:dev": "webpack --env=\"development\"",
+    "dev": "webpack --env=\"development\" --watch",
+    "publish-local": "npm publish --registry http://localhost:4873",
+    "publish-wu2": "npm run build && npm publish --registry https://packages.wu2.prague.office-int.com",
+    "publish-patch-local": "npm version patch && npm run publish-local"
+  },
+  "author": "Microsoft",
+  "repository": "microsoft/prague",
+  "dependencies": {
+    "@chaincode/table-document": "^0.2.0",
+    "@prague/app-component": "^0.2.0",
+    "@prague/app-datastore": "^0.2.0",
+    "@prague/flow-util": "^0.2.0",
+    "@prague/map": "^0.2.0",
+    "@prague/merge-tree": "^0.2.0",
+    "@prague/runtime-definitions": "^0.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^10.12.12",
+    "css-loader": "^1.0.0",
+    "source-map-loader": "^0.2.4",
+    "style-loader": "^0.23.0",
+    "ts-loader": "^4.5.0",
+    "typescript": "^3.2.2",
+    "typings-for-css-modules-loader": "^1.7.0",
+    "webpack": "^4.8.2",
+    "webpack-cli": "^3.1.2",
+    "webpack-merge": "^4.1.2"
+  }
+}

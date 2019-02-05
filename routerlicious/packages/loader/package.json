@@ -1,6 +1,6 @@
 {
   "name": "@prague/loader",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Prague document loader",
   "main": "dist/index.js",
   "module": "lib/index.js",
@@ -48,9 +48,10 @@
     "typescript": "^3.2.2"
   },
   "dependencies": {
-    "@prague/gitresources": "^0.1.0",
-    "@prague/runtime-definitions": "^0.1.0",
-    "@prague/utils": "^0.1.0",
+    "@prague/container-definitions": "^0.2.0",
+    "@prague/gitresources": "^0.2.0",
+    "@prague/runtime-definitions": "^0.2.0",
+    "@prague/utils": "^0.2.0",
     "@types/async": "^2.0.50",
     "@types/debug": "^0.0.31",
     "@types/lodash": "^4.14.118",

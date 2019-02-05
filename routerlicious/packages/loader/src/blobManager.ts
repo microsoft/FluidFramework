@@ -1,4 +1,4 @@
-import { IBlobManager, IDocumentStorageService, IGenericBlob } from "@prague/runtime-definitions";
+import { IBlobManager, IDocumentStorageService, IGenericBlob } from "@prague/container-definitions";
 
 export class BlobManager implements IBlobManager {
     private blobs: Map<string, IGenericBlob>;

@@ -1,6 +1,6 @@
 {
   "name": "@prague/app-ui",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Prague App UI",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

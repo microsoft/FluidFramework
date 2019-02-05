@@ -1,4 +1,5 @@
 // tslint:disable:whitespace align no-bitwise
+import { ITree } from "@prague/container-definitions";
 import {
     CollaborativeMap,
     IMap,
@@ -13,7 +14,6 @@ import {
     IObjectStorageService,
     IRuntime,
     ISequencedObjectMessage,
-    ITree,
 } from "@prague/runtime-definitions";
 import { Deferred } from "@prague/utils";
 import * as assert from "assert";

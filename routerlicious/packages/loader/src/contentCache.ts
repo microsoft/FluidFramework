@@ -1,5 +1,5 @@
 // tslint:disable no-bitwise
-import { IContentMessage } from "@prague/runtime-definitions";
+import { IContentMessage } from "@prague/container-definitions";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 

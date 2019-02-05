@@ -1,4 +1,4 @@
-import * as api from "@prague/runtime-definitions";
+import * as api from "@prague/container-definitions";
 import { ICredentials } from "@prague/services-client";
 import { DocumentService } from "./documentService";
 import { TokenProvider } from "./tokens";

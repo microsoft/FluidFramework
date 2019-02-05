@@ -1,5 +1,5 @@
 import * as api from "@prague/client-api";
-import { Browser, IDocumentService, ITokenProvider } from "@prague/runtime-definitions";
+import { Browser, IDocumentService, ITokenProvider } from "@prague/container-definitions";
 import { EventEmitter } from "events";
 import { IDocumentTaskInfo } from "./definitions";
 import { runAfterWait } from "./utils";

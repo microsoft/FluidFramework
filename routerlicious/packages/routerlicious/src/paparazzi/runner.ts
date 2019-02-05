@@ -1,5 +1,6 @@
 import * as agent from "@prague/agent";
-import { IDocumentService, IQueueMessage } from "@prague/runtime-definitions";
+import { IDocumentService } from "@prague/container-definitions";
+import { IQueueMessage } from "@prague/runtime-definitions";
 import * as core from "@prague/services-core";
 import * as utils from "@prague/services-utils";
 import * as socketStorage from "@prague/socket-storage";

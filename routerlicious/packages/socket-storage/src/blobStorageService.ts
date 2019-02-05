@@ -1,5 +1,5 @@
+import * as api from "@prague/container-definitions";
 import * as resources from "@prague/gitresources";
-import * as api from "@prague/runtime-definitions";
 import * as gitStorage from "@prague/services-client";
 import { buildHierarchy } from "@prague/utils";
 

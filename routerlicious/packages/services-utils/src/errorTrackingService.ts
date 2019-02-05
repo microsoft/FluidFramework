@@ -1,4 +1,4 @@
-import { IErrorTrackingService } from "@prague/runtime-definitions";
+import { IErrorTrackingService } from "@prague/container-definitions";
 import * as raven from "raven";
 
 export class NodeErrorTrackingService implements IErrorTrackingService {

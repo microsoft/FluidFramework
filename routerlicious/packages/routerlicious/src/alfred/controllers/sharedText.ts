@@ -2,11 +2,11 @@
 import * as agent from "@prague/agent";
 import * as API from "@prague/client-api";
 import { controls, ui } from "@prague/client-ui";
+import { Browser, IClient } from "@prague/container-definitions";
 import * as resources from "@prague/gitresources";
 import * as DistributedMap from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
 import * as replaySocketStorage from "@prague/replay-socket-storage";
-import { Browser, IClient } from "@prague/runtime-definitions";
 import * as Sequence from "@prague/sequence";
 import * as socketStorage from "@prague/socket-storage";
 import { IStream } from "@prague/stream";

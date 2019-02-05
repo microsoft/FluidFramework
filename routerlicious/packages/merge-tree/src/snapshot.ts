@@ -1,4 +1,5 @@
-import { FileMode, IObjectStorageService, ITree, TreeEntry } from "@prague/runtime-definitions";
+import { FileMode, ITree, TreeEntry } from "@prague/container-definitions";
+import { IObjectStorageService } from "@prague/runtime-definitions";
 import * as MergeTree from "./mergeTree";
 import * as ops from "./ops";
 

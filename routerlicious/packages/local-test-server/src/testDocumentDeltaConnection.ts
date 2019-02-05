@@ -4,7 +4,7 @@ import {
     IDocumentDeltaConnection,
     IDocumentMessage,
     ISequencedDocumentMessage,
-} from "@prague/runtime-definitions";
+} from "@prague/container-definitions";
 import * as core from "@prague/services-core";
 import { debug, IConnect, IConnected } from "@prague/socket-storage-shared";
 import { TestWebSocketServer } from "@prague/test-utils";
