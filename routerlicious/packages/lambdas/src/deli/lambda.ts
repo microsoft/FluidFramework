@@ -260,6 +260,12 @@ export class DeliLambda implements IPartitionLambda {
             }
         }
 
+        // Early termination for no-op messages.
+        if (message.operation.type === MessageType.NoOp && message.clientId) {
+            this.updateClientTimestamp(message.clientId, message.timestamp);
+            return;
+        }
+
         // Increment and grab the next sequence number
         const sequenceNumber = this.revSequenceNumber();
 
@@ -634,6 +640,14 @@ export class DeliLambda implements IPartitionLambda {
         heapNode.value.lastUpdate = timestamp;
         heapNode.value.nack = nack;
         this.clientSeqNumbers.update(heapNode);
+    }
+
+    private updateClientTimestamp(clientId: string, timestamp: number) {
+        const heapNode = this.clientNodeMap.get(clientId);
+        if (heapNode) {
+            heapNode.value.lastUpdate = timestamp;
+            this.clientSeqNumbers.update(heapNode);
+        }
     }
 
     /**
