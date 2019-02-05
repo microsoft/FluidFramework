@@ -1,3 +1,4 @@
+import { ICollaborativeObject } from "@prague/api-definitions";
 import * as loader from "@prague/loader";
 import { IMap, IMapView, MapExtension } from "@prague/map";
 import * as Sequence from "@prague/sequence";
@@ -25,7 +26,7 @@ export class IntelligentServicesManager {
         this.services.push(service);
     }
 
-    public process(object: Sequence.SharedString) {
+    public process(object: ICollaborativeObject) {
         // TODO expose way for intelligent services to express their supported document types
         if (object.type === Sequence.CollaborativeStringExtension.Type) {
             if (!this.intelInvoked) {
