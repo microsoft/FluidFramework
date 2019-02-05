@@ -3,6 +3,7 @@ import {
     ConnectionState,
     FileMode,
     IChaincode,
+    IChannel,
     IChunkedOp,
     IClientJoin,
     ICodeLoader,
@@ -208,7 +209,7 @@ export class Document extends EventEmitter {
     public on(event: "connected", listener: (clientId: string) => void): this;
     public on(event: "disconnect", listener: () => void): this;
     public on(event: "error", listener: (error: any) => void): this;
-    public on(event: "op", listener: (message: ISequencedDocumentMessage) => void): this;
+    public on(event: "op", listener: (message: ISequencedDocumentMessage, object: IChannel) => void): this;
     public on(event: "pong" | "processTime", listener: (latency: number) => void): this;
     public on(event: "runtimeChanged", listener: (runtime: IRuntime) => void): this;
 
