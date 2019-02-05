@@ -5,8 +5,10 @@ import { Component, Document } from "@prague/app-component";
 import * as API from "@prague/client-api";
 import {
     IContainerContext,
+    IPlatform,
     IRequest,
     IRuntime,
+    ITree,
 } from "@prague/container-definitions";
 import * as DistributedMap from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
@@ -18,7 +20,7 @@ import {
     IDeltaHandler,
     Runtime,
 } from "@prague/runtime";
-import { IChaincode, IPlatform, ITree } from "@prague/runtime-definitions";
+import { IChaincode } from "@prague/runtime-definitions";
 import * as SharedString from "@prague/sequence";
 import { IStream } from "@prague/stream";
 import { Deferred } from "@prague/utils";
@@ -239,7 +241,7 @@ export async function instantiateRuntime(context: IContainerContext): Promise<IR
         context.existing,
         context.options,
         context.clientId,
-        context.user,
+        { id: "test" },
         context.blobManager,
         context.deltaManager,
         context.quorum,

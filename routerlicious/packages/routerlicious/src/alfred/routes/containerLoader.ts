@@ -36,7 +36,7 @@ export function create(
             oid: request.user.oid,
         } : undefined;
 
-        const token = getToken(tenantId, request.params.id, appTenants, user);
+        const token = getToken(tenantId, documentId, appTenants, user);
 
         const workerConfigP = getConfig(
             config.get("worker"),
@@ -45,7 +45,7 @@ export function create(
             config.get("error:track"),
             config.get("client"));
 
-        const versionP = storage.getLatestVersion(tenantId, request.params.id);
+        const versionP = storage.getLatestVersion(tenantId, documentId);
         Promise.all([workerConfigP, versionP]).then(([workerConfig, version]) => {
             response.render(
                 "containerLoader",
@@ -57,7 +57,7 @@ export function create(
                     partials: defaultPartials,
                     path,
                     tenantId,
-                    title: request.params.id,
+                    title: documentId,
                     to,
                     token,
                     unitIsTime,

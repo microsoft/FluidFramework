@@ -1,3 +1,4 @@
+import { IPlatform, ITree } from "@prague/container-definitions";
 import { MapExtension } from "@prague/map";
 import {
     ComponentHost,
@@ -6,7 +7,7 @@ import {
     IComponentRuntime,
     IDeltaHandler,
 } from "@prague/runtime";
-import { IChaincode, IPlatform, IRuntime, ITree } from "@prague/runtime-definitions";
+import { IChaincode, IRuntime } from "@prague/runtime-definitions";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import { PinpointRunner } from "./runner";
