@@ -31,7 +31,7 @@ export class Deferred<T> {
     }
 
     /**
-     * Rejects the promsie
+     * Rejects the promise
      */
     public reject(error: any) {
         this.rej(error);
