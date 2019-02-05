@@ -54,7 +54,7 @@ export function create(
             request.params.id,
             targetVersionSha);
 
-        const user: IAlfredUser = (request.user) ? {
+        const user: utils.IAlfredUser = (request.user) ? {
             displayName: request.user.name,
             id: request.user.oid,
             name: request.user.name,
@@ -94,7 +94,7 @@ export function create(
             config.get("client"));
         const versionP = storage.getLatestVersion(tenantId, request.params.id);
 
-        const user: IAlfredUser = (request.user) ? {
+        const user: utils.IAlfredUser = (request.user) ? {
             displayName: request.user.name,
             id: request.user.oid,
             name: request.user.name,

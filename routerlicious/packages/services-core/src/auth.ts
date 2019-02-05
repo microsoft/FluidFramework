@@ -1,4 +1,4 @@
-import { ITokenClaims, IUser } from "@prague/runtime-definitions";
+import { ITokenClaims, IUser } from "@prague/container-definitions";
 import { Guid } from "guid-typescript";
 import * as jwt from "jsonwebtoken";
 import { debug } from "util";
