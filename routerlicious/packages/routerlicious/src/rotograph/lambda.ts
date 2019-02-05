@@ -1,5 +1,5 @@
-import { SequencedLambda } from "@prague/lambdas";
 import { IDataBlob, MessageType } from "@prague/container-definitions";
+import { SequencedLambda } from "@prague/lambdas";
 import {
     extractBoxcar,
     IContext,

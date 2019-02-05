@@ -1,5 +1,5 @@
-import * as resources from "@prague/gitresources";
 import * as api from "@prague/container-definitions";
+import * as resources from "@prague/gitresources";
 
 /**
  * Document storage service for the test driver...just does a default implememtation for

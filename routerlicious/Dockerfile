@@ -1,4 +1,4 @@
-FROM node:8.14.0-slim
+FROM node:8.15.0-slim
 
 # node-gyp dependencies
 RUN apt-get update && apt-get install -y \
@@ -25,6 +25,8 @@ COPY packages/cell/package*.json packages/cell/
 COPY packages/chart-view/package*.json packages/chart-view/
 COPY packages/client-api/package*.json packages/client-api/
 COPY packages/client-ui/package*.json packages/client-ui/
+COPY packages/container-definitions/package*.json packages/container-definitions/
+COPY packages/container-loader/package*.json packages/container-loader/
 COPY packages/flow-app/package*.json packages/flow-app/
 COPY packages/flow-document/package*.json packages/flow-document/
 COPY packages/flow-editor/package*.json packages/flow-editor/

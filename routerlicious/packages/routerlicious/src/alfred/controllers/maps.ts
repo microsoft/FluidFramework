@@ -1,9 +1,9 @@
 import * as agent from "@prague/agent";
 import { CollaborativeObject } from "@prague/api-definitions";
 import * as api from "@prague/client-api";
+import { Browser, IClient } from "@prague/container-definitions";
 import * as resources from "@prague/gitresources";
 import * as Map from "@prague/map";
-import { Browser, IClient } from "@prague/container-definitions";
 import * as socketStorage from "@prague/socket-storage";
 import * as $ from "jquery";
 // tslint:disable-next-line:no-var-requires

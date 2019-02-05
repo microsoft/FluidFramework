@@ -1,6 +1,6 @@
 {
   "name": "@prague/lambdas",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Prague service lambdas",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -36,12 +36,13 @@
     "report-dir": "nyc/report"
   },
   "dependencies": {
-    "@prague/container-definitions": "^0.1.0",
-    "@prague/gitresources": "^0.1.0",
-    "@prague/services": "^0.1.0",
-    "@prague/services-core": "^0.1.0",
-    "@prague/services-utils": "^0.1.0",
-    "@prague/utils": "^0.1.0",
+    "@prague/container-definitions": "^0.2.0",
+    "@prague/gitresources": "^0.2.0",
+    "@prague/runtime-definitions": "^0.2.0",
+    "@prague/services": "^0.2.0",
+    "@prague/services-core": "^0.2.0",
+    "@prague/services-utils": "^0.2.0",
+    "@prague/utils": "^0.2.0",
     "async": "^2.6.1",
     "lodash": "^4.17.11",
     "moniker": "^0.1.2",
@@ -49,7 +50,7 @@
     "winston": "^3.1.0"
   },
   "devDependencies": {
-    "@prague/test-utils": "^0.1.0",
+    "@prague/test-utils": "^0.2.0",
     "@types/async": "^2.0.50",
     "@types/lodash": "^4.14.118",
     "@types/mocha": "^5.2.5",

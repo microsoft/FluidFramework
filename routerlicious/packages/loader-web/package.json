@@ -1,6 +1,6 @@
 {
   "name": "@prague/loader-web",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Loader client app",
   "main": "dist/index.js",
   "module": "lib/index.js",
@@ -24,10 +24,10 @@
     "typescript": "^3.2.2"
   },
   "dependencies": {
-    "@prague/container-definitions": "^0.1.0",
-    "@prague/gitresources": "^0.1.0",
-    "@prague/loader": "^0.1.0",
-    "@prague/runtime-definitions": "^0.1.0",
+    "@prague/container-definitions": "^0.2.0",
+    "@prague/gitresources": "^0.2.0",
+    "@prague/loader": "^0.2.0",
+    "@prague/runtime-definitions": "^0.2.0",
     "@types/node": "^10.12.12",
     "chalk": "^2.4.1",
     "source-map-loader": "^0.2.4"

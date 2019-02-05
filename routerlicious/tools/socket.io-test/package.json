@@ -1,6 +1,6 @@
 {
   "name": "sequence",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Prague API sequence sample",
   "main": "index.js",
   "dependencies": {

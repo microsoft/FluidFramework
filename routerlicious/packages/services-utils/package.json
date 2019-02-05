@@ -1,6 +1,6 @@
 {
   "name": "@prague/services-utils",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Prague service lambdas",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -15,10 +15,10 @@
   "author": "Microsoft",
   "repository": "microsoft/prague",
   "dependencies": {
-    "@prague/container-definitions": "^0.1.0",
-    "@prague/runtime-definitions": "^0.1.0",
-    "@prague/services-core": "^0.1.0",
-    "@prague/utils": "^0.1.0",
+    "@prague/container-definitions": "^0.2.0",
+    "@prague/runtime-definitions": "^0.2.0",
+    "@prague/services-core": "^0.2.0",
+    "@prague/utils": "^0.2.0",
     "bytes": "^3.0.0",
     "debug": "^3.1.0",
     "kafka-node": "^3.0.1",

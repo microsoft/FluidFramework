@@ -1,5 +1,5 @@
-import * as resources from "@prague/gitresources";
 import * as api from "@prague/container-definitions";
+import * as resources from "@prague/gitresources";
 import { buildHierarchy } from "@prague/utils";
 import * as assert from "assert";
 import { IHistorian } from "./historian";

@@ -1,4 +1,3 @@
-import * as resources from "@prague/gitresources";
 import {
     IDeltaStorageService,
     IDocumentDeltaConnection,
@@ -9,6 +8,7 @@ import {
     ITokenProvider,
     ITree,
 } from "@prague/container-definitions";
+import * as resources from "@prague/gitresources";
 import * as socketStorage from "@prague/socket-storage";
 import { TestDocumentDeltaConnection } from "./";
 

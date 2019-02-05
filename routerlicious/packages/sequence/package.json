@@ -1,6 +1,6 @@
 {
   "name": "@prague/sequence",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Distributed map",
   "main": "dist/index.js",
   "module": "lib/index.js",
@@ -17,7 +17,7 @@
   "author": "Microsoft",
   "repository": "microsoft/prague",
   "devDependencies": {
-    "@prague/merge-tree-utils": "^0.1.0",
+    "@prague/merge-tree-utils": "^0.2.0",
     "@types/diff": "^3.5.1",
     "@types/random-js": "^1.0.31",
     "@types/xmldoc": "^1.1.3",
@@ -30,12 +30,12 @@
     "xmldoc": "^1.1.2"
   },
   "dependencies": {
-    "@prague/api-definitions": "^0.1.0",
-    "@prague/container-definitions": "^0.1.0",
-    "@prague/map": "^0.1.0",
-    "@prague/merge-tree": "^0.1.0",
-    "@prague/runtime-definitions": "^0.1.0",
-    "@prague/utils": "^0.1.0",
+    "@prague/api-definitions": "^0.2.0",
+    "@prague/container-definitions": "^0.2.0",
+    "@prague/map": "^0.2.0",
+    "@prague/merge-tree": "^0.2.0",
+    "@prague/runtime-definitions": "^0.2.0",
+    "@prague/utils": "^0.2.0",
     "@types/uuid": "^3.4.4",
     "uuid": "^3.3.2"
   }
