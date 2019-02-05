@@ -1,12 +1,12 @@
 import { ICollaborativeObject } from "@prague/api-definitions";
 import * as api from "@prague/client-api";
-import { IMap, IMapView } from "@prague/map";
 import {
     IDocumentService,
     ISequencedDocumentMessage,
     ITokenProvider,
     MessageType,
-} from "@prague/runtime-definitions";
+} from "@prague/container-definitions";
+import { IMap, IMapView } from "@prague/map";
 import { nativeTextAnalytics, textAnalytics } from "../intelligence";
 import { BaseWork} from "./baseWork";
 import { IWork} from "./definitions";

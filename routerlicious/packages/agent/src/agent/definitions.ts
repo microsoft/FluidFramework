@@ -1,4 +1,4 @@
-import { IDocumentService, ITokenProvider } from "@prague/runtime-definitions";
+import { IDocumentService, ITokenProvider } from "@prague/container-definitions";
 
 export interface IWork {
     /**

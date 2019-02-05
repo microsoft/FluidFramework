@@ -1,5 +1,6 @@
 import * as api from "@prague/client-api";
-import { IClient, IHelpMessage, ITokenProvider } from "@prague/runtime-definitions";
+import { IClient, ITokenProvider } from "@prague/container-definitions";
+import { IHelpMessage } from "@prague/runtime-definitions";
 import { RateLimitter } from "@prague/utils";
 import { loadDictionary } from "./dictionaryLoader";
 import { IntelWork } from "./intelWork";

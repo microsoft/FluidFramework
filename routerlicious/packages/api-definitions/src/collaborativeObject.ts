@@ -1,11 +1,10 @@
+import { ConnectionState, ITree } from "@prague/container-definitions";
 import {
-    ConnectionState,
     IDistributedObjectServices,
     IObjectMessage,
     IObjectStorageService,
     IRuntime,
     ISequencedObjectMessage,
-    ITree,
 } from "@prague/runtime-definitions";
 import * as assert from "assert";
 import * as Deque from "double-ended-queue";

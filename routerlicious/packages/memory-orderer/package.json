@@ -20,8 +20,8 @@
     "typescript": "^3.2.2"
   },
   "dependencies": {
+    "@prague/container-definitions": "^0.1.0",
     "@prague/lambdas": "^0.1.0",
-    "@prague/runtime-definitions": "^0.1.0",
     "@prague/services-core": "^0.1.0",
     "@prague/services-utils": "^0.1.0",
     "@prague/utils": "^0.1.0",

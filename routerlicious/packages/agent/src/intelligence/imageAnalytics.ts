@@ -1,4 +1,4 @@
-import { IImageBlob } from "@prague/runtime-definitions";
+import { IImageBlob } from "@prague/container-definitions";
 import * as request from "request";
 import { IIntelligentService, IIntelligentServiceFactory } from "./api";
 

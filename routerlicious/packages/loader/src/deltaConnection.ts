@@ -1,4 +1,4 @@
-import * as runtime from "@prague/runtime-definitions";
+import * as runtime from "@prague/container-definitions";
 import { EventEmitter } from "events";
 
 export interface IConnectionDetails {

@@ -1,20 +1,15 @@
-import { ICommit, ICreateBlobResponse } from "@prague/gitresources";
 import {
     ConnectionState,
     FileMode,
-    IChaincode,
     IChunkedOp,
     IClientJoin,
-    ICodeLoader,
     IDeltaManager,
     IDocumentAttributes,
     IDocumentService,
     IDocumentStorageService,
-    IEnvelope,
     IGenericBlob,
     IPlatformFactory,
     IProposal,
-    IRuntime,
     ISequencedClient,
     ISequencedDocumentMessage,
     ISequencedDocumentSystemMessage,
@@ -26,6 +21,13 @@ import {
     IUser,
     MessageType,
     TreeEntry,
+} from "@prague/container-definitions";
+import { ICommit, ICreateBlobResponse } from "@prague/gitresources";
+import {
+    IChaincode,
+    ICodeLoader,
+    IEnvelope,
+    IRuntime,
 } from "@prague/runtime-definitions";
 import { buildHierarchy, flatten } from "@prague/utils";
 import * as assert from "assert";

@@ -8,7 +8,7 @@ import {
     ISnapshotTree,
     ITokenProvider,
     ITree,
-} from "@prague/runtime-definitions";
+} from "@prague/container-definitions";
 import * as socketStorage from "@prague/socket-storage";
 import { TestDocumentDeltaConnection } from "./";
 

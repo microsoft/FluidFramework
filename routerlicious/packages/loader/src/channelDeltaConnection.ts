@@ -1,10 +1,9 @@
+import { ConnectionState, ISequencedDocumentMessage } from "@prague/container-definitions";
 import {
-    ConnectionState,
     IDeltaConnection,
     IDeltaHandler,
     IEnvelope,
     IObjectMessage,
-    ISequencedDocumentMessage,
     ISequencedObjectMessage,
 } from "@prague/runtime-definitions";
 import { RangeTracker } from "@prague/utils";

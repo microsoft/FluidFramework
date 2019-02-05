@@ -16,7 +16,7 @@
   "author": "Microsoft",
   "repository": "microsoft/prague",
   "dependencies": {
-    "@prague/runtime-definitions": "^0.1.0",
+    "@prague/container-definitions": "^0.1.0",
     "@prague/utils": "^0.1.0",
     "@types/debug": "^0.0.31",
     "@types/node": "^10.12.12",

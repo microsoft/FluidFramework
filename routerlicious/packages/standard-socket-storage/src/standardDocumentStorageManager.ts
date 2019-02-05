@@ -1,5 +1,5 @@
+import * as api from "@prague/container-definitions";
 import * as resources from "@prague/gitresources";
-import * as api from "@prague/runtime-definitions";
 import { RestWrapper } from "@prague/services-client";
 import { IDocumentStorageGetVersionsResponse } from "./contracts";
 import { TokenProvider } from "./token";

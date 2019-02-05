@@ -48,6 +48,7 @@
     "typescript": "^3.2.2"
   },
   "dependencies": {
+    "@prague/container-definitions": "^0.1.0",
     "@prague/gitresources": "^0.1.0",
     "@prague/runtime-definitions": "^0.1.0",
     "@types/debug": "^0.0.31",

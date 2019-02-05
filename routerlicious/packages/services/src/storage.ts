@@ -1,5 +1,5 @@
+import { IDocumentAttributes, IDocumentSystemMessage, MessageType } from "@prague/container-definitions";
 import { ICommit, ICommitDetails } from "@prague/gitresources";
-import { IDocumentAttributes, IDocumentSystemMessage, MessageType } from "@prague/runtime-definitions";
 import { IProducer } from "@prague/services-core";
 import * as core from "@prague/services-core";
 import * as moniker from "moniker";

@@ -1,4 +1,4 @@
-import { Browser, ISequencedClient } from "@prague/runtime-definitions";
+import { Browser, ISequencedClient } from "@prague/container-definitions";
 
 export interface IHelpTasks {
     robot: string[];

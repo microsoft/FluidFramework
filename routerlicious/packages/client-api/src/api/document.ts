@@ -1,17 +1,17 @@
 import { ICollaborativeObject } from "@prague/api-definitions";
 import * as cell from "@prague/cell";
-import * as resources from "@prague/gitresources";
-import * as pragueLoader from "@prague/loader";
-import { IMap, MapExtension } from "@prague/map";
 import {
     IDeltaManager,
     IDocumentService,
     IGenericBlob,
     IPlatform,
-    IRuntime,
     ISequencedClient,
     ITokenProvider,
-} from "@prague/runtime-definitions";
+} from "@prague/container-definitions";
+import * as resources from "@prague/gitresources";
+import * as pragueLoader from "@prague/loader";
+import { IMap, MapExtension } from "@prague/map";
+import { IRuntime } from "@prague/runtime-definitions";
 import * as sequence from "@prague/sequence";
 import * as stream from "@prague/stream";
 import { Deferred } from "@prague/utils";

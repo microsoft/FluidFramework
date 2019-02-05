@@ -20,7 +20,7 @@
     "typescript": "^3.2.2"
   },
   "dependencies": {
-    "@prague/runtime-definitions": "^0.1.0",
+    "@prague/container-definitions": "^0.1.0",
     "@prague/services-core": "^0.1.0",
     "@types/lodash": "^4.14.118",
     "@types/node": "^10.12.12",

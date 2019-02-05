@@ -1,5 +1,5 @@
 import { ISnapshotDocument } from "@prague/agent";
-import { IDeltaManager, IDeltaQueue } from "@prague/runtime-definitions";
+import { IDeltaManager, IDeltaQueue } from "@prague/container-definitions";
 import * as utils from "@prague/utils";
 import * as assert from "assert";
 import { EventEmitter } from "events";

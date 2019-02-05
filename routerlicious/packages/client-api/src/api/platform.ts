@@ -1,4 +1,4 @@
-import { IPlatform, IPlatformFactory } from "@prague/runtime-definitions";
+import { IPlatform, IPlatformFactory } from "@prague/container-definitions";
 import { EventEmitter } from "events";
 
 export class Platform extends EventEmitter implements IPlatform {

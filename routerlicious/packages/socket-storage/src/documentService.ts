@@ -1,4 +1,4 @@
-import * as api from "@prague/runtime-definitions";
+import * as api from "@prague/container-definitions";
 import { GitManager, Historian, ICredentials } from "@prague/services-client";
 import { DocumentDeltaConnection } from "@prague/socket-storage-shared";
 import Axios from "axios";

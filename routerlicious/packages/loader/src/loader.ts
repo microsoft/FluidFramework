@@ -1,5 +1,6 @@
+import { IDocumentService, IPlatformFactory, ITokenProvider } from "@prague/container-definitions";
 import { ICommit } from "@prague/gitresources";
-import { ICodeLoader, IDocumentService, IPlatformFactory, ITokenProvider } from "@prague/runtime-definitions";
+import { ICodeLoader } from "@prague/runtime-definitions";
 import { debug } from "./debug";
 import { Document } from "./document";
 

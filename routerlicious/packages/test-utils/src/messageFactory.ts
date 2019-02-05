@@ -1,4 +1,4 @@
-import { IDocumentMessage, ISequencedDocumentMessage, MessageType } from "@prague/runtime-definitions";
+import { IDocumentMessage, ISequencedDocumentMessage, MessageType } from "@prague/container-definitions";
 import {
     BoxcarType,
     IBoxcarMessage,

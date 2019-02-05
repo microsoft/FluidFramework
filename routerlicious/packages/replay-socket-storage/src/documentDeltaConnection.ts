@@ -5,7 +5,7 @@ import {
     IDocumentMessage,
     ISequencedDocumentMessage,
     ITokenProvider,
-} from "@prague/runtime-definitions";
+} from "@prague/container-definitions";
 import * as messages from "@prague/socket-storage-shared";
 import { EventEmitter } from "events";
 

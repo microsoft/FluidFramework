@@ -1,8 +1,7 @@
+import { IPlatform, ITree } from "@prague/container-definitions";
 import { IDistributedObjectServices } from "./channel";
-import { IPlatform } from "./platform";
 import { IObjectMessage, ISequencedObjectMessage } from "./protocol";
 import { IRuntime } from "./runtime";
-import { ITree } from "./storage";
 
 export interface IChaincode {
     /**

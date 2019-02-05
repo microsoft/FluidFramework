@@ -39,6 +39,7 @@
   },
   "dependencies": {
     "@prague/api-definitions": "^0.1.0",
+    "@prague/container-definitions": "^0.1.0",
     "@prague/runtime-definitions": "^0.1.0",
     "debug": "^3.1.0",
     "lodash": "^4.17.11"

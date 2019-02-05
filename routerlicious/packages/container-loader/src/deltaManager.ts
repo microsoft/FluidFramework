@@ -22,8 +22,6 @@ import { debug } from "./debug";
 import { DeltaConnection, IConnectionDetails } from "./deltaConnection";
 import { DeltaQueue } from "./deltaQueue";
 
-// import * as runtime from "@prague/runtime-definitions";
-
 const MaxReconnectDelay = 8000;
 const InitialReconnectDelay = 1000;
 const MissingFetchDelay = 100;

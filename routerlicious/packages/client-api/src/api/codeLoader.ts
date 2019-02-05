@@ -1,10 +1,10 @@
 import * as cell from "@prague/cell";
+import { IPlatform } from "@prague/container-definitions";
 import * as map from "@prague/map";
 import {
     IChaincode,
     IChaincodeFactory,
     ICodeLoader,
-    IPlatform,
     IRuntime,
 } from "@prague/runtime-definitions";
 import * as sequence from "@prague/sequence";

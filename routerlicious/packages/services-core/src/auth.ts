@@ -1,4 +1,4 @@
-import { ITokenClaims, IUser } from "@prague/runtime-definitions";
+import { ITokenClaims, IUser } from "@prague/container-definitions";
 import * as jwt from "jsonwebtoken";
 import { getRandomName } from "./dockerNames";
 

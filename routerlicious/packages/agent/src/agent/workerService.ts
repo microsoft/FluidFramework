@@ -1,4 +1,5 @@
-import { ICodeLoader, IPlatformFactory, ITokenProvider } from "@prague/runtime-definitions";
+import { IPlatformFactory, ITokenProvider } from "@prague/container-definitions";
+import { ICodeLoader } from "@prague/runtime-definitions";
 import { EventEmitter } from "events";
 import { IDocumentServiceFactory, IDocumentTaskInfo, IWorkManager } from "./definitions";
 import { WorkManager } from "./workManager";

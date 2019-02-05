@@ -1,7 +1,6 @@
-import * as api from "@prague/runtime-definitions";
+import * as api from "@prague/container-definitions";
 import * as socketStorage from "@prague/socket-storage";
-// tslint:disable-next-line:match-default-export-name
-import axios from "axios";
+import Axios from "axios";
 import * as querystring from "querystring";
 
 export class ReplayDeltaStorageService implements api.IDocumentDeltaStorageService {
@@ -34,7 +33,7 @@ export class DeltaStorageService implements api.IDeltaStorageService {
             };
         }
 
-        const result = await axios.get<api.ISequencedDocumentMessage[]>(
+        const result = await Axios.get<api.ISequencedDocumentMessage[]>(
             `${this.url}/deltas/${encodeURIComponent(tenantId)}/${encodeURIComponent(id)}?${query}`, { headers });
         return result.data;
     }

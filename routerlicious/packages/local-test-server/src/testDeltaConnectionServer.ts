@@ -1,14 +1,14 @@
 import { RoundTrip } from "@prague/client-api";
 import {
+    IContentMessage,
+    IDocumentMessage,
+    ITokenClaims,
+} from "@prague/container-definitions";
+import {
     LocalNodeFactory,
     LocalOrderManager,
     NodeManager,
     ReservationManager } from "@prague/memory-orderer";
-import {
-    IContentMessage,
-    IDocumentMessage,
-    ITokenClaims,
-} from "@prague/runtime-definitions";
 import {
     ICollection,
     IDatabaseManager,

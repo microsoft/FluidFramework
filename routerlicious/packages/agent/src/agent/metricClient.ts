@@ -1,4 +1,4 @@
-import { ITrace } from "@prague/runtime-definitions";
+import { ITrace } from "@prague/container-definitions";
 import * as telegraf from "telegrafjs";
 
 export interface IMetricClient {

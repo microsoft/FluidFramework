@@ -1,4 +1,4 @@
-import { IDocumentService } from "@prague/runtime-definitions";
+import { IDocumentService } from "@prague/container-definitions";
 import { ITestDeltaConnectionServer } from "./testDeltaConnectionServer";
 import { TestDocumentService } from "./testDocumentService";
 

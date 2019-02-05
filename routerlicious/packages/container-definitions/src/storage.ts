@@ -106,6 +106,21 @@ export interface ISnapshotTree {
 /**
  * Interface to provide access to stored deltas for a collaborative object
  */
+export interface IDeltaStorageService {
+    /**
+     * Retrieves all the delta operations within the inclusive sequence number range
+     */
+    get(
+        tenantId: string,
+        id: string,
+        tokenProvider: ITokenProvider,
+        from?: number,
+        to?: number): Promise<ISequencedDocumentMessage[]>;
+}
+
+/**
+ * Interface to provide access to stored deltas for a collaborative object
+ */
 export interface IDocumentDeltaStorageService {
     /**
      * Retrieves all the delta operations within the inclusive sequence number range
@@ -207,6 +222,7 @@ export interface IDocumentDeltaConnection extends EventEmitter {
     /**
      * Async version of the regular submit function.
      */
+    // TODO why the need for two of these?
     submitAsync(message: IDocumentMessage): Promise<void>;
 
     /**

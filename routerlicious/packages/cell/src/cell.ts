@@ -4,14 +4,15 @@ import {
 } from "@prague/api-definitions";
 import {
     FileMode,
+    ITree,
+    TreeEntry,
+} from "@prague/container-definitions";
+import {
     IObjectMessage,
     IObjectStorageService,
     IRuntime,
     ISequencedObjectMessage,
-    ITree,
-    TreeEntry,
 } from "@prague/runtime-definitions";
-// tslint:disable-next-line
 import { debug } from "./debug";
 import { CellExtension } from "./extension";
 import { ICell } from "./interfaces";

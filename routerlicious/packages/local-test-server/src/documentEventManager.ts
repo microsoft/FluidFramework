@@ -1,4 +1,4 @@
-import { IDeltaManager } from "@prague/runtime-definitions";
+import { IDeltaManager } from "@prague/container-definitions";
 
 export interface IDocumentDeltaEvent {
     deltaManager: IDeltaManager;

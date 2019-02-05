@@ -1,5 +1,5 @@
 // tslint:disable
-import { IUser } from "@prague/runtime-definitions";
+import { IUser } from "@prague/container-definitions";
 import * as Base from "./base";
 import * as Collections from "./collections";
 import * as ops from "./ops";

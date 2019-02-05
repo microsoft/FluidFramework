@@ -1,6 +1,7 @@
 import { ICollaborativeObjectExtension } from "@prague/api-definitions";
+import { IPlatform } from "@prague/container-definitions";
 import { IMap, MapExtension } from "@prague/map";
-import { IChaincode, IPlatform, IRuntime } from "@prague/runtime-definitions";
+import { IChaincode, IRuntime } from "@prague/runtime-definitions";
 import { EventEmitter } from "events";
 import { debug } from "./debug";
 

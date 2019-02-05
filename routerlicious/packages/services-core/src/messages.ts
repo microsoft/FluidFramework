@@ -1,4 +1,4 @@
-import { IDocumentMessage, INack, ISequencedDocumentMessage } from "@prague/runtime-definitions";
+import { IDocumentMessage, INack, ISequencedDocumentMessage } from "@prague/container-definitions";
 
 // String identifying the raw operation message
 export const RawOperationType: string = "RawOperation";

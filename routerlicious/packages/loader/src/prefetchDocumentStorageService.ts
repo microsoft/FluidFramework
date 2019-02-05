@@ -1,5 +1,5 @@
+import { IDocumentStorageService, ISnapshotTree, ITree } from "@prague/container-definitions";
 import { ICommit, ICreateBlobResponse } from "@prague/gitresources";
-import { IDocumentStorageService, ISnapshotTree, ITree } from "@prague/runtime-definitions";
 
 export class PrefetchDocumentStorageService implements IDocumentStorageService {
     // SHA -> blob prefetchCache cache

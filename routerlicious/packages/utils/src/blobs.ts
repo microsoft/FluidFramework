@@ -1,4 +1,3 @@
-import * as git from "@prague/gitresources";
 import {
     FileMode,
     IBlob,
@@ -7,7 +6,8 @@ import {
     ITree,
     ITreeEntry,
     TreeEntry,
-} from "@prague/runtime-definitions";
+} from "@prague/container-definitions";
+import * as git from "@prague/gitresources";
 // tslint:disable-next-line:no-submodule-imports
 import * as sha1 from "sha.js/sha1";
 

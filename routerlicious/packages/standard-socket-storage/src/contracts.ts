@@ -1,5 +1,5 @@
 import * as resources from "@prague/gitresources";
-import * as api from "@prague/runtime-definitions";
+import * as api from "@prague/container-definitions";
 
 /**
  * Socket storage discovery api response

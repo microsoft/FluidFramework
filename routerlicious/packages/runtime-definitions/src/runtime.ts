@@ -1,11 +1,14 @@
+import {
+    IDeltaManager,
+    IGenericBlob,
+    IPlatform,
+    IQuorum,
+    ISequencedDocumentMessage,
+    MessageType,
+} from "@prague/container-definitions";
 import { EventEmitter } from "events";
-import { IGenericBlob } from "./blobs";
 import { IChannel } from "./chaincode";
 import { IDistributedObjectServices } from "./channel";
-import { IQuorum } from "./consensus";
-import { IDeltaManager } from "./deltas";
-import { IPlatform } from "./platform";
-import { ISequencedDocumentMessage, MessageType } from "./protocol";
 
 /**
  * Message handler definition
