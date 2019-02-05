@@ -1,3 +1,4 @@
+import { ICollaborativeObject } from "@prague/api-definitions";
 import * as loader from "@prague/loader";
 import { IMap, IMapView } from "@prague/map";
 import {
@@ -8,7 +9,6 @@ import {
     ITokenProvider,
     MessageType,
 } from "@prague/runtime-definitions";
-import * as Sequence from "@prague/sequence";
 import { textAnalytics } from "../../intelligence";
 import { IWork} from "../definitions";
 import { ChaincodeWork } from "./chaincodeWork";
@@ -33,12 +33,9 @@ export class IntelWork extends ChaincodeWork implements IWork {
     public async start(): Promise<void> {
         await this.loadChaincode(
             { localMinSeq: 0, encrypted: undefined, client: { type: "intel" } });
-        const rootMap = await this.document.runtime.getChannel("root") as IMap;
         const insightsMap = await this.document.runtime.getChannel("insights") as IMap;
         const insightsMapView = await insightsMap.getView();
-        const rootMapView = await rootMap.getView();
-        const sharedText = rootMapView.get("text") as Sequence.SharedString;
-        this.processIntelligenceWork(this.document, insightsMapView, sharedText);
+        this.processIntelligenceWork(this.document, insightsMapView);
     }
 
     public async stop(): Promise<void> {
@@ -52,18 +49,15 @@ export class IntelWork extends ChaincodeWork implements IWork {
         this.intelligenceManager.registerService(service.factory.create(this.config.intelligence.resume));
     }
 
-    private processIntelligenceWork(
-        doc: loader.Document,
-        insightsMap: IMapView,
-        sharedText: Sequence.SharedString) {
+    private processIntelligenceWork(doc: loader.Document, insightsMap: IMapView) {
         this.intelligenceManager = new IntelligentServicesManager(doc, insightsMap);
         this.intelligenceManager.registerService(textAnalytics.factory.create(this.config.intelligence.textAnalytics));
 
-        this.document.on("op", (op: ISequencedDocumentMessage) => {
+        this.document.on("op", (op: ISequencedDocumentMessage, object: ICollaborativeObject) => {
             if (op.type === MessageType.Operation) {
-                this.intelligenceManager.process(sharedText);
+                this.intelligenceManager.process(object);
             } else if (op.type === MessageType.Attach) {
-                this.intelligenceManager.process(sharedText);
+                this.intelligenceManager.process(object);
             }
         });
     }
