@@ -1,4 +1,3 @@
-import { IUser } from "@prague/container-definitions";
 import { IAlfredTenant, IDocumentStorage, ITenantManager } from "@prague/services-core";
 import { Router } from "express";
 import { Provider } from "nconf";
@@ -55,10 +54,10 @@ export function create(
             request.params.id,
             targetVersionSha);
 
-        const user: IUser = (request.user) ? {
-            id: request.user.name,
+        const user: IAlfredUser = (request.user) ? {
+            displayName: request.user.name,
+            id: request.user.oid,
             name: request.user.name,
-            oid: request.user.oid,
         } : undefined;
         const token = utils.getToken(tenantId, request.params.id, appTenants, user);
 
@@ -95,11 +94,11 @@ export function create(
             config.get("client"));
         const versionP = storage.getLatestVersion(tenantId, request.params.id);
 
-        const user: IUser = (request.user) ? {
-            id: request.user.name,
+        const user: IAlfredUser = (request.user) ? {
+            displayName: request.user.name,
+            id: request.user.oid,
             name: request.user.name,
-            oid: request.user.oid,
-        } : undefined;
+    } : undefined;
 
         const token = utils.getToken(tenantId, request.params.id, appTenants, user);
 

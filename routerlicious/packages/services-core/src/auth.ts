@@ -1,5 +1,7 @@
-import { ITokenClaims, IUser } from "@prague/container-definitions";
+import { ITokenClaims, IUser } from "@prague/runtime-definitions";
+import { Guid } from "guid-typescript";
 import * as jwt from "jsonwebtoken";
+import { debug } from "util";
 import { getRandomName } from "./dockerNames";
 
 /**
@@ -8,9 +10,9 @@ import { getRandomName } from "./dockerNames";
 export function generateToken(tenantId: string, documentId: string, key: string, user?: IUser): string {
     user = (user) ? user : generateUser();
     if (user.id === "" || user.id === undefined) {
-        user.id = getRandomName(" ", true);
+        debug("User with no id");
+        user = generateUser();
     }
-    user.funName = getRandomName(" ", true);
 
     const claims: ITokenClaims = {
         documentId,
@@ -24,6 +26,7 @@ export function generateToken(tenantId: string, documentId: string, key: string,
 
 export function generateUser(): IUser {
     return {
-        id: getRandomName(" ", true),
+        id: Guid.raw(),
+        name: getRandomName(" ", true),
     };
 }

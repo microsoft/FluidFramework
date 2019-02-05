@@ -33,7 +33,7 @@ export async function getConfig(
     return JSON.stringify(updatedConfig);
 }
 
-export function getToken(tenantId: string, documentId: string, tenants: IAlfredTenant[], user?: IUser): string {
+export function getToken(tenantId: string, documentId: string, tenants: IAlfredTenant[], user?: IAlfredUser): string {
     for (const tenant of tenants) {
         if (tenantId === tenant.id) {
             return generateToken(tenantId, documentId, tenant.key, user);
@@ -41,4 +41,8 @@ export function getToken(tenantId: string, documentId: string, tenants: IAlfredT
     }
 
     throw new Error("Invalid tenant");
+}
+
+export interface IAlfredUser extends IUser {
+    displayName: string;
 }
