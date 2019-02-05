@@ -2,7 +2,7 @@ import * as api from "@prague/client-api";
 import { IMap, IMapView } from "@prague/map";
 import * as mergeTree from "@prague/merge-tree";
 import { ISequencedObjectMessage , IUser } from "@prague/runtime-definitions";
-import * as sharedString from "@prague/shared-string";
+import * as sequence from "@prague/sequence";
 import * as socketStorage from "@prague/socket-storage";
 import { EventEmitter } from "events";
 import * as jwt from "jsonwebtoken";
@@ -17,10 +17,10 @@ export interface IRemotePresenceInfo {
 // Get rid of this wrapper soon. It mostly wraps bugs in Prague which could have been fixed already
 // or provides some default arguments which either should be removed or should be moved to Prague API.
 export class SharedStringForWord extends EventEmitter {
-    private sharedString: sharedString.SharedString;
+    private sharedString: sequence.SharedString;
 
     public constructor(
-        sharedStringIn: sharedString.SharedString,
+        sharedStringIn: sequence.SharedString,
         private document: api.Document) {
         super();
         this.sharedString = sharedStringIn;
@@ -132,7 +132,7 @@ export class SharedStringForWord extends EventEmitter {
             const colGuid = "{A115C672-1001-4A22-B21A-799F56A1A803}";
             const cellGuid = "{8E84740B-1A19-4FFC-9C25-9E9814818072}";
             const key = "value";
-            const onPrepareDeserialize: sharedString.PrepareDeserializeCallback = (properties) => {
+            const onPrepareDeserialize: sequence.PrepareDeserializeCallback = (properties) => {
                 if (properties && properties[rowGuid] && properties[colGuid]) {
                     const rowProp = properties[rowGuid];
                     const colProp = properties[colGuid];
@@ -149,7 +149,7 @@ export class SharedStringForWord extends EventEmitter {
                     return Promise.resolve(null);
                 }
             };
-            const onDeserialize: sharedString.DeserializeCallback = (interval, obj: any) => {
+            const onDeserialize: sequence.DeserializeCallback = (interval, obj: any) => {
                 if (interval.properties && interval.properties[rowGuid] && interval.properties[colGuid]) {
                     interval.properties[rowGuid] = obj[0];
                     interval.properties[colGuid] = obj[1];
@@ -171,7 +171,7 @@ export class SharedStringForWord extends EventEmitter {
             // Update the text after being loaded as well as when receiving ops
             this.sharedString.loaded.then(() => {
                 const segmentWindow = this.sharedString.client.mergeTree.getCollabWindow();
-                const notifyWord = (segment: mergeTree.Segment, pos: number,
+                const notifyWord = (segment: mergeTree.ISegment, pos: number,
                                     refSeq: number, clientId: number, segStart: number,
                                     segEnd: number) => {
                         if (segment.getType() === mergeTree.SegmentType.Text) {
@@ -371,7 +371,7 @@ async function OpenDocument(id: string): Promise<void> {
         },
         secret);
     const tokenProvider = new socketStorage.TokenProvider(jwtToken);
-    const collabDoc = await api.load(id, tenantId, user, tokenProvider, { blockUpdateMarkers: true });
+    const collabDoc = await api.load(id, tenantId, tokenProvider, { blockUpdateMarkers: true });
     console.log("Opened document");
     const rootMap = collabDoc.getRoot();
     const rootView = await rootMap.getView();
@@ -384,7 +384,7 @@ async function OpenDocument(id: string): Promise<void> {
     }
 
     // Load the text string and listen for updates
-    const text = await rootView.wait("text") as sharedString.SharedString;
+    const text = await rootView.wait("text") as sequence.SharedString;
     const sharedStringForWord = new SharedStringForWord(text, collabDoc);
 
     const sharedStringForWordFactory = {
