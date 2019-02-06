@@ -1,6 +1,7 @@
 import { MapExtension } from "@prague/map";
 import { Component } from "@prague/app-component";
 import { DataStore } from "@prague/app-datastore";
+import { IChaincode } from "@prague/runtime-definitions";
 import { TableDocument } from "@chaincode/table-document";
 import { GridView } from "./grid";
 import { ConfigView } from "./config";
@@ -46,6 +47,6 @@ export class TableView extends Component {
 }
 
 // Chainloader bootstrap.
-export async function instantiate() {
+export async function instantiate(): Promise<IChaincode> {
     return Component.instantiate(new TableView());
 }

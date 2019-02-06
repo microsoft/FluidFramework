@@ -12,8 +12,10 @@ import {
     reservedTileLabelsKey,
     PropertySet,
     SegmentType,
-    Marker
+    Marker,
+    ReferencePosition
 } from "@prague/merge-tree";
+import { IChaincode } from "@prague/runtime-definitions";
 
 export enum DocSegmentKind {
     Text = "text",
@@ -203,7 +205,7 @@ export class FlowDocument extends Component {
         this.sharedString.annotateRange(props, start, end);
     }
 
-    public findTile(startPos: number, tileType: string, preceding = true) {
+    public findTile(startPos: number, tileType: string, preceding = true): { tile: ReferencePosition, pos: number } {
         return this.mergeTree.findTile(startPos, this.clientId, tileType, preceding);
     }
    
@@ -230,6 +232,6 @@ export class FlowDocument extends Component {
 }
 
 // Chainloader bootstrap.
-export async function instantiate() {
+export async function instantiate(): Promise<IChaincode> {
     return Component.instantiate(new FlowDocument());
 }

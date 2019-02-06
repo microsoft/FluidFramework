@@ -27,12 +27,13 @@ import {
     IntervalType,
     LocalReference
 } from "@prague/merge-tree";
+import { IChaincode } from "@prague/runtime-definitions";
 
 import { CellRange } from "./cellrange";
 export { CellRange };
 
-const loadCellTextSym = Symbol("TableDocument.loadCellText");
-const storeCellTextSym = Symbol("TableDocument.storeCellText");
+export const loadCellTextSym = Symbol("TableDocument.loadCellText");
+export const storeCellTextSym = Symbol("TableDocument.storeCellText");
 
 type EvaluationResult = Result<ReadOper, FailureReason | NotImplemented | NotFormulaString | IllFormedFormula> | EvalFormulaPaused;
 
@@ -216,6 +217,6 @@ export class TableDocument extends Component {
 }
 
 // Chainloader bootstrap.
-export async function instantiate() {
+export async function instantiate(): Promise<IChaincode> {
     return Component.instantiate(new TableDocument());
 }

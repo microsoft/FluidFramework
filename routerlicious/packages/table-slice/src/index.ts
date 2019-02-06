@@ -1,6 +1,7 @@
 import { MapExtension, IMapView } from "@prague/map";
 import { Component } from "@prague/app-component";
 import { DataStore } from "@prague/app-datastore";
+import { IChaincode } from "@prague/runtime-definitions";
 import { TableDocument, CellRange } from "@chaincode/table-document";
 import { ConfigView } from "./config";
 import { ConfigKeys } from "./configKeys";
@@ -75,4 +76,6 @@ export class TableSlice extends Component {
 }
 
 // Chainloader bootstrap.
-export async function instantiate() { return Component.instantiate(new TableSlice()); }
+export async function instantiate(): Promise<IChaincode> {
+    return Component.instantiate(new TableSlice());
+}
