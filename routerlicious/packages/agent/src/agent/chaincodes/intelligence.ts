@@ -1,5 +1,5 @@
 import { ICollaborativeObject } from "@prague/api-definitions";
-// import * as loader from "@prague/loader";
+import { Container } from "@prague/container-loader";
 import { IMap, IMapView, MapExtension } from "@prague/map";
 import * as Sequence from "@prague/sequence";
 import * as uuid from "uuid/v4";
@@ -16,7 +16,7 @@ export class IntelligentServicesManager {
     private intelInvoked: boolean = false;
 
     constructor(
-        private doc, // loader.Document,
+        private doc: Container,
         private documentInsights: IMapView) {}
 
     /**

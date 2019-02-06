@@ -1,5 +1,4 @@
-import { IPlatform, IPlatformFactory } from "@prague/container-definitions";
-import { IChaincodeFactory, ICodeLoader } from "@prague/runtime-definitions";
+import { IChaincodeFactory, ICodeLoader, IPlatform, IPlatformFactory } from "@prague/container-definitions";
 import { exec } from "child_process";
 import { EventEmitter } from "events";
 import { promisify } from "util";

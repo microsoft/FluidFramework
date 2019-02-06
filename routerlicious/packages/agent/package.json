@@ -21,6 +21,7 @@
     "@prague/api-definitions": "^0.2.0",
     "@prague/client-api": "^0.2.0",
     "@prague/container-definitions": "^0.2.0",
+    "@prague/container-loader": "^0.2.0",
     "@prague/map": "^0.2.0",
     "@prague/merge-tree": "^0.2.0",
     "@prague/runtime-definitions": "^0.2.0",
