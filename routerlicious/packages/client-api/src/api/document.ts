@@ -8,23 +8,21 @@ import {
     ISequencedClient,
     ITokenProvider,
 } from "@prague/container-definitions";
+import { Container, Loader } from "@prague/container-loader";
 import * as resources from "@prague/gitresources";
-// import * as pragueLoader from "@prague/loader";
 import { IMap, MapExtension } from "@prague/map";
 import { IRuntime } from "@prague/runtime-definitions";
 import * as sequence from "@prague/sequence";
 import * as stream from "@prague/stream";
 import { Deferred } from "@prague/utils";
 import { EventEmitter } from "events";
-
 // tslint:disable-next-line:no-submodule-imports
 import * as uuid from "uuid/v4";
-// import { CodeLoader } from "./codeLoader";
-// import { debug } from "./debug";
-// import { PlatformFactory } from "./platform";
+import { CodeLoader } from "./codeLoader";
+import { debug } from "./debug";
 
-// tslint:disable-next-line
-// const apiVersion = require("../../package.json").version;
+// tslint:disable-next-line:no-var-requires no-require-imports no-unsafe-any
+const apiVersion = require("../../package.json").version;
 
 // TODO: All these should be enforced by server as a part of document creation.
 const rootMapId = "root";
@@ -240,23 +238,22 @@ export class Document extends EventEmitter {
     }
 }
 
-// async function initializeChaincode(document: pragueLoader.Document, pkg: string): Promise<void> {
-//     const quorum = document.getQuorum();
+async function initializeChaincode(container: Container, pkg: string): Promise<void> {
+    const quorum = container.getQuorum();
 
-//     // Wait for connection so that proposals can be sent
-//     if (!document.connected) {
-//         // tslint:disable-next-line
-//         await new Promise<void>((resolve) => document.on("connected", () => resolve()));
-//     }
+    // Wait for connection so that proposals can be sent
+    if (!container.connected) {
+        // tslint:disable-next-line
+        await new Promise<void>((resolve) => container.on("connected", () => resolve()));
+    }
 
-//     // And then make the proposal if a code proposal has not yet been made
-//     if (!quorum.has("code")) {
-//         await quorum.propose("code", pkg);
-//     }
+    // And then make the proposal if a code proposal has not yet been made
+    if (!quorum.has("code2")) {
+        await quorum.propose("code2", pkg);
+    }
 
-//     // tslint:disable-next-line:no-backbone-get-set-outside-model
-//     debug(`Code is ${quorum.get("code")}`);
-// }
+    debug(`Code is ${quorum.get("code2")}`);
+}
 
 /**
  * Loads a specific version (commit) of the collaborative object
@@ -272,34 +269,30 @@ export async function load(
 
     // const classicPlatform = new PlatformFactory();
     const runDeferred = new Deferred<{ runtime: IRuntime; platform: IPlatform }>();
-    // const loader = new CodeLoader(
-    //     async (r, p) => {
-    //         debug("Code loaded and resolved");
-    //         runDeferred.resolve({ runtime: r, platform: p });
-    //         return null;
-    //     });
+    const codeLoader = new CodeLoader(
+        async (r, p) => {
+            debug("Code loaded and resolved");
+            runDeferred.resolve({ runtime: r, platform: p });
+            return null;
+        });
 
-    // TODO this needs to be new loader
-    // Load the Prague document
-    // const loaderDoc = await pragueLoader.load(
-    //     id,
-    //     tenantId,
-    //     tokenProvider,
-    //     options,
-    //     classicPlatform,
-    //     service,
-    //     loader,
+    // TODO need both of these
     //     version,
     //     connect);
 
-    // If this is a new document we will go and instantiate the chaincode. For old documents we assume a legacy
-    // package.
-    // if (!loaderDoc.existing) {
-    //     initializeChaincode(loaderDoc, `@prague/client-api@${apiVersion}`)
-    //         .catch((error) => {
-    //             debug("chaincode error", error);
-    //         });
-    // }
+    // Load the Prague document
+    // For legacy purposes we currently fill in a default domain
+    const baseUrl =
+        `prague://prague.com/${encodeURIComponent(tenantId)}/${encodeURIComponent(id)}`;
+    const loader = new Loader({ tokenProvider }, service, codeLoader, options);
+    const container = await loader.resolve({ url: baseUrl });
+
+    if (!container.existing) {
+        initializeChaincode(container, `@prague/client-api@${apiVersion}`)
+            .catch((error) => {
+                debug("chaincode error", error);
+            });
+    }
 
     // Wait for loader to start us
     const { runtime } = await runDeferred.promise;

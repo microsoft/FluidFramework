@@ -70,6 +70,7 @@
     "@prague/kafka-orderer": "^0.2.0",
     "@prague/lambdas": "^0.2.0",
     "@prague/lambdas-driver": "^0.2.0",
+    "@prague/loader-web": "^0.2.0",
     "@prague/map": "^0.2.0",
     "@prague/memory-orderer": "^0.2.0",
     "@prague/merge-tree": "^0.2.0",
