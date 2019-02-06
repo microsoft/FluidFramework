@@ -15,18 +15,14 @@ import {
     TreeEntry,
 } from "@prague/container-definitions";
 import { ICommit } from "@prague/gitresources";
-import { IAttachMessage, IEnvelope } from "@prague/runtime-definitions";
+import { IAttachMessage, IComponentRuntime, IEnvelope } from "@prague/runtime-definitions";
 import { buildHierarchy, Deferred, flatten, readAndParse } from "@prague/utils";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import { Component } from "./component";
 import { ComponentStorageService } from "./componentStorageService";
 import { debug } from "./debug";
-import {
-    IComponentFactory,
-    IComponentRuntime,
-    IHostRuntime,
-} from "./definitions";
+import { IComponentFactory, IHostRuntime } from "./definitions";
 
 // Context will define the component level mappings
 export class Runtime extends EventEmitter implements IHostRuntime {

@@ -5,7 +5,8 @@ import { ICommit } from "@prague/gitresources";
 import { WebLoader } from "@prague/loader-web";
 import { CollaborativeMap, IMapView } from "@prague/map";
 import { createReplayDocumentService } from "@prague/replay-socket-storage";
-import { IComponentRuntime, WebPlatform } from "@prague/runtime";
+import { WebPlatform } from "@prague/runtime";
+import { IComponentRuntime } from "@prague/runtime-definitions";
 import {
     createDocumentService,
     DefaultErrorTracking,

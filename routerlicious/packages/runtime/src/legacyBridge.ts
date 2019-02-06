@@ -1,12 +1,12 @@
 import { IPlatform, ITree } from "@prague/container-definitions";
-import { IChaincode } from "@prague/runtime-definitions";
-import { ComponentHost } from "./componentHost";
 import {
+    IChaincode,
     IChaincodeComponent,
+    IComponentDeltaHandler,
     IComponentPlatform,
     IComponentRuntime,
-    IDeltaHandler,
-} from "./definitions";
+} from "@prague/runtime-definitions";
+import { ComponentHost } from "./componentHost";
 
 export class LegacyChaincodeBridge implements IChaincodeComponent {
     private component: ComponentHost;
@@ -22,7 +22,7 @@ export class LegacyChaincodeBridge implements IChaincodeComponent {
         return;
     }
 
-    public async run(runtime: IComponentRuntime, platform: IPlatform): Promise<IDeltaHandler> {
+    public async run(runtime: IComponentRuntime, platform: IPlatform): Promise<IComponentDeltaHandler> {
         const chaincode = this.chaincode;
 
         // All of the below would be hidden from a developer

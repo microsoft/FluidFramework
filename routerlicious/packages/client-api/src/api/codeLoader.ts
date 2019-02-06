@@ -11,14 +11,17 @@ import {
 import * as map from "@prague/map";
 import {
     ComponentHost,
-    IChaincodeComponent,
     IComponentFactory,
-    IComponentPlatform,
-    IComponentRuntime,
-    IDeltaHandler,
     Runtime,
 } from "@prague/runtime";
-import { IChaincode, IRuntime as ILegacyRuntime } from "@prague/runtime-definitions";
+import {
+    IChaincode,
+    IChaincodeComponent,
+    IComponentDeltaHandler,
+    IComponentPlatform,
+    IComponentRuntime,
+    IRuntime as ILegacyRuntime,
+} from "@prague/runtime-definitions";
 import * as sequence from "@prague/sequence";
 import * as stream from "@prague/stream";
 
@@ -78,7 +81,7 @@ class Component implements IChaincodeComponent {
         return;
     }
 
-    public async run(runtime: IComponentRuntime, platform: IPlatform): Promise<IDeltaHandler> {
+    public async run(runtime: IComponentRuntime, platform: IPlatform): Promise<IComponentDeltaHandler> {
         const component = await ComponentHost.LoadFromSnapshot(
             runtime,
             runtime.tenantId,
