@@ -6,7 +6,7 @@ import {
     ITokenProvider,
     MessageType,
 } from "@prague/container-definitions";
-import * as loader from "@prague/loader";
+// import * as loader from "@prague/loader";
 import { IMap, IMapView } from "@prague/map";
 import { ICodeLoader } from "@prague/runtime-definitions";
 import { textAnalytics } from "../../intelligence";
@@ -49,7 +49,7 @@ export class IntelWork extends ChaincodeWork implements IWork {
         this.intelligenceManager.registerService(service.factory.create(this.config.intelligence.resume));
     }
 
-    private processIntelligenceWork(doc: loader.Document, insightsMap: IMapView) {
+    private processIntelligenceWork(doc /*: loader.Document */, insightsMap: IMapView) {
         this.intelligenceManager = new IntelligentServicesManager(doc, insightsMap);
         this.intelligenceManager.registerService(textAnalytics.factory.create(this.config.intelligence.textAnalytics));
 

@@ -4,47 +4,47 @@ import {
     IPlatformFactory,
     ITokenProvider,
 } from "@prague/container-definitions";
-import * as loader from "@prague/loader";
+// import * as loader from "@prague/loader";
 import { ICodeLoader } from "@prague/runtime-definitions";
 import { EventEmitter } from "events";
 import { IDocumentTaskInfo } from "../definitions";
 
 export class ChaincodeWork extends EventEmitter {
 
-    protected document: loader.Document;
+    protected document; // loader.Document;
     protected task: string;
 
     private events = new EventEmitter();
 
     constructor(
-        private docId: string,
-        private tenantId: string,
-        private tokenProvider: ITokenProvider,
-        private service: IDocumentService,
-        private codeLoader: ICodeLoader,
-        private platformFactory: IPlatformFactory,
+        docId: string,
+        tenantId: string,
+        tokenProvider: ITokenProvider,
+        service: IDocumentService,
+        codeLoader: ICodeLoader,
+        platformFactory: IPlatformFactory,
         task: string) {
             super();
             this.task = task;
     }
 
     public async loadChaincode(options: any): Promise<void> {
-            const documentP = loader.load(
-                this.docId,
-                this.tenantId,
-                this.tokenProvider,
-                options,
-                this.platformFactory,
-                this.service,
-                this.codeLoader);
-            this.document = await documentP;
+            // const documentP = loader.load(
+            //     this.docId,
+            //     this.tenantId,
+            //     this.tokenProvider,
+            //     options,
+            //     this.platformFactory,
+            //     this.service,
+            //     this.codeLoader);
+            // this.document = await documentP;
 
             this.attachListeners();
 
             // Wait to be fully connected!
-            if (!this.document.connected) {
-                await new Promise<void>((resolve) => this.document.on("connected", () => resolve()));
-            }
+            // if (!this.document.connected) {
+            //     await new Promise<void>((resolve) => this.document.on("connected", () => resolve()));
+            // }
     }
 
     public async stop(): Promise<void> {

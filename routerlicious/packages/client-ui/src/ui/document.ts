@@ -1,12 +1,13 @@
 import { Block, BoxState } from "@prague/app-ui";
-import { getChaincodeRepo, getDefaultCredentials, getDefaultDocumentService } from "@prague/client-api";
+// import { getChaincodeRepo, getDefaultCredentials, getDefaultDocumentService } from "@prague/client-api";
 import { IPlatform, IPlatformFactory } from "@prague/container-definitions";
-import * as loader from "@prague/loader";
-import { proposeChaincode, WebLoader, WebPlatform } from "@prague/loader-web";
+// import * as loader from "@prague/loader";
+import { WebPlatform } from "@prague/loader-web";
+// import { proposeChaincode, WebLoader, WebPlatform } from "@prague/loader-web";
 import { IRuntime } from "@prague/runtime-definitions";
-import { TokenProvider } from "@prague/socket-storage";
+// import { TokenProvider } from "@prague/socket-storage";
 import { EventEmitter } from "events";
-import * as jwt from "jsonwebtoken";
+// import * as jwt from "jsonwebtoken";
 import { FlowViewContext } from "./flowViewContext";
 
 const documentSym = Symbol("Document.document");
@@ -71,7 +72,7 @@ const definitionGuide = new DefinitionGuide();
 export class DocumentState extends BoxState {
     public id: string;
     public chaincode?: string;
-    public [documentSym]: loader.Document;
+    public [documentSym]; // : loader.Document;
     public [platformSym]: PlatformFactory;
 }
 
@@ -152,57 +153,57 @@ export class Document extends Block<DocumentState> {
         mountDiv.appendChild(div);
 
         // TODO also something that shouldn't be direclty exposed
-        const credentials = getDefaultCredentials();
-        const token = jwt.sign(
-            {
-                documentId: self.id,
-                permission: "read:write",
-                tenantId: credentials.tenant,
-                user: { id: "loader-client" },
-            },
-            credentials.key) as string;
-        const tokenProvider = new TokenProvider(token);
+        // const credentials = getDefaultCredentials();
+        // const token = jwt.sign(
+        //     {
+        //         documentId: self.id,
+        //         permission: "read:write",
+        //         tenantId: credentials.tenant,
+        //         user: { id: "loader-client" },
+        //     },
+        //     credentials.key) as string;
+        // const tokenProvider = new TokenProvider(token);
 
-        const webLoader = new WebLoader(getChaincodeRepo());
+        // const webLoader = new WebLoader(getChaincodeRepo());
 
-        const invalidateLayout = (width: number, height: number) => {
-            div.style.width = `${width}px`;
-            div.style.height = `${height}px`;
-            context.services.get("invalidateLayout")();
-        };
+        // const invalidateLayout = (width: number, height: number) => {
+        //     div.style.width = `${width}px`;
+        //     div.style.height = `${height}px`;
+        //     context.services.get("invalidateLayout")();
+        // };
 
-        const platformFactory = new PlatformFactory(div, invalidateLayout);
+        // const platformFactory = new PlatformFactory(div, invalidateLayout);
 
-        const documentP = loader.load(
-            self.id,
-            credentials.tenant,
-            tokenProvider,
-            { blockUpdateMarkers: true },
-            platformFactory,
-            getDefaultDocumentService(),
-            webLoader,
-            null,
-            true);
-        documentP.then(
-            (document) => {
-                self[documentSym] = document;
-                self[platformSym] = platformFactory;
-                console.log("Document loaded");
+        // const documentP = loader.load(
+        //     self.id,
+        //     credentials.tenant,
+        //     tokenProvider,
+        //     { blockUpdateMarkers: true },
+        //     platformFactory,
+        //     getDefaultDocumentService(),
+        //     webLoader,
+        //     null,
+        //     true);
+        // documentP.then(
+        //     (document) => {
+        //         self[documentSym] = document;
+        //         self[platformSym] = platformFactory;
+        //         console.log("Document loaded");
 
-                if (self.chaincode) {
-                    proposeChaincode(document, self.chaincode).catch(
-                        (error) => {
-                            console.error("Error installing chaincode");
-                        });
-                }
+        //         if (self.chaincode) {
+        //             proposeChaincode(document, self.chaincode).catch(
+        //                 (error) => {
+        //                     console.error("Error installing chaincode");
+        //                 });
+        //         }
 
-                // query the runtime for its definition - if it exists
-                definitionGuide.addComponent(self.id, document.runtime);
-                document.on("runtimeChanged", (runtime) => {
-                    definitionGuide.addComponent(self.id, document.runtime);
-                });
-            },
-            (error) => console.error("Failed to load document"));
+        //         // query the runtime for its definition - if it exists
+        //         definitionGuide.addComponent(self.id, document.runtime);
+        //         document.on("runtimeChanged", (runtime) => {
+        //             definitionGuide.addComponent(self.id, document.runtime);
+        //         });
+        //     },
+        //     (error) => console.error("Failed to load document"));
 
         // Call 'updating' to update the contents of the div with the updated chart.
         return this.updating(self, context, mountDiv);
