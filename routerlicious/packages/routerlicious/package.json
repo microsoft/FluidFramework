@@ -65,7 +65,6 @@
     "@prague/client-ui": "^0.2.0",
     "@prague/container-definitions": "^0.2.0",
     "@prague/container-loader": "^0.2.0",
-    "@prague/flow-host": "^0.2.0",
     "@prague/gitresources": "^0.2.0",
     "@prague/kafka-orderer": "^0.2.0",
     "@prague/lambdas": "^0.2.0",

@@ -196,7 +196,6 @@ export function create(
     app.use("/canvas", routes.canvas);
     app.use("/sharedText", routes.sharedText);
     app.use("/cell", routes.cell);
-    app.use("/flow", routes.flow);
     app.use("/loader", routes.loader);
     app.use("/scribe", routes.scribe);
     app.use("/democreator", routes.demoCreator);

@@ -7,7 +7,6 @@ import * as api from "./api";
 import * as canvas from "./canvas";
 import * as cell from "./cell";
 import * as demoCreator from "./democreator";
-import * as flow from "./flow";
 import * as home from "./home";
 import * as loader from "./loader";
 import * as maps from "./maps";
@@ -21,7 +20,6 @@ export interface IRoutes {
     canvas: Router;
     cell: Router;
     demoCreator: Router;
-    flow: Router;
     loader: Router;
     home: Router;
     signUp: Router;
@@ -50,7 +48,6 @@ export function create(
         canvas: canvas.create(config, tenantManager, storage, appTenants, ensureLoggedIn),
         cell: cell.create(config, tenantManager, storage, appTenants, ensureLoggedIn),
         demoCreator: demoCreator.create(config, ensureLoggedIn),
-        flow: flow.create(config, tenantManager, storage, appTenants, ensureLoggedIn),
         home: home.create(config, ensureLoggedIn),
         loader: loader.create(config, tenantManager, storage, appTenants, ensureLoggedIn),
         maps: maps.create(config, tenantManager, storage, appTenants, ensureLoggedIn),
