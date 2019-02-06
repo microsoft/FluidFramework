@@ -1,5 +1,5 @@
 {
-  "name": "@chaincode/shared-text",
+  "name": "@chaincode/shared-text2",
   "version": "0.1.0",
   "description": "Shared text",
   "main": "dist/index.js",
