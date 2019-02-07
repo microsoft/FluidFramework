@@ -1,6 +1,5 @@
 import * as React from "react";
-import { DataStore } from "@prague/app-datastore";
-import { FlowDocument } from "@chaincode/flow-document";
+import { FlowDocument, FlowDocumentComponent } from "@chaincode/flow-document";
 import { VirtualizedView } from "@chaincode/flow-editor";
 import { Scheduler } from "@prague/flow-util";
 import * as style from "./index.css";
@@ -10,7 +9,6 @@ import { IAppConfig } from "./app";
 
 interface IProps {
     config: IAppConfig;
-    docId: string;
     virtualize: boolean;
     cmds: { 
         insert: (element: JSX.Element) => void,
@@ -35,17 +33,27 @@ export class FlowEditor extends React.Component<IProps, IState> {
     }
 
     componentWillMount() {
-        const { config, docId } = this.props;
-        DataStore.from(config.serverUrl).then(store => {
-            store
-                .open<FlowDocument>(docId, "danlehen", FlowDocument.type, [["datastore", Promise.resolve(store)]])
-                .then((doc) => {
-                    // buildTestParagraph(doc);
-                    const editor = new VirtualizedView();
-                    const editorProps: IVirtualizedProps = { virtualize: this.props.virtualize, scheduler: new Scheduler(), doc, trackedPositions: [] };
-                    editor.mount(editorProps);
-                    this.setState({ doc, editor, editorProps });
-                });
+        const { config } = this.props;
+
+        if (!config.runtime.existing) {
+            config.runtime.createAndAttachProcess("document", "@chaincode/flow-document");
+        }
+
+        config.runtime.getProcess("document", true).then((component) => {
+            // TODO when we fetch the process we get a layer of indirection to the thing we actually want - which
+            // is sitting inside of the chaincode field
+            const flowDocComponent = component.chaincode as FlowDocumentComponent;
+            const doc = flowDocComponent.document;
+
+            // TODO getProcess happens after run is called not before the component is ready. May want to formalize
+            // this ready call.
+            doc.ready.then(() => {
+                // buildTestParagraph(doc);
+                const editor = new VirtualizedView();
+                const editorProps: IVirtualizedProps = { virtualize: this.props.virtualize, scheduler: new Scheduler(), doc, trackedPositions: [] };
+                editor.mount(editorProps);
+                this.setState({ doc, editor, editorProps });
+            });
         });
     }
 
@@ -73,7 +81,7 @@ export class FlowEditor extends React.Component<IProps, IState> {
         const asAny = inclusion as any;
         
         if (asAny.chaincode) {
-            this.state.doc.insertComponent(position, this.props.config.serverUrl, asAny.docId, asAny.chaincode);
+            this.state.doc.insertComponent(position, null /* this.props.config.serverUrl */, asAny.docId, asAny.chaincode);
         } else if (asAny.innerHTML) {
             this.state.doc.insertHTML(position, asAny);
         } else {

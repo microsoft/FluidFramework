@@ -17,8 +17,8 @@ module.exports = env => {
         
         // We use WebPack to bundle assets like CSS, but do not require WebPack to bundle our dependencies since
         // the output of this pack package is rebundled by the consuming apps ('routerlicious' and 'flow-app')
-        target: "node",                 // Do not bundle built-in node modules (e.g., 'fs', 'path', etc.)
-        externals: [nodeExternals()],   // Do not bundle modules in /node_modules/ folder 
+        // target: "node",                 // Do not bundle built-in node modules (e.g., 'fs', 'path', etc.)
+        // externals: [nodeExternals()],   // Do not bundle modules in /node_modules/ folder 
 
         module: {
             rules: [
@@ -43,18 +43,27 @@ module.exports = env => {
                 },
                 {
                     test: /\.css$/,
-                    include: path.join(__dirname, 'src'),
                     use: [
-                        'style-loader', {
-                            loader: 'typings-for-css-modules-loader',
-                            options: {
-                                modules: true,
-                                namedExport: true,
-                                localIdentName: styleLocalIdentName
-                            }
-                        }
+                        "style-loader", // creates style nodes from JS strings
+                        "css-loader", // translates CSS into CommonJS
                     ]
-                }]
+                }
+                // {
+                //     test: /\.css$/,
+                //     include: path.join(__dirname, 'src'),
+                //     use: [
+                //         'style-loader', {
+                //             loader: 'typings-for-css-modules-loader',
+                //             options: {
+                //                 modules: true,
+                //                 namedExport: true,
+                //                 localIdentName: styleLocalIdentName
+                //             }
+                //         },
+                //         "css-loader", // translates CSS into CommonJS
+                //     ]
+                // }
+        ]
         },
         output: {
             filename: "[name].bundle.js",
@@ -63,7 +72,8 @@ module.exports = env => {
             // https://github.com/webpack/webpack/issues/5767
             // https://github.com/webpack/webpack/issues/7939            
             devtoolNamespace: "flow-host",
-            libraryTarget: "umd"
+            libraryTarget: "umd",
+            publicPath: "/dist/",
         },
         devServer: {
             contentBase: [path.resolve(__dirname, 'assets')],

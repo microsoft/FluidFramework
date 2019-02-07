@@ -1,3 +1,4 @@
+import { IPlatform, ITree } from "@prague/container-definitions";
 import { MapExtension } from "@prague/map";
 import { SharedString, CollaborativeStringExtension } from "@prague/sequence";
 import { Component } from "@prague/app-component";
@@ -15,7 +16,9 @@ import {
     Marker,
     ReferencePosition
 } from "@prague/merge-tree";
-import { IChaincode } from "@prague/runtime-definitions";
+import { ComponentHost } from "@prague/runtime";
+import { IChaincodeComponent, IComponentRuntime, IComponentDeltaHandler, IComponentPlatform, IChaincode } from "@prague/runtime-definitions";
+import { Deferred } from "@prague/utils";
 
 export enum DocSegmentKind {
     Text = "text",
@@ -94,12 +97,17 @@ const accumAsLeafAction = {
 };
 
 export class FlowDocument extends Component {
+    public get ready() {
+        return this.readyDeferred.promise;
+    }
+
     private maybeSharedString?: SharedString;
     private maybeMergeTree?: MergeTree;
     private maybeClientId?: number;
     private static readonly paragraphTileProperties = { [reservedTileLabelsKey]: [DocSegmentKind.Paragraph] };
     private static readonly lineBreakTileProperties = { [reservedTileLabelsKey]: [DocSegmentKind.LineBreak] };
     private static readonly eofTileProperties       = { [reservedTileLabelsKey]: [DocSegmentKind.EOF] };
+    private readyDeferred = new Deferred<void>();
 
     constructor() {
         super([
@@ -126,6 +134,8 @@ export class FlowDocument extends Component {
         const client = this.sharedString.client;
         this.maybeClientId = client.getClientId();
         this.maybeMergeTree = client.mergeTree;
+
+        this.readyDeferred.resolve();
     }
 
     private get sharedString() { return this.maybeSharedString as SharedString; }
@@ -231,7 +241,70 @@ export class FlowDocument extends Component {
     public static readonly type = `${require("../package.json").name}@${require("../package.json").version}`;
 }
 
-// Chainloader bootstrap.
-export async function instantiate(): Promise<IChaincode> {
-    return Component.instantiate(new FlowDocument());
+/**
+ * A document is a collection of collaborative types.
+ */
+export class FlowDocumentComponent implements IChaincodeComponent {
+    public readonly document = new FlowDocument();
+    private chaincode: IChaincode;
+    private component: ComponentHost;
+
+    constructor() {
+        this.chaincode = Component.instantiate(this.document);
+    }
+
+    public getModule(type: string) {
+        return null;
+    }
+
+    public async close(): Promise<void> {
+        return;
+    }
+
+    public async run(runtime: IComponentRuntime, platform: IPlatform): Promise<IComponentDeltaHandler> {
+        const chaincode = this.chaincode;
+
+        // All of the below would be hidden from a developer
+        // Is this an await or does it just go?
+        const component = await ComponentHost.LoadFromSnapshot(
+            runtime,
+            runtime.tenantId,
+            runtime.documentId,
+            runtime.id,
+            runtime.parentBranch,
+            runtime.existing,
+            runtime.options,
+            runtime.clientId,
+            runtime.user,
+            runtime.blobManager,
+            runtime.baseSnapshot,
+            chaincode,
+            runtime.deltaManager,
+            runtime.getQuorum(),
+            runtime.storage,
+            runtime.connectionState,
+            runtime.branch,
+            runtime.minimumSequenceNumber,
+            runtime.snapshotFn,
+            runtime.closeFn);
+        this.component = component;
+
+        return component;
+    }
+
+    public async attach(platform: IComponentPlatform): Promise<IComponentPlatform> {
+        return null;
+    }
+
+    public snapshot(): ITree {
+        const entries = this.component.snapshotInternal();
+        return { entries };
+    }
+}
+
+/**
+ * Instantiates a new chaincode component
+ */
+export async function instantiateComponent(): Promise<IChaincodeComponent> {
+    return new FlowDocumentComponent();
 }
