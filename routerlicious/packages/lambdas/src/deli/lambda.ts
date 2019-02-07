@@ -41,6 +41,8 @@ export interface ITicketedMessageOutput {
     timestamp: number;
 
     type: string;
+
+    forwardSend: boolean;
 }
 
 const SequenceNumberComparer: IComparer<IClientSequenceNumber> = {
@@ -73,6 +75,7 @@ export class DeliLambda implements IPartitionLambda {
     private branchMap: RangeTracker;
     private checkpointContext: CheckpointContext;
     private idleTimer: any;
+    private noopTimer: any;
 
     constructor(
         private context: IContext,
@@ -135,6 +138,7 @@ export class DeliLambda implements IPartitionLambda {
     public handler(rawMessage: IKafkaMessage): void {
         // In cases where we are reprocessing messages we have already checkpointed exit early
         if (rawMessage.offset < this.logOffset) {
+            console.log(`Return in kafka level!`);
             return;
         }
 
@@ -143,16 +147,36 @@ export class DeliLambda implements IPartitionLambda {
         const boxcar = extractBoxcar(rawMessage);
         let lastSendP = Promise.resolve();
 
-        for (const message of boxcar.contents) {
+        console.log(`LENGTH OF CAR: ${boxcar.contents.length}`);
+        // tslint:disable
+        for (let i = 0; i < boxcar.contents.length; ++i) {
+            const message = boxcar.contents[i];
+            const rMessage = message as IRawOperationMessage;
+            console.log(`Ingested ${i}: ${rMessage.clientId} to ${rMessage.operation.type}:${rMessage.operation.clientSequenceNumber}`);
             // Ticket current message.
             const ticketedMessage = this.ticket(message, this.createTrace("start"));
 
             // Return early if message is not valid.
             if (!ticketedMessage) {
-                return;
+                continue;
             }
 
-            // Send tick1eted message to scriptorium.
+            if (!ticketedMessage.forwardSend) {
+                if (this.noopTimer !== undefined) {
+                    clearTimeout(this.noopTimer);
+                }
+                this.noopTimer = setTimeout(() => {
+                    const noOpMessage = this.createNoOpMessage();
+                    this.sendToDeli(noOpMessage);
+                    console.log(`I JUST SENT A NOOP MAN`);
+                }, 500);
+                continue;
+            }
+
+            if (this.noopTimer !== undefined) {
+                clearTimeout(this.noopTimer);
+            }
+
             lastSendP = this.sendToScriptorium(ticketedMessage.message);
 
             // Check if there are any old/idle clients. Craft and send a leave message to alfred.
@@ -211,6 +235,9 @@ export class DeliLambda implements IPartitionLambda {
 
         const systemContent = this.extractSystemContent(message);
 
+        // tslint:disable
+        // console.log(`Received ${message.clientId} to ${message.operation.type}:${message.operation.clientSequenceNumber}`);
+
         if (this.isDuplicate(message, systemContent)) {
             return;
         }
@@ -260,14 +287,18 @@ export class DeliLambda implements IPartitionLambda {
             }
         }
 
-        // Early termination for no-op messages.
-        if (message.operation.type === MessageType.NoOp && message.clientId) {
-            this.updateClientTimestamp(message.clientId, message.timestamp);
-            return;
-        }
-
         // Increment and grab the next sequence number
-        const sequenceNumber = this.revSequenceNumber();
+        let sequenceNumber = this.sequenceNumber;
+        let forwardSend = true;
+        if (message.operation.type !== MessageType.NoOp) {
+            sequenceNumber = this.revSequenceNumber();
+        } else {
+            if (!message.clientId) {
+                sequenceNumber = this.revSequenceNumber();
+            } else {
+                forwardSend = false;
+            }
+        }
 
         let origin: IBranchOrigin;
 
@@ -337,6 +368,7 @@ export class DeliLambda implements IPartitionLambda {
                     message.operation.referenceSequenceNumber >= this.minimumSequenceNumber,
                     `${message.operation.referenceSequenceNumber} >= ${this.minimumSequenceNumber}`);
 
+                // console.log(`Updated ${message.clientId} to ${message.operation.type}:${message.operation.clientSequenceNumber}`);
                 this.upsertClient(
                     message.clientId,
                     message.operation.clientSequenceNumber,
@@ -368,6 +400,7 @@ export class DeliLambda implements IPartitionLambda {
         };
 
         return {
+            forwardSend,
             message: sequencedMessage,
             timestamp: message.timestamp,
             type: message.operation.type,
@@ -443,7 +476,7 @@ export class DeliLambda implements IPartitionLambda {
         // For back compat ignore the 0/undefined message
         if (clientSequenceNumber && (node.value.clientSequenceNumber + 1 !== clientSequenceNumber)) {
             // tslint:disable-next-line:max-line-length
-            winston.info(`Duplicate ${node.value.clientId}:${node.value.clientSequenceNumber} !== ${clientSequenceNumber}`);
+            winston.info(`Duplicate ${node.value.clientId}:${node.value.clientSequenceNumber + 1} !== ${clientSequenceNumber}`);
             return true;
         }
 
@@ -505,6 +538,7 @@ export class DeliLambda implements IPartitionLambda {
             type: NackOperationType,
         };
         return {
+            forwardSend: true,
             message: nackMessage,
             timestamp: message.timestamp,
             type: message.operation.type,
@@ -577,6 +611,7 @@ export class DeliLambda implements IPartitionLambda {
     /**
      * Begins tracking or updates an already tracked client.
      * @param clientId The client identifier
+     * @param clientSequenceNumber The sequence number generated by client
      * @param referenceSequenceNumber The sequence number the client is at
      * @param timestamp The time of the operation
      * @param canEvict Flag indicating whether or not we can evict the client (branch clients cannot be evicted)
@@ -640,14 +675,6 @@ export class DeliLambda implements IPartitionLambda {
         heapNode.value.lastUpdate = timestamp;
         heapNode.value.nack = nack;
         this.clientSeqNumbers.update(heapNode);
-    }
-
-    private updateClientTimestamp(clientId: string, timestamp: number) {
-        const heapNode = this.clientNodeMap.get(clientId);
-        if (heapNode) {
-            heapNode.value.lastUpdate = timestamp;
-            this.clientSeqNumbers.update(heapNode);
-        }
     }
 
     /**
