@@ -3,6 +3,7 @@ import { Scheduler, KeyCode } from "@prague/flow-util";
 import { DocumentView, IDocumentProps } from "../document";
 import { View, IViewState } from "..";
 import { shouldIgnoreEvent } from "../inclusion";
+import { ISegment } from "@prague/merge-tree";
 
 export interface IEditorProps extends IDocumentProps { 
     scheduler: Scheduler;
@@ -131,6 +132,25 @@ export class Editor extends View<IEditorProps, IEditorViewState> {
         }
     }
 
+    private horizontalArrow(ev: KeyboardEvent, deltaX: number) {
+        this.cursor.moveBy(deltaX, ev.shiftKey);
+        this.invalidate();
+        ev.stopPropagation();
+    }
+
+    private verticalArrow(ev: KeyboardEvent, searchFn: (x: number, top: number, bottom: number) => { segment: ISegment, offset: number} | undefined) {
+        const cursorBounds = this.cursor.bounds;
+        if (cursorBounds) {
+            const segmentAndOffset = searchFn(cursorBounds.left, cursorBounds.top, cursorBounds.bottom);
+            if (segmentAndOffset) {
+                const position = this.doc.getPosition(segmentAndOffset.segment);
+                this.cursor.moveTo(position + segmentAndOffset.offset, ev.shiftKey);
+                this.invalidate();
+                ev.stopPropagation();
+            }
+        }
+    }
+
     private readonly onKeyDown = (ev: KeyboardEvent) => {
         const keyCode = ev.keyCode;
         switch (keyCode) {
@@ -146,28 +166,19 @@ export class Editor extends View<IEditorProps, IEditorViewState> {
                 break;
             }
             case KeyCode.LeftArrow: {
-                this.cursor.moveBy(-1, ev.shiftKey);
-                this.invalidate();
-                ev.stopPropagation();
+                this.horizontalArrow(ev, -1);
                 break;
             }
             case KeyCode.RightArrow: {
-                this.cursor.moveBy(+1, ev.shiftKey);
-                this.invalidate();
-                ev.stopPropagation();
+                this.horizontalArrow(ev, +1);
                 break;
             }
             case KeyCode.DownArrow: {
-                const cursorBounds = this.cursor.bounds;
-                if (cursorBounds) {
-                    const segmentAndOffset = this.state.docView.findBelow(cursorBounds.left, cursorBounds.top, cursorBounds.bottom);
-                    if (segmentAndOffset) {
-                        const position = this.doc.getPosition(segmentAndOffset.segment!);
-                        this.cursor.moveTo(position + segmentAndOffset.offset, ev.shiftKey);
-                        this.invalidate();
-                        ev.stopPropagation();
-                    }
-                }
+                this.verticalArrow(ev, this.state.docView.findBelow);
+                break;
+            }
+            case KeyCode.UpArrow: {
+                this.verticalArrow(ev, this.state.docView.findAbove);
                 break;
             }
             default: {
