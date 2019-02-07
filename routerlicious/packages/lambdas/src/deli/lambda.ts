@@ -42,7 +42,7 @@ export interface ITicketedMessageOutput {
 
     type: string;
 
-    forwardSend: boolean;
+    sendLater: boolean;
 }
 
 const SequenceNumberComparer: IComparer<IClientSequenceNumber> = {
@@ -156,9 +156,10 @@ export class DeliLambda implements IPartitionLambda {
                 continue;
             }
 
-            // Return early but start a timer for noop messages.
+            // Return early but start a timer for noop messages if we want to
+            // delay sending it.
             this.clearNoOpTimer();
-            if (!ticketedMessage.forwardSend) {
+            if (ticketedMessage.sendLater) {
                 this.setNoOpTimer();
                 continue;
             }
@@ -262,17 +263,15 @@ export class DeliLambda implements IPartitionLambda {
             }
         }
 
-        // Increment and grab the next sequence number
+        // Get the current sequence number and increment it if appropriate.
+        // We don't increment sequence number for noops sent by client since they will
+        // be consolidated and sent later as raw message.
         let sequenceNumber = this.sequenceNumber;
-        let forwardSend = true;
-        if (message.operation.type !== MessageType.NoOp) {
-            sequenceNumber = this.revSequenceNumber();
+        let sendLater = false;
+        if (message.operation.type === MessageType.NoOp && message.clientId) {
+            sendLater = true;
         } else {
-            if (!message.clientId) {
-                sequenceNumber = this.revSequenceNumber();
-            } else {
-                forwardSend = false;
-            }
+            sequenceNumber = this.revSequenceNumber();
         }
 
         let origin: IBranchOrigin;
@@ -374,8 +373,8 @@ export class DeliLambda implements IPartitionLambda {
         };
 
         return {
-            forwardSend,
             message: sequencedMessage,
+            sendLater,
             timestamp: message.timestamp,
             type: message.operation.type,
         };
@@ -512,8 +511,8 @@ export class DeliLambda implements IPartitionLambda {
             type: NackOperationType,
         };
         return {
-            forwardSend: true,
             message: nackMessage,
+            sendLater: true,
             timestamp: message.timestamp,
             type: message.operation.type,
         };
