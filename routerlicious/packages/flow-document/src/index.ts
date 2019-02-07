@@ -175,6 +175,11 @@ export class FlowDocument extends Component {
         this.sharedString.insertText(text, position);
     }
 
+    public replaceWithText(start: number, end: number, text: string) {
+        debug(`replaceWithText(${start}, ${end}, "${text}")`);
+        this.sharedString.replaceText(text, start, end);
+    }
+
     public remove(start: number, end: number) {
         debug(`remove(${start},${end})`);
         this.sharedString.removeText(start, end);

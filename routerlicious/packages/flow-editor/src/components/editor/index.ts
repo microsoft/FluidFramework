@@ -1,5 +1,5 @@
 import { Cursor } from "./cursor";
-import { Scheduler } from "@prague/flow-util";
+import { Scheduler, KeyCode } from "@prague/flow-util";
 import { DocumentView, IDocumentProps } from "../document";
 import { View, IViewState } from "..";
 import { shouldIgnoreEvent } from "../inclusion";
@@ -33,7 +33,7 @@ export class Editor extends View<IEditorProps, IEditorViewState> {
         this.invalidate = this.render;
     }
 
-    private on(listeners: ListenerRegistration[], target: EventTarget, type: string, listener: EventListener) {
+    private on<K extends keyof HTMLElementEventMap>(listeners: ListenerRegistration[], target: EventTarget, type: K | string, listener: (ev: HTMLElementEventMap[K]) => any) {
         const wrappedListener = (e: Event) => {
             // Ignore events that bubble up from inclusions
             if (shouldIgnoreEvent(e)) {
@@ -60,9 +60,9 @@ export class Editor extends View<IEditorProps, IEditorViewState> {
 
         const listeners: ListenerRegistration[] = [];
         const eventSink = props.eventSink || root;
-        this.on(listeners, eventSink, "keydown",   this.onKeyDown as any);
-        this.on(listeners, eventSink, "keypress",  this.onKeyPress as any);
-        this.on(listeners, eventSink, "mousedown", this.onMouseDown as any);
+        this.on(listeners, eventSink, "keydown",   this.onKeyDown);
+        this.on(listeners, eventSink, "keypress",  this.onKeyPress);
+        this.on(listeners, eventSink, "mousedown", this.onMouseDown);
         this.on(listeners, window,    "resize",    this.invalidate);
 
         props.doc.on("op", this.invalidate);
@@ -108,38 +108,57 @@ export class Editor extends View<IEditorProps, IEditorViewState> {
         this.cursor.render();
     }
 
-    private readonly onKeyDown = async (ev: KeyboardEvent) => {
-        switch (ev.keyCode) {
-            case 8: {
-                // Note: Chrome 69 delivers backspace on 'keydown' only (i.e., 'keypress' is not fired.)
-                //       Safari 12 delivers backspace on both 'keydown' and 'keypress'.
-                const start = this.cursor.selectionStart;
-                const end = this.cursor.position;
+    private delete(deltaStart: number, deltaEnd: number) {
+        const start = this.cursor.selectionStart;
+        const end = this.cursor.position;
 
-                if (start === end) {
-                    // If no range is currently selected, delete the preceding character (if any).
-                    this.doc.remove(start - 1, start);
-                } else {
-                    // Otherwise, delete the selected range.
-                    this.doc.remove(Math.min(start, end), Math.max(start, end));
-                }
+        if (start === end) {
+            // If no range is currently selected, delete the preceding character (if any).
+            this.doc.remove(start + deltaStart, end + deltaEnd);
+        } else {
+            // Otherwise, delete the selected range.
+            this.doc.remove(Math.min(start, end), Math.max(start, end));
+        }
+    }
+
+    private insertText(text: string) {
+        const start = this.cursor.selectionStart;
+        const end = this.cursor.position;
+        if (start === end) {
+            this.doc.insertText(end, text);
+        } else {
+            this.doc.replaceWithText(Math.min(start, end), Math.max(start, end), text);
+        }
+    }
+
+    private readonly onKeyDown = (ev: KeyboardEvent) => {
+        const keyCode = ev.keyCode;
+        switch (keyCode) {
+            // Note: Chrome 69 delivers backspace on 'keydown' only (i.e., 'keypress' is not fired.)
+            case KeyCode.Backspace: {
+                this.delete(-1, 0);
                 ev.stopPropagation();
                 break;
             }
-            case 37: {
+            case KeyCode.Delete: {
+                this.delete(0, 1);
+                ev.stopPropagation();
+                break;
+            }
+            case KeyCode.LeftArrow: {
                 this.cursor.moveBy(-1, ev.shiftKey);
                 this.invalidate();
                 ev.stopPropagation();
                 break;
             }
-            case 39: {
+            case KeyCode.RightArrow: {
                 this.cursor.moveBy(+1, ev.shiftKey);
                 this.invalidate();
                 ev.stopPropagation();
                 break;
             }
-            case 40: {
-                const cursorBounds = await this.cursor.bounds;
+            case KeyCode.DownArrow: {
+                const cursorBounds = this.cursor.bounds;
                 if (cursorBounds) {
                     const segmentAndOffset = this.state.docView.findBelow(cursorBounds.left, cursorBounds.top, cursorBounds.bottom);
                     if (segmentAndOffset) {
@@ -160,11 +179,11 @@ export class Editor extends View<IEditorProps, IEditorViewState> {
 
     private readonly onKeyPress = (ev: KeyboardEvent) => {
         switch (ev.keyCode) {
-            case 8: {
+            case KeyCode.Backspace: {
                 // Note: Backspace handled on 'keydown' event to support Chrome 69 (see comment in 'onKeyDown').
                 break;
             }
-            case 13: {
+            case KeyCode.Enter: {
                 if (ev.shiftKey) {
                     this.doc.insertLineBreak(this.cursor.position);
                 } else {
@@ -174,8 +193,7 @@ export class Editor extends View<IEditorProps, IEditorViewState> {
                 break;
             }
             default: {
-                console.log(`Key: ${ev.key} (${ev.keyCode})`);
-                this.doc.insertText(this.cursor.position, ev.key);
+                this.insertText(ev.key);
                 ev.stopPropagation();
                 ev.preventDefault();
                 break;
