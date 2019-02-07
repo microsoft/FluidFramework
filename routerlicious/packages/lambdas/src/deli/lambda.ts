@@ -74,6 +74,7 @@ export class DeliLambda implements IPartitionLambda {
     private minimumSequenceNumber = 0;
     private branchMap: RangeTracker;
     private checkpointContext: CheckpointContext;
+    private lastSendP = Promise.resolve();
     private idleTimer: any;
     private noopTimer: any;
 
@@ -138,21 +139,15 @@ export class DeliLambda implements IPartitionLambda {
     public handler(rawMessage: IKafkaMessage): void {
         // In cases where we are reprocessing messages we have already checkpointed exit early
         if (rawMessage.offset < this.logOffset) {
-            console.log(`Return in kafka level!`);
             return;
         }
 
         this.logOffset = rawMessage.offset;
 
         const boxcar = extractBoxcar(rawMessage);
-        let lastSendP = Promise.resolve();
 
-        console.log(`LENGTH OF CAR: ${boxcar.contents.length}`);
-        // tslint:disable
-        for (let i = 0; i < boxcar.contents.length; ++i) {
-            const message = boxcar.contents[i];
-            const rMessage = message as IRawOperationMessage;
-            console.log(`Ingested ${i}: ${rMessage.clientId} to ${rMessage.operation.type}:${rMessage.operation.clientSequenceNumber}`);
+        for (const message of boxcar.contents) {
+
             // Ticket current message.
             const ticketedMessage = this.ticket(message, this.createTrace("start"));
 
@@ -161,23 +156,14 @@ export class DeliLambda implements IPartitionLambda {
                 continue;
             }
 
+            // Return early but start a timer for noop messages.
+            this.clearNoOpTimer();
             if (!ticketedMessage.forwardSend) {
-                if (this.noopTimer !== undefined) {
-                    clearTimeout(this.noopTimer);
-                }
-                this.noopTimer = setTimeout(() => {
-                    const noOpMessage = this.createNoOpMessage();
-                    this.sendToDeli(noOpMessage);
-                    console.log(`I JUST SENT A NOOP MAN`);
-                }, 500);
+                this.setNoOpTimer();
                 continue;
             }
 
-            if (this.noopTimer !== undefined) {
-                clearTimeout(this.noopTimer);
-            }
-
-            lastSendP = this.sendToScriptorium(ticketedMessage.message);
+            this.lastSendP = this.sendToScriptorium(ticketedMessage.message);
 
             // Check if there are any old/idle clients. Craft and send a leave message to alfred.
             // To prevent recurrent leave message sending, leave messages are only piggybacked with
@@ -194,7 +180,7 @@ export class DeliLambda implements IPartitionLambda {
         const checkpoint = this.generateCheckpoint();
         // TODO optimize this to aviod doing per message
         // Checkpoint the current state
-        lastSendP.then(
+        this.lastSendP.then(
             () => {
                 this.checkpointContext.checkpoint(checkpoint);
             },
@@ -205,23 +191,15 @@ export class DeliLambda implements IPartitionLambda {
 
         // Start a timer to check inactivity on the document. To trigger idle client leave message,
         // we send a noop back to alfred. The noop should trigger a client leave message if there are any.
-        if (this.idleTimer !== undefined) {
-            clearTimeout(this.idleTimer);
-        }
-
-        this.idleTimer = setTimeout(() => {
-            const noOpMessage = this.createNoOpMessage();
-            this.sendToDeli(noOpMessage);
-        }, this.activityTimeout);
+        this.clearIdleTimer();
+        this.setIdleTimer();
     }
 
     public close() {
         this.checkpointContext.close();
 
-        if (this.idleTimer !== undefined) {
-            clearTimeout(this.idleTimer);
-            this.idleTimer = undefined;
-        }
+        this.clearIdleTimer();
+        this.clearNoOpTimer();
     }
 
     private ticket(rawMessage: IMessage, trace: ITrace): ITicketedMessageOutput {
@@ -234,9 +212,6 @@ export class DeliLambda implements IPartitionLambda {
         let message = rawMessage as IRawOperationMessage;
 
         const systemContent = this.extractSystemContent(message);
-
-        // tslint:disable
-        // console.log(`Received ${message.clientId} to ${message.operation.type}:${message.operation.clientSequenceNumber}`);
 
         if (this.isDuplicate(message, systemContent)) {
             return;
@@ -368,7 +343,6 @@ export class DeliLambda implements IPartitionLambda {
                     message.operation.referenceSequenceNumber >= this.minimumSequenceNumber,
                     `${message.operation.referenceSequenceNumber} >= ${this.minimumSequenceNumber}`);
 
-                // console.log(`Updated ${message.clientId} to ${message.operation.type}:${message.operation.clientSequenceNumber}`);
                 this.upsertClient(
                     message.clientId,
                     message.operation.clientSequenceNumber,
@@ -698,6 +672,34 @@ export class DeliLambda implements IPartitionLambda {
             if (client.value.canEvict && (timestamp - client.value.lastUpdate > this.clientTimeout)) {
                 return client.value;
             }
+        }
+    }
+
+    private setIdleTimer() {
+        this.idleTimer = setTimeout(() => {
+            const noOpMessage = this.createNoOpMessage();
+            this.sendToDeli(noOpMessage);
+        }, this.activityTimeout);
+    }
+
+    private clearIdleTimer() {
+        if (this.idleTimer !== undefined) {
+            clearTimeout(this.idleTimer);
+            this.idleTimer = undefined;
+        }
+    }
+
+    private setNoOpTimer() {
+        this.noopTimer = setTimeout(() => {
+            const noOpMessage = this.createNoOpMessage();
+            this.sendToDeli(noOpMessage);
+        }, 500);
+    }
+
+    private clearNoOpTimer() {
+        if (this.noopTimer !== undefined) {
+            clearTimeout(this.noopTimer);
+            this.noopTimer = undefined;
         }
     }
 }
