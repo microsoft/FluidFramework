@@ -12,7 +12,8 @@ interface IProps {
     virtualize: boolean;
     cmds: { 
         insert: (element: JSX.Element) => void,
-        insertText: (lines: string[]) => void
+        insertText: (lines: string[]) => void,
+        insertContainerComponent: (pkg: string) => void,
     };
 }
 
@@ -30,6 +31,7 @@ export class FlowEditor extends React.Component<IProps, IState> {
         this.state = {};
         this.props.cmds.insert = this.insert;
         this.props.cmds.insertText = this.insertText;
+        this.props.cmds.insertContainerComponent = this.insertContainerComponent;
     }
 
     componentWillMount() {
@@ -91,6 +93,13 @@ export class FlowEditor extends React.Component<IProps, IState> {
             ReactDOM.render(asAny, root);
             this.state.doc.insertHTML(position, root);
         }
+    }
+
+    insertContainerComponent = (pkg: string) => {
+        const position = this.state.editor.cursorPosition;        
+        console.log(position);
+        console.log(pkg);
+        // this.state.doc.insertComponent(position, inclusion.compId, pkg);
     }
 
     insertText = (lines: string[]) => {

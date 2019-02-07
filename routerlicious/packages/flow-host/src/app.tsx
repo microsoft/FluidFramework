@@ -23,7 +23,8 @@ interface IState {
 export class App extends React.Component<IProps, IState> {
     private readonly cmds = { 
         insert: (element: JSX.Element | HTMLElement | { docId: string, chaincode?: string }) => { alert("insert(?)"); },
-        insertText: (lines: string[]) => { alert("insert(text)"); }
+        insertText: (lines: string[]) => { alert("insert(text)"); },
+        insertContainerComponent: (pkg: string) => { alert("insertContainerComponent(pkg)"); },
     };
 
     private readonly chaincodeDlg = React.createRef<ChaincodeDialog>();
@@ -82,6 +83,9 @@ export class App extends React.Component<IProps, IState> {
         ) },
         /*{ name: "Wedge Left", iconName: "CaretRight", onClick: () => this.cmds.insert(<div className={style.wedgeLeft}></div>) },*/
         { name: "Wedge Right", iconName: "CaretLeft", onClick: () => this.cmds.insert(<div className={style.wedgeRight}></div>) },
+        { name: "Chart", iconName: "CaretLeft", onClick: () => this.cmds.insertContainerComponent("@chaincode/chart-view") },
+        { name: "Table", iconName: "CaretLeft", onClick: () => this.cmds.insertContainerComponent("@chaincode/table-view") },
+        { name: "Table Slice", iconName: "CaretLeft", onClick: () => this.cmds.insertContainerComponent("@chaincode/table-slice") },
         /*{ name: "Flow", iconName: "Text", onClick: () => this.cmds.insert(<FlowEditor cmds={this.cmds} docUrl="http://localhost:3000" docId={Math.random().toString(36).substr(2, 4)}></FlowEditor>) },*/
         { name: "Component", iconName: "Text", onClick: () => { this.chaincodeDlg.current.showDialog(); }},
     ].map(({name, iconName, onClick}) => { return {
