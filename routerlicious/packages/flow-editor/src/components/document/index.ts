@@ -495,6 +495,11 @@ export class DocumentLayout {
                 case InclusionKind.HTML:
                     child = getInclusionHtml(marker);
                     break;
+
+                case InclusionKind.Component:
+                    child = document.createElement("span");
+                    context.doc.getInclusionContainerComponent(marker, [["div", Promise.resolve(child)]]);
+                    break;
                 
                 default:
                     console.assert(kind === InclusionKind.Chaincode);

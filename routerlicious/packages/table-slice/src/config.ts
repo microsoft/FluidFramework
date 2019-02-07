@@ -5,7 +5,7 @@ import { IMap } from "@prague/map";
 const template = new Template({
     tag: "table",
     children: [
-        { tag: "caption", children: [{ tag: "span", props: { textContent: "Table-View Configuration" } }]},
+        { tag: "caption", children: [{ tag: "span", props: { textContent: "Table-Slice Configuration" } }]},
         { tag: "tfoot", children: [{ tag: "button", ref: "okButton", props: { textContent: "Ok" }}]},
         {
             tag: "tbody",

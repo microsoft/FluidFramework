@@ -25,7 +25,7 @@ export class TableView extends Component {
     }
 
     public async attach(platform: IComponentPlatform): Promise<IComponentPlatform> {
-        const maybeDiv = await this.platform.queryInterface<HTMLElement>("div");
+        const maybeDiv = await platform.queryInterface<HTMLElement>("div");
         if (!maybeDiv) {
             console.error(`No <div> provided`);
             return;

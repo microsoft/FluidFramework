@@ -19,6 +19,7 @@ import {
 import { ComponentHost } from "@prague/runtime";
 import { IChaincodeComponent, IComponentRuntime, IComponentDeltaHandler, IComponentPlatform, IChaincode } from "@prague/runtime-definitions";
 import { Deferred } from "@prague/utils";
+import { EventEmitter } from "events";
 
 export enum DocSegmentKind {
     Text = "text",
@@ -30,7 +31,8 @@ export enum DocSegmentKind {
 
 export enum InclusionKind {
     HTML = "<html>",
-    Chaincode = "<@chaincode>"
+    Chaincode = "<@chaincode>",
+    Component = "<@component>"
 }
 
 export const getInclusionKind = (marker: Marker): InclusionKind => marker.properties.kind;
@@ -96,6 +98,24 @@ const accumAsLeafAction = {
     ) => (accum as LeafAction)(position, segment, start, end)
 };
 
+class ServicePlatform extends EventEmitter implements IComponentPlatform {
+    private qi: Map<string, Promise<any>>;
+
+    constructor(services: ReadonlyArray<[string, Promise<any>]>) {
+        super();
+
+        this.qi = new Map(services);
+    }
+
+    public queryInterface<T>(id: string): Promise<T> {
+        return this.qi.get(id);
+    }
+
+    public detach() {
+        return;
+    }
+}
+
 export class FlowDocument extends Component {
     public get ready() {
         return this.readyDeferred.promise;
@@ -109,7 +129,7 @@ export class FlowDocument extends Component {
     private static readonly eofTileProperties       = { [reservedTileLabelsKey]: [DocSegmentKind.EOF] };
     private readyDeferred = new Deferred<void>();
 
-    constructor() {
+    constructor(private componentRuntime: IComponentRuntime) {
         super([
             [MapExtension.Type, new MapExtension()],
             [CollaborativeStringExtension.Type, new CollaborativeStringExtension()]
@@ -149,6 +169,11 @@ export class FlowDocument extends Component {
         return store.open(marker.properties.docId, "danlehen", marker.properties.chaincode, 
             services.concat([["datastore", Promise.resolve(store)]]));
     };
+
+    public async getInclusionContainerComponent(marker: Marker, services: ReadonlyArray<[string, Promise<any>]>) {
+        const component = await this.componentRuntime.getProcess(marker.properties.docId, true);
+        await component.attach(new ServicePlatform(services));
+    }
 
     public getSegmentAndOffset(position: number) {
         return this.mergeTree.getContainingSegment(position, UniversalSequenceNumber, this.clientId);        
@@ -211,6 +236,12 @@ export class FlowDocument extends Component {
         this.sharedString.insertMarker(position, ReferenceType.Simple, docInfo);
     }
 
+    public insertInclusionComponent(position: number, docId: string, pkg: string) {
+        const docInfo = { kind: InclusionKind.Component, docId };
+        this.sharedString.insertMarker(position, ReferenceType.Simple, docInfo);
+        this.componentRuntime.createAndAttachProcess(docId, pkg);
+    }
+
     public annotate(start: number, end: number, props: PropertySet) {
         this.sharedString.annotateRange(props, start, end);
     }
@@ -245,13 +276,9 @@ export class FlowDocument extends Component {
  * A document is a collection of collaborative types.
  */
 export class FlowDocumentComponent implements IChaincodeComponent {
-    public readonly document = new FlowDocument();
+    public document: FlowDocument;
     private chaincode: IChaincode;
     private component: ComponentHost;
-
-    constructor() {
-        this.chaincode = Component.instantiate(this.document);
-    }
 
     public getModule(type: string) {
         return null;
@@ -262,6 +289,8 @@ export class FlowDocumentComponent implements IChaincodeComponent {
     }
 
     public async run(runtime: IComponentRuntime, platform: IPlatform): Promise<IComponentDeltaHandler> {
+        this.document = new FlowDocument(runtime);
+        this.chaincode = Component.instantiate(this.document);
         const chaincode = this.chaincode;
 
         // All of the below would be hidden from a developer

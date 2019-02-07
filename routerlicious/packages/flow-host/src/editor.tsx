@@ -99,7 +99,7 @@ export class FlowEditor extends React.Component<IProps, IState> {
         const position = this.state.editor.cursorPosition;        
         console.log(position);
         console.log(pkg);
-        // this.state.doc.insertComponent(position, inclusion.compId, pkg);
+        this.state.doc.insertInclusionComponent(position, Math.random().toString(36).substr(2, 4), pkg);
     }
 
     insertText = (lines: string[]) => {

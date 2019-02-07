@@ -44,7 +44,7 @@ export class TableSlice extends Component {
         {
             const maybeServerUrl = await this.root.get(ConfigKeys.serverUrl);
             if (!maybeServerUrl) {
-                const maybeDiv = await this.platform.queryInterface<HTMLElement>("div");
+                const maybeDiv = await platform.queryInterface<HTMLElement>("div");
                 if (maybeDiv) {            
                     const docId = this.rootView.get(ConfigKeys.docId);
                     if (!docId) {
