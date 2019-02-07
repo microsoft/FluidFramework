@@ -17,6 +17,9 @@ export const ClientSequenceTimeout = 5 * 60 * 1000;
 // Timeout for sending no-ops to trigger inactivity checker.
 export const ActivityCheckingTimeout = 30 * 1000;
 
+// Timeout for sending consolidated no-ops.
+export const NoopConsolidationTimeout = 250;
+
 export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaFactory {
     constructor(
         private mongoManager: MongoManager,
@@ -48,7 +51,8 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
             this.forwardProducer,
             this.reverseProducer,
             ClientSequenceTimeout,
-            ActivityCheckingTimeout);
+            ActivityCheckingTimeout,
+            NoopConsolidationTimeout);
     }
 
     public async dispose(): Promise<void> {

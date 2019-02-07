@@ -87,7 +87,8 @@ export class DeliLambda implements IPartitionLambda {
         private forwardProducer: IProducer,
         private reverseProducer: IProducer,
         private clientTimeout: number,
-        private activityTimeout: number) {
+        private activityTimeout: number,
+        private noOpConsolidationTimeout: number) {
 
         // Instantiate existing clients
         if (dbObject.clients) {
@@ -692,7 +693,7 @@ export class DeliLambda implements IPartitionLambda {
         this.noopTimer = setTimeout(() => {
             const noOpMessage = this.createNoOpMessage();
             this.sendToDeli(noOpMessage);
-        }, 500);
+        }, this.noOpConsolidationTimeout);
     }
 
     private clearNoOpTimer() {
