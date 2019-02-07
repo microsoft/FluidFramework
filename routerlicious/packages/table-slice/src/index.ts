@@ -1,8 +1,11 @@
 import { MapExtension, IMapView } from "@prague/map";
 import { Component } from "@prague/app-component";
 import { DataStore } from "@prague/app-datastore";
-import { IChaincode } from "@prague/runtime-definitions";
+import { ITree, IPlatform } from "@prague/container-definitions";
+import { ComponentHost } from "@prague/runtime";
+import { IChaincode, IChaincodeComponent, IComponentPlatform, IComponentRuntime, IComponentDeltaHandler } from "@prague/runtime-definitions";
 import { TableDocument, CellRange } from "@chaincode/table-document";
+import { Deferred } from "@prague/utils";
 import { ConfigView } from "./config";
 import { ConfigKeys } from "./configKeys";
 
@@ -11,6 +14,7 @@ export class TableSlice extends Component {
     private maybeRootView?: IMapView;
     private maybeHeaders?: CellRange;
     private maybeValues?: CellRange;
+    private ready = new Deferred<void>();
 
     constructor() {
         super([[MapExtension.Type, new MapExtension()]]);
@@ -33,7 +37,10 @@ export class TableSlice extends Component {
     public async opened() {
         await this.connected;
         this.maybeRootView = await this.root.getView();
-     
+        this.ready.resolve();
+    }
+
+    public async attach(platform: IComponentPlatform): Promise<IComponentPlatform> {
         {
             const maybeServerUrl = await this.root.get(ConfigKeys.serverUrl);
             if (!maybeServerUrl) {
@@ -62,6 +69,8 @@ export class TableSlice extends Component {
         this.maybeValues  = await this.getRange(ConfigKeys.valuesRange);
 
         this.doc.on("op", (...args) => this.emit("op", ...args));
+
+        return;
     }
 
     public get name() { return this.rootView.get(ConfigKeys.name); }
@@ -75,7 +84,67 @@ export class TableSlice extends Component {
     public static readonly type = `${require("../package.json").name}@${require("../package.json").version}`;
 }
 
-// Chainloader bootstrap.
-export async function instantiate(): Promise<IChaincode> {
-    return Component.instantiate(new TableSlice());
+/**
+ * A document is a collection of collaborative types.
+ */
+export class TableViewComponent implements IChaincodeComponent {
+    public slice = new TableSlice();
+    private chaincode: IChaincode;
+    private component: ComponentHost;
+
+    constructor() {
+        this.chaincode = Component.instantiate(this.slice);
+    }
+
+    public getModule(type: string) {
+        return null;
+    }
+
+    public async close(): Promise<void> {
+        return;
+    }
+
+    public async run(runtime: IComponentRuntime, platform: IPlatform): Promise<IComponentDeltaHandler> {
+        const chaincode = this.chaincode;
+
+        // All of the below would be hidden from a developer
+        // Is this an await or does it just go?
+        const component = await ComponentHost.LoadFromSnapshot(
+            runtime,
+            runtime.tenantId,
+            runtime.documentId,
+            runtime.id,
+            runtime.parentBranch,
+            runtime.existing,
+            runtime.options,
+            runtime.clientId,
+            runtime.user,
+            runtime.blobManager,
+            runtime.baseSnapshot,
+            chaincode,
+            runtime.deltaManager,
+            runtime.getQuorum(),
+            runtime.storage,
+            runtime.connectionState,
+            runtime.branch,
+            runtime.minimumSequenceNumber,
+            runtime.snapshotFn,
+            runtime.closeFn);
+        this.component = component;
+
+        return component;
+    }
+
+    public async attach(platform: IComponentPlatform): Promise<IComponentPlatform> {
+        return this.slice.attach(platform);
+    }
+
+    public snapshot(): ITree {
+        const entries = this.component.snapshotInternal();
+        return { entries };
+    }
+}
+
+export async function instantiateComponent(): Promise<IChaincodeComponent> {
+    return new TableViewComponent();
 }

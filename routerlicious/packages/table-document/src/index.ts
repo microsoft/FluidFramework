@@ -1,3 +1,4 @@
+import { ITree, IPlatform } from "@prague/container-definitions";
 import { 
     UnboxedOper,
     Workbook,
@@ -27,7 +28,8 @@ import {
     IntervalType,
     LocalReference
 } from "@prague/merge-tree";
-import { IChaincode } from "@prague/runtime-definitions";
+import { ComponentHost } from "@prague/runtime";
+import { IChaincode, IChaincodeComponent, IComponentPlatform, IComponentRuntime, IComponentDeltaHandler } from "@prague/runtime-definitions";
 
 import { CellRange } from "./cellrange";
 export { CellRange };
@@ -216,7 +218,67 @@ export class TableDocument extends Component {
     public static readonly type = `${require("../package.json").name}@${require("../package.json").version}`;
 }
 
-// Chainloader bootstrap.
-export async function instantiate(): Promise<IChaincode> {
-    return Component.instantiate(new TableDocument());
+/**
+ * A document is a collection of collaborative types.
+ */
+export class TableDocumentComponent implements IChaincodeComponent {
+    public table = new TableDocument();
+    private chaincode: IChaincode;
+    private component: ComponentHost;
+
+    constructor() {
+        this.chaincode = Component.instantiate(this.table);
+    }
+
+    public getModule(type: string) {
+        return null;
+    }
+
+    public async close(): Promise<void> {
+        return;
+    }
+
+    public async run(runtime: IComponentRuntime, platform: IPlatform): Promise<IComponentDeltaHandler> {
+        const chaincode = this.chaincode;
+
+        // All of the below would be hidden from a developer
+        // Is this an await or does it just go?
+        const component = await ComponentHost.LoadFromSnapshot(
+            runtime,
+            runtime.tenantId,
+            runtime.documentId,
+            runtime.id,
+            runtime.parentBranch,
+            runtime.existing,
+            runtime.options,
+            runtime.clientId,
+            runtime.user,
+            runtime.blobManager,
+            runtime.baseSnapshot,
+            chaincode,
+            runtime.deltaManager,
+            runtime.getQuorum(),
+            runtime.storage,
+            runtime.connectionState,
+            runtime.branch,
+            runtime.minimumSequenceNumber,
+            runtime.snapshotFn,
+            runtime.closeFn);
+        this.component = component;
+
+        return component;
+    }
+
+    public async attach(platform: IComponentPlatform): Promise<IComponentPlatform> {
+        return;
+    }
+
+    public snapshot(): ITree {
+        const entries = this.component.snapshotInternal();
+        return { entries };
+    }
+}
+
+export async function instantiateComponent(): Promise<IChaincodeComponent> {
+    return new TableDocumentComponent();
 }
