@@ -10,6 +10,7 @@ import {
     BBCLambda,
     ClientSequenceTimeout,
     DeliLambda,
+    NoopConsolidationTimeout,
     ScriptoriumLambda,
     TmzLambda,
 } from "@prague/lambdas";
@@ -354,7 +355,8 @@ export class LocalOrderer implements IOrderer {
             this.deliToScriptoriumKafka,
             this.alfredToDeliKafka,
             clientTimeout,
-            ActivityCheckingTimeout);
+            ActivityCheckingTimeout,
+            NoopConsolidationTimeout);
 
         this.startLambdas();
     }
