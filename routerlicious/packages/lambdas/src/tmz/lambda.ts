@@ -80,14 +80,13 @@ export class TmzLambda extends SequencedLambda {
             const queueName = queueTask[0];
             const tasks = this.rateLimitter.filter(clientId, queueTask[1]);
             if (tasks.length > 0) {
-                const user = core.generateUser();
                 const queueMessage: IQueueMessage = {
                     documentId: docId,
                     message: {
                         tasks,
                     },
                     tenantId,
-                    token: core.generateToken(tenantId, docId, key, user),
+                    token: core.generateToken(tenantId, docId, key),
                 };
                 this.messageSender.sendTask(
                     queueName,

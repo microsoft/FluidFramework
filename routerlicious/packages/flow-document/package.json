@@ -42,7 +42,9 @@
     "@prague/utils": "^0.2.0"
   },
   "devDependencies": {
+    "@types/debug": "^0.0.31",
     "@types/node": "^10.12.12",
+    "debug": "^3.1.0",
     "source-map-loader": "^0.2.4",
     "ts-loader": "^4.5.0",
     "typescript": "^3.2.2",

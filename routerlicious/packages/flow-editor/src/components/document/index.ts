@@ -64,6 +64,9 @@ export interface IViewInfo<TProps, TView extends IFlowViewComponent<TProps>> {
     clientRects?: ClientRectList | DOMRectList;
 }
 
+type Rect = { top: number, bottom: number, left: number, right: number };
+type FindVerticalPredicate = (top: number, bottom: number, best: Rect, candidate: Rect) => boolean;
+
 /**
  * The state maintained by the DocumentView instance.
  */
@@ -169,6 +172,14 @@ export class DocumentView extends View<IDocumentProps, IDocumentViewState> {
  
     /** Returns the closest { segment, offset } to the 0-width rect described by x/top/bottom. */
     private findDomPosition(node: Node, x: number, yMin: number, yMax: number) {
+        // Note: Attempting to hit test using 'caretRangeFromPoint()' against a reported client rect's top/bottom
+        //       produced inconsistent results, presumably due to internal fixed-point -> Float32 rounding discrepancies.
+        // 
+        // Reported edge: 487.99713134765625
+        //
+        // Boundary case: 487.999999999999971578290569595992 (miss)
+        //                487.999999999999971578290569595993 (hit)
+
         // Note: Caller must pass a 'node' that was previously rendered for a TextSegment.
         const domRange = document.createRange();
         let left = 0
@@ -209,7 +220,7 @@ export class DocumentView extends View<IDocumentProps, IDocumentViewState> {
      * Returns the closest { segment, offset } below the text cursor occupying the 0-width rect
      * described by x/top/bottom.
      */
-    public findBelow(x: number, top: number, bottom: number) {
+    private findVertical(x: number, top: number, bottom: number, predicate: FindVerticalPredicate) {
         console.log(`looking below: ${bottom}`);
 
         const state = this.state;
@@ -230,16 +241,7 @@ export class DocumentView extends View<IDocumentProps, IDocumentViewState> {
             
             for (const rect of rects) {
                 console.log(`    ${JSON.stringify(rect)}`);
-                // Disqualify any rects at the same height, otherwise our algorithm will select the
-                // the current position.
-                if (rect.top <= top) {
-                    console.log(`        Rejected top: (${rect.top} <= ${top})`)
-                    continue;
-                }
-
-                // Disqualify any rects lower than our best match.
-                if (rect.top > bestRect.top) {
-                    console.log(`        Rejected dY: (${rect.top} > ${bestRect.top})`);
+                if (!predicate(top, bottom, bestRect, rect)) {
                     continue;
                 }
 
@@ -257,14 +259,6 @@ export class DocumentView extends View<IDocumentProps, IDocumentViewState> {
             }
         }
 
-        // Note: Attempting to hit test using 'caretRangeFromPoint()' against the reported client rect's top/bottom
-        //       produced inconsistent results, presumably due to internal fixed-point -> Float32 rounding discrepancies.
-        // 
-        // Reported edge: 487.99713134765625
-        //
-        // Boundary case: 487.999999999999971578290569595992 (miss)
-        //                487.999999999999971578290569595993 (hit)
-
         if (!bestViewInfo) {
             console.log(`No best candidate found.`);
             return undefined;
@@ -276,7 +270,35 @@ export class DocumentView extends View<IDocumentProps, IDocumentViewState> {
         return this.findDomPosition(
             LayoutContext.getCursorTarget(bestViewInfo.view),
             Math.min(Math.max(x, bestRect.left), bestRect.right),
-            bestRect.top, bestRect.bottom);    
+            bestRect.top, bestRect.bottom);
+    }
+
+    private static readonly findBelowPredicate: FindVerticalPredicate =
+        (top, bottom, best, candidate) => {
+            return candidate.top > top              // disqualify rects higher/same original height
+                && candidate.top <= best.top;       // disqualify rects lower than best match
+        };
+
+    private static readonly findAbovePredicate: FindVerticalPredicate =
+        (top, bottom, best, candidate) => {
+            return candidate.bottom < bottom        // disqualify rects lower/same as starting point
+                && candidate.bottom >= best.bottom; // disqualify rects higher than best match
+        };
+
+    /**
+     * Returns the closest { segment, offset } below the text cursor occupying the 0-width rect
+     * described by x/top/bottom.
+     */
+    public readonly findBelow = (x: number, top: number, bottom: number) => {
+        return this.findVertical(x, top, bottom, DocumentView.findBelowPredicate);
+    }
+
+    /**
+     * Returns the closest { segment, offset } below the text cursor occupying the 0-width rect
+     * described by x/top/bottom.
+     */
+    public readonly findAbove = (x: number, top: number, bottom: number) => {
+        return this.findVertical(x, top, bottom, DocumentView.findAbovePredicate);
     }
 }
 

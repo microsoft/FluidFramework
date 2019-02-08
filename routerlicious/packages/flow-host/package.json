@@ -10,6 +10,7 @@
   "sideEffects": false,
   "scripts": {
     "build": "npm run tsc && npm run build:esnext && npm run tslint && copyfiles -u 1 'src/**/*.css' dist/ && copyfiles -u 1 'src/**/*.css' lib/",
+    "build:dev": "webpack --env=\"development\"",
     "build:full": "npm run build && npm run webpack",
     "clean": "rimraf dist && rimraf lib",
     "tsc": "tsc",
@@ -17,7 +18,7 @@
     "tslint": "tslint --project tsconfig.json --format verbose",
     "webpack": "webpack --env=\"production\"",
     "webpack:full": "webpack --env=\"production\"",
-    "dev": "webpack-dev-server"
+    "dev": "npm run build:dev -- --watch"
   },
   "dependencies": {
     "@chaincode/chart-view": "^0.2.0",

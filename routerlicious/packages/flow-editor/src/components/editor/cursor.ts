@@ -71,8 +71,8 @@ export class Cursor {
 
     public getTracked() {
         return [
-            { position: this.selectionStart, callback: this.updateDomRangeStart },
             { position: this.position, callback: this.updateDomRangeEnd },
+            { position: this.selectionStart, callback: this.updateDomRangeStart },
         ];
     }
 
@@ -177,11 +177,9 @@ export class Cursor {
         this.endContainer = node;
         this.relativeEndOffset = nodeOffset;
 
-        requestAnimationFrame(() => {
-            this.updateCursor();
-            this.updateSelection();
-            this.restartBlinkAnimation();
-        });
+        this.updateCursor();
+        this.updateSelection();
+        this.restartBlinkAnimation();
     }
 
     private restartBlinkAnimation() {

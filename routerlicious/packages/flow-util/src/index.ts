@@ -1,3 +1,4 @@
+export { Char } from "./char";
 export { Dom } from "./dom";
 export { KeyCode } from "./keycode";
 export { lis } from "./lis";

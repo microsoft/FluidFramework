@@ -10423,7 +10423,9 @@ packages:
     version: 0.0.0
   'file:projects/flow-document.tgz':
     dependencies:
+      '@types/debug': 0.0.31
       '@types/node': 10.12.21
+      debug: 3.2.6
       source-map-loader: 0.2.4
       ts-loader: 4.5.0
       typescript: 3.3.1

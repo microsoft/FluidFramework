@@ -41,6 +41,8 @@ export interface ITicketedMessageOutput {
     timestamp: number;
 
     type: string;
+
+    sendLater: boolean;
 }
 
 const SequenceNumberComparer: IComparer<IClientSequenceNumber> = {
@@ -72,7 +74,10 @@ export class DeliLambda implements IPartitionLambda {
     private minimumSequenceNumber = 0;
     private branchMap: RangeTracker;
     private checkpointContext: CheckpointContext;
+    private lastSendP = Promise.resolve();
     private idleTimer: any;
+    private noopTimer: any;
+    private noActiveClients = false;
 
     constructor(
         private context: IContext,
@@ -83,7 +88,8 @@ export class DeliLambda implements IPartitionLambda {
         private forwardProducer: IProducer,
         private reverseProducer: IProducer,
         private clientTimeout: number,
-        private activityTimeout: number) {
+        private activityTimeout: number,
+        private noOpConsolidationTimeout: number) {
 
         // Instantiate existing clients
         if (dbObject.clients) {
@@ -141,19 +147,26 @@ export class DeliLambda implements IPartitionLambda {
         this.logOffset = rawMessage.offset;
 
         const boxcar = extractBoxcar(rawMessage);
-        let lastSendP = Promise.resolve();
 
         for (const message of boxcar.contents) {
+
             // Ticket current message.
             const ticketedMessage = this.ticket(message, this.createTrace("start"));
 
             // Return early if message is not valid.
             if (!ticketedMessage) {
-                return;
+                continue;
             }
 
-            // Send tick1eted message to scriptorium.
-            lastSendP = this.sendToScriptorium(ticketedMessage.message);
+            // Return early but start a timer for noop messages if we want to
+            // delay sending it.
+            this.clearNoOpTimer();
+            if (ticketedMessage.sendLater) {
+                this.setNoOpTimer();
+                continue;
+            }
+
+            this.lastSendP = this.sendToScriptorium(ticketedMessage.message);
 
             // Check if there are any old/idle clients. Craft and send a leave message to alfred.
             // To prevent recurrent leave message sending, leave messages are only piggybacked with
@@ -170,7 +183,7 @@ export class DeliLambda implements IPartitionLambda {
         const checkpoint = this.generateCheckpoint();
         // TODO optimize this to aviod doing per message
         // Checkpoint the current state
-        lastSendP.then(
+        this.lastSendP.then(
             () => {
                 this.checkpointContext.checkpoint(checkpoint);
             },
@@ -181,23 +194,15 @@ export class DeliLambda implements IPartitionLambda {
 
         // Start a timer to check inactivity on the document. To trigger idle client leave message,
         // we send a noop back to alfred. The noop should trigger a client leave message if there are any.
-        if (this.idleTimer !== undefined) {
-            clearTimeout(this.idleTimer);
-        }
-
-        this.idleTimer = setTimeout(() => {
-            const noOpMessage = this.createNoOpMessage();
-            this.sendToDeli(noOpMessage);
-        }, this.activityTimeout);
+        this.clearIdleTimer();
+        this.setIdleTimer();
     }
 
     public close() {
         this.checkpointContext.close();
 
-        if (this.idleTimer !== undefined) {
-            clearTimeout(this.idleTimer);
-            this.idleTimer = undefined;
-        }
+        this.clearIdleTimer();
+        this.clearNoOpTimer();
     }
 
     private ticket(rawMessage: IMessage, trace: ITrace): ITicketedMessageOutput {
@@ -260,8 +265,16 @@ export class DeliLambda implements IPartitionLambda {
             }
         }
 
-        // Increment and grab the next sequence number
-        const sequenceNumber = this.revSequenceNumber();
+        // Get the current sequence number and increment it if appropriate.
+        // We don't increment sequence number for noops sent by client since they will
+        // be consolidated and sent later as raw message.
+        let sequenceNumber = this.sequenceNumber;
+        let sendLater = false;
+        if (message.operation.type === MessageType.NoOp && message.clientId) {
+            sendLater = true;
+        } else {
+            sequenceNumber = this.revSequenceNumber();
+        }
 
         let origin: IBranchOrigin;
 
@@ -343,7 +356,13 @@ export class DeliLambda implements IPartitionLambda {
         // Store the previous minimum sequene number we returned and then update it. If there are no clients
         // then set the MSN to the next SN.
         const msn = this.getMinimumSequenceNumber();
-        this.minimumSequenceNumber = msn === -1 ? sequenceNumber : msn;
+        if (msn === -1) {
+            this.minimumSequenceNumber = sequenceNumber;
+            this.noActiveClients = true;
+        } else {
+            this.minimumSequenceNumber = msn;
+            this.noActiveClients = false;
+        }
 
         // Add traces
         if (message.operation.traces && message.operation.traces.length > 1) {
@@ -363,6 +382,7 @@ export class DeliLambda implements IPartitionLambda {
 
         return {
             message: sequencedMessage,
+            sendLater,
             timestamp: message.timestamp,
             type: message.operation.type,
         };
@@ -437,7 +457,7 @@ export class DeliLambda implements IPartitionLambda {
         // For back compat ignore the 0/undefined message
         if (clientSequenceNumber && (node.value.clientSequenceNumber + 1 !== clientSequenceNumber)) {
             // tslint:disable-next-line:max-line-length
-            winston.info(`Duplicate ${node.value.clientId}:${node.value.clientSequenceNumber} !== ${clientSequenceNumber}`);
+            winston.info(`Duplicate ${node.value.clientId}:${node.value.clientSequenceNumber + 1} !== ${clientSequenceNumber}`);
             return true;
         }
 
@@ -500,6 +520,7 @@ export class DeliLambda implements IPartitionLambda {
         };
         return {
             message: nackMessage,
+            sendLater: false,
             timestamp: message.timestamp,
             type: message.operation.type,
         };
@@ -571,6 +592,7 @@ export class DeliLambda implements IPartitionLambda {
     /**
      * Begins tracking or updates an already tracked client.
      * @param clientId The client identifier
+     * @param clientSequenceNumber The sequence number generated by client
      * @param referenceSequenceNumber The sequence number the client is at
      * @param timestamp The time of the operation
      * @param canEvict Flag indicating whether or not we can evict the client (branch clients cannot be evicted)
@@ -657,6 +679,40 @@ export class DeliLambda implements IPartitionLambda {
             if (client.value.canEvict && (timestamp - client.value.lastUpdate > this.clientTimeout)) {
                 return client.value;
             }
+        }
+    }
+
+    private setIdleTimer() {
+        if (this.noActiveClients) {
+            return;
+        }
+        this.idleTimer = setTimeout(() => {
+            const noOpMessage = this.createNoOpMessage();
+            this.sendToDeli(noOpMessage);
+        }, this.activityTimeout);
+    }
+
+    private clearIdleTimer() {
+        if (this.idleTimer !== undefined) {
+            clearTimeout(this.idleTimer);
+            this.idleTimer = undefined;
+        }
+    }
+
+    private setNoOpTimer() {
+        if (this.noActiveClients) {
+            return;
+        }
+        this.noopTimer = setTimeout(() => {
+            const noOpMessage = this.createNoOpMessage();
+            this.sendToDeli(noOpMessage);
+        }, this.noOpConsolidationTimeout);
+    }
+
+    private clearNoOpTimer() {
+        if (this.noopTimer !== undefined) {
+            clearTimeout(this.noopTimer);
+            this.noopTimer = undefined;
         }
     }
 }

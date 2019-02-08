@@ -20,6 +20,7 @@ import { ComponentHost } from "@prague/runtime";
 import { IChaincodeComponent, IComponentRuntime, IComponentDeltaHandler, IComponentPlatform, IChaincode } from "@prague/runtime-definitions";
 import { Deferred } from "@prague/utils";
 import { EventEmitter } from "events";
+import { debug } from "./debug";
 
 export enum DocSegmentKind {
     Text = "text",
@@ -207,10 +208,17 @@ export class FlowDocument extends Component {
     }
 
     public insertText(position: number, text: string) {
+        debug(`insertText(${position},"${text}")`);
         this.sharedString.insertText(text, position);
     }
 
+    public replaceWithText(start: number, end: number, text: string) {
+        debug(`replaceWithText(${start}, ${end}, "${text}")`);
+        this.sharedString.replaceText(text, start, end);
+    }
+
     public remove(start: number, end: number) {
+        debug(`remove(${start},${end})`);
         this.sharedString.removeText(start, end);
     }
 
@@ -220,10 +228,12 @@ export class FlowDocument extends Component {
     }
 
     public insertParagraph(position: number) {
+        debug(`insertParagraph(${position})`);
         this.sharedString.insertMarker(position, ReferenceType.Tile, FlowDocument.paragraphTileProperties);
     }
 
     public insertLineBreak(position: number) {
+        debug(`insertLineBreak(${position})`);
         this.sharedString.insertMarker(position, ReferenceType.Tile, FlowDocument.lineBreakTileProperties);
     }
 
