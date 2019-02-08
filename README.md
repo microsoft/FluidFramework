@@ -4,7 +4,7 @@
 
 Prague is investigating and prototyping key design questions around interactive documents and MUIs.
 
-We're currently in the middle of [Sprint 5](./doc/sprints/sprint5/readme.md) and focused on self-hosting.
+A listing of architectural design principals can be found in the [doc/architecture](./doc/architecture) folder. 
 
 ## Source Code Overview
 
