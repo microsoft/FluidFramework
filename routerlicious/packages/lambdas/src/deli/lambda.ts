@@ -513,7 +513,7 @@ export class DeliLambda implements IPartitionLambda {
         };
         return {
             message: nackMessage,
-            sendLater: true,
+            sendLater: false,
             timestamp: message.timestamp,
             type: message.operation.type,
         };

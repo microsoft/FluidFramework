@@ -73,7 +73,7 @@ export class MessageFactory {
             },
             referenceSequenceNumber,
             traces: [],
-            type: MessageType.NoOp,
+            type: MessageType.Operation,
         };
         return operation;
     }
