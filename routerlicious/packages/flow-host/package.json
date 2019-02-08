@@ -14,8 +14,6 @@
     "clean": "rimraf dist && rimraf lib",
     "tsc": "tsc",
     "build:esnext": "tsc --outDir lib --m esnext",
-    "test": "mocha --recursive dist/test",
-    "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml",
     "tslint": "tslint --project tsconfig.json --format verbose",
     "webpack": "webpack --env=\"production\"",
     "webpack:full": "webpack --env=\"production\"",

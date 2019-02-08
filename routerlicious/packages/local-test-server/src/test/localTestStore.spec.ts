@@ -12,7 +12,7 @@ import { TestComponent } from "./testComponent";
 let testLoader: TestLoader;
 let testDeltaConnectionServer: ITestDeltaConnectionServer;
 
-describe("LocalTestDataStore", () => {
+describe.skip("LocalTestDataStore", () => {
     it("open 2 Documents", async () => {
         testDeltaConnectionServer = TestDeltaConnectionServer.Create();
         testLoader = new TestLoader([
