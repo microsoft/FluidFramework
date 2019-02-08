@@ -1,10 +1,9 @@
 import { MapExtension, IMapView } from "@prague/map";
 import { Component } from "@prague/app-component";
-import { DataStore } from "@prague/app-datastore";
 import { ITree, IPlatform } from "@prague/container-definitions";
 import { ComponentHost } from "@prague/runtime";
 import { IChaincode, IChaincodeComponent, IComponentPlatform, IComponentRuntime, IComponentDeltaHandler } from "@prague/runtime-definitions";
-import { TableDocument, CellRange } from "@chaincode/table-document";
+import { TableDocument, CellRange, TableDocumentComponent } from "@chaincode/table-document";
 import { Deferred } from "@prague/utils";
 import { ConfigView } from "./config";
 import { ConfigKeys } from "./configKeys";
@@ -16,7 +15,7 @@ export class TableSlice extends Component {
     private maybeValues?: CellRange;
     private ready = new Deferred<void>();
 
-    constructor() {
+    constructor(private componentRuntime: IComponentRuntime) {
         super([[MapExtension.Type, new MapExtension()]]);
     }
     
@@ -48,7 +47,7 @@ export class TableSlice extends Component {
                 if (maybeDiv) {            
                     const docId = this.rootView.get(ConfigKeys.docId);
                     if (!docId) {
-                        const configView = new ConfigView(this.root);
+                        const configView = new ConfigView(this.componentRuntime, this.root);
                         maybeDiv.appendChild(configView.root);
                         await configView.done;
                         while (maybeDiv.lastChild) {
@@ -59,11 +58,10 @@ export class TableSlice extends Component {
             }
         }
 
-        const store = await DataStore.from(await this.root.get(ConfigKeys.serverUrl));
-        this.maybeDoc = await store.open<TableDocument>(
-            this.rootView.get(ConfigKeys.docId), 
-            this.rootView.get(ConfigKeys.userId),
-            TableDocument.type);
+        const docId = await this.root.get(ConfigKeys.docId);
+        const component = await this.componentRuntime.getProcess(docId, true);
+        const tableDocComponent = component.chaincode as TableDocumentComponent;
+        this.maybeDoc = tableDocComponent.table;
 
         this.maybeHeaders = await this.getRange(ConfigKeys.headersRange);
         this.maybeValues  = await this.getRange(ConfigKeys.valuesRange);
@@ -87,14 +85,10 @@ export class TableSlice extends Component {
 /**
  * A document is a collection of collaborative types.
  */
-export class TableViewComponent implements IChaincodeComponent {
-    public slice = new TableSlice();
+export class TableSliceComponent implements IChaincodeComponent {
+    public slice: TableSlice;
     private chaincode: IChaincode;
     private component: ComponentHost;
-
-    constructor() {
-        this.chaincode = Component.instantiate(this.slice);
-    }
 
     public getModule(type: string) {
         return null;
@@ -105,6 +99,8 @@ export class TableViewComponent implements IChaincodeComponent {
     }
 
     public async run(runtime: IComponentRuntime, platform: IPlatform): Promise<IComponentDeltaHandler> {
+        this.slice = new TableSlice(runtime);
+        this.chaincode = Component.instantiate(this.slice);
         const chaincode = this.chaincode;
 
         // All of the below would be hidden from a developer
@@ -146,5 +142,5 @@ export class TableViewComponent implements IChaincodeComponent {
 }
 
 export async function instantiateComponent(): Promise<IChaincodeComponent> {
-    return new TableViewComponent();
+    return new TableSliceComponent();
 }

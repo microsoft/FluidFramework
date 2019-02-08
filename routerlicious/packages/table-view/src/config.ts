@@ -1,12 +1,18 @@
 import { ConfigKeys } from "./configKeys";
 import { Template } from "@prague/flow-util";
 import { IMap } from "@prague/map";
+import { IComponentRuntime } from "../../runtime-definitions/dist";
 
 const template = new Template({
     tag: "table",
     children: [
         { tag: "caption", children: [{ tag: "span", props: { textContent: "Table-View Configuration" } }]},
-        { tag: "tfoot", children: [{ tag: "button", ref: "okButton", props: { textContent: "Ok" }}]},
+        {
+            tag: "tfoot",
+            children: [
+                { tag: "button", ref: "createButton", props: { textContent: "Create" }},
+                { tag: "button", ref: "okButton", props: { textContent: "Ok" }}
+            ]},
         {
             tag: "tbody",
             ref: "body",
@@ -61,11 +67,18 @@ export class ConfigView {
     // private readonly colsBox    = template.get(this.root, "colsBox") as HTMLInputElement;
     // private readonly rowsBox    = template.get(this.root, "rowsBox") as HTMLInputElement;
     private readonly okButton   = template.get(this.root, "okButton") as HTMLButtonElement;
+    private readonly createButton   = template.get(this.root, "createButton") as HTMLButtonElement;
 
     public readonly done: Promise<void>;
 
-    constructor (private readonly map: IMap) {
+    constructor (private readonly runtime: IComponentRuntime, private readonly map: IMap) {
         this.done = new Promise<void>(accept => {
+            this.createButton.addEventListener("click", () => {
+                const id = Math.random().toString(36).substr(2, 4)
+                this.runtime.createAndAttachProcess(id, "@chaincode/table-document");
+                this.map.set(ConfigKeys.docId, this.idBox.value);
+            });
+
             this.okButton.addEventListener("click", () => {
                 this.map.set(ConfigKeys.docId, this.idBox.value);
                 this.map.set(ConfigKeys.serverUrl, this.serverBox.value);

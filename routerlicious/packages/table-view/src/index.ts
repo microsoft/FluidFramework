@@ -1,10 +1,9 @@
 import { MapExtension } from "@prague/map";
 import { Component } from "@prague/app-component";
-import { DataStore } from "@prague/app-datastore";
 import { ITree, IPlatform } from "@prague/container-definitions";
 import { ComponentHost } from "@prague/runtime";
 import { IChaincode, IChaincodeComponent, IComponentPlatform, IComponentRuntime, IComponentDeltaHandler } from "@prague/runtime-definitions";
-import { TableDocument } from "@chaincode/table-document";
+import { TableDocumentComponent } from "@chaincode/table-document";
 import { Deferred } from "@prague/utils";
 import { GridView } from "./grid";
 import { ConfigView } from "./config";
@@ -13,7 +12,7 @@ import { ConfigKeys } from "./configKeys";
 export class TableView extends Component {
     private ready = new Deferred<void>();
 
-    constructor() {
+    constructor(private componentRuntime: IComponentRuntime) {
         super([[MapExtension.Type, new MapExtension()]]);
     }
     
@@ -33,7 +32,7 @@ export class TableView extends Component {
 
         const docId = await this.root.get(ConfigKeys.docId);
         if (!docId) {
-            const configView = new ConfigView(this.root);
+            const configView = new ConfigView(this.componentRuntime, this.root);
             maybeDiv.appendChild(configView.root);
             await configView.done;
             while (maybeDiv.lastChild) {
@@ -41,12 +40,11 @@ export class TableView extends Component {
             }
         }
 
-        const store = await DataStore.from(await this.root.get(ConfigKeys.serverUrl));
         if (maybeDiv) {
-            const doc = await store.open<TableDocument>(
-                await this.root.get(ConfigKeys.docId), 
-                await this.root.get(ConfigKeys.userId),
-                TableDocument.type);
+            const docId = await this.root.get(ConfigKeys.docId);
+            const component = await this.componentRuntime.getProcess(docId, true);
+            const tableDocComponent = component.chaincode as TableDocumentComponent;
+            const doc = tableDocComponent.table;
             const grid = new GridView(doc);
             maybeDiv.appendChild(grid.root);
         }
@@ -59,12 +57,11 @@ export class TableView extends Component {
  * A document is a collection of collaborative types.
  */
 export class TableViewComponent implements IChaincodeComponent {
-    public view = new TableView();
+    public view: TableView;
     private chaincode: IChaincode;
     private component: ComponentHost;
 
     constructor() {
-        this.chaincode = Component.instantiate(this.view);
     }
 
     public getModule(type: string) {
@@ -76,6 +73,8 @@ export class TableViewComponent implements IChaincodeComponent {
     }
 
     public async run(runtime: IComponentRuntime, platform: IPlatform): Promise<IComponentDeltaHandler> {
+        this.view = new TableView(runtime);
+        this.chaincode = Component.instantiate(this.view);
         const chaincode = this.chaincode;
 
         // All of the below would be hidden from a developer
