@@ -100,23 +100,24 @@ export class TableDocument extends Component {
     }
     
     protected async create() {
-        const text = this.runtime.createChannel("text", CollaborativeStringExtension.Type) as SharedString;
-        this.root.set("text", text);
-
         const numRows = 7;
         const numCols = 8;
-        this.root.set<Counter>("stride", numCols, CounterValueType.Name);
-        
+
+        const text = this.runtime.createChannel("text", CollaborativeStringExtension.Type) as SharedString;
         for (let i = numRows * numCols; i > 0; i--) {
             text.insertMarker(0, ReferenceType.Simple, { value: "" });
         }
+
+        this.root.set<Counter>("stride", numCols, CounterValueType.Name);
+        this.root.set("text", text);        
     }
 
     public async opened() {
         this.maybeRootView = await this.root.getView();
         
-        await this.connected;
         this.maybeSharedString = await this.root.wait("text") as SharedString;
+        await this.connected;
+
         const client = this.sharedString.client;
         this.maybeClientId = client.getClientId();
         this.maybeMergeTree = client.mergeTree;

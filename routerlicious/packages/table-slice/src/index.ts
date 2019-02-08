@@ -9,11 +9,15 @@ import { ConfigView } from "./config";
 import { ConfigKeys } from "./configKeys";
 
 export class TableSlice extends Component {
+    public get ready() {
+        return this.readyDeferred.promise;
+    }
+
     private maybeDoc?: TableDocument;
     private maybeRootView?: IMapView;
     private maybeHeaders?: CellRange;
     private maybeValues?: CellRange;
-    private ready = new Deferred<void>();
+    private readyDeferred = new Deferred<void>();
 
     constructor(private componentRuntime: IComponentRuntime) {
         super([[MapExtension.Type, new MapExtension()]]);
@@ -36,7 +40,7 @@ export class TableSlice extends Component {
     public async opened() {
         await this.connected;
         this.maybeRootView = await this.root.getView();
-        this.ready.resolve();
+        this.readyDeferred.resolve();
     }
 
     public async attach(platform: IComponentPlatform): Promise<IComponentPlatform> {

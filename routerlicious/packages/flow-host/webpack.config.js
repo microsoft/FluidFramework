@@ -45,7 +45,15 @@ module.exports = env => {
                     test: /\.css$/,
                     use: [
                         "style-loader", // creates style nodes from JS strings
-                        "css-loader", // translates CSS into CommonJS
+                        {
+                            loader: "typings-for-css-modules-loader",
+                            options: {
+                                modules: true,
+                                namedExport: true,
+                                localIdentName: styleLocalIdentName
+                            }
+                        }
+                        // "css-loader", // translates CSS into CommonJS
                     ]
                 }
                 // {
