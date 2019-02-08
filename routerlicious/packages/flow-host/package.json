@@ -25,6 +25,7 @@
     "@chaincode/chart-view": "^0.2.0",
     "@chaincode/flow-document": "^0.2.0",
     "@chaincode/flow-editor": "^0.2.0",
+    "@chaincode/table-document": "^0.2.0",
     "@chaincode/table-slice": "^0.2.0",
     "@chaincode/table-view": "^0.2.0",
     "@prague/app-component": "^0.2.0",

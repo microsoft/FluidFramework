@@ -1,6 +1,7 @@
 import * as chartView from "@chaincode/chart-view";
 import * as flowDocument from "@chaincode/flow-document";
 import * as flowEditor from "@chaincode/flow-editor";
+import * as tableDocument from "@chaincode/table-document";
 import * as tableSlice from "@chaincode/table-slice";
 import * as tableView from "@chaincode/table-view";
 import { Component, Document } from "@prague/app-component";
@@ -126,6 +127,7 @@ export async function instantiateRuntime(context: IContainerContext): Promise<IR
         ["@chaincode/flow-document", flowDocument],
         ["@chaincode/flow-host", { instantiateComponent }],
         ["@chaincode/flow-editor", flowEditor],
+        ["@chaincode/table-document", tableDocument],
         ["@chaincode/table-slice", tableSlice],
         ["@chaincode/table-view", tableView]]);
 

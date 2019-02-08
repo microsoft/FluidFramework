@@ -77,6 +77,7 @@ export class ConfigView {
                 const id = Math.random().toString(36).substr(2, 4)
                 this.runtime.createAndAttachProcess(id, "@chaincode/table-document");
                 this.map.set(ConfigKeys.docId, this.idBox.value);
+                accept();
             });
 
             this.okButton.addEventListener("click", () => {
