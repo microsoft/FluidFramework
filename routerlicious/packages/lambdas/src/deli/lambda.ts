@@ -77,6 +77,7 @@ export class DeliLambda implements IPartitionLambda {
     private lastSendP = Promise.resolve();
     private idleTimer: any;
     private noopTimer: any;
+    private noActiveClients = false;
 
     constructor(
         private context: IContext,
@@ -355,7 +356,13 @@ export class DeliLambda implements IPartitionLambda {
         // Store the previous minimum sequene number we returned and then update it. If there are no clients
         // then set the MSN to the next SN.
         const msn = this.getMinimumSequenceNumber();
-        this.minimumSequenceNumber = msn === -1 ? sequenceNumber : msn;
+        if (msn === -1) {
+            this.minimumSequenceNumber = sequenceNumber;
+            this.noActiveClients = true;
+        } else {
+            this.minimumSequenceNumber = msn;
+            this.noActiveClients = false;
+        }
 
         // Add traces
         if (message.operation.traces && message.operation.traces.length > 1) {
@@ -676,6 +683,9 @@ export class DeliLambda implements IPartitionLambda {
     }
 
     private setIdleTimer() {
+        if (this.noActiveClients) {
+            return;
+        }
         this.idleTimer = setTimeout(() => {
             const noOpMessage = this.createNoOpMessage();
             this.sendToDeli(noOpMessage);
@@ -690,6 +700,9 @@ export class DeliLambda implements IPartitionLambda {
     }
 
     private setNoOpTimer() {
+        if (this.noActiveClients) {
+            return;
+        }
         this.noopTimer = setTimeout(() => {
             const noOpMessage = this.createNoOpMessage();
             this.sendToDeli(noOpMessage);
