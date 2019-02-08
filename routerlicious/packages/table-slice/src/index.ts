@@ -62,6 +62,7 @@ export class TableSlice extends Component {
         const component = await this.componentRuntime.getProcess(docId, true);
         const tableDocComponent = component.chaincode as TableDocumentComponent;
         this.maybeDoc = tableDocComponent.table;
+        await this.maybeDoc.ready;
 
         this.maybeHeaders = await this.getRange(ConfigKeys.headersRange);
         this.maybeValues  = await this.getRange(ConfigKeys.valuesRange);

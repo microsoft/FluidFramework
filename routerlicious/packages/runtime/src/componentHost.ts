@@ -334,6 +334,10 @@ export class ComponentHost extends EventEmitter implements IComponentDeltaHandle
                 object.connection.setConnectionState(value);
             }
         }
+
+        if (this.connectionState === ConnectionState.Connected) {
+            this.emit("connected", clientId);
+        }
     }
 
     public getQuorum(): IQuorum {

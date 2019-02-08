@@ -74,8 +74,7 @@ export class ConfigView {
     constructor (private readonly runtime: IComponentRuntime, private readonly map: IMap) {
         this.done = new Promise<void>(accept => {
             this.createButton.addEventListener("click", () => {
-                const id = Math.random().toString(36).substr(2, 4)
-                this.runtime.createAndAttachProcess(id, "@chaincode/table-document");
+                this.runtime.createAndAttachProcess(this.idBox.value, "@chaincode/table-document");
                 this.map.set(ConfigKeys.docId, this.idBox.value);
             });
 

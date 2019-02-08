@@ -30,6 +30,7 @@ import {
 } from "@prague/merge-tree";
 import { ComponentHost } from "@prague/runtime";
 import { IChaincode, IChaincodeComponent, IComponentPlatform, IComponentRuntime, IComponentDeltaHandler } from "@prague/runtime-definitions";
+import { Deferred } from "@prague/utils";
 
 import { CellRange } from "./cellrange";
 export { CellRange };
@@ -76,11 +77,16 @@ class WorkbookAdapter extends Workbook {
 }
 
 export class TableDocument extends Component {
+    public get ready() {
+        return this.readyDeferred.promise;
+    }
+
     private maybeSharedString?: SharedString;
     private maybeMergeTree?: MergeTree;
     private maybeClientId?: number;
     private maybeRootView?: IMapView;
     private maybeWorkbook?: WorkbookAdapter;
+    private readyDeferred = new Deferred<void>();
 
     constructor() {
         super([
@@ -127,6 +133,7 @@ export class TableDocument extends Component {
         });
 
         this.maybeWorkbook = new WorkbookAdapter(this);
+        this.readyDeferred.resolve();
     }
 
     private localRefToPosition(localRef: LocalReference) {

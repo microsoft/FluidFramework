@@ -45,6 +45,8 @@ export class TableView extends Component {
             const component = await this.componentRuntime.getProcess(docId, true);
             const tableDocComponent = component.chaincode as TableDocumentComponent;
             const doc = tableDocComponent.table;
+            await doc.ready;
+
             const grid = new GridView(doc);
             maybeDiv.appendChild(grid.root);
         }
