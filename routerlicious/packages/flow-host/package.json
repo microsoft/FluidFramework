@@ -4,20 +4,36 @@
   "version": "0.2.0",
   "author": "Microsoft",
   "repository": "microsoft/prague",
-  "main": "dist/main.bundle.js",
+  "main": "dist/index.js",
+  "module": "lib/index.js",
   "types": "dist/index.d.ts",
+  "sideEffects": false,
   "scripts": {
-    "build": "webpack --env=\"production\"",
+    "build": "npm run tsc && npm run build:esnext && npm run tslint && copyfiles -u 1 'src/**/*.css' dist/ && copyfiles -u 1 'src/**/*.css' lib/",
     "build:dev": "webpack --env=\"development\"",
-    "build:full": "webpack --env=\"production\"",
+    "build:full": "npm run build",
+    "clean": "rimraf dist && rimraf lib",
+    "tsc": "tsc",
+    "build:esnext": "tsc --outDir lib --m esnext",
+    "tslint": "tslint --project tsconfig.json --format verbose",
+    "webpack": "webpack --env=\"production\"",
+    "webpack:full": "webpack --env=\"production\"",
     "dev": "npm run build:dev -- --watch"
   },
   "dependencies": {
+    "@chaincode/chart-view": "^0.2.0",
     "@chaincode/flow-document": "^0.2.0",
     "@chaincode/flow-editor": "^0.2.0",
+    "@chaincode/table-document": "^0.2.0",
+    "@chaincode/table-slice": "^0.2.0",
+    "@chaincode/table-view": "^0.2.0",
     "@prague/app-component": "^0.2.0",
     "@prague/app-datastore": "^0.2.0",
+    "@prague/container-definitions": "^0.2.0",
     "@prague/flow-util": "^0.2.0",
+    "@prague/runtime": "^0.2.0",
+    "@prague/runtime-definitions": "^0.2.0",
+    "@prague/utils": "^0.2.0",
     "@uifabric/icons": "~6.3.0",
     "office-ui-fabric-react": "^6.108.0",
     "react": "^16.6.3",
@@ -26,6 +42,7 @@
   "devDependencies": {
     "@types/react": "^16.7.7",
     "@types/react-dom": "^16.0.11",
+    "copyfiles": "^2.1.0",
     "css-loader": "^1.0.0",
     "source-map-loader": "^0.2.4",
     "style-loader": "^0.23.0",
@@ -36,5 +53,13 @@
     "webpack-cli": "^3.1.2",
     "webpack-merge": "^4.1.2",
     "webpack-node-externals": "^1.7.2"
+  },
+  "prague": {
+    "browser": {
+      "entrypoint": "main",
+      "bundle": [
+        "dist/main.bundle.js"
+      ]
+    }
   }
 }

@@ -1,50 +1,51 @@
 import {
     Browser,
+    ICodeLoader,
     IDocumentService,
     IPlatformFactory,
     ITokenProvider,
 } from "@prague/container-definitions";
-import * as loader from "@prague/loader";
-import { ICodeLoader } from "@prague/runtime-definitions";
+import { Container, Loader } from "@prague/container-loader";
 import { EventEmitter } from "events";
 import { IDocumentTaskInfo } from "../definitions";
 
 export class ChaincodeWork extends EventEmitter {
 
-    protected document: loader.Document;
+    protected document: Container;
     protected task: string;
 
     private events = new EventEmitter();
 
     constructor(
-        private docId: string,
-        private tenantId: string,
-        private tokenProvider: ITokenProvider,
-        private service: IDocumentService,
-        private codeLoader: ICodeLoader,
-        private platformFactory: IPlatformFactory,
+        private readonly docId: string,
+        private readonly tenantId: string,
+        private readonly tokenProvider: ITokenProvider,
+        private readonly service: IDocumentService,
+        private readonly codeLoader: ICodeLoader,
+        platformFactory: IPlatformFactory,
         task: string) {
             super();
             this.task = task;
     }
 
     public async loadChaincode(options: any): Promise<void> {
-            const documentP = loader.load(
-                this.docId,
-                this.tenantId,
-                this.tokenProvider,
-                options,
-                this.platformFactory,
-                this.service,
-                this.codeLoader);
-            this.document = await documentP;
+        const loader = new Loader(
+            { tokenProvider: this.tokenProvider },
+            this.service,
+            this.codeLoader,
+            options);
 
-            this.attachListeners();
+        const url =
+            `prague://prague.com/` +
+            `${encodeURIComponent(this.tenantId)}/${encodeURIComponent(this.docId)}`;
+        this.document = await loader.resolve({ url });
 
-            // Wait to be fully connected!
-            if (!this.document.connected) {
-                await new Promise<void>((resolve) => this.document.on("connected", () => resolve()));
-            }
+        this.attachListeners();
+
+        // Wait to be fully connected!
+        if (!this.document.connected) {
+            await new Promise<void>((resolve) => this.document.on("connected", () => resolve()));
+        }
     }
 
     public async stop(): Promise<void> {

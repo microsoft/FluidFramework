@@ -6,9 +6,10 @@
   "repository": "microsoft/prague",
   "main": "dist/index.bundle.js",
   "types": "dist/index.d.ts",
+  "sideEffects": false,
   "scripts": {
-    "build": "webpack --env=\"production\"",
-    "build:full": "webpack --env=\"production\"",
+    "webpack": "webpack --env=\"production\"",
+    "webpack:full": "webpack --env=\"production\"",
     "republish": "docker-compose stop verdaccio && docker-compose rm -f -v verdaccio && docker-compose create --force-recreate verdaccio && docker-compose start verdaccio && npm run publish-local",
     "publish-local-flow-document": "cd ../flow-document && npm run publish-local",
     "publish-local-flow-editor": "cd ../flow-editor && npm run publish-local",

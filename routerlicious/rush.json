@@ -94,10 +94,6 @@
       "projectFolder": "packages/loader-web"
     },
     {
-      "packageName": "@prague/loader",
-      "projectFolder": "packages/loader"
-    },
-    {
       "packageName": "@prague/local-test-server",
       "projectFolder": "packages/local-test-server"
     },

@@ -1,6 +1,6 @@
 import * as core from "@prague/api-definitions";
-// tslint:disable-next-line:max-line-length
 import {
+    ICodeLoader,
     IDocumentService,
     IPlatformFactory,
     ISequencedDocumentMessage,
@@ -8,7 +8,7 @@ import {
 } from "@prague/container-definitions";
 import * as map from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
-import { ICodeLoader, ISequencedObjectMessage } from "@prague/runtime-definitions";
+import { ISequencedObjectMessage } from "@prague/runtime-definitions";
 import * as Sequence from "@prague/sequence";
 import { EventEmitter } from "events";
 import * as request from "request";
@@ -250,7 +250,7 @@ export class TranslationWork extends ChaincodeWork implements IWork {
     }
 
     private trackEvents(insights: map.IMap): Promise<void> {
-        const eventHandler = (op: ISequencedDocumentMessage, object: core.ICollaborativeObject) => {
+        const eventHandler = (op: ISequencedDocumentMessage, object?: core.ICollaborativeObject) => {
             if (object && object.type === Sequence.CollaborativeStringExtension.Type) {
                 if (!this.translationSet.has(object)) {
                     this.translationSet.add(object);
@@ -260,6 +260,7 @@ export class TranslationWork extends ChaincodeWork implements IWork {
                 }
             }
         };
+
         this.document.on("op", eventHandler);
         return Promise.resolve();
     }

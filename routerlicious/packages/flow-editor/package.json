@@ -3,7 +3,9 @@
   "version": "0.2.0",
   "description": "Experimental flow editor for collaborative journaling.",
   "main": "dist/main.bundle.js",
+  "module": "lib/index.js",
   "types": "dist/index.d.ts",
+  "sideEffects": false,
   "prague": {
     "browser": {
       "entrypoint": "main",
@@ -13,9 +15,15 @@
     }
   },
   "scripts": {
-    "build": "webpack --env=\"production\"",
-    "build:full": "webpack --env=\"production\"",
-    "build:dev": "webpack --env=\"development\"",
+    "build": "npm run tsc && npm run build:esnext && npm run tslint && copyfiles -u 1 'src/**/*.css' dist/ && copyfiles -u 1 'src/**/*.css' lib/",
+    "build:full": "npm run build",
+    "clean": "rimraf dist && rimraf lib",
+    "tsc": "tsc",
+    "build:esnext": "tsc --outDir lib --m esnext",
+    "tslint": "tslint --project tsconfig.json --format verbose",
+    "webpack": "webpack --env=\"production\"",
+    "webpack:full": "webpack --env=\"production\"",
+    "webpack:dev": "webpack --env=\"development\"",
     "dev": "npm run build:dev -- --watch",
     "publish-local": "npm publish --registry http://localhost:4873",
     "publish-patch-local": "npm version patch && npm run publish-local",
@@ -34,6 +42,7 @@
   },
   "devDependencies": {
     "@types/node": "^10.12.12",
+    "copyfiles": "^2.1.0",
     "css-loader": "^1.0.0",
     "source-map-loader": "^0.2.4",
     "style-loader": "^0.23.0",

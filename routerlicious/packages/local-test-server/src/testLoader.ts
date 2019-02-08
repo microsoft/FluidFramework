@@ -1,4 +1,4 @@
-import { IChaincodeFactory, ICodeLoader } from "@prague/runtime-definitions";
+import { IChaincodeFactory, ICodeLoader } from "@prague/container-definitions";
 
 export class TestLoader implements ICodeLoader {
     private readonly typeToFactory: Map<string, Promise<IChaincodeFactory> | IChaincodeFactory>;

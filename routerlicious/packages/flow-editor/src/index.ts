@@ -1,7 +1,7 @@
 export { Editor } from "./components/editor";
 export { VirtualizedView, IVirtualizedProps } from "./components/virtualized";
-
 import { MapExtension } from "@prague/map";
+import { IChaincode } from "@prague/runtime-definitions";
 import { Component } from "@prague/app-component";
 import { DataStore } from "@prague/app-datastore";
 import { FlowDocument } from "@chaincode/flow-document";
@@ -36,6 +36,6 @@ export class FlowEditor extends Component {
 }
 
 // Chainloader bootstrap.
-export async function instantiate() {
+export async function instantiate(): Promise<IChaincode> {
     return Component.instantiate(new FlowEditor());
 }

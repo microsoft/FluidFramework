@@ -12,6 +12,7 @@
         "missing-jsdoc": false,
         "newline-before-return": false,
         "newline-per-chained-call": false,
+        "no-backbone-get-set-outside-model": false,
         "no-console": false,
         "no-default-export": false,
         "no-empty-interface": false,
@@ -25,7 +26,8 @@
         "prefer-method-signature": false,
         "prefer-readonly": false,
         "prefer-type-cast": false,
-        "strict-boolean-expressions": [true, "allow-null-union", "allow-undefined-union"],
+        "promise-function-async": false,
+        "strict-boolean-expressions": false,
         "underscore-consistent-invocation": false,
         "use-default-type-parameter": false
     }

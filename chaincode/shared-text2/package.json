@@ -7,7 +7,6 @@
   "scripts": {
     "build": "lerna run build --stream",
     "postinstall": "lerna bootstrap --hoist --nohoist tslint-microsoft-contrib",
-    "start": "lerna run start --stream --scope @prague/harness",
-    "tsc": "lerna run tsc --stream --scope @prague/dproc-client --include-filtered-dependencies"
+    "start": "lerna run start --stream --scope @chaincode/shared-text2"
   }
 }

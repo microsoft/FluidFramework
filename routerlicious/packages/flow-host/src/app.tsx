@@ -1,3 +1,4 @@
+import { IComponentRuntime } from "@prague/runtime-definitions";
 import * as React from "react";
 import { FlowEditor } from "./editor";
 import { CommandBar, ICommandBarItemProps } from "office-ui-fabric-react/lib/CommandBar";
@@ -7,7 +8,7 @@ import { ChaincodeDialog } from "./chaincodedialog";
 import * as styles from "./index.css";
 
 export interface IAppConfig {
-    serverUrl: string;              // Url of routerlicious front door (e.g., "http://localhost:3000")
+    runtime: IComponentRuntime,
     verdaccioUrl: string;           // Url of Verdaccio npm server (e.g., "http://localhost:4873")
 }
 
@@ -22,27 +23,28 @@ interface IState {
 export class App extends React.Component<IProps, IState> {
     private readonly cmds = { 
         insert: (element: JSX.Element | HTMLElement | { docId: string, chaincode?: string }) => { alert("insert(?)"); },
-        insertText: (lines: string[]) => { alert("insert(text)"); }
+        insertText: (lines: string[]) => { alert("insert(text)"); },
+        insertContainerComponent: (pkg: string) => { alert("insertContainerComponent(pkg)"); },
     };
 
     private readonly chaincodeDlg = React.createRef<ChaincodeDialog>();
-    private readonly docId: string;
+    // private readonly docId: string;
     
     constructor(props: Readonly<IProps>) {
         super(props);
 
         this.state = { virtualize: true };
 
-        // Extract docId from query parameters
-        const queryParams = window.location.search.substr(1).split('&');
-        let docId = queryParams.shift();
+        // // Extract docId from query parameters
+        // const queryParams = window.location.search.substr(1).split('&');
+        // let docId = queryParams.shift();
 
-        // If docId was unspecified, create one and update URL.
-        if (!docId) {
-            docId = Math.random().toString(36).substr(2, 4);
-            window.history.pushState("", "", `${window.location.href}?${docId}`);
-        }
-        this.docId = docId;
+        // // If docId was unspecified, create one and update URL.
+        // if (!docId) {
+        //     docId = Math.random().toString(36).substr(2, 4);
+        //     window.history.pushState("", "", `${window.location.href}?${docId}`);
+        // }
+        // this.docId = docId;
 
         initializeIcons();
     }
@@ -57,7 +59,7 @@ export class App extends React.Component<IProps, IState> {
                     overflowItems={this.getOverlflowItems()}
                     farItems={this.getFarItems()} />
                 <div className={`${style.fill} ${ this.state.virtualize ? styles.virtualized : styles.normal }`}>
-                    <FlowEditor cmds={this.cmds} config={this.props.config} docId={this.docId} virtualize={this.state.virtualize}></FlowEditor>
+                    <FlowEditor cmds={this.cmds} config={this.props.config} virtualize={this.state.virtualize}></FlowEditor>
                 </div>
                 <ChaincodeDialog config={this.props.config} ref={this.chaincodeDlg} addComponent={this.addComponent} />
             </div>
@@ -81,6 +83,9 @@ export class App extends React.Component<IProps, IState> {
         ) },
         /*{ name: "Wedge Left", iconName: "CaretRight", onClick: () => this.cmds.insert(<div className={style.wedgeLeft}></div>) },*/
         { name: "Wedge Right", iconName: "CaretLeft", onClick: () => this.cmds.insert(<div className={style.wedgeRight}></div>) },
+        { name: "Chart", iconName: "CaretLeft", onClick: () => this.cmds.insertContainerComponent("@chaincode/chart-view") },
+        { name: "Table", iconName: "CaretLeft", onClick: () => this.cmds.insertContainerComponent("@chaincode/table-view") },
+        { name: "Table Slice", iconName: "CaretLeft", onClick: () => this.cmds.insertContainerComponent("@chaincode/table-slice") },
         /*{ name: "Flow", iconName: "Text", onClick: () => this.cmds.insert(<FlowEditor cmds={this.cmds} docUrl="http://localhost:3000" docId={Math.random().toString(36).substr(2, 4)}></FlowEditor>) },*/
         { name: "Component", iconName: "Text", onClick: () => { this.chaincodeDlg.current.showDialog(); }},
     ].map(({name, iconName, onClick}) => { return {

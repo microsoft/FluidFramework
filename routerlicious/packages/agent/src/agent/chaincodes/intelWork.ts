@@ -1,14 +1,14 @@
 import { ICollaborativeObject } from "@prague/api-definitions";
 import {
+    ICodeLoader,
     IDocumentService,
     IPlatformFactory,
     ISequencedDocumentMessage,
     ITokenProvider,
     MessageType,
 } from "@prague/container-definitions";
-import * as loader from "@prague/loader";
+import { Container } from "@prague/container-loader";
 import { IMap, IMapView } from "@prague/map";
-import { ICodeLoader } from "@prague/runtime-definitions";
 import { textAnalytics } from "../../intelligence";
 import { IWork} from "../definitions";
 import { ChaincodeWork } from "./chaincodeWork";
@@ -49,15 +49,18 @@ export class IntelWork extends ChaincodeWork implements IWork {
         this.intelligenceManager.registerService(service.factory.create(this.config.intelligence.resume));
     }
 
-    private processIntelligenceWork(doc: loader.Document, insightsMap: IMapView) {
+    private processIntelligenceWork(doc: Container, insightsMap: IMapView) {
         this.intelligenceManager = new IntelligentServicesManager(doc, insightsMap);
         this.intelligenceManager.registerService(textAnalytics.factory.create(this.config.intelligence.textAnalytics));
 
-        this.document.on("op", (op: ISequencedDocumentMessage, object: ICollaborativeObject) => {
-            if (op.type === MessageType.Operation) {
-                this.intelligenceManager.process(object);
-            } else if (op.type === MessageType.Attach) {
-                this.intelligenceManager.process(object);
+        this.document.on("op", (op: ISequencedDocumentMessage, object?: ICollaborativeObject) => {
+            // TODO include object as part of op
+            if (object) {
+                if (op.type === MessageType.Operation) {
+                    this.intelligenceManager.process(object);
+                } else if (op.type === MessageType.Attach) {
+                    this.intelligenceManager.process(object);
+                }
             }
         });
     }

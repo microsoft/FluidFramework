@@ -1,3 +1,4 @@
+import { ITree, IPlatform } from "@prague/container-definitions";
 import { 
     UnboxedOper,
     Workbook,
@@ -27,12 +28,15 @@ import {
     IntervalType,
     LocalReference
 } from "@prague/merge-tree";
+import { ComponentHost } from "@prague/runtime";
+import { IChaincode, IChaincodeComponent, IComponentPlatform, IComponentRuntime, IComponentDeltaHandler } from "@prague/runtime-definitions";
+import { Deferred } from "@prague/utils";
 
 import { CellRange } from "./cellrange";
 export { CellRange };
 
-const loadCellTextSym = Symbol("TableDocument.loadCellText");
-const storeCellTextSym = Symbol("TableDocument.storeCellText");
+export const loadCellTextSym = Symbol("TableDocument.loadCellText");
+export const storeCellTextSym = Symbol("TableDocument.storeCellText");
 
 type EvaluationResult = Result<ReadOper, FailureReason | NotImplemented | NotFormulaString | IllFormedFormula> | EvalFormulaPaused;
 
@@ -73,11 +77,16 @@ class WorkbookAdapter extends Workbook {
 }
 
 export class TableDocument extends Component {
+    public get ready() {
+        return this.readyDeferred.promise;
+    }
+
     private maybeSharedString?: SharedString;
     private maybeMergeTree?: MergeTree;
     private maybeClientId?: number;
     private maybeRootView?: IMapView;
     private maybeWorkbook?: WorkbookAdapter;
+    private readyDeferred = new Deferred<void>();
 
     constructor() {
         super([
@@ -91,23 +100,24 @@ export class TableDocument extends Component {
     }
     
     protected async create() {
-        const text = this.runtime.createChannel("text", CollaborativeStringExtension.Type) as SharedString;
-        this.root.set("text", text);
-
         const numRows = 7;
         const numCols = 8;
-        this.root.set<Counter>("stride", numCols, CounterValueType.Name);
-        
+
+        const text = this.runtime.createChannel("text", CollaborativeStringExtension.Type) as SharedString;
         for (let i = numRows * numCols; i > 0; i--) {
             text.insertMarker(0, ReferenceType.Simple, { value: "" });
         }
+
+        this.root.set<Counter>("stride", numCols, CounterValueType.Name);
+        this.root.set("text", text);        
     }
 
     public async opened() {
         this.maybeRootView = await this.root.getView();
         
-        await this.connected;
         this.maybeSharedString = await this.root.wait("text") as SharedString;
+        await this.connected;
+
         const client = this.sharedString.client;
         this.maybeClientId = client.getClientId();
         this.maybeMergeTree = client.mergeTree;
@@ -124,6 +134,7 @@ export class TableDocument extends Component {
         });
 
         this.maybeWorkbook = new WorkbookAdapter(this);
+        this.readyDeferred.resolve();
     }
 
     private localRefToPosition(localRef: LocalReference) {
@@ -215,7 +226,67 @@ export class TableDocument extends Component {
     public static readonly type = `${require("../package.json").name}@${require("../package.json").version}`;
 }
 
-// Chainloader bootstrap.
-export async function instantiate() {
-    return Component.instantiate(new TableDocument());
+/**
+ * A document is a collection of collaborative types.
+ */
+export class TableDocumentComponent implements IChaincodeComponent {
+    public table = new TableDocument();
+    private chaincode: IChaincode;
+    private component: ComponentHost;
+
+    constructor() {
+        this.chaincode = Component.instantiate(this.table);
+    }
+
+    public getModule(type: string) {
+        return null;
+    }
+
+    public async close(): Promise<void> {
+        return;
+    }
+
+    public async run(runtime: IComponentRuntime, platform: IPlatform): Promise<IComponentDeltaHandler> {
+        const chaincode = this.chaincode;
+
+        // All of the below would be hidden from a developer
+        // Is this an await or does it just go?
+        const component = await ComponentHost.LoadFromSnapshot(
+            runtime,
+            runtime.tenantId,
+            runtime.documentId,
+            runtime.id,
+            runtime.parentBranch,
+            runtime.existing,
+            runtime.options,
+            runtime.clientId,
+            runtime.user,
+            runtime.blobManager,
+            runtime.baseSnapshot,
+            chaincode,
+            runtime.deltaManager,
+            runtime.getQuorum(),
+            runtime.storage,
+            runtime.connectionState,
+            runtime.branch,
+            runtime.minimumSequenceNumber,
+            runtime.snapshotFn,
+            runtime.closeFn);
+        this.component = component;
+
+        return component;
+    }
+
+    public async attach(platform: IComponentPlatform): Promise<IComponentPlatform> {
+        return;
+    }
+
+    public snapshot(): ITree {
+        const entries = this.component.snapshotInternal();
+        return { entries };
+    }
+}
+
+export async function instantiateComponent(): Promise<IChaincodeComponent> {
+    return new TableDocumentComponent();
 }

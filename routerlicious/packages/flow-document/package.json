@@ -4,11 +4,19 @@
   "version": "0.2.0",
   "author": "Microsoft",
   "repository": "microsoft/prague",
-  "main": "dist/main.bundle.js",
+  "main": "dist/index.js",
+  "module": "lib/index.js",
   "types": "dist/index.d.ts",
+  "sideEffects": false,
   "scripts": {
-    "build": "webpack --env=\"production\"",
-    "build:full": "webpack --env=\"production\"",
+    "build": "npm run tsc && npm run build:esnext && npm run tslint",
+    "build:full": "npm run build",
+    "clean": "rimraf dist && rimraf lib",
+    "tsc": "tsc",
+    "build:esnext": "tsc --outDir lib --m esnext",
+    "tslint": "tslint --project tsconfig.json --format verbose",
+    "webpack": "webpack --env=\"production\"",
+    "webpack:full": "webpack --env=\"production\"",
     "dev": "webpack --env=\"development\" --watch",
     "publish-local": "npm publish --registry http://localhost:4873",
     "publish-patch-local": "npm version patch && npm run publish-local",
@@ -25,10 +33,13 @@
   "dependencies": {
     "@prague/app-component": "^0.2.0",
     "@prague/app-datastore": "^0.2.0",
+    "@prague/container-definitions": "^0.2.0",
     "@prague/map": "^0.2.0",
     "@prague/merge-tree": "^0.2.0",
+    "@prague/runtime": "^0.2.0",
     "@prague/runtime-definitions": "^0.2.0",
-    "@prague/sequence": "^0.2.0"
+    "@prague/sequence": "^0.2.0",
+    "@prague/utils": "^0.2.0"
   },
   "devDependencies": {
     "@types/debug": "^0.0.31",

@@ -193,9 +193,9 @@ export class DeltaManager extends EventEmitter implements IDeltaManager {
 
         // The MSN starts at the base the manager is initialized to
         this.baseSequenceNumber = sequenceNumber;
-        this.minSequenceNumber = this.baseSequenceNumber;
-        this.lastQueuedSequenceNumber = this.baseSequenceNumber;
-        this.largestSequenceNumber = this.baseSequenceNumber;
+        this.minSequenceNumber = sequenceNumber;
+        this.lastQueuedSequenceNumber = sequenceNumber;
+        this.largestSequenceNumber = sequenceNumber;
         this.handler = handler;
 
         // We are ready to process inbound messages
@@ -314,14 +314,17 @@ export class DeltaManager extends EventEmitter implements IDeltaManager {
         to: number,
         allDeltas: ISequencedDocumentMessage[],
         deferred: Deferred<ISequencedDocumentMessage[]>,
-        retry: number) {
+        retry: number,
+    ) {
         if (this.closed) {
             return;
         }
 
+        const maxFetchTo = from + MaxBatchDeltas;
+
         // Grab a chunk of deltas - limit the number fetched to MaxBatchDeltas
         const deltasP = this.deltaStorageP.then((deltaStorage) => {
-            const fetchTo = to === undefined ? MaxBatchDeltas : Math.min(from + MaxBatchDeltas, to);
+            const fetchTo = to === undefined ? maxFetchTo : Math.min(maxFetchTo, to);
             return deltaStorage.get(from, fetchTo);
         });
 
@@ -335,7 +338,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager {
                 // If we have no upper bound and fetched less than the max deltas - meaning we got as many as exit -
                 // then we can resolve the promise. We also resolve if we fetched up to the expected to. Otherwise
                 // we will look to try again
-                if ((to === undefined && Math.max(0, lastFetch - from - 1) < MaxBatchDeltas) || to === lastFetch + 1) {
+                if ((to === undefined && maxFetchTo !== lastFetch + 1) || to === lastFetch + 1) {
                     deferred.resolve(allDeltas);
                     return null;
                 } else {
@@ -344,12 +347,11 @@ export class DeltaManager extends EventEmitter implements IDeltaManager {
                     return { from: lastFetch, to, retry: deltas.length === 0 ? retry + 1 : 0 };
                 }
             },
-            (error) => {
+            () => {
                 // There was an error fetching the deltas. Up the retry counter
                 return { from, to, retry: retry + 1 };
             });
 
-        /* tslint:disable:no-floating-promises */
         // If an error or we missed fetching ops - call back with a timer to fetch any missing values
         replayP.then(
             (replay) => {
@@ -363,6 +365,10 @@ export class DeltaManager extends EventEmitter implements IDeltaManager {
                 setTimeout(
                     () => this.getDeltasCore(replay.from, replay.to, allDeltas, deferred, replay.retry),
                     delay);
+            },
+            (error) => {
+                // replayP is guaranteed to always resolve
+                assert(false, error);
             });
     }
 
@@ -629,11 +635,15 @@ export class DeltaManager extends EventEmitter implements IDeltaManager {
                 }
             };
             this.contentCache.on("content", lateContentHandler);
-            this.fetchContent(clientId, clientSeqNumber, seqNumber).then((content) => {
-                this.contentCache.removeListener("content", lateContentHandler);
-                resolve(content);
-            });
-
+            this.fetchContent(clientId, clientSeqNumber, seqNumber).then(
+                (content) => {
+                    this.contentCache.removeListener("content", lateContentHandler);
+                    resolve(content);
+                },
+                (error) => {
+                    // fetchContent guaranteed to always resolve
+                    assert(false, error);
+                });
         });
     }
 
@@ -658,7 +668,11 @@ export class DeltaManager extends EventEmitter implements IDeltaManager {
                 (error) => {
                     // Retry on failure
                     debug(error.toString());
-                    this.fetchContent(clientId, clientSeqNumber, seqNumber);
+                    this.fetchContent(clientId, clientSeqNumber, seqNumber)
+                        .catch((fetchError) => {
+                            // fetchContent guaranteed to always resolve
+                            assert(false, fetchError);
+                        });
                 });
         });
     }

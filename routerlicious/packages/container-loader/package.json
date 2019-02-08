@@ -11,7 +11,28 @@
     "clean": "rimraf dist && rimraf lib",
     "tsc": "tsc",
     "tsc:watch": "tsc --watch",
+    "test": "mocha --recursive dist/test",
+    "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml",
     "tslint": "tslint --project tsconfig.json --format verbose"
+  },
+  "nyc": {
+    "all": true,
+    "exclude": [
+      "src/test/**/*.ts",
+      "dist/test/**/*.js"
+    ],
+    "include": [
+      "src/**/*.ts",
+      "dist/**/*.js"
+    ],
+    "reporter": [
+      "cobertura",
+      "html",
+      "text"
+    ],
+    "temp-directory": "nyc/.nyc_output",
+    "cache-dir": "nyc/.cache",
+    "report-dir": "nyc/report"
   },
   "author": "Microsoft",
   "repository": "microsoft/prague",

@@ -23,6 +23,8 @@ import {
     IChaincode,
     IChaincodeModule,
     IChannel,
+    IComponentDeltaHandler,
+    IComponentRuntime,
     IDistributedObjectServices,
     IEnvelope,
     IHelpMessage,
@@ -38,11 +40,7 @@ import { EventEmitter } from "events";
 import { ChannelDeltaConnection } from "./channelDeltaConnection";
 import { ChannelStorageService } from "./channelStorageService";
 import { debug } from "./debug";
-import {
-    IComponentRuntime,
-    IDeltaHandler,
-    ILegacyRuntime,
-} from "./definitions";
+import { ILegacyRuntime } from "./definitions";
 import { LeaderElector } from "./leaderElection";
 import { LocalChannelStorageService } from "./localChannelStorageService";
 import { analyzeTasks, getLeaderCandidate } from "./taskAnalyzer";
@@ -61,7 +59,7 @@ interface IObjectServices {
 // This needs to deal with transformed messages
 // And also output attributes
 
-export class ComponentHost extends EventEmitter implements IDeltaHandler, ILegacyRuntime {
+export class ComponentHost extends EventEmitter implements IComponentDeltaHandler, ILegacyRuntime {
     public static async LoadFromSnapshot(
         componentRuntime: IComponentRuntime,
         tenantId: string,
@@ -335,6 +333,10 @@ export class ComponentHost extends EventEmitter implements IDeltaHandler, ILegac
             if (object.connection) {
                 object.connection.setConnectionState(value);
             }
+        }
+
+        if (this.connectionState === ConnectionState.Connected) {
+            this.emit("connected", clientId);
         }
     }
 

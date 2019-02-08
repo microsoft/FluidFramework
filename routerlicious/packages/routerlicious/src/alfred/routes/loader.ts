@@ -16,9 +16,15 @@ export function create(
     /**
      * Loading of a specific shared text.
      */
-    router.get("/:tenantId?/:id", ensureLoggedIn(), async (request, response, next) => {
-        const tenantId = request.params.tenantId || appTenants[0].id;
+    router.get("/:tenantId/*", ensureLoggedIn(), async (request, response, next) => {
+        const rawPath =  request.params[0] as string;
+        const slash = rawPath.indexOf("/");
+        const documentId = rawPath.substring(0, slash !== -1 ? slash : rawPath.length);
+        const path = rawPath.substring(slash !== -1 ? slash + 1 : rawPath.length);
+
+        const tenantId = request.params.tenantId;
         const chaincode = request.query.chaincode;
+
         const from = Number.parseInt(request.query.from, 10);
         const to = Number.parseInt(request.query.to, 10);
         const unitIsTime = request.query.unit === "time";
@@ -29,7 +35,7 @@ export function create(
             name: request.user.name,
         } : undefined;
 
-        const token = getToken(tenantId, request.params.id, appTenants, user);
+        const token = getToken(tenantId, documentId, appTenants, user);
 
         const workerConfigP = getConfig(
             config.get("worker"),
@@ -38,18 +44,19 @@ export function create(
             config.get("error:track"),
             config.get("client"));
 
-        const versionP = storage.getLatestVersion(tenantId, request.params.id);
+        const versionP = storage.getLatestVersion(tenantId, documentId);
         Promise.all([workerConfigP, versionP]).then(([workerConfig, version]) => {
             response.render(
-                "loader",
+                "containerLoader",
                 {
                     chaincode,
                     config: workerConfig,
-                    documentId: request.params.id,
+                    documentId,
                     from,
                     partials: defaultPartials,
+                    path,
                     tenantId,
-                    title: request.params.id,
+                    title: documentId,
                     to,
                     token,
                     unitIsTime,

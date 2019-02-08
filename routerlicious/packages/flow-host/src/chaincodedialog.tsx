@@ -2,7 +2,7 @@ import * as React from "react";
 import { Dialog, DialogType, DialogFooter } from "office-ui-fabric-react/lib/Dialog";
 import { PrimaryButton } from "office-ui-fabric-react/lib/Button";
 import { TextField } from "office-ui-fabric-react/lib/TextField";
-import { ComboBox, IComboBoxOption, VirtualizedComboBox, IComboBox } from "office-ui-fabric-react/lib/ComboBox";
+import { ComboBox, IComboBoxOption, IComboBox } from "office-ui-fabric-react/lib/ComboBox";
 import { IAppConfig } from "./app";
 
 interface IProps { 

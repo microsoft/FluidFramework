@@ -4,9 +4,6 @@ export { canvas };
 import * as cell from "./cell";
 export { cell };
 
-import * as flow from "./flow";
-export { flow };
-
 import * as maps from "./maps";
 export { maps };
 

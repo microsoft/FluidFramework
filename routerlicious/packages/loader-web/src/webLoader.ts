@@ -1,4 +1,4 @@
-import { IChaincodeFactory, ICodeLoader, IPraguePackage } from "@prague/runtime-definitions";
+import { IChaincodeFactory, ICodeLoader, IPraguePackage } from "@prague/container-definitions";
 
 async function loadScript(scriptUrl: string): Promise<{}> {
     return new Promise((resolve, reject) => {

@@ -15,17 +15,18 @@ import {
     MessageType,
     TreeEntry,
 } from "@prague/container-definitions";
-import { IChannel, IEnvelope, IObjectStorageService } from "@prague/runtime-definitions";
-import { EventEmitter } from "events";
-import { ChannelDeltaConnection } from "./channelDeltaConnection";
 import {
     IChaincodeComponent,
-    IComponentFactory,
+    IChannel,
+    IComponentDeltaHandler,
     IComponentPlatform,
     IComponentRuntime,
-    IDeltaHandler,
-    IHostRuntime,
-} from "./definitions";
+    IEnvelope,
+    IObjectStorageService,
+} from "@prague/runtime-definitions";
+import { EventEmitter } from "events";
+import { ChannelDeltaConnection } from "./channelDeltaConnection";
+import { IComponentFactory, IHostRuntime } from "./definitions";
 
 // tslint:disable:no-unsafe-any
 
@@ -146,7 +147,7 @@ export class Component extends EventEmitter implements IComponentRuntime {
     }
 
     private closed = false;
-    private handler: IDeltaHandler;
+    private handler: IComponentDeltaHandler;
 
     private constructor(
         private readonly pkg: string,

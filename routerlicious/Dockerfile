@@ -36,8 +36,6 @@ COPY packages/gitresources/package*.json packages/gitresources/
 COPY packages/kafka-orderer/package*.json packages/kafka-orderer/
 COPY packages/lambdas-driver/package*.json packages/lambdas-driver/
 COPY packages/lambdas/package*.json packages/lambdas/
-COPY packages/loader/package*.json packages/loader/
-COPY packages/loader-client/package*.json packages/loader-client/
 COPY packages/loader-web/package*.json packages/loader-web/
 COPY packages/local-test-server/package*.json packages/local-test-server/
 COPY packages/map/package*.json packages/map/

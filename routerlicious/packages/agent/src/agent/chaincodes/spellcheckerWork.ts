@@ -1,5 +1,6 @@
 import * as core from "@prague/api-definitions";
 import {
+    ICodeLoader,
     IDocumentService,
     IPlatformFactory,
     ISequencedDocumentMessage,
@@ -7,7 +8,6 @@ import {
     MessageType,
 } from "@prague/container-definitions";
 import * as MergeTree from "@prague/merge-tree";
-import { ICodeLoader } from "@prague/runtime-definitions";
 import * as Sequence from "@prague/sequence";
 import { IWork} from "../definitions";
 import { Spellcheker } from "../spellchecker";
@@ -40,9 +40,12 @@ export class SpellcheckerWork extends ChaincodeWork implements IWork {
                 encrypted: undefined,
                 localMinSeq: 0,
             });
-        const eventHandler = (op: ISequencedDocumentMessage, object: core.ICollaborativeObject) => {
-            if (op.type === MessageType.Operation || op.type === MessageType.Attach) {
-                this.spellCheck(object);
+        // TODO emit target as part of op event
+        const eventHandler = (op: ISequencedDocumentMessage, object?: core.ICollaborativeObject) => {
+            if (object) {
+                if (op.type === MessageType.Operation || op.type === MessageType.Attach) {
+                    this.spellCheck(object);
+                }
             }
         };
 
