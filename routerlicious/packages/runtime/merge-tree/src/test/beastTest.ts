@@ -1702,7 +1702,7 @@ if (testTST) {
     tst();
 }
 
-const baseDir = "../../../routerlicious/public/literature";
+const baseDir = "../../../../server/routerlicious/public/literature";
 const testTimeout = 30000;
 
 describe("Routerlicious", () => {

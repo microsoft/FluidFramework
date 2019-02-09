@@ -27,7 +27,7 @@ spec:
           - 'node'
           - 'deli/dist/kafka-service/index.js'
           - 'scriptorium'
-          - '/usr/src/server/packages/routerlicious/dist/scriptorium/index.js'
+          - '/usr/src/server/packages/server/routerlicious/dist/scriptorium/index.js'
         env:
         - name: DEBUG
           value: "prague:*"

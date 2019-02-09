@@ -16,7 +16,7 @@ async function getFileContents(p: string): Promise<Buffer> {
     });
 }
 
-const dataDir = "../../../routerlicious/public";
+const dataDir = "../../../../server/routerlicious/public";
 
 describe("Core-Utils", () => {
     // Expected hashes are from git hash-object file...

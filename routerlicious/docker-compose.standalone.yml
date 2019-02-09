@@ -11,35 +11,35 @@ services:
         restart: always
     deli:
         image: prague.azurecr.io/prague:latest
-        command: node dist/kafka-service/index.js deli /usr/src/server/packages/routerlicious/dist/deli/index.js
+        command: node dist/kafka-service/index.js deli /usr/src/server/packages/server/routerlicious/dist/deli/index.js
         environment:
             - DEBUG=prague:*
             - NODE_ENV=development
         restart: always
     scriptorium:
         image: prague.azurecr.io/prague:latest
-        command: node dist/kafka-service/index.js scriptorium /usr/src/server/packages/routerlicious/dist/scriptorium/index.js
+        command: node dist/kafka-service/index.js scriptorium /usr/src/server/packages/server/routerlicious/dist/scriptorium/index.js
         environment:
             - DEBUG=prague:*
             - NODE_ENV=development
         restart: always
     bbc:
         image: prague.azurecr.io/prague:latest
-        command: node dist/kafka-service/index.js bbc /usr/src/server/packages/routerlicious/dist/bbc/index.js
+        command: node dist/kafka-service/index.js bbc /usr/src/server/packages/server/routerlicious/dist/bbc/index.js
         environment:
             - DEBUG=prague:*
             - NODE_ENV=development
         restart: always
     tmz:
         image: prague.azurecr.io/prague:latest
-        command: node dist/kafka-service/index.js tmz /usr/src/server/packages/routerlicious/dist/tmz/index.js
+        command: node dist/kafka-service/index.js tmz /usr/src/server/packages/server/routerlicious/dist/tmz/index.js
         environment:
             - DEBUG=prague:*
             - NODE_ENV=development
         restart: always
     rotograph:
         image: prague.azurecr.io/prague:latest
-        command: node dist/kafka-service/index.js rotograph /usr/src/server/packages/routerlicious/dist/rotograph/index.js
+        command: node dist/kafka-service/index.js rotograph /usr/src/server/packages/server/routerlicious/dist/rotograph/index.js
         environment:
             - DEBUG=prague:*
             - NODE_ENV=development
@@ -50,7 +50,7 @@ services:
         environment:
             - DEBUG=prague:*
             - NODE_ENV=development
-            - documentLambda=/usr/src/server/packages/routerlicious/dist/routemaster/index.js
+            - documentLambda=/usr/src/server/packages/server/routerlicious/dist/routemaster/index.js
         restart: always
     paparazzi:
         image: prague.azurecr.io/prague:latest

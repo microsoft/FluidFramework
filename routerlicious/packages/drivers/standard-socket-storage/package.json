@@ -17,6 +17,25 @@
   },
   "author": "Microsoft",
   "repository": "microsoft/prague",
+  "nyc": {
+    "all": true,
+    "exclude": [
+      "src/test/**/*.ts",
+      "dist/test/**/*.js"
+    ],
+    "include": [
+      "src/**/*.ts",
+      "dist/**/*.js"
+    ],
+    "reporter": [
+      "cobertura",
+      "html",
+      "text"
+    ],
+    "temp-directory": "nyc/.nyc_output",
+    "cache-dir": "nyc/.cache",
+    "report-dir": "nyc/report"
+  },
   "devDependencies": {
     "@types/mocha": "^5.2.5",
     "@types/nock": "^9.3.0",

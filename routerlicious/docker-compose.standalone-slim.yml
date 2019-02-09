@@ -11,21 +11,21 @@ services:
         restart: always
     deli:
         image: prague.azurecr.io/prague:latest
-        command: node dist/kafka-service/index.js deli /usr/src/server/packages/routerlicious/dist/deli/index.js
+        command: node dist/kafka-service/index.js deli /usr/src/server/packages/server/routerlicious/dist/deli/index.js
         environment:
             - DEBUG=prague:*
             - NODE_ENV=development
         restart: always
     scriptorium:
         image: prague.azurecr.io/prague:latest
-        command: node dist/kafka-service/index.js scriptorium /usr/src/server/packages/routerlicious/dist/scriptorium/index.js
+        command: node dist/kafka-service/index.js scriptorium /usr/src/server/packages/server/routerlicious/dist/scriptorium/index.js
         environment:
             - DEBUG=prague:*
             - NODE_ENV=development
         restart: always
     bbc:
         image: prague.azurecr.io/prague:latest
-        command: node dist/kafka-service/index.js bbc /usr/src/server/packages/routerlicious/dist/bbc/index.js
+        command: node dist/kafka-service/index.js bbc /usr/src/server/packages/server/routerlicious/dist/bbc/index.js
         environment:
             - DEBUG=prague:*
             - NODE_ENV=development
