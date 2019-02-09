@@ -6,180 +6,180 @@
   "projectFolderMaxDepth": 999,
   "projects": [
     {
-      "packageName": "@prague/agent",
-      "projectFolder": "packages/agent"
-    },
-    {
-      "packageName": "@prague/api-definitions",
-      "projectFolder": "packages/api-definitions"
-    },
-    {
       "packageName": "@prague/app-component",
-      "projectFolder": "packages/app-component"
+      "projectFolder": "packages/components/app-component/"
     },
     {
       "packageName": "@prague/app-datastore",
-      "projectFolder": "packages/app-datastore"
+      "projectFolder": "packages/components/app-datastore/"
     },
     {
       "packageName": "@prague/app-ui",
-      "projectFolder": "packages/app-ui"
-    },
-    {
-      "packageName": "@prague/cell",
-      "projectFolder": "packages/cell"
+      "projectFolder": "packages/components/app-ui/"
     },
     {
       "packageName": "@chaincode/chart-view",
-      "projectFolder": "packages/chart-view"
-    },
-    {
-      "packageName": "@prague/client-api",
-      "projectFolder": "packages/client-api"
+      "projectFolder": "packages/components/chart-view/"
     },
     {
       "packageName": "@prague/client-ui",
-      "projectFolder": "packages/client-ui"
-    },
-    {
-      "packageName": "@prague/container-definitions",
-      "projectFolder": "packages/container-definitions"
-    },
-    {
-      "packageName": "@prague/container-loader",
-      "projectFolder": "packages/container-loader"
+      "projectFolder": "packages/components/client-ui/"
     },
     {
       "packageName": "@chaincode/flow-document",
-      "projectFolder": "packages/flow-document"
+      "projectFolder": "packages/components/flow-document/"
     },
     {
       "packageName": "@chaincode/flow-editor",
-      "projectFolder": "packages/flow-editor"
+      "projectFolder": "packages/components/flow-editor/"
     },
     {
       "packageName": "@prague/flow-host",
-      "projectFolder": "packages/flow-host"
+      "projectFolder": "packages/components/flow-host/"
     },
     {
       "packageName": "@prague/flow-util",
-      "projectFolder": "packages/flow-util"
-    },
-    {
-      "packageName": "@prague/gitresources",
-      "projectFolder": "packages/gitresources"
-    },
-    {
-      "packageName": "@prague/kafka-orderer",
-      "projectFolder": "packages/kafka-orderer"
-    },
-    {
-      "packageName": "@prague/lambdas",
-      "projectFolder": "packages/lambdas"
-    },
-    {
-      "packageName": "@prague/lambdas-driver",
-      "projectFolder": "packages/lambdas-driver"
-    },
-    {
-      "packageName": "@prague/loader-web",
-      "projectFolder": "packages/loader-web"
-    },
-    {
-      "packageName": "@prague/local-test-server",
-      "projectFolder": "packages/local-test-server"
-    },
-    {
-      "packageName": "@prague/map",
-      "projectFolder": "packages/map"
-    },
-    {
-      "packageName": "@prague/memory-orderer",
-      "projectFolder": "packages/memory-orderer"
-    },
-    {
-      "packageName": "@prague/merge-tree-utils",
-      "projectFolder": "packages/merge-tree-utils"
-    },
-    {
-      "packageName": "@prague/merge-tree",
-      "projectFolder": "packages/merge-tree"
-    },
-    {
-      "packageName": "@prague/replay-socket-storage",
-      "projectFolder": "packages/replay-socket-storage"
-    },
-    {
-      "packageName": "@prague/routerlicious",
-      "projectFolder": "packages/routerlicious"
-    },
-    {
-      "packageName": "@prague/runtime",
-      "projectFolder": "packages/runtime"
-    },
-    {
-      "packageName": "@prague/runtime-definitions",
-      "projectFolder": "packages/runtime-definitions"
-    },
-    {
-      "packageName": "@prague/services-client",
-      "projectFolder": "packages/services-client"
-    },
-    {
-      "packageName": "@prague/services-core",
-      "projectFolder": "packages/services-core"
-    },
-    {
-      "packageName": "@prague/services-utils",
-      "projectFolder": "packages/services-utils"
-    },
-    {
-      "packageName": "@prague/services",
-      "projectFolder": "packages/services"
-    },
-    {
-      "packageName": "@prague/sequence",
-      "projectFolder": "packages/sequence"
-    },
-    {
-      "packageName": "@prague/socket-storage-shared",
-      "projectFolder": "packages/socket-storage-shared"
-    },
-    {
-      "packageName": "@prague/socket-storage",
-      "projectFolder": "packages/socket-storage"
-    },
-    {
-      "packageName": "@prague/standard-socket-storage",
-      "projectFolder": "packages/standard-socket-storage"
-    },
-    {
-      "packageName": "@prague/stream",
-      "projectFolder": "packages/stream"
+      "projectFolder": "packages/components/flow-util/"
     },
     {
       "packageName": "@chaincode/table-document",
-      "projectFolder": "packages/table-document"
+      "projectFolder": "packages/components/table-document/"
     },
     {
       "packageName": "@chaincode/table-slice",
-      "projectFolder": "packages/table-slice"
+      "projectFolder": "packages/components/table-slice/"
     },
     {
       "packageName": "@chaincode/table-view",
-      "projectFolder": "packages/table-view"
+      "projectFolder": "packages/components/table-view/"
+    },
+    {
+      "packageName": "@prague/replay-socket-storage",
+      "projectFolder": "packages/drivers/replay-socket-storage/"
+    },
+    {
+      "packageName": "@prague/socket-storage",
+      "projectFolder": "packages/drivers/socket-storage/"
+    },
+    {
+      "packageName": "@prague/socket-storage-shared",
+      "projectFolder": "packages/drivers/socket-storage-shared/"
+    },
+    {
+      "packageName": "@prague/standard-socket-storage",
+      "projectFolder": "packages/drivers/standard-socket-storage/"
+    },
+    {
+      "packageName": "@prague/container-definitions",
+      "projectFolder": "packages/loader/container-definitions/"
+    },
+    {
+      "packageName": "@prague/container-loader",
+      "projectFolder": "packages/loader/container-loader/"
+    },
+    {
+      "packageName": "@prague/gitresources",
+      "projectFolder": "packages/loader/gitresources/"
+    },
+    {
+      "packageName": "@prague/loader-web",
+      "projectFolder": "packages/loader/loader-web/"
+    },
+    {
+      "packageName": "@prague/api-definitions",
+      "projectFolder": "packages/runtime/api-definitions/"
+    },
+    {
+      "packageName": "@prague/cell",
+      "projectFolder": "packages/runtime/cell/"
+    },
+    {
+      "packageName": "@prague/client-api",
+      "projectFolder": "packages/runtime/client-api/"
+    },
+    {
+      "packageName": "@prague/map",
+      "projectFolder": "packages/runtime/map/"
+    },
+    {
+      "packageName": "@prague/merge-tree",
+      "projectFolder": "packages/runtime/merge-tree/"
+    },
+    {
+      "packageName": "@prague/merge-tree-utils",
+      "projectFolder": "packages/runtime/merge-tree-utils/"
+    },
+    {
+      "packageName": "@prague/runtime",
+      "projectFolder": "packages/runtime/runtime/"
+    },
+    {
+      "packageName": "@prague/runtime-definitions",
+      "projectFolder": "packages/runtime/runtime-definitions/"
+    },
+    {
+      "packageName": "@prague/sequence",
+      "projectFolder": "packages/runtime/sequence/"
+    },
+    {
+      "packageName": "@prague/stream",
+      "projectFolder": "packages/runtime/stream/"
+    },
+    {
+      "packageName": "@prague/agent",
+      "projectFolder": "packages/server/agent/"
+    },
+    {
+      "packageName": "@prague/kafka-orderer",
+      "projectFolder": "packages/server/kafka-orderer/"
+    },
+    {
+      "packageName": "@prague/lambdas-driver",
+      "projectFolder": "packages/server/lambdas-driver/"
+    },
+    {
+      "packageName": "@prague/lambdas",
+      "projectFolder": "packages/server/lambdas/"
+    },
+    {
+      "packageName": "@prague/local-test-server",
+      "projectFolder": "packages/server/local-test-server/"
+    },
+    {
+      "packageName": "@prague/memory-orderer",
+      "projectFolder": "packages/server/memory-orderer/"
+    },
+    {
+      "packageName": "@prague/routerlicious",
+      "projectFolder": "packages/server/routerlicious/"
+    },
+    {
+      "packageName": "@prague/services",
+      "projectFolder": "packages/server/services/"
+    },
+    {
+      "packageName": "@prague/services-client",
+      "projectFolder": "packages/server/services-client/"
+    },
+    {
+      "packageName": "@prague/services-core",
+      "projectFolder": "packages/server/services-core/"
+    },
+    {
+      "packageName": "@prague/services-utils",
+      "projectFolder": "packages/server/services-utils/"
     },
     {
       "packageName": "@prague/test-utils",
-      "projectFolder": "packages/test-utils"
+      "projectFolder": "packages/shared/test-utils/"
     },
     {
       "packageName": "@prague/tools-core",
-      "projectFolder": "packages/tools-core"
+      "projectFolder": "packages/shared/tools-core/"
     },
     {
       "packageName": "@prague/utils",
-      "projectFolder": "packages/utils"
+      "projectFolder": "packages/shared/utils/"
     }
   ]
 }
