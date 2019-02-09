@@ -4,8 +4,8 @@
   "version": "0.2.0",
   "author": "Microsoft",
   "repository": "microsoft/prague",
-  "main": "dist/index.js",
-  "module": "lib/index.js",
+  "main": "dist/main.bundle.js",
+  "module": "dist/main.bundle.js",
   "types": "dist/index.d.ts",
   "sideEffects": false,
   "scripts": {
@@ -18,7 +18,15 @@
     "tslint": "tslint --project tsconfig.json --format verbose",
     "webpack": "webpack --env=\"production\"",
     "webpack:full": "webpack --env=\"production\"",
-    "dev": "npm run build:dev -- --watch"
+    "dev": "node ../../common/tools/node_modules/@prague/prague-dev-server/bin/prague-dev-server.js --config webpack.dev.js --package package.json"
+  },
+  "prague": {
+    "browser": {
+      "entrypoint": "main",
+      "bundle": [
+        "dist/main.bundle.js"
+      ]
+    }
   },
   "dependencies": {
     "@chaincode/chart-view": "^0.2.0",
@@ -40,6 +48,7 @@
     "react-dom": "^16.6.3"
   },
   "devDependencies": {
+    "@types/node": "^10.12.12",
     "@types/react": "^16.7.7",
     "@types/react-dom": "^16.0.11",
     "copyfiles": "^2.1.0",
@@ -53,13 +62,5 @@
     "webpack-cli": "^3.1.2",
     "webpack-merge": "^4.1.2",
     "webpack-node-externals": "^1.7.2"
-  },
-  "prague": {
-    "browser": {
-      "entrypoint": "main",
-      "bundle": [
-        "dist/main.bundle.js"
-      ]
-    }
   }
 }

@@ -50,10 +50,6 @@
       "projectFolder": "packages/container-loader"
     },
     {
-      "packageName": "@prague/flow-app",
-      "projectFolder": "packages/flow-app"
-    },
-    {
       "packageName": "@chaincode/flow-document",
       "projectFolder": "packages/flow-document"
     },
@@ -84,10 +80,6 @@
     {
       "packageName": "@prague/lambdas-driver",
       "projectFolder": "packages/lambdas-driver"
-    },
-    {
-      "packageName": "@prague/loader-client",
-      "projectFolder": "packages/loader-client"
     },
     {
       "packageName": "@prague/loader-web",

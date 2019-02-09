@@ -2,6 +2,9 @@
   "name": "tools",
   "private": true,
   "devDependencies": {
-    "@microsoft/rush": "^5.5.4"
+    "@microsoft/rush": "^5.5.4",
+    "@prague/prague-dev-server": "^3.2.1",
+    "webpack": "^4.29.3",
+    "webpack-cli": "^3.2.3"
   }
 }

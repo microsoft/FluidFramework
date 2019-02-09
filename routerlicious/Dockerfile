@@ -27,7 +27,6 @@ COPY packages/client-api/package*.json packages/client-api/
 COPY packages/client-ui/package*.json packages/client-ui/
 COPY packages/container-definitions/package*.json packages/container-definitions/
 COPY packages/container-loader/package*.json packages/container-loader/
-COPY packages/flow-app/package*.json packages/flow-app/
 COPY packages/flow-document/package*.json packages/flow-document/
 COPY packages/flow-editor/package*.json packages/flow-editor/
 COPY packages/flow-host/package*.json packages/flow-host/
