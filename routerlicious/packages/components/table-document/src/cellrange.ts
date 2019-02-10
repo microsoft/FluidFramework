@@ -2,7 +2,7 @@ import { LocalReference } from "@prague/merge-tree";
 import { SharedStringInterval } from "@prague/sequence";
 
 export class CellRange {
-    constructor (
+    constructor(
         private readonly interval: SharedStringInterval,
         private readonly resolve: (localRef: LocalReference) => { row: number, col: number }) {}
 
@@ -13,7 +13,7 @@ export class CellRange {
 
     public forEachRowMajor(callback: (row: number, col: number) => boolean) {
         const {start, end} = this.getPositions();
-        
+
         for (let row = start.row; row < end.row; row++) {
             for (let col = start.col; col < end.col; col++) {
                 if (!callback(row, col)) {
@@ -25,7 +25,7 @@ export class CellRange {
 
     public forEachColMajor(callback: (row: number, col: number) => boolean) {
         const {start, end} = this.getPositions();
-        
+
         for (let col = start.col; col < end.col; col++) {
             for (let row = start.row; row < end.row; row++) {
                 if (!callback(row, col)) {

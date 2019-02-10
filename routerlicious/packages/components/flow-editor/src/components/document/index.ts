@@ -1,30 +1,29 @@
-// This pen illustrates an attempt to render the cursor as an inline span in the document's content flow without impacting kerning or ligatures due to splitting the word into separate spans.
-
+import { DocSegmentKind, FlowDocument, getDocSegmentKind, getInclusionHtml, getInclusionKind, InclusionKind } from "@chaincode/flow-document";
+import { Dom, Template } from "@prague/flow-util";
 import {
     ISegment,
     Marker,
     TextSegment,
 } from "@prague/merge-tree";
-import { Template, Dom } from "@prague/flow-util";
-import { getInclusionKind, getInclusionHtml, FlowDocument, DocSegmentKind, getDocSegmentKind, InclusionKind } from "@chaincode/flow-document";
-import { ParagraphView } from "../paragraph";
-import { LineBreakView } from "../linebreak";
-import { TextView } from "../text";
 import { IFlowViewComponent, IViewState, View } from "../";
+import { debug } from "../../debug";
 import { InclusionView } from "../inclusion";
-import { TextAccumulator } from "./textaccumulator";
+import { LineBreakView } from "../linebreak";
+import { ParagraphView } from "../paragraph";
+import { TextView } from "../text";
 import * as styles from "./index.css";
 import { Paginator } from "./paginator";
+import { TextAccumulator } from "./textaccumulator";
 
 const template = new Template({
     tag: "span",
-    props: { tabIndex: 0, className: styles.document, },
+    props: { tabIndex: 0, className: styles.document },
     children: [
         { tag: "span", ref: "leadingSpan", props: { className: styles.leadingSpan }},
         { tag: "span", ref: "slot", props: { className: styles.documentContent }},
         { tag: "span", ref: "trailingSpan", props: { className: styles.trailingSpan }},
-        { tag: "span", ref: "overlay", props: { className: styles.documentOverlay }}
-    ]
+        { tag: "span", ref: "overlay", props: { className: styles.documentOverlay }},
+    ],
 });
 
 /**
@@ -32,9 +31,9 @@ const template = new Template({
  * and offset within the dom node where that position is rendered.
  */
 export interface ITrackedPosition {
-    position: number, 
-    callback: (node: Node, nodeOffset: number) => void
-};
+    position: number;
+    callback: (node: Node, nodeOffset: number) => void;
+}
 
 /**
  * The state to be visualized/edited by the DocumentView.
@@ -50,7 +49,7 @@ export interface IDocumentProps {
  * window.
  */
 export interface IViewInfo<TProps, TView extends IFlowViewComponent<TProps>> {
-    /** 
+    /**
      * The document-ordered list of segments visualized by the cached 'view' instance.
      * (Currently, only TextSegments are combined into a single view/element.  Other segment
      * types are 1:1.)
@@ -64,24 +63,24 @@ export interface IViewInfo<TProps, TView extends IFlowViewComponent<TProps>> {
     clientRects?: ClientRectList | DOMRectList;
 }
 
-type Rect = { top: number, bottom: number, left: number, right: number };
-type FindVerticalPredicate = (top: number, bottom: number, best: Rect, candidate: Rect) => boolean;
+interface IRect { top: number; bottom: number; left: number; right: number; }
+type FindVerticalPredicate = (top: number, bottom: number, best: IRect, candidate: IRect) => boolean;
 
 /**
  * The state maintained by the DocumentView instance.
  */
 interface IDocumentViewState extends IViewState {
     /** The root element into which segments are rendered. */
-    slot: HTMLElement,
+    slot: HTMLElement;
 
     /** The root element into which overlays are attached. */
-    overlay: Element,
+    overlay: Element;
 
     /** Leading span */
-    leadingSpan: Element,
-    trailingSpan: Element,
+    leadingSpan: Element;
+    trailingSpan: Element;
 
-    /** 
+    /**
      * Mapping from segments to their IViewInfo, if the segment is currently within the rendered window.
      * Note that when a range of segments are rendered by a single view (as is the case with TextSegments
      * that share the same style), only the first segment in the range appears in this map.
@@ -96,6 +95,48 @@ interface IDocumentViewState extends IViewState {
 
 /** IView that renders a FlowDocument. */
 export class DocumentView extends View<IDocumentProps, IDocumentViewState> {
+
+    public  get root()       { return this.state.root; }
+    public  get overlay()    { return this.state.overlay; }
+
+    private static readonly findBelowPredicate: FindVerticalPredicate =
+        (top, bottom, best, candidate) => {
+            return candidate.top > top              // disqualify rects higher/same original height
+                && candidate.top <= best.top;       // disqualify rects lower than best match
+        }
+
+    private static readonly findAbovePredicate: FindVerticalPredicate =
+        (top, bottom, best, candidate) => {
+            return candidate.bottom < bottom        // disqualify rects lower/same as starting point
+                && candidate.bottom >= best.bottom; // disqualify rects higher than best match
+        }
+
+    /** Returns the { segment, offset } currently visible at the given x/y coordinates (if any). */
+    public hitTest(x: number, y: number) {
+        const range = document.caretRangeFromPoint(x, y);
+        const segmentAndOffset = this.nodeOffsetToSegmentOffset(range.startContainer, range.startOffset);
+        debug(`  (${x},${y}) -> "${range.startContainer.textContent}":${range.startOffset} -> ${
+            segmentAndOffset
+                ? `${(segmentAndOffset.segment as TextSegment).text}:${segmentAndOffset.offset}`
+                : `undefined`}`);
+        return segmentAndOffset;
+    }
+
+    /**
+     * Returns the closest { segment, offset } below the text cursor occupying the 0-width rect
+     * described by x/top/bottom.
+     */
+    public readonly findBelow = (x: number, top: number, bottom: number) => {
+        return this.findVertical(x, top, bottom, DocumentView.findBelowPredicate);
+    }
+
+    /**
+     * Returns the closest { segment, offset } below the text cursor occupying the 0-width rect
+     * described by x/top/bottom.
+     */
+    public readonly findAbove = (x: number, top: number, bottom: number) => {
+        return this.findVertical(x, top, bottom, DocumentView.findAbovePredicate);
+    }
     protected mounting(props: IDocumentProps) {
         const root = template.clone();
         const leadingSpan = template.get(root, "leadingSpan");
@@ -110,12 +151,9 @@ export class DocumentView extends View<IDocumentProps, IDocumentViewState> {
             trailingSpan,
             overlay,
             segmentToViewInfo: new Map<ISegment, IViewInfo<any, IFlowViewComponent<any>>>(),
-            elementToViewInfo: new Map<Element, IViewInfo<any, IFlowViewComponent<any>>>()
+            elementToViewInfo: new Map<Element, IViewInfo<any, IFlowViewComponent<any>>>(),
         });
     }
-
-    public  get root()       { return this.state.root; }
-    public  get overlay()    { return this.state.overlay; }
 
     protected updating(props: Readonly<IDocumentProps>, state: Readonly<IDocumentViewState>) {
         const originalTrackedPositions = props.trackedPositions;
@@ -134,12 +172,13 @@ export class DocumentView extends View<IDocumentProps, IDocumentViewState> {
         return state;
     }
 
-    protected unmounting() { }
+    protected unmounting() { /* do nothing */ }
 
     /** Map a node/nodeOffset to the corresponding segment/segmentOffset that rendered it. */
     private nodeOffsetToSegmentOffset(node: Node | null, nodeOffset: number) {
         const state = this.state;
         let viewInfo: IViewInfo<any, IFlowViewComponent<any>> | undefined;
+        // tslint:disable-next-line:no-conditional-assignment
         while (node && !(viewInfo = state.elementToViewInfo.get(node as Element))) {
             node = node.parentElement;
         }
@@ -148,7 +187,7 @@ export class DocumentView extends View<IDocumentProps, IDocumentViewState> {
             return undefined;
         }
 
-        let segment: ISegment | undefined = undefined;
+        let segment: ISegment | undefined;
         for (segment of viewInfo.segments) {
             if (nodeOffset < segment.cachedLength) {
                 return { segment, offset: nodeOffset };
@@ -159,22 +198,11 @@ export class DocumentView extends View<IDocumentProps, IDocumentViewState> {
         return segment && { segment, offset: segment.cachedLength };
     }
 
-    /** Returns the { segment, offset } currently visible at the given x/y coordinates (if any). */
-    public hitTest(x: number, y: number) {
-        const range = document.caretRangeFromPoint(x, y);
-        const segmentAndOffset = this.nodeOffsetToSegmentOffset(range.startContainer, range.startOffset);
-        console.log(`  (${x},${y}) -> "${range.startContainer.textContent}":${range.startOffset} -> ${
-            segmentAndOffset
-                ? `${(segmentAndOffset.segment as TextSegment).text}:${segmentAndOffset.offset}`
-                : `undefined`}`);
-        return segmentAndOffset;
-    }
- 
     /** Returns the closest { segment, offset } to the 0-width rect described by x/top/bottom. */
     private findDomPosition(node: Node, x: number, yMin: number, yMax: number) {
         // Note: Attempting to hit test using 'caretRangeFromPoint()' against a reported client rect's top/bottom
         //       produced inconsistent results, presumably due to internal fixed-point -> Float32 rounding discrepancies.
-        // 
+        //
         // Reported edge: 487.99713134765625
         //
         // Boundary case: 487.999999999999971578290569595992 (miss)
@@ -182,10 +210,11 @@ export class DocumentView extends View<IDocumentProps, IDocumentViewState> {
 
         // Note: Caller must pass a 'node' that was previously rendered for a TextSegment.
         const domRange = document.createRange();
-        let left = 0
+        let left = 0;
         let right = node.textContent!.length;
 
         while (left < right) {
+            // tslint:disable-next-line:no-bitwise
             const m = (left + right) >>> 1;
             domRange.setStart(node, m);
             domRange.setEnd(node, m);
@@ -221,12 +250,12 @@ export class DocumentView extends View<IDocumentProps, IDocumentViewState> {
      * described by x/top/bottom.
      */
     private findVertical(x: number, top: number, bottom: number, predicate: FindVerticalPredicate) {
-        console.log(`looking below: ${bottom}`);
+        debug(`looking below: ${bottom}`);
 
         const state = this.state;
         let bestRect = { top: +Infinity, bottom: -Infinity, left: +Infinity, right: -Infinity };
         let bestDx = +Infinity;
-        let bestViewInfo: IViewInfo<any, IFlowViewComponent<any>> | undefined = undefined;
+        let bestViewInfo: IViewInfo<any, IFlowViewComponent<any>> | undefined;
 
         for (const viewInfo of state.elementToViewInfo.values()) {
             // TODO: Better filter for potential cursor targets?
@@ -237,10 +266,10 @@ export class DocumentView extends View<IDocumentProps, IDocumentViewState> {
             const view = viewInfo.view;
             const node = view.root;
             const rects = this.getClientRects(node);
-            console.log(`rects: ${rects.length} for ${node.textContent}`);
-            
+            debug(`rects: ${rects.length} for ${node.textContent}`);
+
             for (const rect of rects) {
-                console.log(`    ${JSON.stringify(rect)}`);
+                debug(`    ${JSON.stringify(rect)}`);
                 if (!predicate(top, bottom, bestRect, rect)) {
                     continue;
                 }
@@ -248,69 +277,56 @@ export class DocumentView extends View<IDocumentProps, IDocumentViewState> {
                 // Disqualify the new rect if its horizontal distance is greater than the best match
                 const dx = Math.max(rect.left - x, 0, x - rect.right);
                 if (dx > bestDx) {
-                    console.log(`        Rejected dx (${dx} > ${bestDx})`);
+                    debug(`        Rejected dx (${dx} > ${bestDx})`);
                     continue;
                 }
 
                 bestRect = rect;
                 bestDx = dx;
                 bestViewInfo = viewInfo;
-                console.log(`    ==> Best candidate: ${bestViewInfo.view.root.id}: ${bestViewInfo.view.root.textContent}`);
+                debug(`    ==> Best candidate: ${bestViewInfo.view.root.id}: ${bestViewInfo.view.root.textContent}`);
             }
         }
 
         if (!bestViewInfo) {
-            console.log(`No best candidate found.`);
+            debug(`No best candidate found.`);
             return undefined;
         }
-        
-        console.log(`Best candidate: ${bestViewInfo.view.root.id}: ${bestViewInfo.view.root.textContent}`);
-        console.log(`    rect: ${JSON.stringify(bestRect)}`);
+
+        debug(`Best candidate: ${bestViewInfo.view.root.id}: ${bestViewInfo.view.root.textContent}`);
+        debug(`    rect: ${JSON.stringify(bestRect)}`);
 
         return this.findDomPosition(
             LayoutContext.getCursorTarget(bestViewInfo.view),
             Math.min(Math.max(x, bestRect.left), bestRect.right),
             bestRect.top, bestRect.bottom);
     }
-
-    private static readonly findBelowPredicate: FindVerticalPredicate =
-        (top, bottom, best, candidate) => {
-            return candidate.top > top              // disqualify rects higher/same original height
-                && candidate.top <= best.top;       // disqualify rects lower than best match
-        };
-
-    private static readonly findAbovePredicate: FindVerticalPredicate =
-        (top, bottom, best, candidate) => {
-            return candidate.bottom < bottom        // disqualify rects lower/same as starting point
-                && candidate.bottom >= best.bottom; // disqualify rects higher than best match
-        };
-
-    /**
-     * Returns the closest { segment, offset } below the text cursor occupying the 0-width rect
-     * described by x/top/bottom.
-     */
-    public readonly findBelow = (x: number, top: number, bottom: number) => {
-        return this.findVertical(x, top, bottom, DocumentView.findBelowPredicate);
-    }
-
-    /**
-     * Returns the closest { segment, offset } below the text cursor occupying the 0-width rect
-     * described by x/top/bottom.
-     */
-    public readonly findAbove = (x: number, top: number, bottom: number) => {
-        return this.findVertical(x, top, bottom, DocumentView.findAbovePredicate);
-    }
 }
 
 /** Holds ephemeral state used during layout calculations. */
 class LayoutContext {
-    /** 
+
+    /** The next tracked position we're looking for. */
+    private get nextTrackedPosition() {
+        return this.pendingTrackedPositions[this.pendingTrackedPositions.length - 1];
+    }
+
+    public get currentInline() { return this._currentInline; }
+
+    /**
+     * Returns the given view's designated cursor target, if any.  This is the node within the view that
+     * should receive the text caret.
+     */
+    public static getCursorTarget<TProps>(view: IFlowViewComponent<TProps>): Node {
+        return (view as any).cursorTarget;
+    }
+    /**
      * Sorted stack of tracked position we're still looking for.  Positions are popped from
      * the stack as the consumers are notified.
      */
     private readonly pendingTrackedPositions: ITrackedPosition[];
 
-    /** 
+    /**
      * Set of Elements that were previously rendered that have not yet been encountered by
      * this layout pass.  At the end of the layout pass, any remaining elements are unmounted
      * as they are no longer within the rendered window.
@@ -318,41 +334,30 @@ class LayoutContext {
     private readonly pendingLayout: Set<Element>;
 
     /** The IViewInfo for the last rendered inline view. */
+    // tslint:disable-next-line:variable-name
     private _currentInline: IViewInfo<any, IFlowViewComponent<any>> | null = null;
 
-    constructor (readonly doc: FlowDocument, readonly state: IDocumentViewState, public root: Element, trackedPositions: ITrackedPosition[]) {
+    constructor(readonly doc: FlowDocument, readonly state: IDocumentViewState, public root: Element, trackedPositions: ITrackedPosition[]) {
         // Initialize 'pendingTrackedPositions' by copying and sorting the tracked positions.
         this.pendingTrackedPositions = trackedPositions
             .slice(0)
             .sort((left, right) => right.position - left.position);
-        
+
         // Initialize 'pendingLayout' with the set of root elements rendered in the last layout pass.
         this.pendingLayout = new Set<Element>(state.elementToViewInfo.keys());
     }
 
-    /** 
-     * Returns the given view's designated cursor target, if any.  This is the node within the view that
-     * should receive the text caret.
-     */
-    public static getCursorTarget<TProps>(view: IFlowViewComponent<TProps>): Node {
-        return (view as any)["cursorTarget"];
-    }
-
-    /** The next tracked position we're looking for. */
-    private get nextTrackedPosition() {
-        return this.pendingTrackedPositions[this.pendingTrackedPositions.length - 1];
-    }
-
-    /** 
+    /**
      * Invoked for each DOM node we emit.  Position is the starting position rendered by the current IView.
      */
-    public notifyTrackedPositionListeners(node: Node, position: number, segments: { cachedLength: number }[]) {
+    public notifyTrackedPositionListeners(node: Node, position: number, segments: Array<{ cachedLength: number }>) {
         const trackedPositions = this.pendingTrackedPositions;
         let topTracked: ITrackedPosition;
 
         // Notify listeners if we've advanced past a tracked position without intersecting it (e.g., the
         // tracked position is above the rendered window.)  In this case, the calculated position will be
         // negative.
+        // tslint:disable-next-line:no-conditional-assignment
         while ((topTracked = this.nextTrackedPosition) && topTracked.position < position) {
             trackedPositions.pop()!.callback(node, topTracked.position - position);
         }
@@ -361,6 +366,7 @@ class LayoutContext {
         let end = position;
         for (const segment of segments) {
             end += segment.cachedLength;
+            // tslint:disable-next-line:no-conditional-assignment
             while ((topTracked = this.nextTrackedPosition) && position <= topTracked.position && topTracked.position < end) {
                 // Note: Pop() cannot return 'undefined' per the condition 'topTracked !== undefined' above.
                 trackedPositions.pop()!.callback(node, topTracked.position - position);
@@ -376,18 +382,18 @@ class LayoutContext {
             toUnmount.remove();
             toUnmountInfo.view.unmount();
         }
-        
+
         this.pendingLayout.clear();
 
         // Rebuild the segment -> ViewInfo map from the remaining visible elements.
         this.state.segmentToViewInfo = new Map<ISegment, IViewInfo<any, IFlowViewComponent<any>>>(
             [...this.state.elementToViewInfo.values()].map<[ISegment, IViewInfo<any, IFlowViewComponent<any>>]>(
-                viewInfo => [viewInfo.segments[0], viewInfo]));
+                (viewInfo) => [viewInfo.segments[0], viewInfo]));
     }
 
     public elementToViewInfo(element: Element) { return this.state.elementToViewInfo.get(element); }
 
-    /** 
+    /**
      * If the given 'segment' is at the head of a list of previously rendered segments, return it's
      * cached ViewInfo and remove that IView from the pendingLayout list.
      */
@@ -404,8 +410,6 @@ class LayoutContext {
         return viewInfo;
     }
 
-    public get currentInline() { return this._currentInline; }
-
     public setViewInfo<TProps, TView extends IFlowViewComponent<TProps>>(viewInfo: IViewInfo<TProps, TView>) {
         this.state.segmentToViewInfo.set(viewInfo.segments[0], viewInfo);
         this.state.elementToViewInfo.set(viewInfo.view.root, viewInfo);
@@ -415,22 +419,62 @@ class LayoutContext {
 
 /** State machine that synchronizes the DOM with the visible portion of the FlowDocument. */
 export class DocumentLayout {
+
+    /** Runs state machine, starting with the paragraph at 'start'. */
+    public static sync(props: IDocumentProps, state: IDocumentViewState) {
+        const paginator = props.paginator;
+        const desiredStart = (paginator && paginator.startPosition) || 0;
+        let start = (paginator && paginator.startingBlockPosition) || 0;
+
+        debug(`Sync(${desiredStart}): [${start}..?)`);
+
+        const context = new LayoutContext(
+            props.doc,
+            state,
+            state.slot,
+            props.trackedPositions);
+
+        do {
+            // Ensure that we exit the outer do..while loop if there are no remaining segments.
+            let nextStart = -1;
+
+            context.doc.visitRange((position, segment, startOffset, endOffset) => {
+                nextStart = this.syncSegment(context, position, segment, startOffset, endOffset);
+
+                // TODO: Halt synchronization once we're off-screen.
+
+                // If the 'syncSegment' returned '-1', proceed to the next segment (if any).
+                // Otherwise break to the outer 'do..while' loop and we'll restart at the returned
+                // 'next' position.
+                return nextStart < 0;
+            }, start);
+
+            start = nextStart;
+        } while (start >= 0);
+
+        // Notify listeners whose tracked positions were after our rendered window.
+        context.notifyTrackedPositionListeners(LayoutContext.getCursorTarget(context.currentInline!.view)!, +Infinity, []);
+
+        // Any nodes not re-used from the previous layout are unmounted and removed.
+        context.unmount();
+    }
+
+    private static readonly inclusionRootSym = Symbol("Flow.Editor.Marker.InclusionRoot");
     private static mountView<TProps, TView extends IFlowViewComponent<TProps>>(
         context: LayoutContext,
         segments: ISegment[],
         factory: () => TView,
-        props: TProps): IViewInfo<TProps, TView>
-    {
+        props: TProps): IViewInfo<TProps, TView> {
         const view = factory();
         view.mount(props);
 
         return context.setViewInfo({
             view,
-            segments
+            segments,
         });
     }
 
-    /** 
+    /**
      * Ensure that the IView for the given set of Segments has been created and that it's root DOM node
      * is at the correct position within the current parent.
      */
@@ -439,8 +483,7 @@ export class DocumentLayout {
         previous: Node | null,
         segments: ISegment[],
         factory: () => TView,
-        props: TProps): IViewInfo<TProps, TView>
-    {
+        props: TProps): IViewInfo<TProps, TView> {
         const parent = context.root;
 
         // TODO: Check all non-head segments to look for best match?
@@ -504,8 +547,6 @@ export class DocumentLayout {
        this.syncInline(context, position, segments, TextView.factory, { text });
     }
 
-    private static readonly inclusionRootSym = Symbol("Flow.Editor.Marker.InclusionRoot");
-
     /** Ensures that a foreign inclusion's view is mounted and up to date. */
     private static syncInclusion(context: LayoutContext, position: number, marker: Marker) {
         let child: HTMLElement;
@@ -522,7 +563,7 @@ export class DocumentLayout {
                     child = document.createElement("span");
                     context.doc.getInclusionContainerComponent(marker, [["div", Promise.resolve(child)]]);
                     break;
-                
+
                 default:
                     console.assert(kind === InclusionKind.Chaincode);
                     child = document.createElement("span");
@@ -535,13 +576,12 @@ export class DocumentLayout {
         this.syncInline(context, position, [ marker ], InclusionView.factory, { child });
     }
 
-    /** 
+    /**
      * Finds the largest contiguous run of TextSegments that share the same style as 'first', starting at
      * the given 'start' position and returns the concatenated text.
      */
     private static concatTextSegments(context: LayoutContext, position: number, first: TextSegment, relativeStartOffset: number, relativeEndOffset: number)
-        : { text: string, style: CSSStyleDeclaration, segments: TextSegment[], nextPosition: number, startPosition: number }
-    {
+        : { text: string, style: CSSStyleDeclaration, segments: TextSegment[], nextPosition: number, startPosition: number } {
         const accumulator = new TextAccumulator(position, first, relativeStartOffset, relativeEndOffset);
         context.doc.visitRange(accumulator.tryConcat, accumulator.nextPosition, position + relativeEndOffset);
         return accumulator;
@@ -558,7 +598,7 @@ export class DocumentLayout {
                 //       This will cause the outer loop to skip to the next TextSegment we haven't yet
                 //       processed.  (TODO: Consider pushing/popping processors in the outer loop instead?)
                 return textInfo.nextPosition;
-            
+
             case DocSegmentKind.Paragraph:
                 this.syncParagraph(context, position, segment as Marker);
                 break;
@@ -570,55 +610,16 @@ export class DocumentLayout {
             case DocSegmentKind.Inclusion:
                 this.syncInclusion(context, position, segment as Marker);
                 break;
-          
+
             case DocSegmentKind.EOF:
                 this.syncText(context, position, [segment], "\u200B");
                 break;
-          
+
             default:
                 throw new Error(`Unknown DocSegmentKind '${kind}'.`);
         }
 
         // By default, continue continue with the next segment.
         return -1;
-    }
-
-    /** Runs state machine, starting with the paragraph at 'start'. */
-    public static sync(props: IDocumentProps, state: IDocumentViewState) {
-        const paginator = props.paginator;
-        const desiredStart = (paginator && paginator.startPosition) || 0;
-        let start = (paginator && paginator.startingBlockPosition) || 0;
-
-        console.log(`Sync(${desiredStart}): [${start}..?)`);
-
-        const context = new LayoutContext(
-            props.doc,
-            state,
-            state.slot,
-            props.trackedPositions);
-        
-        do {
-            // Ensure that we exit the outer do..while loop if there are no remaining segments.
-            let nextStart = -1;
-            
-            context.doc.visitRange((position, segment, startOffset, endOffset) => {
-                nextStart = this.syncSegment(context, position, segment, startOffset, endOffset);
-
-                // TODO: Halt synchronization once we're off-screen.
-
-                // If the 'syncSegment' returned '-1', proceed to the next segment (if any).
-                // Otherwise break to the outer 'do..while' loop and we'll restart at the returned
-                // 'next' position.
-                return nextStart < 0;
-            }, start);
-
-            start = nextStart;
-        } while (start >= 0);
-
-        // Notify listeners whose tracked positions were after our rendered window.
-        context.notifyTrackedPositionListeners(LayoutContext.getCursorTarget(context.currentInline!.view)!, +Infinity, []);
-
-        // Any nodes not re-used from the previous layout are unmounted and removed.
-        context.unmount();
     }
 }

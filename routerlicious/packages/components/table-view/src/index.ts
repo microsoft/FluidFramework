@@ -1,46 +1,48 @@
-import { MapExtension } from "@prague/map";
-import { Component } from "@prague/app-component";
-import { ITree, IPlatform } from "@prague/container-definitions";
-import { ComponentHost } from "@prague/runtime";
-import { IChaincode, IChaincodeComponent, IComponentPlatform, IComponentRuntime, IComponentDeltaHandler } from "@prague/runtime-definitions";
 import { TableDocumentComponent } from "@chaincode/table-document";
+import { Component } from "@prague/app-component";
+import { IPlatform, ITree } from "@prague/container-definitions";
+import { MapExtension } from "@prague/map";
+import { ComponentHost } from "@prague/runtime";
+import { IChaincode, IChaincodeComponent, IComponentDeltaHandler, IComponentPlatform, IComponentRuntime } from "@prague/runtime-definitions";
 import { Deferred } from "@prague/utils";
-import { GridView } from "./grid";
 import { ConfigView } from "./config";
 import { ConfigKeys } from "./configKeys";
+import { GridView } from "./grid";
 
 export class TableView extends Component {
+
+    public static readonly type = `${require("../package.json").name}@${require("../package.json").version}`;
     private ready = new Deferred<void>();
 
     constructor(private componentRuntime: IComponentRuntime) {
         super([[MapExtension.Type, new MapExtension()]]);
     }
-    
-    protected async create() {}
 
     public async opened() {
         await this.connected;
-        this.ready.resolve();        
+        this.ready.resolve();
     }
 
     public async attach(platform: IComponentPlatform): Promise<IComponentPlatform> {
         const maybeDiv = await platform.queryInterface<HTMLElement>("div");
         if (!maybeDiv) {
-            console.error(`No <div> provided`);
-            return;
+            throw new Error("No <div> provided");
         }
 
-        const docId = await this.root.get(ConfigKeys.docId);
-        if (!docId) {
-            const configView = new ConfigView(this.componentRuntime, this.root);
-            maybeDiv.appendChild(configView.root);
-            await configView.done;
-            while (maybeDiv.lastChild) {
-                maybeDiv.lastChild.remove();
+        {
+            const docId = await this.root.get(ConfigKeys.docId);
+            if (!docId) {
+                const configView = new ConfigView(this.componentRuntime, this.root);
+                maybeDiv.appendChild(configView.root);
+                await configView.done;
+                while (maybeDiv.lastChild) {
+                    maybeDiv.lastChild.remove();
+                }
             }
         }
 
         if (maybeDiv) {
+            // tslint:disable-next-line:no-shadowed-variable
             const docId = await this.root.get(ConfigKeys.docId);
             const component = await this.componentRuntime.getProcess(docId, true);
             const tableDocComponent = component.chaincode as TableDocumentComponent;
@@ -50,9 +52,11 @@ export class TableView extends Component {
             const grid = new GridView(doc);
             maybeDiv.appendChild(grid.root);
         }
+
+        return;
     }
 
-    public static readonly type = `${require("../package.json").name}@${require("../package.json").version}`;
+    protected async create() { /* do nothing */ }
 }
 
 /**
@@ -62,9 +66,6 @@ export class TableViewComponent implements IChaincodeComponent {
     public view: TableView;
     private chaincode: IChaincode;
     private component: ComponentHost;
-
-    constructor() {
-    }
 
     public getModule(type: string) {
         return null;

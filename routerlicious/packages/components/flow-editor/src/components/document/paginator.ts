@@ -1,22 +1,23 @@
 import { FlowDocument } from "@chaincode/flow-document";
-import { ITrackedPosition } from ".";
 import { Dom } from "@prague/flow-util";
+import { ITrackedPosition } from ".";
+import { debug } from "../../debug";
 
 export class Paginator {
     public startPosition = 0;
     public deltaY = 0;
 
-    constructor (private readonly doc: FlowDocument) {}
+    constructor(private readonly doc: FlowDocument) {}
 
     private readonly foundLine = (node: Node, nodeOffset: number) => {
-        console.log(`scroll to: "${node.textContent}":${nodeOffset}`);
+        debug(`scroll to: "${node.textContent}":${nodeOffset}`);
         const bounds = Dom.getClientRect(node, nodeOffset);
-        
+
         // 'bounds' can be undefined if the position corresponds to a zero-sized node, such as the
         // <span> inserted to mark EOF.
         if (bounds) {
             this.deltaY = bounds.top;
-            console.log(`  -> ${this.deltaY}`);
+            debug(`  -> ${this.deltaY}`);
         }
     }
 

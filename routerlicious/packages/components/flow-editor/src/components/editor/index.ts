@@ -1,19 +1,20 @@
-import { Cursor } from "./cursor";
-import { Scheduler, KeyCode } from "@prague/flow-util";
-import { DocumentView, IDocumentProps } from "../document";
-import { View, IViewState } from "..";
-import { shouldIgnoreEvent } from "../inclusion";
+import { KeyCode, Scheduler } from "@prague/flow-util";
 import { ISegment } from "@prague/merge-tree";
+import { IViewState, View } from "..";
+import { debug } from "../../debug";
+import { DocumentView, IDocumentProps } from "../document";
+import { shouldIgnoreEvent } from "../inclusion";
+import { Cursor } from "./cursor";
 
-export interface IEditorProps extends IDocumentProps { 
+export interface IEditorProps extends IDocumentProps {
     scheduler: Scheduler;
     eventSink?: HTMLElement;
 }
 
-interface ListenerRegistration { 
-    target: EventTarget,
-    type: string,
-    listener: EventListener
+interface IListenerRegistration {
+    target: EventTarget;
+    type: string;
+    listener: EventListener;
 }
 
 interface IEditorViewState extends IViewState {
@@ -21,37 +22,28 @@ interface IEditorViewState extends IViewState {
     docView: DocumentView;
     eventSink: Element;
     props: IEditorProps;
-    listeners: ListenerRegistration[];
+    listeners: IListenerRegistration[];
 }
 
 export class Editor extends View<IEditorProps, IEditorViewState> {
+
+    private get cursor()         { return this.state.cursor; }
+    public  get doc()            { return this.state.props.doc; }
+    private get props()          { return this.state.props; }
+    public  get cursorPosition() { return this.state.cursor.position; }
     public invalidate: () => void;
 
-    constructor () {
+    constructor() {
         super();
 
         // TODO: Kludge: We temporarily assign invalidate -> render until we get our scheduler in mount().
         this.invalidate = this.render;
     }
 
-    private on<K extends keyof HTMLElementEventMap>(listeners: ListenerRegistration[], target: EventTarget, type: K | string, listener: (ev: HTMLElementEventMap[K]) => any) {
-        const wrappedListener = (e: Event) => {
-            // Ignore events that bubble up from inclusions
-            if (shouldIgnoreEvent(e)) {
-                return;
-            }
-
-            listener(e);
-        }
-        
-        target.addEventListener(type, wrappedListener);
-        listeners.push({ target, type, listener: wrappedListener });
-    }
-
     protected mounting(props: Readonly<IEditorProps>): IEditorViewState {
         const scheduler = props.scheduler;
         this.invalidate = scheduler.coalesce(this.render);
-        
+
         const cursor = new Cursor(props.doc);
         cursor.moveTo(0, false);
 
@@ -59,7 +51,7 @@ export class Editor extends View<IEditorProps, IEditorViewState> {
         const root = docView.mount(props);
         docView.overlay.appendChild(cursor.root);
 
-        const listeners: ListenerRegistration[] = [];
+        const listeners: IListenerRegistration[] = [];
         const eventSink = props.eventSink || root;
         this.on(listeners, eventSink, "keydown",   this.onKeyDown);
         this.on(listeners, eventSink, "keypress",  this.onKeyPress);
@@ -74,7 +66,7 @@ export class Editor extends View<IEditorProps, IEditorViewState> {
             docView,
             eventSink,
             props,
-            cursor
+            cursor,
         });
     }
 
@@ -98,10 +90,19 @@ export class Editor extends View<IEditorProps, IEditorViewState> {
         this.doc.off("op", this.invalidate);
     }
 
-    private get cursor()         { return this.state.cursor; }
-    public  get doc()            { return this.state.props.doc; }
-    private get props()          { return this.state.props; }
-    public  get cursorPosition() { return this.state.cursor.position; }
+    private on<K extends keyof HTMLElementEventMap>(listeners: IListenerRegistration[], target: EventTarget, type: K | string, listener: (ev: HTMLElementEventMap[K]) => any) {
+        const wrappedListener = (e: Event) => {
+            // Ignore events that bubble up from inclusions
+            if (shouldIgnoreEvent(e)) {
+                return;
+            }
+
+            listener(e);
+        };
+
+        target.addEventListener(type, wrappedListener);
+        listeners.push({ target, type, listener: wrappedListener });
+    }
 
     private readonly render = () => {
         this.props.trackedPositions = this.cursor.getTracked();
@@ -182,7 +183,7 @@ export class Editor extends View<IEditorProps, IEditorViewState> {
                 break;
             }
             default: {
-                console.log(`Key: ${ev.key} (${ev.keyCode})`);
+                debug(`Key: ${ev.key} (${ev.keyCode})`);
                 break;
             }
         }

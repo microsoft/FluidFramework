@@ -122,5 +122,5 @@ export const enum KeyCode {
     US_CLOSE_SQUARE_BRACKET = 221,
     US_QUOTE = 222,
 
-    Composition = 229
+    Composition = 229,
 }

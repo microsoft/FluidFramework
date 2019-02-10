@@ -35,7 +35,7 @@ export class Dom {
         }
     }
 
-    /** 
+    /**
      * Inserts the given 'newChild' immediately after the given 'refChild'.  If 'refChild' is undefined,
      * inserts 'newChild' as the first child of 'parent'.
      */
@@ -55,9 +55,9 @@ export class Dom {
 
         measurementRange.setStart(node, nodeOffset);
         measurementRange.setEnd(node, nodeOffset);
-        
+
         // Note: On Safari 12, 'domRange.getBoundingClientRect()' returns an empty rectangle when domRange start === end.
-        //       However, 'getClientRects()' for the same range returns the expected 0-width rect.        
+        //       However, 'getClientRects()' for the same range returns the expected 0-width rect.
         return measurementRange.getClientRects()[0];
     }
 }

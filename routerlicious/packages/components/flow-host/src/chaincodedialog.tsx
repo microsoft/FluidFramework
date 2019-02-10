@@ -1,20 +1,20 @@
-import * as React from "react";
-import { Dialog, DialogType, DialogFooter } from "office-ui-fabric-react/lib/Dialog";
 import { PrimaryButton } from "office-ui-fabric-react/lib/Button";
+import { ComboBox, IComboBox, IComboBoxOption } from "office-ui-fabric-react/lib/ComboBox";
+import { Dialog, DialogFooter, DialogType } from "office-ui-fabric-react/lib/Dialog";
 import { TextField } from "office-ui-fabric-react/lib/TextField";
-import { ComboBox, IComboBoxOption, IComboBox } from "office-ui-fabric-react/lib/ComboBox";
+import * as React from "react";
 import { IAppConfig } from "./app";
 
-interface IProps { 
+interface IProps {
     config: IAppConfig;
-    addComponent: (docId: string, chaincode: string) => void,
+    addComponent: (docId: string, chaincode: string) => void;
 }
 
-interface IState { 
+interface IState {
     docId: string;
     chaincode: string;
-    options: IComboBoxOption[]
-    hideDialog: boolean
+    options: IComboBoxOption[];
+    hideDialog: boolean;
 }
 
 export class ChaincodeDialog extends React.Component<IProps, IState> {
@@ -27,38 +27,39 @@ export class ChaincodeDialog extends React.Component<IProps, IState> {
         fetch(`${queryUrl}`, {
             method: "GET",
             headers: new Headers([[
-                "Authorization", `Basic ${btoa("prague:bohemia")}`]
+                "Authorization", `Basic ${btoa("prague:bohemia")}`],
             ]),
         })
-        .then(response => response.json())
-        .then(json => {
+        .then((response) => response.json())
+        .then((json) => {
             this.setState({
                 options: [...new Set<IComboBoxOption>(json.map((pkg: { name: string, version: string }) => ({
                     key: `${pkg.name}@${pkg.version}`,
-                    text: pkg.name
-                })))]
-            })
+                    text: pkg.name,
+                })))],
+            });
         });
 
-        this.state = { 
+        this.state = {
+            // tslint:disable-next-line:insecure-random
             docId: Math.random().toString(36).substr(2, 4),
             chaincode: "",
             options: [],
-            hideDialog: true
+            hideDialog: true,
         };
     }
 
-    render() {
+    public render() {
         return (<Dialog
                 hidden={this.state.hideDialog}
                 onDismiss={this.closeDialog}
                 dialogContentProps={{
                     type: DialogType.normal,
-                    title: "Add Component"
+                    title: "Add Component",
                 }}
                 modalProps={{
                     isBlocking: false,
-                    containerClassName: "ms-dialogMainOverride"
+                    containerClassName: "ms-dialogMainOverride",
                 }}>
                 <TextField
                     label="Document ID"
@@ -72,15 +73,9 @@ export class ChaincodeDialog extends React.Component<IProps, IState> {
                     allowFreeform={true}
                     autoComplete="on"
                     options={this.state.options}
-                    //onRenderOption={this._onRenderFontOption}
-                    //componentRef={this._basicComboBoxComponentRef}
+                    // onRenderOption={this._onRenderFontOption}
+                    // componentRef={this._basicComboBoxComponentRef}
                     // tslint:disable:jsx-no-lambda
-                    onFocus={() => console.log("onFocus called")}
-                    onBlur={() => console.log("onBlur called")}
-                    onMenuOpen={() => console.log("ComboBox menu opened")}
-                    onPendingValueChanged={(option, pendingIndex, pendingValue) =>
-                        console.log("Preview value was changed. Pending index: " + pendingIndex + ". Pending value: " + pendingValue)
-                    }
                     onChange={this._onChange}
                     // tslint:enable:jsx-no-lambda
                     />
@@ -90,23 +85,23 @@ export class ChaincodeDialog extends React.Component<IProps, IState> {
             </Dialog>);
     }
 
+    public showDialog() {
+        this.setState({ hideDialog: false });
+    }
+
+    // tslint:disable-next-line:variable-name
     private _onChange = (event: React.FormEvent<IComboBox>, option: IComboBoxOption, index: number, value: string): void => {
-        console.log("_onChanged() is called: option = " + JSON.stringify(option));
         if (option !== undefined) {
             this.setState({ chaincode: option.key.toString() });
         } else if (index !== undefined && index >= 0 && index < this.state.options.length) {
             this.setState({ chaincode: this.state.options[index].key.toString() });
         } else if (value !== undefined) {
             const newOption = { key: value, text: value };
-            this.setState({ 
+            this.setState({
                 options: [...this.state.options, newOption],
-                chaincode: newOption.key.toString()
+                chaincode: newOption.key.toString(),
             });
         }
-    };
-
-    public showDialog() {
-        this.setState({ hideDialog: false });
     }
 
     private closeDialog = () => {

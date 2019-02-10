@@ -16,9 +16,9 @@ import { ComponentHost, Runtime } from "@prague/runtime";
 import {
     IChaincode,
     IChaincodeComponent,
+    IComponentDeltaHandler,
     IComponentPlatform,
     IComponentRuntime,
-    IComponentDeltaHandler,
 } from "@prague/runtime-definitions";
 import { Deferred } from "@prague/utils";
 import * as React from "react";
@@ -58,9 +58,6 @@ export class FlowHostComponent implements IChaincodeComponent {
     private sharedText: SharedText;
     private chaincode: IChaincode;
     private component: ComponentHost;
-
-    constructor() {
-    }
 
     public getModule(type: string): any {
         return null;
@@ -155,7 +152,6 @@ export async function instantiateRuntime(context: IContainerContext): Promise<IR
 
     // Register path handler for inbound messages
     runtime.registerRequestHandler(async (request: IRequest) => {
-        console.log(request.url);
         const requestUrl = request.url.length > 0 && request.url.charAt(0) === "/"
             ? request.url.substr(1)
             : request.url;

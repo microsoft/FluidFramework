@@ -1,13 +1,14 @@
 import { Template } from "@prague/flow-util";
+import { FlowViewComponent, IFlowViewComponentState } from "..";
 import * as styles from "./index.css";
-import { IFlowViewComponentState, FlowViewComponent } from "..";
 
 const template = new Template({ tag: "p", props: { className: styles.text }});
 
 export interface ITextProps {
-    text: string
+    text: string;
 }
 
+// tslint:disable-next-line:no-empty-interface
 export interface ITextViewState extends IFlowViewComponentState { }
 
 export class TextView extends FlowViewComponent<ITextProps, ITextViewState> {
@@ -33,5 +34,5 @@ export class TextView extends FlowViewComponent<ITextProps, ITextViewState> {
         return { root, cursorTarget: root.firstChild! };
     }
 
-    public unmounting(state: Readonly<ITextViewState>) { }
+    public unmounting(state: Readonly<ITextViewState>) { /* do nothing */ }
 }

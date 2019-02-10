@@ -5,7 +5,7 @@
 export function lis(x: number[]): number[] {
     // Avoid returning '[ undefined ]' for an empty sequence.  The 'undefined' happens because we begin
     // with the initial state i = 1, m = [ 0 ].  For an empty sequence, 'x[m[0]]' -> undefined.
-    if (!x.length) { 
+    if (!x.length) {
         return x;
     }
 
@@ -16,7 +16,7 @@ export function lis(x: number[]): number[] {
     // maintains the m[j] that terminates the subsequence with the smallest value of x[m[j]] found so
     // far.
     const m = [ 0 ];
-    
+
     // p[k] stores the index of the predecessor of x[k] in the longest increasing subsequence ending at x[k].
     const p = new Array<number>(x.length);
 
@@ -32,14 +32,15 @@ export function lis(x: number[]): number[] {
                 continue;
             }
         }
- 
+
         // Because x[m[j]] < x[m[j + 1]] for all 'j', we can binary search for the longest increasing
         // subsequence that terminates with a value of 'x[k < i]' less than x[i] (if any).
         let lo = 0;
         {
             let hi = m.length - 1;
             while (lo < hi) {
-                const mid = (lo + hi) >> 1;
+                // tslint:disable-next-line:no-bitwise
+                const mid = (lo + hi) >>> 1;
                 if (x[m[mid]] < x[i]) {
                     lo = mid + 1;
                 } else {
@@ -47,19 +48,19 @@ export function lis(x: number[]): number[] {
                 }
             }
         }
- 
+
         // After searching, x[i] is known to extend the increasing sequence terminating with x[m[lo - 1]].
         // If we this is the first subsequence of length 'lo', or if the previously found subsequence of
-        // length 'lo' terminated with a higher value of x[m[lo]], record the new subsequence.  
-		if (x[i] < x[m[lo]]) {
+        // length 'lo' terminated with a higher value of x[m[lo]], record the new subsequence.
+        if (x[i] < x[m[lo]]) {
             // Avoid setting p[i] / accessing 'm[-1]' when 'lo === 0' (severe performance penalty).
-			if (lo) {
+            if (lo) {
                 p[i] = m[lo - 1];
             }
-			m[lo] = i;
-		}
-	}
-    
+            m[lo] = i;
+        }
+    }
+
     // Reconstruct the longest increasing subsequence.  Our 'm' array is conveniently the length of the
     // longest increasing subsequence found, and (once we load the tail of the list from 'x[m[m.length]]')
     // is no longer used.

@@ -1,16 +1,16 @@
-import * as React from "react";
 import { FlowDocument, FlowDocumentComponent } from "@chaincode/flow-document";
 import { VirtualizedView } from "@chaincode/flow-editor";
-import { Scheduler } from "@prague/flow-util";
-import * as style from "./index.css";
-import * as ReactDOM from "react-dom";
 import { IVirtualizedProps } from "@chaincode/flow-editor";
+import { Scheduler } from "@prague/flow-util";
+import * as React from "react";
+import * as ReactDOM from "react-dom";
 import { IAppConfig } from "./app";
+import * as style from "./index.css";
 
 interface IProps {
     config: IAppConfig;
     virtualize: boolean;
-    cmds: { 
+    cmds: {
         insert: (element: JSX.Element) => void,
         insertText: (lines: string[]) => void,
         insertContainerComponent: (pkg: string) => void,
@@ -27,14 +27,14 @@ export class FlowEditor extends React.Component<IProps, IState> {
     private readonly ref = React.createRef<HTMLDivElement>();
 
     constructor(props: Readonly<IProps>) {
-        super(props)
+        super(props);
         this.state = {};
         this.props.cmds.insert = this.insert;
         this.props.cmds.insertText = this.insertText;
         this.props.cmds.insertContainerComponent = this.insertContainerComponent;
     }
 
-    componentWillMount() {
+    public componentWillMount() {
         const { config } = this.props;
 
         if (!config.runtime.existing) {
@@ -59,11 +59,11 @@ export class FlowEditor extends React.Component<IProps, IState> {
         });
     }
 
-    render() { 
-        return <span className={`${style.fill} ${style.editorPane}`} ref={this.ref}></span>
+    public render() {
+        return <span className={`${style.fill} ${style.editorPane}`} ref={this.ref}></span>;
     }
 
-    componentDidUpdate() {
+    public componentDidUpdate() {
         const editor = this.state.editor;
         if (editor) {
             this.state.editorProps.virtualize = this.props.virtualize;
@@ -73,15 +73,15 @@ export class FlowEditor extends React.Component<IProps, IState> {
             if (parent.firstElementChild && parent.firstElementChild !== editor.root) {
                 parent.replaceChild(editor.root, parent.firstElementChild);
             } else {
-                parent.appendChild(editor.root)
+                parent.appendChild(editor.root);
             }
         }
     }
 
-    insert = (inclusion: JSX.Element | HTMLElement | { docId: string, chaincode?: string }) => {
+    public insert = (inclusion: JSX.Element | HTMLElement | { docId: string, chaincode?: string }) => {
         const position = this.state.editor.cursorPosition;
         const asAny = inclusion as any;
-        
+
         if (asAny.chaincode) {
             this.state.doc.insertComponent(position, null /* this.props.config.serverUrl */, asAny.docId, asAny.chaincode);
         } else if (asAny.innerHTML) {
@@ -95,14 +95,13 @@ export class FlowEditor extends React.Component<IProps, IState> {
         }
     }
 
-    insertContainerComponent = (pkg: string) => {
-        const position = this.state.editor.cursorPosition;        
-        console.log(position);
-        console.log(pkg);
+    public insertContainerComponent = (pkg: string) => {
+        const position = this.state.editor.cursorPosition;
+        // tslint:disable-next-line:insecure-random
         this.state.doc.insertInclusionComponent(position, Math.random().toString(36).substr(2, 4), pkg);
     }
 
-    insertText = (lines: string[]) => {
+    public insertText = (lines: string[]) => {
         const position = this.state.editor.cursorPosition;
         const doc = this.state.doc;
         for (let i = lines.length - 1; i >= 0; i--) {

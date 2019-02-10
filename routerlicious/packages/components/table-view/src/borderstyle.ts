@@ -5,17 +5,13 @@ const enum StyleIndex {
 }
 
 export class BorderRect {
-    constructor (private readonly styles: string[][]) { }
+
+    public get min() { return [Math.min(this.start[0], this.end[0]), Math.min(this.start[1], this.end[1])]; }
+    public get max() { return [Math.max(this.start[0], this.end[0]), Math.max(this.start[1], this.end[1])]; }
 
     public start = [NaN, NaN];
     public end   = [NaN, NaN];
-
-    public get min() { return [Math.min(this.start[0], this.end[0]), Math.min(this.start[1], this.end[1])] }
-    public get max() { return [Math.max(this.start[0], this.end[0]), Math.max(this.start[1], this.end[1])] }
-
-    private inRange(min: number, value: number, max: number) {
-        return min <= value && value <= max
-    }
+    constructor(private readonly styles: string[][]) { }
 
     public reset() {
         this.start = [NaN, NaN];
@@ -29,14 +25,6 @@ export class BorderRect {
             && this.inRange(min[1], col, max[1]);
     }
 
-    private getStyleIndices(min: number, value: number, max: number) {
-        const styles = [];
-        if (value === min) { styles.push(StyleIndex.Near) };
-        if (value === max) { styles.push(StyleIndex.Far) };
-        if (styles.length === 0) { styles.push(StyleIndex.Middle); }
-        return styles;
-    }
-
     public getStyle(row: number, col: number) {
         if (!this.intersect(row, col)) {
             return "";
@@ -46,12 +34,23 @@ export class BorderRect {
         const max = this.max;
         const vert = this.getStyleIndices(min[0], row, max[0]);
         const horiz = this.getStyleIndices(min[1], col, max[1]);
-        return vert.reduce((accumulator, vertIndex) => {
+        return vert.reduce((vertAccum, vertIndex) => {
             const vertStyles = this.styles[vertIndex];
-            return horiz.reduce((accumulator, horizIndex) => {
-                return `${accumulator} ${vertStyles[horizIndex]}`;
-            }, accumulator);
+            return horiz.reduce((horizAccum, horizIndex) => {
+                return `${horizAccum} ${vertStyles[horizIndex]}`;
+            }, vertAccum);
         }, "");
     }
-}
 
+    private inRange(min: number, value: number, max: number) {
+        return min <= value && value <= max;
+    }
+
+    private getStyleIndices(min: number, value: number, max: number) {
+        const styles = [];
+        if (value === min) { styles.push(StyleIndex.Near); }
+        if (value === max) { styles.push(StyleIndex.Far); }
+        if (styles.length === 0) { styles.push(StyleIndex.Middle); }
+        return styles;
+    }
+}

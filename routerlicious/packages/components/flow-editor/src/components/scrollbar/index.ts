@@ -1,14 +1,15 @@
 import { Template } from "@prague/flow-util";
-import * as styles from "./index.css";
 import { IViewState, View } from "..";
+import { debug } from "../../debug";
+import * as styles from "./index.css";
 
-const template = new Template({ 
-    tag: "div", 
+const template = new Template({
+    tag: "div",
     children: [{
         tag: "div",
         ref: "content",
-        props: { className: styles.scrollbarContent }
-    }]
+        props: { className: styles.scrollbarContent },
+    }],
 });
 
 export enum ScrollbarOrientation {
@@ -19,7 +20,7 @@ export enum ScrollbarOrientation {
 const orientationToClass = [
     styles.scrollbarHorizontal,
     styles.scrollbarVertical,
-]
+];
 
 export interface IScrollBarProps {
     orientation: ScrollbarOrientation;
@@ -38,26 +39,11 @@ export interface IScrollBarViewState extends IViewState {
 export class ScrollbarView extends View<IScrollBarProps, IScrollBarViewState> {
     public static readonly factory = () => new ScrollbarView();
 
-    private adjust(props: IScrollBarProps, length: number) {
-        const delta = props.max - props.min;
-        const size = length + delta;
-        return `${size}px`; 
-    }
-
     public mounting(props: Readonly<IScrollBarProps>): IScrollBarViewState {
         const root = template.clone() as HTMLElement;
         const content = template.get(root, "content") as HTMLElement;
 
         return this.updating(props, { root, content });
-    }
-
-    private readonly onScrollVert = (state: Readonly<IScrollBarViewState>) => this.fireOnScroll(state, state.root.scrollTop);
-    private readonly onScrollHoriz = (state: Readonly<IScrollBarViewState>) => this.fireOnScroll(state, state.root.scrollLeft);
-
-    private readonly fireOnScroll = (state: Readonly<IScrollBarViewState>, value: number) => {
-        value = Math.round(value);
-        console.log(`scrollbar: ${value}`);
-        state.onScroll!(value);
     }
 
     public updating(props: Readonly<IScrollBarProps>, state: Readonly<IScrollBarViewState>): IScrollBarViewState {
@@ -68,9 +54,9 @@ export class ScrollbarView extends View<IScrollBarProps, IScrollBarViewState> {
             state.root.removeEventListener("scroll", state.onScrollRaw);
         }
 
-        let onScrollRaw: undefined | (() => void) = undefined;
+        let onScrollRaw: undefined | (() => void);
         if (props.onScroll) {
-            onScrollRaw = 
+            onScrollRaw =
                 props.orientation === ScrollbarOrientation.Vertical
                     ? () => this.onScrollVert(state)
                     : () => this.onScrollHoriz(state);
@@ -82,7 +68,7 @@ export class ScrollbarView extends View<IScrollBarProps, IScrollBarViewState> {
 
         const bounds = state.root.getBoundingClientRect();
         const content = state.content;
-        
+
         switch (props.orientation) {
             case ScrollbarOrientation.Horizontal: {
                 content.style.width = this.adjust(props, bounds.width);
@@ -95,13 +81,28 @@ export class ScrollbarView extends View<IScrollBarProps, IScrollBarViewState> {
                 break;
             }
         }
-        
+
         return state;
     }
 
-    public unmounting(state: Readonly<IScrollBarViewState>) { 
+    public unmounting(state: Readonly<IScrollBarViewState>) {
         if (state.onScrollRaw) {
             state.root.removeEventListener("scroll", state.onScrollRaw);
         }
+    }
+
+    private adjust(props: IScrollBarProps, length: number) {
+        const delta = props.max - props.min;
+        const size = length + delta;
+        return `${size}px`;
+    }
+
+    private readonly onScrollVert = (state: Readonly<IScrollBarViewState>) => this.fireOnScroll(state, state.root.scrollTop);
+    private readonly onScrollHoriz = (state: Readonly<IScrollBarViewState>) => this.fireOnScroll(state, state.root.scrollLeft);
+
+    private readonly fireOnScroll = (state: Readonly<IScrollBarViewState>, value: number) => {
+        value = Math.round(value);
+        debug(`scrollbar: ${value}`);
+        state.onScroll!(value);
     }
 }

@@ -15,25 +15,17 @@ class Cursor {
     private path: string = "";
     private pathName: string = "";
 
-    constructor () { }
-
     public start(root: Element) {
         this.path = "return root";
         this.pathName = "";
         this.element = root;
     }
 
-    private moveTo(transition: ICursorTransition) {
-        this.path += `.${transition.property}`;
-        this.pathName += transition.suffix;
-        this.element = transition.fn(this.element!);
-    }
-
     public first()      { this.moveTo(Cursor.first); }
     public last()       { this.moveTo(Cursor.last); }
     public next()       { this.moveTo(Cursor.next); }
     public previous()   { this.moveTo(Cursor.previous); }
-    
+
     public child(index: number) {
         // Calculate the distance to the child from the last child.
         let delta = this.element!.childElementCount - index;
@@ -54,28 +46,64 @@ class Cursor {
     public end() {
         let pathFn = this.pathFns.get(this.pathName);
         if (!pathFn) {
-            pathFn = new Function('root', this.path) as (element: Element) => Element;
+            // tslint:disable-next-line:no-function-constructor-with-string-args
+            pathFn = new Function("root", this.path) as (element: Element) => Element;
             this.pathFns.set(this.pathName, pathFn);
         }
         return pathFn;
     }
+
+    private moveTo(transition: ICursorTransition) {
+        this.path += `.${transition.property}`;
+        this.pathName += transition.suffix;
+        this.element = transition.fn(this.element!);
+    }
 }
 
-export interface TemplateNode {
+export interface ITemplateNode {
     tag: string;
     classList?: string[];
     props?: {};
-    children?: TemplateNode[];
+    children?: ITemplateNode[];
     ref?: string;
 }
 
 export class Template {
     private static readonly cursor = new Cursor();
-    
+
+    private static build(vnode: ITemplateNode, path: number[], refs: Map<string, number[]>): Element {
+        // Create the HTML element and assign all properties.
+        const element = Object.assign(
+            document.createElement(vnode.tag),
+            vnode.props);
+
+        // Copy CSS classes to classList.
+        if (vnode.classList) {
+            element.classList.add(...vnode.classList);
+        }
+
+        // Recursively build children (if any).
+        if (vnode.children) {
+            const level = path.length;
+            path.push(0);
+            for (const child of vnode.children) {
+                element.appendChild(Template.build(child, path, refs));
+                path[level]++;
+            }
+            path.pop();
+        }
+
+        if (vnode.ref) {
+            refs.set(vnode.ref, path.slice(0));
+        }
+
+        return element;
+    }
+
     private readonly content: Element;
-    private readonly refs = new Map<string, (root: Element) => Element>(); 
-    
-    constructor (content: TemplateNode) {
+    private readonly refs = new Map<string, (root: Element) => Element>();
+
+    constructor(content: ITemplateNode) {
         const refToPath = new Map<string, number[]>();
         this.content = Template.build(content, [], refToPath);
 
@@ -92,35 +120,6 @@ export class Template {
 
     public get(root: Element, name: string) {
         return this.refs.get(name)!(root);
-    }
-
-    private static build(vnode: TemplateNode, path: number[], refs: Map<string, number[]>): Element {
-        // Create the HTML element and assign all properties.
-        const element = Object.assign(
-            document.createElement(vnode.tag),
-            vnode.props);
-        
-        // Copy CSS classes to classList.
-        if (vnode.classList) {
-            element.classList.add(...vnode.classList);
-        }
-    
-        // Recursively build children (if any).
-        if (vnode.children) {
-            const level = path.length;
-            path.push(0);
-            for (const child of vnode.children) {
-                element.appendChild(Template.build(child, path, refs));
-                path[level]++;
-            }
-            path.pop();
-        }
-
-        if (vnode.ref) {
-            refs.set(vnode.ref, path.slice(0));
-        }
-        
-        return element;
     }
 
     public clone() {

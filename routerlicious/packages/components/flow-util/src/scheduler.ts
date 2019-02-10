@@ -4,16 +4,6 @@ export class Scheduler {
     private framePending = false;
     private frameTasks: TaskCallback[] = [];
 
-    private readonly processFrameTasks = () => {
-        for (const task of this.frameTasks) {
-            task();
-        }
-
-        console.log(`Processed ${this.frameTasks.length} frame tasks.`);
-        this.frameTasks.length = 0;
-        this.framePending = false;
-    }
-
     public schedule(callback: TaskCallback) {
         // Record the new task.
         this.frameTasks.push(callback);
@@ -30,7 +20,7 @@ export class Scheduler {
 
     public coalesce(callback: TaskCallback) {
         let scheduled = false;
-        
+
         return () => {
             if (scheduled) {
                 return;
@@ -42,6 +32,15 @@ export class Scheduler {
             });
 
             scheduled = true;
+        };
+    }
+
+    private readonly processFrameTasks = () => {
+        for (const task of this.frameTasks) {
+            task();
         }
+
+        this.frameTasks.length = 0;
+        this.framePending = false;
     }
 }

@@ -1,7 +1,7 @@
 import { TableDocument } from "@chaincode/table-document";
 import { KeyCode, Scheduler, Template } from "@prague/flow-util";
-import * as styles from "./index.css";
 import { BorderRect } from "./borderstyle";
+import * as styles from "./index.css";
 
 const tableTemplate = new Template({
     tag: "table",
@@ -9,20 +9,20 @@ const tableTemplate = new Template({
     children: [
         {
             tag: "caption",
-            children: [{ tag: "span", props: { textContent: "Table" } }]
+            children: [{ tag: "span", props: { textContent: "Table" } }],
         },
         {
             tag: "thead",
             children: [{
                 tag: "tr",
-                ref: "cols"
+                ref: "cols",
             }],
         },
         {
             tag: "tbody",
-            ref: "body"
-        }
-    ]
+            ref: "body",
+        },
+    ],
 });
 
 const rowTemplate = new Template({ tag: "tr" });
@@ -39,16 +39,16 @@ export class GridView {
     private selection = new BorderRect([
         [ `${styles.selectedTL}`, `${styles.selectedT}`, `${styles.selectedTR}` ],
         [ `${styles.selectedL}`,  `${styles.selected}`,  `${styles.selectedR}`  ],
-        [ `${styles.selectedBL}`, `${styles.selectedB}`, `${styles.selectedBR}` ]
+        [ `${styles.selectedBL}`, `${styles.selectedB}`, `${styles.selectedBR}` ],
     ]);
 
     private readonly invalidate: () => void;
 
-    constructor (private readonly doc: TableDocument) {
-        const scheduler = new Scheduler;
+    constructor(private readonly doc: TableDocument) {
+        const scheduler = new Scheduler();
         this.invalidate = scheduler.coalesce(this.refreshCells);
 
-        this.root.addEventListener("click", this.onClick as EventListener);        
+        this.root.addEventListener("click", this.onClick as EventListener);
         this.tbody.addEventListener("pointerdown", this.cellDown as EventListener);
         this.tbody.addEventListener("pointermove", this.cellMove as EventListener);
         this.inputBox.addEventListener("keydown", this.cellKeyDown);
@@ -58,7 +58,6 @@ export class GridView {
 
         const numRows = this.numRows;
         const numCols = this.numCols;
-        console.log(`table-view: ctor ${numRows}x${this.numCols}`);
 
         const blank = headerTemplate.clone();
         this.cols.appendChild(blank);
@@ -75,7 +74,7 @@ export class GridView {
             const th = headerTemplate.clone();
             th.textContent = `${r + 1}`;
             row.appendChild(th);
-            
+
             for (let c = 0; c < numCols; c++) {
                 row.appendChild(cellTemplate.clone());
             }
@@ -137,7 +136,7 @@ export class GridView {
                 this.moveInputToPosition(row, col, e.shiftKey);
             }
         }
-    };
+    }
 
     private readonly cellDown = (e: PointerEvent) => {
         const maybeTd = this.getCellFromEvent(e);
@@ -245,7 +244,7 @@ export class GridView {
         }
     }
 
-    private readonly cellInput = () => { 
+    private readonly cellInput = () => {
         this.tdText!.textContent = `\u200B${this.inputBox.value}`;
     }
 
@@ -259,11 +258,11 @@ export class GridView {
             case KeyCode.Tab:        { e.preventDefault(); /* fall-through */ }
             case KeyCode.RightArrow: { this.moveInputByOffset(e, /* rowOffset: */  0, /* colOffset */  1); break; }
         }
-    };
+    }
 
     private getCellFromEvent(e: Event) {
         const target = e.target as HTMLElement;
-        
+
         return (target.nodeName === "TD" || target.nodeName === "TH")
             ? target as HTMLTableCellElement
             : undefined;
@@ -273,7 +272,7 @@ export class GridView {
     private getRowColFromTd(td: HTMLTableDataCellElement) {
         const col = td.cellIndex;
         const row = (td.parentElement as HTMLTableRowElement).rowIndex;
-        
+
         // The '-1' are to account for Row/Columns headings.  Note that even though the column
         // headings our outside the body, it still impacts their cellIndex.
         return [row - 1, col - 1];

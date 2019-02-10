@@ -1,23 +1,23 @@
-import { IPlatform, ITree } from "@prague/container-definitions";
-import { MapExtension } from "@prague/map";
-import { SharedString, CollaborativeStringExtension } from "@prague/sequence";
 import { Component } from "@prague/app-component";
 import { DataStore } from "@prague/app-datastore";
+import { IPlatform, ITree } from "@prague/container-definitions";
+import { MapExtension } from "@prague/map";
 import {
-    MergeTree,
-    UniversalSequenceNumber,
+    BaseSegment,
     ISegment,
     LocalReference,
-    BaseSegment,
+    Marker,
+    MergeTree,
+    PropertySet,
+    ReferencePosition,
     ReferenceType,
     reservedTileLabelsKey,
-    PropertySet,
     SegmentType,
-    Marker,
-    ReferencePosition
+    UniversalSequenceNumber,
 } from "@prague/merge-tree";
 import { ComponentHost } from "@prague/runtime";
-import { IChaincodeComponent, IComponentRuntime, IComponentDeltaHandler, IComponentPlatform, IChaincode } from "@prague/runtime-definitions";
+import { IChaincode, IChaincodeComponent, IComponentDeltaHandler, IComponentPlatform, IComponentRuntime } from "@prague/runtime-definitions";
+import { CollaborativeStringExtension, SharedString } from "@prague/sequence";
 import { Deferred } from "@prague/utils";
 import { EventEmitter } from "events";
 import { debug } from "./debug";
@@ -27,25 +27,26 @@ export enum DocSegmentKind {
     Paragraph = "<p>",
     LineBreak = "<br>",
     Inclusion = "<?>",
-    EOF = "<eof>"
-};
+    EOF = "<eof>",
+}
 
 export enum InclusionKind {
     HTML = "<html>",
     Chaincode = "<@chaincode>",
-    Component = "<@component>"
+    Component = "<@component>",
 }
 
 export const getInclusionKind = (marker: Marker): InclusionKind => marker.properties.kind;
 export const getInclusionHtml = (marker: Marker) => {
     const template = document.createElement("template");
+    // tslint:disable-next-line:no-inner-html
     template.innerHTML = marker.properties.content;
     return template.content.firstElementChild as HTMLElement;
 };
 
 const styleProperty = "style";
 export const getStyle = (segment: BaseSegment): CSSStyleDeclaration => segment.properties && segment.properties[styleProperty];
-export const setStyle = (segment: BaseSegment, style: CSSStyleDeclaration) => { 
+export const setStyle = (segment: BaseSegment, style: CSSStyleDeclaration) => {
     segment.properties = Object.assign(segment.properties || {}, { [styleProperty]: style });
 };
 
@@ -78,11 +79,11 @@ export const getDocSegmentKind = (segment: ISegment): DocSegmentKind => {
         default:
             throw new Error(`Unknown SegmentType '${segmentType}'.`);
     }
-}
+};
 
 type LeafAction = (position: number, segment: ISegment, start: number, end: number) => boolean;
 
-/** 
+/**
  * Used by 'FlowDocument.visitRange'.  Uses the otherwise unused 'accum' object to pass the
  * leaf action callback, allowing us to simplify the the callback signature and while (maybe)
  * avoiding unnecessary allocation to wrap the given 'callback'.
@@ -95,8 +96,8 @@ const accumAsLeafAction = {
         clientId: number,
         start: number,
         end: number,
-        accum?: LeafAction
-    ) => (accum as LeafAction)(position, segment, start, end)
+        accum?: LeafAction,
+    ) => (accum as LeafAction)(position, segment, start, end),
 };
 
 class ServicePlatform extends EventEmitter implements IComponentPlatform {
@@ -122,62 +123,59 @@ export class FlowDocument extends Component {
         return this.readyDeferred.promise;
     }
 
-    private maybeSharedString?: SharedString;
-    private maybeMergeTree?: MergeTree;
-    private maybeClientId?: number;
+    private get sharedString() { return this.maybeSharedString as SharedString; }
+    private get mergeTree() { return this.maybeMergeTree as MergeTree; }
+    private get clientId() { return this.maybeClientId as number; }
+
+    public get length() {
+        return this.mergeTree.getLength(UniversalSequenceNumber, this.clientId);
+    }
+
+    public static readonly type = `${require("../package.json").name}@${require("../package.json").version}`;
+
+    public static markAsParagraph(marker: Marker) {
+        marker.properties = Object.assign(marker.properties || {}, FlowDocument.paragraphTileProperties);
+        return marker;
+    }
     private static readonly paragraphTileProperties = { [reservedTileLabelsKey]: [DocSegmentKind.Paragraph] };
     private static readonly lineBreakTileProperties = { [reservedTileLabelsKey]: [DocSegmentKind.LineBreak] };
     private static readonly eofTileProperties       = { [reservedTileLabelsKey]: [DocSegmentKind.EOF] };
+
+    private maybeSharedString?: SharedString;
+    private maybeMergeTree?: MergeTree;
+    private maybeClientId?: number;
     private readyDeferred = new Deferred<void>();
 
     constructor(private componentRuntime: IComponentRuntime) {
         super([
             [MapExtension.Type, new MapExtension()],
-            [CollaborativeStringExtension.Type, new CollaborativeStringExtension()]
+            [CollaborativeStringExtension.Type, new CollaborativeStringExtension()],
         ]);
-    }
-    
-    protected async create() {
-        // For 'findTile(..)', we must enable tracking of left/rightmost tiles:
-        // (See: https://github.com/Microsoft/Prague/pull/1118)
-        Object.assign(this.runtime, { options: Object.assign(this.runtime.options || {}, { blockUpdateMarkers: true }) });
-
-        const text = this.runtime.createChannel("text", CollaborativeStringExtension.Type) as SharedString;
-        text.insertMarker(0, ReferenceType.Tile, FlowDocument.eofTileProperties);
-        this.root.set("text", text);
     }
 
     public async opened() {
-        console.log("component loaded");
-
         this.maybeSharedString = await this.root.wait("text") as SharedString;
-        this.maybeSharedString.on("op", (op, local) => { this.emit("op", op, local) });
+        this.maybeSharedString.on("op", (op, local) => { this.emit("op", op, local); });
         const client = this.sharedString.client;
         this.maybeClientId = client.getClientId();
         this.maybeMergeTree = client.mergeTree;
-
         this.readyDeferred.resolve();
     }
-
-    private get sharedString() { return this.maybeSharedString as SharedString; }
-    private get mergeTree() { return this.maybeMergeTree as MergeTree; }
-    private get clientId() { return this.maybeClientId as number; }
 
     public async getInclusionComponent(marker: Marker, services: ReadonlyArray<[string, Promise<any>]>) {
         const store = await DataStore.from(marker.properties.serverUrl);
 
         // TODO: Component should record serverUrl, not rely on passed-through datastore instance?
-        return store.open(marker.properties.docId, "danlehen", marker.properties.chaincode, 
+        return store.open(marker.properties.docId, "danlehen", marker.properties.chaincode,
             services.concat([["datastore", Promise.resolve(store)]]));
-    };
-
+    }
     public async getInclusionContainerComponent(marker: Marker, services: ReadonlyArray<[string, Promise<any>]>) {
         const component = await this.componentRuntime.getProcess(marker.properties.docId, true);
         await component.attach(new ServicePlatform(services));
     }
 
     public getSegmentAndOffset(position: number) {
-        return this.mergeTree.getContainingSegment(position, UniversalSequenceNumber, this.clientId);        
+        return this.mergeTree.getContainingSegment(position, UniversalSequenceNumber, this.clientId);
     }
 
     public getPosition(segment: ISegment) {
@@ -199,10 +197,6 @@ export class FlowDocument extends Component {
         return localRef.toPosition(this.mergeTree, UniversalSequenceNumber, this.clientId);
     }
 
-    public get length() {
-        return this.mergeTree.getLength(UniversalSequenceNumber, this.clientId);
-    }
-
     public appendText(text: string) {
         this.sharedString.insertText(text, this.length);
     }
@@ -220,11 +214,6 @@ export class FlowDocument extends Component {
     public remove(start: number, end: number) {
         debug(`remove(${start},${end})`);
         this.sharedString.removeText(start, end);
-    }
-
-    public static markAsParagraph(marker: Marker) {
-        marker.properties = Object.assign(marker.properties || {}, FlowDocument.paragraphTileProperties);
-        return marker;
     }
 
     public insertParagraph(position: number) {
@@ -259,7 +248,7 @@ export class FlowDocument extends Component {
     public findTile(startPos: number, tileType: string, preceding = true): { tile: ReferencePosition, pos: number } {
         return this.mergeTree.findTile(startPos, this.clientId, tileType, preceding);
     }
-   
+
     public findParagraphStart(position: number) {
         position = Math.min(position, this.length - 1);
         const maybePosAndTile = this.findTile(position, DocSegmentKind.Paragraph);
@@ -279,7 +268,15 @@ export class FlowDocument extends Component {
             endPosition);
     }
 
-    public static readonly type = `${require("../package.json").name}@${require("../package.json").version}`;
+    protected async create() {
+        // For 'findTile(..)', we must enable tracking of left/rightmost tiles:
+        // (See: https://github.com/Microsoft/Prague/pull/1118)
+        Object.assign(this.runtime, { options: Object.assign(this.runtime.options || {}, { blockUpdateMarkers: true }) });
+
+        const text = this.runtime.createChannel("text", CollaborativeStringExtension.Type) as SharedString;
+        text.insertMarker(0, ReferenceType.Tile, FlowDocument.eofTileProperties);
+        this.root.set("text", text);
+    }
 }
 
 /**

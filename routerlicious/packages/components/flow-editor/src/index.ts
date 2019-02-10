@@ -1,26 +1,24 @@
 export { Editor } from "./components/editor";
 export { VirtualizedView, IVirtualizedProps } from "./components/virtualized";
-import { MapExtension } from "@prague/map";
-import { IChaincode } from "@prague/runtime-definitions";
+import { FlowDocument } from "@chaincode/flow-document";
 import { Component } from "@prague/app-component";
 import { DataStore } from "@prague/app-datastore";
-import { FlowDocument } from "@chaincode/flow-document";
-import { Editor } from "./components/editor";
 import { Scheduler } from "@prague/flow-util";
+import { MapExtension } from "@prague/map";
+import { IChaincode } from "@prague/runtime-definitions";
+import { Editor } from "./components/editor";
 
 export class FlowEditor extends Component {
+
+    public static readonly type = `${require("../package.json").name}@${require("../package.json").version}`;
     constructor() {
         super([[MapExtension.Type, new MapExtension()]]);
-    }
-    
-    protected async create() { 
-        this.root.set("docId", Math.random().toString(36).substr(2, 4));
     }
 
     public async opened() {
         const store = await this.platform.queryInterface<DataStore>("datastore");
         const maybeDiv = await this.platform.queryInterface<HTMLElement>("div");
-        
+
         if (maybeDiv) {
             const docId = await this.root.get("docId");
             // TODO: 'hostUrl' (or possibly DataStore) should be passed from the host, not
@@ -32,7 +30,10 @@ export class FlowEditor extends Component {
         }
     }
 
-    public static readonly type = `${require("../package.json").name}@${require("../package.json").version}`;
+    protected async create() {
+        // tslint:disable-next-line:insecure-random
+        this.root.set("docId", Math.random().toString(36).substr(2, 4));
+    }
 }
 
 // Chainloader bootstrap.

@@ -1,7 +1,8 @@
 import { Template } from "@prague/flow-util";
-import { IViewState, View } from "..";
-import * as styles from "./index.css";
 import { Dom } from "@prague/flow-util";
+import { IViewState, View } from "..";
+import { debug } from "../../debug";
+import * as styles from "./index.css";
 
 const template = new Template({
     tag: "div",
@@ -24,15 +25,15 @@ const template = new Template({
             ref: "scrollPane",
             props: { className: styles.scrollPane },
             children: [
-                { tag: "div", ref: "space", props: { className: styles.space }}
-            ]
-        }
-    ]
+                { tag: "div", ref: "space", props: { className: styles.space }},
+            ],
+        },
+    ],
 });
 
-export interface IViewportProps { 
-    slot: Element,
-    sizeY: number,
+export interface IViewportProps {
+    slot: Element;
+    sizeY: number;
     offsetY: number;
     onScroll: (position: number) => void;
 }
@@ -40,7 +41,7 @@ export interface IViewportProps {
 export interface IViewportViewState extends IViewState {
     props: IViewportProps;
     root: Element;
-    transform: HTMLElement,
+    transform: HTMLElement;
     slot: HTMLElement;
     origin: HTMLElement;
     space: HTMLElement;
@@ -50,16 +51,11 @@ export interface IViewportViewState extends IViewState {
 }
 
 export class ViewportView extends View<IViewportProps, IViewportViewState> {
-    public static readonly factory = () => new ViewportView();
 
-    private readonly onScroll = () => {
-        const state = this.state;
-        state.props.onScroll(state.scrollPane.scrollTop);
-    };
-
-    public get slotOriginTop() { 
+    public get slotOriginTop() {
         return this.state.origin.getBoundingClientRect().top;
     }
+    public static readonly factory = () => new ViewportView();
 
     public mounting(props: Readonly<IViewportProps>): IViewportViewState {
         const root = template.clone();
@@ -70,7 +66,7 @@ export class ViewportView extends View<IViewportProps, IViewportViewState> {
         const space = template.get(root, "space") as HTMLElement;
 
         scrollPane.addEventListener("scroll", this.onScroll);
-        
+
         // TypeScript 3.2.2 'lib.dom.d.ts' does not type "wheel" event as WheelEvent.
         const onWheel = ((e: WheelEvent) => {
             const delta = e.deltaY;
@@ -88,19 +84,24 @@ export class ViewportView extends View<IViewportProps, IViewportViewState> {
             scrollPane,
             space,
             offsetY: 0,
-            sizeY: props.sizeY
+            sizeY: props.sizeY,
         });
     }
 
     public updating(props: Readonly<IViewportProps>, state: Readonly<IViewportViewState>): IViewportViewState {
         Dom.ensureFirstChild(state.slot, props.slot);
         state.space.style.height = `${props.sizeY}px`;
-        console.log(`  offset: ${props.offsetY}`)
+        debug(`  offset: ${props.offsetY}`);
         state.transform.style.top = `${props.offsetY}px`;
         return state;
     }
 
-    public unmounting(state: Readonly<IViewportViewState>) { 
+    public unmounting(state: Readonly<IViewportViewState>) {
         state.root.removeEventListener("scroll", this.onScroll);
+    }
+
+    private readonly onScroll = () => {
+        const state = this.state;
+        state.props.onScroll(state.scrollPane.scrollTop);
     }
 }

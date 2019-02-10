@@ -3,5 +3,5 @@ export const enum ConfigKeys {
     serverUrl = "serverUrl",
     userId = "userId",
     numRows = "numRows",
-    numCols = "numCols"
+    numCols = "numCols",
 }

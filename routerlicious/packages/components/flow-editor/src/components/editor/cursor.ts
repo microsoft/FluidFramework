@@ -1,18 +1,27 @@
-import { LocalReference } from "@prague/merge-tree";
-import { Template, Dom } from "@prague/flow-util";
-import * as styles from "./index.css";
 import { FlowDocument } from "@chaincode/flow-document";
+import { Dom, Template } from "@prague/flow-util";
+import { LocalReference } from "@prague/merge-tree";
+import { debug } from "../../debug";
+import * as styles from "./index.css";
 
 const template = new Template({
     tag: "span",
     props: { className: styles.cursorOverlay },
     children: [
         { tag: "span", ref: "highlights", props: { className: styles.cursorHighlightRoot }},
-        { tag: "span", ref: "cursor", props: { className: styles.cursor }}
-    ]
+        { tag: "span", ref: "cursor", props: { className: styles.cursor }},
+    ],
 });
 
 export class Cursor {
+
+    public get selectionStart() { return this.doc.localRefToPosition(this.startRef); }
+
+    public get position() { return this.doc.localRefToPosition(this.endRef); }
+
+    public get bounds() { return this.cursorBounds; }
+
+    public readonly root: HTMLElement;
     private startRef: LocalReference;
     private endRef: LocalReference;
 
@@ -24,12 +33,10 @@ export class Cursor {
     private cursorBounds?: ClientRect = undefined;
 
     private readonly domRange = document.createRange();
-    
-    public readonly root: HTMLElement;
     private readonly highlightRootElement: Element;
     private readonly cursorElement: HTMLElement;
 
-    constructor (private readonly doc: FlowDocument) {
+    constructor(private readonly doc: FlowDocument) {
         this.root = template.clone() as HTMLElement;
         this.highlightRootElement = template.get(this.root, "highlights");
         this.cursorElement = template.get(this.root, "cursor") as HTMLElement;
@@ -38,26 +45,6 @@ export class Cursor {
         this.endRef = doc.addLocalRef(0);
     }
 
-    private clampPosition(position: number) {
-        return Math.min(Math.max(position, 0), this.doc.length - 1);
-    }
-
-    private addLocalRef(position: number) {
-        return this.doc.addLocalRef(this.clampPosition(position));
-    }
-
-    public get selectionStart() { return this.doc.localRefToPosition(this.startRef); }
-    private setSelectionStart(newStart: number) { 
-        this.doc.removeLocalRef(this.startRef);
-        this.startRef = this.addLocalRef(newStart);
-    }
-
-    public get position() { return this.doc.localRefToPosition(this.endRef); }
-    private setPosition(newEnd: number) {
-        this.doc.removeLocalRef(this.endRef);
-        this.endRef = this.addLocalRef(newEnd);
-    }
-    
     public moveTo(position: number, extendSelection: boolean) {
         this.setPosition(position);
         if (!extendSelection) {
@@ -76,6 +63,36 @@ export class Cursor {
         ];
     }
 
+    public show() {
+        debug("show cursor");
+        this.root.style.visibility = "inherit";
+    }
+
+    public hide() {
+        debug("hide cursor");
+        this.root.style.visibility = "hidden";
+    }
+
+    public readonly render = () => {
+        return this.root;
+    }
+
+    private clampPosition(position: number) {
+        return Math.min(Math.max(position, 0), this.doc.length - 1);
+    }
+
+    private addLocalRef(position: number) {
+        return this.doc.addLocalRef(this.clampPosition(position));
+    }
+    private setSelectionStart(newStart: number) {
+        this.doc.removeLocalRef(this.startRef);
+        this.startRef = this.addLocalRef(newStart);
+    }
+    private setPosition(newEnd: number) {
+        this.doc.removeLocalRef(this.endRef);
+        this.endRef = this.addLocalRef(newEnd);
+    }
+
     private clampToText(container: Node, position: number) {
         return Math.max(0, Math.min(position, container.textContent!.length));
     }
@@ -88,7 +105,7 @@ export class Cursor {
         this.domRange.setEnd(container, this.clampToText(container, position));
     }
 
-    /** 
+    /**
      * Returns the top/left offset of nearest ancestor that is a CSS containing block, used to
      * adjust absolute the x/y position of the caret/highlight.
      */
@@ -98,6 +115,7 @@ export class Cursor {
     }
 
     private updateSelection() {
+        // tslint:disable-next-line:no-inner-html
         this.highlightRootElement.innerHTML = "";
 
         if (!this.startContainer || !this.endContainer) {
@@ -118,7 +136,7 @@ export class Cursor {
 
         // const offset = this.getOffset();
         // for (const rect of this.domRange.getClientRects()) {
-        //     console.log(`highlight: ${JSON.stringify(rect)}`);
+        //     debug(`highlight: ${JSON.stringify(rect)}`);
         //     const div = e({ tag: "div", props: { className: styles.highlightRect }});
 
         //     div.style.top = `${rect.top - offset.top}px`;
@@ -130,7 +148,7 @@ export class Cursor {
         // }
     }
 
-    private getCursorBounds() {       
+    private getCursorBounds() {
         if ((!this.endContainer)
             || (this.relativeEndOffset < 0 || +Infinity < this.relativeEndOffset)
         ) {
@@ -146,8 +164,8 @@ export class Cursor {
         this.cursorBounds = this.getCursorBounds();
         if (this.cursorBounds) {
             const offset = this.getOffset();
-            console.log(`cursor: (${this.cursorBounds.top} - ${offset.top} -> ${this.cursorBounds.top - offset.top},`);
-            console.log(`        (${this.cursorBounds.left} - ${offset.left} -> ${this.cursorBounds.left - offset.left},`);
+            debug(`cursor: (${this.cursorBounds.top} - ${offset.top} -> ${this.cursorBounds.top - offset.top},`);
+            debug(`        (${this.cursorBounds.left} - ${offset.left} -> ${this.cursorBounds.left - offset.left},`);
             this.cursorElement.style.visibility = "inherit";
             this.cursorElement.style.top = `${this.cursorBounds.top - offset.top}px`;
             this.cursorElement.style.left = `${this.cursorBounds.left - offset.left}px`;
@@ -156,16 +174,6 @@ export class Cursor {
             // Otherwise hide it.
             this.cursorElement.style.visibility = "hidden";
         }
-    }
-
-    public show() {
-        console.log("show cursor"); 
-        this.root.style.visibility = "inherit";
-    }
-    
-    public hide() { 
-        console.log("hide cursor"); 
-        this.root.style.visibility = "hidden";
     }
 
     private readonly updateDomRangeStart = (node: Node, nodeOffset: number) => {
@@ -188,11 +196,5 @@ export class Cursor {
         if (this.cursorElement.parentNode) {
             this.cursorElement.parentNode.insertBefore(this.cursorElement, this.cursorElement.previousSibling);
         }
-    }
-
-    public get bounds() { return this.cursorBounds; }
-    
-    public readonly render = () => { 
-        return this.root;
     }
 }

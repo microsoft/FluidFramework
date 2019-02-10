@@ -1,14 +1,16 @@
-import { Template, Dom } from "@prague/flow-util";
+import { Dom, Template } from "@prague/flow-util";
+import { FlowViewComponent, IFlowViewComponentState } from "..";
 import * as styles from "./index.css";
-import { IFlowViewComponentState, FlowViewComponent } from "..";
 
-const template = new Template({ 
+const template = new Template({
     tag: "span",
     props: { className: styles.inclusion },
 });
 
-export interface IInclusionProps { child: Node }
-export interface IInclusionViewState extends IFlowViewComponentState { } 
+export interface IInclusionProps { child: Node; }
+
+// tslint:disable-next-line:no-empty-interface
+export interface IInclusionViewState extends IFlowViewComponentState { }
 
 // TODO: This can not yet be made a Symbol due to multiple/recursive WebPack bundles.
 //       'unique symbol' should work, but isn't yet universally supported (e.g., breaks tests on Node v8).
@@ -21,7 +23,7 @@ const markInclusionEvent = (e: Event) => {
 
 /** List of events that the FlowEditor may try to hijack. */
 const events: string[] = [
-    "mousedown", "keydown", "keypress"
+    "mousedown", "keydown", "keypress",
 ];
 
 /**
@@ -38,11 +40,11 @@ export class InclusionView extends FlowViewComponent<IInclusionProps, IInclusion
 
     public mounting(props: Readonly<IInclusionProps>): IInclusionViewState {
         const root = template.clone();
-        
+
         for (const type of events) {
             root.addEventListener(type, markInclusionEvent);
         }
-        
+
         return this.updating( props, { root, cursorTarget: props.child });
     }
 
@@ -54,11 +56,11 @@ export class InclusionView extends FlowViewComponent<IInclusionProps, IInclusion
             Dom.replaceFirstChild(root, desiredChild);
             state = { root, cursorTarget: desiredChild };
         }
-        
+
         return state;
     }
 
-    public unmounting(state: Readonly<IInclusionViewState>) { 
+    public unmounting(state: Readonly<IInclusionViewState>) {
         for (const type of events) {
             state.root.removeEventListener(type, markInclusionEvent);
         }
