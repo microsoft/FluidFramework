@@ -1,11 +1,12 @@
 const path = require("path");
 const merge = require("webpack-merge");
 const nodeExternals = require("webpack-node-externals");
+const pkg = require("./package.json");
 
 module.exports = env => {
     const isProduction = env === "production";
     const tsconfig = isProduction
-        ? "tsconfig.dev.json" // TODO: "tsconfig.prod.json"
+        ? "tsconfig.prod.json"
         : "tsconfig.dev.json";
     const styleLocalIdentName = isProduction
         ? "[hash:base64:5]"
@@ -44,8 +45,7 @@ module.exports = env => {
                 {
                     test: /\.css$/,
                     use: [
-                        "style-loader", // creates style nodes from JS strings
-                        {
+                        "style-loader", {
                             loader: "typings-for-css-modules-loader",
                             options: {
                                 modules: true,
@@ -53,25 +53,9 @@ module.exports = env => {
                                 localIdentName: styleLocalIdentName
                             }
                         }
-                        // "css-loader", // translates CSS into CommonJS
                     ]
                 }
-                // {
-                //     test: /\.css$/,
-                //     include: path.join(__dirname, 'src'),
-                //     use: [
-                //         'style-loader', {
-                //             loader: 'typings-for-css-modules-loader',
-                //             options: {
-                //                 modules: true,
-                //                 namedExport: true,
-                //                 localIdentName: styleLocalIdentName
-                //             }
-                //         },
-                //         "css-loader", // translates CSS into CommonJS
-                //     ]
-                // }
-        ]
+            ]
         },
         output: {
             filename: "[name].bundle.js",
@@ -79,7 +63,7 @@ module.exports = env => {
             library: "[name]",
             // https://github.com/webpack/webpack/issues/5767
             // https://github.com/webpack/webpack/issues/7939            
-            devtoolNamespace: "flow-host",
+            devtoolNamespace: pkg.name,
             libraryTarget: "umd",
             publicPath: "/dist/",
         },

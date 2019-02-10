@@ -1,5 +1,6 @@
 const path = require("path");
 const merge = require("webpack-merge");
+const pkg = require("./package.json");
 
 module.exports = env => {
     const isProduction = env === "production";
@@ -8,12 +9,8 @@ module.exports = env => {
         : "tsconfig.dev.json";
 
     return merge({
-        entry: {
-            main: "./src/index.ts"
-        },
-        resolve: {
-            extensions: [".ts", ".tsx", ".js"],
-        },
+        entry: { main: "./src/index.ts" },
+        resolve: { extensions: [".ts", ".tsx", ".js"] },
         module: {
             rules: [
                 {
@@ -22,7 +19,7 @@ module.exports = env => {
                     exclude: /node_modules/,
                     enforce: "pre"
                 },
-                { 
+                {
                     test: /\.tsx?$/,
                     loader: "ts-loader",
                     options: { 
@@ -43,7 +40,7 @@ module.exports = env => {
             library: "[name]",
             // https://github.com/webpack/webpack/issues/5767
             // https://github.com/webpack/webpack/issues/7939            
-            devtoolNamespace: "table-document",
+            devtoolNamespace: pkg.name,
             libraryTarget: "umd"
         },
         node: {

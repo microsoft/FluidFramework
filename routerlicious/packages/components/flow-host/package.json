@@ -18,7 +18,7 @@
     "tslint": "tslint --project tsconfig.json --format verbose",
     "webpack": "webpack --env=\"production\"",
     "webpack:full": "webpack --env=\"production\"",
-    "dev": "node ../../common/tools/node_modules/@prague/prague-dev-server/bin/prague-dev-server.js --config webpack.dev.js --package package.json"
+    "dev": "node ../../../common/tools/node_modules/@prague/prague-dev-server/bin/prague-dev-server.js --config webpack.config.js --package package.json"
   },
   "prague": {
     "browser": {

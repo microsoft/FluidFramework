@@ -5,7 +5,7 @@ import { ComponentHost } from "@prague/runtime";
 import { IChaincode, IChaincodeComponent, IComponentPlatform, IComponentRuntime, IComponentDeltaHandler } from "@prague/runtime-definitions";
 import { TableDocument, CellRange, TableDocumentComponent } from "@chaincode/table-document";
 import { Deferred } from "@prague/utils";
-import { ConfigView } from "./config";
+import { ConfigView, cellRangeExpr } from "./config";
 import { ConfigKeys } from "./configKeys";
 
 export class TableSlice extends Component {
@@ -25,13 +25,25 @@ export class TableSlice extends Component {
     
     protected async create() { }
 
-    private async getRange(key: ConfigKeys) {
-        let id = this.rootView.get(key);
+    private colNameToIndex(name: string) {
+        return [...name]
+            .map(letter => letter.toUpperCase().charCodeAt(0) - 64)                 // 64 -> A=1, B=2, etc.
+            .reduce((accumulator, value) => (accumulator * 26) + value, 0) - 1;     // 1-indexed -> 0-indexed
+    }
 
+    private async getRange(rangeKey: ConfigKeys, initKey: ConfigKeys) {
+        let id = this.rootView.get(rangeKey);
         if (!id) {
             id = `${Math.random().toString(36).substr(2)}`;
-            this.rootView.set(key, id);
-            await this.doc.createRange(id, 0, 0, 0, 0);                
+            const init = this.rootView.get(initKey);
+            // Note: <input> pattern validation ensures that matches will be non-null.
+            const matches = cellRangeExpr.exec(init)!;
+            const minCol = this.colNameToIndex(matches[1]);
+            const minRow = parseInt(matches[2], 10) - 1;                           // 1-indexed -> 0-indexed
+            const maxCol = this.colNameToIndex(matches[3]);
+            const maxRow = parseInt(matches[4], 10) - 1;                           // 1-indexed -> 0-indexed
+            this.rootView.set(rangeKey, id);
+            await this.doc.createRange(id, minRow, minCol, maxRow, maxCol);
         }
 
         return await this.doc.getRange(id);
@@ -68,18 +80,33 @@ export class TableSlice extends Component {
         this.maybeDoc = tableDocComponent.table;
         await this.maybeDoc.ready;
 
-        this.maybeHeaders = await this.getRange(ConfigKeys.headersRange);
-        this.maybeValues  = await this.getRange(ConfigKeys.valuesRange);
+        this.maybeHeaders = await this.getRange(ConfigKeys.headersKey, ConfigKeys.headerText);
+        this.maybeValues  = await this.getRange(ConfigKeys.valuesKey, ConfigKeys.valuesText);
 
-        this.doc.on("op", (...args) => this.emit("op", ...args));
+        console.log(`Headers: ${JSON.stringify(this.maybeHeaders.getPositions())}`);
+        console.log(`Values: ${JSON.stringify(this.maybeValues.getPositions())}`);
 
+        this.root.on("op", this.emitOp);
+        this.doc.on("op", this.emitOp);
         return;
+    }
+
+    private readonly emitOp = (...args: any[]) => {
+        this.emit("op", ...args);
     }
 
     public get name() { return this.rootView.get(ConfigKeys.name); }
     public set name(value: string) { this.rootView.set(ConfigKeys.name, value); }
     public get headers() { return this.maybeHeaders! }
     public get values() { return this.maybeValues! }
+
+    public evaluateCell(row: number, col: number) {
+        return this.doc.evaluateCell(row, col);
+    }
+
+    public evaluateFormula(formula: string) {
+        return this.doc.evaluateFormula(formula);
+    }
 
     private get doc() { return this.maybeDoc!; }
     private get rootView() { return this.maybeRootView!; }

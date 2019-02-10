@@ -3,8 +3,10 @@ import { ConfigKeys } from "./configKeys";
 import { Template } from "@prague/flow-util";
 import { IMap } from "@prague/map";
 
+export const cellRangeExpr = /([a-zA-Z]+)(\d+):([a-zA-Z]+)(\d+)/;
+
 const template = new Template({
-    tag: "table",
+    tag: "form",
     children: [
         { tag: "caption", children: [{ tag: "span", ref: "captionTitle" }] },
         {
@@ -15,9 +17,11 @@ const template = new Template({
             ]
         },
         {
-            tag: "tbody",
-            ref: "body",
+            tag: "table",
+            props: { action: "demo" },
             children: [
+                { tag: "caption", children: [{ tag: "span", props: { textContent: "Table-Slice Configuration" } }]},
+                { tag: "tfoot", children: [{ tag: "input", props: { type: "submit" }}]},
                 {
                     tag: "tr",
                     children: [
@@ -39,22 +43,36 @@ const template = new Template({
                         { tag: "td", children: [{ tag: "input", ref: "userBox", props: { value: "anonymous-coward" } }] },
                     ]
                 },
-                /*
                 {
                     tag: "tr",
                     children: [
-                        { tag: "td", props: { textContent: "Rows" }},
-                        { tag: "td", props: { textContent: "Npm" }, children: [{ tag: "input", ref: "rowsBox", props: { type: "number", min: "1", value: "5" }}]},
+                        { tag: "td", props: { textContent: "header" }},
+                        { tag: "td", children: [{ 
+                            tag: "input",
+                            ref: "headerBox",
+                            props: {
+                                type: "text",
+                                value: "A2:A5",
+                                pattern: `${cellRangeExpr.source}`,
+                                title: "Cell range must be in the form 'RC:RC' (e.g., 'A1:F6')" }
+                        }]},
                     ]
                 },
                 {
                     tag: "tr",
                     children: [
-                        { tag: "td", props: { textContent: "Columns" }},
-                        { tag: "td", props: { textContent: "Npm" }, children: [{ tag: "input", ref: "colsBox", props: { type: "number", min: "1", value: "5" }}]},
+                        { tag: "td", props: { textContent: "values" }},
+                        { tag: "td", children: [{ 
+                            tag: "input",
+                            ref: "valuesBox",
+                            props: {
+                                type: "text",
+                                value: "E2:E5",
+                                pattern: `${cellRangeExpr.source}`,
+                                title: "Cell range must be in the form 'RC:RC' (e.g., 'A1:F6')" }
+                        }]},
                     ]
                 }
-                */
             ]
         }
     ]
@@ -66,8 +84,8 @@ export class ConfigView {
     private readonly idBox      = template.get(this.root, "idBox") as HTMLInputElement;
     private readonly serverBox  = template.get(this.root, "serverBox") as HTMLInputElement;
     private readonly userBox    = template.get(this.root, "userBox") as HTMLInputElement;
-    // private readonly colsBox    = template.get(this.root, "colsBox") as HTMLInputElement;
-    // private readonly rowsBox    = template.get(this.root, "rowsBox") as HTMLInputElement;
+    private readonly valuesBox  = template.get(this.root, "valuesBox") as HTMLInputElement;
+    private readonly headerBox  = template.get(this.root, "headerBox") as HTMLInputElement;
     private readonly okButton   = template.get(this.root, "okButton") as HTMLButtonElement;
     private readonly createButton   = template.get(this.root, "createButton") as HTMLButtonElement;
 
@@ -86,9 +104,9 @@ export class ConfigView {
             this.okButton.addEventListener("click", () => {
                 this.map.set(ConfigKeys.serverUrl, this.serverBox.value);
                 this.map.set(ConfigKeys.userId, this.userBox.value);
+                this.map.set(ConfigKeys.headerText, this.headerBox.value);
+                this.map.set(ConfigKeys.valuesText, this.valuesBox.value);
                 this.map.set(ConfigKeys.docId, this.idBox.value);
-                // this.map.set(ConfigKeys.numRows, this.rowsBox.value);
-                // this.map.set(ConfigKeys.numCols, this.colsBox.value);
                 accept();
             });
 

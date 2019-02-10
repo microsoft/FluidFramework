@@ -33,8 +33,8 @@ export class ChaincodeDialog extends React.Component<IProps, IState> {
         .then(response => response.json())
         .then(json => {
             this.setState({
-                options: [...new Set<IComboBoxOption>(json.map((pkg: { name: string }) => ({
-                    key: `${pkg.name}@latest`,
+                options: [...new Set<IComboBoxOption>(json.map((pkg: { name: string, version: string }) => ({
+                    key: `${pkg.name}@${pkg.version}`,
                     text: pkg.name
                 })))]
             })

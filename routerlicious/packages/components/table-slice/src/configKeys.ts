@@ -3,6 +3,8 @@ export const enum ConfigKeys {
     docId = "docId",
     serverUrl = "serverUrl",
     userId = "userId",
-    headersRange = "headersRange",
-    valuesRange = "valuesRange"
+    headersKey = "headersRange",
+    valuesKey = "valuesRange",
+    headerText = "headersText",
+    valuesText = "valuesText",
 }
