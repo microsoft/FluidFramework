@@ -1,4 +1,5 @@
 import {
+    Browser,
     ConnectionState,
     FileMode,
     IBlobManager,
@@ -15,7 +16,7 @@ import {
     TreeEntry,
 } from "@prague/container-definitions";
 import { ICommit } from "@prague/gitresources";
-import { IAttachMessage, IComponentRuntime, IEnvelope } from "@prague/runtime-definitions";
+import { IAttachMessage, IComponentRuntime, IEnvelope, IHelpMessage } from "@prague/runtime-definitions";
 import { buildHierarchy, Deferred, flatten, readAndParse } from "@prague/utils";
 import * as assert from "assert";
 import { EventEmitter } from "events";
@@ -23,6 +24,8 @@ import { Component } from "./component";
 import { ComponentStorageService } from "./componentStorageService";
 import { debug } from "./debug";
 import { IComponentFactory, IHostRuntime } from "./definitions";
+import { LeaderElector } from "./leaderElection";
+import { analyzeTasks, getLeaderCandidate } from "./taskAnalyzer";
 
 // Context will define the component level mappings
 export class Runtime extends EventEmitter implements IHostRuntime {
@@ -111,6 +114,12 @@ export class Runtime extends EventEmitter implements IHostRuntime {
     private closed = false;
     private pendingAttach = new Map<string, IAttachMessage>();
     private requestHandler: (request: IRequest) => Promise<IResponse>;
+
+    private tasks: string[] = [];
+    private leaderElector: LeaderElector;
+
+    // back-compat: version decides between loading document and chaincode.
+    private version: string;
 
     public get connected(): boolean {
         return this.connectionState === ConnectionState.Connected;
@@ -391,6 +400,13 @@ export class Runtime extends EventEmitter implements IHostRuntime {
         debug("Context has encountered a non-recoverable error");
     }
 
+    public registerTasks(tasks: string[], version?: string) {
+        this.verifyNotClosed();
+        this.tasks = tasks;
+        this.version = version;
+        this.startLeaderElection();
+    }
+
     private submit(type: MessageType, content: any) {
         this.verifyNotClosed();
         this.submitFn(type, content);
@@ -519,6 +535,77 @@ export class Runtime extends EventEmitter implements IHostRuntime {
                 const deferred = new Deferred<Component>();
                 deferred.resolve(context);
                 this.processDeferred.set(attachMessage.id, deferred);
+            }
+        }
+    }
+
+    private startLeaderElection() {
+        if (this.deltaManager && this.deltaManager.clientType === Browser) {
+            if (this.connected) {
+                this.initLeaderElection();
+            } else {
+                const leaderElectionHandler = () => {
+                    this.initLeaderElection();
+                    this.removeListener("connected", leaderElectionHandler);
+                };
+                this.on("connected", leaderElectionHandler);
+            }
+        }
+    }
+
+    private initLeaderElection() {
+        this.leaderElector = new LeaderElector(this.getQuorum(), this.clientId);
+        this.leaderElector.on("newLeader", (clientId: string) => {
+            debug(`New leader elected: ${clientId}`);
+            this.runTaskAnalyzer();
+        });
+        this.leaderElector.on("leaderLeft", (clientId: string) => {
+            debug(`Leader ${clientId} left`);
+            this.proposeLeadership();
+        });
+        this.leaderElector.on("memberLeft", (clientId: string) => {
+            debug(`Member ${clientId} left`);
+            this.runTaskAnalyzer();
+        });
+        this.proposeLeadership();
+    }
+
+    private proposeLeadership() {
+        if (getLeaderCandidate(this.getQuorum().getMembers()) === this.clientId) {
+            this.leaderElector.proposeLeadership().then(() => {
+                debug(`Proposal accepted`);
+            }, (err) => {
+                debug(`Proposal rejected: ${err}`);
+            });
+        }
+    }
+
+    /**
+     * On a client joining/departure, decide whether this client is the new leader.
+     * If so, calculate if there are any unhandled tasks for browsers and remote agents.
+     * Emit local help message for this browser and submits a remote help message for agents.
+     */
+    private runTaskAnalyzer() {
+        if (this.leaderElector.getLeader() === this.clientId) {
+            // Analyze the current state and ask for local and remote help seperately.
+            const helpTasks = analyzeTasks(this.clientId, this.getQuorum().getMembers(), this.tasks);
+            if (helpTasks && (helpTasks.browser.length > 0 || helpTasks.robot.length > 0)) {
+                if (helpTasks.browser.length > 0) {
+                    const localHelpMessage: IHelpMessage = {
+                        tasks: helpTasks.browser,
+                        version: this.version,   // back-compat
+                    };
+                    console.log(`Requesting local help for ${helpTasks.browser}`);
+                    this.emit("localHelp", localHelpMessage);
+                }
+                if (helpTasks.robot.length > 0) {
+                    const remoteHelpMessage: IHelpMessage = {
+                        tasks: helpTasks.robot,
+                        version: this.version,   // back-compat
+                    };
+                    console.log(`Requesting remote help for ${helpTasks.robot}`);
+                    this.submit(MessageType.RemoteHelp, remoteHelpMessage);
+                }
             }
         }
     }
