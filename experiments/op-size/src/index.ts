@@ -1,9 +1,12 @@
 import * as proto from "./proto";
 
+const contents = "{\"address\":\"root\",\"contents\":{\"content\":{\"address\":\"160c115d-26dc-4163-980a-16419672a3f3\",\"contents\":{\"clientSequenceNumber\":30,\"contents\":{\"pos1\":27,\"text\":\"e\",\"type\":0},\"referenceSequenceNumber\":29,\"type\":\"op\"}},\"type\":\"objOp\"}}";
+console.log(`Content size: ${contents.length}`);
+
 const op = {
     clientId: "itchy-steel",
     clientSequenceNumber: 20,
-    contents: "{\"address\":\"root\",\"contents\":{\"content\":{\"address\":\"160c115d-26dc-4163-980a-16419672a3f3\",\"contents\":{\"clientSequenceNumber\":30,\"contents\":{\"pos1\":27,\"text\":\"e\",\"type\":0},\"referenceSequenceNumber\":29,\"type\":\"op\"}},\"type\":\"objOp\"}}",
+    contents: null,
     minimumSequenceNumber: 63,
     referenceSequenceNumber: 63,
     sequenceNumber: 64,
@@ -15,7 +18,7 @@ const op = {
 const op2 = {
     cId: 123,
     csn: 20,
-    contents: "{\"address\":\"root\",\"contents\":{\"content\":{\"address\":\"160c115d-26dc-4163-980a-16419672a3f3\",\"contents\":{\"clientSequenceNumber\":30,\"contents\":{\"pos1\":27,\"text\":\"e\",\"type\":0},\"referenceSequenceNumber\":29,\"type\":\"op\"}},\"type\":\"objOp\"}}",
+    contents: null,
     msn: 63,
     rsn: 63,
     sn: 256,
