@@ -52,11 +52,13 @@ export class SharedString extends SegmentSequence<SharedStringSegment> {
         if (segSpec.text) {
             mergeTree.insertText(pos, MergeTree.UniversalSequenceNumber,
                 mergeTree.collabWindow.clientId, MergeTree.UniversalSequenceNumber, segSpec.text,
-                segSpec.props as MergeTree.PropertySet);
+                segSpec.props as MergeTree.PropertySet,
+                undefined);
         } else {
             // assume marker for now
             mergeTree.insertMarker(pos, MergeTree.UniversalSequenceNumber, mergeTree.collabWindow.clientId,
-                MergeTree.UniversalSequenceNumber, segSpec.marker.refType, segSpec.props as MergeTree.PropertySet);
+                MergeTree.UniversalSequenceNumber, segSpec.marker.refType, segSpec.props as MergeTree.PropertySet,
+                undefined);
         }
 
     }
@@ -75,7 +77,7 @@ export class SharedString extends SegmentSequence<SharedStringSegment> {
         };
 
         const pos = this.client.mergeTree.posFromRelativePos(relativePos1);
-        this.client.insertMarkerLocal(pos, refType, props);
+        this.client.insertMarkerLocal(pos, refType, props, {op: insertMessage});
         this.submitIfAttached(insertMessage);
 
     }
@@ -92,7 +94,7 @@ export class SharedString extends SegmentSequence<SharedStringSegment> {
             type: MergeTree.MergeTreeDeltaType.INSERT,
         };
 
-        this.client.insertMarkerLocal(pos, refType, props);
+        this.client.insertMarkerLocal(pos, refType, props, {op: insertMessage});
         this.submitIfAttached(insertMessage);
     }
 
@@ -109,7 +111,7 @@ export class SharedString extends SegmentSequence<SharedStringSegment> {
         };
 
         const pos = this.client.mergeTree.posFromRelativePos(relativePos1);
-        this.client.insertTextLocal(text, pos, props);
+        this.client.insertTextLocal(text, pos, props, {op: insertMessage});
         this.submitIfAttached(insertMessage);
     }
 
@@ -121,7 +123,7 @@ export class SharedString extends SegmentSequence<SharedStringSegment> {
             type: MergeTree.MergeTreeDeltaType.INSERT,
         };
 
-        this.client.insertTextLocal(text, pos, props);
+        this.client.insertTextLocal(text, pos, props, {op: insertMessage});
         this.submitIfAttached(insertMessage);
     }
 
@@ -134,8 +136,8 @@ export class SharedString extends SegmentSequence<SharedStringSegment> {
             type: MergeTree.MergeTreeDeltaType.INSERT,
         };
         this.client.mergeTree.startGroupOperation();
-        this.client.removeSegmentLocal(start, end);
-        this.client.insertTextLocal(text, start, props);
+        this.client.removeSegmentLocal(start, end, {op: insertMessage});
+        this.client.insertTextLocal(text, start, props, {op: insertMessage});
         this.client.mergeTree.endGroupOperation();
         this.submitIfAttached(insertMessage);
     }
@@ -152,7 +154,7 @@ export class SharedString extends SegmentSequence<SharedStringSegment> {
             pos2: end,
             type: MergeTree.MergeTreeDeltaType.REMOVE,
         };
-        this.client.removeSegmentLocal(start, end);
+        this.client.removeSegmentLocal(start, end, {op: removeMessage});
         this.submitIfAttached(removeMessage);
     }
 
@@ -183,7 +185,7 @@ export class SharedString extends SegmentSequence<SharedStringSegment> {
             relativePos2: { id },
             type: MergeTree.MergeTreeDeltaType.ANNOTATE,
         };
-        this.client.annotateMarkerNotifyConsensus(marker, props, callback);
+        this.client.annotateMarkerNotifyConsensus(marker, props, callback, {op: annotateMessage});
         this.submitIfAttached(annotateMessage);
     }
 
@@ -199,7 +201,7 @@ export class SharedString extends SegmentSequence<SharedStringSegment> {
         if (op) {
             annotateMessage.combiningOp = op;
         }
-        this.client.annotateMarker(props, marker, op);
+        this.client.annotateMarker(props, marker, op, {op: annotateMessage});
         this.submitIfAttached(annotateMessage);
     }
 

@@ -210,7 +210,7 @@ function checkInsertMergeTree(mergeTree: MergeTree.MergeTree, pos: number, textS
     checkText = editFlat(checkText, pos, 0, textSegment.text);
     let clockStart = clock();
     mergeTree.insertText(pos, MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId, MergeTree.UniversalSequenceNumber,
-        textSegment.text);
+        textSegment.text, undefined, undefined);
     accumTime += elapsedMicroseconds(clockStart);
     let updatedText = mergeTree.getText(MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId);
     let result = (checkText == updatedText);
@@ -241,7 +241,7 @@ function checkMarkRemoveMergeTree(mergeTree: MergeTree.MergeTree, start: number,
     let origText = mergeTree.getText(MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId);
     let checkText = editFlat(origText, start, end - start);
     let clockStart = clock();
-    mergeTree.markRangeRemoved(start, end, MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId, MergeTree.UniversalSequenceNumber);
+    mergeTree.markRangeRemoved(start, end, MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId, MergeTree.UniversalSequenceNumber, false, undefined);
     accumTime += elapsedMicroseconds(clockStart);
     let updatedText = mergeTree.getText(MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId);
     let result = (checkText == updatedText);
@@ -300,7 +300,7 @@ export function mergeTreeLargeTest() {
         let pos = random.integer(0, preLen)(mt);
         let clockStart = clock();
         mergeTree.insertText(pos, MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId, MergeTree.UniversalSequenceNumber,
-            s);
+            s, undefined, undefined);
         accumTime += elapsedMicroseconds(clockStart);
         if ((i > 0) && (0 == (i % 50000))) {
             let perIter = (accumTime / (i + 1)).toFixed(3);
@@ -1684,7 +1684,9 @@ function findReplacePerf(filename: string) {
                     MergeTree.UniversalSequenceNumber,
                     client.getClientId(),
                     1,
-                    "teh");
+                    "teh",
+                    undefined,
+                    undefined);
                 pos = pos + i + 3;
                 cReplaces++;
             } else {

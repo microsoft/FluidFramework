@@ -1138,7 +1138,7 @@ export function TestPack(verbose = true) {
 
     }
     let clientNames = ["Ed", "Ted", "Ned", "Harv", "Marv", "Glenda", "Susan"];
-    
+
     function firstItemTest() {
         let cli = new MergeTree.Client("");
         cli.startCollaboration("Fred1");
@@ -1383,7 +1383,7 @@ function checkInsertMergeTree(mergeTree: MergeTree.MergeTree, pos: number, textS
     checkText = editFlat(checkText, pos, 0, textSegment.text);
     let clockStart = clock();
     mergeTree.insertText(pos, MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId, MergeTree.UniversalSequenceNumber,
-        textSegment.text);
+        textSegment.text, undefined, undefined);
     accumTime += elapsedMicroseconds(clockStart);
     let updatedText = mergeTree.getText(MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId);
     let result = (checkText == updatedText);
@@ -1414,7 +1414,7 @@ function checkMarkRemoveMergeTree(mergeTree: MergeTree.MergeTree, start: number,
     let origText = mergeTree.getText(MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId);
     let checkText = editFlat(origText, start, end - start);
     let clockStart = clock();
-    mergeTree.markRangeRemoved(start, end, MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId, MergeTree.UniversalSequenceNumber);
+    mergeTree.markRangeRemoved(start, end, MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId, MergeTree.UniversalSequenceNumber, false, undefined);
     accumTime += elapsedMicroseconds(clockStart);
     let updatedText = mergeTree.getText(MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId);
     let result = (checkText == updatedText);
@@ -2083,7 +2083,7 @@ let testPropCopy = false;
 let overlayTree = false;
 let docTree = false;
 let chktst = false;
-let clientServerTest = false;
+let clientServerTest = true;
 let tstTest = false;
 let firstTest = false;
 let ivalTest = false;
@@ -2131,7 +2131,7 @@ if (clientServerTest) {
     let ppTest = true;
     let branch = false;
     let testPack = TestPack();
-    const filename = path.join(__dirname, "../../routerlicious/public/literature", "pp.txt");
+    const filename = path.join(__dirname, "../../../server/routerlicious/public/literature", "pp.txt");
     if (ppTest) {
         if (branch) {
             testPack.clientServerBranch(filename, 100000);

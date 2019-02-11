@@ -12,10 +12,31 @@
     "clean": "rimraf dist && rimraf lib",
     "tsc": "tsc",
     "build:esnext": "tsc --outDir lib --m esnext",
-    "tslint": "tslint --project tsconfig.json --format verbose"
+    "tslint": "tslint --project tsconfig.json --format verbose",
+    "test": "mocha --recursive dist/test",
+    "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml"
   },
   "author": "Microsoft",
   "repository": "microsoft/prague",
+  "nyc": {
+    "all": true,
+    "exclude": [
+      "src/test/**/*.ts",
+      "dist/test/**/*.js"
+    ],
+    "include": [
+      "src/**/*.ts",
+      "dist/**/*.js"
+    ],
+    "reporter": [
+      "cobertura",
+      "html",
+      "text"
+    ],
+    "temp-directory": "nyc/.nyc_output",
+    "cache-dir": "nyc/.cache",
+    "report-dir": "nyc/report"
+  },
   "devDependencies": {
     "@prague/merge-tree-utils": "^0.2.0",
     "@types/diff": "^3.5.1",
@@ -27,7 +48,11 @@
     "tslint": "^5.11.0",
     "tslint-microsoft-contrib": "^6.0.0",
     "typescript": "^3.2.2",
-    "xmldoc": "^1.1.2"
+    "xmldoc": "^1.1.2",
+    "@types/mocha": "^5.2.5",
+    "mocha": "^5.2.0",
+    "mocha-junit-reporter": "^1.18.0",
+    "nyc": "^13.0.1"
   },
   "dependencies": {
     "@prague/api-definitions": "^0.2.0",

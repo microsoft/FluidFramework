@@ -28,6 +28,7 @@ import {
     SharedStringInterval,
     SharedStringIntervalCollectionValueType,
 } from "./intervalCollection";
+import { SequenceDeltaEvent } from "./sequenceDeltaEvent";
 
 export abstract class SegmentSequence<T extends MergeTree.ISegment> extends CollaborativeMap {
     public client: MergeTree.Client;
@@ -53,6 +54,40 @@ export abstract class SegmentSequence<T extends MergeTree.ISegment> extends Coll
         super(id, document, extensionType);
         /* tslint:disable:no-unsafe-any */
         this.client = new MergeTree.Client("", document.options);
+
+        super.on("newListener", (event) => {
+            switch (event) {
+                case "sequenceDelta":
+                    if (!this.client.mergeTree.mergeTreeDeltaCallback) {
+                        this.client.mergeTree.mergeTreeDeltaCallback = (opArgs, deltaArgs) => {
+                            this.emit("sequenceDelta", this, new SequenceDeltaEvent(opArgs, this.client, deltaArgs));
+                        };
+                    }
+                    break;
+                default:
+            }
+        });
+        super.on("removeListener", (event) => {
+            switch (event) {
+                case "sequenceDelta":
+                    if (super.listenerCount(event) === 0) {
+                        this.client.mergeTree.mergeTreeDeltaCallback = undefined;
+                    }
+                    break;
+                default:
+            }
+        });
+    }
+
+    public on(event: "sequenceDelta", listener: (sender: this, event: SequenceDeltaEvent) => void): this;
+    public on(event: "pre-op" | "op", listener: (op: ISequencedObjectMessage, local: boolean) => void): this;
+    public on(
+        event: "valueChanged",
+        listener: (changed: IValueChanged, local: boolean, op: ISequencedObjectMessage) => void): this;
+    public on(event: string | symbol, listener: (...args: any[]) => void): this;
+    // tslint:disable-next-line:no-unnecessary-override
+    public on(event: string | symbol, listener: (...args: any[]) => void): this {
+        return super.on(event, listener);
     }
 
     public removeRange(start: number, end: number) {
@@ -62,7 +97,7 @@ export abstract class SegmentSequence<T extends MergeTree.ISegment> extends Coll
             type: MergeTree.MergeTreeDeltaType.REMOVE,
         };
 
-        this.client.removeSegmentLocal(start, end);
+        this.client.removeSegmentLocal(start, end, {op: removeMessage});
         this.submitIfAttached(removeMessage);
     }
 
@@ -75,7 +110,7 @@ export abstract class SegmentSequence<T extends MergeTree.ISegment> extends Coll
         };
         this.client.copy(start, end, register, this.client.getCurrentSeq(),
             this.client.getClientId(), this.client.longClientId);
-        this.client.removeSegmentLocal(start, end);
+        this.client.removeSegmentLocal(start, end, {op: removeMessage});
         this.submitIfAttached(removeMessage);
     }
 
@@ -87,7 +122,7 @@ export abstract class SegmentSequence<T extends MergeTree.ISegment> extends Coll
         };
 
         // tslint:disable-next-line:no-parameter-reassignment
-        pos = this.client.pasteLocal(register, pos);
+        pos = this.client.pasteLocal(register, pos, {op: insertMessage});
         this.submitIfAttached(insertMessage);
         return pos;
     }
@@ -122,7 +157,7 @@ export abstract class SegmentSequence<T extends MergeTree.ISegment> extends Coll
         if (op) {
             annotateMessage.combiningOp = op;
         }
-        this.client.annotateSegmentLocal(props, start, end, op);
+        this.client.annotateSegmentLocal(props, start, end, op, {op: annotateMessage});
         this.submitIfAttached(annotateMessage);
     }
 
@@ -443,7 +478,7 @@ export class SharedSequence<T extends MergeTree.SequenceItem> extends SegmentSeq
         const pos = mergeTree.root.cachedLength;
         mergeTree.insertSegment(pos, MergeTree.UniversalSequenceNumber,
             mergeTree.collabWindow.clientId, MergeTree.UniversalSequenceNumber,
-            MergeTree.runToSeg(segSpec));
+            MergeTree.runToSeg(segSpec), undefined);
     }
 
     public insert(pos: number, items: T[], props?: MergeTree.PropertySet) {
@@ -457,7 +492,7 @@ export class SharedSequence<T extends MergeTree.SequenceItem> extends SegmentSeq
             insertMessage.isNumberSequence = true;
         }
         const segment = new MergeTree.SubSequence<T>(items);
-        this.client.insertSegmentLocal(pos, segment, props);
+        this.client.insertSegmentLocal(pos, segment, props, {op: insertMessage});
         this.submitIfAttached(insertMessage);
     }
 
