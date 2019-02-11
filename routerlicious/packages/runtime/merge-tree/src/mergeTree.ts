@@ -3902,32 +3902,10 @@ export class MergeTree {
         }
     }
 
-    // REVIEW: this is never used
-    nodeCompareUpdateLength(node: IMergeBlock, seq: number, clientId: number) {
-        this.blockUpdate(node);
-        if (this.collabWindow.collaborating && (seq != UnassignedSequenceNumber) && (seq != TreeMaintenanceSequenceNumber)) {
-            if (node.partialLengths !== undefined) {
-                let bplStr = node.partialLengths.toString();
-                node.partialLengths.update(this, node, seq, clientId, this.collabWindow);
-                let tempPartialLengths = PartialSequenceLengths.combine(this, node, this.collabWindow);
-                if (!tempPartialLengths.compare(node.partialLengths)) {
-                    console.log(`partial sum update mismatch @cli ${glc(this, this.collabWindow.clientId)} seq ${seq} clientId ${glc(this, clientId)}`);
-                    console.log(tempPartialLengths.toString());
-                    console.log("b4 " + bplStr);
-                    console.log(node.partialLengths.toString());
-                }
-            }
-            else {
-                node.partialLengths = PartialSequenceLengths.combine(this, node, this.collabWindow);
-            }
-        }
-    }
-
     private blockUpdateLength(node: IMergeBlock, seq: number, clientId: number) {
         this.blockUpdate(node);
         if (this.collabWindow.collaborating && (seq != UnassignedSequenceNumber) && (seq != TreeMaintenanceSequenceNumber)) {
             if (node.partialLengths !== undefined) {
-                //nodeCompareUpdateLength(node, seq, clientId);
                 if (MergeTree.options.incrementalUpdate) {
                     node.partialLengths.update(this, node, seq, clientId, this.collabWindow);
                 }
