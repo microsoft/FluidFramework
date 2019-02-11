@@ -188,7 +188,7 @@ class Translator extends EventEmitter {
 
         const textAndMarkers = this.sharedString.client.getTextAndMarkers("pg");
 
-        const rawTranslations = await translate(from, languages, textAndMarkers.paralellText);
+        const rawTranslations = await translate(from, languages, textAndMarkers.parallelText);
         const processedTranslations = processTranslationOutput(rawTranslations);
 
         for (const languageTranslations of processedTranslations) {
