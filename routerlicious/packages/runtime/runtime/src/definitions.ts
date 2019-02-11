@@ -51,6 +51,8 @@ export interface IHostRuntime {
     getQuorum(): IQuorum;
 
     error(err: any): void;
+
+    registerTasks(tasks: string[], version?: string);
 }
 
 export interface IComponentFactory {

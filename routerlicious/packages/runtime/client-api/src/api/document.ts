@@ -27,7 +27,6 @@ const apiVersion = require("../../package.json").version;
 // TODO: All these should be enforced by server as a part of document creation.
 const rootMapId = "root";
 const insightsMapId = "insights";
-const documentTasks = ["snapshot", "spell", "intel", "translation"];
 
 // Registered services to use when loading a document
 let defaultDocumentService: IDocumentService;
@@ -308,9 +307,6 @@ export async function load(
     } else {
         root = await runtime.getChannel("root") as IMap;
     }
-
-    // Register tasks for the non-chaincode documents.
-    runtime.registerTasks(documentTasks);
 
     // Return the document
     const document = new Document(runtime, root);

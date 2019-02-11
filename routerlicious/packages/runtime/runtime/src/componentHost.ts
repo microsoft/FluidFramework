@@ -1,5 +1,4 @@
 import {
-    Browser,
     ConnectionState,
     FileMode,
     IBlobManager,
@@ -27,7 +26,6 @@ import {
     IComponentRuntime,
     IDistributedObjectServices,
     IEnvelope,
-    IHelpMessage,
     IObjectAttributes,
     IObjectMessage,
     IObjectStorageService,
@@ -39,11 +37,8 @@ import * as assert from "assert";
 import { EventEmitter } from "events";
 import { ChannelDeltaConnection } from "./channelDeltaConnection";
 import { ChannelStorageService } from "./channelStorageService";
-import { debug } from "./debug";
 import { ILegacyRuntime } from "./definitions";
-import { LeaderElector } from "./leaderElection";
 import { LocalChannelStorageService } from "./localChannelStorageService";
-import { analyzeTasks, getLeaderCandidate } from "./taskAnalyzer";
 
 export interface IChannelState {
     object: IChannel;
@@ -203,12 +198,6 @@ export class ComponentHost extends EventEmitter implements IComponentDeltaHandle
     // tslint:disable-next-line:variable-name
     private _platform: IPlatform;
     // tslint:enable-next-line:variable-name
-
-    private tasks: string[] = [];
-    private leaderElector: LeaderElector;
-
-    // back-compat: version decides between loading document and chaincode.
-    private version: string;
 
     private constructor(
         private readonly componentRuntime: IComponentRuntime,
@@ -541,13 +530,6 @@ export class ComponentHost extends EventEmitter implements IComponentDeltaHandle
         return entries;
     }
 
-    public registerTasks(tasks: string[], version?: string) {
-        this.verifyNotClosed();
-        this.tasks = tasks;
-        this.version = version;
-        this.startLeaderElection();
-    }
-
     public submitMessage(type: MessageType, content: any) {
         this.submit(type, content);
     }
@@ -743,77 +725,6 @@ export class ComponentHost extends EventEmitter implements IComponentDeltaHandle
     private verifyNotClosed() {
         if (this.closed) {
             throw new Error("Runtime is closed");
-        }
-    }
-
-    private startLeaderElection() {
-        if (this.deltaManager && this.deltaManager.clientType === Browser) {
-            if (this.connected) {
-                this.initLeaderElection();
-            } else {
-                const leaderElectionHandler = () => {
-                    this.initLeaderElection();
-                    this.removeListener("connected", leaderElectionHandler);
-                };
-                this.on("connected", leaderElectionHandler);
-            }
-        }
-    }
-
-    private initLeaderElection() {
-        this.leaderElector = new LeaderElector(this.getQuorum(), this.clientId);
-        this.leaderElector.on("newLeader", (clientId: string) => {
-            debug(`New leader elected: ${clientId}`);
-            this.runTaskAnalyzer();
-        });
-        this.leaderElector.on("leaderLeft", (clientId: string) => {
-            debug(`Leader ${clientId} left`);
-            this.proposeLeadership();
-        });
-        this.leaderElector.on("memberLeft", (clientId: string) => {
-            debug(`Member ${clientId} left`);
-            this.runTaskAnalyzer();
-        });
-        this.proposeLeadership();
-    }
-
-    private proposeLeadership() {
-        if (getLeaderCandidate(this.getQuorum().getMembers()) === this.clientId) {
-            this.leaderElector.proposeLeadership().then(() => {
-                debug(`Proposal accepted`);
-            }, (err) => {
-                debug(`Proposal rejected: ${err}`);
-            });
-        }
-    }
-
-    /**
-     * On a client joining/departure, decide whether this client is the new leader.
-     * If so, calculate if there are any unhandled tasks for browsers and remote agents.
-     * Emit local help message for this browser and submits a remote help message for agents.
-     */
-    private runTaskAnalyzer() {
-        if (this.leaderElector.getLeader() === this.clientId) {
-            // Analyze the current state and ask for local and remote help seperately.
-            const helpTasks = analyzeTasks(this.clientId, this.getQuorum().getMembers(), this.tasks);
-            if (helpTasks && (helpTasks.browser.length > 0 || helpTasks.robot.length > 0)) {
-                if (helpTasks.browser.length > 0) {
-                    const localHelpMessage: IHelpMessage = {
-                        tasks: helpTasks.browser,
-                        version: this.version,   // back-compat
-                    };
-                    console.log(`Requesting local help for ${helpTasks.browser}`);
-                    this.emit("localHelp", localHelpMessage);
-                }
-                if (helpTasks.robot.length > 0) {
-                    const remoteHelpMessage: IHelpMessage = {
-                        tasks: helpTasks.robot,
-                        version: this.version,   // back-compat
-                    };
-                    console.log(`Requesting remote help for ${helpTasks.robot}`);
-                    this.submitMessage(MessageType.RemoteHelp, remoteHelpMessage);
-                }
-            }
         }
     }
 }
