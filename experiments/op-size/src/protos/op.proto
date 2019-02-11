@@ -1,0 +1,16 @@
+// model.proto
+syntax = "proto3";
+
+package op;
+
+message SequencedOp {
+    required string clientId = 1;
+    required int64 clientSequenceNumber = 2;
+    optional string contents = 3;
+    required int64 minimumSequenceNumber = 4;
+    required int64 referenceSequenceNumber = 5;
+    required int64 sequenceNumber = 6;
+    required int64 timestamp = 7;
+    repeated string traces = 8;
+    required string type = 9;
+}

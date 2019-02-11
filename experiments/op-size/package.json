@@ -22,5 +22,7 @@
 		"tslint-microsoft-contrib": "^6.0.0",
 		"typescript": "^3.2.2"
 	},
-	"dependencies": {}
+	"dependencies": {
+		"protobufjs": "~6.8.8"
+	}
 }
