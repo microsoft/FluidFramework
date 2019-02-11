@@ -34,7 +34,7 @@ export class ChatApp extends Document {
               messages={messages}
               messageView={messagesView}
               counter={msgCtr}
-              clientId= {user.client.user.id}
+              clientId={user.client.user.name}
             />
           </Provider>,
           maybeDiv
