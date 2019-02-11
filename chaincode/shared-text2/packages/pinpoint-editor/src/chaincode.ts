@@ -2,12 +2,14 @@ import { IPlatform, ITree } from "@prague/container-definitions";
 import { MapExtension } from "@prague/map";
 import {
     ComponentHost,
+} from "@prague/runtime";
+import {
+    IChaincode,
     IChaincodeComponent,
+    IComponentDeltaHandler,
     IComponentPlatform,
     IComponentRuntime,
-    IDeltaHandler,
-} from "@prague/runtime";
-import { IChaincode, IRuntime } from "@prague/runtime-definitions";
+    IRuntime} from "@prague/runtime-definitions";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import { PinpointRunner } from "./runner";
@@ -61,7 +63,7 @@ export class PinpointComponent implements IChaincodeComponent {
         return;
     }
 
-    public async run(runtime: IComponentRuntime, platform: IPlatform): Promise<IDeltaHandler> {
+    public async run(runtime: IComponentRuntime, platform: IPlatform): Promise<IComponentDeltaHandler> {
         const chaincode = this.chaincode;
 
         // All of the below would be hidden from a developer

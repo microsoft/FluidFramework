@@ -10,12 +10,13 @@ import {
 } from "@prague/merge-tree";
 import {
     ComponentHost,
-    IChaincodeComponent,
-    IComponentPlatform,
-    IComponentRuntime,
-    IDeltaHandler,
 } from "@prague/runtime";
-import { IChaincode } from "@prague/runtime-definitions";
+import {
+    IChaincode,
+    IChaincodeComponent,
+    IComponentDeltaHandler,
+    IComponentPlatform,
+    IComponentRuntime } from "@prague/runtime-definitions";
 import { SharedString } from "@prague/sequence";
 import { Deferred } from "@prague/utils";
 import * as monaco from "monaco-editor";
@@ -265,7 +266,7 @@ export class MonacoComponent implements IChaincodeComponent {
         return;
     }
 
-    public async run(runtime: IComponentRuntime, platform: IPlatform): Promise<IDeltaHandler> {
+    public async run(runtime: IComponentRuntime, platform: IPlatform): Promise<IComponentDeltaHandler> {
         const chaincode = this.chaincode;
 
         // All of the below would be hidden from a developer

@@ -13,3 +13,4 @@ export {
 } from "./sharedString";
 export * from "./sequence";
 export * from "./extension";
+export * from "./sequenceDeltaEvent";

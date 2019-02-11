@@ -289,6 +289,7 @@ export class CollaborativeMap extends CollaborativeObject implements IMap {
     public on(
         event: "valueChanged",
         listener: (changed: IValueChanged, local: boolean, op: ISequencedObjectMessage) => void): this;
+    public on(event: string | symbol, listener: (...args: any[]) => void): this;
 
     /* tslint:disable:no-unnecessary-override */
     public on(event: string | symbol, listener: (...args: any[]) => void): this {

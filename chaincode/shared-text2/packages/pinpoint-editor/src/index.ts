@@ -1,4 +1,4 @@
-import { IChaincodeComponent } from "@prague/runtime";
+import { IChaincodeComponent } from "@prague/runtime-definitions";
 import { PinpointComponent } from "./chaincode";
 
 /**

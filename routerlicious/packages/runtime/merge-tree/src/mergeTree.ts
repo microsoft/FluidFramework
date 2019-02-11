@@ -7,6 +7,7 @@ import * as Properties from "./properties";
 import * as assert from "assert";
 import { IRelativePosition } from "./index";
 import { SegmentGroupCollection } from "./segmentGroupCollection";
+import { MergeTreeDeltaCallback, IMergeTreeDeltaOpCallbackArgs } from "./mergeTreeDeltaCallback";
 
 export interface ReferencePosition {
     properties: Properties.PropertySet;
@@ -764,9 +765,10 @@ export class ExternalSegment extends BaseSegment {
         return obj;
     }
 
-    mergeTreeInsert(mergeTree: MergeTree, pos: number, refSeq: number, clientId: number, seq: number) {
+    mergeTreeInsert(mergeTree: MergeTree, pos: number, refSeq: number, clientId: number, seq: number, opArgs: IMergeTreeDeltaOpCallbackArgs) {
         mergeTree.insert(pos, refSeq, clientId, seq, this, (block, pos, refSeq, clientId, seq, eseg) =>
-            mergeTree.blockInsert(block, pos, refSeq, clientId, seq, eseg));
+            mergeTree.blockInsert(block, pos, refSeq, clientId, seq, eseg),
+            opArgs);
     }
 
     clone(): ISegment {
@@ -2122,6 +2124,7 @@ export class MergeTree {
     // for diagnostics
     getLongClientId: (id: number) => string;
     getUserInfo: (id: number) => IUser;
+    mergeTreeDeltaCallback: MergeTreeDeltaCallback;
 
     // TODO: make and use interface describing options
     constructor(public text: string, public options?: Properties.PropertySet) {
@@ -3220,8 +3223,9 @@ export class MergeTree {
         return pos;
     }
 
-    insert<T>(pos: number, refSeq: number, clientId: number, seq: number, segData: T,
-        traverse: (block: IMergeBlock, pos: number, refSeq: number, clientId: number, seq: number, segData: T) => IMergeBlock) {
+    insert<T extends ISegment>(pos: number, refSeq: number, clientId: number, seq: number, segData: T,
+        traverse: (block: IMergeBlock, pos: number, refSeq: number, clientId: number, seq: number, segData: T) => IMergeBlock,
+        opArgs: IMergeTreeDeltaOpCallbackArgs) {
         this.ensureIntervalBoundary(pos, refSeq, clientId);
         if (MergeTree.traceOrdinals) {
             this.ordinalIntegrity();
@@ -3230,18 +3234,28 @@ export class MergeTree {
         let splitNode = traverse(this.root, pos, refSeq, clientId, seq, segData);
         //traceTraversal = false;
         this.updateRoot(splitNode, refSeq, clientId, seq);
+        if (this.mergeTreeDeltaCallback) {
+            this.mergeTreeDeltaCallback(
+                opArgs,
+                {
+                    mergeTreeClientId: clientId,
+                    operation: ops.MergeTreeDeltaType.INSERT,
+                    mergeTree: this,
+                    segments: [segData]
+                });
+        }
     }
 
-    insertSegment(pos: number, refSeq: number, clientId: number, seq: number, segment: ISegment) {
+    insertSegment(pos: number, refSeq: number, clientId: number, seq: number, segment: ISegment, opArgs: IMergeTreeDeltaOpCallbackArgs) {
         // const tt = MergeTree.traceTraversal;
-        // MergeTree.traceTraversal = true;    
+        // MergeTree.traceTraversal = true;
         this.insert(pos, refSeq, clientId, seq, segment, (block, pos, refSeq, clientId, seq, seg) =>
-            this.blockInsert(block, pos, refSeq, clientId, seq, seg));
+            this.blockInsert(block, pos, refSeq, clientId, seq, seg), opArgs);
         // MergeTree.traceTraversal = tt;
     }
 
     insertMarker(pos: number, refSeq: number, clientId: number, seq: number,
-        behaviors: ops.ReferenceType, props?: Properties.PropertySet) {
+        behaviors: ops.ReferenceType, props: Properties.PropertySet, opArgs: IMergeTreeDeltaOpCallbackArgs) {
         let marker = Marker.make(behaviors, props, seq, clientId);
 
         let markerId = marker.getId();
@@ -3249,7 +3263,8 @@ export class MergeTree {
             this.mapIdToSegment(markerId, marker);
         }
         this.insert(pos, refSeq, clientId, seq, marker, (block, pos, refSeq, clientId, seq, marker) =>
-            this.blockInsert(block, pos, refSeq, clientId, seq, marker));
+            this.blockInsert(block, pos, refSeq, clientId, seq, marker),
+            opArgs);
         // report segment if client interested
         if (this.markerModifiedHandler && (seq !== UnassignedSequenceNumber)) {
             this.markerModifiedHandler(marker);
@@ -3258,13 +3273,14 @@ export class MergeTree {
     }
 
     insertTextMarkerRelative(markerPos: IRelativePosition, refSeq: number, clientId: number, seq: number,
-        text: string, props?: Properties.PropertySet) {
+        text: string, props: Properties.PropertySet, opArgs: IMergeTreeDeltaOpCallbackArgs) {
         let pos = this.posFromRelativePos(markerPos, refSeq, clientId);
         if (pos >= 0) {
             let newSegment = TextSegment.make(text, props, seq, clientId);
             // MergeTree.traceTraversal = true;
-            this.insert(pos, refSeq, clientId, seq, text, (block, pos, refSeq, clientId, seq, text) =>
-                this.blockInsert(this.root, pos, refSeq, clientId, seq, newSegment));
+            this.insert(pos, refSeq, clientId, seq, newSegment, (block, pos, refSeq, clientId, seq, segment) =>
+                this.blockInsert(this.root, pos, refSeq, clientId, seq, segment),
+            opArgs);
             MergeTree.traceTraversal = false;
             if (this.collabWindow.collaborating && MergeTree.options.zamboniSegments &&
                 (seq != UnassignedSequenceNumber)) {
@@ -3273,11 +3289,12 @@ export class MergeTree {
         }
     }
 
-    insertText(pos: number, refSeq: number, clientId: number, seq: number, text: string, props?: Properties.PropertySet) {
+    insertText(pos: number, refSeq: number, clientId: number, seq: number, text: string, props: Properties.PropertySet, opArgs: IMergeTreeDeltaOpCallbackArgs) {
         let newSegment = TextSegment.make(text, props, seq, clientId);
         // MergeTree.traceTraversal = true;
-        this.insert(pos, refSeq, clientId, seq, text, (block, pos, refSeq, clientId, seq, text) =>
-            this.blockInsert(this.root, pos, refSeq, clientId, seq, newSegment));
+        this.insert(pos, refSeq, clientId, seq, newSegment, (block, pos, refSeq, clientId, seq, segment) =>
+            this.blockInsert(this.root, pos, refSeq, clientId, seq, segment),
+            opArgs);
         MergeTree.traceTraversal = false;
         if (MergeTree.traceOrdinals) {
             this.ordinalIntegrity();
@@ -3662,12 +3679,14 @@ export class MergeTree {
     }
 
     annotateRange(props: Properties.PropertySet, start: number, end: number, refSeq: number,
-        clientId: number, seq: number, combiningOp?: ops.ICombiningOp) {
+        clientId: number, seq: number, combiningOp: ops.ICombiningOp, opArgs: IMergeTreeDeltaOpCallbackArgs) {
         this.ensureIntervalBoundary(start, refSeq, clientId);
         this.ensureIntervalBoundary(end, refSeq, clientId);
+        const annotatedSegments: ISegment[] = [];
         let annotateSegment = (segment: ISegment) => {
             let segType = segment.getType();
             if ((segType == SegmentType.Marker) || (segType == SegmentType.Text)) {
+                annotatedSegments.push(segment);
                 segment.addProperties(props, combiningOp, seq);
                 if (this.markerModifiedHandler && (segType === SegmentType.Marker) && (seq !== UnassignedSequenceNumber)) {
                     this.markerModifiedHandler(<Marker>segment);
@@ -3676,12 +3695,24 @@ export class MergeTree {
             return true;
         }
         this.mapRange({ leaf: annotateSegment }, refSeq, clientId, undefined, start, end);
+
+        if (this.mergeTreeDeltaCallback) {
+            this.mergeTreeDeltaCallback(
+                opArgs,
+                {
+                    mergeTreeClientId: clientId,
+                    operation: ops.MergeTreeDeltaType.ANNOTATE,
+                    mergeTree: this,
+                    segments: annotatedSegments
+                });
+        }
     }
 
-    markRangeRemoved(start: number, end: number, refSeq: number, clientId: number, seq: number, overwrite = false) {
+    markRangeRemoved(start: number, end: number, refSeq: number, clientId: number, seq: number, overwrite = false, opArgs: IMergeTreeDeltaOpCallbackArgs) {
         this.ensureIntervalBoundary(start, refSeq, clientId);
         this.ensureIntervalBoundary(end, refSeq, clientId);
         let segmentGroup: SegmentGroup;
+        const removedSegments: ISegment[]  = []
         let savedLocalRefs = <LocalReference[][]>[];
         let markRemoved = (segment: ISegment, pos: number, start: number, end: number) => {
             let branchId = this.getBranchId(clientId);
@@ -3707,6 +3738,7 @@ export class MergeTree {
                 else {
                     removalInfo.removedClientId = clientId;
                     removalInfo.removedSeq = seq;
+                    removedSegments.push(segment);
                     if (segment.localRefs && (brid === this.localBranchId)) {
                         savedLocalRefs.push(segment.localRefs);
                         segment.localRefs = undefined;
@@ -3766,6 +3798,16 @@ export class MergeTree {
                     LocalClientId);
             }
         }
+        if (this.mergeTreeDeltaCallback) {
+            this.mergeTreeDeltaCallback(
+                opArgs,
+                {
+                    mergeTreeClientId: clientId,
+                    operation: ops.MergeTreeDeltaType.REMOVE,
+                    mergeTree: this,
+                    segments: removedSegments
+                });
+        }
         if (this.collabWindow.collaborating && (seq != UnassignedSequenceNumber)) {
             if (MergeTree.options.zamboniSegments) {
                 this.zamboniSegments();
@@ -3774,6 +3816,7 @@ export class MergeTree {
         // MergeTree.traceTraversal = false;
     }
 
+    // This method is deprecated should not be used. It modifies existing segments.
     removeRange(start: number, end: number, refSeq: number, clientId: number) {
         let removeInfo = <RemoveRangeInfo>{};
         this.nodeRemoveRange(this.root, start, end, refSeq, clientId, removeInfo);
