@@ -14,13 +14,14 @@ import * as DistributedMap from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
 import {
     ComponentHost,
-    IChaincodeComponent,
-    IComponentPlatform,
-    IComponentRuntime,
-    IDeltaHandler,
     Runtime,
 } from "@prague/runtime";
-import { IChaincode } from "@prague/runtime-definitions";
+import {
+    IChaincode,
+    IChaincodeComponent,
+    IComponentDeltaHandler,
+    IComponentPlatform,
+    IComponentRuntime } from "@prague/runtime-definitions";
 import * as SharedString from "@prague/sequence";
 import { IStream } from "@prague/stream";
 import { Deferred } from "@prague/utils";
@@ -178,7 +179,7 @@ export class SharedTextComponent implements IChaincodeComponent {
         return;
     }
 
-    public async run(runtime: IComponentRuntime, platform: IPlatform): Promise<IDeltaHandler> {
+    public async run(runtime: IComponentRuntime, platform: IPlatform): Promise<IComponentDeltaHandler> {
         const chaincode = this.chaincode;
 
         // All of the below would be hidden from a developer

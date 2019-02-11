@@ -1,8 +1,7 @@
 import { Pinpoint } from "@kurtb/pinpoint";
 import { IPlatform } from "@prague/container-definitions";
 import { IMapView } from "@prague/map";
-import { IComponentPlatform } from "@prague/runtime";
-import { IRuntime } from "@prague/runtime-definitions";
+import { IComponentPlatform, IRuntime } from "@prague/runtime-definitions";
 import { Deferred } from "@prague/utils";
 import * as angular from "angular";
 import * as angularRoute from "angular-route";
