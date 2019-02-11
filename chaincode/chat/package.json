@@ -1,7 +1,7 @@
 {
   "name": "@chaincode/chat",
   "description": "Prague Chat!",
-  "version": "0.2.68",
+  "version": "0.2.69",
   "author": "Microsoft",
   "repository": "microsoft/prague",
   "main": "dist/main.bundle.js",
@@ -15,7 +15,7 @@
     "tsc": "tsc"
   },
   "devDependencies": {
-    "@prague/prague-dev-server": "^3.1.14",
+    "@prague/prague-dev-server": "^3.2.1",
     "@types/node": "^10.11.5",
     "@types/react-dom": "^16.0.11",
     "clean-webpack-plugin": "^0.1.19",
@@ -43,4 +43,3 @@
     "react-dom": "^16.7.0"
   }
 }
- 
