@@ -114,10 +114,6 @@
             "group": "serviceGraph",
             "topic": "deltas"
         },
-        "rotograph": {
-            "group": "rotograph",
-            "topic": "deltas"
-        },
         "tmz": {
             "group": "tmz",
             "topic": "deltas"
@@ -136,18 +132,6 @@
         "permissions": {
             "paparazziQueue": ["snapshot", "spell", "intel", "translation", "chain-snapshot", "chain-spell", "chain-intel", "chain-translation"],
             "augloopQueue": ["augmentation"]
-        }
-    },
-    "rotograph": {
-        "alfred": "http://alfred:3000",
-        "queues": ["videoQueue"],
-        "clientId": "339e853d-1307-4148-aa82-c6bd8a56dccc",
-        "clientSecret": "A1LGEWdAVj8doEs5zyGgmikLgwijKliqbKwgs/CKcf0=",
-        "endpoint": "https://videoblobstorage.restv2.westus2-2.media.azure.net/api/",
-        "authEndpoint": "https://login.microsoftonline.com/microsoft.onmicrosoft.com/oauth2/token",
-        "resource": "https://rest.media.azure.net",
-        "permissions": {
-            "videoQueue": ["encoding"]
         }
     },
     "paparazzi": {
