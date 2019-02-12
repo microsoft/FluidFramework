@@ -81,26 +81,7 @@ class Component implements IChaincodeComponent {
     }
 
     public async run(runtime: IComponentRuntime): Promise<IComponentDeltaHandler> {
-        const component = await ComponentHost.LoadFromSnapshot(
-            runtime,
-            runtime.tenantId,
-            runtime.documentId,
-            runtime.id,
-            runtime.parentBranch,
-            runtime.existing,
-            runtime.options,
-            runtime.clientId,
-            runtime.blobManager,
-            runtime.baseSnapshot,
-            this.chaincode,
-            runtime.deltaManager,
-            runtime.getQuorum(),
-            runtime.storage,
-            runtime.connectionState,
-            runtime.branch,
-            runtime.minimumSequenceNumber,
-            runtime.snapshotFn,
-            runtime.closeFn);
+        const component = await ComponentHost.LoadFromSnapshot(runtime, this.chaincode);
         this.component = component;
 
         return component;

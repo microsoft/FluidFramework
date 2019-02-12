@@ -303,26 +303,7 @@ export class FlowDocumentComponent implements IChaincodeComponent {
 
         // All of the below would be hidden from a developer
         // Is this an await or does it just go?
-        const component = await ComponentHost.LoadFromSnapshot(
-            runtime,
-            runtime.tenantId,
-            runtime.documentId,
-            runtime.id,
-            runtime.parentBranch,
-            runtime.existing,
-            runtime.options,
-            runtime.clientId,
-            runtime.blobManager,
-            runtime.baseSnapshot,
-            chaincode,
-            runtime.deltaManager,
-            runtime.getQuorum(),
-            runtime.storage,
-            runtime.connectionState,
-            runtime.branch,
-            runtime.minimumSequenceNumber,
-            runtime.snapshotFn,
-            runtime.closeFn);
+        const component = await ComponentHost.LoadFromSnapshot(runtime, chaincode);
         this.component = component;
 
         return component;

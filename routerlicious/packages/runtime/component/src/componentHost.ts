@@ -58,30 +58,15 @@ interface IObjectServices {
 export class ComponentHost extends EventEmitter implements IComponentDeltaHandler, IRuntime {
     public static async LoadFromSnapshot(
         componentRuntime: IComponentRuntime,
-        tenantId: string,
-        documentId: string,
-        id: string,
-        parentBranch: string,
-        existing: boolean,
-        options: any,
-        clientId: string,
-        blobManager: IBlobManager,
-        tree: ISnapshotTree,
         chaincode: IChaincode,
-        deltaManager: IDeltaManager,
-        quorum: IQuorum,
-        storage: IDocumentStorageService,
-        connectionState: ConnectionState,
-        branch: string,
-        minimumSequenceNumber: number,
-        snapshotFn: (message: string) => Promise<void>,
-        closeFn: () => void,
     ) {
+        const tree = componentRuntime.baseSnapshot;
+
         // pkg and chaincode also probably available from the snapshot?
         const attributes = tree !== null
-            ? await readAndParse<IDocumentAttributes>(storage, tree.blobs[".attributes"])
+            ? await readAndParse<IDocumentAttributes>(componentRuntime.storage, tree.blobs[".attributes"])
             : {
-                branch: documentId,
+                branch: componentRuntime.documentId,
                 clients: [],
                 minimumSequenceNumber: 0,
                 partialOps: [],
@@ -89,25 +74,29 @@ export class ComponentHost extends EventEmitter implements IComponentDeltaHandle
                 sequenceNumber: 0,
                 values: [],
             };
-        const tardisMessagesP = ComponentHost.loadTardisMessages(documentId, attributes, storage, tree);
+        const tardisMessagesP = ComponentHost.loadTardisMessages(
+            componentRuntime.documentId,
+            attributes,
+            componentRuntime.storage,
+            tree);
 
         const runtime = new ComponentHost(
             componentRuntime,
-            tenantId,
-            documentId,
-            id,
-            parentBranch,
-            existing,
-            options,
-            clientId,
-            blobManager,
-            deltaManager,
-            quorum,
+            componentRuntime.tenantId,
+            componentRuntime.documentId,
+            componentRuntime.id,
+            componentRuntime.parentBranch,
+            componentRuntime.existing,
+            componentRuntime.options,
+            componentRuntime.clientId,
+            componentRuntime.blobManager,
+            componentRuntime.deltaManager,
+            componentRuntime.getQuorum(),
             chaincode,
-            storage,
-            connectionState,
-            snapshotFn,
-            closeFn);
+            componentRuntime.storage,
+            componentRuntime.connectionState,
+            componentRuntime.snapshotFn,
+            componentRuntime.closeFn);
 
         // Must always receive the component type inside of the attributes
         const tardisMessages = await tardisMessagesP;
@@ -122,10 +111,9 @@ export class ComponentHost extends EventEmitter implements IComponentDeltaHandle
                 return runtime.loadSnapshotChannel(
                     path,
                     tree.trees[path],
-                    storage,
+                    componentRuntime.storage,
                     tardisMessages.has(path) ? tardisMessages.get(path) : [],
-                    branch,
-                    minimumSequenceNumber);
+                    componentRuntime.branch);
             });
 
             await Promise.all(loadSnapshotsP);
@@ -645,12 +633,12 @@ export class ComponentHost extends EventEmitter implements IComponentDeltaHandle
         tree: ISnapshotTree,
         storage: IDocumentStorageService,
         messages: ISequencedDocumentMessage[],
-        branch: string,
-        minimumSequenceNumber: number): Promise<void> {
+        branch: string): Promise<void> {
 
         const channelAttributes = await readAndParse<IObjectAttributes>(storage, tree.blobs[".attributes"]);
         const services = this.getObjectServices(id, tree, storage);
-        services.deltaConnection.setBaseMapping(channelAttributes.sequenceNumber, minimumSequenceNumber);
+        // base mapping will be removed
+        services.deltaConnection.setBaseMapping(channelAttributes.sequenceNumber, -100);
 
         // Run the transformed messages through the delta connection in order to update their offsets
         // Then pass these to the loadInternal call. Moving forward we will want to update the snapshot

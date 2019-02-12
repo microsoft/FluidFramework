@@ -62,7 +62,6 @@ export interface IComponentRuntime {
     readonly storage: IDocumentStorageService;
     readonly connectionState: ConnectionState;
     readonly branch: string;
-    readonly minimumSequenceNumber: number;
     readonly chaincode: IChaincodeComponent;
     readonly baseSnapshot: ISnapshotTree;
     readonly snapshotFn: (message: string) => Promise<void>;
@@ -118,6 +117,8 @@ export interface IHostRuntime extends IRuntime {
     // attachProcess(process: IProcess);
 
     getQuorum(): IQuorum;
+
+    getPackage(name: string): Promise<IComponentFactory>;
 
     error(err: any): void;
 }
