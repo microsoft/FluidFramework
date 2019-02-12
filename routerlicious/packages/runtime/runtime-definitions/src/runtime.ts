@@ -87,6 +87,4 @@ export interface IRuntime extends EventEmitter {
      * Submits a message on the document channel
      */
     submitMessage(type: MessageType, content: any);
-
-    registerTasks(tasks: string[], version?: string);
 }
