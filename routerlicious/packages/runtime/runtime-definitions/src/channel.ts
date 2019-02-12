@@ -19,7 +19,7 @@ export interface IChannel {
 
     snapshot(): ITree;
 
-    transform(message: IDocumentMessage, sequenceNumber: number): IDocumentMessage;
+    transform(message: ISequencedDocumentMessage, sequenceNumber: number): ISequencedDocumentMessage;
 
     isLocal(): boolean;
 }

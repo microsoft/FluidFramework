@@ -161,7 +161,7 @@ export class Cell extends SharedObject implements ICell {
         return tree;
     }
 
-    public transform(message: IDocumentMessage, sequenceNumber: number): IDocumentMessage {
+    public transform(message: ISequencedDocumentMessage, sequenceNumber: number): ISequencedDocumentMessage {
         return message;
     }
 

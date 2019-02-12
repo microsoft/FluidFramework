@@ -136,7 +136,7 @@ export abstract class SharedObject extends EventEmitter implements ISharedObject
      * Creates a new message from the provided message that is relative to the given sequenceNumber. It is valid
      * to modify the passed in object in place.
      */
-    public abstract transform(message: IDocumentMessage, sequenceNumber: number): IDocumentMessage;
+    public abstract transform(message: ISequencedDocumentMessage, sequenceNumber: number): ISequencedDocumentMessage;
 
     /**
      * Allows the distributed data type to perform custom loading

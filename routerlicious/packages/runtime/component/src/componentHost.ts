@@ -4,7 +4,6 @@ import {
     IBlobManager,
     IDeltaManager,
     IDocumentAttributes,
-    IDocumentMessage,
     IDocumentStorageService,
     IGenericBlob,
     IPlatform,
@@ -368,10 +367,7 @@ export class ComponentHost extends EventEmitter implements IComponentDeltaHandle
         if (message.type === MessageType.Operation) {
             const envelope = message.contents as IEnvelope;
             const objectDetails = this.channels.get(envelope.address);
-            envelope.contents = objectDetails.object.transform(
-                envelope.contents as IDocumentMessage,
-                objectDetails.connection.transformDocumentSequenceNumber(
-                    Math.max(message.referenceSequenceNumber, this.deltaManager.minimumSequenceNumber)));
+            message = objectDetails.object.transform(message, sequenceNumber);
         } else {
             message.type = MessageType.NoOp;
         }
@@ -435,7 +431,7 @@ export class ComponentHost extends EventEmitter implements IComponentDeltaHandle
         }
 
         for (const [, object] of this.channels) {
-            if (!object.object.isLocal() && object.connection.baseMappingIsSet()) {
+            if (!object.object.isLocal()) {
                 object.connection.updateMinSequenceNumber(msn);
             }
         }
@@ -485,7 +481,7 @@ export class ComponentHost extends EventEmitter implements IComponentDeltaHandle
         for (const [objectId, object] of this.channels) {
             // If the object isn't local - and we have received the sequenced op creating the object (i.e. it has a
             // base mapping) - then we go ahead and snapshot
-            if (!object.object.isLocal() && object.connection.baseMappingIsSet()) {
+            if (!object.object.isLocal()) {
                 const snapshot = object.object.snapshot();
 
                 // Add in the object attributes to the returned tree
@@ -563,13 +559,6 @@ export class ComponentHost extends EventEmitter implements IComponentDeltaHandle
         if (local) {
             assert(this.pendingAttach.has(attachMessage.id));
             this.pendingAttach.delete(attachMessage.id);
-
-            // Document sequence number references <= message.sequenceNumber should map to the
-            // object's 0 sequence number. We cap to the MSN to keep a tighter window and because
-            // no references should be below it.
-            this.channels.get(attachMessage.id).connection.setBaseMapping(
-                0,
-                message.minimumSequenceNumber);
         } else {
             const channelState = context as IChannelState;
             this.channels.set(channelState.object.id, channelState);
@@ -604,11 +593,6 @@ export class ComponentHost extends EventEmitter implements IComponentDeltaHandle
                 this.submit(MessageType.Operation, submitEnvelope);
             });
 
-        // Document sequence number references <= message.sequenceNumber should map to the object's 0
-        // sequence number. We cap to the MSN to keep a tighter window and because no references should
-        // be below it.
-        connection.setBaseMapping(0, message.minimumSequenceNumber);
-
         const services: IObjectServices = {
             deltaConnection: connection,
             objectStorage: localStorage,
@@ -636,23 +620,13 @@ export class ComponentHost extends EventEmitter implements IComponentDeltaHandle
 
         const channelAttributes = await readAndParse<IObjectAttributes>(storage, tree.blobs[".attributes"]);
         const services = this.getObjectServices(id, tree, storage);
-        // base mapping will be removed
-        services.deltaConnection.setBaseMapping(channelAttributes.sequenceNumber, -100);
-
-        // Run the transformed messages through the delta connection in order to update their offsets
-        // Then pass these to the loadInternal call. Moving forward we will want to update the snapshot
-        // to include the range maps. And then make the objects responsible for storing any messages they
-        // need to transform.
-        const transformedObjectMessages = messages.map((message) => {
-            return services.deltaConnection.translateToObjectMessage(message, true);
-        });
 
         const channelDetails = await this.loadChannel(
             id,
             channelAttributes.type,
             channelAttributes.sequenceNumber,
             channelAttributes.sequenceNumber,
-            transformedObjectMessages,
+            messages,
             services,
             branch);
 

@@ -210,7 +210,7 @@ export class SharedMap extends SharedObject implements ISharedMap {
         return tree;
     }
 
-    public transform(message: IDocumentMessage, sequenceNumber: number): IDocumentMessage {
+    public transform(message: ISequencedDocumentMessage, sequenceNumber: number): ISequencedDocumentMessage {
         const handled = message.type === OperationType
             ? this.messageHandler.has((message.contents as IMapOperation).type)
             : false;
@@ -460,7 +460,7 @@ export class SharedMap extends SharedObject implements ISharedMap {
     /**
      * Allows derived classes to transform the given message
      */
-    protected transformContent(message: IDocumentMessage, sequenceNumber: number): IDocumentMessage {
+    protected transformContent(message: ISequencedDocumentMessage, sequenceNumber: number): ISequencedDocumentMessage {
         return message;
     }
 

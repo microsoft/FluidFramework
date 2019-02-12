@@ -251,9 +251,12 @@ export abstract class SegmentSequence<T extends MergeTree.ISegment> extends Shar
         }
     }
 
-    protected transformContent(message: IDocumentMessage, toSequenceNumber: number): IDocumentMessage {
+    protected transformContent(
+        message: ISequencedDocumentMessage,
+        toSequenceNumber: number,
+    ): ISequencedDocumentMessage {
         if (message.contents) {
-            this.client.transform(message as ISequencedDocumentMessage, toSequenceNumber);
+            this.client.transform(message, toSequenceNumber);
         }
         message.referenceSequenceNumber = toSequenceNumber;
         return message;

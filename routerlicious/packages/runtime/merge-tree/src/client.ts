@@ -327,7 +327,7 @@ export class Client {
         }
         return op;
     }
-    transform(msg: ISequencedDocumentMessage, toSequenceNumber: number) {
+    transform(msg: ISequencedDocumentMessage, toSequenceNumber: number): ISequencedDocumentMessage {
         if (msg.referenceSequenceNumber >= toSequenceNumber) {
             return msg;
         }

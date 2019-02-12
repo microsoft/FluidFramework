@@ -1,4 +1,4 @@
-import { IDocumentMessage, ITree } from "@prague/container-definitions";
+import { ISequencedDocumentMessage, ITree } from "@prague/container-definitions";
 import { IChannel } from "@prague/runtime-definitions";
 
 /**
@@ -54,5 +54,5 @@ export interface ISharedObject extends IChannel {
     /**
      * Transforms the given message relative to the provided sequence number
      */
-    transform(message: IDocumentMessage, sequenceNumber: number): IDocumentMessage;
+    transform(message: ISequencedDocumentMessage, sequenceNumber: number): ISequencedDocumentMessage;
 }
