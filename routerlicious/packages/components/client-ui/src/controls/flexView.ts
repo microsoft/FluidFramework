@@ -1,7 +1,7 @@
 // The main app code
 import * as api from "@prague/client-api";
 import { IGenericBlob, MessageType } from "@prague/container-definitions";
-import { IMap, IMapView } from "@prague/map";
+import { IMapView, ISharedMap } from "@prague/map";
 import { IColor } from "@prague/stream";
 import { blobUploadHandler } from "../blob";
 import * as ui from "../ui";
@@ -74,7 +74,7 @@ export class FlexView extends ui.Component {
         if (!root.has("insights")) {
             root.set("insights", doc.createMap());
         }
-        root.get<IMap>("insights").getView()
+        root.get<ISharedMap>("insights").getView()
             .then((insightsView) => {
                 this.insightsMap = insightsView;
             });
@@ -174,13 +174,13 @@ export class FlexView extends ui.Component {
         this.element.appendChild(this.popup.element);
     }
 
-    private async processComponents(components: IMap) {
+    private async processComponents(components: ISharedMap) {
         const view = await components.getView();
 
         // Pull in all the objects on the canvas
         // tslint:disable-next-line:forin
         for (const componentName of view.keys()) {
-            const component = view.get(componentName) as IMap;
+            const component = view.get(componentName) as ISharedMap;
             this.addComponent(component);
         }
 
@@ -191,7 +191,7 @@ export class FlexView extends ui.Component {
         });
     }
 
-    private async addComponent(component: IMap) {
+    private async addComponent(component: ISharedMap) {
         const details = await component.getView();
         if (details.get("type") !== "chart") {
             return;
@@ -242,7 +242,7 @@ export class FlexView extends ui.Component {
                 if (!this.insightsMap.has(incl.sha)) {
                     this.insightsMap.set(incl.sha, this.doc.createMap());
                 }
-                const videoMap = this.insightsMap.get<IMap>(incl.sha);
+                const videoMap = this.insightsMap.get<ISharedMap>(incl.sha);
 
                 const video = new Video(videoDiv, videoMap, incl.url);
                 ink.addVideo(video);

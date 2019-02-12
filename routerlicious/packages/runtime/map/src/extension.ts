@@ -1,7 +1,7 @@
-import { ICollaborativeObjectExtension } from "@prague/api-definitions";
+import { ISharedObjectExtension } from "@prague/api-definitions";
 import { IDistributedObjectServices, IRuntime, ISequencedObjectMessage } from "@prague/runtime-definitions";
-import { IMap, IValueType } from "./interfaces";
-import { CollaborativeMap } from "./map";
+import { ISharedMap, IValueType } from "./interfaces";
+import { SharedMap } from "./map";
 
 // register default types
 const defaultValueTypes = new Array<IValueType<any>>();
@@ -12,7 +12,7 @@ export function registerDefaultValueType(type: IValueType<any>) {
 /**
  * The extension that defines the map
  */
-export class MapExtension implements ICollaborativeObjectExtension {
+export class MapExtension implements ISharedObjectExtension {
     public static Type = "https://graph.microsoft.com/types/map";
 
     public type: string = MapExtension.Type;
@@ -24,24 +24,24 @@ export class MapExtension implements ICollaborativeObjectExtension {
         minimumSequenceNumber: number,
         messages: ISequencedObjectMessage[],
         services: IDistributedObjectServices,
-        headerOrigin: string): Promise<IMap> {
+        headerOrigin: string): Promise<ISharedMap> {
 
-        const map = new CollaborativeMap(id, runtime, MapExtension.Type);
+        const map = new SharedMap(id, runtime, MapExtension.Type);
         this.registerValueTypes(map, defaultValueTypes);
         await map.load(sequenceNumber, minimumSequenceNumber, messages, headerOrigin, services);
 
         return map;
     }
 
-    public create(document: IRuntime, id: string): IMap {
-        const map = new CollaborativeMap(id, document, MapExtension.Type);
+    public create(document: IRuntime, id: string): ISharedMap {
+        const map = new SharedMap(id, document, MapExtension.Type);
         this.registerValueTypes(map, defaultValueTypes);
         map.initializeLocal();
 
         return map;
     }
 
-    private registerValueTypes(map: CollaborativeMap, valueTypes: Array<IValueType<any>>) {
+    private registerValueTypes(map: SharedMap, valueTypes: Array<IValueType<any>>) {
         for (const type of valueTypes) {
             map.registerValueType(type);
         }

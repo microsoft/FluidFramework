@@ -58,7 +58,7 @@ export interface IDeltaHandlerStrategy {
 }
 
 /**
- * Manages the flow of both inbound and outbound messages. This class ensures that collaborative objects receive delta
+ * Manages the flow of both inbound and outbound messages. This class ensures that shared objects receive delta
  * messages in order regardless of possible network conditions or timings causing out of order delivery.
  */
 export class DeltaManager extends EventEmitter implements IDeltaManager {

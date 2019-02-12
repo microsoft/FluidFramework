@@ -1,4 +1,4 @@
-import { ICollaborativeObject } from "@prague/api-definitions";
+import { ISharedObject } from "@prague/api-definitions";
 import { ISequencedObjectMessage } from "@prague/runtime-definitions";
 
 export type SerializeFilter = (key: string, serializedValue: any, type: string) => any;
@@ -76,21 +76,13 @@ export interface IValueType<T> {
     ops: Map<string, IValueOperation<T>>;
 }
 
-export interface IMapView {
-    /**
-     * Retrieves the given key from the map
-     */
-    get<T = any>(key: string): T;
-
+export interface IMapView extends Map<string, any> {
     /**
      * A form of get except it will only resolve the promise once the key exists in the map.
      */
     wait<T>(key: string): Promise<T>;
 
-    /**
-     * Returns a boolean indicating whether or not the key exists in the map
-     */
-    has(key: string): boolean;
+    get<T = any>(key: string): T;
 
     /**
      * Sets the key to the provided value
@@ -98,35 +90,15 @@ export interface IMapView {
     set<T = any>(key: string, value: T | any, type?: string): T;
 
     /**
-     * Deletes the specified key from the map and returns the value of the key at the time of deletion.
-     */
-    delete(key: string): void;
-
-    /**
-     * Retrieves all the keys contained within the map
-     */
-    keys(): IterableIterator<string>;
-
-    /**
-     * Removes all entries from the map
-     */
-    clear(): void;
-
-    /**
-     * Executes the provided callback function once per each key/value pair
-     */
-    forEach(callbackFn: (value: any, key: any) => void);
-
-    /**
      * Get the map viewed by this view.
      */
-    getMap(): IMap;
+    getMap(): ISharedMap;
 }
 
 /**
- * Collaborative map interface
+ * Shared map interface
  */
-export interface IMap extends ICollaborativeObject {
+export interface ISharedMap extends ISharedObject {
     /**
      * Retrieves the given key from the map
      */
@@ -151,17 +123,12 @@ export interface IMap extends ICollaborativeObject {
     /**
      * Deletes the specified key from the map and returns the value of the key at the time of deletion.
      */
-    delete(key: string): Promise<void>;
+    delete(key: string): Promise<boolean>;
 
     /**
      * Retreives all the keys contained within the map
      */
     keys(): Promise<string[]>;
-
-    /**
-     * Removes all entries from the map
-     */
-    clear(): Promise<void>;
 
     /**
      * Retreives a synchronous view of the map

@@ -2,7 +2,7 @@ import * as cell from "@prague/cell";
 import {
     CounterValueType,
     DistributedSetValueType,
-    IMap,
+    ISharedMap,
     MapExtension,
     registerDefaultValueType,
 } from "@prague/map";
@@ -21,11 +21,11 @@ export class Document extends Component {
 
         // Create channel extensions
         const mapExtension = new MapExtension();
-        const sharedStringExtension = new sequence.CollaborativeStringExtension();
+        const sharedStringExtension = new sequence.SharedStringExtension();
         const streamExtension = new stream.StreamExtension();
         const cellExtension = new cell.CellExtension();
-        const objectSequenceExtension = new sequence.CollaborativeObjectSequenceExtension();
-        const numberSequenceExtension = new sequence.CollaborativeNumberSequenceExtension();
+        const objectSequenceExtension = new sequence.SharedObjectSequenceExtension();
+        const numberSequenceExtension = new sequence.SharedNumberSequenceExtension();
 
         // Register channel extensions
         super([
@@ -46,30 +46,30 @@ export class Document extends Component {
     }
 
     /**
-     * Creates a new collaborative map
+     * Creates a new shared map
      */
-    public createMap(id: string = uuid()): IMap {
-        return this.runtime.createChannel(id, MapExtension.Type) as IMap;
+    public createMap(id: string = uuid()): ISharedMap {
+        return this.runtime.createChannel(id, MapExtension.Type) as ISharedMap;
     }
 
     /**
-     * Creates a new collaborative cell.
+     * Creates a new shared cell.
      */
     public createCell(id: string = uuid()): cell.ICell {
         return this.runtime.createChannel(id, cell.CellExtension.Type) as cell.ICell;
     }
 
     /**
-     * Creates a new collaborative string
+     * Creates a new shared string
      */
     public createString(id: string = uuid()): sequence.SharedString {
         return this.runtime.createChannel(
             id,
-            sequence.CollaborativeStringExtension.Type) as sequence.SharedString;
+            sequence.SharedStringExtension.Type) as sequence.SharedString;
     }
 
     /**
-     * Creates a new ink collaborative object
+     * Creates a new ink shared object
      */
     public createStream(id: string = uuid()): stream.IStream {
         return this.runtime.createChannel(id, stream.StreamExtension.Type) as stream.IStream;

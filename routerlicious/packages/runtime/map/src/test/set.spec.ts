@@ -4,7 +4,7 @@ import * as map from "..";
 describe("Routerlicious", () => {
     describe("Map", () => {
         describe("Set", () => {
-            let testMap: map.IMap;
+            let testMap: map.ISharedMap;
             let emptySet: map.DistributedSet<number>;
             let populatedSet: map.DistributedSet<number>;
 

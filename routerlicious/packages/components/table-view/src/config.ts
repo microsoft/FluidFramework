@@ -1,5 +1,5 @@
 import { Template } from "@prague/flow-util";
-import { IMap } from "@prague/map";
+import { ISharedMap } from "@prague/map";
 import { IComponentRuntime } from "@prague/runtime-definitions";
 import { ConfigKeys } from "./configKeys";
 
@@ -74,7 +74,7 @@ export class ConfigView {
     private readonly okButton   = template.get(this.root, "okButton") as HTMLButtonElement;
     private readonly createButton   = template.get(this.root, "createButton") as HTMLButtonElement;
 
-    constructor(private readonly runtime: IComponentRuntime, private readonly map: IMap) {
+    constructor(private readonly runtime: IComponentRuntime, private readonly map: ISharedMap) {
         this.caption.innerText = `Table View ${this.runtime.id}`;
 
         this.done = new Promise<void>((accept) => {

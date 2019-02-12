@@ -1,2 +1,2 @@
-import { CollaborativeWorkbook } from "./collaborativeworkbook";
-export { CollaborativeWorkbook };
+import { SharedWorkbook } from "./sharedworkbook";
+export { SharedWorkbook };

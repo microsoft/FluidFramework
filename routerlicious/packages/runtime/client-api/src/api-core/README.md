@@ -12,7 +12,7 @@ Stuff I should do...
 General questions
 * Can I somehow reuse the old sharedb types here? Maybe they all listen for server updates but we pipe changes
   through my own place.
-* Do I really need to abstract the collaborative data types inside of a container object like a document? Or can I expose    them as individual objects? The document may provide better visibility in to where the person is inside the document.
+* Do I really need to abstract the shared data types inside of a container object like a document? Or can I expose    them as individual objects? The document may provide better visibility in to where the person is inside the document.
   But do we really want the MUI semantics of these objects being separably addressable?
 
 * Do we need some form of discovery on the underlying data type? Probably not since this is placed within the JS from
@@ -20,9 +20,9 @@ General questions
 
 
 
-Collaborative object
+Shared object
 * Base class for all object types
 * Construction puts it in a default, un-initialized state
 * Caller must then either load it - which brings it in from an existing collab object. Or initializeLocal which
-* makes it a local object that is not collaborative. A local object can be later attached which will make it
-* collaborative.
+* makes it a local object that is not shared. A local object can be later attached which will make it
+* shared.

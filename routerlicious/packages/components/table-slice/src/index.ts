@@ -114,7 +114,7 @@ export class TableSlice extends Component {
 }
 
 /**
- * A document is a collection of collaborative types.
+ * A document is a collection of shared types.
  */
 export class TableSliceComponent implements IChaincodeComponent {
     public slice: TableSlice;

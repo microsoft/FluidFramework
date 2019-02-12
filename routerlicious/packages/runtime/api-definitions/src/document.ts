@@ -1,7 +1,7 @@
 import { IUser } from "@prague/container-definitions";
 import { IDistributedObjectServices, IRuntime } from "@prague/runtime-definitions";
 import { EventEmitter } from "events";
-import { ICollaborativeObject } from "./types";
+import { ISharedObject } from "./types";
 
 export interface IDeltaManager {
     // The queue of inbound delta messages
@@ -47,9 +47,9 @@ export interface IDocument {
 
     runtime: IRuntime;
 
-    attach(object: ICollaborativeObject): IDistributedObjectServices;
+    attach(object: ISharedObject): IDistributedObjectServices;
 
-    get(id: string): Promise<ICollaborativeObject>;
+    get(id: string): Promise<ISharedObject>;
 
     getUser(): IUser;
 }

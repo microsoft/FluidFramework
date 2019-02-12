@@ -4,7 +4,7 @@ import {
     ITree,
     TreeEntry,
 } from "@prague/container-definitions";
-import { CollaborativeMap } from "@prague/map";
+import { SharedMap } from "@prague/map";
 import {
     IObjectMessage,
     IObjectStorageService,
@@ -28,7 +28,7 @@ const snapshotFileName = "header";
 
 const emptySnapshot: ISnapshot = { layers: [], layerIndex: {} };
 
-export class Stream extends CollaborativeMap implements IStream {
+export class Stream extends SharedMap implements IStream {
     // The current ink snapshot
     private inkSnapshot: Snapshot;
 

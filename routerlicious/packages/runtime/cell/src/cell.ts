@@ -1,6 +1,6 @@
 import {
-    CollaborativeObject,
     OperationType,
+    SharedObject,
 } from "@prague/api-definitions";
 import {
     FileMode,
@@ -36,8 +36,8 @@ export interface ICellSnapshot {
 }
 
 export enum CellValueType {
-    // The value is another collaborative object
-    Collaborative,
+    // The value is another shared object
+    Shared,
 
     // The value is a plain JavaScript object
     Plain,
@@ -54,13 +54,13 @@ export interface ICellValue {
 const snapshotFileName = "header";
 
 /**
- * Implementation of a cell collaborative object
+ * Implementation of a cell shared object
  */
-export class Cell extends CollaborativeObject implements ICell {
+export class Cell extends SharedObject implements ICell {
     private data: any;
 
     /**
-     * Constructs a new collaborative cell. If the object is non-local an id and service interfaces will
+     * Constructs a new shared cell. If the object is non-local an id and service interfaces will
      * be provided
      */
     constructor(id: string, runtime: IRuntime) {
@@ -80,14 +80,14 @@ export class Cell extends CollaborativeObject implements ICell {
     public async set(value: any): Promise<void> {
         let operationValue: ICellValue;
         /* tslint:disable:no-unsafe-any */
-        if (value instanceof CollaborativeObject) {
-            // Convert any local collaborative objects to our internal storage format
+        if (value instanceof SharedObject) {
+            // Convert any local shared objects to our internal storage format
             if (!this.isLocal()) {
                 value.attach();
             }
 
             operationValue = {
-                type: CellValueType[CellValueType.Collaborative],
+                type: CellValueType[CellValueType.Shared],
                 value: value.id,
             };
         } else {
@@ -131,10 +131,10 @@ export class Cell extends CollaborativeObject implements ICell {
     public snapshot(): ITree {
         // Get a serializable form of data
         let content: ICellValue;
-        if (this.data instanceof CollaborativeObject) {
+        if (this.data instanceof SharedObject) {
             content = {
-                type: CellValueType[CellValueType.Collaborative],
-                value: this.data.id, // (this.data as ICollaborativeObject).id,
+                type: CellValueType[CellValueType.Shared],
+                value: this.data.id, // (this.data as ISharedObject).id,
             };
         } else {
             content = {
@@ -180,7 +180,7 @@ export class Cell extends CollaborativeObject implements ICell {
                 .toString("utf-8")) as ICellValue
             : { type: CellValueType[CellValueType.Plain], value: undefined };
 
-        this.data = content.type === CellValueType[CellValueType.Collaborative]
+        this.data = content.type === CellValueType[CellValueType.Shared]
             ? await this.runtime.getChannel(content.value)
             : content.value;
     }
@@ -210,7 +210,7 @@ export class Cell extends CollaborativeObject implements ICell {
             const op: ICellOperation = message.contents;
             if (op.type === "setCell") {
                 /* tslint:disable:no-return-await */
-                return op.value.type === CellValueType[CellValueType.Collaborative]
+                return op.value.type === CellValueType[CellValueType.Shared]
                     ? await this.runtime.getChannel(op.value.value)
                     : op.value.value;
             }

@@ -1,6 +1,6 @@
-import { ICollaborativeObject } from "@prague/api-definitions";
+import { ISharedObject } from "@prague/api-definitions";
 import * as api from "@prague/client-api";
-import { IMap, IMapView } from "@prague/map";
+import { IMapView, ISharedMap } from "@prague/map";
 import * as Sequence from "@prague/sequence";
 import * as intelligence from "../intelligence";
 import { RateLimiter } from "./rateLimiter";
@@ -25,9 +25,9 @@ export class IntelligentServicesManager {
         this.services.push(service);
     }
 
-    public process(object: ICollaborativeObject) {
+    public process(object: ISharedObject) {
         // TODO expose way for intelligent services to express their supported document types
-        if (object.type === Sequence.CollaborativeStringExtension.Type) {
+        if (object.type === Sequence.SharedStringExtension.Type) {
             if (!this.intelInvoked) {
                 const sharedString = object as Sequence.SharedString;
 
@@ -39,9 +39,9 @@ export class IntelligentServicesManager {
                             this.documentInsights.set(object.id, this.doc.createMap());
                         }
 
-                        const output = this.documentInsights.get(object.id) as IMap;
+                        const output = this.documentInsights.get(object.id) as ISharedMap;
 
-                        // Run the collaborative services
+                        // Run the shared services
                         const text = sharedString.client.getText();
                         const setInsightsP = this.services.map(async (service) => {
                             const result = await service.run(text);

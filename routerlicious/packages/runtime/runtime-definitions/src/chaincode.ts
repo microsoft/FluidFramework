@@ -47,7 +47,7 @@ export interface ICodeLoader {
 
 export interface IChannel {
     /**
-     * A readonly identifier for the collaborative object
+     * A readonly identifier for the shared object
      */
     readonly id: string;
 
@@ -68,7 +68,7 @@ export interface IChaincodeModule  {
     /**
      * Loads the given distributed object. This call is only ever invoked internally as the only thing
      * that is ever directly loaded is the document itself. Load will then only be called on documents that
-     * were created and added to a collaborative object.
+     * were created and added to a shared object.
      *
      * document: The document the object is part of
      * connection: Interface used to retrieve updates from remote clients

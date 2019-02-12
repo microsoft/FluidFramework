@@ -1,5 +1,5 @@
 // tslint:disable:no-bitwise whitespace align switch-default no-string-literal ban-types no-angle-bracket-type-assertion
-import { ICollaborativeObject } from "@prague/api-definitions";
+import { ISharedObject } from "@prague/api-definitions";
 import * as api from "@prague/client-api";
 import { IGenericBlob, IUser } from "@prague/container-definitions";
 import * as types from "@prague/map";
@@ -13,7 +13,7 @@ import * as Geocoder from "geocoder";
 const performanceNow = require("performance-now");
 import { isBlock } from "@prague/app-ui";
 import { blobUploadHandler, urlToInclusion } from "../blob";
-import { CollaborativeWorkbook } from "../calc";
+import { SharedWorkbook } from "../calc";
 import {
     CharacterCodes,
     Paragraph,
@@ -3667,7 +3667,7 @@ export class FlowView extends ui.Component {
             (incl: IGenericBlob) => this.insertBlobInternal(incl),
         );
 
-        // HACK: Expose "insertComponent" and "insertText" via window to Collaborative Browser Extension
+        // HACK: Expose "insertComponent" and "insertText" via window to Shared Browser Extension
         //       for 2018/Oct demo.
         window["insertComponent"] = this.insertComponent.bind(this);
         window["insertText"] = (text: string) => {
@@ -3682,7 +3682,7 @@ export class FlowView extends ui.Component {
             this.localQueueRender(FlowView.docStartPosition);
         });
 
-        // Provide access to the containing collaborative object
+        // Provide access to the containing shared object
         this.services.set("document", this.collabDocument);
 
         // TODO: Should insert a workbook into the document on demand, implement the ability
@@ -3691,18 +3691,18 @@ export class FlowView extends ui.Component {
         //       Instead, we currently check to see if a workbook already exists.  If not, we
         //       insert one up front.
         this.collabDocument.getRoot().getView().then(async (rootView) => {
-            let workbookMap: types.IMap;
+            let workbookMap: types.ISharedMap;
 
             if (!this.collabDocument.existing) {
                 workbookMap = this.collabDocument.createMap();
             } else {
-                workbookMap = await rootView.wait<types.IMap>("workbook");
+                workbookMap = await rootView.wait<types.ISharedMap>("workbook");
             }
 
             const workbookView = await workbookMap.getView();
             this.services.set(
                 "workbook",
-                new CollaborativeWorkbook(workbookView, 6, 6, [
+                new SharedWorkbook(workbookView, 6, 6, [
                     ["Player", "Euchre", "Bridge", "Poker", "Go Fish", "Total Wins"],
                     ["Daniel", "0", "0", "0", "5", "=SUM(B2:E2)"],
                     ["Kurt", "2", "3", "0", "0", "=SUM(B3:E3)"],
@@ -3939,7 +3939,7 @@ export class FlowView extends ui.Component {
         }
     }
 
-    public addPresenceMap(presenceMap: types.IMap) {
+    public addPresenceMap(presenceMap: types.ISharedMap) {
         presenceMap.on("valueChanged", (delta: types.IValueChanged, local: boolean, op: ISequencedObjectMessage) => {
             this.remotePresenceUpdate(delta, local, op);
         });
@@ -5586,8 +5586,8 @@ export class FlowView extends ui.Component {
         const bookmarksCollection = this.sharedString.getSharedIntervalCollection("bookmarks");
         this.bookmarks = await bookmarksCollection.getView();
 
-        // Takes a collaborative Object from OnPrepareDeserialize and inserts back into the interval's "Story" Property
-        const onDeserialize: Sequence.DeserializeCallback = (interval, commentSharedString: ICollaborativeObject) => {
+        // Takes a shared Object from OnPrepareDeserialize and inserts back into the interval's "Story" Property
+        const onDeserialize: Sequence.DeserializeCallback = (interval, commentSharedString: ISharedObject) => {
             if (interval.properties && interval.properties["story"]) {
                 assert(commentSharedString);
                 interval.properties["story"] = commentSharedString;
@@ -5596,7 +5596,7 @@ export class FlowView extends ui.Component {
             return true;
         };
 
-        // Fetches the collaborative object with the key story["value"];
+        // Fetches the shared object with the key story["value"];
         const onPrepareDeserialize: Sequence.PrepareDeserializeCallback = (properties) => {
             if (properties && properties["story"]) {
                 const story = properties["story"];
@@ -5620,7 +5620,7 @@ export class FlowView extends ui.Component {
             // tslint:disable-next-line:max-line-length
             console.log(`time to edit/impression: ${this.timeToEdit} time to load: ${Date.now() - clockStart}ms len: ${this.sharedString.client.getLength()} - ${performanceNow()}`);
         }
-        const presenceMap = this.docRoot.get("presence") as types.IMap;
+        const presenceMap = this.docRoot.get("presence") as types.ISharedMap;
         this.addPresenceMap(presenceMap);
         this.addCalendarMap();
         const intervalMap = this.sharedString.intervalCollections.getMap();

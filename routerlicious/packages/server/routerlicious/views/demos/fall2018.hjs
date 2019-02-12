@@ -64,12 +64,12 @@
                 Street Journal <a href="http://wsj.github.io/pinpoint/" target="_blank">http://wsj.github.io/pinpoint/</a> and is used
                 by their journalists for creating pinpoint maps. The original version is an Angular app that makes use of
                 a RESTful web service that is backed by a Postgres database. With a small set of changes we were able to
-                update it to make use of Prague distributed data types. By using Prague the app becomes collaborative and
+                update it to make use of Prague distributed data types. By using Prague the app becomes shared and
                 no longer needs a backend database.
             </p>
             <p>
                 To view the pinpoint map in action open two copies of the link above and then edit the map properties.
-                Notice that edits to the pinpoint map are collaborative.
+                Notice that edits to the pinpoint map are shared.
             </p>
             <p>
                 Next insert the map into a flow view by using the copy of pride and prejudice created at the beginning of

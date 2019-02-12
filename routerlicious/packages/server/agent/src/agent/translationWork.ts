@@ -86,7 +86,7 @@ class Translator extends EventEmitter {
     private translationTimer = null;
 
     constructor(
-        private insights: map.IMap,
+        private insights: map.ISharedMap,
         private sharedString: Sequence.SharedString) {
             super();
     }
@@ -97,7 +97,7 @@ class Translator extends EventEmitter {
 
     public async start(): Promise<void> {
         await this.insights.wait(this.sharedString.id);
-        const typeInsights = await this.insights.get(this.sharedString.id) as map.IMap;
+        const typeInsights = await this.insights.get(this.sharedString.id) as map.ISharedMap;
         this.view = await typeInsights.getView();
 
         this.sharedString.on("op", (op: ISequencedObjectMessage) => {
@@ -207,7 +207,7 @@ class Translator extends EventEmitter {
 
 export class TranslationWork extends BaseWork implements IWork {
     private translationSet = new Set();
-    private translators = new Map<string, core.ICollaborativeObject>();
+    private translators = new Map<string, core.ISharedObject>();
     private translator: Translator;
 
     constructor(
@@ -227,7 +227,7 @@ export class TranslationWork extends BaseWork implements IWork {
 
         // Wait for the insights
         await this.document.getRoot().wait("insights");
-        const insights = await this.document.getRoot().get("insights") as map.IMap;
+        const insights = await this.document.getRoot().get("insights") as map.ISharedMap;
         return this.trackEvents(insights);
     }
 
@@ -244,9 +244,9 @@ export class TranslationWork extends BaseWork implements IWork {
         await super.stop();
     }
 
-    private trackEvents(insights: map.IMap): Promise<void> {
-        const eventHandler = (op: ISequencedDocumentMessage, object: core.ICollaborativeObject) => {
-            if (object && object.type === Sequence.CollaborativeStringExtension.Type) {
+    private trackEvents(insights: map.ISharedMap): Promise<void> {
+        const eventHandler = (op: ISequencedDocumentMessage, object: core.ISharedObject) => {
+            if (object && object.type === Sequence.SharedStringExtension.Type) {
                 if (!this.translationSet.has(object)) {
                     this.translationSet.add(object);
                     this.translator = new Translator(insights, object as Sequence.SharedString);

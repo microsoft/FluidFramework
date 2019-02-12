@@ -1,4 +1,4 @@
-import { ICollaborativeObject } from "@prague/api-definitions";
+import { ISharedObject } from "@prague/api-definitions";
 import * as cell from "@prague/cell";
 import {
     IDeltaManager,
@@ -10,7 +10,7 @@ import {
 } from "@prague/container-definitions";
 import { Container, Loader } from "@prague/container-loader";
 import * as resources from "@prague/gitresources";
-import { IMap, MapExtension } from "@prague/map";
+import { ISharedMap, MapExtension } from "@prague/map";
 import { IRuntime } from "@prague/runtime-definitions";
 import * as sequence from "@prague/sequence";
 import * as stream from "@prague/stream";
@@ -33,9 +33,9 @@ const documentTasks = ["snapshot", "spell", "intel", "translation"];
 let defaultDocumentService: IDocumentService;
 
 /**
- * Registers the default services to use for interacting with collaborative documents. To simplify the API it is
+ * Registers the default services to use for interacting with shared documents. To simplify the API it is
  * expected that the implementation provider of these will register themselves during startup prior to the user
- * requesting to load a collaborative object.
+ * requesting to load a shared object.
  */
 export function registerDocumentService(service: IDocumentService) {
     defaultDocumentService = service;
@@ -66,7 +66,7 @@ export function getChaincodeRepo(): string {
 // End temporary calls
 
 /**
- * A document is a collection of collaborative types.
+ * A document is a collection of shared types.
  */
 export class Document extends EventEmitter {
 
@@ -115,7 +115,7 @@ export class Document extends EventEmitter {
     /**
      * Constructs a new document from the provided details
      */
-    constructor(public readonly runtime: IRuntime, private root: IMap) {
+    constructor(public readonly runtime: IRuntime, private root: ISharedMap) {
         super();
 
         this.on("clientLeave", (leftClientId) => {
@@ -127,12 +127,12 @@ export class Document extends EventEmitter {
     }
 
     /**
-     * Constructs a new collaborative object that can be attached to the document
-     * @param type the identifier for the collaborative object type
+     * Constructs a new shared object that can be attached to the document
+     * @param type the identifier for the shared object type
      */
-    public create(type: string, id = uuid()): ICollaborativeObject {
+    public create(type: string, id = uuid()): ISharedObject {
         const channel = this.runtime.createChannel(id, type);
-        return channel as ICollaborativeObject;
+        return channel as ISharedObject;
     }
 
     public on(event: string | symbol, listener: (...args: any[]) => void): this {
@@ -148,20 +148,20 @@ export class Document extends EventEmitter {
      *
      * @param id Identifier of the object to load
      */
-    public async get(id: string): Promise<ICollaborativeObject> {
+    public async get(id: string): Promise<ISharedObject> {
         const channel = await this.runtime.getChannel(id);
-        return channel as ICollaborativeObject;
+        return channel as ISharedObject;
     }
 
     /**
-     * Creates a new collaborative map
+     * Creates a new shared map
      */
-    public createMap(): IMap {
-        return this.create(MapExtension.Type) as IMap;
+    public createMap(): ISharedMap {
+        return this.create(MapExtension.Type) as ISharedMap;
     }
 
     /**
-     * Creates a new collaborative cell.
+     * Creates a new shared cell.
      * TODO (tanvir): replace this with type class.
      */
     public createCell(): cell.ICell {
@@ -169,23 +169,23 @@ export class Document extends EventEmitter {
     }
 
     /**
-     * Creates a new collaborative string
+     * Creates a new shared string
      */
     public createString(): sequence.SharedString {
-        return this.create(sequence.CollaborativeStringExtension.Type) as sequence.SharedString;
+        return this.create(sequence.SharedStringExtension.Type) as sequence.SharedString;
     }
 
     /**
-     * Creates a new ink collaborative object
+     * Creates a new ink shared object
      */
     public createStream(): stream.IStream {
         return this.create(stream.StreamExtension.Type) as stream.IStream;
     }
 
     /**
-     * Retrieves the root collaborative object that the document is based on
+     * Retrieves the root shared object that the document is based on
      */
-    public getRoot(): IMap {
+    public getRoot(): ISharedMap {
         return this.root;
     }
 
@@ -256,7 +256,7 @@ async function initializeChaincode(container: Container, pkg: string): Promise<v
 }
 
 /**
- * Loads a specific version (commit) of the collaborative object
+ * Loads a specific version (commit) of the shared object
  */
 export async function load(
     id: string,
@@ -298,15 +298,15 @@ export async function load(
     const { runtime } = await runDeferred.promise;
 
     // Initialize core data structures
-    let root: IMap;
+    let root: ISharedMap;
     if (!runtime.existing) {
-        root = runtime.createChannel(rootMapId, MapExtension.Type) as IMap;
+        root = runtime.createChannel(rootMapId, MapExtension.Type) as ISharedMap;
         root.attach();
 
         const insights = runtime.createChannel(insightsMapId, MapExtension.Type);
         root.set(insightsMapId, insights);
     } else {
-        root = await runtime.getChannel("root") as IMap;
+        root = await runtime.getChannel("root") as ISharedMap;
     }
 
     // Register tasks for the non-chaincode documents.

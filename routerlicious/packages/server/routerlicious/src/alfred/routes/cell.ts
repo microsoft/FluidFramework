@@ -13,7 +13,7 @@ export function create(
     const router: Router = Router();
 
     /**
-     * Loading of a specific collaborative map
+     * Loading of a specific shared map
      */
     router.get("/:tenantId?/:id", ensureLoggedIn(), async (request, response, next) => {
         const tenantId = request.params.tenantId || appTenants[0].id;

@@ -4,7 +4,7 @@ import * as map from "..";
 describe("Routerlicious", () => {
     describe("Map", () => {
         describe("Counter", () => {
-            let testMap: map.IMap;
+            let testMap: map.ISharedMap;
             let testCounter: map.Counter;
 
             beforeEach(async () => {

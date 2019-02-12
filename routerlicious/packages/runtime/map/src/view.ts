@@ -1,12 +1,12 @@
-import { CollaborativeObject, ICollaborativeObject, ValueType } from "@prague/api-definitions";
+import { ISharedObject, SharedObject, ValueType } from "@prague/api-definitions";
 import { IRuntime, ISequencedObjectMessage } from "@prague/runtime-definitions";
 // tslint:disable-next-line
 import { IMapOperation, IMapValue } from "./definitions";
 import { IMapView, IValueOpEmitter, SerializeFilter } from "./interfaces";
-import { CollaborativeMap } from "./map";
+import { SharedMap } from "./map";
 
 class ValueOpEmitter implements IValueOpEmitter {
-    constructor(private readonly type: string, private readonly key: string, private readonly map: CollaborativeMap) {
+    constructor(private readonly type: string, private readonly key: string, private readonly map: SharedMap) {
     }
 
     public emit(name: string, params: any) {
@@ -33,9 +33,11 @@ export interface ILocalViewElement {
 }
 
 export class MapView implements IMapView {
+    public [Symbol.toStringTag]: string;
     private readonly data = new Map<string, ILocalViewElement>();
 
-    constructor(private readonly map: CollaborativeMap, private readonly runtime: IRuntime, id: string) {
+    constructor(private readonly map: SharedMap, private readonly runtime: IRuntime, id: string) {
+        this[Symbol.toStringTag] = this.data[Symbol.toStringTag];
     }
 
     public async populate(data: {[key: string]: IMapValue }): Promise<void> {
@@ -55,9 +57,10 @@ export class MapView implements IMapView {
         }
     }
 
-    public forEach(callbackFn: (value: any, key: any) => void) {
-        this.data.forEach((value, key) => {
-            callbackFn(value.localValue, key);
+    // TODO: fix to pass-through when meta-data moved to separate map
+    public forEach(callbackFn: (value: any, key: any, map: Map<string, any>) => void) {
+        this.data.forEach((value, key, m) => {
+            callbackFn(value.localValue, key, m);
         });
     }
 
@@ -70,6 +73,25 @@ export class MapView implements IMapView {
         const value = this.data.get(key);
 
         return value.localValue;
+    }
+
+    public get size() {
+        return this.data.size;
+    }
+
+    // TODO: entries and values will have incorrect content until
+    // map contains plain values and meta-data is segregated into
+    // separate map
+    public entries() {
+        return this.data.entries();
+    }
+
+    public values() {
+        return this.data.values();
+    }
+
+    public [Symbol.iterator]() {
+        return this.data[Symbol.iterator]();
     }
 
     public getMap() {
@@ -103,7 +125,7 @@ export class MapView implements IMapView {
 
     public attachAll() {
         for (const [, value] of this.data) {
-            if (value.localValue instanceof CollaborativeObject) {
+            if (value.localValue instanceof SharedObject) {
                 value.localValue.attach();
             }
         }
@@ -125,8 +147,8 @@ export class MapView implements IMapView {
             // tslint:disable-next-line:no-parameter-reassignment
             value = valueType.factory.load(new ValueOpEmitter(type, key, this.map), value);
         } else {
-            const valueType = value instanceof CollaborativeObject
-                ? ValueType[ValueType.Collaborative]
+            const valueType = value instanceof SharedObject
+                ? ValueType[ValueType.Shared]
                 : ValueType[ValueType.Plain];
             operationValue = this.spill({ localType: valueType, localValue: value });
         }
@@ -150,14 +172,15 @@ export class MapView implements IMapView {
         return value;
     }
 
-    public delete(key: string): void {
+    public delete(key: string) {
         const op: IMapOperation = {
             key,
             type: "delete",
         };
 
-        this.deleteCore(op.key, true, null);
+        const successfullyRemoved = this.deleteCore(op.key, true, null);
         this.map.submitMapMessage(op);
+        return successfullyRemoved;
     }
 
     public keys(): IterableIterator<string> {
@@ -174,7 +197,7 @@ export class MapView implements IMapView {
     }
 
     /**
-     * Serializes the collaborative map to a JSON string
+     * Serializes the shared map to a JSON string
      */
     public serialize(filter: SerializeFilter): string {
         const serialized: any = {};
@@ -201,13 +224,14 @@ export class MapView implements IMapView {
     }
 
     public deleteCore(key: string, local: boolean, op: ISequencedObjectMessage) {
-        this.data.delete(key);
+        const successfullyRemoved = this.data.delete(key);
         this.map.emit("valueChanged", { key }, local, op);
+        return successfullyRemoved;
     }
 
     private async fill(key: string, remote: IMapValue): Promise<ILocalViewElement> {
         let translatedValue: any;
-        if (remote.type === ValueType[ValueType.Collaborative]) {
+        if (remote.type === ValueType[ValueType.Shared]) {
             const distributedObject = await this.runtime.getChannel(remote.value);
             translatedValue = distributedObject;
         } else if (remote.type === ValueType[ValueType.Plain]) {
@@ -226,8 +250,8 @@ export class MapView implements IMapView {
     }
 
     private spill(local: ILocalViewElement): IMapValue {
-        if (local.localType === ValueType[ValueType.Collaborative]) {
-            const distributedObject = local.localValue as ICollaborativeObject;
+        if (local.localType === ValueType[ValueType.Shared]) {
+            const distributedObject = local.localValue as ISharedObject;
 
             // Attach the collab object to the document. If already attached the attach call will noop.
             // This feels slightly out of place here since it has a side effect. But is part of spilling a document.
@@ -238,7 +262,7 @@ export class MapView implements IMapView {
             }
 
             return {
-                type: ValueType[ValueType.Collaborative],
+                type: ValueType[ValueType.Shared],
                 value: distributedObject.id,
             };
         } else if (this.map.hasValueType(local.localType)) {

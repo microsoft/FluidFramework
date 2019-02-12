@@ -1,5 +1,5 @@
 import * as agent from "@prague/agent";
-import { CollaborativeObject } from "@prague/api-definitions";
+import { SharedObject } from "@prague/api-definitions";
 import * as api from "@prague/client-api";
 import { Browser, IClient } from "@prague/container-definitions";
 import * as resources from "@prague/gitresources";
@@ -14,27 +14,27 @@ async function loadDocument(
     version: resources.ICommit,
     client: any,
     token?: string): Promise<api.Document> {
-        console.log("Loading in root document...");
-        const tokenService = new socketStorage.TokenService();
-        const claims = tokenService.extractClaims(token);
+    console.log("Loading in root document...");
+    const tokenService = new socketStorage.TokenService();
+    const claims = tokenService.extractClaims(token);
 
-        const document = await api.load(
-            id,
-            claims.tenantId,
-            new socketStorage.TokenProvider(token),
-            { encrypted: false},
-            version);
+    const document = await api.load(
+        id,
+        claims.tenantId,
+        new socketStorage.TokenProvider(token),
+        { encrypted: false },
+        version);
 
-        console.log("Document loaded");
-        return document;
+    console.log("Document loaded");
+    return document;
 }
 
-async function updateOrCreateKey(key: string, map: Map.IMap, container: JQuery, doc: api.Document) {
+async function updateOrCreateKey(key: string, map: Map.ISharedMap, container: JQuery, doc: api.Document) {
     const value = await map.get(key);
 
     let keyElement = container.find(`>.${key}`);
     const newElement = keyElement.length === 0;
-    const isCollab = value instanceof CollaborativeObject;
+    const isCollab = value instanceof SharedObject;
 
     if (newElement) {
         keyElement = $(`<div class="${key} ${isCollab ? "collab-object" : ""}"></div>`);
@@ -58,7 +58,7 @@ async function updateOrCreateKey(key: string, map: Map.IMap, container: JQuery, 
     }
 }
 
-async function displayValues(map: Map.IMap, container: JQuery, doc: api.Document) {
+async function displayValues(map: Map.ISharedMap, container: JQuery, doc: api.Document) {
     const keys = await map.keys();
     keys.sort();
 
@@ -68,7 +68,7 @@ async function displayValues(map: Map.IMap, container: JQuery, doc: api.Document
     }
 
     // Listen and process updates
-    map.on("valueChanged", async (changed: Map.IValueChanged ) => {
+    map.on("valueChanged", async (changed: Map.IValueChanged) => {
         updateOrCreateKey(changed.key, map, values, doc);
     });
 
@@ -78,7 +78,9 @@ async function displayValues(map: Map.IMap, container: JQuery, doc: api.Document
 /**
  * Displays the keys in the map
  */
-async function displayMap(parentElement: JQuery, key: string, map: Map.IMap, parent: Map.IMap, doc: api.Document) {
+async function displayMap(parentElement: JQuery, key: string, map: Map.ISharedMap,
+// tslint:disable-next-line: align
+    parent: Map.ISharedMap, doc: api.Document) {
     const header = key !== null ? $(`<h2>${key}: ${map.id}</h2>`) : $(`<h2>${map.id}</h2>`);
 
     if (key !== null) {
@@ -123,7 +125,7 @@ async function displayMap(parentElement: JQuery, key: string, map: Map.IMap, par
 /**
  * Randomly changes the values in the map
  */
-async function randomizeMap(map: Map.IMap) {
+async function randomizeMap(map: Map.ISharedMap) {
     // link up the randomize button
     const keys = ["foo", "bar", "baz", "binky", "winky", "twinkie"];
 
@@ -189,13 +191,13 @@ function loadCommit(id: string, version: resources.ICommit, config: any) {
             { client: config.client, encrypted: false },
             version,
             false).then(async (doc) => {
-            // tslint:disable-next-line
-            window["doc"] = doc;
+                // tslint:disable-next-line
+                window["doc"] = doc;
 
-            const root = doc.getRoot();
+                const root = doc.getRoot();
 
-            // Display the initial values and then listen for updates
-            displayMap($("#mapViews"), null, root, null, doc);
-        });
+                // Display the initial values and then listen for updates
+                displayMap($("#mapViews"), null, root, null, doc);
+            });
     });
 }

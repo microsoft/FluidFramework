@@ -1,9 +1,9 @@
-import { ICollaborativeObject } from "@prague/api-definitions";
+import { ISharedObject } from "@prague/api-definitions";
 
 /**
- * Collaborative cell interface
+ * Shared cell interface
  */
-export interface ICell extends ICollaborativeObject {
+export interface ICell extends ISharedObject {
     /**
      * Retrieves the cell value.
      */

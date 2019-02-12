@@ -1,4 +1,4 @@
-import { IMap, IMapView } from "@prague/map";
+import { IMapView, ISharedMap } from "@prague/map";
 import * as ui from "../ui";
 import { getProposedPlaybackTime, PlayerState, YouTubeWrapper } from "../utils/youtubeHelper";
 
@@ -18,7 +18,7 @@ export class YouTubeVideoCanvas extends ui.Component {
     private videoMapView: IMapView;
     private playerId = "player";
 
-    constructor(elem: HTMLDivElement, private videoMap: IMap) {
+    constructor(elem: HTMLDivElement, private videoMap: ISharedMap) {
         super(elem);
 
         // Youtube Setup

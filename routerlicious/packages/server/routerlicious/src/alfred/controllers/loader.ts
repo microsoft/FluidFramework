@@ -1,9 +1,9 @@
-import { CollaborativeObject } from "@prague/api-definitions";
+import { SharedObject } from "@prague/api-definitions";
 import { Container } from "@prague/container-loader";
 import { Loader } from "@prague/container-loader";
 import { ICommit } from "@prague/gitresources";
 import { WebLoader } from "@prague/loader-web";
-import { CollaborativeMap, IMapView } from "@prague/map";
+import { IMapView, SharedMap } from "@prague/map";
 import { createReplayDocumentService } from "@prague/replay-socket-storage";
 import { WebPlatform } from "@prague/runtime";
 import { IComponentRuntime } from "@prague/runtime-definitions";
@@ -45,7 +45,7 @@ function renderMap(view: IMapView) {
         const dd = document.createElement("dd");
         dt.innerText = key;
 
-        if (value instanceof CollaborativeObject) {
+        if (value instanceof SharedObject) {
             dd.innerText = `${value.type}/${value.id}`;
         } else {
             try {
@@ -74,7 +74,7 @@ async function attach(loader: Loader, url: string, platform: LocalPlatform) {
             component.attach(platform);
             break;
         case "prague/dataType":
-            const dataType = response.value as CollaborativeMap;
+            const dataType = response.value as SharedMap;
             const view = await dataType.getView();
             renderMap(view);
             dataType.on("valueChanged", (key) => renderMap(view));

@@ -1,7 +1,7 @@
 {
   "name": "@chaincode/flow-editor",
   "version": "0.2.0",
-  "description": "Experimental flow editor for collaborative journaling.",
+  "description": "Experimental flow editor for shared journaling.",
   "main": "dist/main.bundle.js",
   "module": "lib/index.js",
   "types": "dist/index.d.ts",

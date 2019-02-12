@@ -1,6 +1,6 @@
 {
   "name": "@prague/flow-host",
-  "description": "App UI for experimental flow-editor for collaborative journaling.",
+  "description": "App UI for experimental flow-editor for shared journaling.",
   "version": "0.2.0",
   "author": "Microsoft",
   "repository": "microsoft/prague",

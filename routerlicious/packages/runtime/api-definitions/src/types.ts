@@ -4,15 +4,15 @@ import { IChannel, IObjectMessage } from "@prague/runtime-definitions";
 /**
  * Helper interface to wrap a snapshot with the sequence number it was taken at
  */
-export interface ICollaborativeObjectSnapshot {
+export interface ISharedObjectSnapshot {
     sequenceNumber: number;
 
     snapshot: any;
 }
 
-export interface ICollaborativeObject extends IChannel {
+export interface ISharedObject extends IChannel {
     /**
-     * The type of the collaborative object
+     * The type of the shared object
      */
     type: string;
 
@@ -22,9 +22,9 @@ export interface ICollaborativeObject extends IChannel {
     dirty: boolean;
 
     /**
-     * Marker to clearly identify the object as a collaborative object
+     * Marker to clearly identify the object as a shared object
      */
-    __collaborativeObject__: boolean;
+    __sharedObject__: boolean;
 
     /**
      * Attaches an event listener for the given event
@@ -37,12 +37,12 @@ export interface ICollaborativeObject extends IChannel {
     removeListener(event: string | symbol, listener: (...args: any[]) => void): this;
 
     /**
-     * Attaches the given collaborative object to its containing document
+     * Attaches the given shared object to its containing document
      */
     attach(): this;
 
     /**
-     * Returns whether the given collaborative object is local
+     * Returns whether the given shared object is local
      */
     isLocal(): boolean;
 

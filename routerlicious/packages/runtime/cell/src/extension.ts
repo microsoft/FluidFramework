@@ -1,4 +1,4 @@
-import { ICollaborativeObjectExtension } from "@prague/api-definitions";
+import { ISharedObjectExtension as ISharedObjectExtension } from "@prague/api-definitions";
 import { IDistributedObjectServices, IRuntime, ISequencedObjectMessage } from "@prague/runtime-definitions";
 import { Cell } from "./cell";
 import { ICell } from "./interfaces";
@@ -6,7 +6,7 @@ import { ICell } from "./interfaces";
 /**
  * The extension that defines the map
  */
-export class CellExtension implements ICollaborativeObjectExtension {
+export class CellExtension implements ISharedObjectExtension {
     public static Type = "https://graph.microsoft.com/types/cell";
 
     public type: string = CellExtension.Type;

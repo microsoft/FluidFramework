@@ -37,11 +37,11 @@ class LegacyChaincode implements IChaincode {
 
         // Create channel extensions
         const mapExtension = new map.MapExtension();
-        const sharedStringExtension = new sequence.CollaborativeStringExtension();
+        const sharedStringExtension = new sequence.SharedStringExtension();
         const streamExtension = new stream.StreamExtension();
         const cellExtension = new cell.CellExtension();
-        const objectSequenceExtension = new sequence.CollaborativeObjectSequenceExtension();
-        const numberSequenceExtension = new sequence.CollaborativeNumberSequenceExtension();
+        const objectSequenceExtension = new sequence.SharedObjectSequenceExtension();
+        const numberSequenceExtension = new sequence.SharedNumberSequenceExtension();
 
         // Register channel extensions
         this.modules.set(mapExtension.type, mapExtension);

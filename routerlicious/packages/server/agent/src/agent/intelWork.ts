@@ -1,4 +1,4 @@
-import { ICollaborativeObject } from "@prague/api-definitions";
+import { ISharedObject } from "@prague/api-definitions";
 import * as api from "@prague/client-api";
 import {
     IDocumentService,
@@ -6,7 +6,7 @@ import {
     ITokenProvider,
     MessageType,
 } from "@prague/container-definitions";
-import { IMap, IMapView } from "@prague/map";
+import { IMapView, ISharedMap } from "@prague/map";
 import { nativeTextAnalytics, textAnalytics } from "../intelligence";
 import { BaseWork} from "./baseWork";
 import { IWork} from "./definitions";
@@ -30,7 +30,7 @@ export class IntelWork extends BaseWork implements IWork {
             { localMinSeq: 0, encrypted: undefined, client: { type: "intel"} },
             this.service,
             task);
-        const insightsMap = await this.document.getRoot().wait<IMap>("insights");
+        const insightsMap = await this.document.getRoot().wait<ISharedMap>("insights");
         const insightsMapView = await insightsMap.getView();
         return this.processIntelligenceWork(this.document, insightsMapView);
     }
@@ -53,7 +53,7 @@ export class IntelWork extends BaseWork implements IWork {
             this.intelligenceManager.registerService(
                 nativeTextAnalytics.factory.create(this.config.intelligence.nativeTextAnalytics));
         }
-        const eventHandler = (op: ISequencedDocumentMessage, object: ICollaborativeObject) => {
+        const eventHandler = (op: ISequencedDocumentMessage, object: ISharedObject) => {
             if (op.type === MessageType.Operation) {
                 this.intelligenceManager.process(object);
             } else if (op.type === MessageType.Attach) {

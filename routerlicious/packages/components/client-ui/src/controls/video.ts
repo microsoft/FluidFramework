@@ -1,11 +1,11 @@
-import { IMap } from "@prague/map";
+import { ISharedMap } from "@prague/map";
 import * as ui from "../ui";
 
 export class Video extends ui.Component {
     private message: HTMLSpanElement;
     private video: HTMLVideoElement;
 
-    constructor(element: HTMLDivElement, private videoMap: IMap, src: string) {
+    constructor(element: HTMLDivElement, private videoMap: ISharedMap, src: string) {
         super(element);
 
         this.message = document.createElement("span");

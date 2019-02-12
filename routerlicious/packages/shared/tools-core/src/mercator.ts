@@ -16,7 +16,7 @@ export function generateRandomBatchMessages(length: number, payloadSize: number)
     return messages;
 }
 
-export function send(map: Map.IMap, index: number, total: number, messages: string[]) {
+export function send(map: Map.ISharedMap, index: number, total: number, messages: string[]) {
     for (let i = 0; i < messages.length; i++) {
         map.set("" + (index * messages.length + i), { time: Date.now(), str: messages[i] });
     }

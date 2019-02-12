@@ -1,4 +1,4 @@
-import { ICollaborativeObject } from "@prague/api-definitions";
+import { ISharedObject } from "@prague/api-definitions";
 // tslint:disable-next-line:no-submodule-imports
 import * as uuid from "uuid/v4";
 
@@ -147,7 +147,7 @@ export function getStylusId(operation: IOperation): string {
     }
 }
 
-export interface IStream extends ICollaborativeObject {
+export interface IStream extends ISharedObject {
     getLayers(): IInkLayer[];
 
     getLayer(key: string): IInkLayer;

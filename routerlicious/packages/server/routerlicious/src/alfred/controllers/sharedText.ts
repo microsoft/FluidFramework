@@ -35,15 +35,15 @@ function downloadRawText(textUrl: string): Promise<string> {
     });
 }
 
-async function getInsights(map: DistributedMap.IMap, id: string): Promise<DistributedMap.IMap> {
-    const insights = await map.wait<DistributedMap.IMap>("insights");
-    return insights.wait<DistributedMap.IMap>(id);
+async function getInsights(map: DistributedMap.ISharedMap, id: string): Promise<DistributedMap.ISharedMap> {
+    const insights = await map.wait<DistributedMap.ISharedMap>("insights");
+    return insights.wait<DistributedMap.ISharedMap>(id);
 }
 
 async function addTranslation(document: API.Document, id: string, language: string): Promise<void> {
     // Create the translations map
-    const insights = await document.getRoot().wait<DistributedMap.IMap>("insights");
-    const view = await (await insights.wait<DistributedMap.IMap>(id)).getView();
+    const insights = await document.getRoot().wait<DistributedMap.ISharedMap>("insights");
+    const view = await (await insights.wait<DistributedMap.ISharedMap>(id)).getView();
     if (!document.existing) {
         view.set("translations", undefined, DistributedMap.DistributedSetValueType.Name);
     }
@@ -148,7 +148,7 @@ async function loadDocument(
         root.set("presence", collabDoc.createMap());
         root.set("users", collabDoc.createMap());
         root.set("calendar", undefined, Sequence.SharedIntervalCollectionValueType.Name);
-        const seq = collabDoc.create(Sequence.CollaborativeNumberSequenceExtension.Type) as
+        const seq = collabDoc.create(Sequence.SharedNumberSequenceExtension.Type) as
             Sequence.SharedNumberSequence;
         root.set("sequence-test", seq);
         const newString = collabDoc.createString() as Sequence.SharedString;

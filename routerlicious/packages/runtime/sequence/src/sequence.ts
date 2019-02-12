@@ -1,11 +1,11 @@
 // tslint:disable:whitespace align no-bitwise
 import { ITree } from "@prague/container-definitions";
 import {
-    CollaborativeMap,
-    IMap,
     IMapView,
+    ISharedMap,
     IValueChanged,
     MapExtension,
+    SharedMap,
 } from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
 import {
@@ -20,8 +20,8 @@ import * as assert from "assert";
 // tslint:disable-next-line:no-submodule-imports
 import * as uuid from "uuid/v4";
 import {
-    CollaborativeNumberSequenceExtension,
-    CollaborativeObjectSequenceExtension,
+    SharedNumberSequenceExtension,
+    SharedObjectSequenceExtension,
 } from "./extension";
 import {
     SharedIntervalCollection,
@@ -30,7 +30,7 @@ import {
 } from "./intervalCollection";
 import { SequenceDeltaEvent } from "./sequenceDeltaEvent";
 
-export abstract class SegmentSequence<T extends MergeTree.ISegment> extends CollaborativeMap {
+export abstract class SegmentSequence<T extends MergeTree.ISegment> extends SharedMap {
     public client: MergeTree.Client;
     public intervalCollections: IMapView;
     protected autoApply = true;
@@ -270,7 +270,7 @@ export abstract class SegmentSequence<T extends MergeTree.ISegment> extends Coll
     }
 
     protected initializeContent() {
-        const intervalCollections = this.runtime.createChannel(uuid(), MapExtension.Type) as IMap;
+        const intervalCollections = this.runtime.createChannel(uuid(), MapExtension.Type) as ISharedMap;
         this.set("intervalCollections", intervalCollections);
         // TODO will want to update initialize to operate synchronously
         this.initialize(0, 0, [], null, false, this.id, null)
@@ -344,7 +344,7 @@ export abstract class SegmentSequence<T extends MergeTree.ISegment> extends Coll
         sequenceNumber: number,
         minimumSequenceNumber: number,
         header: string,
-        collaborative: boolean,
+        shared: boolean,
         originBranch: string,
         services: IObjectStorageService) {
 
@@ -355,7 +355,7 @@ export abstract class SegmentSequence<T extends MergeTree.ISegment> extends Coll
         const chunk = MergeTree.Snapshot.processChunk(header);
         const segs = this.segmentsFromSpecs(chunk.segmentTexts);
         this.client.mergeTree.reloadFromSegments(segs);
-        if (collaborative) {
+        if (shared) {
             // TODO currently only assumes two levels of branching
             const branchId = originBranch === this.runtime.id ? 0 : 1;
             this.collabStarted = true;
@@ -369,7 +369,7 @@ export abstract class SegmentSequence<T extends MergeTree.ISegment> extends Coll
         minimumSequenceNumber: number,
         header: string,
         messages: ISequencedObjectMessage[],
-        collaborative: boolean,
+        shared: boolean,
         originBranch: string,
         services: IObjectStorageService) {
 
@@ -395,7 +395,7 @@ export abstract class SegmentSequence<T extends MergeTree.ISegment> extends Coll
         minimumSequenceNumber: number,
         messages: ISequencedObjectMessage[],
         header: string,
-        collaborative: boolean,
+        shared: boolean,
         originBranch: string,
         services: IObjectStorageService) {
 
@@ -403,14 +403,14 @@ export abstract class SegmentSequence<T extends MergeTree.ISegment> extends Coll
             assert.equal(minimumSequenceNumber, MergeTree.Snapshot.EmptyChunk.chunkSequenceNumber);
         }
 
-        this.loadHeader(sequenceNumber, minimumSequenceNumber, header, collaborative, originBranch, services);
+        this.loadHeader(sequenceNumber, minimumSequenceNumber, header, shared, originBranch, services);
 
         this.loadBody(
             sequenceNumber,
             minimumSequenceNumber,
             header,
             messages,
-            collaborative,
+            shared,
             originBranch,
             services)
             .then(
@@ -423,7 +423,7 @@ export abstract class SegmentSequence<T extends MergeTree.ISegment> extends Coll
     }
 
     private async initializeIntervalCollections() {
-        const intervalCollections = await this.get("intervalCollections") as IMap;
+        const intervalCollections = await this.get("intervalCollections") as ISharedMap;
         this.intervalCollections = await intervalCollections.getView();
 
         // Listen and initialize new SharedIntervalCollections
@@ -468,7 +468,7 @@ export class SharedSequence<T extends MergeTree.SequenceItem> extends SegmentSeq
         extensionType: string,
         services?: IDistributedObjectServices) {
         super(document, id, sequenceNumber, extensionType, services);
-        if (extensionType === CollaborativeNumberSequenceExtension.Type) {
+        if (extensionType === SharedNumberSequenceExtension.Type) {
             this.isNumeric = true;
         }
     }
@@ -524,7 +524,7 @@ export class SharedObjectSequence<T extends MergeTree.SequenceItem> extends Shar
         public id: string,
         sequenceNumber: number,
         services?: IDistributedObjectServices) {
-        super(document, id, sequenceNumber, CollaborativeObjectSequenceExtension.Type, services);
+        super(document, id, sequenceNumber, SharedObjectSequenceExtension.Type, services);
     }
 
     public getRange(start: number, end?: number) {
@@ -539,7 +539,7 @@ export class SharedNumberSequence extends SharedSequence<number> {
         public id: string,
         sequenceNumber: number,
         services?: IDistributedObjectServices) {
-        super(document, id, sequenceNumber, CollaborativeNumberSequenceExtension.Type, services);
+        super(document, id, sequenceNumber, SharedNumberSequenceExtension.Type, services);
     }
 
     public getRange(start: number, end?: number) {

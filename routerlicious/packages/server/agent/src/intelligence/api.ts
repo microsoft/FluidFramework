@@ -8,7 +8,7 @@ export interface IIntelligentService {
     name: string;
 
     /**
-     * The collaborative documents understood by the intelligent service
+     * The shared documents understood by the intelligent service
      */
     // supportedTypes: string[];
 

@@ -1,7 +1,7 @@
 // TODO this is probably too map specific - but is used to serailize objects in certain cases
 export enum ValueType {
-    // The value is a collaborative object
-    Collaborative,
+    // The value is a shared object
+    Shared,
 
     // The value is a plain JavaScript object
     Plain,

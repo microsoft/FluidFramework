@@ -1,6 +1,6 @@
 import {
-    CollaborativeObject,
     OperationType,
+    SharedObject,
 } from "@prague/api-definitions";
 import {
     FileMode,
@@ -16,7 +16,7 @@ import {
 import { debug } from "./debug";
 import { IMapOperation } from "./definitions";
 import { MapExtension } from "./extension";
-import { IMap, IMapView, IValueChanged, IValueOperation, IValueType, SerializeFilter } from "./interfaces";
+import { IMapView, ISharedMap, IValueChanged, IValueOperation, IValueType, SerializeFilter } from "./interfaces";
 import { MapView } from "./view";
 
 const snapshotFileName = "header";
@@ -49,16 +49,16 @@ interface IMapMessageHandler {
 }
 
 /**
- * Implementation of a map collaborative object
+ * Implementation of a map shared object
  */
-export class CollaborativeMap extends CollaborativeObject implements IMap {
+export class SharedMap extends SharedObject implements ISharedMap {
     private readonly messageHandler: Map<string, IMapMessageHandler>;
     private readonly view: MapView;
     private serializeFilter: SerializeFilter;
     private readonly valueTypes = new Map<string, IValueType<any>>();
 
     /**
-     * Constructs a new collaborative map. If the object is non-local an id and service interfaces will
+     * Constructs a new shared map. If the object is non-local an id and service interfaces will
      * be provided
      */
     constructor(
@@ -140,7 +140,7 @@ export class CollaborativeMap extends CollaborativeObject implements IMap {
         return this.view.set(key, value, type);
     }
 
-    public delete(key: string): Promise<void> {
+    public delete(key: string): Promise<boolean> {
         return Promise.resolve(this.view.delete(key));
     }
 
@@ -172,7 +172,7 @@ export class CollaborativeMap extends CollaborativeObject implements IMap {
             entries: [],
         };
         this.view.forEach((value, key) => {
-            if (value instanceof CollaborativeObject) {
+            if (value instanceof SharedObject) {
                 const id = value.id;
                 const path = encodeURIComponent(key);
 

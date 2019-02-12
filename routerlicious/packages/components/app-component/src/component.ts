@@ -1,6 +1,6 @@
-import { ICollaborativeObjectExtension } from "@prague/api-definitions";
+import { ISharedObjectExtension } from "@prague/api-definitions";
 import { IPlatform } from "@prague/container-definitions";
-import { IMap, MapExtension } from "@prague/map";
+import { ISharedMap, MapExtension } from "@prague/map";
 import { IChaincode, IRuntime } from "@prague/runtime-definitions";
 import { EventEmitter } from "events";
 import { debug } from "./debug";
@@ -33,7 +33,7 @@ class Platform extends EventEmitter implements IPlatform {
 class Chaincode<T extends Component> extends EventEmitter implements IChaincode {
     constructor(private readonly component: T) { super(); }
 
-    // Returns the CollaborativeObject factory for the given type id.
+    // Returns the SharedObject factory for the given type id.
     public getModule(type: string): any {
         return this.component[typeToFactorySym].get(type) || console.assert(false);
     }
@@ -83,7 +83,7 @@ export abstract class Component extends EventEmitter {
     }
 
     private static readonly rootMapId = "root";
-    private readonly [typeToFactorySym]: ReadonlyMap<string, ICollaborativeObjectExtension>;
+    private readonly [typeToFactorySym]: ReadonlyMap<string, ISharedObjectExtension>;
 
     // tslint:disable-next-line:variable-name
     private _runtime: IRuntime = null;
@@ -94,17 +94,17 @@ export abstract class Component extends EventEmitter {
     protected get platform() { return this._platform; }
 
     // tslint:disable-next-line:variable-name
-    private _root: IMap = null;
+    private _root: ISharedMap = null;
     protected get root() { return this._root; }
 
-    constructor(types: ReadonlyArray<[string, ICollaborativeObjectExtension]>) {
+    constructor(types: ReadonlyArray<[string, ISharedObjectExtension]>) {
         super();
 
         // Construct a map of extension types to their corresponding factory.
-        const typeToFactory = new Map<string, ICollaborativeObjectExtension>(types);
+        const typeToFactory = new Map<string, ISharedObjectExtension>(types);
 
-        // Ensure that the map includes the collaborative map type.  This is necessary because
-        // all components construct a collaborative map to be their root.
+        // Ensure that the map includes the shared map type.  This is necessary because
+        // all components construct a shared map to be their root.
         if (!typeToFactory.has(MapExtension.Type)) {
             typeToFactory.set(MapExtension.Type, new MapExtension());
         }
@@ -121,14 +121,14 @@ export abstract class Component extends EventEmitter {
                 debug("Component.open(existing)");
 
                 // If the component already exists, open it's root map.
-                this._root = await runtime.getChannel(Component.rootMapId) as IMap;
+                this._root = await runtime.getChannel(Component.rootMapId) as ISharedMap;
             } else {
                 debug("Component.open(new)");
 
                 // If this is the first client to attempt opening the component, create the component's
                 // root map and call 'create()' to give the component author a chance to initialize the
-                // component's collaborative data structures.
-                this._root = runtime.createChannel(Component.rootMapId, MapExtension.Type) as IMap;
+                // component's shared data structures.
+                this._root = runtime.createChannel(Component.rootMapId, MapExtension.Type) as ISharedMap;
                 this._root.attach();
                 await this.create();
             }

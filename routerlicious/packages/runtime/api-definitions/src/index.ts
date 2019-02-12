@@ -1,4 +1,4 @@
-export * from "./collaborativeObject";
+export * from "./sharedObject";
 export * from "./document";
 export * from "./extension";
 export * from "./types";

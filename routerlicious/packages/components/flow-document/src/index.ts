@@ -17,7 +17,7 @@ import {
 } from "@prague/merge-tree";
 import { ComponentHost } from "@prague/runtime";
 import { IChaincode, IChaincodeComponent, IComponentDeltaHandler, IComponentPlatform, IComponentRuntime } from "@prague/runtime-definitions";
-import { CollaborativeStringExtension, SharedString } from "@prague/sequence";
+import { SharedString, SharedStringExtension } from "@prague/sequence";
 import { Deferred } from "@prague/utils";
 import { EventEmitter } from "events";
 import { debug } from "./debug";
@@ -149,7 +149,7 @@ export class FlowDocument extends Component {
     constructor(private componentRuntime: IComponentRuntime) {
         super([
             [MapExtension.Type, new MapExtension()],
-            [CollaborativeStringExtension.Type, new CollaborativeStringExtension()],
+            [SharedStringExtension.Type, new SharedStringExtension()],
         ]);
     }
 
@@ -273,14 +273,14 @@ export class FlowDocument extends Component {
         // (See: https://github.com/Microsoft/Prague/pull/1118)
         Object.assign(this.runtime, { options: Object.assign(this.runtime.options || {}, { blockUpdateMarkers: true }) });
 
-        const text = this.runtime.createChannel("text", CollaborativeStringExtension.Type) as SharedString;
+        const text = this.runtime.createChannel("text", SharedStringExtension.Type) as SharedString;
         text.insertMarker(0, ReferenceType.Tile, FlowDocument.eofTileProperties);
         this.root.set("text", text);
     }
 }
 
 /**
- * A document is a collection of collaborative types.
+ * A document is a collection of shared types.
  */
 export class FlowDocumentComponent implements IChaincodeComponent {
     public document: FlowDocument;

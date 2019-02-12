@@ -10,15 +10,15 @@ import * as assert from "assert";
 import * as Deque from "double-ended-queue";
 import { EventEmitter } from "events";
 import { debug } from "./debug";
-import { ICollaborativeObject } from "./types";
+import { ISharedObject } from "./types";
 import { ValueType } from "./valueType";
 
 // TODO this may migrate to the runtime
 export const OperationType = "op";
 
-export abstract class CollaborativeObject extends EventEmitter implements ICollaborativeObject {
+export abstract class SharedObject extends EventEmitter implements ISharedObject {
     // tslint:disable-next-line:variable-name
-    public readonly __collaborativeObject__ = true;
+    public readonly __sharedObject__ = true;
 
     // Private fields exposed via getters
     // tslint:disable:variable-name
@@ -52,7 +52,7 @@ export abstract class CollaborativeObject extends EventEmitter implements IColla
 
     public toJSON() {
         return {
-            type: ValueType[ValueType.Collaborative],
+            type: ValueType[ValueType.Shared],
             value: this.id,
         };
     }
@@ -60,8 +60,8 @@ export abstract class CollaborativeObject extends EventEmitter implements IColla
     public abstract ready(): Promise<void>;
 
     /**
-     * A collaborative object, after construction, can either be loaded in the case that it is already part of
-     * a collaborative document. Or later attached if it is being newly added.
+     * A shared object, after construction, can either be loaded in the case that it is already part of
+     * a shared document. Or later attached if it is being newly added.
      */
     public async load(
         sequenceNumber: number,
@@ -83,7 +83,7 @@ export abstract class CollaborativeObject extends EventEmitter implements IColla
     }
 
     /**
-     * Initializes the object as a local, non-collaborative object. This object can become collaborative after
+     * Initializes the object as a local, non-shared object. This object can become shared after
      * it is attached to the document.
      */
     public initializeLocal() {
@@ -92,7 +92,7 @@ export abstract class CollaborativeObject extends EventEmitter implements IColla
     }
 
     /**
-     * Attaches the given collaborative object to its containing document
+     * Attaches the given shared object to its containing document
      */
     public attach(): this {
         if (!this.isLocal()) {
@@ -110,7 +110,7 @@ export abstract class CollaborativeObject extends EventEmitter implements IColla
     }
 
     /**
-     * Returns whether the given collaborative object is local
+     * Returns whether the given shared object is local
      */
     public isLocal(): boolean {
         return !this.services;

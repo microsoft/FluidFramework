@@ -5,7 +5,7 @@ import { UnboxedOper, Workbook } from "../../ext/calc";
  * To avoid a cyclic build dependency, the Workbook base class has no knowledge of Prague.
  * This subclass adds basic storage to an IMapView using "row,col" as the key.
  */
-export class CollaborativeWorkbook extends Workbook {
+export class SharedWorkbook extends Workbook {
     private readonly cellText: map.IMapView;
     private ready;
     private existing;

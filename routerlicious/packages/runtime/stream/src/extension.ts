@@ -1,8 +1,8 @@
-import { ICollaborativeObject, ICollaborativeObjectExtension } from "@prague/api-definitions";
+import { ISharedObject, ISharedObjectExtension as ISharedObjectExtension } from "@prague/api-definitions";
 import { IDistributedObjectServices, IRuntime, ISequencedObjectMessage } from "@prague/runtime-definitions";
 import { Stream } from "./stream";
 
-export class StreamExtension implements ICollaborativeObjectExtension {
+export class StreamExtension implements ISharedObjectExtension {
     public static Type = "https://graph.microsoft.com/types/stream";
 
     public type = StreamExtension.Type;
@@ -14,7 +14,7 @@ export class StreamExtension implements ICollaborativeObjectExtension {
         minimumSequenceNumber: number,
         messages: ISequencedObjectMessage[],
         services: IDistributedObjectServices,
-        headerOrigin: string): Promise<ICollaborativeObject> {
+        headerOrigin: string): Promise<ISharedObject> {
 
         const stream = new Stream(runtime, id, sequenceNumber);
         await stream.load(sequenceNumber, minimumSequenceNumber, messages, headerOrigin, services);
@@ -22,7 +22,7 @@ export class StreamExtension implements ICollaborativeObjectExtension {
         return stream;
     }
 
-    public create(runtime: IRuntime, id: string): ICollaborativeObject {
+    public create(runtime: IRuntime, id: string): ISharedObject {
         const stream = new Stream(runtime, id, 0);
         stream.initializeLocal();
 

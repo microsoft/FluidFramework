@@ -25,9 +25,9 @@ import {
 import { ComponentHost } from "@prague/runtime";
 import { IChaincode, IChaincodeComponent, IComponentDeltaHandler, IComponentPlatform, IComponentRuntime } from "@prague/runtime-definitions";
 import {
-    CollaborativeStringExtension,
     SharedIntervalCollectionValueType,
     SharedString,
+    SharedStringExtension,
     SharedStringIntervalCollectionValueType,
 } from "@prague/sequence";
 import { Deferred } from "@prague/utils";
@@ -42,7 +42,7 @@ type EvaluationResult = Result<ReadOper, FailureReason | NotImplemented | NotFor
 
 class WorkbookAdapter extends Workbook {
     // TODO: Our base class has a bug that calls 'storeCellText' during init(), overwriting
-    //       incoming collaborative data.
+    //       incoming shared data.
     private isInitializing = true;
 
     constructor(private readonly doc: TableDocument) {
@@ -103,7 +103,7 @@ export class TableDocument extends Component {
     constructor() {
         super([
             [MapExtension.Type, new MapExtension()],
-            [CollaborativeStringExtension.Type, new CollaborativeStringExtension()],
+            [SharedStringExtension.Type, new SharedStringExtension()],
         ]);
 
         registerDefaultValueType(new CounterValueType());
@@ -169,7 +169,7 @@ export class TableDocument extends Component {
         const numRows = 7;
         const numCols = 8;
 
-        const text = this.runtime.createChannel("text", CollaborativeStringExtension.Type) as SharedString;
+        const text = this.runtime.createChannel("text", SharedStringExtension.Type) as SharedString;
         for (let i = numRows * numCols; i > 0; i--) {
             text.insertMarker(0, ReferenceType.Simple, { value: "" });
         }
@@ -226,7 +226,7 @@ export class TableDocument extends Component {
 }
 
 /**
- * A document is a collection of collaborative types.
+ * A document is a collection of shared types.
  */
 export class TableDocumentComponent implements IChaincodeComponent {
     public table = new TableDocument();

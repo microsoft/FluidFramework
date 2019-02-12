@@ -104,7 +104,7 @@ export interface ISnapshotTree {
 }
 
 /**
- * Interface to provide access to stored deltas for a collaborative object
+ * Interface to provide access to stored deltas for a shared object
  */
 export interface IDeltaStorageService {
     /**
@@ -119,7 +119,7 @@ export interface IDeltaStorageService {
 }
 
 /**
- * Interface to provide access to stored deltas for a collaborative object
+ * Interface to provide access to stored deltas for a shared object
  */
 export interface IDocumentDeltaStorageService {
     /**
@@ -129,7 +129,7 @@ export interface IDocumentDeltaStorageService {
 }
 
 /**
- * Interface to provide access to snapshots saved for a collaborative object
+ * Interface to provide access to snapshots saved for a shared object
  */
 export interface IDocumentStorageService {
     repositoryUrl: string;

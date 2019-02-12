@@ -5,7 +5,7 @@ import {
     IRuntime,
 } from "@prague/runtime-definitions";
 import {
-    CollaborativeStringExtension,
+    SharedStringExtension,
 } from "./extension";
 import {
     SegmentSequence,
@@ -42,7 +42,7 @@ export class SharedString extends SegmentSequence<SharedStringSegment> {
         sequenceNumber: number,
         services?: IDistributedObjectServices) {
 
-        super(document, id, sequenceNumber, CollaborativeStringExtension.Type, services);
+        super(document, id, sequenceNumber, SharedStringExtension.Type, services);
     }
 
     public appendSegment(segSpec: SharedStringJSONSegment) {

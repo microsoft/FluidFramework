@@ -1,7 +1,7 @@
 // tslint:disable:no-empty-interface
 import { Block, BoxState } from "@prague/app-ui";
 import { ResultKind } from "../../ext/calc";
-import { CollaborativeWorkbook } from "../calc";
+import { SharedWorkbook } from "../calc";
 import { FlowViewContext } from "./flowViewContext";
 
 const refreshCellsSym = Symbol("SheetletState.refreshCells");
@@ -44,7 +44,7 @@ export class Sheetlet extends Block<SheetletState> {
         this.getRefreshCells(self)();
         return element;
     }
-    private getWorkbook(context: FlowViewContext): CollaborativeWorkbook {
+    private getWorkbook(context: FlowViewContext): SharedWorkbook {
         return context.services.get("workbook");
     }
 
@@ -53,7 +53,7 @@ export class Sheetlet extends Block<SheetletState> {
         self[refreshCellsSym] = refreshCells;
     }
 
-    private createTable(workbook: CollaborativeWorkbook) {
+    private createTable(workbook: SharedWorkbook) {
         const table = document.createElement("table");
 
         // Update <input>s of all cells with evaluated values.

@@ -1,6 +1,6 @@
 import { ICell } from "@prague/cell";
 import * as api from "@prague/client-api";
-import { IMap } from "@prague/map";
+import { ISharedMap } from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
 import { ISequencedObjectMessage } from "@prague/runtime-definitions";
 import * as Sequence from "@prague/sequence";
@@ -358,7 +358,7 @@ export async function typeFile(
                     return metric;
                 });
         } else {
-            return (doc.getRoot().get("chunks") as Promise<IMap>)
+            return (doc.getRoot().get("chunks") as Promise<ISharedMap>)
                 .then((chunkMap) => {
                     return chunkMap.getView();
                 })

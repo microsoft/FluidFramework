@@ -751,7 +751,7 @@ interface IJSONExternalSegment extends ops.IJSONSegment {
     sequenceLength: number;
 }
 /**
- * A non-collaborative placeholder for external content.
+ * A non-shared placeholder for external content.
  */
 export class ExternalSegment extends BaseSegment {
     constructor(public placeholderSeq, public sequenceLength: number,
@@ -1186,7 +1186,7 @@ export class IncrementalMapState<TContext> {
 }
 
 /**
- * Sequence numbers for collaborative segments start at 1 or greater.  Every segment marked
+ * Sequence numbers for shared segments start at 1 or greater.  Every segment marked
  * with sequence number zero will be counted as part of the requested string.
  */
 export const UniversalSequenceNumber = 0;

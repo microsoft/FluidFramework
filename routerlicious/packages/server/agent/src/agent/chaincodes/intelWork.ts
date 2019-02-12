@@ -1,4 +1,4 @@
-import { ICollaborativeObject } from "@prague/api-definitions";
+import { ISharedObject } from "@prague/api-definitions";
 import {
     ICodeLoader,
     IDocumentService,
@@ -8,7 +8,7 @@ import {
     MessageType,
 } from "@prague/container-definitions";
 import { Container } from "@prague/container-loader";
-import { IMap, IMapView } from "@prague/map";
+import { IMapView, ISharedMap } from "@prague/map";
 import { textAnalytics } from "../../intelligence";
 import { IWork} from "../definitions";
 import { ChaincodeWork } from "./chaincodeWork";
@@ -33,7 +33,7 @@ export class IntelWork extends ChaincodeWork implements IWork {
     public async start(): Promise<void> {
         await this.loadChaincode(
             { localMinSeq: 0, encrypted: undefined, client: { type: "intel" } });
-        const insightsMap = await this.document.runtime.getChannel("insights") as IMap;
+        const insightsMap = await this.document.runtime.getChannel("insights") as ISharedMap;
         const insightsMapView = await insightsMap.getView();
         this.processIntelligenceWork(this.document, insightsMapView);
     }
@@ -53,7 +53,7 @@ export class IntelWork extends ChaincodeWork implements IWork {
         this.intelligenceManager = new IntelligentServicesManager(doc, insightsMap);
         this.intelligenceManager.registerService(textAnalytics.factory.create(this.config.intelligence.textAnalytics));
 
-        this.document.on("op", (op: ISequencedDocumentMessage, object?: ICollaborativeObject) => {
+        this.document.on("op", (op: ISequencedDocumentMessage, object?: ISharedObject) => {
             // TODO include object as part of op
             if (object) {
                 if (op.type === MessageType.Operation) {

@@ -3,8 +3,8 @@ import * as map from "..";
 
 describe("Routerlicious", () => {
     describe("Map", () => {
-        let rootMap: map.IMap;
-        let testMap: map.IMap;
+        let rootMap: map.ISharedMap;
+        let testMap: map.ISharedMap;
         let extension: map.MapExtension;
 
         beforeEach(async () => {
@@ -13,7 +13,7 @@ describe("Routerlicious", () => {
             testMap = extension.create(null, "test");
         });
 
-        describe("CollaborativeMap", () => {
+        describe("SharedMap", () => {
             it("Can get the root map", () => {
                 assert.ok(rootMap);
             });
@@ -29,7 +29,6 @@ describe("Routerlicious", () => {
                 await testMap.set("testKey2", "testValue2");
                 assert.equal(await testMap.get("testKey"), "testValue");
                 assert.equal(await testMap.get("testKey2"), "testValue2");
-                assert.deepEqual(await testMap.keys(), ["testKey", "testKey2"]);
             });
         });
 
@@ -88,7 +87,7 @@ describe("Routerlicious", () => {
                     assert.equal(value, view.get("test"));
                 });
 
-                it("Should be able to set a collaborative object as a key", () => {
+                it("Should be able to set a shared object as a key", () => {
                     const subMap = extension.create(null, "subMap");
                     view.set("test", subMap);
                     assert.equal(view.get("test"), subMap);
@@ -137,7 +136,7 @@ describe("Routerlicious", () => {
                             assert.equal(parsed[key].type, "Plain");
                             assert.equal(parsed[key].value, value);
                         } else {
-                            assert.equal(parsed[key].type, "Collaborative");
+                            assert.equal(parsed[key].type, "Shared");
                             assert.equal(parsed[key].value, subMap.id);
                         }
                     });

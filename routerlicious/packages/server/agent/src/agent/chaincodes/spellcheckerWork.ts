@@ -41,7 +41,7 @@ export class SpellcheckerWork extends ChaincodeWork implements IWork {
                 localMinSeq: 0,
             });
         // TODO emit target as part of op event
-        const eventHandler = (op: ISequencedDocumentMessage, object?: core.ICollaborativeObject) => {
+        const eventHandler = (op: ISequencedDocumentMessage, object?: core.ISharedObject) => {
             if (object) {
                 if (op.type === MessageType.Operation || op.type === MessageType.Attach) {
                     this.spellCheck(object);
@@ -70,8 +70,8 @@ export class SpellcheckerWork extends ChaincodeWork implements IWork {
 
     // Enable spell checking for the document
     // TODO will want to configure this as a pluggable insight
-    private spellCheck(object: core.ICollaborativeObject) {
-        if (object.type === Sequence.CollaborativeStringExtension.Type && !this.spellchecker) {
+    private spellCheck(object: core.ISharedObject) {
+        if (object.type === Sequence.SharedStringExtension.Type && !this.spellchecker) {
             const sharedString = object as Sequence.SharedString;
             this.spellchecker = new Spellcheker(sharedString, this.dict);
             this.spellchecker.run();

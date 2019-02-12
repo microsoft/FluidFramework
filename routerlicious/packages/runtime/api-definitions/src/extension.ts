@@ -8,13 +8,13 @@ export interface IExtension {
     type: string;
 }
 /**
- * Definitions of a collaborative extensions. Extensions follow a common model but enable custom behavior.
+ * Definitions of a shared extensions. Extensions follow a common model but enable custom behavior.
  */
-export interface ICollaborativeObjectExtension extends IChaincodeModule, IExtension {
+export interface ISharedObjectExtension extends IChaincodeModule, IExtension {
 }
 
 export interface IContentModelExtension extends IExtension {
-    exec(message: ISequencedObjectMessage, instance: types.ICollaborativeObject);
+    exec(message: ISequencedObjectMessage, instance: types.ISharedObject);
 }
 
 /**

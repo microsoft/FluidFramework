@@ -2,7 +2,7 @@ Service interface implementations that are safe to be run on the client or serve
 
 # Git Storage
 
-Storage driver to save collaborative document snapshots as git repositories.
+Storage driver to save shared document snapshots as git repositories.
 
 The long term hope is to be able to use our deltas as the stored values that allow you to transition between versions.
 But for now we rely on git's own binary format for this.

@@ -1,14 +1,14 @@
-import { ICollaborativeObject, ICollaborativeObjectExtension } from "@prague/api-definitions";
+import { ISharedObject, ISharedObjectExtension } from "@prague/api-definitions";
 import { IDistributedObjectServices, IRuntime, ISequencedObjectMessage } from "@prague/runtime-definitions";
 import { SharedNumberSequence, SharedObjectSequence} from "./sequence";
 import { SharedString } from "./sharedString";
 
-export class CollaborativeStringExtension implements ICollaborativeObjectExtension {
+export class SharedStringExtension implements ISharedObjectExtension {
     // TODO rename back to https://graph.microsoft.com/types/mergeTree/string once paparazzi is able to dynamically
     // load code
     public static Type = "https://graph.microsoft.com/types/mergeTree";
 
-    public type: string = CollaborativeStringExtension.Type;
+    public type: string = SharedStringExtension.Type;
 
     public async load(
         document: IRuntime,
@@ -17,24 +17,24 @@ export class CollaborativeStringExtension implements ICollaborativeObjectExtensi
         minimumSequenceNumber: number,
         messages: ISequencedObjectMessage[],
         services: IDistributedObjectServices,
-        headerOrigin: string): Promise<ICollaborativeObject> {
+        headerOrigin: string): Promise<ISharedObject> {
 
-        const collaborativeString = new SharedString(document, id, sequenceNumber, services);
-        await collaborativeString.load(sequenceNumber, minimumSequenceNumber, messages, headerOrigin, services);
-        return collaborativeString;
+        const sharedString = new SharedString(document, id, sequenceNumber, services);
+        await sharedString.load(sequenceNumber, minimumSequenceNumber, messages, headerOrigin, services);
+        return sharedString;
     }
 
-    public create(document: IRuntime, id: string, options?: any): ICollaborativeObject {
-        const collaborativeString = new SharedString(document, id, 0);
-        collaborativeString.initializeLocal();
-        return collaborativeString;
+    public create(document: IRuntime, id: string, options?: any): ISharedObject {
+        const sharedString = new SharedString(document, id, 0);
+        sharedString.initializeLocal();
+        return sharedString;
     }
 }
 
-export class CollaborativeObjectSequenceExtension implements ICollaborativeObjectExtension {
+export class SharedObjectSequenceExtension implements ISharedObjectExtension {
     public static Type = "https://graph.microsoft.com/types/mergeTree/object-sequence";
 
-    public type: string = CollaborativeObjectSequenceExtension.Type;
+    public type: string = SharedObjectSequenceExtension.Type;
 
     public async load(
         document: IRuntime,
@@ -43,24 +43,24 @@ export class CollaborativeObjectSequenceExtension implements ICollaborativeObjec
         minimumSequenceNumber: number,
         messages: ISequencedObjectMessage[],
         services: IDistributedObjectServices,
-        headerOrigin: string): Promise<ICollaborativeObject> {
+        headerOrigin: string): Promise<ISharedObject> {
 
-        const collaborativeSeq = new SharedObjectSequence<object>(document, id, sequenceNumber, services);
-        await collaborativeSeq.load(sequenceNumber, minimumSequenceNumber, messages, headerOrigin, services);
-        return collaborativeSeq;
+        const sharedSeq = new SharedObjectSequence<object>(document, id, sequenceNumber, services);
+        await sharedSeq.load(sequenceNumber, minimumSequenceNumber, messages, headerOrigin, services);
+        return sharedSeq;
     }
 
-    public create(document: IRuntime, id: string, options?: any): ICollaborativeObject {
-        const collaborativeString = new SharedObjectSequence(document, id, 0);
-        collaborativeString.initializeLocal();
-        return collaborativeString;
+    public create(document: IRuntime, id: string, options?: any): ISharedObject {
+        const sharedString = new SharedObjectSequence(document, id, 0);
+        sharedString.initializeLocal();
+        return sharedString;
     }
 }
 
-export class CollaborativeNumberSequenceExtension implements ICollaborativeObjectExtension {
+export class SharedNumberSequenceExtension implements ISharedObjectExtension {
     public static Type = "https://graph.microsoft.com/types/mergeTree/number-sequence";
 
-    public type: string = CollaborativeNumberSequenceExtension.Type;
+    public type: string = SharedNumberSequenceExtension.Type;
 
     public async load(
         document: IRuntime,
@@ -69,16 +69,16 @@ export class CollaborativeNumberSequenceExtension implements ICollaborativeObjec
         minimumSequenceNumber: number,
         messages: ISequencedObjectMessage[],
         services: IDistributedObjectServices,
-        headerOrigin: string): Promise<ICollaborativeObject> {
+        headerOrigin: string): Promise<ISharedObject> {
 
-        const collaborativeSeq = new SharedNumberSequence(document, id, sequenceNumber, services);
-        await collaborativeSeq.load(sequenceNumber, minimumSequenceNumber, messages, headerOrigin, services);
-        return collaborativeSeq;
+        const sharedSeq = new SharedNumberSequence(document, id, sequenceNumber, services);
+        await sharedSeq.load(sequenceNumber, minimumSequenceNumber, messages, headerOrigin, services);
+        return sharedSeq;
     }
 
-    public create(document: IRuntime, id: string, options?: any): ICollaborativeObject {
-        const collaborativeString = new SharedNumberSequence(document, id, 0);
-        collaborativeString.initializeLocal();
-        return collaborativeString;
+    public create(document: IRuntime, id: string, options?: any): ISharedObject {
+        const sharedString = new SharedNumberSequence(document, id, 0);
+        sharedString.initializeLocal();
+        return sharedString;
     }
 }

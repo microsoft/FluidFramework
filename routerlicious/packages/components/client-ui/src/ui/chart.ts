@@ -1,7 +1,7 @@
 import { Block, BoxState } from "@prague/app-ui";
 import { ResultKind } from "../../ext/calc";
 import * as Charts from "../../ext/microsoft-charts/";
-import { CollaborativeWorkbook } from "../calc";
+import { SharedWorkbook } from "../calc";
 import { FlowViewContext } from "./flowViewContext";
 
 const chartSym = Symbol("Chart.chart");
@@ -104,7 +104,7 @@ export class Chart extends Block<ChartState> {
     }
 
     /** Evaluates the cell at the given (row, col), coercing the result to a number | boolean | string. */
-    private getAt(workbook: CollaborativeWorkbook, row, col) {
+    private getAt(workbook: SharedWorkbook, row, col) {
         const result = workbook.evaluateCell(row, col);
 
         switch (result.kind) {
