@@ -8,6 +8,7 @@ dependencies:
   '@rush-temp/chart-view': 'file:projects/chart-view.tgz'
   '@rush-temp/client-api': 'file:projects/client-api.tgz'
   '@rush-temp/client-ui': 'file:projects/client-ui.tgz'
+  '@rush-temp/component': 'file:projects/component.tgz'
   '@rush-temp/container-definitions': 'file:projects/container-definitions.tgz'
   '@rush-temp/container-loader': 'file:projects/container-loader.tgz'
   '@rush-temp/flow-document': 'file:projects/flow-document.tgz'
@@ -690,6 +691,10 @@ packages:
     dev: false
     resolution:
       integrity: sha512-GWWbvt+z9G5otRBW8rssOFgRY87J9N/qbhqfjMZ+gUuL6zoL+Hm6gP/8qQBG4jjimqdaNLCehcVapZ/Fs2WjCQ==
+  /@types/node/10.12.25:
+    dev: false
+    resolution:
+      integrity: sha512-IcvnGLGSQFDvC07Bz2I8SX+QKErDZbUdiQq7S2u3XyzTyJfUmT0sWJMbeQkMzpTAkO7/N7sZpW/arUM2jfKsbQ==
   /@types/passport-local/1.0.33:
     dependencies:
       '@types/express': 4.16.1
@@ -9255,7 +9260,7 @@ packages:
     dev: false
     name: '@rush-temp/app-datastore'
     resolution:
-      integrity: sha512-Z44ehYteDICQ8uElz083aBjNKSpeCNfBo7xlqzoS8RNQihOiXPBhqh19Z2IAXEIjV3a/c6tTXSeYhKiicY2ZVw==
+      integrity: sha512-tTws+CrUuJCSHueuA8kpd9taOF4dhmyG5m0TLCTaX+7O6Hz/XMNmY91PcX/e6XSZvcuDCatKnonMwzLwJG8Bug==
       tarball: 'file:projects/app-datastore.tgz'
     version: 0.0.0
   'file:projects/app-ui.tgz':
@@ -9309,7 +9314,7 @@ packages:
     dev: false
     name: '@rush-temp/chart-view'
     resolution:
-      integrity: sha512-Hw0WaD+cOsP84aneg3aWFlquGdcGvcbloquup9liVYeImBx30C8DdqD5vBdBCURZ/CzVYbe6vJans95GLjTOtw==
+      integrity: sha512-0kGm8M+YOseahnGlyUKUKuk0T/qiM/RBnAS40ZjLk3zkmykP7kvHCj3tx7Sj/XHZItzmGjkYL+rzNzrhxia7Ag==
       tarball: 'file:projects/chart-view.tgz'
     version: 0.0.0
   'file:projects/client-api.tgz':
@@ -9342,7 +9347,7 @@ packages:
     dev: false
     name: '@rush-temp/client-api'
     resolution:
-      integrity: sha512-JzNHM+Ifct1yIoq7TFs+petnw5tfS6NJInECh8OWyrmEI4e3CD1UVwWZDyA76BxI20runDOdk2oTuj3uRGNFFA==
+      integrity: sha512-GKYUm7/9E+iX1k8G1SLsXfZHasrO5kwjtYkn/9SW0iTIfpniR4DLlgjT42gJpvjMMF0kLY+ezkcEqHdYYvKvpQ==
       tarball: 'file:projects/client-api.tgz'
     version: 0.0.0
   'file:projects/client-ui.tgz':
@@ -9377,6 +9382,31 @@ packages:
     resolution:
       integrity: sha512-dHVxzKf/cUgjOcLEaFvZuV+I9rpM+INFcwxKPAwlh95IOuFOrdRteA7kOUdLVclcFNnbeKjLz88DnOEn3daw+Q==
       tarball: 'file:projects/client-ui.tgz'
+    version: 0.0.0
+  'file:projects/component.tgz':
+    dependencies:
+      '@types/async': 2.4.0
+      '@types/debug': 0.0.31
+      '@types/lodash': 4.14.120
+      '@types/mocha': 5.2.5
+      '@types/node': 10.12.25
+      '@types/scriptjs': 0.0.2
+      async: 2.6.1
+      debug: 3.2.6
+      lodash: 4.17.11
+      mocha: 5.2.0
+      mocha-junit-reporter: /mocha-junit-reporter/1.18.0/mocha@5.2.0
+      nyc: 13.2.0
+      performance-now: 2.1.0
+      rimraf: 2.6.3
+      tslint: /tslint/5.12.1/typescript@3.3.3
+      tslint-microsoft-contrib: /tslint-microsoft-contrib/6.0.0/tslint@5.12.1+typescript@3.3.3
+      typescript: 3.3.3
+    dev: false
+    name: '@rush-temp/component'
+    resolution:
+      integrity: sha512-UpNYQQr/il1htgHRczhDNJqJNht1sZPFEHJElPgRO2uTjviXLpNwJfc89fGO/wlSfQcpp039zHTIQC/olLJg/w==
+      tarball: 'file:projects/component.tgz'
     version: 0.0.0
   'file:projects/container-definitions.tgz':
     dependencies:
@@ -9428,7 +9458,7 @@ packages:
     dev: false
     name: '@rush-temp/flow-document'
     resolution:
-      integrity: sha512-Pa3rNy3o5iPSGfSwXQ49422teLNa9ZZaEk0LwE/40i/q5j1edIRdSpODl9pK34WYMDcW7mvKuFcj6s3PkWEztQ==
+      integrity: sha512-y+8yw0mq6f8BiF5w1wbsnpA3NCey68WU+rUif2GeSnhWlZUq9pimQR/3jseDPx8f36EI8ItRaL0nuYPtD4k4kA==
       tarball: 'file:projects/flow-document.tgz'
     version: 0.0.0
   'file:projects/flow-editor.tgz':
@@ -9451,7 +9481,7 @@ packages:
     dev: false
     name: '@rush-temp/flow-editor'
     resolution:
-      integrity: sha512-LGWgnjF5HpTK7tMgM0mDxWoo/oQP/sAN+1mhNTkhwG6UDyeAX52pq/ozb57YROQ9pQx11YY3YzgdXjITAkLN0w==
+      integrity: sha512-gmEKXsqNFb6GidjCxwGTICtd6s2ImEtwORpoQfxe9Ocz867/pdAuD2Egx8EdzclgNK9T1LmRqtCRDPCTO8rKvw==
       tarball: 'file:projects/flow-editor.tgz'
     version: 0.0.0
   'file:projects/flow-host.tgz':
@@ -9479,7 +9509,7 @@ packages:
     dev: false
     name: '@rush-temp/flow-host'
     resolution:
-      integrity: sha512-8Ym2JSb81vNH7wqk/e66F15SeD1w7tb9HGgBdTklsDNJByRpEW3fUu/w1qsek0jDSBaAEm2iRoYyez9VoBWBJA==
+      integrity: sha512-mbURm8/b/UN20YXkgVqfHET5kFWPPReHTrAUoXu1AGv5jL1TgaV068/484hmkBubacgwBUJFYm3Me+Ov3aqCyg==
       tarball: 'file:projects/flow-host.tgz'
     version: 0.0.0
   'file:projects/flow-util.tgz':
@@ -9883,10 +9913,14 @@ packages:
   'file:projects/sequence.tgz':
     dependencies:
       '@types/diff': 3.5.3
+      '@types/mocha': 5.2.5
       '@types/random-js': 1.0.31
       '@types/uuid': 3.4.4
       '@types/xmldoc': 1.1.3
       diff: 3.5.0
+      mocha: 5.2.0
+      mocha-junit-reporter: /mocha-junit-reporter/1.18.0/mocha@5.2.0
+      nyc: 13.2.0
       random-js: 1.0.8
       rimraf: 2.6.3
       tslint: /tslint/5.12.1/typescript@3.3.3
@@ -9897,7 +9931,7 @@ packages:
     dev: false
     name: '@rush-temp/sequence'
     resolution:
-      integrity: sha512-pJWdq8hERfov8L30LRcFe1mlJSmblLNhQjqxYqq5wzFk0jHl1hTxy4rNTOTGhA6TIuwQ4gAPrxLXd7t6vaeQlA==
+      integrity: sha512-EGm9NdvsJ7/M6JKfuOh5WsA0oHlXVPdDUsL/atsmgv6CGvlkcH/KQ9q+r39xfNDs2m1TYfA0yKHDkZvLWQOT2w==
       tarball: 'file:projects/sequence.tgz'
     version: 0.0.0
   'file:projects/services-client.tgz':
@@ -10090,7 +10124,7 @@ packages:
     dev: false
     name: '@rush-temp/table-document'
     resolution:
-      integrity: sha512-XneMP7vbWU6h1l2O2abxWOJ7asau0ZVsG28bDYS37eGk1GW91FU6UVig2mKyMIVYrSErWKnsynnyFhhEhX2qaw==
+      integrity: sha512-owDiH9AdEcGVUZEql9MhEX/gsIGvyyhLe8YyiNlT225H6aVgCZvrsrrhUtsws1qwOE5vwedADlxR5baIUwBsQA==
       tarball: 'file:projects/table-document.tgz'
     version: 0.0.0
   'file:projects/table-slice.tgz':
@@ -10111,7 +10145,7 @@ packages:
     dev: false
     name: '@rush-temp/table-slice'
     resolution:
-      integrity: sha512-1DM4z0XJqpETCdE0lkQAC2/UtifQl88X/TxfDvpfy5jtjaw3iEt1ElCiA6m5ua10M5bKnyuR9uCfn72IunKHUA==
+      integrity: sha512-5NG4SKpSEunHh1qMEmVzv59wd3u7O5NGdt4ee7eWyxgCQUbJTzSq0x+5r4c3r6EwYyXJfjDr29iOwhqiJ3d+OQ==
       tarball: 'file:projects/table-slice.tgz'
     version: 0.0.0
   'file:projects/table-view.tgz':
@@ -10132,7 +10166,7 @@ packages:
     dev: false
     name: '@rush-temp/table-view'
     resolution:
-      integrity: sha512-n7/SMo3zXb4hhYEUlxaVCKSXwanCQpc3qpfYStEedqbEm+rT10mBntKpIhJjMzeIoilWJsMiYLLXZed+9pFcxQ==
+      integrity: sha512-wRlijVAGdNeUAetMh3IufyQNaEMWkcKUiAMTQu2Ir52Xi1GYnyN6FT/9h9QcOen/6YwD7XixZmVnT0s+QNo15w==
       tarball: 'file:projects/table-view.tgz'
     version: 0.0.0
   'file:projects/test-utils.tgz':
@@ -10210,6 +10244,7 @@ specifiers:
   '@rush-temp/chart-view': 'file:./projects/chart-view.tgz'
   '@rush-temp/client-api': 'file:./projects/client-api.tgz'
   '@rush-temp/client-ui': 'file:./projects/client-ui.tgz'
+  '@rush-temp/component': 'file:./projects/component.tgz'
   '@rush-temp/container-definitions': 'file:./projects/container-definitions.tgz'
   '@rush-temp/container-loader': 'file:./projects/container-loader.tgz'
   '@rush-temp/flow-document': 'file:./projects/flow-document.tgz'

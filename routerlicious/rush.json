@@ -86,8 +86,16 @@
       "projectFolder": "packages/loader/loader-web/"
     },
     {
+      "packageName": "@prague/utils",
+      "projectFolder": "packages/loader/utils/"
+    },
+    {
       "packageName": "@prague/api-definitions",
       "projectFolder": "packages/runtime/api-definitions/"
+    },
+    {
+      "packageName": "@prague/component",
+      "projectFolder": "packages/runtime/component/"
     },
     {
       "packageName": "@prague/cell",
@@ -176,10 +184,6 @@
     {
       "packageName": "@prague/tools-core",
       "projectFolder": "packages/shared/tools-core/"
-    },
-    {
-      "packageName": "@prague/utils",
-      "projectFolder": "packages/shared/utils/"
     }
   ]
 }
