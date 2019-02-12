@@ -34,10 +34,11 @@
     }
   },
   "dependencies": {
-    "@prague/app-component": "^0.2.4854",
-    "@prague/app-datastore": "^0.2.4854",
-    "@prague/map": "^0.2.4854",
-    "@prague/runtime-definitions": "^0.2.4854",
+    "@prague/app-component": "^0.2.4947",
+    "@prague/app-datastore": "^0.2.4947",
+    "@prague/map": "^0.2.4947",
+    "@prague/runtime": "^0.2.4947",
+    "@prague/runtime-definitions": "^0.2.4947",
     "@stardust-ui/react": "^0.17.0",
     "react": "^16.7.0",
     "react-dom": "^16.7.0"

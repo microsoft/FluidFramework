@@ -1,4 +1,4 @@
-import { Counter, IMap, IMapView } from "@prague/map";
+import { Counter, IMapView, ISharedMap } from "@prague/map";
 import { Chat } from "@stardust-ui/react";
 import { ChatRenderer } from "./chat-renderer";
 import { filter } from "./filter";
@@ -18,7 +18,7 @@ interface ChatProps {
 }
 
 interface ChatContainerProps {
-  messages: IMap;
+  messages: ISharedMap;
   messageView: IMapView;
   counter: Counter;
   clientId: string;
