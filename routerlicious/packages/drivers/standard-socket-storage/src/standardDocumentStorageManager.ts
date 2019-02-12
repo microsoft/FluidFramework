@@ -17,16 +17,13 @@ export interface IDocumentStorageManager {
 export class StandardDocumentStorageManager implements IDocumentStorageManager {
     private readonly restWrapper: RestWrapper;
 
-    constructor(private readonly snapshotUrl: string, tokenProvider?: api.ITokenProvider) {
-        let defaultHeaders: {};
-        const token = (tokenProvider as TokenProvider);
-        if (token && token.storageToken) {
-            defaultHeaders = {
-                Authorization: `Bearer ${token.storageToken}`,
-            };
-        }
+    constructor(private readonly snapshotUrl: string, tokenProvider: api.ITokenProvider) {
+        const standardTokenProvider = tokenProvider as TokenProvider;
 
-        this.restWrapper = new RestWrapper(snapshotUrl, defaultHeaders);
+        this.restWrapper = new RestWrapper(
+            snapshotUrl,
+            standardTokenProvider.getStorageHeaders(),
+            standardTokenProvider.getStorageQueryParams());
     }
 
     public async createBlob(file: Buffer): Promise<resources.ICreateBlobResponse> {

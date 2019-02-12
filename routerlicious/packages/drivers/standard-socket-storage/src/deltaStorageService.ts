@@ -38,16 +38,11 @@ export class DeltaStorageService implements api.IDeltaStorageService {
         tokenProvider: api.ITokenProvider,
         from?: number,
         to?: number): Promise<api.ISequencedDocumentMessage[]> {
-        const url = this.buildUrl(from, to);
+        const myTokenProvider = tokenProvider as TokenProvider;
 
-        let headers;
+        const url = this.buildUrl(from, to, myTokenProvider);
 
-        const token = (tokenProvider as TokenProvider).storageToken;
-        if (token && token.length > 0) {
-            headers = {
-                Authorization: `Bearer ${token}`,
-            };
-        }
+        const headers = myTokenProvider.getStorageHeaders();
 
         const result = await this.axiosInstance.get<IDeltaStorageGetResponse>(url, { headers });
         if (result.status !== 200) {
@@ -62,11 +57,17 @@ export class DeltaStorageService implements api.IDeltaStorageService {
         return operations as api.ISequencedDocumentMessage[];
     }
 
-    public buildUrl(from?: number, to?: number) {
+    public buildUrl(from?: number, to?: number, tokenProvider?: TokenProvider) {
         const fromInclusive = from === undefined ? undefined : from + 1;
         const toInclusive = to === undefined ? undefined : to - 1;
-        const query = querystring.stringify({ filter: `sequenceNumber ge ${fromInclusive} and sequenceNumber le ${toInclusive}` });
 
-        return `${this.deltaFeedUrl}?$${query}`;
+        const queryParams = {
+            filter: `sequenceNumber ge ${fromInclusive} and sequenceNumber le ${toInclusive}`,
+            ...(tokenProvider ? tokenProvider.getStorageQueryParams() : {}),
+        };
+
+        const query = querystring.stringify(queryParams);
+
+        return `${this.deltaFeedUrl}?${query}`;
     }
 }
