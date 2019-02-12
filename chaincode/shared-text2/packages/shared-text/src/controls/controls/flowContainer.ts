@@ -1,6 +1,6 @@
 // tslint:disable:ban-types
 import * as api from "@prague/client-api";
-import { IMap } from "@prague/map";
+import { ISharedMap } from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
 import * as SharedString from "@prague/sequence";
 import { IStream } from "@prague/stream";
@@ -37,7 +37,7 @@ export class FlowContainer extends ui.Component {
         element: HTMLDivElement,
         private collabDocument: api.Document,
         sharedString: SharedString.SharedString,
-        private overlayMap: IMap,
+        private overlayMap: ISharedMap,
         private image: Image,
         ink: IStream,
         private options?: Object) {
@@ -175,7 +175,7 @@ export class FlowContainer extends ui.Component {
         this.title.setVisibility(visible);
     }
 
-    public trackInsights(insights: IMap) {
+    public trackInsights(insights: ISharedMap) {
         this.updateInsights(insights);
         insights.on("valueChanged", () => {
             this.updateInsights(insights);
@@ -235,7 +235,7 @@ export class FlowContainer extends ui.Component {
         this.activeLayers[id].layer.setPosition(translated);
     }
 
-    private async updateInsights(insights: IMap) {
+    private async updateInsights(insights: ISharedMap) {
         const view = await insights.getView();
 
         if (view.has("ResumeAnalytics") && this.image) {

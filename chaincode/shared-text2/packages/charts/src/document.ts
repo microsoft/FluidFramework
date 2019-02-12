@@ -1,4 +1,4 @@
-import { IMap, MapExtension } from "@prague/map";
+import { ISharedMap, MapExtension } from "@prague/map";
 import { IRuntime } from "@prague/runtime-definitions";
 
 const rootMapId = "root";
@@ -9,16 +9,16 @@ const insightsMapId = "insights";
  */
 export class Document {
     public static async Load(runtime: IRuntime): Promise<Document> {
-        let root: IMap;
+        let root: ISharedMap;
 
         if (!runtime.existing) {
-            root = runtime.createChannel(rootMapId, MapExtension.Type) as IMap;
+            root = runtime.createChannel(rootMapId, MapExtension.Type) as ISharedMap;
             root.attach();
 
             const insights = runtime.createChannel(insightsMapId, MapExtension.Type);
             root.set(insightsMapId, insights);
         } else {
-            root = await runtime.getChannel("root") as IMap;
+            root = await runtime.getChannel("root") as ISharedMap;
         }
 
         const document = new Document(runtime, root);
@@ -36,10 +36,10 @@ export class Document {
     /**
      * Constructs a new document from the provided details
      */
-    private constructor(public runtime: IRuntime, private root: IMap) {
+    private constructor(public runtime: IRuntime, private root: ISharedMap) {
     }
 
-    public getRoot(): IMap {
+    public getRoot(): ISharedMap {
         return this.root;
     }
 }

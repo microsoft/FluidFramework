@@ -85,7 +85,7 @@ const defaultSettings = {
 };
 
 const dts = `
-declare interface IMap {
+declare interface ISharedMap {
     get<T = any>(key: string): Promise<T>;
     set<T = any>(key: string, value: T | any): T;
 }
@@ -106,7 +106,7 @@ class ChartRunner extends EventEmitter implements IPlatform {
 
         switch (id) {
             case "root":
-                return { entry: await details.collabDoc.getRoot(), type: "IMap" };
+                return { entry: await details.collabDoc.getRoot(), type: "ISharedMap" };
             case "dts":
                 return dts;
             default:

@@ -37,9 +37,9 @@ import { controls, ui } from "./controls";
 // first script loaded
 const clockStart = Date.now();
 
-async function getInsights(map: DistributedMap.IMap, id: string): Promise<DistributedMap.IMap> {
-    const insights = await map.wait<DistributedMap.IMap>("insights");
-    return insights.wait<DistributedMap.IMap>(id);
+async function getInsights(map: DistributedMap.ISharedMap, id: string): Promise<DistributedMap.ISharedMap> {
+    const insights = await map.wait<DistributedMap.ISharedMap>("insights");
+    return insights.wait<DistributedMap.ISharedMap>(id);
 }
 
 async function downloadRawText(textUrl: string): Promise<string> {
@@ -135,7 +135,7 @@ class SharedText extends Document {
         this.root.set("users", this.createMap());
         this.root.set("calendar", undefined, SharedString.SharedIntervalCollectionValueType.Name);
         const seq = this.runtime.createChannel(
-            uuid(), SharedString.CollaborativeNumberSequenceExtension.Type) as
+            uuid(), SharedString.SharedNumberSequenceExtension.Type) as
             SharedString.SharedNumberSequence;
         this.root.set("sequence-test", seq);
         const newString = this.createString() as SharedString.SharedString;
@@ -276,6 +276,8 @@ export async function instantiateRuntime(context: IContainerContext): Promise<IR
             return component.request({ url: requestUrl.substr(trailingSlash) });
         }
     });
+
+    runtime.registerTasks(["snapshot"], "1.0");
 
     // On first boot create the base component
     if (!runtime.existing) {
