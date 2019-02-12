@@ -5,6 +5,7 @@ import * as tableDocument from "@chaincode/table-document";
 import * as tableSlice from "@chaincode/table-slice";
 import * as tableView from "@chaincode/table-view";
 import { Component, Document } from "@prague/app-component";
+import { ComponentHost } from "@prague/component";
 import {
     IContainerContext,
     IPlatform,
@@ -12,12 +13,11 @@ import {
     IRuntime,
     ITree,
 } from "@prague/container-definitions";
-import { ComponentHost, Runtime } from "@prague/runtime";
+import { Runtime } from "@prague/runtime";
 import {
     IChaincode,
     IChaincodeComponent,
     IComponentDeltaHandler,
-    IComponentPlatform,
     IComponentRuntime,
 } from "@prague/runtime-definitions";
 import { Deferred } from "@prague/utils";
@@ -36,7 +36,7 @@ class SharedText extends Document {
         this.ready.resolve();
     }
 
-    public async attach(platform: IComponentPlatform): Promise<IComponentPlatform> {
+    public async attach(platform: IPlatform): Promise<IPlatform> {
         await this.ready.promise;
 
         const hostContent: HTMLElement = await platform.queryInterface<HTMLElement>("div");
@@ -59,15 +59,11 @@ export class FlowHostComponent implements IChaincodeComponent {
     private chaincode: IChaincode;
     private component: ComponentHost;
 
-    public getModule(type: string): any {
-        return null;
-    }
-
     public async close(): Promise<void> {
         return;
     }
 
-    public async run(runtime: IComponentRuntime, platform: IPlatform): Promise<IComponentDeltaHandler> {
+    public async run(runtime: IComponentRuntime): Promise<IComponentDeltaHandler> {
         this.sharedText = new SharedText(runtime);
         this.chaincode = Component.instantiate(this.sharedText);
 
@@ -84,7 +80,6 @@ export class FlowHostComponent implements IChaincodeComponent {
             runtime.existing,
             runtime.options,
             runtime.clientId,
-            runtime.user,
             runtime.blobManager,
             runtime.baseSnapshot,
             chaincode,
@@ -101,7 +96,7 @@ export class FlowHostComponent implements IChaincodeComponent {
         return component;
     }
 
-    public async attach(platform: IComponentPlatform): Promise<IComponentPlatform> {
+    public async attach(platform: IPlatform): Promise<IPlatform> {
         return this.sharedText.attach(platform);
     }
 
@@ -128,27 +123,7 @@ export async function instantiateRuntime(context: IContainerContext): Promise<IR
         ["@chaincode/table-slice", tableSlice],
         ["@chaincode/table-view", tableView]]);
 
-    const runtime = await Runtime.Load(
-        registry,
-        context.tenantId,
-        context.id,
-        context.parentBranch,
-        context.existing,
-        context.options,
-        context.clientId,
-        { id: "test" },
-        context.blobManager,
-        context.deltaManager,
-        context.quorum,
-        context.storage,
-        context.connectionState,
-        context.baseSnapshot,
-        context.blobs,
-        context.branch,
-        context.minimumSequenceNumber,
-        context.submitFn,
-        context.snapshotFn,
-        context.closeFn);
+    const runtime = await Runtime.Load(registry, context);
 
     // Register path handler for inbound messages
     runtime.registerRequestHandler(async (request: IRequest) => {
@@ -160,7 +135,7 @@ export async function instantiateRuntime(context: IContainerContext): Promise<IR
         const componentId = requestUrl
             ? requestUrl.substr(0, trailingSlash === -1 ? requestUrl.length : trailingSlash)
             : "flow-host";
-        const component = await runtime.getProcess(componentId, true);
+        const component = await runtime.getComponent(componentId, true);
 
         // If there is a trailing slash forward to the component. Otherwise handle directly.
         if (trailingSlash === -1) {
@@ -172,7 +147,7 @@ export async function instantiateRuntime(context: IContainerContext): Promise<IR
 
     // On first boot create the base component
     if (!runtime.existing) {
-        runtime.createAndAttachProcess("flow-host", "@chaincode/flow-host").catch((error) => {
+        runtime.createAndAttachComponent("flow-host", "@chaincode/flow-host").catch((error) => {
             context.error(error);
         });
     }

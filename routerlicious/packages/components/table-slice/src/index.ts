@@ -1,9 +1,9 @@
 import { CellRange, TableDocument, TableDocumentComponent } from "@chaincode/table-document";
 import { Component } from "@prague/app-component";
+import { ComponentHost } from "@prague/component";
 import { IPlatform, ITree } from "@prague/container-definitions";
 import { IMapView, MapExtension } from "@prague/map";
-import { ComponentHost } from "@prague/runtime";
-import { IChaincode, IChaincodeComponent, IComponentDeltaHandler, IComponentPlatform, IComponentRuntime } from "@prague/runtime-definitions";
+import { IChaincode, IChaincodeComponent, IComponentDeltaHandler, IComponentRuntime } from "@prague/runtime-definitions";
 import { Deferred } from "@prague/utils";
 import { cellRangeExpr, ConfigView } from "./config";
 import { ConfigKeys } from "./configKeys";
@@ -39,7 +39,7 @@ export class TableSlice extends Component {
         this.readyDeferred.resolve();
     }
 
-    public async attach(platform: IComponentPlatform): Promise<IComponentPlatform> {
+    public async attach(platform: IPlatform): Promise<IPlatform> {
         {
             const maybeServerUrl = await this.root.get(ConfigKeys.serverUrl);
             if (!maybeServerUrl) {
@@ -60,7 +60,7 @@ export class TableSlice extends Component {
         }
 
         const docId = await this.root.get(ConfigKeys.docId);
-        const component = await this.componentRuntime.getProcess(docId, true);
+        const component = await this.componentRuntime.getComponent(docId, true);
         const tableDocComponent = component.chaincode as TableDocumentComponent;
         this.maybeDoc = tableDocComponent.table;
         await this.maybeDoc.ready;
@@ -121,15 +121,11 @@ export class TableSliceComponent implements IChaincodeComponent {
     private chaincode: IChaincode;
     private component: ComponentHost;
 
-    public getModule(type: string) {
-        return null;
-    }
-
     public async close(): Promise<void> {
         return;
     }
 
-    public async run(runtime: IComponentRuntime, platform: IPlatform): Promise<IComponentDeltaHandler> {
+    public async run(runtime: IComponentRuntime): Promise<IComponentDeltaHandler> {
         this.slice = new TableSlice(runtime);
         this.chaincode = Component.instantiate(this.slice);
         const chaincode = this.chaincode;
@@ -145,7 +141,6 @@ export class TableSliceComponent implements IChaincodeComponent {
             runtime.existing,
             runtime.options,
             runtime.clientId,
-            runtime.user,
             runtime.blobManager,
             runtime.baseSnapshot,
             chaincode,
@@ -162,7 +157,7 @@ export class TableSliceComponent implements IChaincodeComponent {
         return component;
     }
 
-    public async attach(platform: IComponentPlatform): Promise<IComponentPlatform> {
+    public async attach(platform: IPlatform): Promise<IPlatform> {
         return this.slice.attach(platform);
     }
 

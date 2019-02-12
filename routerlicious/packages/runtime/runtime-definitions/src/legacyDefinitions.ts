@@ -1,7 +1,16 @@
-import { IPlatform, ITree } from "@prague/container-definitions";
-import { IDistributedObjectServices } from "./channel";
-import { IObjectMessage, ISequencedObjectMessage } from "./protocol";
-import { IRuntime } from "./runtime";
+import {
+    IDeltaManager,
+    IGenericBlob,
+    IPlatform,
+    IQuorum,
+    MessageType,
+} from "@prague/container-definitions";
+import { EventEmitter } from "events";
+import {
+    IChannel,
+    IDistributedObjectServices,
+} from "./channel";
+import { ISequencedObjectMessage } from "./protocol";
 
 export interface IChaincode {
     /**
@@ -19,49 +28,6 @@ export interface IChaincode {
      * interface that can be used to access the running component.
      */
     run(runtime: IRuntime, platform: IPlatform): Promise<IPlatform>;
-}
-
-/**
- * Exported module definition
- */
-export interface IChaincodeFactory {
-    /**
-     * Instantiates a new instance of the chaincode against the given runtime
-     */
-    instantiate(): Promise<IChaincode>;
-}
-
-/**
- * Code loading interface
- */
-export interface ICodeLoader {
-    /**
-     * Loads the package specified by IPackage and returns a promise to its entry point exports.
-     *
-     * This definition will expand. A document likely stores a published package for the document within it. And that
-     * package then goes and refers to other stuff. The base package will have the ability to pull in, install
-     * data contained in the document.
-     */
-    load(source: string): Promise<IChaincodeFactory>;
-}
-
-export interface IChannel {
-    /**
-     * A readonly identifier for the shared object
-     */
-    readonly id: string;
-
-    readonly type: string;
-
-    dirty: boolean;
-
-    ready(): Promise<void>;
-
-    snapshot(): ITree;
-
-    transform(message: IObjectMessage, sequenceNumber: number): IObjectMessage;
-
-    isLocal(): boolean;
 }
 
 export interface IChaincodeModule  {
@@ -97,4 +63,74 @@ export interface IChaincodeModule  {
      * for consistency.
      */
     create(runtime: IRuntime, id: string): IChannel;
+}
+
+export interface IRuntime extends EventEmitter {
+    readonly tenantId: string;
+
+    readonly id: string;
+
+    readonly existing: boolean;
+
+    readonly options: any;
+
+    readonly clientId: string;
+
+    readonly parentBranch: string;
+
+    readonly connected: boolean;
+
+    readonly deltaManager: IDeltaManager;
+
+    readonly platform: IPlatform;
+
+    /**
+     * Returns the channel with the given id
+     */
+    getChannel(id: string): Promise<IChannel>;
+
+    /**
+     * Creates a new channel of the given type
+     */
+    createChannel(id: string, type: string): IChannel;
+
+    /**
+     * Attaches the channel to the runtime - exposing it ot remote clients
+     */
+    attachChannel(channel: IChannel): IDistributedObjectServices;
+
+    /**
+     * Retrieves the current quorum
+     */
+    getQuorum(): IQuorum;
+
+    /**
+     * Snapshots the current runtime
+     */
+    snapshot(message: string): Promise<void>;
+
+    /**
+     * Triggers a message to force a snapshot
+     */
+    save(message: string);
+
+    /**
+     * Terminates the runtime and closes the document
+     */
+    close(): void;
+
+    hasUnackedOps(): boolean;
+
+    // Blob related calls
+
+    uploadBlob(file: IGenericBlob): Promise<IGenericBlob>;
+
+    getBlob(sha: string): Promise<IGenericBlob>;
+
+    getBlobMetadata(): Promise<IGenericBlob[]>;
+
+    /**
+     * Submits a message on the document channel
+     */
+    submitMessage(type: MessageType, content: any);
 }

@@ -13,7 +13,6 @@ import {
     ISequencedDocumentMessage,
     ISnapshotTree,
     ITreeEntry,
-    IUser,
     MessageType,
     TreeEntry,
 } from "@prague/container-definitions";
@@ -37,7 +36,6 @@ import * as assert from "assert";
 import { EventEmitter } from "events";
 import { ChannelDeltaConnection } from "./channelDeltaConnection";
 import { ChannelStorageService } from "./channelStorageService";
-import { ILegacyRuntime } from "./definitions";
 import { LocalChannelStorageService } from "./localChannelStorageService";
 
 export interface IChannelState {
@@ -54,7 +52,10 @@ interface IObjectServices {
 // This needs to deal with transformed messages
 // And also output attributes
 
-export class ComponentHost extends EventEmitter implements IComponentDeltaHandler, ILegacyRuntime {
+/**
+ * This is the base component class
+ */
+export class ComponentHost extends EventEmitter implements IComponentDeltaHandler, IRuntime {
     public static async LoadFromSnapshot(
         componentRuntime: IComponentRuntime,
         tenantId: string,
@@ -64,7 +65,6 @@ export class ComponentHost extends EventEmitter implements IComponentDeltaHandle
         existing: boolean,
         options: any,
         clientId: string,
-        user: IUser,
         blobManager: IBlobManager,
         tree: ISnapshotTree,
         chaincode: IChaincode,
@@ -99,7 +99,6 @@ export class ComponentHost extends EventEmitter implements IComponentDeltaHandle
             existing,
             options,
             clientId,
-            user,
             blobManager,
             deltaManager,
             quorum,
@@ -120,7 +119,6 @@ export class ComponentHost extends EventEmitter implements IComponentDeltaHandle
             /* tslint:disable:promise-function-async */
             const loadSnapshotsP = Object.keys(tree.trees).map((path) => {
                 return runtime.loadSnapshotChannel(
-                    runtime,
                     path,
                     tree.trees[path],
                     storage,
@@ -207,7 +205,6 @@ export class ComponentHost extends EventEmitter implements IComponentDeltaHandle
         public existing: boolean,
         public readonly options: any,
         public clientId: string,
-        public readonly user: IUser,
         private blobManager: IBlobManager,
         public readonly deltaManager: IDeltaManager,
         private quorum: IQuorum,
@@ -219,12 +216,12 @@ export class ComponentHost extends EventEmitter implements IComponentDeltaHandle
         super();
     }
 
-    public createAndAttachProcess(id: string, pkg: string): Promise<IComponentRuntime> {
-        return this.componentRuntime.createAndAttachProcess(id, pkg);
+    public createAndAttachComponent(id: string, pkg: string): Promise<IComponentRuntime> {
+        return this.componentRuntime.createAndAttachComponent(id, pkg);
     }
 
-    public getProcess(id: string, wait: boolean): Promise<IComponentRuntime> {
-        return this.componentRuntime.getProcess(id, wait);
+    public getComponent(id: string, wait: boolean): Promise<IComponentRuntime> {
+        return this.componentRuntime.getComponent(id, wait);
     }
 
     public async request(request: IRequest): Promise<IResponse> {
@@ -642,7 +639,6 @@ export class ComponentHost extends EventEmitter implements IComponentDeltaHandle
     }
 
     private async loadSnapshotChannel(
-        runtime: IRuntime,
         id: string,
         tree: ISnapshotTree,
         storage: IDocumentStorageService,

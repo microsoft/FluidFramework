@@ -79,7 +79,7 @@ export class ConfigView {
 
         this.done = new Promise<void>((accept) => {
             this.createButton.addEventListener("click", () => {
-                this.runtime.createAndAttachProcess(this.idBox.value, "@chaincode/table-document");
+                this.runtime.createAndAttachComponent(this.idBox.value, "@chaincode/table-document");
                 this.map.set(ConfigKeys.docId, this.idBox.value);
                 accept();
             });

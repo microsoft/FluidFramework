@@ -53,6 +53,10 @@ export class WebPlatform extends EventEmitter implements IPlatform {
     public update() {
         this.emit("update");
     }
+
+    public detach() {
+        return;
+    }
 }
 
 export class WebPlatformFactory implements IPlatformFactory {

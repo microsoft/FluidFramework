@@ -7,10 +7,11 @@ import {
     IQuorum,
     IRequest,
     IResponse,
+    IRuntime,
     ISequencedDocumentMessage,
     ISnapshotTree,
     ITree,
-    IUser,
+    MessageType,
 } from "@prague/container-definitions";
 
 export interface IComponentDeltaHandler {
@@ -21,24 +22,8 @@ export interface IComponentDeltaHandler {
     request(request: IRequest): Promise<IResponse>;
 }
 
-/**
- * The platform interface exposes access to underlying pl
- */
-export interface IComponentPlatform extends IPlatform {
-    /**
-     * Detaches the given platform
-     */
-    detach();
-}
-
 export interface IChaincodeComponent {
     // I'm not sure how many of the below we'll even need
-
-    /**
-     * Retrieves the module by type name
-     */
-    getModule(type: string);
-
     /**
      * Stops the instantiated chaincode from running
      */
@@ -50,12 +35,12 @@ export interface IChaincodeComponent {
      * Invoked once the chaincode has been fully instantiated on the document. Run returns a platform
      * interface that can be used to access the running component.
      */
-    run(runtime: IComponentRuntime, platform: IPlatform): Promise<IComponentDeltaHandler>;
+    run(runtime: IComponentRuntime): Promise<IComponentDeltaHandler>;
 
     /**
      * Allows code to attach to the given component.
      */
-    attach(platform: IComponentPlatform): Promise<IComponentPlatform>;
+    attach(platform: IPlatform): Promise<IPlatform>;
 
     /**
      * Generates a snapshot of the given component
@@ -70,7 +55,6 @@ export interface IComponentRuntime {
     readonly existing: boolean;
     readonly options: any;
     readonly clientId: string;
-    readonly user: IUser;
     readonly parentBranch: string;
     readonly connected: boolean;
     readonly deltaManager: IDeltaManager;
@@ -92,14 +76,52 @@ export interface IComponentRuntime {
 
     submitMessage(type: string, content: any): any;
 
-    createAndAttachProcess(id: string, pkg: string): Promise<IComponentRuntime>;
+    createAndAttachComponent(id: string, pkg: string): Promise<IComponentRuntime>;
 
-    getProcess(id: string, wait: boolean): Promise<IComponentRuntime>;
+    getComponent(id: string, wait: boolean): Promise<IComponentRuntime>;
 
     /**
      * Allows for attachment to the given component
      */
-    attach(platform: IComponentPlatform): Promise<IComponentPlatform>;
+    attach(platform: IPlatform): Promise<IPlatform>;
 
     request(request: IRequest): Promise<IResponse>;
+}
+
+export interface IHostRuntime extends IRuntime {
+    // TODOTODO do I also need the component ID? Does the tenant ID even show up?
+    readonly tenantId: string;
+    readonly id: string;
+    readonly existing: boolean;
+    readonly options: any;
+    readonly clientId: string;
+    readonly parentBranch: string;
+    readonly connected: boolean;
+    readonly deltaManager: IDeltaManager;
+    readonly blobManager: IBlobManager;
+    readonly storage: IDocumentStorageService;
+    readonly connectionState: ConnectionState;
+    readonly branch: string;
+    readonly minimumSequenceNumber: number;
+    readonly submitFn: (type: MessageType, contents: any) => void;
+    readonly snapshotFn: (message: string) => Promise<void>;
+    readonly closeFn: () => void;
+
+    // I believe these next two things won't be necessary
+
+    getComponent(id: string, wait?: boolean): Promise<IComponentRuntime>;
+
+    createAndAttachComponent(id: string, pkg: string): Promise<IComponentRuntime>;
+
+    // TODO at some point we may ant to split create from attach for processes. But the distributed data
+    // structures aren't yet prepared for this. For simplicity we just offer a createAndAttach
+    // attachProcess(process: IProcess);
+
+    getQuorum(): IQuorum;
+
+    error(err: any): void;
+}
+
+export interface IComponentFactory {
+    instantiateComponent(): Promise<IChaincodeComponent>;
 }

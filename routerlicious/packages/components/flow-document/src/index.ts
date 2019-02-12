@@ -1,5 +1,6 @@
 import { Component } from "@prague/app-component";
 import { DataStore } from "@prague/app-datastore";
+import { ComponentHost } from "@prague/component";
 import { IPlatform, ITree } from "@prague/container-definitions";
 import { MapExtension } from "@prague/map";
 import {
@@ -15,8 +16,12 @@ import {
     SegmentType,
     UniversalSequenceNumber,
 } from "@prague/merge-tree";
-import { ComponentHost } from "@prague/runtime";
-import { IChaincode, IChaincodeComponent, IComponentDeltaHandler, IComponentPlatform, IComponentRuntime } from "@prague/runtime-definitions";
+import {
+    IChaincode,
+    IChaincodeComponent,
+    IComponentDeltaHandler,
+    IComponentRuntime,
+} from "@prague/runtime-definitions";
 import { SharedString, SharedStringExtension } from "@prague/sequence";
 import { Deferred } from "@prague/utils";
 import { EventEmitter } from "events";
@@ -100,7 +105,7 @@ const accumAsLeafAction = {
     ) => (accum as LeafAction)(position, segment, start, end),
 };
 
-class ServicePlatform extends EventEmitter implements IComponentPlatform {
+class ServicePlatform extends EventEmitter implements IPlatform {
     private qi: Map<string, Promise<any>>;
 
     constructor(services: ReadonlyArray<[string, Promise<any>]>) {
@@ -170,7 +175,7 @@ export class FlowDocument extends Component {
             services.concat([["datastore", Promise.resolve(store)]]));
     }
     public async getInclusionContainerComponent(marker: Marker, services: ReadonlyArray<[string, Promise<any>]>) {
-        const component = await this.componentRuntime.getProcess(marker.properties.docId, true);
+        const component = await this.componentRuntime.getComponent(marker.properties.docId, true);
         await component.attach(new ServicePlatform(services));
     }
 
@@ -238,7 +243,7 @@ export class FlowDocument extends Component {
     public insertInclusionComponent(position: number, docId: string, pkg: string) {
         const docInfo = { kind: InclusionKind.Component, docId };
         this.sharedString.insertMarker(position, ReferenceType.Simple, docInfo);
-        this.componentRuntime.createAndAttachProcess(docId, pkg);
+        this.componentRuntime.createAndAttachComponent(docId, pkg);
     }
 
     public annotate(start: number, end: number, props: PropertySet) {
@@ -287,15 +292,11 @@ export class FlowDocumentComponent implements IChaincodeComponent {
     private chaincode: IChaincode;
     private component: ComponentHost;
 
-    public getModule(type: string) {
-        return null;
-    }
-
     public async close(): Promise<void> {
         return;
     }
 
-    public async run(runtime: IComponentRuntime, platform: IPlatform): Promise<IComponentDeltaHandler> {
+    public async run(runtime: IComponentRuntime): Promise<IComponentDeltaHandler> {
         this.document = new FlowDocument(runtime);
         this.chaincode = Component.instantiate(this.document);
         const chaincode = this.chaincode;
@@ -311,7 +312,6 @@ export class FlowDocumentComponent implements IChaincodeComponent {
             runtime.existing,
             runtime.options,
             runtime.clientId,
-            runtime.user,
             runtime.blobManager,
             runtime.baseSnapshot,
             chaincode,
@@ -328,7 +328,7 @@ export class FlowDocumentComponent implements IChaincodeComponent {
         return component;
     }
 
-    public async attach(platform: IComponentPlatform): Promise<IComponentPlatform> {
+    public async attach(platform: IPlatform): Promise<IPlatform> {
         return null;
     }
 

@@ -1,9 +1,9 @@
 import { TableDocumentComponent } from "@chaincode/table-document";
 import { Component } from "@prague/app-component";
+import { ComponentHost } from "@prague/component";
 import { IPlatform, ITree } from "@prague/container-definitions";
 import { MapExtension } from "@prague/map";
-import { ComponentHost } from "@prague/runtime";
-import { IChaincode, IChaincodeComponent, IComponentDeltaHandler, IComponentPlatform, IComponentRuntime } from "@prague/runtime-definitions";
+import { IChaincode, IChaincodeComponent, IComponentDeltaHandler, IComponentRuntime } from "@prague/runtime-definitions";
 import { Deferred } from "@prague/utils";
 import { ConfigView } from "./config";
 import { ConfigKeys } from "./configKeys";
@@ -23,7 +23,7 @@ export class TableView extends Component {
         this.ready.resolve();
     }
 
-    public async attach(platform: IComponentPlatform): Promise<IComponentPlatform> {
+    public async attach(platform: IPlatform): Promise<IPlatform> {
         const maybeDiv = await platform.queryInterface<HTMLElement>("div");
         if (!maybeDiv) {
             throw new Error("No <div> provided");
@@ -44,7 +44,7 @@ export class TableView extends Component {
         if (maybeDiv) {
             // tslint:disable-next-line:no-shadowed-variable
             const docId = await this.root.get(ConfigKeys.docId);
-            const component = await this.componentRuntime.getProcess(docId, true);
+            const component = await this.componentRuntime.getComponent(docId, true);
             const tableDocComponent = component.chaincode as TableDocumentComponent;
             const doc = tableDocComponent.table;
             await doc.ready;
@@ -67,15 +67,11 @@ export class TableViewComponent implements IChaincodeComponent {
     private chaincode: IChaincode;
     private component: ComponentHost;
 
-    public getModule(type: string) {
-        return null;
-    }
-
     public async close(): Promise<void> {
         return;
     }
 
-    public async run(runtime: IComponentRuntime, platform: IPlatform): Promise<IComponentDeltaHandler> {
+    public async run(runtime: IComponentRuntime): Promise<IComponentDeltaHandler> {
         this.view = new TableView(runtime);
         this.chaincode = Component.instantiate(this.view);
         const chaincode = this.chaincode;
@@ -91,7 +87,6 @@ export class TableViewComponent implements IChaincodeComponent {
             runtime.existing,
             runtime.options,
             runtime.clientId,
-            runtime.user,
             runtime.blobManager,
             runtime.baseSnapshot,
             chaincode,
@@ -108,7 +103,7 @@ export class TableViewComponent implements IChaincodeComponent {
         return component;
     }
 
-    public async attach(platform: IComponentPlatform): Promise<IComponentPlatform> {
+    public async attach(platform: IPlatform): Promise<IPlatform> {
         return this.view.attach(platform);
     }
 

@@ -37,7 +37,9 @@ COPY packages/loader/container-definitions/package*.json packages/loader/contain
 COPY packages/loader/container-loader/package*.json packages/loader/container-loader/
 COPY packages/loader/gitresources/package*.json packages/loader/gitresources/
 COPY packages/loader/loader-web/package*.json packages/loader/loader-web/
+COPY packages/loader/utils/package*.json packages/loader/utils/
 COPY packages/runtime/api-definitions/package*.json packages/runtime/api-definitions/
+COPY packages/runtime/component/package*.json packages/runtime/component/
 COPY packages/runtime/cell/package*.json packages/runtime/cell/
 COPY packages/runtime/client-api/package*.json packages/runtime/client-api/
 COPY packages/runtime/map/package*.json packages/runtime/map/
@@ -60,7 +62,6 @@ COPY packages/server/services-core/package*.json packages/server/services-core/
 COPY packages/server/services-utils/package*.json packages/server/services-utils/
 COPY packages/shared/test-utils/package*.json packages/shared/test-utils/
 COPY packages/shared/tools-core/package*.json packages/shared/tools-core/
-COPY packages/shared/utils/package*.json packages/shared/utils/
     
 
 # Copy over chaincode npmrc and package.json to dynamically install packages.

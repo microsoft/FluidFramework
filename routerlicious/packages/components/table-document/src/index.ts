@@ -11,6 +11,7 @@ import {
     UnboxedOper,
     Workbook,
 } from "@prague/client-ui/ext/calc";
+import { ComponentHost } from "@prague/component";
 import { IPlatform, ITree } from "@prague/container-definitions";
 import { IMapView, MapExtension, registerDefaultValueType  } from "@prague/map";
 import { Counter, CounterValueType } from "@prague/map";
@@ -22,8 +23,7 @@ import {
     ReferenceType,
     UniversalSequenceNumber,
 } from "@prague/merge-tree";
-import { ComponentHost } from "@prague/runtime";
-import { IChaincode, IChaincodeComponent, IComponentDeltaHandler, IComponentPlatform, IComponentRuntime } from "@prague/runtime-definitions";
+import { IChaincode, IChaincodeComponent, IComponentDeltaHandler, IComponentRuntime } from "@prague/runtime-definitions";
 import {
     SharedIntervalCollectionValueType,
     SharedString,
@@ -237,15 +237,11 @@ export class TableDocumentComponent implements IChaincodeComponent {
         this.chaincode = Component.instantiate(this.table);
     }
 
-    public getModule(type: string) {
-        return null;
-    }
-
     public async close(): Promise<void> {
         return;
     }
 
-    public async run(runtime: IComponentRuntime, platform: IPlatform): Promise<IComponentDeltaHandler> {
+    public async run(runtime: IComponentRuntime): Promise<IComponentDeltaHandler> {
         const chaincode = this.chaincode;
 
         // All of the below would be hidden from a developer
@@ -259,7 +255,6 @@ export class TableDocumentComponent implements IChaincodeComponent {
             runtime.existing,
             runtime.options,
             runtime.clientId,
-            runtime.user,
             runtime.blobManager,
             runtime.baseSnapshot,
             chaincode,
@@ -276,7 +271,7 @@ export class TableDocumentComponent implements IChaincodeComponent {
         return component;
     }
 
-    public async attach(platform: IComponentPlatform): Promise<IComponentPlatform> {
+    public async attach(platform: IPlatform): Promise<IPlatform> {
         return;
     }
 

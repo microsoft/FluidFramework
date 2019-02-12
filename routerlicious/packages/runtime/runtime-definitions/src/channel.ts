@@ -1,6 +1,25 @@
 import { ConnectionState, ITree } from "@prague/container-definitions";
 import { IObjectMessage, ISequencedObjectMessage } from "./protocol";
 
+export interface IChannel {
+    /**
+     * A readonly identifier for the collaborative object
+     */
+    readonly id: string;
+
+    readonly type: string;
+
+    dirty: boolean;
+
+    ready(): Promise<void>;
+
+    snapshot(): ITree;
+
+    transform(message: IObjectMessage, sequenceNumber: number): IObjectMessage;
+
+    isLocal(): boolean;
+}
+
 export interface IAttachMessage {
     // The identifier for the object
     id: string;

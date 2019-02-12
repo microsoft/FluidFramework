@@ -45,4 +45,5 @@ export function getToken(tenantId: string, documentId: string, tenants: IAlfredT
 
 export interface IAlfredUser extends IUser {
     displayName: string;
+    name: string;
 }

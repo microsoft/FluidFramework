@@ -5,8 +5,8 @@ import { debug } from "./debug";
 export const QuorumKey = "leader";
 
 export class LeaderElector extends EventEmitter {
-
     private leader: string;
+
     constructor(private quorum: IQuorum, private clientId: string) {
         super();
         this.attachQuorumListeners();

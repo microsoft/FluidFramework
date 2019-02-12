@@ -3,7 +3,6 @@ import {
     IChaincode,
     IChaincodeComponent,
     IComponentDeltaHandler,
-    IComponentPlatform,
     IComponentRuntime,
 } from "@prague/runtime-definitions";
 import { ComponentHost } from "./componentHost";
@@ -14,15 +13,11 @@ export class LegacyChaincodeBridge implements IChaincodeComponent {
     constructor(private chaincode: IChaincode) {
     }
 
-    public getModule(type: string) {
-        return null;
-    }
-
     public async close(): Promise<void> {
         return;
     }
 
-    public async run(runtime: IComponentRuntime, platform: IPlatform): Promise<IComponentDeltaHandler> {
+    public async run(runtime: IComponentRuntime): Promise<IComponentDeltaHandler> {
         const chaincode = this.chaincode;
 
         // All of the below would be hidden from a developer
@@ -36,7 +31,6 @@ export class LegacyChaincodeBridge implements IChaincodeComponent {
             runtime.existing,
             runtime.options,
             runtime.clientId,
-            runtime.user,
             runtime.blobManager,
             runtime.baseSnapshot,
             chaincode,
@@ -53,7 +47,7 @@ export class LegacyChaincodeBridge implements IChaincodeComponent {
         return component;
     }
 
-    public async attach(platform: IComponentPlatform): Promise<IComponentPlatform> {
+    public async attach(platform: IPlatform): Promise<IPlatform> {
         return null;
     }
 

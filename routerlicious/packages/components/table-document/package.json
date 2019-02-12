@@ -35,6 +35,7 @@
     "@prague/app-component": "^0.2.0",
     "@prague/app-datastore": "^0.2.0",
     "@prague/client-ui": "^0.2.0",
+    "@prague/component": "^0.2.0",
     "@prague/container-definitions": "^0.2.0",
     "@prague/map": "^0.2.0",
     "@prague/merge-tree": "^0.2.0",

@@ -25,8 +25,10 @@ export function generateToken(tenantId: string, documentId: string, key: string,
 }
 
 export function generateUser(): IUser {
-    return {
+    const randomUser = {
         id: uuid(),
         name: getRandomName(" ", true),
     };
+
+    return randomUser;
 }

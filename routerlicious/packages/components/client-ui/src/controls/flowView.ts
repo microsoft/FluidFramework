@@ -22,6 +22,10 @@ import {
 import * as ui from "../ui";
 import { Status } from "./status";
 
+export interface IFlowViewUser extends IUser {
+    name: string;
+}
+
 export interface IOverlayMarker {
     id: string;
     position: number;
@@ -3139,7 +3143,7 @@ export class Cursor {
     public makePresenceDiv() {
         this.presenceDiv = document.createElement("div");
         // TODO callback to go from UID to display information
-        this.presenceDiv.innerText = this.getUserDisplayString(this.presenceInfo.user);
+        this.presenceDiv.innerText = this.getUserDisplayString(this.presenceInfo.user as IFlowViewUser);
         this.presenceDiv.style.zIndex = "1";
         this.presenceDiv.style.position = "absolute";
         this.presenceDiv.style.color = "white";
@@ -3273,7 +3277,7 @@ export class Cursor {
         this.blinkTimer = setTimeout(this.blinker, 20);
     }
 
-    private getUserDisplayString(user: IUser): string {
+    private getUserDisplayString(user: IFlowViewUser): string {
         // TODO - callback to client code to provide mapping from user -> display
         // this would allow a user ID to be put on the wire which can then be mapped
         // back to an email, name, etc...

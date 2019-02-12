@@ -1,4 +1,5 @@
 import * as cell from "@prague/cell";
+import { ComponentHost } from "@prague/component";
 import {
     IChaincodeFactory,
     ICodeLoader,
@@ -10,15 +11,13 @@ import {
 } from "@prague/container-definitions";
 import * as map from "@prague/map";
 import {
-    ComponentHost,
-    IComponentFactory,
     Runtime,
 } from "@prague/runtime";
 import {
     IChaincode,
     IChaincodeComponent,
     IComponentDeltaHandler,
-    IComponentPlatform,
+    IComponentFactory,
     IComponentRuntime,
     IRuntime as ILegacyRuntime,
 } from "@prague/runtime-definitions";
@@ -81,7 +80,7 @@ class Component implements IChaincodeComponent {
         return;
     }
 
-    public async run(runtime: IComponentRuntime, platform: IPlatform): Promise<IComponentDeltaHandler> {
+    public async run(runtime: IComponentRuntime): Promise<IComponentDeltaHandler> {
         const component = await ComponentHost.LoadFromSnapshot(
             runtime,
             runtime.tenantId,
@@ -91,7 +90,6 @@ class Component implements IChaincodeComponent {
             runtime.existing,
             runtime.options,
             runtime.clientId,
-            runtime.user,
             runtime.blobManager,
             runtime.baseSnapshot,
             this.chaincode,
@@ -108,7 +106,7 @@ class Component implements IChaincodeComponent {
         return component;
     }
 
-    public attach(platform: IComponentPlatform): Promise<IComponentPlatform> {
+    public attach(platform: IPlatform): Promise<IPlatform> {
         throw new Error("Method not implemented.");
     }
 
@@ -137,27 +135,7 @@ export class ChaincodeFactory implements IChaincodeFactory {
         // return Promise.resolve(chaincode);
         const registry = new Map<string, any>([["@prague/client-api", chaincode]]);
 
-        const runtime = await Runtime.Load(
-            registry,
-            context.tenantId,
-            context.id,
-            context.parentBranch,
-            context.existing,
-            context.options,
-            context.clientId,
-            { id: "test" },
-            context.blobManager,
-            context.deltaManager,
-            context.quorum,
-            context.storage,
-            context.connectionState,
-            context.baseSnapshot,
-            context.blobs,
-            context.branch,
-            context.minimumSequenceNumber,
-            context.submitFn,
-            context.snapshotFn,
-            context.closeFn);
+        const runtime = await Runtime.Load(registry, context);
 
         // Register path handler for inbound messages
         runtime.registerRequestHandler(async (request: IRequest) => {
@@ -170,7 +148,7 @@ export class ChaincodeFactory implements IChaincodeFactory {
             const componentId = requestUrl
                 ? requestUrl.substr(0, trailingSlash === -1 ? requestUrl.length : trailingSlash)
                 : "text";
-            const component = await runtime.getProcess(componentId, true);
+            const component = await runtime.getComponent(componentId, true);
 
             // If there is a trailing slash forward to the component. Otherwise handle directly.
             if (trailingSlash === -1) {
@@ -182,7 +160,7 @@ export class ChaincodeFactory implements IChaincodeFactory {
 
         // On first boot create the base component
         if (!runtime.existing) {
-            runtime.createAndAttachProcess("root", "@prague/client-api").catch((error) => {
+            runtime.createAndAttachComponent("root", "@prague/client-api").catch((error) => {
                 context.error(error);
             });
         }

@@ -3,6 +3,7 @@ import {
     ConnectionState,
     FileMode,
     IBlobManager,
+    IContainerContext,
     IDeltaManager,
     IDocumentStorageService,
     IQuorum,
@@ -11,73 +12,40 @@ import {
     ISequencedDocumentMessage,
     ISnapshotTree,
     ITree,
-    IUser,
     MessageType,
     TreeEntry,
 } from "@prague/container-definitions";
 import { ICommit } from "@prague/gitresources";
-import { IAttachMessage, IComponentRuntime, IEnvelope, IHelpMessage } from "@prague/runtime-definitions";
+import {
+    IAttachMessage,
+    IComponentFactory,
+    IComponentRuntime,
+    IEnvelope,
+    IHelpMessage,
+    IHostRuntime,
+} from "@prague/runtime-definitions";
 import { buildHierarchy, Deferred, flatten, readAndParse } from "@prague/utils";
 import * as assert from "assert";
 import { EventEmitter } from "events";
-import { Component } from "./component";
+import { ComponentRuntime } from "./componentRuntime";
 import { ComponentStorageService } from "./componentStorageService";
 import { debug } from "./debug";
-import { IComponentFactory, IHostRuntime } from "./definitions";
 import { LeaderElector } from "./leaderElection";
 import { analyzeTasks, getLeaderCandidate } from "./taskAnalyzer";
 
 // Context will define the component level mappings
 export class Runtime extends EventEmitter implements IHostRuntime {
-    // TODO Runtime should have a component registry. Type -> component.
-
     public static async Load(
         registry: Map<string, IComponentFactory>,
-        tenantId: string,
-        id: string,
-        parentBranch: string,
-        existing: boolean,
-        options: any,
-        clientId: string,
-        user: IUser,
-        blobManager: IBlobManager,
-        deltaManager: IDeltaManager,
-        quorum: IQuorum,
-        storage: IDocumentStorageService,
-        connectionState: ConnectionState,
-        baseSnapshot: ISnapshotTree,
-        extraBlobs: Map<string, string>,
-        branch: string,
-        minimumSequenceNumber: number,
-        submitFn: (type: MessageType, contents: any) => void,
-        snapshotFn: (message: string) => Promise<void>,
-        closeFn: () => void,
+        context: IContainerContext,
     ): Promise<Runtime> {
-        const context = new Runtime(
-            registry,
-            tenantId,
-            id,
-            parentBranch,
-            existing,
-            options,
-            clientId,
-            user,
-            blobManager,
-            deltaManager,
-            quorum,
-            storage,
-            connectionState,
-            branch,
-            minimumSequenceNumber,
-            submitFn,
-            snapshotFn,
-            closeFn);
+        const runtime = new Runtime(registry, context);
 
         const components = new Map<string, ISnapshotTree>();
-        const snapshotTreesP = Object.keys(baseSnapshot.commits).map(async (key) => {
-            const moduleSha = baseSnapshot.commits[key];
-            const commit = (await storage.getVersions(moduleSha, 1))[0];
-            const moduleTree = await storage.getSnapshotTree(commit);
+        const snapshotTreesP = Object.keys(context.baseSnapshot.commits).map(async (key) => {
+            const moduleSha = context.baseSnapshot.commits[key];
+            const commit = (await context.storage.getVersions(moduleSha, 1))[0];
+            const moduleTree = await context.storage.getSnapshotTree(commit);
             return { id: key, tree: moduleTree };
         });
 
@@ -88,32 +56,75 @@ export class Runtime extends EventEmitter implements IHostRuntime {
 
         const componentsP = new Array<Promise<void>>();
         for (const [componentId, snapshot] of components) {
-            const componentP = context.loadComponent(componentId, snapshot, extraBlobs);
+            const componentP = runtime.loadComponent(componentId, snapshot, context.blobs);
             componentsP.push(componentP);
         }
 
         await Promise.all(componentsP);
 
-        return context;
-    }
-
-    public get ready(): Promise<void> {
-        this.verifyNotClosed();
-
-        // TODOTODO this needs to defer to the runtime
-        return Promise.resolve();
+        return runtime;
     }
 
     public get connectionState(): ConnectionState {
-        return this._connectionState;
+        return this.context.connectionState;
     }
 
-    // Components tracked by the Domain
-    private components = new Map<string, Component>();
-    private processDeferred = new Map<string, Deferred<Component>>();
-    private closed = false;
-    private pendingAttach = new Map<string, IAttachMessage>();
-    private requestHandler: (request: IRequest) => Promise<IResponse>;
+    public get tenantId(): string {
+        return this.context.tenantId;
+    }
+
+    public get id(): string {
+        return this.context.id;
+    }
+
+    public get parentBranch(): string {
+        return this.context.parentBranch;
+    }
+
+    public get existing(): boolean {
+        return this.context.existing;
+    }
+
+    // tslint:disable-next-line:no-unsafe-any
+    public get options(): any {
+        return this.context.options;
+    }
+
+    public get clientId(): string {
+        return this.context.clientId;
+    }
+
+    public get blobManager(): IBlobManager {
+        return this.context.blobManager;
+    }
+
+    public get deltaManager(): IDeltaManager {
+        return this.context.deltaManager;
+    }
+
+    public get storage(): IDocumentStorageService {
+        return this.context.storage;
+    }
+
+    public get branch(): string {
+        return this.context.branch;
+    }
+
+    public get minimumSequenceNumber(): number {
+        return this.context.minimumSequenceNumber;
+    }
+
+    public get submitFn(): (type: MessageType, contents: any) => void {
+        return this.context.submitFn;
+    }
+
+    public get snapshotFn(): (message: string) => Promise<void> {
+        return this.context.snapshotFn;
+    }
+
+    public get closeFn(): () => void {
+        return this.context.closeFn;
+    }
 
     private tasks: string[] = [];
     private leaderElector: LeaderElector;
@@ -125,26 +136,16 @@ export class Runtime extends EventEmitter implements IHostRuntime {
         return this.connectionState === ConnectionState.Connected;
     }
 
+    // Components tracked by the Domain
+    private components = new Map<string, ComponentRuntime>();
+    private componentsDeferred = new Map<string, Deferred<ComponentRuntime>>();
+    private closed = false;
+    private pendingAttach = new Map<string, IAttachMessage>();
+    private requestHandler: (request: IRequest) => Promise<IResponse>;
+
     private constructor(
         private readonly registry: Map<string, IComponentFactory>,
-        public readonly tenantId: string,
-        public readonly id: string,
-        public readonly parentBranch: string,
-        public existing: boolean,
-        public readonly options: any,
-        public clientId: string,
-        public readonly user: IUser,
-        public readonly blobManager: IBlobManager,
-        public readonly deltaManager: IDeltaManager,
-        private quorum: IQuorum,
-        public readonly storage: IDocumentStorageService,
-        // tslint:disable-next-line:variable-name
-        private _connectionState: ConnectionState,
-        public readonly branch: string,
-        public readonly minimumSequenceNumber: number,
-        public readonly submitFn: (type: MessageType, contents: any) => void,
-        public readonly snapshotFn: (message: string) => Promise<void>,
-        public readonly closeFn: () => void,
+        private readonly context: IContainerContext,
     ) {
         super();
     }
@@ -158,7 +159,7 @@ export class Runtime extends EventEmitter implements IHostRuntime {
         const runtimeStorage = new ComponentStorageService(this.storage, extraBlobs);
         const details = await readAndParse<{ pkg: string }>(this.storage, snapshotTree.blobs[".component"]);
 
-        const componentP = Component.LoadFromSnapshot(
+        const componentP = ComponentRuntime.LoadFromSnapshot(
             this.registry.get(details.pkg),
             this,
             this.tenantId,
@@ -167,11 +168,10 @@ export class Runtime extends EventEmitter implements IHostRuntime {
             this.parentBranch,
             this.options,
             this.clientId,
-            this.user,
             this.blobManager,
             details.pkg,
             this.deltaManager,
-            this.quorum,
+            this.context.quorum,
             runtimeStorage,
             this.connectionState,
             snapshotTree,
@@ -180,9 +180,9 @@ export class Runtime extends EventEmitter implements IHostRuntime {
             this.submitFn,
             this.snapshotFn,
             this.closeFn);
-        const deferred = new Deferred<Component>();
+        const deferred = new Deferred<ComponentRuntime>();
         deferred.resolve(componentP);
-        this.processDeferred.set(id, deferred);
+        this.componentsDeferred.set(id, deferred);
 
         const component = await componentP;
 
@@ -263,13 +263,6 @@ export class Runtime extends EventEmitter implements IHostRuntime {
     public changeConnectionState(value: ConnectionState, clientId: string) {
         this.verifyNotClosed();
 
-        if (value === this.connectionState) {
-            return;
-        }
-
-        this._connectionState = value;
-        this.clientId = clientId;
-
         // Resend all pending attach messages prior to notifying clients
         if (value === ConnectionState.Connected) {
             for (const [, message] of this.pendingAttach) {
@@ -295,7 +288,7 @@ export class Runtime extends EventEmitter implements IHostRuntime {
         }
     }
 
-    public process(message: ISequencedDocumentMessage, local: boolean, context: Component) {
+    public process(message: ISequencedDocumentMessage, local: boolean, context: ComponentRuntime) {
         switch (message.type) {
             case MessageType.Operation:
                 this.processOperation(message, local, context);
@@ -309,7 +302,11 @@ export class Runtime extends EventEmitter implements IHostRuntime {
         }
     }
 
-    public async postProcess(message: ISequencedDocumentMessage, local: boolean, context: Component): Promise<void> {
+    public async postProcess(
+        message: ISequencedDocumentMessage,
+        local: boolean,
+        context: ComponentRuntime,
+    ): Promise<void> {
         switch (message.type) {
             case MessageType.Attach:
                 return this.postProcessAttach(message, local, context);
@@ -323,26 +320,26 @@ export class Runtime extends EventEmitter implements IHostRuntime {
         }
     }
 
-    public getProcess(id: string, wait = true): Promise<IComponentRuntime> {
+    public getComponent(id: string, wait = true): Promise<IComponentRuntime> {
         this.verifyNotClosed();
 
-        if (!this.processDeferred.has(id)) {
+        if (!this.componentsDeferred.has(id)) {
             if (!wait) {
                 return Promise.reject(`Process ${id} does not exist`);
             }
 
             // Add in a deferred that will resolve once the process ID arrives
-            this.processDeferred.set(id, new Deferred<Component>());
+            this.componentsDeferred.set(id, new Deferred<ComponentRuntime>());
         }
 
-        return this.processDeferred.get(id).promise;
+        return this.componentsDeferred.get(id).promise;
     }
 
-    public async createAndAttachProcess(id: string, pkg: string): Promise<IComponentRuntime> {
+    public async createAndAttachComponent(id: string, pkg: string): Promise<IComponentRuntime> {
         this.verifyNotClosed();
 
         const runtimeStorage = new ComponentStorageService(this.storage, new Map());
-        const component = await Component.create(
+        const component = await ComponentRuntime.create(
             this.registry.get(pkg),
             this,
             this.tenantId,
@@ -351,11 +348,10 @@ export class Runtime extends EventEmitter implements IHostRuntime {
             this.parentBranch,
             this.options,
             this.clientId,
-            this.user,
             this.blobManager,
             pkg,
             this.deltaManager,
-            this.quorum,
+            this.context.quorum,
             runtimeStorage,
             this.connectionState,
             this.id,
@@ -380,24 +376,23 @@ export class Runtime extends EventEmitter implements IHostRuntime {
         this.components.set(id, component);
 
         // Resolve any pending requests for the component
-        if (this.processDeferred.has(id)) {
-            this.processDeferred.get(id).resolve(component);
+        if (this.componentsDeferred.has(id)) {
+            this.componentsDeferred.get(id).resolve(component);
         } else {
-            const deferred = new Deferred<Component>();
+            const deferred = new Deferred<ComponentRuntime>();
             deferred.resolve(component);
-            this.processDeferred.set(id, deferred);
+            this.componentsDeferred.set(id, deferred);
         }
 
         return component;
     }
 
     public getQuorum(): IQuorum {
-        return this.quorum;
+        return this.context.quorum;
     }
 
     public error(error: any) {
-        // TODO bubble up to parent
-        debug("Context has encountered a non-recoverable error");
+        this.context.error(error);
     }
 
     public registerTasks(tasks: string[], version?: string) {
@@ -418,7 +413,7 @@ export class Runtime extends EventEmitter implements IHostRuntime {
         }
     }
 
-    private async prepareOperation(message: ISequencedDocumentMessage, local: boolean): Promise<Component> {
+    private async prepareOperation(message: ISequencedDocumentMessage, local: boolean): Promise<ComponentRuntime> {
         const envelope = message.contents as IEnvelope;
         const component = this.components.get(envelope.address);
         assert(component);
@@ -464,7 +459,7 @@ export class Runtime extends EventEmitter implements IHostRuntime {
         component.process(transformed, local, context);
     }
 
-    private async prepareAttach(message: ISequencedDocumentMessage, local: boolean): Promise<Component> {
+    private async prepareAttach(message: ISequencedDocumentMessage, local: boolean): Promise<ComponentRuntime> {
         this.verifyNotClosed();
 
         // the local object has already been attached
@@ -481,7 +476,7 @@ export class Runtime extends EventEmitter implements IHostRuntime {
 
         // create storage service that wraps the attach data
         const runtimeStorage = new ComponentStorageService(this.storage, new Map());
-        const component = await Component.LoadFromSnapshot(
+        const component = await ComponentRuntime.LoadFromSnapshot(
             this.registry.get(attachMessage.type),
             this,
             this.tenantId,
@@ -490,11 +485,10 @@ export class Runtime extends EventEmitter implements IHostRuntime {
             this.parentBranch,
             this.options,
             this.clientId,
-            this.user,
             this.blobManager,
             attachMessage.type,
             this.deltaManager,
-            this.quorum,
+            this.context.quorum,
             runtimeStorage,
             this.connectionState,
             snapshotTree,
@@ -507,7 +501,7 @@ export class Runtime extends EventEmitter implements IHostRuntime {
         return component;
     }
 
-    private processAttach(message: ISequencedDocumentMessage, local: boolean, context: Component): void {
+    private processAttach(message: ISequencedDocumentMessage, local: boolean, context: ComponentRuntime): void {
         this.verifyNotClosed();
         debug("processAttach");
     }
@@ -515,7 +509,7 @@ export class Runtime extends EventEmitter implements IHostRuntime {
     private async postProcessAttach(
         message: ISequencedDocumentMessage,
         local: boolean,
-        context: Component,
+        context: ComponentRuntime,
     ): Promise<void> {
         const attachMessage = message.contents as IAttachMessage;
 
@@ -529,12 +523,12 @@ export class Runtime extends EventEmitter implements IHostRuntime {
             this.components.set(attachMessage.id, context);
 
             // Resolve pending gets and store off any new ones
-            if (this.processDeferred.has(attachMessage.id)) {
-                this.processDeferred.get(attachMessage.id).resolve(context);
+            if (this.componentsDeferred.has(attachMessage.id)) {
+                this.componentsDeferred.get(attachMessage.id).resolve(context);
             } else {
-                const deferred = new Deferred<Component>();
+                const deferred = new Deferred<ComponentRuntime>();
                 deferred.resolve(context);
-                this.processDeferred.set(attachMessage.id, deferred);
+                this.componentsDeferred.set(attachMessage.id, deferred);
             }
         }
     }

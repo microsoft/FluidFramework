@@ -8,6 +8,11 @@ export interface IPlatform extends EventEmitter {
      * Queries the platform for an interface of the given ID.
      */
     queryInterface<T>(id: string): Promise<T>;
+
+    /**
+     * Detaches the given platform
+     */
+    detach();
 }
 
 export interface IPlatformFactory {

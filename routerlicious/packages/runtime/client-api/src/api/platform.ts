@@ -5,6 +5,10 @@ export class Platform extends EventEmitter implements IPlatform {
     public queryInterface<T>(id: string) {
         return null;
     }
+
+    public detach() {
+        return;
+    }
 }
 
 export class PlatformFactory implements IPlatformFactory {

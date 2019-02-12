@@ -234,27 +234,7 @@ export async function instantiateRuntime(context: IContainerContext): Promise<IR
         ["@chaincode/pinpoint-editor", pinpoint],
         ["@chaincode/monaco", monaco]]);
 
-    const runtime = await Runtime.Load(
-        registry,
-        context.tenantId,
-        context.id,
-        context.parentBranch,
-        context.existing,
-        context.options,
-        context.clientId,
-        { id: "test" },
-        context.blobManager,
-        context.deltaManager,
-        context.quorum,
-        context.storage,
-        context.connectionState,
-        context.baseSnapshot,
-        context.blobs,
-        context.branch,
-        context.minimumSequenceNumber,
-        context.submitFn,
-        context.snapshotFn,
-        context.closeFn);
+    const runtime = await Runtime.Load(registry, context);
 
     // Register path handler for inbound messages
     runtime.registerRequestHandler(async (request: IRequest) => {

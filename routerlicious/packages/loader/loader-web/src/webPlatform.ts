@@ -16,6 +16,10 @@ export class WebPlatform extends EventEmitter implements IPlatform {
                 return null;
         }
     }
+
+    public detach() {
+        return;
+    }
 }
 
 export class WebPlatformFactory implements IPlatformFactory {

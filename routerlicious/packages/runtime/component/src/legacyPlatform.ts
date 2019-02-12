@@ -5,4 +5,8 @@ export class MyPlatform extends EventEmitter implements IPlatform {
     public async queryInterface<T>(id: string): Promise<T> {
         return null;
     }
+
+    public detach() {
+        return;
+    }
 }

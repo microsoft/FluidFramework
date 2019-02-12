@@ -34,6 +34,7 @@ import { debug } from "./debug";
 import { IConnectionDetails } from "./deltaConnection";
 import { DeltaManager } from "./deltaManager";
 import { NullChaincode } from "./nullChaincode";
+import { PrefetchDocumentStorageService } from "./prefetchDocumentStorageService";
 import { IQuorumSnapshot, Quorum } from "./quorum";
 
 interface IConnectResult {
@@ -266,7 +267,8 @@ export class Container extends EventEmitter {
 
     private async load(specifiedVersion: ICommit, connect: boolean): Promise<void> {
         // TODO connect to storage needs the token provider
-        const storageP = this.service.connectToStorage(this.tenantId, this.id, this.containerHost.tokenProvider);
+        const storageP = this.service.connectToStorage(this.tenantId, this.id, this.containerHost.tokenProvider)
+            .then((storage) => storage ? new PrefetchDocumentStorageService(storage) : null);
 
         // If a version is specified we will load it directly - otherwise will query historian for the latest
         // version and then load it

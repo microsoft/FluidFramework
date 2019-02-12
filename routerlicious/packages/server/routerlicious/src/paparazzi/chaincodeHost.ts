@@ -29,6 +29,10 @@ class NodePlatform extends EventEmitter implements IPlatform {
     public async queryInterface<T>(id: string): Promise<any> {
         return null;
     }
+
+    public detach() {
+        return;
+    }
 }
 
 export class NodePlatformFactory implements IPlatformFactory {

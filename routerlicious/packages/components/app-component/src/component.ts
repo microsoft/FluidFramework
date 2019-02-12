@@ -27,6 +27,10 @@ class Platform extends EventEmitter implements IPlatform {
             ? this.component as any
             : Promise.reject(`Unknown 'id': ${id}`);
     }
+
+    public detach() {
+        return;
+    }
 }
 
 // Internal/reusable IChaincode implementation returned by DataStore.instantiate().

@@ -38,10 +38,10 @@ export class FlowEditor extends React.Component<IProps, IState> {
         const { config } = this.props;
 
         if (!config.runtime.existing) {
-            config.runtime.createAndAttachProcess("document", "@chaincode/flow-document");
+            config.runtime.createAndAttachComponent("document", "@chaincode/flow-document");
         }
 
-        config.runtime.getProcess("document", true).then((component) => {
+        config.runtime.getComponent("document", true).then((component) => {
             // TODO when we fetch the process we get a layer of indirection to the thing we actually want - which
             // is sitting inside of the chaincode field
             const flowDocComponent = component.chaincode as FlowDocumentComponent;

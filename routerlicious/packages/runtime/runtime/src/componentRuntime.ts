@@ -5,38 +5,29 @@ import {
     IDeltaManager,
     IDocumentStorageService,
     IGenericBlob,
+    IPlatform,
     IQuorum,
     IRequest,
     IResponse,
     ISequencedDocumentMessage,
     ISnapshotTree,
     ITree,
-    IUser,
     MessageType,
     TreeEntry,
 } from "@prague/container-definitions";
 import {
     IChaincodeComponent,
-    IChannel,
     IComponentDeltaHandler,
-    IComponentPlatform,
+    IComponentFactory,
     IComponentRuntime,
     IEnvelope,
-    IObjectStorageService,
+    IHostRuntime,
 } from "@prague/runtime-definitions";
 import { EventEmitter } from "events";
-import { ChannelDeltaConnection } from "./channelDeltaConnection";
-import { IComponentFactory, IHostRuntime } from "./definitions";
 
 // tslint:disable:no-unsafe-any
 
-export interface IChannelState {
-    object: IChannel;
-    storage: IObjectStorageService;
-    connection: ChannelDeltaConnection;
-}
-
-export class Component extends EventEmitter implements IComponentRuntime {
+export class ComponentRuntime extends EventEmitter implements IComponentRuntime {
     public static async create(
         factory: IComponentFactory,
         hostRuntime: IHostRuntime,
@@ -46,7 +37,6 @@ export class Component extends EventEmitter implements IComponentRuntime {
         parentBranch: string,
         options: any,
         clientId: string,
-        user: IUser,
         blobManager: IBlobManager,
         pkg: string,
         deltaManager: IDeltaManager,
@@ -60,7 +50,7 @@ export class Component extends EventEmitter implements IComponentRuntime {
         closeFn: () => void,
     ) {
         const extension = await factory.instantiateComponent();
-        const component = new Component(
+        const component = new ComponentRuntime(
             pkg,
             hostRuntime,
             tenantId,
@@ -70,7 +60,6 @@ export class Component extends EventEmitter implements IComponentRuntime {
             false,
             options,
             clientId,
-            user,
             blobManager,
             deltaManager,
             quorum,
@@ -96,7 +85,6 @@ export class Component extends EventEmitter implements IComponentRuntime {
         parentBranch: string,
         options: any,
         clientId: string,
-        user: IUser,
         blobManager: IBlobManager,
         pkg: string,
         deltaManager: IDeltaManager,
@@ -109,9 +97,9 @@ export class Component extends EventEmitter implements IComponentRuntime {
         submitFn: (type: MessageType, contents: any) => void,
         snapshotFn: (message: string) => Promise<void>,
         closeFn: () => void,
-    ): Promise<Component> {
+    ): Promise<ComponentRuntime> {
         const extension = await factory.instantiateComponent();
-        const component = new Component(
+        const component = new ComponentRuntime(
             pkg,
             hostRuntime,
             tenantId,
@@ -121,7 +109,6 @@ export class Component extends EventEmitter implements IComponentRuntime {
             true,
             options,
             clientId,
-            user,
             blobManager,
             deltaManager,
             quorum,
@@ -159,7 +146,6 @@ export class Component extends EventEmitter implements IComponentRuntime {
         public readonly existing: boolean,
         public readonly options: any,
         public clientId: string,
-        public readonly user: IUser,
         public readonly blobManager: IBlobManager,
         public readonly deltaManager: IDeltaManager,
         private quorum: IQuorum,
@@ -177,18 +163,12 @@ export class Component extends EventEmitter implements IComponentRuntime {
         super();
     }
 
-    public createAndAttachProcess(id: string, pkg: string): Promise<IComponentRuntime> {
-        return this.hostRuntime.createAndAttachProcess(id, pkg);
+    public createAndAttachComponent(id: string, pkg: string): Promise<IComponentRuntime> {
+        return this.hostRuntime.createAndAttachComponent(id, pkg);
     }
 
-    public getProcess(id: string, wait: boolean): Promise<IComponentRuntime> {
-        return this.hostRuntime.getProcess(id, wait);
-    }
-
-    public async ready(): Promise<void> {
-        this.verifyNotClosed();
-
-        // TODOTODO this needs to defer to the runtime
+    public getComponent(id: string, wait: boolean): Promise<IComponentRuntime> {
+        return this.hostRuntime.getComponent(id, wait);
     }
 
     public changeConnectionState(value: ConnectionState, clientId: string) {
@@ -270,10 +250,10 @@ export class Component extends EventEmitter implements IComponentRuntime {
 
     public async start(): Promise<void> {
         this.verifyNotClosed();
-        this.handler = await this.chaincode.run(this, null);
+        this.handler = await this.chaincode.run(this);
     }
 
-    public async attach(platform: IComponentPlatform): Promise<IComponentPlatform> {
+    public async attach(platform: IPlatform): Promise<IPlatform> {
         return this.chaincode.attach(platform);
     }
 
