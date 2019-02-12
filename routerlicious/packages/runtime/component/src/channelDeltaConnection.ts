@@ -1,16 +1,14 @@
-import { ConnectionState, ISequencedDocumentMessage } from "@prague/container-definitions";
+import { ConnectionState, IDocumentMessage, ISequencedDocumentMessage } from "@prague/container-definitions";
 import {
     IDeltaConnection,
     IDeltaHandler,
     IEnvelope,
-    IObjectMessage,
-    ISequencedObjectMessage,
 } from "@prague/runtime-definitions";
 import { RangeTracker } from "@prague/utils";
 import * as assert from "assert";
 
 export interface IMessageContext {
-    objectMessage: ISequencedObjectMessage;
+    objectMessage: ISequencedDocumentMessage;
     handlerContext: any;
 }
 
@@ -39,7 +37,7 @@ export class ChannelDeltaConnection implements IDeltaConnection {
     constructor(
         public objectId: string,
         private _state: ConnectionState,
-        private submitFn: (message: IObjectMessage) => void) {
+        private submitFn: (message: IDocumentMessage) => void) {
     }
     // tslint:enable:variable-name
 
@@ -127,7 +125,7 @@ export class ChannelDeltaConnection implements IDeltaConnection {
     /**
      * Send new messages to the server
      */
-    public submit(message: IObjectMessage): void {
+    public submit(message: IDocumentMessage): void {
         this.submitFn(message);
     }
 
@@ -136,12 +134,12 @@ export class ChannelDeltaConnection implements IDeltaConnection {
     // the set of tardis'd messages.
     public translateToObjectMessage(
         documentMessage: ISequencedDocumentMessage,
-        updateState = false): ISequencedObjectMessage {
+        updateState = false): ISequencedDocumentMessage {
 
         assert(this.baseMappingIsSet());
 
         const envelope = documentMessage.contents as IEnvelope;
-        const message = envelope.contents as IObjectMessage;
+        const message = envelope.contents as IDocumentMessage;
 
         // Take the max between our base and the new MSN. In the case of a new document our MSN may be greater.
         // We do not need to add to the rangeTracker in this case since by definition the MSN must be strictly less
@@ -149,7 +147,7 @@ export class ChannelDeltaConnection implements IDeltaConnection {
         const minSequenceNumber = this.rangeTracker.get(
             Math.max(this.rangeTracker.base, documentMessage.minimumSequenceNumber));
 
-        const sequencedObjectMessage: ISequencedObjectMessage = {
+        const sequencedObjectMessage: ISequencedDocumentMessage = {
             clientId: documentMessage.clientId,
             clientSequenceNumber: message.clientSequenceNumber,
             contents: message.contents,
@@ -157,6 +155,7 @@ export class ChannelDeltaConnection implements IDeltaConnection {
             origin: documentMessage.origin,
             referenceSequenceNumber: message.referenceSequenceNumber,
             sequenceNumber: this._sequenceNumber + 1,
+            timestamp: documentMessage.timestamp,
             traces: documentMessage.traces,
             type: message.type,
         };

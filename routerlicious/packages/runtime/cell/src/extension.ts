@@ -1,5 +1,6 @@
-import { ISharedObjectExtension as ISharedObjectExtension } from "@prague/api-definitions";
-import { IDistributedObjectServices, IRuntime, ISequencedObjectMessage } from "@prague/runtime-definitions";
+import { ISharedObjectExtension } from "@prague/api-definitions";
+import { ISequencedDocumentMessage } from "@prague/container-definitions";
+import { IDistributedObjectServices, IRuntime } from "@prague/runtime-definitions";
 import { Cell } from "./cell";
 import { ICell } from "./interfaces";
 
@@ -16,7 +17,7 @@ export class CellExtension implements ISharedObjectExtension {
         id: string,
         sequenceNumber: number,
         minimumSequenceNumber: number,
-        messages: ISequencedObjectMessage[],
+        messages: ISequencedDocumentMessage[],
         services: IDistributedObjectServices,
         headerOrigin: string): Promise<ICell> {
 

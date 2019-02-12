@@ -4,14 +4,14 @@ import {
 } from "@prague/api-definitions";
 import {
     FileMode,
+    IDocumentMessage,
+    ISequencedDocumentMessage,
     ITree,
     TreeEntry,
 } from "@prague/container-definitions";
 import {
-    IObjectMessage,
     IObjectStorageService,
     IRuntime,
-    ISequencedObjectMessage,
 } from "@prague/runtime-definitions";
 import { debug } from "./debug";
 import { IMapOperation } from "./definitions";
@@ -44,8 +44,8 @@ class ContentObjectStorage implements IObjectStorageService {
 }
 
 interface IMapMessageHandler {
-    prepare(op: IMapOperation, local: boolean, message: ISequencedObjectMessage): Promise<any>;
-    process(op: IMapOperation, context: any, local: boolean, message: ISequencedObjectMessage): void;
+    prepare(op: IMapOperation, local: boolean, message: ISequencedDocumentMessage): Promise<any>;
+    process(op: IMapOperation, context: any, local: boolean, message: ISequencedDocumentMessage): void;
 }
 
 /**
@@ -210,7 +210,7 @@ export class SharedMap extends SharedObject implements ISharedMap {
         return tree;
     }
 
-    public transform(message: IObjectMessage, sequenceNumber: number): IObjectMessage {
+    public transform(message: IDocumentMessage, sequenceNumber: number): IDocumentMessage {
         const handled = message.type === OperationType
             ? this.messageHandler.has((message.contents as IMapOperation).type)
             : false;
@@ -285,10 +285,10 @@ export class SharedMap extends SharedObject implements ISharedMap {
         this.serializeFilter = filter;
     }
 
-    public on(event: "pre-op" | "op", listener: (op: ISequencedObjectMessage, local: boolean) => void): this;
+    public on(event: "pre-op" | "op", listener: (op: ISequencedDocumentMessage, local: boolean) => void): this;
     public on(
         event: "valueChanged",
-        listener: (changed: IValueChanged, local: boolean, op: ISequencedObjectMessage) => void): this;
+        listener: (changed: IValueChanged, local: boolean, op: ISequencedDocumentMessage) => void): this;
     public on(event: string | symbol, listener: (...args: any[]) => void): this;
 
     /* tslint:disable:no-unnecessary-override */
@@ -305,12 +305,12 @@ export class SharedMap extends SharedObject implements ISharedMap {
         this.onDisconnectContent();
     }
 
-    protected onConnect(pending: IObjectMessage[]) {
+    protected onConnect(pending: IDocumentMessage[]) {
         debug(`Map ${this.id} is now connected`);
 
         // Filter the nonAck and pending mesages into a map set and a content set.
-        const mapMessages: IObjectMessage[] = [];
-        const contentMessages: IObjectMessage[] = [];
+        const mapMessages: IDocumentMessage[] = [];
+        const contentMessages: IDocumentMessage[] = [];
         for (const message of pending) {
             if (this.isMapMessage(message)) {
                 mapMessages.push(message);
@@ -331,7 +331,7 @@ export class SharedMap extends SharedObject implements ISharedMap {
     protected async loadCore(
         sequenceNumber: number,
         minimumSequenceNumber: number,
-        messages: ISequencedObjectMessage[],
+        messages: ISequencedDocumentMessage[],
         headerOrigin: string,
         storage: IObjectStorageService) {
 
@@ -363,7 +363,7 @@ export class SharedMap extends SharedObject implements ISharedMap {
     protected async loadContent(
         sequenceNumber: number,
         minimumSequenceNumber: number,
-        messages: ISequencedObjectMessage[],
+        messages: ISequencedDocumentMessage[],
         headerOrigin: string,
         services: IObjectStorageService): Promise<void> {
         return;
@@ -373,7 +373,7 @@ export class SharedMap extends SharedObject implements ISharedMap {
         return;
     }
 
-    protected prepareCore(message: ISequencedObjectMessage, local: boolean): Promise<any> {
+    protected prepareCore(message: ISequencedDocumentMessage, local: boolean): Promise<any> {
         if (message.type === OperationType) {
             const op: IMapOperation = message.contents;
             if (this.messageHandler.has(op.type)) {
@@ -385,7 +385,7 @@ export class SharedMap extends SharedObject implements ISharedMap {
         return this.prepareContent(message, local);
     }
 
-    protected processCore(message: ISequencedObjectMessage, local: boolean, context: any) {
+    protected processCore(message: ISequencedDocumentMessage, local: boolean, context: any) {
         let handled = false;
         if (message.type === OperationType) {
             const op: IMapOperation = message.contents;
@@ -414,14 +414,14 @@ export class SharedMap extends SharedObject implements ISharedMap {
         return;
     }
 
-    protected async prepareContent(message: ISequencedObjectMessage, local: boolean): Promise<any> {
+    protected async prepareContent(message: ISequencedDocumentMessage, local: boolean): Promise<any> {
         return Promise.resolve();
     }
 
     /**
      * Processes a content message
      */
-    protected processContent(message: ISequencedObjectMessage, local: boolean, context: any) {
+    protected processContent(message: ISequencedDocumentMessage, local: boolean, context: any) {
         return;
     }
 
@@ -435,7 +435,7 @@ export class SharedMap extends SharedObject implements ISharedMap {
     /**
      * Message sent upon reconnecting to the delta stream
      */
-    protected onConnectContent(pending: IObjectMessage[]) {
+    protected onConnectContent(pending: IDocumentMessage[]) {
         for (const message of pending) {
             this.submitLocalMessage(message.contents);
         }
@@ -460,11 +460,11 @@ export class SharedMap extends SharedObject implements ISharedMap {
     /**
      * Allows derived classes to transform the given message
      */
-    protected transformContent(message: IObjectMessage, sequenceNumber: number): IObjectMessage {
+    protected transformContent(message: IDocumentMessage, sequenceNumber: number): IDocumentMessage {
         return message;
     }
 
-    private isMapMessage(message: IObjectMessage): boolean {
+    private isMapMessage(message: IDocumentMessage): boolean {
         const type = message.contents.type;
         return this.messageHandler.has(type);
     }

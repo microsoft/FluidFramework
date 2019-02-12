@@ -3,6 +3,7 @@ import {
     IGenericBlob,
     IPlatform,
     IQuorum,
+    ISequencedDocumentMessage,
     MessageType,
 } from "@prague/container-definitions";
 import { EventEmitter } from "events";
@@ -10,7 +11,6 @@ import {
     IChannel,
     IDistributedObjectServices,
 } from "./channel";
-import { ISequencedObjectMessage } from "./protocol";
 
 export interface IChaincode {
     /**
@@ -51,7 +51,7 @@ export interface IChaincodeModule  {
         id: string,
         sequenceNumber: number,
         minimumSequenceNumber: number,
-        messages: ISequencedObjectMessage[],
+        messages: ISequencedDocumentMessage[],
         services: IDistributedObjectServices,
         headerOrigin: string): Promise<IChannel>;
 

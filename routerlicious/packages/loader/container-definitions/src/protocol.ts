@@ -105,7 +105,7 @@ export interface IDocumentMessage {
     metadata?: ISystemData;
 
     // Traces related to the packet.
-    traces: ITrace[];
+    traces?: ITrace[];
 }
 
 /**

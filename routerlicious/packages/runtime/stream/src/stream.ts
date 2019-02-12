@@ -1,15 +1,15 @@
 import { OperationType } from "@prague/api-definitions";
 import {
     FileMode,
+    IDocumentMessage,
+    ISequencedDocumentMessage,
     ITree,
     TreeEntry,
 } from "@prague/container-definitions";
 import { SharedMap } from "@prague/map";
 import {
-    IObjectMessage,
     IObjectStorageService,
     IRuntime,
-    ISequencedObjectMessage,
 } from "@prague/runtime-definitions";
 import { StreamExtension } from "./extension";
 import { IDelta, IInkLayer, IStream } from "./interfaces";
@@ -56,7 +56,7 @@ export class Stream extends SharedMap implements IStream {
     protected async loadContent(
         sequenceNumber: number,
         minimumSequenceNumber: number,
-        messages: IObjectMessage[],
+        messages: IDocumentMessage[],
         headerOrigin: string,
         storage: IObjectStorageService): Promise<void> {
 
@@ -91,13 +91,13 @@ export class Stream extends SharedMap implements IStream {
         return tree;
     }
 
-    protected processContent(message: ISequencedObjectMessage, local: boolean) {
+    protected processContent(message: ISequencedDocumentMessage, local: boolean) {
         if (message.type === OperationType && !local) {
             this.inkSnapshot.apply(message.contents as IDelta);
         }
     }
 
-    protected onConnectContent(pending: IObjectMessage[]) {
+    protected onConnectContent(pending: IDocumentMessage[]) {
         // Stream can resend messages under new client id
         for (const message of pending) {
             this.submitLocalMessage(message.contents);

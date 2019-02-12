@@ -1,5 +1,5 @@
-import { ITree } from "@prague/container-definitions";
-import { IChannel, IObjectMessage } from "@prague/runtime-definitions";
+import { IDocumentMessage, ITree } from "@prague/container-definitions";
+import { IChannel } from "@prague/runtime-definitions";
 
 /**
  * Helper interface to wrap a snapshot with the sequence number it was taken at
@@ -54,5 +54,5 @@ export interface ISharedObject extends IChannel {
     /**
      * Transforms the given message relative to the provided sequence number
      */
-    transform(message: IObjectMessage, sequenceNumber: number): IObjectMessage;
+    transform(message: IDocumentMessage, sequenceNumber: number): IDocumentMessage;
 }

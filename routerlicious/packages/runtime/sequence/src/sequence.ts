@@ -1,5 +1,9 @@
 // tslint:disable:whitespace align no-bitwise
-import { ITree } from "@prague/container-definitions";
+import {
+    IDocumentMessage,
+    ISequencedDocumentMessage,
+    ITree,
+} from "@prague/container-definitions";
 import {
     IMapView,
     ISharedMap,
@@ -10,10 +14,8 @@ import {
 import * as MergeTree from "@prague/merge-tree";
 import {
     IDistributedObjectServices,
-    IObjectMessage,
     IObjectStorageService,
     IRuntime,
-    ISequencedObjectMessage,
 } from "@prague/runtime-definitions";
 import { Deferred } from "@prague/utils";
 import * as assert from "assert";
@@ -80,10 +82,10 @@ export abstract class SegmentSequence<T extends MergeTree.ISegment> extends Shar
     }
 
     public on(event: "sequenceDelta", listener: (sender: this, event: SequenceDeltaEvent) => void): this;
-    public on(event: "pre-op" | "op", listener: (op: ISequencedObjectMessage, local: boolean) => void): this;
+    public on(event: "pre-op" | "op", listener: (op: ISequencedDocumentMessage, local: boolean) => void): this;
     public on(
         event: "valueChanged",
-        listener: (changed: IValueChanged, local: boolean, op: ISequencedObjectMessage) => void): this;
+        listener: (changed: IValueChanged, local: boolean, op: ISequencedDocumentMessage) => void): this;
     public on(event: string | symbol, listener: (...args: any[]) => void): this;
     // tslint:disable-next-line:no-unnecessary-override
     public on(event: string | symbol, listener: (...args: any[]) => void): this {
@@ -249,9 +251,9 @@ export abstract class SegmentSequence<T extends MergeTree.ISegment> extends Shar
         }
     }
 
-    protected transformContent(message: IObjectMessage, toSequenceNumber: number): IObjectMessage {
+    protected transformContent(message: IDocumentMessage, toSequenceNumber: number): IDocumentMessage {
         if (message.contents) {
-            this.client.transform(message as ISequencedObjectMessage, toSequenceNumber);
+            this.client.transform(message as ISequencedDocumentMessage, toSequenceNumber);
         }
         message.referenceSequenceNumber = toSequenceNumber;
         return message;
@@ -260,7 +262,7 @@ export abstract class SegmentSequence<T extends MergeTree.ISegment> extends Shar
     protected async loadContent(
         sequenceNumber: number,
         minimumSequenceNumber: number,
-        messages: ISequencedObjectMessage[],
+        messages: ISequencedDocumentMessage[],
         headerOrigin: string,
         storage: IObjectStorageService): Promise<void> {
 
@@ -291,7 +293,7 @@ export abstract class SegmentSequence<T extends MergeTree.ISegment> extends Shar
         return this.loadedDeferred.promise;
     }
 
-    protected processContent(message: ISequencedObjectMessage) {
+    protected processContent(message: ISequencedDocumentMessage) {
         if (this.autoApply) {
             this.client.applyMsg(message);
             if (this.client.mergeTree.minSeqPending) {
@@ -314,7 +316,7 @@ export abstract class SegmentSequence<T extends MergeTree.ISegment> extends Shar
         this.collabStarted = true;
     }
 
-    protected onConnectContent(pending: IObjectMessage[]) {
+    protected onConnectContent(pending: IDocumentMessage[]) {
         // Update merge tree collaboration information with new client ID and then resend pending ops
         if (this.collabStarted) {
             this.client.updateCollaboration(this.runtime.clientId);
@@ -368,7 +370,7 @@ export abstract class SegmentSequence<T extends MergeTree.ISegment> extends Shar
         sequenceNumber: number,
         minimumSequenceNumber: number,
         header: string,
-        messages: ISequencedObjectMessage[],
+        messages: ISequencedDocumentMessage[],
         shared: boolean,
         originBranch: string,
         services: IObjectStorageService) {
@@ -393,7 +395,7 @@ export abstract class SegmentSequence<T extends MergeTree.ISegment> extends Shar
     private async initialize(
         sequenceNumber: number,
         minimumSequenceNumber: number,
-        messages: ISequencedObjectMessage[],
+        messages: ISequencedDocumentMessage[],
         header: string,
         shared: boolean,
         originBranch: string,

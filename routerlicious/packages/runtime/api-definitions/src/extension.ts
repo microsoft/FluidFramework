@@ -1,4 +1,5 @@
-import { IChaincodeModule, ISequencedObjectMessage } from "@prague/runtime-definitions";
+import { ISequencedDocumentMessage } from "@prague/container-definitions";
+import { IChaincodeModule } from "@prague/runtime-definitions";
 import * as types from "./types";
 
 export interface IExtension {
@@ -14,7 +15,7 @@ export interface ISharedObjectExtension extends IChaincodeModule, IExtension {
 }
 
 export interface IContentModelExtension extends IExtension {
-    exec(message: ISequencedObjectMessage, instance: types.ISharedObject);
+    exec(message: ISequencedDocumentMessage, instance: types.ISharedObject);
 }
 
 /**

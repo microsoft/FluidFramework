@@ -1,5 +1,5 @@
 import { ISharedObject } from "@prague/api-definitions";
-import { ISequencedObjectMessage } from "@prague/runtime-definitions";
+import { ISequencedDocumentMessage } from "@prague/container-definitions";
 
 export type SerializeFilter = (key: string, serializedValue: any, type: string) => any;
 
@@ -44,12 +44,12 @@ export interface IValueOperation<T> {
     /**
      * Allows the handler to prepare for the operation
      */
-    prepare(value: T, params: any, local: boolean, message: ISequencedObjectMessage): Promise<any>;
+    prepare(value: T, params: any, local: boolean, message: ISequencedDocumentMessage): Promise<any>;
 
     /**
      * Performs the actual processing on the operation
      */
-    process(value: T, params: any, context: any, local: boolean, message: ISequencedObjectMessage);
+    process(value: T, params: any, context: any, local: boolean, message: ISequencedDocumentMessage);
 }
 
 /**
@@ -146,9 +146,9 @@ export interface ISharedMap extends ISharedObject {
      */
     registerSerializeFilter(filter: SerializeFilter);
 
-    on(event: "pre-op" | "op", listener: (op: ISequencedObjectMessage, local: boolean) => void): this;
+    on(event: "pre-op" | "op", listener: (op: ISequencedDocumentMessage, local: boolean) => void): this;
     on(
         event: "valueChanged",
-        listener: (changed: IValueChanged, local: boolean, op: ISequencedObjectMessage) => void): this;
+        listener: (changed: IValueChanged, local: boolean, op: ISequencedDocumentMessage) => void): this;
     on(event: string | symbol, listener: (...args: any[]) => void): this;
 }

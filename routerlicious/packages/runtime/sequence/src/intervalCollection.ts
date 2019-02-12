@@ -1,7 +1,7 @@
 // tslint:disable:whitespace align
+import { ISequencedDocumentMessage } from "@prague/container-definitions";
 import { IValueFactory, IValueOpEmitter, IValueOperation, IValueType } from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
-import { ISequencedObjectMessage } from "@prague/runtime-definitions";
 import { EventEmitter } from "events";
 
 export interface ISerializedInterval {
@@ -562,7 +562,7 @@ export class SharedIntervalCollectionView<TInterval extends ISerializableInterva
     /* tslint:disable:no-unnecessary-override */
     public on(
         event: "addInterval",
-        listener: (interval: ISerializedInterval, local: boolean, op: ISequencedObjectMessage) => void): this {
+        listener: (interval: ISerializedInterval, local: boolean, op: ISequencedDocumentMessage) => void): this {
         return super.on(event, listener);
     }
 
@@ -593,7 +593,7 @@ export class SharedIntervalCollectionView<TInterval extends ISerializableInterva
         serializedInterval: ISerializedInterval,
         context: any,
         local: boolean,
-        op: ISequencedObjectMessage) {
+        op: ISequencedDocumentMessage) {
 
         const interval = this.localCollection.addInterval(
             serializedInterval.start,
@@ -620,7 +620,7 @@ export class SharedIntervalCollectionView<TInterval extends ISerializableInterva
     public async prepareAdd(
         interval: ISerializedInterval,
         local: boolean,
-        message: ISequencedObjectMessage): Promise<any> {
+        message: ISequencedDocumentMessage): Promise<any> {
 
         await this.attachingP;
         return this.onPrepareDeserialize ? this.onPrepareDeserialize(interval.properties) : null;
@@ -718,7 +718,7 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval> {
     public prepareAddInternal(
         interval: ISerializedInterval,
         local: boolean,
-        message: ISequencedObjectMessage): Promise<any> {
+        message: ISequencedDocumentMessage): Promise<any> {
 
         if (!this.view) {
             return Promise.reject("attachSharedString must be called");
@@ -731,7 +731,7 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval> {
         serializedInterval: ISerializedInterval,
         context: any,
         local: boolean,
-        op: ISequencedObjectMessage) {
+        op: ISequencedDocumentMessage) {
 
         if (!this.view) {
             throw new Error("attachSharedString must be called");

@@ -1,7 +1,6 @@
 // tslint:disable
 import { OperationType } from "@prague/api-definitions";
-import { IUser } from "@prague/container-definitions";
-import { ISequencedObjectMessage } from "@prague/runtime-definitions";
+import { ISequencedDocumentMessage, IUser } from "@prague/container-definitions";
 import { IMergeTreeDeltaOpCallbackArgs, IRelativePosition } from "./index";
 import {
     MergeTree, ClientIds, compareStrings, RegisterCollection, UnassignedSequenceNumber, Marker, SubSequence,
@@ -23,7 +22,7 @@ export class Client {
     verboseOps = false;
     noVerboseRemoteAnnote = false;
     measureOps = false;
-    q: Collections.List<ISequencedObjectMessage>;
+    q: Collections.List<ISequencedDocumentMessage>;
     checkQ: Collections.List<string>;
     clientSequenceNumber = 1;
     clientNameToIds = new Collections.RedBlackTree<string, ClientIds>(compareStrings);
@@ -43,7 +42,7 @@ export class Client {
         this.mergeTree.getUserInfo = id => this.getUserInfo(id);
         this.mergeTree.markerModifiedHandler = marker => this.markerModified(marker);
         this.mergeTree.clientIdToBranchId = this.shortClientBranchIdMap;
-        this.q = Collections.ListMakeHead<ISequencedObjectMessage>();
+        this.q = Collections.ListMakeHead<ISequencedDocumentMessage>();
         this.checkQ = Collections.ListMakeHead<string>();
     }
     resetModifiedMarkers() {
@@ -181,7 +180,7 @@ export class Client {
     }
     // TODO: props, end
     makeInsertMarkerMsg(markerType: string, behaviors: ops.ReferenceType, pos: number, seq: number, refSeq: number, objectId: string) {
-        return <ISequencedObjectMessage>{
+        return <ISequencedDocumentMessage>{
             clientId: this.longClientId,
             minimumSequenceNumber: undefined,
             clientSequenceNumber: this.clientSequenceNumber,
@@ -194,12 +193,13 @@ export class Client {
             contents: {
                 type: ops.MergeTreeDeltaType.INSERT, marker: { type: markerType, behaviors }, pos1: pos
             },
+            timestamp: Date.now(),
             traces: [],
             type: OperationType,
         };
     }
     makeInsertMsg(text: string, pos: number, seq: number, refSeq: number, objectId: string) {
-        return <ISequencedObjectMessage>{
+        return <ISequencedDocumentMessage>{
             clientId: this.longClientId,
             sequenceNumber: seq,
             referenceSequenceNumber: refSeq,
@@ -212,12 +212,13 @@ export class Client {
             contents: {
                 type: ops.MergeTreeDeltaType.INSERT, text: text, pos1: pos
             },
+            timestamp: Date.now(),
             traces: [],
             type: OperationType,
         };
     }
     makeRemoveMsg(start: number, end: number, seq: number, refSeq: number, objectId: string) {
-        return <ISequencedObjectMessage>{
+        return <ISequencedDocumentMessage>{
             clientId: this.longClientId,
             sequenceNumber: seq,
             referenceSequenceNumber: refSeq,
@@ -230,12 +231,13 @@ export class Client {
             contents: {
                 type: ops.MergeTreeDeltaType.REMOVE, pos1: start, pos2: end,
             },
+            timestamp: Date.now(),
             traces: [],
             type: OperationType,
         };
     }
     makeAnnotateMsg(props: Properties.PropertySet, start: number, end: number, seq: number, refSeq: number, objectId: string) {
-        return <ISequencedObjectMessage>{
+        return <ISequencedDocumentMessage>{
             clientId: this.longClientId,
             sequenceNumber: seq,
             referenceSequenceNumber: refSeq,
@@ -248,6 +250,7 @@ export class Client {
             contents: {
                 type: ops.MergeTreeDeltaType.ANNOTATE, pos1: start, pos2: end, props
             },
+            timestamp: Date.now(),
             traces: [],
             type: OperationType,
         };
@@ -255,10 +258,10 @@ export class Client {
     hasMessages(): boolean {
         return this.q.count() > 0;
     }
-    enqueueMsg(msg: ISequencedObjectMessage) {
+    enqueueMsg(msg: ISequencedDocumentMessage) {
         this.q.enqueue(msg);
     }
-    dequeueMsg(): ISequencedObjectMessage {
+    dequeueMsg(): ISequencedDocumentMessage {
         return this.q.dequeue();
     }
     enqueueTestString() {
@@ -296,7 +299,7 @@ export class Client {
             opList.push(removeOp);
         }
     }
-    transformOp(op: ops.IMergeTreeOp, msg: ISequencedObjectMessage, toSequenceNumber: number) {
+    transformOp(op: ops.IMergeTreeOp, msg: ISequencedDocumentMessage, toSequenceNumber: number) {
         if ((op.type == ops.MergeTreeDeltaType.ANNOTATE) ||
             (op.type == ops.MergeTreeDeltaType.REMOVE)) {
             let ranges = this.mergeTree.tardisRange(op.pos1, op.pos2, msg.referenceSequenceNumber, toSequenceNumber);
@@ -324,7 +327,7 @@ export class Client {
         }
         return op;
     }
-    transform(msg: ISequencedObjectMessage, toSequenceNumber: number) {
+    transform(msg: ISequencedDocumentMessage, toSequenceNumber: number) {
         if (msg.referenceSequenceNumber >= toSequenceNumber) {
             return msg;
         }
@@ -375,7 +378,7 @@ export class Client {
         }
         // TODO: error reporting
     }
-    checkNest(op: ops.IMergeTreeRemoveMsg, msg: ISequencedObjectMessage, clid: number) {
+    checkNest(op: ops.IMergeTreeRemoveMsg, msg: ISequencedDocumentMessage, clid: number) {
         let beginMarker = this.mergeTree.getSegmentFromId(op.checkNest.id1);
         let endMarker = this.mergeTree.getSegmentFromId(op.checkNest.id2);
         let beginPos = this.mergeTree.getOffset(beginMarker, msg.referenceSequenceNumber, clid);
@@ -479,14 +482,14 @@ export class Client {
     getModifiedMarkersForOp() {
         return this.opMarkersModified;
     }
-    coreApplyMsg(msg: ISequencedObjectMessage) {
+    coreApplyMsg(msg: ISequencedDocumentMessage) {
         this.resetModifiedMarkers();
         this.applyOp({
             op: <ops.IMergeTreeOp> msg.contents,
             sequencedMessage: msg
         });
     }
-    applyMsg(msg: ISequencedObjectMessage) {
+    applyMsg(msg: ISequencedDocumentMessage) {
         if ((msg !== undefined) && (msg.minimumSequenceNumber > this.mergeTree.getCollabWindow().minSeq)) {
             this.updateMinSeq(msg.minimumSequenceNumber);
         }
@@ -498,7 +501,7 @@ export class Client {
         this.getOrAddShortClientId(msg.clientId, branchId);
         // Apply if an operation message
         if (msg.type === OperationType) {
-            const operationMessage = msg as ISequencedObjectMessage;
+            const operationMessage = msg as ISequencedDocumentMessage;
             if (msg.clientId === this.longClientId) {
                 let op = <ops.IMergeTreeOp>msg.contents;
                 if (op.type !== ops.MergeTreeDeltaType.ANNOTATE) {
@@ -603,7 +606,7 @@ export class Client {
         this.mergeTree.endGroupOperation();
         return segmentGroup;
     }
-    updateConsensusProperty(op: ops.IMergeTreeAnnotateMsg, msg: ISequencedObjectMessage) {
+    updateConsensusProperty(op: ops.IMergeTreeAnnotateMsg, msg: ISequencedDocumentMessage) {
         let markerId = op.relativePos1.id;
         let consensusInfo = this.pendingConsensus.get(markerId);
         if (consensusInfo) {

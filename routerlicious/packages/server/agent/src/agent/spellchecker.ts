@@ -1,5 +1,5 @@
+import { ISequencedDocumentMessage } from "@prague/container-definitions";
 import * as MergeTree from "@prague/merge-tree";
-import { ISequencedObjectMessage } from "@prague/runtime-definitions";
 import * as Sequence from "@prague/sequence";
 
 export interface IPgMarker {
@@ -136,7 +136,7 @@ class Speller {
                 this.currentIdleTime = 0;
             }
         }, idleCheckerMS);
-        this.sharedString.on("op", (msg: ISequencedObjectMessage) => {
+        this.sharedString.on("op", (msg: ISequencedDocumentMessage) => {
             if (msg && msg.contents) {
                 const delta = msg.contents as MergeTree.IMergeTreeOp;
                 this.collectDeltas(delta);

@@ -1,5 +1,9 @@
-import { ConnectionState, ITree } from "@prague/container-definitions";
-import { IObjectMessage, ISequencedObjectMessage } from "./protocol";
+import {
+    ConnectionState,
+    IDocumentMessage,
+    ISequencedDocumentMessage,
+    ITree,
+} from "@prague/container-definitions";
 
 export interface IChannel {
     /**
@@ -15,7 +19,7 @@ export interface IChannel {
 
     snapshot(): ITree;
 
-    transform(message: IObjectMessage, sequenceNumber: number): IObjectMessage;
+    transform(message: IDocumentMessage, sequenceNumber: number): IDocumentMessage;
 
     isLocal(): boolean;
 }
@@ -32,9 +36,9 @@ export interface IAttachMessage {
 }
 
 export interface IDeltaHandler {
-    prepare: (message: ISequencedObjectMessage, local: boolean) => Promise<any>;
+    prepare: (message: ISequencedDocumentMessage, local: boolean) => Promise<any>;
 
-    process: (message: ISequencedObjectMessage, local: boolean, context: any) => void;
+    process: (message: ISequencedDocumentMessage, local: boolean, context: any) => void;
 
     minSequenceNumberChanged: (value: number) => void;
 
@@ -55,7 +59,7 @@ export interface IDeltaConnection {
     /**
      * Send new messages to the server
      */
-    submit(message: IObjectMessage): void;
+    submit(message: IDocumentMessage): void;
 
     /**
      * Attaches a message handler to the delta connection

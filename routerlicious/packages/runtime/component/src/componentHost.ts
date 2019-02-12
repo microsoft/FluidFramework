@@ -4,6 +4,7 @@ import {
     IBlobManager,
     IDeltaManager,
     IDocumentAttributes,
+    IDocumentMessage,
     IDocumentStorageService,
     IGenericBlob,
     IPlatform,
@@ -26,10 +27,8 @@ import {
     IDistributedObjectServices,
     IEnvelope,
     IObjectAttributes,
-    IObjectMessage,
     IObjectStorageService,
     IRuntime,
-    ISequencedObjectMessage,
 } from "@prague/runtime-definitions";
 import { Deferred, gitHashFile, readAndParse } from "@prague/utils";
 import * as assert from "assert";
@@ -370,7 +369,7 @@ export class ComponentHost extends EventEmitter implements IComponentDeltaHandle
             const envelope = message.contents as IEnvelope;
             const objectDetails = this.channels.get(envelope.address);
             envelope.contents = objectDetails.object.transform(
-                envelope.contents as IObjectMessage,
+                envelope.contents as IDocumentMessage,
                 objectDetails.connection.transformDocumentSequenceNumber(
                     Math.max(message.referenceSequenceNumber, this.deltaManager.minimumSequenceNumber)));
         } else {
@@ -667,7 +666,7 @@ export class ComponentHost extends EventEmitter implements IComponentDeltaHandle
         type: string,
         sequenceNumber: number,
         minSequenceNumber: number,
-        messages: ISequencedObjectMessage[],
+        messages: ISequencedDocumentMessage[],
         services: IObjectServices,
         originBranch: string): Promise<IChannelState> {
 

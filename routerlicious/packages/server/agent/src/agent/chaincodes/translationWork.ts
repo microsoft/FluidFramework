@@ -8,7 +8,6 @@ import {
 } from "@prague/container-definitions";
 import * as map from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
-import { ISequencedObjectMessage } from "@prague/runtime-definitions";
 import * as Sequence from "@prague/sequence";
 import { EventEmitter } from "events";
 import * as request from "request";
@@ -106,7 +105,7 @@ class Translator extends EventEmitter {
         const typeInsights = await this.insights.get(this.sharedString.id) as map.ISharedMap;
         this.view = await typeInsights.getView();
 
-        this.sharedString.on("op", (op: ISequencedObjectMessage) => {
+        this.sharedString.on("op", (op: ISequencedDocumentMessage) => {
             if (this.needsTranslation(op)) {
                 this.requestTranslation(op);
             }
@@ -147,7 +146,7 @@ class Translator extends EventEmitter {
         return true;
     }
 
-    private requestTranslation(op: ISequencedObjectMessage): void {
+    private requestTranslation(op: ISequencedDocumentMessage): void {
         // Exit early if there is a translation in progress but make not of the desired request
         if (this.pendingTranslation) {
             return;

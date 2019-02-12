@@ -1,5 +1,6 @@
 import { ISharedObject, ISharedObjectExtension } from "@prague/api-definitions";
-import { IDistributedObjectServices, IRuntime, ISequencedObjectMessage } from "@prague/runtime-definitions";
+import { ISequencedDocumentMessage } from "@prague/container-definitions";
+import { IDistributedObjectServices, IRuntime } from "@prague/runtime-definitions";
 import { SharedNumberSequence, SharedObjectSequence} from "./sequence";
 import { SharedString } from "./sharedString";
 
@@ -15,7 +16,7 @@ export class SharedStringExtension implements ISharedObjectExtension {
         id: string,
         sequenceNumber: number,
         minimumSequenceNumber: number,
-        messages: ISequencedObjectMessage[],
+        messages: ISequencedDocumentMessage[],
         services: IDistributedObjectServices,
         headerOrigin: string): Promise<ISharedObject> {
 
@@ -41,7 +42,7 @@ export class SharedObjectSequenceExtension implements ISharedObjectExtension {
         id: string,
         sequenceNumber: number,
         minimumSequenceNumber: number,
-        messages: ISequencedObjectMessage[],
+        messages: ISequencedDocumentMessage[],
         services: IDistributedObjectServices,
         headerOrigin: string): Promise<ISharedObject> {
 
@@ -67,7 +68,7 @@ export class SharedNumberSequenceExtension implements ISharedObjectExtension {
         id: string,
         sequenceNumber: number,
         minimumSequenceNumber: number,
-        messages: ISequencedObjectMessage[],
+        messages: ISequencedDocumentMessage[],
         services: IDistributedObjectServices,
         headerOrigin: string): Promise<ISharedObject> {
 

@@ -1,6 +1,6 @@
 import { ISharedObject, SharedObject, ValueType } from "@prague/api-definitions";
-import { IRuntime, ISequencedObjectMessage } from "@prague/runtime-definitions";
-// tslint:disable-next-line
+import { ISequencedDocumentMessage } from "@prague/container-definitions";
+import { IRuntime } from "@prague/runtime-definitions";
 import { IMapOperation, IMapValue } from "./definitions";
 import { IMapView, IValueOpEmitter, SerializeFilter } from "./interfaces";
 import { SharedMap } from "./map";
@@ -209,7 +209,7 @@ export class MapView implements IMapView {
         return JSON.stringify(serialized);
     }
 
-    public setCore(key: string, value: ILocalViewElement, local: boolean, op: ISequencedObjectMessage) {
+    public setCore(key: string, value: ILocalViewElement, local: boolean, op: ISequencedDocumentMessage) {
         this.data.set(key, value);
         this.map.emit("valueChanged", { key }, local, op);
     }
@@ -218,12 +218,12 @@ export class MapView implements IMapView {
         return this.fill(key, value);
     }
 
-    public clearCore(local: boolean, op: ISequencedObjectMessage) {
+    public clearCore(local: boolean, op: ISequencedDocumentMessage) {
         this.data.clear();
         this.map.emit("clear", local, op);
     }
 
-    public deleteCore(key: string, local: boolean, op: ISequencedObjectMessage) {
+    public deleteCore(key: string, local: boolean, op: ISequencedDocumentMessage) {
         const successfullyRemoved = this.data.delete(key);
         this.map.emit("valueChanged", { key }, local, op);
         return successfullyRemoved;

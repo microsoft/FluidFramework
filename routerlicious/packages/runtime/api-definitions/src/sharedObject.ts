@@ -1,10 +1,13 @@
-import { ConnectionState, ITree } from "@prague/container-definitions";
+import {
+    ConnectionState,
+    IDocumentMessage,
+    ISequencedDocumentMessage,
+    ITree,
+} from "@prague/container-definitions";
 import {
     IDistributedObjectServices,
-    IObjectMessage,
     IObjectStorageService,
     IRuntime,
-    ISequencedObjectMessage,
 } from "@prague/runtime-definitions";
 import * as assert from "assert";
 import * as Deque from "double-ended-queue";
@@ -27,7 +30,7 @@ export abstract class SharedObject extends EventEmitter implements ISharedObject
     // tslint:enable:variable-name
 
     // Locally applied operations not yet ACK'd by the server
-    private readonly pendingOps = new Deque<IObjectMessage>();
+    private readonly pendingOps = new Deque<IDocumentMessage>();
 
     private services: IDistributedObjectServices;
 
@@ -66,7 +69,7 @@ export abstract class SharedObject extends EventEmitter implements ISharedObject
     public async load(
         sequenceNumber: number,
         minimumSequenceNumber: number,
-        messages: ISequencedObjectMessage[],
+        messages: ISequencedDocumentMessage[],
         headerOrigin: string,
         services: IDistributedObjectServices): Promise<void> {
 
@@ -116,7 +119,7 @@ export abstract class SharedObject extends EventEmitter implements ISharedObject
         return !this.services;
     }
 
-    public on(event: "pre-op" | "op", listener: (op: ISequencedObjectMessage, local: boolean) => void): this;
+    public on(event: "pre-op" | "op", listener: (op: ISequencedDocumentMessage, local: boolean) => void): this;
     public on(event: string | symbol, listener: (...args: any[]) => void): this;
 
     /* tslint:disable:no-unnecessary-override */
@@ -133,7 +136,7 @@ export abstract class SharedObject extends EventEmitter implements ISharedObject
      * Creates a new message from the provided message that is relative to the given sequenceNumber. It is valid
      * to modify the passed in object in place.
      */
-    public abstract transform(message: IObjectMessage, sequenceNumber: number): IObjectMessage;
+    public abstract transform(message: IDocumentMessage, sequenceNumber: number): IDocumentMessage;
 
     /**
      * Allows the distributed data type to perform custom loading
@@ -141,7 +144,7 @@ export abstract class SharedObject extends EventEmitter implements ISharedObject
     protected abstract loadCore(
         sequenceNumber: number,
         minimumSequenceNumber: number,
-        messages: ISequencedObjectMessage[],
+        messages: ISequencedDocumentMessage[],
         headerOrigin: string,
         services: IObjectStorageService): Promise<void>;
 
@@ -158,12 +161,12 @@ export abstract class SharedObject extends EventEmitter implements ISharedObject
     /**
      * Prepares the given message for processing
      */
-    protected abstract prepareCore(message: ISequencedObjectMessage, local: boolean): Promise<any>;
+    protected abstract prepareCore(message: ISequencedDocumentMessage, local: boolean): Promise<any>;
 
     /**
      * Derived classes must override this to do custom processing on a remote message
      */
-    protected abstract processCore(message: ISequencedObjectMessage, local: boolean, context: any);
+    protected abstract processCore(message: ISequencedDocumentMessage, local: boolean, context: any);
 
     /**
      * Method called when the minimum sequence number for the object has changed
@@ -178,7 +181,7 @@ export abstract class SharedObject extends EventEmitter implements ISharedObject
     /**
      * Called when the object has fully connected to the delta stream
      */
-    protected abstract onConnect(pending: IObjectMessage[]);
+    protected abstract onConnect(pending: IDocumentMessage[]);
 
     /**
      * Processes a message by the local client
@@ -188,7 +191,7 @@ export abstract class SharedObject extends EventEmitter implements ISharedObject
 
         /* tslint:disable:no-increment-decrement */
         // Prep the message
-        const message: IObjectMessage = {
+        const message: IDocumentMessage = {
             clientSequenceNumber: ++this.clientSequenceNumber,
             contents,
             referenceSequenceNumber: this.sequenceNumber,
@@ -226,7 +229,7 @@ export abstract class SharedObject extends EventEmitter implements ISharedObject
         this.setConnectionState(this.services.deltaConnection.state);
     }
 
-    private prepare(message: ISequencedObjectMessage, local: boolean): Promise<any> {
+    private prepare(message: ISequencedDocumentMessage, local: boolean): Promise<any> {
         return this.prepareCore(message, local);
     }
 
@@ -277,7 +280,7 @@ export abstract class SharedObject extends EventEmitter implements ISharedObject
     /**
      * Handles a message being received from the remote delta server
      */
-    private process(message: ISequencedObjectMessage, local: boolean, context: any) {
+    private process(message: ISequencedDocumentMessage, local: boolean, context: any) {
         // server messages should only be delivered to this method in sequence number order
         assert.equal(this.sequenceNumber + 1, message.sequenceNumber);
         this._sequenceNumber = message.sequenceNumber;

@@ -1,5 +1,5 @@
 // tslint:disable
-import { ISequencedObjectMessage } from "@prague/runtime-definitions";
+import { ISequencedDocumentMessage } from "@prague/container-definitions";
 import { Client } from "../client";
 import { ClientSeq, compareNumbers, clientSeqComparer, useCheckQ } from "../mergeTree";
 import * as Collections from "../collections";
@@ -38,7 +38,7 @@ export class TestServer extends Client {
     addListeners(listeners: Client[]) {
         this.listeners = listeners;
     }
-    applyMsg(msg: ISequencedObjectMessage) {
+    applyMsg(msg: ISequencedDocumentMessage) {
         this.coreApplyMsg(msg);
         if (useCheckQ) {
             let clid = this.getShortClientId(msg.clientId);
@@ -50,7 +50,7 @@ export class TestServer extends Client {
     }
     // TODO: remove mappings when no longer needed using min seq
     // in upstream message
-    transformUpstreamMessage(msg: ISequencedObjectMessage) {
+    transformUpstreamMessage(msg: ISequencedDocumentMessage) {
         if (msg.referenceSequenceNumber > 0) {
             msg.referenceSequenceNumber =
                 this.upstreamMap.get(msg.referenceSequenceNumber).data;
@@ -63,8 +63,8 @@ export class TestServer extends Client {
         this.upstreamMap.put(msg.sequenceNumber, this.seq);
         msg.sequenceNumber = -1;
     }
-    copyMsg(msg: ISequencedObjectMessage) {
-        return <ISequencedObjectMessage>{
+    copyMsg(msg: ISequencedDocumentMessage) {
+        return <ISequencedDocumentMessage>{
             clientId: msg.clientId,
             clientSequenceNumber: msg.clientSequenceNumber,
             contents: msg.contents,
@@ -122,7 +122,7 @@ export class TestServer extends Client {
  * Used for in-memory testing.  This will queue a reference string for each client message.
  */
 export function checkTextMatchRelative(refSeq: number, clientId: number, server: TestServer,
-    msg: ISequencedObjectMessage) {
+    msg: ISequencedDocumentMessage) {
     let client = server.clients[clientId];
     let serverText = server.mergeTree.getText(refSeq, clientId);
     let cliText = client.checkQ.dequeue();

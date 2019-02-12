@@ -4,14 +4,14 @@ import {
 } from "@prague/api-definitions";
 import {
     FileMode,
+    IDocumentMessage,
+    ISequencedDocumentMessage,
     ITree,
     TreeEntry,
 } from "@prague/container-definitions";
 import {
-    IObjectMessage,
     IObjectStorageService,
     IRuntime,
-    ISequencedObjectMessage,
 } from "@prague/runtime-definitions";
 import { debug } from "./debug";
 import { CellExtension } from "./extension";
@@ -161,14 +161,14 @@ export class Cell extends SharedObject implements ICell {
         return tree;
     }
 
-    public transform(message: IObjectMessage, sequenceNumber: number): IObjectMessage {
+    public transform(message: IDocumentMessage, sequenceNumber: number): IDocumentMessage {
         return message;
     }
 
     protected async loadCore(
         sequenceNumber: number,
         minimumSequenceNumber: number,
-        messages: IObjectMessage[],
+        messages: IDocumentMessage[],
         headerOrigin: string,
         storage: IObjectStorageService): Promise<void> {
 
@@ -197,7 +197,7 @@ export class Cell extends SharedObject implements ICell {
         debug(`Cell ${this.id} is now disconnected`);
     }
 
-    protected onConnect(pending: IObjectMessage[]) {
+    protected onConnect(pending: IDocumentMessage[]) {
         for (const message of pending) {
             this.submitLocalMessage(message.contents);
         }
@@ -205,7 +205,7 @@ export class Cell extends SharedObject implements ICell {
         return;
     }
 
-    protected async prepareCore(message: ISequencedObjectMessage, local: boolean): Promise<any> {
+    protected async prepareCore(message: ISequencedDocumentMessage, local: boolean): Promise<any> {
         if (message.type === OperationType && !local) {
             const op: ICellOperation = message.contents;
             if (op.type === "setCell") {
@@ -217,7 +217,7 @@ export class Cell extends SharedObject implements ICell {
         }
     }
 
-    protected processCore(message: ISequencedObjectMessage, local: boolean, context: any) {
+    protected processCore(message: ISequencedDocumentMessage, local: boolean, context: any) {
         if (message.type === OperationType && !local) {
             const op: ICellOperation = message.contents;
 
