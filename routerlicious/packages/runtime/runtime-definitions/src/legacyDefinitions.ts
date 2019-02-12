@@ -68,6 +68,8 @@ export interface IChaincodeModule  {
 export interface IRuntime extends EventEmitter {
     readonly tenantId: string;
 
+    readonly documentId: string;
+
     readonly id: string;
 
     readonly existing: boolean;

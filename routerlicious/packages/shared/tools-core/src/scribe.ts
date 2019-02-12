@@ -105,6 +105,10 @@ export async function create(
     root.set("presence", document.createMap());
     root.set("users", document.createMap());
     sharedString = document.createString() as Sequence.SharedString;
+    root.set("calendar", undefined, Sequence.SharedIntervalCollectionValueType.Name);
+    const seq = document.create(Sequence.SharedNumberSequenceExtension.Type) as
+        Sequence.SharedNumberSequence;
+    root.set("sequence-test", seq);
 
     // p-start might break something
     sharedString.insertMarker(0, MergeTree.ReferenceType.Tile, {[MergeTree.reservedTileLabelsKey]: ["pg"] });

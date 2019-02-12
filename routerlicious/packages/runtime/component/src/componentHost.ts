@@ -94,6 +94,7 @@ export class ComponentHost extends EventEmitter implements IComponentDeltaHandle
         const runtime = new ComponentHost(
             componentRuntime,
             tenantId,
+            documentId,
             id,
             parentBranch,
             existing,
@@ -200,6 +201,7 @@ export class ComponentHost extends EventEmitter implements IComponentDeltaHandle
     private constructor(
         private readonly componentRuntime: IComponentRuntime,
         public readonly tenantId: string,
+        public readonly documentId: string,
         public readonly id: string,
         public readonly parentBranch: string,
         public existing: boolean,

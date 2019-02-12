@@ -74,7 +74,7 @@ export class Document extends EventEmitter {
     }
 
     public get id(): string {
-        return this.runtime.id;
+        return this.runtime.documentId;
     }
 
     public get tenantId(): string {
