@@ -1,6 +1,6 @@
 import * as pragueClientApi from "@prague/client-api";
+import { IUser } from "@prague/container-definitions";
 import { ICommit } from "@prague/gitresources";
-import { IUser } from "@prague/runtime-definitions";
 import { SharedString } from "@prague/sequence";
 import * as socketStorage from "@prague/socket-storage";
 import * as jwt from "jsonwebtoken";
