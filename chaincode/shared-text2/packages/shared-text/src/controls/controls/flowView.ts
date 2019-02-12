@@ -1,5 +1,5 @@
 // tslint:disable:no-bitwise whitespace align switch-default no-string-literal ban-types no-angle-bracket-type-assertion
-import { ICollaborativeObject } from "@prague/api-definitions";
+import { ISharedObject } from "@prague/api-definitions";
 import * as api from "@prague/client-api";
 import { IGenericBlob, IUser } from "@prague/container-definitions";
 import * as types from "@prague/map";
@@ -3715,12 +3715,12 @@ export class FlowView extends ui.Component {
         //       Instead, we currently check to see if a workbook already exists.  If not, we
         //       insert one up front.
         this.collabDocument.getRoot().getView().then(async (rootView) => {
-            let workbookMap: types.IMap;
+            let workbookMap: types.ISharedMap;
 
             if (!this.collabDocument.existing) {
                 workbookMap = this.collabDocument.createMap();
             } else {
-                workbookMap = await rootView.wait<types.IMap>("workbook");
+                workbookMap = await rootView.wait<types.ISharedMap>("workbook");
             }
 
             const workbookView = await workbookMap.getView();
@@ -3963,7 +3963,7 @@ export class FlowView extends ui.Component {
         }
     }
 
-    public addPresenceMap(presenceMap: types.IMap) {
+    public addPresenceMap(presenceMap: types.ISharedMap) {
         presenceMap.on("valueChanged", (delta: types.IValueChanged, local: boolean, op: ISequencedObjectMessage) => {
             this.remotePresenceUpdate(delta, local, op);
         });
@@ -5620,7 +5620,7 @@ export class FlowView extends ui.Component {
         this.bookmarks = await bookmarksCollection.getView();
 
         // Takes a collaborative Object from OnPrepareDeserialize and inserts back into the interval's "Story" Property
-        const onDeserialize: Sequence.DeserializeCallback = (interval, commentSharedString: ICollaborativeObject) => {
+        const onDeserialize: Sequence.DeserializeCallback = (interval, commentSharedString: ISharedObject) => {
             if (interval.properties && interval.properties["story"]) {
                 assert(commentSharedString);
                 interval.properties["story"] = commentSharedString;
@@ -5653,7 +5653,7 @@ export class FlowView extends ui.Component {
             // tslint:disable-next-line:max-line-length
             console.log(`time to edit/impression: ${this.timeToEdit} time to load: ${Date.now() - clockStart}ms len: ${this.sharedString.client.getLength()} - ${performanceNow()}`);
         }
-        const presenceMap = this.docRoot.get("presence") as types.IMap;
+        const presenceMap = this.docRoot.get("presence") as types.ISharedMap;
         this.addPresenceMap(presenceMap);
         this.addCalendarMap();
         const intervalMap = this.sharedString.intervalCollections.getMap();
