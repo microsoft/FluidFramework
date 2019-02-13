@@ -1,9 +1,8 @@
-import { CellRange, TableDocument, TableDocumentComponent } from "@chaincode/table-document";
-import { Component } from "@prague/app-component";
-import { ComponentHost } from "@prague/component";
-import { IPlatform, ITree } from "@prague/container-definitions";
+import { CellRange, TableDocument } from "@chaincode/table-document";
+import { Component, ComponentChaincode } from "@prague/app-component";
+import { IPlatform } from "@prague/container-definitions";
 import { IMapView, MapExtension } from "@prague/map";
-import { IChaincode, IChaincodeComponent, IComponentDeltaHandler, IComponentRuntime } from "@prague/runtime-definitions";
+import { IChaincodeComponent, IComponentRuntime } from "@prague/runtime-definitions";
 import { Deferred } from "@prague/utils";
 import { cellRangeExpr, ConfigView } from "./config";
 import { ConfigKeys } from "./configKeys";
@@ -61,8 +60,8 @@ export class TableSlice extends Component {
 
         const docId = await this.root.get(ConfigKeys.docId);
         const component = await this.componentRuntime.getComponent(docId, true);
-        const tableDocComponent = component.chaincode as TableDocumentComponent;
-        this.maybeDoc = tableDocComponent.table;
+        const tableDocChaincode = component.chaincode as ComponentChaincode<TableDocument>;
+        this.maybeDoc = tableDocChaincode.instance;
         await this.maybeDoc.ready;
 
         this.maybeHeaders = await this.getRange(ConfigKeys.headersKey, ConfigKeys.headerText);
@@ -113,60 +112,6 @@ export class TableSlice extends Component {
     }
 }
 
-/**
- * A document is a collection of shared types.
- */
-export class TableSliceComponent implements IChaincodeComponent {
-    public slice: TableSlice;
-    private chaincode: IChaincode;
-    private component: ComponentHost;
-
-    public async close(): Promise<void> {
-        return;
-    }
-
-    public async run(runtime: IComponentRuntime): Promise<IComponentDeltaHandler> {
-        this.slice = new TableSlice(runtime);
-        this.chaincode = Component.instantiate(this.slice);
-        const chaincode = this.chaincode;
-
-        // All of the below would be hidden from a developer
-        // Is this an await or does it just go?
-        const component = await ComponentHost.LoadFromSnapshot(
-            runtime,
-            runtime.tenantId,
-            runtime.documentId,
-            runtime.id,
-            runtime.parentBranch,
-            runtime.existing,
-            runtime.options,
-            runtime.clientId,
-            runtime.blobManager,
-            runtime.baseSnapshot,
-            chaincode,
-            runtime.deltaManager,
-            runtime.getQuorum(),
-            runtime.storage,
-            runtime.connectionState,
-            runtime.branch,
-            runtime.minimumSequenceNumber,
-            runtime.snapshotFn,
-            runtime.closeFn);
-        this.component = component;
-
-        return component;
-    }
-
-    public async attach(platform: IPlatform): Promise<IPlatform> {
-        return this.slice.attach(platform);
-    }
-
-    public snapshot(): ITree {
-        const entries = this.component.snapshotInternal();
-        return { entries };
-    }
-}
-
 export async function instantiateComponent(): Promise<IChaincodeComponent> {
-    return new TableSliceComponent();
+    return Component.instantiateComponent(TableSlice);
 }

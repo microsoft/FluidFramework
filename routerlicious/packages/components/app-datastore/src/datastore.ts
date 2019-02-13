@@ -1,38 +1,13 @@
-import { ICodeLoader, IDocumentService } from "@prague/container-definitions";
-// import { IDocumentService, IPlatform, IPlatformFactory } from "@prague/container-definitions";
-// import * as loader from "@prague/loader";
+import { SharedObject } from "@prague/api-definitions";
+import { ICodeLoader, IDocumentService, IPlatform } from "@prague/container-definitions";
+import { Container, Loader } from "@prague/container-loader";
 import { WebLoader } from "@prague/loader-web";
-// import { ICodeLoader, IRuntime } from "@prague/runtime-definitions";
-import * as socketStorage from "@prague/socket-storage";
-// import { EventEmitter } from "events";
-// import * as jwt from "jsonwebtoken";
+import { IMapView, ISharedMap } from "@prague/map";
+import { IComponentRuntime } from "@prague/runtime-definitions";
+import { createDocumentService, TokenProvider } from "@prague/socket-storage";
+import { EventEmitter } from "events";
+import * as jwt from "jsonwebtoken";
 import { debug } from "./debug";
-
-// Internal IPlatform implementation used to pass the host services provided to
-// DataStore.open() to the component instance.
-// class HostPlatform extends EventEmitter implements IPlatform {
-//     private readonly services: Map<string, Promise<any>>;
-
-//     constructor(services?: ReadonlyArray<[string, Promise<any>]>) {
-//         super();
-//         this.services = new Map(services);
-//     }
-
-//     public queryInterface<T>(id: string): Promise<T> {
-//         const service = this.services.get(id) as (Promise<T> | undefined);
-//         return service || Promise.reject(`Unknown id: ${id}`);
-//     }
-// }
-
-// Internal IPlatformFactory instance used by DataStore.open() to bootstrap the above
-// IPlatform implementation.
-// class HostPlatformFactory implements IPlatformFactory {
-//     constructor(private readonly services?: ReadonlyArray<[string, Promise<any>]>) { }
-
-//     public async create(): Promise<IPlatform> {
-//         return new HostPlatform(this.services);
-//     }
-// }
 
 /**
  * Instance of a Prague data store, used to open/create component instances.
@@ -45,7 +20,7 @@ export class DataStore {
      * @param hostUrl The url of the routerlicious service to (e.g., "http://localhost:3000")
      */
     // tslint:disable-next-line:no-reserved-keywords
-    public static async from(hostUrl: string) {
+    public static async from(hostUrl: string, userId: string) {
         // Routerlicious currently exposes it's configuration parameters as a JSON file at "<serverUrl>/api/tenants".
         const url = new URL(hostUrl);
         url.pathname = "/api/tenants";
@@ -60,17 +35,20 @@ export class DataStore {
 
         return new DataStore(
             new WebLoader(config.npm),
-            socketStorage.createDocumentService(hostUrl, config.blobStorageUrl),
+            createDocumentService(hostUrl, config.blobStorageUrl),
             config.key,
             config.id,
+            userId,
         );
     }
 
     constructor(
-        readonly codeLoader: ICodeLoader,
-        readonly documentService: IDocumentService,
-        readonly key: string,
-        readonly tenantId: string) { }
+        private readonly codeLoader: ICodeLoader,
+        private readonly documentService: IDocumentService,
+        private readonly key: string,
+        private readonly tenantId: string,
+        private readonly userId: string,
+    ) { }
 
     /**
      * Open or create a component instance.
@@ -81,44 +59,22 @@ export class DataStore {
      * @param services Services to provided by the caller to the component.
      */
     public async open<T>(
-        componentId: string, userId: string,
+        componentId: string,
         chaincodePackage: string,
+        path: string,
         services?: ReadonlyArray<[string, Promise<any>]>,
     ): Promise<T> {
-        debug(`DataStore.open("${componentId}", "${userId}", "${chaincodePackage}")`);
-        // const token = await this.auth(this.key, this.tenantId, userId, componentId);
-        // const factory = new HostPlatformFactory(services);
+        debug(`DataStore.open("${componentId}", "${chaincodePackage}")`);
 
-        // const loaderDoc = await loader.load(
-        //     componentId,
-        //     this.tenantId,
-        //     new socketStorage.TokenProvider(token),
-        //     null,
-        //     factory,
-        //     this.documentService,
-        //     this.codeLoader,
-        //     undefined,
-        //     true);
-
-        // if (!loaderDoc.existing) {
-        //     debug(`  not existing`);
-
-        //     // Wait for connection so that proposals can be sent
-        //     if (!loaderDoc.connected) {
-        //         await new Promise<void>((resolve) => loaderDoc.once("connected", resolve));
-        //     }
-
-        //     debug(`  now connected`);
-
-        //     // And then make the proposal if a code proposal has not yet been made
-        //     const quorum = loaderDoc.getQuorum();
-        //     if (!quorum.has("code")) {
-        //         debug(`  prosposing code`);
-        //         await quorum.propose("code", chaincodePackage);
-        //     }
-
-        //     debug(`   code is ${quorum.get("code")}`);
-        // }
+        await start(
+            this.auth(componentId),
+            this.tenantId,
+            componentId,
+            "",
+            chaincodePackage,
+            this.codeLoader,
+            this.documentService,
+            services);
 
         // Return the constructed/loaded component.  We retrieve this via queryInterface on the
         // IPlatform created by ChainCode.run().  This arrives via the "runtimeChanged" event on
@@ -128,18 +84,164 @@ export class DataStore {
         //         resolver(runtime.platform.queryInterface("component"));
         //     });
         // });
+
         return null;
     }
 
-    // private async auth(key: string, tenantId: string, userId: string, documentId: string) {
-    //     return jwt.sign({
-    //             documentId,
-    //             permission: "read:write",       // use "read:write" for now
-    //             tenantId,
-    //             user: {
-    //                 id: userId,
-    //             },
-    //         },
-    //         key);
-    // }
+    private auth(documentId: string) {
+        return jwt.sign({
+                documentId,
+                permission: "read:write",       // use "read:write" for now
+                tenantId: this.tenantId,
+                user: {
+                    id: this.userId,
+                },
+            },
+            this.key);
+    }
+}
+
+async function initializeChaincode(document: Container, pkg: string): Promise<void> {
+    if (!pkg) {
+        return;
+    }
+
+    const quorum = document.getQuorum();
+
+    // Wait for connection so that proposals can be sent
+    if (!document.connected) {
+        await new Promise<void>((resolve) => document.on("connected", (clientId: string) => { resolve(); }));
+    }
+
+    // And then make the proposal if a code proposal has not yet been made
+    if (!quorum.has("code2")) {
+        await quorum.propose("code2", pkg);
+    }
+
+    console.log(`Code is ${quorum.get("code2")}`);
+}
+
+// This demo code does not belong in DataStore.
+function renderMap(view: IMapView, div: HTMLElement) {
+    // tslint:disable-next-line:no-inner-html using to clear contents
+    div.innerHTML = "";
+
+    const dl = document.createElement("dl");
+    view.forEach((value, key: string) => {
+        const dt = document.createElement("dt");
+        const dd = document.createElement("dd");
+        dt.innerText = key;
+
+        if (value instanceof SharedObject) {
+            dd.innerText = `${value.type}/${value.id}`;
+        } else {
+            try {
+                dd.innerText = JSON.stringify(value);
+            } catch {
+                dd.innerText = "!Circular";
+            }
+        }
+
+        dl.appendChild(dt).appendChild(dd);
+    });
+
+    div.appendChild(dl);
+}
+
+async function attach(loader: Loader, url: string, platform: HostPlatform) {
+    debug(`loader.request(url=${url})`);
+    const response = await loader.request({ url });
+
+    if (response.status !== 200) {
+        debug(`Error: loader.request(url=${url}) -> ${response.status}`);
+        return;
+    }
+
+    const mimeType = response.mimeType;
+    debug(`loader.request(url=${url}) -> ${mimeType}`);
+    switch (mimeType) {
+        case "prague/component":
+            const component = response.value as IComponentRuntime;
+            await component.attach(platform);
+            break;
+        case "prague/dataType":
+            const dataType = response.value as ISharedMap;
+            const view = await dataType.getView();
+            const div = await platform.queryInterface<HTMLElement>("div");
+            renderMap(view, div);
+            dataType.on("valueChanged", (key) => { renderMap(view, div); });
+            break;
+        default:
+            throw new Error(`Unhandled mimeType ${mimeType}`);
+    }
+}
+
+async function registerAttach(loader: Loader, container: Container, uri: string, platform: HostPlatform) {
+    container.on("contextChanged", async (value) => {
+        debug(`contextChanged uri=${uri}`);
+        await attach(loader, uri, platform);
+    });
+    await attach(loader, uri, platform);
+}
+
+class HostPlatform extends EventEmitter implements IPlatform {
+    private readonly services: Map<string, Promise<any>>;
+
+    constructor(services?: ReadonlyArray<[string, Promise<any>]>) {
+        super();
+        this.services = new Map(services);
+    }
+
+    public queryInterface<T>(id: string): Promise<T> {
+        debug(`HostPlatform.queryInterface(${id})`);
+        const service = this.services.get(id) as (Promise<T> | undefined);
+        return service || Promise.reject(`Unknown id: ${id}`);
+    }
+
+    public async detach() {
+        debug(`HostPlatform.detach()`);
+        return;
+    }
+}
+
+async function start(
+    token: string,
+    tenantId: string,
+    documentId: string,
+    path: string,
+    code: string,
+    codeLoader: ICodeLoader,
+    documentService: IDocumentService,
+    services: ReadonlyArray<[string, Promise<any>]>,
+): Promise<void> {
+    const tokenProvider = new TokenProvider(token);
+    const loader = new Loader(
+        { tokenProvider },
+        documentService,
+        codeLoader,
+        { blockUpdateMarkers: true });
+
+    const baseUrl =
+        `prague://${document.location.host}/${encodeURIComponent(tenantId)}/${encodeURIComponent(documentId)}`;
+    debug(`resolving baseUrl = ${baseUrl}`);
+    const container = await loader.resolve({ url: baseUrl });
+    debug(`resolved baseUrl = ${baseUrl}`);
+
+    const platform = new HostPlatform(services);
+    debug(`attaching baseUrl = ${baseUrl}`);
+    await registerAttach(
+        loader,
+        container,
+        `${baseUrl}/${path}`,
+        platform);
+    debug(`attached baseUrl = ${baseUrl}`);
+
+    // If this is a new document we will go and instantiate the chaincode. For old documents we assume a legacy
+    // package.
+    if (!container.existing) {
+        debug("initializing chaincode");
+        await initializeChaincode(container, code)
+            .catch((error) => { console.assert(false, `chaincode error: ${error}`); });
+        debug("chaincode initialized");
+    }
 }
