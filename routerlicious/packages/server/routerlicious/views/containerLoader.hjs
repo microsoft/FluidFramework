@@ -6,32 +6,18 @@
     {{$scripts}}
         <script src="{{#hfurl}}/public/scripts/dist/loader.js{{/hfurl}}"></script>
         <script>
-            var config = {{{ config }}};
-            var version = {{{ version }}};
-
-            var token = "{{ token }}";
-            var chaincode = "{{ chaincode }}";
-
-            var tenantId = "{{ tenantId }}";
-            var documentId = "{{ documentId }}";
-            var path = "{{ path }}";
-
-            var from = {{ from }};
-            var to = {{ to }};
-            var unitIsTime = {{ unitIsTime }};
-
+            const user1 = {{{ user }}};
+            const user2 = {{ user }};
             loader.containerInitialize(
-                tenantId,
-                documentId,
-                path,
-                version,
-                token,
-                config,
-                chaincode,
-                config.npm,
-                from,
-                to,
-                unitIsTime);
+                "{{ documentId }}",
+                "{{ path }}",
+                "{{ chaincode }}",
+                {{{ config }}},
+                "{{ key }}",
+                {{{ user }}},
+                {{ from }},
+                {{ to }},
+                {{{ unitIsTime }}});
         </script>
     {{/scripts}}
 {{/layout}}

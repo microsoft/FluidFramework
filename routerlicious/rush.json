@@ -34,7 +34,7 @@
       "projectFolder": "packages/components/flow-editor/"
     },
     {
-      "packageName": "@prague/flow-host",
+      "packageName": "@chaincode/flow-host",
       "projectFolder": "packages/components/flow-host/"
     },
     {

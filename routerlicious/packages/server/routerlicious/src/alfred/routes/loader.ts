@@ -44,6 +44,10 @@ export function create(
             config.get("error:track"),
             config.get("client"));
 
+        const key = appTenants
+            .find((tenant: IAlfredTenant) => tenant.id === tenantId)
+            .key;
+
         const versionP = storage.getLatestVersion(tenantId, documentId);
         Promise.all([workerConfigP, versionP]).then(([workerConfig, version]) => {
             response.render(
@@ -53,6 +57,7 @@ export function create(
                     config: workerConfig,
                     documentId,
                     from,
+                    key,
                     partials: defaultPartials,
                     path,
                     tenantId,
@@ -60,6 +65,7 @@ export function create(
                     to,
                     token,
                     unitIsTime,
+                    user: JSON.stringify(user) || "undefined",
                     version: JSON.stringify(version),
                 });
             }, (error) => {

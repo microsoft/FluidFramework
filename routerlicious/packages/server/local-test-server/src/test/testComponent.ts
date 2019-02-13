@@ -1,4 +1,5 @@
 import { Component } from "@prague/app-component";
+import { IPlatform } from "@prague/container-definitions";
 import { MapExtension } from "@prague/map";
 import { Deferred } from "@prague/utils";
 
@@ -10,6 +11,10 @@ export class TestComponent extends Component {
 
     constructor() {
         super([[MapExtension.Type, new MapExtension()]]);
+    }
+
+    public attach(platform: IPlatform): Promise<IPlatform> {
+        return;
     }
 
     public async opened() {

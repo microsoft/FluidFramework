@@ -39,7 +39,7 @@
     "@microsoft/rush": "^5.5.4",
     "concurrently": "^4.0.1",
     "copyfiles": "^2.1.0",
-    "lerna": "^3.1.4"
+    "lerna": "3.8.0"
   },
   "dependencies": {}
 }
