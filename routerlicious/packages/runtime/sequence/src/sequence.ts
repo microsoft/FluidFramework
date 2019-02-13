@@ -1,7 +1,6 @@
 // tslint:disable:whitespace align no-bitwise
 import { ITree } from "@prague/container-definitions";
 import {
-    IMapView,
     ISharedMap,
     IValueChanged,
     MapExtension,
@@ -32,7 +31,7 @@ import { SequenceDeltaEvent } from "./sequenceDeltaEvent";
 
 export abstract class SegmentSequence<T extends MergeTree.ISegment> extends SharedMap {
     public client: MergeTree.Client;
-    public intervalCollections: IMapView;
+    public intervalCollections: ISharedMap;
     protected autoApply = true;
     protected isLoaded = false;
     protected collabStarted = false;
@@ -187,7 +186,7 @@ export abstract class SegmentSequence<T extends MergeTree.ISegment> extends Shar
         }
     }
 
-    public getIntervalCollections(): IMapView {
+    public getIntervalCollections(): ISharedMap {
         return this.intervalCollections;
     }
 
@@ -387,7 +386,7 @@ export abstract class SegmentSequence<T extends MergeTree.ISegment> extends Shar
         }
 
         // And initialize the interval collections
-        await this.initializeIntervalCollections();
+        this.initializeIntervalCollections();
     }
 
     private async initialize(
@@ -422,12 +421,11 @@ export abstract class SegmentSequence<T extends MergeTree.ISegment> extends Shar
                 });
     }
 
-    private async initializeIntervalCollections() {
-        const intervalCollections = await this.get("intervalCollections") as ISharedMap;
-        this.intervalCollections = await intervalCollections.getView();
+    private initializeIntervalCollections() {
+        this.intervalCollections = this.get("intervalCollections") as ISharedMap;
 
         // Listen and initialize new SharedIntervalCollections
-        intervalCollections.on("valueChanged", (ev: IValueChanged) => {
+        this.intervalCollections.on("valueChanged", (ev: IValueChanged) => {
             const intervalCollection =
                 this.intervalCollections.get<SharedIntervalCollection<SharedStringInterval>>(ev.key);
             if (!intervalCollection.attached) {

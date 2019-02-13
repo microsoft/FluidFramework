@@ -16,7 +16,7 @@ import {
 import { debug } from "./debug";
 import { IMapOperation } from "./definitions";
 import { MapExtension } from "./extension";
-import { IMapView, ISharedMap, IValueChanged, IValueOperation, IValueType, SerializeFilter } from "./interfaces";
+import { ISharedMap, IValueChanged, IValueOperation, IValueType, SerializeFilter } from "./interfaces";
 import { MapView } from "./view";
 
 const snapshotFileName = "header";
@@ -24,9 +24,9 @@ const contentPath = "content";
 const keyPath = "keys";
 
 /**
- * Copies all values from the provided MapView to the given Map
+ * Copies all values from the provided SharedMap to the given Map
  */
-export function copyMap(from: IMapView, to: Map<string, any>) {
+export function copyMap(from: ISharedMap, to: Map<string, any>) {
     from.forEach((value, key) => {
         /* tslint:disable:no-unsafe-any */
         to.set(key, value);
@@ -52,6 +52,7 @@ interface IMapMessageHandler {
  * Implementation of a map shared object
  */
 export class SharedMap extends SharedObject implements ISharedMap {
+    public [Symbol.toStringTag]: string;
     private readonly messageHandler: Map<string, IMapMessageHandler>;
     private readonly view: MapView;
     private serializeFilter: SerializeFilter;
@@ -115,37 +116,65 @@ export class SharedMap extends SharedObject implements ISharedMap {
             this,
             this.runtime,
             this.id);
+        this[Symbol.toStringTag] = this.view.data[Symbol.toStringTag];
     }
 
-    public async keys(): Promise<string[]> {
-        return Promise.resolve(Array.from(this.view.keys()));
+    public internalView() {
+        return this.view;
+    }
+
+    public keys() {
+        return this.view.keys();
+    }
+
+    // TODO: entries and values will have incorrect content until
+    // map contains plain values and meta-data is segregated into
+    // separate map
+    public entries() {
+        return this.view.data.entries();
+    }
+
+    public values() {
+        return this.view.data.values();
+    }
+
+    public [Symbol.iterator]() {
+        return this.view.data[Symbol.iterator]();
+    }
+
+    public get size() {
+        return this.view.data.size;
+    }
+
+    public forEach(callbackFn: (value: any, key: any, map: Map<string, any>) => void) {
+        this.view.forEach(callbackFn);
     }
 
     /**
      * Retrieves the value with the given key from the map.
      */
     public get(key: string) {
-        return Promise.resolve(this.view.get(key));
+        return this.view.get(key);
     }
 
     public async wait<T>(key: string): Promise<T> {
         return this.view.wait<T>(key);
     }
 
-    public has(key: string): Promise<boolean> {
-        return Promise.resolve(this.view.has(key));
+    public has(key: string) {
+        return this.view.has(key);
     }
 
     public set<T>(key: string, value: any, type?: string): T {
         return this.view.set(key, value, type);
     }
 
-    public delete(key: string): Promise<boolean> {
-        return Promise.resolve(this.view.delete(key));
+    public delete(key: string): boolean {
+        return this.view.delete(key);
     }
 
-    public clear(): Promise<void> {
-        return Promise.resolve(this.view.clear());
+    public clear() {
+        return this.view.clear();
     }
 
     public ready(): Promise<void> {
@@ -231,13 +260,6 @@ export class SharedMap extends SharedObject implements ISharedMap {
 
         // Once we have performed the attach submit the local operation
         this.submitLocalMessage(op);
-    }
-
-    /**
-     * Returns a synchronous view of the map
-     */
-    public getView(): Promise<IMapView> {
-        return Promise.resolve(this.view);
     }
 
     /**

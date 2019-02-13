@@ -2,7 +2,7 @@ import { CellRange, TableDocument, TableDocumentComponent } from "@chaincode/tab
 import { Component } from "@prague/app-component";
 import { ComponentHost } from "@prague/component";
 import { IPlatform, ITree } from "@prague/container-definitions";
-import { IMapView, MapExtension } from "@prague/map";
+import { MapExtension } from "@prague/map";
 import { IChaincode, IChaincodeComponent, IComponentDeltaHandler, IComponentRuntime } from "@prague/runtime-definitions";
 import { Deferred } from "@prague/utils";
 import { cellRangeExpr, ConfigView } from "./config";
@@ -13,18 +13,16 @@ export class TableSlice extends Component {
         return this.readyDeferred.promise;
     }
 
-    public get name() { return this.rootView.get(ConfigKeys.name); }
-    public set name(value: string) { this.rootView.set(ConfigKeys.name, value); }
+    public get name() { return this.root.get(ConfigKeys.name); }
+    public set name(value: string) { this.root.set(ConfigKeys.name, value); }
     public get headers() { return this.maybeHeaders!; }
     public get values() { return this.maybeValues!; }
 
     private get doc() { return this.maybeDoc!; }
-    private get rootView() { return this.maybeRootView!; }
 
     public static readonly type = `${require("../package.json").name}@${require("../package.json").version}`;
 
     private maybeDoc?: TableDocument;
-    private maybeRootView?: IMapView;
     private maybeHeaders?: CellRange;
     private maybeValues?: CellRange;
     private readyDeferred = new Deferred<void>();
@@ -35,7 +33,6 @@ export class TableSlice extends Component {
 
     public async opened() {
         await this.connected;
-        this.maybeRootView = await this.root.getView();
         this.readyDeferred.resolve();
     }
 
@@ -46,7 +43,7 @@ export class TableSlice extends Component {
                 const maybeDiv = await platform.queryInterface<HTMLElement>("div");
                 if (maybeDiv) {
                     // tslint:disable-next-line:no-shadowed-variable
-                    const docId = this.rootView.get(ConfigKeys.docId);
+                    const docId = this.root.get(ConfigKeys.docId);
                     if (!docId) {
                         const configView = new ConfigView(this.componentRuntime, this.root);
                         maybeDiv.appendChild(configView.root);
@@ -90,18 +87,18 @@ export class TableSlice extends Component {
     }
 
     private async getRange(rangeKey: ConfigKeys, initKey: ConfigKeys) {
-        let id = this.rootView.get(rangeKey);
+        let id = this.root.get(rangeKey);
         if (!id) {
             // tslint:disable-next-line:insecure-random
             id = `${Math.random().toString(36).substr(2)}`;
-            const init = this.rootView.get(initKey);
+            const init = this.root.get(initKey);
             // Note: <input> pattern validation ensures that matches will be non-null.
             const matches = cellRangeExpr.exec(init)!;
             const minCol = this.colNameToIndex(matches[1]);
             const minRow = parseInt(matches[2], 10) - 1;                           // 1-indexed -> 0-indexed
             const maxCol = this.colNameToIndex(matches[3]);
             const maxRow = parseInt(matches[4], 10) - 1;                           // 1-indexed -> 0-indexed
-            this.rootView.set(rangeKey, id);
+            this.root.set(rangeKey, id);
             await this.doc.createRange(id, minRow, minCol, maxRow, maxCol);
         }
 

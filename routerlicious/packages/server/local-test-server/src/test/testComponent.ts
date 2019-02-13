@@ -1,12 +1,10 @@
 import { Component } from "@prague/app-component";
-import { IMapView, MapExtension } from "@prague/map";
+import { MapExtension } from "@prague/map";
 import { Deferred } from "@prague/utils";
 
 export class TestComponent extends Component {
-    public get count(): number { return this.rootView.get("count"); }
+    public get count(): number { return this.root.get("count"); }
     public static readonly type = "@chaincode/test-component";
-
-    public rootView?: IMapView;
 
     private ready = new Deferred<void>();
 
@@ -15,8 +13,7 @@ export class TestComponent extends Component {
     }
 
     public async opened() {
-        this.rootView = await this.root.getView();
-        await this.rootView.wait("count");
+        await this.root.wait("count");
         this.ready.resolve();
     }
 

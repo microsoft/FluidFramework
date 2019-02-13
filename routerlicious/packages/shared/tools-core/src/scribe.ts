@@ -1,5 +1,5 @@
 import * as api from "@prague/client-api";
-import { IMapView } from "@prague/map";
+import { ISharedMap } from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
 import * as Sequence from "@prague/sequence";
 import * as socketStorage from "@prague/socket-storage";
@@ -29,29 +29,28 @@ function setParagraphs(chunks: string[]) {
 }
 
 function getParagraphs() {
-    document.getRoot().getView()
-        .then((root) => {
-            (root.get("chunks").getView() as Promise<IMapView>)
-                .then((chunksMap) => {
-                    for (const key of chunksMap.keys()) {
-                        console.log(key + ": " + chunksMap.get(key));
-                    }
-                });
-        })
-        .catch((error) => console.log("No Chunks: " + error));
+    const root = document.getRoot();
+    const chunksMap = root.get("chunks");
+    if (chunksMap) {
+        for (const key of chunksMap.keys()) {
+            console.log(key + ": " + chunksMap.get(key));
+        }
+    }
 }
 
 async function setChunkMap(chunks: string[]) {
     let c = 0;
-    const root = await document.getRoot().getView();
-    const chunkMap = root.get("chunks") as IMapView;
+    const root = await document.getRoot();
+    const chunkMap = root.get("chunks") as ISharedMap;
 
-    for (const chunk of chunks) {
-        const chunkKey = "p-" + c;
-        if (chunk !== "" ) {
-            chunkMap.set(chunkKey, chunk);
+    if (chunks) {
+        for (const chunk of chunks) {
+            const chunkKey = "p-" + c;
+            if (chunk !== "") {
+                chunkMap.set(chunkKey, chunk);
+            }
+            c++;
         }
-        c++;
     }
 }
 
@@ -99,8 +98,8 @@ export async function create(
     const tokenService = new socketStorage.TokenService();
     const claims = tokenService.extractClaims(token);
 
-    document = await api.load(id, claims.tenantId, new socketStorage.TokenProvider(token), { });
-    const root = await document.getRoot().getView();
+    document = await api.load(id, claims.tenantId, new socketStorage.TokenProvider(token), {});
+    const root = await document.getRoot();
 
     root.set("presence", document.createMap());
     root.set("users", document.createMap());
@@ -111,7 +110,7 @@ export async function create(
     root.set("sequence-test", seq);
 
     // p-start might break something
-    sharedString.insertMarker(0, MergeTree.ReferenceType.Tile, {[MergeTree.reservedTileLabelsKey]: ["pg"] });
+    sharedString.insertMarker(0, MergeTree.ReferenceType.Tile, { [MergeTree.reservedTileLabelsKey]: ["pg"] });
     root.set("text", sharedString);
     root.set("ink", document.createMap());
 

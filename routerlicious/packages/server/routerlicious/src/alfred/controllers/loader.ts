@@ -3,7 +3,7 @@ import { Container } from "@prague/container-loader";
 import { Loader } from "@prague/container-loader";
 import { ICommit } from "@prague/gitresources";
 import { WebLoader } from "@prague/loader-web";
-import { IMapView, SharedMap } from "@prague/map";
+import { ISharedMap, SharedMap } from "@prague/map";
 import { createReplayDocumentService } from "@prague/replay-socket-storage";
 import { WebPlatform } from "@prague/runtime";
 import { IComponentRuntime } from "@prague/runtime-definitions";
@@ -34,7 +34,7 @@ async function initializeChaincode(document: Container, pkg: string): Promise<vo
     console.log(`Code is ${quorum.get("code2")}`);
 }
 
-function renderMap(view: IMapView) {
+function renderMap(view: ISharedMap) {
     const div = document.getElementById("content");
     // tslint:disable-next-line:no-inner-html using to clear contents
     div.innerHTML = "";
@@ -75,9 +75,8 @@ async function attach(loader: Loader, url: string, platform: LocalPlatform) {
             break;
         case "prague/dataType":
             const dataType = response.value as SharedMap;
-            const view = await dataType.getView();
-            renderMap(view);
-            dataType.on("valueChanged", (key) => renderMap(view));
+            renderMap(dataType);
+            dataType.on("valueChanged", (key) => renderMap(dataType));
             break;
     }
 }

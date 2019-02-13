@@ -6,7 +6,7 @@ import {
     ITokenProvider,
     MessageType,
 } from "@prague/container-definitions";
-import { IMapView, ISharedMap } from "@prague/map";
+import { ISharedMap } from "@prague/map";
 import { nativeTextAnalytics, textAnalytics } from "../intelligence";
 import { BaseWork} from "./baseWork";
 import { IWork} from "./definitions";
@@ -31,8 +31,7 @@ export class IntelWork extends BaseWork implements IWork {
             this.service,
             task);
         const insightsMap = await this.document.getRoot().wait<ISharedMap>("insights");
-        const insightsMapView = await insightsMap.getView();
-        return this.processIntelligenceWork(this.document, insightsMapView);
+        return this.processIntelligenceWork(this.document, insightsMap);
     }
 
     public async stop(): Promise<void> {
@@ -46,7 +45,7 @@ export class IntelWork extends BaseWork implements IWork {
         this.intelligenceManager.registerService(service.factory.create(this.config.intelligence.resume));
     }
 
-    private processIntelligenceWork(doc: api.Document, insightsMap: IMapView): Promise<void> {
+    private processIntelligenceWork(doc: api.Document, insightsMap: ISharedMap): Promise<void> {
         this.intelligenceManager = new IntelligentServicesManager(doc, insightsMap);
         this.intelligenceManager.registerService(textAnalytics.factory.create(this.config.intelligence.textAnalytics));
         if (this.config.intelligence.nativeTextAnalytics.enable) {

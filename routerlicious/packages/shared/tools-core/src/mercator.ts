@@ -62,7 +62,7 @@ export async function run(
     // Load in the latest and connect to the document
     const tokenThing = new socketStorage.TokenProvider(token);
     const collabDoc = await api.load(id, tenantId, tokenThing, { blockUpdateMarkers: true, token });
-    const rootView = await collabDoc.getRoot().getView();
+    const root = await collabDoc.getRoot();
     if (!collabDoc.isConnected) {
         await new Promise<void>((resolve) => collabDoc.once("connected", () => resolve()));
     }
@@ -70,7 +70,7 @@ export async function run(
 
     const start = Date.now();
     const newMap = collabDoc.createMap();
-    rootView.set("newMap", newMap);
+    root.set("newMap", newMap);
 
     const totalMessages = batches * batchSize;
     send(newMap, 0, batches, randomMessages);

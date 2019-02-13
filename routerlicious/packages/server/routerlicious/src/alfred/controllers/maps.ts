@@ -58,12 +58,16 @@ async function updateOrCreateKey(key: string, map: Map.ISharedMap, container: JQ
     }
 }
 
-async function displayValues(map: Map.ISharedMap, container: JQuery, doc: api.Document) {
-    const keys = await map.keys();
-    keys.sort();
+function displayValues(map: Map.ISharedMap, container: JQuery, doc: api.Document) {
+    const keys = map.keys();
+    const keyArr = [] as string[];
+    for (const key of keys) {
+        keyArr.push(key);
+    }
+    keyArr.sort();
 
     const values = $("<div></div>");
-    for (const key of keys) {
+    for (const key of keyArr) {
         updateOrCreateKey(key, map, values, doc);
     }
 

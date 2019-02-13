@@ -13,7 +13,7 @@ import {
 } from "@prague/client-ui/ext/calc";
 import { ComponentHost } from "@prague/component";
 import { IPlatform, ITree } from "@prague/container-definitions";
-import { IMapView, MapExtension, registerDefaultValueType  } from "@prague/map";
+import { MapExtension, registerDefaultValueType  } from "@prague/map";
 import { Counter, CounterValueType } from "@prague/map";
 import {
     IntervalType,
@@ -82,21 +82,19 @@ export class TableDocument extends Component {
     }
 
     private get length()     { return this.mergeTree.getLength(UniversalSequenceNumber, this.clientId); }
-    public  get numCols()    { return Math.min(this.rootView.get("stride").value, this.length); }
+    public  get numCols()    { return Math.min(this.root.get("stride").value, this.length); }
     public  get numRows()    { return Math.floor(this.length / this.numCols); }
 
     private get sharedString()  { return this.maybeSharedString!; }
     private get mergeTree()     { return this.maybeMergeTree!; }
     private get clientId()      { return this.maybeClientId!; }
     private get workbook()      { return this.maybeWorkbook!; }
-    private get rootView()      { return this.maybeRootView!; }
 
     public static readonly type = `${require("../package.json").name}@${require("../package.json").version}`;
 
     private maybeSharedString?: SharedString;
     private maybeMergeTree?: MergeTree;
     private maybeClientId?: number;
-    private maybeRootView?: IMapView;
     private maybeWorkbook?: WorkbookAdapter;
     private readyDeferred = new Deferred<void>();
 
@@ -112,8 +110,6 @@ export class TableDocument extends Component {
     }
 
     public async opened() {
-        this.maybeRootView = await this.root.getView();
-
         this.maybeSharedString = await this.root.wait("text") as SharedString;
         await this.connected;
 

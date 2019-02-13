@@ -1,6 +1,5 @@
 import { ICell } from "@prague/cell";
 import * as api from "@prague/client-api";
-import { ISharedMap } from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
 import { ISequencedObjectMessage } from "@prague/runtime-definitions";
 import * as Sequence from "@prague/sequence";
@@ -238,8 +237,8 @@ async function setMetrics(doc: api.Document, token: string) {
         `${doc.id}-metrics`,
         doc.tenantId,
         new socketStorage.TokenProvider(token),
-        { });
-    const root = await metricsDoc.getRoot().getView();
+        {});
+    const root = metricsDoc.getRoot();
 
     const components = metricsDoc.createMap();
     root.set("components", components);
@@ -272,137 +271,128 @@ export async function typeFile(
     metricsToken: string,
     scribeCallback: ScribeMetricsCallback): Promise<IScribeMetrics> {
 
-        const metricsArray: IScribeMetrics[] = [];
-        let q: any;
+    const metricsArray: IScribeMetrics[] = [];
+    let q: any;
 
-        metrics = {
-            ackProgress: undefined,
-            ackRate: undefined,
-            latencyAverage: undefined,
-            latencyMaximum: undefined,
-            latencyMinimum: undefined,
-            latencyStdDev: undefined,
-            pingAverage: undefined,
-            pingMaximum: undefined,
-            processAverage: undefined,
-            serverAverage: undefined,
-            textLength: fileText.length,
-            time: 0,
-            totalOps: 0,
-            typingInterval: intervalTime,
-            typingProgress: undefined,
-            typingRate: undefined,
-            writers,
-        };
+    metrics = {
+        ackProgress: undefined,
+        ackRate: undefined,
+        latencyAverage: undefined,
+        latencyMaximum: undefined,
+        latencyMinimum: undefined,
+        latencyStdDev: undefined,
+        pingAverage: undefined,
+        pingMaximum: undefined,
+        processAverage: undefined,
+        serverAverage: undefined,
+        textLength: fileText.length,
+        time: 0,
+        totalOps: 0,
+        typingInterval: intervalTime,
+        typingProgress: undefined,
+        typingRate: undefined,
+        writers,
+    };
 
-        await setMetrics(doc, metricsToken);
+    await setMetrics(doc, metricsToken);
 
-        const m: IScribeMetrics = {
-            ackProgress: undefined,
-                ackRate: undefined,
-                latencyAverage: undefined,
-                latencyMaximum: undefined,
-                latencyMinimum: undefined,
-                latencyStdDev: undefined,
-                pingAverage: undefined,
-                pingMaximum: undefined,
-                processAverage: undefined,
-                serverAverage: undefined,
-                textLength: fileText.length,
-                time: 0,
-                totalOps: 0,
-                typingInterval: intervalTime,
-                typingProgress: undefined,
-                typingRate: undefined,
-                writers,
-        };
+    const m: IScribeMetrics = {
+        ackProgress: undefined,
+        ackRate: undefined,
+        latencyAverage: undefined,
+        latencyMaximum: undefined,
+        latencyMinimum: undefined,
+        latencyStdDev: undefined,
+        pingAverage: undefined,
+        pingMaximum: undefined,
+        processAverage: undefined,
+        serverAverage: undefined,
+        textLength: fileText.length,
+        time: 0,
+        totalOps: 0,
+        typingInterval: intervalTime,
+        typingProgress: undefined,
+        typingRate: undefined,
+        writers,
+    };
 
-        let author: IAuthor = {
+    let author: IAuthor = {
+        ackCounter: new Counter(),
+        doc,
+        latencyCounter: new Counter(),
+        metrics: clone(m),
+        pingCounter: new Counter(),
+        ss,
+        typingCounter: new Counter(),
+    };
+    const authors: IAuthor[] = [author];
+    const docList: api.Document[] = [doc];
+    const ssList: Sequence.SharedString[] = [ss];
+
+    for (let i = 1; i < writers; i++) {
+        const tokenProvider = new socketStorage.TokenProvider(documentToken);
+        docList.push(await api.load(doc.id, doc.tenantId, tokenProvider, {}));
+        ssList.push(await docList[i].getRoot().get("text") as Sequence.SharedString);
+        author = {
             ackCounter: new Counter(),
-            doc,
+            doc: await api.load(doc.id, doc.tenantId, tokenProvider, {}),
             latencyCounter: new Counter(),
             metrics: clone(m),
             pingCounter: new Counter(),
-            ss,
+            ss: await docList[i].getRoot().get("text") as Sequence.SharedString,
             typingCounter: new Counter(),
         };
-        const authors: IAuthor[] = [author];
-        const docList: api.Document[] = [doc];
-        const ssList: Sequence.SharedString[] = [ss];
+        authors.push(author);
+    }
 
-        for (let i = 1; i < writers; i++ ) {
-            const tokenProvider = new socketStorage.TokenProvider(documentToken);
-            docList.push(await api.load(doc.id, doc.tenantId, tokenProvider, { }));
-            ssList.push(await docList[i].getRoot().get("text") as Sequence.SharedString);
-            author = {
-                ackCounter: new Counter(),
-                doc: await api.load(doc.id, doc.tenantId, tokenProvider, { }),
-                latencyCounter: new Counter(),
-                metrics: clone(m),
-                pingCounter: new Counter(),
-                ss: await docList[i].getRoot().get("text") as Sequence.SharedString,
-                typingCounter: new Counter(),
+    if (writers === 1) {
+        const startTime = Date.now();
+        typingCounter.reset();
+        ackCounter.reset();
+        latencyCounter.reset();
+        pingCounter.reset();
+        return typeChunk(authors[0], "p-0", fileText, intervalTime, scribeCallback, scribeCallback)
+            .then((metric) => {
+                metric.time = Date.now() - startTime;
+                return metric;
+            });
+    } else {
+        const root = doc.getRoot();
+        const chunkMap = root.get("chunks");
+        let totalKeys = 0;
+        let curKey = 0;
+        const startTime = Date.now();
+        typingCounter.reset();
+        ackCounter.reset();
+        latencyCounter.reset();
+        pingCounter.reset();
+
+        return new Promise((resolve, reject) => {
+            q = queue(async (chunkKey, queueCallback) => {
+                const chunk = chunkMap.get(chunkKey);
+                const a = authors.shift();
+                curKey++;
+                metrics.typingProgress = curKey / totalKeys;
+                typeChunk(a, chunkKey, chunk, intervalTime, scribeCallback, queueCallback);
+            }, writers);
+
+            for (const chunkKey of chunkMap.keys()) {
+                totalKeys++;
+                q.push(chunkKey, (
+                    metric: IScribeMetrics,
+                    a: IAuthor) => {
+                    authors.push(a);
+                    metricsArray.push(metric);
+                });
+            }
+            q.drain = () => {
+                const now = Date.now();
+                metrics.time = now - startTime;
+                resolve(metricsArray[0]);
             };
-            authors.push(author);
-        }
-
-        if (writers === 1) {
-            const startTime = Date.now();
-            typingCounter.reset();
-            ackCounter.reset();
-            latencyCounter.reset();
-            pingCounter.reset();
-            return typeChunk(authors[0], "p-0", fileText, intervalTime, scribeCallback, scribeCallback)
-                .then((metric) => {
-                    metric.time = Date.now() - startTime;
-                    return metric;
-                });
-        } else {
-            return (doc.getRoot().get("chunks") as Promise<ISharedMap>)
-                .then((chunkMap) => {
-                    return chunkMap.getView();
-                })
-                .then((chunkView) => {
-                    let totalKeys = 0;
-                    let curKey = 0;
-                    const startTime = Date.now();
-                    typingCounter.reset();
-                    ackCounter.reset();
-                    latencyCounter.reset();
-                    pingCounter.reset();
-
-                    return new Promise((resolve, reject) => {
-                        q = queue(async (chunkKey, queueCallback) => {
-                            const chunk = chunkView.get(chunkKey);
-                            const a = authors.shift();
-                            curKey++;
-                            metrics.typingProgress = curKey / totalKeys;
-                            typeChunk(a, chunkKey, chunk, intervalTime, scribeCallback, queueCallback);
-                        }, writers);
-
-                        for (const chunkKey of chunkView.keys()) {
-                            totalKeys++;
-                            q.push(chunkKey, (
-                                    metric: IScribeMetrics,
-                                    a: IAuthor) => {
-                                authors.push(a);
-                                metricsArray.push(metric);
-                            });
-                        }
-                        q.drain = () => {
-                            const now = Date.now();
-                            metrics.time = now - startTime;
-                            resolve(metricsArray[0]);
-                        };
-                    });
-                })
-                .catch((error) => {
-                    console.log("No Chunk Map: " + error);
-                    return null;
-                });
-        }
+        });
+    }
 }
-
 /**
  * Types the given file into the shared string - starting at the end of the string
  */
@@ -561,7 +551,7 @@ export async function typeChunk(
 
                 if (code === 10) {
                     a.ss.insertMarker(pos, MergeTree.ReferenceType.Tile,
-                        {[MergeTree.reservedTileLabelsKey]: ["pg"]});
+                        { [MergeTree.reservedTileLabelsKey]: ["pg"] });
                     readPosition++;
                     ++lineNumber;
                     if (lineNumber % saveLineFrequency === 0) {
