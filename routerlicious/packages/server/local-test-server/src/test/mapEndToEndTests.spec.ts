@@ -1,7 +1,7 @@
 /* tslint:disable:no-unsafe-any */
 /* tslint:disable:no-backbone-get-set-outside-model  */
-import { OperationType } from "@prague/api-definitions";
 import * as api from "@prague/client-api";
+import { MessageType } from "@prague/container-definitions";
 import { ISharedMap } from "@prague/map";
 import { generateToken } from "@prague/services-core";
 import * as socketStorage from "@prague/socket-storage";
@@ -95,7 +95,7 @@ describe.skip("Map", () => {
         let user3ValueChangedCount: number = 0;
         root1.on("valueChanged", (changed, local, msg) => {
             if (!local) {
-                if (msg.type === OperationType) {
+                if (msg.type === MessageType.Operation) {
                     assert.equal(changed.key, "testKey1", "Incorrect value for testKey1 in document 1");
                     user1ValueChangedCount = user1ValueChangedCount + 1;
                 }
@@ -103,7 +103,7 @@ describe.skip("Map", () => {
         });
         root2.on("valueChanged", (changed, local, msg) => {
             if (!local) {
-                if (msg.type === OperationType) {
+                if (msg.type === MessageType.Operation) {
                     assert.equal(changed.key, "testKey1", "Incorrect value for testKey1 in document 2");
                     user2ValueChangedCount = user2ValueChangedCount + 1;
                 }
@@ -111,7 +111,7 @@ describe.skip("Map", () => {
         });
         root3.on("valueChanged", (changed, local, msg) => {
             if (!local) {
-                if (msg.type === OperationType) {
+                if (msg.type === MessageType.Operation) {
                     assert.equal(changed.key, "testKey1", "Incorrect value for testKey1 in document 3");
                     user3ValueChangedCount = user3ValueChangedCount + 1;
                 }

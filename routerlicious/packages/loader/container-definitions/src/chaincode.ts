@@ -133,7 +133,7 @@ export interface IContainerContext {
     readonly minimumSequenceNumber: number;
     readonly baseSnapshot: ISnapshotTree;
     readonly blobs: Map<string, string>;
-    readonly submitFn: (type: MessageType, contents: any) => void;
+    readonly submitFn: (type: MessageType, contents: any) => number;
     readonly snapshotFn: (message: string) => Promise<void>;
     readonly closeFn: () => void;
     readonly quorum: IQuorum;

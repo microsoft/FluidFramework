@@ -1,4 +1,4 @@
-import { ISequencedObjectMessage } from "@prague/runtime-definitions";
+import { ISequencedDocumentMessage } from "@prague/container-definitions";
 import { IMergeTreeOp, ISegment, MergeTreeDeltaType } from ".";
 import { MergeTree } from "./mergeTree";
 import { IMergeTreeGroupMsg } from "./ops";
@@ -16,7 +16,7 @@ export interface IMergeTreeDeltaCallbackArgs {
 export interface IMergeTreeDeltaOpCallbackArgs {
     readonly groupOp?: IMergeTreeGroupMsg;
     readonly op: IMergeTreeOp;
-    readonly sequencedMessage?: ISequencedObjectMessage;
+    readonly sequencedMessage?: ISequencedDocumentMessage;
 }
 
 export type MergeTreeDeltaCallback =

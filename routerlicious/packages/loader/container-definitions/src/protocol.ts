@@ -24,7 +24,7 @@ export enum MessageType {
     Attach = "attach",
 
     // Channel operation.
-    Operation = "objOp",
+    Operation = "op",
 
     // Chunked operation.
     ChunkedOp = "chunkedOp",
@@ -105,7 +105,7 @@ export interface IDocumentMessage {
     metadata?: ISystemData;
 
     // Traces related to the packet.
-    traces: ITrace[];
+    traces?: ITrace[];
 }
 
 /**

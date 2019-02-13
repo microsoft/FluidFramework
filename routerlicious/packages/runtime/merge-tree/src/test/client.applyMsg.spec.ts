@@ -1,4 +1,4 @@
-import { ISequencedObjectMessage } from "@prague/runtime-definitions";
+import { ISequencedDocumentMessage } from "@prague/container-definitions";
 import * as assert from "assert";
 import { Client, SegmentGroup, UnassignedSequenceNumber } from "..";
 
@@ -13,12 +13,12 @@ describe("client.applyMsg", () => {
     });
 
     it("Interleaved inserts, annotates, and deletes", () => {
-        const changes = new Map<number, {msg: ISequencedObjectMessage, segmentGroup: SegmentGroup}>();
+        const changes = new Map<number, {msg: ISequencedDocumentMessage, segmentGroup: SegmentGroup}>();
         assert.equal(client.mergeTree.pendingSegments.count(), 0);
         for (let i = 0; i < 100; i++) {
             const len = client.getLength();
             const pos1 = Math.floor(len / 2);
-            let msg: ISequencedObjectMessage;
+            let msg: ISequencedDocumentMessage;
             const imod6 = i % 6;
             switch (imod6) {
 
@@ -219,7 +219,7 @@ describe("client.applyMsg", () => {
     it("multiple interleaved annotateSegmentLocal", () => {
 
         let annotateEnd: number = client.getText().length;
-        const messages: ISequencedObjectMessage[] = [];
+        const messages: ISequencedDocumentMessage[] = [];
         let sequenceNumber = 0;
         while (annotateEnd > 0) {
 

@@ -378,7 +378,7 @@ export class Container extends EventEmitter {
                 this.loaded = true;
 
                 /* tslint:disable:no-unsafe-any */
-                debug(`Document loaded ${this.id}: ${Date.now} `);
+                debug(`Document loaded ${this.id}: ${Date.now()} `);
             });
     }
 

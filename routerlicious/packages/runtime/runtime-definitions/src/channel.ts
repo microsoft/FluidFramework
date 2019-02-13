@@ -1,5 +1,8 @@
-import { ConnectionState, ITree } from "@prague/container-definitions";
-import { IObjectMessage, ISequencedObjectMessage } from "./protocol";
+import {
+    ConnectionState,
+    ISequencedDocumentMessage,
+    ITree,
+} from "@prague/container-definitions";
 
 export interface IChannel {
     /**
@@ -9,13 +12,11 @@ export interface IChannel {
 
     readonly type: string;
 
-    dirty: boolean;
-
     ready(): Promise<void>;
 
     snapshot(): ITree;
 
-    transform(message: IObjectMessage, sequenceNumber: number): IObjectMessage;
+    transform(message: any, referenceSequenceNumber: number, sequenceNumber: number): any;
 
     isLocal(): boolean;
 }
@@ -32,9 +33,9 @@ export interface IAttachMessage {
 }
 
 export interface IDeltaHandler {
-    prepare: (message: ISequencedObjectMessage, local: boolean) => Promise<any>;
+    prepare: (message: ISequencedDocumentMessage, local: boolean) => Promise<any>;
 
-    process: (message: ISequencedObjectMessage, local: boolean, context: any) => void;
+    process: (message: ISequencedDocumentMessage, local: boolean, context: any) => void;
 
     minSequenceNumberChanged: (value: number) => void;
 
@@ -48,14 +49,13 @@ export interface IDeltaHandler {
  * Interface to represent a connection to a delta notification stream.
  */
 export interface IDeltaConnection {
-    // clientId: string;
-
     state: ConnectionState;
 
     /**
-     * Send new messages to the server
+     * Send new messages to the server. Returns the client ID for the messaage. Must be in a connected state
+     * to submit a message.
      */
-    submit(message: IObjectMessage): void;
+    submit(messageContent: any): number;
 
     /**
      * Attaches a message handler to the delta connection

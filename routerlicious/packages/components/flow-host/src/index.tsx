@@ -64,11 +64,11 @@ export async function instantiateComponent(): Promise<IChaincodeComponent> {
  */
 export async function instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
     return Component.instantiateRuntime(context, "flow-host", pkg.name, [
-        ["@chaincode/chart-view", chartView],
-        ["@chaincode/flow-document", flowDocument],
-        [pkg.name, { instantiateComponent }],
-        ["@chaincode/flow-editor", flowEditor],
-        ["@chaincode/table-document", tableDocument],
-        ["@chaincode/table-slice", tableSlice],
-        ["@chaincode/table-view", tableView]]);
+        ["@chaincode/chart-view", Promise.resolve(chartView)],
+        ["@chaincode/flow-document", Promise.resolve(flowDocument)],
+        [pkg.name, Promise.resolve({ instantiateComponent })],
+        ["@chaincode/flow-editor", Promise.resolve(flowEditor)],
+        ["@chaincode/table-document", Promise.resolve(tableDocument)],
+        ["@chaincode/table-slice", Promise.resolve(tableSlice)],
+        ["@chaincode/table-view", Promise.resolve(tableView)]]);
 }

@@ -1,11 +1,10 @@
 // tslint:disable:no-bitwise whitespace align switch-default no-string-literal ban-types no-angle-bracket-type-assertion
 import { ISharedObject } from "@prague/api-definitions";
 import * as api from "@prague/client-api";
-import { IGenericBlob, IUser } from "@prague/container-definitions";
+import { IGenericBlob, ISequencedDocumentMessage, IUser } from "@prague/container-definitions";
 import * as types from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
 import { findRandomWord } from "@prague/merge-tree-utils";
-import { ISequencedObjectMessage } from "@prague/runtime-definitions";
 import * as Sequence from "@prague/sequence";
 import * as assert from "assert";
 import * as Geocoder from "geocoder";
@@ -3945,7 +3944,7 @@ export class FlowView extends ui.Component {
     }
 
     public addPresenceMap(presenceMap: types.ISharedMap) {
-        presenceMap.on("valueChanged", (delta: types.IValueChanged, local: boolean, op: ISequencedObjectMessage) => {
+        presenceMap.on("valueChanged", (delta: types.IValueChanged, local: boolean, op: ISequencedDocumentMessage) => {
             this.remotePresenceUpdate(delta, local, op);
         });
 
@@ -5764,7 +5763,7 @@ export class FlowView extends ui.Component {
         this.localQueueRender(startPos);
     }
 
-    private remotePresenceUpdate(delta: types.IValueChanged, local: boolean, op: ISequencedObjectMessage) {
+    private remotePresenceUpdate(delta: types.IValueChanged, local: boolean, op: ISequencedDocumentMessage) {
         if (local) {
             return;
         }
@@ -5888,7 +5887,7 @@ export class FlowView extends ui.Component {
 
     // TODO: paragraph spanning changes and annotations
     // TODO: generalize this by using transform fwd
-    private applyOp(delta: MergeTree.IMergeTreeOp, msg: ISequencedObjectMessage) {
+    private applyOp(delta: MergeTree.IMergeTreeOp, msg: ISequencedDocumentMessage) {
         // tslint:disable:switch-default
         switch (delta.type) {
             case MergeTree.MergeTreeDeltaType.INSERT:
@@ -5972,7 +5971,7 @@ export class FlowView extends ui.Component {
         }
     }
 
-    private queueRender(msg: ISequencedObjectMessage, go = false) {
+    private queueRender(msg: ISequencedDocumentMessage, go = false) {
         if ((!this.pendingRender) && (go || (msg && msg.contents))) {
             this.pendingRender = true;
             window.requestAnimationFrame(() => {

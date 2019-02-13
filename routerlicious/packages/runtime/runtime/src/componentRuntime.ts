@@ -18,7 +18,6 @@ import {
 import {
     IChaincodeComponent,
     IComponentDeltaHandler,
-    IComponentFactory,
     IComponentRuntime,
     IEnvelope,
     IHostRuntime,
@@ -29,137 +28,109 @@ import { EventEmitter } from "events";
 
 export class ComponentRuntime extends EventEmitter implements IComponentRuntime {
     public static async create(
-        factory: IComponentFactory,
         hostRuntime: IHostRuntime,
-        tenantId: string,
-        documentId: string,
         id: string,
-        parentBranch: string,
-        options: any,
-        clientId: string,
-        blobManager: IBlobManager,
         pkg: string,
-        deltaManager: IDeltaManager,
-        quorum: IQuorum,
         storage: IDocumentStorageService,
-        connectionState: ConnectionState,
-        branch: string,
-        minimumSequenceNumber: number,
-        submitFn: (type: MessageType, contents: any) => void,
-        snapshotFn: (message: string) => Promise<void>,
-        closeFn: () => void,
     ) {
+        const factory = await hostRuntime.getPackage(pkg);
         const extension = await factory.instantiateComponent();
         const component = new ComponentRuntime(
-            pkg,
             hostRuntime,
-            tenantId,
-            documentId,
+            pkg,
             id,
-            parentBranch,
             false,
-            options,
-            clientId,
-            blobManager,
-            deltaManager,
-            quorum,
             extension,
             storage,
-            connectionState,
-            branch,
-            minimumSequenceNumber,
-            null,
-            submitFn,
-            snapshotFn,
-            closeFn);
+            null);
 
         return component;
     }
 
     public static async LoadFromSnapshot(
-        factory: IComponentFactory,
         hostRuntime: IHostRuntime,
-        tenantId: string,
-        documentId: string,
         id: string,
-        parentBranch: string,
-        options: any,
-        clientId: string,
-        blobManager: IBlobManager,
         pkg: string,
-        deltaManager: IDeltaManager,
-        quorum: IQuorum,
         storage: IDocumentStorageService,
-        connectionState: ConnectionState,
         channels: ISnapshotTree,
-        branch: string,
-        minimumSequenceNumber: number,
-        submitFn: (type: MessageType, contents: any) => void,
-        snapshotFn: (message: string) => Promise<void>,
-        closeFn: () => void,
     ): Promise<ComponentRuntime> {
+        const factory = await hostRuntime.getPackage(pkg);
         const extension = await factory.instantiateComponent();
         const component = new ComponentRuntime(
-            pkg,
             hostRuntime,
-            tenantId,
-            documentId,
+            pkg,
             id,
-            parentBranch,
             true,
-            options,
-            clientId,
-            blobManager,
-            deltaManager,
-            quorum,
             extension,
             storage,
-            connectionState,
-            branch,
-            minimumSequenceNumber,
-            channels,
-            submitFn,
-            snapshotFn,
-            closeFn);
+            channels);
 
         return component;
     }
 
+    public get tenantId(): string {
+        return this.hostRuntime.tenantId;
+    }
+
+    public get documentId(): string {
+        return this.hostRuntime.id;
+    }
+
+    public get parentBranch(): string {
+        return this.hostRuntime.parentBranch;
+    }
+
+    public get options(): any {
+        return this.hostRuntime.options;
+    }
+
+    public get clientId(): string {
+        return this.hostRuntime.clientId;
+    }
+
+    public get blobManager(): IBlobManager {
+        return this.hostRuntime.blobManager;
+    }
+
+    public get deltaManager(): IDeltaManager {
+        return this.hostRuntime.deltaManager;
+    }
+
     public get connected(): boolean {
-        return this._connectionState === ConnectionState.Connected;
+        return this.hostRuntime.connected;
     }
 
     public get connectionState(): ConnectionState {
-        return this._connectionState;
+        return this.hostRuntime.connectionState;
+    }
+
+    public get submitFn(): (type: MessageType, contents: any) => void {
+        return this.hostRuntime.submitFn;
+    }
+
+    public get snapshotFn(): (message: string) => Promise<void> {
+        return this.hostRuntime.snapshotFn;
+    }
+
+    public get closeFn(): () => void {
+        return this.hostRuntime.closeFn;
+    }
+
+    public get branch(): string {
+        return this.hostRuntime.branch;
     }
 
     private closed = false;
     private handler: IComponentDeltaHandler;
 
     private constructor(
-        private readonly pkg: string,
         private readonly hostRuntime: IHostRuntime,
-        public readonly tenantId: string,
-        public readonly documentId: string,
+        private readonly pkg: string,
         public readonly id: string,
-        public readonly parentBranch: string,
         public readonly existing: boolean,
-        public readonly options: any,
-        public clientId: string,
-        public readonly blobManager: IBlobManager,
-        public readonly deltaManager: IDeltaManager,
-        private quorum: IQuorum,
         public readonly chaincode: IChaincodeComponent,
         public readonly storage: IDocumentStorageService,
-        // tslint:disable:variable-name
-        private _connectionState: ConnectionState,
-        // tslint:enable:variable-name
-        public readonly branch: string,
-        public readonly minimumSequenceNumber: number,
-        public readonly baseSnapshot: ISnapshotTree,
-        public readonly submitFn: (type: MessageType, contents: any) => void,
-        public readonly snapshotFn: (message: string) => Promise<void>,
-        public readonly closeFn: () => void) {
+        public readonly baseSnapshot: ISnapshotTree) {
         super();
     }
 
@@ -173,13 +144,6 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime 
 
     public changeConnectionState(value: ConnectionState, clientId: string) {
         this.verifyNotClosed();
-
-        if (value === this.connectionState) {
-            return;
-        }
-
-        this._connectionState = value;
-        this.clientId = clientId;
         this.handler.changeConnectionState(value, clientId);
     }
 
@@ -195,8 +159,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime 
 
     public getQuorum(): IQuorum {
         this.verifyNotClosed();
-
-        return this.quorum;
+        return this.hostRuntime.getQuorum();
     }
 
     public async getBlobMetadata(): Promise<IGenericBlob[]> {
@@ -212,7 +175,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime 
     }
 
     public close(): void {
-        this.closeFn();
+        this.hostRuntime.closeFn();
     }
 
     public updateMinSequenceNumber(msn: number) {
@@ -240,8 +203,8 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime 
         return this.handler.request(request);
     }
 
-    public submitMessage(type: MessageType, content: any) {
-        this.submit(type, content);
+    public submitMessage(type: MessageType, content: any): number {
+        return this.submit(type, content);
     }
 
     public error(err: any): void {
@@ -257,7 +220,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime 
         return this.chaincode.attach(platform);
     }
 
-    private submit(type: MessageType, content: any) {
+    private submit(type: MessageType, content: any): number {
         this.verifyNotClosed();
         const envelope: IEnvelope = {
             address: this.id,
@@ -266,7 +229,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime 
                 type,
             },
         };
-        this.submitFn(MessageType.Operation, envelope);
+        return this.hostRuntime.submitFn(MessageType.Operation, envelope);
     }
 
     private verifyNotClosed() {

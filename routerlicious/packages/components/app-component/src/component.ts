@@ -42,26 +42,7 @@ export class ComponentChaincode<T extends Component> implements IChaincodeCompon
 
         // All of the below would be hidden from a developer
         // Is this an await or does it just go?
-        const host = await ComponentHost.LoadFromSnapshot(
-            runtime,
-            runtime.tenantId,
-            runtime.documentId,
-            runtime.id,
-            runtime.parentBranch,
-            runtime.existing,
-            runtime.options,
-            runtime.clientId,
-            runtime.blobManager,
-            runtime.baseSnapshot,
-            chaincode,
-            runtime.deltaManager,
-            runtime.getQuorum(),
-            runtime.storage,
-            runtime.connectionState,
-            runtime.branch,
-            runtime.minimumSequenceNumber,
-            runtime.snapshotFn,
-            runtime.closeFn);
+        const host = await ComponentHost.LoadFromSnapshot(runtime, chaincode);
         this.host = host;
         return host;
     }
@@ -189,7 +170,7 @@ export abstract class Component extends EventEmitter {
         context: IContainerContext,
         name: string,
         chaincode: string,
-        registry: ReadonlyArray<[string, IComponentFactory]>,
+        registry: ReadonlyArray<[string, Promise<IComponentFactory>]>,
     ): Promise<IRuntime> {
         debug(`instantiateRuntime(name=${name},chaincode=${chaincode},registry=${JSON.stringify(registry)})`);
         const runtime = await Runtime.Load(new Map(registry), context);

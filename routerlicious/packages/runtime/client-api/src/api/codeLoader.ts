@@ -81,26 +81,7 @@ class Component implements IChaincodeComponent {
     }
 
     public async run(runtime: IComponentRuntime): Promise<IComponentDeltaHandler> {
-        const component = await ComponentHost.LoadFromSnapshot(
-            runtime,
-            runtime.tenantId,
-            runtime.documentId,
-            runtime.id,
-            runtime.parentBranch,
-            runtime.existing,
-            runtime.options,
-            runtime.clientId,
-            runtime.blobManager,
-            runtime.baseSnapshot,
-            this.chaincode,
-            runtime.deltaManager,
-            runtime.getQuorum(),
-            runtime.storage,
-            runtime.connectionState,
-            runtime.branch,
-            runtime.minimumSequenceNumber,
-            runtime.snapshotFn,
-            runtime.closeFn);
+        const component = await ComponentHost.LoadFromSnapshot(runtime, this.chaincode);
         this.component = component;
 
         return component;
@@ -133,7 +114,8 @@ export class ChaincodeFactory implements IChaincodeFactory {
         const chaincode = new Chaincode(this.runFn);
 
         // return Promise.resolve(chaincode);
-        const registry = new Map<string, any>([["@prague/client-api", chaincode]]);
+        const registry = new Map<string, Promise<IComponentFactory>>([
+            ["@prague/client-api", Promise.resolve(chaincode)]]);
 
         const runtime = await Runtime.Load(registry, context);
 

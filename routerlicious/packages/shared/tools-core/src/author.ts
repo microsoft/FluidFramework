@@ -1,7 +1,7 @@
 import { ICell } from "@prague/cell";
 import * as api from "@prague/client-api";
+import { ISequencedDocumentMessage } from "@prague/container-definitions";
 import * as MergeTree from "@prague/merge-tree";
-import { ISequencedObjectMessage } from "@prague/runtime-definitions";
 import * as Sequence from "@prague/sequence";
 import * as socketStorage from "@prague/socket-storage";
 import * as queue from "async/queue";
@@ -450,7 +450,7 @@ export async function typeChunk(
             processCounter.increment(time);
         });
 
-        a.ss.on("op", (message: ISequencedObjectMessage, local) => {
+        a.ss.on("op", (message: ISequencedDocumentMessage, local) => {
             if (message.traces &&
                 message.clientSequenceNumber &&
                 message.clientSequenceNumber > 25 &&

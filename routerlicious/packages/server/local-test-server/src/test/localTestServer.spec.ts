@@ -1,5 +1,5 @@
-import { OperationType } from "@prague/api-definitions";
 import * as api from "@prague/client-api";
+import { MessageType } from "@prague/container-definitions";
 import { SharedString } from "@prague/sequence";
 import { generateToken } from "@prague/services-core";
 import * as socketStorage from "@prague/socket-storage";
@@ -59,7 +59,7 @@ describe.skip("LocalTestServer", () => {
 
       user1SharedString.on("op", (msg, local) => {
         if (!local) {
-          if (msg.type === OperationType) {
+          if (msg.type === MessageType.Operation) {
             user1ReceivedMsgCount = user1ReceivedMsgCount + 1;
           }
         }
@@ -67,7 +67,7 @@ describe.skip("LocalTestServer", () => {
 
       user2SharedString.on("op", (msg, local) => {
         if (!local) {
-          if (msg.type === OperationType) {
+          if (msg.type === MessageType.Operation) {
             user2ReceivedMsgCount = user2ReceivedMsgCount + 1;
           }
         }

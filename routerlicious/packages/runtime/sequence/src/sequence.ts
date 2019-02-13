@@ -1,5 +1,8 @@
 // tslint:disable:whitespace align no-bitwise
-import { ITree } from "@prague/container-definitions";
+import {
+    ISequencedDocumentMessage,
+    ITree,
+} from "@prague/container-definitions";
 import {
     ISharedMap,
     IValueChanged,
@@ -9,10 +12,8 @@ import {
 import * as MergeTree from "@prague/merge-tree";
 import {
     IDistributedObjectServices,
-    IObjectMessage,
     IObjectStorageService,
     IRuntime,
-    ISequencedObjectMessage,
 } from "@prague/runtime-definitions";
 import { Deferred } from "@prague/utils";
 import * as assert from "assert";
@@ -46,7 +47,6 @@ export abstract class SegmentSequence<T extends MergeTree.ISegment> extends Shar
     constructor(
         document: IRuntime,
         public id: string,
-        sequenceNumber: number,
         extensionType: string,
         services?: IDistributedObjectServices) {
 
@@ -79,10 +79,10 @@ export abstract class SegmentSequence<T extends MergeTree.ISegment> extends Shar
     }
 
     public on(event: "sequenceDelta", listener: (sender: this, event: SequenceDeltaEvent) => void): this;
-    public on(event: "pre-op" | "op", listener: (op: ISequencedObjectMessage, local: boolean) => void): this;
+    public on(event: "pre-op" | "op", listener: (op: ISequencedDocumentMessage, local: boolean) => void): this;
     public on(
         event: "valueChanged",
-        listener: (changed: IValueChanged, local: boolean, op: ISequencedObjectMessage) => void): this;
+        listener: (changed: IValueChanged, local: boolean, op: ISequencedDocumentMessage) => void): this;
     public on(event: string | symbol, listener: (...args: any[]) => void): this;
     // tslint:disable-next-line:no-unnecessary-override
     public on(event: string | symbol, listener: (...args: any[]) => void): this {
@@ -225,7 +225,7 @@ export abstract class SegmentSequence<T extends MergeTree.ISegment> extends Shar
 
         /* tslint:disable:no-object-literal-type-assertion */
         const segmentGroup = {
-            segments: orderedSegments,
+            segments: [],
         } as MergeTree.SegmentGroup;
         const opList = [] as MergeTree.IMergeTreeOp[];
         let prevSeg: MergeTree.ISegment;
@@ -248,31 +248,30 @@ export abstract class SegmentSequence<T extends MergeTree.ISegment> extends Shar
         }
     }
 
-    protected transformContent(message: IObjectMessage, toSequenceNumber: number): IObjectMessage {
-        if (message.contents) {
-            this.client.transform(message as ISequencedObjectMessage, toSequenceNumber);
-        }
-        message.referenceSequenceNumber = toSequenceNumber;
-        return message;
+    protected transformContent(
+        message: any,
+        fromSequenceNumber: number,
+        toSequenceNumber: number,
+    ): any {
+        return this.client.transform(message, fromSequenceNumber, toSequenceNumber);
     }
 
     protected async loadContent(
-        sequenceNumber: number,
         minimumSequenceNumber: number,
-        messages: ISequencedObjectMessage[],
+        messages: ISequencedDocumentMessage[],
         headerOrigin: string,
         storage: IObjectStorageService): Promise<void> {
 
         const header = await storage.read("header");
 
-        return this.initialize(sequenceNumber, minimumSequenceNumber, messages, header, true, headerOrigin, storage);
+        return this.initialize(minimumSequenceNumber, messages, header, true, headerOrigin, storage);
     }
 
     protected initializeContent() {
         const intervalCollections = this.runtime.createChannel(uuid(), MapExtension.Type) as ISharedMap;
         this.set("intervalCollections", intervalCollections);
         // TODO will want to update initialize to operate synchronously
-        this.initialize(0, 0, [], null, false, this.id, null)
+        this.initialize(0, [], null, false, this.id, null)
             .catch((error) => {
                 console.error("initializeContent", error);
             });
@@ -290,7 +289,7 @@ export abstract class SegmentSequence<T extends MergeTree.ISegment> extends Shar
         return this.loadedDeferred.promise;
     }
 
-    protected processContent(message: ISequencedObjectMessage) {
+    protected processContent(message: ISequencedDocumentMessage) {
         if (this.autoApply) {
             this.client.applyMsg(message);
             if (this.client.mergeTree.minSeqPending) {
@@ -313,7 +312,7 @@ export abstract class SegmentSequence<T extends MergeTree.ISegment> extends Shar
         this.collabStarted = true;
     }
 
-    protected onConnectContent(pending: IObjectMessage[]) {
+    protected onConnectContent(pending: any[]) {
         // Update merge tree collaboration information with new client ID and then resend pending ops
         if (this.collabStarted) {
             this.client.updateCollaboration(this.runtime.clientId);
@@ -340,7 +339,6 @@ export abstract class SegmentSequence<T extends MergeTree.ISegment> extends Shar
     protected abstract segmentsFromSpecs(segSpecs: MergeTree.IJSONSegment[]): MergeTree.ISegment[];
 
     private loadHeader(
-        sequenceNumber: number,
         minimumSequenceNumber: number,
         header: string,
         shared: boolean,
@@ -364,10 +362,9 @@ export abstract class SegmentSequence<T extends MergeTree.ISegment> extends Shar
     }
 
     private async loadBody(
-        sequenceNumber: number,
         minimumSequenceNumber: number,
         header: string,
-        messages: ISequencedObjectMessage[],
+        messages: ISequencedDocumentMessage[],
         shared: boolean,
         originBranch: string,
         services: IObjectStorageService) {
@@ -390,9 +387,8 @@ export abstract class SegmentSequence<T extends MergeTree.ISegment> extends Shar
     }
 
     private async initialize(
-        sequenceNumber: number,
         minimumSequenceNumber: number,
-        messages: ISequencedObjectMessage[],
+        messages: ISequencedDocumentMessage[],
         header: string,
         shared: boolean,
         originBranch: string,
@@ -402,10 +398,9 @@ export abstract class SegmentSequence<T extends MergeTree.ISegment> extends Shar
             assert.equal(minimumSequenceNumber, MergeTree.Snapshot.EmptyChunk.chunkSequenceNumber);
         }
 
-        this.loadHeader(sequenceNumber, minimumSequenceNumber, header, shared, originBranch, services);
+        this.loadHeader(minimumSequenceNumber, header, shared, originBranch, services);
 
         this.loadBody(
-            sequenceNumber,
             minimumSequenceNumber,
             header,
             messages,
@@ -462,10 +457,9 @@ export class SharedSequence<T extends MergeTree.SequenceItem> extends SegmentSeq
     constructor(
         document: IRuntime,
         public id: string,
-        sequenceNumber: number,
         extensionType: string,
         services?: IDistributedObjectServices) {
-        super(document, id, sequenceNumber, extensionType, services);
+        super(document, id, extensionType, services);
         if (extensionType === SharedNumberSequenceExtension.Type) {
             this.isNumeric = true;
         }
@@ -520,9 +514,8 @@ export class SharedObjectSequence<T extends MergeTree.SequenceItem> extends Shar
     constructor(
         document: IRuntime,
         public id: string,
-        sequenceNumber: number,
         services?: IDistributedObjectServices) {
-        super(document, id, sequenceNumber, SharedObjectSequenceExtension.Type, services);
+        super(document, id, SharedObjectSequenceExtension.Type, services);
     }
 
     public getRange(start: number, end?: number) {
@@ -535,9 +528,8 @@ export class SharedNumberSequence extends SharedSequence<number> {
     constructor(
         document: IRuntime,
         public id: string,
-        sequenceNumber: number,
         services?: IDistributedObjectServices) {
-        super(document, id, sequenceNumber, SharedNumberSequenceExtension.Type, services);
+        super(document, id, SharedNumberSequenceExtension.Type, services);
     }
 
     public getRange(start: number, end?: number) {

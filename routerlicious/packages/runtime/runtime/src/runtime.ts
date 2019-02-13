@@ -36,7 +36,7 @@ import { analyzeTasks, getLeaderCandidate } from "./taskAnalyzer";
 // Context will define the component level mappings
 export class Runtime extends EventEmitter implements IHostRuntime {
     public static async Load(
-        registry: Map<string, IComponentFactory>,
+        registry: Map<string, Promise<IComponentFactory>>,
         context: IContainerContext,
     ): Promise<Runtime> {
         const runtime = new Runtime(registry, context);
@@ -114,7 +114,7 @@ export class Runtime extends EventEmitter implements IHostRuntime {
         return this.context.minimumSequenceNumber;
     }
 
-    public get submitFn(): (type: MessageType, contents: any) => void {
+    public get submitFn(): (type: MessageType, contents: any) => number {
         return this.context.submitFn;
     }
 
@@ -144,7 +144,7 @@ export class Runtime extends EventEmitter implements IHostRuntime {
     private requestHandler: (request: IRequest) => Promise<IResponse>;
 
     private constructor(
-        private readonly registry: Map<string, IComponentFactory>,
+        private readonly registry: Map<string, Promise<IComponentFactory>>,
         private readonly context: IContainerContext,
     ) {
         super();
@@ -160,26 +160,11 @@ export class Runtime extends EventEmitter implements IHostRuntime {
         const details = await readAndParse<{ pkg: string }>(this.storage, snapshotTree.blobs[".component"]);
 
         const componentP = ComponentRuntime.LoadFromSnapshot(
-            this.registry.get(details.pkg),
             this,
-            this.tenantId,
-            this.id,
             id,
-            this.parentBranch,
-            this.options,
-            this.clientId,
-            this.blobManager,
             details.pkg,
-            this.deltaManager,
-            this.context.quorum,
             runtimeStorage,
-            this.connectionState,
-            snapshotTree,
-            this.id,
-            this.deltaManager.minimumSequenceNumber,
-            this.submitFn,
-            this.snapshotFn,
-            this.closeFn);
+            snapshotTree);
         const deferred = new Deferred<ComponentRuntime>();
         deferred.resolve(componentP);
         this.componentsDeferred.set(id, deferred);
@@ -193,6 +178,10 @@ export class Runtime extends EventEmitter implements IHostRuntime {
 
     public registerRequestHandler(handler: (request: IRequest) => Promise<IResponse>) {
         this.requestHandler = handler;
+    }
+
+    public getPackage(name: string): Promise<IComponentFactory> {
+        return this.registry.get(name);
     }
 
     public async request(request: IRequest): Promise<IResponse> {
@@ -340,25 +329,10 @@ export class Runtime extends EventEmitter implements IHostRuntime {
 
         const runtimeStorage = new ComponentStorageService(this.storage, new Map());
         const component = await ComponentRuntime.create(
-            this.registry.get(pkg),
             this,
-            this.tenantId,
-            this.id,
             id,
-            this.parentBranch,
-            this.options,
-            this.clientId,
-            this.blobManager,
             pkg,
-            this.deltaManager,
-            this.context.quorum,
-            runtimeStorage,
-            this.connectionState,
-            this.id,
-            this.deltaManager.minimumSequenceNumber,
-            this.submitFn,
-            this.snapshotFn,
-            this.closeFn);
+            runtimeStorage);
 
         // Generate the attach message
         const message: IAttachMessage = {
@@ -477,26 +451,11 @@ export class Runtime extends EventEmitter implements IHostRuntime {
         // create storage service that wraps the attach data
         const runtimeStorage = new ComponentStorageService(this.storage, new Map());
         const component = await ComponentRuntime.LoadFromSnapshot(
-            this.registry.get(attachMessage.type),
             this,
-            this.tenantId,
-            this.id,
             attachMessage.id,
-            this.parentBranch,
-            this.options,
-            this.clientId,
-            this.blobManager,
             attachMessage.type,
-            this.deltaManager,
-            this.context.quorum,
             runtimeStorage,
-            this.connectionState,
-            snapshotTree,
-            this.id,
-            this.deltaManager.minimumSequenceNumber,
-            this.submitFn,
-            this.snapshotFn,
-            this.closeFn);
+            snapshotTree);
 
         return component;
     }

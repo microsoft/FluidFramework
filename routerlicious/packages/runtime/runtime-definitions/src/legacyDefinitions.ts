@@ -3,6 +3,7 @@ import {
     IGenericBlob,
     IPlatform,
     IQuorum,
+    ISequencedDocumentMessage,
     MessageType,
 } from "@prague/container-definitions";
 import { EventEmitter } from "events";
@@ -10,7 +11,6 @@ import {
     IChannel,
     IDistributedObjectServices,
 } from "./channel";
-import { ISequencedObjectMessage } from "./protocol";
 
 export interface IChaincode {
     /**
@@ -49,9 +49,8 @@ export interface IChaincodeModule  {
     load(
         runtime: IRuntime,
         id: string,
-        sequenceNumber: number,
         minimumSequenceNumber: number,
-        messages: ISequencedObjectMessage[],
+        messages: ISequencedDocumentMessage[],
         services: IDistributedObjectServices,
         headerOrigin: string): Promise<IChannel>;
 
@@ -120,8 +119,6 @@ export interface IRuntime extends EventEmitter {
      * Terminates the runtime and closes the document
      */
     close(): void;
-
-    hasUnackedOps(): boolean;
 
     // Blob related calls
 

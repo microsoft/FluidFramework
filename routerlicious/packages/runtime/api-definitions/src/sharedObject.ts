@@ -1,10 +1,13 @@
-import { ConnectionState, ITree } from "@prague/container-definitions";
+import {
+    ConnectionState,
+    ISequencedDocumentMessage,
+    ITree,
+    MessageType,
+} from "@prague/container-definitions";
 import {
     IDistributedObjectServices,
-    IObjectMessage,
     IObjectStorageService,
     IRuntime,
-    ISequencedObjectMessage,
 } from "@prague/runtime-definitions";
 import * as assert from "assert";
 import * as Deque from "double-ended-queue";
@@ -13,37 +16,20 @@ import { debug } from "./debug";
 import { ISharedObject } from "./types";
 import { ValueType } from "./valueType";
 
-// TODO this may migrate to the runtime
-export const OperationType = "op";
-
 export abstract class SharedObject extends EventEmitter implements ISharedObject {
     // tslint:disable-next-line:variable-name
     public readonly __sharedObject__ = true;
 
-    // Private fields exposed via getters
-    // tslint:disable:variable-name
-    private _sequenceNumber: number;
+    // tslint:disable-next-line:variable-name private fields exposed via getters
     private _state = ConnectionState.Disconnected;
-    // tslint:enable:variable-name
 
     // Locally applied operations not yet ACK'd by the server
-    private readonly pendingOps = new Deque<IObjectMessage>();
+    private readonly pendingOps = new Deque<{ clientSequenceNumber: number; content: any }>();
 
     private services: IDistributedObjectServices;
 
-    // Sequence number for operations local to this client
-    private clientSequenceNumber = 0;
-
-    public get sequenceNumber(): number {
-        return this._sequenceNumber;
-    }
-
     public get state(): ConnectionState {
         return this._state;
-    }
-
-    public get dirty(): boolean {
-        return this.pendingOps.length > 0;
     }
 
     constructor(public id: string, protected runtime: IRuntime, public type: string) {
@@ -64,17 +50,14 @@ export abstract class SharedObject extends EventEmitter implements ISharedObject
      * a shared document. Or later attached if it is being newly added.
      */
     public async load(
-        sequenceNumber: number,
         minimumSequenceNumber: number,
-        messages: ISequencedObjectMessage[],
+        messages: ISequencedDocumentMessage[],
         headerOrigin: string,
         services: IDistributedObjectServices): Promise<void> {
 
-        this._sequenceNumber = sequenceNumber;
         this.services = services;
 
         await this.loadCore(
-            sequenceNumber,
             minimumSequenceNumber,
             messages,
             headerOrigin,
@@ -87,7 +70,6 @@ export abstract class SharedObject extends EventEmitter implements ISharedObject
      * it is attached to the document.
      */
     public initializeLocal() {
-        this._sequenceNumber = 0;
         this.initializeLocalCore();
     }
 
@@ -116,7 +98,7 @@ export abstract class SharedObject extends EventEmitter implements ISharedObject
         return !this.services;
     }
 
-    public on(event: "pre-op" | "op", listener: (op: ISequencedObjectMessage, local: boolean) => void): this;
+    public on(event: "pre-op" | "op", listener: (op: ISequencedDocumentMessage, local: boolean) => void): this;
     public on(event: string | symbol, listener: (...args: any[]) => void): this;
 
     /* tslint:disable:no-unnecessary-override */
@@ -133,15 +115,17 @@ export abstract class SharedObject extends EventEmitter implements ISharedObject
      * Creates a new message from the provided message that is relative to the given sequenceNumber. It is valid
      * to modify the passed in object in place.
      */
-    public abstract transform(message: IObjectMessage, sequenceNumber: number): IObjectMessage;
+    public abstract transform(
+        message: any,
+        referenceSequenceNumber: number,
+        sequenceNumber: number): any;
 
     /**
      * Allows the distributed data type to perform custom loading
      */
     protected abstract loadCore(
-        sequenceNumber: number,
         minimumSequenceNumber: number,
-        messages: ISequencedObjectMessage[],
+        messages: ISequencedDocumentMessage[],
         headerOrigin: string,
         services: IObjectStorageService): Promise<void>;
 
@@ -158,12 +142,12 @@ export abstract class SharedObject extends EventEmitter implements ISharedObject
     /**
      * Prepares the given message for processing
      */
-    protected abstract prepareCore(message: ISequencedObjectMessage, local: boolean): Promise<any>;
+    protected abstract prepareCore(message: ISequencedDocumentMessage, local: boolean): Promise<any>;
 
     /**
      * Derived classes must override this to do custom processing on a remote message
      */
-    protected abstract processCore(message: ISequencedObjectMessage, local: boolean, context: any);
+    protected abstract processCore(message: ISequencedDocumentMessage, local: boolean, context: any);
 
     /**
      * Method called when the minimum sequence number for the object has changed
@@ -178,32 +162,24 @@ export abstract class SharedObject extends EventEmitter implements ISharedObject
     /**
      * Called when the object has fully connected to the delta stream
      */
-    protected abstract onConnect(pending: IObjectMessage[]);
+    protected abstract onConnect(pending: any[]);
 
     /**
      * Processes a message by the local client
      */
-    protected submitLocalMessage(contents: any): void {
+    protected submitLocalMessage(content: any): void {
         assert(!this.isLocal());
 
-        /* tslint:disable:no-increment-decrement */
-        // Prep the message
-        const message: IObjectMessage = {
-            clientSequenceNumber: ++this.clientSequenceNumber,
-            contents,
-            referenceSequenceNumber: this.sequenceNumber,
-            type: OperationType,
-        };
-
-        // Store the message for when it is ACKed and then submit to the server if connected
-        this.pendingOps.push(message);
-
         // Send if we are connected - otherwise just add to the sent list
+        let clientSequenceNumber = -1;
         if (this.state === ConnectionState.Connected) {
-            this.services.deltaConnection.submit(message);
+            clientSequenceNumber = this.services.deltaConnection.submit(content);
         } else {
-            debug(`${this.id} Not fully connected - adding to pending list`, contents);
+            debug(`${this.id} Not fully connected - adding to pending list`, content);
+            // Store the message for when it is ACKed and then submit to the server if connected
         }
+
+        this.pendingOps.push({ clientSequenceNumber, content});
     }
 
     private attachDeltaHandler() {
@@ -226,7 +202,7 @@ export abstract class SharedObject extends EventEmitter implements ISharedObject
         this.setConnectionState(this.services.deltaConnection.state);
     }
 
-    private prepare(message: ISequencedObjectMessage, local: boolean): Promise<any> {
+    private prepare(message: ISequencedDocumentMessage, local: boolean): Promise<any> {
         return this.prepareCore(message, local);
     }
 
@@ -255,18 +231,15 @@ export abstract class SharedObject extends EventEmitter implements ISharedObject
                 break;
 
             case ConnectionState.Connected:
-                // tslint:disable-next-line:max-line-length
-                debug(`${this.id} had ${this.pendingOps.length} pending ops`);
-
                 // Extract all un-ack'd payload operation
-                const pendingOps = this.pendingOps.toArray();
+                const pendingOps = this.pendingOps.toArray().map((value) => value.content);
                 this.pendingOps.clear();
-                this.clientSequenceNumber = 0;
 
                 // And now we are fully connected
                 // - we have a client ID
                 // - we are caught up enough to attempt to send messages
                 this.onConnect(pendingOps);
+
                 break;
 
             default:
@@ -277,12 +250,13 @@ export abstract class SharedObject extends EventEmitter implements ISharedObject
     /**
      * Handles a message being received from the remote delta server
      */
-    private process(message: ISequencedObjectMessage, local: boolean, context: any) {
-        // server messages should only be delivered to this method in sequence number order
-        assert.equal(this.sequenceNumber + 1, message.sequenceNumber);
-        this._sequenceNumber = message.sequenceNumber;
+    private process(message: ISequencedDocumentMessage, local: boolean, context: any) {
+        if (message.type === MessageType.Operation && local) {
+            // disconnected ops should never be processed. They should have been fully sent on connected
+            assert(
+                this.pendingOps.length === 0 || this.pendingOps.peekFront().clientSequenceNumber !== -1,
+                `process for disconnected op ${this.pendingOps.peekFront().clientSequenceNumber}`);
 
-        if (message.type === OperationType && local) {
             // One of our messages was sequenced. We can remove it from the local message list. Given these arrive
             // in order we only need to check the beginning of the local list.
             if (this.pendingOps.length > 0 &&

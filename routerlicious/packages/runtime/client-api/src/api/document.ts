@@ -198,13 +198,6 @@ export class Document extends EventEmitter {
         return quorum.getMember(clientId);
     }
 
-    /**
-     * Flag indicating whether all submitted ops for this document is acked.
-     */
-    public get hasUnackedOps(): boolean {
-        return this.runtime.hasUnackedOps();
-    }
-
     /* tslint:disable:promise-function-async */
     /**
      * Called to snapshot the given document
