@@ -2,7 +2,7 @@ import { ISharedObject, SharedObject, ValueType } from "@prague/api-definitions"
 import { ISequencedDocumentMessage } from "@prague/container-definitions";
 import { IRuntime } from "@prague/runtime-definitions";
 import { IMapOperation, IMapValue } from "./definitions";
-import { IMapView, IValueOpEmitter, SerializeFilter } from "./interfaces";
+import { IValueOpEmitter, SerializeFilter } from "./interfaces";
 import { SharedMap } from "./map";
 
 class ValueOpEmitter implements IValueOpEmitter {
@@ -32,12 +32,10 @@ export interface ILocalViewElement {
     localValue: any;
 }
 
-export class MapView implements IMapView {
-    public [Symbol.toStringTag]: string;
-    private readonly data = new Map<string, ILocalViewElement>();
+export class MapView  {
+    public readonly data = new Map<string, ILocalViewElement>();
 
     constructor(private readonly map: SharedMap, private readonly runtime: IRuntime, id: string) {
-        this[Symbol.toStringTag] = this.data[Symbol.toStringTag];
     }
 
     public async populate(data: {[key: string]: IMapValue }): Promise<void> {
@@ -73,25 +71,6 @@ export class MapView implements IMapView {
         const value = this.data.get(key);
 
         return value.localValue;
-    }
-
-    public get size() {
-        return this.data.size;
-    }
-
-    // TODO: entries and values will have incorrect content until
-    // map contains plain values and meta-data is segregated into
-    // separate map
-    public entries() {
-        return this.data.entries();
-    }
-
-    public values() {
-        return this.data.values();
-    }
-
-    public [Symbol.iterator]() {
-        return this.data[Symbol.iterator]();
     }
 
     public getMap() {

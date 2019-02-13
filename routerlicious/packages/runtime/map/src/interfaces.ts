@@ -76,64 +76,25 @@ export interface IValueType<T> {
     ops: Map<string, IValueOperation<T>>;
 }
 
-export interface IMapView extends Map<string, any> {
-    /**
-     * A form of get except it will only resolve the promise once the key exists in the map.
-     */
-    wait<T>(key: string): Promise<T>;
-
-    get<T = any>(key: string): T;
-
-    /**
-     * Sets the key to the provided value
-     */
-    set<T = any>(key: string, value: T | any, type?: string): T;
-
-    /**
-     * Get the map viewed by this view.
-     */
-    getMap(): ISharedMap;
-}
-
 /**
  * Shared map interface
  */
-export interface ISharedMap extends ISharedObject {
+export interface ISharedMap extends ISharedObject, Map<string, any> {
     /**
      * Retrieves the given key from the map
      */
-    get<T = any>(key: string): Promise<T>;
+    get<T = any>(key: string): T;
 
     /**
      * A form of get except it will only resolve the promise once the key exists in the map.
      */
     wait<T>(key: string): Promise<T>;
-
-    /**
-     * Returns a boolean indicating whether or not the key exists in the map
-     */
-    has(key: string): Promise<boolean>;
 
     /**
      * Sets the key to the provided value. An optional type can be specified to initialize the key
      * to one of the registered value types.
      */
     set<T = any>(key: string, value: T | any, type?: string): T;
-
-    /**
-     * Deletes the specified key from the map and returns the value of the key at the time of deletion.
-     */
-    delete(key: string): Promise<boolean>;
-
-    /**
-     * Retreives all the keys contained within the map
-     */
-    keys(): Promise<string[]>;
-
-    /**
-     * Retreives a synchronous view of the map
-     */
-    getView(): Promise<IMapView>;
 
     /**
      * Registers a new operation on the map

@@ -11,9 +11,7 @@ import {
     UnboxedOper,
     Workbook,
 } from "@prague/client-ui/ext/calc";
-import { ComponentHost } from "@prague/component";
-import { IPlatform, ITree } from "@prague/container-definitions";
-import { IMapView, MapExtension, registerDefaultValueType  } from "@prague/map";
+import { MapExtension, registerDefaultValueType  } from "@prague/map";
 import { Counter, CounterValueType } from "@prague/map";
 import {
     IntervalType,
@@ -23,7 +21,7 @@ import {
     ReferenceType,
     UniversalSequenceNumber,
 } from "@prague/merge-tree";
-import { IChaincode, IChaincodeComponent, IComponentDeltaHandler, IComponentRuntime } from "@prague/runtime-definitions";
+import { IChaincodeComponent } from "@prague/runtime-definitions";
 import {
     SharedIntervalCollectionValueType,
     SharedString,
@@ -32,6 +30,7 @@ import {
 } from "@prague/sequence";
 import { Deferred } from "@prague/utils";
 
+import { IPlatform } from "../../../loader/container-definitions/dist";
 import { CellRange } from "./cellrange";
 export { CellRange };
 
@@ -82,21 +81,19 @@ export class TableDocument extends Component {
     }
 
     private get length()     { return this.mergeTree.getLength(UniversalSequenceNumber, this.clientId); }
-    public  get numCols()    { return Math.min(this.rootView.get("stride").value, this.length); }
+    public  get numCols()    { return Math.min(this.root.get("stride").value, this.length); }
     public  get numRows()    { return Math.floor(this.length / this.numCols); }
 
     private get sharedString()  { return this.maybeSharedString!; }
     private get mergeTree()     { return this.maybeMergeTree!; }
     private get clientId()      { return this.maybeClientId!; }
     private get workbook()      { return this.maybeWorkbook!; }
-    private get rootView()      { return this.maybeRootView!; }
 
     public static readonly type = `${require("../package.json").name}@${require("../package.json").version}`;
 
     private maybeSharedString?: SharedString;
     private maybeMergeTree?: MergeTree;
     private maybeClientId?: number;
-    private maybeRootView?: IMapView;
     private maybeWorkbook?: WorkbookAdapter;
     private readyDeferred = new Deferred<void>();
 
@@ -112,8 +109,6 @@ export class TableDocument extends Component {
     }
 
     public async opened() {
-        this.maybeRootView = await this.root.getView();
-
         this.maybeSharedString = await this.root.wait("text") as SharedString;
         await this.connected;
 
@@ -135,6 +130,8 @@ export class TableDocument extends Component {
         this.maybeWorkbook = new WorkbookAdapter(this);
         this.readyDeferred.resolve();
     }
+
+    public async attach(): Promise<IPlatform> { return; }
 
     public evaluateCell(row: number, col: number) {
         return this.parseResult(this.workbook.evaluateCell(row, col));
@@ -225,43 +222,6 @@ export class TableDocument extends Component {
     }
 }
 
-/**
- * A document is a collection of shared types.
- */
-export class TableDocumentComponent implements IChaincodeComponent {
-    public table = new TableDocument();
-    private chaincode: IChaincode;
-    private component: ComponentHost;
-
-    constructor() {
-        this.chaincode = Component.instantiate(this.table);
-    }
-
-    public async close(): Promise<void> {
-        return;
-    }
-
-    public async run(runtime: IComponentRuntime): Promise<IComponentDeltaHandler> {
-        const chaincode = this.chaincode;
-
-        // All of the below would be hidden from a developer
-        // Is this an await or does it just go?
-        const component = await ComponentHost.LoadFromSnapshot(runtime, chaincode);
-        this.component = component;
-
-        return component;
-    }
-
-    public async attach(platform: IPlatform): Promise<IPlatform> {
-        return;
-    }
-
-    public snapshot(): ITree {
-        const entries = this.component.snapshotInternal();
-        return { entries };
-    }
-}
-
 export async function instantiateComponent(): Promise<IChaincodeComponent> {
-    return new TableDocumentComponent();
+    return Component.instantiateComponent(TableDocument);
 }

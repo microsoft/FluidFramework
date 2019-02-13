@@ -236,18 +236,16 @@ export class FlowContainer extends ui.Component {
     }
 
     private async updateInsights(insights: ISharedMap) {
-        const view = await insights.getView();
-
-        if (view.has("ResumeAnalytics") && this.image) {
-            const resume = view.get("ResumeAnalytics");
+        if (insights.has("ResumeAnalytics") && this.image) {
+            const resume = insights.get("ResumeAnalytics");
             const probability = parseFloat(resume.resumeAnalyticsResult);
             if (probability !== 1 && probability > 0.7) {
                 this.image.setMessage(`${Math.round(probability * 100)}% sure I found a resume!`);
                 this.image.element.style.visibility = "visible";
             }
         }
-        if (view.has("TextAnalytics")) {
-            const analytics = view.get("TextAnalytics");
+        if (insights.has("TextAnalytics")) {
+            const analytics = insights.get("TextAnalytics");
             if (analytics) {
                 if (analytics.language) {
                     this.status.add("li", analytics.language);

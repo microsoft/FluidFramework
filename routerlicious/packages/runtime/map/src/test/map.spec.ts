@@ -1,5 +1,6 @@
 import * as assert from "assert";
 import * as map from "..";
+import { SharedMap } from "../map";
 
 describe("Routerlicious", () => {
     describe("Map", () => {
@@ -34,7 +35,7 @@ describe("Routerlicious", () => {
 
         describe("copyMap", () => {
             it("Should copy all values in the MapView into the map", async () => {
-                const from = await testMap.getView();
+                const from = testMap;
                 from.set("lebron", "james");
                 from.set("dwayne", "wade");
                 from.set("kevin", "love");
@@ -50,47 +51,47 @@ describe("Routerlicious", () => {
         });
 
         describe("MapView", () => {
-            let view: map.IMapView;
+            let sharedMap: map.ISharedMap;
 
             beforeEach(async () => {
-                view = await testMap.getView();
+                sharedMap = testMap;
             });
 
             describe(".get()", () => {
                 it("Should be able to retrieve a key", () => {
                     const value = "value";
-                    view.set("test", value);
-                    assert.equal(value, view.get("test"));
+                    sharedMap.set("test", value);
+                    assert.equal(value, sharedMap.get("test"));
                 });
 
                 it("Should return undefined when a key does not exist in the map", () => {
-                    assert.equal(undefined, view.get("missing"));
+                    assert.equal(undefined, sharedMap.get("missing"));
                 });
             });
 
             describe(".has()", () => {
                 it("Should return false when a key is not in the map", () => {
-                    assert.equal(false, view.has("notInSet"));
+                    assert.equal(false, sharedMap.has("notInSet"));
                 });
 
                 it("Should return true when a key is in the map", () => {
-                    view.set("inSet", "value");
-                    assert.equal(true, view.has("inSet"));
+                    sharedMap.set("inSet", "value");
+                    assert.equal(true, sharedMap.has("inSet"));
                 });
             });
 
             describe(".set()", () => {
                 it("Should set a key to a value", () => {
                     const value = "value";
-                    view.set("test", value);
-                    assert.equal(true, view.has("test"));
-                    assert.equal(value, view.get("test"));
+                    sharedMap.set("test", value);
+                    assert.equal(true, sharedMap.has("test"));
+                    assert.equal(value, sharedMap.get("test"));
                 });
 
                 it("Should be able to set a shared object as a key", () => {
                     const subMap = extension.create(null, "subMap");
-                    view.set("test", subMap);
-                    assert.equal(view.get("test"), subMap);
+                    sharedMap.set("test", subMap);
+                    assert.equal(sharedMap.get("test"), subMap);
                 });
             });
 
@@ -104,13 +105,13 @@ describe("Routerlicious", () => {
                     set.add("third");
 
                     for (const value of set) {
-                        view.set(value, value);
+                        sharedMap.set(value, value);
                     }
 
-                    view.forEach((value, key) => {
+                    sharedMap.forEach((value, key) => {
                         assert.ok(set.has(key));
                         assert.equal(key, value);
-                        assert.equal(view.get(key), value);
+                        assert.equal(sharedMap.get(key), value);
                         set.delete(key);
                     });
 
@@ -120,17 +121,17 @@ describe("Routerlicious", () => {
 
             describe(".serialize", () => {
                 it("Should serialize the map as a JSON object", () => {
-                    view.set("first", "second");
-                    view.set("third", "fourth");
-                    view.set("fifth", "sixth");
+                    sharedMap.set("first", "second");
+                    sharedMap.set("third", "fourth");
+                    sharedMap.set("fifth", "sixth");
                     const subMap = extension.create(null, "subMap");
-                    view.set("object", subMap);
+                    sharedMap.set("object", subMap);
 
-                    const concrete = view as map.MapView;
+                    const concrete = (sharedMap as SharedMap).internalView();
                     const serialized = concrete.serialize((key, value, type) => value);
                     const parsed = JSON.parse(serialized);
 
-                    view.forEach((value, key) => {
+                    sharedMap.forEach((value, key) => {
                         const type = parsed[key].type;
                         if (type === "Plain") {
                             assert.equal(parsed[key].type, "Plain");
@@ -145,16 +146,16 @@ describe("Routerlicious", () => {
 
             describe(".wait()", () => {
                 it("Should resolve returned promise for existing keys", async () => {
-                    view.set("test", "resolved");
-                    assert.ok(view.has("test"));
-                    await view.wait("test");
+                    sharedMap.set("test", "resolved");
+                    assert.ok(sharedMap.has("test"));
+                    await sharedMap.wait("test");
                 });
 
                 it("Should resolve returned promise once unavailable key is available", async () => {
-                    assert.ok(!view.has("test"));
+                    assert.ok(!sharedMap.has("test"));
 
-                    const waitP = view.wait("test");
-                    view.set("test", "resolved");
+                    const waitP = sharedMap.wait("test");
+                    sharedMap.set("test", "resolved");
 
                     await waitP;
                 });

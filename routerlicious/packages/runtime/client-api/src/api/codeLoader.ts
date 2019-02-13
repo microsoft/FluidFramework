@@ -114,7 +114,8 @@ export class ChaincodeFactory implements IChaincodeFactory {
         const chaincode = new Chaincode(this.runFn);
 
         // return Promise.resolve(chaincode);
-        const registry = new Map<string, any>([["@prague/client-api", chaincode]]);
+        const registry = new Map<string, Promise<IComponentFactory>>([
+            ["@prague/client-api", Promise.resolve(chaincode)]]);
 
         const runtime = await Runtime.Load(registry, context);
 

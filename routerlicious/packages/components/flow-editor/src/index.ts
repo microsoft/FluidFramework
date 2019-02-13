@@ -3,9 +3,10 @@ export { VirtualizedView, IVirtualizedProps } from "./components/virtualized";
 import { FlowDocument } from "@chaincode/flow-document";
 import { Component } from "@prague/app-component";
 import { DataStore } from "@prague/app-datastore";
+import { IPlatform } from "@prague/container-definitions";
 import { Scheduler } from "@prague/flow-util";
 import { MapExtension } from "@prague/map";
-import { IChaincode } from "@prague/runtime-definitions";
+import { IChaincode, IChaincodeComponent } from "@prague/runtime-definitions";
 import { Editor } from "./components/editor";
 
 export class FlowEditor extends Component {
@@ -21,13 +22,20 @@ export class FlowEditor extends Component {
 
         if (maybeDiv) {
             const docId = await this.root.get("docId");
-            // TODO: 'hostUrl' (or possibly DataStore) should be passed from the host, not
-            //       derived here.
-            const doc = await store.open<FlowDocument>(docId, "danlehen", FlowDocument.type, [["datastore", Promise.resolve(store)]]);
+            // TODO: Likely should not pass datastore to children?
+            const doc = await store.open<FlowDocument>(
+                docId,
+                FlowDocument.type,
+                "",
+                [["datastore", Promise.resolve(store)]]);
             const editor = new Editor();
             const root = editor.mount({ doc, scheduler: new Scheduler(), trackedPositions: [] });
             maybeDiv.appendChild(root);
         }
+    }
+
+    public attach(platform: IPlatform): Promise<IPlatform> {
+        return;
     }
 
     protected async create() {
@@ -39,4 +47,8 @@ export class FlowEditor extends Component {
 // Chainloader bootstrap.
 export async function instantiate(): Promise<IChaincode> {
     return Component.instantiate(new FlowEditor());
+}
+
+export async function instantiateComponent(): Promise<IChaincodeComponent> {
+    return Component.instantiateComponent(FlowEditor);
 }

@@ -8,7 +8,7 @@ import {
     MessageType,
 } from "@prague/container-definitions";
 import { Container } from "@prague/container-loader";
-import { IMapView, ISharedMap } from "@prague/map";
+import { ISharedMap } from "@prague/map";
 import { textAnalytics } from "../../intelligence";
 import { IWork} from "../definitions";
 import { ChaincodeWork } from "./chaincodeWork";
@@ -34,8 +34,7 @@ export class IntelWork extends ChaincodeWork implements IWork {
         await this.loadChaincode(
             { localMinSeq: 0, encrypted: undefined, client: { type: "intel" } });
         const insightsMap = await this.document.runtime.getChannel("insights") as ISharedMap;
-        const insightsMapView = await insightsMap.getView();
-        this.processIntelligenceWork(this.document, insightsMapView);
+        this.processIntelligenceWork(this.document, insightsMap);
     }
 
     public async stop(): Promise<void> {
@@ -49,7 +48,7 @@ export class IntelWork extends ChaincodeWork implements IWork {
         this.intelligenceManager.registerService(service.factory.create(this.config.intelligence.resume));
     }
 
-    private processIntelligenceWork(doc: Container, insightsMap: IMapView) {
+    private processIntelligenceWork(doc: Container, insightsMap: ISharedMap) {
         this.intelligenceManager = new IntelligentServicesManager(doc, insightsMap);
         this.intelligenceManager.registerService(textAnalytics.factory.create(this.config.intelligence.textAnalytics));
 

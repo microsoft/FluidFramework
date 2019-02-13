@@ -43,16 +43,16 @@ async function getInsights(map: DistributedMap.ISharedMap, id: string): Promise<
 async function addTranslation(document: API.Document, id: string, language: string): Promise<void> {
     // Create the translations map
     const insights = await document.getRoot().wait<DistributedMap.ISharedMap>("insights");
-    const view = await (await insights.wait<DistributedMap.ISharedMap>(id)).getView();
+    const idMap = await insights.wait<DistributedMap.ISharedMap>(id);
     if (!document.existing) {
-        view.set("translations", undefined, DistributedMap.DistributedSetValueType.Name);
+        idMap.set("translations", undefined, DistributedMap.DistributedSetValueType.Name);
     }
 
     if (!language) {
         return;
     }
 
-    const translations = await view.wait<DistributedMap.DistributedSet<string>>("translations");
+    const translations = await idMap.wait<DistributedMap.DistributedSet<string>>("translations");
     translations.add(language);
 }
 
@@ -130,7 +130,7 @@ async function loadDocument(
     }
 
     console.log(`Document loaded ${id}: ${performanceNow()}`);
-    const root = await collabDoc.getRoot().getView();
+    const root = await collabDoc.getRoot();
     console.log(`Getting root ${id} - ${performanceNow()}`);
 
     collabDoc.on("clientJoin", (message) => {
@@ -173,7 +173,7 @@ async function loadDocument(
             root.set("pageInk", collabDoc.createStream());
         }
     } else {
-        await Promise.all([root.wait("text"), root.wait("ink"), root.wait("sequence-test")]);
+        await Promise.all([root.wait("text"), root.wait("ink"), root.wait("sequence-test"), root.wait("presence")]);
     }
 
     const sharedString = root.get("text") as Sequence.SharedString;

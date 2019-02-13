@@ -3576,9 +3576,9 @@ export class FlowView extends ui.Component {
     public calendarIntervalsView: Sequence.SharedIntervalCollectionView<Sequence.Interval>;
     public sequenceTest: Sequence.SharedNumberSequence;
     public sequenceObjTest: Sequence.SharedObjectSequence<ISeqTestItem>;
-    public presenceMapView: types.IMapView;
+    public presenceMap: types.ISharedMap;
     public presenceVector: ILocalPresenceInfo[] = [];
-    public docRoot: types.IMapView;
+    public docRoot: types.ISharedMap;
     public curPG: MergeTree.Marker;
     public modes = {
         randExclusion: false,
@@ -3687,42 +3687,43 @@ export class FlowView extends ui.Component {
 
         // Provide access to the containing shared object
         this.services.set("document", this.collabDocument);
+        this.initializeMaps();
+    }
 
+    public async initializeMaps() {
         // TODO: Should insert a workbook into the document on demand, implement the ability
         //       to add references to pre-existing notebooks, support multiple notebooks, ...
         //
         //       Instead, we currently check to see if a workbook already exists.  If not, we
         //       insert one up front.
-        this.collabDocument.getRoot().getView().then(async (rootView) => {
-            let workbookMap: types.ISharedMap;
+        const rootMap = this.collabDocument.getRoot();
+        let workbookMap: types.ISharedMap;
 
-            if (!this.collabDocument.existing) {
-                workbookMap = this.collabDocument.createMap();
-            } else {
-                workbookMap = await rootView.wait<types.ISharedMap>("workbook");
-            }
+        if (!this.collabDocument.existing) {
+            workbookMap = this.collabDocument.createMap();
+        } else {
+            workbookMap = await rootMap.wait<types.ISharedMap>("workbook");
+        }
 
-            const workbookView = await workbookMap.getView();
-            this.services.set(
-                "workbook",
-                new SharedWorkbook(workbookView, 6, 6, [
-                    ["Player", "Euchre", "Bridge", "Poker", "Go Fish", "Total Wins"],
-                    ["Daniel", "0", "0", "0", "5", "=SUM(B2:E2)"],
-                    ["Kurt", "2", "3", "0", "0", "=SUM(B3:E3)"],
-                    ["Sam", "3", "4", "0", "0", "=SUM(B4:E4)"],
-                    ["Tanvir", "3", "3", "0", "0", "=SUM(B5:E5)"],
-                    ["Total Played", "=SUM(B2:B5)", "=SUM(C2:C5)", "=SUM(D2:D5)", "=SUM(E2:E5)", "=SUM(F2:F5)"],
-                ]));
+        this.services.set(
+            "workbook",
+            new SharedWorkbook(workbookMap, 6, 6, [
+                ["Player", "Euchre", "Bridge", "Poker", "Go Fish", "Total Wins"],
+                ["Daniel", "0", "0", "0", "5", "=SUM(B2:E2)"],
+                ["Kurt", "2", "3", "0", "0", "=SUM(B3:E3)"],
+                ["Sam", "3", "4", "0", "0", "=SUM(B4:E4)"],
+                ["Tanvir", "3", "3", "0", "0", "=SUM(B5:E5)"],
+                ["Total Played", "=SUM(B2:B5)", "=SUM(C2:C5)", "=SUM(D2:D5)", "=SUM(E2:E5)", "=SUM(F2:F5)"],
+            ]));
 
-            // Set the map after loading data so it's populated when other clients load it
-            if (!this.collabDocument.existing) {
-                rootView.set("workbook", workbookMap);
-            }
+        // Set the map after loading data so it's populated when other clients load it
+        if (!this.collabDocument.existing) {
+            rootMap.set("workbook", workbookMap);
+        }
 
-            workbookMap.on("valueChanged", () => {
-                // TODO: Track which cells are visible and damp invalidation for off-screen cells.
-                this.queueRender(undefined, true);
-            });
+        workbookMap.on("valueChanged", () => {
+            // TODO: Track which cells are visible and damp invalidation for off-screen cells.
+            this.queueRender(undefined, true);
         });
     }
 
@@ -3738,7 +3739,7 @@ export class FlowView extends ui.Component {
         childFlow.setEdit(this.docRoot);
         childFlow.comments = this.comments;
         childFlow.commentsView = this.commentsView;
-        childFlow.presenceMapView = this.presenceMapView;
+        childFlow.presenceMap = this.presenceMap;
         childFlow.presenceVector = this.presenceVector;
         childFlow.bookmarks = this.bookmarks;
         childFlow.cursor.pos = cursorPos;
@@ -3947,10 +3948,7 @@ export class FlowView extends ui.Component {
             this.remotePresenceUpdate(delta, local, op);
         });
 
-        presenceMap.getView().then((v) => {
-            this.presenceMapView = v;
-            this.updatePresence();
-        });
+        this.updatePresence();
     }
 
     public presenceInfoInRange(start: number, end: number) {
@@ -4415,7 +4413,7 @@ export class FlowView extends ui.Component {
         }
     }
 
-    public setEdit(docRoot: types.IMapView) {
+    public setEdit(docRoot: types.ISharedMap) {
         this.docRoot = docRoot;
 
         window.oncontextmenu = preventD;
@@ -5623,10 +5621,10 @@ export class FlowView extends ui.Component {
             // tslint:disable-next-line:max-line-length
             console.log(`time to edit/impression: ${this.timeToEdit} time to load: ${Date.now() - clockStart}ms len: ${this.sharedString.client.getLength()} - ${performanceNow()}`);
         }
-        const presenceMap = this.docRoot.get("presence") as types.ISharedMap;
-        this.addPresenceMap(presenceMap);
+        this.presenceMap = this.docRoot.get("presence") as types.ISharedMap;
+        this.addPresenceMap(this.presenceMap);
         this.addCalendarMap();
-        const intervalMap = this.sharedString.intervalCollections.getMap();
+        const intervalMap = this.sharedString.intervalCollections;
         intervalMap.on("valueChanged", (delta: types.IValueChanged) => {
             this.queueRender(undefined, true);
         });
@@ -5770,7 +5768,7 @@ export class FlowView extends ui.Component {
             return;
         }
 
-        const remotePresenceBase = this.presenceMapView.get(delta.key) as IRemotePresenceBase;
+        const remotePresenceBase = this.presenceMap.get(delta.key) as IRemotePresenceBase;
         const docClient = this.collabDocument.getClient(op.clientId);
         if (remotePresenceBase.type === "selection") {
             this.remotePresenceToLocal(delta.key, docClient.client.user, remotePresenceBase as IRemotePresenceInfo);
@@ -5848,7 +5846,7 @@ export class FlowView extends ui.Component {
     }
 
     private updatePresence() {
-        if (this.presenceMapView) {
+        if (this.presenceMap) {
             const presenceInfo: IRemotePresenceInfo = {
                 origMark: this.cursor.mark,
                 origPos: this.cursor.pos,
@@ -5856,12 +5854,12 @@ export class FlowView extends ui.Component {
                 type: "selection",
             };
 
-            this.presenceMapView.set(this.collabDocument.clientId, presenceInfo);
+            this.presenceMap.set(this.collabDocument.clientId, presenceInfo);
         }
     }
 
     private updateDragPresence() {
-        if (this.presenceMapView) {
+        if (this.presenceMap) {
             let dragPresenceInfo: IRemoteDragInfo;
             dragPresenceInfo = {
                 dx: this.movingInclusion.dx,
@@ -5871,7 +5869,7 @@ export class FlowView extends ui.Component {
                 onTheMove: this.movingInclusion.onTheMove,
                 type: "drag",
             };
-            this.presenceMapView.set(this.collabDocument.clientId, dragPresenceInfo);
+            this.presenceMap.set(this.collabDocument.clientId, dragPresenceInfo);
         }
     }
 

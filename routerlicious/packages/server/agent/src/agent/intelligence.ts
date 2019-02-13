@@ -1,6 +1,6 @@
 import { ISharedObject } from "@prague/api-definitions";
 import * as api from "@prague/client-api";
-import { IMapView, ISharedMap } from "@prague/map";
+import { ISharedMap } from "@prague/map";
 import * as Sequence from "@prague/sequence";
 import * as intelligence from "../intelligence";
 import { RateLimiter } from "./rateLimiter";
@@ -16,7 +16,7 @@ export class IntelligentServicesManager {
 
     constructor(
         private doc: api.Document,
-        private documentInsights: IMapView) {}
+        private documentInsights: ISharedMap) {}
 
     /**
      * Registers a new intelligent service

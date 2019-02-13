@@ -31,16 +31,16 @@ describe.skip("LocalTestServer", () => {
     const documentService = createTestDocumentService(testDeltaConnectionServer);
     user1Document = await api.load(
       id, tenantId, new socketStorage.TokenProvider(user1Token), {}, null, true, documentService);
-    let rootView = await user1Document.getRoot().getView();
+    let root = user1Document.getRoot();
     user1SharedString = user1Document.createString();
-    rootView.set("SharedString", user1SharedString);
+    root.set("SharedString", user1SharedString);
     documentDeltaEventManager.registerDocuments(user1Document);
 
     const user2Token = generateToken(tenantId, id, tokenKey);
     user2Document = await api.load(
       id, tenantId, new socketStorage.TokenProvider(user2Token), {}, null, true, documentService);
-    rootView = await user2Document.getRoot().getView();
-    user2SharedString = await rootView.wait("SharedString") as SharedString;
+    root = user2Document.getRoot();
+    user2SharedString = await root.wait("SharedString") as SharedString;
     documentDeltaEventManager.registerDocuments(user2Document);
   });
 

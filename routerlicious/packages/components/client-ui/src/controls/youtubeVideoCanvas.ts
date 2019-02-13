@@ -1,4 +1,4 @@
-import { IMapView, ISharedMap } from "@prague/map";
+import { ISharedMap } from "@prague/map";
 import * as ui from "../ui";
 import { getProposedPlaybackTime, PlayerState, YouTubeWrapper } from "../utils/youtubeHelper";
 
@@ -15,7 +15,6 @@ interface IVideoState {
 export class YouTubeVideoCanvas extends ui.Component {
     public player: YouTubeWrapper;
     private videoId: string;
-    private videoMapView: IMapView;
     private playerId = "player";
 
     constructor(elem: HTMLDivElement, private videoMap: ISharedMap) {
@@ -47,13 +46,12 @@ export class YouTubeVideoCanvas extends ui.Component {
 
     public async loadYoutubePlayer() {
         // Fetch a synchronous version of the youTubeVideo Map for easier use
-        this.videoMapView = await this.videoMap.getView();
 
         this.player = new YouTubeWrapper(this.videoId, this.playerId,
         // On YouTube Player Ready
         (event) => {
-            if (this.videoMapView.has("state")) {
-                const state = this.videoMapView.get<IVideoState>("state");
+            if (this.videoMap.has("state")) {
+                const state = this.videoMap.get<IVideoState>("state");
 
                 const proposedPlaybackTime = getProposedPlaybackTime(state.lastChangeUTC,
                     state.playing, state.elapsedTime);
@@ -68,7 +66,7 @@ export class YouTubeVideoCanvas extends ui.Component {
                     }
                 } else {
                     // We've finished the video! Reset the state.
-                    this.videoMapView.set<IVideoState>("state", {
+                    this.videoMap.set<IVideoState>("state", {
                         elapsedTime: 0,
                         lastChangeUTC: Date.now(),
                         playing: false,
@@ -81,7 +79,7 @@ export class YouTubeVideoCanvas extends ui.Component {
         (playerState) => {
             // Update current time, play/pause, src, last changed time
             if (playerState === PlayerState.playing || playerState === PlayerState.paused) {
-                this.videoMapView.set<IVideoState>("state", {
+                this.videoMap.set<IVideoState>("state", {
                     elapsedTime: this.player.getCurrentTime(),
                     lastChangeUTC: Date.now(),
                     playing: (playerState === PlayerState.playing),
@@ -93,7 +91,7 @@ export class YouTubeVideoCanvas extends ui.Component {
         // Actions to take when the client receives an update to the video map
         this.videoMap.on("valueChanged", (value) => {
             if (value.key === "state") {
-                const incomingState = this.videoMapView.get<IVideoState>(value.key);
+                const incomingState = this.videoMap.get<IVideoState>(value.key);
                 const incomingPlaybackTime = (Date.now() -
                                         incomingState.lastChangeUTC +
                                         incomingState.elapsedTime * 1000) / 1000;

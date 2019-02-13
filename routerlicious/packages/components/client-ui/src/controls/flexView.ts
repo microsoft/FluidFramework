@@ -1,7 +1,7 @@
 // The main app code
 import * as api from "@prague/client-api";
 import { IGenericBlob, MessageType } from "@prague/container-definitions";
-import { IMapView, ISharedMap } from "@prague/map";
+import { ISharedMap } from "@prague/map";
 import { IColor } from "@prague/stream";
 import { blobUploadHandler } from "../blob";
 import * as ui from "../ui";
@@ -45,9 +45,9 @@ export class FlexView extends ui.Component {
     private popup: Popup;
     private colorStack: StackPanel;
     private components: IFlexViewComponent[] = [];
-    private insightsMap: IMapView;
+    private insightsMap: ISharedMap;
 
-    constructor(element: HTMLDivElement, private doc: api.Document, root: IMapView) {
+    constructor(element: HTMLDivElement, private doc: api.Document, root: ISharedMap) {
         super(element);
 
         const dockElement = document.createElement("div");
@@ -74,10 +74,7 @@ export class FlexView extends ui.Component {
         if (!root.has("insights")) {
             root.set("insights", doc.createMap());
         }
-        root.get<ISharedMap>("insights").getView()
-            .then((insightsView) => {
-                this.insightsMap = insightsView;
-            });
+        this.insightsMap = root.get<ISharedMap>("insights");
         this.processComponents(root.get("components"));
     }
 
@@ -175,31 +172,28 @@ export class FlexView extends ui.Component {
     }
 
     private async processComponents(components: ISharedMap) {
-        const view = await components.getView();
-
         // Pull in all the objects on the canvas
         // tslint:disable-next-line:forin
-        for (const componentName of view.keys()) {
-            const component = view.get(componentName) as ISharedMap;
+        for (const componentName of components.keys()) {
+            const component = components.get(componentName) as ISharedMap;
             this.addComponent(component);
         }
 
         components.on("valueChanged", (event) => {
-            if (view.has(event.key)) {
-                this.addComponent(view.get(event.key));
+            if (components.has(event.key)) {
+                this.addComponent(components.get(event.key));
             }
         });
     }
 
     private async addComponent(component: ISharedMap) {
-        const details = await component.getView();
-        if (details.get("type") !== "chart") {
+        if (component.get("type") !== "chart") {
             return;
         }
 
-        const size = details.get("size");
-        const position = details.get("position");
-        const chart = new Chart(document.createElement("div"), details.get("data"));
+        const size = component.get("size");
+        const position = component.get("position");
+        const chart = new Chart(document.createElement("div"), component.get("data"));
         this.components.push({ size, position, component: chart });
 
         this.element.insertBefore(chart.element, this.element.lastChild);

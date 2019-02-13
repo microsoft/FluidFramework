@@ -29,7 +29,7 @@ export async function initialize(id: string, version: resources.ICommit, token: 
     registerDocumentServices(config);
 
     const doc = await loadDocument(id, version, token, config.client);
-    const root = await doc.getRoot().getView();
+    const root = doc.getRoot();
 
     const canvasDiv = document.createElement("div");
     if (!doc.existing) {

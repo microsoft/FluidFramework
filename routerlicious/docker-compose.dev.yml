@@ -15,9 +15,6 @@ services:
     tmz:
         volumes:
             - .:/usr/src/server
-    rotograph:
-        volumes:
-            - .:/usr/src/server
     paparazzi:
         volumes:
             - .:/usr/src/server

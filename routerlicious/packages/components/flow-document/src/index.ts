@@ -1,7 +1,6 @@
 import { Component } from "@prague/app-component";
 import { DataStore } from "@prague/app-datastore";
-import { ComponentHost } from "@prague/component";
-import { IPlatform, ITree } from "@prague/container-definitions";
+import { IPlatform } from "@prague/container-definitions";
 import { MapExtension } from "@prague/map";
 import {
     BaseSegment,
@@ -17,9 +16,7 @@ import {
     UniversalSequenceNumber,
 } from "@prague/merge-tree";
 import {
-    IChaincode,
     IChaincodeComponent,
-    IComponentDeltaHandler,
     IComponentRuntime,
 } from "@prague/runtime-definitions";
 import { SharedString, SharedStringExtension } from "@prague/sequence";
@@ -124,6 +121,7 @@ class ServicePlatform extends EventEmitter implements IPlatform {
 }
 
 export class FlowDocument extends Component {
+
     public get ready() {
         return this.readyDeferred.promise;
     }
@@ -157,6 +155,9 @@ export class FlowDocument extends Component {
             [SharedStringExtension.Type, new SharedStringExtension()],
         ]);
     }
+    public async attach(platform: IPlatform): Promise<IPlatform> {
+        return;
+    }
 
     public async opened() {
         this.maybeSharedString = await this.root.wait("text") as SharedString;
@@ -168,10 +169,13 @@ export class FlowDocument extends Component {
     }
 
     public async getInclusionComponent(marker: Marker, services: ReadonlyArray<[string, Promise<any>]>) {
-        const store = await DataStore.from(marker.properties.serverUrl);
+        const store = await DataStore.from(marker.properties.serverUrl, "anonymous-coward");
 
         // TODO: Component should record serverUrl, not rely on passed-through datastore instance?
-        return store.open(marker.properties.docId, "danlehen", marker.properties.chaincode,
+        return store.open(
+            marker.properties.docId,
+            marker.properties.chaincode,
+            "",
             services.concat([["datastore", Promise.resolve(store)]]));
     }
     public async getInclusionContainerComponent(marker: Marker, services: ReadonlyArray<[string, Promise<any>]>) {
@@ -285,43 +289,8 @@ export class FlowDocument extends Component {
 }
 
 /**
- * A document is a collection of shared types.
- */
-export class FlowDocumentComponent implements IChaincodeComponent {
-    public document: FlowDocument;
-    private chaincode: IChaincode;
-    private component: ComponentHost;
-
-    public async close(): Promise<void> {
-        return;
-    }
-
-    public async run(runtime: IComponentRuntime): Promise<IComponentDeltaHandler> {
-        this.document = new FlowDocument(runtime);
-        this.chaincode = Component.instantiate(this.document);
-        const chaincode = this.chaincode;
-
-        // All of the below would be hidden from a developer
-        // Is this an await or does it just go?
-        const component = await ComponentHost.LoadFromSnapshot(runtime, chaincode);
-        this.component = component;
-
-        return component;
-    }
-
-    public async attach(platform: IPlatform): Promise<IPlatform> {
-        return null;
-    }
-
-    public snapshot(): ITree {
-        const entries = this.component.snapshotInternal();
-        return { entries };
-    }
-}
-
-/**
  * Instantiates a new chaincode component
  */
 export async function instantiateComponent(): Promise<IChaincodeComponent> {
-    return new FlowDocumentComponent();
+    return Component.instantiateComponent(FlowDocument);
 }

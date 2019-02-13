@@ -79,7 +79,7 @@ async function translate(from: string, to: string[], text: string[]): Promise<IT
 }
 
 class Translator extends EventEmitter {
-    private view: map.IMapView;
+    private typeInsights: map.ISharedMap;
     private pendingTranslation = false;
     private translating = false;
     private translationTimer = null;
@@ -96,8 +96,7 @@ class Translator extends EventEmitter {
 
     public async start(): Promise<void> {
         await this.insights.wait(this.sharedString.id);
-        const typeInsights = await this.insights.get(this.sharedString.id) as map.ISharedMap;
-        this.view = await typeInsights.getView();
+        this.typeInsights = this.insights.get(this.sharedString.id) as map.ISharedMap;
 
         this.sharedString.on("op", (op: ISequencedDocumentMessage) => {
             if (this.needsTranslation(op)) {
@@ -115,7 +114,7 @@ class Translator extends EventEmitter {
 
     private needsTranslation(op: any): boolean {
         // Exit early if there are no target translations
-        const languages = this.view.get("translations") as map.DistributedSet<string>;
+        const languages = this.typeInsights.get("translations") as map.DistributedSet<string>;
         if (!languages || languages.entries().length === 0) {
             return false;
         }
@@ -157,7 +156,7 @@ class Translator extends EventEmitter {
             // Let new reqeusts start
             this.pendingTranslation = false;
 
-            const languages = this.view.get("translations") as map.DistributedSet<string>;
+            const languages = this.typeInsights.get("translations") as map.DistributedSet<string>;
 
             // Run translation on all other operations
             this.translating = true;

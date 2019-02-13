@@ -1,4 +1,5 @@
 import * as cell from "@prague/cell";
+import { IPlatform } from "@prague/container-definitions";
 import {
     CounterValueType,
     DistributedSetValueType,
@@ -73,6 +74,10 @@ export class Document extends Component {
      */
     public createStream(id: string = uuid()): stream.IStream {
         return this.runtime.createChannel(id, stream.StreamExtension.Type) as stream.IStream;
+    }
+
+    public async attach(platform: IPlatform): Promise<IPlatform> {
+        return;
     }
 
     /**

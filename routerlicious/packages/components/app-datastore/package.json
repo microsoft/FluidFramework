@@ -16,6 +16,9 @@
   "author": "Microsoft",
   "repository": "microsoft/prague",
   "dependencies": {
+    "@prague/api-definitions": "^0.2.0",
+    "@prague/container-loader": "^0.2.0",
+    "@prague/map": "^0.2.0",
     "@prague/container-definitions": "^0.2.0",
     "@prague/loader-web": "^0.2.0",
     "@prague/runtime-definitions": "^0.2.0",

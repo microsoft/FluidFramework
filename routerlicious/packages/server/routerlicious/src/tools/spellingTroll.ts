@@ -309,7 +309,7 @@ async function initSpell(id: string) {
         undefined, // tenantId
         undefined, // token
         { blockUpdateMarkers: true, localMinSeq: 0, encrypted: undefined });
-    const root = await document.getRoot().getView();
+    const root = document.getRoot();
     if (!root.has("text")) {
         root.set("text", document.createString());
     }

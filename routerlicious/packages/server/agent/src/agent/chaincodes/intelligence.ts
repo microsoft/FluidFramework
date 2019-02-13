@@ -1,6 +1,6 @@
 import { ISharedObject } from "@prague/api-definitions";
 import { Container } from "@prague/container-loader";
-import { IMapView, ISharedMap, MapExtension } from "@prague/map";
+import { ISharedMap, MapExtension } from "@prague/map";
 import * as Sequence from "@prague/sequence";
 import * as uuid from "uuid/v4";
 import * as intelligence from "../../intelligence";
@@ -17,7 +17,7 @@ export class IntelligentServicesManager {
 
     constructor(
         private doc: Container,
-        private documentInsights: IMapView) {}
+        private documentInsights: ISharedMap) {}
 
     /**
      * Registers a new intelligent service

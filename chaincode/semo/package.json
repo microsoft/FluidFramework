@@ -1,0 +1,54 @@
+{
+  "name": "@chaincode/chat",
+  "description": "Prague Chat!",
+  "version": "0.0.55",
+  "author": "Microsoft",
+  "repository": "microsoft/prague",
+  "main": "dist/main.bundle.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "webpack --env=\"production\"",
+    "dev": "webpack --env=\"development\" --watch",
+    "start": "prague-dev-server --config webpack.config.js --package package.json",
+    "tsc": "tsc"
+  },
+  "devDependencies": {
+    "@prague/prague-dev-server": "^3.1.13",
+    "@types/node": "^10.11.5",
+    "@types/react-dom": "^16.0.11",
+    "clean-webpack-plugin": "^0.1.19",
+    "cross-spawn": "^6.0.5",
+    "lerna": "^3.4.3",
+    "ts-loader": "^4.4.2",
+    "typescript": "^3.0.1",
+    "webpack": "^4.16.5",
+    "webpack-cli": "^3.1.0",
+    "webpack-merge": "^4.1.4",
+    "webpack-serve": "^2.0.2"
+  },
+  "prague": {
+    "browser": {
+      "entrypoint": "main",
+      "bundle": [
+        "dist/main.bundle.js"
+      ]
+    }
+  },
+  "dependencies": {
+    "jquery": "^3.3.1",
+    "@prague/datastore": "^0.1.4276",
+    "@prague/map": "^0.1.4276",
+    "@prague/runtime-definitions": "^0.1.4276",
+    "@stardust-ui/react": "^0.17.0",
+    "lodash": "^4.17.11",
+    "react": "^16.7.0",
+    "react-dom": "^16.7.0",
+    "semantic-ui-css": "^2.4.0",
+    "semantic-ui-react": "^0.82.5",
+    "css-loader": "^1.0.0",
+    "file-loader": "^3.0.1",
+    "style-loader": "^0.23.0",
+    "url-loader": "^1.1.2",
+    "uuid": "^3.3.2"
+  }
+}
