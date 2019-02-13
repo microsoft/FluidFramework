@@ -1,4 +1,4 @@
-FROM node:8.15.0-slim
+FROM node:8.15.0-slim AS base
 
 # node-gyp dependencies
 RUN apt-get update && apt-get install -y \
@@ -87,6 +87,28 @@ RUN mkdir nyc && chown node: nyc
 # And now copy over our actual code and build
 COPY . .
 RUN npm run build:full
+
+# Partial Build Target for publishing
+FROM base AS publish
+
+# Install git
+RUN apt-get update && apt-get install -y \
+        curl \
+        git
+
+# Initialize a base repo for Lerna
+RUN git init
+RUN git config --global user.email "praguertdev@microsoft.com"
+RUN git config --global user.name "Prague build server"
+RUN git add .
+RUN git commit -m "Base commit for Lerna"
+
+# Node wasn't designed to be run as PID 1. Tini is a tiny init wrapper. You can also set --init on docker later than
+# 1.13 but Kubernetes is at 1.12 so we prefer tini for now.
+ENTRYPOINT ["/tini", "--"]
+
+# Build that alfred uses
+FROM base AS runner
 
 # Don't run as root user
 USER node
