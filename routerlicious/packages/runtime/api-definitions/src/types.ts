@@ -1,4 +1,4 @@
-import { ISequencedDocumentMessage, ITree } from "@prague/container-definitions";
+import { ITree } from "@prague/container-definitions";
 import { IChannel } from "@prague/runtime-definitions";
 
 /**
@@ -15,11 +15,6 @@ export interface ISharedObject extends IChannel {
      * The type of the shared object
      */
     type: string;
-
-    /**
-     * Returns whether the object has any pending unacked ops.
-     */
-    dirty: boolean;
 
     /**
      * Marker to clearly identify the object as a shared object
@@ -54,5 +49,5 @@ export interface ISharedObject extends IChannel {
     /**
      * Transforms the given message relative to the provided sequence number
      */
-    transform(message: ISequencedDocumentMessage, sequenceNumber: number): ISequencedDocumentMessage;
+    transform(message: any, referenceSequenceNumber: number, sequenceNumber: number): any;
 }

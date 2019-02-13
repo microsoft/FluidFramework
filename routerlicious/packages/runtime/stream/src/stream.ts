@@ -32,11 +32,7 @@ export class Stream extends SharedMap implements IStream {
     // The current ink snapshot
     private inkSnapshot: Snapshot;
 
-    constructor(
-        runtime: IRuntime,
-        id: string,
-        sequenceNumber: number) {
-
+    constructor(runtime: IRuntime, id: string) {
         super(id, runtime, StreamExtension.Type);
     }
 
@@ -54,7 +50,6 @@ export class Stream extends SharedMap implements IStream {
     }
 
     protected async loadContent(
-        sequenceNumber: number,
         minimumSequenceNumber: number,
         messages: IDocumentMessage[],
         headerOrigin: string,

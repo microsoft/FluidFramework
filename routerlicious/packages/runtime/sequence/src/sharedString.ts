@@ -39,10 +39,9 @@ export class SharedString extends SegmentSequence<SharedStringSegment> {
     constructor(
         document: IRuntime,
         public id: string,
-        sequenceNumber: number,
         services?: IDistributedObjectServices) {
 
-        super(document, id, sequenceNumber, SharedStringExtension.Type, services);
+        super(document, id, SharedStringExtension.Type, services);
     }
 
     public appendSegment(segSpec: SharedStringJSONSegment) {

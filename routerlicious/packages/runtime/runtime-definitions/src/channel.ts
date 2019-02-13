@@ -1,6 +1,5 @@
 import {
     ConnectionState,
-    IDocumentMessage,
     ISequencedDocumentMessage,
     ITree,
 } from "@prague/container-definitions";
@@ -13,13 +12,11 @@ export interface IChannel {
 
     readonly type: string;
 
-    dirty: boolean;
-
     ready(): Promise<void>;
 
     snapshot(): ITree;
 
-    transform(message: ISequencedDocumentMessage, sequenceNumber: number): ISequencedDocumentMessage;
+    transform(message: any, referenceSequenceNumber: number, sequenceNumber: number): any;
 
     isLocal(): boolean;
 }
@@ -52,14 +49,12 @@ export interface IDeltaHandler {
  * Interface to represent a connection to a delta notification stream.
  */
 export interface IDeltaConnection {
-    // clientId: string;
-
     state: ConnectionState;
 
     /**
      * Send new messages to the server
      */
-    submit(message: IDocumentMessage): void;
+    submit(messageContent: any): void;
 
     /**
      * Attaches a message handler to the delta connection

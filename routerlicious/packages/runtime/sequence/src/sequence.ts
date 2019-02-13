@@ -49,7 +49,6 @@ export abstract class SegmentSequence<T extends MergeTree.ISegment> extends Shar
     constructor(
         document: IRuntime,
         public id: string,
-        sequenceNumber: number,
         extensionType: string,
         services?: IDistributedObjectServices) {
 
@@ -252,18 +251,14 @@ export abstract class SegmentSequence<T extends MergeTree.ISegment> extends Shar
     }
 
     protected transformContent(
-        message: ISequencedDocumentMessage,
+        message: any,
+        fromSequenceNumber: number,
         toSequenceNumber: number,
-    ): ISequencedDocumentMessage {
-        if (message.contents) {
-            this.client.transform(message, toSequenceNumber);
-        }
-        message.referenceSequenceNumber = toSequenceNumber;
-        return message;
+    ): any {
+        return this.client.transform(message, fromSequenceNumber, toSequenceNumber);
     }
 
     protected async loadContent(
-        sequenceNumber: number,
         minimumSequenceNumber: number,
         messages: ISequencedDocumentMessage[],
         headerOrigin: string,
@@ -271,14 +266,14 @@ export abstract class SegmentSequence<T extends MergeTree.ISegment> extends Shar
 
         const header = await storage.read("header");
 
-        return this.initialize(sequenceNumber, minimumSequenceNumber, messages, header, true, headerOrigin, storage);
+        return this.initialize(minimumSequenceNumber, messages, header, true, headerOrigin, storage);
     }
 
     protected initializeContent() {
         const intervalCollections = this.runtime.createChannel(uuid(), MapExtension.Type) as ISharedMap;
         this.set("intervalCollections", intervalCollections);
         // TODO will want to update initialize to operate synchronously
-        this.initialize(0, 0, [], null, false, this.id, null)
+        this.initialize(0, [], null, false, this.id, null)
             .catch((error) => {
                 console.error("initializeContent", error);
             });
@@ -346,7 +341,6 @@ export abstract class SegmentSequence<T extends MergeTree.ISegment> extends Shar
     protected abstract segmentsFromSpecs(segSpecs: MergeTree.IJSONSegment[]): MergeTree.ISegment[];
 
     private loadHeader(
-        sequenceNumber: number,
         minimumSequenceNumber: number,
         header: string,
         shared: boolean,
@@ -370,7 +364,6 @@ export abstract class SegmentSequence<T extends MergeTree.ISegment> extends Shar
     }
 
     private async loadBody(
-        sequenceNumber: number,
         minimumSequenceNumber: number,
         header: string,
         messages: ISequencedDocumentMessage[],
@@ -396,7 +389,6 @@ export abstract class SegmentSequence<T extends MergeTree.ISegment> extends Shar
     }
 
     private async initialize(
-        sequenceNumber: number,
         minimumSequenceNumber: number,
         messages: ISequencedDocumentMessage[],
         header: string,
@@ -408,10 +400,9 @@ export abstract class SegmentSequence<T extends MergeTree.ISegment> extends Shar
             assert.equal(minimumSequenceNumber, MergeTree.Snapshot.EmptyChunk.chunkSequenceNumber);
         }
 
-        this.loadHeader(sequenceNumber, minimumSequenceNumber, header, shared, originBranch, services);
+        this.loadHeader(minimumSequenceNumber, header, shared, originBranch, services);
 
         this.loadBody(
-            sequenceNumber,
             minimumSequenceNumber,
             header,
             messages,
@@ -469,10 +460,9 @@ export class SharedSequence<T extends MergeTree.SequenceItem> extends SegmentSeq
     constructor(
         document: IRuntime,
         public id: string,
-        sequenceNumber: number,
         extensionType: string,
         services?: IDistributedObjectServices) {
-        super(document, id, sequenceNumber, extensionType, services);
+        super(document, id, extensionType, services);
         if (extensionType === SharedNumberSequenceExtension.Type) {
             this.isNumeric = true;
         }
@@ -527,9 +517,8 @@ export class SharedObjectSequence<T extends MergeTree.SequenceItem> extends Shar
     constructor(
         document: IRuntime,
         public id: string,
-        sequenceNumber: number,
         services?: IDistributedObjectServices) {
-        super(document, id, sequenceNumber, SharedObjectSequenceExtension.Type, services);
+        super(document, id, SharedObjectSequenceExtension.Type, services);
     }
 
     public getRange(start: number, end?: number) {
@@ -542,9 +531,8 @@ export class SharedNumberSequence extends SharedSequence<number> {
     constructor(
         document: IRuntime,
         public id: string,
-        sequenceNumber: number,
         services?: IDistributedObjectServices) {
-        super(document, id, sequenceNumber, SharedNumberSequenceExtension.Type, services);
+        super(document, id, SharedNumberSequenceExtension.Type, services);
     }
 
     public getRange(start: number, end?: number) {

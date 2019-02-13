@@ -5,33 +5,19 @@ import {
 } from "@prague/runtime-definitions";
 import * as assert from "assert";
 
-// Should inherit state, MSN, SN from parent
-
 export class ChannelDeltaConnection implements IDeltaConnection {
-    // tslint:disable-next-line:variable-name
-    private _sequenceNumber: number;
-    private minSequenceNumber: number;
     private handler: IDeltaHandler;
 
     public get state(): ConnectionState {
         return this._state;
     }
 
-    public get minimumSequenceNumber(): number {
-        return this.minSequenceNumber;
-    }
-
-    public get sequenceNumber(): number {
-        return this._sequenceNumber;
-    }
-
-    // tslint:disable:variable-name
     constructor(
         public objectId: string,
+        // tslint:disable-next-line:variable-name
         private _state: ConnectionState,
         private submitFn: (message: IDocumentMessage) => void) {
     }
-    // tslint:enable:variable-name
 
     public attach(handler: IDeltaHandler) {
         /* tslint:disable:strict-boolean-expressions */
@@ -41,7 +27,7 @@ export class ChannelDeltaConnection implements IDeltaConnection {
 
     public setConnectionState(state: ConnectionState) {
         this._state = state;
-        this.handler.setConnectionState(state as any);
+        this.handler.setConnectionState(state);
     }
 
     public prepare(message: ISequencedDocumentMessage, local: boolean): Promise<any> {
@@ -51,11 +37,6 @@ export class ChannelDeltaConnection implements IDeltaConnection {
 
     public process(message: ISequencedDocumentMessage, local: boolean, context: any) {
         assert(this.handler);
-
-        // update internal fields
-        this._sequenceNumber = message.sequenceNumber;
-        this.minSequenceNumber = message.minimumSequenceNumber;
-
         this.handler.process(message, local, context);
     }
 

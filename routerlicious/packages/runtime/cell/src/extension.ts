@@ -15,14 +15,13 @@ export class CellExtension implements ISharedObjectExtension {
     public async load(
         document: IRuntime,
         id: string,
-        sequenceNumber: number,
         minimumSequenceNumber: number,
         messages: ISequencedDocumentMessage[],
         services: IDistributedObjectServices,
         headerOrigin: string): Promise<ICell> {
 
         const cell = new Cell(id, document);
-        await cell.load(sequenceNumber, minimumSequenceNumber, messages, headerOrigin, services);
+        await cell.load(minimumSequenceNumber, messages, headerOrigin, services);
         return cell;
     }
 

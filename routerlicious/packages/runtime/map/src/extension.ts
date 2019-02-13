@@ -21,7 +21,6 @@ export class MapExtension implements ISharedObjectExtension {
     public async load(
         runtime: IRuntime,
         id: string,
-        sequenceNumber: number,
         minimumSequenceNumber: number,
         messages: ISequencedDocumentMessage[],
         services: IDistributedObjectServices,
@@ -29,7 +28,7 @@ export class MapExtension implements ISharedObjectExtension {
 
         const map = new SharedMap(id, runtime, MapExtension.Type);
         this.registerValueTypes(map, defaultValueTypes);
-        await map.load(sequenceNumber, minimumSequenceNumber, messages, headerOrigin, services);
+        await map.load(minimumSequenceNumber, messages, headerOrigin, services);
 
         return map;
     }

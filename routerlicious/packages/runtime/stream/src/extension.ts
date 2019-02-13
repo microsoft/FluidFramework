@@ -11,20 +11,19 @@ export class StreamExtension implements ISharedObjectExtension {
     public async load(
         runtime: IRuntime,
         id: string,
-        sequenceNumber: number,
         minimumSequenceNumber: number,
         messages: ISequencedDocumentMessage[],
         services: IDistributedObjectServices,
         headerOrigin: string): Promise<ISharedObject> {
 
-        const stream = new Stream(runtime, id, sequenceNumber);
-        await stream.load(sequenceNumber, minimumSequenceNumber, messages, headerOrigin, services);
+        const stream = new Stream(runtime, id);
+        await stream.load(minimumSequenceNumber, messages, headerOrigin, services);
 
         return stream;
     }
 
     public create(runtime: IRuntime, id: string): ISharedObject {
-        const stream = new Stream(runtime, id, 0);
+        const stream = new Stream(runtime, id);
         stream.initializeLocal();
 
         return stream;

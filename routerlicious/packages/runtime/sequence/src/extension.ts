@@ -14,19 +14,18 @@ export class SharedStringExtension implements ISharedObjectExtension {
     public async load(
         document: IRuntime,
         id: string,
-        sequenceNumber: number,
         minimumSequenceNumber: number,
         messages: ISequencedDocumentMessage[],
         services: IDistributedObjectServices,
         headerOrigin: string): Promise<ISharedObject> {
 
-        const sharedString = new SharedString(document, id, sequenceNumber, services);
-        await sharedString.load(sequenceNumber, minimumSequenceNumber, messages, headerOrigin, services);
+        const sharedString = new SharedString(document, id, services);
+        await sharedString.load(minimumSequenceNumber, messages, headerOrigin, services);
         return sharedString;
     }
 
-    public create(document: IRuntime, id: string, options?: any): ISharedObject {
-        const sharedString = new SharedString(document, id, 0);
+    public create(document: IRuntime, id: string): ISharedObject {
+        const sharedString = new SharedString(document, id);
         sharedString.initializeLocal();
         return sharedString;
     }
@@ -40,19 +39,18 @@ export class SharedObjectSequenceExtension implements ISharedObjectExtension {
     public async load(
         document: IRuntime,
         id: string,
-        sequenceNumber: number,
         minimumSequenceNumber: number,
         messages: ISequencedDocumentMessage[],
         services: IDistributedObjectServices,
         headerOrigin: string): Promise<ISharedObject> {
 
-        const sharedSeq = new SharedObjectSequence<object>(document, id, sequenceNumber, services);
-        await sharedSeq.load(sequenceNumber, minimumSequenceNumber, messages, headerOrigin, services);
+        const sharedSeq = new SharedObjectSequence<object>(document, id, services);
+        await sharedSeq.load(minimumSequenceNumber, messages, headerOrigin, services);
         return sharedSeq;
     }
 
-    public create(document: IRuntime, id: string, options?: any): ISharedObject {
-        const sharedString = new SharedObjectSequence(document, id, 0);
+    public create(document: IRuntime, id: string): ISharedObject {
+        const sharedString = new SharedObjectSequence(document, id);
         sharedString.initializeLocal();
         return sharedString;
     }
@@ -66,19 +64,18 @@ export class SharedNumberSequenceExtension implements ISharedObjectExtension {
     public async load(
         document: IRuntime,
         id: string,
-        sequenceNumber: number,
         minimumSequenceNumber: number,
         messages: ISequencedDocumentMessage[],
         services: IDistributedObjectServices,
         headerOrigin: string): Promise<ISharedObject> {
 
-        const sharedSeq = new SharedNumberSequence(document, id, sequenceNumber, services);
-        await sharedSeq.load(sequenceNumber, minimumSequenceNumber, messages, headerOrigin, services);
+        const sharedSeq = new SharedNumberSequence(document, id, services);
+        await sharedSeq.load(minimumSequenceNumber, messages, headerOrigin, services);
         return sharedSeq;
     }
 
-    public create(document: IRuntime, id: string, options?: any): ISharedObject {
-        const sharedString = new SharedNumberSequence(document, id, 0);
+    public create(document: IRuntime, id: string): ISharedObject {
+        const sharedString = new SharedNumberSequence(document, id);
         sharedString.initializeLocal();
         return sharedString;
     }

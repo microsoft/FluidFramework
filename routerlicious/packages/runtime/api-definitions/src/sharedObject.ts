@@ -10,7 +10,6 @@ import {
     IRuntime,
 } from "@prague/runtime-definitions";
 import * as assert from "assert";
-import * as Deque from "double-ended-queue";
 import { EventEmitter } from "events";
 import { debug } from "./debug";
 import { ISharedObject } from "./types";
@@ -25,28 +24,13 @@ export abstract class SharedObject extends EventEmitter implements ISharedObject
 
     // Private fields exposed via getters
     // tslint:disable:variable-name
-    private _sequenceNumber: number;
     private _state = ConnectionState.Disconnected;
     // tslint:enable:variable-name
 
-    // Locally applied operations not yet ACK'd by the server
-    private readonly pendingOps = new Deque<IDocumentMessage>();
-
     private services: IDistributedObjectServices;
-
-    // Sequence number for operations local to this client
-    private clientSequenceNumber = 0;
-
-    public get sequenceNumber(): number {
-        return this._sequenceNumber;
-    }
 
     public get state(): ConnectionState {
         return this._state;
-    }
-
-    public get dirty(): boolean {
-        return this.pendingOps.length > 0;
     }
 
     constructor(public id: string, protected runtime: IRuntime, public type: string) {
@@ -67,17 +51,14 @@ export abstract class SharedObject extends EventEmitter implements ISharedObject
      * a shared document. Or later attached if it is being newly added.
      */
     public async load(
-        sequenceNumber: number,
         minimumSequenceNumber: number,
         messages: ISequencedDocumentMessage[],
         headerOrigin: string,
         services: IDistributedObjectServices): Promise<void> {
 
-        this._sequenceNumber = sequenceNumber;
         this.services = services;
 
         await this.loadCore(
-            sequenceNumber,
             minimumSequenceNumber,
             messages,
             headerOrigin,
@@ -90,7 +71,6 @@ export abstract class SharedObject extends EventEmitter implements ISharedObject
      * it is attached to the document.
      */
     public initializeLocal() {
-        this._sequenceNumber = 0;
         this.initializeLocalCore();
     }
 
@@ -136,13 +116,15 @@ export abstract class SharedObject extends EventEmitter implements ISharedObject
      * Creates a new message from the provided message that is relative to the given sequenceNumber. It is valid
      * to modify the passed in object in place.
      */
-    public abstract transform(message: ISequencedDocumentMessage, sequenceNumber: number): ISequencedDocumentMessage;
+    public abstract transform(
+        message: any,
+        referenceSequenceNumber: number,
+        sequenceNumber: number): any;
 
     /**
      * Allows the distributed data type to perform custom loading
      */
     protected abstract loadCore(
-        sequenceNumber: number,
         minimumSequenceNumber: number,
         messages: ISequencedDocumentMessage[],
         headerOrigin: string,
@@ -188,25 +170,7 @@ export abstract class SharedObject extends EventEmitter implements ISharedObject
      */
     protected submitLocalMessage(contents: any): void {
         assert(!this.isLocal());
-
-        /* tslint:disable:no-increment-decrement */
-        // Prep the message
-        const message: IDocumentMessage = {
-            clientSequenceNumber: ++this.clientSequenceNumber,
-            contents,
-            referenceSequenceNumber: this.sequenceNumber,
-            type: OperationType,
-        };
-
-        // Store the message for when it is ACKed and then submit to the server if connected
-        this.pendingOps.push(message);
-
-        // Send if we are connected - otherwise just add to the sent list
-        if (this.state === ConnectionState.Connected) {
-            this.services.deltaConnection.submit(message);
-        } else {
-            debug(`${this.id} Not fully connected - adding to pending list`, contents);
-        }
+        this.services.deltaConnection.submit(contents);
     }
 
     private attachDeltaHandler() {
@@ -258,18 +222,11 @@ export abstract class SharedObject extends EventEmitter implements ISharedObject
                 break;
 
             case ConnectionState.Connected:
-                // tslint:disable-next-line:max-line-length
-                debug(`${this.id} had ${this.pendingOps.length} pending ops`);
-
-                // Extract all un-ack'd payload operation
-                const pendingOps = this.pendingOps.toArray();
-                this.pendingOps.clear();
-                this.clientSequenceNumber = 0;
-
                 // And now we are fully connected
                 // - we have a client ID
                 // - we are caught up enough to attempt to send messages
-                this.onConnect(pendingOps);
+                throw new Error("To be implemented");
+                this.onConnect([]);
                 break;
 
             default:
@@ -281,24 +238,6 @@ export abstract class SharedObject extends EventEmitter implements ISharedObject
      * Handles a message being received from the remote delta server
      */
     private process(message: ISequencedDocumentMessage, local: boolean, context: any) {
-        // server messages should only be delivered to this method in sequence number order
-        assert.equal(this.sequenceNumber + 1, message.sequenceNumber);
-        this._sequenceNumber = message.sequenceNumber;
-
-        if (message.type === OperationType && local) {
-            // One of our messages was sequenced. We can remove it from the local message list. Given these arrive
-            // in order we only need to check the beginning of the local list.
-            if (this.pendingOps.length > 0 &&
-                this.pendingOps.peekFront().clientSequenceNumber === message.clientSequenceNumber) {
-                this.pendingOps.shift();
-                if (this.pendingOps.length === 0) {
-                    this.emit("processed");
-                }
-            } else {
-                debug(`Duplicate ack received ${message.clientSequenceNumber}`);
-            }
-        }
-
         this.emit("pre-op", message, local);
         this.processCore(message, local, context);
         this.emit("op", message, local);

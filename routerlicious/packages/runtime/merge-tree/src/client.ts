@@ -299,10 +299,10 @@ export class Client {
             opList.push(removeOp);
         }
     }
-    transformOp(op: ops.IMergeTreeOp, msg: ISequencedDocumentMessage, toSequenceNumber: number) {
+    transformOp(op: ops.IMergeTreeOp, referenceSequenceNumber, toSequenceNumber: number) {
         if ((op.type == ops.MergeTreeDeltaType.ANNOTATE) ||
             (op.type == ops.MergeTreeDeltaType.REMOVE)) {
-            let ranges = this.mergeTree.tardisRange(op.pos1, op.pos2, msg.referenceSequenceNumber, toSequenceNumber);
+            let ranges = this.mergeTree.tardisRange(op.pos1, op.pos2, referenceSequenceNumber, toSequenceNumber);
             if (ranges.length == 1) {
                 op.pos1 = ranges[0].start;
                 op.pos2 = ranges[0].end;
@@ -318,21 +318,21 @@ export class Client {
             }
         }
         else if (op.type == ops.MergeTreeDeltaType.INSERT) {
-            op.pos1 = this.mergeTree.tardisPosition(op.pos1, msg.referenceSequenceNumber, toSequenceNumber);
+            op.pos1 = this.mergeTree.tardisPosition(op.pos1, referenceSequenceNumber, toSequenceNumber);
         }
         else if (op.type === ops.MergeTreeDeltaType.GROUP) {
             for (let i = 0, len = op.ops.length; i < len; i++) {
-                op.ops[i] = this.transformOp(op.ops[i], msg, toSequenceNumber);
+                op.ops[i] = this.transformOp(op.ops[i], referenceSequenceNumber, toSequenceNumber);
             }
         }
         return op;
     }
-    transform(msg: ISequencedDocumentMessage, toSequenceNumber: number): ISequencedDocumentMessage {
-        if (msg.referenceSequenceNumber >= toSequenceNumber) {
-            return msg;
+    transform(op: ops.IMergeTreeOp, referenceSequenceNumber: number, toSequenceNumber: number): ops.IMergeTreeOp {
+        if (referenceSequenceNumber >= toSequenceNumber) {
+            return op;
         }
-        let op = <ops.IMergeTreeOp>msg.contents;
-        msg.contents = this.transformOp(op, msg, toSequenceNumber);
+
+        return this.transformOp(op, referenceSequenceNumber, toSequenceNumber);
     }
     copy(start: number, end: number, registerId: string, refSeq: number, clientId: number, longClientId: string) {
         let segs = this.mergeTree.cloneSegments(refSeq, clientId, start, end);

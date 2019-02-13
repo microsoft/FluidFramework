@@ -49,7 +49,6 @@ export interface IChaincodeModule  {
     load(
         runtime: IRuntime,
         id: string,
-        sequenceNumber: number,
         minimumSequenceNumber: number,
         messages: ISequencedDocumentMessage[],
         services: IDistributedObjectServices,
@@ -120,8 +119,6 @@ export interface IRuntime extends EventEmitter {
      * Terminates the runtime and closes the document
      */
     close(): void;
-
-    hasUnackedOps(): boolean;
 
     // Blob related calls
 

@@ -161,12 +161,11 @@ export class Cell extends SharedObject implements ICell {
         return tree;
     }
 
-    public transform(message: ISequencedDocumentMessage, sequenceNumber: number): ISequencedDocumentMessage {
+    public transform(message: any, referenceSequenceNumber: number, sequenceNumber: number): any {
         return message;
     }
 
     protected async loadCore(
-        sequenceNumber: number,
         minimumSequenceNumber: number,
         messages: IDocumentMessage[],
         headerOrigin: string,

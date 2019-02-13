@@ -32,6 +32,8 @@ import {
 import { Deferred, gitHashFile, readAndParse } from "@prague/utils";
 import * as assert from "assert";
 import { EventEmitter } from "events";
+// tslint:disable-next-line:no-submodule-imports no-var-requires
+const cloneDeep = require("lodash/cloneDeep") as <T>(value: T) => T;
 import { ChannelDeltaConnection } from "./channelDeltaConnection";
 import { ChannelStorageService } from "./channelStorageService";
 import { LocalChannelStorageService } from "./localChannelStorageService";
@@ -47,11 +49,8 @@ interface IObjectServices {
     objectStorage: IObjectStorageService;
 }
 
-// This needs to deal with transformed messages
-// And also output attributes
-
 /**
- * This is the base component class
+ * Base component class
  */
 export class ComponentHost extends EventEmitter implements IComponentDeltaHandler, IRuntime {
     public static async LoadFromSnapshot(
@@ -86,13 +85,11 @@ export class ComponentHost extends EventEmitter implements IComponentDeltaHandle
             componentRuntime.parentBranch,
             componentRuntime.existing,
             componentRuntime.options,
-            componentRuntime.clientId,
             componentRuntime.blobManager,
             componentRuntime.deltaManager,
             componentRuntime.getQuorum(),
             chaincode,
             componentRuntime.storage,
-            componentRuntime.connectionState,
             componentRuntime.snapshotFn,
             componentRuntime.closeFn);
 
@@ -166,12 +163,16 @@ export class ComponentHost extends EventEmitter implements IComponentDeltaHandle
     }
 
     public get connected(): boolean {
-        return this.connectionState === ConnectionState.Connected;
+        return this.componentRuntime.connected;
     }
 
     // Interface used to access the runtime code
     public get platform(): IPlatform {
         return this._platform;
+    }
+
+    public get clientId(): string {
+        return this.componentRuntime.clientId;
     }
 
     private channels = new Map<string, IChannelState>();
@@ -192,13 +193,11 @@ export class ComponentHost extends EventEmitter implements IComponentDeltaHandle
         public readonly parentBranch: string,
         public existing: boolean,
         public readonly options: any,
-        public clientId: string,
         private blobManager: IBlobManager,
         public readonly deltaManager: IDeltaManager,
         private quorum: IQuorum,
         private readonly chaincode: IChaincode,
         private storageService: IDocumentStorageService,
-        private connectionState: ConnectionState,
         private snapshotFn: (message: string) => Promise<void>,
         private closeFn: () => void) {
         super();
@@ -289,13 +288,6 @@ export class ComponentHost extends EventEmitter implements IComponentDeltaHandle
     public changeConnectionState(value: ConnectionState, clientId: string) {
         this.verifyNotClosed();
 
-        if (value === this.connectionState) {
-            return;
-        }
-
-        this.connectionState = value;
-        this.clientId = clientId;
-
         // Resend all pending attach messages prior to notifying clients
         if (value === ConnectionState.Connected) {
             for (const [, message] of this.pendingAttach) {
@@ -309,7 +301,7 @@ export class ComponentHost extends EventEmitter implements IComponentDeltaHandle
             }
         }
 
-        if (this.connectionState === ConnectionState.Connected) {
+        if (value === ConnectionState.Connected) {
             this.emit("connected", clientId);
         }
     }
@@ -318,18 +310,6 @@ export class ComponentHost extends EventEmitter implements IComponentDeltaHandle
         this.verifyNotClosed();
 
         return this.quorum;
-    }
-
-    public hasUnackedOps(): boolean {
-        this.verifyNotClosed();
-
-        for (const state of this.channels.values()) {
-            if (state.object.dirty) {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     public snapshot(message: string): Promise<void> {
@@ -360,21 +340,6 @@ export class ComponentHost extends EventEmitter implements IComponentDeltaHandle
         this.verifyNotClosed();
 
         return this.blobManager.getBlob(sha);
-    }
-
-    public transform(message: ISequencedDocumentMessage, sequenceNumber: number) {
-        // Allow the distributed data types to perform custom transformations
-        if (message.type === MessageType.Operation) {
-            const envelope = message.contents as IEnvelope;
-            const objectDetails = this.channels.get(envelope.address);
-            message = objectDetails.object.transform(message, sequenceNumber);
-        } else {
-            message.type = MessageType.NoOp;
-        }
-
-        message.referenceSequenceNumber = sequenceNumber;
-
-        return message;
     }
 
     public async getBlobMetadata(): Promise<IGenericBlob[]> {
@@ -442,11 +407,12 @@ export class ComponentHost extends EventEmitter implements IComponentDeltaHandle
 
         this.updateMinSequenceNumber(this.deltaManager.minimumSequenceNumber);
 
-        const transformedMessages: ISequencedDocumentMessage[] = [];
         // debug(`Transforming up to ${this.deltaManager.minimumSequenceNumber}`);
+        const transformedMessages: ISequencedDocumentMessage[] = [];
         for (const message of this.messagesSinceMSNChange) {
             transformedMessages.push(this.transform(message, this.deltaManager.minimumSequenceNumber));
         }
+
         entries.push({
             mode: FileMode.File,
             path: ".messages",
@@ -486,7 +452,7 @@ export class ComponentHost extends EventEmitter implements IComponentDeltaHandle
 
                 // Add in the object attributes to the returned tree
                 const objectAttributes: IObjectAttributes = {
-                    sequenceNumber: object.connection.minimumSequenceNumber,
+                    sequenceNumber: this.deltaManager.minimumSequenceNumber,
                     type: object.object.type,
                 };
                 snapshot.entries.push({
@@ -514,6 +480,29 @@ export class ComponentHost extends EventEmitter implements IComponentDeltaHandle
 
     public submitMessage(type: MessageType, content: any) {
         this.submit(type, content);
+    }
+
+    private transform(originalMessage: ISequencedDocumentMessage, sequenceNumber: number): ISequencedDocumentMessage {
+        // Make a copy of original message since we will be modifying in place
+        const message = cloneDeep(originalMessage) as ISequencedDocumentMessage;
+
+        // Allow the distributed data types to perform custom transformations
+        if (message.type === MessageType.Operation) {
+            if (message.referenceSequenceNumber < sequenceNumber) {
+                const envelope = message.contents as IEnvelope;
+                const objectDetails = this.channels.get(envelope.address);
+                envelope.contents = objectDetails.object.transform(
+                    envelope.contents,
+                    message.referenceSequenceNumber,
+                    sequenceNumber);
+            }
+        } else {
+            message.type = MessageType.NoOp;
+            message.referenceSequenceNumber = sequenceNumber;
+            delete message.contents;
+        }
+
+        return message;
     }
 
     private submit(type: MessageType, content: any) {
@@ -587,9 +576,12 @@ export class ComponentHost extends EventEmitter implements IComponentDeltaHandle
         const localStorage = new LocalChannelStorageService(attachMessage.snapshot);
         const connection = new ChannelDeltaConnection(
             attachMessage.id,
-            this.connectionState,
+            this.componentRuntime.connectionState,
             (submitMessage) => {
-                const submitEnvelope: IEnvelope = { address: attachMessage.id, contents: submitMessage };
+                const submitEnvelope: IEnvelope = {
+                    address: attachMessage.id,
+                    contents: submitMessage,
+                };
                 this.submit(MessageType.Operation, submitEnvelope);
             });
 
@@ -602,8 +594,7 @@ export class ComponentHost extends EventEmitter implements IComponentDeltaHandle
         const value = await this.loadChannel(
             attachMessage.id,
             attachMessage.type,
-            0,
-            0,
+            message.minimumSequenceNumber,
             [],
             services,
             origin);
@@ -625,7 +616,6 @@ export class ComponentHost extends EventEmitter implements IComponentDeltaHandle
             id,
             channelAttributes.type,
             channelAttributes.sequenceNumber,
-            channelAttributes.sequenceNumber,
             messages,
             services,
             branch);
@@ -638,7 +628,6 @@ export class ComponentHost extends EventEmitter implements IComponentDeltaHandle
     private async loadChannel(
         id: string,
         type: string,
-        sequenceNumber: number,
         minSequenceNumber: number,
         messages: ISequencedDocumentMessage[],
         services: IObjectServices,
@@ -652,7 +641,6 @@ export class ComponentHost extends EventEmitter implements IComponentDeltaHandle
         const value = await extension.load(
             this,
             id,
-            services.deltaConnection.sequenceNumber,
             minSequenceNumber,
             messages,
             services,
@@ -668,7 +656,7 @@ export class ComponentHost extends EventEmitter implements IComponentDeltaHandle
 
         const deltaConnection = new ChannelDeltaConnection(
             id,
-            this.connectionState,
+            this.componentRuntime.connectionState,
             (message) => {
                 const envelope: IEnvelope = { address: id, contents: message };
                 this.submit(MessageType.Operation, envelope);

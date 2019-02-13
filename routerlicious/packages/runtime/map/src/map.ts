@@ -210,17 +210,14 @@ export class SharedMap extends SharedObject implements ISharedMap {
         return tree;
     }
 
-    public transform(message: ISequencedDocumentMessage, sequenceNumber: number): ISequencedDocumentMessage {
-        const handled = message.type === OperationType
-            ? this.messageHandler.has((message.contents as IMapOperation).type)
-            : false;
+    public transform(
+        message: any,
+        referenceSequenceNumber: number,
+        sequenceNumber: number,
+    ): any {
+        const handled = this.messageHandler.has((message as IMapOperation).type);
 
-        if (!handled) {
-            // tslint:disable-next-line:no-parameter-reassignment
-            message = this.transformContent(message, sequenceNumber);
-        }
-
-        return message;
+        return handled ? message : this.transformContent(message, referenceSequenceNumber, sequenceNumber);
     }
 
     public submitMapMessage(op: any): void {
@@ -329,7 +326,6 @@ export class SharedMap extends SharedObject implements ISharedMap {
     }
 
     protected async loadCore(
-        sequenceNumber: number,
         minimumSequenceNumber: number,
         messages: ISequencedDocumentMessage[],
         headerOrigin: string,
@@ -345,7 +341,6 @@ export class SharedMap extends SharedObject implements ISharedMap {
 
         const contentStorage = new ContentObjectStorage(storage);
         await this.loadContent(
-            sequenceNumber,
             minimumSequenceNumber,
             contentMessages,
             headerOrigin,
@@ -361,7 +356,6 @@ export class SharedMap extends SharedObject implements ISharedMap {
     }
 
     protected async loadContent(
-        sequenceNumber: number,
         minimumSequenceNumber: number,
         messages: ISequencedDocumentMessage[],
         headerOrigin: string,
@@ -460,7 +454,11 @@ export class SharedMap extends SharedObject implements ISharedMap {
     /**
      * Allows derived classes to transform the given message
      */
-    protected transformContent(message: ISequencedDocumentMessage, sequenceNumber: number): ISequencedDocumentMessage {
+    protected transformContent(
+        message: any,
+        referenceSequenceNumber: number,
+        sequenceNumber: number,
+    ): any {
         return message;
     }
 
