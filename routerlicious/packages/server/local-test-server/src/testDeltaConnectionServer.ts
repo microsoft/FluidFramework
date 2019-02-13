@@ -6,9 +6,11 @@ import {
 } from "@prague/container-definitions";
 import {
     LocalNodeFactory,
+    LocalOrderer,
     LocalOrderManager,
     NodeManager,
-    ReservationManager } from "@prague/memory-orderer";
+    ReservationManager,
+} from "@prague/memory-orderer";
 import {
     ICollection,
     IDatabaseManager,
@@ -35,14 +37,32 @@ import * as jwt from "jsonwebtoken";
 export interface ITestDeltaConnectionServer {
     webSocketServer: IWebSocketServer;
     databaseManager: IDatabaseManager;
+
+    hasPendingWork(): Promise<boolean>;
 }
 
 class TestOrderManager implements IOrdererManager {
+    private readonly orderersP = new Array<Promise<IOrderer>>();
+
     constructor(private orderer: LocalOrderManager) {
     }
 
     public getOrderer(tenantId: string, documentId: string): Promise<IOrderer> {
-        return this.orderer.get(tenantId, documentId);
+        const p = this.orderer.get(tenantId, documentId);
+        this.orderersP.push(p);
+        return p;
+    }
+
+    public async hasPendingWork(): Promise<boolean> {
+        return Promise.all(this.orderersP).then((orderers) => {
+            for (const orderer of orderers) {
+                // We know that it ia LocalOrderer, break the abstraction
+                if ((orderer as LocalOrderer).hasPendingWork()) {
+                    return true;
+                }
+            }
+            return false;
+        });
     }
 }
 
@@ -96,12 +116,17 @@ export class TestDeltaConnectionServer implements ITestDeltaConnectionServer {
             testTenantManager,
             testCollection);
 
-        return new TestDeltaConnectionServer(webSocketServer, databaseManager);
+        return new TestDeltaConnectionServer(webSocketServer, databaseManager, testOrderer);
     }
 
-    constructor(
+    private constructor(
         public webSocketServer: IWebSocketServer,
-        public databaseManager: IDatabaseManager) {}
+        public databaseManager: IDatabaseManager,
+        private testOrdererManager: TestOrderManager) { }
+
+    public async hasPendingWork(): Promise<boolean> {
+        return this.testOrdererManager.hasPendingWork();
+    }
 }
 
 // Forked from io.ts in alfred, which has service dependencies and cannot run in a browser.

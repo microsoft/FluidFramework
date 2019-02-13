@@ -146,7 +146,7 @@ export class MapView  {
             },
             true,
             null);
-        this.map.submitMapMessage(op);
+        this.map.submitMapKeyMessage(op);
 
         return value;
     }
@@ -158,7 +158,7 @@ export class MapView  {
         };
 
         const successfullyRemoved = this.deleteCore(op.key, true, null);
-        this.map.submitMapMessage(op);
+        this.map.submitMapKeyMessage(op);
         return successfullyRemoved;
     }
 
@@ -172,7 +172,7 @@ export class MapView  {
         };
 
         this.clearCore(true, null);
-        this.map.submitMapMessage(op);
+        this.map.submitMapClearMessage(op);
     }
 
     /**
@@ -206,6 +206,19 @@ export class MapView  {
         const successfullyRemoved = this.data.delete(key);
         this.map.emit("valueChanged", { key }, local, op);
         return successfullyRemoved;
+    }
+
+    public clearExceptPendingKeys(pendingKeys: Map<string, number>) {
+        // Assuming the pendingKeys is small and the map is large
+        // we will get the value for the pendingKeys and clear the map
+        const temp = new Map<string, ILocalViewElement>();
+        pendingKeys.forEach((value, key, map) => {
+            temp.set(key, this.data.get(key));
+        });
+        this.data.clear();
+        temp.forEach((value, key, map) => {
+            this.data.set(key, value);
+        });
     }
 
     private async fill(key: string, remote: IMapValue): Promise<ILocalViewElement> {

@@ -9,6 +9,7 @@ import {
 import { Deferred } from "@prague/utils";
 import * as assert from "assert";
 import { EventEmitter } from "events";
+import { debug } from "./debug";
 
 // Appends a deferred and rejection count to a sequenced proposal. For locally generated promises this allows us to
 // attach a Deferred which we will resolve once the proposal is either accepted or rejected.
@@ -263,7 +264,7 @@ export class Quorum extends EventEmitter implements IQuorum {
         const completed = new Array<PendingProposal>();
         for (const [sequenceNumber, proposal] of this.proposals) {
             if (sequenceNumber <= this.minimumSequenceNumber) {
-                console.log(`${sequenceNumber} Completed`);
+                debug(`Quorum proposal SN# ${sequenceNumber} Completed`);
                 completed.push(proposal);
             }
         }
@@ -314,7 +315,7 @@ export class Quorum extends EventEmitter implements IQuorum {
             this.proposals.delete(proposal.sequenceNumber);
         }
 
-        // Move values to the commited stage and notify
+        // Move values to the committed stage and notify
         if (this.pendingCommit.size > 0) {
             Array.from(this.pendingCommit.values())
                 .filter((pendingCommit) => pendingCommit.approvalSequenceNumber <= value)

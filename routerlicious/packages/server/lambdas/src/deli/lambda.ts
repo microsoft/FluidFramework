@@ -181,7 +181,7 @@ export class DeliLambda implements IPartitionLambda {
         }
 
         const checkpoint = this.generateCheckpoint();
-        // TODO optimize this to aviod doing per message
+        // TODO optimize this to avoid doing per message
         // Checkpoint the current state
         this.lastSendP.then(
             () => {

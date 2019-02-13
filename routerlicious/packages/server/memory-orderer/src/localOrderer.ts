@@ -399,13 +399,16 @@ export class LocalOrderer implements IOrderer {
         this.alfredToDeliKafka.close();
         this.deliToScriptoriumKafka.close();
 
-        // close lambas
+        // close lambdas
         this.bbcLambda.close();
         this.scriptoriumLambda.close();
         this.tmzLambda.close();
         this.deliLambda.close();
     }
 
+    public hasPendingWork(): boolean {
+        return this.bbcLambda.hasPendingWork();
+    }
     private startLambdas() {
         this.alfredToDeliKafka.on("message", (message: IKafkaMessage) => {
             this.deliLambda.handler(message);

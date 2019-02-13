@@ -14,9 +14,9 @@ import {
     TestDeltaConnectionServer,
 } from "..";
 
-describe.skip("Map", () => {
+describe("Map", () => {
     const id = "documentId";
-    const tenatId = "tenantId";
+    const tenantId = "tenantId";
     const tokenKey = "tokenKey";
 
     let testDeltaConnectionServer: ITestDeltaConnectionServer;
@@ -31,18 +31,18 @@ describe.skip("Map", () => {
     beforeEach(async () => {
 
         testDeltaConnectionServer = TestDeltaConnectionServer.Create();
-        documentDeltaEventManager = new DocumentDeltaEventManager();
+        documentDeltaEventManager = new DocumentDeltaEventManager(testDeltaConnectionServer);
         const documentService = createTestDocumentService(testDeltaConnectionServer);
-        const tokenProvider1 = new socketStorage.TokenProvider(generateToken(tenatId, id, tokenKey));
-        const tokenProvider2 = new socketStorage.TokenProvider(generateToken(tenatId, id, tokenKey));
-        const tokenProvider3 = new socketStorage.TokenProvider(generateToken(tenatId, id, tokenKey));
-        user1Document = await api.load(id, tenatId, tokenProvider1, {}, null, true, documentService);
+        const tokenProvider1 = new socketStorage.TokenProvider(generateToken(tenantId, id, tokenKey));
+        const tokenProvider2 = new socketStorage.TokenProvider(generateToken(tenantId, id, tokenKey));
+        const tokenProvider3 = new socketStorage.TokenProvider(generateToken(tenantId, id, tokenKey));
+        user1Document = await api.load(id, tenantId, tokenProvider1, {}, null, true, documentService);
         documentDeltaEventManager.registerDocuments(user1Document);
 
-        user2Document = await api.load(id, tenatId, tokenProvider2, {}, null, true, documentService);
+        user2Document = await api.load(id, tenantId, tokenProvider2, {}, null, true, documentService);
         documentDeltaEventManager.registerDocuments(user2Document);
 
-        user3Document = await api.load(id, tenatId, tokenProvider3, {}, null, true, documentService);
+        user3Document = await api.load(id, tenantId, tokenProvider3, {}, null, true, documentService);
         documentDeltaEventManager.registerDocuments(user3Document);
         root1 = user1Document.getRoot();
         root2 = user2Document.getRoot();
@@ -52,14 +52,36 @@ describe.skip("Map", () => {
         await documentDeltaEventManager.process(user1Document, user2Document, user3Document);
     });
 
-    it("should set key value in three documents correctly", async () => {
-        const user1Value = root1.get("testKey1") as string;
-        assert.equal(user1Value, "testValue", "Incorrect value for testKey1 in document 1");
-        const user2Value = root2.get("testKey1") as string;
-        assert.equal(user2Value, "testValue", "Incorrect value for testKey1 in document 2");
-        const user3Value = root3.get("testKey1") as string;
-        assert.equal(user3Value, "testValue", "Incorrect value for testKey1 in document 3");
+    function expectAllValues(msg, key, value1, value2, value3) {
+        const user1Value = root1.get(key) as string;
+        assert.equal(user1Value, value1, `Incorrect value for ${key} in document 1 ${msg}`);
+        const user2Value = root2.get(key) as string;
+        assert.equal(user2Value, value2, `Incorrect value for ${key} in document 2 ${msg}`);
+        const user3Value = root3.get(key) as string;
+        assert.equal(user3Value, value3, `Incorrect value for ${key} in document 3 ${msg}`);
+    }
+    function expectAllBeforeValues(key, value1, value2, value3) {
+        expectAllValues("before process", key, value1, value2, value3);
+    }
+    function expectAllAfterValues(key, value) {
+        expectAllValues("after process", key, value, value, value);
+    }
 
+    function expectAllSize(size) {
+        const keys1 = Array.from(root1.keys());
+        assert.equal(keys1.length, size, "Incorrect number of Keys in document1");
+        const keys2 = Array.from(root2.keys());
+        assert.equal(keys2.length, size, "Incorrect number of Keys in document2");
+        const keys3 = Array.from(root3.keys());
+        assert.equal(keys3.length, size, "Incorrect number of Keys in document3");
+
+        assert.equal(root1.size, size, "Incorrect map size in document1");
+        assert.equal(root2.size, size, "Incorrect map size in document2");
+        assert.equal(root3.size, size, "Incorrect map size in document3");
+    }
+
+    it("should set key value in three documents correctly", async () => {
+        expectAllAfterValues("testKey1", "testValue");
     });
 
     it("Should delete values in 3 documents correctly", async () => {
@@ -81,12 +103,7 @@ describe.skip("Map", () => {
         await documentDeltaEventManager.process(user1Document, user2Document, user3Document);
 
         // check the number of keys in the map (2 keys set  + insights key = 3)
-        const keys1 = Array.from(root1.keys());
-        assert.equal(keys1.length, 3, "Incorrect number of Keys in document1");
-        const keys2 = Array.from(root2.keys());
-        assert.equal(keys2.length, 3, "Incorrect number of Keys in document2");
-        const keys3 = Array.from(root3.keys());
-        assert.equal(keys3.length, 3, "Incorrect number of Keys in document3");
+        expectAllSize(3);
     });
 
     it("Should update value and trigger onValueChanged on other two documents", async () => {
@@ -126,14 +143,94 @@ describe.skip("Map", () => {
         assert.equal(user2ValueChangedCount, 1, "Incorrect number of valueChanged op received in document 2");
         assert.equal(user3ValueChangedCount, 1, "Incorrect number of valueChanged op received in document 3");
 
-        const user1Value = root1.get("testKey1") as string;
-        assert.equal(user1Value, "updatedValue", "Incorrect value for testKey1 in document 1 after update");
-        const user2Value = root2.get("testKey1") as string;
-        assert.equal(user2Value, "updatedValue", "Incorrect value for testKey1 in document 2 after update");
-        const user3Value = root3.get("testKey1") as string;
-        assert.equal(user3Value, "updatedValue", "Incorrect value for testKey1 in document 3 after update");
+        expectAllAfterValues("testKey1", "updatedValue");
+    });
+
+    it("Simultaneous set should reach eventual consistency with the same value", async () => {
+        root1.set("testKey1", "value1");
+        root2.set("testKey1", "value2");
+        root3.set("testKey1", "value0");
+        root3.set("testKey1", "value3");
+
+        expectAllBeforeValues("testKey1", "value1", "value2", "value3");
+        await documentDeltaEventManager.process(user1Document, user2Document, user3Document);
+        expectAllAfterValues("testKey1", "value3");
+    });
+
+    it("Simultaneous delete/set should reach eventual consistency with the same value", async () => {
+        // set after delete
+        root1.set("testKey1", "value1.1");
+        root2.delete("testKey1");
+        root3.set("testKey1", "value1.3");
+
+        expectAllBeforeValues("testKey1", "value1.1", undefined, "value1.3");
+        await documentDeltaEventManager.process(user1Document, user2Document, user3Document);
+        expectAllAfterValues("testKey1", "value1.3");
+    });
+
+    it("Simultaneous delete/set on same map should reach eventual consistency with the same value", async () => {
+        // delete and then set on the same map
+        root1.set("testKey2", "value2.1");
+        root2.delete("testKey2");
+        root3.set("testKey2", "value2.3");
+        // drain the outgoing so that the next set will come after
+        await documentDeltaEventManager.processOutgoing(user1Document, user2Document, user3Document);
+        root2.set("testKey2", "value2.2");
+
+        expectAllBeforeValues("testKey2", "value2.1", "value2.2", "value2.3");
+        await documentDeltaEventManager.process(user1Document, user2Document, user3Document);
+        expectAllAfterValues("testKey2", "value2.2");
 
     });
+
+    it("Simultaneous set/delete should reach eventual consistency with the same value", async () => {
+        // delete after set
+        root1.set("testKey3", "value3.1");
+        root2.set("testKey3", "value3.2");
+        root3.delete("testKey3");
+
+        expectAllBeforeValues("testKey3", "value3.1", "value3.2", undefined);
+        await documentDeltaEventManager.process(user1Document, user2Document, user3Document);
+        expectAllAfterValues("testKey3", undefined);
+    });
+
+    it("Simultaneous set/clear on a key should reach eventual consistency with the same value", async () => {
+        // clear after set
+        root1.set("testKey1", "value1.1");
+        root2.set("testKey1", "value1.2");
+        root3.clear();
+        expectAllBeforeValues("testKey1", "value1.1", "value1.2", undefined);
+        assert.equal(root3.size, 0, "Incorrect map size after clear");
+        await documentDeltaEventManager.process(user1Document, user2Document, user3Document);
+        expectAllAfterValues("testKey1", undefined);
+        expectAllSize(0);
+    });
+
+    it("Simultaneous clear/set on same map should reach eventual consistency with the same value", async () => {
+        // set after clear on the same map
+        root1.set("testKey2", "value2.1");
+        root2.clear();
+        root3.set("testKey2", "value2.3");
+        // drain the outgoing so that the next set will come after
+        await documentDeltaEventManager.processOutgoing(user1Document, user2Document, user3Document);
+        root2.set("testKey2", "value2.2");
+        expectAllBeforeValues("testKey2", "value2.1", "value2.2", "value2.3");
+        await documentDeltaEventManager.process(user1Document, user2Document, user3Document);
+        expectAllAfterValues("testKey2", "value2.2");
+        expectAllSize(1);
+    });
+
+    it("Simultaneous clear/set should reach eventual consistency and resolve to the same value", async () => {
+        // set after clear
+        root1.set("testKey3", "value3.1");
+        root2.clear();
+        root3.set("testKey3", "value3.3");
+        expectAllBeforeValues("testKey3", "value3.1", undefined, "value3.3");
+        await documentDeltaEventManager.process(user1Document, user2Document, user3Document);
+        expectAllAfterValues("testKey3", "value3.3");
+        expectAllSize(1);
+    });
+
     afterEach(async () => {
         user1Document.close();
         user2Document.close();

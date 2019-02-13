@@ -325,7 +325,7 @@ export class Container extends EventEmitter {
                 blobManagerP,
                 chaincodeP,
                 connectResult.handlerAttachedP,
-                ])
+            ])
             .then(async ([
                 storageService,
                 tree,
@@ -466,9 +466,9 @@ export class Container extends EventEmitter {
         quorum.on(
             "approveProposal",
             (sequenceNumber, key, value) => {
-                console.log(`approve ${key}`);
+                debug(`approved ${key}`);
                 if (key === "code2") {
-                    console.log(`loadCode ${JSON.stringify(value)}`);
+                    debug(`loadCode ${JSON.stringify(value)}`);
 
                     // Stop processing inbound messages as we transition to the new code
                     this.deltaManager.inbound.pause();
@@ -572,7 +572,7 @@ export class Container extends EventEmitter {
             this.service,
             clientDetails);
 
-        // Open a connection - the DeltaMananger will automatically reconnect
+        // Open a connection - the DeltaManager will automatically reconnect
         const detailsP = this._deltaManager.connect("Document loading");
         this._deltaManager.on("connect", (details: IConnectionDetails) => {
             this.setConnectionState(ConnectionState.Connecting, "websocket established", details.clientId);
@@ -613,7 +613,7 @@ export class Container extends EventEmitter {
                         this.processRemoteMessage(message, context);
                     },
                 });
-            });
+        });
 
         return { detailsP, handlerAttachedP };
     }
@@ -654,7 +654,7 @@ export class Container extends EventEmitter {
 
     private sendUnackedChunks() {
         for (const message of this.unackedChunkedMessages) {
-            console.log(`Resending unacked chunks!`);
+            debug(`Resending unacked chunks!`);
             this.submitChunkedMessage(
                 message[1].type,
                 message[1].content,
@@ -719,7 +719,7 @@ export class Container extends EventEmitter {
                 const chunkComplete = this.prepareRemoteChunkedMessage(message);
                 if (!chunkComplete) {
                     return Promise.resolve();
-                } else  {
+                } else {
                     if (local) {
                         const clientSeqNumber = message.clientSequenceNumber;
                         if (this.unackedChunkedMessages.has(clientSeqNumber)) {
