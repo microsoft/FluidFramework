@@ -1,6 +1,6 @@
 {
   "name": "@chaincode/shared-text2",
-  "version": "0.1.8",
+  "version": "0.2.0",
   "description": "Shared text",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -35,9 +35,9 @@
     "webpack-visualizer-plugin": "^0.1.11"
   },
   "dependencies": {
-    "@chaincode/charts": "^0.1.0",
-    "@chaincode/monaco": "^0.1.0",
-    "@chaincode/pinpoint-editor": "^0.1.0",
+    "@chaincode/charts": "0.2.0",
+    "@chaincode/monaco": "0.2.0",
+    "@chaincode/pinpoint-editor": "0.2.0",
     "@prague/api-definitions": "^0.2.4947",
     "@prague/app-component": "^0.2.4947",
     "@prague/app-ui": "^0.2.4947",
