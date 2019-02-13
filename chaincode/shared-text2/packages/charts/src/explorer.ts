@@ -1,6 +1,6 @@
 import * as charts from "@ms/charts";
 import * as ederaExtensions from "@ms/charts-extensions";
-import { IMapView } from "@prague/map";
+import { ISharedMap } from "@prague/map";
 import * as ko from "knockout";
 import * as chartBinding from "./chartBinding";
 import * as utils from "./utils";
@@ -49,7 +49,7 @@ class ViewModel {
      * Constructs a new ViewModel for the explorer page. Taking in the host to use as well
      * as an optional default layout.
      */
-    constructor(private host: charts.Host, private view: IMapView) {
+    constructor(private host: charts.Host, private view: ISharedMap) {
         const extensionsP = new Promise<charts.IExtensionsResource>((resolve, reject) => {
             host.getExtensions((error, extensions) => error ? reject(error) : resolve(extensions));
         });
@@ -199,7 +199,7 @@ class ViewModel {
 
 // Initializes the controller making use of the provided base URL
 export function initialize(
-    view: IMapView,
+    view: ISharedMap,
     base: string,
     div: HTMLDivElement) {
 
