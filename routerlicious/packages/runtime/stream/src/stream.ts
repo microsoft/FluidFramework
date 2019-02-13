@@ -1,9 +1,9 @@
-import { OperationType } from "@prague/api-definitions";
 import {
     FileMode,
     IDocumentMessage,
     ISequencedDocumentMessage,
     ITree,
+    MessageType,
     TreeEntry,
 } from "@prague/container-definitions";
 import { SharedMap } from "@prague/map";
@@ -87,15 +87,15 @@ export class Stream extends SharedMap implements IStream {
     }
 
     protected processContent(message: ISequencedDocumentMessage, local: boolean) {
-        if (message.type === OperationType && !local) {
+        if (message.type === MessageType.Operation && !local) {
             this.inkSnapshot.apply(message.contents as IDelta);
         }
     }
 
-    protected onConnectContent(pending: IDocumentMessage[]) {
+    protected onConnectContent(pending: any[]) {
         // Stream can resend messages under new client id
         for (const message of pending) {
-            this.submitLocalMessage(message.contents);
+            this.submitLocalMessage(message);
         }
 
         return;

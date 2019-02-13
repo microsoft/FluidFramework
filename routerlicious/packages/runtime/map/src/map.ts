@@ -1,12 +1,9 @@
-import {
-    OperationType,
-    SharedObject,
-} from "@prague/api-definitions";
+import { SharedObject } from "@prague/api-definitions";
 import {
     FileMode,
-    IDocumentMessage,
     ISequencedDocumentMessage,
     ITree,
+    MessageType,
     TreeEntry,
 } from "@prague/container-definitions";
 import {
@@ -302,12 +299,12 @@ export class SharedMap extends SharedObject implements ISharedMap {
         this.onDisconnectContent();
     }
 
-    protected onConnect(pending: IDocumentMessage[]) {
+    protected onConnect(pending: any[]) {
         debug(`Map ${this.id} is now connected`);
 
         // Filter the nonAck and pending mesages into a map set and a content set.
-        const mapMessages: IDocumentMessage[] = [];
-        const contentMessages: IDocumentMessage[] = [];
+        const mapMessages: any[] = [];
+        const contentMessages: any[] = [];
         for (const message of pending) {
             if (this.isMapMessage(message)) {
                 mapMessages.push(message);
@@ -318,7 +315,7 @@ export class SharedMap extends SharedObject implements ISharedMap {
 
         // Deal with the map messages - for the map it's always last one wins so we just resend
         for (const message of mapMessages) {
-            this.submitLocalMessage(message.contents);
+            this.submitLocalMessage(message);
         }
 
         // Allow content to catch up
@@ -368,7 +365,7 @@ export class SharedMap extends SharedObject implements ISharedMap {
     }
 
     protected prepareCore(message: ISequencedDocumentMessage, local: boolean): Promise<any> {
-        if (message.type === OperationType) {
+        if (message.type === MessageType.Operation) {
             const op: IMapOperation = message.contents;
             if (this.messageHandler.has(op.type)) {
                 return this.messageHandler.get(op.type)
@@ -381,7 +378,7 @@ export class SharedMap extends SharedObject implements ISharedMap {
 
     protected processCore(message: ISequencedDocumentMessage, local: boolean, context: any) {
         let handled = false;
-        if (message.type === OperationType) {
+        if (message.type === MessageType.Operation) {
             const op: IMapOperation = message.contents;
             if (this.messageHandler.has(op.type)) {
                 this.messageHandler.get(op.type)
@@ -429,9 +426,9 @@ export class SharedMap extends SharedObject implements ISharedMap {
     /**
      * Message sent upon reconnecting to the delta stream
      */
-    protected onConnectContent(pending: IDocumentMessage[]) {
+    protected onConnectContent(pending: any[]) {
         for (const message of pending) {
-            this.submitLocalMessage(message.contents);
+            this.submitLocalMessage(message);
         }
 
         return;
@@ -462,8 +459,8 @@ export class SharedMap extends SharedObject implements ISharedMap {
         return message;
     }
 
-    private isMapMessage(message: IDocumentMessage): boolean {
-        const type = message.contents.type;
+    private isMapMessage(message: any): boolean {
+        const type = message.type;
         return this.messageHandler.has(type);
     }
 }

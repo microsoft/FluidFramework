@@ -114,7 +114,7 @@ export class Runtime extends EventEmitter implements IHostRuntime {
         return this.context.minimumSequenceNumber;
     }
 
-    public get submitFn(): (type: MessageType, contents: any) => void {
+    public get submitFn(): (type: MessageType, contents: any) => number {
         return this.context.submitFn;
     }
 

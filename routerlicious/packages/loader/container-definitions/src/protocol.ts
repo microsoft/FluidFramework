@@ -24,7 +24,7 @@ export enum MessageType {
     Attach = "attach",
 
     // Channel operation.
-    Operation = "objOp",
+    Operation = "op",
 
     // Chunked operation.
     ChunkedOp = "chunkedOp",

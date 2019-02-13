@@ -1,12 +1,10 @@
-import {
-    OperationType,
-    SharedObject,
-} from "@prague/api-definitions";
+import { SharedObject } from "@prague/api-definitions";
 import {
     FileMode,
     IDocumentMessage,
     ISequencedDocumentMessage,
     ITree,
+    MessageType,
     TreeEntry,
 } from "@prague/container-definitions";
 import {
@@ -196,16 +194,16 @@ export class Cell extends SharedObject implements ICell {
         debug(`Cell ${this.id} is now disconnected`);
     }
 
-    protected onConnect(pending: IDocumentMessage[]) {
+    protected onConnect(pending: any[]) {
         for (const message of pending) {
-            this.submitLocalMessage(message.contents);
+            this.submitLocalMessage(message);
         }
 
         return;
     }
 
     protected async prepareCore(message: ISequencedDocumentMessage, local: boolean): Promise<any> {
-        if (message.type === OperationType && !local) {
+        if (message.type === MessageType.Operation && !local) {
             const op: ICellOperation = message.contents;
             if (op.type === "setCell") {
                 /* tslint:disable:no-return-await */
@@ -217,7 +215,7 @@ export class Cell extends SharedObject implements ICell {
     }
 
     protected processCore(message: ISequencedDocumentMessage, local: boolean, context: any) {
-        if (message.type === OperationType && !local) {
+        if (message.type === MessageType.Operation && !local) {
             const op: ICellOperation = message.contents;
 
             switch (op.type) {

@@ -52,9 +52,10 @@ export interface IDeltaConnection {
     state: ConnectionState;
 
     /**
-     * Send new messages to the server
+     * Send new messages to the server. Returns the client ID for the messaage. Must be in a connected state
+     * to submit a message.
      */
-    submit(messageContent: any): void;
+    submit(messageContent: any): number;
 
     /**
      * Attaches a message handler to the delta connection

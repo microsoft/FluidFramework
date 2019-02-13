@@ -1,6 +1,5 @@
 // tslint:disable:whitespace align no-bitwise
 import {
-    IDocumentMessage,
     ISequencedDocumentMessage,
     ITree,
 } from "@prague/container-definitions";
@@ -227,7 +226,7 @@ export abstract class SegmentSequence<T extends MergeTree.ISegment> extends Shar
 
         /* tslint:disable:no-object-literal-type-assertion */
         const segmentGroup = {
-            segments: orderedSegments,
+            segments: [],
         } as MergeTree.SegmentGroup;
         const opList = [] as MergeTree.IMergeTreeOp[];
         let prevSeg: MergeTree.ISegment;
@@ -314,7 +313,7 @@ export abstract class SegmentSequence<T extends MergeTree.ISegment> extends Shar
         this.collabStarted = true;
     }
 
-    protected onConnectContent(pending: IDocumentMessage[]) {
+    protected onConnectContent(pending: any[]) {
         // Update merge tree collaboration information with new client ID and then resend pending ops
         if (this.collabStarted) {
             this.client.updateCollaboration(this.runtime.clientId);

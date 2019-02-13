@@ -203,8 +203,8 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime 
         return this.handler.request(request);
     }
 
-    public submitMessage(type: MessageType, content: any) {
-        this.submit(type, content);
+    public submitMessage(type: MessageType, content: any): number {
+        return this.submit(type, content);
     }
 
     public error(err: any): void {
@@ -220,7 +220,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime 
         return this.chaincode.attach(platform);
     }
 
-    private submit(type: MessageType, content: any) {
+    private submit(type: MessageType, content: any): number {
         this.verifyNotClosed();
         const envelope: IEnvelope = {
             address: this.id,
@@ -229,7 +229,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime 
                 type,
             },
         };
-        this.hostRuntime.submitFn(MessageType.Operation, envelope);
+        return this.hostRuntime.submitFn(MessageType.Operation, envelope);
     }
 
     private verifyNotClosed() {

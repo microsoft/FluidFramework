@@ -1,6 +1,5 @@
 // tslint:disable
-import { OperationType } from "@prague/api-definitions";
-import { ISequencedDocumentMessage, IUser } from "@prague/container-definitions";
+import { MessageType, ISequencedDocumentMessage, IUser } from "@prague/container-definitions";
 import { IMergeTreeDeltaOpCallbackArgs, IRelativePosition } from "./index";
 import {
     MergeTree, ClientIds, compareStrings, RegisterCollection, UnassignedSequenceNumber, Marker, SubSequence,
@@ -195,7 +194,7 @@ export class Client {
             },
             timestamp: Date.now(),
             traces: [],
-            type: OperationType,
+            type: MessageType.Operation,
         };
     }
     makeInsertMsg(text: string, pos: number, seq: number, refSeq: number, objectId: string) {
@@ -214,7 +213,7 @@ export class Client {
             },
             timestamp: Date.now(),
             traces: [],
-            type: OperationType,
+            type: MessageType.Operation,
         };
     }
     makeRemoveMsg(start: number, end: number, seq: number, refSeq: number, objectId: string) {
@@ -233,7 +232,7 @@ export class Client {
             },
             timestamp: Date.now(),
             traces: [],
-            type: OperationType,
+            type: MessageType.Operation,
         };
     }
     makeAnnotateMsg(props: Properties.PropertySet, start: number, end: number, seq: number, refSeq: number, objectId: string) {
@@ -252,7 +251,7 @@ export class Client {
             },
             timestamp: Date.now(),
             traces: [],
-            type: OperationType,
+            type: MessageType.Operation,
         };
     }
     hasMessages(): boolean {
@@ -500,7 +499,7 @@ export class Client {
         const branchId = msg.origin ? 0 : this.mergeTree.localBranchId;
         this.getOrAddShortClientId(msg.clientId, branchId);
         // Apply if an operation message
-        if (msg.type === OperationType) {
+        if (msg.type === MessageType.Operation) {
             const operationMessage = msg as ISequencedDocumentMessage;
             if (msg.clientId === this.longClientId) {
                 let op = <ops.IMergeTreeOp>msg.contents;

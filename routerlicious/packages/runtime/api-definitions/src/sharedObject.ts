@@ -1,8 +1,8 @@
 import {
     ConnectionState,
-    IDocumentMessage,
     ISequencedDocumentMessage,
     ITree,
+    MessageType,
 } from "@prague/container-definitions";
 import {
     IDistributedObjectServices,
@@ -10,22 +10,21 @@ import {
     IRuntime,
 } from "@prague/runtime-definitions";
 import * as assert from "assert";
+import * as Deque from "double-ended-queue";
 import { EventEmitter } from "events";
 import { debug } from "./debug";
 import { ISharedObject } from "./types";
 import { ValueType } from "./valueType";
 
-// TODO this may migrate to the runtime
-export const OperationType = "op";
-
 export abstract class SharedObject extends EventEmitter implements ISharedObject {
     // tslint:disable-next-line:variable-name
     public readonly __sharedObject__ = true;
 
-    // Private fields exposed via getters
-    // tslint:disable:variable-name
+    // tslint:disable-next-line:variable-name private fields exposed via getters
     private _state = ConnectionState.Disconnected;
-    // tslint:enable:variable-name
+
+    // Locally applied operations not yet ACK'd by the server
+    private readonly pendingOps = new Deque<{ clientSequenceNumber: number; content: any }>();
 
     private services: IDistributedObjectServices;
 
@@ -163,14 +162,24 @@ export abstract class SharedObject extends EventEmitter implements ISharedObject
     /**
      * Called when the object has fully connected to the delta stream
      */
-    protected abstract onConnect(pending: IDocumentMessage[]);
+    protected abstract onConnect(pending: any[]);
 
     /**
      * Processes a message by the local client
      */
-    protected submitLocalMessage(contents: any): void {
+    protected submitLocalMessage(content: any): void {
         assert(!this.isLocal());
-        this.services.deltaConnection.submit(contents);
+
+        // Send if we are connected - otherwise just add to the sent list
+        let clientSequenceNumber = -1;
+        if (this.state === ConnectionState.Connected) {
+            clientSequenceNumber = this.services.deltaConnection.submit(content);
+        } else {
+            debug(`${this.id} Not fully connected - adding to pending list`, content);
+            // Store the message for when it is ACKed and then submit to the server if connected
+        }
+
+        this.pendingOps.push({ clientSequenceNumber, content});
     }
 
     private attachDeltaHandler() {
@@ -222,11 +231,15 @@ export abstract class SharedObject extends EventEmitter implements ISharedObject
                 break;
 
             case ConnectionState.Connected:
+                // Extract all un-ack'd payload operation
+                const pendingOps = this.pendingOps.toArray().map((value) => value.content);
+                this.pendingOps.clear();
+
                 // And now we are fully connected
                 // - we have a client ID
                 // - we are caught up enough to attempt to send messages
-                throw new Error("To be implemented");
-                this.onConnect([]);
+                this.onConnect(pendingOps);
+
                 break;
 
             default:
@@ -238,6 +251,25 @@ export abstract class SharedObject extends EventEmitter implements ISharedObject
      * Handles a message being received from the remote delta server
      */
     private process(message: ISequencedDocumentMessage, local: boolean, context: any) {
+        if (message.type === MessageType.Operation && local) {
+            // disconnected ops should never be processed. They should have been fully sent on connected
+            assert(
+                this.pendingOps.length === 0 || this.pendingOps.peekFront().clientSequenceNumber !== -1,
+                `process for disconnected op ${this.pendingOps.peekFront().clientSequenceNumber}`);
+
+            // One of our messages was sequenced. We can remove it from the local message list. Given these arrive
+            // in order we only need to check the beginning of the local list.
+            if (this.pendingOps.length > 0 &&
+                this.pendingOps.peekFront().clientSequenceNumber === message.clientSequenceNumber) {
+                this.pendingOps.shift();
+                if (this.pendingOps.length === 0) {
+                    this.emit("processed");
+                }
+            } else {
+                debug(`Duplicate ack received ${message.clientSequenceNumber}`);
+            }
+        }
+
         this.emit("pre-op", message, local);
         this.processCore(message, local, context);
         this.emit("op", message, local);

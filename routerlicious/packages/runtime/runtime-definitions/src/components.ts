@@ -73,7 +73,7 @@ export interface IComponentRuntime {
 
     error(err: any): void;
 
-    submitMessage(type: string, content: any): any;
+    submitMessage(type: string, content: any): number;
 
     createAndAttachComponent(id: string, pkg: string): Promise<IComponentRuntime>;
 
@@ -102,7 +102,7 @@ export interface IHostRuntime extends IRuntime {
     readonly connectionState: ConnectionState;
     readonly branch: string;
     readonly minimumSequenceNumber: number;
-    readonly submitFn: (type: MessageType, contents: any) => void;
+    readonly submitFn: (type: MessageType, contents: any) => number;
     readonly snapshotFn: (message: string) => Promise<void>;
     readonly closeFn: () => void;
 

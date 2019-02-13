@@ -505,9 +505,9 @@ export class ComponentHost extends EventEmitter implements IComponentDeltaHandle
         return message;
     }
 
-    private submit(type: MessageType, content: any) {
+    private submit(type: MessageType, content: any): number {
         this.verifyNotClosed();
-        this.componentRuntime.submitMessage(type, content);
+        return this.componentRuntime.submitMessage(type, content);
     }
 
     private reserve(id: string) {
@@ -523,7 +523,21 @@ export class ComponentHost extends EventEmitter implements IComponentDeltaHandle
         const objectDetails = this.channels.get(envelope.address);
         assert(objectDetails);
 
-        return objectDetails.connection.prepare(message, local);
+        const transformed: ISequencedDocumentMessage = {
+            clientId: message.clientId,
+            clientSequenceNumber: message.clientSequenceNumber,
+            contents: envelope.contents,
+            metadata: message.metadata,
+            minimumSequenceNumber: message.minimumSequenceNumber,
+            origin: message.origin,
+            referenceSequenceNumber: message.referenceSequenceNumber,
+            sequenceNumber: message.sequenceNumber,
+            timestamp: message.timestamp,
+            traces: message.traces,
+            type: message.type,
+        };
+
+        return objectDetails.connection.prepare(transformed, local);
     }
 
     private processOp(message: ISequencedDocumentMessage, local: boolean, context: any): IChannel {
@@ -533,8 +547,20 @@ export class ComponentHost extends EventEmitter implements IComponentDeltaHandle
         const objectDetails = this.channels.get(envelope.address);
         assert(objectDetails);
 
-        /* tslint:disable:no-unsafe-any */
-        objectDetails.connection.process(message, local, context);
+        const transformed: ISequencedDocumentMessage = {
+            clientId: message.clientId,
+            clientSequenceNumber: message.clientSequenceNumber,
+            contents: envelope.contents,
+            metadata: message.metadata,
+            minimumSequenceNumber: message.minimumSequenceNumber,
+            origin: message.origin,
+            referenceSequenceNumber: message.referenceSequenceNumber,
+            sequenceNumber: message.sequenceNumber,
+            timestamp: message.timestamp,
+            traces: message.traces,
+            type: message.type,
+        };
+        objectDetails.connection.process(transformed, local, context);
 
         return objectDetails.object;
     }
@@ -582,7 +608,7 @@ export class ComponentHost extends EventEmitter implements IComponentDeltaHandle
                     address: attachMessage.id,
                     contents: submitMessage,
                 };
-                this.submit(MessageType.Operation, submitEnvelope);
+                return this.submit(MessageType.Operation, submitEnvelope);
             });
 
         const services: IObjectServices = {
@@ -659,7 +685,7 @@ export class ComponentHost extends EventEmitter implements IComponentDeltaHandle
             this.componentRuntime.connectionState,
             (message) => {
                 const envelope: IEnvelope = { address: id, contents: message };
-                this.submit(MessageType.Operation, envelope);
+                return this.submit(MessageType.Operation, envelope);
             });
         const objectStorage = new ChannelStorageService(tree, storage);
 

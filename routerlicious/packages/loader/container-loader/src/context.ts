@@ -29,7 +29,7 @@ export class Context implements IContainerContext {
         quorum: IQuorum,
         storage: IDocumentStorageService,
         errorFn: (err: any) => void,
-        submitFn: (type: MessageType, contents: any) => void,
+        submitFn: (type: MessageType, contents: any) => number,
         snapshotFn: (message: string) => Promise<void>,
         closeFn: () => void,                        // When would the context ever close?
     ): Promise<Context> {
@@ -105,7 +105,7 @@ export class Context implements IContainerContext {
         public readonly quorum: IQuorum,
         public readonly storage: IDocumentStorageService,
         private readonly errorFn: (err: any) => void,
-        public readonly submitFn: (type: MessageType, contents: any) => void,
+        public readonly submitFn: (type: MessageType, contents: any) => number,
         public readonly snapshotFn: (message: string) => Promise<void>,
         public readonly closeFn: () => void,
     ) {

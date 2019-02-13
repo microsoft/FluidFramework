@@ -16,7 +16,7 @@ export class ChannelDeltaConnection implements IDeltaConnection {
         public objectId: string,
         // tslint:disable-next-line:variable-name
         private _state: ConnectionState,
-        private submitFn: (message: IDocumentMessage) => void) {
+        private submitFn: (message: IDocumentMessage) => number) {
     }
 
     public attach(handler: IDeltaHandler) {
@@ -48,7 +48,7 @@ export class ChannelDeltaConnection implements IDeltaConnection {
     /**
      * Send new messages to the server
      */
-    public submit(message: IDocumentMessage): void {
-        this.submitFn(message);
+    public submit(message: IDocumentMessage): number {
+        return this.submitFn(message);
     }
 }
