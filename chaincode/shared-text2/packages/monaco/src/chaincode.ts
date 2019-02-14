@@ -1,5 +1,6 @@
 // inspiration for this example taken from https://github.com/agentcooper/typescript-play
 import { Component, Document } from "@prague/app-component";
+import { ComponentHost } from "@prague/component";
 import { IPlatform, ITree } from "@prague/container-definitions";
 import {
     IMergeTreeGroupMsg,
@@ -9,13 +10,9 @@ import {
     MergeTreeDeltaType,
 } from "@prague/merge-tree";
 import {
-    ComponentHost,
-} from "@prague/runtime";
-import {
     IChaincode,
     IChaincodeComponent,
     IComponentDeltaHandler,
-    IComponentPlatform,
     IComponentRuntime } from "@prague/runtime-definitions";
 import { SharedString } from "@prague/sequence";
 import { Deferred } from "@prague/utils";
@@ -66,7 +63,7 @@ class MonacoRunner extends Document {
         this.ready.resolve();
     }
 
-    public async attach(platform: IComponentPlatform): Promise<IComponentPlatform> {
+    public async attach(platform: IPlatform): Promise<IPlatform> {
         await this.ready.promise;
 
         this.mapHost = await platform.queryInterface<HTMLElement>("div");
@@ -99,7 +96,7 @@ class MonacoRunner extends Document {
         hostWrapper.appendChild(inputDiv);
         hostWrapper.appendChild(outputDiv);
 
-        const root = await this.root.getView();
+        const root = await this.root;
         const text = await root.wait<SharedString>("text");
 
         monaco.languages.typescript.typescriptDefaults.setCompilerOptions(defaultCompilerOptions);
@@ -266,38 +263,18 @@ export class MonacoComponent implements IChaincodeComponent {
         return;
     }
 
-    public async run(runtime: IComponentRuntime, platform: IPlatform): Promise<IComponentDeltaHandler> {
+    public async run(runtime: IComponentRuntime): Promise<IComponentDeltaHandler> {
         const chaincode = this.chaincode;
 
         // All of the below would be hidden from a developer
         // Is this an await or does it just go?
-        const component = await ComponentHost.LoadFromSnapshot(
-            runtime,
-            runtime.tenantId,
-            runtime.documentId,
-            runtime.id,
-            runtime.parentBranch,
-            runtime.existing,
-            runtime.options,
-            runtime.clientId,
-            runtime.user,
-            runtime.blobManager,
-            runtime.baseSnapshot,
-            chaincode,
-            runtime.deltaManager,
-            runtime.getQuorum(),
-            runtime.storage,
-            runtime.connectionState,
-            runtime.branch,
-            runtime.minimumSequenceNumber,
-            runtime.snapshotFn,
-            runtime.closeFn);
+        const component = await ComponentHost.LoadFromSnapshot(runtime, chaincode);
         this.component = component;
 
         return component;
     }
 
-    public async attach(platform: IComponentPlatform): Promise<IComponentPlatform> {
+    public async attach(platform: IPlatform): Promise<IPlatform> {
         return this.monaco.attach(platform);
     }
 
