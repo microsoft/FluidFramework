@@ -1,6 +1,6 @@
 import { Component } from "@prague/app-component";
 import { DataStore } from "@prague/app-datastore";
-import { IPlatform } from "@prague/container-definitions";
+import { IContainerContext, IPlatform, IRuntime } from "@prague/container-definitions";
 import { MapExtension } from "@prague/map";
 import {
     BaseSegment,
@@ -16,6 +16,7 @@ import {
     UniversalSequenceNumber,
 } from "@prague/merge-tree";
 import {
+    IChaincode,
     IChaincodeComponent,
     IComponentRuntime,
 } from "@prague/runtime-definitions";
@@ -23,6 +24,9 @@ import { SharedString, SharedStringExtension } from "@prague/sequence";
 import { Deferred } from "@prague/utils";
 import { EventEmitter } from "events";
 import { debug } from "./debug";
+
+// tslint:disable-next-line:no-var-requires
+const pkg = require("../package.json");
 
 export enum DocSegmentKind {
     Text = "text",
@@ -112,7 +116,7 @@ class ServicePlatform extends EventEmitter implements IPlatform {
     }
 
     public queryInterface<T>(id: string): Promise<T> {
-        return this.qi.get(id);
+        return this.qi.get(id)!;
     }
 
     public detach() {
@@ -154,9 +158,6 @@ export class FlowDocument extends Component {
             [MapExtension.Type, new MapExtension()],
             [SharedStringExtension.Type, new SharedStringExtension()],
         ]);
-    }
-    public async attach(platform: IPlatform): Promise<IPlatform> {
-        return;
     }
 
     public async opened() {
@@ -244,10 +245,10 @@ export class FlowDocument extends Component {
         this.sharedString.insertMarker(position, ReferenceType.Simple, docInfo);
     }
 
-    public insertInclusionComponent(position: number, docId: string, pkg: string) {
+    public insertInclusionComponent(position: number, docId: string, chaincodePkg: string) {
         const docInfo = { kind: InclusionKind.Component, docId };
         this.sharedString.insertMarker(position, ReferenceType.Simple, docInfo);
-        this.componentRuntime.createAndAttachComponent(docId, pkg);
+        this.componentRuntime.createAndAttachComponent(docId, chaincodePkg);
     }
 
     public annotate(start: number, end: number, props: PropertySet) {
@@ -286,6 +287,14 @@ export class FlowDocument extends Component {
         text.insertMarker(0, ReferenceType.Tile, FlowDocument.eofTileProperties);
         this.root.set("text", text);
     }
+}
+
+export async function instantiate(): Promise<IChaincode> {
+    return Component.instantiate(new FlowDocument(null as any));
+}
+
+export async function instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
+    return Component.instantiateRuntime(context, pkg.name, [[pkg.name, Promise.resolve({ instantiateComponent })]]);
 }
 
 /**

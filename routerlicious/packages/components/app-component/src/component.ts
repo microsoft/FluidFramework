@@ -48,7 +48,7 @@ export class ComponentChaincode<T extends Component> implements IChaincodeCompon
     }
 
     public async attach(platform: IPlatform): Promise<IPlatform> {
-        return this.instance.attach(platform);
+        return new Platform(Promise.resolve(this.instance));
     }
 
     public snapshot(): ITree {
@@ -64,7 +64,7 @@ class Platform extends EventEmitter implements IPlatform {
     constructor(private readonly component: Promise<Component>) { super(); }
 
     public queryInterface<T>(id: string): Promise<T> {
-        debug("QI");
+        debug(`queryInterface(${id})`);
 
         return id === "component"
             ? this.component as any
@@ -72,6 +72,7 @@ class Platform extends EventEmitter implements IPlatform {
     }
 
     public detach() {
+        debug(`detach()`);
         return;
     }
 }
@@ -168,10 +169,11 @@ export abstract class Component extends EventEmitter {
      */
     public static async instantiateRuntime(
         context: IContainerContext,
-        name: string,
         chaincode: string,
         registry: ReadonlyArray<[string, Promise<IComponentFactory>]>,
     ): Promise<IRuntime> {
+        const name = encodeURIComponent(chaincode);
+
         debug(`instantiateRuntime(name=${name},chaincode=${chaincode},registry=${JSON.stringify(registry)})`);
         const runtime = await Runtime.Load(new Map(registry), context);
         debug("runtime loaded.");
@@ -269,8 +271,6 @@ export abstract class Component extends EventEmitter {
         debug("Component.close()");
         this.runtime.close();
     }
-
-    public abstract async attach(platform: IPlatform): Promise<IPlatform>;
 
     /**
      * Subclass implements 'create()' to put initial document structure in place.

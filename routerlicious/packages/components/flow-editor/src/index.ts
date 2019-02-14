@@ -3,11 +3,14 @@ export { VirtualizedView, IVirtualizedProps } from "./components/virtualized";
 import { FlowDocument } from "@chaincode/flow-document";
 import { Component } from "@prague/app-component";
 import { DataStore } from "@prague/app-datastore";
-import { IPlatform } from "@prague/container-definitions";
+import { IContainerContext, IRuntime } from "@prague/container-definitions";
 import { Scheduler } from "@prague/flow-util";
 import { MapExtension } from "@prague/map";
 import { IChaincode, IChaincodeComponent } from "@prague/runtime-definitions";
 import { Editor } from "./components/editor";
+
+// tslint:disable-next-line:no-var-requires
+const pkg = require("../package.json");
 
 export class FlowEditor extends Component {
 
@@ -34,10 +37,6 @@ export class FlowEditor extends Component {
         }
     }
 
-    public attach(platform: IPlatform): Promise<IPlatform> {
-        return;
-    }
-
     protected async create() {
         // tslint:disable-next-line:insecure-random
         this.root.set("docId", Math.random().toString(36).substr(2, 4));
@@ -51,4 +50,8 @@ export async function instantiate(): Promise<IChaincode> {
 
 export async function instantiateComponent(): Promise<IChaincodeComponent> {
     return Component.instantiateComponent(FlowEditor);
+}
+
+export async function instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
+    return Component.instantiateRuntime(context, pkg.name, [[pkg.name, Promise.resolve({ instantiateComponent })]]);
 }

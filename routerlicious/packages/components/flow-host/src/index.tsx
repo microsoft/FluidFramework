@@ -7,14 +7,12 @@ import * as tableView from "@chaincode/table-view";
 import { Component } from "@prague/app-component";
 import {
     IContainerContext,
-    IPlatform,
     IRuntime,
 } from "@prague/container-definitions";
 import {
     IChaincodeComponent,
     IComponentRuntime,
 } from "@prague/runtime-definitions";
-import { Deferred } from "@prague/utils";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import { App, IAppConfig } from "./app";
@@ -24,7 +22,6 @@ const pkg = require("../package.json");
 
 export class FlowHost extends Component {
     public static readonly type = `${pkg.name}@${pkg.version}`;
-    private ready = new Deferred<void>();
 
     constructor(private componentRuntime: IComponentRuntime) {
         super([]);
@@ -32,13 +29,8 @@ export class FlowHost extends Component {
 
     public async opened() {
         await this.connected;
-        this.ready.resolve();
-    }
 
-    public async attach(platform: IPlatform): Promise<IPlatform> {
-        await this.ready.promise;
-
-        const hostContent: HTMLElement = await platform.queryInterface<HTMLElement>("div");
+        const hostContent: HTMLElement = await this.platform.queryInterface<HTMLElement>("div");
         if (!hostContent) {
             // If headless exist early
             return;
@@ -63,7 +55,7 @@ export async function instantiateComponent(): Promise<IChaincodeComponent> {
  * Instantiates a new chaincode host
  */
 export async function instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
-    return Component.instantiateRuntime(context, "flow-host", pkg.name, [
+    return Component.instantiateRuntime(context, pkg.name, [
         ["@chaincode/chart-view", Promise.resolve(chartView)],
         ["@chaincode/flow-document", Promise.resolve(flowDocument)],
         [pkg.name, Promise.resolve({ instantiateComponent })],

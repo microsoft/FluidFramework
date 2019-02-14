@@ -11,6 +11,7 @@ import {
     UnboxedOper,
     Workbook,
 } from "@prague/client-ui/ext/calc";
+import { IContainerContext, IRuntime } from "@prague/container-definitions";
 import { MapExtension, registerDefaultValueType  } from "@prague/map";
 import { Counter, CounterValueType } from "@prague/map";
 import {
@@ -21,7 +22,7 @@ import {
     ReferenceType,
     UniversalSequenceNumber,
 } from "@prague/merge-tree";
-import { IChaincodeComponent } from "@prague/runtime-definitions";
+import { IChaincode, IChaincodeComponent } from "@prague/runtime-definitions";
 import {
     SharedIntervalCollectionValueType,
     SharedString,
@@ -29,13 +30,14 @@ import {
     SharedStringIntervalCollectionValueType,
 } from "@prague/sequence";
 import { Deferred } from "@prague/utils";
-
-import { IPlatform } from "../../../loader/container-definitions/dist";
 import { CellRange } from "./cellrange";
 export { CellRange };
 
 export const loadCellTextSym = Symbol("TableDocument.loadCellText");
 export const storeCellTextSym = Symbol("TableDocument.storeCellText");
+
+// tslint:disable-next-line:no-var-requires
+const pkg = require("../package.json");
 
 type EvaluationResult = Result<ReadOper, FailureReason | NotImplemented | NotFormulaString | IllFormedFormula> | EvalFormulaPaused;
 
@@ -131,8 +133,6 @@ export class TableDocument extends Component {
         this.readyDeferred.resolve();
     }
 
-    public async attach(): Promise<IPlatform> { return; }
-
     public evaluateCell(row: number, col: number) {
         return this.parseResult(this.workbook.evaluateCell(row, col));
     }
@@ -222,6 +222,14 @@ export class TableDocument extends Component {
     }
 }
 
+export async function instantiate(): Promise<IChaincode> {
+    return Component.instantiate(new TableDocument());
+}
+
 export async function instantiateComponent(): Promise<IChaincodeComponent> {
     return Component.instantiateComponent(TableDocument);
+}
+
+export async function instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
+    return Component.instantiateRuntime(context, pkg.name, [[pkg.name, Promise.resolve({ instantiateComponent })]]);
 }
