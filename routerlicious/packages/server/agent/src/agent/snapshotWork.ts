@@ -28,6 +28,7 @@ export class SnapshotWork extends BaseWork implements IWork {
             { encrypted: undefined, localMinSeq: 0, client: { type: "snapshot"} },
             this.service,
             task);
+
         this.serializer = new Serializer(
             this.document,
             IdleDetectionTime,

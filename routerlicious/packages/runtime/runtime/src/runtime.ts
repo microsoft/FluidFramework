@@ -262,6 +262,10 @@ export class Runtime extends EventEmitter implements IHostRuntime {
         for (const [, component] of this.components) {
             component.changeConnectionState(value, clientId);
         }
+
+        if (value === ConnectionState.Connected) {
+            this.emit("connected", this.clientId);
+        }
     }
 
     public prepare(message: ISequencedDocumentMessage, local: boolean): Promise<any> {
@@ -497,11 +501,7 @@ export class Runtime extends EventEmitter implements IHostRuntime {
             if (this.connected) {
                 this.initLeaderElection();
             } else {
-                const leaderElectionHandler = () => {
-                    this.initLeaderElection();
-                    this.removeListener("connected", leaderElectionHandler);
-                };
-                this.on("connected", leaderElectionHandler);
+                this.once("connected", () => this.initLeaderElection());
             }
         }
     }
