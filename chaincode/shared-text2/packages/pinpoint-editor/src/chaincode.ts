@@ -1,13 +1,10 @@
+import { ComponentHost } from "@prague/component";
 import { IPlatform, ITree } from "@prague/container-definitions";
 import { MapExtension } from "@prague/map";
-import {
-    ComponentHost,
-} from "@prague/runtime";
 import {
     IChaincode,
     IChaincodeComponent,
     IComponentDeltaHandler,
-    IComponentPlatform,
     IComponentRuntime,
     IRuntime} from "@prague/runtime-definitions";
 import * as assert from "assert";
@@ -63,38 +60,16 @@ export class PinpointComponent implements IChaincodeComponent {
         return;
     }
 
-    public async run(runtime: IComponentRuntime, platform: IPlatform): Promise<IComponentDeltaHandler> {
+    public async run(runtime: IComponentRuntime): Promise<IComponentDeltaHandler> {
         const chaincode = this.chaincode;
 
-        // All of the below would be hidden from a developer
-        // Is this an await or does it just go?
-        const component = await ComponentHost.LoadFromSnapshot(
-            runtime,
-            runtime.tenantId,
-            runtime.documentId,
-            runtime.id,
-            runtime.parentBranch,
-            runtime.existing,
-            runtime.options,
-            runtime.clientId,
-            runtime.user,
-            runtime.blobManager,
-            runtime.baseSnapshot,
-            chaincode,
-            runtime.deltaManager,
-            runtime.getQuorum(),
-            runtime.storage,
-            runtime.connectionState,
-            runtime.branch,
-            runtime.minimumSequenceNumber,
-            runtime.snapshotFn,
-            runtime.closeFn);
+        const component = await ComponentHost.LoadFromSnapshot(runtime, chaincode);
         this.component = component;
 
         return component;
     }
 
-    public async attach(platform: IComponentPlatform): Promise<IComponentPlatform> {
+    public async attach(platform: IPlatform): Promise<IPlatform> {
         return this.pinpoint.attach(platform);
     }
 

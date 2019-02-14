@@ -1,8 +1,8 @@
 import { IPinpointOptions, Pinpoint } from "@kurtb/pinpoint";
-import { IMapView } from "@prague/map";
+import { ISharedMap } from "@prague/map";
 import { Document } from "./document";
 
-export function embed(mapHost: HTMLElement, collabDoc: Document, rootView: IMapView, platform: any) {
+export function embed(mapHost: HTMLElement, collabDoc: Document, rootView: ISharedMap, platform: any) {
     const div = document.createElement("div");
     div.style.width = "300px";
     mapHost.appendChild(div);
