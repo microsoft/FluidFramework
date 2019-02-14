@@ -15,18 +15,19 @@
     }
   },
   "scripts": {
-    "build": "npm run tsc && npm run build:esnext && npm run tslint",
-    "build:esnext": "tsc --outDir lib --m esnext",
+    "build": "npm run tsc && npm run build:esnext && npm run tslint && copyfiles -u 1 'src/**/*.css' dist/ && copyfiles -u 1 'src/**/*.css' lib/",
     "build:full": "npm run build",
     "clean": "rimraf dist && rimraf lib",
     "tsc": "tsc",
+    "build:esnext": "tsc --outDir lib --m esnext",
     "tslint": "tslint --project tsconfig.json --format verbose",
     "webpack": "webpack --env=\"production\"",
+    "webpack:full": "webpack --env=\"production\"",
     "webpack:dev": "webpack --env=\"development\"",
-    "webpack:full": "npm run webpack",
-    "publish-local": "npm run webpack && npm publish --registry http://localhost:4873",
-    "publish-patch-local": "npm version patch && npm run publish-local",
-    "publish-wu2": "npm run webpack && npm publish --registry https://packages.wu2.prague.office-int.com"
+    "dev": "webpack --env=\"development\" --watch",
+    "publish-local": "npm publish --registry http://localhost:4873",
+    "publish-wu2": "npm run build && npm publish --registry https://packages.wu2.prague.office-int.com",
+    "publish-patch-local": "npm version patch && npm run publish-local"
   },
   "author": "Microsoft",
   "repository": "microsoft/prague",

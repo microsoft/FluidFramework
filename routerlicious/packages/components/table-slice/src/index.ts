@@ -1,15 +1,11 @@
 import { CellRange, TableDocument } from "@chaincode/table-document";
-import * as tableDocumentPkg from "@chaincode/table-document";
 import { Component, ComponentChaincode } from "@prague/app-component";
-import { IContainerContext, IRuntime } from "@prague/container-definitions";
+import { IPlatform } from "@prague/container-definitions";
 import { MapExtension } from "@prague/map";
-import { IChaincode, IChaincodeComponent, IComponentRuntime } from "@prague/runtime-definitions";
+import { IChaincodeComponent, IComponentRuntime } from "@prague/runtime-definitions";
 import { Deferred } from "@prague/utils";
 import { cellRangeExpr, ConfigView } from "./config";
 import { ConfigKeys } from "./configKeys";
-
-// tslint:disable-next-line:no-var-requires
-const pkg = require("../package.json");
 
 export class TableSlice extends Component {
     public get ready() {
@@ -36,11 +32,14 @@ export class TableSlice extends Component {
 
     public async opened() {
         await this.connected;
+        this.readyDeferred.resolve();
+    }
 
+    public async attach(platform: IPlatform): Promise<IPlatform> {
         {
             const maybeServerUrl = await this.root.get(ConfigKeys.serverUrl);
             if (!maybeServerUrl) {
-                const maybeDiv = await this.platform.queryInterface<HTMLElement>("div");
+                const maybeDiv = await platform.queryInterface<HTMLElement>("div");
                 if (maybeDiv) {
                     // tslint:disable-next-line:no-shadowed-variable
                     const docId = this.root.get(ConfigKeys.docId);
@@ -67,6 +66,7 @@ export class TableSlice extends Component {
 
         this.root.on("op", this.emitOp);
         this.doc.on("op", this.emitOp);
+        return;
     }
 
     public evaluateCell(row: number, col: number) {
@@ -109,16 +109,6 @@ export class TableSlice extends Component {
     }
 }
 
-export async function instantiate(): Promise<IChaincode> {
-    return Component.instantiate(new TableSlice(null as any));
-}
-
 export async function instantiateComponent(): Promise<IChaincodeComponent> {
     return Component.instantiateComponent(TableSlice);
-}
-
-export async function instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
-    return Component.instantiateRuntime(context, pkg.name, [
-        [pkg.name, Promise.resolve({ instantiateComponent })],
-        ["@chaincode/table-document", Promise.resolve(tableDocumentPkg)]]);
 }

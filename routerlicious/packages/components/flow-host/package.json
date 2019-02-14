@@ -18,7 +18,7 @@
     "tslint": "tslint --project tsconfig.json --format verbose",
     "webpack": "webpack --env=\"production\"",
     "webpack:dev": "webpack --env=\"developement\"",
-    "webpack:full": "npm run webpack",
+    "webpack:full": "webpack --env=\"production\"",
     "dev": "node ../../../common/tools/node_modules/@prague/prague-dev-server/bin/prague-dev-server.js --config webpack.config.js --package package.json",
     "publish-local-chart-view": "cd ../chart-view && npm run publish-local",
     "publish-local-flow-document": "cd ../flow-document && npm run publish-local",

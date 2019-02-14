@@ -66,7 +66,7 @@ export class DataStore {
     ): Promise<T> {
         debug(`DataStore.open("${componentId}", "${chaincodePackage}")`);
 
-        const componentPlatform = await start(
+        await start(
             this.auth(componentId),
             this.tenantId,
             componentId,
@@ -75,8 +75,6 @@ export class DataStore {
             this.codeLoader,
             this.documentService,
             services);
-
-        return componentPlatform.queryInterface("component");
 
         // Return the constructed/loaded component.  We retrieve this via queryInterface on the
         // IPlatform created by ChainCode.run().  This arrives via the "runtimeChanged" event on
@@ -164,13 +162,14 @@ async function attach(loader: Loader, url: string, platform: HostPlatform) {
     switch (mimeType) {
         case "prague/component":
             const component = response.value as IComponentRuntime;
-            return component.attach(platform);
+            await component.attach(platform);
+            break;
         case "prague/dataType":
             const dataType = response.value as ISharedMap;
             const div = await platform.queryInterface<HTMLElement>("div");
             renderMap(dataType, div);
             dataType.on("valueChanged", (key) => { renderMap(dataType, div); });
-            return platform;
+            break;
         default:
             throw new Error(`Unhandled mimeType ${mimeType}`);
     }
@@ -181,7 +180,7 @@ async function registerAttach(loader: Loader, container: Container, uri: string,
         debug(`contextChanged uri=${uri}`);
         await attach(loader, uri, platform);
     });
-    return attach(loader, uri, platform);
+    await attach(loader, uri, platform);
 }
 
 class HostPlatform extends EventEmitter implements IPlatform {
@@ -213,7 +212,7 @@ async function start(
     codeLoader: ICodeLoader,
     documentService: IDocumentService,
     services: ReadonlyArray<[string, Promise<any>]>,
-): Promise<IPlatform> {
+): Promise<void> {
     const tokenProvider = new TokenProvider(token);
     const loader = new Loader(
         { tokenProvider },
@@ -229,7 +228,7 @@ async function start(
 
     const platform = new HostPlatform(services);
     debug(`attaching baseUrl = ${baseUrl}`);
-    const componentPlatform = await registerAttach(
+    await registerAttach(
         loader,
         container,
         `${baseUrl}/${path}`,
@@ -244,6 +243,4 @@ async function start(
             .catch((error) => { console.assert(false, `chaincode error: ${error}`); });
         debug("chaincode initialized");
     }
-
-    return componentPlatform;
 }

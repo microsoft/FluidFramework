@@ -1,17 +1,17 @@
 import { TableDocument } from "@chaincode/table-document";
 import { Component, ComponentChaincode } from "@prague/app-component";
-import { IContainerContext, IRuntime } from "@prague/container-definitions";
+import { IPlatform } from "@prague/container-definitions";
 import { MapExtension } from "@prague/map";
-import { IChaincode, IChaincodeComponent, IComponentRuntime } from "@prague/runtime-definitions";
+import { IChaincodeComponent, IComponentRuntime } from "@prague/runtime-definitions";
+import { Deferred } from "@prague/utils";
 import { ConfigView } from "./config";
 import { ConfigKeys } from "./configKeys";
 import { GridView } from "./grid";
 
-// tslint:disable-next-line:no-var-requires
-const pkg = require("../package.json");
-
 export class TableView extends Component {
+
     public static readonly type = `${require("../package.json").name}@${require("../package.json").version}`;
+    private ready = new Deferred<void>();
 
     constructor(private componentRuntime: IComponentRuntime) {
         super([[MapExtension.Type, new MapExtension()]]);
@@ -19,8 +19,11 @@ export class TableView extends Component {
 
     public async opened() {
         await this.connected;
+        this.ready.resolve();
+    }
 
-        const maybeDiv = await this.platform.queryInterface<HTMLElement>("div");
+    public async attach(platform: IPlatform): Promise<IPlatform> {
+        const maybeDiv = await platform.queryInterface<HTMLElement>("div");
         if (!maybeDiv) {
             throw new Error("No <div> provided");
         }
@@ -48,19 +51,13 @@ export class TableView extends Component {
             const grid = new GridView(doc);
             maybeDiv.appendChild(grid.root);
         }
+
+        return;
     }
 
     protected async create() { /* do nothing */ }
 }
 
-export async function instantiate(): Promise<IChaincode> {
-    return Component.instantiate(new TableView(null as any));
-}
-
 export async function instantiateComponent(): Promise<IChaincodeComponent> {
     return Component.instantiateComponent(TableView);
-}
-
-export async function instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
-    return Component.instantiateRuntime(context, pkg.name, [[pkg.name, Promise.resolve({ instantiateComponent })]]);
 }
