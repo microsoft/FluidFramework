@@ -381,7 +381,6 @@ export class ComponentHost extends EventEmitter implements IComponentDeltaHandle
                 target = this.processOp(message, local, context);
                 break;
             default:
-                return;
         }
 
         this.emit("op", message, target);
