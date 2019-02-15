@@ -1,12 +1,14 @@
 import { Block, BoxState } from "@prague/app-ui";
-import { Document } from "@prague/client-api";
-import { ILegacyRuntime, WebPlatform } from "@prague/runtime";
-import { IComponentPlatform } from "@prague/runtime-definitions";
+// import { Document } from "@prague/client-api";
+// import { IPlatform } from "@prague/container-definitions";
+// import { WebPlatform } from "@prague/runtime";
 import { FlowViewContext } from "./flowViewContext";
 
 const platformSym = Symbol("Document.platform");
 
-class InnerPlatform extends WebPlatform implements IComponentPlatform {
+// TODO (mdaumi): Fix this later.
+/*
+class InnerPlatform extends WebPlatform implements IPlatform {
     constructor(div: HTMLElement, private readonly invalidateLayout: (width, height) => void) {
         super(div);
     }
@@ -27,7 +29,7 @@ class InnerPlatform extends WebPlatform implements IComponentPlatform {
     public detach() {
         return;
     }
-}
+}*/
 
 export class InnerDocumentState extends BoxState {
     public id: string;
@@ -52,9 +54,10 @@ export class InnerComponent extends Block<InnerDocumentState> {
         mountDiv.style.flexWrap = "wrap";
         mountDiv.appendChild(div);
 
+        /*
         // This is my access to the document
         const collabDocument = context.services.get("document") as Document;
-        const runtime = collabDocument.runtime as ILegacyRuntime;
+        const runtime = collabDocument.runtime;
 
         const invalidateLayout = (width: number, height: number) => {
             div.style.width = `${width}px`;
@@ -68,7 +71,7 @@ export class InnerComponent extends Block<InnerDocumentState> {
             process.attach(platform).then((innerPlatform) => {
                 console.log("Attached and got its inner platform!");
             });
-        });
+        });*/
 
         // Call 'updating' to update the contents of the div with the updated chart.
         return this.updating(self, context, mountDiv);

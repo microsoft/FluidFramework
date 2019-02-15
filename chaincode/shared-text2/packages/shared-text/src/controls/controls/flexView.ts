@@ -1,7 +1,7 @@
 // The main app code
 import * as api from "@prague/client-api";
 import { IGenericBlob, MessageType } from "@prague/container-definitions";
-import { IMapView, ISharedMap } from "@prague/map";
+import { ISharedMap } from "@prague/map";
 import { IColor } from "@prague/stream";
 import { blobUploadHandler } from "../blob";
 import * as ui from "../ui";
@@ -45,7 +45,7 @@ export class FlexView extends ui.Component {
     private colorStack: StackPanel;
     private components: IFlexViewComponent[] = [];
 
-    constructor(element: HTMLDivElement, doc: api.Document, root: IMapView) {
+    constructor(element: HTMLDivElement, doc: api.Document, root: ISharedMap) {
         super(element);
 
         const dockElement = document.createElement("div");
@@ -168,8 +168,7 @@ export class FlexView extends ui.Component {
         this.element.appendChild(this.popup.element);
     }
 
-    private async processComponents(components: ISharedMap) {
-        const view = await components.getView();
+    private async processComponents(view: ISharedMap) {
 
         // Pull in all the objects on the canvas
         // tslint:disable-next-line:forin
@@ -178,15 +177,14 @@ export class FlexView extends ui.Component {
             this.addComponent(component);
         }
 
-        components.on("valueChanged", (event) => {
+        view.on("valueChanged", (event) => {
             if (view.has(event.key)) {
                 this.addComponent(view.get(event.key));
             }
         });
     }
 
-    private async addComponent(component: ISharedMap) {
-        const details = await component.getView();
+    private async addComponent(details: ISharedMap) {
         if (details.get("type") !== "chart") {
             return;
         }

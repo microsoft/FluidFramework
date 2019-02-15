@@ -1,7 +1,7 @@
 import { Pinpoint } from "@kurtb/pinpoint";
 import { IPlatform } from "@prague/container-definitions";
-import { IMapView } from "@prague/map";
-import { IComponentPlatform, IRuntime } from "@prague/runtime-definitions";
+import { ISharedMap } from "@prague/map";
+import { IRuntime } from "@prague/runtime-definitions";
 import { Deferred } from "@prague/utils";
 import * as angular from "angular";
 import * as angularRoute from "angular-route";
@@ -295,7 +295,7 @@ pinpointTool.filter("html", ($sce) => {
 });
 
 export class PinpointRunner extends EventEmitter implements IPlatform {
-    private rootView: IMapView;
+    private rootView: ISharedMap;
     private editor: boolean = false;
     private mapHost: HTMLElement;
     private collabDocDeferred = new Deferred<Document>();
@@ -311,7 +311,12 @@ export class PinpointRunner extends EventEmitter implements IPlatform {
         return null;
     }
 
-    public async attach(platform: IComponentPlatform): Promise<IComponentPlatform> {
+    public detach() {
+        console.log("Chart detach");
+        return;
+    }
+
+    public async attach(platform: IPlatform): Promise<IPlatform> {
         const collabDoc = await this.collabDocDeferred.promise;
 
         // If headless return early
@@ -351,7 +356,7 @@ export class PinpointRunner extends EventEmitter implements IPlatform {
 
     private async initialize(runtime: IRuntime): Promise<Document> {
         const collabDoc = await Document.Load(runtime);
-        this.rootView = await collabDoc.getRoot().getView();
+        this.rootView = await collabDoc.getRoot();
 
         // Add in the text string if it doesn't yet exist
         if (!collabDoc.existing) {

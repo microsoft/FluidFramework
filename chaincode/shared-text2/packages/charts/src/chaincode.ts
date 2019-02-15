@@ -1,14 +1,11 @@
 import * as charts from "@ms/charts";
+import { ComponentHost } from "@prague/component";
 import { IPlatform, ITree } from "@prague/container-definitions";
-import { IMapView, MapExtension } from "@prague/map";
-import {
-    ComponentHost,
-} from "@prague/runtime";
+import { ISharedMap, MapExtension } from "@prague/map";
 import {
     IChaincode,
     IChaincodeComponent,
     IComponentDeltaHandler,
-    IComponentPlatform,
     IComponentRuntime,
     IRuntime } from "@prague/runtime-definitions";
 import { Deferred } from "@prague/utils";
@@ -92,7 +89,7 @@ declare interface ISharedMap {
 `;
 
 class ChartRunner extends EventEmitter implements IPlatform {
-    private deferred = new Deferred<{ collabDoc: Document, rootView: IMapView }>();
+    private deferred = new Deferred<{ collabDoc: Document, rootMap: ISharedMap }>();
 
     public async run(runtime: IRuntime, platform: IPlatform) {
         this.initialize(runtime).then(
@@ -114,7 +111,12 @@ class ChartRunner extends EventEmitter implements IPlatform {
         }
     }
 
-    public async attach(platform: IComponentPlatform): Promise<IComponentPlatform> {
+    public detach() {
+        console.log("Chart detach");
+        return;
+    }
+
+    public async attach(platform: IPlatform): Promise<IPlatform> {
         console.log("Chart attach");
         const details = await this.deferred.promise;
 
@@ -128,32 +130,26 @@ class ChartRunner extends EventEmitter implements IPlatform {
         hostContent.appendChild(content);
 
         if (hostContent.id === "content") {
-            explorer.initialize(details.rootView, "https://charts.microsoft.com", content);
+            explorer.initialize(details.rootMap, "https://charts.microsoft.com", content);
         } else {
-            this.renderChart(details.collabDoc, content, details.rootView);
+            this.renderChart(details.collabDoc, content, details.rootMap);
         }
     }
 
     private async initialize(runtime: IRuntime) {
         const collabDoc = await Document.Load(runtime);
 
-        const rootView = await collabDoc.getRoot().getView();
+        const rootMap = await collabDoc.getRoot();
         if (!collabDoc.existing) {
-            rootView.set("chart", defaultSettings);
+            rootMap.set("chart", defaultSettings);
         } else {
-            await rootView.wait("chart");
+            await rootMap.wait("chart");
         }
 
-        // TODO need to emit connected on new component code
-        // Wait for connection to get latest data
-        // if (!runtime.connected) {
-        //     await new Promise<void>((resolve) => runtime.once("connected", () => resolve()));
-        // }
-
-        return { collabDoc, rootView };
+        return { collabDoc, rootMap };
     }
 
-    private renderChart(collabDoc: Document, content: HTMLDivElement, rootView: IMapView) {
+    private renderChart(collabDoc: Document, content: HTMLDivElement, rootView: ISharedMap) {
         const host = new charts.Host({ base: "https://charts.microsoft.com" });
         const chart = new charts.Chart(host, content);
         chart.setRenderer(charts.IvyRenderer.Svg);
@@ -221,38 +217,16 @@ export class ChartComponent implements IChaincodeComponent {
         return;
     }
 
-    public async run(runtime: IComponentRuntime, platform: IPlatform): Promise<IComponentDeltaHandler> {
+    public async run(runtime: IComponentRuntime): Promise<IComponentDeltaHandler> {
         const chaincode = this.chaincode;
 
-        // All of the below would be hidden from a developer
-        // Is this an await or does it just go?
-        const component = await ComponentHost.LoadFromSnapshot(
-            runtime,
-            runtime.tenantId,
-            runtime.documentId,
-            runtime.id,
-            runtime.parentBranch,
-            runtime.existing,
-            runtime.options,
-            runtime.clientId,
-            runtime.user,
-            runtime.blobManager,
-            runtime.baseSnapshot,
-            chaincode,
-            runtime.deltaManager,
-            runtime.getQuorum(),
-            runtime.storage,
-            runtime.connectionState,
-            runtime.branch,
-            runtime.minimumSequenceNumber,
-            runtime.snapshotFn,
-            runtime.closeFn);
+        const component = await ComponentHost.LoadFromSnapshot(runtime, chaincode);
         this.component = component;
 
         return component;
     }
 
-    public async attach(platform: IComponentPlatform): Promise<IComponentPlatform> {
+    public async attach(platform: IPlatform): Promise<IPlatform> {
         return this.chart.attach(platform);
     }
 

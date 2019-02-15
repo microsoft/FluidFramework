@@ -1,8 +1,6 @@
-import * as charts from "@chaincode/charts";
-import * as monaco from "@chaincode/monaco";
-import * as pinpoint from "@chaincode/pinpoint-editor";
 import { Component, Document } from "@prague/app-component";
 import * as API from "@prague/client-api";
+import { ComponentHost } from "@prague/component";
 import {
     IContainerContext,
     IPlatform,
@@ -13,14 +11,12 @@ import {
 import * as DistributedMap from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
 import {
-    ComponentHost,
     Runtime,
 } from "@prague/runtime";
 import {
     IChaincode,
     IChaincodeComponent,
     IComponentDeltaHandler,
-    IComponentPlatform,
     IComponentRuntime } from "@prague/runtime-definitions";
 import * as SharedString from "@prague/sequence";
 import { IStream } from "@prague/stream";
@@ -57,11 +53,11 @@ class SharedText extends Document {
         this.ready.resolve();
     }
 
-    public async attach(platform: IComponentPlatform): Promise<IComponentPlatform> {
+    public async attach(platform: IPlatform): Promise<IPlatform> {
         await this.ready.promise;
 
         debug(`collabDoc loaded ${this.runtime.id} - ${performanceNow()}`);
-        const root = await this.root.getView();
+        const root = await this.root;
         debug(`Getting root ${this.runtime.id} - ${performanceNow()}`);
 
         await Promise.all([root.wait("text"), root.wait("ink")]);
@@ -179,38 +175,16 @@ export class SharedTextComponent implements IChaincodeComponent {
         return;
     }
 
-    public async run(runtime: IComponentRuntime, platform: IPlatform): Promise<IComponentDeltaHandler> {
+    public async run(runtime: IComponentRuntime): Promise<IComponentDeltaHandler> {
         const chaincode = this.chaincode;
 
-        // All of the below would be hidden from a developer
-        // Is this an await or does it just go?
-        const component = await ComponentHost.LoadFromSnapshot(
-            runtime,
-            runtime.tenantId,
-            runtime.documentId,
-            runtime.id,
-            runtime.parentBranch,
-            runtime.existing,
-            runtime.options,
-            runtime.clientId,
-            runtime.user,
-            runtime.blobManager,
-            runtime.baseSnapshot,
-            chaincode,
-            runtime.deltaManager,
-            runtime.getQuorum(),
-            runtime.storage,
-            runtime.connectionState,
-            runtime.branch,
-            runtime.minimumSequenceNumber,
-            runtime.snapshotFn,
-            runtime.closeFn);
+        const component = await ComponentHost.LoadFromSnapshot(runtime, chaincode);
         this.component = component;
 
         return component;
     }
 
-    public async attach(platform: IComponentPlatform): Promise<IComponentPlatform> {
+    public async attach(platform: IPlatform): Promise<IPlatform> {
         return this.sharedText.attach(platform);
     }
 
@@ -228,11 +202,9 @@ export async function instantiateComponent(): Promise<IChaincodeComponent> {
  * Instantiates a new chaincode host
  */
 export async function instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
+    // TODO (madumi): Add back charts, monaco, and pinpoint-editor.
     const registry = new Map<string, any>([
-        ["@chaincode/charts", charts],
-        ["@chaincode/shared-text", { instantiateComponent }],
-        ["@chaincode/pinpoint-editor", pinpoint],
-        ["@chaincode/monaco", monaco]]);
+        ["@chaincode/shared-text", { instantiateComponent }]]);
 
     const runtime = await Runtime.Load(registry, context);
 
@@ -247,7 +219,7 @@ export async function instantiateRuntime(context: IContainerContext): Promise<IR
         const componentId = requestUrl
             ? requestUrl.substr(0, trailingSlash === -1 ? requestUrl.length : trailingSlash)
             : "text";
-        const component = await runtime.getProcess(componentId, true);
+        const component = await runtime.getComponent(componentId, true);
 
         // If there is a trailing slash forward to the component. Otherwise handle directly.
         if (trailingSlash === -1) {
@@ -257,11 +229,11 @@ export async function instantiateRuntime(context: IContainerContext): Promise<IR
         }
     });
 
-    runtime.registerTasks(["snapshot"], "1.0");
+    runtime.registerTasks(["snapshot", "spell", "translation"], "1.0");
 
     // On first boot create the base component
     if (!runtime.existing) {
-        runtime.createAndAttachProcess("text", "@chaincode/shared-text").catch((error) => {
+        runtime.createAndAttachComponent("text", "@chaincode/shared-text").catch((error) => {
             context.error(error);
         });
     }
