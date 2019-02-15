@@ -8,7 +8,7 @@
         "declaration": true,
         "noImplicitAny": false,
         "noUnusedLocals": true,
-        "module": "esnext",
+        "module": "commonjs",
         "moduleResolution": "node",
         "outDir": "dist",
         "sourceMap": true,
