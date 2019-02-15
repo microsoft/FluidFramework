@@ -7,7 +7,8 @@
   "types": "dist/index.d.ts",
   "sideEffects": "false",
   "scripts": {
-    "build": "npm run tsc && npm run build:esnext && npm run tslint",
+    "build": "concurrently npm:build:compile npm:tslint",
+    "build:compile": "concurrently npm:tsc npm:build:esnext",
     "build:full": "npm run build",
     "clean": "rimraf dist && rimraf lib",
     "test": "mocha --recursive dist/test",
@@ -45,6 +46,7 @@
     "lodash": "^4.17.11"
   },
   "devDependencies": {
+    "concurrently": "^4.1.0",
     "@types/debug": "^0.0.31",
     "@types/mocha": "^5.2.5",
     "@types/node": "^10.12.12",

@@ -6,7 +6,8 @@
   "types": "dist/index.d.ts",
   "sideEffects": "false",
   "scripts": {
-    "build": "npm run tsc && npm run tslint",
+    "build": "concurrently npm:build:compile npm:tslint",
+    "build:compile": "npm run tsc",
     "build:full": "npm run build",
     "clean": "rimraf dist && rimraf lib",
     "tsc": "tsc",
@@ -50,6 +51,7 @@
     "performance-now": "^2.1.0"
   },
   "devDependencies": {
+    "concurrently": "^4.1.0",
     "@types/mocha": "^5.2.5",
     "rimraf": "^2.6.2",
     "tslint": "^5.11.0",

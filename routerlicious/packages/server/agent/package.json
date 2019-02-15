@@ -6,7 +6,8 @@
   "types": "dist/index.d.ts",
   "sideEffects": false,
   "scripts": {
-    "build": "npm run tsc && npm run tslint",
+    "build": "concurrently npm:build:compile npm:tslint",
+    "build:compile": "npm run tsc",
     "build:full": "npm run build",
     "clean": "rimraf dist",
     "tsc": "tsc",
@@ -37,6 +38,7 @@
     "xhr": "^2.5.0"
   },
   "devDependencies": {
+    "concurrently": "^4.1.0",
     "@types/node": "^10.12.12",
     "@types/request": "^2.47.1",
     "@types/socket.io-client": "^1.4.32",

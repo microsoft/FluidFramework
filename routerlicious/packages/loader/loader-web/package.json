@@ -7,7 +7,8 @@
   "types": "dist/index.d.ts",
   "sideEffects": "false",
   "scripts": {
-    "build": "npm run tsc && npm run build:esnext && npm run tslint",
+    "build": "concurrently npm:build:compile npm:tslint",
+    "build:compile": "concurrently npm:tsc npm:build:esnext",
     "build:full": "npm run build",
     "clean": "rimraf dist && rimraf lib",
     "tsc": "tsc",
@@ -17,6 +18,7 @@
   "author": "Microsoft",
   "repository": "microsoft/prague",
   "devDependencies": {
+    "concurrently": "^4.1.0",
     "rimraf": "^2.6.2",
     "source-map-loader": "^0.2.4",
     "tslint": "^5.11.0",

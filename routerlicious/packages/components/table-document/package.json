@@ -9,7 +9,8 @@
   "sideEffects": false,
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "npm run tsc && npm run build:esnext && npm run tslint",
+    "build": "concurrently npm:build:compile npm:tslint",
+    "build:compile": "concurrently npm:tsc npm:build:esnext",
     "build:full": "npm run build",
     "clean": "rimraf dist && rimraf lib",
     "tsc": "tsc",
@@ -45,6 +46,7 @@
     "@prague/utils": "^0.2.0"
   },
   "devDependencies": {
+    "concurrently": "^4.1.0",
     "@types/node": "^10.12.12",
     "source-map-loader": "^0.2.4",
     "ts-loader": "^4.5.0",

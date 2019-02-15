@@ -7,7 +7,8 @@
   "types": "dist/index.d.ts",
   "sideEffects": "false",
   "scripts": {
-    "build": "npm run tsc && npm run build:esnext && npm run tslint",
+    "build": "concurrently npm:build:compile npm:tslint",
+    "build:compile": "concurrently npm:tsc npm:build:esnext",
     "build:full": "npm run build",
     "clean": "rimraf dist && rimraf lib",
     "tsc": "tsc",
@@ -38,6 +39,7 @@
     "report-dir": "nyc/report"
   },
   "devDependencies": {
+    "concurrently": "^4.1.0",
     "@prague/merge-tree-utils": "^0.2.0",
     "@types/diff": "^3.5.1",
     "@types/random-js": "^1.0.31",

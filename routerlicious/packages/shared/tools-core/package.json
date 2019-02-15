@@ -6,7 +6,8 @@
   "types": "dist/index.d.ts",
   "sideEffects": false,
   "scripts": {
-    "build": "npm run tsc && npm run tslint",
+    "build": "concurrently npm:build:compile npm:tslint",
+    "build:compile": "npm run tsc",
     "build:full": "npm run build",
     "clean": "rimraf dist && rimraf lib",
     "tsc": "tsc",
@@ -15,6 +16,7 @@
   "author": "Microsoft",
   "repository": "microsoft/prague",
   "devDependencies": {
+    "concurrently": "^4.1.0",
     "@types/debug": "^0.0.31",
     "@types/jsonwebtoken": "^8.3.0",
     "@types/lodash": "^4.14.118",
