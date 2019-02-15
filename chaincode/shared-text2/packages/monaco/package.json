@@ -1,6 +1,6 @@
 {
   "name": "@chaincode/monaco",
-  "version": "0.2.0",
+  "version": "0.2.3",
   "description": "Monaco code editor",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
