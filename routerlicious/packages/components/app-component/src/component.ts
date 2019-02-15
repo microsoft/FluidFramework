@@ -25,7 +25,6 @@ const openSym = "Component.open()";
 
 export class ComponentChaincode<T extends Component> implements IChaincodeComponent {
     public instance: T;
-    private chaincode: IChaincode;
     private host: ComponentHost;
 
     constructor(private readonly ctorFn: new (runtime: IComponentRuntime) => T) {}
@@ -35,23 +34,26 @@ export class ComponentChaincode<T extends Component> implements IChaincodeCompon
     }
 
     public async run(runtime: IComponentRuntime): Promise<IComponentDeltaHandler> {
+        debug(`ComponentChaincode.run(${this.ctorFn.name})`);
         this.instance = new this.ctorFn(runtime);
-        this.chaincode = Component.instantiate(this.instance);
-
-        const chaincode = this.chaincode;
+        const chaincode = new Chaincode(this.instance);
 
         // All of the below would be hidden from a developer
         // Is this an await or does it just go?
-        const host = await ComponentHost.LoadFromSnapshot(runtime, chaincode);
-        this.host = host;
-        return host;
+        debug(`ComponentChaincode.LoadFromSnapshot(${this.instance.constructor.name})`);
+        this.host = await ComponentHost.LoadFromSnapshot(runtime, chaincode);
+        return this.host;
     }
 
     public async attach(platform: IPlatform): Promise<IPlatform> {
-        return this.instance.attach(platform);
+        this.instance.attach(platform);
+        debug(`ComponentChaincode.attach(${this.instance.constructor.name})`);
+
+        return new ComponentPlatform(Promise.resolve(this.instance));
     }
 
     public snapshot(): ITree {
+        debug(`ComponentChaincode.snapshot(${this.instance.constructor.name})`);
         const entries = this.host.snapshotInternal();
         return { entries };
     }
@@ -60,11 +62,11 @@ export class ComponentChaincode<T extends Component> implements IChaincodeCompon
 // Internal IPlatform implementation used to defer returning the component
 // from DataStore.open() until after the component's async 'opened()' method has
 // completed.  (See 'Chaincode.run()' below.)
-class Platform extends EventEmitter implements IPlatform {
+class ComponentPlatform extends EventEmitter implements IPlatform {
     constructor(private readonly component: Promise<Component>) { super(); }
 
     public queryInterface<T>(id: string): Promise<T> {
-        debug("QI");
+        debug(`${this.component.constructor.name}.queryInterface(${id})`);
 
         return id === "component"
             ? this.component as any
@@ -72,6 +74,7 @@ class Platform extends EventEmitter implements IPlatform {
     }
 
     public detach() {
+        debug(`${this.component.constructor.name}.detach()`);
         return;
     }
 }
@@ -82,6 +85,7 @@ class Chaincode<T extends Component> extends EventEmitter implements IChaincode 
 
     // Returns the SharedObject factory for the given type id.
     public getModule(type: string): any {
+        debug(`getModule(${type})`);
         return this.component[typeToFactorySym].get(type) || console.assert(false);
     }
 
@@ -95,7 +99,7 @@ class Chaincode<T extends Component> extends EventEmitter implements IChaincode 
         // platform for our component instance.  The QI will return the Promise we construct
         // here.
         let acceptFn: (component: T) => void;
-        const platformOut = new Platform(new Promise<T>((accept) => { acceptFn = accept; }));
+        const platformOut = new ComponentPlatform(new Promise<T>((accept) => { acceptFn = accept; }));
 
         // Invoke the component's internal 'open()' method and wait for it to complete before
         // resolving the promise.  This gives the component author an opportunity to preform
@@ -129,29 +133,15 @@ export abstract class Component extends EventEmitter {
 
         debug("Component.connected: Waiting...");
         return new Promise((accept) => {
-                this._runtime.on("connected", () => {
-                    debug("Component.connected: Now connected.");
-                    accept();
-                });
+            this._runtime.on("connected", () => {
+                debug("Component.connected: Now connected.");
+                accept();
             });
-    }
-    /**
-     * Constructs an IChaincode from a Component instance.  All chaincode components must
-     * export an 'instantiate()' function from their module that returns an IChaincode as
-     * shown in the following example:
-     *
-     * @example
-     * export async function instantiate() {
-     *     return Component.instantiate(new MyComponentSubClass());
-     * }
-     * @example
-     */
-    public static instantiate(component: Component): IChaincode {
-        debug(`Component.instantiate(${component.constructor.name})`);
-        return new Chaincode(component);
+        });
     }
 
     public static async instantiateComponent<T extends Component>(ctorFn: new (runtime: IComponentRuntime) => T) {
+        debug(`Component.instantiateComponent(${ctorFn.name})`);
         return new ComponentChaincode(ctorFn);
     }
 
@@ -271,7 +261,7 @@ export abstract class Component extends EventEmitter {
         this.runtime.close();
     }
 
-    public abstract async attach(platform: IPlatform): Promise<IPlatform>;
+    public abstract async attach(platform: IPlatform): Promise<void>;
 
     /**
      * Subclass implements 'create()' to put initial document structure in place.

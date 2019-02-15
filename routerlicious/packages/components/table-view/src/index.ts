@@ -22,7 +22,7 @@ export class TableView extends Component {
         this.ready.resolve();
     }
 
-    public async attach(platform: IPlatform): Promise<IPlatform> {
+    public async attach(platform: IPlatform): Promise<void> {
         const maybeDiv = await platform.queryInterface<HTMLElement>("div");
         if (!maybeDiv) {
             throw new Error("No <div> provided");
@@ -51,8 +51,6 @@ export class TableView extends Component {
             const grid = new GridView(doc);
             maybeDiv.appendChild(grid.root);
         }
-
-        return;
     }
 
     protected async create() { /* do nothing */ }

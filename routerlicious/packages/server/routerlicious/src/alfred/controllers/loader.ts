@@ -42,9 +42,13 @@ export async function containerInitialize(
         config.tenantId,
         userId);
 
-    await store.open(
+    const componentOut = await store.open(
         documentId,
         code,
         path,
         [["div", Promise.resolve(document.getElementById("content"))]]);
+
+    // The below line is a convenient place to set a breakpoint to interact with headless
+    // components in the debugger.
+    console.log(`Finished loading ${componentOut.constructor.name}`);
 }

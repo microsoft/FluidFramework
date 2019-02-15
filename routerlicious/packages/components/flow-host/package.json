@@ -9,8 +9,8 @@
   "types": "dist/index.d.ts",
   "sideEffects": false,
   "scripts": {
-    "build": "npm run tsc && npm run build:esnext && npm run tslint && copyfiles -u 1 'src/**/*.css' dist/ && copyfiles -u 1 'src/**/*.css' lib/",
-    "build:dev": "webpack --env=\"development\"",
+    "build": "npm run webpack:dev",
+    "build:dev": "npm run webpack:dev",
     "build:esnext": "tsc --outDir lib --m esnext",
     "build:full": "npm run build",
     "clean": "rimraf dist && rimraf lib",

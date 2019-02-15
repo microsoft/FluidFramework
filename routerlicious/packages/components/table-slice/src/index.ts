@@ -35,7 +35,7 @@ export class TableSlice extends Component {
         this.readyDeferred.resolve();
     }
 
-    public async attach(platform: IPlatform): Promise<IPlatform> {
+    public async attach(platform: IPlatform): Promise<void> {
         {
             const maybeServerUrl = await this.root.get(ConfigKeys.serverUrl);
             if (!maybeServerUrl) {

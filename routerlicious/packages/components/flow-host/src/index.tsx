@@ -35,7 +35,7 @@ export class FlowHost extends Component {
         this.ready.resolve();
     }
 
-    public async attach(platform: IPlatform): Promise<IPlatform> {
+    public async attach(platform: IPlatform): Promise<void> {
         await this.ready.promise;
 
         const hostContent: HTMLElement = await platform.queryInterface<HTMLElement>("div");

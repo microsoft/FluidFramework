@@ -13,9 +13,7 @@ export class TestComponent extends Component {
         super([[MapExtension.Type, new MapExtension()]]);
     }
 
-    public attach(platform: IPlatform): Promise<IPlatform> {
-        return;
-    }
+    public async attach(platform: IPlatform): Promise<void> { /* do nothing */ }
 
     public async opened() {
         await this.root.wait("count");

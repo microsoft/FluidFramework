@@ -155,9 +155,8 @@ export class FlowDocument extends Component {
             [SharedStringExtension.Type, new SharedStringExtension()],
         ]);
     }
-    public async attach(platform: IPlatform): Promise<IPlatform> {
-        return;
-    }
+
+    public async attach(): Promise<void> { /* do nothing */ }
 
     public async opened() {
         this.maybeSharedString = await this.root.wait("text") as SharedString;

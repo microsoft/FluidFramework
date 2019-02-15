@@ -29,9 +29,8 @@ import {
     SharedStringIntervalCollectionValueType,
 } from "@prague/sequence";
 import { Deferred } from "@prague/utils";
-
-import { IPlatform } from "../../../loader/container-definitions/dist";
 import { CellRange } from "./cellrange";
+
 export { CellRange };
 
 export const loadCellTextSym = Symbol("TableDocument.loadCellText");
@@ -131,7 +130,7 @@ export class TableDocument extends Component {
         this.readyDeferred.resolve();
     }
 
-    public async attach(): Promise<IPlatform> { return; }
+    public async attach(): Promise<void> { /* do nothing */ }
 
     public evaluateCell(row: number, col: number) {
         return this.parseResult(this.workbook.evaluateCell(row, col));

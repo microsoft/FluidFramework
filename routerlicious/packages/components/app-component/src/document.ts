@@ -1,5 +1,4 @@
 import * as cell from "@prague/cell";
-import { IPlatform } from "@prague/container-definitions";
 import {
     CounterValueType,
     DistributedSetValueType,
@@ -76,14 +75,10 @@ export class Document extends Component {
         return this.runtime.createChannel(id, stream.StreamExtension.Type) as stream.IStream;
     }
 
-    public async attach(platform: IPlatform): Promise<IPlatform> {
-        return;
-    }
+    public async attach(): Promise<void> { /* do nothing */ }
 
     /**
      * Subclass implements 'create()' to put initial document structure in place.
      */
-    protected async create(): Promise<void> {
-        return;
-    }
+    protected async create(): Promise<void> { /* do nothing */ }
 }

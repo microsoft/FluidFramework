@@ -3,10 +3,9 @@ export { VirtualizedView, IVirtualizedProps } from "./components/virtualized";
 import { FlowDocument } from "@chaincode/flow-document";
 import { Component } from "@prague/app-component";
 import { DataStore } from "@prague/app-datastore";
-import { IPlatform } from "@prague/container-definitions";
 import { Scheduler } from "@prague/flow-util";
 import { MapExtension } from "@prague/map";
-import { IChaincode, IChaincodeComponent } from "@prague/runtime-definitions";
+import { IChaincodeComponent } from "@prague/runtime-definitions";
 import { Editor } from "./components/editor";
 
 export class FlowEditor extends Component {
@@ -34,19 +33,12 @@ export class FlowEditor extends Component {
         }
     }
 
-    public attach(platform: IPlatform): Promise<IPlatform> {
-        return;
-    }
+    public async attach(): Promise<void> { /* do nothing */ }
 
     protected async create() {
         // tslint:disable-next-line:insecure-random
         this.root.set("docId", Math.random().toString(36).substr(2, 4));
     }
-}
-
-// Chainloader bootstrap.
-export async function instantiate(): Promise<IChaincode> {
-    return Component.instantiate(new FlowEditor());
 }
 
 export async function instantiateComponent(): Promise<IChaincodeComponent> {
