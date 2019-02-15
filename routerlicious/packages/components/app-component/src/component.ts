@@ -162,7 +162,8 @@ export abstract class Component extends EventEmitter {
      *
      * @example
      * export async function instantiateRuntime(context: IContainerContext) {
-     *     return Component.instantiateRuntime(context, "flow-host", "@chaincode/flow-host");
+     *     return Component.instantiateRuntime(context, "flow-host", "@chaincode/flow-host",
+     *          [["@chaincode/flow-host", Promise.resolve({ instantiateComponent })]]);
      * }
      * @example
      */
