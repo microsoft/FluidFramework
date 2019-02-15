@@ -1,5 +1,6 @@
 import {
     IBranchOrigin,
+    IDocumentMessage,
     IDocumentSystemMessage,
     ISequencedDocumentMessage,
     ISequencedDocumentSystemMessage,
@@ -213,8 +214,7 @@ export class DeliLambda implements IPartitionLambda {
 
         // Update and retrieve the minimum sequence number
         let message = rawMessage as IRawOperationMessage;
-
-        const systemContent = this.extractSystemContent(message);
+        let systemContent = this.extractSystemContent(message);
 
         if (this.isDuplicate(message, systemContent)) {
             return;
@@ -281,7 +281,7 @@ export class DeliLambda implements IPartitionLambda {
         if (message.operation.type === MessageType.Integrate) {
             // Branch operation is the original message
             const branchOperation = systemContent as ISequencedOperationMessage;
-            const branchDocumentMessage = branchOperation.operation as ISequencedDocumentSystemMessage;
+            const branchDocumentMessage = branchOperation.operation;
             const branchClientId = getBranchClientId(branchOperation.documentId);
 
             // Do I transform the ref or the MSN - I guess the ref here because it's that key space
@@ -297,15 +297,19 @@ export class DeliLambda implements IPartitionLambda {
             // A merge message contains the sequencing information in the target branch's (i.e. this)
             // coordinate space. But contains the original message in the contents.
             // back-compat: Copying over both field.
-            const operation: IDocumentSystemMessage = {
+            const operation: IDocumentMessage = {
                 clientSequenceNumber: branchDocumentMessage.sequenceNumber,
                 contents: branchDocumentMessage.contents,
-                data: branchDocumentMessage.data,
                 metadata: branchDocumentMessage.metadata,
                 referenceSequenceNumber: transformedRefSeqNumber,
                 traces: message.operation.traces,
                 type: branchDocumentMessage.type,
             };
+            if (isSystemType(branchDocumentMessage.type)) {
+                const systemMessage = operation as IDocumentSystemMessage;
+                systemMessage.data = (branchDocumentMessage as ISequencedDocumentSystemMessage).data;
+            }
+
             const transformed: IRawOperationMessage = {
                 clientId: branchDocumentMessage.clientId,
                 documentId: this.documentId,
@@ -323,6 +327,8 @@ export class DeliLambda implements IPartitionLambda {
             };
 
             message = transformed;
+            // Need to re-extract system content for the transformed messages
+            systemContent = this.extractSystemContent(message);
 
             // Update the entry for the branch client
             this.upsertClient(
