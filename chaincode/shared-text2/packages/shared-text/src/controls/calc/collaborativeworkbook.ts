@@ -6,7 +6,7 @@ import { UnboxedOper, Workbook } from "../../../ext/calc";
  * This subclass adds basic storage to an IMapView using "row,col" as the key.
  */
 export class CollaborativeWorkbook extends Workbook {
-    private readonly cellText: map.IMapView;
+    private readonly cellText: map.ISharedMap;
     private ready;
     private existing;
 
@@ -14,7 +14,7 @@ export class CollaborativeWorkbook extends Workbook {
      * Constructs a new Workbook with the prescribed dimensions, optionally initializing it
      * with a jagged 2D array of cell values as pre-parsed strings.
      */
-    constructor(cellText: map.IMapView, numRows: number, numCols: number, init?: string[][]) {
+    constructor(cellText: map.ISharedMap, numRows: number, numCols: number, init?: string[][]) {
         const existingRows = cellText.get("numRows");
         const existingCols = cellText.get("numCols");
 
@@ -45,7 +45,7 @@ export class CollaborativeWorkbook extends Workbook {
         this.init(init);
         this.ready = true;
 
-        cellText.getMap().on("valueChanged", ({ key }, isLocal) => {
+        cellText.on("valueChanged", ({ key }, isLocal) => {
             if (!isLocal) {
                 switch (key) {
                     case "numRows":
@@ -60,12 +60,12 @@ export class CollaborativeWorkbook extends Workbook {
     }
 
     public on(event: string | symbol, listener: (...args: any[]) => void): this {
-        this.cellText.getMap().on(event, listener);
+        this.cellText.on(event, listener);
         return this;
     }
 
     public removeListener(event: string | symbol, listener: (...args: any[]) => void): this {
-        this.cellText.getMap().removeListener(event, listener);
+        this.cellText.removeListener(event, listener);
         return this;
     }
 

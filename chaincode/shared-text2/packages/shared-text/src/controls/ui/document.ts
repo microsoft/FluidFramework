@@ -1,9 +1,9 @@
 import { Block, BoxState } from "@prague/app-ui";
 import { getChaincodeRepo, getDefaultCredentials, getDefaultDocumentService } from "@prague/client-api";
-import { IPlatformFactory } from "@prague/container-definitions";
+import { IPlatform, IPlatformFactory } from "@prague/container-definitions";
 import { Container, Loader } from "@prague/container-loader";
 import { WebLoader, WebPlatform } from "@prague/loader-web";
-import { IComponentPlatform, IComponentRuntime } from "@prague/runtime-definitions";
+import { IComponentRuntime } from "@prague/runtime-definitions";
 import { TokenProvider } from "@prague/socket-storage";
 import { EventEmitter } from "events";
 import * as jwt from "jsonwebtoken";
@@ -38,7 +38,7 @@ class DefinitionGuide extends EventEmitter {
         return this.value;
     }
 
-    public async addComponent(id: string, platform: IComponentPlatform) {
+    public async addComponent(id: string, platform: IPlatform) {
         const rootP = platform ? platform.queryInterface("root") : Promise.resolve(null);
         const dtsP = platform ? platform.queryInterface("dts") : Promise.resolve(null);
         const [root, dts] = await Promise.all([rootP, dtsP]);
@@ -84,7 +84,7 @@ export class DocumentState extends BoxState {
     public [platformSym]: PlatformFactory;
 }
 
-export class Platform extends WebPlatform implements IComponentPlatform {
+export class Platform extends WebPlatform implements IPlatform {
     constructor(div: HTMLElement, private readonly invalidateLayout: (width, height) => void) {
         super(div);
     }
@@ -142,7 +142,7 @@ export class PlatformFactory implements IPlatformFactory {
     ) {
     }
 
-    public async create(): Promise<IComponentPlatform> {
+    public async create(): Promise<IPlatform> {
         if (this.div) {
             // tslint:disable-next-line:no-inner-html using to clear the list of children
             this.div.innerHTML = "";

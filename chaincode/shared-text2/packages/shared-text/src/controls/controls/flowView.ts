@@ -1,12 +1,11 @@
 // tslint:disable:no-bitwise whitespace align switch-default no-string-literal ban-types no-angle-bracket-type-assertion
 import { ISharedObject } from "@prague/api-definitions";
 import * as api from "@prague/client-api";
-import { IGenericBlob, IUser } from "@prague/container-definitions";
+import { IGenericBlob, ISequencedDocumentMessage, IUser } from "@prague/container-definitions";
 import * as types from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
 import { findRandomWord } from "@prague/merge-tree-utils";
-import { ILegacyRuntime } from "@prague/runtime";
-import { ISequencedObjectMessage } from "@prague/runtime-definitions";
+import { IComponentRuntime } from "@prague/runtime-definitions";
 import * as Sequence from "@prague/sequence";
 import * as assert from "assert";
 import * as Geocoder from "geocoder";
@@ -3597,9 +3596,9 @@ export class FlowView extends ui.Component {
     public calendarIntervalsView: Sequence.SharedIntervalCollectionView<Sequence.Interval>;
     public sequenceTest: Sequence.SharedNumberSequence;
     public sequenceObjTest: Sequence.SharedObjectSequence<ISeqTestItem>;
-    public presenceMapView: types.IMapView;
+    public presenceMapView: types.ISharedMap;
     public presenceVector: ILocalPresenceInfo[] = [];
-    public docRoot: types.IMapView;
+    public docRoot: types.ISharedMap;
     public curPG: MergeTree.Marker;
     public modes = {
         randExclusion: false,
@@ -3714,19 +3713,10 @@ export class FlowView extends ui.Component {
         //
         //       Instead, we currently check to see if a workbook already exists.  If not, we
         //       insert one up front.
-        this.collabDocument.getRoot().getView().then(async (rootView) => {
-            let workbookMap: types.ISharedMap;
-
-            if (!this.collabDocument.existing) {
-                workbookMap = this.collabDocument.createMap();
-            } else {
-                workbookMap = await rootView.wait<types.ISharedMap>("workbook");
-            }
-
-            const workbookView = await workbookMap.getView();
+        this.getWorkBook().then((workbookMap) => {
             this.services.set(
                 "workbook",
-                new CollaborativeWorkbook(workbookView, 6, 6, [
+                new CollaborativeWorkbook(workbookMap, 6, 6, [
                     ["Player", "Euchre", "Bridge", "Poker", "Go Fish", "Total Wins"],
                     ["Daniel", "0", "0", "0", "5", "=SUM(B2:E2)"],
                     ["Kurt", "2", "3", "0", "0", "=SUM(B3:E3)"],
@@ -3737,14 +3727,16 @@ export class FlowView extends ui.Component {
 
             // Set the map after loading data so it's populated when other clients load it
             if (!this.collabDocument.existing) {
-                rootView.set("workbook", workbookMap);
+                this.collabDocument.getRoot().set("workbook", workbookMap);
             }
 
             workbookMap.on("valueChanged", () => {
                 // TODO: Track which cells are visible and damp invalidation for off-screen cells.
                 this.queueRender(undefined, true);
             });
+
         });
+
     }
 
     public treeForViewport() {
@@ -3964,14 +3956,12 @@ export class FlowView extends ui.Component {
     }
 
     public addPresenceMap(presenceMap: types.ISharedMap) {
-        presenceMap.on("valueChanged", (delta: types.IValueChanged, local: boolean, op: ISequencedObjectMessage) => {
+        presenceMap.on("valueChanged", (delta: types.IValueChanged, local: boolean, op: ISequencedDocumentMessage) => {
             this.remotePresenceUpdate(delta, local, op);
         });
 
-        presenceMap.getView().then((v) => {
-            this.presenceMapView = v;
-            this.updatePresence();
-        });
+        this.presenceMapView = presenceMap;
+        this.updatePresence();
     }
 
     public presenceInfoInRange(start: number, end: number) {
@@ -4436,7 +4426,7 @@ export class FlowView extends ui.Component {
         }
     }
 
-    public setEdit(docRoot: types.IMapView) {
+    public setEdit(docRoot: types.ISharedMap) {
         this.docRoot = docRoot;
 
         window.oncontextmenu = preventD;
@@ -5099,8 +5089,9 @@ export class FlowView extends ui.Component {
     public insertInnerComponent(prefix: string, chaincode: string) {
         const id = `${prefix}${Date.now()}`;
 
-        const runtime = this.collabDocument.runtime as ILegacyRuntime;
-        runtime.createAndAttachProcess(id, chaincode);
+        const documentRuntime = this.collabDocument.runtime as unknown;
+        const runtime = documentRuntime as IComponentRuntime;
+        runtime.createAndAttachComponent(id, chaincode);
 
         this.insertComponent("innerComponent", { id, chaincode });
     }
@@ -5656,7 +5647,7 @@ export class FlowView extends ui.Component {
         const presenceMap = this.docRoot.get("presence") as types.ISharedMap;
         this.addPresenceMap(presenceMap);
         this.addCalendarMap();
-        const intervalMap = this.sharedString.intervalCollections.getMap();
+        const intervalMap = this.sharedString.intervalCollections;
         intervalMap.on("valueChanged", (delta: types.IValueChanged) => {
             this.queueRender(undefined, true);
         });
@@ -5795,7 +5786,7 @@ export class FlowView extends ui.Component {
         this.localQueueRender(startPos);
     }
 
-    private remotePresenceUpdate(delta: types.IValueChanged, local: boolean, op: ISequencedObjectMessage) {
+    private remotePresenceUpdate(delta: types.IValueChanged, local: boolean, op: ISequencedDocumentMessage) {
         if (local) {
             return;
         }
@@ -5919,7 +5910,7 @@ export class FlowView extends ui.Component {
 
     // TODO: paragraph spanning changes and annotations
     // TODO: generalize this by using transform fwd
-    private applyOp(delta: MergeTree.IMergeTreeOp, msg: ISequencedObjectMessage) {
+    private applyOp(delta: MergeTree.IMergeTreeOp, msg: ISequencedDocumentMessage) {
         // tslint:disable:switch-default
         switch (delta.type) {
             case MergeTree.MergeTreeDeltaType.INSERT:
@@ -6003,13 +5994,21 @@ export class FlowView extends ui.Component {
         }
     }
 
-    private queueRender(msg: ISequencedObjectMessage, go = false) {
+    private queueRender(msg: ISequencedDocumentMessage, go = false) {
         if ((!this.pendingRender) && (go || (msg && msg.contents))) {
             this.pendingRender = true;
             window.requestAnimationFrame(() => {
                 this.pendingRender = false;
                 this.render(this.topChar, true);
             });
+        }
+    }
+
+    private async getWorkBook(): Promise<types.ISharedMap> {
+        if (!this.collabDocument.existing) {
+            return this.collabDocument.createMap();
+        } else {
+            return this.collabDocument.getRoot().wait<types.ISharedMap>("workbook");
         }
     }
 }

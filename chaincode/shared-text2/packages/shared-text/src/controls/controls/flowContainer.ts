@@ -235,8 +235,7 @@ export class FlowContainer extends ui.Component {
         this.activeLayers[id].layer.setPosition(translated);
     }
 
-    private async updateInsights(insights: ISharedMap) {
-        const view = await insights.getView();
+    private async updateInsights(view: ISharedMap) {
 
         if (view.has("ResumeAnalytics") && this.image) {
             const resume = view.get("ResumeAnalytics");
