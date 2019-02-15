@@ -25,7 +25,7 @@ describe.skip("LocalTestServer", () => {
 
   beforeEach(async () => {
     testDeltaConnectionServer = TestDeltaConnectionServer.Create();
-    documentDeltaEventManager = new DocumentDeltaEventManager();
+    documentDeltaEventManager = new DocumentDeltaEventManager(testDeltaConnectionServer);
 
     const user1Token = generateToken(tenantId, id, tokenKey);
     const documentService = createTestDocumentService(testDeltaConnectionServer);

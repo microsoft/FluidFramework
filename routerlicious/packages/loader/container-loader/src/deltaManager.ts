@@ -564,8 +564,8 @@ export class DeltaManager extends EventEmitter implements IDeltaManager {
 
             // We will queue a message to update our reference sequence number upon receiving a server operation. This
             // allows the server to know our true reference sequence number and be able to correctly update the minimum
-            // sequence number (MSN). We don't ackowledge other message types similarly (like a min sequence number
-            // update) to avoid ackowledgement cycles (i.e. ack the MSN update, which updates the MSN, then ack the
+            // sequence number (MSN). We don't acknowledge other message types similarly (like a min sequence number
+            // update) to avoid acknowledgement cycles (i.e. ack the MSN update, which updates the MSN, then ack the
             // update, etc...).
             if (message.type === MessageType.Operation ||
                 message.type === MessageType.Propose) {

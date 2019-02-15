@@ -372,16 +372,18 @@ export class ComponentHost extends EventEmitter implements IComponentDeltaHandle
     public process(message: ISequencedDocumentMessage, local: boolean, context: any) {
         this.messagesSinceMSNChange.push(message);
 
+        let target: IChannel = null;
         switch (message.type) {
             case MessageType.Attach:
-                this.processAttach(message, local, context);
+                target = this.processAttach(message, local, context);
                 break;
             case MessageType.Operation:
-                this.processOp(message, local, context);
+                target = this.processOp(message, local, context);
                 break;
             default:
-                return;
         }
+
+        this.emit("op", message, target);
     }
 
     public updateMinSequenceNumber(msn: number) {

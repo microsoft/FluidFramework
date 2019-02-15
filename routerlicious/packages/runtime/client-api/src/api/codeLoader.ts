@@ -147,6 +147,8 @@ export class ChaincodeFactory implements IChaincodeFactory {
             });
         }
 
+        runtime.registerTasks(["snapshot", "spell", "intel", "translation"]);
+
         return runtime;
     }
 }

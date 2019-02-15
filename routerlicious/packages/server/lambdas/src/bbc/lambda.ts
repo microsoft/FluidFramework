@@ -70,6 +70,10 @@ export class BBCLambda implements IPartitionLambda {
         return;
     }
 
+    public hasPendingWork() {
+        return this.pending.size !== 0 || this.current.size !== 0;
+    }
+
     private sendPending() {
         // If there is work currently being sent or we have no pending work return early
         if (this.current.size > 0 || this.pending.size === 0) {

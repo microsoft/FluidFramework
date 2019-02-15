@@ -43,6 +43,7 @@ class ContentObjectStorage implements IObjectStorageService {
 interface IMapMessageHandler {
     prepare(op: IMapOperation, local: boolean, message: ISequencedDocumentMessage): Promise<any>;
     process(op: IMapOperation, context: any, local: boolean, message: ISequencedDocumentMessage): void;
+    submit(op: IMapOperation);
 }
 
 /**
@@ -52,6 +53,8 @@ export class SharedMap extends SharedObject implements ISharedMap {
     public [Symbol.toStringTag]: string;
     private readonly messageHandler: Map<string, IMapMessageHandler>;
     private readonly view: MapView;
+    private readonly pendingKeys: Map<string, number>;
+    private pendingClearClientSequenceNumber: number;
     private serializeFilter: SerializeFilter;
     private readonly valueTypes = new Map<string, IValueType<any>>();
 
@@ -69,6 +72,8 @@ export class SharedMap extends SharedObject implements ISharedMap {
         this.serializeFilter = (key, value, valueType) => value;
 
         this.messageHandler = new Map<string, IMapMessageHandler>();
+        this.pendingKeys = new Map<string, number>();
+        this.pendingClearClientSequenceNumber = -1;
         // tslint:disable:no-backbone-get-set-outside-model
         this.messageHandler.set(
             "clear",
@@ -76,10 +81,21 @@ export class SharedMap extends SharedObject implements ISharedMap {
                 prepare: defaultPrepare,
                 process: (op, context, local, message) => {
                     if (local) {
+                        if (this.pendingClearClientSequenceNumber === message.clientSequenceNumber) {
+                            this.pendingClearClientSequenceNumber = -1;
+                        }
+                        return false;
+                    }
+
+                    if (this.pendingKeys.size !== 0) {
+                        this.view.clearExceptPendingKeys(this.pendingKeys);
                         return;
                     }
 
                     this.view.clearCore(local, message);
+                },
+                submit: (op) => {
+                    this.submitMapClearMessage(op);
                 },
             });
         this.messageHandler.set(
@@ -87,11 +103,14 @@ export class SharedMap extends SharedObject implements ISharedMap {
             {
                 prepare: defaultPrepare,
                 process: (op, context, local, message) => {
-                    if (local) {
+                    if (!this.needProcessKeyOperations(op, local, message)) {
                         return;
                     }
 
                     return this.view.deleteCore(op.key, local, message);
+                },
+                submit: (op) => {
+                    this.submitMapKeyMessage(op);
                 },
             });
         this.messageHandler.set(
@@ -101,11 +120,14 @@ export class SharedMap extends SharedObject implements ISharedMap {
                     return local ? Promise.resolve(null) : this.view.prepareSetCore(op.key, op.value);
                 },
                 process: (op, context, local, message) => {
-                    if (local) {
+                    if (!this.needProcessKeyOperations(op, local, message)) {
                         return;
                     }
 
                     this.view.setCore(op.key, context, local, message);
+                },
+                submit: (op) => {
+                    this.submitMapKeyMessage(op);
                 },
             });
 
@@ -246,14 +268,28 @@ export class SharedMap extends SharedObject implements ISharedMap {
         return handled ? message : this.transformContent(message, referenceSequenceNumber, sequenceNumber);
     }
 
-    public submitMapMessage(op: any): void {
+    public submitMapClearMessage(op: IMapOperation): void {
+        const clientSequenceNumber = this.submitMapMessage(op);
+        if (clientSequenceNumber !== -1) {
+            this.pendingClearClientSequenceNumber = clientSequenceNumber;
+        }
+    }
+
+    public submitMapKeyMessage(op: IMapOperation): void {
+        const clientSequenceNumber = this.submitMapMessage(op);
+        if (clientSequenceNumber !== -1) {
+            this.pendingKeys.set(op.key, clientSequenceNumber);
+        }
+    }
+
+    public submitMapMessage(op: IMapOperation): number {
         // Local operations do not require any extra processing
         if (this.isLocal()) {
-            return;
+            return -1;
         }
 
         // Once we have performed the attach submit the local operation
-        this.submitLocalMessage(op);
+        return this.submitLocalMessage(op);
     }
 
     /**
@@ -283,6 +319,10 @@ export class SharedMap extends SharedObject implements ISharedMap {
                 const value = this.view.get(op.key);
                 handler.process(value, op.value.value, context, local, message);
                 this.emit("valueChanged", { key: op.key }, local, message);
+            },
+
+            submit: (op) => {
+                this.submitLocalMessage(op);
             },
         };
 
@@ -323,9 +363,10 @@ export class SharedMap extends SharedObject implements ISharedMap {
 
     protected onConnect(pending: any[]) {
         debug(`Map ${this.id} is now connected`);
+        // REVIEW: Does it matter that the map and content message get out of order?
 
-        // Filter the nonAck and pending mesages into a map set and a content set.
-        const mapMessages: any[] = [];
+        // Filter the nonAck and pending messages into a map set and a content set.
+        const mapMessages: IMapOperation[] = [];
         const contentMessages: any[] = [];
         for (const message of pending) {
             if (this.isMapMessage(message)) {
@@ -337,7 +378,8 @@ export class SharedMap extends SharedObject implements ISharedMap {
 
         // Deal with the map messages - for the map it's always last one wins so we just resend
         for (const message of mapMessages) {
-            this.submitLocalMessage(message);
+            const handler = this.messageHandler.get(message.type);
+            handler.submit(message);
         }
 
         // Allow content to catch up
@@ -484,5 +526,28 @@ export class SharedMap extends SharedObject implements ISharedMap {
     private isMapMessage(message: any): boolean {
         const type = message.type;
         return this.messageHandler.has(type);
+    }
+
+    private needProcessKeyOperations(op: IMapOperation, local: boolean, message: ISequencedDocumentMessage): boolean {
+        if (this.pendingClearClientSequenceNumber !== -1) {
+            // If I have a NACK clear, we can ignore all ops.
+            return false;
+        }
+
+        if ((this.pendingKeys.size !== 0 && this.pendingKeys.has(op.key))) {
+            // Found an NACK op, clear it from the map if the latest sequence number in the map match the message's
+            // and don't process the op.
+            if (local) {
+                const pendingKeyClientSequenceNumber = this.pendingKeys.get(op.key);
+                if (pendingKeyClientSequenceNumber === message.clientSequenceNumber) {
+                    this.pendingKeys.delete(op.key);
+                }
+            }
+            return false;
+        }
+
+        // If we don't have a NACK op on the key, we need to process the remote ops.
+        return !local;
+
     }
 }

@@ -167,7 +167,7 @@ export abstract class SharedObject extends EventEmitter implements ISharedObject
     /**
      * Processes a message by the local client
      */
-    protected submitLocalMessage(content: any): void {
+    protected submitLocalMessage(content: any): number {
         assert(!this.isLocal());
 
         // Send if we are connected - otherwise just add to the sent list
@@ -180,6 +180,7 @@ export abstract class SharedObject extends EventEmitter implements ISharedObject
         }
 
         this.pendingOps.push({ clientSequenceNumber, content});
+        return clientSequenceNumber;
     }
 
     private attachDeltaHandler() {
