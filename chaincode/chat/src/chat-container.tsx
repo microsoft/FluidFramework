@@ -1,4 +1,4 @@
-import { Counter, IMapView, ISharedMap } from "@prague/map";
+import { Counter, ISharedMap } from "@prague/map";
 import { Chat } from "@stardust-ui/react";
 import { ChatRenderer } from "./chat-renderer";
 import { filter } from "./filter";
@@ -19,7 +19,6 @@ interface ChatProps {
 
 interface ChatContainerProps {
   messages: ISharedMap;
-  messageView: IMapView;
   counter: Counter;
   clientId: string;
 }
@@ -34,7 +33,7 @@ export class ChatContainer extends React.Component<ChatContainerProps, ChatConta
     this.setState({ messages: this.getInitialChat(), inputMessage: "" });
 
     this.props.messages.on("valueChanged", changed => {
-      let message = this.props.messageView.get(changed.key) as IMessage;
+      let message = this.props.messages.get(changed.key);
       message.content = filter(message.content);
 
       const chatProp = {
@@ -94,8 +93,7 @@ export class ChatContainer extends React.Component<ChatContainerProps, ChatConta
    */
   getInitialChat(): ChatProps[] {
     let items: ChatProps[] = [];
-
-    this.props.messageView.forEach((value: IMessage, key: string) => {
+    this.props.messages.forEach((value: IMessage, key: string) => {
       value.content = filter(value.content);
       let chatProp: ChatProps = {
         message: value,
@@ -109,15 +107,15 @@ export class ChatContainer extends React.Component<ChatContainerProps, ChatConta
 
   inputChangeHandler = (event: React.ChangeEvent<HTMLInputElement>) => this.setState({ inputMessage: event.target.value });
 
-  addMessageHandler = (component?: string) => {
+  addMessageHandler = async (component?: string) => {
     const { inputMessage } = this.state;
-    const { counter, messageView, clientId } = this.props;
+    const { counter, clientId, messages } = this.props;
 
     if (!component && inputMessage.length === 0) return;
 
     this.setState({ inputMessage: "" });
     counter.increment(1);
-    messageView.set<IMessage>(counter.value.toString(), {
+    messages.set<IMessage>(counter.value.toString(), {
       author: clientId,
       component: component,
       content: inputMessage,

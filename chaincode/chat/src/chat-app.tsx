@@ -4,8 +4,8 @@ import { Provider, themes } from "@stardust-ui/react";
 import { ChatContainer } from "./chat-container";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
-import { IComponentPlatform } from "@prague/runtime-definitions";
 import { Deferred } from "@prague/utils";
+import { IPlatform } from "@prague/container-definitions";
 
 export class ChatApp extends Document {
   private ready = new Deferred<void>();
@@ -22,7 +22,7 @@ export class ChatApp extends Document {
     this.ready.resolve();
   }
 
-  public async attach(platform: IComponentPlatform): Promise<IComponentPlatform> {
+  public async attach(platform: IPlatform): Promise<IPlatform> {
     await this.ready.promise;
 
     // If the host provided a <div>, display a minimal UI.
@@ -30,20 +30,18 @@ export class ChatApp extends Document {
     if (maybeDiv) {
       const msgCtr = await this.root.wait<Counter>("msgCtr");
       const messages = await this.root.wait<ISharedMap>("messages");
-      const messagesView = await messages.getView();
       await this.root.set("connected", true);
 
       setTimeout(() => {
         const quorum = this.runtime.getQuorum();
         const user = quorum.getMember(this.runtime.clientId);        
-
+        const username = (user.client.user as any).name;
         ReactDOM.render(
           <Provider theme={themes.teams}>
             <ChatContainer
               messages={messages}
-              messageView={messagesView}
               counter={msgCtr}
-              clientId={user.client.user.name}
+              clientId={username}
             />
           </Provider>,
           maybeDiv

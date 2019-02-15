@@ -28,13 +28,15 @@ export class LoaderComponent extends React.Component<IProps, IState> {
   async componentDidMount() {
     const domNode = ReactDOM.findDOMNode(this);
     domNode.appendChild(this.domElement);
-    let ds = await DataStore.from(this.serverUrl);
+    let ds = await DataStore.from(this.serverUrl, "anonymous-coward");
 
     const services: ReadonlyArray<[string, Promise<any>]> = [
       ["div", Promise.resolve(this.domElement)],
       ["datastore", Promise.resolve(ds)]
     ];
 
+    // TODO: this will work because we don't install new chaincode
+    // but sabroner is wrong
     await ds.open(this.props.docId, "sabroner", "any", services);
   }
 
