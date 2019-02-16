@@ -8,6 +8,7 @@ import {
 import { EventEmitter } from "events";
 // tslint:disable-next-line:no-var-requires
 const now = require("performance-now") as () => number;
+import * as querystring from "querystring";
 import { parse } from "url";
 import { Container } from "./container";
 import { debug } from "./debug";
@@ -15,6 +16,7 @@ import { debug } from "./debug";
 interface IParsedUrl {
     id: string;
     path: string;
+    version: string;
 }
 
 /**
@@ -52,7 +54,7 @@ export class Loader extends EventEmitter {
             return Promise.reject("Invalid URI");
         }
 
-        return this.resolveCore(parsed.id);
+        return this.resolveCore(parsed);
     }
 
     public async request(request: IRequest): Promise<IResponse> {
@@ -63,30 +65,35 @@ export class Loader extends EventEmitter {
             return Promise.reject("Invalid URI");
         }
 
-        const container = await this.resolveCore(parsed.id);
+        const container = await this.resolveCore(parsed);
         return container.request({ url: parsed.path });
     }
 
     private parseUrl(url: string): IParsedUrl {
         const parsed = parse(url);
+        const qs = querystring.parse(parsed.query);
 
         const regex = /^\/([^\/]*\/[^\/]*)(\/?.*)$/;
         const match = parsed.pathname.match(regex);
 
-        return (match && match.length === 3) ? { id: match[1], path: match[2] } : null;
+        return (match && match.length === 3)
+            ? { id: match[1], path: match[2], version: qs.version as string }
+            : null;
     }
 
-    private resolveCore(id: string) {
-        if (!this.containers.has(id)) {
+    private resolveCore(parsed: IParsedUrl): Promise<Container> {
+        const versionedId = parsed.version ? `${parsed.id}@${parsed.version}` : parsed.id;
+        if (!this.containers.has(versionedId)) {
             const containerP = Container.Load(
-                id,
+                parsed.id,
+                parsed.version,
                 this.containerHost,
                 this.documentService,
                 this.codeLoader,
                 this.options);
-            this.containers.set(id, containerP);
+            this.containers.set(versionedId, containerP);
         }
 
-        return this.containers.get(id);
+        return this.containers.get(versionedId);
     }
 }

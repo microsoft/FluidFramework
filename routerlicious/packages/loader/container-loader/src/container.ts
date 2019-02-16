@@ -24,7 +24,6 @@ import {
     MessageType,
     TreeEntry,
 } from "@prague/container-definitions";
-import { ICommit } from "@prague/gitresources";
 import { buildHierarchy, flatten, readAndParse } from "@prague/utils";
 import * as assert from "assert";
 import { EventEmitter } from "events";
@@ -52,6 +51,7 @@ interface IBufferedChunk {
 export class Container extends EventEmitter {
     public static async Load(
         id: string,
+        version: string,
         containerHost: IHost,
         service: IDocumentService,
         codeLoader: ICodeLoader,
@@ -65,7 +65,7 @@ export class Container extends EventEmitter {
             codeLoader);
 
         // TODO need to crack the version and connection flag out of the URL
-        await container.load(null, true);
+        await container.load(version);
 
         return container;
     }
@@ -265,19 +265,20 @@ export class Container extends EventEmitter {
         await this.storageService.write(root, parents, message, "");
     }
 
-    private async load(specifiedVersion: ICommit, connect: boolean): Promise<void> {
+    private async load(specifiedVersion: string): Promise<void> {
+        const connect = !specifiedVersion;
+
         // TODO connect to storage needs the token provider
         const storageP = this.service.connectToStorage(this.tenantId, this.id, this.containerHost.tokenProvider)
             .then((storage) => storage ? new PrefetchDocumentStorageService(storage) : null);
 
         // If a version is specified we will load it directly - otherwise will query historian for the latest
         // version and then load it
-        const versionP = specifiedVersion
-            ? Promise.resolve(specifiedVersion)
-            : storageP.then(async (storage) => {
-                const versions = await storage.getVersions(this.id, 1);
-                return versions.length > 0 ? versions[0] : null;
-            });
+        const versionP = storageP.then(async (storage) => {
+            const versionSha = specifiedVersion ? specifiedVersion : this.id;
+            const versions = await storage.getVersions(versionSha, 1);
+            return versions.length > 0 ? versions[0] : null;
+        });
 
         // Get the snapshot tree
         const treeP = Promise.all([storageP, versionP]).then(

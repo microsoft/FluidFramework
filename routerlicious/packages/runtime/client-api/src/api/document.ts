@@ -268,14 +268,12 @@ export async function load(
             return null;
         });
 
-    // TODO need both of these
-    //     version,
-    //     connect);
+    const queryString = !connect ? `?version=${encodeURIComponent(version.sha)}` : "";
 
     // Load the Prague document
     // For legacy purposes we currently fill in a default domain
     const baseUrl =
-        `prague://prague.com/${encodeURIComponent(tenantId)}/${encodeURIComponent(id)}`;
+        `prague://prague.com/${encodeURIComponent(tenantId)}/${encodeURIComponent(id)}${queryString}`;
     const loader = new Loader({ tokenProvider }, service, codeLoader, options);
     const container = await loader.resolve({ url: baseUrl });
 

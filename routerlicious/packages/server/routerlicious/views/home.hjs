@@ -37,7 +37,6 @@
             <h3>Starter Documents</h3>
             <ul class="list-unstyled">
                 <li><a href="/templates/list">Document Templates</a></li>
-                <li><a href="/scribe">Scribe</a></li>
             </ul>
 
             <h3>Demo Scripts</h3>
