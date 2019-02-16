@@ -16,6 +16,10 @@ class NullRuntime implements IRuntime {
         return Promise.resolve(null);
     }
 
+    public requestSnapshot(tagMessage: string): Promise<void> {
+        return Promise.resolve();
+    }
+
     public changeConnectionState(value: ConnectionState, clientId: string) {
         return;
     }

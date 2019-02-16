@@ -244,6 +244,10 @@ export class Runtime extends EventEmitter implements IHostRuntime {
         return root;
     }
 
+    public async requestSnapshot(tagMessage: string): Promise<void> {
+        return this.context.requestSnapshot(tagMessage);
+    }
+
     public async stop(): Promise<void> {
         this.verifyNotClosed();
         this.closed = true;
