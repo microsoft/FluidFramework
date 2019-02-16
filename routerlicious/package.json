@@ -24,7 +24,7 @@
     "stop:full": "docker-compose down && docker volume prune --force",
     "test": "lerna run test --stream",
     "test:coverage": "lerna run test:coverage --stream",
-    "test:copyresults": "copyfiles 'packages/*/nyc/**' nyc",
+    "test:copyresults": "copyfiles \"packages/*/nyc/**\" nyc",
     "test:full": "npm run test:coverage;t1=$?;npm run test:copyresults; exit $t1",
     "tsc": "lerna run tsc --stream",
     "tslint": "lerna run tslint --stream",
