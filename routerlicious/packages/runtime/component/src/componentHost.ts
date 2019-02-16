@@ -3,7 +3,6 @@ import {
     FileMode,
     IBlobManager,
     IDeltaManager,
-    IDocumentAttributes,
     IDocumentStorageService,
     IGenericBlob,
     IPlatform,
@@ -21,11 +20,11 @@ import {
     IChaincode,
     IChaincodeModule,
     IChannel,
+    IChannelAttributes,
     IComponentDeltaHandler,
     IComponentRuntime,
     IDistributedObjectServices,
     IEnvelope,
-    IObjectAttributes,
     IObjectStorageService,
     IRuntime,
 } from "@prague/runtime-definitions";
@@ -58,22 +57,9 @@ export class ComponentHost extends EventEmitter implements IComponentDeltaHandle
         chaincode: IChaincode,
     ) {
         const tree = componentRuntime.baseSnapshot;
-
-        // pkg and chaincode also probably available from the snapshot?
-        const attributes = tree !== null
-            ? await readAndParse<IDocumentAttributes>(componentRuntime.storage, tree.blobs[".attributes"])
-            : {
-                branch: componentRuntime.documentId,
-                clients: [],
-                minimumSequenceNumber: 0,
-                partialOps: [],
-                proposals: [],
-                sequenceNumber: 0,
-                values: [],
-            };
         const tardisMessagesP = ComponentHost.loadTardisMessages(
             componentRuntime.documentId,
-            attributes,
+            componentRuntime.branch,
             componentRuntime.storage,
             tree);
 
@@ -122,7 +108,7 @@ export class ComponentHost extends EventEmitter implements IComponentDeltaHandle
 
     private static async loadTardisMessages(
         id: string,
-        attributes: IDocumentAttributes,
+        branch: string,
         storage: IDocumentStorageService,
         tree: ISnapshotTree): Promise<Map<string, ISequencedDocumentMessage[]>> {
 
@@ -131,12 +117,12 @@ export class ComponentHost extends EventEmitter implements IComponentDeltaHandle
             : [];
 
         // Update message information based on branch details
-        if (attributes.branch !== id) {
+        if (branch !== id) {
             for (const message of messages) {
                 // Append branch information when transforming for the case of messages stashed with the snapshot
-                if (attributes.branch) {
+                if (branch) {
                     message.origin = {
-                        id: attributes.branch,
+                        id: branch,
                         minimumSequenceNumber: message.minimumSequenceNumber,
                         sequenceNumber: message.sequenceNumber,
                     };
@@ -425,26 +411,6 @@ export class ComponentHost extends EventEmitter implements IComponentDeltaHandle
             },
         });
 
-        // Save attributes for the document
-        const documentAttributes: IDocumentAttributes = {
-            branch: this.id,
-            clients: [],
-            minimumSequenceNumber: -101,
-            partialOps: [],
-            proposals: [],
-            sequenceNumber: -101,
-            values: [],
-        };
-        entries.push({
-            mode: FileMode.File,
-            path: ".attributes",
-            type: TreeEntry[TreeEntry.Blob],
-            value: {
-                contents: JSON.stringify(documentAttributes),
-                encoding: "utf-8",
-            },
-        });
-
         // Craft the .attributes file for each distributed object
         for (const [objectId, object] of this.channels) {
             // If the object isn't local - and we have received the sequenced op creating the object (i.e. it has a
@@ -453,8 +419,7 @@ export class ComponentHost extends EventEmitter implements IComponentDeltaHandle
                 const snapshot = object.object.snapshot();
 
                 // Add in the object attributes to the returned tree
-                const objectAttributes: IObjectAttributes = {
-                    sequenceNumber: this.deltaManager.minimumSequenceNumber,
+                const objectAttributes: IChannelAttributes = {
                     type: object.object.type,
                 };
                 snapshot.entries.push({
@@ -637,13 +602,13 @@ export class ComponentHost extends EventEmitter implements IComponentDeltaHandle
         messages: ISequencedDocumentMessage[],
         branch: string): Promise<void> {
 
-        const channelAttributes = await readAndParse<IObjectAttributes>(storage, tree.blobs[".attributes"]);
+        const channelAttributes = await readAndParse<IChannelAttributes>(storage, tree.blobs[".attributes"]);
         const services = this.getObjectServices(id, tree, storage);
 
         const channelDetails = await this.loadChannel(
             id,
             channelAttributes.type,
-            channelAttributes.sequenceNumber,
+            this.deltaManager.minimumSequenceNumber,
             messages,
             services,
             branch);

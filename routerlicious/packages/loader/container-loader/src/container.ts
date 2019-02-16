@@ -5,6 +5,7 @@ import {
     IChunkedOp,
     IClientJoin,
     ICodeLoader,
+    ICommittedProposal,
     IDeltaManager,
     IDocumentAttributes,
     IDocumentService,
@@ -34,7 +35,7 @@ import { IConnectionDetails } from "./deltaConnection";
 import { DeltaManager } from "./deltaManager";
 import { NullChaincode } from "./nullChaincode";
 import { PrefetchDocumentStorageService } from "./prefetchDocumentStorageService";
-import { IQuorumSnapshot, Quorum } from "./quorum";
+import { Quorum } from "./quorum";
 
 interface IConnectResult {
     detailsP: Promise<IConnectionDetails>;
@@ -400,10 +401,28 @@ export class Container extends EventEmitter {
         const quorumSnapshot = this.quorum.snapshot();
         entries.push({
             mode: FileMode.File,
-            path: "quorum",
+            path: "quorumMembers",
             type: TreeEntry[TreeEntry.Blob],
             value: {
-                contents: JSON.stringify(quorumSnapshot),
+                contents: JSON.stringify(quorumSnapshot.members),
+                encoding: "utf-8",
+            },
+        });
+        entries.push({
+            mode: FileMode.File,
+            path: "quorumProposals",
+            type: TreeEntry[TreeEntry.Blob],
+            value: {
+                contents: JSON.stringify(quorumSnapshot.proposals),
+                encoding: "utf-8",
+            },
+        });
+        entries.push({
+            mode: FileMode.File,
+            path: "quorumValues",
+            type: TreeEntry[TreeEntry.Blob],
+            value: {
+                contents: JSON.stringify(quorumSnapshot.values),
                 encoding: "utf-8",
             },
         });
@@ -411,12 +430,9 @@ export class Container extends EventEmitter {
         // Save attributes for the document
         const documentAttributes: IDocumentAttributes = {
             branch: this.id,
-            clients: [...this.quorum.getMembers()],
             minimumSequenceNumber: this._deltaManager.minimumSequenceNumber,
             partialOps: [...this.chunkMap],
-            proposals: [],
             sequenceNumber: this._deltaManager.referenceSequenceNumber,
-            values: [],
         };
         entries.push({
             mode: FileMode.File,
@@ -445,11 +461,16 @@ export class Container extends EventEmitter {
         let proposals: Array<[number, ISequencedProposal, string[]]>;
         let values: Array<[string, any]>;
 
-        if (tree && tree.blobs.quorum) {
-            const quorumSnapshot = await readAndParse<IQuorumSnapshot>(storage, tree.blobs.quorum);
-            members = quorumSnapshot.members;
-            proposals = quorumSnapshot.proposals;
-            values = quorumSnapshot.values;
+        if (tree) {
+            const snapshot = await Promise.all([
+                readAndParse<Array<[string, ISequencedClient]>>(storage, tree.blobs.quorumMembers),
+                readAndParse<Array<[number, ISequencedProposal, string[]]>>(storage, tree.blobs.quorumProposals),
+                readAndParse<Array<[string, ICommittedProposal]>>(storage, tree.blobs.quorumValues),
+            ]);
+
+            members = snapshot[0];
+            proposals = snapshot[1];
+            values = snapshot[2];
         } else {
             members = [];
             proposals = [];
@@ -521,12 +542,9 @@ export class Container extends EventEmitter {
 
         const attributes: IDocumentAttributes = {
             branch: this.id,
-            clients: null,
             minimumSequenceNumber: this._deltaManager.minimumSequenceNumber,
             partialOps: null,
-            proposals: null,
             sequenceNumber: null,
-            values: null,
         };
 
         const newContext = await Context.Load(

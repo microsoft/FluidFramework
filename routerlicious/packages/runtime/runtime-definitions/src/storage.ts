@@ -1,7 +1,4 @@
-// TODO consider a rename to channel
-export interface IObjectAttributes {
-    sequenceNumber: number;
-
+export interface IChannelAttributes {
     type: string;
 }
 
