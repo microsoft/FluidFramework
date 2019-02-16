@@ -92,11 +92,6 @@ export interface IRuntime {
     snapshot(tagMessage: string): Promise<ITree>;
 
     /**
-     * Requests the host container to perform a snapshot
-     */
-    requestSnapshot(tagMessage: string): Promise<void>;
-
-    /**
      * Notifies the runtime of a change in the connection state
      */
     changeConnectionState(value: ConnectionState, clientId: string);
