@@ -143,6 +143,10 @@ export class Context implements IContainerContext {
         return this.runtime.request(path);
     }
 
+    public async requestSnapshot(tagMessage: string): Promise<void> {
+        return this.container.snapshot(tagMessage);
+    }
+
     public error(err: any): void {
         this.errorFn(err);
     }
