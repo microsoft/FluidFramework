@@ -15,7 +15,7 @@
     }
   },
   "scripts": {
-    "build": "npm run tsc && npm run build:esnext && npm run tslint && copyfiles -u 1 'src/**/*.css' dist/ && copyfiles -u 1 'src/**/*.css' lib/",
+    "build": "npm run tsc && npm run build:esnext && npm run tslint && copyfiles -u 1 \"src/**/*.css\" dist/ && copyfiles -u 1 \"src/**/*.css\" lib/",
     "build:full": "npm run build",
     "clean": "rimraf dist && rimraf lib",
     "tsc": "tsc",
