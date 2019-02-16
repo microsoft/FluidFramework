@@ -4,6 +4,8 @@ FROM node:8.15.0-slim AS base
 RUN apt-get update && apt-get install -y \
         python \
         make \
+        git \
+        curl \
         g++
 
 # Add Tini
@@ -90,11 +92,6 @@ RUN npm run build:full
 
 # Partial Build Target for publishing
 FROM base AS publish
-
-# Install git
-RUN apt-get update && apt-get install -y \
-        curl \
-        git
 
 # Initialize a base repo for Lerna
 RUN git init
