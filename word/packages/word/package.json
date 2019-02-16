@@ -21,13 +21,14 @@
     "typescript": "^3.2.2"
   },
   "dependencies": {
-    "@prague/client-api": "^0.1.0",
-    "@prague/gitresources": "^0.1.0",
-    "@prague/map": "^0.1.0",
-    "@prague/merge-tree": "^0.1.0",
-    "@prague/runtime-definitions": "^0.1.0",
-    "@prague/sequence": "^0.1.0",
-    "@prague/socket-storage": "^0.1.0",
+    "@prague/container-definitions": "^0.2.0",
+    "@prague/client-api": "^0.2.0",
+    "@prague/gitresources": "^0.2.0",
+    "@prague/map": "^0.2.0",
+    "@prague/merge-tree": "^0.2.0",
+    "@prague/runtime-definitions": "^0.2.0",
+    "@prague/sequence": "^0.2.0",
+    "@prague/socket-storage": "^0.2.0",
     "@types/jsonwebtoken": "^7.2.8",
     "@types/node": "^10.9.4",
     "jsonwebtoken": "^8.3.0"
