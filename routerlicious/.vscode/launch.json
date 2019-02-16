@@ -7,6 +7,28 @@
         {
             "type": "node",
             "request": "launch",
+            "name": "Table Tests",
+            "cwd": "${workspaceFolder}/packages/components/table-test-app",
+            "runtimeArgs": [
+                "-r",
+                "${workspaceFolder}/common/tools/node_modules/ts-node/register"
+            ],
+            "args": [
+                "src/index.ts"
+            ],
+            "env": {
+                "DEBUG": "*,-socket.io*,-engine.io*,-follow-redirects",
+                "RUSH_ROOT": "${workspaceFolder}",
+                "TS_NODE_PROJECT": "tsconfig.json"
+            },
+            "console": "integratedTerminal",
+            "skipFiles": [
+                "<node_internals>/**/*.js"
+            ]
+        },
+        {
+            "type": "node",
+            "request": "launch",
             "name": "Mocha Tests",
             "program": "/usr/local/bin/mocha",
             "args": [

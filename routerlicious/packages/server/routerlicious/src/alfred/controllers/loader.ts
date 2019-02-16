@@ -24,10 +24,11 @@ export async function containerInitialize(
         : new DefaultErrorTracking();
 
     const replay = from >= 0 || to >= 0;
+    const hostUrl = document.location.origin;
     const documentServices = replay
-        ? createReplayDocumentService(document.location.origin, from, to, unitIsTime)
+        ? createReplayDocumentService(hostUrl, from, to, unitIsTime)
         : createDocumentService(
-            document.location.origin,
+            hostUrl,
             config.blobStorageUrl,
             errorService);
 
@@ -36,6 +37,7 @@ export async function containerInitialize(
         : "anonymous";
 
     const store = new DataStore(
+        hostUrl,
         new WebLoader(config.npm),
         documentServices,
         key,

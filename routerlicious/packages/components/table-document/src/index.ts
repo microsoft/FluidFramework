@@ -11,6 +11,7 @@ import {
     UnboxedOper,
     Workbook,
 } from "@prague/client-ui/ext/calc";
+import { IContainerContext, IRuntime } from "@prague/container-definitions";
 import { MapExtension, registerDefaultValueType  } from "@prague/map";
 import { Counter, CounterValueType } from "@prague/map";
 import {
@@ -35,6 +36,9 @@ export { CellRange };
 
 export const loadCellTextSym = Symbol("TableDocument.loadCellText");
 export const storeCellTextSym = Symbol("TableDocument.storeCellText");
+
+// tslint:disable-next-line:no-var-requires
+const pkg = require("../package.json");
 
 type EvaluationResult = Result<ReadOper, FailureReason | NotImplemented | NotFormulaString | IllFormedFormula> | EvalFormulaPaused;
 
@@ -223,4 +227,10 @@ export class TableDocument extends Component {
 
 export async function instantiateComponent(): Promise<IChaincodeComponent> {
     return Component.instantiateComponent(TableDocument);
+}
+
+export async function instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
+    return Component.instantiateRuntime(context, "table-document", pkg.name, [
+        [pkg.name, Promise.resolve({ instantiateComponent })],
+    ]);
 }

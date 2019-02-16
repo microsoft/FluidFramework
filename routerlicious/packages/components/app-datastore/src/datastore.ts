@@ -33,6 +33,7 @@ export class DataStore {
         };
 
         return new DataStore(
+            hostUrl,
             new WebLoader(config.npm),
             createDocumentService(hostUrl, config.blobStorageUrl),
             config.key,
@@ -42,6 +43,7 @@ export class DataStore {
     }
 
     constructor(
+        private readonly hostUrl: string,
         private readonly codeLoader: ICodeLoader,
         private readonly documentService: IDocumentService,
         private readonly key: string,
@@ -74,7 +76,7 @@ export class DataStore {
 
         const baseUrl =
             // tslint:disable-next-line:max-line-length
-            `prague://${document.location.host}/${encodeURIComponent(this.tenantId)}/${encodeURIComponent(componentId)}`;
+            `${this.hostUrl.replace(/^[^:]+/, "prague")}/${encodeURIComponent(this.tenantId)}/${encodeURIComponent(componentId)}`;
         debug(`resolving baseUrl = ${baseUrl}`);
         const container = await loader.resolve({ url: baseUrl });
         debug(`resolved baseUrl = ${baseUrl}`);

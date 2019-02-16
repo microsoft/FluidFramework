@@ -41,7 +41,8 @@ module.exports = env => {
             // https://github.com/webpack/webpack/issues/5767
             // https://github.com/webpack/webpack/issues/7939            
             devtoolNamespace: pkg.name,
-            libraryTarget: "umd"
+            libraryTarget: "umd",
+            globalObject: "this"
         },
         node: {
             fs: "empty",
