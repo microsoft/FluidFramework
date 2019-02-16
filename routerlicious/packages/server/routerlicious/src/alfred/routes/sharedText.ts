@@ -160,7 +160,11 @@ export function create(
             config.get("error:track"),
             config.get("client"),
             direct);
+
         const versionP = storage.getLatestVersion(tenantId, request.params.id);
+        // const fullTree = storage.getFullTree(values[1].tree); // tree?
+        // const header = storage.getHeader(); // header?
+
         Promise.all([workerConfigP, versionP]).then((values) => {
             const parsedTemplate = path.parse(request.query.template ? request.query.template : defaultTemplate);
             const template =

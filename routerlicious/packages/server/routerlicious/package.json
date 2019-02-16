@@ -10,7 +10,7 @@
     "webpack": "parallel-webpack --config webpack.config.js",
     "webpack:dev": "parallel-webpack --config webpack.config.js",
     "webpack:watch": "npm run webpack:dev -- --watch",
-    "webpack:min": "parallel-webpack --config webpack.config.js --env.target production",
+    "webpack:min": "parallel-webpack --config webpack.config.js -- --env.target production",
     "build": "npm run tslint && npm run tsc && npm run less && npm run webpack",
     "build:dts": "dts-bundle --main dist/client-api/index.d.ts --name prague --baseDir ./dist --out ../public/scripts/dist/prague.d.ts",
     "build:full": "npm run build && npm run webpack:min",

@@ -17,6 +17,8 @@ export interface IDocumentStorage {
 
     getVersion(tenantId: string, documentId: string, sha: string): Promise<ICommit>;
 
+    getFullTree(tenantId: string, documentId: string, sha: string): Promise<any>;
+
     getForks(tenantId: string, documentId: string): Promise<string[]>;
 
     createFork(tenantId: string, id: string): Promise<string>;

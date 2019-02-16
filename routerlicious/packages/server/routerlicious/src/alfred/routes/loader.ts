@@ -49,6 +49,10 @@ export function create(
             .key;
 
         const versionP = storage.getLatestVersion(tenantId, documentId);
+        // get full tree?
+        // get header?
+        // get initial chaincode?
+
         Promise.all([workerConfigP, versionP]).then(([workerConfig, version]) => {
             response.render(
                 "containerLoader",
