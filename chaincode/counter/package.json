@@ -13,7 +13,7 @@
     "tsc": "tsc"
   },
   "devDependencies": {
-    "@prague/prague-dev-server": "^3.1.13",
+    "@prague/prague-dev-server": "^3.2.1",
     "@types/node": "^10.11.5",
     "clean-webpack-plugin": "^0.1.19",
     "ts-loader": "^4.4.2",
@@ -31,8 +31,11 @@
     }
   },
   "dependencies": {
-    "@prague/app-component": "^0.1.4668",
-    "@prague/map": "^0.1.4668",
-    "@prague/runtime-definitions": "^0.1.4668"
+    "@prague/app-component": "^0.2.5038",
+    "@prague/app-datastore": "^0.2.5038",
+    "@prague/map": "^0.2.5038",
+    "@prague/runtime": "^0.2.5038",
+    "@prague/runtime-definitions": "^0.2.5038",
+    "@prague/container-definitions": "^0.2.5038"
   }
 }
