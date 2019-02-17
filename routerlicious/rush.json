@@ -188,6 +188,10 @@
     {
       "packageName": "@prague/tools-core",
       "projectFolder": "packages/shared/tools-core/"
+    },
+    {
+      "packageName": "@prague/spellchecker",
+      "projectFolder": "packages/agents/spellchecker/"
     }
   ]
 }
