@@ -1,0 +1,23 @@
+{
+    "exclude": [
+        "dist",
+        "node_modules"
+    ],
+    "compilerOptions": {
+        "target": "es6",
+        "declaration": true,
+        "declarationMap": true,
+        "module": "commonjs",
+        "moduleResolution": "node",
+        "rootDir": "./src",
+        "outDir": "./dist",
+        "declarationDir": "./dist",
+        "sourceMap": true,
+        "inlineSources": true,
+        "noImplicitAny": false,
+        "noUnusedLocals": true
+    },
+    "include": [
+        "src/**/*"
+    ]
+}
