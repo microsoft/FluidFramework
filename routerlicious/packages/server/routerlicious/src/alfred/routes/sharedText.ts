@@ -179,12 +179,13 @@ export function create(
             response.render(
                 "sharedText",
                 {
+                    cache: JSON.stringify(fullTree.cache),
+                    code: fullTree.code,
                     config: workerConfig,
                     connect: true,
                     disableCache,
                     documentId: request.params.id,
                     from,
-                    fullTree: JSON.stringify(fullTree),
                     key: tenant.key,
                     options: JSON.stringify(options),
                     pageInk: request.query.pageInk === "true",

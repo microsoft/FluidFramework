@@ -5,6 +5,9 @@ import * as git from "@prague/gitresources";
  * Git cache data
  */
 export interface IGitCache {
+    // Cached blob values
+    blobs: git.IBlob[];
+
     // Reference mapping
     refs: { [key: string]: string };
 

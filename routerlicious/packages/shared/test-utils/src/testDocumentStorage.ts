@@ -62,7 +62,7 @@ export class TestDocumentStorage implements IDocumentStorage {
         return gitManager.getCommit(sha);
     }
 
-    public async getFullTree(tenantId: string, documentId: string): Promise<IGitCache> {
+    public async getFullTree(tenantId: string, documentId: string): Promise<{ cache: IGitCache, code: string }> {
         throw new Error("Method not implemented.");
     }
 

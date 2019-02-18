@@ -39,7 +39,7 @@ export class GitManager implements IGitManager {
      */
     public async getCommits(sha: string, count: number): Promise<resources.ICommitDetails[]> {
         if (this.refCache.has(sha)) {
-            debug(`Cache hit on ${sha}`);
+            debug(`Commit cache hit on ${sha}`);
             const refSha = this.refCache.get(sha);
             if (!refSha) {
                 return [];
@@ -68,7 +68,7 @@ export class GitManager implements IGitManager {
      */
     public async getTree(root: string, recursive = true): Promise<resources.ITree> {
         if (this.commitCache.has(root)) {
-            debug(`Cache hit on ${root}`);
+            debug(`Tree cache hit on ${root}`);
             return this.treeCache.get(root);
         }
 
@@ -76,9 +76,12 @@ export class GitManager implements IGitManager {
     }
 
     public async getBlob(sha: string): Promise<resources.IBlob> {
-        return this.blobCache.has(sha)
-            ? this.blobCache.get(sha)
-            : this.historian.getBlob(sha);
+        if (this.blobCache.has(sha)) {
+            debug(`Blob cache hit on ${sha}`);
+            return this.blobCache.get(sha);
+        }
+
+        return this.historian.getBlob(sha);
     }
 
     public getRawUrl(sha: string): string {
