@@ -8,10 +8,10 @@ export interface IDocumentDetails {
 
 export interface IFullTree {
     // All trees contained in the commit (includes submodules)
-    trees: Map<string, ITree>;
+    trees: ITree[];
 
     // Commits for each module
-    modules: Map<string, ICommit>;
+    commits: ICommit[];
 }
 
 export interface IDocumentStorage {

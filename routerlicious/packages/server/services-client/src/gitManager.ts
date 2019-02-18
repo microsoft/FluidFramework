@@ -6,6 +6,8 @@ import { IGitManager, IHistorian } from "./storage";
 
 export class GitManager implements IGitManager {
     private blobCache = new Map<string, resources.IBlob>();
+    private commitCache = new Map<string, resources.ICommit>();
+    private treeCache = new Map<string, resources.ITree>();
 
     constructor(private historian: IHistorian) {
     }
@@ -22,6 +24,10 @@ export class GitManager implements IGitManager {
     }
 
     public async getCommit(sha: string): Promise<resources.ICommit> {
+        if (this.commitCache.has(sha)) {
+            return this.commitCache.get(sha);
+        }
+
         return this.historian.getCommit(sha);
     }
 
@@ -36,6 +42,10 @@ export class GitManager implements IGitManager {
      * Reads the object with the given ID. We defer to the client implementation to do the actual read.
      */
     public async getTree(root: string, recursive = true): Promise<resources.ITree> {
+        if (this.commitCache.has(root)) {
+            return this.treeCache.get(root);
+        }
+
         return this.historian.getTree(root, recursive);
     }
 
@@ -102,6 +112,14 @@ export class GitManager implements IGitManager {
         };
 
         return this.historian.updateRef(`heads/${branch}`, ref);
+    }
+
+    public addCommit(commit: resources.ICommit) {
+        this.commitCache.set(commit.sha, commit);
+    }
+
+    public addTree(tree: resources.ITree) {
+        this.treeCache.set(tree.sha, tree);
     }
 
     /**

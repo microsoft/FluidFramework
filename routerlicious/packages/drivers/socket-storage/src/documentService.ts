@@ -1,4 +1,5 @@
 import * as api from "@prague/container-definitions";
+import { ICommit, ITree } from "@prague/gitresources";
 import { GitManager, Historian, ICredentials } from "@prague/services-client";
 import { DocumentDeltaConnection } from "@prague/socket-storage-shared";
 import Axios from "axios";
@@ -20,7 +21,8 @@ export class DocumentService implements api.IDocumentService {
         private errorTracking: api.IErrorTrackingService,
         private disableCache: boolean,
         private historianApi: boolean,
-        private directCredentials: ICredentials) {
+        private directCredentials: ICredentials,
+        private seedData: { commits: ICommit[]; trees: ITree[] }) {
 
         this.deltaStorage = new DeltaStorageService(this.deltaUrl);
     }
@@ -53,6 +55,18 @@ export class DocumentService implements api.IDocumentService {
             this.disableCache,
             credentials);
         const gitManager = new GitManager(historian);
+
+        // Insert cached seed data
+        if (this.seedData) {
+            for (const commit of this.seedData.commits) {
+                gitManager.addCommit(commit);
+            }
+
+            for (const tree of this.seedData.trees) {
+                gitManager.addTree(tree);
+            }
+        }
+
         return new DocumentStorageService(tenantId, id, gitManager);
     }
 

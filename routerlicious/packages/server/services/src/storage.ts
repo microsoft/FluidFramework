@@ -1,5 +1,5 @@
 import { IDocumentAttributes, IDocumentSystemMessage, MessageType } from "@prague/container-definitions";
-import { ICommit, ICommitDetails } from "@prague/gitresources";
+import { ICommit, ICommitDetails, ITree } from "@prague/gitresources";
 import {
     ICollection,
     IForkOperation,
@@ -67,12 +67,37 @@ export class DocumentStorage implements IDocumentStorage {
         return gitManager.getCommit(sha);
     }
 
-    public async getFullTree(tenantId: string, documentId: string, sha: ICommit): Promise<IFullTree> {
-        if (!sha) {
+    public async getFullTree(tenantId: string, documentId: string, commit: ICommit): Promise<IFullTree> {
+        if (!commit) {
             return null;
         }
 
-        throw new Error("Method not implemented.");
+        const tenant = await this.tenantManager.getTenant(tenantId);
+        const gitManager = tenant.gitManager;
+
+        const trees = new Map<string, ITree>();
+        const commits = new Map<string, ICommit>();
+
+        const baseTree = await gitManager.getTree(commit.tree.sha, true);
+
+        commits.set(commit.sha, commit);
+        trees.set(baseTree.sha, baseTree);
+
+        const submoduleCommits = new Array<string>();
+        baseTree.tree.forEach((entry) => {
+            if (entry.type === "commit") {
+                submoduleCommits.push(entry.sha);
+            }
+        });
+
+        await Promise.all(submoduleCommits.map(async (submoduleCommitSha) => {
+            const submoduleCommit = await gitManager.getCommit(submoduleCommitSha);
+            const submoduleTree = await gitManager.getTree(submoduleCommit.tree.sha, true);
+            trees.set(submoduleTree.sha, submoduleTree);
+            commits.set(submoduleCommit.sha, submoduleCommit);
+        }));
+
+        return { trees: Array.from(trees.values()), commits: Array.from(commits.values()) };
     }
 
     /**

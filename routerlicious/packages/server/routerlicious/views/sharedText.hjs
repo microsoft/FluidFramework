@@ -14,6 +14,7 @@
             var options = {{{ options }}};
             var connect = {{{ connect }}};
             var token = "{{ token }}";
+            var seedData = {{{ fullTree }}};
 
             var tenant = "{{ tenantId }}";
             var key = "{{ key }}";
@@ -25,6 +26,7 @@
                 "{{ documentId }}",
                 version,
                 token,
+                seedData,
                 {{ pageInk }},
                 {{ disableCache }},
                 config,

@@ -60,6 +60,7 @@ export async function load(
     id: string,
     version: resources.ICommit,
     token: string,
+    seedData: { trees: [], commits: [] },
     pageInk: boolean,
     disableCache: boolean,
     config: any,
@@ -74,7 +75,7 @@ export async function load(
     API.registerDefaultCredentials(credentials);
 
     console.log(`Load Option: ${JSON.stringify(options)}`);
-    loadDocument(id, version, token, pageInk, disableCache, config, template, connect, options, from, to)
+    loadDocument(id, version, token, seedData, pageInk, disableCache, config, template, connect, options, from, to)
         .catch((error) => {
             console.error(error);
         });
@@ -84,6 +85,7 @@ async function loadDocument(
     id: string,
     version: resources.ICommit,
     token: string,
+    seedData: { trees: [], commits: [] },
     pageInk: boolean,
     disableCache: boolean,
     config: any,
@@ -107,7 +109,8 @@ async function loadDocument(
             errorService,
             disableCache,
             config.historianApi,
-            config.credentials);
+            config.credentials,
+            seedData);
     API.registerDocumentService(documentService);
 
     const tokenService = new socketStorage.TokenService();
