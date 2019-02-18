@@ -8,6 +8,7 @@ import * as DistributedMap from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
 import * as replaySocketStorage from "@prague/replay-socket-storage";
 import * as Sequence from "@prague/sequence";
+import { IGitCache } from "@prague/services-client";
 import * as socketStorage from "@prague/socket-storage";
 import { IStream } from "@prague/stream";
 // tslint:disable-next-line:no-var-requires
@@ -60,7 +61,7 @@ export async function load(
     id: string,
     version: resources.ICommit,
     token: string,
-    seedData: { trees: [], commits: [] },
+    seedData: IGitCache,
     pageInk: boolean,
     disableCache: boolean,
     config: any,
@@ -85,7 +86,7 @@ async function loadDocument(
     id: string,
     version: resources.ICommit,
     token: string,
-    seedData: { trees: [], commits: [] },
+    seedData: IGitCache,
     pageInk: boolean,
     disableCache: boolean,
     config: any,

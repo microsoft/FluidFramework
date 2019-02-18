@@ -1,17 +1,10 @@
-import { ICommit, ICommitDetails, ITree } from "@prague/gitresources";
+import { ICommit, ICommitDetails } from "@prague/gitresources";
+import { IGitCache } from "@prague/services-client";
 import { IRangeTrackerSnapshot } from "@prague/utils";
 
 export interface IDocumentDetails {
     existing: boolean;
     value: IDocument;
-}
-
-export interface IFullTree {
-    // All trees contained in the commit (includes submodules)
-    trees: ITree[];
-
-    // Commits for each module
-    commits: ICommit[];
 }
 
 export interface IDocumentStorage {
@@ -25,7 +18,7 @@ export interface IDocumentStorage {
 
     getVersion(tenantId: string, documentId: string, sha: string): Promise<ICommit>;
 
-    getFullTree(tenantId: string, documentId: string, commit: ICommit): Promise<IFullTree>;
+    getFullTree(tenantId: string, documentId: string): Promise<IGitCache>;
 
     getForks(tenantId: string, documentId: string): Promise<string[]>;
 

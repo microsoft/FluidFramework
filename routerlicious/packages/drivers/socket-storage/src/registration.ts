@@ -1,5 +1,5 @@
 import { IDocumentService, IErrorTrackingService } from "@prague/container-definitions";
-import { ICommit, ITree } from "@prague/gitresources";
+import { IGitCache } from "@prague/services-client";
 import { DocumentService } from "./documentService";
 import { DefaultErrorTracking } from "./errorTracking";
 
@@ -10,7 +10,7 @@ export function createDocumentService(
     disableCache = false,
     historianApi = true,
     credentials?,
-    seedData?: { commits: ICommit[]; trees: ITree[] }): IDocumentService {
+    seedData?: IGitCache): IDocumentService {
 
     /* tslint:disable:no-unsafe-any */
     const service = new DocumentService(

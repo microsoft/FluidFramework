@@ -161,11 +161,9 @@ export function create(
             config.get("client"),
             direct);
 
-        const versionP = storage.getLatestVersion(tenantId, request.params.id);
-        const fullTreeP = versionP.then((version) => storage.getFullTree(tenantId, request.params.id, version));
-        // const header = storage.getHeader(); // header?
+        const fullTreeP = storage.getFullTree(tenantId, request.params.id);
 
-        Promise.all([workerConfigP, versionP, fullTreeP]).then(([workerConfig, version, fullTree]) => {
+        Promise.all([workerConfigP, fullTreeP]).then(([workerConfig, fullTree]) => {
             const parsedTemplate = path.parse(request.query.template ? request.query.template : defaultTemplate);
             const template =
                 parsedTemplate.base !== "empty" ? `/public/literature/${parsedTemplate.base}` : undefined;
@@ -196,7 +194,7 @@ export function create(
                     title: request.params.id,
                     to,
                     token,
-                    version: JSON.stringify(version),
+                    version: JSON.stringify(null),
                 });
             }, (error) => {
                 response.status(400).json(safeStringify(error));

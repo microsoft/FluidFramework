@@ -2,6 +2,20 @@ import * as api from "@prague/container-definitions";
 import * as git from "@prague/gitresources";
 
 /**
+ * Git cache data
+ */
+export interface IGitCache {
+    // Reference mapping
+    refs: { [key: string]: string };
+
+    // All trees contained in the commit (includes submodules)
+    trees: git.ITree[];
+
+    // Commits for each module
+    commits: git.ICommit[];
+}
+
+/**
  * Interface to a generic Git provider
  */
 export interface IGitService {

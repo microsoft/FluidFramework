@@ -1,9 +1,9 @@
 import { IDocumentAttributes, IDocumentSystemMessage, MessageType } from "@prague/container-definitions";
 import { ICommit, ICommitDetails, ITree } from "@prague/gitresources";
+import { IGitCache } from "@prague/services-client";
 import {
     ICollection,
     IForkOperation,
-    IFullTree,
     IProducer,
     IRawOperationMessage,
     RawOperationType,
@@ -67,9 +67,10 @@ export class DocumentStorage implements IDocumentStorage {
         return gitManager.getCommit(sha);
     }
 
-    public async getFullTree(tenantId: string, documentId: string, commit: ICommit): Promise<IFullTree> {
+    public async getFullTree(tenantId: string, documentId: string): Promise<IGitCache> {
+        const commit = await this.getLatestVersion(tenantId, documentId);
         if (!commit) {
-            return null;
+            return { commits: [], refs: { [documentId]: null }, trees: [] };
         }
 
         const tenant = await this.tenantManager.getTenant(tenantId);
@@ -97,7 +98,11 @@ export class DocumentStorage implements IDocumentStorage {
             commits.set(submoduleCommit.sha, submoduleCommit);
         }));
 
-        return { trees: Array.from(trees.values()), commits: Array.from(commits.values()) };
+        return {
+            commits: Array.from(commits.values()),
+            refs: { [documentId]: commit.sha},
+            trees: Array.from(trees.values()),
+        };
     }
 
     /**

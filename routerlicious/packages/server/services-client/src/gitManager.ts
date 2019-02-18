@@ -2,12 +2,14 @@ import * as api from "@prague/container-definitions";
 import * as resources from "@prague/gitresources";
 import { buildHierarchy } from "@prague/utils";
 import * as assert from "assert";
+import { debug } from "./debug";
 import { IGitManager, IHistorian } from "./storage";
 
 export class GitManager implements IGitManager {
     private blobCache = new Map<string, resources.IBlob>();
     private commitCache = new Map<string, resources.ICommit>();
     private treeCache = new Map<string, resources.ITree>();
+    private refCache = new Map<string, string>();
 
     constructor(private historian: IHistorian) {
     }
@@ -25,6 +27,7 @@ export class GitManager implements IGitManager {
 
     public async getCommit(sha: string): Promise<resources.ICommit> {
         if (this.commitCache.has(sha)) {
+            debug(`Cache hit on ${sha}`);
             return this.commitCache.get(sha);
         }
 
@@ -35,6 +38,28 @@ export class GitManager implements IGitManager {
      * Reads the object with the given ID. We defer to the client implementation to do the actual read.
      */
     public async getCommits(sha: string, count: number): Promise<resources.ICommitDetails[]> {
+        if (this.refCache.has(sha)) {
+            debug(`Cache hit on ${sha}`);
+            const refSha = this.refCache.get(sha);
+            if (!refSha) {
+                return [];
+            }
+
+            const commit = await this.getCommit(refSha);
+            return [{
+                commit: {
+                    author: commit.author,
+                    committer: commit.committer,
+                    message: commit.message,
+                    tree: commit.tree,
+                    url: commit.url,
+                },
+                parents: commit.parents,
+                sha: commit.sha,
+                url: commit.url,
+            }];
+        }
+
         return this.historian.getCommits(sha, count);
     }
 
@@ -43,6 +68,7 @@ export class GitManager implements IGitManager {
      */
     public async getTree(root: string, recursive = true): Promise<resources.ITree> {
         if (this.commitCache.has(root)) {
+            debug(`Cache hit on ${root}`);
             return this.treeCache.get(root);
         }
 
@@ -112,6 +138,10 @@ export class GitManager implements IGitManager {
         };
 
         return this.historian.updateRef(`heads/${branch}`, ref);
+    }
+
+    public addRef(ref: string, sha: string) {
+        this.refCache.set(ref, sha);
     }
 
     public addCommit(commit: resources.ICommit) {
