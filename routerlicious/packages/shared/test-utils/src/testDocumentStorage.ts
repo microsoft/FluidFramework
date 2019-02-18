@@ -3,6 +3,7 @@ import {
     IDatabaseManager,
     IDocumentDetails,
     IDocumentStorage,
+    IFullTree,
     ITenantManager,
 } from "@prague/services-core";
 
@@ -59,6 +60,10 @@ export class TestDocumentStorage implements IDocumentStorage {
         const gitManager = tenant.gitManager;
 
         return gitManager.getCommit(sha);
+    }
+
+    public async getFullTree(tenantId: string, documentId: string, commit: ICommit): Promise<IFullTree> {
+        throw new Error("Method not implemented.");
     }
 
     /**

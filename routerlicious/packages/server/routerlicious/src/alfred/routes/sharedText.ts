@@ -162,10 +162,10 @@ export function create(
             direct);
 
         const versionP = storage.getLatestVersion(tenantId, request.params.id);
-        // const fullTree = storage.getFullTree(values[1].tree); // tree?
+        const fullTreeP = versionP.then((version) => storage.getFullTree(tenantId, request.params.id, version));
         // const header = storage.getHeader(); // header?
 
-        Promise.all([workerConfigP, versionP]).then((values) => {
+        Promise.all([workerConfigP, versionP, fullTreeP]).then(([workerConfig, version, fullTree]) => {
             const parsedTemplate = path.parse(request.query.template ? request.query.template : defaultTemplate);
             const template =
                 parsedTemplate.base !== "empty" ? `/public/literature/${parsedTemplate.base}` : undefined;
@@ -181,11 +181,12 @@ export function create(
             response.render(
                 "sharedText",
                 {
-                    config: values[0],
+                    config: workerConfig,
                     connect: true,
                     disableCache,
                     documentId: request.params.id,
                     from,
+                    fullTree: JSON.stringify(fullTree),
                     key: tenant.key,
                     options: JSON.stringify(options),
                     pageInk: request.query.pageInk === "true",
@@ -195,7 +196,7 @@ export function create(
                     title: request.params.id,
                     to,
                     token,
-                    version: JSON.stringify(values[1]),
+                    version: JSON.stringify(version),
                 });
             }, (error) => {
                 response.status(400).json(safeStringify(error));

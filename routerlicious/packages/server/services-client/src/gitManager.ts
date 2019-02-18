@@ -2,9 +2,9 @@ import * as api from "@prague/container-definitions";
 import * as resources from "@prague/gitresources";
 import { buildHierarchy } from "@prague/utils";
 import * as assert from "assert";
-import { IHistorian } from "./historian";
+import { IGitManager, IHistorian } from "./storage";
 
-export class GitManager {
+export class GitManager implements IGitManager {
     private blobCache = new Map<string, resources.IBlob>();
 
     constructor(private historian: IHistorian) {
