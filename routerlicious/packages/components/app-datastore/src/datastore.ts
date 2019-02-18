@@ -77,24 +77,30 @@ export class DataStore {
         const baseUrl =
             // tslint:disable-next-line:max-line-length
             `${this.hostUrl.replace(/^[^:]+/, "prague")}/${encodeURIComponent(this.tenantId)}/${encodeURIComponent(componentId)}`;
+
         debug(`resolving baseUrl = ${baseUrl}`);
         const container = await loader.resolve({ url: baseUrl });
         debug(`resolved baseUrl = ${baseUrl}`);
 
         const platformIn = new HostPlatform(services);
-        debug(`attaching baseUrl = ${baseUrl}`);
 
         let acceptPlatformOut: (value: IPlatform) => void;
         // tslint:disable-next-line:promise-must-complete
         const platformOut = new Promise<IPlatform>((accept) => { acceptPlatformOut = accept; });
 
+        const url = `${baseUrl}${
+            // Ensure '/' separator when concatenating 'baseUrl' and 'path'.
+            (path && path.charAt(0)) !== "/" ? "/" : ""
+        }${path}`;
+
+        debug(`attaching url = ${url}`);
         await registerAttach(
             loader,
             container,
-            `${baseUrl}/${path}`,
+            url,
             platformIn,
             acceptPlatformOut);
-        debug(`attached baseUrl = ${baseUrl}`);
+        debug(`attached url = ${url}`);
 
         // If this is a new document we will go and instantiate the chaincode. For old documents we assume a legacy
         // package.

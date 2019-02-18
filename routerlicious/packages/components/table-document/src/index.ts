@@ -230,7 +230,7 @@ export async function instantiateComponent(): Promise<IChaincodeComponent> {
 }
 
 export async function instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
-    return Component.instantiateRuntime(context, "table-document", pkg.name, [
+    return Component.instantiateRuntime(context, pkg.name, [
         [pkg.name, Promise.resolve({ instantiateComponent })],
     ]);
 }

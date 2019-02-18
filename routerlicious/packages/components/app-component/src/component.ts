@@ -151,19 +151,22 @@ export abstract class Component extends EventEmitter {
      * shown in the following example:
      *
      * @example
+     * const pkg = require("../package.json")
+     *
      * export async function instantiateRuntime(context: IContainerContext) {
-     *     return Component.instantiateRuntime(context, "flow-host", "@chaincode/flow-host",
-     *          [["@chaincode/flow-host", Promise.resolve({ instantiateComponent })]]);
+     *     return Component.instantiateRuntime(context, pkg.name,
+     *          [[pkg.name, Promise.resolve({ instantiateComponent })]]);
      * }
      * @example
      */
     public static async instantiateRuntime(
         context: IContainerContext,
-        name: string,
         chaincode: string,
         registry: ReadonlyArray<[string, Promise<IComponentFactory>]>,
     ): Promise<IRuntime> {
-        debug(`instantiateRuntime(name=${name},chaincode=${chaincode},registry=${JSON.stringify(registry)})`);
+        const runtimeId = encodeURIComponent(chaincode);
+
+        debug(`instantiateRuntime(chaincode=${chaincode},registry=${JSON.stringify(registry)})`);
         const runtime = await Runtime.Load(new Map(registry), context);
         debug("runtime loaded.");
 
@@ -177,25 +180,25 @@ export abstract class Component extends EventEmitter {
 
             const componentId = requestUrl
                 ? requestUrl.substr(0, trailingSlash === -1 ? requestUrl.length : trailingSlash)
-                : name;
+                : runtimeId;
             debug(`awaiting component ${componentId}`);
-            const component = await runtime.getComponent(componentId, true);
+            const componentRuntime = await runtime.getComponent(componentId, true);
             debug(`have component ${componentId}`);
 
             // If there is a trailing slash forward to the component. Otherwise handle directly.
             if (trailingSlash === -1) {
                 debug(`resolved ${componentId}`);
-                return { status: 200, mimeType: "prague/component", value: component };
+                return { status: 200, mimeType: "prague/component", value: componentRuntime };
             } else {
                 debug(`delegating to ${requestUrl.substr(trailingSlash)}`);
-                return component.request({ url: requestUrl.substr(trailingSlash) });
+                return componentRuntime.request({ url: requestUrl.substr(trailingSlash) });
             }
         });
 
         // On first boot create the base component
         if (!runtime.existing) {
-            debug(`createAndAttachComponent(name=${name},chaincode=${chaincode})`);
-            runtime.createAndAttachComponent(name, chaincode).catch((error) => {
+            debug(`createAndAttachComponent(chaincode=${chaincode})`);
+            runtime.createAndAttachComponent(runtimeId, chaincode).catch((error) => {
                 context.error(error);
             });
         }
