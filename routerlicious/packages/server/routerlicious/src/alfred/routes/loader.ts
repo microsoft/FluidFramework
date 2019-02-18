@@ -55,7 +55,7 @@ export function create(
 
         Promise.all([workerConfigP, versionP]).then(([workerConfig, version]) => {
             response.render(
-                "containerLoader",
+                "loader",
                 {
                     chaincode,
                     config: workerConfig,

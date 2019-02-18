@@ -1,4 +1,4 @@
-FROM node:8-slim
+FROM node:8.15.0-slim
 
 # See https://crbug.com/795759
 RUN apt-get update && apt-get install -yq libgconf-2-4

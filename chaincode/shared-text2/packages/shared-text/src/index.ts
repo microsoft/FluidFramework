@@ -24,7 +24,7 @@ import { default as axios } from "axios";
 import * as uuid from "uuid/v4";
 // tslint:disable:no-var-requires
 const performanceNow = require("performance-now");
-const debug = require("debug")("chaincode:shared-text");
+const debug = require("debug")("prague:shared-text");
 // tslint:enable:no-var-requires
 import * as url from "url";
 import { controls, ui } from "./controls";
@@ -64,7 +64,7 @@ class SharedTextComponent extends Document {
         this.sharedString = root.get("text") as SharedString.SharedString;
         debug(`Shared string ready - ${performanceNow()}`);
         debug(`id is ${this.runtime.id}`);
-        debug(`Partial load fired - ${performanceNow()}`);
+        debug(`Partial load fired: ${performanceNow()}`);
 
         const hostContent: HTMLElement = await platform.queryInterface<HTMLElement>("div");
         if (!hostContent) {
@@ -115,7 +115,7 @@ class SharedTextComponent extends Document {
 
         this.sharedString.loaded.then(() => {
             theFlow.loadFinished(clockStart);
-            debug(`fully loaded ${this.runtime.id}: ${performanceNow()} `);
+            debug(`${this.runtime.id} fully loaded: ${performanceNow()} `);
         });
     }
 
@@ -194,7 +194,7 @@ export async function instantiateRuntime(context: IContainerContext): Promise<IR
         }
     });
 
-    runtime.registerTasks(["snapshot", "spell", "translation"], "1.0");
+    runtime.registerTasks(["snapshot", "spell", "translation"]);
 
     // On first boot create the base component
     if (!runtime.existing) {

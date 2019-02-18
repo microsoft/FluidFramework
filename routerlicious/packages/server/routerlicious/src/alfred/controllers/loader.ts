@@ -1,5 +1,4 @@
 import { Container, Loader } from "@prague/container-loader";
-import { ICommit } from "@prague/gitresources";
 import { WebLoader, WebPlatform } from "@prague/loader-web";
 import { IComponentRuntime } from "@prague/runtime-definitions";
 import {
@@ -110,7 +109,6 @@ export function containerInitialize(
     tenantId: string,
     documentId: string,
     path: string,
-    version: ICommit,
     token: string,
     config: any,
     chaincode: string,
