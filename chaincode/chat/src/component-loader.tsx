@@ -5,7 +5,7 @@ import * as ReactDOM from "react-dom";
 interface IProps {
   // TODO: Bring back package component. Right now this needs to get a document that already has a loaded chaincode
   // chaincodePackage: string;
-  docId: string;
+  componentId: string;
 }
 
 interface IState {}
@@ -37,7 +37,7 @@ export class LoaderComponent extends React.Component<IProps, IState> {
 
     // TODO: this will work because we don't install new chaincode
     // but sabroner is wrong
-    await ds.open(this.props.docId, "sabroner", "any", services);
+    await ds.open(this.props.componentId, "@chaincode/chat", "any", services);
   }
 
   render() {
