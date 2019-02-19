@@ -10,7 +10,7 @@ import { defaultPartials } from "./partials";
 
 interface ICachedPackage {
     entrypoint: string;
-    scripts: string[];
+    scripts: Array<{ id: string, url: string }>;
 }
 
 const scriptCache = new Map<string, Promise<ICachedPackage>>();
@@ -34,7 +34,12 @@ function getScriptsForCode(externalUrl: string, internalUrl: string, pkg: string
             return {
                 entrypoint: result.data.prague.browser.entrypoint,
                 scripts: result.data.prague.browser.bundle.map(
-                    (script) => `${packageUrl}/${script}`.replace(internalUrl, externalUrl)),
+                    (script, index) => {
+                        return {
+                            id: `${name}-${index}`,
+                            url: `${packageUrl}/${script}`.replace(internalUrl, externalUrl),
+                        };
+                    }),
             };
         });
         scriptCache.set(pkg, packageP);

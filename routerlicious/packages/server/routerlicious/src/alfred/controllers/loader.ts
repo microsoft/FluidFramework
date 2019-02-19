@@ -12,9 +12,29 @@ import {
 export class WebLoader implements ICodeLoader {
     private entryCache = new Map<string, Promise<IChaincodeFactory>>();
 
-    constructor(private baseUrl: string, pkg: string, entrypoint: string) {
+    constructor(private baseUrl: string, pkg: string, entrypoint: string, scriptIds: string[]) {
         if (entrypoint) {
-            this.entryCache.set(pkg, Promise.resolve(window[entrypoint]));
+            // Check to see if the entrypoint exists - use it if so
+            const entrypointReadyP = new Promise<IChaincodeFactory>((resolve, reject) => {
+                if (entrypoint in window) {
+                    resolve(window[entrypoint]);
+                }
+
+                scriptIds.forEach((scriptId) => {
+                    const script = document.getElementById(scriptId) as HTMLScriptElement;
+                    script.onload = () => {
+                        if (entrypoint in window) {
+                            resolve(window[entrypoint]);
+                        }
+                    };
+
+                    script.onerror = (error) => {
+                        reject(error);
+                    };
+                });
+            });
+
+            this.entryCache.set(pkg, entrypointReadyP);
         }
     }
 
@@ -125,6 +145,7 @@ async function start(
     cache: IGitCache,
     code: string,
     entrypoint: string,
+    scriptIds: string[],
     npm: string,
     config: any,
 ): Promise<void> {
@@ -140,7 +161,7 @@ async function start(
         cache);
 
     // Create the web loader and prefetch the chaincode we will need
-    const codeLoader = new WebLoader(npm, code, entrypoint);
+    const codeLoader = new WebLoader(npm, code, entrypoint, scriptIds);
     codeLoader.load(code).catch((error) => console.error("script load error", error));
 
     const tokenProvider = new TokenProvider(token);
@@ -178,6 +199,7 @@ export function initialize(
     config: any,
     chaincode: string,
     entrypoint: string,
+    scriptIds: string[],
     npm: string,
 ) {
     console.log(`Loading ${documentId}`);
@@ -189,6 +211,7 @@ export function initialize(
         cache,
         chaincode,
         entrypoint,
+        scriptIds,
         npm,
         config);
     startP.catch((err) => console.error(err));

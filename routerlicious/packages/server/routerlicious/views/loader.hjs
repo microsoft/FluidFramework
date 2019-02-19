@@ -13,7 +13,7 @@
     <script src="{{#hfurl}}/public/scripts/dist/loader.js{{/hfurl}}"></script>
     {{#pkg}}
         {{#scripts}}
-        <script src="{{.}}"></script>
+        <script id="{{id}}" src="{{url}}" async></script>
         {{/scripts}}
     {{/pkg}}
 
@@ -29,9 +29,17 @@
 
         {{#pkg}}
         var entry = "{{ entrypoint }}";
+        var scriptIds = [
+            {{#pkg}}
+            {{#scripts}}
+            "{{id}}",
+            {{/scripts}}
+            {{/pkg}}
+        ];
         {{/pkg}}
         {{^pkg}}
         var entry = null;
+        var scriptIds = [];
         {{/pkg}}
   
         loader.initialize(
@@ -43,6 +51,7 @@
             config,
             chaincode,
             entry,
+            scriptIds,
             config.npm);
     </script>
 </body>

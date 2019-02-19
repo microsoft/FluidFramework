@@ -108,7 +108,7 @@ export class DocumentStorage implements IDocumentStorage {
         const submodulesP = Promise.all(submoduleCommits.map(async (submoduleCommitSha) => {
             const submoduleCommit = await gitManager.getCommit(submoduleCommitSha);
             const submoduleTree = await gitManager.getTree(submoduleCommit.tree.sha, true);
-            trees.set(submoduleTree.sha, submoduleTree);
+            trees.set(submoduleCommit.tree.sha, submoduleTree);
             commits.set(submoduleCommit.sha, submoduleCommit);
         }));
 

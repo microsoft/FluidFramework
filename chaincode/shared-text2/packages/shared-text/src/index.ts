@@ -21,6 +21,7 @@ import * as SharedString from "@prague/sequence";
 import { IStream } from "@prague/stream";
 import { Deferred } from "@prague/utils";
 import { default as axios } from "axios";
+import { parse } from "querystring";
 import * as uuid from "uuid/v4";
 // tslint:disable:no-var-requires
 const performanceNow = require("performance-now");
@@ -41,8 +42,6 @@ async function downloadRawText(textUrl: string): Promise<string> {
     const data = await axios.get(textUrl);
     return data.data;
 }
-
-const loadPP = false;
 
 class SharedTextComponent extends Document {
     private sharedString: SharedString.SharedString;
@@ -135,8 +134,10 @@ class SharedTextComponent extends Document {
         this.root.set("sequence-test", seq);
         const newString = this.createString() as SharedString.SharedString;
 
-        const starterText = loadPP
-            ? await downloadRawText("https://alfred.wu2-ppe.prague.office-int.com/public/literature/pp.txt")
+        const template = parse(window.location.search).template;
+        const starterText = template
+            ? await downloadRawText(
+                `/public/literature/${template}`)
             : " ";
 
         const segments = MergeTree.loadSegments(starterText, 0, true);

@@ -37,15 +37,23 @@ export class GitManager implements IGitManager {
     /**
      * Reads the object with the given ID. We defer to the client implementation to do the actual read.
      */
-    public async getCommits(sha: string, count: number): Promise<resources.ICommitDetails[]> {
+    public async getCommits(shaOrRef: string, count: number): Promise<resources.ICommitDetails[]> {
+        let sha = shaOrRef;
+
+        // See if the sha is really a ref and convert
         if (this.refCache.has(sha)) {
             debug(`Commit cache hit on ${sha}`);
-            const refSha = this.refCache.get(sha);
-            if (!refSha) {
+            sha = this.refCache.get(sha);
+
+            // If null is stored for the ref then there are no commits - return an empty array
+            if (!sha) {
                 return [];
             }
+        }
 
-            const commit = await this.getCommit(refSha);
+        // See if the commit sha is hashed and return it if so
+        if (this.commitCache.has(sha)) {
+            const commit = this.commitCache.get(sha);
             return [{
                 commit: {
                     author: commit.author,
@@ -60,6 +68,7 @@ export class GitManager implements IGitManager {
             }];
         }
 
+        // Otherwise fall back to the historian
         return this.historian.getCommits(sha, count);
     }
 
@@ -67,7 +76,7 @@ export class GitManager implements IGitManager {
      * Reads the object with the given ID. We defer to the client implementation to do the actual read.
      */
     public async getTree(root: string, recursive = true): Promise<resources.ITree> {
-        if (this.commitCache.has(root)) {
+        if (this.treeCache.has(root)) {
             debug(`Tree cache hit on ${root}`);
             return this.treeCache.get(root);
         }
