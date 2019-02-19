@@ -8,6 +8,7 @@
     "build": "concurrently npm:build:compile npm:tslint",
     "build:compile": "npm run tsc",
     "build:full": "npm run build",
+    "build:full:compile": "npm run build:compile",
     "clean": "rimraf dist && rimraf lib",
     "tsc": "tsc",
     "tslint": "tslint --project tsconfig.json --format verbose"

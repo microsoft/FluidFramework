@@ -9,6 +9,7 @@
     "build": "concurrently npm:build:compile npm:tslint",
     "build:compile": "npm run tsc",
     "build:full": "npm run build",
+    "build:full:compile": "npm run build:compile",
     "dev": "tsc --project tsconfig.dev.json --watch",
     "bench": "ts-node --project tsconfig.prod.json bench/index.ts",
     "test": "ts-mocha -p tsconfig.dev.json \"test/**/*.{ts,tsx}\"",

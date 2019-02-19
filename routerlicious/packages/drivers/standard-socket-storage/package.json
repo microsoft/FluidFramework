@@ -10,6 +10,7 @@
     "build": "concurrently npm:build:compile npm:tslint",
     "build:compile": "concurrently npm:tsc npm:build:esnext",
     "build:full": "npm run build",
+    "build:full:compile": "npm run build:compile",
     "tsc": "tsc",
     "build:esnext": "tsc --outDir lib --m esnext",
     "test": "mocha --recursive dist/test",
