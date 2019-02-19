@@ -10,8 +10,6 @@ import {
 } from "@prague/services-core";
 import { IDatabaseManager, IDocumentDetails, IDocumentStorage, ITenantManager } from "@prague/services-core";
 import * as moniker from "moniker";
-import * as winston from "winston";
-import { debug } from "./debug";
 
 const StartingSequenceNumber = 0;
 
@@ -157,7 +155,6 @@ export class DocumentStorage implements IDocumentStorage {
         // Load in the latest snapshot
         const gitManager = tenant.gitManager;
         const head = await gitManager.getRef(id);
-        winston.info(JSON.stringify(head));
 
         let sequenceNumber: number;
         let minimumSequenceNumber: number;

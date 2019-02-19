@@ -30,9 +30,9 @@
         {{#pkg}}
         var entry = "{{ entrypoint }}";
         {{/pkg}}
-        {{^repo}}
+        {{^pkg}}
         var entry = null;
-        {{/repo}}
+        {{/pkg}}
   
         loader.initialize(
             tenantId,
