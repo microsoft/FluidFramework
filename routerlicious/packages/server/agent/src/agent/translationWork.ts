@@ -1,212 +1,14 @@
-import * as core from "@prague/api-definitions";
-import { IDocumentService, ISequencedDocumentMessage, ITokenProvider } from "@prague/container-definitions";
-import * as map from "@prague/map";
-import * as MergeTree from "@prague/merge-tree";
+import {
+    IDocumentService,
+    ITokenProvider,
+} from "@prague/container-definitions";
+import { ISharedMap } from "@prague/map";
 import * as Sequence from "@prague/sequence";
-import { EventEmitter } from "events";
-import * as request from "request";
+import * as Translator from "@prague/translator";
 import { BaseWork} from "./baseWork";
 import { IWork} from "./definitions";
-import { runAfterWait } from "./utils";
-
-interface ITranslatorInput {
-    Text: string;
-}
-
-interface ITranslatorOutputUnit {
-    text: string;
-    to: string;
-}
-
-interface ITranslatorOutput {
-    translations: ITranslatorOutputUnit[];
-}
-
-const subscriptionKey = "bd099a1e38724333b253fcff7523f76a";
-
-function createRequestUri(from: string, to: string[]): string {
-    const uri = `https://api.cognitive.microsofttranslator.com/translate?api-version=3.0`;
-    const fromLanguage = `&from=${from}&to=`;
-    const toLanguages = to.join(`&to=`);
-    return uri.concat(fromLanguage, toLanguages);
-}
-
-function createRequestBody(texts: string[]): ITranslatorInput[] {
-    return texts.map((text: string) => {
-        const input: ITranslatorInput = {Text: text};
-        return input;
-    });
-}
-
-function processTranslationOutput(input: ITranslatorOutput[]): Map<string, string[]> {
-    const languageText = new Map<string, string[]>();
-    for (const unit of input) {
-        for (const translation of unit.translations) {
-            if (!languageText.has(translation.to)) {
-                languageText.set(translation.to, []);
-            }
-            languageText.get(translation.to).push(translation.text);
-        }
-    }
-    return languageText;
-}
-
-async function translate(from: string, to: string[], text: string[]): Promise<ITranslatorOutput[]> {
-    const uri = createRequestUri(from, to);
-
-    const requestBody = createRequestBody(text);
-
-    return new Promise<ITranslatorOutput[]>((resolve, reject) => {
-        request(
-            {
-                body: requestBody,
-                headers: {
-                    "Content-Type": "application/json",
-                    "Ocp-Apim-Subscription-Key" : subscriptionKey,
-                },
-                json: true,
-                method: "POST",
-                uri,
-            },
-            (err, resp, body) => {
-                if (err || resp.statusCode !== 200) {
-                    reject(err || body);
-                } else {
-                    resolve(body as ITranslatorOutput[]);
-                }
-            });
-    });
-}
-
-class Translator extends EventEmitter {
-    private typeInsights: map.ISharedMap;
-    private pendingTranslation = false;
-    private translating = false;
-    private translationTimer = null;
-
-    constructor(
-        private insights: map.ISharedMap,
-        private sharedString: Sequence.SharedString) {
-            super();
-    }
-
-    public get isTranslating() {
-        return this.translating;
-    }
-
-    public async start(): Promise<void> {
-        await this.insights.wait(this.sharedString.id);
-        this.typeInsights = this.insights.get(this.sharedString.id) as map.ISharedMap;
-
-        this.sharedString.on("op", (op: ISequencedDocumentMessage) => {
-            if (this.needsTranslation(op)) {
-                this.requestTranslation(op);
-            }
-        });
-    }
-
-    public stop() {
-        // Remove listener to stop inbound ops first.
-        this.sharedString.removeAllListeners();
-        // Cancel timer to stop invoking further translation.
-        clearTimeout(this.translationTimer);
-    }
-
-    private needsTranslation(op: any): boolean {
-        // Exit early if there are no target translations
-        const languages = this.typeInsights.get("translations") as map.DistributedSet<string>;
-        if (!languages || languages.entries().length === 0) {
-            return false;
-        }
-
-        // The operation must be an insert, remove or annotate
-        const mergeTreeOp = op.contents as MergeTree.IMergeTreeOp;
-        if (mergeTreeOp.type !== MergeTree.MergeTreeDeltaType.INSERT &&
-            mergeTreeOp.type !== MergeTree.MergeTreeDeltaType.REMOVE &&
-            mergeTreeOp.type !== MergeTree.MergeTreeDeltaType.ANNOTATE) {
-            return false;
-        }
-
-        // If an annotation it must be a style property change
-        if (mergeTreeOp.type === MergeTree.MergeTreeDeltaType.ANNOTATE) {
-            const annotateOp = mergeTreeOp as MergeTree.IMergeTreeAnnotateMsg;
-            if (Object.keys(annotateOp.props).findIndex(
-                (key) => key === "font-weight" || key === "text-decoration") === -1) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    private requestTranslation(op: ISequencedDocumentMessage): void {
-        // Exit early if there is a translation in progress but make not of the desired request
-        if (this.pendingTranslation) {
-            return;
-        }
-
-        const start = Date.now();
-        console.log(`${start} - Requesting translation ${this.sharedString.id}`);
-
-        // Begin the translation
-        this.pendingTranslation = true;
-
-        // Set a timeout before we perform the translation to collect any extra inbound ops
-        this.translationTimer = setTimeout(() => {
-            // Let new reqeusts start
-            this.pendingTranslation = false;
-
-            const languages = this.typeInsights.get("translations") as map.DistributedSet<string>;
-
-            // Run translation on all other operations
-            this.translating = true;
-            const translationsP = this.translate(languages.entries());
-            const doneP = translationsP.catch((error) => {
-                this.translating = false;
-                console.error(error);
-                this.emit("translated");
-            });
-
-            doneP.then(() => {
-                this.translating = false;
-                console.log(`${start} - ${Date.now()} - Done with translation ${this.sharedString.id}`);
-                this.emit("translated");
-            });
-        }, 30);
-    }
-
-    private async translate(languages: string[]): Promise<void> {
-        const from = "en";
-
-        const textAndMarkers = this.sharedString.client.getTextAndMarkers("pg");
-
-        const rawTranslations = await translate(from, languages, textAndMarkers.parallelText);
-        const processedTranslations = processTranslationOutput(rawTranslations);
-
-        for (const languageTranslations of processedTranslations) {
-            const language = languageTranslations[0];
-            const translations = languageTranslations[1];
-            for (let i = 0; i < translations.length; i++) {
-                const translation = translations[i];
-
-                const pos = this.sharedString.client.mergeTree.getOffset(
-                    textAndMarkers.parallelMarkers[i],
-                    this.sharedString.client.getCurrentSeq(),
-                    this.sharedString.client.getClientId());
-
-                const props: any = {};
-                props[`translation-${language}`] = translation;
-                this.sharedString.annotateRange(props, pos, pos + 1);
-            }
-        }
-
-    }
-}
 
 export class TranslationWork extends BaseWork implements IWork {
-    private translationSet = new Set();
-    private translators = new Map<string, core.ISharedObject>();
-    private translator: Translator;
 
     constructor(
         docId: string,
@@ -223,38 +25,23 @@ export class TranslationWork extends BaseWork implements IWork {
             this.service,
             task);
 
-        // Wait for the insights
-        await this.document.getRoot().wait("insights");
-        const insights = await this.document.getRoot().get("insights") as map.ISharedMap;
-        return this.trackEvents(insights);
+        // Wait for the document to get fully connected.
+        if (!this.document.isConnected) {
+            await new Promise<void>((resolve) => this.document.on("connected", () => resolve()));
+        }
+
+        const rootMap = this.document.getRoot();
+        const sharedString = rootMap.get("text") as Sequence.SharedString;
+        const insightsMap = rootMap.get("insights") as ISharedMap;
+
+        if (sharedString && insightsMap) {
+            await insightsMap.wait(sharedString.id);
+            Translator.run(sharedString, insightsMap);
+        }
+
     }
 
     public async stop(): Promise<void> {
-        if (this.translator) {
-            await runAfterWait(
-                this.translator.isTranslating,
-                this.translator,
-                "translated",
-                async () => {
-                    this.translator.stop();
-                });
-        }
         await super.stop();
-    }
-
-    private trackEvents(insights: map.ISharedMap): Promise<void> {
-        const eventHandler = (op: ISequencedDocumentMessage, object: core.ISharedObject) => {
-            if (object && object.type === Sequence.SharedStringExtension.Type) {
-                if (!this.translationSet.has(object)) {
-                    this.translationSet.add(object);
-                    this.translator = new Translator(insights, object as Sequence.SharedString);
-                    this.translators.set(object.id, object);
-                    this.translator.start();
-                }
-            }
-        };
-        this.opHandler = eventHandler;
-        this.document.on("op", eventHandler);
-        return Promise.resolve();
     }
 }
