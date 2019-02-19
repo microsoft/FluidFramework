@@ -35,12 +35,12 @@
     }
   },
   "dependencies": {
-    "@prague/app-component": "^0.2.5038",
-    "@prague/app-datastore": "^0.2.5038",
-    "@prague/map": "^0.2.5038",
-    "@prague/runtime": "^0.2.5038",
-    "@prague/runtime-definitions": "^0.2.5038",
-    "@prague/container-definitions": "^0.2.5038",
+    "@prague/app-component": "^0.2.5056",
+    "@prague/app-datastore": "^0.2.5056",
+    "@prague/map": "^0.2.5056",
+    "@prague/runtime": "^0.2.5056",
+    "@prague/runtime-definitions": "^0.2.5056",
+    "@prague/container-definitions": "^0.2.5056",
     "@stardust-ui/react": "^0.17.0",
     "react": "^16.7.0",
     "react-dom": "^16.7.0"
