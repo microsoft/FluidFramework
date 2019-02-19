@@ -170,6 +170,7 @@
         "blobStorageUrl": "http://historian:3000",
         "repository": "prague",
         "npm": "http://localhost:3002",
+        "clusterNpm": "http://auspkn:3000",
         "permission": ["snapshot", "spell", "intel", "translation", "chain-snapshot", "chain-spell", "chain-intel", "chain-translation"]
     },
     "tenantConfig": [

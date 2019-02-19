@@ -1,11 +1,69 @@
+import { IChaincodeFactory, ICodeLoader, IPraguePackage } from "@prague/container-definitions";
 import { Container, Loader } from "@prague/container-loader";
-import { WebLoader, WebPlatform } from "@prague/loader-web";
+import { WebPlatform } from "@prague/loader-web";
 import { IComponentRuntime } from "@prague/runtime-definitions";
+import { IGitCache } from "@prague/services-client";
 import {
     createDocumentService,
     DefaultErrorTracking,
     TokenProvider,
 } from "@prague/socket-storage";
+
+export class WebLoader implements ICodeLoader {
+    private entryCache = new Map<string, Promise<IChaincodeFactory>>();
+
+    constructor(private baseUrl: string, pkg: string, entrypoint: string) {
+        if (entrypoint) {
+            this.entryCache.set(pkg, Promise.resolve(window[entrypoint]));
+        }
+    }
+
+    public async load(source: string): Promise<IChaincodeFactory> {
+        if (!this.entryCache.has(source)) {
+            const entryP = this.loadCore(source);
+            this.entryCache.set(source, entryP);
+        }
+
+        return this.entryCache.get(source);
+    }
+
+    private async loadCore(source: string): Promise<IChaincodeFactory> {
+        const components = source.match(/(.*)\/(.*)@(.*)/);
+        if (!components) {
+            return Promise.reject("Invalid package");
+        }
+
+        const [, scope, name, version] = components;
+        const packageUrl = `${this.baseUrl}/${encodeURI(scope)}/${encodeURI(`${name}@${version}`)}`;
+
+        const response = await fetch(`${packageUrl}/package.json`);
+        const packageJson = await response.json() as IPraguePackage;
+
+        await Promise.all(
+            packageJson.prague.browser.bundle.map(async (bundle) => this.loadScript(`${packageUrl}/${bundle}`)));
+
+        // tslint:disable-next-line:no-unsafe-any
+        return window[packageJson.prague.browser.entrypoint];
+    }
+
+    private async loadScript(scriptUrl: string): Promise<void> {
+        return new Promise((resolve, reject) => {
+          const script = document.createElement("script");
+          script.src = scriptUrl;
+
+          // Dynamically added scripts are async by default. By setting async to false, we are enabling the scripts
+          // to be downloaded in parallel, but executed in order. This ensures that a script is executed after all of
+          // its dependencies have been loaded and executed.
+          script.async = false;
+
+          script.onload = () => resolve();
+          script.onerror = () =>
+            reject(new Error(`Failed to download the script at url: ${scriptUrl}`));
+
+          document.head.appendChild(script);
+        });
+    }
+}
 
 async function initializeChaincode(document: Container, pkg: string): Promise<void> {
     if (!pkg) {
@@ -64,21 +122,27 @@ async function start(
     tenantId: string,
     documentId: string,
     path: string,
+    cache: IGitCache,
     code: string,
+    entrypoint: string,
     npm: string,
     config: any,
-    from: number,
-    to: number,
-    unitIsTime: boolean,
 ): Promise<void> {
     const errorService = new DefaultErrorTracking();
 
     const documentServices = createDocumentService(
         document.location.origin,
         config.blobStorageUrl,
-        errorService);
+        errorService,
+        false,
+        true,
+        null,
+        cache);
 
-    const codeLoader = new WebLoader(npm);
+    // Create the web loader and prefetch the chaincode we will need
+    const codeLoader = new WebLoader(npm, code, entrypoint);
+    codeLoader.load(code).catch((error) => console.error("script load error", error));
+
     const tokenProvider = new TokenProvider(token);
     const loader = new Loader(
         { tokenProvider },
@@ -101,21 +165,20 @@ async function start(
     // package.
     if (!container.existing) {
         await initializeChaincode(container, code)
-            .catch((error) => console.log("chaincode error", error));
+            .catch((error) => console.error("chaincode error", error));
     }
 }
 
-export function containerInitialize(
+export function initialize(
     tenantId: string,
     documentId: string,
     path: string,
+    cache: IGitCache,
     token: string,
     config: any,
     chaincode: string,
+    entrypoint: string,
     npm: string,
-    from: number,
-    to: number,
-    unitIsTime: boolean,
 ) {
     console.log(`Loading ${documentId}`);
     const startP = start(
@@ -123,11 +186,10 @@ export function containerInitialize(
         tenantId,
         documentId,
         path,
+        cache,
         chaincode,
+        entrypoint,
         npm,
-        config,
-        from,
-        to,
-        unitIsTime);
+        config);
     startP.catch((err) => console.error(err));
 }

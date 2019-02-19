@@ -1,35 +1,49 @@
-{{<layout}}
-    {{$content}}
-        <div id="content"></div>
-    {{/content}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    {{$scripts}}
-        <script src="{{#hfurl}}/public/scripts/dist/loader.js{{/hfurl}}"></script>
-        <script>
-            var config = {{{ config }}};
+    <title>{{ title }}</title>
+</head>
+<body class="{{ optionalBodyClass }}">
+    <div id="content"></div>
 
-            var token = "{{ token }}";
-            var chaincode = "{{ chaincode }}";
+    <script src="{{#hfurl}}/public/scripts/dist/loader.js{{/hfurl}}"></script>
+    {{#pkg}}
+        {{#scripts}}
+        <script src="{{.}}"></script>
+        {{/scripts}}
+    {{/pkg}}
 
-            var tenantId = "{{ tenantId }}";
-            var documentId = "{{ documentId }}";
-            var path = "{{ path }}";
+    <script>
+        var config = {{{ config }}};
+        var cache = {{{ cache }}};
 
-            var from = {{ from }};
-            var to = {{ to }};
-            var unitIsTime = {{ unitIsTime }};
+        var token = "{{ token }}";
+        var chaincode = "{{ chaincode }}";
+        var tenantId = "{{ tenantId }}";
+        var documentId = "{{ documentId }}";
+        var path = "{{ path }}";
 
-            loader.containerInitialize(
-                tenantId,
-                documentId,
-                path,
-                token,
-                config,
-                chaincode,
-                config.npm,
-                from,
-                to,
-                unitIsTime);
-        </script>
-    {{/scripts}}
-{{/layout}}
+        {{#pkg}}
+        var entry = "{{ entrypoint }}";
+        {{/pkg}}
+        {{^repo}}
+        var entry = null;
+        {{/repo}}
+  
+        loader.initialize(
+            tenantId,
+            documentId,
+            path,
+            cache,
+            token,
+            config,
+            chaincode,
+            entry,
+            config.npm);
+    </script>
+</body>
+</html>

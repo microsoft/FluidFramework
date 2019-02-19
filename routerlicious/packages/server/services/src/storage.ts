@@ -114,9 +114,7 @@ export class DocumentStorage implements IDocumentStorage {
             commits.set(submoduleCommit.sha, submoduleCommit);
         }));
 
-        debug(`getBlob ${quorumValuesSha}`);
         const quorumValuesP = gitManager.getBlob(quorumValuesSha).then((blob) => {
-            debug(`got blob ${blob.sha} ${JSON.stringify(blob, null, 2)}`);
             blobs.set(blob.sha, blob);
             const quorumValues = JSON.parse(Buffer.from(blob.content, blob.encoding).toString()) as
                 Array<[string, { value: string }]>;
