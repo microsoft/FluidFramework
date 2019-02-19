@@ -31,6 +31,7 @@ export class GitManager implements IGitManager {
 
     public async getCommit(sha: string): Promise<resources.ICommit> {
         if (this.commitCache.has(sha)) {
+            // tslint:disable-next-line:no-unsafe-any - tslint bug?
             debug(`Cache hit on ${sha}`);
             return this.commitCache.get(sha);
         }
@@ -46,6 +47,7 @@ export class GitManager implements IGitManager {
 
         // See if the sha is really a ref and convert
         if (this.refCache.has(sha)) {
+            // tslint:disable-next-line:no-unsafe-any - tslint bug?
             debug(`Commit cache hit on ${sha}`);
             sha = this.refCache.get(sha);
 
@@ -81,6 +83,7 @@ export class GitManager implements IGitManager {
      */
     public async getTree(root: string, recursive = true): Promise<resources.ITree> {
         if (this.treeCache.has(root)) {
+            // tslint:disable-next-line:no-unsafe-any - tslint bug?
             debug(`Tree cache hit on ${root}`);
             return this.treeCache.get(root);
         }
@@ -90,6 +93,7 @@ export class GitManager implements IGitManager {
 
     public async getBlob(sha: string): Promise<resources.IBlob> {
         if (this.blobCache.has(sha)) {
+            // tslint:disable-next-line:no-unsafe-any - tslint bug?
             debug(`Blob cache hit on ${sha}`);
             return this.blobCache.get(sha);
         }
