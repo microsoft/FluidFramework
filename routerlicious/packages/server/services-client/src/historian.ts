@@ -29,23 +29,19 @@ export class Historian implements IHistorian {
         private disableCache: boolean,
         credentials?: ICredentials) {
 
-        let headers: {};
-        if (credentials) {
-            headers = {
-                Authorization:
-                    `Basic ${new Buffer(`${credentials.user}:${credentials.password}`).toString("base64")}`,
-            };
-        }
-
-        let queryString: {};
+        const queryString: { token?; disableCache? } = {};
         let cacheBust = false;
         if (this.disableCache && this.historianApi) {
-            queryString = { disableCache: this.disableCache };
+            queryString.disableCache = this.disableCache;
         } else if (this.disableCache) {
             cacheBust = true;
         }
 
-        this.restWrapper = new RestWrapper(endpoint, headers, queryString, cacheBust);
+        if (credentials) {
+            queryString.token = new Buffer(`${credentials.user}`).toString("base64");
+        }
+
+        this.restWrapper = new RestWrapper(endpoint, {}, queryString, cacheBust);
     }
 
     /* tslint:disable:promise-function-async */
@@ -55,6 +51,10 @@ export class Historian implements IHistorian {
         } else {
             return this.getHeaderDirect(sha);
         }
+    }
+
+    public getFullTree(sha: string): Promise<any> {
+        return this.restWrapper.get(`/tree/${encodeURIComponent(sha)}`);
     }
 
     public getBlob(sha: string): Promise<git.IBlob> {

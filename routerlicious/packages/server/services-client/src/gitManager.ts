@@ -25,6 +25,10 @@ export class GitManager implements IGitManager {
         return buildHierarchy(header.tree);
     }
 
+    public async getFullTree(sha: string): Promise<any> {
+        return this.historian.getFullTree(sha);
+    }
+
     public async getCommit(sha: string): Promise<resources.ICommit> {
         if (this.commitCache.has(sha)) {
             debug(`Cache hit on ${sha}`);
@@ -162,6 +166,10 @@ export class GitManager implements IGitManager {
 
     public addTree(tree: resources.ITree) {
         this.treeCache.set(tree.sha, tree);
+    }
+
+    public addBlob(blob: resources.IBlob) {
+        this.blobCache.set(blob.sha, blob);
     }
 
     /**

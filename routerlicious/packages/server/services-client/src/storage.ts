@@ -50,11 +50,12 @@ export interface IHistorian extends IGitService {
      * Retrieves the header for the given document
      */
     getHeader(sha: string): Promise<git.IHeader>;
-
+    getFullTree(sha: string): Promise<any>;
 }
 
 export interface IGitManager {
     getHeader(id: string, sha: string): Promise<api.ISnapshotTree>;
+    getFullTree(sha: string): Promise<any>;
     getCommit(sha: string): Promise<git.ICommit>;
     getCommits(sha: string, count: number): Promise<git.ICommitDetails[]>;
     getTree(root: string, recursive: boolean): Promise<git.ITree>;

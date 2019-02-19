@@ -68,6 +68,10 @@ export class DocumentService implements api.IDocumentService {
             for (const tree of this.gitCache.trees) {
                 gitManager.addTree(tree);
             }
+
+            for (const blob of this.gitCache.blobs) {
+                gitManager.addBlob(blob);
+            }
         }
 
         return new DocumentStorageService(tenantId, id, gitManager);

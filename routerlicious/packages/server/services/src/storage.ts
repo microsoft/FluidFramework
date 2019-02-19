@@ -1,5 +1,5 @@
 import { IDocumentAttributes, IDocumentSystemMessage, MessageType } from "@prague/container-definitions";
-import { IBlob, ICommit, ICommitDetails, ITree } from "@prague/gitresources";
+import { ICommit, ICommitDetails } from "@prague/gitresources";
 import { IGitCache } from "@prague/services-client";
 import {
     ICollection,
@@ -73,69 +73,37 @@ export class DocumentStorage implements IDocumentStorage {
             return { cache: { blobs: [], commits: [], refs: { [documentId]: null }, trees: [] }, code: null };
         }
 
-        const commit = {
-            author: versions[0].commit.author,
-            committer: versions[0].commit.committer,
-            message: versions[0].commit.message,
-            parents: versions[0].parents,
-            sha: versions[0].sha,
-            tree: versions[0].commit.tree,
-            url: versions[0].url,
-        };
-        const gitManager = tenant.gitManager;
+        const fullTree = await tenant.gitManager.getFullTree(versions[0].sha);
 
-        const blobs = new Map<string, IBlob>();
-        const trees = new Map<string, ITree>();
-        const commits = new Map<string, ICommit>();
+        let code: string = null;
+        if (fullTree.quorumValues) {
+            let quorumValues;
+            for (const blob of fullTree.blobs) {
+                if (blob.sha === fullTree.quorumValues) {
+                    quorumValues = JSON.parse(Buffer.from(blob.content, blob.encoding).toString()) as
+                        Array<[string, { value: string }]>;
 
-        const baseTree = await gitManager.getTree(commit.tree.sha, true);
+                    for (const quorumValue of quorumValues) {
+                        if (quorumValue[0] === "code2") {
+                            code = quorumValue[1].value;
+                            break;
+                        }
+                    }
 
-        commits.set(commit.sha, commit);
-        trees.set(baseTree.sha, baseTree);
-
-        const submoduleCommits = new Array<string>();
-        let quorumValuesSha = null as string;
-        baseTree.tree.forEach((entry) => {
-            if (entry.path === "quorumValues") {
-                quorumValuesSha = entry.sha;
-            }
-
-            if (entry.type === "commit") {
-                submoduleCommits.push(entry.sha);
-            }
-        });
-
-        const submodulesP = Promise.all(submoduleCommits.map(async (submoduleCommitSha) => {
-            const submoduleCommit = await gitManager.getCommit(submoduleCommitSha);
-            const submoduleTree = await gitManager.getTree(submoduleCommit.tree.sha, true);
-            trees.set(submoduleCommit.tree.sha, submoduleTree);
-            commits.set(submoduleCommit.sha, submoduleCommit);
-        }));
-
-        const quorumValuesP = gitManager.getBlob(quorumValuesSha).then((blob) => {
-            blobs.set(blob.sha, blob);
-            const quorumValues = JSON.parse(Buffer.from(blob.content, blob.encoding).toString()) as
-                Array<[string, { value: string }]>;
-
-            for (const quorumValue of quorumValues) {
-                if (quorumValue[0] === "code2") {
-                    return quorumValue[1].value;
+                    break;
                 }
             }
+        }
 
-            return null;
-        });
-
-        const [, code] = await Promise.all([submodulesP, quorumValuesP]);
-
-        const cache = {
-            blobs: Array.from(blobs.values()),
-            commits: Array.from(commits.values()),
-            refs: { [documentId]: commit.sha},
-            trees: Array.from(trees.values()),
+        return {
+            cache: {
+                blobs: fullTree.blobs,
+                commits: fullTree.commits,
+                refs: { [documentId]: versions[0].sha },
+                trees: fullTree.trees,
+            },
+            code,
         };
-
-        return { cache, code };
     }
 
     /**
