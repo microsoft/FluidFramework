@@ -16,20 +16,17 @@
   "author": "Microsoft",
   "repository": "microsoft/prague",
   "dependencies": {
-    "@prague/api-definitions": "^0.2.0",
     "@prague/container-loader": "^0.2.0",
-    "@prague/map": "^0.2.0",
     "@prague/container-definitions": "^0.2.0",
     "@prague/loader-web": "^0.2.0",
     "@prague/runtime-definitions": "^0.2.0",
     "@prague/socket-storage": "^0.2.0",
-    "@types/jsonwebtoken": "^8.3.0",
-    "axios": "^0.18.0",
     "debug": "^3.1.0",
     "jsonwebtoken": "^8.4.0"
   },
   "devDependencies": {
     "@types/debug": "^0.0.31",
+    "@types/jsonwebtoken": "^8.3.0",
     "@types/mocha": "^5.2.5",
     "@types/nock": "^9.3.0",
     "@types/node": "^10.12.12",
