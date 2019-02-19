@@ -1,4 +1,5 @@
 import { ICommit, ICommitDetails } from "@prague/gitresources";
+import { IGitCache } from "@prague/services-client";
 import { IRangeTrackerSnapshot } from "@prague/utils";
 
 export interface IDocumentDetails {
@@ -16,6 +17,8 @@ export interface IDocumentStorage {
     getVersions(tenantId: string, documentId: string, count: number): Promise<ICommitDetails[]>;
 
     getVersion(tenantId: string, documentId: string, sha: string): Promise<ICommit>;
+
+    getFullTree(tenantId: string, documentId: string): Promise<{ cache: IGitCache, code: string }>;
 
     getForks(tenantId: string, documentId: string): Promise<string[]>;
 

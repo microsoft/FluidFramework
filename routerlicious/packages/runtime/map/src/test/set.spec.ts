@@ -1,3 +1,5 @@
+// tslint:disable: newline-per-chained-call
+// tslint:disable: no-backbone-get-set-outside-model
 import * as assert from "assert";
 import * as map from "..";
 
@@ -13,14 +15,18 @@ describe("Routerlicious", () => {
                 testMap = extension.create(null, "test");
                 testMap.registerValueType(new map.DistributedSetValueType());
 
-                emptySet = testMap.set<map.DistributedSet<number>>(
-                    "emptySet",
-                    undefined,
-                    map.DistributedSetValueType.Name);
-                populatedSet = testMap.set<map.DistributedSet<number>>(
+                emptySet = testMap.
+                    set(
+                        "emptySet",
+                        undefined,
+                        map.DistributedSetValueType.Name).
+                    get<map.DistributedSet<number>>("emptySet");
+                populatedSet = testMap.
+                set(
                     "populatedSet",
                     [1, 2, 4, 6],
-                    map.DistributedSetValueType.Name);
+                    map.DistributedSetValueType.Name).
+                    get<map.DistributedSet<number>>("populatedSet");
             });
 
             describe(".add()", () => {

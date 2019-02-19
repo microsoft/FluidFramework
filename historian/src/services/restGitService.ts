@@ -164,6 +164,64 @@ export class RestGitService {
             useCache);
     }
 
+    public async getFullTree(sha: string, useCache: boolean): Promise<any> {
+        const version = await this.getCommit(sha, useCache);
+
+        const key = `${version.sha}:tree`;
+        return this.resolve(
+            key,
+            async () => {
+                const blobs = new Map<string, git.IBlob>();
+                const trees = new Map<string, git.ITree>();
+                const commits = new Map<string, git.ICommit>();
+
+                const baseTree = await this.getTree(version.tree.sha, true, useCache);
+
+                commits.set(version.sha, version);
+                trees.set(baseTree.sha, baseTree);
+
+                const submoduleCommits = new Array<string>();
+                const quorumValuesSha = new Array<string>();
+                let quorumValues: string;
+
+                baseTree.tree.forEach((entry) => {
+                    if (entry.path.indexOf("quorum") !== -1) {
+                        quorumValuesSha.push(entry.sha);
+                    }
+
+                    if (entry.path === "quorumValues") {
+                        quorumValues = entry.sha;
+                    }
+
+                    if (entry.type === "commit") {
+                        submoduleCommits.push(entry.sha);
+                    }
+                });
+
+                const submodulesP = Promise.all(submoduleCommits.map(async (submoduleCommitSha) => {
+                    const submoduleCommit = await this.getCommit(submoduleCommitSha, useCache);
+                    const submoduleTree = await this.getTree(submoduleCommit.tree.sha, true, useCache);
+                    trees.set(submoduleCommit.tree.sha, submoduleTree);
+                    commits.set(submoduleCommit.sha, submoduleCommit);
+                }));
+
+                const blobsP = Promise.all(quorumValuesSha.map(async (quorumSha) => {
+                    const blob = await this.getBlob(quorumSha, useCache);
+                    blobs.set(blob.sha, blob);
+                }));
+
+                await Promise.all([submodulesP, blobsP]);
+
+                return {
+                    blobs: Array.from(blobs.values()),
+                    commits: Array.from(commits.values()),
+                    quorumValues,
+                    trees: Array.from(trees.values()),
+                };
+            },
+            useCache);
+    }
+
     /**
      * Helper method to translate from an owner repo pair to the URL component for it. In the future we will require
      * the owner parameter. But for back compat we allow it to be optional.

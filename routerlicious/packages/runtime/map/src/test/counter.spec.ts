@@ -1,3 +1,5 @@
+// tslint:disable: newline-per-chained-call
+// tslint:disable: no-backbone-get-set-outside-model
 import * as assert from "assert";
 import * as map from "..";
 
@@ -12,7 +14,10 @@ describe("Routerlicious", () => {
                 testMap = extension.create(null, "test");
                 testMap.registerValueType(new map.CounterValueType());
 
-                testCounter = testMap.set("defaultCounter", undefined, map.CounterValueType.Name);
+                testCounter = testMap.
+                    set("defaultCounter", undefined,
+                        map.CounterValueType.Name).
+                    get("defaultCounter");
             });
 
             describe(".constructor", () => {
@@ -22,7 +27,9 @@ describe("Routerlicious", () => {
                 });
 
                 it("Should be able to create a counter with predefined value", async () => {
-                    const counterWithValue = testMap.set("defaultCounter", 50, map.CounterValueType.Name);
+                    const counterWithValue = testMap.
+                        set("defaultCounter", 50, map.CounterValueType.Name).
+                        get("defaultCounter");
                     assert.ok(counterWithValue);
 
                     /* tslint:disable:no-unsafe-any */

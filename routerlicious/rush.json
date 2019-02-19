@@ -50,6 +50,10 @@
       "projectFolder": "packages/components/table-slice/"
     },
     {
+      "packageName": "@prague/table-test-app",
+      "projectFolder": "packages/components/table-test-app/"
+    },
+    {
       "packageName": "@chaincode/table-view",
       "projectFolder": "packages/components/table-view/"
     },

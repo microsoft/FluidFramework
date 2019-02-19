@@ -20,6 +20,7 @@ describe.skip("LocalTestDataStore", () => {
             // [TestComponent.type, { instantiate: async () => Component.instantiate(new TestComponent()) }],
         ]);
         const datastore1 = new DataStore(
+            "origin",
             testLoader,
             createTestDocumentService(testDeltaConnectionServer),
             "tokenKey",
@@ -33,6 +34,7 @@ describe.skip("LocalTestDataStore", () => {
 
         doc1.set("done1");
         const datastore2 = new DataStore(
+            "origin",
             testLoader,
             createTestDocumentService(testDeltaConnectionServer),
             "tokenKey",

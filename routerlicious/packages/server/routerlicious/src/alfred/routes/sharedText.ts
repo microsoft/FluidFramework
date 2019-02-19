@@ -141,6 +141,8 @@ export function create(
      * Loading of a specific shared text.
      */
     router.get("/:tenantId?/:id", ensureLoggedIn(), async (request, response, next) => {
+        const start = Date.now();
+
         const disableCache = "disableCache" in request.query;
         const direct = "direct" in request.query;
 
@@ -160,8 +162,15 @@ export function create(
             config.get("error:track"),
             config.get("client"),
             direct);
-        const versionP = storage.getLatestVersion(tenantId, request.params.id);
-        Promise.all([workerConfigP, versionP]).then((values) => {
+
+        const fullTreeP = storage.getFullTree(tenantId, request.params.id);
+
+        // Track timing
+        const workerTimeP = workerConfigP.then(() => Date.now() - start);
+        const treeTimeP = fullTreeP.then(() => Date.now() - start);
+        const timingsP = Promise.all([workerTimeP, treeTimeP]);
+
+        Promise.all([workerConfigP, fullTreeP, timingsP]).then(([workerConfig, fullTree, timings]) => {
             const parsedTemplate = path.parse(request.query.template ? request.query.template : defaultTemplate);
             const template =
                 parsedTemplate.base !== "empty" ? `/public/literature/${parsedTemplate.base}` : undefined;
@@ -174,10 +183,14 @@ export function create(
                 translationLanguage: "language" in request.query ? request.query.language : undefined,
             };
 
+            timings.push(Date.now() - start);
+
             response.render(
                 "sharedText",
                 {
-                    config: values[0],
+                    cache: JSON.stringify(fullTree.cache),
+                    code: fullTree.code,
+                    config: workerConfig,
                     connect: true,
                     disableCache,
                     documentId: request.params.id,
@@ -188,10 +201,11 @@ export function create(
                     partials: defaultPartials,
                     template,
                     tenantId,
+                    timings: JSON.stringify(timings),
                     title: request.params.id,
                     to,
                     token,
-                    version: JSON.stringify(values[1]),
+                    version: JSON.stringify(null),
                 });
             }, (error) => {
                 response.status(400).json(safeStringify(error));

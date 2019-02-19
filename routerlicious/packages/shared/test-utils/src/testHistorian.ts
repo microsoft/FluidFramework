@@ -8,6 +8,10 @@ export class TestHistorian implements IHistorian {
         throw new Error("Method not implemented.");
     }
 
+    public getFullTree(sha: string): Promise<any> {
+        throw new Error("Method not implemented.");
+    }
+
     public getBlob(sha: string): Promise<git.IBlob> {
         throw new Error("Method not implemented.");
     }

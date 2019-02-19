@@ -1,7 +1,9 @@
+// tslint:disable:align
 import { ISharedObject, SharedObject, ValueType } from "@prague/api-definitions";
 import { ISequencedDocumentMessage } from "@prague/container-definitions";
 import { IRuntime } from "@prague/runtime-definitions";
 import { IMapOperation, IMapValue } from "./definitions";
+import { SharedDirectory } from "./directory";
 import { IValueOpEmitter, SerializeFilter } from "./interfaces";
 import { SharedMap } from "./map";
 
@@ -32,20 +34,20 @@ export interface ILocalViewElement {
     localValue: any;
 }
 
-export class MapView  {
+export class MapView {
     public readonly data = new Map<string, ILocalViewElement>();
 
     constructor(private readonly map: SharedMap, private readonly runtime: IRuntime, id: string) {
     }
 
-    public async populate(data: {[key: string]: IMapValue }): Promise<void> {
-        const localValuesP = new Array<Promise<{key: string, value: ILocalViewElement}>>();
+    public async populate(data: { [key: string]: IMapValue }): Promise<void> {
+        const localValuesP = new Array<Promise<{ key: string, value: ILocalViewElement }>>();
 
         // tslint:disable-next-line:forin
         for (const key in data) {
             const value = data[key];
             const localValueP = this.fill(key, value)
-                .then((filledValue) => ({key, value: filledValue}));
+                .then((filledValue) => ({ key, value: filledValue }));
             localValuesP.push(localValueP);
         }
 
@@ -99,7 +101,7 @@ export class MapView  {
     }
 
     public has(key: string): boolean {
-        return this.data.has(key);
+    return this.data.has(key);
     }
 
     public attachAll() {
@@ -110,7 +112,7 @@ export class MapView  {
         }
     }
 
-    public set<T = any>(key: string, value: any, type?: string): T {
+    public prepareOperationValue<T = any>(key: string, value: T, type?: string) {
         let operationValue: IMapValue;
         if (type) {
             const valueType = this.map.getValueType(type);
@@ -131,24 +133,26 @@ export class MapView  {
                 : ValueType[ValueType.Plain];
             operationValue = this.spill({ localType: valueType, localValue: value });
         }
+        return { operationValue, localValue : value };
+    }
 
+    public set<T = any>(key: string, value: T, type?: string): void {
+        const values = this.prepareOperationValue(key, value, type);
         const op: IMapOperation = {
             key,
             type: "set",
-            value: operationValue,
+            value: values.operationValue,
         };
 
         this.setCore(
             op.key,
             {
-                localType: operationValue.type,
-                localValue: value,
+                localType: values.operationValue.type,
+                localValue: values.localValue,
             },
             true,
             null);
         this.map.submitMapKeyMessage(op);
-
-        return value;
     }
 
     public delete(key: string) {
@@ -221,7 +225,7 @@ export class MapView  {
         });
     }
 
-    private async fill(key: string, remote: IMapValue): Promise<ILocalViewElement> {
+    protected async fill(key: string, remote: IMapValue): Promise<ILocalViewElement> {
         let translatedValue: any;
         if (remote.type === ValueType[ValueType.Shared]) {
             const distributedObject = await this.runtime.getChannel(remote.value);
@@ -252,7 +256,6 @@ export class MapView  {
             if (!this.map.isLocal()) {
                 distributedObject.attach();
             }
-
             return {
                 type: ValueType[ValueType.Shared],
                 value: distributedObject.id,
@@ -270,4 +273,12 @@ export class MapView  {
             };
         }
     }
+}
+
+export class DirectoryView extends MapView {
+    constructor(directory: SharedDirectory, runtime: IRuntime,
+        id: string) {
+        super(directory, runtime, id);
+    }
+
 }

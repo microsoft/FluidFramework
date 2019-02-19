@@ -51,10 +51,10 @@ interface IMapMessageHandler {
  */
 export class SharedMap extends SharedObject implements ISharedMap {
     public [Symbol.toStringTag]: string;
-    private readonly messageHandler: Map<string, IMapMessageHandler>;
-    private readonly view: MapView;
-    private readonly pendingKeys: Map<string, number>;
-    private pendingClearClientSequenceNumber: number;
+    protected readonly messageHandler: Map<string, IMapMessageHandler>;
+    protected view: MapView;
+    protected readonly pendingKeys: Map<string, number>;
+    protected pendingClearClientSequenceNumber: number;
     private serializeFilter: SerializeFilter;
     private readonly valueTypes = new Map<string, IValueType<any>>();
 
@@ -68,73 +68,14 @@ export class SharedMap extends SharedObject implements ISharedMap {
         type = MapExtension.Type) {
 
         super(id, runtime, type);
-        const defaultPrepare = (op: IMapOperation, local: boolean) => Promise.resolve();
         this.serializeFilter = (key, value, valueType) => value;
 
         this.messageHandler = new Map<string, IMapMessageHandler>();
         this.pendingKeys = new Map<string, number>();
         this.pendingClearClientSequenceNumber = -1;
-        // tslint:disable:no-backbone-get-set-outside-model
-        this.messageHandler.set(
-            "clear",
-            {
-                prepare: defaultPrepare,
-                process: (op, context, local, message) => {
-                    if (local) {
-                        if (this.pendingClearClientSequenceNumber === message.clientSequenceNumber) {
-                            this.pendingClearClientSequenceNumber = -1;
-                        }
-                        return false;
-                    }
 
-                    if (this.pendingKeys.size !== 0) {
-                        this.view.clearExceptPendingKeys(this.pendingKeys);
-                        return;
-                    }
-
-                    this.view.clearCore(local, message);
-                },
-                submit: (op) => {
-                    this.submitMapClearMessage(op);
-                },
-            });
-        this.messageHandler.set(
-            "delete",
-            {
-                prepare: defaultPrepare,
-                process: (op, context, local, message) => {
-                    if (!this.needProcessKeyOperations(op, local, message)) {
-                        return;
-                    }
-
-                    return this.view.deleteCore(op.key, local, message);
-                },
-                submit: (op) => {
-                    this.submitMapKeyMessage(op);
-                },
-            });
-        this.messageHandler.set(
-            "set",
-            {
-                prepare: (op, local) => {
-                    return local ? Promise.resolve(null) : this.view.prepareSetCore(op.key, op.value);
-                },
-                process: (op, context, local, message) => {
-                    if (!this.needProcessKeyOperations(op, local, message)) {
-                        return;
-                    }
-
-                    this.view.setCore(op.key, context, local, message);
-                },
-                submit: (op) => {
-                    this.submitMapKeyMessage(op);
-                },
-            });
-
-        this.view = new MapView(
-            this,
-            this.runtime,
-            this.id);
+        this.setMessageHandlers();
+        this.initializeView();
         this[Symbol.toStringTag] = this.view.data[Symbol.toStringTag];
     }
 
@@ -184,8 +125,9 @@ export class SharedMap extends SharedObject implements ISharedMap {
         return this.view.has(key);
     }
 
-    public set<T>(key: string, value: any, type?: string): T {
-        return this.view.set(key, value, type);
+    public set<T>(key: string, value: any, type?: string): this {
+        this.view.set(key, value, type);
+        return this;
     }
 
     public delete(key: string): boolean {
@@ -523,12 +465,7 @@ export class SharedMap extends SharedObject implements ISharedMap {
         return message;
     }
 
-    private isMapMessage(message: any): boolean {
-        const type = message.type;
-        return this.messageHandler.has(type);
-    }
-
-    private needProcessKeyOperations(op: IMapOperation, local: boolean, message: ISequencedDocumentMessage): boolean {
+    protected needProcessKeyOperations(op: IMapOperation, local: boolean, message: ISequencedDocumentMessage): boolean {
         if (this.pendingClearClientSequenceNumber !== -1) {
             // If I have a NACK clear, we can ignore all ops.
             return false;
@@ -550,4 +487,73 @@ export class SharedMap extends SharedObject implements ISharedMap {
         return !local;
 
     }
+
+    protected initializeView() {
+        this.view = new MapView(
+            this,
+            this.runtime,
+            this.id);
+    }
+
+    protected setMessageHandlers() {
+        const defaultPrepare = (op: IMapOperation, local: boolean) => Promise.resolve();
+        // tslint:disable:no-backbone-get-set-outside-model
+        this.messageHandler.set(
+            "clear",
+            {
+                prepare: defaultPrepare,
+                process: (op, context, local, message) => {
+                    if (local) {
+                        if (this.pendingClearClientSequenceNumber === message.clientSequenceNumber) {
+                            this.pendingClearClientSequenceNumber = -1;
+                        }
+                        return false;
+                    }
+                    if (this.pendingKeys.size !== 0) {
+                        this.view.clearExceptPendingKeys(this.pendingKeys);
+                        return;
+                    }
+                    this.view.clearCore(local, message);
+                },
+                submit: (op) => {
+                    this.submitMapClearMessage(op);
+                },
+            });
+        this.messageHandler.set(
+            "delete",
+            {
+                prepare: defaultPrepare,
+                process: (op, context, local, message) => {
+                    if (!this.needProcessKeyOperations(op, local, message)) {
+                        return;
+                    }
+                    return this.view.deleteCore(op.key, local, message);
+                },
+                submit: (op) => {
+                    this.submitMapKeyMessage(op);
+                },
+            });
+        this.messageHandler.set(
+            "set",
+            {
+                prepare: (op, local) => {
+                    return local ? Promise.resolve(null) : this.view.prepareSetCore(op.key, op.value);
+                },
+                process: (op, context, local, message) => {
+                    if (!this.needProcessKeyOperations(op, local, message)) {
+                        return;
+                    }
+                    this.view.setCore(op.key, context, local, message);
+                },
+                submit: (op) => {
+                    this.submitMapKeyMessage(op);
+                },
+            });
+    }
+
+    private isMapMessage(message: any): boolean {
+        const type = message.type;
+        return this.messageHandler.has(type);
+    }
+
 }

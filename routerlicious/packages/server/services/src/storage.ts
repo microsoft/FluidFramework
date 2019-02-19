@@ -1,16 +1,22 @@
 import { IDocumentAttributes, IDocumentSystemMessage, MessageType } from "@prague/container-definitions";
 import { ICommit, ICommitDetails } from "@prague/gitresources";
-import { IProducer } from "@prague/services-core";
-import * as core from "@prague/services-core";
+import { IGitCache } from "@prague/services-client";
+import {
+    ICollection,
+    IForkOperation,
+    IProducer,
+    IRawOperationMessage,
+    RawOperationType,
+} from "@prague/services-core";
+import { IDatabaseManager, IDocumentDetails, IDocumentStorage, ITenantManager } from "@prague/services-core";
 import * as moniker from "moniker";
-import * as winston from "winston";
 
 const StartingSequenceNumber = 0;
 
-export class DocumentStorage implements core.IDocumentStorage {
+export class DocumentStorage implements IDocumentStorage {
     constructor(
-        private databaseManager: core.IDatabaseManager,
-        private tenantManager: core.ITenantManager,
+        private databaseManager: IDatabaseManager,
+        private tenantManager: ITenantManager,
         private producer: IProducer) {
     }
 
@@ -22,7 +28,7 @@ export class DocumentStorage implements core.IDocumentStorage {
         return collection.findOne({ documentId, tenantId });
     }
 
-    public async getOrCreateDocument(tenantId: string, documentId: string): Promise<core.IDocumentDetails> {
+    public async getOrCreateDocument(tenantId: string, documentId: string): Promise<IDocumentDetails> {
         const getOrCreateP = this.getOrCreateObject(tenantId, documentId);
 
         return getOrCreateP;
@@ -60,11 +66,51 @@ export class DocumentStorage implements core.IDocumentStorage {
         return gitManager.getCommit(sha);
     }
 
+    public async getFullTree(tenantId: string, documentId: string): Promise<{ cache: IGitCache, code: string }> {
+        const tenant = await this.tenantManager.getTenant(tenantId);
+        const versions = await tenant.gitManager.getCommits(documentId, 1);
+        if (versions.length === 0) {
+            return { cache: { blobs: [], commits: [], refs: { [documentId]: null }, trees: [] }, code: null };
+        }
+
+        const fullTree = await tenant.gitManager.getFullTree(versions[0].sha);
+
+        let code: string = null;
+        if (fullTree.quorumValues) {
+            let quorumValues;
+            for (const blob of fullTree.blobs) {
+                if (blob.sha === fullTree.quorumValues) {
+                    quorumValues = JSON.parse(Buffer.from(blob.content, blob.encoding).toString()) as
+                        Array<[string, { value: string }]>;
+
+                    for (const quorumValue of quorumValues) {
+                        if (quorumValue[0] === "code2") {
+                            code = quorumValue[1].value;
+                            break;
+                        }
+                    }
+
+                    break;
+                }
+            }
+        }
+
+        return {
+            cache: {
+                blobs: fullTree.blobs,
+                commits: fullTree.commits,
+                refs: { [documentId]: versions[0].sha },
+                trees: fullTree.trees,
+            },
+            code,
+        };
+    }
+
     /**
      * Retrieves the forks for the given document
      */
     public async getForks(tenantId: string, documentId: string): Promise<string[]> {
-        const collection: core.ICollection<any> = await this.databaseManager.getDocumentCollection();
+        const collection: ICollection<any> = await this.databaseManager.getDocumentCollection();
         const document = await collection.findOne({ documentId, tenantId });
 
         return document.forks || [];
@@ -77,7 +123,6 @@ export class DocumentStorage implements core.IDocumentStorage {
         // Load in the latest snapshot
         const gitManager = tenant.gitManager;
         const head = await gitManager.getRef(id);
-        winston.info(JSON.stringify(head));
 
         let sequenceNumber: number;
         let minimumSequenceNumber: number;
@@ -141,7 +186,7 @@ export class DocumentStorage implements core.IDocumentStorage {
         return name;
     }
 
-    private async getOrCreateObject(tenantId: string, documentId: string): Promise<core.IDocumentDetails> {
+    private async getOrCreateObject(tenantId: string, documentId: string): Promise<IDocumentDetails> {
         const collection = await this.databaseManager.getDocumentCollection();
         const result = await collection.findOrCreate(
             {
@@ -174,7 +219,7 @@ export class DocumentStorage implements core.IDocumentStorage {
         name: string,
         producer: IProducer): Promise<void> {
 
-        const contents: core.IForkOperation = {
+        const contents: IForkOperation = {
             documentId: name,
             minSequenceNumber,
             sequenceNumber,
@@ -194,13 +239,13 @@ export class DocumentStorage implements core.IDocumentStorage {
             type: MessageType.Fork,
         };
 
-        const integrateMessage: core.IRawOperationMessage = {
+        const integrateMessage: IRawOperationMessage = {
             clientId: null,
             documentId: id,
             operation,
             tenantId,
             timestamp: Date.now(),
-            type: core.RawOperationType,
+            type: RawOperationType,
         };
 
         await producer.send(integrateMessage, tenantId, id);

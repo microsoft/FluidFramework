@@ -76,10 +76,33 @@ export interface IValueType<T> {
     ops: Map<string, IValueOperation<T>>;
 }
 
+export interface IMapRegistry {
+    /**
+     * Registers a new operation on the map
+     */
+    registerValueType<T>(type: IValueType<T>);
+
+    /**
+     * Registers a custom filter to provide extra processing on the condensed log.
+     * This is a very advanced feature and should be used with extreme caution.
+     */
+    registerSerializeFilter(filter: SerializeFilter);
+}
+
+export interface ISharedDirectory {
+    getPath<T = any>(path: string): T;
+    hasPath(path: string): boolean;
+    setPath<T = any>(path: string, value: T, type?: string): void;
+    /**
+     * A form of get except it will only resolve the promise once the path exists in the directory.
+     */
+    waitPath<T>(path: string): Promise<T>;
+}
+
 /**
  * Shared map interface
  */
-export interface ISharedMap extends ISharedObject, Map<string, any> {
+export interface ISharedMap extends ISharedObject, IMapRegistry, Map<string, any> {
     /**
      * Retrieves the given key from the map
      */
@@ -94,22 +117,11 @@ export interface ISharedMap extends ISharedObject, Map<string, any> {
      * Sets the key to the provided value. An optional type can be specified to initialize the key
      * to one of the registered value types.
      */
-    set<T = any>(key: string, value: T | any, type?: string): T;
+    set<T = any>(key: string, value: T, type?: string): this;
 
-    /**
-     * Registers a new operation on the map
-     */
-    registerValueType<T>(type: IValueType<T>);
-
-    /**
-     * Registers a custom filter to provide extra processing on the condensed log.
-     * This is a very advanced feature and should be used with extreme caution.
-     */
-    registerSerializeFilter(filter: SerializeFilter);
-
+    on(event: string | symbol, listener: (...args: any[]) => void): this;
     on(event: "pre-op" | "op", listener: (op: ISequencedDocumentMessage, local: boolean) => void): this;
     on(
         event: "valueChanged",
         listener: (changed: IValueChanged, local: boolean, op: ISequencedDocumentMessage) => void): this;
-    on(event: string | symbol, listener: (...args: any[]) => void): this;
 }

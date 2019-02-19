@@ -16,6 +16,7 @@
   "author": "Microsoft",
   "repository": "microsoft/prague",
   "devDependencies": {
+    "@prague/prague-dev-server": "^3.2.1",
     "css-loader": "^1.0.0",
     "file-loader": "^2.0.0",
     "html-loader": "^0.5.5",

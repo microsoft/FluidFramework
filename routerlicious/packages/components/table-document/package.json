@@ -23,7 +23,8 @@
     "dev": "npm run build:dev -- --watch",
     "publish-local": "npm publish --registry http://localhost:4873",
     "publish-wu2": "npm run build && npm publish --registry https://packages.wu2.prague.office-int.com",
-    "publish-patch-local": "npm version patch && npm run publish-local"
+    "publish-patch-local": "npm version patch && npm run publish-local",
+    "republish": "docker-compose stop verdaccio && docker-compose rm -f -v verdaccio && docker-compose create --force-recreate verdaccio && docker-compose start verdaccio && npm run publish-local"
   },
   "prague": {
     "browser": {

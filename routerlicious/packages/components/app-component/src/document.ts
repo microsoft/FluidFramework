@@ -11,7 +11,7 @@ import * as stream from "@prague/stream";
 import * as uuid from "uuid/v4";
 import { Component } from "./component";
 
-export class Document extends Component {
+export abstract class Document extends Component {
     constructor() {
         // Register default map value types
         registerDefaultValueType(new DistributedSetValueType());
@@ -74,11 +74,4 @@ export class Document extends Component {
     public createStream(id: string = uuid()): stream.IStream {
         return this.runtime.createChannel(id, stream.StreamExtension.Type) as stream.IStream;
     }
-
-    public async attach(): Promise<void> { /* do nothing */ }
-
-    /**
-     * Subclass implements 'create()' to put initial document structure in place.
-     */
-    protected async create(): Promise<void> { /* do nothing */ }
 }

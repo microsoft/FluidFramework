@@ -139,6 +139,7 @@ export interface IContainerContext {
     readonly quorum: IQuorum;
 
     error(err: any): void;
+    requestSnapshot(tagMessage: string): Promise<void>;
 }
 
 /**

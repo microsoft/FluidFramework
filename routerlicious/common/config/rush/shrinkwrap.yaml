@@ -40,6 +40,7 @@ dependencies:
   '@rush-temp/stream': 'file:projects/stream.tgz'
   '@rush-temp/table-document': 'file:projects/table-document.tgz'
   '@rush-temp/table-slice': 'file:projects/table-slice.tgz'
+  '@rush-temp/table-test-app': 'file:projects/table-test-app.tgz'
   '@rush-temp/table-view': 'file:projects/table-view.tgz'
   '@rush-temp/test-utils': 'file:projects/test-utils.tgz'
   '@rush-temp/tools-core': 'file:projects/tools-core.tgz'
@@ -65,7 +66,7 @@ dependencies:
   '@types/lodash': 4.14.120
   '@types/logform': 1.2.0
   '@types/minio': 7.0.1
-  '@types/mocha': 5.2.5
+  '@types/mocha': 5.2.6
   '@types/mongodb': 3.1.19
   '@types/morgan': 1.7.35
   '@types/nconf': 0.0.37
@@ -659,6 +660,10 @@ packages:
     dev: false
     resolution:
       integrity: sha512-lAVp+Kj54ui/vLUFxsJTMtWvZraZxum3w3Nwkble2dNuV5VnPA+Mi2oGX9XYJAaIvZi3tn3cbjS/qcJXRb6Bww==
+  /@types/mocha/5.2.6:
+    dev: false
+    resolution:
+      integrity: sha512-1axi39YdtBI7z957vdqXI4Ac25e7YihYQtJa+Clnxg1zTJEaIRbndt71O3sP4GAMgiAm0pY26/b9BrY4MR/PMw==
   /@types/mongodb/3.1.19:
     dependencies:
       '@types/bson': 1.0.11
@@ -853,6 +858,10 @@ packages:
     dev: false
     resolution:
       integrity: sha512-SudIN9TRJ+v8g5pTG8RRCqfqTMNqgWCKKd3vtynhGzkIIjxaicNAMuY5TRadJ6tzDu3Dotf3ngaMILtmOdmWEQ==
+  /@types/url-parse/1.4.3:
+    dev: false
+    resolution:
+      integrity: sha512-4kHAkbV/OfW2kb5BLVUuUMoumB3CP8rHqlw48aHvFy5tf9ER0AfOonBlX29l/DD68G70DmyhRlSYfQPSYpC5Vw==
   /@types/uuid/3.4.4:
     dependencies:
       '@types/node': 10.12.24
@@ -1374,6 +1383,12 @@ packages:
     dev: false
     resolution:
       integrity: sha512-fNEiL2+AZt6AlAw/29Cr0UDe4sRAHCpEHh54WMz+Bb7QfNcFw4h3loofyJpLeQs4Yx7yuqu/2dLgM5hKOs6HlQ==
+  /async/2.6.2:
+    dependencies:
+      lodash: 4.17.11
+    dev: false
+    resolution:
+      integrity: sha512-H1qVYh1MYhEEFLsP97cVKqCGo7KfCyTt6uEWqsTBr9SO84oK9Uwbyd/yCW+6rKJLHksBNUVWZDAjfS+Ccx0Bbg==
   /asynckit/0.4.0:
     dev: false
     resolution:
@@ -7686,7 +7701,7 @@ packages:
       integrity: sha512-qnQ7gVMxGNxsiL4lEuJwe/To8UnK7fAnmbGEEH8RpLouuKbeEm0lhbQVFIrNSuB+G7tVrAlVsZgETT5nljf+Iw==
   /source-map-loader/0.2.4:
     dependencies:
-      async: 2.6.1
+      async: 2.6.2
       loader-utils: 1.2.3
     dev: false
     engines:
@@ -8423,6 +8438,15 @@ packages:
     hasBin: true
     resolution:
       integrity: sha512-BVwVbPJRspzNh2yfslyT1PSbl5uIk03EZlb493RKHN4qej/D06n1cEhjlOJG69oFsE7OT8XjpTUcYf6pKTLMhw==
+  /ts-node/8.0.2:
+    dev: false
+    engines:
+      node: '>=4.2.0'
+    hasBin: true
+    peerDependencies:
+      typescript: '>=2.0'
+    resolution:
+      integrity: sha512-MosTrinKmaAcWgO8tqMjMJB22h+sp3Rd1i4fdoWY4mhBDekOwIAKI/bzmRi7IcbCmjquccYg2gcF6NBkLgr0Tw==
   /tsconfig-paths/3.8.0:
     dependencies:
       '@types/json5': 0.0.29
@@ -9403,7 +9427,7 @@ packages:
     dev: false
     name: '@rush-temp/app-component'
     resolution:
-      integrity: sha512-i1e+HNO1SrPNg/W3QownqrdU8T/f1UamZ/v8DSyHvZ7BfCUpdEQJZ1HqcTkZqrpecnCvAHNy82JJWth6Ts2u+A==
+      integrity: sha512-Ij65gUgnPyxmCzMg3VlEkF7UJytexwjugNeY121Dl9C0qifWStZ4Mhj860GVEC9Vy5rdRcYCcZz3gxOG8PdiPA==
       tarball: 'file:projects/app-component.tgz'
     version: 0.0.0
   'file:projects/app-datastore.tgz':
@@ -9413,6 +9437,7 @@ packages:
       '@types/mocha': 5.2.5
       '@types/nock': 9.3.1
       '@types/node': 10.12.24
+      '@types/url-parse': 1.4.3
       axios: 0.18.0
       debug: 3.2.6
       jsonwebtoken: 8.4.0
@@ -9424,10 +9449,11 @@ packages:
       tslint: /tslint/5.12.1/typescript@3.3.3
       tslint-microsoft-contrib: /tslint-microsoft-contrib/6.0.0/tslint@5.12.1+typescript@3.3.3
       typescript: 3.3.3
+      url-parse: 1.4.4
     dev: false
     name: '@rush-temp/app-datastore'
     resolution:
-      integrity: sha512-tTws+CrUuJCSHueuA8kpd9taOF4dhmyG5m0TLCTaX+7O6Hz/XMNmY91PcX/e6XSZvcuDCatKnonMwzLwJG8Bug==
+      integrity: sha512-R0bCAjEx+F8dBpV1tjSED8skJjz7Uc67irnEo4fFlStPcnHaph44xWOu0KYsEUxAHFYKftzoW2ZyQ9f2AM/QBg==
       tarball: 'file:projects/app-datastore.tgz'
     version: 0.0.0
   'file:projects/app-ui.tgz':
@@ -9648,7 +9674,7 @@ packages:
     dev: false
     name: '@rush-temp/flow-editor'
     resolution:
-      integrity: sha512-gmEKXsqNFb6GidjCxwGTICtd6s2ImEtwORpoQfxe9Ocz867/pdAuD2Egx8EdzclgNK9T1LmRqtCRDPCTO8rKvw==
+      integrity: sha512-D2F3WRwm3zu9to97vSnZa46ZQWdzB7aiuy4Qdx33l2Z+k3KFMKWnx7sdXmbU1XRdZhKGcL0Jm2DDKInMkfZFvA==
       tarball: 'file:projects/flow-editor.tgz'
     version: 0.0.0
   'file:projects/flow-host.tgz':
@@ -9677,7 +9703,7 @@ packages:
     dev: false
     name: '@rush-temp/flow-host'
     resolution:
-      integrity: sha512-mbURm8/b/UN20YXkgVqfHET5kFWPPReHTrAUoXu1AGv5jL1TgaV068/484hmkBubacgwBUJFYm3Me+Ov3aqCyg==
+      integrity: sha512-9FgGP3bAX72lkNQRhjNvMwuOc+J2/+bjVEKMu0h2Vpk7OnpffH2ipgE/QszQDRgj0Q1NmBlGFf/Ln8zaWcwG4w==
       tarball: 'file:projects/flow-host.tgz'
     version: 0.0.0
   'file:projects/flow-util.tgz':
@@ -9953,6 +9979,7 @@ packages:
       '@types/ws': 6.0.1
       amqplib: 0.5.3
       async: 2.6.1
+      axios: 0.18.0
       azure-iot-device: 1.9.3
       azure-iot-device-mqtt: 1.9.3
       azure-iothub: 1.9.3
@@ -10037,7 +10064,7 @@ packages:
     dev: false
     name: '@rush-temp/routerlicious'
     resolution:
-      integrity: sha512-tt4RYVLBhr+PlJSa+oANMY0eZdoU0jJhigT4b5WAbe0Q6TjRfewQxC78FeZi5++Wc3aT2wLOSWtg0E8ZF5KMBQ==
+      integrity: sha512-s+77u/JDzvGSnWmoytOihMpBPHAyGnKag3w3EWLtXKAnjoe/85MWOBVC7LBOAimVimekjhLRMggiHO5X+/Oi2w==
       tarball: 'file:projects/routerlicious.tgz'
     version: 0.0.0
   'file:projects/runtime-definitions.tgz':
@@ -10133,7 +10160,7 @@ packages:
     dev: false
     name: '@rush-temp/services-core'
     resolution:
-      integrity: sha512-f2wKVQqi9D91LOzwSyHChtMaOLCRe3fYWgveEZz7tak9SrNWOIpI0bw+2K6llWGmglmIJJlPpPjQ3a33tCHLwQ==
+      integrity: sha512-9BB0vCJShGzYWaL3IW9RQgh3/kr14tyN2d+TELaae1rA53jf/zcleH8EpKvFA0h9ZCg+iS9t8uDbAbV6rYQq3w==
       tarball: 'file:projects/services-core.tgz'
     version: 0.0.0
   'file:projects/services-utils.tgz':
@@ -10316,6 +10343,28 @@ packages:
       integrity: sha512-5NG4SKpSEunHh1qMEmVzv59wd3u7O5NGdt4ee7eWyxgCQUbJTzSq0x+5r4c3r6EwYyXJfjDr29iOwhqiJ3d+OQ==
       tarball: 'file:projects/table-slice.tgz'
     version: 0.0.0
+  'file:projects/table-test-app.tgz':
+    dependencies:
+      '@types/debug': 0.0.31
+      '@types/mocha': 5.2.6
+      '@types/node': 10.12.25
+      debug: 3.2.6
+      mocha: 5.2.0
+      source-map-loader: 0.2.4
+      ts-loader: 4.5.0
+      ts-node: 8.0.2
+      tslint: /tslint/5.12.1/typescript@3.3.3
+      tslint-microsoft-contrib: /tslint-microsoft-contrib/6.0.0/tslint@5.12.1+typescript@3.3.3
+      typescript: 3.3.3
+      webpack: 4.29.3
+      webpack-cli: 3.2.3
+      webpack-merge: 4.2.1
+    dev: false
+    name: '@rush-temp/table-test-app'
+    resolution:
+      integrity: sha512-qTmC8KGHadZ0gxcbLyz87dbGOUpuoX+wfqgH+cJrV96FFZkOZOVbPOaWCuS8+KgOD5r54khrQnWTkNHyK0rT1A==
+      tarball: 'file:projects/table-test-app.tgz'
+    version: 0.0.0
   'file:projects/table-view.tgz':
     dependencies:
       '@types/node': 10.12.24
@@ -10376,7 +10425,7 @@ packages:
     dev: false
     name: '@rush-temp/tools-core'
     resolution:
-      integrity: sha512-Bp9LufX72/Axl0cDZri0xA3Hr61nocdAMv63dp4AM05TOodAkcX1ZNKqQ8pmGhydiFEMb8RgJMmSUeTTbo2IWA==
+      integrity: sha512-63MuHjun9+qbaspLgNkRzJdUnLPM8glwD98i1GaAfd1qz6XIHf0PbDSDc/syy/iRs3dlOOpVpccPW/GI96oYyQ==
       tarball: 'file:projects/tools-core.tgz'
     version: 0.0.0
   'file:projects/utils.tgz':
@@ -10444,6 +10493,7 @@ specifiers:
   '@rush-temp/stream': 'file:./projects/stream.tgz'
   '@rush-temp/table-document': 'file:./projects/table-document.tgz'
   '@rush-temp/table-slice': 'file:./projects/table-slice.tgz'
+  '@rush-temp/table-test-app': 'file:./projects/table-test-app.tgz'
   '@rush-temp/table-view': 'file:./projects/table-view.tgz'
   '@rush-temp/test-utils': 'file:./projects/test-utils.tgz'
   '@rush-temp/tools-core': 'file:./projects/tools-core.tgz'

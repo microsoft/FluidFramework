@@ -1,5 +1,6 @@
 import { IDocumentStorageService, ISnapshotTree, ITree } from "@prague/container-definitions";
 import { ICommit, ICreateBlobResponse } from "@prague/gitresources";
+import { debug } from "./debug";
 
 export class PrefetchDocumentStorageService implements IDocumentStorageService {
     // SHA -> blob prefetchCache cache
@@ -70,11 +71,17 @@ export class PrefetchDocumentStorageService implements IDocumentStorageService {
 
     private prefetchTree(tree: ISnapshotTree) {
         for (const blobKey of Object.keys(tree.blobs)) {
-            if (blobKey[0] === "." || blobKey === "header" || blobKey === "quorum") {
+            if (blobKey[0] === "." || blobKey === "header" || blobKey.indexOf("quorum") === 0) {
                 // We don't care if the prefetch succeed
                 // tslint:disable-next-line:no-floating-promises
                 this.cachedRead(tree.blobs[blobKey]);
             }
+        }
+
+        for (const commit of Object.keys(tree.commits)) {
+            this.getVersions(tree.commits[commit], 1)
+                .then((moduleCommit) => this.getSnapshotTree(moduleCommit[0]))
+                .catch((error) => debug("Ignored cached read error", error));
         }
 
         for (const subTree of Object.keys(tree.trees)) {

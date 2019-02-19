@@ -33,10 +33,14 @@ import { debug } from "./debug";
 import { LeaderElector } from "./leaderElection";
 import { analyzeTasks, getLeaderCandidate } from "./taskAnalyzer";
 
+export interface IComponentRegistry {
+    get(name: string): Promise<IComponentFactory>;
+}
+
 // Context will define the component level mappings
 export class Runtime extends EventEmitter implements IHostRuntime {
     public static async Load(
-        registry: Map<string, Promise<IComponentFactory>>,
+        registry: IComponentRegistry,
         context: IContainerContext,
     ): Promise<Runtime> {
         const runtime = new Runtime(registry, context);
@@ -144,7 +148,7 @@ export class Runtime extends EventEmitter implements IHostRuntime {
     private requestHandler: (request: IRequest) => Promise<IResponse>;
 
     private constructor(
-        private readonly registry: Map<string, Promise<IComponentFactory>>,
+        private readonly registry: IComponentRegistry,
         private readonly context: IContainerContext,
     ) {
         super();
@@ -242,6 +246,10 @@ export class Runtime extends EventEmitter implements IHostRuntime {
         });
 
         return root;
+    }
+
+    public async requestSnapshot(tagMessage: string): Promise<void> {
+        return this.context.requestSnapshot(tagMessage);
     }
 
     public async stop(): Promise<void> {

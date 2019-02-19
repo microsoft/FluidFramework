@@ -1,7 +1,6 @@
 import * as resources from "@prague/gitresources";
 import { EventEmitter } from "events";
-import { IClient, ISequencedClient } from "./clients";
-import { ISequencedProposal } from "./consensus";
+import { IClient } from "./clients";
 import {
     IContentMessage,
     IDocumentMessage,
@@ -28,22 +27,7 @@ export interface IDocumentAttributes {
     /**
      * List of clients when the snapshot was taken
      */
-    clients: Array<[string, ISequencedClient]>;
-
-    /**
-     * List of clients when the snapshot was taken
-     */
     partialOps: Array<[string, string[]]>;
-
-    /**
-     * Pending proposals at the time of the snapshot
-     */
-    proposals: ISequencedProposal[];
-
-    /**
-     * Quorum values at the time of the snapshot
-     */
-    values: Array<[string, any]>;
 }
 
 export enum FileMode {
