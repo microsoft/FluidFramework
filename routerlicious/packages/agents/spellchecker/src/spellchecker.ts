@@ -255,7 +255,7 @@ export class Spellcheker {
         private dict: MergeTree.TST<number>) {
     }
 
-    public run() {
+    public checkSharedString() {
         this.root.loaded.then(() => {
             this.speller = new Speller(this.root, this.dict);
             this.speller.initialSpellCheck();
