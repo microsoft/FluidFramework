@@ -2,9 +2,11 @@
   "name": "root",
   "private": true,
   "scripts": {
-    "build": "lerna run build --stream",
+    "build": "npm run build:compile && npm run tslint",
+    "build:compile": "lerna run build:compile --stream",
     "build:flow": "lerna run build --stream --scope '@chaincode/flow-*' --scope '@prague/flow-*' --scope '@prague/routerlicious'",
-    "build:full": "lerna run build:full --stream",
+    "build:full": "npm run build:full:compile && npm run tslint",
+    "build:full:compile": "lerna run build:full:compile --stream",
     "clean": "lerna run clean --stream --parallel",
     "docker-restart": "docker-compose restart alfred && docker-compose restart deli && docker-compose restart scriptorium && docker-compose restart tmz && docker-compose restart paparazzi",
     "postinstall": "(npm run registryAuth || true) && lerna bootstrap --hoist --nohoist tslint-microsoft-contrib",
@@ -27,7 +29,7 @@
     "test:copyresults": "copyfiles \"packages/*/nyc/**\" nyc",
     "test:full": "npm run test:coverage;t1=$?;npm run test:copyresults; exit $t1",
     "tsc": "lerna run tsc --stream",
-    "tslint": "lerna run tslint --stream",
+    "tslint": "lerna run tslint --no-sort --stream",
     "watch": "concurrently \"npm run watch:tsc\" \"npm run watch:esnext\" \"npm run watch:webpack\"",
     "use:lerna": "git clean -Xdf && npm i",
     "use:rush": "git clean -Xdf && (npm run registryAuth || true) && cd common/tools && npm install && cd ../.. && npm run rush:install",
@@ -37,7 +39,7 @@
   },
   "devDependencies": {
     "@microsoft/rush": "^5.5.4",
-    "concurrently": "^4.0.1",
+    "concurrently": "^4.1.0",
     "copyfiles": "^2.1.0",
     "lerna": "^3.13.0"
   },

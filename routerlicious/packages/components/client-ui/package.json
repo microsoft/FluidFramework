@@ -6,8 +6,10 @@
   "types": "dist/index.d.ts",
   "sideEffects": false,
   "scripts": {
-    "build": "npm run tsc && npm run tslint",
+    "build": "concurrently npm:build:compile npm:tslint",
+    "build:compile": "npm run tsc",
     "build:full": "npm run build",
+    "build:full:compile": "npm run build:compile",
     "clean": "rimraf dist",
     "test": "mocha --recursive dist/test",
     "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml",
@@ -36,6 +38,7 @@
     "report-dir": "nyc/report"
   },
   "devDependencies": {
+    "concurrently": "^4.1.0",
     "@types/jsdom": "^12.0.0",
     "@types/mocha": "^5.2.5",
     "jsdom": "^12.0.0",

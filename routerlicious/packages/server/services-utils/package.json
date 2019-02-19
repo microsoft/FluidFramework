@@ -6,8 +6,10 @@
   "types": "dist/index.d.ts",
   "sideEffects": false,
   "scripts": {
-    "build": "npm run tsc && npm run tslint",
+    "build": "concurrently npm:build:compile npm:tslint",
+    "build:compile": "npm run tsc",
     "build:full": "npm run build",
+    "build:full:compile": "npm run build:compile",
     "clean": "rimraf dist && rimraf lib",
     "tsc": "tsc",
     "tslint": "tslint --project tsconfig.json --format verbose"
@@ -29,6 +31,7 @@
     "winston": "^3.1.0"
   },
   "devDependencies": {
+    "concurrently": "^4.1.0",
     "@types/bytes": "^3.0.0",
     "@types/debug": "^0.0.31",
     "@types/logform": "^1.2.0",

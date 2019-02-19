@@ -15,8 +15,11 @@
     }
   },
   "scripts": {
-    "build": "npm run tsc && npm run build:esnext && npm run tslint && copyfiles -u 1 \"src/**/*.css\" dist/ && copyfiles -u 1 \"src/**/*.css\" lib/",
+    "build": "concurrently npm:build:compile npm:tslint",
+    "build:compile": "concurrently npm:tsc npm:build:esnext npm:build:copy",
+    "build:copy": "copyfiles -u 1 \"src/**/*.css\" dist/ && copyfiles -u 1 \"src/**/*.css\" lib/",
     "build:full": "npm run build",
+    "build:full:compile": "npm run build:compile",
     "clean": "rimraf dist && rimraf lib",
     "tsc": "tsc",
     "build:esnext": "tsc --outDir lib --m esnext",
@@ -44,6 +47,7 @@
     "debug": "^3.1.0"
   },
   "devDependencies": {
+    "concurrently": "^4.1.0",
     "@types/debug": "^0.0.31",
     "@types/node": "^10.12.12",
     "copyfiles": "^2.1.0",
