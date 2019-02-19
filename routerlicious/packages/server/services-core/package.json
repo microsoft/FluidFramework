@@ -24,6 +24,7 @@
     "@prague/container-definitions": "^0.2.0",
     "@prague/gitresources": "^0.2.0",
     "@prague/runtime-definitions": "^0.2.0",
+    "@prague/services-client": "^0.2.0",
     "@prague/utils": "^0.2.0",
     "@types/jsonwebtoken": "^8.3.0",
     "@types/nconf": "^0.0.37",

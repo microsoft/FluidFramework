@@ -1,4 +1,4 @@
-// import { GitManager } from "@prague/services-client";
+import { IGitManager } from "@prague/services-client";
 
 export interface IAlfredTenant {
     id: string;
@@ -45,8 +45,7 @@ export interface ITenantOrderer {
 }
 
 export interface ITenant {
-    // TODO KURTB This needs to take in the GitManager/IHistorian/etc... once packages have been split
-    gitManager: any;
+    gitManager: IGitManager;
 
     storage: ITenantStorage;
 

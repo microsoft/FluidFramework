@@ -1,16 +1,22 @@
 import { IDocumentAttributes, IDocumentSystemMessage, MessageType } from "@prague/container-definitions";
-import { ICommit, ICommitDetails } from "@prague/gitresources";
-import { IProducer } from "@prague/services-core";
-import * as core from "@prague/services-core";
+import { IBlob, ICommit, ICommitDetails, ITree } from "@prague/gitresources";
+import { IGitCache } from "@prague/services-client";
+import {
+    ICollection,
+    IForkOperation,
+    IProducer,
+    IRawOperationMessage,
+    RawOperationType,
+} from "@prague/services-core";
+import { IDatabaseManager, IDocumentDetails, IDocumentStorage, ITenantManager } from "@prague/services-core";
 import * as moniker from "moniker";
-import * as winston from "winston";
 
 const StartingSequenceNumber = 0;
 
-export class DocumentStorage implements core.IDocumentStorage {
+export class DocumentStorage implements IDocumentStorage {
     constructor(
-        private databaseManager: core.IDatabaseManager,
-        private tenantManager: core.ITenantManager,
+        private databaseManager: IDatabaseManager,
+        private tenantManager: ITenantManager,
         private producer: IProducer) {
     }
 
@@ -22,7 +28,7 @@ export class DocumentStorage implements core.IDocumentStorage {
         return collection.findOne({ documentId, tenantId });
     }
 
-    public async getOrCreateDocument(tenantId: string, documentId: string): Promise<core.IDocumentDetails> {
+    public async getOrCreateDocument(tenantId: string, documentId: string): Promise<IDocumentDetails> {
         const getOrCreateP = this.getOrCreateObject(tenantId, documentId);
 
         return getOrCreateP;
@@ -60,11 +66,83 @@ export class DocumentStorage implements core.IDocumentStorage {
         return gitManager.getCommit(sha);
     }
 
+    public async getFullTree(tenantId: string, documentId: string): Promise<{ cache: IGitCache, code: string }> {
+        const tenant = await this.tenantManager.getTenant(tenantId);
+        const versions = await tenant.gitManager.getCommits(documentId, 1);
+        if (versions.length === 0) {
+            return { cache: { blobs: [], commits: [], refs: { [documentId]: null }, trees: [] }, code: null };
+        }
+
+        const commit = {
+            author: versions[0].commit.author,
+            committer: versions[0].commit.committer,
+            message: versions[0].commit.message,
+            parents: versions[0].parents,
+            sha: versions[0].sha,
+            tree: versions[0].commit.tree,
+            url: versions[0].url,
+        };
+        const gitManager = tenant.gitManager;
+
+        const blobs = new Map<string, IBlob>();
+        const trees = new Map<string, ITree>();
+        const commits = new Map<string, ICommit>();
+
+        const baseTree = await gitManager.getTree(commit.tree.sha, true);
+
+        commits.set(commit.sha, commit);
+        trees.set(baseTree.sha, baseTree);
+
+        const submoduleCommits = new Array<string>();
+        let quorumValuesSha = null as string;
+        baseTree.tree.forEach((entry) => {
+            if (entry.path === "quorumValues") {
+                quorumValuesSha = entry.sha;
+            }
+
+            if (entry.type === "commit") {
+                submoduleCommits.push(entry.sha);
+            }
+        });
+
+        const submodulesP = Promise.all(submoduleCommits.map(async (submoduleCommitSha) => {
+            const submoduleCommit = await gitManager.getCommit(submoduleCommitSha);
+            const submoduleTree = await gitManager.getTree(submoduleCommit.tree.sha, true);
+            trees.set(submoduleTree.sha, submoduleTree);
+            commits.set(submoduleCommit.sha, submoduleCommit);
+        }));
+
+        const quorumValuesP = gitManager.getBlob(quorumValuesSha).then((blob) => {
+            blobs.set(blob.sha, blob);
+            const quorumValues = JSON.parse(Buffer.from(blob.content, blob.encoding).toString()) as
+                Array<[string, { value: string }]>;
+
+            for (const quorumValue of quorumValues) {
+                if (quorumValue[0] === "code2") {
+                    return quorumValue[1].value;
+                }
+            }
+
+            return null;
+        });
+
+        const [, code] = await Promise.all([submodulesP, quorumValuesP]);
+
+        const cache = {
+            blobs: Array.from(blobs.values()),
+            commits: Array.from(commits.values()),
+            refs: { [documentId]: commit.sha},
+            trees: Array.from(trees.values()),
+        };
+
+        return { cache, code };
+    }
+
     /**
      * Retrieves the forks for the given document
      */
     public async getForks(tenantId: string, documentId: string): Promise<string[]> {
-        const collection: core.ICollection<any> = await this.databaseManager.getDocumentCollection();
+        const collection: ICollection<any> = await this.databaseManager.getDocumentCollection();
         const document = await collection.findOne({ documentId, tenantId });
 
         return document.forks || [];
@@ -77,7 +155,6 @@ export class DocumentStorage implements core.IDocumentStorage {
         // Load in the latest snapshot
         const gitManager = tenant.gitManager;
         const head = await gitManager.getRef(id);
-        winston.info(JSON.stringify(head));
 
         let sequenceNumber: number;
         let minimumSequenceNumber: number;
@@ -141,7 +218,7 @@ export class DocumentStorage implements core.IDocumentStorage {
         return name;
     }
 
-    private async getOrCreateObject(tenantId: string, documentId: string): Promise<core.IDocumentDetails> {
+    private async getOrCreateObject(tenantId: string, documentId: string): Promise<IDocumentDetails> {
         const collection = await this.databaseManager.getDocumentCollection();
         const result = await collection.findOrCreate(
             {
@@ -174,7 +251,7 @@ export class DocumentStorage implements core.IDocumentStorage {
         name: string,
         producer: IProducer): Promise<void> {
 
-        const contents: core.IForkOperation = {
+        const contents: IForkOperation = {
             documentId: name,
             minSequenceNumber,
             sequenceNumber,
@@ -194,13 +271,13 @@ export class DocumentStorage implements core.IDocumentStorage {
             type: MessageType.Fork,
         };
 
-        const integrateMessage: core.IRawOperationMessage = {
+        const integrateMessage: IRawOperationMessage = {
             clientId: null,
             documentId: id,
             operation,
             tenantId,
             timestamp: Date.now(),
-            type: core.RawOperationType,
+            type: RawOperationType,
         };
 
         await producer.send(integrateMessage, tenantId, id);

@@ -2,10 +2,14 @@ import * as api from "@prague/container-definitions";
 import * as resources from "@prague/gitresources";
 import { buildHierarchy } from "@prague/utils";
 import * as assert from "assert";
-import { IHistorian } from "./historian";
+import { debug } from "./debug";
+import { IGitManager, IHistorian } from "./storage";
 
-export class GitManager {
+export class GitManager implements IGitManager {
     private blobCache = new Map<string, resources.IBlob>();
+    private commitCache = new Map<string, resources.ICommit>();
+    private treeCache = new Map<string, resources.ITree>();
+    private refCache = new Map<string, string>();
 
     constructor(private historian: IHistorian) {
     }
@@ -22,6 +26,11 @@ export class GitManager {
     }
 
     public async getCommit(sha: string): Promise<resources.ICommit> {
+        if (this.commitCache.has(sha)) {
+            debug(`Cache hit on ${sha}`);
+            return this.commitCache.get(sha);
+        }
+
         return this.historian.getCommit(sha);
     }
 
@@ -29,6 +38,28 @@ export class GitManager {
      * Reads the object with the given ID. We defer to the client implementation to do the actual read.
      */
     public async getCommits(sha: string, count: number): Promise<resources.ICommitDetails[]> {
+        if (this.refCache.has(sha)) {
+            debug(`Commit cache hit on ${sha}`);
+            const refSha = this.refCache.get(sha);
+            if (!refSha) {
+                return [];
+            }
+
+            const commit = await this.getCommit(refSha);
+            return [{
+                commit: {
+                    author: commit.author,
+                    committer: commit.committer,
+                    message: commit.message,
+                    tree: commit.tree,
+                    url: commit.url,
+                },
+                parents: commit.parents,
+                sha: commit.sha,
+                url: commit.url,
+            }];
+        }
+
         return this.historian.getCommits(sha, count);
     }
 
@@ -36,13 +67,21 @@ export class GitManager {
      * Reads the object with the given ID. We defer to the client implementation to do the actual read.
      */
     public async getTree(root: string, recursive = true): Promise<resources.ITree> {
+        if (this.commitCache.has(root)) {
+            debug(`Tree cache hit on ${root}`);
+            return this.treeCache.get(root);
+        }
+
         return this.historian.getTree(root, recursive);
     }
 
     public async getBlob(sha: string): Promise<resources.IBlob> {
-        return this.blobCache.has(sha)
-            ? this.blobCache.get(sha)
-            : this.historian.getBlob(sha);
+        if (this.blobCache.has(sha)) {
+            debug(`Blob cache hit on ${sha}`);
+            return this.blobCache.get(sha);
+        }
+
+        return this.historian.getBlob(sha);
     }
 
     public getRawUrl(sha: string): string {
@@ -102,6 +141,18 @@ export class GitManager {
         };
 
         return this.historian.updateRef(`heads/${branch}`, ref);
+    }
+
+    public addRef(ref: string, sha: string) {
+        this.refCache.set(ref, sha);
+    }
+
+    public addCommit(commit: resources.ICommit) {
+        this.commitCache.set(commit.sha, commit);
+    }
+
+    public addTree(tree: resources.ITree) {
+        this.treeCache.set(tree.sha, tree);
     }
 
     /**

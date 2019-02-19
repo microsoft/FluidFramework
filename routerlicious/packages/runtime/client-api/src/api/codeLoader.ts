@@ -11,6 +11,7 @@ import {
 } from "@prague/container-definitions";
 import * as map from "@prague/map";
 import {
+    IComponentRegistry,
     Runtime,
 } from "@prague/runtime";
 import {
@@ -106,16 +107,23 @@ class Chaincode implements IComponentFactory {
     }
 }
 
+class BackCompatLoader implements IComponentRegistry {
+    constructor(private chaincode: Chaincode) {
+    }
+
+    public get(name: string): Promise<IComponentFactory> {
+        // Back compat loader simply returns a kitchen sink component with all the data types
+        return Promise.resolve(this.chaincode);
+    }
+}
+
 export class ChaincodeFactory implements IChaincodeFactory {
     constructor(private runFn: (runtime: ILegacyRuntime, platform: IPlatform) => Promise<IPlatform>) {
     }
 
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
         const chaincode = new Chaincode(this.runFn);
-
-        // return Promise.resolve(chaincode);
-        const registry = new Map<string, Promise<IComponentFactory>>([
-            ["@prague/client-api", Promise.resolve(chaincode)]]);
+        const registry = new BackCompatLoader(chaincode);
 
         const runtime = await Runtime.Load(registry, context);
 

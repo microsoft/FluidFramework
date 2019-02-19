@@ -1,7 +1,6 @@
 // inspiration for this example taken from https://github.com/agentcooper/typescript-play
-import { Component, Document } from "@prague/app-component";
-import { ComponentHost } from "@prague/component";
-import { IPlatform, ITree } from "@prague/container-definitions";
+import { Document } from "@prague/app-component";
+import { IPlatform } from "@prague/container-definitions";
 import {
     IMergeTreeGroupMsg,
     IMergeTreeInsertMsg,
@@ -9,11 +8,6 @@ import {
     IMergeTreeRemoveMsg,
     MergeTreeDeltaType,
 } from "@prague/merge-tree";
-import {
-    IChaincode,
-    IChaincodeComponent,
-    IComponentDeltaHandler,
-    IComponentRuntime } from "@prague/runtime-definitions";
 import { SharedString } from "@prague/sequence";
 import { Deferred } from "@prague/utils";
 import * as monaco from "monaco-editor";
@@ -53,7 +47,7 @@ const defaultCompilerOptions = {
 };
 // tslint:enable
 
-class MonacoRunner extends Document {
+export class Monaco extends Document {
     private mapHost: HTMLElement;
     private codeModel: monaco.editor.ITextModel;
     private codeEditor: monaco.editor.IStandaloneCodeEditor;
@@ -63,7 +57,8 @@ class MonacoRunner extends Document {
         this.ready.resolve();
     }
 
-    public async attach(platform: IPlatform): Promise<IPlatform> {
+    // TODO can remove ? once document is fixed in main package
+    public async attach(platform?: IPlatform): Promise<void> {
         await this.ready.promise;
 
         this.mapHost = await platform.queryInterface<HTMLElement>("div");
@@ -240,46 +235,5 @@ class MonacoRunner extends Document {
 
     private async exec(host: any, code: string) {
         eval(code);
-    }
-}
-
-/**
- * A document is a collection of collaborative types.
- */
-export class MonacoComponent implements IChaincodeComponent {
-    private monaco = new MonacoRunner();
-    private chaincode: IChaincode;
-    private component: ComponentHost;
-
-    constructor() {
-        this.chaincode = Component.instantiate(this.monaco);
-    }
-
-    public getModule(type: string) {
-        return null;
-    }
-
-    public async close(): Promise<void> {
-        return;
-    }
-
-    public async run(runtime: IComponentRuntime): Promise<IComponentDeltaHandler> {
-        const chaincode = this.chaincode;
-
-        // All of the below would be hidden from a developer
-        // Is this an await or does it just go?
-        const component = await ComponentHost.LoadFromSnapshot(runtime, chaincode);
-        this.component = component;
-
-        return component;
-    }
-
-    public async attach(platform: IPlatform): Promise<IPlatform> {
-        return this.monaco.attach(platform);
-    }
-
-    public snapshot(): ITree {
-        const entries = this.component.snapshotInternal();
-        return { entries };
     }
 }

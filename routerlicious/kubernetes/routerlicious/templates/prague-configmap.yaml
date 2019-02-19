@@ -189,6 +189,7 @@ data:
             "serverUrl": "{{ .Values.alfred.externalUrl }}",
             "blobStorageUrl": "{{ .Values.historian.externalUrl }}",
             "repository": "prague",
+            "clusterNpm": "https://pragueauspkn-3873244262.azureedge.net",
             "npm": "https://pragueauspkn-3873244262.azureedge.net",
             "permission": ["snapshot", "spell", "intel", "translation", "chain-snapshot", "chain-spell", "chain-intel", "chain-translation"]
         },
