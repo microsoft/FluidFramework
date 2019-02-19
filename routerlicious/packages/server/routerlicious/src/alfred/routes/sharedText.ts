@@ -141,6 +141,8 @@ export function create(
      * Loading of a specific shared text.
      */
     router.get("/:tenantId?/:id", ensureLoggedIn(), async (request, response, next) => {
+        const start = Date.now();
+
         const disableCache = "disableCache" in request.query;
         const direct = "direct" in request.query;
 
@@ -163,7 +165,12 @@ export function create(
 
         const fullTreeP = storage.getFullTree(tenantId, request.params.id);
 
-        Promise.all([workerConfigP, fullTreeP]).then(([workerConfig, fullTree]) => {
+        // Track timing
+        const workerTimeP = workerConfigP.then(() => Date.now() - start);
+        const treeTimeP = fullTreeP.then(() => Date.now() - start);
+        const timingsP = Promise.all([workerTimeP, treeTimeP]);
+
+        Promise.all([workerConfigP, fullTreeP, timingsP]).then(([workerConfig, fullTree, timings]) => {
             const parsedTemplate = path.parse(request.query.template ? request.query.template : defaultTemplate);
             const template =
                 parsedTemplate.base !== "empty" ? `/public/literature/${parsedTemplate.base}` : undefined;
@@ -175,6 +182,8 @@ export function create(
                 spellchecker,
                 translationLanguage: "language" in request.query ? request.query.language : undefined,
             };
+
+            timings.push(Date.now() - start);
 
             response.render(
                 "sharedText",
@@ -192,6 +201,7 @@ export function create(
                     partials: defaultPartials,
                     template,
                     tenantId,
+                    timings: JSON.stringify(timings),
                     title: request.params.id,
                     to,
                     token,

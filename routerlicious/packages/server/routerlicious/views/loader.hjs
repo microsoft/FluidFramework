@@ -20,6 +20,7 @@
     <script>
         var config = {{{ config }}};
         var cache = {{{ cache }}};
+        var timings = "{{ timings }}";
 
         var token = "{{ token }}";
         var chaincode = "{{ chaincode }}";

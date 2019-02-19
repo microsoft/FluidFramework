@@ -61,6 +61,8 @@ export function create(
      * Loading of a specific shared text.
      */
     router.get("/:tenantId/*", ensureLoggedIn(), async (request, response, next) => {
+        const start = Date.now();
+
         const rawPath =  request.params[0] as string;
         const slash = rawPath.indexOf("/");
         const documentId = rawPath.substring(0, slash !== -1 ? slash : rawPath.length);
@@ -89,13 +91,25 @@ export function create(
             .key;
 
         const fullTreeP = storage.getFullTree(tenantId, documentId);
-        const pkgP = fullTreeP.then(
-            (fullTree) => getScriptsForCode(
+        const pkgP = fullTreeP.then((fullTree) => {
+            winston.info(`getScriptsForCode ${tenantId}/${documentId} +${Date.now() - start}`);
+            return getScriptsForCode(
                 config.get("worker:npm"),
                 config.get("worker:clusterNpm"),
-                fullTree.code ? fullTree.code : chaincode));
+                fullTree.code ? fullTree.code : chaincode);
+        });
 
-        Promise.all([workerConfigP, fullTreeP, pkgP]).then(([workerConfig, fullTree, pkg]) => {
+        // Track timing
+        const workerTimeP = workerConfigP.then(() => Date.now() - start);
+        const treeTimeP = fullTreeP.then(() => Date.now() - start);
+        const pkgTimeP = pkgP.then(() => Date.now() - start);
+        const timingsP = Promise.all([workerTimeP, treeTimeP, pkgTimeP]);
+
+        Promise.all([workerConfigP, fullTreeP, pkgP, timingsP]).then(([workerConfig, fullTree, pkg, timings]) => {
+            winston.info(`render ${tenantId}/${documentId} +${Date.now() - start}`);
+
+            timings.push(Date.now() - start);
+
             response.render(
                 "loader",
                 {
@@ -108,6 +122,7 @@ export function create(
                     path,
                     pkg,
                     tenantId,
+                    timings: JSON.stringify(timings),
                     title: documentId,
                     token,
                 });

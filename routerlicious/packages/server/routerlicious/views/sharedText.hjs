@@ -16,6 +16,7 @@
             var token = "{{ token }}";
             var cache = {{{ cache }}};
             var code = "{{ code }}";
+            var timings = "{{ timings }}";
 
             var tenant = "{{ tenantId }}";
             var key = "{{ key }}";
