@@ -3300,7 +3300,7 @@ export class Cursor {
         // TODO - callback to client code to provide mapping from user -> display
         // this would allow a user ID to be put on the wire which can then be mapped
         // back to an email, name, etc...
-        return user.id;
+        return (user as any).name;
     }
 }
 
