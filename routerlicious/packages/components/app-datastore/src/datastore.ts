@@ -77,24 +77,29 @@ export class DataStore {
         const baseUrl =
             // tslint:disable-next-line:max-line-length
             `${this.hostUrl.replace(/^[^:]+/, "prague")}/${encodeURIComponent(this.tenantId)}/${encodeURIComponent(componentId)}`;
+
         debug(`resolving baseUrl = ${baseUrl}`);
         const container = await loader.resolve({ url: baseUrl });
         debug(`resolved baseUrl = ${baseUrl}`);
 
         const platformIn = new HostPlatform(services);
-        debug(`attaching baseUrl = ${baseUrl}`);
 
-        let acceptPlatformOut: (value: IPlatform) => void;
+        let acceptResultOut: (value: T) => void;
         // tslint:disable-next-line:promise-must-complete
-        const platformOut = new Promise<IPlatform>((accept) => { acceptPlatformOut = accept; });
+        const resultOut = new Promise<T>((accept) => { acceptResultOut = accept; });
 
-        await registerAttach(
-            loader,
-            container,
-            `${baseUrl}/${path}`,
-            platformIn,
-            acceptPlatformOut);
-        debug(`attached baseUrl = ${baseUrl}`);
+        const url = `${baseUrl}${
+            // Ensure '/' separator when concatenating 'baseUrl' and 'path'.
+            (path && path.charAt(0)) !== "/" ? "/" : ""
+        }${path}`;
+
+        debug(`attaching url = ${url}`);
+        container.on("contextChanged", async () => {
+            debug(`contextChanged url=${url}`);
+            await attach(loader, url, platformIn, acceptResultOut);
+        });
+        await attach(loader, url, platformIn, acceptResultOut);
+        debug(`attached url = ${url}`);
 
         // If this is a new document we will go and instantiate the chaincode. For old documents we assume a legacy
         // package.
@@ -107,7 +112,7 @@ export class DataStore {
 
         // Return the constructed/loaded component.  We retrieve this via queryInterface on the
         // IPlatform created by ChainCode.run().
-        return (await platformOut).queryInterface("component");
+        return resultOut;
     }
 
     private auth(documentId: string) {
@@ -123,16 +128,16 @@ export class DataStore {
     }
 }
 
-async function initializeChaincode(document: Container, pkg: string): Promise<void> {
+async function initializeChaincode(container: Container, pkg: string): Promise<void> {
     if (!pkg) {
         return;
     }
 
-    const quorum = document.getQuorum();
+    const quorum = container.getQuorum();
 
     // Wait for connection so that proposals can be sent
-    if (!document.connected) {
-        await new Promise<void>((resolve) => document.on("connected", () => { resolve(); }));
+    if (!container.connected) {
+        await new Promise<void>((resolve) => container.on("connected", () => { resolve(); }));
     }
 
     // And then make the proposal if a code proposal has not yet been made
@@ -143,11 +148,11 @@ async function initializeChaincode(document: Container, pkg: string): Promise<vo
     debug(`Code is ${quorum.get("code2")}`);
 }
 
-async function attach(
+async function attach<T>(
     loader: Loader,
     url: string,
     platformIn: HostPlatform,
-    platformOut: (out: IPlatform) => void,
+    resultOut: (out: T) => void,
 ) {
     debug(`loader.request(url=${url})`);
     const response = await loader.request({ url });
@@ -158,29 +163,19 @@ async function attach(
     }
 
     const mimeType = response.mimeType;
+    debug(`loader.request(url=${url}) -> ${mimeType}`);
     switch (mimeType) {
         case "prague/component":
-            debug(`loader.request(url=${url}) -> ${mimeType}`);
-            const component = response.value as IComponentRuntime;
-            platformOut(await component.attach(platformIn));
+            const componentRuntime = response.value as IComponentRuntime;
+            const platformOut = await componentRuntime.attach(platformIn);
+            resultOut(await platformOut.queryInterface("component"));
+            break;
+        case "prague/dataType":
+            resultOut(response.value as T);
             break;
         default:
-            debug(`loader.request(url=${url}) -> Unhandled mimeType ${mimeType}`);
+            debug(`Unhandled mimeType ${mimeType}`);
     }
-}
-
-async function registerAttach(
-    loader: Loader,
-    container: Container,
-    uri: string,
-    platformIn: HostPlatform,
-    platformOut: (out: IPlatform) => void,
-) {
-    container.on("contextChanged", async () => {
-        debug(`contextChanged uri=${uri}`);
-        await attach(loader, uri, platformIn, platformOut);
-    });
-    await attach(loader, uri, platformIn, platformOut);
 }
 
 class HostPlatform extends EventEmitter implements IPlatform {
