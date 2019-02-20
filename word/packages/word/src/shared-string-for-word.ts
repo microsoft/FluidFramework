@@ -1,6 +1,6 @@
-import { IMapView } from "@prague/map";
+import { ISequencedDocumentMessage } from "@prague/container-definitions";
+import { ISharedMap } from "@prague/map";
 import * as mergeTree from "@prague/merge-tree";
-import { ISequencedObjectMessage } from "@prague/runtime-definitions";
 import * as sequence from "@prague/sequence";
 import { EventEmitter } from "events";
 
@@ -304,7 +304,7 @@ export class SharedStringForWord extends EventEmitter {
      * Gets interval collections
      * @returns interval collections
      */
-    public getIntervalCollections(): IMapView {
+    public getIntervalCollections(): ISharedMap {
         return this.sharedString.getIntervalCollections();
     }
 
@@ -423,7 +423,7 @@ export class SharedStringForWord extends EventEmitter {
      * @param listener
      * @returns on
      */
-    public on(event: "op", listener: (op: ISequencedObjectMessage, local: boolean) => void): this;
+    public on(event: "op", listener: (op: ISequencedDocumentMessage, local: boolean) => void): this;
 
     /**
      * On shared string for word

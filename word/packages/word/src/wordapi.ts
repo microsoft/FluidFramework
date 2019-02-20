@@ -65,18 +65,17 @@ class WordApi implements IWordApi {
 
         console.log("Opened document");
         const rootMap = collabDoc.getRoot();
-        const rootView = await rootMap.getView();
         console.log("Keys");
-        console.log(rootView.keys());
+        console.log(rootMap.keys());
 
         if (!collabDoc.existing) {
-            rootView.set("text", collabDoc.createString());
-            rootView.set("presence", collabDoc.createMap());
-            rootView.set("snapshots", collabDoc.createMap());
+            rootMap.set("text", collabDoc.createString());
+            rootMap.set("presence", collabDoc.createMap());
+            rootMap.set("snapshots", collabDoc.createMap());
         }
 
         // Wait for main text to appear
-        await rootView.wait("text");
+        await rootMap.wait("text");
 
         return collabDoc;
     }
