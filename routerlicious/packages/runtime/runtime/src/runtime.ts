@@ -301,6 +301,7 @@ export class Runtime extends EventEmitter implements IHostRuntime {
 
             default:
         }
+        this.emit("op", message);
     }
 
     public async postProcess(

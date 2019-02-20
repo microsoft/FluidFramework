@@ -1,0 +1,36 @@
+{
+  "name": "@prague/intelligence-runner",
+  "version": "0.2.0",
+  "description": "Generates insights on distributed data structures",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "sideEffects": false,
+  "scripts": {
+    "build": "concurrently npm:build:compile npm:tslint",
+    "build:compile": "npm run tsc",
+    "build:full": "npm run build",
+    "build:full:compile": "npm run build:compile",
+    "clean": "rimraf dist",
+    "tsc": "tsc",
+    "tslint": "tslint --project tsconfig.json --format verbose"
+  },
+  "author": "Microsoft",
+  "repository": "microsoft/prague",
+  "devDependencies": {
+    "concurrently": "^4.1.0",
+    "@types/debug": "^0.0.31",
+    "@types/node": "^10.12.12",
+    "request": "^2.88.0",
+    "rimraf": "^2.6.2",
+    "tslint": "^5.11.0",
+    "tslint-microsoft-contrib": "^6.0.0",
+    "typescript": "^3.2.2"
+  },
+  "dependencies": {
+    "@prague/container-definitions": "^0.2.0",
+    "@prague/map": "^0.2.0",
+    "@prague/sequence": "^0.2.0",
+    "@types/request": "^2.47.1",
+    "debug": "^3.1.0"
+  }
+}

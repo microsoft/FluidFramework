@@ -188,6 +188,22 @@
     {
       "packageName": "@prague/tools-core",
       "projectFolder": "packages/shared/tools-core/"
+    },
+    {
+      "packageName": "@prague/intelligence-runner",
+      "projectFolder": "packages/agents/intelligence-runner/"
+    },
+    {
+      "packageName": "@prague/snapshotter",
+      "projectFolder": "packages/agents/snapshotter/"
+    },
+    {
+      "packageName": "@prague/spellchecker",
+      "projectFolder": "packages/agents/spellchecker/"
+    },
+    {
+      "packageName": "@prague/translator",
+      "projectFolder": "packages/agents/translator/"
     }
   ]
 }

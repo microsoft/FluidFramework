@@ -1,20 +1,15 @@
-import { ISharedObject } from "@prague/api-definitions";
-import * as api from "@prague/client-api";
 import {
     IDocumentService,
-    ISequencedDocumentMessage,
     ITokenProvider,
-    MessageType,
 } from "@prague/container-definitions";
-import { ISharedMap } from "@prague/map";
-import { nativeTextAnalytics, textAnalytics } from "../intelligence";
+import * as Intelligence from "@prague/intelligence-runner";
+import { ISharedMap, MapExtension } from "@prague/map";
+import * as Sequence from "@prague/sequence";
+import * as uuid from "uuid/v4";
 import { BaseWork} from "./baseWork";
 import { IWork} from "./definitions";
-import { IntelligentServicesManager } from "./intelligence";
 
 export class IntelWork extends BaseWork implements IWork {
-
-    private intelligenceManager: IntelligentServicesManager;
 
     constructor(
         docId: string,
@@ -30,37 +25,28 @@ export class IntelWork extends BaseWork implements IWork {
             { localMinSeq: 0, encrypted: undefined, client: { type: "intel"} },
             this.service,
             task);
-        const insightsMap = await this.document.getRoot().wait<ISharedMap>("insights");
-        return this.processIntelligenceWork(this.document, insightsMap);
+
+        // Wait for the document to get fully connected.
+        if (!this.document.isConnected) {
+            await new Promise<void>((resolve) => this.document.on("connected", () => resolve()));
+        }
+
+        const rootMap = this.document.getRoot();
+        const sharedString = rootMap.get("text") as Sequence.SharedString;
+        const insightsMap = rootMap.get("insights") as ISharedMap;
+
+        if (sharedString && insightsMap) {
+            // This is a patchup for our legacy stuff when both agents uses the same map key to populate results.
+            // To play nice with back-compat, intel runner creates the map and translator waits on the key.
+            if (!insightsMap.has(sharedString.id)) {
+                const insightSlot = this.document.runtime.createChannel(uuid(), MapExtension.Type);
+                insightsMap.set(sharedString.id, insightSlot);
+                Intelligence.run(sharedString, insightsMap);
+            }
+        }
     }
 
     public async stop(): Promise<void> {
-        if (this.intelligenceManager) {
-            await this.intelligenceManager.stop();
-        }
         await super.stop();
-    }
-
-    public registerNewService(service: any) {
-        this.intelligenceManager.registerService(service.factory.create(this.config.intelligence.resume));
-    }
-
-    private processIntelligenceWork(doc: api.Document, insightsMap: ISharedMap): Promise<void> {
-        this.intelligenceManager = new IntelligentServicesManager(doc, insightsMap);
-        this.intelligenceManager.registerService(textAnalytics.factory.create(this.config.intelligence.textAnalytics));
-        if (this.config.intelligence.nativeTextAnalytics.enable) {
-            this.intelligenceManager.registerService(
-                nativeTextAnalytics.factory.create(this.config.intelligence.nativeTextAnalytics));
-        }
-        const eventHandler = (op: ISequencedDocumentMessage, object: ISharedObject) => {
-            if (op.type === MessageType.Operation) {
-                this.intelligenceManager.process(object);
-            } else if (op.type === MessageType.Attach) {
-                this.intelligenceManager.process(object);
-            }
-        };
-        this.opHandler = eventHandler;
-        this.document.on("op", eventHandler);
-        return Promise.resolve();
     }
 }

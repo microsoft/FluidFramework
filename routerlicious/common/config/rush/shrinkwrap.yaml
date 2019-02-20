@@ -16,6 +16,7 @@ dependencies:
   '@rush-temp/flow-host': 'file:projects/flow-host.tgz'
   '@rush-temp/flow-util': 'file:projects/flow-util.tgz'
   '@rush-temp/gitresources': 'file:projects/gitresources.tgz'
+  '@rush-temp/intelligence-runner': 'file:projects/intelligence-runner.tgz'
   '@rush-temp/kafka-orderer': 'file:projects/kafka-orderer.tgz'
   '@rush-temp/lambdas': 'file:projects/lambdas.tgz'
   '@rush-temp/lambdas-driver': 'file:projects/lambdas-driver.tgz'
@@ -34,8 +35,10 @@ dependencies:
   '@rush-temp/services-client': 'file:projects/services-client.tgz'
   '@rush-temp/services-core': 'file:projects/services-core.tgz'
   '@rush-temp/services-utils': 'file:projects/services-utils.tgz'
+  '@rush-temp/snapshotter': 'file:projects/snapshotter.tgz'
   '@rush-temp/socket-storage': 'file:projects/socket-storage.tgz'
   '@rush-temp/socket-storage-shared': 'file:projects/socket-storage-shared.tgz'
+  '@rush-temp/spellchecker': 'file:projects/spellchecker.tgz'
   '@rush-temp/standard-socket-storage': 'file:projects/standard-socket-storage.tgz'
   '@rush-temp/stream': 'file:projects/stream.tgz'
   '@rush-temp/table-document': 'file:projects/table-document.tgz'
@@ -44,6 +47,7 @@ dependencies:
   '@rush-temp/table-view': 'file:projects/table-view.tgz'
   '@rush-temp/test-utils': 'file:projects/test-utils.tgz'
   '@rush-temp/tools-core': 'file:projects/tools-core.tgz'
+  '@rush-temp/translator': 'file:projects/translator.tgz'
   '@rush-temp/utils': 'file:projects/utils.tgz'
   '@types/amqplib': 0.5.9
   '@types/async': 2.4.0
@@ -701,6 +705,10 @@ packages:
     dev: false
     resolution:
       integrity: sha512-IcvnGLGSQFDvC07Bz2I8SX+QKErDZbUdiQq7S2u3XyzTyJfUmT0sWJMbeQkMzpTAkO7/N7sZpW/arUM2jfKsbQ==
+  /@types/node/10.12.26:
+    dev: false
+    resolution:
+      integrity: sha512-nMRqS+mL1TOnIJrL6LKJcNZPB8V3eTfRo9FQA2b5gDvrHurC8XbSA86KNe0dShlEL7ReWJv/OU9NL7Z0dnqWTg==
   /@types/passport-local/1.0.33:
     dependencies:
       '@types/express': 4.16.1
@@ -9737,6 +9745,23 @@ packages:
       integrity: sha512-eESY27X9fH8/I83qa1GFxSATSvCGrAeHu4iL/E1LZhL5YUc42zn52SDWlegDNbzIpDLpFBHYUeKe4CjjpoWsGg==
       tarball: 'file:projects/gitresources.tgz'
     version: 0.0.0
+  'file:projects/intelligence-runner.tgz':
+    dependencies:
+      '@types/debug': 0.0.31
+      '@types/node': 10.12.26
+      '@types/request': 2.48.1
+      debug: 3.2.6
+      request: 2.88.0
+      rimraf: 2.6.3
+      tslint: /tslint/5.12.1/typescript@3.3.3
+      tslint-microsoft-contrib: /tslint-microsoft-contrib/6.0.0/tslint@5.12.1+typescript@3.3.3
+      typescript: 3.3.3
+    dev: false
+    name: '@rush-temp/intelligence-runner'
+    resolution:
+      integrity: sha512-v5l62iT3lLhrKbRprsCgJJ2mx//iqCG+gGGy752c53OqLL1y8zeHw15pH1OpFShhy/46BZQTUsDnY4U6zxIcdw==
+      tarball: 'file:projects/intelligence-runner.tgz'
+    version: 0.0.0
   'file:projects/kafka-orderer.tgz':
     dependencies:
       '@types/lodash': 4.14.120
@@ -10228,6 +10253,21 @@ packages:
       integrity: sha512-ZMsAvUN5cQipn5uD+Q1EdRZbaKUaNUYLj2+2CxjMVHHxsOQoVMNHUbhmoymLs6ABxlH/p6zIsVLfo0x+ltwxCw==
       tarball: 'file:projects/services.tgz'
     version: 0.0.0
+  'file:projects/snapshotter.tgz':
+    dependencies:
+      '@types/debug': 0.0.31
+      '@types/node': 10.12.26
+      debug: 3.2.6
+      rimraf: 2.6.3
+      tslint: /tslint/5.12.1/typescript@3.3.3
+      tslint-microsoft-contrib: /tslint-microsoft-contrib/6.0.0/tslint@5.12.1+typescript@3.3.3
+      typescript: 3.3.3
+    dev: false
+    name: '@rush-temp/snapshotter'
+    resolution:
+      integrity: sha512-j2xRxHqz+aH+0GzVti6Z7CBIXNPegJNz1SP+2TeCs0jnLhEuDuyaCf56d5aJhjbn6FZvBHh3PFjxfdQo/n8B+g==
+      tarball: 'file:projects/snapshotter.tgz'
+    version: 0.0.0
   'file:projects/socket-storage-shared.tgz':
     dependencies:
       '@types/debug': 0.0.31
@@ -10269,6 +10309,23 @@ packages:
     resolution:
       integrity: sha512-nj18MxgnbJFyu274OYHKkNhvEilq37da+H1zPvm3ZkP17ZPG9F51qyEgBFtRuJPL3NTmwAmwmwJu3xhnSdnFWA==
       tarball: 'file:projects/socket-storage.tgz'
+    version: 0.0.0
+  'file:projects/spellchecker.tgz':
+    dependencies:
+      '@types/debug': 0.0.31
+      '@types/node': 10.12.26
+      '@types/request': 2.48.1
+      debug: 3.2.6
+      request: 2.88.0
+      rimraf: 2.6.3
+      tslint: /tslint/5.12.1/typescript@3.3.3
+      tslint-microsoft-contrib: /tslint-microsoft-contrib/6.0.0/tslint@5.12.1+typescript@3.3.3
+      typescript: 3.3.3
+    dev: false
+    name: '@rush-temp/spellchecker'
+    resolution:
+      integrity: sha512-/sJ81/E8pYgSrt7fbjjMUXNWB/mOMEFdcdVjIEx6P4lhMT0t7htypVF2ZJO2RcR+VIJEhltNbw8e3amBa0DdbA==
+      tarball: 'file:projects/spellchecker.tgz'
     version: 0.0.0
   'file:projects/standard-socket-storage.tgz':
     dependencies:
@@ -10428,6 +10485,23 @@ packages:
       integrity: sha512-63MuHjun9+qbaspLgNkRzJdUnLPM8glwD98i1GaAfd1qz6XIHf0PbDSDc/syy/iRs3dlOOpVpccPW/GI96oYyQ==
       tarball: 'file:projects/tools-core.tgz'
     version: 0.0.0
+  'file:projects/translator.tgz':
+    dependencies:
+      '@types/debug': 0.0.31
+      '@types/node': 10.12.26
+      '@types/request': 2.48.1
+      debug: 3.2.6
+      request: 2.88.0
+      rimraf: 2.6.3
+      tslint: /tslint/5.12.1/typescript@3.3.3
+      tslint-microsoft-contrib: /tslint-microsoft-contrib/6.0.0/tslint@5.12.1+typescript@3.3.3
+      typescript: 3.3.3
+    dev: false
+    name: '@rush-temp/translator'
+    resolution:
+      integrity: sha512-VqksRJoIiUd14H39pQYu6Bm0G1dYs4YABIUH6Ps4MLEigEKGtZuRx0yATqBvSU7eCcXlPdpSDngYuQ3MOnGANQ==
+      tarball: 'file:projects/translator.tgz'
+    version: 0.0.0
   'file:projects/utils.tgz':
     dependencies:
       '@types/debug': 0.0.31
@@ -10469,6 +10543,7 @@ specifiers:
   '@rush-temp/flow-host': 'file:./projects/flow-host.tgz'
   '@rush-temp/flow-util': 'file:./projects/flow-util.tgz'
   '@rush-temp/gitresources': 'file:./projects/gitresources.tgz'
+  '@rush-temp/intelligence-runner': 'file:./projects/intelligence-runner.tgz'
   '@rush-temp/kafka-orderer': 'file:./projects/kafka-orderer.tgz'
   '@rush-temp/lambdas': 'file:./projects/lambdas.tgz'
   '@rush-temp/lambdas-driver': 'file:./projects/lambdas-driver.tgz'
@@ -10487,8 +10562,10 @@ specifiers:
   '@rush-temp/services-client': 'file:./projects/services-client.tgz'
   '@rush-temp/services-core': 'file:./projects/services-core.tgz'
   '@rush-temp/services-utils': 'file:./projects/services-utils.tgz'
+  '@rush-temp/snapshotter': 'file:./projects/snapshotter.tgz'
   '@rush-temp/socket-storage': 'file:./projects/socket-storage.tgz'
   '@rush-temp/socket-storage-shared': 'file:./projects/socket-storage-shared.tgz'
+  '@rush-temp/spellchecker': 'file:./projects/spellchecker.tgz'
   '@rush-temp/standard-socket-storage': 'file:./projects/standard-socket-storage.tgz'
   '@rush-temp/stream': 'file:./projects/stream.tgz'
   '@rush-temp/table-document': 'file:./projects/table-document.tgz'
@@ -10497,6 +10574,7 @@ specifiers:
   '@rush-temp/table-view': 'file:./projects/table-view.tgz'
   '@rush-temp/test-utils': 'file:./projects/test-utils.tgz'
   '@rush-temp/tools-core': 'file:./projects/tools-core.tgz'
+  '@rush-temp/translator': 'file:./projects/translator.tgz'
   '@rush-temp/utils': 'file:./projects/utils.tgz'
   '@types/amqplib': ^0.5.9
   '@types/async': ^2.0.50

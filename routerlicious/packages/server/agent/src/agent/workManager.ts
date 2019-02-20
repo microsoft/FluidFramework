@@ -217,8 +217,8 @@ export class WorkManager extends EventEmitter implements IWorkManager {
         for (const doc of this.documentMap) {
             const taskName = doc[0].split("/")[2];
             if (taskName === "intel") {
-                const intelWork = doc[1] as IntelWork;
-                intelWork.registerNewService(agent.code);
+                // const intelWork = doc[1] as IntelWork;
+                // intelWork.registerNewService(agent.code);
                 console.log(`Registered newly loaded ${agent.name} to document ${doc[0]}`);
             }
         }
@@ -226,12 +226,12 @@ export class WorkManager extends EventEmitter implements IWorkManager {
 
     // Register all agents to a new document.
     private registerAgentsToNewDocument(fullId: string) {
-        const intelWork = this.documentMap.get(fullId) as IntelWork;
+        // const intelWork = this.documentMap.get(fullId) as IntelWork;
         const agents = this.agentLoader.getAgents();
         // tslint:disable-next-line
         for (const name in agents) {
             console.log(`Registering ${name} to document ${fullId}`);
-            intelWork.registerNewService(agents[name].code);
+            // intelWork.registerNewService(agents[name].code);
         }
     }
 
