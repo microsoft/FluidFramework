@@ -4,7 +4,6 @@ import { IVirtualizedProps } from "@chaincode/flow-editor";
 import { Scheduler } from "@prague/flow-util";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
-import { ComponentChaincode } from "../../app-component/dist";
 import { IAppConfig } from "./app";
 import * as style from "./index.css";
 
@@ -38,16 +37,11 @@ export class FlowEditor extends React.Component<IProps, IState> {
     public componentWillMount() {
         const { config } = this.props;
 
-        if (!config.runtime.existing) {
-            config.runtime.createAndAttachComponent("document", "@chaincode/flow-document");
+        if (!config.host.existing) {
+            config.host.createAndAttachComponent("document", "@chaincode/flow-document");
         }
 
-        config.runtime.getComponent("document", true).then((component) => {
-            // TODO when we fetch the process we get a layer of indirection to the thing we actually want - which
-            // is sitting inside of the chaincode field
-            const flowDocComponent = component.chaincode as ComponentChaincode<FlowDocument>;
-            const doc = flowDocComponent.instance;
-
+        config.host.openComponent<FlowDocument>("document", true).then((doc) => {
             // TODO getProcess happens after run is called not before the component is ready. May want to formalize
             // this ready call.
             doc.ready.then(() => {

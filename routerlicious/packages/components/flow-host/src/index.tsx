@@ -26,26 +26,21 @@ export class FlowHost extends Component {
     public static readonly type = `${pkg.name}@${pkg.version}`;
     private ready = new Deferred<void>();
 
-    constructor(private componentRuntime: IComponentRuntime) {
+    constructor() {
         super([]);
     }
 
     public async opened() {
         await this.connected;
-        this.ready.resolve();
-    }
 
-    public async attach(platform: IPlatform): Promise<void> {
-        await this.ready.promise;
-
-        const hostContent: HTMLElement = await platform.queryInterface<HTMLElement>("div");
+        const hostContent: HTMLElement = await this.platform.queryInterface<HTMLElement>("div");
         if (!hostContent) {
             // If headless exist early
             return;
         }
 
         const appConfig: IAppConfig = {
-            runtime: this.componentRuntime,
+            host: this.host,
             verdaccioUrl: "http://localhost:4873",
         };
 

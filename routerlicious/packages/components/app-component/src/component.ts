@@ -23,42 +23,6 @@ const typeToFactorySym = "Component.typeToFactory()";
 // const openSym: unique symbol = Symbol("Component.open()");
 const openSym = "Component.open()";
 
-export class ComponentChaincode<T extends Component> implements IChaincodeComponent {
-    public instance: T;
-    private host: ComponentHost;
-
-    constructor(private readonly ctorFn: new (runtime: IComponentRuntime) => T) {}
-
-    public async close(): Promise<void> {
-        return;
-    }
-
-    public async run(runtime: IComponentRuntime): Promise<IComponentDeltaHandler> {
-        debug(`ComponentChaincode.run(${this.ctorFn.name})`);
-        this.instance = new this.ctorFn(runtime);
-        const chaincode = new Chaincode(this.instance);
-
-        // All of the below would be hidden from a developer
-        // Is this an await or does it just go?
-        debug(`ComponentChaincode.LoadFromSnapshot(${this.instance.constructor.name})`);
-        this.host = await ComponentHost.LoadFromSnapshot(runtime, chaincode);
-        return this.host;
-    }
-
-    public async attach(platform: IPlatform): Promise<IPlatform> {
-        this.instance.attach(platform);
-        debug(`ComponentChaincode.attach(${this.instance.constructor.name})`);
-
-        return new ComponentPlatform(Promise.resolve(this.instance));
-    }
-
-    public snapshot(): ITree {
-        debug(`ComponentChaincode.snapshot(${this.instance.constructor.name})`);
-        const entries = this.host.snapshotInternal();
-        return { entries };
-    }
-}
-
 // Internal IPlatform implementation used to defer returning the component
 // from DataStore.open() until after the component's async 'opened()' method has
 // completed.  (See 'Chaincode.run()' below.)
@@ -66,7 +30,7 @@ class ComponentPlatform extends EventEmitter implements IPlatform {
     constructor(private readonly component: Promise<Component>) { super(); }
 
     public queryInterface<T>(id: string): Promise<T> {
-        debug(`${this.component.constructor.name}.queryInterface(${id})`);
+        debug(`ComponentPlatform.queryInterface(${id})`);
 
         return id === "component"
             ? this.component as any
@@ -74,7 +38,7 @@ class ComponentPlatform extends EventEmitter implements IPlatform {
     }
 
     public detach() {
-        debug(`${this.component.constructor.name}.detach()`);
+        debug(`ComponentPlatform.detach()`);
         return;
     }
 }
@@ -94,32 +58,20 @@ class Chaincode<T extends Component> extends EventEmitter implements IChaincode 
 
     public async run(runtime: IOldRuntime, platform: IPlatform): Promise<IPlatform> {
         debug("Chaincode.run()");
-
-        // Construct and return our IPlatform implementation.  DataStore.open() will QI this
-        // platform for our component instance.  The QI will return the Promise we construct
-        // here.
-        let acceptFn: (component: T) => void;
-        const platformOut = new ComponentPlatform(new Promise<T>((accept) => { acceptFn = accept; }));
-
-        // Invoke the component's internal 'open()' method and wait for it to complete before
-        // resolving the promise.  This gives the component author an opportunity to preform
-        // async work to prepare the component before the user gets a reference.
-        this.component[openSym](runtime, platform).then(() => {
-            debug("Platform.resolveComponent()");
-            acceptFn(this.component);
-        });
-
-        return platformOut;
+        return new ComponentPlatform(Promise.resolve(this.component));
     }
 }
 
 /**
  * Base class for chainloadable Prague components.
  */
-export abstract class Component extends EventEmitter {
+export abstract class Component extends EventEmitter implements IChaincodeComponent {
+    private get ctorName() { return this.constructor.name; }
+
     protected get runtime(): IOldRuntime { return this._runtime; }
     protected get platform() { return this._platform; }
     protected get root() { return this._root; }
+    protected get host() { return this._host; }
 
     /**
      * Returns a promise that resolves once the component is synchronized with its date store.
@@ -127,22 +79,22 @@ export abstract class Component extends EventEmitter {
      */
     protected get connected(): Promise<void> {
         if (this._runtime.connected) {
-            debug("Component.connected: Already connected.");
+            debug(`${this.ctorName}.connected: Already connected.`);
             return Promise.resolve();
         }
 
-        debug("Component.connected: Waiting...");
+        debug(`${this.ctorName}.connected: Waiting...`);
         return new Promise((accept) => {
             this._runtime.on("connected", () => {
-                debug("Component.connected: Now connected.");
+                debug(`${this.ctorName}.connected: Now connected.`);
                 accept();
             });
         });
     }
 
-    public static async instantiateComponent<T extends Component>(ctorFn: new (runtime: IComponentRuntime) => T) {
-        debug(`Component.instantiateComponent(${ctorFn.name})`);
-        return new ComponentChaincode(ctorFn);
+    public static async instantiateComponent<T extends Component>(ctorFn: new () => T) {
+        debug(`${ctorFn.name}.instantiateComponent()`);
+        return new ctorFn();
     }
 
     /**
@@ -179,7 +131,7 @@ export abstract class Component extends EventEmitter {
 
             if (request.url && request.url !== "/") {
                 debug(`delegating to ${request.url}`);
-                const component = (componentRuntime.chaincode as ComponentChaincode<Component>).instance;
+                const component = (componentRuntime.chaincode as Component);
                 return component.request(componentRuntime, { url: request.url });
             } else {
                 debug(`resolved ${runtimeId}`);
@@ -200,6 +152,9 @@ export abstract class Component extends EventEmitter {
 
     private static readonly rootMapId = "root";
     private readonly [typeToFactorySym]: ReadonlyMap<string, ISharedObjectExtension>;
+
+    // tslint:disable-next-line:variable-name
+    private _host: ComponentHost = null;
 
     // tslint:disable-next-line:variable-name
     private _runtime: IOldRuntime = null;
@@ -231,32 +186,60 @@ export abstract class Component extends EventEmitter {
             this._platform = platform;
 
             if (runtime.existing) {
-                debug("Component.open(existing)");
+                debug(`${this.ctorName}.open(existing)`);
 
                 // If the component already exists, open it's root map.
                 this._root = await runtime.getChannel(Component.rootMapId) as ISharedMap;
             } else {
-                debug("Component.open(new)");
+                debug(`${this.ctorName}.open(new)`);
 
                 // If this is the first client to attempt opening the component, create the component's
                 // root map and call 'create()' to give the component author a chance to initialize the
                 // component's shared data structures.
                 this._root = runtime.createChannel(Component.rootMapId, MapExtension.Type) as ISharedMap;
                 this._root.attach();
+                debug(`${this.ctorName}.create() - begin`);
                 await this.create();
+                debug(`${this.ctorName}.create() - end`);
             }
 
-            debug("Component.opened()");
+            debug(`${this.ctorName}.opened() - begin`);
             await this.opened();
+            debug(`${this.ctorName}.opened() - end`);
         };
     }
 
-    public close() {
-        debug("Component.close()");
+    public async close() {
+        debug(`${this.ctorName}.close()`);
         this.runtime.close();
     }
 
-    public abstract async attach(platform: IPlatform): Promise<void>;
+    public async run(runtime: IComponentRuntime): Promise<IComponentDeltaHandler> {
+        debug(`${this.ctorName}.run()`);
+        debug(`${this.ctorName}.LoadFromSnapshot() - begin`);
+        this._host = await ComponentHost.LoadFromSnapshot(runtime, new Chaincode(this));
+        debug(`${this.ctorName}.LoadFromSnapshot() - end`);
+        return this._host;
+    }
+
+    public async attach(platform: IPlatform): Promise<IPlatform> {
+        debug(`${this.ctorName}.attach()`);
+        this._platform = platform;
+
+        // Invoke the component's internal 'open()' method and wait for it to complete before
+        // resolving the promise.  This gives the component author an opportunity to preform
+        // async work to prepare the component before the user gets a reference.
+        this[openSym](this.host, platform).then(() => {
+            debug("Platform.resolveComponent()");
+        });
+
+        return new ComponentPlatform(Promise.resolve(this));
+    }
+
+    public snapshot(): ITree {
+        debug(`${this.ctorName}.snapshot()`);
+        return { entries: this._host.snapshotInternal() };
+    }
 
     /**
      * Subclass implements 'create()' to put initial document structure in place.
@@ -272,6 +255,7 @@ export abstract class Component extends EventEmitter {
      * Subclasses may override request to internally route requests.
      */
     protected request(runtime: IComponentRuntime, request: IRequest): Promise<IResponse> {
+        debug(`${this.ctorName}.request(${JSON.stringify(request)})`);
         return runtime.request(request);
     }
 }

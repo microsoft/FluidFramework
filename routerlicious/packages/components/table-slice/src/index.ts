@@ -1,17 +1,11 @@
 import { CellRange, TableDocument } from "@chaincode/table-document";
-import { Component, ComponentChaincode } from "@prague/app-component";
-import { IPlatform } from "@prague/container-definitions";
+import { Component } from "@prague/app-component";
 import { MapExtension } from "@prague/map";
-import { IChaincodeComponent, IComponentRuntime } from "@prague/runtime-definitions";
-import { Deferred } from "@prague/utils";
+import { IChaincodeComponent } from "@prague/runtime-definitions";
 import { cellRangeExpr, ConfigView } from "./config";
 import { ConfigKeys } from "./configKeys";
 
 export class TableSlice extends Component {
-    public get ready() {
-        return this.readyDeferred.promise;
-    }
-
     public get name() { return this.root.get(ConfigKeys.name); }
     public set name(value: string) { this.root.set(ConfigKeys.name, value); }
     public get headers() { return this.maybeHeaders!; }
@@ -24,27 +18,23 @@ export class TableSlice extends Component {
     private maybeDoc?: TableDocument;
     private maybeHeaders?: CellRange;
     private maybeValues?: CellRange;
-    private readyDeferred = new Deferred<void>();
 
-    constructor(private componentRuntime: IComponentRuntime) {
+    constructor() {
         super([[MapExtension.Type, new MapExtension()]]);
     }
 
     public async opened() {
         await this.connected;
-        this.readyDeferred.resolve();
-    }
 
-    public async attach(platform: IPlatform): Promise<void> {
         {
             const maybeServerUrl = await this.root.get(ConfigKeys.serverUrl);
             if (!maybeServerUrl) {
-                const maybeDiv = await platform.queryInterface<HTMLElement>("div");
+                const maybeDiv = await this.platform.queryInterface<HTMLElement>("div");
                 if (maybeDiv) {
                     // tslint:disable-next-line:no-shadowed-variable
                     const docId = this.root.get(ConfigKeys.docId);
                     if (!docId) {
-                        const configView = new ConfigView(this.componentRuntime, this.root);
+                        const configView = new ConfigView(this.host, this.root);
                         maybeDiv.appendChild(configView.root);
                         await configView.done;
                         while (maybeDiv.lastChild) {
@@ -56,9 +46,7 @@ export class TableSlice extends Component {
         }
 
         const docId = await this.root.get(ConfigKeys.docId);
-        const component = await this.componentRuntime.getComponent(docId, true);
-        const tableDocChaincode = component.chaincode as ComponentChaincode<TableDocument>;
-        this.maybeDoc = tableDocChaincode.instance;
+        this.maybeDoc = await this.host.openComponent(docId, true);
         await this.maybeDoc.ready;
 
         this.maybeHeaders = await this.getRange(ConfigKeys.headersKey, ConfigKeys.headerText);
@@ -66,7 +54,6 @@ export class TableSlice extends Component {
 
         this.root.on("op", this.emitOp);
         this.doc.on("op", this.emitOp);
-        return;
     }
 
     public evaluateCell(row: number, col: number) {

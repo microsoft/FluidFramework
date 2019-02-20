@@ -9,8 +9,8 @@ import { IChaincodeComponent } from "@prague/runtime-definitions";
 import { Editor } from "./components/editor";
 
 export class FlowEditor extends Component {
-
     public static readonly type = `${require("../package.json").name}@${require("../package.json").version}`;
+
     constructor() {
         super([[MapExtension.Type, new MapExtension()]]);
     }
@@ -32,8 +32,6 @@ export class FlowEditor extends Component {
             maybeDiv.appendChild(root);
         }
     }
-
-    public async attach(): Promise<void> { /* do nothing */ }
 
     protected async create() {
         // tslint:disable-next-line:insecure-random

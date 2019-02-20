@@ -1,9 +1,7 @@
 import { TableDocument } from "@chaincode/table-document";
-import { Component, ComponentChaincode } from "@prague/app-component";
-import { IPlatform } from "@prague/container-definitions";
+import { Component } from "@prague/app-component";
 import { MapExtension } from "@prague/map";
-import { IChaincodeComponent, IComponentRuntime } from "@prague/runtime-definitions";
-import { Deferred } from "@prague/utils";
+import { IChaincodeComponent } from "@prague/runtime-definitions";
 import { ConfigView } from "./config";
 import { ConfigKeys } from "./configKeys";
 import { GridView } from "./grid";
@@ -11,19 +9,15 @@ import { GridView } from "./grid";
 export class TableView extends Component {
 
     public static readonly type = `${require("../package.json").name}@${require("../package.json").version}`;
-    private ready = new Deferred<void>();
 
-    constructor(private componentRuntime: IComponentRuntime) {
+    constructor() {
         super([[MapExtension.Type, new MapExtension()]]);
     }
 
     public async opened() {
         await this.connected;
-        this.ready.resolve();
-    }
 
-    public async attach(platform: IPlatform): Promise<void> {
-        const maybeDiv = await platform.queryInterface<HTMLElement>("div");
+        const maybeDiv = await this.platform.queryInterface<HTMLElement>("div");
         if (!maybeDiv) {
             throw new Error("No <div> provided");
         }
@@ -31,7 +25,7 @@ export class TableView extends Component {
         {
             const docId = await this.root.get(ConfigKeys.docId);
             if (!docId) {
-                const configView = new ConfigView(this.componentRuntime, this.root);
+                const configView = new ConfigView(this.host, this.root);
                 maybeDiv.appendChild(configView.root);
                 await configView.done;
                 while (maybeDiv.lastChild) {
@@ -43,9 +37,7 @@ export class TableView extends Component {
         if (maybeDiv) {
             // tslint:disable-next-line:no-shadowed-variable
             const docId = await this.root.get(ConfigKeys.docId);
-            const component = await this.componentRuntime.getComponent(docId, true);
-            const tableDocComponent = component.chaincode as ComponentChaincode<TableDocument>;
-            const doc = tableDocComponent.instance;
+            const doc = await this.host.openComponent<TableDocument>(docId, true);
             await doc.ready;
 
             const grid = new GridView(doc);

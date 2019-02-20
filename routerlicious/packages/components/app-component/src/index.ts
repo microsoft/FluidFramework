@@ -1,2 +1,2 @@
-export { Component, ComponentChaincode } from "./component";
+export { Component } from "./component";
 export { Document } from "./document";
