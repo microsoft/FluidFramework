@@ -8,7 +8,6 @@ import { findRandomWord } from "@prague/merge-tree-utils";
 import { IComponentRuntime } from "@prague/runtime-definitions";
 import * as Sequence from "@prague/sequence";
 import * as assert from "assert";
-import * as Geocoder from "geocoder";
 // tslint:disable-next-line:no-var-requires
 const performanceNow = require("performance-now");
 import { isBlock } from "@prague/app-ui";
@@ -119,12 +118,6 @@ const commands: ICmd[] = [
             f.paintFormat();
         },
         key: "paint format",
-    },
-    {
-        exec: (f) => {
-            f.geocodeAddress();
-        },
-        key: "geocode",
     },
     {
         exec: (f) => {
@@ -5030,15 +5023,6 @@ export class FlowView extends ui.Component {
 
     public cursorLocation() {
         this.statusMessage("cursor", `Cursor: ${this.cursor.pos} `);
-    }
-
-    public geocodeAddress() {
-        const sel = this.cursor.getSelection();
-        if (sel) {
-            const text = this.client.getText(sel.start, sel.end);
-            Geocoder.geocode(text, (err, data) => console.log(data),
-                { key: "AIzaSyCY3kHHzocQSos6QNOzJINWmNo_a4IqN-8" });
-        }
     }
 
     public showCommentText() {

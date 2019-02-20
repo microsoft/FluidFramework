@@ -1,7 +1,7 @@
 const path = require('path');
 // var Visualizer = require('webpack-visualizer-plugin');
 // const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
-const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin');
+// const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin');
 
 module.exports = {
     entry: './src/index.ts',
@@ -66,12 +66,14 @@ module.exports = {
     },
     output: {
         filename: '[name].bundle.js',
+        chunkFilename: '[name].async.js',
         path: path.resolve(__dirname, 'dist'),
         publicPath: "/dist/",
         library: "[name]",
         libraryTarget: "umd"
     },
     plugins: [
-        new MonacoWebpackPlugin()
+        // new MonacoWebpackPlugin()
+        // new BundleAnalyzerPlugin()
     ]
 };
