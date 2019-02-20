@@ -4,10 +4,12 @@
   "description": "Generates insights on distributed data structures",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "sideEffects": "false",
+  "sideEffects": false,
   "scripts": {
-    "build": "npm run tsc && npm run tslint",
+    "build": "concurrently npm:build:compile npm:tslint",
+    "build:compile": "npm run tsc",
     "build:full": "npm run build",
+    "build:full:compile": "npm run build:compile",
     "clean": "rimraf dist",
     "tsc": "tsc",
     "tslint": "tslint --project tsconfig.json --format verbose"
@@ -15,6 +17,7 @@
   "author": "Microsoft",
   "repository": "microsoft/prague",
   "devDependencies": {
+    "concurrently": "^4.1.0",
     "@types/debug": "^0.0.31",
     "@types/node": "^10.12.12",
     "request": "^2.88.0",
