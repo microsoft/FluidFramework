@@ -60,8 +60,15 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
 
             // Listen for connection issues
             socket.on("connect_error", (error) => {
+                debug(`Socket connection error: [${error}]`);
                 reject(error);
             });
+
+            // Listen for timeouts
+            socket.on("connect_timeout", () => {
+                debug(`Socket connection timeout`);
+                reject();
+            })
 
             socket.on("connect_document_success", (response: messages.IConnected) => {
                 socket.removeListener("op", earlyOpHandler);
@@ -94,7 +101,10 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
                 resolve(response);
             });
 
-            socket.on("connect_document_error", reject);
+            socket.on("connect_document_error", (error => {
+                debug(`Error connecting to the document after connecting to the socket. Error:[${error}]`)
+                reject(error);
+            }));
 
             socket.emit("connect_document", connectMessage);
         });
