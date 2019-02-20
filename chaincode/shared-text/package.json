@@ -1,14 +1,13 @@
 {
-  "name": "@chaincode/shared-text2",
-  "version": "0.2.10",
+  "name": "@chaincode/shared-text",
+  "version": "0.3.0",
   "description": "Shared text",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "sideEffects": "false",
   "scripts": {
-    "build": "npm run tsc && npm run tslint",
+    "build": "tsc && tsc --outDir lib --m esnext && npm run webpack && npm run tslint",
     "tsc": "tsc",
-    "tsc:watch": "tsc --watch",
     "webpack": "webpack --config webpack.config.js",
     "tslint": "tslint 'src/**/*.ts'",
     "start": "prague-dev-server --config webpack.config.js --package package.json"
@@ -36,11 +35,11 @@
     "webpack-visualizer-plugin": "^0.1.11"
   },
   "dependencies": {
-    "@chaincode/charts": "0.2.3",
-    "@chaincode/monaco": "0.2.3",
-    "@chaincode/pinpoint-editor": "0.2.3",
+    "@chaincode/charts": "^0.3.5157",
+    "@chaincode/monaco": "^0.3.5159",
+    "@chaincode/pinpoint-editor": "^0.3.5160",
     "@prague/api-definitions": "^0.2.5011",
-    "@prague/app-component": "^0.2.5011",
+    "@prague/app-component": "^0.2.5134",
     "@prague/app-ui": "^0.2.5011",
     "@prague/cell": "^0.2.5011",
     "@prague/client-api": "^0.2.5011",

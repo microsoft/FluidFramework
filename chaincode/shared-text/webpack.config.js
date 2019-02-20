@@ -11,7 +11,14 @@ module.exports = {
         rules: [
             {
                 test: /\.tsx?$/,
-                use: 'ts-loader',
+                use: [{
+                    loader:'ts-loader',
+                    options: {
+                        compilerOptions: {
+                            module: "esnext"
+                        },
+                    }
+                }],
                 exclude: /node_modules/
             },
             {
