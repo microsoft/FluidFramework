@@ -2,6 +2,7 @@ import * as api from "@prague/container-definitions";
 import Axios, { AxiosInstance } from "axios";
 import * as querystring from "querystring";
 import { IDeltaStorageGetResponse, ISequencedDeltaOpMessage } from "./contracts";
+import { debug } from "./debug";
 import { TokenProvider } from "./token";
 
 /**
@@ -46,6 +47,7 @@ export class DeltaStorageService implements api.IDeltaStorageService {
 
         const result = await this.axiosInstance.get<IDeltaStorageGetResponse>(url, { headers });
         if (result.status !== 200) {
+            debug(`Invalid opStream response status "${result.status} ".`);
             throw new Error(`Invalid opStream response status "${result.status}".`);
         }
 
