@@ -36,7 +36,7 @@ export interface IOrdererConnection {
 
     order(message: IDocumentMessage): void;
 
-    disconnect();
+    disconnect(): void;
 }
 
 export interface IOrderer {
