@@ -1,12 +1,12 @@
 import { IMarker, IPinpointOptions } from "@kurtb/pinpoint";
-import { IMap, IMapView } from "@prague/map";
+import { ISharedMap } from "@prague/map";
 import * as angular from "angular";
 
 export class MapDetailsService {
     public details: IPinpointOptions;
     private sequenceNumber: number;
 
-    constructor(private $rootScope: angular.IRootScopeService, map: IMap, view: IMapView) {
+    constructor(private $rootScope: angular.IRootScopeService, map: ISharedMap, view: ISharedMap) {
         this.details = JSON.parse(view.get("map"));
 
         $rootScope.$watch(

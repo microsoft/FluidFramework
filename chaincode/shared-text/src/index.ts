@@ -1,24 +1,41 @@
+import * as charts from "@chaincode/charts";
+import * as monaco from "@chaincode/monaco";
+import * as pinpoint from "@chaincode/pinpoint-editor";
 import { Component, Document } from "@prague/app-component";
 import * as API from "@prague/client-api";
-import { controls, ui } from "@prague/client-ui";
+import {
+    IContainerContext,
+    IPlatform,
+    IRequest,
+    IRuntime,
+} from "@prague/container-definitions";
 import * as DistributedMap from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
-import { IChaincode } from "@prague/runtime-definitions";
+import {
+    Runtime,
+} from "@prague/runtime";
+import {
+    IChaincodeComponent,
+} from "@prague/runtime-definitions";
 import * as SharedString from "@prague/sequence";
 import { IStream } from "@prague/stream";
+import { Deferred } from "@prague/utils";
 import { default as axios } from "axios";
+import { parse } from "querystring";
+import * as uuid from "uuid/v4";
 // tslint:disable:no-var-requires
 const performanceNow = require("performance-now");
-const debug = require("debug")("chaincode:shared-text");
+const debug = require("debug")("prague:shared-text");
 // tslint:enable:no-var-requires
 import * as url from "url";
+import { controls, ui } from "./controls";
 
 // first script loaded
 const clockStart = Date.now();
 
-async function getInsights(map: DistributedMap.IMap, id: string): Promise<DistributedMap.IMap> {
-    const insights = await map.wait<DistributedMap.IMap>("insights");
-    return insights.wait<DistributedMap.IMap>(id);
+async function getInsights(map: DistributedMap.ISharedMap, id: string): Promise<DistributedMap.ISharedMap> {
+    const insights = await map.wait<DistributedMap.ISharedMap>("insights");
+    return insights.wait<DistributedMap.ISharedMap>(id);
 }
 
 async function downloadRawText(textUrl: string): Promise<string> {
@@ -26,23 +43,29 @@ async function downloadRawText(textUrl: string): Promise<string> {
     return data.data;
 }
 
-const loadPP = false;
-
-class SharedText extends Document {
+class SharedTextComponent extends Document {
     private sharedString: SharedString.SharedString;
+    private ready = new Deferred<void>();
 
     public async opened() {
-        debug(`collabDoc loaded - ${performanceNow()}`);
-        const root = await this.root.getView();
-        debug(`Getting root - ${performanceNow()}`);
+        this.ready.resolve();
+    }
+
+    public async attach(platform?: IPlatform): Promise<void> {
+        await this.ready.promise;
+
+        debug(`collabDoc loaded ${this.runtime.id} - ${performanceNow()}`);
+        const root = await this.root;
+        debug(`Getting root ${this.runtime.id} - ${performanceNow()}`);
 
         await Promise.all([root.wait("text"), root.wait("ink")]);
 
         this.sharedString = root.get("text") as SharedString.SharedString;
         debug(`Shared string ready - ${performanceNow()}`);
-        debug(`Partial load fired - ${performanceNow()}`);
+        debug(`id is ${this.runtime.id}`);
+        debug(`Partial load fired: ${performanceNow()}`);
 
-        const hostContent: HTMLElement = await this.platform.queryInterface<HTMLElement>("div");
+        const hostContent: HTMLElement = await platform.queryInterface<HTMLElement>("div");
         if (!hostContent) {
             // If headless exist early
             return;
@@ -91,11 +114,8 @@ class SharedText extends Document {
 
         this.sharedString.loaded.then(() => {
             theFlow.loadFinished(clockStart);
-            debug(`fully loaded - ${performanceNow()} `);
+            debug(`${this.runtime.id} fully loaded: ${performanceNow()} `);
         });
-
-        this.runtime.registerTasks(["snapshot", "spell", "intel", "translation"], "1.0");
-
     }
 
     protected async create() {
@@ -104,13 +124,20 @@ class SharedText extends Document {
         const insights = this.createMap(insightsMapId);
         this.root.set(insightsMapId, insights);
 
-        debug(`Not existing - ${performanceNow()}`);
+        debug(`Not existing ${this.runtime.id} - ${performanceNow()}`);
         this.root.set("presence", this.createMap());
         this.root.set("users", this.createMap());
+        this.root.set("calendar", undefined, SharedString.SharedIntervalCollectionValueType.Name);
+        const seq = this.runtime.createChannel(
+            uuid(), SharedString.SharedNumberSequenceExtension.Type) as
+            SharedString.SharedNumberSequence;
+        this.root.set("sequence-test", seq);
         const newString = this.createString() as SharedString.SharedString;
 
-        const starterText = loadPP
-            ? await downloadRawText("https://alfred.wu2-ppe.prague.office-int.com/public/literature/pp.txt")
+        const template = parse(window.location.search).template;
+        const starterText = template
+            ? await downloadRawText(
+                `/public/literature/${template}`)
             : " ";
 
         const segments = MergeTree.loadSegments(starterText, 0, true);
@@ -130,6 +157,52 @@ class SharedText extends Document {
     }
 }
 
-export async function instantiate(): Promise<IChaincode> {
-    return Component.instantiate(new SharedText());
+export async function instantiateComponent(): Promise<IChaincodeComponent> {
+    return Component.instantiateComponent(SharedTextComponent);
+}
+
+/**
+ * Instantiates a new chaincode host
+ */
+export async function instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
+    const registry = new Map<string, any>([
+        ["@chaincode/charts", charts],
+        ["@chaincode/monaco", monaco],
+        ["@chaincode/pinpoint-editor", pinpoint],
+        ["@chaincode/shared-text", { instantiateComponent }],
+    ]);
+
+    const runtime = await Runtime.Load(registry, context);
+
+    // Register path handler for inbound messages
+    runtime.registerRequestHandler(async (request: IRequest) => {
+        console.log(request.url);
+        const requestUrl = request.url.length > 0 && request.url.charAt(0) === "/"
+            ? request.url.substr(1)
+            : request.url;
+        const trailingSlash = requestUrl.indexOf("/");
+
+        const componentId = requestUrl
+            ? requestUrl.substr(0, trailingSlash === -1 ? requestUrl.length : trailingSlash)
+            : "text";
+        const component = await runtime.getComponent(componentId, true);
+
+        // If there is a trailing slash forward to the component. Otherwise handle directly.
+        if (trailingSlash === -1) {
+            return { status: 200, mimeType: "prague/component", value: component };
+        } else {
+            return component.request({ url: requestUrl.substr(trailingSlash) });
+        }
+    });
+
+    runtime.registerTasks(["snapshot", "spell", "translation"]);
+
+    // On first boot create the base component
+    if (!runtime.existing) {
+        runtime.createAndAttachComponent("text", "@chaincode/shared-text").catch((error) => {
+            context.error(error);
+        });
+    }
+
+    return runtime;
 }
