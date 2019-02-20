@@ -63,7 +63,7 @@ export async function instantiateComponent(): Promise<IChaincodeComponent> {
  * Instantiates a new chaincode host
  */
 export async function instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
-    return Component.instantiateRuntime(context, "flow-host", pkg.name, [
+    return Component.instantiateRuntime(context, pkg.name, [
         ["@chaincode/chart-view", Promise.resolve(chartView)],
         ["@chaincode/flow-document", Promise.resolve(flowDocument)],
         [pkg.name, Promise.resolve({ instantiateComponent })],

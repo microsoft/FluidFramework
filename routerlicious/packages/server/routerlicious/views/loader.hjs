@@ -1,31 +1,59 @@
-{{<layout}}
-    {{$styles}}
-        <link href="{{#hfurl}}/public/stylesheets/dist/map.css{{/hfurl}}" rel="stylesheet" />
-    {{/styles}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    {{$content}}
-        <div id="content"></div>
-    {{/content}}
+    <title>{{ title }}</title>
+</head>
+<body class="{{ optionalBodyClass }}">
+    <div id="content"></div>
 
-    {{$scripts}}
-        <script src="{{#hfurl}}/public/scripts/dist/loader.js{{/hfurl}}"></script>
-        <script>
-            var config = {{{ config }}};
-            var version = {{{ version }}};
-            var token = "{{ token }}";
-            var chaincode = "{{ chaincode }}";
-            var from = {{ from }};
-            var to = {{ to }};
-            var unitIsTime = {{ unitIsTime }};
-            loader.initialize(
-                version,
-                token,
-                config,
-                chaincode,
-                config.npm,
-                from,
-                to,
-                unitIsTime);
-        </script>
-    {{/scripts}}
-{{/layout}}
+    <script src="{{#hfurl}}/public/scripts/dist/loader.js{{/hfurl}}"></script>
+    {{#pkg}}
+        {{#scripts}}
+        <script id="{{id}}" src="{{url}}" async></script>
+        {{/scripts}}
+    {{/pkg}}
+
+    <script>
+        var config = {{{ config }}};
+        var cache = {{{ cache }}};
+        var timings = "{{ timings }}";
+
+        var token = "{{ token }}";
+        var chaincode = "{{ chaincode }}";
+        var tenantId = "{{ tenantId }}";
+        var documentId = "{{ documentId }}";
+        var path = "{{ path }}";
+
+        {{#pkg}}
+        var entry = "{{ entrypoint }}";
+        var scriptIds = [
+            {{#pkg}}
+            {{#scripts}}
+            "{{id}}",
+            {{/scripts}}
+            {{/pkg}}
+        ];
+        {{/pkg}}
+        {{^pkg}}
+        var entry = null;
+        var scriptIds = [];
+        {{/pkg}}
+  
+        loader.initialize(
+            tenantId,
+            documentId,
+            path,
+            cache,
+            token,
+            config,
+            chaincode,
+            entry,
+            scriptIds,
+            config.npm);
+    </script>
+</body>
+</html>

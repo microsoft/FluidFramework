@@ -1,12 +1,13 @@
+import * as charts from "@chaincode/charts";
+import * as monaco from "@chaincode/monaco";
+import * as pinpoint from "@chaincode/pinpoint-editor";
 import { Component, Document } from "@prague/app-component";
 import * as API from "@prague/client-api";
-import { ComponentHost } from "@prague/component";
 import {
     IContainerContext,
     IPlatform,
     IRequest,
     IRuntime,
-    ITree,
 } from "@prague/container-definitions";
 import * as DistributedMap from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
@@ -14,18 +15,17 @@ import {
     Runtime,
 } from "@prague/runtime";
 import {
-    IChaincode,
     IChaincodeComponent,
-    IComponentDeltaHandler,
-    IComponentRuntime } from "@prague/runtime-definitions";
+} from "@prague/runtime-definitions";
 import * as SharedString from "@prague/sequence";
 import { IStream } from "@prague/stream";
 import { Deferred } from "@prague/utils";
 import { default as axios } from "axios";
+import { parse } from "querystring";
 import * as uuid from "uuid/v4";
 // tslint:disable:no-var-requires
 const performanceNow = require("performance-now");
-const debug = require("debug")("chaincode:shared-text");
+const debug = require("debug")("prague:shared-text");
 // tslint:enable:no-var-requires
 import * as url from "url";
 import { controls, ui } from "./controls";
@@ -43,9 +43,7 @@ async function downloadRawText(textUrl: string): Promise<string> {
     return data.data;
 }
 
-const loadPP = false;
-
-class SharedText extends Document {
+class SharedTextComponent extends Document {
     private sharedString: SharedString.SharedString;
     private ready = new Deferred<void>();
 
@@ -53,7 +51,7 @@ class SharedText extends Document {
         this.ready.resolve();
     }
 
-    public async attach(platform: IPlatform): Promise<IPlatform> {
+    public async attach(platform?: IPlatform): Promise<void> {
         await this.ready.promise;
 
         debug(`collabDoc loaded ${this.runtime.id} - ${performanceNow()}`);
@@ -65,7 +63,7 @@ class SharedText extends Document {
         this.sharedString = root.get("text") as SharedString.SharedString;
         debug(`Shared string ready - ${performanceNow()}`);
         debug(`id is ${this.runtime.id}`);
-        debug(`Partial load fired - ${performanceNow()}`);
+        debug(`Partial load fired: ${performanceNow()}`);
 
         const hostContent: HTMLElement = await platform.queryInterface<HTMLElement>("div");
         if (!hostContent) {
@@ -116,7 +114,7 @@ class SharedText extends Document {
 
         this.sharedString.loaded.then(() => {
             theFlow.loadFinished(clockStart);
-            debug(`fully loaded ${this.runtime.id}: ${performanceNow()} `);
+            debug(`${this.runtime.id} fully loaded: ${performanceNow()} `);
         });
     }
 
@@ -136,8 +134,10 @@ class SharedText extends Document {
         this.root.set("sequence-test", seq);
         const newString = this.createString() as SharedString.SharedString;
 
-        const starterText = loadPP
-            ? await downloadRawText("https://alfred.wu2-ppe.prague.office-int.com/public/literature/pp.txt")
+        const template = parse(window.location.search).template;
+        const starterText = template
+            ? await downloadRawText(
+                `/public/literature/${template}`)
             : " ";
 
         const segments = MergeTree.loadSegments(starterText, 0, true);
@@ -157,54 +157,20 @@ class SharedText extends Document {
     }
 }
 
-export class SharedTextComponent implements IChaincodeComponent {
-    private sharedText = new SharedText();
-    private chaincode: IChaincode;
-    private component: ComponentHost;
-
-    constructor() {
-        this.sharedText = new SharedText();
-        this.chaincode = Component.instantiate(this.sharedText);
-    }
-
-    public getModule(type: string) {
-        return null;
-    }
-
-    public async close(): Promise<void> {
-        return;
-    }
-
-    public async run(runtime: IComponentRuntime): Promise<IComponentDeltaHandler> {
-        const chaincode = this.chaincode;
-
-        const component = await ComponentHost.LoadFromSnapshot(runtime, chaincode);
-        this.component = component;
-
-        return component;
-    }
-
-    public async attach(platform: IPlatform): Promise<IPlatform> {
-        return this.sharedText.attach(platform);
-    }
-
-    public snapshot(): ITree {
-        const entries = this.component.snapshotInternal();
-        return { entries };
-    }
-}
-
 export async function instantiateComponent(): Promise<IChaincodeComponent> {
-    return new SharedTextComponent();
+    return Component.instantiateComponent(SharedTextComponent);
 }
 
 /**
  * Instantiates a new chaincode host
  */
 export async function instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
-    // TODO (madumi): Add back charts, monaco, and pinpoint-editor.
     const registry = new Map<string, any>([
-        ["@chaincode/shared-text", { instantiateComponent }]]);
+        ["@chaincode/charts", charts],
+        ["@chaincode/monaco", monaco],
+        ["@chaincode/pinpoint-editor", pinpoint],
+        ["@chaincode/shared-text", { instantiateComponent }],
+    ]);
 
     const runtime = await Runtime.Load(registry, context);
 
@@ -229,7 +195,7 @@ export async function instantiateRuntime(context: IContainerContext): Promise<IR
         }
     });
 
-    runtime.registerTasks(["snapshot", "spell", "translation"], "1.0");
+    runtime.registerTasks(["snapshot", "spell", "translation"]);
 
     // On first boot create the base component
     if (!runtime.existing) {

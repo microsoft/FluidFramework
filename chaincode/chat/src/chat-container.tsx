@@ -64,7 +64,7 @@ export class ChatContainer extends React.Component<ChatContainerProps, ChatConta
               content={
                 message.message.component ? 
                   <LoaderComponent
-                    docId={message.message.component}
+                    componentId={message.message.component}
                     >
                   </LoaderComponent>
                 : message.message.content

@@ -83,7 +83,7 @@ function displayValues(map: Map.ISharedMap, container: JQuery, doc: api.Document
  * Displays the keys in the map
  */
 async function displayMap(parentElement: JQuery, key: string, map: Map.ISharedMap,
-// tslint:disable-next-line: align
+    // tslint:disable-next-line: align
     parent: Map.ISharedMap, doc: api.Document) {
     const header = key !== null ? $(`<h2>${key}: ${map.id}</h2>`) : $(`<h2>${map.id}</h2>`);
 
@@ -133,8 +133,12 @@ async function randomizeMap(map: Map.ISharedMap) {
     // link up the randomize button
     const keys = ["foo", "bar", "baz", "binky", "winky", "twinkie"];
 
-    const counter = map.set<Map.Counter>("counter", undefined, Map.CounterValueType.Name);
-    const set = map.set<Map.DistributedSet<number>>("set", [1, 2, 3, 3, 2, 4], Map.DistributedSetValueType.Name);
+    const counter: Map.Counter =
+        map.set("counter", undefined, Map.CounterValueType.Name).
+            get("counter");
+    const set: Map.DistributedSet<number> =
+        map.set("set", [1, 2, 3, 3, 2, 4], Map.DistributedSetValueType.Name).
+            get("set");
 
     setInterval(async () => {
         // tslint:disable-next-line:insecure-random

@@ -5,8 +5,10 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "npm run tsc && npm run tslint",
+    "build": "concurrently npm:build:compile npm:tslint",
+    "build:compile": "npm run tsc",
     "build:full": "npm run build",
+    "build:full:compile": "npm run build:compile",
     "clean": "rimraf dist && rimraf lib",
     "tsc": "tsc",
     "tslint": "tslint --project tsconfig.json --format verbose"
@@ -14,6 +16,7 @@
   "author": "Microsoft",
   "repository": "microsoft/prague",
   "devDependencies": {
+    "concurrently": "^4.1.0",
     "jsonwebtoken": "^8.4.0",
     "rimraf": "^2.6.2",
     "tslint": "^5.11.0",
@@ -24,6 +27,7 @@
     "@prague/container-definitions": "^0.2.0",
     "@prague/gitresources": "^0.2.0",
     "@prague/runtime-definitions": "^0.2.0",
+    "@prague/services-client": "^0.2.0",
     "@prague/utils": "^0.2.0",
     "@types/jsonwebtoken": "^8.3.0",
     "@types/nconf": "^0.0.37",

@@ -1,5 +1,6 @@
 import * as git from "@prague/gitresources";
 import { RestWrapper } from "./restWrapper";
+import { IHistorian } from "./storage";
 
 function endsWith(value: string, endings: string[]): boolean {
     for (const ending of endings) {
@@ -9,40 +10,6 @@ function endsWith(value: string, endings: string[]): boolean {
     }
 
     return false;
-}
-
-/**
- * Interface to a generic Git provider
- */
-export interface IGitService {
-    getBlob(sha: string): Promise<git.IBlob>;
-    createBlob(blob: git.ICreateBlobParams): Promise<git.ICreateBlobResponse>;
-    getContent(path: string, ref: string): Promise<any>;
-    getCommits(sha: string, count: number): Promise<git.ICommitDetails[]>;
-    getCommit(sha: string): Promise<git.ICommit>;
-    createCommit(commit: git.ICreateCommitParams): Promise<git.ICommit>;
-    getRefs(): Promise<git.IRef[]>;
-    getRef(ref: string): Promise<git.IRef>;
-    createRef(params: git.ICreateRefParams): Promise<git.IRef>;
-    updateRef(ref: string, params: git.IPatchRefParams): Promise<git.IRef>;
-    deleteRef(ref: string): Promise<void>;
-    createTag(tag: git.ICreateTagParams): Promise<git.ITag>;
-    getTag(tag: string): Promise<git.ITag>;
-    createTree(tree: git.ICreateTreeParams): Promise<git.ITree>;
-    getTree(sha: string, recursive: boolean): Promise<git.ITree>;
-}
-/**
- * The Historian extends the git service by providing access to document header information stored in
- * the repository
- */
-export interface IHistorian extends IGitService {
-    endpoint: string;
-
-    /**
-     * Retrieves the header for the given document
-     */
-    getHeader(sha: string): Promise<git.IHeader>;
-
 }
 
 export interface ICredentials {
@@ -62,23 +29,19 @@ export class Historian implements IHistorian {
         private disableCache: boolean,
         credentials?: ICredentials) {
 
-        let headers: {};
-        if (credentials) {
-            headers = {
-                Authorization:
-                    `Basic ${new Buffer(`${credentials.user}:${credentials.password}`).toString("base64")}`,
-            };
-        }
-
-        let queryString: {};
+        const queryString: { token?; disableCache? } = {};
         let cacheBust = false;
         if (this.disableCache && this.historianApi) {
-            queryString = { disableCache: this.disableCache };
+            queryString.disableCache = this.disableCache;
         } else if (this.disableCache) {
             cacheBust = true;
         }
 
-        this.restWrapper = new RestWrapper(endpoint, headers, queryString, cacheBust);
+        if (credentials) {
+            queryString.token = new Buffer(`${credentials.user}`).toString("base64");
+        }
+
+        this.restWrapper = new RestWrapper(endpoint, {}, queryString, cacheBust);
     }
 
     /* tslint:disable:promise-function-async */
@@ -88,6 +51,10 @@ export class Historian implements IHistorian {
         } else {
             return this.getHeaderDirect(sha);
         }
+    }
+
+    public getFullTree(sha: string): Promise<any> {
+        return this.restWrapper.get(`/tree/${encodeURIComponent(sha)}`);
     }
 
     public getBlob(sha: string): Promise<git.IBlob> {

@@ -6,17 +6,21 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "clean": "git clean -fXd -e \\!**/node_modules/**",
-    "build": "tsc --project tsconfig.prod.json && npm run tslint",
+    "build": "concurrently npm:build:compile npm:tslint",
+    "build:compile": "npm run tsc",
     "build:full": "npm run build",
+    "build:full:compile": "npm run build:compile",
     "dev": "tsc --project tsconfig.dev.json --watch",
     "bench": "ts-node --project tsconfig.prod.json bench/index.ts",
     "test": "ts-mocha -p tsconfig.dev.json \"test/**/*.{ts,tsx}\"",
+    "tsc": "tsc --project tsconfig.prod.json",
     "tslint": "tslint --project tsconfig.json --format verbose"
 
   },
   "author": "Microsoft",
   "repository": "microsoft/prague",
   "devDependencies": {
+    "concurrently": "^4.1.0",
     "@types/benchmark": "^1.0.31",
     "@types/mocha": "^5.2.5",
     "benchmark": "^2.1.4",

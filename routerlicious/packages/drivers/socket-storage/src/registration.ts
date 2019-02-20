@@ -1,4 +1,5 @@
 import { IDocumentService, IErrorTrackingService } from "@prague/container-definitions";
+import { IGitCache } from "@prague/services-client";
 import { DocumentService } from "./documentService";
 import { DefaultErrorTracking } from "./errorTracking";
 
@@ -8,7 +9,8 @@ export function createDocumentService(
     errorTracking: IErrorTrackingService = new DefaultErrorTracking(),
     disableCache = false,
     historianApi = true,
-    credentials?): IDocumentService {
+    credentials?,
+    seedData?: IGitCache): IDocumentService {
 
     /* tslint:disable:no-unsafe-any */
     const service = new DocumentService(
@@ -17,7 +19,8 @@ export function createDocumentService(
         errorTracking,
         disableCache,
         historianApi,
-        credentials);
+        credentials,
+        seedData);
 
     return service;
 }

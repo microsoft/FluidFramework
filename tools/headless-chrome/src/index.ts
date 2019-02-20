@@ -16,13 +16,16 @@ async function testPage(documentUrl: string, page: puppeteer.Page, matchText: st
             return;
         }
 
-        const regEx = new RegExp(`${matchText[entry]} (.+): (\\d+.\\d+)`);
+        const regEx = new RegExp(`${matchText[entry]}: (\\d+.\\d+)`);
         const matches = text.match(regEx);
         if (matches) {
             entry++;
-            perfMatches.push(Number.parseFloat(matches[2]));
+            console.log(matches[1]);
+            perfMatches.push(Number.parseFloat(matches[1]));
         }
     };
+
+    console.log(documentUrl);
 
     page.on("console", testFn);
     await page.goto(
@@ -49,18 +52,20 @@ async function loginAndInitialize(
         localStorage.debug = "prague:*";
     });
 
-    await page.type("#username", username);
-    await page.type("#password", password);
-    const navigationP = page.waitForNavigation();
-    await page.click("#submit");
-    await navigationP;
+    // await page.type("#username", username);
+    // await page.type("#password", password);
+    // const navigationP = page.waitForNavigation();
+    // await page.click("#submit");
+    // await navigationP;
 }
 
 async function runTest(
     documentUrl: string,
+    document2Url: string,
     iterations: number,
     username: string,
-    password: string): Promise<any[]> {
+    password: string,
+): Promise<any[]> {
 
     console.error(`Opening ${documentUrl} for ${iterations} iterations`);
 
@@ -72,10 +77,13 @@ async function runTest(
     await loginAndInitialize(parsedUrl.origin, page, username, password);
 
     const matchText = [
-        { text: "Document loading", event: "loading" },
-        { text: "Document loaded", event: "loaded_head" },
-        { text: "fully loaded", event: "loaded_body" }];
+        { text: "Container resolve", event: "resolve" },
+        { text: "Container loading", event: "loading" },
+        { text: "Partial load fired", event: "partial" },
+        { text: "fully loaded", event: "full" }];
     const matchTextStrings = matchText.map((match) => match.text);
+
+    await testPage(document2Url, page, matchTextStrings);
 
     const results: any[] = [];
     for (let i = 0; i < iterations; i++) {
@@ -113,12 +121,21 @@ commander
     .option(
         "-d, --document [document]",
         "Document to open",
-        "https://alfred.eu.prague.office-int.com/sharedText/disastrous-page")
+        "http://localhost:3000/loader/prague/testtesttest8?chaincode=@chaincode/shared-text2@0.2.13")
+    .option(
+        "-e, --document2 [document2]",
+        "Document to open",
+        "http://localhost:3000/loader/prague/testtesttest7?chaincode=@chaincode/shared-text2@0.2.13")
     .option("-u, --username [username]", "Username", "test")
     .option("-p, --password [password]", "Password", "mRTvhfDTE3FYbVc")
     .parse(process.argv);
 
-runTest(commander.document, commander.iterations, commander.username, commander.password).then(
+runTest(
+    commander.document,
+    commander.document2,
+    commander.iterations,
+    commander.username,
+    commander.password).then(
     (metrics) => {
         console.log(JSON.stringify(metrics, null, 2));
     },

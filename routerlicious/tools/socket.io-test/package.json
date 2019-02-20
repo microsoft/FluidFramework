@@ -13,6 +13,7 @@
     "socket.io-client": "^2.1.1"
   },
   "devDependencies": {
+    "concurrently": "^4.1.0",
     "source-map-loader": "^0.2.3",
     "ts-loader": "^4.2.0",
     "tslint": "^5.9.1",
@@ -24,7 +25,8 @@
     "webpack-visualizer-plugin": "^0.1.11"
   },
   "scripts": {
-    "build": "npm run tslint && npm run webpack",
+    "build": "concurrently npm:build:compile npm:tslint",
+    "build:compile": "npm run webpack",
     "tslint": "tslint 'src/**/*.ts'",
     "webpack": "webpack --config webpack.config.js",
     "webpack:serve": "webpack-dev-server --config webpack.config.js --open"

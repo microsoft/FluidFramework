@@ -7,8 +7,10 @@
   "types": "dist/index.d.ts",
   "sideEffects": "false",
   "scripts": {
-    "build": "npm run tsc && npm run build:esnext && npm run tslint",
+    "build": "concurrently npm:build:compile npm:tslint",
+    "build:compile": "concurrently npm:tsc npm:build:esnext",
     "build:full": "npm run build",
+    "build:full:compile": "npm run build:compile",
     "tsc": "tsc",
     "build:esnext": "tsc --outDir lib --m esnext",
     "tslint": "tslint --project tsconfig.json --format verbose"
@@ -16,20 +18,18 @@
   "author": "Microsoft",
   "repository": "microsoft/prague",
   "dependencies": {
-    "@prague/api-definitions": "^0.2.0",
     "@prague/container-loader": "^0.2.0",
-    "@prague/map": "^0.2.0",
     "@prague/container-definitions": "^0.2.0",
     "@prague/loader-web": "^0.2.0",
     "@prague/runtime-definitions": "^0.2.0",
     "@prague/socket-storage": "^0.2.0",
-    "@types/jsonwebtoken": "^8.3.0",
-    "axios": "^0.18.0",
     "debug": "^3.1.0",
     "jsonwebtoken": "^8.4.0"
   },
   "devDependencies": {
+    "concurrently": "^4.1.0",
     "@types/debug": "^0.0.31",
+    "@types/jsonwebtoken": "^8.3.0",
     "@types/mocha": "^5.2.5",
     "@types/nock": "^9.3.0",
     "@types/node": "^10.12.12",

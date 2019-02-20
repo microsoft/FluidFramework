@@ -9461,7 +9461,7 @@ packages:
     dev: false
     name: '@rush-temp/app-datastore'
     resolution:
-      integrity: sha512-k6MjtP7OquByz8w8CM1yNCSszeVl/XXjlKMxgbrbalzIJ19fSeV0vC/G6EeC748/Q9hslMMmjmPeKRLpBwoDNA==
+      integrity: sha512-R0bCAjEx+F8dBpV1tjSED8skJjz7Uc67irnEo4fFlStPcnHaph44xWOu0KYsEUxAHFYKftzoW2ZyQ9f2AM/QBg==
       tarball: 'file:projects/app-datastore.tgz'
     version: 0.0.0
   'file:projects/app-ui.tgz':
@@ -10004,6 +10004,7 @@ packages:
       '@types/ws': 6.0.1
       amqplib: 0.5.3
       async: 2.6.1
+      axios: 0.18.0
       azure-iot-device: 1.9.3
       azure-iot-device-mqtt: 1.9.3
       azure-iothub: 1.9.3
@@ -10088,7 +10089,7 @@ packages:
     dev: false
     name: '@rush-temp/routerlicious'
     resolution:
-      integrity: sha512-tt4RYVLBhr+PlJSa+oANMY0eZdoU0jJhigT4b5WAbe0Q6TjRfewQxC78FeZi5++Wc3aT2wLOSWtg0E8ZF5KMBQ==
+      integrity: sha512-s+77u/JDzvGSnWmoytOihMpBPHAyGnKag3w3EWLtXKAnjoe/85MWOBVC7LBOAimVimekjhLRMggiHO5X+/Oi2w==
       tarball: 'file:projects/routerlicious.tgz'
     version: 0.0.0
   'file:projects/runtime-definitions.tgz':
@@ -10184,7 +10185,7 @@ packages:
     dev: false
     name: '@rush-temp/services-core'
     resolution:
-      integrity: sha512-f2wKVQqi9D91LOzwSyHChtMaOLCRe3fYWgveEZz7tak9SrNWOIpI0bw+2K6llWGmglmIJJlPpPjQ3a33tCHLwQ==
+      integrity: sha512-9BB0vCJShGzYWaL3IW9RQgh3/kr14tyN2d+TELaae1rA53jf/zcleH8EpKvFA0h9ZCg+iS9t8uDbAbV6rYQq3w==
       tarball: 'file:projects/services-core.tgz'
     version: 0.0.0
   'file:projects/services-utils.tgz':

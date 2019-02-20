@@ -7,8 +7,10 @@
   "types": "dist/index.d.ts",
   "sideEffects": "false",
   "scripts": {
-    "build": "npm run tsc && npm run build:esnext && npm run tslint",
+    "build": "concurrently npm:build:compile npm:tslint",
+    "build:compile": "concurrently npm:tsc npm:build:esnext",
     "build:full": "npm run build",
+    "build:full:compile": "npm run build:compile",
     "tsc": "tsc",
     "build:esnext": "tsc --outDir lib --m esnext",
     "test": "mocha --recursive dist/test --exit",
@@ -62,6 +64,7 @@
     "jsonwebtoken": "^8.4.0"
   },
   "devDependencies": {
+    "concurrently": "^4.1.0",
     "@types/mocha": "^5.2.5",
     "@types/nock": "^9.3.0",
     "@types/node": "^10.12.12",

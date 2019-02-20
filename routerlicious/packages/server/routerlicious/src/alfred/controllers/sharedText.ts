@@ -8,6 +8,7 @@ import * as DistributedMap from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
 import * as replaySocketStorage from "@prague/replay-socket-storage";
 import * as Sequence from "@prague/sequence";
+import { IGitCache } from "@prague/services-client";
 import * as socketStorage from "@prague/socket-storage";
 import { IStream } from "@prague/stream";
 // tslint:disable-next-line:no-var-requires
@@ -60,6 +61,7 @@ export async function load(
     id: string,
     version: resources.ICommit,
     token: string,
+    seedData: IGitCache,
     pageInk: boolean,
     disableCache: boolean,
     config: any,
@@ -74,7 +76,7 @@ export async function load(
     API.registerDefaultCredentials(credentials);
 
     console.log(`Load Option: ${JSON.stringify(options)}`);
-    loadDocument(id, version, token, pageInk, disableCache, config, template, connect, options, from, to)
+    loadDocument(id, version, token, seedData, pageInk, disableCache, config, template, connect, options, from, to)
         .catch((error) => {
             console.error(error);
         });
@@ -84,6 +86,7 @@ async function loadDocument(
     id: string,
     version: resources.ICommit,
     token: string,
+    seedData: IGitCache,
     pageInk: boolean,
     disableCache: boolean,
     config: any,
@@ -107,7 +110,8 @@ async function loadDocument(
             errorService,
             disableCache,
             config.historianApi,
-            config.credentials);
+            config.credentials,
+            seedData);
     API.registerDocumentService(documentService);
 
     const tokenService = new socketStorage.TokenService();

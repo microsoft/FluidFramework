@@ -1,4 +1,5 @@
 import { ICommit, ICommitDetails } from "@prague/gitresources";
+import { IGitCache } from "@prague/services-client";
 import {
     IDatabaseManager,
     IDocumentDetails,
@@ -59,6 +60,10 @@ export class TestDocumentStorage implements IDocumentStorage {
         const gitManager = tenant.gitManager;
 
         return gitManager.getCommit(sha);
+    }
+
+    public async getFullTree(tenantId: string, documentId: string): Promise<{ cache: IGitCache, code: string }> {
+        throw new Error("Method not implemented.");
     }
 
     /**
