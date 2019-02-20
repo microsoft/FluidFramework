@@ -19,6 +19,10 @@ WORKDIR /usr/src/server
 # Copy over the package and package-lock and install prior to the other code to optimize Docker's file system cache on rebuilds
 COPY *.json ./
 
+COPY packages/agents/intelligence-runner/package*.json packages/agents/intelligence-runner/
+COPY packages/agents/snapshotter/package*.json packages/agents/snapshotter/
+COPY packages/agents/spellchecker/package*.json packages/agents/spellchecker/
+COPY packages/agents/translator/package*.json packages/agents/translator/
 COPY packages/components/app-component/package*.json packages/components/app-component/
 COPY packages/components/app-datastore/package*.json packages/components/app-datastore/
 COPY packages/components/app-ui/package*.json packages/components/app-ui/
