@@ -1,6 +1,5 @@
 import { AxiosError, AxiosInstance, AxiosRequestConfig, default as Axios } from "axios";
 import * as querystring from "querystring";
-import { debug } from "./debug";
 
 export class RestWrapper {
     constructor(
@@ -64,13 +63,9 @@ export class RestWrapper {
         }
 
         const response = await this.axios.request<T>(options)
-            .catch(async (error: AxiosError) => {
-                // tslint:disable-next-line:max-line-length
-                debug(`[${error.config.method}] request to [${error.config.url}] failed with [${error.code}] [${error.message}]`);
-                return error.response && error.response.status !== statusCode
+            .catch(async (error: AxiosError) => error.response && error.response.status !== statusCode
                 ? Promise.reject(error.response.status)
-                : Promise.reject(error);
-            });
+                : Promise.reject(error));
         return response.data;
     }
 
