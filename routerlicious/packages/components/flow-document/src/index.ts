@@ -17,7 +17,6 @@ import {
 } from "@prague/merge-tree";
 import {
     IChaincodeComponent,
-    IComponentRuntime,
 } from "@prague/runtime-definitions";
 import { SharedString, SharedStringExtension } from "@prague/sequence";
 import { Deferred } from "@prague/utils";
@@ -149,14 +148,12 @@ export class FlowDocument extends Component {
     private maybeClientId?: number;
     private readyDeferred = new Deferred<void>();
 
-    constructor(private componentRuntime: IComponentRuntime) {
+    constructor() {
         super([
             [MapExtension.Type, new MapExtension()],
             [SharedStringExtension.Type, new SharedStringExtension()],
         ]);
     }
-
-    public async attach(): Promise<void> { /* do nothing */ }
 
     public async opened() {
         this.maybeSharedString = await this.root.wait("text") as SharedString;
@@ -178,7 +175,7 @@ export class FlowDocument extends Component {
             services.concat([["datastore", Promise.resolve(store)]]));
     }
     public async getInclusionContainerComponent(marker: Marker, services: ReadonlyArray<[string, Promise<any>]>) {
-        const component = await this.componentRuntime.getComponent(marker.properties.docId, true);
+        const component = await this.host.getComponent(marker.properties.docId, true);
         await component.attach(new ServicePlatform(services));
     }
 
@@ -246,7 +243,7 @@ export class FlowDocument extends Component {
     public insertInclusionComponent(position: number, docId: string, pkg: string) {
         const docInfo = { kind: InclusionKind.Component, docId };
         this.sharedString.insertMarker(position, ReferenceType.Simple, docInfo);
-        this.componentRuntime.createAndAttachComponent(docId, pkg);
+        this.host.createAndAttachComponent(docId, pkg);
     }
 
     public annotate(start: number, end: number, props: PropertySet) {

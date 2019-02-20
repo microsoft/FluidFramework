@@ -1,11 +1,12 @@
 const path = require('path');
+// var Visualizer = require('webpack-visualizer-plugin');
+// const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
+const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin');
 
 module.exports = {
-    entry: {
-        main: './src/index.ts'
-    },
-    mode: 'development',
+    entry: './src/index.ts',
     devtool: 'source-map',
+    mode: "production",
     module: {
         rules: [
             {
@@ -46,9 +47,6 @@ module.exports = {
             }
         ]
     },
-    resolve: {
-        extensions: [ '.tsx', '.ts', '.js' ]
-    },
     node: {
         dgram: 'empty',
         fs: 'empty',
@@ -56,13 +54,17 @@ module.exports = {
         tls: 'empty',
         child_process: 'empty',
     },
+    resolve: {
+        extensions: [ '.tsx', '.ts', '.js' ]
+    },
     output: {
         filename: '[name].bundle.js',
         path: path.resolve(__dirname, 'dist'),
+        publicPath: "/dist/",
         library: "[name]",
         libraryTarget: "umd"
     },
-    devServer: {
-        publicPath: '/dist'
-    }
+    plugins: [
+        new MonacoWebpackPlugin()
+    ]
 };

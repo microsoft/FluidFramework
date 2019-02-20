@@ -18,6 +18,7 @@ import {
 import {
     IAttachMessage,
     IChaincode,
+    IChaincodeComponent,
     IChaincodeModule,
     IChannel,
     IChannelAttributes,
@@ -46,6 +47,23 @@ export interface IChannelState {
 interface IObjectServices {
     deltaConnection: ChannelDeltaConnection;
     objectStorage: IObjectStorageService;
+}
+
+class ServicePlatform extends EventEmitter implements IPlatform {
+    private readonly qi: Map<string, Promise<any>>;
+
+    constructor(services?: ReadonlyArray<[string, Promise<any>]>) {
+        super();
+        this.qi = new Map(services);
+    }
+
+    public queryInterface<T>(id: string): Promise<T> {
+        return this.qi.get(id) || Promise.reject(`queryInterface() failed - Unknown id '${id}'.`);
+    }
+
+    public detach() {
+        return;
+    }
 }
 
 /**
@@ -195,6 +213,20 @@ export class ComponentHost extends EventEmitter implements IComponentDeltaHandle
 
     public getComponent(id: string, wait: boolean): Promise<IComponentRuntime> {
         return this.componentRuntime.getComponent(id, wait);
+    }
+
+    /**
+     * Opens the component with the given 'id'.  Once the component is retrieved, it is attached
+     * with the given list of services.
+     */
+    public async openComponent<T extends IChaincodeComponent>(
+        id: string,
+        wait: boolean,
+        services?: ReadonlyArray<[string, Promise<any>]>,
+    ): Promise<T> {
+        const runtime = await this.componentRuntime.getComponent(id, wait);
+        const platform = await runtime.attach(new ServicePlatform(services));
+        return platform.queryInterface("component");
     }
 
     public async request(request: IRequest): Promise<IResponse> {

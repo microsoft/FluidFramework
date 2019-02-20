@@ -1,6 +1,6 @@
+import { ComponentHost } from "@prague/component";
 import { Template } from "@prague/flow-util";
 import { ISharedMap } from "@prague/map";
-import { IComponentRuntime } from "@prague/runtime-definitions";
 import { ConfigKeys } from "./configKeys";
 
 export const cellRangeExpr = /([a-zA-Z]+)(\d+):([a-zA-Z]+)(\d+)/;
@@ -92,12 +92,12 @@ export class ConfigView {
     private readonly okButton   = template.get(this.root, "okButton") as HTMLButtonElement;
     private readonly createButton   = template.get(this.root, "createButton") as HTMLButtonElement;
 
-    constructor(private readonly runtime: IComponentRuntime, private readonly map: ISharedMap) {
-        this.caption.innerText = `Table Slice ${this.runtime.id}`;
+    constructor(private readonly host: ComponentHost, private readonly map: ISharedMap) {
+        this.caption.innerText = `Table Slice ${this.host.id}`;
 
         this.done = new Promise<void>((accept) => {
             this.createButton.addEventListener("click", () => {
-                this.runtime.createAndAttachComponent(this.idBox.value, "@chaincode/table-document");
+                this.host.createAndAttachComponent(this.idBox.value, "@chaincode/table-document");
                 this.map.set(ConfigKeys.docId, this.idBox.value);
                 accept();
             });

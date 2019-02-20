@@ -1,4 +1,4 @@
-import { IComponentRuntime } from "@prague/runtime-definitions";
+import { ComponentHost } from "@prague/component";
 import { initializeIcons } from "@uifabric/icons";
 import { CommandBar, ICommandBarItemProps } from "office-ui-fabric-react/lib/CommandBar";
 import * as React from "react";
@@ -8,7 +8,7 @@ import * as style from "./index.css";
 import * as styles from "./index.css";
 
 export interface IAppConfig {
-    runtime: IComponentRuntime;
+    host: ComponentHost;
     verdaccioUrl: string;           // Url of Verdaccio npm server (e.g., "http://localhost:4873")
 }
 

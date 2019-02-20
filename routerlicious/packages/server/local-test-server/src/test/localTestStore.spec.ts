@@ -49,10 +49,9 @@ describe.skip("LocalTestDataStore", () => {
 
         doc2.increment();
         assert.equal(doc2.count, 2, "Incorrect count in Doc2 after increment");
-        doc1.close();
-        doc2.close();
-
-     });
+        await doc1.close();
+        await doc2.close();
+    });
 
     after(async () => {
         await testDeltaConnectionServer.webSocketServer.close();
