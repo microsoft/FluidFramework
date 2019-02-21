@@ -160,6 +160,14 @@ export abstract class SegmentSequence<T extends MergeTree.ISegment> extends Shar
         this.submitIfAttached(annotateMessage);
     }
 
+    public getPropertiesAtPosition(pos: number) {
+        return this.client.getPropertiesAtPosition(pos);
+    }
+
+    public getRangeExtentsOfPosition(pos: number) {
+        return this.client.getRangeExtentsOfPosition(pos);
+    }
+
     public setLocalMinSeq(lmseq: number) {
         this.client.mergeTree.updateLocalMinSeq(lmseq);
     }

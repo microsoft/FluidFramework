@@ -894,6 +894,37 @@ export class Client {
             }
         }
     }
+    getPropertiesAtPosition(pos: number) {
+        let segWindow = this.mergeTree.getCollabWindow();
+        if (this.verboseOps) {
+            console.log(`getPropertiesAtPosition cli ${this.getLongClientId(segWindow.clientId)} ref seq ${segWindow.currentSeq}`);
+        }
+
+        let propertiesAtPosition: Properties.PropertySet;
+        let segoff = this.mergeTree.getContainingSegment(pos, segWindow.currentSeq, segWindow.clientId);
+        let seg = segoff.segment;
+        if (seg) {
+            propertiesAtPosition = seg.properties;
+        }
+        return propertiesAtPosition;
+    }
+    getRangeExtentsOfPosition(pos: number) {
+        let segWindow = this.mergeTree.getCollabWindow();
+        if (this.verboseOps) {
+            console.log(`getRangeExtentsOfPosition cli ${this.getLongClientId(segWindow.clientId)} ref seq ${segWindow.currentSeq}`);
+        }
+
+        let startPos: number;
+        let endPos: number;
+ 
+        let segoff = this.mergeTree.getContainingSegment(pos, segWindow.currentSeq, segWindow.clientId);
+        let seg = segoff.segment;
+        if (seg) {
+            startPos = this.mergeTree.getOffset(seg, segWindow.currentSeq, segWindow.clientId);
+            endPos = startPos + seg.cachedLength;
+        }
+        return { startPos, endPos };
+    }
     getCurrentSeq() {
         return this.mergeTree.getCollabWindow().currentSeq;
     }

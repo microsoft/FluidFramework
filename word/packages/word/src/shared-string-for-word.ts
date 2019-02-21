@@ -63,6 +63,22 @@ export class SharedStringForWord extends EventEmitter {
     }
 
     /**
+     * Gets properties from given position
+     * @param pos
+     */
+    public getPropertiesAtPosition(pos: number) {
+        return this.sharedString.getPropertiesAtPosition(pos);
+    }
+
+    /**
+     * Gets range extents of segment containning given position
+     * @param pos
+     */
+    public getRangeExtentsOfPosition(pos: number) {
+        return this.sharedString.getRangeExtentsOfPosition(pos);
+    }
+
+    /**
      * Gets text
      * @returns
      */
