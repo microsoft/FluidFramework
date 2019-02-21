@@ -2,7 +2,7 @@
 
 ## Counter
 You can create a counter on a map key. We support incrementing/decrementing counter to an upper/lower limit.
-### Create counter on a map kay
+### Create counter on a map key
 **Required parameter:**<br/>
 *key*: map key name for the counter.<br/>
 **Optional parameter(s):**<br/>
