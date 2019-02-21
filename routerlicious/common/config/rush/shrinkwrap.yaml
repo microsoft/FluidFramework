@@ -26,8 +26,10 @@ dependencies:
   '@rush-temp/memory-orderer': 'file:projects/memory-orderer.tgz'
   '@rush-temp/merge-tree': 'file:projects/merge-tree.tgz'
   '@rush-temp/merge-tree-utils': 'file:projects/merge-tree-utils.tgz'
+  '@rush-temp/odsp-socket-storage': 'file:projects/odsp-socket-storage.tgz'
   '@rush-temp/replay-socket-storage': 'file:projects/replay-socket-storage.tgz'
   '@rush-temp/routerlicious': 'file:projects/routerlicious.tgz'
+  '@rush-temp/routerlicious-socket-storage': 'file:projects/routerlicious-socket-storage.tgz'
   '@rush-temp/runtime': 'file:projects/runtime.tgz'
   '@rush-temp/runtime-definitions': 'file:projects/runtime-definitions.tgz'
   '@rush-temp/sequence': 'file:projects/sequence.tgz'
@@ -36,10 +38,8 @@ dependencies:
   '@rush-temp/services-core': 'file:projects/services-core.tgz'
   '@rush-temp/services-utils': 'file:projects/services-utils.tgz'
   '@rush-temp/snapshotter': 'file:projects/snapshotter.tgz'
-  '@rush-temp/socket-storage': 'file:projects/socket-storage.tgz'
   '@rush-temp/socket-storage-shared': 'file:projects/socket-storage-shared.tgz'
   '@rush-temp/spellchecker': 'file:projects/spellchecker.tgz'
-  '@rush-temp/standard-socket-storage': 'file:projects/standard-socket-storage.tgz'
   '@rush-temp/stream': 'file:projects/stream.tgz'
   '@rush-temp/table-document': 'file:projects/table-document.tgz'
   '@rush-temp/table-slice': 'file:projects/table-slice.tgz'
@@ -10160,7 +10160,7 @@ packages:
       integrity: sha512-AUdolp6AhmJXp7D6tcEhjDASOmpFMdW9WRRs1+Z+0B+8AC9XILNfFS3eXOFZAWAig89iNpowlvKJ71a1smVgnw==
       tarball: 'file:projects/spellchecker.tgz'
     version: 0.0.0
-  'file:projects/standard-socket-storage.tgz':
+  'file:projects/odsp-socket-storage.tgz':
     dependencies:
       '@types/mocha': 5.2.5
       '@types/nock': 9.3.1
@@ -10176,10 +10176,10 @@ packages:
       tslint-microsoft-contrib: /tslint-microsoft-contrib/6.0.0/tslint@5.12.1+typescript@3.3.3
       typescript: 3.3.3
     dev: false
-    name: '@rush-temp/standard-socket-storage'
+    name: '@rush-temp/odsp-socket-storage'
     resolution:
       integrity: sha512-XKCssFhrsmgBWr8n1UtJOybjjnV2CuCjMBz5OJKyw+8ltDfVXucVdgFmy+8mI+DipAbEw7SfHSyutkIPR4ZHhQ==
-      tarball: 'file:projects/standard-socket-storage.tgz'
+      tarball: 'file:projects/odsp-socket-storage.tgz'
     version: 0.0.0
   'file:projects/stream.tgz':
     dependencies:
@@ -10409,7 +10409,7 @@ specifiers:
   '@rush-temp/socket-storage': 'file:./projects/socket-storage.tgz'
   '@rush-temp/socket-storage-shared': 'file:./projects/socket-storage-shared.tgz'
   '@rush-temp/spellchecker': 'file:./projects/spellchecker.tgz'
-  '@rush-temp/standard-socket-storage': 'file:./projects/standard-socket-storage.tgz'
+  '@rush-temp/odsp-socket-storage': 'file:./projects/odsp-socket-storage.tgz'
   '@rush-temp/stream': 'file:./projects/stream.tgz'
   '@rush-temp/table-document': 'file:./projects/table-document.tgz'
   '@rush-temp/table-slice': 'file:./projects/table-slice.tgz'

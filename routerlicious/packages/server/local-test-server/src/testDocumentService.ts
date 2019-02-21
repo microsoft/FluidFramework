@@ -1,5 +1,5 @@
 import * as api from "@prague/container-definitions";
-import * as socketStorage from "@prague/socket-storage";
+import * as socketStorage from "@prague/routerlicious-socket-storage";
 import { ITestDeltaConnectionServer } from "./testDeltaConnectionServer";
 import { TestDeltaStorageService } from "./testDeltaStorageService";
 import { TestDocumentDeltaConnection } from "./testDocumentDeltaConnection";

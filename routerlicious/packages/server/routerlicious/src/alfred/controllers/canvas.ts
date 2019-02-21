@@ -1,7 +1,7 @@
 import * as api from "@prague/client-api";
 import { controls, ui } from "@prague/client-ui";
 import * as resources from "@prague/gitresources";
-import * as socketStorage from "@prague/socket-storage";
+import * as socketStorage from "@prague/routerlicious-socket-storage";
 import { registerDocumentServices } from "./utils";
 
 async function loadDocument(id: string, version: resources.ICommit, token: string, client: any): Promise<api.Document> {

@@ -3,8 +3,8 @@ import { getChaincodeRepo, getDefaultCredentials, getDefaultDocumentService } fr
 import { IPlatform, IPlatformFactory } from "@prague/container-definitions";
 import { Container, Loader } from "@prague/container-loader";
 import { WebLoader, WebPlatform } from "@prague/loader-web";
+import { TokenProvider } from "@prague/routerlicious-socket-storage";
 import { IComponentRuntime } from "@prague/runtime-definitions";
-import { TokenProvider } from "@prague/socket-storage";
 import { EventEmitter } from "events";
 import * as jwt from "jsonwebtoken";
 import { FlowViewContext } from "./flowViewContext";

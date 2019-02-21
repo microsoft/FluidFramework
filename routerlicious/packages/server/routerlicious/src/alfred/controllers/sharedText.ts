@@ -7,9 +7,9 @@ import * as resources from "@prague/gitresources";
 import * as DistributedMap from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
 import * as replaySocketStorage from "@prague/replay-socket-storage";
+import * as socketStorage from "@prague/routerlicious-socket-storage";
 import * as Sequence from "@prague/sequence";
 import { IGitCache } from "@prague/services-client";
-import * as socketStorage from "@prague/socket-storage";
 import { IStream } from "@prague/stream";
 // tslint:disable-next-line:no-var-requires
 const performanceNow = require("performance-now");

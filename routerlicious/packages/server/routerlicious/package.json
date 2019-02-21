@@ -85,7 +85,7 @@
     "@prague/services-client": "^0.2.0",
     "@prague/services-core": "^0.2.0",
     "@prague/services-utils": "^0.2.0",
-    "@prague/socket-storage": "^0.2.0",
+    "@prague/routerlicious-socket-storage": "^0.2.0",
     "@prague/stream": "^0.2.0",
     "@prague/test-utils": "^0.2.0",
     "@prague/tools-core": "^0.2.0",

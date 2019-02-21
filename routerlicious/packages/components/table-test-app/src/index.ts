@@ -1,6 +1,6 @@
 import { TableDocument } from "@chaincode/table-document";
 import { DataStore } from "@prague/app-datastore";
-import { createDocumentService } from "@prague/socket-storage";
+import { createDocumentService } from "@prague/routerlicious-socket-storage";
 import { FileSystemLoader } from "./filesystemloader";
 import * as process from "process";
 

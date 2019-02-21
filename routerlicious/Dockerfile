@@ -36,10 +36,10 @@ COPY packages/components/table-document/package*.json packages/components/table-
 COPY packages/components/table-slice/package*.json packages/components/table-slice/
 COPY packages/components/table-test-app/package*.json packages/components/table-test-app/
 COPY packages/components/table-view/package*.json packages/components/table-view/
+COPY packages/drivers/odsp-socket-storage/package*.json packages/drivers/odsp-socket-storage/
 COPY packages/drivers/replay-socket-storage/package*.json packages/drivers/replay-socket-storage/
-COPY packages/drivers/socket-storage/package*.json packages/drivers/socket-storage/
+COPY packages/drivers/routerlicious-socket-storage/package*.json packages/drivers/routerlicious-socket-storage/
 COPY packages/drivers/socket-storage-shared/package*.json packages/drivers/socket-storage-shared/
-COPY packages/drivers/standard-socket-storage/package*.json packages/drivers/standard-socket-storage/
 COPY packages/loader/container-definitions/package*.json packages/loader/container-definitions/
 COPY packages/loader/container-loader/package*.json packages/loader/container-loader/
 COPY packages/loader/gitresources/package*.json packages/loader/gitresources/

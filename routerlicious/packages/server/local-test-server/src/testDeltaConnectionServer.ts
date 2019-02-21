@@ -11,6 +11,7 @@ import {
     NodeManager,
     ReservationManager,
 } from "@prague/memory-orderer";
+import * as socketStorage from "@prague/routerlicious-socket-storage";
 import {
     ICollection,
     IDatabaseManager,
@@ -23,7 +24,6 @@ import {
     MongoDatabaseManager,
     MongoManager,
 } from "@prague/services-core";
-import * as socketStorage from "@prague/socket-storage";
 import {
     TestCollection,
     TestDbFactory,

@@ -1,8 +1,8 @@
 import * as api from "@prague/client-api";
 import { ISharedMap } from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
+import * as socketStorage from "@prague/routerlicious-socket-storage";
 import * as Sequence from "@prague/sequence";
-import * as socketStorage from "@prague/socket-storage";
 import * as childProcess from "child_process";
 import * as path from "path";
 import * as author from "./author";

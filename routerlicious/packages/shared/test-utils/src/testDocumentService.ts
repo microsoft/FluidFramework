@@ -9,7 +9,7 @@ import {
     ITree,
 } from "@prague/container-definitions";
 import * as resources from "@prague/gitresources";
-import * as socketStorage from "@prague/socket-storage";
+import * as socketStorage from "@prague/routerlicious-socket-storage";
 import { TestDocumentDeltaConnection } from "./";
 
 class TestDocumentStorageService implements IDocumentStorageService {

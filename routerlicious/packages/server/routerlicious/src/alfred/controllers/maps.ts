@@ -4,7 +4,7 @@ import * as api from "@prague/client-api";
 import { Browser, IClient } from "@prague/container-definitions";
 import * as resources from "@prague/gitresources";
 import * as Map from "@prague/map";
-import * as socketStorage from "@prague/socket-storage";
+import * as socketStorage from "@prague/routerlicious-socket-storage";
 import * as $ from "jquery";
 // tslint:disable-next-line:no-var-requires
 import { registerDocumentServices } from "./utils";

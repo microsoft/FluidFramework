@@ -1,6 +1,6 @@
 import * as api from "@prague/client-api";
+import * as socketStorage from "@prague/routerlicious-socket-storage";
 import * as core from "@prague/services-core";
-import * as socketStorage from "@prague/socket-storage";
 import * as scribe from "@prague/tools-core";
 import * as commander from "commander";
 import * as fs from "fs";

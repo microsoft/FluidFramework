@@ -1,9 +1,9 @@
 import * as agent from "@prague/agent";
 import { IDocumentService } from "@prague/container-definitions";
+import * as socketStorage from "@prague/routerlicious-socket-storage";
 import { IQueueMessage } from "@prague/runtime-definitions";
 import * as core from "@prague/services-core";
 import * as utils from "@prague/services-utils";
-import * as socketStorage from "@prague/socket-storage";
 import { Deferred } from "@prague/utils";
 import * as fs from "fs";
 import * as request from "request";

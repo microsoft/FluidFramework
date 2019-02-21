@@ -1,5 +1,5 @@
 {
-  "name": "@prague/socket-storage",
+  "name": "@prague/routerlicious-socket-storage",
   "version": "0.2.0",
   "description": "Socket.IO + Git implementation of Prague service API",
   "main": "dist/index.js",

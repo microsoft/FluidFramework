@@ -1,6 +1,6 @@
 import * as api from "@prague/client-api";
 import * as Map from "@prague/map";
-import * as socketStorage from "@prague/socket-storage";
+import * as socketStorage from "@prague/routerlicious-socket-storage";
 import { Deferred } from "@prague/utils";
 import * as jwt from "jsonwebtoken";
 import * as randomstring from "randomstring";

@@ -1,8 +1,8 @@
 import { ICodeLoader, IDocumentService, IPlatform } from "@prague/container-definitions";
 import { Container, Loader } from "@prague/container-loader";
 import { WebLoader } from "@prague/loader-web";
+import { createDocumentService, TokenProvider } from "@prague/routerlicious-socket-storage";
 import { IComponentRuntime } from "@prague/runtime-definitions";
-import { createDocumentService, TokenProvider } from "@prague/socket-storage";
 import { EventEmitter } from "events";
 import * as jwt from "jsonwebtoken";
 import { debug } from "./debug";
