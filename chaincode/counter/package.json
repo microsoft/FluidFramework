@@ -9,11 +9,12 @@
   "scripts": {
     "build": "webpack --env=\"production\"",
     "dev": "webpack --env=\"development\" --watch",
-    "start": "prague-dev-server --config webpack.config.js --package package.json",
+    "start": "prague-dev-server --config webpack.config.js --live --package package.json",
+    "start:local": "prague-dev-server --config webpack.config.js --package package.json",
     "tsc": "tsc"
   },
   "devDependencies": {
-    "@prague/prague-dev-server": "^3.2.1",
+    "@prague/prague-dev-server": "^3.2.2",
     "@types/node": "^10.11.5",
     "clean-webpack-plugin": "^0.1.19",
     "ts-loader": "^4.4.2",
