@@ -78,6 +78,7 @@ dependencies:
   '@types/node': 10.12.24
   '@types/node-geocoder': 3.19.0
   '@types/passport': 0.4.7
+  '@types/passport-jwt': 3.0.1
   '@types/passport-local': 1.0.33
   '@types/progress': 2.0.3
   '@types/random-js': 1.0.31
@@ -159,6 +160,7 @@ dependencies:
   parallel-webpack: 2.3.0
   parse-address: 1.1.0
   passport: 0.3.2
+  passport-jwt: 4.0.0
   passport-local: 1.0.0
   passport-openidconnect: 0.0.2
   performance-now: 2.1.0
@@ -709,6 +711,14 @@ packages:
     dev: false
     resolution:
       integrity: sha512-nMRqS+mL1TOnIJrL6LKJcNZPB8V3eTfRo9FQA2b5gDvrHurC8XbSA86KNe0dShlEL7ReWJv/OU9NL7Z0dnqWTg==
+  /@types/passport-jwt/3.0.1:
+    dependencies:
+      '@types/express': 4.16.1
+      '@types/jsonwebtoken': 8.3.0
+      '@types/passport-strategy': 0.2.35
+    dev: false
+    resolution:
+      integrity: sha512-JwF9U/Rmr6YicHSu/MITmHNDy2KeiedxKW2bhz6wZts3y4cq48NiN0UD98zO56TyM5Vm6BpyjFxcs6jh68ni/A==
   /@types/passport-local/1.0.33:
     dependencies:
       '@types/express': 4.16.1
@@ -4868,6 +4878,24 @@ packages:
       npm: '>=1.4.28'
     resolution:
       integrity: sha512-coyXjRTCy0pw5WYBpMvWOMN+Kjaik2MwTUIq9cna/W7NpO9E+iYbumZONAz3hcr+tXFJECoQVrtmIoC3Oz0gvg==
+  /jsonwebtoken/8.5.0:
+    dependencies:
+      jws: 3.2.1
+      lodash.includes: 4.3.0
+      lodash.isboolean: 3.0.3
+      lodash.isinteger: 4.0.4
+      lodash.isnumber: 3.0.3
+      lodash.isplainobject: 4.0.6
+      lodash.isstring: 4.0.1
+      lodash.once: 4.1.1
+      ms: 2.1.1
+      semver: 5.6.0
+    dev: false
+    engines:
+      node: '>=4'
+      npm: '>=1.4.28'
+    resolution:
+      integrity: sha512-IqEycp0znWHNA11TpYi77bVgyBO/pGESDh7Ajhas+u0ttkGkKYIIAjniL4Bw5+oVejVF+SYkaI7XKfwCCyeTuA==
   /jsprim/1.4.1:
     dependencies:
       assert-plus: 1.0.0
@@ -6362,6 +6390,13 @@ packages:
       node: '>=0.10.0'
     resolution:
       integrity: sha1-s2PlXoAGym/iF4TS2yK9FdeRfxQ=
+  /passport-jwt/4.0.0:
+    dependencies:
+      jsonwebtoken: 8.5.0
+      passport-strategy: 1.0.0
+    dev: false
+    resolution:
+      integrity: sha512-BwC0n2GP/1hMVjR4QpnvqA61TxenUMlmfNjYNgK0ZAs0HK4SOQkHcSv4L328blNTLtHq7DbmvyNJiH+bn6C5Mg==
   /passport-local/1.0.0:
     dependencies:
       passport-strategy: 1.0.0
@@ -8446,11 +8481,14 @@ packages:
     hasBin: true
     resolution:
       integrity: sha512-BVwVbPJRspzNh2yfslyT1PSbl5uIk03EZlb493RKHN4qej/D06n1cEhjlOJG69oFsE7OT8XjpTUcYf6pKTLMhw==
-  /ts-node/8.0.2:
+  /ts-node/8.0.2/typescript@3.3.3:
+    dependencies:
+      typescript: 3.3.3
     dev: false
     engines:
       node: '>=4.2.0'
     hasBin: true
+    id: registry.npmjs.org/ts-node/8.0.2
     peerDependencies:
       typescript: '>=2.0'
     resolution:
@@ -10132,6 +10170,7 @@ packages:
       '@types/nconf': 0.0.37
       '@types/node': 10.12.24
       '@types/passport': 0.4.7
+      '@types/passport-jwt': 3.0.1
       '@types/passport-local': 1.0.33
       '@types/progress': 2.0.3
       '@types/random-js': 1.0.31
@@ -10192,6 +10231,7 @@ packages:
       nyc: 13.2.0
       parallel-webpack: /parallel-webpack/2.3.0/webpack@4.29.3
       passport: 0.3.2
+      passport-jwt: 4.0.0
       passport-local: 1.0.0
       passport-openidconnect: 0.0.2
       performance-now: 2.1.0
@@ -10235,7 +10275,7 @@ packages:
     dev: false
     name: '@rush-temp/routerlicious'
     resolution:
-      integrity: sha512-HLAykxXaWUSKVidpHG3N7X2tvP8Xi9gNe2mV0iAwwHUHBJNJJLsQYWWxaTRTNYCWzuHay9tJ7FiVcxZjXgiBRQ==
+      integrity: sha512-SFGrf7NB7ktrSSAY9u/cGj+hU68yl1Rcus3Ak0S8Pm+sALYXawqnyrdZ106hfUZhy6WinQatv1YHD1LscWxPBg==
       tarball: 'file:projects/routerlicious.tgz'
     version: 0.0.0
   'file:projects/runtime-definitions.tgz':
@@ -10525,12 +10565,12 @@ packages:
       mocha: 5.2.0
       source-map-loader: 0.2.4
       ts-loader: 4.5.0
-      ts-node: 8.0.2
+      ts-node: /ts-node/8.0.2/typescript@3.3.3
       tslint: /tslint/5.12.1/typescript@3.3.3
       tslint-microsoft-contrib: /tslint-microsoft-contrib/6.0.0/tslint@5.12.1+typescript@3.3.3
       typescript: 3.3.3
       webpack: 4.29.3
-      webpack-cli: 3.2.3
+      webpack-cli: /webpack-cli/3.2.3/webpack@4.29.3
       webpack-merge: 4.2.1
     dev: false
     name: '@rush-temp/table-test-app'
@@ -10726,6 +10766,7 @@ specifiers:
   '@types/node': ^10.12.12
   '@types/node-geocoder': ^3.19.0
   '@types/passport': ^0.4.5
+  '@types/passport-jwt': ^3.0.1
   '@types/passport-local': ^1.0.33
   '@types/progress': ^2.0.3
   '@types/random-js': ^1.0.31
@@ -10807,6 +10848,7 @@ specifiers:
   parallel-webpack: ^2.3.0
   parse-address: ^1.1.0
   passport: ^0.3.2
+  passport-jwt: ^4.0.0
   passport-local: ^1.0.0
   passport-openidconnect: 0.0.2
   performance-now: ^2.1.0
