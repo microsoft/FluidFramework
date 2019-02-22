@@ -5,6 +5,7 @@ import {
     IRequest,
     IRuntime,
 } from "@prague/container-definitions";
+import * as Intelligence from "@prague/intelligence-runner";
 import * as DistributedMap from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
 import {
@@ -14,7 +15,10 @@ import {
     IChaincodeComponent,
 } from "@prague/runtime-definitions";
 import * as SharedString from "@prague/sequence";
+import * as Snapshotter from "@prague/snapshotter";
+import * as Spellcheker from "@prague/spellchecker";
 import { IStream } from "@prague/stream";
+import * as Translator from "@prague/translator";
 import { default as axios } from "axios";
 import { parse } from "querystring";
 import * as uuid from "uuid/v4";
@@ -24,6 +28,7 @@ const debug = require("debug")("prague:shared-text");
 // tslint:enable:no-var-requires
 import * as url from "url";
 import { controls, ui } from "./controls";
+import { intelTask, resolveTask, snapshotTask, spellTask, translationTask } from "./taskResolver";
 
 // first script loaded
 const clockStart = Date.now();
@@ -38,20 +43,39 @@ async function downloadRawText(textUrl: string): Promise<string> {
     return data.data;
 }
 
+// Task runner needs the runtime to get fully connected.
+async function waitForFullConnection(runtime: any): Promise<void> {
+    if (runtime.connected) {
+        return;
+    } else {
+        return new Promise<void>((resolve, reject) => {
+            runtime.once("connected", () => {
+                resolve();
+            });
+        });
+    }
+}
+
 class SharedTextComponent extends Document {
     private sharedString: SharedString.SharedString;
+    private insightsMap: DistributedMap.ISharedMap;
 
     public async opened() {
         debug(`collabDoc loaded ${this.runtime.id} - ${performanceNow()}`);
         const root = await this.root;
         debug(`Getting root ${this.runtime.id} - ${performanceNow()}`);
 
-        await Promise.all([root.wait("text"), root.wait("ink")]);
+        await Promise.all([root.wait("text"), root.wait("ink"), root.wait("insights")]);
 
         this.sharedString = root.get("text") as SharedString.SharedString;
+        this.insightsMap = root.get("insights") as DistributedMap.ISharedMap;
         debug(`Shared string ready - ${performanceNow()}`);
         debug(`id is ${this.runtime.id}`);
         debug(`Partial load fired: ${performanceNow()}`);
+
+        waitForFullConnection(this.runtime).then(() => {
+            this.runTask();
+        });
 
         const hostContent: HTMLElement = await this.platform.queryInterface<HTMLElement>("div");
         if (!hostContent) {
@@ -138,6 +162,28 @@ class SharedTextComponent extends Document {
         }
         this.root.set("text", newString);
         this.root.set("ink", this.createMap());
+
+        insights.set(newString.id, this.createMap());
+    }
+
+    private runTask() {
+        const maybeTask = resolveTask(this.runtime.getQuorum().getMembers(), this.runtime.clientId);
+        switch (maybeTask) {
+            case intelTask:
+                console.log(`Chaincode running ${maybeTask}`);
+                Intelligence.run(this.sharedString, this.insightsMap);
+                break;
+            case translationTask:
+                console.log(`Chaincode running ${maybeTask}`);
+                Translator.run(this.sharedString, this.insightsMap);
+                break;
+            case spellTask:
+                console.log(`Chaincode running ${maybeTask}`);
+                Spellcheker.run(this.sharedString);
+                break;
+            default:
+                break;
+        }
     }
 }
 
@@ -150,7 +196,7 @@ export async function instantiateComponent(): Promise<IChaincodeComponent> {
  */
 export async function instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
     const registry = new Map<string, any>([
-        ["@chaincode/shared-text", { instantiateComponent }],
+        ["@chaincode/shared-text-2", { instantiateComponent }],
     ]);
 
     const runtime = await Runtime.Load(registry, context);
@@ -176,11 +222,19 @@ export async function instantiateRuntime(context: IContainerContext): Promise<IR
         }
     });
 
-    runtime.registerTasks(["snapshot", "spell", "translation"]);
+    runtime.registerTasks(["snapshot", "spell", "translation", "intel"], "1.0");
+
+    waitForFullConnection(runtime).then(() => {
+        // Call snapshot directly from runtime.
+        if (resolveTask(runtime.getQuorum().getMembers(), runtime.clientId) === snapshotTask) {
+            console.log(`Chaincode running ${snapshotTask}`);
+            Snapshotter.run(runtime);
+        }
+    });
 
     // On first boot create the base component
     if (!runtime.existing) {
-        runtime.createAndAttachComponent("text", "@chaincode/shared-text").catch((error) => {
+        runtime.createAndAttachComponent("text", "@chaincode/shared-text-2").catch((error) => {
             context.error(error);
         });
     }

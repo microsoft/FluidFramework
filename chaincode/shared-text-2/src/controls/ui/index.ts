@@ -1,5 +1,4 @@
 export * from "./chart";
-export * from "./innie";
 export * from "./formula";
 export * from "./sheetlet";
 export * from "./slider";
