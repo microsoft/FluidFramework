@@ -2,10 +2,11 @@ import {
     Browser,
     ICodeLoader,
     IDocumentService,
-    IPlatformFactory,
+    IPlatform,
     ITokenProvider,
 } from "@prague/container-definitions";
 import { Container, Loader } from "@prague/container-loader";
+import { IComponentRuntime } from "@prague/runtime-definitions";
 import { EventEmitter } from "events";
 import { IDocumentTaskInfo } from "../definitions";
 
@@ -21,14 +22,11 @@ export class ChaincodeWork extends EventEmitter {
         private readonly tenantId: string,
         private readonly tokenProvider: ITokenProvider,
         private readonly service: IDocumentService,
-        private readonly codeLoader: ICodeLoader,
-        platformFactory: IPlatformFactory,
-        task: string) {
+        private readonly codeLoader: ICodeLoader) {
             super();
-            this.task = task;
     }
 
-    public async loadChaincode(options: any): Promise<void> {
+    public async loadChaincode(options: any, attachPlatform: boolean): Promise<void> {
         const loader = new Loader(
             { tokenProvider: this.tokenProvider },
             this.service,
@@ -40,7 +38,14 @@ export class ChaincodeWork extends EventEmitter {
             `${encodeURIComponent(this.tenantId)}/${encodeURIComponent(this.docId)}`;
         this.document = await loader.resolve({ url });
 
-        this.attachListeners();
+        if (attachPlatform) {
+            this.registerAttach(
+                loader,
+                this.document,
+                url,
+                new NodePlatform());
+            this.attachListeners();
+        }
 
         // Wait to be fully connected!
         if (!this.document.connected) {
@@ -66,6 +71,26 @@ export class ChaincodeWork extends EventEmitter {
     public removeListeners() {
         this.events.removeAllListeners();
         this.removeAllListeners();
+    }
+
+    private registerAttach(loader: Loader, container: Container, uri: string, platform: NodePlatform) {
+        this.attach(loader, uri, platform);
+        container.on("contextChanged", (value) => {
+            this.attach(loader, uri, platform);
+        });
+    }
+
+    private async attach(loader: Loader, url: string, platform: NodePlatform) {
+        const response = await loader.request({ url });
+        if (response.status !== 200) {
+            return;
+        }
+        switch (response.mimeType) {
+            case "prague/component":
+                const component = response.value as IComponentRuntime;
+                component.attach(platform);
+                break;
+        }
     }
 
     private attachListeners() {
@@ -108,5 +133,15 @@ export class ChaincodeWork extends EventEmitter {
             }
         }
         return true;
+    }
+}
+
+class NodePlatform extends EventEmitter implements IPlatform {
+    public async queryInterface<T>(id: string): Promise<any> {
+        return null;
+    }
+
+    public detach() {
+        return;
     }
 }

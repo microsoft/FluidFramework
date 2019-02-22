@@ -10,7 +10,7 @@ import * as request from "request";
 import * as unzip from "unzip-stream";
 import * as url from "url";
 import * as winston from "winston";
-import { NodeCodeLoader, NodePlatformFactory } from "./chaincodeHost";
+import { NodeCodeLoader } from "./chaincodeHost";
 
 class DocumentServiceFactory implements agent.IDocumentServiceFactory {
     constructor(private serverUrl: string, private historianUrl: string) {
@@ -42,8 +42,7 @@ export class PaparazziRunner implements utils.IRunner {
             this.workerConfig,
             alfredUrl,
             this.initLoadModule(alfredUrl),
-            new NodeCodeLoader(),
-            new NodePlatformFactory());
+            new NodeCodeLoader());
     }
 
     public async start(): Promise<void> {
