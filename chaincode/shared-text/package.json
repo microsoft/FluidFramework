@@ -3,6 +3,7 @@
   "version": "0.3.0",
   "description": "Shared text",
   "main": "dist/index.js",
+  "module": "lib/index.js",
   "types": "dist/index.d.ts",
   "sideEffects": [
     "./src/publicpath.ts"
