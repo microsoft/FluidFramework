@@ -1,7 +1,6 @@
 import { SharedObject } from "@prague/api-definitions";
 import {
     FileMode,
-    IDocumentMessage,
     ISequencedDocumentMessage,
     ITree,
     MessageType,
@@ -114,11 +113,6 @@ export class Cell extends SharedObject implements ICell {
         this.submitIfAttached(op);
     }
 
-    // tslint:disable-next-line:promise-function-async
-    public ready(): Promise<void> {
-        return Promise.resolve();
-    }
-
     /**
      * Returns whether cell is empty or not.
      */
@@ -154,18 +148,14 @@ export class Cell extends SharedObject implements ICell {
                     },
                 },
             ],
+            sha: null,
         };
 
         return tree;
     }
 
-    public transform(message: any, referenceSequenceNumber: number, sequenceNumber: number): any {
-        return message;
-    }
-
     protected async loadCore(
         minimumSequenceNumber: number,
-        messages: IDocumentMessage[],
         headerOrigin: string,
         storage: IObjectStorageService): Promise<void> {
 

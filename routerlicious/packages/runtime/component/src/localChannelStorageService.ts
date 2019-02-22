@@ -37,8 +37,6 @@ export class LocalChannelStorageService implements IObjectStorageService {
                     break;
 
                 default:
-                    // tslint:disable-next-line:switch-final-break
-                    break;
             }
         }
 

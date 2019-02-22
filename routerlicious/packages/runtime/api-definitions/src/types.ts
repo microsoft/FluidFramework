@@ -45,9 +45,4 @@ export interface ISharedObject extends IChannel {
      * Snapshots the object
      */
     snapshot(): ITree;
-
-    /**
-     * Transforms the given message relative to the provided sequence number
-     */
-    transform(message: any, referenceSequenceNumber: number, sequenceNumber: number): any;
 }

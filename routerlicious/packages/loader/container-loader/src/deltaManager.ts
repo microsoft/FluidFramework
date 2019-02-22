@@ -188,7 +188,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager {
     /**
      * Sets the sequence number from which inbound messages should be returned
      */
-    public attachOpHandler(sequenceNumber: number, handler: IDeltaHandlerStrategy) {
+    public attachOpHandler(sequenceNumber: number, handler: IDeltaHandlerStrategy, resume = true) {
         debug("Attached op handler", sequenceNumber);
 
         // The MSN starts at the base the manager is initialized to
@@ -199,9 +199,10 @@ export class DeltaManager extends EventEmitter implements IDeltaManager {
         this.handler = handler;
 
         // We are ready to process inbound messages
-        this._inbound.systemResume();
-
-        this.fetchMissingDeltas(sequenceNumber);
+        if (resume) {
+            this._inbound.systemResume();
+            this.fetchMissingDeltas(sequenceNumber);
+        }
     }
 
     public async connect(reason: string): Promise<IConnectionDetails> {

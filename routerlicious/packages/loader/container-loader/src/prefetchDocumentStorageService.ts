@@ -70,11 +70,24 @@ export class PrefetchDocumentStorageService implements IDocumentStorageService {
     }
 
     private prefetchTree(tree: ISnapshotTree) {
+        const secondary = new Array<string>();
+        this.prefetchTreeCore(tree, secondary);
+
+        for (const blob of secondary) {
+            // We don't care if the prefetch succeed
+            // tslint:disable-next-line:no-floating-promises
+            this.cachedRead(blob);
+        }
+    }
+
+    private prefetchTreeCore(tree: ISnapshotTree, secondary: string[]) {
         for (const blobKey of Object.keys(tree.blobs)) {
             if (blobKey[0] === "." || blobKey === "header" || blobKey.indexOf("quorum") === 0) {
                 // We don't care if the prefetch succeed
                 // tslint:disable-next-line:no-floating-promises
                 this.cachedRead(tree.blobs[blobKey]);
+            } else if (blobKey[0] !== "deltas") {
+                secondary.push(tree.blobs[blobKey]);
             }
         }
 
@@ -85,7 +98,7 @@ export class PrefetchDocumentStorageService implements IDocumentStorageService {
         }
 
         for (const subTree of Object.keys(tree.trees)) {
-            this.prefetchTree(tree.trees[subTree]);
+            this.prefetchTreeCore(tree.trees[subTree], secondary);
         }
     }
 }

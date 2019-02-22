@@ -240,7 +240,7 @@ export abstract class Component extends EventEmitter implements IChaincodeCompon
 
     public snapshot(): ITree {
         debug(`${this.dbgName}.snapshot()`);
-        return { entries: this._host.snapshotInternal() };
+        return { entries: this._host.snapshotInternal(), sha: null };
     }
 
     /**

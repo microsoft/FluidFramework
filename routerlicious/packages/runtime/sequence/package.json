@@ -65,6 +65,7 @@
     "@prague/runtime-definitions": "^0.2.0",
     "@prague/utils": "^0.2.0",
     "@types/uuid": "^3.4.4",
+    "lodash": "^4.17.11",
     "uuid": "^3.3.2"
   }
 }

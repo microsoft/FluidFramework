@@ -123,6 +123,10 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime 
     private closed = false;
     private handler: IComponentDeltaHandler;
 
+    // Tracks the base snapshot hash. If no ops effect this component then the sha value can be returned on a
+    // snapshot call
+    private baseSha = null;
+
     private constructor(
         private readonly hostRuntime: IHostRuntime,
         private readonly pkg: string,
@@ -132,6 +136,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime 
         public readonly storage: IDocumentStorageService,
         public readonly baseSnapshot: ISnapshotTree) {
         super();
+        this.baseSha = baseSnapshot ? baseSnapshot.sha : null;
     }
 
     public createAndAttachComponent(id: string, pkg: string): Promise<IComponentRuntime> {
@@ -147,6 +152,11 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime 
         this.handler.changeConnectionState(value, clientId);
     }
 
+    // Called after a snapshot to update the base sha
+    public updateBaseSha(sha: string) {
+        this.baseSha = sha;
+    }
+
     public prepare(message: ISequencedDocumentMessage, local: boolean): Promise<any> {
         this.verifyNotClosed();
         return this.handler.prepare(message, local);
@@ -154,6 +164,8 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime 
 
     public process(message: ISequencedDocumentMessage, local: boolean, context: any): void {
         this.verifyNotClosed();
+        // component has been modified and will need to regenerate its snapshot
+        this.baseSha = null;
         return this.handler.process(message, local, context);
     }
 
@@ -195,6 +207,11 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime 
                 encoding: "utf-8",
             },
         });
+
+        // base sha still being set means previous snapshot is still valid
+        if (this.baseSha) {
+            snapshot.sha = this.baseSha;
+        }
 
         return snapshot;
     }

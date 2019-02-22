@@ -18,7 +18,6 @@ import { MapView } from "./view";
 
 const snapshotFileName = "header";
 const contentPath = "content";
-const keyPath = "keys";
 
 /**
  * Copies all values from the provided SharedMap to the given Map
@@ -138,10 +137,6 @@ export class SharedMap extends SharedObject implements ISharedMap {
         return this.view.clear();
     }
 
-    public ready(): Promise<void> {
-        return this.readyContent();
-    }
-
     public snapshot(): ITree {
         const tree: ITree = {
             entries: [
@@ -155,36 +150,8 @@ export class SharedMap extends SharedObject implements ISharedMap {
                     },
                 },
             ],
+            sha: null,
         };
-
-        // Add in the directory structure of any links within the map
-        const keysTree: ITree = {
-            entries: [],
-        };
-        this.view.forEach((value, key) => {
-            if (value instanceof SharedObject) {
-                const id = value.id;
-                const path = encodeURIComponent(key);
-
-                keysTree.entries.push({
-                    mode: FileMode.Symlink,
-                    path,
-                    type: TreeEntry[TreeEntry.Blob],
-                    value: {
-                        contents: `${encodeURIComponent(id)}`,
-                        encoding: "utf-8",
-                    },
-                });
-            }
-        });
-        if (keysTree.entries.length > 0) {
-            tree.entries.push({
-                mode: FileMode.Directory,
-                path: keyPath,
-                type: TreeEntry[TreeEntry.Tree],
-                value: keysTree,
-            });
-        }
 
         // Add the snapshot of the content to the tree
         const contentSnapshot = this.snapshotContent();
@@ -198,16 +165,6 @@ export class SharedMap extends SharedObject implements ISharedMap {
         }
 
         return tree;
-    }
-
-    public transform(
-        message: any,
-        referenceSequenceNumber: number,
-        sequenceNumber: number,
-    ): any {
-        const handled = this.messageHandler.has((message as IMapOperation).type);
-
-        return handled ? message : this.transformContent(message, referenceSequenceNumber, sequenceNumber);
     }
 
     public submitMapClearMessage(op: IMapOperation): void {
@@ -294,10 +251,6 @@ export class SharedMap extends SharedObject implements ISharedMap {
         return super.on(event, listener);
     }
 
-    protected readyContent(): Promise<void> {
-        return Promise.resolve();
-    }
-
     protected onDisconnect() {
         debug(`Map ${this.id} is now disconnected`);
         this.onDisconnectContent();
@@ -330,7 +283,6 @@ export class SharedMap extends SharedObject implements ISharedMap {
 
     protected async loadCore(
         minimumSequenceNumber: number,
-        messages: ISequencedDocumentMessage[],
         headerOrigin: string,
         storage: IObjectStorageService) {
 
@@ -340,12 +292,9 @@ export class SharedMap extends SharedObject implements ISharedMap {
             .toString("utf-8")) : {};
         await this.view.populate(data);
 
-        const contentMessages = messages.filter((message) => !this.messageHandler.has(message.contents.type));
-
         const contentStorage = new ContentObjectStorage(storage);
         await this.loadContent(
             minimumSequenceNumber,
-            contentMessages,
             headerOrigin,
             contentStorage);
     }
@@ -360,7 +309,6 @@ export class SharedMap extends SharedObject implements ISharedMap {
 
     protected async loadContent(
         minimumSequenceNumber: number,
-        messages: ISequencedDocumentMessage[],
         headerOrigin: string,
         services: IObjectStorageService): Promise<void> {
         return;
@@ -452,17 +400,6 @@ export class SharedMap extends SharedObject implements ISharedMap {
      */
     protected processMinSequenceNumberChangedContent(value: number) {
         return;
-    }
-
-    /**
-     * Allows derived classes to transform the given message
-     */
-    protected transformContent(
-        message: any,
-        referenceSequenceNumber: number,
-        sequenceNumber: number,
-    ): any {
-        return message;
     }
 
     protected needProcessKeyOperations(op: IMapOperation, local: boolean, message: ISequencedDocumentMessage): boolean {
