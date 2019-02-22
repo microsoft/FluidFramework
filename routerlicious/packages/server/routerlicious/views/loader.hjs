@@ -27,6 +27,7 @@
         var tenantId = "{{ tenantId }}";
         var documentId = "{{ documentId }}";
         var path = "{{ path }}";
+        var jwt = "{{ jwt }}";
 
         {{#pkg}}
         var entry = "{{ entrypoint }}";
@@ -53,7 +54,8 @@
             chaincode,
             entry,
             scriptIds,
-            config.npm);
+            config.npm,
+            jwt);
     </script>
 </body>
 </html>

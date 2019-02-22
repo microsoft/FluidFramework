@@ -1,23 +1,36 @@
-import { Component, Document } from "@prague/app-component";
+import * as cell from "@prague/cell";
 import * as API from "@prague/client-api";
+import { ComponentHost } from "@prague/component";
 import {
     IContainerContext,
     IPlatform,
     IRequest,
     IRuntime,
+    ITree,
 } from "@prague/container-definitions";
 import * as DistributedMap from "@prague/map";
+import {
+    CounterValueType,
+    DistributedSetValueType,
+    ISharedMap,
+    MapExtension,
+    registerDefaultValueType,
+} from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
 import {
     Runtime,
 } from "@prague/runtime";
 import {
-    IChaincodeComponent,
+    IChaincode, IChaincodeComponent, IComponentDeltaHandler, IComponentRuntime, IRuntime as ILegacyRuntime,
 } from "@prague/runtime-definitions";
 import * as SharedString from "@prague/sequence";
+import * as sequence from "@prague/sequence";
 import { IStream } from "@prague/stream";
+import * as stream from "@prague/stream";
 import { Deferred } from "@prague/utils";
+import * as assert from "assert";
 import { default as axios } from "axios";
+import { EventEmitter } from "events";
 import { parse } from "querystring";
 import * as uuid from "uuid/v4";
 // tslint:disable:no-var-requires
@@ -26,6 +39,7 @@ const debug = require("debug")("prague:shared-text");
 // tslint:enable:no-var-requires
 import * as url from "url";
 import { controls, ui } from "./controls";
+import { Document } from "./document";
 
 const charts = import(/* webpackChunkName: "charts", webpackPrefetch: true */ "@chaincode/charts");
 // const monaco = import("@chaincode/monaco");
@@ -44,24 +58,38 @@ async function downloadRawText(textUrl: string): Promise<string> {
     return data.data;
 }
 
-class SharedTextComponent extends Document {
+export class SharedTextRunner extends EventEmitter implements IPlatform {
     private sharedString: SharedString.SharedString;
-    private ready = new Deferred<void>();
+    private rootView: ISharedMap;
+    private runtime: ILegacyRuntime;
+    private collabDocDeferred = new Deferred<Document>();
 
-    public async opened() {
-        this.ready.resolve();
+    public async run(runtime: ILegacyRuntime, platform: IPlatform) {
+        this.runtime = runtime;
+        this.initialize(runtime).then(
+            (doc) => this.collabDocDeferred.resolve(doc),
+            (error) => this.collabDocDeferred.reject(error));
+        return this;
     }
 
-    public async attach(platform?: IPlatform): Promise<void> {
-        await this.ready.promise;
+    public async queryInterface<T>(id: string): Promise<any> {
+        return null;
+    }
+
+    public detach() {
+        console.log("Text detach");
+        return;
+    }
+
+    public async attach(platform: IPlatform): Promise<IPlatform> {
+        await this.collabDocDeferred.promise;
 
         debug(`collabDoc loaded ${this.runtime.id} - ${performanceNow()}`);
-        const root = await this.root;
         debug(`Getting root ${this.runtime.id} - ${performanceNow()}`);
 
-        await Promise.all([root.wait("text"), root.wait("ink")]);
+        await Promise.all([this.rootView.wait("text"), this.rootView.wait("ink")]);
 
-        this.sharedString = root.get("text") as SharedString.SharedString;
+        this.sharedString = this.rootView.get("text") as SharedString.SharedString;
         debug(`Shared string ready - ${performanceNow()}`);
         debug(`id is ${this.runtime.id}`);
         debug(`Partial load fired: ${performanceNow()}`);
@@ -89,15 +117,15 @@ class SharedTextComponent extends Document {
         const containerDiv = document.createElement("div");
         const container = new controls.FlowContainer(
             containerDiv,
-            new API.Document(this.runtime, this.root),
+            new API.Document(this.runtime, this.rootView),
             this.sharedString,
             image,
-            root.get("pageInk") as IStream,
+            this.rootView.get("pageInk") as IStream,
             {});
         const theFlow = container.flowView;
         host.attach(container);
 
-        getInsights(this.root, this.sharedString.id).then(
+        getInsights(this.rootView, this.sharedString.id).then(
             (insightsMap) => {
                 container.trackInsights(insightsMap);
             });
@@ -107,7 +135,7 @@ class SharedTextComponent extends Document {
         }
         theFlow.timeToEdit = theFlow.timeToImpression = Date.now() - clockStart;
 
-        theFlow.setEdit(root);
+        theFlow.setEdit(this.rootView);
 
         this.sharedString.loaded.then(() => {
             theFlow.loadFinished(clockStart);
@@ -115,47 +143,141 @@ class SharedTextComponent extends Document {
         });
     }
 
-    protected async create() {
-        const insightsMapId = "insights";
+    private async initialize(runtime: ILegacyRuntime): Promise<Document> {
+        const collabDoc = await Document.Load(runtime);
+        this.rootView = await collabDoc.getRoot();
 
-        const insights = this.createMap(insightsMapId);
-        this.root.set(insightsMapId, insights);
+        if (!runtime.existing) {
+            const insightsMapId = "insights";
 
-        debug(`Not existing ${this.runtime.id} - ${performanceNow()}`);
-        this.root.set("presence", this.createMap());
-        this.root.set("users", this.createMap());
-        this.root.set("calendar", undefined, SharedString.SharedIntervalCollectionValueType.Name);
-        const seq = this.runtime.createChannel(
-            uuid(), SharedString.SharedNumberSequenceExtension.Type) as
-            SharedString.SharedNumberSequence;
-        this.root.set("sequence-test", seq);
-        const newString = this.createString() as SharedString.SharedString;
+            const insights = collabDoc.createMap(insightsMapId);
+            this.rootView.set(insightsMapId, insights);
 
-        const template = parse(window.location.search).template;
-        const starterText = template
-            ? await downloadRawText(
-                `/public/literature/${template}`)
-            : " ";
+            debug(`Not existing ${runtime.id} - ${performanceNow()}`);
+            this.rootView.set("presence", collabDoc.createMap());
+            this.rootView.set("users", collabDoc.createMap());
+            this.rootView.set("calendar", undefined, SharedString.SharedIntervalCollectionValueType.Name);
+            const seq = collabDoc.createChannel(
+                uuid(), SharedString.SharedNumberSequenceExtension.Type) as
+                SharedString.SharedNumberSequence;
+            this.rootView.set("sequence-test", seq);
+            const newString = collabDoc.createString() as SharedString.SharedString;
 
-        const segments = MergeTree.loadSegments(starterText, 0, true);
-        for (const segment of segments) {
-            if (segment.getType() === MergeTree.SegmentType.Text) {
-                const textSegment = segment as MergeTree.TextSegment;
-                newString.insertText(textSegment.text, newString.client.getLength(),
-                    textSegment.properties);
-            } else {
-                // assume marker
-                const marker = segment as MergeTree.Marker;
-                newString.insertMarker(newString.client.getLength(), marker.refType, marker.properties);
+            const template = parse(window.location.search).template;
+            const starterText = template
+                ? await downloadRawText(
+                    `/public/literature/${template}`)
+                : " ";
+
+            const segments = MergeTree.loadSegments(starterText, 0, true);
+            for (const segment of segments) {
+                if (segment.getType() === MergeTree.SegmentType.Text) {
+                    const textSegment = segment as MergeTree.TextSegment;
+                    newString.insertText(textSegment.text, newString.client.getLength(),
+                        textSegment.properties);
+                } else {
+                    // assume marker
+                    const marker = segment as MergeTree.Marker;
+                    newString.insertMarker(newString.client.getLength(), marker.refType, marker.properties);
+                }
             }
+            this.rootView.set("text", newString);
+            this.rootView.set("ink", collabDoc.createMap());
         }
-        this.root.set("text", newString);
-        this.root.set("ink", this.createMap());
+
+        return collabDoc;
+    }
+}
+
+/**
+ * A document is a collection of collaborative types.
+ */
+class Chaincode extends EventEmitter implements IChaincode {
+    private modules = new Map<string, any>();
+
+    /**
+     * Constructs a new document from the provided details
+     */
+    constructor(private runner: any) {
+        super();
+
+        // Register default map value types
+        registerDefaultValueType(new DistributedSetValueType());
+        registerDefaultValueType(new CounterValueType());
+        registerDefaultValueType(new sequence.SharedStringIntervalCollectionValueType());
+        registerDefaultValueType(new sequence.SharedIntervalCollectionValueType());
+
+        // Create channel extensions
+        const mapExtension = new MapExtension();
+        const sharedStringExtension = new sequence.SharedStringExtension();
+        const streamExtension = new stream.StreamExtension();
+        const cellExtension = new cell.CellExtension();
+        const objectSequenceExtension = new sequence.SharedObjectSequenceExtension();
+        const numberSequenceExtension = new sequence.SharedNumberSequenceExtension();
+
+        this.modules.set(MapExtension.Type, mapExtension);
+        this.modules.set(sharedStringExtension.type, sharedStringExtension);
+        this.modules.set(streamExtension.type, streamExtension);
+        this.modules.set(cellExtension.type, cellExtension);
+        this.modules.set(objectSequenceExtension.type, objectSequenceExtension);
+        this.modules.set(numberSequenceExtension.type, numberSequenceExtension);
+    }
+
+    public getModule(type: string): any {
+        assert(this.modules.has(type));
+        return this.modules.get(type);
+    }
+
+    /**
+     * Stops the instantiated chaincode from running
+     */
+    public close(): Promise<void> {
+        return Promise.resolve();
+    }
+
+    public async run(runtime: ILegacyRuntime, platform: IPlatform): Promise<IPlatform> {
+        return this.runner.run(runtime, platform);
+    }
+}
+
+export class SharedTextComponent implements IChaincodeComponent {
+    private sharedText = new SharedTextRunner();
+    private chaincode: Chaincode;
+    private component: ComponentHost;
+
+    constructor() {
+        this.chaincode = new Chaincode(this.sharedText);
+    }
+
+    public getModule(type: string) {
+        return null;
+    }
+
+    public async close(): Promise<void> {
+        return;
+    }
+
+    public async run(runtime: IComponentRuntime): Promise<IComponentDeltaHandler> {
+        const chaincode = this.chaincode;
+
+        const component = await ComponentHost.LoadFromSnapshot(runtime, chaincode);
+        this.component = component;
+
+        return component;
+    }
+
+    public async attach(platform: IPlatform): Promise<IPlatform> {
+        return this.sharedText.attach(platform);
+    }
+
+    public snapshot(): ITree {
+        const entries = this.component.snapshotInternal();
+        return { entries, sha: null };
     }
 }
 
 export async function instantiateComponent(): Promise<IChaincodeComponent> {
-    return Component.instantiateComponent(SharedTextComponent);
+    return new SharedTextComponent();
 }
 
 /**

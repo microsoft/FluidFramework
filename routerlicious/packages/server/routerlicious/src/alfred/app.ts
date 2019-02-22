@@ -10,6 +10,7 @@ import * as fs from "fs";
 import * as morgan from "morgan";
 import { Provider } from "nconf";
 import * as passport from "passport";
+import * as passportJWT from "passport-jwt";
 import * as passportLocal from "passport-local";
 import * as passportOpenIdConnect from "passport-openidconnect";
 import * as path from "path";
@@ -114,6 +115,14 @@ export function create(
             },
         ),
     );
+
+    const opts = {
+        jwtFromRequest: passportJWT.ExtractJwt.fromAuthHeaderAsBearerToken(),
+        secretOrKey: config.get("alfred:key"),
+    };
+    passport.use(new passportJWT.Strategy(opts, (payload, done) => {
+        return done(null, payload);
+    }));
 
     // Get local accounts - used primarily for automated testing
     const localAccounts = config.get("login:accounts") as Array<{ username: string, password: string }>;

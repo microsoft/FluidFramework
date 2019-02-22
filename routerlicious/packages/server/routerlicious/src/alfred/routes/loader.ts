@@ -3,6 +3,7 @@ import { IAlfredTenant, IDocumentStorage, ITenantManager } from "@prague/service
 import Axios from "axios";
 import { Router } from "express";
 import * as safeStringify from "json-stringify-safe";
+import * as jwt from "jsonwebtoken";
 import { Provider } from "nconf";
 import * as winston from "winston";
 import { getConfig, getToken, IAlfredUser } from "../utils";
@@ -56,12 +57,19 @@ export function create(
     ensureLoggedIn: any): Router {
 
     const router: Router = Router();
+    const jwtKey = config.get("alfred:key");
 
     /**
      * Loading of a specific shared text.
      */
     router.get("/:tenantId/*", ensureLoggedIn(), async (request, response, next) => {
         const start = Date.now();
+
+        const jwtToken = jwt.sign(
+            {
+                user: request.user,
+            },
+            jwtKey);
 
         const rawPath =  request.params[0] as string;
         const slash = rawPath.indexOf("/");
@@ -117,6 +125,7 @@ export function create(
                     chaincode: fullTree.code ? fullTree.code : chaincode,
                     config: workerConfig,
                     documentId,
+                    jwt: jwtToken,
                     key,
                     partials: defaultPartials,
                     path,

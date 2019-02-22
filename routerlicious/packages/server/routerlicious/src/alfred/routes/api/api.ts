@@ -10,6 +10,8 @@ import * as core from "@prague/services-core";
 import { Router } from "express";
 import * as jwt from "jsonwebtoken";
 import * as moniker from "moniker";
+import passport = require("passport");
+import winston = require("winston");
 
 interface IOperation {
     op: string;
@@ -24,6 +26,13 @@ export function create(
     storage: core.IDocumentStorage): Router {
 
     const router: Router = Router();
+
+    router.post("/load", passport.authenticate("jwt", { session: false }), (request, response) => {
+        winston.info("/load", request.user);
+        winston.info("/load URL", request.body.url);
+
+        return response.status(200).json({ url: request.body.url, message: "YEPPP" });
+    });
 
     router.patch("/:tenantId?/:id", (request, response) => {
         const token = request.headers["access-token"] as string;

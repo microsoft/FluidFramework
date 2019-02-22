@@ -43,6 +43,7 @@ data:
             "topic": "{{ .Values.kafka.topics.rawdeltas }}",
             "bucket": "snapshots",
             "restJsonSize": "50mb",
+            "key": "{{ template "alfred.key" . }}",
             "tenants": [
                 {{- range $index, $tenant := .Values.alfred.tenants }}
                 {{ toJson . }},

@@ -201,6 +201,7 @@ export function initialize(
     entrypoint: string,
     scriptIds: string[],
     npm: string,
+    jwt: string,
 ) {
     console.log(`Loading ${documentId}`);
     const startP = start(
