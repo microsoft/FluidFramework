@@ -3,8 +3,8 @@
 import * as api from "@prague/client-api";
 import { MessageType } from "@prague/container-definitions";
 import { ISharedMap } from "@prague/map";
+import * as socketStorage from "@prague/routerlicious-socket-storage";
 import { generateToken } from "@prague/services-core";
-import * as socketStorage from "@prague/socket-storage";
 import * as assert from "assert";
 
 import {

@@ -10,7 +10,7 @@ import {
     ITree,
 } from "@prague/container-definitions";
 import * as git from "@prague/gitresources";
-import * as socketStorage from "@prague/socket-storage";
+import * as socketStorage from "@prague/routerlicious-socket-storage";
 import { EventEmitter } from "events";
 
 export class TestDocumentDeltaConnection extends EventEmitter implements IDocumentDeltaConnection {

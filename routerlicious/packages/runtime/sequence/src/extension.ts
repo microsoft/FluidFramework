@@ -1,5 +1,4 @@
 import { ISharedObject, ISharedObjectExtension } from "@prague/api-definitions";
-import { ISequencedDocumentMessage } from "@prague/container-definitions";
 import { IDistributedObjectServices, IRuntime } from "@prague/runtime-definitions";
 import { SharedNumberSequence, SharedObjectSequence} from "./sequence";
 import { SharedString } from "./sharedString";
@@ -15,12 +14,11 @@ export class SharedStringExtension implements ISharedObjectExtension {
         document: IRuntime,
         id: string,
         minimumSequenceNumber: number,
-        messages: ISequencedDocumentMessage[],
         services: IDistributedObjectServices,
         headerOrigin: string): Promise<ISharedObject> {
 
         const sharedString = new SharedString(document, id, services);
-        await sharedString.load(minimumSequenceNumber, messages, headerOrigin, services);
+        await sharedString.load(minimumSequenceNumber, headerOrigin, services);
         return sharedString;
     }
 
@@ -40,12 +38,11 @@ export class SharedObjectSequenceExtension implements ISharedObjectExtension {
         document: IRuntime,
         id: string,
         minimumSequenceNumber: number,
-        messages: ISequencedDocumentMessage[],
         services: IDistributedObjectServices,
         headerOrigin: string): Promise<ISharedObject> {
 
         const sharedSeq = new SharedObjectSequence<object>(document, id, services);
-        await sharedSeq.load(minimumSequenceNumber, messages, headerOrigin, services);
+        await sharedSeq.load(minimumSequenceNumber, headerOrigin, services);
         return sharedSeq;
     }
 
@@ -65,12 +62,11 @@ export class SharedNumberSequenceExtension implements ISharedObjectExtension {
         document: IRuntime,
         id: string,
         minimumSequenceNumber: number,
-        messages: ISequencedDocumentMessage[],
         services: IDistributedObjectServices,
         headerOrigin: string): Promise<ISharedObject> {
 
         const sharedSeq = new SharedNumberSequence(document, id, services);
-        await sharedSeq.load(minimumSequenceNumber, messages, headerOrigin, services);
+        await sharedSeq.load(minimumSequenceNumber, headerOrigin, services);
         return sharedSeq;
     }
 

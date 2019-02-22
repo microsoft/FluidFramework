@@ -1,5 +1,4 @@
 import { ISharedObject, ISharedObjectExtension as ISharedObjectExtension } from "@prague/api-definitions";
-import { ISequencedDocumentMessage } from "@prague/container-definitions";
 import { IDistributedObjectServices, IRuntime } from "@prague/runtime-definitions";
 import { Stream } from "./stream";
 
@@ -12,12 +11,11 @@ export class StreamExtension implements ISharedObjectExtension {
         runtime: IRuntime,
         id: string,
         minimumSequenceNumber: number,
-        messages: ISequencedDocumentMessage[],
         services: IDistributedObjectServices,
         headerOrigin: string): Promise<ISharedObject> {
 
         const stream = new Stream(runtime, id);
-        await stream.load(minimumSequenceNumber, messages, headerOrigin, services);
+        await stream.load(minimumSequenceNumber, headerOrigin, services);
 
         return stream;
     }

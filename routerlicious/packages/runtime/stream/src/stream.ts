@@ -1,6 +1,5 @@
 import {
     FileMode,
-    IDocumentMessage,
     ISequencedDocumentMessage,
     ITree,
     MessageType,
@@ -51,7 +50,6 @@ export class Stream extends SharedMap implements IStream {
 
     protected async loadContent(
         minimumSequenceNumber: number,
-        messages: IDocumentMessage[],
         headerOrigin: string,
         storage: IObjectStorageService): Promise<void> {
 
@@ -81,6 +79,7 @@ export class Stream extends SharedMap implements IStream {
                     },
                 },
             ],
+            sha: null,
         };
 
         return tree;

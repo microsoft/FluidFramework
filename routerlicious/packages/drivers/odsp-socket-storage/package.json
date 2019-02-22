@@ -1,7 +1,7 @@
 {
-  "name": "@prague/standard-socket-storage",
+  "name": "@prague/odsp-socket-storage",
   "version": "0.2.0",
-  "description": "Standardized socket storage implementation",
+  "description": "Socket storage implementation for SPO and ODC",
   "main": "dist/index.js",
   "module": "lib/index.js",
   "types": "dist/index.d.ts",

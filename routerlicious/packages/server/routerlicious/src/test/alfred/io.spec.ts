@@ -1,8 +1,8 @@
 import { IDocumentMessage, MessageType } from "@prague/container-definitions";
 import { KafkaOrdererFactory } from "@prague/kafka-orderer";
+import * as socketStorage from "@prague/routerlicious-socket-storage";
 import * as services from "@prague/services";
 import * as core from "@prague/services-core";
-import * as socketStorage from "@prague/socket-storage";
 import {
     MessageFactory,
     TestCollection,

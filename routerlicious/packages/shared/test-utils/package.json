@@ -30,7 +30,7 @@
     "@prague/runtime-definitions": "^0.2.0",
     "@prague/services-client": "^0.2.0",
     "@prague/services-core": "^0.2.0",
-    "@prague/socket-storage": "^0.2.0",
+    "@prague/routerlicious-socket-storage": "^0.2.0",
     "@prague/utils": "^0.2.0",
     "@types/lodash": "^4.14.118",
     "@types/nconf": "^0.0.37",

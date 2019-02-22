@@ -15,7 +15,6 @@ import {
     MessageType,
     TreeEntry,
 } from "@prague/container-definitions";
-import { ICommit } from "@prague/gitresources";
 import {
     IAttachMessage,
     IComponentFactory,
@@ -146,12 +145,14 @@ export class Runtime extends EventEmitter implements IHostRuntime {
     private closed = false;
     private pendingAttach = new Map<string, IAttachMessage>();
     private requestHandler: (request: IRequest) => Promise<IResponse>;
+    private lastMinSequenceNumber: number;
 
     private constructor(
         private readonly registry: IComponentRegistry,
         private readonly context: IContainerContext,
     ) {
         super();
+        this.lastMinSequenceNumber = context.minimumSequenceNumber;
     }
 
     public async loadComponent(
@@ -208,16 +209,27 @@ export class Runtime extends EventEmitter implements IHostRuntime {
         this.components.forEach((component, key) => channelEntries.set(key, component.snapshot()));
 
         // Use base tree to know previous component snapshot and then snapshot each component
-        const channelCommitsP = new Array<Promise<{ id: string, commit: ICommit }>>();
+        const channelCommitsP = new Array<Promise<{ id: string, commit: string }>>();
         for (const [channelId, channelSnapshot] of channelEntries) {
-            const parent = channelId in tree.commits ? [tree.commits[channelId]] : [];
-            const channelCommitP = this.storage
-                .write(channelSnapshot, parent, `${channelId} commit ${tagMessage}`, channelId)
-                .then((commit) => ({ id: channelId, commit }));
-            channelCommitsP.push(channelCommitP);
+            // If sha exists then previous commit is still valid
+            if (channelSnapshot.sha) {
+                channelCommitsP.push(Promise.resolve({
+                    commit: tree.commits[channelId],
+                    id: channelId,
+                }));
+            } else {
+                const parent = channelId in tree.commits ? [tree.commits[channelId]] : [];
+                const channelCommitP = this.storage
+                    .write(channelSnapshot, parent, `${channelId} commit ${tagMessage}`, channelId)
+                    .then((commit) => {
+                        this.components.get(channelId).updateBaseSha(commit.tree.sha);
+                        return { id: channelId, commit: commit.sha };
+                    });
+                channelCommitsP.push(channelCommitP);
+            }
         }
 
-        const root: ITree = { entries: [] };
+        const root: ITree = { entries: [], sha: null };
 
         // Add in module references to the component snapshots
         const channelCommits = await Promise.all(channelCommitsP);
@@ -227,7 +239,7 @@ export class Runtime extends EventEmitter implements IHostRuntime {
                 mode: FileMode.Commit,
                 path: channelCommit.id,
                 type: TreeEntry[TreeEntry.Commit],
-                value: channelCommit.commit.sha,
+                value: channelCommit.commit,
             });
 
             const repoUrl = "https://github.com/kurtb/praguedocs.git"; // this.storageService.repositoryUrl
@@ -301,7 +313,13 @@ export class Runtime extends EventEmitter implements IHostRuntime {
 
             default:
         }
+
         this.emit("op", message);
+
+        if (this.lastMinSequenceNumber !== message.minimumSequenceNumber) {
+            this.lastMinSequenceNumber = message.minimumSequenceNumber;
+            this.updateMinSequenceNumber(message.minimumSequenceNumber);
+        }
     }
 
     public async postProcess(

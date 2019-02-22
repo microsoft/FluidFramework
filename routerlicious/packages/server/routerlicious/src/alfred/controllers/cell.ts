@@ -1,7 +1,7 @@
 import { ICell } from "@prague/cell";
 import * as api from "@prague/client-api";
 import * as resources from "@prague/gitresources";
-import * as socketStorage from "@prague/socket-storage";
+import * as socketStorage from "@prague/routerlicious-socket-storage";
 import * as $ from "jquery";
 import { registerDocumentServices } from "./utils";
 

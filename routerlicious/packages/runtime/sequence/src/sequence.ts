@@ -1,7 +1,9 @@
 // tslint:disable:whitespace align no-bitwise
 import {
+    FileMode,
     ISequencedDocumentMessage,
     ITree,
+    TreeEntry,
 } from "@prague/container-definitions";
 import {
     ISharedMap,
@@ -17,6 +19,8 @@ import {
 } from "@prague/runtime-definitions";
 import { Deferred } from "@prague/utils";
 import * as assert from "assert";
+// tslint:disable-next-line:no-submodule-imports no-var-requires no-require-imports
+const cloneDeep = require("lodash/cloneDeep") as <T>(value: T) => T;
 // tslint:disable-next-line:no-submodule-imports
 import * as uuid from "uuid/v4";
 import {
@@ -33,12 +37,12 @@ import { SequenceDeltaEvent } from "./sequenceDeltaEvent";
 export abstract class SegmentSequence<T extends MergeTree.ISegment> extends SharedMap {
     public client: MergeTree.Client;
     public intervalCollections: ISharedMap;
-    protected autoApply = true;
     protected isLoaded = false;
     protected collabStarted = false;
     protected pendingMinSequenceNumber: number = 0;
     // Deferred that triggers once the object is loaded
     protected loadedDeferred = new Deferred<void>();
+    private messagesSinceMSNChange = new Array<ISequencedDocumentMessage>();
 
     get loaded(): Promise<void> {
         return this.loadedDeferred.promise;
@@ -160,6 +164,14 @@ export abstract class SegmentSequence<T extends MergeTree.ISegment> extends Shar
         this.submitIfAttached(annotateMessage);
     }
 
+    public getPropertiesAtPosition(pos: number) {
+        return this.client.getPropertiesAtPosition(pos);
+    }
+
+    public getRangeExtentsOfPosition(pos: number) {
+        return this.client.getRangeExtentsOfPosition(pos);
+    }
+
     public setLocalMinSeq(lmseq: number) {
         this.client.mergeTree.updateLocalMinSeq(lmseq);
     }
@@ -248,40 +260,51 @@ export abstract class SegmentSequence<T extends MergeTree.ISegment> extends Shar
         }
     }
 
-    protected transformContent(
-        message: any,
-        fromSequenceNumber: number,
-        toSequenceNumber: number,
-    ): any {
-        return this.client.transform(message, fromSequenceNumber, toSequenceNumber);
-    }
-
     protected async loadContent(
         minimumSequenceNumber: number,
-        messages: ISequencedDocumentMessage[],
         headerOrigin: string,
         storage: IObjectStorageService): Promise<void> {
 
         const header = await storage.read("header");
 
-        return this.initialize(minimumSequenceNumber, messages, header, true, headerOrigin, storage);
+        return this.initialize(minimumSequenceNumber, header, true, headerOrigin, storage);
     }
 
     protected initializeContent() {
         const intervalCollections = this.runtime.createChannel(uuid(), MapExtension.Type) as ISharedMap;
         this.set("intervalCollections", intervalCollections);
         // TODO will want to update initialize to operate synchronously
-        this.initialize(0, [], null, false, this.id, null)
+        this.initialize(0, null, false, this.id, null)
             .catch((error) => {
                 console.error("initializeContent", error);
             });
     }
 
     protected snapshotContent(): ITree {
+        // debug(`Transforming up to ${this.deltaManager.minimumSequenceNumber}`);
+        const transformedMessages: ISequencedDocumentMessage[] = [];
+        for (const message of this.messagesSinceMSNChange) {
+            transformedMessages.push(this.transform(
+                message,
+                this.runtime.deltaManager.minimumSequenceNumber));
+        }
+
         this.client.mergeTree.commitGlobalMin();
         const snap = new MergeTree.Snapshot(this.client.mergeTree);
         snap.extractSync();
-        return snap.emit();
+        const mtSnap = snap.emit();
+
+        mtSnap.entries.push({
+            mode: FileMode.File,
+            path: "tardis",
+            type: TreeEntry[TreeEntry.Blob],
+            value: {
+                contents: JSON.stringify(transformedMessages),
+                encoding: "utf-8",
+            },
+        });
+
+        return mtSnap;
     }
 
     /* tslint:disable:promise-function-async */
@@ -290,15 +313,21 @@ export abstract class SegmentSequence<T extends MergeTree.ISegment> extends Shar
     }
 
     protected processContent(message: ISequencedDocumentMessage) {
-        if (this.autoApply) {
-            this.client.applyMsg(message);
-            if (this.client.mergeTree.minSeqPending) {
-                this.client.mergeTree.notifyMinSeqListeners();
-            }
-        }
+        this.messagesSinceMSNChange.push(message);
+        this.processMessage(message);
     }
 
     protected processMinSequenceNumberChangedContent(value: number) {
+        let index = 0;
+        for (; index < this.messagesSinceMSNChange.length; index++) {
+            if (this.messagesSinceMSNChange[index].sequenceNumber > value) {
+                break;
+            }
+        }
+        if (index !== 0) {
+            this.messagesSinceMSNChange = this.messagesSinceMSNChange.slice(index);
+        }
+
         // Apply directly once loaded - otherwise track so we can update later
         if (this.isLoaded) {
             this.client.updateMinSeq(value);
@@ -338,12 +367,33 @@ export abstract class SegmentSequence<T extends MergeTree.ISegment> extends Shar
     protected abstract appendSegment(segSpec: MergeTree.IJSONSegment);
     protected abstract segmentsFromSpecs(segSpecs: MergeTree.IJSONSegment[]): MergeTree.ISegment[];
 
+    private processMessage(message: ISequencedDocumentMessage) {
+        this.client.applyMsg(message);
+        if (this.client.mergeTree.minSeqPending) {
+            this.client.mergeTree.notifyMinSeqListeners();
+        }
+    }
+
+    private transform(originalMessage: ISequencedDocumentMessage, sequenceNumber: number): ISequencedDocumentMessage {
+        let message = originalMessage;
+
+        // Allow the distributed data types to perform custom transformations
+        if (message.referenceSequenceNumber < sequenceNumber) {
+            // Make a copy of original message since we will be modifying in place
+            message = cloneDeep(message);
+            message.contents = this.client.transform(
+                message.contents, message.referenceSequenceNumber, sequenceNumber);
+            message.referenceSequenceNumber = sequenceNumber;
+        }
+
+        return message;
+    }
+
     private loadHeader(
         minimumSequenceNumber: number,
         header: string,
         shared: boolean,
-        originBranch: string,
-        services: IObjectStorageService) {
+        originBranch: string) {
 
         if (!header) {
             return;
@@ -354,7 +404,7 @@ export abstract class SegmentSequence<T extends MergeTree.ISegment> extends Shar
         this.client.mergeTree.reloadFromSegments(segs);
         if (shared) {
             // TODO currently only assumes two levels of branching
-            const branchId = originBranch === this.runtime.id ? 0 : 1;
+            const branchId = originBranch === this.runtime.documentId ? 0 : 1;
             this.collabStarted = true;
             this.client.startCollaboration(
                 this.runtime.clientId, minimumSequenceNumber, branchId);
@@ -362,24 +412,37 @@ export abstract class SegmentSequence<T extends MergeTree.ISegment> extends Shar
     }
 
     private async loadBody(
-        minimumSequenceNumber: number,
         header: string,
-        messages: ISequencedDocumentMessage[],
-        shared: boolean,
         originBranch: string,
-        services: IObjectStorageService) {
-
-        // If loading from a snapshot load in the body
+        services: IObjectStorageService,
+    ): Promise<void> {
+        // If loading from a snapshot load in the body and tardis messages
         if (header) {
-            const chunk = await MergeTree.Snapshot.loadChunk(services, "body");
+            const [chunk, rawMessages] = await Promise.all([
+                await MergeTree.Snapshot.loadChunk(services, "body"),
+                services.read("tardis"),
+            ]);
+
             for (const segSpec of chunk.segmentTexts) {
                 this.appendSegment(segSpec);
             }
-        }
 
-        // Apply all pending messages
-        for (const message of messages) {
-            this.processContent(message);
+            const messages = JSON.parse(Buffer.from(rawMessages, "base64").toString()) as ISequencedDocumentMessage[];
+            if (originBranch !== this.runtime.documentId) {
+                for (const message of messages) {
+                    // Append branch information when transforming for the case of messages stashed with the snapshot
+                    message.origin = {
+                        id: originBranch,
+                        minimumSequenceNumber: message.minimumSequenceNumber,
+                        sequenceNumber: message.sequenceNumber,
+                    };
+                }
+            }
+
+            // Apply all pending messages
+            for (const message of messages) {
+                this.processMessage(message);
+            }
         }
 
         // And initialize the interval collections
@@ -388,7 +451,6 @@ export abstract class SegmentSequence<T extends MergeTree.ISegment> extends Shar
 
     private async initialize(
         minimumSequenceNumber: number,
-        messages: ISequencedDocumentMessage[],
         header: string,
         shared: boolean,
         originBranch: string,
@@ -398,13 +460,10 @@ export abstract class SegmentSequence<T extends MergeTree.ISegment> extends Shar
             assert.equal(minimumSequenceNumber, MergeTree.Snapshot.EmptyChunk.chunkSequenceNumber);
         }
 
-        this.loadHeader(minimumSequenceNumber, header, shared, originBranch, services);
+        this.loadHeader(minimumSequenceNumber, header, shared, originBranch);
 
         this.loadBody(
-            minimumSequenceNumber,
             header,
-            messages,
-            shared,
             originBranch,
             services)
             .then(

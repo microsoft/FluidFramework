@@ -3519,8 +3519,15 @@ export class MergeTree {
                     if (MergeTree.traceTraversal) {
                         console.log(`@tcli: ${glc(this, this.collabWindow.clientId)}: leaf action`);
                     }
+                    const segment = child as ISegment;
+                    const branchId = this.getBranchId(clientId);
+                    const segmentBranchId = this.getBranchId(segment.clientId);
+                    const removalInfo = this.getRemovalInfo(branchId, segmentBranchId, segment);
+                    if(removalInfo && removalInfo.removedSeq){
+                        continue;
+                    }
 
-                    let segmentChanges = context.leaf(<ISegment>child, pos, context);
+                    let segmentChanges = context.leaf(segment, pos, context);
                     if (segmentChanges.replaceCurrent) {
                         if (MergeTree.traceOrdinals) {
                             console.log(`assign from leaf with block ord ${ordinalToArray(block.ordinal)}`);

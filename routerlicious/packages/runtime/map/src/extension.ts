@@ -1,5 +1,4 @@
 import { ISharedObjectExtension } from "@prague/api-definitions";
-import { ISequencedDocumentMessage } from "@prague/container-definitions";
 import { IDistributedObjectServices, IRuntime } from "@prague/runtime-definitions";
 import { ISharedMap, IValueType } from "./interfaces";
 import { SharedMap } from "./map";
@@ -22,13 +21,12 @@ export class MapExtension implements ISharedObjectExtension {
         runtime: IRuntime,
         id: string,
         minimumSequenceNumber: number,
-        messages: ISequencedDocumentMessage[],
         services: IDistributedObjectServices,
         headerOrigin: string): Promise<ISharedMap> {
 
         const map = new SharedMap(id, runtime, MapExtension.Type);
         this.registerValueTypes(map, defaultValueTypes);
-        await map.load(minimumSequenceNumber, messages, headerOrigin, services);
+        await map.load(minimumSequenceNumber, headerOrigin, services);
 
         return map;
     }

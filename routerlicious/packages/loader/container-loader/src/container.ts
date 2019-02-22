@@ -197,8 +197,13 @@ export class Container extends EventEmitter {
     public async snapshot(tagMessage: string): Promise<void> {
         // TODO: support for branch snapshots. For now simply no-op when a branch snapshot is requested
         if (this.parentBranch) {
-            debug(`Skipping snapshot due to being branch of ${this.parentBranch}`);
+            debug(`${this.tenantId}/${this.id} Skipping snapshot due to being branch of ${this.parentBranch}`);
             return;
+        }
+
+        // Only snapshot once a code quorum has been established
+        if (this.quorum.has("code2")) {
+            debug(`${this.tenantId}/${this.id} Skipping snapshot due to no code quorum`);
         }
 
         // Stop inbound message processing while we complete the snapshot
@@ -217,9 +222,6 @@ export class Container extends EventEmitter {
     }
 
     private async snapshotCore(tagMessage: string) {
-        // NOTE I believe I did the explicit then here so that the snapshot held the turn until it got the data
-        // it needed
-
         // Snapshots base document state and currently running context
         const root = this.snapshotBase();
         const componentEntries = await this.context.snapshot(tagMessage);
@@ -302,9 +304,7 @@ export class Container extends EventEmitter {
             });
 
         // ...begin the connection process to the delta stream
-        const connectResult: IConnectResult = connect
-            ? this.connect(attributesP)
-            : { detailsP: Promise.resolve(null), handlerAttachedP: Promise.resolve() };
+        const connectResult: IConnectResult = this.createDeltaManager(attributesP, connect);
 
         // ...load in the existing quorum
         const quorumP = Promise.all([attributesP, storageP, treeP]).then(
@@ -447,6 +447,7 @@ export class Container extends EventEmitter {
         // Output the tree
         const root: ITree = {
             entries,
+            sha: null,
         };
 
         return root;
@@ -581,7 +582,7 @@ export class Container extends EventEmitter {
         return pkg ? this.codeLoader.load(pkg) : new NullChaincode();
     }
 
-    private connect(attributesP: Promise<IDocumentAttributes>): IConnectResult {
+    private createDeltaManager(attributesP: Promise<IDocumentAttributes>, connect: boolean): IConnectResult {
         // Create the DeltaManager and begin listening for connection events
         const clientDetails = this.options ? this.options.client : null;
         this._deltaManager = new DeltaManager(
@@ -591,50 +592,71 @@ export class Container extends EventEmitter {
             this.service,
             clientDetails);
 
-        // Open a connection - the DeltaManager will automatically reconnect
-        const detailsP = this._deltaManager.connect("Document loading");
-        this._deltaManager.on("connect", (details: IConnectionDetails) => {
-            this.setConnectionState(ConnectionState.Connecting, "websocket established", details.clientId);
-            this.sendUnackedChunks();
-        });
+        if (connect) {
+            // Open a connection - the DeltaManager will automatically reconnect
+            const detailsP = this._deltaManager.connect("Document loading");
+            this._deltaManager.on("connect", (details: IConnectionDetails) => {
+                this.setConnectionState(ConnectionState.Connecting, "websocket established", details.clientId);
+                this.sendUnackedChunks();
+            });
 
-        this._deltaManager.on("disconnect", (nack: boolean) => {
-            this.setConnectionState(ConnectionState.Disconnected, `nack === ${nack}`);
-            this.emit("disconnect");
-        });
+            this._deltaManager.on("disconnect", (nack: boolean) => {
+                this.setConnectionState(ConnectionState.Disconnected, `nack === ${nack}`);
+                this.emit("disconnect");
+            });
 
-        this._deltaManager.on("error", (error) => {
-            this.emit("error", error);
-        });
+            this._deltaManager.on("error", (error) => {
+                this.emit("error", error);
+            });
 
-        this._deltaManager.on("pong", (latency) => {
-            this.emit("pong", latency);
-        });
+            this._deltaManager.on("pong", (latency) => {
+                this.emit("pong", latency);
+            });
 
-        this._deltaManager.on("processTime", (time) => {
-            this.emit("processTime", time);
-        });
+            this._deltaManager.on("processTime", (time) => {
+                this.emit("processTime", time);
+            });
 
-        // Begin fetching any pending deltas once we know the base sequence #. Can this fail?
-        // It seems like something, like reconnection, that we would want to retry but otherwise allow
-        // the document to load
-        const handlerAttachedP = attributesP.then((attributes) => {
-            this._deltaManager.attachOpHandler(
-                attributes.sequenceNumber,
-                {
-                    postProcess: (message, context) => {
-                        return this.postProcessRemoteMessage(message, context);
+            // Begin fetching any pending deltas once we know the base sequence #. Can this fail?
+            // It seems like something, like reconnection, that we would want to retry but otherwise allow
+            // the document to load
+            const handlerAttachedP = attributesP.then((attributes) => {
+                this._deltaManager.attachOpHandler(
+                    attributes.sequenceNumber,
+                    {
+                        postProcess: (message, context) => {
+                            return this.postProcessRemoteMessage(message, context);
+                        },
+                        prepare: (message) => {
+                            return this.prepareRemoteMessage(message);
+                        },
+                        process: (message, context) => {
+                            this.processRemoteMessage(message, context);
+                        },
+                    });
+            });
+
+            return { detailsP, handlerAttachedP };
+        } else {
+            const handlerAttachedP = attributesP.then((attributes) => {
+                this._deltaManager.attachOpHandler(
+                    attributes.sequenceNumber,
+                    {
+                        postProcess: (message, context) => {
+                            throw new Error("Delta manager is offline");
+                        },
+                        prepare: (message) => {
+                            throw new Error("Delta manager is offline");
+                        },
+                        process: (message, context) => {
+                            throw new Error("Delta manager is offline");
+                        },
                     },
-                    prepare: (message) => {
-                        return this.prepareRemoteMessage(message);
-                    },
-                    process: (message, context) => {
-                        this.processRemoteMessage(message, context);
-                    },
-                });
-        });
+                    false);
+            });
 
-        return { detailsP, handlerAttachedP };
+            return { detailsP: Promise.resolve(null), handlerAttachedP };
+        }
     }
 
     private setConnectionState(value: ConnectionState.Disconnected, reason: string);

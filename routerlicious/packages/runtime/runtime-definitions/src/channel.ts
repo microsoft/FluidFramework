@@ -12,11 +12,7 @@ export interface IChannel {
 
     readonly type: string;
 
-    ready(): Promise<void>;
-
     snapshot(): ITree;
-
-    transform(message: any, referenceSequenceNumber: number, sequenceNumber: number): any;
 
     isLocal(): boolean;
 }

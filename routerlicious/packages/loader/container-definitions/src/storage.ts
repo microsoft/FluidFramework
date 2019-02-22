@@ -78,6 +78,10 @@ export enum TreeEntry {
 
 export interface ITree {
     entries: ITreeEntry[];
+
+    // sha hash representing all entries in the tree. Can be used to optimize snapshotting in the case
+    // it is known that the ITree has already been created and stored
+    sha: string;
 }
 
 export interface ISnapshotTree {

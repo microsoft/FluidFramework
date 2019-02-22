@@ -1,13 +1,13 @@
 import { IChaincodeFactory, ICodeLoader, IPraguePackage } from "@prague/container-definitions";
 import { Container, Loader } from "@prague/container-loader";
 import { WebPlatform } from "@prague/loader-web";
-import { IComponentRuntime } from "@prague/runtime-definitions";
-import { IGitCache } from "@prague/services-client";
 import {
     createDocumentService,
     DefaultErrorTracking,
     TokenProvider,
-} from "@prague/socket-storage";
+} from "@prague/routerlicious-socket-storage";
+import { IComponentRuntime } from "@prague/runtime-definitions";
+import { IGitCache } from "@prague/services-client";
 
 export class WebLoader implements ICodeLoader {
     private entryCache = new Map<string, Promise<IChaincodeFactory>>();

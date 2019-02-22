@@ -51,6 +51,9 @@ export class GitManager implements IGitManager {
             debug(`Commit cache hit on ${sha}`);
             sha = this.refCache.get(sha);
 
+            // Delete refcache after first use
+            this.refCache.delete(sha);
+
             // If null is stored for the ref then there are no commits - return an empty array
             if (!sha) {
                 return [];
@@ -215,6 +218,11 @@ export class GitManager implements IGitManager {
     }
 
     private async createTreeCore(files: api.ITree, depth: number): Promise<resources.ITree> {
+        // If a sha is specified use it rather than creating new
+        if (files.sha) {
+            return this.getTree(files.sha);
+        }
+
         // Kick off the work to create all the tree values
         const entriesP: Array<Promise<resources.ICreateBlobResponse | resources.ITree>> = [];
         for (const entry of files.entries) {

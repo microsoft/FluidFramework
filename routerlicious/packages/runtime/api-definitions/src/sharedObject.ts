@@ -43,15 +43,12 @@ export abstract class SharedObject extends EventEmitter implements ISharedObject
         };
     }
 
-    public abstract ready(): Promise<void>;
-
     /**
      * A shared object, after construction, can either be loaded in the case that it is already part of
      * a shared document. Or later attached if it is being newly added.
      */
     public async load(
         minimumSequenceNumber: number,
-        messages: ISequencedDocumentMessage[],
         headerOrigin: string,
         services: IDistributedObjectServices): Promise<void> {
 
@@ -59,7 +56,6 @@ export abstract class SharedObject extends EventEmitter implements ISharedObject
 
         await this.loadCore(
             minimumSequenceNumber,
-            messages,
             headerOrigin,
             services.objectStorage);
         this.attachDeltaHandler();
@@ -112,20 +108,10 @@ export abstract class SharedObject extends EventEmitter implements ISharedObject
     public abstract snapshot(): ITree;
 
     /**
-     * Creates a new message from the provided message that is relative to the given sequenceNumber. It is valid
-     * to modify the passed in object in place.
-     */
-    public abstract transform(
-        message: any,
-        referenceSequenceNumber: number,
-        sequenceNumber: number): any;
-
-    /**
      * Allows the distributed data type to perform custom loading
      */
     protected abstract loadCore(
         minimumSequenceNumber: number,
-        messages: ISequencedDocumentMessage[],
         headerOrigin: string,
         services: IObjectStorageService): Promise<void>;
 

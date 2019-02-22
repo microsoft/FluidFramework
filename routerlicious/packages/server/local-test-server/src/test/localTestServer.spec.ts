@@ -1,8 +1,8 @@
 import * as api from "@prague/client-api";
 import { MessageType } from "@prague/container-definitions";
+import * as socketStorage from "@prague/routerlicious-socket-storage";
 import { SharedString } from "@prague/sequence";
 import { generateToken } from "@prague/services-core";
-import * as socketStorage from "@prague/socket-storage";
 import * as assert from "assert";
 import {
   createTestDocumentService,

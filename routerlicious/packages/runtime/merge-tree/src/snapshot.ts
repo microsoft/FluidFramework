@@ -88,6 +88,7 @@ export class Snapshot {
                     },
                 },
             ],
+            sha: null,
         };
 
         return tree;

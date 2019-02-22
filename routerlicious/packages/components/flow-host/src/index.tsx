@@ -7,14 +7,11 @@ import * as tableView from "@chaincode/table-view";
 import { Component } from "@prague/app-component";
 import {
     IContainerContext,
-    IPlatform,
     IRuntime,
 } from "@prague/container-definitions";
 import {
     IChaincodeComponent,
-    IComponentRuntime,
 } from "@prague/runtime-definitions";
-import { Deferred } from "@prague/utils";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import { App, IAppConfig } from "./app";
@@ -24,7 +21,6 @@ const pkg = require("../package.json");
 
 export class FlowHost extends Component {
     public static readonly type = `${pkg.name}@${pkg.version}`;
-    private ready = new Deferred<void>();
 
     constructor() {
         super([]);

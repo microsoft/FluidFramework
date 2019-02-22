@@ -7,9 +7,9 @@ import {
     IDocumentSystemMessage,
     ITokenClaims,
 } from "@prague/container-definitions";
+import * as socketStorage from "@prague/routerlicious-socket-storage";
 import * as core from "@prague/services-core";
 import { getRandomInt } from "@prague/services-utils";
-import * as socketStorage from "@prague/socket-storage";
 import { isSystemType } from "@prague/utils";
 import * as jwt from "jsonwebtoken";
 import * as winston from "winston";

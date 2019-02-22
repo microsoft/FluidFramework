@@ -2,6 +2,6 @@
 
 const standardSocketStorage = require('..');
 
-describe('@prague/standard-socket-storage', () => {
+describe('@prague/odsp-socket-storage', () => {
     it('needs tests');
 });

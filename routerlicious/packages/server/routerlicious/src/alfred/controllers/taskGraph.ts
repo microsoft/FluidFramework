@@ -1,7 +1,7 @@
 import * as api from "@prague/client-api";
 import { Browser, ISequencedClient } from "@prague/container-definitions";
 import * as resources from "@prague/gitresources";
-import * as socketStorage from "@prague/socket-storage";
+import * as socketStorage from "@prague/routerlicious-socket-storage";
 import * as d3 from "d3";
 import { registerDocumentServices } from "./utils";
 

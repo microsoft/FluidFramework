@@ -66,7 +66,9 @@ class Chaincode<T extends Component> extends EventEmitter implements IChaincode 
  * Base class for chainloadable Prague components.
  */
 export abstract class Component extends EventEmitter implements IChaincodeComponent {
-    private get ctorName() { return this.constructor.name; }
+    private get dbgName() {
+        return `${this.constructor.name}${this.host ? `:'${this.host.id}'` : ""}`;
+    }
 
     protected get runtime(): IOldRuntime { return this._runtime; }
     protected get platform() { return this._platform; }
@@ -79,14 +81,14 @@ export abstract class Component extends EventEmitter implements IChaincodeCompon
      */
     protected get connected(): Promise<void> {
         if (this._runtime.connected) {
-            debug(`${this.ctorName}.connected: Already connected.`);
+            debug(`${this.dbgName}.connected: Already connected.`);
             return Promise.resolve();
         }
 
-        debug(`${this.ctorName}.connected: Waiting...`);
+        debug(`${this.dbgName}.connected: Waiting...`);
         return new Promise((accept) => {
             this._runtime.on("connected", () => {
-                debug(`${this.ctorName}.connected: Now connected.`);
+                debug(`${this.dbgName}.connected: Now connected.`);
                 accept();
             });
         });
@@ -186,44 +188,44 @@ export abstract class Component extends EventEmitter implements IChaincodeCompon
             this._platform = platform;
 
             if (runtime.existing) {
-                debug(`${this.ctorName}.open(existing)`);
+                debug(`${this.dbgName}.open(existing)`);
 
                 // If the component already exists, open it's root map.
                 this._root = await runtime.getChannel(Component.rootMapId) as ISharedMap;
             } else {
-                debug(`${this.ctorName}.open(new)`);
+                debug(`${this.dbgName}.open(new)`);
 
                 // If this is the first client to attempt opening the component, create the component's
                 // root map and call 'create()' to give the component author a chance to initialize the
                 // component's shared data structures.
                 this._root = runtime.createChannel(Component.rootMapId, MapExtension.Type) as ISharedMap;
                 this._root.attach();
-                debug(`${this.ctorName}.create() - begin`);
+                debug(`${this.dbgName}.create() - begin`);
                 await this.create();
-                debug(`${this.ctorName}.create() - end`);
+                debug(`${this.dbgName}.create() - end`);
             }
 
-            debug(`${this.ctorName}.opened() - begin`);
+            debug(`${this.dbgName}.opened() - begin`);
             await this.opened();
-            debug(`${this.ctorName}.opened() - end`);
+            debug(`${this.dbgName}.opened() - end`);
         };
     }
 
     public async close() {
-        debug(`${this.ctorName}.close()`);
+        debug(`${this.dbgName}.close()`);
         this.runtime.close();
     }
 
     public async run(runtime: IComponentRuntime): Promise<IComponentDeltaHandler> {
-        debug(`${this.ctorName}.run()`);
-        debug(`${this.ctorName}.LoadFromSnapshot() - begin`);
+        debug(`${this.dbgName}.run()`);
+        debug(`${this.dbgName}.LoadFromSnapshot() - begin`);
         this._host = await ComponentHost.LoadFromSnapshot(runtime, new Chaincode(this));
-        debug(`${this.ctorName}.LoadFromSnapshot() - end`);
+        debug(`${this.dbgName}.LoadFromSnapshot() - end`);
         return this._host;
     }
 
     public async attach(platform: IPlatform): Promise<IPlatform> {
-        debug(`${this.ctorName}.attach()`);
+        debug(`${this.dbgName}.attach()`);
         this._platform = platform;
 
         // Invoke the component's internal 'open()' method and wait for it to complete before
@@ -237,8 +239,8 @@ export abstract class Component extends EventEmitter implements IChaincodeCompon
     }
 
     public snapshot(): ITree {
-        debug(`${this.ctorName}.snapshot()`);
-        return { entries: this._host.snapshotInternal() };
+        debug(`${this.dbgName}.snapshot()`);
+        return { entries: this._host.snapshotInternal(), sha: null };
     }
 
     /**
@@ -255,7 +257,7 @@ export abstract class Component extends EventEmitter implements IChaincodeCompon
      * Subclasses may override request to internally route requests.
      */
     protected request(runtime: IComponentRuntime, request: IRequest): Promise<IResponse> {
-        debug(`${this.ctorName}.request(${JSON.stringify(request)})`);
+        debug(`${this.dbgName}.request(${JSON.stringify(request)})`);
         return runtime.request(request);
     }
 }

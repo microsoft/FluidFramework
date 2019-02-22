@@ -62,16 +62,16 @@
       "projectFolder": "packages/drivers/replay-socket-storage/"
     },
     {
-      "packageName": "@prague/socket-storage",
-      "projectFolder": "packages/drivers/socket-storage/"
+      "packageName": "@prague/routerlicious-socket-storage",
+      "projectFolder": "packages/drivers/routerlicious-socket-storage/"
     },
     {
       "packageName": "@prague/socket-storage-shared",
       "projectFolder": "packages/drivers/socket-storage-shared/"
     },
     {
-      "packageName": "@prague/standard-socket-storage",
-      "projectFolder": "packages/drivers/standard-socket-storage/"
+      "packageName": "@prague/odsp-socket-storage",
+      "projectFolder": "packages/drivers/odsp-socket-storage/"
     },
     {
       "packageName": "@prague/container-definitions",
