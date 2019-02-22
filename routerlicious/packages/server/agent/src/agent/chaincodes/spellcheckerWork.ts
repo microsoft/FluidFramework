@@ -23,7 +23,8 @@ export class SpellcheckerWork extends ChaincodeWork implements IWork {
                 client: { type: "spell"},
                 encrypted: undefined,
                 localMinSeq: 0,
-            });
+            },
+            true);
     }
 
     public async stop(): Promise<void> {

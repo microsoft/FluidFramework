@@ -17,7 +17,7 @@ export class IntelWork extends ChaincodeWork implements IWork {
     }
 
     public async start(): Promise<void> {
-        return this.loadChaincode({ localMinSeq: 0, encrypted: undefined, client: { type: "intel" } });
+        return this.loadChaincode({ localMinSeq: 0, encrypted: undefined, client: { type: "intel" } }, true);
     }
 
     public async stop(): Promise<void> {
