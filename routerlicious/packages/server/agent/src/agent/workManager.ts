@@ -1,9 +1,8 @@
-import { ICodeLoader, IPlatformFactory, ITokenProvider } from "@prague/container-definitions";
+import { ICodeLoader, ITokenProvider } from "@prague/container-definitions";
 import * as MergeTree from "@prague/merge-tree";
 import { EventEmitter } from "events";
 import { AgentLoader, IAgent } from "./agentLoader";
 import * as chaincode from "./chaincodes";
-import { ChaincodeWork } from "./chaincodeWork";
 import { IDocumentServiceFactory, IDocumentTaskInfo, IWork, IWorkManager } from "./definitions";
 import { loadDictionary } from "./dictionaryLoader";
 import { IntelWork } from "./intelWork";
@@ -24,8 +23,7 @@ export class WorkManager extends EventEmitter implements IWorkManager {
                 private config: any,
                 private serverUrl: string,
                 private agentModuleLoader: (id: string) => Promise<any>,
-                private codeLoader: ICodeLoader,
-                private platformFactory: IPlatformFactory) {
+                private codeLoader: ICodeLoader) {
         super();
         this.loadUploadedAgents().catch((err) => {
             this.emit("error", err);
@@ -82,9 +80,7 @@ export class WorkManager extends EventEmitter implements IWorkManager {
                         tenantId,
                         tokenProvider,
                         services,
-                        this.codeLoader,
-                        this.platformFactory,
-                        workType));
+                        this.codeLoader));
                 break;
             case "chain-intel":
                 await this.startTask(
@@ -96,10 +92,7 @@ export class WorkManager extends EventEmitter implements IWorkManager {
                         tenantId,
                         tokenProvider,
                         services,
-                        this.codeLoader,
-                        this.platformFactory,
-                        workType,
-                        this.config));
+                        this.codeLoader));
                 break;
             case "chain-spell":
                 await this.loadSpellings().catch((err) => {
@@ -115,10 +108,7 @@ export class WorkManager extends EventEmitter implements IWorkManager {
                             tenantId,
                             tokenProvider,
                             services,
-                            this.codeLoader,
-                            this.platformFactory,
-                            workType,
-                            this.dict));
+                            this.codeLoader));
                 }
                 break;
             case "chain-translation":
@@ -131,22 +121,8 @@ export class WorkManager extends EventEmitter implements IWorkManager {
                         tenantId,
                         tokenProvider,
                         services,
-                        this.codeLoader,
-                        this.platformFactory,
-                        workType));
+                        this.codeLoader));
                 break;
-            case "chaincode":
-                await this.startTask(
-                    tenantId,
-                    documentId,
-                    workType,
-                    new ChaincodeWork(
-                        documentId,
-                        tenantId,
-                        tokenProvider,
-                        services,
-                        this.codeLoader,
-                        this.platformFactory));
             default:
                 throw new Error(`Unknown work type: ${workType}`);
         }

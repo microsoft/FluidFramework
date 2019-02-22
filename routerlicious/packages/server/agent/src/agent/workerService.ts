@@ -1,4 +1,4 @@
-import { ICodeLoader, IPlatformFactory, ITokenProvider } from "@prague/container-definitions";
+import { ICodeLoader, ITokenProvider } from "@prague/container-definitions";
 import { EventEmitter } from "events";
 import { IDocumentServiceFactory, IDocumentTaskInfo, IWorkManager } from "./definitions";
 import { WorkManager } from "./workManager";
@@ -12,16 +12,14 @@ export class WorkerService extends EventEmitter {
         private config: any,
         private serverUrl: string,
         private agentModuleLoader: (id: string) => Promise<any>,
-        private codeLoader?: ICodeLoader,
-        private platformFactory?: IPlatformFactory) {
+        private codeLoader?: ICodeLoader) {
         super();
         this.workManager = new WorkManager(
             this.serviceFactory,
             this.config,
             this.serverUrl,
             this.agentModuleLoader,
-            this.codeLoader,
-            this.platformFactory);
+            this.codeLoader);
         this.listenToEvents();
     }
 
