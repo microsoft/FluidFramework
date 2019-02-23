@@ -1,7 +1,6 @@
 import { CellRange, TableDocument } from "@chaincode/table-document";
 import { Component } from "@prague/app-component";
 import { MapExtension } from "@prague/map";
-import { IChaincodeComponent } from "@prague/runtime-definitions";
 import { cellRangeExpr, ConfigView } from "./config";
 import { ConfigKeys } from "./configKeys";
 
@@ -94,8 +93,4 @@ export class TableSlice extends Component {
     private readonly emitOp = (...args: any[]) => {
         this.emit("op", ...args);
     }
-}
-
-export async function instantiateComponent(): Promise<IChaincodeComponent> {
-    return Component.instantiateComponent(TableSlice);
 }

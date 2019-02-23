@@ -22,7 +22,6 @@ import {
     ReferenceType,
     UniversalSequenceNumber,
 } from "@prague/merge-tree";
-import { IChaincodeComponent } from "@prague/runtime-definitions";
 import {
     SharedIntervalCollectionValueType,
     SharedString,
@@ -223,12 +222,8 @@ export class TableDocument extends Component {
     }
 }
 
-export async function instantiateComponent(): Promise<IChaincodeComponent> {
-    return Component.instantiateComponent(TableDocument);
-}
-
 export async function instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
     return Component.instantiateRuntime(context, pkg.name, [
-        [pkg.name, Promise.resolve({ instantiateComponent })],
+        [pkg.name, TableDocument],
     ]);
 }

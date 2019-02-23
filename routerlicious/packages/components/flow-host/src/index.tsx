@@ -9,9 +9,6 @@ import {
     IContainerContext,
     IRuntime,
 } from "@prague/container-definitions";
-import {
-    IChaincodeComponent,
-} from "@prague/runtime-definitions";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import { App, IAppConfig } from "./app";
@@ -46,20 +43,17 @@ export class FlowHost extends Component {
     protected async create() { /* do nothing */ }
 }
 
-export async function instantiateComponent(): Promise<IChaincodeComponent> {
-    return Component.instantiateComponent(FlowHost);
-}
-
 /**
  * Instantiates a new chaincode host
  */
 export async function instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
     return Component.instantiateRuntime(context, pkg.name, [
-        ["@chaincode/chart-view", Promise.resolve(chartView)],
-        ["@chaincode/flow-document", Promise.resolve(flowDocument)],
-        [pkg.name, Promise.resolve({ instantiateComponent })],
-        ["@chaincode/flow-editor", Promise.resolve(flowEditor)],
-        ["@chaincode/table-document", Promise.resolve(tableDocument)],
-        ["@chaincode/table-slice", Promise.resolve(tableSlice)],
-        ["@chaincode/table-view", Promise.resolve(tableView)]]);
+        ["@chaincode/chart-view", chartView.ChartView],
+        ["@chaincode/flow-document", flowDocument.FlowDocument],
+        [pkg.name, FlowHost],
+        ["@chaincode/flow-editor", flowEditor.FlowEditor],
+        ["@chaincode/table-document", tableDocument.TableDocument],
+        ["@chaincode/table-slice", tableSlice.TableSlice],
+        ["@chaincode/table-view", tableView.TableView],
+    ]);
 }

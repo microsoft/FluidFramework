@@ -91,12 +91,12 @@ export class ConfigView {
     private readonly createButton   = template.get(this.root, "createButton") as HTMLButtonElement;
 
     constructor(private readonly host: ComponentHost, private readonly map: ISharedMap) {
-        this.caption.innerText = `Table-Slice: '${this.host.id}'`;
+        this.caption.innerText = `Table Slice ${this.host.id}`;
 
         this.done = new Promise<void>((accept) => {
             this.createButton.addEventListener("click", () => {
                 this.host.createAndAttachComponent(this.idBox.value, "@chaincode/table-document");
-                this.saveConfig();
+                this.map.set(ConfigKeys.docId, this.idBox.value);
                 accept();
             });
 

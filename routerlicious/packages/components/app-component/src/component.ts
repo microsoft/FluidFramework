@@ -1,6 +1,13 @@
 import { ISharedObjectExtension } from "@prague/api-definitions";
 import { ComponentHost } from "@prague/component";
-import { IContainerContext, IPlatform, IRequest, IResponse, IRuntime, ITree } from "@prague/container-definitions";
+import {
+    IContainerContext,
+    IPlatform,
+    IRequest,
+    IResponse,
+    IRuntime,
+    ITree,
+} from "@prague/container-definitions";
 import { ISharedMap, MapExtension } from "@prague/map";
 import { Runtime } from "@prague/runtime";
 import {
@@ -56,7 +63,7 @@ class Chaincode<T extends Component> extends EventEmitter implements IChaincode 
     // NYI?
     public close() { return Promise.resolve(); }
 
-    public async run(runtime: IOldRuntime, platform: IPlatform): Promise<IPlatform> {
+    public async run(): Promise<IPlatform> {
         debug("Chaincode.run()");
         return new ComponentPlatform(Promise.resolve(this.component));
     }
@@ -70,33 +77,28 @@ export abstract class Component extends EventEmitter implements IChaincodeCompon
         return `${this.constructor.name}${this.host ? `:'${this.host.id}'` : ""}`;
     }
 
-    protected get runtime(): IOldRuntime { return this._runtime; }
+    protected get runtime(): IOldRuntime { return this._host; }
     protected get platform() { return this._platform; }
-    protected get root() { return this._root; }
     protected get host() { return this._host; }
+    protected get root() { return this._root; }
 
     /**
      * Returns a promise that resolves once the component is synchronized with its date store.
      * If the component is already connected, returns a resolved promise.
      */
     protected get connected(): Promise<void> {
-        if (this._runtime.connected) {
+        if (this.runtime.connected) {
             debug(`${this.dbgName}.connected: Already connected.`);
             return Promise.resolve();
         }
 
         debug(`${this.dbgName}.connected: Waiting...`);
         return new Promise((accept) => {
-            this._runtime.on("connected", () => {
+            this.runtime.on("connected", () => {
                 debug(`${this.dbgName}.connected: Now connected.`);
                 accept();
             });
         });
-    }
-
-    public static async instantiateComponent<T extends Component>(ctorFn: new () => T) {
-        debug(`${ctorFn.name}.instantiateComponent()`);
-        return new ctorFn();
     }
 
     /**
@@ -116,12 +118,17 @@ export abstract class Component extends EventEmitter implements IChaincodeCompon
     public static async instantiateRuntime(
         context: IContainerContext,
         chaincode: string,
-        registry: ReadonlyArray<[string, Promise<IComponentFactory>]>,
+        registry: ReadonlyArray<[string, new () => IChaincodeComponent]>,
     ): Promise<IRuntime> {
         const runtimeId = encodeURIComponent(chaincode);
 
         debug(`instantiateRuntime(chaincode=${chaincode},registry=${JSON.stringify(registry)})`);
-        const runtime = await Runtime.Load(new Map(registry), context);
+        const runtime = await Runtime.Load(
+            new Map(registry.map<[string, Promise<IComponentFactory>]>(([name, ctorFn]) => [
+                name,
+                Promise.resolve({ instantiateComponent: () => Promise.resolve(new ctorFn()) }),
+            ])),
+            context);
         debug("runtime loaded.");
 
         // Register path handler for inbound messages
@@ -159,9 +166,6 @@ export abstract class Component extends EventEmitter implements IChaincodeCompon
     private _host: ComponentHost = null;
 
     // tslint:disable-next-line:variable-name
-    private _runtime: IOldRuntime = null;
-
-    // tslint:disable-next-line:variable-name
     private _platform: IPlatform = null;
 
     // tslint:disable-next-line:variable-name
@@ -184,7 +188,6 @@ export abstract class Component extends EventEmitter implements IChaincodeCompon
 
         // Internally expose the 'open()' function to 'Chaincode.run()'.
         this[openSym] = async (runtime: IOldRuntime, platform: IPlatform) => {
-            this._runtime = runtime;
             this._platform = platform;
 
             if (runtime.existing) {
