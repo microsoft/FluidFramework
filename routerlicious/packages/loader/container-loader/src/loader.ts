@@ -2,6 +2,7 @@ import {
     ICodeLoader,
     IDocumentService,
     IHost,
+    ILoader,
     IRequest,
     IResponse,
 } from "@prague/container-definitions";
@@ -22,7 +23,7 @@ interface IParsedUrl {
 /**
  * Manages Prague resource loading
  */
-export class Loader extends EventEmitter {
+export class Loader extends EventEmitter implements ILoader {
     private containers = new Map<string, Promise<Container>>();
 
     constructor(

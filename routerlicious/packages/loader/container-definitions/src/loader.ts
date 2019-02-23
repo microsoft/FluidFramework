@@ -31,3 +31,7 @@ export interface IResponse {
     status: number;
     value: any;
 }
+
+export interface ILoader {
+    request(request: IRequest): Promise<IResponse>;
+}

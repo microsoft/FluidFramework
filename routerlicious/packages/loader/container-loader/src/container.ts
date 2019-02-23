@@ -12,6 +12,7 @@ import {
     IDocumentStorageService,
     IGenericBlob,
     IHost,
+    ILoader,
     IProposal,
     IRequest,
     IResponse,
@@ -57,6 +58,7 @@ export class Container extends EventEmitter {
         service: IDocumentService,
         codeLoader: ICodeLoader,
         options: any,
+        loader: ILoader,
     ): Promise<Container> {
         const container = new Container(
             id,
@@ -149,6 +151,7 @@ export class Container extends EventEmitter {
         private containerHost: IHost,
         private service: IDocumentService,
         private codeLoader: ICodeLoader,
+        private loader: ILoader,
     ) {
         super();
 
@@ -362,6 +365,7 @@ export class Container extends EventEmitter {
                     this.blobManager,
                     this._deltaManager,
                     this.quorum,
+                    this.loader,
                     storageService,
                     (err) => debug("Context error", err),
                     (type, contents) => this.submitMessage(type, contents),
@@ -557,6 +561,7 @@ export class Container extends EventEmitter {
             this.blobManager,
             this._deltaManager,
             this.quorum,
+            this.loader,
             this.storageService,
             (err) => debug("Context error", err),
             (type, contents) => this.submitMessage(type, contents),

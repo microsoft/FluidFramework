@@ -1,25 +1,13 @@
 import { Block, BoxState } from "@prague/app-ui";
-import { getChaincodeRepo, getDefaultCredentials, getDefaultDocumentService } from "@prague/client-api";
+import * as api from "@prague/client-api";
 import { IPlatform, IPlatformFactory } from "@prague/container-definitions";
-import { Container, Loader } from "@prague/container-loader";
-import { WebLoader, WebPlatform } from "@prague/loader-web";
-import { TokenProvider } from "@prague/routerlicious-socket-storage";
+import { WebPlatform } from "@prague/loader-web";
 import { IComponentRuntime } from "@prague/runtime-definitions";
 import { EventEmitter } from "events";
-import * as jwt from "jsonwebtoken";
 import { FlowViewContext } from "./flowViewContext";
 
 const containerSym = Symbol("Document.container");
 const platformSym = Symbol("Document.platform");
-
-export async function proposeChaincode(document: Container, chaincode: string) {
-    if (!document.connected) {
-        // tslint:disable-next-line:no-unnecessary-callback-wrapper
-        await new Promise<void>((resolve) => document.once("connected", () => resolve()));
-    }
-
-    await document.getQuorum().propose("code2", chaincode);
-}
 
 class DefinitionGuide extends EventEmitter {
     private dts: string = "";
@@ -162,12 +150,12 @@ export class PlatformFactory implements IPlatformFactory {
 }
 
 export class Document extends Block<DocumentState> {
-    // TODO taking a dependency on the loader, loader-web, and socket-storage is not something we want to do.
-    // This component needs access to the core abstract loader defined in runtime-definitions
-    // but we need to update the API to provide it access and include the necessary methods.
-    // We cut some corners below to start experimenting with dynamic document loading.
     protected mounting(self: DocumentState, context: FlowViewContext): HTMLElement {
         console.log(`Mount value is ${self.id}`);
+
+        const collabDocument = context.services.get("document") as api.Document;
+
+        collabDocument.runtime;
 
         // Create the div to which the Chart will attach the SVG rendered chart when the
         // web service responds.
@@ -189,34 +177,11 @@ export class Document extends Block<DocumentState> {
         mountDiv.appendChild(openDoc);
         mountDiv.appendChild(div);
 
-        // TODO also something that shouldn't be direclty exposed
-        const credentials = getDefaultCredentials();
-        const token = jwt.sign(
-            {
-                documentId: self.id,
-                permission: "read:write",
-                tenantId: credentials.tenant,
-                user: { id: "loader-client" },
-            },
-            credentials.key) as string;
-        const tokenProvider = new TokenProvider(token);
-
-        const webLoader = new WebLoader(getChaincodeRepo());
-
         const invalidateLayout = (width: number, height: number) => {
             div.style.width = `${width}px`;
             div.style.height = `${height}px`;
             context.services.get("invalidateLayout")();
         };
-
-        const loader = new Loader(
-            { tokenProvider },
-            getDefaultDocumentService(),
-            webLoader,
-            { blockUpdateMarkers: true });
-        const url =
-            `prague://${document.location.host}/` +
-            `${encodeURIComponent(credentials.tenant)}/${encodeURIComponent(self.id)}`;
 
         const platformFactory = new PlatformFactory(div, invalidateLayout);
         const containerP = loader.resolve({ url });
