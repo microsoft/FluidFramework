@@ -420,7 +420,7 @@ const commands: ICmd[] = [
             f.insertChart();
         },
         key: "insert chart",
-    }
+    },
 ];
 
 export function moveMarker(flowView: FlowView, fromPos: number, toPos: number) {

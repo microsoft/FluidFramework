@@ -6,6 +6,7 @@ import {
     IContainerContext,
     IDeltaManager,
     IDocumentStorageService,
+    ILoader,
     IQuorum,
     IRequest,
     IResponse,
@@ -127,6 +128,10 @@ export class Runtime extends EventEmitter implements IHostRuntime {
 
     public get closeFn(): () => void {
         return this.context.closeFn;
+    }
+
+    public get loader(): ILoader {
+        return this.context.loader;
     }
 
     private tasks: string[] = [];

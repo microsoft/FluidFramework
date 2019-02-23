@@ -91,7 +91,8 @@ export class Loader extends EventEmitter implements ILoader {
                 this.containerHost,
                 this.documentService,
                 this.codeLoader,
-                this.options);
+                this.options,
+                this);
             this.containers.set(versionedId, containerP);
         }
 

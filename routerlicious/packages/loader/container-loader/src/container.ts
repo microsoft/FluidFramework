@@ -65,7 +65,8 @@ export class Container extends EventEmitter {
             options,
             containerHost,
             service,
-            codeLoader);
+            codeLoader,
+            loader);
 
         // TODO need to crack the version and connection flag out of the URL
         await container.load(version);

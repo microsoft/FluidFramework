@@ -6,7 +6,6 @@ import { IComponentRuntime } from "@prague/runtime-definitions";
 import { EventEmitter } from "events";
 import { FlowViewContext } from "./flowViewContext";
 
-const containerSym = Symbol("Document.container");
 const platformSym = Symbol("Document.platform");
 
 class DefinitionGuide extends EventEmitter {
@@ -66,9 +65,7 @@ class DefinitionGuide extends EventEmitter {
 const definitionGuide = new DefinitionGuide();
 
 export class DocumentState extends BoxState {
-    public id: string;
-    public chaincode?: string;
-    public [containerSym]: Container;
+    public url: string;
     public [platformSym]: PlatformFactory;
 }
 
@@ -93,31 +90,6 @@ export class Platform extends WebPlatform implements IPlatform {
     public detach() {
         return;
     }
-}
-
-async function attach(loader: Loader, url: string, factory: PlatformFactory) {
-    const response = await loader.request({ url });
-
-    if (response.status !== 200) {
-        return;
-    }
-
-    switch (response.mimeType) {
-        case "prague/component":
-            const component = response.value as IComponentRuntime;
-            const platform = await factory.create();
-            const componentPlatform = await component.attach(platform);
-            // query the runtime for its definition - if it exists
-            definitionGuide.addComponent(component.id, componentPlatform);
-            break;
-    }
-}
-
-async function registerAttach(loader: Loader, container: Container, uri: string, platform: PlatformFactory) {
-    attach(loader, uri, platform);
-    container.on("contextChanged", (value) => {
-        attach(loader, uri, platform);
-    });
 }
 
 export class PlatformFactory implements IPlatformFactory {
@@ -151,11 +123,9 @@ export class PlatformFactory implements IPlatformFactory {
 
 export class Document extends Block<DocumentState> {
     protected mounting(self: DocumentState, context: FlowViewContext): HTMLElement {
-        console.log(`Mount value is ${self.id}`);
+        console.log(`Mount value is ${self.url}`);
 
         const collabDocument = context.services.get("document") as api.Document;
-
-        collabDocument.runtime;
 
         // Create the div to which the Chart will attach the SVG rendered chart when the
         // web service responds.
@@ -164,9 +134,9 @@ export class Document extends Block<DocumentState> {
         div.style.height = "600px";
 
         const openDoc = document.createElement("a");
-        openDoc.href = `/loader/${encodeURIComponent(self.id)}`;
+        openDoc.href = self.url;
         openDoc.target = "_blank";
-        openDoc.innerText = self.id;
+        openDoc.innerText = self.url;
         openDoc.style.display = "block";
         openDoc.style.width = "100%";
         openDoc.classList.add("component-link");
@@ -184,23 +154,27 @@ export class Document extends Block<DocumentState> {
         };
 
         const platformFactory = new PlatformFactory(div, invalidateLayout);
-        const containerP = loader.resolve({ url });
-        containerP.then(
-            (container) => {
-                self[containerSym] = container;
-                self[platformSym] = platformFactory;
-                console.log("Document loaded");
+        const responseP = collabDocument.runtime.loader.request({ url: self.url });
+        const mountedP = responseP.then(async (response) => {
+            self[platformSym] = platformFactory;
+            console.log("Document loaded");
 
-                if (self.chaincode) {
-                    proposeChaincode(container, self.chaincode).catch(
-                        (error) => {
-                            console.error("Error installing chaincode");
-                        });
-                }
+            if (response.status !== 200) {
+                return;
+            }
 
-                registerAttach(loader, container, url, platformFactory);
-            },
-            (error) => console.error("Failed to load document"));
+            switch (response.mimeType) {
+                case "prague/component":
+                    const component = response.value as IComponentRuntime;
+                    const platform = await platformFactory.create();
+                    const componentPlatform = await component.attach(platform);
+                    // query the runtime for its definition - if it exists
+                    definitionGuide.addComponent(component.id, componentPlatform);
+                    break;
+            }
+        });
+
+        mountedP.catch((error) => console.error("Failed to load document"));
 
         // Call 'updating' to update the contents of the div with the updated chart.
         return this.updating(self, context, mountDiv);
