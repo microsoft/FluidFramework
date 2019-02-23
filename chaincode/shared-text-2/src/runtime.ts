@@ -1,4 +1,4 @@
-import { Component, Document } from "@prague/app-component";
+import { Document } from "@prague/app-component";
 import * as API from "@prague/client-api";
 import {
     IContainerContext,
@@ -11,9 +11,6 @@ import * as MergeTree from "@prague/merge-tree";
 import {
     Runtime,
 } from "@prague/runtime";
-import {
-    IChaincodeComponent,
-} from "@prague/runtime-definitions";
 import * as SharedString from "@prague/sequence";
 import * as Snapshotter from "@prague/snapshotter";
 import * as Spellcheker from "@prague/spellchecker";
@@ -187,8 +184,8 @@ class SharedTextComponent extends Document {
     }
 }
 
-export async function instantiateComponent(): Promise<IChaincodeComponent> {
-    return Component.instantiateComponent(SharedTextComponent);
+export async function instantiateComponent() {
+    return new SharedTextComponent();
 }
 
 /**
@@ -222,7 +219,7 @@ export async function instantiateRuntime(context: IContainerContext): Promise<IR
         }
     });
 
-    runtime.registerTasks(["snapshot", "spell", "translation", "intel"], "1.0");
+    runtime.registerTasks(["spell", "translation", "intel"], "1.0");
 
     waitForFullConnection(runtime).then(() => {
         // Call snapshot directly from runtime.
