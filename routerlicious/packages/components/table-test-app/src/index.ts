@@ -20,9 +20,12 @@ async function main() {
         "prague",
         "anonymous-coward"
     );
-    const table = await store.open(tableId, TableDocument.type, "", []);
+    const table = await store.open<TableDocument>(tableId, TableDocument.type, "", []);
 
-    console.log(table);
+    const sliceId = makeId("Table-Slice");
+    const slice = await table.createSlice(sliceId, "unnamed", 0, 0, 0, 0);
+
+    console.log(slice);
 }
 
 main();

@@ -1,5 +1,17 @@
 import { LocalReference } from "@prague/merge-tree";
 import { SharedStringInterval } from "@prague/sequence";
+import { colNameToIndex } from "./cell";
+
+const rangeExpr = /([a-zA-Z]+)(\d+):([a-zA-Z]+)(\d+)/;
+
+export function parseRange(range: string) {
+    const matches = rangeExpr.exec(range)!;
+    const minCol = colNameToIndex(matches[1]);
+    const minRow = parseInt(matches[2], 10) - 1;    // 1-indexed -> 0-indexed
+    const maxCol = colNameToIndex(matches[3]);
+    const maxRow = parseInt(matches[4], 10) - 1;    // 1-indexed -> 0-indexed
+    return { minRow, minCol, maxRow, maxCol };
+}
 
 export class CellRange {
     constructor(

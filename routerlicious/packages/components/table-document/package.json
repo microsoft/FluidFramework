@@ -40,6 +40,7 @@
     "@prague/client-ui": "^0.2.0",
     "@prague/component": "^0.2.0",
     "@prague/container-definitions": "^0.2.0",
+    "@prague/flow-util": "^0.2.0",
     "@prague/map": "^0.2.0",
     "@prague/merge-tree": "^0.2.0",
     "@prague/runtime": "^0.2.0",

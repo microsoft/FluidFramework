@@ -190,7 +190,12 @@ export abstract class Component extends EventEmitter implements IChaincodeCompon
         this[openSym] = async (runtime: IOldRuntime, platform: IPlatform) => {
             this._platform = platform;
 
-            if (runtime.existing) {
+            // Note that if the same component is created and then again opened within the same session,
+            // the 'runtime.existing' flag will remain false.  Therefore we need to additionally check
+            // 'this._root' to determine if the component is truly being created vs. opened.
+            const existing = runtime.existing || this._root;
+
+            if (existing) {
                 debug(`${this.dbgName}.open(existing)`);
 
                 // If the component already exists, open it's root map.

@@ -39,7 +39,6 @@
     "@chaincode/flow-document": "^0.2.0",
     "@chaincode/flow-editor": "^0.2.0",
     "@chaincode/table-document": "^0.2.0",
-    "@chaincode/table-slice": "^0.2.0",
     "@chaincode/table-view": "^0.2.0",
     "@prague/app-component": "^0.2.0",
     "@prague/app-datastore": "^0.2.0",
@@ -59,9 +58,7 @@
     "@types/node": "^10.12.12",
     "@types/react": "^16.7.7",
     "@types/react-dom": "^16.0.11",
-    "copyfiles": "^2.1.0",
     "css-loader": "^1.0.0",
-    "npm-run-all": "^4.1.5",
     "source-map-loader": "^0.2.4",
     "style-loader": "^0.23.0",
     "ts-loader": "^4.5.0",
@@ -71,7 +68,6 @@
     "typings-for-css-modules-loader": "^1.7.0",
     "webpack": "^4.8.2",
     "webpack-cli": "^3.1.2",
-    "webpack-merge": "^4.1.2",
-    "webpack-node-externals": "^1.7.2"
+    "webpack-merge": "^4.1.2"
   }
 }
