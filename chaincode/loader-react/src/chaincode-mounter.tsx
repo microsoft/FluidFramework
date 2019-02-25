@@ -21,19 +21,17 @@ export class LoaderComponent extends React.Component<IProps, IState> {
     async componentDidMount() {
         this.props.mountedElement.appendChild(this.domElement);
 
-        let ds = await DataStore.from(this.props.serverUrl);
+        let ds = await DataStore.from(this.props.serverUrl, "anonymous-coward");
 
         const services: ReadonlyArray<[string, Promise<any>]>  = [
             ["div", Promise.resolve(this.domElement)], 
             ["datastore", Promise.resolve(ds)]
         ];
 
-        await ds.open(this.props.docId, "sabroner", this.props.chaincodePackage,
-            services
-            );
+        await ds.open(this.props.docId, this.props.chaincodePackage, "", services);
     }
 
     render() {
-        return null;
+        return(<p> Component </p>);
     }
 }
