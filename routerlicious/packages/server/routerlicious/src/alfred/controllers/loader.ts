@@ -8,6 +8,7 @@ import {
 } from "@prague/routerlicious-socket-storage";
 import { IComponentRuntime } from "@prague/runtime-definitions";
 import { IGitCache } from "@prague/services-client";
+import Axios from "axios";
 
 export class WebLoader implements ICodeLoader {
     private entryCache = new Map<string, Promise<IChaincodeFactory>>();
@@ -203,6 +204,16 @@ export function initialize(
     npm: string,
     jwt: string,
 ) {
+    const headers = {
+        Authorization: `Bearer ${jwt}`,
+    };
+    Axios.post(
+        "/api/v1/load",
+        { url: "a.com" },
+        {
+            headers,
+        }).then((data) => console.log(data.data));
+
     console.log(`Loading ${documentId}`);
     const startP = start(
         token,

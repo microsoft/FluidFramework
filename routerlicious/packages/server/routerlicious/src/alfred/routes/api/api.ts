@@ -7,10 +7,14 @@ import {
     MessageType,
     Robot } from "@prague/container-definitions";
 import * as core from "@prague/services-core";
+import Axios from "axios";
 import { Router } from "express";
+import * as safeStringify from "json-stringify-safe";
 import * as jwt from "jsonwebtoken";
 import * as moniker from "moniker";
+import { Provider } from "nconf";
 import passport = require("passport");
+import { parse } from "url";
 import winston = require("winston");
 
 interface IOperation {
@@ -19,7 +23,43 @@ interface IOperation {
     value: string;
 }
 
+interface IBaseThing {
+}
+
+interface ILocalThing extends IBaseThing {
+    url: string;
+    token: "";
+
+    // Unclear if we want to specify these or rely on the url above
+    orderer: string;
+    storage: string;
+}
+
+interface IRemoteThing extends IBaseThing {
+    data?: string;
+}
+
+// Although probably the case we want a default behavior here. Maybe just the URL?
+async function getExternalComponent(url: string): Promise<IBaseThing> {
+    const result = await Axios.get(url);
+
+    return {
+        data: result.data,
+    } as IRemoteThing;
+}
+
+async function getInternalComponent(url: string): Promise<IBaseThing> {
+    return {
+        data: null,
+        orderer: "",
+        storage: "",
+        token: "",
+        url: "",
+    } as ILocalThing;
+}
+
 export function create(
+    config: Provider,
     producer: core.IProducer,
     appTenants: core.IAlfredTenant[],
     tenantManager: core.ITenantManager,
@@ -27,11 +67,22 @@ export function create(
 
     const router: Router = Router();
 
+    const alfred = parse(config.get("worker:serverUrl"));
+
     router.post("/load", passport.authenticate("jwt", { session: false }), (request, response) => {
         winston.info("/load", request.user);
         winston.info("/load URL", request.body.url);
 
-        return response.status(200).json({ url: request.body.url, message: "YEPPP" });
+        // Ok.... so we get a URL
+        const url = parse(request.body.url);
+
+        const resultP = alfred.host === url.host
+            ? getInternalComponent(request.body.url)
+            : getExternalComponent(request.body.url);
+
+        resultP.then(
+            (result) => response.status(200).json(result),
+            (error) => response.status(400).end(safeStringify(error)));
     });
 
     router.patch("/:tenantId?/:id", (request, response) => {
