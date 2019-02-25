@@ -46,10 +46,6 @@
       "projectFolder": "packages/components/table-document/"
     },
     {
-      "packageName": "@chaincode/table-slice",
-      "projectFolder": "packages/components/table-slice/"
-    },
-    {
       "packageName": "@prague/table-test-app",
       "projectFolder": "packages/components/table-test-app/"
     },

@@ -1,3 +1,4 @@
+import { TableDocument } from "@chaincode/table-document";
 import { ComponentHost } from "@prague/component";
 import { Template } from "@prague/flow-util";
 import { ISharedMap } from "@prague/map";
@@ -79,7 +80,7 @@ export class ConfigView {
 
         this.done = new Promise<void>((accept) => {
             this.createButton.addEventListener("click", () => {
-                this.host.createAndAttachComponent(this.idBox.value, "@chaincode/table-document");
+                this.host.createAndAttachComponent(this.idBox.value, TableDocument.type);
                 this.map.set(ConfigKeys.docId, this.idBox.value);
                 accept();
             });

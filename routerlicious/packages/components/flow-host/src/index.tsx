@@ -1,8 +1,10 @@
+// Must be first import.
+import "./publicpath";
+
 import * as chartView from "@chaincode/chart-view";
 import * as flowDocument from "@chaincode/flow-document";
 import * as flowEditor from "@chaincode/flow-editor";
 import * as tableDocument from "@chaincode/table-document";
-import * as tableSlice from "@chaincode/table-slice";
 import * as tableView from "@chaincode/table-view";
 import { Component } from "@prague/app-component";
 import {
@@ -52,8 +54,8 @@ export async function instantiateRuntime(context: IContainerContext): Promise<IR
         ["@chaincode/flow-document", flowDocument.FlowDocument],
         [pkg.name, FlowHost],
         ["@chaincode/flow-editor", flowEditor.FlowEditor],
-        ["@chaincode/table-document", tableDocument.TableDocument],
-        ["@chaincode/table-slice", tableSlice.TableSlice],
+        [tableDocument.TableDocument.type, tableDocument.TableDocument],
+        [tableDocument.TableSlice.type, tableDocument.TableSlice],
         ["@chaincode/table-view", tableView.TableView],
     ]);
 }

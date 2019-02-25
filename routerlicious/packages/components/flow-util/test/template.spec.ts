@@ -1,4 +1,4 @@
-import "jsdom-global/register"
+import "jsdom-global/register";
 import { Template } from "../src/template";
 
 describe("", () => {
@@ -10,8 +10,8 @@ describe("", () => {
                 { tag: "span", ref: "0", props: { textContent: "00" }},
                 { tag: "span", ref: "1", props: { textContent: "01" }},
                 { tag: "span", ref: "2", props: { textContent: "02" }},
-                { tag: "span", ref: "3", props: { textContent: "03" }}
-            ]
+                { tag: "span", ref: "3", props: { textContent: "03" }},
+            ],
         });
 
         const root = template.clone();
@@ -24,5 +24,5 @@ describe("", () => {
         console.log(r1.outerHTML);
         console.log(r2.outerHTML);
         console.log(r3.outerHTML);
-    })
-})
+    });
+});

@@ -42,7 +42,6 @@ dependencies:
   '@rush-temp/spellchecker': 'file:projects/spellchecker.tgz'
   '@rush-temp/stream': 'file:projects/stream.tgz'
   '@rush-temp/table-document': 'file:projects/table-document.tgz'
-  '@rush-temp/table-slice': 'file:projects/table-slice.tgz'
   '@rush-temp/table-test-app': 'file:projects/table-test-app.tgz'
   '@rush-temp/table-view': 'file:projects/table-view.tgz'
   '@rush-temp/test-utils': 'file:projects/test-utils.tgz'
@@ -9629,7 +9628,7 @@ packages:
     dev: false
     name: '@rush-temp/chart-view'
     resolution:
-      integrity: sha512-B4J9HQLkzLfykZNbkmiEHIO/OwlFc1ebHyrPEJuY4/hElFDNYngZYSkN6Q/38mkrrOl2wvBgct6BYAKYu9BcnA==
+      integrity: sha512-+TGcsqf8HmdKgGiNNZBe7fM0vu9kdZ8pu07NxGufbmwdvwnSXoK5h2J1ECIjJ2K97pyDRrVZANqUlkPYTka9dA==
       tarball: 'file:projects/chart-view.tgz'
     version: 0.0.0
   'file:projects/client-api.tgz':
@@ -9833,7 +9832,7 @@ packages:
     dev: false
     name: '@rush-temp/flow-host'
     resolution:
-      integrity: sha512-ljeSx2lyjDmcyxlmQfUAgXL3UbbTc8dAYQC5JBV/TgL9Q9ehBi80846Zww9758NMGcwIzMdoyiiDWg/c7NiaPQ==
+      integrity: sha512-WU/QoDwZKmlRZLlF4YBvQgvLWlfHtGo+JAk8VpEjX8WGZRT6hGTTOtDAFypobxtmlfBC5s4WgimBDK/T6CpXOA==
       tarball: 'file:projects/flow-host.tgz'
     version: 0.0.0
   'file:projects/flow-util.tgz':
@@ -10531,30 +10530,8 @@ packages:
     dev: false
     name: '@rush-temp/table-document'
     resolution:
-      integrity: sha512-1gKqzfysMRAxLliM9AACwA8jyVmd6QfI6cTnj56CLDoR9YYOF9cuQ/OtQpCCfyB2u5zJdNzS+Ga9MdyA6cEKQw==
+      integrity: sha512-RjjWRSy55VIUtSEdlYuJUTOlwyXgK3dqDdCtNfEoQWcDvLsGh1WSBLEjCDMRP/4b5ykCjw9hCrKH+vl0Q39TEw==
       tarball: 'file:projects/table-document.tgz'
-    version: 0.0.0
-  'file:projects/table-slice.tgz':
-    dependencies:
-      '@types/node': 10.12.24
-      concurrently: 4.1.0
-      copyfiles: 2.1.0
-      css-loader: /css-loader/1.0.1/webpack@4.29.3
-      source-map-loader: 0.2.4
-      style-loader: 0.23.1
-      ts-loader: 4.5.0
-      tslint: /tslint/5.12.1/typescript@3.3.3
-      tslint-microsoft-contrib: /tslint-microsoft-contrib/6.0.0/tslint@5.12.1+typescript@3.3.3
-      typescript: 3.3.3
-      typings-for-css-modules-loader: /typings-for-css-modules-loader/1.7.0/css-loader@1.0.1
-      webpack: 4.29.3
-      webpack-cli: /webpack-cli/3.2.3/webpack@4.29.3
-      webpack-merge: 4.2.1
-    dev: false
-    name: '@rush-temp/table-slice'
-    resolution:
-      integrity: sha512-dKsmPLvds3qOTUevWVyVaLtK0/R8no8U9ZECIOyoTCRc4YEIqb+5znqfYuRsw0v7DnZ6KqGrdKdKdcR8s/WuuA==
-      tarball: 'file:projects/table-slice.tgz'
     version: 0.0.0
   'file:projects/table-test-app.tgz':
     dependencies:
@@ -10730,7 +10707,6 @@ specifiers:
   '@rush-temp/spellchecker': 'file:./projects/spellchecker.tgz'
   '@rush-temp/stream': 'file:./projects/stream.tgz'
   '@rush-temp/table-document': 'file:./projects/table-document.tgz'
-  '@rush-temp/table-slice': 'file:./projects/table-slice.tgz'
   '@rush-temp/table-test-app': 'file:./projects/table-test-app.tgz'
   '@rush-temp/table-view': 'file:./projects/table-view.tgz'
   '@rush-temp/test-utils': 'file:./projects/test-utils.tgz'
