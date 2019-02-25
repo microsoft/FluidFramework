@@ -14,7 +14,7 @@ import * as jwt from "jsonwebtoken";
 import * as moniker from "moniker";
 import { Provider } from "nconf";
 import passport = require("passport");
-import { parse } from "url";
+import { parse, UrlWithStringQuery } from "url";
 import winston = require("winston");
 
 interface IOperation {
@@ -40,22 +40,35 @@ interface IRemoteThing extends IBaseThing {
 }
 
 // Although probably the case we want a default behavior here. Maybe just the URL?
-async function getExternalComponent(url: string): Promise<IBaseThing> {
-    const result = await Axios.get(url);
+async function getExternalComponent(url: UrlWithStringQuery): Promise<IBaseThing> {
+    const result = await Axios.get(url.href);
 
     return {
         data: result.data,
     } as IRemoteThing;
 }
 
-async function getInternalComponent(url: string): Promise<IBaseThing> {
-    return {
-        data: null,
-        orderer: "",
-        storage: "",
-        token: "",
-        url: "",
-    } as ILocalThing;
+async function getInternalComponent(url: UrlWithStringQuery): Promise<IBaseThing> {
+    const regex = /^\/loader\/([^\/]*)\/([^\/]*)(\/?.*)$/;
+    const match = url.path.match(regex);
+
+    const tenantId = match[1];
+    const documentId = match[2];
+    const path = match[3];
+
+    if (match) {
+        return {
+            data: null,
+            orderer: "",
+            path: url.path,
+            pathname: url.pathname,
+            storage: "",
+            token: "",
+            url: `prague://${url.host}/${tenantId}/${documentId}${path}`,
+        } as ILocalThing;
+    } else {
+        return { sad: true };
+    }
 }
 
 export function create(
@@ -77,8 +90,8 @@ export function create(
         const url = parse(request.body.url);
 
         const resultP = alfred.host === url.host
-            ? getInternalComponent(request.body.url)
-            : getExternalComponent(request.body.url);
+            ? getInternalComponent(url)
+            : getExternalComponent(url);
 
         resultP.then(
             (result) => response.status(200).json(result),

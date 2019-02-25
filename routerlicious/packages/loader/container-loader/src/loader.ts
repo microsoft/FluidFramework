@@ -47,6 +47,12 @@ export class Loader extends EventEmitter implements ILoader {
         }
     }
 
+    // On the initial boot what do I do? I guess they already have some kind of /joinSession thing which gives all
+    // the deeets for something?
+    // But our loader knows enough to return the resolved information. I suppose we could return this, along with
+    // a token, and seed the system with it to begin with? Then you just do the request/resolve?
+    // For refresh you just go look up the route again?
+
     public async resolve(request: IRequest): Promise<Container> {
         debug(`Container resolve: ${now()} `);
 
