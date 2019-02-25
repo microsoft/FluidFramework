@@ -1,8 +1,11 @@
 import { Component } from "@prague/app-component";
 import { MapExtension } from "@prague/map";
+import { UnboxedOper } from "../../client-ui/ext/calc";
 import { CellRange, parseRange } from "./cellrange";
 import { ConfigKeys } from "./configKeys";
 import { TableDocument } from "./document";
+import { createComponentType } from "./pkg";
+import { ITable } from "./table";
 
 export interface ITableSliceConfig {
     docId: string;
@@ -13,7 +16,9 @@ export interface ITableSliceConfig {
     maxCol: number;
 }
 
-export class TableSlice extends Component {
+export class TableSlice extends Component implements ITable {
+    public static readonly type = createComponentType(TableSlice);
+
     public get name() { return this.root.get(ConfigKeys.name); }
     public set name(value: string) { this.root.set(ConfigKeys.name, value); }
     public get values() { return this.maybeValues!; }
@@ -36,12 +41,30 @@ export class TableSlice extends Component {
         this.doc.on("op", this.emitOp);
     }
 
+    public get numRows() {
+        const {start, end} = this.maybeValues.getPositions();
+        return end.row - start.row;
+    }
+
+    public get numCols() {
+        const {start, end} = this.maybeValues.getPositions();
+        return end.col - start.col;
+    }
+
     public evaluateCell(row: number, col: number) {
         return this.doc.evaluateCell(row, col);
     }
 
     public evaluateFormula(formula: string) {
         return this.doc.evaluateFormula(formula);
+    }
+
+    public getCellText(row: number, col: number): string {
+        return this.doc.getCellText(row, col);
+    }
+
+    public setCellText(row: number, col: number, value: UnboxedOper) {
+        this.doc.setCellText(row, col, value);
     }
 
     protected async create() {
@@ -60,7 +83,6 @@ export class TableSlice extends Component {
         if (!this.maybeDoc) {
             const docId = this.root.get(ConfigKeys.docId);
             this.maybeDoc = await this.host.openComponent(docId, true);
-            await this.maybeDoc.ready;
         }
     }
 

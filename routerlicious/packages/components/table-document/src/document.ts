@@ -27,8 +27,10 @@ import {
     SharedStringExtension,
     SharedStringIntervalCollectionValueType,
 } from "@prague/sequence";
-import { Deferred } from "@prague/utils";
 import { CellRange } from "./cellrange";
+import { createComponentType } from "./pkg";
+import { TableSlice } from "./slice";
+import { ITable } from "./table";
 
 export const loadCellTextSym = Symbol("TableDocument.loadCellText");
 export const storeCellTextSym = Symbol("TableDocument.storeCellText");
@@ -71,12 +73,8 @@ class WorkbookAdapter extends Workbook {
     }
 }
 
-export class TableDocument extends Component {
-    public static readonly type = `${require("../package.json").name}@${require("../package.json").version}`;
-
-    public get ready() {
-        return this.readyDeferred.promise;
-    }
+export class TableDocument extends Component implements ITable {
+    public static readonly type = createComponentType(TableDocument);
 
     private get length()     { return this.mergeTree.getLength(UniversalSequenceNumber, this.clientId); }
     public  get numCols()    { return Math.min(this.root.get("stride").value, this.length); }
@@ -91,7 +89,6 @@ export class TableDocument extends Component {
     private maybeMergeTree?: MergeTree;
     private maybeClientId?: number;
     private maybeWorkbook?: WorkbookAdapter;
-    private readyDeferred = new Deferred<void>();
 
     constructor() {
         super([
@@ -124,7 +121,6 @@ export class TableDocument extends Component {
         });
 
         this.maybeWorkbook = new WorkbookAdapter(this);
-        this.readyDeferred.resolve();
     }
 
     public evaluateCell(row: number, col: number) {
@@ -156,9 +152,9 @@ export class TableDocument extends Component {
         return new CellRange(interval, this.localRefToRowCol);
     }
 
-    public async createSlice(sliceId: string, name: string, minRow: number, minCol: number, maxRow: number, maxCol: number) {
-        await this.host.createAndAttachComponent(sliceId, "@chaincode/table-slice");
-        return await this.host.openComponent(
+    public async createSlice(sliceId: string, name: string, minRow: number, minCol: number, maxRow: number, maxCol: number): Promise<ITable> {
+        await this.host.createAndAttachComponent(sliceId, TableSlice.type);
+        return await this.host.openComponent<TableSlice>(
             sliceId, true, [
                 ["config", Promise.resolve({ docId: this.host.id, name, minRow, minCol, maxRow, maxCol })],
             ]);

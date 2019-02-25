@@ -45,8 +45,7 @@
     "@prague/merge-tree": "^0.2.0",
     "@prague/runtime": "^0.2.0",
     "@prague/runtime-definitions": "^0.2.0",
-    "@prague/sequence": "^0.2.0",
-    "@prague/utils": "^0.2.0"
+    "@prague/sequence": "^0.2.0"
   },
   "devDependencies": {
     "concurrently": "^4.1.0",

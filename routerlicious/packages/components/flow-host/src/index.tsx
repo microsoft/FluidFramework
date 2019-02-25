@@ -54,8 +54,8 @@ export async function instantiateRuntime(context: IContainerContext): Promise<IR
         ["@chaincode/flow-document", flowDocument.FlowDocument],
         [pkg.name, FlowHost],
         ["@chaincode/flow-editor", flowEditor.FlowEditor],
-        ["@chaincode/table-document", tableDocument.TableDocument],
-        ["@chaincode/table-slice", tableDocument.TableSlice],
+        [tableDocument.TableDocument.type, tableDocument.TableDocument],
+        [tableDocument.TableSlice.type, tableDocument.TableSlice],
         ["@chaincode/table-view", tableView.TableView],
     ]);
 }

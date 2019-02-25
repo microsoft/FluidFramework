@@ -21,14 +21,7 @@ import {
 import { EventEmitter } from "events";
 import { debug } from "./debug";
 
-// Symbols used to internally expose APIs from Component to Chaincode
-// TODO: Node v8 does not support 'unique symbol'?
-// const typeToFactorySym: unique symbol = Symbol("Component.typeToFactory()");
-const typeToFactorySym = "Component.typeToFactory()";
-
-// TODO: Node v8 does not support 'unique symbol'?
-// const openSym: unique symbol = Symbol("Component.open()");
-const openSym = "Component.open()";
+const typeToFactorySym: unique symbol = Symbol("Component.typeToFactory()");
 
 // Internal IPlatform implementation used to defer returning the component
 // from DataStore.open() until after the component's async 'opened()' method has
@@ -51,12 +44,12 @@ class ComponentPlatform extends EventEmitter implements IPlatform {
 }
 
 // Internal/reusable IChaincode implementation returned by DataStore.instantiate().
-class Chaincode<T extends Component> extends EventEmitter implements IChaincode {
-    constructor(private readonly component: T) { super(); }
+class LegacyChaincode<T extends Component> implements IChaincode {
+    constructor(private readonly component: T) { }
 
     // Returns the SharedObject factory for the given type id.
     public getModule(type: string): any {
-        debug(`getModule(${type})`);
+        debug(`Chaincode.getModule(${type})`);
         return this.component[typeToFactorySym].get(type) || console.assert(false);
     }
 
@@ -87,14 +80,14 @@ export abstract class Component extends EventEmitter implements IChaincodeCompon
      * If the component is already connected, returns a resolved promise.
      */
     protected get connected(): Promise<void> {
-        if (this.runtime.connected) {
+        if (this.host.connected) {
             debug(`${this.dbgName}.connected: Already connected.`);
             return Promise.resolve();
         }
 
         debug(`${this.dbgName}.connected: Waiting...`);
         return new Promise((accept) => {
-            this.runtime.on("connected", () => {
+            this.host.on("connected", () => {
                 debug(`${this.dbgName}.connected: Now connected.`);
                 accept();
             });
@@ -185,49 +178,17 @@ export abstract class Component extends EventEmitter implements IChaincodeCompon
 
         // Internally expose the 'typeToFactory' map to 'Chaincode.getModule()'.
         this[typeToFactorySym] = typeToFactory;
-
-        // Internally expose the 'open()' function to 'Chaincode.run()'.
-        this[openSym] = async (runtime: IOldRuntime, platform: IPlatform) => {
-            this._platform = platform;
-
-            // Note that if the same component is created and then again opened within the same session,
-            // the 'runtime.existing' flag will remain false.  Therefore we need to additionally check
-            // 'this._root' to determine if the component is truly being created vs. opened.
-            const existing = runtime.existing || this._root;
-
-            if (existing) {
-                debug(`${this.dbgName}.open(existing)`);
-
-                // If the component already exists, open it's root map.
-                this._root = await runtime.getChannel(Component.rootMapId) as ISharedMap;
-            } else {
-                debug(`${this.dbgName}.open(new)`);
-
-                // If this is the first client to attempt opening the component, create the component's
-                // root map and call 'create()' to give the component author a chance to initialize the
-                // component's shared data structures.
-                this._root = runtime.createChannel(Component.rootMapId, MapExtension.Type) as ISharedMap;
-                this._root.attach();
-                debug(`${this.dbgName}.create() - begin`);
-                await this.create();
-                debug(`${this.dbgName}.create() - end`);
-            }
-
-            debug(`${this.dbgName}.opened() - begin`);
-            await this.opened();
-            debug(`${this.dbgName}.opened() - end`);
-        };
     }
 
     public async close() {
         debug(`${this.dbgName}.close()`);
-        this.runtime.close();
+        this.host.close();
     }
 
     public async run(runtime: IComponentRuntime): Promise<IComponentDeltaHandler> {
         debug(`${this.dbgName}.run()`);
         debug(`${this.dbgName}.LoadFromSnapshot() - begin`);
-        this._host = await ComponentHost.LoadFromSnapshot(runtime, new Chaincode(this));
+        this._host = await ComponentHost.LoadFromSnapshot(runtime, new LegacyChaincode(this));
         debug(`${this.dbgName}.LoadFromSnapshot() - end`);
         return this._host;
     }
@@ -235,15 +196,7 @@ export abstract class Component extends EventEmitter implements IChaincodeCompon
     public async attach(platform: IPlatform): Promise<IPlatform> {
         debug(`${this.dbgName}.attach()`);
         this._platform = platform;
-
-        // Invoke the component's internal 'open()' method and wait for it to complete before
-        // resolving the promise.  This gives the component author an opportunity to preform
-        // async work to prepare the component before the user gets a reference.
-        this[openSym](this.host, platform).then(() => {
-            debug("Platform.resolveComponent()");
-        });
-
-        return new ComponentPlatform(Promise.resolve(this));
+        return new ComponentPlatform(this.ensureOpened());
     }
 
     public snapshot(): ITree {
@@ -267,5 +220,42 @@ export abstract class Component extends EventEmitter implements IChaincodeCompon
     protected request(runtime: IComponentRuntime, request: IRequest): Promise<IResponse> {
         debug(`${this.dbgName}.request(${JSON.stringify(request)})`);
         return runtime.request(request);
+    }
+
+    /**
+     * Invoked by 'attach' to ensure that create/opened are called the first time
+     * a component is attached.  Subsequent calls ignore are a no-op.
+     */
+    private readonly ensureOpened = async () => {
+        // If the '_root' map is already initialized, than this is component has already been
+        // prepared.  Promptly return 'this'.
+        if (this._root) {
+            debug(`${this.dbgName}.ensureOpened() - already open`);
+            return this;
+        }
+
+        if (this.host.existing) {
+            debug(`${this.dbgName}.ensureOpened() - already exists`);
+
+            // If the component already exists, open it's root map.
+            this._root = await this.host.getChannel(Component.rootMapId) as ISharedMap;
+        } else {
+            debug(`${this.dbgName}.ensureOpened() - new component`);
+
+            // If this is the first client to attempt opening the component, create the component's
+            // root map and call 'create()' to give the component author a chance to initialize the
+            // component's shared data structures.
+            this._root = this.host.createChannel(Component.rootMapId, MapExtension.Type) as ISharedMap;
+            this._root.attach();
+            debug(`${this.dbgName}.create() - begin`);
+            await this.create();
+            debug(`${this.dbgName}.create() - end`);
+        }
+
+        debug(`${this.dbgName}.opened() - begin`);
+        await this.opened();
+        debug(`${this.dbgName}.opened() - end`);
+
+        return this;
     }
 }

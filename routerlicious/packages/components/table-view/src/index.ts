@@ -34,8 +34,6 @@ export class TableView extends Component {
             // tslint:disable-next-line:no-shadowed-variable
             const docId = await this.root.get(ConfigKeys.docId);
             const doc = await this.host.openComponent<TableDocument>(docId, true);
-            await doc.ready;
-
             const grid = new GridView(doc);
             maybeDiv.appendChild(grid.root);
         }
