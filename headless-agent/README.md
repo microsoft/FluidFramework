@@ -6,10 +6,10 @@ Simple script that loads Prague components with headless chrome as task runner.
 To build
 
 ```
-docker build -t headless-chrome .
+docker build --build-arg NPM_TOKEN=$(echo $NPM_TOKEN) -t headless-agent .
 ```
 
 And to run
 ```
-`docker run --rm -t --cap-add=SYS_ADMIN headless-chrome`
+`docker run --rm -t --cap-add=SYS_ADMIN --network routerlicious_default headless-agent`
 ```

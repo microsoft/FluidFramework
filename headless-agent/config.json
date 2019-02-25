@@ -1,0 +1,45 @@
+{
+    "logger": {
+        "colorize": true,
+        "morganFormat": "dev",
+        "json": false,
+        "level": "info",
+        "timestamp": true,
+        "label": "winston"
+    },
+    "kafka": {
+        "lib": {
+            "name": "kafka-node",
+            "endpoint": "zookeeper:2181"
+        }
+    },
+    "system": {
+        "topics": {
+            "send": "deltas"
+        }
+    },
+    "error": {
+        "track": false,
+        "endpoint" : "https://25f5c231660f474fb85fb4daeb070029:3301d25c7ed9434688e4f5bd998b9739@sentry.wu2.prague.office-int.com/2"
+    },
+    "auth": {
+        "endpoint": "http://riddler:5000"
+    },
+    "worker": {
+        "alfredUrl": "http://alfred:3000",
+        "serverUrl": "http://localhost:3000",
+        "blobStorageUrl": "http://historian:3000",
+        "repository": "prague",
+        "permission": ["augmentation"]
+    },
+    "tmz": {
+        "alfred": "http://alfred:3000",
+        "agentExchange": "agentExchange"
+    },
+    "headless-agent": {
+            "queue": "headlessQueue"
+    },
+    "rabbitmq": {
+        "connectionString": "amqp://rabbitmq"
+    }
+}
