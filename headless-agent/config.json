@@ -30,7 +30,7 @@
         "serverUrl": "http://localhost:3000",
         "blobStorageUrl": "http://historian:3000",
         "repository": "prague",
-        "permission": ["augmentation"]
+        "permission": []
     },
     "tmz": {
         "alfred": "http://alfred:3000",

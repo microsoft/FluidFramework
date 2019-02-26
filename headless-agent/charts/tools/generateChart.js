@@ -37,7 +37,7 @@ name: headless-agent
 resources:
   limits:
     cpu: 2048m
-    memory: 2048Mi
+    memory: 4096Mi
   requests:
     cpu: 512m
     memory: 512Mi

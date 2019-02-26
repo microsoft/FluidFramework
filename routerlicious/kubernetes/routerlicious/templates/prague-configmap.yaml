@@ -145,10 +145,11 @@ data:
             "topic": "{{ .Values.kafka.topics.deltas }}",
             "kafkaClientId": "{{ template "tmz.fullname" . }}",
             "groupId": "{{ template "tmz.fullname" . }}",
-            "queues": ["paparazziQueue", "augloopQueue"],
+            "queues": ["paparazziQueue", "augloopQueue", "headlessQueue"],
             "permissions": {
-                "paparazziQueue": ["snapshot", "spell", "intel", "translation", "chain-snapshot", "chain-spell", "chain-intel", "chain-translation"],
-                "augloopQueue": ["augmentation"]
+                "paparazziQueue": ["snapshot", "spell", "intel", "translation", "chain-spell", "chain-intel", "chain-translation"],
+                "augloopQueue": ["augmentation"],
+                "headlessQueue": ["chain-snapshot"]
             }
         },
         "paparazzi": {

@@ -15,7 +15,7 @@ export class HeadlessResources implements utils.IResources {
     }
 }
 
-export class AugLoopResourcesFactory implements utils.IResourcesFactory<HeadlessResources> {
+export class HeadlessResourcesFactory implements utils.IResourcesFactory<HeadlessResources> {
     public async create(config: Provider): Promise<HeadlessResources> {
         const rabbitmqConfig = config.get("rabbitmq");
         const workerConfig = config.get("worker");
@@ -27,7 +27,7 @@ export class AugLoopResourcesFactory implements utils.IResourcesFactory<Headless
     }
 }
 
-export class AugLoopRunnerFactory implements utils.IRunnerFactory<HeadlessResources> {
+export class HeadlessRunnerFactory implements utils.IRunnerFactory<HeadlessResources> {
     public async create(resources: HeadlessResources): Promise<utils.IRunner> {
         return new HeadlessRunner(
             resources.workerConfig,

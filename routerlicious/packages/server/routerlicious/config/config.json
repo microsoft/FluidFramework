@@ -129,10 +129,11 @@
     },
     "tmz": {
         "alfred": "http://alfred:3000",
-        "queues": ["paparazziQueue", "augloopQueue"],
+        "queues": ["paparazziQueue", "augloopQueue", "headlessQueue"],
         "permissions": {
-            "paparazziQueue": ["snapshot", "spell", "intel", "translation", "chain-snapshot", "chain-spell", "chain-intel", "chain-translation"],
-            "augloopQueue": ["augmentation"]
+            "paparazziQueue": ["snapshot", "spell", "intel", "translation", "chain-spell", "chain-intel", "chain-translation"],
+            "augloopQueue": ["augmentation"],
+            "headlessQueue": ["chain-snapshot"]
         }
     },
     "paparazzi": {

@@ -42,7 +42,7 @@ data:
             "serverUrl": "{{ .Values.endpoints.alfredUrl }}",
             "blobStorageUrl": "{{ .Values.endpoints.historianUrl }}",
             "repository": "prague",
-            "permission": ["augmentation"]
+            "permission": []
         },
         "tmz": {
             "alfred": "{{ .Values.endpoints.alfred }}",

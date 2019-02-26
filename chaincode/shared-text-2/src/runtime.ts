@@ -219,7 +219,7 @@ export async function instantiateRuntime(context: IContainerContext): Promise<IR
         }
     });
 
-    runtime.registerTasks(["spell", "translation", "intel"], "1.0");
+    runtime.registerTasks(["spell", "translation", "intel", "snapshot"], "1.0");
 
     waitForFullConnection(runtime).then(() => {
         // Call snapshot directly from runtime.

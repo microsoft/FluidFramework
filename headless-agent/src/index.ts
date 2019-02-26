@@ -1,9 +1,9 @@
 import { runService } from "@prague/services-utils";
 import * as path from "path";
-import { AugLoopResourcesFactory, AugLoopRunnerFactory } from "./runnerFactory";
+import { HeadlessResourcesFactory, HeadlessRunnerFactory } from "./runnerFactory";
 
 runService(
-    new AugLoopResourcesFactory(),
-    new AugLoopRunnerFactory(),
+    new HeadlessResourcesFactory(),
+    new HeadlessRunnerFactory(),
     "headless-agent",
     path.join(__dirname, "../config.json"));
