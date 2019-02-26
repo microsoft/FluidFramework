@@ -3131,7 +3131,8 @@ export class MergeTree {
      * Assign sequence number to existing segment; update partial lengths to reflect the change
      * @param seq sequence number given by server to pending segment
      */
-    ackPendingSegment(seq: number, verboseOps = false) {
+    ackPendingSegment(opArgs: IMergeTreeDeltaOpCallbackArgs, verboseOps = false) {
+        const seq = opArgs.sequencedMessage.sequenceNumber;
         let pendingSegmentGroup = this.pendingSegments.dequeue();
         let nodesToUpdate = <IMergeBlock[]>[];
         let clientId: number;

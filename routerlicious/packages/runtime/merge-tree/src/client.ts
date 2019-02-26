@@ -1,5 +1,5 @@
 // tslint:disable
-import { MessageType, ISequencedDocumentMessage, IUser } from "@prague/container-definitions";
+import { MessageType, ISequencedDocumentMessage } from "@prague/container-definitions";
 import { IMergeTreeDeltaOpCallbackArgs, IRelativePosition } from "./index";
 import {
     MergeTree, ClientIds, compareStrings, RegisterCollection, UnassignedSequenceNumber, Marker, SubSequence,
@@ -23,11 +23,9 @@ export class Client {
     measureOps = false;
     q: Collections.List<ISequencedDocumentMessage>;
     checkQ: Collections.List<string>;
-    clientSequenceNumber = 1;
     clientNameToIds = new Collections.RedBlackTree<string, ClientIds>(compareStrings);
     shortClientIdMap = <string[]>[];
     shortClientBranchIdMap = <number[]>[];
-    shortClientUserInfoMap = <IUser[]>[];
     registerCollection = new RegisterCollection();
     localSequenceNumber = UnassignedSequenceNumber;
     opMarkersModified = <Marker[]>[];
@@ -38,7 +36,6 @@ export class Client {
     constructor(initText: string, options?: Properties.PropertySet) {
         this.mergeTree = new MergeTree(initText, options);
         this.mergeTree.getLongClientId = id => this.getLongClientId(id);
-        this.mergeTree.getUserInfo = id => this.getUserInfo(id);
         this.mergeTree.markerModifiedHandler = marker => this.markerModified(marker);
         this.mergeTree.clientIdToBranchId = this.shortClientBranchIdMap;
         this.q = Collections.ListMakeHead<ISequencedDocumentMessage>();
@@ -158,14 +155,6 @@ export class Client {
             return "original";
         }
     }
-    getUserInfo(shortClientId: number) {
-        if (shortClientId >= 0) {
-            return this.shortClientUserInfoMap[shortClientId];
-        }
-        else {
-            return null;
-        }
-    }
     addLongClientId(longClientId: string, branchId = 0) {
         this.clientNameToIds.put(longClientId, {
             branchId,
@@ -182,7 +171,7 @@ export class Client {
         return <ISequencedDocumentMessage>{
             clientId: this.longClientId,
             minimumSequenceNumber: undefined,
-            clientSequenceNumber: this.clientSequenceNumber,
+            clientSequenceNumber: 1,
             sequenceNumber: seq,
             referenceSequenceNumber: refSeq,
             objectId: objectId,
@@ -202,7 +191,7 @@ export class Client {
             clientId: this.longClientId,
             sequenceNumber: seq,
             referenceSequenceNumber: refSeq,
-            clientSequenceNumber: this.clientSequenceNumber,
+            clientSequenceNumber: 1,
             minimumSequenceNumber: undefined,
             objectId: objectId,
             userId: undefined,
@@ -221,7 +210,7 @@ export class Client {
             clientId: this.longClientId,
             sequenceNumber: seq,
             referenceSequenceNumber: refSeq,
-            clientSequenceNumber: this.clientSequenceNumber,
+            clientSequenceNumber: 1,
             minimumSequenceNumber: undefined,
             objectId: objectId,
             userId: undefined,
@@ -241,7 +230,7 @@ export class Client {
             sequenceNumber: seq,
             referenceSequenceNumber: refSeq,
             objectId: objectId,
-            clientSequenceNumber: this.clientSequenceNumber,
+            clientSequenceNumber: 1,
             userId: undefined,
             minimumSequenceNumber: undefined,
             offset: seq,
@@ -481,12 +470,9 @@ export class Client {
     getModifiedMarkersForOp() {
         return this.opMarkersModified;
     }
-    coreApplyMsg(msg: ISequencedDocumentMessage) {
+    coreApplyMsg(opArgs: IMergeTreeDeltaOpCallbackArgs) {
         this.resetModifiedMarkers();
-        this.applyOp({
-            op: <ops.IMergeTreeOp> msg.contents,
-            sequencedMessage: msg
-        });
+        this.applyOp(opArgs);
     }
     applyMsg(msg: ISequencedDocumentMessage) {
         if ((msg !== undefined) && (msg.minimumSequenceNumber > this.mergeTree.getCollabWindow().minSeq)) {
@@ -500,20 +486,22 @@ export class Client {
         this.getOrAddShortClientId(msg.clientId, branchId);
         // Apply if an operation message
         if (msg.type === MessageType.Operation) {
-            const operationMessage = msg as ISequencedDocumentMessage;
+            const opArgs: IMergeTreeDeltaOpCallbackArgs = {
+                op: msg.contents as ops.IMergeTreeOp,
+                sequencedMessage: msg,
+            };
             if (msg.clientId === this.longClientId) {
-                let op = <ops.IMergeTreeOp>msg.contents;
-                if (op.type !== ops.MergeTreeDeltaType.ANNOTATE) {
-                    this.ackPendingSegment(operationMessage.sequenceNumber);
-                }
-                else {
+                if (opArgs.op.type !== ops.MergeTreeDeltaType.ANNOTATE) {
+                    this.ackPendingSegment(opArgs);
+                } else {
+                    const op = opArgs.op as ops.IMergeTreeAnnotateMsg;
                     if (op.combiningOp && (op.combiningOp.name === "consensus")) {
-                        this.updateConsensusProperty(op, operationMessage);
+                        this.updateConsensusProperty(op, opArgs.sequencedMessage);
                     }
                 }
             }
             else {
-                this.coreApplyMsg(operationMessage);
+                this.coreApplyMsg(opArgs);
             }
         }
     }
@@ -864,12 +852,13 @@ export class Client {
             console.log(`@cli ${this.getLongClientId(this.mergeTree.getCollabWindow().clientId)} text ${text} seq ${seq} insert remote pos ${pos} refseq ${refSeq} cli ${this.getLongClientId(clientId)}`);
         }
     }
-    ackPendingSegment(seq: number) {
+    ackPendingSegment(opArgs: IMergeTreeDeltaOpCallbackArgs) {
         let clockStart;
         if (this.measureOps) {
             clockStart = clock();
         }
-        this.mergeTree.ackPendingSegment(seq, this.verboseOps);
+        this.mergeTree.ackPendingSegment(opArgs, this.verboseOps);
+        const seq = opArgs.sequencedMessage.sequenceNumber;
         this.mergeTree.getCollabWindow().currentSeq = seq;
         if (this.measureOps) {
             this.accumTime += elapsedMicroseconds(clockStart);
@@ -916,7 +905,7 @@ export class Client {
 
         let startPos: number;
         let endPos: number;
- 
+
         let segoff = this.mergeTree.getContainingSegment(pos, segWindow.currentSeq, segWindow.clientId);
         let seg = segoff.segment;
         if (seg) {
