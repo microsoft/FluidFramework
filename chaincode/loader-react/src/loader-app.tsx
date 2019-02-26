@@ -2,10 +2,13 @@ import { Document } from "@prague/app-component";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import { LoaderComponent } from "./chaincode-mounter";
+import { getRandomName } from "./names";
 
 export class LoaderChaincode extends Document {
+
   // Initialize the document/component (only called when document is initially created).
     protected async create() {
+        const subname = getRandomName();
         
         let serverUrl: string;
         if (document.location.origin.includes("localhost")) {
@@ -13,13 +16,15 @@ export class LoaderChaincode extends Document {
         } else {
             serverUrl = document.location.origin;
         }
-//     "@chaincode/counter": "^0.0.5241",
 
+        this.root.set<string>("subname", subname);
         this.root.set<string>("docId", "funny-doc-id");
         this.root.set<string>("serverUrl", serverUrl);
         // TODO: get drop down of chaincodes from verdaccio... check Flow for this info.
         this.root.set<string>("chaincodePackage", "@chaincode/counter@0.0.5241");
         this.root.set<boolean>("shouldRender", false);
+
+        await this.host.createAndAttachComponent(subname, "@chaincode/counter");
 
     }
 
@@ -27,13 +32,16 @@ export class LoaderChaincode extends Document {
     // document/component is returned to to the host.
     public async opened() {
       // If the host provided a <div>, display a minimual UI.
-        const maybeDiv = await this.platform.queryInterface<HTMLElement>("div");        
-
+        const maybeDiv = await this.platform.queryInterface<HTMLElement>("div");      
+        const subname = await this.root.wait<string>("subname");  
         if (maybeDiv) {
             const docId = await this.root.wait<string>("docId");
             const serverUrl = await this.root.wait<string>("serverUrl");
             const chaincodePackage = await this.root.wait<string>("chaincodePackage");
             const shouldRender = await this.root.wait<boolean>("shouldRender");
+
+            const subnameSpan = document.createElement("span");
+            subnameSpan.innerText = subname;
 
             // Set up Form
             const docSpan = document.createElement("span");
@@ -65,6 +73,7 @@ export class LoaderChaincode extends Document {
             submit.type = "button";
             submit.value = "Render This Chaincode!!!"
 
+            maybeDiv.append(subnameSpan);
             maybeDiv.append(docSpan);
             maybeDiv.append(document.createElement("br"));
             maybeDiv.append(serverSpan);
@@ -72,6 +81,7 @@ export class LoaderChaincode extends Document {
             maybeDiv.append(chaincodeSpan);
             maybeDiv.append(document.createElement("br"));
             maybeDiv.append(submit);
+            
 
             // Render Function
             const submitClick =  () => {
@@ -125,6 +135,14 @@ export class LoaderChaincode extends Document {
 
             const chaincodeHost = document.createElement("div");
             maybeDiv.append(chaincodeHost);
+
+            const innieHost = document.createElement("div");
+            innieHost.style.width = "50px";
+            innieHost.style.height = "50px";
+            innieHost.style.border = "solid black 4px";
+
+            maybeDiv.append(innieHost)
+            await this.host.openComponent(subname, true, [["div", Promise.resolve(innieHost)]]);
 
             submit.onclick = submitClick;
             if (shouldRender) {
