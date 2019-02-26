@@ -1,29 +1,9 @@
-// tslint:disable max-classes-per-file
-import { IChaincodeFactory, ICodeLoader } from "@prague/container-definitions";
 import { Container, Loader } from "@prague/container-loader";
 import { createDocumentService, TokenProvider } from "@prague/routerlicious-socket-storage";
 import { IComponentRuntime } from "@prague/runtime-definitions";
 import * as jwt from "jsonwebtoken";
-import { WebPlatform } from "./webPlatform";
-
-class CodeLoader implements ICodeLoader {
-    constructor(private factory: IChaincodeFactory) {
-    }
-
-    public async load(source: string): Promise<IChaincodeFactory> {
-        return Promise.resolve(this.factory);
-    }
-}
-
-class LocalPlatform extends WebPlatform {
-    constructor(div: HTMLElement) {
-        super(div);
-    }
-
-    public async detach() {
-        return;
-    }
-}
+import { LocalPlatform } from "./localPlatform";
+import { WebLoader } from "./webLoader";
 
 async function attach(loader: Loader, url: string, platform: LocalPlatform) {
     console.log(url);
@@ -55,18 +35,17 @@ export async function registerAttach(loader: Loader, container: Container, uri: 
 
 export async function startLoading(
     id: string,
-    factory: IChaincodeFactory,
     routerlicious: string,
     historian: string,
     tenantId: string,
-    secret: string): Promise<void> {
+    secret: string,
+    packageUrl: string): Promise<void> {
 
-    console.log(`Doing something with ${id}!`);
+    console.log(`Loading ${id}...`);
     const documentServices = createDocumentService(routerlicious, historian);
 
-    const codeLoader = new CodeLoader(factory);
-    // console.log(JSON.stringify(factory));
-    // await factory.instantiateRuntime(null);
+    const codeLoader = new WebLoader(packageUrl);
+
     const user = {
         id: "test",
         name: "tanvir",
@@ -81,9 +60,6 @@ export async function startLoading(
         },
         secret);
     const tokenProvider = new TokenProvider(token);
-    console.log(token);
-
-    codeLoader.load("").catch((error) => console.error("script load error", error));
 
     const loader = new Loader(
         { tokenProvider },
@@ -96,13 +72,12 @@ export async function startLoading(
         `${encodeURIComponent(tenantId)}/${encodeURIComponent(id)}`;
     const container = await loader.resolve({ url: baseUrl });
 
-    console.log(container.id);
-
     // Wait to be fully connected!
     if (!container.connected) {
         await new Promise<void>((resolve) => container.on("connected", () => resolve()));
     }
-    console.log(`Fully connected!`);
+
+    console.log(`${container.id} is now fully connected`);
 
     const platform = new LocalPlatform(document.getElementById("content"));
     registerAttach(loader, container, baseUrl, platform);
