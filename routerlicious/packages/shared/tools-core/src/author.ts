@@ -238,7 +238,6 @@ async function setMetrics(doc: api.Document, token: string, resolver: ContanierU
     // And also load a canvas document where we will place the metrics
     const metricsDoc = await api.load(
         `${doc.id}-metrics`,
-        doc.tenantId,
         host,
         {});
     const root = metricsDoc.getRoot();
@@ -337,11 +336,11 @@ export async function typeFile(
         const tokenProvider = new socketStorage.TokenProvider(documentToken);
         const host = { tokenProvider, resolver };
 
-        docList.push(await api.load(doc.id, doc.tenantId, host, {}));
+        docList.push(await api.load(doc.id, host, {}));
         ssList.push(await docList[i].getRoot().get("text") as Sequence.SharedString);
         author = {
             ackCounter: new Counter(),
-            doc: await api.load(doc.id, doc.tenantId, host, {}),
+            doc: await api.load(doc.id, host, {}),
             latencyCounter: new Counter(),
             metrics: clone(m),
             pingCounter: new Counter(),

@@ -59,13 +59,17 @@ export async function run(
             },
         },
         secret);
+    const url = `prague://${routerlicious}/${encodeURIComponent(tenantId)}/${encodeURIComponent(id)}`;
 
     // Load in the latest and connect to the document
     const resolver = new ContanierUrlResolver(routerlicious, null);
     const tokenProvider = new socketStorage.TokenProvider(token);
     const host = { tokenProvider, resolver };
 
-    const collabDoc = await api.load(id, tenantId, host, { blockUpdateMarkers: true, token });
+    const collabDoc = await api.load(
+        url,
+        host,
+        { blockUpdateMarkers: true, token });
     const root = await collabDoc.getRoot();
     if (!collabDoc.isConnected) {
         await new Promise<void>((resolve) => collabDoc.once("connected", () => resolve()));

@@ -22,12 +22,16 @@
             var key = "{{ key }}";
             var from = {{ from }};
             var to = {{ to }};
+            var resolved = {{{ resolved }}};
+            var jwt = "{{ jwt }}";
                    
             console.log(`Starting load at - ${performance.now()}`);
             controller.sharedText.load(
                 "{{ documentId }}",
                 version,
                 token,
+                resolved,
+                jwt,
                 cache,
                 {{ pageInk }},
                 {{ disableCache }},

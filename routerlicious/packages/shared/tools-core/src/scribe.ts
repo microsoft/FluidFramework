@@ -98,13 +98,8 @@ export async function create(
     text: string,
     debug = false): Promise<void> {
 
-    // Load the shared string extension we will type into
-    const tokenService = new socketStorage.TokenService();
-    const claims = tokenService.extractClaims(token);
-
     document = await api.load(
         id,
-        claims.tenantId,
         {
             resolver,
             tokenProvider: new socketStorage.TokenProvider(token),

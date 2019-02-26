@@ -2,7 +2,7 @@
 import * as agent from "@prague/agent";
 import * as API from "@prague/client-api";
 import { controls, ui } from "@prague/client-ui";
-import { Browser, IClient } from "@prague/container-definitions";
+import { Browser, IClient, IResolvedUrl } from "@prague/container-definitions";
 import * as resources from "@prague/gitresources";
 import * as DistributedMap from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
@@ -62,6 +62,8 @@ export async function load(
     id: string,
     version: resources.ICommit,
     token: string,
+    resolved: IResolvedUrl,
+    jwt: string,
     seedData: IGitCache,
     pageInk: boolean,
     disableCache: boolean,
@@ -77,7 +79,9 @@ export async function load(
     API.registerDefaultCredentials(credentials);
 
     console.log(`Load Option: ${JSON.stringify(options)}`);
-    loadDocument(id, version, token, seedData, pageInk, disableCache, config, template, connect, options, from, to)
+    loadDocument(
+        id, version, token, resolved, jwt, seedData, pageInk, disableCache, config,
+        template, connect, options, from, to)
         .catch((error) => {
             console.error(error);
         });
@@ -87,6 +91,8 @@ async function loadDocument(
     id: string,
     version: resources.ICommit,
     token: string,
+    resolved: IResolvedUrl,
+    jwt: string,
     seedData: IGitCache,
     pageInk: boolean,
     disableCache: boolean,
@@ -115,7 +121,10 @@ async function loadDocument(
             seedData);
     API.registerDocumentService(documentService);
 
-    const resolver = new ContanierUrlResolver(null, null);
+    const resolver = new ContanierUrlResolver(
+        document.location.origin,
+        jwt,
+        new Map<string, IResolvedUrl>([[window.location.href, resolved]]));
     const tokenService = new socketStorage.TokenService();
     const claims = tokenService.extractClaims(token);
 

@@ -1,8 +1,11 @@
+import { IPragueResolvedUrl } from "@prague/container-definitions";
 import { IAlfredTenant, IDocumentStorage, ITenantManager } from "@prague/services-core";
 import { Router } from "express";
 import * as safeStringify from "json-stringify-safe";
+import * as jwt from "jsonwebtoken";
 import { Provider } from "nconf";
 import * as path from "path";
+import { parse } from "url";
 import { getConfig, getToken } from "../utils";
 import { defaultPartials } from "./partials";
 
@@ -152,6 +155,12 @@ export function create(
         const from = +request.query.from;
         const to = +request.query.to;
 
+        const jwtToken = jwt.sign(
+            {
+                user: request.user,
+            },
+            config.get("alfred:key"));
+
         // Temporary until we allow tokens that can access multiple documents
         const tenant = appTenants.find((appTenant) => appTenant.id === tenantId);
 
@@ -185,6 +194,18 @@ export function create(
 
             timings.push(Date.now() - start);
 
+            const pragueUrl = "prague://" +
+                `${parse(config.get("worker:serverUrl")).host}/` +
+                `${encodeURIComponent(tenantId)}/` +
+                `${encodeURIComponent(request.params.id)}`;
+            const resolved: IPragueResolvedUrl = {
+                ordererUrl: config.get("worker:serverUrl"),
+                storageUrl: config.get("worker:blobStorageUrl"),
+                tokens: { jwt: token },
+                type: "prague",
+                url: pragueUrl,
+            };
+
             response.render(
                 "sharedText",
                 {
@@ -195,10 +216,12 @@ export function create(
                     disableCache,
                     documentId: request.params.id,
                     from,
+                    jwt: jwtToken,
                     key: tenant.key,
                     options: JSON.stringify(options),
                     pageInk: request.query.pageInk === "true",
                     partials: defaultPartials,
+                    resolved: JSON.stringify(resolved),
                     template,
                     tenantId,
                     timings: JSON.stringify(timings),
