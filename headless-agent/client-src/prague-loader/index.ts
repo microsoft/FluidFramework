@@ -1,3 +1,4 @@
+import { Browser } from "@prague/container-definitions";
 import { Container, Loader } from "@prague/container-loader";
 import { createDocumentService, TokenProvider } from "@prague/routerlicious-socket-storage";
 import { IComponentRuntime } from "@prague/runtime-definitions";
@@ -62,8 +63,25 @@ export async function startLoading(
         await new Promise<void>((resolve) => container.on("connected", () => resolve()));
     }
 
-    console.log(`${container.id} is now fully connected`);
+    console.log(`${container.clientId} is now fully connected to ${container.id}`);
+    checkContainerActivity(container);
 
     const platform = new LocalPlatform(document.getElementById("content"));
     registerAttach(loader, container, baseUrl, platform);
+}
+
+function checkContainerActivity(container: Container) {
+    const quorum = container.getQuorum();
+    quorum.on("removeMember", (clientId: string) => {
+        if (container.clientId === clientId) {
+            (window as any).closeContainer();
+        } else {
+            for (const client of quorum.getMembers()) {
+                if (!client[1].client || !client[1].client.type || client[1].client.type === Browser) {
+                    return;
+                }
+            }
+            (window as any).closeContainer();
+        }
+    });
 }

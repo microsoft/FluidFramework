@@ -34,7 +34,12 @@ export class PuppetMaster {
             };
         });
 
-        // todo (mdaumi): Hook up a function here to close the browser and remove console listener.
+        await this.page.exposeFunction("closeContainer", async () => {
+            console.log(`Close function invoked! Page and Browser should close now!`);
+            this.page.removeAllListeners();
+            await this.page.close();
+            await this.browser.close();
+        });
 
         await this.page.addScriptTag({path: "client/prague-loader.bundle.js"});
         const htmlToRender = craftHtml(
