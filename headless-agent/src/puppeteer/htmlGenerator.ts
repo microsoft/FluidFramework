@@ -1,10 +1,9 @@
-const routerlicious = "https://alfred.wu2-ppe.prague.office-int.com";
-const historian = "https://historian.wu2-ppe.prague.office-int.com";
-const tenantId = "thirsty-shirley";
-const secret = "f793c1603cf75ea41a09804e94f43cd2";
-
-// cheating 1: Should figure out main.bundle.js and window["main"]
-export function generateHtml(docId: string) {
+export function craftHtml(
+    docId: string,
+    routerlicious: string,
+    historian: string,
+    tenantId: string,
+    secret: string) {
     const html = `
     <!DOCTYPE html>
     <html lang="en">

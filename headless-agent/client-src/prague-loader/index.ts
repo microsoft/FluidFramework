@@ -96,13 +96,12 @@ export async function startLoading(
         `${encodeURIComponent(tenantId)}/${encodeURIComponent(id)}`;
     const container = await loader.resolve({ url: baseUrl });
 
-    console.log(container.id);
-
     // Wait to be fully connected!
     if (!container.connected) {
         await new Promise<void>((resolve) => container.on("connected", () => resolve()));
     }
-    console.log(`Fully connected!`);
+
+    console.log(`${container.id} is fully connected`);
 
     const platform = new LocalPlatform(document.getElementById("content"));
     registerAttach(loader, container, baseUrl, platform);
