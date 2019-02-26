@@ -151,15 +151,11 @@ export async function load(id: string, version: resources.ICommit, config: any, 
     registerDocumentServices(config);
 
     const resolver = new ContanierUrlResolver(null, null);
-    const tokenService = new socketStorage.TokenService();
-    const claims = tokenService.extractClaims(token);
 
     const doc = await api.load(
         id,
-        claims.tenantId,
         { resolver, tokenProvider: new socketStorage.TokenProvider(token) },
-        { client: { type: "visualize" }, encrypted: false },
-        version);
+        { client: { type: "visualize" }, encrypted: false });
     let prev: IGraph;
     let curr = generateGraphData(doc);
     updateSimulation(curr);

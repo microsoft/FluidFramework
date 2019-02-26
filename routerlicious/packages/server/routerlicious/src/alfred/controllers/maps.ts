@@ -2,31 +2,19 @@ import * as agent from "@prague/agent";
 import { SharedObject } from "@prague/api-definitions";
 import * as api from "@prague/client-api";
 import { Browser, IClient, IHost } from "@prague/container-definitions";
-import * as resources from "@prague/gitresources";
 import * as Map from "@prague/map";
 import { ContanierUrlResolver } from "@prague/routerlicious-host";
-import * as socketStorage from "@prague/routerlicious-socket-storage";
 import * as $ from "jquery";
 // tslint:disable-next-line:no-var-requires
 import { registerDocumentServices } from "./utils";
 
-async function loadDocument(
-    id: string,
-    version: resources.ICommit,
-    client: any,
-    token: string,
-    host: IHost,
-): Promise<api.Document> {
+async function loadDocument(url: string, host: IHost): Promise<api.Document> {
     console.log("Loading in root document...");
-    const tokenService = new socketStorage.TokenService();
-    const claims = tokenService.extractClaims(token);
 
     const document = await api.load(
-        id,
-        claims.tenantId,
+        url,
         host,
-        { encrypted: false },
-        version);
+        { encrypted: false });
 
     console.log("Document loaded");
     return document;
@@ -156,25 +144,18 @@ async function randomizeMap(map: Map.ISharedMap) {
 }
 
 export async function load(
-    id: string,
-    version: resources.ICommit,
-    token: string,
+    url: string,
     config: any,
     loadPartial: boolean) {
 
     const resolver = new ContanierUrlResolver(null, null);
-    const tokenProvider = new socketStorage.TokenProvider(token);
-    const host = { resolver, tokenProvider };
+    const host = { resolver };
 
-    loadPartial ? loadCommit(id, version, config) : loadFull(id, version, config, token, host);
-}
-
-function loadFull(id: string, version: resources.ICommit, config: any, token?: string, host?: IHost) {
     registerDocumentServices(config);
 
     $(document).ready(() => {
         // Bootstrap worker service.
-        loadDocument(id, version, config.client, token, host).then(async (doc) => {
+        loadDocument(url, host).then(async (doc) => {
             // tslint:disable-next-line
             window["doc"] = doc;
 
@@ -186,33 +167,11 @@ function loadFull(id: string, version: resources.ICommit, config: any, token?: s
             // Register to run task only if the client type is browser.
             const client = config.client as IClient;
             if (client && client.type === Browser) {
-                agent.registerToWork(doc, client, host, config);
+                agent.registerToWork(config.serverUrl, doc, client, host, config);
             }
         }, (err) => {
             // TODO (auth): Display an error page here.
             console.log(err);
         });
-    });
-}
-
-function loadCommit(id: string, version: resources.ICommit, config: any) {
-    registerDocumentServices(config);
-
-    $(document).ready(() => {
-        api.load(
-            id,
-            undefined, // tenantId
-            undefined, // token
-            { client: config.client, encrypted: false },
-            version,
-            false).then(async (doc) => {
-                // tslint:disable-next-line
-                window["doc"] = doc;
-
-                const root = doc.getRoot();
-
-                // Display the initial values and then listen for updates
-                displayMap($("#mapViews"), null, root, null, doc);
-            });
     });
 }

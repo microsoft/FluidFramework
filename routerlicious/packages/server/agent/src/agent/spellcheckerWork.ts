@@ -11,6 +11,7 @@ import { IWork} from "./definitions";
 export class SpellcheckerWork extends BaseWork implements IWork {
 
     constructor(
+        alfred: string,
         docId: string,
         tenantId: string,
         host: IHost,
@@ -18,7 +19,7 @@ export class SpellcheckerWork extends BaseWork implements IWork {
         private dictionary: MergeTree.TST<number>,
         private service: IDocumentService) {
 
-        super(docId, tenantId, host, config);
+        super(alfred, docId, tenantId, host, config);
     }
 
     public async start(task: string): Promise<void> {

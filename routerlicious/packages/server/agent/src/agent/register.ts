@@ -12,12 +12,13 @@ import { TranslationWork } from "./translationWork";
 const RequestWindowMS = 15000;
 
 // If a client declares taks runnning capability in permission array, it must register to perform the task.
-export function registerToWork(doc: api.Document, client: IClient, host: IHost, workerConfig: any) {
+export function registerToWork(alfred: string, doc: api.Document, client: IClient, host: IHost, workerConfig: any) {
     if (client.permission && client.permission.length > 0) {
         const rateLimitter = new RateLimitter(RequestWindowMS);
         doc.on("localHelp", async (helpMessage: IHelpMessage) => {
             const filteredTasks = rateLimitter.filter(doc.clientId, helpMessage.tasks);
             await performTasks(
+                alfred,
                 doc.id,
                 doc.tenantId,
                 host,
@@ -31,6 +32,7 @@ export function registerToWork(doc: api.Document, client: IClient, host: IHost, 
 }
 
 async function performTasks(
+    alfred: string,
     docId: string,
     tenantId: string,
     host: IHost,
@@ -38,12 +40,13 @@ async function performTasks(
     config: any) {
     const taskPromises = [];
     for (const task of tasks) {
-        taskPromises.push(performTask(docId, tenantId, host, task, config));
+        taskPromises.push(performTask(alfred, docId, tenantId, host, task, config));
     }
     await Promise.all(taskPromises);
 }
 
 async function performTask(
+    alfred: string,
     docId: string,
     tenantId: string,
     host: IHost,
@@ -52,6 +55,7 @@ async function performTask(
     switch (task) {
         case "snapshot":
             const snapshotWork  = new SnapshotWork(
+                alfred,
                 docId,
                 tenantId,
                 host,
@@ -61,6 +65,7 @@ async function performTask(
             break;
         case "intel":
             const intelWork  = new IntelWork(
+                alfred,
                 docId,
                 tenantId,
                 host,
@@ -71,6 +76,7 @@ async function performTask(
         case "spell":
             loadDictionary(config.serverUrl).then(async (dictionary) => {
                 const spellWork = new SpellcheckerWork(
+                    alfred,
                     docId,
                     tenantId,
                     host,
@@ -85,6 +91,7 @@ async function performTask(
             break;
         case "translation":
             const translationWork = new TranslationWork(
+                alfred,
                 docId,
                 tenantId,
                 host,

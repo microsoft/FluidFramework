@@ -523,7 +523,7 @@ export class ComponentHost extends EventEmitter implements IComponentDeltaHandle
             objectStorage: localStorage,
         };
 
-        const origin = message.origin ? message.origin.id : this.id;
+        const origin = message.origin ? message.origin.id : this.documentId;
         const value = await this.loadChannel(
             attachMessage.id,
             attachMessage.type,

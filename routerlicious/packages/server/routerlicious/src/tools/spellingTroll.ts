@@ -306,8 +306,7 @@ async function initSpell(id: string) {
 
     const document = await API.load(
         id,
-        undefined, // tenantId
-        undefined, // token
+        null,
         { blockUpdateMarkers: true, localMinSeq: 0, encrypted: undefined });
     const root = document.getRoot();
     if (!root.has("text")) {

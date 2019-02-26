@@ -12,12 +12,13 @@ import { IWork} from "./definitions";
 export class IntelWork extends BaseWork implements IWork {
 
     constructor(
+        alfred: string,
         docId: string,
         tenantId: string,
         host: IHost,
         config: any,
         private service: IDocumentService) {
-        super(docId, tenantId, host, config);
+        super(alfred, docId, tenantId, host, config);
     }
 
     public async start(task: string): Promise<void> {

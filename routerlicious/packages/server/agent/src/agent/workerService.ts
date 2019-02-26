@@ -24,13 +24,14 @@ export class WorkerService extends EventEmitter {
     }
 
     public async startTasks(
+        alfred: string,
         tenantId: string,
         documentId: string,
         tasks: string[],
         host: IHost) {
         const tasksP = [];
         for (const task of tasks) {
-            tasksP.push(this.workManager.startDocumentWork(tenantId, documentId, task, host));
+            tasksP.push(this.workManager.startDocumentWork(alfred, tenantId, documentId, task, host));
         }
         await Promise.all(tasksP);
     }

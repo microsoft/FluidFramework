@@ -15,12 +15,13 @@ const MaxOpCountWithoutSnapshot = 1000;
 export class SnapshotWork extends BaseWork implements IWork {
     private serializer: Serializer;
     constructor(
+        alfred: string,
         docId: string,
         tenantId: string,
         host: IHost,
         config: any,
         private service: IDocumentService) {
-        super(docId, tenantId, host, config);
+        super(alfred, docId, tenantId, host, config);
     }
 
     public async start(task: string): Promise<void> {

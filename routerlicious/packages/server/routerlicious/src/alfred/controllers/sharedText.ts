@@ -2,7 +2,7 @@
 import * as agent from "@prague/agent";
 import * as API from "@prague/client-api";
 import { controls, ui } from "@prague/client-ui";
-import { Browser, IClient, IResolvedUrl } from "@prague/container-definitions";
+import { Browser, IClient, IPragueResolvedUrl, IResolvedUrl } from "@prague/container-definitions";
 import * as resources from "@prague/gitresources";
 import * as DistributedMap from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
@@ -62,7 +62,7 @@ export async function load(
     id: string,
     version: resources.ICommit,
     token: string,
-    resolved: IResolvedUrl,
+    resolved: IPragueResolvedUrl,
     jwt: string,
     seedData: IGitCache,
     pageInk: boolean,
@@ -91,7 +91,7 @@ async function loadDocument(
     id: string,
     version: resources.ICommit,
     token: string,
-    resolved: IResolvedUrl,
+    resolved: IPragueResolvedUrl,
     jwt: string,
     seedData: IGitCache,
     pageInk: boolean,
@@ -125,25 +125,20 @@ async function loadDocument(
         document.location.origin,
         jwt,
         new Map<string, IResolvedUrl>([[window.location.href, resolved]]));
-    const tokenService = new socketStorage.TokenService();
-    const claims = tokenService.extractClaims(token);
 
     console.log(`Document loading ${id}: ${performanceNow()}`);
     const tokenProvider = new socketStorage.TokenProvider(token);
     const apiHost = { resolver, tokenProvider };
 
     const collabDoc = await API.load(
-        id,
-        claims.tenantId,
+        resolved.url,
         apiHost,
-        { blockUpdateMarkers: true, client: config.client },
-        version,
-        connect);
+        { blockUpdateMarkers: true, client: config.client });
 
     // Register to run task only if the client type is browser.
     const client = config.client as IClient;
     if (client && client.type === Browser) {
-        agent.registerToWork(collabDoc, client, apiHost, config);
+        agent.registerToWork(document.location.origin, collabDoc, client, apiHost, config);
     }
 
     console.log(`Document loaded ${id}: ${performanceNow()}`);

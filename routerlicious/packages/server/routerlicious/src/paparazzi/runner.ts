@@ -123,6 +123,7 @@ export class PaparazziRunner implements utils.IRunner {
 
             winston.info(`Starting ${JSON.stringify(filteredTask)}: ${requestMsg.tenantId}/${requestMsg.documentId}`);
             this.workerService.startTasks(
+                this.workerConfig.alfredUrl,
                 requestMsg.tenantId,
                 requestMsg.documentId,
                 filteredTask,

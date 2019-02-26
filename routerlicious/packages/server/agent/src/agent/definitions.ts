@@ -27,6 +27,7 @@ export interface IWorkManager {
      * Starts working on a document
      */
     startDocumentWork(
+        alfred: string,
         tenantId: string,
         documentId: string,
         workType: string,

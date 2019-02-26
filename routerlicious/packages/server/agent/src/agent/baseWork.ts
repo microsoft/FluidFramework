@@ -16,14 +16,17 @@ export class BaseWork extends EventEmitter {
 
     private events = new EventEmitter();
     private readonlyMode = false;
+    private url: string;
 
     constructor(
-        private id: string,
-        private tenantId: string,
+        alfred: string,
+        id: string,
+        tenantId: string,
         private host: IHost,
         private conf: any) {
         super();
         this.config = this.conf;
+        this.url = `prague://${alfred}/${encodeURIComponent(tenantId)}/${encodeURIComponent(id)}`;
     }
 
     public async loadDocument(
@@ -31,8 +34,8 @@ export class BaseWork extends EventEmitter {
         service: IDocumentService,
         task: string): Promise<void> {
         this.task = task;
-        this.document = await api.load(
-            this.id, this.tenantId, this.host, options, null, true, service);
+
+        this.document = await api.load(this.url, this.host, options, service);
 
         await runAfterWait(
             !this.document.isConnected,

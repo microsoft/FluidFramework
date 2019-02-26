@@ -31,6 +31,7 @@ export class WorkManager extends EventEmitter implements IWorkManager {
     }
 
     public async startDocumentWork(
+        alfred: string,
         tenantId: string,
         documentId: string,
         workType: string,
@@ -39,11 +40,11 @@ export class WorkManager extends EventEmitter implements IWorkManager {
 
         switch (workType) {
             case "snapshot":
-                const snapshotWork = new SnapshotWork(documentId, tenantId,  host, this.config, services);
+                const snapshotWork = new SnapshotWork(alfred, documentId, tenantId,  host, this.config, services);
                 await this.startTask(tenantId, documentId, workType, snapshotWork);
                 break;
             case "intel":
-                const intelWork = new IntelWork(documentId, tenantId,  host, this.config, services);
+                const intelWork = new IntelWork(alfred, documentId, tenantId,  host, this.config, services);
                 await this.startTask(tenantId, documentId, workType, intelWork);
                 break;
             case "spell":
@@ -52,6 +53,7 @@ export class WorkManager extends EventEmitter implements IWorkManager {
                 });
                 if (this.dict) {
                     const spellcheckWork = new SpellcheckerWork(
+                        alfred,
                         documentId,
                         tenantId,
                         host,
@@ -63,6 +65,7 @@ export class WorkManager extends EventEmitter implements IWorkManager {
                 break;
             case "translation":
                 const translationWork = new TranslationWork(
+                    alfred,
                     documentId,
                     tenantId,
                     host,
