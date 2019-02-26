@@ -1,7 +1,7 @@
+import { Browser } from "@prague/container-definitions";
 import { Container, Loader } from "@prague/container-loader";
 import { createDocumentService, TokenProvider } from "@prague/routerlicious-socket-storage";
 import { IComponentRuntime } from "@prague/runtime-definitions";
-import * as jwt from "jsonwebtoken";
 import { LocalPlatform } from "./localPlatform";
 import { WebLoader } from "./webLoader";
 
@@ -38,27 +38,13 @@ export async function startLoading(
     routerlicious: string,
     historian: string,
     tenantId: string,
-    secret: string,
+    token: string,
     packageUrl: string): Promise<void> {
 
     console.log(`Loading ${id}...`);
     const documentServices = createDocumentService(routerlicious, historian);
 
     const codeLoader = new WebLoader(packageUrl);
-
-    const user = {
-        id: "test",
-        name: "tanvir",
-    };
-
-    const token = jwt.sign(
-        {
-            documentId: id,
-            permission: "read:write", // use "read:write" for now
-            tenantId,
-            user,
-        },
-        secret);
     const tokenProvider = new TokenProvider(token);
 
     const loader = new Loader(
@@ -77,8 +63,25 @@ export async function startLoading(
         await new Promise<void>((resolve) => container.on("connected", () => resolve()));
     }
 
-    console.log(`${container.id} is now fully connected`);
+    console.log(`${container.clientId} is now fully connected to ${container.id}`);
+    checkContainerActivity(container);
 
     const platform = new LocalPlatform(document.getElementById("content"));
     registerAttach(loader, container, baseUrl, platform);
+}
+
+function checkContainerActivity(container: Container) {
+    const quorum = container.getQuorum();
+    quorum.on("removeMember", (clientId: string) => {
+        if (container.clientId === clientId) {
+            (window as any).closeContainer();
+        } else {
+            for (const client of quorum.getMembers()) {
+                if (!client[1].client || !client[1].client.type || client[1].client.type === Browser) {
+                    return;
+                }
+            }
+            (window as any).closeContainer();
+        }
+    });
 }

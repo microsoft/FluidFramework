@@ -3,6 +3,7 @@ import * as core from "@prague/services-core";
 import * as utils from "@prague/services-utils";
 import { Deferred } from "@prague/utils";
 import * as winston from "winston";
+import { PuppetMaster } from "./puppeteer";
 
 export class HeadlessRunner implements utils.IRunner {
     private running = new Deferred<void>();
@@ -32,7 +33,20 @@ export class HeadlessRunner implements utils.IRunner {
             const type = message.type;
             if (type === "tasks:start") {
                 const requestMessage = message.content as IQueueMessage;
-                winston.info(`Message received: ${JSON.stringify(requestMessage)}`);
+                winston.info(`Task message received: ${JSON.stringify(requestMessage)}`);
+                // For now we only care about snapshot
+                const puppetMaster = new PuppetMaster(
+                    requestMessage.documentId,
+                    this.workerConfig.alfredUrl,
+                    this.workerConfig.blobStorageUrl,
+                    requestMessage.tenantId,
+                    requestMessage.token,
+                    this.workerConfig.packageUrl);
+                puppetMaster.launch().then(() => {
+                    winston.info(`Launched for ${requestMessage.tenantId}/${requestMessage.documentId}`);
+                }, (err) => {
+                    winston.error(err);
+                });
             }
         });
 

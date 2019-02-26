@@ -40,6 +40,7 @@ data:
         "worker": {
             "alfredUrl": "{{ .Values.endpoints.alfred }}",
             "serverUrl": "{{ .Values.endpoints.alfredUrl }}",
+            "packageUrl": "{{ .Values.endpoints.packageUrl }}",
             "blobStorageUrl": "{{ .Values.endpoints.historianUrl }}",
             "repository": "prague",
             "permission": []
