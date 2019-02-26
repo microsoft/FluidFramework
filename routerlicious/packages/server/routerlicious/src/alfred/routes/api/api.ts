@@ -5,10 +5,11 @@ import {
     IDocumentSystemMessage,
     ITokenClaims,
     MessageType,
-    Robot } from "@prague/container-definitions";
+    Robot,
+} from "@prague/container-definitions";
 import * as core from "@prague/services-core";
 import Axios from "axios";
-import { Router } from "express";
+import { Request, Router } from "express";
 import * as safeStringify from "json-stringify-safe";
 import * as jwt from "jsonwebtoken";
 import * as moniker from "moniker";
@@ -16,6 +17,7 @@ import { Provider } from "nconf";
 import passport = require("passport");
 import { parse, UrlWithStringQuery } from "url";
 import winston = require("winston");
+import { getToken, IAlfredUser } from "../../utils";
 
 interface IOperation {
     op: string;
@@ -23,52 +25,69 @@ interface IOperation {
     value: string;
 }
 
-interface IBaseThing {
-}
-
-interface ILocalThing extends IBaseThing {
+interface IContainerDetails {
     url: string;
-    token: "";
+    token: string;
 
     // Unclear if we want to specify these or rely on the url above
     orderer: string;
     storage: string;
+    documentId: string;
+    path: string;
+    pathname: string;
+    tenantId: string;
 }
 
-interface IRemoteThing extends IBaseThing {
-    data?: string;
+interface IUrlDetails {
+    data: string;
 }
 
 // Although probably the case we want a default behavior here. Maybe just the URL?
-async function getExternalComponent(url: UrlWithStringQuery): Promise<IBaseThing> {
+async function getExternalComponent(url: UrlWithStringQuery): Promise<IUrlDetails> {
     const result = await Axios.get(url.href);
 
     return {
         data: result.data,
-    } as IRemoteThing;
+    };
 }
 
-async function getInternalComponent(url: UrlWithStringQuery): Promise<IBaseThing> {
+async function getInternalComponent(
+    request: Request,
+    config: Provider,
+    url: UrlWithStringQuery,
+    appTenants: core.IAlfredTenant[],
+): Promise<IUrlDetails | IContainerDetails> {
     const regex = /^\/loader\/([^\/]*)\/([^\/]*)(\/?.*)$/;
     const match = url.path.match(regex);
+
+    if (!match) {
+        return getExternalComponent(url);
+    }
 
     const tenantId = match[1];
     const documentId = match[2];
     const path = match[3];
 
-    if (match) {
-        return {
-            data: null,
-            orderer: "",
-            path: url.path,
-            pathname: url.pathname,
-            storage: "",
-            token: "",
-            url: `prague://${url.host}/${tenantId}/${documentId}${path}`,
-        } as ILocalThing;
-    } else {
-        return { sad: true };
-    }
+    const orderer = config.get("worker:serverUrl");
+    const storage = config.get("worker:blobStorageUrl");
+
+    const user: IAlfredUser = (request.user) ? {
+        displayName: request.user.name,
+        id: request.user.oid,
+        name: request.user.name,
+    } : undefined;
+    const token = getToken(tenantId, documentId, appTenants, user);
+
+    return {
+        documentId,
+        orderer,
+        path,
+        pathname: url.pathname,
+        storage,
+        tenantId,
+        token,
+        url: `prague://${url.host}/${tenantId}/${documentId}${path}${url.hash ? url.hash : ""}`,
+    };
 }
 
 export function create(
@@ -90,7 +109,7 @@ export function create(
         const url = parse(request.body.url);
 
         const resultP = alfred.host === url.host
-            ? getInternalComponent(url)
+            ? getInternalComponent(request, config, url, appTenants)
             : getExternalComponent(url);
 
         resultP.then(
