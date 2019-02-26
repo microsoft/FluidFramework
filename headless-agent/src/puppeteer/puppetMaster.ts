@@ -13,7 +13,7 @@ export class PuppetMaster {
         private packageUrl: string,
         ) {}
     public async launch() {
-        this.browser = await puppeteer.launch({headless: false});
+        this.browser = await puppeteer.launch();
         this.page = await this.browser.newPage();
         return this.launchPage();
     }
