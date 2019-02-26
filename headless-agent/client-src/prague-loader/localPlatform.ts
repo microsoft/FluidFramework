@@ -1,7 +1,8 @@
+// tslint:disable max-classes-per-file
 import { IPlatform } from "@prague/container-definitions";
 import { EventEmitter } from "events";
 
-export class WebPlatform extends EventEmitter implements IPlatform {
+class WebPlatform extends EventEmitter implements IPlatform {
     constructor(private div: HTMLElement) {
         super();
     }
@@ -18,6 +19,16 @@ export class WebPlatform extends EventEmitter implements IPlatform {
     }
 
     public detach() {
+        return;
+    }
+}
+
+export class LocalPlatform extends WebPlatform {
+    constructor(div: HTMLElement) {
+        super(div);
+    }
+
+    public async detach() {
         return;
     }
 }

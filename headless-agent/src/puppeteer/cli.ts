@@ -5,6 +5,7 @@ const routerlicious = "https://alfred.wu2-ppe.prague.office-int.com";
 const historian = "https://historian.wu2-ppe.prague.office-int.com";
 const tenantId = "prague";
 const secret = "43cfc3fbf04a97c0921fd23ff10f9e4b";
+const packageUrl = "https://pragueauspkn-3873244262.azureedge.net";
 
 commander
     .version("0.0.1")
@@ -19,7 +20,8 @@ launchPuppeteer(
     routerlicious,
     historian,
     tenantId,
-    secret).catch(
+    secret,
+    packageUrl).catch(
     (error) => {
         console.error(error);
         process.exit(1);

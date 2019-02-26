@@ -8,6 +8,7 @@ async function launchPage(
     historian: string,
     tenantId: string,
     secret: string,
+    packageUrl: string,
     page: puppeteer.Page): Promise<void> {
     const consoleFn = (msg: puppeteer.ConsoleMessage) => {
         const text = msg.text();
@@ -26,7 +27,7 @@ async function launchPage(
 
     await page.addScriptTag({path: "client/prague-loader.bundle.js"});
     await page.addScriptTag({url: "https://pragueauspkn-3873244262.azureedge.net/@chaincode/shared-text-2@0.3.16/dist/main.bundle.js"});
-    const htmlToRender = craftHtml(documentId, routerlicious, historian, tenantId, secret);
+    const htmlToRender = craftHtml(documentId, routerlicious, historian, tenantId, secret, packageUrl);
     await page.setContent(htmlToRender);
 }
 
@@ -35,11 +36,12 @@ export async function launchPuppeteer(
     routerlicious: string,
     historian: string,
     tenantId: string,
-    secret: string): Promise<void> {
+    secret: string,
+    packageUrl: string): Promise<void> {
     console.log(`Launching browser to load ${documentId}`);
 
     const browser = await puppeteer.launch({headless: false});
     const page = await browser.newPage();
 
-    return launchPage(documentId, routerlicious, historian, tenantId, secret, page);
+    return launchPage(documentId, routerlicious, historian, tenantId, secret, packageUrl, page);
 }

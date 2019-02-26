@@ -3,7 +3,8 @@ export function craftHtml(
     routerlicious: string,
     historian: string,
     tenantId: string,
-    secret: string) {
+    secret: string,
+    packageUrl: string) {
     const html = `
     <!DOCTYPE html>
     <html lang="en">
@@ -13,9 +14,13 @@ export function craftHtml(
         <title>${docId}</title>
     </head>
     <script>
-    loader.startLoading("${docId}", window["main"],
-        "${routerlicious}", "${historian}",
-        "${tenantId}", "${secret}")
+    loader.startLoading(
+        "${docId}",
+        "${routerlicious}",
+        "${historian}",
+        "${tenantId}",
+        "${secret}",
+        "${packageUrl}")
     .catch((error) => console.error(error));
     </script>
     <body>
