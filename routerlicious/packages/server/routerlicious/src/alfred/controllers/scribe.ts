@@ -1,3 +1,4 @@
+import { ContanierUrlResolver } from "@prague/routerlicious-host";
 import * as scribe from "@prague/tools-core";
 import * as request from "request";
 import * as url from "url";
@@ -143,6 +144,8 @@ export function initialize(
     const ackProgress = document.getElementById("ack-progress") as HTMLElement;
     const ackProgressBar = ackProgress.getElementsByClassName("progress-bar")[0] as HTMLElement;
 
+    const resolver = new ContanierUrlResolver(null, null);
+
     // Set the speed and translation elements
     intervalElement.value = speed.toString();
     authorElement.value = authors.toString();
@@ -175,7 +178,7 @@ export function initialize(
 
         intervalTime = Number.parseInt(intervalElement.value, 10);
         authorCount = Number.parseInt(authorElement.value, 10);
-        const scribeP = scribe.create(id, token, text);
+        const scribeP = scribe.create(id, resolver, token, text);
 
         scribeP.then(() => {
             const linkList = document.getElementById("link-list") as HTMLDivElement;
@@ -226,6 +229,7 @@ export function initialize(
                 1,
                 token,
                 metricsToken,
+                resolver,
                 (metrics) => updateMetrics(metrics, ackProgressBar, typingProgressBar));
 
             // Output the total time once typing is finished

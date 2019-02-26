@@ -1,5 +1,6 @@
 import * as api from "@prague/client-api";
 import { MessageType } from "@prague/container-definitions";
+import { ContanierUrlResolver } from "@prague/routerlicious-host";
 import * as socketStorage from "@prague/routerlicious-socket-storage";
 import { SharedString } from "@prague/sequence";
 import { generateToken } from "@prague/services-core";
@@ -28,17 +29,22 @@ describe.skip("LocalTestServer", () => {
     documentDeltaEventManager = new DocumentDeltaEventManager(testDeltaConnectionServer);
 
     const user1Token = generateToken(tenantId, id, tokenKey);
+    const resolver = new ContanierUrlResolver(null, null);
+    const tokenProvider = new socketStorage.TokenProvider(user1Token);
+    const host = { resolver, tokenProvider };
     const documentService = createTestDocumentService(testDeltaConnectionServer);
     user1Document = await api.load(
-      id, tenantId, new socketStorage.TokenProvider(user1Token), {}, null, true, documentService);
+      id, tenantId, host, {}, null, true, documentService);
     let root = user1Document.getRoot();
     user1SharedString = user1Document.createString();
     root.set("SharedString", user1SharedString);
     documentDeltaEventManager.registerDocuments(user1Document);
 
     const user2Token = generateToken(tenantId, id, tokenKey);
+    const tokenProvider2 = new socketStorage.TokenProvider(user2Token);
+    const host2 = { resolver, tokenProvider: tokenProvider2 };
     user2Document = await api.load(
-      id, tenantId, new socketStorage.TokenProvider(user2Token), {}, null, true, documentService);
+      id, tenantId, host2, {}, null, true, documentService);
     root = user2Document.getRoot();
     user2SharedString = await root.wait("SharedString") as SharedString;
     documentDeltaEventManager.registerDocuments(user2Document);

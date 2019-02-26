@@ -1,6 +1,7 @@
 import { IChaincodeFactory, ICodeLoader, IPraguePackage } from "@prague/container-definitions";
 import { Container, Loader } from "@prague/container-loader";
 import { WebPlatform } from "@prague/loader-web";
+import { ContanierUrlResolver } from "@prague/routerlicious-host";
 import {
     createDocumentService,
     DefaultErrorTracking,
@@ -8,7 +9,6 @@ import {
 } from "@prague/routerlicious-socket-storage";
 import { IComponentRuntime } from "@prague/runtime-definitions";
 import { IGitCache } from "@prague/services-client";
-import Axios from "axios";
 
 export class WebLoader implements ICodeLoader {
     private entryCache = new Map<string, Promise<IChaincodeFactory>>();
@@ -165,9 +165,10 @@ async function start(
     const codeLoader = new WebLoader(npm, code, entrypoint, scriptIds);
     codeLoader.load(code).catch((error) => console.error("script load error", error));
 
+    const resolver = new ContanierUrlResolver(null, null);
     const tokenProvider = new TokenProvider(token);
     const loader = new Loader(
-        { tokenProvider },
+        { resolver, tokenProvider },
         documentServices,
         codeLoader,
         { blockUpdateMarkers: true });
@@ -204,16 +205,6 @@ export function initialize(
     npm: string,
     jwt: string,
 ) {
-    const headers = {
-        Authorization: `Bearer ${jwt}`,
-    };
-    Axios.post(
-        "/api/v1/load",
-        { url: "a.com" },
-        {
-            headers,
-        }).then((data) => console.log(data.data));
-
     console.log(`Loading ${documentId}`);
     const startP = start(
         token,

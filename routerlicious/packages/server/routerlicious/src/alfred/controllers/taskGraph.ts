@@ -1,6 +1,7 @@
 import * as api from "@prague/client-api";
 import { Browser, ISequencedClient } from "@prague/container-definitions";
 import * as resources from "@prague/gitresources";
+import { ContanierUrlResolver } from "@prague/routerlicious-host";
 import * as socketStorage from "@prague/routerlicious-socket-storage";
 import * as d3 from "d3";
 import { registerDocumentServices } from "./utils";
@@ -149,13 +150,14 @@ function updateSimulation(graph: any) {
 export async function load(id: string, version: resources.ICommit, config: any, token?: string) {
     registerDocumentServices(config);
 
+    const resolver = new ContanierUrlResolver(null, null);
     const tokenService = new socketStorage.TokenService();
     const claims = tokenService.extractClaims(token);
 
     const doc = await api.load(
         id,
         claims.tenantId,
-        new socketStorage.TokenProvider(token),
+        { resolver, tokenProvider: new socketStorage.TokenProvider(token) },
         { client: { type: "visualize" }, encrypted: false },
         version);
     let prev: IGraph;

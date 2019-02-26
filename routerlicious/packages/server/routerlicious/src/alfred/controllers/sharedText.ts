@@ -7,6 +7,7 @@ import * as resources from "@prague/gitresources";
 import * as DistributedMap from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
 import * as replaySocketStorage from "@prague/replay-socket-storage";
+import { ContanierUrlResolver } from "@prague/routerlicious-host";
 import * as socketStorage from "@prague/routerlicious-socket-storage";
 import * as Sequence from "@prague/sequence";
 import { IGitCache } from "@prague/services-client";
@@ -114,15 +115,18 @@ async function loadDocument(
             seedData);
     API.registerDocumentService(documentService);
 
+    const resolver = new ContanierUrlResolver(null, null);
     const tokenService = new socketStorage.TokenService();
     const claims = tokenService.extractClaims(token);
 
     console.log(`Document loading ${id}: ${performanceNow()}`);
     const tokenProvider = new socketStorage.TokenProvider(token);
+    const apiHost = { resolver, tokenProvider };
+
     const collabDoc = await API.load(
         id,
         claims.tenantId,
-        tokenProvider,
+        apiHost,
         { blockUpdateMarkers: true, client: config.client },
         version,
         connect);
@@ -130,7 +134,7 @@ async function loadDocument(
     // Register to run task only if the client type is browser.
     const client = config.client as IClient;
     if (client && client.type === Browser) {
-        agent.registerToWork(collabDoc, client, tokenProvider, config);
+        agent.registerToWork(collabDoc, client, apiHost, config);
     }
 
     console.log(`Document loaded ${id}: ${performanceNow()}`);

@@ -1,6 +1,6 @@
 import {
     IDocumentService,
-    ITokenProvider,
+    IHost,
 } from "@prague/container-definitions";
 import * as Intelligence from "@prague/intelligence-runner";
 import { ISharedMap, MapExtension } from "@prague/map";
@@ -14,10 +14,10 @@ export class IntelWork extends BaseWork implements IWork {
     constructor(
         docId: string,
         tenantId: string,
-        tokenProvider: ITokenProvider,
+        host: IHost,
         config: any,
         private service: IDocumentService) {
-        super(docId, tenantId, tokenProvider, config);
+        super(docId, tenantId, host, config);
     }
 
     public async start(task: string): Promise<void> {

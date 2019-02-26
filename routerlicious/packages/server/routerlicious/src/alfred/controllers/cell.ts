@@ -1,11 +1,19 @@
 import { ICell } from "@prague/cell";
 import * as api from "@prague/client-api";
+import { IHost } from "@prague/container-definitions";
 import * as resources from "@prague/gitresources";
+import { ContanierUrlResolver } from "@prague/routerlicious-host";
 import * as socketStorage from "@prague/routerlicious-socket-storage";
 import * as $ from "jquery";
 import { registerDocumentServices } from "./utils";
 
-async function loadDocument(id: string, version: resources.ICommit, token: string, client: any): Promise<api.Document> {
+async function loadDocument(
+    id: string,
+    version: resources.ICommit,
+    token: string,
+    host: IHost,
+    client: any,
+): Promise<api.Document> {
     console.log("Loading in root document...");
 
     const tokenService = new socketStorage.TokenService();
@@ -14,7 +22,7 @@ async function loadDocument(id: string, version: resources.ICommit, token: strin
     const document = await api.load(
         id,
         claims.tenantId,
-        new socketStorage.TokenProvider(token),
+        host,
         { encrypted: false},
         version);
 
@@ -122,7 +130,9 @@ function randomizeCell(cell: ICell, element1: JQuery, element2: JQuery) {
 export async function load(id: string, version: resources.ICommit, token: string, config: any) {
     registerDocumentServices(config);
 
-    const doc = await loadDocument(id, version, token, config.client);
+    const resolver = new ContanierUrlResolver(null, null);
+    const tokenProvider = new socketStorage.TokenProvider(token);
+    const doc = await loadDocument(id, version, token, { resolver, tokenProvider }, config.client);
     const root = doc.getRoot();
 
     let cell: ICell;

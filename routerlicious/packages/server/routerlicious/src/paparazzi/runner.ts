@@ -1,5 +1,6 @@
 import * as agent from "@prague/agent";
 import { IDocumentService } from "@prague/container-definitions";
+import { ContanierUrlResolver } from "@prague/routerlicious-host";
 import * as socketStorage from "@prague/routerlicious-socket-storage";
 import { IQueueMessage } from "@prague/runtime-definitions";
 import * as core from "@prague/services-core";
@@ -117,12 +118,15 @@ export class PaparazziRunner implements utils.IRunner {
         const filteredTask = requestMsg.message.tasks.filter((task) => this.permission.has(task));
 
         if (filteredTask.length > 0) {
+            const tokenProvider = new socketStorage.TokenProvider(requestMsg.token);
+            const resolver = new ContanierUrlResolver(null, null);
+
             winston.info(`Starting ${JSON.stringify(filteredTask)}: ${requestMsg.tenantId}/${requestMsg.documentId}`);
             this.workerService.startTasks(
                 requestMsg.tenantId,
                 requestMsg.documentId,
                 filteredTask,
-                new socketStorage.TokenProvider(requestMsg.token)).catch((err) => {
+                { resolver, tokenProvider }).catch((err) => {
                     winston.error(
                         // tslint:disable-next-line
                         `Error starting ${JSON.stringify(filteredTask)}: ${requestMsg.tenantId}/${requestMsg.documentId}: ${err}`

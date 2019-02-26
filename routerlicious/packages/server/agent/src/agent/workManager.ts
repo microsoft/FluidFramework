@@ -1,4 +1,4 @@
-import { ICodeLoader, ITokenProvider } from "@prague/container-definitions";
+import { ICodeLoader, IHost } from "@prague/container-definitions";
 import * as MergeTree from "@prague/merge-tree";
 import { EventEmitter } from "events";
 import { AgentLoader, IAgent } from "./agentLoader";
@@ -34,16 +34,16 @@ export class WorkManager extends EventEmitter implements IWorkManager {
         tenantId: string,
         documentId: string,
         workType: string,
-        tokenProvider: ITokenProvider) {
+        host: IHost) {
         const services = await this.serviceFactory.getService(tenantId);
 
         switch (workType) {
             case "snapshot":
-                const snapshotWork = new SnapshotWork(documentId, tenantId,  tokenProvider, this.config, services);
+                const snapshotWork = new SnapshotWork(documentId, tenantId,  host, this.config, services);
                 await this.startTask(tenantId, documentId, workType, snapshotWork);
                 break;
             case "intel":
-                const intelWork = new IntelWork(documentId, tenantId,  tokenProvider, this.config, services);
+                const intelWork = new IntelWork(documentId, tenantId,  host, this.config, services);
                 await this.startTask(tenantId, documentId, workType, intelWork);
                 break;
             case "spell":
@@ -54,7 +54,7 @@ export class WorkManager extends EventEmitter implements IWorkManager {
                     const spellcheckWork = new SpellcheckerWork(
                         documentId,
                         tenantId,
-                        tokenProvider,
+                        host,
                         this.config,
                         this.dict,
                         services);
@@ -65,7 +65,7 @@ export class WorkManager extends EventEmitter implements IWorkManager {
                 const translationWork = new TranslationWork(
                     documentId,
                     tenantId,
-                    tokenProvider,
+                    host,
                     this.config,
                     services);
                 await this.startTask(tenantId, documentId, workType, translationWork);
@@ -78,7 +78,7 @@ export class WorkManager extends EventEmitter implements IWorkManager {
                     new chaincode.SnapshotWork(
                         documentId,
                         tenantId,
-                        tokenProvider,
+                        host,
                         services,
                         this.codeLoader));
                 break;
@@ -90,7 +90,7 @@ export class WorkManager extends EventEmitter implements IWorkManager {
                     new chaincode.IntelWork(
                         documentId,
                         tenantId,
-                        tokenProvider,
+                        host,
                         services,
                         this.codeLoader));
                 break;
@@ -106,7 +106,7 @@ export class WorkManager extends EventEmitter implements IWorkManager {
                         new chaincode.SpellcheckerWork(
                             documentId,
                             tenantId,
-                            tokenProvider,
+                            host,
                             services,
                             this.codeLoader));
                 }
@@ -119,7 +119,7 @@ export class WorkManager extends EventEmitter implements IWorkManager {
                     new chaincode.TranslationWork(
                         documentId,
                         tenantId,
-                        tokenProvider,
+                        host,
                         services,
                         this.codeLoader));
                 break;

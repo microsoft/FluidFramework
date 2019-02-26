@@ -1,6 +1,7 @@
 import { ICodeLoader, IDocumentService, IPlatform } from "@prague/container-definitions";
 import { Container, Loader } from "@prague/container-loader";
 import { WebLoader } from "@prague/loader-web";
+import { ContanierUrlResolver } from "@prague/routerlicious-host";
 import { createDocumentService, TokenProvider } from "@prague/routerlicious-socket-storage";
 import { IComponentRuntime } from "@prague/runtime-definitions";
 import { EventEmitter } from "events";
@@ -39,6 +40,7 @@ export class DataStore {
             config.key,
             config.id,
             userId,
+            null,
         );
     }
 
@@ -49,6 +51,7 @@ export class DataStore {
         private readonly key: string,
         private readonly tenantId: string,
         private readonly userId: string,
+        private readonly hostJwt: string,
     ) { }
 
     /**
@@ -68,8 +71,10 @@ export class DataStore {
         debug(`DataStore.open("${componentId}", "${chaincodePackage}")`);
 
         const tokenProvider = new TokenProvider(this.auth(componentId));
+        const resolver = new ContanierUrlResolver(this.hostUrl, this.hostJwt);
+
         const loader = new Loader(
-            { tokenProvider },
+            { resolver, tokenProvider },
             this.documentService,
             this.codeLoader,
             { blockUpdateMarkers: true });

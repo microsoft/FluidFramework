@@ -1,5 +1,5 @@
 import * as api from "@prague/client-api";
-import { Browser, IDocumentService, ITokenProvider } from "@prague/container-definitions";
+import { Browser, IDocumentService, IHost } from "@prague/container-definitions";
 import { EventEmitter } from "events";
 import { IDocumentTaskInfo } from "./definitions";
 import { runAfterWait } from "./utils";
@@ -20,7 +20,7 @@ export class BaseWork extends EventEmitter {
     constructor(
         private id: string,
         private tenantId: string,
-        private tokenProvider: ITokenProvider,
+        private host: IHost,
         private conf: any) {
         super();
         this.config = this.conf;
@@ -32,7 +32,7 @@ export class BaseWork extends EventEmitter {
         task: string): Promise<void> {
         this.task = task;
         this.document = await api.load(
-            this.id, this.tenantId, this.tokenProvider, options, null, true, service);
+            this.id, this.tenantId, this.host, options, null, true, service);
 
         await runAfterWait(
             !this.document.isConnected,

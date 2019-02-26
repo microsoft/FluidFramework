@@ -1,6 +1,7 @@
 import * as api from "@prague/client-api";
 import { ISharedMap } from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
+import { ContanierUrlResolver } from "@prague/routerlicious-host";
 import * as socketStorage from "@prague/routerlicious-socket-storage";
 import * as Sequence from "@prague/sequence";
 import * as childProcess from "child_process";
@@ -55,6 +56,7 @@ async function setChunkMap(chunks: string[]) {
 }
 
 async function conductor(
+    resolver: ContanierUrlResolver,
     text,
     intervalTime,
     writers,
@@ -70,6 +72,7 @@ async function conductor(
     if (processes === 1) {
         return await author.typeFile(
             document,
+            resolver,
             sharedString,
             text,
             intervalTime,
@@ -90,6 +93,7 @@ async function conductor(
 
 export async function create(
     id: string,
+    resolver: ContanierUrlResolver,
     token: string,
     text: string,
     debug = false): Promise<void> {
@@ -98,7 +102,14 @@ export async function create(
     const tokenService = new socketStorage.TokenService();
     const claims = tokenService.extractClaims(token);
 
-    document = await api.load(id, claims.tenantId, new socketStorage.TokenProvider(token), {});
+    document = await api.load(
+        id,
+        claims.tenantId,
+        {
+            resolver,
+            tokenProvider: new socketStorage.TokenProvider(token),
+        },
+        {});
     const root = await document.getRoot();
 
     root.set("presence", document.createMap());
@@ -133,6 +144,7 @@ export async function type(
     processes: number,
     documentToken: string,
     metricsToken: string,
+    resolver: ContanierUrlResolver,
     callback: author.ScribeMetricsCallback,
     distributed = false): Promise<author.IScribeMetrics> {
 
@@ -140,6 +152,7 @@ export async function type(
         console.log("distributed");
     }
     return conductor(
+        resolver,
         text,
         intervalTime,
         writers,

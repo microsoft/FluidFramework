@@ -1,6 +1,6 @@
 import {
     IDocumentService,
-    ITokenProvider,
+    IHost,
 } from "@prague/container-definitions";
 import { ISharedMap } from "@prague/map";
 import * as Sequence from "@prague/sequence";
@@ -13,10 +13,10 @@ export class TranslationWork extends BaseWork implements IWork {
     constructor(
         docId: string,
         tenantId: string,
-        tokenProvider: ITokenProvider,
+        host: IHost,
         config: any,
         private service: IDocumentService) {
-        super(docId, tenantId, tokenProvider, config);
+        super(docId, tenantId, host, config);
     }
 
     public async start(task: string): Promise<void> {

@@ -1,7 +1,7 @@
 import {
     ICodeLoader,
     IDocumentService,
-    ITokenProvider,
+    IHost,
 } from "@prague/container-definitions";
 import { IWork} from "../definitions";
 import { ChaincodeWork } from "./chaincodeWork";
@@ -10,10 +10,11 @@ export class IntelWork extends ChaincodeWork implements IWork {
     constructor(
         docId: string,
         tenantId: string,
-        tokenProvider: ITokenProvider,
+        host: IHost,
         service: IDocumentService,
-        codeLoader: ICodeLoader) {
-        super(docId, tenantId, tokenProvider, service, codeLoader);
+        codeLoader: ICodeLoader,
+    ) {
+        super(docId, tenantId, host, service, codeLoader);
     }
 
     public async start(): Promise<void> {

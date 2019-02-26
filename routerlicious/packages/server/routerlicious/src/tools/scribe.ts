@@ -1,4 +1,5 @@
 import * as api from "@prague/client-api";
+import { ContanierUrlResolver } from "@prague/routerlicious-host";
 import * as socketStorage from "@prague/routerlicious-socket-storage";
 import * as core from "@prague/services-core";
 import * as scribe from "@prague/tools-core";
@@ -57,10 +58,11 @@ fs.readFile(commander.file, "utf8", async (error, data: string) => {
             });
     }
 
+    const resolver = new ContanierUrlResolver(null, null);
     const token = core.generateToken(commander.tenant, sharedStringId, commander.key);
     const metricsToken = core.generateToken(commander.tenant, `${sharedStringId}-metrics`, commander.key);
 
-    await scribe.create(sharedStringId, token, data, debug);
+    await scribe.create(sharedStringId, resolver, token, data, debug);
     scribe.togglePlay();
 
     setTimeout(() => {
@@ -73,6 +75,7 @@ fs.readFile(commander.file, "utf8", async (error, data: string) => {
             Number(commander.processes),
             token,
             metricsToken,
+            resolver,
             (metrics) => {
                 if (commander.progress) {
                     bar.update(metrics.ackProgress, {

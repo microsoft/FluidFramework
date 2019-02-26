@@ -15,19 +15,29 @@ export interface ICodeLoader {
     load(source: string): Promise<IChaincodeFactory>;
 }
 
-export interface IResolvedContainer {
-    orderUrl: string;
-    storageUrl: string;
-    id: string;
-    token: string;
-    // Services as well?
+export interface IResolvedUrl {
+    type: string;
+    originalUrl: string;
 }
 
-export interface IContainerUrlResolver {
+export interface IWebResolvedUrl extends IResolvedUrl {
+    type: "web";
+    data: string;
+}
+
+export interface IPragueResolvedUrl extends IResolvedUrl {
+    type: "prague";
+    url: string;
+    token: string;
+    ordererUrl: string;
+    storageUrl: string;
+}
+
+export interface IUrlResolver {
     // Like DNS should be able to cache resolution requests. Then possibly just have a token provider go and do stuff?
     // the expiration of it could be relative to the lifetime of the token? Requests after need to refresh?
     // or do we split the token access from this?
-    resolve(request: IRequest): Promise<IResolvedContainer>;
+    resolve(request: IRequest): Promise<IResolvedUrl>;
 }
 
 /**
@@ -35,7 +45,7 @@ export interface IContainerUrlResolver {
  */
 export interface IHost {
     tokenProvider: ITokenProvider;
-    // resolver: IContainerUrlResolver;
+    resolver: IUrlResolver;
 }
 
 export interface IRequest {

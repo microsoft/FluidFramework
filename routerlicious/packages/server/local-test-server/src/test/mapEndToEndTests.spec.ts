@@ -3,6 +3,7 @@
 import * as api from "@prague/client-api";
 import { MessageType } from "@prague/container-definitions";
 import { ISharedMap } from "@prague/map";
+import { ContanierUrlResolver } from "@prague/routerlicious-host";
 import * as socketStorage from "@prague/routerlicious-socket-storage";
 import { generateToken } from "@prague/services-core";
 import * as assert from "assert";
@@ -33,16 +34,20 @@ describe("Map", () => {
         testDeltaConnectionServer = TestDeltaConnectionServer.Create();
         documentDeltaEventManager = new DocumentDeltaEventManager(testDeltaConnectionServer);
         const documentService = createTestDocumentService(testDeltaConnectionServer);
+        const resolver = new ContanierUrlResolver(null, null);
         const tokenProvider1 = new socketStorage.TokenProvider(generateToken(tenantId, id, tokenKey));
         const tokenProvider2 = new socketStorage.TokenProvider(generateToken(tenantId, id, tokenKey));
         const tokenProvider3 = new socketStorage.TokenProvider(generateToken(tenantId, id, tokenKey));
-        user1Document = await api.load(id, tenantId, tokenProvider1, {}, null, true, documentService);
+        user1Document = await api.load(
+            id, tenantId, { resolver, tokenProvider: tokenProvider1 }, {}, null, true, documentService);
         documentDeltaEventManager.registerDocuments(user1Document);
 
-        user2Document = await api.load(id, tenantId, tokenProvider2, {}, null, true, documentService);
+        user2Document = await api.load(
+            id, tenantId, { resolver, tokenProvider: tokenProvider2 }, {}, null, true, documentService);
         documentDeltaEventManager.registerDocuments(user2Document);
 
-        user3Document = await api.load(id, tenantId, tokenProvider3, {}, null, true, documentService);
+        user3Document = await api.load(
+            id, tenantId, { resolver, tokenProvider: tokenProvider3 }, {}, null, true, documentService);
         documentDeltaEventManager.registerDocuments(user3Document);
         root1 = user1Document.getRoot();
         root2 = user2Document.getRoot();

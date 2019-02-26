@@ -4,9 +4,9 @@ import {
     IDeltaManager,
     IDocumentService,
     IGenericBlob,
+    IHost,
     IPlatform,
     ISequencedClient,
-    ITokenProvider,
 } from "@prague/container-definitions";
 import { Container, Loader } from "@prague/container-loader";
 import * as resources from "@prague/gitresources";
@@ -253,7 +253,7 @@ async function initializeChaincode(container: Container, pkg: string): Promise<v
 export async function load(
     id: string,
     tenantId: string,
-    tokenProvider: ITokenProvider,
+    host: IHost,
     options: any = {},
     version: resources.ICommit = null,
     connect = true,
@@ -274,7 +274,7 @@ export async function load(
     // For legacy purposes we currently fill in a default domain
     const baseUrl =
         `prague://prague.com/${encodeURIComponent(tenantId)}/${encodeURIComponent(id)}${queryString}`;
-    const loader = new Loader({ tokenProvider }, service, codeLoader, options);
+    const loader = new Loader(host, service, codeLoader, options);
     const container = await loader.resolve({ url: baseUrl });
 
     if (!container.existing) {

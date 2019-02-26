@@ -1,5 +1,5 @@
 import * as api from "@prague/client-api";
-import { IClient, ITokenProvider } from "@prague/container-definitions";
+import { IClient, IHost } from "@prague/container-definitions";
 import { IHelpMessage } from "@prague/runtime-definitions";
 import { RateLimitter } from "@prague/utils";
 import { loadDictionary } from "./dictionaryLoader";
@@ -12,7 +12,7 @@ import { TranslationWork } from "./translationWork";
 const RequestWindowMS = 15000;
 
 // If a client declares taks runnning capability in permission array, it must register to perform the task.
-export function registerToWork(doc: api.Document, client: IClient, tokenProvider: ITokenProvider, workerConfig: any) {
+export function registerToWork(doc: api.Document, client: IClient, host: IHost, workerConfig: any) {
     if (client.permission && client.permission.length > 0) {
         const rateLimitter = new RateLimitter(RequestWindowMS);
         doc.on("localHelp", async (helpMessage: IHelpMessage) => {
@@ -20,7 +20,7 @@ export function registerToWork(doc: api.Document, client: IClient, tokenProvider
             await performTasks(
                 doc.id,
                 doc.tenantId,
-                tokenProvider,
+                host,
                 filteredTasks,
                 workerConfig).catch((err) => {
                 console.error(err);
@@ -33,12 +33,12 @@ export function registerToWork(doc: api.Document, client: IClient, tokenProvider
 async function performTasks(
     docId: string,
     tenantId: string,
-    tokenProvider: ITokenProvider,
+    host: IHost,
     tasks: string[],
     config: any) {
     const taskPromises = [];
     for (const task of tasks) {
-        taskPromises.push(performTask(docId, tenantId, tokenProvider, task, config));
+        taskPromises.push(performTask(docId, tenantId, host, task, config));
     }
     await Promise.all(taskPromises);
 }
@@ -46,7 +46,7 @@ async function performTasks(
 async function performTask(
     docId: string,
     tenantId: string,
-    tokenProvider: ITokenProvider,
+    host: IHost,
     task: string,
     config: any) {
     switch (task) {
@@ -54,7 +54,7 @@ async function performTask(
             const snapshotWork  = new SnapshotWork(
                 docId,
                 tenantId,
-                tokenProvider,
+                host,
                 config,
                 api.getDefaultDocumentService());
             await snapshotWork.start(task);
@@ -63,7 +63,7 @@ async function performTask(
             const intelWork  = new IntelWork(
                 docId,
                 tenantId,
-                tokenProvider,
+                host,
                 config,
                 api.getDefaultDocumentService());
             await intelWork.start(task);
@@ -73,7 +73,7 @@ async function performTask(
                 const spellWork = new SpellcheckerWork(
                     docId,
                     tenantId,
-                    tokenProvider,
+                    host,
                     config,
                     dictionary,
                     api.getDefaultDocumentService(),
@@ -87,7 +87,7 @@ async function performTask(
             const translationWork = new TranslationWork(
                 docId,
                 tenantId,
-                tokenProvider,
+                host,
                 config,
                 api.getDefaultDocumentService());
             await translationWork.start(task);

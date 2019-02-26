@@ -1,9 +1,10 @@
 import * as agent from "@prague/agent";
 import { SharedObject } from "@prague/api-definitions";
 import * as api from "@prague/client-api";
-import { Browser, IClient } from "@prague/container-definitions";
+import { Browser, IClient, IHost } from "@prague/container-definitions";
 import * as resources from "@prague/gitresources";
 import * as Map from "@prague/map";
+import { ContanierUrlResolver } from "@prague/routerlicious-host";
 import * as socketStorage from "@prague/routerlicious-socket-storage";
 import * as $ from "jquery";
 // tslint:disable-next-line:no-var-requires
@@ -13,7 +14,9 @@ async function loadDocument(
     id: string,
     version: resources.ICommit,
     client: any,
-    token?: string): Promise<api.Document> {
+    token: string,
+    host: IHost,
+): Promise<api.Document> {
     console.log("Loading in root document...");
     const tokenService = new socketStorage.TokenService();
     const claims = tokenService.extractClaims(token);
@@ -21,7 +24,7 @@ async function loadDocument(
     const document = await api.load(
         id,
         claims.tenantId,
-        new socketStorage.TokenProvider(token),
+        host,
         { encrypted: false },
         version);
 
@@ -159,15 +162,19 @@ export async function load(
     config: any,
     loadPartial: boolean) {
 
-    loadPartial ? loadCommit(id, version, config) : loadFull(id, version, config, token);
+    const resolver = new ContanierUrlResolver(null, null);
+    const tokenProvider = new socketStorage.TokenProvider(token);
+    const host = { resolver, tokenProvider };
+
+    loadPartial ? loadCommit(id, version, config) : loadFull(id, version, config, token, host);
 }
 
-function loadFull(id: string, version: resources.ICommit, config: any, token?: string) {
+function loadFull(id: string, version: resources.ICommit, config: any, token?: string, host?: IHost) {
     registerDocumentServices(config);
 
     $(document).ready(() => {
         // Bootstrap worker service.
-        loadDocument(id, version, config.client, token).then(async (doc) => {
+        loadDocument(id, version, config.client, token, host).then(async (doc) => {
             // tslint:disable-next-line
             window["doc"] = doc;
 
@@ -179,7 +186,7 @@ function loadFull(id: string, version: resources.ICommit, config: any, token?: s
             // Register to run task only if the client type is browser.
             const client = config.client as IClient;
             if (client && client.type === Browser) {
-                agent.registerToWork(doc, client, new socketStorage.TokenProvider(token), config);
+                agent.registerToWork(doc, client, host, config);
             }
         }, (err) => {
             // TODO (auth): Display an error page here.

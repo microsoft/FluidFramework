@@ -1,4 +1,4 @@
-import { IDocumentService, ITokenProvider } from "@prague/container-definitions";
+import { IDocumentService, IHost } from "@prague/container-definitions";
 
 export interface IWork {
     /**
@@ -30,7 +30,7 @@ export interface IWorkManager {
         tenantId: string,
         documentId: string,
         workType: string,
-        tokenProvider: ITokenProvider): Promise<void>;
+        tokenProvider: IHost): Promise<void>;
 
     /**
      * Stops working on a document

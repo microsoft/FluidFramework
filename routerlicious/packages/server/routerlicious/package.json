@@ -78,6 +78,7 @@
     "@prague/merge-tree": "^0.2.0",
     "@prague/merge-tree-utils": "^0.2.0",
     "@prague/replay-socket-storage": "^0.2.0",
+    "@prague/routerlicious-host": "^0.2.0",
     "@prague/routerlicious-socket-storage": "^0.2.0",
     "@prague/runtime": "^0.2.0",
     "@prague/runtime-definitions": "^0.2.0",

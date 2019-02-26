@@ -2,6 +2,7 @@ import { ICell } from "@prague/cell";
 import * as api from "@prague/client-api";
 import { ISequencedDocumentMessage } from "@prague/container-definitions";
 import * as MergeTree from "@prague/merge-tree";
+import { ContanierUrlResolver } from "@prague/routerlicious-host";
 import * as socketStorage from "@prague/routerlicious-socket-storage";
 import * as Sequence from "@prague/sequence";
 import * as queue from "async/queue";
@@ -230,13 +231,15 @@ function combine(first: number[], second: number[], combineCb: (a, b) => number)
     return result;
 }
 
-async function setMetrics(doc: api.Document, token: string) {
+async function setMetrics(doc: api.Document, token: string, resolver: ContanierUrlResolver) {
+    const tokenProvider = new socketStorage.TokenProvider(token);
+    const host = { tokenProvider, resolver };
 
     // And also load a canvas document where we will place the metrics
     const metricsDoc = await api.load(
         `${doc.id}-metrics`,
         doc.tenantId,
-        new socketStorage.TokenProvider(token),
+        host,
         {});
     const root = metricsDoc.getRoot();
 
@@ -263,6 +266,7 @@ async function setMetrics(doc: api.Document, token: string) {
 
 export async function typeFile(
     doc: api.Document,
+    resolver: ContanierUrlResolver,
     ss: Sequence.SharedString,
     fileText: string,
     intervalTime: number,
@@ -294,7 +298,7 @@ export async function typeFile(
         writers,
     };
 
-    await setMetrics(doc, metricsToken);
+    await setMetrics(doc, metricsToken, resolver);
 
     const m: IScribeMetrics = {
         ackProgress: undefined,
@@ -331,11 +335,13 @@ export async function typeFile(
 
     for (let i = 1; i < writers; i++) {
         const tokenProvider = new socketStorage.TokenProvider(documentToken);
-        docList.push(await api.load(doc.id, doc.tenantId, tokenProvider, {}));
+        const host = { tokenProvider, resolver };
+
+        docList.push(await api.load(doc.id, doc.tenantId, host, {}));
         ssList.push(await docList[i].getRoot().get("text") as Sequence.SharedString);
         author = {
             ackCounter: new Counter(),
-            doc: await api.load(doc.id, doc.tenantId, tokenProvider, {}),
+            doc: await api.load(doc.id, doc.tenantId, host, {}),
             latencyCounter: new Counter(),
             metrics: clone(m),
             pingCounter: new Counter(),
