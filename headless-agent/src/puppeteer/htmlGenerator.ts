@@ -3,7 +3,7 @@ export function craftHtml(
     routerlicious: string,
     historian: string,
     tenantId: string,
-    secret: string,
+    token: string,
     packageUrl: string) {
     const html = `
     <!DOCTYPE html>
@@ -19,7 +19,7 @@ export function craftHtml(
         "${routerlicious}",
         "${historian}",
         "${tenantId}",
-        "${secret}",
+        "${token}",
         "${packageUrl}")
     .catch((error) => console.error(error));
     </script>
