@@ -1,6 +1,5 @@
 const path = require("path");
 const merge = require("webpack-merge");
-const nodeExternals = require("webpack-node-externals");
 const pkg = require("./package.json");
 
 module.exports = env => {

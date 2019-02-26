@@ -1,3 +1,4 @@
+import { TableSlice } from "@chaincode/table-document";
 import { ComponentHost } from "@prague/component";
 import { initializeIcons } from "@uifabric/icons";
 import { CommandBar, ICommandBarItemProps } from "office-ui-fabric-react/lib/CommandBar";
@@ -5,7 +6,6 @@ import * as React from "react";
 import { ChaincodeDialog } from "./chaincodedialog";
 import { FlowEditor } from "./editor";
 import * as style from "./index.css";
-import * as styles from "./index.css";
 
 export interface IAppConfig {
     host: ComponentHost;
@@ -47,7 +47,7 @@ export class App extends React.Component<IProps, IState> {
     private readonly insertables = [
         { name: "Text", iconName: "Video", onClick: () => { this.cmds.insertText(App.exampleText); }},
         { name: "Video", iconName: "Video", onClick: () => this.cmds.insert(
-            <div className={styles.video}>
+            <div className={style.video}>
               <figure style={{ marginInlineStart: 0, marginInlineEnd: 0 }}>
                 <video style={{ width: "100%" }} autoPlay={true} loop={true} controls={true} src="/assets/outrun.mp4"></video>
               </figure>
@@ -58,7 +58,7 @@ export class App extends React.Component<IProps, IState> {
         { name: "Wedge Right", iconName: "CaretLeft", onClick: () => this.cmds.insert(<div className={style.wedgeRight}></div>) },
         { name: "Chart", iconName: "CaretLeft", onClick: () => this.cmds.insertContainerComponent("@chaincode/chart-view") },
         { name: "Table", iconName: "CaretLeft", onClick: () => this.cmds.insertContainerComponent("@chaincode/table-view") },
-        { name: "Table Slice", iconName: "CaretLeft", onClick: () => this.cmds.insertContainerComponent("@chaincode/table-slice") },
+        { name: "Table Slice", iconName: "CaretLeft", onClick: () => this.cmds.insertContainerComponent(TableSlice.type) },
         /*{ name: "Flow", iconName: "Text", onClick: () => this.cmds.insert(<FlowEditor cmds={this.cmds} docUrl="http://localhost:3000" docId={Math.random().toString(36).substr(2, 4)}></FlowEditor>) },*/
         { name: "Component", iconName: "Text", onClick: () => { this.chaincodeDlg.current.showDialog(); }},
     ].map(({name, iconName, onClick}) => { return {
@@ -98,7 +98,7 @@ export class App extends React.Component<IProps, IState> {
                     items={this.getItems()}
                     overflowItems={this.getOverlflowItems()}
                     farItems={this.getFarItems()} />
-                <div className={`${style.fill} ${ this.state.virtualize ? styles.virtualized : styles.normal }`}>
+                <div className={`${style.fill} ${ this.state.virtualize ? style.virtualized : style.normal }`}>
                     <FlowEditor cmds={this.cmds} config={this.props.config} virtualize={this.state.virtualize}></FlowEditor>
                 </div>
                 <ChaincodeDialog config={this.props.config} ref={this.chaincodeDlg} addComponent={this.addComponent} />

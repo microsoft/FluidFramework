@@ -33,7 +33,6 @@ COPY packages/components/flow-editor/package*.json packages/components/flow-edit
 COPY packages/components/flow-host/package*.json packages/components/flow-host/
 COPY packages/components/flow-util/package*.json packages/components/flow-util/
 COPY packages/components/table-document/package*.json packages/components/table-document/
-COPY packages/components/table-slice/package*.json packages/components/table-slice/
 COPY packages/components/table-test-app/package*.json packages/components/table-test-app/
 COPY packages/components/table-view/package*.json packages/components/table-view/
 COPY packages/drivers/odsp-socket-storage/package*.json packages/drivers/odsp-socket-storage/

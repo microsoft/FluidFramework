@@ -1,0 +1,19 @@
+{
+  "name": "generator-prague",
+  "version": "0.1.0",
+  "description": "A yeoman project generator for prague chaincodes",
+  "main": "app/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "yeoman-generator"
+  ],
+  "files": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "ts-morph": "^1.2.0",
+    "yeoman-generator": "^3.2.0"
+  }
+}

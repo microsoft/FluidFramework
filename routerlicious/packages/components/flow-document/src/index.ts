@@ -15,9 +15,6 @@ import {
     SegmentType,
     UniversalSequenceNumber,
 } from "@prague/merge-tree";
-import {
-    IChaincodeComponent,
-} from "@prague/runtime-definitions";
 import { SharedString, SharedStringExtension } from "@prague/sequence";
 import { Deferred } from "@prague/utils";
 import { EventEmitter } from "events";
@@ -120,7 +117,6 @@ class ServicePlatform extends EventEmitter implements IPlatform {
 }
 
 export class FlowDocument extends Component {
-
     public get ready() {
         return this.readyDeferred.promise;
     }
@@ -282,11 +278,4 @@ export class FlowDocument extends Component {
         text.insertMarker(0, ReferenceType.Tile, FlowDocument.eofTileProperties);
         this.root.set("text", text);
     }
-}
-
-/**
- * Instantiates a new chaincode component
- */
-export async function instantiateComponent(): Promise<IChaincodeComponent> {
-    return Component.instantiateComponent(FlowDocument);
 }

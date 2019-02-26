@@ -1,4 +1,7 @@
+// tslint:disable:no-object-literal-type-assertion
+import { ISequencedDocumentMessage } from "@prague/container-definitions";
 import * as MergeTree from "./client";
+import { MergeTreeDeltaType } from "./ops";
 
 /**
  * Example of overlapping insertion position.  Clients A and B both insert at position 0.
@@ -36,7 +39,12 @@ function overlappingInsert(bSeesTheCat = false) {
     }
     // simulate server choosing A's insert of 'cat ' as sequence number 1
     // ack client A's op
-    clientA.ackPendingSegment(sequenceNumber);
+    clientA.ackPendingSegment({
+        op: { type: MergeTreeDeltaType.INSERT },
+        sequencedMessage: {
+            sequenceNumber,
+        } as ISequencedDocumentMessage,
+    });
     console.log(clientA.mergeTree.toString());
     // propagate client A's op to client B
     const referenceSequenceNumber = 0;
@@ -48,7 +56,12 @@ function overlappingInsert(bSeesTheCat = false) {
     // tslint:disable-next-line:no-increment-decrement
     sequenceNumber++;
     // simulate server choosing B's two insert operations as sequence numbers 2 and 3
-    clientB.ackPendingSegment(sequenceNumber);
+    clientB.ackPendingSegment({
+        op: { type: MergeTreeDeltaType.INSERT },
+        sequencedMessage: {
+            sequenceNumber,
+        } as ISequencedDocumentMessage,
+    });
     console.log(clientB.mergeTree.toString());
     const aLocalIdForB = clientA.getOrAddShortClientId("B", null);
     clientA.insertTextRemote("big ", 0, properties, sequenceNumber,
@@ -61,7 +74,12 @@ function overlappingInsert(bSeesTheCat = false) {
         clientB.insertTextLocal("furry ", 8);
         console.log(clientB.mergeTree.toString());
     }
-    clientB.ackPendingSegment(sequenceNumber);
+    clientB.ackPendingSegment({
+        op: { type: MergeTreeDeltaType.INSERT },
+        sequencedMessage: {
+            sequenceNumber,
+        } as ISequencedDocumentMessage,
+    });
     console.log(clientB.mergeTree.toString());
     if (bSeesTheCat) {
         clientA.insertTextRemote("furry ", 8 /* insert after cat */, properties, sequenceNumber,

@@ -10,6 +10,7 @@ import * as fs from "fs";
 import * as Xmldoc from "xmldoc";
 import * as SharedString from "./intervalCollection";
 import { TestServer } from "@prague/merge-tree/dist/test/testServer"
+import { ISequencedDocumentMessage } from "@prague/container-definitions";
 
 function clock() {
     return process.hrtime();
@@ -1165,7 +1166,12 @@ export function TestPack(verbose = true) {
                 }
             }
         }
-        cli.mergeTree.ackPendingSegment(3);
+        cli.mergeTree.ackPendingSegment({
+            op: { type: MergeTree.MergeTreeDeltaType.INSERT },
+            sequencedMessage: {
+                sequenceNumber: 3,
+            } as ISequencedDocumentMessage,
+        });
         cli.insertItemsRemote([1,5,6,2,3], true, 6, undefined, 4, 2, 2);
         cli.insertItemsRemote([9], true, 0, undefined, 5, 0, 2);
         if (verbose) {
@@ -1213,7 +1219,12 @@ export function TestPack(verbose = true) {
                 }
             }
         }
-        cli.mergeTree.ackPendingSegment(3);
+        cli.mergeTree.ackPendingSegment({
+            op: { type: MergeTree.MergeTreeDeltaType.INSERT },
+            sequencedMessage: {
+                sequenceNumber: 3,
+            } as ISequencedDocumentMessage,
+        });
         if (verbose) {
             console.log(cli.mergeTree.toString());
             for (let clientId = 0; clientId < 4; clientId++) {
@@ -1254,7 +1265,12 @@ export function TestPack(verbose = true) {
         cli.insertTextRemote("yowza: ", 0, undefined, 6, 4, 2);
         let lref1pos = cli.mergeTree.referencePositionToLocalPosition(lref1);
         console.log(`lref pos: ${lref1pos}`);
-        cli.mergeTree.ackPendingSegment(7);
+        cli.mergeTree.ackPendingSegment({
+            op: { type: MergeTree.MergeTreeDeltaType.INSERT },
+            sequencedMessage: {
+                sequenceNumber: 7,
+            } as ISequencedDocumentMessage,
+        });
         if (verbose) {
             console.log(cli.mergeTree.toString());
             for (let clientId = 0; clientId < 6; clientId++) {
@@ -1303,7 +1319,12 @@ export function TestPack(verbose = true) {
         }
         cli.insertTextRemote(" chaser", 9, undefined, 3, 2, 3);
         cli.removeSegmentLocal(12, 14);
-        cli.mergeTree.ackPendingSegment(4);
+        cli.mergeTree.ackPendingSegment({
+            op: { type: MergeTree.MergeTreeDeltaType.REMOVE },
+            sequencedMessage: {
+                sequenceNumber: 4,
+            } as ISequencedDocumentMessage,
+        });
         if (verbose) {
             console.log(cli.mergeTree.toString());
             for (let clientId = 0; clientId < 4; clientId++) {
@@ -1314,9 +1335,19 @@ export function TestPack(verbose = true) {
         }
         cli.insertTextLocal("*yolumba*", 14);
         cli.insertTextLocal("-zanzibar-", 17);
-        cli.mergeTree.ackPendingSegment(5);
+        cli.mergeTree.ackPendingSegment({
+            op: { type: MergeTree.MergeTreeDeltaType.INSERT },
+            sequencedMessage: {
+                sequenceNumber: 5,
+            } as ISequencedDocumentMessage,
+        });
         cli.insertTextRemote("(aaa)", 2, undefined, 6, 4, 2);
-        cli.mergeTree.ackPendingSegment(7);
+        cli.mergeTree.ackPendingSegment({
+            op: { type: MergeTree.MergeTreeDeltaType.INSERT },
+            sequencedMessage: {
+                sequenceNumber: 7,
+            } as ISequencedDocumentMessage,
+        });
         if (verbose) {
             console.log(cli.mergeTree.toString());
             for (let clientId = 0; clientId < 4; clientId++) {
@@ -1351,7 +1382,12 @@ export function TestPack(verbose = true) {
             }
         }
         cli.removeSegmentRemote(3, 6, 10, 9, 2);
-        cli.ackPendingSegment(11);
+        cli.ackPendingSegment({
+            op: { type: MergeTree.MergeTreeDeltaType.REMOVE },
+            sequencedMessage: {
+                sequenceNumber: 11,
+            } as ISequencedDocumentMessage,
+        });
         if (verbose) {
             console.log(cli.mergeTree.toString());
             for (let clientId = 0; clientId < 4; clientId++) {

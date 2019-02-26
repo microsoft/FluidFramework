@@ -1,0 +1,38 @@
+{
+  "name": "@chaincode/counter",
+  "description": "Minimal @chaincode sample to implement a collaborative counter.",
+  "version": "0.0.1",
+  "author": "Microsoft",
+  "repository": "microsoft/prague",
+  "main": "dist/main.bundle.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "webpack --env=\"production\"",
+    "dev": "webpack --env=\"development\"",
+    "start": "prague-dev-server --config webpack.config.js --live --package package.json",
+    "start:local": "prague-dev-server --config webpack.config.js --package package.json",
+    "tsc": "tsc"
+  },
+  "devDependencies": {
+    "@prague/prague-dev-server": "3.2.2",
+    "@types/node": "10.11.5",
+    "ts-loader": "4.4.2",
+    "typescript": "3.0.1",
+    "webpack": "4.16.5",
+    "webpack-cli": "3.1.0",
+    "webpack-merge": "4.1.4"
+  },
+  "prague": {
+    "browser": {
+      "entrypoint": "main",
+      "bundle": [
+        "dist/main.bundle.js"
+      ]
+    }
+  },
+  "dependencies": {
+    "@prague/app-component": "0.2.5246",
+    "@prague/map": "0.2.5246",
+    "@prague/container-definitions": "0.2.5246"
+  }
+}

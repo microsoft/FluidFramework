@@ -8,13 +8,15 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "webpack --env=\"production\"",
-    "dev": "webpack --env=\"development\" --watch",
-    "start": "prague-dev-server --config webpack.config.js --package package.json",
+    "dev": "webpack --env=\"development\"",
+    "dev:watch": "webpack --env=\"development\" --watch",
+    "start": "prague-dev-server --config webpack.config.js --live --package package.json",
+    "start:local": "prague-dev-server --config webpack.config.js --package package.json",
     "tsc": "tsc",
     "publish": "npm version patch && npm publish --registry https://packages.wu2.prague.office-int.com"
   },
   "devDependencies": {
-    "@prague/prague-dev-server": "^3.1.13",
+    "@prague/prague-dev-server": "^3.2.2",
     "@types/node": "^10.11.5",
     "@types/react-dom": "^16.0.11",
     "clean-webpack-plugin": "^0.1.19",
@@ -33,12 +35,14 @@
     }
   },
   "dependencies": {
-    "@prague/app-component": "^0.1.4668",
-    "@prague/app-datastore": "^0.1.4668",
-    "@prague/map": "^0.1.4668",
-    "@prague/runtime-definitions": "^0.1.4668",
+    "@chaincode/counter": "^0.0.5264",
+    "@prague/app-component": "^0.2.5240",
+    "@prague/app-datastore": "^0.2.5240",
+    "@prague/map": "^0.2.5240",
+    "@prague/runtime-definitions": "^0.2.5240",
     "@stardust-ui/react": "^0.17.0",
     "react": "^16.7.0",
-    "react-dom": "^16.7.0"
+    "react-dom": "^16.7.0",
+    "sillyname": "^0.1.0"
   }
 }

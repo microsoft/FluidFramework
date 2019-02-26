@@ -4,6 +4,7 @@ import { Client } from "../client";
 import { ClientSeq, compareNumbers, clientSeqComparer, useCheckQ } from "../mergeTree";
 import * as Collections from "../collections";
 import * as Properties from "../properties";
+import { IMergeTreeOp } from "../ops";
 
 /**
  * Server for tests.  Simulates client communication by directing placing
@@ -39,7 +40,10 @@ export class TestServer extends Client {
         this.listeners = listeners;
     }
     applyMsg(msg: ISequencedDocumentMessage) {
-        this.coreApplyMsg(msg);
+        this.coreApplyMsg({
+            op: msg.contents as IMergeTreeOp,
+            sequencedMessage: msg,
+        });
         if (useCheckQ) {
             let clid = this.getShortClientId(msg.clientId);
             return checkTextMatchRelative(msg.referenceSequenceNumber, clid, this, msg);
