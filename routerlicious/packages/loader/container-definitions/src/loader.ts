@@ -15,20 +15,21 @@ export interface ICodeLoader {
     load(source: string): Promise<IChaincodeFactory>;
 }
 
-export interface IResolvedUrl {
+export type IResolvedUrl = IWebResolvedUrl | IPragueResolvedUrl;
+
+export interface IResolvedUrlBase {
     type: string;
-    originalUrl: string;
 }
 
-export interface IWebResolvedUrl extends IResolvedUrl {
+export interface IWebResolvedUrl extends IResolvedUrlBase {
     type: "web";
     data: string;
 }
 
-export interface IPragueResolvedUrl extends IResolvedUrl {
+export interface IPragueResolvedUrl extends IResolvedUrlBase {
     type: "prague";
     url: string;
-    token: string;
+    tokens: { [name: string]: string };
     ordererUrl: string;
     storageUrl: string;
 }
@@ -44,7 +45,7 @@ export interface IUrlResolver {
  * Host provider interfaces
  */
 export interface IHost {
-    tokenProvider: ITokenProvider;
+    tokenProvider?: ITokenProvider;
     resolver: IUrlResolver;
 }
 

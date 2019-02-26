@@ -221,6 +221,11 @@ export interface IDocumentDeltaConnection extends EventEmitter {
 
 export interface IDocumentService {
     /**
+     * Converts a raw set of tokens into a token provider
+     */
+    createTokenProvider(tokens: { [name: string]: string }): Promise<ITokenProvider>;
+
+    /**
      * Access to storage associated with the document...
      */
     connectToStorage(tenantId: string, id: string, tokenProvider: ITokenProvider): Promise<IDocumentStorageService>;

@@ -11,6 +11,10 @@ export class TestDocumentService implements api.IDocumentService {
     constructor(private testDeltaConnectionServer: ITestDeltaConnectionServer) {
     }
 
+    public async createTokenProvider(tokens: { [name: string]: string }): Promise<api.ITokenProvider> {
+        return new socketStorage.TokenProvider(tokens.jwt);
+    }
+
     public async connectToStorage(
         tenantId: string,
         id: string,
@@ -18,6 +22,7 @@ export class TestDocumentService implements api.IDocumentService {
 
         return new TestDocumentStorageService();
     }
+
     public async connectToDeltaStorage(
         tenantId: string,
         id: string,

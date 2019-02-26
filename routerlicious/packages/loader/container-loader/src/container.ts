@@ -11,7 +11,6 @@ import {
     IDocumentService,
     IDocumentStorageService,
     IGenericBlob,
-    IHost,
     ILoader,
     IProposal,
     IRequest,
@@ -21,6 +20,7 @@ import {
     ISequencedDocumentSystemMessage,
     ISequencedProposal,
     ISnapshotTree,
+    ITokenProvider,
     ITree,
     ITreeEntry,
     MessageType,
@@ -54,7 +54,7 @@ export class Container extends EventEmitter {
     public static async Load(
         id: string,
         version: string,
-        containerHost: IHost,
+        tokenProvider: ITokenProvider,
         service: IDocumentService,
         codeLoader: ICodeLoader,
         options: any,
@@ -63,7 +63,7 @@ export class Container extends EventEmitter {
         const container = new Container(
             id,
             options,
-            containerHost,
+            tokenProvider,
             service,
             codeLoader,
             loader);
@@ -149,7 +149,7 @@ export class Container extends EventEmitter {
     constructor(
         id: string,
         public readonly options: any,
-        private containerHost: IHost,
+        private tokenProvider: ITokenProvider,
         private service: IDocumentService,
         private codeLoader: ICodeLoader,
         private loader: ILoader,
@@ -276,7 +276,10 @@ export class Container extends EventEmitter {
         const connect = !specifiedVersion;
 
         // TODO connect to storage needs the token provider
-        const storageP = this.service.connectToStorage(this.tenantId, this.id, this.containerHost.tokenProvider)
+        const storageP = this.service.connectToStorage(
+            this.tenantId,
+            this.id,
+            this.tokenProvider)
             .then((storage) => storage ? new PrefetchDocumentStorageService(storage) : null);
 
         // If a version is specified we will load it directly - otherwise will query historian for the latest
@@ -594,7 +597,7 @@ export class Container extends EventEmitter {
         this._deltaManager = new DeltaManager(
             this.id,
             this.tenantId,
-            this.containerHost.tokenProvider,
+            this.tokenProvider,
             this.service,
             clientDetails);
 

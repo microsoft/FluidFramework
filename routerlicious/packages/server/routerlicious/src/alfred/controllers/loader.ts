@@ -1,11 +1,15 @@
-import { IChaincodeFactory, ICodeLoader, IPraguePackage } from "@prague/container-definitions";
+import {
+    IChaincodeFactory,
+    ICodeLoader,
+    IPraguePackage,
+    IResolvedUrl,
+} from "@prague/container-definitions";
 import { Container, Loader } from "@prague/container-loader";
 import { WebPlatform } from "@prague/loader-web";
 import { ContanierUrlResolver } from "@prague/routerlicious-host";
 import {
     createDocumentService,
     DefaultErrorTracking,
-    TokenProvider,
 } from "@prague/routerlicious-socket-storage";
 import { IComponentRuntime } from "@prague/runtime-definitions";
 import { IGitCache } from "@prague/services-client";
@@ -139,19 +143,25 @@ class LocalPlatform extends WebPlatform {
 }
 
 async function start(
-    token: string,
-    tenantId: string,
-    documentId: string,
-    path: string,
+    url: string,
+    resolved: IResolvedUrl,
     cache: IGitCache,
+    config: any,
     code: string,
     entrypoint: string,
     scriptIds: string[],
     npm: string,
-    config: any,
+    jwt: string,
 ): Promise<void> {
     const errorService = new DefaultErrorTracking();
 
+    // URL resolver for routes
+    const resolver = new ContanierUrlResolver(
+        config.serverUrl,
+        jwt,
+        new Map<string, IResolvedUrl>([[url, resolved]]));
+
+    // Generate driver interface
     const documentServices = createDocumentService(
         document.location.origin,
         config.blobStorageUrl,
@@ -165,23 +175,19 @@ async function start(
     const codeLoader = new WebLoader(npm, code, entrypoint, scriptIds);
     codeLoader.load(code).catch((error) => console.error("script load error", error));
 
-    const resolver = new ContanierUrlResolver(null, null);
-    const tokenProvider = new TokenProvider(token);
     const loader = new Loader(
-        { resolver, tokenProvider },
+        { resolver },
         documentServices,
         codeLoader,
         { blockUpdateMarkers: true });
 
-    const baseUrl =
-        `prague://${document.location.host}/${encodeURIComponent(tenantId)}/${encodeURIComponent(documentId)}`;
-    const container = await loader.resolve({ url: baseUrl });
+    const container = await loader.resolve({ url });
 
     const platform = new LocalPlatform(document.getElementById("content"));
     registerAttach(
         loader,
         container,
-        `${baseUrl}/${path}`,
+        url,
         platform);
 
     // If this is a new document we will go and instantiate the chaincode. For old documents we assume a legacy
@@ -193,11 +199,9 @@ async function start(
 }
 
 export function initialize(
-    tenantId: string,
-    documentId: string,
-    path: string,
+    url: string,
+    resolved: IResolvedUrl,
     cache: IGitCache,
-    token: string,
     config: any,
     chaincode: string,
     entrypoint: string,
@@ -205,17 +209,16 @@ export function initialize(
     npm: string,
     jwt: string,
 ) {
-    console.log(`Loading ${documentId}`);
+    console.log(`Loading ${url}`);
     const startP = start(
-        token,
-        tenantId,
-        documentId,
-        path,
+        url,
+        resolved,
         cache,
+        config,
         chaincode,
         entrypoint,
         scriptIds,
         npm,
-        config);
+        jwt);
     startP.catch((err) => console.error(err));
 }

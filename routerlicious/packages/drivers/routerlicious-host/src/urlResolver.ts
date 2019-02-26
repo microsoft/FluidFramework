@@ -6,22 +6,37 @@ import {
 import Axios from "axios";
 
 export class ContanierUrlResolver implements IUrlResolver {
-    constructor(private baseUrl: string, private jwt: string) {
+    private cache = new Map<string, Promise<IResolvedUrl>>();
+
+    constructor(
+        private baseUrl: string,
+        private jwt: string,
+        cache?: Map<string, IResolvedUrl>,
+    ) {
+        if (cache) {
+            for (const [key, value] of cache) {
+                this.cache.set(key, Promise.resolve(value));
+            }
+        }
     }
 
-    public async resolve(request: IRequest): Promise<IResolvedUrl> {
-        const headers = {
-            Authorization: `Bearer ${this.jwt}`,
-        };
-        const resolved = await Axios.post<IResolvedUrl>(
-            `${this.baseUrl}/api/v1/load`,
-            {
-                url: request.url,
-            },
-            {
-                headers,
-            });
+    public resolve(request: IRequest): Promise<IResolvedUrl> {
+        if (!this.cache.has(request.url)) {
+            const headers = {
+                Authorization: `Bearer ${this.jwt}`,
+            };
+            const resolvedP = Axios.post<IResolvedUrl>(
+                `${this.baseUrl}/api/v1/load`,
+                {
+                    url: request.url,
+                },
+                {
+                    headers,
+                });
 
-        return resolved.data;
+            this.cache.set(request.url, resolvedP.then((resolved) => resolved.data));
+        }
+
+        return this.cache.get(request.url);
     }
 }

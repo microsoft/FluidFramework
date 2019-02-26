@@ -14,6 +14,10 @@ export class DocumentService implements api.IDocumentService {
         private readonly webSocketUrl: string) {
     }
 
+    public async createTokenProvider(tokens: { [name: string]: string }): Promise<api.ITokenProvider> {
+        return new TokenProvider(tokens.storageToken, tokens.socketToken);
+    }
+
     public async connectToStorage(
         tenantId: string,
         id: string,
