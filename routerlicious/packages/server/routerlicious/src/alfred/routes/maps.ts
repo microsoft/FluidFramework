@@ -1,6 +1,9 @@
+import { IPragueResolvedUrl } from "@prague/container-definitions";
 import { IAlfredTenant, IDocumentStorage, ITenantManager } from "@prague/services-core";
 import { Router } from "express";
+import * as jwt from "jsonwebtoken";
 import { Provider } from "nconf";
+import { parse } from "url";
 import * as utils from "../utils";
 import { defaultPartials } from "./partials";
 
@@ -14,77 +17,16 @@ export function create(
     const router: Router = Router();
 
     /**
-     * Loads count number of latest commits.
-     */
-    router.get("/:tenantId?/:id/commits", ensureLoggedIn(), (request, response, next) => {
-        const tenantId = request.params.tenantId || appTenants[0].id;
-        const versionsP = storage.getVersions(tenantId, request.params.id, 30);
-
-        versionsP.then(
-            (versions) => {
-                response.render(
-                    "commits",
-                    {
-                        documentId: request.params.id,
-                        partials: defaultPartials,
-                        tenantId,
-                        type: "maps",
-                        versions: JSON.stringify(versions),
-                    });
-        }, (error) => {
-            response.status(400).json(error);
-        });
-    });
-
-    /**
-     * Loading of a specific version of shared text.
-     */
-    router.get("/:tenantId?/:id/commit", ensureLoggedIn(), async (request, response, next) => {
-        const tenantId = request.params.tenantId || appTenants[0].id;
-
-        const targetVersionSha = request.query.version;
-        const workerConfigP = utils.getConfig(
-            config.get("worker"),
-            tenantManager,
-            tenantId,
-            config.get("error:track"),
-            config.get("client"));
-        const versionsP = storage.getVersion(
-            request.params.tenantid,
-            request.params.id,
-            targetVersionSha);
-
-        const user: utils.IAlfredUser = (request.user) ? {
-            displayName: request.user.name,
-            id: request.user.oid,
-            name: request.user.name,
-        } : undefined;
-        const token = utils.getToken(tenantId, request.params.id, appTenants, user);
-
-        Promise.all([workerConfigP, versionsP]).then((values) => {
-            response.render(
-                "maps",
-                {
-                    config: values[0],
-                    documentId: request.params.id,
-                    loadPartial: true,
-                    partials: defaultPartials,
-                    tenantId,
-                    title: request.params.id,
-                    token,
-                    version: JSON.stringify(values[1]),
-                });
-        },
-        (error) => {
-            response.status(400).json(error);
-        });
-    });
-
-    /**
      * Loading of a specific shared map
      */
     router.get("/:tenantId?/:id", ensureLoggedIn(), async (request, response, next) => {
         const tenantId = request.params.tenantId || appTenants[0].id;
+
+        const jwtToken = jwt.sign(
+            {
+                user: request.user,
+            },
+            config.get("alfred:key"));
 
         const workerConfigP = utils.getConfig(
             config.get("worker"),
@@ -98,22 +40,32 @@ export function create(
             displayName: request.user.name,
             id: request.user.oid,
             name: request.user.name,
-    } : undefined;
+        } : undefined;
 
         const token = utils.getToken(tenantId, request.params.id, appTenants, user);
 
         Promise.all([workerConfigP, versionP]).then((values) => {
+            const pragueUrl = "prague://" +
+                `${parse(config.get("worker:serverUrl")).host}/` +
+                `${encodeURIComponent(tenantId)}/` +
+                `${encodeURIComponent(request.params.id)}`;
+            const resolved: IPragueResolvedUrl = {
+                ordererUrl: config.get("worker:serverUrl"),
+                storageUrl: config.get("worker:blobStorageUrl"),
+                tokens: { jwt: token },
+                type: "prague",
+                url: pragueUrl,
+            };
+
             response.render(
                 "maps",
                 {
                     config: values[0],
-                    documentId: request.params.id,
+                    jwt: jwtToken,
                     loadPartial: false,
                     partials: defaultPartials,
-                    tenantId,
+                    resolved: JSON.stringify(resolved),
                     title: request.params.id,
-                    token,
-                    version: JSON.stringify(values[1]),
                 });
         }, (error) => {
             response.status(400).json(error);

@@ -1,9 +1,16 @@
 import * as agent from "@prague/agent";
 import { SharedObject } from "@prague/api-definitions";
 import * as api from "@prague/client-api";
-import { Browser, IClient, IHost } from "@prague/container-definitions";
-import * as Map from "@prague/map";
-import { ContanierUrlResolver } from "@prague/routerlicious-host";
+import { Browser, IClient, IHost, IPragueResolvedUrl, IResolvedUrl } from "@prague/container-definitions";
+import {
+    Counter,
+    CounterValueType,
+    DistributedSet,
+    DistributedSetValueType,
+    ISharedMap,
+    IValueChanged,
+} from "@prague/map";
+import { ContainerUrlResolver } from "@prague/routerlicious-host";
 import * as $ from "jquery";
 // tslint:disable-next-line:no-var-requires
 import { registerDocumentServices } from "./utils";
@@ -20,7 +27,7 @@ async function loadDocument(url: string, host: IHost): Promise<api.Document> {
     return document;
 }
 
-async function updateOrCreateKey(key: string, map: Map.ISharedMap, container: JQuery, doc: api.Document) {
+async function updateOrCreateKey(key: string, map: ISharedMap, container: JQuery, doc: api.Document) {
     const value = await map.get(key);
 
     let keyElement = container.find(`>.${key}`);
@@ -38,10 +45,10 @@ async function updateOrCreateKey(key: string, map: Map.ISharedMap, container: JQ
         }
     } else {
         if (key === "set") {
-            const set = value as Map.DistributedSet<number>;
+            const set = value as DistributedSet<number>;
             keyElement.text(`${key}: ${JSON.stringify(set.entries())}`);
         } else if (key === "counter") {
-            const counter = value as Map.Counter;
+            const counter = value as Counter;
             keyElement.text(`${key}: ${counter.value}`);
         } else {
             keyElement.text(`${key}: ${JSON.stringify(value)}`);
@@ -49,7 +56,7 @@ async function updateOrCreateKey(key: string, map: Map.ISharedMap, container: JQ
     }
 }
 
-function displayValues(map: Map.ISharedMap, container: JQuery, doc: api.Document) {
+function displayValues(map: ISharedMap, container: JQuery, doc: api.Document) {
     const keys = map.keys();
     const keyArr = [] as string[];
     for (const key of keys) {
@@ -63,7 +70,7 @@ function displayValues(map: Map.ISharedMap, container: JQuery, doc: api.Document
     }
 
     // Listen and process updates
-    map.on("valueChanged", async (changed: Map.IValueChanged) => {
+    map.on("valueChanged", async (changed: IValueChanged) => {
         updateOrCreateKey(changed.key, map, values, doc);
     });
 
@@ -73,9 +80,9 @@ function displayValues(map: Map.ISharedMap, container: JQuery, doc: api.Document
 /**
  * Displays the keys in the map
  */
-async function displayMap(parentElement: JQuery, key: string, map: Map.ISharedMap,
+async function displayMap(parentElement: JQuery, key: string, map: ISharedMap,
     // tslint:disable-next-line: align
-    parent: Map.ISharedMap, doc: api.Document) {
+    parent: ISharedMap, doc: api.Document) {
     const header = key !== null ? $(`<h2>${key}: ${map.id}</h2>`) : $(`<h2>${map.id}</h2>`);
 
     if (key !== null) {
@@ -120,15 +127,15 @@ async function displayMap(parentElement: JQuery, key: string, map: Map.ISharedMa
 /**
  * Randomly changes the values in the map
  */
-async function randomizeMap(map: Map.ISharedMap) {
+async function randomizeMap(map: ISharedMap) {
     // link up the randomize button
     const keys = ["foo", "bar", "baz", "binky", "winky", "twinkie"];
 
-    const counter: Map.Counter =
-        map.set("counter", undefined, Map.CounterValueType.Name).
+    const counter: Counter =
+        map.set("counter", undefined, CounterValueType.Name).
             get("counter");
-    const set: Map.DistributedSet<number> =
-        map.set("set", [1, 2, 3, 3, 2, 4], Map.DistributedSetValueType.Name).
+    const set: DistributedSet<number> =
+        map.set("set", [1, 2, 3, 3, 2, 4], DistributedSetValueType.Name).
             get("set");
 
     setInterval(async () => {
@@ -143,19 +150,19 @@ async function randomizeMap(map: Map.ISharedMap) {
     }, 1000);
 }
 
-export async function load(
-    url: string,
-    config: any,
-    loadPartial: boolean) {
+export async function load(resolved: IPragueResolvedUrl, jwt: string, config: any) {
 
-    const resolver = new ContanierUrlResolver(null, null);
+    const resolver = new ContainerUrlResolver(
+        document.location.origin,
+        jwt,
+        new Map<string, IResolvedUrl>([[resolved.url, resolved]]));
     const host = { resolver };
 
     registerDocumentServices(config);
 
     $(document).ready(() => {
         // Bootstrap worker service.
-        loadDocument(url, host).then(async (doc) => {
+        loadDocument(resolved.url, host).then(async (doc) => {
             // tslint:disable-next-line
             window["doc"] = doc;
 

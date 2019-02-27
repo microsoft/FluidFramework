@@ -8,7 +8,8 @@ export class PaparazziResources implements utils.IResources {
     constructor(
         public workerConfig: any,
         public messageReceiver: core.ITaskMessageReceiver,
-        public agentUploader: core.IAgentUploader) {
+        public agentUploader: core.IAgentUploader,
+        public jwtKey: string) {
     }
 
     public async dispose(): Promise<void> {
@@ -20,6 +21,7 @@ export class PaparazziResourcesFactory implements utils.IResourcesFactory<Papara
     public async create(config: Provider): Promise<PaparazziResources> {
         const workerConfig = config.get("worker");
         const queueName = config.get("paparazzi:queue");
+        const jwtKey = config.get("alfred:key");
 
         const rabbitmqConfig = config.get("rabbitmq");
         const minioConfig = config.get("minio");
@@ -27,7 +29,7 @@ export class PaparazziResourcesFactory implements utils.IResourcesFactory<Papara
         const messageReceiver = services.createMessageReceiver(rabbitmqConfig, queueName);
         const agentUploader = services.createUploader("minio", minioConfig);
 
-        return new PaparazziResources(workerConfig, messageReceiver, agentUploader);
+        return new PaparazziResources(workerConfig, messageReceiver, agentUploader, jwtKey);
     }
 }
 
@@ -36,6 +38,7 @@ export class PaparazziRunnerFactory implements utils.IRunnerFactory<PaparazziRes
         return new PaparazziRunner(
             resources.workerConfig,
             resources.messageReceiver,
-            resources.agentUploader);
+            resources.agentUploader,
+            resources.jwtKey);
     }
 }

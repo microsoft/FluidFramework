@@ -6,7 +6,7 @@ import {
 } from "@prague/container-definitions";
 import { Container, Loader } from "@prague/container-loader";
 import { WebPlatform } from "@prague/loader-web";
-import { ContanierUrlResolver } from "@prague/routerlicious-host";
+import { ContainerUrlResolver } from "@prague/routerlicious-host";
 import {
     createDocumentService,
     DefaultErrorTracking,
@@ -156,7 +156,7 @@ async function start(
     const errorService = new DefaultErrorTracking();
 
     // URL resolver for routes
-    const resolver = new ContanierUrlResolver(
+    const resolver = new ContainerUrlResolver(
         config.serverUrl,
         jwt,
         new Map<string, IResolvedUrl>([[url, resolved]]));

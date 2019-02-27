@@ -1,13 +1,10 @@
 /* tslint:disable:no-unsafe-any */
 /* tslint:disable:no-backbone-get-set-outside-model  */
 import * as api from "@prague/client-api";
-import { MessageType } from "@prague/container-definitions";
+import { IPragueResolvedUrl, IRequest, IResolvedUrl, IUrlResolver, MessageType } from "@prague/container-definitions";
 import { ISharedMap } from "@prague/map";
-import { ContanierUrlResolver } from "@prague/routerlicious-host";
-import * as socketStorage from "@prague/routerlicious-socket-storage";
 import { generateToken } from "@prague/services-core";
 import * as assert from "assert";
-
 import {
     createTestDocumentService,
     DocumentDeltaEventManager,
@@ -15,10 +12,26 @@ import {
     TestDeltaConnectionServer,
 } from "..";
 
+class TestResolver implements IUrlResolver {
+    private id = "documentId";
+    private tenantId = "tenantId";
+    private tokenKey = "tokenKey";
+
+    public async resolve(request: IRequest): Promise<IResolvedUrl> {
+        const resolved: IPragueResolvedUrl = {
+            ordererUrl: "test.com",
+            storageUrl: "test.com",
+            tokens: { jwt: generateToken(this.tenantId, this.id, this.tokenKey) },
+            type: "prague",
+            url: `prague://test.com/${this.tenantId}/${this.id}`,
+        };
+
+        return resolved;
+    }
+}
+
 describe("Map", () => {
-    const id = "documentId";
-    const tenantId = "tenantId";
-    const tokenKey = "tokenKey";
+    const id = "prague://test.com/test/test";
 
     let testDeltaConnectionServer: ITestDeltaConnectionServer;
     let documentDeltaEventManager: DocumentDeltaEventManager;
@@ -30,24 +43,20 @@ describe("Map", () => {
     let root3: ISharedMap;
 
     beforeEach(async () => {
-
         testDeltaConnectionServer = TestDeltaConnectionServer.Create();
         documentDeltaEventManager = new DocumentDeltaEventManager(testDeltaConnectionServer);
         const documentService = createTestDocumentService(testDeltaConnectionServer);
-        const resolver = new ContanierUrlResolver(null, null);
-        const tokenProvider1 = new socketStorage.TokenProvider(generateToken(tenantId, id, tokenKey));
-        const tokenProvider2 = new socketStorage.TokenProvider(generateToken(tenantId, id, tokenKey));
-        const tokenProvider3 = new socketStorage.TokenProvider(generateToken(tenantId, id, tokenKey));
+        const resolver = new TestResolver();
         user1Document = await api.load(
-            id, tenantId, { resolver, tokenProvider: tokenProvider1 }, {}, null, true, documentService);
+            id, { resolver }, {}, documentService);
         documentDeltaEventManager.registerDocuments(user1Document);
 
         user2Document = await api.load(
-            id, tenantId, { resolver, tokenProvider: tokenProvider2 }, {}, null, true, documentService);
+            id, { resolver }, {}, documentService);
         documentDeltaEventManager.registerDocuments(user2Document);
 
         user3Document = await api.load(
-            id, tenantId, { resolver, tokenProvider: tokenProvider3 }, {}, null, true, documentService);
+            id, { resolver }, {}, documentService);
         documentDeltaEventManager.registerDocuments(user3Document);
         root1 = user1Document.getRoot();
         root2 = user2Document.getRoot();

@@ -1,6 +1,7 @@
 import * as api from "@prague/client-api";
 import { Browser, IDocumentService, IHost } from "@prague/container-definitions";
 import { EventEmitter } from "events";
+import { parse } from "url";
 import { IDocumentTaskInfo } from "./definitions";
 import { runAfterWait } from "./utils";
 
@@ -26,7 +27,7 @@ export class BaseWork extends EventEmitter {
         private conf: any) {
         super();
         this.config = this.conf;
-        this.url = `prague://${alfred}/${encodeURIComponent(tenantId)}/${encodeURIComponent(id)}`;
+        this.url = `prague://${parse(alfred).host}/${encodeURIComponent(tenantId)}/${encodeURIComponent(id)}`;
     }
 
     public async loadDocument(

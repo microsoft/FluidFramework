@@ -1,5 +1,4 @@
 import { IChaincodeFactory } from "./chaincode";
-import { ITokenProvider } from "./tokens";
 
 /**
  * Code loading interface
@@ -45,7 +44,6 @@ export interface IUrlResolver {
  * Host provider interfaces
  */
 export interface IHost {
-    tokenProvider?: ITokenProvider;
     resolver: IUrlResolver;
 }
 

@@ -1,6 +1,6 @@
 import * as api from "@prague/client-api";
 import * as Map from "@prague/map";
-import { ContanierUrlResolver } from "@prague/routerlicious-host";
+import { ContainerUrlResolver } from "@prague/routerlicious-host";
 import * as socketStorage from "@prague/routerlicious-socket-storage";
 import { Deferred } from "@prague/utils";
 import * as jwt from "jsonwebtoken";
@@ -62,7 +62,7 @@ export async function run(
     const url = `prague://${routerlicious}/${encodeURIComponent(tenantId)}/${encodeURIComponent(id)}`;
 
     // Load in the latest and connect to the document
-    const resolver = new ContanierUrlResolver(routerlicious, null);
+    const resolver = new ContainerUrlResolver(routerlicious, null);
     const tokenProvider = new socketStorage.TokenProvider(token);
     const host = { tokenProvider, resolver };
 

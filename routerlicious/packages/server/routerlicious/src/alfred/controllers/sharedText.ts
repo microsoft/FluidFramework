@@ -3,11 +3,10 @@ import * as agent from "@prague/agent";
 import * as API from "@prague/client-api";
 import { controls, ui } from "@prague/client-ui";
 import { Browser, IClient, IPragueResolvedUrl, IResolvedUrl } from "@prague/container-definitions";
-import * as resources from "@prague/gitresources";
 import * as DistributedMap from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
 import * as replaySocketStorage from "@prague/replay-socket-storage";
-import { ContanierUrlResolver } from "@prague/routerlicious-host";
+import { ContainerUrlResolver } from "@prague/routerlicious-host";
 import * as socketStorage from "@prague/routerlicious-socket-storage";
 import * as Sequence from "@prague/sequence";
 import { IGitCache } from "@prague/services-client";
@@ -59,9 +58,6 @@ async function addTranslation(document: API.Document, id: string, language: stri
 }
 
 export async function load(
-    id: string,
-    version: resources.ICommit,
-    token: string,
     resolved: IPragueResolvedUrl,
     jwt: string,
     seedData: IGitCache,
@@ -69,28 +65,23 @@ export async function load(
     disableCache: boolean,
     config: any,
     template: string,
-    connect: boolean,
     options: Object,
-    credentials: { tenant: string, key: string },
     from: number,
     to: number) {
 
     API.registerChaincodeRepo(config.npm);
-    API.registerDefaultCredentials(credentials);
 
     console.log(`Load Option: ${JSON.stringify(options)}`);
     loadDocument(
-        id, version, token, resolved, jwt, seedData, pageInk, disableCache, config,
-        template, connect, options, from, to)
+        resolved, jwt, seedData,
+        pageInk, disableCache, config,
+        template, options, from, to)
         .catch((error) => {
             console.error(error);
         });
 }
 
 async function loadDocument(
-    id: string,
-    version: resources.ICommit,
-    token: string,
     resolved: IPragueResolvedUrl,
     jwt: string,
     seedData: IGitCache,
@@ -98,7 +89,6 @@ async function loadDocument(
     disableCache: boolean,
     config: any,
     template: string,
-    connect: boolean,
     options: Object,
     from: number,
     to: number) {
@@ -121,14 +111,13 @@ async function loadDocument(
             seedData);
     API.registerDocumentService(documentService);
 
-    const resolver = new ContanierUrlResolver(
+    const resolver = new ContainerUrlResolver(
         document.location.origin,
         jwt,
-        new Map<string, IResolvedUrl>([[window.location.href, resolved]]));
+        new Map<string, IResolvedUrl>([[resolved.url, resolved]]));
 
-    console.log(`Document loading ${id}: ${performanceNow()}`);
-    const tokenProvider = new socketStorage.TokenProvider(token);
-    const apiHost = { resolver, tokenProvider };
+    console.log(`Document loading ${resolved.url}: ${performanceNow()}`);
+    const apiHost = { resolver };
 
     const collabDoc = await API.load(
         resolved.url,
@@ -141,9 +130,9 @@ async function loadDocument(
         agent.registerToWork(document.location.origin, collabDoc, client, apiHost, config);
     }
 
-    console.log(`Document loaded ${id}: ${performanceNow()}`);
+    console.log(`Document loaded ${resolved.url}: ${performanceNow()}`);
     const root = await collabDoc.getRoot();
-    console.log(`Getting root ${id} - ${performanceNow()}`);
+    console.log(`Getting root ${resolved.url} - ${performanceNow()}`);
 
     collabDoc.on("clientJoin", (message) => {
         console.log(`${JSON.stringify(message)} joined`);
@@ -156,7 +145,7 @@ async function loadDocument(
 
     // If a text element already exists load it directly - otherwise load in pride + prejudice
     if (!collabDoc.existing) {
-        console.log(`Not existing ${id} - ${performanceNow()}`);
+        console.log(`Not existing ${resolved.url} - ${performanceNow()}`);
         root.set("presence", collabDoc.createMap());
         root.set("users", collabDoc.createMap());
         root.set("calendar", undefined, Sequence.SharedIntervalCollectionValueType.Name);
@@ -191,7 +180,7 @@ async function loadDocument(
     const sharedString = root.get("text") as Sequence.SharedString;
     console.log(`Shared string ready - ${performanceNow()}`);
     console.log(window.navigator.userAgent);
-    console.log(`id is ${id}`);
+    console.log(`id is ${resolved.url}`);
     console.log(`Partial load fired - ${performanceNow()}`);
 
     // Higher plane ink
@@ -233,6 +222,6 @@ async function loadDocument(
 
     sharedString.loaded.then(() => {
         theFlow.loadFinished(clockStart);
-        console.log(`fully loaded ${id}: ${performanceNow()} `);
+        console.log(`fully loaded ${resolved.url}: ${performanceNow()} `);
     });
 }

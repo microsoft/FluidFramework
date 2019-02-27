@@ -101,6 +101,19 @@ export function create(
             targetVersionSha);
 
         Promise.all([workerConfigP, versionP]).then((values) => {
+            const pragueUrl = "prague://" +
+                `${parse(config.get("worker:serverUrl")).host}/` +
+                `${encodeURIComponent(tenantId)}/` +
+                `${encodeURIComponent(request.params.id)}` +
+                `?version=${values[1].sha}`;
+            const resolved: IPragueResolvedUrl = {
+                ordererUrl: config.get("worker:serverUrl"),
+                storageUrl: config.get("worker:blobStorageUrl"),
+                tokens: { jwt: token },
+                type: "prague",
+                url: pragueUrl,
+            };
+
             const options = {
                 spellchecker: "disabled",
             };
@@ -108,18 +121,15 @@ export function create(
                 "sharedText",
                 {
                     config: values[0],
-                    connect: false,
                     disableCache,
-                    documentId: request.params.id,
                     from: Number.NaN,
                     options: JSON.stringify(options),
                     pageInk: request.query.pageInk === "true",
                     partials: defaultPartials,
+                    resolved: JSON.stringify(resolved),
                     template: undefined,
-                    tenantId,
                     title: request.params.id,
                     to: Number.NaN,
-                    token,
                     version: JSON.stringify(values[1]),
                 });
         }, (error) => {
@@ -160,9 +170,6 @@ export function create(
                 user: request.user,
             },
             config.get("alfred:key"));
-
-        // Temporary until we allow tokens that can access multiple documents
-        const tenant = appTenants.find((appTenant) => appTenant.id === tenantId);
 
         const workerConfigP = getConfig(
             config.get("worker"),
@@ -210,25 +217,18 @@ export function create(
                 "sharedText",
                 {
                     cache: JSON.stringify(fullTree.cache),
-                    code: fullTree.code,
                     config: workerConfig,
-                    connect: true,
                     disableCache,
-                    documentId: request.params.id,
                     from,
                     jwt: jwtToken,
-                    key: tenant.key,
                     options: JSON.stringify(options),
                     pageInk: request.query.pageInk === "true",
                     partials: defaultPartials,
                     resolved: JSON.stringify(resolved),
                     template,
-                    tenantId,
                     timings: JSON.stringify(timings),
                     title: request.params.id,
                     to,
-                    token,
-                    version: JSON.stringify(null),
                 });
             }, (error) => {
                 response.status(400).json(safeStringify(error));

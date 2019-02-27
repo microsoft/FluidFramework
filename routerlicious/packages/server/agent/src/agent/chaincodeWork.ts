@@ -6,11 +6,13 @@ import {
 } from "@prague/container-definitions";
 import { Loader } from "@prague/container-loader";
 import { EventEmitter } from "events";
+import { parse } from "url";
 import { IWork } from "./definitions";
 
 export class ChaincodeWork extends EventEmitter implements IWork {
     private events = new EventEmitter();
     constructor(
+        private readonly alfred: string,
         private readonly docId: string,
         private readonly tenantId: string,
         private readonly host: IHost,
@@ -29,7 +31,7 @@ export class ChaincodeWork extends EventEmitter implements IWork {
             null);
 
         const url =
-            `prague://prague.com/` +
+            `prague://${parse(this.alfred).host}/` +
             `${encodeURIComponent(this.tenantId)}/${encodeURIComponent(this.docId)}`;
         const document = await loader.resolve({ url });
         const quorum = document.getQuorum();

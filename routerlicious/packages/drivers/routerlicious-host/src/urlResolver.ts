@@ -5,7 +5,7 @@ import {
 } from "@prague/container-definitions";
 import Axios from "axios";
 
-export class ContanierUrlResolver implements IUrlResolver {
+export class ContainerUrlResolver implements IUrlResolver {
     private cache = new Map<string, Promise<IResolvedUrl>>();
 
     constructor(

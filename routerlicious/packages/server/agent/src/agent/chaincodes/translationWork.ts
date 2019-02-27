@@ -8,12 +8,14 @@ import { ChaincodeWork } from "./chaincodeWork";
 
 export class TranslationWork extends ChaincodeWork implements IWork {
     constructor(
+        alfred: string,
         docId: string,
         tenantId: string,
         host: IHost,
         service: IDocumentService,
-        codeLoader: ICodeLoader) {
-        super(docId, tenantId, host, service, codeLoader);
+        codeLoader: ICodeLoader,
+    ) {
+        super(alfred, docId, tenantId, host, service, codeLoader);
     }
 
     public async start(): Promise<void> {

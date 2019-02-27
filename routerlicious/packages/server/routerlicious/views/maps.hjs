@@ -13,10 +13,10 @@
         <script src="{{#hfurl}}/public/scripts/dist/controller.js{{/hfurl}}"></script>
         <script>
             var config = {{{ config }}};
-            var version = {{{ version }}};
-            var loadPartial = {{{ loadPartial }}};
-            var token = "{{ token }}";
-            controller.maps.load("{{ documentId }}", version, token, config, loadPartial);
+            var resolved = {{{ resolved }}};
+            var jwt = "{{ jwt }}";
+
+            controller.maps.load(resolved, jwt, config);
         </script>
     {{/scripts}}
 {{/layout}}

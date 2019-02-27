@@ -3,7 +3,9 @@ import {
     IClientJoin,
     IDocumentMessage,
     IDocumentSystemMessage,
+    IResolvedUrl,
     ITokenClaims,
+    IWebResolvedUrl,
     MessageType,
     Robot,
 } from "@prague/container-definitions";
@@ -16,7 +18,6 @@ import * as moniker from "moniker";
 import { Provider } from "nconf";
 import passport = require("passport");
 import { parse, UrlWithStringQuery } from "url";
-import winston = require("winston");
 import { getToken, IAlfredUser } from "../../utils";
 
 interface IOperation {
@@ -25,29 +26,13 @@ interface IOperation {
     value: string;
 }
 
-interface IContainerDetails {
-    url: string;
-    token: string;
-
-    // Unclear if we want to specify these or rely on the url above
-    orderer: string;
-    storage: string;
-    documentId: string;
-    path: string;
-    pathname: string;
-    tenantId: string;
-}
-
-interface IUrlDetails {
-    data: string;
-}
-
 // Although probably the case we want a default behavior here. Maybe just the URL?
-async function getExternalComponent(url: UrlWithStringQuery): Promise<IUrlDetails> {
+async function getExternalComponent(url: UrlWithStringQuery): Promise<IWebResolvedUrl> {
     const result = await Axios.get(url.href);
 
     return {
         data: result.data,
+        type: "web",
     };
 }
 
@@ -56,8 +41,10 @@ async function getInternalComponent(
     config: Provider,
     url: UrlWithStringQuery,
     appTenants: core.IAlfredTenant[],
-): Promise<IUrlDetails | IContainerDetails> {
-    const regex = /^\/loader\/([^\/]*)\/([^\/]*)(\/?.*)$/;
+): Promise<IResolvedUrl> {
+    const regex = url.protocol === "prague:"
+        ? /^\/([^\/]*)\/([^\/]*)(\/?.*)$/
+        : /^\/loader\/([^\/]*)\/([^\/]*)(\/?.*)$/;
     const match = url.path.match(regex);
 
     if (!match) {
@@ -79,13 +66,10 @@ async function getInternalComponent(
     const token = getToken(tenantId, documentId, appTenants, user);
 
     return {
-        documentId,
-        orderer,
-        path,
-        pathname: url.pathname,
-        storage,
-        tenantId,
-        token,
+        ordererUrl: orderer,
+        storageUrl: storage,
+        tokens: { jwt: token },
+        type: "prague",
         url: `prague://${url.host}/${tenantId}/${documentId}${path}${url.hash ? url.hash : ""}`,
     };
 }
@@ -102,10 +86,6 @@ export function create(
     const alfred = parse(config.get("worker:serverUrl"));
 
     router.post("/load", passport.authenticate("jwt", { session: false }), (request, response) => {
-        winston.info("/load", request.user);
-        winston.info("/load URL", request.body.url);
-
-        // Ok.... so we get a URL
         const url = parse(request.body.url);
 
         const resultP = alfred.host === url.host

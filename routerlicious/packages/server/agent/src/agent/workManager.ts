@@ -79,6 +79,7 @@ export class WorkManager extends EventEmitter implements IWorkManager {
                     documentId,
                     workType,
                     new chaincode.SnapshotWork(
+                        alfred,
                         documentId,
                         tenantId,
                         host,
@@ -91,6 +92,7 @@ export class WorkManager extends EventEmitter implements IWorkManager {
                     documentId,
                     workType,
                     new chaincode.IntelWork(
+                        alfred,
                         documentId,
                         tenantId,
                         host,
@@ -107,6 +109,7 @@ export class WorkManager extends EventEmitter implements IWorkManager {
                         documentId,
                         workType,
                         new chaincode.SpellcheckerWork(
+                            alfred,
                             documentId,
                             tenantId,
                             host,
@@ -120,6 +123,7 @@ export class WorkManager extends EventEmitter implements IWorkManager {
                     documentId,
                     workType,
                     new chaincode.TranslationWork(
+                        alfred,
                         documentId,
                         tenantId,
                         host,

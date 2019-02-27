@@ -2,8 +2,7 @@ import { ICell } from "@prague/cell";
 import * as api from "@prague/client-api";
 import { ISequencedDocumentMessage } from "@prague/container-definitions";
 import * as MergeTree from "@prague/merge-tree";
-import { ContanierUrlResolver } from "@prague/routerlicious-host";
-import * as socketStorage from "@prague/routerlicious-socket-storage";
+import { ContainerUrlResolver } from "@prague/routerlicious-host";
 import * as Sequence from "@prague/sequence";
 import * as queue from "async/queue";
 import clone = require("lodash/clone");
@@ -231,13 +230,12 @@ function combine(first: number[], second: number[], combineCb: (a, b) => number)
     return result;
 }
 
-async function setMetrics(doc: api.Document, token: string, resolver: ContanierUrlResolver) {
-    const tokenProvider = new socketStorage.TokenProvider(token);
-    const host = { tokenProvider, resolver };
+async function setMetrics(urlBase: string, doc: api.Document, resolver: ContainerUrlResolver) {
+    const host = { resolver };
 
     // And also load a canvas document where we will place the metrics
     const metricsDoc = await api.load(
-        `${doc.id}-metrics`,
+        `${urlBase}/${doc.id}-metrics`,
         host,
         {});
     const root = metricsDoc.getRoot();
@@ -263,15 +261,14 @@ async function setMetrics(doc: api.Document, token: string, resolver: ContanierU
     histogramChart.set("data", histogramData);
 }
 
-export async function typeFile(
+export async function typeFile2(
+    urlBase: string,
     doc: api.Document,
-    resolver: ContanierUrlResolver,
+    resolver: ContainerUrlResolver,
     ss: Sequence.SharedString,
     fileText: string,
     intervalTime: number,
     writers: number,
-    documentToken: string,
-    metricsToken: string,
     scribeCallback: ScribeMetricsCallback): Promise<IScribeMetrics> {
 
     const metricsArray: IScribeMetrics[] = [];
@@ -297,7 +294,7 @@ export async function typeFile(
         writers,
     };
 
-    await setMetrics(doc, metricsToken, resolver);
+    await setMetrics(urlBase, doc, resolver);
 
     const m: IScribeMetrics = {
         ackProgress: undefined,
@@ -333,14 +330,13 @@ export async function typeFile(
     const ssList: Sequence.SharedString[] = [ss];
 
     for (let i = 1; i < writers; i++) {
-        const tokenProvider = new socketStorage.TokenProvider(documentToken);
-        const host = { tokenProvider, resolver };
+        const host = { resolver };
 
-        docList.push(await api.load(doc.id, host, {}));
+        docList.push(await api.load(`${urlBase}/${doc.id}`, host, {}));
         ssList.push(await docList[i].getRoot().get("text") as Sequence.SharedString);
         author = {
             ackCounter: new Counter(),
-            doc: await api.load(doc.id, host, {}),
+            doc: await api.load(`${urlBase}/${doc.id}`, host, {}),
             latencyCounter: new Counter(),
             metrics: clone(m),
             pingCounter: new Counter(),

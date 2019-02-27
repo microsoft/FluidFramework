@@ -1,4 +1,4 @@
-import { ContanierUrlResolver } from "@prague/routerlicious-host";
+import { ContainerUrlResolver } from "@prague/routerlicious-host";
 import * as scribe from "@prague/tools-core";
 import * as request from "request";
 import * as url from "url";
@@ -120,9 +120,9 @@ function addLink(element: HTMLDivElement, link: string) {
 
 export function initialize(
     config: any,
+    baseUrl: string,
     id: string,
-    token: string,
-    metricsToken: string,
+    jwt: string,
     template: string,
     speed: number,
     authors: number,
@@ -144,7 +144,9 @@ export function initialize(
     const ackProgress = document.getElementById("ack-progress") as HTMLElement;
     const ackProgressBar = ackProgress.getElementsByClassName("progress-bar")[0] as HTMLElement;
 
-    const resolver = new ContanierUrlResolver(null, null);
+    const resolver = new ContainerUrlResolver(
+        document.location.origin,
+        jwt);
 
     // Set the speed and translation elements
     intervalElement.value = speed.toString();
@@ -178,7 +180,7 @@ export function initialize(
 
         intervalTime = Number.parseInt(intervalElement.value, 10);
         authorCount = Number.parseInt(authorElement.value, 10);
-        const scribeP = scribe.create(id, resolver, token, text);
+        const scribeP = scribe.create(baseUrl, id, resolver, text);
 
         scribeP.then(() => {
             const linkList = document.getElementById("link-list") as HTMLDivElement;
@@ -223,12 +225,11 @@ export function initialize(
 
             // Start typing and register to update the UI
             const typeP = scribe.type(
+                baseUrl,
                 intervalTime,
                 text,
                 authorCount,
                 1,
-                token,
-                metricsToken,
                 resolver,
                 (metrics) => updateMetrics(metrics, ackProgressBar, typingProgressBar));
 
