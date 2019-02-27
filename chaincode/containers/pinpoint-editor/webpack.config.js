@@ -61,7 +61,7 @@ module.exports = {
         chunkFilename: '[name].async.js',
         path: path.resolve(__dirname, 'dist'),
         publicPath: "/dist/",
-        library: "[name]",
+        library: "pinpoint",
         libraryTarget: "umd"
     },
     plugins: [

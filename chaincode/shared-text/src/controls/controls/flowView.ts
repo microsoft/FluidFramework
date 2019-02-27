@@ -413,21 +413,15 @@ const commands: ICmd[] = [
     },
     {
         exec: (f) => {
-            f.insertChaincode("map", "@chaincode/pinpoint-editor@0.6.15");
+            f.insertInnerComponent("map", "@chaincode/pinpoint-editor");
         },
         key: "insert map",
     },
     {
         exec: (f) => {
-            f.insertInnerComponent("map", "@chaincode/pinpoint-editor");
-        },
-        key: "insert inner map",
-    },
-    {
-        exec: (f) => {
             f.insertInnerComponent("chart", "@chaincode/charts");
         },
-        key: "insert inner chart",
+        key: "insert chart",
     },
     {
         exec: (f) => {
@@ -437,21 +431,12 @@ const commands: ICmd[] = [
     },
     {
         exec: (f) => {
-            f.insertChaincode("code", "@chaincode/monaco@0.1.18");
+            (navigator as any).clipboard.readText().then((text) => {
+                console.log(`Inserting ${text}`);
+                f.insertDocument(text);
+            });
         },
-        key: "insert code",
-    },
-    {
-        exec: (f) => {
-            f.insertChaincode("chart", "@chaincode/charts@0.7.3");
-        },
-        key: "insert ivy",
-    },
-    {
-        exec: (f) => {
-            f.insertChaincode("scriptor", "@ms/scriptor@0.23.25");
-        },
-        key: "insert scriptor",
+        key: "paste component",
     },
 ];
 
@@ -5081,8 +5066,8 @@ export class FlowView extends ui.Component {
     }
 
     /** Insert a Document */
-    public insertDocument(id) {
-        this.insertComponent("document", { id });
+    public insertDocument(url) {
+        this.insertComponent("document", { url });
     }
 
     /** Insert a Formula box to display the given 'formula'. */

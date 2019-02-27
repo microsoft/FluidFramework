@@ -69,7 +69,7 @@ module.exports = {
         chunkFilename: '[name].async.js',
         path: path.resolve(__dirname, 'dist'),
         publicPath: "/dist/",
-        library: "[name]",
+        library: "monaco",
         libraryTarget: "umd",
         globalObject: 'self',
     },

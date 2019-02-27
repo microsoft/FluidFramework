@@ -18,7 +18,6 @@
   "author": "Microsoft",
   "repository": "microsoft/prague",
   "devDependencies": {
-    "@prague/prague-dev-server": "^3.2.1",
     "css-loader": "^1.0.0",
     "file-loader": "^2.0.0",
     "html-loader": "^0.5.5",
@@ -48,6 +47,7 @@
     "@prague/client-api": "^0.2.5287",
     "@prague/component": "^0.2.5287",
     "@prague/container-definitions": "^0.2.5287",
+    "@prague/loader-web": "^0.2.5287",
     "@prague/map": "^0.2.5287",
     "@prague/merge-tree": "^0.2.5287",
     "@prague/merge-tree-utils": "^0.2.5287",
