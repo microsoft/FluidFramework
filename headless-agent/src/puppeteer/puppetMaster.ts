@@ -14,7 +14,7 @@ export class PuppetMaster {
         ) {}
     public async launch() {
         // { headless: false, args: ["--start-fullscreen"] }
-        this.browser = await puppeteer.launch({ headless: false, args: ["--start-fullscreen"] });
+        this.browser = await puppeteer.launch();
         this.page = await this.browser.newPage();
         await this.page.setViewport({ width: 1920, height: 1080 });
         return this.launchPage();
