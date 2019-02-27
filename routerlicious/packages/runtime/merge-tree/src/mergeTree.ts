@@ -493,6 +493,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
     removedSeq: number;
     removedClientId: number;
     removedClientOverlap: number[];
+    removalsByBranch?: IRemovalInfo[];
     readonly segmentGroups: SegmentGroupCollection = new SegmentGroupCollection(this);
     properties: Properties.PropertySet;
     localRefs: LocalReference[];
@@ -624,11 +625,46 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
         return true;
     }
 
+    splitAt(pos: number): ISegment{
+        if (pos > 0) {
+            const leafSegment = this.createSplitSegmentAt(pos);
+            if (leafSegment) {
+                if (this.properties) {
+                    leafSegment.addProperties(Properties.extend(Properties.createMap<any>(), this.properties));
+                }
+                leafSegment.parent = this.parent;
+                leafSegment.removedClientId = this.removedClientId;
+                leafSegment.removedSeq = this.removedSeq;
+                if (this.removalsByBranch) {
+                    leafSegment.removalsByBranch = <IRemovalInfo[]>[];
+                    for (let i = 0, len = this.removalsByBranch.length; i < len; i++) {
+                        let fromRemovalInfo = this.removalsByBranch[i];
+                        if (fromRemovalInfo) {
+                            leafSegment.removalsByBranch[i] = {
+                                removedClientId: fromRemovalInfo.removedClientId,
+                                removedSeq: fromRemovalInfo.removedSeq,
+                                removedClientOverlap: fromRemovalInfo.removedClientOverlap,
+                            }
+                        }
+                    }
+                }
+                leafSegment.seq = this.seq;
+                leafSegment.clientId = this.clientId;
+                leafSegment.removedClientOverlap = this.removedClientOverlap;
+                this.segmentGroups.copyTo(leafSegment);
+                if (this.localRefs) {
+                    this.splitLocalRefs(pos, leafSegment);
+                }
+            }
+            return leafSegment;
+        }
+    }
+
     abstract clone(): ISegment;
     abstract append(segment: ISegment): ISegment;
     abstract getType(): SegmentType;
     abstract removeRange(start: number, end: number): boolean;
-    abstract splitAt(pos: number): ISegment;
+    protected abstract createSplitSegmentAt(pos: number): BaseSegment
 }
 
 export interface IJSONRunSegment<T> extends ops.IJSONSegment {
@@ -649,19 +685,12 @@ export class SubSequence<T> extends BaseSegment {
         return obj;
     }
 
-    public splitAt(pos: number) {
+    protected createSplitSegmentAt(pos: number) {
         if (pos > 0) {
             const remainingItems = this.items.slice(pos);
             this.items = this.items.slice(0, pos);
             this.cachedLength = this.items.length;
             const leafSegment = new SubSequence(remainingItems, this.seq, this.clientId);
-            if (this.properties) {
-                leafSegment.addProperties(Properties.extend(Properties.createMap<any>(), this.properties));
-            }
-            segmentCopy(this, leafSegment);
-            if (this.localRefs) {
-                this.splitLocalRefs(pos, leafSegment);
-            }
             return leafSegment;
         }
     }
@@ -787,7 +816,7 @@ export class ExternalSegment extends BaseSegment {
         throw new Error('Method not implemented.');
     }
 
-    splitAt(pos: number): ISegment {
+    protected createSplitSegmentAt(pos: number): BaseSegment {
         throw new Error('Method not implemented.');
     }
 }
@@ -992,7 +1021,7 @@ export class Marker extends BaseSegment implements ReferencePosition {
         return false;
     }
 
-    splitAt(pos: number) {
+    protected createSplitSegmentAt(pos: number) {
         return undefined;
     }
 
@@ -1030,19 +1059,12 @@ export class TextSegment extends BaseSegment {
         this.cachedLength = text.length;
     }
 
-    splitAt(pos: number) {
+    protected createSplitSegmentAt(pos: number) {
         if (pos > 0) {
             let remainingText = this.text.substring(pos);
             this.text = this.text.substring(0, pos);
             this.cachedLength = this.text.length;
             let leafSegment = new TextSegment(remainingText, this.seq, this.clientId);
-            if (this.properties) {
-                leafSegment.addProperties(Properties.extend(Properties.createMap<any>(), this.properties));
-            }
-            segmentCopy(this, leafSegment);
-            if (this.localRefs) {
-                this.splitLocalRefs(pos, leafSegment);
-            }
             return leafSegment;
         }
     }
@@ -1116,29 +1138,6 @@ export class TextSegment extends BaseSegment {
         this.cachedLength = remnantString.length;
         return (remnantString.length == 0);
     }
-}
-
-export function segmentCopy(from: ISegment, to: ISegment) {
-    to.parent = from.parent;
-    to.removedClientId = from.removedClientId;
-    to.removedSeq = from.removedSeq;
-    if (from.removalsByBranch) {
-        to.removalsByBranch = <IRemovalInfo[]>[];
-        for (let i = 0, len = from.removalsByBranch.length; i < len; i++) {
-            let fromRemovalInfo = from.removalsByBranch[i];
-            if (fromRemovalInfo) {
-                to.removalsByBranch[i] = {
-                    removedClientId: fromRemovalInfo.removedClientId,
-                    removedSeq: fromRemovalInfo.removedSeq,
-                    removedClientOverlap: fromRemovalInfo.removedClientOverlap,
-                }
-            }
-        }
-    }
-    to.seq = from.seq;
-    to.clientId = from.clientId;
-    to.removedClientOverlap = from.removedClientOverlap;
-    from.segmentGroups.copyTo(to);
 }
 
 function incrementalGatherText(segment: ISegment, state: IncrementalMapState<TextSegment>) {
