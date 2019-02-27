@@ -75,6 +75,6 @@ export class PinpointComponent implements IChaincodeComponent {
 
     public snapshot(): ITree {
         const entries = this.component.snapshotInternal();
-        return { entries };
+        return { entries, sha: null };
     }
 }

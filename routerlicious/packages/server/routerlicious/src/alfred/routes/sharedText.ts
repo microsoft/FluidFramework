@@ -120,6 +120,7 @@ export function create(
             response.render(
                 "sharedText",
                 {
+                    cache: JSON.stringify(null),
                     config: values[0],
                     disableCache,
                     from: Number.NaN,
