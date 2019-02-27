@@ -1,7 +1,9 @@
 import { IAlfredTenant, ITenantManager } from "@prague/services-core";
-import { Router } from "express";
+import { Request, Response, Router } from "express";
+import * as jwt from "jsonwebtoken";
 import * as moniker from "moniker";
 import { Provider } from "nconf";
+import { parse } from "url";
 import * as utils from "../utils";
 import { defaultPartials } from "./partials";
 
@@ -14,13 +16,20 @@ export function create(config: Provider, tenantManager: ITenantManager,
     const router: Router = Router();
 
     function handleResponse(
-        response,
+        request: Request,
+        response: Response,
         speed: number = defaultSpeed,
         authors: number = defaultAuthors,
         languages: string = "",
         id?: string,
         template?: string,
         tenantId = appTenants[0].id) {
+
+        const jwtToken = jwt.sign(
+            {
+                user: request.user,
+            },
+            config.get("alfred:key"));
 
         const workerConfigP = utils.getConfig(
             config.get("worker"),
@@ -30,23 +39,24 @@ export function create(config: Provider, tenantManager: ITenantManager,
             config.get("client"));
         workerConfigP.then(
             (workerConfig) => {
-                const token = utils.getToken(tenantId, id, appTenants);
-                const metricsToken = utils.getToken(tenantId, `${id}-metrics`, appTenants);
+                const baseUrl = `prague://` +
+                    `${parse(config.get("worker:serverUrl")).host}/` +
+                    `${encodeURIComponent(tenantId)}`;
 
                 response.render(
                     "scribe",
                     {
                         authors,
+                        baseUrl,
                         config: workerConfig,
                         fileLoad: !id,
                         id,
+                        jwt: jwtToken,
                         languages,
-                        metricsToken,
                         partials: defaultPartials,
                         speed,
                         template,
                         title: "Scribe",
-                        token,
                     });
             },
             (error) => {
@@ -58,7 +68,7 @@ export function create(config: Provider, tenantManager: ITenantManager,
      * Script entry point root
      */
     router.get("/", ensureLoggedIn(), (request, response, next) => {
-        handleResponse(response);
+        handleResponse(request, response);
     });
 
     /**
@@ -70,7 +80,7 @@ export function create(config: Provider, tenantManager: ITenantManager,
         const text = request.query.text || defaultTemplate;
         const languages = request.query.language || "";
 
-        handleResponse(response, speed, authors, languages, moniker.choose(), text, request.params.tenantId);
+        handleResponse(request, response, speed, authors, languages, moniker.choose(), text, request.params.tenantId);
     });
 
     router.get("/mercator", ensureLoggedIn(), (request, response, next) => {

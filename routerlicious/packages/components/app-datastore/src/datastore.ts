@@ -1,10 +1,10 @@
 import { ICodeLoader, IDocumentService, IPlatform } from "@prague/container-definitions";
 import { Container, Loader } from "@prague/container-loader";
 import { WebLoader } from "@prague/loader-web";
-import { createDocumentService, TokenProvider } from "@prague/routerlicious-socket-storage";
+import { ContainerUrlResolver } from "@prague/routerlicious-host";
+import { createDocumentService } from "@prague/routerlicious-socket-storage";
 import { IComponentRuntime } from "@prague/runtime-definitions";
 import { EventEmitter } from "events";
-import * as jwt from "jsonwebtoken";
 import { debug } from "./debug";
 
 /**
@@ -39,6 +39,7 @@ export class DataStore {
             config.key,
             config.id,
             userId,
+            null,
         );
     }
 
@@ -46,9 +47,10 @@ export class DataStore {
         private readonly hostUrl: string,
         private readonly codeLoader: ICodeLoader,
         private readonly documentService: IDocumentService,
-        private readonly key: string,
+        key: string,
         private readonly tenantId: string,
-        private readonly userId: string,
+        userId: string,
+        private readonly hostJwt: string,
     ) { }
 
     /**
@@ -67,9 +69,10 @@ export class DataStore {
     ): Promise<T> {
         debug(`DataStore.open("${componentId}", "${chaincodePackage}")`);
 
-        const tokenProvider = new TokenProvider(this.auth(componentId));
+        const resolver = new ContainerUrlResolver(this.hostUrl, this.hostJwt);
+
         const loader = new Loader(
-            { tokenProvider },
+            { resolver },
             this.documentService,
             this.codeLoader,
             { blockUpdateMarkers: true });
@@ -113,18 +116,6 @@ export class DataStore {
         // Return the constructed/loaded component.  We retrieve this via queryInterface on the
         // IPlatform created by ChainCode.run().
         return resultOut;
-    }
-
-    private auth(documentId: string) {
-        return jwt.sign({
-                documentId,
-                permission: "read:write",       // use "read:write" for now
-                tenantId: this.tenantId,
-                user: {
-                    id: this.userId,
-                },
-            },
-            this.key);
     }
 }
 

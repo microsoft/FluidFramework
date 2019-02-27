@@ -11,7 +11,7 @@ import {
     IDocumentService,
     IDocumentStorageService,
     IGenericBlob,
-    IHost,
+    ILoader,
     IProposal,
     IRequest,
     IResponse,
@@ -20,6 +20,7 @@ import {
     ISequencedDocumentSystemMessage,
     ISequencedProposal,
     ISnapshotTree,
+    ITokenProvider,
     ITree,
     ITreeEntry,
     MessageType,
@@ -53,17 +54,19 @@ export class Container extends EventEmitter {
     public static async Load(
         id: string,
         version: string,
-        containerHost: IHost,
+        tokenProvider: ITokenProvider,
         service: IDocumentService,
         codeLoader: ICodeLoader,
         options: any,
+        loader: ILoader,
     ): Promise<Container> {
         const container = new Container(
             id,
             options,
-            containerHost,
+            tokenProvider,
             service,
-            codeLoader);
+            codeLoader,
+            loader);
 
         // TODO need to crack the version and connection flag out of the URL
         await container.load(version);
@@ -146,9 +149,10 @@ export class Container extends EventEmitter {
     constructor(
         id: string,
         public readonly options: any,
-        private containerHost: IHost,
+        private tokenProvider: ITokenProvider,
         private service: IDocumentService,
         private codeLoader: ICodeLoader,
+        private loader: ILoader,
     ) {
         super();
 
@@ -272,7 +276,10 @@ export class Container extends EventEmitter {
         const connect = !specifiedVersion;
 
         // TODO connect to storage needs the token provider
-        const storageP = this.service.connectToStorage(this.tenantId, this.id, this.containerHost.tokenProvider)
+        const storageP = this.service.connectToStorage(
+            this.tenantId,
+            this.id,
+            this.tokenProvider)
             .then((storage) => storage ? new PrefetchDocumentStorageService(storage) : null);
 
         // If a version is specified we will load it directly - otherwise will query historian for the latest
@@ -362,6 +369,7 @@ export class Container extends EventEmitter {
                     this.blobManager,
                     this._deltaManager,
                     this.quorum,
+                    this.loader,
                     storageService,
                     (err) => debug("Context error", err),
                     (type, contents) => this.submitMessage(type, contents),
@@ -557,6 +565,7 @@ export class Container extends EventEmitter {
             this.blobManager,
             this._deltaManager,
             this.quorum,
+            this.loader,
             this.storageService,
             (err) => debug("Context error", err),
             (type, contents) => this.submitMessage(type, contents),
@@ -588,7 +597,7 @@ export class Container extends EventEmitter {
         this._deltaManager = new DeltaManager(
             this.id,
             this.tenantId,
-            this.containerHost.tokenProvider,
+            this.tokenProvider,
             this.service,
             clientDetails);
 

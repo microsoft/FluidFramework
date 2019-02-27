@@ -1,7 +1,7 @@
 import { IBlobManager } from "./blobs";
 import { IQuorum } from "./consensus";
 import { IDeltaManager } from "./deltas";
-import { IRequest, IResponse } from "./loader";
+import { ILoader, IRequest, IResponse } from "./loader";
 import { ISequencedDocumentMessage, MessageType } from "./protocol";
 import { IDocumentStorageService, ISnapshotTree, ITree } from "./storage";
 
@@ -137,6 +137,7 @@ export interface IContainerContext {
     readonly snapshotFn: (message: string) => Promise<void>;
     readonly closeFn: () => void;
     readonly quorum: IQuorum;
+    readonly loader: ILoader;
 
     error(err: any): void;
     requestSnapshot(tagMessage: string): Promise<void>;

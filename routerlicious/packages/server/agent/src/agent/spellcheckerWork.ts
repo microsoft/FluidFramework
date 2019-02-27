@@ -1,6 +1,6 @@
 import {
     IDocumentService,
-    ITokenProvider,
+    IHost,
 } from "@prague/container-definitions";
 import * as MergeTree from "@prague/merge-tree";
 import * as Sequence from "@prague/sequence";
@@ -11,14 +11,15 @@ import { IWork} from "./definitions";
 export class SpellcheckerWork extends BaseWork implements IWork {
 
     constructor(
+        alfred: string,
         docId: string,
         tenantId: string,
-        tokenProvider: ITokenProvider,
+        host: IHost,
         config: any,
         private dictionary: MergeTree.TST<number>,
         private service: IDocumentService) {
 
-        super(docId, tenantId, tokenProvider, config);
+        super(alfred, docId, tenantId, host, config);
     }
 
     public async start(task: string): Promise<void> {

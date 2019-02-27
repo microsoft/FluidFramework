@@ -1,11 +1,13 @@
 import * as agent from "@prague/agent";
-import { IDocumentService } from "@prague/container-definitions";
+import { IDocumentService, IPragueResolvedUrl } from "@prague/container-definitions";
+import { ContainerUrlResolver } from "@prague/routerlicious-host";
 import * as socketStorage from "@prague/routerlicious-socket-storage";
 import { IQueueMessage } from "@prague/runtime-definitions";
 import * as core from "@prague/services-core";
 import * as utils from "@prague/services-utils";
 import { Deferred } from "@prague/utils";
 import * as fs from "fs";
+import * as jwt from "jsonwebtoken";
 import * as request from "request";
 import * as unzip from "unzip-stream";
 import * as url from "url";
@@ -31,7 +33,9 @@ export class PaparazziRunner implements utils.IRunner {
     constructor(
         private workerConfig: any,
         private messageReceiver: core.ITaskMessageReceiver,
-        private agentUploader: core.IAgentUploader) {
+        private agentUploader: core.IAgentUploader,
+        private jwtKey: string,
+    ) {
         this.permission = new Set(workerConfig.permission as string[]);
         const alfredUrl = workerConfig.alfredUrl;
 
@@ -117,12 +121,35 @@ export class PaparazziRunner implements utils.IRunner {
         const filteredTask = requestMsg.message.tasks.filter((task) => this.permission.has(task));
 
         if (filteredTask.length > 0) {
+            const hostToken = jwt.sign(
+                {
+                    user: "paparazzi",
+                },
+                this.jwtKey);
+
+            const documentUrl = `prague://${url.parse(this.workerConfig.alfredUrl).host}` +
+                `/${encodeURIComponent(requestMsg.tenantId)}` +
+                `/${encodeURIComponent(requestMsg.documentId)}`;
+            const resolved: IPragueResolvedUrl = {
+                ordererUrl: this.workerConfig.alfredUrl,
+                storageUrl: this.workerConfig.blobStorageUrl,
+                tokens: { jwt: requestMsg.token },
+                type: "prague",
+                url: documentUrl,
+            };
+
+            const resolver = new ContainerUrlResolver(
+                this.workerConfig.alfredUrl,
+                hostToken,
+                new Map([[documentUrl, resolved]]));
+
             winston.info(`Starting ${JSON.stringify(filteredTask)}: ${requestMsg.tenantId}/${requestMsg.documentId}`);
             this.workerService.startTasks(
+                this.workerConfig.alfredUrl,
                 requestMsg.tenantId,
                 requestMsg.documentId,
                 filteredTask,
-                new socketStorage.TokenProvider(requestMsg.token)).catch((err) => {
+                { resolver }).catch((err) => {
                     winston.error(
                         // tslint:disable-next-line
                         `Error starting ${JSON.stringify(filteredTask)}: ${requestMsg.tenantId}/${requestMsg.documentId}: ${err}`

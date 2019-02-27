@@ -1,10 +1,11 @@
-import { IPraguePackage } from "@prague/container-definitions";
+import { IPraguePackage, IPragueResolvedUrl } from "@prague/container-definitions";
 import { IAlfredTenant, IDocumentStorage, ITenantManager } from "@prague/services-core";
 import Axios from "axios";
 import { Router } from "express";
 import * as safeStringify from "json-stringify-safe";
 import * as jwt from "jsonwebtoken";
 import { Provider } from "nconf";
+import { parse } from "url";
 import * as winston from "winston";
 import { getConfig, getToken, IAlfredUser } from "../utils";
 import { defaultPartials } from "./partials";
@@ -74,7 +75,7 @@ export function create(
         const rawPath =  request.params[0] as string;
         const slash = rawPath.indexOf("/");
         const documentId = rawPath.substring(0, slash !== -1 ? slash : rawPath.length);
-        const path = rawPath.substring(slash !== -1 ? slash + 1 : rawPath.length);
+        const path = rawPath.substring(slash !== -1 ? slash : rawPath.length);
 
         const tenantId = request.params.tenantId;
         const chaincode = request.query.chaincode;
@@ -113,6 +114,20 @@ export function create(
         const pkgTimeP = pkgP.then(() => Date.now() - start);
         const timingsP = Promise.all([workerTimeP, treeTimeP, pkgTimeP]);
 
+        const pragueUrl = "prague://" +
+            `${parse(config.get("worker:serverUrl")).host}/` +
+            `${encodeURIComponent(tenantId)}/` +
+            `${encodeURIComponent(documentId)}` +
+            path;
+
+        const resolved: IPragueResolvedUrl = {
+            ordererUrl: config.get("worker:serverUrl"),
+            storageUrl: config.get("worker:blobStorageUrl"),
+            tokens: { jwt: token },
+            type: "prague",
+            url: pragueUrl,
+        };
+
         Promise.all([workerConfigP, fullTreeP, pkgP, timingsP]).then(([workerConfig, fullTree, pkg, timings]) => {
             winston.info(`render ${tenantId}/${documentId} +${Date.now() - start}`);
 
@@ -124,13 +139,11 @@ export function create(
                     cache: JSON.stringify(fullTree.cache),
                     chaincode: fullTree.code ? fullTree.code : chaincode,
                     config: workerConfig,
-                    documentId,
                     jwt: jwtToken,
                     key,
                     partials: defaultPartials,
-                    path,
                     pkg,
-                    tenantId,
+                    resolved: JSON.stringify(resolved),
                     timings: JSON.stringify(timings),
                     title: documentId,
                     token,

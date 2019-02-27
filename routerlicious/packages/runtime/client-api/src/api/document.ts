@@ -4,12 +4,11 @@ import {
     IDeltaManager,
     IDocumentService,
     IGenericBlob,
+    IHost,
     IPlatform,
     ISequencedClient,
-    ITokenProvider,
 } from "@prague/container-definitions";
 import { Container, Loader } from "@prague/container-loader";
-import * as resources from "@prague/gitresources";
 import { ISharedMap, MapExtension } from "@prague/map";
 import { IRuntime } from "@prague/runtime-definitions";
 import * as sequence from "@prague/sequence";
@@ -42,16 +41,6 @@ export function registerDocumentService(service: IDocumentService) {
 
 export function getDefaultDocumentService(): IDocumentService {
     return defaultDocumentService;
-}
-
-// The below are temporary calls to register loader specific data. Do not take a dependency on them.
-let defaultCredentials: { tenant: string; key: string };
-export function registerDefaultCredentials(credentials: { tenant: string; key: string }) {
-    defaultCredentials = credentials;
-}
-
-export function getDefaultCredentials(): { tenant: string; key: string } {
-    return defaultCredentials;
 }
 
 let chaincodeRepo: string;
@@ -251,12 +240,9 @@ async function initializeChaincode(container: Container, pkg: string): Promise<v
  * Loads a specific version (commit) of the shared object
  */
 export async function load(
-    id: string,
-    tenantId: string,
-    tokenProvider: ITokenProvider,
+    url: string,
+    host: IHost,
     options: any = {},
-    version: resources.ICommit = null,
-    connect = true,
     service: IDocumentService = defaultDocumentService): Promise<Document> {
 
     // const classicPlatform = new PlatformFactory();
@@ -268,14 +254,10 @@ export async function load(
             return null;
         });
 
-    const queryString = !connect ? `?version=${encodeURIComponent(version.sha)}` : "";
-
     // Load the Prague document
     // For legacy purposes we currently fill in a default domain
-    const baseUrl =
-        `prague://prague.com/${encodeURIComponent(tenantId)}/${encodeURIComponent(id)}${queryString}`;
-    const loader = new Loader({ tokenProvider }, service, codeLoader, options);
-    const container = await loader.resolve({ url: baseUrl });
+    const loader = new Loader(host, service, codeLoader, options);
+    const container = await loader.resolve({ url });
 
     if (!container.existing) {
         initializeChaincode(container, `@prague/client-api@${apiVersion}`)

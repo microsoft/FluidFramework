@@ -24,9 +24,9 @@
 
         var token = "{{ token }}";
         var chaincode = "{{ chaincode }}";
-        var tenantId = "{{ tenantId }}";
-        var documentId = "{{ documentId }}";
-        var path = "{{ path }}";
+
+        var url = "{{ url }}";
+        var resolved = {{{ resolved }}};
         var jwt = "{{ jwt }}";
 
         {{#pkg}}
@@ -45,11 +45,9 @@
         {{/pkg}}
   
         loader.initialize(
-            tenantId,
-            documentId,
-            path,
+            window.location.href,
+            resolved,
             cache,
-            token,
             config,
             chaincode,
             entry,

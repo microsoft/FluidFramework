@@ -1,4 +1,5 @@
 import * as api from "@prague/container-definitions";
+import { TokenProvider } from "@prague/routerlicious-socket-storage";
 import { DeltaStorageService, ReplayDeltaStorageService } from "./deltaStorageService";
 import { ReplayDocumentDeltaConnection } from "./documentDeltaConnection";
 import { ReplayDocumentStorageService } from "./replayDocumentStorageService";
@@ -16,6 +17,11 @@ export class ReplayDocumentService implements api.IDocumentService {
                 private unitIsTime: boolean) {
         this.deltaStorage = new DeltaStorageService(this.deltaUrl);
     }
+
+    public async createTokenProvider(tokens: { [name: string]: string }): Promise<api.ITokenProvider> {
+        return new TokenProvider(tokens.jwt);
+    }
+
     public async connectToStorage(
         tenantId: string,
         id: string,

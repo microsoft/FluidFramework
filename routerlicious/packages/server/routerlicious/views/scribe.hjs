@@ -112,9 +112,9 @@
             var config = {{{ config }}};
             controller.scribe.initialize(
                 config,
+                "{{ baseUrl }}",
                 "{{ id }}",
-                "{{ token }}",
-                "{{ metricsToken }}",
+                "{{ jwt }}",
                 "{{ template }}",
                 "{{ speed }}",
                 "{{ authors }}",

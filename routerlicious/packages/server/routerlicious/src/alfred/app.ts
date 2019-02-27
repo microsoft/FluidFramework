@@ -204,7 +204,6 @@ export function create(
     app.use("/maps", routes.maps);
     app.use("/canvas", routes.canvas);
     app.use("/sharedText", routes.sharedText);
-    app.use("/cell", routes.cell);
     app.use("/loader", routes.loader);
     app.use("/scribe", routes.scribe);
     app.use("/democreator", routes.demoCreator);

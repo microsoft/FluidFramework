@@ -5,6 +5,7 @@ import {
     IDeltaManager,
     IDocumentStorageService,
     IGenericBlob,
+    ILoader,
     IPlatform,
     IQuorum,
     IRequest,
@@ -127,6 +128,10 @@ export class ComponentHost extends EventEmitter implements IComponentDeltaHandle
 
     public get clientId(): string {
         return this.componentRuntime.clientId;
+    }
+
+    public get loader(): ILoader {
+        return this.componentRuntime.loader;
     }
 
     private channels = new Map<string, IChannelState>();

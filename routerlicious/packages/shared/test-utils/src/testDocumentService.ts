@@ -68,6 +68,10 @@ export class TestDocumentService implements IDocumentService {
     constructor(private deltaStorage: IDeltaStorageService) {
     }
 
+    public async createTokenProvider(tokens: { [name: string]: string; }): Promise<ITokenProvider> {
+        throw new Error("Method not implemented.");
+    }
+
     public async connectToStorage(
         tenantId: string,
         id: string,

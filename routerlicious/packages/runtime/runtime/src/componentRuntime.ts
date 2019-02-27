@@ -5,6 +5,7 @@ import {
     IDeltaManager,
     IDocumentStorageService,
     IGenericBlob,
+    ILoader,
     IPlatform,
     IQuorum,
     IRequest,
@@ -118,6 +119,10 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime 
 
     public get branch(): string {
         return this.hostRuntime.branch;
+    }
+
+    public get loader(): ILoader {
+        return this.hostRuntime.loader;
     }
 
     private closed = false;

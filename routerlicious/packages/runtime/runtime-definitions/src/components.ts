@@ -3,6 +3,7 @@ import {
     IBlobManager,
     IDeltaManager,
     IDocumentStorageService,
+    ILoader,
     IPlatform,
     IQuorum,
     IRequest,
@@ -64,6 +65,7 @@ export interface IComponentRuntime {
     readonly branch: string;
     readonly chaincode: IChaincodeComponent;
     readonly baseSnapshot: ISnapshotTree;
+    readonly loader: ILoader;
     readonly snapshotFn: (message: string) => Promise<void>;
     readonly closeFn: () => void;
 
@@ -102,6 +104,7 @@ export interface IHostRuntime extends IRuntime {
     readonly connectionState: ConnectionState;
     readonly branch: string;
     readonly minimumSequenceNumber: number;
+    readonly loader: ILoader;
     readonly submitFn: (type: MessageType, contents: any) => number;
     readonly snapshotFn: (message: string) => Promise<void>;
     readonly closeFn: () => void;

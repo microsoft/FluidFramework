@@ -2,6 +2,8 @@ import {
     ICodeLoader,
     IDocumentService,
     IHost,
+    ILoader,
+    IPragueResolvedUrl,
     IRequest,
     IResponse,
 } from "@prague/container-definitions";
@@ -22,7 +24,7 @@ interface IParsedUrl {
 /**
  * Manages Prague resource loading
  */
-export class Loader extends EventEmitter {
+export class Loader extends EventEmitter implements ILoader {
     private containers = new Map<string, Promise<Container>>();
 
     constructor(
@@ -49,24 +51,15 @@ export class Loader extends EventEmitter {
     public async resolve(request: IRequest): Promise<Container> {
         debug(`Container resolve: ${now()} `);
 
-        const parsed = this.parseUrl(request.url);
-        if (!parsed) {
-            return Promise.reject("Invalid URI");
-        }
-
-        return this.resolveCore(parsed);
+        const resolved = await this.resolveCore(request);
+        return resolved.container;
     }
 
     public async request(request: IRequest): Promise<IResponse> {
         debug(`Container loading: ${now()} `);
 
-        const parsed = this.parseUrl(request.url);
-        if (!parsed) {
-            return Promise.reject("Invalid URI");
-        }
-
-        const container = await this.resolveCore(parsed);
-        return container.request({ url: parsed.path });
+        const resolved = await this.resolveCore(request);
+        return resolved.container.request({ url: resolved.parsed.path });
     }
 
     private parseUrl(url: string): IParsedUrl {
@@ -81,19 +74,33 @@ export class Loader extends EventEmitter {
             : null;
     }
 
-    private resolveCore(parsed: IParsedUrl): Promise<Container> {
+    private async resolveCore(request: IRequest): Promise<{ container: Container, parsed: IParsedUrl }> {
+        // Resolve the given request to a URL
+        const resolved = await this.containerHost.resolver.resolve(request);
+        if (resolved.type !== "prague") {
+            return Promise.reject("Only Prague components currently supported");
+        }
+
+        const resolvedAsPrague = resolved as IPragueResolvedUrl;
+        const parsed = this.parseUrl(resolvedAsPrague.url);
+
         const versionedId = parsed.version ? `${parsed.id}@${parsed.version}` : parsed.id;
         if (!this.containers.has(versionedId)) {
+            const tokenProvider = await this.documentService.createTokenProvider(resolvedAsPrague.tokens);
+
             const containerP = Container.Load(
                 parsed.id,
                 parsed.version,
-                this.containerHost,
+                tokenProvider,
                 this.documentService,
                 this.codeLoader,
-                this.options);
+                this.options,
+                this);
             this.containers.set(versionedId, containerP);
         }
 
-        return this.containers.get(versionedId);
+        const container = await this.containers.get(versionedId);
+
+        return { container, parsed };
     }
 }

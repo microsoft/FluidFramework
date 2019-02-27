@@ -7,6 +7,7 @@ import {
     IDocumentStorageService,
     ISequencedDocumentMessage,
     ISnapshotTree,
+    ITokenProvider,
     ITree,
 } from "@prague/container-definitions";
 import * as git from "@prague/gitresources";
@@ -88,6 +89,10 @@ export class TestDocumentDeltaStorageService implements IDocumentDeltaStorageSer
 
 export class TestDocumentService implements IDocumentService {
     private errorTracking = new socketStorage.DefaultErrorTracking();
+
+    public createTokenProvider(tokens: { [name: string]: string; }): Promise<ITokenProvider> {
+        throw new Error("Method not implemented.");
+    }
 
     public async connectToStorage(id: string, token: string): Promise<IDocumentStorageService> {
         return new TestDocumentStorageService();

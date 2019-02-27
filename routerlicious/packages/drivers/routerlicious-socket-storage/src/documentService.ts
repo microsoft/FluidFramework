@@ -26,6 +26,10 @@ export class DocumentService implements api.IDocumentService {
         this.deltaStorage = new DeltaStorageService(this.deltaUrl);
     }
 
+    public async createTokenProvider(tokens: { [name: string]: string }): Promise<api.ITokenProvider> {
+        return new TokenProvider(tokens.jwt);
+    }
+
     public async connectToStorage(
         tenantId: string,
         id: string,

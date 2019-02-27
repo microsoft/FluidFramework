@@ -1,11 +1,14 @@
 import * as api from "@prague/client-api";
+import { ContainerUrlResolver } from "@prague/routerlicious-host";
 import * as socketStorage from "@prague/routerlicious-socket-storage";
-import * as core from "@prague/services-core";
+import { generateUser } from "@prague/services-core";
 import * as scribe from "@prague/tools-core";
 import * as commander from "commander";
 import * as fs from "fs";
+import * as jwt from "jsonwebtoken";
 import * as path from "path";
 import * as ProgressBar from "progress";
+import { parse } from "url";
 
 // Process command line input
 let sharedStringId;
@@ -57,22 +60,28 @@ fs.readFile(commander.file, "utf8", async (error, data: string) => {
             });
     }
 
-    const token = core.generateToken(commander.tenant, sharedStringId, commander.key);
-    const metricsToken = core.generateToken(commander.tenant, `${sharedStringId}-metrics`, commander.key);
+    const claims = {
+        user: generateUser(),
+    };
+    const token = jwt.sign(claims, commander.key);
+    const resolver = new ContainerUrlResolver(
+        commander.server,
+        token);
+    const baseUrl = `prague://${parse(commander.server).host}/${commander.tenant}`;
 
-    await scribe.create(sharedStringId, token, data, debug);
+    await scribe.create(baseUrl, sharedStringId, resolver, data, debug);
     scribe.togglePlay();
 
     setTimeout(() => {
         let lastReported = 0;
 
         const typeP = scribe.type(
+            baseUrl,
             commander.interval,
             data,
             Number(commander.authors),
             Number(commander.processes),
-            token,
-            metricsToken,
+            resolver,
             (metrics) => {
                 if (commander.progress) {
                     bar.update(metrics.ackProgress, {

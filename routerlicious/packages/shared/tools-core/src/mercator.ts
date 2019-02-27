@@ -1,5 +1,6 @@
 import * as api from "@prague/client-api";
 import * as Map from "@prague/map";
+import { ContainerUrlResolver } from "@prague/routerlicious-host";
 import * as socketStorage from "@prague/routerlicious-socket-storage";
 import { Deferred } from "@prague/utils";
 import * as jwt from "jsonwebtoken";
@@ -58,10 +59,17 @@ export async function run(
             },
         },
         secret);
+    const url = `prague://${routerlicious}/${encodeURIComponent(tenantId)}/${encodeURIComponent(id)}`;
 
     // Load in the latest and connect to the document
-    const tokenThing = new socketStorage.TokenProvider(token);
-    const collabDoc = await api.load(id, tenantId, tokenThing, { blockUpdateMarkers: true, token });
+    const resolver = new ContainerUrlResolver(routerlicious, null);
+    const tokenProvider = new socketStorage.TokenProvider(token);
+    const host = { tokenProvider, resolver };
+
+    const collabDoc = await api.load(
+        url,
+        host,
+        { blockUpdateMarkers: true, token });
     const root = await collabDoc.getRoot();
     if (!collabDoc.isConnected) {
         await new Promise<void>((resolve) => collabDoc.once("connected", () => resolve()));

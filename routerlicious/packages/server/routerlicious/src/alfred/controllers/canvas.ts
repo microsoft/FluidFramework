@@ -1,34 +1,26 @@
 import * as api from "@prague/client-api";
 import { controls, ui } from "@prague/client-ui";
-import * as resources from "@prague/gitresources";
-import * as socketStorage from "@prague/routerlicious-socket-storage";
+import { IPragueResolvedUrl, IResolvedUrl } from "@prague/container-definitions";
+import { ContainerUrlResolver } from "@prague/routerlicious-host";
 import { registerDocumentServices } from "./utils";
-
-async function loadDocument(id: string, version: resources.ICommit, token: string, client: any): Promise<api.Document> {
-    console.log("Loading in root document...");
-
-    const tokenService = new socketStorage.TokenService();
-    const claims = tokenService.extractClaims(token);
-    const document = await api.load(
-        id,
-        claims.tenantId,
-        new socketStorage.TokenProvider(token),
-        { encrypted: false },
-        version);
-
-    console.log("Document loaded");
-    return document;
-}
 
 // throttle resize events and replace with an optimized version
 ui.throttle("resize", "throttled-resize");
 
-export async function initialize(id: string, version: resources.ICommit, token: string, config: any) {
+export async function initialize(resolved: IPragueResolvedUrl, jwt: string, config: any) {
     const host = new ui.BrowserContainerHost();
+
+    const resolver = new ContainerUrlResolver(
+        document.location.origin,
+        jwt,
+        new Map<string, IResolvedUrl>([[resolved.url, resolved]]));
 
     registerDocumentServices(config);
 
-    const doc = await loadDocument(id, version, token, config.client);
+    const doc = await api.load(
+        resolved.url,
+        { resolver },
+        { encrypted: false });
     const root = doc.getRoot();
 
     const canvasDiv = document.createElement("div");

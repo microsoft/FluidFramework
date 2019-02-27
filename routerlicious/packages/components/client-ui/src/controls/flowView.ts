@@ -408,30 +408,6 @@ const commands: IFlowViewCmd[] = [
         },
         key: "insert chart",
     },
-    {
-        exec: (f) => {
-            f.insertChaincode("map", "@chaincode/pinpoint-editor@0.6.15");
-        },
-        key: "insert map",
-    },
-    {
-        exec: (f) => {
-            f.insertChaincode("code", "@chaincode/monaco@0.1.18");
-        },
-        key: "insert code",
-    },
-    {
-        exec: (f) => {
-            f.insertChaincode("chart", "@chaincode/charts@0.7.3");
-        },
-        key: "insert ivy",
-    },
-    {
-        exec: (f) => {
-            f.insertChaincode("scriptor", "@ms/scriptor@0.23.25");
-        },
-        key: "insert scriptor",
-    },
 ];
 
 export function moveMarker(flowView: FlowView, fromPos: number, toPos: number) {
@@ -4355,15 +4331,9 @@ export class FlowView extends ui.Component {
         this.insertComponent("chart", {});
     }
 
-    /** Insert an external component */
-    public insertChaincode(prefix: string, chaincode: string) {
-        const id = `${prefix}${Date.now()}`;
-        this.insertComponent("document", { id, chaincode });
-    }
-
-    /** Insert a Document */
-    public insertDocument(id) {
-        this.insertComponent("document", { id });
+    /** Insert an external Document */
+    public insertDocument(url: string) {
+        this.insertComponent("document", { url });
     }
 
     /** Insert a Formula box to display the given 'formula'. */

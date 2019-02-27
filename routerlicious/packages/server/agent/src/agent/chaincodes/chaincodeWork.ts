@@ -2,12 +2,13 @@ import {
     Browser,
     ICodeLoader,
     IDocumentService,
+    IHost,
     IPlatform,
-    ITokenProvider,
 } from "@prague/container-definitions";
 import { Container, Loader } from "@prague/container-loader";
 import { IComponentRuntime } from "@prague/runtime-definitions";
 import { EventEmitter } from "events";
+import { parse } from "url";
 import { IDocumentTaskInfo } from "../definitions";
 
 export class ChaincodeWork extends EventEmitter {
@@ -18,9 +19,10 @@ export class ChaincodeWork extends EventEmitter {
     private events = new EventEmitter();
 
     constructor(
+        private readonly alfred: string,
         private readonly docId: string,
         private readonly tenantId: string,
-        private readonly tokenProvider: ITokenProvider,
+        private readonly host: IHost,
         private readonly service: IDocumentService,
         private readonly codeLoader: ICodeLoader) {
             super();
@@ -28,13 +30,13 @@ export class ChaincodeWork extends EventEmitter {
 
     public async loadChaincode(options: any, attachPlatform: boolean): Promise<void> {
         const loader = new Loader(
-            { tokenProvider: this.tokenProvider },
+            this.host,
             this.service,
             this.codeLoader,
             options);
 
         const url =
-            `prague://prague.com/` +
+            `prague://${parse(this.alfred).host}/` +
             `${encodeURIComponent(this.tenantId)}/${encodeURIComponent(this.docId)}`;
         this.document = await loader.resolve({ url });
 

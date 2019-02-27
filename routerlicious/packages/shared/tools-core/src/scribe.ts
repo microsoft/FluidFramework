@@ -1,7 +1,7 @@
 import * as api from "@prague/client-api";
 import { ISharedMap } from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
-import * as socketStorage from "@prague/routerlicious-socket-storage";
+import { ContainerUrlResolver } from "@prague/routerlicious-host";
 import * as Sequence from "@prague/sequence";
 import * as childProcess from "child_process";
 import * as path from "path";
@@ -55,12 +55,12 @@ async function setChunkMap(chunks: string[]) {
 }
 
 async function conductor(
+    urlBase: string,
+    resolver: ContainerUrlResolver,
     text,
     intervalTime,
     writers,
     processes,
-    documentToken: string,
-    metricsToken: string,
     callback): Promise<author.IScribeMetrics> {
 
     const process = 0;
@@ -68,14 +68,14 @@ async function conductor(
     const chunks = author.normalizeText(text).split("\n");
 
     if (processes === 1) {
-        return await author.typeFile(
+        return await author.typeFile2(
+            urlBase,
             document,
+            resolver,
             sharedString,
             text,
             intervalTime,
             writers,
-            documentToken,
-            metricsToken,
             callback);
     }
 
@@ -89,16 +89,13 @@ async function conductor(
 }
 
 export async function create(
+    urlBase: string,
     id: string,
-    token: string,
+    resolver: ContainerUrlResolver,
     text: string,
     debug = false): Promise<void> {
 
-    // Load the shared string extension we will type into
-    const tokenService = new socketStorage.TokenService();
-    const claims = tokenService.extractClaims(token);
-
-    document = await api.load(id, claims.tenantId, new socketStorage.TokenProvider(token), {});
+    document = await api.load(`${urlBase}/${id}`, { resolver }, {});
     const root = await document.getRoot();
 
     root.set("presence", document.createMap());
@@ -127,12 +124,12 @@ export async function create(
 }
 
 export async function type(
+    urlBase: string,
     intervalTime: number,
     text: string,
     writers: number,
     processes: number,
-    documentToken: string,
-    metricsToken: string,
+    resolver: ContainerUrlResolver,
     callback: author.ScribeMetricsCallback,
     distributed = false): Promise<author.IScribeMetrics> {
 
@@ -140,12 +137,12 @@ export async function type(
         console.log("distributed");
     }
     return conductor(
+        urlBase,
+        resolver,
         text,
         intervalTime,
         writers,
         processes,
-        documentToken,
-        metricsToken,
         callback);
 }
 

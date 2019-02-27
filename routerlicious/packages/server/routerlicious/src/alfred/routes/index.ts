@@ -5,7 +5,6 @@ import { Provider } from "nconf";
 import * as agent from "./agent";
 import * as api from "./api";
 import * as canvas from "./canvas";
-import * as cell from "./cell";
 import * as demoCreator from "./democreator";
 import * as home from "./home";
 import * as loader from "./loader";
@@ -18,7 +17,6 @@ export interface IRoutes {
     agent: Router;
     api: Router;
     canvas: Router;
-    cell: Router;
     demoCreator: Router;
     loader: Router;
     home: Router;
@@ -46,7 +44,6 @@ export function create(
         agent: agent.create(config),
         api: api.create(config, tenantManager, storage, mongoManager, producer, appTenants),
         canvas: canvas.create(config, tenantManager, storage, appTenants, ensureLoggedIn),
-        cell: cell.create(config, tenantManager, storage, appTenants, ensureLoggedIn),
         demoCreator: demoCreator.create(config, ensureLoggedIn),
         home: home.create(config, ensureLoggedIn),
         loader: loader.create(config, tenantManager, storage, appTenants, ensureLoggedIn),

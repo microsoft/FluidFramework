@@ -36,6 +36,7 @@
     "@prague/merge-tree": "^0.2.0",
     "@prague/runtime-definitions": "^0.2.0",
     "@prague/sequence": "^0.2.0",
+    "@prague/routerlicious-host": "^0.2.0",
     "@prague/routerlicious-socket-storage": "^0.2.0",
     "@prague/utils": "^0.2.0",
     "async": "^2.6.1",

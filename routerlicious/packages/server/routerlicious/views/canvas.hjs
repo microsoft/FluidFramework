@@ -12,9 +12,10 @@
 
         <script>
             var config = {{{ config }}};
-            var version = {{{ version }}};
-            var token = "{{ token }}";
-            controller.canvas.initialize("{{ documentId }}", version, token, config);
+            var resolved = {{{ resolved }}};
+            var jwt = "{{ jwt }}";
+
+            controller.canvas.initialize(resolved, jwt, config);
         </script>
     {{/scripts}}
 {{/layout}}

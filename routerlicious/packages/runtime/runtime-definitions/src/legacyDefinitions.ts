@@ -1,6 +1,7 @@
 import {
     IDeltaManager,
     IGenericBlob,
+    ILoader,
     IPlatform,
     IQuorum,
     MessageType,
@@ -82,6 +83,8 @@ export interface IRuntime extends EventEmitter {
     readonly deltaManager: IDeltaManager;
 
     readonly platform: IPlatform;
+
+    readonly loader: ILoader;
 
     /**
      * Returns the channel with the given id
