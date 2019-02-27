@@ -29,6 +29,7 @@ dependencies:
   '@rush-temp/odsp-socket-storage': 'file:projects/odsp-socket-storage.tgz'
   '@rush-temp/replay-socket-storage': 'file:projects/replay-socket-storage.tgz'
   '@rush-temp/routerlicious': 'file:projects/routerlicious.tgz'
+  '@rush-temp/routerlicious-host': 'file:projects/routerlicious-host.tgz'
   '@rush-temp/routerlicious-socket-storage': 'file:projects/routerlicious-socket-storage.tgz'
   '@rush-temp/runtime': 'file:projects/runtime.tgz'
   '@rush-temp/runtime-definitions': 'file:projects/runtime-definitions.tgz'
@@ -153,7 +154,6 @@ dependencies:
   nock: 10.0.6
   node-geocoder: 3.22.0
   node-sass: 4.11.0
-  npm-run-all: 4.1.5
   nyc: 13.2.0
   office-ui-fabric-react: 6.136.0
   parallel-webpack: 2.3.0
@@ -206,7 +206,6 @@ dependencies:
   webpack-bundle-analyzer: 2.13.1
   webpack-cli: 3.2.3
   webpack-merge: 4.2.1
-  webpack-node-externals: 1.7.2
   winston: 3.2.1
   ws: 6.1.3
   xhr: 2.5.0
@@ -4739,6 +4738,14 @@ packages:
     hasBin: true
     resolution:
       integrity: sha512-um46hB9wNOKlwkHgiuyEVAybXBjwFUV0Z/RaHJblRd9DXltue9FTYvzCr9ErQrK9Adz5MU4gHWVaNUfdmrC8qA==
+  /js-yaml/3.12.2:
+    dependencies:
+      argparse: 1.0.10
+      esprima: 4.0.1
+    dev: false
+    hasBin: true
+    resolution:
+      integrity: sha512-QHn/Lh/7HhZ/Twc7vJYQTkjuCa0kaCcDcjK5Zlk2rvnUpy7DxMJ23+Jc2dcyvltwQVg1nygAVlB2oRDFHoRS5Q==
   /jsbn/0.1.1:
     dev: false
     resolution:
@@ -8528,6 +8535,18 @@ packages:
       typescript: ^2.1.0 || ^3.0.0
     resolution:
       integrity: sha512-R//efwn+34IUjTJeYgNDAJdzG0jyLWIehygPt/PHuZAieTolFVS56FgeFW7DOLap9ghXzMiFPTmDgm54qaL7QA==
+  /tslint-microsoft-contrib/6.0.0/8e3c60f614a8b018ff3d29c8e227399b:
+    dependencies:
+      tslint: /tslint/5.13.0/typescript@3.3.3333
+      tsutils: /tsutils/2.28.0/typescript@3.3.3333
+      typescript: 3.3.3333
+    dev: false
+    id: registry.npmjs.org/tslint-microsoft-contrib/6.0.0
+    peerDependencies:
+      tslint: ^5.1.0
+      typescript: ^2.1.0 || ^3.0.0
+    resolution:
+      integrity: sha512-R//efwn+34IUjTJeYgNDAJdzG0jyLWIehygPt/PHuZAieTolFVS56FgeFW7DOLap9ghXzMiFPTmDgm54qaL7QA==
   /tslint-microsoft-contrib/6.0.0/tslint@5.12.1+typescript@3.3.3:
     dependencies:
       tslint: /tslint/5.12.1/typescript@3.3.3
@@ -8610,6 +8629,31 @@ packages:
       typescript: '>=2.1.0 || >=2.1.0-dev || >=2.2.0-dev || >=2.3.0-dev || >=2.4.0-dev || >=2.5.0-dev || >=2.6.0-dev || >=2.7.0-dev || >=2.8.0-dev || >=2.9.0-dev'
     resolution:
       integrity: sha512-sfodBHOucFg6egff8d1BvuofoOQ/nOeYNfbp7LDlKBcLNrL3lmS5zoiDGyOMdT7YsEXAwWpTdAHwOGOc8eRZAw==
+  /tslint/5.13.0/typescript@3.3.3333:
+    dependencies:
+      babel-code-frame: 6.26.0
+      builtin-modules: 1.1.1
+      chalk: 2.4.2
+      commander: 2.19.0
+      diff: 3.5.0
+      glob: 7.1.3
+      js-yaml: 3.12.2
+      minimatch: 3.0.4
+      mkdirp: 0.5.1
+      resolve: 1.10.0
+      semver: 5.6.0
+      tslib: 1.9.3
+      tsutils: /tsutils/2.29.0/typescript@3.3.3333
+      typescript: 3.3.3333
+    dev: false
+    engines:
+      node: '>=4.8.0'
+    hasBin: true
+    id: registry.npmjs.org/tslint/5.13.0
+    peerDependencies:
+      typescript: '>=2.1.0 || >=2.1.0-dev || >=2.2.0-dev || >=2.3.0-dev || >=2.4.0-dev || >=2.5.0-dev || >=2.6.0-dev || >=2.7.0-dev || >=2.8.0-dev || >=2.9.0-dev || >=3.0.0-dev || >= 3.1.0-dev || >= 3.2.0-dev'
+    resolution:
+      integrity: sha512-ECOOQRxXCYnUUePG5h/+Z1Zouobk3KFpIHA9aKBB/nnMxs97S1JJPDGt5J4cGm1y9U9VmVlfboOxA8n1kSNzGw==
   /tsutils/2.28.0:
     dependencies:
       tslib: 1.9.3
@@ -9571,7 +9615,7 @@ packages:
     dev: false
     name: '@rush-temp/app-datastore'
     resolution:
-      integrity: sha512-Ge53j6RNKxxUfvYetWZT+rk+9QztCBkQ46qg6VR1Tn3gNKN4ii+UomNtVKQ9R3W/R7ZRs0ELS9I6/OT/el7LdA==
+      integrity: sha512-G38o+qynKD1D76U+F6zIbHsINX8Aje8XgjUlvFr1Nh/pbmA0GotiUeB55IF3PvpKdZBjoiWmkh2oi6NdUrxttQ==
       tarball: 'file:projects/app-datastore.tgz'
     version: 0.0.0
   'file:projects/app-ui.tgz':
@@ -9832,7 +9876,7 @@ packages:
     dev: false
     name: '@rush-temp/flow-host'
     resolution:
-      integrity: sha512-WU/QoDwZKmlRZLlF4YBvQgvLWlfHtGo+JAk8VpEjX8WGZRT6hGTTOtDAFypobxtmlfBC5s4WgimBDK/T6CpXOA==
+      integrity: sha512-TxIo2B9uF9g8LrmSlHGVSXVQeB/hrVL338a3pBphJ0kOhribelIC04XQdLUKRAJFfvZR+5AfVTB2GbAxcy8Eeg==
       tarball: 'file:projects/flow-host.tgz'
     version: 0.0.0
   'file:projects/flow-util.tgz':
@@ -9990,7 +10034,7 @@ packages:
     dev: false
     name: '@rush-temp/local-test-server'
     resolution:
-      integrity: sha512-fL2FVnFSZFcr7ndU7+Kjcn4WyF3ZZuKvVa67xh0IWwUf8Y9HayACaGPnRYs26lWeYYzPAlUWVw9CPiRY80kyXw==
+      integrity: sha512-OMM86HiNe7LXEzYzrtnVIkfvyMBkcu/Aw6b86wpEWpj4Prz6p9Vfokx70a8CqIfbEZS9Jf3juIEkaCuaXBPvOw==
       tarball: 'file:projects/local-test-server.tgz'
     version: 0.0.0
   'file:projects/map.tgz':
@@ -10119,6 +10163,24 @@ packages:
       integrity: sha512-LTiKcmv8dtlvyEaLfP88nX6lLsw2JjsijTD/7DQKTo36ylbw2LuVK5A0n67ce0jYNQTc7VPOx0fy3MrGokRuhA==
       tarball: 'file:projects/replay-socket-storage.tgz'
     version: 0.0.0
+  'file:projects/routerlicious-host.tgz':
+    dependencies:
+      '@types/debug': 0.0.31
+      '@types/mocha': 5.2.6
+      axios: 0.18.0
+      concurrently: 4.1.0
+      debug: 3.2.6
+      mocha: 5.2.0
+      rimraf: 2.6.3
+      tslint: /tslint/5.13.0/typescript@3.3.3333
+      tslint-microsoft-contrib: /tslint-microsoft-contrib/6.0.0/8e3c60f614a8b018ff3d29c8e227399b
+      typescript: 3.3.3333
+    dev: false
+    name: '@rush-temp/routerlicious-host'
+    resolution:
+      integrity: sha512-fTveb+4sASDZUiAmms8Imkq5RMwKE1/OR0VD7f8pasZbuD33mlu3EhfytM5z2O6kg05uCZXzsjN22/7VoHoGSQ==
+      tarball: 'file:projects/routerlicious-host.tgz'
+    version: 0.0.0
   'file:projects/routerlicious-socket-storage.tgz':
     dependencies:
       '@types/debug': 0.0.31
@@ -10160,6 +10222,7 @@ packages:
       '@types/diff': 3.5.3
       '@types/express-session': 1.15.11
       '@types/jquery': 3.3.29
+      '@types/jsdom': 12.2.1
       '@types/json-stringify-safe': 5.0.0
       '@types/jsonwebtoken': 8.3.0
       '@types/lodash': 4.14.120
@@ -10213,6 +10276,7 @@ packages:
       hjs: 0.0.6
       html-loader: 0.5.5
       jquery: 3.3.1
+      jsdom: 12.2.0
       json-stringify-safe: 5.0.1
       jsonwebtoken: 8.4.0
       kafka-node: 3.0.1
@@ -10274,7 +10338,7 @@ packages:
     dev: false
     name: '@rush-temp/routerlicious'
     resolution:
-      integrity: sha512-SFGrf7NB7ktrSSAY9u/cGj+hU68yl1Rcus3Ak0S8Pm+sALYXawqnyrdZ106hfUZhy6WinQatv1YHD1LscWxPBg==
+      integrity: sha512-frClucFES9CUh9pt9eXzi4lh0tW3lESHOz0YPt6Te60aOaVjCchM8jxjzMZ23MTbtIUKRcIOFaqRRdvbSIM9cQ==
       tarball: 'file:projects/routerlicious.tgz'
     version: 0.0.0
   'file:projects/runtime-definitions.tgz':
@@ -10530,7 +10594,7 @@ packages:
     dev: false
     name: '@rush-temp/table-document'
     resolution:
-      integrity: sha512-RjjWRSy55VIUtSEdlYuJUTOlwyXgK3dqDdCtNfEoQWcDvLsGh1WSBLEjCDMRP/4b5ykCjw9hCrKH+vl0Q39TEw==
+      integrity: sha512-3Q9P/iDS+zOVlBY/dapw1LyKGi1SrO9Gm9NZcxoHuN46avqer8nkwdl/4S+vI32DfP6tVy6kV56G1feLSJsLsw==
       tarball: 'file:projects/table-document.tgz'
     version: 0.0.0
   'file:projects/table-test-app.tgz':
@@ -10618,7 +10682,7 @@ packages:
     dev: false
     name: '@rush-temp/tools-core'
     resolution:
-      integrity: sha512-nippYixLRN1QwGNUEZ9/WSnNv8XsSvo4Q3vLf/RXd9c/dtrfN3S6RpsFakayLprikeNNzxR4j//AMj6THXZPzA==
+      integrity: sha512-odcx13CtHe1xZdE+XQ3+vShKGNs8Utb7SNeaveM7WAWRIBT0qzmZra0D3O4BBx0cHohYhe5wRpnkrgCcWGkP4A==
       tarball: 'file:projects/tools-core.tgz'
     version: 0.0.0
   'file:projects/translator.tgz':
@@ -10694,6 +10758,7 @@ specifiers:
   '@rush-temp/odsp-socket-storage': 'file:./projects/odsp-socket-storage.tgz'
   '@rush-temp/replay-socket-storage': 'file:./projects/replay-socket-storage.tgz'
   '@rush-temp/routerlicious': 'file:./projects/routerlicious.tgz'
+  '@rush-temp/routerlicious-host': 'file:./projects/routerlicious-host.tgz'
   '@rush-temp/routerlicious-socket-storage': 'file:./projects/routerlicious-socket-storage.tgz'
   '@rush-temp/runtime': 'file:./projects/runtime.tgz'
   '@rush-temp/runtime-definitions': 'file:./projects/runtime-definitions.tgz'
@@ -10818,7 +10883,6 @@ specifiers:
   nock: ^10.0.1
   node-geocoder: ^3.22.0
   node-sass: ^4.9.3
-  npm-run-all: ^4.1.5
   nyc: ^13.0.1
   office-ui-fabric-react: ^6.108.0
   parallel-webpack: ^2.3.0
@@ -10871,7 +10935,6 @@ specifiers:
   webpack-bundle-analyzer: ^2.13.1
   webpack-cli: ^3.1.2
   webpack-merge: ^4.1.2
-  webpack-node-externals: ^1.7.2
   winston: ^3.1.0
   ws: ^6.1.2
   xhr: ^2.5.0

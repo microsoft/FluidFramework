@@ -162,6 +162,10 @@
       "projectFolder": "packages/server/routerlicious/"
     },
     {
+      "packageName": "@prague/routerlicious-host",
+      "projectFolder": "packages/drivers/routerlicious-host"
+    },
+    {
       "packageName": "@prague/services",
       "projectFolder": "packages/server/services/"
     },
