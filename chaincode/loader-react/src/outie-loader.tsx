@@ -5,13 +5,13 @@ interface IProps {
     chaincodePackage: string;
     docId: string;
     mountedElement: HTMLDivElement;
-    serverUrl;
+    serverUrl: string;
 }
 
 interface IState {
 }
 
-export class LoaderComponent extends React.Component<IProps, IState> {
+export class OutieLoader extends React.Component<IProps, IState> {
     private domElement: HTMLDivElement;
     constructor(props) {
         super(props);
@@ -34,4 +34,8 @@ export class LoaderComponent extends React.Component<IProps, IState> {
     render() {
         return(<p> Component </p>);
     }
+}
+
+export class OutieLoaderMenu extends React.Component {
+
 }
