@@ -1,5 +1,7 @@
 var Generator = require("yeoman-generator");
 var { Project } = require("ts-morph");
+var chalk = require("chalk");
+
 module.exports = class extends Generator {
   constructor(args, opts) {
     super(args, opts);
@@ -12,17 +14,10 @@ module.exports = class extends Generator {
         name: "name",
         message: "Component Name",
         default: this.appname,
-        filter: (input) => {
+        filter: input => {
           input = input.replace(" ", "_");
-          return input.replace(/\W/g, '');
+          return input.replace(/\W/g, "");
         }
-      },
-      {
-        type: "input",
-        name: "local",
-        message: "Would you like to run against a local server?",
-        default: "n",
-        choices: ["Y", "n"]
       },
       {
         type: "input",
@@ -40,34 +35,10 @@ module.exports = class extends Generator {
       }
     ]);
     this._setNewDestinationPath(this.answers.path);
-    this._cleanDestination();
   }
 
   _setNewDestinationPath(path) {
-    this.log("Modifying destination path");
     this.destinationRoot(path);
-  }
-
-  _cleanDestination() {
-    this.log("Remove old tmp stuff");
-    // this.fs.delete(this.destinationPath("./**/*"));
-  }
-
-  reiterateChoices() {
-    this.log("App Name", this.answers.name);
-    this.log("Running against", this.answers.local === "Y" ? "local" : "live");
-  }
-
-  getPathOfInvocation() {
-    this.log("InvocationRoot", this.contextRoot);
-  }
-
-  getDestinationPath() {
-    this.log("DestinationRoot", this.destinationRoot());
-  }
-
-  getTemplatePath() {
-    this.log("Template path", this.templatePath());
   }
 
   moveBuildFiles() {
@@ -98,16 +69,18 @@ module.exports = class extends Generator {
     this.fs.writeJSON(
       this.destinationPath("package.json"), // TO
       packageJson // contents
-      );
+    );
   }
 
   _modifyComponent() {
-
     const fileString = this.fs.read(this.templatePath("src/index.ts"));
 
     const project = new Project({});
 
-    const file = project.createSourceFile(this.destinationPath("src/index.ts"), fileString);
+    const file = project.createSourceFile(
+      this.destinationPath("src/index.ts"),
+      fileString
+    );
 
     file.getClass("Clicker").rename(this.answers.name);
 
@@ -116,7 +89,63 @@ module.exports = class extends Generator {
     file.save();
   }
 
-  runInstall() {
+  install() {
+    this.log("Installing dependencies. This may take a minute.");
     this.npmInstall();
+  }
+
+  async end() {
+    // await this._runInstall();
+
+    this.log("\n");
+    this.log(chalk.green("Success.") + " Created component", this.answers.name);
+    this.log("Component is in", this.destinationRoot());
+    this.log("\n");
+    this.log("You can try the following commands");
+    this.log("\n");
+
+    this.log(chalk.cyan("    npm start"));
+    this.log("       Hosts the component at http://localhost:8080");
+    this.log("\n");
+
+    this.log(chalk.cyan("    npm run build"));
+    this.log("       Builds the component into bundled js files");
+    this.log("\n");
+
+    this.log(chalk.cyan("    npm deploy"));
+    this.log(
+      "       Publishes the chaincode to https://packages.wu2.prague.office-int.com/#/"
+    );
+    this.log("\n");
+
+    this.log("We suggest you start by typing:");
+    if (this.answers.path !== ".") {
+      const cdPath = "    cd " + this.answers.path;
+      this.log(chalk.cyan(cdPath));
+    }
+    this.log(chalk.cyan("    npm start"));
+  }
+
+  // Helper Functions
+  _cleanDestination() {
+    this.log("Remove old tmp stuff");
+    this.fs.delete(this.destinationPath("./**/*"));
+  }
+
+  _reiterateChoices() {
+    this.log("App Name", this.answers.name);
+    this.log("Running against", this.answers.local === "Y" ? "local" : "live");
+  }
+
+  _getPathOfInvocation() {
+    this.log("InvocationRoot", this.contextRoot);
+  }
+
+  _getDestinationPath() {
+    this.log("DestinationRoot", this.destinationRoot());
+  }
+
+  _getTemplatePath() {
+    this.log("Template path", this.templatePath());
   }
 };

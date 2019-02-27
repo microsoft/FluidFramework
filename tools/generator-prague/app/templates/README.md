@@ -1,17 +1,47 @@
-import { Component, Document } from "@prague/app-component";
-import { IContainerContext, IRuntime } from "@prague/container-definitions";
-import { Counter, CounterValueType } from "@prague/map";
+# Welcome to your first Chaincode
 
-export class Clicker extends Document {
 
+Welcome to your first chaincode component.
+
+
+## Getting Started
+You can try the following commands
+
+````
+    npm start
+       Hosts the component at http://localhost:8080
+
+
+    npm run build
+       Builds the component into bundled js files
+
+
+    npm deploy
+       Publishes the chaincode to https://packages.wu2.prague.office-int.com/#/
+````
+
+We suggest you start by typing:
+	
+    npm start
+
+
+## Get Coding
+
+The two phases of running a chaincode are the create and the render.
+
+Create sets the initial schema.
+
+Render uses the distributed data types to create an exciting view experience.
+
+````TypeScript
   // Create the component's schema and perform other initialization tasks
   // (only called when document is initially created).
   protected async create() {
     this.root.set("clicks", 0, CounterValueType.Name);
   }
 
+  // Renders your chaincode
   protected async render(host: HTMLDivElement) {
-
     // Get the distributed Counter
     const counter = await this.root.wait<Counter>("clicks");
 
@@ -35,20 +65,4 @@ export class Clicker extends Document {
     host.appendChild(btn);
   }
 
-  // The component has been loaded. Attempt to get a div from the host. TODO explain this better.
-  public async opened() {
-    // If the host provided a <div>, render the component into that Div
-    const maybeDiv = await this.platform.queryInterface<HTMLDivElement>("div");
-    if (maybeDiv) {
-      this.render(maybeDiv);
-    } else {
-      return;
-    }
-  }
-}
-
-export async function instantiateRuntime( context: IContainerContext ): Promise<IRuntime> {
-  return Component.instantiateRuntime(context, "@chaincode/counter", [
-    ["@chaincode/counter", Clicker]
-  ]);
-}
+````

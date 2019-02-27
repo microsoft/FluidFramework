@@ -13,6 +13,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "chalk": "^2.4.2",
     "ts-morph": "^1.2.0",
     "yeoman-generator": "^3.2.0"
   }
