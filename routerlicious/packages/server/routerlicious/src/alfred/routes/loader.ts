@@ -113,12 +113,14 @@ export function create(
         const treeTimeP = fullTreeP.then(() => Date.now() - start);
         const pkgTimeP = pkgP.then(() => Date.now() - start);
         const timingsP = Promise.all([workerTimeP, treeTimeP, pkgTimeP]);
+        const search = parse(request.url).search;
 
         const pragueUrl = "prague://" +
             `${parse(config.get("worker:serverUrl")).host}/` +
             `${encodeURIComponent(tenantId)}/` +
             `${encodeURIComponent(documentId)}` +
-            path;
+            path +
+            (search ? search : "");
 
         const resolved: IPragueResolvedUrl = {
             ordererUrl: config.get("worker:serverUrl"),
