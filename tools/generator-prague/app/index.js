@@ -34,7 +34,9 @@ module.exports = class extends Generator {
         type: "input",
         name: "path",
         message: "Where would you like to put your prague component?",
-        default: "../tmp"
+        default: function(answers) {
+          return "./" + answers.name;
+        }
       }
     ]);
     this._setNewDestinationPath(this.answers.path);
