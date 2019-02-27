@@ -51,7 +51,7 @@ export async function startLoading(
         { tokenProvider },
         documentServices,
         codeLoader,
-        { encrypted: undefined, localMinSeq: 0, client: { type: "snapshot"} });
+        { encrypted: undefined, localMinSeq: 0, blockUpdateMarkers: true, client: { type: "snapshot"} });
 
     const baseUrl =
         `prague://prague.com/` +

@@ -13,8 +13,10 @@ export class PuppetMaster {
         private packageUrl: string,
         ) {}
     public async launch() {
-        this.browser = await puppeteer.launch();
+        // { headless: false, args: ["--start-fullscreen"] }
+        this.browser = await puppeteer.launch({ headless: false, args: ["--start-fullscreen"] });
         this.page = await this.browser.newPage();
+        await this.page.setViewport({ width: 1920, height: 1080 });
         return this.launchPage();
     }
 
