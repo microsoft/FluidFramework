@@ -1,9 +1,11 @@
 import * as puppeteer from "puppeteer";
+import { ICache } from "../redisCache";
 import { craftHtml } from "./htmlGenerator";
 
 export class PuppetMaster {
     private browser: puppeteer.Browser;
     private page: puppeteer.Page;
+    private cachingTimer: any;
     constructor(
         private documentId: string,
         private routerlicious: string,
@@ -11,6 +13,7 @@ export class PuppetMaster {
         private tenantId: string,
         private token: string,
         private packageUrl: string,
+        private cache?: ICache,
         ) {}
     public async launch() {
         // { headless: false, args: ["--start-fullscreen"] }
@@ -39,6 +42,10 @@ export class PuppetMaster {
         await this.page.exposeFunction("closeContainer", async () => {
             console.log(`Close function invoked! Page and Browser should close now!`);
             this.page.removeAllListeners();
+            if (this.cachingTimer) {
+                clearInterval(this.cachingTimer);
+                this.cachingTimer = undefined;
+            }
             await this.page.close();
             await this.browser.close();
         });
@@ -47,5 +54,45 @@ export class PuppetMaster {
         const htmlToRender = craftHtml(
             this.documentId, this.routerlicious, this.historian, this.tenantId, this.token, this.packageUrl);
         await this.page.setContent(htmlToRender);
+
+        this.cachingTimer = setInterval(() => {
+            this.cachePage();
+        }, 10000);
+    }
+
+    private async cachePage() {
+        const bodyHTML = await this.page.evaluate(() => document.body.innerHTML);
+        const headHTML = await this.page.evaluate(() => document.head.innerHTML);
+        const cleanBodyHTML = bodyHTML.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "");
+        const cleanHeadHTML = headHTML.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "");
+        const pageHTML = this.craftPage(cleanHeadHTML, cleanBodyHTML);
+        console.log(`Crafted page`);
+        if (this.cache) {
+            this.cache.set(`${this.tenantId}-${this.documentId}`, pageHTML).then(() => {
+                console.log(`Updated cache`);
+            }, (err) => {
+                console.log(`Error: ${err}`);
+            });
+        }
+    }
+
+    // Hack 1: Script should be inserted later after reading from redis
+    private craftPage(headHTML: string, bodyHTML: string) {
+        const html = `
+        <!DOCTYPE html>
+        <html lang="en">
+            <head>
+                ${headHTML}
+            </head>
+            <script>
+                <script src="/public/scripts/dist/a80f5e67a5a5cb68c10a28c08dd058cb-loader.min.js"></script>
+            </script>
+        <body>
+            <div id="content">
+                ${bodyHTML}
+            </div>
+        </body>
+        </html>`;
+        return html;
     }
 }

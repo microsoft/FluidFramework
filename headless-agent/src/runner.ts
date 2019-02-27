@@ -4,13 +4,15 @@ import * as utils from "@prague/services-utils";
 import { Deferred } from "@prague/utils";
 import * as winston from "winston";
 import { PuppetMaster } from "./puppeteer";
+import { ICache } from "./redisCache";
 
 export class HeadlessRunner implements utils.IRunner {
     private running = new Deferred<void>();
 
     constructor(
         private workerConfig: any,
-        private messageReceiver: core.ITaskMessageReceiver) {
+        private messageReceiver: core.ITaskMessageReceiver,
+        private cache: ICache) {
         const alfredUrl = workerConfig.alfredUrl;
         winston.info(`Alfred URL: ${alfredUrl}`);
         winston.info(`Worker congif: ${JSON.stringify(this.workerConfig)}`);
@@ -41,7 +43,8 @@ export class HeadlessRunner implements utils.IRunner {
                     this.workerConfig.blobStorageUrl,
                     requestMessage.tenantId,
                     requestMessage.token,
-                    this.workerConfig.packageUrl);
+                    this.workerConfig.packageUrl,
+                    this.cache);
                 puppetMaster.launch().then(() => {
                     winston.info(`Launched for ${requestMessage.tenantId}/${requestMessage.documentId}`);
                 }, (err) => {

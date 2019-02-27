@@ -13,6 +13,10 @@
             "endpoint": "zookeeper:2181"
         }
     },
+    "redis": {
+        "host": "redis",
+        "port": 6379
+    },
     "system": {
         "topics": {
             "send": "deltas"

@@ -25,6 +25,10 @@ data:
                 "endpoint": "{{ .Values.endpoints.kafka }}"
             }
         },
+        "redis": {
+            "host": "{{ .Values.endpoints.redis }}",
+            "port": 6379
+        },
         "system": {
             "topics": {
                 "send": "deltas"
