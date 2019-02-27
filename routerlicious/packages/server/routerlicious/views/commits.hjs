@@ -17,7 +17,12 @@
         <script src="{{#hfurl}}/public/scripts/dist/controller.js{{/hfurl}}"></script>
         <script>
             var versions = {{{ versions }}};
-            controller.commits.load("{{ type }}","{{ documentId }}", versions);
+            controller.commits.load(
+                "{{ type }}",
+                "{{ pathPostfix }}",
+                "{{ tenantId }}",
+                "{{ documentId }}",
+                versions);
         </script>
     {{/scripts}}
 {{/layout}}

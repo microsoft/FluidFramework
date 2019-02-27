@@ -39,7 +39,13 @@ const templateConfig = {
   };
 const template = new GitGraph.Template(templateConfig);
 
-function generateGraph(type: string, id: string, versions: resources.ICommitDetails[]): void {
+function generateGraph(
+    type: string,
+    pathPostfix: string,
+    tenantId: string,
+    id: string,
+    versions: resources.ICommitDetails[],
+): void {
     const config: GitGraph.GitGraphOptions = {
         initCommitOffsetX: -20,
         initCommitOffsetY: -10,
@@ -47,6 +53,11 @@ function generateGraph(type: string, id: string, versions: resources.ICommitDeta
         template,
     };
     const graph = new GitGraph(config);
+
+    const fullId = tenantId
+        ? `${encodeURIComponent(tenantId)}/${encodeURIComponent(id)}`
+        : encodeURIComponent(id);
+    const path = pathPostfix ? `${fullId}/${pathPostfix}` : fullId;
 
     const master = graph.branch("master");
     for (const version of versions) {
@@ -56,7 +67,8 @@ function generateGraph(type: string, id: string, versions: resources.ICommitDeta
             message: commitTag.length >= 1 ? commitTag[0] : "",
             onClick: (commit: any) => {
                 console.log(commit);
-                const url = `${document.location.origin}/${type}/${id}/commit?version=${commit.sha1}`;
+                // tslint:disable-next-line:max-line-length
+                const url = `${document.location.origin}/${encodeURIComponent(type)}/${path}?version=${encodeURIComponent(commit.sha1)}`;
                 window.open(url, "_blank");
             },
             sha1: version.sha,
@@ -66,8 +78,13 @@ function generateGraph(type: string, id: string, versions: resources.ICommitDeta
     }
 }
 
-export async function load(type: string, id: string, versions: resources.ICommitDetails[]) {
+export async function load(
+    type: string,
+    pathPostfix: string,
+    tenantId: string,
+    id: string,
+    versions: resources.ICommitDetails[]) {
     console.log(JSON.stringify(versions));
     $("#commitsView").append($(`<h2>Document ${id} commit graph</h2>`));
-    generateGraph(type, id, versions);
+    generateGraph(type, pathPostfix, tenantId, id, versions);
 }

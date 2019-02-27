@@ -37,6 +37,7 @@ export function create(
                     {
                         documentId: request.params.id,
                         partials: defaultPartials,
+                        pathPostfix: "commit",
                         tenantId,
                         type: "sharedText",
                         versions: JSON.stringify(versions),

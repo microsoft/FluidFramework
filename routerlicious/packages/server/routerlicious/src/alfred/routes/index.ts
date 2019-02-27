@@ -12,6 +12,7 @@ import * as maps from "./maps";
 import * as scribe from "./scribe";
 import * as sharedText from "./sharedText";
 import * as templates from "./templates";
+import * as versions from "./versions";
 
 export interface IRoutes {
     agent: Router;
@@ -25,6 +26,7 @@ export interface IRoutes {
     scribe: Router;
     sharedText: Router;
     templates: Router;
+    versions: Router;
 }
 
 export function create(
@@ -51,5 +53,6 @@ export function create(
         scribe: scribe.create(config, tenantManager, appTenants, ensureLoggedIn),
         sharedText: sharedText.create(config, tenantManager, storage, appTenants, ensureLoggedIn),
         templates: templates.create(config),
+        versions: versions.create(storage, ensureLoggedIn),
     };
 }
