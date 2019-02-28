@@ -61,23 +61,27 @@ export class PuppetMaster {
     }
 
     private async cachePage() {
-        // const bodyHTML = await this.page.evaluate(() => document.body.innerHTML);
-        // const headHTML = await this.page.evaluate(() => document.head.innerHTML);
-        // const cleanBodyHTML = bodyHTML.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "");
-        // const cleanHeadHTML = headHTML.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "");
-        // const pageHTML = this.craftPage(cleanHeadHTML, cleanBodyHTML);
+        const bodyHTML = await this.page.evaluate(() => document.body.innerHTML);
+        const headHTML = await this.page.evaluate(() => document.head.innerHTML);
+        const cleanBodyHTML = bodyHTML.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "");
+        const cleanHeadHTML = headHTML.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "");
+        const pageHTML = this.craftPage(cleanHeadHTML, cleanBodyHTML);
         const pageContent = await this.page.content();
         const cleanContent = pageContent.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "");
         if (this.cache) {
             this.cache.set(`${this.tenantId}-${this.documentId}`, cleanContent).then(() => {
-                console.log(`Updated cache`);
+                console.log(`Updated full cache`);
+            }, (err) => {
+                console.log(`Error: ${err}`);
+            });
+            this.cache.set(`${this.tenantId}-${this.documentId}-split`, pageHTML).then(() => {
+                console.log(`Updated full cache`);
             }, (err) => {
                 console.log(`Error: ${err}`);
             });
         }
     }
 
-    /*
     private craftPage(headHTML: string, bodyHTML: string) {
         const html = `
         <!DOCTYPE html>
@@ -92,5 +96,5 @@ export class PuppetMaster {
             </body>
         </html>`;
         return html;
-    }*/
+    }
 }
