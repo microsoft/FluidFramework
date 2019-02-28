@@ -56,7 +56,8 @@ export class HeadlessRunner implements utils.IRunner {
         return this.running.promise;
     }
 
-    public stop(): Promise<void> {
+    public async stop(): Promise<void> {
+        await this.messageReceiver.close();
         return this.running.promise;
     }
 }

@@ -66,7 +66,8 @@ export class PuppetMaster {
         const cleanBodyHTML = bodyHTML.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "");
         const cleanHeadHTML = headHTML.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "");
         const pageHTML = this.craftPage(cleanHeadHTML, cleanBodyHTML);
-        console.log(`Crafted page`);
+        // const pageContent = await this.page.content();
+        // const cleanContent = pageContent.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "");
         if (this.cache) {
             this.cache.set(`${this.tenantId}-${this.documentId}`, pageHTML).then(() => {
                 console.log(`Updated cache`);
@@ -76,7 +77,6 @@ export class PuppetMaster {
         }
     }
 
-    // Hack 1: Script should be inserted later after reading from redis
     private craftPage(headHTML: string, bodyHTML: string) {
         const html = `
         <!DOCTYPE html>
@@ -84,14 +84,11 @@ export class PuppetMaster {
             <head>
                 ${headHTML}
             </head>
-            <script>
-                <script src="/public/scripts/dist/a80f5e67a5a5cb68c10a28c08dd058cb-loader.min.js"></script>
-            </script>
-        <body>
-            <div id="content">
-                ${bodyHTML}
-            </div>
-        </body>
+            <body>
+                <div id="content">
+                    ${bodyHTML}
+                </div>
+            </body>
         </html>`;
         return html;
     }
