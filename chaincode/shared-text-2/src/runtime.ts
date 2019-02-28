@@ -94,7 +94,12 @@ class SharedTextComponent extends Document {
             document.createElement("div"),
             url.resolve(document.baseURI, "/public/images/bindy.svg"));
 
+        // const wrapperDiv = document.createElement("div");
+        // wrapperDiv.id = "content";
+        // wrapperDiv.appendChild(containerDiv);
+
         const containerDiv = document.createElement("div");
+        containerDiv.id = "content";
         const container = new controls.FlowContainer(
             containerDiv,
             new API.Document(this.runtime, this.root),

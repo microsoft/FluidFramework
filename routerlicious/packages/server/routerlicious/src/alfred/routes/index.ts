@@ -44,7 +44,8 @@ export function create(
     storage: IDocumentStorage,
     cache: ICache,
     producer: IProducer,
-    appTenants: IAlfredTenant[]) {
+    appTenants: IAlfredTenant[],
+    urlResolver: (id: string) => string) {
 
     const ensureLoggedIn = config.get("login:enabled") ? ensureAuth.ensureLoggedIn :
         (options) => {
@@ -56,7 +57,7 @@ export function create(
         api: api.create(config, tenantManager, storage, mongoManager, producer, appTenants),
         canvas: canvas.create(config, tenantManager, storage, appTenants, ensureLoggedIn),
         demoCreator: demoCreator.create(config, ensureLoggedIn),
-        fastLoader: fastLoader.create(config, tenantManager, storage, cache, appTenants, ensureLoggedIn),
+        fastLoader: fastLoader.create(config, tenantManager, storage, cache, appTenants, ensureLoggedIn, urlResolver),
         home: home.create(config, ensureLoggedIn),
         loader: loader.create(config, tenantManager, storage, appTenants, ensureLoggedIn),
         maps: maps.create(config, tenantManager, storage, appTenants, ensureLoggedIn),

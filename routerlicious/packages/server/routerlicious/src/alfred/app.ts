@@ -204,8 +204,26 @@ export function create(
         }
     });
 
+    function getFingerprintUrl(requestUrl: string) {
+        const local = requestUrl.substring(staticFilesEndpoint.length);
+        if (!(local in staticMinCache)) {
+            return requestUrl;
+        } else {
+            return staticFilesEndpoint + app.locals.furl(staticMinCache[local]);
+        }
+    }
+
     // bind routes
-    const routes = alfredRoutes.create(config, tenantManager, mongoManager, storage, cache, producer, appTenants);
+    const routes = alfredRoutes.create(
+        config,
+        tenantManager,
+        mongoManager,
+        storage,
+        cache,
+        producer,
+        appTenants,
+        getFingerprintUrl);
+
     app.use(routes.api);
     app.use("/templates", routes.templates);
     app.use("/maps", routes.maps);

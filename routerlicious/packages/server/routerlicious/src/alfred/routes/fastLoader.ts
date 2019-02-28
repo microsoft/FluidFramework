@@ -56,7 +56,8 @@ export function create(
     storage: IDocumentStorage,
     cache: ICache,
     appTenants: IAlfredTenant[],
-    ensureLoggedIn: any): Router {
+    ensureLoggedIn: any,
+    urlResolver: (id: string) => string): Router {
 
     const router: Router = Router();
     const jwtKey = config.get("alfred:key");
@@ -117,19 +118,23 @@ export function create(
             config.get("error:track"),
             config.get("client"));
 
+        const pageKey = `${tenantId}-${documentId}`;
         const packageUrl = config.get("worker:npm");
-        const cachedPageP = cache.get(`${tenantId}-${documentId}`);
+        const cachedPageP = cache.get(pageKey);
         Promise.all([workerConfigP, cachedPageP]).then(([workerConfig, page]) => {
             if (page) {
-                winston.info(`Sending cached page`);
+                const loaderUrl = urlResolver(`/public/scripts/dist/loader.js`);
+                winston.info(`Sending page ${pageKey} with ${loaderUrl}`);
                 const scriptCode = createLoaderScript(
+                    loaderUrl,
                     resolved,
                     emptyCache,
                     workerConfig,
                     chaincode,
                     [],
                     packageUrl,
-                    jwtToken);
+                    jwtToken,
+                    );
                 // response.send(page.replace(`placeholder_for_prague_script`, scriptCode));
                 const pageWithCode = page.concat(scriptCode);
                 response.send(pageWithCode);
@@ -185,6 +190,7 @@ export function create(
 }
 
 function createLoaderScript(
+    loaderUrl: string,
     resolved: IPragueResolvedUrl,
     cache: any,
     workerConfig: string,
@@ -193,7 +199,7 @@ function createLoaderScript(
     npm: string,
     userJwt: string) {
     const scriptCode = `
-    <script src="/public/scripts/dist/loader.js"></script>
+    <script src="${loaderUrl}"></script>
     <script>
         console.log("Cached page rendered");
         loader.initialize(

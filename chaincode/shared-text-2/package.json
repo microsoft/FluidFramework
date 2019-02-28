@@ -1,6 +1,6 @@
 {
   "name": "@chaincode/shared-text-2",
-  "version": "0.3.21",
+  "version": "0.3.44",
   "description": "Just Shared text for chaincode bake experience",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
