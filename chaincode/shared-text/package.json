@@ -38,7 +38,7 @@
     "webpack-visualizer-plugin": "^0.1.11"
   },
   "dependencies": {
-    "@chaincode/charts": "^0.3.5157",
+    "@chaincode/charts": "^0.3.5351",
     "@chaincode/monaco": "^0.3.5291",
     "@chaincode/pinpoint-editor": "^0.3.5292",
     "@prague/api-definitions": "^0.2.5287",
