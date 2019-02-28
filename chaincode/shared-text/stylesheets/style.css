@@ -135,12 +135,6 @@ body {
     opacity: 1;
   }
 }
-@font-face {
-  font-family: 'Roboto';
-  font-style: normal;
-  font-weight: 300;
-  src: local('Roboto Light'), local('Roboto-Light'), url(https://fonts.gstatic.com/s/roboto/v18/KFOlCnqEu92Fr1MmSU5fBBc9.ttf) format('truetype');
-}
 .login-page {
   width: 360px;
   padding: 8% 0 0;
@@ -307,4 +301,10 @@ div.titleletters {
 .slider {
   display: inline !important;
   width: 5% !important;
+}
+.component-link {
+  opacity: 0;
+}
+.component-link:hover {
+  opacity: 1;
 }

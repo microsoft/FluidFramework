@@ -54,23 +54,23 @@ module.exports = {
             }
         ]
     },
-    node: {
-        dgram: 'empty',
-        fs: 'empty',
-        net: 'empty',
-        tls: 'empty',
-        child_process: 'empty',
-    },
     resolve: {
         extensions: [ '.tsx', '.ts', '.js' ]
     },
+    resolveLoader: {
+		alias: {
+			'blob-url-loader': require.resolve('./loaders/blobUrl'),
+			'compile-loader': require.resolve('./loaders/compile'),
+		},
+	},
     output: {
         filename: '[name].bundle.js',
         chunkFilename: '[name].async.js',
         path: path.resolve(__dirname, 'dist'),
         publicPath: "/dist/",
         library: "[name]",
-        libraryTarget: "umd"
+        libraryTarget: "umd",
+        globalObject: 'self',
     },
     plugins: [
         // new MonacoWebpackPlugin()

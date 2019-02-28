@@ -425,9 +425,9 @@ const commands: ICmd[] = [
     },
     {
         exec: (f) => {
-            f.insertInnerComponent("chart", "@chaincode/monaco");
+            f.insertInnerComponent("code", "@chaincode/monaco");
         },
-        key: "insert inner monaco",
+        key: "insert monaco",
     },
     {
         exec: (f) => {

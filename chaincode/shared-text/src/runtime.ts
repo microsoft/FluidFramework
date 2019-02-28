@@ -42,8 +42,24 @@ import { controls, ui } from "./controls";
 import { Document } from "./document";
 
 const charts = import(/* webpackChunkName: "charts", webpackPrefetch: true */ "@chaincode/charts");
-// const monaco = import("@chaincode/monaco");
+const monaco = import(/* webpackChunkName: "charts", webpackPrefetch: true */ "@chaincode/monaco");
 const pinpoint = import(/* webpackChunkName: "pinpoint", webpackPrefetch: true */ "@chaincode/pinpoint-editor");
+
+// tslint:disable
+(self as any).MonacoEnvironment = {
+	getWorkerUrl: function (moduleId, label) {
+		switch (label) {
+			case 'json': return require('blob-url-loader?type=application/javascript!compile-loader?target=worker&emit=false!monaco-editor/esm/vs/language/json/json.worker');
+			case 'css': return require('blob-url-loader?type=application/javascript!compile-loader?target=worker&emit=false!monaco-editor/esm/vs/language/css/css.worker');
+			case 'html': return require('blob-url-loader?type=application/javascript!compile-loader?target=worker&emit=false!monaco-editor/esm/vs/language/html/html.worker');
+			case 'typescript':
+			case 'javascript': return require('blob-url-loader?type=application/javascript!compile-loader?target=worker&emit=false!monaco-editor/esm/vs/language/typescript/ts.worker');
+			default:
+				return require('blob-url-loader?type=application/javascript!compile-loader?target=worker&emit=false!monaco-editor/esm/vs/editor/editor.worker');
+		}
+	}
+};
+// tslint:enable
 
 // first script loaded
 const clockStart = Date.now();
@@ -286,7 +302,7 @@ export async function instantiateComponent(): Promise<IChaincodeComponent> {
 export async function instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
     const registry = new Map<string, any>([
         ["@chaincode/charts", charts],
-        // ["@chaincode/monaco", monaco],
+        ["@chaincode/monaco", monaco],
         ["@chaincode/pinpoint-editor", pinpoint],
         ["@chaincode/shared-text", { instantiateComponent }],
     ]);
@@ -314,7 +330,7 @@ export async function instantiateRuntime(context: IContainerContext): Promise<IR
         }
     });
 
-    runtime.registerTasks(["snapshot", "spell", "translation"]);
+    runtime.registerTasks(["snapshot", "spell", "intel", "translation"]);
 
     // On first boot create the base component
     if (!runtime.existing) {
