@@ -102,7 +102,10 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
             });
 
             socket.on("connect_document_error", (error => {
-                debug(`Error connecting to the document after connecting to the socket. Error:[${error}]`)
+                debug(`Error connecting to the document after connecting to the socket. Error:[${error}]`);
+
+                socket.disconnect();
+                
                 reject(error);
             }));
 
