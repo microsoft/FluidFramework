@@ -14,7 +14,7 @@ function roundtrip(slice: ITable) {
     for (let row = 0; row < slice.numRows; row++) {
         for (let col = 0; col < slice.numCols; col++) {
             slice.setCellText(row, col, `${row},${col}`);
-        }    
+        }
     }
 
     for (let row = 0; row < slice.numRows; row++) {
@@ -55,6 +55,15 @@ async function main() {
 
     const table = await store.open<TableDocument>(makeId("Table-Document"), TableDocument.type, "", []);
     table.setCellText(0, 0, "=0/0");
+
+    table.annotateRows(0, 1, { id: "row0" });
+    console.log(table.getRowProperties(0));
+    console.log(table.getRowProperties(1));
+
+    table.annotateCols(0, 1, { id: "col0" });
+    console.log(table.getColProperties(0));
+    console.log(table.getColProperties(1));
+
 
     const slice1 = await table.createSlice(makeId("Table-Slice-1"), "unnamed", 0, 0, 2, 2);
     roundtrip(slice1);

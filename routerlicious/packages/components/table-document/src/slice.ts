@@ -1,7 +1,7 @@
 import { Component } from "@prague/app-component";
 import { MapExtension } from "@prague/map";
 import { UnboxedOper } from "../../client-ui/ext/calc";
-import { CellRange, parseRange } from "./cellrange";
+import { CellInterval, parseRange } from "./cellinterval";
 import { ConfigKeys } from "./configKeys";
 import { TableDocument } from "./document";
 import { createComponentType } from "./pkg";
@@ -17,38 +17,28 @@ export interface ITableSliceConfig {
 }
 
 export class TableSlice extends Component implements ITable {
-    public static readonly type = createComponentType(TableSlice);
 
     public get name() { return this.root.get(ConfigKeys.name); }
     public set name(value: string) { this.root.set(ConfigKeys.name, value); }
     public get values() { return this.maybeValues!; }
     private get doc() { return this.maybeDoc!; }
 
-    private maybeDoc?: TableDocument;
-    private maybeValues?: CellRange;
-
-    constructor() {
-        super([[MapExtension.Type, new MapExtension()]]);
-    }
-
-    public async opened() {
-        await this.connected;
-
-        await this.ensureDoc();
-        this.maybeValues = await this.doc.getRange(this.root.get(ConfigKeys.valuesKey));
-
-        this.root.on("op", this.emitOp);
-        this.doc.on("op", this.emitOp);
-    }
-
     public get numRows() {
-        const {start, end} = this.maybeValues.getPositions();
+        const {start, end} = this.values.getRange();
         return end.row - start.row;
     }
 
     public get numCols() {
-        const {start, end} = this.maybeValues.getPositions();
+        const {start, end} = this.values.getRange();
         return end.col - start.col;
+    }
+    public static readonly type = createComponentType(TableSlice);
+
+    private maybeDoc?: TableDocument;
+    private maybeValues?: CellInterval;
+
+    constructor() {
+        super([[MapExtension.Type, new MapExtension()]]);
     }
 
     public evaluateCell(row: number, col: number) {
@@ -79,6 +69,16 @@ export class TableSlice extends Component implements ITable {
         }
     }
 
+    protected async opened() {
+        await this.connected;
+
+        await this.ensureDoc();
+        this.maybeValues = await this.doc.getRange(this.root.get(ConfigKeys.valuesKey));
+
+        this.root.on("op", this.emitOp);
+        this.doc.on("op", this.emitOp);
+    }
+
     private async ensureDoc() {
         if (!this.maybeDoc) {
             const docId = this.root.get(ConfigKeys.docId);
@@ -90,7 +90,7 @@ export class TableSlice extends Component implements ITable {
         // tslint:disable-next-line:insecure-random
         const valuesRangeId = `values-${Math.random().toString(36).substr(2)}`;
         this.root.set(ConfigKeys.valuesKey, valuesRangeId);
-        await this.doc.createRange(valuesRangeId, minRow, minCol, maxRow, maxCol);
+        await this.doc.createInterval(valuesRangeId, minRow, minCol, maxRow, maxCol);
     }
 
     private async showConfigDlg() {

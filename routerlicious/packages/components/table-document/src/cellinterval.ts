@@ -13,18 +13,18 @@ export function parseRange(range: string) {
     return { minRow, minCol, maxRow, maxCol };
 }
 
-export class CellRange {
+export class CellInterval {
     constructor(
         private readonly interval: SharedStringInterval,
         private readonly resolve: (localRef: LocalReference) => { row: number, col: number }) {}
 
-    public getPositions() {
+    public getRange() {
         const { start, end } = this.interval;
         return { start: this.resolve(start), end: this.resolve(end) };
     }
 
     public forEachRowMajor(callback: (row: number, col: number) => boolean) {
-        const {start, end} = this.getPositions();
+        const {start, end} = this.getRange();
 
         for (let row = start.row; row < end.row; row++) {
             for (let col = start.col; col < end.col; col++) {
@@ -36,7 +36,7 @@ export class CellRange {
     }
 
     public forEachColMajor(callback: (row: number, col: number) => boolean) {
-        const {start, end} = this.getPositions();
+        const {start, end} = this.getRange();
 
         for (let col = start.col; col < end.col; col++) {
             for (let row = start.row; row < end.row; row++) {
