@@ -5,6 +5,7 @@ export * from "./kafkaNodeProducer";
 export * from "./messageReceiver";
 export * from "./messageSender";
 export * from "./mongodb";
+export * from "./redis";
 export * from "./socketIoRedisPublisher";
 export * from "./storage";
 export * from "./tenant";
