@@ -3274,11 +3274,11 @@ export class Cursor {
         this.blinkTimer = setTimeout(this.blinker, 20);
     }
 
-    private getUserDisplayString(user: IUser): string {
+    private getUserDisplayString(user: { id: string, name: string }): string {
         // TODO - callback to client code to provide mapping from user -> display
         // this would allow a user ID to be put on the wire which can then be mapped
         // back to an email, name, etc...
-        return user.id;
+        return user.name;
     }
 }
 
