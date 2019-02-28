@@ -14,7 +14,7 @@ export class TemperatureConverter extends Document {
 
   // Initialize the document/component (only called when document is initially created).
   protected async create() {
-    this.root.set<SharedMap>("farenheight", "0", "");
+    this.root.set<SharedMap>("fahrenheit", "0", "");
     this.root.set<SharedMap>("celsius", "0", "");
   }
 
@@ -29,34 +29,34 @@ export class TemperatureConverter extends Document {
   public async attach(platform: IPlatform): Promise<IPlatform> {
     await this.ready.promise;
 
-    // If the host provided a <div>, display a minimual UI.
+    // If the host provided a <div>, display a minimal UI.
     const maybeDiv = await platform.queryInterface<HTMLElement>("div");
     if (maybeDiv) {
       let inputTemperature = 0;
       let outputTemperature =0; 
 
+      // Create a <input> box for the source temperature
       const inputBox : HTMLInputElement = document.createElement("input");
 
-      // Create a <span> that displays the current value of 'clicks'.
+      // Create a <span> to display the converted temperature
       const span = document.createElement("span");
       const update = () => {
-        inputTemperature = Number(this.root.get<SharedMap>("farenheight"));
+        inputTemperature = Number(this.root.get<SharedMap>("fahrenheit"));
         outputTemperature = Number(this.root.get<SharedMap>("celsius"));
-        //span.textContent = "input temperature : " + inputTemperature.toString() +  " outputtemp : " + outputTemperature.toString();
+
         span.textContent = outputTemperature.toString();
         inputBox.value = inputTemperature.toString();
       };
       this.root.on("valueChanged", update);
       update();
 
-      // Create a button that increments the value of 'clicks' when pressed.
+      // Create a button to run the conversion.
       const btn = document.createElement("button",);
       inputBox.value = inputTemperature.toString();
       btn.textContent = "Convert to Celsius";
       btn.addEventListener("click", () => {
         inputTemperature = Number(inputBox.value);
-        outputTemperature = inputTemperature + 10;
-        this.root.set<SharedMap>("farenheight",inputTemperature.toString(),"");
+        this.root.set<SharedMap>("fahrenheit",inputTemperature.toString(),"");
         this.root.set<SharedMap>("celsius",(Math.round((inputTemperature-32)/1.8)).toString(),"");
         update();
       });
@@ -65,7 +65,6 @@ export class TemperatureConverter extends Document {
       maybeDiv.appendChild(inputBox);
       maybeDiv.appendChild(btn);
       maybeDiv.appendChild(span);
- 
 
     } else {
       return;
