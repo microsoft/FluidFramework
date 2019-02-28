@@ -41,7 +41,7 @@
   },
   "prague": {
     "browser": {
-      "entrypoint": "monaco",
+      "entrypoint": "monacocontainer",
       "bundle": [
         "dist/main.bundle.js"
       ]
