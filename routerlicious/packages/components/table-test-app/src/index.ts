@@ -45,6 +45,7 @@ function areEqual(left: ITable, right: ITable) {
 async function main() {
     const store = new DataStore(
         "http://localhost:3000",
+        "http://localhost:3001",
         new FileSystemLoader(process.env.RUSH_ROOT),
         createDocumentService("http://localhost:3000", "http://localhost:3001"),
         "43cfc3fbf04a97c0921fd23ff10f9e4b",

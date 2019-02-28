@@ -1,11 +1,76 @@
-import { ICodeLoader, IDocumentService, IPlatform } from "@prague/container-definitions";
+import {
+    ICodeLoader,
+    IDocumentService,
+    IPlatform,
+    IPragueResolvedUrl,
+    IRequest,
+    IResolvedUrl,
+    ITokenClaims,
+    IUrlResolver,
+} from "@prague/container-definitions";
 import { Container, Loader } from "@prague/container-loader";
 import { WebLoader } from "@prague/loader-web";
-import { ContainerUrlResolver } from "@prague/routerlicious-host";
 import { createDocumentService } from "@prague/routerlicious-socket-storage";
 import { IComponentRuntime } from "@prague/runtime-definitions";
 import { EventEmitter } from "events";
+import * as jwt from "jsonwebtoken";
 import { debug } from "./debug";
+
+// tslint:disable-next-line:no-typeof-undefined
+const URL: Window["URL"] = typeof window === "undefined"
+    // tslint:disable:no-unsafe-any
+    // tslint:disable:no-implicit-dependencies
+    // tslint:disable:no-var-requires
+    // tslint:disable:no-require-imports
+    ? require("url").URL
+    : window.URL;
+    // tslint:enable:no-implicit-dependencies
+    // tslint:enable:no-var-requires
+    // tslint:enable:no-require-imports
+    // tslint:enable:no-unsafe-any
+
+class InsecureUrlResolver implements IUrlResolver {
+    constructor(
+        private readonly ordererUrl: string,
+        private readonly storageUrl: string,
+        private readonly user: string,
+        private readonly key: string,
+    ) { }
+
+    public async resolve(request: IRequest): Promise<IResolvedUrl> {
+        debug(`resolving url=${JSON.stringify(request)}`);
+
+        // tslint:disable-next-line:no-http-string - Replacing protocol so URL will parse.
+        const parsedUrl = new URL(request.url.replace(/^prague:\/\//, "http://"));
+        const [tenantId, documentId] = parsedUrl.pathname.substr(1).split("/");
+
+        const documentUrl = `prague://${new URL(this.ordererUrl).host}` +
+            `/${encodeURIComponent(tenantId)}` +
+            `/${encodeURIComponent(documentId)}`;
+
+        // tslint:disable-next-line:no-unnecessary-local-variable
+        const response: IPragueResolvedUrl = {
+            ordererUrl: this.ordererUrl,
+            storageUrl: this.storageUrl,
+            tokens: { jwt: this.auth(tenantId, documentId) },
+            type: "prague",
+            url: documentUrl,
+        };
+
+        return response;
+    }
+
+    private auth(tenantId: string, documentId: string) {
+        const claims: ITokenClaims = {
+            documentId,
+            permission: "read:write",
+            tenantId,
+            user: { id: this.user },
+        };
+
+        return jwt.sign(claims, this.key);
+    }
+}
 
 /**
  * Instance of a Prague data store, used to open/create component instances.
@@ -19,7 +84,7 @@ export class DataStore {
      * @param usedId The ID of the user (e.g., "anonymous-coward")
      */
     // tslint:disable-next-line:no-reserved-keywords
-    public static async from(hostUrl: string, userId: string) {
+    public static async from(hostUrl: string, userId: string, codeLoader?: ICodeLoader) {
         // Routerlicious currently exposes it's configuration parameters as a JSON file at "<serverUrl>/api/tenants".
         const url = new URL(hostUrl);
         url.pathname = "/api/tenants";
@@ -34,23 +99,23 @@ export class DataStore {
 
         return new DataStore(
             hostUrl,
-            new WebLoader(config.npm),
+            config.blobStorageUrl,
+            codeLoader || new WebLoader(config.npm),
             createDocumentService(hostUrl, config.blobStorageUrl),
             config.key,
             config.id,
             userId,
-            null,
         );
     }
 
     constructor(
-        private readonly hostUrl: string,
+        private readonly ordererUrl: string,
+        private readonly storageUrl: string,
         private readonly codeLoader: ICodeLoader,
         private readonly documentService: IDocumentService,
-        key: string,
+        private readonly key: string,
         private readonly tenantId: string,
-        userId: string,
-        private readonly hostJwt: string,
+        private readonly userId: string,
     ) { }
 
     /**
@@ -69,7 +134,11 @@ export class DataStore {
     ): Promise<T> {
         debug(`DataStore.open("${componentId}", "${chaincodePackage}")`);
 
-        const resolver = new ContainerUrlResolver(this.hostUrl, this.hostJwt);
+        const resolver = new InsecureUrlResolver(
+            this.ordererUrl,
+            this.storageUrl,
+            this.userId,
+            this.key);
 
         const loader = new Loader(
             { resolver },
@@ -79,7 +148,7 @@ export class DataStore {
 
         const baseUrl =
             // tslint:disable-next-line:max-line-length
-            `${this.hostUrl.replace(/^[^:]+/, "prague")}/${encodeURIComponent(this.tenantId)}/${encodeURIComponent(componentId)}`;
+            `${this.ordererUrl.replace(/^[^:]+/, "prague")}/${encodeURIComponent(this.tenantId)}/${encodeURIComponent(componentId)}`;
 
         debug(`resolving baseUrl = ${baseUrl}`);
         const container = await loader.resolve({ url: baseUrl });

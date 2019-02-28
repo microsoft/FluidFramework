@@ -20,13 +20,13 @@ describe.skip("LocalTestDataStore", () => {
             // [TestComponent.type, { instantiate: async () => Component.instantiate(new TestComponent()) }],
         ]);
         const datastore1 = new DataStore(
-            "origin",
+            "ordererUrl",
+            "storageUrl",
             testLoader,
             createTestDocumentService(testDeltaConnectionServer),
             "tokenKey",
             "tenantId",
-            "userId",
-            "jwtToken");
+            "userId");
         const doc1 = await datastore1.open<TestComponent>("documentId", TestComponent.type, "");
         assert.equal(doc1.count, 0, "Incorrect count in Doc1");
 
@@ -35,13 +35,13 @@ describe.skip("LocalTestDataStore", () => {
 
         doc1.set("done1");
         const datastore2 = new DataStore(
-            "origin",
+            "ordererUrl",
+            "storageUrl",
             testLoader,
             createTestDocumentService(testDeltaConnectionServer),
             "tokenKey",
             "tenantId",
-            "userId",
-            "jwtToken");
+            "userId");
 
         // TODO: this line is hanging after using a test web socket in LocalNode.
         const doc2 = await datastore2.open<TestComponent>("documentId", TestComponent.type, "");
