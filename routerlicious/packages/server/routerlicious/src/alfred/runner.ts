@@ -1,5 +1,6 @@
 import {
     IAlfredTenant,
+    ICache,
     ICollection,
     IDocumentStorage,
     IOrdererManager,
@@ -27,6 +28,7 @@ export class AlfredRunner implements utils.IRunner {
         private orderManager: IOrdererManager,
         private tenantManager: ITenantManager,
         private storage: IDocumentStorage,
+        private cache: ICache,
         private appTenants: IAlfredTenant[],
         private mongoManager: MongoManager,
         private producer: IProducer,
@@ -44,6 +46,7 @@ export class AlfredRunner implements utils.IRunner {
             this.storage,
             this.appTenants,
             this.mongoManager,
+            this.cache,
             this.producer);
         alfred.set("port", this.port);
 

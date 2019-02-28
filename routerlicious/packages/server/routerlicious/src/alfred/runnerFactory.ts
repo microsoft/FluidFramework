@@ -11,6 +11,7 @@ import * as utils from "@prague/services-utils";
 import * as bytes from "bytes";
 import { Provider } from "nconf";
 import * as os from "os";
+import * as redis from "redis";
 import * as ws from "ws";
 import { AlfredRunner } from "./runner";
 
@@ -57,6 +58,7 @@ export class AlfredResources implements utils.IResources {
         public config: Provider,
         public producer: core.IProducer,
         public redisConfig: any,
+        public cache: core.ICache,
         public webSocketLibrary: string,
         public orderManager: core.IOrdererManager,
         public tenantManager: core.ITenantManager,
@@ -96,6 +98,10 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
         const redisConfig = config.get("redis");
         const webSocketLibrary = config.get("alfred:webSocketLib");
         const authEndpoint = config.get("auth:endpoint");
+
+        // Redis connection
+        const redisClient = redis.createClient(redisConfig.port, redisConfig.host);
+        const redisCache = new services.RedisCache(redisClient);
 
         // Database connection
         const mongoUrl = config.get("mongo:endpoint") as string;
@@ -183,6 +189,7 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
             config,
             producer,
             redisConfig,
+            redisCache,
             webSocketLibrary,
             orderManager,
             tenantManager,
@@ -205,6 +212,7 @@ export class AlfredRunnerFactory implements utils.IRunnerFactory<AlfredResources
             resources.orderManager,
             resources.tenantManager,
             resources.storage,
+            resources.cache,
             resources.appTenants,
             resources.mongoManager,
             resources.producer,
