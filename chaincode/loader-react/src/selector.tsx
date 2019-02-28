@@ -1,27 +1,32 @@
 import * as React from "react";
 import { ISharedMap } from "@prague/map";
 import { ComponentHost } from "@prague/component";
+import { innie, outie } from "./constants";
 
 interface IProps {
   root: ISharedMap;
   host: ComponentHost;
+  innie: React.ReactNode;
+  outie: React.ReactNode;
 }
 
 interface IState {
   docId: string;
   serverUrl: string;
   chaincodePackage: string;
-  shouldRender: boolean;
+  shouldRender: string;
 }
 
 export class Selector extends React.Component<IProps, IState> {
+  outieA: boolean;
+
   constructor(props) {
     super(props);
 
     const docIdP = this.props.root.wait<string>("docId");
     const serverUrlP = this.props.root.wait<string>("serverUrl");
     const chaincodePackageP = this.props.root.wait<string>("chaincodePackage");
-    const shouldRenderP = this.props.root.wait<boolean>("shouldRender");
+    const shouldRenderP = this.props.root.wait<string>("shouldRender");
 
     Promise.all([docIdP, serverUrlP, chaincodePackageP, shouldRenderP]).then(
       ([docId, serverUrl, chaincodePackage, shouldRender]) => {
@@ -53,29 +58,41 @@ export class Selector extends React.Component<IProps, IState> {
     };
   }
 
-  handleRender = async () =>  {
+  renderInnie = async () => {
     const { chaincodePackage, docId } = this.state;
 
     await this.props.host.createAndAttachComponent(docId, chaincodePackage);
 
-    await this.props.root.set("shouldRender", true)
+    await this.props.root.set("shouldRender", innie);
   }
+
+  renderOutie = async () => {
+    const { chaincodePackage, docId, serverUrl } = this.state;
+    console.log(chaincodePackage);
+    console.log(docId);
+    console.log(serverUrl);
+
+    // TODO: this is related to the component loading hack
+    this.outieA = true;
+    this.setState(
+      this.state
+    );
+  };
 
   render() {
     if (this.state === null) {
       return <p> Selector </p>;
     }
     const { chaincodePackage, docId, serverUrl, shouldRender } = this.state;
-    // const todo = document.createElement("div");
-    if (shouldRender) {
-      // TODO: if it's an innie
 
-      return (
-        <div>
-        {this.props.children}
+    const rendered = (shouldRender !== "");
+    console.log("Render");
+    console.log(this.outieA);
+    if (shouldRender === innie) {
+      return <div>{this.props.innie}</div>;
 
-        </div>
-      );
+    } else if (this.outieA === true || shouldRender === outie) { // TODO This is a hack... because we need to delay render the outie
+      return <div>{this.props.outie}</div>;
     }
 
     return (
@@ -86,7 +103,7 @@ export class Selector extends React.Component<IProps, IState> {
             <a>Doc Id</a>
             <input
               type={"text"}
-              disabled={shouldRender}
+              disabled={rendered}
               value={docId}
               onChange={this.handleTextChange("docId")}
             />
@@ -97,7 +114,7 @@ export class Selector extends React.Component<IProps, IState> {
             <a>Server Url</a>
             <input
               type={"text"}
-              disabled={shouldRender}
+              disabled={rendered}
               value={serverUrl}
               onChange={this.handleTextChange("serverUrl")}
             />
@@ -108,7 +125,7 @@ export class Selector extends React.Component<IProps, IState> {
             <a>Chaincode Package</a>
             <input
               type={"text"}
-              disabled={shouldRender}
+              disabled={rendered}
               value={chaincodePackage}
               onChange={this.handleTextChange("chaincodePackage")}
             />
@@ -118,9 +135,15 @@ export class Selector extends React.Component<IProps, IState> {
           <span>
             <input
               type={"button"}
-              disabled={shouldRender}
-              value={"Render"}
-              onClick={this.handleRender}
+              disabled={rendered}
+              value={"Render Innie"}
+              onClick={this.renderInnie}
+            />
+            <input
+              type={"button"}
+              disabled={rendered}
+              value={"Render Outie"}
+              onClick={this.renderOutie}
             />
           </span>
         </div>

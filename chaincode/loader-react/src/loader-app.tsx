@@ -5,11 +5,11 @@ import { getRandomName } from "./names";
 import { ISharedMap } from "@prague/map";
 import { Selector } from "./selector";
 import { InnieLoader } from "./innie-loader";
+import { OutieLoader } from "./outie-loader";
 
 export class LoaderChaincode extends Document {
   // Initialize the document/component (only called when document is initially created).
   protected async create() {
-
     let serverUrl: string;
     if (document.location.origin.includes("localhost")) {
       serverUrl = "https://alfred.wu2-ppe.prague.office-int.com";
@@ -25,22 +25,22 @@ export class LoaderChaincode extends Document {
     A.set<string>("docId", getRandomName());
     A.set<string>("serverUrl", serverUrl);
     A.set<string>("chaincodePackage", "@chaincode/counter");
-    A.set<boolean>("shouldRender", false);
+    A.set<string>("shouldRender", "");
 
     B.set<string>("docId", getRandomName());
     B.set<string>("serverUrl", serverUrl);
     B.set<string>("chaincodePackage", "@chaincode/counter");
-    B.set<boolean>("shouldRender", false);
+    B.set<string>("shouldRender", "");
 
     C.set<string>("docId", getRandomName());
     C.set<string>("serverUrl", serverUrl);
     C.set<string>("chaincodePackage", "@chaincode/counter");
-    C.set<boolean>("shouldRender", false);
+    C.set<string>("shouldRender", "");
 
     D.set<string>("docId", getRandomName());
     D.set<string>("serverUrl", serverUrl);
-    D.set<string>("chaincodePackage", "@chaincode/counter"); // @0.0.5264
-    D.set<boolean>("shouldRender", false);
+    D.set<string>("chaincodePackage", "@chaincode/counter@0.0.5264");
+    D.set<string>("shouldRender", "");
 
     this.root.set<ISharedMap>("A", A);
     this.root.set<ISharedMap>("B", B);
@@ -80,43 +80,87 @@ export class LoaderChaincode extends Document {
       maybeDiv.append(divD);
 
       ReactDOM.render(
-        <Selector root={await this.root.wait<ISharedMap>("A")} host={this.host}>
-          <InnieLoader
-            host={this.host}
-            root={await this.root.wait<ISharedMap>("A")}
-            div={divA}
-          />
-        </Selector>,
+        <Selector
+          root={await this.root.wait<ISharedMap>("A")}
+          host={this.host}
+          innie={
+            <InnieLoader
+              host={this.host}
+              root={await this.root.wait<ISharedMap>("A")}
+              div={divA}
+            />
+          }
+          outie={
+            <OutieLoader
+              host={this.host}
+              root={await this.root.wait<ISharedMap>("A")}
+              div={divA}
+            />
+          }
+        />,
         divA
       );
       ReactDOM.render(
-        <Selector root={await this.root.wait<ISharedMap>("B")} host={this.host}>
-          <InnieLoader
-            host={this.host}
-            root={await this.root.wait<ISharedMap>("B")}
-            div={divB}
-          />
-        </Selector>,
+        <Selector
+          root={await this.root.wait<ISharedMap>("B")}
+          host={this.host}
+          innie={
+            <InnieLoader
+              host={this.host}
+              root={await this.root.wait<ISharedMap>("B")}
+              div={divB}
+            />
+          }
+          outie={
+            <OutieLoader
+              host={this.host}
+              root={await this.root.wait<ISharedMap>("B")}
+              div={divB}
+            />
+          }
+        />,
         divB
       );
       ReactDOM.render(
-        <Selector root={await this.root.wait<ISharedMap>("C")} host={this.host}>
-          <InnieLoader
-            host={this.host}
-            root={await this.root.wait<ISharedMap>("C")}
-            div={divC}
-          />
-        </Selector>,
+        <Selector
+          root={await this.root.wait<ISharedMap>("C")}
+          host={this.host}
+          innie={
+            <InnieLoader
+              host={this.host}
+              root={await this.root.wait<ISharedMap>("C")}
+              div={divC}
+            />
+          }
+          outie={
+            <OutieLoader
+              host={this.host}
+              root={await this.root.wait<ISharedMap>("C")}
+              div={divC}
+            />
+          }
+        />,
         divC
       );
       ReactDOM.render(
-        <Selector root={await this.root.wait<ISharedMap>("D")} host={this.host}>
-          <InnieLoader
-            host={this.host}
-            root={await this.root.wait<ISharedMap>("D")}
-            div={divD}
-          />
-        </Selector>,
+        <Selector
+          root={await this.root.wait<ISharedMap>("D")}
+          host={this.host}
+          innie={
+            <InnieLoader
+              host={this.host}
+              root={await this.root.wait<ISharedMap>("D")}
+              div={divD}
+            />
+          }
+          outie={
+            <OutieLoader
+              host={this.host}
+              root={await this.root.wait<ISharedMap>("D")}
+              div={divD}
+            />
+          }
+        />,
         divD
       );
     }

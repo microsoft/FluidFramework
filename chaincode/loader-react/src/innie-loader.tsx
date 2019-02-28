@@ -28,8 +28,9 @@ export class InnieLoader extends React.Component<IProps, IState> {
     }
 
     render() {
-        console.log("Innie Render");
-
+        if(this.state !== null) {
+            return(<p>{this.docId}</p>);
+        }
         return(<p> Innie </p>);
     }
 }

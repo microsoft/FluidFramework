@@ -1,37 +1,48 @@
 import * as React from "react";
 import { DataStore } from "@prague/app-datastore";
+import { ComponentHost } from "@prague/component";
+import { ISharedMap } from "@prague/map";
+import { outie } from "./constants";
 
 interface IProps {
-    chaincodePackage: string;
-    docId: string;
-    mountedElement: HTMLDivElement;
-    serverUrl: string;
+    host: ComponentHost;
+    root: ISharedMap;
+    div: HTMLDivElement;
 }
 
 interface IState {
+    docId: string;
 }
 
 export class OutieLoader extends React.Component<IProps, IState> {
-    private domElement: HTMLDivElement;
+    docId: string;
+
     constructor(props) {
         super(props);
-        this.domElement = document.createElement("div");
     }
 
     async componentDidMount() {
-        this.props.mountedElement.appendChild(this.domElement);
 
-        let ds = await DataStore.from(this.props.serverUrl, "anonymous-coward");
+        this.docId = await this.props.root.get("docId");
+
+        let ds = await DataStore.from(await this.props.root.get("serverUrl"), "anonymous-coward");
 
         const services: ReadonlyArray<[string, Promise<any>]>  = [
-            ["div", Promise.resolve(this.domElement)], 
+            ["div", Promise.resolve(this.props.div)], 
             ["datastore", Promise.resolve(ds)]
         ];
 
-        await ds.open(this.props.docId, this.props.chaincodePackage, "", services);
+        await ds.open(this.docId, await this.props.root.get("chaincodePackage"), "", services);
+
+        // TODO: wow this is a hack
+        // There's a timing issue related to opening this docId twice.
+        this.props.root.set("shouldRender", outie);
     }
 
     render() {
+        if(this.state !== null) {
+            return(<p>{this.docId}</p>);
+        }
         return(<p> Component </p>);
     }
 }
