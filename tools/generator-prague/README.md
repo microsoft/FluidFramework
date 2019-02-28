@@ -19,3 +19,5 @@ Try it now.
 ````bash
 yo prague
 ````
+
+**** If you run into an auth issue. Please set up your .npmrc using the instructions at the routerlicious root.
