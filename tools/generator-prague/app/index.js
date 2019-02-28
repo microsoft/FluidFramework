@@ -73,12 +73,12 @@ module.exports = class extends Generator {
   }
 
   _modifyComponent() {
-    const fileString = this.fs.read(this.templatePath("src/index.ts"));
+    const fileString = this.fs.read(this.templatePath("src/index.tsx"));
 
     const project = new Project({});
 
     const file = project.createSourceFile(
-      this.destinationPath("src/index.ts"),
+      this.destinationPath("src/index.tsx"),
       fileString
     );
 
