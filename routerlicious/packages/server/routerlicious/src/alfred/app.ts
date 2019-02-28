@@ -1,4 +1,10 @@
-import { IAlfredTenant, IDocumentStorage, IProducer, ITenantManager, MongoManager } from "@prague/services-core";
+import {
+    IAlfredTenant,
+    ICache,
+    IDocumentStorage,
+    IProducer,
+    ITenantManager,
+    MongoManager } from "@prague/services-core";
 import * as bodyParser from "body-parser";
 import * as compression from "compression";
 import * as connectRedis from "connect-redis";
@@ -70,6 +76,7 @@ export function create(
     storage: IDocumentStorage,
     appTenants: IAlfredTenant[],
     mongoManager: MongoManager,
+    cache: ICache,
     producer: IProducer) {
 
     // Authentication is disabled for local run and test. Only use redis when authentication is enabled.
@@ -198,13 +205,14 @@ export function create(
     });
 
     // bind routes
-    const routes = alfredRoutes.create(config, tenantManager, mongoManager, storage, producer, appTenants);
+    const routes = alfredRoutes.create(config, tenantManager, mongoManager, storage, cache, producer, appTenants);
     app.use(routes.api);
     app.use("/templates", routes.templates);
     app.use("/maps", routes.maps);
     app.use("/canvas", routes.canvas);
     app.use("/sharedText", routes.sharedText);
     app.use("/loader", routes.loader);
+    app.use("/fastloader", routes.fastLoader);
     app.use("/scribe", routes.scribe);
     app.use("/democreator", routes.demoCreator);
     app.use("/agent", routes.agent);

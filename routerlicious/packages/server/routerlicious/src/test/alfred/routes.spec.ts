@@ -36,6 +36,7 @@ describe("Routerlicious", () => {
                     storage,
                     [{ id: "git", key: "git" }],
                     mongoManager,
+                    null,
                     producer);
                 testServer = supertest(alfred);
             });

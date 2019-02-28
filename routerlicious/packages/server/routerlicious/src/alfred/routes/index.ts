@@ -1,4 +1,10 @@
-import { IAlfredTenant, IDocumentStorage, IProducer, ITenantManager, MongoManager } from "@prague/services-core";
+import {
+    IAlfredTenant,
+    ICache,
+    IDocumentStorage,
+    IProducer,
+    ITenantManager,
+    MongoManager } from "@prague/services-core";
 import * as ensureAuth from "connect-ensure-login";
 import { Router } from "express";
 import { Provider } from "nconf";
@@ -6,6 +12,7 @@ import * as agent from "./agent";
 import * as api from "./api";
 import * as canvas from "./canvas";
 import * as demoCreator from "./democreator";
+import * as fastLoader from "./fastLoader";
 import * as home from "./home";
 import * as loader from "./loader";
 import * as maps from "./maps";
@@ -20,6 +27,7 @@ export interface IRoutes {
     canvas: Router;
     demoCreator: Router;
     loader: Router;
+    fastLoader: Router;
     home: Router;
     signUp: Router;
     maps: Router;
@@ -34,6 +42,7 @@ export function create(
     tenantManager: ITenantManager,
     mongoManager: MongoManager,
     storage: IDocumentStorage,
+    cache: ICache,
     producer: IProducer,
     appTenants: IAlfredTenant[]) {
 
@@ -47,6 +56,7 @@ export function create(
         api: api.create(config, tenantManager, storage, mongoManager, producer, appTenants),
         canvas: canvas.create(config, tenantManager, storage, appTenants, ensureLoggedIn),
         demoCreator: demoCreator.create(config, ensureLoggedIn),
+        fastLoader: fastLoader.create(config, tenantManager, storage, cache, appTenants, ensureLoggedIn),
         home: home.create(config, ensureLoggedIn),
         loader: loader.create(config, tenantManager, storage, appTenants, ensureLoggedIn),
         maps: maps.create(config, tenantManager, storage, appTenants, ensureLoggedIn),
