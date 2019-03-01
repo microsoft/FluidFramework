@@ -3,11 +3,12 @@ import { Chat } from "@stardust-ui/react";
 import { ChatRenderer } from "./chat-renderer";
 import { filter } from "./filter";
 import * as React from "react";
-import { LoaderComponent } from "./component-loader";
+import { LoaderComponent, IOutieProps } from "./component-loader";
+import { findComponent } from "./urlDecoder";
 
 interface IMessage {
   author: string;
-  component?: string;
+  component?: IOutieProps;
   content: string;
   time: string;
 }
@@ -35,7 +36,6 @@ export class ChatContainer extends React.Component<ChatContainerProps, ChatConta
     this.props.messages.on("valueChanged", changed => {
       let message = this.props.messages.get(changed.key);
       message.content = filter(message.content);
-
       const chatProp = {
         message,
         key: changed.key
@@ -43,6 +43,7 @@ export class ChatContainer extends React.Component<ChatContainerProps, ChatConta
 
       const messages = Object.values(this.state.messages).concat([chatProp]);
       this.setState({ messages });
+
     });
   }
 
@@ -54,27 +55,29 @@ export class ChatContainer extends React.Component<ChatContainerProps, ChatConta
     const { inputMessage } = this.state;
     const messagesToRender: any[] = [];
 
-    for (const message of Object.values(this.state.messages)) {
-      const isMine = message.message.author === this.props.clientId;
-      const tss: string = new Date(Number.parseInt(message.message.time)).toLocaleString();
+
+    // Build up message history
+    for (const chatProp of Object.values(this.state.messages)) {
+      const isMine = chatProp.message.author === this.props.clientId;
+      const tss: string = new Date(Number.parseInt(chatProp.message.time)).toLocaleString();
       messagesToRender.push({
         message: {
           content: (
             <Chat.Message 
               content={
-                message.message.component ? 
+                chatProp.message.component ? 
                   <LoaderComponent
-                    componentId={message.message.component}
+                      {...chatProp.message.component}
                     >
                   </LoaderComponent>
-                : message.message.content
+                : chatProp.message.content
               }
-              author={message.message.author}
+              author={chatProp.message.author}
               timestamp={tss}
               mine={isMine} />
           )
         },
-        key: message.key
+        key: chatProp.key
       });
     }
 
@@ -83,7 +86,7 @@ export class ChatContainer extends React.Component<ChatContainerProps, ChatConta
         messagesToRender={messagesToRender}
         inputMessage={inputMessage}
         onChangeHandler={this.inputChangeHandler}
-        addMessageHandler={this.addMessageHandler}
+        appendMessageCb={this.appendMessageCb}
       />
     );
   }
@@ -107,11 +110,11 @@ export class ChatContainer extends React.Component<ChatContainerProps, ChatConta
 
   inputChangeHandler = (event: React.ChangeEvent<HTMLInputElement>) => this.setState({ inputMessage: event.target.value });
 
-  addMessageHandler = async (component?: string) => {
+  appendMessageCb = async (component?: IOutieProps) => {
     const { inputMessage } = this.state;
     const { counter, clientId, messages } = this.props;
 
-    if (!component && inputMessage.length === 0) return;
+    if (inputMessage.length === 0 && !component) return;
 
     this.setState({ inputMessage: "" });
     counter.increment(1);
@@ -121,6 +124,14 @@ export class ChatContainer extends React.Component<ChatContainerProps, ChatConta
       content: inputMessage,
       time: Date.now().toString()
     });
+
+    setTimeout(() => {
+      const maybeComponent = findComponent(inputMessage);
+      console.log(maybeComponent);
+      if (maybeComponent) {
+        this.appendMessageCb(maybeComponent);
+      }
+    }, 100);
 
     return inputMessage;
   };
