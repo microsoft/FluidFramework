@@ -18,18 +18,14 @@ import {
     IntervalType,
     LocalClientId,
     LocalReference,
-    Marker,
     MergeTree,
     PropertySet,
-    ReferenceType,
     UniversalSequenceNumber,
 } from "@prague/merge-tree";
 import {
     SharedIntervalCollectionValueType,
-//    SharedObjectSequence,
-//    SharedObjectSequenceExtension,
-    SharedString,
-    SharedStringExtension,
+    SharedNumberSequence,
+    SharedNumberSequenceExtension,
     SharedStringIntervalCollectionValueType,
 } from "@prague/sequence";
 import { CellInterval } from "./cellinterval";
@@ -54,7 +50,7 @@ class WorkbookAdapter extends Workbook {
         this.isInitializing = true;
         const init = [];
         for (let row = 0; row < doc.numRows; row++) {
-            const rowArray: string[] = [];
+            const rowArray: UnboxedOper[] = [];
             init.push(rowArray);
             for (let col = 0; col < doc.numCols; col++) {
                 rowArray.push(this.doc[loadCellTextSym](row, col));
@@ -66,7 +62,7 @@ class WorkbookAdapter extends Workbook {
     }
 
     protected loadCellText(row: number, col: number): string {
-        return this.doc[loadCellTextSym](row, col);
+        return `${this.doc[loadCellTextSym](row, col)}`;
     }
 
     protected storeCellText(row: number, col: number, value: UnboxedOper) {
@@ -83,21 +79,21 @@ export class TableDocument extends Component implements ITable {
     public  get numCols()    { return Math.min(this.root.get("stride").value, this.length); }
     public  get numRows()    { return Math.floor(this.length / this.numCols); }
 
-    private get sharedString()  { return this.maybeSharedString!; }
+    private get matrix()        { return this.maybeMatrix!; }
     private get mergeTree()     { return this.maybeMergeTree!; }
     private get workbook()      { return this.maybeWorkbook!; }
     public static readonly type = createComponentType(TableDocument);
 
-    private maybeRows?: SharedString;
-    private maybeCols?: SharedString;
-    private maybeSharedString?: SharedString;
+    private maybeRows?: SharedNumberSequence;
+    private maybeCols?: SharedNumberSequence;
+    private maybeMatrix?: SharedNumberSequence;
     private maybeMergeTree?: MergeTree;
     private maybeWorkbook?: WorkbookAdapter;
 
     constructor() {
         super([
             [MapExtension.Type, new MapExtension()],
-            [SharedStringExtension.Type, new SharedStringExtension()],
+            [SharedNumberSequenceExtension.Type, new SharedNumberSequenceExtension()],
         ]);
 
         registerDefaultValueType(new CounterValueType());
@@ -114,7 +110,7 @@ export class TableDocument extends Component implements ITable {
     }
 
     public getCellText(row: number, col: number) {
-        return this.workbook.getCellText(row, col);
+        return this[loadCellTextSym](row, col);
     }
 
     public setCellText(row: number, col: number, value: UnboxedOper) {
@@ -122,7 +118,7 @@ export class TableDocument extends Component implements ITable {
     }
 
     public async getRange(label: string) {
-        const intervals = this.sharedString.getSharedIntervalCollection(label);
+        const intervals = this.matrix.getSharedIntervalCollection(label);
         const interval = (await intervals.getView()).nextInterval(0);
         return new CellInterval(interval, this.localRefToRowCol);
     }
@@ -157,7 +153,7 @@ export class TableDocument extends Component implements ITable {
     public createInterval(label: string, minRow: number, minCol: number, maxRow: number, maxCol: number) {
         const start = this.rowColToPosition(minRow, minCol);
         const end = this.rowColToPosition(maxRow, maxCol);
-        const intervals = this.sharedString.getSharedIntervalCollection(label);
+        const intervals = this.matrix.getSharedIntervalCollection(label);
         intervals.add(start, end, IntervalType.Simple);
     }
 
@@ -165,39 +161,33 @@ export class TableDocument extends Component implements ITable {
         const numRows = 7;
         const numCols = 8;
 
-        const rows = this.runtime.createChannel("rows", SharedStringExtension.Type) as SharedString;
-        for (let i = numRows; i > 0; i--) {
-            rows.insertMarker(0, ReferenceType.Simple, { });
-        }
+        const rows = this.runtime.createChannel("rows", SharedNumberSequenceExtension.Type) as SharedNumberSequence;
+        rows.insert(0, new Array(numRows).fill(0));
         this.root.set("rows", rows);
 
-        const cols = this.runtime.createChannel("cols", SharedStringExtension.Type) as SharedString;
-        for (let i = numCols; i > 0; i--) {
-            cols.insertMarker(0, ReferenceType.Simple, { });
-        }
+        const cols = this.runtime.createChannel("cols", SharedNumberSequenceExtension.Type) as SharedNumberSequence;
+        cols.insert(0, new Array(numCols).fill(0));
         this.root.set("cols", cols);
 
-        const text = this.runtime.createChannel("matrix", SharedStringExtension.Type) as SharedString;
-        for (let i = numRows * numCols; i > 0; i--) {
-            text.insertMarker(0, ReferenceType.Simple, { value: "" });
-        }
+        const matrix = this.runtime.createChannel("matrix", SharedNumberSequenceExtension.Type) as SharedNumberSequence;
+        matrix.insert(0, new Array(numRows * numCols).fill(+Infinity));
         this.root.set("stride", numCols, CounterValueType.Name);
-        this.root.set("matrix", text);
+        this.root.set("matrix", matrix);
     }
 
     protected async opened() {
-        this.maybeSharedString = await this.root.wait("matrix") as SharedString;
-        this.maybeRows = await this.root.wait("rows") as SharedString;
-        this.maybeCols = await this.root.wait("cols") as SharedString;
+        this.maybeMatrix = await this.root.wait("matrix") as SharedNumberSequence;
+        this.maybeRows = await this.root.wait("rows") as SharedNumberSequence;
+        this.maybeCols = await this.root.wait("cols") as SharedNumberSequence;
         await this.connected;
 
-        const client = this.sharedString.client;
+        const client = this.matrix.client;
         this.maybeMergeTree = client.mergeTree;
-        this.sharedString.on("op", (op, local) => {
+        this.matrix.on("op", (op, local) => {
             if (!local) {
                 for (let row = 0; row < this.numRows; row++) {
                     for (let col = 0; col < this.numCols; col++) {
-                        this.workbook.setCellText(row, col, this[loadCellTextSym](row, col), /* isExternal: */ true);
+                        this.workbook.setCellText(row, col, this.getCellText(row, col), /* isExternal: */ true);
                     }
                 }
             }
@@ -206,6 +196,35 @@ export class TableDocument extends Component implements ITable {
         });
 
         this.maybeWorkbook = new WorkbookAdapter(this);
+    }
+
+    private [loadCellTextSym](row: number, col: number): UnboxedOper {
+        const position = this.rowColToPosition(row, col);
+        const asNumber = this.matrix.getItems(position, position + 1)[0];
+
+        switch (asNumber) {
+            case +Infinity: return "";
+            default:
+                if (isNaN(asNumber)) {
+                    return this.matrix.getPropertiesAtPosition(position).value;
+                } else {
+                    return asNumber;
+                }
+        }
+    }
+
+    private [storeCellTextSym](row: number, col: number, value: UnboxedOper) {
+        const position = this.rowColToPosition(row, col);
+        if (value === "") {
+            this.setPosition(position, +Infinity);          // Encode empty string as +Infinity
+            this.annotatePosition(position, undefined);
+        } else if (typeof value === "number" && isFinite(value)) {
+            this.setPosition(position, value);              // Encode finite number as numbers
+            this.annotatePosition(position, undefined);
+        } else {
+            this.setPosition(position, NaN);                // Store other values/types as annotations
+            this.annotatePosition(position, value);
+        }
     }
 
     private localRefToPosition(localRef: LocalReference) {
@@ -243,13 +262,12 @@ export class TableDocument extends Component implements ITable {
         return {row, col};
     }
 
-    private [loadCellTextSym](row: number, col: number): string {
-        const { segment } = this.mergeTree.getContainingSegment(this.rowColToPosition(row, col), UniversalSequenceNumber, LocalClientId);
-        return (segment as Marker).properties.value;
+    private setPosition(position: number, value: number) {
+        this.matrix.remove(position, position + 1);
+        this.matrix.insert(position, [ value ]);
     }
 
-    private [storeCellTextSym](row: number, col: number, value: UnboxedOper) {
-        const position = this.rowColToPosition(row, col);
-        this.sharedString.annotateRange({ value: value.toString() }, position, position);
+    private annotatePosition(position: number, value: UnboxedOper) {
+        this.matrix.annotateRange({ value }, position, position + 1);
     }
 }

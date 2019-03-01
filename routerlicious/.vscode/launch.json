@@ -9,11 +9,11 @@
             "request": "launch",
             "name": "Table Tests",
             "cwd": "${workspaceFolder}/packages/components/table-test-app",
-            "runtimeArgs": [
-                "-r",
-                "${workspaceFolder}/common/tools/node_modules/ts-node/register"
-            ],
+            "program": "${workspaceFolder}/common/tools/node_modules/mocha/bin/_mocha",
             "args": [
+                "-r",
+                "${workspaceFolder}/common/tools/node_modules/ts-node/register",
+                "--no-timeouts",
                 "src/index.ts"
             ],
             "env": {

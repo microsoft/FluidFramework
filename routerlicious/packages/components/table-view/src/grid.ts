@@ -176,12 +176,22 @@ export class GridView {
         }
     }
 
+    private parseInput(input: string) {
+        const asNumber = Number(input);
+        if (isNaN(asNumber)) {
+            return input === "NaN"
+                ? NaN
+                : input;
+        }
+        return asNumber;
+    }
+
     private commitInput() {
         const maybeParent = this.inputBox.parentElement as HTMLTableCellElement;
         if (maybeParent) {
             const [row, col] = this.getRowColFromTd(maybeParent);
             const previous = this.doc.getCellText(row, col);
-            const current = this.inputBox.value;
+            const current = this.parseInput(this.inputBox.value);
             if (previous !== current) {
                 this.doc.setCellText(row, col, current);
             }
@@ -197,7 +207,7 @@ export class GridView {
             this.tdText = newParent.firstChild!;
             console.assert(this.tdText.nodeType === Node.TEXT_NODE);
 
-            this.inputBox.value = this.doc.getCellText(row, col);
+            this.inputBox.value = `${this.doc.getCellText(row, col)}`;
             newParent.appendChild(this.inputBox);
             this.cellInput();
             this.tdText.textContent = this.inputBox.value;

@@ -17,7 +17,6 @@ export interface ITableSliceConfig {
 }
 
 export class TableSlice extends Component implements ITable {
-
     public get name() { return this.root.get(ConfigKeys.name); }
     public set name(value: string) { this.root.set(ConfigKeys.name, value); }
     public get values() { return this.maybeValues!; }
@@ -49,7 +48,7 @@ export class TableSlice extends Component implements ITable {
         return this.doc.evaluateFormula(formula);
     }
 
-    public getCellText(row: number, col: number): string {
+    public getCellText(row: number, col: number): UnboxedOper {
         return this.doc.getCellText(row, col);
     }
 

@@ -1,79 +1,68 @@
-import { TableDocument, ITable } from "@chaincode/table-document";
-import { DataStore } from "@prague/app-datastore";
-import { createDocumentService } from "@prague/routerlicious-socket-storage";
-import { FileSystemLoader } from "./filesystemloader";
-import * as process from "process";
+import "mocha";
+import { TableDocument } from "@chaincode/table-document";
+// import { DataStore } from "@prague/app-datastore";
+// import { createDocumentService } from "@prague/routerlicious-socket-storage";
+// import { FileSystemLoader } from "./filesystemloader";
+// import * as process from "process";
+import { createTable, makeId } from "./helper";
+import * as assert from "assert";
 
-function makeId(type: string) {
-    const id = Math.random().toString(36).substr(2);
-    console.log(`${type}: ${id}`);
-    return id;
-}
+describe("TableDocument", () => {
+    let table: TableDocument;    
+    beforeEach(async () => { table = await createTable(); });
+    afterEach(async () => { await table.close(); });
 
-function roundtrip(slice: ITable) {
-    for (let row = 0; row < slice.numRows; row++) {
-        for (let col = 0; col < slice.numCols; col++) {
-            slice.setCellText(row, col, `${row},${col}`);
+    it(`"Uninitialized cell is empty string"`, () => {
+        assert.strictEqual(table.getCellText(0, 0), "");
+    });
+
+    describe("get/set", () => {
+        for (const value of ["", "string", 0, -Infinity, +Infinity]) {
+            it(`roundtrip ${JSON.stringify(value)}`, () => {
+                table.setCellText(0, 0, value);
+                assert.strictEqual(table.getCellText(0, 0), value);
+            });
         }
-    }
 
-    for (let row = 0; row < slice.numRows; row++) {
-        let s = "";
-        for (let col = 0; col < slice.numCols; col++) {
-            s = `${s}${slice.getCellText(row, col)} `;
-        }
-        console.log(s);
-    }
-}
+        it(`roundtrip NaN`, () => {
+            table.setCellText(0, 0, NaN);
+            assert(isNaN(table.getCellText(0, 0) as number));
+        });
+    });
 
-function areEqual(left: ITable, right: ITable) {
-    if (left.numRows != right.numRows && left.numCols != right.numCols) {
-        return false;
-    }
+    it("eval", () => {
+        table.setCellText(0, 0, 10);
+        table.setCellText(0, 1, "=A1");
+        assert.strictEqual(table.evaluateCell(0, 1), 10);
+    });
 
-    for (let row = 0; row < left.numRows; row++) {
-        for (let col = 0; col < left.numCols; col++) {
-            if (left.getCellText(row, col) !== right.getCellText(row, col)) {
-                return false;
-            }
-        }
-    }
+    describe("annotations", () => {
+        it("row", () => {
+            table.annotateRows(0, 1, { id: "row0" });
+            assert.deepEqual(table.getRowProperties(0), { id: "row0" });
+            assert.strictEqual(table.getRowProperties(1), undefined);
+        });
 
-    return true;
-}
+        it("col", () => {
+            table.annotateRows(0, 1, { id: "col0" });
+            assert.deepEqual(table.getRowProperties(0), { id: "col0" });
+            assert.strictEqual(table.getRowProperties(1), undefined);
+        });
+    })
 
-async function main() {
-    const store = new DataStore(
-        "http://localhost:3000",
-        "http://localhost:3001",
-        new FileSystemLoader(process.env.RUSH_ROOT),
-        createDocumentService("http://localhost:3000", "http://localhost:3001"),
-        "43cfc3fbf04a97c0921fd23ff10f9e4b",
-        "prague",
-        "anonymous-coward"
-    );
+    describe("TableSlice", () => {
+        it("range follows edits", async () => {
+            table.setCellText(0, 0, "start");
+            table.setCellText(2, 2, "end");
 
-    const table = await store.open<TableDocument>(makeId("Table-Document"), TableDocument.type, "", []);
-    table.setCellText(0, 0, "=0/0");
+            const slice = await table.createSlice(makeId("Table-Slice"), "unnamed-slice", 0, 0, 2, 2);
+            assert.strictEqual(slice.getCellText(0, 0), "start");
+            assert.strictEqual(slice.getCellText(2, 2), "end");
 
-    table.annotateRows(0, 1, { id: "row0" });
-    console.log(table.getRowProperties(0));
-    console.log(table.getRowProperties(1));
-
-    table.annotateCols(0, 1, { id: "col0" });
-    console.log(table.getColProperties(0));
-    console.log(table.getColProperties(1));
-
-
-    const slice1 = await table.createSlice(makeId("Table-Slice-1"), "unnamed", 0, 0, 2, 2);
-    roundtrip(slice1);
-
-    const slice2 = await table.createSlice(makeId("Table-Slice-2"), "unnamed2", 0, 0, 2, 2);
-    console.log(areEqual(slice1, slice2));
-
-    slice1.setCellText(0, 0, "=0/1");
-    console.log(slice2.evaluateCell(0, 0));         // -> "0"
-    console.log(slice2.evaluateFormula("=A1"));     // -> "0"
-}
-
-main();
+            table.setCellText(0, 0, "min");
+            table.setCellText(2, 2, "max");
+            assert.strictEqual(slice.getCellText(0, 0), "min");
+            assert.strictEqual(slice.getCellText(2, 2), "max");
+        });
+    });
+});

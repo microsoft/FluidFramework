@@ -555,12 +555,12 @@ export class SharedSequence<T extends MergeTree.SequenceItem> extends SegmentSeq
         return this.client.mergeTree.getLength(this.client.getCurrentSeq(), this.client.getClientId());
     }
 
-    // tslint:disable: no-parameter-reassignment
-    public getItems<U>(start: number, end?: number) {
+    public getItems(start: number, end?: number) {
         if (end === undefined) {
+            // tslint:disable-next-line:no-parameter-reassignment
             end = this.getItemCount();
         }
-        return this.client.mergeTree.getItems<U>(this.client.getCurrentSeq(), this.client.getClientId(),
+        return this.client.mergeTree.getItems<T>(this.client.getCurrentSeq(), this.client.getClientId(),
             start, end);
     }
 
@@ -578,9 +578,8 @@ export class SharedObjectSequence<T extends MergeTree.SequenceItem> extends Shar
     }
 
     public getRange(start: number, end?: number) {
-        return this.getItems<T>(start,end);
+        return this.getItems(start, end);
     }
-
 }
 
 export class SharedNumberSequence extends SharedSequence<number> {
@@ -592,6 +591,6 @@ export class SharedNumberSequence extends SharedSequence<number> {
     }
 
     public getRange(start: number, end?: number) {
-        return this.getItems<number>(start, end);
+        return this.getItems(start, end);
     }
 }

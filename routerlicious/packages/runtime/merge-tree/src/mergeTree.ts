@@ -3690,14 +3690,12 @@ export class MergeTree {
         this.ensureIntervalBoundary(start, refSeq, clientId);
         this.ensureIntervalBoundary(end, refSeq, clientId);
         const annotatedSegments: ISegment[] = [];
-        let annotateSegment = (segment: ISegment) => {
-            let segType = segment.getType();
-            if ((segType == SegmentType.Marker) || (segType == SegmentType.Text)) {
-                annotatedSegments.push(segment);
-                segment.addProperties(props, combiningOp, seq);
-                if (this.markerModifiedHandler && (segType === SegmentType.Marker) && (seq !== UnassignedSequenceNumber)) {
-                    this.markerModifiedHandler(<Marker>segment);
-                }
+        const annotateSegment = (segment: ISegment) => {
+            const segType = segment.getType();
+            annotatedSegments.push(segment);
+            segment.addProperties(props, combiningOp, seq);
+            if (this.markerModifiedHandler && (segType === SegmentType.Marker) && (seq !== UnassignedSequenceNumber)) {
+                this.markerModifiedHandler(<Marker>segment);
             }
             return true;
         }
