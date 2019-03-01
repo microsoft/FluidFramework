@@ -10,7 +10,6 @@ import { Router } from "express";
 import { Provider } from "nconf";
 import * as agent from "./agent";
 import * as api from "./api";
-import * as canvas from "./canvas";
 import * as demoCreator from "./democreator";
 import * as fastLoader from "./fastLoader";
 import * as home from "./home";
@@ -24,7 +23,6 @@ import * as versions from "./versions";
 export interface IRoutes {
     agent: Router;
     api: Router;
-    canvas: Router;
     demoCreator: Router;
     loader: Router;
     fastLoader: Router;
@@ -55,7 +53,6 @@ export function create(
     return {
         agent: agent.create(config),
         api: api.create(config, tenantManager, storage, mongoManager, producer, appTenants),
-        canvas: canvas.create(config, tenantManager, storage, appTenants, ensureLoggedIn),
         demoCreator: demoCreator.create(config, ensureLoggedIn),
         fastLoader: fastLoader.create(config, tenantManager, storage, cache, appTenants, ensureLoggedIn, urlResolver),
         home: home.create(config, ensureLoggedIn),

@@ -227,7 +227,6 @@ export function create(
     app.use(routes.api);
     app.use("/templates", routes.templates);
     app.use("/maps", routes.maps);
-    app.use("/canvas", routes.canvas);
     app.use("/sharedText", routes.sharedText);
     app.use("/loader", routes.loader);
     app.use("/fastloader", routes.fastLoader);

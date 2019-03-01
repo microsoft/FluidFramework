@@ -1,6 +1,3 @@
-import * as canvas from "./canvas";
-export { canvas };
-
 import * as maps from "./maps";
 export { maps };
 
