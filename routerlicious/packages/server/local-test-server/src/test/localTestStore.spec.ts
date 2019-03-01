@@ -1,4 +1,4 @@
-// import { Component } from "@prague/app-component";
+import { Component } from "@prague/app-component";
 import { DataStore } from "@prague/app-datastore";
 import * as assert from "assert";
 import {
@@ -12,16 +12,19 @@ import { TestComponent } from "./testComponent";
 let testLoader: TestLoader;
 let testDeltaConnectionServer: ITestDeltaConnectionServer;
 
-describe.skip("LocalTestDataStore", () => {
+// tslint:disable:no-http-string - Allow fake test URLs when constructing DataStore.
+
+describe("LocalTestDataStore", () => {
     it("open 2 Documents", async () => {
         testDeltaConnectionServer = TestDeltaConnectionServer.Create();
         testLoader = new TestLoader([
-            // TODO fix
-            // [TestComponent.type, { instantiate: async () => Component.instantiate(new TestComponent()) }],
+            [TestComponent.type, {
+                instantiateRuntime: (context) => Component.instantiateRuntime(
+                    context, TestComponent.type, [[TestComponent.type, TestComponent]]) }],
         ]);
         const datastore1 = new DataStore(
-            "ordererUrl",
-            "storageUrl",
+            "http://test-orderer-url.test",
+            "http://test-storage-url.test",
             testLoader,
             createTestDocumentService(testDeltaConnectionServer),
             "tokenKey",
@@ -35,8 +38,8 @@ describe.skip("LocalTestDataStore", () => {
 
         doc1.set("done1");
         const datastore2 = new DataStore(
-            "ordererUrl",
-            "storageUrl",
+            "http://test-orderer-url.test",
+            "http://test-storage-url.test",
             testLoader,
             createTestDocumentService(testDeltaConnectionServer),
             "tokenKey",

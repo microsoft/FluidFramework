@@ -14,10 +14,34 @@
                 "-r",
                 "${workspaceFolder}/common/tools/node_modules/ts-node/register",
                 "--no-timeouts",
-                "src/index.ts"
+                "src/index.ts",
+                "--exit"
             ],
             "env": {
                 "DEBUG": "*,-socket.io*,-engine.io*,-follow-redirects",
+                "RUSH_ROOT": "${workspaceFolder}",
+                "TS_NODE_PROJECT": "tsconfig.json"
+            },
+            "console": "integratedTerminal",
+            "skipFiles": [
+                "<node_internals>/**/*.js"
+            ]
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Local Server Tests",
+            "cwd": "${workspaceFolder}/packages/server/local-test-server",
+            "program": "${workspaceFolder}/common/tools/node_modules/mocha/bin/_mocha",
+            "args": [
+                "-r",
+                "${workspaceFolder}/common/tools/node_modules/ts-node/register",
+                "--no-timeouts",
+                "src/test/**/*.ts",
+                "--exit"
+            ],
+            "env": {
+                // "DEBUG": "*,-socket.io*,-engine.io*,-follow-redirects",
                 "RUSH_ROOT": "${workspaceFolder}",
                 "TS_NODE_PROJECT": "tsconfig.json"
             },
