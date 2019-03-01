@@ -1,21 +1,17 @@
 import * as api from "@prague/client-api";
 import { MessageType } from "@prague/container-definitions";
-import { ContainerUrlResolver } from "@prague/routerlicious-host";
-import * as socketStorage from "@prague/routerlicious-socket-storage";
 import { SharedString } from "@prague/sequence";
-import { generateToken } from "@prague/services-core";
 import * as assert from "assert";
 import {
   createTestDocumentService,
   DocumentDeltaEventManager,
   ITestDeltaConnectionServer,
   TestDeltaConnectionServer,
+  TestResolver,
 } from "..";
 
-describe.skip("LocalTestServer", () => {
-  const id = "documentId";
-  const tenantId = "tenantId";
-  const tokenKey = "tokenKey";
+describe("LocalTestServer", () => {
+  const id = "prague://test.com/test/test";
 
   let testDeltaConnectionServer: ITestDeltaConnectionServer;
   let documentDeltaEventManager: DocumentDeltaEventManager;
@@ -28,35 +24,29 @@ describe.skip("LocalTestServer", () => {
     testDeltaConnectionServer = TestDeltaConnectionServer.Create();
     documentDeltaEventManager = new DocumentDeltaEventManager(testDeltaConnectionServer);
 
-    const user1Token = generateToken(tenantId, id, tokenKey);
-    const resolver = new ContainerUrlResolver(null, null);
-    const tokenProvider = new socketStorage.TokenProvider(user1Token);
-    const host = { resolver, tokenProvider };
+    const resolver = new TestResolver();
     const documentService = createTestDocumentService(testDeltaConnectionServer);
     user1Document = await api.load(
-      id, host, {}, documentService);
+      id, { resolver }, {}, documentService);
     let root = user1Document.getRoot();
     user1SharedString = user1Document.createString();
     root.set("SharedString", user1SharedString);
     documentDeltaEventManager.registerDocuments(user1Document);
 
-    const user2Token = generateToken(tenantId, id, tokenKey);
-    const tokenProvider2 = new socketStorage.TokenProvider(user2Token);
-    const host2 = { resolver, tokenProvider: tokenProvider2 };
     user2Document = await api.load(
-      id, host2, {}, documentService);
+      id, { resolver }, {}, documentService);
     root = user2Document.getRoot();
     user2SharedString = await root.wait("SharedString") as SharedString;
     documentDeltaEventManager.registerDocuments(user2Document);
   });
 
   describe("Document.existing", () => {
-      it("Validate document is new for user1 1 and exists for client 2", () => {
-        assert.equal(user1Document.existing, false, "Document already exists");
-        assert.equal(user2Document.existing, true, "Document does not exist on the server");
-        assert.notEqual(user2SharedString, undefined, "Document does not contain a SharedString");
-        });
+    it("Validate document is new for user1 1 and exists for client 2", () => {
+      assert.equal(user1Document.existing, false, "Document already exists");
+      assert.equal(user2Document.existing, true, "Document does not exist on the server");
+      assert.notEqual(user2SharedString, undefined, "Document does not contain a SharedString");
     });
+  });
 
   describe("Attach Op Handlers on Both Clients", () => {
     it("Validate messaging", async () => {

@@ -1,34 +1,16 @@
 /* tslint:disable:no-unsafe-any */
 /* tslint:disable:no-backbone-get-set-outside-model  */
 import * as api from "@prague/client-api";
-import { IPragueResolvedUrl, IRequest, IResolvedUrl, IUrlResolver, MessageType } from "@prague/container-definitions";
+import { MessageType } from "@prague/container-definitions";
 import { ISharedMap } from "@prague/map";
-import { generateToken } from "@prague/services-core";
 import * as assert from "assert";
 import {
     createTestDocumentService,
     DocumentDeltaEventManager,
     ITestDeltaConnectionServer,
     TestDeltaConnectionServer,
+    TestResolver,
 } from "..";
-
-class TestResolver implements IUrlResolver {
-    private id = "documentId";
-    private tenantId = "tenantId";
-    private tokenKey = "tokenKey";
-
-    public async resolve(request: IRequest): Promise<IResolvedUrl> {
-        const resolved: IPragueResolvedUrl = {
-            ordererUrl: "test.com",
-            storageUrl: "test.com",
-            tokens: { jwt: generateToken(this.tenantId, this.id, this.tokenKey) },
-            type: "prague",
-            url: `prague://test.com/${this.tenantId}/${this.id}`,
-        };
-
-        return resolved;
-    }
-}
 
 describe("Map", () => {
     const id = "prague://test.com/test/test";

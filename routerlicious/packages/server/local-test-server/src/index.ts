@@ -4,5 +4,6 @@ export * from "./testDocumentStorageService";
 export * from "./testDocumentDeltaConnection";
 export * from "./testDeltaConnectionServer";
 export * from "./testLoader";
+export * from "./testResolver";
 export * from "./registration";
 export * from "./documentEventManager";
