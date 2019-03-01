@@ -46,8 +46,8 @@
       "projectFolder": "packages/components/table-document/"
     },
     {
-      "packageName": "@prague/table-test-app",
-      "projectFolder": "packages/components/table-test-app/"
+      "packageName": "@prague/table-test",
+      "projectFolder": "packages/components/table-test/"
     },
     {
       "packageName": "@chaincode/table-view",

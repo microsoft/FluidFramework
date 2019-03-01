@@ -43,7 +43,7 @@ dependencies:
   '@rush-temp/spellchecker': 'file:projects/spellchecker.tgz'
   '@rush-temp/stream': 'file:projects/stream.tgz'
   '@rush-temp/table-document': 'file:projects/table-document.tgz'
-  '@rush-temp/table-test-app': 'file:projects/table-test-app.tgz'
+  '@rush-temp/table-test': 'file:projects/table-test.tgz'
   '@rush-temp/table-view': 'file:projects/table-view.tgz'
   '@rush-temp/test-utils': 'file:projects/test-utils.tgz'
   '@rush-temp/tools-core': 'file:projects/tools-core.tgz'
@@ -709,6 +709,10 @@ packages:
     dev: false
     resolution:
       integrity: sha512-nMRqS+mL1TOnIJrL6LKJcNZPB8V3eTfRo9FQA2b5gDvrHurC8XbSA86KNe0dShlEL7ReWJv/OU9NL7Z0dnqWTg==
+  /@types/node/10.12.27:
+    dev: false
+    resolution:
+      integrity: sha512-e9wgeY6gaY21on3ve0xAjgBVjGDWq/xUteK0ujsE53bUoxycMkqfnkUgMt6ffZtykZ5X12Mg3T7Pw4TRCObDKg==
   /@types/passport-jwt/3.0.1:
     dependencies:
       '@types/express': 4.16.1
@@ -6007,6 +6011,39 @@ packages:
     hasBin: true
     resolution:
       integrity: sha512-gQBlOqvfpYt9b2PZ7qElrHWt8x4y8ApNfbMBoDPdl3sY4/4RJwCxDGTSqhA9RnaguZjS5nW7taW8oToe86JLgQ==
+  /nyc/13.3.0:
+    bundledDependencies:
+      - archy
+      - arrify
+      - caching-transform
+      - convert-source-map
+      - find-cache-dir
+      - find-up
+      - foreground-child
+      - glob
+      - istanbul-lib-coverage
+      - istanbul-lib-hook
+      - istanbul-lib-report
+      - istanbul-lib-source-maps
+      - istanbul-reports
+      - make-dir
+      - merge-source-map
+      - resolve-from
+      - rimraf
+      - signal-exit
+      - spawn-wrap
+      - test-exclude
+      - uuid
+      - yargs
+      - yargs-parser
+    dependencies:
+      istanbul-lib-instrument: 3.1.0
+    dev: false
+    engines:
+      node: '>=6'
+    hasBin: true
+    resolution:
+      integrity: sha512-P+FwIuro2aFG6B0Esd9ZDWUd51uZrAEoGutqZxzrVmYl3qSfkLgcQpBPBjtDFsUQLFY1dvTQJPOyeqr8S9GF8w==
   /oauth-sign/0.9.0:
     dev: false
     resolution:
@@ -8487,18 +8524,6 @@ packages:
     hasBin: true
     resolution:
       integrity: sha512-BVwVbPJRspzNh2yfslyT1PSbl5uIk03EZlb493RKHN4qej/D06n1cEhjlOJG69oFsE7OT8XjpTUcYf6pKTLMhw==
-  /ts-node/8.0.2/typescript@3.3.3:
-    dependencies:
-      typescript: 3.3.3
-    dev: false
-    engines:
-      node: '>=4.2.0'
-    hasBin: true
-    id: registry.npmjs.org/ts-node/8.0.2
-    peerDependencies:
-      typescript: '>=2.0'
-    resolution:
-      integrity: sha512-MosTrinKmaAcWgO8tqMjMJB22h+sp3Rd1i4fdoWY4mhBDekOwIAKI/bzmRi7IcbCmjquccYg2gcF6NBkLgr0Tw==
   /tsconfig-paths/3.8.0:
     dependencies:
       '@types/json5': 0.0.29
@@ -8518,6 +8543,18 @@ packages:
     dependencies:
       tsutils: 2.28.0
     dev: false
+    peerDependencies:
+      tslint: ^5.1.0
+      typescript: ^2.1.0 || ^3.0.0
+    resolution:
+      integrity: sha512-R//efwn+34IUjTJeYgNDAJdzG0jyLWIehygPt/PHuZAieTolFVS56FgeFW7DOLap9ghXzMiFPTmDgm54qaL7QA==
+  /tslint-microsoft-contrib/6.0.0/423a18befb435f96eae194eebd054b03:
+    dependencies:
+      tslint: /tslint/5.13.1/typescript@3.3.3333
+      tsutils: /tsutils/2.28.0/typescript@3.3.3333
+      typescript: 3.3.3333
+    dev: false
+    id: registry.npmjs.org/tslint-microsoft-contrib/6.0.0
     peerDependencies:
       tslint: ^5.1.0
       typescript: ^2.1.0 || ^3.0.0
@@ -8654,6 +8691,31 @@ packages:
       typescript: '>=2.1.0 || >=2.1.0-dev || >=2.2.0-dev || >=2.3.0-dev || >=2.4.0-dev || >=2.5.0-dev || >=2.6.0-dev || >=2.7.0-dev || >=2.8.0-dev || >=2.9.0-dev || >=3.0.0-dev || >= 3.1.0-dev || >= 3.2.0-dev'
     resolution:
       integrity: sha512-ECOOQRxXCYnUUePG5h/+Z1Zouobk3KFpIHA9aKBB/nnMxs97S1JJPDGt5J4cGm1y9U9VmVlfboOxA8n1kSNzGw==
+  /tslint/5.13.1/typescript@3.3.3333:
+    dependencies:
+      babel-code-frame: 6.26.0
+      builtin-modules: 1.1.1
+      chalk: 2.4.2
+      commander: 2.19.0
+      diff: 3.5.0
+      glob: 7.1.3
+      js-yaml: 3.12.2
+      minimatch: 3.0.4
+      mkdirp: 0.5.1
+      resolve: 1.10.0
+      semver: 5.6.0
+      tslib: 1.9.3
+      tsutils: /tsutils/2.29.0/typescript@3.3.3333
+      typescript: 3.3.3333
+    dev: false
+    engines:
+      node: '>=4.8.0'
+    hasBin: true
+    id: registry.npmjs.org/tslint/5.13.1
+    peerDependencies:
+      typescript: '>=2.1.0 || >=2.1.0-dev || >=2.2.0-dev || >=2.3.0-dev || >=2.4.0-dev || >=2.5.0-dev || >=2.6.0-dev || >=2.7.0-dev || >=2.8.0-dev || >=2.9.0-dev || >=3.0.0-dev || >= 3.1.0-dev || >= 3.2.0-dev'
+    resolution:
+      integrity: sha512-fplQqb2miLbcPhyHoMV4FU9PtNRbgmm/zI5d3SZwwmJQM6V0eodju+hplpyfhLWpmwrDNfNYU57uYRb8s0zZoQ==
   /tsutils/2.28.0:
     dependencies:
       tslib: 1.9.3
@@ -10034,7 +10096,7 @@ packages:
     dev: false
     name: '@rush-temp/local-test-server'
     resolution:
-      integrity: sha512-OMM86HiNe7LXEzYzrtnVIkfvyMBkcu/Aw6b86wpEWpj4Prz6p9Vfokx70a8CqIfbEZS9Jf3juIEkaCuaXBPvOw==
+      integrity: sha512-hbXELL+bF1BSYz6ci2Jv2ss8YD9n+RE6J1BikVB7b1+LcYc03XHp9TZAgphygUxq9AjOBq0PvHPoPMVdzic11Q==
       tarball: 'file:projects/local-test-server.tgz'
     version: 0.0.0
   'file:projects/map.tgz':
@@ -10597,27 +10659,23 @@ packages:
       integrity: sha512-3Q9P/iDS+zOVlBY/dapw1LyKGi1SrO9Gm9NZcxoHuN46avqer8nkwdl/4S+vI32DfP6tVy6kV56G1feLSJsLsw==
       tarball: 'file:projects/table-document.tgz'
     version: 0.0.0
-  'file:projects/table-test-app.tgz':
+  'file:projects/table-test.tgz':
     dependencies:
-      '@types/debug': 0.0.31
       '@types/mocha': 5.2.6
-      '@types/node': 10.12.25
-      debug: 3.2.6
+      '@types/node': 10.12.27
       mocha: 5.2.0
+      mocha-junit-reporter: /mocha-junit-reporter/1.18.0/mocha@5.2.0
+      nyc: 13.3.0
       source-map-loader: 0.2.4
       ts-loader: 4.5.0
-      ts-node: /ts-node/8.0.2/typescript@3.3.3
-      tslint: /tslint/5.12.1/typescript@3.3.3
-      tslint-microsoft-contrib: /tslint-microsoft-contrib/6.0.0/tslint@5.12.1+typescript@3.3.3
-      typescript: 3.3.3
-      webpack: 4.29.3
-      webpack-cli: /webpack-cli/3.2.3/webpack@4.29.3
-      webpack-merge: 4.2.1
+      tslint: /tslint/5.13.1/typescript@3.3.3333
+      tslint-microsoft-contrib: /tslint-microsoft-contrib/6.0.0/423a18befb435f96eae194eebd054b03
+      typescript: 3.3.3333
     dev: false
-    name: '@rush-temp/table-test-app'
+    name: '@rush-temp/table-test'
     resolution:
-      integrity: sha512-2sRcOtqmDDcx8SdU3YEcyJaH2cLFvjnPfG0VyoQReCa53NgzjIUPp9IdwLgEgUzhZIXPfZAimiTRzzMHLVHeeA==
-      tarball: 'file:projects/table-test-app.tgz'
+      integrity: sha512-p+aXYqS1RwRnoOvo90zSv401dtA1wv50sDEo/xChf/014JWQGKpK2TpRrTJ1JfS50Tb6z/yAwugDjs8CTLD4SQ==
+      tarball: 'file:projects/table-test.tgz'
     version: 0.0.0
   'file:projects/table-view.tgz':
     dependencies:
@@ -10772,7 +10830,7 @@ specifiers:
   '@rush-temp/spellchecker': 'file:./projects/spellchecker.tgz'
   '@rush-temp/stream': 'file:./projects/stream.tgz'
   '@rush-temp/table-document': 'file:./projects/table-document.tgz'
-  '@rush-temp/table-test-app': 'file:./projects/table-test-app.tgz'
+  '@rush-temp/table-test': 'file:./projects/table-test.tgz'
   '@rush-temp/table-view': 'file:./projects/table-view.tgz'
   '@rush-temp/test-utils': 'file:./projects/test-utils.tgz'
   '@rush-temp/tools-core': 'file:./projects/tools-core.tgz'

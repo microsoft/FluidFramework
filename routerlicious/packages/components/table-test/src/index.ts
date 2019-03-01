@@ -28,6 +28,21 @@ describe("TableDocument", () => {
             table.setCellText(0, 0, NaN);
             assert(isNaN(table.getCellText(0, 0) as number));
         });
+
+        it(`all cells`, async () => {
+            for (let row = 0; row < table.numRows; row++) {
+                for (let col = 0; col < table.numCols; col++) {
+                    table.setCellText(row, col, `${row},${col}`);
+                }
+            }
+        
+            for (let row = 0; row < table.numRows; row++) {
+                let s = "";
+                for (let col = 0; col < table.numCols; col++) {
+                    s = `${s}${table.getCellText(row, col)} `;
+                }
+            }        
+        });
     });
 
     it("eval", () => {
