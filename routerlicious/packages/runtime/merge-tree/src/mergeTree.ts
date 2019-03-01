@@ -1,5 +1,4 @@
 // tslint:disable
-import { IUser } from "@prague/container-definitions";
 import * as Base from "./base";
 import * as Collections from "./collections";
 import * as ops from "./ops";
@@ -174,6 +173,18 @@ export interface ISegment extends IMergeNode, IRemovalInfo {
     removeRange(start: number, end: number): boolean;
     splitAt(pos: number): ISegment;
     toJSONObject(): ops.IJSONSegment;
+    /**
+     * Acks the current segment against the segment group, op, and merge tree.
+     *
+     * Throws error if the segment state doesn't match segment group or op.
+     * E.g. Segment group not first is pending queue.
+     * Inserted segment does not have unassigned sequeuence number.
+     *
+     * Returns true if the op  modifies the segment, otherwise false.
+     * The only current false case is overlapping remove, where a segment is removed
+     * by a previously sequenced operation before the current operation is acked.
+     */
+    ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpCallbackArgs, mergeTree: MergeTree): boolean;
 }
 
 export interface IMarkerModifiedAction {
@@ -625,7 +636,40 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
         return true;
     }
 
-    splitAt(pos: number): ISegment{
+    public ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpCallbackArgs, mergeTree: MergeTree): boolean {
+
+        const currentSegmentGroup = this.segmentGroups.dequeue();
+        assert.equal(currentSegmentGroup, segmentGroup);
+
+        switch (opArgs.op.type) {
+
+            case ops.MergeTreeDeltaType.INSERT:
+                assert.equal(this.seq, UnassignedSequenceNumber);
+                this.seq = opArgs.sequencedMessage.sequenceNumber;
+                return true;
+
+            case ops.MergeTreeDeltaType.REMOVE:
+                const segBranchId = mergeTree.getBranchId(this.clientId);
+                const removalInfo = mergeTree.getRemovalInfo(mergeTree.localBranchId, segBranchId, this);
+                assert(removalInfo);
+                assert(removalInfo.removedSeq);
+                if (removalInfo.removedSeq === UnassignedSequenceNumber) {
+                    removalInfo.removedSeq = opArgs.sequencedMessage.sequenceNumber;
+                    return true;
+                }
+                if (MergeTree.diagOverlappingRemove) {
+                    console.log(`grump @seq ${opArgs.sequencedMessage.sequenceNumber} ` +
+                        `cli ${glc(mergeTree, mergeTree.collabWindow.clientId)} ` +
+                        `from ${removalInfo.removedSeq} text ${mergeTree.toString()}`);
+                }
+                return false;
+
+            default:
+                assert(`${opArgs.op.type} is in unrecognised operation type`);
+        }
+    }
+
+    public splitAt(pos: number): ISegment{
         if (pos > 0) {
             const leafSegment = this.createSplitSegmentAt(pos);
             if (leafSegment) {
@@ -2122,7 +2166,6 @@ export class MergeTree {
     minSeqPending = false;
     // for diagnostics
     getLongClientId: (id: number) => string;
-    getUserInfo: (id: number) => IUser;
     mergeTreeDeltaCallback: MergeTreeDeltaCallback;
 
     // TODO: make and use interface describing options
@@ -3134,38 +3177,19 @@ export class MergeTree {
         const seq = opArgs.sequencedMessage.sequenceNumber;
         let pendingSegmentGroup = this.pendingSegments.dequeue();
         let nodesToUpdate = <IMergeBlock[]>[];
-        let clientId: number;
         let overwrite = false;
         if (pendingSegmentGroup !== undefined) {
             if (verboseOps) {
                 console.log(`segment group has ${pendingSegmentGroup.segments.length} segments`);
             }
             pendingSegmentGroup.segments.map((pendingSegment) => {
-                if (pendingSegment.seq === UnassignedSequenceNumber) {
-                    pendingSegment.seq = seq;
-                }
-                else {
-                    let segBranchId = this.getBranchId(pendingSegment.clientId);
-                    let removalInfo = this.getRemovalInfo(this.localBranchId, segBranchId, pendingSegment);
-                    if (removalInfo.removedSeq !== undefined) {
-                        if (removalInfo.removedSeq != UnassignedSequenceNumber) {
-                            overwrite = true;
-                            if (MergeTree.diagOverlappingRemove) {
-                                console.log(`grump @seq ${seq} cli ${glc(this, this.collabWindow.clientId)} from ${pendingSegment.removedSeq} text ${pendingSegment.toString()}`);
-                            }
-                        }
-                        else {
-                            removalInfo.removedSeq = seq;
-                        }
-                    }
-                }
-                const segmentGroup = pendingSegment.segmentGroups.dequeue();
-                assert.equal(segmentGroup, pendingSegmentGroup);
-                clientId = this.collabWindow.clientId;
+                overwrite = !pendingSegment.ack(pendingSegmentGroup, opArgs, this) || overwrite;
+
                 if (nodesToUpdate.indexOf(pendingSegment.parent) < 0) {
                     nodesToUpdate.push(pendingSegment.parent);
                 }
             });
+            const clientId = this.collabWindow.clientId;
             for (let node of nodesToUpdate) {
                 this.blockUpdatePathLengths(node, seq, clientId, overwrite);
                 //nodeUpdatePathLengths(node, seq, clientId, true);
