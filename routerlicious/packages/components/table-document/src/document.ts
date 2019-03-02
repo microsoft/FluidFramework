@@ -170,7 +170,7 @@ export class TableDocument extends Component implements ITable {
         this.root.set("cols", cols);
 
         const matrix = this.runtime.createChannel("matrix", SharedNumberSequenceExtension.Type) as SharedNumberSequence;
-        matrix.insert(0, new Array(numRows * numCols).fill(+Infinity));
+        matrix.insert(0, new Array(numRows * numCols).fill(NaN));
         this.root.set("stride", numCols, CounterValueType.Name);
         this.root.set("matrix", matrix);
     }
@@ -202,28 +202,30 @@ export class TableDocument extends Component implements ITable {
         const position = this.rowColToPosition(row, col);
         const asNumber = this.matrix.getItems(position, position + 1)[0];
 
-        switch (asNumber) {
-            case +Infinity: return "";
-            default:
-                if (isNaN(asNumber)) {
-                    return this.matrix.getPropertiesAtPosition(position).value;
-                } else {
-                    return asNumber;
-                }
+        // 'null' check to workaround https://github.com/Microsoft/Prague/issues/1683
+        const isNumber = asNumber !== null && !isNaN(asNumber);
+        if (isNumber) {
+            return asNumber;
         }
+
+        const asProperty = this.matrix.getPropertiesAtPosition(position);
+        return asProperty && ("value" in asProperty) && (asProperty.value !== undefined)
+            ? asProperty.value
+            : "";
     }
 
     private [storeCellTextSym](row: number, col: number, value: UnboxedOper) {
         const position = this.rowColToPosition(row, col);
-        if (value === "") {
-            this.setPosition(position, +Infinity);          // Encode empty string as +Infinity
-            this.annotatePosition(position, undefined);
-        } else if (typeof value === "number" && isFinite(value)) {
-            this.setPosition(position, value);              // Encode finite number as numbers
+        if (typeof value === "number") {
+            if (!isFinite(value)) {
+                // tslint:disable-next-line:no-console
+                console.error(`Can not roundtrip ${value} - Issue #1683.`);
+            }
+            this.setPosition(position, value);
             this.annotatePosition(position, undefined);
         } else {
             this.setPosition(position, NaN);                // Store other values/types as annotations
-            this.annotatePosition(position, value);
+            this.annotatePosition(position, value === "" ? undefined : value);
         }
     }
 

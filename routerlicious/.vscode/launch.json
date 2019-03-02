@@ -8,7 +8,7 @@
             "type": "node",
             "request": "launch",
             "name": "Table Tests",
-            "cwd": "${workspaceFolder}/packages/components/table-test-app",
+            "cwd": "${workspaceFolder}/packages/components/table-test",
             "program": "${workspaceFolder}/common/tools/node_modules/mocha/bin/_mocha",
             "args": [
                 "-r",

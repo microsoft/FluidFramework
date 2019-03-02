@@ -30,6 +30,8 @@ const headerTemplate = new Template({ tag: "th" });
 const cellTemplate = new Template({ tag: "td" });
 const cellInputTemplate = new Template({ tag: "input", props: { className: styles.inputBox } });
 
+const numberExp = /^[-+]?[0-9]*\.?[0-9]+(?:[eE][-+]?[0-9]+)?$/;
+
 export class GridView {
     public readonly root = tableTemplate.clone();
     private readonly cols = tableTemplate.get(this.root, "cols");
@@ -177,13 +179,14 @@ export class GridView {
     }
 
     private parseInput(input: string) {
-        const asNumber = Number(input);
-        if (isNaN(asNumber)) {
-            return input === "NaN"
-                ? NaN
-                : input;
+        if (input.match(numberExp)) {
+            const asNumber = Number(input);
+            if (!isNaN(asNumber)) {
+                return asNumber;
+            }
         }
-        return asNumber;
+
+        return input;
     }
 
     private commitInput() {
