@@ -57,6 +57,7 @@ COPY packages/runtime/runtime-definitions/package*.json packages/runtime/runtime
 COPY packages/runtime/sequence/package*.json packages/runtime/sequence/
 COPY packages/runtime/stream/package*.json packages/runtime/stream/
 COPY packages/server/agent/package*.json packages/server/agent/
+COPY packages/server/gateway/package*.json packages/server/gateway/
 COPY packages/server/kafka-orderer/package*.json packages/server/kafka-orderer/
 COPY packages/server/lambdas-driver/package*.json packages/server/lambdas-driver/
 COPY packages/server/lambdas/package*.json packages/server/lambdas/

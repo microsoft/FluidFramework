@@ -1,5 +1,14 @@
 version: '3'
 services:
+    gateway:
+        build: .
+        ports:
+            - "4000:3000"
+        command: node ../gateway/dist/www.js
+        environment:
+            - DEBUG=prague:*
+            - NODE_ENV=development
+        restart: always
     alfred:
         build: .
         ports:

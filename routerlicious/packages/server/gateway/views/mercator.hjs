@@ -1,0 +1,41 @@
+{{<layout}}
+    {{$styles}}
+        <link href="{{#hfurl}}/public/stylesheets/dist/style.css{{/hfurl}}" rel="stylesheet" />
+        <style>
+            body {
+                overflow: visible;
+            }
+        </style>
+    {{/styles}}
+
+    {{$content}}
+        <div>Batch size: <input id="batchSize" type="number" value="1000" /></div>
+        <div>Batches <input id="batches" type="number" value="10" /></div>
+        <div>Payload <input id="payload" type="number" value="1024" /></div>
+
+        <div>
+            <button id="run">Run!</button>
+        </div>
+
+        <table class="table table-dark">
+            <thead>
+                <tr>
+                    <th scope="col">Test</th>
+                    <th scope="col">Socket.IO</th>
+                    <th scope="col">Socket.IO Local</th>
+                    <th scope="col">WS</th>
+                    <th scope="col">WS Local</th>
+                </tr>
+            </thead>
+            <tbody id="output">
+            </tbody>
+        </table>
+    {{/content}}
+
+    {{$scripts}}
+        <script src="{{#hfurl}}/public/scripts/dist/controller.js{{/hfurl}}"></script>
+        <script>
+            controller.mercator.initialize();
+        </script>
+    {{/scripts}}
+{{/layout}}

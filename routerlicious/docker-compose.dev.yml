@@ -1,5 +1,8 @@
 version: '3'
 services:
+    gateway:
+        volumes:
+            - .:/usr/src/server
     alfred:
         volumes:
             - .:/usr/src/server

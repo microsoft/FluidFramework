@@ -1,0 +1,22 @@
+{{<layout}}
+    {{$styles}}
+        <link href="{{#hfurl}}/public/stylesheets/dist/map.css{{/hfurl}}" rel="stylesheet" />
+    {{/styles}}
+
+    {{$content}}
+        <div class="container-fluid">
+            <div id="mapViews"></div>
+        </div>
+    {{/content}}
+
+    {{$scripts}}
+        <script src="{{#hfurl}}/public/scripts/dist/controller.js{{/hfurl}}"></script>
+        <script>
+            var config = {{{ config }}};
+            var resolved = {{{ resolved }}};
+            var jwt = "{{ jwt }}";
+
+            controller.maps.load(resolved, jwt, config);
+        </script>
+    {{/scripts}}
+{{/layout}}
