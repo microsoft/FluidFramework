@@ -66,16 +66,11 @@ export class PuppetMaster {
         const cleanBodyHTML = bodyHTML.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "");
         const cleanHeadHTML = headHTML.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "");
         const pageHTML = this.craftPage(cleanHeadHTML, cleanBodyHTML);
-        const pageContent = await this.page.content();
-        const cleanContent = pageContent.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "");
+        // const pageContent = await this.page.content();
+        // const cleanContent = pageContent.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "");
         if (this.cache) {
-            this.cache.set(`${this.tenantId}-${this.documentId}`, cleanContent).then(() => {
-                console.log(`Updated full cache`);
-            }, (err) => {
-                console.log(`Error: ${err}`);
-            });
-            this.cache.set(`${this.tenantId}-${this.documentId}-split`, pageHTML).then(() => {
-                console.log(`Updated full cache`);
+            this.cache.set(`${this.tenantId}-${this.documentId}`, pageHTML).then(() => {
+                console.log(`${this.tenantId}:${this.documentId} - Updated page cache`);
             }, (err) => {
                 console.log(`Error: ${err}`);
             });
