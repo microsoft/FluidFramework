@@ -7,3 +7,4 @@ export * from "./registration";
 export * from "./tokens";
 export * from "./documentService2";
 export * from "./createDocumentService2";
+export * from "./nullBlobStorageService";
