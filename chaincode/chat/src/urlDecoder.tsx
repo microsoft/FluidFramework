@@ -24,7 +24,7 @@ function findLoadableUrl(message: string): string | undefined {
 
     // We found a URL
     const messageStartingAtHttp = message.substring(index);
-    const indexFinalSpace = message.indexOf(" ");
+    const indexFinalSpace = messageStartingAtHttp.indexOf(" ");
     if (indexFinalSpace === -1) {
         return messageStartingAtHttp;
     } else {

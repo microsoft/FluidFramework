@@ -125,6 +125,7 @@ export class ChatContainer extends React.Component<ChatContainerProps, ChatConta
       time: Date.now().toString()
     });
 
+    // TODO this hack stops appendMessage from getting into a loop without setting state.
     setTimeout(() => {
       const maybeComponent = findComponent(inputMessage);
       console.log(maybeComponent);
