@@ -41,6 +41,13 @@ alfred:
   tenants: []
   key: VBQyoGpEYrTn3XQPtXW3K8fFDd
 
+gateway:
+  name: gateway
+  replicas: 4
+  externalUrl: https://www.wu2.prague.office-int.com
+  host: www.wu2.prague.office-int.com
+  cert: wu2-tls-certificate
+
 deli:
   name: deli
   replicas: 8
