@@ -25,7 +25,7 @@ spec:
         imagePullPolicy: {{ default "" .Values.imagePullPolicy | quote }}
         command:
           - 'node'
-          - 'dist/gateway/www.js'
+          - '/usr/src/server/packages/server/gateway/dist/www.js'
         ports:
         - name: ui
           containerPort: 3000
