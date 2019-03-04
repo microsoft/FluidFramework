@@ -13,6 +13,7 @@ const routes: Routes = [
 
 @NgModule({
     exports: [RouterModule],
-    imports: [RouterModule.forRoot(routes)],
+    imports: [RouterModule.forRoot(routes, { initialNavigation: false })],
 })
-export class AppRoutingModule { }
+export class AppRoutingModule {
+}

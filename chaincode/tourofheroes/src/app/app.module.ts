@@ -1,9 +1,8 @@
-import { APP_BASE_HREF } from '@angular/common';
-import { NgModule } from '@angular/core';
+import { NgModule, Inject } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
-import { parse } from "url";
+
 
 import { HttpClientInMemoryWebApiModule } from 'angular-in-memory-web-api';
 import { InMemoryDataService } from './in-memory-data.service';
@@ -16,6 +15,8 @@ import { HeroDetailComponent } from './hero-detail/hero-detail.component';
 import { HeroesComponent } from './heroes/heroes.component';
 import { HeroSearchComponent } from './hero-search/hero-search.component';
 import { MessagesComponent } from './messages/messages.component';
+import { PRAGUE_PATH } from './tokens';
+import { Router } from '@angular/router';
 
 @NgModule({
   imports: [
@@ -40,8 +41,11 @@ import { MessagesComponent } from './messages/messages.component';
     HeroSearchComponent
   ],
   bootstrap: [AppComponent],
-  providers: [{ provide: APP_BASE_HREF, useValue: parse(window.location.href).pathname }]
 })
-export class AppModule { }
+export class AppModule {
+  constructor(@Inject(PRAGUE_PATH) path: string, router: Router) {
+    router.navigate([path ? path : "/dashboard"], { skipLocationChange: !!path });
+  }
+}
 
 

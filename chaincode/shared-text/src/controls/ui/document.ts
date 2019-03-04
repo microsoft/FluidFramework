@@ -98,27 +98,7 @@ export class Document extends Block<DocumentState> {
         };
 
         const platformFactory = new PlatformFactory(div, invalidateLayout);
-        const responseP = collabDocument.runtime.loader.request({ url: self.url });
-        const mountedP = responseP.then(async (response) => {
-            self[platformSym] = platformFactory;
-            console.log("Document loaded");
-
-            if (response.status !== 200) {
-                return;
-            }
-
-            switch (response.mimeType) {
-                case "prague/component":
-                    const component = response.value as IComponentRuntime;
-                    const platform = await platformFactory.create();
-                    const componentPlatform = await component.attach(platform);
-                    // query the runtime for its definition - if it exists
-                    definitionGuide.addComponent(component.documentId, componentPlatform);
-                    break;
-            }
-        });
-
-        mountedP.catch((error) => console.error("Failed to load document"));
+        this.attach(collabDocument, self.url, platformFactory, 0);
 
         // Call 'updating' to update the contents of the div with the updated chart.
         return this.updating(self, context, mountDiv);
@@ -134,5 +114,40 @@ export class Document extends Block<DocumentState> {
         }
 
         return element;
+    }
+
+    private attach(collabDocument: api.Document, url: string, platformFactory: PlatformFactory, tryCount: number) {
+        const responseP = collabDocument.runtime.loader.request({ url });
+        const mountedP = responseP.then(async (response) => {
+            self[platformSym] = platformFactory;
+            console.log("Document loaded");
+
+            // The below retry is a temporary measure until we are able to return an object that can notify
+            // clients of an update to the URL route
+            if (response.status !== 200) {
+                if (tryCount < 3) {
+                    console.log(`Failed to load, trying again ${tryCount}`);
+                    setTimeout(
+                        () => {
+                            this.attach(collabDocument, url, platformFactory, tryCount + 1);
+                        },
+                        1000);
+                } else {
+                    console.log(`Failed to load ${tryCount}`);
+                }
+            }
+
+            switch (response.mimeType) {
+                case "prague/component":
+                    const component = response.value as IComponentRuntime;
+                    const platform = await platformFactory.create();
+                    const componentPlatform = await component.attach(platform);
+                    // query the runtime for its definition - if it exists
+                    definitionGuide.addComponent(component.documentId, componentPlatform);
+                    break;
+            }
+        });
+
+        mountedP.catch((error) => console.error("Failed to load document"));
     }
 }

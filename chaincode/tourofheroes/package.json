@@ -1,7 +1,7 @@
 {
   "name": "@chaincode/tourofheroes",
   "description": "Angular 2 Tour of Heroes tutorial as a chaincode package",
-  "version": "0.0.1",
+  "version": "0.0.4",
   "author": "Microsoft",
   "repository": "microsoft/prague",
   "main": "dist/main.bundle.js",
@@ -15,7 +15,7 @@
     "tsc": "tsc"
   },
   "devDependencies": {
-    "@prague/prague-dev-server": "^3.2.2",
+    "@prague/prague-dev-server": "^3.2.4",
     "@types/node": "^10.11.5",
     "@types/react-dom": "^16.0.11",
     "angular-router-loader": "^0.8.5",
