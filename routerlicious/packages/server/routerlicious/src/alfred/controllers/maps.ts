@@ -11,6 +11,7 @@ import {
     IValueChanged,
 } from "@prague/map";
 import { ContainerUrlResolver } from "@prague/routerlicious-host";
+import * as socketStorage from "@prague/routerlicious-socket-storage";
 import * as $ from "jquery";
 // tslint:disable-next-line:no-var-requires
 import { registerDocumentServices } from "./utils";
@@ -158,7 +159,9 @@ export async function load(resolved: IPragueResolvedUrl, jwt: string, config: an
         new Map<string, IResolvedUrl>([[resolved.url, resolved]]));
     const host = { resolver };
 
-    registerDocumentServices(config);
+    const tokenService = new socketStorage.TokenService();
+    const claims = tokenService.extractClaims(resolved.tokens.jwt);
+    registerDocumentServices(config, claims.documentId, claims.tenantId);
 
     $(document).ready(() => {
         // Bootstrap worker service.

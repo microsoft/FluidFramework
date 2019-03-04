@@ -11,7 +11,9 @@ export class DocumentService implements api.IDocumentService {
     constructor(
         private readonly snapshotUrl: string,
         private readonly deltaStorageUrl: string,
-        private readonly webSocketUrl: string) {
+        private readonly webSocketUrl: string,
+        private readonly tenantId?: string,
+        private readonly documentId?: string) {
     }
 
     public async createTokenProvider(tokens: { [name: string]: string }): Promise<api.ITokenProvider> {
@@ -19,8 +21,6 @@ export class DocumentService implements api.IDocumentService {
     }
 
     public async connectToStorage(
-        tenantId: string,
-        id: string,
         tokenProvider: api.ITokenProvider): Promise<api.IDocumentStorageService> {
         const documentManager = this.snapshotUrl ?
             new StandardDocumentStorageManager(this.snapshotUrl, tokenProvider) :
@@ -29,23 +29,19 @@ export class DocumentService implements api.IDocumentService {
     }
 
     public async connectToDeltaStorage(
-        tenantId: string,
-        id: string,
         tokenProvider: api.ITokenProvider): Promise<api.IDocumentDeltaStorageService> {
         const deltaStorage = new DeltaStorageService(this.deltaStorageUrl);
-        return new DocumentDeltaStorageService(tenantId, id, tokenProvider, deltaStorage);
+        return new DocumentDeltaStorageService(this.tenantId, this.documentId, tokenProvider, deltaStorage);
     }
 
     public async connectToDeltaStream(
-        tenantId: string,
-        id: string,
         tokenProvider: api.ITokenProvider,
         client: api.IClient): Promise<api.IDocumentDeltaConnection> {
         const token = (tokenProvider as TokenProvider).socketToken;
-        return DocumentDeltaConnection.Create(tenantId, id, token, io, client, this.webSocketUrl);
+        return DocumentDeltaConnection.Create(this.tenantId, this.documentId, token, io, client, this.webSocketUrl);
     }
 
-    public async branch(tenantId: string, id: string, tokenProvider: api.ITokenProvider): Promise<string> {
+    public async branch(tokenProvider: api.ITokenProvider): Promise<string> {
         return null;
     }
 

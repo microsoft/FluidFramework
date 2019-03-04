@@ -2,6 +2,7 @@ import {
     IChaincodeFactory,
     ICodeLoader,
     IPraguePackage,
+    IPragueResolvedUrl,
     IResolvedUrl,
 } from "@prague/container-definitions";
 import { Container, Loader } from "@prague/container-loader";
@@ -10,6 +11,7 @@ import { ContainerUrlResolver } from "@prague/routerlicious-host";
 import {
     createDocumentService,
     DefaultErrorTracking,
+    TokenService,
 } from "@prague/routerlicious-socket-storage";
 import { IComponentRuntime } from "@prague/runtime-definitions";
 import { IGitCache } from "@prague/services-client";
@@ -161,10 +163,22 @@ async function start(
         jwt,
         new Map<string, IResolvedUrl>([[url, resolved]]));
 
-    // Generate driver interface
+    // TODO: cleanup abstraction and required upcast
+    const routerliciousToken = (resolved as IPragueResolvedUrl).tokens.jwt;
+    let documentId: string;
+    let tenantId: string;
+    if (routerliciousToken) {
+        const tokenService = new TokenService();
+        const claims = tokenService.extractClaims(routerliciousToken);
+        documentId = claims.documentId;
+        tenantId = claims.tenantId;
+    }
+
     const documentServices = createDocumentService(
         document.location.origin,
         config.blobStorageUrl,
+        tenantId,
+        documentId,
         errorService,
         false,
         true,

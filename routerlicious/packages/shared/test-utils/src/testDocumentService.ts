@@ -65,36 +65,27 @@ class TestDocumentStorageService implements IDocumentStorageService {
 export class TestDocumentService implements IDocumentService {
     private errorTracking = new socketStorage.DefaultErrorTracking();
 
-    constructor(private deltaStorage: IDeltaStorageService) {
+    constructor(private deltaStorage: IDeltaStorageService, private id: string, private tenantId: string) {
     }
 
     public async createTokenProvider(tokens: { [name: string]: string; }): Promise<ITokenProvider> {
         throw new Error("Method not implemented.");
     }
 
-    public async connectToStorage(
-        tenantId: string,
-        id: string,
-        tokenProvider: ITokenProvider): Promise<IDocumentStorageService> {
+    public async connectToStorage(tokenProvider: ITokenProvider): Promise<IDocumentStorageService> {
         return new TestDocumentStorageService();
     }
 
-    public async connectToDeltaStorage(
-        tenantId: string,
-        id: string,
-        tokenProvider: ITokenProvider): Promise<IDocumentDeltaStorageService> {
-        return new socketStorage.DocumentDeltaStorageService(tenantId, id, tokenProvider, this.deltaStorage);
+    public async connectToDeltaStorage(tokenProvider: ITokenProvider): Promise<IDocumentDeltaStorageService> {
+        return new socketStorage.DocumentDeltaStorageService(this.tenantId, this.id, tokenProvider, this.deltaStorage);
     }
 
-    public async connectToDeltaStream(
-        tenantId: string,
-        id: string,
-        tokenProvider: ITokenProvider): Promise<IDocumentDeltaConnection> {
+    public async connectToDeltaStream(tokenProvider: ITokenProvider): Promise<IDocumentDeltaConnection> {
 
-        return new TestDocumentDeltaConnection(id, "test-client", false, "", undefined, undefined);
+        return new TestDocumentDeltaConnection(this.id, "test-client", false, "", undefined, undefined);
     }
 
-    public branch(tenantId: string, id: string, tokenProvider: ITokenProvider): Promise<string> {
+    public branch(tokenProvider: ITokenProvider): Promise<string> {
         return Promise.reject("Not implemented");
     }
 

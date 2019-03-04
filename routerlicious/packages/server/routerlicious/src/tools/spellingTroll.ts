@@ -339,7 +339,7 @@ if (!sharedStringId) {
 }
 else {
     // Mark socket storage as our default provider
-    const documentServices = socketStorage.createDocumentService(commander.server, commander.storage);
+    const documentServices = socketStorage.createDocumentService(commander.server, commander.storage, commander.tenant, sharedStringId);
     API.registerDocumentService(documentServices);
     initSpell(sharedStringId);
 }

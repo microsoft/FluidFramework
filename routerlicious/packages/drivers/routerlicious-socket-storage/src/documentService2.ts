@@ -14,15 +14,24 @@ export class DocumentService2 extends DocumentService {
         gitUrl: string,
         errorTracking: api.IErrorTrackingService,
         disableCache: boolean, historianApi: boolean,
-        directCredentials: ICredentials) {
-        super(deltaUrl, gitUrl, errorTracking, disableCache, historianApi, directCredentials, null);
+        directCredentials: ICredentials,
+        tenantId: string,
+        documentId: string) {
+        super(
+            deltaUrl,
+            gitUrl,
+            errorTracking,
+            disableCache,
+            historianApi,
+            directCredentials,
+            null,
+            tenantId,
+            documentId);
     }
     public async connectToDeltaStream(
-        tenantId: string,
-        id: string,
         tokenProvider: api.ITokenProvider,
         client: api.IClient): Promise<api.IDocumentDeltaConnection> {
         const token = (tokenProvider as TokenProvider).token;
-        return WSDeltaConnection.Create(tenantId, id, token, client, this.deltaUrl);
+        return WSDeltaConnection.Create(this.tenantId, this.documentId, token, client, this.deltaUrl);
     }
 }

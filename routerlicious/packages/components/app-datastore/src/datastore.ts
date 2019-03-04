@@ -101,7 +101,7 @@ export class DataStore {
             hostUrl,
             config.blobStorageUrl,
             codeLoader || new WebLoader(config.npm),
-            createDocumentService(hostUrl, config.blobStorageUrl),
+            createDocumentService(hostUrl, config.blobStorageUrl, config.id, userId),
             config.key,
             config.id,
             userId,

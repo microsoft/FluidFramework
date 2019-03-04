@@ -38,7 +38,7 @@ export class DeltaQueueManager {
     }
 }
 
-export function registerDocumentServices(config: any) {
+export function registerDocumentServices(config: any, id: string, tenantId: string) {
     const errorService = config.trackError
         ? new BrowserErrorTrackingService()
         : new socketStorage.DefaultErrorTracking();
@@ -46,6 +46,8 @@ export function registerDocumentServices(config: any) {
     const documentServices = socketStorage.createDocumentService(
         document.location.origin,
         config.blobStorageUrl,
+        tenantId,
+        id,
         errorService);
     api.registerDocumentService(documentServices);
 }

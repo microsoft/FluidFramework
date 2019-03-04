@@ -14,6 +14,8 @@ import {
 
 describe("Map", () => {
     const id = "prague://test.com/test/test";
+    const documentId = "documentId";
+    const tenantId = "tenantId";
 
     let testDeltaConnectionServer: ITestDeltaConnectionServer;
     let documentDeltaEventManager: DocumentDeltaEventManager;
@@ -27,7 +29,7 @@ describe("Map", () => {
     beforeEach(async () => {
         testDeltaConnectionServer = TestDeltaConnectionServer.Create();
         documentDeltaEventManager = new DocumentDeltaEventManager(testDeltaConnectionServer);
-        const documentService = createTestDocumentService(testDeltaConnectionServer);
+        const documentService = createTestDocumentService(testDeltaConnectionServer, tenantId, documentId);
         const resolver = new TestResolver();
         user1Document = await api.load(
             id, { resolver }, {}, documentService);
