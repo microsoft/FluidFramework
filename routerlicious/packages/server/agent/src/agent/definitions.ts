@@ -56,7 +56,7 @@ export interface IWorkManager {
 
 export interface IDocumentServiceFactory {
 
-    getService(documentId: string, tenantId: string): Promise<IDocumentService>;
+    getService(tenantId: string): Promise<IDocumentService>;
 }
 
 export interface IDocumentTaskInfo {

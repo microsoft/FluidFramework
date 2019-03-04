@@ -44,8 +44,8 @@ export async function run(
 
     // Register endpoint connection
     const documentServices = routerlicious === "http://localhost:3030"
-        ? socketStorage.createDocumentService2(routerlicious, historian, tenantId, id)
-        : socketStorage.createDocumentService(routerlicious, historian, tenantId, id);
+        ? socketStorage.createDocumentService2(routerlicious, historian)
+        : socketStorage.createDocumentService(routerlicious, historian);
     api.registerDocumentService(documentServices);
 
     console.log("Doc id is", id);

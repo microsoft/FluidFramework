@@ -35,12 +35,7 @@ if (!sharedStringId) {
 }
 
 // Mark socket storage as our default provider
-const documentService = socketStorage.createDocumentService(
-    commander.server,
-    commander.storage,
-    commander.tenant,
-    sharedStringId,
-  );
+const documentService = socketStorage.createDocumentService(commander.server, commander.storage);
 api.registerDocumentService(documentService);
 
 fs.readFile(commander.file, "utf8", async (error, data: string) => {

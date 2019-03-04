@@ -8,39 +8,47 @@ import { TestDocumentStorageService } from "./testDocumentStorageService";
 /**
  */
 export class TestDocumentService implements api.IDocumentService {
-    constructor(
-        private testDeltaConnectionServer: ITestDeltaConnectionServer,
-        private tenantId: string,
-        private id: string) {
+    constructor(private testDeltaConnectionServer: ITestDeltaConnectionServer) {
     }
 
     public async createTokenProvider(tokens: { [name: string]: string }): Promise<api.ITokenProvider> {
         return new socketStorage.TokenProvider(tokens.jwt);
     }
 
-    public async connectToStorage(tokenProvider: api.ITokenProvider): Promise<api.IDocumentStorageService> {
+    public async connectToStorage(
+        tenantId: string,
+        id: string,
+        tokenProvider: api.ITokenProvider): Promise<api.IDocumentStorageService> {
 
         return new TestDocumentStorageService();
     }
 
-    public async connectToDeltaStorage(tokenProvider: api.ITokenProvider): Promise<api.IDocumentDeltaStorageService> {
+    public async connectToDeltaStorage(
+        tenantId: string,
+        id: string,
+        tokenProvider: api.ITokenProvider): Promise<api.IDocumentDeltaStorageService> {
 
-        return new TestDeltaStorageService(this.tenantId, this.id, this.testDeltaConnectionServer.databaseManager);
+        return new TestDeltaStorageService(tenantId, id, this.testDeltaConnectionServer.databaseManager);
     }
 
     public async connectToDeltaStream(
+        tenantId: string,
+        id: string,
         tokenProvider: api.ITokenProvider,
         client: api.IClient): Promise<api.IDocumentDeltaConnection> {
         const token = (tokenProvider as socketStorage.TokenProvider).token;
         return TestDocumentDeltaConnection.Create(
-            this.tenantId,
-            this.id,
+            tenantId,
+            id,
             token,
             client,
             this.testDeltaConnectionServer.webSocketServer);
     }
 
-    public async branch(tokenProvider: api.ITokenProvider): Promise<string> {
+    public async branch(
+        tenantId: string,
+        id: string,
+        tokenProvider: api.ITokenProvider): Promise<string> {
         return null;
     }
 

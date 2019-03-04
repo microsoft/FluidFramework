@@ -228,22 +228,29 @@ export interface IDocumentService {
     /**
      * Access to storage associated with the document...
      */
-    connectToStorage(tokenProvider: ITokenProvider): Promise<IDocumentStorageService>;
+    connectToStorage(tenantId: string, id: string, tokenProvider: ITokenProvider): Promise<IDocumentStorageService>;
 
     /**
      * Access to delta storage associated with the document
      */
-    connectToDeltaStorage(tokenProvider: ITokenProvider): Promise<IDocumentDeltaStorageService>;
+    connectToDeltaStorage(
+        tenantId: string,
+        id: string,
+        tokenProvider: ITokenProvider): Promise<IDocumentDeltaStorageService>;
 
     /**
      * Subscribes to the document delta stream
      */
-    connectToDeltaStream(tokenProvider: ITokenProvider, client: IClient): Promise<IDocumentDeltaConnection>;
+    connectToDeltaStream(
+        tenantId: string,
+        id: string,
+        tokenProvider: ITokenProvider,
+        client: IClient): Promise<IDocumentDeltaConnection>;
 
     /**
      * Creates a branch of the document with the given ID. Returns the new ID.
      */
-    branch(tokenProvider: ITokenProvider): Promise<string>;
+    branch(tenantId: string, id: string, tokenProvider: ITokenProvider): Promise<string>;
 
     /**
      * Returns the error tracking service

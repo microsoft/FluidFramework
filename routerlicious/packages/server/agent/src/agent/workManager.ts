@@ -36,7 +36,7 @@ export class WorkManager extends EventEmitter implements IWorkManager {
         documentId: string,
         workType: string,
         host: IHost) {
-        const services = await this.serviceFactory.getService(documentId, tenantId);
+        const services = await this.serviceFactory.getService(tenantId);
 
         switch (workType) {
             case "snapshot":

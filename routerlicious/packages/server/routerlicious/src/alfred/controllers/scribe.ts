@@ -1,5 +1,4 @@
 import { ContainerUrlResolver } from "@prague/routerlicious-host";
-import * as socketStorage from "@prague/routerlicious-socket-storage";
 import * as scribe from "@prague/tools-core";
 import * as request from "request";
 import * as url from "url";
@@ -255,7 +254,5 @@ export function initialize(
     });
 
     // Mark socket storage as our default provider
-    const tokenService = new socketStorage.TokenService();
-    const claims = tokenService.extractClaims(jwt);
-    registerDocumentServices(config, id, claims.tenantId);
+    registerDocumentServices(config);
 }

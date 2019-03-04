@@ -6,8 +6,6 @@ import { DefaultErrorTracking } from "./errorTracking";
 export function createDocumentService(
     deltaUrl: string,
     gitUrl: string,
-    tenantId: string,
-    documentId: string,
     errorTracking: IErrorTrackingService = new DefaultErrorTracking(),
     disableCache = false,
     historianApi = true,
@@ -22,9 +20,7 @@ export function createDocumentService(
         disableCache,
         historianApi,
         credentials,
-        seedData,
-        tenantId,
-        documentId);
+        seedData);
 
     return service;
 }

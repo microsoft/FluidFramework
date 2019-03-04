@@ -83,7 +83,7 @@ export async function load(
 
 async function loadDocument(
     resolved: IPragueResolvedUrl,
-    token: string,
+    jwt: string,
     seedData: IGitCache,
     pageInk: boolean,
     disableCache: boolean,
@@ -94,25 +94,16 @@ async function loadDocument(
     to: number) {
 
     const host = new ui.BrowserContainerHost();
-    const tokenService = new socketStorage.TokenService();
-    const claims = tokenService.extractClaims(resolved.tokens.jwt);
 
     const errorService = config.trackError
         ? new BrowserErrorTrackingService()
         : new socketStorage.DefaultErrorTracking();
     const replayMode = (from >= 0) && (to >= 0);
     const documentService = replayMode
-        ? replaySocketStorage.createReplayDocumentService(
-            document.location.origin,
-            from,
-            to,
-            claims.tenantId,
-            claims.documentId)
+        ? replaySocketStorage.createReplayDocumentService(document.location.origin, from, to)
         : socketStorage.createDocumentService(
             document.location.origin,
             config.blobStorageUrl,
-            claims.tenantId,
-            claims.documentId,
             errorService,
             disableCache,
             config.historianApi,
@@ -122,7 +113,7 @@ async function loadDocument(
 
     const resolver = new ContainerUrlResolver(
         document.location.origin,
-        token,
+        jwt,
         new Map<string, IResolvedUrl>([[resolved.url, resolved]]));
 
     console.log(`Document loading ${resolved.url}: ${performanceNow()}`);

@@ -43,9 +43,6 @@ export class TestHost {
     constructor(registry: ReadonlyArray<[string, new () => IChaincodeComponent]>) {
         this.testDeltaConnectionServer = TestDeltaConnectionServer.Create();
 
-        const tenantId = "tenantId";
-        const documentId = "test-root-component";
-
         // tslint:disable:no-http-string - Allow fake test URLs when constructing DataStore.
         const store = new DataStore(
             "http://test-orderer-url.test",
@@ -56,12 +53,12 @@ export class TestHost {
                         context,
                         TestRootComponent.type, registry.concat([[TestRootComponent.type, TestRootComponent]])) }],
             ]),
-            createTestDocumentService(this.testDeltaConnectionServer, tenantId, documentId),
+            createTestDocumentService(this.testDeltaConnectionServer),
             "tokenKey",
-            tenantId,
-            documentId);
+            "tenantId",
+            "userId");
 
-        store.open<TestRootComponent>(documentId, TestRootComponent.type, "")
+        store.open<TestRootComponent>("test-root-component", TestRootComponent.type, "")
             .then(this.rootResolver)
             .catch((reason) => { throw new Error(`${reason}`); });
     }

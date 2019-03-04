@@ -12,8 +12,6 @@ import {
 
 describe("LocalTestServer", () => {
   const id = "prague://test.com/test/test";
-  const documentId = "documentId";
-  const tenantId = "tenantId";
 
   let testDeltaConnectionServer: ITestDeltaConnectionServer;
   let documentDeltaEventManager: DocumentDeltaEventManager;
@@ -27,7 +25,7 @@ describe("LocalTestServer", () => {
     documentDeltaEventManager = new DocumentDeltaEventManager(testDeltaConnectionServer);
 
     const resolver = new TestResolver();
-    const documentService = createTestDocumentService(testDeltaConnectionServer, tenantId, documentId);
+    const documentService = createTestDocumentService(testDeltaConnectionServer);
     user1Document = await api.load(
       id, { resolver }, {}, documentService);
     let root = user1Document.getRoot();
