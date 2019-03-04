@@ -81,7 +81,6 @@ export function create(
 
         const tenantId = request.params.tenantId;
         const chaincode = request.query.chaincode;
-        const cacheVersion = request.query.cacheversion;
 
         const user: IAlfredUser = (request.user) ? {
             displayName: request.user.name,
@@ -119,11 +118,8 @@ export function create(
             config.get("error:track"),
             config.get("client"));
 
-        let pageKey = `${tenantId}-${documentId}`;
-        if (cacheVersion !== "full") {
-            pageKey += `-split`;
-        }
         const packageUrl = config.get("worker:npm");
+        const pageKey = `${tenantId}-${documentId}`;
         const cachedPageP = cache.get(pageKey);
         Promise.all([workerConfigP, cachedPageP]).then(([workerConfig, page]) => {
             if (page) {
