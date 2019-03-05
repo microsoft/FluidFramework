@@ -1,5 +1,6 @@
 import { Component } from "@prague/app-component";
 import { MapExtension } from "@prague/map";
+import { ICombiningOp, PropertySet } from "@prague/merge-tree";
 import { UnboxedOper } from "../../client-ui/ext/calc";
 import { CellInterval, parseRange } from "./cellinterval";
 import { ConfigKeys } from "./configKeys";
@@ -41,6 +42,7 @@ export class TableSlice extends Component implements ITable {
     }
 
     public evaluateCell(row: number, col: number) {
+        this.validateInSlice(row, col);
         return this.doc.evaluateCell(row, col);
     }
 
@@ -48,12 +50,36 @@ export class TableSlice extends Component implements ITable {
         return this.doc.evaluateFormula(formula);
     }
 
-    public getCellText(row: number, col: number): UnboxedOper {
-        return this.doc.getCellText(row, col);
+    public getCellValue(row: number, col: number): UnboxedOper {
+        this.validateInSlice(row, col);
+        return this.doc.getCellValue(row, col);
     }
 
-    public setCellText(row: number, col: number, value: UnboxedOper) {
-        this.doc.setCellText(row, col, value);
+    public setCellValue(row: number, col: number, value: UnboxedOper) {
+        this.validateInSlice(row, col);
+        this.doc.setCellValue(row, col, value);
+    }
+
+    public annotateRows(startRow: number, endRow: number, properties: PropertySet, op?: ICombiningOp) {
+        this.validateInSlice(startRow, undefined);
+        this.validateInSlice(endRow, undefined);
+        this.doc.annotateRows(startRow, endRow, properties, op);
+    }
+
+    public getRowProperties(row: number): PropertySet {
+        this.validateInSlice(row, undefined);
+        return this.doc.getRowProperties(row);
+    }
+
+    public annotateCols(startCol: number, endCol: number, properties: PropertySet, op?: ICombiningOp) {
+        this.validateInSlice(undefined, startCol);
+        this.validateInSlice(undefined, endCol);
+        this.doc.annotateCols(startCol, endCol, properties, op);
+    }
+
+    public getColProperties(col: number): PropertySet {
+        this.validateInSlice(undefined, col);
+        return this.doc.getColProperties(col);
     }
 
     protected async create() {
@@ -90,6 +116,19 @@ export class TableSlice extends Component implements ITable {
         const valuesRangeId = `values-${Math.random().toString(36).substr(2)}`;
         this.root.set(ConfigKeys.valuesKey, valuesRangeId);
         await this.doc.createInterval(valuesRangeId, minRow, minCol, maxRow, maxCol);
+    }
+
+    // Checks whether or not a specified row/column combination is within this slice and throws if not.
+    private validateInSlice(row?: number, col?: number) {
+        const {start, end} = this.values.getRange();
+
+        if (row !== undefined && row < start.row || row > end.row) {
+            throw new Error("Unable to access specified row from this slice.");
+        }
+
+        if (col !== undefined && col < start.col || col > end.col) {
+            throw new Error("Unable to access specified column from this slice.");
+        }
     }
 
     private async showConfigDlg() {

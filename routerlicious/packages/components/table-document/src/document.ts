@@ -109,11 +109,11 @@ export class TableDocument extends Component implements ITable {
         return this.parseResult(this.workbook.evaluateFormulaText(formula, 0, 0));
     }
 
-    public getCellText(row: number, col: number) {
+    public getCellValue(row: number, col: number) {
         return this[loadCellTextSym](row, col);
     }
 
-    public setCellText(row: number, col: number, value: UnboxedOper) {
+    public setCellValue(row: number, col: number, value: UnboxedOper) {
         this.workbook.setCellText(row, col, value);
     }
 
@@ -187,7 +187,7 @@ export class TableDocument extends Component implements ITable {
             if (!local) {
                 for (let row = 0; row < this.numRows; row++) {
                     for (let col = 0; col < this.numCols; col++) {
-                        this.workbook.setCellText(row, col, this.getCellText(row, col), /* isExternal: */ true);
+                        this.workbook.setCellText(row, col, this.getCellValue(row, col), /* isExternal: */ true);
                     }
                 }
             }
@@ -255,10 +255,14 @@ export class TableDocument extends Component implements ITable {
     }
 
     private rowColToPosition(row: number, col: number) {
+        // This assumes 0 based logic, which seems to work correctly even if positions appear to move by 1 after round-tripping.
         return row * this.numCols + col;
     }
 
     private positionToRowCol(position: number) {
+        // Positions appear to be 1 based and table document logic appears to be 0 based
+        position = position - 1;
+
         const row = Math.floor(position / this.numCols);
         const col = position - (row * this.numCols);
         return {row, col};

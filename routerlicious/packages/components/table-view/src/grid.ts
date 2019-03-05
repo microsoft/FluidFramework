@@ -193,10 +193,10 @@ export class GridView {
         const maybeParent = this.inputBox.parentElement as HTMLTableCellElement;
         if (maybeParent) {
             const [row, col] = this.getRowColFromTd(maybeParent);
-            const previous = this.doc.getCellText(row, col);
+            const previous = this.doc.getCellValue(row, col);
             const current = this.parseInput(this.inputBox.value);
             if (previous !== current) {
-                this.doc.setCellText(row, col, current);
+                this.doc.setCellValue(row, col, current);
             }
             this.refreshCell(maybeParent, row, col);
         }
@@ -210,7 +210,7 @@ export class GridView {
             this.tdText = newParent.firstChild!;
             console.assert(this.tdText.nodeType === Node.TEXT_NODE);
 
-            this.inputBox.value = `${this.doc.getCellText(row, col)}`;
+            this.inputBox.value = `${this.doc.getCellValue(row, col)}`;
             newParent.appendChild(this.inputBox);
             this.cellInput();
             this.tdText.textContent = this.inputBox.value;

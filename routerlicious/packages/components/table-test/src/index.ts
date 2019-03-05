@@ -13,43 +13,43 @@ describe("TableDocument", () => {
     afterEach(async () => { await table.close(); });
 
     it(`"Uninitialized cell is empty string"`, () => {
-        assert.strictEqual(table.getCellText(0, 0), "");
+        assert.strictEqual(table.getCellValue(0, 0), "");
     });
 
     describe("local get/set", () => {
         // GitHub Issue #1683 - Cannot roundtrip non-finite numbers.
         for (const value of ["", "string", 0 /*, -Infinity, +Infinity */]) {
             it(`roundtrip ${JSON.stringify(value)}`, () => {
-                table.setCellText(0, 0, value);
-                assert.strictEqual(table.getCellText(0, 0), value);
+                table.setCellValue(0, 0, value);
+                assert.strictEqual(table.getCellValue(0, 0), value);
             });
         }
 
         // GitHub Issue #1683 - Cannot roundtrip non-finite numbers.
         // it(`roundtrip NaN`, () => {
         //     table.setCellText(0, 0, NaN);
-        //     assert(isNaN(table.getCellText(0, 0) as number));
+        //     assert(isNaN(table.getCellValue(0, 0) as number));
         // });
 
         it(`all cells`, async () => {
             for (let row = 0; row < table.numRows; row++) {
                 for (let col = 0; col < table.numCols; col++) {
-                    table.setCellText(row, col, `${row},${col}`);
+                    table.setCellValue(row, col, `${row},${col}`);
                 }
             }
         
             for (let row = 0; row < table.numRows; row++) {
                 let s = "";
                 for (let col = 0; col < table.numCols; col++) {
-                    s = `${s}${table.getCellText(row, col)} `;
+                    s = `${s}${table.getCellValue(row, col)} `;
                 }
             } 
         });
     });
 
     it("eval", () => {
-        table.setCellText(0, 0, 10);
-        table.setCellText(0, 1, "=A1");
+        table.setCellValue(0, 0, 10);
+        table.setCellValue(0, 1, "=A1");
         assert.strictEqual(table.evaluateCell(0, 1), 10);
     });
 
@@ -69,17 +69,25 @@ describe("TableDocument", () => {
 
     describe("TableSlice", () => {
         it("range follows edits", async () => {
-            table.setCellText(0, 0, "start");
-            table.setCellText(2, 2, "end");
+            table.setCellValue(0, 0, "start");
+            table.setCellValue(2, 2, "end");
 
             const slice = await table.createSlice(makeId("Table-Slice"), "unnamed-slice", 0, 0, 2, 2);
-            assert.strictEqual(slice.getCellText(0, 0), "start");
-            assert.strictEqual(slice.getCellText(2, 2), "end");
+            assert.strictEqual(slice.getCellValue(0, 0), "start");
+            assert.strictEqual(slice.getCellValue(2, 2), "end");
 
-            table.setCellText(0, 0, "min");
-            table.setCellText(2, 2, "max");
-            assert.strictEqual(slice.getCellText(0, 0), "min");
-            assert.strictEqual(slice.getCellText(2, 2), "max");
+            table.setCellValue(0, 0, "min");
+            table.setCellValue(2, 2, "max");
+            assert.strictEqual(slice.getCellValue(0, 0), "min");
+            assert.strictEqual(slice.getCellValue(2, 2), "max");
+        });
+
+        it("asserts when outside of slice", async () => {
+            const slice = await table.createSlice(makeId("Table-Slice"), "unnamed-slice", 0, 0, 2, 2);
+            assert.throws(() => slice.getCellValue(-1, 0));
+            assert.throws(() => slice.getCellValue(3, 0));
+            assert.throws(() => slice.getCellValue(0, -1));
+            assert.throws(() => slice.getCellValue(0, 3));
         });
     });
 });
