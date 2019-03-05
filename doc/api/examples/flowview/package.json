@@ -4,13 +4,12 @@
   "description": "Prague API sequence sample",
   "main": "index.js",
   "dependencies": {
-    "@prague/client-api": "0.1.4138",
-    "@prague/client-ui": "0.1.4138",
-    "@prague/loader": "0.1.4138",
-    "@prague/loader-web": "0.1.4138",
-    "@prague/socket-storage": "0.1.4138",
-    "@prague/merge-tree": "0.1.4138",
-    "@prague/shared-string": "0.1.4138",
+    "@prague/container-definitions": "0.2.5461",
+    "@prague/client-api": "0.2.5461",
+    "@prague/client-ui": "0.2.5461",
+    "@prague/routerlicious-socket-storage": "0.2.5461",
+    "@prague/merge-tree": "0.2.5461",
+    "@prague/sequence": "0.2.5461",
     "jsonwebtoken": "^8.2.1"
   },
   "devDependencies": {

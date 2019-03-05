@@ -1,52 +1,55 @@
 import * as API from "@prague/client-api";
 import { controls, ui } from "@prague/client-ui";
 import * as MergeTree from "@prague/merge-tree";
-import * as SharedString from "@prague/shared-string";
-import * as socketStorage from "@prague/socket-storage";
-import * as jwt from "jsonwebtoken";
+import * as socketStorage from "@prague/routerlicious-socket-storage";
+import * as SharedString from "@prague/sequence";
+import { InsecureUrlResolver } from "./urlResolver";
 
-// Using package verions published in 11/26/2018
+// Using package verions published in 03-04-2019
 // For local development
 // const routerlicious = "http://localhost:3000";
 // const historian = "http://localhost:3001";
 // const tenantId = "prague";
 // const secret = "43cfc3fbf04a97c0921fd23ff10f9e4b";
-const routerlicious = "https://alfred.wu2.prague.office-int.com";
-const historian = "https://historian.wu2.prague.office-int.com";
-const tenantId = "gallant-hugle";
-const secret = "03302d4ebfb6f44b662d00313aff5a46";
+// const routerlicious = "https://alfred.wu2.prague.office-int.com";
+// const historian = "https://historian.wu2.prague.office-int.com";
+// const tenantId = "gallant-hugle";
+// const secret = "03302d4ebfb6f44b662d00313aff5a46";
+const routerlicious = "https://alfred.wu2-ppe.prague.office-int.com";
+// Use undefined for only subscribing to the ordering service.
+const historian = undefined;
+const tenantId = "stupefied-kilby";
+const secret = "4a9211594f7c3daebca3deb8d6115fe2";
 
-const documentId = window.location.search.slice(1) || "flow-test-12032018";
+const userId = "test";
+
+const documentId = window.location.search.slice(1) || "flowview-test-03042019-03";
 
 // Register endpoint connection
 const documentServices = socketStorage.createDocumentService(routerlicious, historian);
 API.registerDocumentService(documentServices);
 
 async function run(id: string): Promise<void> {
-    const token = jwt.sign(
-        {
-            documentId,
-            permission: "read:write", // use "read:write" for now
-            tenantId,
-            user: {
-                id: "test",
-            },
-        },
-        secret);
-
     const host = new ui.BrowserContainerHost();
 
-    // Load in the latest and connect to the document
+    const resolver = new InsecureUrlResolver(
+        routerlicious,
+        historian,
+        userId,
+        secret);
+
+    const documentUrl = `prague://${new URL(routerlicious).host}` +
+        `/${encodeURIComponent(tenantId)}` +
+        `/${encodeURIComponent(documentId)}`;
+    const apiHost = { resolver };
+
     const collabDoc = await API.load(
-        id,
-        tenantId,
-        { id: "test" },
-        new socketStorage.TokenProvider(token),
+        documentUrl,
+        apiHost,
         { blockUpdateMarkers: true });
 
-    const rootView = await collabDoc.getRoot().getView();
-    console.log("Keys");
-    console.log(rootView.keys());
+    const rootMap = await collabDoc.getRoot();
+    console.log(`rootMap keys: ${rootMap.keys()}`);
 
     // Add in the text string if it doesn't yet exist
     if (!collabDoc.existing) {
@@ -65,12 +68,16 @@ async function run(id: string): Promise<void> {
             }
         }
 
-        rootView.set("presence", collabDoc.createMap());
-        rootView.set("text", newString);
-        rootView.set("ink", collabDoc.createMap());
-        rootView.set("pageInk", collabDoc.createStream());
+        rootMap.set("presence", collabDoc.createMap());
+        rootMap.set("text", newString);
+        rootMap.set("ink", collabDoc.createMap());
+        rootMap.set("pageInk", collabDoc.createStream());
+
+        const seq = collabDoc.create(SharedString.SharedNumberSequenceExtension.Type) as
+            SharedString.SharedNumberSequence;
+        rootMap.set("sequence-test", seq);
     } else {
-        await Promise.all([rootView.wait("text"), rootView.wait("ink")]);
+        await Promise.all([rootMap.wait("text"), rootMap.wait("ink")]);
     }
 
     collabDoc.on("clientJoin", (message) => {
@@ -83,8 +90,8 @@ async function run(id: string): Promise<void> {
     });
 
     // Load the text string and listen for updates
-    const text = rootView.get("text");
-    const ink = rootView.get("ink");
+    const text = rootMap.get("text");
+    const ink = rootMap.get("ink");
 
     const image = new controls.Image(
         document.createElement("div"),
@@ -97,7 +104,7 @@ async function run(id: string): Promise<void> {
         text,
         ink,
         image,
-        rootView.get("pageInk"),
+        rootMap.get("pageInk"),
         {});
     const theFlow = container.flowView;
     host.attach(container);
@@ -108,7 +115,7 @@ async function run(id: string): Promise<void> {
 
     const clockStart = Date.now();
     theFlow.timeToEdit = theFlow.timeToImpression = Date.now() - clockStart;
-    theFlow.setEdit(rootView);
+    theFlow.setEdit(rootMap);
 
     text.loaded.then(() => {
         theFlow.loadFinished(clockStart);
