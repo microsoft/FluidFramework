@@ -37,14 +37,14 @@ export function clientGetPropertiesAtPositionTest() {
 	return (testResult1 === testResult2 === testResult3 === testResult4 === true);
 }
 
-function checkGetSegmentExtentsOfPos(client: MergeTree.Client, pos: number, start: number,
-									end: number, verbose = false) {
+function checkGetSegmentExtentsOfPos(client: MergeTree.Client, pos: number, posStart: number,
+									posAfterEnd: number, verbose = false) {
 	const segExtents = client.getRangeExtentsOfPosition(pos);
-	const result = segExtents.startPos === start && segExtents.endPos === end;
+	const result = segExtents.posStart === posStart && segExtents.posAfterEnd === posAfterEnd;
 	if ((!result) && verbose) {
 		console.log(`At pos: ${pos}`);
-		console.log(`Expected extents -> start: ${start} end: ${end}`);
-		console.log(`Actual extents -> start: ${segExtents.startPos} end: ${segExtents.endPos}`);
+		console.log(`Expected extents -> start: ${posStart} end: ${posAfterEnd}`);
+		console.log(`Actual extents -> start: ${segExtents.posStart} end: ${segExtents.posAfterEnd}`);
 	}
 	return result;
 }

@@ -903,16 +903,16 @@ export class Client {
             console.log(`getRangeExtentsOfPosition cli ${this.getLongClientId(segWindow.clientId)} ref seq ${segWindow.currentSeq}`);
         }
 
-        let startPos: number;
-        let endPos: number;
+        let posStart: number;
+        let posAfterEnd: number;
 
         let segoff = this.mergeTree.getContainingSegment(pos, segWindow.currentSeq, segWindow.clientId);
         let seg = segoff.segment;
         if (seg) {
-            startPos = this.mergeTree.getOffset(seg, segWindow.currentSeq, segWindow.clientId);
-            endPos = startPos + seg.cachedLength;
+            posStart = this.mergeTree.getOffset(seg, segWindow.currentSeq, segWindow.clientId);
+            posAfterEnd = posStart + seg.cachedLength;
         }
-        return { startPos, endPos };
+        return { posStart, posAfterEnd };
     }
     getCurrentSeq() {
         return this.mergeTree.getCollabWindow().currentSeq;
