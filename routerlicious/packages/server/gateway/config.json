@@ -7,10 +7,11 @@
         "timestamp": true,
         "label": "winston"
     },
-    "alfred": {
+    "gateway": {
         "maxMessageSize": "16KB",
         "restJsonSize": "50mb",
         "key": "VBQyoGpEYrTn3XQPtXW3K8fFDd",
+        "url": "http://localhost:4000",
         "tenants": [
             {
                 "id": "prague",

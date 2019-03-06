@@ -62,7 +62,7 @@ export function create(
 ): Router {
     const router: Router = Router();
 
-    const alfred = parse(config.get("worker:serverUrl"));
+    const alfred = parse(config.get("gateway:url"));
 
     router.post("/load", passport.authenticate("jwt", { session: false }), (request, response) => {
         const url = parse(request.body.url);

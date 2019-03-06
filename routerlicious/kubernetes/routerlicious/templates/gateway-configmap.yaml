@@ -19,10 +19,11 @@ data:
             "timestamp": false,
             "label": "winston"
         },
-        "alfred": {
+        "gateway": {
             "maxMessageSize": "16KB",
             "restJsonSize": "50mb",
             "key": "{{ .Values.alfred.key }}",
+            "url": {{ .Values.gateway.externalUrl }},
             "tenants": [
                 {{- range $index, $tenant := .Values.alfred.tenants }}
                 {{ toJson . }},

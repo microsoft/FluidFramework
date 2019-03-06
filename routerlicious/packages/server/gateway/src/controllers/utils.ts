@@ -44,7 +44,7 @@ export function registerDocumentServices(config: any) {
         : new socketStorage.DefaultErrorTracking();
 
     const documentServices = socketStorage.createDocumentService(
-        document.location.origin,
+        config.serverUrl,
         config.blobStorageUrl,
         errorService);
     api.registerDocumentService(documentServices);

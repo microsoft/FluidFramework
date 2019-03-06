@@ -9,6 +9,7 @@ import { Deferred } from "@prague/utils";
 import { Provider } from "nconf";
 import * as winston from "winston";
 import * as app from "./app";
+import { IAlfred } from "./interfaces";
 
 export class AlfredRunner implements utils.IRunner {
     private server: IWebServer;
@@ -19,6 +20,7 @@ export class AlfredRunner implements utils.IRunner {
         private config: Provider,
         private port: string | number,
         private cache: ICache,
+        private alfred: IAlfred,
         private appTenants: IAlfredTenant[]) {
     }
 
@@ -28,6 +30,7 @@ export class AlfredRunner implements utils.IRunner {
         // Create the HTTP server and attach alfred to it
         const alfred = app.create(
             this.config,
+            this.alfred,
             this.appTenants,
             this.cache);
         alfred.set("port", this.port);

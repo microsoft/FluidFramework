@@ -3,6 +3,7 @@ import * as core from "@prague/services-core";
 import * as utils from "@prague/services-utils";
 import { Provider } from "nconf";
 import * as redis from "redis";
+import { Alfred } from "./alfred";
 import { AlfredRunner } from "./runner";
 
 export class GatewayResources implements utils.IResources {
@@ -11,6 +12,7 @@ export class GatewayResources implements utils.IResources {
     constructor(
         public config: Provider,
         public redisConfig: any,
+        public alfred: Alfred,
         public cache: core.ICache,
         public appTenants: core.IAlfredTenant[],
         public port: any,
@@ -33,14 +35,17 @@ export class GatewayResourcesFactory implements utils.IResourcesFactory<GatewayR
         const redisCache = new services.RedisCache(redisClient);
 
         // Tenants attached to the apps this service exposes
-        const appTenants = config.get("alfred:tenants") as Array<{ id: string, key: string }>;
+        const appTenants = config.get("gateway:tenants") as Array<{ id: string, key: string }>;
 
         // This wanst to create stuff
         const port = utils.normalizePort(process.env.PORT || "3000");
 
+        const alfred = new Alfred(appTenants, config.get("worker:blobStorageUrl"));
+
         return new GatewayResources(
             config,
             redisConfig,
+            alfred,
             redisCache,
             appTenants,
             port);
@@ -54,6 +59,7 @@ export class GatewayRunnerFactory implements utils.IRunnerFactory<GatewayResourc
             resources.config,
             resources.port,
             resources.cache,
+            resources.alfred,
             resources.appTenants);
     }
 }

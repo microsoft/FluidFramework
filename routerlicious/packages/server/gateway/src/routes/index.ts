@@ -1,26 +1,41 @@
 import { IAlfredTenant, ICache } from "@prague/services-core";
 import * as ensureAuth from "connect-ensure-login";
 import { Provider } from "nconf";
+import { IAlfred } from "../interfaces";
 import * as api from "./api";
 import * as demoCreator from "./democreator";
+import * as fastloader from "./fastLoader";
 import * as home from "./home";
+import * as loader from "./loader";
+import * as maps from "./maps";
+import * as scribe from "./scribe";
+import * as sharedText from "./sharedText";
 import * as templates from "./templates";
+import * as versions from "./versions";
 
 export function create(
     config: Provider,
     cache: ICache,
+    alfred: IAlfred,
     appTenants: IAlfredTenant[],
     urlResolver: (id: string) => string,
 ) {
-    const ensureLoggedIn = config.get("login:enabled") ? ensureAuth.ensureLoggedIn :
-        (options) => {
+    const ensureLoggedIn = config.get("login:enabled")
+        ? ensureAuth.ensureLoggedIn
+        : () => {
             return (req, res, next) => next();
         };
 
     return {
         api: api.create(config, appTenants),
         demoCreator: demoCreator.create(ensureLoggedIn),
+        fastLoader: fastloader.create(config, cache, appTenants, ensureLoggedIn, urlResolver),
         home: home.create(config, ensureLoggedIn),
+        loader: loader.create(config, alfred, appTenants, ensureLoggedIn),
+        maps: maps.create(config, appTenants, ensureLoggedIn),
+        scribe: scribe.create(config, appTenants, ensureLoggedIn),
+        sharedText: sharedText.create(config, alfred, appTenants, ensureLoggedIn),
         templates: templates.create(config),
+        versions: versions.create(alfred, ensureLoggedIn),
     };
 }

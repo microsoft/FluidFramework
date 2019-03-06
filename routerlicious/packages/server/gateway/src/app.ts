@@ -20,6 +20,7 @@ import * as favicon from "serve-favicon";
 const split = require("split");
 import * as expiry from "static-expiry";
 import * as winston from "winston";
+import { IAlfred } from "./interfaces";
 import * as alfredRoutes from "./routes";
 
 // Base endpoint to expose static files at
@@ -66,6 +67,7 @@ const stream = split().on("data", (message) => {
 
 export function create(
     config: Provider,
+    alfred: IAlfred,
     tenants: IAlfredTenant[],
     cache: ICache,
 ) {
@@ -90,14 +92,15 @@ export function create(
     }
 
     // Maximum REST request size
-    const requestSize = config.get("alfred:restJsonSize");
+    const requestSize = config.get("gateway:restJsonSize");
 
     // Static cache to help map from full to minified files
     const staticMinCache: { [key: string]: string } = {};
 
     const microsoftConfiguration = config.get("login:microsoft");
     passport.use(
-        new passportOpenIdConnect.Strategy({
+        new passportOpenIdConnect.Strategy(
+            {
                 authorizationURL: "https://login.microsoftonline.com/organizations/oauth2/v2.0/authorize",
                 callbackURL: "/auth/callback",
                 clientID: microsoftConfiguration.clientId,
@@ -115,7 +118,7 @@ export function create(
 
     const opts = {
         jwtFromRequest: passportJWT.ExtractJwt.fromAuthHeaderAsBearerToken(),
-        secretOrKey: config.get("alfred:key"),
+        secretOrKey: config.get("gateway:key"),
     };
     passport.use(new passportJWT.Strategy(opts, (payload, done) => {
         return done(null, payload);
@@ -204,14 +207,16 @@ export function create(
     }
 
     // bind routes
-    const routes = alfredRoutes.create(
-        config,
-        cache,
-        tenants,
-        getFingerprintUrl);
-
+    const routes = alfredRoutes.create(config, cache, alfred, tenants, getFingerprintUrl);
+    app.use(routes.api);
     app.use("/templates", routes.templates);
+    app.use("/maps", routes.maps);
+    app.use("/sharedText", routes.sharedText);
+    app.use("/loader", routes.loader);
+    app.use("/fastloader", routes.fastLoader);
+    app.use("/scribe", routes.scribe);
     app.use("/democreator", routes.demoCreator);
+    app.use("/versions", routes.versions);
     app.use(routes.home);
 
     // catch 404 and forward to error handler

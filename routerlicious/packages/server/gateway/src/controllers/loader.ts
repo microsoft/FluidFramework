@@ -157,13 +157,13 @@ async function start(
 
     // URL resolver for routes
     const resolver = new ContainerUrlResolver(
-        config.serverUrl,
+        document.location.origin,
         jwt,
         new Map<string, IResolvedUrl>([[url, resolved]]));
 
     // Generate driver interface
     const documentServices = createDocumentService(
-        document.location.origin,
+        config.serverUrl,
         config.blobStorageUrl,
         errorService,
         false,
