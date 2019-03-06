@@ -71,7 +71,7 @@ export class Serializer {
         // Otherwise pause the processing of inbound ops and then resume once the snapshot is complete
         console.log(`Snapshotting ${this.runtime.id}@${this.lastOp.sequenceNumber}`);
         this.runtime.deltaManager.inbound.pause();
-        const snapshotP = this.runtime.snapshot(message).then(
+        const snapshotP = this.runtime.requestSnapshot(message).then(
             () => {
                 // On success note the time of the snapshot and op sequence number. Skip on error to cause us to
                 // attempt the snapshot again.
