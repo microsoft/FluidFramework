@@ -255,14 +255,10 @@ export class TableDocument extends Component implements ITable {
     }
 
     private rowColToPosition(row: number, col: number) {
-        // This assumes 0 based logic, which seems to work correctly even if positions appear to move by 1 after round-tripping.
         return row * this.numCols + col;
     }
 
     private positionToRowCol(position: number) {
-        // Positions appear to be 1 based and table document logic appears to be 0 based
-        position = position - 1;
-
         const row = Math.floor(position / this.numCols);
         const col = position - (row * this.numCols);
         return {row, col};
