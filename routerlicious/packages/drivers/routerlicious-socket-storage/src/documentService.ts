@@ -107,7 +107,8 @@ export class DocumentService implements api.IDocumentService {
         const token = (tokenProvider as TokenProvider).token;
         if (token) {
             headers = {
-                Authorization: `Basic ${new Buffer(`${tenantId}:${token}`).toString("base64")}`,
+                Authorization: `Basic ${Buffer.from(`${tenantId}:${token}`)
+                    .toString("base64")}`,
             };
         }
 

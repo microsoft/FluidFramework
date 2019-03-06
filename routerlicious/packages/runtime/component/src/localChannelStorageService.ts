@@ -25,7 +25,7 @@ export class LocalChannelStorageService implements IObjectStorageService {
                     if (path === entry.path) {
                         const blob = entry.value as IBlob;
                         return blob.encoding === "utf-8"
-                            ? new Buffer(blob.contents).toString("base64")
+                            ? Buffer.from(blob.contents).toString("base64")
                             : blob.contents;
                     }
                     break;

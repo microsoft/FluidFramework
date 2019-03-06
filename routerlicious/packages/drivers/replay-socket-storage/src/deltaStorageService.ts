@@ -29,7 +29,8 @@ export class DeltaStorageService implements api.IDeltaStorageService {
         const token = (tokenProvider as socketStorage.TokenProvider).token;
         if (token) {
             headers = {
-                Authorization: `Basic ${new Buffer(`${tenantId}:${token}`).toString("base64")}`,
+                Authorization: `Basic ${Buffer.from(`${tenantId}:${token}`)
+                    .toString("base64")}`,
             };
         }
 

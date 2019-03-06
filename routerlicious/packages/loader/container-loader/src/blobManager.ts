@@ -33,7 +33,7 @@ export class BlobManager implements IBlobManager {
         }
         const blob = this.blobs.get(sha);
         const blobContent = await this.storage.read(sha);
-        blob.content = new Buffer(blobContent, "base64");
+        blob.content = Buffer.from(blobContent, "base64");
         return blob;
     }
 

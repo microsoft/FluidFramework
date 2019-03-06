@@ -38,7 +38,7 @@ export class Historian implements IHistorian {
         }
 
         if (credentials) {
-            queryString.token = new Buffer(`${credentials.user}`).toString("base64");
+            queryString.token = Buffer.from(`${credentials.user}`).toString("base64");
         }
 
         this.restWrapper = new RestWrapper(endpoint, {}, queryString, cacheBust);

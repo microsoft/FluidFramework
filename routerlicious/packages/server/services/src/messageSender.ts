@@ -34,7 +34,7 @@ class RabbitmqTaskSender implements ITaskMessageSender {
     }
 
     public sendTask(queueName: string, message: ITaskMessage) {
-        this.channel.sendToQueue(queueName, new Buffer(JSON.stringify(message)), { persistent: false });
+        this.channel.sendToQueue(queueName, Buffer.from(JSON.stringify(message)), { persistent: false });
     }
 
     public on(event: string, listener: (...args: any[]) => void): this {
