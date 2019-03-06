@@ -23,7 +23,7 @@ data:
             "maxMessageSize": "16KB",
             "restJsonSize": "50mb",
             "key": "{{ .Values.alfred.key }}",
-            "url": {{ .Values.gateway.externalUrl }},
+            "url": "{{ .Values.gateway.externalUrl }}",
             "tenants": [
                 {{- range $index, $tenant := .Values.alfred.tenants }}
                 {{ toJson . }},
