@@ -37,7 +37,10 @@ export class TranslationWork extends BaseWork implements IWork {
 
         if (sharedString && insightsMap) {
             await insightsMap.wait(sharedString.id);
-            Translator.run(sharedString, insightsMap);
+            Translator.run(
+                sharedString,
+                insightsMap,
+                this.config.intelligence.translation.key);
         }
 
     }

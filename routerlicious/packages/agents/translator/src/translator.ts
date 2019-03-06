@@ -17,8 +17,6 @@ interface ITranslatorOutput {
     translations: ITranslatorOutputUnit[];
 }
 
-const subscriptionKey = "bd099a1e38724333b253fcff7523f76a";
-
 function createRequestUri(from: string, to: string[]): string {
     const uri = `https://api.cognitive.microsofttranslator.com/translate?api-version=3.0`;
     const fromLanguage = `&from=${from}&to=`;
@@ -46,7 +44,7 @@ function processTranslationOutput(input: ITranslatorOutput[]): Map<string, strin
     return languageText;
 }
 
-async function translate(from: string, to: string[], text: string[]): Promise<ITranslatorOutput[]> {
+async function translate(key: string, from: string, to: string[], text: string[]): Promise<ITranslatorOutput[]> {
     const uri = createRequestUri(from, to);
 
     const requestBody = createRequestBody(text);
@@ -57,7 +55,7 @@ async function translate(from: string, to: string[], text: string[]): Promise<IT
                 body: requestBody,
                 headers: {
                     "Content-Type": "application/json",
-                    "Ocp-Apim-Subscription-Key" : subscriptionKey,
+                    "Ocp-Apim-Subscription-Key" : key,
                 },
                 json: true,
                 method: "POST",
@@ -81,7 +79,8 @@ export class Translator {
 
     constructor(
         private insights: map.ISharedMap,
-        private sharedString: Sequence.SharedString) {
+        private sharedString: Sequence.SharedString,
+        private apiKey: string) {
         }
 
     public get isTranslating() {
@@ -172,7 +171,7 @@ export class Translator {
 
         const textAndMarkers = this.sharedString.client.getTextAndMarkers("pg");
 
-        const rawTranslations = await translate(from, languages, textAndMarkers.parallelText);
+        const rawTranslations = await translate(this.apiKey, from, languages, textAndMarkers.parallelText);
         const processedTranslations = processTranslationOutput(rawTranslations);
 
         for (const languageTranslations of processedTranslations) {

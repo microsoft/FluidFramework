@@ -165,6 +165,9 @@
             "nativeTextAnalytics": {
                 "enable": false,
                 "url": "http://praguepy.westus2.cloudapp.azure.com/"
+            },
+            "translation": {
+                "key": "75ed7b5c411649eb895e03dae6a6f873"
             }
         },
         "alfredUrl": "http://alfred:3000",
