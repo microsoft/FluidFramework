@@ -1,5 +1,6 @@
 export * from "./auth";
 export * from "./cache";
+export * from "./celaNames";
 export * from "./database";
 export * from "./dockerNames";
 export * from "./document";
