@@ -30,6 +30,8 @@ import { intelTask, resolveTask, snapshotTask, spellTask, translationTask } from
 // first script loaded
 const clockStart = Date.now();
 
+const translationApiKey = "bd099a1e38724333b253fcff7523f76a";
+
 async function getInsights(map: DistributedMap.ISharedMap, id: string): Promise<DistributedMap.ISharedMap> {
     const insights = await map.wait<DistributedMap.ISharedMap>("insights");
     return insights.wait<DistributedMap.ISharedMap>(id);
@@ -177,7 +179,10 @@ class SharedTextComponent extends Document {
                 break;
             case translationTask:
                 console.log(`Chaincode running ${maybeTask}`);
-                Translator.run(this.sharedString, this.insightsMap);
+                Translator.run(
+                    this.sharedString,
+                    this.insightsMap,
+                    translationApiKey);
                 break;
             case spellTask:
                 console.log(`Chaincode running ${maybeTask}`);
