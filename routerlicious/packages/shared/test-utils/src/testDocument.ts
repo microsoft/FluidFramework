@@ -1,5 +1,12 @@
 import { ISnapshotDocument } from "@prague/agent";
-import { IDeltaManager, IDeltaQueue } from "@prague/container-definitions";
+import {
+    IConnectionDetails,
+    IDeltaHandlerStrategy,
+    IDeltaManager,
+    IDeltaQueue,
+    ISequencedDocumentMessage,
+    MessageType,
+} from "@prague/container-definitions";
 import * as utils from "@prague/utils";
 import * as assert from "assert";
 import { EventEmitter } from "events";
@@ -28,7 +35,10 @@ export class TestDeltaQueue extends EventEmitter implements IDeltaQueue {
     }
 }
 
-export class TestDeltaManager implements IDeltaManager {
+export class TestDeltaManager extends EventEmitter implements IDeltaManager {
+    public referenceSequenceNumber: number;
+    public maxMessageSize: number;
+
     public minimumSequenceNumber: number;
 
     public inbound = new TestDeltaQueue();
@@ -39,6 +49,30 @@ export class TestDeltaManager implements IDeltaManager {
 
     public enableReadonlyMode() {
         return;
+    }
+
+    public disableReadonlyMode(): void {
+        return;
+    }
+
+    public close(): void {
+        return;
+    }
+
+    public connect(reason: string): Promise<IConnectionDetails> {
+        throw new Error("Method not implemented.");
+    }
+
+    public getDeltas(from: number, to?: number): Promise<ISequencedDocumentMessage[]> {
+        throw new Error("Method not implemented.");
+    }
+
+    public attachOpHandler(sequenceNumber: number, handler: IDeltaHandlerStrategy, resume: boolean) {
+        throw new Error("Method not implemented.");
+    }
+
+    public submit(type: MessageType, contents: string): number {
+        throw new Error("Method not implemented.");
     }
 }
 
