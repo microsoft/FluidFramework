@@ -5,6 +5,7 @@ import { IAlfred } from "../interfaces";
 import * as api from "./api";
 import * as demoCreator from "./democreator";
 import * as fastloader from "./fastLoader";
+import * as fork from "./fork";
 import * as home from "./home";
 import * as loader from "./loader";
 import * as maps from "./maps";
@@ -30,6 +31,7 @@ export function create(
         api: api.create(config, appTenants),
         demoCreator: demoCreator.create(ensureLoggedIn),
         fastLoader: fastloader.create(config, cache, appTenants, ensureLoggedIn, urlResolver),
+        fork: fork.create(alfred, ensureLoggedIn),
         home: home.create(config, ensureLoggedIn),
         loader: loader.create(config, alfred, appTenants, ensureLoggedIn),
         maps: maps.create(config, appTenants, ensureLoggedIn),

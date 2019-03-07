@@ -62,12 +62,13 @@ export function create(
 ): Router {
     const router: Router = Router();
 
-    const alfred = parse(config.get("gateway:url"));
+    const gateway = parse(config.get("gateway:url"));
+    const alfred = parse(config.get("worker:serverUrl"));
 
     router.post("/load", passport.authenticate("jwt", { session: false }), (request, response) => {
         const url = parse(request.body.url);
 
-        const resultP = alfred.host === url.host
+        const resultP = alfred.host === url.host || gateway.host === url.host
             ? getInternalComponent(request, config, url, appTenants)
             : getExternalComponent(url);
 

@@ -1,13 +1,14 @@
 import { IPragueResolvedUrl } from "@prague/container-definitions";
-import { IAlfredTenant } from "@prague/services-core";
+import { chooseCelaName, IAlfredTenant } from "@prague/services-core";
 import { Router } from "express";
 import * as safeStringify from "json-stringify-safe";
 import * as jwt from "jsonwebtoken";
 import { Provider } from "nconf";
 import * as path from "path";
 import { parse } from "url";
+import * as uuid from "uuid/v4";
 import { IAlfred } from "../interfaces";
-import { getConfig, getToken } from "../utils";
+import { getConfig, getToken, IAlfredUser } from "../utils";
 import { defaultPartials } from "./partials";
 
 const defaultTemplate = "pp.txt";
@@ -157,8 +158,14 @@ export function create(
 
         const disableCache = "disableCache" in request.query;
 
+        let celaUser: IAlfredUser = null;
+        if ("cela" in request.query) {
+            const celaName = chooseCelaName();
+            celaUser = { id: uuid(), name: celaName, displayName: celaName };
+        }
+
         const tenantId = request.params.tenantId || appTenants[0].id;
-        const token = getToken(tenantId, request.params.id, appTenants);
+        const token = getToken(tenantId, request.params.id, appTenants, celaUser);
 
         const from = +request.query.from;
         const to = +request.query.to;

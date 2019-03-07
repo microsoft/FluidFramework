@@ -19,6 +19,9 @@ data:
             "timestamp": false,
             "label": "winston"
         },
+        "gateway": {
+            "url": "{{ .Values.gateway.externalUrl }}"
+        },
         "mongo": {
             "endpoint": "{{ .Values.mongodb.url }}",
             "collectionNames": {

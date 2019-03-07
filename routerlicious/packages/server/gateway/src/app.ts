@@ -217,6 +217,7 @@ export function create(
     app.use("/scribe", routes.scribe);
     app.use("/democreator", routes.demoCreator);
     app.use("/versions", routes.versions);
+    app.use("/fork", routes.fork);
     app.use(routes.home);
 
     // catch 404 and forward to error handler

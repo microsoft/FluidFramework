@@ -7,6 +7,9 @@
         "timestamp": true,
         "label": "winston"
     },
+    "gateway": {
+        "url": "http://localhost:3000"
+    },
     "mongo": {
         "endpoint": "mongodb://mongodb:27017",
         "collectionNames": {
@@ -157,7 +160,7 @@
                 "host": "pkarimov-paidIOT.azure-devices.net",
                 "sharedAccessKeyName": "iothubowner",
                 "sharedAccessKey": "8mvOmNnUklwnuzY+U96V51w+qCq262ZUpSkdw8nTZ18=",
-                "url": "http://localhost:3000/intelligence/resume"
+                "url": "http://localhost:3003/intelligence/resume"
             },
             "textAnalytics": {
                 "key": "c8b60dc5e49849ce903d7d29a2dce550"
@@ -171,7 +174,7 @@
             }
         },
         "alfredUrl": "http://alfred:3000",
-        "serverUrl": "http://localhost:3000",
+        "serverUrl": "http://localhost:3003",
         "blobStorageUrl": "http://historian:3000",
         "repository": "prague",
         "npm": "http://localhost:3002",
@@ -221,7 +224,7 @@
             },
             "orderer": {
                 "type": "memory",
-                "url": "http://localhost:3000"
+                "url": "http://localhost:3003"
             }
         }
     ],

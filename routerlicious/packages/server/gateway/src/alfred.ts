@@ -1,11 +1,16 @@
 import { ICommit, ICommitDetails } from "@prague/gitresources";
 import { GitManager, Historian, IGitCache } from "@prague/services-client";
+import Axios from "axios";
 import { IAlfred } from "./interfaces";
 
 export class Alfred implements IAlfred {
     private tenants = new Map<string, GitManager>();
 
-    constructor(tenants: Array<{ id: string, key: string }>, historianUrl: string) {
+    constructor(
+        tenants: Array<{ id: string, key: string }>,
+        private ordererUrl: string,
+        historianUrl: string,
+    ) {
         for (const tenant of tenants) {
             const historian = new Historian(
                 `${historianUrl}/repos/${encodeURIComponent(tenant.id)}`,
@@ -16,9 +21,11 @@ export class Alfred implements IAlfred {
         }
     }
 
-    public createFork(tenantId: string, id: string): Promise<string> {
-        // TODO invoke API call against alfred service API
-        throw new Error("Method not implemented.");
+    public async createFork(tenantId: string, id: string): Promise<string> {
+        const forkResponse = await Axios.post<string>(
+            `${this.ordererUrl}/documents/${encodeURIComponent(tenantId)}/${encodeURIComponent(id)}/forks`);
+
+        return forkResponse.data;
     }
 
     public async getFullTree(tenantId: string, documentId: string): Promise<{ cache: IGitCache, code: string }> {

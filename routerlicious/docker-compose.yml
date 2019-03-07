@@ -3,7 +3,7 @@ services:
     gateway:
         build: .
         ports:
-            - "4000:3000"
+            - "3000:3000"
         command: node ../gateway/dist/www.js
         environment:
             - DEBUG=prague:*
@@ -12,7 +12,7 @@ services:
     alfred:
         build: .
         ports:
-            - "3000:3000"
+            - "3003:3000"
         command: node dist/alfred/www.js
         environment:
             - DEBUG=prague:*
@@ -101,6 +101,7 @@ services:
         image: wurstmeister/zookeeper:latest
         ports:
             - "2181:2181"
+        restart: always
     kafka:
         image: wurstmeister/kafka:2.11-1.1.1
         ports:
@@ -111,6 +112,7 @@ services:
             KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'false'
             KAFKA_CREATE_TOPICS: "deltas:8:1,rawdeltas:8:1,testtopic:8:1,deltas2:8:1,rawdeltas2:8:1"
             KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+        restart: always
     redis:
         image: "redis:alpine"
     mongodb:

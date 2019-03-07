@@ -40,7 +40,10 @@ export class GatewayResourcesFactory implements utils.IResourcesFactory<GatewayR
         // This wanst to create stuff
         const port = utils.normalizePort(process.env.PORT || "3000");
 
-        const alfred = new Alfred(appTenants, config.get("worker:blobStorageUrl"));
+        const alfred = new Alfred(
+            appTenants,
+            config.get("worker:alfredUrl"),
+            config.get("worker:blobStorageUrl"));
 
         return new GatewayResources(
             config,
