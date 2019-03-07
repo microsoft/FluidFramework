@@ -142,7 +142,6 @@ export class LocalReference implements ReferencePosition {
 }
 
 export enum SegmentType {
-    Base,
     Text,
     Marker,
     External,
@@ -3378,7 +3377,7 @@ export class MergeTree {
             saveIfLocal(newSegment);
             return segmentChanges;
         }
-        return this.insertingWalk(block, pos, refSeq, clientId, seq, newSegment.getType(),
+        return this.insertingWalk(block, pos, refSeq, clientId, seq,
             { leaf: onLeaf, candidateSegment: newSegment, continuePredicate: continueFrom });
     }
 
@@ -3392,7 +3391,7 @@ export class MergeTree {
 
     private ensureIntervalBoundary(pos: number, refSeq: number, clientId: number) {
         let splitNode = this.insertingWalk(this.root, pos, refSeq, clientId, TreeMaintenanceSequenceNumber,
-            SegmentType.Base, { leaf: this.splitLeafSegment });
+            { leaf: this.splitLeafSegment });
         this.updateRoot(splitNode, refSeq, clientId, TreeMaintenanceSequenceNumber);
     }
 
@@ -3485,7 +3484,7 @@ export class MergeTree {
     }
 
     private insertingWalk(block: IMergeBlock, pos: number, refSeq: number, clientId: number, seq: number,
-        segType: SegmentType, context: InsertContext) {
+        context: InsertContext) {
         let children = block.children;
         let childIndex: number;
         let child: IMergeNode;
@@ -3517,7 +3516,7 @@ export class MergeTree {
                     let childBlock = <IMergeBlock>child;
                     //internal node
                     let splitNode = this.insertingWalk(childBlock, pos, refSeq, clientId,
-                        seq, segType, context);
+                        seq, context);
                     if (splitNode === undefined) {
                         if (context.structureChange) {
                             this.nodeUpdateLengthNewStructure(block);
