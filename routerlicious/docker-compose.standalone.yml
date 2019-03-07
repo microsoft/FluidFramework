@@ -1,9 +1,18 @@
 version: '3'
 services:
-    alfred:
+    gateway:
         image: prague.azurecr.io/prague:latest
         ports:
             - "3000:3000"
+        command: node ../gateway/dist/www.js
+        environment:
+            - DEBUG=prague:*
+            - NODE_ENV=development
+        restart: always
+    alfred:
+        image: prague.azurecr.io/prague:latest
+        ports:
+            - "3003:3000"
         command: node dist/alfred/www.js
         environment:
             - DEBUG=prague:*

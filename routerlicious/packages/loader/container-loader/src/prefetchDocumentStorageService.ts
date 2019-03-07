@@ -44,11 +44,11 @@ export class PrefetchDocumentStorageService implements IDocumentStorageService {
     }
 
     public async createBlob(file: Buffer): Promise<ICreateBlobResponse> {
-        return this.createBlob(file);
+        return this.storage.createBlob(file);
     }
 
     public getRawUrl(sha: string): string {
-        return this.getRawUrl(sha);
+        return this.storage.getRawUrl(sha);
     }
 
     public stopPrefetch() {
