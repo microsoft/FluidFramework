@@ -2,6 +2,7 @@ import {
     ConnectionState,
     IChaincodeFactory,
     IContainerContext,
+    IDeltaManager,
     IDocumentAttributes,
     IDocumentStorageService,
     ILoader,
@@ -16,7 +17,6 @@ import {
 } from "@prague/container-definitions";
 import { BlobManager } from "./blobManager";
 import { Container } from "./container";
-import { DeltaManager } from "./deltaManager";
 
 export class Context implements IContainerContext {
     public static async Load(
@@ -26,7 +26,7 @@ export class Context implements IContainerContext {
         blobs: Map<string, string>,
         attributes: IDocumentAttributes,
         blobManager: BlobManager,
-        deltaManager: DeltaManager,
+        deltaManager: IDeltaManager,
         quorum: IQuorum,
         loader: ILoader,
         storage: IDocumentStorageService,
@@ -104,7 +104,7 @@ export class Context implements IContainerContext {
         public readonly blobs: Map<string, string>,
         private readonly attributes: IDocumentAttributes,
         public readonly blobManager: BlobManager,
-        public readonly deltaManager: DeltaManager,
+        public readonly deltaManager: IDeltaManager,
         public readonly quorum: IQuorum,
         public readonly storage: IDocumentStorageService,
         public readonly loader: ILoader,

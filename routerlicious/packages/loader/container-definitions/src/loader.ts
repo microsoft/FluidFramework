@@ -1,3 +1,4 @@
+import { EventEmitter } from "events";
 import { IChaincodeFactory } from "./chaincode";
 
 /**
@@ -57,6 +58,11 @@ export interface IResponse {
     value: any;
 }
 
+export interface IContainer extends EventEmitter {
+}
+
 export interface ILoader {
     request(request: IRequest): Promise<IResponse>;
+
+    resolve(request: IRequest): Promise<IContainer>;
 }

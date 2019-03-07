@@ -6,6 +6,8 @@ import {
     IClientJoin,
     ICodeLoader,
     ICommittedProposal,
+    IConnectionDetails,
+    IContainer,
     IDeltaManager,
     IDocumentAttributes,
     IDocumentService,
@@ -32,7 +34,6 @@ import { EventEmitter } from "events";
 import { BlobManager } from "./blobManager";
 import { Context } from "./context";
 import { debug } from "./debug";
-import { IConnectionDetails } from "./deltaConnection";
 import { DeltaManager } from "./deltaManager";
 import { NullChaincode } from "./nullChaincode";
 import { PrefetchDocumentStorageService } from "./prefetchDocumentStorageService";
@@ -50,7 +51,7 @@ interface IBufferedChunk {
     content: string;
 }
 
-export class Container extends EventEmitter {
+export class Container extends EventEmitter implements IContainer {
     public static async Load(
         id: string,
         version: string,
@@ -87,7 +88,7 @@ export class Container extends EventEmitter {
 
     // tslint:disable:variable-name
     private _clientId: string = "disconnected";
-    private _deltaManager: DeltaManager;
+    private _deltaManager: IDeltaManager;
     private _existing: boolean;
     private _id: string;
     private _parentBranch: string;
@@ -642,7 +643,8 @@ export class Container extends EventEmitter {
                         process: (message, context) => {
                             this.processRemoteMessage(message, context);
                         },
-                    });
+                    },
+                    true);
             });
 
             return { detailsP, handlerAttachedP };

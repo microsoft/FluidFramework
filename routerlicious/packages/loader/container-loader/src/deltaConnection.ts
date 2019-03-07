@@ -1,5 +1,6 @@
 import {
     IClient,
+    IConnectionDetails,
     IContentMessage,
     IDocumentDeltaConnection,
     IDocumentMessage,
@@ -9,15 +10,6 @@ import {
     ITokenProvider,
 } from "@prague/container-definitions";
 import { EventEmitter } from "events";
-
-export interface IConnectionDetails {
-    clientId: string;
-    existing: boolean;
-    parentBranch: string;
-    initialMessages?: ISequencedDocumentMessage[];
-    initialContents?: IContentMessage[];
-    maxMessageSize: number;
-}
 
 export class DeltaConnection extends EventEmitter {
     public static async Connect(
