@@ -2,6 +2,7 @@ import { ICell } from "@prague/cell";
 import * as API from "@prague/client-api";
 import { ISharedMap, IValueChanged } from "@prague/map";
 import * as socketStorage from "@prague/routerlicious-socket-storage";
+import * as URL from "url-parse";
 import { InsecureUrlResolver } from "./urlResolver";
 
 // Using package verions published in 03-04-2019
@@ -22,7 +23,7 @@ const secret = "4a9211594f7c3daebca3deb8d6115fe2";
 
 const userId = "test";
 
-const documentId = window.location.search.slice(1) || "cell-test-03062019-02";
+const documentId = "cell-test-03062019-06";
 
 // Register endpoint connection
 const documentServices = socketStorage.createDocumentService(routerlicious, historian);
@@ -37,7 +38,7 @@ async function run(id: string): Promise<void> {
 
     const documentUrl = `prague://${new URL(routerlicious).host}` +
         `/${encodeURIComponent(tenantId)}` +
-        `/${encodeURIComponent(documentId)}`;
+        `/${encodeURIComponent(id)}`;
     const apiHost = { resolver };
 
     const collabDoc = await API.load(

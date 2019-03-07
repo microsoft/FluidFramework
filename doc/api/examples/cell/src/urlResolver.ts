@@ -6,6 +6,7 @@ import {
     IUrlResolver,
 } from "@prague/container-definitions";
 import * as jwt from "jsonwebtoken";
+import * as URL from "url-parse";
 
 export class InsecureUrlResolver implements IUrlResolver {
 
