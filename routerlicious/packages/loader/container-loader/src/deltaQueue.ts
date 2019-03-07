@@ -4,7 +4,7 @@ import { AsyncQueue, AsyncWorker } from "async";
 import * as queue from "async/queue";
 import { EventEmitter } from "events";
 
-export class DeltaQueue<T> extends EventEmitter implements IDeltaQueue {
+export class DeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
     private q: AsyncQueue<T>;
 
     // We expose access to the DeltaQueue in order to allow users (from the console or code) to be able to pause/resume.
@@ -54,6 +54,14 @@ export class DeltaQueue<T> extends EventEmitter implements IDeltaQueue {
         };
 
         this.updatePause();
+    }
+
+    public take(count: number) {
+        return;
+    }
+
+    public peek(): T {
+        return null;
     }
 
     public push(task: T) {

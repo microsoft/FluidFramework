@@ -4,6 +4,7 @@ import {
     IDeltaHandlerStrategy,
     IDeltaManager,
     IDeltaQueue,
+    IDocumentMessage,
     ISequencedDocumentMessage,
     MessageType,
 } from "@prague/container-definitions";
@@ -11,7 +12,7 @@ import * as utils from "@prague/utils";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 
-export class TestDeltaQueue extends EventEmitter implements IDeltaQueue {
+export class TestDeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
     public paused: boolean;
     public length: number;
     public idle: boolean;
@@ -33,17 +34,27 @@ export class TestDeltaQueue extends EventEmitter implements IDeltaQueue {
         assert(this.paused);
         return this.resumeDeferred.promise;
     }
+
+    public take(count: number) {
+        throw new Error("Method not implemented.");
+    }
+
+    public peek(): T {
+        throw new Error("Method not implemented.");
+    }
 }
 
-export class TestDeltaManager extends EventEmitter implements IDeltaManager {
+export class TestDeltaManager
+    extends EventEmitter implements IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
     public referenceSequenceNumber: number;
+
     public maxMessageSize: number;
 
     public minimumSequenceNumber: number;
 
-    public inbound = new TestDeltaQueue();
+    public inbound = new TestDeltaQueue<ISequencedDocumentMessage>();
 
-    public outbound = new TestDeltaQueue();
+    public outbound = new TestDeltaQueue<IDocumentMessage>();
 
     public clientType = "Browser";
 

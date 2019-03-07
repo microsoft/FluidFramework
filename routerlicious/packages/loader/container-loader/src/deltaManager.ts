@@ -40,7 +40,7 @@ const DefaultContentBufferSize = 10;
  * Manages the flow of both inbound and outbound messages. This class ensures that shared objects receive delta
  * messages in order regardless of possible network conditions or timings causing out of order delivery.
  */
-export class DeltaManager extends EventEmitter implements IDeltaManager {
+export class DeltaManager extends EventEmitter implements IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
     public readonly clientType: string;
 
     private pending: ISequencedDocumentMessage[] = [];
@@ -67,7 +67,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager {
     private baseSequenceNumber: number;
 
     // tslint:disable:variable-name
-    private _inbound: DeltaQueue<IDocumentMessage>;
+    private _inbound: DeltaQueue<ISequencedDocumentMessage>;
     private _outbound: DeltaQueue<IDocumentMessage>;
     // tslint:enable:variable-name
 
@@ -81,11 +81,11 @@ export class DeltaManager extends EventEmitter implements IDeltaManager {
 
     private contentCache = new ContentCache(DefaultContentBufferSize);
 
-    public get inbound(): IDeltaQueue {
+    public get inbound(): IDeltaQueue<ISequencedDocumentMessage> {
         return this._inbound;
     }
 
-    public get outbound(): IDeltaQueue {
+    public get outbound(): IDeltaQueue<IDocumentMessage> {
         return this._outbound;
     }
 

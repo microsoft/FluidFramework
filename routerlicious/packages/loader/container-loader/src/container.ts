@@ -10,6 +10,7 @@ import {
     IContainer,
     IDeltaManager,
     IDocumentAttributes,
+    IDocumentMessage,
     IDocumentService,
     IDocumentStorageService,
     IGenericBlob,
@@ -68,8 +69,6 @@ export class Container extends EventEmitter implements IContainer {
             service,
             codeLoader,
             loader);
-
-        // TODO need to crack the version and connection flag out of the URL
         await container.load(version);
 
         return container;
@@ -88,7 +87,7 @@ export class Container extends EventEmitter implements IContainer {
 
     // tslint:disable:variable-name
     private _clientId: string = "disconnected";
-    private _deltaManager: IDeltaManager;
+    private _deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     private _existing: boolean;
     private _id: string;
     private _parentBranch: string;
@@ -113,7 +112,7 @@ export class Container extends EventEmitter implements IContainer {
         return this._id;
     }
 
-    public get deltaManager(): IDeltaManager {
+    public get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
         return this._deltaManager;
     }
 

@@ -31,12 +31,12 @@ export interface IDeltaHandlerStrategy {
     postProcess: (message: ISequencedDocumentMessage, context: any) => Promise<void>;
 }
 
-export interface IDeltaManager extends EventEmitter {
+export interface IDeltaManager<T, U> extends EventEmitter {
     // The queue of inbound delta messages
-    inbound: IDeltaQueue;
+    inbound: IDeltaQueue<T>;
 
     // the queue of outbound delta messages
-    outbound: IDeltaQueue;
+    outbound: IDeltaQueue<U>;
 
     // The current minimum sequence number
     minimumSequenceNumber: number;
@@ -68,7 +68,7 @@ export interface IDeltaManager extends EventEmitter {
     submit(type: MessageType, contents: string): number;
 }
 
-export interface IDeltaQueue extends EventEmitter {
+export interface IDeltaQueue<T> extends EventEmitter {
     /**
      * Flag indicating whether or not the queue was paused
      */
@@ -93,4 +93,14 @@ export interface IDeltaQueue extends EventEmitter {
      * Resumes processing on the queue
      */
     resume();
+
+    /**
+     * Processes the set number of messages and then pauses the queue
+     */
+    take(count: number);
+
+    /**
+     * Peeks at the next message in the queue
+     */
+    peek(): T;
 }

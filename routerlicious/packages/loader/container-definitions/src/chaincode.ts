@@ -2,7 +2,7 @@ import { IBlobManager } from "./blobs";
 import { IQuorum } from "./consensus";
 import { IDeltaManager } from "./deltas";
 import { ILoader, IRequest, IResponse } from "./loader";
-import { ISequencedDocumentMessage, MessageType } from "./protocol";
+import { IDocumentMessage, ISequencedDocumentMessage, MessageType } from "./protocol";
 import { IDocumentStorageService, ISnapshotTree, ITree } from "./storage";
 
 /**
@@ -125,7 +125,7 @@ export interface IContainerContext {
     readonly options: any;
     readonly clientId: string;
     readonly parentBranch: string;
-    readonly deltaManager: IDeltaManager;
+    readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     readonly blobManager: IBlobManager;
     readonly storage: IDocumentStorageService;
     readonly connectionState: ConnectionState;

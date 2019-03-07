@@ -2,6 +2,7 @@ import {
     ConnectionState,
     IBlobManager,
     IDeltaManager,
+    IDocumentMessage,
     IDocumentStorageService,
     ILoader,
     IPlatform,
@@ -58,7 +59,7 @@ export interface IComponentRuntime {
     readonly clientId: string;
     readonly parentBranch: string;
     readonly connected: boolean;
-    readonly deltaManager: IDeltaManager;
+    readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     readonly blobManager: IBlobManager;
     readonly storage: IDocumentStorageService;
     readonly connectionState: ConnectionState;
@@ -98,7 +99,7 @@ export interface IHostRuntime extends IRuntime {
     readonly clientId: string;
     readonly parentBranch: string;
     readonly connected: boolean;
-    readonly deltaManager: IDeltaManager;
+    readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     readonly blobManager: IBlobManager;
     readonly storage: IDocumentStorageService;
     readonly connectionState: ConnectionState;
