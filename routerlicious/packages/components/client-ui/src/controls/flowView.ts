@@ -2862,6 +2862,7 @@ export class FlowView extends ui.Component {
     // TODO: 'services' is being used temporarily to smuggle context down to components.
     //       Should be replaced w/component-standardized render context, layout context, etc.
     public services = new Map<string, any>();
+    public srcLanguage = "en";
 
     private lastVerticalX = -1;
     private randWordTimer: any;
@@ -2903,7 +2904,9 @@ export class FlowView extends ui.Component {
         this.targetTranslation = options[translationToLanguage]
             ? `translation-${options[translationToLanguage]}`
             : undefined;
-
+        if (options["translationFromLanguage"]) {
+            this.srcLanguage = options["translationFroLanguage"];
+        }
         this.statusMessage("li", " ");
         this.statusMessage("si", " ");
         sharedString.on("op", (msg, local) => {
@@ -4989,7 +4992,9 @@ export class FlowView extends ui.Component {
         }
 
         newProps[MergeTree.reservedTileLabelsKey] = newLabels;
-
+        if (this.srcLanguage !== "en") {
+            newProps["fromLanguage"] = this.srcLanguage;
+        }
         // TODO: place in group op
         // old marker gets new props
         this.sharedString.annotateRange(newProps, pgPos, pgPos + 1, { name: "rewrite" });
