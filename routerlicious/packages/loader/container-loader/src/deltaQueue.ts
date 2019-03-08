@@ -1,71 +1,49 @@
 import { IDeltaQueue } from "@prague/container-definitions";
-import { AsyncQueue, AsyncWorker } from "async";
-// tslint:disable-next-line:no-submodule-imports
-import * as queue from "async/queue";
+import * as Deque from "double-ended-queue";
 import { EventEmitter } from "events";
 
 export class DeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
-    private q: AsyncQueue<T>;
+    private q = new Deque<T>();
 
     // We expose access to the DeltaQueue in order to allow users (from the console or code) to be able to pause/resume.
     // But the internal system itself also sometimes needs to override these changes. The system field takes precedence.
     private sysPause = true;
     private userPause = false;
 
+    // tslint:disable:variable-name
+    private _paused = true;
+    // tslint:enable:variable-name
+
+    private processing = false;
+
     public get paused(): boolean {
-        return this.q.paused;
+        return this._paused;
     }
 
     public get length(): number {
-        return this.q.length();
+        return this.q.length;
     }
 
     public get idle(): boolean {
-        return this.q.idle();
+        return this.processing || this.q.length > 0;
     }
 
-    constructor(private worker: AsyncWorker<T, void>) {
+    constructor(private worker: (value: T, callback: (error) => void) => void) {
         super();
-
-        // Clear creates a new queue
-        this.clear();
     }
 
     public clear() {
-        // Remove any tasks and stop the old queue
-        /* tslint:disable:strict-boolean-expressions */
-        if (this.q) {
-            this.q.kill();
-        }
-
-        /* tslint:disable:no-unsafe-any */
-        // Then create a new one
-        this.q = queue<T, void>((task, callback) => {
-            this.emit("pre-op", task);
-            this.worker(task, (error) => {
-                this.emit("op", task);
-                callback(error);
-            });
-        });
-
-        this.q.error = (error) => {
-            this.emit("error", error);
-            this.q.kill();
-        };
-
+        this.q.clear();
         this.updatePause();
     }
 
-    public take(count: number) {
-        return;
-    }
-
     public peek(): T {
-        return null;
+        return this.q.peekFront();
     }
 
     public push(task: T) {
         this.q.push(task);
+        this.processDeltas();
     }
 
     public pause() {
@@ -90,16 +68,39 @@ export class DeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
 
     private updatePause() {
         const paused = this.sysPause || this.userPause;
-        if (paused === this.q.paused) {
+        if (paused === this._paused) {
             return;
         }
 
         if (paused) {
-            this.q.pause();
+            this._paused = true;
             this.emit("pause");
         } else {
-            this.q.resume();
+            this._paused = false;
+            this.processDeltas();
             this.emit("resume");
         }
+    }
+
+    private processDeltas() {
+        // Return early if no messages to process, we have become paused, or are already processing a delta
+        if (this.q.length === 0 || this._paused || this.processing) {
+            return;
+        }
+
+        // Process the next message in the queue and then call back into processDeltas once complete
+        this.processing = true;
+        const next = this.q.shift();
+        this.emit("pre-op", next);
+        this.worker(next, (error) => {
+            this.processing = false;
+            if (error) {
+                this.emit("error", error);
+                this.q.clear();
+            } else {
+                this.emit("op", next);
+                this.processDeltas();
+            }
+        });
     }
 }

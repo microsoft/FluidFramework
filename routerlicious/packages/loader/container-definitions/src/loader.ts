@@ -1,5 +1,7 @@
 import { EventEmitter } from "events";
 import { IChaincodeFactory } from "./chaincode";
+import { IDeltaManager } from "./deltas";
+import { IDocumentMessage, ISequencedDocumentMessage } from "./protocol";
 
 /**
  * Code loading interface
@@ -59,6 +61,7 @@ export interface IResponse {
 }
 
 export interface IContainer extends EventEmitter {
+    deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 }
 
 export interface ILoader {

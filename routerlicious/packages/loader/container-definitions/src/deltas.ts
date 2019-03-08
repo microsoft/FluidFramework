@@ -95,11 +95,6 @@ export interface IDeltaQueue<T> extends EventEmitter {
     resume();
 
     /**
-     * Processes the set number of messages and then pauses the queue
-     */
-    take(count: number);
-
-    /**
      * Peeks at the next message in the queue
      */
     peek(): T;
