@@ -56,6 +56,11 @@ module.exports = class extends Generator {
     );
 
     this.fs.copy(
+      this.templatePath("getRoute.js"), // FROM
+      this.destinationPath("./getRoute.js") // TO Base Folder
+    );
+
+    this.fs.copy(
       this.templatePath(".*"), // FROM
       this.destinationPath("./") // TO
     );

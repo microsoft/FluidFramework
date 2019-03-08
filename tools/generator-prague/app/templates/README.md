@@ -80,9 +80,14 @@ Login with:
 
 And follow the npm adduser steps
 
-When you're done logging in run
+To deploy, use
 
     npm run deploy
 
 
+To view your chaincode, you can go to the URL
+
+    https://www.wu2-ppe.prague.office-int.com/loader/stupefied-kilby/prague/{random container name}?chaincode={pkg.name}@{pkg.version};
+
+This link is then shareable and, in an expanding list of components, embeddable!
 
