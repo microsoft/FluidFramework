@@ -30,6 +30,14 @@ export class TestDeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
         this.resumeDeferred.resolve();
     }
 
+    public systemPause() {
+        this.pause();
+    }
+
+    public systemResume() {
+        this.resume();
+    }
+
     public waitForResume(): Promise<void> {
         assert(this.paused);
         return this.resumeDeferred.promise;
