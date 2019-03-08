@@ -178,7 +178,42 @@ export class Translator {
         }
 
         const textAndMarkers = this.sharedString.client.getTextAndMarkers("pg");
-        for (const fromLanguage of fromLanguages) {
+        // tslint:disable-next-line
+        for (let i = 0; i < textAndMarkers.parallelMarkers.length; ++i) {
+            const pgMarker = textAndMarkers.parallelMarkers[i];
+            const pgText = textAndMarkers.parallelText[i];
+
+            // Fetch input paragraph language from marker property.
+            const pgProperty = pgMarker.getProperties();
+            const languageProperty = "fromLanguage";
+            const pgLanguage = pgProperty[languageProperty];
+            const fromLanguage = pgLanguage ? pgLanguage : "en";
+
+            const rawTranslations = await translate(
+                this.apiKey,
+                fromLanguage,
+                toLanguages,
+                [pgText]);
+            const processedTranslations = processTranslationOutput(rawTranslations);
+
+            for (const languageTranslations of processedTranslations) {
+                const language = languageTranslations[0];
+                const translations = languageTranslations[1];
+                if (translations.length > 0 ) {
+                    const translation = translations[0];
+                    const pos = this.sharedString.client.mergeTree.getOffset(
+                        pgMarker,
+                        this.sharedString.client.getCurrentSeq(),
+                        this.sharedString.client.getClientId());
+
+                    const props: any = {};
+                    props[`translation-${language}`] = translation;
+                    this.sharedString.annotateRange(props, pos, pos + 1);
+                }
+            }
+        }
+
+        /*for (const fromLanguage of fromLanguages) {
             const rawTranslations = await translate(
                 this.apiKey,
                 fromLanguage,
@@ -202,6 +237,7 @@ export class Translator {
                     this.sharedString.annotateRange(props, pos, pos + 1);
                 }
             }
-        }
+        }*/
+
     }
 }

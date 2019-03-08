@@ -2905,7 +2905,7 @@ export class FlowView extends ui.Component {
             ? `translation-${options[translationToLanguage]}`
             : undefined;
         if (options["translationFromLanguage"]) {
-            this.srcLanguage = options["translationFroLanguage"];
+            this.srcLanguage = options["translationFromLanguage"];
         }
         this.statusMessage("li", " ");
         this.statusMessage("si", " ");
