@@ -60,6 +60,7 @@ export class Container extends EventEmitter implements IContainer {
         service: IDocumentService,
         codeLoader: ICodeLoader,
         options: any,
+        connection: string,
         loader: ILoader,
     ): Promise<Container> {
         const container = new Container(
@@ -69,7 +70,7 @@ export class Container extends EventEmitter implements IContainer {
             service,
             codeLoader,
             loader);
-        await container.load(version);
+        await container.load(version, connection);
 
         return container;
     }
@@ -272,8 +273,11 @@ export class Container extends EventEmitter implements IContainer {
         await this.storageService.write(root, parents, message, "");
     }
 
-    private async load(specifiedVersion: string): Promise<void> {
-        const connect = !specifiedVersion;
+    private async load(specifiedVersion: string, connection: string): Promise<void> {
+        const connectionValues = connection.split(",");
+
+        const connect = connectionValues.indexOf("open") !== -1;
+        const pause = connectionValues.indexOf("pause") !== -1;
 
         // TODO connect to storage needs the token provider
         const storageP = this.service.connectToStorage(
@@ -285,9 +289,13 @@ export class Container extends EventEmitter implements IContainer {
         // If a version is specified we will load it directly - otherwise will query historian for the latest
         // version and then load it
         const versionP = storageP.then(async (storage) => {
-            const versionSha = specifiedVersion ? specifiedVersion : this.id;
-            const versions = await storage.getVersions(versionSha, 1);
-            return versions.length > 0 ? versions[0] : null;
+            if (specifiedVersion === null) {
+                return null;
+            } else {
+                const versionSha = specifiedVersion ? specifiedVersion : this.id;
+                const versions = await storage.getVersions(versionSha, 1);
+                return versions.length > 0 ? versions[0] : null;
+            }
         });
 
         // Get the snapshot tree
@@ -379,9 +387,13 @@ export class Container extends EventEmitter implements IContainer {
 
                 if (connect) {
                     assert(this._deltaManager, "DeltaManager should have been created during connect call");
-                    debug("Everyone ready - resuming inbound messages");
-                    this._deltaManager.inbound.resume();
-                    this._deltaManager.outbound.resume();
+                    if (!pause) {
+                        debug("Connected - resuming inbound messages");
+                        this._deltaManager.inbound.resume();
+                        this._deltaManager.outbound.resume();
+                    } else {
+                        debug("Connected - waiting to process inbound messages");
+                    }
                 }
 
                 // Internal context is fully loaded at this point
