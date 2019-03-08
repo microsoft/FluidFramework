@@ -66,3 +66,23 @@ Render uses the distributed data types to create an exciting view experience.
   }
 
 ````
+
+## Deploy
+
+To deploy and make your chaincode "Live" you'll have to deploy it to verdaccio, our private NPM repository.
+
+Go to https://packages.wu2.prague.office-int.com
+
+Login with:
+
+    UN: prague
+    PW: bohemia
+
+And follow the npm adduser steps
+
+When you're done logging in run
+
+    npm run deploy
+
+
+
