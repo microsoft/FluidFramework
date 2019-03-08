@@ -52,12 +52,14 @@ export interface IHost {
 
 export interface IRequest {
     url: string;
+    headers?: { [key: string]: any };
 }
 
 export interface IResponse {
     mimeType: string;
     status: number;
     value: any;
+    headers?: { [key: string]: any };
 }
 
 export interface IContainer extends EventEmitter {
