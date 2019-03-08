@@ -30,7 +30,7 @@ A listing of architectural design principals can be found in the [doc/architectu
 
 ## Get Started
 
-Check out [Chaincode](./chaincode) to get started building a component. We love using the [Yo Prague tool](./tools/generator-prague)
+Check out [Chaincode](./chaincode) to get started building a component. We love using the [Yo Prague tool](./tools/generator-prague).
 
 Developers looking to make deep/advanced Prague changes can find our latest implementation in [Routerlicious](./routerlicious).
 
