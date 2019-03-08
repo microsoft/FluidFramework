@@ -14,7 +14,7 @@
                 "-r",
                 "${workspaceFolder}/common/tools/node_modules/ts-node/register",
                 "--no-timeouts",
-                "src/index.ts",
+                "src/**/*.spec.ts",
                 "--exit"
             ],
             "env": {
