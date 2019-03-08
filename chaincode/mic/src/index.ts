@@ -23,6 +23,10 @@ export class mic extends Document {
       vidTag.setAttribute("controls", "");
       vidTag.src = this.root.get("recording");
       maybeDiv.appendChild(vidTag);
+
+      vidTag.addEventListener('timeupdate', (event) => {
+        console.log('The currentTime attribute has been updated. Again.', vidTag.currentTime);
+      });
     } else {
       const mediaStream = await navigator.mediaDevices.getUserMedia({ video: true });
 
@@ -77,7 +81,7 @@ export class mic extends Document {
 
       setTimeout(() => {
         recorder.stop();
-      }, 2000);
+      }, 20000);
     }
   }
 }
