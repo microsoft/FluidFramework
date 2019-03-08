@@ -1,8 +1,8 @@
-import { IDeltaManager } from "@prague/container-definitions";
+import { IDeltaManager, IDocumentMessage, ISequencedDocumentMessage } from "@prague/container-definitions";
 import { ITestDeltaConnectionServer } from "./testDeltaConnectionServer";
 
 export interface IDocumentDeltaEvent {
-    deltaManager: IDeltaManager;
+    deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 }
 
 export class DocumentDeltaEventManager {

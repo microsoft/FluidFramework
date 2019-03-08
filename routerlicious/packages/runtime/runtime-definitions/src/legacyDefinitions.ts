@@ -1,9 +1,11 @@
 import {
     IDeltaManager,
+    IDocumentMessage,
     IGenericBlob,
     ILoader,
     IPlatform,
     IQuorum,
+    ISequencedDocumentMessage,
     MessageType,
 } from "@prague/container-definitions";
 import { EventEmitter } from "events";
@@ -80,7 +82,7 @@ export interface IRuntime extends EventEmitter {
 
     readonly connected: boolean;
 
-    readonly deltaManager: IDeltaManager;
+    readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 
     readonly platform: IPlatform;
 

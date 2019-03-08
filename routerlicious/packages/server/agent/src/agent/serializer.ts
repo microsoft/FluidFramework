@@ -1,4 +1,4 @@
-import { IDeltaManager, ISequencedDocumentMessage, MessageType } from "@prague/container-definitions";
+import { IDeltaManager, IDocumentMessage, ISequencedDocumentMessage, MessageType } from "@prague/container-definitions";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 
@@ -20,7 +20,7 @@ interface IOpSnapshotDetails {
 export interface ISnapshotDocument {
     id: string;
 
-    deltaManager: IDeltaManager;
+    deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 
     snapshot(message: string): Promise<void>;
 }

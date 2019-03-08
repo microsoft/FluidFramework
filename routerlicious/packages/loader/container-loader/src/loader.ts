@@ -84,23 +84,56 @@ export class Loader extends EventEmitter implements ILoader {
         const resolvedAsPrague = resolved as IPragueResolvedUrl;
         const parsed = this.parseUrl(resolvedAsPrague.url);
 
-        const versionedId = parsed.version ? `${parsed.id}@${parsed.version}` : parsed.id;
-        if (!this.containers.has(versionedId)) {
-            const tokenProvider = await this.documentService.createTokenProvider(resolvedAsPrague.tokens);
+        let canCache = true;
+        let connection = parsed.version === undefined ? "open" : "close";
+        let version = parsed.version;
 
-            const containerP = Container.Load(
-                parsed.id,
-                parsed.version,
-                tokenProvider,
-                this.documentService,
-                this.codeLoader,
-                this.options,
-                this);
-            this.containers.set(versionedId, containerP);
+        if (request.headers) {
+            if (request.headers.connect) {
+                // If connection header is pure open or close we will cache it. Otherwise custom load behavior
+                // and so we will not cache the request
+                canCache = request.headers.connect === "open" || request.headers.connect === "close";
+                connection = request.headers.connect as string;
+            }
+
+            version = version || request.headers.version as string;
         }
 
-        const container = await this.containers.get(versionedId);
+        debug(`${canCache} ${connection} ${version}`);
+
+        let container: Container;
+        if (canCache) {
+            const versionedId = version ? `${parsed.id}@${version}` : parsed.id;
+            if (!this.containers.has(versionedId)) {
+                const containerP = this.loadContainer(parsed.id, version, connection, resolvedAsPrague.tokens);
+                this.containers.set(versionedId, containerP);
+            }
+
+            container = await this.containers.get(versionedId);
+        } else {
+            container = await this.loadContainer(parsed.id, version, connection, resolvedAsPrague.tokens);
+        }
 
         return { container, parsed };
+    }
+
+    private async loadContainer(
+        id: string,
+        version: string,
+        connection: string,
+        tokens: { [key: string]: string },
+    ): Promise<Container> {
+        const tokenProvider = await this.documentService.createTokenProvider(tokens);
+        const container = await Container.Load(
+            id,
+            version,
+            tokenProvider,
+            this.documentService,
+            this.codeLoader,
+            this.options,
+            connection,
+            this);
+
+        return container;
     }
 }

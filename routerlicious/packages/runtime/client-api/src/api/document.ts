@@ -2,11 +2,13 @@ import { ISharedObject } from "@prague/api-definitions";
 import * as cell from "@prague/cell";
 import {
     IDeltaManager,
+    IDocumentMessage,
     IDocumentService,
     IGenericBlob,
     IHost,
     IPlatform,
     ISequencedClient,
+    ISequencedDocumentMessage,
 } from "@prague/container-definitions";
 import { Container, Loader } from "@prague/container-loader";
 import { ISharedMap, MapExtension } from "@prague/map";
@@ -70,7 +72,7 @@ export class Document extends EventEmitter {
         return this.runtime.tenantId;
     }
 
-    public get deltaManager(): IDeltaManager {
+    public get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
         return this.runtime.deltaManager;
     }
 

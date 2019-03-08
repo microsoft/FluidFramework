@@ -6,8 +6,11 @@ import {
     IClientJoin,
     ICodeLoader,
     ICommittedProposal,
+    IConnectionDetails,
+    IContainer,
     IDeltaManager,
     IDocumentAttributes,
+    IDocumentMessage,
     IDocumentService,
     IDocumentStorageService,
     IGenericBlob,
@@ -32,7 +35,6 @@ import { EventEmitter } from "events";
 import { BlobManager } from "./blobManager";
 import { Context } from "./context";
 import { debug } from "./debug";
-import { IConnectionDetails } from "./deltaConnection";
 import { DeltaManager } from "./deltaManager";
 import { NullChaincode } from "./nullChaincode";
 import { PrefetchDocumentStorageService } from "./prefetchDocumentStorageService";
@@ -50,7 +52,7 @@ interface IBufferedChunk {
     content: string;
 }
 
-export class Container extends EventEmitter {
+export class Container extends EventEmitter implements IContainer {
     public static async Load(
         id: string,
         version: string,
@@ -58,6 +60,7 @@ export class Container extends EventEmitter {
         service: IDocumentService,
         codeLoader: ICodeLoader,
         options: any,
+        connection: string,
         loader: ILoader,
     ): Promise<Container> {
         const container = new Container(
@@ -67,9 +70,7 @@ export class Container extends EventEmitter {
             service,
             codeLoader,
             loader);
-
-        // TODO need to crack the version and connection flag out of the URL
-        await container.load(version);
+        await container.load(version, connection);
 
         return container;
     }
@@ -87,7 +88,7 @@ export class Container extends EventEmitter {
 
     // tslint:disable:variable-name
     private _clientId: string = "disconnected";
-    private _deltaManager: DeltaManager;
+    private _deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     private _existing: boolean;
     private _id: string;
     private _parentBranch: string;
@@ -112,7 +113,7 @@ export class Container extends EventEmitter {
         return this._id;
     }
 
-    public get deltaManager(): IDeltaManager {
+    public get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
         return this._deltaManager;
     }
 
@@ -272,8 +273,11 @@ export class Container extends EventEmitter {
         await this.storageService.write(root, parents, message, "");
     }
 
-    private async load(specifiedVersion: string): Promise<void> {
-        const connect = !specifiedVersion;
+    private async load(specifiedVersion: string, connection: string): Promise<void> {
+        const connectionValues = connection.split(",");
+
+        const connect = connectionValues.indexOf("open") !== -1;
+        const pause = connectionValues.indexOf("pause") !== -1;
 
         // TODO connect to storage needs the token provider
         const storageP = this.service.connectToStorage(
@@ -285,9 +289,13 @@ export class Container extends EventEmitter {
         // If a version is specified we will load it directly - otherwise will query historian for the latest
         // version and then load it
         const versionP = storageP.then(async (storage) => {
-            const versionSha = specifiedVersion ? specifiedVersion : this.id;
-            const versions = await storage.getVersions(versionSha, 1);
-            return versions.length > 0 ? versions[0] : null;
+            if (specifiedVersion === null) {
+                return null;
+            } else {
+                const versionSha = specifiedVersion ? specifiedVersion : this.id;
+                const versions = await storage.getVersions(versionSha, 1);
+                return versions.length > 0 ? versions[0] : null;
+            }
         });
 
         // Get the snapshot tree
@@ -379,9 +387,13 @@ export class Container extends EventEmitter {
 
                 if (connect) {
                     assert(this._deltaManager, "DeltaManager should have been created during connect call");
-                    debug("Everyone ready - resuming inbound messages");
-                    this._deltaManager.inbound.resume();
-                    this._deltaManager.outbound.resume();
+                    if (!pause) {
+                        debug("Connected - resuming inbound messages");
+                        this._deltaManager.inbound.resume();
+                        this._deltaManager.outbound.resume();
+                    } else {
+                        debug("Connected - waiting to process inbound messages");
+                    }
                 }
 
                 // Internal context is fully loaded at this point
@@ -502,11 +514,11 @@ export class Container extends EventEmitter {
                     debug(`loadCode ${JSON.stringify(value)}`);
 
                     // Stop processing inbound messages as we transition to the new code
-                    this.deltaManager.inbound.pause();
+                    this.deltaManager.inbound.systemPause();
                     this.transitionRuntime(value).then(
                         () => {
                             // Resume once transition is complete
-                            this.deltaManager.inbound.resume();
+                            this.deltaManager.inbound.systemResume();
                         },
                         (error) => {
                             this.emit("error", error);
@@ -642,7 +654,8 @@ export class Container extends EventEmitter {
                         process: (message, context) => {
                             this.processRemoteMessage(message, context);
                         },
-                    });
+                    },
+                    true);
             });
 
             return { detailsP, handlerAttachedP };

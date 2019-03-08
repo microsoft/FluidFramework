@@ -3,6 +3,7 @@ import {
     FileMode,
     IBlobManager,
     IDeltaManager,
+    IDocumentMessage,
     IDocumentStorageService,
     IGenericBlob,
     ILoader,
@@ -93,7 +94,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime 
         return this.hostRuntime.blobManager;
     }
 
-    public get deltaManager(): IDeltaManager {
+    public get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
         return this.hostRuntime.deltaManager;
     }
 

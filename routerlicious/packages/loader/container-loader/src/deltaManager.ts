@@ -1,7 +1,9 @@
 import {
     Browser,
     IClient,
+    IConnectionDetails,
     IContentMessage,
+    IDeltaHandlerStrategy,
     IDeltaManager,
     IDeltaQueue,
     IDocumentDeltaStorageService,
@@ -19,7 +21,7 @@ import * as assert from "assert";
 import { EventEmitter } from "events";
 import { ContentCache } from "./contentCache";
 import { debug } from "./debug";
-import { DeltaConnection, IConnectionDetails } from "./deltaConnection";
+import { DeltaConnection } from "./deltaConnection";
 import { DeltaQueue } from "./deltaQueue";
 
 const MaxReconnectDelay = 8000;
@@ -34,34 +36,11 @@ const DefaultChunkSize = 16 * 1024;
 const DefaultMaxContentSize = 32 * 1024;
 const DefaultContentBufferSize = 10;
 
-// tslint:disable no-unsafe-any
-
-/**
- * Interface used to define a strategy for handling incoming delta messages
- */
-export interface IDeltaHandlerStrategy {
-    /**
-     * Preparess data necessary to process the message. The return value of the method will be passed to the process
-     * function.
-     */
-    prepare: (message: ISequencedDocumentMessage) => Promise<any>;
-
-    /**
-     * Processes the message. The return value from prepare is passed in the context parameter.
-     */
-    process: (message: ISequencedDocumentMessage, context: any) => void;
-
-    /**
-     * Called immediately after process.
-     */
-    postProcess: (message: ISequencedDocumentMessage, context: any) => Promise<void>;
-}
-
 /**
  * Manages the flow of both inbound and outbound messages. This class ensures that shared objects receive delta
  * messages in order regardless of possible network conditions or timings causing out of order delivery.
  */
-export class DeltaManager extends EventEmitter implements IDeltaManager {
+export class DeltaManager extends EventEmitter implements IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
     public readonly clientType: string;
 
     private pending: ISequencedDocumentMessage[] = [];
@@ -88,7 +67,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager {
     private baseSequenceNumber: number;
 
     // tslint:disable:variable-name
-    private _inbound: DeltaQueue<IDocumentMessage>;
+    private _inbound: DeltaQueue<ISequencedDocumentMessage>;
     private _outbound: DeltaQueue<IDocumentMessage>;
     // tslint:enable:variable-name
 
@@ -102,11 +81,11 @@ export class DeltaManager extends EventEmitter implements IDeltaManager {
 
     private contentCache = new ContentCache(DefaultContentBufferSize);
 
-    public get inbound(): IDeltaQueue {
+    public get inbound(): IDeltaQueue<ISequencedDocumentMessage> {
         return this._inbound;
     }
 
-    public get outbound(): IDeltaQueue {
+    public get outbound(): IDeltaQueue<IDocumentMessage> {
         return this._outbound;
     }
 
@@ -154,7 +133,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager {
         // Outbound message queue
         this._outbound = new DeltaQueue<IDocumentMessage>(
             (message, callback: (error?) => void) => {
-                if (this.shouldSplit(message.contents)) {
+                if (this.shouldSplit(message.contents as string)) {
                     debug(`Splitting content from envelope.`);
                     this.connection.submitAsync(message).then(
                         () => {
@@ -188,7 +167,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager {
     /**
      * Sets the sequence number from which inbound messages should be returned
      */
-    public attachOpHandler(sequenceNumber: number, handler: IDeltaHandlerStrategy, resume = true) {
+    public attachOpHandler(sequenceNumber: number, handler: IDeltaHandlerStrategy, resume: boolean) {
         debug("Attached op handler", sequenceNumber);
 
         // The MSN starts at the base the manager is initialized to
@@ -298,7 +277,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager {
         type: MessageType,
         coreMessage: IDocumentMessage): IDocumentMessage {
         if (isSystemType(type)) {
-            const data = coreMessage.contents;
+            const data = coreMessage.contents as string;
             coreMessage.contents = null;
             const outboundMessage: IDocumentSystemMessage = {
                 ...coreMessage,
@@ -369,7 +348,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager {
             },
             (error) => {
                 // replayP is guaranteed to always resolve
-                assert(false, error);
+                assert(false, error as Error);
             });
     }
 

@@ -1,4 +1,8 @@
+import { EventEmitter } from "events";
 import { IChaincodeFactory } from "./chaincode";
+import { IQuorum } from "./consensus";
+import { IDeltaManager } from "./deltas";
+import { IDocumentMessage, ISequencedDocumentMessage } from "./protocol";
 
 /**
  * Code loading interface
@@ -49,14 +53,24 @@ export interface IHost {
 
 export interface IRequest {
     url: string;
+    headers?: { [key: string]: any };
 }
 
 export interface IResponse {
     mimeType: string;
     status: number;
     value: any;
+    headers?: { [key: string]: any };
+}
+
+export interface IContainer extends EventEmitter {
+    deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+
+    getQuorum(): IQuorum;
 }
 
 export interface ILoader {
     request(request: IRequest): Promise<IResponse>;
+
+    resolve(request: IRequest): Promise<IContainer>;
 }
