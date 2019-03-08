@@ -23,7 +23,7 @@ const secret = "4a9211594f7c3daebca3deb8d6115fe2";
 
 const userId = "test";
 
-const documentId = "cell-test-03062019-06";
+const documentId = "cell-test-03072019-01";
 
 // Register endpoint connection
 const documentServices = socketStorage.createDocumentService(routerlicious, historian);

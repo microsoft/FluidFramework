@@ -4,11 +4,11 @@
   "description": "Prague API sequence sample",
   "main": "index.js",
   "dependencies": {
-    "@prague/cell": "0.2.5461",
-    "@prague/client-api": "0.2.5461",
-    "@prague/container-definitions": "0.2.5461",
-    "@prague/map": "0.2.5461",
-    "@prague/routerlicious-socket-storage": "0.2.5461",
+    "@prague/cell": "0.2.5524",
+    "@prague/client-api": "0.2.5524",
+    "@prague/container-definitions": "0.2.5524",
+    "@prague/map": "0.2.5524",
+    "@prague/routerlicious-socket-storage": "0.2.5524",
     "jsonwebtoken": "^8.2.1",
     "url-parse": "^1.4.4"
   },
