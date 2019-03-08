@@ -5,6 +5,7 @@ import {
     IBlobManager,
     IContainerContext,
     IDeltaManager,
+    IDocumentMessage,
     IDocumentStorageService,
     ILoader,
     IQuorum,
@@ -102,7 +103,7 @@ export class Runtime extends EventEmitter implements IHostRuntime {
         return this.context.blobManager;
     }
 
-    public get deltaManager(): IDeltaManager {
+    public get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
         return this.context.deltaManager;
     }
 
