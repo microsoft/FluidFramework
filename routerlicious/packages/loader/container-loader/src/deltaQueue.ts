@@ -25,7 +25,7 @@ export class DeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
     }
 
     public get idle(): boolean {
-        return this.processing || this.q.length > 0;
+        return !this.processing && this.q.length === 0;
     }
 
     constructor(private worker: (value: T, callback: (error) => void) => void) {
