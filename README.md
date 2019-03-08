@@ -8,6 +8,8 @@ A listing of architectural design principals can be found in the [doc/architectu
 
 ## Source Code Overview
 
+[Chaincode](./chaincode) contains our latest component and chaincode demos. This is the right place to get started checking out the world of Prague.
+
 [Routerlicious](./routerlicious) contains our latest prototype around new approaches to collaborative objects as well as a server backend to enable them with minimal COGS. This is probably where you want to start.
 
 [Historian](./historian) provides a REST API to git repositories. The API is similar to that exposed by GitHub but can be used in local development.
@@ -25,6 +27,12 @@ A listing of architectural design principals can be found in the [doc/architectu
 [Intelligence](./intelligence) contains a starter container for developing Python based intelligent services.
 
 [legacy](./legacy) folder contains a set of legacy prototypes around a collaborative canvas. As well as MUIs that load within the browser or within an enlightened host.
+
+## Get Started
+
+Check out [Chaincode](./chaincode) to get started building a component.
+
+Developers looking to make deep/advanced Prague changes can find our latest implementation in [Routerlicious](./routerlicious).
 
 ## Build Status
 
