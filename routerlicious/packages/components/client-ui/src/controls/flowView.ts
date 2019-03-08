@@ -2899,9 +2899,9 @@ export class FlowView extends ui.Component {
         this.client = sharedString.client;
         this.viewportDiv = document.createElement("div");
         this.element.appendChild(this.viewportDiv);
-        const translationLanguage = "translationLanguage";
-        this.targetTranslation = options[translationLanguage]
-            ? `translation-${options[translationLanguage]}`
+        const translationToLanguage = "translationToLanguage";
+        this.targetTranslation = options[translationToLanguage]
+            ? `translation-${options[translationToLanguage]}`
             : undefined;
 
         this.statusMessage("li", " ");

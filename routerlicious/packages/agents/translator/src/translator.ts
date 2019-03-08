@@ -107,7 +107,7 @@ export class Translator {
 
     private needsTranslation(op: any): boolean {
         // Exit early if there are no target translations
-        const languages = this.typeInsights.get("translations") as map.DistributedSet<string>;
+        const languages = this.typeInsights.get("translationsTo") as map.DistributedSet<string>;
         if (!languages || languages.entries().length === 0) {
             return false;
         }
@@ -149,11 +149,12 @@ export class Translator {
             // Let new reqeusts start
             this.pendingTranslation = false;
 
-            const languages = this.typeInsights.get("translations") as map.DistributedSet<string>;
+            const fromLanguages = this.typeInsights.get("translationsFrom") as map.DistributedSet<string>;
+            const toLanguages = this.typeInsights.get("translationsTo") as map.DistributedSet<string>;
 
             // Run translation on all other operations
             this.translating = true;
-            const translationsP = this.translate(languages.entries());
+            const translationsP = this.translate(fromLanguages.entries(), toLanguages.entries());
             const doneP = translationsP.catch((error) => {
                 this.translating = false;
                 console.error(error);
@@ -166,30 +167,41 @@ export class Translator {
         }, 30);
     }
 
-    private async translate(languages: string[]): Promise<void> {
-        const from = "en";
-
-        const textAndMarkers = this.sharedString.client.getTextAndMarkers("pg");
-
-        const rawTranslations = await translate(this.apiKey, from, languages, textAndMarkers.parallelText);
-        const processedTranslations = processTranslationOutput(rawTranslations);
-
-        for (const languageTranslations of processedTranslations) {
-            const language = languageTranslations[0];
-            const translations = languageTranslations[1];
-            for (let i = 0; i < translations.length; i++) {
-                const translation = translations[i];
-
-                const pos = this.sharedString.client.mergeTree.getOffset(
-                    textAndMarkers.parallelMarkers[i],
-                    this.sharedString.client.getCurrentSeq(),
-                    this.sharedString.client.getClientId());
-
-                const props: any = {};
-                props[`translation-${language}`] = translation;
-                this.sharedString.annotateRange(props, pos, pos + 1);
-            }
+    private async translate(fromLanguages: string[], toLanguages: string[]): Promise<void> {
+        // Default to English if no from language is specified.
+        if (fromLanguages.length === 0) {
+            fromLanguages = ["en"];
+        }
+        // Exit early if no target language is specified
+        if (toLanguages.length === 0) {
+            return;
         }
 
+        const textAndMarkers = this.sharedString.client.getTextAndMarkers("pg");
+        for (const fromLanguage of fromLanguages) {
+            const rawTranslations = await translate(
+                this.apiKey,
+                fromLanguage,
+                toLanguages,
+                textAndMarkers.parallelText);
+            const processedTranslations = processTranslationOutput(rawTranslations);
+
+            for (const languageTranslations of processedTranslations) {
+                const language = languageTranslations[0];
+                const translations = languageTranslations[1];
+                for (let i = 0; i < translations.length; i++) {
+                    const translation = translations[i];
+
+                    const pos = this.sharedString.client.mergeTree.getOffset(
+                        textAndMarkers.parallelMarkers[i],
+                        this.sharedString.client.getCurrentSeq(),
+                        this.sharedString.client.getClientId());
+
+                    const props: any = {};
+                    props[`translation-${language}`] = translation;
+                    this.sharedString.annotateRange(props, pos, pos + 1);
+                }
+            }
+        }
     }
 }

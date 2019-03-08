@@ -197,7 +197,8 @@ export function create(
             const spellchecker = parsedSpellchecking.base === "disabled" ? `disabled` : defaultSpellChecking;
             const options = {
                 spellchecker,
-                translationLanguage: "language" in request.query ? request.query.language : undefined,
+                translationFromLanguage: "languageFrom" in request.query ? request.query.languageFrom : undefined,
+                translationToLanguage: "languageTo" in request.query ? request.query.languageTo : undefined,
             };
 
             timings.push(Date.now() - start);

@@ -41,20 +41,28 @@ async function getInsights(map: DistributedMap.ISharedMap, id: string): Promise<
     return insights.wait<DistributedMap.ISharedMap>(id);
 }
 
-async function addTranslation(document: API.Document, id: string, language: string): Promise<void> {
+async function addTranslation(
+    document: API.Document,
+    id: string,
+    fromLanguage: string,
+    toLanguage: string): Promise<void> {
     // Create the translations map
     const insights = await document.getRoot().wait<DistributedMap.ISharedMap>("insights");
     const idMap = await insights.wait<DistributedMap.ISharedMap>(id);
     if (!document.existing) {
-        idMap.set("translations", undefined, DistributedMap.DistributedSetValueType.Name);
+        idMap.set("translationsFrom", undefined, DistributedMap.DistributedSetValueType.Name);
+        idMap.set("translationsTo", undefined, DistributedMap.DistributedSetValueType.Name);
     }
 
-    if (!language) {
-        return;
+    if (fromLanguage) {
+        const translationsFrom = await idMap.wait<DistributedMap.DistributedSet<string>>("translationsFrom");
+        translationsFrom.add(fromLanguage);
     }
 
-    const translations = await idMap.wait<DistributedMap.DistributedSet<string>>("translations");
-    translations.add(language);
+    if (toLanguage) {
+        const translationsTo = await idMap.wait<DistributedMap.DistributedSet<string>>("translationsTo");
+        translationsTo.add(toLanguage);
+    }
 }
 
 export async function load(
@@ -203,8 +211,13 @@ async function loadDocument(
     theFlow = container.flowView;
     host.attach(container);
 
-    const translationLanguage = "translationLanguage";
-    addTranslation(collabDoc, sharedString.id, options[translationLanguage]).catch((error) => {
+    const translationFromLanguage = "translationFromLanguage";
+    const translationToLanguage = "translationToLanguage";
+    addTranslation(
+        collabDoc,
+        sharedString.id,
+        options[translationFromLanguage],
+        options[translationToLanguage]).catch((error) => {
         console.error("Problem adding translation", error);
     });
 
