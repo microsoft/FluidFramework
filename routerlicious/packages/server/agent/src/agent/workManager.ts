@@ -84,7 +84,8 @@ export class WorkManager extends EventEmitter implements IWorkManager {
                         tenantId,
                         host,
                         services,
-                        this.codeLoader));
+                        this.codeLoader,
+                        workType));
                 break;
             case "chain-intel":
                 await this.startTask(
@@ -97,7 +98,8 @@ export class WorkManager extends EventEmitter implements IWorkManager {
                         tenantId,
                         host,
                         services,
-                        this.codeLoader));
+                        this.codeLoader,
+                        workType));
                 break;
             case "chain-spell":
                 await this.loadSpellings().catch((err) => {
@@ -114,7 +116,8 @@ export class WorkManager extends EventEmitter implements IWorkManager {
                             tenantId,
                             host,
                             services,
-                            this.codeLoader));
+                            this.codeLoader,
+                            workType));
                 }
                 break;
             case "chain-translation":
@@ -128,7 +131,8 @@ export class WorkManager extends EventEmitter implements IWorkManager {
                         tenantId,
                         host,
                         services,
-                        this.codeLoader));
+                        this.codeLoader,
+                        workType));
                 break;
             default:
                 throw new Error(`Unknown work type: ${workType}`);

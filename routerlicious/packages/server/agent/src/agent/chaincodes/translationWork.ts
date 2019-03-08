@@ -14,8 +14,9 @@ export class TranslationWork extends ChaincodeWork implements IWork {
         host: IHost,
         service: IDocumentService,
         codeLoader: ICodeLoader,
+        workType: string,
     ) {
-        super(alfred, docId, tenantId, host, service, codeLoader);
+        super(alfred, docId, tenantId, host, service, codeLoader, workType);
     }
 
     public async start(): Promise<void> {

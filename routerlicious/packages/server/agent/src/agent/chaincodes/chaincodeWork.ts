@@ -14,9 +14,9 @@ import { IDocumentTaskInfo } from "../definitions";
 export class ChaincodeWork extends EventEmitter {
 
     protected document: Container;
-    protected task: string;
 
     private events = new EventEmitter();
+    private task: string;
 
     constructor(
         private readonly alfred: string,
@@ -24,8 +24,10 @@ export class ChaincodeWork extends EventEmitter {
         private readonly tenantId: string,
         private readonly host: IHost,
         private readonly service: IDocumentService,
-        private readonly codeLoader: ICodeLoader) {
+        private readonly codeLoader: ICodeLoader,
+        workType: string) {
             super();
+            this.task = workType;
     }
 
     public async loadChaincode(options: any, attachPlatform: boolean): Promise<void> {

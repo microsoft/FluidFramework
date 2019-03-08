@@ -13,8 +13,9 @@ export class SnapshotWork extends ChaincodeWork implements IWork {
         tenantId: string,
         host: IHost,
         service: IDocumentService,
-        codeLoader: ICodeLoader) {
-        super(alfred, docId, tenantId, host, service, codeLoader);
+        codeLoader: ICodeLoader,
+        workType: string) {
+        super(alfred, docId, tenantId, host, service, codeLoader, workType);
     }
 
     public async start(): Promise<void> {
