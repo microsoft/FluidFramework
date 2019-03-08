@@ -1,3 +1,4 @@
+import { ISharedObjectExtension } from "@prague/api-definitions";
 import { Component } from "@prague/app-component";
 import { DataStore } from "@prague/app-datastore";
 import { IChaincodeComponent } from "@prague/runtime-definitions";
@@ -11,8 +12,8 @@ import {
 class TestRootComponent extends Component {
     public static readonly type = "@chaincode/test-root-component";
 
-    constructor() {
-        super([]);
+    constructor(types: ReadonlyArray<[string, ISharedObjectExtension]>) {
+        super(types);
     }
 
     public async createComponent(id: string, type: string) {
@@ -25,6 +26,14 @@ class TestRootComponent extends Component {
         services: ReadonlyArray<[string, Promise<any>]>,
     ) {
         return this.host.openComponent<T>(id, wait, services);
+    }
+
+    public async createType(id: string, type: string) {
+        return this.runtime.createChannel(id, type);
+    }
+
+    public async openType(id: string, type: string) {
+        return this.runtime.getChannel("id");
     }
 
     protected async create(): Promise<void> { /* do nothing */ }
@@ -40,7 +49,10 @@ export class TestHost {
 
     private components: IChaincodeComponent[] = [];
 
-    constructor(registry: ReadonlyArray<[string, new () => IChaincodeComponent]>) {
+    constructor(
+        componentRegistry: ReadonlyArray<[string, new () => IChaincodeComponent]>,
+        types?: ReadonlyArray<[string, ISharedObjectExtension]>,
+    ) {
         this.testDeltaConnectionServer = TestDeltaConnectionServer.Create();
 
         // tslint:disable:no-http-string - Allow fake test URLs when constructing DataStore.
@@ -51,7 +63,16 @@ export class TestHost {
                 [TestRootComponent.type, {
                     instantiateRuntime: (context) => Component.instantiateRuntime(
                         context,
-                        TestRootComponent.type, registry.concat([[TestRootComponent.type, TestRootComponent]])) }],
+                        TestRootComponent.type,
+                        componentRegistry.concat([[
+                            TestRootComponent.type,
+                            // tslint:disable:no-function-expression
+                            // tslint:disable:only-arrow-functions
+                            function(): IChaincodeComponent {
+                                return new TestRootComponent(types || []);
+                            } as any,
+                        ]])),
+                }],
             ]),
             createTestDocumentService(this.testDeltaConnectionServer),
             "tokenKey",
@@ -73,6 +94,11 @@ export class TestHost {
         const component = await root.openComponent<T>(id, /* wait: */ true, services);
         this.components.push(component);
         return component;
+    }
+
+    public async createType<T>(id: string, type: string): Promise<T> {
+        const root = await this.root;
+        return root.createType(id, type) as any;
     }
 
     public async close() {
