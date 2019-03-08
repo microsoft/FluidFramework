@@ -3,12 +3,17 @@ import "./publicpath";
 
 import { IContainerContext, IRequest, IRuntime } from "@prague/container-definitions";
 import { Runtime } from "@prague/runtime";
+import { Mic } from "./mic";
+import { Playback } from "./playback";
 
 /**
  * Instantiates a new chaincode host
  */
 export async function instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
-    const registry = new Map<string, any>([]);
+    const registry = new Map<string, any>([
+        ["@chaincode/mic", Promise.resolve({ instantiateComponent: () => Promise.resolve(new Mic()) })],
+        ["@chaincode/playback", Promise.resolve({ instantiateComponent: () => Promise.resolve(new Playback()) })],
+    ]);
 
     const runtime = await Runtime.Load(registry, context);
 
@@ -22,7 +27,7 @@ export async function instantiateRuntime(context: IContainerContext): Promise<IR
 
         const componentId = requestUrl
             ? requestUrl.substr(0, trailingSlash === -1 ? requestUrl.length : trailingSlash)
-            : "map";
+            : "playback";
         const component = await runtime.getComponent(componentId, true);
 
         // If there is a trailing slash forward to the component. Otherwise handle directly.
@@ -33,13 +38,8 @@ export async function instantiateRuntime(context: IContainerContext): Promise<IR
         }
     });
 
-    runtime.registerTasks(["snapshot"]);
-
-    // On first boot create the base component
     if (!runtime.existing) {
-        runtime.createAndAttachComponent("map", "@chaincode/playback").catch((error) => {
-            context.error(error);
-        });
+        runtime.createAndAttachComponent("playback", "@chaincode/playback");
     }
 
     return runtime;

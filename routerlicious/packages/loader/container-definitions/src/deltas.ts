@@ -98,4 +98,14 @@ export interface IDeltaQueue<T> extends EventEmitter {
      * Peeks at the next message in the queue
      */
     peek(): T;
+
+    /**
+     * System level pause
+     */
+    systemPause();
+
+    /**
+     * System level resume
+     */
+    systemResume();
 }

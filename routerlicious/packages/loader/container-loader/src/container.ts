@@ -514,11 +514,11 @@ export class Container extends EventEmitter implements IContainer {
                     debug(`loadCode ${JSON.stringify(value)}`);
 
                     // Stop processing inbound messages as we transition to the new code
-                    this.deltaManager.inbound.pause();
+                    this.deltaManager.inbound.systemPause();
                     this.transitionRuntime(value).then(
                         () => {
                             // Resume once transition is complete
-                            this.deltaManager.inbound.resume();
+                            this.deltaManager.inbound.systemResume();
                         },
                         (error) => {
                             this.emit("error", error);

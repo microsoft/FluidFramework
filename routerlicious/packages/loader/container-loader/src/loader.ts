@@ -103,15 +103,15 @@ export class Loader extends EventEmitter implements ILoader {
 
         let container: Container;
         if (canCache) {
-            const versionedId = parsed.version ? `${parsed.id}@${parsed.version}` : parsed.id;
+            const versionedId = version ? `${parsed.id}@${version}` : parsed.id;
             if (!this.containers.has(versionedId)) {
-                const containerP = this.loadContainer(parsed.id, parsed.version, connection, resolvedAsPrague.tokens);
+                const containerP = this.loadContainer(parsed.id, version, connection, resolvedAsPrague.tokens);
                 this.containers.set(versionedId, containerP);
             }
 
             container = await this.containers.get(versionedId);
         } else {
-            container = await this.loadContainer(parsed.id, parsed.version, connection, resolvedAsPrague.tokens);
+            container = await this.loadContainer(parsed.id, version, connection, resolvedAsPrague.tokens);
         }
 
         return { container, parsed };

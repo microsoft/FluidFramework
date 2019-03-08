@@ -1,5 +1,6 @@
 import { EventEmitter } from "events";
 import { IChaincodeFactory } from "./chaincode";
+import { IQuorum } from "./consensus";
 import { IDeltaManager } from "./deltas";
 import { IDocumentMessage, ISequencedDocumentMessage } from "./protocol";
 
@@ -64,6 +65,8 @@ export interface IResponse {
 
 export interface IContainer extends EventEmitter {
     deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+
+    getQuorum(): IQuorum;
 }
 
 export interface ILoader {

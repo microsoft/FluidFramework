@@ -1,6 +1,6 @@
 {
   "name": "@container/playback",
-  "version": "0.2.0",
+  "version": "0.2.31",
   "description": "Pinpoint editor container",
   "main": "dist/index.js",
   "module": "lib/index.js",
@@ -17,8 +17,14 @@
   },
   "author": "Microsoft",
   "dependencies": {
+    "@prague/app-component": "^0.2.0",
     "@prague/container-definitions": "^0.2.0",
-    "@prague/runtime": "^0.2.0"
+    "@prague/map": "^0.2.0",
+    "@prague/runtime": "^0.2.0",
+    "@prague/runtime-definitions": "^0.2.0",
+    "@types/dom-mediacapture-record": "^1.0.1",
+    "react": "^16.8.3",
+    "react-dom": "^16.8.3"
   },
   "devDependencies": {
     "css-loader": "^1.0.0",
