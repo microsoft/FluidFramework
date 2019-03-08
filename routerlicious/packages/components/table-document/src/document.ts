@@ -16,9 +16,7 @@ import { CounterValueType } from "@prague/map";
 import {
     ICombiningOp,
     IntervalType,
-    LocalClientId,
     LocalReference,
-    MergeTree,
     PropertySet,
     UniversalSequenceNumber,
 } from "@prague/merge-tree";
@@ -75,19 +73,22 @@ class WorkbookAdapter extends Workbook {
 }
 
 export class TableDocument extends Component implements ITable {
-    private get length()     { return this.mergeTree.getLength(UniversalSequenceNumber, LocalClientId); }
+    private get length() {
+        const client = this.matrix.client;
+        const mergeTree = client.mergeTree;
+        return mergeTree.getLength(UniversalSequenceNumber, client.getClientId());
+    }
+
     public  get numCols()    { return Math.min(this.root.get("stride").value, this.length); }
     public  get numRows()    { return Math.floor(this.length / this.numCols); }
 
     private get matrix()        { return this.maybeMatrix!; }
-    private get mergeTree()     { return this.maybeMergeTree!; }
     private get workbook()      { return this.maybeWorkbook!; }
     public static readonly type = createComponentType(TableDocument);
 
     private maybeRows?: SharedNumberSequence;
     private maybeCols?: SharedNumberSequence;
     private maybeMatrix?: SharedNumberSequence;
-    private maybeMergeTree?: MergeTree;
     private maybeWorkbook?: WorkbookAdapter;
 
     constructor() {
@@ -136,7 +137,9 @@ export class TableDocument extends Component implements ITable {
     }
 
     public getRowProperties(row: number): PropertySet {
-        const {segment} = this.maybeRows.client.mergeTree.getContainingSegment(row, UniversalSequenceNumber, LocalClientId);
+        const client = this.maybeRows.client;
+        const mergeTree = client.mergeTree;
+        const { segment } = mergeTree.getContainingSegment(row, UniversalSequenceNumber, client.getClientId());
         return segment.properties;
     }
 
@@ -145,7 +148,9 @@ export class TableDocument extends Component implements ITable {
     }
 
     public getColProperties(col: number): PropertySet {
-        const {segment} = this.maybeCols.client.mergeTree.getContainingSegment(col, UniversalSequenceNumber, LocalClientId);
+        const client = this.maybeCols.client;
+        const mergeTree = client.mergeTree;
+        const { segment } = mergeTree.getContainingSegment(col, UniversalSequenceNumber, client.getClientId());
         return segment.properties;
     }
 
@@ -181,8 +186,6 @@ export class TableDocument extends Component implements ITable {
         this.maybeCols = await this.root.wait("cols") as SharedNumberSequence;
         await this.connected;
 
-        const client = this.matrix.client;
-        this.maybeMergeTree = client.mergeTree;
         this.matrix.on("op", (op, local) => {
             if (!local) {
                 for (let row = 0; row < this.numRows; row++) {
@@ -230,7 +233,9 @@ export class TableDocument extends Component implements ITable {
     }
 
     private localRefToPosition(localRef: LocalReference) {
-        return localRef.toPosition(this.mergeTree, UniversalSequenceNumber, LocalClientId);
+        const client = this.maybeMatrix.client;
+        const mergeTree = client.mergeTree;
+        return localRef.toPosition(mergeTree, UniversalSequenceNumber, client.getClientId());
     }
 
     private readonly localRefToRowCol = (localRef: LocalReference) => this.positionToRowCol(this.localRefToPosition(localRef));

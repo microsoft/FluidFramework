@@ -1,10 +1,6 @@
 import "mocha";
 import { TableDocument } from "@chaincode/table-document";
-// import { DataStore } from "@prague/app-datastore";
-// import { createDocumentService } from "@prague/routerlicious-socket-storage";
-// import { FileSystemLoader } from "./filesystemloader";
-// import * as process from "process";
-import { createTable } from "./helper";
+import { createTable, makeId } from "./helper";
 import * as assert from "assert";
 
 describe("TableDocument", () => {
@@ -39,11 +35,10 @@ describe("TableDocument", () => {
             }
         
             for (let row = 0; row < table.numRows; row++) {
-                let s = "";
                 for (let col = 0; col < table.numCols; col++) {
-                    s = `${s}${table.getCellValue(row, col)} `;
+                    assert.strictEqual(table.getCellValue(row, col), `${row},${col}`);
                 }
-            } 
+            }
         });
     });
 
@@ -65,30 +60,32 @@ describe("TableDocument", () => {
             assert.deepEqual(table.getRowProperties(0), { id: "col0" });
             assert.strictEqual(table.getRowProperties(1), undefined);
         });
-    })
+    });
 
     describe("TableSlice", () => {
-        // GitHub Issue #1709 - LocalReference offset resolution appears to be incorrect during unit tests
-        // it("range follows edits", async () => {
-        //     table.setCellValue(0, 0, "start");
-        //     table.setCellValue(2, 2, "end");
+        it("range follows edits", async () => {
+            const min = { row: 1, col: 2 };
+            const max = { row: 3, col: 4 };
 
-        //     const slice = await table.createSlice(makeId("Table-Slice"), "unnamed-slice", 0, 0, 2, 2);
-        //     assert.strictEqual(slice.getCellValue(0, 0), "start");
-        //     assert.strictEqual(slice.getCellValue(2, 2), "end");
+            table.setCellValue(min.row, min.col, "start");
+            table.setCellValue(max.row, max.col, "end");
 
-        //     table.setCellValue(0, 0, "min");
-        //     table.setCellValue(2, 2, "max");
-        //     assert.strictEqual(slice.getCellValue(0, 0), "min");
-        //     assert.strictEqual(slice.getCellValue(2, 2), "max");
-        // });
+            const slice = await table.createSlice(makeId("Table-Slice"), "unnamed-slice", min.row, min.col, max.row, max.col);
+            assert.strictEqual(slice.getCellValue(min.row, min.col), "start");
+            assert.strictEqual(slice.getCellValue(max.row, max.col), "end");
 
-        // it("asserts when outside of slice", async () => {
-        //     const slice = await table.createSlice(makeId("Table-Slice"), "unnamed-slice", 0, 0, 2, 2);
-        //     assert.throws(() => slice.getCellValue(-1, 0));
-        //     assert.throws(() => slice.getCellValue(3, 0));
-        //     assert.throws(() => slice.getCellValue(0, -1));
-        //     assert.throws(() => slice.getCellValue(0, 3));
-        // });
+            table.setCellValue(min.row, min.col, "min");
+            table.setCellValue(max.row, max.col, "max");
+            assert.strictEqual(slice.getCellValue(min.row, min.col), "min");
+            assert.strictEqual(slice.getCellValue(max.row, max.col), "max");
+        });
+
+        it("asserts when outside of slice", async () => {
+            const slice = await table.createSlice(makeId("Table-Slice"), "unnamed-slice", 0, 0, 2, 2);
+            assert.throws(() => slice.getCellValue(-1, 0));
+            assert.throws(() => slice.getCellValue(3, 0));
+            assert.throws(() => slice.getCellValue(0, -1));
+            assert.throws(() => slice.getCellValue(0, 3));
+        });
     });
 });
