@@ -9,6 +9,7 @@ import {
 } from "@prague/container-definitions";
 import { IComponentRuntime } from "@prague/runtime-definitions";
 import { EventEmitter } from "events";
+import * as qs from "querystring";
 import { parse } from "url";
 
 class PlaybackPlatform extends EventEmitter implements IPlatform {
@@ -30,10 +31,12 @@ class PlaybackPlatform extends EventEmitter implements IPlatform {
 }
 
 class DeltaQueueManager {
+    public timestamps = new Map<number, number>();
     private resolve: () => void;
 
     constructor(private q: IDeltaQueue<ISequencedDocumentMessage>) {
-        this.q.on("op", (op) => {
+        this.q.on("op", (op: ISequencedDocumentMessage) => {
+            this.timestamps.set(op.sequenceNumber, op.timestamp);
             this.q.pause();
             this.resolve();
         });
@@ -141,7 +144,7 @@ export class Playback extends Document {
             const container = await codeContainerP;
             startButton.disabled = false;
             stopButton.disabled = false;
-            startButton.onclick = () => this.record(maybeDiv, stopButton, container);
+            startButton.onclick = () => this.record(maybeDiv, stopButton, container.container, container.dqm);
         }
     }
 
@@ -152,30 +155,33 @@ export class Playback extends Document {
         const url = `${windowUrl.protocol}//${windowUrl.host}/loader/prague/code${Date.now()}`;
         const code = await this.runtime.loader.resolve({ url });
 
-        // Wait for connection so that proposals can be sent
+        // Wait for connection so that proposals  can be sent
         if (!(code as any).connected) {
             await new Promise<void>((resolve) => code.on("connected", () => resolve()));
         }
 
-        // await code.getQuorum().propose("code2", "@container/monaco@0.1.3");
-        await code.getQuorum().propose("code2", "@container/pinpoint-editor@0.1.3");
+        // TODO URL params should be available at the time of create
+        const queryString = qs.parse(windowUrl.search ? windowUrl.search.substr(1) : "");
+        const pkg = queryString.cc ? queryString.cc as string : "@container/monaco@0.1.3";
+
+        await code.getQuorum().propose("code2", pkg);
 
         this.root.set("code", url);
     }
 
-    private async record(maybeDiv: HTMLDivElement, stop: HTMLButtonElement, container: IContainer) {
+    private async record(
+        maybeDiv: HTMLDivElement,
+        stop: HTMLButtonElement,
+        container: IContainer,
+        dqm: DeltaQueueManager,
+    ) {
         const mediaStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-
-        const vidTag2 = document.createElement("video");
-        vidTag2.setAttribute("playsinline", "");
-        vidTag2.setAttribute("autoplay", "");
-        vidTag2.setAttribute("muted", "");
-        maybeDiv.appendChild(vidTag2);
-        vidTag2.srcObject = mediaStream;
 
         const recorder = new MediaRecorder(mediaStream);
         recorder.start();
         const startSeqNum = container.deltaManager.referenceSequenceNumber;
+        const timestamp = dqm.timestamps.get(startSeqNum);
+
         console.log("Starting record at " + startSeqNum);
 
         const chunks = [];
@@ -185,7 +191,6 @@ export class Playback extends Document {
 
         recorder.addEventListener("stop", () => {
             const blob = new Blob(chunks);
-            const url = URL.createObjectURL(blob);
 
             const fileReader = new FileReader();
             fileReader.onload = (event) => {
@@ -206,16 +211,12 @@ export class Playback extends Document {
                         "recording",
                         {
                             sequenceNumber: startSeqNum,
+                            timestamp,
                             video: value.url,
                         });
                 });
             };
             fileReader.readAsArrayBuffer(blob);
-
-            const videoTag = document.createElement("video");
-            maybeDiv.appendChild(videoTag);
-            videoTag.src = url;
-            videoTag.play();
 
             for (const track of mediaStream.getTracks()) {
                 track.stop();
@@ -256,7 +257,11 @@ export class Playback extends Document {
         return response;
     }
 
-    private async attachCode(loader: ILoader, url: string, platform: IPlatform): Promise<IContainer> {
+    private async attachCode(
+        loader: ILoader,
+        url: string,
+        platform: IPlatform,
+    ): Promise<{ container: IContainer, dqm: DeltaQueueManager }> {
         const response = await loader.resolve({
             headers: { connect: "open,pause", version: null },
             url,
@@ -268,7 +273,7 @@ export class Playback extends Document {
 
         this.registerAttach(response, url, platform);
 
-        return response;
+        return { container: response, dqm };
     }
 
     private takeMessage(dqm: DeltaQueueManager) {

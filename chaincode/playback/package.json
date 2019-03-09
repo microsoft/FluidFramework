@@ -1,6 +1,6 @@
 {
   "name": "@container/playback",
-  "version": "0.2.31",
+  "version": "0.2.36",
   "description": "Pinpoint editor container",
   "main": "dist/index.js",
   "module": "lib/index.js",
@@ -17,11 +17,11 @@
   },
   "author": "Microsoft",
   "dependencies": {
-    "@prague/app-component": "^0.2.0",
-    "@prague/container-definitions": "^0.2.0",
-    "@prague/map": "^0.2.0",
-    "@prague/runtime": "^0.2.0",
-    "@prague/runtime-definitions": "^0.2.0",
+    "@prague/app-component": "^0.2.5545",
+    "@prague/container-definitions": "^0.2.5545",
+    "@prague/map": "^0.2.5545",
+    "@prague/runtime": "^0.2.5545",
+    "@prague/runtime-definitions": "^0.2.5545",
     "@types/dom-mediacapture-record": "^1.0.1",
     "react": "^16.8.3",
     "react-dom": "^16.8.3"
@@ -44,7 +44,7 @@
   },
   "prague": {
     "browser": {
-      "entrypoint": "pinpoint",
+      "entrypoint": "playback",
       "bundle": [
         "dist/main.bundle.js"
       ]
