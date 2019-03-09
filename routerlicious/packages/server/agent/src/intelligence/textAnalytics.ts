@@ -42,7 +42,6 @@ class TextAnalyticsIntelligentService implements IIntelligentService {
 
             let sentiment;
             if (!results[0].documents[0]) {
-                console.log(JSON.stringify(results[0].documents[0]));
                 sentiment = 0.5;
             } else {
                 sentiment = results[0].documents[0].score;

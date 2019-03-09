@@ -2,6 +2,7 @@ import * as api from "@prague/client-api";
 import { IClient, IHost } from "@prague/container-definitions";
 import { IHelpMessage } from "@prague/runtime-definitions";
 import { RateLimitter } from "@prague/utils";
+import { debug } from "./debug";
 import { loadDictionary } from "./dictionaryLoader";
 import { IntelWork } from "./intelWork";
 import { SnapshotWork } from "./snapshotWork";
@@ -27,7 +28,7 @@ export function registerToWork(alfred: string, doc: api.Document, client: IClien
                 console.error(err);
             });
         });
-        console.log(`Registered to perform tasks!`);
+        debug(`Registered to perform tasks!`);
     }
 }
 
@@ -86,7 +87,7 @@ async function performTask(
                 );
                 await spellWork.start(task);
             }, (err) => {
-                console.log(err);
+                debug(err);
             });
             break;
         case "translation":

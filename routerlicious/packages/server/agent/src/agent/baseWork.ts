@@ -2,6 +2,7 @@ import * as api from "@prague/client-api";
 import { Browser, IDocumentService, IHost } from "@prague/container-definitions";
 import { EventEmitter } from "events";
 import { parse } from "url";
+import { debug } from "./debug";
 import { IDocumentTaskInfo } from "./definitions";
 import { runAfterWait } from "./utils";
 
@@ -106,7 +107,7 @@ export class BaseWork extends EventEmitter {
     }
 
     private closeDocument() {
-        console.log(`Closing document ${this.document.tenantId}/${this.document.id} for task ${this.task}`);
+        debug(`Closing document ${this.document.tenantId}/${this.document.id} for task ${this.task}`);
 
         // Remove all listeners from the document.
         this.document.removeAllListeners();

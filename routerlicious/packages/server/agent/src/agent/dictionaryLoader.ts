@@ -1,6 +1,7 @@
 import * as MergeTree from "@prague/merge-tree";
 import * as request from "request";
 import * as url from "url";
+import { debug } from "./debug";
 
 export async function loadDictionary(serverUrl: string): Promise<MergeTree.TST<number>> {
     const dict = new MergeTree.TST<number>();
@@ -11,10 +12,10 @@ export async function loadDictionary(serverUrl: string): Promise<MergeTree.TST<n
                 const splitEntry = entry.split(";");
                 dict.put(splitEntry[0], parseInt(splitEntry[1], 10));
             }
-            console.log(`Loaded dictionary`);
+            debug(`Loaded dictionary`);
             resolve(dict);
         }, (err) => {
-            console.log(err);
+            debug(`Error loading dictionary ${err}`);
             reject(err);
         });
     });

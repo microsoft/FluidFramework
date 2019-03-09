@@ -1,4 +1,5 @@
 import { EventEmitter } from "events";
+import { debug } from "./debug";
 
 /**
  * Invokes a callback based on boolean or waits for event to fire.
@@ -13,7 +14,7 @@ export async function runAfterWait(
     } else {
         return new Promise<void>((resolve, reject) => {
             eventSource.on(eventName, async () => {
-                console.log(`${eventName} event fired!`);
+                debug(`${eventName} event fired!`);
                 await callback();
                 resolve();
             });
@@ -36,6 +37,6 @@ export function printMemoryUsage() {
     const used = process.memoryUsage();
     // tslint:disable-next-line
     for (const key in used) {
-        console.log(`${key} ${Math.round(used[key] / 1024 / 1024 * 100) / 100} MB`);
+        debug(`${key} ${Math.round(used[key] / 1024 / 1024 * 100) / 100} MB`);
     }
 }

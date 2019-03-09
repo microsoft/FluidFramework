@@ -3,6 +3,7 @@ import * as MergeTree from "@prague/merge-tree";
 import { EventEmitter } from "events";
 import { AgentLoader, IAgent } from "./agentLoader";
 import * as chaincode from "./chaincodes";
+import { debug } from "./debug";
 import { IDocumentServiceFactory, IDocumentTaskInfo, IWork, IWorkManager } from "./definitions";
 import { loadDictionary } from "./dictionaryLoader";
 import { IntelWork } from "./intelWork";
@@ -178,7 +179,7 @@ export class WorkManager extends EventEmitter implements IWorkManager {
 
     private async applyWork(fullId: string, workType: string, worker: IWork) {
         await worker.start(workType);
-        console.log(`Started work ${workType} for document ${fullId}`);
+        debug(`Started work ${workType} for document ${fullId}`);
         // Register existing intel agents to this document
         if (workType === "intel") {
             this.registerAgentsToNewDocument(fullId);
@@ -206,7 +207,7 @@ export class WorkManager extends EventEmitter implements IWorkManager {
             if (taskName === "intel") {
                 // const intelWork = doc[1] as IntelWork;
                 // intelWork.registerNewService(agent.code);
-                console.log(`Registered newly loaded ${agent.name} to document ${doc[0]}`);
+                debug(`Registered newly loaded ${agent.name} to document ${doc[0]}`);
             }
         }
     }
@@ -217,7 +218,7 @@ export class WorkManager extends EventEmitter implements IWorkManager {
         const agents = this.agentLoader.getAgents();
         // tslint:disable-next-line
         for (const name in agents) {
-            console.log(`Registering ${name} to document ${fullId}`);
+            debug(`Registering ${name} to document ${fullId}`);
             // intelWork.registerNewService(agents[name].code);
         }
     }

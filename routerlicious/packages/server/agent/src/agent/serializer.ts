@@ -1,6 +1,7 @@
 import { IDeltaManager, IDocumentMessage, ISequencedDocumentMessage, MessageType } from "@prague/container-definitions";
 import * as assert from "assert";
 import { EventEmitter } from "events";
+import { debug } from "./debug";
 
 /**
  * Wrapper interface holding snapshot details for a given op
@@ -79,7 +80,7 @@ export class Serializer extends EventEmitter {
         this.snapshotting = true;
 
         // Otherwise pause the processing of inbound ops and then resume once the snapshot is complete
-        console.log(`Snapshotting ${this.document.id}@${this.lastOp.sequenceNumber}`);
+        debug(`Snapshotting ${this.document.id}@${this.lastOp.sequenceNumber}`);
         this.document.deltaManager.inbound.pause();
         const snapshotP = this.document.snapshot(message).then(
             () => {
@@ -148,7 +149,7 @@ export class Serializer extends EventEmitter {
         assert(!this.idleTimer);
         this.idleTimer = setTimeout(
             () => {
-                console.log("Snapshotting due to being idle");
+                debug("Snapshotting due to being idle");
                 this.snapshot(this.lastOpSnapshotDetails.message, this.lastOpSnapshotDetails.required);
             },
             this.idleTime);

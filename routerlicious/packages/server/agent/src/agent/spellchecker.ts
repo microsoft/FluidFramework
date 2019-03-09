@@ -1,6 +1,7 @@
 import { ISequencedDocumentMessage } from "@prague/container-definitions";
 import * as MergeTree from "@prague/merge-tree";
 import * as Sequence from "@prague/sequence";
+import { debug } from "./debug";
 
 export interface IPgMarker {
     tile: MergeTree.Marker;
@@ -48,7 +49,7 @@ class Speller {
                         const end = re.lastIndex;
                         const textErrorInfo = this.makeTextErrorInfo(candidate);
                         if (this.verbose) {
-                            console.log(`spell (${startPG + start}, ${startPG + end}): ${textErrorInfo.text}`);
+                            debug(`spell (${startPG + start}, ${startPG + end}): ${textErrorInfo.text}`);
                         }
                         this.sharedString.annotateRange({ textError: textErrorInfo }, startPG + start, startPG + end);
                     }
@@ -228,12 +229,12 @@ class Speller {
                     }
                     const textErrorInfo = this.makeTextErrorInfo(candidate);
                     if (this.verbose) {
-                        console.log(`respell (${start}, ${end}): ${textErrorInfo.text}`);
+                        debug(`respell (${start}, ${end}): ${textErrorInfo.text}`);
                         let buf = "alternates: ";
                         for (const alt of textErrorInfo.alternates) {
                             buf += ` ${alt.text}:${alt.invDistance}:${alt.val}`;
                         }
-                        console.log(buf);
+                        debug(buf);
                     }
                     this.sharedString.annotateRange({ textError: textErrorInfo }, start, end);
                     runningStart = end;

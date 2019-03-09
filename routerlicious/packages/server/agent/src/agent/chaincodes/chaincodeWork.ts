@@ -9,6 +9,7 @@ import { Container, Loader } from "@prague/container-loader";
 import { IComponentRuntime } from "@prague/runtime-definitions";
 import { EventEmitter } from "events";
 import { parse } from "url";
+import { debug } from "../debug";
 import { IDocumentTaskInfo } from "../definitions";
 
 export class ChaincodeWork extends EventEmitter {
@@ -63,7 +64,7 @@ export class ChaincodeWork extends EventEmitter {
             // Remove all listeners and close the document.
             this.document.removeAllListeners();
             this.document.close();
-            console.log(`Closed document ${this.document.tenantId}/${this.document.id} for task ${this.task}`);
+            debug(`Closed document ${this.document.tenantId}/${this.document.id} for task ${this.task}`);
         }
     }
 
