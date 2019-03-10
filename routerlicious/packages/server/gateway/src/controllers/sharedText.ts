@@ -2,7 +2,7 @@
 import * as agent from "@prague/agent";
 import * as API from "@prague/client-api";
 import { controls, ui } from "@prague/client-ui";
-import { Browser, IClient, IPragueResolvedUrl, IResolvedUrl } from "@prague/container-definitions";
+import { Browser, IClient, IPragueResolvedUrl, IResolvedUrl, ISequencedClient } from "@prague/container-definitions";
 import * as DistributedMap from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
 import * as replaySocketStorage from "@prague/replay-socket-storage";
@@ -142,13 +142,12 @@ async function loadDocument(
     const root = await collabDoc.getRoot();
     console.log(`Getting root ${resolved.url} - ${performanceNow()}`);
 
-    collabDoc.on("clientJoin", (message) => {
-        console.log(`${JSON.stringify(message)} joined`);
-        console.log(`${Array.from(collabDoc.getClients().keys())}`);
+    collabDoc.runtime.getQuorum().on("addMember", (clientId: string, detail: ISequencedClient) => {
+        console.log(`${clientId} joined`);
+        console.log(JSON.stringify(detail));
     });
-    collabDoc.on("clientLeave", (message) => {
-        console.log(`${JSON.stringify(message)} left`);
-        console.log(`${Array.from(collabDoc.getClients().keys())}`);
+    collabDoc.runtime.getQuorum().on("removeMember", (clientId: string) => {
+        console.log(`${clientId} left`);
     });
 
     // If a text element already exists load it directly - otherwise load in pride + prejudice

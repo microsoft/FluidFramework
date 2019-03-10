@@ -103,7 +103,7 @@ export class BaseWork extends EventEmitter {
                 }
             }
         };
-        this.document.on("clientLeave", this.leaveHandler);
+        this.document.runtime.getQuorum().on("removeMember", this.leaveHandler);
     }
 
     private closeDocument() {

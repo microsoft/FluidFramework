@@ -160,7 +160,7 @@ export async function load(id: string, version: resources.ICommit, config: any, 
     updateSimulation(curr);
     prev = curr;
 
-    doc.on("clientLeave", () => {
+    doc.runtime.getQuorum().on("removeMember", () => {
         curr = generateGraphData(doc);
         if (!sameGraph(prev, curr)) {
             updateSimulation(curr);
@@ -170,7 +170,7 @@ export async function load(id: string, version: resources.ICommit, config: any, 
         }
     });
 
-    doc.on("clientJoin", () => {
+    doc.runtime.getQuorum().on("addMember", () => {
         curr = generateGraphData(doc);
         if (!sameGraph(prev, curr)) {
             updateSimulation(curr);

@@ -2921,11 +2921,10 @@ export class FlowView extends ui.Component {
         });
 
         // refresh cursors when clients join or leave
-        collabDocument.on("clientJoin", () => {
+        collabDocument.runtime.getQuorum().on("addMember", () => {
             this.updatePresenceCursors();
         });
-
-        collabDocument.on("clientLeave", () => {
+        collabDocument.runtime.getQuorum().on("removeMember", () => {
             this.updatePresenceCursors();
         });
 
