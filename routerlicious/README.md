@@ -14,7 +14,15 @@ via Redis.
 
 The services follow the [twelve factor](https://12factor.net) methodology and are considered [cattle and not pets](http://cloudscaling.com/blog/cloud-computing/the-history-of-pets-vs-cattle/).
 
-#### Questions can be directed to [Stack Overflow](https://stackoverflow.microsoft.com/questions/tagged/prague)
+## Getting Started
+
+To get started in Prague, we suggest that you build a [component](../chaincode/README.md). Visit the [chaincode directory](../chaincode/README.md) and use [Yo Prague](../tools/generator-prague/README.md) bootstrapper.
+
+If you want to dive into the Prague internals, keep reading below.
+
+## Help and Questions
+
+Questions can be directed to [Stack Overflow](https://stackoverflow.microsoft.com/questions/tagged/prague)
 
 ## Build and Deployment Status
 

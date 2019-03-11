@@ -1,10 +1,39 @@
 # Chaincode
 
-### What's a chaincode?
+Use [Yo Prague](../tools/generator-prague/README.md) to start building components and chaincode.
+
+## What's a chaincode?
 A chaincode is a installable block of code. They often create web components following the [Prague component model](../doc/architecture/web-component-model.md).
 
-### How do I build a chaincode?
-The easiest way to build a chaincode is to use [Yo Prague](../tools/generator-prague). We strongly suggest using Yo Prague as your starting point. For more exotic features, you can look through the examples in this directory.
+## How do I build a chaincode?
+Build a chaincode with [Yo Prague](../tools/generator-prague/README.md). We strongly suggest using Yo Prague as your starting point. For more exotic features, you can look through the examples in this directory.
 
-### Troubleshooting
-If you find a broken chaincode, feel free to fix it. We iterate on chaincode examples very quickly. The most recently updated chaincodes will always be working, but we don't guarentee updates to older chaincode.
+## How do I deploy a chaincode?
+
+To deploy and make your chaincode "Live" you'll have to deploy it to verdaccio, our private NPM repository.
+
+Go to https://packages.wu2.prague.office-int.com
+
+Login with:
+
+    UN: prague
+    PW: bohemia
+
+And follow the npm adduser steps
+
+To deploy, use
+
+    npm run deploy
+
+
+To view your chaincode, you can go to the URL
+
+    https://www.wu2-ppe.prague.office-int.com/loader/stupefied-kilby/prague/{random container name}?chaincode={pkg.name}@{pkg.version};
+
+This link is then shareable and, in an expanding list of components, embeddable!
+
+
+## Troubleshooting
+If you find a broken chaincode, feel free to fix it. We iterate on chaincode examples very quickly. The most recently updated chaincodes will always be working, but we don't guarantee updates to older chaincode.
+
+If you have questions, please use the [Microsoft internal StackOverflow](https://stackoverflow.microsoft.com/) using the [tag Prague](https://stackoverflow.microsoft.com/questions/tagged/prague)
