@@ -6,7 +6,7 @@
 
 Bootstrap a component with [Yo Prague](./tools/generator-prague/README.md).
 
-To use Yo Prague, do these one time steps. * Troubleshooting: [Stack Overflow](https://stackoverflow.microsoft.com/questions/137930/npm-install-fails-with-auth-issues/137931#137931)
+To use Yo Prague, do these one time steps. 
 
 ````bash
 npm install -g yo
@@ -23,6 +23,8 @@ yo prague
 ````
 
 [Chaincode](./chaincode/README.md) has additional chaincode examples.
+
+\* For Yo Prague setup issues: [Unauthorized - Stack Overflow](https://stackoverflow.microsoft.com/questions/137930/npm-install-fails-with-auth-issues/137931#137931)
 
 ## Stack Overflow
 The Prague team answers questions on the [Microsoft internal stack overflow](https://stackoverflow.microsoft.com/) using the [tag Prague](https://stackoverflow.microsoft.com/questions/tagged/prague)
