@@ -47,7 +47,7 @@ data:
             "packageUrl": "{{ .Values.endpoints.packageUrl }}",
             "blobStorageUrl": "{{ .Values.endpoints.historianUrl }}",
             "repository": "prague",
-            "permission": []
+            "permission": ["chain-snapshot", "chain-spell", "chain-intel", "chain-translation"]
         },
         "tmz": {
             "alfred": "{{ .Values.endpoints.alfred }}",
