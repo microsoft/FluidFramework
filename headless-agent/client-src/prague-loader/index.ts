@@ -42,7 +42,7 @@ export async function startLoading(
     packageUrl: string,
     loaderType: string): Promise<void> {
 
-    console.log(`Loading ${id}...`);
+    console.log(`Loading ${id} as ${loaderType}`);
     const documentServices = createDocumentService(routerlicious, historian);
 
     const codeLoader = new WebLoader(packageUrl);
@@ -65,12 +65,15 @@ export async function startLoading(
     }
 
     console.log(`${container.clientId} is now fully connected to ${container.id}`);
+
     checkContainerActivity(container);
 
     const platform = new LocalPlatform(document.getElementById("content"));
     registerAttach(loader, container, baseUrl, platform);
 }
 
+// Checks container quorum for connected clients. Once all client leaves,
+// invokes the close function injected by puppeteer launcher.
 function checkContainerActivity(container: Container) {
     const quorum = container.getQuorum();
     quorum.on("removeMember", (clientId: string) => {

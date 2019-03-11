@@ -1,4 +1,4 @@
-export function craftHtml(
+export function generateLoaderHTML(
     docId: string,
     routerlicious: string,
     historian: string,

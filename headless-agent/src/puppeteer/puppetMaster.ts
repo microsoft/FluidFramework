@@ -1,6 +1,11 @@
 import * as puppeteer from "puppeteer";
+import * as winston from "winston";
 import { ICache } from "../redisCache";
-import { craftHtml } from "./htmlGenerator";
+import { createCacheHTML } from "./cacheGenerator";
+import { generateLoaderHTML } from "./htmlGenerator";
+
+const cachingIntervalMS = 10000;
+const cachePiggybackType = "snapshot";
 
 export class PuppetMaster {
     private browser: puppeteer.Browser;
@@ -27,7 +32,7 @@ export class PuppetMaster {
     private async launchPage(): Promise<void> {
         const consoleFn = (msg: puppeteer.ConsoleMessage) => {
             const text = msg.text();
-            console.log(text);
+            winston.info(text);
         };
         this.page.on("console", consoleFn);
 
@@ -40,19 +45,10 @@ export class PuppetMaster {
             };
         });
 
-        await this.page.exposeFunction("closeContainer", async () => {
-            console.log(`Close function invoked! Page and Browser should close now!`);
-            this.page.removeAllListeners();
-            if (this.cachingTimer) {
-                clearInterval(this.cachingTimer);
-                this.cachingTimer = undefined;
-            }
-            await this.page.close();
-            await this.browser.close();
-        });
+        await this.attachEndOfLife();
 
         await this.page.addScriptTag({path: "client/prague-loader.bundle.js"});
-        const htmlToRender = craftHtml(
+        const htmlToRender = generateLoaderHTML(
             this.documentId,
             this.routerlicious,
             this.historian,
@@ -62,41 +58,35 @@ export class PuppetMaster {
             this.agentType);
         await this.page.setContent(htmlToRender);
 
-        this.cachingTimer = setInterval(() => {
-            this.cachePage();
-        }, 10000);
+        this.upsertPageCache();
     }
 
-    private async cachePage() {
-        const bodyHTML = await this.page.evaluate(() => document.body.innerHTML);
-        const headHTML = await this.page.evaluate(() => document.head.innerHTML);
-        const cleanBodyHTML = bodyHTML.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "");
-        const cleanHeadHTML = headHTML.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "");
-        const pageHTML = this.craftCachePage(cleanHeadHTML, cleanBodyHTML);
-        // const pageContent = await this.page.content();
-        // const cleanContent = pageContent.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "");
-        if (this.cache) {
-            this.cache.set(`${this.tenantId}-${this.documentId}`, pageHTML).then(() => {
-                console.log(`${this.tenantId}:${this.documentId} - Updated page cache`);
-            }, (err) => {
-                console.log(`Error: ${err}`);
-            });
+    // Code running inside Browser will invoke closeContainer. In response,
+    // Puppeteer will close the tab and browser window.
+    private async attachEndOfLife() {
+        await this.page.exposeFunction("closeContainer", async () => {
+            this.page.removeAllListeners();
+            if (this.cachingTimer) {
+                clearInterval(this.cachingTimer);
+                this.cachingTimer = undefined;
+            }
+            await this.page.close();
+            await this.browser.close();
+            winston.info(`Closed browser for ${this.tenantId}/${this.documentId}/${this.agentType}`);
+        });
+    }
+
+    // todo (mdaumi): Right now we piggyback on a agent to cache the page.
+    // May be make this an independent agent?
+    private upsertPageCache() {
+        if (this.cache && this.agentType === cachePiggybackType) {
+            this.cachingTimer = setInterval(async () => {
+                this.cache.set(`${this.tenantId}-${this.documentId}`, await createCacheHTML(this.page)).then(() => {
+                    winston.info(`Updated page cache for ${this.tenantId}/${this.documentId}`);
+                }, (err) => {
+                    winston.error(err);
+                });
+            }, cachingIntervalMS);
         }
-    }
-
-    private craftCachePage(headHTML: string, bodyHTML: string) {
-        const html = `
-        <!DOCTYPE html>
-        <html lang="en">
-            <head>
-                ${headHTML}
-            </head>
-            <body>
-                <div id="content">
-                    ${bodyHTML}
-                </div>
-            </body>
-        </html>`;
-        return html;
     }
 }

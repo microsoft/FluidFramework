@@ -7,6 +7,7 @@ const historian = "https://historian.wu2-ppe.prague.office-int.com";
 const tenantId = "prague";
 const secret = "43cfc3fbf04a97c0921fd23ff10f9e4b";
 const packageUrl = "https://pragueauspkn-3873244262.azureedge.net";
+const loaderType = "snapshot";
 
 async function launchPuppeteer(documentId: string) {
     const user = {
@@ -29,7 +30,7 @@ async function launchPuppeteer(documentId: string) {
         tenantId,
         token,
         packageUrl,
-    );
+        loaderType);
 
     return puppetMaster.launch();
 }
