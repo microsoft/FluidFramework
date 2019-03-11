@@ -2,11 +2,11 @@
 
 ![Prague](http://wallpapers-best.com/uploads/posts/2015-09/18_prague.jpg)
 
-## Get Started with Prague
+## Build with Prague
 
-Bootstrap a component with [Yo Prague](./tools/generator-prague/README.md).
+Use [Yo Prague](./tools/generator-prague/README.md) to get set up quickly.
 
-To use Yo Prague, do these one time steps. 
+First, do these one time steps:
 
 ````bash
 npm install -g yo
@@ -22,21 +22,12 @@ Yo Prague is now ready. Try it!
 yo prague
 ````
 
-[Chaincode](./chaincode/README.md) has additional chaincode examples.
+[Chaincode](./chaincode/README.md) has additional examples of building components with Prague.
 
 \* For Yo Prague setup issues: [Unauthorized - Stack Overflow](https://stackoverflow.microsoft.com/questions/137930/npm-install-fails-with-auth-issues/137931#137931)
 
 ## Stack Overflow
 The Prague team answers questions on the [Microsoft internal stack overflow](https://stackoverflow.microsoft.com/) using the [tag Prague](https://stackoverflow.microsoft.com/questions/tagged/prague)
-
-## Demo Videos
-[Prague Highlight Reel](https://msit.microsoftstream.com/video/fde32402-b458-431e-b223-26a4cdfc350c)
-
-[Translations](https://msit.microsoftstream.com/video/baf075cb-8718-4b16-aa73-400b64766317)
-
-[Yo Prague (Prague Getting Started)](https://msit.microsoftstream.com/video/95532bfa-919e-4233-943e-55faaf418234)
-
-[All Demos](https://msit.microsoftstream.com/channel/de63dd15-b6a2-4237-9fbc-2a2629b12fbc)
 
 ## FAQ
 
@@ -60,6 +51,16 @@ The Prague team answers questions on the [Microsoft internal stack overflow](htt
 Architectural design principals can be found in the [doc/architecture](./doc/architecture) folder.
 
 Developers looking to make deep/advanced Prague changes can find our latest implementations in [Routerlicious](./routerlicious).
+
+## Demo Videos
+[Prague Highlight Reel](https://msit.microsoftstream.com/video/fde32402-b458-431e-b223-26a4cdfc350c)
+
+[Translations](https://msit.microsoftstream.com/video/baf075cb-8718-4b16-aa73-400b64766317)
+
+[Yo Prague (Prague Getting Started)](https://msit.microsoftstream.com/video/95532bfa-919e-4233-943e-55faaf418234)
+
+[All Demos](https://msit.microsoftstream.com/channel/de63dd15-b6a2-4237-9fbc-2a2629b12fbc)
+
 
 <br />
 <br />
