@@ -46,6 +46,8 @@ The Prague team answers questions on the [Microsoft internal stack overflow](htt
   * Architectural design principals can be found in the [doc/architecture](./doc/architecture) folder. 
 * How do I get started?
   * Check out [Yo Prague](./tools/generator-prague/README.md)
+* Do you have a homepage?
+  * [Yep.](https://www.wu2-ppe.prague.office-int.com)
 * Do you have any suggested reading before I get started?
   * Get hacking: check out yo prague!
   * If you need to read, check out our [architecture documents](./doc/architecture)
@@ -109,7 +111,7 @@ To ensure minimal latency and smoother user experience, we deploy our backend in
 * https://historian.wu2.prague.office-int.com
 
 Our code is deployed immediately after check in to:
-* https://alfred.wu2.prague.office-int.com
+* https://www.wu2-ppe.prague.office-int.com
 * https://historian.wu2.prague.office-int.com
 
 East coast developers are encouraged to use the following endpoints(located at Virginia):
