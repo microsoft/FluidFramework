@@ -24,7 +24,7 @@ export function generateLoaderHTML(
         "${token}",
         "${key}",
         "${packageUrl}",
-        "${loaderType}");
+        "${loaderType}")
     .catch((error) => console.error(error));
     </script>
     <body>

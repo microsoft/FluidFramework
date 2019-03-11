@@ -15,5 +15,5 @@ And to run
 
 To run locally using cli (defaults to PPE endpoint)
 ```
-`node dist/puppeteer/cli.js -d <documentId>`
+`node dist/puppeteer/cli.js -d <documentId> -t <agentType>`
 ```

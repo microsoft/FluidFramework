@@ -67,6 +67,7 @@ export class PuppetMaster {
     // Puppeteer will close the tab and browser window.
     private async attachEndOfLife() {
         await this.page.exposeFunction("closeContainer", async () => {
+            winston.info(`Closing browser for ${this.tenantId}/${this.documentId}/${this.agentType}`);
             this.page.removeAllListeners();
             if (this.cachingTimer) {
                 clearInterval(this.cachingTimer);
@@ -74,7 +75,6 @@ export class PuppetMaster {
             }
             await this.page.close();
             await this.browser.close();
-            winston.info(`Closed browser for ${this.tenantId}/${this.documentId}/${this.agentType}`);
         });
     }
 
