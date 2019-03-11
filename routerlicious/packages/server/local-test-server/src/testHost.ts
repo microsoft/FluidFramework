@@ -1,4 +1,4 @@
-import { ISharedObjectExtension } from "@prague/api-definitions";
+import { ISharedObject, ISharedObjectExtension } from "@prague/api-definitions";
 import { Component } from "@prague/app-component";
 import { DataStore } from "@prague/app-datastore";
 import { IChaincodeComponent } from "@prague/runtime-definitions";
@@ -23,25 +23,61 @@ class TestRootComponent extends Component {
     public openComponent<T extends IChaincodeComponent>(
         id: string,
         wait: boolean,
-        services: ReadonlyArray<[string, Promise<any>]>,
+        services?: ReadonlyArray<[string, Promise<any>]>,
     ) {
         return this.host.openComponent<T>(id, wait, services);
     }
 
-    public async createType(id: string, type: string) {
-        return this.runtime.createChannel(id, type);
+    public createType<T extends ISharedObject>(id: string, type: string) {
+        const instance = this.runtime.createChannel(id, type) as T;
+        this.root.set(id, instance);
+        return instance;
     }
 
-    public async openType(id: string, type: string) {
-        return this.runtime.getChannel("id");
+    public async getType<T extends ISharedObject>(id: string) {
+        return this.root.wait(id) as Promise<T>;
     }
 
-    protected async create(): Promise<void> { /* do nothing */ }
-    protected async opened(): Promise<void> { /* do nothing */ }
+    public async waitFor(fenceId: number) {
+        const key = `fence-${fenceId}`;
+        await this.root.wait(key);
+    }
+
+    public mark(fenceId: number) {
+        this.root.set(`fence-${fenceId}`, true);
+    }
+
+    public unmark(fenceId: number) {
+        this.root.delete(`fence-${fenceId}`);
+    }
+
+    protected async create(): Promise<void> {
+        this.root.set("ready", true);
+    }
+
+    protected async opened(): Promise<void> {
+        await this.connected;
+        await this.root.wait("ready");
+    }
 }
 
+let lastFence = 0;
+
 export class TestHost {
-    private readonly testDeltaConnectionServer: ITestDeltaConnectionServer;
+    public static async sync(...hosts: TestHost[]) {
+        for (const host of hosts) {
+            const fence = await host.mark();
+            for (const other of hosts) {
+                if (other === host) {
+                    continue;
+                }
+                await other.waitFor(fence);
+            }
+            await host.unmark(fence);
+        }
+    }
+
+    private readonly deltaConnectionServer: ITestDeltaConnectionServer;
     private rootResolver: (accept: TestRootComponent) => void;
 
     // tslint:disable-next-line:promise-must-complete
@@ -50,10 +86,11 @@ export class TestHost {
     private components: IChaincodeComponent[] = [];
 
     constructor(
-        componentRegistry: ReadonlyArray<[string, new () => IChaincodeComponent]>,
-        types?: ReadonlyArray<[string, ISharedObjectExtension]>,
+        private readonly componentRegistry: ReadonlyArray<[string, new () => IChaincodeComponent]>,
+        private readonly types?: ReadonlyArray<[string, ISharedObjectExtension]>,
+        deltaConnectionServer?: ITestDeltaConnectionServer,
     ) {
-        this.testDeltaConnectionServer = TestDeltaConnectionServer.Create();
+        this.deltaConnectionServer = deltaConnectionServer || TestDeltaConnectionServer.Create();
 
         // tslint:disable:no-http-string - Allow fake test URLs when constructing DataStore.
         const store = new DataStore(
@@ -74,7 +111,7 @@ export class TestHost {
                         ]])),
                 }],
             ]),
-            createTestDocumentService(this.testDeltaConnectionServer),
+            createTestDocumentService(this.deltaConnectionServer),
             "tokenKey",
             "tenantId",
             "userId");
@@ -84,6 +121,13 @@ export class TestHost {
             .catch((reason) => { throw new Error(`${reason}`); });
     }
 
+    public clone() {
+        return new TestHost(
+            this.componentRegistry,
+            this.types,
+            this.deltaConnectionServer);
+    }
+
     public async createComponent<T extends IChaincodeComponent>(
         id: string,
         type: string,
@@ -91,18 +135,45 @@ export class TestHost {
     ) {
         const root = await this.root;
         await root.createComponent(id, type);
+        return this.openComponent<T>(id, services);
+    }
+
+    public async openComponent<T extends IChaincodeComponent>(
+        id: string,
+        services?: ReadonlyArray<[string, Promise<any>]>,
+    ) {
+        const root = await this.root;
         const component = await root.openComponent<T>(id, /* wait: */ true, services);
         this.components.push(component);
         return component;
     }
 
-    public async createType<T>(id: string, type: string): Promise<T> {
+    public async createType<T extends ISharedObject>(id: string, type: string): Promise<T> {
         const root = await this.root;
-        return root.createType(id, type) as any;
+        return root.createType<T>(id, type);
+    }
+
+    public async getType<T extends ISharedObject>(id: string): Promise<T> {
+        const root = await this.root;
+        return root.getType<T>(id);
     }
 
     public async close() {
         this.components.forEach((component) => component.close);
-        await this.testDeltaConnectionServer.webSocketServer.close();
+        await this.deltaConnectionServer.webSocketServer.close();
+    }
+
+    private async mark() {
+        lastFence += 1;
+        (await this.root).mark(lastFence);
+        return lastFence;
+    }
+
+    private async waitFor(id: number) {
+        return (await this.root).waitFor(id);
+    }
+
+    private async unmark(id: number) {
+        (await this.root).unmark(id);
     }
 }

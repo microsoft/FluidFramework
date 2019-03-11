@@ -1,72 +1,174 @@
+import { ISharedObjectExtension } from "@prague/api-definitions";
 import { Component } from "@prague/app-component";
-import { MapExtension } from "@prague/map";
+import { Counter, CounterValueType, MapExtension, registerDefaultValueType } from "@prague/map";
 import { IChaincodeComponent } from "@prague/runtime-definitions";
-import { Deferred } from "@prague/utils";
 import * as assert from "assert";
 import { TestHost } from "..";
+import { SharedString, SharedStringExtension } from "../../../../runtime/sequence/dist";
 
 export class TestComponent extends Component {
-    public get count(): number { return this.root.get("count"); }
     public static readonly type = "@chaincode/test-component";
-
-    private ready = new Deferred<void>();
+    private counter: Counter;
 
     constructor() {
         super([[MapExtension.Type, new MapExtension()]]);
+        registerDefaultValueType(new CounterValueType());
     }
 
-    public async opened() {
-        await this.root.wait("count");
-        this.ready.resolve();
-    }
+    public get value(): number { return this.counter.value; }
 
     public increment() {
-        // tslint:disable-next-line:no-backbone-get-set-outside-model
-        this.root.set("count", this.count + 1);
-    }
-
-    public async wait(key: string) {
-        return this.root.wait(key);
-    }
-
-    public set(key: string) {
-        this.root.set(key, true);
+        this.counter.increment(1);
     }
 
     protected async create() {
         // tslint:disable-next-line:no-backbone-get-set-outside-model
-        this.root.set("count", 0);
+        this.root.set("count", 0, CounterValueType.Name);
+    }
+
+    protected async opened() {
+        this.counter = await this.root.wait("count");
     }
 }
 
+const testComponents: ReadonlyArray<[string, new () => IChaincodeComponent]> = [
+    [TestComponent.type, TestComponent],
+];
+
+// tslint:disable-next-line:mocha-no-side-effect-code
+const testTypes: ReadonlyArray<[string, ISharedObjectExtension]> = [
+    [SharedStringExtension.Type, new SharedStringExtension()],
+];
+
 describe("TestHost", () => {
-    it("open 2 Documents", async () => {
-        const testComponents: ReadonlyArray<[string, new () => IChaincodeComponent]> = [
-            [TestComponent.type, TestComponent],
-        ];
+    describe("1 component", () => {
+        let host: TestHost;
+        let comp: TestComponent;
 
-        const host1 = new TestHost(testComponents);
-        const doc1 = await host1.createComponent<TestComponent>("documentId", TestComponent.type);
-        assert.equal(doc1.count, 0, "Incorrect count in Doc1");
+        beforeEach(async () => {
+            host = new TestHost(testComponents);
+            comp = await host.createComponent<TestComponent>("documentId", TestComponent.type);
+        });
 
-        doc1.increment();
-        assert.equal(doc1.count, 1, "Incorrect count in Doc1 after increment");
+        afterEach(async () => {
+            await comp.close();
+            await host.close();
+        });
 
-        doc1.set("done1");
-        const host2 = new TestHost(testComponents);
+        it("opened", async () => {
+            assert(comp instanceof TestComponent, "createComponent() must return the expected component type.");
+        });
+    });
 
-        // TODO: this line is hanging after using a test web socket in LocalNode.
-        const doc2 = await host2.createComponent<TestComponent>("documentId", TestComponent.type);
-        await doc2.wait("done1");
-        console.log("sync completed");
-        assert.equal(doc2.count, 1, "Incorrect count in Doc2");
+    describe("2 compenents", () => {
+        it("early open / late close", async () => {
+            const host1 = new TestHost(testComponents);
+            const host2 = host1.clone();
 
-        doc2.increment();
-        assert.equal(doc2.count, 2, "Incorrect count in Doc2 after increment");
-        await doc1.close();
-        await doc2.close();
+            // Create/open both instance of TestComponent before applying ops.
+            const comp1 = await host1.createComponent<TestComponent>("documentId", TestComponent.type);
+            const comp2 = await host2.openComponent<TestComponent>("documentId");
+            assert(comp1 !== comp2, "Each host must return a separate TestComponent instance.");
 
-        await host1.close();
-        await host2.close();
+            comp1.increment();
+            assert.equal(comp1.value, 1, "Local update by 'comp1' must be promptly observable");
+
+            await TestHost.sync(host1, host2);
+            assert.equal(comp2.value, 1, "Remote update by 'comp1' must be observable to 'comp2' after sync.");
+
+            comp2.increment();
+            assert.equal(comp2.value, 2, "Local update by 'comp2' must be promptly observable");
+
+            await TestHost.sync(host1, host2);
+            assert.equal(comp1.value, 2, "Remote update by 'comp2' must be observable to 'comp1' after sync.");
+
+            // Close components & hosts after test completes.
+            await comp1.close();
+            await comp2.close();
+            await host1.close();
+            await host2.close();
+        });
+
+        it("late open / early close", async () => {
+            const host1 = new TestHost(testComponents);
+            const comp1 = await host1.createComponent<TestComponent>("documentId", TestComponent.type);
+
+            comp1.increment();
+            assert.equal(comp1.value, 1, "Local update by 'comp1' must be promptly observable");
+
+            // Wait until ops are pending before opening second TestComponent instance.
+            const host2 = host1.clone();
+            const comp2 = await host2.openComponent<TestComponent>("documentId");
+            assert(comp1 !== comp2, "Each host must return a separate TestComponent instance.");
+
+            await TestHost.sync(host1, host2);
+            assert.equal(comp2.value, 1, "Remote update by 'comp1' must be observable to 'comp2' after sync.");
+
+            comp2.increment();
+            assert.equal(comp2.value, 2, "Local update by 'comp2' must be promptly observable");
+
+            await TestHost.sync(host1, host2);
+
+            // Close second TestComponent instance as soon as we're finished with it.
+            await comp2.close();
+            await host2.close();
+
+            assert.equal(comp1.value, 2, "Remote update by 'comp2' must be observable to 'comp1' after sync.");
+
+            await comp1.close();
+            await host1.close();
+        });
+    });
+
+    describe("1 DDT", () => {
+        describe("1 data type", () => {
+            let host: TestHost;
+            let text: SharedString;
+
+            beforeEach(async () => {
+                host = new TestHost([], testTypes);
+                text = await host.createType("text", SharedStringExtension.Type);
+            });
+
+            afterEach(async () => {
+                await host.close();
+            });
+
+            it("opened", async () => {
+                assert(text instanceof SharedString, "createType() must return the expected component type.");
+            });
+        });
+
+        describe("2 data types", () => {
+            let host1: TestHost;
+            let host2: TestHost;
+            let text1: SharedString;
+            let text2: SharedString;
+
+            beforeEach(async () => {
+                host1 = new TestHost([], testTypes);
+                text1 = await host1.createType("text", SharedStringExtension.Type);
+
+                host2 = host1.clone();
+                text2 = await host2.getType("text");
+            });
+
+            afterEach(async () => {
+                await host1.close();
+                await host2.close();
+            });
+
+            it("edits propagate", async () => {
+                assert.strictEqual(text1.client.mergeTree.root.cachedLength, 0);
+                assert.strictEqual(text2.client.mergeTree.root.cachedLength, 0);
+
+                text1.insertText("1", 0);
+                text2.insertText("2", 0);
+                await TestHost.sync(host1, host2);
+
+                assert.strictEqual(text1.client.mergeTree.root.cachedLength, 2);
+                assert.strictEqual(text2.client.mergeTree.root.cachedLength, 2);
+            });
+        });
     });
 });
