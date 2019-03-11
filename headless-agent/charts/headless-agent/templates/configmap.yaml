@@ -47,7 +47,8 @@ data:
             "packageUrl": "{{ .Values.endpoints.packageUrl }}",
             "blobStorageUrl": "{{ .Values.endpoints.historianUrl }}",
             "repository": "prague",
-            "permission": ["chain-snapshot", "chain-spell", "chain-intel", "chain-translation"]
+            "permission": ["chain-snapshot", "chain-spell", "chain-intel", "chain-translation"],
+            "key": "VBQyoGpEYrTn3XQPtXW3K8fFDd"
         },
         "tmz": {
             "alfred": "{{ .Values.endpoints.alfred }}",

@@ -4,6 +4,7 @@ export function generateLoaderHTML(
     historian: string,
     tenantId: string,
     token: string,
+    key: string,
     packageUrl: string,
     loaderType: string) {
     const html = `
@@ -21,6 +22,7 @@ export function generateLoaderHTML(
         "${historian}",
         "${tenantId}",
         "${token}",
+        "${key}",
         "${packageUrl}",
         "${loaderType}");
     .catch((error) => console.error(error));

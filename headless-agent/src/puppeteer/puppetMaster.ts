@@ -17,6 +17,7 @@ export class PuppetMaster {
         private historian: string,
         private tenantId: string,
         private token: string,
+        private key: string,
         private packageUrl: string,
         private agentType: string,
         private cache?: ICache,
@@ -54,6 +55,7 @@ export class PuppetMaster {
             this.historian,
             this.tenantId,
             this.token,
+            this.key,
             this.packageUrl,
             this.agentType);
         await this.page.setContent(htmlToRender);

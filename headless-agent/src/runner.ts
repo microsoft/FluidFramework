@@ -40,6 +40,7 @@ export class HeadlessRunner implements utils.IRunner {
                     this.workerConfig.blobStorageUrl,
                     requestMessage.tenantId,
                     requestMessage.token,
+                    this.workerConfig.key,
                     this.workerConfig.packageUrl,
                     "snapshot",
                     this.cache);
