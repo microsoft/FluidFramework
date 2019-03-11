@@ -61,6 +61,11 @@ module.exports = class extends Generator {
     );
 
     this.fs.copy(
+      this.templatePath("README.md"), // FROM
+      this.destinationPath("./README.md") // TO Base Folder
+    );
+
+    this.fs.copy(
       this.templatePath(".*"), // FROM
       this.destinationPath("./") // TO
     );
