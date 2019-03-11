@@ -6,7 +6,7 @@
 
 Bootstrap a component with [Yo Prague](./tools/generator-prague/README.md).
 
-To use Yo Prague, do these one time steps. If you have install issues: [private npm problems](https://stackoverflow.microsoft.com/questions/137930/npm-install-fails-with-auth-issues/137931#137931)
+To use Yo Prague, do these one time steps. [Yo Prague Setup Issues](https://stackoverflow.microsoft.com/questions/137930/npm-install-fails-with-auth-issues/137931#137931)
 
 ````bash
 npm install -g yo
