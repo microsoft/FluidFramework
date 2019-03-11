@@ -25,45 +25,8 @@ We suggest you start by typing:
 
 ## Get Coding
 
-The two phases of running a chaincode are the create and the render.
+Uncomment the commented code in index.tsx to add a title to your component.
 
-Create sets the initial schema.
-
-Render uses the distributed data types to create an exciting view experience.
-
-````TypeScript
-  // Create the component's schema and perform other initialization tasks
-  // (only called when document is initially created).
-  protected async create() {
-    this.root.set("clicks", 0, CounterValueType.Name);
-  }
-
-  // Renders your chaincode
-  protected async render(host: HTMLDivElement) {
-    // Get the distributed Counter
-    const counter = await this.root.wait<Counter>("clicks");
-
-    // Create a <span> that displays the current value of 'clicks'.
-    const span = document.createElement("span");
-    const update = () => {
-      span.textContent = counter.value.toString();
-    };
-    this.root.on("valueChanged", update);
-    update();
-
-    // Create a button that increments the value of 'clicks' when pressed.
-    const btn = document.createElement("button");
-    btn.textContent = "+";
-    btn.addEventListener("click", () => {
-      counter.increment(1);
-    });
-
-    // Add both to the <div> provided by the host:
-    host.appendChild(span);
-    host.appendChild(btn);
-  }
-
-````
 
 ## Deploy
 

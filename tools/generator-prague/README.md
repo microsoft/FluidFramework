@@ -19,8 +19,9 @@ Try it now.
 ````bash
 yo prague
 ````
+---
 
-### NPM or VSTS Auth Issue and Private NPM Repositories
+## NPM or VSTS Auth Issue and Private NPM Repositories
 
 If you run into an auth issue. Please set up your .npmrc.
 
@@ -28,7 +29,7 @@ If you run into an auth issue. Please set up your .npmrc.
 https://www.npmjs.com/package/vsts-npm-auth
 
 #### Mac
-To get started simply
+
 * Navigate to our production npm repository https://offnet.visualstudio.com/officenet/_packaging?feed=prague&_a=feed
 * Click the "Connect to feed" link
 * Choose "npm"
