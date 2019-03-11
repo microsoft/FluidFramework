@@ -39,7 +39,8 @@ export async function startLoading(
     historian: string,
     tenantId: string,
     token: string,
-    packageUrl: string): Promise<void> {
+    packageUrl: string,
+    loaderType: string): Promise<void> {
 
     console.log(`Loading ${id}...`);
     const documentServices = createDocumentService(routerlicious, historian);
@@ -51,7 +52,7 @@ export async function startLoading(
         { tokenProvider },
         documentServices,
         codeLoader,
-        { encrypted: undefined, localMinSeq: 0, blockUpdateMarkers: true, client: { type: "snapshot"} });
+        { encrypted: undefined, localMinSeq: 0, blockUpdateMarkers: true, client: { type: loaderType } });
 
     const baseUrl =
         `prague://prague.com/` +

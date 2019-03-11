@@ -13,10 +13,11 @@ export class PuppetMaster {
         private tenantId: string,
         private token: string,
         private packageUrl: string,
+        private agentType: string,
         private cache?: ICache,
         ) {}
     public async launch() {
-        // { headless: false, args: ["--start-fullscreen"] }
+        // Debug parameters if running locally { headless: false, args: ["--start-fullscreen"] }
         this.browser = await puppeteer.launch();
         this.page = await this.browser.newPage();
         await this.page.setViewport({ width: 1920, height: 1080 });
@@ -52,7 +53,13 @@ export class PuppetMaster {
 
         await this.page.addScriptTag({path: "client/prague-loader.bundle.js"});
         const htmlToRender = craftHtml(
-            this.documentId, this.routerlicious, this.historian, this.tenantId, this.token, this.packageUrl);
+            this.documentId,
+            this.routerlicious,
+            this.historian,
+            this.tenantId,
+            this.token,
+            this.packageUrl,
+            this.agentType);
         await this.page.setContent(htmlToRender);
 
         this.cachingTimer = setInterval(() => {
@@ -65,7 +72,7 @@ export class PuppetMaster {
         const headHTML = await this.page.evaluate(() => document.head.innerHTML);
         const cleanBodyHTML = bodyHTML.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "");
         const cleanHeadHTML = headHTML.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "");
-        const pageHTML = this.craftPage(cleanHeadHTML, cleanBodyHTML);
+        const pageHTML = this.craftCachePage(cleanHeadHTML, cleanBodyHTML);
         // const pageContent = await this.page.content();
         // const cleanContent = pageContent.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "");
         if (this.cache) {
@@ -77,7 +84,7 @@ export class PuppetMaster {
         }
     }
 
-    private craftPage(headHTML: string, bodyHTML: string) {
+    private craftCachePage(headHTML: string, bodyHTML: string) {
         const html = `
         <!DOCTYPE html>
         <html lang="en">

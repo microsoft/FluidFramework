@@ -4,7 +4,8 @@ export function craftHtml(
     historian: string,
     tenantId: string,
     token: string,
-    packageUrl: string) {
+    packageUrl: string,
+    loaderType: string) {
     const html = `
     <!DOCTYPE html>
     <html lang="en">
@@ -20,7 +21,8 @@ export function craftHtml(
         "${historian}",
         "${tenantId}",
         "${token}",
-        "${packageUrl}")
+        "${packageUrl}",
+        "${loaderType}");
     .catch((error) => console.error(error));
     </script>
     <body>
