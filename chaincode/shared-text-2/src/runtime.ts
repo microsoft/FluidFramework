@@ -168,6 +168,14 @@ class SharedTextComponent extends Document {
         this.root.set("ink", this.createMap());
 
         insights.set(newString.id, this.createMap());
+        /*
+        const idMap = await insights.wait<DistributedMap.ISharedMap>(newString.id);
+        idMap.set("translationsTo", undefined, DistributedMap.DistributedSetValueType.Name);
+        idMap.set("translationsFrom", undefined, DistributedMap.DistributedSetValueType.Name);
+        const translationsTo = await idMap.wait<DistributedMap.DistributedSet<string>>("translationsTo");
+        translationsTo.add("fr");
+        const translationsFrom = await idMap.wait<DistributedMap.DistributedSet<string>>("translationsFrom");
+        translationsFrom.add("en");*/
     }
 
     private runTask() {
