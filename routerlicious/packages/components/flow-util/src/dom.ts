@@ -2,8 +2,6 @@ function isElement(node: Node): node is Element {
     return node.nodeType === Node.ELEMENT_NODE;
 }
 
-const measurementRange = document.createRange();
-
 export class Dom {
     /** Returns true if the given 'node' follows the specified 'previous' node in the 'parent' node's children. */
     public static isAfterNode(parent: Node, node: Node, previous: Node | null) {
@@ -48,6 +46,8 @@ export class Dom {
     }
 
     public static getClientRect(node: Node, nodeOffset: number) {
+        const measurementRange = document.createRange();
+
         if (isElement(node)) {
             console.assert(!nodeOffset);
             return node.getBoundingClientRect();
