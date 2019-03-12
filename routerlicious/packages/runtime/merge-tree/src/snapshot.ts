@@ -1,5 +1,6 @@
 import { FileMode, ITree, TreeEntry } from "@prague/container-definitions";
 import { IObjectStorageService } from "@prague/runtime-definitions";
+import * as assert from "assert";
 import * as MergeTree from "./mergeTree";
 import * as ops from "./ops";
 
@@ -43,14 +44,14 @@ export class Snapshot {
     getSeqLengthSegs(allSegments: ops.IJSONSegment[], allLengths: number[], approxSequenceLength: number, 
         startIndex = 0): ops.MergeTreeChunk {
 
-            let segs = <ops.IJSONSegment[]>[];
+        let segs = <ops.IJSONSegment[]>[];
         let sequenceLength = 0;
         let segCount = 0;
         while ((sequenceLength < approxSequenceLength) && ((startIndex + segCount) < allSegments.length)) {
             let pseg = allSegments[startIndex + segCount];
-            segCount++;
             segs.push(pseg);
             sequenceLength += allLengths[startIndex + segCount];
+            segCount++;
         }
         return {
             chunkStartSegmentIndex: startIndex,
@@ -64,9 +65,15 @@ export class Snapshot {
     }
 
     emit(): ITree {
-        let chunk1 = this.getSeqLengthSegs(this.segments, this.segmentLengths, 10000);
-        let chunk2 = this.getSeqLengthSegs(this.segments, this.segmentLengths, chunk1.totalLengthChars, chunk1.chunkSegmentCount);
+        // Split snapshot into two entries - headers (small) and body (overflow) for faster loading initial content
+        // Please note that this number has no direct relationship to anything other than size of raw text (characters).
+        // As we produce json for the blob (and then encode into base64 and send over the wire compressed), this number
+        // is really hard to correlate with any actual metric that matters (like bytes over the wire).
+        // For test with small number of chunks it would be closer to blob size (before base64 encoding), for very chunky text
+        // blob size can easily be 4x-8x of that number.
+        const sizeOfFirstChunk: number = 10000;
 
+        let chunk1 = this.getSeqLengthSegs(this.segments, this.segmentLengths, sizeOfFirstChunk);
         const tree: ITree = {
             entries: [
                 {
@@ -78,19 +85,26 @@ export class Snapshot {
                         encoding: "utf-8",
                     },
                 },
-                {
-                    mode: FileMode.File,
-                    path: "body",
-                    type: TreeEntry[TreeEntry.Blob],
-                    value: {
-                        contents: JSON.stringify(chunk2),
-                        encoding: "utf-8",
-                    },
-                },
             ],
             sha: null,
         };
 
+        assert(chunk1.chunkSegmentCount <= chunk1.totalSegmentCount);
+        if (chunk1.chunkSegmentCount < chunk1.totalSegmentCount)
+        {
+            assert(chunk1.chunkLengthChars < chunk1.totalLengthChars);
+            let chunk2 = this.getSeqLengthSegs(this.segments, this.segmentLengths, chunk1.totalLengthChars, chunk1.chunkSegmentCount);
+            tree.entries.push({
+                mode: FileMode.File,
+                path: "body",
+                type: TreeEntry[TreeEntry.Blob],
+                value: {
+                    contents: JSON.stringify(chunk2),
+                    encoding: "utf-8",
+                },
+            });
+        }
+        
         return tree;
     }
 

@@ -266,18 +266,23 @@ export abstract class SegmentSequence<T extends MergeTree.ISegment> extends Shar
         storage: IObjectStorageService): Promise<void> {
 
         const header = await storage.read("header");
+        assert(header);
 
-        return this.initialize(minimumSequenceNumber, header, true, headerOrigin, storage);
+        this.initialize(minimumSequenceNumber, header, true, headerOrigin, storage)
+            .then(
+                () => {
+                    this.loadFinished();
+                },
+                (error) => {
+                    this.loadFinished(error);
+                });
     }
 
     protected initializeContent() {
         const intervalCollections = this.runtime.createChannel(uuid(), MapExtension.Type) as ISharedMap;
         this.set("intervalCollections", intervalCollections);
-        // TODO will want to update initialize to operate synchronously
-        this.initialize(0, null, false, this.id, null)
-            .catch((error) => {
-                console.error("initializeContent", error);
-            });
+        assert(MergeTree.Snapshot.EmptyChunk.chunkSequenceNumber === 0);
+        this.loadFinished();
     }
 
     protected snapshotContent(): ITree {
@@ -393,11 +398,7 @@ export abstract class SegmentSequence<T extends MergeTree.ISegment> extends Shar
         minimumSequenceNumber: number,
         header: string,
         shared: boolean,
-        originBranch: string) {
-
-        if (!header) {
-            return;
-        }
+        originBranch: string): MergeTree.MergeTreeChunk {
 
         const chunk = MergeTree.Snapshot.processChunk(header);
         const segs = this.segmentsFromSpecs(chunk.segmentTexts);
@@ -409,44 +410,30 @@ export abstract class SegmentSequence<T extends MergeTree.ISegment> extends Shar
             this.client.startCollaboration(
                 this.runtime.clientId, minimumSequenceNumber, branchId);
         }
+        return chunk;
     }
 
-    private async loadBody(
-        header: string,
+    // If loading from a snapshot load tardis messages
+    private async loadTardis(
+        rawMessages: Promise<string>,
         originBranch: string,
-        services: IObjectStorageService,
     ): Promise<void> {
-        // If loading from a snapshot load in the body and tardis messages
-        if (header) {
-            const [chunk, rawMessages] = await Promise.all([
-                await MergeTree.Snapshot.loadChunk(services, "body"),
-                services.read("tardis"),
-            ]);
-
-            for (const segSpec of chunk.segmentTexts) {
-                this.appendSegment(segSpec);
-            }
-
-            const messages = JSON.parse(Buffer.from(rawMessages, "base64").toString()) as ISequencedDocumentMessage[];
-            if (originBranch !== this.runtime.documentId) {
-                for (const message of messages) {
-                    // Append branch information when transforming for the case of messages stashed with the snapshot
-                    message.origin = {
-                        id: originBranch,
-                        minimumSequenceNumber: message.minimumSequenceNumber,
-                        sequenceNumber: message.sequenceNumber,
-                    };
-                }
-            }
-
-            // Apply all pending messages
+        const messages = JSON.parse(Buffer.from(await rawMessages, "base64").toString()) as ISequencedDocumentMessage[];
+        if (originBranch !== this.runtime.documentId) {
             for (const message of messages) {
-                this.processMessage(message);
+                // Append branch information when transforming for the case of messages stashed with the snapshot
+                message.origin = {
+                    id: originBranch,
+                    minimumSequenceNumber: message.minimumSequenceNumber,
+                    sequenceNumber: message.sequenceNumber,
+                };
             }
         }
 
-        // And initialize the interval collections
-        this.initializeIntervalCollections();
+        // Apply all pending messages
+        for (const message of messages) {
+            this.processMessage(message);
+        }
     }
 
     private async initialize(
@@ -454,48 +441,57 @@ export abstract class SegmentSequence<T extends MergeTree.ISegment> extends Shar
         header: string,
         shared: boolean,
         originBranch: string,
-        services: IObjectStorageService) {
+        services: IObjectStorageService): Promise<void> {
 
-        if (!header) {
-            assert.equal(minimumSequenceNumber, MergeTree.Snapshot.EmptyChunk.chunkSequenceNumber);
+        // If loading from a snapshot load tardis messages
+        // kick off loading in parallel to loading "body" chunk.
+        const rawMessages = services.read("tardis");
+
+        const chunk1 = this.loadHeader(minimumSequenceNumber, header, shared, originBranch);
+        await this.loadBody(chunk1, services);
+        return this.loadTardis(rawMessages, originBranch);
+    }
+
+    private async loadBody(chunk1: MergeTree.MergeTreeChunk, services: IObjectStorageService): Promise<void> {
+        assert(chunk1.chunkLengthChars <= chunk1.totalLengthChars);
+        assert(chunk1.chunkSegmentCount <= chunk1.totalSegmentCount);
+        if (chunk1.chunkSegmentCount === chunk1.totalSegmentCount) {
+            return;
         }
 
-        this.loadHeader(minimumSequenceNumber, header, shared, originBranch);
-
-        this.loadBody(
-            header,
-            originBranch,
-            services)
-            .then(
-                () => {
-                    this.loadFinished();
-                },
-                (error) => {
-                    this.loadFinished(error);
-                });
+        const chunk2 = await MergeTree.Snapshot.loadChunk(services, "body");
+        for (const segSpec of chunk2.segmentTexts) {
+            this.appendSegment(segSpec);
+        }
     }
 
     private initializeIntervalCollections() {
         this.intervalCollections = this.get("intervalCollections") as ISharedMap;
 
-        // Listen and initialize new SharedIntervalCollections
-        this.intervalCollections.on("valueChanged", (ev: IValueChanged) => {
-            const intervalCollection =
-                this.intervalCollections.get<SharedIntervalCollection<SharedStringInterval>>(ev.key);
-            if (!intervalCollection.attached) {
-                intervalCollection.attach(this.client, ev.key);
-            }
-        });
+        // when testing and using mock runtime, intervalCollections would be null.
+        if (this.intervalCollections) {
+            // Listen and initialize new SharedIntervalCollections
+            this.intervalCollections.on("valueChanged", (ev: IValueChanged) => {
+                const intervalCollection =
+                    this.intervalCollections.get<SharedIntervalCollection<SharedStringInterval>>(ev.key);
+                if (!intervalCollection.attached) {
+                    intervalCollection.attach(this.client, ev.key);
+                }
+            });
 
-        // Initialize existing SharedIntervalCollections
-        for (const key of this.intervalCollections.keys()) {
-            const intervalCollection =
-                this.intervalCollections.get<SharedIntervalCollection<SharedStringInterval>>(key);
-            intervalCollection.attach(this.client, key);
+            // Initialize existing SharedIntervalCollections
+            for (const key of this.intervalCollections.keys()) {
+                const intervalCollection =
+                    this.intervalCollections.get<SharedIntervalCollection<SharedStringInterval>>(key);
+                intervalCollection.attach(this.client, key);
+            }
         }
     }
 
     private loadFinished(error?: any) {
+        // initialize the interval collections
+        this.initializeIntervalCollections();
+
         if (error) {
             this.loadedDeferred.reject(error);
         } else {

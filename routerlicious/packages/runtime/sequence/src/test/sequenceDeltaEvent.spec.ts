@@ -1,18 +1,21 @@
-import {
-    Client,
-    IMergeTreeDeltaCallbackArgs,
-} from "@prague/merge-tree";
+import { ITree } from "@prague/container-definitions";
+import { Client, IMergeTreeDeltaCallbackArgs } from "@prague/merge-tree";
 import * as assert from "assert";
 import { SequenceDeltaEvent } from "../sequenceDeltaEvent";
+import { SharedString } from "../sharedString";
+import * as mocks from "./mocks";
 
 describe("SequenceDeltaEvent", () => {
 
+    const documentId = "fakeId";
     const localUserLongId = "localUser";
+    let runtime: mocks.MockRuntime;
     let client: Client;
 
     beforeEach(() => {
         client = new Client("");
         client.startCollaboration(localUserLongId);
+        runtime = new mocks.MockRuntime();
     });
 
     describe(".ranges", () => {
@@ -110,5 +113,56 @@ describe("SequenceDeltaEvent", () => {
                 assert.equal(event.ranges[i].length, textCount);
             }
         });
+
+        it("snapshots", async () => {
+            const insertText = "text";
+            const segmentCount = 1000;
+
+            const sharedString = new SharedString(runtime, documentId);
+            sharedString.client.mergeTree.collabWindow.collaborating = false;
+
+            for (let i = 0; i < segmentCount; i = i + 1) {
+                sharedString.client.insertTextLocal(`${insertText}${i}`, 0);
+            }
+
+            let tree = sharedString.snapshot();
+            assert(tree.entries.length === 2);
+            assert(tree.entries[0].path === "header");
+            assert(tree.entries[1].path === "content");
+            let subTree = tree.entries[1].value as ITree;
+            assert(subTree.entries.length === 2);
+            assert(subTree.entries[0].path === "header");
+            assert(subTree.entries[1].path === "tardis");
+
+            await CreateStringAndCompare(sharedString, tree);
+
+            for (let i = 0; i < segmentCount; i = i + 1) {
+                sharedString.client.insertTextLocal(`${insertText}-${i}`, 0);
+            }
+
+            tree = sharedString.snapshot();
+            assert(tree.entries.length === 2);
+            assert(tree.entries[0].path === "header");
+            assert(tree.entries[1].path === "content");
+            subTree = tree.entries[1].value as ITree;
+            assert(subTree.entries.length === 3);
+            assert(subTree.entries[0].path === "header");
+            assert(subTree.entries[1].path === "body");
+            assert(subTree.entries[2].path === "tardis");
+
+            await CreateStringAndCompare(sharedString, tree);
+        });
+
+        async function CreateStringAndCompare(sharedString: SharedString, tree: ITree): Promise<void> {
+            const services = {
+                deltaConnection: new mocks.MockDeltaConnection(),
+                objectStorage: new mocks.MockStorage(tree),
+            };
+
+            const sharedString2 = new SharedString(runtime, documentId, services);
+            await sharedString2.load(0, null/*headerOrigin*/, services);
+
+            assert(sharedString.getText() === sharedString2.getText());
+        }
     });
 });
