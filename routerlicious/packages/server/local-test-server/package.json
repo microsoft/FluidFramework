@@ -49,6 +49,7 @@
     "@prague/gitresources": "^0.2.0",
     "@prague/map": "^0.2.0",
     "@prague/memory-orderer": "^0.2.0",
+    "@prague/merge-tree": "^0.2.0",
     "@prague/runtime-definitions": "^0.2.0",
     "@prague/services": "^0.2.0",
     "@prague/services-core": "^0.2.0",

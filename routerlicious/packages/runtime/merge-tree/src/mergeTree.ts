@@ -552,6 +552,31 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
         }
     }
 
+    /**
+     * Called by 'append()' implementations to append local refs from the given 'other' segment to the
+     * end of 'this' segment.
+     * 
+     * Note: This method should be invoked after the caller has ensured that segments can be merged,
+     *       but before 'this' segment's cachedLength has changed, or the adjustment to the local refs
+     *       will be incorrect.
+     */
+    protected appendLocalRefs(other: ISegment) {
+        if (!other.localRefs) {
+            return;
+        }
+
+        const leftLength = this.cachedLength;
+        for (const localRef of other.localRefs) {
+            localRef.offset += leftLength;
+            localRef.segment = this;
+        }
+
+        // Concat or adopt 
+        this.localRefs = this.localRefs
+            ? this.localRefs.concat(other.localRefs)
+            : other.localRefs;
+    }
+
     splitLocalRefs(pos: number, leafSegment: BaseSegment) {
         let aRefs = <LocalReference[]>[];
         let bRefs = <LocalReference[]>[];
@@ -776,14 +801,11 @@ export class SubSequence<T> extends BaseSegment {
 
     public append(segment: ISegment) {
         if (segment.getType() === SegmentType.Run) {
+            // Note: Must call 'appendLocalRefs' before modifying this segment's length as
+            //       'this.cachedLength' is used to adjust the offsets of the local refs.
+            this.appendLocalRefs(segment);
+
             const rseg = segment as SubSequence<T>;
-            if (segment.localRefs) {
-                const adj = this.cachedLength;
-                for (const localRef of segment.localRefs) {
-                    localRef.offset += adj;
-                    localRef.segment = this;
-                }
-            }
             this.items = this.items.concat(rseg.items);
             this.cachedLength = this.items.length;
             return this;
@@ -1150,13 +1172,10 @@ export class TextSegment extends BaseSegment {
 
     append(segment: ISegment) {
         if (segment.getType() === SegmentType.Text) {
-            if (segment.localRefs) {
-                let adj = this.text.length;
-                for (let localRef of segment.localRefs) {
-                    localRef.offset += adj;
-                    localRef.segment = this;
-                }
-            }
+            // Note: Must call 'appendLocalRefs' before modifying this segment's length as
+            //       'this.cachedLength' is used to adjust the offsets of the local refs.
+            this.appendLocalRefs(segment);
+
             this.text += (<TextSegment>segment).text;
             this.cachedLength = this.text.length;
             return this;
