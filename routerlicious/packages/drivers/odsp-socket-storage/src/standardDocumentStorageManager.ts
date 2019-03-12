@@ -51,10 +51,12 @@ export class StandardDocumentStorageManager implements IDocumentStorageManager {
         if (blobid) {
             // each commit calls getVersions but odsp doesn't have a history for each version
             // return the blobid as is
-            return {
-                message: "",
-                sha: blobid,
-            } as any;
+            return [
+                {
+                    message: "",
+                    sha: blobid,
+                } as any,
+            ];
         }
 
         const versionsResponse = await this.restWrapper
