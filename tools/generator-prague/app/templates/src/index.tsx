@@ -18,7 +18,7 @@ export class Clicker extends Document {
 
   protected render(host: HTMLDivElement, counter: Counter) {
 
-    // Uncomment the code in this function to render your title!
+    // Uncomment the line below and the comment in ReactDom.Render to render your title!
     // const title = this.root.get("title");
 
     ReactDOM.render(

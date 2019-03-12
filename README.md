@@ -41,6 +41,8 @@ The Prague team answers questions on the [Microsoft internal stack overflow](htt
   * Check out [Yo Prague](./tools/generator-prague/README.md)
 * Do you have a homepage?
   * [Yep.](https://www.wu2-ppe.prague.office-int.com)
+* Why aren't commandline tools working?
+  * [You may need to upgrade NPM or Node. We require above 5 and 8 respectively](https://stackoverflow.microsoft.com/questions/138019/yo-prague-fails-with-insight-track-firstcmd-args-slice0-2/138020#138020)
 * Do you have any suggested reading before I get started?
   * Get hacking: check out yo prague!
   * If you need to read, check out our [architecture documents](./doc/architecture)

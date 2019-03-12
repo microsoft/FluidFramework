@@ -22,7 +22,7 @@
 
     <h2>Build a Component</h2>
     <p>
-        To quickly build a component set up the "yo prague" bootstrapper:
+        Once you've cloned the repo, you can set up the "yo prague" bootstrapper:
         <br>
         <div style="color:#005cc5;font-family:monospace;padding-left:50px">
             <p>
@@ -41,7 +41,7 @@
                 npm link
             </p>
         </div>
-        And get started
+        Now go back to your root directory and get started
         <br>
         <div style="color:green;font-family:monospace;padding-left:50px">
             <p>
