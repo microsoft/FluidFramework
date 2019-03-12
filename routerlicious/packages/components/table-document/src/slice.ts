@@ -62,7 +62,7 @@ export class TableSlice extends Component implements ITable {
 
     public annotateRows(startRow: number, endRow: number, properties: PropertySet, op?: ICombiningOp) {
         this.validateInSlice(startRow, undefined);
-        this.validateInSlice(endRow, undefined);
+        this.validateInSlice(endRow - 1, undefined);
         this.doc.annotateRows(startRow, endRow, properties, op);
     }
 
@@ -73,7 +73,7 @@ export class TableSlice extends Component implements ITable {
 
     public annotateCols(startCol: number, endCol: number, properties: PropertySet, op?: ICombiningOp) {
         this.validateInSlice(undefined, startCol);
-        this.validateInSlice(undefined, endCol);
+        this.validateInSlice(undefined, endCol - 1);
         this.doc.annotateCols(startCol, endCol, properties, op);
     }
 

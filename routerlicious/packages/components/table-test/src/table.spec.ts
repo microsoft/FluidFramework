@@ -56,9 +56,9 @@ describe("TableDocument", () => {
         });
 
         it("col", () => {
-            table.annotateRows(0, 1, { id: "col0" });
-            assert.deepEqual(table.getRowProperties(0), { id: "col0" });
-            assert.strictEqual(table.getRowProperties(1), undefined);
+            table.annotateCols(0, 1, { id: "col0" });
+            assert.deepEqual(table.getColProperties(0), { id: "col0" });
+            assert.strictEqual(table.getColProperties(1), undefined);
         });
     });
 
@@ -86,6 +86,16 @@ describe("TableDocument", () => {
             assert.throws(() => slice.getCellValue(3, 0));
             assert.throws(() => slice.getCellValue(0, -1));
             assert.throws(() => slice.getCellValue(0, 3));
+        });
+
+        it("Annotations work when proxied through table slice", async () => {
+            const slice = await table.createSlice(makeId("Table-Slice"), "unnamed-slice", 0, 0, 2, 2);
+            slice.annotateRows(0, 1, { id: "row0" });
+            assert.deepEqual(slice.getRowProperties(0), { id: "row0" });
+            assert.strictEqual(slice.getRowProperties(1), undefined);
+
+            slice.annotateRows(2, 3, { id: "row1" });
+            assert.deepEqual(slice.getRowProperties(2), { id: "row1" });
         });
     });
 });
