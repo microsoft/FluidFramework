@@ -9,6 +9,7 @@ import {
 import * as bodyParser from "body-parser";
 import * as compression from "compression";
 import * as cookieParser from "cookie-parser";
+import * as cors from "cors";
 import * as express from "express";
 import { Express } from "express";
 import * as safeStringify from "json-stringify-safe";
@@ -61,7 +62,7 @@ export function create(
         producer,
         appTenants);
 
-    app.use("/public", express.static(path.join(__dirname, "../../public")));
+    app.use("/public", cors(), express.static(path.join(__dirname, "../../public")));
     app.use(routes.api);
     app.use("/agent", routes.agent);
     app.use("/", (request, response) => response.redirect(config.get("gateway:url")));
