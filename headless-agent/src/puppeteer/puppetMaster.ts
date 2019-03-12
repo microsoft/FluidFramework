@@ -1,3 +1,4 @@
+import { EventEmitter } from "events";
 import * as puppeteer from "puppeteer";
 import * as winston from "winston";
 import { ICache } from "../redisCache";
@@ -7,7 +8,13 @@ import { generateLoaderHTML } from "./htmlGenerator";
 const cachingIntervalMS = 10000;
 const cachePiggybackType = "snapshot";
 
-export class PuppetMaster {
+export interface ICloseEvent {
+    documentId: string;
+    task: string;
+    tenantId: string;
+}
+
+export class PuppetMaster extends EventEmitter {
     private browser: puppeteer.Browser;
     private page: puppeteer.Page;
     private cachingTimer: any;
@@ -21,7 +28,9 @@ export class PuppetMaster {
         private packageUrl: string,
         private agentType: string,
         private cache?: ICache,
-        ) {}
+        ) {
+            super();
+        }
     public async launch() {
         // Debug parameters if running locally { headless: false, args: ["--start-fullscreen"] }
         this.browser = await puppeteer.launch();
@@ -73,8 +82,17 @@ export class PuppetMaster {
                 clearInterval(this.cachingTimer);
                 this.cachingTimer = undefined;
             }
+            // Close the tab and browser.
             await this.page.close();
             await this.browser.close();
+
+            // Emit an event to notify the caller.
+            const closeEvent: ICloseEvent = {
+                documentId: this.documentId,
+                task: this.agentType,
+                tenantId: this.tenantId,
+            };
+            this.emit("close", closeEvent);
         });
     }
 
