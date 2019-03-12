@@ -13,9 +13,6 @@ export class HeadlessRunner implements utils.IRunner {
         private workerConfig: any,
         private messageReceiver: core.ITaskMessageReceiver,
         private cache: ICache) {
-        const alfredUrl = workerConfig.alfredUrl;
-        winston.info(`Alfred URL: ${alfredUrl}`);
-        winston.info(`Worker congif: ${JSON.stringify(this.workerConfig)}`);
     }
 
     public async start(): Promise<void> {
@@ -43,7 +40,9 @@ export class HeadlessRunner implements utils.IRunner {
                     this.workerConfig.blobStorageUrl,
                     requestMessage.tenantId,
                     requestMessage.token,
+                    this.workerConfig.key,
                     this.workerConfig.packageUrl,
+                    "snapshot",
                     this.cache);
                 puppetMaster.launch().then(() => {
                     winston.info(`Launched for ${requestMessage.tenantId}/${requestMessage.documentId}`);

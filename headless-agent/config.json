@@ -35,7 +35,8 @@
         "packageUrl": "http://auspkn:3000",
         "blobStorageUrl": "http://historian:3000",
         "repository": "prague",
-        "permission": []
+        "permission": ["chain-snapshot", "chain-spell", "chain-intel", "chain-translation"],
+        "key": "VBQyoGpEYrTn3XQPtXW3K8fFDd"
     },
     "tmz": {
         "alfred": "http://alfred:3000",

@@ -1,13 +1,16 @@
-import { Browser } from "@prague/container-definitions";
+import { Browser, IPragueResolvedUrl } from "@prague/container-definitions";
 import { Container, Loader } from "@prague/container-loader";
-import { createDocumentService, TokenProvider } from "@prague/routerlicious-socket-storage";
+import { ContainerUrlResolver } from "@prague/routerlicious-host";
+import { createDocumentService } from "@prague/routerlicious-socket-storage";
 import { IComponentRuntime } from "@prague/runtime-definitions";
+import * as jwt from "jsonwebtoken";
+import * as url from "url";
 import { LocalPlatform } from "./localPlatform";
 import { WebLoader } from "./webLoader";
 
-async function attach(loader: Loader, url: string, platform: LocalPlatform) {
-    console.log(url);
-    const response = await loader.request({ url });
+async function attach(loader: Loader, baseUrl: string, platform: LocalPlatform) {
+    console.log(baseUrl);
+    const response = await loader.request({ url: baseUrl });
 
     if (response.status !== 200) {
         return;
@@ -39,24 +42,43 @@ export async function startLoading(
     historian: string,
     tenantId: string,
     token: string,
-    packageUrl: string): Promise<void> {
+    jwtKey: string,
+    packageUrl: string,
+    loaderType: string): Promise<void> {
+    console.log(`Loading ${id} as ${loaderType}`);
 
-    console.log(`Loading ${id}...`);
+    const hostToken = jwt.sign(
+        {
+            user: "headless-agent",
+        },
+        jwtKey);
+
+    const documentUrl = `prague://${url.parse(routerlicious).host}` +
+    `/${encodeURIComponent(tenantId)}` +
+    `/${encodeURIComponent(id)}`;
+    const resolved: IPragueResolvedUrl = {
+        ordererUrl: routerlicious,
+        storageUrl: historian,
+        tokens: { jwt: token },
+        type: "prague",
+        url: documentUrl,
+    };
+
+    const resolver = new ContainerUrlResolver(
+        routerlicious,
+        hostToken,
+        new Map([[documentUrl, resolved]]));
     const documentServices = createDocumentService(routerlicious, historian);
-
     const codeLoader = new WebLoader(packageUrl);
-    const tokenProvider = new TokenProvider(token);
 
     const loader = new Loader(
-        { tokenProvider },
+        { resolver },
         documentServices,
         codeLoader,
-        { encrypted: undefined, localMinSeq: 0, blockUpdateMarkers: true, client: { type: "snapshot"} });
+        { encrypted: undefined, localMinSeq: 0, blockUpdateMarkers: true, client: { type: loaderType } });
 
-    const baseUrl =
-        `prague://prague.com/` +
-        `${encodeURIComponent(tenantId)}/${encodeURIComponent(id)}`;
-    const container = await loader.resolve({ url: baseUrl });
+    const container = await loader.resolve({ url: documentUrl });
+    console.log(`Resolved ${documentUrl}`);
 
     // Wait to be fully connected!
     if (!container.connected) {
@@ -64,12 +86,15 @@ export async function startLoading(
     }
 
     console.log(`${container.clientId} is now fully connected to ${container.id}`);
+
     checkContainerActivity(container);
 
     const platform = new LocalPlatform(document.getElementById("content"));
-    registerAttach(loader, container, baseUrl, platform);
+    registerAttach(loader, container, documentUrl, platform);
 }
 
+// Checks container quorum for connected clients. Once all client leaves,
+// invokes the close function injected by puppeteer launcher.
 function checkContainerActivity(container: Container) {
     const quorum = container.getQuorum();
     quorum.on("removeMember", (clientId: string) => {

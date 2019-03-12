@@ -1,10 +1,12 @@
-export function craftHtml(
+export function generateLoaderHTML(
     docId: string,
     routerlicious: string,
     historian: string,
     tenantId: string,
     token: string,
-    packageUrl: string) {
+    key: string,
+    packageUrl: string,
+    loaderType: string) {
     const html = `
     <!DOCTYPE html>
     <html lang="en">
@@ -20,7 +22,9 @@ export function craftHtml(
         "${historian}",
         "${tenantId}",
         "${token}",
-        "${packageUrl}")
+        "${key}",
+        "${packageUrl}",
+        "${loaderType}")
     .catch((error) => console.error(error));
     </script>
     <body>
