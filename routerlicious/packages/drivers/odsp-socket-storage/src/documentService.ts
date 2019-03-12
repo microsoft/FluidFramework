@@ -23,7 +23,7 @@ export class DocumentService implements api.IDocumentService {
         id: string,
         tokenProvider: api.ITokenProvider): Promise<api.IDocumentStorageService> {
         const documentManager = this.snapshotUrl ?
-            new StandardDocumentStorageManager(this.snapshotUrl, tokenProvider) :
+            new StandardDocumentStorageManager(id, this.snapshotUrl, tokenProvider) :
             new NoopDocumentStorageManager();
         return new DocumentStorageService(documentManager);
     }

@@ -17,7 +17,10 @@ export interface IDocumentStorageManager {
 export class StandardDocumentStorageManager implements IDocumentStorageManager {
     private readonly restWrapper: RestWrapper;
 
-    constructor(private readonly snapshotUrl: string, tokenProvider: api.ITokenProvider) {
+    constructor(
+        private readonly documentId: string,
+        private readonly snapshotUrl: string,
+        tokenProvider: api.ITokenProvider) {
         const standardTokenProvider = tokenProvider as TokenProvider;
 
         this.restWrapper = new RestWrapper(
@@ -48,7 +51,7 @@ export class StandardDocumentStorageManager implements IDocumentStorageManager {
     }
 
     public async getVersions(blobid: string, count: number): Promise<resources.ICommit[]> {
-        if (blobid) {
+        if (blobid && blobid !== this.documentId) {
             // each commit calls getVersions but odsp doesn't have a history for each version
             // return the blobid as is
             return [
@@ -59,6 +62,7 @@ export class StandardDocumentStorageManager implements IDocumentStorageManager {
             ];
         }
 
+        // fetch the latest snapshot versions for the document
         const versionsResponse = await this.restWrapper
             .get<IDocumentStorageGetVersionsResponse>("/versions", { count })
             .catch((error) => (error === 400 || error === 404) ? undefined : Promise.reject(error));
