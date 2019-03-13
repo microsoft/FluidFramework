@@ -198,6 +198,9 @@ export class TableDocument extends Component implements ITable {
             this.emit("op", op, local);
         });
 
+        this.maybeCols.on("op", (...args: any[]) => this.emit("op", ...args));
+        this.maybeRows.on("op", (...args: any[]) => this.emit("op", ...args));
+
         this.maybeWorkbook = new WorkbookAdapter(this);
     }
 
