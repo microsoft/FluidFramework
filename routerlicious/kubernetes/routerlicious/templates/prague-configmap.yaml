@@ -150,9 +150,9 @@ data:
             "groupId": "{{ template "tmz.fullname" . }}",
             "queues": ["paparazziQueue", "augloopQueue", "headlessQueue"],
             "permissions": {
-                "paparazziQueue": ["snapshot", "spell", "intel", "translation", "chain-spell", "chain-intel", "chain-translation"],
+                "paparazziQueue": ["snapshot", "spell", "intel", "translation"],
                 "augloopQueue": ["augmentation"],
-                "headlessQueue": ["chain-snapshot"]
+                "headlessQueue": ["chain-snapshot", "chain-intel", "chain-translation", "chain-spell"]
             }
         },
         "paparazzi": {
