@@ -37,7 +37,9 @@ export class LeaderElector extends EventEmitter {
         });
 
         this.quorum.on("removeMember", (removedClientId: string) => {
-            if (this.leader === undefined || removedClientId === this.leader) {
+            if (this.leader === undefined) {
+                this.emit("noLeader", removedClientId);
+            } else if (removedClientId === this.leader) {
                 this.leader = undefined;
                 this.emit("leaderLeft", removedClientId);
             } else {

@@ -549,6 +549,10 @@ export class Runtime extends EventEmitter implements IHostRuntime {
             debug(`Leader ${clientId} left`);
             this.proposeLeadership();
         });
+        this.leaderElector.on("noLeader", (clientId: string) => {
+            debug(`No leader present. Member ${clientId} left`);
+            this.proposeLeadership();
+        });
         this.leaderElector.on("memberLeft", (clientId: string) => {
             debug(`Member ${clientId} left`);
             this.runTaskAnalyzer();
@@ -559,9 +563,9 @@ export class Runtime extends EventEmitter implements IHostRuntime {
     private proposeLeadership() {
         if (getLeaderCandidate(this.getQuorum().getMembers()) === this.clientId) {
             this.leaderElector.proposeLeadership().then(() => {
-                debug(`Proposal accepted`);
+                debug(`Leadership proposal accepted for ${this.clientId}`);
             }, (err) => {
-                debug(`Proposal rejected: ${err}`);
+                debug(`Leadership proposal rejected ${err}`);
             });
         }
     }
@@ -581,7 +585,7 @@ export class Runtime extends EventEmitter implements IHostRuntime {
                         tasks: helpTasks.browser,
                         version: this.version,   // back-compat
                     };
-                    console.log(`Requesting local help for ${helpTasks.browser}`);
+                    debug(`Requesting local help for ${helpTasks.browser}`);
                     this.emit("localHelp", localHelpMessage);
                 }
                 if (helpTasks.robot.length > 0) {
@@ -589,7 +593,7 @@ export class Runtime extends EventEmitter implements IHostRuntime {
                         tasks: helpTasks.robot,
                         version: this.version,   // back-compat
                     };
-                    console.log(`Requesting remote help for ${helpTasks.robot}`);
+                    debug(`Requesting remote help for ${helpTasks.robot}`);
                     this.submit(MessageType.RemoteHelp, remoteHelpMessage);
                 }
             }
