@@ -25,6 +25,7 @@ import {
     IDocumentStorage,
     IKafkaMessage,
     IOrderer,
+    IOrdererClientIdStamper,
     IOrdererConnection,
     IProducer,
     IPublisher,
@@ -40,6 +41,12 @@ import { EventEmitter } from "events";
 import * as moniker from "moniker";
 // tslint:disable-next-line:no-var-requires
 const now = require("performance-now");
+
+const ordererClientIdStamper: IOrdererClientIdStamper = {
+    getClientId: (client: IClient) => {
+        return moniker.choose();
+    },
+};
 
 export interface ISubscriber {
     id: string;
@@ -274,7 +281,8 @@ export class LocalOrderer implements IOrderer {
         tenantManager: ITenantManager,
         permission: any,
         maxMessageSize: number,
-        clientTimeout: number = ClientSequenceTimeout) {
+        clientTimeout: number = ClientSequenceTimeout,
+        clientIdStamper: IOrdererClientIdStamper = ordererClientIdStamper) {
 
         const [details, documentCollection, deltasCollection] = await Promise.all([
             storage.getOrCreateDocument(tenantId, documentId),
@@ -292,7 +300,8 @@ export class LocalOrderer implements IOrderer {
             tenantManager,
             permission,
             maxMessageSize,
-            clientTimeout);
+            clientTimeout,
+            clientIdStamper);
     }
 
     private static pubSub = new PubSub();
@@ -323,7 +332,8 @@ export class LocalOrderer implements IOrderer {
         private tenantManager: ITenantManager,
         private permission: any,
         private maxMessageSize: number,
-        clientTimeout: number) {
+        clientTimeout: number,
+        private clientIdStamper: IOrdererClientIdStamper) {
 
         this.existing = details.existing;
 
@@ -373,8 +383,6 @@ export class LocalOrderer implements IOrderer {
     public connectInternal(
         subscriber: ISubscriber,
         client: IClient): IOrdererConnection {
-        const clientId = moniker.choose();
-
         // Create the connection
         const connection = new LocalOrdererConnection(
             LocalOrderer.pubSub,
@@ -384,7 +392,7 @@ export class LocalOrderer implements IOrderer {
             this.alfredToDeliKafka,
             this.tenantId,
             this.documentId,
-            clientId,
+            this.clientIdStamper.getClientId(client),
             client,
             this.maxMessageSize);
 

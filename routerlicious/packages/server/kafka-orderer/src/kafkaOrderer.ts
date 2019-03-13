@@ -8,6 +8,12 @@ import * as core from "@prague/services-core";
 import * as _ from "lodash";
 import * as moniker from "moniker";
 
+const ordererClientIdStamper: core.IOrdererClientIdStamper = {
+    getClientId: (client: IClient) => {
+        return moniker.choose();
+    },
+};
+
 export class KafkaOrdererConnection implements core.IOrdererConnection {
     public static async Create(
         existing: boolean,
@@ -17,10 +23,8 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
         documentId: string,
         socket: core.IWebSocket,
         client: IClient,
-        maxMessageSize: number): Promise<KafkaOrdererConnection> {
-
-        const clientId = moniker.choose();
-
+        maxMessageSize: number,
+        clientId: string): Promise<KafkaOrdererConnection> {
         // Create the connection
         const connection = new KafkaOrdererConnection(
             existing,
@@ -153,10 +157,11 @@ export class KafkaOrderer implements core.IOrderer {
         producer: core.IProducer,
         tenantId: string,
         documentId: string,
-        maxMessageSize: number): Promise<KafkaOrderer> {
+        maxMessageSize: number,
+        clientIdStamper: core.IOrdererClientIdStamper = ordererClientIdStamper): Promise<KafkaOrderer> {
 
         const details = await storage.getOrCreateDocument(tenantId, documentId);
-        return new KafkaOrderer(details, producer, tenantId, documentId, maxMessageSize);
+        return new KafkaOrderer(details, producer, tenantId, documentId, maxMessageSize, clientIdStamper);
     }
 
     private existing: boolean;
@@ -166,7 +171,8 @@ export class KafkaOrderer implements core.IOrderer {
         private producer: core.IProducer,
         private tenantId: string,
         private documentId: string,
-        private maxMessageSize: number) {
+        private maxMessageSize: number,
+        private clientIdStamper: core.IOrdererClientIdStamper) {
         this.existing = details.existing;
     }
 
@@ -182,7 +188,8 @@ export class KafkaOrderer implements core.IOrderer {
             this.documentId,
             socket,
             client,
-            this.maxMessageSize);
+            this.maxMessageSize,
+            this.clientIdStamper.getClientId(client));
 
         // document is now existing regardless of the original value
         this.existing = true;
