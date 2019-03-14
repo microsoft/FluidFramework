@@ -36,8 +36,8 @@
                 Open one link in the left browser and the other in the right. Ctrl+B will bold text and Ctrl+U will underline.
             </p>
             <ul class="list-unstyled">
-                <li><a href="/sharedText/{{translateMoniker}}?template=empty&language=el" target="_blank">Greek</a></li>
-                <li><a href="/sharedText/{{translateMoniker}}?template=empty&language=es" target="_blank">Spanish</a></li>
+                <li><a href="/sharedText/{{translateMoniker}}?template=empty&languageFrom=en&languageTo=el" target="_blank">Greek</a></li>
+                <li><a href="/sharedText/{{translateMoniker}}?template=empty&languageFrom=en&languageTo=es" target="_blank">Spanish</a></li>
             </ul>
 
             <h3>Automatic</h3>

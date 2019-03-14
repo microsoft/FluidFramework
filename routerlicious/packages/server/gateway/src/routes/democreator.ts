@@ -57,5 +57,22 @@ export function create(ensureLoggedIn: any): Router {
             });
     });
 
+    /**
+     * Spring 2010 demos
+     */
+    router.get("/spring2019", ensureLoggedIn(), (request, response, next) => {
+        response.render(
+            "demos/spring2019",
+            {
+                chartMonacoMoniker: moniker.choose(),
+                inkMoniker: moniker.choose(),
+                newsMoniker: moniker.choose(),
+                partials: defaultPartials,
+                pinpointMoniker: moniker.choose(),
+                title: "Prague Demos",
+                translateMoniker: moniker.choose(),
+            });
+    });
+
     return router;
 }

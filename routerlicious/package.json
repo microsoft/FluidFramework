@@ -8,7 +8,7 @@
     "build:full": "npm run build:full:compile && npm run tslint",
     "build:full:compile": "lerna run build:full:compile --stream",
     "clean": "lerna run clean --stream --parallel",
-    "docker-restart": "docker-compose restart alfred && docker-compose restart deli && docker-compose restart scriptorium && docker-compose restart tmz && docker-compose restart paparazzi",
+    "docker-restart": "docker-compose restart gateway && docker-compose restart alfred && docker-compose restart deli && docker-compose restart scriptorium && docker-compose restart tmz && docker-compose restart paparazzi",
     "postinstall": "(npm run registryAuth || true) && lerna bootstrap --hoist --nohoist tslint-microsoft-contrib",
     "publish-local": "lerna run publish-local --stream",
     "registryAuth": "docker login -u prague -p /vM3i=D+K4+vj+pgha=cg=55OQLDWj3w prague.azurecr.io",
