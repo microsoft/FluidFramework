@@ -38,6 +38,7 @@
                 "${workspaceFolder}/common/tools/node_modules/ts-node/register",
                 "--no-timeouts",
                 "src/test/**/*.ts",
+                // "src/test/**/sharedInterval.spec.ts",
                 "--exit"
             ],
             "env": {

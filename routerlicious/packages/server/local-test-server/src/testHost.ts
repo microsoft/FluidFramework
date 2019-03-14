@@ -160,6 +160,7 @@ export class TestHost {
 
     public async close() {
         this.components.forEach((component) => component.close);
+        await (await this.root).close();
         await this.deltaConnectionServer.webSocketServer.close();
     }
 
