@@ -1146,11 +1146,11 @@ export function TestPack(verbose = true) {
         for (let cname of clientNames) {
             cli.addLongClientId(cname);
         }
-        cli.insertItemsRemote([2,11], true, 0, undefined, 1, 0, 1);
+        cli.insertItemsRemote([2,11], 0, undefined, 1, 0, 1);
         if (verbose) {
             console.log(cli.mergeTree.toString());
         }
-        cli.insertItemsRemote([4,5,6],true, 0, undefined, 2, 0, 2);
+        cli.insertItemsRemote([4,5,6], 0, undefined, 2, 0, 2);
         if (verbose) {
             console.log(cli.mergeTree.toString());
         }
@@ -1172,8 +1172,8 @@ export function TestPack(verbose = true) {
                 sequenceNumber: 3,
             } as ISequencedDocumentMessage,
         });
-        cli.insertItemsRemote([1,5,6,2,3], true, 6, undefined, 4, 2, 2);
-        cli.insertItemsRemote([9], true, 0, undefined, 5, 0, 2);
+        cli.insertItemsRemote([1,5,6,2,3], 6, undefined, 4, 2, 2);
+        cli.insertItemsRemote([9], 0, undefined, 5, 0, 2);
         if (verbose) {
             console.log(cli.mergeTree.toString());
             for (let clientId = 0; clientId < 4; clientId++) {

@@ -399,7 +399,7 @@ export class Client {
                     this.insertMarkerRemote(op.marker, op.pos1, op.props as Properties.PropertySet, msg.sequenceNumber, msg.referenceSequenceNumber, clid, opArgs);
                 }
                 else if (op.items !== undefined) {
-                    this.insertItemsRemote(op.items, op.isNumberSequence, op.pos1, op.props,
+                    this.insertItemsRemote(op.items, op.pos1, op.props,
                         msg.sequenceNumber, msg.referenceSequenceNumber, clid, opArgs);
                 }
                 else if (op.register !== undefined) {
@@ -784,19 +784,14 @@ export class Client {
         }
     }
 
-    insertItemsRemote(items: ops.SequenceItem[], isNumberSequence: boolean, pos: number, props: Properties.PropertySet, seq: number,
+    insertItemsRemote(items: ops.SequenceItem[], pos: number, props: Properties.PropertySet, seq: number,
         refSeq: number, clientId: number, opArgs?: IMergeTreeDeltaOpCallbackArgs) {
         const traceItems = false;
         let clockStart;
         if (this.measureOps) {
             clockStart = clock();
         }
-        let segment: ISegment;
-        if (isNumberSequence) {
-            segment = new SubSequence<number>(<number[]>items, seq, clientId);
-        } else {
-            segment = new SubSequence<object>(<object[]>items, seq, clientId);
-        }
+        const segment = new SubSequence(items, seq, clientId);
         if (props) {
             segment.addProperties(props);
         }

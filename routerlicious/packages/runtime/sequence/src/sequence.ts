@@ -507,17 +507,12 @@ export abstract class SegmentSequence<T extends MergeTree.ISegment> extends Shar
 }
 
 export class SharedSequence<T extends MergeTree.SequenceItem> extends SegmentSequence<MergeTree.SubSequence<T>> {
-    public isNumeric;
-
     constructor(
         document: IRuntime,
         public id: string,
         extensionType: string,
         services?: IDistributedObjectServices) {
         super(document, id, extensionType, services);
-        if (extensionType === SharedNumberSequenceExtension.Type) {
-            this.isNumeric = true;
-        }
     }
 
     public appendSegment(segSpec: MergeTree.IJSONRunSegment<T>) {
@@ -535,9 +530,6 @@ export class SharedSequence<T extends MergeTree.SequenceItem> extends SegmentSeq
             props,
             type: MergeTree.MergeTreeDeltaType.INSERT,
         };
-        if (this.isNumeric) {
-            insertMessage.isNumberSequence = true;
-        }
         const segment = new MergeTree.SubSequence<T>(items);
         this.client.insertSegmentLocal(pos, segment, props, {op: insertMessage});
         this.submitIfAttached(insertMessage);
