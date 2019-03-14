@@ -28,3 +28,7 @@ services:
         ports:
             - "5863:5858"
         command: node --inspect=0.0.0.0:5858 dist/kafka-service/index.js routemaster /usr/src/server/packages/server/lambdas-driver/dist/document-router/index.js
+    gateway:
+        ports:
+            - "5866:5858"
+        command: node --inspect=0.0.0.0:5858 ../gateway/dist/www.js
