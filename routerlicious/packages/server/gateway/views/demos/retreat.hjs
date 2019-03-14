@@ -22,7 +22,7 @@
 
             <ul class="list-unstyled">
                 <li><a href="https://docs.google.com/document/d/1Ed3_Bgmfj4L1tvjjh8geSHNZMbh_X6SaRd1uZGSQSio/edit" target="_blank">Google Docs Pride and Prejudice</a></li>
-                <li><a href="/sharedText/{{sharedTextMoniker}}" target="_blank">Prague Pride and Prejudice</a></li>
+                <li><a href="/sharedText/{{sharedTextMoniker}}?template=pp.txt" target="_blank">Prague Pride and Prejudice</a></li>
             </ul>
 
             <h2>Augmentation Loop</h2>
