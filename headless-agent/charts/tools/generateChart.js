@@ -25,7 +25,7 @@ home: https://github.com/microsoft/prague
 const values =
 `## Generated from a tool - do not edit directly
 ## Prague image version
-replicaCount: 1
+replicaCount: 4
 image: prague.azurecr.io/headless-agent:${imageVersion}
 
 ## Specify a imagePullPolicy
