@@ -1,5 +1,6 @@
 import * as cell from "@prague/cell";
 import { ComponentHost } from "@prague/component";
+import { ConsensusQueueExtension, ConsensusStackExtension} from "@prague/consensus-ordered-collection";
 import {
     IChaincodeFactory,
     ICodeLoader,
@@ -42,6 +43,8 @@ class LegacyChaincode implements IChaincode {
         const cellExtension = new cell.CellExtension();
         const objectSequenceExtension = new sequence.SharedObjectSequenceExtension();
         const numberSequenceExtension = new sequence.SharedNumberSequenceExtension();
+        const consensusQueueExtension = new ConsensusQueueExtension();
+        const consensusStackExtension = new ConsensusStackExtension();
 
         // Register channel extensions
         this.modules.set(mapExtension.type, mapExtension);
@@ -50,6 +53,8 @@ class LegacyChaincode implements IChaincode {
         this.modules.set(cellExtension.type, cellExtension);
         this.modules.set(objectSequenceExtension.type, objectSequenceExtension);
         this.modules.set(numberSequenceExtension.type, numberSequenceExtension);
+        this.modules.set(consensusQueueExtension.type, consensusQueueExtension);
+        this.modules.set(consensusStackExtension.type, consensusStackExtension);
     }
 
     public getModule(type: string) {

@@ -207,6 +207,9 @@ export class ComponentHost extends EventEmitter implements IComponentDeltaHandle
         this.verifyNotClosed();
 
         const extension = this.chaincode.getModule(type) as IChaincodeModule;
+        if (!extension) {
+            throw new Error(`Channel Extension ${type} not registered`);
+        }
         const channel = extension.create(this, id);
         this.channels.set(
             id,
