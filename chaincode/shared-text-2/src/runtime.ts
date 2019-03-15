@@ -25,7 +25,6 @@ const debug = require("debug")("prague:shared-text");
 // tslint:enable:no-var-requires
 import * as url from "url";
 import { controls, ui } from "./controls";
-import { intelTask, resolveTask, snapshotTask, spellTask, translationTask } from "./taskResolver";
 
 // first script loaded
 const clockStart = Date.now();
@@ -42,7 +41,7 @@ async function downloadRawText(textUrl: string): Promise<string> {
     return data.data;
 }
 
-// Task runner needs the runtime to get fully connected.
+// Wait for the runtime to get fully connected.
 async function waitForFullConnection(runtime: any): Promise<void> {
     if (runtime.connected) {
         return;
@@ -73,7 +72,7 @@ class SharedTextComponent extends Document {
         debug(`Partial load fired: ${performanceNow()}`);
 
         waitForFullConnection(this.runtime).then(() => {
-            this.runTask();
+            this.runTask(this.runtime.clientType);
         });
 
         const hostContent: HTMLElement = await this.platform.queryInterface<HTMLElement>("div");
@@ -178,22 +177,21 @@ class SharedTextComponent extends Document {
         translationsFrom.add("en");*/
     }
 
-    private runTask() {
-        const maybeTask = resolveTask(this.runtime.getQuorum().getMembers(), this.runtime.clientId);
-        switch (maybeTask) {
-            case intelTask:
-                console.log(`Chaincode running ${maybeTask}`);
+    private runTask(clientType: string) {
+        switch (clientType) {
+            case "intel":
+                console.log(`@chaincode/shared-text-2 running ${clientType}`);
                 Intelligence.run(this.sharedString, this.insightsMap);
                 break;
-            case translationTask:
-                console.log(`Chaincode running ${maybeTask}`);
+            case "translation":
+                console.log(`@chaincode/shared-text-2 running ${clientType}`);
                 Translator.run(
                     this.sharedString,
                     this.insightsMap,
                     translationApiKey);
                 break;
-            case spellTask:
-                console.log(`Chaincode running ${maybeTask}`);
+            case "spell":
+                console.log(`@chaincode/shared-text-2 running ${clientType}`);
                 Spellcheker.run(this.sharedString);
                 break;
             default:
@@ -241,8 +239,8 @@ export async function instantiateRuntime(context: IContainerContext): Promise<IR
 
     waitForFullConnection(runtime).then(() => {
         // Call snapshot directly from runtime.
-        if (resolveTask(runtime.getQuorum().getMembers(), runtime.clientId) === snapshotTask) {
-            console.log(`Chaincode running ${snapshotTask}`);
+        if (runtime.clientType === "snapshot") {
+            console.log(`@chaincode/shared-text-2 running ${runtime.clientType}`);
             Snapshotter.run(runtime);
         }
     });
