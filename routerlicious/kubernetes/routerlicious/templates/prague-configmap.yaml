@@ -42,8 +42,8 @@ data:
         },
         {{- if .Values.eventHub }}
         "eventHub": {
-            "endpoint": "{{ .Values.eventHub.endpoint }}"
-            "storageEndpoint": "{{ .Values.eventHub.storageEndpoint }}"
+            "endpoint": "{{ .Values.eventHub.endpoint }}",
+            "storageEndpoint": "{{ .Values.eventHub.storageEndpoint }}",
             "storageContainer": "{{ .Values.eventHub.storageContainer }}"
         },
         {{- end }}
