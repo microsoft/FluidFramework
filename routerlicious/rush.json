@@ -6,6 +6,22 @@
   "projectFolderMaxDepth": 999,
   "projects": [
     {
+      "packageName": "@prague/intelligence-runner",
+      "projectFolder": "packages/agents/intelligence-runner/"
+    },
+    {
+      "packageName": "@prague/snapshotter",
+      "projectFolder": "packages/agents/snapshotter/"
+    },
+    {
+      "packageName": "@prague/spellchecker",
+      "projectFolder": "packages/agents/spellchecker/"
+    },
+    {
+      "packageName": "@prague/translator",
+      "projectFolder": "packages/agents/translator/"
+    },
+    {
       "packageName": "@prague/app-component",
       "projectFolder": "packages/components/app-component/"
     },
@@ -54,8 +70,16 @@
       "projectFolder": "packages/components/table-view/"
     },
     {
+      "packageName": "@prague/odsp-socket-storage",
+      "projectFolder": "packages/drivers/odsp-socket-storage/"
+    },
+    {
       "packageName": "@prague/replay-socket-storage",
       "projectFolder": "packages/drivers/replay-socket-storage/"
+    },
+    {
+      "packageName": "@prague/routerlicious-host",
+      "projectFolder": "packages/drivers/routerlicious-host/"
     },
     {
       "packageName": "@prague/routerlicious-socket-storage",
@@ -64,10 +88,6 @@
     {
       "packageName": "@prague/socket-storage-shared",
       "projectFolder": "packages/drivers/socket-storage-shared/"
-    },
-    {
-      "packageName": "@prague/odsp-socket-storage",
-      "projectFolder": "packages/drivers/odsp-socket-storage/"
     },
     {
       "packageName": "@prague/container-definitions",
@@ -138,6 +158,10 @@
       "projectFolder": "packages/server/agent/"
     },
     {
+      "packageName": "@prague/gateway",
+      "projectFolder": "packages/server/gateway/"
+    },
+    {
       "packageName": "@prague/kafka-orderer",
       "projectFolder": "packages/server/kafka-orderer/"
     },
@@ -162,10 +186,6 @@
       "projectFolder": "packages/server/routerlicious/"
     },
     {
-      "packageName": "@prague/routerlicious-host",
-      "projectFolder": "packages/drivers/routerlicious-host"
-    },
-    {
       "packageName": "@prague/services",
       "projectFolder": "packages/server/services/"
     },
@@ -188,22 +208,6 @@
     {
       "packageName": "@prague/tools-core",
       "projectFolder": "packages/shared/tools-core/"
-    },
-    {
-      "packageName": "@prague/intelligence-runner",
-      "projectFolder": "packages/agents/intelligence-runner/"
-    },
-    {
-      "packageName": "@prague/snapshotter",
-      "projectFolder": "packages/agents/snapshotter/"
-    },
-    {
-      "packageName": "@prague/spellchecker",
-      "projectFolder": "packages/agents/spellchecker/"
-    },
-    {
-      "packageName": "@prague/translator",
-      "projectFolder": "packages/agents/translator/"
     }
   ]
 }
