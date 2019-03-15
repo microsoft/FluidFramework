@@ -1,6 +1,7 @@
 import { EventData, EventProcessorHost, PartitionContext } from "@azure/event-processor-host";
 import { BoxcarType, IBoxcarMessage, IConsumer, IKafkaMessage, IPartition } from "@prague/services-core";
 import { EventEmitter } from "events";
+import { debug } from "./debug";
 
 const emit = true;
 
@@ -31,9 +32,15 @@ export class EventHubConsumer implements IConsumer {
                 eventHubPath: topic,
             });
 
-        this.eventHost.start(
+        const startP = this.eventHost.start(
             (context, data) => this.handleMessage(context, data),
             (error) => this.error(error));
+
+        startP.catch((error) => {
+            debug("Error starting event hub");
+            debug(JSON.stringify(error));
+            this.error(error);
+        });
     }
 
     public async commitOffset(data: any[]): Promise<void> {
