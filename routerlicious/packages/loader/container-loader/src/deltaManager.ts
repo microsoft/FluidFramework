@@ -14,7 +14,6 @@ import {
     ITokenProvider,
     ITrace,
     MessageType,
-    Robot,
 } from "@prague/container-definitions";
 import { Deferred, isSystemType } from "@prague/utils";
 import * as assert from "assert";
@@ -116,7 +115,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         super();
 
         /* tslint:disable:strict-boolean-expressions */
-        this.clientType = (!this.client || this.client.type === Browser) ? Browser : Robot;
+        this.clientType = (!this.client || !this.client.type) ? Browser : this.client.type;
         // Inbound message queue
         this._inbound = new DeltaQueue<ISequencedDocumentMessage>((op, callback) => {
             if (op.contents === undefined) {

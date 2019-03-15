@@ -88,6 +88,7 @@ export class Container extends EventEmitter implements IContainer {
 
     // tslint:disable:variable-name
     private _clientId: string = "disconnected";
+    private _clientType: string = "disconnected";
     private _deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     private _existing: boolean;
     private _id: string;
@@ -127,6 +128,10 @@ export class Container extends EventEmitter implements IContainer {
 
     public get clientId(): string {
         return this._clientId;
+    }
+
+    public get clientType(): string {
+        return this._clientType;
     }
 
     public get chaincodePackage(): string {
@@ -701,6 +706,7 @@ export class Container extends EventEmitter implements IContainer {
         } else if (value === ConnectionState.Connected) {
             this._deltaManager.disableReadonlyMode();
             this._clientId = this.pendingClientId;
+            this._clientType = this._deltaManager.clientType;
         }
 
         if (!this.loaded) {

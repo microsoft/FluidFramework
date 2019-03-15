@@ -99,6 +99,10 @@ export class Runtime extends EventEmitter implements IHostRuntime {
         return this.context.clientId;
     }
 
+    public get clientType(): string {
+        return this.context.clientType;
+    }
+
     public get blobManager(): IBlobManager {
         return this.context.blobManager;
     }

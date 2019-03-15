@@ -68,6 +68,10 @@ export class Context implements IContainerContext {
         return this.container.clientId;
     }
 
+    public get clientType(): string {
+        return this.container.clientType;
+    }
+
     public get existing(): boolean {
         return this.container.existing;
     }

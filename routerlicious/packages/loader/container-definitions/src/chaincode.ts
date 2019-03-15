@@ -124,6 +124,7 @@ export interface IContainerContext {
     readonly existing: boolean;
     readonly options: any;
     readonly clientId: string;
+    readonly clientType: string;
     readonly parentBranch: string;
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     readonly blobManager: IBlobManager;

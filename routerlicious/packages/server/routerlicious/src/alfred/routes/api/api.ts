@@ -5,7 +5,6 @@ import {
     IDocumentSystemMessage,
     ITokenClaims,
     MessageType,
-    Robot,
 } from "@prague/container-definitions";
 import * as core from "@prague/services-core";
 import { Router } from "express";
@@ -19,6 +18,7 @@ interface IOperation {
     value: string;
 }
 
+const Robot = "robot";
 export function create(
     config: Provider,
     producer: core.IProducer,
