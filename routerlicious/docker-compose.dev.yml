@@ -9,15 +9,6 @@ services:
     deli:
         volumes:
             - .:/usr/src/server
-    delieh:
-        volumes:
-            - .:/usr/src/server
-    scriptoriumeh:
-        volumes:
-            - .:/usr/src/server
-    bbceh:
-        volumes:
-            - .:/usr/src/server
     scriptorium:
         volumes:
             - .:/usr/src/server

@@ -1,0 +1,33 @@
+version: '3'
+services:
+    delieh:
+        build: .
+        ports:
+            - "5867:5858"
+        command: node --inspect=0.0.0.0:5858 dist/event-hub-service/index.js deli /usr/src/server/packages/server/routerlicious/dist/event-hub/deli/index.js
+        environment:
+            - DEBUG=prague:*
+            - NODE_ENV=development
+        volumes:
+            - .:/usr/src/server
+        restart: always
+    scriptoriumeh:
+        build: .
+        command: node dist/event-hub-service/index.js scriptorium /usr/src/server/packages/server/routerlicious/dist/scriptorium/index.js
+        environment:
+            - DEBUG=prague:*
+            - NODE_ENV=development
+        volumes:
+            - .:/usr/src/server
+        restart: always
+    bbceh:
+        build: .
+        ports:
+            - "5868:5858"
+        command: node --inspect=0.0.0.0:5858 dist/event-hub-service/index.js bbc /usr/src/server/packages/server/routerlicious/dist/bbc/index.js
+        environment:
+            - DEBUG=prague:*
+            - NODE_ENV=development
+        volumes:
+            - .:/usr/src/server
+        restart: always

@@ -185,11 +185,14 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
             maxSendMessageSize);
         const serverUrl = config.get("worker:serverUrl");
 
-        const eventHubProducer = new services.EventHubProducer(config.get("eventHub:endpoint"), topic);
-        const eventHubOrdererFactory = new KafkaOrdererFactory(
-            eventHubProducer,
-            storage,
-            maxSendMessageSize);
+        let eventHubOrdererFactory: KafkaOrdererFactory = null;
+        if (config.get("eventHub")) {
+            const eventHubProducer = new services.EventHubProducer(config.get("eventHub:endpoint"), topic);
+            eventHubOrdererFactory = new KafkaOrdererFactory(
+                eventHubProducer,
+                storage,
+                maxSendMessageSize);
+        }
 
         const orderManager = new OrdererManager(
             serverUrl,

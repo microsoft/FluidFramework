@@ -28,11 +28,6 @@
         },
         "maxMessageSize": "1MB"
     },
-    "eventHub": {
-        "endpoint": "Endpoint=sb://praguelatencyeh.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=eRPPRn1OmykX2BHo384xDhgM9OlPpIAllXa33nrbKYs=",
-        "storageEndpoint": "DefaultEndpointsProtocol=https;AccountName=pragueeventhub;AccountKey=KajkTRPIDPHydu+YXM9tLob/bgdYNmKYaMpwE9zMvChxQUyybQn3o8BycESg9AN7xXI3Ah+XQbb0OjC2yJSPFw==;EndpointSuffix=core.windows.net",
-        "storageContainer": "checkpoints"
-    },
     "alfred": {
         "kafkaClientId": "alfred",
         "maxMessageSize": "16KB",
@@ -217,19 +212,6 @@
                 "url": "http://cobalt",
                 "owner": "prague",
                 "repository": "cobalt"
-            }
-        },
-        {
-            "_id": "eventhub",
-            "key": "0bea3f87c186991a936c7e7e9c79478c",
-            "storage": {
-                "url": "http://gitrest:3000",
-                "owner": "prague",
-                "repository": "eventhub"
-            },
-            "orderer": {
-                "type": "eventHub",
-                "url": "http://localhost:3003"
             }
         },
         {
