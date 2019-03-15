@@ -63,7 +63,7 @@ dependencies:
   '@types/debug': 0.0.31
   '@types/diff': 3.5.3
   '@types/double-ended-queue': 2.1.0
-  '@types/express-session': 1.15.11
+  '@types/express-session': 1.15.12
   '@types/jquery': 3.3.29
   '@types/jsdom': 12.2.1
   '@types/json-stringify-safe': 5.0.0
@@ -10786,7 +10786,7 @@ packages:
     dev: false
     name: '@rush-temp/gateway'
     resolution:
-      integrity: sha512-kamB8j1eap8EDP0Ki3PTyPAluLq+D4JqvaMnkZBQABwglKt4pGJ/XeLgzES4IHZuBf8kqZE8FNsPzehJsOHZTQ==
+      integrity: sha512-iHg7leT3a+5XceJKuS2fS/lrdDTiVR0GexJPU7vscwJstiCrwObj6bxYuOvu26FdlzoXGXMgfD04ByTWDO+XuQ==
       tarball: 'file:projects/gateway.tgz'
     version: 0.0.0
   'file:projects/gitresources.tgz':
@@ -11110,7 +11110,7 @@ packages:
       '@types/d3': 5.7.0
       '@types/debug': 0.0.31
       '@types/diff': 3.5.3
-      '@types/express-session': 1.15.11
+      '@types/express-session': 1.15.12
       '@types/jquery': 3.3.29
       '@types/jsdom': 12.2.1
       '@types/json-stringify-safe': 5.0.0
@@ -11228,7 +11228,7 @@ packages:
     dev: false
     name: '@rush-temp/routerlicious'
     resolution:
-      integrity: sha512-/Rwmhb5osLkZyRyfAU2kt0aDXgAFxi5Kp0IAa0KrUE2VqpforChQbGr02ODL3bVi8CqOQtgcPHKwUq7Y+ibdSg==
+      integrity: sha512-VMgavGp6UO3m/ZzHlTy55tmPJ5NK9RtxeiYyofXCvzTP+VPTP5wHysr6WIQjW76S5ErPz0SZLdISbz9Q1IsKrA==
       tarball: 'file:projects/routerlicious.tgz'
     version: 0.0.0
   'file:projects/runtime-definitions.tgz':
@@ -11678,7 +11678,7 @@ specifiers:
   '@types/debug': ^0.0.31
   '@types/diff': ^3.5.1
   '@types/double-ended-queue': ^2.1.0
-  '@types/express-session': ^1.15.8
+  '@types/express-session': ^1.15.12
   '@types/jquery': ^3.3.6
   '@types/jsdom': ^12.0.0
   '@types/json-stringify-safe': ^5.0.0
