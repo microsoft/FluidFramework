@@ -23,6 +23,8 @@
     "typescript": "^3.2.2"
   },
   "dependencies": {
+    "@azure/event-hubs": "^1.0.8",
+    "@azure/event-processor-host": "^1.0.6",
     "@prague/container-definitions": "^0.2.0",
     "@prague/gitresources": "^0.2.0",
     "@prague/runtime-definitions": "^0.2.0",
