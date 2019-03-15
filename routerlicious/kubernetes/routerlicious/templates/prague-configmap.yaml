@@ -40,6 +40,13 @@ data:
             },
             "maxMessageSize": "1MB"
         },
+        {{- if .Values.eventHub }}
+        "eventHub": {
+            "endpoint": "{{ .Values.eventHub.endpoint }}"
+            "storageEndpoint": "{{ .Values.eventHub.storageEndpoint }}"
+            "storageContainer": "{{ .Values.eventHub.storageContainer }}"
+        },
+        {{- end }}
         "alfred": {
             "kafkaClientId": "{{ template "alfred.fullname" . }}",
             "maxMessageSize": "16KB",
@@ -202,6 +209,9 @@ data:
             "permission": ["snapshot", "spell", "intel", "translation", "chain-snapshot", "chain-spell", "chain-intel", "chain-translation"]
         },
         "tenantConfig": [
+            {{- range $index, $tenant := .Values.riddler.tenants }}
+            {{ toJson . }},
+            {{- end }}
             {
                 "_id": "prague",
                 "key": "43cfc3fbf04a97c0921fd23ff10f9e4b",

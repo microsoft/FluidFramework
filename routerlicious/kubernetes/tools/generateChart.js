@@ -82,6 +82,7 @@ serviceGraph:
 riddler:
   name: riddler
   replicas: 2
+  tenants: []
 
 historian:
   externalUrl: https://historian.wu2.prague.office-int.com
