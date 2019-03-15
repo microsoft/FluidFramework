@@ -131,6 +131,10 @@ export class ComponentHost extends EventEmitter implements IComponentDeltaHandle
         return this.componentRuntime.clientId;
     }
 
+    public get clientType(): string {
+        return this.componentRuntime.clientType;
+    }
+
     public get loader(): ILoader {
         return this.componentRuntime.loader;
     }

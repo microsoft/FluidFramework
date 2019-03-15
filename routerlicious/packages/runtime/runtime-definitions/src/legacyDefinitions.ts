@@ -78,6 +78,8 @@ export interface IRuntime extends EventEmitter {
 
     readonly clientId: string;
 
+    readonly clientType: string;
+
     readonly parentBranch: string;
 
     readonly connected: boolean;

@@ -90,6 +90,10 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime 
         return this.hostRuntime.clientId;
     }
 
+    public get clientType(): string {
+        return this.hostRuntime.clientType;
+    }
+
     public get blobManager(): IBlobManager {
         return this.hostRuntime.blobManager;
     }

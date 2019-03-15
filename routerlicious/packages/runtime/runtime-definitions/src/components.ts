@@ -57,6 +57,7 @@ export interface IComponentRuntime {
     readonly existing: boolean;
     readonly options: any;
     readonly clientId: string;
+    readonly clientType: string;
     readonly parentBranch: string;
     readonly connected: boolean;
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
@@ -97,6 +98,7 @@ export interface IHostRuntime extends IRuntime {
     readonly existing: boolean;
     readonly options: any;
     readonly clientId: string;
+    readonly clientType: string;
     readonly parentBranch: string;
     readonly connected: boolean;
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
