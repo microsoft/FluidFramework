@@ -9,6 +9,7 @@ dependencies:
   '@rush-temp/client-api': 'file:projects/client-api.tgz'
   '@rush-temp/client-ui': 'file:projects/client-ui.tgz'
   '@rush-temp/component': 'file:projects/component.tgz'
+  '@rush-temp/consensus-ordered-collection': 'file:projects/consensus-ordered-collection.tgz'
   '@rush-temp/container-definitions': 'file:projects/container-definitions.tgz'
   '@rush-temp/container-loader': 'file:projects/container-loader.tgz'
   '@rush-temp/flow-document': 'file:projects/flow-document.tgz'
@@ -10461,7 +10462,7 @@ packages:
     dev: false
     name: '@rush-temp/client-api'
     resolution:
-      integrity: sha512-bacrZm3LRjkc7Fem8nMlLYqbKPyKf3DX40I640kOJh59aWDJ0m0ko9o3rZZSzGha99b199yi5X+vqKKyTh8x4Q==
+      integrity: sha512-OZJa6AgSj82EkloLxO8wFGYs/zfLjPeBR6DxKrADn4UxsqIHNglF5EfO4rFXEoCyFWA+8s+ANPHJGXr8yhsUTQ==
       tarball: 'file:projects/client-api.tgz'
     version: 0.0.0
   'file:projects/client-ui.tgz':
@@ -10523,6 +10524,26 @@ packages:
     resolution:
       integrity: sha512-YGWh5l56zSuHZ8qr3VWRxhtC5lT6NLqBn5bsTn8Yha1kSWVufMdh9AEaf/ABvPnd5O73XI2S458yaz8X25OuoQ==
       tarball: 'file:projects/component.tgz'
+    version: 0.0.0
+  'file:projects/consensus-ordered-collection.tgz':
+    dependencies:
+      '@types/debug': 0.0.31
+      '@types/mocha': 5.2.6
+      '@types/node': 10.14.1
+      concurrently: 4.1.0
+      debug: 3.2.6
+      mocha: 5.2.0
+      mocha-junit-reporter: /mocha-junit-reporter/1.18.0/mocha@5.2.0
+      nyc: 13.3.0
+      rimraf: 2.6.3
+      tslint: /tslint/5.14.0/typescript@3.3.3333
+      tslint-microsoft-contrib: /tslint-microsoft-contrib/6.1.0/6921bdfbb1407821bef8c0bfffda7652
+      typescript: 3.3.3333
+    dev: false
+    name: '@rush-temp/consensus-ordered-collection'
+    resolution:
+      integrity: sha512-glASH1pic+I0w97CwuSONwYWQipK177+Ws6pflih80YyHOjbSLpJST0rPaHnHbhHg40Gh7QGbZk0WXTrS+WJvA==
+      tarball: 'file:projects/consensus-ordered-collection.tgz'
     version: 0.0.0
   'file:projects/container-definitions.tgz':
     dependencies:
@@ -10903,7 +10924,7 @@ packages:
     dev: false
     name: '@rush-temp/local-test-server'
     resolution:
-      integrity: sha512-aH0TFzsQm1GRFL7/5da/w2WXDEtDlBrTqMrkZ54t7kOwEy5FPExfPXWVuvq4ecxH0hxcZ1VdU2Z3mhE5s8OF2A==
+      integrity: sha512-kYewlSYVMwzJe3XVEcdO4Daz/V2b838WajxZZ8nEwP0+CqO+zTpKv3RIJs3E61cEHbJRQ7/VamshgvKYBklNjw==
       tarball: 'file:projects/local-test-server.tgz'
     version: 0.0.0
   'file:projects/map.tgz':
@@ -11603,6 +11624,7 @@ specifiers:
   '@rush-temp/client-api': 'file:./projects/client-api.tgz'
   '@rush-temp/client-ui': 'file:./projects/client-ui.tgz'
   '@rush-temp/component': 'file:./projects/component.tgz'
+  '@rush-temp/consensus-ordered-collection': 'file:./projects/consensus-ordered-collection.tgz'
   '@rush-temp/container-definitions': 'file:./projects/container-definitions.tgz'
   '@rush-temp/container-loader': 'file:./projects/container-loader.tgz'
   '@rush-temp/flow-document': 'file:./projects/flow-document.tgz'

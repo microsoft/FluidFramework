@@ -118,6 +118,10 @@
       "projectFolder": "packages/runtime/component/"
     },
     {
+      "packageName": "@prague/consensus-ordered-collection",
+      "projectFolder": "packages/runtime/consensus-ordered-collection/"
+    },
+    {
       "packageName": "@prague/cell",
       "projectFolder": "packages/runtime/cell/"
     },
