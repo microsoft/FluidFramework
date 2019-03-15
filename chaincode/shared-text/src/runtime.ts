@@ -8,6 +8,7 @@ import {
     IRuntime,
     ITree,
 } from "@prague/container-definitions";
+import * as Intelligence from "@prague/intelligence-runner";
 import * as DistributedMap from "@prague/map";
 import {
     CounterValueType,
@@ -25,8 +26,11 @@ import {
 } from "@prague/runtime-definitions";
 import * as SharedString from "@prague/sequence";
 import * as sequence from "@prague/sequence";
+import * as Snapshotter from "@prague/snapshotter";
+import * as Spellcheker from "@prague/spellchecker";
 import { IStream } from "@prague/stream";
 import * as stream from "@prague/stream";
+import * as Translator from "@prague/translator";
 import { Deferred } from "@prague/utils";
 import * as assert from "assert";
 import { default as axios } from "axios";
@@ -64,6 +68,8 @@ const pinpoint = import(/* webpackChunkName: "pinpoint", webpackPrefetch: true *
 // first script loaded
 const clockStart = Date.now();
 
+const translationApiKey = "bd099a1e38724333b253fcff7523f76a";
+
 async function getInsights(map: DistributedMap.ISharedMap, id: string): Promise<DistributedMap.ISharedMap> {
     const insights = await map.wait<DistributedMap.ISharedMap>("insights");
     return insights.wait<DistributedMap.ISharedMap>(id);
@@ -74,8 +80,22 @@ async function downloadRawText(textUrl: string): Promise<string> {
     return data.data;
 }
 
+// Wait for the runtime to get fully connected.
+async function waitForFullConnection(runtime: any): Promise<void> {
+    if (runtime.connected) {
+        return;
+    } else {
+        return new Promise<void>((resolve, reject) => {
+            runtime.once("connected", () => {
+                resolve();
+            });
+        });
+    }
+}
+
 export class SharedTextRunner extends EventEmitter implements IPlatform {
     private sharedString: SharedString.SharedString;
+    private insightsMap: DistributedMap.ISharedMap;
     private rootView: ISharedMap;
     private runtime: ILegacyRuntime;
     private collabDocDeferred = new Deferred<Document>();
@@ -103,12 +123,17 @@ export class SharedTextRunner extends EventEmitter implements IPlatform {
         debug(`collabDoc loaded ${this.runtime.id} - ${performanceNow()}`);
         debug(`Getting root ${this.runtime.id} - ${performanceNow()}`);
 
-        await Promise.all([this.rootView.wait("text"), this.rootView.wait("ink")]);
+        await Promise.all([this.rootView.wait("text"), this.rootView.wait("ink"), this.rootView.wait("insights")]);
 
         this.sharedString = this.rootView.get("text") as SharedString.SharedString;
+        this.insightsMap = this.rootView.get("insights") as DistributedMap.ISharedMap;
         debug(`Shared string ready - ${performanceNow()}`);
         debug(`id is ${this.runtime.id}`);
         debug(`Partial load fired: ${performanceNow()}`);
+
+        waitForFullConnection(this.runtime).then(() => {
+            this.runTask(this.runtime.clientType);
+        });
 
         const hostContent: HTMLElement = await platform.queryInterface<HTMLElement>("div");
         if (!hostContent) {
@@ -199,9 +224,33 @@ export class SharedTextRunner extends EventEmitter implements IPlatform {
             }
             this.rootView.set("text", newString);
             this.rootView.set("ink", collabDoc.createMap());
+
+            insights.set(newString.id, collabDoc.createMap());
         }
 
         return collabDoc;
+    }
+
+    private runTask(clientType: string) {
+        switch (clientType) {
+            case "intel":
+                console.log(`@chaincode/shared-text running ${clientType}`);
+                Intelligence.run(this.sharedString, this.insightsMap);
+                break;
+            case "translation":
+                console.log(`@chaincode/shared-text running ${clientType}`);
+                Translator.run(
+                    this.sharedString,
+                    this.insightsMap,
+                    translationApiKey);
+                break;
+            case "spell":
+                console.log(`@chaincode/shared-text running ${clientType}`);
+                Spellcheker.run(this.sharedString);
+                break;
+            default:
+                break;
+        }
     }
 }
 
@@ -330,7 +379,15 @@ export async function instantiateRuntime(context: IContainerContext): Promise<IR
         }
     });
 
-    runtime.registerTasks(["snapshot", "spell", "intel", "translation"]);
+    runtime.registerTasks(["snapshot", "spell", "intel", "translation"], "1.0");
+
+    waitForFullConnection(runtime).then(() => {
+        // Call snapshot directly from runtime.
+        if (runtime.clientType === "snapshot") {
+            console.log(`@chaincode/shared-text running ${runtime.clientType}`);
+            Snapshotter.run(runtime);
+        }
+    });
 
     // On first boot create the base component
     if (!runtime.existing) {

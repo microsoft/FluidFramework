@@ -14,7 +14,6 @@ body {
   bottom: 50px;
   right: 0px;
   z-index: 0;
-  background-color: darkgrey;
 }
 #hitPlane {
   position: absolute;
