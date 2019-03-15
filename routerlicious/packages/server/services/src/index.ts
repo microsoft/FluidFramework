@@ -1,4 +1,6 @@
 export * from "./agentUploader";
+export * from "./eventHubConsumer";
+export * from "./eventHubProducer";
 export * from "./kafkaFactory";
 export * from "./kafkaNodeConsumer";
 export * from "./kafkaNodeProducer";

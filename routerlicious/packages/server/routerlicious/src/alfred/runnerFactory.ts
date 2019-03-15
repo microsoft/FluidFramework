@@ -12,6 +12,7 @@ import * as bytes from "bytes";
 import { Provider } from "nconf";
 import * as os from "os";
 import * as redis from "redis";
+import * as winston from "winston";
 import * as ws from "ws";
 import { AlfredRunner } from "./runner";
 
@@ -35,19 +36,29 @@ export class OrdererManager implements core.IOrdererManager {
         private ordererUrl: string,
         private tenantManager: core.ITenantManager,
         private localOrderManager: LocalOrderManager,
-        private kafkaFactory: KafkaOrdererFactory) {
+        private kafkaFactory: KafkaOrdererFactory,
+        private eventHubFactory: KafkaOrdererFactory,
+    ) {
     }
 
     public async getOrderer(tenantId: string, documentId: string): Promise<core.IOrderer> {
         const tenant = await this.tenantManager.getTenant(tenantId);
 
+        winston.info(tenant.orderer);
+        winston.info(tenant.orderer.url);
+
         if (tenant.orderer.url !== this.ordererUrl) {
             return Promise.reject("Invalid ordering service endpoint");
         }
 
-        return tenant.orderer.type === "kafka"
-            ? this.kafkaFactory.create(tenantId, documentId)
-            : this.localOrderManager.get(tenantId, documentId);
+        switch (tenant.orderer.type) {
+            case "kafka":
+                return this.kafkaFactory.create(tenantId, documentId);
+            case "eventHub":
+                return this.eventHubFactory.create(tenantId, documentId);
+            default:
+                return this.localOrderManager.get(tenantId, documentId);
+        }
     }
 }
 
@@ -173,11 +184,19 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
             storage,
             maxSendMessageSize);
         const serverUrl = config.get("worker:serverUrl");
+
+        const eventHubProducer = new services.EventHubProducer(config.get("eventHub:endpoint"), topic);
+        const eventHubOrdererFactory = new KafkaOrdererFactory(
+            eventHubProducer,
+            storage,
+            maxSendMessageSize);
+
         const orderManager = new OrdererManager(
             serverUrl,
             tenantManager,
             localOrderManager,
-            kafkaOrdererFactory);
+            kafkaOrdererFactory,
+            eventHubOrdererFactory);
 
         // Tenants attached to the apps this service exposes
         const appTenants = config.get("alfred:tenants") as Array<{ id: string, key: string }>;

@@ -52,7 +52,7 @@ describe("Routerlicious", () => {
                         testTenantManager,
                         producer);
                     const kafkaOrderer = new KafkaOrdererFactory(producer, testStorage, 1024 * 1024);
-                    testOrderer = new OrdererManager(url, testTenantManager, null, kafkaOrderer);
+                    testOrderer = new OrdererManager(url, testTenantManager, null, kafkaOrderer, null);
 
                     webSocketServer = new TestWebSocketServer();
                     contentCollection = new TestCollection([]);

@@ -39,6 +39,27 @@ services:
             - DEBUG=prague:*
             - NODE_ENV=development
         restart: always
+    delieh:
+        build: .
+        command: node dist/event-hub-service/index.js deli /usr/src/server/packages/server/routerlicious/dist/event-hub/deli/index.js
+        environment:
+            - DEBUG=prague:*
+            - NODE_ENV=development
+        restart: always
+    scriptoriumeh:
+        build: .
+        command: node dist/event-hub-service/index.js scriptorium /usr/src/server/packages/server/routerlicious/dist/scriptorium/index.js
+        environment:
+            - DEBUG=prague:*
+            - NODE_ENV=development
+        restart: always
+    bbceh:
+        build: .
+        command: node dist/event-hub-service/index.js bbc /usr/src/server/packages/server/routerlicious/dist/bbc/index.js
+        environment:
+            - DEBUG=prague:*
+            - NODE_ENV=development
+        restart: always
     tmz:
         build: .
         command: node dist/kafka-service/index.js tmz /usr/src/server/packages/server/routerlicious/dist/tmz/index.js

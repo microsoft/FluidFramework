@@ -18,8 +18,7 @@ export class EventHubProducer implements IProducer {
     private sendPending: NodeJS.Immediate;
     private client: EventHubClient;
 
-    constructor(endpoint: string, topic: string,
-    ) {
+    constructor(endpoint: string, topic: string) {
         this.client = EventHubClient.createFromConnectionString(
             endpoint,
             topic);
@@ -28,7 +27,7 @@ export class EventHubProducer implements IProducer {
     /**
      * Sends the provided message to Kafka
      */
-    public send(message: object, tenantId: string, documentId: string): Promise<any> {
+    public send(message: any, tenantId: string, documentId: string): Promise<any> {
         const key = `${tenantId}/${documentId}`;
 
         // Get the list of boxcars for the given key
@@ -87,8 +86,9 @@ export class EventHubProducer implements IProducer {
     }
 
     private sendBoxcar(boxcar: IPendingBoxcar) {
+        boxcar.messages[0].partitionKey = boxcar.documentId;
         this.client
-            .sendBatch(boxcar.messages, boxcar.documentId)
+            .sendBatch(boxcar.messages)
             .then(() => boxcar.deferred.resolve());
     }
 }

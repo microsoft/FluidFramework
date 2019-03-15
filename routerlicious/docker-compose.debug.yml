@@ -8,6 +8,14 @@ services:
         ports:
             - "5859:5858"
         command: node --inspect=0.0.0.0:5858 dist/kafka-service/index.js deli /usr/src/server/packages/server/routerlicious/dist/deli/index.js
+    delieh:
+        ports:
+            - "5867:5858"
+        command: node --inspect=0.0.0.0:5858 dist/event-hub-service/index.js deli /usr/src/server/packages/server/routerlicious/dist/event-hub/deli/index.js
+    bbceh:
+        ports:
+            - "5868:5858"
+        command: node --inspect=0.0.0.0:5858 dist/event-hub-service/index.js bbc /usr/src/server/packages/server/routerlicious/dist/bbc/index.js
     paparazzi:
         ports:
             - "5860:5858"

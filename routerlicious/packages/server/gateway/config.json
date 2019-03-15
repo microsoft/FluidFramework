@@ -22,6 +22,10 @@
                 "key": "0bea3f87c186991a69245a29dc3f61d2"
             },
             {
+                "id": "eventhub",
+                "key": "0bea3f87c186991a936c7e7e9c79478c"
+            },
+            {
                 "id": "cobalt",
                 "key": "0e3c439e9ba63d85936c7e7e9c79478c"
             },

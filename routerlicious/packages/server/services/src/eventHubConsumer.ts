@@ -1,6 +1,8 @@
 import { EventData, EventProcessorHost, PartitionContext } from "@azure/event-processor-host";
-import { IConsumer, IKafkaMessage, IPartition } from "@prague/services-core";
+import { BoxcarType, IBoxcarMessage, IConsumer, IKafkaMessage, IPartition } from "@prague/services-core";
 import { EventEmitter } from "events";
+
+const emit = true;
 
 export class EventHubConsumer implements IConsumer {
     private events = new EventEmitter();
@@ -16,14 +18,17 @@ export class EventHubConsumer implements IConsumer {
         storageEndpoint: string,
         storageContainerName: string,
     ) {
+        console.log("Starting Event Hub");
+
         // Create the Event Processo Host
         this.eventHost = EventProcessorHost.createFromConnectionString(
             clientId,
             storageEndpoint,
-            storageContainerName,
+            `${storageContainerName}-${groupId}`,
             endpoint,
             {
                 consumerGroup: groupId,
+                eventHubPath: topic,
             });
 
         this.eventHost.start(
@@ -93,19 +98,27 @@ export class EventHubConsumer implements IConsumer {
     private handleMessage(context: PartitionContext, data: EventData) {
         this.updatePartitions();
 
+        const boxcarMessage: IBoxcarMessage = {
+            contents: [data.body],
+            documentId: data.body.documentId,
+            tenantId: data.body.tenantId,
+            type: BoxcarType,
+        };
+
         const kafkaMessage: IKafkaMessage = {
             highWaterOffset: data.sequenceNumber,
             key: data.partitionKey,
             offset: data.sequenceNumber,
             partition: parseInt(context.partitionId, 10),
             topic: context.eventhubPath,
-            value: data.body,
+            value: boxcarMessage,
         };
-
-        this.events.emit("data", kafkaMessage);
 
         // TODO handle checkpointing
         context.checkpoint();
+        if (emit) {
+            this.events.emit("data", kafkaMessage);
+        }
     }
 
     private error(error) {
