@@ -44,24 +44,6 @@ export class SharedString extends SegmentSequence<SharedStringSegment> {
         super(document, id, SharedStringExtension.Type, services);
     }
 
-    public appendSegment(segSpec: SharedStringJSONSegment) {
-        const mergeTree = this.client.mergeTree;
-        const pos = mergeTree.root.cachedLength;
-
-        if (segSpec.text) {
-            mergeTree.insertText(pos, MergeTree.UniversalSequenceNumber,
-                mergeTree.collabWindow.clientId, MergeTree.UniversalSequenceNumber, segSpec.text,
-                segSpec.props as MergeTree.PropertySet,
-                undefined);
-        } else {
-            // assume marker for now
-            mergeTree.insertMarker(pos, MergeTree.UniversalSequenceNumber, mergeTree.collabWindow.clientId,
-                MergeTree.UniversalSequenceNumber, segSpec.marker.refType, segSpec.props as MergeTree.PropertySet,
-                undefined);
-        }
-
-    }
-
     public segmentsFromSpecs(segSpecs: SharedStringJSONSegment[]) {
         return textsToSegments(segSpecs);
     }
@@ -206,5 +188,23 @@ export class SharedString extends SegmentSequence<SharedStringSegment> {
 
     public findTile(startPos: number, tileLabel: string, preceding = true) {
         return this.client.findTile(startPos, tileLabel, preceding);
+    }
+
+    protected appendSegment(segSpec: SharedStringJSONSegment) {
+        const mergeTree = this.client.mergeTree;
+        const pos = mergeTree.root.cachedLength;
+
+        if (segSpec.text) {
+            mergeTree.insertText(pos, MergeTree.UniversalSequenceNumber,
+                mergeTree.collabWindow.clientId, MergeTree.UniversalSequenceNumber, segSpec.text,
+                segSpec.props as MergeTree.PropertySet,
+                undefined);
+        } else {
+            // assume marker for now
+            mergeTree.insertMarker(pos, MergeTree.UniversalSequenceNumber, mergeTree.collabWindow.clientId,
+                MergeTree.UniversalSequenceNumber, segSpec.marker.refType, segSpec.props as MergeTree.PropertySet,
+                undefined);
+        }
+
     }
 }

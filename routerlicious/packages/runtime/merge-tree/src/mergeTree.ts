@@ -860,9 +860,7 @@ export class ExternalSegment extends BaseSegment {
     }
 
     mergeTreeInsert(mergeTree: MergeTree, pos: number, refSeq: number, clientId: number, seq: number, opArgs: IMergeTreeDeltaOpCallbackArgs) {
-        mergeTree.insert(pos, refSeq, clientId, seq, this, (block, pos, refSeq, clientId, seq, eseg) =>
-            mergeTree.blockInsert(block, pos, refSeq, clientId, seq, eseg),
-            opArgs);
+        mergeTree.insertSegment(pos, refSeq, clientId, seq, this, opArgs);
     }
 
     clone(): ISegment {
@@ -3265,16 +3263,15 @@ export class MergeTree {
         return pos;
     }
 
-    insert<T extends ISegment>(pos: number, refSeq: number, clientId: number, seq: number, segData: T,
-        traverse: (block: IMergeBlock, pos: number, refSeq: number, clientId: number, seq: number, segData: T) => IMergeBlock,
-        opArgs: IMergeTreeDeltaOpCallbackArgs) {
+    insertSegment(pos: number, refSeq: number, clientId: number, seq: number, segment: ISegment, opArgs: IMergeTreeDeltaOpCallbackArgs) {
+        // const tt = MergeTree.traceTraversal;
+        // MergeTree.traceTraversal = true;
+
         this.ensureIntervalBoundary(pos, refSeq, clientId);
         if (MergeTree.traceOrdinals) {
             this.ordinalIntegrity();
         }
-        //traceTraversal = true;
-        let splitNode = traverse(this.root, pos, refSeq, clientId, seq, segData);
-        //traceTraversal = false;
+        const splitNode = this.blockInsert(this.root, pos, refSeq, clientId, seq, segment);
         this.updateRoot(splitNode, refSeq, clientId, seq);
         if (this.mergeTreeDeltaCallback) {
             this.mergeTreeDeltaCallback(
@@ -3283,30 +3280,31 @@ export class MergeTree {
                     mergeTreeClientId: clientId,
                     operation: ops.MergeTreeDeltaType.INSERT,
                     mergeTree: this,
-                    segments: [segData]
+                    segments: [segment]
                 });
         }
-    }
 
-    insertSegment(pos: number, refSeq: number, clientId: number, seq: number, segment: ISegment, opArgs: IMergeTreeDeltaOpCallbackArgs) {
-        // const tt = MergeTree.traceTraversal;
-        // MergeTree.traceTraversal = true;
-        this.insert(pos, refSeq, clientId, seq, segment, (block, pos, refSeq, clientId, seq, seg) =>
-            this.blockInsert(block, pos, refSeq, clientId, seq, seg), opArgs);
         // MergeTree.traceTraversal = tt;
+        if (MergeTree.traceOrdinals) {
+            this.ordinalIntegrity();
+        }
+        if (this.collabWindow.collaborating && MergeTree.options.zamboniSegments &&
+            (seq != UnassignedSequenceNumber)) {
+            this.zamboniSegments();
+        }
     }
 
     insertMarker(pos: number, refSeq: number, clientId: number, seq: number,
         behaviors: ops.ReferenceType, props: Properties.PropertySet, opArgs: IMergeTreeDeltaOpCallbackArgs) {
-        let marker = Marker.make(behaviors, props, seq, clientId);
+        const marker = Marker.make(behaviors, props, seq, clientId);
 
-        let markerId = marker.getId();
+        const markerId = marker.getId();
         if (markerId) {
             this.mapIdToSegment(markerId, marker);
         }
-        this.insert(pos, refSeq, clientId, seq, marker, (block, pos, refSeq, clientId, seq, marker) =>
-            this.blockInsert(block, pos, refSeq, clientId, seq, marker),
-            opArgs);
+
+        this.insertSegment(pos, refSeq, clientId, seq, marker, opArgs);
+        
         // report segment if client interested
         if (this.markerModifiedHandler && (seq !== UnassignedSequenceNumber)) {
             this.markerModifiedHandler(marker);
@@ -3318,33 +3316,12 @@ export class MergeTree {
         text: string, props: Properties.PropertySet, opArgs: IMergeTreeDeltaOpCallbackArgs) {
         let pos = this.posFromRelativePos(markerPos, refSeq, clientId);
         if (pos >= 0) {
-            let newSegment = TextSegment.make(text, props, seq, clientId);
-            // MergeTree.traceTraversal = true;
-            this.insert(pos, refSeq, clientId, seq, newSegment, (block, pos, refSeq, clientId, seq, segment) =>
-                this.blockInsert(this.root, pos, refSeq, clientId, seq, segment),
-            opArgs);
-            MergeTree.traceTraversal = false;
-            if (this.collabWindow.collaborating && MergeTree.options.zamboniSegments &&
-                (seq != UnassignedSequenceNumber)) {
-                this.zamboniSegments();
-            }
+            this.insertSegment(pos, refSeq, clientId, seq, TextSegment.make(text, props, seq, clientId), opArgs);
         }
     }
 
     insertText(pos: number, refSeq: number, clientId: number, seq: number, text: string, props: Properties.PropertySet, opArgs: IMergeTreeDeltaOpCallbackArgs) {
-        let newSegment = TextSegment.make(text, props, seq, clientId);
-        // MergeTree.traceTraversal = true;
-        this.insert(pos, refSeq, clientId, seq, newSegment, (block, pos, refSeq, clientId, seq, segment) =>
-            this.blockInsert(this.root, pos, refSeq, clientId, seq, segment),
-            opArgs);
-        MergeTree.traceTraversal = false;
-        if (MergeTree.traceOrdinals) {
-            this.ordinalIntegrity();
-        }
-        if (this.collabWindow.collaborating && MergeTree.options.zamboniSegments &&
-            (seq != UnassignedSequenceNumber)) {
-            this.zamboniSegments();
-        }
+        this.insertSegment(pos, refSeq, clientId, seq, TextSegment.make(text, props, seq, clientId), opArgs);
     }
 
     blockInsert<T extends ISegment>(block: IMergeBlock, pos: number, refSeq: number, clientId: number, seq: number, newSegment: T) {

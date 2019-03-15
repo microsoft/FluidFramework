@@ -832,11 +832,15 @@ export class Client {
     }
 
     insertTextRemote(text: string, pos: number, props: Properties.PropertySet, seq: number, refSeq: number, clientId: number, opArgs?: IMergeTreeDeltaOpCallbackArgs) {
+        this.insertSegmentRemote(TextSegment.make(text, props, seq, clientId), pos, props, seq, refSeq, clientId, opArgs);
+    }
+
+    insertSegmentRemote(segment: ISegment, pos: number, props: Properties.PropertySet, seq: number, refSeq: number, clientId: number, opArgs?: IMergeTreeDeltaOpCallbackArgs) {
         let clockStart;
         if (this.measureOps) {
             clockStart = clock();
         }
-        this.mergeTree.insertText(pos, refSeq, clientId, seq, text, props, opArgs);
+        this.mergeTree.insertSegment(pos, refSeq, clientId, seq, segment, opArgs);
         this.mergeTree.getCollabWindow().currentSeq = seq;
         if (this.measureOps) {
             this.accumTime += elapsedMicroseconds(clockStart);
@@ -844,9 +848,10 @@ export class Client {
             this.accumWindow += (this.getCurrentSeq() - this.mergeTree.getCollabWindow().minSeq);
         }
         if (this.verboseOps) {
-            console.log(`@cli ${this.getLongClientId(this.mergeTree.getCollabWindow().clientId)} text ${text} seq ${seq} insert remote pos ${pos} refseq ${refSeq} cli ${this.getLongClientId(clientId)}`);
+            console.log(`@cli ${this.getLongClientId(this.mergeTree.getCollabWindow().clientId)} seg ${JSON.stringify(segment)} seq ${seq} insert remote pos ${pos} refseq ${refSeq} cli ${this.getLongClientId(clientId)}`);
         }
     }
+
     ackPendingSegment(opArgs: IMergeTreeDeltaOpCallbackArgs) {
         let clockStart;
         if (this.measureOps) {
