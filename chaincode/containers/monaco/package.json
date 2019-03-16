@@ -18,8 +18,9 @@
   "author": "Microsoft",
   "dependencies": {
     "@chaincode/monaco": "^0.3.5291",
-    "@prague/container-definitions": "^0.2.5295",
-    "@prague/runtime": "^0.2.5295"
+    "@prague/container-definitions": "^0.2.5666",
+    "@prague/runtime": "^0.2.5666",
+    "@prague/snapshotter": "^0.2.5666"
   },
   "devDependencies": {
     "@prague/prague-dev-server": "^3.2.3",

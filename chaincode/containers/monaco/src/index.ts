@@ -3,7 +3,7 @@ import "./publicpath";
 
 import { IContainerContext, IRequest, IRuntime } from "@prague/container-definitions";
 import { Runtime } from "@prague/runtime";
-
+import * as Snapshotter from "@prague/snapshotter";
 const monaco = import("@chaincode/monaco");
 
 // tslint:disable
@@ -21,6 +21,18 @@ const monaco = import("@chaincode/monaco");
 	}
 };
 // tslint:enable
+
+async function waitForFullConnection(runtime: any): Promise<void> {
+    if (runtime.connected) {
+        return;
+    } else {
+        return new Promise<void>((resolve, reject) => {
+            runtime.once("connected", () => {
+                resolve();
+            });
+        });
+    }
+}
 
 /**
  * Instantiates a new chaincode host
@@ -51,7 +63,15 @@ export async function instantiateRuntime(context: IContainerContext): Promise<IR
         }
     });
 
-    runtime.registerTasks(["snapshot"]);
+    runtime.registerTasks(["snapshot"], "1.0");
+
+    waitForFullConnection(runtime).then(() => {
+        // Call snapshot directly from runtime.
+        if (runtime.clientType === "snapshot") {
+            console.log(`@chaincode/manaco running ${runtime.clientType}`);
+            Snapshotter.run(runtime);
+        }
+    });
 
     // On first boot create the base component
     if (!runtime.existing) {
