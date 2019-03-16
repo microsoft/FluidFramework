@@ -1,24 +1,27 @@
-FROM node:8.11.1-alpine
+FROM ubuntu
 
-RUN apk --no-cache add \
-      bash \
-      g++ \
-      ca-certificates \
-      lz4-dev \
-      musl-dev \
-      cyrus-sasl-dev \
-      openssl-dev \
-      make \
-      python
-
-RUN apk add --no-cache --virtual .build-deps gcc zlib-dev libc-dev bsd-compat-headers py-setuptools bash
+RUN  apt-get update -qqy \
+  && apt-get install -y --no-install-recommends \
+     build-essential \
+     node-gyp \
+     nodejs-dev \
+     libssl1.0-dev \
+     liblz4-dev \
+     libpthread-stubs0-dev \
+     libsasl2-dev \
+     libsasl2-modules \
+     make \
+     python \
+     nodejs npm ca-certificates \
+  && rm -rf /var/cache/apt/* /var/lib/apt/lists/*
 
 WORKDIR /usr/local/app
 
 COPY package-lock.json .
 COPY package.json .
 
-RUN npm install
+RUN npm install -d
+ENV LD_LIBRARY_PATH=/usr/src/app/node_modules/node-rdkafka/build/deps
 
 COPY . .
 RUN npm run build

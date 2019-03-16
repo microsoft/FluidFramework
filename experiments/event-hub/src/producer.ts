@@ -7,16 +7,17 @@ import { Deferred } from "./deferred";
 const producer = new Kafka.Producer({
     // 'debug' : 'all',
     "dr_cb": true,  // delivery report callback
-    "metadata.broker.list": "kafka:9092", // "prague-eu.servicebus.windows.net:9093"
-    // "sasl.mechanisms": "PLAIN",
+    "metadata.broker.list": "praguelatencykafka.servicebus.windows.net:9093",
+    "queue.buffering.max.ms": 1,
+    "sasl.mechanisms": "PLAIN",
     // tslint:disable-next-line:max-line-length
-    // "sasl.password": "Endpoint=sb://prague-eu.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=u5rC/uCLRQapndUk9+ixNVNfoanpNbtAL8LJYS15DPc=",
-    // "sasl.username": "$ConnectionString",
-    // "security.protocol": "SASL_SSL",
+    "sasl.password": "Endpoint=sb://praguelatencykafka.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=yCrpDaQEKFrE3iJ0GM2eBNrqLj4qde4PeTfeCtoUetE=",
+    "sasl.username": "$ConnectionString",
+    "security.protocol": "SASL_SSL",
 }, null);
 producer.setPollInterval(1);
 
-const topicName = "test2";
+const topicName = "test";
 const partition = 0;
 
 // logging debug messages, if debug is enabled
@@ -139,3 +140,5 @@ async function runWriteTest(suffix: string) {
 
     producer.disconnect();
 }
+
+runWriteTest("testing");

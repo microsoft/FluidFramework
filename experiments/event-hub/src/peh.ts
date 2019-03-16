@@ -2,7 +2,7 @@ import * as assert from "assert";
 import { EventHubClient } from "azure-event-hubs";
 
 // tslint:disable-next-line
-const connectionString = `Endpoint=sb://pragueeh.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=n33JU/QyddfONq8E6d4iL/Rhl+8Pxjyoc266kjHdC6Q=`;
+const connectionString = "Endpoint=sb://pragueperftest.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=QB2cxwUA3ZmnGxze58jngPSjYlJcXxKIgmCcOdNAPIU=";
 const topic = "test";
 
 const client = EventHubClient.createFromConnectionString(connectionString, topic);
@@ -21,12 +21,13 @@ async function sendBatches(totalBatches, messagesPerBatch, suffix: string) {
     for (let i = 0; i < totalBatches; i++) {
         console.log(`Sending batch ${i}`);
         await sendBatch(messagesPerBatch, suffix);
+        await new Promise((resolve) => setTimeout(resolve, 2000));
     }
 }
 
 async function runWriteTest(suffix: string) {
-    const totalMessages =       25;
-    const messagesPerBatch =     5;
+    const totalMessages =      100;
+    const messagesPerBatch =    10;
     const totalBatches = totalMessages / messagesPerBatch;
     assert.equal(totalBatches * messagesPerBatch, totalMessages, "total messages should be divisible by batch size");
 

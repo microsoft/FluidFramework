@@ -5,12 +5,12 @@ import { Deferred } from "./deferred";
 const producer = new Kafka.Producer({
     // 'debug' : 'all',
     "dr_cb": true,  // delivery report callback
-    "metadata.broker.list": "kafka:9092", // "prague-eu.servicebus.windows.net:9093"
-    // "sasl.mechanisms": "PLAIN",
+    "metadata.broker.list": "praguelatencykafka.servicebus.windows.net:9093",
+    "sasl.mechanisms": "PLAIN",
     // tslint:disable-next-line:max-line-length
-    // "sasl.password": "Endpoint=sb://prague-eu.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=u5rC/uCLRQapndUk9+ixNVNfoanpNbtAL8LJYS15DPc=",
-    // "sasl.username": "$ConnectionString",
-    // "security.protocol": "SASL_SSL",
+    "sasl.password": "Endpoint=sb://praguelatencykafka.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=yCrpDaQEKFrE3iJ0GM2eBNrqLj4qde4PeTfeCtoUetE=",
+    "sasl.username": "$ConnectionString",
+    "security.protocol": "SASL_SSL",
 }, null);
 producer.setPollInterval(1);
 
@@ -19,19 +19,19 @@ const consumer = new Kafka.KafkaConsumer(
         // 'debug' : 'all',
         "enable.auto.commit": false,
         "group.id": "node-rdkafka-consumer-flow-example",
-        "metadata.broker.list": "kafka:9092", // "prague-eu.servicebus.windows.net:9093",
-        // "sasl.mechanisms": "PLAIN",
+        "metadata.broker.list": "praguelatencykafka.servicebus.windows.net:9093",
+        "sasl.mechanisms": "PLAIN",
         // tslint:disable-next-line:max-line-length
-        // "sasl.password": "Endpoint=sb://prague-eu.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=u5rC/uCLRQapndUk9+ixNVNfoanpNbtAL8LJYS15DPc=",
-        // "sasl.username": "$ConnectionString",
-        // "security.protocol": "SASL_SSL",
+        "sasl.password": "Endpoint=sb://praguelatencykafka.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=yCrpDaQEKFrE3iJ0GM2eBNrqLj4qde4PeTfeCtoUetE=",
+        "sasl.username": "$ConnectionString",
+        "security.protocol": "SASL_SSL",
         "socket.keepalive.enable": true,
     },
     {
         "auto.offset.reset": "latest",
     });
 
-const topicName = "test2";
+const topicName = "test";
 const partition = 0;
 
 // logging debug messages, if debug is enabled
@@ -110,7 +110,7 @@ function sendBatches(currentBatch, totalBatches, messagesPerBatch, resolve, reje
     const from = currentBatch * messagesPerBatch;
     const to = from + messagesPerBatch;
 
-    console.log(`Send batch with suffix ${suffix}`);
+    // console.log(`Send batch with suffix ${suffix}`);
     sendBatch(from, to, suffix).then(
         () => {
             setImmediate(() => sendBatches(currentBatch + 1, totalBatches, messagesPerBatch, resolve, reject, suffix));
@@ -124,7 +124,7 @@ export async function runWriteTest(suffix: string) {
     console.log(`Suffix is ${suffix}`);
     const start = Date.now();
 
-    const totalMessages =      100;
+    const totalMessages =     1000;
     const messagesPerBatch =    10;
     const totalBatches = totalMessages / messagesPerBatch;
     assert.equal(totalBatches * messagesPerBatch, totalMessages, "total messages should be divisible by batch size");
@@ -159,7 +159,7 @@ export async function runWriteTest(suffix: string) {
     console.log(`${totalMessages} messages in ${total} ms`);
     console.log(`${(totalMessages * 1000 / total).toFixed(4)} msg/s`);
 
-    producer.disconnect();
+    // producer.disconnect();
 }
 
 const consumerDeferred = new Deferred<void>();
@@ -178,12 +178,13 @@ consumer.connect(null, (error, data) => {
 });
 
 consumer.on("data", (m) => {
+    console.log("HIIIIII!");
     try {
         // Output the actual message contents
         // console.log(JSON.stringify(m));
-        console.log(m.value.toString());
+        // console.log(m.value.toString());
         const [time, suffix] = m.value.toString().split(":");
-        const start = Number.parseInt(time);
+        const start = Number.parseInt(time, 10);
         const end = Date.now();
         const delta = end - start;
         console.log(`${suffix}: ${delta} = ${end} - ${start}`);
@@ -193,5 +194,5 @@ consumer.on("data", (m) => {
 });
 
 Promise.all([consumerDeferred.promise, producerDeferred.promise]).then(async () => {
-    // await runWriteTest(process.argv[2]);
+    setTimeout(() => runWriteTest(process.argv[2]), 5000);
 });

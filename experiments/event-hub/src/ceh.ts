@@ -1,7 +1,7 @@
 import { EventHubClient, EventPosition } from "azure-event-hubs";
 
 // tslint:disable-next-line
-const connectionString = `Endpoint=sb://pragueeh.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=n33JU/QyddfONq8E6d4iL/Rhl+8Pxjyoc266kjHdC6Q=`;
+const connectionString = "Endpoint=sb://pragueperftest.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=QB2cxwUA3ZmnGxze58jngPSjYlJcXxKIgmCcOdNAPIU=";
 const topic = "test";
 
 const client = EventHubClient.createFromConnectionString(connectionString, topic);
@@ -17,7 +17,7 @@ async function main() {
 
         console.log(eventData.body);
         const [time, suffix] = eventData.body.split(":");
-        const start = Number.parseInt(time);
+        const start = Number.parseInt(time, 10);
         const end = Date.now();
         const delta = end - start;
         console.log(`${suffix}: ${delta} = ${end} - ${start}`);

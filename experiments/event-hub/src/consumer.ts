@@ -12,12 +12,15 @@ import * as Kafka from "node-rdkafka";
 const consumer = new Kafka.KafkaConsumer(
     {
         // 'debug' : 'all',
+        "client.id": Date.now().toString(),
         "enable.auto.commit": false,
+        "fetch.min.bytes": 1,
+        "fetch.wait.max.ms": 100,
         "group.id": "node-rdkafka-consumer-flow-example",
-        "metadata.broker.list": "prague-eu.servicebus.windows.net:9093",
+        "metadata.broker.list": "praguelatencykafka.servicebus.windows.net:9093",
         "sasl.mechanisms": "PLAIN",
         // tslint:disable-next-line:max-line-length
-        "sasl.password": "Endpoint=sb://prague-eu.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=u5rC/uCLRQapndUk9+ixNVNfoanpNbtAL8LJYS15DPc=",
+        "sasl.password": "Endpoint=sb://praguelatencykafka.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=yCrpDaQEKFrE3iJ0GM2eBNrqLj4qde4PeTfeCtoUetE=",
         "sasl.username": "$ConnectionString",
         "security.protocol": "SASL_SSL",
         "socket.keepalive.enable": true,
@@ -26,7 +29,7 @@ const consumer = new Kafka.KafkaConsumer(
         "auto.offset.reset": "latest",
     });
 
-const topicName = "test2";
+const topicName = "test";
 
 // logging debug messages, if debug is enabled
 consumer.on("event.log", (log) => {
@@ -39,37 +42,20 @@ consumer.on("event.error", (err) => {
     console.error(err);
 });
 
-// counter to commit offsets every numMessages are received
-const numMessages = 1000;
-let counter = 0;
-let start: number;
-
 consumer.on("ready", (arg) => {
     console.log("consumer ready." + JSON.stringify(arg));
 
     consumer.subscribe([topicName]);
     // start consuming messages
     consumer.consume();
-
-    start = Date.now();
 });
 
 consumer.on("data", (m) => {
-    counter++;
-
-    // Update stopwatch periodically
-    if (counter % numMessages === 0) {
-        const now = Date.now();
-        const total = now - start;
-        console.log(`${(counter * 1000 / total).toFixed(4)} msg/s - ${counter} / ${total / 1000}`);
-        counter = 0;
-        start = now;
-        consumer.commit(m);
-    }
-
-    // Output the actual message contents
-    // console.log(JSON.stringify(m));
-    // console.log(m.value.toString());
+    const [time, suffix] = m.value.toString().split(":");
+    const start = Number.parseInt(time, 10);
+    const end = Date.now();
+    const delta = end - start;
+    console.log(`${suffix}: ${delta} = ${end} - ${start}`);
 });
 
 consumer.on("disconnected", (arg) => {
