@@ -375,7 +375,7 @@ export class Runtime extends EventEmitter implements IHostRuntime {
             pkg,
             runtimeStorage);
 
-        // Generate the attach message
+        // Generate the attach message. This may include ownership
         const message: IAttachMessage = {
             id,
             snapshot: null,

@@ -32,6 +32,7 @@ COPY packages/components/flow-document/package*.json packages/components/flow-do
 COPY packages/components/flow-editor/package*.json packages/components/flow-editor/
 COPY packages/components/flow-host/package*.json packages/components/flow-host/
 COPY packages/components/flow-util/package*.json packages/components/flow-util/
+COPY packages/components/owned-map/package*.json packages/components/owned-map/
 COPY packages/components/table-document/package*.json packages/components/table-document/
 COPY packages/components/table-test/package*.json packages/components/table-test/
 COPY packages/components/table-view/package*.json packages/components/table-view/

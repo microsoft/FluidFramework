@@ -54,6 +54,8 @@ export abstract class SharedObject extends EventEmitter implements ISharedObject
 
         this.services = services;
 
+        await this.getOwnerSnapshot(services.objectStorage);
+
         await this.loadCore(
             minimumSequenceNumber,
             headerOrigin,
@@ -76,6 +78,8 @@ export abstract class SharedObject extends EventEmitter implements ISharedObject
         if (!this.isLocal()) {
             return this;
         }
+
+        this.setOwner();
 
         // Allow derived classes to perform custom processing prior to attaching this object
         this.attachCore();
@@ -106,6 +110,14 @@ export abstract class SharedObject extends EventEmitter implements ISharedObject
      * Gets a form of the object that can be serialized.
      */
     public abstract snapshot(): ITree;
+
+    protected setOwner(): string {
+        return;
+    }
+
+    protected async getOwnerSnapshot(storage: IObjectStorageService): Promise<void> {
+         return;
+     }
 
     /**
      * Allows the distributed data type to perform custom loading
@@ -169,6 +181,10 @@ export abstract class SharedObject extends EventEmitter implements ISharedObject
         return clientSequenceNumber;
     }
 
+    protected prepare(message: ISequencedDocumentMessage, local: boolean): Promise<any> {
+        return this.prepareCore(message, local);
+    }
+
     private attachDeltaHandler() {
         this.services.deltaConnection.attach({
             minSequenceNumberChanged: (value) => {
@@ -187,10 +203,6 @@ export abstract class SharedObject extends EventEmitter implements ISharedObject
 
         // Trigger initial state
         this.setConnectionState(this.services.deltaConnection.state);
-    }
-
-    private prepare(message: ISequencedDocumentMessage, local: boolean): Promise<any> {
-        return this.prepareCore(message, local);
     }
 
     private setConnectionState(state: ConnectionState) {

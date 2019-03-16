@@ -10,6 +10,8 @@ export interface IChannel {
      */
     readonly id: string;
 
+    readonly owner?: string;
+
     readonly type: string;
 
     snapshot(): ITree;
@@ -24,7 +26,7 @@ export interface IAttachMessage {
     // The type of object
     type: string;
 
-    // Initial snapshot of the document
+    // Initial snapshot of the document (contains ownership)
     snapshot: ITree;
 }
 

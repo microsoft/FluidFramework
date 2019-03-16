@@ -532,6 +532,7 @@ export class ComponentHost extends EventEmitter implements IComponentDeltaHandle
         };
 
         const origin = message.origin ? message.origin.id : this.documentId;
+
         const value = await this.loadChannel(
             attachMessage.id,
             attachMessage.type,
@@ -550,7 +551,6 @@ export class ComponentHost extends EventEmitter implements IComponentDeltaHandle
 
         const channelAttributes = await readAndParse<IChannelAttributes>(storage, tree.blobs[".attributes"]);
         const services = this.getObjectServices(id, tree, storage);
-
         const channelDetails = await this.loadChannel(
             id,
             channelAttributes.type,

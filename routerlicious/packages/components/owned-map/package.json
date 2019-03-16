@@ -1,0 +1,56 @@
+{
+  "name": "@chaincode/owned-map",
+  "description": "Chaincode starter project",
+  "version": "0.0.1",
+  "author": "Microsoft",
+  "repository": "microsoft/prague",
+  "main": "dist/main.bundle.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "npm run pack:dev",
+    "build:compile": "npm run pack:dev",
+    "build:esnext": "tsc --outDir lib --m esnext",
+    "build:full": "npm run build && npm run tsc",
+    "build:full:compile": "npm run build:compile",
+    "clean": "rimraf dist && rimraf lib",
+    "tsc": "tsc",
+    "tslint": "tslint --project tsconfig.json --format verbose",
+    "pack": "webpack --env=\"production\"",
+    "pack:dev": "webpack",
+    "start": "node ../../../common/tools/node_modules/@prague/prague-dev-server/bin/prague-dev-server.js --config webpack.config.js --live --package package.json",
+    "start:local": "node ../../../common/tools/node_modules/@prague/prague-dev-server/bin/prague-dev-server.js --config webpack.config.js --package package.json",
+    "verdaccio": "npm publish --registry https://packages.wu2.prague.office-int.com",
+    "deploy": "npm run build && npm version patch && npm run verdaccio"
+  },
+  "devDependencies": {
+    "@types/node": "^10.12.12",
+    "tslint-microsoft-contrib": "^6.0.0",
+    "tslint": "^5.11.0",
+    "@types/react-dom": "^16.0.11",
+    "ts-loader": "^4.5.0",
+    "typescript": "^3.2.2",
+    "webpack": "^4.8.2",
+    "webpack-cli": "^3.1.2",
+    "webpack-merge": "^4.1.2"
+  },
+  "prague": {
+    "browser": {
+      "entrypoint": "main",
+      "bundle": [
+        "dist/main.bundle.js"
+      ]
+    }
+  },
+  "dependencies": {
+    "@prague/app-component": "^0.2.0",
+    "@prague/api-definitions": "^0.2.0",
+    "@prague/cell": "^0.2.0",
+    "@prague/container-definitions": "^0.2.0",
+    "@prague/map": "^0.2.0",
+    "@prague/runtime-definitions": "^0.2.0",
+    "@prague/sequence": "^0.2.0",
+    "@prague/stream": "^0.2.0",
+    "react": "^16.8.3",
+    "react-dom": "^16.8.3"
+  }
+}
