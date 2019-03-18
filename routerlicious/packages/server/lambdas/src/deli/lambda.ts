@@ -163,32 +163,29 @@ export class DeliLambda implements IPartitionLambda {
             // Ticket current message.
             const ticketedMessage = this.ticket(message, this.createTrace("start"));
 
-            // Return early if message is invalid or sending is not required.
-            if (!ticketedMessage || ticketedMessage.send === SendType.Never) {
+            // Return early if message is invalid
+            if (!ticketedMessage) {
                 continue;
             }
 
-            // Return early but start a timer to create consolidate message.
-            this.clearNoOpTimer();
+            // Check for idle clients.
+            this.checkIdleClients(ticketedMessage);
+
+            // Return early if sending is not required.
+            if (ticketedMessage.send === SendType.Never) {
+                continue;
+            }
+
+            // Return early but start a timer to create consolidated message.
+            this.clearNoopConsolidationTimer();
             if (ticketedMessage.send === SendType.Later) {
-                this.setNoOpTimer();
+                this.setNoopConsolidationTimer();
                 continue;
             }
 
             // Update the msn last sent.
             this.lastSentMSN = ticketedMessage.msn;
             this.lastSendP = this.sendToScriptorium(ticketedMessage.message);
-
-            // Check if there are any old/idle clients. Craft and send a leave message to alfred.
-            // To prevent recurrent leave message sending, leave messages are only piggybacked with
-            // other message type.
-            if (ticketedMessage.type !== MessageType.ClientLeave) {
-                const idleClient = this.getIdleClient(ticketedMessage.timestamp);
-                if (idleClient) {
-                    const leaveMessage = this.createLeaveMessage(idleClient.clientId);
-                    this.sendToDeli(leaveMessage);
-                }
-            }
         }
 
         const checkpoint = this.generateCheckpoint();
@@ -213,7 +210,7 @@ export class DeliLambda implements IPartitionLambda {
         this.checkpointContext.close();
 
         this.clearIdleTimer();
-        this.clearNoOpTimer();
+        this.clearNoopConsolidationTimer();
     }
 
     private ticket(rawMessage: IMessage, trace: ITrace): ITicketedMessageOutput {
@@ -503,12 +500,24 @@ export class DeliLambda implements IPartitionLambda {
         return this.forwardProducer.send(message, message.tenantId, message.documentId);
     }
 
-    private sendToDeli(message: IRawOperationMessage) {
-        // Otherwise send the message to the event hub
+    private sendToAlfred(message: IRawOperationMessage) {
         this.reverseProducer.send(message, message.tenantId, message.documentId).catch((error) => {
             winston.error("Could not send message to alfred", error);
             this.context.error(error, true);
         });
+    }
+
+    // Check if there are any old/idle clients. Craft and send a leave message to alfred.
+    // To prevent recurrent leave message sending, leave messages are only piggybacked with
+    // other message type.
+    private checkIdleClients(message: ITicketedMessageOutput) {
+        if (message.type !== MessageType.ClientLeave) {
+            const idleClient = this.getIdleClient(message.timestamp);
+            if (idleClient) {
+                const leaveMessage = this.createLeaveMessage(idleClient.clientId);
+                this.sendToAlfred(leaveMessage);
+            }
+        }
     }
 
     /**
@@ -724,7 +733,7 @@ export class DeliLambda implements IPartitionLambda {
         }
         this.idleTimer = setTimeout(() => {
             const noOpMessage = this.createNoOpMessage();
-            this.sendToDeli(noOpMessage);
+            this.sendToAlfred(noOpMessage);
         }, this.activityTimeout);
     }
 
@@ -735,17 +744,17 @@ export class DeliLambda implements IPartitionLambda {
         }
     }
 
-    private setNoOpTimer() {
+    private setNoopConsolidationTimer() {
         if (this.noActiveClients) {
             return;
         }
         this.noopTimer = setTimeout(() => {
             const noOpMessage = this.createNoOpMessage();
-            this.sendToDeli(noOpMessage);
+            this.sendToAlfred(noOpMessage);
         }, this.noOpConsolidationTimeout);
     }
 
-    private clearNoOpTimer() {
+    private clearNoopConsolidationTimer() {
         if (this.noopTimer !== undefined) {
             clearTimeout(this.noopTimer);
             this.noopTimer = undefined;
