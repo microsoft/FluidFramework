@@ -1,6 +1,6 @@
 // tslint:disable
 import { MessageType, ISequencedDocumentMessage } from "@prague/container-definitions";
-import { IMergeTreeDeltaOpCallbackArgs, IRelativePosition } from "./index";
+import { IMergeTreeDeltaOpCallbackArgs } from "./index";
 import {
     MergeTree, ClientIds, compareStrings, RegisterCollection, UnassignedSequenceNumber, Marker, SubSequence,
     IConsensusInfo, IUndoInfo, ISegment, SegmentType, TextSegment, UniversalSequenceNumber, SegmentGroup, clock, elapsedMicroseconds
@@ -709,24 +709,6 @@ export class Client {
         }
         if (this.verboseOps) {
             console.log(`insert local text ${text} pos ${pos} cli ${this.getLongClientId(clientId)} ref seq ${refSeq}`);
-        }
-    }
-    insertTextMarkerRelative(text: string, markerPos: IRelativePosition, props?: Properties.PropertySet, opArgs?: IMergeTreeDeltaOpCallbackArgs) {
-        let segWindow = this.mergeTree.getCollabWindow();
-        let clientId = segWindow.clientId;
-        let refSeq = segWindow.currentSeq;
-        let seq = this.getLocalSequenceNumber();
-        let clockStart;
-        if (this.measureOps) {
-            clockStart = clock();
-        }
-        this.mergeTree.insertTextMarkerRelative(markerPos, refSeq, clientId, seq, text, props, opArgs);
-        if (this.measureOps) {
-            this.localTime += elapsedMicroseconds(clockStart);
-            this.localOps++;
-        }
-        if (this.verboseOps) {
-            console.log(`insert local text marker relative ${text} pos ${markerPos.id} cli ${this.getLongClientId(clientId)} ref seq ${refSeq}`);
         }
     }
 

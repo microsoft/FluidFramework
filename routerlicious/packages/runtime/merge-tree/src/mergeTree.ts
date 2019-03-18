@@ -3306,14 +3306,6 @@ export class MergeTree {
         this.insertSegment(pos, refSeq, clientId, seq, Marker.make(behaviors, props, seq, clientId), opArgs);
     }
 
-    insertTextMarkerRelative(markerPos: IRelativePosition, refSeq: number, clientId: number, seq: number,
-        text: string, props: Properties.PropertySet, opArgs: IMergeTreeDeltaOpCallbackArgs) {
-        let pos = this.posFromRelativePos(markerPos, refSeq, clientId);
-        if (pos >= 0) {
-            this.insertSegment(pos, refSeq, clientId, seq, TextSegment.make(text, props, seq, clientId), opArgs);
-        }
-    }
-
     insertText(pos: number, refSeq: number, clientId: number, seq: number, text: string, props: Properties.PropertySet, opArgs: IMergeTreeDeltaOpCallbackArgs) {
         this.insertSegment(pos, refSeq, clientId, seq, TextSegment.make(text, props, seq, clientId), opArgs);
     }

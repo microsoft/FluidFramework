@@ -1926,7 +1926,8 @@ function insertElm(treeLabel: string, elm: Xmldoc.XmlElement, client: MergeTree.
         }
     }
     if (elm.val && /[^\s]/.test(elm.val)) {
-        client.insertTextMarkerRelative(elm.val, { id: elmId });
+        const pos = client.mergeTree.posFromRelativePos({ id: elmId })
+        client.insertTextLocal(elm.val, pos);
     }
     return elmId;
 }
