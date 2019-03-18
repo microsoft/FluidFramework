@@ -2176,7 +2176,6 @@ export class MergeTree {
     idToSegment = Properties.createMap<ISegment>();
     clientIdToBranchId: number[] = [];
     localBranchId = 0;
-    markerModifiedHandler: IMarkerModifiedAction;
     transactionSegmentGroup: SegmentGroup;
     minSeqListeners: Collections.Heap<MinListener>;
     minSeqPending = false;
@@ -3267,6 +3266,14 @@ export class MergeTree {
         // const tt = MergeTree.traceTraversal;
         // MergeTree.traceTraversal = true;
 
+        if (segment.getType() === SegmentType.Marker) {
+            const marker = segment as Marker;
+            const markerId = marker.getId();
+            if (markerId) {
+                this.mapIdToSegment(markerId, marker);
+            }
+        }
+
         this.ensureIntervalBoundary(pos, refSeq, clientId);
         if (MergeTree.traceOrdinals) {
             this.ordinalIntegrity();
@@ -3296,20 +3303,7 @@ export class MergeTree {
 
     insertMarker(pos: number, refSeq: number, clientId: number, seq: number,
         behaviors: ops.ReferenceType, props: Properties.PropertySet, opArgs: IMergeTreeDeltaOpCallbackArgs) {
-        const marker = Marker.make(behaviors, props, seq, clientId);
-
-        const markerId = marker.getId();
-        if (markerId) {
-            this.mapIdToSegment(markerId, marker);
-        }
-
-        this.insertSegment(pos, refSeq, clientId, seq, marker, opArgs);
-        
-        // report segment if client interested
-        if (this.markerModifiedHandler && (seq !== UnassignedSequenceNumber)) {
-            this.markerModifiedHandler(marker);
-        }
-        return marker;
+        this.insertSegment(pos, refSeq, clientId, seq, Marker.make(behaviors, props, seq, clientId), opArgs);
     }
 
     insertTextMarkerRelative(markerPos: IRelativePosition, refSeq: number, clientId: number, seq: number,
@@ -3710,12 +3704,8 @@ export class MergeTree {
         this.ensureIntervalBoundary(end, refSeq, clientId);
         const annotatedSegments: ISegment[] = [];
         const annotateSegment = (segment: ISegment) => {
-            const segType = segment.getType();
             annotatedSegments.push(segment);
             segment.addProperties(props, combiningOp, seq);
-            if (this.markerModifiedHandler && (segType === SegmentType.Marker) && (seq !== UnassignedSequenceNumber)) {
-                this.markerModifiedHandler(<Marker>segment);
-            }
             return true;
         }
         this.mapRange({ leaf: annotateSegment }, refSeq, clientId, undefined, start, end);
@@ -3771,10 +3761,6 @@ export class MergeTree {
             }
             // save segment so can assign removed sequence number when acked by server
             if (this.collabWindow.collaborating) {
-                // report segment if client interested
-                if (this.markerModifiedHandler && (segment.getType() === SegmentType.Marker) && (seq !== UnassignedSequenceNumber)) {
-                    this.markerModifiedHandler(<Marker>segment);
-                }
                 // use removal information
                 let removalInfo = this.getRemovalInfo(this.localBranchId, segBranchId, segment);
                 if ((removalInfo.removedSeq === UnassignedSequenceNumber) && (clientId === this.collabWindow.clientId)) {

@@ -2873,6 +2873,11 @@ export class FlowView extends ui.Component {
     private cmdTree: MergeTree.TST<IFlowViewCmd>;
     private formatRegister: MergeTree.PropertySet;
 
+    // A list of Marker segments modified by the most recently processed op.  (Reset on each
+    // mergeTreeDeltaCallback.)  Used by 'updatePgInfo()' to determine if table information
+    // may have been invalidated.
+    private modifiedMarkers = [];
+
     constructor(
         element: HTMLDivElement,
         public collabDocument: api.Document,
@@ -2898,6 +2903,15 @@ export class FlowView extends ui.Component {
         }
 
         this.client = sharedString.client;
+
+        // For each incoming delta, save any referenced Marker segments.
+        // (see comments at 'modifiedMarkers' decl for more info.)
+        this.client.mergeTree.mergeTreeDeltaCallback = (opArgs, deltaArgs) => {
+            this.modifiedMarkers = deltaArgs
+                .segments
+                .filter((segment) => segment.getType() === MergeTree.SegmentType.Marker);
+        };
+
         this.viewportDiv = document.createElement("div");
         this.element.appendChild(this.viewportDiv);
         const translationToLanguage = "translationToLanguage";
@@ -4937,8 +4951,7 @@ export class FlowView extends ui.Component {
         } else {
             console.log("did not find pg to clear");
         }
-        const markers = this.client.getModifiedMarkersForOp();
-        if (markers.length > 0) {
+        if (this.modifiedMarkers.length > 0) {
             this.updateTableInfo(changePos);
         }
     }

@@ -36,16 +36,9 @@ export class Client {
     constructor(initText: string, options?: Properties.PropertySet) {
         this.mergeTree = new MergeTree(initText, options);
         this.mergeTree.getLongClientId = id => this.getLongClientId(id);
-        this.mergeTree.markerModifiedHandler = marker => this.markerModified(marker);
         this.mergeTree.clientIdToBranchId = this.shortClientBranchIdMap;
         this.q = Collections.ListMakeHead<ISequencedDocumentMessage>();
         this.checkQ = Collections.ListMakeHead<string>();
-    }
-    resetModifiedMarkers() {
-        this.opMarkersModified = [];
-    }
-    markerModified(marker: Marker) {
-        this.opMarkersModified.push(marker);
     }
     setLocalSequenceNumber(seq: number) {
         this.localSequenceNumber = seq;
@@ -471,7 +464,6 @@ export class Client {
         return this.opMarkersModified;
     }
     coreApplyMsg(opArgs: IMergeTreeDeltaOpCallbackArgs) {
-        this.resetModifiedMarkers();
         this.applyOp(opArgs);
     }
     applyMsg(msg: ISequencedDocumentMessage) {
@@ -619,7 +611,6 @@ export class Client {
         let clientId = segWindow.clientId;
         let refSeq = segWindow.currentSeq;
         let seq = this.getLocalSequenceNumber();
-        this.resetModifiedMarkers();
         let clockStart;
         if (this.measureOps) {
             clockStart = clock();
@@ -639,7 +630,6 @@ export class Client {
         let clientId = segWindow.clientId;
         let refSeq = segWindow.currentSeq;
         let seq = this.getLocalSequenceNumber();
-        this.resetModifiedMarkers();
         let clockStart;
         if (this.measureOps) {
             clockStart = clock();
@@ -674,7 +664,6 @@ export class Client {
         let clientId = segWindow.clientId;
         let refSeq = segWindow.currentSeq;
         let seq = this.getLocalSequenceNumber();
-        this.resetModifiedMarkers();
         let clockStart;
         if (this.measureOps) {
             clockStart = clock();
@@ -709,7 +698,6 @@ export class Client {
         let clientId = segWindow.clientId;
         let refSeq = segWindow.currentSeq;
         let seq = this.getLocalSequenceNumber();
-        this.resetModifiedMarkers();
         let clockStart;
         if (this.measureOps) {
             clockStart = clock();
@@ -728,7 +716,6 @@ export class Client {
         let clientId = segWindow.clientId;
         let refSeq = segWindow.currentSeq;
         let seq = this.getLocalSequenceNumber();
-        this.resetModifiedMarkers();
         let clockStart;
         if (this.measureOps) {
             clockStart = clock();
@@ -769,12 +756,12 @@ export class Client {
         let clientId = segWindow.clientId;
         let refSeq = segWindow.currentSeq;
         let seq = this.getLocalSequenceNumber();
-        this.resetModifiedMarkers();
         let clockStart;
         if (this.measureOps) {
             clockStart = clock();
         }
-        let marker = this.mergeTree.insertMarker(pos, refSeq, clientId, seq, behaviors, props, opArgs);
+        const marker = Marker.make(behaviors, props, seq, clientId);
+        this.mergeTree.insertSegment(pos, refSeq, clientId, seq, Marker.make(behaviors, props, seq, clientId), opArgs);
         if (this.measureOps) {
             this.localTime += elapsedMicroseconds(clockStart);
             this.localOps++;
@@ -819,7 +806,8 @@ export class Client {
         if (this.measureOps) {
             clockStart = clock();
         }
-        let marker = this.mergeTree.insertMarker(pos, refSeq, clientId, seq, markerDef.refType, props, opArgs);
+        const marker = Marker.make(markerDef.refType, props, seq, clientId);
+        this.mergeTree.insertSegment(pos, refSeq, clientId, seq, marker, opArgs);
         this.mergeTree.getCollabWindow().currentSeq = seq;
         if (this.measureOps) {
             this.accumTime += elapsedMicroseconds(clockStart);
