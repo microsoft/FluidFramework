@@ -35,15 +35,23 @@ import * as _ from "lodash";
 import * as winston from "winston";
 import { CheckpointContext, ICheckpoint, IClientSequenceNumber } from "./checkpointContext";
 
+enum SendType {
+    Immediate,
+    Later,
+    Never,
+}
+
 export interface ITicketedMessageOutput {
 
     message: ITicketedMessage;
+
+    msn: number;
 
     timestamp: number;
 
     type: string;
 
-    sendLater: boolean;
+    send: SendType;
 }
 
 const SequenceNumberComparer: IComparer<IClientSequenceNumber> = {
@@ -76,6 +84,7 @@ export class DeliLambda implements IPartitionLambda {
     private branchMap: RangeTracker;
     private checkpointContext: CheckpointContext;
     private lastSendP = Promise.resolve();
+    private lastSentMSN = 0;
     private idleTimer: any;
     private noopTimer: any;
     private noActiveClients = false;
@@ -154,19 +163,20 @@ export class DeliLambda implements IPartitionLambda {
             // Ticket current message.
             const ticketedMessage = this.ticket(message, this.createTrace("start"));
 
-            // Return early if message is not valid.
-            if (!ticketedMessage) {
+            // Return early if message is invalid or sending is not required.
+            if (!ticketedMessage || ticketedMessage.send === SendType.Never) {
                 continue;
             }
 
-            // Return early but start a timer for noop messages if we want to
-            // delay sending it.
+            // Return early but start a timer to create consolidate message.
             this.clearNoOpTimer();
-            if (ticketedMessage.sendLater) {
+            if (ticketedMessage.send === SendType.Later) {
                 this.setNoOpTimer();
                 continue;
             }
 
+            // Update the msn last sent.
+            this.lastSentMSN = ticketedMessage.msn;
             this.lastSendP = this.sendToScriptorium(ticketedMessage.message);
 
             // Check if there are any old/idle clients. Craft and send a leave message to alfred.
@@ -269,16 +279,10 @@ export class DeliLambda implements IPartitionLambda {
         // We don't increment sequence number for noops sent by client since they will
         // be consolidated and sent later as raw message.
         let sequenceNumber = this.sequenceNumber;
-        let sendLater = false;
-        if (message.operation.type === MessageType.NoOp && message.clientId) {
-            sendLater = true;
-        } else {
-            sequenceNumber = this.revSequenceNumber();
-        }
-
         let origin: IBranchOrigin;
-
         if (message.operation.type === MessageType.Integrate) {
+            sequenceNumber = this.revSequenceNumber();
+
             // Branch operation is the original message
             const branchOperation = systemContent as ISequencedOperationMessage;
             const branchDocumentMessage = branchOperation.operation;
@@ -339,13 +343,17 @@ export class DeliLambda implements IPartitionLambda {
                 false);
         } else {
             if (message.clientId) {
-                // We checked earlier for the below case. Why checking again?
-                // Only for directly sent ops (e.g., using REST API). To avoid getting nacked,
-                // We rev the refseq number to current sequence number.
-                if (message.operation.referenceSequenceNumber === -1) {
-                    message.operation.referenceSequenceNumber = sequenceNumber;
+                // Don't rev for client sent no-ops
+                if (message.operation.type !== MessageType.NoOp) {
+                    // Rev the sequence number
+                    sequenceNumber = this.revSequenceNumber();
+                    // We checked earlier for the below case. Why checking again?
+                    // Only for directly sent ops (e.g., using REST API). To avoid getting nacked,
+                    // We rev the refseq number to current sequence number.
+                    if (message.operation.referenceSequenceNumber === -1) {
+                        message.operation.referenceSequenceNumber = sequenceNumber;
+                    }
                 }
-
                 assert(
                     message.operation.referenceSequenceNumber >= this.minimumSequenceNumber,
                     `${message.operation.referenceSequenceNumber} >= ${this.minimumSequenceNumber}`);
@@ -356,6 +364,11 @@ export class DeliLambda implements IPartitionLambda {
                     message.operation.referenceSequenceNumber,
                     message.timestamp,
                     true);
+            } else {
+                // Don't rev for server sent no-ops
+                if (message.operation.type !== MessageType.NoOp) {
+                    sequenceNumber = this.revSequenceNumber();
+                }
             }
         }
 
@@ -368,6 +381,21 @@ export class DeliLambda implements IPartitionLambda {
         } else {
             this.minimumSequenceNumber = msn;
             this.noActiveClients = false;
+        }
+
+        let sendType = SendType.Immediate;
+        if (message.operation.type === MessageType.NoOp) {
+            // Set up delay sending of client sent no-ops
+            if (message.clientId) {
+                sendType = SendType.Later;
+            } else {
+                if (this.minimumSequenceNumber <= this.lastSentMSN) {
+                    sendType = SendType.Never;
+                } else {
+                    // Only rev if we need to send a new msn.
+                    sequenceNumber = this.revSequenceNumber();
+                }
+            }
         }
 
         // Add traces
@@ -388,7 +416,8 @@ export class DeliLambda implements IPartitionLambda {
 
         return {
             message: sequencedMessage,
-            sendLater,
+            msn: this.minimumSequenceNumber,
+            send: sendType,
             timestamp: message.timestamp,
             type: message.operation.type,
         };
@@ -526,7 +555,8 @@ export class DeliLambda implements IPartitionLambda {
         };
         return {
             message: nackMessage,
-            sendLater: false,
+            msn: this.minimumSequenceNumber,
+            send: SendType.Immediate,
             timestamp: message.timestamp,
             type: message.operation.type,
         };
