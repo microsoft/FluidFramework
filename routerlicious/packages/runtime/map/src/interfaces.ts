@@ -119,9 +119,16 @@ export interface ISharedMap extends ISharedObject, IMapRegistry, Map<string, any
      */
     set<T = any>(key: string, value: T, type?: string): this;
 
+    /**
+     * Registers a listener on the specified events
+     */
     on(event: string | symbol, listener: (...args: any[]) => void): this;
-    on(event: "pre-op" | "op", listener: (op: ISequencedDocumentMessage, local: boolean) => void): this;
     on(
-        event: "valueChanged",
-        listener: (changed: IValueChanged, local: boolean, op: ISequencedDocumentMessage) => void): this;
+        event: "pre-op" | "op",
+        listener: (op: ISequencedDocumentMessage, local: boolean, target: this) => void): this;
+    on(event: "valueChanged", listener: (
+                                        changed: IValueChanged,
+                                        local: boolean,
+                                        op: ISequencedDocumentMessage,
+                                        target: this) => void): this;
 }

@@ -240,10 +240,17 @@ export class SharedMap extends SharedObject implements ISharedMap {
         this.serializeFilter = filter;
     }
 
-    public on(event: "pre-op" | "op", listener: (op: ISequencedDocumentMessage, local: boolean) => void): this;
+    /**
+     * Registers a listener on the specified events
+     */
     public on(
-        event: "valueChanged",
-        listener: (changed: IValueChanged, local: boolean, op: ISequencedDocumentMessage) => void): this;
+        event: "pre-op" | "op",
+        listener: (op: ISequencedDocumentMessage, local: boolean, target: this) => void): this;
+    public on(event: "valueChanged", listener: (
+                                            changed: IValueChanged,
+                                            local: boolean,
+                                            op: ISequencedDocumentMessage,
+                                            target: this) => void): this;
     public on(event: string | symbol, listener: (...args: any[]) => void): this;
 
     /* tslint:disable:no-unnecessary-override */

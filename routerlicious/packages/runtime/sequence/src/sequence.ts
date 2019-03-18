@@ -63,7 +63,7 @@ export abstract class SegmentSequence<T extends MergeTree.ISegment> extends Shar
                 case "sequenceDelta":
                     if (!this.client.mergeTree.mergeTreeDeltaCallback) {
                         this.client.mergeTree.mergeTreeDeltaCallback = (opArgs, deltaArgs) => {
-                            this.emit("sequenceDelta", this, new SequenceDeltaEvent(opArgs, this.client, deltaArgs));
+                            this.emit("sequenceDelta", new SequenceDeltaEvent(opArgs, this.client, deltaArgs), this);
                         };
                     }
                     break;
@@ -82,11 +82,16 @@ export abstract class SegmentSequence<T extends MergeTree.ISegment> extends Shar
         });
     }
 
-    public on(event: "sequenceDelta", listener: (sender: this, event: SequenceDeltaEvent) => void): this;
-    public on(event: "pre-op" | "op", listener: (op: ISequencedDocumentMessage, local: boolean) => void): this;
-    public on(
-        event: "valueChanged",
-        listener: (changed: IValueChanged, local: boolean, op: ISequencedDocumentMessage) => void): this;
+    /**
+     * Registers a listener on the specified events
+     */
+    public on(event: "sequenceDelta", listener: (event: SequenceDeltaEvent, target: this) => void): this;
+    public on(event: "pre-op" | "op",
+                listener: (op: ISequencedDocumentMessage, local: boolean, target: this) => void): this;
+    public on(event: "valueChanged", listener: (changed: IValueChanged,
+                                                local: boolean,
+                                                op: ISequencedDocumentMessage,
+                                                target: this) => void): this;
     public on(event: string | symbol, listener: (...args: any[]) => void): this;
     // tslint:disable-next-line:no-unnecessary-override
     public on(event: string | symbol, listener: (...args: any[]) => void): this {
