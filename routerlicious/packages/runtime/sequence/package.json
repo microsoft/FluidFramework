@@ -15,7 +15,8 @@
     "tsc": "tsc",
     "build:esnext": "tsc --outDir lib --m esnext",
     "tslint": "tslint --project tsconfig.json --format verbose",
-    "test": "mocha --recursive dist/test",
+    "test": "mocha --recursive dist/test/**/*.spec.js",
+    "testfarm": "node dist/test/testFarm.js",
     "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml"
   },
   "author": "Microsoft",

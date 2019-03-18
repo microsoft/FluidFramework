@@ -8,7 +8,7 @@ import * as path from "path";
 import * as random from "random-js";
 import * as fs from "fs";
 import * as Xmldoc from "xmldoc";
-import * as SharedString from "./intervalCollection";
+import * as SharedString from "../intervalCollection";
 import { TestServer } from "@prague/merge-tree/dist/test/testServer"
 import { ISequencedDocumentMessage } from "@prague/container-definitions";
 
@@ -2167,7 +2167,7 @@ if (clientServerTest) {
     let ppTest = true;
     let branch = false;
     let testPack = TestPack();
-    const filename = path.join(__dirname, "../../../server/routerlicious/public/literature", "pp.txt");
+    const filename = path.join(__dirname, "../../../../server/gateway/public/literature", "pp.txt");
     if (ppTest) {
         if (branch) {
             testPack.clientServerBranch(filename, 100000);
