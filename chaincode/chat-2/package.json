@@ -1,7 +1,7 @@
 {
   "name": "@chaincode/chat-2",
-  "description": "Prague Chat!",
-  "version": "0.0.1",
+  "description": "Prague Chat with no distributed data structure",
+  "version": "0.0.7",
   "author": "Microsoft",
   "repository": "microsoft/prague",
   "main": "dist/main.bundle.js",
@@ -16,7 +16,7 @@
     "tsc": "tsc"
   },
   "devDependencies": {
-    "@prague/prague-dev-server": "^3.2.2",
+    "@prague/prague-dev-server": "^3.2.5",
     "@types/node": "^10.11.5",
     "@types/react-dom": "^16.0.11",
     "clean-webpack-plugin": "^0.1.19",
@@ -35,12 +35,10 @@
     }
   },
   "dependencies": {
-    "@prague/app-component": "^0.2.5287",
-    "@prague/app-datastore": "^0.2.5287",
-    "@prague/map": "^0.2.5287",
-    "@prague/runtime": "^0.2.5287",
-    "@prague/runtime-definitions": "^0.2.5287",
-    "@prague/container-definitions": "^0.2.5287",
+    "@prague/app-datastore": "^0.2.5666",
+    "@prague/runtime": "^0.2.5666",
+    "@prague/runtime-definitions": "^0.2.5666",
+    "@prague/container-definitions": "^0.2.5666",
     "@stardust-ui/react": "^0.17.0",
     "react": "^16.7.0",
     "react-dom": "^16.7.0"
