@@ -1,7 +1,7 @@
 import { 
   IContainerContext,
   IPlatform,
-  IRequest, 
+  IRequest,
   IRuntime,
   ITree,
 } from "@prague/container-definitions";

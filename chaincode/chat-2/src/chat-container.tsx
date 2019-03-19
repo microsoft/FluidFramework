@@ -30,16 +30,11 @@ interface ChatContainerState {
 
 export class ChatContainer extends React.Component<ChatContainerProps, ChatContainerState> {
   componentDidMount() {
-    this.setState({ messages: this.getInitialChat(), inputMessage: "" });
+    this.setState({ messages: [], inputMessage: "" });
 
     this.props.runtime.on("op", (op: ISequencedDocumentMessage) => {
       console.log(op);
-      // todo: Somehow extract the message from op.
-      let message: IMessage = {
-        author: "tanvir",
-        content: "hello",
-        time: "123",
-      };
+      let message: IMessage = op.contents;
       message.content = filter(message.content);
       const chatProp = { message } as ChatProps;
 
@@ -91,15 +86,6 @@ export class ChatContainer extends React.Component<ChatContainerProps, ChatConta
         appendMessageCb={this.appendMessageCb}
       />
     );
-  }
-
-  /**
-   * Fetch the existing messages
-   */
-  getInitialChat(): ChatProps[] {
-    const items: ChatProps[] = [];
-    // todo: Somehow extract the message from prior op.
-    return items;
   }
 
   inputChangeHandler = (event: React.ChangeEvent<HTMLInputElement>) => this.setState({ inputMessage: event.target.value });
