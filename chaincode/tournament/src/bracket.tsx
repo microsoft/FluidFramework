@@ -15,7 +15,7 @@ export class Bracket extends React.Component<IProps, any> {
   render() {
       let i = 0;
     return (
-      <body className="bracket standings light-blue">
+      <div className="bracket standings light-blue">
         <div id="content-wrapper">
           <div id="bracket">
             <div id="round1" className="round">
@@ -332,7 +332,7 @@ export class Bracket extends React.Component<IProps, any> {
             </div>
           </div>
         </div>
-      </body>
+      </div>
     );
   }
 }
