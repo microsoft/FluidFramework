@@ -2,7 +2,7 @@ import * as React from "react";
 import "./index.css";
 import { ITeam, IMatchup } from "./schedule";
 import { ISharedMap, IValueChanged } from "@prague/map";
-import {nextGame} from "./schedule";
+import { nextGame } from "./schedule";
 
 export interface IMatchupProps {
   matchNumber: number; // The match number within the RegionRound
@@ -21,22 +21,21 @@ export interface IState {
 // TODO: add winner info
 export class Matchup extends React.Component<IMatchupProps, IState> {
   state: IState = {};
-  nextGame: string;
+  nextGame: { game: number; top: boolean };
   constructor(props: IMatchupProps) {
     super(props);
-    this.nextGame = nextGame(props.game).toString();
+    this.nextGame = nextGame(props.game);
 
     // TODO This is sort of worrying because we make high/low mutable for Round 1
     this.state = {
       highTeam: this.props.highTeam,
       lowTeam: this.props.lowTeam
-    }
+    };
   }
 
   componentDidMount() {
     this.props.bracket.on("valueChanged", (key: IValueChanged) => {
       if (key.key === this.props.game.toString()) {
-        console.log("FOund the right game");
         const updatedMatchup = this.props.bracket.get(key.key);
         this.setState(updatedMatchup);
       }
@@ -44,12 +43,9 @@ export class Matchup extends React.Component<IMatchupProps, IState> {
   }
 
   render() {
-    const { matchNumber, game } = this.props;
+    const { matchNumber } = this.props;
     const { highTeam, lowTeam } = this.state;
-    // const highTeam = this.props.highTeam !== undefined ? this.props.highTeam : this.state.highTeam;
-    // const lowTeam = this.props.lowTeam !== undefined ? this.props.lowTeam : this.state.lowTeam;
 
-    console.log(game);
     const classname = "match m" + matchNumber;
     return (
       <div className={classname}>
@@ -63,7 +59,7 @@ export class Matchup extends React.Component<IMatchupProps, IState> {
           )}
         </p>
         <p className="slot slot2" onClick={this.onClickSlot2}>
-          {lowTeam !== undefined? (
+          {lowTeam !== undefined ? (
             <>
               <span className="seed">{lowTeam.seed}</span> {lowTeam.name}{" "}
             </>
@@ -82,10 +78,13 @@ export class Matchup extends React.Component<IMatchupProps, IState> {
       winner: highTeam.name
     });
 
-    const nextGame = this.props.bracket.get<IMatchup>(this.nextGame);
-    nextGame.highTeam = highTeam;
-    this.props.bracket.set<IMatchup>(this.nextGame, nextGame);
-    alert("Picked " + highTeam.name + " Game: " + this.props.game + " NextGame: " + this.nextGame);
+    const nextGame = this.props.bracket.get<IMatchup>(this.nextGame.game.toString());
+    if (this.nextGame.top) {
+      nextGame.highTeam = highTeam;
+    } else {
+      nextGame.lowTeam = highTeam;
+    }
+    this.props.bracket.set<IMatchup>(this.nextGame.game.toString(), nextGame);
   };
 
   // Pick "lowTeam" as winner
@@ -95,10 +94,12 @@ export class Matchup extends React.Component<IMatchupProps, IState> {
       winner: lowTeam.name
     });
 
-    const nextGame = this.props.bracket.get<IMatchup>(this.nextGame);
-    nextGame.lowTeam = lowTeam;
-
-    this.props.bracket.set<IMatchup>(this.nextGame, nextGame);
-    alert("Picked " + lowTeam.name + " Game: " + this.props.game + " NextGame: " + this.nextGame);
+    const nextGame = this.props.bracket.get<IMatchup>(this.nextGame.game.toString());
+    if (this.nextGame.top) {
+      nextGame.highTeam = lowTeam;
+    } else {
+      nextGame.lowTeam = lowTeam;
+    }
+    this.props.bracket.set<IMatchup>(this.nextGame.game.toString(), nextGame);
   };
 }

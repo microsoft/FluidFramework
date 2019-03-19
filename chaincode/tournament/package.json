@@ -1,7 +1,7 @@
 {
   "name": "@chaincode/tournament",
   "description": "Chaincode starter project",
-  "version": "0.0.1",
+  "version": "0.0.5",
   "author": "Microsoft",
   "repository": "microsoft/prague",
   "main": "dist/main.bundle.js",

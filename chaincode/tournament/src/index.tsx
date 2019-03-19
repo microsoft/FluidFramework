@@ -3,7 +3,7 @@ import { IContainerContext, IRuntime } from "@prague/container-definitions";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import { Bracket } from "./bracket";
-import { FakeTeamsArray, ITeam, IMatchup } from "./schedule";
+import { FullTeamsArray, ITeam, IMatchup } from "./schedule";
 import { ISharedMap } from "@prague/map";
 
 
@@ -17,9 +17,9 @@ export class Tournament extends Document {
 
     // Set up the initial 32 games
     for (let i = 0; i < 32; i++) {
-      const highTeam: ITeam = FakeTeamsArray[i];
+      const highTeam: ITeam = FullTeamsArray[i];
 
-      const lowTeam: ITeam = FakeTeamsArray[i + 1];
+      const lowTeam: ITeam = FullTeamsArray[i + 1];
 
       const matchup: IMatchup = {
         // matchNumber: i % 8,
@@ -72,11 +72,3 @@ export async function instantiateRuntime(
     ["@chaincode/tournament", Tournament]
   ]);
 }
-
-// function correctBracket(bracket: ISharedMap) {
-
-//   bracket.set("EAST-1-1-Up", {"Duke", 1, );
-//   bracket.set("EAST-1-1-Up","Duke");
-
-//   return bracket;
-// }
