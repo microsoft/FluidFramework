@@ -4,7 +4,7 @@ import "./publicpath";
 import * as chartView from "@chaincode/chart-view";
 import * as flowDocument from "@chaincode/flow-document";
 import * as flowEditor from "@chaincode/flow-editor";
-import * as tableDocument from "@chaincode/table-document";
+import {TableDocumentType, TableSliceType} from "@chaincode/table-document";
 import * as tableView from "@chaincode/table-view";
 import { Component } from "@prague/app-component";
 import {
@@ -54,8 +54,8 @@ export async function instantiateRuntime(context: IContainerContext): Promise<IR
         ["@chaincode/flow-document", Promise.resolve(flowDocument.FlowDocument)],
         [pkg.name, Promise.resolve(FlowHost)],
         ["@chaincode/flow-editor", Promise.resolve(flowEditor.FlowEditor)],
-        [tableDocument.TableDocument.type, Promise.resolve(tableDocument.TableDocument)],
-        [tableDocument.TableSlice.type, Promise.resolve(tableDocument.TableSlice)],
+        [TableDocumentType, import("@chaincode/table-document").then((m) => m.TableDocument)],
+        [TableSliceType, import("@chaincode/table-document").then((m) => m.TableSlice)],
         ["@chaincode/table-view", Promise.resolve(tableView.TableView)],
     ]);
 }

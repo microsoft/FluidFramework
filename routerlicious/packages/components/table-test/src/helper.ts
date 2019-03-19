@@ -1,10 +1,10 @@
 import "mocha";
-import { TableDocument, TableSlice } from "@chaincode/table-document";
+import { TableDocumentType, TableSliceType } from "@chaincode/table-document";
 import { TestHost } from "@prague/local-test-server";
 
 const host = new TestHost([
-    [TableDocument.type, Promise.resolve(TableDocument)],
-    [TableSlice.type, Promise.resolve(TableSlice)],
+    [TableDocumentType, import("@chaincode/table-document").then((m) => m.TableDocument)],
+    [TableSliceType, import("@chaincode/table-document").then((m) => m.TableSlice)],
 ]);
 
 after(async () => { await host.close(); })
@@ -16,5 +16,5 @@ export function makeId(type: string) {
 }
 
 export async function createTable() {
-    return await host.createComponent<TableDocument>(makeId("Table-Document"), TableDocument.type);
+    return await host.createComponent(makeId("Table-Document"), TableDocumentType);
 }

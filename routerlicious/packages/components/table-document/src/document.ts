@@ -27,7 +27,7 @@ import {
     SharedStringIntervalCollectionValueType,
 } from "@prague/sequence";
 import { CellInterval } from "./cellinterval";
-import { createComponentType } from "./pkg";
+import { TableSliceType } from "./ComponentTypes";
 import { TableSlice } from "./slice";
 import { ITable } from "./table";
 
@@ -84,7 +84,6 @@ export class TableDocument extends Component implements ITable {
 
     private get matrix()        { return this.maybeMatrix!; }
     private get workbook()      { return this.maybeWorkbook!; }
-    public static readonly type = createComponentType(TableDocument);
 
     private maybeRows?: SharedNumberSequence;
     private maybeCols?: SharedNumberSequence;
@@ -125,7 +124,7 @@ export class TableDocument extends Component implements ITable {
     }
 
     public async createSlice(sliceId: string, name: string, minRow: number, minCol: number, maxRow: number, maxCol: number): Promise<ITable> {
-        await this.host.createAndAttachComponent(sliceId, TableSlice.type);
+        await this.host.createAndAttachComponent(sliceId, TableSliceType);
         return await this.host.openComponent<TableSlice>(
             sliceId, true, [
                 ["config", Promise.resolve({ docId: this.host.id, name, minRow, minCol, maxRow, maxCol })],

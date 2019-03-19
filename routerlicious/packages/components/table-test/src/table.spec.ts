@@ -5,7 +5,7 @@ import * as assert from "assert";
 
 describe("TableDocument", () => {
     let table: TableDocument;    
-    beforeEach(async () => { table = await createTable(); });
+    beforeEach(async () => { table = await createTable() as TableDocument});
     afterEach(async () => { await table.close(); });
 
     it(`"Uninitialized cell is empty string"`, () => {

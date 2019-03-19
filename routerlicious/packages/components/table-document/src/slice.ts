@@ -5,7 +5,6 @@ import { UnboxedOper } from "../../client-ui/ext/calc";
 import { CellInterval, parseRange } from "./cellinterval";
 import { ConfigKeys } from "./configKeys";
 import { TableDocument } from "./document";
-import { createComponentType } from "./pkg";
 import { ITable } from "./table";
 
 export interface ITableSliceConfig {
@@ -32,7 +31,6 @@ export class TableSlice extends Component implements ITable {
         const {start, end} = this.values.getRange();
         return end.col - start.col;
     }
-    public static readonly type = createComponentType(TableSlice);
 
     private maybeDoc?: TableDocument;
     private maybeValues?: CellInterval;

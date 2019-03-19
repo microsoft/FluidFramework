@@ -1,4 +1,4 @@
-import { TableSlice } from "@chaincode/table-document";
+import { TableSliceType } from "@chaincode/table-document";
 import { ComponentHost } from "@prague/component";
 import { initializeIcons } from "@uifabric/icons";
 import { CommandBar, ICommandBarItemProps } from "office-ui-fabric-react/lib/CommandBar";
@@ -58,7 +58,7 @@ export class App extends React.Component<IProps, IState> {
         { name: "Wedge Right", iconName: "CaretLeft", onClick: () => this.cmds.insert(<div className={style.wedgeRight}></div>) },
         { name: "Chart", iconName: "CaretLeft", onClick: () => this.cmds.insertContainerComponent("@chaincode/chart-view") },
         { name: "Table", iconName: "CaretLeft", onClick: () => this.cmds.insertContainerComponent("@chaincode/table-view") },
-        { name: "Table Slice", iconName: "CaretLeft", onClick: () => this.cmds.insertContainerComponent(TableSlice.type) },
+        { name: "Table Slice", iconName: "CaretLeft", onClick: () => this.cmds.insertContainerComponent(TableSliceType) },
         /*{ name: "Flow", iconName: "Text", onClick: () => this.cmds.insert(<FlowEditor cmds={this.cmds} docUrl="http://localhost:3000" docId={Math.random().toString(36).substr(2, 4)}></FlowEditor>) },*/
         { name: "Component", iconName: "Text", onClick: () => { this.chaincodeDlg.current.showDialog(); }},
     ].map(({name, iconName, onClick}) => { return {
