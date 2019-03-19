@@ -56,10 +56,11 @@
             "type": "node",
             "request": "launch",
             "name": "Mocha Tests",
-            "program": "/usr/local/bin/mocha",
+            "cwd": "${workspaceFolder}/",
+            "program": "${workspaceFolder}/common/tools/node_modules/mocha/bin/_mocha",
             "args": [
                 "--recursive",
-                "dist/test",
+                "dist/test/",
                 "--grep Checked"
             ],
             "internalConsoleOptions": "openOnSessionStart"
@@ -72,7 +73,7 @@
             "sourceMaps": true,
             "url": "localhost:3000/sharedText/oct18-3",
             "pathMapping": {
-                "/public/scripts/dist/src/" : "${workspaceRoot}/dist"
+                "/public/scripts/dist/src/" : "${workspaceFolder}/dist"
             }
         },
         {
@@ -88,17 +89,17 @@
             "request": "launch",
             "name": "Beast",
             "sourceMaps": true,
-            "outFiles": [ "${workspaceRoot}/dist/**/*.js" ],
+            "outFiles": [ "${workspaceFolder}/dist/**/*.js" ],
             "protocol": "inspector",
-            "program": "${workspaceRoot}/dist/test/merge-tree/beastTest.js"
+            "program": "${workspaceFolder}/dist/test/merge-tree/beastTest.js"
         },
         {
             "type": "node",
             "request": "launch",
             "name": "STroll",
             "sourceMaps": true,
-            "outFiles": [ "${workspaceRoot}/dist/**/*.js" ],
-            "program": "${workspaceRoot}/dist/tools/spellingTroll.js",
+            "outFiles": [ "${workspaceFolder}/dist/**/*.js" ],
+            "program": "${workspaceFolder}/dist/tools/spellingTroll.js",
             "args": ["aug8-5"]
         },
         {
@@ -109,9 +110,9 @@
             "port": 5858,
             "restart": true,
             "sourceMaps": true,
-            "localRoot": "${workspaceRoot}",
+            "localRoot": "${workspaceFolder}",
             "remoteRoot": "/usr/src/server",
-            "outFiles": [ "${workspaceRoot}/dist/**/*.js" ],
+            "outFiles": [ "${workspaceFolder}/dist/**/*.js" ],
             "protocol":"inspector",
             "trace": "sm"
         },
@@ -165,9 +166,9 @@
             "port": 5859,
             "restart": true,
             "sourceMaps": true,
-            "localRoot": "${workspaceRoot}",
+            "localRoot": "${workspaceFolder}",
             "remoteRoot": "/usr/src/server",
-            "outFiles": [ "${workspaceRoot}/dist/**/*.js" ],
+            "outFiles": [ "${workspaceFolder}/dist/**/*.js" ],
             "protocol":"inspector",
             "trace": "sm"
         },    
@@ -179,9 +180,9 @@
             "port": 5860,
             "restart": true,
             "sourceMaps": true,
-            "localRoot": "${workspaceRoot}",
+            "localRoot": "${workspaceFolder}",
             "remoteRoot": "/usr/src/server",
-            "outFiles": [ "${workspaceRoot}/dist/**/*.js" ],
+            "outFiles": [ "${workspaceFolder}/dist/**/*.js" ],
             "protocol":"inspector",
             "trace": "sm"
         },
@@ -193,9 +194,9 @@
             "port": 5861,
             "restart": true,
             "sourceMaps": true,
-            "localRoot": "${workspaceRoot}",
+            "localRoot": "${workspaceFolder}",
             "remoteRoot": "/usr/src/server",
-            "outFiles": [ "${workspaceRoot}/dist/**/*.js" ],
+            "outFiles": [ "${workspaceFolder}/dist/**/*.js" ],
             "protocol":"inspector",
             "trace": "sm"
         },
@@ -207,9 +208,9 @@
             "port": 5862,
             "restart": true,
             "sourceMaps": true,
-            "localRoot": "${workspaceRoot}",
+            "localRoot": "${workspaceFolder}",
             "remoteRoot": "/usr/src/server",
-            "outFiles": [ "${workspaceRoot}/dist/**/*.js" ],
+            "outFiles": [ "${workspaceFolder}/dist/**/*.js" ],
             "protocol":"inspector",
             "trace": "sm"
         },
@@ -221,9 +222,9 @@
             "port": 5863,
             "restart": true,
             "sourceMaps": true,
-            "localRoot": "${workspaceRoot}",
+            "localRoot": "${workspaceFolder}",
             "remoteRoot": "/usr/src/server",
-            "outFiles": [ "${workspaceRoot}/dist/**/*.js" ],
+            "outFiles": [ "${workspaceFolder}/dist/**/*.js" ],
             "protocol":"inspector",
             "trace": "sm"
         },
@@ -231,10 +232,10 @@
             "type": "node",
             "request": "launch",
             "name": "Debug Current Test",
-            "program": "${workspaceRoot}/node_modules/mocha/bin/_mocha",
+            "program": "${workspaceFolder}/common/tools/node_modules/mocha/bin/_mocha",
             "stopOnEntry": false,
             "args": ["--no-timeouts", "--exit", "--require", "ts-node\\register", "${file}", ],
-            "cwd": "${fileDirname}"
+            "cwd": "${workspaceFolder}"
         },
         {
             "type": "node",
