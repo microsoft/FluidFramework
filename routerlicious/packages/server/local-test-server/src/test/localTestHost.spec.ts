@@ -31,8 +31,9 @@ export class TestComponent extends Component {
     }
 }
 
-const testComponents: ReadonlyArray<[string, new () => IChaincodeComponent]> = [
-    [TestComponent.type, TestComponent],
+// tslint:disable-next-line:mocha-no-side-effect-code
+const testComponents: ReadonlyArray<[string, Promise<new () => IChaincodeComponent>]> = [
+    [TestComponent.type, Promise.resolve(TestComponent)],
 ];
 
 // tslint:disable-next-line:mocha-no-side-effect-code

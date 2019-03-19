@@ -9,7 +9,7 @@ export { TableDocument, TableSlice, ITable, chaincodePackage };
 
 export async function instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
     return Component.instantiateRuntime(context, chaincodePackage, [
-        [chaincodePackage, TableDocument],
-        [TableSlice.type, TableSlice],
+        [chaincodePackage, Promise.resolve(TableDocument)],
+        [TableSlice.type, Promise.resolve(TableSlice)],
     ]);
 }

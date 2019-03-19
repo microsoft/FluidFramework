@@ -50,12 +50,12 @@ export class FlowHost extends Component {
  */
 export async function instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
     return Component.instantiateRuntime(context, pkg.name, [
-        ["@chaincode/chart-view", chartView.ChartView],
-        ["@chaincode/flow-document", flowDocument.FlowDocument],
-        [pkg.name, FlowHost],
-        ["@chaincode/flow-editor", flowEditor.FlowEditor],
-        [tableDocument.TableDocument.type, tableDocument.TableDocument],
-        [tableDocument.TableSlice.type, tableDocument.TableSlice],
-        ["@chaincode/table-view", tableView.TableView],
+        ["@chaincode/chart-view", Promise.resolve(chartView.ChartView)],
+        ["@chaincode/flow-document", Promise.resolve(flowDocument.FlowDocument)],
+        [pkg.name, Promise.resolve(FlowHost)],
+        ["@chaincode/flow-editor", Promise.resolve(flowEditor.FlowEditor)],
+        [tableDocument.TableDocument.type, Promise.resolve(tableDocument.TableDocument)],
+        [tableDocument.TableSlice.type, Promise.resolve(tableDocument.TableSlice)],
+        ["@chaincode/table-view", Promise.resolve(tableView.TableView)],
     ]);
 }

@@ -3,8 +3,8 @@ import { TableDocument, TableSlice } from "@chaincode/table-document";
 import { TestHost } from "@prague/local-test-server";
 
 const host = new TestHost([
-    [TableDocument.type, TableDocument],
-    [TableSlice.type, TableSlice],
+    [TableDocument.type, Promise.resolve(TableDocument)],
+    [TableSlice.type, Promise.resolve(TableSlice)],
 ]);
 
 after(async () => { await host.close(); })

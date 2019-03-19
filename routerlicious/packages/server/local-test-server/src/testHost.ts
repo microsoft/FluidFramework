@@ -86,7 +86,7 @@ export class TestHost {
     private components: IChaincodeComponent[] = [];
 
     constructor(
-        private readonly componentRegistry: ReadonlyArray<[string, new () => IChaincodeComponent]>,
+        private readonly componentRegistry: ReadonlyArray<[string, Promise<new () => IChaincodeComponent>]>,
         private readonly types?: ReadonlyArray<[string, ISharedObjectExtension]>,
         deltaConnectionServer?: ITestDeltaConnectionServer,
     ) {
@@ -105,9 +105,9 @@ export class TestHost {
                             TestRootComponent.type,
                             // tslint:disable:no-function-expression
                             // tslint:disable:only-arrow-functions
-                            function(): IChaincodeComponent {
+                            Promise.resolve(function(): IChaincodeComponent {
                                 return new TestRootComponent(types || []);
-                            } as any,
+                            } as any),
                         ]])),
                 }],
             ]),

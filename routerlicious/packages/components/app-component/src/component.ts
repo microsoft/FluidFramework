@@ -111,15 +111,15 @@ export abstract class Component extends EventEmitter implements IChaincodeCompon
     public static async instantiateRuntime(
         context: IContainerContext,
         chaincode: string,
-        registry: ReadonlyArray<[string, new () => IChaincodeComponent]>,
+        registry: ReadonlyArray<[string, Promise<new () => IChaincodeComponent>]>,
     ): Promise<IRuntime> {
         const runtimeId = encodeURIComponent(chaincode);
 
         debug(`instantiateRuntime(chaincode=${chaincode},registry=${JSON.stringify(registry)})`);
         const runtime = await Runtime.Load(
-            new Map(registry.map<[string, Promise<IComponentFactory>]>(([name, ctorFn]) => [
+            new Map(registry.map<[string, Promise<IComponentFactory>]>(([name, ctorFnP]) => [
                 name,
-                Promise.resolve({ instantiateComponent: () => Promise.resolve(new ctorFn()) }),
+                ctorFnP.then((ctorFn) => ({ instantiateComponent: () => Promise.resolve(new ctorFn()) })),
             ])),
             context);
         debug("runtime loaded.");
