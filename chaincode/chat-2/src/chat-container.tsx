@@ -21,6 +21,7 @@ interface ChatProps {
 interface ChatContainerProps {
   runtime: IRuntime;
   clientId: string;
+  history: ISequencedDocumentMessage[];
 }
 
 interface ChatContainerState {
@@ -30,10 +31,9 @@ interface ChatContainerState {
 
 export class ChatContainer extends React.Component<ChatContainerProps, ChatContainerState> {
   componentDidMount() {
-    this.setState({ messages: [], inputMessage: "" });
+    this.setState({ messages: this.getInitialChat(this.props.history), inputMessage: "" });
 
     this.props.runtime.on("op", (op: ISequencedDocumentMessage) => {
-      console.log(op);
       let message: IMessage = op.contents;
       message.content = filter(message.content);
       const chatProp = { message } as ChatProps;
@@ -88,6 +88,17 @@ export class ChatContainer extends React.Component<ChatContainerProps, ChatConta
     );
   }
 
+  getInitialChat(ops: ISequencedDocumentMessage[]): ChatProps[] {
+    let items: ChatProps[] = [];
+    for (const op of ops) {
+      let message: IMessage = op.contents;
+      message.content = filter(message.content);
+      const chatProp = { message } as ChatProps;
+      items.push(chatProp);
+    }
+    return items;
+  }
+
   inputChangeHandler = (event: React.ChangeEvent<HTMLInputElement>) => this.setState({ inputMessage: event.target.value });
 
   appendMessageCb = async (component?: IOutieProps) => {
@@ -107,7 +118,6 @@ export class ChatContainer extends React.Component<ChatContainerProps, ChatConta
     // TODO this hack stops appendMessage from getting into a loop without setting state.
     setTimeout(() => {
       const maybeComponent = findComponent(inputMessage);
-      console.log(maybeComponent);
       if (maybeComponent) {
         this.appendMessageCb(maybeComponent);
       }

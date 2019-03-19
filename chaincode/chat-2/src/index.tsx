@@ -2,6 +2,7 @@ import {
   IContainerContext,
   IPlatform,
   IRequest,
+  ISequencedDocumentMessage,
   IRuntime,
   ITree,
 } from "@prague/container-definitions";
@@ -23,9 +24,13 @@ import * as ReactDOM from "react-dom";
 
 export class ChatRunner extends EventEmitter implements IPlatform {
   private runtime: ILegacyRuntime;
+  private priorOps: ISequencedDocumentMessage[] = [];
 
   public async run(runtime: ILegacyRuntime, platform: IPlatform) {
       this.runtime = runtime;
+      this.runtime.on("op", (op: ISequencedDocumentMessage) => {
+        this.priorOps.push(op);
+      });
       return this;
   }
 
@@ -56,10 +61,12 @@ export class ChatRunner extends EventEmitter implements IPlatform {
         const quorum = runtime.getQuorum();
         const user = quorum.getMember(this.runtime.clientId);
         const username = (user.client.user as any).name;
+        runtime.removeAllListeners();
+        const opHistory = this.priorOps;
 
         ReactDOM.render(
           <Provider theme={themes.teams}>
-            <ChatContainer runtime={runtime} clientId={username} />
+            <ChatContainer runtime={runtime} clientId={username} history={opHistory}/>
           </Provider>,
           hostContent
         );

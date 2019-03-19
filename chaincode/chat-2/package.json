@@ -1,7 +1,7 @@
 {
   "name": "@chaincode/chat-2",
   "description": "Prague Chat with no distributed data structure",
-  "version": "0.0.5",
+  "version": "0.0.7",
   "author": "Microsoft",
   "repository": "microsoft/prague",
   "main": "dist/main.bundle.js",
