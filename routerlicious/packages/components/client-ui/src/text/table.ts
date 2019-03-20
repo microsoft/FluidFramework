@@ -54,9 +54,8 @@ function createRelativeMarkerOp(
         props[MergeTree.reservedTileLabelsKey] = tileLabels;
     }
     return <MergeTree.IMergeTreeInsertMsg>{
-        marker: { refType },
+        seg: { marker: { refType }, props },
         relativePos1,
-        props,
         type: MergeTree.MergeTreeDeltaType.INSERT,
     };
 }
@@ -80,9 +79,8 @@ function createMarkerOp(
         props[MergeTree.reservedTileLabelsKey] = tileLabels;
     }
     return <MergeTree.IMergeTreeInsertMsg>{
-        marker: { refType },
+        seg: { marker: { refType }, props },
         pos1,
-        props,
         type: MergeTree.MergeTreeDeltaType.INSERT,
     };
 }
@@ -180,10 +178,12 @@ export function insertColumn(sharedString: SharedString, prevCell: Cell, row: Ro
     }
     let opList = <MergeTree.IMergeTreeOp[]>[];
     const insertColMarkerOp = <MergeTree.IMergeTreeInsertMsg>{
-        marker: <MergeTree.IMarkerDef>{
-            refType: MergeTree.ReferenceType.Simple,
+        seg: { 
+            marker: <MergeTree.IMarkerDef>{
+                refType: MergeTree.ReferenceType.Simple,
+            },
+            props: { columnId, [MergeTree.reservedMarkerIdKey]: columnId }
         },
-        props: { columnId, [MergeTree.reservedMarkerIdKey]: columnId },
         relativePos1: { id: prevColumnId },
         type: MergeTree.MergeTreeDeltaType.INSERT,
     };
@@ -351,10 +351,12 @@ export function createTable(pos: number, sharedString: SharedString, nrows = 3, 
     for (let i = columnIds.length - 1; i >= 0; i--) {
         let columnId = columnIds[i];
         const insertColMarkerOp = <MergeTree.IMergeTreeInsertMsg>{
-            marker: <MergeTree.IMarkerDef>{
-                refType: MergeTree.ReferenceType.Simple,
+            seg: {
+                marker: <MergeTree.IMarkerDef>{
+                    refType: MergeTree.ReferenceType.Simple,
+                },
+                props: { columnId, [MergeTree.reservedMarkerIdKey]: columnId }
             },
-            props: { columnId, [MergeTree.reservedMarkerIdKey]: columnId },
             relativePos1: { id: tableId },
             type: MergeTree.MergeTreeDeltaType.INSERT,
         };

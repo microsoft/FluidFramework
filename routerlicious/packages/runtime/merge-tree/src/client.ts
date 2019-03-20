@@ -2,8 +2,8 @@
 import { MessageType, ISequencedDocumentMessage } from "@prague/container-definitions";
 import { IMergeTreeDeltaOpCallbackArgs } from "./index";
 import {
-    MergeTree, ClientIds, compareStrings, RegisterCollection, UnassignedSequenceNumber, Marker, SubSequence,
-    IConsensusInfo, IUndoInfo, ISegment, SegmentType, TextSegment, UniversalSequenceNumber, SegmentGroup, clock, elapsedMicroseconds
+    MergeTree, ClientIds, compareStrings, RegisterCollection, UnassignedSequenceNumber, Marker,
+    IConsensusInfo, IUndoInfo, ISegment, UniversalSequenceNumber, SegmentGroup, clock, elapsedMicroseconds, TextSegment
 } from "./mergeTree";
 import * as Collections from "./collections";
 import * as ops from "./ops";
@@ -33,13 +33,21 @@ export class Client {
     public longClientId: string;
     public undoSegments: IUndoInfo[];
     public redoSegments: IUndoInfo[];
-    constructor(initText: string, options?: Properties.PropertySet) {
+
+    constructor(
+        initText: string,
+        // Passing this callback would be unnecessary if Client were merged with SegmentSequence
+        // (See https://github.com/Microsoft/Prague/issues/1791).
+        private readonly specToSegment: (spec: ops.IJSONSegment) => ISegment,
+        options?: Properties.PropertySet
+    ) {
         this.mergeTree = new MergeTree(initText, options);
         this.mergeTree.getLongClientId = id => this.getLongClientId(id);
         this.mergeTree.clientIdToBranchId = this.shortClientBranchIdMap;
         this.q = Collections.ListMakeHead<ISequencedDocumentMessage>();
         this.checkQ = Collections.ListMakeHead<string>();
     }
+
     setLocalSequenceNumber(seq: number) {
         this.localSequenceNumber = seq;
     }
@@ -92,7 +100,7 @@ export class Client {
         return this.undoSingleSequenceNumber(this.redoSegments, this.undoSegments);
     }
     cloneFromSegments() {
-        let clone = new Client("", this.mergeTree.options);
+        let clone = new Client("", this.specToSegment, this.mergeTree.options);
         let segments = <ISegment[]>[];
         let newRoot = this.mergeTree.blockClone(this.mergeTree.root, segments);
         clone.mergeTree.root = newRoot;
@@ -191,7 +199,7 @@ export class Client {
             offset: seq,
             origin: null,
             contents: {
-                type: ops.MergeTreeDeltaType.INSERT, text: text, pos1: pos
+                type: ops.MergeTreeDeltaType.INSERT, seg: new TextSegment(text).toJSONObject(), pos1: pos
             },
             timestamp: Date.now(),
             traces: [],
@@ -254,20 +262,9 @@ export class Client {
             let pos = this.mergeTree.getOffset(segment, this.getCurrentSeq(), this.getClientId());
             let insertOp = <ops.IMergeTreeInsertMsg>{
                 pos1: pos,
+                seg: segment.toJSONObject(),
                 type: ops.MergeTreeDeltaType.INSERT,
             };
-            if (segment.getType() === SegmentType.Text) {
-                let textSegment = <TextSegment>segment;
-                insertOp.text = textSegment.text;
-            }
-            else {
-                // assume marker
-                let marker = <Marker>segment;
-                insertOp.marker = { refType: marker.refType };
-            }
-            if (segment.properties) {
-                insertOp.props = segment.properties;
-            }
             opList.push(insertOp);
         }
         if (segment.removedSeq === UnassignedSequenceNumber) {
@@ -325,16 +322,7 @@ export class Client {
             this.mergeTree.startGroupOperation();
             // TODO: build tree from segs and insert all at once
             for (let seg of segs) {
-                if (seg.getType() === SegmentType.Text) {
-                    let textSegment = <TextSegment>seg;
-                    this.insertTextLocal(textSegment.text, pos, textSegment.properties, opArgs);
-                    pos += textSegment.cachedLength;
-                }
-                else {
-                    let marker = <Marker>seg;
-                    this.insertMarkerLocal(pos, marker.refType, marker.properties, opArgs);
-                    pos += marker.cachedLength;
-                }
+                this.insertSegmentLocal(pos, seg, opArgs);
             }
             this.mergeTree.endGroupOperation();
         }
@@ -345,16 +333,7 @@ export class Client {
         if (segs) {
             // TODO: build tree from segs and insert all at once
             for (let seg of segs) {
-                if (seg.getType() === SegmentType.Text) {
-                    let textSegment = <TextSegment>seg;
-                    this.insertTextRemote(textSegment.text, pos, textSegment.properties, seq, refSeq, clientId, opArgs);
-                    pos += textSegment.cachedLength;
-                }
-                else {
-                    let marker = <Marker>seg;
-                    this.insertMarkerRemote({ refType: marker.refType }, pos, marker.properties, seq, refSeq, clientId, opArgs);
-                    pos += marker.cachedLength;
-                }
+                this.insertSegmentRemote(seg, pos, seq, refSeq, clientId, opArgs);
             }
         }
         // TODO: error reporting
@@ -381,19 +360,12 @@ export class Client {
                         return;
                     }
                 }
-                if (op.text !== undefined) {
+                if (op.seg !== undefined) {
                     if (op.pos2 !== undefined) {
                         // replace
                         this.removeSegmentRemote(op.pos1, op.pos2, msg.sequenceNumber, msg.referenceSequenceNumber, clid, opArgs);
                     }
-                    this.insertTextRemote(op.text, op.pos1, op.props as Properties.PropertySet, msg.sequenceNumber, msg.referenceSequenceNumber, clid, opArgs);
-                }
-                else if (op.marker !== undefined) {
-                    this.insertMarkerRemote(op.marker, op.pos1, op.props as Properties.PropertySet, msg.sequenceNumber, msg.referenceSequenceNumber, clid, opArgs);
-                }
-                else if (op.items !== undefined) {
-                    this.insertItemsRemote(op.items, op.pos1, op.props,
-                        msg.sequenceNumber, msg.referenceSequenceNumber, clid, opArgs);
+                    this.insertSegmentRemote(this.specToSegment(op.seg), op.pos1, msg.sequenceNumber, msg.referenceSequenceNumber, clid, opArgs);
                 }
                 else if (op.register !== undefined) {
                     // TODO: relative addressing
@@ -536,12 +508,7 @@ export class Client {
                             break;
                         }
                     }
-                    if (op.marker) {
-                        this.insertMarkerLocal(op.pos1, op.marker.refType, op.props, opArgs);
-                    }
-                    else {
-                        this.insertTextLocal(op.text, op.pos1, op.props, opArgs);
-                    }
+                    this.insertSegmentLocal(op.pos1, this.specToSegment(op.seg), opArgs);
                     break;
                 case ops.MergeTreeDeltaType.ANNOTATE:
                     if (op.relativePos1) {
@@ -591,7 +558,7 @@ export class Client {
         if (consensusInfo) {
             consensusInfo.marker.addProperties(op.props, op.combiningOp, msg.sequenceNumber);
         }
-        this.mergeTree.addMinSeqListener(msg.sequenceNumber, (minSeq) => consensusInfo.callback(consensusInfo.marker));
+        this.mergeTree.addMinSeqListener(msg.sequenceNumber, () => consensusInfo.callback(consensusInfo.marker));
     }
     // marker must have an id
     annotateMarkerNotifyConsensus(marker: Marker, props: Properties.PropertySet, consensusCallback: (m: Marker) => void, opArgs?: IMergeTreeDeltaOpCallbackArgs) {
@@ -693,7 +660,8 @@ export class Client {
             console.log(`@cli ${this.getLongClientId(this.mergeTree.getCollabWindow().clientId)} seq ${seq} remove remote start ${start} end ${end} refseq ${refSeq} cli ${this.getLongClientId(clientId)}`);
         }
     }
-    insertTextLocal(text: string, pos: number, props?: Properties.PropertySet, opArgs?: IMergeTreeDeltaOpCallbackArgs) {
+    
+    insertSegmentLocal(pos: number, segment: ISegment, opArgs?: IMergeTreeDeltaOpCallbackArgs) {
         let segWindow = this.mergeTree.getCollabWindow();
         let clientId = segWindow.clientId;
         let refSeq = segWindow.currentSeq;
@@ -702,27 +670,6 @@ export class Client {
         if (this.measureOps) {
             clockStart = clock();
         }
-        this.mergeTree.insertText(pos, refSeq, clientId, seq, text, props, opArgs);
-        if (this.measureOps) {
-            this.localTime += elapsedMicroseconds(clockStart);
-            this.localOps++;
-        }
-        if (this.verboseOps) {
-            console.log(`insert local text ${text} pos ${pos} cli ${this.getLongClientId(clientId)} ref seq ${refSeq}`);
-        }
-    }
-
-    insertSegmentLocal(pos: number, segment: ISegment, props?: Properties.PropertySet, opArgs?: IMergeTreeDeltaOpCallbackArgs) {
-        let segWindow = this.mergeTree.getCollabWindow();
-        let clientId = segWindow.clientId;
-        let refSeq = segWindow.currentSeq;
-        let seq = this.getLocalSequenceNumber();
-        let clockStart;
-        if (this.measureOps) {
-            clockStart = clock();
-        }
-        segment.seq = seq;
-        segment.clientId = clientId;
         this.mergeTree.insertSegment(pos, refSeq, clientId, seq, segment, opArgs);
         if (this.measureOps) {
             this.localTime += elapsedMicroseconds(clockStart);
@@ -733,83 +680,12 @@ export class Client {
         }
     }
 
-    insertMarkerLocal(pos: number, behaviors: ops.ReferenceType, props?: Properties.PropertySet, opArgs?: IMergeTreeDeltaOpCallbackArgs) {
-        let segWindow = this.mergeTree.getCollabWindow();
-        let clientId = segWindow.clientId;
-        let refSeq = segWindow.currentSeq;
-        let seq = this.getLocalSequenceNumber();
+    insertSegmentRemote(segment: ISegment, pos: number, seq: number, refSeq: number, clientId: number, opArgs?: IMergeTreeDeltaOpCallbackArgs) {
         let clockStart;
         if (this.measureOps) {
             clockStart = clock();
         }
-        const marker = Marker.make(behaviors, props, seq, clientId);
-        this.mergeTree.insertSegment(pos, refSeq, clientId, seq, Marker.make(behaviors, props, seq, clientId), opArgs);
-        if (this.measureOps) {
-            this.localTime += elapsedMicroseconds(clockStart);
-            this.localOps++;
-        }
-        if (this.verboseOps) {
-            console.log(`insert local marker pos ${pos} cli ${this.getLongClientId(clientId)} ${marker.toString()} ref seq ${refSeq}`);
-        }
-    }
 
-    insertItemsRemote(items: ops.SequenceItem[], pos: number, props: Properties.PropertySet, seq: number,
-        refSeq: number, clientId: number, opArgs?: IMergeTreeDeltaOpCallbackArgs) {
-        const traceItems = false;
-        let clockStart;
-        if (this.measureOps) {
-            clockStart = clock();
-        }
-        const segment = new SubSequence(items, seq, clientId);
-        if (props) {
-            segment.addProperties(props);
-        }
-        if (traceItems) {
-            console.log(`pre-length: ${this.mergeTree.getLength(UniversalSequenceNumber, this.mergeTree.collabWindow.clientId)} pos: ${pos}`);
-        }
-        this.mergeTree.insertSegment(pos, refSeq, clientId, seq, segment, opArgs);
-        if (traceItems) {
-            console.log(`post-length: ${this.mergeTree.getLength(UniversalSequenceNumber, this.mergeTree.collabWindow.clientId)} pos: ${pos}`);
-        }
-        this.mergeTree.getCollabWindow().currentSeq = seq;
-        if (this.measureOps) {
-            this.accumTime += elapsedMicroseconds(clockStart);
-            this.accumOps++;
-            this.accumWindow += (this.getCurrentSeq() - this.mergeTree.getCollabWindow().minSeq);
-        }
-        if (this.verboseOps) {
-            console.log(`@cli ${this.getLongClientId(this.mergeTree.getCollabWindow().clientId)} ${segment.toString()} seq ${seq} insert remote pos ${pos} refseq ${refSeq} cli ${clientId}`);
-        }
-    }
-
-    insertMarkerRemote(markerDef: ops.IMarkerDef, pos: number, props: Properties.PropertySet, seq: number,
-        refSeq: number, clientId: number, opArgs?: IMergeTreeDeltaOpCallbackArgs) {
-        let clockStart;
-        if (this.measureOps) {
-            clockStart = clock();
-        }
-        const marker = Marker.make(markerDef.refType, props, seq, clientId);
-        this.mergeTree.insertSegment(pos, refSeq, clientId, seq, marker, opArgs);
-        this.mergeTree.getCollabWindow().currentSeq = seq;
-        if (this.measureOps) {
-            this.accumTime += elapsedMicroseconds(clockStart);
-            this.accumOps++;
-            this.accumWindow += (this.getCurrentSeq() - this.mergeTree.getCollabWindow().minSeq);
-        }
-        if (this.verboseOps) {
-            console.log(`@cli ${this.getLongClientId(this.mergeTree.getCollabWindow().clientId)} ${marker.toString()} seq ${seq} insert remote pos ${pos} refseq ${refSeq} cli ${clientId}`);
-        }
-    }
-
-    insertTextRemote(text: string, pos: number, props: Properties.PropertySet, seq: number, refSeq: number, clientId: number, opArgs?: IMergeTreeDeltaOpCallbackArgs) {
-        this.insertSegmentRemote(TextSegment.make(text, props, seq, clientId), pos, props, seq, refSeq, clientId, opArgs);
-    }
-
-    insertSegmentRemote(segment: ISegment, pos: number, props: Properties.PropertySet, seq: number, refSeq: number, clientId: number, opArgs?: IMergeTreeDeltaOpCallbackArgs) {
-        let clockStart;
-        if (this.measureOps) {
-            clockStart = clock();
-        }
         this.mergeTree.insertSegment(pos, refSeq, clientId, seq, segment, opArgs);
         this.mergeTree.getCollabWindow().currentSeq = seq;
         if (this.measureOps) {

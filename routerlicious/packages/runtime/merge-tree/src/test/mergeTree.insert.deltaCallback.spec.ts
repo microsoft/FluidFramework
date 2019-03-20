@@ -4,6 +4,7 @@ import {
     ReferenceType,
     UnassignedSequenceNumber,
 } from "..";
+import { insertMarker, insertText } from "./testUtils";
 
 describe("MergeTree", () => {
     let mergeTree: MergeTree;
@@ -28,7 +29,8 @@ describe("MergeTree", () => {
                     eventCalled++;
                 };
 
-            mergeTree.insertText(
+            insertText(
+                mergeTree,
                 0,
                 currentSequenceNumber,
                 localClientId,
@@ -49,7 +51,8 @@ describe("MergeTree", () => {
                     eventCalled++;
                 };
 
-            mergeTree.insertText(
+            insertText(
+                mergeTree,
                 textLength,
                 currentSequenceNumber,
                 localClientId,
@@ -69,7 +72,8 @@ describe("MergeTree", () => {
                     eventCalled++;
                 };
 
-            mergeTree.insertText(
+            insertText(
+                mergeTree,
                 4,
                 currentSequenceNumber,
                 localClientId,
@@ -91,7 +95,8 @@ describe("MergeTree", () => {
                     eventCalled++;
                 };
 
-            mergeTree.insertText(
+            insertText(
+                mergeTree,
                 0,
                 currentSequenceNumber,
                 remoteClientId,
@@ -112,7 +117,8 @@ describe("MergeTree", () => {
                     eventCalled++;
                 };
 
-            mergeTree.insertMarker(
+            insertMarker(
+                mergeTree,
                 4,
                 currentSequenceNumber,
                 localClientId,

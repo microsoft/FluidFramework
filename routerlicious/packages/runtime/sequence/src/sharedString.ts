@@ -14,27 +14,6 @@ import {
 export type SharedStringSegment = MergeTree.TextSegment | MergeTree.Marker | MergeTree.ExternalSegment;
 type SharedStringJSONSegment = MergeTree.IJSONTextSegment & MergeTree.IJSONMarkerSegment;
 
-function textsToSegments(texts: SharedStringJSONSegment[]) {
-    const segments: MergeTree.ISegment[] = [];
-    for (const ptext of texts) {
-        let segment: MergeTree.ISegment;
-        if (ptext.text !== undefined) {
-            segment = MergeTree.TextSegment.make(ptext.text, ptext.props as MergeTree.PropertySet,
-                MergeTree.UniversalSequenceNumber,
-                MergeTree.LocalClientId);
-        } else {
-            // for now assume marker
-            segment = MergeTree.Marker.make(
-                ptext.marker.refType,
-                ptext.props as MergeTree.PropertySet,
-                MergeTree.UniversalSequenceNumber,
-                MergeTree.LocalClientId);
-        }
-        segments.push(segment);
-    }
-    return segments;
-}
-
 export class SharedString extends SegmentSequence<SharedStringSegment> {
     constructor(
         document: IRuntime,
@@ -44,23 +23,21 @@ export class SharedString extends SegmentSequence<SharedStringSegment> {
         super(document, id, SharedStringExtension.Type, services);
     }
 
-    public segmentsFromSpecs(segSpecs: SharedStringJSONSegment[]) {
-        return textsToSegments(segSpecs);
-    }
-
     public insertMarkerRelative(relativePos1: MergeTree.IRelativePosition,
         refType: MergeTree.ReferenceType, props?: MergeTree.PropertySet) {
+        const segment = new MergeTree.Marker(refType);
+        if (props) {
+            segment.addProperties(props);
+        }
         const insertMessage: MergeTree.IMergeTreeInsertMsg = {
-            marker: { refType },
-            props,
             relativePos1,
+            seg: segment.toJSONObject(),
             type: MergeTree.MergeTreeDeltaType.INSERT,
         };
 
         const pos = this.client.mergeTree.posFromRelativePos(relativePos1);
-        this.client.insertMarkerLocal(pos, refType, props, {op: insertMessage});
+        this.client.insertSegmentLocal(pos, segment, {op: insertMessage});
         this.submitIfAttached(insertMessage);
-
     }
 
     public insertMarker(
@@ -68,14 +45,17 @@ export class SharedString extends SegmentSequence<SharedStringSegment> {
         refType: MergeTree.ReferenceType,
         props?: MergeTree.PropertySet) {
 
+        const segment = new MergeTree.Marker(refType);
+        if (props) {
+            segment.addProperties(props);
+        }
         const insertMessage: MergeTree.IMergeTreeInsertMsg = {
-            marker: { refType },
             pos1: pos,
-            props,
+            seg: segment.toJSONObject(),
             type: MergeTree.MergeTreeDeltaType.INSERT,
         };
 
-        this.client.insertMarkerLocal(pos, refType, props, {op: insertMessage});
+        this.client.insertSegmentLocal(pos, segment, {op: insertMessage});
         this.submitIfAttached(insertMessage);
     }
 
@@ -84,41 +64,50 @@ export class SharedString extends SegmentSequence<SharedStringSegment> {
     }
 
     public insertTextRelative(relativePos1: MergeTree.IRelativePosition, text: string, props?: MergeTree.PropertySet) {
+        const segment = new MergeTree.TextSegment(text);
+        if (props) {
+            segment.addProperties(props);
+        }
         const insertMessage: MergeTree.IMergeTreeInsertMsg = {
-            props,
             relativePos1,
-            text,
+            seg: segment.toJSONObject(),
             type: MergeTree.MergeTreeDeltaType.INSERT,
         };
 
         const pos = this.client.mergeTree.posFromRelativePos(relativePos1);
-        this.client.insertTextLocal(text, pos, props, {op: insertMessage});
+        this.client.insertSegmentLocal(pos, segment, {op: insertMessage});
         this.submitIfAttached(insertMessage);
     }
 
     public insertText(text: string, pos: number, props?: MergeTree.PropertySet) {
+        const segment = new MergeTree.TextSegment(text);
+        if (props) {
+            segment.addProperties(props);
+        }
         const insertMessage: MergeTree.IMergeTreeInsertMsg = {
             pos1: pos,
-            props,
-            text,
+            seg: segment.toJSONObject(),
             type: MergeTree.MergeTreeDeltaType.INSERT,
         };
 
-        this.client.insertTextLocal(text, pos, props, {op: insertMessage});
+        this.client.insertSegmentLocal(pos, segment, {op: insertMessage});
         this.submitIfAttached(insertMessage);
     }
 
     public replaceText(text: string, start: number, end: number, props?: MergeTree.PropertySet) {
+        const segment = new MergeTree.TextSegment(text);
+        if (props) {
+            segment.addProperties(props);
+        }
         const insertMessage: MergeTree.IMergeTreeInsertMsg = {
             pos1: start,
             pos2: end,
-            props,
-            text,
+            seg: segment.toJSONObject(),
             type: MergeTree.MergeTreeDeltaType.INSERT,
         };
         this.client.mergeTree.startGroupOperation();
         this.client.removeSegmentLocal(start, end, {op: insertMessage});
-        this.client.insertTextLocal(text, start, props, {op: insertMessage});
+        this.client.insertSegmentLocal(start, segment, {op: insertMessage});
         this.client.mergeTree.endGroupOperation();
         this.submitIfAttached(insertMessage);
     }
@@ -190,21 +179,24 @@ export class SharedString extends SegmentSequence<SharedStringSegment> {
         return this.client.findTile(startPos, tileLabel, preceding);
     }
 
+    protected segmentFromSpec(spec: any) {
+        const maybeText = MergeTree.TextSegment.fromJSONObject(spec);
+        if (maybeText) { return maybeText; }
+
+        const maybeMarker = MergeTree.Marker.fromJSONObject(spec);
+        if (maybeMarker) { return maybeMarker; }
+    }
+
     protected appendSegment(segSpec: SharedStringJSONSegment) {
         const mergeTree = this.client.mergeTree;
         const pos = mergeTree.root.cachedLength;
 
-        if (segSpec.text) {
-            mergeTree.insertText(pos, MergeTree.UniversalSequenceNumber,
-                mergeTree.collabWindow.clientId, MergeTree.UniversalSequenceNumber, segSpec.text,
-                segSpec.props as MergeTree.PropertySet,
-                undefined);
-        } else {
-            // assume marker for now
-            mergeTree.insertMarker(pos, MergeTree.UniversalSequenceNumber, mergeTree.collabWindow.clientId,
-                MergeTree.UniversalSequenceNumber, segSpec.marker.refType, segSpec.props as MergeTree.PropertySet,
-                undefined);
-        }
-
+        mergeTree.insertSegment(
+            pos,
+            MergeTree.UniversalSequenceNumber,
+            mergeTree.collabWindow.clientId,
+            MergeTree.UniversalSequenceNumber,
+            this.segmentFromSpec(segSpec),
+            undefined);
     }
 }

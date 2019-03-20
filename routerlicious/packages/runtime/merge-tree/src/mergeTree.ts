@@ -171,7 +171,7 @@ export interface ISegment extends IMergeNode, IRemovalInfo {
     getType(): SegmentType;
     removeRange(start: number, end: number): boolean;
     splitAt(pos: number): ISegment;
-    toJSONObject(): ops.IJSONSegment;
+    toJSONObject(): any;
     /**
      * Acks the current segment against the segment group, op, and merge tree.
      *
@@ -625,11 +625,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
         }
     }
 
-    toJSONObject(): ops.IJSONSegment {
-        let obj = <ops.IJSONSegment>Properties.createMap();
-        this.addSerializedProps(obj);
-        return obj;
-    }
+    abstract toJSONObject(): any;
 
     // TODO: use function in properties.ts
     matchProperties(b: BaseSegment) {
@@ -753,6 +749,17 @@ export class SubSequence<T> extends BaseSegment {
         return obj;
     }
 
+    public static fromJSONObject(spec: any) {
+        if (spec && typeof spec === "object" && "items" in spec) {
+            const segment = new SubSequence(spec.items, UniversalSequenceNumber, LocalClientId);
+            if (spec.props) {
+                segment.addProperties(spec.props);
+            }
+            return segment;
+        }
+        return undefined;
+    }
+
     protected createSplitSegmentAt(pos: number) {
         if (pos > 0) {
             const remainingItems = this.items.slice(pos);
@@ -830,14 +837,6 @@ export class SubSequence<T> extends BaseSegment {
         return (this.items.length === 0);
     }
 
-}
-
-export function runToSeg<T>(segSpec: IJSONRunSegment<T>) {
-    const seg = new SubSequence<T>(segSpec.items,UniversalSequenceNumber, LocalClientId);
-    if (segSpec.props) {
-        seg.addProperties(segSpec.props);
-    }
-    return seg;
 }
 
 interface IJSONExternalSegment extends ops.IJSONSegment {
@@ -962,6 +961,17 @@ export class Marker extends BaseSegment implements ReferencePosition {
         let obj = <IJSONMarkerSegment>{ marker: <ops.IMarkerDef>{ refType: this.refType } };
         super.addSerializedProps(obj);
         return obj;
+    }
+
+    static fromJSONObject(spec: any) {
+        if (spec && typeof spec === "object" && "marker" in spec) {
+            return Marker.make(
+                spec.marker.refType,
+                spec.props as Properties.PropertySet,
+                UniversalSequenceNumber,
+                LocalClientId);
+        }
+        return undefined;
     }
 
     clone() {
@@ -1111,15 +1121,29 @@ export class TextSegment extends BaseSegment {
         return tseg;
     }
 
-    toJSONObject() {
-        let obj = <IJSONTextSegment>{ text: this.text };
-        super.addSerializedProps(obj);
-        return obj;
-    }
-
     constructor(public text: string, seq?: number, clientId?: number) {
         super(seq, clientId);
         this.cachedLength = text.length;
+    }
+
+    toJSONObject() {
+        // To reduce snapshot/ops size, we serialize a TextSegment as a plain 'string' if it is
+        // not annotated.
+        return this.properties
+            ? { text: this.text, props: this.properties }
+            : this.text;
+    }
+
+    static fromJSONObject(spec: any) {
+        if (typeof spec === "string") {
+            return new TextSegment(spec, UniversalSequenceNumber, LocalClientId);
+        }
+        else if (spec && typeof spec === "object" && "text" in spec) {
+            return TextSegment.make(spec.text, spec.props as Properties.PropertySet,
+                UniversalSequenceNumber,
+                LocalClientId);    
+        }
+        return undefined;
     }
 
     protected createSplitSegmentAt(pos: number) {
@@ -3266,6 +3290,9 @@ export class MergeTree {
         // const tt = MergeTree.traceTraversal;
         // MergeTree.traceTraversal = true;
 
+        segment.seq = seq;
+        segment.clientId = clientId;
+
         if (segment.getType() === SegmentType.Marker) {
             const marker = segment as Marker;
             const markerId = marker.getId();
@@ -3301,16 +3328,7 @@ export class MergeTree {
         }
     }
 
-    insertMarker(pos: number, refSeq: number, clientId: number, seq: number,
-        behaviors: ops.ReferenceType, props: Properties.PropertySet, opArgs: IMergeTreeDeltaOpCallbackArgs) {
-        this.insertSegment(pos, refSeq, clientId, seq, Marker.make(behaviors, props, seq, clientId), opArgs);
-    }
-
-    insertText(pos: number, refSeq: number, clientId: number, seq: number, text: string, props: Properties.PropertySet, opArgs: IMergeTreeDeltaOpCallbackArgs) {
-        this.insertSegment(pos, refSeq, clientId, seq, TextSegment.make(text, props, seq, clientId), opArgs);
-    }
-
-    blockInsert<T extends ISegment>(block: IMergeBlock, pos: number, refSeq: number, clientId: number, seq: number, newSegment: T) {
+    private blockInsert<T extends ISegment>(block: IMergeBlock, pos: number, refSeq: number, clientId: number, seq: number, newSegment: T) {
         let segIsLocal = false;
         let checkSegmentIsLocal = (segment: ISegment, pos: number, refSeq: number, clientId: number) => {
             if (segment.seq == UnassignedSequenceNumber) {

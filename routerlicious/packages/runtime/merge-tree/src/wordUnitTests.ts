@@ -6,7 +6,7 @@ import * as Properties from "./properties";
 import * as ops from "./ops";
 import * as path from "path";
 import * as random from "random-js";
-import { loadTextFromFileWithMarkers } from "./test/testUtils";
+import { loadTextFromFileWithMarkers, specToSegment } from "./test/testUtils";
 
 function clock() {
     return process.hrtime();
@@ -126,7 +126,7 @@ function makeBookmarks(client: Client, bookmarkCount: number) {
 
 function measureFetch(startFile: string, withBookmarks = false) {
     let bookmarkCount = 20000;
-    let client = new Client("", { blockUpdateMarkers: true });
+    let client = new Client("", specToSegment, { blockUpdateMarkers: true });
     loadTextFromFileWithMarkers(startFile, client.mergeTree);
     if (withBookmarks) {
         makeBookmarks(client, bookmarkCount);

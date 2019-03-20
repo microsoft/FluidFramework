@@ -4,6 +4,7 @@ import * as assert from "assert";
 import { SequenceDeltaEvent } from "../sequenceDeltaEvent";
 import { SharedString } from "../sharedString";
 import * as mocks from "./mocks";
+import { insertTextLocal, specToSegment } from "./testUtils";
 
 describe("SequenceDeltaEvent", () => {
 
@@ -13,7 +14,7 @@ describe("SequenceDeltaEvent", () => {
     let client: Client;
 
     beforeEach(() => {
-        client = new Client("");
+        client = new Client("", specToSegment);
         client.startCollaboration(localUserLongId);
         runtime = new mocks.MockRuntime();
     });
@@ -23,7 +24,7 @@ describe("SequenceDeltaEvent", () => {
             const insertText = "text";
             let deltaArgs: IMergeTreeDeltaCallbackArgs;
             client.mergeTree.mergeTreeDeltaCallback = (op, delta) => { deltaArgs = delta; };
-            client.insertTextLocal(insertText, 0);
+            insertTextLocal(client, insertText, 0);
 
             assert(deltaArgs);
             assert.equal(deltaArgs.segments.length, 1);
@@ -43,7 +44,7 @@ describe("SequenceDeltaEvent", () => {
             const insertText = "text";
             const segmentCount = 5;
             for (let i = 0; i < segmentCount + 2; i = i + 1) {
-                client.insertTextLocal(insertText, 0);
+                insertTextLocal(client, insertText, 0);
             }
 
             let deltaArgs: IMergeTreeDeltaCallbackArgs;
@@ -74,7 +75,7 @@ describe("SequenceDeltaEvent", () => {
             const textCount = 4;
             const segmentCount = 5;
             for (let i = 0; i < segmentCount; i = i + 1) {
-                client.insertTextLocal(`${i}`.repeat(textCount), 0);
+                insertTextLocal(client, `${i}`.repeat(textCount), 0);
                 const insertMessage = client.makeInsertMsg(
                     `${i}`.repeat(textCount),
                     0,
@@ -95,7 +96,7 @@ describe("SequenceDeltaEvent", () => {
             remoteRemoveMessage.clientId = "remote user";
 
             for (let i = 0; i < segmentCount; i = i + 1) {
-                client.insertTextLocal("b".repeat(textCount), i * 2 * textCount);
+                insertTextLocal(client, "b".repeat(textCount), i * 2 * textCount);
             }
             console.log(client.getText());
 
@@ -122,7 +123,7 @@ describe("SequenceDeltaEvent", () => {
             sharedString.client.mergeTree.collabWindow.collaborating = false;
 
             for (let i = 0; i < segmentCount; i = i + 1) {
-                sharedString.client.insertTextLocal(`${insertText}${i}`, 0);
+                insertTextLocal(sharedString.client, `${insertText}${i}`, 0);
             }
 
             let tree = sharedString.snapshot();
@@ -137,7 +138,7 @@ describe("SequenceDeltaEvent", () => {
             await CreateStringAndCompare(sharedString, tree);
 
             for (let i = 0; i < segmentCount; i = i + 1) {
-                sharedString.client.insertTextLocal(`${insertText}-${i}`, 0);
+                insertTextLocal(sharedString.client, `${insertText}-${i}`, 0);
             }
 
             tree = sharedString.snapshot();

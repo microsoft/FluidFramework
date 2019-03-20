@@ -11,6 +11,8 @@ import * as Xmldoc from "xmldoc";
 import * as SharedString from "../intervalCollection";
 import { TestServer } from "@prague/merge-tree/dist/test/testServer"
 import { ISequencedDocumentMessage } from "@prague/container-definitions";
+import { TextSegment } from "@prague/merge-tree";
+import { insertTextLocal, insertMarkerLocal, insertItemsRemote, insertTextRemote, insertMarkerRemote, specToSegment } from "./testUtils";
 
 function clock() {
     return process.hrtime();
@@ -248,7 +250,7 @@ export function TestPack(verbose = true) {
 
         let clients = <MergeTree.Client[]>Array(clientCount);
         for (let i = 0; i < clientCount; i++) {
-            clients[i] = new MergeTree.Client(initString);
+            clients[i] = new MergeTree.Client(initString, specToSegment);
             clients[i].measureOps = true;
             if (startFile) {
                 loadTextFromFile(startFile, clients[i].mergeTree, fileSegCount);
@@ -279,7 +281,7 @@ export function TestPack(verbose = true) {
             }
         }
         if (addSnapClient) {
-            snapClient = new MergeTree.Client(initString);
+            snapClient = new MergeTree.Client(initString, specToSegment);
             if (startFile) {
                 loadTextFromFile(startFile, snapClient.mergeTree, fileSegCount);
             }
@@ -368,12 +370,12 @@ export function TestPack(verbose = true) {
             if (includeMarkers) {
                 server.enqueueMsg(client.makeInsertMarkerMsg("test", MergeTree.ReferenceType.Tile,
                     pos, MergeTree.UnassignedSequenceNumber, client.getCurrentSeq(), ""));
-                client.insertMarkerLocal(pos, MergeTree.ReferenceType.Tile,
+                insertMarkerLocal(client, pos, MergeTree.ReferenceType.Tile,
                     { [MergeTree.reservedTileLabelsKey]: "test" });
             }
             server.enqueueMsg(client.makeInsertMsg(text, pos, MergeTree.UnassignedSequenceNumber,
                 client.getCurrentSeq(), server.longClientId));
-            client.insertTextLocal(text, pos);
+            insertTextLocal(client, text, pos);
             if (MergeTree.useCheckQ) {
                 client.enqueueTestString();
             }
@@ -409,7 +411,7 @@ export function TestPack(verbose = true) {
                 let pos = word2.pos + word2.text.length;
                 server.enqueueMsg(client.makeInsertMsg(word1.text, pos, MergeTree.UnassignedSequenceNumber,
                     client.getCurrentSeq(), server.longClientId));
-                client.insertTextLocal(word1.text, pos);
+                insertTextLocal(client, word1.text, pos);
                 if (MergeTree.useCheckQ) {
                     client.enqueueTestString();
                 }
@@ -828,7 +830,7 @@ export function TestPack(verbose = true) {
         let clientsB = <MergeTree.Client[]>Array(clientCountB);
 
         for (let i = 0; i < clientCountA; i++) {
-            clientsA[i] = new MergeTree.Client(initString);
+            clientsA[i] = new MergeTree.Client(initString, specToSegment);
             clientsA[i].measureOps = true;
             if (startFile) {
                 loadTextFromFile(startFile, clientsA[i].mergeTree, fileSegCount);
@@ -837,7 +839,7 @@ export function TestPack(verbose = true) {
         }
 
         for (let i = 0; i < clientCountB; i++) {
-            clientsB[i] = new MergeTree.Client(initString);
+            clientsB[i] = new MergeTree.Client(initString, specToSegment);
             clientsB[i].measureOps = true;
             if (startFile) {
                 loadTextFromFile(startFile, clientsB[i].mergeTree, fileSegCount);
@@ -950,7 +952,7 @@ export function TestPack(verbose = true) {
             let msg = client.makeInsertMsg(text, pos, MergeTree.UnassignedSequenceNumber,
                 client.getCurrentSeq(), server.longClientId);
             server.enqueueMsg(msg);
-            client.insertTextLocal(text, pos);
+            insertTextLocal(client, text, pos);
             if (MergeTree.useCheckQ) {
                 client.enqueueTestString();
             }
@@ -987,7 +989,7 @@ export function TestPack(verbose = true) {
                 let pos = word2.pos + word2.text.length;
                 server.enqueueMsg(client.makeInsertMsg(word1.text, pos, MergeTree.UnassignedSequenceNumber,
                     client.getCurrentSeq(), server.longClientId));
-                client.insertTextLocal(word1.text, pos);
+                insertTextLocal(client, word1.text, pos);
                 if (MergeTree.useCheckQ) {
                     client.enqueueTestString();
                 }
@@ -1141,16 +1143,16 @@ export function TestPack(verbose = true) {
     let clientNames = ["Ed", "Ted", "Ned", "Harv", "Marv", "Glenda", "Susan"];
 
     function firstItemTest() {
-        let cli = new MergeTree.Client("");
+        let cli = new MergeTree.Client("", specToSegment);
         cli.startCollaboration("Fred1");
         for (let cname of clientNames) {
             cli.addLongClientId(cname);
         }
-        cli.insertItemsRemote([2,11], 0, undefined, 1, 0, 1);
+        insertItemsRemote(cli, [2,11], 0, undefined, 1, 0, 1);
         if (verbose) {
             console.log(cli.mergeTree.toString());
         }
-        cli.insertItemsRemote([4,5,6], 0, undefined, 2, 0, 2);
+        insertItemsRemote(cli, [4,5,6], 0, undefined, 2, 0, 2);
         if (verbose) {
             console.log(cli.mergeTree.toString());
         }
@@ -1172,8 +1174,8 @@ export function TestPack(verbose = true) {
                 sequenceNumber: 3,
             } as ISequencedDocumentMessage,
         });
-        cli.insertItemsRemote([1,5,6,2,3], 6, undefined, 4, 2, 2);
-        cli.insertItemsRemote([9], 0, undefined, 5, 0, 2);
+        insertItemsRemote(cli, [1,5,6,2,3], 6, undefined, 4, 2, 2);
+        insertItemsRemote(cli, [9], 0, undefined, 5, 0, 2);
         if (verbose) {
             console.log(cli.mergeTree.toString());
             for (let clientId = 0; clientId < 4; clientId++) {
@@ -1195,20 +1197,20 @@ export function TestPack(verbose = true) {
     }
 
     function firstTest() {
-        let cli = new MergeTree.Client("on the mat.");
+        let cli = new MergeTree.Client("on the mat.", specToSegment);
         cli.startCollaboration("Fred1");
         for (let cname of clientNames) {
             cli.addLongClientId(cname);
         }
-        cli.insertTextRemote("that ", 0, undefined, 1, 0, 1);
+        insertTextRemote(cli, "that ", 0, undefined, 1, 0, 1);
         if (verbose) {
             console.log(cli.mergeTree.toString());
         }
-        cli.insertTextRemote("fat ", 0, undefined, 2, 0, 2);
+        insertTextRemote(cli, "fat ", 0, undefined, 2, 0, 2);
         if (verbose) {
             console.log(cli.mergeTree.toString());
         }
-        cli.insertTextLocal("cat ", 5);
+        insertTextLocal(cli, "cat ", 5);
         if (verbose) {
             console.log(cli.mergeTree.toString());
         }
@@ -1233,8 +1235,8 @@ export function TestPack(verbose = true) {
                 }
             }
         }
-        cli.insertTextRemote("very ", 6, undefined, 4, 2, 2);
-        cli.insertMarkerRemote({ refType: MergeTree.ReferenceType.Tile }, 0,
+        insertTextRemote(cli, "very ", 6, undefined, 4, 2, 2);
+        insertMarkerRemote(cli, { refType: MergeTree.ReferenceType.Tile }, 0,
             { [MergeTree.reservedTileLabelsKey]: ["peach"] },
             5, 0, 2);
         if (verbose) {
@@ -1247,22 +1249,22 @@ export function TestPack(verbose = true) {
         }
         cli.updateMinSeq(5);
 
-        cli = new MergeTree.Client(" old sock!");
+        cli = new MergeTree.Client(" old sock!", specToSegment);
         cli.startCollaboration("Fred2");
         for (let cname of clientNames) {
             cli.addLongClientId(cname);
         }
-        cli.insertTextRemote("abcde", 0, undefined, 1, 0, 2);
+        insertTextRemote(cli, "abcde", 0, undefined, 1, 0, 2);
         let segoff = cli.mergeTree.getContainingSegment(0,
             MergeTree.UniversalSequenceNumber, cli.getClientId());
         let lref1 = new MergeTree.LocalReference(<MergeTree.BaseSegment>(segoff.segment),
             segoff.offset);
-        cli.insertTextRemote("yyy", 0, undefined, 2, 0, 1);
-        cli.insertTextRemote("zzz", 2, undefined, 3, 1, 3);
-        cli.insertTextRemote("EAGLE", 1, undefined, 4, 1, 4);
-        cli.insertTextRemote("HAS", 4, undefined, 5, 1, 5);
-        cli.insertTextLocal(" LANDED", 19);
-        cli.insertTextRemote("yowza: ", 0, undefined, 6, 4, 2);
+        insertTextRemote(cli, "yyy", 0, undefined, 2, 0, 1);
+        insertTextRemote(cli, "zzz", 2, undefined, 3, 1, 3);
+        insertTextRemote(cli, "EAGLE", 1, undefined, 4, 1, 4);
+        insertTextRemote(cli, "HAS", 4, undefined, 5, 1, 5);
+        insertTextLocal(cli, " LANDED", 19);
+        insertTextRemote(cli, "yowza: ", 0, undefined, 6, 4, 2);
         let lref1pos = cli.mergeTree.referencePositionToLocalPosition(lref1);
         console.log(`lref pos: ${lref1pos}`);
         cli.mergeTree.ackPendingSegment({
@@ -1288,7 +1290,7 @@ export function TestPack(verbose = true) {
                 }
             }
         }
-        cli = new MergeTree.Client("abcdefgh");
+        cli = new MergeTree.Client("abcdefgh", specToSegment);
         cli.startCollaboration("Fred3");
         for (let cname of clientNames) {
             cli.addLongClientId(cname);
@@ -1297,7 +1299,7 @@ export function TestPack(verbose = true) {
         if (verbose) {
             console.log(cli.mergeTree.toString());
         }
-        cli.insertTextRemote("zzz", 2, undefined, 2, 0, 2);
+        insertTextRemote(cli, "zzz", 2, undefined, 2, 0, 2);
         if (verbose) {
             console.log(cli.mergeTree.toString());
         }
@@ -1317,7 +1319,7 @@ export function TestPack(verbose = true) {
                 }
             }
         }
-        cli.insertTextRemote(" chaser", 9, undefined, 3, 2, 3);
+        insertTextRemote(cli, " chaser", 9, undefined, 3, 2, 3);
         cli.removeSegmentLocal(12, 14);
         cli.mergeTree.ackPendingSegment({
             op: { type: MergeTree.MergeTreeDeltaType.REMOVE },
@@ -1333,15 +1335,15 @@ export function TestPack(verbose = true) {
                 }
             }
         }
-        cli.insertTextLocal("*yolumba*", 14);
-        cli.insertTextLocal("-zanzibar-", 17);
+        insertTextLocal(cli, "*yolumba*", 14);
+        insertTextLocal(cli, "-zanzibar-", 17);
         cli.mergeTree.ackPendingSegment({
             op: { type: MergeTree.MergeTreeDeltaType.INSERT },
             sequencedMessage: {
                 sequenceNumber: 5,
             } as ISequencedDocumentMessage,
         });
-        cli.insertTextRemote("(aaa)", 2, undefined, 6, 4, 2);
+        insertTextRemote(cli, "(aaa)", 2, undefined, 6, 4, 2);
         cli.mergeTree.ackPendingSegment({
             op: { type: MergeTree.MergeTreeDeltaType.INSERT },
             sequencedMessage: {
@@ -1418,8 +1420,13 @@ function checkInsertMergeTree(mergeTree: MergeTree.MergeTree, pos: number, textS
     let checkText = mergeTree.getText(MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId);
     checkText = editFlat(checkText, pos, 0, textSegment.text);
     let clockStart = clock();
-    mergeTree.insertText(pos, MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId, MergeTree.UniversalSequenceNumber,
-        textSegment.text, undefined, undefined);
+    mergeTree.insertSegment(
+        pos,
+        MergeTree.UniversalSequenceNumber,
+        MergeTree.LocalClientId,
+        MergeTree.UniversalSequenceNumber,
+        new TextSegment(textSegment.text),
+        undefined);
     accumTime += elapsedMicroseconds(clockStart);
     let updatedText = mergeTree.getText(MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId);
     let result = (checkText == updatedText);
@@ -1682,12 +1689,12 @@ export class DocumentTree {
     addToMergeTree(client: MergeTree.Client, docNode: DocumentNode) {
         if (typeof docNode === "string") {
             let text = <string>docNode;
-            client.insertTextLocal(text, this.pos);
+            insertTextLocal(client, text, this.pos);
             this.pos += text.length;
         } else {
             let id: number;
             if (docNode.name === "pg") {
-                client.insertMarkerLocal(this.pos, MergeTree.ReferenceType.Tile,
+                insertMarkerLocal(client, this.pos, MergeTree.ReferenceType.Tile,
                     {
                         [MergeTree.reservedTileLabelsKey]: [docNode.name],
                     },
@@ -1707,7 +1714,7 @@ export class DocumentTree {
                     behaviors |= MergeTree.ReferenceType.Tile;
                 }
 
-                client.insertMarkerLocal(this.pos, behaviors, props);
+                insertMarkerLocal(client, this.pos, behaviors, props);
                 this.pos++;
             }
             for (let child of docNode.children) {
@@ -1715,7 +1722,7 @@ export class DocumentTree {
             }
             if (docNode.name !== "pg") {
                 let etrid = "end-" + docNode.name + id.toString();
-                client.insertMarkerLocal(this.pos, MergeTree.ReferenceType.NestEnd,
+                insertMarkerLocal(client, this.pos, MergeTree.ReferenceType.NestEnd,
                     {
                         [MergeTree.reservedMarkerIdKey]: etrid,
                         [MergeTree.reservedRangeLabelsKey]: [docNode.name],
@@ -1842,7 +1849,7 @@ export class DocumentTree {
     }
 
     private generateClient() {
-        let client = new MergeTree.Client("", { blockUpdateMarkers: true });
+        let client = new MergeTree.Client("", specToSegment, { blockUpdateMarkers: true });
         client.startCollaboration("Fred");
         for (let child of this.children) {
             this.addToMergeTree(client, child);
@@ -1927,7 +1934,7 @@ function insertElm(treeLabel: string, elm: Xmldoc.XmlElement, client: MergeTree.
     }
     if (elm.val && /[^\s]/.test(elm.val)) {
         const pos = client.mergeTree.posFromRelativePos({ id: elmId })
-        client.insertTextLocal(elm.val, pos);
+        insertTextLocal(client, elm.val, pos);
     }
     return elmId;
 }
@@ -1982,7 +1989,7 @@ function testOverlayTree() {
     const plantsFilename = path.join(__dirname, "../../public/literature", "plants.xml");
     let books = fs.readFileSync(booksFilename, "utf8");
     let booksDoc = new Xmldoc.XmlDocument(books);
-    let client = new MergeTree.Client("", { blockUpdateMarkers: true });
+    let client = new MergeTree.Client("", specToSegment, { blockUpdateMarkers: true });
     let plants = fs.readFileSync(plantsFilename, "utf8");
     let plantsDoc = new Xmldoc.XmlDocument(plants);
     insertElm("booksDoc", booksDoc, client);

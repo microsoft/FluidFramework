@@ -6,6 +6,7 @@ import {
     UnassignedSequenceNumber,
     UniversalSequenceNumber,
 } from "..";
+import { insertText } from "./testUtils";
 
 interface ITestTreeFactory {
     readonly create: () => ITestData;
@@ -45,7 +46,8 @@ const treeFactories: ITestTreeFactory[] = [
             const mergeTree = new MergeTree(initialText);
             for (let i = 1; i < MaxNodesInBlock - 1; i++) {
                 const text = i.toString();
-                mergeTree.insertText(
+                insertText(
+                    mergeTree,
                     mergeTree.getLength(UniversalSequenceNumber, localClientId),
                     UniversalSequenceNumber,
                     localClientId,
@@ -90,7 +92,8 @@ const treeFactories: ITestTreeFactory[] = [
             const mergeTree = new MergeTree(initialText);
             for (let i = 1; i < MaxNodesInBlock * 4; i++) {
                 const text = i.toString();
-                mergeTree.insertText(
+                insertText(
+                    mergeTree,
                     mergeTree.getLength(UniversalSequenceNumber, localClientId),
                     UniversalSequenceNumber,
                     localClientId,
@@ -151,7 +154,8 @@ describe("MergeTree.insertingWalk", () => {
             });
             describe("insertText", () => {
                 it("at beginning", () => {
-                    testData.mergeTree.insertText(
+                    insertText(
+                        testData.mergeTree,
                         0,
                         testData.refSeq,
                         localClientId,
@@ -171,7 +175,8 @@ describe("MergeTree.insertingWalk", () => {
                 });
 
                 it("at end", () => {
-                    testData.mergeTree.insertText(
+                    insertText(
+                        testData.mergeTree,
                         testData.initialText.length,
                         testData.refSeq,
                         localClientId,
@@ -191,7 +196,8 @@ describe("MergeTree.insertingWalk", () => {
                 });
 
                 it("in middle", () => {
-                    testData.mergeTree.insertText(
+                    insertText(
+                        testData.mergeTree,
                         testData.middle,
                         testData.refSeq,
                         localClientId,

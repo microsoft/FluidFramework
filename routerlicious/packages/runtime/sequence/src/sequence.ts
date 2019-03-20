@@ -35,6 +35,10 @@ import {
 import { SequenceDeltaEvent } from "./sequenceDeltaEvent";
 
 export abstract class SegmentSequence<T extends MergeTree.ISegment> extends SharedMap {
+
+    get loaded(): Promise<void> {
+        return this.loadedDeferred.promise;
+    }
     public client: MergeTree.Client;
     public intervalCollections: ISharedMap;
     protected isLoaded = false;
@@ -44,10 +48,6 @@ export abstract class SegmentSequence<T extends MergeTree.ISegment> extends Shar
     protected loadedDeferred = new Deferred<void>();
     private messagesSinceMSNChange = new Array<ISequencedDocumentMessage>();
 
-    get loaded(): Promise<void> {
-        return this.loadedDeferred.promise;
-    }
-
     constructor(
         document: IRuntime,
         public id: string,
@@ -56,7 +56,7 @@ export abstract class SegmentSequence<T extends MergeTree.ISegment> extends Shar
 
         super(id, document, extensionType);
         /* tslint:disable:no-unsafe-any */
-        this.client = new MergeTree.Client("", document.options);
+        this.client = new MergeTree.Client("", this.segmentFromSpec.bind(this), document.options);
 
         super.on("newListener", (event) => {
             switch (event) {
@@ -374,8 +374,12 @@ export abstract class SegmentSequence<T extends MergeTree.ISegment> extends Shar
         this.submitLocalMessage(message);
     }
 
-    protected abstract appendSegment(segSpec: MergeTree.IJSONSegment);
-    protected abstract segmentsFromSpecs(segSpecs: MergeTree.IJSONSegment[]): MergeTree.ISegment[];
+    protected abstract appendSegment(segSpec: any);
+    protected abstract segmentFromSpec(segSpecs: any): MergeTree.ISegment;
+
+    protected segmentsFromSpecs(segSpecs: MergeTree.IJSONSegment[]): MergeTree.ISegment[] {
+        return segSpecs.map(this.segmentFromSpec.bind(this));
+    }
 
     private processMessage(message: ISequencedDocumentMessage) {
         this.client.applyMsg(message);
@@ -525,18 +529,20 @@ export class SharedSequence<T extends MergeTree.SequenceItem> extends SegmentSeq
         const pos = mergeTree.root.cachedLength;
         mergeTree.insertSegment(pos, MergeTree.UniversalSequenceNumber,
             mergeTree.collabWindow.clientId, MergeTree.UniversalSequenceNumber,
-            MergeTree.runToSeg(segSpec), undefined);
+            this.segmentFromSpec(segSpec), undefined);
     }
 
     public insert(pos: number, items: T[], props?: MergeTree.PropertySet) {
+        const segment = new MergeTree.SubSequence<T>(items);
+        if (props) {
+            segment.addProperties(props);
+        }
         const insertMessage: MergeTree.IMergeTreeInsertMsg = {
-            items,
             pos1: pos,
-            props,
+            seg: segment.toJSONObject(),
             type: MergeTree.MergeTreeDeltaType.INSERT,
         };
-        const segment = new MergeTree.SubSequence<T>(items);
-        this.client.insertSegmentLocal(pos, segment, props, {op: insertMessage});
+        this.client.insertSegmentLocal(pos, segment, {op: insertMessage});
         this.submitIfAttached(insertMessage);
     }
 
@@ -557,8 +563,12 @@ export class SharedSequence<T extends MergeTree.SequenceItem> extends SegmentSeq
             start, end);
     }
 
-    public segmentsFromSpecs(segSpecs: Array<MergeTree.IJSONRunSegment<T>>) {
-        return segSpecs.map(MergeTree.runToSeg);
+    protected segmentFromSpec(segSpec: MergeTree.IJSONRunSegment<T>) {
+        const seg = new MergeTree.SubSequence<T>(segSpec.items);
+        if (segSpec.props) {
+            seg.addProperties(segSpec.props);
+        }
+        return seg;
     }
 }
 

@@ -3,6 +3,7 @@ import {
     MergeTree,
     UnassignedSequenceNumber,
 } from "..";
+import { insertText } from "./testUtils";
 
 describe("MergeTree", () => {
     let mergeTree: MergeTree;
@@ -45,7 +46,8 @@ describe("MergeTree", () => {
         it("Annotate over local insertion", () => {
             let eventCalled: number = 0;
 
-            mergeTree.insertText(
+            insertText(
+                mergeTree,
                 4,
                 localClientId,
                 currentSequenceNumber,
@@ -79,7 +81,8 @@ describe("MergeTree", () => {
             const remoteClientId: number = 35;
             let remoteSequenceNumber = currentSequenceNumber;
 
-            mergeTree.insertText(
+            insertText(
+                mergeTree,
                 4,
                 remoteClientId,
                 remoteSequenceNumber,

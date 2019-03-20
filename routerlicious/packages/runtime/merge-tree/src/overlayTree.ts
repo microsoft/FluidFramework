@@ -28,15 +28,13 @@ function createTreeMarkerOps(treeRangeLabel: string,
     beginMarkerProps[onodeTypeKey] = nodeType;
     return [
         <MergeLib.IMergeTreeInsertMsg>{
-            marker: { refType: MergeLib.ReferenceType.NestBegin },
+            seg: { marker: { refType: MergeLib.ReferenceType.NestBegin }, props: beginMarkerProps },
             relativePos1: beginMarkerPos,
-            props: beginMarkerProps,
             type: MergeLib.MergeTreeDeltaType.INSERT,
         },
         <MergeLib.IMergeTreeInsertMsg>{
-            marker: { refType: MergeLib.ReferenceType.NestEnd },
+            seg: { marker: { refType: MergeLib.ReferenceType.NestEnd }, props: endMarkerProps },
             relativePos1: endMarkerPos,
-            props: endMarkerProps,
             type: MergeLib.MergeTreeDeltaType.INSERT,
         }
     ]

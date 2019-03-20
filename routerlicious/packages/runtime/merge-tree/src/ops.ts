@@ -68,10 +68,7 @@ export interface IMergeTreeInsertMsg extends IMergeTreeDelta {
     relativePos1?: IRelativePosition;
     pos2?: number;
     relativePos2?: IRelativePosition;
-    items?: SequenceItem[];
-    props?: object;
-    text?: string;
-    marker?: IMarkerDef;
+    seg?: any;
     register?: string;
 }
 

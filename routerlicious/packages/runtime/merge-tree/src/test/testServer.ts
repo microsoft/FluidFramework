@@ -5,6 +5,7 @@ import { ClientSeq, compareNumbers, clientSeqComparer, useCheckQ } from "../merg
 import * as Collections from "../collections";
 import * as Properties from "../properties";
 import { IMergeTreeOp } from "../ops";
+import { specToSegment } from "./testUtils";
 
 /**
  * Server for tests.  Simulates client communication by directing placing
@@ -17,7 +18,7 @@ export class TestServer extends Client {
     clientSeqNumbers: Collections.Heap<ClientSeq>;
     upstreamMap: Collections.RedBlackTree<number, number>;
     constructor(initText: string, options?: Properties.PropertySet) {
-        super(initText, options);
+        super(initText, specToSegment, options);
     }
     addUpstreamClients(upstreamClients: Client[]) {
         // assumes addClients already called

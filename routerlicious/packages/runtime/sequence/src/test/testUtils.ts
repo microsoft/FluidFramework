@@ -1,22 +1,15 @@
-import * as fs from "fs";
-import { IMergeTreeDeltaOpCallbackArgs } from "..";
-import { Client } from "../client";
-import { Marker, MergeTree, SubSequence, TextSegment } from "../mergeTree";
-import * as ops from "../ops";
-import * as Properties from "../properties";
-import { loadText } from "../text";
-
-export function loadTextFromFile(filename: string, mergeTree: MergeTree, segLimit = 0) {
-    // tslint:disable-next-line:non-literal-fs-path
-    const content = fs.readFileSync(filename, "utf8");
-    return loadText(content, mergeTree, segLimit);
-}
-
-export function loadTextFromFileWithMarkers(filename: string, mergeTree: MergeTree, segLimit = 0) {
-    // tslint:disable-next-line:non-literal-fs-path
-    const content = fs.readFileSync(filename, "utf8");
-    return loadText(content, mergeTree, segLimit, true);
-}
+import {
+    Client,
+    IMarkerDef,
+    IMergeTreeDeltaOpCallbackArgs,
+    Marker,
+    MergeTree,
+    PropertySet,
+    ReferenceType,
+    SequenceItem,
+    SubSequence,
+    TextSegment,
+} from "@prague/merge-tree";
 
 // tslint:disable:no-unsafe-any
 export function specToSegment(spec: any) {
@@ -45,7 +38,7 @@ export function insertMarker(
     refSeq: number,
     clientId: number,
     seq: number,
-    behaviors: ops.ReferenceType, props: Properties.PropertySet, opArgs: IMergeTreeDeltaOpCallbackArgs,
+    behaviors: ReferenceType, props: PropertySet, opArgs: IMergeTreeDeltaOpCallbackArgs,
 ) {
     mergeTree.insertSegment(pos, refSeq, clientId, seq, Marker.make(behaviors, props, seq, clientId), opArgs);
 }
@@ -57,7 +50,7 @@ export function insertText(
     clientId: number,
     seq: number,
     text: string,
-    props: Properties.PropertySet,
+    props: PropertySet,
     opArgs: IMergeTreeDeltaOpCallbackArgs,
 ) {
     mergeTree.insertSegment(pos, refSeq, clientId, seq, TextSegment.make(text, props, seq, clientId), opArgs);
@@ -67,7 +60,7 @@ export function insertTextLocal(
     client: Client,
     text: string,
     pos: number,
-    props?: Properties.PropertySet,
+    props?: PropertySet,
     opArgs?: IMergeTreeDeltaOpCallbackArgs,
 ) {
     const segment = new TextSegment(text);
@@ -80,8 +73,8 @@ export function insertTextLocal(
 export function insertMarkerLocal(
     client: Client,
     pos: number,
-    behaviors: ops.ReferenceType,
-    props?: Properties.PropertySet,
+    behaviors: ReferenceType,
+    props?: PropertySet,
     opArgs?: IMergeTreeDeltaOpCallbackArgs,
 ) {
     const segment = new Marker(behaviors);
@@ -93,9 +86,9 @@ export function insertMarkerLocal(
 
 export function insertItemsRemote(
     client: Client,
-    items: ops.SequenceItem[],
+    items: SequenceItem[],
     pos: number,
-    props: Properties.PropertySet,
+    props: PropertySet,
     seq: number,
     refSeq: number,
     clientId: number,
@@ -110,9 +103,9 @@ export function insertItemsRemote(
 
 export function insertMarkerRemote(
     client: Client, markerDef:
-    ops.IMarkerDef,
+    IMarkerDef,
     pos: number,
-    props: Properties.PropertySet,
+    props: PropertySet,
     seq: number,
     refSeq: number,
     clientId: number, opArgs?: IMergeTreeDeltaOpCallbackArgs,
@@ -128,7 +121,7 @@ export function insertTextRemote(
     client: Client,
     text: string,
     pos: number,
-    props: Properties.PropertySet,
+    props: PropertySet,
     seq: number,
     refSeq: number,
     clientId: number,

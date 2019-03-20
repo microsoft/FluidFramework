@@ -5167,12 +5167,13 @@ export class FlowView extends ui.Component {
         switch (delta.type) {
             case MergeTree.MergeTreeDeltaType.INSERT:
                 let adjLength = 1;
-                if (delta.marker) {
+                if (MergeTree.Marker.fromJSONObject(delta.seg)) {
                     this.updatePGInfo(delta.pos1 - 1);
                 } else if (delta.pos1 <= this.cursor.pos) {
-                    if (delta.text) {
+                    const maybeText = MergeTree.TextSegment.fromJSONObject(delta.seg);
+                    if (maybeText) {
                         // insert text
-                        adjLength = delta.text.length;
+                        adjLength = maybeText.text.length;
                         if (delta.pos2 !== undefined) {
                             // replace range
                             const remLen = delta.pos2 - delta.pos1;
