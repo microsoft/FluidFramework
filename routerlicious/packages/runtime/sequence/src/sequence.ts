@@ -374,7 +374,6 @@ export abstract class SegmentSequence<T extends MergeTree.ISegment> extends Shar
         this.submitLocalMessage(message);
     }
 
-    protected abstract appendSegment(segSpec: any);
     protected abstract segmentFromSpec(segSpecs: any): MergeTree.ISegment;
 
     protected segmentsFromSpecs(segSpecs: MergeTree.IJSONSegment[]): MergeTree.ISegment[] {
@@ -469,8 +468,18 @@ export abstract class SegmentSequence<T extends MergeTree.ISegment> extends Shar
         }
 
         const chunk2 = await MergeTree.Snapshot.loadChunk(services, "body");
+        const mergeTree = this.client.mergeTree;
+        const clientId = mergeTree.collabWindow.clientId;
+
+        // Deserialize each chunk segment and append it to the end of the MergeTree.
         for (const segSpec of chunk2.segmentTexts) {
-            this.appendSegment(segSpec);
+            mergeTree.insertSegment(
+                mergeTree.root.cachedLength,
+                MergeTree.UniversalSequenceNumber,
+                clientId,
+                MergeTree.UniversalSequenceNumber,
+                this.segmentFromSpec(segSpec),
+                undefined);
         }
     }
 
@@ -522,14 +531,6 @@ export class SharedSequence<T extends MergeTree.SequenceItem> extends SegmentSeq
         extensionType: string,
         services?: IDistributedObjectServices) {
         super(document, id, extensionType, services);
-    }
-
-    public appendSegment(segSpec: MergeTree.IJSONRunSegment<T>) {
-        const mergeTree = this.client.mergeTree;
-        const pos = mergeTree.root.cachedLength;
-        mergeTree.insertSegment(pos, MergeTree.UniversalSequenceNumber,
-            mergeTree.collabWindow.clientId, MergeTree.UniversalSequenceNumber,
-            this.segmentFromSpec(segSpec), undefined);
     }
 
     public insert(pos: number, items: T[], props?: MergeTree.PropertySet) {

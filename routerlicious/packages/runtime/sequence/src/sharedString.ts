@@ -12,7 +12,6 @@ import {
 } from "./sequence";
 
 export type SharedStringSegment = MergeTree.TextSegment | MergeTree.Marker | MergeTree.ExternalSegment;
-type SharedStringJSONSegment = MergeTree.IJSONTextSegment & MergeTree.IJSONMarkerSegment;
 
 export class SharedString extends SegmentSequence<SharedStringSegment> {
     constructor(
@@ -185,18 +184,5 @@ export class SharedString extends SegmentSequence<SharedStringSegment> {
 
         const maybeMarker = MergeTree.Marker.fromJSONObject(spec);
         if (maybeMarker) { return maybeMarker; }
-    }
-
-    protected appendSegment(segSpec: SharedStringJSONSegment) {
-        const mergeTree = this.client.mergeTree;
-        const pos = mergeTree.root.cachedLength;
-
-        mergeTree.insertSegment(
-            pos,
-            MergeTree.UniversalSequenceNumber,
-            mergeTree.collabWindow.clientId,
-            MergeTree.UniversalSequenceNumber,
-            this.segmentFromSpec(segSpec),
-            undefined);
     }
 }
