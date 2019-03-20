@@ -1,10 +1,6 @@
 import {
     ConnectionState,
     IContainerContext,
-    IDeltaManager,
-    IDocumentMessage,
-    IDocumentStorageService,
-    ILoader,
     IQuorum,
     IRequest,
     IResponse,
@@ -24,65 +20,8 @@ export class Runtime extends EventEmitter {
         return this.context.connectionState;
     }
 
-    public get tenantId(): string {
-        return this.context.tenantId;
-    }
-
-    public get id(): string {
-        return this.context.id;
-    }
-
-    public get parentBranch(): string {
-        return this.context.parentBranch;
-    }
-
-    public get existing(): boolean {
-        return this.context.existing;
-    }
-
-    // tslint:disable-next-line:no-unsafe-any
-    public get options(): any {
-        return this.context.options;
-    }
-
     public get clientId(): string {
         return this.context.clientId;
-    }
-
-    public get clientType(): string {
-        return this.context.clientType;
-    }
-
-    public get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
-        return this.context.deltaManager;
-    }
-
-    public get storage(): IDocumentStorageService {
-        return this.context.storage;
-    }
-
-    public get branch(): string {
-        return this.context.branch;
-    }
-
-    public get minimumSequenceNumber(): number {
-        return this.context.minimumSequenceNumber;
-    }
-
-    public get submitFn(): (type: MessageType, contents: any) => number {
-        return this.context.submitFn;
-    }
-
-    public get snapshotFn(): (message: string) => Promise<void> {
-        return this.context.snapshotFn;
-    }
-
-    public get closeFn(): () => void {
-        return this.context.closeFn;
-    }
-
-    public get loader(): ILoader {
-        return this.context.loader;
     }
 
     public get connected(): boolean {
@@ -91,14 +30,14 @@ export class Runtime extends EventEmitter {
 
     private closed = false;
     private requestHandler: (request: IRequest) => Promise<IResponse>;
-    private opsUntilConnection: ISequencedDocumentMessage[] = [];
+    private bufferedOpsUntilConnection: ISequencedDocumentMessage[] = [];
 
     private constructor(private readonly context: IContainerContext) {
         super();
     }
 
     public get opsBeforeConnection(): ISequencedDocumentMessage[] {
-        return this.opsUntilConnection;
+        return this.bufferedOpsUntilConnection;
     }
 
     public registerRequestHandler(handler: (request: IRequest) => Promise<IResponse>) {
@@ -140,7 +79,7 @@ export class Runtime extends EventEmitter {
 
     public process(message: ISequencedDocumentMessage, local: boolean, context: any) {
         if (!this.connected) {
-            this.opsUntilConnection.push(message);
+            this.bufferedOpsUntilConnection.push(message);
         } else {
             this.emit("op", message);
         }
@@ -168,7 +107,7 @@ export class Runtime extends EventEmitter {
 
     private submit(type: MessageType, content: any) {
         this.verifyNotClosed();
-        this.submitFn(type, content);
+        this.context.submitFn(type, content);
     }
 
     private verifyNotClosed() {
