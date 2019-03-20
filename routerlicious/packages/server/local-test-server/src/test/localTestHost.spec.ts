@@ -61,10 +61,13 @@ describe("TestHost", () => {
         });
     });
 
-    describe("2 compenents", () => {
+    describe("2 components", () => {
         it("early open / late close", async () => {
             const host1 = new TestHost(testComponents);
             const host2 = host1.clone();
+
+            assert(host1.deltaConnectionServer === host2.deltaConnectionServer,
+                "Cloned hosts must share the deltaConnectionServer.");
 
             // Create/open both instance of TestComponent before applying ops.
             const comp1 = await host1.createComponent<TestComponent>("documentId", TestComponent.type);
@@ -121,7 +124,7 @@ describe("TestHost", () => {
         });
     });
 
-    describe("1 DDT", () => {
+    describe("Distributed data types", () => {
         describe("1 data type", () => {
             let host: TestHost;
             let text: SharedString;

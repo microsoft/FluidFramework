@@ -77,7 +77,7 @@ export class TestHost {
         }
     }
 
-    private readonly deltaConnectionServer: ITestDeltaConnectionServer;
+    public readonly deltaConnectionServer: ITestDeltaConnectionServer;
     private rootResolver: (accept: TestRootComponent) => void;
 
     // tslint:disable-next-line:promise-must-complete
