@@ -13,11 +13,11 @@ export interface IMergeTreeDeltaCallbackArgs {
     readonly segments: ISegment[];
 }
 
-export interface IMergeTreeDeltaOpCallbackArgs {
+export interface IMergeTreeDeltaOpArgs {
     readonly groupOp?: IMergeTreeGroupMsg;
     readonly op: IMergeTreeOp;
     readonly sequencedMessage?: ISequencedDocumentMessage;
 }
 
 export type MergeTreeDeltaCallback =
-    (opArgs: IMergeTreeDeltaOpCallbackArgs, deltaArgs: IMergeTreeDeltaCallbackArgs) => void;
+    (opArgs: IMergeTreeDeltaOpArgs, deltaArgs: IMergeTreeDeltaCallbackArgs) => void;

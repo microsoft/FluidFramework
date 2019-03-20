@@ -1,4 +1,3 @@
-// tslint:disable:whitespace align no-bitwise
 import * as MergeTree from "@prague/merge-tree";
 import {
     IDistributedObjectServices,
@@ -22,8 +21,11 @@ export class SharedString extends SegmentSequence<SharedStringSegment> {
         super(document, id, SharedStringExtension.Type, services);
     }
 
-    public insertMarkerRelative(relativePos1: MergeTree.IRelativePosition,
-        refType: MergeTree.ReferenceType, props?: MergeTree.PropertySet) {
+    public insertMarkerRelative(
+        relativePos1: MergeTree.IRelativePosition,
+        refType: MergeTree.ReferenceType,
+        props?: MergeTree.PropertySet) {
+
         const segment = new MergeTree.Marker(refType);
         if (props) {
             segment.addProperties(props);
@@ -143,35 +145,38 @@ export class SharedString extends SegmentSequence<SharedStringSegment> {
             this.annotateRange(props, range.start, range.end);
         });
     }
-
-    public annotateMarkerNotifyConsensus(marker: MergeTree.Marker, props: MergeTree.PropertySet,
+    /**
+     * Annotates the marker with the provided properties
+     * and calls the callback on concensus.
+     * @param marker The marker to annotate
+     * @param props The properties to annotate the marker with
+     * @param consensusCallback The callback called when consensus is reached
+     */
+    public annotateMarkerNotifyConsensus(
+        marker: MergeTree.Marker,
+        props: MergeTree.PropertySet,
         callback: (m: MergeTree.Marker) => void) {
-        const id = marker.getId();
-        const annotateMessage: MergeTree.IMergeTreeAnnotateMsg = {
-            combiningOp: { name: "consensus" },
-            props,
-            relativePos1: { id, before: true },
-            relativePos2: { id },
-            type: MergeTree.MergeTreeDeltaType.ANNOTATE,
-        };
-        this.client.annotateMarkerNotifyConsensus(marker, props, callback, {op: annotateMessage});
-        this.submitIfAttached(annotateMessage);
+
+        const annotateOp = this.client.annotateMarkerNotifyConsensus(marker, props, callback);
+        if (annotateOp) {
+            this.submitIfAttached(annotateOp);
+        }
     }
 
-    public annotateMarker(props: MergeTree.PropertySet, marker: MergeTree.Marker, op?: MergeTree.ICombiningOp) {
-        const id = marker.getId();
-        const annotateMessage: MergeTree.IMergeTreeAnnotateMsg = {
-            props,
-            relativePos1: { id, before: true },
-            relativePos2: { id },
-            type: MergeTree.MergeTreeDeltaType.ANNOTATE,
-        };
-
-        if (op) {
-            annotateMessage.combiningOp = op;
+    /**
+     * Annotates the marker with the provided properties
+     * @param marker The marker to annotate
+     * @param props The properties to annotate the marker with
+     * @param combiningOp Optional. Specifies how to combine values for the property, such as "incr" for increment.
+     */
+    public annotateMarker(
+        marker: MergeTree.Marker,
+        props: MergeTree.PropertySet,
+        combiningOp?: MergeTree.ICombiningOp) {
+        const annotateOp = this.client.annotateMarker(marker, props, combiningOp);
+        if (annotateOp) {
+            this.submitIfAttached(annotateOp);
         }
-        this.client.annotateMarker(props, marker, op, {op: annotateMessage});
-        this.submitIfAttached(annotateMessage);
     }
 
     public findTile(startPos: number, tileLabel: string, preceding = true) {

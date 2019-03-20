@@ -29,15 +29,15 @@ describe("MergeTree", () => {
                 };
 
             mergeTree.annotateRange(
+                4,
+                6,
                 {
                     foo: "bar",
                 },
-                4,
-                6,
+                undefined,
                 currentSequenceNumber,
                 localClientId,
                 UnassignedSequenceNumber,
-                undefined,
                 undefined);
 
             assert.equal(eventCalled, 1);
@@ -62,15 +62,15 @@ describe("MergeTree", () => {
                 };
 
             mergeTree.annotateRange(
+                3,
+                8,
                 {
                     foo: "bar",
                 },
-                3,
-                8,
+                undefined,
                 currentSequenceNumber,
                 localClientId,
                 UnassignedSequenceNumber,
-                undefined,
                 undefined);
 
             assert.equal(eventCalled, 1);
@@ -97,15 +97,15 @@ describe("MergeTree", () => {
                 };
 
             mergeTree.annotateRange(
+                3,
+                8,
                 {
                     foo: "bar",
                 },
-                3,
-                8,
+                undefined,
                 currentSequenceNumber,
                 localClientId,
                 UnassignedSequenceNumber,
-                undefined,
                 undefined);
 
             assert.equal(eventCalled, 1);
@@ -131,15 +131,15 @@ describe("MergeTree", () => {
                 };
 
             mergeTree.annotateRange(
+                3,
+                8,
                 {
                     foo: "bar",
                 },
-                3,
-                8,
+                undefined,
                 currentSequenceNumber,
                 localClientId,
                 UnassignedSequenceNumber,
-                undefined,
                 undefined);
 
             assert.equal(eventCalled, 1);

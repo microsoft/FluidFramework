@@ -1,52 +1,204 @@
-// tslint:disable
-import { MessageType, ISequencedDocumentMessage } from "@prague/container-definitions";
-import { IMergeTreeDeltaOpCallbackArgs } from "./index";
-import {
-    MergeTree, ClientIds, compareStrings, RegisterCollection, UnassignedSequenceNumber, Marker,
-    IConsensusInfo, IUndoInfo, ISegment, UniversalSequenceNumber, SegmentGroup, clock, elapsedMicroseconds, TextSegment
-} from "./mergeTree";
+import { ISequencedDocumentMessage, MessageType } from "@prague/container-definitions";
+import * as assert from "assert";
 import * as Collections from "./collections";
+import { IMergeTreeDeltaOpArgs } from "./index";
+import {
+    ClientIds, clock, compareStrings, elapsedMicroseconds, IConsensusInfo, ISegment,
+    IUndoInfo, Marker, MergeTree, RegisterCollection, SegmentGroup, TextSegment,
+    UnassignedSequenceNumber, UniversalSequenceNumber,
+} from "./mergeTree";
+import * as OpBuilder from "./opBuilder";
 import * as ops from "./ops";
 import * as Properties from "./properties";
 
 export class Client {
-    mergeTree: MergeTree;
-    accumTime = 0;
-    localTime = 0;
-    localOps = 0;
-    accumWindowTime = 0;
-    maxWindowTime = 0;
-    accumWindow = 0;
-    accumOps = 0;
-    verboseOps = false;
-    noVerboseRemoteAnnote = false;
-    measureOps = false;
-    q: Collections.List<ISequencedDocumentMessage>;
-    checkQ: Collections.List<string>;
-    clientNameToIds = new Collections.RedBlackTree<string, ClientIds>(compareStrings);
-    shortClientIdMap = <string[]>[];
-    shortClientBranchIdMap = <number[]>[];
-    registerCollection = new RegisterCollection();
-    localSequenceNumber = UnassignedSequenceNumber;
-    opMarkersModified = <Marker[]>[];
-    pendingConsensus = new Map<string, IConsensusInfo>();
+    public readonly mergeTree: MergeTree;
+    public readonly q: Collections.List<ISequencedDocumentMessage>;
+    public readonly checkQ: Collections.List<string>;
+
+    public verboseOps = false;
+    public noVerboseRemoteAnnote = false;
+    public measureOps = false;
+    public registerCollection = new RegisterCollection();
+    public accumTime = 0;
+    public localTime = 0;
+    public localOps = 0;
+    public accumWindowTime = 0;
+    public accumWindow = 0;
+    public accumOps = 0;
+    public maxWindowTime = 0;
     public longClientId: string;
     public undoSegments: IUndoInfo[];
     public redoSegments: IUndoInfo[];
+
+    private readonly clientNameToIds = new Collections.RedBlackTree<string, ClientIds>(compareStrings);
+    private readonly shortClientIdMap: string[] = [];
+    private readonly shortClientBranchIdMap: number[] = [];
+    private readonly pendingConsensus = new Map<string, IConsensusInfo>();
+
+    private localSequenceNumber = UnassignedSequenceNumber;
 
     constructor(
         initText: string,
         // Passing this callback would be unnecessary if Client were merged with SegmentSequence
         // (See https://github.com/Microsoft/Prague/issues/1791).
         private readonly specToSegment: (spec: ops.IJSONSegment) => ISegment,
-        options?: Properties.PropertySet
+        options?: Properties.PropertySet,
     ) {
         this.mergeTree = new MergeTree(initText, options);
-        this.mergeTree.getLongClientId = id => this.getLongClientId(id);
+        this.mergeTree.getLongClientId = (id) => this.getLongClientId(id);
         this.mergeTree.clientIdToBranchId = this.shortClientBranchIdMap;
         this.q = Collections.ListMakeHead<ISequencedDocumentMessage>();
         this.checkQ = Collections.ListMakeHead<string>();
     }
+    /**
+     * Annotate a maker and call the callback on concensus.
+     * @param marker The marker to annotate
+     * @param props The properties to annotate the marker with
+     * @param consensusCallback The callback called when consensus is reached
+     * @returns The annotate op if valid, otherwise undefined
+     */
+    public annotateMarkerNotifyConsensus(
+        marker: Marker,
+        props: Properties.PropertySet,
+        consensusCallback: (m: Marker) => void): ops.IMergeTreeAnnotateMsg {
+
+        const combiningOp: ops.ICombiningOp = {
+            name: "consensus",
+        };
+
+        const annotateOp =
+            this.annotateMarker(marker, props, combiningOp);
+
+        if (annotateOp) {
+            const consensusInfo: IConsensusInfo = {
+                callback: consensusCallback,
+                marker,
+            };
+            this.pendingConsensus.set(marker.getId(), consensusInfo);
+            return annotateOp;
+        } else {
+            return undefined;
+        }
+    }
+    /**
+     * Annotates the markers with the provided properties
+     * @param marker The marker to annotate
+     * @param props The properties to annotate the marker with
+     * @param combiningOp Optional. Specifies how to combine values for the property, such as "incr" for increment.
+     * @returns The annotate op if valid, otherwise undefined
+     */
+    public annotateMarker(
+        marker: Marker,
+        props: Properties.PropertySet,
+        combiningOp: ops.ICombiningOp): ops.IMergeTreeAnnotateMsg {
+
+        const annotateOp =
+            OpBuilder.createAnnotateMarkerOp(marker, props, combiningOp);
+
+        if (this.annotateRangeFromOp(true, {op: annotateOp})) {
+            return annotateOp;
+        } else {
+            return undefined;
+        }
+    }
+    /**
+     * Annotates the range with the provided properties
+     * @param start The inclusive start postition of the range to annotate
+     * @param end The inclusive end position of the range to annotate
+     * @param props The properties to annotate the range with
+     * @param combiningOp Optional. Specifies how to combine values for the property, such as "incr" for increment.
+     * @returns The annotate op if valid, otherwise undefined
+     */
+    public annotateRangeLocal(
+        start: number,
+        end: number,
+        props: Properties.PropertySet,
+        combiningOp: ops.ICombiningOp): ops.IMergeTreeAnnotateMsg {
+
+        const annotateOp = OpBuilder.createAnnotateRangeOp(
+            start,
+            end,
+            props,
+            combiningOp);
+
+        if (this.annotateRangeFromOp(true, {op: annotateOp})) {
+            return annotateOp;
+        } else {
+            return undefined;
+        }
+    }
+    /**
+     * Performs the annotate based on the provided op
+     * @param local Whether the annotate is local
+     * @param opArgs The ops args for the op
+     * @returns True if the annotate was applied. False if it could not be.
+     */
+    private annotateRangeFromOp(local: boolean, opArgs: IMergeTreeDeltaOpArgs): boolean {
+        assert.equal(opArgs.op.type, ops.MergeTreeDeltaType.ANNOTATE);
+        const op = opArgs.op as ops.IMergeTreeAnnotateMsg;
+
+        let clientId: number;
+        let refSeq: number;
+        let seq: number;
+        if (local) {
+            const segWindow = this.mergeTree.getCollabWindow();
+            clientId = segWindow.clientId;
+            refSeq = segWindow.currentSeq;
+            seq = this.getLocalSequenceNumber();
+        } else {
+            clientId = this.getShortClientId(opArgs.sequencedMessage.clientId);
+            refSeq = opArgs.sequencedMessage.referenceSequenceNumber;
+            seq = opArgs.sequencedMessage.sequenceNumber;
+        }
+
+        let start = op.pos1;
+        let end = op.pos2;
+        if (!start && op.relativePos1) {
+            start = this.mergeTree.posFromRelativePos(op.relativePos1);
+        }
+        if (!end && op.relativePos2) {
+            end = this.mergeTree.posFromRelativePos(op.relativePos2);
+        }
+        // check for invalid range positions
+        //
+        if (start < 0
+            || end < 0
+            || end - start < 0
+            || start >= this.mergeTree.getLength(refSeq, clientId)) {
+            return false;
+        }
+
+        let clockStart: number | [ number, number ];
+        if (this.measureOps) {
+            clockStart = clock();
+        }
+
+        this.mergeTree.annotateRange(start, end, op.props, op.combiningOp,  refSeq, clientId, seq, opArgs);
+        if (local) {
+            if (this.measureOps) {
+                this.localTime += elapsedMicroseconds(clockStart);
+                this.localOps++;
+            }
+        } else {
+            this.mergeTree.getCollabWindow().currentSeq = seq;
+            if (this.measureOps) {
+                this.accumTime += elapsedMicroseconds(clockStart);
+                this.accumOps++;
+                this.accumWindow += (this.getCurrentSeq() - this.mergeTree.getCollabWindow().minSeq);
+            }
+        }
+        if (this.verboseOps && (local || !this.noVerboseRemoteAnnote)) {
+            console.log(
+                `@cli ${this.getLongClientId(this.mergeTree.getCollabWindow().clientId)} ` +
+                ` seq ${seq} annotate local ${local} start ${start} end ${end} refseq ${refSeq} ` +
+                `cli ${clientId} props ${op.props}`);
+        }
+        return true;
+    }
+
+// tslint:disable
+// as functions are modified move them above the tslint: disabled waterline and lint them
 
     setLocalSequenceNumber(seq: number) {
         this.localSequenceNumber = seq;
@@ -225,25 +377,7 @@ export class Client {
             type: MessageType.Operation,
         };
     }
-    makeAnnotateMsg(props: Properties.PropertySet, start: number, end: number, seq: number, refSeq: number, objectId: string) {
-        return <ISequencedDocumentMessage>{
-            clientId: this.longClientId,
-            sequenceNumber: seq,
-            referenceSequenceNumber: refSeq,
-            objectId: objectId,
-            clientSequenceNumber: 1,
-            userId: undefined,
-            minimumSequenceNumber: undefined,
-            offset: seq,
-            origin: null,
-            contents: {
-                type: ops.MergeTreeDeltaType.ANNOTATE, pos1: start, pos2: end, props
-            },
-            timestamp: Date.now(),
-            traces: [],
-            type: MessageType.Operation,
-        };
-    }
+
     hasMessages(): boolean {
         return this.q.count() > 0;
     }
@@ -277,7 +411,7 @@ export class Client {
             opList.push(removeOp);
         }
     }
-    transformOp(op: ops.IMergeTreeOp, referenceSequenceNumber, toSequenceNumber: number) {
+    transformOp(op: ops.IMergeTreeOp, referenceSequenceNumber: number, toSequenceNumber: number) {
         if ((op.type == ops.MergeTreeDeltaType.ANNOTATE) ||
             (op.type == ops.MergeTreeDeltaType.REMOVE)) {
             let ranges = this.mergeTree.tardisRange(op.pos1, op.pos2, referenceSequenceNumber, toSequenceNumber);
@@ -316,7 +450,7 @@ export class Client {
         let segs = this.mergeTree.cloneSegments(refSeq, clientId, start, end);
         this.registerCollection.set(longClientId, registerId, segs);
     }
-    pasteLocal(register: string, pos: number, opArgs?: IMergeTreeDeltaOpCallbackArgs) {
+    pasteLocal(register: string, pos: number, opArgs?: IMergeTreeDeltaOpArgs) {
         let segs = this.registerCollection.get(this.longClientId, register);
         if (segs) {
             this.mergeTree.startGroupOperation();
@@ -328,7 +462,7 @@ export class Client {
         }
         return pos;
     }
-    pasteRemote(pos: number, registerId: string, seq: number, refSeq: number, clientId: number, longClientId, opArgs?: IMergeTreeDeltaOpCallbackArgs) {
+    pasteRemote(pos: number, registerId: string, seq: number, refSeq: number, clientId: number, longClientId: string, opArgs?: IMergeTreeDeltaOpArgs) {
         let segs = this.registerCollection.get(longClientId, registerId);
         if (segs) {
             // TODO: build tree from segs and insert all at once
@@ -347,7 +481,7 @@ export class Client {
             console.log(`remove nest mismatch ${beginPos} ${op.pos1} ${endPos} ${op.pos2}`);
         }
     }
-    applyOp(opArgs: IMergeTreeDeltaOpCallbackArgs) {
+    applyRemoteOp(opArgs: IMergeTreeDeltaOpArgs) {
         const op = opArgs.op;
         const msg = opArgs.sequencedMessage;
         let clid = this.getOrAddShortClientId(msg.clientId);
@@ -404,25 +538,11 @@ export class Client {
                 this.removeSegmentRemote(op.pos1, op.pos2, msg.sequenceNumber, msg.referenceSequenceNumber, clid, opArgs);
                 break;
             case ops.MergeTreeDeltaType.ANNOTATE:
-                if (op.relativePos1) {
-                    op.pos1 = this.mergeTree.posFromRelativePos(op.relativePos1, msg.referenceSequenceNumber, clid);
-                    if (op.pos1 < 0) {
-                        // TODO: event when marker id not found
-                        return;
-                    }
-                }
-                if (op.relativePos2) {
-                    op.pos2 = this.mergeTree.posFromRelativePos(op.relativePos2, msg.referenceSequenceNumber, clid);
-                    if (op.pos2 < 0) {
-                        // TODO: event when marker id not found
-                        return;
-                    }
-                }
-                this.annotateSegmentRemote(op.props, op.pos1, op.pos2, msg.sequenceNumber, msg.referenceSequenceNumber, clid, op.combiningOp, opArgs);
+                this.annotateRangeFromOp(false, opArgs);
                 break;
             case ops.MergeTreeDeltaType.GROUP: {
                 for (let memberOp of op.ops) {
-                    this.applyOp({
+                    this.applyRemoteOp({
                         op: memberOp,
                         groupOp: op,
                         sequencedMessage: msg,
@@ -432,11 +552,9 @@ export class Client {
             }
         }
     }
-    getModifiedMarkersForOp() {
-        return this.opMarkersModified;
-    }
-    coreApplyMsg(opArgs: IMergeTreeDeltaOpCallbackArgs) {
-        this.applyOp(opArgs);
+
+    coreApplyMsg(opArgs: IMergeTreeDeltaOpArgs) {
+        this.applyRemoteOp(opArgs);
     }
     applyMsg(msg: ISequencedDocumentMessage) {
         if ((msg !== undefined) && (msg.minimumSequenceNumber > this.mergeTree.getCollabWindow().minSeq)) {
@@ -450,7 +568,7 @@ export class Client {
         this.getOrAddShortClientId(msg.clientId, branchId);
         // Apply if an operation message
         if (msg.type === MessageType.Operation) {
-            const opArgs: IMergeTreeDeltaOpCallbackArgs = {
+            const opArgs: IMergeTreeDeltaOpArgs = {
                 op: msg.contents as ops.IMergeTreeOp,
                 sequencedMessage: msg,
             };
@@ -495,7 +613,7 @@ export class Client {
     localTransaction(groupOp: ops.IMergeTreeGroupMsg, segmentGroup?: SegmentGroup) {
         segmentGroup = this.mergeTree.startGroupOperation(segmentGroup);
         for (let op of groupOp.ops) {
-            const opArgs: IMergeTreeDeltaOpCallbackArgs = {
+            const opArgs: IMergeTreeDeltaOpArgs = {
                 op,
                 groupOp,
             }
@@ -511,21 +629,7 @@ export class Client {
                     this.insertSegmentLocal(op.pos1, this.specToSegment(op.seg), opArgs);
                     break;
                 case ops.MergeTreeDeltaType.ANNOTATE:
-                    if (op.relativePos1) {
-                        op.pos1 = this.mergeTree.posFromRelativePos(op.relativePos1);
-                        if (op.pos1 < 0) {
-                            // TODO: raise exception or other error flow
-                            break;
-                        }
-                    }
-                    if (op.relativePos2) {
-                        op.pos2 = this.mergeTree.posFromRelativePos(op.relativePos2);
-                        if (op.pos2 < 0) {
-                            // TODO: raise exception or other error flow
-                            break;
-                        }
-                    }
-                    this.annotateSegmentLocal(op.props, op.pos1, op.pos2, op.combiningOp, opArgs);
+                    this.annotateRangeFromOp(true, opArgs);
                     break;
                 case ops.MergeTreeDeltaType.REMOVE:
                     if (op.relativePos1) {
@@ -560,78 +664,12 @@ export class Client {
         }
         this.mergeTree.addMinSeqListener(msg.sequenceNumber, () => consensusInfo.callback(consensusInfo.marker));
     }
-    // marker must have an id
-    annotateMarkerNotifyConsensus(marker: Marker, props: Properties.PropertySet, consensusCallback: (m: Marker) => void, opArgs?: IMergeTreeDeltaOpCallbackArgs) {
-        let combiningOp = <ops.ICombiningOp>{
-            name: "consensus"
-        };
-        let consensusInfo = <IConsensusInfo>{
-            callback: consensusCallback,
-            marker,
-        };
-        let id = marker.getId();
-        this.pendingConsensus.set(id, consensusInfo);
-        this.annotateMarker(props, marker, combiningOp, opArgs);
-    }
-    annotateMarker(props: Properties.PropertySet, marker: Marker, op: ops.ICombiningOp, opArgs?: IMergeTreeDeltaOpCallbackArgs) {
+    removeSegmentLocal(start: number, end: number, opArgs?: IMergeTreeDeltaOpArgs) {
         let segWindow = this.mergeTree.getCollabWindow();
         let clientId = segWindow.clientId;
         let refSeq = segWindow.currentSeq;
         let seq = this.getLocalSequenceNumber();
-        let clockStart;
-        if (this.measureOps) {
-            clockStart = clock();
-        }
-        let start = this.mergeTree.getOffset(marker, UniversalSequenceNumber, this.getClientId());
-        this.mergeTree.annotateRange(props, start, start + marker.cachedLength, refSeq, clientId, seq, op, opArgs);
-        if (this.measureOps) {
-            this.localTime += elapsedMicroseconds(clockStart);
-            this.localOps++;
-        }
-        if (this.verboseOps) {
-            console.log(`annotate local cli ${this.getLongClientId(clientId)} ref seq ${refSeq}`);
-        }
-    }
-    annotateSegmentLocal(props: Properties.PropertySet, start: number, end: number, op: ops.ICombiningOp, opArgs?: IMergeTreeDeltaOpCallbackArgs) {
-        let segWindow = this.mergeTree.getCollabWindow();
-        let clientId = segWindow.clientId;
-        let refSeq = segWindow.currentSeq;
-        let seq = this.getLocalSequenceNumber();
-        let clockStart;
-        if (this.measureOps) {
-            clockStart = clock();
-        }
-        this.mergeTree.annotateRange(props, start, end, refSeq, clientId, seq, op, opArgs);
-        if (this.measureOps) {
-            this.localTime += elapsedMicroseconds(clockStart);
-            this.localOps++;
-        }
-        if (this.verboseOps) {
-            console.log(`annotate local cli ${this.getLongClientId(clientId)} ref seq ${refSeq}`);
-        }
-    }
-    annotateSegmentRemote(props: Properties.PropertySet, start: number, end: number, seq: number, refSeq: number, clientId: number, combiningOp: ops.ICombiningOp, opArgs?: IMergeTreeDeltaOpCallbackArgs) {
-        let clockStart;
-        if (this.measureOps) {
-            clockStart = clock();
-        }
-        this.mergeTree.annotateRange(props, start, end, refSeq, clientId, seq, combiningOp, opArgs);
-        this.mergeTree.getCollabWindow().currentSeq = seq;
-        if (this.measureOps) {
-            this.accumTime += elapsedMicroseconds(clockStart);
-            this.accumOps++;
-            this.accumWindow += (this.getCurrentSeq() - this.mergeTree.getCollabWindow().minSeq);
-        }
-        if (this.verboseOps && (!this.noVerboseRemoteAnnote)) {
-            console.log(`@cli ${this.getLongClientId(this.mergeTree.getCollabWindow().clientId)} seq ${seq} annotate remote start ${start} end ${end} refseq ${refSeq} cli ${clientId} props ${props}`);
-        }
-    }
-    removeSegmentLocal(start: number, end: number, opArgs?: IMergeTreeDeltaOpCallbackArgs) {
-        let segWindow = this.mergeTree.getCollabWindow();
-        let clientId = segWindow.clientId;
-        let refSeq = segWindow.currentSeq;
-        let seq = this.getLocalSequenceNumber();
-        let clockStart;
+        let clockStart: number | [ number, number ];
         if (this.measureOps) {
             clockStart = clock();
         }
@@ -644,8 +682,8 @@ export class Client {
             console.log(`remove local cli ${this.getLongClientId(clientId)} ref seq ${refSeq} [${start},${end})`);
         }
     }
-    removeSegmentRemote(start: number, end: number, seq: number, refSeq: number, clientId: number, opArgs?: IMergeTreeDeltaOpCallbackArgs) {
-        let clockStart;
+    removeSegmentRemote(start: number, end: number, seq: number, refSeq: number, clientId: number, opArgs?: IMergeTreeDeltaOpArgs) {
+        let clockStart: number | [ number, number ];
         if (this.measureOps) {
             clockStart = clock();
         }
@@ -660,13 +698,13 @@ export class Client {
             console.log(`@cli ${this.getLongClientId(this.mergeTree.getCollabWindow().clientId)} seq ${seq} remove remote start ${start} end ${end} refseq ${refSeq} cli ${this.getLongClientId(clientId)}`);
         }
     }
-    
-    insertSegmentLocal(pos: number, segment: ISegment, opArgs?: IMergeTreeDeltaOpCallbackArgs) {
+
+    insertSegmentLocal(pos: number, segment: ISegment, opArgs?: IMergeTreeDeltaOpArgs) {
         let segWindow = this.mergeTree.getCollabWindow();
         let clientId = segWindow.clientId;
         let refSeq = segWindow.currentSeq;
         let seq = this.getLocalSequenceNumber();
-        let clockStart;
+        let clockStart: number | [ number, number ];
         if (this.measureOps) {
             clockStart = clock();
         }
@@ -680,7 +718,7 @@ export class Client {
         }
     }
 
-    insertSegmentRemote(segment: ISegment, pos: number, seq: number, refSeq: number, clientId: number, opArgs?: IMergeTreeDeltaOpCallbackArgs) {
+    insertSegmentRemote(segment: ISegment, pos: number, seq: number, refSeq: number, clientId: number, opArgs?: IMergeTreeDeltaOpArgs) {
         let clockStart;
         if (this.measureOps) {
             clockStart = clock();
@@ -698,8 +736,8 @@ export class Client {
         }
     }
 
-    ackPendingSegment(opArgs: IMergeTreeDeltaOpCallbackArgs) {
-        let clockStart;
+    ackPendingSegment(opArgs: IMergeTreeDeltaOpArgs) {
+        let clockStart: number | [ number, number ];
         if (this.measureOps) {
             clockStart = clock();
         }
@@ -716,7 +754,7 @@ export class Client {
         }
     }
     updateMinSeq(minSeq: number) {
-        let clockStart;
+        let clockStart: number | [ number, number ];
         if (this.measureOps) {
             clockStart = clock();
         }

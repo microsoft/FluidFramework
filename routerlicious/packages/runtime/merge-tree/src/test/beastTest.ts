@@ -1287,7 +1287,7 @@ function compareProxStrings(a: MergeTree.ProxString<number>, b: MergeTree.ProxSt
     return bscore - ascore;
 }
 
-function createOpArgs(type: MergeTree.MergeTreeDeltaType, sequenceNumber: number): MergeTree.IMergeTreeDeltaOpCallbackArgs {
+function createOpArgs(type: MergeTree.MergeTreeDeltaType, sequenceNumber: number): MergeTree.IMergeTreeDeltaOpArgs {
     return {
         op: { type } as MergeTree.IMergeTreeOp,
         sequencedMessage: {

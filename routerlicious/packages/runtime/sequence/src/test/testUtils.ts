@@ -1,7 +1,7 @@
 import {
     Client,
     IMarkerDef,
-    IMergeTreeDeltaOpCallbackArgs,
+    IMergeTreeDeltaOpArgs,
     Marker,
     MergeTree,
     PropertySet,
@@ -38,7 +38,7 @@ export function insertMarker(
     refSeq: number,
     clientId: number,
     seq: number,
-    behaviors: ReferenceType, props: PropertySet, opArgs: IMergeTreeDeltaOpCallbackArgs,
+    behaviors: ReferenceType, props: PropertySet, opArgs: IMergeTreeDeltaOpArgs,
 ) {
     mergeTree.insertSegment(pos, refSeq, clientId, seq, Marker.make(behaviors, props, seq, clientId), opArgs);
 }
@@ -51,7 +51,7 @@ export function insertText(
     seq: number,
     text: string,
     props: PropertySet,
-    opArgs: IMergeTreeDeltaOpCallbackArgs,
+    opArgs: IMergeTreeDeltaOpArgs,
 ) {
     mergeTree.insertSegment(pos, refSeq, clientId, seq, TextSegment.make(text, props, seq, clientId), opArgs);
 }
@@ -61,7 +61,7 @@ export function insertTextLocal(
     text: string,
     pos: number,
     props?: PropertySet,
-    opArgs?: IMergeTreeDeltaOpCallbackArgs,
+    opArgs?: IMergeTreeDeltaOpArgs,
 ) {
     const segment = new TextSegment(text);
     if (props) {
@@ -75,7 +75,7 @@ export function insertMarkerLocal(
     pos: number,
     behaviors: ReferenceType,
     props?: PropertySet,
-    opArgs?: IMergeTreeDeltaOpCallbackArgs,
+    opArgs?: IMergeTreeDeltaOpArgs,
 ) {
     const segment = new Marker(behaviors);
     if (props) {
@@ -92,7 +92,7 @@ export function insertItemsRemote(
     seq: number,
     refSeq: number,
     clientId: number,
-    opArgs?: IMergeTreeDeltaOpCallbackArgs,
+    opArgs?: IMergeTreeDeltaOpArgs,
 ) {
     const segment = new SubSequence(items);
     if (props) {
@@ -108,7 +108,7 @@ export function insertMarkerRemote(
     props: PropertySet,
     seq: number,
     refSeq: number,
-    clientId: number, opArgs?: IMergeTreeDeltaOpCallbackArgs,
+    clientId: number, opArgs?: IMergeTreeDeltaOpArgs,
 ) {
     const segment = new Marker(markerDef.refType);
     if (props) {
@@ -125,7 +125,7 @@ export function insertTextRemote(
     seq: number,
     refSeq: number,
     clientId: number,
-    opArgs?: IMergeTreeDeltaOpCallbackArgs,
+    opArgs?: IMergeTreeDeltaOpArgs,
 ) {
     const segment = new TextSegment(text);
     if (props) {

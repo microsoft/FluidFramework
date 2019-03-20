@@ -1,7 +1,7 @@
 import {
     Client,
     IMergeTreeDeltaCallbackArgs,
-    IMergeTreeDeltaOpCallbackArgs,
+    IMergeTreeDeltaOpArgs,
     ISegment,
     MergeTreeDeltaOperationType,
     MergeTreeDeltaType,
@@ -32,7 +32,7 @@ export class SequenceDeltaEvent {
     private readonly pRanges: Lazy<ISequenceDeltaRange[]>;
 
     constructor(
-        public readonly opArgs: IMergeTreeDeltaOpCallbackArgs,
+        public readonly opArgs: IMergeTreeDeltaOpArgs,
         public readonly mergeTreeClient: Client,
         public readonly deltaArgs: IMergeTreeDeltaCallbackArgs,
     ) {

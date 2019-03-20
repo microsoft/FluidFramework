@@ -1,4 +1,4 @@
-// tslint:disable:whitespace align no-bitwise
+
 import {
     FileMode,
     ISequencedDocumentMessage,
@@ -70,7 +70,7 @@ export abstract class SegmentSequence<T extends MergeTree.ISegment> extends Shar
                 default:
             }
         });
-        super.on("removeListener", (event) => {
+        super.on("removeListener", (event: string | symbol) => {
             switch (event) {
                 case "sequenceDelta":
                     if (super.listenerCount(event) === 0) {
@@ -86,8 +86,9 @@ export abstract class SegmentSequence<T extends MergeTree.ISegment> extends Shar
      * Registers a listener on the specified events
      */
     public on(event: "sequenceDelta", listener: (event: SequenceDeltaEvent, target: this) => void): this;
-    public on(event: "pre-op" | "op",
-                listener: (op: ISequencedDocumentMessage, local: boolean, target: this) => void): this;
+    public on(
+        event: "pre-op" | "op",
+        listener: (op: ISequencedDocumentMessage, local: boolean, target: this) => void): this;
     public on(event: "valueChanged", listener: (changed: IValueChanged,
                                                 local: boolean,
                                                 op: ISequencedDocumentMessage,
@@ -154,19 +155,25 @@ export abstract class SegmentSequence<T extends MergeTree.ISegment> extends Shar
         return segmentGroup;
     }
 
-    public annotateRange(props: MergeTree.PropertySet, start: number, end: number, op?: MergeTree.ICombiningOp) {
-        const annotateMessage: MergeTree.IMergeTreeAnnotateMsg = {
-            pos1: start,
-            pos2: end,
-            props,
-            type: MergeTree.MergeTreeDeltaType.ANNOTATE,
-        };
+    /**
+     * Annotates the range with the provided properties
+     * @param start The inclusive start postition of the range to annotate
+     * @param end The inclusive end position of the range to annotate
+     * @param props The properties to annotate the range with
+     * @param combiningOp Optional. Specifies how to combine values for the property, such as "incr" for increment.
+     *
+     */
+    public annotateRange(
+        props: MergeTree.PropertySet,
+        start: number,
+        end: number,
+        combiningOp?: MergeTree.ICombiningOp) {
 
-        if (op) {
-            annotateMessage.combiningOp = op;
+        const annotateOp =
+            this.client.annotateRangeLocal(start, end, props, combiningOp);
+        if (annotateOp) {
+            this.submitIfAttached(annotateOp);
         }
-        this.client.annotateSegmentLocal(props, start, end, op, {op: annotateMessage});
-        this.submitIfAttached(annotateMessage);
     }
 
     public getPropertiesAtPosition(pos: number) {
@@ -181,10 +188,13 @@ export abstract class SegmentSequence<T extends MergeTree.ISegment> extends Shar
         this.client.mergeTree.updateLocalMinSeq(lmseq);
     }
 
-    public createPositionReference(pos: number, refType: MergeTree.ReferenceType, refSeq = this.client.getCurrentSeq(),
+    public createPositionReference(
+        pos: number,
+        refType: MergeTree.ReferenceType,
+        refSeq = this.client.getCurrentSeq(),
         clientId = this.client.getClientId()): MergeTree.LocalReference {
         const segoff = this.client.mergeTree.getContainingSegment(pos,
-            refSeq, this.client.getClientId());
+            refSeq, clientId);
         if (segoff && segoff.segment) {
             const lref = new MergeTree.LocalReference(segoff.segment, segoff.offset, refType);
             if (refType !== MergeTree.ReferenceType.Transient) {
@@ -395,7 +405,9 @@ export abstract class SegmentSequence<T extends MergeTree.ISegment> extends Shar
             // Make a copy of original message since we will be modifying in place
             message = cloneDeep(message);
             message.contents = this.client.transform(
-                message.contents, message.referenceSequenceNumber, sequenceNumber);
+                message.contents as MergeTree.IMergeTreeOp,
+                message.referenceSequenceNumber,
+                sequenceNumber);
             message.referenceSequenceNumber = sequenceNumber;
         }
 

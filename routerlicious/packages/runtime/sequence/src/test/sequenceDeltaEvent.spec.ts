@@ -49,12 +49,12 @@ describe("SequenceDeltaEvent", () => {
 
             let deltaArgs: IMergeTreeDeltaCallbackArgs;
             client.mergeTree.mergeTreeDeltaCallback = (op, delta) => { deltaArgs = delta; };
-            client.annotateSegmentLocal(
+            client.annotateRangeLocal(
+                insertText.length,
+                client.getLength() - insertText.length,
                 {
                     foo: "bar",
                 },
-                insertText.length,
-                client.getLength() - insertText.length,
                 undefined);
 
             assert(deltaArgs);

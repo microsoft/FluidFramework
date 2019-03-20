@@ -6,7 +6,7 @@ import * as Properties from "./properties";
 import * as assert from "assert";
 import { IRelativePosition } from "./index";
 import { SegmentGroupCollection } from "./segmentGroupCollection";
-import { MergeTreeDeltaCallback, IMergeTreeDeltaOpCallbackArgs } from "./mergeTreeDeltaCallback";
+import { MergeTreeDeltaCallback, IMergeTreeDeltaOpArgs } from "./mergeTreeDeltaCallback";
 
 export interface ReferencePosition {
     properties: Properties.PropertySet;
@@ -183,7 +183,7 @@ export interface ISegment extends IMergeNode, IRemovalInfo {
      * The only current false case is overlapping remove, where a segment is removed
      * by a previously sequenced operation before the current operation is acked.
      */
-    ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpCallbackArgs, mergeTree: MergeTree): boolean;
+    ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs, mergeTree: MergeTree): boolean;
 }
 
 export interface IMarkerModifiedAction {
@@ -555,7 +555,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
     /**
      * Called by 'append()' implementations to append local refs from the given 'other' segment to the
      * end of 'this' segment.
-     * 
+     *
      * Note: This method should be invoked after the caller has ensured that segments can be merged,
      *       but before 'this' segment's cachedLength has changed, or the adjustment to the local refs
      *       will be incorrect.
@@ -571,7 +571,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
             localRef.segment = this;
         }
 
-        // Concat or adopt 
+        // Concat or adopt
         this.localRefs = this.localRefs
             ? this.localRefs.concat(other.localRefs)
             : other.localRefs;
@@ -656,7 +656,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
         return true;
     }
 
-    public ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpCallbackArgs, mergeTree: MergeTree): boolean {
+    public ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs, mergeTree: MergeTree): boolean {
 
         const currentSegmentGroup = this.segmentGroups.dequeue();
         assert.equal(currentSegmentGroup, segmentGroup);
@@ -858,7 +858,7 @@ export class ExternalSegment extends BaseSegment {
         return obj;
     }
 
-    mergeTreeInsert(mergeTree: MergeTree, pos: number, refSeq: number, clientId: number, seq: number, opArgs: IMergeTreeDeltaOpCallbackArgs) {
+    mergeTreeInsert(mergeTree: MergeTree, pos: number, refSeq: number, clientId: number, seq: number, opArgs: IMergeTreeDeltaOpArgs) {
         mergeTree.insertSegment(pos, refSeq, clientId, seq, this, opArgs);
     }
 
@@ -1141,7 +1141,7 @@ export class TextSegment extends BaseSegment {
         else if (spec && typeof spec === "object" && "text" in spec) {
             return TextSegment.make(spec.text, spec.props as Properties.PropertySet,
                 UniversalSequenceNumber,
-                LocalClientId);    
+                LocalClientId);
         }
         return undefined;
     }
@@ -3212,7 +3212,7 @@ export class MergeTree {
      * Assign sequence number to existing segment; update partial lengths to reflect the change
      * @param seq sequence number given by server to pending segment
      */
-    ackPendingSegment(opArgs: IMergeTreeDeltaOpCallbackArgs, verboseOps = false) {
+    ackPendingSegment(opArgs: IMergeTreeDeltaOpArgs, verboseOps = false) {
         const seq = opArgs.sequencedMessage.sequenceNumber;
         let pendingSegmentGroup = this.pendingSegments.dequeue();
         let nodesToUpdate = <IMergeBlock[]>[];
@@ -3286,7 +3286,7 @@ export class MergeTree {
         return pos;
     }
 
-    insertSegment(pos: number, refSeq: number, clientId: number, seq: number, segment: ISegment, opArgs: IMergeTreeDeltaOpCallbackArgs) {
+    insertSegment(pos: number, refSeq: number, clientId: number, seq: number, segment: ISegment, opArgs: IMergeTreeDeltaOpArgs) {
         // const tt = MergeTree.traceTraversal;
         // MergeTree.traceTraversal = true;
 
@@ -3708,8 +3708,19 @@ export class MergeTree {
         removalInfo.removedClientOverlap.push(clientId);
     }
 
-    annotateRange(props: Properties.PropertySet, start: number, end: number, refSeq: number,
-        clientId: number, seq: number, combiningOp: ops.ICombiningOp, opArgs: IMergeTreeDeltaOpCallbackArgs) {
+    /**
+     * Annotate a range with properites
+     * @param start The inclusive start postition of the range to annotate
+     * @param end The inclusive end position of the range to annotate
+     * @param props The properties to annotate the range with
+     * @param combiningOp Optional. Specifies how to combine values for the property, such as "incr" for increment.
+     * @param refSeq The refernece sequence number to use to apply the annotate
+     * @param clientId The id of the client making the annotate
+     * @param seq The sequence number of the annotate operation
+     * @param opArgs The op args for the annotate op. this is passed to the merge tree callback if there is one
+     */
+    annotateRange(start: number, end: number, props: Properties.PropertySet, combiningOp: ops.ICombiningOp, refSeq: number,
+        clientId: number, seq: number,  opArgs: IMergeTreeDeltaOpArgs) {
         this.ensureIntervalBoundary(start, refSeq, clientId);
         this.ensureIntervalBoundary(end, refSeq, clientId);
         const annotatedSegments: ISegment[] = [];
@@ -3732,7 +3743,7 @@ export class MergeTree {
         }
     }
 
-    markRangeRemoved(start: number, end: number, refSeq: number, clientId: number, seq: number, overwrite = false, opArgs: IMergeTreeDeltaOpCallbackArgs) {
+    markRangeRemoved(start: number, end: number, refSeq: number, clientId: number, seq: number, overwrite = false, opArgs: IMergeTreeDeltaOpArgs) {
         this.ensureIntervalBoundary(start, refSeq, clientId);
         this.ensureIntervalBoundary(end, refSeq, clientId);
         let segmentGroup: SegmentGroup;
