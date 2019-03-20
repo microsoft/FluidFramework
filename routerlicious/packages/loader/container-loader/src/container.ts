@@ -212,15 +212,25 @@ export class Container extends EventEmitter implements IContainer {
         }
 
         // Only snapshot once a code quorum has been established
-        if (this.quorum.has("code2")) {
+        if (!this.quorum.has("code2")) {
             debug(`${this.tenantId}/${this.id} Skipping snapshot due to no code quorum`);
+            return;
         }
 
         // Stop inbound message processing while we complete the snapshot
         // TODO I should verify that when paused, if we are in the middle of a prepare, we will not process the message
-        this.deltaManager.inbound.pause();
-        await this.snapshotCore(tagMessage).catch((error) => debug("Snapshot error", error));
-        this.deltaManager.inbound.resume();
+        try {
+            this.deltaManager.inbound.pause();
+
+            await this.snapshotCore(tagMessage);
+
+        } catch (ex) {
+            debug("Snapshot error", ex);
+            throw ex;
+
+        } finally {
+            this.deltaManager.inbound.resume();
+        }
     }
 
     public async request(path: IRequest): Promise<IResponse> {
