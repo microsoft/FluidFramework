@@ -1,9 +1,9 @@
 import { ISequencedDocumentMessage, MessageType } from "@prague/container-definitions";
 import { Chat } from "@stardust-ui/react";
+import * as React from "react";
+import { Runtime } from "../runtime/runtime";
 import { ChatRenderer } from "./chat-renderer";
 import { filter } from "./filter";
-import * as React from "react";
-import { Runtime } from "./runtime/runtime";
 
 interface IMessage {
   author: string;
@@ -11,29 +11,29 @@ interface IMessage {
   time: string;
 }
 
-interface ChatProps {
+interface IChatProps {
   message: IMessage;
 }
 
-interface ChatContainerProps {
+interface IChatContainerProps {
   runtime: Runtime;
   clientId: string;
   history: ISequencedDocumentMessage[];
 }
 
-interface ChatContainerState {
-  messages: ChatProps[];
+interface IChatContainerState {
+  messages: IChatProps[];
   inputMessage: string;
 }
 
-export class ChatContainer extends React.Component<ChatContainerProps, ChatContainerState> {
-  componentDidMount() {
+export class ChatContainer extends React.Component<IChatContainerProps, IChatContainerState> {
+  public componentDidMount() {
     this.setState({ messages: this.getInitialChat(this.props.history), inputMessage: "" });
 
     this.props.runtime.on("op", (op: ISequencedDocumentMessage) => {
-      let message: IMessage = op.contents;
+      const message: IMessage = op.contents;
       message.content = filter(message.content);
-      const chatProp = { message } as ChatProps;
+      const chatProp = { message } as IChatProps;
 
       const messages = Object.values(this.state.messages).concat([chatProp]);
       this.setState({ messages });
@@ -41,7 +41,7 @@ export class ChatContainer extends React.Component<ChatContainerProps, ChatConta
     });
   }
 
-  render() {
+  public render() {
     if (this.state === null) {
       return <div> Fetching Messages </div>;
     }
@@ -49,22 +49,20 @@ export class ChatContainer extends React.Component<ChatContainerProps, ChatConta
     const { inputMessage } = this.state;
     const messagesToRender: any[] = [];
 
-
     // Build up message history
     for (const chatProp of Object.values(this.state.messages)) {
       const isMine = chatProp.message.author === this.props.clientId;
-      const tss: string = new Date(Number.parseInt(chatProp.message.time)).toLocaleString();
+      const tss: string = new Date(Number.parseInt(chatProp.message.time, 10)).toLocaleString();
       messagesToRender.push({
         message: {
           content: (
-            <Chat.Message 
+            <Chat.Message
               content = { chatProp.message.content }
               author = { chatProp.message.author }
               timestamp={tss}
               mine={isMine} />
-          )
+          ),
         },
-
       });
     }
 
@@ -73,29 +71,32 @@ export class ChatContainer extends React.Component<ChatContainerProps, ChatConta
         messagesToRender={messagesToRender}
         inputMessage={inputMessage}
         onChangeHandler={this.inputChangeHandler}
-        appendMessageCb={this.appendMessageCb}
+        appendMessageCb={this.appendMessage}
       />
     );
   }
 
-  getInitialChat(ops: ISequencedDocumentMessage[]): ChatProps[] {
-    let items: ChatProps[] = [];
+  public getInitialChat(ops: ISequencedDocumentMessage[]): IChatProps[] {
+    const items: IChatProps[] = [];
     for (const op of ops) {
-      let message: IMessage = op.contents;
+      const message: IMessage = op.contents;
       message.content = filter(message.content);
-      const chatProp = { message } as ChatProps;
+      const chatProp = { message } as IChatProps;
       items.push(chatProp);
     }
     return items;
   }
 
-  inputChangeHandler = (event: React.ChangeEvent<HTMLInputElement>) => this.setState({ inputMessage: event.target.value });
+  public inputChangeHandler = (event: React.ChangeEvent<HTMLInputElement>) =>
+    this.setState({ inputMessage: event.target.value })
 
-  appendMessageCb = () => {
+  public appendMessage = () => {
     const { inputMessage } = this.state;
     const { runtime, clientId } = this.props;
 
-    if (inputMessage.length === 0) return;
+    if (inputMessage.length === 0) {
+      return;
+    }
 
     this.setState({ inputMessage: "" });
 
@@ -104,5 +105,5 @@ export class ChatContainer extends React.Component<ChatContainerProps, ChatConta
       content: inputMessage,
       time: Date.now().toString(),
     });
-  };
+  }
 }

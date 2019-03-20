@@ -1,7 +1,7 @@
 // TODO: Consider hashing this list and matching it to hashed messages so that clients don't have the list.
-const profane_words = ["belichick", "boston", "brady", "bruins", "celtics", "new england", "red sox", "patriots"];
+const profaneWords = ["belichick", "boston", "brady", "bruins", "celtics", "new england", "red sox", "patriots"];
 
-const profanExp = new RegExp(profane_words.join("|"), "gi");
+const profanExp = new RegExp(profaneWords.join("|"), "gi");
 let cheating = false;
 
 export function filter(input: string): string {

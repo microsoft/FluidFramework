@@ -1,22 +1,20 @@
+import { Chat, Divider, Input, Layout} from "@stardust-ui/react";
 import * as React from "react";
-import { Chat, Divider,Input, Layout} from "@stardust-ui/react";
 
-interface ChatRendererProps {
+interface IChatRendererProps {
   messagesToRender: any[];
   inputMessage: string;
   onChangeHandler: any;
   appendMessageCb: any;
 }
 
-export class ChatRenderer extends React.Component<ChatRendererProps> {
-  componentDidUpdate() {
+export class ChatRenderer extends React.Component<IChatRendererProps> {
+  public componentDidUpdate() {
     window.scrollTo(0, document.body.scrollHeight);
   }
 
-  render() {
+  public render() {
     const { messagesToRender, inputMessage, appendMessageCb, onChangeHandler } = this.props;
-
-    // TODO: turn Input into it's own component
     return (
       <div>
         <Chat items={messagesToRender} />

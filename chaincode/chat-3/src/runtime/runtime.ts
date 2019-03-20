@@ -14,8 +14,6 @@ import {
 } from "@prague/container-definitions";
 import { EventEmitter } from "events";
 
-
-// Context will define the component level mappings
 export class Runtime extends EventEmitter {
     public static async Load(context: IContainerContext): Promise<Runtime> {
         const runtime = new Runtime(context);
@@ -93,9 +91,14 @@ export class Runtime extends EventEmitter {
 
     private closed = false;
     private requestHandler: (request: IRequest) => Promise<IResponse>;
+    private opsUntilConnection: ISequencedDocumentMessage[] = [];
 
     private constructor(private readonly context: IContainerContext) {
         super();
+    }
+
+    public get opsBeforeConnection(): ISequencedDocumentMessage[] {
+        return this.opsUntilConnection;
     }
 
     public registerRequestHandler(handler: (request: IRequest) => Promise<IResponse>) {
@@ -136,7 +139,11 @@ export class Runtime extends EventEmitter {
     }
 
     public process(message: ISequencedDocumentMessage, local: boolean, context: any) {
-        this.emit("op", message);
+        if (!this.connected) {
+            this.opsUntilConnection.push(message);
+        } else {
+            this.emit("op", message);
+        }
     }
 
     public async postProcess(
@@ -144,6 +151,7 @@ export class Runtime extends EventEmitter {
         local: boolean,
         context: any,
     ): Promise<void> {
+    //
     }
 
     public submitMessage(type: MessageType, content: any) {
