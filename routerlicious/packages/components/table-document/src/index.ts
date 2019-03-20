@@ -1,7 +1,5 @@
-import { TableDocument } from "./document";
-import { TableSlice } from "./slice";
-import { ITable } from "./table";
-
-export { TableDocument, TableSlice, ITable };
-
+export { TableDocument } from "./document";
+export { TableSlice } from "./slice";
+export { ITable } from "./table";
+export { SparseMatrix, SparseMatrixExtension } from "./matrix/sparsematrix";
 export * from "./ComponentTypes";

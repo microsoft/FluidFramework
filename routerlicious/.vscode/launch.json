@@ -15,6 +15,7 @@
                 "${workspaceFolder}/common/tools/node_modules/ts-node/register",
                 "--no-timeouts",
                 "src/**/*.spec.ts",
+                // "src/**/sparsematrix.spec.ts",
                 "--exit"
             ],
             "env": {

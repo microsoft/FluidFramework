@@ -1,9 +1,30 @@
 import "mocha";
-import { TableDocument } from "@chaincode/table-document";
-import { createTable, makeId } from "./helper";
+import { TableDocument, TableDocumentType, TableSliceType } from "@chaincode/table-document";
 import * as assert from "assert";
+import { TestHost } from "../../../server/local-test-server/dist";
 
 describe("TableDocument", () => {
+    let host: TestHost;
+
+    before(() => {
+        host = new TestHost([
+            [TableDocumentType, import("@chaincode/table-document").then((m) => m.TableDocument)],
+            [TableSliceType, import("@chaincode/table-document").then((m) => m.TableSlice)],
+        ]);
+    });
+    
+    after(async () => { await host.close(); })
+    
+    function makeId(type: string) {
+        const id = Math.random().toString(36).substr(2);
+        console.log(`${type}: ${id}`);
+        return id;
+    }
+    
+    async function createTable() {
+        return await host.createComponent(makeId("Table-Document"), TableDocumentType);
+    }
+
     let table: TableDocument;    
     beforeEach(async () => { table = await createTable() as TableDocument});
     afterEach(async () => { await table.close(); });

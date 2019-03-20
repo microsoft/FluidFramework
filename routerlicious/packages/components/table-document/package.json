@@ -35,6 +35,7 @@
     }
   },
   "dependencies": {
+    "@prague/api-definitions": "^0.2.0",
     "@prague/app-component": "^0.2.0",
     "@prague/app-datastore": "^0.2.0",
     "@prague/client-ui": "^0.2.0",
