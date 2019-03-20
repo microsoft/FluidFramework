@@ -3,13 +3,10 @@ import { Chat } from "@stardust-ui/react";
 import { ChatRenderer } from "./chat-renderer";
 import { filter } from "./filter";
 import * as React from "react";
-import { LoaderComponent, IOutieProps } from "./component-loader";
 import { Runtime } from "./runtime/runtime";
-import { findComponent } from "./urlDecoder";
 
 interface IMessage {
   author: string;
-  component?: IOutieProps;
   content: string;
   time: string;
 }
@@ -61,15 +58,8 @@ export class ChatContainer extends React.Component<ChatContainerProps, ChatConta
         message: {
           content: (
             <Chat.Message 
-              content={
-                chatProp.message.component ? 
-                  <LoaderComponent
-                      {...chatProp.message.component}
-                    >
-                  </LoaderComponent>
-                : chatProp.message.content
-              }
-              author={chatProp.message.author}
+              content = { chatProp.message.content }
+              author = { chatProp.message.author }
               timestamp={tss}
               mine={isMine} />
           )
@@ -101,28 +91,18 @@ export class ChatContainer extends React.Component<ChatContainerProps, ChatConta
 
   inputChangeHandler = (event: React.ChangeEvent<HTMLInputElement>) => this.setState({ inputMessage: event.target.value });
 
-  appendMessageCb = async (component?: IOutieProps) => {
+  appendMessageCb = () => {
     const { inputMessage } = this.state;
     const { runtime, clientId } = this.props;
 
-    if (inputMessage.length === 0 && !component) return;
+    if (inputMessage.length === 0) return;
 
     this.setState({ inputMessage: "" });
+
     runtime.submitMessage(MessageType.Operation, {
       author: clientId,
-      component,
       content: inputMessage,
       time: Date.now().toString(),
     });
-
-    // TODO this hack stops appendMessage from getting into a loop without setting state.
-    setTimeout(() => {
-      const maybeComponent = findComponent(inputMessage);
-      if (maybeComponent) {
-        this.appendMessageCb(maybeComponent);
-      }
-    }, 100);
-
-    return inputMessage;
   };
 }
