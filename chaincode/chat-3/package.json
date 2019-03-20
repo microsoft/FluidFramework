@@ -1,0 +1,46 @@
+{
+  "name": "@chaincode/chat-3",
+  "description": "Prague Chat with custom runtime",
+  "version": "0.0.1",
+  "author": "Microsoft",
+  "repository": "microsoft/prague",
+  "main": "dist/main.bundle.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "dev": "webpack --env=\"development\"",
+    "build": "webpack --env=\"production\"",
+    "dev:watch": "webpack --env=\"development\" --watch",
+    "start": "prague-dev-server --config webpack.config.js --live --package package.json",
+    "publish:prod": "npm publish --registry https://packages.wu2.prague.office-int.com",
+    "publish:local": "npm publish --registry http://localhost:4873",
+    "tsc": "tsc"
+  },
+  "devDependencies": {
+    "@prague/prague-dev-server": "^3.2.5",
+    "@types/node": "^10.11.5",
+    "@types/react-dom": "^16.0.11",
+    "clean-webpack-plugin": "^0.1.19",
+    "ts-loader": "^4.4.2",
+    "typescript": "^3.0.1",
+    "webpack": "^4.16.5",
+    "webpack-cli": "^3.1.0",
+    "webpack-merge": "^4.1.4"
+  },
+  "prague": {
+    "browser": {
+      "entrypoint": "main",
+      "bundle": [
+        "dist/main.bundle.js"
+      ]
+    }
+  },
+  "dependencies": {
+    "@prague/app-datastore": "^0.2.5666",
+    "@prague/runtime": "^0.2.5666",
+    "@prague/runtime-definitions": "^0.2.5666",
+    "@prague/container-definitions": "^0.2.5666",
+    "@stardust-ui/react": "^0.17.0",
+    "react": "^16.7.0",
+    "react-dom": "^16.7.0"
+  }
+}
