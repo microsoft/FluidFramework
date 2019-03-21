@@ -1,0 +1,38 @@
+{
+  "name": "prague-loader",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@prague/app-component": "^0.2.5240",
+    "@prague/app-datastore": "^0.2.5240",
+    "@prague/loader-web": "^0.2.5790",
+    "@prague/map": "^0.2.5240",
+    "@prague/routerlicious-socket-storage": "^0.2.5790",
+    "@prague/runtime-definitions": "^0.2.5240",
+    "react": "^16.8.4",
+    "react-dom": "^16.8.4",
+    "react-scripts": "2.1.8"
+  },
+  "devDependencies": {
+    "@types/jest": "24.0.11",
+    "@types/node": "11.11.4",
+    "@types/react": "16.8.8",
+    "@types/react-dom": "16.8.3",
+    "typescript": "3.3.4000"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
+  },
+  "eslintConfig": {
+    "extends": "react-app"
+  },
+  "browserslist": [
+    ">0.2%",
+    "not dead",
+    "not ie <= 11",
+    "not op_mini all"
+  ]
+}
