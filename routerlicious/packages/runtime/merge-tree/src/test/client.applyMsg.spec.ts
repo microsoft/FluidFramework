@@ -1,7 +1,7 @@
 import { ISequencedDocumentMessage } from "@prague/container-definitions";
 import * as assert from "assert";
 import { Client, SegmentGroup, UnassignedSequenceNumber } from "..";
-import { insertTextLocal, makeOpMessage, specToSegment } from "./testUtils";
+import { insertTextLocal, makeClientOpMessage, specToSegment} from "./testUtils";
 
 describe("client.applyMsg", () => {
     const localUserLongId = "localUser";
@@ -25,13 +25,10 @@ describe("client.applyMsg", () => {
                 case 0:
                 case 5: {
                     const pos2 = Math.max(Math.floor((len - pos1) / 4) - imod6 + pos1, pos1 + 1);
-                    const msg = client.makeRemoveMsg(
-                        pos1,
-                        pos2,
-                        i + 1,
-                        client.mergeTree.collabWindow.currentSeq,
-                        undefined);
-                    client.removeSegmentLocal(pos1, pos2);
+                    const msg = makeClientOpMessage(
+                        client,
+                        client.removeRangeLocal(pos1, pos2),
+                        i + 1);
                     changes.set(i, {msg, segmentGroup: client.mergeTree.pendingSegments.last()});
                     break;
                 }
@@ -60,7 +57,7 @@ describe("client.applyMsg", () => {
                             foo: `${i}`,
                         },
                         undefined);
-                    const msg = makeOpMessage(client, op, i + 1);
+                    const msg = makeClientOpMessage(client, op, i + 1);
                     changes.set(i, { msg, segmentGroup: { segments: [] } });
                     break;
                 }
@@ -119,21 +116,15 @@ describe("client.applyMsg", () => {
         assert.equal(segmentInfo.segment.seq, 17);
     });
 
-    it("removeSegmentLocal", () => {
+    it("removeRangeLocal", () => {
         const segmentInfo =
             client.mergeTree.getContainingSegment(0, client.getCurrentSeq(), client.getClientId());
 
-        client.removeSegmentLocal(0, 1);
+        const removeOp = client.removeRangeLocal(0, 1);
 
         assert.equal(segmentInfo.segment.removedSeq, UnassignedSequenceNumber);
 
-        client.applyMsg(
-            client.makeRemoveMsg(
-                0,
-                1,
-                17,
-                0,
-                undefined));
+        client.applyMsg(makeClientOpMessage(client, removeOp, 17));
 
         assert.equal(segmentInfo.segment.removedSeq, 17);
     });
@@ -148,12 +139,12 @@ describe("client.applyMsg", () => {
             props,
             undefined);
 
-        client.applyMsg(makeOpMessage(client, op, 17));
+        client.applyMsg(makeClientOpMessage(client, op, 17));
 
         assert.equal(client.mergeTree.pendingSegments.count(), 0);
     });
 
-    it("annotateSegmentLocal then removeSegmentLocal", () => {
+    it("annotateSegmentLocal then removeRangeLocal", () => {
         const segmentInfo =
             client.mergeTree.getContainingSegment(0, client.getCurrentSeq(), client.getClientId());
 
@@ -172,23 +163,17 @@ describe("client.applyMsg", () => {
 
         assert.equal(client.mergeTree.pendingSegments.count(), 0);
 
-        client.removeSegmentLocal(start, end);
+        const removeOp = client.removeRangeLocal(start, end);
 
         assert.equal(segmentInfo.segment.removedSeq, UnassignedSequenceNumber);
         assert.equal(client.mergeTree.pendingSegments.count(), 1);
 
-        client.applyMsg(makeOpMessage(client, annotateOp, 17));
+        client.applyMsg(makeClientOpMessage(client, annotateOp, 17));
 
         assert.equal(segmentInfo.segment.removedSeq, UnassignedSequenceNumber);
         assert.equal(client.mergeTree.pendingSegments.count(), 1);
 
-        client.applyMsg(
-            client.makeRemoveMsg(
-                start,
-                end,
-                18,
-                0,
-                undefined));
+        client.applyMsg(makeClientOpMessage(client, removeOp, 18));
 
         assert.equal(segmentInfo.segment.removedSeq, 18);
         assert.equal(client.mergeTree.pendingSegments.count(), 0);
@@ -212,7 +197,7 @@ describe("client.applyMsg", () => {
                 undefined);
 
             messages.push(
-                makeOpMessage(client,
+                makeClientOpMessage(client,
                     annotateOp,
                     ++sequenceNumber));
 
@@ -238,17 +223,12 @@ describe("client.applyMsg", () => {
         assert.equal(segmentInfo.segment.removedSeq, undefined);
         assert(segmentInfo.segment.segmentGroups.empty);
 
-        client.removeSegmentLocal(start, end);
+        const removeOp = client.removeRangeLocal(start, end);
 
         assert.equal(segmentInfo.segment.removedSeq, UnassignedSequenceNumber);
         assert.equal(segmentInfo.segment.segmentGroups.size, 1);
 
-        const remoteMessage = client.makeRemoveMsg(
-            start,
-            end,
-            17,
-            0,
-            undefined);
+        const remoteMessage = makeClientOpMessage(client, removeOp, 17);
         remoteMessage.clientId = "remoteClient";
 
         client.applyMsg(remoteMessage);
@@ -256,13 +236,7 @@ describe("client.applyMsg", () => {
         assert.equal(segmentInfo.segment.removedSeq, remoteMessage.sequenceNumber);
         assert.equal(segmentInfo.segment.segmentGroups.size, 1);
 
-        client.applyMsg(
-            client.makeRemoveMsg(
-                start,
-                end,
-                18,
-                0,
-                undefined));
+        client.applyMsg(makeClientOpMessage(client, removeOp, 17));
 
         assert.equal(segmentInfo.segment.removedSeq, remoteMessage.sequenceNumber);
         assert(segmentInfo.segment.segmentGroups.empty);

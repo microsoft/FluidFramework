@@ -17,14 +17,17 @@ export function loadTextFromFileWithMarkers(filename: string, mergeTree: MergeTr
     return loadText(content, mergeTree, segLimit, true);
 }
 
-export function makeOpMessage(client: Client, op: IMergeTreeOp, seq: number) {
+export function makeClientOpMessage(client: Client, op: IMergeTreeOp, seq: number) {
+    return makeOpMessage(op, seq, client.mergeTree.collabWindow.currentSeq, client.longClientId);
+}
+export function makeOpMessage(op: IMergeTreeOp, seq: number, refSeq: number, longClientId: string) {
     const msg: ISequencedDocumentMessage = {
-        clientId: client.longClientId,
+        clientId: longClientId,
         clientSequenceNumber: 1,
         contents: op,
-        minimumSequenceNumber: client.mergeTree.collabWindow.minSeq,
+        minimumSequenceNumber: undefined,
         origin: null,
-        referenceSequenceNumber: client.mergeTree.collabWindow.currentSeq,
+        referenceSequenceNumber: refSeq,
         sequenceNumber: seq,
         timestamp: Date.now(),
         traces: [],

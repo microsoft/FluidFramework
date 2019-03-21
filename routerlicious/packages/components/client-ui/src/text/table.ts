@@ -178,7 +178,7 @@ export function insertColumn(sharedString: SharedString, prevCell: Cell, row: Ro
     }
     let opList = <MergeTree.IMergeTreeOp[]>[];
     const insertColMarkerOp = <MergeTree.IMergeTreeInsertMsg>{
-        seg: { 
+        seg: {
             marker: <MergeTree.IMarkerDef>{
                 refType: MergeTree.ReferenceType.Simple,
             },
@@ -217,9 +217,12 @@ export function deleteColumn(sharedString: SharedString, cell: Cell, row: Row,
     for (let row of table.rows) {
         for (let cell of row.cells) {
             if (cell.columnId === columnId) {
-                let clientId = sharedString.client.longClientId;
+                const clientId = sharedString.client.longClientId;
+                const mergeTree = sharedString.client.mergeTree;
                 sharedString.annotateMarkerNotifyConsensus(cell.marker, { moribund: clientId }, (m) => {
-                    sharedString.removeNest(cell.marker, cell.endMarker);
+                    sharedString.removeRange(
+                        mergeTree.getOffset(cell.marker, mergeTree.collabWindow.currentSeq, mergeTree.collabWindow.clientId),
+                        mergeTree.getOffset(cell.endMarker, mergeTree.collabWindow.currentSeq, mergeTree.collabWindow.clientId));
                 });
             }
         }

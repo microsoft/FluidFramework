@@ -17,6 +17,13 @@ export interface IMergeTreeDeltaOpArgs {
     readonly groupOp?: IMergeTreeGroupMsg;
     readonly op: IMergeTreeOp;
     readonly sequencedMessage?: ISequencedDocumentMessage;
+    readonly local: boolean;
+}
+
+export interface IMergeTreeClientSequenceArgs {
+    readonly clientId: number;
+    readonly referenceSequenceNumber: number;
+    readonly sequenceNumber: number;
 }
 
 export type MergeTreeDeltaCallback =

@@ -411,7 +411,7 @@ const commands: IFlowViewCmd[] = [
 ];
 
 export function moveMarker(flowView: FlowView, fromPos: number, toPos: number) {
-    flowView.sharedString.cut("inclusion", fromPos, fromPos + 1);
+    flowView.sharedString.cut(fromPos, fromPos + 1, "inclusion");
     flowView.sharedString.paste("inclusion", toPos);
 }
 
@@ -4428,7 +4428,7 @@ export class FlowView extends ui.Component {
         const sel = this.cursor.getSelection();
         if (sel) {
             const len = sel.end - sel.start;
-            this.sharedString.cut("clipboard", sel.start, sel.end);
+            this.sharedString.cut(sel.start, sel.end, "clipboard");
             if (this.cursor.pos === sel.end) {
                 this.cursor.pos -= len;
             }

@@ -41,7 +41,8 @@ export class TestServer extends Client {
         this.listeners = listeners;
     }
     applyMsg(msg: ISequencedDocumentMessage) {
-        this.coreApplyMsg({
+        this.applyRemoteOp({
+            local: msg.clientId === this.longClientId,
             op: msg.contents as IMergeTreeOp,
             sequencedMessage: msg,
         });

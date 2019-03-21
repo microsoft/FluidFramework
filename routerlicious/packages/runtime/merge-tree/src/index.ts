@@ -8,3 +8,4 @@ export { loadSegments } from "./text";
 export * from "./client";
 export * from "./segmentGroupCollection";
 export * from "./mergeTreeDeltaCallback";
+export * from "./opBuilder";

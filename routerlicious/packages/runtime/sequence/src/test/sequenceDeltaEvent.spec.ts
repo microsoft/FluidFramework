@@ -1,5 +1,7 @@
 import { ITree } from "@prague/container-definitions";
-import { Client, IMergeTreeDeltaCallbackArgs } from "@prague/merge-tree";
+import { Client, createRemoveRangeOp, IMergeTreeDeltaCallbackArgs } from "@prague/merge-tree";
+// tslint:disable-next-line: no-submodule-imports
+import { makeClientOpMessage } from "@prague/merge-tree/dist/test/testUtils";
 import * as assert from "assert";
 import { SequenceDeltaEvent } from "../sequenceDeltaEvent";
 import { SharedString } from "../sharedString";
@@ -86,12 +88,10 @@ describe("SequenceDeltaEvent", () => {
             }
             console.log(client.getText());
 
-            const remoteRemoveMessage = client.makeRemoveMsg(
-                0,
-                client.getLength(),
-                client.mergeTree.collabWindow.currentSeq + 1,
-                client.mergeTree.collabWindow.currentSeq,
-                undefined);
+            const remoteRemoveMessage = makeClientOpMessage(
+                client,
+                createRemoveRangeOp(0, client.getLength()),
+                client.mergeTree.collabWindow.currentSeq + 1);
             remoteRemoveMessage.clientSequenceNumber = 0;
             remoteRemoveMessage.clientId = "remote user";
 

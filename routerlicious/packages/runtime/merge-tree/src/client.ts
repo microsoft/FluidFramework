@@ -1,7 +1,8 @@
 import { ISequencedDocumentMessage, MessageType } from "@prague/container-definitions";
 import * as assert from "assert";
+import { IIntegerRange } from "./base";
 import * as Collections from "./collections";
-import { IMergeTreeDeltaOpArgs } from "./index";
+import { IMergeTreeClientSequenceArgs, IMergeTreeDeltaOpArgs } from "./index";
 import {
     ClientIds, clock, compareStrings, elapsedMicroseconds, IConsensusInfo, ISegment,
     IUndoInfo, Marker, MergeTree, RegisterCollection, SegmentGroup, TextSegment,
@@ -96,7 +97,7 @@ export class Client {
         const annotateOp =
             OpBuilder.createAnnotateMarkerOp(marker, props, combiningOp);
 
-        if (this.annotateRangeFromOp(true, {op: annotateOp})) {
+        if (this.applyAnnotateRangeOp({local: true, op: annotateOp})) {
             return annotateOp;
         } else {
             return undefined;
@@ -105,7 +106,7 @@ export class Client {
     /**
      * Annotates the range with the provided properties
      * @param start The inclusive start postition of the range to annotate
-     * @param end The inclusive end position of the range to annotate
+     * @param end The exclusive end position of the range to annotate
      * @param props The properties to annotate the range with
      * @param combiningOp Optional. Specifies how to combine values for the property, such as "incr" for increment.
      * @returns The annotate op if valid, otherwise undefined
@@ -122,50 +123,87 @@ export class Client {
             props,
             combiningOp);
 
-        if (this.annotateRangeFromOp(true, {op: annotateOp})) {
+        if (this.applyAnnotateRangeOp({local: true, op: annotateOp})) {
             return annotateOp;
         } else {
             return undefined;
         }
     }
+
+    /**
+     * Removes the range and puts the content of the removed range in a register
+     * if a register name is provided
+     *
+     * @param start The inclusive start of the range to remove
+     * @param end The exclusive end of the range to remove
+     * @param register Optional. The name of the register to store the removed range in
+     */
+    public removeRangeLocal(start: number, end: number, register?: string) {
+
+        const removeOp = OpBuilder.createRemoveRangeOp(start, end, register);
+
+        if (this.applyRemoveRangeOp({local: true, op: removeOp})) {
+            return removeOp;
+        } else {
+            return undefined;
+        }
+    }
+
     /**
      * Performs the annotate based on the provided op
-     * @param local Whether the annotate is local
      * @param opArgs The ops args for the op
      * @returns True if the annotate was applied. False if it could not be.
      */
-    private annotateRangeFromOp(local: boolean, opArgs: IMergeTreeDeltaOpArgs): boolean {
+    private applyRemoveRangeOp(opArgs: IMergeTreeDeltaOpArgs): boolean {
+        assert.equal(opArgs.op.type, ops.MergeTreeDeltaType.REMOVE);
+        const op = opArgs.op as ops.IMergeTreeRemoveMsg;
+        const clientArgs = this.getClientSequenceArgs(opArgs);
+        const range = this.getValidOpRange(op, clientArgs);
+        if (!range) {
+            return false;
+        }
+
+        if (op.register) {
+            // cut
+            this.copy(
+                op.pos1,
+                op.pos2,
+                op.register,
+                clientArgs.referenceSequenceNumber,
+                clientArgs.clientId);
+        }
+
+        let clockStart: number | [ number, number ];
+        if (this.measureOps) {
+            clockStart = clock();
+        }
+
+        this.mergeTree.markRangeRemoved(
+            range.start,
+            range.end,
+            clientArgs.referenceSequenceNumber,
+            clientArgs.clientId,
+            clientArgs.sequenceNumber,
+            false,
+            opArgs);
+
+        this.completeAndLogOp(opArgs, clientArgs, range, clockStart);
+
+        return true;
+    }
+
+    /**
+     * Performs the annotate based on the provided op
+     * @param opArgs The ops args for the op
+     * @returns True if the annotate was applied. False if it could not be.
+     */
+    private applyAnnotateRangeOp(opArgs: IMergeTreeDeltaOpArgs): boolean {
         assert.equal(opArgs.op.type, ops.MergeTreeDeltaType.ANNOTATE);
         const op = opArgs.op as ops.IMergeTreeAnnotateMsg;
+        const clientArgs = this.getClientSequenceArgs(opArgs);
+        const range = this.getValidOpRange(op, clientArgs);
 
-        let clientId: number;
-        let refSeq: number;
-        let seq: number;
-        if (local) {
-            const segWindow = this.mergeTree.getCollabWindow();
-            clientId = segWindow.clientId;
-            refSeq = segWindow.currentSeq;
-            seq = this.getLocalSequenceNumber();
-        } else {
-            clientId = this.getShortClientId(opArgs.sequencedMessage.clientId);
-            refSeq = opArgs.sequencedMessage.referenceSequenceNumber;
-            seq = opArgs.sequencedMessage.sequenceNumber;
-        }
-
-        let start = op.pos1;
-        let end = op.pos2;
-        if (!start && op.relativePos1) {
-            start = this.mergeTree.posFromRelativePos(op.relativePos1);
-        }
-        if (!end && op.relativePos2) {
-            end = this.mergeTree.posFromRelativePos(op.relativePos2);
-        }
-        // check for invalid range positions
-        //
-        if (start < 0
-            || end < 0
-            || end - start < 0
-            || start >= this.mergeTree.getLength(refSeq, clientId)) {
+        if (!range) {
             return false;
         }
 
@@ -174,27 +212,116 @@ export class Client {
             clockStart = clock();
         }
 
-        this.mergeTree.annotateRange(start, end, op.props, op.combiningOp,  refSeq, clientId, seq, opArgs);
-        if (local) {
-            if (this.measureOps) {
+        this.mergeTree.annotateRange(
+            range.start,
+            range.end,
+            op.props,
+            op.combiningOp,
+            clientArgs.referenceSequenceNumber,
+            clientArgs.clientId,
+            clientArgs.sequenceNumber,
+            opArgs);
+
+        this.completeAndLogOp(opArgs, clientArgs, range, clockStart);
+
+        return true;
+    }
+
+    /**
+     *
+     * @param opArgs The op args of the op to complete
+     * @param clientArgs The client args for the op
+     * @param range The range the op applied to
+     * @param clockStart Optional. The clock start if timing data should be updated.
+     */
+    private completeAndLogOp(
+        opArgs: IMergeTreeDeltaOpArgs,
+        clientArgs: IMergeTreeClientSequenceArgs,
+        range: IIntegerRange,
+        clockStart?: number | [ number, number ]) {
+        if (opArgs.local) {
+            if (clockStart) {
                 this.localTime += elapsedMicroseconds(clockStart);
                 this.localOps++;
             }
         } else {
-            this.mergeTree.getCollabWindow().currentSeq = seq;
-            if (this.measureOps) {
+            this.mergeTree.getCollabWindow().currentSeq = clientArgs.sequenceNumber;
+            if (clockStart) {
                 this.accumTime += elapsedMicroseconds(clockStart);
                 this.accumOps++;
                 this.accumWindow += (this.getCurrentSeq() - this.mergeTree.getCollabWindow().minSeq);
             }
         }
-        if (this.verboseOps && (local || !this.noVerboseRemoteAnnote)) {
+        if (this.verboseOps && (opArgs.local || !this.noVerboseRemoteAnnote)) {
             console.log(
                 `@cli ${this.getLongClientId(this.mergeTree.getCollabWindow().clientId)} ` +
-                ` seq ${seq} annotate local ${local} start ${start} end ${end} refseq ${refSeq} ` +
-                `cli ${clientId} props ${op.props}`);
+                `seq ${clientArgs.sequenceNumber} ${opArgs.op.type} local ${opArgs.local} start ${range.start} ` +
+                `end ${range.end} refseq ${clientArgs.referenceSequenceNumber} ` +
+                `cli ${clientArgs.clientId}`);
         }
-        return true;
+    }
+
+    /**
+     * Returns a valid range for the op, or undefined
+     * @param op The op to generate the range for
+     * @param clientArgs The client args for the op
+     */
+    private getValidOpRange(
+        op: ops.IMergeTreeAnnotateMsg | ops.IMergeTreeInsertMsg | ops.IMergeTreeRemoveMsg,
+        clientArgs: IMergeTreeClientSequenceArgs): IIntegerRange {
+
+        const range: IIntegerRange = {
+            end: op.pos2,
+            start: op.pos1,
+        };
+
+        if (!range.start && op.relativePos1) {
+            range.start = this.mergeTree.posFromRelativePos(op.relativePos1);
+        }
+        if (!range.end && op.relativePos2) {
+            range.end = this.mergeTree.posFromRelativePos(op.relativePos2);
+        }
+
+        // valid start position
+        //
+        const length = this.mergeTree.getLength(clientArgs.referenceSequenceNumber, clientArgs.clientId);
+        if (range.start === undefined
+            || range.start < 0
+            || range.start > length) {
+            return undefined;
+        }
+
+        // valid end if not insert, or insert has end
+        //
+        if (op.type !== ops.MergeTreeDeltaType.INSERT || range.end !== undefined) {
+            if (range.end === undefined || range.end < 0 || range.end - range.start < 0) {
+                return undefined;
+            }
+        }
+
+        return range;
+    }
+
+    /**
+     * Get's the client args from the op if remote, otherwise uses the local clients info
+     * @param opArgs The op arge to get the client sequence args for
+     */
+    private getClientSequenceArgs(opArgs: IMergeTreeDeltaOpArgs): IMergeTreeClientSequenceArgs {
+
+        if (opArgs.local) {
+            const segWindow = this.mergeTree.getCollabWindow();
+            return {
+                clientId: segWindow.clientId,
+                referenceSequenceNumber: segWindow.currentSeq,
+                sequenceNumber: this.getLocalSequenceNumber(),
+            };
+        } else {
+            return {
+                clientId: this.getShortClientId(opArgs.sequencedMessage.clientId),
+                referenceSequenceNumber: opArgs.sequencedMessage.referenceSequenceNumber,
+                sequenceNumber: opArgs.sequencedMessage.sequenceNumber,
+            };
+        }
     }
 
 // tslint:disable
@@ -358,25 +485,6 @@ export class Client {
             type: MessageType.Operation,
         };
     }
-    makeRemoveMsg(start: number, end: number, seq: number, refSeq: number, objectId: string) {
-        return <ISequencedDocumentMessage>{
-            clientId: this.longClientId,
-            sequenceNumber: seq,
-            referenceSequenceNumber: refSeq,
-            clientSequenceNumber: 1,
-            minimumSequenceNumber: undefined,
-            objectId: objectId,
-            userId: undefined,
-            offset: seq,
-            origin: null,
-            contents: {
-                type: ops.MergeTreeDeltaType.REMOVE, pos1: start, pos2: end,
-            },
-            timestamp: Date.now(),
-            traces: [],
-            type: MessageType.Operation,
-        };
-    }
 
     hasMessages(): boolean {
         return this.q.count() > 0;
@@ -446,9 +554,10 @@ export class Client {
 
         return this.transformOp(op, referenceSequenceNumber, toSequenceNumber);
     }
-    copy(start: number, end: number, registerId: string, refSeq: number, clientId: number, longClientId: string) {
+    copy(start: number, end: number, registerId: string, refSeq: number, clientId: number) {
         let segs = this.mergeTree.cloneSegments(refSeq, clientId, start, end);
-        this.registerCollection.set(longClientId, registerId, segs);
+        this.registerCollection.set(
+            this.getLongClientId(clientId), registerId, segs);
     }
     pasteLocal(register: string, pos: number, opArgs?: IMergeTreeDeltaOpArgs) {
         let segs = this.registerCollection.get(this.longClientId, register);
@@ -472,15 +581,6 @@ export class Client {
         }
         // TODO: error reporting
     }
-    checkNest(op: ops.IMergeTreeRemoveMsg, msg: ISequencedDocumentMessage, clid: number) {
-        let beginMarker = this.mergeTree.getSegmentFromId(op.checkNest.id1);
-        let endMarker = this.mergeTree.getSegmentFromId(op.checkNest.id2);
-        let beginPos = this.mergeTree.getOffset(beginMarker, msg.referenceSequenceNumber, clid);
-        let endPos = endMarker.cachedLength + this.mergeTree.getOffset(endMarker, msg.referenceSequenceNumber, clid);
-        if ((beginPos !== op.pos1) || (endPos !== op.pos2)) {
-            console.log(`remove nest mismatch ${beginPos} ${op.pos1} ${endPos} ${op.pos2}`);
-        }
-    }
     applyRemoteOp(opArgs: IMergeTreeDeltaOpArgs) {
         const op = opArgs.op;
         const msg = opArgs.sequencedMessage;
@@ -495,17 +595,13 @@ export class Client {
                     }
                 }
                 if (op.seg !== undefined) {
-                    if (op.pos2 !== undefined) {
-                        // replace
-                        this.removeSegmentRemote(op.pos1, op.pos2, msg.sequenceNumber, msg.referenceSequenceNumber, clid, opArgs);
-                    }
                     this.insertSegmentRemote(this.specToSegment(op.seg), op.pos1, msg.sequenceNumber, msg.referenceSequenceNumber, clid, opArgs);
                 }
                 else if (op.register !== undefined) {
                     // TODO: relative addressing
                     if (op.pos2 !== undefined) {
                         // copy
-                        this.copy(op.pos1, op.pos2, op.register, msg.referenceSequenceNumber, clid, msg.clientId);
+                        this.copy(op.pos1, op.pos2, op.register, msg.referenceSequenceNumber, clid);
                     }
                     else {
                         // paste
@@ -514,35 +610,15 @@ export class Client {
                 }
                 break;
             case ops.MergeTreeDeltaType.REMOVE:
-                if (op.relativePos1) {
-                    op.pos1 = this.mergeTree.posFromRelativePos(op.relativePos1, msg.referenceSequenceNumber, clid);
-                    if (op.pos1 < 0) {
-                        // TODO: event when marker id not found
-                        return;
-                    }
-                }
-                if (op.relativePos2) {
-                    op.pos2 = this.mergeTree.posFromRelativePos(op.relativePos2, msg.referenceSequenceNumber, clid);
-                    if (op.pos2 < 0) {
-                        // TODO: event when marker id not found
-                        return;
-                    }
-                }
-                if (op.register) {
-                    // cut
-                    this.copy(op.pos1, op.pos2, op.register, msg.referenceSequenceNumber, clid, msg.clientId);
-                }
-                if (op.checkNest) {
-                    this.checkNest(op, msg, clid);
-                }
-                this.removeSegmentRemote(op.pos1, op.pos2, msg.sequenceNumber, msg.referenceSequenceNumber, clid, opArgs);
+                this.applyRemoveRangeOp(opArgs);
                 break;
             case ops.MergeTreeDeltaType.ANNOTATE:
-                this.annotateRangeFromOp(false, opArgs);
+                this.applyAnnotateRangeOp(opArgs);
                 break;
             case ops.MergeTreeDeltaType.GROUP: {
                 for (let memberOp of op.ops) {
                     this.applyRemoteOp({
+                        local: opArgs.local,
                         op: memberOp,
                         groupOp: op,
                         sequencedMessage: msg,
@@ -553,9 +629,6 @@ export class Client {
         }
     }
 
-    coreApplyMsg(opArgs: IMergeTreeDeltaOpArgs) {
-        this.applyRemoteOp(opArgs);
-    }
     applyMsg(msg: ISequencedDocumentMessage) {
         if ((msg !== undefined) && (msg.minimumSequenceNumber > this.mergeTree.getCollabWindow().minSeq)) {
             this.updateMinSeq(msg.minimumSequenceNumber);
@@ -569,10 +642,11 @@ export class Client {
         // Apply if an operation message
         if (msg.type === MessageType.Operation) {
             const opArgs: IMergeTreeDeltaOpArgs = {
+                local: msg.clientId === this.longClientId,
                 op: msg.contents as ops.IMergeTreeOp,
                 sequencedMessage: msg,
             };
-            if (msg.clientId === this.longClientId) {
+            if (opArgs.local) {
                 if (opArgs.op.type !== ops.MergeTreeDeltaType.ANNOTATE) {
                     this.ackPendingSegment(opArgs);
                 } else {
@@ -583,7 +657,7 @@ export class Client {
                 }
             }
             else {
-                this.coreApplyMsg(opArgs);
+                this.applyRemoteOp(opArgs);
             }
         }
     }
@@ -614,6 +688,7 @@ export class Client {
         segmentGroup = this.mergeTree.startGroupOperation(segmentGroup);
         for (let op of groupOp.ops) {
             const opArgs: IMergeTreeDeltaOpArgs = {
+                local: true,
                 op,
                 groupOp,
             }
@@ -629,24 +704,10 @@ export class Client {
                     this.insertSegmentLocal(op.pos1, this.specToSegment(op.seg), opArgs);
                     break;
                 case ops.MergeTreeDeltaType.ANNOTATE:
-                    this.annotateRangeFromOp(true, opArgs);
+                    this.applyAnnotateRangeOp( opArgs);
                     break;
                 case ops.MergeTreeDeltaType.REMOVE:
-                    if (op.relativePos1) {
-                        op.pos1 = this.mergeTree.posFromRelativePos(op.relativePos1);
-                        if (op.pos1 < 0) {
-                            // TODO: raise exception or other error flow
-                            break;
-                        }
-                    }
-                    if (op.relativePos2) {
-                        op.pos2 = this.mergeTree.posFromRelativePos(op.relativePos2);
-                        if (op.pos2 < 0) {
-                            // TODO: raise exception or other error flow
-                            break;
-                        }
-                    }
-                    this.removeSegmentLocal(op.pos1, op.pos2, opArgs);
+                    this.applyRemoveRangeOp(opArgs);
                     break;
                 case ops.MergeTreeDeltaType.GROUP:
                     console.log("unhandled nested group op");
@@ -663,40 +724,6 @@ export class Client {
             consensusInfo.marker.addProperties(op.props, op.combiningOp, msg.sequenceNumber);
         }
         this.mergeTree.addMinSeqListener(msg.sequenceNumber, () => consensusInfo.callback(consensusInfo.marker));
-    }
-    removeSegmentLocal(start: number, end: number, opArgs?: IMergeTreeDeltaOpArgs) {
-        let segWindow = this.mergeTree.getCollabWindow();
-        let clientId = segWindow.clientId;
-        let refSeq = segWindow.currentSeq;
-        let seq = this.getLocalSequenceNumber();
-        let clockStart: number | [ number, number ];
-        if (this.measureOps) {
-            clockStart = clock();
-        }
-        this.mergeTree.markRangeRemoved(start, end, refSeq, clientId, seq, false, opArgs);
-        if (this.measureOps) {
-            this.localTime += elapsedMicroseconds(clockStart);
-            this.localOps++;
-        }
-        if (this.verboseOps) {
-            console.log(`remove local cli ${this.getLongClientId(clientId)} ref seq ${refSeq} [${start},${end})`);
-        }
-    }
-    removeSegmentRemote(start: number, end: number, seq: number, refSeq: number, clientId: number, opArgs?: IMergeTreeDeltaOpArgs) {
-        let clockStart: number | [ number, number ];
-        if (this.measureOps) {
-            clockStart = clock();
-        }
-        this.mergeTree.markRangeRemoved(start, end, refSeq, clientId, seq, false, opArgs);
-        this.mergeTree.getCollabWindow().currentSeq = seq;
-        if (this.measureOps) {
-            this.accumTime += elapsedMicroseconds(clockStart);
-            this.accumOps++;
-            this.accumWindow += (this.getCurrentSeq() - this.mergeTree.getCollabWindow().minSeq);
-        }
-        if (this.verboseOps) {
-            console.log(`@cli ${this.getLongClientId(this.mergeTree.getCollabWindow().clientId)} seq ${seq} remove remote start ${start} end ${end} refseq ${refSeq} cli ${this.getLongClientId(clientId)}`);
-        }
     }
 
     insertSegmentLocal(pos: number, segment: ISegment, opArgs?: IMergeTreeDeltaOpArgs) {

@@ -41,6 +41,7 @@ function overlappingInsert(bSeesTheCat = false) {
     // simulate server choosing A's insert of 'cat ' as sequence number 1
     // ack client A's op
     clientA.ackPendingSegment({
+        local: true,
         op: { type: MergeTreeDeltaType.INSERT },
         sequencedMessage: {
             sequenceNumber,
@@ -58,6 +59,7 @@ function overlappingInsert(bSeesTheCat = false) {
     sequenceNumber++;
     // simulate server choosing B's two insert operations as sequence numbers 2 and 3
     clientB.ackPendingSegment({
+        local: true,
         op: { type: MergeTreeDeltaType.INSERT },
         sequencedMessage: {
             sequenceNumber,
@@ -76,6 +78,7 @@ function overlappingInsert(bSeesTheCat = false) {
         console.log(clientB.mergeTree.toString());
     }
     clientB.ackPendingSegment({
+        local: true,
         op: { type: MergeTreeDeltaType.INSERT },
         sequencedMessage: {
             sequenceNumber,

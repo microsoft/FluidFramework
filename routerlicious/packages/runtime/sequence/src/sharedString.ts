@@ -37,7 +37,7 @@ export class SharedString extends SegmentSequence<SharedStringSegment> {
         };
 
         const pos = this.client.mergeTree.posFromRelativePos(relativePos1);
-        this.client.insertSegmentLocal(pos, segment, {op: insertMessage});
+        this.client.insertSegmentLocal(pos, segment, {local: true, op: insertMessage});
         this.submitIfAttached(insertMessage);
     }
 
@@ -56,7 +56,7 @@ export class SharedString extends SegmentSequence<SharedStringSegment> {
             type: MergeTree.MergeTreeDeltaType.INSERT,
         };
 
-        this.client.insertSegmentLocal(pos, segment, {op: insertMessage});
+        this.client.insertSegmentLocal(pos, segment, {local: true, op: insertMessage});
         this.submitIfAttached(insertMessage);
     }
 
@@ -76,7 +76,7 @@ export class SharedString extends SegmentSequence<SharedStringSegment> {
         };
 
         const pos = this.client.mergeTree.posFromRelativePos(relativePos1);
-        this.client.insertSegmentLocal(pos, segment, {op: insertMessage});
+        this.client.insertSegmentLocal(pos, segment, {local: true, op: insertMessage});
         this.submitIfAttached(insertMessage);
     }
 
@@ -91,44 +91,34 @@ export class SharedString extends SegmentSequence<SharedStringSegment> {
             type: MergeTree.MergeTreeDeltaType.INSERT,
         };
 
-        this.client.insertSegmentLocal(pos, segment, {op: insertMessage});
+        this.client.insertSegmentLocal(pos, segment, {local: true, op: insertMessage});
         this.submitIfAttached(insertMessage);
     }
-
-    public replaceText(text: string, start: number, end: number, props?: MergeTree.PropertySet) {
-        const segment = new MergeTree.TextSegment(text);
-        if (props) {
-            segment.addProperties(props);
-        }
-        const insertMessage: MergeTree.IMergeTreeInsertMsg = {
-            pos1: start,
-            pos2: end,
-            seg: segment.toJSONObject(),
-            type: MergeTree.MergeTreeDeltaType.INSERT,
-        };
+    /**
+     * Replaces a range with the provided text.
+     *
+     * @param start The inclusive start of the range to replace
+     * @param end The exclusive end of the range to replace
+     * @param text The text to replace the range with
+     * @param props Optional. The properties of the replacement text
+     */
+    public replaceText(start: number, end: number, text: string, props?: MergeTree.PropertySet) {
         this.client.mergeTree.startGroupOperation();
-        this.client.removeSegmentLocal(start, end, {op: insertMessage});
-        this.client.insertSegmentLocal(start, segment, {op: insertMessage});
-        this.client.mergeTree.endGroupOperation();
-        this.submitIfAttached(insertMessage);
-    }
+        try {
+            const removeOp = this.client.removeRangeLocal(start, end);
+            if (removeOp) {
+                const segment = MergeTree.TextSegment.make(text, props);
+                this.client.insertSegmentLocal(start, segment);
+                this.submitIfAttached(
+                    MergeTree.createGroupOp(
+                        removeOp,
+                        MergeTree.createInsertSegmentOp(start, segment)));
+            }
+        } finally {
+            this.client.mergeTree.endGroupOperation();
+        }
 
-    public removeNest(nestStart: MergeTree.Marker, nestEnd: MergeTree.Marker) {
-        const start = this.client.mergeTree.getOffset(nestStart,
-            MergeTree.UniversalSequenceNumber, this.client.getClientId());
-        const end = nestEnd.cachedLength + this.client.mergeTree.getOffset(nestEnd,
-            MergeTree.UniversalSequenceNumber, this.client.getClientId());
-        console.log(`removing nest ${nestStart.getId()} from [${start},${end})`);
-        const removeMessage: MergeTree.IMergeTreeRemoveMsg = {
-            checkNest: { id1: nestStart.getId(), id2: nestEnd.getId() },
-            pos1: start,
-            pos2: end,
-            type: MergeTree.MergeTreeDeltaType.REMOVE,
-        };
-        this.client.removeSegmentLocal(start, end, {op: removeMessage});
-        this.submitIfAttached(removeMessage);
     }
-
     public removeText(start: number, end: number) {
         this.removeRange(start, end);
     }

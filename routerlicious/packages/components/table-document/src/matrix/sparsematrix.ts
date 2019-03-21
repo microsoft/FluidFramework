@@ -192,7 +192,7 @@ export class SparseMatrix extends SegmentSequence<MatrixSegment> {
             type: MergeTreeDeltaType.INSERT,
         } as IMergeTreeInsertMsg;
 
-        this.client.insertSegmentLocal(start, segment, { op: insertMessage });
+        this.client.insertSegmentLocal(start, segment, {local: true, op: insertMessage });
         this.submitIfAttached(insertMessage);
     }
 
@@ -220,7 +220,7 @@ export class SparseMatrix extends SegmentSequence<MatrixSegment> {
             type: MergeTreeDeltaType.INSERT,
         };
 
-        this.client.insertSegmentLocal(pos, segment, { op: insertMessage });
+        this.client.insertSegmentLocal(pos, segment, {local: true, op: insertMessage });
         this.submitIfAttached(insertMessage);
     }
 
@@ -273,7 +273,7 @@ export class SparseMatrix extends SegmentSequence<MatrixSegment> {
                 type: MergeTreeDeltaType.INSERT,
             } as IMergeTreeInsertMsg;
 
-            this.client.insertSegmentLocal(insertPos, segment, { op: insertMessage });
+            this.client.insertSegmentLocal(insertPos, segment, {local: true, op: insertMessage });
             this.submitIfAttached(insertMessage);
         }
     }

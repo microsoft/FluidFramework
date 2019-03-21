@@ -76,7 +76,7 @@ describe("SharedInterval", () => {
             intervals.add(0, 3, IntervalType.Simple);
             assertIntervals([{ start: 0, end: 3 }]);
 
-            sharedString.replaceText(`xxx`, 0, 3);
+            sharedString.replaceText(0, 3, `xxx`);
             assertIntervals([{ start: 0, end: 3 }]);
         });
 
@@ -95,7 +95,7 @@ describe("SharedInterval", () => {
             intervals.add(1, 2, IntervalType.Simple);
             assertIntervals([{ start: 1, end: 2 }]);
 
-            sharedString.replaceText(`x`, 0, 1);
+            sharedString.replaceText(0, 1, `x`);
             assertIntervals([{ start: 1, end: 2 }]);
         });
 
@@ -112,7 +112,7 @@ describe("SharedInterval", () => {
             intervals.add(0, 2, IntervalType.Simple);
             assertIntervals([{ start: 0, end: 2 }]);
 
-            sharedString.replaceText(`x`, 0, 1);
+            sharedString.replaceText(0, 1, `x`);
             assertIntervals([{ start: 0, end: 2 }]);
         });
 
@@ -121,7 +121,7 @@ describe("SharedInterval", () => {
             intervals.add(0, 2, IntervalType.Simple);
             assertIntervals([{ start: 0, end: 2 }]);
 
-            sharedString.replaceText(`x`, 1, 2);
+            sharedString.replaceText(1, 2, `x`);
             assertIntervals([{ start: 0, end: 2 }]);
         });
 
@@ -145,7 +145,7 @@ describe("SharedInterval", () => {
             intervals.add(0, 1, IntervalType.Simple);
             assertIntervals([{ start: 0, end: 1 }]);
 
-            sharedString.replaceText(`x`, 1, 2);
+            sharedString.replaceText(1, 2, `x`);
             assertIntervals([{ start: 0, end: 1 }]);
         });
     });

@@ -209,7 +209,7 @@ export class FlowDocument extends Component {
 
     public replaceWithText(start: number, end: number, text: string) {
         debug(`replaceWithText(${start}, ${end}, "${text}")`);
-        this.sharedString.replaceText(text, start, end);
+        this.sharedString.replaceText(start, end, text);
     }
 
     public remove(start: number, end: number) {

@@ -99,28 +99,28 @@ export abstract class SegmentSequence<T extends MergeTree.ISegment> extends Shar
         return super.on(event, listener);
     }
 
+    /**
+     * @param start The inclusive start of the range to remove
+     * @param end The exclusive end of the range to remove
+     */
     public removeRange(start: number, end: number) {
-        const removeMessage: MergeTree.IMergeTreeRemoveMsg = {
-            pos1: start,
-            pos2: end,
-            type: MergeTree.MergeTreeDeltaType.REMOVE,
-        };
-
-        this.client.removeSegmentLocal(start, end, {op: removeMessage});
-        this.submitIfAttached(removeMessage);
+        const removeOp = this.client.removeRangeLocal(start, end);
+        if (removeOp) {
+            this.submitIfAttached(removeOp);
+        }
     }
 
-    public cut(register: string, start: number, end: number) {
-        const removeMessage: MergeTree.IMergeTreeRemoveMsg = {
-            pos1: start,
-            pos2: end,
-            register,
-            type: MergeTree.MergeTreeDeltaType.REMOVE,
-        };
-        this.client.copy(start, end, register, this.client.getCurrentSeq(),
-            this.client.getClientId(), this.client.longClientId);
-        this.client.removeSegmentLocal(start, end, {op: removeMessage});
-        this.submitIfAttached(removeMessage);
+    /**
+     * Removes the range and puts the content of the removed range in a register
+     * @param start The inclusive start of the range to remove
+     * @param end The exclusive end of the range to remove
+     * @param register The name of the register to store the removed range in
+     */
+    public cut(start: number, end: number, register: string) {
+        const removeOp = this.client.removeRangeLocal(start, end, register);
+        if (removeOp) {
+            this.submitIfAttached(removeOp);
+        }
     }
 
     public paste(register: string, pos: number) {
@@ -131,7 +131,7 @@ export abstract class SegmentSequence<T extends MergeTree.ISegment> extends Shar
         };
 
         // tslint:disable-next-line:no-parameter-reassignment
-        pos = this.client.pasteLocal(register, pos, {op: insertMessage});
+        pos = this.client.pasteLocal(register, pos, {local: true, op: insertMessage});
         this.submitIfAttached(insertMessage);
         return pos;
     }
@@ -145,7 +145,7 @@ export abstract class SegmentSequence<T extends MergeTree.ISegment> extends Shar
         };
 
         this.client.copy(start, end, register, this.client.getCurrentSeq(),
-            this.client.getClientId(), this.client.longClientId);
+            this.client.getClientId());
         this.submitIfAttached(insertMessage);
     }
 
@@ -158,7 +158,7 @@ export abstract class SegmentSequence<T extends MergeTree.ISegment> extends Shar
     /**
      * Annotates the range with the provided properties
      * @param start The inclusive start postition of the range to annotate
-     * @param end The inclusive end position of the range to annotate
+     * @param end The exclusive end position of the range to annotate
      * @param props The properties to annotate the range with
      * @param combiningOp Optional. Specifies how to combine values for the property, such as "incr" for increment.
      *
@@ -555,7 +555,7 @@ export class SharedSequence<T extends MergeTree.SequenceItem> extends SegmentSeq
             seg: segment.toJSONObject(),
             type: MergeTree.MergeTreeDeltaType.INSERT,
         };
-        this.client.insertSegmentLocal(pos, segment, {op: insertMessage});
+        this.client.insertSegmentLocal(pos, segment, {local: true, op: insertMessage});
         this.submitIfAttached(insertMessage);
     }
 

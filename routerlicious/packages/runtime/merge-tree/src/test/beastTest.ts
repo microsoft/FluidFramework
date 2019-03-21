@@ -8,6 +8,7 @@ import * as path from "path";
 import * as random from "random-js";
 import * as MergeTree from "..";
 import * as Base from "../base";
+import { createRemoveRangeOp } from "../opBuilder";
 import { TestServer } from "./testServer";
 import {
     insertMarkerLocal,
@@ -16,6 +17,8 @@ import {
     insertTextLocal,
     insertTextRemote,
     loadTextFromFile,
+    makeClientOpMessage,
+    makeOpMessage,
     specToSegment,
 } from "./testUtils";
 
@@ -717,9 +720,8 @@ export function TestPack(verbose = true) {
             let dlen = randTextLength();
             let preLen = client.getLength();
             let pos = random.integer(0, preLen)(mt);
-            server.enqueueMsg(client.makeRemoveMsg(pos, pos + dlen, MergeTree.UnassignedSequenceNumber,
-                client.getCurrentSeq(), server.longClientId));
-            client.removeSegmentLocal(pos, pos + dlen);
+            const op = client.removeRangeLocal(pos, pos + dlen);
+            server.enqueueMsg(makeClientOpMessage(client, op, MergeTree.UnassignedSequenceNumber));
             if (MergeTree.useCheckQ) {
                 client.enqueueTestString();
             }
@@ -730,9 +732,8 @@ export function TestPack(verbose = true) {
             if (word1) {
                 let removeStart = word1.pos;
                 let removeEnd = removeStart + word1.text.length;
-                server.enqueueMsg(client.makeRemoveMsg(removeStart, removeEnd, MergeTree.UnassignedSequenceNumber,
-                    client.getCurrentSeq(), server.longClientId));
-                client.removeSegmentLocal(removeStart, removeEnd);
+                const op = client.removeRangeLocal(removeStart, removeEnd);
+                server.enqueueMsg(makeClientOpMessage(client, op, MergeTree.UnassignedSequenceNumber));
                 if (MergeTree.useCheckQ) {
                     client.enqueueTestString();
                 }
@@ -996,7 +997,7 @@ export function TestPack(verbose = true) {
                     insertTextLocal(cliA, text, pos);
                 }
                 for (let k = firstSeq; k < sequenceNumber; k++) {
-                    cliA.ackPendingSegment(createOpArgs(MergeTree.MergeTreeDeltaType.INSERT, k));
+                    cliA.ackPendingSegment(createLocalOpArgs(MergeTree.MergeTreeDeltaType.INSERT, k));
                 }
                 if (checkTextMatch(sequenceNumber - 1)) {
                     return true;
@@ -1015,7 +1016,7 @@ export function TestPack(verbose = true) {
                     insertTextLocal(cliB, text, pos);
                 }
                 for (let k = firstSeq; k < sequenceNumber; k++) {
-                    cliB.ackPendingSegment(createOpArgs(MergeTree.MergeTreeDeltaType.INSERT, k));
+                    cliB.ackPendingSegment(createLocalOpArgs(MergeTree.MergeTreeDeltaType.INSERT, k));
                 }
                 if (checkTextMatch(sequenceNumber - 1)) {
                     return true;
@@ -1036,11 +1037,11 @@ export function TestPack(verbose = true) {
                     let dlen = randTextLength();
                     let preLen = cliA.getLength();
                     let pos = random.integer(0, preLen)(mt);
-                    cliB.removeSegmentRemote(pos, pos + dlen, sequenceNumber++, cliA.getCurrentSeq(), cliA.mergeTree.getCollabWindow().clientId);
-                    cliA.removeSegmentLocal(pos, pos + dlen);
+                    const op = cliA.removeRangeLocal(pos, pos + dlen);
+                    cliB.applyMsg(makeClientOpMessage(cliA, op, sequenceNumber++));
                 }
                 for (let k = firstSeq; k < sequenceNumber; k++) {
-                    cliA.ackPendingSegment(createOpArgs(MergeTree.MergeTreeDeltaType.REMOVE, k));
+                    cliA.ackPendingSegment(createLocalOpArgs(MergeTree.MergeTreeDeltaType.REMOVE, k));
                 }
                 if (checkTextMatch(sequenceNumber - 1)) {
                     return true;
@@ -1054,11 +1055,11 @@ export function TestPack(verbose = true) {
                     let dlen = randTextLength();
                     let preLen = cliB.getLength();
                     let pos = random.integer(0, preLen)(mt);
-                    cliA.removeSegmentRemote(pos, pos + dlen, sequenceNumber++, cliB.getCurrentSeq(), cliB.mergeTree.getCollabWindow().clientId);
-                    cliB.removeSegmentLocal(pos, pos + dlen);
+                    const op = cliB.removeRangeLocal(pos, pos + dlen);
+                    cliA.applyMsg(makeClientOpMessage(cliB, op, sequenceNumber++));
                 }
                 for (let k = firstSeq; k < sequenceNumber; k++) {
-                    cliB.ackPendingSegment(createOpArgs(MergeTree.MergeTreeDeltaType.REMOVE, k));
+                    cliB.ackPendingSegment(createLocalOpArgs(MergeTree.MergeTreeDeltaType.REMOVE, k));
                 }
                 if (checkTextMatch(sequenceNumber - 1)) {
                     return true;
@@ -1126,7 +1127,7 @@ export function TestPack(verbose = true) {
                 }
             }
         }
-        cli.mergeTree.ackPendingSegment(createOpArgs(MergeTree.MergeTreeDeltaType.INSERT, 3));
+        cli.mergeTree.ackPendingSegment(createLocalOpArgs(MergeTree.MergeTreeDeltaType.INSERT, 3));
         if (verbose) {
             console.log(cli.mergeTree.toString());
             for (let clientId = 0; clientId < 4; clientId++) {
@@ -1166,7 +1167,7 @@ export function TestPack(verbose = true) {
         insertTextRemote(cli, "HAS", 4, undefined, 5, 1, 5);
         insertTextLocal(cli, " LANDED", 19);
         insertTextRemote(cli, "yowza: ", 0, undefined, 6, 4, 2);
-        cli.mergeTree.ackPendingSegment(createOpArgs(MergeTree.MergeTreeDeltaType.INSERT, 7));
+        cli.mergeTree.ackPendingSegment(createLocalOpArgs(MergeTree.MergeTreeDeltaType.INSERT, 7));
         if (verbose) {
             console.log(cli.mergeTree.toString());
             for (let clientId = 0; clientId < 6; clientId++) {
@@ -1175,7 +1176,7 @@ export function TestPack(verbose = true) {
                 }
             }
         }
-        cli.removeSegmentRemote(3, 5, 8, 6, 1);
+        cli.applyMsg(makeOpMessage(createRemoveRangeOp(3, 5), 8, 6, cli.getLongClientId(1)));
         if (verbose) {
             console.log(cli.mergeTree.toString());
             for (let clientId = 0; clientId < 6; clientId++) {
@@ -1189,7 +1190,7 @@ export function TestPack(verbose = true) {
         for (let cname of clientNames) {
             cli.addLongClientId(cname, null);
         }
-        cli.removeSegmentRemote(1, 3, 1, 0, 3);
+        cli.applyMsg(makeOpMessage(createRemoveRangeOp(1, 3), 1, 0, cli.getLongClientId(3)));
         if (verbose) {
             console.log(cli.mergeTree.toString());
         }
@@ -1214,8 +1215,8 @@ export function TestPack(verbose = true) {
             }
         }
         insertTextRemote(cli, " chaser", 9, undefined, 3, 2, 3);
-        cli.removeSegmentLocal(12, 14);
-        cli.mergeTree.ackPendingSegment(createOpArgs(MergeTree.MergeTreeDeltaType.REMOVE, 4));
+        cli.removeRangeLocal(12, 14);
+        cli.mergeTree.ackPendingSegment(createLocalOpArgs(MergeTree.MergeTreeDeltaType.REMOVE, 4));
         if (verbose) {
             console.log(cli.mergeTree.toString());
             for (let clientId = 0; clientId < 4; clientId++) {
@@ -1226,9 +1227,9 @@ export function TestPack(verbose = true) {
         }
         insertTextLocal(cli, "*yolumba*", 14);
         insertTextLocal(cli, "-zanzibar-", 17);
-        cli.mergeTree.ackPendingSegment(createOpArgs(MergeTree.MergeTreeDeltaType.INSERT, 5));
+        cli.mergeTree.ackPendingSegment(createLocalOpArgs(MergeTree.MergeTreeDeltaType.INSERT, 5));
         insertTextRemote(cli, "(aaa)", 2, undefined, 6, 4, 2);
-        cli.mergeTree.ackPendingSegment(createOpArgs(MergeTree.MergeTreeDeltaType.INSERT, 7));
+        cli.mergeTree.ackPendingSegment(createLocalOpArgs(MergeTree.MergeTreeDeltaType.INSERT, 7));
         if (verbose) {
             console.log(cli.mergeTree.toString());
             for (let clientId = 0; clientId < 4; clientId++) {
@@ -1238,13 +1239,13 @@ export function TestPack(verbose = true) {
             }
         }
         /*
-        cli.removeSegmentLocal(3,8);
-        cli.removeSegmentLocal(5,7);
+        cli.removeRangeLocal(3,8);
+        cli.removeRangeLocal(5,7);
         cli.ackPendingSegment(8);
         cli.ackPendingSegment(9);
         */
-        cli.removeSegmentRemote(3, 8, 8, 7, 2);
-        cli.removeSegmentRemote(5, 7, 9, 7, 2);
+        cli.applyMsg(makeOpMessage(createRemoveRangeOp(3, 8), 8, 7, cli.getLongClientId(2)));
+        cli.applyMsg(makeOpMessage(createRemoveRangeOp(5, 7), 9, 7, cli.getLongClientId(2)));
         if (verbose) {
             console.log(cli.mergeTree.toString());
             for (let clientId = 0; clientId < 4; clientId++) {
@@ -1253,7 +1254,7 @@ export function TestPack(verbose = true) {
                 }
             }
         }
-        cli.removeSegmentLocal(3,5);
+        cli.removeRangeLocal(3,5);
         fwdRanges = cli.mergeTree.tardisRangeFromClient(3,6,9,10,2,0);
         if (verbose) {
             console.log(cli.mergeTree.toString());
@@ -1262,8 +1263,8 @@ export function TestPack(verbose = true) {
                 console.log(`fwd range (${r.start}, ${r.end})`);
             }
         }
-        cli.removeSegmentRemote(3,6,10,9,2);
-        cli.ackPendingSegment(createOpArgs(MergeTree.MergeTreeDeltaType.REMOVE, 11));
+        cli.applyMsg(makeOpMessage(createRemoveRangeOp(3, 6), 10, 9, cli.getLongClientId(2)));
+        cli.ackPendingSegment(createLocalOpArgs(MergeTree.MergeTreeDeltaType.REMOVE, 11));
         if (verbose) {
             console.log(cli.mergeTree.toString());
             for (let clientId = 0; clientId < 4; clientId++) {
@@ -1287,8 +1288,9 @@ function compareProxStrings(a: MergeTree.ProxString<number>, b: MergeTree.ProxSt
     return bscore - ascore;
 }
 
-function createOpArgs(type: MergeTree.MergeTreeDeltaType, sequenceNumber: number): MergeTree.IMergeTreeDeltaOpArgs {
+function createLocalOpArgs(type: MergeTree.MergeTreeDeltaType, sequenceNumber: number): MergeTree.IMergeTreeDeltaOpArgs {
     return {
+        local: true,
         op: { type } as MergeTree.IMergeTreeOp,
         sequencedMessage: {
             sequenceNumber,
