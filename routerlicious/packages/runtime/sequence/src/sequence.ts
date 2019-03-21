@@ -337,7 +337,7 @@ export abstract class SegmentSequence<T extends MergeTree.ISegment> extends Shar
         this.processMessage(message);
     }
 
-    protected processMinSequenceNumberChangedContent(value: number) {
+    protected processMinSequenceNumberChanged(value: number) {
         let index = 0;
         for (; index < this.messagesSinceMSNChange.length; index++) {
             if (this.messagesSinceMSNChange[index].sequenceNumber > value) {
@@ -354,6 +354,12 @@ export abstract class SegmentSequence<T extends MergeTree.ISegment> extends Shar
         } else {
             this.pendingMinSequenceNumber = value;
         }
+    }
+
+    protected attachCore() {
+        this.runtime.addListener("minSequenceNumberChanged", (msn: number) => {
+            this.processMinSequenceNumberChanged(msn);
+        });
     }
 
     protected attachContent() {

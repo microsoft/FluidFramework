@@ -344,12 +344,6 @@ export class Runtime extends EventEmitter implements IHostRuntime {
         }
     }
 
-    public updateMinSequenceNumber(minimumSequenceNumber: number) {
-        for (const [, component] of this.components) {
-            component.updateMinSequenceNumber(minimumSequenceNumber);
-        }
-    }
-
     public getComponent(id: string, wait = true): Promise<IComponentRuntime> {
         this.verifyNotClosed();
 
@@ -415,6 +409,10 @@ export class Runtime extends EventEmitter implements IHostRuntime {
         this.tasks = tasks;
         this.version = version;
         this.startLeaderElection();
+    }
+
+    private updateMinSequenceNumber(minimumSequenceNumber: number) {
+        this.emit("minSequenceNumberChanged", this.deltaManager.minimumSequenceNumber);
     }
 
     private submit(type: MessageType, content: any) {

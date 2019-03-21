@@ -223,10 +223,6 @@ export class Cell extends SharedObject implements ICell {
         }
     }
 
-    protected processMinSequenceNumberChanged(value: number) {
-        return;
-    }
-
     private submitIfAttached(message) {
         if (this.isLocal()) {
             return;

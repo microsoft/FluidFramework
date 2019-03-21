@@ -271,7 +271,6 @@ declare module 'prague/api-core/collaborativeObject' {
                 */
             protected attachCore(): void;
             protected abstract processCore(message: ISequencedObjectMessage): any;
-            protected abstract processMinSequenceNumberChanged(value: number): any;
             /**
                 * Processes a message by the local client
                 */
@@ -1378,7 +1377,6 @@ declare module 'prague/map/map' {
             getView(): Promise<IMapView>;
             deserialize(): void;
             protected submitCore(message: api.IObjectMessage): void;
-            protected processMinSequenceNumberChanged(value: number): void;
             protected processCore(message: api.ISequencedObjectMessage): void;
     }
     /**
@@ -2158,7 +2156,6 @@ declare module 'prague/merge-tree/sharedString' {
         snapshot(): api.ITree;
         transform(message: api.IObjectMessage, toSequenceNumber: number): api.IObjectMessage;
         protected processCore(message: api.ISequencedObjectMessage): void;
-        protected processMinSequenceNumberChanged(value: number): void;
         protected attachCore(): void;
     }
 }

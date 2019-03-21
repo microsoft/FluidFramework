@@ -81,9 +81,6 @@ export abstract class SharedObject extends EventEmitter implements ISharedObject
 
         this.setOwner();
 
-        // Allow derived classes to perform custom processing prior to attaching this object
-        this.attachCore();
-
         // Notify the document of the attachment
         this.services = this.runtime.attachChannel(this);
         this.attachDeltaHandler();
@@ -153,11 +150,6 @@ export abstract class SharedObject extends EventEmitter implements ISharedObject
     protected abstract processCore(message: ISequencedDocumentMessage, local: boolean, context: any);
 
     /**
-     * Method called when the minimum sequence number for the object has changed
-     */
-    protected abstract processMinSequenceNumberChanged(value: number);
-
-    /**
      * Called when the object has disconnected from the delta stream
      */
     protected abstract onDisconnect();
@@ -191,10 +183,10 @@ export abstract class SharedObject extends EventEmitter implements ISharedObject
     }
 
     private attachDeltaHandler() {
+        // Allow derived classes to perform custom processing prior to attaching this object
+        this.attachCore();
+
         this.services.deltaConnection.attach({
-            minSequenceNumberChanged: (value) => {
-                this.processMinSequenceNumberChanged(value);
-            },
             prepare: (message, local) => {
                 return this.prepare(message, local);
             },

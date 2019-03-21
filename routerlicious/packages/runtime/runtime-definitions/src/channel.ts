@@ -35,11 +35,9 @@ export interface IDeltaHandler {
 
     process: (message: ISequencedDocumentMessage, local: boolean, context: any) => void;
 
-    minSequenceNumberChanged: (value: number) => void;
-
-    /**
-     * State change events to indicate changes to the delta connection
-     */
+   /**
+    * State change events to indicate changes to the delta connection
+    */
     setConnectionState(state: ConnectionState): void;
 }
 
