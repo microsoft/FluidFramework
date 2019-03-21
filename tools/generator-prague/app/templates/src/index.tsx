@@ -57,6 +57,6 @@ export async function instantiateRuntime(
   context: IContainerContext
 ): Promise<IRuntime> {
   return Component.instantiateRuntime(context, "@chaincode/counter", [
-    ["@chaincode/counter", Clicker]
+    ["@chaincode/counter", Promise.resolve(Clicker)]
   ]);
 }
