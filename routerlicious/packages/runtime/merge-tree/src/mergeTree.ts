@@ -166,7 +166,7 @@ export interface ISegment extends IMergeNode, IRemovalInfo {
     removeLocalRef(lref: LocalReference);
     addProperties(newProps: Properties.PropertySet, op?: ops.ICombiningOp, seq?: number);
     clone(): ISegment;
-    canAppend(segment: ISegment, mergeTree: MergeTree): boolean;
+    canAppend(segment: ISegment): boolean;
     append(segment: ISegment);
     getType(): SegmentType;
     removeRange(start: number, end: number): boolean;
@@ -615,7 +615,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
         b.seq = this.seq;
     }
 
-    canAppend(segment: ISegment, mergeTree: MergeTree) {
+    canAppend(segment: ISegment) {
         return false;
     }
 
@@ -626,35 +626,6 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
     }
 
     abstract toJSONObject(): any;
-
-    // TODO: use function in properties.ts
-    matchProperties(b: BaseSegment) {
-        if (this.properties) {
-            if (!b.properties) {
-                return false;
-            } else {
-                let bProps = b.properties;
-                // for now, straightforward; later use hashing
-                for (let key in this.properties) {
-                    if (bProps[key] === undefined) {
-                        return false;
-                    } else if (bProps[key] !== this.properties[key]) {
-                        return false;
-                    }
-                }
-                for (let key in bProps) {
-                    if (this.properties[key] === undefined) {
-                        return false;
-                    }
-                }
-            }
-        } else {
-            if (b.properties) {
-                return false;
-            }
-        }
-        return true;
-    }
 
     public ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs, mergeTree: MergeTree): boolean {
 
@@ -786,20 +757,9 @@ export class SubSequence<T> extends BaseSegment {
         return SegmentType.Run;
     }
 
-    public canAppend(segment: ISegment, mergeTree: MergeTree) {
-        if (!this.removedSeq) {
-            if (segment.getType() === SegmentType.Run) {
-                if (this.matchProperties(segment as SubSequence<T>)) {
-                    const branchId = mergeTree.getBranchId(this.clientId);
-                    const segBranchId = mergeTree.getBranchId(segment.clientId);
-                    if ((segBranchId === branchId) && (mergeTree.localNetLength(segment) > 0)) {
-                        return ((this.cachedLength <= MaxRun) ||
-                            (segment.cachedLength <= MaxRun));
-                    }
-                }
-            }
-        }
-        return false;
+    public canAppend(segment: ISegment) {
+        return segment.getType() === SegmentType.Run
+            && (this.cachedLength <= MaxRun || segment.cachedLength <= MaxRun);
     }
 
     public toString() {
@@ -1172,20 +1132,11 @@ export class TextSegment extends BaseSegment {
         return SegmentType.Text;
     }
 
-    canAppend(segment: ISegment, mergeTree: MergeTree) {
-        if ((!this.removedSeq) && (this.text.charAt(this.text.length - 1) != '\n')) {
-            if (segment.getType() === SegmentType.Text) {
-                if (this.matchProperties(<TextSegment>segment)) {
-                    let branchId = mergeTree.getBranchId(this.clientId);
-                    let segBranchId = mergeTree.getBranchId(segment.clientId);
-                    if ((segBranchId === branchId) && (mergeTree.localNetLength(segment) > 0)) {
-                        return ((this.cachedLength <= MergeTree.TextSegmentGranularity) ||
-                            (segment.cachedLength <= MergeTree.TextSegmentGranularity));
-                    }
-                }
-            }
-        }
-        return false;
+    canAppend(segment: ISegment) {
+        return this.text.charAt(this.text.length - 1) !== '\n'
+            && segment.getType() === SegmentType.Text
+            && (this.cachedLength <= MergeTree.TextSegmentGranularity ||
+                segment.cachedLength <= MergeTree.TextSegmentGranularity);
     }
 
     toString() {
@@ -2442,7 +2393,15 @@ export class MergeTree {
                 else {
                     if ((segment.seq <= this.collabWindow.minSeq) &&
                         segment.segmentGroups.empty && (segment.seq != UnassignedSequenceNumber)) {
-                        if (prevSegment && prevSegment.canAppend(segment, this)) {
+
+                        const canAppend = prevSegment
+                            && (!prevSegment.removedSeq)
+                            && prevSegment.canAppend(segment)
+                            && Properties.matchProperties(prevSegment.properties, segment.properties)
+                            && this.getBranchId(prevSegment.clientId) === this.getBranchId(segment.clientId)
+                            && this.localNetLength(segment) > 0;
+
+                        if (canAppend) {
                             if (MergeTree.traceAppend) {
                                 console.log(`${this.getLongClientId(this.collabWindow.clientId)}: append ${(<TextSegment>prevSegment).text} + ${(<TextSegment>segment).text}; cli ${this.getLongClientId(prevSegment.clientId)} + cli ${this.getLongClientId(segment.clientId)}`);
                             }

@@ -5,7 +5,6 @@ import {
     IMergeTreeInsertMsg,
     ISegment,
     LocalClientId,
-    MergeTree,
     MergeTreeDeltaType,
     PropertySet,
     SegmentType,
@@ -49,12 +48,8 @@ export class PaddingSegment extends BaseSegment {
 
     public getType() { return SegmentType.Custom; }
 
-    public canAppend(segment: ISegment, mergeTree: MergeTree) {
-        return (!this.removedSeq)
-            && segment instanceof PaddingSegment
-            && this.matchProperties(segment as PaddingSegment)
-            && mergeTree.getBranchId(this.clientId) === mergeTree.getBranchId(segment.clientId)
-            && mergeTree.localNetLength(segment) > 0;
+    public canAppend(segment: ISegment) {
+        return segment instanceof PaddingSegment;
     }
 
     public toString() {

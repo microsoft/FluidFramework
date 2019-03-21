@@ -168,7 +168,7 @@ export class ParagraphLexer<TContext> {
     }
 
     public lex(textSegment: MergeTree.TextSegment) {
-        if (this.leadSegment && (!this.leadSegment.matchProperties(textSegment))) {
+        if (this.leadSegment && (!MergeTree.matchProperties(this.leadSegment.properties, textSegment.properties))) {
             this.emit();
             this.leadSegment = textSegment;
         } else if (!this.leadSegment) {
