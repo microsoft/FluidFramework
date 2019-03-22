@@ -5,8 +5,8 @@ import * as jwt from "jsonwebtoken";
 // Process command line input
 let action = false;
 commander
-    .option("-t, --tenant [tenant]", "Tenant", "prague")
-    .option("-s, --secret [secret]", "Secret", "43cfc3fbf04a97c0921fd23ff10f9e4b")
+    .option("-t, --tenant [tenant]", "Tenant", "stupefied-kilby")
+    .option("-s, --secret [secret]", "Secret", "4a9211594f7c3daebca3deb8d6115fe2")
     .arguments("<documentId>")
     .action((documentId) => {
         action = true;

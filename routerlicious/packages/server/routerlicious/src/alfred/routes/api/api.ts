@@ -95,11 +95,14 @@ export function create(
 function craftOp(reqOp: IOperation) {
     // Craft and send op
     const opContent = {
-        key: reqOp.path,
-        type: "set",
-        value: {
-            type: "Plain",
-            value: reqOp.value,
+        address: "root",
+        contents: {
+            key: reqOp.path,
+            type: "set",
+            value: {
+                type: "Plain",
+                value: reqOp.value,
+            },
         },
     };
 
@@ -107,7 +110,7 @@ function craftOp(reqOp: IOperation) {
         address: "root",
         contents: {
             clientSequenceNumber: 1,
-            contents: opContent,
+            content: opContent,
             referenceSequenceNumber: 1,
             type: "op",
         },
