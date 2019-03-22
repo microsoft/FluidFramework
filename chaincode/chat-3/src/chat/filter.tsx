@@ -2,7 +2,7 @@
 const profaneWords = ["belichick", "boston", "brady", "bruins", "celtics", "new england", "red sox", "patriots"];
 
 const profanExp = new RegExp(profaneWords.join("|"), "gi");
-let cheating = false;
+const cheating = false;
 
 export function filter(input: string): string {
   if (!cheating) {
@@ -15,17 +15,3 @@ export function filter(input: string): string {
   }
   return input;
 }
-
-/**
- * If you cheat, active client can publish profane language, but others will scrub it.
- */
-function cheat() {
-  cheating = !cheating;
-  if (cheating) {
-    console.log("You cheater");
-  } else {
-    console.log("Thanks!");
-  }
-}
-
-(window as any).cheat = cheat;

@@ -9,10 +9,10 @@ export class ChatRunner {
   constructor(private runtime: Runtime) {
   }
 
-  public async attach(platform: IPlatform): Promise<IPlatform> {
+  public async attach(platform: IPlatform) {
       const hostContent: HTMLElement = await platform.queryInterface<HTMLElement>("div");
       if (!hostContent) {
-          return;
+          return this.runtime;
       }
       renderChat(this.runtime, hostContent);
   }

@@ -1,15 +1,16 @@
 {
   "name": "@chaincode/chat-3",
   "description": "Prague Chat with custom runtime",
-  "version": "0.0.16",
+  "version": "0.0.19",
   "author": "Microsoft",
   "repository": "microsoft/prague",
-  "main": "dist/main.bundle.js",
+  "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
     "tslint": "tslint 'src/**/*.{ts,tsx}'",
+    "tsc": "tsc",
     "build-webpack": "webpack --env=\"production\"",
-    "build": "npm run tslint && npm run build-webpack",
+    "build": "npm run tsc && npm run tslint && npm run build-webpack",
     "start": "prague-dev-server --config webpack.config.js --live --package package.json"
   },
   "devDependencies": {
