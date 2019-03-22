@@ -1,11 +1,14 @@
 import { ITree } from "@prague/container-definitions";
-import { Client, createRemoveRangeOp, IMergeTreeDeltaCallbackArgs } from "@prague/merge-tree";
+import { createRemoveRangeOp, IMergeTreeDeltaCallbackArgs } from "@prague/merge-tree";
+// tslint:disable-next-line: no-submodule-imports
+import { TestClient } from "@prague/merge-tree/dist/test/testClient";
 // tslint:disable-next-line: no-submodule-imports
 import { makeClientOpMessage } from "@prague/merge-tree/dist/test/testUtils";
 import * as assert from "assert";
 import { SequenceDeltaEvent } from "../sequenceDeltaEvent";
 import { SharedString } from "../sharedString";
 import * as mocks from "./mocks";
+
 import { insertTextLocal, specToSegment } from "./testUtils";
 
 describe("SequenceDeltaEvent", () => {
@@ -13,10 +16,10 @@ describe("SequenceDeltaEvent", () => {
     const documentId = "fakeId";
     const localUserLongId = "localUser";
     let runtime: mocks.MockRuntime;
-    let client: Client;
+    let client: TestClient;
 
     beforeEach(() => {
-        client = new Client("", specToSegment);
+        client = new TestClient("", specToSegment);
         client.startCollaboration(localUserLongId);
         runtime = new mocks.MockRuntime();
     });
@@ -82,8 +85,7 @@ describe("SequenceDeltaEvent", () => {
                     `${i}`.repeat(textCount),
                     0,
                     client.mergeTree.collabWindow.currentSeq + 1,
-                    client.mergeTree.collabWindow.currentSeq,
-                    undefined);
+                    client.mergeTree.collabWindow.currentSeq);
                 client.applyMsg(insertMessage);
             }
             console.log(client.getText());

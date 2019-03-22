@@ -1890,11 +1890,6 @@ export function elapsedMicroseconds(start: [number, number] | number) {
     }
 }
 
-/**
- * Used for in-memory testing.  This will queue a reference string for each client message.
- */
-export const useCheckQ = false;
-
 let indentStrings = ["", " ", "  "];
 export function internedSpaces(n: number) {
     if (indentStrings[n] === undefined) {

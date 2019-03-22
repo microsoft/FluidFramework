@@ -1,14 +1,15 @@
 import { ISequencedDocumentMessage } from "@prague/container-definitions";
 import * as assert from "assert";
-import { Client, SegmentGroup, UnassignedSequenceNumber } from "..";
+import { SegmentGroup, UnassignedSequenceNumber } from "..";
+import { TestClient } from "./testClient";
 import { insertTextLocal, makeClientOpMessage, specToSegment} from "./testUtils";
 
 describe("client.applyMsg", () => {
     const localUserLongId = "localUser";
-    let client: Client;
+    let client: TestClient;
 
     beforeEach(() => {
-        client = new Client("hello world", specToSegment);
+        client = new TestClient("hello world", specToSegment);
 
         client.startCollaboration(localUserLongId);
     });
@@ -40,8 +41,7 @@ describe("client.applyMsg", () => {
                         str,
                         pos1,
                         i + 1,
-                        client.mergeTree.collabWindow.currentSeq,
-                        undefined);
+                        client.mergeTree.collabWindow.currentSeq);
                     insertTextLocal(client, str, pos1);
                     changes.set(i, {msg, segmentGroup: client.mergeTree.pendingSegments.last()});
                     break;
@@ -110,8 +110,7 @@ describe("client.applyMsg", () => {
                 "abc",
                 0,
                 17,
-                0,
-                undefined));
+                0));
 
         assert.equal(segmentInfo.segment.seq, 17);
     });

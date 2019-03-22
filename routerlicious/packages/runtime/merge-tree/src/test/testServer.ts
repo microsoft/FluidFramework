@@ -1,26 +1,26 @@
 // tslint:disable
 import { ISequencedDocumentMessage } from "@prague/container-definitions";
-import { Client } from "../client";
-import { ClientSeq, compareNumbers, clientSeqComparer, useCheckQ } from "../mergeTree";
+import { ClientSeq, compareNumbers, clientSeqComparer } from "../mergeTree";
 import * as Collections from "../collections";
 import * as Properties from "../properties";
 import { IMergeTreeOp } from "../ops";
+import { TestClient } from "./testClient";
 import { specToSegment } from "./testUtils";
 
 /**
  * Server for tests.  Simulates client communication by directing placing
  * messages in client queues.
  */
-export class TestServer extends Client {
+export class TestServer extends TestClient {
     seq = 1;
-    clients: Client[];
-    listeners: Client[]; // listeners do not generate edits
+    clients: TestClient[];
+    listeners: TestClient[]; // listeners do not generate edits
     clientSeqNumbers: Collections.Heap<ClientSeq>;
     upstreamMap: Collections.RedBlackTree<number, number>;
     constructor(initText: string, options?: Properties.PropertySet) {
         super(initText, specToSegment, options);
     }
-    addUpstreamClients(upstreamClients: Client[]) {
+    addUpstreamClients(upstreamClients: TestClient[]) {
         // assumes addClients already called
         this.upstreamMap = new Collections.RedBlackTree<number, number>(compareNumbers);
         for (let upstreamClient of upstreamClients) {
@@ -30,14 +30,14 @@ export class TestServer extends Client {
             });
         }
     }
-    addClients(clients: Client[]) {
+    addClients(clients: TestClient[]) {
         this.clientSeqNumbers = new Collections.Heap<ClientSeq>([], clientSeqComparer);
         this.clients = clients;
         for (let client of clients) {
             this.clientSeqNumbers.add({ refSeq: client.getCurrentSeq(), clientId: client.longClientId });
         }
     }
-    addListeners(listeners: Client[]) {
+    addListeners(listeners: TestClient[]) {
         this.listeners = listeners;
     }
     applyMsg(msg: ISequencedDocumentMessage) {
@@ -46,7 +46,7 @@ export class TestServer extends Client {
             op: msg.contents as IMergeTreeOp,
             sequencedMessage: msg,
         });
-        if (useCheckQ) {
+        if (TestClient.useCheckQ) {
             let clid = this.getShortClientId(msg.clientId);
             return checkTextMatchRelative(msg.referenceSequenceNumber, clid, this, msg);
         }
