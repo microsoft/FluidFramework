@@ -4,7 +4,6 @@ import { ISharedMap } from "@prague/map";
 import * as Sequence from "@prague/sequence";
 import * as intelligence from "../intelligence";
 import { RateLimiter } from "./rateLimiter";
-import { runAfterWait } from "./utils";
 
 // 5s wait time between intelligent service calls
 const defaultWaitTime = 10 * 1000;
@@ -57,14 +56,6 @@ export class IntelligentServicesManager {
     }
 
     public async stop() {
-        if (this.rateLimiter) {
-            await runAfterWait(
-                this.rateLimiter.isRunning,
-                this.rateLimiter,
-                "done",
-                async () => {
-                    this.rateLimiter.stop();
-                });
-        }
+        //
     }
 }

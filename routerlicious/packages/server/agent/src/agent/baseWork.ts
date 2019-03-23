@@ -4,7 +4,6 @@ import { EventEmitter } from "events";
 import { parse } from "url";
 import { debug } from "./debug";
 import { IDocumentTaskInfo } from "./definitions";
-import { runAfterWait } from "./utils";
 
 export class BaseWork extends EventEmitter {
 
@@ -39,13 +38,8 @@ export class BaseWork extends EventEmitter {
 
         this.document = await api.load(this.url, this.host, options, service);
 
-        await runAfterWait(
-            !this.document.isConnected,
-            this.document,
-            "connected",
-            async () => {
-                this.attachPostListeners();
-            });
+        await this.waitForFullConnection();
+        this.attachPostListeners();
     }
 
     public on(event: string, listener: (...args: any[]) => void): this {
@@ -61,16 +55,6 @@ export class BaseWork extends EventEmitter {
                 this.closeDocument();
             } else {
                 this.closeDocument();
-                // TODO (mdaumi): Bring back "processed signal"
-                /*
-                await runAfterWait(
-                    this.document.hasUnackedOps,
-                    this.document,
-                    "processed",
-                    async () => {
-                        this.closeDocument();
-                    });
-                */
             }
         }
     }
@@ -135,5 +119,18 @@ export class BaseWork extends EventEmitter {
             }
         }
         return true;
+    }
+
+    // Wait for the runtime to get fully connected.
+    private waitForFullConnection(): Promise<void> {
+        if (this.document.isConnected) {
+            return;
+        } else {
+            return new Promise<void>((resolve, reject) => {
+                this.document.once("connected", () => {
+                    resolve();
+                });
+            });
+        }
     }
 }
