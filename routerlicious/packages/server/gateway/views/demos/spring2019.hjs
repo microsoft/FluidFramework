@@ -78,7 +78,7 @@
     <h2>Performance</h2>
 
     <h3>Inking Canvas</h3>
-    <li class="list-unstyled"><a href="/loader/stupefied-kilby/{{inkMoniker}}/chaincode=@chaincode/canvas@0.0.5410"
+    <li class="list-unstyled"><a href="/loader/stupefied-kilby/{{inkMoniker}}?chaincode=@chaincode/canvas@0.0.5410"
             target="_blank">Canvas Chaincode</a></li>
 
     <h3>Fast Load</h3>

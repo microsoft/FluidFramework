@@ -69,6 +69,7 @@ export function create(ensureLoggedIn: any): Router {
                 newsMoniker: moniker.choose(),
                 partials: defaultPartials,
                 pinpointMoniker: moniker.choose(),
+                sharedTextMoniker: moniker.choose(),
                 title: "Prague Demos",
                 translateMoniker: moniker.choose(),
             });
