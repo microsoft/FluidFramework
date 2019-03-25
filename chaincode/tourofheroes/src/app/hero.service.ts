@@ -16,6 +16,19 @@ import { MessageService } from './message.service';
 
 // Example of how to manually build a GraphQL Schema at https://github.com/graphql/graphql-js/
 
+const heroes = [
+    { id: 11, name: 'Mr. Nice' },
+    { id: 12, name: 'Narco' },
+    { id: 13, name: 'Bombasto' },
+    { id: 14, name: 'Celeritas' },
+    { id: 15, name: 'Magneta' },
+    { id: 16, name: 'RubberMan' },
+    { id: 17, name: 'Dynama' },
+    { id: 18, name: 'Dr IQ' },
+    { id: 19, name: 'Magma' },
+    { id: 20, name: 'Tornado' }
+];
+
 // type Hero {
 //     id: Int!
 //     name: String!
@@ -29,7 +42,7 @@ const heroType = new GraphQLObjectType({
             description: "The super hero ID",
         },
         name: {
-            type: GraphQLString,
+            type: GraphQLNonNull(GraphQLString),
             description: 'The name of the human.',
         }
     }),
@@ -51,19 +64,6 @@ const queryType = new GraphQLObjectType({
                 },
             },
             resolve: (root, { id }) => {
-                const heroes = [
-                    { id: 11, name: 'Mr. Nice' },
-                    { id: 12, name: 'Narco' },
-                    { id: 13, name: 'Bombasto' },
-                    { id: 14, name: 'Celeritas' },
-                    { id: 15, name: 'Magneta' },
-                    { id: 16, name: 'RubberMan' },
-                    { id: 17, name: 'Dynama' },
-                    { id: 18, name: 'Dr IQ' },
-                    { id: 19, name: 'Magma' },
-                    { id: 20, name: 'Tornado' }
-                ];
-
                 if (id) {
                     const found = heroes.find((value) => value.id === id);
                     return Promise.resolve(found ? [found] : []);
@@ -75,8 +75,37 @@ const queryType = new GraphQLObjectType({
     }),
 });
 
+const mutation = new GraphQLObjectType({
+    fields: {
+        renameHero: {
+            type: heroType,
+            args: {
+                id: {
+                    description: "Id for the hero to update",
+                    type: GraphQLNonNull(GraphQLInt),
+                },
+                name: {
+                    description: "Updated name for the hero",
+                    type: GraphQLNonNull(GraphQLString),
+                }
+            },
+            resolve: (obj, { id, name }) => {
+                const found = heroes.find((value) => value.id === id);
+                if (!found) {
+                    return Promise.reject("Hero not found");
+                }
+
+                found.name = name;
+                return Promise.resolve(found);
+            },
+        }
+    },
+    name: 'Mutation',
+});
+
 const schema = new GraphQLSchema({
-    query: queryType
+    query: queryType,
+    mutation,
 });
 
 const httpOptions = {
@@ -168,7 +197,23 @@ export class HeroService {
 
     /** PUT: update the hero on the server */
     updateHero(hero: Hero): Observable<any> {
-        return this.http.put(this.heroesUrl, hero, httpOptions).pipe(
+        const query =
+            `
+                mutation Rename($id: Int!, $name: String!) {
+                    renameHero(id: $id, name: $name) {
+                        id
+                        name
+                    }
+                }
+            `;
+        const variableValues = {
+            id: hero.id,
+            name: hero.name,
+        };
+        const queryP = graphql<{ renameHero: Hero }>({ schema, source: query, variableValues }).then(
+            (response) => response.errors ? Promise.reject(response.errors) : Promise.resolve(response.data.renameHero));
+
+        return from(queryP).pipe(
             tap(_ => this.log(`updated hero id=${hero.id}`)),
             catchError(this.handleError<any>('updateHero'))
         );
