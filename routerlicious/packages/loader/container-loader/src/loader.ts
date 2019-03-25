@@ -66,6 +66,12 @@ export class Loader extends EventEmitter implements ILoader {
         const parsed = parse(url);
         const qs = querystring.parse(parsed.query);
 
+        // null is required later if you don't want to make the get latest version call.
+        // there is no way to encode null in a query string
+        if (qs.version === "null") {
+            qs.version = null;
+        }
+
         const regex = /^\/([^\/]*\/[^\/]*)(\/?.*)$/;
         const match = parsed.pathname.match(regex);
 
