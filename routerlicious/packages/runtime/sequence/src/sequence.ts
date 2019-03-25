@@ -360,6 +360,8 @@ export abstract class SegmentSequence<T extends MergeTree.ISegment> extends Shar
         this.runtime.addListener("minSequenceNumberChanged", (msn: number) => {
             this.processMinSequenceNumberChanged(msn);
         });
+
+        super.attachCore();
     }
 
     protected attachContent() {
