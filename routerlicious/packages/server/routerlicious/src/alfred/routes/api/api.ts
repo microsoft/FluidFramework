@@ -119,7 +119,6 @@ function craftOp(reqOp: IOperation) {
     return op;
 }
 
-// Back-compat: Replicate the same info in content, metadata, and data.
 function craftSystemMessage(
     tenantId: string,
     documentId: string,
@@ -127,12 +126,8 @@ function craftSystemMessage(
         const type = (typeof contents === "string") ? MessageType.ClientLeave : MessageType.ClientJoin;
         const operation: IDocumentSystemMessage = {
             clientSequenceNumber: -1,
-            contents,
+            contents: null,
             data: JSON.stringify(contents),
-            metadata: {
-                content: contents,
-                split: false,
-            },
             referenceSequenceNumber: -1,
             traces: [],
             type,

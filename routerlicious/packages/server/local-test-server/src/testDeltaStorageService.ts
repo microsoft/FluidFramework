@@ -24,17 +24,7 @@ export class TestDeltaStorageService implements api.IDocumentDeltaStorageService
         }
 
         const allDeltas = await this.databaseManager.getDeltaCollection(this.tenantId, this.id);
-        const deltas = await allDeltas.find(query, { "operation.sequenceNumber": 1 });
-        const deltaMsgs: api.ISequencedDocumentMessage[] = [];
-        deltas.forEach((delta) => {
-            const operation = delta.operation as api.ISequencedDocumentMessage;
-            // Temporary workaround to handle old deltas where content type is object.
-            if (typeof operation.contents === "string") {
-                operation.contents = JSON.parse(operation.contents);
-            }
-            deltaMsgs.push(operation);
-        });
-
-        return deltaMsgs;
+        const dbDeltas = await allDeltas.find(query, { "operation.sequenceNumber": 1 });
+        return dbDeltas.map((delta) => delta.operation);
     }
 }

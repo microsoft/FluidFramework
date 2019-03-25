@@ -14,8 +14,9 @@ import { isSystemType } from "@prague/utils";
 import * as jwt from "jsonwebtoken";
 import * as winston from "winston";
 
-// A safety mechanism to make sure that all outbound messages from alfred adheres to the permitted schema.
+// Sanitize the receeived op before sending.
 function sanitizeMessage(message: any): IDocumentMessage {
+    // Trace sampling.
     if (getRandomInt(100) === 0 && message.operation && message.operation.traces) {
         message.operation.traces.push(
             {
@@ -27,12 +28,11 @@ function sanitizeMessage(message: any): IDocumentMessage {
     const sanitizedMessage: IDocumentMessage = {
         clientSequenceNumber: message.clientSequenceNumber,
         contents: message.contents,
-        metadata: message.metadata,
         referenceSequenceNumber: message.referenceSequenceNumber,
         traces: message.traces,
         type: message.type,
     };
-    // back-compat: Should be consolidated with other system messages.
+
     if (isSystemType(sanitizedMessage.type)) {
         const systemMessage = sanitizedMessage as IDocumentSystemMessage;
         systemMessage.data = message.data;

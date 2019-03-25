@@ -516,10 +516,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         assert.equal(message.sequenceNumber, this.baseSequenceNumber + 1);
         const startTime = Date.now();
 
-        // Back-compat: Client might open an old document.
-        if (message.contents &&
-            typeof message.contents === "string" &&
-            message.type !== MessageType.ClientLeave) {
+        if (message.contents && typeof message.contents === "string") {
             message.contents = JSON.parse(message.contents);
         }
 

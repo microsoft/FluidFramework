@@ -62,16 +62,7 @@ export async function getDeltas(
     const collection = await db.collection<any>(collectionName);
     const dbDeltas = await collection.find(query, { "operation.sequenceNumber": 1 });
 
-    return dbDeltas.map((delta) => {
-        const operation = delta.operation as ISequencedDocumentMessage;
-
-        // Back-Compat: Perf killer. Remove it later.
-        if (operation.contents !== undefined) {
-            operation.contents = JSON.parse(operation.contents);
-        }
-
-        return operation;
-    });
+    return dbDeltas.map((delta) => delta.operation);
 }
 
 export function create(config: Provider, mongoManager: MongoManager, appTenants: IAlfredTenant[]): Router {

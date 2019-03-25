@@ -1,4 +1,3 @@
-import { ISequencedDocumentMessage } from "@prague/container-definitions";
 import * as core from "@prague/services-core";
 import { Deferred } from "@prague/utils";
 
@@ -71,16 +70,6 @@ export class DocumentManager {
             const deltasP = this.deltas.find(query, { "operation.sequenceNumber": 1 });
             deltasP.then(
                 (deltas) => {
-                    // Contents is stored as stringified json. Parse to convert back.
-                    deltas.forEach((delta) => {
-                        const operation = delta.operation as ISequencedDocumentMessage;
-
-                        // Back-Compat: Perf killer. Remove it later.
-                        if (operation.contents !== undefined) {
-                            operation.contents = JSON.parse(operation.contents);
-                        }
-                    });
-
                     result = result.concat(deltas);
                     if (result.length === finalLength) {
                         deferred.resolve(result);

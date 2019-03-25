@@ -1,4 +1,8 @@
-import { IDocumentMessage, MessageType } from "@prague/container-definitions";
+import {
+    IClientJoin,
+    IDocumentMessage,
+    ISequencedDocumentSystemMessage,
+    MessageType } from "@prague/container-definitions";
 import { KafkaOrdererFactory } from "@prague/kafka-orderer";
 import * as socketStorage from "@prague/routerlicious-socket-storage";
 import * as services from "@prague/services";
@@ -129,10 +133,12 @@ describe("Routerlicious", () => {
 
                         // Verify a connection message was sent
                         const message = deliKafka.getLastMessage();
+                        const systemJoinMessage = message.operation as ISequencedDocumentSystemMessage;
                         assert.equal(message.documentId, testId);
-                        assert.equal(message.operation.clientId, null);
-                        assert.equal(message.operation.type, MessageType.ClientJoin);
-                        assert.equal(message.operation.metadata.content.clientId, connectMessage.clientId);
+                        assert.equal(systemJoinMessage.clientId, null);
+                        assert.equal(systemJoinMessage.type, MessageType.ClientJoin);
+                        const JoinMessage = JSON.parse(systemJoinMessage.data) as IClientJoin;
+                        assert.equal(JoinMessage.clientId, connectMessage.clientId);
                     });
 
                     it("Should connect to and set existing flag to true when connecting to an existing document",
@@ -162,9 +168,11 @@ describe("Routerlicious", () => {
                         assert.equal(deliKafka.getRawMessages().length, 3);
                         const message = deliKafka.getMessage(1);
                         assert.equal(message.documentId, testId);
-                        assert.equal(message.operation.clientId, null);
-                        assert.equal(message.operation.type, MessageType.ClientLeave);
-                        assert.equal(message.operation.metadata.content, connectMessage.clientId);
+                        const systemLeaveMessage = message.operation as ISequencedDocumentSystemMessage;
+                        assert.equal(systemLeaveMessage.clientId, null);
+                        assert.equal(systemLeaveMessage.type, MessageType.ClientLeave);
+                        const clientId = JSON.parse(systemLeaveMessage.data) as string;
+                        assert.equal(clientId, connectMessage.clientId);
                     });
                 });
 

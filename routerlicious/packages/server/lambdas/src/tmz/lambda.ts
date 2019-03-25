@@ -34,26 +34,14 @@ export class TmzLambda extends SequencedLambda {
                 const sequencedMessage = baseMessage as core.ISequencedOperationMessage;
                 // Only process "Help" messages.
                 if (sequencedMessage.operation.type === MessageType.RemoteHelp) {
-                    // Back-compat: Temporary workaround to handle old help messages.
-                    // Back-compat: Only "snapshot" will be available to old clients.
                     let helpContent: string[];
-                    if (sequencedMessage.operation.metadata) {
-                        helpContent = sequencedMessage.operation.metadata.content.tasks;
-                        helpContent = helpContent.indexOf("snapshot") === -1 ? [] : ["snapshot"];
+                    // tslint:disable max-line-length
+                    const helpMessage: IHelpMessage = JSON.parse((sequencedMessage.operation as ISequencedDocumentSystemMessage).data);
+                    // back-compat to play well with older client.
+                    if (helpMessage.version) {
+                        helpContent = helpMessage.tasks.map((task: string) => `chain-${task}`);
                     } else {
-                        if (sequencedMessage.operation.contents) {
-                            helpContent = sequencedMessage.operation.contents.tasks;
-                            helpContent = helpContent.indexOf("snapshot") === -1 ? [] : ["snapshot"];
-                        } else {
-                            // Another back-compat to play well with older client.
-                            // tslint:disable max-line-length
-                            const helpMessage: IHelpMessage = JSON.parse((sequencedMessage.operation as ISequencedDocumentSystemMessage).data);
-                            if (helpMessage.version) {
-                                helpContent = helpMessage.tasks.map((task: string) => `chain-${task}`);
-                            } else {
-                                helpContent = helpMessage.tasks;
-                            }
-                        }
+                        helpContent = helpMessage.tasks;
                     }
 
                     await this.trackDocument(

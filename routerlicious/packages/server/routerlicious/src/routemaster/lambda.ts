@@ -42,11 +42,8 @@ export class RouteMasterLambda extends SequencedLambda {
     private async createFork(message: core.ISequencedOperationMessage): Promise<void> {
         const operation = message.operation as ISequencedDocumentSystemMessage;
         let contents: core.IForkOperation;
-        // back-compat: Support two versions.
         if (operation.data) {
             contents = JSON.parse(operation.data);
-        } else {
-            contents = operation.metadata.content;
         }
         const forkId = contents.documentId;
         const forkSequenceNumber = message.operation.sequenceNumber;
@@ -97,10 +94,6 @@ export class RouteMasterLambda extends SequencedLambda {
             clientSequenceNumber: -1,
             contents: null,
             data: JSON.stringify(message),
-            metadata: {
-                content: message,
-                split: false,
-            },
             referenceSequenceNumber: -1,
             traces: [],
             type: MessageType.Integrate,

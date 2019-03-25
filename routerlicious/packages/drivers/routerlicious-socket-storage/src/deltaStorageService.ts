@@ -59,14 +59,10 @@ export class DeltaStorageService implements api.IDeltaStorageService {
         const ops = opData.data;
         let contentIndex = 0;
         for (const op of ops) {
-            // Back-compat: Paparazzi to support old documents.
-            if ((op.metadata && op.metadata.split)|| (op.contents === undefined)) {
+            if (op.contents === undefined) {
                 assert.ok(contentIndex < contents.length, "Delta content not found");
                 const content = contents[contentIndex];
                 assert.equal(op.sequenceNumber, content.sequenceNumber, "Invalid delta content order");
-                if (op.metadata) {
-                    op.metadata.split = false;
-                }
                 op.contents = content.op.contents;
                 ++contentIndex;
             }

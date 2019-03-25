@@ -230,10 +230,6 @@ export class DocumentStorage implements IDocumentStorage {
             clientSequenceNumber: -1,
             contents: null,
             data: JSON.stringify(contents),
-            metadata: {
-                content: contents,
-                split: false,
-            },
             referenceSequenceNumber: -1,
             traces: [],
             type: MessageType.Fork,
