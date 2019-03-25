@@ -1,7 +1,6 @@
 import { ISharedObjectExtension } from "@prague/api-definitions";
 import { Component } from "@prague/app-component";
 import { Counter, CounterValueType, MapExtension, registerDefaultValueType } from "@prague/map";
-import { IChaincodeComponent } from "@prague/runtime-definitions";
 import * as assert from "assert";
 import { TestHost } from "..";
 import { SharedString, SharedStringExtension } from "../../../../runtime/sequence/dist";
@@ -32,117 +31,12 @@ export class TestComponent extends Component {
 }
 
 // tslint:disable-next-line:mocha-no-side-effect-code
-const testComponents: ReadonlyArray<[string, Promise<new () => IChaincodeComponent>]> = [
-    [TestComponent.type, Promise.resolve(TestComponent)],
-];
-
-// tslint:disable-next-line:mocha-no-side-effect-code
 const testTypes: ReadonlyArray<[string, ISharedObjectExtension]> = [
     [SharedStringExtension.Type, new SharedStringExtension()],
 ];
 
 describe("TestHost", () => {
-    describe("1 component", () => {
-        let host: TestHost;
-        let comp: TestComponent;
-
-        beforeEach(async () => {
-            host = new TestHost(testComponents);
-            comp = await host.createComponent<TestComponent>("documentId", TestComponent.type);
-        });
-
-        afterEach(async () => {
-            await comp.close();
-            await host.close();
-        });
-
-        it("opened", async () => {
-            assert(comp instanceof TestComponent, "createComponent() must return the expected component type.");
-        });
-    });
-
-    describe("2 components", () => {
-        it("early open / late close", async () => {
-            const host1 = new TestHost(testComponents);
-            const host2 = host1.clone();
-
-            assert(host1.deltaConnectionServer === host2.deltaConnectionServer,
-                "Cloned hosts must share the deltaConnectionServer.");
-
-            // Create/open both instance of TestComponent before applying ops.
-            const comp1 = await host1.createComponent<TestComponent>("documentId", TestComponent.type);
-            const comp2 = await host2.openComponent<TestComponent>("documentId");
-            assert(comp1 !== comp2, "Each host must return a separate TestComponent instance.");
-
-            comp1.increment();
-            assert.equal(comp1.value, 1, "Local update by 'comp1' must be promptly observable");
-
-            await TestHost.sync(host1, host2);
-            assert.equal(comp2.value, 1, "Remote update by 'comp1' must be observable to 'comp2' after sync.");
-
-            comp2.increment();
-            assert.equal(comp2.value, 2, "Local update by 'comp2' must be promptly observable");
-
-            await TestHost.sync(host1, host2);
-            assert.equal(comp1.value, 2, "Remote update by 'comp2' must be observable to 'comp1' after sync.");
-
-            // Close components & hosts after test completes.
-            await comp1.close();
-            await comp2.close();
-            await host1.close();
-            await host2.close();
-        });
-
-        it("late open / early close", async () => {
-            const host1 = new TestHost(testComponents);
-            const comp1 = await host1.createComponent<TestComponent>("documentId", TestComponent.type);
-
-            comp1.increment();
-            assert.equal(comp1.value, 1, "Local update by 'comp1' must be promptly observable");
-
-            // Wait until ops are pending before opening second TestComponent instance.
-            const host2 = host1.clone();
-            const comp2 = await host2.openComponent<TestComponent>("documentId");
-            assert(comp1 !== comp2, "Each host must return a separate TestComponent instance.");
-
-            await TestHost.sync(host1, host2);
-            assert.equal(comp2.value, 1, "Remote update by 'comp1' must be observable to 'comp2' after sync.");
-
-            comp2.increment();
-            assert.equal(comp2.value, 2, "Local update by 'comp2' must be promptly observable");
-
-            await TestHost.sync(host1, host2);
-
-            // Close second TestComponent instance as soon as we're finished with it.
-            await comp2.close();
-            await host2.close();
-
-            assert.equal(comp1.value, 2, "Remote update by 'comp2' must be observable to 'comp1' after sync.");
-
-            await comp1.close();
-            await host1.close();
-        });
-    });
-
-    describe("Distributed data types", () => {
-        describe("1 data type", () => {
-            let host: TestHost;
-            let text: SharedString;
-
-            beforeEach(async () => {
-                host = new TestHost([], testTypes);
-                text = await host.createType("text", SharedStringExtension.Type);
-            });
-
-            afterEach(async () => {
-                await host.close();
-            });
-
-            it("opened", async () => {
-                assert(text instanceof SharedString, "createType() must return the expected component type.");
-            });
-        });
-
+     describe("2 components", () => {
         describe("2 data types", () => {
             let host1: TestHost;
             let host2: TestHost;
@@ -152,6 +46,7 @@ describe("TestHost", () => {
             beforeEach(async () => {
                 host1 = new TestHost([], testTypes);
                 text1 = await host1.createType("text", SharedStringExtension.Type);
+                text2 = await host1.getType("text");
 
                 host2 = host1.clone();
                 text2 = await host2.getType("text");
