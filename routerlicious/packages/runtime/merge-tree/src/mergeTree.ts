@@ -167,7 +167,7 @@ export interface ISegment extends IMergeNode, IRemovalInfo {
     addProperties(newProps: Properties.PropertySet, op?: ops.ICombiningOp, seq?: number);
     clone(): ISegment;
     canAppend(segment: ISegment): boolean;
-    append(segment: ISegment);
+    append(segment: ISegment): void;
     getType(): SegmentType;
     removeRange(start: number, end: number): boolean;
     splitAt(pos: number): ISegment;
@@ -696,7 +696,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
     }
 
     abstract clone(): ISegment;
-    abstract append(segment: ISegment): ISegment;
+    abstract append(segment: ISegment): void;
     abstract getType(): SegmentType;
     abstract removeRange(start: number, end: number): boolean;
     protected abstract createSplitSegmentAt(pos: number): BaseSegment
@@ -767,18 +767,17 @@ export class SubSequence<T> extends BaseSegment {
     }
 
     public append(segment: ISegment) {
-        if (segment.getType() === SegmentType.Run) {
-            // Note: Must call 'appendLocalRefs' before modifying this segment's length as
-            //       'this.cachedLength' is used to adjust the offsets of the local refs.
-            this.appendLocalRefs(segment);
-
-            const rseg = segment as SubSequence<T>;
-            this.items = this.items.concat(rseg.items);
-            this.cachedLength = this.items.length;
-            return this;
-        } else {
+        if (segment.getType() !== SegmentType.Run) {
             throw new Error("can only append another run segment");
         }
+
+        // Note: Must call 'appendLocalRefs' before modifying this segment's length as
+        //       'this.cachedLength' is used to adjust the offsets of the local refs.
+        this.appendLocalRefs(segment);
+
+        const rseg = segment as SubSequence<T>;
+        this.items = this.items.concat(rseg.items);
+        this.cachedLength = this.items.length;
     }
 
     // TODO: retain removed items for undo
@@ -826,7 +825,7 @@ export class ExternalSegment extends BaseSegment {
         throw new Error('clone not implemented');
     }
 
-    append(segment: ISegment): ISegment {
+    append() {
         throw new Error('Can not append to external segment');
     }
 
@@ -1062,10 +1061,7 @@ export class Marker extends BaseSegment implements ReferencePosition {
         return false;
     }
 
-    append(segment: ISegment) {
-        return undefined;
-    }
-
+    append() { throw new Error("Can not append to marker"); }
 }
 
 export interface IJSONTextSegment extends ops.IJSONSegment {
@@ -1144,18 +1140,16 @@ export class TextSegment extends BaseSegment {
     }
 
     append(segment: ISegment) {
-        if (segment.getType() === SegmentType.Text) {
-            // Note: Must call 'appendLocalRefs' before modifying this segment's length as
-            //       'this.cachedLength' is used to adjust the offsets of the local refs.
-            this.appendLocalRefs(segment);
-
-            this.text += (<TextSegment>segment).text;
-            this.cachedLength = this.text.length;
-            return this;
-        }
-        else {
+        if (segment.getType() !== SegmentType.Text) {
             throw new Error("can only append text segment");
         }
+
+        // Note: Must call 'appendLocalRefs' before modifying this segment's length as
+        //       'this.cachedLength' is used to adjust the offsets of the local refs.
+        this.appendLocalRefs(segment);
+
+        this.text += (<TextSegment>segment).text;
+        this.cachedLength = this.text.length;
     }
 
     // TODO: retain removed text for undo

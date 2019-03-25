@@ -57,19 +57,15 @@ export class PaddingSegment extends BaseSegment {
     }
 
     public append(segment: ISegment) {
-        if (segment.getType() === SegmentType.Custom) {
-            const asPadding = segment as PaddingSegment;
-            if (segment.localRefs) {
-                for (const localRef of segment.localRefs) {
-                    localRef.offset += this.cachedLength;
-                    localRef.segment = this;
-                }
-            }
-            this.cachedLength += asPadding.cachedLength;
-            return this;
-        } else {
-            throw new Error("can only append another PaddingSegment");
+        if (segment.getType() !== SegmentType.Custom) {
+            throw new Error("can only append padding segment");
         }
+
+        // Note: Must call 'appendLocalRefs' before modifying this segment's length as
+        //       'this.cachedLength' is used to adjust the offsets of the local refs.
+        this.appendLocalRefs(segment);
+
+        this.cachedLength += segment.cachedLength;
     }
 
     // returns true if entire run removed
