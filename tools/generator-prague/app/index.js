@@ -8,6 +8,8 @@ module.exports = class extends Generator {
   }
 
   async prompting() {
+    this.log("Congratulations! You've started building your own prague component.");
+    this.log("Let us help you get set up. Once we're done, you can start coding!");
     this.answers = await this.prompt([
       {
         type: "input",
@@ -22,7 +24,7 @@ module.exports = class extends Generator {
       {
         type: "input",
         name: "description",
-        message: "Chaincode Description",
+        message: "Component Description",
         default: "Chaincode starter project"
       },
       {
@@ -128,7 +130,7 @@ module.exports = class extends Generator {
     );
     this.log("\n");
 
-    this.log("We suggest you start by typing:");
+    this.log("We suggest you open your component with your favorite IDE.\n Then start by typing:");
     if (this.answers.path !== ".") {
       const cdPath = "    cd " + this.answers.path;
       this.log(chalk.cyan(cdPath));

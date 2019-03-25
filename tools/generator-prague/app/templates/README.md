@@ -3,6 +3,8 @@
 Welcome to your first chaincode component.
 
 ## Getting Started
+To start coding, open this directory in your IDE and check out ./src/index.tsx
+
 You can try the following commands
 
 ````
@@ -25,7 +27,7 @@ We suggest you start by typing:
 
 ## Get Coding
 
-Uncomment the commented code in index.tsx to add a title to your component.
+Uncomment the commented code in ./src/index.tsx to add a title to your component.
 
 
 ## Deploy

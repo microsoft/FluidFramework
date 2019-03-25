@@ -17,7 +17,7 @@
     "tsc": "tsc"
   },
   "devDependencies": {
-    "@prague/prague-dev-server": "^3.2.5",
+    "@prague/prague-dev-server": "^3.2.7",
     "@types/node": "10.11.5",
     "@types/react-dom": "^16.0.11",
     "ts-loader": "4.4.2",

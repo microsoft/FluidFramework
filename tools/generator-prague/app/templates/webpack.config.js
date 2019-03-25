@@ -27,7 +27,8 @@ module.exports = env => {
             libraryTarget: "umd"
         },
         devServer: {
-            publicPath: '/dist'
+            publicPath: '/dist',
+            stats: "minimal"
         }
     }, isProduction
         ? require("./webpack.prod")
