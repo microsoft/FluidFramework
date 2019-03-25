@@ -1,4 +1,8 @@
-import { IDocumentMessage, ISequencedDocumentMessage, MessageType } from "@prague/container-definitions";
+import {
+    IDocumentMessage,
+    IDocumentSystemMessage,
+    ISequencedDocumentMessage,
+    MessageType } from "@prague/container-definitions";
 import {
     BoxcarType,
     IBoxcarMessage,
@@ -67,10 +71,6 @@ export class MessageFactory {
         const operation: IDocumentMessage = {
             clientSequenceNumber: this.clientSequenceNumber++,
             contents: null,
-            metadata: {
-                content: null,
-                split: false,
-            },
             referenceSequenceNumber,
             traces: [],
             type: MessageType.Operation,
@@ -84,13 +84,10 @@ export class MessageFactory {
     }
 
     public createJoin(timestamp = Date.now()) {
-        const operation: IDocumentMessage = {
+        const operation: IDocumentSystemMessage = {
             clientSequenceNumber: -1,
             contents: null,
-            metadata: {
-                content: { clientId: this.clientId },
-                split: false,
-            },
+            data: JSON.stringify({ clientId: this.clientId}),
             referenceSequenceNumber: -1,
             traces: [],
             type: MessageType.ClientJoin,
@@ -100,13 +97,10 @@ export class MessageFactory {
     }
 
     public createLeave(timestamp = Date.now()) {
-        const operation: IDocumentMessage = {
+        const operation: IDocumentSystemMessage = {
             clientSequenceNumber: -1,
-            contents: this.clientId,
-            metadata: {
-                content: this.clientId,
-                split: false,
-            },
+            contents: null,
+            data: JSON.stringify(this.clientId),
             referenceSequenceNumber: -1,
             traces: [],
             type: MessageType.ClientLeave,
@@ -132,10 +126,6 @@ export class MessageFactory {
         const operation: IDocumentMessage = {
             clientSequenceNumber: this.clientSequenceNumber++,
             contents: "Test Save",
-            metadata: {
-                content: null,
-                split: false,
-            },
             referenceSequenceNumber: 0,
             traces: [],
             type: MessageType.Save,
@@ -145,7 +135,6 @@ export class MessageFactory {
             clientId: this.clientId,
             clientSequenceNumber: operation.clientSequenceNumber,
             contents: operation.contents,
-            metadata: operation.metadata,
             minimumSequenceNumber: 0,
             origin: undefined,
             referenceSequenceNumber: operation.referenceSequenceNumber,
@@ -171,7 +160,6 @@ export class MessageFactory {
             clientId: this.clientId,
             clientSequenceNumber: operation.clientSequenceNumber,
             contents: operation.contents,
-            metadata: operation.metadata,
             minimumSequenceNumber: 0,
             origin: undefined,
             referenceSequenceNumber: operation.referenceSequenceNumber,

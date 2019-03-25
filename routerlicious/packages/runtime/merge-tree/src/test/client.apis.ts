@@ -1,7 +1,7 @@
 import * as assert from "assert";
 import * as MergeTree from "..";
 import * as Properties from "../properties";
-import { insertTextLocal, specToSegment } from "./testUtils";
+import { TestClient } from "./testClient";
 
 // tslint:disable
 
@@ -25,10 +25,10 @@ function checkGetPropertiesAtPos(client: MergeTree.Client, pos: number,
 }
 
 export function clientGetPropertiesAtPositionTest() {
-	const client = new MergeTree.Client("the cat is on the mat", specToSegment);
+	const client = new TestClient("the cat is on the mat");
 	const props = MergeTree.createMap<any>();
 	props["prop1"] = 10;
-	insertTextLocal(client, "fuzzy, fuzzy ", 4, props);
+	client.insertTextLocal("fuzzy, fuzzy ", 4, props);
 
 	const testResult1 = checkGetPropertiesAtPos(client, 4, props, true);
 	const testResult2 = checkGetPropertiesAtPos(client, 16, props, true);
@@ -51,11 +51,11 @@ function checkGetSegmentExtentsOfPos(client: MergeTree.Client, pos: number, posS
 }
 
 export function clientGetSegmentExtentsOfPositionTest() {
-	const client = new MergeTree.Client("the cat is on the mat", specToSegment);
+	const client = new TestClient("the cat is on the mat");
 	const props = MergeTree.createMap<any>();
 	props["prop1"] = 10;
-	insertTextLocal(client, "fuzzy, fuzzy ", 4, props);
-	insertTextLocal(client, "more fuzzy text", 8, {});
+	client.insertTextLocal("fuzzy, fuzzy ", 4, props);
+	client.insertTextLocal("more fuzzy text", 8, {});
 
 	const testResult1 = checkGetSegmentExtentsOfPos(client, 26, 23, 32);
 	const testResult2 = checkGetSegmentExtentsOfPos(client, 6, 4, 8);

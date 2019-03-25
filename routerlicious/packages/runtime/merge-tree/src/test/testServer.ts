@@ -5,7 +5,6 @@ import * as Collections from "../collections";
 import * as Properties from "../properties";
 import { IMergeTreeOp } from "../ops";
 import { TestClient } from "./testClient";
-import { specToSegment } from "./testUtils";
 
 /**
  * Server for tests.  Simulates client communication by directing placing
@@ -18,7 +17,7 @@ export class TestServer extends TestClient {
     clientSeqNumbers: Collections.Heap<ClientSeq>;
     upstreamMap: Collections.RedBlackTree<number, number>;
     constructor(initText: string, options?: Properties.PropertySet) {
-        super(initText, specToSegment, options);
+        super(initText, options);
     }
     addUpstreamClients(upstreamClients: TestClient[]) {
         // assumes addClients already called

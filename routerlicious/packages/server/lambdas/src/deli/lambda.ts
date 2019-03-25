@@ -297,11 +297,9 @@ export class DeliLambda implements IPartitionLambda {
 
             // A merge message contains the sequencing information in the target branch's (i.e. this)
             // coordinate space. But contains the original message in the contents.
-            // back-compat: Copying over both field.
             const operation: IDocumentMessage = {
                 clientSequenceNumber: branchDocumentMessage.sequenceNumber,
                 contents: branchDocumentMessage.contents,
-                metadata: branchDocumentMessage.metadata,
                 referenceSequenceNumber: transformedRefSeqNumber,
                 traces: message.operation.traces,
                 type: branchDocumentMessage.type,
@@ -420,23 +418,15 @@ export class DeliLambda implements IPartitionLambda {
         };
     }
 
-    // Back-Compat: Older message does not have metadata field. So use the content field.
     private extractSystemContent(message: IRawOperationMessage) {
         if (isSystemType(message.operation.type)) {
-            if (message.operation.metadata) {
-                return message.operation.metadata.content;
-            } else {
-                const operation = message.operation as IDocumentSystemMessage;
-                if (operation.data) {
-                    return JSON.parse(operation.data);
-                } else {
-                    return message.operation.contents;
-                }
+            const operation = message.operation as IDocumentSystemMessage;
+            if (operation.data) {
+                return JSON.parse(operation.data);
             }
         }
     }
 
-    // Back-compat: We should consolidate it better when we remove back-compat.
     private createOutputMessage(
         message: IRawOperationMessage,
         origin: IBranchOrigin,
@@ -446,7 +436,6 @@ export class DeliLambda implements IPartitionLambda {
             clientId: message.clientId,
             clientSequenceNumber: message.operation.clientSequenceNumber,
             contents: message.operation.contents,
-            metadata: message.operation.metadata,
             minimumSequenceNumber: this.minimumSequenceNumber,
             origin,
             referenceSequenceNumber: message.operation.referenceSequenceNumber,
@@ -523,16 +512,11 @@ export class DeliLambda implements IPartitionLambda {
     /**
      * Creates a leave message for inactive clients.
      */
-    // back-compat: Puts the same content in metadata and contents.
     private createLeaveMessage(clientId: string): IRawOperationMessage {
         const operation: IDocumentSystemMessage = {
             clientSequenceNumber: -1,
-            contents: clientId,
+            contents: null,
             data: JSON.stringify(clientId),
-            metadata: {
-                content: clientId,
-                split: false,
-            },
             referenceSequenceNumber: -1,
             traces: [],
             type: MessageType.ClientLeave,
@@ -578,10 +562,6 @@ export class DeliLambda implements IPartitionLambda {
             operation: {
                 clientSequenceNumber: -1,
                 contents: null,
-                metadata: {
-                    content: null,
-                    split: false,
-                },
                 referenceSequenceNumber: -1,
                 traces: [],
                 type: MessageType.NoOp,

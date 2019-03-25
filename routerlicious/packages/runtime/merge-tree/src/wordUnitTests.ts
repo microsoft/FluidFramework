@@ -1,12 +1,12 @@
 // tslint:disable
 
 import * as MergeTree from "./mergeTree";
-import { Client } from "./client";
+import { TestClient } from "./test/testClient";
 import * as Properties from "./properties";
 import * as ops from "./ops";
 import * as path from "path";
 import * as random from "random-js";
-import { loadTextFromFileWithMarkers, specToSegment } from "./test/testUtils";
+import { loadTextFromFileWithMarkers } from "./test/testUtils";
 
 function clock() {
     return process.hrtime();
@@ -103,7 +103,7 @@ export function propertyCopy() {
     console.log(`diff time ${perIter} us per ${propCount} properties; ${perProp} us per property`);
 }
 
-function makeBookmarks(client: Client, bookmarkCount: number) {
+function makeBookmarks(client: TestClient, bookmarkCount: number) {
     let mt = random.engines.mt19937();
     mt.seedWithArray([0xdeadbeef, 0xfeedbed]);
     let bookmarks = <MergeTree.LocalReference[]>[];
@@ -126,7 +126,7 @@ function makeBookmarks(client: Client, bookmarkCount: number) {
 
 function measureFetch(startFile: string, withBookmarks = false) {
     let bookmarkCount = 20000;
-    let client = new Client("", specToSegment, { blockUpdateMarkers: true });
+    let client = new TestClient("", { blockUpdateMarkers: true });
     loadTextFromFileWithMarkers(startFile, client.mergeTree);
     if (withBookmarks) {
         makeBookmarks(client, bookmarkCount);

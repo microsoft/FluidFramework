@@ -53,16 +53,6 @@ export interface IChunkedOp {
 }
 
 /**
- * System level metadata
- */
-export interface ISystemData {
-
-    split: boolean;
-
-    content: any;
-}
-
-/**
  * Messages to track latency trace
  */
 export interface ITrace {
@@ -98,11 +88,7 @@ export interface IDocumentMessage {
     type: string;
 
     // The contents of the message
-    // back-compat: This should be string.
     contents: any;
-
-    // back-compat: Remove this optional field once clients are up to date.
-    metadata?: ISystemData;
 
     // Traces related to the packet.
     traces?: ITrace[];
@@ -158,9 +144,6 @@ export interface ISequencedDocumentMessage {
     // Origin branch information for the message. Can be marked undefined if the current
     // message is also the origin.
     origin: IBranchOrigin;
-
-    // back-compat: Remove this optional field once clients are up to date.
-    metadata?: ISystemData;
 
     // Traces related to the packet.
     traces: ITrace[];

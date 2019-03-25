@@ -5,14 +5,32 @@ import * as ReactDOM from "react-dom";
 import ImageGallery from "react-image-gallery";
 import "../node_modules/react-image-gallery/styles/css/image-gallery.css";
 import "./Styles.css";
-import ReactImageGallery from "react-image-gallery";
+import { ISharedMap } from "@prague/map";
 
-export class imagegallerycomponent extends Document {
-  /**
-   * Create the component's schema and perform other initialization tasks
-   * (only called when document is initially created).
-   */
-  position: number;
+export class ImageGalleryComponent extends Document {
+  
+  imageList = [
+    {
+      original: "https://picsum.photos/800/800/?image=400",
+      thumbnail: "https://picsum.photos/100/100/?image=400"
+    },
+    {
+      original: "https://picsum.photos/800/800/?image=430",
+      thumbnail: "https://picsum.photos/100/100/?image=430"
+    },
+    {
+      original: "https://picsum.photos/800/800/?image=490",
+      thumbnail: "https://picsum.photos/100/100/?image=490"
+    },
+    {
+      original: "https://picsum.photos/800/800/?image=580",
+      thumbnail: "https://picsum.photos/100/100/?image=580"
+    },
+    {
+      original: "https://picsum.photos/800/800/?image=700",
+      thumbnail: "https://picsum.photos/100/100/?image=700"
+    }
+  ];
 
   defaultProps = {
     items: [],
@@ -21,24 +39,11 @@ export class imagegallerycomponent extends Document {
     lazyLoad: false
   };
 
-  private images = [];
-
   imageGallery: ImageGallery;
+  images: ISharedMap;
 
   public async create() {
     this.root.set("position", 0);
-    this.position = 1;
-  }
-
-  private GenerateImages()
-  {
-    var i:number; 
-    var picNum : number = 400;
-    for (i=0;i<5;i++)
-    {
-      picNum=picNum+i*30;
-      this.images.push({original: 'https://picsum.photos/800/800/?image=' + picNum.toString(), thumbnail: 'https://picsum.photos/100/100/?image=' + picNum.toString()})
-    }
   }
 
   /**
@@ -48,54 +53,34 @@ export class imagegallerycomponent extends Document {
     const maybeDiv = await this.platform.queryInterface<HTMLDivElement>("div");
 
     if (maybeDiv) {
-      
-      this.GenerateImages();
-
-      this.imageGallery = new ReactImageGallery(this.defaultProps);
-
       maybeDiv.className = "app-sandbox";
-      
-      // Don't try to render if there's not a root map yet
-      this.runtime.on("connected", () => {
-        this.render(maybeDiv);
-      });
 
       this.root.on("op", () => {
-        this.moveToNewSlidePosition();
+        const position = this.root.get<number>("position");
+        if (this.imageGallery) {
+          this.imageGallery.slideToIndex(position);
+        }
+
         this.render(maybeDiv);
       });
-
-      // Value changed is a subset of op
-      // this.root.on("valueChanged");
-
     } else {
       return;
     }
   }
 
-  /**
-   * This function creates a slideChangedCallback, but it gives the callback a scope
-   * that includes the appropriate this.root
-   */
-  private slideChangedCallbackFactory() {
-    return (index) => {
-      console.log(index);
-      this.root.set("position", index);
-    }
-  }
-
-  private async moveToNewSlidePosition(): Promise<number> {
-    const position = await this.root.get<number>("position");
-    this.imageGallery.slideToIndex(position);
-    return position;
-  }
 
   protected render(host: HTMLDivElement) {
+
+    const onSlide = (index) => {
+      this.root.set("position", index);
+    }
+
     ReactDOM.render(
       <ImageGallery
-        ref={i => (this.imageGallery = i)}
-        items={this.images}
-        onSlide={this.slideChangedCallbackFactory()}
+        ref={gallery => (this.imageGallery = gallery)}
+        items={this.imageList}
+        onSlide={onSlide}
+        slideDuration={10}
       />,
       host
     );
@@ -106,6 +91,6 @@ export async function instantiateRuntime(
   context: IContainerContext
 ): Promise<IRuntime> {
   return Component.instantiateRuntime(context, "@chaincode/counter", [
-    ["@chaincode/counter", imagegallerycomponent]
+    ["@chaincode/counter", ImageGalleryComponent]
   ]);
 }

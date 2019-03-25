@@ -236,5 +236,26 @@
             "args": ["--no-timeouts", "--exit", "--require", "ts-node\\register", "${file}", ],
             "cwd": "${fileDirname}"
         },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Local Test Server",
+            "cwd": "${workspaceFolder}/packages/server/local-test-server",
+            "program": "${workspaceFolder}/packages/server/local-test-server/node_modules/.bin/_mocha",
+            "args": [
+                "--require", "ts-node/register",
+                "-u", "tdd",
+                "--colors",
+                "--no-timeouts",
+                "--recursive",
+                "src/test/**/*.spec.ts",
+                "--exit"
+            ],
+            "env": {
+                "TS_NODE_PROJECT": "tsconfig.json"
+            },
+            "internalConsoleOptions": "openOnSessionStart"
+        }
+        
     ]
 }

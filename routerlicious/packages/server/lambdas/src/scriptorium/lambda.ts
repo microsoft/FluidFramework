@@ -30,11 +30,6 @@ export class ScriptoriumLambda implements IPartitionLambda {
                 // Remove traces and serialize content before writing to mongo.
                 value.operation.traces = [];
 
-                // Back-Compat: Remove this when everybody is up to date.
-                if (value.operation && value.operation.contents !== undefined) {
-                    value.operation.contents = JSON.stringify(value.operation.contents);
-                }
-
                 const topic = `${value.tenantId}/${value.documentId}`;
                 if (!this.pending.has(topic)) {
                     this.pending.set(topic, []);
@@ -114,9 +109,7 @@ export class ScriptoriumLambda implements IPartitionLambda {
 
         const allUpdates = [];
         for (const message of messages) {
-            // Back-Compat: Temporary workaround to handle old clients.
-            // tslint:disable max-line-length
-            if ((message.operation.metadata && message.operation.metadata.split) || message.operation.contents === undefined) {
+            if (message.operation.contents === undefined) {
                 const updateP = this.contentCollection.update(
                     {
                         "clientId": message.operation.clientId,

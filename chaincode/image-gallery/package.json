@@ -1,7 +1,7 @@
 {
   "name": "@chaincode/imagegallery",
   "description": "Image Gallery with pretty layout",
-  "version": "0.0.1",
+  "version": "0.0.3",
   "author": "Microsoft",
   "repository": "microsoft/prague",
   "main": "dist/main.bundle.js",

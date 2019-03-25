@@ -1,14 +1,14 @@
 import * as assert from "assert";
 import * as MergeTree from "..";
-import { insertMarkerLocal, insertTextLocal, specToSegment } from "./testUtils";
+import { TestClient } from "./testClient";
 
-describe("MergeTree.Client", () => {
+describe("TestClient", () => {
 
     const localUserLongId = "localUser";
-    let client: MergeTree.Client;
+    let client: TestClient;
 
     beforeEach(() => {
-        client = new MergeTree.Client("", specToSegment);
+        client = new TestClient("");
 
         client.startCollaboration(localUserLongId);
     });
@@ -17,8 +17,7 @@ describe("MergeTree.Client", () => {
         it("Should be able to find non preceding tile based on label", () => {
             const tileLabel = "EOP";
 
-            insertMarkerLocal(
-                client,
+            client.insertMarkerLocal(
                 0,
                 MergeTree.ReferenceType.Tile,
                 {
@@ -26,7 +25,7 @@ describe("MergeTree.Client", () => {
                     [MergeTree.reservedMarkerIdKey]: "some-id",
                 });
 
-            insertTextLocal(client, "abc", 0);
+            client.insertTextLocal("abc", 0);
 
             console.log(client.getText());
 
@@ -43,10 +42,9 @@ describe("MergeTree.Client", () => {
     describe(".findTile", () => {
         it("Should be able to find non preceding tile position based on label from client with single tile", () => {
             const tileLabel = "EOP";
-            insertTextLocal(client, "abc d", 0);
+            client.insertTextLocal("abc d", 0);
 
-            insertMarkerLocal(
-                client,
+            client.insertMarkerLocal(
                 0,
                 MergeTree.ReferenceType.Tile,
                 {
@@ -68,8 +66,7 @@ describe("MergeTree.Client", () => {
     describe(".findTile", () => {
         it("Should be able to find preceding tile position based on label from client with multiple tile", () => {
             const tileLabel = "EOP";
-            insertMarkerLocal(
-                client,
+            client.insertMarkerLocal(
                 0,
                 MergeTree.ReferenceType.Tile,
                 {
@@ -77,10 +74,9 @@ describe("MergeTree.Client", () => {
                     [MergeTree.reservedMarkerIdKey]: "some-id",
                 });
 
-            insertTextLocal(client, "abc d", 0);
+            client.insertTextLocal("abc d", 0);
 
-            insertMarkerLocal(
-                client,
+            client.insertMarkerLocal(
                 0,
                 MergeTree.ReferenceType.Tile,
                 {
@@ -88,9 +84,8 @@ describe("MergeTree.Client", () => {
                     [MergeTree.reservedMarkerIdKey]: "some-id",
                 });
 
-            insertTextLocal(client, "ef", 7);
-            insertMarkerLocal(
-                client,
+            client.insertTextLocal("ef", 7);
+            client.insertMarkerLocal(
                 8,
                 MergeTree.ReferenceType.Tile,
                 {
@@ -112,8 +107,7 @@ describe("MergeTree.Client", () => {
     describe(".findTile", () => {
         it("Should be able to find non preceding tile position from client with multiple tile", () => {
             const tileLabel = "EOP";
-            insertMarkerLocal(
-                client,
+            client.insertMarkerLocal(
                 0,
                 MergeTree.ReferenceType.Tile,
                 {
@@ -121,10 +115,9 @@ describe("MergeTree.Client", () => {
                     [MergeTree.reservedMarkerIdKey]: "some-id",
                 });
 
-            insertTextLocal(client, "abc d", 0);
+            client.insertTextLocal("abc d", 0);
 
-            insertMarkerLocal(
-                client,
+            client.insertMarkerLocal(
                 0,
                 MergeTree.ReferenceType.Tile,
                 {
@@ -132,9 +125,8 @@ describe("MergeTree.Client", () => {
                     [MergeTree.reservedMarkerIdKey]: "some-id",
                 });
 
-            insertTextLocal(client, "ef", 7);
-            insertMarkerLocal(
-                client,
+            client.insertTextLocal("ef", 7);
+            client.insertMarkerLocal(
                 8,
                 MergeTree.ReferenceType.Tile,
                 {
@@ -156,8 +148,7 @@ describe("MergeTree.Client", () => {
     describe(".findTile", () => {
         it("Should be able to find  tile from client with text length 1", () => {
             const tileLabel = "EOP";
-            insertMarkerLocal(
-                client,
+            client.insertMarkerLocal(
                 0,
                 MergeTree.ReferenceType.Tile,
                 {
@@ -186,8 +177,7 @@ describe("MergeTree.Client", () => {
     describe(".findTile", () => {
         it("Should be able to find only preceding but not non preceeding tile with index out of bound", () => {
             const tileLabel = "EOP";
-            insertMarkerLocal(
-                client,
+            client.insertMarkerLocal(
                 0,
                 MergeTree.ReferenceType.Tile,
                 {
@@ -195,7 +185,7 @@ describe("MergeTree.Client", () => {
                     [MergeTree.reservedMarkerIdKey]: "some-id",
                 });
 
-            insertTextLocal(client, "abc", 0);
+            client.insertTextLocal("abc", 0);
             console.log(client.getText());
 
             assert.equal(client.getLength(), 4, "length not expected");
@@ -208,25 +198,25 @@ describe("MergeTree.Client", () => {
 
             const tile1 = client.findTile(5, tileLabel, false);
 
-            assert.equal(typeof(tile1), "undefined", "Returned tile should be undefined.");
+            assert.equal(typeof (tile1), "undefined", "Returned tile should be undefined.");
         });
     });
 
     describe(".findTile", () => {
         it("Should return undefined when trying to find tile from text without the specified tile", () => {
             const tileLabel = "EOP";
-            insertTextLocal(client, "abc", 0);
+            client.insertTextLocal("abc", 0);
             console.log(client.getText());
 
             assert.equal(client.getLength(), 3, "length not expected");
 
             const tile = client.findTile(1, tileLabel);
 
-            assert.equal(typeof(tile), "undefined", "Returned tile should be undefined.");
+            assert.equal(typeof (tile), "undefined", "Returned tile should be undefined.");
 
             const tile1 = client.findTile(1, tileLabel, false);
 
-            assert.equal(typeof(tile1), "undefined", "Returned tile should be undefined.");
+            assert.equal(typeof (tile1), "undefined", "Returned tile should be undefined.");
         });
     });
 
@@ -236,11 +226,11 @@ describe("MergeTree.Client", () => {
 
             const tile = client.findTile(1, tileLabel);
 
-            assert.equal(typeof(tile), "undefined", "Returned tile should be undefined.");
+            assert.equal(typeof (tile), "undefined", "Returned tile should be undefined.");
 
             const tile1 = client.findTile(1, tileLabel, false);
 
-            assert.equal(typeof(tile1), "undefined", "Returned tile should be undefined.");
+            assert.equal(typeof (tile1), "undefined", "Returned tile should be undefined.");
         });
     });
 });
