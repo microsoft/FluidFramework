@@ -79,10 +79,10 @@ export abstract class SharedObject extends EventEmitter implements ISharedObject
             return this;
         }
 
+        this.setOwner();
+
         // Allow derived classes to perform custom processing prior to attaching this object
         this.attachCore();
-
-        this.setOwner();
 
         // Notify the document of the attachment
         this.services = this.runtime.attachChannel(this);
@@ -144,7 +144,7 @@ export abstract class SharedObject extends EventEmitter implements ISharedObject
 
     /**
      * Allows the distributive data type the ability to perform custom processing once an attach has happened.
-     * Also called after non-local data type get loaded.  
+     * Also called after non-local data type get loaded.
      */
     protected postAttach() {
         return;
