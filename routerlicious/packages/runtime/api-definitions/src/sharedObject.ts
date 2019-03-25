@@ -79,6 +79,9 @@ export abstract class SharedObject extends EventEmitter implements ISharedObject
             return this;
         }
 
+        // Allow derived classes to perform custom processing prior to attaching this object
+        this.attachCore();
+
         this.setOwner();
 
         // Notify the document of the attachment
@@ -140,6 +143,14 @@ export abstract class SharedObject extends EventEmitter implements ISharedObject
     protected abstract attachCore();
 
     /**
+     * Allows the distributive data type the ability to perform custom processing once an attach has happened.
+     * Also called after non-local data type get loaded.  
+     */
+    protected postAttach() {
+        return;
+    }
+
+    /**
      * Prepares the given message for processing
      */
     protected abstract prepareCore(message: ISequencedDocumentMessage, local: boolean): Promise<any>;
@@ -183,8 +194,8 @@ export abstract class SharedObject extends EventEmitter implements ISharedObject
     }
 
     private attachDeltaHandler() {
-        // Allow derived classes to perform custom processing prior to attaching this object
-        this.attachCore();
+        // Allows objects to start listening for events
+        this.postAttach();
 
         this.services.deltaConnection.attach({
             prepare: (message, local) => {
