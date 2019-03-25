@@ -11,7 +11,7 @@ module.exports = env => {
             polyfills: './src/polyfills.ts',
         },
         resolve: {
-            extensions: [".ts", ".tsx", ".js"],
+            extensions: [".mjs", ".ts", ".tsx", ".js"],
         },
         module: {
             rules: [

@@ -1,11 +1,83 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-
-import { Observable, of } from 'rxjs';
-import { catchError, map, tap } from 'rxjs/operators';
-
+import { graphql } from "graphql";
+import { from, Observable, of } from 'rxjs';
+import {
+    GraphQLInt,
+    GraphQLList,
+    GraphQLNonNull,
+    GraphQLObjectType,
+    GraphQLSchema,
+    GraphQLString,
+} from "graphql";
+import { catchError, tap } from 'rxjs/operators';
 import { Hero } from './hero';
 import { MessageService } from './message.service';
+
+// Example of how to manually build a GraphQL Schema at https://github.com/graphql/graphql-js/
+
+// type Hero {
+//     id: Int!
+//     name: String!
+// }
+const heroType = new GraphQLObjectType({
+    name: "Hero",
+    description: "A superhero",
+    fields: () => ({
+        id: {
+            type: GraphQLNonNull(GraphQLInt),
+            description: "The super hero ID",
+        },
+        name: {
+            type: GraphQLString,
+            description: 'The name of the human.',
+        }
+    }),
+});
+
+// type Query {
+//     heroes: [Character!]!
+// }
+const queryType = new GraphQLObjectType({
+    name: "Query",
+    fields: () => ({
+        heroes: {
+            type: GraphQLList(heroType),
+            args: {
+                id: {
+                    description:
+                        "If omitted, returns all the heroes. If provided, returns the hero of that particular id.",
+                    type: GraphQLInt,
+                },
+            },
+            resolve: (root, { id }) => {
+                const heroes = [
+                    { id: 11, name: 'Mr. Nice' },
+                    { id: 12, name: 'Narco' },
+                    { id: 13, name: 'Bombasto' },
+                    { id: 14, name: 'Celeritas' },
+                    { id: 15, name: 'Magneta' },
+                    { id: 16, name: 'RubberMan' },
+                    { id: 17, name: 'Dynama' },
+                    { id: 18, name: 'Dr IQ' },
+                    { id: 19, name: 'Magma' },
+                    { id: 20, name: 'Tornado' }
+                ];
+
+                if (id) {
+                    const found = heroes.find((value) => value.id === id);
+                    return Promise.resolve(found ? [found] : []);
+                } else {
+                    return Promise.resolve(heroes);
+                }
+            },
+        }
+    }),
+});
+
+const schema = new GraphQLSchema({
+    query: queryType
+});
 
 const httpOptions = {
     headers: new HttpHeaders({ 'Content-Type': 'application/json' })
@@ -13,7 +85,6 @@ const httpOptions = {
 
 @Injectable({ providedIn: 'root' })
 export class HeroService {
-
     private heroesUrl = 'api/heroes';  // URL to web api
 
     constructor(
@@ -22,31 +93,41 @@ export class HeroService {
 
     /** GET heroes from the server */
     getHeroes(): Observable<Hero[]> {
-        return this.http.get<Hero[]>(this.heroesUrl)
+        const query =
+            `
+                {
+                    heroes {
+                        id
+                        name
+                    }
+                }
+            `;
+
+        const queryP = graphql<{ heroes: Hero[] }>(schema, query).then(
+            (response) => response.errors ? Promise.reject(response.errors) : Promise.resolve(response.data.heroes));
+
+        return from(queryP)
             .pipe(
                 tap(_ => this.log('fetched heroes')),
                 catchError(this.handleError('getHeroes', []))
             );
     }
 
-    /** GET hero by id. Return `undefined` when id not found */
-    getHeroNo404<Data>(id: number): Observable<Hero> {
-        const url = `${this.heroesUrl}/?id=${id}`;
-        return this.http.get<Hero[]>(url)
-            .pipe(
-                map(heroes => heroes[0]), // returns a {0|1} element array
-                tap(h => {
-                    const outcome = h ? `fetched` : `did not find`;
-                    this.log(`${outcome} hero id=${id}`);
-                }),
-                catchError(this.handleError<Hero>(`getHero id=${id}`))
-            );
-    }
-
     /** GET hero by id. Will 404 if id not found */
     getHero(id: number): Observable<Hero> {
-        const url = `${this.heroesUrl}/${id}`;
-        return this.http.get<Hero>(url).pipe(
+        const query =
+            `
+                {
+                    heroes(id: ${id}) {
+                        id
+                        name
+                    }
+                }
+            `;
+        const queryP = graphql<{ heroes: Hero[] }>(schema, query).then(
+            (response) => response.errors ? Promise.reject(response.errors) : Promise.resolve(response.data.heroes[0]));
+
+        return from(queryP).pipe(
             tap(_ => this.log(`fetched hero id=${id}`)),
             catchError(this.handleError<Hero>(`getHero id=${id}`))
         );
