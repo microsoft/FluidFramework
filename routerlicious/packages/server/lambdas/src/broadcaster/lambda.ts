@@ -13,7 +13,7 @@ import {
 } from "@prague/services-core";
 import * as _ from "lodash";
 
-class BBCBatch {
+class BroadcasterBatch {
     public messages: Array<ISequencedDocumentMessage | INack> = [];
 
     constructor(
@@ -23,10 +23,10 @@ class BBCBatch {
     }
 }
 
-export class BBCLambda implements IPartitionLambda {
-    private pending = new Map<string, BBCBatch>();
+export class BroadcasterLambda implements IPartitionLambda {
+    private pending = new Map<string, BroadcasterBatch>();
     private pendingOffset: number;
-    private current = new Map<string, BBCBatch>();
+    private current = new Map<string, BroadcasterBatch>();
 
     constructor(private io: IPublisher, protected context: IContext) {
     }
@@ -52,7 +52,7 @@ export class BBCLambda implements IPartitionLambda {
                 const value = baseMessage as INackMessage | ISequencedOperationMessage;
 
                 if (!this.pending.has(topic)) {
-                    this.pending.set(topic, new BBCBatch(value.documentId, value.tenantId, event));
+                    this.pending.set(topic, new BroadcasterBatch(value.documentId, value.tenantId, event));
                 }
 
                 this.pending.get(topic).messages.push(value.operation);

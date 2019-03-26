@@ -35,16 +35,16 @@ We truncate at 63 chars because some Kubernetes name fields are limited to this 
 {{- printf "%s-%s" .Release.Name .Values.scriptorium.name | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
-{{- define "bbc.fullname" -}}
-{{- printf "%s-%s" .Release.Name .Values.bbc.name | trunc 63 | trimSuffix "-" -}}
+{{- define "broadcaster.fullname" -}}
+{{- printf "%s-%s" .Release.Name .Values.broadcaster.name | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
 {{- define "routemaster.fullname" -}}
 {{- printf "%s-%s" .Release.Name .Values.routemaster.name | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
-{{- define "tmz.fullname" -}}
-{{- printf "%s-%s" .Release.Name .Values.tmz.name | trunc 63 | trimSuffix "-" -}}
+{{- define "foreman.fullname" -}}
+{{- printf "%s-%s" .Release.Name .Values.foreman.name | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
 {{- define "riddler.fullname" -}}

@@ -32,14 +32,14 @@ services:
             options:
                 gelf-address: "udp://127.0.0.1:12201"
                 tag: "log-scriptorium"
-    tmz:
+    foreman:
         depends_on:
             - logstash
         logging:
             driver: gelf
             options:
                 gelf-address: "udp://127.0.0.1:12201"
-                tag: "log-tmz"
+                tag: "log-foreman"
     elasticsearch:
         image: elasticsearch:5.5.1
         ports:

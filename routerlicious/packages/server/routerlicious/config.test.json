@@ -55,7 +55,7 @@
         "queue": "snapshot",
         "bucket": "snapshots",
         "alfred": "http://alfred:3000",
-        "tmz": "http://tmz:4000"
+        "foreman": "http://tmz:4000"
     },
     "scriptorium": {
         "topic": "deltas",
@@ -64,11 +64,11 @@
         "checkpointBatchSize": 1,
         "checkpointTimeIntervalMsec": 1000
     },
-    "tmz": {
+    "foreman": {
         "queue": "snapshot",
         "topic": "deltas",
-        "kafkaClientId": "tmz",
-        "groupId": "tmz",
+        "kafkaClientId": "foreman",
+        "groupId": "foreman",
         "port": 4000,
         "timeoutMSec": {
             "checker": 10000,

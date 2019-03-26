@@ -12,10 +12,10 @@ services:
     scriptorium:
         volumes:
             - .:/usr/src/server
-    bbc:
+    broadcaster:
         volumes:
             - .:/usr/src/server
-    tmz:
+    foreman:
         volumes:
             - .:/usr/src/server
     paparazzi:

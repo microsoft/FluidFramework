@@ -32,16 +32,16 @@ services:
             - DEBUG=prague:*
             - NODE_ENV=development
         restart: always
-    bbc:
+    broadcaster:
         image: prague.azurecr.io/prague:latest
-        command: node dist/kafka-service/index.js bbc /usr/src/server/packages/server/routerlicious/dist/bbc/index.js
+        command: node dist/kafka-service/index.js broadcaster /usr/src/server/packages/server/routerlicious/dist/broadcaster/index.js
         environment:
             - DEBUG=prague:*
             - NODE_ENV=development
         restart: always
-    tmz:
+    foreman:
         image: prague.azurecr.io/prague:latest
-        command: node dist/kafka-service/index.js tmz /usr/src/server/packages/server/routerlicious/dist/tmz/index.js
+        command: node dist/kafka-service/index.js foreman /usr/src/server/packages/server/routerlicious/dist/foreman/index.js
         environment:
             - DEBUG=prague:*
             - NODE_ENV=development

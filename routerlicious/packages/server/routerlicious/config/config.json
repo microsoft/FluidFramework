@@ -110,16 +110,16 @@
             "group": "scriptorium",
             "topic": "deltas"
         },
-        "bbc": {
-            "group": "bbc",
+        "broadcaster": {
+            "group": "broadcaster",
             "topic": "deltas"
         },
         "serviceGraph": {
             "group": "serviceGraph",
             "topic": "deltas"
         },
-        "tmz": {
-            "group": "tmz",
+        "foreman": {
+            "group": "foreman",
             "topic": "deltas"
         }
     },
@@ -130,7 +130,7 @@
         "checkpointBatchSize": 1,
         "checkpointTimeIntervalMsec": 1000
     },
-    "tmz": {
+    "foreman": {
         "alfred": "http://alfred:3000",
         "queues": ["paparazziQueue", "augloopQueue", "headlessQueue"],
         "permissions": {

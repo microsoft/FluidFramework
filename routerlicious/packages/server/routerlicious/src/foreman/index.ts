@@ -1,4 +1,4 @@
-import { TmzLambdaFactory } from "@prague/lambdas";
+import { ForemanLambdaFactory } from "@prague/lambdas";
 import * as services from "@prague/services";
 import { IPartitionLambdaFactory } from "@prague/services-core";
 import { Provider } from "nconf";
@@ -9,10 +9,10 @@ export async function create(config: Provider): Promise<IPartitionLambdaFactory>
         authEndpoint,
         config.get("worker:blobStorageUrl"));
 
-    const tmzConfig = config.get("tmz");
-    const messageSender = services.createMessageSender(config.get("rabbitmq"), tmzConfig);
+    const foremanConfig = config.get("foreman");
+    const messageSender = services.createMessageSender(config.get("rabbitmq"), foremanConfig);
 
     // Preps message sender.
     await messageSender.initialize();
-    return new TmzLambdaFactory(messageSender, tenantManager, tmzConfig.permissions);
+    return new ForemanLambdaFactory(messageSender, tenantManager, foremanConfig.permissions);
 }

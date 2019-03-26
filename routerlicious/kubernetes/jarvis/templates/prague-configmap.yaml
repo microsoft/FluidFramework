@@ -93,7 +93,7 @@ data:
             "checkpointBatchSize": 10,
             "checkpointTimeIntervalMsec": 1000
         },
-        "tmz": {
+        "foreman": {
             "queues": ["paparazziQueue2", "augloopQueue2"],
             "permissions": {
                 "paparazziQueue": ["snapshot", "spell", "intel", "translation", "chain-snapshot", "chain-spell", "chain-intel", "chain-translation"],
@@ -117,8 +117,8 @@ data:
                 "group": "{{ template "scriptorium.fullname" . }}",
                 "topic": "{{ .Values.kafka.topics.deltas }}"
             },
-            "bbc": {
-                "group": "{{ template "bbc.fullname" . }}",
+            "broadcaster": {
+                "group": "{{ template "broadcaster.fullname" . }}",
                 "topic": "{{ .Values.kafka.topics.deltas }}"
             }
         },

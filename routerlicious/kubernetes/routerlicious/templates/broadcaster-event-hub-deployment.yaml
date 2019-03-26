@@ -1,33 +1,34 @@
+{{- if .Values.eventHub }}
 apiVersion: apps/v1beta1
 kind: Deployment
 metadata:
-  name: {{ template "bbc.fullname" . }}
+  name: {{ template "broadcaster.fullname" . }}-eventhub
   labels:
     app: {{ template "routerlicious.name" . }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
-    component: "{{ .Values.bbc.name }}"
+    component: "{{ .Values.broadcaster.name }}-eventhub"
     release: "{{ .Release.Name }}"
     heritage: "{{ .Release.Service }}"
 spec:
-  replicas: {{ .Values.bbc.replicas }}
+  replicas: {{ .Values.broadcaster.replicas }}
   template:
     metadata:
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/prague-configmap.yaml") . | sha256sum }}
       labels:
         app: {{ template "routerlicious.name" . }}
-        component: "{{ .Values.bbc.name }}"
+        component: "{{ .Values.broadcaster.name }}-eventhub"
         release: {{ .Release.Name }}
     spec:
       containers:
-      - name: {{ template "bbc.fullname" . }}
+      - name: {{ template "broadcaster.fullname" . }}-eventhub
         image: "{{ .Values.image }}"
         imagePullPolicy: {{ default "" .Values.imagePullPolicy | quote }}
         command:
           - 'node'
-          - 'deli/dist/kafka-service/index.js'
-          - 'bbc'
-          - '/usr/src/server/functions/deli/dist/bbc/index.js'
+          - 'dist/event-hub-service/index.js'
+          - 'broadcaster'
+          - '/usr/src/server/packages/server/routerlicious/dist/broadcaster/index.js'
         env:
         - name: DEBUG
           value: "prague:*"
@@ -35,7 +36,7 @@ spec:
           value: production
         volumeMounts:
         - name: config
-          mountPath: /usr/src/server/functions/deli/config.json
+          mountPath: /usr/src/server/packages/server/routerlicious/config/config.json
           subPath: config.json
       dnsConfig:
         options:
@@ -46,3 +47,4 @@ spec:
         - name: config
           configMap:
             name: {{ template "routerlicious.fullname" . }}
+{{- end }}

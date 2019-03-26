@@ -131,10 +131,10 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
             true);
         const deltasCollectionName = config.get("mongo:collectionNames:deltas");
 
-        // tmz agent uploader does not run locally.
+        // foreman agent uploader does not run locally.
         // TODO: Make agent uploader run locally.
-        const tmzConfig = config.get("tmz");
-        const taskMessageSender = services.createMessageSender(config.get("rabbitmq"), tmzConfig);
+        const foremanConfig = config.get("foreman");
+        const taskMessageSender = services.createMessageSender(config.get("rabbitmq"), foremanConfig);
         await taskMessageSender.initialize();
 
         const nodeCollectionName = config.get("mongo:collectionNames:nodes");
@@ -176,7 +176,7 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
             () => new NodeWebSocketServer(4000),
             taskMessageSender,
             tenantManager,
-            tmzConfig.permissions,
+            foremanConfig.permissions,
             maxSendMessageSize);
         const localOrderManager = new LocalOrderManager(nodeFactory, reservationManager);
         const kafkaOrdererFactory = new KafkaOrdererFactory(

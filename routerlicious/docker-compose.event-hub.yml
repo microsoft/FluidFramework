@@ -20,11 +20,11 @@ services:
         volumes:
             - .:/usr/src/server
         restart: always
-    bbceh:
+    broadcastereh:
         build: .
         ports:
             - "5868:5858"
-        command: node --inspect=0.0.0.0:5858 dist/event-hub-service/index.js bbc /usr/src/server/packages/server/routerlicious/dist/bbc/index.js
+        command: node --inspect=0.0.0.0:5858 dist/event-hub-service/index.js broadcaster /usr/src/server/packages/server/routerlicious/dist/broadcaster/index.js
         environment:
             - DEBUG=prague:*
             - NODE_ENV=development

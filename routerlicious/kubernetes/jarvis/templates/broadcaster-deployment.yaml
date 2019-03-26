@@ -1,36 +1,33 @@
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1beta1
 kind: Deployment
 metadata:
-  name: {{ template "tmz.fullname" . }}
+  name: {{ template "broadcaster.fullname" . }}
   labels:
     app: {{ template "routerlicious.name" . }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
-    component: "{{ .Values.tmz.name }}"
+    component: "{{ .Values.broadcaster.name }}"
     release: "{{ .Release.Name }}"
     heritage: "{{ .Release.Service }}"
 spec:
-  replicas: {{ .Values.tmz.replicas }}
+  replicas: {{ .Values.broadcaster.replicas }}
   template:
     metadata:
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/prague-configmap.yaml") . | sha256sum }}
       labels:
         app: {{ template "routerlicious.name" . }}
-        component: "{{ .Values.tmz.name }}"
+        component: "{{ .Values.broadcaster.name }}"
         release: {{ .Release.Name }}
     spec:
       containers:
-      - name: {{ template "tmz.fullname" . }}
+      - name: {{ template "broadcaster.fullname" . }}
         image: "{{ .Values.image }}"
         imagePullPolicy: {{ default "" .Values.imagePullPolicy | quote }}
-        ports:
-        - name: ui
-          containerPort: 4000
         command:
           - 'node'
-          - 'dist/kafka-service/index.js'
-          - 'tmz'
-          - '/usr/src/server/packages/server/routerlicious/dist/tmz/index.js'
+          - 'deli/dist/kafka-service/index.js'
+          - 'broadcaster'
+          - '/usr/src/server/functions/deli/dist/broadcaster/index.js'
         env:
         - name: DEBUG
           value: "prague:*"
@@ -38,7 +35,7 @@ spec:
           value: production
         volumeMounts:
         - name: config
-          mountPath: /usr/src/server/packages/server/routerlicious/config/config.json
+          mountPath: /usr/src/server/functions/deli/config.json
           subPath: config.json
       dnsConfig:
         options:

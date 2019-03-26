@@ -1,5 +1,5 @@
-export * from "./bbc";
+export * from "./broadcaster";
 export * from "./deli";
 export * from "./scriptorium";
 export * from "./sequencedLambda";
-export * from "./tmz";
+export * from "./foreman";

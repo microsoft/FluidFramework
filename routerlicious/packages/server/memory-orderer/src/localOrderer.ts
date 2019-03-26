@@ -7,12 +7,12 @@ import {
 } from "@prague/container-definitions";
 import {
     ActivityCheckingTimeout,
-    BBCLambda,
+    BroadcasterLambda,
     ClientSequenceTimeout,
     DeliLambda,
+    ForemanLambda,
     NoopConsolidationTimeout,
     ScriptoriumLambda,
-    TmzLambda,
 } from "@prague/lambdas";
 import {
     BoxcarType,
@@ -297,15 +297,15 @@ export class LocalOrderer implements IOrderer {
     private static pubSub = new PubSub();
     private static socketPublisher = new LocalSocketPublisher(LocalOrderer.pubSub);
 
-    private static bbcContext = new LocalContext();
+    private static broadcasterContext = new LocalContext();
     private static scriptoriumContext = new LocalContext();
-    private static tmzContext = new LocalContext();
+    private static foremanContext = new LocalContext();
     private static deliContext = new LocalContext();
 
     private scriptoriumLambda: ScriptoriumLambda;
-    private tmzLambda: TmzLambda;
+    private foremanLambda: ForemanLambda;
     private deliLambda: DeliLambda;
-    private bbcLambda: BBCLambda;
+    private broadcasterLambda: BroadcasterLambda;
 
     private alfredToDeliKafka: InMemoryKafka;
     private deliToScriptoriumKafka: InMemoryKafka;
@@ -334,16 +334,16 @@ export class LocalOrderer implements IOrderer {
         this.alfredToDeliKafka = new InMemoryKafka(this.existing ? details.value.sequenceNumber : 0);
         this.deliToScriptoriumKafka = new InMemoryKafka();
 
-        // Scriptorium + BBC Lambda
+        // Scriptorium + Broadcaster Lambda
         this.scriptoriumLambda = new ScriptoriumLambda(deltasCollection, undefined, LocalOrderer.scriptoriumContext);
-        this.bbcLambda = new BBCLambda(LocalOrderer.socketPublisher, LocalOrderer.bbcContext);
+        this.broadcasterLambda = new BroadcasterLambda(LocalOrderer.socketPublisher, LocalOrderer.broadcasterContext);
 
-        // TMZ lambda
-        this.tmzLambda = new TmzLambda(
+        // Foreman lambda
+        this.foremanLambda = new ForemanLambda(
             this.taskMessageSender,
             this.tenantManager,
             this.permission,
-            LocalOrderer.tmzContext);
+            LocalOrderer.foremanContext);
 
         // Deli lambda
         this.deliLambda = new DeliLambda(
@@ -398,14 +398,14 @@ export class LocalOrderer implements IOrderer {
         this.deliToScriptoriumKafka.close();
 
         // close lambdas
-        this.bbcLambda.close();
+        this.broadcasterLambda.close();
         this.scriptoriumLambda.close();
-        this.tmzLambda.close();
+        this.foremanLambda.close();
         this.deliLambda.close();
     }
 
     public hasPendingWork(): boolean {
-        return this.bbcLambda.hasPendingWork();
+        return this.broadcasterLambda.hasPendingWork();
     }
     private startLambdas() {
         this.alfredToDeliKafka.on("message", (message: IKafkaMessage) => {
@@ -413,9 +413,9 @@ export class LocalOrderer implements IOrderer {
         });
 
         this.deliToScriptoriumKafka.on("message", (message: IKafkaMessage) => {
-            this.bbcLambda.handler(message);
+            this.broadcasterLambda.handler(message);
             this.scriptoriumLambda.handler(message);
-            this.tmzLambda.handler(message);
+            this.foremanLambda.handler(message);
         });
     }
 }

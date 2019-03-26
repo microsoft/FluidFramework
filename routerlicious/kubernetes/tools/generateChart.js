@@ -56,16 +56,16 @@ scriptorium:
   name: scriptorium
   replicas: 8
 
-bbc:
-  name: bbc
+broadcaster:
+  name: broadcaster
   replicas: 8
 
 routemaster:
   name: routemaster
   replicas: 8
 
-tmz:
-  name: tmz
+foreman:
+  name: foreman
   replicas: 8
   externalUrl: https://tmz.wu2.prague.office-int.com
   host: tmz.wu2.prague.office-int.com

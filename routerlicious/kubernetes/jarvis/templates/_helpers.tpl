@@ -21,6 +21,6 @@
 {{- printf "%s-%s" .Release.Name .Values.scriptorium.name | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
-{{- define "bbc.fullname" -}}
-{{- printf "%s-%s" .Release.Name .Values.bbc.name | trunc 63 | trimSuffix "-" -}}
+{{- define "broadcaster.fullname" -}}
+{{- printf "%s-%s" .Release.Name .Values.broadcaster.name | trunc 63 | trimSuffix "-" -}}
 {{- end -}}

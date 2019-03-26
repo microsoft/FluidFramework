@@ -7,9 +7,9 @@ import {
 } from "@prague/services-core";
 import { EventEmitter } from "events";
 import { Provider } from "nconf";
-import { TmzLambda } from "./lambda";
+import { ForemanLambda } from "./lambda";
 
-export class TmzLambdaFactory extends EventEmitter implements IPartitionLambdaFactory {
+export class ForemanLambdaFactory extends EventEmitter implements IPartitionLambdaFactory {
     constructor(
         private messageSender: ITaskMessageSender,
         private tenantManager: ITenantManager,
@@ -23,7 +23,7 @@ export class TmzLambdaFactory extends EventEmitter implements IPartitionLambdaFa
     }
 
     public async create(config: Provider, context: IContext): Promise<IPartitionLambda> {
-        return new TmzLambda(
+        return new ForemanLambda(
             this.messageSender,
             this.tenantManager,
             this.permissions,

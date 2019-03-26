@@ -11,9 +11,9 @@ class RabbitmqTaskSender implements ITaskMessageSender {
     private connection: amqp.Connection;
     private channel: amqp.Channel;
 
-    constructor(rabbitmqConfig: any, tmzConfig: any) {
+    constructor(rabbitmqConfig: any, config: any) {
         this.rabbitmqConnectionString = rabbitmqConfig.connectionString;
-        this.taskQueues = tmzConfig.queues;
+        this.taskQueues = config.queues;
     }
 
     public async initialize() {
@@ -50,6 +50,6 @@ class RabbitmqTaskSender implements ITaskMessageSender {
 }
 
 // Factory to switch between different message sender.
-export function createMessageSender(rabbitmqConfig: any, tmzConfig: any): ITaskMessageSender {
-    return new RabbitmqTaskSender(rabbitmqConfig, tmzConfig);
+export function createMessageSender(rabbitmqConfig: any, config: any): ITaskMessageSender {
+    return new RabbitmqTaskSender(rabbitmqConfig, config);
 }

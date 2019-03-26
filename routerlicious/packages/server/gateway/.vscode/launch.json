@@ -112,7 +112,7 @@
         {
             "type": "node",
             "request": "attach",
-            "name": "Attach to tmz",
+            "name": "Attach to foreman",
             "address": "localhost",
             "port": 5862,
             "restart": true,

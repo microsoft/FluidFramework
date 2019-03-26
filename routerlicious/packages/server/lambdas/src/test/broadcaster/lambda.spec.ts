@@ -1,10 +1,10 @@
 import { IPartitionLambda } from "@prague/services-core";
 import { IEvent, KafkaMessageFactory, MessageFactory, TestContext, TestPublisher } from "@prague/test-utils";
 import * as assert from "assert";
-import { BBCLambda } from "../../bbc/lambda";
+import { BroadcasterLambda } from "../../broadcaster/lambda";
 
 describe("Routerlicious", () => {
-    describe("BBC", () => {
+    describe("Broadcaster", () => {
         describe("Lambda", () => {
             const testTenantId = "test";
             const testDocumentId = "test";
@@ -22,7 +22,7 @@ describe("Routerlicious", () => {
 
                 testPublisher = new TestPublisher();
                 testContext = new TestContext();
-                lambda = new BBCLambda(testPublisher, testContext);
+                lambda = new BroadcasterLambda(testPublisher, testContext);
             });
 
             function countOps(events: IEvent[]) {

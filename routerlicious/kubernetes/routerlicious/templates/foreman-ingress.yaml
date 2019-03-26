@@ -1,17 +1,17 @@
 apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
-  name: {{ template "tmz.fullname" . }}
+  name: {{ template "foreman.fullname" . }}
   labels:
     app: {{ template "routerlicious.name" . }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
-    component: "{{ .Values.tmz.name }}"
+    component: "{{ .Values.foreman.name }}"
     release: "{{ .Release.Name }}"
     heritage: "{{ .Release.Service }}"
   annotations:
     kubernetes.io/ingress.class: {{ .Values.ingress.class }}
     ingress.kubernetes.io/ssl-redirect: "true"
-    nginx.org/websocket-services: {{ template "tmz.fullname" . }}
+    nginx.org/websocket-services: {{ template "foreman.fullname" . }}
     nginx.org/proxy-send-timeout: "7200s"
     nginx.org/proxy-read-timeout: "7200s"
     nginx.org/client-max-body-size: "100m"
@@ -19,13 +19,13 @@ metadata:
 spec:
   tls:
   - hosts:
-    - {{ .Values.tmz.host }}
-    secretName: {{ .Values.tmz.cert }}
+    - {{ .Values.foreman.host }}
+    secretName: {{ .Values.foreman.cert }}
   rules:
-  - host: {{ .Values.tmz.host }}
+  - host: {{ .Values.foreman.host }}
     http:
       paths:
       - path: /
         backend:
-          serviceName: {{ template "tmz.fullname" . }}
+          serviceName: {{ template "foreman.fullname" . }}
           servicePort: 80

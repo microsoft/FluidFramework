@@ -24,8 +24,8 @@ scriptorium:
   name: scriptorium2
   replicas: 1
 
-bbc:
-  name: bbc2
+broadcaster:
+  name: broadcaster2
   replicas: 1
 
 riddler:

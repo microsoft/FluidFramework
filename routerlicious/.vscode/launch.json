@@ -146,7 +146,7 @@
         {
             "type": "node",
             "request": "attach",
-            "name": "Attach to bbceh",
+            "name": "Attach to broadcastereh",
             "address": "localhost",
             "port": 5868,
             "restart": true,
@@ -202,7 +202,7 @@
         {
             "type": "node",
             "request": "attach",
-            "name": "Attach to tmz",
+            "name": "Attach to foreman",
             "address": "localhost",
             "port": 5862,
             "restart": true,

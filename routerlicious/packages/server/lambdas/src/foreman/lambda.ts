@@ -8,7 +8,7 @@ import { SequencedLambda } from "../sequencedLambda";
 // TODO: Move this to config.
 const RequestWindowMS = 15000;
 
-export class TmzLambda extends SequencedLambda {
+export class ForemanLambda extends SequencedLambda {
     private taskQueueMap = new Map<string, string>();
     private rateLimitter = new RateLimitter(RequestWindowMS);
     constructor(

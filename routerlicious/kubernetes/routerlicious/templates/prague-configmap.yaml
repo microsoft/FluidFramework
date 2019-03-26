@@ -134,12 +134,12 @@ data:
                 "group": "{{ template "scriptorium.fullname" . }}",
                 "topic": "{{ .Values.kafka.topics.deltas }}"
             },
-            "bbc": {
-                "group": "{{ template "bbc.fullname" . }}",
+            "broadcaster": {
+                "group": "{{ template "broadcaster.fullname" . }}",
                 "topic": "{{ .Values.kafka.topics.deltas }}"
             },
-            "tmz": {
-                "group": "{{ template "tmz.fullname" . }}",
+            "foreman": {
+                "group": "{{ template "foreman.fullname" . }}",
                 "topic": "{{ .Values.kafka.topics.deltas }}"
             }
         },
@@ -150,11 +150,11 @@ data:
             "checkpointBatchSize": 1,
             "checkpointTimeIntervalMsec": 1000
         },
-        "tmz": {
+        "foreman": {
             "alfred": "http://{{ template "alfred.fullname" . }}",
             "topic": "{{ .Values.kafka.topics.deltas }}",
-            "kafkaClientId": "{{ template "tmz.fullname" . }}",
-            "groupId": "{{ template "tmz.fullname" . }}",
+            "kafkaClientId": "{{ template "foreman.fullname" . }}",
+            "groupId": "{{ template "foreman.fullname" . }}",
             "queues": ["paparazziQueue", "augloopQueue", "headlessQueue"],
             "permissions": {
                 "paparazziQueue": ["snapshot", "spell", "intel", "translation"],

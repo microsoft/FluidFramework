@@ -2,9 +2,9 @@ import * as services from "@prague/services";
 import { IContext, IPartitionLambda, IPartitionLambdaFactory } from "@prague/services-core";
 import { EventEmitter } from "events";
 import { Provider } from "nconf";
-import { BBCLambda } from "./lambda";
+import { BroadcasterLambda } from "./lambda";
 
-export class BBCLambdaFactory extends EventEmitter implements IPartitionLambdaFactory {
+export class BroadcasterLambdaFactory extends EventEmitter implements IPartitionLambdaFactory {
     constructor(private io: services.SocketIoRedisPublisher) {
         super();
 
@@ -15,7 +15,7 @@ export class BBCLambdaFactory extends EventEmitter implements IPartitionLambdaFa
     }
 
     public async create(config: Provider, context: IContext): Promise<IPartitionLambda> {
-        return new BBCLambda(this.io, context);
+        return new BroadcasterLambda(this.io, context);
     }
 
     public async dispose(): Promise<void> {

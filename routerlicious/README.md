@@ -162,11 +162,11 @@ intelligent agents. Paparazzi agents are designed to be isomorphic - that is the
 and the client. This enables a connected client join in with a pool of server Paparazzi instances to perform
 snapshotting and intelligence on a document.
 
-Paparazzi instances connect to TMZ to receive instructions on what operations to perform on the document.
+Paparazzi instances connect to Foreman to receive instructions on what operations to perform on the document.
 
-#### [TMZ](./src/tmz)
+#### [Foreman](./src/foreman)
 
-TMZ is in charge of managing a pool of Paparazzi instances. It listens to the same stream of Kafka messages as
+Foreman is in charge of managing a pool of Paparazzi instances. It listens to the same stream of Kafka messages as
 Scriptorium but uses this to understand which documents are active. It then schedules and manages work to be run
 across the pool of Paparazzi instances (snapshot, spell check, entity extraction, etc...).
 
@@ -186,8 +186,8 @@ More details on content-adressable file systems and Git can be found at
 
 * Deli only talks to Kafka
 * Scriptorium should have a line to MongoDB
-* Paparazzi talks to TMZ directly and no longer proxies through a queue
-* Clients can also be Paparazzi and connect directly to TMZ
+* Paparazzi talks to Foreman directly and no longer proxies through a queue
+* Clients can also be Paparazzi and connect directly to Foreman
 * Only a single receive line should be drawn from Redis to Aflred
 * Historian is missing - as well as the underlying storage provider it proxies to.
   * Clients (including Paparazzi) talk directly to Historian.

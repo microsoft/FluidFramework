@@ -1,34 +1,36 @@
-{{- if .Values.eventHub }}
-apiVersion: apps/v1beta1
+apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
-  name: {{ template "bbc.fullname" . }}-eventhub
+  name: {{ template "foreman.fullname" . }}
   labels:
     app: {{ template "routerlicious.name" . }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
-    component: "{{ .Values.bbc.name }}-eventhub"
+    component: "{{ .Values.foreman.name }}"
     release: "{{ .Release.Name }}"
     heritage: "{{ .Release.Service }}"
 spec:
-  replicas: {{ .Values.bbc.replicas }}
+  replicas: {{ .Values.foreman.replicas }}
   template:
     metadata:
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/prague-configmap.yaml") . | sha256sum }}
       labels:
         app: {{ template "routerlicious.name" . }}
-        component: "{{ .Values.bbc.name }}-eventhub"
+        component: "{{ .Values.foreman.name }}"
         release: {{ .Release.Name }}
     spec:
       containers:
-      - name: {{ template "bbc.fullname" . }}-eventhub
+      - name: {{ template "foreman.fullname" . }}
         image: "{{ .Values.image }}"
         imagePullPolicy: {{ default "" .Values.imagePullPolicy | quote }}
+        ports:
+        - name: ui
+          containerPort: 4000
         command:
           - 'node'
-          - 'dist/event-hub-service/index.js'
-          - 'bbc'
-          - '/usr/src/server/packages/server/routerlicious/dist/bbc/index.js'
+          - 'dist/kafka-service/index.js'
+          - 'foreman'
+          - '/usr/src/server/packages/server/routerlicious/dist/foreman/index.js'
         env:
         - name: DEBUG
           value: "prague:*"
@@ -47,4 +49,3 @@ spec:
         - name: config
           configMap:
             name: {{ template "routerlicious.fullname" . }}
-{{- end }}

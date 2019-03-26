@@ -12,4 +12,4 @@ intelligent agents. Paparazzi agents are designed to be isomorphic - that is the
 and the client. This enables a connected client join in with a pool of server Paparazzi instances to perform
 snapshotting and intelligence on a document.
 
-Paparazzi instances connect to TMZ to receive instructions on what operations to perform on the document.
+Paparazzi instances connect to Foreman to receive instructions on what operations to perform on the document.
