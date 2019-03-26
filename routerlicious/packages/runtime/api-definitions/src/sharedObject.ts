@@ -146,7 +146,7 @@ export abstract class SharedObject extends EventEmitter implements ISharedObject
      * Allows the distributive data type the ability to perform custom processing once an attach has happened.
      * Also called after non-local data type get loaded.
      */
-    protected postAttach() {
+    protected didAttach() {
         return;
     }
 
@@ -195,7 +195,7 @@ export abstract class SharedObject extends EventEmitter implements ISharedObject
 
     private attachDeltaHandler() {
         // Allows objects to start listening for events
-        this.postAttach();
+        this.didAttach();
 
         this.services.deltaConnection.attach({
             prepare: (message, local) => {
