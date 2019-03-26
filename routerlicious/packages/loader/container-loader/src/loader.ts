@@ -91,7 +91,7 @@ export class Loader extends EventEmitter implements ILoader {
         const parsed = this.parseUrl(resolvedAsPrague.url);
 
         let canCache = true;
-        let connection = parsed.version === undefined ? "open" : "close";
+        let connection = !parsed.version ? "open" : "close";
         let version = parsed.version;
 
         if (request.headers) {
