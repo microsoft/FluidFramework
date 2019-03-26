@@ -29,6 +29,11 @@ export interface IDeltaHandlerStrategy {
      * Called immediately after process.
      */
     postProcess: (message: ISequencedDocumentMessage, context: any) => Promise<void>;
+
+    /**
+     * Processes the signal. we probably don't need to prepare or post process for now.
+     */
+    processSignal: (clientId: string, message: string) => void;
 }
 
 export interface IDeltaManager<T, U> extends EventEmitter {

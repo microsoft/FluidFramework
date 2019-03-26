@@ -28,12 +28,16 @@ class SocketIoSocket implements core.IWebSocket {
         await socketJoin(this.socket, id);
     }
 
-    public async emit(event: string, ...args) {
+    public async emit(event: string, ...args: any[]) {
         this.socket.emit(event, ...args);
     }
 
-    public async broadcast(event: string, ...args) {
-        this.socket.broadcast.emit(event, ...args);
+    public async emitToRoom(roomId: string, event: string, ...args: any[]) {
+        this.socket.to(roomId).emit(event, ...args);
+    }
+
+    public async broadcastToRoom(roomId: string, event: string, ...args: any) {
+        this.socket.to(roomId).broadcast.emit(event, ...args);
     }
 }
 

@@ -11,6 +11,7 @@ import {
     IDocumentService,
     IDocumentSystemMessage,
     ISequencedDocumentMessage,
+    ISignalMessage,
     ITokenProvider,
     ITrace,
     MessageType,
@@ -385,6 +386,15 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                     // Need to buffer messages we receive before having the point set
                     if (this.handler) {
                         this.contentCache.set(message);
+                    }
+                });
+
+                connection.on("signal", (signal: ISignalMessage) => {
+                    if (this.handler) {
+                        const clientId = signal.clientId;
+                        for (const message of signal.messages) {
+                            this.handler.processSignal(clientId, message);
+                        }
                     }
                 });
 

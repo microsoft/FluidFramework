@@ -669,6 +669,9 @@ export class Container extends EventEmitter implements IContainer {
                         process: (message, context) => {
                             this.processRemoteMessage(message, context);
                         },
+                        processSignal: (clientId: string, message: string) => {
+                            this.processSignal(clientId, message);
+                        },
                     },
                     true);
             });
@@ -686,6 +689,9 @@ export class Container extends EventEmitter implements IContainer {
                             throw new Error("Delta manager is offline");
                         },
                         process: (message, context) => {
+                            throw new Error("Delta manager is offline");
+                        },
+                        processSignal: (clientId: string, message: string) => {
                             throw new Error("Delta manager is offline");
                         },
                     },
@@ -940,5 +946,10 @@ export class Container extends EventEmitter implements IContainer {
             default:
                 await this.context.postProcess(message, local, context);
         }
+    }
+
+    private processSignal(clientId: string, message: string) {
+        console.log(clientId);
+        console.log(message);
     }
 }

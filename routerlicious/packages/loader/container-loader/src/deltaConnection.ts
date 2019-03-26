@@ -7,6 +7,7 @@ import {
     IDocumentService,
     INack,
     ISequencedDocumentMessage,
+    ISignalMessage,
     ITokenProvider,
 } from "@prague/container-definitions";
 import { EventEmitter } from "events";
@@ -59,6 +60,10 @@ export class DeltaConnection extends EventEmitter {
 
         connection.on("op-content", (message: IContentMessage) => {
             this.emit("op-content", message);
+        });
+
+        connection.on("signal", (signal: ISignalMessage) => {
+            this.emit("signal", signal);
         });
 
         connection.on("nack", (documentId: string, message: INack[]) => {

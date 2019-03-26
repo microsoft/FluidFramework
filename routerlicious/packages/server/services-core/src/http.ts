@@ -15,7 +15,9 @@ export interface IWebSocket {
 
     emit(event: string, ...args);
 
-    broadcast(event: string, ...args);
+    broadcastToRoom(roomId: string, event: string, ...args: any[]);
+
+    emitToRoom(roomId: string, event: string, ...args: any[]);
 }
 
 export interface IWebServer {

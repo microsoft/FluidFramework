@@ -24,7 +24,11 @@ export class TestWebSocket implements core.IWebSocket {
         this.events.emit(event, ...args);
     }
 
-    public broadcast(event: string, ...args: any[]) {
+    public broadcastToRoom(roomId: string, event: string, ...args: any[]) {
+        this.events.emit(event, ...args);
+    }
+
+    public emitToRoom(roomId: string, event: string, ...args: any[]) {
         this.events.emit(event, ...args);
     }
 

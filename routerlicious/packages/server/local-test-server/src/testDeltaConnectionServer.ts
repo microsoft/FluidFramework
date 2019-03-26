@@ -2,6 +2,7 @@ import { RoundTrip } from "@prague/client-api";
 import {
     IContentMessage,
     IDocumentMessage,
+    ISignalMessage,
     ITokenClaims,
 } from "@prague/container-definitions";
 import {
@@ -141,6 +142,8 @@ export function register(
     webSocketServer.on("connection", (socket: IWebSocket) => {
         // Map from client IDs on this connection to the object ID and user info.
         const connectionsMap = new Map<string, IOrdererConnection>();
+        // Map from client IDs to room.
+        const roomMap = new Map<string, string>();
 
         async function connectDocument(message: socketStorage.IConnect): Promise<socketStorage.IConnected> {
 
@@ -214,7 +217,7 @@ export function register(
         // Message sent when a new splitted operation is submitted to the router
         socket.on("submitContent", (clientId: string, message: IDocumentMessage, response) => {
             // Verify the user has connected on this object id
-            if (!connectionsMap.has(clientId)) {
+            if (!connectionsMap.has(clientId) || !roomMap.has(clientId)) {
                 return response("Invalid client ID", null);
             }
 
@@ -234,13 +237,29 @@ export function register(
             };
 
             contentCollection.insertOne(dbMessage).then(() => {
-                socket.broadcast("op-content", broadCastMessage);
+                socket.broadcastToRoom(roomMap.get(clientId), "op-content", broadCastMessage);
                 return response(null);
             }, (error) => {
                 if (error.code !== 11000) {
                     return response("Could not write to DB", null);
                 }
             });
+        });
+
+        // Message sent when a new signal is submitted to the router
+        socket.on("submitSignal", (clientId: string, messages: string[], response) => {
+            // Verify the user has connected on this object id
+            if (!roomMap.has(clientId)) {
+                return response("Invalid client ID", null);
+            }
+
+            const signalMessage: ISignalMessage = {
+                clientId,
+                messages,
+            };
+            socket.emitToRoom(roomMap.get(clientId), "signal", signalMessage);
+
+            response(null);
         });
 
         socket.on("disconnect", () => {
