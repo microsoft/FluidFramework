@@ -2,26 +2,55 @@ import { APP_BASE_HREF } from '@angular/common';
 import { platformBrowserDynamic } from '@angular/platform-browser-dynamic';
 import { Document } from "@prague/app-component";
 import { IContainerContext, IRuntime, IRequest, ITree, IPlatform } from "@prague/container-definitions";
-import { Counter, CounterValueType } from "@prague/map";
+import { ISharedMap } from '@prague/map';
 import { Runtime } from "@prague/runtime";
-import { parse } from "url";
 import { IChaincodeComponent, IComponentDeltaHandler, IComponentRuntime } from '@prague/runtime-definitions';
-import { EventEmitter } from 'events';
+import { EventEmitter } from "events";
+import { parse } from "url";
 import { AppModule } from './app/app.module';
-import { PRAGUE_PATH } from "./app/tokens";
+import { PRAGUE_PATH, PRAGUE_ROOT } from "./app/tokens";
+
+class ViewPlatform extends EventEmitter implements IPlatform {
+    public async queryInterface<T>(id: string): Promise<T> {
+        return null;
+    }
+    
+    public async detach() {
+        return;
+    }
+}
 
 export class TourOfHeroes extends Document {
     // Create the component's schema and perform other initialization tasks
     // (only called when document is initially created).
     protected async create() {
-        this.root.set("clicks", 0, CounterValueType.Name);
+        const defaultHeroes = [
+            { id: 11, name: 'Mr. Nice' },
+            { id: 12, name: 'Narco' },
+            { id: 13, name: 'Bombasto' },
+            { id: 14, name: 'Celeritas' },
+            { id: 15, name: 'Magneta' },
+            { id: 16, name: 'RubberMan' },
+            { id: 17, name: 'Dynama' },
+            { id: 18, name: 'Dr IQ' },
+            { id: 19, name: 'Magma' },
+            { id: 20, name: 'Tornado' }
+        ];
+
+        // Seed the map with some heroes
+        for (const hero of defaultHeroes) {
+            this.root.set(`/heroes/${hero.id}`, hero.name);
+        }
     }
 
-    protected render(host: HTMLDivElement, counter: Counter) {
+    public getRoot(): ISharedMap {
+        return this.root;
     }
 
     // The component has been loaded. Attempt to get a div from the host. TODO explain this better.
     public async opened() {
+        await this.connected;
+
         // If the host provided a <div>, render the component into that Div
         const maybeDiv = await this.platform.queryInterface<HTMLDivElement>("div");
         if (!maybeDiv) {
@@ -39,13 +68,14 @@ export class TourOfHeroes extends Document {
             [
                 { provide: APP_BASE_HREF, useValue: pathname },
                 { provide: PRAGUE_PATH, useValue: null },
+                { provide: PRAGUE_ROOT, useValue: this.root },
             ])
             .bootstrapModule(AppModule)
     }
 }
 
 class TourOfHeroesComponentView extends EventEmitter implements IChaincodeComponent, IPlatform {
-    constructor(realComponent: TourOfHeroes, private path: string) {
+    constructor(private realComponent: TourOfHeroes, private path: string) {
         super();
     }
 
@@ -66,6 +96,12 @@ class TourOfHeroesComponentView extends EventEmitter implements IChaincodeCompon
     }
 
     public async attach(platform: IPlatform): Promise<IPlatform> {
+        // To get the base component to fully initialize we attach (so opened is called) and then await the
+        // component interface to make sure it has been fully created.
+        // TODO should be an easier and cleaner way to do this
+        const realPlatform = await this.realComponent.attach(new ViewPlatform());
+        await realPlatform.queryInterface("component");
+
         this.renderPath(platform);
         return this;
     }
@@ -92,6 +128,7 @@ class TourOfHeroesComponentView extends EventEmitter implements IChaincodeCompon
             [
                 { provide: APP_BASE_HREF, useValue: pathname },
                 { provide: PRAGUE_PATH, useValue: this.path },
+                { provide: PRAGUE_ROOT, useValue: this.realComponent.getRoot() },
             ])
             .bootstrapModule(AppModule)
     }
