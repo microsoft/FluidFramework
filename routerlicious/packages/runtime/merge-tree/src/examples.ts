@@ -24,23 +24,22 @@ function overlappingInsert(bSeesTheCat = false) {
     clientB.startCollaboration("B");
     clientB.verboseOps = true;
     // A does local insert of 'cat ' at position zero (unassigned sequence number)
-    clientA.insertTextLocal("cat ", 0);
+    clientA.insertTextLocal(0, "cat ");
     // see the merge tree for A
     console.log(clientA.mergeTree.toString());
     // B does a local insert of 'big' at position zero (unassigned sequence number)
-    clientB.insertTextLocal("big ", 0);
+    clientB.insertTextLocal(0, "big ");
     // see the merge tree for B
     console.log(clientB.mergeTree.toString());
     if (!bSeesTheCat) {
         // B does a local insert of 'one ' at position four (unassigned sequence number)
-        clientB.insertTextLocal("furry ", 4);
+        clientB.insertTextLocal(4, "furry ");
         // see the merge tree for B
         console.log(clientB.mergeTree.toString());
     }
     // simulate server choosing A's insert of 'cat ' as sequence number 1
     // ack client A's op
-    clientA.ackPendingSegment({
-        local: true,
+    clientA.mergeTree.ackPendingSegment({
         op: { type: MergeTreeDeltaType.INSERT },
         sequencedMessage: {
             sequenceNumber,
@@ -51,14 +50,13 @@ function overlappingInsert(bSeesTheCat = false) {
     const referenceSequenceNumber = 0;
     const bLocalIdForA = clientB.getOrAddShortClientId("A", null);
     /* tslint:disable:no-unsafe-any */
-    clientB.insertTextRemote("cat ", 0, properties, sequenceNumber,
+    clientB.insertTextRemote(0, "cat ", properties, sequenceNumber,
         referenceSequenceNumber, bLocalIdForA);
     console.log(clientB.mergeTree.toString());
     // tslint:disable-next-line:no-increment-decrement
     sequenceNumber++;
     // simulate server choosing B's two insert operations as sequence numbers 2 and 3
-    clientB.ackPendingSegment({
-        local: true,
+    clientB.mergeTree.ackPendingSegment({
         op: { type: MergeTreeDeltaType.INSERT },
         sequencedMessage: {
             sequenceNumber,
@@ -66,18 +64,17 @@ function overlappingInsert(bSeesTheCat = false) {
     });
     console.log(clientB.mergeTree.toString());
     const aLocalIdForB = clientA.getOrAddShortClientId("B", null);
-    clientA.insertTextRemote("big ", 0, properties, sequenceNumber,
+    clientA.insertTextRemote(0, "big ", properties, sequenceNumber,
         referenceSequenceNumber, aLocalIdForB);
     console.log(clientA.mergeTree.toString());
 
     // tslint:disable-next-line:no-increment-decrement
     sequenceNumber++;
     if (bSeesTheCat) {
-        clientB.insertTextLocal("furry ", 8);
+        clientB.insertTextLocal(8, "furry ");
         console.log(clientB.mergeTree.toString());
     }
-    clientB.ackPendingSegment({
-        local: true,
+    clientB.mergeTree.ackPendingSegment({
         op: { type: MergeTreeDeltaType.INSERT },
         sequencedMessage: {
             sequenceNumber,
@@ -85,11 +82,11 @@ function overlappingInsert(bSeesTheCat = false) {
     });
     console.log(clientB.mergeTree.toString());
     if (bSeesTheCat) {
-        clientA.insertTextRemote("furry ", 8 /* insert after cat */, properties, sequenceNumber,
+        clientA.insertTextRemote(8 /* insert after cat */, "furry ", properties, sequenceNumber,
             2 /* ref seq sees cat*/, aLocalIdForB);
         console.log(clientA.mergeTree.toString());
     } else {
-        clientA.insertTextRemote("furry ", 4, properties, sequenceNumber,
+        clientA.insertTextRemote(4, "furry ", properties, sequenceNumber,
             referenceSequenceNumber, aLocalIdForB);
         console.log(clientA.mergeTree.toString());
     }

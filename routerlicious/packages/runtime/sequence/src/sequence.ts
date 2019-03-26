@@ -123,30 +123,31 @@ export abstract class SegmentSequence<T extends MergeTree.ISegment> extends Shar
         }
     }
 
-    public paste(register: string, pos: number) {
-        const insertMessage: MergeTree.IMergeTreeInsertMsg = {
-            pos1: pos,
-            register,
-            type: MergeTree.MergeTreeDeltaType.INSERT,
-        };
-
-        // tslint:disable-next-line:no-parameter-reassignment
-        pos = this.client.pasteLocal(register, pos, {local: true, op: insertMessage});
-        this.submitIfAttached(insertMessage);
+    /**
+     * Inserts the content of the register.
+     * @param pos The postition to insert the content at.
+     * @param register The name of the register to get the content from
+     */
+    public paste(pos: number, register: string) {
+        const insertOp = this.client.pasteLocal(pos, register);
+        if (insertOp) {
+            this.submitIfAttached(insertOp);
+        }
         return pos;
     }
 
-    public copy(register: string, start: number, end: number) {
-        const insertMessage: MergeTree.IMergeTreeInsertMsg = {
-            pos1: start,
-            pos2: end,
-            register,
-            type: MergeTree.MergeTreeDeltaType.INSERT,
-        };
+    /**
+     * Puts the content of the range in a register
+     * @param start The inclusive start of the range
+     * @param end The exclusive end of the range
+     * @param register The name of the register to store the range in
+     */
+    public copy(start: number, end: number, register: string) {
 
-        this.client.copy(start, end, register, this.client.getCurrentSeq(),
-            this.client.getClientId());
-        this.submitIfAttached(insertMessage);
+        const insertOp = this.client.copyLocal(start, end, register);
+        if (insertOp) {
+            this.submitIfAttached(insertOp);
+        }
     }
 
     public groupOperation(groupOp: MergeTree.IMergeTreeGroupMsg): MergeTree.SegmentGroup {
@@ -484,15 +485,14 @@ export abstract class SegmentSequence<T extends MergeTree.ISegment> extends Shar
         const clientId = mergeTree.collabWindow.clientId;
 
         // Deserialize each chunk segment and append it to the end of the MergeTree.
-        for (const segSpec of chunk2.segmentTexts) {
-            mergeTree.insertSegment(
-                mergeTree.root.cachedLength,
-                MergeTree.UniversalSequenceNumber,
-                clientId,
-                MergeTree.UniversalSequenceNumber,
-                this.segmentFromSpec(segSpec),
-                undefined);
-        }
+        mergeTree.insertSegments(
+            mergeTree.root.cachedLength,
+            chunk2.segmentTexts.map((segSpec) => this.segmentFromSpec(segSpec)),
+            MergeTree.UniversalSequenceNumber,
+            clientId,
+            MergeTree.UniversalSequenceNumber,
+            undefined);
+
     }
 
     private initializeIntervalCollections() {
@@ -545,20 +545,27 @@ export class SharedSequence<T extends MergeTree.SequenceItem> extends SegmentSeq
         super(document, id, extensionType, services);
     }
 
+    /**
+     * @param pos The position to insert the items at.
+     * @param items The items to insert.
+     * @param props Optional. Properties to set on the inserted items.
+     */
     public insert(pos: number, items: T[], props?: MergeTree.PropertySet) {
+
         const segment = new MergeTree.SubSequence<T>(items);
         if (props) {
             segment.addProperties(props);
         }
-        const insertMessage: MergeTree.IMergeTreeInsertMsg = {
-            pos1: pos,
-            seg: segment.toJSONObject(),
-            type: MergeTree.MergeTreeDeltaType.INSERT,
-        };
-        this.client.insertSegmentLocal(pos, segment, {local: true, op: insertMessage});
-        this.submitIfAttached(insertMessage);
+        const insertOp = this.client.insertSegmentLocal(pos, segment);
+        if (insertOp) {
+            this.submitIfAttached(insertOp);
+        }
     }
 
+    /**
+     * @param start The inclusive start of the range to remove
+     * @param end The exclusive end of the range to remove
+     */
     public remove(start: number, end: number) {
         this.removeRange(start, end);
     }

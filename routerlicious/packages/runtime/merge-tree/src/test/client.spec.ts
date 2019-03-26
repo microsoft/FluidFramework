@@ -25,7 +25,7 @@ describe("TestClient", () => {
                     [MergeTree.reservedMarkerIdKey]: "some-id",
                 });
 
-            client.insertTextLocal("abc", 0);
+            client.insertTextLocal(0, "abc");
 
             console.log(client.getText());
 
@@ -42,7 +42,7 @@ describe("TestClient", () => {
     describe(".findTile", () => {
         it("Should be able to find non preceding tile position based on label from client with single tile", () => {
             const tileLabel = "EOP";
-            client.insertTextLocal("abc d", 0);
+            client.insertTextLocal(0, "abc d");
 
             client.insertMarkerLocal(
                 0,
@@ -74,7 +74,7 @@ describe("TestClient", () => {
                     [MergeTree.reservedMarkerIdKey]: "some-id",
                 });
 
-            client.insertTextLocal("abc d", 0);
+            client.insertTextLocal(0, "abc d");
 
             client.insertMarkerLocal(
                 0,
@@ -84,7 +84,7 @@ describe("TestClient", () => {
                     [MergeTree.reservedMarkerIdKey]: "some-id",
                 });
 
-            client.insertTextLocal("ef", 7);
+            client.insertTextLocal(7, "ef");
             client.insertMarkerLocal(
                 8,
                 MergeTree.ReferenceType.Tile,
@@ -115,7 +115,7 @@ describe("TestClient", () => {
                     [MergeTree.reservedMarkerIdKey]: "some-id",
                 });
 
-            client.insertTextLocal("abc d", 0);
+            client.insertTextLocal(0, "abc d");
 
             client.insertMarkerLocal(
                 0,
@@ -125,7 +125,7 @@ describe("TestClient", () => {
                     [MergeTree.reservedMarkerIdKey]: "some-id",
                 });
 
-            client.insertTextLocal("ef", 7);
+            client.insertTextLocal(7, "ef");
             client.insertMarkerLocal(
                 8,
                 MergeTree.ReferenceType.Tile,
@@ -185,7 +185,7 @@ describe("TestClient", () => {
                     [MergeTree.reservedMarkerIdKey]: "some-id",
                 });
 
-            client.insertTextLocal("abc", 0);
+            client.insertTextLocal(0, "abc");
             console.log(client.getText());
 
             assert.equal(client.getLength(), 4, "length not expected");
@@ -205,7 +205,7 @@ describe("TestClient", () => {
     describe(".findTile", () => {
         it("Should return undefined when trying to find tile from text without the specified tile", () => {
             const tileLabel = "EOP";
-            client.insertTextLocal("abc", 0);
+            client.insertTextLocal(0, "abc");
             console.log(client.getText());
 
             assert.equal(client.getLength(), 3, "length not expected");

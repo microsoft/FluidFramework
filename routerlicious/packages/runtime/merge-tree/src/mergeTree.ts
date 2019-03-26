@@ -818,7 +818,7 @@ export class ExternalSegment extends BaseSegment {
     }
 
     mergeTreeInsert(mergeTree: MergeTree, pos: number, refSeq: number, clientId: number, seq: number, opArgs: IMergeTreeDeltaOpArgs) {
-        mergeTree.insertSegment(pos, refSeq, clientId, seq, this, opArgs);
+        mergeTree.insertSegments(pos, [this], refSeq, clientId, seq, opArgs);
     }
 
     clone(): ISegment {
@@ -3234,27 +3234,16 @@ export class MergeTree {
         return pos;
     }
 
-    insertSegment(pos: number, refSeq: number, clientId: number, seq: number, segment: ISegment, opArgs: IMergeTreeDeltaOpArgs) {
+    insertSegments(pos: number, segments: ISegment[], refSeq: number, clientId: number, seq: number, opArgs: IMergeTreeDeltaOpArgs) {
         // const tt = MergeTree.traceTraversal;
         // MergeTree.traceTraversal = true;
-
-        segment.seq = seq;
-        segment.clientId = clientId;
-
-        if (segment.getType() === SegmentType.Marker) {
-            const marker = segment as Marker;
-            const markerId = marker.getId();
-            if (markerId) {
-                this.mapIdToSegment(markerId, marker);
-            }
-        }
-
         this.ensureIntervalBoundary(pos, refSeq, clientId);
         if (MergeTree.traceOrdinals) {
             this.ordinalIntegrity();
         }
-        const splitNode = this.blockInsert(this.root, pos, refSeq, clientId, seq, segment);
-        this.updateRoot(splitNode, refSeq, clientId, seq);
+
+        this.blockInsert(pos, refSeq, clientId, seq, segments);
+
         if (this.mergeTreeDeltaCallback) {
             this.mergeTreeDeltaCallback(
                 opArgs,
@@ -3262,7 +3251,7 @@ export class MergeTree {
                     mergeTreeClientId: clientId,
                     operation: ops.MergeTreeDeltaType.INSERT,
                     mergeTree: this,
-                    segments: [segment]
+                    segments
                 });
         }
 
@@ -3276,7 +3265,7 @@ export class MergeTree {
         }
     }
 
-    private blockInsert<T extends ISegment>(block: IMergeBlock, pos: number, refSeq: number, clientId: number, seq: number, newSegment: T) {
+    private blockInsert<T extends ISegment>(pos: number, refSeq: number, clientId: number, seq: number, newSegments: T[]) {
         let segIsLocal = false;
         let checkSegmentIsLocal = (segment: ISegment, pos: number, refSeq: number, clientId: number) => {
             if (segment.seq == UnassignedSequenceNumber) {
@@ -3292,20 +3281,20 @@ export class MergeTree {
         let continueFrom = (node: IMergeBlock) => {
             segIsLocal = false;
             this.rightExcursion(node, checkSegmentIsLocal);
-            if (MergeTree.diagInsertTie && segIsLocal && (newSegment.getType() === SegmentType.Text)) {
-                let text = newSegment.toString();
-                console.log(`@cli ${glc(this, this.collabWindow.clientId)}: attempting continue with seq ${seq} text ${text} ref ${refSeq}`);
+            if (MergeTree.diagInsertTie && segIsLocal ) {
+                console.log(`@cli ${glc(this, this.collabWindow.clientId)}: attempting continue with seq ${seq}  ref ${refSeq} `);
             }
             return segIsLocal;
         }
 
+        let segmentGroup: SegmentGroup;
         let onLeaf = (segment: ISegment, pos: number, context: InsertContext) => {
             let saveIfLocal = (locSegment: ISegment) => {
                 // save segment so can assign sequence number when acked by server
                 if (this.collabWindow.collaborating) {
                     if ((locSegment.seq == UnassignedSequenceNumber) &&
                         (clientId == this.collabWindow.clientId)) {
-                        this.addToPendingList(locSegment);
+                        segmentGroup = this.addToPendingList(locSegment, segmentGroup);
                     }
                     else if ((locSegment.seq >= this.collabWindow.minSeq) &&
                         MergeTree.options.zamboniSegments) {
@@ -3316,17 +3305,38 @@ export class MergeTree {
             let segmentChanges = <ISegmentChanges>{};
             if (segment) {
                 // insert before segment
-                segmentChanges.replaceCurrent = newSegment;
+                segmentChanges.replaceCurrent = context.candidateSegment;
                 segmentChanges.next = segment;
             }
             else {
-                segmentChanges.next = newSegment;
+                segmentChanges.next = context.candidateSegment;
             }
-            saveIfLocal(newSegment);
+            saveIfLocal(context.candidateSegment);
             return segmentChanges;
         }
-        return this.insertingWalk(block, pos, refSeq, clientId, seq,
-            { leaf: onLeaf, candidateSegment: newSegment, continuePredicate: continueFrom });
+
+        // TODO: build tree from segs and insert all at once
+        let insertPos = pos;
+        for(const newSegment of newSegments){
+
+            segIsLocal = false;
+
+            newSegment.seq = seq;
+            newSegment.clientId = clientId;
+            if (newSegment instanceof Marker) {
+                const markerId = newSegment.getId();
+                if (markerId) {
+                    this.mapIdToSegment(markerId, newSegment);
+                }
+            }
+
+            const splitNode = this.insertingWalk(this.root, insertPos, refSeq, clientId, seq,
+                { leaf: onLeaf, candidateSegment: newSegment, continuePredicate: continueFrom });
+
+            this.updateRoot(splitNode, refSeq, clientId, seq);
+
+            insertPos += newSegment.cachedLength;
+        }
     }
 
     private splitLeafSegment = (segment: ISegment, pos: number) => {

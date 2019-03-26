@@ -1,7 +1,10 @@
 import { ITree } from "@prague/container-definitions";
 import { createRemoveRangeOp, IMergeTreeDeltaCallbackArgs, TextSegment } from "@prague/merge-tree";
-// tslint:disable-next-line: no-submodule-imports
-import { TestClient } from "@prague/merge-tree/dist/test/testClient";
+import {
+    MockStorage,
+    TestClient,
+// tslint:disable-next-line:no-submodule-imports
+} from "@prague/merge-tree/dist/test/";
 import * as assert from "assert";
 import { SequenceDeltaEvent } from "../sequenceDeltaEvent";
 import { SharedString } from "../sharedString";
@@ -25,7 +28,7 @@ describe("SequenceDeltaEvent", () => {
             const insertText = "text";
             let deltaArgs: IMergeTreeDeltaCallbackArgs;
             client.mergeTree.mergeTreeDeltaCallback = (op, delta) => { deltaArgs = delta; };
-            client.insertTextLocal(insertText, 0);
+            client.insertTextLocal(0, insertText);
 
             assert(deltaArgs);
             assert.equal(deltaArgs.segments.length, 1);
@@ -45,7 +48,7 @@ describe("SequenceDeltaEvent", () => {
             const insertText = "text";
             const segmentCount = 5;
             for (let i = 0; i < segmentCount + 2; i = i + 1) {
-                client.insertTextLocal(insertText, 0);
+                client.insertTextLocal(0, insertText);
             }
 
             let deltaArgs: IMergeTreeDeltaCallbackArgs;
@@ -76,13 +79,8 @@ describe("SequenceDeltaEvent", () => {
             const textCount = 4;
             const segmentCount = 5;
             for (let i = 0; i < segmentCount; i = i + 1) {
-                client.insertTextLocal(`${i}`.repeat(textCount), 0);
-                const insertMessage = client.makeInsertMsg(
-                    `${i}`.repeat(textCount),
-                    0,
-                    client.mergeTree.collabWindow.currentSeq + 1,
-                    client.mergeTree.collabWindow.currentSeq);
-                client.applyMsg(insertMessage);
+                const op = client.insertTextLocal(0, `${i}`.repeat(textCount));
+                client.applyMsg(client.makeOpMessage(op, client.mergeTree.collabWindow.currentSeq + 1));
             }
             console.log(client.getText());
 
@@ -93,7 +91,7 @@ describe("SequenceDeltaEvent", () => {
             remoteRemoveMessage.clientId = "remote user";
 
             for (let i = 0; i < segmentCount; i = i + 1) {
-                client.insertTextLocal("b".repeat(textCount), i * 2 * textCount);
+                client.insertTextLocal(i * 2 * textCount, "b".repeat(textCount));
             }
             console.log(client.getText());
 
@@ -154,7 +152,7 @@ describe("SequenceDeltaEvent", () => {
         async function CreateStringAndCompare(sharedString: SharedString, tree: ITree): Promise<void> {
             const services = {
                 deltaConnection: new mocks.MockDeltaConnection(),
-                objectStorage: new mocks.MockStorage(tree),
+                objectStorage: new MockStorage(tree),
             };
 
             const sharedString2 = new SharedString(runtime, documentId, services);

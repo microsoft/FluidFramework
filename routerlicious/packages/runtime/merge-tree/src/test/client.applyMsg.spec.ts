@@ -35,12 +35,8 @@ describe("client.applyMsg", () => {
                 case 1:
                 case 4: {
                     const str = `${i}`.repeat(imod6 + 5);
-                    const msg = client.makeInsertMsg(
-                        str,
-                        pos1,
-                        i + 1);
-                    client.insertTextLocal(str, pos1);
-                    changes.set(i, { msg, segmentGroup: client.mergeTree.pendingSegments.last() });
+                    const msg = client.makeOpMessage(client.insertTextLocal(pos1, str), i + 1);
+                    changes.set(i, {msg, segmentGroup: client.mergeTree.pendingSegments.last()});
                     break;
                 }
 
@@ -95,19 +91,14 @@ describe("client.applyMsg", () => {
 
     it("insertTextLocal", () => {
 
-        client.insertTextLocal("abc", 0);
+        const op = client.insertTextLocal(0, "abc");
 
         const segmentInfo =
             client.mergeTree.getContainingSegment(0, client.getCurrentSeq(), client.getClientId());
 
         assert.equal(segmentInfo.segment.seq, UnassignedSequenceNumber);
 
-        client.applyMsg(
-            client.makeInsertMsg(
-                "abc",
-                0,
-                17,
-                0));
+        client.applyMsg(client.makeOpMessage(op, 17));
 
         assert.equal(segmentInfo.segment.seq, 17);
     });

@@ -2,10 +2,8 @@ import { ISharedObject, ISharedObjectExtension } from "@prague/api-definitions";
 import {
     BaseSegment,
     IJSONSegment,
-    IMergeTreeInsertMsg,
     ISegment,
     LocalClientId,
-    MergeTreeDeltaType,
     PropertySet,
     SegmentType,
     SubSequence,
@@ -181,15 +179,10 @@ export class SparseMatrix extends SegmentSequence<MatrixSegment> {
         // (See https://github.com/Microsoft/Prague/issues/1840)
 
         this.removeRange(start, end);
-
-        const insertMessage = {
-            pos1: start,
-            seg: segment.toJSONObject(),
-            type: MergeTreeDeltaType.INSERT,
-        } as IMergeTreeInsertMsg;
-
-        this.client.insertSegmentLocal(start, segment, {local: true, op: insertMessage });
-        this.submitIfAttached(insertMessage);
+        const insertOp = this.client.insertSegmentLocal(start, segment);
+        if (insertOp) {
+            this.submitIfAttached(insertOp);
+        }
     }
 
     public getItem(row: number, col: number) {
@@ -210,14 +203,11 @@ export class SparseMatrix extends SegmentSequence<MatrixSegment> {
         const pos = rowColToPosition(row, 0);
         const size = maxCols * numRows;
         const segment = new PaddingSegment(size);
-        const insertMessage: IMergeTreeInsertMsg = {
-            pos1: pos,
-            seg: segment.toJSONObject(),
-            type: MergeTreeDeltaType.INSERT,
-        };
 
-        this.client.insertSegmentLocal(pos, segment, {local: true, op: insertMessage });
-        this.submitIfAttached(insertMessage);
+        const insertOp = this.client.insertSegmentLocal(pos, segment);
+        if (insertOp) {
+            this.submitIfAttached(insertOp);
+        }
     }
 
     public removeRows(row: number, numRows: number) {
@@ -263,14 +253,11 @@ export class SparseMatrix extends SegmentSequence<MatrixSegment> {
 
             const insertPos = rowStart + destCol;
             const segment = new PaddingSegment(numCols, UniversalSequenceNumber, LocalClientId);
-            const insertMessage = {
-                pos1: insertPos,
-                seg: segment.toJSONObject(),
-                type: MergeTreeDeltaType.INSERT,
-            } as IMergeTreeInsertMsg;
 
-            this.client.insertSegmentLocal(insertPos, segment, {local: true, op: insertMessage });
-            this.submitIfAttached(insertMessage);
+            const insertOp = this.client.insertSegmentLocal(insertPos, segment);
+            if (insertOp) {
+                this.submitIfAttached(insertOp);
+            }
         }
     }
 }

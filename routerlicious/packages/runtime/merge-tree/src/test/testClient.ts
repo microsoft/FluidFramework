@@ -2,8 +2,8 @@ import { ISequencedDocumentMessage, MessageType } from "@prague/container-defini
 import { Client } from "../client";
 import * as Collections from "../collections";
 import { Marker, SubSequence, TextSegment, UnassignedSequenceNumber } from "../mergeTree";
-import { IMergeTreeDeltaOpArgs } from "../mergeTreeDeltaCallback";
-import { IMarkerDef, IMergeTreeInsertMsg, IMergeTreeOp, MergeTreeDeltaType, ReferenceType, SequenceItem } from "../ops";
+import { createInsertSegmentOp } from "../opBuilder";
+import { IMarkerDef, IMergeTreeOp, ReferenceType, SequenceItem } from "../ops";
 import { PropertySet } from "../properties";
 
 export function specToSegment(spec: any) {
@@ -66,93 +66,84 @@ export class TestClient extends Client {
     }
 
     public insertTextLocal(
-        text: string,
         pos: number,
+        text: string,
         props?: PropertySet,
-        opArgs?: IMergeTreeDeltaOpArgs,
     ) {
         const segment = new TextSegment(text);
         if (props) {
             segment.addProperties(props);
         }
-        this.insertSegmentLocal(pos, segment, opArgs);
+        return this.insertSegmentLocal(pos, segment);
     }
 
     public insertTextRemote(
-        text: string,
         pos: number,
+        text: string,
         props: PropertySet,
         seq: number,
         refSeq: number,
         clientId: number,
-        opArgs?: IMergeTreeDeltaOpArgs,
     ) {
         const segment = new TextSegment(text);
         if (props) {
             segment.addProperties(props);
         }
-        this.insertSegmentRemote(segment, pos, seq, refSeq, clientId, opArgs);
+        this.applyMsg(this.makeOpMessage(
+            createInsertSegmentOp(pos, segment),
+            seq,
+            refSeq,
+            clientId));
     }
 
     public insertMarkerLocal(
         pos: number,
         behaviors: ReferenceType,
         props?: PropertySet,
-        opArgs?: IMergeTreeDeltaOpArgs,
     ) {
         const segment = new Marker(behaviors);
         if (props) {
             segment.addProperties(props);
         }
-        this.insertSegmentLocal(pos, segment, opArgs);
+        return this.insertSegmentLocal(pos, segment);
     }
 
     public insertMarkerRemote(
-        markerDef: IMarkerDef,
         pos: number,
+        markerDef: IMarkerDef,
         props: PropertySet,
         seq: number,
         refSeq: number,
-        clientId: number, opArgs?: IMergeTreeDeltaOpArgs,
+        clientId: number,
     ) {
         const segment = new Marker(markerDef.refType);
         if (props) {
             segment.addProperties(props);
         }
-        this.insertSegmentRemote(segment, pos, seq, refSeq, clientId, opArgs);
+        this.applyMsg(this.makeOpMessage(
+            createInsertSegmentOp(pos, segment),
+            seq,
+            refSeq,
+            clientId));
     }
 
     public insertItemsRemote(
-        items: SequenceItem[],
         pos: number,
+        items: SequenceItem[],
         props: PropertySet,
         seq: number,
         refSeq: number,
         clientId: number,
-        opArgs?: IMergeTreeDeltaOpArgs,
     ) {
         const segment = new SubSequence(items);
         if (props) {
             segment.addProperties(props);
         }
-        this.insertSegmentRemote(segment, pos, seq, refSeq, clientId, opArgs);
-    }
-
-    // TODO: props, end
-    public makeInsertMarkerMsg(refType: ReferenceType, pos: number): ISequencedDocumentMessage {
-        const contents: IMergeTreeInsertMsg = {
-            // tslint:disable-next-line:object-literal-sort-keys
-            type: MergeTreeDeltaType.INSERT, seg: new Marker(refType).toJSONObject(), pos1: pos,
-        };
-        return this.makeOpMessage(contents);
-    }
-    public makeInsertMsg(
-        text: string, pos: number, seq: number = UnassignedSequenceNumber, refSeq: number = this.getCurrentSeq()) {
-        const contents: IMergeTreeInsertMsg = {
-            // tslint:disable-next-line:object-literal-sort-keys
-            type: MergeTreeDeltaType.INSERT, seg: new TextSegment(text).toJSONObject(), pos1: pos,
-        };
-        return this.makeOpMessage(contents, seq, refSeq);
+        this.applyMsg(this.makeOpMessage(
+            createInsertSegmentOp(pos, segment),
+            seq,
+            refSeq,
+            clientId));
     }
 
     public makeOpMessage(

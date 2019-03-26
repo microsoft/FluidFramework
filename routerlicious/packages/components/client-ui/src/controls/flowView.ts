@@ -412,7 +412,7 @@ const commands: IFlowViewCmd[] = [
 
 export function moveMarker(flowView: FlowView, fromPos: number, toPos: number) {
     flowView.sharedString.cut(fromPos, fromPos + 1, "inclusion");
-    flowView.sharedString.paste("inclusion", toPos);
+    flowView.sharedString.paste(toPos, "inclusion");
 }
 
 function elmOffToSegOff(elmOff: IRangeInfo, span: HTMLSpanElement) {
@@ -4419,7 +4419,7 @@ export class FlowView extends ui.Component {
     public copy() {
         const sel = this.cursor.getSelection();
         if (sel) {
-            this.sharedString.copy("clipboard", sel.start, sel.end);
+            this.sharedString.copy(sel.start, sel.end, "clipboard");
             this.clearSelection();
         }
     }
@@ -4442,7 +4442,7 @@ export class FlowView extends ui.Component {
 
     public paste() {
         this.updatePGInfo(this.cursor.pos);
-        this.cursor.pos = this.sharedString.paste("clipboard", this.cursor.pos);
+        this.cursor.pos = this.sharedString.paste(this.cursor.pos, "clipboard");
         this.updatePGInfo(this.cursor.pos);
         this.updatePresence();
         if (this.modes.showCursorLocation) {
@@ -5172,15 +5172,8 @@ export class FlowView extends ui.Component {
                 } else if (delta.pos1 <= this.cursor.pos) {
                     const maybeText = MergeTree.TextSegment.fromJSONObject(delta.seg);
                     if (maybeText) {
-                        // insert text
-                        adjLength = maybeText.text.length;
-                        if (delta.pos2 !== undefined) {
-                            // replace range
-                            const remLen = delta.pos2 - delta.pos1;
-                            adjLength -= remLen;
-                        }
-                        this.cursor.pos += adjLength;
-                    } else if (delta.register) {
+                        this.cursor.pos += maybeText.text.length;
+                    } else if (delta.register && !delta.pos2) {
                         // paste
                         const len = this.sharedString.client.registerCollection.getLength(msg.clientId,
                             delta.register);

@@ -26,9 +26,13 @@ export interface SnapChunk {
 }
 
 export class Snapshot {
-    static SnapChunkMaxSize = 0x20000;
-    static SegmentLengthSize = 0x4;
-    static SnapshotHeaderSize = 0x14;
+    // Split snapshot into two entries - headers (small) and body (overflow) for faster loading initial content
+    // Please note that this number has no direct relationship to anything other than size of raw text (characters).
+    // As we produce json for the blob (and then encode into base64 and send over the wire compressed), this number
+    // is really hard to correlate with any actual metric that matters (like bytes over the wire).
+    // For test with small number of chunks it would be closer to blob size (before base64 encoding), for very chunky text
+    // blob size can easily be 4x-8x of that number.
+    public static readonly sizeOfFirstChunk: number = 10000;
 
     header: SnapshotHeader;
     seq: number;
@@ -41,7 +45,7 @@ export class Snapshot {
         public onCompletion?: () => void) {
     }
 
-    getSeqLengthSegs(allSegments: ops.IJSONSegment[], allLengths: number[], approxSequenceLength: number, 
+    getSeqLengthSegs(allSegments: ops.IJSONSegment[], allLengths: number[], approxSequenceLength: number,
         startIndex = 0): ops.MergeTreeChunk {
 
         let segs = <ops.IJSONSegment[]>[];
@@ -65,15 +69,7 @@ export class Snapshot {
     }
 
     emit(): ITree {
-        // Split snapshot into two entries - headers (small) and body (overflow) for faster loading initial content
-        // Please note that this number has no direct relationship to anything other than size of raw text (characters).
-        // As we produce json for the blob (and then encode into base64 and send over the wire compressed), this number
-        // is really hard to correlate with any actual metric that matters (like bytes over the wire).
-        // For test with small number of chunks it would be closer to blob size (before base64 encoding), for very chunky text
-        // blob size can easily be 4x-8x of that number.
-        const sizeOfFirstChunk: number = 10000;
-
-        let chunk1 = this.getSeqLengthSegs(this.segments, this.segmentLengths, sizeOfFirstChunk);
+        let chunk1 = this.getSeqLengthSegs(this.segments, this.segmentLengths, Snapshot.sizeOfFirstChunk);
         const tree: ITree = {
             entries: [
                 {
@@ -104,7 +100,7 @@ export class Snapshot {
                 },
             });
         }
-        
+
         return tree;
     }
 

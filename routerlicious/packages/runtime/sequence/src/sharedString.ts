@@ -21,6 +21,12 @@ export class SharedString extends SegmentSequence<SharedStringSegment> {
         super(document, id, SharedStringExtension.Type, services);
     }
 
+    /**
+     * Inserts a marker at a relative postition
+     * @param relativePos1 The relative postition to insert the marker at
+     * @param refType The reference type of the marker
+     * @param props  The properties of the marker
+     */
     public insertMarkerRelative(
         relativePos1: MergeTree.IRelativePosition,
         refType: MergeTree.ReferenceType,
@@ -30,17 +36,20 @@ export class SharedString extends SegmentSequence<SharedStringSegment> {
         if (props) {
             segment.addProperties(props);
         }
-        const insertMessage: MergeTree.IMergeTreeInsertMsg = {
-            relativePos1,
-            seg: segment.toJSONObject(),
-            type: MergeTree.MergeTreeDeltaType.INSERT,
-        };
 
         const pos = this.client.mergeTree.posFromRelativePos(relativePos1);
-        this.client.insertSegmentLocal(pos, segment, {local: true, op: insertMessage});
-        this.submitIfAttached(insertMessage);
+        const insertOp = this.client.insertSegmentLocal(pos, segment);
+        if (insertOp) {
+            this.submitIfAttached(insertOp);
+        }
     }
 
+    /**
+     * Inserts a marker at the postition
+     * @param pos The  postition to insert the marker at
+     * @param refType The reference type of the marker
+     * @param props  The properties of the marker
+     */
     public insertMarker(
         pos: number,
         refType: MergeTree.ReferenceType,
@@ -50,49 +59,52 @@ export class SharedString extends SegmentSequence<SharedStringSegment> {
         if (props) {
             segment.addProperties(props);
         }
-        const insertMessage: MergeTree.IMergeTreeInsertMsg = {
-            pos1: pos,
-            seg: segment.toJSONObject(),
-            type: MergeTree.MergeTreeDeltaType.INSERT,
-        };
 
-        this.client.insertSegmentLocal(pos, segment, {local: true, op: insertMessage});
-        this.submitIfAttached(insertMessage);
+        const insertOp = this.client.insertSegmentLocal(pos, segment);
+        if (insertOp) {
+            this.submitIfAttached(insertOp);
+        }
     }
 
     public getText(start?: number, end?: number): string {
         return this.client.getText(start, end);
     }
 
+    /**
+     * Inserts the text at the postition
+     * @param relativePos1 The  postition to insert the text at
+     * @param text The text to insert
+     * @param props  The properties of text
+     */
     public insertTextRelative(relativePos1: MergeTree.IRelativePosition, text: string, props?: MergeTree.PropertySet) {
         const segment = new MergeTree.TextSegment(text);
         if (props) {
             segment.addProperties(props);
         }
-        const insertMessage: MergeTree.IMergeTreeInsertMsg = {
-            relativePos1,
-            seg: segment.toJSONObject(),
-            type: MergeTree.MergeTreeDeltaType.INSERT,
-        };
 
         const pos = this.client.mergeTree.posFromRelativePos(relativePos1);
-        this.client.insertSegmentLocal(pos, segment, {local: true, op: insertMessage});
-        this.submitIfAttached(insertMessage);
+        const insertOp = this.client.insertSegmentLocal(pos, segment);
+        if (insertOp) {
+            this.submitIfAttached(insertOp);
+        }
     }
 
+    /**
+     * Inserts the text at the postition
+     * @param pos The  postition to insert the text at
+     * @param text The text to insert
+     * @param props  The properties of text
+     */
     public insertText(text: string, pos: number, props?: MergeTree.PropertySet) {
         const segment = new MergeTree.TextSegment(text);
         if (props) {
             segment.addProperties(props);
         }
-        const insertMessage: MergeTree.IMergeTreeInsertMsg = {
-            pos1: pos,
-            seg: segment.toJSONObject(),
-            type: MergeTree.MergeTreeDeltaType.INSERT,
-        };
 
-        this.client.insertSegmentLocal(pos, segment, {local: true, op: insertMessage});
-        this.submitIfAttached(insertMessage);
+        const insertOp = this.client.insertSegmentLocal(pos, segment);
+        if (insertOp) {
+            this.submitIfAttached(insertOp);
+        }
     }
     /**
      * Replaces a range with the provided text.

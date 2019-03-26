@@ -3,7 +3,6 @@ import { ISequencedDocumentMessage } from "@prague/container-definitions";
 import { ClientSeq, compareNumbers, clientSeqComparer } from "../mergeTree";
 import * as Collections from "../collections";
 import * as Properties from "../properties";
-import { IMergeTreeOp } from "../ops";
 import { TestClient } from "./testClient";
 
 /**
@@ -40,11 +39,7 @@ export class TestServer extends TestClient {
         this.listeners = listeners;
     }
     applyMsg(msg: ISequencedDocumentMessage) {
-        this.applyRemoteOp({
-            local: msg.clientId === this.longClientId,
-            op: msg.contents as IMergeTreeOp,
-            sequencedMessage: msg,
-        });
+        super.applyMsg(msg);
         if (TestClient.useCheckQ) {
             let clid = this.getShortClientId(msg.clientId);
             return checkTextMatchRelative(msg.referenceSequenceNumber, clid, this, msg);

@@ -1,5 +1,5 @@
 import * as fs from "fs";
-import { IMergeTreeDeltaOpArgs, Marker, MergeTree, TextSegment  } from "..";
+import { IMergeTreeDeltaOpArgs, Marker, MergeTree, TextSegment} from "..";
 import * as ops from "../ops";
 import * as Properties from "../properties";
 import { loadText } from "../text";
@@ -24,7 +24,7 @@ export function insertMarker(
     seq: number,
     behaviors: ops.ReferenceType, props: Properties.PropertySet, opArgs: IMergeTreeDeltaOpArgs,
 ) {
-    mergeTree.insertSegment(pos, refSeq, clientId, seq, Marker.make(behaviors, props, seq, clientId), opArgs);
+    mergeTree.insertSegments(pos, [Marker.make(behaviors, props, seq, clientId)], refSeq, clientId, seq, opArgs);
 }
 
 export function insertText(
@@ -37,5 +37,5 @@ export function insertText(
     props: Properties.PropertySet,
     opArgs: IMergeTreeDeltaOpArgs,
 ) {
-    mergeTree.insertSegment(pos, refSeq, clientId, seq, TextSegment.make(text, props, seq, clientId), opArgs);
+    mergeTree.insertSegments(pos, [TextSegment.make(text, props, seq, clientId)], refSeq, clientId, seq, opArgs);
 }

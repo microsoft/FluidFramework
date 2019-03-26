@@ -14,10 +14,20 @@ export interface IMergeTreeDeltaCallbackArgs {
 }
 
 export interface IMergeTreeDeltaOpArgs {
+    /**
+     * The group op which contains the operation
+     * if there operation is part of a group op.
+     */
     readonly groupOp?: IMergeTreeGroupMsg;
+    /**
+     * The merge tree operation
+     */
     readonly op: IMergeTreeOp;
+    /**
+     * Get the sequence message, should only be null if the
+     * Delta op args are for an unacked local change
+     */
     readonly sequencedMessage?: ISequencedDocumentMessage;
-    readonly local: boolean;
 }
 
 export interface IMergeTreeClientSequenceArgs {

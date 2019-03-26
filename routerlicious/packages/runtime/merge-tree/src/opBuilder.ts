@@ -84,6 +84,34 @@ export function createInsertSegmentOp(pos: number, segment: ISegment): IMergeTre
 
 /**
  *
+ * @param pos The position to insert the register contents at
+ * @param register The name of the register to insert the value of
+ */
+export function createInsertFromRegisterOp(pos: number,  register: string): IMergeTreeInsertMsg {
+    return {
+        pos1: pos,
+        register,
+        type: MergeTreeDeltaType.INSERT,
+    };
+}
+
+/**
+ *
+ * @param start The inclusive start of the range to insert into the register
+ * @param end The exclusive end of the range to insert into the register
+ * @param register The name of the register to insert the range contents into
+ */
+export function createInsertToRegisterOp(start: number, end: number, register: string): IMergeTreeInsertMsg {
+    return {
+        pos1: start,
+        pos2: end,
+        register,
+        type: MergeTreeDeltaType.INSERT,
+    };
+}
+
+/**
+ *
  * @param ops The ops to group
  */
 export function createGroupOp(

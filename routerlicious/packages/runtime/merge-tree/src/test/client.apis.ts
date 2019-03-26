@@ -28,7 +28,7 @@ export function clientGetPropertiesAtPositionTest() {
 	const client = new TestClient("the cat is on the mat");
 	const props = MergeTree.createMap<any>();
 	props["prop1"] = 10;
-	client.insertTextLocal("fuzzy, fuzzy ", 4, props);
+	client.insertTextLocal(4, "fuzzy, fuzzy ", props);
 
 	const testResult1 = checkGetPropertiesAtPos(client, 4, props, true);
 	const testResult2 = checkGetPropertiesAtPos(client, 16, props, true);
@@ -54,8 +54,8 @@ export function clientGetSegmentExtentsOfPositionTest() {
 	const client = new TestClient("the cat is on the mat");
 	const props = MergeTree.createMap<any>();
 	props["prop1"] = 10;
-	client.insertTextLocal("fuzzy, fuzzy ", 4, props);
-	client.insertTextLocal("more fuzzy text", 8, {});
+	client.insertTextLocal(4, "fuzzy, fuzzy ", props);
+	client.insertTextLocal(8, "more fuzzy text", {});
 
 	const testResult1 = checkGetSegmentExtentsOfPos(client, 26, 23, 32);
 	const testResult2 = checkGetSegmentExtentsOfPos(client, 6, 4, 8);
