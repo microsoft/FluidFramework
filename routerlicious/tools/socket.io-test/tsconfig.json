@@ -1,17 +1,15 @@
 {    
+    "extends": "@prague/build-common/ts-common-config.json",
     "exclude": [
         "dist",
         "node_modules"
     ],
     "compilerOptions": {
-        "target": "es6",
-        "noImplicitAny": false,
+        "declaration": false,
+        "declarationMap": false,
         "noUnusedLocals": true,
         "module": "esnext",
-        "moduleResolution": "node",
-        "outDir": "dist",
-        "sourceMap": true,
-        "inlineSources": true
+        "outDir": "dist"
     },
     "include": [
         "src/index.ts"

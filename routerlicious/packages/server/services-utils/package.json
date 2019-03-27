@@ -31,6 +31,7 @@
     "winston": "^3.1.0"
   },
   "devDependencies": {
+    "@prague/build-common": "^0.2.0",
     "concurrently": "^4.1.0",
     "@types/bytes": "^3.0.0",
     "@types/debug": "^0.0.31",

@@ -41,6 +41,7 @@
     "report-dir": "nyc/report"
   },
   "devDependencies": {
+    "@prague/build-common": "^0.2.0",
     "concurrently": "^4.1.0",
     "@prague/merge-tree-utils": "^0.2.0",
     "@types/diff": "^3.5.1",

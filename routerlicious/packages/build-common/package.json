@@ -1,32 +1,27 @@
 {
-  "name": "@prague/runtime-definitions",
+  "name": "@prague/build-common",
   "version": "0.2.0",
-  "description": "Prague document loader",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "description": "Package containing common configs",
   "sideEffects": "false",
   "scripts": {
     "build": "concurrently npm:build:compile npm:tslint",
-    "build:compile": "npm run tsc",
+    "build:compile": "concurrently npm:tsc npm:build:esnext",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
-    "clean": "rimraf dist",
+    "clean": "rimraf dist && rimraf lib",
     "tsc": "tsc",
-    "tslint": "tslint --project tsconfig.json --format verbose"
+    "build:esnext": "tsc --outDir lib --m esnext",
+    "tslint": "tslint --project ts-common-config.json --format verbose"
   },
   "author": "Microsoft",
   "repository": "microsoft/prague",
+  "dependencies": {
+  },
   "devDependencies": {
-    "@prague/build-common": "^0.2.0",
     "concurrently": "^4.1.0",
     "rimraf": "^2.6.2",
     "tslint": "^5.11.0",
     "tslint-microsoft-contrib": "^6.0.0",
     "typescript": "^3.2.2"
-  },
-  "dependencies": {
-    "@prague/container-definitions": "^0.2.0",
-    "@prague/gitresources": "^0.2.0",
-    "@types/node": "^10.12.12"
   }
 }

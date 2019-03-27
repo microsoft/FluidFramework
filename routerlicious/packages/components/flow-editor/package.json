@@ -47,6 +47,7 @@
     "debug": "^3.1.0"
   },
   "devDependencies": {
+    "@prague/build-common": "^0.2.0",
     "concurrently": "^4.1.0",
     "@types/debug": "^0.0.31",
     "@types/node": "^10.12.12",
@@ -57,8 +58,8 @@
     "ts-loader": "^4.5.0",
     "tslint": "^5.11.0",
     "tslint-microsoft-contrib": "^6.0.0",
-    "typescript": "^3.2.2",
     "typings-for-css-modules-loader": "^1.7.0",
+    "typescript": "^3.2.2",
     "webpack": "^4.8.2",
     "webpack-cli": "^3.1.2",
     "webpack-merge": "^4.1.2"

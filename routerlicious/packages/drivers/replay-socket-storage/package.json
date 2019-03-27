@@ -18,6 +18,7 @@
   "author": "Microsoft",
   "repository": "microsoft/prague",
   "devDependencies": {
+    "@prague/build-common": "^0.2.0",
     "concurrently": "^4.1.0",
     "@types/mocha": "^5.2.5",
     "@types/nock": "^9.3.0",

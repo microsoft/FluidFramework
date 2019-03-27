@@ -1,22 +1,15 @@
 {    
+    "extends": "@prague/build-common/ts-common-config.json",
     "exclude": [
         "dist",
         "node_modules"
     ],
     "compilerOptions": {
-        "target": "es6",
-        "declaration": true,
-        "declarationMap": true,
-        "module": "commonjs",
-        "moduleResolution": "node",
-        "outDir": "dist",
-        "rootDir": "./src",
-        "sourceMap": true,
-        "inlineSources": true,
         "strict": true,
+        "rootDir": "./src",
+        "outDir": "./dist",
         "noFallthroughCasesInSwitch": true,
         "noImplicitReturns": true,
-        "noUnusedLocals": true,
         "noUnusedParameters": true,
         "forceConsistentCasingInFileNames": true
     },

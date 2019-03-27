@@ -16,6 +16,7 @@
   "author": "Microsoft",
   "repository": "microsoft/prague",
   "devDependencies": {
+    "@prague/build-common": "^0.2.0",
     "concurrently": "^4.1.0",
     "jsonwebtoken": "^8.4.0",
     "rimraf": "^2.6.2",

@@ -52,6 +52,7 @@
     "winston": "^3.1.0"
   },
   "devDependencies": {
+    "@prague/build-common": "^0.2.0",
     "concurrently": "^4.1.0",
     "@prague/test-utils": "^0.2.0",
     "@types/async": "^2.0.50",

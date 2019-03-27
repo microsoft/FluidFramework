@@ -13,6 +13,7 @@
     "socket.io-client": "^2.1.1"
   },
   "devDependencies": {
+    "@prague/build-common": "^0.2.0",
     "concurrently": "^4.1.0",
     "source-map-loader": "^0.2.3",
     "ts-loader": "^4.2.0",

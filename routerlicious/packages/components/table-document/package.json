@@ -49,6 +49,7 @@
     "@prague/sequence": "^0.2.0"
   },
   "devDependencies": {
+    "@prague/build-common": "^0.2.0",
     "concurrently": "^4.1.0",
     "@types/node": "^10.12.12",
     "source-map-loader": "^0.2.4",

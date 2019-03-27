@@ -72,6 +72,7 @@ COPY packages/server/services-core/package*.json packages/server/services-core/
 COPY packages/server/services-utils/package*.json packages/server/services-utils/
 COPY packages/shared/test-utils/package*.json packages/shared/test-utils/
 COPY packages/shared/tools-core/package*.json packages/shared/tools-core/
+COPY packages/build-common/package*.json packages/build-common/
     
 
 # Copy over chaincode npmrc and package.json to dynamically install packages.

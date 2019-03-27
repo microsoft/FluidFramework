@@ -23,6 +23,7 @@
     "random-js": "^1.0.8"
   },
   "devDependencies": {
+    "@prague/build-common": "^0.2.0",
     "concurrently": "^4.1.0",
     "@types/node": "^10.12.12",
     "@types/random-js": "^1.0.31",

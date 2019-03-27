@@ -13,7 +13,10 @@
 		"tsc": "tsc",
 		"tslint": "tslint --project tsconfig.json --format verbose"
 	},
+	"dependencies": {
+	},
 	"devDependencies": {
+		"@prague/build-common": "^0.2.0",
     "concurrently": "^4.1.0",
 		"rimraf": "^2.6.2",
 		"tslint": "^5.11.0",

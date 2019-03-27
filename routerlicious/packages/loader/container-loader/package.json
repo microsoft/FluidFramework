@@ -38,7 +38,7 @@
   },
   "author": "Microsoft",
   "repository": "microsoft/prague",
-  "dependencies": {
+  "dependencies": {  
     "@prague/container-definitions": "^0.2.0",
     "@prague/gitresources": "^0.2.0",
     "@prague/utils": "^0.2.0",
@@ -52,6 +52,7 @@
     "performance-now": "^2.1.0"
   },
   "devDependencies": {
+    "@prague/build-common": "^0.2.0",
     "concurrently": "^4.1.0",
     "@types/mocha": "^5.2.5",
     "rimraf": "^2.6.2",

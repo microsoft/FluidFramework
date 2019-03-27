@@ -71,6 +71,7 @@
     "uuid": "^3.3.2"
   },
   "devDependencies": {
+    "@prague/build-common": "^0.2.0",
     "concurrently": "^4.1.0",
     "@types/jwt-decode": "^2.2.1",
     "@types/mocha": "^5.2.5",
