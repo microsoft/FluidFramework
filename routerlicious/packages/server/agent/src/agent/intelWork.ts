@@ -1,5 +1,5 @@
 import {
-    IDocumentService,
+    IDocumentServiceFactory,
     IHost,
 } from "@prague/container-definitions";
 import * as Intelligence from "@prague/intelligence-runner";
@@ -17,14 +17,14 @@ export class IntelWork extends BaseWork implements IWork {
         tenantId: string,
         host: IHost,
         config: any,
-        private service: IDocumentService) {
+        private serviceFactory: IDocumentServiceFactory) {
         super(alfred, docId, tenantId, host, config);
     }
 
     public async start(task: string): Promise<void> {
         await this.loadDocument(
             { localMinSeq: 0, encrypted: undefined, client: { type: "intel"} },
-            this.service,
+            this.serviceFactory,
             task);
 
         // Wait for the document to get fully connected.

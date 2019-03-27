@@ -1,6 +1,6 @@
 import {
     ICodeLoader,
-    IDocumentService,
+    IDocumentServiceFactory,
     IPlatform,
     IPragueResolvedUrl,
     IRequest,
@@ -10,7 +10,7 @@ import {
 } from "@prague/container-definitions";
 import { Container, Loader } from "@prague/container-loader";
 import { WebLoader } from "@prague/loader-web";
-import { createDocumentService } from "@prague/routerlicious-socket-storage";
+import { RouterliciousDocumentServiceFactory } from "@prague/routerlicious-socket-storage";
 import { IComponentRuntime } from "@prague/runtime-definitions";
 import { EventEmitter } from "events";
 import * as jwt from "jsonwebtoken";
@@ -50,8 +50,11 @@ class InsecureUrlResolver implements IUrlResolver {
 
         // tslint:disable-next-line:no-unnecessary-local-variable
         const response: IPragueResolvedUrl = {
-            ordererUrl: this.ordererUrl,
-            storageUrl: this.storageUrl,
+            endpoints: {
+                deltaStorageUrl: this.ordererUrl,
+                ordererUrl: this.ordererUrl,
+                storageUrl: this.storageUrl,
+            },
             tokens: { jwt: this.auth(tenantId, documentId) },
             type: "prague",
             url: documentUrl,
@@ -101,7 +104,7 @@ export class DataStore {
             hostUrl,
             config.blobStorageUrl,
             codeLoader || new WebLoader(config.npm),
-            createDocumentService(hostUrl, config.blobStorageUrl),
+            new RouterliciousDocumentServiceFactory(),
             config.key,
             config.id,
             userId,
@@ -112,7 +115,7 @@ export class DataStore {
         private readonly ordererUrl: string,
         private readonly storageUrl: string,
         private readonly codeLoader: ICodeLoader,
-        private readonly documentService: IDocumentService,
+        private readonly documentServiceFactory: IDocumentServiceFactory,
         private readonly key: string,
         private readonly tenantId: string,
         private readonly userId: string,
@@ -142,7 +145,7 @@ export class DataStore {
 
         const loader = new Loader(
             { resolver },
-            this.documentService,
+            this.documentServiceFactory,
             this.codeLoader,
             { blockUpdateMarkers: true });
 

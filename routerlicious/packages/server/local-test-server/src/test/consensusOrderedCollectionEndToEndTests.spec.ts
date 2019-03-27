@@ -7,10 +7,10 @@ import {
 import { ISharedMap } from "@prague/map";
 import * as assert from "assert";
 import {
-    createTestDocumentService,
     DocumentDeltaEventManager,
     ITestDeltaConnectionServer,
     TestDeltaConnectionServer,
+    TestDocumentServiceFactory,
     TestResolver,
 } from "..";
 
@@ -32,7 +32,7 @@ function generate(name: string, type: string, input: any[], output: any[]) {
         beforeEach(async () => {
             testDeltaConnectionServer = TestDeltaConnectionServer.Create();
             documentDeltaEventManager = new DocumentDeltaEventManager(testDeltaConnectionServer);
-            const documentService = createTestDocumentService(testDeltaConnectionServer);
+            const documentService = new TestDocumentServiceFactory(testDeltaConnectionServer);
             const resolver = new TestResolver();
             user1Document = await api.load(
                 id, { resolver }, {}, documentService);

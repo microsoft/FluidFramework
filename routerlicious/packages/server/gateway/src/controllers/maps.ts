@@ -13,7 +13,7 @@ import {
 import { ContainerUrlResolver } from "@prague/routerlicious-host";
 import * as $ from "jquery";
 // tslint:disable-next-line:no-var-requires
-import { registerDocumentServices } from "./utils";
+import { registerDocumentServiceFactory } from "./utils";
 
 async function loadDocument(url: string, host: IHost): Promise<api.Document> {
     console.log("Loading in root document...");
@@ -158,7 +158,7 @@ export async function load(resolved: IPragueResolvedUrl, jwt: string, config: an
         new Map<string, IResolvedUrl>([[resolved.url, resolved]]));
     const host = { resolver };
 
-    registerDocumentServices(config);
+    registerDocumentServiceFactory(config);
 
     $(document).ready(() => {
         // Bootstrap worker service.

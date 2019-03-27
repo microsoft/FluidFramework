@@ -2,7 +2,7 @@ import { ContainerUrlResolver } from "@prague/routerlicious-host";
 import * as scribe from "@prague/tools-core";
 import * as request from "request";
 import * as url from "url";
-import { registerDocumentServices } from "./utils";
+import { registerDocumentServiceFactory } from "./utils";
 
 // Text represents the loaded file text
 let text: string;
@@ -254,5 +254,5 @@ export function initialize(
     });
 
     // Mark socket storage as our default provider
-    registerDocumentServices(config);
+    registerDocumentServiceFactory(config);
 }

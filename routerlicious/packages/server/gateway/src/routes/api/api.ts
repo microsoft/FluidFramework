@@ -1,4 +1,4 @@
-import { IResolvedUrl, IWebResolvedUrl } from "@prague/container-definitions";
+import { IPragueResolvedUrl, IResolvedUrl, IWebResolvedUrl } from "@prague/container-definitions";
 import * as core from "@prague/services-core";
 import Axios from "axios";
 import { Request, Router } from "express";
@@ -15,7 +15,7 @@ async function getExternalComponent(url: UrlWithStringQuery): Promise<IWebResolv
     return {
         data: result.data,
         type: "web",
-    };
+    } as IWebResolvedUrl;
 }
 
 async function getInternalComponent(
@@ -48,12 +48,14 @@ async function getInternalComponent(
     const token = getToken(tenantId, documentId, appTenants, user);
 
     return {
-        ordererUrl: orderer,
-        storageUrl: storage,
+        endpoints: {
+            ordererUrl: orderer,
+            storageUrl: storage,
+        },
         tokens: { jwt: token },
         type: "prague",
         url: `prague://${url.host}/${tenantId}/${documentId}${path}${url.hash ? url.hash : ""}`,
-    };
+    } as IPragueResolvedUrl;
 }
 
 export function create(

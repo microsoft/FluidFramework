@@ -1,10 +1,10 @@
-import { ICodeLoader, IHost } from "@prague/container-definitions";
+import { ICodeLoader, IDocumentServiceFactory, IHost } from "@prague/container-definitions";
 import * as MergeTree from "@prague/merge-tree";
 import { EventEmitter } from "events";
 import { AgentLoader, IAgent } from "./agentLoader";
 import * as chaincode from "./chaincodes";
 import { debug } from "./debug";
-import { IDocumentServiceFactory, IDocumentTaskInfo, IWork, IWorkManager } from "./definitions";
+import { IDocumentTaskInfo, IWork, IWorkManager } from "./definitions";
 import { loadDictionary } from "./dictionaryLoader";
 import { IntelWork } from "./intelWork";
 import { SnapshotWork } from "./snapshotWork";
@@ -37,15 +37,15 @@ export class WorkManager extends EventEmitter implements IWorkManager {
         documentId: string,
         workType: string,
         host: IHost) {
-        const services = await this.serviceFactory.getService(tenantId);
 
         switch (workType) {
             case "snapshot":
-                const snapshotWork = new SnapshotWork(alfred, documentId, tenantId,  host, this.config, services);
+                const snapshotWork =
+                    new SnapshotWork(alfred, documentId, tenantId,  host, this.config, this.serviceFactory);
                 await this.startTask(tenantId, documentId, workType, snapshotWork);
                 break;
             case "intel":
-                const intelWork = new IntelWork(alfred, documentId, tenantId,  host, this.config, services);
+                const intelWork = new IntelWork(alfred, documentId, tenantId,  host, this.config, this.serviceFactory);
                 await this.startTask(tenantId, documentId, workType, intelWork);
                 break;
             case "spell":
@@ -60,7 +60,7 @@ export class WorkManager extends EventEmitter implements IWorkManager {
                         host,
                         this.config,
                         this.dict,
-                        services);
+                        this.serviceFactory);
                     await this.startTask(tenantId, documentId, workType, spellcheckWork);
                 }
                 break;
@@ -71,7 +71,7 @@ export class WorkManager extends EventEmitter implements IWorkManager {
                     tenantId,
                     host,
                     this.config,
-                    services);
+                    this.serviceFactory);
                 await this.startTask(tenantId, documentId, workType, translationWork);
                 break;
             case "chain-snapshot":
@@ -84,7 +84,7 @@ export class WorkManager extends EventEmitter implements IWorkManager {
                         documentId,
                         tenantId,
                         host,
-                        services,
+                        this.serviceFactory,
                         this.codeLoader,
                         workType));
                 break;
@@ -98,7 +98,7 @@ export class WorkManager extends EventEmitter implements IWorkManager {
                         documentId,
                         tenantId,
                         host,
-                        services,
+                        this.serviceFactory,
                         this.codeLoader,
                         workType));
                 break;
@@ -116,7 +116,7 @@ export class WorkManager extends EventEmitter implements IWorkManager {
                             documentId,
                             tenantId,
                             host,
-                            services,
+                            this.serviceFactory,
                             this.codeLoader,
                             workType));
                 }
@@ -131,7 +131,7 @@ export class WorkManager extends EventEmitter implements IWorkManager {
                         documentId,
                         tenantId,
                         host,
-                        services,
+                        this.serviceFactory,
                         this.codeLoader,
                         workType));
                 break;

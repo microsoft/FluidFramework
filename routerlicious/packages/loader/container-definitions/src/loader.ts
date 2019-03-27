@@ -33,8 +33,10 @@ export interface IPragueResolvedUrl extends IResolvedUrlBase {
     type: "prague";
     url: string;
     tokens: { [name: string]: string };
-    ordererUrl: string;
-    storageUrl: string;
+    endpoints: { [name: string]: string };
+    // ordererUrl: string;
+    // deltaStorageUrl: string;
+    // storageUrl: string;
 }
 
 export interface IUrlResolver {

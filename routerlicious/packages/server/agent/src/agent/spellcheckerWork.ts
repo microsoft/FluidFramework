@@ -1,5 +1,5 @@
 import {
-    IDocumentService,
+    IDocumentServiceFactory,
     IHost,
 } from "@prague/container-definitions";
 import * as MergeTree from "@prague/merge-tree";
@@ -17,7 +17,7 @@ export class SpellcheckerWork extends BaseWork implements IWork {
         host: IHost,
         config: any,
         private dictionary: MergeTree.TST<number>,
-        private service: IDocumentService) {
+        private serviceFactory: IDocumentServiceFactory) {
 
         super(alfred, docId, tenantId, host, config);
     }
@@ -30,7 +30,7 @@ export class SpellcheckerWork extends BaseWork implements IWork {
                 encrypted: undefined,
                 localMinSeq: 0,
             },
-            this.service,
+            this.serviceFactory,
             task);
 
         // Wait for the document to get fully connected.

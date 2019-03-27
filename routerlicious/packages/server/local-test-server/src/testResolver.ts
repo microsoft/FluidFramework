@@ -8,8 +8,10 @@ export class TestResolver implements IUrlResolver {
 
     public async resolve(request: IRequest): Promise<IResolvedUrl> {
         const resolved: IPragueResolvedUrl = {
-            ordererUrl: "test.com",
-            storageUrl: "test.com",
+            endpoints: {
+                ordererUrl: "test.com",
+                storageUrl: "test.com",
+            },
             tokens: { jwt: generateToken(this.tenantId, this.id, this.tokenKey) },
             type: "prague",
             url: `prague://test.com/${this.tenantId}/${this.id}`,

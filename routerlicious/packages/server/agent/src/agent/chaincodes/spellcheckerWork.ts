@@ -1,6 +1,6 @@
 import {
     ICodeLoader,
-    IDocumentService,
+    IDocumentServiceFactory,
     IHost,
 } from "@prague/container-definitions";
 import { IWork} from "../definitions";
@@ -12,10 +12,10 @@ export class SpellcheckerWork extends ChaincodeWork implements IWork {
         docId: string,
         tenantId: string,
         host: IHost,
-        service: IDocumentService,
+        serviceFactory: IDocumentServiceFactory,
         codeLoader: ICodeLoader,
         workType: string) {
-        super(alfred, docId, tenantId, host, service, codeLoader, workType);
+        super(alfred, docId, tenantId, host, serviceFactory, codeLoader, workType);
     }
 
     public async start(): Promise<void> {

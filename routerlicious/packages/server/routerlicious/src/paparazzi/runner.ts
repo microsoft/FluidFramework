@@ -1,5 +1,10 @@
 import * as agent from "@prague/agent";
-import { IDocumentService, IPragueResolvedUrl } from "@prague/container-definitions";
+import {
+    IDocumentService,
+    IDocumentServiceFactory,
+    IPragueResolvedUrl,
+    IResolvedUrl,
+} from "@prague/container-definitions";
 import { ContainerUrlResolver } from "@prague/routerlicious-host";
 import * as socketStorage from "@prague/routerlicious-socket-storage";
 import { IQueueMessage } from "@prague/runtime-definitions";
@@ -14,14 +19,13 @@ import * as url from "url";
 import * as winston from "winston";
 import { NodeCodeLoader } from "./chaincodeHost";
 
-class DocumentServiceFactory implements agent.IDocumentServiceFactory {
+class WorkerDocumentServiceFactory implements IDocumentServiceFactory {
     constructor(private serverUrl: string, private historianUrl: string) {
     }
 
-    public async getService(tenantId: string): Promise<IDocumentService> {
-        // Disabling browser error tracking for paparazzi.
-        const services = socketStorage.createDocumentService(this.serverUrl, this.historianUrl);
-        return services;
+    // tslint:disable-next-line:no-shadowed-variable
+    public createDocumentService(url: IResolvedUrl): Promise<IDocumentService> {
+        return Promise.resolve(socketStorage.createDocumentService(this.serverUrl, this.historianUrl));
     }
 }
 
@@ -39,10 +43,10 @@ export class PaparazziRunner implements utils.IRunner {
         this.permission = new Set(workerConfig.permission as string[]);
         const alfredUrl = workerConfig.alfredUrl;
 
-        const factory = new DocumentServiceFactory(alfredUrl, workerConfig.blobStorageUrl);
+        const serviceFactory = new WorkerDocumentServiceFactory(alfredUrl, workerConfig.blobStorageUrl);
 
         this.workerService = new agent.WorkerService(
-            factory,
+            serviceFactory,
             this.workerConfig,
             alfredUrl,
             this.initLoadModule(alfredUrl),
@@ -131,8 +135,10 @@ export class PaparazziRunner implements utils.IRunner {
                 `/${encodeURIComponent(requestMsg.tenantId)}` +
                 `/${encodeURIComponent(requestMsg.documentId)}`;
             const resolved: IPragueResolvedUrl = {
-                ordererUrl: this.workerConfig.alfredUrl,
-                storageUrl: this.workerConfig.blobStorageUrl,
+                endpoints: {
+                    ordererUrl: this.workerConfig.alfredUrl,
+                    storageUrl: this.workerConfig.blobStorageUrl,
+                },
                 tokens: { jwt: requestMsg.token },
                 type: "prague",
                 url: documentUrl,

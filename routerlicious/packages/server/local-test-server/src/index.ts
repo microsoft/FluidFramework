@@ -8,3 +8,4 @@ export * from "./testResolver";
 export * from "./registration";
 export * from "./documentEventManager";
 export * from "./testHost";
+export * from "./testDocumentServiceFactory";

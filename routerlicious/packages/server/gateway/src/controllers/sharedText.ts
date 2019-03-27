@@ -5,9 +5,9 @@ import { controls, ui } from "@prague/client-ui";
 import { Browser, IClient, IPragueResolvedUrl, IResolvedUrl, ISequencedClient } from "@prague/container-definitions";
 import * as DistributedMap from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
-import * as replaySocketStorage from "@prague/replay-socket-storage";
+import { ReplayDocumentServiceFactory } from "@prague/replay-socket-storage";
 import { ContainerUrlResolver } from "@prague/routerlicious-host";
-import * as socketStorage from "@prague/routerlicious-socket-storage";
+import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@prague/routerlicious-socket-storage";
 import * as Sequence from "@prague/sequence";
 import { IGitCache } from "@prague/services-client";
 import { IStream } from "@prague/stream";
@@ -105,19 +105,18 @@ async function loadDocument(
 
     const errorService = config.trackError
         ? new BrowserErrorTrackingService()
-        : new socketStorage.DefaultErrorTracking();
+        : new DefaultErrorTracking();
     const replayMode = (from >= 0) && (to >= 0);
     const documentService = replayMode
-        ? replaySocketStorage.createReplayDocumentService(document.location.origin, from, to)
-        : socketStorage.createDocumentService(
-            config.serverUrl,
-            config.blobStorageUrl,
+        ? new ReplayDocumentServiceFactory(document.location.origin, from, to)
+        : new RouterliciousDocumentServiceFactory(
+            false,
             errorService,
             disableCache,
             config.historianApi,
-            config.credentials,
-            seedData);
-    API.registerDocumentService(documentService);
+            seedData,
+            config.credentials);
+    API.registerDocumentServiceFactory(documentService);
 
     const resolver = new ContainerUrlResolver(
         document.location.origin,

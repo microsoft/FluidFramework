@@ -1,7 +1,7 @@
 import {
     Browser,
     ICodeLoader,
-    IDocumentService,
+    IDocumentServiceFactory,
     IHost,
     IPlatform,
 } from "@prague/container-definitions";
@@ -24,7 +24,7 @@ export class ChaincodeWork extends EventEmitter {
         private readonly docId: string,
         private readonly tenantId: string,
         private readonly host: IHost,
-        private readonly service: IDocumentService,
+        private readonly serviceFactory: IDocumentServiceFactory,
         private readonly codeLoader: ICodeLoader,
         workType: string) {
             super();
@@ -34,7 +34,7 @@ export class ChaincodeWork extends EventEmitter {
     public async loadChaincode(options: any, attachPlatform: boolean): Promise<void> {
         const loader = new Loader(
             this.host,
-            this.service,
+            this.serviceFactory,
             this.codeLoader,
             options);
 

@@ -1,4 +1,4 @@
-import { IDocumentService, IHost, ISequencedDocumentMessage } from "@prague/container-definitions";
+import { IDocumentServiceFactory, IHost, ISequencedDocumentMessage } from "@prague/container-definitions";
 import { BaseWork} from "./baseWork";
 import { IWork } from "./definitions";
 import { Serializer } from "./serializer";
@@ -19,14 +19,14 @@ export class SnapshotWork extends BaseWork implements IWork {
         tenantId: string,
         host: IHost,
         config: any,
-        private service: IDocumentService) {
+        private serviceFactory: IDocumentServiceFactory) {
         super(alfred, docId, tenantId, host, config);
     }
 
     public async start(task: string): Promise<void> {
         await this.loadDocument(
             { encrypted: undefined, localMinSeq: 0, client: { type: "snapshot"} },
-            this.service,
+            this.serviceFactory,
             task);
 
         this.serializer = new Serializer(

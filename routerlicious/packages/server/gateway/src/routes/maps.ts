@@ -43,8 +43,10 @@ export function create(
             `${encodeURIComponent(tenantId)}/` +
             `${encodeURIComponent(request.params.id)}`;
         const resolved: IPragueResolvedUrl = {
-            ordererUrl: config.get("worker:serverUrl"),
-            storageUrl: config.get("worker:blobStorageUrl"),
+            endpoints: {
+                ordererUrl: config.get("worker:serverUrl"),
+                storageUrl: config.get("worker:blobStorageUrl"),
+            },
             tokens: { jwt: token },
             type: "prague",
             url: pragueUrl,

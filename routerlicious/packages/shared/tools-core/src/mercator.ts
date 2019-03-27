@@ -1,7 +1,7 @@
 import * as api from "@prague/client-api";
 import * as Map from "@prague/map";
 import { ContainerUrlResolver } from "@prague/routerlicious-host";
-import * as socketStorage from "@prague/routerlicious-socket-storage";
+import { RouterliciousDocumentServiceFactory, TokenProvider } from "@prague/routerlicious-socket-storage";
 import { Deferred } from "@prague/utils";
 import * as jwt from "jsonwebtoken";
 import * as randomstring from "randomstring";
@@ -43,10 +43,10 @@ export async function run(
     const randomMessages = generateRandomBatchMessages(batchSize, payloadSize);
 
     // Register endpoint connection
-    const documentServices = routerlicious === "http://localhost:3030"
-        ? socketStorage.createDocumentService2(routerlicious, historian)
-        : socketStorage.createDocumentService(routerlicious, historian);
-    api.registerDocumentService(documentServices);
+    const documentServiceFactory = routerlicious === "http://localhost:3030"
+        ? new RouterliciousDocumentServiceFactory(true)
+        : new RouterliciousDocumentServiceFactory();
+    api.registerDocumentServiceFactory(documentServiceFactory);
 
     console.log("Doc id is", id);
     const token = jwt.sign(
@@ -63,7 +63,7 @@ export async function run(
 
     // Load in the latest and connect to the document
     const resolver = new ContainerUrlResolver(routerlicious, null);
-    const tokenProvider = new socketStorage.TokenProvider(token);
+    const tokenProvider = new TokenProvider(token);
     const host = { tokenProvider, resolver };
 
     const collabDoc = await api.load(

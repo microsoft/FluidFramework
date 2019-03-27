@@ -3,10 +3,10 @@ import { MessageType } from "@prague/container-definitions";
 import { SharedString } from "@prague/sequence";
 import * as assert from "assert";
 import {
-  createTestDocumentService,
   DocumentDeltaEventManager,
   ITestDeltaConnectionServer,
   TestDeltaConnectionServer,
+  TestDocumentServiceFactory,
   TestResolver,
 } from "..";
 
@@ -25,16 +25,16 @@ describe("LocalTestServer", () => {
     documentDeltaEventManager = new DocumentDeltaEventManager(testDeltaConnectionServer);
 
     const resolver = new TestResolver();
-    const documentService = createTestDocumentService(testDeltaConnectionServer);
+    const serviceFactory = new TestDocumentServiceFactory(testDeltaConnectionServer);
     user1Document = await api.load(
-      id, { resolver }, {}, documentService);
+      id, { resolver }, {}, serviceFactory);
     let root = user1Document.getRoot();
     user1SharedString = user1Document.createString();
     root.set("SharedString", user1SharedString);
     documentDeltaEventManager.registerDocuments(user1Document);
 
     user2Document = await api.load(
-      id, { resolver }, {}, documentService);
+      id, { resolver }, {}, serviceFactory);
     root = user2Document.getRoot();
     user2SharedString = await root.wait("SharedString") as SharedString;
     documentDeltaEventManager.registerDocuments(user2Document);

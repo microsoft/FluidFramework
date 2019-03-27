@@ -1,6 +1,7 @@
 import * as resources from "@prague/gitresources";
 import { EventEmitter } from "events";
 import { IClient } from "./clients";
+import { IResolvedUrl } from "./loader";
 import {
     IContentMessage,
     IDocumentMessage,
@@ -256,4 +257,12 @@ export interface IDocumentService {
      * Returns the error tracking service
      */
     getErrorTrackingService(): IErrorTrackingService;
+}
+
+export interface IDocumentServiceFactory {
+
+    /**
+     * returns an instance of IDocumentService
+     */
+    createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService>;
 }

@@ -1,6 +1,6 @@
 import * as api from "@prague/client-api";
 import { ContainerUrlResolver } from "@prague/routerlicious-host";
-import * as socketStorage from "@prague/routerlicious-socket-storage";
+import { RouterliciousDocumentServiceFactory } from "@prague/routerlicious-socket-storage";
 import { generateUser } from "@prague/services-core";
 import * as scribe from "@prague/tools-core";
 import * as commander from "commander";
@@ -35,8 +35,8 @@ if (!sharedStringId) {
 }
 
 // Mark socket storage as our default provider
-const documentService = socketStorage.createDocumentService(commander.server, commander.storage);
-api.registerDocumentService(documentService);
+const serviceFactory = new RouterliciousDocumentServiceFactory();
+api.registerDocumentServiceFactory(serviceFactory);
 
 fs.readFile(commander.file, "utf8", async (error, data: string) => {
     if (error) {

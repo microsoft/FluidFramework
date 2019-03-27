@@ -1,6 +1,7 @@
 import {
     ICodeLoader,
     IDocumentService,
+    IDocumentServiceFactory,
     IHost,
     ILoader,
     IPragueResolvedUrl,
@@ -29,7 +30,7 @@ export class Loader extends EventEmitter implements ILoader {
 
     constructor(
         private readonly containerHost: IHost,
-        private readonly documentService: IDocumentService,
+        private readonly documentServiceFactory: IDocumentServiceFactory,
         private readonly codeLoader: ICodeLoader,
         private readonly options: any,
     ) {
@@ -39,7 +40,7 @@ export class Loader extends EventEmitter implements ILoader {
             throw new Error("An IContainerHost must be provided");
         }
 
-        if (!documentService) {
+        if (!documentServiceFactory) {
             throw new Error("An IDocumentService must be provided");
         }
 
@@ -107,17 +108,32 @@ export class Loader extends EventEmitter implements ILoader {
 
         debug(`${canCache} ${connection} ${version}`);
 
+        // TODO: skjokiel - figure out if i want to handle this or not
+        const documentService = await this.documentServiceFactory.createDocumentService(resolved);
+
         let container: Container;
         if (canCache) {
             const versionedId = version ? `${parsed.id}@${version}` : parsed.id;
             if (!this.containers.has(versionedId)) {
-                const containerP = this.loadContainer(parsed.id, version, connection, resolvedAsPrague.tokens);
+                const containerP =
+                    this.loadContainer(
+                        parsed.id,
+                        version,
+                        connection,
+                        resolvedAsPrague.tokens,
+                        documentService);
                 this.containers.set(versionedId, containerP);
             }
 
             container = await this.containers.get(versionedId);
         } else {
-            container = await this.loadContainer(parsed.id, version, connection, resolvedAsPrague.tokens);
+            container =
+                await this.loadContainer(
+                    parsed.id,
+                    version,
+                    connection,
+                    resolvedAsPrague.tokens,
+                    documentService);
         }
 
         return { container, parsed };
@@ -128,13 +144,14 @@ export class Loader extends EventEmitter implements ILoader {
         version: string,
         connection: string,
         tokens: { [key: string]: string },
+        documentService: IDocumentService,
     ): Promise<Container> {
-        const tokenProvider = await this.documentService.createTokenProvider(tokens);
+        const tokenProvider = await documentService.createTokenProvider(tokens);
         const container = await Container.Load(
             id,
             version,
             tokenProvider,
-            this.documentService,
+            documentService,
             this.codeLoader,
             this.options,
             connection,

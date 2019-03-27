@@ -8,8 +8,8 @@ import { Container, Loader } from "@prague/container-loader";
 import { WebPlatform } from "@prague/loader-web";
 import { ContainerUrlResolver } from "@prague/routerlicious-host";
 import {
-    createDocumentService,
     DefaultErrorTracking,
+    RouterliciousDocumentServiceFactory,
 } from "@prague/routerlicious-socket-storage";
 import { IComponentRuntime } from "@prague/runtime-definitions";
 import { IGitCache } from "@prague/services-client";
@@ -161,15 +161,7 @@ async function start(
         jwt,
         new Map<string, IResolvedUrl>([[url, resolved]]));
 
-    // Generate driver interface
-    const documentServices = createDocumentService(
-        config.serverUrl,
-        config.blobStorageUrl,
-        errorService,
-        false,
-        true,
-        null,
-        cache);
+    const documentServiceFactory = new RouterliciousDocumentServiceFactory(false, errorService, false, true, cache);
 
     // Create the web loader and prefetch the chaincode we will need
     const codeLoader = new WebLoader(npm, code, entrypoint, scriptIds);
@@ -177,7 +169,7 @@ async function start(
 
     const loader = new Loader(
         { resolver },
-        documentServices,
+        documentServiceFactory,
         codeLoader,
         { blockUpdateMarkers: true });
 

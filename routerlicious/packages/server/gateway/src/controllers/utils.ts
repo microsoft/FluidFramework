@@ -1,15 +1,12 @@
 import * as api from "@prague/client-api";
-import * as socketStorage from "@prague/routerlicious-socket-storage";
+import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@prague/routerlicious-socket-storage";
 import { BrowserErrorTrackingService } from "./errorTracking";
 
-export function registerDocumentServices(config: any) {
+export function registerDocumentServiceFactory(config: any) {
     const errorService = config.trackError
         ? new BrowserErrorTrackingService()
-        : new socketStorage.DefaultErrorTracking();
+        : new DefaultErrorTracking();
 
-    const documentServices = socketStorage.createDocumentService(
-        config.serverUrl,
-        config.blobStorageUrl,
-        errorService);
-    api.registerDocumentService(documentServices);
+    const documentServices = new RouterliciousDocumentServiceFactory(false, errorService);
+    api.registerDocumentServiceFactory(documentServices);
 }

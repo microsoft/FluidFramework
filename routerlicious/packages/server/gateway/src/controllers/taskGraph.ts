@@ -3,7 +3,7 @@ import { Browser, ISequencedClient } from "@prague/container-definitions";
 import * as resources from "@prague/gitresources";
 import { ContainerUrlResolver } from "@prague/routerlicious-host";
 import * as d3 from "d3";
-import { registerDocumentServices } from "./utils";
+import { registerDocumentServiceFactory } from "./utils";
 
 interface INode {
     label: string;  // Text inside the node.
@@ -147,7 +147,7 @@ function updateSimulation(graph: any) {
 }
 
 export async function load(id: string, version: resources.ICommit, config: any, token?: string) {
-    registerDocumentServices(config);
+    registerDocumentServiceFactory(config);
 
     const resolver = new ContainerUrlResolver(null, null);
 

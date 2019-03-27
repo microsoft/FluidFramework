@@ -1,5 +1,5 @@
 import * as api from "@prague/client-api";
-import { Browser, IDocumentService, IHost } from "@prague/container-definitions";
+import { Browser, IDocumentServiceFactory, IHost } from "@prague/container-definitions";
 import { EventEmitter } from "events";
 import { parse } from "url";
 import { debug } from "./debug";
@@ -32,7 +32,7 @@ export class BaseWork extends EventEmitter {
 
     public async loadDocument(
         options: any,
-        service: IDocumentService,
+        service: IDocumentServiceFactory,
         task: string): Promise<void> {
         this.task = task;
 

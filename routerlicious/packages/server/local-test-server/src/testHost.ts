@@ -3,9 +3,9 @@ import { Component } from "@prague/app-component";
 import { DataStore } from "@prague/app-datastore";
 import { IChaincodeComponent } from "@prague/runtime-definitions";
 import {
-    createTestDocumentService,
     ITestDeltaConnectionServer,
     TestDeltaConnectionServer,
+    TestDocumentServiceFactory,
     TestLoader,
 } from ".";
 
@@ -111,7 +111,7 @@ export class TestHost {
                         ]])),
                 }],
             ]),
-            createTestDocumentService(this.deltaConnectionServer),
+            new TestDocumentServiceFactory(this.deltaConnectionServer),
             "tokenKey",
             "tenantId",
             "userId");

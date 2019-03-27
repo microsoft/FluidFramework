@@ -1,5 +1,5 @@
 import {
-    IDocumentService,
+    IDocumentServiceFactory,
     IHost,
 } from "@prague/container-definitions";
 import { ISharedMap } from "@prague/map";
@@ -16,14 +16,14 @@ export class TranslationWork extends BaseWork implements IWork {
         tenantId: string,
         host: IHost,
         config: any,
-        private service: IDocumentService) {
+        private serviceFactory: IDocumentServiceFactory) {
         super(alfred, docId, tenantId, host, config);
     }
 
     public async start(task: string): Promise<void> {
         await this.loadDocument(
             { encrypted: undefined, localMinSeq: 0, client: { type: "translation"} },
-            this.service,
+            this.serviceFactory,
             task);
 
         // Wait for the document to get fully connected.

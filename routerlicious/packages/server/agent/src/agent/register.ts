@@ -61,7 +61,7 @@ async function performTask(
                 tenantId,
                 host,
                 config,
-                api.getDefaultDocumentService());
+                api.getDefaultDocumentServiceFactory());
             await snapshotWork.start(task);
             break;
         case "intel":
@@ -71,7 +71,7 @@ async function performTask(
                 tenantId,
                 host,
                 config,
-                api.getDefaultDocumentService());
+                api.getDefaultDocumentServiceFactory());
             await intelWork.start(task);
             break;
         case "spell":
@@ -83,7 +83,7 @@ async function performTask(
                     host,
                     config,
                     dictionary,
-                    api.getDefaultDocumentService(),
+                    api.getDefaultDocumentServiceFactory(),
                 );
                 await spellWork.start(task);
             }, (err) => {
@@ -97,7 +97,7 @@ async function performTask(
                 tenantId,
                 host,
                 config,
-                api.getDefaultDocumentService());
+                api.getDefaultDocumentServiceFactory());
             await translationWork.start(task);
             break;
         case "chaincode":

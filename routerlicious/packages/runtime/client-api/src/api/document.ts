@@ -3,7 +3,7 @@ import * as cell from "@prague/cell";
 import {
     IDeltaManager,
     IDocumentMessage,
-    IDocumentService,
+    IDocumentServiceFactory,
     IGenericBlob,
     IHost,
     IPlatform,
@@ -30,19 +30,19 @@ const rootMapId = "root";
 const insightsMapId = "insights";
 
 // Registered services to use when loading a document
-let defaultDocumentService: IDocumentService;
+let defaultDocumentServiceFactory: IDocumentServiceFactory;
 
 /**
  * Registers the default services to use for interacting with shared documents. To simplify the API it is
  * expected that the implementation provider of these will register themselves during startup prior to the user
  * requesting to load a shared object.
  */
-export function registerDocumentService(service: IDocumentService) {
-    defaultDocumentService = service;
+export function registerDocumentServiceFactory(service: IDocumentServiceFactory) {
+    defaultDocumentServiceFactory = service;
 }
 
-export function getDefaultDocumentService(): IDocumentService {
-    return defaultDocumentService;
+export function getDefaultDocumentServiceFactory(): IDocumentServiceFactory {
+    return defaultDocumentServiceFactory;
 }
 
 let chaincodeRepo: string;
@@ -245,7 +245,7 @@ export async function load(
     url: string,
     host: IHost,
     options: any = {},
-    service: IDocumentService = defaultDocumentService): Promise<Document> {
+    serviceFactory: IDocumentServiceFactory = defaultDocumentServiceFactory): Promise<Document> {
 
     // const classicPlatform = new PlatformFactory();
     const runDeferred = new Deferred<{ runtime: IRuntime; platform: IPlatform }>();
@@ -258,7 +258,7 @@ export async function load(
 
     // Load the Prague document
     // For legacy purposes we currently fill in a default domain
-    const loader = new Loader(host, service, codeLoader, options);
+    const loader = new Loader(host, serviceFactory, codeLoader, options);
     const container = await loader.resolve({ url });
 
     if (!container.existing) {

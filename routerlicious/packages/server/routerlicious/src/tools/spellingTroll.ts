@@ -2,7 +2,7 @@
 import * as API from "@prague/client-api";
 import { ISequencedDocumentMessage } from "@prague/container-definitions";
 import * as MergeTree from "@prague/merge-tree";
-import * as socketStorage from "@prague/routerlicious-socket-storage";
+import { RouterliciousDocumentServiceFactory } from "@prague/routerlicious-socket-storage";
 import * as Sequence from "@prague/sequence";
 import * as fs from "fs";
 import * as path from "path";
@@ -339,7 +339,7 @@ if (!sharedStringId) {
 }
 else {
     // Mark socket storage as our default provider
-    const documentServices = socketStorage.createDocumentService(commander.server, commander.storage);
-    API.registerDocumentService(documentServices);
+    const serviceFactory = new RouterliciousDocumentServiceFactory();
+    API.registerDocumentServiceFactory(serviceFactory );
     initSpell(sharedStringId);
 }

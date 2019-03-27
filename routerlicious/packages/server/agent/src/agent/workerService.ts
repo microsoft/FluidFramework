@@ -1,6 +1,6 @@
-import { ICodeLoader, IHost } from "@prague/container-definitions";
+import { ICodeLoader, IDocumentServiceFactory, IHost } from "@prague/container-definitions";
 import { EventEmitter } from "events";
-import { IDocumentServiceFactory, IDocumentTaskInfo, IWorkManager } from "./definitions";
+import { IDocumentTaskInfo, IWorkManager } from "./definitions";
 import { WorkManager } from "./workManager";
 
 export class WorkerService extends EventEmitter {
