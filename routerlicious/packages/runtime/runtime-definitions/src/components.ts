@@ -19,7 +19,6 @@ import {
 export interface IComponentDeltaHandler {
     prepare: (message: ISequencedDocumentMessage, local: boolean) => Promise<any>;
     process: (message: ISequencedDocumentMessage, local: boolean, context: any) => void;
-    updateMinSequenceNumber: (value: number) => void;
     changeConnectionState(value: ConnectionState, clientId: string);
     request(request: IRequest): Promise<IResponse>;
 }

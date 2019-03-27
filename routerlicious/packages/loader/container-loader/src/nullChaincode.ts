@@ -39,10 +39,6 @@ class NullRuntime implements IRuntime {
     public postProcess(message: ISequencedDocumentMessage, local: boolean, context: any): Promise<void> {
         return Promise.reject("Null chaincode should not receive messages");
     }
-
-    public updateMinSequenceNumber(minimumSequenceNumber: number) {
-        return;
-    }
 }
 
 export class NullChaincode implements IChaincodeFactory {

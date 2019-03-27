@@ -302,6 +302,13 @@ export abstract class SegmentSequence<T extends MergeTree.ISegment> extends Shar
     }
 
     protected snapshotContent(): ITree {
+        // Catch up to latest MSN, if we have not had a chance to do it.
+        // Required for case where ComponentHost.attachChannel() generates snapshot right after loading component.
+        // Note that we mock runtime in tests and mock does not have deltamanager implementation.
+        if (this.runtime.deltaManager) {
+            this.processMinSequenceNumberChanged(this.runtime.deltaManager.minimumSequenceNumber);
+        }
+
         // debug(`Transforming up to ${this.deltaManager.minimumSequenceNumber}`);
         const transformedMessages: ISequencedDocumentMessage[] = [];
         for (const message of this.messagesSinceMSNChange) {
@@ -338,25 +345,6 @@ export abstract class SegmentSequence<T extends MergeTree.ISegment> extends Shar
         this.processMessage(message);
     }
 
-    protected processMinSequenceNumberChangedContent(value: number) {
-        let index = 0;
-        for (; index < this.messagesSinceMSNChange.length; index++) {
-            if (this.messagesSinceMSNChange[index].sequenceNumber > value) {
-                break;
-            }
-        }
-        if (index !== 0) {
-            this.messagesSinceMSNChange = this.messagesSinceMSNChange.slice(index);
-        }
-
-        // Apply directly once loaded - otherwise track so we can update later
-        if (this.isLoaded) {
-            this.client.updateMinSeq(value);
-        } else {
-            this.pendingMinSequenceNumber = value;
-        }
-    }
-
     protected attachContent() {
         this.client.startCollaboration(this.runtime.clientId, 0);
         this.collabStarted = true;
@@ -389,6 +377,33 @@ export abstract class SegmentSequence<T extends MergeTree.ISegment> extends Shar
 
     protected segmentsFromSpecs(segSpecs: MergeTree.IJSONSegment[]): MergeTree.ISegment[] {
         return segSpecs.map(this.segmentFromSpec.bind(this));
+    }
+
+    protected didAttach() {
+        this.runtime.addListener("minSequenceNumberChanged", (msn: number) => {
+            this.processMinSequenceNumberChanged(msn);
+        });
+
+        super.didAttach();
+    }
+
+    private processMinSequenceNumberChanged(value: number) {
+        let index = 0;
+        for (; index < this.messagesSinceMSNChange.length; index++) {
+            if (this.messagesSinceMSNChange[index].sequenceNumber > value) {
+                break;
+            }
+        }
+        if (index !== 0) {
+            this.messagesSinceMSNChange = this.messagesSinceMSNChange.slice(index);
+        }
+
+        // Apply directly once loaded - otherwise track so we can update later
+        if (this.isLoaded) {
+            this.client.updateMinSeq(value);
+        } else {
+            this.pendingMinSequenceNumber = value;
+        }
     }
 
     private processMessage(message: ISequencedDocumentMessage) {

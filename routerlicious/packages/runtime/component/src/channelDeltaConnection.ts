@@ -40,11 +40,6 @@ export class ChannelDeltaConnection implements IDeltaConnection {
         this.handler.process(message, local, context);
     }
 
-    public updateMinSequenceNumber(value: number) {
-        assert(this.handler);
-        this.handler.minSequenceNumberChanged(value);
-    }
-
     /**
      * Send new messages to the server
      */

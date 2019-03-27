@@ -360,18 +360,8 @@ export class ComponentHost extends EventEmitter implements IComponentDeltaHandle
         this.emit("op", message, target);
     }
 
-    public updateMinSequenceNumber(msn: number) {
-        for (const [, object] of this.channels) {
-            if (!object.object.isLocal()) {
-                object.connection.updateMinSequenceNumber(msn);
-            }
-        }
-    }
-
-    public snapshotInternal(): ITreeEntry[] {
+   public snapshotInternal(): ITreeEntry[] {
         const entries = new Array<ITreeEntry>();
-
-        this.updateMinSequenceNumber(this.deltaManager.minimumSequenceNumber);
 
         // Craft the .attributes file for each distributed object
         for (const [objectId, object] of this.channels) {

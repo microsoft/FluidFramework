@@ -310,10 +310,6 @@ export class SharedMap extends SharedObject implements ISharedMap {
         this.initializeContent();
     }
 
-    protected processMinSequenceNumberChanged(value: number) {
-        this.processMinSequenceNumberChangedContent(value);
-    }
-
     protected async loadContent(
         minimumSequenceNumber: number,
         headerOrigin: string,
@@ -400,13 +396,6 @@ export class SharedMap extends SharedObject implements ISharedMap {
      */
     protected snapshotContent(): ITree {
         return null;
-    }
-
-    /**
-     * Notifies the content that the minimum sequence number has changed
-     */
-    protected processMinSequenceNumberChangedContent(value: number) {
-        return;
     }
 
     protected needProcessKeyOperations(op: IMapOperation, local: boolean, message: ISequencedDocumentMessage): boolean {

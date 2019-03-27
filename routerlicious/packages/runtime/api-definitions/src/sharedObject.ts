@@ -143,6 +143,14 @@ export abstract class SharedObject extends EventEmitter implements ISharedObject
     protected abstract attachCore();
 
     /**
+     * Allows the distributive data type the ability to perform custom processing once an attach has happened.
+     * Also called after non-local data type get loaded.
+     */
+    protected didAttach() {
+        return;
+    }
+
+    /**
      * Prepares the given message for processing
      */
     protected abstract prepareCore(message: ISequencedDocumentMessage, local: boolean): Promise<any>;
@@ -151,11 +159,6 @@ export abstract class SharedObject extends EventEmitter implements ISharedObject
      * Derived classes must override this to do custom processing on a remote message
      */
     protected abstract processCore(message: ISequencedDocumentMessage, local: boolean, context: any);
-
-    /**
-     * Method called when the minimum sequence number for the object has changed
-     */
-    protected abstract processMinSequenceNumberChanged(value: number);
 
     /**
      * Called when the object has disconnected from the delta stream
@@ -191,10 +194,10 @@ export abstract class SharedObject extends EventEmitter implements ISharedObject
     }
 
     private attachDeltaHandler() {
+        // Allows objects to start listening for events
+        this.didAttach();
+
         this.services.deltaConnection.attach({
-            minSequenceNumberChanged: (value) => {
-                this.processMinSequenceNumberChanged(value);
-            },
             prepare: (message, local) => {
                 return this.prepare(message, local);
             },

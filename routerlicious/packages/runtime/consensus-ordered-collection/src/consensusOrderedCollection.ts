@@ -200,10 +200,6 @@ export class ConsensusOrderedCollection<T = any> extends SharedObject implements
         }
     }
 
-    protected processMinSequenceNumberChanged(value: number) {
-        return;
-    }
-
     /**
      * Resolve the promise of a local operation
      *

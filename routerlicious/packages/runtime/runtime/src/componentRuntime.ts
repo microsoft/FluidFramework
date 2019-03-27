@@ -200,10 +200,6 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime 
         this.hostRuntime.closeFn();
     }
 
-    public updateMinSequenceNumber(msn: number) {
-        this.handler.updateMinSequenceNumber(msn);
-    }
-
     public snapshot(): ITree {
         const componentAttributes = { pkg: this.pkg };
 
