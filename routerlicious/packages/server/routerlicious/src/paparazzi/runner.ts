@@ -137,7 +137,7 @@ export class PaparazziRunner implements utils.IRunner {
             const resolved: IPragueResolvedUrl = {
                 endpoints: {
                     ordererUrl: this.workerConfig.alfredUrl,
-                    storageUrl: this.workerConfig.blobStorageUrl,
+                    storageUrl: this.workerConfig.blobStorageUrl.replace("historian:3000", "localhost:3001"),
                 },
                 tokens: { jwt: requestMsg.token },
                 type: "prague",

@@ -108,7 +108,7 @@ export function create(
             const resolved: IPragueResolvedUrl = {
                 endpoints: {
                     ordererUrl: config.get("worker:serverUrl"),
-                    storageUrl: config.get("worker:blobStorageUrl"),
+                    storageUrl: config.get("worker:blobStorageUrl").replace("historian:3000", "localhost:3001"),
                 },
                 tokens: { jwt: token },
                 type: "prague",
@@ -212,7 +212,7 @@ export function create(
             const resolved: IPragueResolvedUrl = {
                 endpoints: {
                     ordererUrl: config.get("worker:serverUrl"),
-                    storageUrl: config.get("worker:blobStorageUrl"),
+                    storageUrl: config.get("worker:blobStorageUrl").replace("historian:3000", "localhost:3001"),
                 },
                 tokens: { jwt: token },
                 type: "prague",

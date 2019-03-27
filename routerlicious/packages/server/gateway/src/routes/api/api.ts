@@ -38,7 +38,7 @@ async function getInternalComponent(
     const path = match[3];
 
     const orderer = config.get("worker:serverUrl");
-    const storage = config.get("worker:blobStorageUrl");
+    const storage = config.get("worker:blobStorageUrl").replace("historian:3000", "localhost:3001");
 
     const user: IAlfredUser = (request.user) ? {
         displayName: request.user.name,
