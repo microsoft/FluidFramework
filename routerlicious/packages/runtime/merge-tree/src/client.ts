@@ -35,8 +35,6 @@ export class Client {
     private readonly shortClientBranchIdMap: number[] = [];
     private readonly pendingConsensus = new Map<string, IConsensusInfo>();
 
-    private localSequenceNumber = UnassignedSequenceNumber;
-
     constructor(
         initText: string,
         // Passing this callback would be unnecessary if Client were merged with SegmentSequence
@@ -427,12 +425,6 @@ export class Client {
 // tslint:disable
 // as functions are modified move them above the tslint: disabled waterline and lint them
 
-    setLocalSequenceNumber(seq: number) {
-        this.localSequenceNumber = seq;
-    }
-    resetLocalSequenceNumber() {
-        this.localSequenceNumber = UnassignedSequenceNumber;
-    }
     undoSingleSequenceNumber(undoSegments: IUndoInfo[], redoSegments: IUndoInfo[]) {
         let len = undoSegments.length;
         let index = len - 1;
@@ -662,10 +654,10 @@ export class Client {
             }
         }
     }
-    getLocalSequenceNumber() {
+    private getLocalSequenceNumber() {
         let segWindow = this.mergeTree.getCollabWindow();
         if (segWindow.collaborating) {
-            return this.localSequenceNumber;
+            return UnassignedSequenceNumber;
         }
         else {
             return UniversalSequenceNumber;
@@ -799,12 +791,6 @@ export class Client {
     getLength() {
         let segmentWindow = this.mergeTree.getCollabWindow();
         return this.mergeTree.getLength(segmentWindow.currentSeq, segmentWindow.clientId);
-    }
-    relText(clientId: number, refSeq: number) {
-        return `cli: ${this.getLongClientId(clientId)} refSeq: ${refSeq}: ` + this.mergeTree.getText(refSeq, clientId);
-    }
-    relItems(clientId: number, refSeq: number) {
-        return `cli: ${this.getLongClientId(clientId)} refSeq: ${refSeq}: ` + this.mergeTree.getItems(refSeq, clientId).toString();
     }
     startCollaboration(longClientId: string,  minSeq = 0, branchId = 0) {
         this.longClientId = longClientId;

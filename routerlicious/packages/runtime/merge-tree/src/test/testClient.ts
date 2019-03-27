@@ -146,6 +146,16 @@ export class TestClient extends Client {
             clientId));
     }
 
+    public relText(clientId: number, refSeq: number) {
+        return `cli: ${this.getLongClientId(clientId)} refSeq: ${refSeq}: ${this.mergeTree.getText(refSeq, clientId)}`;
+    }
+
+    public relItems(clientId: number, refSeq: number) {
+        return `cli: ${this.getLongClientId(clientId)} refSeq: ${refSeq}: ` +
+            `${this.mergeTree.getItems(refSeq, clientId)
+                .toString()}`;
+    }
+
     public makeOpMessage(
         op: IMergeTreeOp,
         seq: number = UnassignedSequenceNumber,

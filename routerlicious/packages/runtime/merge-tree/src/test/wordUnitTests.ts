@@ -1,12 +1,12 @@
 // tslint:disable
 
-import * as MergeTree from "./mergeTree";
-import { TestClient } from "./test/testClient";
-import * as Properties from "./properties";
-import * as ops from "./ops";
+import * as MergeTree from "../mergeTree";
+import { TestClient } from "./testClient";
+import * as Properties from "../properties";
+import * as ops from "../ops";
 import * as path from "path";
 import * as random from "random-js";
-import { loadTextFromFileWithMarkers } from "./test/testUtils";
+import { loadTextFromFileWithMarkers } from "./testUtils";
 
 function clock() {
     return process.hrtime();
@@ -137,7 +137,7 @@ function measureFetch(startFile: string, withBookmarks = false) {
     let count = 0;
     for (let i = 0; i < reps; i++) {
         for (let pos = 0; pos < client.getLength();) {
-            // let prevPG = client.mergeTree.findTile(pos, client.getClientId(), "pg");
+            // let prevPG = client.findTile(pos, "pg");
             // let caBegin: number;
             // if (prevPG) {
             //     caBegin = prevPG.pos;
@@ -145,7 +145,7 @@ function measureFetch(startFile: string, withBookmarks = false) {
             //     caBegin = 0;
             // }
             // curPG.pos is ca end
-            let curPG = client.mergeTree.findTile(pos, client.getClientId(), "pg", false);
+            let curPG = client.findTile(pos, "pg", false);
             let properties = curPG.tile.properties;
             let curSegOff = client.mergeTree.getContainingSegment(pos, MergeTree.UniversalSequenceNumber, client.getClientId());
             let curSeg = curSegOff.segment;
@@ -165,11 +165,21 @@ function measureFetch(startFile: string, withBookmarks = false) {
     et = elapsedMicroseconds(clockStart);
     console.log(`naive clone took ${(et / (1000*reps)).toFixed(1)} milliseconds`);
 }
-const filename = path.join(__dirname, "../../../routerlicious/public/literature", "pp.txt");
 
-propertyCopy();
-measureFetch(filename);
-measureFetch(filename, true);
-measureFetch(filename);
-measureFetch(filename, true);
+const baseDir = "../../../../server/gateway/public/literature";
+const filename = path.join(__dirname, baseDir, "pp.txt");
+const testTimeout = 30000;
+
+describe("Routerlicious", () => {
+    describe("merge-tree", () => {
+        it("wordUnitTest", () => {
+            propertyCopy();
+            measureFetch(filename);
+            measureFetch(filename, true);
+            measureFetch(filename);
+            measureFetch(filename, true);
+        }).timeout(testTimeout);
+    })
+});
+
 

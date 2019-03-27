@@ -273,8 +273,7 @@ function getPrecedingTile(
     }
     while (tilePos > 0) {
         tilePos = tilePos - 1;
-        let prevTileInfo = sharedString.client.mergeTree.findTile(tilePos,
-            sharedString.client.getClientId(), label);
+        let prevTileInfo = sharedString.findTile(tilePos, label);
         if (prevTileInfo && filter(<MergeTree.Marker>prevTileInfo.tile)) {
             return prevTileInfo;
         }

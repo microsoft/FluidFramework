@@ -149,8 +149,7 @@ class Speller {
     private collectDeltas(delta: MergeTree.IMergeTreeOp) {
         if (delta.type === MergeTree.MergeTreeDeltaType.INSERT ||
             delta.type === MergeTree.MergeTreeDeltaType.REMOVE) {
-            const pgRef = this.sharedString.client.mergeTree.findTile(delta.pos1,
-                this.sharedString.client.getClientId(), "pg");
+            const pgRef = this.sharedString.findTile(delta.pos1, "pg");
             let pgMarker: IPgMarker;
             if (!pgRef) {
                 pgMarker = { tile: undefined, pos: 0 };
@@ -185,8 +184,7 @@ class Speller {
                     offset = this.sharedString.client.mergeTree.getOffset(pg.tile, MergeTree.UniversalSequenceNumber,
                         this.sharedString.client.getClientId());
                 }
-                const endMarker = this.sharedString.client.mergeTree.findTile(offset + 1,
-                    this.sharedString.client.getClientId(), "pg", false);
+                const endMarker = this.sharedString.findTile(offset + 1, "pg", false);
                 if (endMarker) {
                     this.tileMap.set(endMarker.tile, {begin: offset, end: endMarker.pos});
                 }

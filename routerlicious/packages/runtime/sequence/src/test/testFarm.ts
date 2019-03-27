@@ -1835,7 +1835,7 @@ export class DocumentTree {
                         client.getClientId());
                     prevPos = endRowPos;
                 }
-                let tilePos = client.mergeTree.findTile(prevPos, client.getClientId(), "pg", false);
+                let tilePos = client.findTile(prevPos, "pg", false);
                 if (tilePos) {
                     if (tilePos.pos !== pos) {
                         errorCount++;

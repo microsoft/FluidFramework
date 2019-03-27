@@ -599,8 +599,7 @@ function parseCell(cellStartPos: number, sharedString: SharedString, fontInfo?: 
                 }
             } else {
                 // text segment
-                let tilePos = sharedString.client.mergeTree.findTile(nextPos, sharedString.client.getClientId(),
-                    "pg", false);
+                let tilePos = sharedString.findTile(nextPos, "pg", false);
                 let pgMarker = <Paragraph.IParagraphMarker>tilePos.tile;
                 if (!pgMarker.itemCache) {
                     if (fontInfo) {

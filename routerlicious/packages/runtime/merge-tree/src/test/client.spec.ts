@@ -31,7 +31,7 @@ describe("TestClient", () => {
 
             assert.equal(client.getLength(), 4, "length not expected");
 
-            const tile = client.mergeTree.findTile(0, client.getClientId(), tileLabel, false);
+            const tile = client.findTile(0, tileLabel, false);
 
             assert(tile, "Returned tile undefined.");
 
