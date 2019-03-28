@@ -44,10 +44,6 @@ class NullRuntime implements IRuntime {
         // todo (mdaumi): We might want to buffer signals before transitioning.
         return Promise.reject("Null chaincode should not receive signals");
     }
-
-    public updateMinSequenceNumber(minimumSequenceNumber: number) {
-        return;
-    }
 }
 
 export class NullChaincode implements IChaincodeFactory {
