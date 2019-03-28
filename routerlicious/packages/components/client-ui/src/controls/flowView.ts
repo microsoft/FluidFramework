@@ -2930,6 +2930,7 @@ export class FlowView extends ui.Component {
         // refresh cursors when clients join or leave
         collabDocument.runtime.getQuorum().on("addMember", () => {
             this.updatePresenceCursors();
+            this.broadcastPresence();
         });
         collabDocument.runtime.getQuorum().on("removeMember", () => {
             this.updatePresenceCursors();
@@ -3218,7 +3219,7 @@ export class FlowView extends ui.Component {
             this.remotePresenceUpdate(message, local);
         });
 
-        this.updatePresence();
+        this.broadcastPresence();
     }
 
     public presenceInfoInRange(start: number, end: number) {
@@ -3428,7 +3429,7 @@ export class FlowView extends ui.Component {
             if (tilePos) {
                 this.curPG = tilePos.tile as MergeTree.Marker;
             }
-            this.updatePresence();
+            this.broadcastPresence();
             this.cursor.updateView(this);
             if (this.parentFlow) {
                 this.parentFlow.focusChild = this;
@@ -3678,7 +3679,7 @@ export class FlowView extends ui.Component {
         // TODO: only rerender line if selection on one line
         if (this.cursor.getSelection()) {
             this.cursor.clearSelection();
-            this.updatePresence();
+            this.broadcastPresence();
             if (render) {
                 this.localQueueRender(this.cursor.pos);
             }
@@ -3724,7 +3725,7 @@ export class FlowView extends ui.Component {
                         if (dist >= thresh) {
                             this.movingInclusion.dx = deltaX;
                             this.movingInclusion.dy = deltaY;
-                            this.updateDragPresence();
+                            this.broadcastDragPresence();
                             this.render(this.topChar, true);
                         }
                     } else {
@@ -3786,7 +3787,7 @@ export class FlowView extends ui.Component {
                     this.movingInclusion.dy = 0;
                     this.movingInclusion.onTheMove = false;
                     this.movingInclusion.ulPos = undefined;
-                    this.updateDragPresence();
+                    this.broadcastDragPresence();
                     if (toPos !== undefined) {
                         // console.log(`moving to ${toPos}`);
                         const fromPos = getOffset(this, this.movingInclusion.marker);
@@ -3917,7 +3918,7 @@ export class FlowView extends ui.Component {
                     if (this.modes.showCursorLocation) {
                         this.cursorLocation();
                     }
-                    this.updatePresence();
+                    this.broadcastPresence();
                     this.render(topChar);
                 } else if (e.keyCode === KeyCode.rightArrow) {
                     if (this.cursor.pos < (this.client.getLength() - 1)) {
@@ -3930,7 +3931,7 @@ export class FlowView extends ui.Component {
                             this.clearSelection();
                         }
                         this.cursorFwd();
-                        this.updatePresence();
+                        this.broadcastPresence();
                         this.cursor.updateView(this);
                     }
                 } else if (e.keyCode === KeyCode.leftArrow) {
@@ -3944,7 +3945,7 @@ export class FlowView extends ui.Component {
                             this.clearSelection();
                         }
                         this.cursorRev();
-                        this.updatePresence();
+                        this.broadcastPresence();
                         this.cursor.updateView(this);
                     }
                 } else if ((e.keyCode === KeyCode.upArrow) || (e.keyCode === KeyCode.downArrow)) {
@@ -3983,7 +3984,7 @@ export class FlowView extends ui.Component {
                         if (this.cursor.pos > maxPos) {
                             this.cursor.pos = maxPos;
                         }
-                        this.updatePresence();
+                        this.broadcastPresence();
                         this.cursor.updateView(this);
                     }
                 } else {
@@ -4138,7 +4139,7 @@ export class FlowView extends ui.Component {
                         this.cursor.pos = endOffset + 1;
                     }
                 }
-                this.updatePresence();
+                this.broadcastPresence();
                 this.cursor.updateView(this);
             }
             return true;
@@ -4415,7 +4416,7 @@ export class FlowView extends ui.Component {
             if (this.modes.showCursorLocation) {
                 this.cursorLocation();
             }
-            this.updatePresence();
+            this.broadcastPresence();
         }
     }
 
@@ -4423,7 +4424,7 @@ export class FlowView extends ui.Component {
         this.updatePGInfo(this.cursor.pos);
         this.cursor.pos = this.sharedString.paste(this.cursor.pos, "clipboard");
         this.updatePGInfo(this.cursor.pos);
-        this.updatePresence();
+        this.broadcastPresence();
         if (this.modes.showCursorLocation) {
             this.cursorLocation();
         }
@@ -4734,7 +4735,7 @@ export class FlowView extends ui.Component {
             } else {
                 this.setCursorPosFromPixels(this.lastLineDiv(), x);
             }
-            this.updatePresence();
+            this.broadcastPresence();
             this.cursor.updateView(this);
         }
     }
@@ -5090,8 +5091,8 @@ export class FlowView extends ui.Component {
         }
     }
 
-    private updatePresence() {
-        if (this.presenceSignal  && this.collabDocument.isConnected) {
+    private broadcastPresence() {
+        if (this.presenceSignal && this.collabDocument.isConnected) {
             const presenceInfo: IRemotePresenceInfo = {
                 origMark: this.cursor.mark,
                 origPos: this.cursor.pos,
@@ -5102,8 +5103,8 @@ export class FlowView extends ui.Component {
         }
     }
 
-    private updateDragPresence() {
-        if (this.presenceSignal  && this.collabDocument.isConnected) {
+    private broadcastDragPresence() {
+        if (this.presenceSignal && this.collabDocument.isConnected) {
             let dragPresenceInfo: IRemoteDragInfo;
             dragPresenceInfo = {
                 dx: this.movingInclusion.dx,

@@ -17,6 +17,7 @@ export class PresenceSignal extends EventEmitter {
     private listenForPresence() {
         this.runtime.on("signal", (message: ISignalMessage, local: boolean) => {
             if (message.content.type === presenceKey) {
+                // Copy over nested content.
                 message.content = message.content.content;
                 this.emit("message", message, local);
             }
