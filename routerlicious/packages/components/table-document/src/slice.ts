@@ -80,6 +80,22 @@ export class TableSlice extends Component implements ITable {
         return this.doc.getColProperties(col);
     }
 
+    public insertRows(startRow: number, numRows: number) {
+        this.doc.insertRows(startRow, numRows);
+    }
+
+    public removeRows(startRow: number, numRows: number) {
+        this.doc.removeRows(startRow, numRows);
+    }
+
+    public insertCols(startCol: number, numCols: number) {
+        this.doc.insertCols(startCol, numCols);
+    }
+
+    public removeCols(startCol: number, numCols: number)  {
+        this.doc.removeCols(startCol, numCols);
+    }
+
     protected async create() {
         try {
             const maybeConfig = await this.platform.queryInterface<ITableSliceConfig>("config");

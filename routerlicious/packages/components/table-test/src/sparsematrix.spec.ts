@@ -1,7 +1,7 @@
 import "mocha";
 import * as assert from "assert";
 import { SparseMatrix, SparseMatrixExtension } from "@chaincode/table-document"
-import { TestHost } from "../../../server/local-test-server/dist";
+import { TestHost } from "@prague/local-test-server";
 
 describe("SparseMatrix", () => {
     const extract = (matrix: SparseMatrix, numCols: number) => {

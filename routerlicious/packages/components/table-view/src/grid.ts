@@ -58,31 +58,8 @@ export class GridView {
 
         this.doc.on("op", this.invalidate);
 
-        const numRows = this.numRows;
-        const numCols = this.numCols;
-
         const blank = headerTemplate.clone();
         this.cols.appendChild(blank);
-
-        for (let c = 0; c < numCols; c++) {
-            const th = headerTemplate.clone();
-            th.textContent = String.fromCharCode(65 + c);
-            this.cols.appendChild(th);
-        }
-
-        for (let r = 0; r < numRows; r++) {
-            const row = rowTemplate.clone();
-
-            const th = headerTemplate.clone();
-            th.textContent = `${r + 1}`;
-            row.appendChild(th);
-
-            for (let c = 0; c < numCols; c++) {
-                row.appendChild(cellTemplate.clone());
-            }
-
-            this.tbody.appendChild(row);
-        }
 
         this.refreshCells();
     }
@@ -99,7 +76,14 @@ export class GridView {
         // While the cell is being edited, we use the <td>'s content to size the table to the
         // formula.  Don't synchronize it now.
         if (this.inputBox.parentElement !== td) {
-            const text = `\u200B${this.doc.evaluateCell(row, col)}`;
+            const value = this.doc.evaluateCell(row, col);
+
+            const text = `\u200B${
+                value === undefined
+                    ? ""
+                    : value
+            }`;
+
             if (td.textContent !== text) {
                 td.textContent = text;
             }
@@ -118,7 +102,30 @@ export class GridView {
                 }
                 col++;
             }
+
+            // Append any missing columns
+            for (; col < this.numCols; col++) {
+                const td = cellTemplate.clone() as HTMLTableCellElement;
+                this.refreshCell(td, row, col);
+                tr.appendChild(td);
+            }
             row++;
+        }
+
+        // Append any missing rows
+        for (; row < this.numRows; row++) {
+            const tr = rowTemplate.clone();
+            const th = headerTemplate.clone();
+            th.textContent = `${row + 1}`;
+            tr.appendChild(th);
+
+            for (let col = 0; col < this.numCols; col++) {
+                const td = cellTemplate.clone() as HTMLTableCellElement;
+                this.refreshCell(td, row, col);
+                tr.appendChild(td);
+            }
+
+            this.tbody.appendChild(tr);
         }
     }
 
@@ -210,10 +217,13 @@ export class GridView {
             this.tdText = newParent.firstChild!;
             console.assert(this.tdText.nodeType === Node.TEXT_NODE);
 
-            this.inputBox.value = `${this.doc.getCellValue(row, col)}`;
+            const value = this.doc.getCellValue(row, col);
+            this.inputBox.value = value === undefined
+                ? ""
+                : `${value}`;
             newParent.appendChild(this.inputBox);
             this.cellInput();
-            this.tdText.textContent = this.inputBox.value;
+            this.tdText.textContent = `\u200B${this.inputBox.value}`;
             this.inputBox.focus();
 
             this.selection.end = [row, col];

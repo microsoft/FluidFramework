@@ -1,3 +1,4 @@
+export const grid: string;
 export const view: string;
 export const inputBox: string;
 export const selectedTL: string;

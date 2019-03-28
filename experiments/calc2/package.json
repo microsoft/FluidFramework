@@ -1,0 +1,20 @@
+{
+  "name": "@prague/calc",
+  "description": "Prague-enabled Workbook API that recalculates with '@ms/excel-online-calc'.",
+  "scripts": {
+    "build": "webpack",
+    "dev": "webpack --watch"
+  },
+  "author": "Microsoft",
+  "repository": "microsoft/prague",
+  "devDependencies": {
+    "clean-webpack-plugin": "^0.1.19",
+    "ts-loader": "^4.4.2",
+    "typescript": "^3.1.1",
+    "webpack": "^4.16.5",
+    "webpack-cli": "^3.1.0"
+  },
+  "dependencies": {
+    "@ms/excel-online-calc": "^8.14.4"
+  }
+}

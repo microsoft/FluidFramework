@@ -97,3 +97,10 @@ table.view:focus-within td.selectedBL, table.view:focus-within td.selectedB, tab
 table.view:focus-within td.selectedTL, table.view:focus-within td.selectedT, table.view:focus-within td.selectedTR, table.view:focus-within td.selectedL, table.view:focus-within td.selected, table.view:focus-within td.selectedR, table.view:focus-within td.selectedBL, table.view:focus-within td.selectedB, table.view:focus-within td.selectedBR {
     background-color: rgba(17, 102, 238, 0.1);
 }
+
+.grid {
+    max-width: 100%;
+    max-height: 50%;
+    padding: 0px 0px 8px 0px;
+    overflow: auto;
+}

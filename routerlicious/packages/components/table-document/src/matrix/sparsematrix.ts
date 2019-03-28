@@ -81,21 +81,92 @@ export class PaddingSegment extends BaseSegment {
     }
 }
 
-type MatrixSegment = SubSequence<UnboxedOper> | PaddingSegment;
+export class RunSegment extends SubSequence<UnboxedOper> {
+    public static fromJSONObject(spec: any) {
+        if (spec && typeof spec === "object" && "items" in spec) {
+            const segment = new RunSegment(spec.items, UniversalSequenceNumber, LocalClientId);
+            if (spec.props) {
+                segment.addProperties(spec.props);
+            }
+            return segment;
+        }
+        return undefined;
+    }
 
-export const maxCol = 0xFFFF;
+    private tags: any [];
+
+    constructor(public items: UnboxedOper[], seq?: number, clientId?: number) {
+        super(items, seq, clientId);
+        this.tags = new Array(items.length).fill(undefined);
+    }
+
+    public clone(start = 0, end?: number) {
+        const b = new RunSegment(this.items.slice(start, end), this.seq, this.clientId);
+        if (this.tags) {
+            b.tags = this.tags.slice(start, end);
+        }
+        this.cloneInto(b);
+        return b;
+    }
+
+    public append(segment: ISegment) {
+        super.append(segment);
+
+        const asRun = segment as RunSegment;
+        if (asRun.tags) {
+            if (this.tags) {
+                this.tags.splice(this.items.length, 0, ...asRun.tags);
+            }
+        }
+
+        return this;
+    }
+
+    // TODO: retain removed items for undo
+    // returns true if entire run removed
+    public removeRange(start: number, end: number) {
+        this.tags.splice(start, end - start);
+        return super.removeRange(start, end);
+    }
+
+    public getTag(pos: number) {
+        return this.tags[pos];
+    }
+
+    public setTag(pos: number, tag: any) {
+        this.tags[pos] = tag;
+    }
+
+    protected createSplitSegmentAt(pos: number) {
+        if (pos > 0) {
+            const remainingItems = this.items.slice(pos);
+            this.items = this.items.slice(0, pos);
+            this.cachedLength = this.items.length;
+
+            const leafSegment = new RunSegment(remainingItems, this.seq, this.clientId);
+            leafSegment.tags = this.tags.slice(pos);
+            this.tags.length = pos;
+
+            return leafSegment;
+        }
+    }
+}
+
+type MatrixSegment = RunSegment | PaddingSegment;
+
+export const maxCol = 0x200000;         // x128 Excel maximum of 16,384 columns
 export const maxCols = maxCol + 1;
 
-export const maxRow = Math.floor(Number.MAX_SAFE_INTEGER / maxCol);
+export const maxRow = 0xFFFFFFFF;       // x4096 Excel maximum of 1,048,576 rows
 export const maxRows = maxRow + 1;
 
 export const maxCellPosition = maxCol * maxRow;
 
-function rowColToPosition(row: number, col: number) {
+export function rowColToPosition(row: number, col: number) {
     return row * maxCols + col;
 }
 
-function positionToRowCol(position: number) {
+export function positionToRowCol(position: number) {
     const row = Math.floor(position / maxCols);
     const col = position - (row * maxCols);
     return {row, col};
@@ -116,7 +187,7 @@ export class SparseMatrix extends SegmentSequence<MatrixSegment> {
     // public setItems(row: number, col: number, values: UnboxedOper[], props?: PropertySet) {
     //     const start = rowColToPosition(row, col);
     //     const end = start + values.length;
-    //     const segment = new SubSequence<UnboxedOper>(values);
+    //     const segment = new RunSegment(values);
     //     if (props) {
     //         segment.addProperties(props);
     //     }
@@ -138,7 +209,7 @@ export class SparseMatrix extends SegmentSequence<MatrixSegment> {
     // public setItems(row: number, col: number, values: UnboxedOper[], props?: PropertySet) {
     //     const start = rowColToPosition(row, col);
     //     const end = start + values.length;
-    //     const segment = new SubSequence<UnboxedOper>(values);
+    //     const segment = new RunSegment(values);
     //     if (props) {
     //         segment.addProperties(props);
     //     }
@@ -170,7 +241,7 @@ export class SparseMatrix extends SegmentSequence<MatrixSegment> {
     public setItems(row: number, col: number, values: UnboxedOper[], props?: PropertySet) {
         const start = rowColToPosition(row, col);
         const end = start + values.length;
-        const segment = new SubSequence<UnboxedOper>(values);
+        const segment = new RunSegment(values);
         if (props) {
             segment.addProperties(props);
         }
@@ -188,15 +259,30 @@ export class SparseMatrix extends SegmentSequence<MatrixSegment> {
     public getItem(row: number, col: number) {
         const pos = rowColToPosition(row, col);
         const { segment, offset } = this.client.mergeTree.getContainingSegment(pos, UniversalSequenceNumber, this.client.getClientId());
-
         switch (segment.getType()) {
             case SegmentType.Run:
-                return (segment as SubSequence<UnboxedOper>).items[offset];
+                return (segment as RunSegment).items[offset];
             case SegmentType.Custom:
                 return undefined;
         }
 
         throw new Error(`Unrecognized Segment type: ${segment.constructor}`);
+    }
+
+    public getTag(row: number, col: number) {
+        const { segment, offset } = this.getSegment(row, col);
+        return segment instanceof RunSegment
+            ? segment.getTag(offset)
+            : undefined;
+    }
+
+    public setTag(row: number, col: number, tag: any) {
+        const { segment, offset } = this.getSegment(row, col);
+        if (segment instanceof RunSegment) {
+            segment.setTag(offset, tag);
+        } else if (tag !== undefined) {
+            throw new Error(`Must not attempt to set tags on '${segment.constructor.name}'.`);
+        }
     }
 
     public insertRows(row: number, numRows: number) {
@@ -230,7 +316,7 @@ export class SparseMatrix extends SegmentSequence<MatrixSegment> {
             return maybePadding;
         }
 
-        const maybeRun = SubSequence.fromJSONObject(spec);
+        const maybeRun = RunSegment.fromJSONObject(spec);
         if (maybeRun) {
             return maybeRun;
         }
@@ -247,8 +333,7 @@ export class SparseMatrix extends SegmentSequence<MatrixSegment> {
         // Note: The removes/inserts need to be made atomic:
         // (See https://github.com/Microsoft/Prague/issues/1840)
 
-        let rowStart = 0;
-        for (let r = 0; r < this.numRows; r++, rowStart += maxCols) {
+        for (let r = 0, rowStart = 0; r < this.numRows; r++, rowStart += maxCols) {
             this.removeRange(rowStart + removeColStart, rowStart + removeColEnd);
 
             const insertPos = rowStart + destCol;
@@ -259,6 +344,11 @@ export class SparseMatrix extends SegmentSequence<MatrixSegment> {
                 this.submitIfAttached(insertOp);
             }
         }
+    }
+
+    private getSegment(row: number, col: number) {
+        const pos = rowColToPosition(row, col);
+        return this.client.mergeTree.getContainingSegment(pos, UniversalSequenceNumber, this.client.getClientId());
     }
 }
 
