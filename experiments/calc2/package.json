@@ -15,6 +15,6 @@
     "webpack-cli": "^3.1.0"
   },
   "dependencies": {
-    "@ms/excel-online-calc": "^8.14.4"
+    "@ms/excel-online-calc": "^8.18.4"
   }
 }

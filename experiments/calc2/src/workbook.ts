@@ -2,22 +2,26 @@ import { mapperContext, recalcMapper } from "@ms/excel-online-calc/lib/calc";
 import * as assert from "assert";
 import { Cell, CellState } from "./cell";
 import { printSheetGridRange } from "./helpers";
-import { calcConfig } from "@ms/excel-online-calc/lib/lang/config";
-import { createCompiler, fastMathpack, createEvaluator, Interrupt, notImplemented, CompiledFormula, FailureReason, CompileResult, illFormedFormula, Unavailable, CellFormula, cellFormula, CellValue, finalValue, pendingValue, PreviousFailure, previousFailure } from "@ms/excel-online-calc/lib/runtime";
-import { createAnalyzer } from "@ms/excel-online-calc/lib/analyze";
+import { calcConfig, initCalc } from "@ms/excel-online-calc/lib/lang/config";
+import { createCompiler, fastMathpack, createEvaluator, CompiledFormula, FailureReason, CompileResult, illFormedFormula, Unavailable, CellFormula, cellFormula, CellValue, finalValue, pendingValue, PreviousFailure, previousFailure, createCompileGlobals, evalGlobals } from "@ms/excel-online-calc/lib/runtime";
+import { createAnalyzer, createAnalyzeGlobals } from "@ms/excel-online-calc/lib/analyze";
 import { documentLoc, FormulaSource, SheetGridCell, sheetGridCell, sheetIndex, gridCell, SheetGridRange, DocumentLoc, NameLoc, sheetGridRange, gridRange } from "@ms/excel-online-calc/lib/lang/location";
 import { failure, success, Result, ResultKind } from "@ms/excel-online-calc/lib/lang/util";
-import { ReadOper, blankOper, WriteOper, errorOper } from "@ms/excel-online-calc/lib/lang/value";
+import { OperKind, ReadOper, blankOper, WriteOper, errorOper } from "@ms/excel-online-calc/lib/lang/value";
 import { notFormulaString } from "@ms/excel-online-calc/lib/parse/serviceTypes";
-import { OperKind } from "@ms/excel-online-calc/lib/lang/types";
 import { isFormulaString, isWellFormed } from "./types";
 import { RefStyle } from "@ms/excel-online-calc/lib/lang/formula";
 import { jaggedArray } from "@ms/excel-online-calc/lib/common/arrayUtils";
-import { createParser } from "@ms/excel-online-calc/lib/parse";
-import { createLocaleInfo } from "@ms/excel-online-calc/lib/test/config";
-import { makeGetFirstOrderFunc } from "@ms/excel-online-calc/lib/test/evalContext";
+import { createParser, createParseGlobals } from "@ms/excel-online-calc/lib/parse";
+import { Config, createSimpleLocaleInfo } from "@ms/excel-online-calc/lib/lang/config";
+import { makeGetFirstOrderFunc } from "@ms/excel-online-calc/lib/funcs";
 
 export type UnboxedOper = undefined | boolean | number | string;
+
+const initialiseCalcConfig: (...any: Parameters<typeof initCalc>) => Config = (logger, featureSet) => {
+    initCalc(logger, featureSet);
+    return calcConfig(createSimpleLocaleInfo());
+}
 
 /**
  * One sheet Workbook that evaluates using 'Calc.ts'.
@@ -27,29 +31,45 @@ export abstract class Workbook {
     protected abstract get numCols();
 
     // Calc.ts services
-    private readonly config = calcConfig(createLocaleInfo());
-    private readonly parser = createParser({ config: { localeInfo: this.config.localeInfo } });
-    private readonly compiler = createCompiler({ config: this.config, mathpack: fastMathpack });
-    private readonly analyzer = createAnalyzer({ config: this.config });
-    private readonly evaluator = createEvaluator({
-        config: this.config,
-        mathpack: fastMathpack,
-        getDocumentLoc: this.getDocumentLoc.bind(this),
-        getSheetIndex: this.getSheetIndex.bind(this),
-        getCellValue: this.getCellValue.bind(this),
-        getCellValues: this.getCellValues.bind(this),
-        getFirstOrderFunc: makeGetFirstOrderFunc(this.config.localeInfo),
-        getNameFormula: this.getNameFormula.bind(this),
-        getCellFormula: this.getCellFormula.bind(this),
-        interruptToken: [Interrupt.Continue],
-        schedulerInfo: {},
-        setCellValue: this.setCellValue.bind(this),
-        setCellValues: this.setCellValues.bind(this),
-        setCellFailure: this.setCellFailure.bind(this),
-        setDynamicPrecs: this.setDynamicPrecs.bind(this),
-        loadObjects: () => false,
-        getUsedRange: () => failure(notImplemented(["getUsedRange"])),
-    });
+    private readonly logger = {
+        shipAssertTag: (tag: number, category: any, condition: boolean, message: string) => {
+            console.assert(condition, "shipAssertTag:", tag, category, message);
+        },
+
+        assertTag: (tag: number, category: any, condition: boolean, message: string) => {
+            if (!condition) {
+                throw new Error(`assertTag2 ${tag} ${category} ${message}`);
+            }
+        },
+
+        traceTag: () => {
+            // console.log("traceTag2", tag, message, category, level);
+        },
+
+        debugTraceTag: () => {
+            // console.log("debugTraceTag2", tag, message, category, level);
+        },
+    }
+    private readonly config = initialiseCalcConfig(this.logger, () => false);
+    private readonly parser = createParser(createParseGlobals(this.config));
+    private readonly compiler = createCompiler(createCompileGlobals(this.config, fastMathpack));
+    private readonly analyzer = createAnalyzer(createAnalyzeGlobals(this.config));
+    private readonly evaluator = createEvaluator(evalGlobals(
+        this.config,
+        fastMathpack,
+        this.getDocumentLoc.bind(this),
+        this.getSheetIndex.bind(this),
+        this.getCellValue.bind(this),
+        this.getCellValues.bind(this),
+        makeGetFirstOrderFunc(this.config.localeInfo),
+        this.getNameFormula.bind(this),
+        this.getCellFormula.bind(this),
+        this.setCellValue.bind(this),
+        this.setCellValues.bind(this),
+        this.setCellFailure.bind(this),
+        this.setDynamicPrecs.bind(this),
+        () => false
+    ));
 
     // Workbook state
     private readonly workbookLoc = documentLoc(undefined, "");
@@ -69,25 +89,7 @@ export abstract class Workbook {
         /* nameRefToSheetGridRange */ () => undefined,
     );
 
-    private readonly mapper = recalcMapper({
-        shipAssertTag: (tag: number, category: any, condition: boolean, message: string) => {
-            console.assert(condition, "shipAssertTag:", tag, category, message);
-        },
-
-        assertTag: (tag: number, category: any, condition: boolean, message: string) => {
-            if (!condition) {
-                throw new Error(`assertTag2 ${tag} ${category} ${message}`);
-            }
-        },
-
-        traceTag: () => {
-            // console.log("traceTag2", tag, message, category, level);
-        },
-
-        debugTraceTag: () => {
-            // console.log("debugTraceTag2", tag, message, category, level);
-        },
-    });
+    private readonly mapper = recalcMapper(this.logger);
 
     private convertReadOper(oper: ReadOper): UnboxedOper {
         switch (typeof oper) {
