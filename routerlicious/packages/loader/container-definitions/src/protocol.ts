@@ -166,8 +166,6 @@ export interface IContentMessage {
 }
 
 export interface ISignalMessage {
-
     clientId: string;
-
     messages: string[];
 }

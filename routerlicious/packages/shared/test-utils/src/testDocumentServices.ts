@@ -34,6 +34,10 @@ export class TestDocumentDeltaConnection extends EventEmitter implements IDocume
         throw new Error("Method not implemented.");
     }
 
+    public submitSignal(message: any): void {
+        throw new Error("Method not implemented.");
+    }
+
     public async submitAsync(message: IDocumentMessage): Promise<void> {
         throw new Error("Method not implemented.");
     }

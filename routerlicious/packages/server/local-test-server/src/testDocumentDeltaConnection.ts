@@ -163,6 +163,14 @@ export class TestDocumentDeltaConnection extends EventEmitter implements IDocume
         this.submitManager.drain();
     }
 
+    /**
+     * Submits a new signal to the server
+     */
+    public submitSignal(message: IDocumentMessage): void {
+        this.submitManager.add("submitSignal", message);
+        this.submitManager.drain();
+    }
+
     public async submitAsync(message: IDocumentMessage): Promise<void> {
         return new Promise<void>((resolve, reject) => {
             this.socket.emit(

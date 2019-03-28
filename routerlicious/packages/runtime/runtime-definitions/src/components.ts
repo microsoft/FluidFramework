@@ -19,6 +19,7 @@ import {
 export interface IComponentDeltaHandler {
     prepare: (message: ISequencedDocumentMessage, local: boolean) => Promise<any>;
     process: (message: ISequencedDocumentMessage, local: boolean, context: any) => void;
+    processSignal: (message: any, local: boolean) => void;
     changeConnectionState(value: ConnectionState, clientId: string);
     request(request: IRequest): Promise<IResponse>;
 }
@@ -78,6 +79,8 @@ export interface IComponentRuntime {
 
     submitMessage(type: string, content: any): number;
 
+    submitSignal(type: string, content: any): void;
+
     createAndAttachComponent(id: string, pkg: string): Promise<IComponentRuntime>;
 
     getComponent(id: string, wait: boolean): Promise<IComponentRuntime>;
@@ -108,6 +111,7 @@ export interface IHostRuntime extends IRuntime {
     readonly minimumSequenceNumber: number;
     readonly loader: ILoader;
     readonly submitFn: (type: MessageType, contents: any) => number;
+    readonly submitSignalFn: (contents: any) => void;
     readonly snapshotFn: (message: string) => Promise<void>;
     readonly closeFn: () => void;
 

@@ -33,6 +33,13 @@ export class TestDocumentDeltaConnection extends EventEmitter implements IDocume
         return;
     }
 
+    /**
+     * Submits a new signal to the server
+     */
+    public submitSignal(message: IDocumentMessage): void {
+        return;
+    }
+
     public async submitAsync(message: IDocumentMessage): Promise<void> {
         return;
     }

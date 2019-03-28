@@ -215,6 +215,11 @@ export interface IDocumentDeltaConnection extends EventEmitter {
     submitAsync(message: IDocumentMessage): Promise<void>;
 
     /**
+     * Submit a new signal to the server
+     */
+    submitSignal(message: any): void;
+
+    /**
      * Disconnects the given delta connection
      */
     disconnect();

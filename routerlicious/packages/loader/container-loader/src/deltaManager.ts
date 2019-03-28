@@ -234,6 +234,10 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         return message.clientSequenceNumber;
     }
 
+    public submitSignal(content: any) {
+        this.connection.submitSignal(content);
+    }
+
     /* tslint:disable:promise-function-async */
     public getDeltas(from: number, to?: number): Promise<ISequencedDocumentMessage[]> {
         const deferred = new Deferred<ISequencedDocumentMessage[]>();
@@ -393,7 +397,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                     if (this.handler) {
                         const clientId = signal.clientId;
                         for (const message of signal.messages) {
-                            this.handler.processSignal(clientId, message);
+                            this.handler.processSignal(clientId, JSON.parse(message));
                         }
                     }
                 });

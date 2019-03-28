@@ -77,6 +77,10 @@ export class MockRuntime implements IRuntime {
         return null;
     }
 
+    public submitSignal(type: string, content: any) {
+        return null;
+    }
+
     public addListener(event: string | symbol, listener: (...args: any[]) => void): this {
         return null;
     }

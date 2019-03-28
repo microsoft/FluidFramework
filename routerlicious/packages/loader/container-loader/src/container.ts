@@ -396,6 +396,7 @@ export class Container extends EventEmitter implements IContainer {
                     storageService,
                     (err) => debug("Context error", err),
                     (type, contents) => this.submitMessage(type, contents),
+                    (message) => this.submitSignal(message),
                     (message) => this.snapshot(message),
                     () => this.close());
                 this.context.changeConnectionState(this.connectionState, this.clientId);
@@ -596,6 +597,7 @@ export class Container extends EventEmitter implements IContainer {
             this.storageService,
             (err) => debug("Context error", err),
             (type, contents) => this.submitMessage(type, contents),
+            (message) => this.submitSignal(message),
             (message) => this.snapshot(message),
             () => this.close());
         this.context = newContext;
@@ -669,7 +671,7 @@ export class Container extends EventEmitter implements IContainer {
                         process: (message, context) => {
                             this.processRemoteMessage(message, context);
                         },
-                        processSignal: (clientId: string, message: string) => {
+                        processSignal: (clientId, message) => {
                             this.processSignal(clientId, message);
                         },
                     },
@@ -691,7 +693,7 @@ export class Container extends EventEmitter implements IContainer {
                         process: (message, context) => {
                             throw new Error("Delta manager is offline");
                         },
-                        processSignal: (clientId: string, message: string) => {
+                        processSignal: (clientId, message) => {
                             throw new Error("Delta manager is offline");
                         },
                     },
@@ -948,8 +950,12 @@ export class Container extends EventEmitter implements IContainer {
         }
     }
 
-    private processSignal(clientId: string, message: string) {
-        console.log(clientId);
-        console.log(message);
+    private submitSignal(message: any) {
+        this._deltaManager.submitSignal(JSON.stringify(message));
+    }
+
+    private processSignal(clientId: string, message: any) {
+        const local = this._clientId === clientId;
+        this.context.processSignal(message, local);
     }
 }

@@ -116,6 +116,11 @@ export interface IRuntime {
      * Called immediately after a message has been processed but prior to the next message being executed
      */
     postProcess(message: ISequencedDocumentMessage, local: boolean, context: any): Promise<void>;
+
+    /**
+     * Processes the given signal
+     */
+    processSignal(message: any, local: boolean);
 }
 
 export interface IContainerContext {
@@ -135,6 +140,7 @@ export interface IContainerContext {
     readonly baseSnapshot: ISnapshotTree;
     readonly blobs: Map<string, string>;
     readonly submitFn: (type: MessageType, contents: any) => number;
+    readonly submitSignalFn: (contents: any) => void;
     readonly snapshotFn: (message: string) => Promise<void>;
     readonly closeFn: () => void;
     readonly quorum: IQuorum;

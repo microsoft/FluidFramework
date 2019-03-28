@@ -33,7 +33,7 @@ class SocketIoSocket implements core.IWebSocket {
     }
 
     public async emitToRoom(roomId: string, event: string, ...args: any[]) {
-        this.socket.to(roomId).emit(event, ...args);
+        this.socket.in(roomId).emit(event, ...args);
     }
 
     public async broadcastToRoom(roomId: string, event: string, ...args: any) {

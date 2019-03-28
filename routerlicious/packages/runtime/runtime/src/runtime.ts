@@ -127,6 +127,10 @@ export class Runtime extends EventEmitter implements IHostRuntime {
         return this.context.submitFn;
     }
 
+    public get submitSignalFn(): (contents: any) => void {
+        return this.context.submitSignalFn;
+    }
+
     public get snapshotFn(): (message: string) => Promise<void> {
         return this.context.snapshotFn;
     }
@@ -342,6 +346,14 @@ export class Runtime extends EventEmitter implements IHostRuntime {
                 return this.postProcessAttach(message, local, context);
             default:
         }
+    }
+
+    public processSignal(message: any, local: boolean) {
+        const envelope = message as IEnvelope;
+        const component = this.components.get(envelope.address);
+        assert(component);
+        const innerContents = envelope.contents as { content: any, type: string };
+        component.processSignal(innerContents, local);
     }
 
     public getComponent(id: string, wait = true): Promise<IComponentRuntime> {

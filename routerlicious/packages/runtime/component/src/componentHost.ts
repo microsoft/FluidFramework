@@ -360,7 +360,11 @@ export class ComponentHost extends EventEmitter implements IComponentDeltaHandle
         this.emit("op", message, target);
     }
 
-   public snapshotInternal(): ITreeEntry[] {
+    public processSignal(message: any, local: boolean) {
+        this.emit("signal", message, local);
+    }
+
+    public snapshotInternal(): ITreeEntry[] {
         const entries = new Array<ITreeEntry>();
 
         // Craft the .attributes file for each distributed object
@@ -404,6 +408,11 @@ export class ComponentHost extends EventEmitter implements IComponentDeltaHandle
 
     public submitMessage(type: MessageType, content: any) {
         this.submit(type, content);
+    }
+
+    public submitSignal(type: string, content: any) {
+        this.verifyNotClosed();
+        return this.componentRuntime.submitSignal(type, content);
     }
 
     private submit(type: MessageType, content: any): number {

@@ -114,6 +114,10 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime 
         return this.hostRuntime.submitFn;
     }
 
+    public get submitSignalFn(): (contents: any) => void {
+        return this.hostRuntime.submitSignalFn;
+    }
+
     public get snapshotFn(): (message: string) => Promise<void> {
         return this.hostRuntime.snapshotFn;
     }
@@ -179,6 +183,11 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime 
         return this.handler.process(message, local, context);
     }
 
+    public processSignal(message: any, local: boolean): void {
+        this.verifyNotClosed();
+        return this.handler.processSignal(message, local);
+    }
+
     public getQuorum(): IQuorum {
         this.verifyNotClosed();
         return this.hostRuntime.getQuorum();
@@ -227,7 +236,19 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime 
     }
 
     public submitMessage(type: MessageType, content: any): number {
-        return this.submit(type, content);
+        return this.submitOp(type, content);
+    }
+
+    public submitSignal(type: string, content: any) {
+        this.verifyNotClosed();
+        const envelope: IEnvelope = {
+            address: this.id,
+            contents: {
+                content,
+                type,
+            },
+        };
+        return this.hostRuntime.submitSignalFn(envelope);
     }
 
     public error(err: any): void {
@@ -243,7 +264,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime 
         return this.chaincode.attach(platform);
     }
 
-    private submit(type: MessageType, content: any): number {
+    private submitOp(type: MessageType, content: any): number {
         this.verifyNotClosed();
         const envelope: IEnvelope = {
             address: this.id,

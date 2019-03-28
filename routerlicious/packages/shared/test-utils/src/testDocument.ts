@@ -93,6 +93,10 @@ export class TestDeltaManager
     public submit(type: MessageType, contents: string): number {
         throw new Error("Method not implemented.");
     }
+
+    public submitSignal(contents: any): void {
+        throw new Error("Method not implemented.");
+    }
 }
 
 export class TestDocument implements ISnapshotDocument {

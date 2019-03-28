@@ -33,6 +33,7 @@ export class Context implements IContainerContext {
         storage: IDocumentStorageService,
         errorFn: (err: any) => void,
         submitFn: (type: MessageType, contents: any) => number,
+        submitSignalFn: (contents: any) => void,
         snapshotFn: (message: string) => Promise<void>,
         closeFn: () => void,                        // When would the context ever close?
     ): Promise<Context> {
@@ -49,6 +50,7 @@ export class Context implements IContainerContext {
             loader,
             errorFn,
             submitFn,
+            submitSignalFn,
             snapshotFn,
             closeFn);
         await context.load();
@@ -115,6 +117,7 @@ export class Context implements IContainerContext {
         public readonly loader: ILoader,
         private readonly errorFn: (err: any) => void,
         public readonly submitFn: (type: MessageType, contents: any) => number,
+        public readonly submitSignalFn: (contents: any) => void,
         public readonly snapshotFn: (message: string) => Promise<void>,
         public readonly closeFn: () => void,
     ) {
@@ -146,6 +149,10 @@ export class Context implements IContainerContext {
 
     public async postProcess(message: ISequencedDocumentMessage, local: boolean, context: any): Promise<void> {
         return this.runtime.postProcess(message, local, context);
+    }
+
+    public processSignal(message: any, local: boolean) {
+        this.runtime.processSignal(message, local);
     }
 
     public async request(path: IRequest): Promise<IResponse> {

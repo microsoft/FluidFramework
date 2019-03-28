@@ -100,4 +100,8 @@ export class DeltaConnection extends EventEmitter {
     public async submitAsync(message: IDocumentMessage): Promise<void> {
         return this.connection.submitAsync(message);
     }
+
+    public submitSignal(message: any): void {
+        return this.connection.submitSignal(message);
+    }
 }

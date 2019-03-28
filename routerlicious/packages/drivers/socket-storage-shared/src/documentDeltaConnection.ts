@@ -150,7 +150,7 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
         public details: messages.IConnected) {
         super();
 
-        this.submitManager = new BatchManager<IDocumentMessage>(
+        this.submitManager = new BatchManager<IDocumentMessage | any>(
             (submitType, work) => {
                 this.socket.emit(
                     submitType,
@@ -186,6 +186,13 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
      */
     public submit(message: IDocumentMessage): void {
         this.submitManager.add("submitOp", message);
+    }
+
+    /**
+     * Submits a new signal to the server
+     */
+    public submitSignal(message: any): void {
+        this.submitManager.add("submitSignal", message);
     }
 
     public async submitAsync(message: IDocumentMessage): Promise<void> {

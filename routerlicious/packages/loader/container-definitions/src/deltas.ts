@@ -31,9 +31,9 @@ export interface IDeltaHandlerStrategy {
     postProcess: (message: ISequencedDocumentMessage, context: any) => Promise<void>;
 
     /**
-     * Processes the signal. we probably don't need to prepare or post process for now.
+     * Processes the signal.
      */
-    processSignal: (clientId: string, message: string) => void;
+    processSignal: (clientId: string, message: any) => void;
 }
 
 export interface IDeltaManager<T, U> extends EventEmitter {
@@ -71,6 +71,8 @@ export interface IDeltaManager<T, U> extends EventEmitter {
     attachOpHandler(sequenceNumber: number, handler: IDeltaHandlerStrategy, resume: boolean);
 
     submit(type: MessageType, contents: string): number;
+
+    submitSignal(content: any): void;
 }
 
 export interface IDeltaQueue<T> extends EventEmitter {
