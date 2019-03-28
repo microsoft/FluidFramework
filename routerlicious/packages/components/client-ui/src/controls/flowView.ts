@@ -1,7 +1,7 @@
 // tslint:disable:no-bitwise whitespace align switch-default no-string-literal ban-types no-angle-bracket-type-assertion
 import { ISharedObject } from "@prague/api-definitions";
 import * as api from "@prague/client-api";
-import { IGenericBlob, ISequencedDocumentMessage, IUser } from "@prague/container-definitions";
+import { IGenericBlob, ISequencedDocumentMessage, ISignalMessage, IUser } from "@prague/container-definitions";
 import * as types from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
 import { findRandomWord } from "@prague/merge-tree-utils";
@@ -22,6 +22,7 @@ import * as ui from "../ui";
 import { Cursor, IRange } from "./cursor";
 import * as domutils from "./domutils";
 import { KeyCode } from "./keycode";
+import { PresenceSignal } from "./presenceSignal";
 import * as SearchMenu from "./searchMenu";
 import { Status } from "./status";
 
@@ -2840,7 +2841,7 @@ export class FlowView extends ui.Component {
     public calendarIntervalsView: Sequence.SharedIntervalCollectionView<Sequence.Interval>;
     public sequenceTest: Sequence.SharedNumberSequence;
     public sequenceObjTest: Sequence.SharedObjectSequence<ISeqTestItem>;
-    public presenceMap: types.ISharedMap;
+    public presenceSignal: PresenceSignal;
     public presenceVector: ILocalPresenceInfo[] = [];
     public docRoot: types.ISharedMap;
     public curPG: MergeTree.Marker;
@@ -3009,7 +3010,7 @@ export class FlowView extends ui.Component {
         childFlow.setEdit(this.docRoot);
         childFlow.comments = this.comments;
         childFlow.commentsView = this.commentsView;
-        childFlow.presenceMap = this.presenceMap;
+        childFlow.presenceSignal = this.presenceSignal;
         childFlow.presenceVector = this.presenceVector;
         childFlow.bookmarks = this.bookmarks;
         childFlow.cursor.pos = cursorPos;
@@ -3212,9 +3213,9 @@ export class FlowView extends ui.Component {
         }
     }
 
-    public addPresenceMap(presenceMap: types.ISharedMap) {
-        presenceMap.on("valueChanged", (delta: types.IValueChanged, local: boolean, op: ISequencedDocumentMessage) => {
-            this.remotePresenceUpdate(delta, local, op);
+    public addPresenceSignal(presenceSignal: PresenceSignal) {
+        presenceSignal.on("message", (message: ISignalMessage, local: boolean) => {
+            this.remotePresenceUpdate(message, local);
         });
 
         this.updatePresence();
@@ -4864,8 +4865,8 @@ export class FlowView extends ui.Component {
             // tslint:disable-next-line:max-line-length
             console.log(`time to edit/impression: ${this.timeToEdit} time to load: ${Date.now() - clockStart}ms len: ${this.sharedString.client.getLength()} - ${performanceNow()}`);
         }
-        this.presenceMap = this.docRoot.get("presence") as types.ISharedMap;
-        this.addPresenceMap(this.presenceMap);
+        this.presenceSignal = new PresenceSignal(this.collabDocument.runtime);
+        this.addPresenceSignal(this.presenceSignal);
         this.addCalendarMap();
         const intervalMap = this.sharedString.intervalCollections;
         intervalMap.on("valueChanged", (delta: types.IValueChanged) => {
@@ -5004,15 +5005,15 @@ export class FlowView extends ui.Component {
         this.sharedString.insertMarker(this.cursor.pos++, MergeTree.ReferenceType.Simple, props);
     }
 
-    private remotePresenceUpdate(delta: types.IValueChanged, local: boolean, op: ISequencedDocumentMessage) {
+    private remotePresenceUpdate(message: ISignalMessage, local: boolean) {
         if (local) {
             return;
         }
 
-        const remotePresenceBase = this.presenceMap.get(delta.key) as IRemotePresenceBase;
+        const remotePresenceBase = message.content as IRemotePresenceBase;
 
         if (remotePresenceBase.type === "selection") {
-            this.remotePresenceToLocal(delta.key, remotePresenceBase as IRemotePresenceInfo);
+            this.remotePresenceToLocal(message.clientId, remotePresenceBase as IRemotePresenceInfo);
         } else if (remotePresenceBase.type === "drag") {
             this.remoteDragToLocal(remotePresenceBase as IRemoteDragInfo);
         }
@@ -5090,20 +5091,19 @@ export class FlowView extends ui.Component {
     }
 
     private updatePresence() {
-        if (this.presenceMap  && this.collabDocument.isConnected) {
+        if (this.presenceSignal  && this.collabDocument.isConnected) {
             const presenceInfo: IRemotePresenceInfo = {
                 origMark: this.cursor.mark,
                 origPos: this.cursor.pos,
                 refseq: this.client.getCurrentSeq(),
                 type: "selection",
             };
-
-            this.presenceMap.set(this.collabDocument.clientId, presenceInfo);
+            this.presenceSignal.submitPresence(presenceInfo);
         }
     }
 
     private updateDragPresence() {
-        if (this.presenceMap  && this.collabDocument.isConnected) {
+        if (this.presenceSignal  && this.collabDocument.isConnected) {
             let dragPresenceInfo: IRemoteDragInfo;
             dragPresenceInfo = {
                 dx: this.movingInclusion.dx,
@@ -5113,7 +5113,7 @@ export class FlowView extends ui.Component {
                 onTheMove: this.movingInclusion.onTheMove,
                 type: "drag",
             };
-            this.presenceMap.set(this.collabDocument.clientId, dragPresenceInfo);
+            this.presenceSignal.submitPresence(dragPresenceInfo);
         }
     }
 

@@ -152,7 +152,6 @@ async function loadDocument(
     // If a text element already exists load it directly - otherwise load in pride + prejudice
     if (!collabDoc.existing) {
         console.log(`Not existing ${resolved.url} - ${performanceNow()}`);
-        root.set("presence", collabDoc.createMap());
         root.set("users", collabDoc.createMap());
         root.set("calendar", undefined, Sequence.SharedIntervalCollectionValueType.Name);
         const seq = collabDoc.create(Sequence.SharedNumberSequenceExtension.Type) as
@@ -180,7 +179,7 @@ async function loadDocument(
             root.set("pageInk", collabDoc.createStream());
         }
     } else {
-        await Promise.all([root.wait("text"), root.wait("ink"), root.wait("sequence-test"), root.wait("presence")]);
+        await Promise.all([root.wait("text"), root.wait("ink"), root.wait("sequence-test")]);
     }
 
     const sharedString = root.get("text") as Sequence.SharedString;

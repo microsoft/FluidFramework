@@ -98,7 +98,6 @@ export async function create(
     document = await api.load(`${urlBase}/${id}`, { resolver }, {});
     const root = await document.getRoot();
 
-    root.set("presence", document.createMap());
     root.set("users", document.createMap());
     sharedString = document.createString() as Sequence.SharedString;
     root.set("calendar", undefined, Sequence.SharedIntervalCollectionValueType.Name);
