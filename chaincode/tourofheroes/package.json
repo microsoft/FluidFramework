@@ -16,8 +16,7 @@
   },
   "devDependencies": {
     "@prague/prague-dev-server": "^3.2.4",
-    "@types/node": "^10.11.5",
-    "@types/react-dom": "^16.0.11",
+    "@types/react-dom": "^16.8.3",
     "angular-router-loader": "^0.8.5",
     "angular2-template-loader": "^0.6.2",
     "awesome-typescript-loader": "^5.2.1",
@@ -58,14 +57,16 @@
     "@prague/map": "^0.2.5246",
     "@types/double-ended-queue": "^2.1.0",
     "@types/graphql": "^14.0.7",
+    "@types/react": "^16.8.10",
     "angular-in-memory-web-api": "^0.8.0",
     "core-js": "^2.6.5",
     "double-ended-queue": "^2.1.0-0",
+    "graphiql": "^0.13.0",
     "graphql": "^14.1.1",
     "graphql-subscriptions": "^1.0.0",
     "iterall": "^1.2.2",
-    "react": "^16.8.3",
-    "react-dom": "^16.8.3",
+    "react": "^16.8.6",
+    "react-dom": "^16.8.6",
     "rxjs": "^6.4.0",
     "zone.js": "^0.8.29"
   }

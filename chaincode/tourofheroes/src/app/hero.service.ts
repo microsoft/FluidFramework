@@ -14,19 +14,19 @@ import { catchError, tap } from 'rxjs/operators';
 import { Hero } from './hero';
 import { MessageService } from './message.service';
 import { PRAGUE_ROOT } from './tokens';
-import { SharedMap } from '@prague/map';
+import { ISharedMap } from '@prague/map';
 import { EventEmitter } from 'events';
 
 // Example of how to manually build a GraphQL Schema at https://github.com/graphql/graphql-js/ including 
 
 const prefix = "/heroes/";
 
-class GraphQLService {
+export class GraphQLService {
     private schema: GraphQLSchema;
     private heroEmitter = new EventEmitter();
     private heroPubSub = new PubSub({ eventEmitter: this.heroEmitter });
 
-    constructor(private root: SharedMap) {
+    constructor(private root: ISharedMap) {
         // type Hero {
         //     id: Int!
         //     name: String!
@@ -196,6 +196,14 @@ class GraphQLService {
         return queryP;
     }
 
+    public runQuery(query, variables) {
+        return graphql({
+            schema: this.schema,
+            variableValues: variables,
+            source: query,
+        });
+    }
+
     public async subscribeHeroes(): Promise<AsyncIterator<ExecutionResult<{ heroesUpdate: Hero[] }>>> {
         const query =
             parse(`
@@ -289,7 +297,7 @@ export class HeroService {
     private graphQLService: GraphQLService;
 
     constructor(
-        @Inject(PRAGUE_ROOT) root: SharedMap,
+        @Inject(PRAGUE_ROOT) root: ISharedMap,
         private messageService: MessageService,
     ) {
         this.graphQLService = new GraphQLService(root);
