@@ -166,7 +166,8 @@ export class TestDocumentDeltaConnection extends EventEmitter implements IDocume
     /**
      * Submits a new signal to the server
      */
-    public submitSignal(message: IDocumentMessage): void {
+    // tslint:disable no-unsafe-any
+    public submitSignal(message: any): void {
         this.submitManager.add("submitSignal", message);
         this.submitManager.drain();
     }

@@ -1,5 +1,5 @@
 import { EventEmitter } from "events";
-import { IContentMessage, ISequencedDocumentMessage, MessageType } from "./protocol";
+import { IContentMessage, ISequencedDocumentMessage, ISignalMessage, MessageType } from "./protocol";
 
 export interface IConnectionDetails {
     clientId: string;
@@ -33,7 +33,7 @@ export interface IDeltaHandlerStrategy {
     /**
      * Processes the signal.
      */
-    processSignal: (clientId: string, message: any) => void;
+    processSignal: (message: ISignalMessage) => void;
 }
 
 export interface IDeltaManager<T, U> extends EventEmitter {

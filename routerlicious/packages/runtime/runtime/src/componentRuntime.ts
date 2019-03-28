@@ -12,6 +12,7 @@ import {
     IRequest,
     IResponse,
     ISequencedDocumentMessage,
+    ISignalMessage,
     ISnapshotTree,
     ITree,
     MessageType,
@@ -183,7 +184,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime 
         return this.handler.process(message, local, context);
     }
 
-    public processSignal(message: any, local: boolean): void {
+    public processSignal(message: ISignalMessage, local: boolean): void {
         this.verifyNotClosed();
         return this.handler.processSignal(message, local);
     }

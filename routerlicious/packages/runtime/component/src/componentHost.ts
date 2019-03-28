@@ -12,6 +12,7 @@ import {
     IRequest,
     IResponse,
     ISequencedDocumentMessage,
+    ISignalMessage,
     ISnapshotTree,
     ITreeEntry,
     MessageType,
@@ -360,7 +361,7 @@ export class ComponentHost extends EventEmitter implements IComponentDeltaHandle
         this.emit("op", message, target);
     }
 
-    public processSignal(message: any, local: boolean) {
+    public processSignal(message: ISignalMessage, local: boolean) {
         this.emit("signal", message, local);
     }
 

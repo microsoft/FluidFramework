@@ -12,6 +12,7 @@ import {
     IRequest,
     IResponse,
     ISequencedDocumentMessage,
+    ISignalMessage,
     ISnapshotTree,
     ITree,
     MessageType,
@@ -348,12 +349,17 @@ export class Runtime extends EventEmitter implements IHostRuntime {
         }
     }
 
-    public processSignal(message: any, local: boolean) {
-        const envelope = message as IEnvelope;
+    public processSignal(message: ISignalMessage, local: boolean) {
+        const envelope = message.content as IEnvelope;
         const component = this.components.get(envelope.address);
         assert(component);
-        const innerContents = envelope.contents as { content: any, type: string };
-        component.processSignal(innerContents, local);
+        const innerContent = envelope.contents as { content: any, type: string };
+
+        const transformed: ISignalMessage = {
+            clientId: message.clientId,
+            content: innerContent,
+        };
+        component.processSignal(transformed, local);
     }
 
     public getComponent(id: string, wait = true): Promise<IComponentRuntime> {

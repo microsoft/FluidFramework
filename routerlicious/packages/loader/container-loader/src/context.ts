@@ -12,6 +12,7 @@ import {
     IResponse,
     IRuntime,
     ISequencedDocumentMessage,
+    ISignalMessage,
     ISnapshotTree,
     ITree,
     MessageType,
@@ -151,7 +152,7 @@ export class Context implements IContainerContext {
         return this.runtime.postProcess(message, local, context);
     }
 
-    public processSignal(message: any, local: boolean) {
+    public processSignal(message: ISignalMessage, local: boolean) {
         this.runtime.processSignal(message, local);
     }
 

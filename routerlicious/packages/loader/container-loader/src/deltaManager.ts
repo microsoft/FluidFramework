@@ -393,12 +393,11 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                     }
                 });
 
-                connection.on("signal", (signal: ISignalMessage) => {
+                connection.on("signal", (message: ISignalMessage) => {
                     if (this.handler) {
-                        const clientId = signal.clientId;
-                        for (const message of signal.messages) {
-                            this.handler.processSignal(clientId, JSON.parse(message));
-                        }
+                        // tslint:disable no-unsafe-any
+                        message.content = JSON.parse(message.content);
+                        this.handler.processSignal(message);
                     }
                 });
 

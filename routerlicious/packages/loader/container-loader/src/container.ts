@@ -22,6 +22,7 @@ import {
     ISequencedDocumentMessage,
     ISequencedDocumentSystemMessage,
     ISequencedProposal,
+    ISignalMessage,
     ISnapshotTree,
     ITokenProvider,
     ITree,
@@ -671,8 +672,8 @@ export class Container extends EventEmitter implements IContainer {
                         process: (message, context) => {
                             this.processRemoteMessage(message, context);
                         },
-                        processSignal: (clientId, message) => {
-                            this.processSignal(clientId, message);
+                        processSignal: (message) => {
+                            this.processSignal(message);
                         },
                     },
                     true);
@@ -693,7 +694,7 @@ export class Container extends EventEmitter implements IContainer {
                         process: (message, context) => {
                             throw new Error("Delta manager is offline");
                         },
-                        processSignal: (clientId, message) => {
+                        processSignal: (message) => {
                             throw new Error("Delta manager is offline");
                         },
                     },
@@ -954,8 +955,8 @@ export class Container extends EventEmitter implements IContainer {
         this._deltaManager.submitSignal(JSON.stringify(message));
     }
 
-    private processSignal(clientId: string, message: any) {
-        const local = this._clientId === clientId;
+    private processSignal(message: ISignalMessage) {
+        const local = this._clientId === message.clientId;
         this.context.processSignal(message, local);
     }
 }

@@ -127,6 +127,8 @@ export function register(
                 return response("Invalid client ID", null);
             }
 
+            const connection = connectionsMap.get(clientId);
+
             for (const message of messages) {
                 if (message.type === api.RoundTrip) {
                     // End of tracking. Write traces.
@@ -135,7 +137,6 @@ export function register(
                             winston.error(error.stack);
                         });
                 } else {
-                    const connection = connectionsMap.get(clientId);
                     connection.order(sanitizeMessage(message));
                 }
             }
@@ -177,17 +178,22 @@ export function register(
         });
 
         // Message sent when a new signal is submitted to the router
-        socket.on("submitSignal", (clientId: string, messages: string[], response) => {
+        socket.on("submitSignal", (clientId: string, contents: any[], response) => {
             // Verify the user has connected on this object id
             if (!roomMap.has(clientId)) {
                 return response("Invalid client ID", null);
             }
 
-            const signalMessage: ISignalMessage = {
-                clientId,
-                messages,
-            };
-            socket.emitToRoom(roomMap.get(clientId), "signal", signalMessage);
+            const roomId = roomMap.get(clientId);
+
+            for (const content of contents) {
+                const signalMessage: ISignalMessage = {
+                    clientId,
+                    content,
+                };
+
+                socket.emitToRoom(roomId, "signal", signalMessage);
+            }
 
             response(null);
         });
