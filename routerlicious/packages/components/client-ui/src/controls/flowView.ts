@@ -2874,7 +2874,7 @@ export class FlowView extends ui.Component {
     private formatRegister: MergeTree.PropertySet;
 
     // A list of Marker segments modified by the most recently processed op.  (Reset on each
-    // mergeTreeDeltaCallback.)  Used by 'updatePgInfo()' to determine if table information
+    // sequenceDelta event.)  Used by 'updatePgInfo()' to determine if table information
     // may have been invalidated.
     private modifiedMarkers = [];
 
@@ -2904,14 +2904,6 @@ export class FlowView extends ui.Component {
 
         this.client = sharedString.client;
 
-        // For each incoming delta, save any referenced Marker segments.
-        // (see comments at 'modifiedMarkers' decl for more info.)
-        this.client.mergeTree.mergeTreeDeltaCallback = (opArgs, deltaArgs) => {
-            this.modifiedMarkers = deltaArgs
-                .segments
-                .filter((segment) => segment.getType() === MergeTree.SegmentType.Marker);
-        };
-
         this.viewportDiv = document.createElement("div");
         this.element.appendChild(this.viewportDiv);
         const translationToLanguage = "translationToLanguage";
@@ -2923,15 +2915,15 @@ export class FlowView extends ui.Component {
         }
         this.statusMessage("li", " ");
         this.statusMessage("si", " ");
-        sharedString.on("op", (msg, local) => {
-            if (local) {
-                return;
-            }
+        sharedString.on("sequenceDelta", (event, target) => {
+            // For each incoming delta, save any referenced Marker segments.
+            // (see comments at 'modifiedMarkers' decl for more info.)
+            this.modifiedMarkers = event
+                .deltaArgs
+                .segments
+                .filter((segment) => segment.getType() === MergeTree.SegmentType.Marker);
 
-            const delta = msg.contents as MergeTree.IMergeTreeOp;
-            if (this.applyOp(delta, msg)) {
-                this.queueRender(msg);
-            }
+            this.handleSharedStringDelta(event, target);
         });
 
         // refresh cursors when clients join or leave
@@ -2955,8 +2947,6 @@ export class FlowView extends ui.Component {
         window["insertComponent"] = this.insertComponent.bind(this);
         window["insertText"] = (text: string) => {
             this.sharedString.insertText(text, this.cursor.pos);
-            this.cursor.pos += text.length;
-            this.localQueueRender(this.cursor.pos);
         };
 
         // Expose the ability to invalidate the current layout when a component's width/height changes.
@@ -3045,7 +3035,6 @@ export class FlowView extends ui.Component {
             [Paragraph.referenceProperty]: irdoc,
         };
         this.sharedString.insertMarker(this.cursor.pos, MergeTree.ReferenceType.Simple, refProps);
-        this.localQueueRender(this.cursor.pos);
     }
 
     public measureClone() {
@@ -3524,9 +3513,11 @@ export class FlowView extends ui.Component {
         return x;
     }
 
-    public cursorRev() {
+    public cursorRev(skipFirstRev = false) {
         if (this.cursor.pos > FlowView.docStartPosition) {
-            this.cursor.pos--;
+            if (!skipFirstRev) {
+                this.cursor.pos--;
+            }
             const segoff = getContainingSegment(this, this.cursor.pos);
             if (segoff.segment.getType() !== MergeTree.SegmentType.Text) {
                 // REVIEW: assume marker for now (could be external later)
@@ -3906,7 +3897,6 @@ export class FlowView extends ui.Component {
                         this.cursorLocation();
                     }
                     this.sharedString.removeText(toRemove.start, toRemove.end);
-                    this.localQueueRender(toRemove.start);
                 } else if (((e.keyCode === KeyCode.pageUp) || (e.keyCode === KeyCode.pageDown)) && (!this.ticking)) {
                     setTimeout(() => {
                         this.scroll(e.keyCode === KeyCode.pageUp);
@@ -4043,20 +4033,17 @@ export class FlowView extends ui.Component {
                 }
             } else {
                 const pos = this.cursor.pos;
-                this.cursor.pos++;
                 const code = e.charCode;
                 if (code === CharacterCodes.cr) {
                     // TODO: other labels; for now assume only list/pg tile labels
                     this.insertParagraph(pos);
                 } else {
                     this.sharedString.insertText(String.fromCharCode(code), pos);
-                    this.updatePGInfo(pos);
                 }
                 this.clearSelection();
                 if (this.modes.showCursorLocation) {
                     this.cursorLocation();
                 }
-                this.localQueueRender(this.cursor.pos);
             }
         };
 
@@ -4118,7 +4105,6 @@ export class FlowView extends ui.Component {
                 }, tileInfo.pos, tileInfo.pos + 1);
             }
             tile.listCache = undefined;
-            this.localQueueRender(this.cursor.pos);
         }
     }
 
@@ -4182,7 +4168,6 @@ export class FlowView extends ui.Component {
             } else {
                 this.sharedString.annotateRange({ blockquote: true }, tileInfo.pos, tileInfo.pos + 1);
             }
-            this.localQueueRender(this.cursor.pos);
         }
     }
 
@@ -4217,10 +4202,6 @@ export class FlowView extends ui.Component {
                 this.sharedString.annotateRange(props, wordRange.wordStart, wordRange.wordEnd);
             }
         }
-        if (updatePG) {
-            this.updatePGInfo(this.cursor.pos);
-        }
-        this.localQueueRender(this.cursor.pos);
     }
 
     public paintFormat() {
@@ -4363,7 +4344,6 @@ export class FlowView extends ui.Component {
     }
 
     public insertList() {
-        const startPos = this.cursor.pos;
         const testList: SearchMenu.Item[] = [{ key: "providence" }, { key: "boston" }, { key: "issaquah" }];
         const irdoc = <IListReferenceDoc>{
             items: testList,
@@ -4376,7 +4356,6 @@ export class FlowView extends ui.Component {
             [Paragraph.referenceProperty]: irdoc,
         };
         this.sharedString.insertMarker(this.cursor.pos++, MergeTree.ReferenceType.Simple, refProps);
-        this.localQueueRender(startPos);
     }
 
     public insertPhoto() {
@@ -4410,7 +4389,6 @@ export class FlowView extends ui.Component {
                         [Paragraph.referenceProperty]: irdoc,
                     };
                     this.sharedString.insertMarker(this.cursor.pos, MergeTree.ReferenceType.Simple, refProps);
-                    this.localQueueRender(this.cursor.pos);
                 });
             });
     }
@@ -4448,7 +4426,6 @@ export class FlowView extends ui.Component {
         if (this.modes.showCursorLocation) {
             this.cursorLocation();
         }
-        this.localQueueRender(this.cursor.pos);
     }
 
     public deleteRow() {
@@ -4463,7 +4440,6 @@ export class FlowView extends ui.Component {
                 Table.parseTable(tableMarker, tableMarkerPos, this.sharedString, makeFontInfo(this.lastDocContext));
             }
             Table.deleteRow(this.sharedString, rowMarker.row, tableMarker.table);
-            this.localQueueRender(this.cursor.pos);
         }
     }
 
@@ -4479,7 +4455,6 @@ export class FlowView extends ui.Component {
                 Table.parseTable(tableMarker, tableMarkerPos, this.sharedString, makeFontInfo(this.lastDocContext));
             }
             Table.deleteCellShiftLeft(this.sharedString, cellMarker.cell, tableMarker.table);
-            this.localQueueRender(this.cursor.pos);
         }
     }
 
@@ -4496,7 +4471,6 @@ export class FlowView extends ui.Component {
                 Table.parseTable(tableMarker, tableMarkerPos, this.sharedString, makeFontInfo(this.lastDocContext));
             }
             Table.deleteColumn(this.sharedString, cellMarker.cell, rowMarker.row, tableMarker.table);
-            this.localQueueRender(this.cursor.pos);
         }
     }
 
@@ -4512,7 +4486,6 @@ export class FlowView extends ui.Component {
                 Table.parseTable(tableMarker, tableMarkerPos, this.sharedString, makeFontInfo(this.lastDocContext));
             }
             Table.insertRow(this.sharedString, rowMarker.row, tableMarker.table);
-            this.localQueueRender(this.cursor.pos);
         }
     }
 
@@ -4527,7 +4500,6 @@ export class FlowView extends ui.Component {
                 Table.parseTable(tableMarker, tableMarkerPos, this.sharedString, makeFontInfo(this.lastDocContext));
             }
             Table.succinctPrintTable(tableMarker, tableMarkerPos, this.sharedString);
-            this.localQueueRender(this.cursor.pos);
         }
     }
 
@@ -4637,7 +4609,6 @@ export class FlowView extends ui.Component {
                 Table.parseTable(tableMarker, tableMarkerPos, this.sharedString, makeFontInfo(this.lastDocContext));
             }
             Table.insertColumn(this.sharedString, cellMarker.cell, rowMarker.row, tableMarker.table);
-            this.localQueueRender(this.cursor.pos);
         }
     }
 
@@ -4649,7 +4620,6 @@ export class FlowView extends ui.Component {
                 pgMarker.cachedLength + tileInfo.pos);
             Paragraph.clearContentCaches(pgMarker);
         }
-        this.localQueueRender(this.cursor.pos);
     }
 
     public keyCmd(charCode: number) {
@@ -4675,7 +4645,6 @@ export class FlowView extends ui.Component {
             case CharacterCodes.R: {
                 this.updatePGInfo(this.cursor.pos - 1);
                 Table.createTable(this.cursor.pos, this.sharedString);
-                this.localQueueRender(this.cursor.pos);
                 break;
             }
             case CharacterCodes.M: {
@@ -5015,8 +4984,6 @@ export class FlowView extends ui.Component {
     }
 
     private insertComponent(type: string, state: {}) {
-        const startPos = this.cursor.pos;
-
         // TODO: All markers should be inserted as an atomic group.
         const component = ui.refTypeNameToComponent.get(type);
         if (isBlock(component)) {
@@ -5035,7 +5002,6 @@ export class FlowView extends ui.Component {
         };
 
         this.sharedString.insertMarker(this.cursor.pos++, MergeTree.ReferenceType.Simple, props);
-        this.localQueueRender(startPos);
     }
 
     private remotePresenceUpdate(delta: types.IValueChanged, local: boolean, op: ISequencedDocumentMessage) {
@@ -5044,17 +5010,16 @@ export class FlowView extends ui.Component {
         }
 
         const remotePresenceBase = this.presenceMap.get(delta.key) as IRemotePresenceBase;
-        const docClient = this.collabDocument.getClient(op.clientId);
+
         if (remotePresenceBase.type === "selection") {
-            this.remotePresenceToLocal(delta.key, docClient.client.user, remotePresenceBase as IRemotePresenceInfo);
+            this.remotePresenceToLocal(delta.key, remotePresenceBase as IRemotePresenceInfo);
         } else if (remotePresenceBase.type === "drag") {
-            this.remoteDragToLocal(delta.key, docClient.client.user, remotePresenceBase as IRemoteDragInfo);
+            this.remoteDragToLocal(remotePresenceBase as IRemoteDragInfo);
         }
     }
 
     private remotePresenceFromEdit(
         longClientId: string,
-        userInfo: IUser,
         refseq: number,
         oldpos: number,
         posAdjust = 0) {
@@ -5066,10 +5031,10 @@ export class FlowView extends ui.Component {
             type: "selection",
         };
 
-        this.remotePresenceToLocal(longClientId, userInfo, remotePosInfo);
+        this.remotePresenceToLocal(longClientId, remotePosInfo);
     }
     // TODO: throttle this if local starts moving
-    private remoteDragToLocal(longClientId: string, user: IUser, remoteDragInfo: IRemoteDragInfo) {
+    private remoteDragToLocal(remoteDragInfo: IRemoteDragInfo) {
         this.movingInclusion.exclu = remoteDragInfo.exclu;
         this.movingInclusion.marker = <MergeTree.Marker>getContainingSegment(this, remoteDragInfo.markerPos).segment;
         this.movingInclusion.dx = remoteDragInfo.dx;
@@ -5078,7 +5043,7 @@ export class FlowView extends ui.Component {
         this.localQueueRender(Nope);
     }
 
-    private remotePresenceToLocal(longClientId: string, user: IUser, remotePresenceInfo: IRemotePresenceInfo, posAdjust = 0) {
+    private remotePresenceToLocal(longClientId: string, remotePresenceInfo: IRemotePresenceInfo, posAdjust = 0) {
         const clientId = this.client.getOrAddShortClientId(longClientId);
 
         let segoff = this.client.mergeTree.getContainingSegment(remotePresenceInfo.origPos,
@@ -5093,35 +5058,39 @@ export class FlowView extends ui.Component {
                 }
             }
         }
+
         if (segoff.segment) {
-            const localPresenceInfo = {
-                clientId,
-                fresh: true,
-                localRef: new MergeTree.LocalReference(segoff.segment as MergeTree.BaseSegment, segoff.offset,
-                    MergeTree.ReferenceType.SlideOnRemove),
-                shouldShowCursor: () => {
-                    return this.client.getClientId() !== clientId &&
-                        Array.from(this.collabDocument.getClients().keys())
-                            .map((k) => this.client.getOrAddShortClientId(k))
-                            .indexOf(clientId) !== -1;
-                },
-                user,
-            } as ILocalPresenceInfo;
-            if (remotePresenceInfo.origMark >= 0) {
-                const markSegoff = this.client.mergeTree.getContainingSegment(remotePresenceInfo.origMark,
-                    remotePresenceInfo.refseq, clientId);
-                if (markSegoff.segment) {
-                    localPresenceInfo.markLocalRef =
-                        new MergeTree.LocalReference(markSegoff.segment as MergeTree.BaseSegment,
-                            markSegoff.offset, MergeTree.ReferenceType.SlideOnRemove);
+            const docClient = this.collabDocument.getClient(longClientId);
+            if (docClient && docClient.client.type === "browser") {
+                const localPresenceInfo = {
+                    clientId,
+                    fresh: true,
+                    localRef: new MergeTree.LocalReference(segoff.segment as MergeTree.BaseSegment, segoff.offset,
+                        MergeTree.ReferenceType.SlideOnRemove),
+                    shouldShowCursor: () => {
+                        return this.client.getClientId() !== clientId &&
+                            Array.from(this.collabDocument.getClients().keys())
+                                .map((k) => this.client.getOrAddShortClientId(k))
+                                .indexOf(clientId) !== -1;
+                    },
+                    user: docClient.client.user,
+                } as ILocalPresenceInfo;
+                if (remotePresenceInfo.origMark >= 0) {
+                    const markSegoff = this.client.mergeTree.getContainingSegment(remotePresenceInfo.origMark,
+                        remotePresenceInfo.refseq, clientId);
+                    if (markSegoff.segment) {
+                        localPresenceInfo.markLocalRef =
+                            new MergeTree.LocalReference(markSegoff.segment as MergeTree.BaseSegment,
+                                markSegoff.offset, MergeTree.ReferenceType.SlideOnRemove);
+                    }
                 }
+                this.updatePresenceVector(localPresenceInfo);
             }
-            this.updatePresenceVector(localPresenceInfo);
         }
     }
 
     private updatePresence() {
-        if (this.presenceMap) {
+        if (this.presenceMap  && this.collabDocument.isConnected) {
             const presenceInfo: IRemotePresenceInfo = {
                 origMark: this.cursor.mark,
                 origPos: this.cursor.pos,
@@ -5134,7 +5103,7 @@ export class FlowView extends ui.Component {
     }
 
     private updateDragPresence() {
-        if (this.presenceMap) {
+        if (this.presenceMap  && this.collabDocument.isConnected) {
             let dragPresenceInfo: IRemoteDragInfo;
             dragPresenceInfo = {
                 dx: this.movingInclusion.dx,
@@ -5160,62 +5129,72 @@ export class FlowView extends ui.Component {
         this.localQueueRender(this.cursor.pos);
     }
 
-    // TODO: paragraph spanning changes and annotations
-    // TODO: generalize this by using transform fwd
-    private applyOp(delta: MergeTree.IMergeTreeOp, msg: ISequencedDocumentMessage) {
-        // tslint:disable:switch-default
-        switch (delta.type) {
+    private handleSharedStringDelta(event: Sequence.SequenceDeltaEvent, target: Sequence.SharedString) {
+        let opCursorPos: number;
+        switch (event.deltaOperation) {
+            case MergeTree.MergeTreeDeltaType.ANNOTATE:
+                opCursorPos = event.end;
+                event.ranges.forEach((range) => {
+                    if (range.type === MergeTree.SegmentType.Marker) {
+                        this.updatePGInfo(range.start - 1);
+                    } else if (range.type === MergeTree.SegmentType.Text) {
+                        this.updatePGInfo(range.start);
+                        this.updatePGInfo(range.start + range.length);
+                    }
+                });
+                break;
+
             case MergeTree.MergeTreeDeltaType.INSERT:
-                let adjLength = 1;
-                if (MergeTree.Marker.fromJSONObject(delta.seg)) {
-                    this.updatePGInfo(delta.pos1 - 1);
-                } else if (delta.pos1 <= this.cursor.pos) {
-                    const maybeText = MergeTree.TextSegment.fromJSONObject(delta.seg);
-                    if (maybeText) {
-                        this.cursor.pos += maybeText.text.length;
-                    } else if (delta.register && !delta.pos2) {
-                        // paste
-                        const len = this.sharedString.client.registerCollection.getLength(msg.clientId,
-                            delta.register);
-                        this.cursor.pos += len;
-                        adjLength = len;
+                opCursorPos = event.end;
+                event.ranges.forEach((range) => {
+                    if (range.type === MergeTree.SegmentType.Marker) {
+                        this.updatePGInfo(range.start - 1);
+                    } else if (range.type === MergeTree.SegmentType.Text) {
+                        this.updatePGInfo(range.start);
+                        this.updatePGInfo(range.start + range.length);
+                        if (!event.isLocal && range.start <= this.cursor.pos) {
+                            this.cursor.pos += range.length;
+                        }
+                    }
+                });
+                break;
+
+            case MergeTree.MergeTreeDeltaType.REMOVE:
+                opCursorPos = event.start;
+                event.ranges.forEach((range) => {
+                    if (range.type === MergeTree.SegmentType.Marker) {
+                        this.updatePGInfo(range.start - 1);
+                    } else if (range.type === MergeTree.SegmentType.Text) {
+                        this.updatePGInfo(range.start);
+                        if (!event.isLocal && range.start <= this.cursor.pos) {
+                            this.cursor.pos -= range.length;
+                        }
+                    }
+                });
+                break;
+        }
+
+        if (!event.opArgs.groupOp
+            || event.opArgs.op === event.opArgs.groupOp.ops[event.opArgs.groupOp.ops.length - 1]) {
+            if (event.isLocal) {
+                if (opCursorPos) {
+                    this.cursor.pos = opCursorPos;
+                    if (event.opArgs.groupOp) {
+                        // make sure after the group op the cursor ends up
+                        // in text if it is not already.
+                        // This is primarily needed for tables.
+                        this.cursorRev(true);
                     }
                 }
-                this.remotePresenceFromEdit(
-                    msg.clientId,
-                    this.collabDocument.getClient(msg.clientId).client.user,
-                    msg.referenceSequenceNumber,
-                    delta.pos1,
-                    adjLength);
-                this.updatePGInfo(delta.pos1);
-                if (adjLength > 1) {
-                    this.updatePGInfo(delta.pos1 + adjLength);
+                this.localQueueRender(this.cursor.pos);
+            } else {
+                if (opCursorPos) {
+                    this.remotePresenceFromEdit(
+                        event.opArgs.sequencedMessage.clientId,
+                        event.opArgs.sequencedMessage.referenceSequenceNumber,
+                        opCursorPos);
                 }
-                return true;
-            // TODO: update pg info for pos2 (remove and annotate)
-            case MergeTree.MergeTreeDeltaType.REMOVE:
-                if (delta.pos2 <= this.cursor.pos) {
-                    this.cursor.pos -= (delta.pos2 - delta.pos1);
-                } else if (this.cursor.pos >= delta.pos1) {
-                    this.cursor.pos = delta.pos1;
-                }
-                this.remotePresenceFromEdit(
-                    msg.clientId,
-                    this.collabDocument.getClient(msg.clientId).client.user,
-                    msg.referenceSequenceNumber,
-                    delta.pos1);
-                this.updatePGInfo(delta.pos1);
-                return true;
-            case MergeTree.MergeTreeDeltaType.GROUP: {
-                let opAffectsViewport = false;
-                for (const groupOp of delta.ops) {
-                    opAffectsViewport = opAffectsViewport || this.applyOp(groupOp, msg);
-                }
-                return opAffectsViewport;
-            }
-            case MergeTree.MergeTreeDeltaType.ANNOTATE: {
-                this.updatePGInfo(delta.pos1);
-                return this.posInViewport(delta.pos1) || this.posInViewport(delta.pos2 - 1);
+                this.queueRender(undefined, this.posInViewport(event.start) || this.posInViewport(event.end));
             }
         }
     }
