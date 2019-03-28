@@ -1,7 +1,7 @@
 import { Component } from "react";
 import * as React from "react";
 import { DataStore } from "@prague/app-datastore";
-import { createDocumentService } from "@prague/routerlicious-socket-storage";
+import { RouterliciousDocumentServiceFactory  } from "@prague/routerlicious-socket-storage";
 import { WebLoader } from "@prague/loader-web";
 import { ILoaderUrl, ILoaderProps, URLToLoaderProps } from "./url-resolver";
 
@@ -18,7 +18,7 @@ export class Loader extends Component<ILoaderUrl, any> {
       this.bag.ordererUrl,
       this.bag.storageUrl,
       new WebLoader(this.bag.registryUrl),
-      createDocumentService(this.bag.ordererUrl, this.bag.storageUrl),
+      new RouterliciousDocumentServiceFactory(),
       this.bag.token,
       this.bag.tenant,
       "anonymous-coward"
