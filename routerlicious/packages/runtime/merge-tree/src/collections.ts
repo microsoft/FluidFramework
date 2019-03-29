@@ -58,7 +58,7 @@ export class List<T> {
     constructor(public isHead: boolean, public data: T) {
     }
 
-    clear() {
+    clear(): void {
         if (this.isHead) {
             this.prev = this;
             this.next = this;
@@ -74,24 +74,24 @@ export class List<T> {
         return (entry);
     }
 
-    dequeue() {
+    dequeue(): T {
         if (!this.empty()) {
             let removedEntry = ListRemoveEntry(this.next);
             return removedEntry.data;
         }
     }
 
-    enqueue(data: T) {
+    enqueue(data: T): List<T> {
         return this.add(data);
     }
 
-    walk(fn: (data: T, l: List<T>) => void) {
+    walk(fn: (data: T, l: List<T>) => void): void {
         for (var entry = this.next; !(entry.isHead); entry = entry.next) {
             fn(entry.data, entry);
         }
     }
 
-    some(fn: (data: T, l: List<T>) => boolean, rev?: boolean) {
+    some(fn: (data: T, l: List<T>) => boolean, rev?: boolean): T {
         for (var entry = <List<T>>this; !(entry.isHead); entry = rev ? entry.prev : entry.next) {
             if (fn(entry.data, entry)) {
                 return (entry.data);
@@ -116,7 +116,7 @@ export class List<T> {
         }
     }
 
-    last() {
+    last(): T {
         if (!this.empty()) {
             return (this.prev.data);
         }
